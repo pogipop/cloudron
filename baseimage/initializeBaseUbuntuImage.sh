@@ -100,7 +100,7 @@ After=network.target docker.socket
 Requires=docker.socket
 
 [Service]
-ExecStart=/usr/bin/docker daemon -H fd:// --log-driver=journald --exec-opt native.cgroupdriver=cgroupfs --dns 127.0.0.1
+ExecStart=/usr/bin/docker daemon -H fd:// --log-driver=journald --exec-opt native.cgroupdriver=cgroupfs --dns 127.0.0.1 --dns-search=.
 MountFlags=slave
 LimitNOFILE=1048576
 LimitNPROC=1048576
