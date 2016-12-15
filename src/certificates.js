@@ -94,6 +94,8 @@ function getApi(app, callback) {
 function installAdminCertificate(callback) {
     if (process.env.BOX_ENV === 'test') return callback();
 
+    debug('installAdminCertificate');
+
     sysinfo.getIp(function (error, ip) {
         if (error) return callback(error);
 
