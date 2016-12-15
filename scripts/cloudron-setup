@@ -23,7 +23,7 @@ versionsUrl="https://s3.amazonaws.com/prod-cloudron-releases/versions.json"
 version="latest"
 apiServer="https://api.cloudron.io"
 
-args=$(getopt -o "" -l "domain:,help,provider:,encryption-key:,restore-url:,tls-provider:,version:,versions-url:,api-server:" -n "$0" -- "$@")
+args=$(getopt -o "" -l "domain:,help,provider:,encryption-key:,restore-url:,tls-provider:,version:,versions-url:,api-server:,dns-provider:" -n "$0" -- "$@")
 eval set -- "${args}"
 
 while true; do
