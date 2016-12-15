@@ -142,9 +142,6 @@ else
         "url": "${restoreUrl}",
         "key": "${encryptionKey}"
     },
-    "tlsConfig": {
-        "provider": "${tlsProvider}"
-    },
     "version": "${version}"
 }
 EOF
