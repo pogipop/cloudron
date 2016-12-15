@@ -629,16 +629,24 @@ function configure(appId, data, auditSource, callback) {
 
         debug('Will configure app with id:%s values:%j', appId, values);
 
-        appdb.setInstallationCommand(appId, appdb.ISTATE_PENDING_CONFIGURE, values, function (error) {
-            if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(getDuplicateErrorDetails(location, portBindings, error));
+        var oldName = (app.location ? app.location : app.manifest.title.toLowerCase().replace(/[^a-zA-Z0-9]/g, '')) + '.app';
+        var newName = (location ? location : app.manifest.title.toLowerCase().replace(/[^a-zA-Z0-9]/g, '')) + '.app';
+        mailboxdb.updateName(oldName, newName, function (error) {
+            if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(new AppsError(AppsError.ALREADY_EXISTS, 'This mailbox is already taken'));
             if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new AppsError(AppsError.BAD_STATE));
             if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
 
-            taskmanager.restartAppTask(appId);
+            appdb.setInstallationCommand(appId, appdb.ISTATE_PENDING_CONFIGURE, values, function (error) {
+                if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(getDuplicateErrorDetails(location, portBindings, error));
+                if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new AppsError(AppsError.BAD_STATE));
+                if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
 
-            eventlog.add(eventlog.ACTION_APP_CONFIGURE, auditSource, { appId: appId });
+                taskmanager.restartAppTask(appId);
 
-            callback(null);
+                eventlog.add(eventlog.ACTION_APP_CONFIGURE, auditSource, { appId: appId });
+
+                callback(null);
+            });
         });
     });
 }
