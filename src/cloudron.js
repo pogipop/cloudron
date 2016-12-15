@@ -305,30 +305,25 @@ function getConfig(callback) {
             settings.getDeveloperMode(function (error, developerMode) {
                 if (error) return callback(new CloudronError(CloudronError.INTERNAL_ERROR, error));
 
-                sysinfo.getIp(function (error, ip) {
-                    if (error) return callback(new CloudronError(CloudronError.INTERNAL_ERROR, error));
-
-                    callback(null, {
-                        apiServerOrigin: config.apiServerOrigin(),
-                        webServerOrigin: config.webServerOrigin(),
-                        isDev: config.isDev(),
-                        fqdn: config.fqdn(),
-                        ip: ip,
-                        version: config.version(),
-                        update: updateChecker.getUpdateInfo(),
-                        progress: progress.get(),
-                        isCustomDomain: config.isCustomDomain(),
-                        isDemo: config.isDemo(),
-                        developerMode: developerMode,
-                        region: result.box.region,
-                        size: result.box.size,
-                        billing: !!result.user.billing,
-                        plan: result.box.plan,
-                        currency: result.user.currency,
-                        memory: os.totalmem(),
-                        provider: config.provider(),
-                        cloudronName: cloudronName
-                    });
+                callback(null, {
+                    apiServerOrigin: config.apiServerOrigin(),
+                    webServerOrigin: config.webServerOrigin(),
+                    isDev: config.isDev(),
+                    fqdn: config.fqdn(),
+                    version: config.version(),
+                    update: updateChecker.getUpdateInfo(),
+                    progress: progress.get(),
+                    isCustomDomain: config.isCustomDomain(),
+                    isDemo: config.isDemo(),
+                    developerMode: developerMode,
+                    region: result.box.region,
+                    size: result.box.size,
+                    billing: !!result.user.billing,
+                    plan: result.box.plan,
+                    currency: result.user.currency,
+                    memory: os.totalmem(),
+                    provider: config.provider(),
+                    cloudronName: cloudronName
                 });
             });
         });
