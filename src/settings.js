@@ -151,6 +151,8 @@ function getEmailDnsRecords(callback) {
         status: false
     };
 
+    dns.platform.timeout = 8000;
+
     // check if DKIM is already setup
     dns.resolveTxt(records.dkim.subdomain + '.' + config.fqdn(), function (error, txtRecords) {
         if (error) return callback(error);
