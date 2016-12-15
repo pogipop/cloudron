@@ -87,6 +87,9 @@ function updateName(oldName, newName, callback) {
     assert.strictEqual(typeof newName, 'string');
     assert.strictEqual(typeof callback, 'function');
 
+    // skip if no changes
+    if (oldName === newName) return callback(null);
+
     database.query('UPDATE mailboxes SET name=? WHERE name=?', [ newName, oldName ], function (error, result) {
         if (error && error.code === 'ER_DUP_ENTRY') return callback(new DatabaseError(DatabaseError.ALREADY_EXISTS, 'mailbox already exists'));
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
