@@ -1440,6 +1440,23 @@ describe('database', function () {
             });
         });
 
+        it('can change name', function (done) {
+            mailboxdb.updateName('support', 'support3', function (error) {
+                expect(error).to.be(null);
+
+                mailboxdb.updateName('support3', 'support', done);
+            });
+        });
+
+        it('cannot change name to existing one', function (done) {
+            mailboxdb.updateName('support', 'support2', function (error) {
+                expect(error).to.be.ok();
+                expect(error.reason).to.eql(DatabaseError.ALREADY_EXISTS);
+
+                done();
+            });
+        });
+
         it('unset aliases', function (done) {
             mailboxdb.setAliasesForName('support', [ ], function (error) {
                 expect(error).to.be(null);

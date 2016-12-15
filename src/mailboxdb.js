@@ -18,6 +18,8 @@ exports = module.exports = {
     getByOwnerId: getByOwnerId,
     delByOwnerId: delByOwnerId,
 
+    updateName: updateName,
+
     _clear: clear,
 
     TYPE_USER: 'user',
@@ -75,6 +77,20 @@ function delByOwnerId(id, callback) {
     // deletes aliases as well
     database.query('DELETE FROM mailboxes WHERE ownerId=?', [ id ], function (error) {
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
+
+        callback(null);
+    });
+}
+
+function updateName(oldName, newName, callback) {
+    assert.strictEqual(typeof oldName, 'string');
+    assert.strictEqual(typeof newName, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    database.query('UPDATE mailboxes SET name=? WHERE name=?', [ newName, oldName ], function (error, result) {
+        if (error && error.code === 'ER_DUP_ENTRY') return callback(new DatabaseError(DatabaseError.ALREADY_EXISTS, 'mailbox already exists'));
+        if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
+        if (result.affectedRows !== 1) return callback(new DatabaseError(DatabaseError.NOT_FOUND));
 
         callback(null);
     });
