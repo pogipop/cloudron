@@ -49,6 +49,10 @@ The CLI tool does not work on Windows. Please contact us on our [chat](https://c
 
 Both DigitalOcean and EC2 from Amazon Web Services are frequently tested by us.
 
+Please use below links to support us with referrals:
+* [Amazon EC2](https://aws.amazon.com/ec2/)
+* [DigitalOcean](https://m.do.co/c/933831d60a1e)
+
 In addition to those, the Cloudron community has successfully installed the platform on those providers:
 * [Amazon Lightsail](https://amazonlightsail.com/)
 * [hosttech](https://www.hosttech.ch/)
