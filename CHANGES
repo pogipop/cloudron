@@ -681,3 +681,8 @@
 * Support non AWS S3 object storage
 * Settings UI improvements
 
+[0.91.0]
+* Support installing Cloudron on intranet and VirtualBox
+* Fix bug where relocating an app did not free the old location
+* Allow Email server to be enabled with wildcard DNS
+
