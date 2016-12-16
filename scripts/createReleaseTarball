@@ -11,15 +11,13 @@ assertNotEmpty() {
 [[ $(uname -s) == "Darwin" ]] && GNU_GETOPT="/usr/local/opt/gnu-getopt/bin/getopt" || GNU_GETOPT="getopt"
 readonly GNU_GETOPT
 
-args=$(${GNU_GETOPT} -o "" -l "revision:,output:,publish,no-upload" -n "$0" -- "$@")
+args=$(${GNU_GETOPT} -o "" -l "revision:,output:,no-upload" -n "$0" -- "$@")
 eval set -- "${args}"
 
-readonly RELEASE_TOOL_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../release" && pwd)"
 readonly SOURCE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 delete_bundle="yes"
 commitish="HEAD"
-publish="no"
 upload="yes"
 bundle_file=""
 
@@ -28,16 +26,10 @@ while true; do
     --revision) commitish="$2"; shift 2;;
     --output) bundle_file="$2"; delete_bundle="no"; shift 2;;
     --no-upload) upload="no"; shift;;
-    --publish) publish="yes"; shift;;
     --) break;;
     *) echo "Unknown option $1"; exit 1;;
     esac
 done
-
-if [[ "${upload}" == "no" && "${publish}" == "yes" ]]; then
-    echo "Cannot publish without uploading"
-    exit 1
-fi
 
 readonly TMPDIR=${TMPDIR:-/tmp} # why is this not set on mint?
 
@@ -108,11 +100,6 @@ if [[ "${upload}" == "yes" ]]; then
 
     versions_file_url="https://dev-cloudron-releases.s3.amazonaws.com/box-${version}.tar.gz"
     echo "The URL for the versions file is: ${versions_file_url}"
-
-    if [[ "${publish}" == "yes" ]]; then
-        echo "Publishing to dev"
-        ${RELEASE_TOOL_DIR}/release create --env dev --code "${versions_file_url}"
-    fi
 fi
 
 if [[ "${delete_bundle}" == "no" ]]; then
