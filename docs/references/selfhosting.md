@@ -56,7 +56,7 @@ In addition to those, the Cloudron community has successfully installed the plat
 * [OVH](https://www.ovh.com/)
 * [Scaleway](https://www.scaleway.com/)
 * [So you Start](https://www.soyoustart.com/)
-* [Vultr](https://www.vultr.com/)
+* [Vultr](http://www.vultr.com/?ref=7063201)
 
 Please let us know if any of them requires tweaks or adjustments.
 
@@ -211,8 +211,8 @@ The Cloudron creates encrypted backups once a day. Each app is backed up indepen
 backups have the prefix `appbackup_`. The platform state is backed up independently with the
 prefix `backup_`.
 
-By default, backups reside in `/var/backups`. Please note that having backups reside in the same 
-physical machine as the Cloudron server instance is dangerous and it must be changed to 
+By default, backups reside in `/var/backups`. Please note that having backups reside in the same
+physical machine as the Cloudron server instance is dangerous and it must be changed to
 an external storage location like `S3` as soon as possible.
 
 ### Amazon S3
