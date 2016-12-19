@@ -108,7 +108,7 @@ SSH into your server and run the following commands:
 ```
 wget https://git.cloudron.io/cloudron/box/raw/master/scripts/cloudron-setup
 chmod +x cloudron-setup
-./cloudron-setup --domain <domain> --provider <digitalocean|ec2|generic|scaleway> --encryption-key <key>
+./cloudron-setup --domain <domain> --provider <digitalocean|ec2|generic|scaleway>
 ```
 
 The setup will take around 10-15 minutes.
@@ -125,8 +125,6 @@ choose `generic`. In most cases, the `generic` provider mostly will work fine.
 If the Cloudron does not complete initialization, it may mean that
 we have to add some vendor specific quirks. Please open a
 [bug report](https://git.cloudron.io/cloudron/box/issues) in that case.
-
-* `--encryption-key` is the key to be used for encrypting backup data.
 
 Optional arguments for installation:
 
