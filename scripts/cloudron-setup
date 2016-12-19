@@ -61,11 +61,6 @@ elif [[  \
     exit 1
 fi
 
-if [[ -z "${encryptionKey}" ]]; then
-    echo "--encryption-key for backup encryption is required"
-    exit 1
-fi
-
 if [[ -z "${dnsProvider}" ]]; then
     echo "--dns-provider is required (noop, manual)"
     exit 1
