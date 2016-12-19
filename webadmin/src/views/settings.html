@@ -149,11 +149,6 @@
                         <p class="has-error text-center" ng-show="configureBackup.error">{{ configureBackup.error.generic }}</p>
 
                         <!-- S3 -->
-                        <div class="form-group" ng-class="{ 'has-error': configureBackup.error.endpoint }">
-                            <label class="control-label" for="inputConfigureBackupEndpoint">Endpoint (optional)</label>
-                            <input type="text" class="form-control" ng-model="configureBackup.endpoint" id="inputConfigureBackupEndpoint" name="endpoint" ng-disabled="configureBackup.busy" placeholder="Leave empty if using AWS S3">
-                        </div>
-
                         <div class="form-group" ng-class="{ 'has-error': configureBackup.error.bucket }">
                             <label class="control-label" for="inputConfigureBackupBucket">Bucket name</label>
                             <input type="text" class="form-control" ng-model="configureBackup.bucket" id="inputConfigureBackupBucket" name="bucket" ng-disabled="configureBackup.busy" required autofocus>
@@ -177,6 +172,11 @@
                         <div class="form-group" ng-class="{ 'has-error': configureBackup.error.secretAccessKey }">
                             <label class="control-label" for="inputConfigureBackupSecretAccessKey">Secret Access Key</label>
                             <input type="text" class="form-control" ng-model="configureBackup.secretAccessKey" id="inputConfigureBackupSecretAccessKey" name="secretAccessKey" ng-disabled="configureBackup.busy" required>
+                        </div>
+
+                        <div class="form-group" ng-class="{ 'has-error': configureBackup.error.endpoint }">
+                            <label class="control-label" for="inputConfigureBackupEndpoint">Endpoint (optional)</label>
+                            <input type="text" class="form-control" ng-model="configureBackup.endpoint" id="inputConfigureBackupEndpoint" name="endpoint" ng-disabled="configureBackup.busy" placeholder="URL of S3 compatible storage (Minio, Swift). Leave empty when using S3.">
                         </div>
 
                         <div class="form-group" ng-class="{ 'has-error': configureBackup.error.key }">
