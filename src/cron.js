@@ -54,8 +54,9 @@ function initialize(callback) {
     });
     cloudron.sendHeartbeat(); // latest unpublished version of CronJob has runOnInit
 
+    var randomHourMinute = parseInt(60*Math.random());
     gAliveJob = new CronJob({
-        cronTime: '00 23 * * * *', // every hour on a somewhat odd 23 minute after full probably should be randomly spread out over a day?
+        cronTime: '00 ' + randomHourMinute + ' * * * *', // every hour on a random minute
         onTick: cloudron.sendAliveStatus,
         start: true
     });
@@ -90,9 +91,13 @@ function recreateJobs(unusedTimeZone, callback) {
             timeZone: allSettings[settings.TIME_ZONE_KEY]
         });
 
+        // randomized pattern per cloudron every 10 min
+        var randomMinute = parseInt(10*Math.random());
+        var random10MinPattern = [0,1,2,3,4,5].map(function (n) { return n*10+randomMinute; }).join(',');
+
         if (gBoxUpdateCheckerJob) gBoxUpdateCheckerJob.stop();
         gBoxUpdateCheckerJob = new CronJob({
-            cronTime: '00 */10 * * * *', // every 10 minutes
+            cronTime: '00 ' + random10MinPattern + ' * * * *', // every 10 minutes
             onTick: updateChecker.checkBoxUpdates,
             start: true,
             timeZone: allSettings[settings.TIME_ZONE_KEY]
@@ -100,7 +105,7 @@ function recreateJobs(unusedTimeZone, callback) {
 
         if (gAppUpdateCheckerJob) gAppUpdateCheckerJob.stop();
         gAppUpdateCheckerJob = new CronJob({
-            cronTime: '00 */10 * * * *', // every 10 minutes
+            cronTime: '00 ' + random10MinPattern + ' * * * *', // every 10 minutes
             onTick: updateChecker.checkAppUpdates,
             start: true,
             timeZone: allSettings[settings.TIME_ZONE_KEY]
