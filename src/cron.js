@@ -54,7 +54,7 @@ function initialize(callback) {
     });
     cloudron.sendHeartbeat(); // latest unpublished version of CronJob has runOnInit
 
-    var randomHourMinute = parseInt(60*Math.random());
+    var randomHourMinute = Math.floor(60*Math.random());
     gAliveJob = new CronJob({
         cronTime: '00 ' + randomHourMinute + ' * * * *', // every hour on a random minute
         onTick: cloudron.sendAliveStatus,
@@ -92,7 +92,7 @@ function recreateJobs(unusedTimeZone, callback) {
         });
 
         // randomized pattern per cloudron every 10 min
-        var randomMinute = parseInt(10*Math.random());
+        var randomMinute = Math.floor(10*Math.random());
         var random10MinPattern = [0,1,2,3,4,5].map(function (n) { return n*10+randomMinute; }).join(',');
 
         if (gBoxUpdateCheckerJob) gBoxUpdateCheckerJob.stop();
