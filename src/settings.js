@@ -496,19 +496,12 @@ function setBackupConfig(backupConfig, callback) {
     backups.testConfig(backupConfig, function (error) {
         if (error) return callback(error);
 
-        getBackupConfig(function (error, result) {
-            if (error) return callback(error);
+        settingsdb.set(exports.BACKUP_CONFIG_KEY, JSON.stringify(backupConfig), function (error) {
+            if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
 
-            // preserve the backup key!
-            backupConfig.key = backupConfig.key || result.key;
+            exports.events.emit(exports.BACKUP_CONFIG_KEY, backupConfig);
 
-            settingsdb.set(exports.BACKUP_CONFIG_KEY, JSON.stringify(backupConfig), function (error) {
-                if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
-
-                exports.events.emit(exports.BACKUP_CONFIG_KEY, backupConfig);
-
-                callback(null);
-            });
+            callback(null);
         });
     });
 }

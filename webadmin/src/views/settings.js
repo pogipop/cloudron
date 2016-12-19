@@ -331,6 +331,7 @@ angular.module('Application').controller('SettingsController', ['$scope', '$loca
             $scope.configureBackup.accessKeyId = $scope.backupConfig.accessKeyId;
             $scope.configureBackup.secretAccessKey = $scope.backupConfig.secretAccessKey;
             $scope.configureBackup.endpoint = $scope.backupConfig.endpoint;
+            $scope.configureBackup.key = $scope.backupConfig.key;
 
             $('#configureBackupModal').modal('show');
         },
@@ -344,7 +345,8 @@ angular.module('Application').controller('SettingsController', ['$scope', '$loca
                 bucket: $scope.configureBackup.bucket,
                 prefix: $scope.configureBackup.prefix,
                 accessKeyId: $scope.configureBackup.accessKeyId,
-                secretAccessKey: $scope.configureBackup.secretAccessKey
+                secretAccessKey: $scope.configureBackup.secretAccessKey,
+                key: $scope.configureBackup.key
             };
 
             if ($scope.configureBackup.region) backupConfig.region = $scope.configureBackup.region;
