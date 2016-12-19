@@ -142,11 +142,9 @@ the latest version. You can set this to an older version when restoring a Cloudr
 
 * `--restore-url` is a backup URL to restore from.
 
-
-
 ## Finish setup
 
-Once the setup script completes, visit `https://my.<domain>` to complete the installation.
+Once the setup script completes, the server will reboot, then visit `https://my.<domain>` to complete the installation.
 
 Please note the following:
 
@@ -156,8 +154,6 @@ Please note the following:
 already! In this unlikely case, simply delete the server and start over.
 
 Once the setup is done, you can access the admin page in the future at `https://my.<domain>`.
-
-**If apps do not start after installation, a server restart may be required to let bootloader changes take effect.**
 
 ## DNS
 
