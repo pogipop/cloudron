@@ -180,8 +180,8 @@
                         </div>
 
                         <div class="form-group" ng-class="{ 'has-error': configureBackup.error.key }">
-                            <label class="control-label" for="inputConfigureBackupKey">Encryption Key</label>
-                            <input type="text" class="form-control" ng-model="configureBackup.key" id="inputConfigureBackupKey" name="prefix" ng-disabled="configureBackup.busy" placeholder="Encryption key for all backups" required>
+                            <label class="control-label" for="inputConfigureBackupKey">Encryption Key (optional)</label>
+                            <input type="text" class="form-control" ng-model="configureBackup.key" id="inputConfigureBackupKey" name="prefix" ng-disabled="configureBackup.busy" placeholder="Encryption key for all backups">
                         </div>
 
                         <input class="ng-hide" type="submit" ng-disabled="configureBackupForm.$invalid"/>

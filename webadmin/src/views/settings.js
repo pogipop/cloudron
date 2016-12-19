@@ -397,6 +397,9 @@ angular.module('Application').controller('SettingsController', ['$scope', '$loca
                 // $scope.configureBackup.reset();
                 $('#configureBackupModal').modal('hide');
 
+                // TODO: be smarter and create new backup only when required
+                $scope.createBackup.doCreateBackup();
+
                 // now refresh the ui
                 Client.refreshConfig();
                 getBackupConfig();
