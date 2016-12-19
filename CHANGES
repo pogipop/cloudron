@@ -686,3 +686,6 @@
 * Fix bug where relocating an app did not free the old location
 * Allow Email server to be enabled with wildcard DNS
 
+[0.92.0]
+* Backup encryption key is now optional
+
