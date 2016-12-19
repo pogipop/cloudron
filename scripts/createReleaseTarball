@@ -33,9 +33,6 @@ done
 
 readonly TMPDIR=${TMPDIR:-/tmp} # why is this not set on mint?
 
-assertNotEmpty AWS_DEV_ACCESS_KEY
-assertNotEmpty AWS_DEV_SECRET_KEY
-
 if ! $(cd "${SOURCE_DIR}" && git diff --exit-code >/dev/null); then
     echo "You have local changes, stash or commit them to proceed"
     exit 1
@@ -95,6 +92,10 @@ rm -rf "${bundle_dir}"
 
 if [[ "${upload}" == "yes" ]]; then
     echo "Uploading bundle to S3"
+
+    assertNotEmpty AWS_DEV_ACCESS_KEY
+    assertNotEmpty AWS_DEV_SECRET_KEY
+
     # That special header is needed to allow access with singed urls created with different aws credentials than the ones the file got uploaded
     s3cmd --multipart-chunk-size-mb=5 --ssl --acl-public --access_key="${AWS_DEV_ACCESS_KEY}" --secret_key="${AWS_DEV_SECRET_KEY}" --no-mime-magic put "${bundle_file}" "s3://dev-cloudron-releases/box-${version}.tar.gz"
 
@@ -107,4 +108,3 @@ if [[ "${delete_bundle}" == "no" ]]; then
 else
     rm "${bundle_file}"
 fi
-
