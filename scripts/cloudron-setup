@@ -79,6 +79,8 @@ echo "##############################################"
 echo "        Cloudron Setup (${version})           "
 echo "##############################################"
 echo ""
+echo "The server will reboot at the end to complete the setup."
+echo ""
 echo " Follow setup logs in a second terminal with:"
 echo " $ tail -f ${LOG_FILE}"
 echo ""
@@ -177,5 +179,9 @@ while true; do
 done
 
 echo ""
+echo "Rebooting this server now to let bootloader changes take effect."
+echo ""
 echo "Visit https://my.${domain} to finish setup"
 echo ""
+
+systemctl reboot
