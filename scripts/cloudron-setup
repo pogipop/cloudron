@@ -122,9 +122,6 @@ if ! sourceTarballUrl=$(${NPM_BIN}/cloudron-version --out tarballUrl --versions-
     exit 1
 fi
 
-echo "=> Run base init service"
-systemctl start cloudron-system-setup
-
 if [[ -z "${restoreUrl}" ]]; then
     data=$(cat <<EOF
 {
