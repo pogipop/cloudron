@@ -6,10 +6,27 @@ set -eu -o pipefail
 
 readonly USER=yellowtent
 
+readonly USER_DATA_FILE="/root/user_data.img"
+readonly USER_DATA_DIR="/home/yellowtent/data"
+
 readonly container_files="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/container"
 
 readonly CONFIG_DIR="/home/yellowtent/configs"
 readonly DATA_DIR="/home/yellowtent/data"
+
+echo "=== Setup btrfs data ==="
+if ! grep -q loop.ko /lib/modules/`uname -r`/modules.builtin; then
+    # on scaleway loop is not built-in
+    echo "loop" >> /etc/modules
+    modprobe loop
+fi
+
+if [[ ! -d "${USER_DATA_DIR}" ]]; then
+    truncate -s "8192m" "${USER_DATA_FILE}" # 8gb start (this will get resized dynamically by cloudron-system-setup.service)
+    mkfs.btrfs -L UserDataHome "${USER_DATA_FILE}"
+    mkdir -p "${USER_DATA_DIR}"
+    mount -t btrfs -o loop,nosuid "${USER_DATA_FILE}" ${USER_DATA_DIR}
+fi
 
 # Configure time
 sed -e 's/^#NTP=/NTP=0.ubuntu.pool.ntp.org 1.ubuntu.pool.ntp.org 2.ubuntu.pool.ntp.org 3.ubuntu.pool.ntp.org/' -i /etc/systemd/timesyncd.conf

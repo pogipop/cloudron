@@ -7,8 +7,6 @@ readonly USER_HOME="/home/${USER}"
 readonly INSTALLER_SOURCE_DIR="${USER_HOME}/installer"
 readonly INSTALLER_REVISION="${1:-master}"
 readonly PROVIDER="${2:-generic}"
-readonly USER_DATA_FILE="/root/user_data.img"
-readonly USER_DATA_DIR="/home/yellowtent/data"
 
 readonly SOURCE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
@@ -109,17 +107,6 @@ LimitCORE=infinity
 [Install]
 WantedBy=multi-user.target
 EOF
-
-echo "=== Setup btrfs data ==="
-if ! grep -q loop.ko /lib/modules/`uname -r`/modules.builtin; then
-    # on scaleway loop is not built-in
-    echo "loop" >> /etc/modules
-    modprobe loop
-fi
-truncate -s "8192m" "${USER_DATA_FILE}" # 8gb start (this will get resized dynamically by cloudron-system-setup.service)
-mkfs.btrfs -L UserHome "${USER_DATA_FILE}"
-mkdir -p "${USER_DATA_DIR}"
-mount -t btrfs -o loop,nosuid "${USER_DATA_FILE}" ${USER_DATA_DIR}
 
 systemctl daemon-reload
 systemctl enable docker
