@@ -256,13 +256,7 @@ sed -e 's/^#NTP=/NTP=0.ubuntu.pool.ntp.org 1.ubuntu.pool.ntp.org 2.ubuntu.pool.n
 timedatectl set-ntp 1
 timedatectl set-timezone UTC
 
-# Give user access to system logs
 apt-get -y install acl
-usermod -a -G systemd-journal ${USER}
-mkdir -p /var/log/journal  # in some images, this directory is not created making system log to /run/systemd instead
-chown root:systemd-journal /var/log/journal
-systemctl restart systemd-journald
-setfacl -n -m u:${USER}:r /var/log/journal/*/system.journal
 
 # DO uses Google nameservers by default. This causes RBL queries to fail (host 2.0.0.127.zen.spamhaus.org)
 # We do not use dnsmasq because it is not a recursive resolver and defaults to the value in the interfaces file (which is Google DNS!)
