@@ -688,4 +688,6 @@
 
 [0.92.0]
 * Backup encryption key is now optional
+* Fix bug where DNS mail record warning was shown by mistake
+* Make cloudron-setup finish with `manual` DNS provider
 
