@@ -32,7 +32,7 @@ set_progress() {
 }
 
 set_progress "1" "Create container"
-$script_dir/container.sh
+$script_dir/container.sh "${arg_provider}"
 
 set_progress "5" "Adjust system settings"
 hostnamectl set-hostname "${arg_fqdn}"

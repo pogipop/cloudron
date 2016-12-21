@@ -13,6 +13,20 @@ readonly container_files="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/containe
 
 readonly CONFIG_DIR="/home/yellowtent/configs"
 readonly DATA_DIR="/home/yellowtent/data"
+readonly provider="${1:-generic}"
+
+# caas has ssh on port 202 and we disable password login
+if [[ "${provider}" == "caas" ]]; then
+    # https://stackoverflow.com/questions/4348166/using-with-sed on why ? must be escaped
+    sed -e 's/^#\?PermitRootLogin .*/PermitRootLogin without-password/g' \
+        -e 's/^#\?PermitEmptyPasswords .*/PermitEmptyPasswords no/g' \
+        -e 's/^#\?PasswordAuthentication .*/PasswordAuthentication no/g' \
+        -e 's/^#\?Port .*/Port 202/g' \
+        -i /etc/ssh/sshd_config
+
+    # required so we can connect to this machine since port 22 is blocked by iptables by now
+    systemctl reload sshd
+fi
 
 echo "=== Setup btrfs data ==="
 if ! grep -q loop.ko /lib/modules/`uname -r`/modules.builtin; then

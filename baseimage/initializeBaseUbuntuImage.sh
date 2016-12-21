@@ -196,16 +196,3 @@ apt-get -y install unbound
 
 echo "==== Install ssh ==="
 apt-get -y install openssh-server
-
-# caas has ssh on port 202 and we disable password login
-if [[ "${PROVIDER}" == "caas" ]]; then
-    # https://stackoverflow.com/questions/4348166/using-with-sed on why ? must be escaped
-    sed -e 's/^#\?PermitRootLogin .*/PermitRootLogin without-password/g' \
-        -e 's/^#\?PermitEmptyPasswords .*/PermitEmptyPasswords no/g' \
-        -e 's/^#\?PasswordAuthentication .*/PasswordAuthentication no/g' \
-        -e 's/^#\?Port .*/Port 202/g' \
-        -i /etc/ssh/sshd_config
-
-    # required so we can connect to this machine since port 22 is blocked by iptables by now
-    systemctl reload sshd
-fi
