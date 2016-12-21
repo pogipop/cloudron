@@ -239,18 +239,6 @@ systemctl daemon-reload
 systemctl enable iptables-restore
 systemctl enable cloudron-system-setup
 
-# Configure systemd
-sed -e "s/^#SystemMaxUse=.*$/SystemMaxUse=100M/" \
-    -e "s/^#ForwardToSyslog=.*$/ForwardToSyslog=no/" \
-    -i /etc/systemd/journald.conf
-
-# When rotating logs, systemd kills journald too soon sometimes
-# See https://github.com/systemd/systemd/issues/1353 (this is upstream default)
-sed -e "s/^WatchdogSec=.*$/WatchdogSec=3min/" \
-    -i /lib/systemd/system/systemd-journald.service
-
-sync
-
 apt-get -y install acl
 
 # DO uses Google nameservers by default. This causes RBL queries to fail (host 2.0.0.127.zen.spamhaus.org)

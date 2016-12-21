@@ -16,6 +16,16 @@ sed -e 's/^#NTP=/NTP=0.ubuntu.pool.ntp.org 1.ubuntu.pool.ntp.org 2.ubuntu.pool.n
 timedatectl set-ntp 1
 timedatectl set-timezone UTC
 
+########## journald
+sed -e "s/^#SystemMaxUse=.*$/SystemMaxUse=100M/" \
+    -e "s/^#ForwardToSyslog=.*$/ForwardToSyslog=no/" \
+    -i /etc/systemd/journald.conf
+
+# When rotating logs, systemd kills journald too soon sometimes
+# See https://github.com/systemd/systemd/issues/1353 (this is upstream default)
+sed -e "s/^WatchdogSec=.*$/WatchdogSec=3min/" \
+    -i /lib/systemd/system/systemd-journald.service
+
 # Give user access to system logs
 usermod -a -G systemd-journal ${USER}
 mkdir -p /var/log/journal  # in some images, this directory is not created making system log to /run/systemd instead
