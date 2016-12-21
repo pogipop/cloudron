@@ -11,6 +11,11 @@ readonly container_files="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/containe
 readonly CONFIG_DIR="/home/yellowtent/configs"
 readonly DATA_DIR="/home/yellowtent/data"
 
+# Configure time
+sed -e 's/^#NTP=/NTP=0.ubuntu.pool.ntp.org 1.ubuntu.pool.ntp.org 2.ubuntu.pool.ntp.org 3.ubuntu.pool.ntp.org/' -i /etc/systemd/timesyncd.conf
+timedatectl set-ntp 1
+timedatectl set-timezone UTC
+
 # Give user access to system logs
 usermod -a -G systemd-journal ${USER}
 mkdir -p /var/log/journal  # in some images, this directory is not created making system log to /run/systemd instead
