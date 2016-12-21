@@ -29,44 +29,6 @@ apt-get -o Dpkg::Options::="--force-confdef" update -y
 apt-get -o Dpkg::Options::="--force-confdef" dist-upgrade -y
 apt-get install -y curl iptables
 
-# Setup firewall before everything. docker creates it's own chain and the -X below will remove it
-# Do NOT use iptables-persistent because it's startup ordering conflicts with docker
-echo "=== Setting up firewall ==="
-# clear tables and set default policy
-iptables -F # flush all chains
-iptables -X # delete all chains
-# default policy for filter table
-iptables -P INPUT ACCEPT # accept by default to allow network drives to persist
-iptables -P FORWARD ACCEPT # TODO: disable icc and make this as reject
-iptables -P OUTPUT ACCEPT
-
-# NOTE: keep these in sync with src/apps.js validatePortBindings
-# allow ssh, http, https, ping, dns
-iptables -I INPUT -m state --state RELATED,ESTABLISHED -j ACCEPT
-# caas has ssh on port 202
-if [[ "${PROVIDER}" == "caas" ]]; then
-    iptables -A INPUT -p tcp -m tcp -m multiport --dports 25,80,202,443,587,993,4190 -j ACCEPT
-else
-    iptables -A INPUT -p tcp -m tcp -m multiport --dports 25,80,22,443,587,993,4190 -j ACCEPT
-fi
-iptables -A INPUT -p icmp --icmp-type echo-request -j ACCEPT
-iptables -A INPUT -p icmp --icmp-type echo-reply -j ACCEPT
-iptables -A INPUT -p udp --sport 53 -j ACCEPT
-iptables -A INPUT -s 172.18.0.0/16 -j ACCEPT # required to accept any connections from apps to our IP:<public port>
-
-# loopback
-iptables -A INPUT -i lo -j ACCEPT
-iptables -A OUTPUT -o lo -j ACCEPT
-
-# prevent DoS
-# iptables -A INPUT -p tcp --dport 80 -m limit --limit 25/minute --limit-burst 100 -j ACCEPT
-
-# log dropped incoming. keep this at the end of all the rules
-iptables -N LOGGING # new chain
-iptables -A INPUT -j LOGGING # last rule in INPUT chain (log and drop)
-iptables -A LOGGING -m limit --limit 2/min -j LOG --log-prefix "IPTables Packet Dropped: " --log-level 7
-iptables -A LOGGING -j DROP
-
 echo "==== Install btrfs tools ==="
 apt-get -y install btrfs-tools
 
@@ -77,57 +39,11 @@ curl https://get.docker.com/builds/Linux/x86_64/docker-1.10.2 > /usr/bin/docker
 apt-get -y install aufs-tools
 chmod +x /usr/bin/docker
 groupadd docker
-cat > /etc/systemd/system/docker.socket <<EOF
-[Unit]
-Description=Docker Socket for the API
-PartOf=docker.service
-
-[Socket]
-ListenStream=/var/run/docker.sock
-SocketMode=0660
-SocketUser=root
-SocketGroup=docker
-
-[Install]
-WantedBy=sockets.target
-EOF
-cat > /etc/systemd/system/docker.service <<EOF
-[Unit]
-Description=Docker Application Container Engine
-After=network.target docker.socket
-Requires=docker.socket
-
-[Service]
-ExecStart=/usr/bin/docker daemon -H fd:// --log-driver=journald --exec-opt native.cgroupdriver=cgroupfs --dns 127.0.0.1 --dns-search=.
-MountFlags=slave
-LimitNOFILE=1048576
-LimitNPROC=1048576
-LimitCORE=infinity
-
-[Install]
-WantedBy=multi-user.target
-EOF
-
-systemctl daemon-reload
-systemctl enable docker
-systemctl start docker
-
-# give docker sometime to start up and create iptables rules
-# those rules come in after docker has started, and we want to wait for them to be sure iptables-save has all of them
-sleep 10
-
-# Disable forwarding to metadata route from containers
-iptables -I FORWARD -d 169.254.169.254 -j DROP
-
-# ubuntu will restore iptables from this file automatically. this is here so that docker's chain is saved to this file
-mkdir /etc/iptables && iptables-save > /etc/iptables/rules.v4
+usermod "${USER}" -a -G docker
 
 echo "=== Enable memory accounting =="
 sed -e 's/^GRUB_CMDLINE_LINUX="\(.*\)"$/GRUB_CMDLINE_LINUX="\1 cgroup_enable=memory swapaccount=1 panic_on_oops=1 panic=5"/' -i /etc/default/grub
 update-grub
-
-# now add the user to the docker group
-usermod "${USER}" -a -G docker
 
 echo "==== Install nodejs ===="
 # Cannot use anything above 4.1.1 - https://github.com/nodejs/node/issues/3803
