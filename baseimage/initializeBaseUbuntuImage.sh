@@ -200,9 +200,6 @@ cp -rf /tmp/box/installer/* "${INSTALLER_SOURCE_DIR}" && rm -rf /tmp/box
 chown "${USER}:${USER}" -R "${INSTALLER_SOURCE_DIR}"
 echo "${INSTALLER_REVISION}" > "${INSTALLER_SOURCE_DIR}/REVISION"
 
-echo "==== Install cloudron-version tool ===="
-npm install -g cloudron-version@0.1.1
-
 # Restore iptables before docker
 echo "==== Install iptables-restore systemd script ===="
 cat > /etc/systemd/system/iptables-restore.service <<EOF

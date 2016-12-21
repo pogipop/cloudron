@@ -108,6 +108,10 @@ fi
 rm /tmp/initializeBaseUbuntuImage.sh
 
 echo "=> Checking version"
+if ! npm install -g cloudron-version@0.1.1 &>> "${LOG_FILE}"; then
+    echo "Failed to install cloudron-version npm package"
+    exit 1
+fi
 NPM_BIN=$(npm bin -g 2>/dev/null)
 if ! version=$(${NPM_BIN}/cloudron-version --out version --versions-url "${versionsUrl}" --version "${version}"); then
     echo "No such version ${version}"
