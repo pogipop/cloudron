@@ -434,7 +434,7 @@ function setDnsConfig(dnsConfig, callback) {
 
         validator = validateDigitalOceanConfig.bind(null, dnsConfig.domain || config.fqdn());
     } else {
-        return callback(new SettingsError(SettingsError.BAD_FIELD, 'provider must be route53, digitalocean, noop or caas'));
+        return callback(new SettingsError(SettingsError.BAD_FIELD, 'provider must be route53, digitalocean, noop, manual or caas'));
     }
 
     validator(credentials, function (error) {
