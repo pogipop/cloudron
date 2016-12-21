@@ -42,6 +42,8 @@ rm -f /etc/systemd/system/janitor.*
 cp -r "${container_files}/systemd/." /etc/systemd/system/
 systemctl daemon-reload
 systemctl enable cloudron.target
+systemctl enable iptables-restore
+systemctl enable cloudron-system-setup
 
 ########## sudoers
 rm -f /etc/sudoers.d/yellowtent

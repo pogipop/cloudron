@@ -200,45 +200,6 @@ cp -rf /tmp/box/installer/* "${INSTALLER_SOURCE_DIR}" && rm -rf /tmp/box
 chown "${USER}:${USER}" -R "${INSTALLER_SOURCE_DIR}"
 echo "${INSTALLER_REVISION}" > "${INSTALLER_SOURCE_DIR}/REVISION"
 
-# Restore iptables before docker
-echo "==== Install iptables-restore systemd script ===="
-cat > /etc/systemd/system/iptables-restore.service <<EOF
-[Unit]
-Description=IPTables Restore
-Before=docker.service
-
-[Service]
-Type=oneshot
-ExecStart=/sbin/iptables-restore /etc/iptables/rules.v4
-RemainAfterExit=yes
-
-[Install]
-WantedBy=multi-user.target
-EOF
-
-# Allocate swap files
-# https://bbs.archlinux.org/viewtopic.php?id=194792 ensures this runs after do-resize.service
-# On ubuntu ec2 we use cloud-init https://wiki.archlinux.org/index.php/Cloud-init
-echo "==== Install cloudron-system-setup systemd script ===="
-cat > /etc/systemd/system/cloudron-system-setup.service <<EOF
-[Unit]
-Description=Box Setup
-Before=docker.service collectd.service mysql.service sshd.service nginx.service
-After=cloud-init.service
-
-[Service]
-Type=oneshot
-ExecStart="${INSTALLER_SOURCE_DIR}/systemd/cloudron-system-setup.sh"
-RemainAfterExit=yes
-
-[Install]
-WantedBy=multi-user.target
-EOF
-
-systemctl daemon-reload
-systemctl enable iptables-restore
-systemctl enable cloudron-system-setup
-
 apt-get -y install acl
 
 # DO uses Google nameservers by default. This causes RBL queries to fail (host 2.0.0.127.zen.spamhaus.org)

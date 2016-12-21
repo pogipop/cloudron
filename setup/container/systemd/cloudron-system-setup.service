@@ -1,0 +1,16 @@
+# Allocate swap files
+# https://bbs.archlinux.org/viewtopic.php?id=194792 ensures this runs after do-resize.service
+# On ubuntu ec2 we use cloud-init https://wiki.archlinux.org/index.php/Cloud-init
+
+[Unit]
+Description=Box Setup
+Before=docker.service collectd.service mysql.service sshd.service nginx.service
+After=cloud-init.service
+
+[Service]
+Type=oneshot
+ExecStart="/home/yellowtent/box/installer/systemd/cloudron-system-setup.sh"
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
