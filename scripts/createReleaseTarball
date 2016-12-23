@@ -38,8 +38,8 @@ if ! $(cd "${SOURCE_DIR}" && git diff --exit-code >/dev/null); then
     exit 1
 fi
 
-if [[ "$(node --version)" != "v4.1.1" ]]; then
-    echo "This script requires node 4.1.1"
+if [[ "$(node --version)" != "v6.9.2" ]]; then
+    echo "This script requires node 6.9.2"
     exit 1
 fi
 
