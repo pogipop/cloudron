@@ -144,7 +144,7 @@ if ! $ssh22 "root@${server_ip}" "/bin/bash /root/initializeBaseUbuntuImage.sh ${
 fi
 
 echo "Shutting down server with id : ${server_id}"
-$ssh202 "root@${server_ip}" "shutdown -f now" || true # shutdown sometimes terminates ssh connection immediately making this command fail
+$ssh22 "root@${server_ip}" "shutdown -f now" || true # shutdown sometimes terminates ssh connection immediately making this command fail
 
 # wait 10 secs for actual shutdown
 echo "Waiting for 10 seconds for server to shutdown"
