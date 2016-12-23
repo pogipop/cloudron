@@ -32,13 +32,13 @@ apt-get install -y curl iptables
 echo "==== Install btrfs tools ==="
 apt-get -y install btrfs-tools
 
+# https://docs.docker.com/engine/installation/linux/ubuntulinux/
 echo "==== Install docker ===="
-# install docker from binary to pin it to a specific version. the current debian repo does not allow pinning
-# IMPORTANT: docker 1.11.x breaks the --dns option hack that we use below
-curl https://get.docker.com/builds/Linux/x86_64/docker-1.10.2 > /usr/bin/docker
-apt-get -y install aufs-tools
-chmod +x /usr/bin/docker
-groupadd docker
+apt-key adv --keyserver hkp://ha.pool.sks-keyservers.net:80 --recv-keys 58118E89F3A912897C070ADBF76221572C52609D
+echo "deb https://apt.dockerproject.org/repo ubuntu-xenial main" > /etc/apt/sources.list.d/docker.list
+apt-get -y update
+apt-get -y install aufs-tools linux-image-extra-$(uname -r) linux-image-extra-virtual
+apt-get -y install docker-engine=1.12.5-0~ubuntu-xenial # apt-cache madison docker-engine
 usermod "${USER}" -a -G docker
 
 echo "=== Enable memory accounting =="

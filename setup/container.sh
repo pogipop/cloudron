@@ -45,36 +45,8 @@ fi
 # so it gets restored across reboot
 mkdir -p /etc/iptables && iptables-save > /etc/iptables/rules.v4
 
-cat > /etc/systemd/system/docker.socket <<EOF
-[Unit]
-Description=Docker Socket for the API
-PartOf=docker.service
-
-[Socket]
-ListenStream=/var/run/docker.sock
-SocketMode=0660
-SocketUser=root
-SocketGroup=docker
-
-[Install]
-WantedBy=sockets.target
-EOF
-cat > /etc/systemd/system/docker.service <<EOF
-[Unit]
-Description=Docker Application Container Engine
-After=network.target docker.socket
-Requires=docker.socket
-
-[Service]
-ExecStart=/usr/bin/docker daemon -H fd:// --log-driver=journald --exec-opt native.cgroupdriver=cgroupfs --dns 127.0.0.1 --dns-search=.
-MountFlags=slave
-LimitNOFILE=1048576
-LimitNPROC=1048576
-LimitCORE=infinity
-
-[Install]
-WantedBy=multi-user.target
-EOF
+# make docker use the internal unbound dns server
+sed -e 's,^ExecStart=.*$,ExecStart=/usr/bin/docker daemon -H fd:// --log-driver=journald --exec-opt native.cgroupdriver=cgroupfs,' -i /lib/systemd/system/docker.service
 
 # caas has ssh on port 202 and we disable password login
 if [[ "${provider}" == "caas" ]]; then
