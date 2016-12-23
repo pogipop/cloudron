@@ -39,7 +39,7 @@ iptables -t filter -A CLOUDRON -m limit --limit 2/min -j LOG --log-prefix "IPTab
 iptables -t filter -A CLOUDRON -j DROP
 
 if ! iptables -t filter -C INPUT -j CLOUDRON 2>/dev/null; then
-    iptables -t filter -A INPUT -j CLOUDRON
+    iptables -t filter -I INPUT -j CLOUDRON
 fi
 
 # so it gets restored across reboot
