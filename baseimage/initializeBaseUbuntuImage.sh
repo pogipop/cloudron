@@ -5,8 +5,7 @@ set -euv -o pipefail
 readonly USER=yellowtent
 readonly USER_HOME="/home/${USER}"
 readonly INSTALLER_SOURCE_DIR="${USER_HOME}/installer"
-readonly INSTALLER_REVISION="${1:-master}"
-readonly PROVIDER="${2:-generic}"
+readonly PROVIDER="${1:-generic}"
 
 readonly SOURCE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
@@ -93,14 +92,6 @@ update-rc.d -f collectd remove
 echo "==== Install logrotate ==="
 apt-get install -y cron logrotate
 systemctl enable cron
-
-echo "=== Prepare installer revision - ${INSTALLER_REVISION}) ==="
-rm -rf /tmp/box && mkdir -p /tmp/box
-curl "https://git.cloudron.io/cloudron/box/repository/archive.tar.gz?ref=${INSTALLER_REVISION}" | tar zxvf - --strip-components=1 -C /tmp/box
-mkdir -p "${INSTALLER_SOURCE_DIR}"
-cp -rf /tmp/box/installer/* "${INSTALLER_SOURCE_DIR}" && rm -rf /tmp/box
-chown "${USER}:${USER}" -R "${INSTALLER_SOURCE_DIR}"
-echo "${INSTALLER_REVISION}" > "${INSTALLER_SOURCE_DIR}/REVISION"
 
 apt-get -y install acl
 

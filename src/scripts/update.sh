@@ -7,7 +7,7 @@ if [[ ${EUID} -ne 0 ]]; then
     exit 1
 fi
 
-readonly INSTALLER_SOURCE_DIR="/home/yellowtent/installer"
+readonly INSTALLER_PATH="/etc/installer.sh"
 readonly UPDATER_SERVICE="cloudron-updater"
 readonly DATA_FILE="/tmp/cloudron-update-data.json"
 
@@ -36,7 +36,7 @@ fi
 echo "${data}" > "${DATA_FILE}"
 
 echo "=> Run installer.sh as cloudron-updater.service"
-if ! systemd-run --unit "${UPDATER_SERVICE}" ${INSTALLER_SOURCE_DIR}/scripts/installer.sh --sourcetarballurl "${sourceTarballUrl}" --data-file "${DATA_FILE}"; then
+if ! systemd-run --unit "${UPDATER_SERVICE}" ${INSTALLER_PATH} --sourcetarballurl "${sourceTarballUrl}" --data-file "${DATA_FILE}"; then
     echo "Failed to install cloudron. See ${LOG_FILE} for details"
     exit 1
 fi
