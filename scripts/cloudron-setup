@@ -8,9 +8,7 @@ if [[ ${EUID} -ne 0 ]]; then
 fi
 
 # change this to a hash when we make a upgrade release
-readonly INSTALLER_REVISION=master
-readonly INIT_BASESYSTEM_SCRIPT_URL="https://git.cloudron.io/cloudron/box/raw/${INSTALLER_REVISION}/baseimage/initializeBaseUbuntuImage.sh"
-readonly INSTALLER_URL="https://git.cloudron.io/cloudron/box/raw/${INSTALLER_REVISION}/scripts/installer.sh"
+readonly INIT_BASESYSTEM_SCRIPT_URL="https://git.cloudron.io/cloudron/box/raw/master/baseimage/initializeBaseUbuntuImage.sh"
 readonly LOG_FILE="/var/log/cloudron-setup.log"
 
 initBaseImage="true"
@@ -114,16 +112,6 @@ if [[ "${initBaseImage}" == "true" ]]; then
     rm /tmp/initializeBaseUbuntuImage.sh
 fi
 
-echo "=> Downloading and running installer for version ${INSTALLER_REVISION}"
-if ! curl -s "${INSTALLER_URL}" > /etc/installer.sh; then
-    echo "Could not download initialization script"
-    exit 1
-fi
-if ! /bin/bash /etc/installer.sh "${provider}" &>> "${LOG_FILE}"; then
-    echo "Installer failed. See ${LOG_FILE} for details"
-    exit 1
-fi
-
 echo "=> Checking version"
 if ! npm install -g cloudron-version@0.1.1 &>> "${LOG_FILE}"; then
     echo "Failed to install cloudron-version npm package"
@@ -180,8 +168,14 @@ EOF
 )
 fi
 
-echo "=> Run installer.sh for version ${version} with  ${sourceTarballUrl} ... (this takes some time)"
-if ! ${INSTALLER_SOURCE_DIR}/scripts/installer.sh --sourcetarballurl "${sourceTarballUrl}" --data "${data}" &>> "${LOG_FILE}"; then
+echo "=> Downloading and running installer for version ${version} ... (this takes some time)"
+box_src_tmp_dir=$(mktemp -dt box-src-XXXXXX)
+
+if ! $curl -sL "${sourceTarballUrl}" | tar -zxf - -C "${box_src_tmp_dir}"; then
+    echo "Could not download source tarball. See ${LOG_FILE} for details"
+    exit 1
+fi
+if ! /bin/bash "${box_src_tmp_dir}/scripts/installer.sh" --data "${data}" &>> "${LOG_FILE}" &>> "${LOG_FILE}"; then
     echo "Failed to install cloudron. See ${LOG_FILE} for details"
     exit 1
 fi

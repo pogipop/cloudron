@@ -7,30 +7,29 @@ if [[ ${EUID} -ne 0 ]]; then
     exit 1
 fi
 
-readonly BOX_SRC_DIR=/home/yellowtent/box
-readonly DATA_DIR=/home/yellowtent/data
+readonly USER=yellowtent
+readonly BOX_SRC_DIR=/home/${USER}/box
 readonly CLOUDRON_CONF=/home/yellowtent/configs/cloudron.conf
 
 readonly script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+readonly box_src_tmp_dir="$(realpath ${script_dir}/..)"
 readonly json="${script_dir}/../../node_modules/.bin/json"
 readonly curl="curl --fail --connect-timeout 20 --retry 10 --retry-delay 2 --max-time 300"
 
 readonly is_update=$([[ -f "${CLOUDRON_CONF}" ]] && echo "yes" || echo "no")
 
 # create a provision file for testing. %q escapes args. %q is reused as much as necessary to satisfy $@
-(echo -e "#!/bin/bash\n"; printf "%q " "${script_dir}/installer.sh" "$@") > /home/yellowtent/provision.sh
-chmod +x /home/yellowtent/provision.sh
+(echo -e "#!/bin/bash\n"; printf "%q " "${script_dir}/installer.sh" "$@") > /root/provision.sh
+chmod +x /root/provision.sh
 
-arg_source_tarball_url=""
 arg_data=""
 arg_data_file=""
 
-args=$(getopt -o "" -l "sourcetarballurl:,data:,data-file:" -n "$0" -- "$@")
+args=$(getopt -o "" -l "data:,data-file:" -n "$0" -- "$@")
 eval set -- "${args}"
 
 while true; do
     case "$1" in
-    --sourcetarballurl) arg_source_tarball_url="$2";;
     --data) arg_data="$2";;
     --data-file) arg_data_file="$2";;
     --) break;;
@@ -42,20 +41,6 @@ done
 
 if [[ ! -z ${arg_data_file} ]]; then
     arg_data=$(cat "${arg_data_file}")
-fi
-
-box_src_tmp_dir=$(mktemp -dt box-src-XXXXXX)
-echo "Downloading box code from ${arg_source_tarball_url} to ${box_src_tmp_dir}"
-
-for try in `seq 1 10`; do
-    if $curl -L "${arg_source_tarball_url}" | tar -zxf - -C "${box_src_tmp_dir}"; then break; fi
-    echo "Failed to download source tarball, trying again"
-    sleep 5
-done
-
-if [[ ${try} -eq 10 ]]; then
-    echo "Release tarball download failed"
-    exit 3
 fi
 
 # ensure ownership baked into the tarball is overwritten
@@ -77,6 +62,11 @@ if [[ ${try} -eq 10 ]]; then
     exit 4
 fi
 
+echo "==== Create User ${USER} ===="
+if ! id "${USER}"; then
+    useradd "${USER}" -m
+fi
+
 if [[ "${is_update}" == "yes" ]]; then
     echo "Setting up update splash screen"
     "${box_src_tmp_dir}/setup/splashpage.sh" --data "${arg_data}" # show splash from new code
@@ -89,7 +79,7 @@ cd /root
 # switch the codes
 rm -rf "${BOX_SRC_DIR}"
 mv "${box_src_tmp_dir}" "${BOX_SRC_DIR}"
-chown -R yellowtent.yellowtent "${BOX_SRC_DIR}"
+chown -R "${USER}:${USER}" "${BOX_SRC_DIR}"
 
 # create a start file for testing. %q escapes args
 (echo -e "#!/bin/bash\n"; printf "%q " "${BOX_SRC_DIR}/setup/start.sh" --data "${arg_data}") > /home/yellowtent/setup_start.sh
@@ -97,4 +87,3 @@ chmod +x /home/yellowtent/setup_start.sh
 
 echo "Calling box setup script"
 "${BOX_SRC_DIR}/setup/start.sh" --data "${arg_data}"
-

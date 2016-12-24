@@ -7,7 +7,6 @@ if [[ ${EUID} -ne 0 ]]; then
     exit 1
 fi
 
-readonly INSTALLER_PATH="/etc/installer.sh"
 readonly UPDATER_SERVICE="cloudron-updater"
 readonly DATA_FILE="/tmp/cloudron-update-data.json"
 
@@ -27,6 +26,22 @@ readonly data="${2}"
 echo "Updating Cloudron with ${sourceTarballUrl}"
 echo "${data}"
 
+# TODO: pre-download tarball
+box_src_tmp_dir=$(mktemp -dt box-src-XXXXXX)
+readonly installer_path="${box_src_tmp_dir}/scripts/installer.sh"
+echo "Downloading box code from ${sourceTarballUrl} to ${box_src_tmp_dir}"
+
+for try in `seq 1 10`; do
+    if curl -L "${sourceTarballUrl}" | tar -zxf - -C "${box_src_tmp_dir}"; then break; fi
+    echo "Failed to download source tarball, trying again"
+    sleep 5
+done
+
+if [[ ${try} -eq 10 ]]; then
+    echo "Release tarball download failed"
+    exit 3
+fi
+
 echo "=> reset service ${UPDATER_SERVICE} status in case it failed"
 if systemctl reset-failed "${UPDATER_SERVICE}"; then
     echo "=> service has failed earlier"
@@ -36,7 +51,7 @@ fi
 echo "${data}" > "${DATA_FILE}"
 
 echo "=> Run installer.sh as cloudron-updater.service"
-if ! systemd-run --unit "${UPDATER_SERVICE}" ${INSTALLER_PATH} --sourcetarballurl "${sourceTarballUrl}" --data-file "${DATA_FILE}"; then
+if ! systemd-run --unit "${UPDATER_SERVICE}" ${installer_path} --data-file "${DATA_FILE}"; then
     echo "Failed to install cloudron. See ${LOG_FILE} for details"
     exit 1
 fi

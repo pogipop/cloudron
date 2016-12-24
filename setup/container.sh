@@ -15,6 +15,8 @@ readonly CONFIG_DIR="/home/yellowtent/configs"
 readonly DATA_DIR="/home/yellowtent/data"
 readonly provider="${1:-generic}"
 
+usermod "${USER}" -a -G docker
+
 echo "=== Setting up firewall ==="
 iptables -t filter -N CLOUDRON || true
 iptables -t filter -F CLOUDRON # empty any existing rules

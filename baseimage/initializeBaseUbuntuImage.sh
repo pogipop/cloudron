@@ -2,9 +2,6 @@
 
 set -euv -o pipefail
 
-readonly USER=yellowtent
-readonly USER_HOME="/home/${USER}"
-readonly INSTALLER_SOURCE_DIR="${USER_HOME}/installer"
 readonly PROVIDER="${1:-generic}"
 
 readonly SOURCE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -15,11 +12,6 @@ function die {
 }
 
 [[ "$(systemd --version 2>&1)" == *"systemd 229"* ]] || die "Expecting systemd to be 229"
-
-echo "==== Create User ${USER} ===="
-if ! id "${USER}"; then
-    useradd "${USER}" -m
-fi
 
 export DEBIAN_FRONTEND=noninteractive
 
@@ -38,7 +30,6 @@ echo "deb https://apt.dockerproject.org/repo ubuntu-xenial main" > /etc/apt/sour
 apt-get -y update
 apt-get -y install aufs-tools linux-image-extra-$(uname -r) linux-image-extra-virtual
 apt-get -y install docker-engine=1.12.5-0~ubuntu-xenial # apt-cache madison docker-engine
-usermod "${USER}" -a -G docker
 
 echo "=== Enable memory accounting =="
 sed -e 's/^GRUB_CMDLINE_LINUX="\(.*\)"$/GRUB_CMDLINE_LINUX="\1 cgroup_enable=memory swapaccount=1 panic_on_oops=1 panic=5"/' -i /etc/default/grub
