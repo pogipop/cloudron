@@ -22,8 +22,9 @@ tlsProvider="le-prod"
 versionsUrl="https://s3.amazonaws.com/prod-cloudron-releases/versions.json"
 version="latest"
 apiServer="https://api.cloudron.io"
+initBaseImage="true"
 
-args=$(getopt -o "" -l "domain:,help,provider:,encryption-key:,restore-url:,tls-provider:,version:,versions-url:,api-server:,dns-provider:" -n "$0" -- "$@")
+args=$(getopt -o "" -l "domain:,help,skip-baseimage-init,provider:,encryption-key:,restore-url:,tls-provider:,version:,versions-url:,api-server:,dns-provider:" -n "$0" -- "$@")
 eval set -- "${args}"
 
 while true; do
@@ -38,6 +39,7 @@ while true; do
     --version) version="$2"; shift 2;;
     --versions-url) versionsUrl="$2"; shift 2;;
     --api-server) apiServer="$2"; shift 2;;
+    --skip-baseimage-init) initBaseImage="false"; shift;;
     --) break;;
     *) echo "Unknown option $1"; exit 1;;
     esac
@@ -94,18 +96,20 @@ if ! apt-get install curl dnsutils -y &>> "${LOG_FILE}"; then
     exit 1
 fi
 
-echo "=> Downloading initialization script"
-if ! curl -s "${INIT_BASESYSTEM_SCRIPT_URL}" > /tmp/initializeBaseUbuntuImage.sh; then
-    echo "Could not download initialization script"
-    exit 1
-fi
+if [[ "${initBaseImage}" == "true" ]]; then
+    echo "=> Downloading initialization script"
+    if ! curl -s "${INIT_BASESYSTEM_SCRIPT_URL}" > /tmp/initializeBaseUbuntuImage.sh; then
+        echo "Could not download initialization script"
+        exit 1
+    fi
 
-echo "=> Installing base dependencies ... (this takes some time)"
-if ! /bin/bash /tmp/initializeBaseUbuntuImage.sh "${provider}" &>> "${LOG_FILE}"; then
-    echo "Init script failed. See ${LOG_FILE} for details"
-    exit 1
+    echo "=> Installing base dependencies ... (this takes some time)"
+    if ! /bin/bash /tmp/initializeBaseUbuntuImage.sh "${provider}" &>> "${LOG_FILE}"; then
+        echo "Init script failed. See ${LOG_FILE} for details"
+        exit 1
+    fi
+    rm /tmp/initializeBaseUbuntuImage.sh
 fi
-rm /tmp/initializeBaseUbuntuImage.sh
 
 echo "=> Downloading and running installer for version ${INSTALLER_REVISION}"
 if ! curl -s "${INSTALLER_URL}" > /etc/installer.sh; then
