@@ -38,8 +38,8 @@ update-grub
 echo "==== Install nodejs ===="
 mkdir -p /usr/local/node-6.9.2
 curl -sL https://nodejs.org/dist/v6.9.2/node-v6.9.2-linux-x64.tar.gz | tar zxvf - --strip-components=1 -C /usr/local/node-6.9.2
-ln -s /usr/local/node-6.9.2/bin/node /usr/bin/node
-ln -s /usr/local/node-6.9.2/bin/npm /usr/bin/npm
+ln -sf /usr/local/node-6.9.2/bin/node /usr/bin/node
+ln -sf /usr/local/node-6.9.2/bin/npm /usr/bin/npm
 apt-get install -y python   # Install python which is required for npm rebuild
 [[ "$(python --version 2>&1)" == "Python 2.7."* ]] || die "Expecting python version to be 2.7.x"
 

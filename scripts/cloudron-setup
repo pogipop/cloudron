@@ -171,7 +171,7 @@ fi
 echo "=> Downloading and running installer for version ${version} ... (this takes some time)"
 box_src_tmp_dir=$(mktemp -dt box-src-XXXXXX)
 
-if ! $curl -sL "${sourceTarballUrl}" | tar -zxf - -C "${box_src_tmp_dir}"; then
+if ! curl -sL "${sourceTarballUrl}" | tar -zxf - -C "${box_src_tmp_dir}"; then
     echo "Could not download source tarball. See ${LOG_FILE} for details"
     exit 1
 fi
