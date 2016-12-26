@@ -62,8 +62,7 @@ if [[ ${try} -eq 10 ]]; then
     exit 4
 fi
 
-echo "==== Create User ${USER} ===="
-if ! id "${USER}"; then
+if ! id "${USER}" 2>/dev/null; then
     useradd "${USER}" -m
 fi
 
