@@ -13,6 +13,8 @@ readonly INIT_BASESYSTEM_SCRIPT_URL="https://git.cloudron.io/cloudron/box/raw/${
 readonly INSTALLER_URL="https://git.cloudron.io/cloudron/box/raw/${INSTALLER_REVISION}/scripts/installer.sh"
 readonly LOG_FILE="/var/log/cloudron-setup.log"
 
+initBaseImage="true"
+# provisioning data
 domain=""
 provider=""
 encryptionKey=""
@@ -22,9 +24,9 @@ tlsProvider="le-prod"
 versionsUrl="https://s3.amazonaws.com/prod-cloudron-releases/versions.json"
 version="latest"
 apiServer="https://api.cloudron.io"
-initBaseImage="true"
+dataJson=""
 
-args=$(getopt -o "" -l "domain:,help,skip-baseimage-init,provider:,encryption-key:,restore-url:,tls-provider:,version:,versions-url:,api-server:,dns-provider:" -n "$0" -- "$@")
+args=$(getopt -o "" -l "domain:,help,skip-baseimage-init,data:,provider:,encryption-key:,restore-url:,tls-provider:,version:,versions-url:,api-server:,dns-provider:" -n "$0" -- "$@")
 eval set -- "${args}"
 
 while true; do
@@ -40,6 +42,7 @@ while true; do
     --versions-url) versionsUrl="$2"; shift 2;;
     --api-server) apiServer="$2"; shift 2;;
     --skip-baseimage-init) initBaseImage="false"; shift;;
+    --data) dataJson="$2"; shift 2;;
     --) break;;
     *) echo "Unknown option $1"; exit 1;;
     esac
@@ -136,7 +139,9 @@ if ! sourceTarballUrl=$(${NPM_BIN}/cloudron-version --out tarballUrl --versions-
     exit 1
 fi
 
-if [[ -z "${restoreUrl}" ]]; then
+if [[ -n "${dataJson}" ]]; then
+    data="${dataJson}"
+elif [[ -z "${restoreUrl}" ]]; then
     data=$(cat <<EOF
 {
     "boxVersionsUrl": "${versionsUrl}",
