@@ -175,7 +175,7 @@ if ! curl -sL "${sourceTarballUrl}" | tar -zxf - -C "${box_src_tmp_dir}"; then
     echo "Could not download source tarball. See ${LOG_FILE} for details"
     exit 1
 fi
-if ! /bin/bash "${box_src_tmp_dir}/scripts/installer.sh" --data "${data}" &>> "${LOG_FILE}" &>> "${LOG_FILE}"; then
+if ! /bin/bash "${box_src_tmp_dir}/scripts/installer.sh" --data "${data}" &>> "${LOG_FILE}"; then
     echo "Failed to install cloudron. See ${LOG_FILE} for details"
     exit 1
 fi
