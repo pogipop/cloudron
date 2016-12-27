@@ -134,5 +134,12 @@ ln -s "${DATA_DIR}/nginx" /etc/nginx
 cp "${container_files}/mysql.cnf" /etc/mysql/mysql.cnf
 
 ########## Enable services
-update-rc.d -f collectd defaults
+systemctl restart collectd
+
+# For logrotate
+systemctl enable cron
+
+# DO uses Google nameservers by default. This causes RBL queries to fail (host 2.0.0.127.zen.spamhaus.org)
+# We do not use dnsmasq because it is not a recursive resolver and defaults to the value in the interfaces file (which is Google DNS!)
+systemctl enable unbound
 
