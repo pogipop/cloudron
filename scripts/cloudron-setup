@@ -198,4 +198,7 @@ echo ""
 echo "Visit https://my.${domain} to finish setup"
 echo ""
 
-systemctl reboot
+if [[ "${initBaseImage}" == "true" ]]; then
+    systemctl reboot
+fi
+
