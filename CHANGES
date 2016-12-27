@@ -695,3 +695,6 @@
 * Remove DO specific grub cmd line
 * Fix License text
 
+[0.93.0]
+* Smoother upgrades
+
