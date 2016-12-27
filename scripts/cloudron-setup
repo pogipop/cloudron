@@ -46,30 +46,74 @@ while true; do
     esac
 done
 
-if [[ -z "${domain}" ]]; then
-    echo "--domain is required"
-    exit 1
-fi
+# validate arguments in the absence of data
+if [[ -z "${dataJson}" ]]; then
+    if [[ -z "${domain}" ]]; then
+        echo "--domain is required"
+        exit 1
+    fi
 
-if [[ -z "${provider}" ]]; then
-    echo "--provider is required (generic, scaleway, ec2, digitalocean)"
-    exit 1
-elif [[  \
-            "${provider}" != "generic" && \
-            "${provider}" != "scaleway" && \
-            "${provider}" != "ec2" && \
-            "${provider}" != "digitalocean" \
-        ]]; then
-    echo "--provider must be one of: generic, scaleway, ec2, digitalocean"
-    exit 1
-fi
+    if [[ -z "${provider}" ]]; then
+        echo "--provider is required (generic, scaleway, ec2, digitalocean)"
+        exit 1
+    elif [[  \
+                "${provider}" != "generic" && \
+                "${provider}" != "scaleway" && \
+                "${provider}" != "ec2" && \
+                "${provider}" != "digitalocean" \
+            ]]; then
+        echo "--provider must be one of: generic, scaleway, ec2, digitalocean"
+        exit 1
+    fi
 
-if [[ -z "${dnsProvider}" ]]; then
-    echo "--dns-provider is required (noop, manual)"
-    exit 1
-elif [[ "${dnsProvider}" != "noop" && "${dnsProvider}" != "manual" ]]; then
-    echo "--dns-provider must be one of : manual, noop"
-    exit 1
+    if [[ -z "${dnsProvider}" ]]; then
+        echo "--dns-provider is required (noop, manual)"
+        exit 1
+    elif [[ "${dnsProvider}" != "noop" && "${dnsProvider}" != "manual" ]]; then
+        echo "--dns-provider must be one of : manual, noop"
+        exit 1
+    fi
+
+    if [[ -z "${restoreUrl}" ]]; then
+        data=$(cat <<EOF
+    {
+        "boxVersionsUrl": "${versionsUrl}",
+        "fqdn": "${domain}",
+        "provider": "${provider}",
+        "apiServerOrigin": "${apiServer}",
+        "tlsConfig": {
+            "provider": "${tlsProvider}"
+        },
+        "dnsConfig": {
+            "provider": "${dnsProvider}"
+        },
+        "backupConfig" : {
+            "provider": "filesystem",
+            "backupFolder": "/var/backups",
+            "key": "${encryptionKey}"
+        },
+        "version": "${version}"
+    }
+EOF
+    )
+    else
+        data=$(cat <<EOF
+    {
+        "boxVersionsUrl": "${versionsUrl}",
+        "fqdn": "${domain}",
+        "provider": "${provider}",
+        "apiServerOrigin": "${apiServer}",
+        "restore": {
+            "url": "${restoreUrl}",
+            "key": "${encryptionKey}"
+        },
+        "version": "${version}"
+    }
+EOF
+    )
+    fi
+else
+    data="${dataJson}"
 fi
 
 echo ""
@@ -125,47 +169,6 @@ fi
 if ! sourceTarballUrl=$(${NPM_BIN}/cloudron-version --out tarballUrl --versions-url "${versionsUrl}" --version "${version}"); then
     echo "No source code for version ${version}"
     exit 1
-fi
-
-if [[ -n "${dataJson}" ]]; then
-    data="${dataJson}"
-elif [[ -z "${restoreUrl}" ]]; then
-    data=$(cat <<EOF
-{
-    "boxVersionsUrl": "${versionsUrl}",
-    "fqdn": "${domain}",
-    "provider": "${provider}",
-    "apiServerOrigin": "${apiServer}",
-    "tlsConfig": {
-        "provider": "${tlsProvider}"
-    },
-    "dnsConfig": {
-        "provider": "${dnsProvider}"
-    },
-    "backupConfig" : {
-        "provider": "filesystem",
-        "backupFolder": "/var/backups",
-        "key": "${encryptionKey}"
-    },
-    "version": "${version}"
-}
-EOF
-)
-else
-    data=$(cat <<EOF
-{
-    "boxVersionsUrl": "${versionsUrl}",
-    "fqdn": "${domain}",
-    "provider": "${provider}",
-    "apiServerOrigin": "${apiServer}",
-    "restore": {
-        "url": "${restoreUrl}",
-        "key": "${encryptionKey}"
-    },
-    "version": "${version}"
-}
-EOF
-)
 fi
 
 echo "=> Downloading and running installer for version ${version} ... (this takes some time)"
