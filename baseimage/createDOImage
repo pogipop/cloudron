@@ -10,7 +10,7 @@ readonly SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 readonly SOURCE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")"/.. && pwd)"
 export JSON="${SOURCE_DIR}/node_modules/.bin/json"
 
-installer_revision=$(git rev-parse HEAD)
+revision=$(git rev-parse HEAD)
 box_name=""
 server_id=""
 server_ip=""
@@ -28,7 +28,7 @@ eval set -- "${args}"
 while true; do
     case "$1" in
     --env) deploy_env="$2"; shift 2;;
-    --revision) installer_revision="$2"; shift 2;;
+    --revision) revision="$2"; shift 2;;
     --name) box_name="$2"; destroy_server="no"; shift 2;;
     --no-destroy) destroy_server="no"; shift 2;;
     --) break;;
@@ -73,7 +73,7 @@ function get_pretty_revision() {
 }
 
 now=$(date "+%Y-%m-%d-%H%M%S")
-pretty_revision=$(get_pretty_revision "${installer_revision}")
+pretty_revision=$(get_pretty_revision "${revision}")
 
 if [[ -z "${box_name}" ]]; then
     # if you change this, change the regexp is appstore/janitor.js
@@ -138,7 +138,7 @@ cd "${SOURCE_DIR}"
 git archive --format=tar HEAD | $ssh22 "root@${server_ip}" "cat - > /tmp/box.tar.gz"
 
 echo "Executing init script"
-if ! $ssh22 "root@${server_ip}" "/bin/bash /root/initializeBaseUbuntuImage.sh ${installer_revision} caas"; then
+if ! $ssh22 "root@${server_ip}" "/bin/bash /root/initializeBaseUbuntuImage.sh caas"; then
     echo "Init script failed"
     exit 1
 fi
