@@ -61,112 +61,106 @@ function initialize(callback) {
         start: true
     });
 
-    if (cloudron.isConfiguredSync()) {
-        recreateJobs(callback);
-    } else {
-        cloudron.events.on(cloudron.EVENT_ACTIVATED, recreateJobs);
-        callback();
-    }
-}
-
-function recreateJobs(unusedTimeZone, callback) {
-    if (typeof unusedTimeZone === 'function') callback = unusedTimeZone;
+    settings.events.on(settings.TIME_ZONE_KEY, recreateJobs);
+    settings.events.on(settings.AUTOUPDATE_PATTERN_KEY, autoupdatePatternChanged);
 
     settings.getAll(function (error, allSettings) {
-        debug('Creating jobs with timezone %s', allSettings[settings.TIME_ZONE_KEY]);
+        if (error) return callback(error);
 
-        if (gBackupJob) gBackupJob.stop();
-        gBackupJob = new CronJob({
-            cronTime: '00 00 */4 * * *', // every 4 hours. backups.ensureBackup() will only trigger a backup once per day
-            onTick: backups.ensureBackup.bind(null, AUDIT_SOURCE, NOOP_CALLBACK),
-            start: true,
-            timeZone: allSettings[settings.TIME_ZONE_KEY]
-        });
-
-        if (gCheckDiskSpaceJob) gCheckDiskSpaceJob.stop();
-        gCheckDiskSpaceJob = new CronJob({
-            cronTime: '00 30 */4 * * *', // every 4 hours
-            onTick: cloudron.checkDiskSpace,
-            start: true,
-            timeZone: allSettings[settings.TIME_ZONE_KEY]
-        });
-
-        // randomized pattern per cloudron every 10 min
-        var randomMinute = Math.floor(10*Math.random());
-        var random10MinPattern = [0,1,2,3,4,5].map(function (n) { return n*10+randomMinute; }).join(',');
-
-        if (gBoxUpdateCheckerJob) gBoxUpdateCheckerJob.stop();
-        gBoxUpdateCheckerJob = new CronJob({
-            cronTime: '00 ' + random10MinPattern + ' * * * *', // every 10 minutes
-            onTick: updateChecker.checkBoxUpdates,
-            start: true,
-            timeZone: allSettings[settings.TIME_ZONE_KEY]
-        });
-
-        if (gAppUpdateCheckerJob) gAppUpdateCheckerJob.stop();
-        gAppUpdateCheckerJob = new CronJob({
-            cronTime: '00 ' + random10MinPattern + ' * * * *', // every 10 minutes
-            onTick: updateChecker.checkAppUpdates,
-            start: true,
-            timeZone: allSettings[settings.TIME_ZONE_KEY]
-        });
-
-        if (gCleanupTokensJob) gCleanupTokensJob.stop();
-        gCleanupTokensJob = new CronJob({
-            cronTime: '00 */30 * * * *', // every 30 minutes
-            onTick: janitor.cleanupTokens,
-            start: true,
-            timeZone: allSettings[settings.TIME_ZONE_KEY]
-        });
-
-        if (gCleanupBackupsJob) gCleanupBackupsJob.stop();
-        gCleanupBackupsJob = new CronJob({
-            cronTime: '00 */30 * * * *', // every 30 minutes
-            onTick: janitor.cleanupBackups,
-            start: true,
-            timeZone: allSettings[settings.TIME_ZONE_KEY]
-        });
-
-        if (gCleanupEventlogJob) gCleanupEventlogJob.stop();
-        gCleanupEventlogJob = new CronJob({
-            cronTime: '00 */30 * * * *', // every 30 minutes
-            onTick: eventlog.cleanup,
-            start: true,
-            timeZone: allSettings[settings.TIME_ZONE_KEY]
-        });
-
-        if (gDockerVolumeCleanerJob) gDockerVolumeCleanerJob.stop();
-        gDockerVolumeCleanerJob = new CronJob({
-            cronTime: '00 00 */12 * * *', // every 12 hours
-            onTick: janitor.cleanupDockerVolumes,
-            start: true,
-            timeZone: allSettings[settings.TIME_ZONE_KEY]
-        });
-
-        if (gSchedulerSyncJob) gSchedulerSyncJob.stop();
-        gSchedulerSyncJob = new CronJob({
-            cronTime: config.TEST ? '*/10 * * * * *' : '00 */1 * * * *', // every minute
-            onTick: scheduler.sync,
-            start: true,
-            timeZone: allSettings[settings.TIME_ZONE_KEY]
-        });
-
-        if (gCertificateRenewJob) gCertificateRenewJob.stop();
-        gCertificateRenewJob = new CronJob({
-            cronTime: '00 00 */12 * * *', // every 12 hours
-            onTick: certificates.renewAll.bind(null, AUDIT_SOURCE, NOOP_CALLBACK),
-            start: true,
-            timeZone: allSettings[settings.TIME_ZONE_KEY]
-        });
-
-        settings.events.removeListener(settings.AUTOUPDATE_PATTERN_KEY, autoupdatePatternChanged);
-        settings.events.on(settings.AUTOUPDATE_PATTERN_KEY, autoupdatePatternChanged);
+        recreateJobs(allSettings[settings.TIME_ZONE_KEY]);
         autoupdatePatternChanged(allSettings[settings.AUTOUPDATE_PATTERN_KEY]);
 
-        settings.events.removeListener(settings.TIME_ZONE_KEY, recreateJobs);
-        settings.events.on(settings.TIME_ZONE_KEY, recreateJobs);
+        callback();
+    });
+}
 
-        if (callback) callback();
+function recreateJobs(tz) {
+    assert.strictEqual(typeof tz, 'string');
+
+    debug('Creating jobs with timezone %s', tz);
+
+    if (gBackupJob) gBackupJob.stop();
+    gBackupJob = new CronJob({
+        cronTime: '00 00 */4 * * *', // every 4 hours. backups.ensureBackup() will only trigger a backup once per day
+        onTick: backups.ensureBackup.bind(null, AUDIT_SOURCE, NOOP_CALLBACK),
+        start: true,
+        timeZone: tz
+    });
+
+    if (gCheckDiskSpaceJob) gCheckDiskSpaceJob.stop();
+    gCheckDiskSpaceJob = new CronJob({
+        cronTime: '00 30 */4 * * *', // every 4 hours
+        onTick: cloudron.checkDiskSpace,
+        start: true,
+        timeZone: tz
+    });
+
+    // randomized pattern per cloudron every 10 min
+    var randomMinute = Math.floor(10*Math.random());
+    var random10MinPattern = [0,1,2,3,4,5].map(function (n) { return n*10+randomMinute; }).join(',');
+
+    if (gBoxUpdateCheckerJob) gBoxUpdateCheckerJob.stop();
+    gBoxUpdateCheckerJob = new CronJob({
+        cronTime: '00 ' + random10MinPattern + ' * * * *', // every 10 minutes
+        onTick: updateChecker.checkBoxUpdates,
+        start: true,
+        timeZone: tz
+    });
+
+    if (gAppUpdateCheckerJob) gAppUpdateCheckerJob.stop();
+    gAppUpdateCheckerJob = new CronJob({
+        cronTime: '00 ' + random10MinPattern + ' * * * *', // every 10 minutes
+        onTick: updateChecker.checkAppUpdates,
+        start: true,
+        timeZone: tz
+    });
+
+    if (gCleanupTokensJob) gCleanupTokensJob.stop();
+    gCleanupTokensJob = new CronJob({
+        cronTime: '00 */30 * * * *', // every 30 minutes
+        onTick: janitor.cleanupTokens,
+        start: true,
+        timeZone: tz
+    });
+
+    if (gCleanupBackupsJob) gCleanupBackupsJob.stop();
+    gCleanupBackupsJob = new CronJob({
+        cronTime: '00 */30 * * * *', // every 30 minutes
+        onTick: janitor.cleanupBackups,
+        start: true,
+        timeZone: tz
+    });
+
+    if (gCleanupEventlogJob) gCleanupEventlogJob.stop();
+    gCleanupEventlogJob = new CronJob({
+        cronTime: '00 */30 * * * *', // every 30 minutes
+        onTick: eventlog.cleanup,
+        start: true,
+        timeZone: tz
+    });
+
+    if (gDockerVolumeCleanerJob) gDockerVolumeCleanerJob.stop();
+    gDockerVolumeCleanerJob = new CronJob({
+        cronTime: '00 00 */12 * * *', // every 12 hours
+        onTick: janitor.cleanupDockerVolumes,
+        start: true,
+        timeZone: tz
+    });
+
+    if (gSchedulerSyncJob) gSchedulerSyncJob.stop();
+    gSchedulerSyncJob = new CronJob({
+        cronTime: config.TEST ? '*/10 * * * * *' : '00 */1 * * * *', // every minute
+        onTick: scheduler.sync,
+        start: true,
+        timeZone: tz
+    });
+
+    if (gCertificateRenewJob) gCertificateRenewJob.stop();
+    gCertificateRenewJob = new CronJob({
+        cronTime: '00 00 */12 * * *', // every 12 hours
+        onTick: certificates.renewAll.bind(null, AUDIT_SOURCE, NOOP_CALLBACK),
+        start: true,
+        timeZone: tz
     });
 }
 
@@ -201,8 +195,6 @@ function autoupdatePatternChanged(pattern) {
 
 function uninitialize(callback) {
     assert.strictEqual(typeof callback, 'function');
-
-    cloudron.events.removeListener(cloudron.EVENT_ACTIVATED, recreateJobs);
 
     settings.events.removeListener(settings.TIME_ZONE_KEY, recreateJobs);
     settings.events.removeListener(settings.AUTOUPDATE_PATTERN_KEY, autoupdatePatternChanged);

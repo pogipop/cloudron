@@ -25,7 +25,6 @@ exports = module.exports = {
 
     events: new (require('events').EventEmitter)(),
 
-    EVENT_ACTIVATED: 'activated',
     EVENT_CONFIGURED: 'configured'
 };
 
@@ -236,9 +235,6 @@ function activate(username, password, email, displayName, ip, auditSource, callb
 
             tokendb.add(token, userObject.id, result.id, expires, '*', function (error) {
                 if (error) return callback(new CloudronError(CloudronError.INTERNAL_ERROR, error));
-
-                // EE API is sync. do not keep the REST API reponse waiting
-                process.nextTick(function () { exports.events.emit(exports.EVENT_ACTIVATED); });
 
                 eventlog.add(eventlog.ACTION_ACTIVATE, auditSource, { });
 
