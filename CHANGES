@@ -691,3 +691,7 @@
 * Fix bug where DNS mail record warning was shown by mistake
 * Make cloudron-setup finish with `manual` DNS provider
 
+[0.92.1]
+* Remove DO specific grub cmd line
+* Fix License text
+
