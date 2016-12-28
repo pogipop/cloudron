@@ -14,7 +14,6 @@ readonly CLOUDRON_CONF=/home/yellowtent/configs/cloudron.conf
 readonly script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 readonly box_src_tmp_dir="$(realpath ${script_dir}/..)"
 readonly json="${script_dir}/../../node_modules/.bin/json"
-readonly curl="curl --fail --connect-timeout 20 --retry 10 --retry-delay 2 --max-time 300"
 
 readonly is_update=$([[ -f "${CLOUDRON_CONF}" ]] && echo "yes" || echo "no")
 

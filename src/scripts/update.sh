@@ -9,6 +9,7 @@ fi
 
 readonly UPDATER_SERVICE="cloudron-updater"
 readonly DATA_FILE="/tmp/cloudron-update-data.json"
+readonly curl="curl --fail --connect-timeout 20 --retry 10 --retry-delay 2 --max-time 300"
 
 if [[ $# == 1 && "$1" == "--check" ]]; then
     echo "OK"
@@ -32,7 +33,7 @@ readonly installer_path="${box_src_tmp_dir}/scripts/installer.sh"
 echo "Downloading box code from ${sourceTarballUrl} to ${box_src_tmp_dir}"
 
 for try in `seq 1 10`; do
-    if curl -L "${sourceTarballUrl}" | tar -zxf - -C "${box_src_tmp_dir}"; then break; fi
+    if $curl -L "${sourceTarballUrl}" | tar -zxf - -C "${box_src_tmp_dir}"; then break; fi
     echo "Failed to download source tarball, trying again"
     sleep 5
 done
