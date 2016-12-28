@@ -15,9 +15,11 @@ readonly CONFIG_DIR="/home/yellowtent/configs"
 readonly DATA_DIR="/home/yellowtent/data"
 readonly provider="${1:-generic}"
 
-usermod "${USER}" -a -G docker
+sed -e 's/^#NTP=/NTP=0.ubuntu.pool.ntp.org 1.ubuntu.pool.ntp.org 2.ubuntu.pool.ntp.org 3.ubuntu.pool.ntp.org/' -i /etc/systemd/timesyncd.conf
+timedatectl set-ntp 1
+timedatectl set-timezone UTC
 
-echo "=== Setting up firewall ==="
+echo "==> Setting up firewall"
 iptables -t filter -N CLOUDRON || true
 iptables -t filter -F CLOUDRON # empty any existing rules
 
@@ -47,8 +49,14 @@ fi
 # so it gets restored across reboot
 mkdir -p /etc/iptables && iptables-save > /etc/iptables/rules.v4
 
-# make docker use the internal unbound dns server
+echo "==> Configuring docker"
+cp "${container_files}/docker-cloudron-app.apparmor" /etc/apparmor.d/docker-cloudron-app
+systemctl restart apparmor
+
+usermod yellowtent -a -G docker
 sed -e 's,^ExecStart=.*$,ExecStart=/usr/bin/docker daemon -H fd:// --log-driver=journald --exec-opt native.cgroupdriver=cgroupfs,' -i /lib/systemd/system/docker.service
+systemctl enable docker
+systemctl restart docker
 
 # caas has ssh on port 202 and we disable password login
 if [[ "${provider}" == "caas" ]]; then
@@ -63,7 +71,7 @@ if [[ "${provider}" == "caas" ]]; then
     systemctl reload sshd
 fi
 
-echo "=== Setup btrfs data ==="
+echo "==> Setup btrfs data"
 if ! grep -q loop.ko /lib/modules/`uname -r`/modules.builtin; then
     # on scaleway loop is not built-in
     echo "loop" >> /etc/modules
@@ -77,12 +85,7 @@ if [[ ! -d "${USER_DATA_DIR}" ]]; then
     mount -t btrfs -o loop,nosuid "${USER_DATA_FILE}" ${USER_DATA_DIR}
 fi
 
-# Configure time
-sed -e 's/^#NTP=/NTP=0.ubuntu.pool.ntp.org 1.ubuntu.pool.ntp.org 2.ubuntu.pool.ntp.org 3.ubuntu.pool.ntp.org/' -i /etc/systemd/timesyncd.conf
-timedatectl set-ntp 1
-timedatectl set-timezone UTC
-
-########## journald
+echo "==> Configuring journald"
 sed -e "s/^#SystemMaxUse=.*$/SystemMaxUse=100M/" \
     -e "s/^#ForwardToSyslog=.*$/ForwardToSyslog=no/" \
     -i /etc/systemd/journald.conf
@@ -93,48 +96,30 @@ sed -e "s/^WatchdogSec=.*$/WatchdogSec=3min/" \
     -i /lib/systemd/system/systemd-journald.service
 
 # Give user access to system logs
-usermod -a -G systemd-journal ${USER}
+usermod -a -G systemd-journal yellowtent
 mkdir -p /var/log/journal  # in some images, this directory is not created making system log to /run/systemd instead
 chown root:systemd-journal /var/log/journal
 systemctl restart systemd-journald
-setfacl -n -m u:${USER}:r /var/log/journal/*/system.journal
+setfacl -n -m u:yellowtent:r /var/log/journal/*/system.journal
 
-########## create config directory
-rm -rf "${CONFIG_DIR}"
-sudo -u yellowtent mkdir "${CONFIG_DIR}"
+echo "==> Creating config directory"
+rm -rf "${CONFIG_DIR}" && mkdir "${CONFIG_DIR}"
+chown yellowtent:yellowtent "${CONFIG_DIR}"
 
-########## systemd
-rm -f /etc/systemd/system/janitor.*
+echo "==> Adding systemd services"
 cp -r "${container_files}/systemd/." /etc/systemd/system/
 systemctl daemon-reload
 systemctl enable cloudron.target
 systemctl enable iptables-restore
 systemctl enable cloudron-system-setup
-systemctl enable docker
-systemctl restart docker
 
-########## sudoers
-rm -f /etc/sudoers.d/yellowtent
-cp "${container_files}/sudoers" /etc/sudoers.d/yellowtent
-
-########## collectd
 rm -rf /etc/collectd
 ln -sfF "${DATA_DIR}/collectd" /etc/collectd
-
-########## apparmor docker profile
-cp "${container_files}/docker-cloudron-app.apparmor" /etc/apparmor.d/docker-cloudron-app
-systemctl restart apparmor
-
-########## nginx
-# link nginx config to system config
-unlink /etc/nginx 2>/dev/null || rm -rf /etc/nginx
-ln -s "${DATA_DIR}/nginx" /etc/nginx
-
-########## mysql
-cp "${container_files}/mysql.cnf" /etc/mysql/mysql.cnf
-
-########## Enable services
 systemctl restart collectd
+
+echo "==> Configuring system"
+rm -f /etc/sudoers.d/yellowtent
+cp "${container_files}/sudoers" /etc/sudoers.d/yellowtent
 
 # For logrotate
 systemctl enable cron
@@ -142,4 +127,10 @@ systemctl enable cron
 # DO uses Google nameservers by default. This causes RBL queries to fail (host 2.0.0.127.zen.spamhaus.org)
 # We do not use dnsmasq because it is not a recursive resolver and defaults to the value in the interfaces file (which is Google DNS!)
 systemctl enable unbound
+
+# link nginx config to system config
+unlink /etc/nginx 2>/dev/null || rm -rf /etc/nginx
+ln -s "${DATA_DIR}/nginx" /etc/nginx
+
+cp "${container_files}/mysql.cnf" /etc/mysql/mysql.cnf
 
