@@ -23,25 +23,18 @@ readonly is_update=$([[ -f "${CLOUDRON_CONF}" ]] && echo "yes" || echo "no")
 chmod +x /root/provision.sh
 
 arg_data=""
-arg_data_file=""
 
 args=$(getopt -o "" -l "data:,data-file:" -n "$0" -- "$@")
 eval set -- "${args}"
 
 while true; do
     case "$1" in
-    --data) arg_data="$2";;
-    --data-file) arg_data_file="$2";;
+    --data) arg_data="$2"; shift 2;;
+    --data-file) arg_data=$(cat $2); shift 2;;
     --) break;;
     *) echo "Unknown option $1"; exit 1;;
     esac
-
-    shift 2
 done
-
-if [[ ! -z ${arg_data_file} ]]; then
-    arg_data=$(cat "${arg_data_file}")
-fi
 
 # ensure ownership baked into the tarball is overwritten
 chown -R root.root "${box_src_tmp_dir}"
