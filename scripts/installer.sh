@@ -34,9 +34,6 @@ while true; do
     esac
 done
 
-# ensure ownership baked into the tarball is overwritten
-chown -R root.root "${box_src_tmp_dir}"
-
 for try in `seq 1 10`; do
     # for reasons unknown, the dtrace package will fail. but rebuilding second time will work
 
@@ -66,7 +63,7 @@ fi
 # ensure we are not inside the source directory, which we will remove now
 cd /root
 
-# switch the codes
+echo "==> installer: switching the box code"
 rm -rf "${BOX_SRC_DIR}"
 mv "${box_src_tmp_dir}" "${BOX_SRC_DIR}"
 chown -R "${USER}:${USER}" "${BOX_SRC_DIR}"
@@ -75,5 +72,5 @@ chown -R "${USER}:${USER}" "${BOX_SRC_DIR}"
 (echo -e "#!/bin/bash\n"; printf "%q " "${BOX_SRC_DIR}/setup/start.sh" --data "${arg_data}") > /home/yellowtent/setup_start.sh
 chmod +x /home/yellowtent/setup_start.sh
 
-echo "Calling box setup script"
+echo "==> installer: calling box setup script"
 "${BOX_SRC_DIR}/setup/start.sh" --data "${arg_data}"
