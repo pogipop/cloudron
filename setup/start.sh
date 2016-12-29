@@ -32,7 +32,7 @@ set_progress() {
     (echo "{ \"update\": { \"percent\": \"${percent}\", \"message\": \"${message}\" }, \"backup\": {} }" > "${SETUP_PROGRESS_JSON}") 2> /dev/null || true # as this will fail in non-update mode
 }
 
-set_progress "1" "Configuring host"
+set_progress "10" "Configuring host"
 sed -e 's/^#NTP=/NTP=0.ubuntu.pool.ntp.org 1.ubuntu.pool.ntp.org 2.ubuntu.pool.ntp.org 3.ubuntu.pool.ntp.org/' -i /etc/systemd/timesyncd.conf
 timedatectl set-ntp 1
 timedatectl set-timezone UTC
@@ -98,11 +98,29 @@ if ! grep -q loop.ko /lib/modules/`uname -r`/modules.builtin; then
 fi
 
 if [[ ! -d "${DATA_DIR}" ]]; then
+    echo "==> Mounting loopback btrfs"
     truncate -s "8192m" "${DATA_FILE}" # 8gb start (this will get resized dynamically by cloudron-system-setup.service)
     mkfs.btrfs -L UserDataHome "${DATA_FILE}"
     mkdir -p "${DATA_DIR}"
     mount -t btrfs -o loop,nosuid "${DATA_FILE}" ${DATA_DIR}
 fi
+
+# keep these in sync with paths.js
+echo "==> Ensuring directories"
+[[ "${is_update}" == "false" ]] && btrfs subvolume create "${DATA_DIR}/box"
+mkdir -p "${DATA_DIR}/box/appicons"
+mkdir -p "${DATA_DIR}/box/certs"
+mkdir -p "${DATA_DIR}/box/mail/dkim/${arg_fqdn}"
+mkdir -p "${DATA_DIR}/box/acme" # acme keys
+mkdir -p "${DATA_DIR}/graphite"
+
+mkdir -p "${DATA_DIR}/mysql"
+mkdir -p "${DATA_DIR}/postgresql"
+mkdir -p "${DATA_DIR}/mongodb"
+mkdir -p "${DATA_DIR}/snapshots"
+mkdir -p "${DATA_DIR}/addons"
+mkdir -p "${DATA_DIR}/collectd/collectd.conf.d"
+mkdir -p "${DATA_DIR}/acme" # acme challenges
 
 echo "==> Configuring journald"
 sed -e "s/^#SystemMaxUse=.*$/SystemMaxUse=100M/" \
@@ -181,23 +199,6 @@ else
     fi
 fi
 
-set_progress "20" "Ensuring directories"
-# keep these in sync with paths.js
-[[ "${is_update}" == "false" ]] && btrfs subvolume create "${DATA_DIR}/box"
-mkdir -p "${DATA_DIR}/box/appicons"
-mkdir -p "${DATA_DIR}/box/certs"
-mkdir -p "${DATA_DIR}/box/mail/dkim/${arg_fqdn}"
-mkdir -p "${DATA_DIR}/box/acme" # acme keys
-mkdir -p "${DATA_DIR}/graphite"
-
-mkdir -p "${DATA_DIR}/mysql"
-mkdir -p "${DATA_DIR}/postgresql"
-mkdir -p "${DATA_DIR}/mongodb"
-mkdir -p "${DATA_DIR}/snapshots"
-mkdir -p "${DATA_DIR}/addons"
-mkdir -p "${DATA_DIR}/collectd/collectd.conf.d"
-mkdir -p "${DATA_DIR}/acme" # acme challenges
-
 # bookkeep the version as part of data
 echo "{ \"version\": \"${arg_version}\", \"boxVersionsUrl\": \"${arg_box_versions_url}\" }" > "${DATA_DIR}/box/version"
 
@@ -244,10 +245,7 @@ cd "${BOX_SRC_DIR}"
 BOX_ENV=cloudron DATABASE_URL=mysql://root:${mysql_root_password}@localhost/box "${BOX_SRC_DIR}/node_modules/.bin/db-migrate" up
 EOF
 
-set_progress "65" "Creating cloudron config"
-sudo -u yellowtent -H bash <<EOF
-set -eu
-echo "Creating cloudron.conf"
+echo "==> Creating cloudron.conf"
 cat > "${CONFIG_DIR}/cloudron.conf" <<CONF_END
 {
     "version": "${arg_version}",
@@ -270,14 +268,24 @@ cat > "${CONFIG_DIR}/cloudron.conf" <<CONF_END
 }
 CONF_END
 
-echo "Creating config.json for webadmin"
+echo "==> Creating config.json for webadmin"
 cat > "${BOX_SRC_DIR}/webadmin/dist/config.json" <<CONF_END
 {
     "webServerOrigin": "${arg_web_server_origin}"
 }
 CONF_END
-EOF
 
+echo "==> Changing ownership"
+chown "${USER}:${USER}" "${CONFIG_DIR}/cloudron.conf"
+chown "${USER}:${USER}" -R "${DATA_DIR}/nginx" "${DATA_DIR}/collectd" "${DATA_DIR}/addons" "${DATA_DIR}/acme"
+# during updates, do not trample mail ownership behind the the mail container's back
+find "${DATA_DIR}/box" -mindepth 1 -maxdepth 1 -not -path "${DATA_DIR}/box/mail" -print0 | xargs -0 chown -R "${USER}:${USER}"
+chown "${USER}:${USER}" "${DATA_DIR}/box"
+chown "${USER}:${USER}" -R "${DATA_DIR}/box/mail/dkim" # this is owned by box currently since it generates the keys
+chown "${USER}:${USER}" "${DATA_DIR}/INFRA_VERSION" || true
+chown "${USER}:${USER}" "${DATA_DIR}"
+
+echo "==> Adding automated configs"
 if [[ ! -z "${arg_backup_config}" ]]; then
     mysql -u root -p${mysql_root_password} \
         -e "REPLACE INTO settings (name, value) VALUES (\"backup_config\", '$arg_backup_config')" box
@@ -298,6 +306,7 @@ if [[ ! -z "${arg_tls_config}" ]]; then
         -e "REPLACE INTO settings (name, value) VALUES (\"tls_config\", '$arg_tls_config')" box
 fi
 
+echo "==> Adding default clients"
 # The domain might have changed, therefor we have to update the record
 # !!! This needs to be in sync with the webadmin, specifically login_callback.js
 readonly ADMIN_SCOPES="cloudron,developer,profile,users,apps,settings"
@@ -310,21 +319,12 @@ mysql -u root -p${mysql_root_password} \
 mysql -u root -p${mysql_root_password} \
     -e "REPLACE INTO clients (id, appId, type, clientSecret, redirectURI, scope) VALUES (\"cid-cli\", \"Cloudron Tool\", \"built-in\", \"secret-cli\", \"${admin_origin}\", \"*,roleSdk\")" box
 
-set_progress "75" "Changing ownership"
-chown "${USER}:${USER}" -R "${DATA_DIR}/nginx" "${DATA_DIR}/collectd" "${DATA_DIR}/addons" "${DATA_DIR}/acme"
-# during updates, do not trample mail ownership behind the the mail container's back
-find "${DATA_DIR}/box" -mindepth 1 -maxdepth 1 -not -path "${DATA_DIR}/box/mail" -print0 | xargs -0 chown -R "${USER}:${USER}"
-chown "${USER}:${USER}" "${DATA_DIR}/box"
-chown "${USER}:${USER}" -R "${DATA_DIR}/box/mail/dkim" # this is owned by box currently since it generates the keys
-chown "${USER}:${USER}" "${DATA_DIR}/INFRA_VERSION" || true
-chown "${USER}:${USER}" "${DATA_DIR}"
-
-set_progress "80" "Starting Cloudron"
+set_progress "60" "Starting Cloudron"
 systemctl start cloudron.target
 
 sleep 2 # give systemd sometime to start the processes
 
-set_progress "90" "Reloading nginx"
+set_progress "80" "Reloading nginx"
 nginx -s reload
 
 set_progress "100" "Done"
