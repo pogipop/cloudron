@@ -2,7 +2,7 @@
 
 set -eu -o pipefail
 
-echo "==== Cloudron Start ===="
+echo "==> Cloudron Start"
 
 readonly USER="yellowtent"
 readonly DATA_FILE="/root/user_data.img"
@@ -14,13 +14,13 @@ readonly ADMIN_LOCATION="my" # keep this in sync with constants.js
 
 readonly curl="curl --fail --connect-timeout 20 --retry 10 --retry-delay 2 --max-time 2400"
 
-script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+readonly script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 source "${script_dir}/argparser.sh" "$@" # this injects the arg_* variables used below
 
 # keep this is sync with config.js appFqdn()
-admin_fqdn=$([[ "${arg_is_custom_domain}" == "true" ]] && echo "${ADMIN_LOCATION}.${arg_fqdn}" ||  echo "${ADMIN_LOCATION}-${arg_fqdn}")
-admin_origin="https://${admin_fqdn}"
+readonly admin_fqdn=$([[ "${arg_is_custom_domain}" == "true" ]] && echo "${ADMIN_LOCATION}.${arg_fqdn}" ||  echo "${ADMIN_LOCATION}-${arg_fqdn}")
+readonly admin_origin="https://${admin_fqdn}"
 
 readonly is_update=$([[ -f "${CONFIG_DIR}/cloudron.conf" ]] && echo "true" || echo "false")
 
@@ -28,14 +28,15 @@ set_progress() {
     local percent="$1"
     local message="$2"
 
-    echo "==== ${percent} - ${message} ===="
+    echo "==> ${percent} - ${message}"
     (echo "{ \"update\": { \"percent\": \"${percent}\", \"message\": \"${message}\" }, \"backup\": {} }" > "${SETUP_PROGRESS_JSON}") 2> /dev/null || true # as this will fail in non-update mode
 }
 
-set_progress "1" "Create container"
+set_progress "1" "Configuring host"
 sed -e 's/^#NTP=/NTP=0.ubuntu.pool.ntp.org 1.ubuntu.pool.ntp.org 2.ubuntu.pool.ntp.org 3.ubuntu.pool.ntp.org/' -i /etc/systemd/timesyncd.conf
 timedatectl set-ntp 1
 timedatectl set-timezone UTC
+hostnamectl set-hostname "${arg_fqdn}"
 
 echo "==> Setting up firewall"
 iptables -t filter -N CLOUDRON || true
@@ -131,31 +132,56 @@ systemctl enable cloudron.target
 systemctl enable iptables-restore
 systemctl enable cloudron-system-setup
 
-rm -rf /etc/collectd
-ln -sfF "${DATA_DIR}/collectd" /etc/collectd
-systemctl restart collectd
-
-echo "==> Configuring system"
-rm -f /etc/sudoers.d/yellowtent
-cp "${script_dir}/start/sudoers" /etc/sudoers.d/yellowtent
-
 # For logrotate
-systemctl enable cron
+systemctl enable --now cron
 
 # DO uses Google nameservers by default. This causes RBL queries to fail (host 2.0.0.127.zen.spamhaus.org)
 # We do not use dnsmasq because it is not a recursive resolver and defaults to the value in the interfaces file (which is Google DNS!)
-systemctl enable unbound
+systemctl enable --now unbound
 
+echo "==> Configuring sudoers"
+rm -f /etc/sudoers.d/yellowtent
+cp "${script_dir}/start/sudoers" /etc/sudoers.d/yellowtent
+
+echo "==> Configuring collectd"
+rm -rf /etc/collectd
+ln -sfF "${DATA_DIR}/collectd" /etc/collectd
+cp "${script_dir}/start/collectd.conf" "${DATA_DIR}/collectd/collectd.conf"
+systemctl restart collectd
+
+echo "==> Configuring nginx"
 # link nginx config to system config
 unlink /etc/nginx 2>/dev/null || rm -rf /etc/nginx
 ln -s "${DATA_DIR}/nginx" /etc/nginx
+mkdir -p "${DATA_DIR}/nginx/applications"
+cp "${script_dir}/start/nginx/nginx.conf" "${DATA_DIR}/nginx/nginx.conf"
+cp "${script_dir}/start/nginx/mime.types" "${DATA_DIR}/nginx/mime.types"
 
-cp "${script_dir}/start/mysql.cnf" /etc/mysql/mysql.cnf
+# generate these for update code paths as well to overwrite splash
+admin_cert_file="${DATA_DIR}/nginx/cert/host.cert"
+admin_key_file="${DATA_DIR}/nginx/cert/host.key"
+if [[ -f "${DATA_DIR}/box/certs/${admin_fqdn}.cert" && -f "${DATA_DIR}/box/certs/${admin_fqdn}.key" ]]; then
+    admin_cert_file="${DATA_DIR}/box/certs/${admin_fqdn}.cert"
+    admin_key_file="${DATA_DIR}/box/certs/${admin_fqdn}.key"
+fi
+${BOX_SRC_DIR}/node_modules/.bin/ejs-cli -f "${script_dir}/start/nginx/appconfig.ejs" \
+    -O "{ \"vhost\": \"${admin_fqdn}\", \"adminOrigin\": \"${admin_origin}\", \"endpoint\": \"admin\", \"sourceDir\": \"${BOX_SRC_DIR}\", \"certFilePath\": \"${admin_cert_file}\", \"keyFilePath\": \"${admin_key_file}\", \"xFrameOptions\": \"SAMEORIGIN\" }" > "${DATA_DIR}/nginx/applications/admin.conf"
 
-set_progress "5" "Adjust system settings"
-hostnamectl set-hostname "${arg_fqdn}"
+mkdir -p "${DATA_DIR}/nginx/cert"
+if [[ -f "${DATA_DIR}/box/certs/host.cert" && -f "${DATA_DIR}/box/certs/host.key" ]]; then
+    cp "${DATA_DIR}/box/certs/host.cert" "${DATA_DIR}/nginx/cert/host.cert"
+    cp "${DATA_DIR}/box/certs/host.key" "${DATA_DIR}/nginx/cert/host.key"
+else
+    if [[ -z "${arg_tls_cert}" || -z "${arg_tls_key}" ]]; then
+        echo "==> Creating fallback certs"
+        openssl req -x509 -newkey rsa:2048 -keyout "${DATA_DIR}/nginx/cert/host.key" -out "${DATA_DIR}/nginx/cert/host.cert" -days 3650 -subj "/CN=${arg_fqdn}" -nodes
+    else
+        echo "${arg_tls_cert}" > "${DATA_DIR}/nginx/cert/host.cert"
+        echo "${arg_tls_key}" > "${DATA_DIR}/nginx/cert/host.key"
+    fi
+fi
 
-set_progress "10" "Ensuring directories"
+set_progress "20" "Ensuring directories"
 # keep these in sync with paths.js
 [[ "${is_update}" == "false" ]] && btrfs subvolume create "${DATA_DIR}/box"
 mkdir -p "${DATA_DIR}/box/appicons"
@@ -177,11 +203,12 @@ echo "{ \"version\": \"${arg_version}\", \"boxVersionsUrl\": \"${arg_box_version
 
 # remove old snapshots. if we do want to keep this around, we will have to fix the chown -R below
 # which currently fails because these are readonly fs
-echo "Cleaning up snapshots"
+echo "==> Cleaning up snapshots"
 find "${DATA_DIR}/snapshots" -mindepth 1 -maxdepth 1 | xargs --no-run-if-empty btrfs subvolume delete
 
 # restart mysql to make sure it has latest config
 # wait for all running mysql jobs
+cp "${script_dir}/start/mysql.cnf" /etc/mysql/mysql.cnf
 while true; do
     if ! systemctl list-jobs | grep mysql; then break; fi
     echo "Waiting for mysql jobs..."
@@ -194,72 +221,30 @@ mysqladmin -u root -ppassword password password # reset default root password
 mysql -u root -p${mysql_root_password} -e 'CREATE DATABASE IF NOT EXISTS box'
 
 if [[ -n "${arg_restore_url}" ]]; then
-    set_progress "15" "Downloading restore data"
+    set_progress "30" "Downloading restore data"
 
-    echo "Downloading backup: ${arg_restore_url} and key: ${arg_restore_key}"
+    echo "==> Downloading backup: ${arg_restore_url} and key: ${arg_restore_key}"
 
     while true; do
         if $curl -L "${arg_restore_url}" | openssl aes-256-cbc -d -pass "pass:${arg_restore_key}" | tar -zxf - -C "${DATA_DIR}/box"; then break; fi
         echo "Failed to download data, trying again"
     done
 
-    set_progress "21" "Setting up MySQL"
+    set_progress "35" "Setting up MySQL"
     if [[ -f "${DATA_DIR}/box/box.mysqldump" ]]; then
-        echo "Importing existing database into MySQL"
+        echo "==> Importing existing database into MySQL"
         mysql -u root -p${mysql_root_password} box < "${DATA_DIR}/box/box.mysqldump"
     fi
 fi
 
-set_progress "25" "Migrating data"
+set_progress "40" "Migrating data"
 sudo -u "${USER}" -H bash <<EOF
 set -eu
 cd "${BOX_SRC_DIR}"
 BOX_ENV=cloudron DATABASE_URL=mysql://root:${mysql_root_password}@localhost/box "${BOX_SRC_DIR}/node_modules/.bin/db-migrate" up
 EOF
 
-set_progress "28" "Setup collectd"
-cp "${script_dir}/start/collectd.conf" "${DATA_DIR}/collectd/collectd.conf"
-systemctl restart collectd
-
-set_progress "30" "Setup nginx"
-mkdir -p "${DATA_DIR}/nginx/applications"
-cp "${script_dir}/start/nginx/nginx.conf" "${DATA_DIR}/nginx/nginx.conf"
-cp "${script_dir}/start/nginx/mime.types" "${DATA_DIR}/nginx/mime.types"
-
-# generate these for update code paths as well to overwrite splash
-admin_cert_file="${DATA_DIR}/nginx/cert/host.cert"
-admin_key_file="${DATA_DIR}/nginx/cert/host.key"
-if [[ -f "${DATA_DIR}/box/certs/${admin_fqdn}.cert" && -f "${DATA_DIR}/box/certs/${admin_fqdn}.key" ]]; then
-    admin_cert_file="${DATA_DIR}/box/certs/${admin_fqdn}.cert"
-    admin_key_file="${DATA_DIR}/box/certs/${admin_fqdn}.key"
-fi
-${BOX_SRC_DIR}/node_modules/.bin/ejs-cli -f "${script_dir}/start/nginx/appconfig.ejs" \
-    -O "{ \"vhost\": \"${admin_fqdn}\", \"adminOrigin\": \"${admin_origin}\", \"endpoint\": \"admin\", \"sourceDir\": \"${BOX_SRC_DIR}\", \"certFilePath\": \"${admin_cert_file}\", \"keyFilePath\": \"${admin_key_file}\", \"xFrameOptions\": \"SAMEORIGIN\" }" > "${DATA_DIR}/nginx/applications/admin.conf"
-
-mkdir -p "${DATA_DIR}/nginx/cert"
-if [[ -f "${DATA_DIR}/box/certs/host.cert" && -f "${DATA_DIR}/box/certs/host.key" ]]; then
-    cp "${DATA_DIR}/box/certs/host.cert" "${DATA_DIR}/nginx/cert/host.cert"
-    cp "${DATA_DIR}/box/certs/host.key" "${DATA_DIR}/nginx/cert/host.key"
-else
-    if [[ -z "${arg_tls_cert}" || -z "${arg_tls_key}" ]]; then
-        echo "Creating fallback certs"
-        openssl req -x509 -newkey rsa:2048 -keyout "${DATA_DIR}/nginx/cert/host.key" -out "${DATA_DIR}/nginx/cert/host.cert" -days 3650 -subj "/CN=${arg_fqdn}" -nodes
-    else
-        echo "${arg_tls_cert}" > "${DATA_DIR}/nginx/cert/host.cert"
-        echo "${arg_tls_key}" > "${DATA_DIR}/nginx/cert/host.key"
-    fi
-fi
-
-set_progress "33" "Changing ownership"
-chown "${USER}:${USER}" -R "${DATA_DIR}/nginx" "${DATA_DIR}/collectd" "${DATA_DIR}/addons" "${DATA_DIR}/acme"
-# during updates, do not trample mail ownership behind the the mail container's back
-find "${DATA_DIR}/box" -mindepth 1 -maxdepth 1 -not -path "${DATA_DIR}/box/mail" -print0 | xargs -0 chown -R "${USER}:${USER}"
-chown "${USER}:${USER}" "${DATA_DIR}/box"
-chown "${USER}:${USER}" -R "${DATA_DIR}/box/mail/dkim" # this is owned by box currently since it generates the keys
-chown "${USER}:${USER}" "${DATA_DIR}/INFRA_VERSION" || true
-chown "${USER}:${USER}" "${DATA_DIR}"
-
-set_progress "65" "Creating cloudron.conf"
+set_progress "65" "Creating cloudron config"
 sudo -u yellowtent -H bash <<EOF
 set -eu
 echo "Creating cloudron.conf"
@@ -293,60 +278,53 @@ cat > "${BOX_SRC_DIR}/webadmin/dist/config.json" <<CONF_END
 CONF_END
 EOF
 
-# Add Backup Configuration
 if [[ ! -z "${arg_backup_config}" ]]; then
-    echo "Add Backup Config"
-
     mysql -u root -p${mysql_root_password} \
         -e "REPLACE INTO settings (name, value) VALUES (\"backup_config\", '$arg_backup_config')" box
 fi
 
-# Add DNS Configuration
 if [[ ! -z "${arg_dns_config}" ]]; then
-    echo "Add DNS Config"
-
     mysql -u root -p${mysql_root_password} \
         -e "REPLACE INTO settings (name, value) VALUES (\"dns_config\", '$arg_dns_config')" box
 fi
 
-# Add Update Configuration
 if [[ ! -z "${arg_update_config}" ]]; then
-    echo "Add Update Config"
-
     mysql -u root -p${mysql_root_password} \
         -e "REPLACE INTO settings (name, value) VALUES (\"update_config\", '$arg_update_config')" box
 fi
 
-# Add TLS Configuration
 if [[ ! -z "${arg_tls_config}" ]]; then
-    echo "Add TLS Config"
-
     mysql -u root -p${mysql_root_password} \
         -e "REPLACE INTO settings (name, value) VALUES (\"tls_config\", '$arg_tls_config')" box
 fi
 
 # The domain might have changed, therefor we have to update the record
 # !!! This needs to be in sync with the webadmin, specifically login_callback.js
-echo "Add webadmin api cient"
 readonly ADMIN_SCOPES="cloudron,developer,profile,users,apps,settings"
 mysql -u root -p${mysql_root_password} \
     -e "REPLACE INTO clients (id, appId, type, clientSecret, redirectURI, scope) VALUES (\"cid-webadmin\", \"Settings\", \"built-in\", \"secret-webadmin\", \"${admin_origin}\", \"${ADMIN_SCOPES}\")" box
 
-echo "Add SDK api client"
 mysql -u root -p${mysql_root_password} \
     -e "REPLACE INTO clients (id, appId, type, clientSecret, redirectURI, scope) VALUES (\"cid-sdk\", \"SDK\", \"built-in\", \"secret-sdk\", \"${admin_origin}\", \"*,roleSdk\")" box
 
-echo "Add cli api client"
 mysql -u root -p${mysql_root_password} \
     -e "REPLACE INTO clients (id, appId, type, clientSecret, redirectURI, scope) VALUES (\"cid-cli\", \"Cloudron Tool\", \"built-in\", \"secret-cli\", \"${admin_origin}\", \"*,roleSdk\")" box
+
+set_progress "75" "Changing ownership"
+chown "${USER}:${USER}" -R "${DATA_DIR}/nginx" "${DATA_DIR}/collectd" "${DATA_DIR}/addons" "${DATA_DIR}/acme"
+# during updates, do not trample mail ownership behind the the mail container's back
+find "${DATA_DIR}/box" -mindepth 1 -maxdepth 1 -not -path "${DATA_DIR}/box/mail" -print0 | xargs -0 chown -R "${USER}:${USER}"
+chown "${USER}:${USER}" "${DATA_DIR}/box"
+chown "${USER}:${USER}" -R "${DATA_DIR}/box/mail/dkim" # this is owned by box currently since it generates the keys
+chown "${USER}:${USER}" "${DATA_DIR}/INFRA_VERSION" || true
+chown "${USER}:${USER}" "${DATA_DIR}"
 
 set_progress "80" "Starting Cloudron"
 systemctl start cloudron.target
 
 sleep 2 # give systemd sometime to start the processes
 
-set_progress "85" "Reloading nginx"
+set_progress "90" "Reloading nginx"
 nginx -s reload
 
 set_progress "100" "Done"
-
