@@ -36,7 +36,7 @@ echo "==> Installing required packages"
 debconf-set-selections <<< 'mysql-server mysql-server/root_password password password'
 debconf-set-selections <<< 'mysql-server mysql-server/root_password_again password password'
 
-apt-get -y install 
+apt-get -y install \
     acl \
     awscli \
     btrfs-tools \
