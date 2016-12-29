@@ -143,10 +143,6 @@ if ! $ssh22 "root@${server_ip}" "/bin/bash /root/initializeBaseUbuntuImage.sh ca
     exit 1
 fi
 
-echo "Copying installer.sh"
-$scp22 "${SCRIPT_DIR}/../scripts/installer.sh" root@${server_ip}:/etc/installer.sh
-$ssh22 "root@${server_ip}" "chmod +x /etc/installer.sh"
-
 echo "Shutting down server with id : ${server_id}"
 $ssh22 "root@${server_ip}" "shutdown -f now" || true # shutdown sometimes terminates ssh connection immediately making this command fail
 
