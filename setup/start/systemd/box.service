@@ -4,6 +4,7 @@ OnFailure=crashnotifier@%n.service
 StopWhenUnneeded=true
 ; journald crashes result in a EPIPE in node. Cannot ignore it as it results in loss of logs.
 BindsTo=systemd-journald.service
+After=mysql.service
 
 [Service]
 Type=idle
