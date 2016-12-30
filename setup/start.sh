@@ -99,7 +99,7 @@ fi
 
 if [[ ! -d "${DATA_DIR}" ]]; then
     echo "==> Mounting loopback btrfs"
-    truncate -s "8192m" "${DATA_FILE}" # 8gb start (this will get resized dynamically by cloudron-system-setup.service)
+    truncate -s "8192m" "${DATA_FILE}" # 8gb start (this will get resized dynamically by cloudron-resize-fs.service)
     mkfs.btrfs -L UserDataHome "${DATA_FILE}"
     mkdir -p "${DATA_DIR}"
     mount -t btrfs -o loop,nosuid "${DATA_FILE}" ${DATA_DIR}

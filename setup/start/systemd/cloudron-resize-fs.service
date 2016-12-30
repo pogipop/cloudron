@@ -3,13 +3,13 @@
 # On ubuntu ec2 we use cloud-init https://wiki.archlinux.org/index.php/Cloud-init
 
 [Unit]
-Description=Box Setup
+Description=Cloudron FS Resizer
 Before=docker.service collectd.service mysql.service sshd.service nginx.service
 After=cloud-init.service
 
 [Service]
 Type=oneshot
-ExecStart="/home/yellowtent/box/setup/start/cloudron-system-setup.sh"
+ExecStart="/home/yellowtent/box/setup/start/cloudron-resize-fs.sh"
 RemainAfterExit=yes
 
 [Install]
