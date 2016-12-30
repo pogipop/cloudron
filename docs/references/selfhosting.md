@@ -56,7 +56,7 @@ Please use the below links to support us with referrals:
 In addition to those, the Cloudron community has successfully installed the platform on those providers:
 * [Amazon Lightsail](https://amazonlightsail.com/)
 * [hosttech](https://www.hosttech.ch/)
-* [Linode](https://www.linode.com/)
+* [Linode](https://www.linode.com/?r=f68d816692c49141e91dd4cef3305da457ac0f75)
 * [OVH](https://www.ovh.com/)
 * [Scaleway](https://www.scaleway.com/)
 * [So you Start](https://www.soyoustart.com/)
