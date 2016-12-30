@@ -195,11 +195,8 @@ while true; do
     sleep 10
 done
 
-echo ""
-echo "Rebooting this server now to let bootloader changes take effect."
-echo ""
-echo "Visit https://my.${domain} to finish setup"
-echo ""
+echo -e "\n\nRebooting this server now to let bootloader changes take effect.\n"
+echo -e "Visit https://my.${domain} to finish setup once the server has rebooted.\n"
 
 if [[ "${initBaseImage}" == "true" ]]; then
     systemctl reboot
