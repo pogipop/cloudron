@@ -20,7 +20,7 @@ restoreUrl=""
 dnsProvider="manual"
 tlsProvider="le-prod"
 versionsUrl="https://s3.amazonaws.com/prod-cloudron-releases/versions.json"
-version="latest"
+requestedVersion="latest"
 apiServer="https://api.cloudron.io"
 dataJson=""
 
@@ -36,7 +36,7 @@ while true; do
     --restore-url) restoreUrl="$2"; shift 2;;
     --tls-provider) tlsProvider="$2"; shift 2;;
     --dns-provider) dnsProvider="$2"; shift 2;;
-    --version) version="$2"; shift 2;;
+    --version) requestedVersion="$2"; shift 2;;
     --versions-url) versionsUrl="$2"; shift 2;;
     --api-server) apiServer="$2"; shift 2;;
     --skip-baseimage-init) initBaseImage="false"; shift;;
@@ -73,52 +73,11 @@ if [[ -z "${dataJson}" ]]; then
         echo "--dns-provider must be one of : manual, noop"
         exit 1
     fi
-
-    if [[ -z "${restoreUrl}" ]]; then
-        data=$(cat <<EOF
-    {
-        "boxVersionsUrl": "${versionsUrl}",
-        "fqdn": "${domain}",
-        "provider": "${provider}",
-        "apiServerOrigin": "${apiServer}",
-        "tlsConfig": {
-            "provider": "${tlsProvider}"
-        },
-        "dnsConfig": {
-            "provider": "${dnsProvider}"
-        },
-        "backupConfig" : {
-            "provider": "filesystem",
-            "backupFolder": "/var/backups",
-            "key": "${encryptionKey}"
-        },
-        "version": "${version}"
-    }
-EOF
-    )
-    else
-        data=$(cat <<EOF
-    {
-        "boxVersionsUrl": "${versionsUrl}",
-        "fqdn": "${domain}",
-        "provider": "${provider}",
-        "apiServerOrigin": "${apiServer}",
-        "restore": {
-            "url": "${restoreUrl}",
-            "key": "${encryptionKey}"
-        },
-        "version": "${version}"
-    }
-EOF
-    )
-    fi
-else
-    data="${dataJson}"
 fi
 
 echo ""
 echo "##############################################"
-echo "        Cloudron Setup (${version})           "
+echo "        Cloudron Setup (${requestedVersion})  "
 echo "##############################################"
 echo ""
 echo "The server will reboot at the end to complete the setup."
@@ -162,13 +121,57 @@ if ! npm install -g cloudron-version@0.1.1 &>> "${LOG_FILE}"; then
     exit 1
 fi
 NPM_BIN=$(npm bin -g 2>/dev/null)
-if ! version=$(${NPM_BIN}/cloudron-version --out version --versions-url "${versionsUrl}" --version "${version}"); then
-    echo "No such version ${version}"
+if ! version=$(${NPM_BIN}/cloudron-version --out version --versions-url "${versionsUrl}" --version "${requestedVersion}"); then
+    echo "No such version ${requestedVersion}"
     exit 1
 fi
-if ! sourceTarballUrl=$(${NPM_BIN}/cloudron-version --out tarballUrl --versions-url "${versionsUrl}" --version "${version}"); then
-    echo "No source code for version ${version}"
+if ! sourceTarballUrl=$(${NPM_BIN}/cloudron-version --out tarballUrl --versions-url "${versionsUrl}" --version "${requestedVersion}"); then
+    echo "No source code for version ${requestedVersion}"
     exit 1
+fi
+
+# Build data
+if [[ -z "${dataJson}" ]]; then
+    if [[ -z "${restoreUrl}" ]]; then
+        data=$(cat <<EOF
+    {
+        "boxVersionsUrl": "${versionsUrl}",
+        "fqdn": "${domain}",
+        "provider": "${provider}",
+        "apiServerOrigin": "${apiServer}",
+        "tlsConfig": {
+            "provider": "${tlsProvider}"
+        },
+        "dnsConfig": {
+            "provider": "${dnsProvider}"
+        },
+        "backupConfig" : {
+            "provider": "filesystem",
+            "backupFolder": "/var/backups",
+            "key": "${encryptionKey}"
+        },
+        "version": "${version}"
+    }
+EOF
+    )
+    else
+        data=$(cat <<EOF
+    {
+        "boxVersionsUrl": "${versionsUrl}",
+        "fqdn": "${domain}",
+        "provider": "${provider}",
+        "apiServerOrigin": "${apiServer}",
+        "restore": {
+            "url": "${restoreUrl}",
+            "key": "${encryptionKey}"
+        },
+        "version": "${version}"
+    }
+EOF
+    )
+    fi
+else
+    data="${dataJson}"
 fi
 
 echo "=> Downloading and running installer for version ${version} (this takes some time) ..."
