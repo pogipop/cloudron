@@ -5,7 +5,7 @@ set -eu -o pipefail
 readonly SETUP_WEBSITE_DIR="/home/yellowtent/setup/website"
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-readonly BOX_SRC_DIR="/home/yellowtent/box"
+readonly box_src_dir="$(realpath ${script_dir}/..)"
 readonly DATA_DIR="/home/yellowtent/data"
 readonly ADMIN_LOCATION="my" # keep this in sync with constants.js
 
@@ -28,11 +28,11 @@ existing_infra="none"
 if [[ "${arg_retire_reason}" != "" || "${existing_infra}" != "${current_infra}" ]]; then
     echo "Showing progress bar on all subdomains in retired mode or infra update. retire: ${arg_retire_reason} existing: ${existing_infra} current: ${current_infra}"
     rm -f ${DATA_DIR}/nginx/applications/*
-    ${BOX_SRC_DIR}/node_modules/.bin/ejs-cli -f "${script_dir}/start/nginx/appconfig.ejs" \
+    ${box_src_dir}/node_modules/.bin/ejs-cli -f "${script_dir}/start/nginx/appconfig.ejs" \
         -O "{ \"vhost\": \"~^(.+)\$\", \"adminOrigin\": \"${admin_origin}\", \"endpoint\": \"splash\", \"sourceDir\": \"${SETUP_WEBSITE_DIR}\", \"certFilePath\": \"cert/host.cert\", \"keyFilePath\": \"cert/host.key\", \"xFrameOptions\": \"SAMEORIGIN\" }" > "${DATA_DIR}/nginx/applications/admin.conf"
 else
     echo "Show progress bar only on admin domain for normal update"
-    ${BOX_SRC_DIR}/node_modules/.bin/ejs-cli -f "${script_dir}/start/nginx/appconfig.ejs" \
+    ${box_src_dir}/node_modules/.bin/ejs-cli -f "${script_dir}/start/nginx/appconfig.ejs" \
         -O "{ \"vhost\": \"${admin_fqdn}\", \"adminOrigin\": \"${admin_origin}\", \"endpoint\": \"splash\", \"sourceDir\": \"${SETUP_WEBSITE_DIR}\", \"certFilePath\": \"cert/host.cert\", \"keyFilePath\": \"cert/host.key\", \"xFrameOptions\": \"SAMEORIGIN\" }" > "${DATA_DIR}/nginx/applications/admin.conf"
 fi
 
