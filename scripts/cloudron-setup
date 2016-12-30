@@ -129,6 +129,13 @@ echo ""
 echo " Join us at https://chat.cloudron.io for any questions."
 echo ""
 
+echo -n "=> Wait for package manager to finish ..."
+while fuser /var/lib/dpkg/lock &>> "${LOG_FILE}"; do
+    echo -n "."
+    sleep 1
+done
+echo "" # linefeed
+
 echo "=> Update package repositories ..."
 if ! apt-get update &>> "${LOG_FILE}"; then
     echo "Could not update package repositories"
