@@ -281,7 +281,7 @@ chown "${USER}:${USER}" -R "${DATA_DIR}/nginx" "${DATA_DIR}/collectd" "${DATA_DI
 find "${DATA_DIR}/box" -mindepth 1 -maxdepth 1 -not -path "${DATA_DIR}/box/mail" -print0 | xargs -0 chown -R "${USER}:${USER}"
 chown "${USER}:${USER}" "${DATA_DIR}/box"
 chown "${USER}:${USER}" -R "${DATA_DIR}/box/mail/dkim" # this is owned by box currently since it generates the keys
-chown "${USER}:${USER}" "${DATA_DIR}/INFRA_VERSION" || true
+chown "${USER}:${USER}" "${DATA_DIR}/INFRA_VERSION" 2>/dev/null || true
 chown "${USER}:${USER}" "${DATA_DIR}"
 
 echo "==> Adding automated configs"
