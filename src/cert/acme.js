@@ -98,6 +98,7 @@ Acme.prototype.sendSignedRequest = function (url, payload, callback) {
 
     assert(util.isBuffer(this.accountKeyPem));
 
+    var that = this;
     var header = {
         alg: 'RS256',
         jwk: {
@@ -106,7 +107,7 @@ Acme.prototype.sendSignedRequest = function (url, payload, callback) {
             n: b64(getModulus(this.accountKeyPem))
         }
     };
- 
+
     var payload64 = b64(payload);
 
     this.getNonce(function (error, nonce) {
@@ -118,7 +119,7 @@ Acme.prototype.sendSignedRequest = function (url, payload, callback) {
 
         var signer = crypto.createSign('RSA-SHA256');
         signer.update(protected64 + '.' + payload64, 'utf8');
-        var signature64 = urlBase64Encode(signer.sign(this.accountKeyPem, 'base64'));
+        var signature64 = urlBase64Encode(signer.sign(that.accountKeyPem, 'base64'));
 
         var data = {
             header: header,
@@ -352,7 +353,7 @@ Acme.prototype.downloadChain = function (linkHeader, callback) {
     if (!linkHeader) return new AcmeError(AcmeError.EXTERNAL_ERROR, 'Empty link header when downloading certificate chain');
 
     var linkInfo = parseLinks(linkHeader);
-    if (!linkInfo || !linkInfo.up) return new AcmeError(AcmeError.EXTERNAL_ERROR, 'Failed to parse link header when downloading certificate chain'); 
+    if (!linkInfo || !linkInfo.up) return new AcmeError(AcmeError.EXTERNAL_ERROR, 'Failed to parse link header when downloading certificate chain');
 
     debug('downloadChain: downloading from %s', this.caOrigin + linkInfo.up);
 
