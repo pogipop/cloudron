@@ -4,13 +4,13 @@ var assert = require('assert'),
     async = require('async'),
     crypto = require('crypto'),
     debug = require('debug')('box:cert/acme'),
+    execSync = require('safetydance').child_process.execSync,
     fs = require('fs'),
     parseLinks = require('parse-links'),
     path = require('path'),
     paths = require('../paths.js'),
     safe = require('safetydance'),
     superagent = require('superagent'),
-    ursa = require('ursa'),
     util = require('util'),
     _ = require('underscore');
 
@@ -81,20 +81,29 @@ function b64(str) {
    return urlBase64Encode(buf.toString('base64'));
 }
 
+function getModulus(pem) {
+    assert(util.isBuffer(pem));
+
+    var stdout = execSync('openssl rsa -modulus -noout', { input: pem, encoding: 'utf8' });
+    if (!stdout) return null;
+    var match = stdout.match(/Modulus=([0-9a-fA-F]+)$/m);
+    if (!match) return null;
+    return Buffer.from(match[1], 'hex');
+}
+
 Acme.prototype.sendSignedRequest = function (url, payload, callback) {
     assert.strictEqual(typeof url, 'string');
     assert.strictEqual(typeof payload, 'string');
     assert.strictEqual(typeof callback, 'function');
 
     assert(util.isBuffer(this.accountKeyPem));
-    var privateKey = ursa.createPrivateKey(this.accountKeyPem);
 
     var header = {
         alg: 'RS256',
         jwk: {
-            e: b64(privateKey.getExponent()),
+            e: b64(Buffer.from([0x01, 0x00, 0x01])), // exponent - 65537
             kty: 'RSA',
-            n: b64(privateKey.getModulus())
+            n: b64(getModulus(this.accountKeyPem))
         }
     };
  
@@ -107,9 +116,9 @@ Acme.prototype.sendSignedRequest = function (url, payload, callback) {
 
         var protected64 = b64(JSON.stringify(_.extend({ }, header, { nonce: nonce })));
 
-        var signer = ursa.createSigner('sha256');
+        var signer = crypto.createSign('RSA-SHA256');
         signer.update(protected64 + '.' + payload64, 'utf8');
-        var signature64 = urlBase64Encode(signer.sign(privateKey, 'base64'));
+        var signature64 = urlBase64Encode(signer.sign(this.accountKeyPem, 'base64'));
 
         var data = {
             header: header,
@@ -207,12 +216,11 @@ Acme.prototype.prepareHttpChallenge = function (challenge, callback) {
     var token = challenge.token;
 
     assert(util.isBuffer(this.accountKeyPem));
-    var privateKey = ursa.createPrivateKey(this.accountKeyPem);
 
     var jwk = {
-        e: b64(privateKey.getExponent()),
+        e: b64(Buffer.from([0x01, 0x00, 0x01])), // Exponent - 65537
         kty: 'RSA',
-        n: b64(privateKey.getModulus())
+        n: b64(getModulus(this.accountKeyPem))
     };
 
     var shasum = crypto.createHash('sha256');
@@ -318,7 +326,6 @@ Acme.prototype.createKeyAndCsr = function (domain, callback) {
     var outdir = paths.APP_CERTS_DIR;
     var csrFile = path.join(outdir, domain + '.csr');
     var privateKeyFile = path.join(outdir, domain + '.key');
-    var execSync = safe.child_process.execSync;
 
     if (safe.fs.existsSync(privateKeyFile)) {
         // in some old releases, csr file was corrupt. so always regenerate it
@@ -358,8 +365,6 @@ Acme.prototype.downloadChain = function (linkHeader, callback) {
         if (result.statusCode !== 200) return callback(new AcmeError(AcmeError.EXTERNAL_ERROR, util.format('Failed to get cert. Expecting 200, got %s %s', result.statusCode, result.text)));
 
         var chainDer = result.text;
-        var execSync = safe.child_process.execSync;
-
         var chainPem = execSync('openssl x509 -inform DER -outform PEM', { input: chainDer }); // this is really just base64 encoding with header
         if (!chainPem) return callback(new AcmeError(AcmeError.INTERNAL_ERROR, safe.error));
 
@@ -385,7 +390,6 @@ Acme.prototype.downloadCertificate = function (domain, certUrl, callback) {
         if (result.statusCode !== 200) return callback(new AcmeError(AcmeError.EXTERNAL_ERROR, util.format('Failed to get cert. Expecting 200, got %s %s', result.statusCode, result.text)));
 
         var certificateDer = result.text;
-        var execSync = safe.child_process.execSync;
 
         safe.fs.writeFileSync(path.join(outdir, domain + '.der'), certificateDer);
         debug('downloadCertificate: cert der file for %s saved', domain);
