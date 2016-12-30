@@ -10,6 +10,8 @@
                 <span class="appstore-install-meta"><a href="{{ appInstall.app.manifest.website }}" target="_blank">{{ appInstall.app.manifest.author }}</a></span>
                 <br/>
                 <span class="appstore-install-meta">Last updated {{ appInstall.app.creationDate | prettyDate }}</span>
+                <br/>
+                <span class="appstore-install-meta hand" uib-tooltip="Required Memory" tooltip-placement="right">{{ appInstall.app.manifest.memoryLimit | prettyMemory }}M</span>
             </div>
             <div class="modal-body">
                 <div class="collapse" id="collapseInstallForm" data-toggle="false">
