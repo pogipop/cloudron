@@ -148,7 +148,7 @@ if [[ "${initBaseImage}" == "true" ]]; then
         exit 1
     fi
 
-    echo "=> Installing base dependencies ... (this takes some time)"
+    echo "=> Installing base dependencies (this takes some time) ..."
     if ! /bin/bash /tmp/initializeBaseUbuntuImage.sh "${provider}" &>> "${LOG_FILE}"; then
         echo "Init script failed. See ${LOG_FILE} for details"
         exit 1
@@ -171,7 +171,7 @@ if ! sourceTarballUrl=$(${NPM_BIN}/cloudron-version --out tarballUrl --versions-
     exit 1
 fi
 
-echo "=> Downloading and running installer for version ${version} ... (this takes some time)"
+echo "=> Downloading and running installer for version ${version} (this takes some time) ..."
 box_src_tmp_dir=$(mktemp -dt box-src-XXXXXX)
 
 if ! curl -sL "${sourceTarballUrl}" | tar -zxf - -C "${box_src_tmp_dir}"; then
@@ -183,7 +183,7 @@ if ! /bin/bash "${box_src_tmp_dir}/scripts/installer.sh" --data "${data}" &>> "$
     exit 1
 fi
 
-echo -n "=> Waiting for cloudron to be ready ... (this takes some time)"
+echo -n "=> Waiting for cloudron to be ready (this takes some time) ..."
 while true; do
     echo -n "."
     if journalctl -u box -a | grep "platformReady: " >/dev/null; then
