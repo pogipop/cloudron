@@ -148,7 +148,6 @@ cp -r "${script_dir}/start/systemd/." /etc/systemd/system/
 systemctl daemon-reload
 systemctl enable cloudron.target
 systemctl enable iptables-restore
-systemctl enable cloudron-system-setup
 
 # For logrotate
 systemctl enable --now cron

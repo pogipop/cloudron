@@ -5,6 +5,8 @@ StopWhenUnneeded=true
 ; journald crashes result in a EPIPE in node. Cannot ignore it as it results in loss of logs.
 BindsTo=systemd-journald.service
 After=mysql.service
+; As cloudron-system-setup is a one-shot, the Wants= automatically ensures that the service *finishes*
+Wants=cloudron-system-setup.service
 
 [Service]
 Type=idle
