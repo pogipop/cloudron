@@ -24,7 +24,7 @@ readonly ext4_reserved=$((disk_size * 5 / 100)) # this can be changes using tune
 echo "Disk device: ${disk_device}"
 echo "Physical memory: ${physical_memory}"
 echo "Estimated app count: ${app_count}"
-echo "Disk size: ${disk_size}"
+echo "Disk size: ${disk_size}M"
 
 # Allocate swap for general app usage
 if [[ ! -f "${APPS_SWAP_FILE}" && ${swap_size} -gt 0 ]]; then
