@@ -38,6 +38,7 @@ else
     echo "Apps Swap file already exists"
 fi
 
+# see start.sh for the initial default size of 8gb. On small disks the calculation might be lower than 8gb resulting in a failure to resize here.
 echo "Resizing data volume"
 home_data_size=$((disk_size - system_size - swap_size - ext4_reserved))
 echo "Resizing up btrfs user data to size ${home_data_size}M"
