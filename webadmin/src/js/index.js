@@ -111,6 +111,13 @@ app.filter('prettyAppMessage', function () {
     };
 });
 
+app.filter('prettyMemory', function () {
+    return function (memory) {
+        // Adjust the default memory limit if it changes
+        return memory ? Math.floor(memory / 1024 / 1024) : 256;
+    };
+});
+
 app.filter('installationActive', function () {
     return function(app) {
         if (app.installationState === ISTATES.ERROR) return false;
