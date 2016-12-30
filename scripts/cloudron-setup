@@ -129,26 +129,19 @@ echo ""
 echo " Join us at https://chat.cloudron.io for any questions."
 echo ""
 
-echo -n "=> Wait for package manager to finish ..."
-while fuser /var/lib/apt/lists/lock &>> "${LOG_FILE}"; do
-    echo -n "."
-    sleep 1
-done
-echo "" # linefeed
-
-echo "=> Update package repositories ..."
-if ! apt-get update &>> "${LOG_FILE}"; then
-    echo "Could not update package repositories"
-    exit 1
-fi
-
-echo "=> Installing setup dependencies ..."
-if ! apt-get install curl dnsutils -y &>> "${LOG_FILE}"; then
-    echo "Could not install setup dependencies (curl and dnsutils)"
-    exit 1
-fi
-
 if [[ "${initBaseImage}" == "true" ]]; then
+    echo "=> Update package repositories ..."
+    if ! apt-get update &>> "${LOG_FILE}"; then
+        echo "Could not update package repositories"
+        exit 1
+    fi
+
+    echo "=> Installing setup dependencies ..."
+    if ! apt-get install curl dnsutils -y &>> "${LOG_FILE}"; then
+        echo "Could not install setup dependencies (curl and dnsutils)"
+        exit 1
+    fi
+
     echo "=> Downloading initialization script"
     if ! curl -s "${INIT_BASESYSTEM_SCRIPT_URL}" > /tmp/initializeBaseUbuntuImage.sh; then
         echo "Could not download initialization script"
