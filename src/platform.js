@@ -229,7 +229,7 @@ function startMail(callback) {
     const dataDir = paths.DATA_DIR;
     const fqdn = config.fqdn();
     const mailFqdn = config.adminFqdn();
-    const memoryLimit = (1 + Math.round(os.totalmem()/(1024*1024*1024)/4)) * 128;
+    const memoryLimit = Math.max((1 + Math.round(os.totalmem()/(1024*1024*1024)/4)) * 128, 256);
 
     // TODO: watch for a signal here should the certificate path change. Note that haraka reloads
     // config automatically if the contents of the certificate changes (eg, renawal).
