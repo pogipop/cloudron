@@ -11,7 +11,7 @@
                 <br/>
                 <span class="appstore-install-meta">Last updated {{ appInstall.app.creationDate | prettyDate }}</span>
                 <br/>
-                <span class="appstore-install-meta hand" uib-tooltip="Required Memory" tooltip-placement="right">{{ appInstall.app.manifest.memoryLimit | prettyMemory }}M</span>
+                <span class="appstore-install-meta hand" uib-tooltip="Required Memory" tooltip-placement="right">Requires atleast {{ appInstall.app.manifest.memoryLimit | prettyMemory }}MB memory</span>
             </div>
             <div class="modal-body">
                 <div class="collapse" id="collapseInstallForm" data-toggle="false">
