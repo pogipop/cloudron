@@ -23,6 +23,9 @@ exports = module.exports = {
     getDnsConfig: getDnsConfig,
     setDnsConfig: setDnsConfig,
 
+    getDynamicDnsConfig: getDynamicDnsConfig,
+    setDynamicDnsConfig: setDynamicDnsConfig,
+
     getBackupConfig: getBackupConfig,
     setBackupConfig: setBackupConfig,
 
@@ -46,6 +49,7 @@ exports = module.exports = {
     CLOUDRON_NAME_KEY: 'cloudron_name',
     DEVELOPER_MODE_KEY: 'developer_mode',
     DNS_CONFIG_KEY: 'dns_config',
+    DYNAMIC_DNS_KEY: 'dynamic_dns',
     BACKUP_CONFIG_KEY: 'backup_config',
     TLS_CONFIG_KEY: 'tls_config',
     UPDATE_CONFIG_KEY: 'update_config',
@@ -84,6 +88,7 @@ var gDefaults = (function () {
     result[exports.TIME_ZONE_KEY] = 'America/Los_Angeles';
     result[exports.CLOUDRON_NAME_KEY] = 'Cloudron';
     result[exports.DEVELOPER_MODE_KEY] = true;
+    result[exports.DYNAMIC_DNS_KEY] = false;
     result[exports.DNS_CONFIG_KEY] = { provider: 'manual' };
     result[exports.BACKUP_CONFIG_KEY] = {
         provider: 'filesystem',
@@ -447,6 +452,32 @@ function setDnsConfig(dnsConfig, callback) {
 
             callback(null);
         });
+    });
+}
+
+function getDynamicDnsConfig(callback) {
+    assert.strictEqual(typeof callback, 'function');
+
+    settingsdb.get(exports.DYNAMIC_DNS_KEY, function (error, enabled) {
+        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(null, gDefaults[exports.DYNAMIC_DNS_KEY]);
+        if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
+
+        // settingsdb holds string values only
+        callback(null, !!enabled);
+    });
+}
+
+function setDynamicDnsConfig(enabled, callback) {
+    assert.strictEqual(typeof enabled, 'boolean');
+    assert.strictEqual(typeof callback, 'function');
+
+    // settingsdb takes string values only
+    settingsdb.set(exports.DYNAMIC_DNS_KEY, enabled ? 'enabled' : '', function (error) {
+        if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
+
+        exports.events.emit(exports.DYNAMIC_DNS_KEY, enabled);
+
+        return callback(null);
     });
 }
 
