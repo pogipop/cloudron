@@ -71,7 +71,7 @@ function initialize(callback) {
 
         recreateJobs(allSettings[settings.TIME_ZONE_KEY]);
         autoupdatePatternChanged(allSettings[settings.AUTOUPDATE_PATTERN_KEY]);
-        dynamicDNSChanged(allSettings[settings.AUTOUPDATE_PATTERN_KEY]);
+        dynamicDNSChanged(allSettings[settings.DYNAMIC_DNS_KEY]);
 
         callback();
     });
