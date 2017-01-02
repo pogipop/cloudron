@@ -671,8 +671,8 @@ function getAll(callback) {
         settings.forEach(function (setting) { result[setting.name] = setting.value; });
 
         // convert booleans
-        settings[exports.DEVELOPER_MODE_KEY] = !!settings[exports.DEVELOPER_MODE_KEY];
-        settings[exports.DYNAMIC_DNS_KEY] = !!settings[exports.DYNAMIC_DNS_KEY];
+        result[exports.DEVELOPER_MODE_KEY] = !!result[exports.DEVELOPER_MODE_KEY];
+        result[exports.DYNAMIC_DNS_KEY] = !!result[exports.DYNAMIC_DNS_KEY];
 
         callback(null, result);
     });
