@@ -10,6 +10,26 @@ fi
 # change this to a hash when we make a upgrade release
 readonly INIT_BASESYSTEM_SCRIPT_URL="https://git.cloudron.io/cloudron/box/raw/master/baseimage/initializeBaseUbuntuImage.sh"
 readonly LOG_FILE="/var/log/cloudron-setup.log"
+readonly MINIMUM_DISK_SIZE_GB="20"
+readonly MINIMUM_MEMORY="992"     # this is mostly reported for 1GB main memory due to 1000 vs 1024
+
+# copied from cloudron-resize-fs.sh
+readonly disk_device="$(for d in $(find /dev -type b); do [ "$(mountpoint -d /)" = "$(mountpoint -x $d)" ] && echo $d && break; done)"
+readonly physical_memory=$(free -m | awk '/Mem:/ { print $2 }')
+readonly disk_size_gb=$(fdisk -l ${disk_device} | grep "Disk ${disk_device}" | awk '{ printf "%.0f", $3 }')
+readonly disk_size=$((disk_size_gb * 1024))
+
+# verify the system has minimum requirements met
+if [[ "${physical_memory}" -lt "${MINIMUM_MEMORY}" ]]; then
+    echo "Minimum physical memory requirement: 1GB"
+    exit 1
+fi
+
+if [[ "${disk_size_gb}" -lt "${MINIMUM_DISK_SIZE_GB}" ]]; then
+    echo "Disk space on ${disk_device}: ${disk_size_gb}GB"
+    echo "Minimum disk size requirement: 20GB"
+    exit 1
+fi
 
 initBaseImage="true"
 # provisioning data
