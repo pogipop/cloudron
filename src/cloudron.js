@@ -22,6 +22,7 @@ exports = module.exports = {
     checkDiskSpace: checkDiskSpace,
 
     readDkimPublicKeySync: readDkimPublicKeySync,
+    refreshDNS: refreshDNS,
 
     events: new (require('events').EventEmitter)(),
 
@@ -447,8 +448,8 @@ function txtRecordsWithSpf(callback) {
     });
 }
 
-function addDnsRecords() {
-    var callback = NOOP_CALLBACK;
+function addDnsRecords(callback) {
+    callback = typeof callback === 'function' ? callback : NOOP_CALLBACK;
 
     if (process.env.BOX_ENV === 'test') return callback();
 
@@ -786,5 +787,23 @@ function migrate(options, callback) {
         if (error) return callback(new CloudronError(CloudronError.INTERNAL_ERROR, error));
 
         doMigrate(options, callback);
+    });
+}
+
+function refreshDNS(callback) {
+    assert.strictEqual(typeof callback, 'function');
+
+    sysinfo.getIp(function (error, ip) {
+        if (error) return callback(new CloudronError(CloudronError.INTERNAL_ERROR, error));
+
+        debug('refreshDNS: current ip %s', ip);
+
+        addDnsRecords(function (error) {
+            if (error) return callback(error);
+
+            debug('refreshDNS: done');
+
+            callback();
+        });
     });
 }
