@@ -449,7 +449,7 @@ function txtRecordsWithSpf(callback) {
 }
 
 function addDnsRecords(callback) {
-    callback = typeof callback === 'function' ? callback : NOOP_CALLBACK;
+    callback = callback || NOOP_CALLBACK;
 
     if (process.env.BOX_ENV === 'test') return callback();
 
@@ -791,7 +791,7 @@ function migrate(options, callback) {
 }
 
 function refreshDNS(callback) {
-    assert.strictEqual(typeof callback, 'function');
+    callback = callback || NOOP_CALLBACK;
 
     sysinfo.getIp(function (error, ip) {
         if (error) return callback(new CloudronError(CloudronError.INTERNAL_ERROR, error));

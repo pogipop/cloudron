@@ -31,7 +31,8 @@ var gAutoupdaterJob = null,
     gSchedulerSyncJob = null,
     gCertificateRenewJob = null,
     gCheckDiskSpaceJob = null,
-    gCleanupEventlogJob = null;
+    gCleanupEventlogJob = null,
+    gDynamicDNSJob = null;
 
 var NOOP_CALLBACK = function (error) { if (error) console.error(error); };
 var AUDIT_SOURCE = { userId: null, username: 'cron' };
@@ -63,12 +64,14 @@ function initialize(callback) {
 
     settings.events.on(settings.TIME_ZONE_KEY, recreateJobs);
     settings.events.on(settings.AUTOUPDATE_PATTERN_KEY, autoupdatePatternChanged);
+    settings.events.on(settings.DYNAMIC_DNS_KEY, dynamicDNSChanged);
 
     settings.getAll(function (error, allSettings) {
         if (error) return callback(error);
 
         recreateJobs(allSettings[settings.TIME_ZONE_KEY]);
         autoupdatePatternChanged(allSettings[settings.AUTOUPDATE_PATTERN_KEY]);
+        dynamicDNSChanged(allSettings[settings.AUTOUPDATE_PATTERN_KEY]);
 
         callback();
     });
@@ -193,6 +196,25 @@ function autoupdatePatternChanged(pattern) {
     });
 }
 
+function dynamicDNSChanged(enabled) {
+    assert.strictEqual(typeof enabled, 'boolean');
+    assert(gBoxUpdateCheckerJob);
+
+    debug('Dynamic DNS setting changed to %s', enabled);
+
+    if (enabled) {
+        gDynamicDNSJob = new CronJob({
+            cronTime: '00 */10 * * * *',
+            onTick: cloudron.refreshDNS,
+            start: true,
+            timeZone: gBoxUpdateCheckerJob.cronTime.zone // hack
+        });
+    } else {
+        if (gDynamicDNSJob) gDynamicDNSJob.stop();
+        gDynamicDNSJob = null;
+    }
+}
+
 function uninitialize(callback) {
     assert.strictEqual(typeof callback, 'function');
 
@@ -234,6 +256,9 @@ function uninitialize(callback) {
 
     if (gCertificateRenewJob) gCertificateRenewJob.stop();
     gCertificateRenewJob = null;
+
+    if (gDynamicDNSJob) gDynamicDNSJob.stop();
+    gDynamicDNSJob = null;
 
     callback();
 }
