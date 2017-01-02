@@ -801,9 +801,29 @@ function refreshDNS(callback) {
         addDnsRecords(function (error) {
             if (error) return callback(error);
 
-            debug('refreshDNS: done');
+            debug('refreshDNS: done for system records');
 
-            callback();
+            apps.getAll(function (error, result) {
+                if (error) return callback(error);
+
+                async.each(result, function (app, callback) {
+                    // get the current record before updating it
+                    subdomains.get(app.location, 'A', function (error, values) {
+                        if (error) return callback(error);
+
+                        // refuse to update any existing DNS record for custom domains that we did not create
+                        if (values.length !== 0 && !app.dnsRecordId) return callback(null, new Error('DNS Record already exists'));
+
+                        subdomains.upsert(app.location, 'A', [ ip ], callback);
+                    });
+                }, function (error) {
+                    if (error) return callback(error);
+
+                    debug('refreshDNS: done for apps');
+
+                    callback();
+                });
+            });
         });
     });
 }
