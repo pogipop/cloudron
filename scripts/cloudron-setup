@@ -135,16 +135,13 @@ if [[ "${initBaseImage}" == "true" ]]; then
 fi
 
 echo "=> Checking version"
-if ! npm install -g cloudron-version@0.1.1 &>> "${LOG_FILE}"; then
-    echo "Failed to install cloudron-version npm package"
-    exit 1
+releaseJson=$(curl -s "${versionsUrl}")
+if [[ "$requestedVersion" == "latest" ]]; then
+    version=$(echo "${releaseJson}" | python3 -c 'import json,sys,collections;obj=json.load(sys.stdin, object_pairs_hook=collections.OrderedDict);latest=list(v for v in obj if "-pre" not in v)[-1];print(latest)')
+else
+    version="${requestedVersion}"
 fi
-NPM_BIN=$(npm bin -g 2>/dev/null)
-if ! version=$(${NPM_BIN}/cloudron-version --out version --versions-url "${versionsUrl}" --version "${requestedVersion}"); then
-    echo "No such version ${requestedVersion}"
-    exit 1
-fi
-if ! sourceTarballUrl=$(${NPM_BIN}/cloudron-version --out tarballUrl --versions-url "${versionsUrl}" --version "${requestedVersion}"); then
+if ! sourceTarballUrl=$(echo "${releaseJson}" | python3 -c 'import json,sys;obj=json.load(sys.stdin);print(obj[sys.argv[1]]["sourceTarballUrl"])' "${version}"); then
     echo "No source code for version ${requestedVersion}"
     exit 1
 fi
