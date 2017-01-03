@@ -300,14 +300,6 @@ app.controller('SetupController', ['$scope', '$location', 'Client', 'Wizard', fu
                 return;
             }
 
-            if (search.customDomain === 'true') {
-                Wizard.dnsConfig = {
-                    provider: 'route53',
-                    accessKeyId: null,
-                    secretAccessKey: null
-                };
-            }
-
             Wizard.setupToken = search.setupToken;
         }
 
