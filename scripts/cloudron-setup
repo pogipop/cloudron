@@ -8,7 +8,6 @@ if [[ ${EUID} -ne 0 ]]; then
 fi
 
 # change this to a hash when we make a upgrade release
-readonly INIT_BASESYSTEM_SCRIPT_URL="https://git.cloudron.io/cloudron/box/raw/master/baseimage/initializeBaseUbuntuImage.sh"
 readonly LOG_FILE="/var/log/cloudron-setup.log"
 readonly MINIMUM_DISK_SIZE_GB="18"  # this is reported as less than 20GB in virtualbox
 readonly MINIMUM_MEMORY="992"     # this is mostly reported for 1GB main memory due to 1000 vs 1024
@@ -106,33 +105,6 @@ echo ""
 echo " Join us at https://chat.cloudron.io for any questions."
 echo ""
 
-if [[ "${initBaseImage}" == "true" ]]; then
-    echo "=> Update package repositories ..."
-    if ! apt-get update &>> "${LOG_FILE}"; then
-        echo "Could not update package repositories"
-        exit 1
-    fi
-
-    echo "=> Installing setup dependencies ..."
-    if ! apt-get install curl -y &>> "${LOG_FILE}"; then
-        echo "Could not install setup dependencies (curl)"
-        exit 1
-    fi
-
-    echo "=> Downloading initialization script"
-    if ! curl -s "${INIT_BASESYSTEM_SCRIPT_URL}" > /tmp/initializeBaseUbuntuImage.sh; then
-        echo "Could not download initialization script"
-        exit 1
-    fi
-
-    echo "=> Installing base dependencies (this takes some time) ..."
-    if ! /bin/bash /tmp/initializeBaseUbuntuImage.sh "${provider}" &>> "${LOG_FILE}"; then
-        echo "Init script failed. See ${LOG_FILE} for details"
-        exit 1
-    fi
-    rm /tmp/initializeBaseUbuntuImage.sh
-fi
-
 echo "=> Checking version"
 releaseJson=$(curl -s "${versionsUrl}")
 if [[ "$requestedVersion" == "latest" ]]; then
@@ -189,13 +161,33 @@ else
     data="${dataJson}"
 fi
 
-echo "=> Downloading and running installer for version ${version} (this takes some time) ..."
+echo "=> Downloading version ${version} ..."
 box_src_tmp_dir=$(mktemp -dt box-src-XXXXXX)
 
 if ! curl -sL "${sourceTarballUrl}" | tar -zxf - -C "${box_src_tmp_dir}"; then
     echo "Could not download source tarball. See ${LOG_FILE} for details"
     exit 1
 fi
+
+if [[ "${initBaseImage}" == "true" ]]; then
+    echo "=> Installing base dependencies (this takes some time) ..."
+    if ! apt-get update &>> "${LOG_FILE}"; then
+        echo "Could not update package repositories"
+        exit 1
+    fi
+
+    if ! apt-get install curl -y &>> "${LOG_FILE}"; then
+        echo "Could not install setup dependencies (curl)"
+        exit 1
+    fi
+
+    if ! /bin/bash "${box_src_tmp_dir}/baseimage/initializeBaseUbuntuImage.sh" "${provider}" &>> "${LOG_FILE}"; then
+        echo "Init script failed. See ${LOG_FILE} for details"
+        exit 1
+    fi
+fi
+
+echo "=> Installing version ${version} (this takes some time) ..."
 if ! /bin/bash "${box_src_tmp_dir}/scripts/installer.sh" --data "${data}" &>> "${LOG_FILE}"; then
     echo "Failed to install cloudron. See ${LOG_FILE} for details"
     exit 1
