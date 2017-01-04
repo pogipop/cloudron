@@ -118,17 +118,16 @@ app.controller('SetupController', ['$scope', '$http', 'Client', function ($scope
                 return;
             }
 
+            // for caas we are done here
+            if ($scope.provider === 'caas') {
+                window.location.href = '/';
+                return;
+            }
+
             registerAppstoreAccountIfNeeded(function (error) {
                 if (error) console.error('Unable to create appstore account.', error);  // this is not fatal
 
                 $scope.busy = false;
-
-                // for caas we are done here
-                if ($scope.provider === 'caas') {
-                    window.location.href = '/';
-                    return;
-                }
-
                 $scope.showDNSSetup = true;
             });
         });
