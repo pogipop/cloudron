@@ -103,7 +103,7 @@
                                 <div class="col-md-4 col-md-offset-4 text-center">
                                     <p class="has-error text-center" ng-show="dnsCredentials.error">{{ dnsCredentials.error }}</p>
 
-                                    <div class="form-group" ng-class="{ 'has-error': dnsCredentialsForm.domain.$invalid }">
+                                    <div class="form-group" ng-class="{ 'has-error': dnsCredentialsForm.domain.$dirty && dnsCredentialsForm.domain.$invalid }">
                                         <input type="text" class="form-control" ng-model="dnsCredentials.domain" name="domain" ng-minlength="4" ng-maxlength="128" placeholder="example.com" required autofocus>
                                     </div>
 
@@ -114,17 +114,17 @@
                                     </div>
 
                                     <!-- Route53 -->
-                                    <div class="form-group" ng-class="{ 'has-error': dnsCredentialsForm.accessKeyId.$invalid }" ng-show="dnsCredentials.provider === 'route53'">
+                                    <div class="form-group" ng-class="{ 'has-error': dnsCredentialsForm.accessKeyId.$dirty && dnsCredentialsForm.accessKeyId.$invalid }" ng-show="dnsCredentials.provider === 'route53'">
                                         <label class="control-label">Access Key Id</label>
                                         <input type="text" class="form-control" ng-model="dnsCredentials.accessKeyId" name="accessKeyId" ng-minlength="16" ng-maxlength="32" ng-required="dnsCredentials.provider === 'route53'">
                                     </div>
-                                    <div class="form-group" ng-class="{ 'has-error': dnsCredentialsForm.secretAccessKey.$invalid }" ng-show="dnsCredentials.provider === 'route53'">
+                                    <div class="form-group" ng-class="{ 'has-error': dnsCredentialsForm.secretAccessKey.$dirty && dnsCredentialsForm.secretAccessKey.$invalid }" ng-show="dnsCredentials.provider === 'route53'">
                                         <label class="control-label">Secret Access Key</label>
                                         <input type="text" class="form-control" ng-model="dnsCredentials.secretAccessKey" name="secretAccessKey" ng-required="dnsCredentials.provider === 'route53'">
                                     </div>
 
                                     <!-- DigitalOcean -->
-                                    <div class="form-group" ng-class="{ 'has-error': dnsCredentialsForm.digitalOceanToken.$invalid }" ng-show="dnsCredentials.provider === 'digitalocean'">
+                                    <div class="form-group" ng-class="{ 'has-error': dnsCredentialsForm.digitalOceanToken.$dirty && dnsCredentialsForm.digitalOceanToken.$invalid }" ng-show="dnsCredentials.provider === 'digitalocean'">
                                         <label class="control-label">API Token</label>
                                         <input type="text" class="form-control" ng-model="dnsCredentials.digitalOceanToken" name="digitalOceanToken" ng-required="dnsCredentials.provider === 'digitalocean'">
                                     </div>
