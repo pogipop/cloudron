@@ -97,6 +97,7 @@ app.controller('SetupController', ['$scope', '$http', 'Client', function ($scope
     $scope.showDNSSetup = false;
     $scope.dnsProvider = [
         { name: 'Manual/Wildcard', value: 'manual' },
+        { name: 'Wildcard', value: 'wildcard' },
         { name: 'No-op', value: 'noop' },
         { name: 'AWS Route53', value: 'route53' },
         { name: 'Digital Ocean', value: 'digitalocean' }
@@ -158,6 +159,12 @@ app.controller('SetupController', ['$scope', '$http', 'Client', function ($scope
             secretAccessKey: $scope.dnsCredentials.secretAccessKey,
             token: $scope.dnsCredentials.digitalOceanToken
         };
+
+        // special case the wildcard provider
+        if (data.provider === 'wildcard') {
+            data.provider = 'manual';
+            data.wildcard = true;
+        }
 
         Client.setDnsConfig(data, function (error) {
             $scope.busy = false;
