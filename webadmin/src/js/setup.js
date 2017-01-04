@@ -93,7 +93,23 @@ app.controller('SetupController', ['$scope', '$http', 'Client', function ($scope
     $scope.apiServerOrigin = '';
     $scope.setupToken = '';
     $scope.createAppstoreAccount = true;
+
     $scope.showDNSSetup = false;
+    $scope.dnsProvider = [
+        { name: 'Manual/Wildcard', value: 'manual' },
+        { name: 'No-op', value: 'noop' },
+        { name: 'AWS Route53', value: 'route53' },
+        { name: 'Digital Ocean', value: 'digitalocean' }
+    ];
+    $scope.dnsCredentials = {
+        error: null,
+        busy: false,
+        domain: '',
+        accessKeyId: '',
+        secretAccessKey: '',
+        digitalOceanToken: '',
+        provider: 'route53'
+    };
 
     $scope.activateCloudron = function () {
         $scope.busy = true;
@@ -130,6 +146,29 @@ app.controller('SetupController', ['$scope', '$http', 'Client', function ($scope
                 $scope.busy = false;
                 $scope.showDNSSetup = true;
             });
+        });
+    };
+
+    $scope.setDNSCredentials = function () {
+        $scope.busy = true;
+
+        var data = {
+            provider: $scope.dnsCredentials.provider,
+            accessKeyId: $scope.dnsCredentials.accessKeyId,
+            secretAccessKey: $scope.dnsCredentials.secretAccessKey,
+            token: $scope.dnsCredentials.digitalOceanToken
+        };
+
+        Client.setDnsConfig(data, function (error) {
+            $scope.busy = false;
+
+            if (error) {
+                $scope.dnsCredentials.error = error.message;
+                return;
+            }
+
+            // TODO wait until domain is propagated and cert got acquired
+            window.location.href = '/';
         });
     };
 
