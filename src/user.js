@@ -51,6 +51,7 @@ var assert = require('assert'),
 var CRYPTO_SALT_SIZE = 64; // 512-bit salt
 var CRYPTO_ITERATIONS = 10000; // iterations
 var CRYPTO_KEY_LENGTH = 512; // bits
+var CRYPTO_DIGEST = 'sha1'; // used to be the default in node 4.1.1 cannot change since it will affect existing db records
 
 function asyncIf(cond, func, next) {
     if (!cond) return next();
@@ -163,7 +164,7 @@ function createUser(username, password, email, displayName, auditSource, options
     crypto.randomBytes(CRYPTO_SALT_SIZE, function (error, salt) {
         if (error) return callback(new UserError(UserError.INTERNAL_ERROR, error));
 
-        crypto.pbkdf2(password, salt, CRYPTO_ITERATIONS, CRYPTO_KEY_LENGTH, function (error, derivedKey) {
+        crypto.pbkdf2(password, salt, CRYPTO_ITERATIONS, CRYPTO_KEY_LENGTH, CRYPTO_DIGEST, function (error, derivedKey) {
             if (error) return callback(new UserError(UserError.INTERNAL_ERROR, error));
 
             var now = (new Date()).toISOString();
@@ -238,7 +239,7 @@ function verify(userId, password, callback) {
         if (verifyGhost(user.username, password)) return callback(null, user);
 
         var saltBinary = new Buffer(user.salt, 'hex');
-        crypto.pbkdf2(password, saltBinary, CRYPTO_ITERATIONS, CRYPTO_KEY_LENGTH, function (error, derivedKey) {
+        crypto.pbkdf2(password, saltBinary, CRYPTO_ITERATIONS, CRYPTO_KEY_LENGTH, CRYPTO_DIGEST, function (error, derivedKey) {
             if (error) return callback(new UserError(UserError.INTERNAL_ERROR, error));
 
             var derivedKeyHex = new Buffer(derivedKey, 'binary').toString('hex');
@@ -524,7 +525,7 @@ function setPassword(userId, newPassword, callback) {
         if (config.isDemo() && user.username === constants.DEMO_USERNAME) return callback(new UserError(UserError.BAD_FIELD, 'Not allowed in demo mode'));
 
         var saltBuffer = new Buffer(user.salt, 'hex');
-        crypto.pbkdf2(newPassword, saltBuffer, CRYPTO_ITERATIONS, CRYPTO_KEY_LENGTH, function (error, derivedKey) {
+        crypto.pbkdf2(newPassword, saltBuffer, CRYPTO_ITERATIONS, CRYPTO_KEY_LENGTH, CRYPTO_DIGEST, function (error, derivedKey) {
             if (error) return callback(new UserError(UserError.INTERNAL_ERROR, error));
 
             user.modifiedAt = (new Date()).toISOString();
