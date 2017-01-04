@@ -154,6 +154,7 @@ app.controller('SetupController', ['$scope', '$http', 'Client', function ($scope
         $scope.busy = true;
 
         var data = {
+            domain: $scope.dnsCredentials.domain,
             provider: $scope.dnsCredentials.provider,
             accessKeyId: $scope.dnsCredentials.accessKeyId,
             secretAccessKey: $scope.dnsCredentials.secretAccessKey,
