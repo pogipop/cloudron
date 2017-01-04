@@ -9,7 +9,7 @@ fi
 
 # change this to a hash when we make a upgrade release
 readonly LOG_FILE="/var/log/cloudron-setup.log"
-readonly MINIMUM_DISK_SIZE_GB="18"  # this is reported as less than 20GB in virtualbox
+readonly MINIMUM_DISK_SIZE_GB="20" # this is the size of "/" and required to fit in docker images
 readonly MINIMUM_MEMORY="992"     # this is mostly reported for 1GB main memory due to 1000 vs 1024
 
 # copied from cloudron-resize-fs.sh
