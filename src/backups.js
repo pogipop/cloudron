@@ -239,18 +239,6 @@ function backupBoxWithAppBackupIds(appBackupIds, callback) {
     });
 }
 
-// this function expects you to have a lock
-// function backupBox(callback) {
-//    apps.getAll(function (error, allApps) {
-//         if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
-//
-//         var appBackupIds = allApps.map(function (app) { return app.lastBackupId; });
-//         appBackupIds = appBackupIds.filter(function (id) { return id !== null; }); // remove apps that were never backed up
-//
-//         backupBoxWithAppBackupIds(appBackupIds, callback);
-//     });
-// }
-
 function canBackupApp(app) {
     // only backup apps that are installed or pending configure or called from apptask. Rest of them are in some
     // state not good for consistent backup (i.e addons may not have been setup completely)
