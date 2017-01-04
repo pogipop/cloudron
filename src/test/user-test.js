@@ -31,7 +31,6 @@ var NEW_PASSWORD = 'oTHER@#$235';
 var DISPLAY_NAME = 'Nobody cares';
 var DISPLAY_NAME_NEW = 'Somone cares';
 var userObject = null;
-var groupObject = null;
 var NON_ADMIN_GROUP = 'members';
 var AUDIT_SOURCE = { ip: '1.2.3.4' };
 
@@ -51,18 +50,13 @@ function cleanupUsers(done) {
 
 function createOwner(done) {
     groups.create('admin', function () { // ignore error since it might already exist
-        groups.create(NON_ADMIN_GROUP, function (error, result) { // ignore error since it might already exist
-            expect(error).to.be(null);
-            groupObject = result;
+        user.createOwner(USERNAME, PASSWORD, EMAIL, DISPLAY_NAME, AUDIT_SOURCE, function (error, result) {
+            expect(error).to.not.be.ok();
+            expect(result).to.be.ok();
 
-            user.createOwner(USERNAME, PASSWORD, EMAIL, DISPLAY_NAME, AUDIT_SOURCE, function (error, result) {
-                expect(error).to.not.be.ok();
-                expect(result).to.be.ok();
+            userObject = result;
 
-                userObject = result;
-
-                done();
-            });
+            done();
         });
     });
 }
@@ -731,7 +725,21 @@ describe('User', function () {
     });
 
     describe('admin change triggers mail', function () {
-        before(createOwner);
+        var groupObject;
+
+        before(function (done) {
+            createOwner(function (error) {
+                expect(error).to.not.be.ok();
+
+                groups.create(NON_ADMIN_GROUP, function (error, result) {
+                    expect(error).to.be(null);
+                    groupObject = result;
+
+                    done();
+                });
+            });
+        });
+
         after(cleanupUsers);
 
         var user1 = {
@@ -979,7 +987,7 @@ describe('User', function () {
         before(createOwner);
         after(cleanupUsers);
 
-        it('fails for unkown user', function (done) {
+        it('fails for unknown user', function (done) {
             user.remove('unknown', { }, function (error) {
                 expect(error.reason).to.be(UserError.NOT_FOUND);
                 done();
@@ -1016,5 +1024,7 @@ describe('User', function () {
                 });
             });
         });
+
+        it('can re-create user after user was removed', createOwner);
     });
 });
