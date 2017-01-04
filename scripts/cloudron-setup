@@ -65,11 +65,6 @@ done
 
 # validate arguments in the absence of data
 if [[ -z "${dataJson}" ]]; then
-    if [[ -z "${domain}" ]]; then
-        echo "--domain is required"
-        exit 1
-    fi
-
     if [[ -z "${provider}" ]]; then
         echo "--provider is required (generic, scaleway, ec2, digitalocean)"
         exit 1
