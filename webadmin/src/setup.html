@@ -32,12 +32,12 @@
 
 <body class="setup" ng-app="Application" ng-controller="SetupController">
 
-    <center ng-show="provider === 'caas' && !setupToken">
+    <center class="ng-cloak" ng-show="provider === 'caas' && !setupToken">
         <h1> <i class="fa fa-frown-o fa-fw text-danger"></i> No setup token provided. </h1>
         Please use the setup link for this cloudron.
     </center>
 
-    <div class="main-container" ng-hide="provider === 'caas' && !setupToken">
+    <div class="main-container ng-cloak" ng-hide="provider === 'caas' && !setupToken && !initialized">
         <div class="row">
             <div class="col-md-6 col-md-offset-3">
                 <div class="card" style="max-width: none; padding: 20px;">
