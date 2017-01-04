@@ -17,64 +17,6 @@ app.directive('ngEnter', function () {
     };
 });
 
-// app.service('Wizard', [ function () {
-//     var instance = null;
-
-//     function Wizard() {
-//         this.username = '';
-//         this.email = '';
-//         this.password = '';
-//         this.displayName = '';
-//         this.setupToken = null;
-//         this.provider = null;
-//         this.apiServerOrigin = null;
-//         this.createAppstoreAccount = true;
-//         this.dnsConfig = null;
-//     }
-
-//     instance = new Wizard();
-//     return instance;
-// }]);
-
-// app.controller('StepController', ['$scope', '$route', '$location', 'Wizard', function ($scope, $route, $location, Wizard) {
-//     $scope.wizard = Wizard;
-
-//     $scope.next = function (bad) {
-//         if (bad) return;
-
-//         var current = $location.path();
-//         var next = '';
-
-//         if (current === '/step1') {
-//             next = '/step2';
-//         } else if (current === '/step2') {
-//             if (Wizard.dnsConfig === null) next = '/step4';
-//             else next = '/step3';
-//         } else if (current === '/step3') {
-//             next = '/step4';
-//         } else {
-//             next = '/step1';
-//         }
-
-//         $location.path(next);
-//     };
-
-//     $scope.focusNext = function (elemId, bad) {
-//         if (!bad) $('#' + elemId).focus();
-//     };
-// }]);
-
-// app.controller('FinishController', ['$scope', '$location', '$http', 'Wizard', 'Client', function ($scope, $location, $http, Wizard, Client) {
-//     $scope.wizard = Wizard;
-
-//     function setDnsConfigIfNeeded(callback) {
-//         if ($scope.wizard.dnsConfig === null) return callback(null);
-
-//         Client.setDnsConfig($scope.wizard.dnsConfig, callback);
-//     }
-
-// }]);
-
 app.controller('SetupController', ['$scope', '$http', 'Client', function ($scope, $http, Client) {
     // Stupid angular location provider either wants html5 location mode or not, do the query parsing on my own
     var search = decodeURIComponent(window.location.search).slice(1).split('&').map(function (item) { return item.split('='); }).reduce(function (o, k) { o[k[0]] = k[1]; return o; }, {});
