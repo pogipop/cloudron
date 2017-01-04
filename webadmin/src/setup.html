@@ -15,17 +15,12 @@
     <!-- jQuery-->
     <script src="3rdparty/js/jquery.min.js"></script>
 
-    <!-- toBlob() polyfill-->
-    <script src="3rdparty/js/canvas-to-blob.min.js"></script>
-
     <!-- Bootstrap Core JavaScript -->
     <script src="3rdparty/js/bootstrap.min.js"></script>
 
     <!-- Angularjs scripts -->
     <script src="3rdparty/js/angular.min.js"></script>
     <script src="3rdparty/js/angular-loader.min.js"></script>
-    <script src="3rdparty/js/angular-route.min.js"></script>
-    <script src="3rdparty/js/angular-animate.min.js"></script>
     <script src="3rdparty/js/angular-md5.min.js"></script>
     <script src="3rdparty/js/angular-ui-notification.min.js"></script>
     <script src="3rdparty/js/autofill-event.js"></script>
@@ -37,18 +32,67 @@
 
 <body class="setup" ng-app="Application" ng-controller="SetupController">
 
-    <center ng-show="wizard.provider === 'caas' && !wizard.setupToken">
+    <center ng-show="provider === 'caas' && !setupToken">
         <h1> <i class="fa fa-frown-o fa-fw text-danger"></i> No setup token provided. </h1>
         Please use the setup link for this cloudron.
     </center>
 
-    <div class="main-container">
-        <div class="row" ng-show="initialized && !busy && !(wizard.provider === 'caas' && !wizard.setupToken)">
-            <div class="col-md-8 col-md-offset-2">
+    <div class="main-container" ng-hide="provider === 'caas' && !setupToken">
+        <div class="row">
+            <div class="col-md-6 col-md-offset-3">
                 <div class="card" style="max-width: none; padding: 20px;">
-                    <form role="form" name="setup_form" novalidate>
-                        <div ng-view id="ng-view"></div>
-                    </form>
+                    <div ng-show="busy">
+                        <i class="fa fa-spinner fa-pulse fa-5x"></i>
+                    </div>
+                    <div ng-show="!showDNSSetup && !busy">
+                        <form role="form" name="setupForm" ng-submit="activateCloudron()" novalidate>
+                            <div class="row">
+                                <div class="col-md-12 text-center">
+                                    <h1>Welcome to your Cloudron</h1>
+                                    <h3>Create an Admin Account</h3>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-4 col-md-offset-4 text-center">
+                                    <div class="form-group" ng-class="{ 'has-error': setupForm.displayName.$dirty && setupForm.displayName.$invalid }">
+                                        <input type="text" class="form-control" ng-model="account.displayName" id="inputDisplayName" name="displayName" placeholder="Display Name" required autocomplete="off" autofocus>
+                                    </div>
+                                    <div ng-show="account.requireEmail" class="form-group" ng-class="{ 'has-error': setupForm.email.$dirty && setupForm.email.$invalid }">
+                                        <input type="email" class="form-control" ng-model="account.email" id="inputEmail" name="email" placeholder="Email" required autocomplete="off">
+                                    </div>
+                                    <div class="form-group" ng-class="{ 'has-error': setupForm.username.$dirty && setupForm.username.$invalid }">
+                                        <input type="text" class="form-control" ng-model="account.username" id="inputUsername" name="username" placeholder="Username" ng-maxlength="512" ng-minlength="3" required autocomplete="off">
+                                    </div>
+                                    <div class="form-group" ng-class="{ 'has-error': setupForm.password.$dirty && setupForm.password.$invalid }">
+                                        <input type="password" class="form-control" ng-model="account.password" id="inputPassword" name="password" placeholder="Password" ng-pattern="/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[^a-zA-Z0-9])(?!.*\s).{8,30}$/" required autocomplete="off">
+                                        <div class="control-label" ng-show="setupForm.password.$dirty && setupForm.password.$invalid">
+                                            <small ng-show="setupForm.password.$dirty && setupForm.password.$invalid">Password must be 8-30 character with at least one uppercase, one numeric and one special character</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row" ng-hide="provider === 'caas'">
+                                <div class="col-md-12 text-center">
+                                    <div class="form-group">
+                                        <div class="checkbox">
+                                            <label>
+                                                <input type="checkbox" ng-model="createAppstoreAccount"> Create <a href="https://cloudron.io" target="_blank">Cloudron Store</a> account
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-12 text-center">
+                                    <input type="submit" class="btn btn-primary" ng-hide="provider === 'caas'" ng-disabled="setupForm.$invalid || busy" value="Next">
+                                    <input type="submit" class="btn btn-primary" ng-show="provider === 'caas'" ng-disabled="setupForm.$invalid || busy" value="Done">
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    <div ng-show="showDNSSetup && !busy">
+                        Now do DNS setup
+                    </div>
                 </div>
             </div>
         </div>
