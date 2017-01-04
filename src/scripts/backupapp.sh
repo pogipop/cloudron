@@ -42,9 +42,7 @@ if [[ "$1" == "s3" ]]; then
     if [ $# -gt 9 ]; then
         export AWS_SESSION_TOKEN="${10}"
     fi
-fi
-
-if [[ "$1" == "filesystem" ]]; then
+elif [[ "$1" == "filesystem" ]]; then
     readonly backup_folder="$3"
     readonly backup_config_fileName="$4"
     readonly backup_data_fileName="$5"
@@ -99,9 +97,7 @@ if [[ "$1" == "s3" ]]; then
         fi
         cat "${error_log}" && rm "${error_log}"
     done
-fi
-
-if [[ "$1" == "filesystem" ]]; then
+elif [[ "$1" == "filesystem" ]]; then
     mkdir -p "${backup_folder}"
 
     echo "Storing backup config to ${backup_folder}/${backup_config_fileName}"

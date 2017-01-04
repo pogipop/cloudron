@@ -79,9 +79,7 @@ if [[ "$1" == "s3" ]]; then
         fi
         cat "${error_log}" && rm "${error_log}"
     done
-fi
-
-if [[ "$1" == "filesystem" ]]; then
+elif [[ "$1" == "filesystem" ]]; then
     echo "Storing backup to ${backup_folder}/${backup_fileName}"
 
     mkdir -p "${backup_folder}"
