@@ -167,15 +167,16 @@ app.controller('SetupController', ['$scope', '$http', 'Client', function ($scope
         }
 
         Client.setDnsConfig(data, function (error) {
-            $scope.busy = false;
-
             if (error) {
+                $scope.busy = false;
                 $scope.dnsCredentials.error = error.message;
                 return;
             }
 
-            // TODO wait until domain is propagated and cert got acquired
-            window.location.href = '/';
+            setTimeout(function () {
+                // TODO wait until domain is propagated and cert got acquired
+                window.location.href = 'https://my.' + $scope.dnsCredentials.domain;
+            }, 5000);
         });
     };
 
