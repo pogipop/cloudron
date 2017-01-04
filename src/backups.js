@@ -132,7 +132,6 @@ function getByAppIdPaged(page, perPage, appId, callback) {
     });
 }
 
-// backupId is the filename. appbackup_%s_%s-v%s.tar.gz
 function getRestoreConfig(backupId, callback) {
     assert.strictEqual(typeof backupId, 'string');
     assert.strictEqual(typeof callback, 'function');
@@ -149,7 +148,6 @@ function getRestoreConfig(backupId, callback) {
     });
 }
 
-// backupId is the filename. appbackup_%s_%s-v%s.tar.gz
 function getRestoreUrl(backupId, callback) {
     assert.strictEqual(typeof backupId, 'string');
     assert.strictEqual(typeof callback, 'function');
@@ -180,9 +178,9 @@ function copyLastBackup(app, manifest, callback) {
     assert(manifest && typeof manifest === 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    var now = new Date();
-    var toFilenameArchive = util.format('appbackup_%s_%s-v%s.tar.gz', app.id, now.toISOString(), manifest.version);
-    var toFilenameConfig = util.format('appbackup_%s_%s-v%s.json', app.id, now.toISOString(), manifest.version);
+    var timestamp = (new Date()).toISOString().replace('T', '-').replace(/:|\..*/g,'');
+    var toFilenameArchive = util.format('app_%s_%s_v%s.tar.gz', app.id, timestamp, manifest.version);
+    var toFilenameConfig = util.format('app_%s_%s_v%s.json', app.id, timestamp, manifest.version);
 
     settings.getBackupConfig(function (error, backupConfig) {
         if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
@@ -209,8 +207,8 @@ function copyLastBackup(app, manifest, callback) {
 function backupBoxWithAppBackupIds(appBackupIds, callback) {
     assert(util.isArray(appBackupIds));
 
-    var now = new Date();
-    var filebase = util.format('backup_%s-v%s', now.toISOString(), config.version());
+    var timestamp = (new Date()).toISOString().replace('T', '-').replace(/:|\..*/g,'');
+    var filebase = util.format('box_%s_v%s', timestamp, config.version());
     var filename = filebase + '.tar.gz';
 
     settings.getBackupConfig(function (error, backupConfig) {
@@ -269,8 +267,8 @@ function createNewAppBackup(app, manifest, callback) {
     assert(manifest && typeof manifest === 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    var now = new Date();
-    var filebase = util.format('appbackup_%s_%s-v%s', app.id, now.toISOString(), manifest.version);
+    var timestamp = (new Date()).toISOString().replace('T', '-').replace(/:|\..*/g,'');
+    var filebase = util.format('app_%s_%s_v%s', app.id, timestamp, manifest.version);
     var configFilename = filebase + '.json', dataFilename = filebase + '.tar.gz';
 
     settings.getBackupConfig(function (error, backupConfig) {

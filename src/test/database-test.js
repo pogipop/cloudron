@@ -1065,7 +1065,7 @@ describe('database', function () {
 
         it('add app succeeds', function (done) {
             var backup = {
-                id: 'appbackup_appid_123',
+                id: 'app_appid_123',
                 version: '1.0.0',
                 type: backupdb.BACKUP_TYPE_APP,
                 dependsOn: [ ]
@@ -1078,7 +1078,7 @@ describe('database', function () {
         });
 
         it('get succeeds', function (done) {
-            backupdb.get('appbackup_appid_123', function (error, result) {
+            backupdb.get('app_appid_123', function (error, result) {
                 expect(error).to.be(null);
                 expect(result.version).to.be('1.0.0');
                 expect(result.type).to.be(backupdb.BACKUP_TYPE_APP);
@@ -1094,7 +1094,7 @@ describe('database', function () {
                 expect(results).to.be.an(Array);
                 expect(results.length).to.be(1);
 
-                expect(results[0].id).to.be('appbackup_appid_123');
+                expect(results[0].id).to.be('app_appid_123');
                 expect(results[0].version).to.be('1.0.0');
                 expect(results[0].dependsOn).to.eql([]);
 
@@ -1103,11 +1103,11 @@ describe('database', function () {
         });
 
         it('delete succeeds', function (done) {
-            backupdb.del('appbackup_appid_123', function (error, result) {
+            backupdb.del('app_appid_123', function (error, result) {
                 expect(error).to.be(null);
                 expect(result).to.not.be.ok();
 
-                backupdb.get('appbackup_appid_123', function (error, result) {
+                backupdb.get('app_appid_123', function (error, result) {
                     expect(error).to.be.a(DatabaseError);
                     expect(error.reason).to.equal(DatabaseError.NOT_FOUND);
                     expect(result).to.not.be.ok();

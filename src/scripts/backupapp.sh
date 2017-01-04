@@ -50,7 +50,7 @@ elif [[ "$1" == "filesystem" ]]; then
 fi
 
 # perform backup
-readonly now=$(date "+%Y-%m-%dT%H:%M:%S")
+readonly now=$(date "+%Y-%m-%d-%H%M%S")
 readonly app_data_dir="${DATA_DIR}/${app_id}"
 readonly app_data_snapshot="${DATA_DIR}/snapshots/${app_id}-${now}"
 

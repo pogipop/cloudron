@@ -206,8 +206,8 @@ IP of the server created above. If your DNS provider has an API, please open an
 ## Backups
 
 The Cloudron creates encrypted backups once a day. Each app is backed up independently and these
-backups have the prefix `appbackup_`. The platform state is backed up independently with the
-prefix `backup_`.
+backups have the prefix `app_`. The platform state is backed up independently with the
+prefix `box_`.
 
 By default, backups reside in `/var/backups`. Please note that having backups reside in the same
 physical machine as the Cloudron server instance is dangerous and it must be changed to

@@ -46,7 +46,7 @@ if [[ "$1" == "filesystem" ]]; then
 fi
 
 # perform backup
-now=$(date "+%Y-%m-%dT%H:%M:%S")
+now=$(date "+%Y-%m-%d-%H%M%S")
 BOX_DATA_DIR="${HOME}/data/box"
 box_snapshot_dir="${HOME}/data/snapshots/box-${now}"
 
