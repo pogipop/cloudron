@@ -14,8 +14,6 @@ var assert = require('assert'),
     scaleway = require('./sysinfo/scaleway.js'),
     util = require('util');
 
-var gCachedIp = null;
-
 function SysInfoError(reason, errorOrMessage) {
     assert.strictEqual(typeof reason, 'string');
     assert(errorOrMessage instanceof Error || typeof errorOrMessage === 'string' || typeof errorOrMessage === 'undefined');
@@ -54,17 +52,9 @@ function getApi(callback) {
 function getIp(callback) {
     assert.strictEqual(typeof callback, 'function');
 
-    if (gCachedIp) return callback(null, gCachedIp);
-
     getApi(function (error, api) {
         if (error) return callback(error);
 
-        api.getIp(function (error, ip) {
-            if (error) return callback(error);
-
-            gCachedIp = ip;
-
-            callback(null, gCachedIp);
-        });
+        api.getIp(callback);
     });
 }
