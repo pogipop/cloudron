@@ -3,20 +3,6 @@
 // create main application module
 var app = angular.module('Application', ['angular-md5', 'ui-notification']);
 
-app.directive('ngEnter', function () {
-    return function (scope, element, attrs) {
-        element.bind('keydown keypress', function (event) {
-            if(event.which === 13) {
-                scope.$apply(function (){
-                    scope.$eval(attrs.ngEnter);
-                });
-
-                event.preventDefault();
-            }
-        });
-    };
-});
-
 app.controller('SetupController', ['$scope', '$http', 'Client', function ($scope, $http, Client) {
     // Stupid angular location provider either wants html5 location mode or not, do the query parsing on my own
     var search = decodeURIComponent(window.location.search).slice(1).split('&').map(function (item) { return item.split('='); }).reduce(function (o, k) { o[k[0]] = k[1]; return o; }, {});
