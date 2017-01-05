@@ -32,15 +32,15 @@
 
 <body class="setup" ng-app="Application" ng-controller="SetupDNSController">
 
-    <div class="main-container ng-cloak text-center" ng-show="!busy">
+    <div class="main-container ng-cloak text-center" ng-show="busy">
         <div class="row">
             <div class="col-md-6 col-md-offset-3">
                 <i class="fa fa-cog fa-spin fa-5x"></i>
             </div>
         </div>
-    </center>
+    </div>
 
-    <div class="main-container ng-cloak" ng-show="initialized && busy">
+    <div class="main-container ng-cloak" ng-show="initialized && !busy">
         <div class="row">
             <div class="col-md-6 col-md-offset-3">
                 <div class="card" style="max-width: none; padding: 20px;">
