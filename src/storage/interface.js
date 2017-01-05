@@ -17,6 +17,8 @@ exports = module.exports = {
     copyObject: copyObject,
     removeBackup: removeBackup,
 
+    backupDone: backupDone,
+
     testConfig: testConfig
 };
 
@@ -108,6 +110,15 @@ function testConfig(apiConfig, callback) {
     assert.strictEqual(typeof callback, 'function');
 
     // Result: none
+
+    callback(new Error('not implemented'));
+}
+
+function backupDone(filename, app, appBackupIds, callback) {
+    assert.strictEqual(typeof filename, 'string');
+    assert(!app || typeof app === 'object');
+    assert(!appBackupIds || Array.isArray(appBackupIds));
+    assert.strictEqual(typeof callback, 'function');
 
     callback(new Error('not implemented'));
 }
