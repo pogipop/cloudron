@@ -3,6 +3,7 @@
 exports = module.exports = {
     activate: activate,
     dnsSetup: dnsSetup,
+    dnsReady: dnsReady,
     setupTokenAuth: setupTokenAuth,
     getStatus: getStatus,
     reboot: reboot,
@@ -16,6 +17,7 @@ exports = module.exports = {
 
 var assert = require('assert'),
     async = require('async'),
+    certificates = require('../certificates.js'),
     cloudron = require('../cloudron.js'),
     CloudronError = cloudron.CloudronError,
     config = require('../config.js'),
@@ -103,6 +105,17 @@ function dnsSetup(req, res, next) {
             next(new HttpSuccess(200));
         });
     });
+}
+
+function dnsReady(req, res, next) {
+    if (config.provider() === 'caas') return next(new HttpError(410, 'Not availabe for caas'));
+
+    if (!config.fqdn()) return next(new HttpSuccess(200, { domain: false, ssl: false, dns: false }));
+    if (!certificates.adminCertificateExists()) return next(new HttpSuccess(200, { domain: true, ssl: false, dns: false }));
+
+    // TODO also check for DNS
+
+    next(new HttpSuccess(200, { domain: true, ssl: true, dns: false }));
 }
 
 function setupTokenAuth(req, res, next) {

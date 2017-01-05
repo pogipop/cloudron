@@ -9,6 +9,7 @@ exports = module.exports = {
     validateCertificate: validateCertificate,
     ensureCertificate: ensureCertificate,
     getAdminCertificatePath: getAdminCertificatePath,
+    adminCertificateExists: adminCertificateExists,
 
     // exported for testing
     _getApi: getApi
@@ -325,6 +326,14 @@ function getAdminCertificatePath(callback) {
     if (fs.existsSync(certFilePath) && fs.existsSync(keyFilePath)) return callback(null, certFilePath, keyFilePath);
 
     getFallbackCertificatePath(callback);
+}
+
+function adminCertificateExists() {
+    var vhost = config.adminFqdn();
+    var certFilePath = path.join(paths.APP_CERTS_DIR, vhost + '.cert');
+    var keyFilePath = path.join(paths.APP_CERTS_DIR, vhost + '.key');
+
+    return (fs.existsSync(certFilePath) && fs.existsSync(keyFilePath));
 }
 
 function ensureCertificate(app, callback) {

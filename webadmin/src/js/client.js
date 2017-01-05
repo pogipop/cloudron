@@ -616,9 +616,16 @@ angular.module('Application').service('Client', ['$http', 'md5', 'Notification',
     };
 
     Client.prototype.setupDnsConfig = function (dnsConfig, callback) {
-        post('/api/v1/cloudron/setup_dns', dnsConfig).success(function(data, status) {
+        post('/api/v1/cloudron/dns_setup', dnsConfig).success(function(data, status) {
             if (status !== 200) return callback(new ClientError(status, data));
             callback(null);
+        }).error(defaultErrorHandler(callback));
+    };
+
+    Client.prototype.getDnsReady = function (callback) {
+        get('/api/v1/cloudron/dns_ready').success(function(data, status) {
+            if (status !== 200) return callback(new ClientError(status, data));
+            callback(null, data);
         }).error(defaultErrorHandler(callback));
     };
 
