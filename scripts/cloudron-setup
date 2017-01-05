@@ -101,13 +101,13 @@ echo " Join us at https://chat.cloudron.io for any questions."
 echo ""
 
 if [[ "${initBaseImage}" == "true" ]]; then
-    echo "=> Updating apt and installing curl"
+    echo "=> Updating apt and installing script dependancies"
     if ! apt-get update &>> "${LOG_FILE}"; then
         echo "Could not update package repositories"
         exit 1
     fi
 
-    if ! apt-get install curl python3 -y &>> "${LOG_FILE}"; then
+    if ! apt-get install curl python3 ubuntu-standard -y &>> "${LOG_FILE}"; then
         echo "Could not install setup dependencies (curl)"
         exit 1
     fi
