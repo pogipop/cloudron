@@ -110,9 +110,12 @@ echo "==> Ensuring directories"
 [[ "${is_update}" == "false" ]] && btrfs subvolume create "${DATA_DIR}/box"
 mkdir -p "${DATA_DIR}/box/appicons"
 mkdir -p "${DATA_DIR}/box/certs"
-mkdir -p "${DATA_DIR}/box/mail/dkim/${arg_fqdn}"
 mkdir -p "${DATA_DIR}/box/acme" # acme keys
 mkdir -p "${DATA_DIR}/graphite"
+
+if [[ -n "${arg_fqdn}" ]]; then
+    mkdir -p "${DATA_DIR}/box/mail/dkim/${arg_fqdn}"
+fi
 
 mkdir -p "${DATA_DIR}/mysql"
 mkdir -p "${DATA_DIR}/postgresql"
@@ -191,7 +194,7 @@ if [[ -f "${DATA_DIR}/box/certs/host.cert" && -f "${DATA_DIR}/box/certs/host.key
 else
     if [[ -z "${arg_tls_cert}" || -z "${arg_tls_key}" ]]; then
         echo "==> Creating fallback certs"
-        openssl req -x509 -newkey rsa:2048 -keyout "${DATA_DIR}/nginx/cert/host.key" -out "${DATA_DIR}/nginx/cert/host.cert" -days 3650 -subj "/CN=${arg_fqdn}" -nodes
+        # openssl req -x509 -newkey rsa:2048 -keyout "${DATA_DIR}/nginx/cert/host.key" -out "${DATA_DIR}/nginx/cert/host.cert" -days 3650 -subj "/CN=${arg_fqdn}" -nodes
     else
         echo "${arg_tls_cert}" > "${DATA_DIR}/nginx/cert/host.cert"
         echo "${arg_tls_key}" > "${DATA_DIR}/nginx/cert/host.key"

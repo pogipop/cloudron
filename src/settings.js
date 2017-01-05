@@ -448,6 +448,9 @@ function setDnsConfig(dnsConfig, callback) {
         settingsdb.set(exports.DNS_CONFIG_KEY, JSON.stringify(credentials), function (error) {
             if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
 
+            // sync the domain to the cloudron.conf
+            if (dnsConfig.domain) config.set('fqdn', dnsConfig.domain);
+
             exports.events.emit(exports.DNS_CONFIG_KEY, dnsConfig);
 
             callback(null);

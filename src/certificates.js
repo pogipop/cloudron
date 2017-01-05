@@ -96,6 +96,9 @@ function installAdminCertificate(callback) {
 
     debug('installAdminCertificate');
 
+    // TODO we should setup the nginx config and cert for ip only in this case
+    if (!config.fqdn()) return callback();
+
     sysinfo.getIp(function (error, ip) {
         if (error) return callback(error);
 
