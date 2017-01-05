@@ -116,8 +116,6 @@ CloudronError.SELF_UPGRADE_NOT_SUPPORTED = 'Self upgrade not supported';
 function initialize(callback) {
     assert.strictEqual(typeof callback, 'function');
 
-    ensureDkimKeySync();
-
     exports.events.on(exports.EVENT_CONFIGURED, addDnsRecords);
 
     if (!fs.existsSync(paths.FIRST_RUN_FILE)) {
@@ -390,23 +388,24 @@ function sendAliveStatus(callback) {
     }
 }
 
-function ensureDkimKeySync() {
+function readDkimPublicKeySync() {
+    if (!config.fqdn()) {
+        debug('Cannot read dkim public key without a domain.', safe.error);
+        return null;
+    }
+
     var dkimPrivateKeyFile = path.join(paths.MAIL_DATA_DIR, 'dkim/' + config.fqdn() + '/private');
     var dkimPublicKeyFile = path.join(paths.MAIL_DATA_DIR, 'dkim/' + config.fqdn() + '/public');
 
-    if (fs.existsSync(dkimPrivateKeyFile) && fs.existsSync(dkimPublicKeyFile)) {
+    if (!fs.existsSync(dkimPrivateKeyFile) || !fs.existsSync(dkimPublicKeyFile)) {
+        debug('Generating new DKIM keys');
+
+        child_process.execSync('openssl genrsa -out ' + dkimPrivateKeyFile + ' 1024');
+        child_process.execSync('openssl rsa -in ' + dkimPrivateKeyFile + ' -out ' + dkimPublicKeyFile + ' -pubout -outform PEM');
+    } else {
         debug('DKIM keys already present');
-        return;
     }
 
-    debug('Generating new DKIM keys');
-
-    child_process.execSync('openssl genrsa -out ' + dkimPrivateKeyFile + ' 1024');
-    child_process.execSync('openssl rsa -in ' + dkimPrivateKeyFile + ' -out ' + dkimPublicKeyFile + ' -pubout -outform PEM');
-}
-
-function readDkimPublicKeySync() {
-    var dkimPublicKeyFile = path.join(paths.MAIL_DATA_DIR, 'dkim/' + config.fqdn() + '/public');
     var publicKey = safe.fs.readFileSync(dkimPublicKeyFile, 'utf8');
 
     if (publicKey === null) {
