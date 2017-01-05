@@ -112,6 +112,7 @@ mkdir -p "${DATA_DIR}/box/appicons"
 mkdir -p "${DATA_DIR}/box/certs"
 mkdir -p "${DATA_DIR}/box/acme" # acme keys
 mkdir -p "${DATA_DIR}/graphite"
+mkdir -p "${DATA_DIR}/box/mail/dkim"
 
 if [[ -n "${arg_fqdn}" ]]; then
     mkdir -p "${DATA_DIR}/box/mail/dkim/${arg_fqdn}"
