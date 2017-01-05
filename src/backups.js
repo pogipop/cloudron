@@ -171,15 +171,15 @@ function getRestoreUrl(backupId, callback) {
     });
 }
 
-function copyLastBackup(app, manifest, callback) {
+function copyLastBackup(app, manifest, tag, callback) {
     assert.strictEqual(typeof app, 'object');
     assert.strictEqual(typeof app.lastBackupId, 'string');
     assert(manifest && typeof manifest === 'object');
+    assert.strictEqual(typeof tag, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    var timestamp = (new Date()).toISOString().replace(/[T.]/g, '-').replace(/:|\..*/g,'');
-    var toFilenameArchive = util.format('app_%s_%s_v%s.tar.gz', app.id, timestamp, manifest.version);
-    var toFilenameConfig = util.format('app_%s_%s_v%s.json', app.id, timestamp, manifest.version);
+    var toFilenameArchive = util.format('%s/app_%s_%s_v%s.tar.gz', tag, app.id, manifest.version);
+    var toFilenameConfig = util.format('%s/app_%s_%s_v%s.json', tag, app.id, manifest.version);
 
     settings.getBackupConfig(function (error, backupConfig) {
         if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
@@ -203,11 +203,11 @@ function copyLastBackup(app, manifest, callback) {
     });
 }
 
-function backupBoxWithAppBackupIds(appBackupIds, callback) {
+function backupBoxWithAppBackupIds(appBackupIds, tag, callback) {
     assert(util.isArray(appBackupIds));
+    assert.strictEqual(typeof tag, 'string');
 
-    var timestamp = (new Date()).toISOString().replace(/[T.]/g, '-').replace(/:|\..*/g,'');
-    var filebase = util.format('box_%s_v%s', timestamp, config.version());
+    var filebase = util.format('%s/box_%s_v%s', tag, tag, config.version());
     var filename = filebase + '.tar.gz';
 
     settings.getBackupConfig(function (error, backupConfig) {
@@ -245,13 +245,13 @@ function canBackupApp(app) {
             app.installationState === appdb.ISTATE_PENDING_UPDATE; // called from apptask
 }
 
-function createNewAppBackup(app, manifest, callback) {
+function createNewAppBackup(app, manifest, tag, callback) {
     assert.strictEqual(typeof app, 'object');
     assert(manifest && typeof manifest === 'object');
+    assert.strictEqual(typeof tag, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    var timestamp = (new Date()).toISOString().replace(/[T.]/g, '-').replace(/:|\..*/g,'');
-    var filebase = util.format('app_%s_%s_v%s', app.id, timestamp, manifest.version);
+    var filebase = util.format('%s/app_%s_%s_v%s', tag, app.id, tag, manifest.version);
     var configFilename = filebase + '.json', dataFilename = filebase + '.tar.gz';
 
     settings.getBackupConfig(function (error, backupConfig) {
@@ -293,12 +293,15 @@ function setRestorePoint(appId, lastBackupId, callback) {
     });
 }
 
-function backupApp(app, manifest, callback) {
+function backupApp(app, manifest, tag, callback) {
     assert.strictEqual(typeof app, 'object');
     assert(manifest && typeof manifest === 'object');
+    assert(tag === null || typeof tag === 'string');
     assert.strictEqual(typeof callback, 'function');
 
     var backupFunction;
+
+    if (!tag) tag = (new Date()).toISOString().replace(/[T.]/g, '-').replace(/:|\..*/g,'');
 
     if (!canBackupApp(app)) {
         if (!app.lastBackupId) {
@@ -308,11 +311,11 @@ function backupApp(app, manifest, callback) {
 
         // set the 'creation' date of lastBackup so that the backup persists across time based archival rules
         // s3 does not allow changing creation time, so copying the last backup is easy way out for now
-        backupFunction = copyLastBackup.bind(null, app, manifest);
+        backupFunction = copyLastBackup.bind(null, app, manifest, tag);
     } else {
         var appConfig = apps.getAppConfig(app);
         appConfig.manifest = manifest;
-        backupFunction = createNewAppBackup.bind(null, app, manifest);
+        backupFunction = createNewAppBackup.bind(null, app, manifest, tag);
 
         if (!safe.fs.writeFileSync(path.join(paths.DATA_DIR, app.id + '/config.json'), JSON.stringify(appConfig), 'utf8')) {
             return callback(safe.error);
@@ -338,6 +341,8 @@ function backupBoxAndApps(auditSource, callback) {
 
     callback = callback || NOOP_CALLBACK;
 
+    var tag = (new Date()).toISOString().replace(/[T.]/g, '-').replace(/:|\..*/g,'');
+
     eventlog.add(eventlog.ACTION_BACKUP_START, auditSource, { });
 
     apps.getAll(function (error, allApps) {
@@ -351,7 +356,7 @@ function backupBoxAndApps(auditSource, callback) {
         async.mapSeries(allApps, function iterator(app, iteratorCallback) {
             ++processed;
 
-            backupApp(app, app.manifest, function (error, backupId) {
+            backupApp(app, app.manifest, tag, function (error, backupId) {
                 if (error && error.reason !== BackupsError.BAD_STATE) {
                     debugApp(app, 'Unable to backup', error);
                     return iteratorCallback(error);
@@ -369,7 +374,7 @@ function backupBoxAndApps(auditSource, callback) {
 
             backupIds = backupIds.filter(function (id) { return id !== null; }); // remove apps in bad state that were never backed up
 
-            backupBoxWithAppBackupIds(backupIds, function (error, filename) {
+            backupBoxWithAppBackupIds(backupIds, tag, function (error, filename) {
                 progress.set(progress.BACKUP, 100, error ? error.message : '');
 
                 eventlog.add(eventlog.ACTION_BACKUP_FINISH, auditSource, { errorMessage: error ? error.message : null, filename: filename });
