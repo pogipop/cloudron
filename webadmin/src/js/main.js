@@ -140,7 +140,7 @@ angular.module('Application').controller('MainController', ['$scope', '$route', 
         if (error) return $scope.error(error);
 
         if (!status.activated) {
-            window.location.href = '/setup.html';
+            window.location.href = status.provider === 'caas' ? '/setup.html' : '/setupdns.html';
             return;
         }
 
