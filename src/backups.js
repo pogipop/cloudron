@@ -301,7 +301,7 @@ function backupApp(app, manifest, tag, callback) {
 
     var backupFunction;
 
-    if (!tag) tag = (new Date()).toISOString().replace(/[T.]/g, '-').replace(/:|\..*/g,'');
+    if (!tag) tag = (new Date()).toISOString().replace(/[T.]/g, '-').replace(/[:Z]/g,'');
 
     if (!canBackupApp(app)) {
         if (!app.lastBackupId) {
@@ -341,7 +341,7 @@ function backupBoxAndApps(auditSource, callback) {
 
     callback = callback || NOOP_CALLBACK;
 
-    var tag = (new Date()).toISOString().replace(/[T.]/g, '-').replace(/:|\..*/g,'');
+    var tag = (new Date()).toISOString().replace(/[T.]/g, '-').replace(/[:Z]/g,'');
 
     eventlog.add(eventlog.ACTION_BACKUP_START, auditSource, { });
 
