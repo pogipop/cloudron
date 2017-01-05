@@ -177,7 +177,7 @@ function copyLastBackup(app, manifest, callback) {
     assert(manifest && typeof manifest === 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    var timestamp = (new Date()).toISOString().replace('T', '-').replace(/:|\..*/g,'');
+    var timestamp = (new Date()).toISOString().replace(/[T.]/g, '-').replace(/:|\..*/g,'');
     var toFilenameArchive = util.format('app_%s_%s_v%s.tar.gz', app.id, timestamp, manifest.version);
     var toFilenameConfig = util.format('app_%s_%s_v%s.json', app.id, timestamp, manifest.version);
 
@@ -206,7 +206,7 @@ function copyLastBackup(app, manifest, callback) {
 function backupBoxWithAppBackupIds(appBackupIds, callback) {
     assert(util.isArray(appBackupIds));
 
-    var timestamp = (new Date()).toISOString().replace('T', '-').replace(/:|\..*/g,'');
+    var timestamp = (new Date()).toISOString().replace(/[T.]/g, '-').replace(/:|\..*/g,'');
     var filebase = util.format('box_%s_v%s', timestamp, config.version());
     var filename = filebase + '.tar.gz';
 
@@ -250,7 +250,7 @@ function createNewAppBackup(app, manifest, callback) {
     assert(manifest && typeof manifest === 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    var timestamp = (new Date()).toISOString().replace('T', '-').replace(/:|\..*/g,'');
+    var timestamp = (new Date()).toISOString().replace(/[T.]/g, '-').replace(/:|\..*/g,'');
     var filebase = util.format('app_%s_%s_v%s', app.id, timestamp, manifest.version);
     var configFilename = filebase + '.json', dataFilename = filebase + '.tar.gz';
 
