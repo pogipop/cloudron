@@ -47,8 +47,8 @@
                 <div class="card" style="max-width: none; padding: 20px;">
                     <form name="dnsCredentialsForm" role="form" novalidate ng-submit="setDnsCredentials()" autocomplete="off">
                         <div class="row">
-                            <div class="col-md-12 text-center">
-                                <h1>Domain Setup</h1>
+                            <div class="col-md-10 col-md-offset-1 text-center">
+                                <h1>DNS Setup</h1>
                                 <h3>Specify the domain for your Cloudron</h3>
                                 <div class="form-group" ng-class="{ 'has-error': dnsCredentialsForm.domain.$dirty && dnsCredentialsForm.domain.$invalid }">
                                     <input type="text" class="form-control" ng-model="dnsCredentials.domain" name="domain" ng-minlength="4" ng-maxlength="128" placeholder="example.com" required autofocus ng-disabled="dnsCredentials.busy">
@@ -57,7 +57,7 @@
                             </div>
                         </div>
                         <div class="row">
-                            <div class="col-md-12 text-center">
+                            <div class="col-md-10 col-md-offset-1 text-center">
                                 <h3>DNS Provider Configuration</h3>
                                 <p class="has-error text-center" ng-show="dnsCredentials.error">{{ dnsCredentials.error }}</p>
 
@@ -91,7 +91,7 @@
                         </div>
                         <div class="row">
                             <div class="col-md-12 text-center">
-                                <button type="submit" class="btn btn-primary" ng-disabled="dnsCredentialsForm.$invalid"/><i class="fa fa-cog fa-spin" ng-show="dnsCredentials.busy"></i> Done</button>
+                                <button type="submit" class="btn btn-primary" ng-disabled="dnsCredentialsForm.$invalid"/><i class="fa fa-cog fa-spin" ng-show="dnsCredentials.busy"></i> Next</button>
                             </div>
                         </div>
                     </form>

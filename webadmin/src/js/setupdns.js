@@ -55,7 +55,7 @@ app.controller('SetupDNSController', ['$scope', '$http', 'Client', function ($sc
             setTimeout(function () {
                 // TODO wait until domain is propagated and cert got acquired
                 window.location.href = 'https://my.' + $scope.dnsCredentials.domain + '/setup.html';
-            }, 5000);
+            }, 10000);
         });
     };
 
