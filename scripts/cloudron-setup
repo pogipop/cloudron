@@ -100,6 +100,19 @@ echo ""
 echo " Join us at https://chat.cloudron.io for any questions."
 echo ""
 
+if [[ "${initBaseImage}" == "true" ]]; then
+    echo "=> Updating apt and installing curl"
+    if ! apt-get update &>> "${LOG_FILE}"; then
+        echo "Could not update package repositories"
+        exit 1
+    fi
+
+    if ! apt-get install curl python3 -y &>> "${LOG_FILE}"; then
+        echo "Could not install setup dependencies (curl)"
+        exit 1
+    fi
+fi
+
 echo "=> Checking version"
 releaseJson=$(curl -s "${versionsUrl}")
 if [[ "$requestedVersion" == "latest" ]]; then
@@ -166,16 +179,6 @@ fi
 
 if [[ "${initBaseImage}" == "true" ]]; then
     echo "=> Installing base dependencies (this takes some time) ..."
-    if ! apt-get update &>> "${LOG_FILE}"; then
-        echo "Could not update package repositories"
-        exit 1
-    fi
-
-    if ! apt-get install curl -y &>> "${LOG_FILE}"; then
-        echo "Could not install setup dependencies (curl)"
-        exit 1
-    fi
-
     if ! /bin/bash "${box_src_tmp_dir}/baseimage/initializeBaseUbuntuImage.sh" "${provider}" &>> "${LOG_FILE}"; then
         echo "Init script failed. See ${LOG_FILE} for details"
         exit 1
@@ -197,10 +200,10 @@ while true; do
     sleep 10
 done
 
-echo -e "\n\nRebooting this server now to let bootloader changes take effect.\n"
-echo -e "Visit https://my.${domain} to finish setup once the server has rebooted.\n"
-
 if [[ "${initBaseImage}" == "true" ]]; then
+    echo -e "\n\nRebooting this server now to let bootloader changes take effect.\n"
     systemctl reboot
 fi
+
+echo -e "Visit https://my.${domain} to finish setup once the server has rebooted.\n"
 
