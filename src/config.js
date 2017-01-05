@@ -35,6 +35,9 @@ exports = module.exports = {
     isDev: isDev,
     isDemo: isDemo,
 
+    tlsCert: tlsCert,
+    tlsKey: tlsKey,
+
     // for testing resets to defaults
     _reset: _reset
 };
@@ -215,4 +218,14 @@ function isDemo() {
 
 function provider() {
     return get('provider');
+}
+
+function tlsCert() {
+    var certFile = path.join(baseDir(), 'configs/host.cert');
+    return safe.fs.readFileSync(certFile, 'utf8');
+}
+
+function tlsKey() {
+    var keyFile = path.join(baseDir(), 'configs/host.key');
+    return safe.fs.readFileSync(keyFile, 'utf8');
 }

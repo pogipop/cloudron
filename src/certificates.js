@@ -1,6 +1,8 @@
 'use strict';
 
 exports = module.exports = {
+    initialize: initialize,
+
     installAdminCertificate: installAdminCertificate,
     renewAll: renewAll,
     setFallbackCertificate: setFallbackCertificate,
@@ -92,11 +94,46 @@ function getApi(app, callback) {
     });
 }
 
+function initialize(callback) {
+    // ensure a fallback certificate that much of our code requires
+    var certFilePath = path.join(paths.APP_CERTS_DIR, 'host.cert');
+    var keyFilePath = path.join(paths.APP_CERTS_DIR, 'host.key');
+
+    var fallbackCertPath = path.join(paths.NGINX_CERT_DIR, 'host.cert');
+    var fallbackKeyPath = path.join(paths.NGINX_CERT_DIR, 'host.key');
+
+    if (fs.existsSync(certFilePath) && fs.existsSync(keyFilePath)) { // user's custom fallback certs (when restoring, updating)
+        debug('ensureFallbackCertificate: using fallback certs provided by user');
+        if (!safe.child_process.execSync('cp ' + certFilePath + ' ' + fallbackCertPath)) return callback(new CertificatesError(CertificatesError.INTERNAL_ERROR, safe.error.message));
+        if (!safe.child_process.execSync('cp ' + keyFilePath + ' ' + fallbackKeyPath)) return callback(new CertificatesError(CertificatesError.INTERNAL_ERROR, safe.error.message));
+
+        return callback();
+    }
+
+    if (config.tlsCert() && config.tlsKey()) { // cert from CaaS or cloudron-setup
+        debug('ensureFallbackCertificate: using CaaS/cloudron-setup fallback certs');
+        if (!safe.fs.writeFileSync(fallbackCertPath, config.tlsCert())) return callback(new CertificatesError(CertificatesError.INTERNAL_ERROR, safe.error.message));
+        if (!safe.fs.writeFileSync(fallbackKeyPath, config.tlsKey())) return callback(new CertificatesError(CertificatesError.INTERNAL_ERROR, safe.error.message));
+
+        return callback();
+    }
+
+    // generate a self-signed cert (FIXME: this cert does not cover the naked domain. needs SAN)
+    if (config.fqdn()) {
+        debug('ensureFallbackCertificate: generating self-signed certificate');
+        var certCommand = util.format('openssl req -x509 -newkey rsa:2048 -keyout %s -out %s -days 3650 -subj /CN=*.%s -nodes', fallbackKeyPath, fallbackCertPath, config.fqdn());
+        safe.child_process.execSync(certCommand);
+    } else {
+        debug('ensureFallbackCertificate: skip generating self-signed certificate (no domain set)');
+    }
+
+    return callback();
+}
+
 function installAdminCertificate(callback) {
     if (process.env.BOX_ENV === 'test') return callback();
 
     debug('installAdminCertificate');
-
 
     sysinfo.getIp(function (error, ip) {
         if (error) return callback(error);

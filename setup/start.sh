@@ -145,7 +145,6 @@ setfacl -n -m u:yellowtent:r /var/log/journal/*/system.journal
 
 echo "==> Creating config directory"
 rm -rf "${CONFIG_DIR}" && mkdir "${CONFIG_DIR}"
-chown yellowtent:yellowtent "${CONFIG_DIR}"
 
 echo "==> Adding systemd services"
 cp -r "${script_dir}/start/systemd/." /etc/systemd/system/
@@ -175,34 +174,9 @@ echo "==> Configuring nginx"
 unlink /etc/nginx 2>/dev/null || rm -rf /etc/nginx
 ln -s "${DATA_DIR}/nginx" /etc/nginx
 mkdir -p "${DATA_DIR}/nginx/applications"
+mkdir -p "${DATA_DIR}/nginx/cert"
 cp "${script_dir}/start/nginx/nginx.conf" "${DATA_DIR}/nginx/nginx.conf"
 cp "${script_dir}/start/nginx/mime.types" "${DATA_DIR}/nginx/mime.types"
-
-# generate these for update code paths as well to overwrite splash
-admin_cert_file="${DATA_DIR}/nginx/cert/host.cert"
-admin_key_file="${DATA_DIR}/nginx/cert/host.key"
-if [[ -f "${DATA_DIR}/box/certs/${admin_fqdn}.cert" && -f "${DATA_DIR}/box/certs/${admin_fqdn}.key" ]]; then
-    admin_cert_file="${DATA_DIR}/box/certs/${admin_fqdn}.cert"
-    admin_key_file="${DATA_DIR}/box/certs/${admin_fqdn}.key"
-fi
-${BOX_SRC_DIR}/node_modules/.bin/ejs-cli -f "${script_dir}/start/nginx/appconfig.ejs" \
-    -O "{ \"vhost\": \"${admin_fqdn}\", \"adminOrigin\": \"${admin_origin}\", \"endpoint\": \"admin\", \"sourceDir\": \"${BOX_SRC_DIR}\", \"certFilePath\": \"${admin_cert_file}\", \"keyFilePath\": \"${admin_key_file}\", \"xFrameOptions\": \"SAMEORIGIN\" }" > "${DATA_DIR}/nginx/applications/admin.conf"
-
-mkdir -p "${DATA_DIR}/nginx/cert"
-if [[ -f "${DATA_DIR}/box/certs/host.cert" && -f "${DATA_DIR}/box/certs/host.key" ]]; then
-    cp "${DATA_DIR}/box/certs/host.cert" "${DATA_DIR}/nginx/cert/host.cert"
-    cp "${DATA_DIR}/box/certs/host.key" "${DATA_DIR}/nginx/cert/host.key"
-else
-    if [[ -z "${arg_tls_cert}" || -z "${arg_tls_key}" ]]; then
-        if [[ -n "${arg_fqdn}" ]]; then
-            echo "==> Creating fallback certs"
-            openssl req -x509 -newkey rsa:2048 -keyout "${DATA_DIR}/nginx/cert/host.key" -out "${DATA_DIR}/nginx/cert/host.cert" -days 3650 -subj "/CN=${arg_fqdn}" -nodes
-        fi
-    else
-        echo "${arg_tls_cert}" > "${DATA_DIR}/nginx/cert/host.cert"
-        echo "${arg_tls_key}" > "${DATA_DIR}/nginx/cert/host.key"
-    fi
-fi
 
 # bookkeep the version as part of data
 echo "{ \"version\": \"${arg_version}\", \"boxVersionsUrl\": \"${arg_box_versions_url}\" }" > "${DATA_DIR}/box/version"
@@ -272,6 +246,11 @@ cat > "${CONFIG_DIR}/cloudron.conf" <<CONF_END
     "appBundle": ${arg_app_bundle}
 }
 CONF_END
+# pass these out-of-band because they have new lines which interfere with json
+if [[ -n "${arg_tls_cert}" && -n "${arg_tls_key}" ]]; then
+    echo "${arg_tls_cert}" > "${CONFIG_DIR}/host.cert"
+    echo "${arg_tls_key}" > "${CONFIG_DIR}/host.key"
+fi
 
 echo "==> Creating config.json for webadmin"
 cat > "${BOX_SRC_DIR}/webadmin/dist/config.json" <<CONF_END
@@ -281,7 +260,7 @@ cat > "${BOX_SRC_DIR}/webadmin/dist/config.json" <<CONF_END
 CONF_END
 
 echo "==> Changing ownership"
-chown "${USER}:${USER}" "${CONFIG_DIR}/cloudron.conf"
+chown "${USER}:${USER}" -R "${CONFIG_DIR}"
 chown "${USER}:${USER}" -R "${DATA_DIR}/nginx" "${DATA_DIR}/collectd" "${DATA_DIR}/addons" "${DATA_DIR}/acme"
 # during updates, do not trample mail ownership behind the the mail container's back
 find "${DATA_DIR}/box" -mindepth 1 -maxdepth 1 -not -path "${DATA_DIR}/box/mail" -print0 | xargs -0 chown -R "${USER}:${USER}"
@@ -328,8 +307,5 @@ set_progress "60" "Starting Cloudron"
 systemctl start cloudron.target
 
 sleep 2 # give systemd sometime to start the processes
-
-set_progress "80" "Reloading nginx"
-nginx -s reload
 
 set_progress "100" "Done"

@@ -641,8 +641,8 @@ function doUpdate(boxUpdateInfo, callback) {
             apiServerOrigin: config.apiServerOrigin(),
             webServerOrigin: config.webServerOrigin(),
             fqdn: config.fqdn(),
-            tlsCert: fs.readFileSync(path.join(paths.NGINX_CERT_DIR, 'host.cert'), 'utf8'),
-            tlsKey: fs.readFileSync(path.join(paths.NGINX_CERT_DIR, 'host.key'), 'utf8'),
+            tlsCert: config.tlsCert(),
+            tlsKey: config.tlsKey(),
             isCustomDomain: config.isCustomDomain(),
             isDemo: config.isDemo(),
 
