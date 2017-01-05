@@ -19,6 +19,7 @@ exports = module.exports = {
 var assert = require('assert'),
     AWS = require('aws-sdk'),
     config = require('../config.js'),
+    debug = require('debug')('box:storage/caas'),
     safe = require('safetydance'),
     SettingsError = require('../settings.js').SettingsError,
     superagent = require('superagent');
@@ -192,6 +193,22 @@ function backupDone(filename, app, appBackupIds, callback) {
     assert(!appBackupIds || Array.isArray(appBackupIds));
     assert.strictEqual(typeof callback, 'function');
 
-    callback();
-}
+    debug('backupDone %s', filename);
 
+    var url = config.apiServerOrigin() + '/api/v1/boxes/' + config.fqdn() + '/backupDone';
+    var data = {
+        boxVersion: config.version(),
+        restoreKey: filename,
+        appId: app ? app.id : null,
+        appVersion: app ? app.manifest.version : null,
+        appBackupIds: appBackupIds
+    };
+
+    superagent.post(url).send(data).query({ token: config.token() }).timeout(30 * 1000).end(function (error, result) {
+        if (error && !error.response) return callback(error);
+        if (result.statusCode !== 200) return callback(new Error(result.text));
+        if (!result.body) return callback(new Error('Unexpected response'));
+
+        return callback(null);
+    });
+}

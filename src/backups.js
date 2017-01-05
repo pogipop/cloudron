@@ -46,8 +46,7 @@ var addons = require('./addons.js'),
     shell = require('./shell.js'),
     settings = require('./settings.js'),
     SettingsError = require('./settings.js').SettingsError,
-    util = require('util'),
-    webhooks = require('./webhooks.js');
+    util = require('util');
 
 var BACKUP_BOX_CMD = path.join(__dirname, 'scripts/backupbox.sh'),
     BACKUP_APP_CMD = path.join(__dirname, 'scripts/backupapp.sh'),
@@ -227,7 +226,7 @@ function backupBoxWithAppBackupIds(appBackupIds, callback) {
                 backupdb.add({ id: filename, version: config.version(), type: backupdb.BACKUP_TYPE_BOX, dependsOn: appBackupIds }, function (error) {
                     if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
 
-                    webhooks.backupDone(filename, null /* app */, appBackupIds, function (error) {
+                    api(backupConfig.provider).backupDone(filename, null /* app */, appBackupIds, function (error) {
                         if (error) return callback(error);
                         callback(null, filename);
                     });
