@@ -22,29 +22,12 @@ app.controller('SetupController', ['$scope', '$http', 'Client', function ($scope
     $scope.setupToken = '';
     $scope.createAppstoreAccount = true;
 
-    $scope.showDNSSetup = false;
-    $scope.dnsProvider = [
-        { name: 'Manual/Wildcard', value: 'manual' },
-        { name: 'Wildcard', value: 'wildcard' },
-        { name: 'No-op', value: 'noop' },
-        { name: 'AWS Route53', value: 'route53' },
-        { name: 'Digital Ocean', value: 'digitalocean' }
-    ];
-    $scope.dnsCredentials = {
-        error: null,
-        busy: false,
-        domain: '',
-        accessKeyId: '',
-        secretAccessKey: '',
-        digitalOceanToken: '',
-        provider: 'route53'
-    };
-
     $scope.activateCloudron = function () {
         $scope.busy = true;
 
         function registerAppstoreAccountIfNeeded(callback) {
             if (!$scope.createAppstoreAccount) return callback(null);
+            if ($scope.provider === 'caas') return callback(null);
 
             $http.post($scope.apiServerOrigin + '/api/v1/users', { email: $scope.account.email, password: $scope.account.password }).success(function (data, status) {
                 if (status !== 201) return callback({ status: status, data: data });
@@ -63,49 +46,11 @@ app.controller('SetupController', ['$scope', '$http', 'Client', function ($scope
                 return;
             }
 
-            // for caas we are done here
-            if ($scope.provider === 'caas') {
-                window.location.href = '/';
-                return;
-            }
-
             registerAppstoreAccountIfNeeded(function (error) {
                 if (error) console.error('Unable to create appstore account.', error);  // this is not fatal
 
-                $scope.busy = false;
-                $scope.showDNSSetup = true;
+                window.location.href = '/';
             });
-        });
-    };
-
-    $scope.setDNSCredentials = function () {
-        $scope.busy = true;
-
-        var data = {
-            domain: $scope.dnsCredentials.domain,
-            provider: $scope.dnsCredentials.provider,
-            accessKeyId: $scope.dnsCredentials.accessKeyId,
-            secretAccessKey: $scope.dnsCredentials.secretAccessKey,
-            token: $scope.dnsCredentials.digitalOceanToken
-        };
-
-        // special case the wildcard provider
-        if (data.provider === 'wildcard') {
-            data.provider = 'manual';
-            data.wildcard = true;
-        }
-
-        Client.setDnsConfig(data, function (error) {
-            if (error) {
-                $scope.busy = false;
-                $scope.dnsCredentials.error = error.message;
-                return;
-            }
-
-            setTimeout(function () {
-                // TODO wait until domain is propagated and cert got acquired
-                window.location.href = 'https://my.' + $scope.dnsCredentials.domain;
-            }, 5000);
         });
     };
 
