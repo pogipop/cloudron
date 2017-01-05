@@ -3,7 +3,7 @@
 // create main application module
 var app = angular.module('Application', ['angular-md5', 'ui-notification']);
 
-app.controller('SetupController', ['$scope', '$http', 'Client', function ($scope, $http, Client) {
+app.controller('SetupDNSController', ['$scope', '$http', 'Client', function ($scope, $http, Client) {
     $scope.initialized = false;
     $scope.busy = false;
     $scope.error = null;
@@ -43,7 +43,7 @@ app.controller('SetupController', ['$scope', '$http', 'Client', function ($scope
             data.wildcard = true;
         }
 
-        Client.setDnsConfig(data, function (error) {
+        Client.setupDnsConfig(data, function (error) {
             if (error) {
                 $scope.busy = false;
                 $scope.dnsCredentials.error = error.message;
@@ -52,7 +52,7 @@ app.controller('SetupController', ['$scope', '$http', 'Client', function ($scope
 
             setTimeout(function () {
                 // TODO wait until domain is propagated and cert got acquired
-                window.location.href = 'https://my.' + $scope.dnsCredentials.domain;
+                window.location.href = 'https://my.' + $scope.dnsCredentials.domain + '/setup.html';
             }, 5000);
         });
     };
