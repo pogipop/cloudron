@@ -178,8 +178,8 @@ function copyLastBackup(app, manifest, tag, callback) {
     assert.strictEqual(typeof tag, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    var toFilenameArchive = util.format('%s/app_%s_%s_v%s.tar.gz', tag, app.id, manifest.version);
-    var toFilenameConfig = util.format('%s/app_%s_%s_v%s.json', tag, app.id, manifest.version);
+    var toFilenameArchive = util.format('%s/app_%s_%s_v%s.tar.gz', tag, app.id, tag, manifest.version);
+    var toFilenameConfig = util.format('%s/app_%s_%s_v%s.json', tag, app.id, tag, manifest.version);
 
     settings.getBackupConfig(function (error, backupConfig) {
         if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));

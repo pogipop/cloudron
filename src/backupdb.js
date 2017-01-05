@@ -51,7 +51,7 @@ function getByAppIdPaged(page, perPage, appId, callback) {
 
     // box versions (0.93.x and below) used to use appbackup_ prefix
     database.query('SELECT ' + BACKUPS_FIELDS + ' FROM backups WHERE type = ? AND state = ? AND id LIKE ? ORDER BY creationTime DESC LIMIT ?,?',
-        [ exports.BACKUP_TYPE_APP, exports.BACKUP_STATE_NORMAL, 'app%\\_' + appId + '\\_%', (page-1)*perPage, perPage ], function (error, results) {
+        [ exports.BACKUP_TYPE_APP, exports.BACKUP_STATE_NORMAL, '%app%\\_' + appId + '\\_%', (page-1)*perPage, perPage ], function (error, results) {
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
 
         results.forEach(function (result) { postProcess(result); });
