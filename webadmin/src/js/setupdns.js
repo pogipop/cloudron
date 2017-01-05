@@ -70,6 +70,8 @@ app.controller('SetupDNSController', ['$scope', '$http', 'Client', function ($sc
             return;
         }
 
+        if (status.provider === 'digitalocean') $scope.dnsCredentials.provider = 'digitalocean';
+
         $scope.provider = status.provider;
         $scope.initialized = true;
     });
