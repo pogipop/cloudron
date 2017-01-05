@@ -10,11 +10,11 @@ app.controller('SetupDNSController', ['$scope', '$http', 'Client', function ($sc
     $scope.provider = '';
     $scope.showDNSSetup = false;
     $scope.dnsProvider = [
-        { name: 'Manual/Wildcard', value: 'manual' },
-        { name: 'Wildcard', value: 'wildcard' },
-        { name: 'No-op', value: 'noop' },
         { name: 'AWS Route53', value: 'route53' },
-        { name: 'Digital Ocean', value: 'digitalocean' }
+        { name: 'Digital Ocean', value: 'digitalocean' },
+        { name: 'Manual', value: 'manual' },
+        { name: 'Wildcard', value: 'wildcard' },
+        { name: 'No-op (only for development)', value: 'noop' }
     ];
     $scope.dnsCredentials = {
         error: null,
