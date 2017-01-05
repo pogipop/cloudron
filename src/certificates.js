@@ -96,24 +96,33 @@ function installAdminCertificate(callback) {
 
     debug('installAdminCertificate');
 
-    // TODO we should setup the nginx config and cert for ip only in this case
-    if (!config.fqdn()) return callback();
 
     sysinfo.getIp(function (error, ip) {
         if (error) return callback(error);
 
-        subdomains.waitForDns(config.adminFqdn(), ip, 'A', { interval: 30000, times: 50000 }, function (error) {
-            if (error) return callback(error);
+        if (!config.fqdn()) {
+            var certFilePath = path.join(paths.APP_CERTS_DIR, ip + '.cert');
+            var keyFilePath = path.join(paths.APP_CERTS_DIR, ip + '.key');
+            var certCommandArgs = util.format('req -x509 -newkey rsa:2048 -keyout %s -out %s -days 3650 -subj /CN=%s -nodes', keyFilePath, certFilePath, ip);
 
-            ensureCertificate({ location: constants.ADMIN_LOCATION }, function (error, certFilePath, keyFilePath) {
-                if (error) { // currently, this can never happen
-                    debug('Error obtaining certificate. Proceed anyway', error);
-                    return callback();
-                }
+            var result = safe.child_process.spawnSync('/usr/bin/openssl', certCommandArgs.split(' '));
+            if (result.status !== 0) return callback(new CertificatesError(CertificatesError.INTERNAL_ERROR, 'unable to create cert for ip'));
 
-                nginx.configureAdmin(certFilePath, keyFilePath, callback);
+            nginx.configureAdmin(certFilePath, keyFilePath, ip, callback);
+        } else {
+            subdomains.waitForDns(config.adminFqdn(), ip, 'A', { interval: 30000, times: 50000 }, function (error) {
+                if (error) return callback(error);
+
+                ensureCertificate({ location: constants.ADMIN_LOCATION }, function (error, certFilePath, keyFilePath) {
+                    if (error) { // currently, this can never happen
+                        debug('Error obtaining certificate. Proceed anyway', error);
+                        return callback();
+                    }
+
+                    nginx.configureAdmin(certFilePath, keyFilePath, config.adminFqdn(), callback);
+                });
             });
-        });
+        }
     });
 }
 
@@ -202,7 +211,7 @@ function renewAll(auditSource, callback) {
 
                     // reconfigure and reload nginx. this is required for the case where we got a renewed cert after fallback
                     var configureFunc = app.location === constants.ADMIN_LOCATION ?
-                        nginx.configureAdmin.bind(null, certFilePath, keyFilePath)
+                        nginx.configureAdmin.bind(null, certFilePath, keyFilePath, config.adminFqdn())
                         : nginx.configureApp.bind(null, app, certFilePath, keyFilePath);
 
                     configureFunc(function (ignoredError) {
@@ -303,7 +312,7 @@ function setAdminCertificate(cert, key, callback) {
     if (!safe.fs.writeFileSync(certFilePath, cert)) return callback(new CertificatesError(CertificatesError.INTERNAL_ERROR, safe.error.message));
     if (!safe.fs.writeFileSync(keyFilePath, key)) return callback(new CertificatesError(CertificatesError.INTERNAL_ERROR, safe.error.message));
 
-    nginx.configureAdmin(certFilePath, keyFilePath, callback);
+    nginx.configureAdmin(certFilePath, keyFilePath, config.adminFqdn(), callback);
 }
 
 function getAdminCertificatePath(callback) {

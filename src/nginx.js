@@ -20,15 +20,16 @@ exports = module.exports = {
 var NGINX_APPCONFIG_EJS = fs.readFileSync(__dirname + '/../setup/start/nginx/appconfig.ejs', { encoding: 'utf8' }),
     RELOAD_NGINX_CMD = path.join(__dirname, 'scripts/reloadnginx.sh');
 
-function configureAdmin(certFilePath, keyFilePath, callback) {
+function configureAdmin(certFilePath, keyFilePath, vhost, callback) {
     assert.strictEqual(typeof certFilePath, 'string');
     assert.strictEqual(typeof keyFilePath, 'string');
+    assert.strictEqual(typeof vhost, 'string');
     assert.strictEqual(typeof callback, 'function');
 
     var data = {
         sourceDir: path.resolve(__dirname, '..'),
         adminOrigin: config.adminOrigin(),
-        vhost: config.adminFqdn(),
+        vhost: vhost,
         endpoint: 'admin',
         certFilePath: certFilePath,
         keyFilePath: keyFilePath,
