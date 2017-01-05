@@ -615,6 +615,13 @@ angular.module('Application').service('Client', ['$http', 'md5', 'Notification',
         }).error(defaultErrorHandler(callback));
     };
 
+    Client.prototype.setupDnsConfig = function (dnsConfig, callback) {
+        post('/api/v1/cloudron/setup_dns', dnsConfig).success(function(data, status) {
+            if (status !== 200) return callback(new ClientError(status, data));
+            callback(null);
+        }).error(defaultErrorHandler(callback));
+    };
+
     Client.prototype.createAdmin = function (username, password, email, displayName, setupToken, callback) {
         var that = this;
 
