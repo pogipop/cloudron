@@ -146,6 +146,8 @@ function isConfigured(callback) {
     // set of rules to see if we have the configs required for cloudron to function
     // note this checks for missing configs and not invalid configs
 
+    if (!config.fqdn()) return callback(null, false);
+
     settings.getDnsConfig(function (error, dnsConfig) {
         if (error) return callback(error);
 
