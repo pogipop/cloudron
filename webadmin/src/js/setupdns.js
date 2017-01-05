@@ -26,8 +26,8 @@ app.controller('SetupDNSController', ['$scope', '$http', 'Client', function ($sc
         provider: 'route53'
     };
 
-    $scope.setDNSCredentials = function () {
-        $scope.busy = true;
+    $scope.setDnsCredentials = function () {
+        $scope.dnsCredentials.busy = true;
 
         var data = {
             domain: $scope.dnsCredentials.domain,
@@ -45,10 +45,12 @@ app.controller('SetupDNSController', ['$scope', '$http', 'Client', function ($sc
 
         Client.setupDnsConfig(data, function (error) {
             if (error) {
-                $scope.busy = false;
+                $scope.dnsCredentials.busy = false;
                 $scope.dnsCredentials.error = error.message;
                 return;
             }
+
+            $scope.busy = true;
 
             setTimeout(function () {
                 // TODO wait until domain is propagated and cert got acquired
