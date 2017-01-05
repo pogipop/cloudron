@@ -394,11 +394,17 @@ function readDkimPublicKeySync() {
         return null;
     }
 
-    var dkimPrivateKeyFile = path.join(paths.MAIL_DATA_DIR, 'dkim/' + config.fqdn() + '/private');
-    var dkimPublicKeyFile = path.join(paths.MAIL_DATA_DIR, 'dkim/' + config.fqdn() + '/public');
+    var dkimPath = path.join(paths.MAIL_DATA_DIR, 'dkim/' + config.fqdn());
+    var dkimPrivateKeyFile = path.join(dkimPath, 'private');
+    var dkimPublicKeyFile = path.join(dkimPath, 'public');
 
     if (!fs.existsSync(dkimPrivateKeyFile) || !fs.existsSync(dkimPublicKeyFile)) {
         debug('Generating new DKIM keys');
+
+        if (!safe.fs.mkdirSync(dkimPath) && safe.error.code !== 'EEXIST') {
+            debug('Error creating dkim.', safe.error);
+            return null;
+        }
 
         child_process.execSync('openssl genrsa -out ' + dkimPrivateKeyFile + ' 1024');
         child_process.execSync('openssl rsa -in ' + dkimPrivateKeyFile + ' -out ' + dkimPublicKeyFile + ' -pubout -outform PEM');
