@@ -2,6 +2,7 @@
 
 exports = module.exports = {
     activate: activate,
+    dnsSetup: dnsSetup,
     setupTokenAuth: setupTokenAuth,
     getStatus: getStatus,
     reboot: reboot,
@@ -23,8 +24,11 @@ var assert = require('assert'),
     HttpSuccess = require('connect-lastmile').HttpSuccess,
     progress = require('../progress.js'),
     mailer = require('../mailer.js'),
+    settings = require('../settings.js'),
+    SettingsError = settings.SettingsError,
     superagent = require('superagent'),
     updateChecker = require('../updatechecker.js'),
+    user = require('../user.js'),
     _ = require('underscore');
 
 function auditSource(req) {
@@ -76,6 +80,27 @@ function activate(req, res, next) {
             if (result.statusCode !== 201) return next(new HttpError(500, result.text || 'Internal error'));
 
             next(new HttpSuccess(201, info));
+        });
+    });
+}
+
+function dnsSetup(req, res, next) {
+    assert.strictEqual(typeof req.body, 'object');
+
+    if (typeof req.body.provider !== 'string') return next(new HttpError(400, 'provider is required'));
+
+    if (config.provider() === 'caas') return next(new HttpError(410, 'Not availabe for caas'));
+
+    // check if already activated
+    user.count(function (error, count) {
+        if (error) return next(new HttpError(500, error));
+        if (count > 0) return next(new HttpError(409, 'Already setup'));
+
+        settings.setDnsConfig(req.body, function (error) {
+            if (error && error.reason === SettingsError.BAD_FIELD) return next(new HttpError(400, error.message));
+            if (error) return next(new HttpError(500, error));
+
+            next(new HttpSuccess(200));
         });
     });
 }
