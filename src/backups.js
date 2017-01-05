@@ -245,22 +245,6 @@ function canBackupApp(app) {
             app.installationState === appdb.ISTATE_PENDING_UPDATE; // called from apptask
 }
 
-// set the 'creation' date of lastBackup so that the backup persists across time based archival rules
-// s3 does not allow changing creation time, so copying the last backup is easy way out for now
-function reuseOldAppBackup(app, manifest, callback) {
-    assert.strictEqual(typeof app.lastBackupId, 'string');
-    assert(manifest && typeof manifest === 'object');
-    assert.strictEqual(typeof callback, 'function');
-
-    copyLastBackup(app, manifest, function (error, newBackupId) {
-        if (error) return callback(error);
-
-        debugApp(app, 'reuseOldAppBackup: reused old backup %s as %s', app.lastBackupId, newBackupId);
-
-        callback(null, newBackupId);
-    });
-}
-
 function createNewAppBackup(app, manifest, callback) {
     assert.strictEqual(typeof app, 'object');
     assert(manifest && typeof manifest === 'object');
@@ -322,7 +306,9 @@ function backupApp(app, manifest, callback) {
             return callback(new BackupsError(BackupsError.BAD_STATE, 'App not healthy and never backed up previously'));
         }
 
-        backupFunction = reuseOldAppBackup.bind(null, app, manifest);
+        // set the 'creation' date of lastBackup so that the backup persists across time based archival rules
+        // s3 does not allow changing creation time, so copying the last backup is easy way out for now
+        backupFunction = copyLastBackup.bind(null, app, manifest);
     } else {
         var appConfig = apps.getAppConfig(app);
         appConfig.manifest = manifest;
