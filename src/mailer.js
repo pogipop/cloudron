@@ -59,7 +59,7 @@ var gMailQueue = [ ],
 function initialize(callback) {
     assert.strictEqual(typeof callback, 'function');
 
-    if (cloudron.isConfiguredSync()) {
+    if (cloudron.getConfigStateSync().configured) {
         checkDns();
     } else {
         cloudron.events.on(cloudron.EVENT_CONFIGURED, checkDns);

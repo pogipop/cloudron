@@ -17,7 +17,6 @@ exports = module.exports = {
     retire: retire,
     migrate: migrate,
 
-    isConfiguredSync: isConfiguredSync,
     getConfigStateSync: getConfigStateSync,
 
     checkDiskSpace: checkDiskSpace,
@@ -88,8 +87,7 @@ const BOX_AND_USER_TEMPLATE = {
 
 var gUpdatingDns = false,                // flag for dns update reentrancy
     gBoxAndUserDetails = null,         // cached cloudron details like region,size...
-    gIsConfigured = null,              // cached configured state so that return value is synchronous. null means we are not initialized yet
-    gConfigState = { domain: false, dns: false, tls: false };
+    gConfigState = { domain: false, dns: false, tls: false, configured: false };
 
 function CloudronError(reason, errorOrMessage) {
     assert.strictEqual(typeof reason, 'string');
@@ -143,10 +141,6 @@ function uninitialize(callback) {
     callback(null);
 }
 
-function isConfiguredSync() {
-    return gIsConfigured === true;
-}
-
 function getConfigStateSync() {
     return gConfigState;
 }
@@ -170,8 +164,6 @@ function isConfigured(callback) {
 }
 
 function syncConfigState(callback) {
-    assert(!gIsConfigured);
-
     callback = callback || NOOP_CALLBACK;
 
     isConfigured(function (error, configured) {
@@ -180,12 +172,11 @@ function syncConfigState(callback) {
         debug('syncConfigState: configured = %s', configured);
 
         if (configured) {
+            gConfigState.configured = true;
             exports.events.emit(exports.EVENT_CONFIGURED);
         } else {
             settings.events.once(settings.DNS_CONFIG_KEY, function () { syncConfigState(); }); // check again later
         }
-
-        gIsConfigured = configured;
 
         callback();
     });

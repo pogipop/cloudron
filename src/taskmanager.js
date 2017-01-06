@@ -77,7 +77,7 @@ function waitForPendingTasks(callback) {
 }
 
 function platformReady() {
-    if (cloudron.isConfiguredSync()) {
+    if (cloudron.getConfigStateSync().configured) {
         debug('platformReady: configured, resuming tasks'); // cloudron-setup script relies on this log message
         resumeTasks();
     } else {
