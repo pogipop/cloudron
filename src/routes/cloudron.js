@@ -3,7 +3,6 @@
 exports = module.exports = {
     activate: activate,
     dnsSetup: dnsSetup,
-    dnsReady: dnsReady,
     setupTokenAuth: setupTokenAuth,
     getStatus: getStatus,
     reboot: reboot,
@@ -98,10 +97,6 @@ function dnsSetup(req, res, next) {
 
         next(new HttpSuccess(200));
     });
-}
-
-function dnsReady(req, res, next) {
-    next(new HttpSuccess(200, cloudron.getConfigStateSync()));
 }
 
 function setupTokenAuth(req, res, next) {
