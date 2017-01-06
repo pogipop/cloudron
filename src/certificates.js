@@ -212,7 +212,7 @@ function renewAll(auditSource, callback) {
 
                     // reconfigure and reload nginx. this is required for the case where we got a renewed cert after fallback
                     var configureFunc = app.location === constants.ADMIN_LOCATION ?
-                        nginx.configureAdmin.bind(null, certFilePath, keyFilePath, config.adminFqdn())
+                        nginx.configureAdmin.bind(null, certFilePath, keyFilePath, constants.NGINX_ADMIN_CONFIG_FILE_NAME, config.adminFqdn())
                         : nginx.configureApp.bind(null, app, certFilePath, keyFilePath);
 
                     configureFunc(function (ignoredError) {
@@ -313,7 +313,7 @@ function setAdminCertificate(cert, key, callback) {
     if (!safe.fs.writeFileSync(certFilePath, cert)) return callback(new CertificatesError(CertificatesError.INTERNAL_ERROR, safe.error.message));
     if (!safe.fs.writeFileSync(keyFilePath, key)) return callback(new CertificatesError(CertificatesError.INTERNAL_ERROR, safe.error.message));
 
-    nginx.configureAdmin(certFilePath, keyFilePath, config.adminFqdn(), callback);
+    nginx.configureAdmin(certFilePath, keyFilePath, constants.NGINX_ADMIN_CONFIG_FILE_NAME, config.adminFqdn(), callback);
 }
 
 function getAdminCertificatePath(callback) {

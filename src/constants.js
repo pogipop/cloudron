@@ -26,6 +26,8 @@ exports = module.exports = {
 
     ADMIN_GROUP_ID: 'admin',
 
+    NGINX_ADMIN_CONFIG_FILE_NAME: 'admin.conf',
+
     GHOST_USER_FILE: '/tmp/cloudron_ghost.json',
 
     DEFAULT_TOKEN_EXPIRATION: 7 * 24 * 60 * 60 * 1000, // 1 week

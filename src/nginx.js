@@ -20,9 +20,10 @@ exports = module.exports = {
 var NGINX_APPCONFIG_EJS = fs.readFileSync(__dirname + '/../setup/start/nginx/appconfig.ejs', { encoding: 'utf8' }),
     RELOAD_NGINX_CMD = path.join(__dirname, 'scripts/reloadnginx.sh');
 
-function configureAdmin(certFilePath, keyFilePath, vhost, callback) {
+function configureAdmin(certFilePath, keyFilePath, configFileName, vhost, callback) {
     assert.strictEqual(typeof certFilePath, 'string');
     assert.strictEqual(typeof keyFilePath, 'string');
+    assert.strictEqual(typeof configFileName, 'string');
     assert.strictEqual(typeof vhost, 'string');
     assert.strictEqual(typeof callback, 'function');
 
@@ -36,7 +37,7 @@ function configureAdmin(certFilePath, keyFilePath, vhost, callback) {
         xFrameOptions: 'SAMEORIGIN'
     };
     var nginxConf = ejs.render(NGINX_APPCONFIG_EJS, data);
-    var nginxConfigFilename = path.join(paths.NGINX_APPCONFIG_DIR, 'admin.conf');
+    var nginxConfigFilename = path.join(paths.NGINX_APPCONFIG_DIR, configFileName);
 
     if (!safe.fs.writeFileSync(nginxConfigFilename, nginxConf)) return callback(safe.error);
 

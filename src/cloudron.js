@@ -194,17 +194,24 @@ function configureAdmin(callback) {
     sysinfo.getIp(function (error, ip) {
         if (error) return callback(error);
 
-        // always setup cert and nginx config for ip
-        // TODO we should only regenerate the cert if the ip changes?
-        var certFilePath = path.join(paths.NGINX_CERT_DIR, IP_BASED_SETUP_NAME + '.cert');
-        var keyFilePath = path.join(paths.NGINX_CERT_DIR, IP_BASED_SETUP_NAME + '.key');
-        var certCommand = util.format('openssl req -x509 -newkey rsa:2048 -keyout %s -out %s -days 3650 -subj /CN=%s -nodes', keyFilePath, certFilePath, ip);
+        var certFilePath = path.join(paths.NGINX_CERT_DIR, IP_BASED_SETUP_NAME + '-' + ip + '.cert');
+        var keyFilePath = path.join(paths.NGINX_CERT_DIR, IP_BASED_SETUP_NAME + '-' + ip + '.key');
 
-        safe.child_process.execSync(certCommand);
+        // check if we already have a cert for this IP, otherwise create one, this is mostly useful for servers with changing IPs
+        if (!fs.existsSync(certFilePath) || !fs.existsSync(keyFilePath)) {
+            debug('configureAdmin: create new cert for %s', ip);
 
-        nginx.configureAdmin(certFilePath, keyFilePath, ip, callback);
+            var certCommand = util.format('openssl req -x509 -newkey rsa:2048 -keyout %s -out %s -days 3650 -subj /CN=%s -nodes', keyFilePath, certFilePath, ip);
+            safe.child_process.execSync(certCommand);
+        }
 
-        if (config.fqdn()) {
+        // always create a configuration for the ip
+        nginx.configureAdmin(certFilePath, keyFilePath, IP_BASED_SETUP_NAME + '.conf', ip, function (error) {
+            if (error) return callback(error);
+
+            // skip my.domain.com setup if we don't have a domain
+            if (!config.fqdn()) return callback(null);
+
             gConfigState.domain = config.fqdn();
 
             subdomains.waitForDns(config.adminFqdn(), ip, 'A', { interval: 30000, times: 50000 }, function (error) {
@@ -220,10 +227,10 @@ function configureAdmin(callback) {
 
                     gConfigState.tls = true;
 
-                    nginx.configureAdmin(certFilePath, keyFilePath, config.adminFqdn(), callback);
+                    nginx.configureAdmin(certFilePath, keyFilePath, constants.NGINX_ADMIN_CONFIG_FILE_NAME, config.adminFqdn(), callback);
                 });
             });
-        }
+        });
     });
 }
 
