@@ -303,7 +303,8 @@ function getStatus(callback) {
                 boxVersionsUrl: config.get('boxVersionsUrl'),
                 apiServerOrigin: config.apiServerOrigin(), // used by CaaS tool
                 provider: config.provider(),
-                cloudronName: cloudronName
+                cloudronName: cloudronName,
+                configState: gConfigState
             });
         });
     });

@@ -52,12 +52,19 @@ app.controller('SetupDNSController', ['$scope', '$http', 'Client', function ($sc
 
             $scope.busy = true;
 
-            setTimeout(function () {
-                // TODO wait until domain is propagated and cert got acquired
-                window.location.href = 'https://my.' + $scope.dnsCredentials.domain + '/setup.html';
-            }, 10000);
-        });
+            waitForDnsSetup();
+       });
     };
+
+    function waitForDnsSetup() {
+        Client.getStatus(function (error, status) {
+            if (!error && status.configState.dns && status.configState.tls) {
+                window.location.href = 'https://my.' + $scope.dnsCredentials.domain + '/setup.html';
+            }
+
+            setTimeout(waitForDnsSetup, 5000);
+        });
+    }
 
     Client.getStatus(function (error, status) {
         if (error) {
