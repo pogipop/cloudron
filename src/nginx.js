@@ -30,7 +30,7 @@ function configureAdmin(certFilePath, keyFilePath, configFileName, vhost, callba
     var data = {
         sourceDir: path.resolve(__dirname, '..'),
         adminOrigin: config.adminOrigin(),
-        vhost: vhost,
+        vhost: vhost, // if vhost is empty it will become the default_server
         endpoint: 'admin',
         certFilePath: certFilePath,
         keyFilePath: keyFilePath,

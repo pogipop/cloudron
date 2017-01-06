@@ -206,7 +206,7 @@ function configureAdmin(callback) {
         }
 
         // always create a configuration for the ip
-        nginx.configureAdmin(certFilePath, keyFilePath, IP_BASED_SETUP_NAME + '.conf', ip, function (error) {
+        nginx.configureAdmin(certFilePath, keyFilePath, IP_BASED_SETUP_NAME + '.conf', '', function (error) {
             if (error) return callback(error);
 
             // skip my.domain.com setup if we don't have a domain
