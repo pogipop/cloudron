@@ -102,8 +102,8 @@ function installAdminCertificate(callback) {
         if (error) return callback(error);
 
         if (!config.fqdn()) {
-            var certFilePath = path.join(paths.APP_CERTS_DIR, ip + '.cert');
-            var keyFilePath = path.join(paths.APP_CERTS_DIR, ip + '.key');
+            var certFilePath = path.join(paths.NGINX_CERT_DIR, ip + '.cert');
+            var keyFilePath = path.join(paths.NGINX_CERT_DIR, ip + '.key');
             var certCommandArgs = util.format('req -x509 -newkey rsa:2048 -keyout %s -out %s -days 3650 -subj /CN=%s -nodes', keyFilePath, certFilePath, ip);
 
             var result = safe.child_process.spawnSync('/usr/bin/openssl', certCommandArgs.split(' '));
