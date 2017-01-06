@@ -24,6 +24,8 @@ exports = module.exports = {
     readDkimPublicKeySync: readDkimPublicKeySync,
     refreshDNS: refreshDNS,
 
+    configureAdmin: configureAdmin,
+
     events: new (require('events').EventEmitter)(),
 
     EVENT_CONFIGURED: 'configured'
@@ -33,6 +35,7 @@ var apps = require('./apps.js'),
     assert = require('assert'),
     async = require('async'),
     backups = require('./backups.js'),
+    certificates = require('./certificates.js'),
     child_process = require('child_process'),
     clients = require('./clients.js'),
     config = require('./config.js'),
@@ -43,6 +46,7 @@ var apps = require('./apps.js'),
     fs = require('fs'),
     locker = require('./locker.js'),
     mailer = require('./mailer.js'),
+    nginx = require('./nginx.js'),
     os = require('os'),
     path = require('path'),
     paths = require('./paths.js'),
@@ -117,6 +121,7 @@ function initialize(callback) {
     assert.strictEqual(typeof callback, 'function');
 
     exports.events.on(exports.EVENT_CONFIGURED, addDnsRecords);
+    exports.events.on(exports.EVENT_CONFIGURED, configureAdmin);
 
     if (!fs.existsSync(paths.FIRST_RUN_FILE)) {
         debug('initialize: installing app bundle on first run');
@@ -177,6 +182,41 @@ function syncConfigState(callback) {
         gIsConfigured = configured;
 
         callback();
+    });
+}
+
+function configureAdmin(callback) {
+    callback = callback || NOOP_CALLBACK;
+
+    if (process.env.BOX_ENV === 'test') return callback();
+
+    debug('configureAdmin');
+
+    sysinfo.getIp(function (error, ip) {
+        if (error) return callback(error);
+
+        if (!config.fqdn()) {
+            var certFilePath = path.join(paths.NGINX_CERT_DIR, ip + '.cert');
+            var keyFilePath = path.join(paths.NGINX_CERT_DIR, ip + '.key');
+            var certCommand = util.format('openssl req -x509 -newkey rsa:2048 -keyout %s -out %s -days 3650 -subj /CN=%s -nodes', keyFilePath, certFilePath, ip);
+
+            safe.child_process.execSync(certCommand);
+
+            nginx.configureAdmin(certFilePath, keyFilePath, ip, callback);
+        } else {
+            subdomains.waitForDns(config.adminFqdn(), ip, 'A', { interval: 30000, times: 50000 }, function (error) {
+                if (error) return callback(error);
+
+                certificates.ensureCertificate({ location: constants.ADMIN_LOCATION }, function (error, certFilePath, keyFilePath) {
+                    if (error) { // currently, this can never happen
+                        debug('Error obtaining certificate. Proceed anyway', error);
+                        return callback();
+                    }
+
+                    nginx.configureAdmin(certFilePath, keyFilePath, config.adminFqdn(), callback);
+                });
+            });
+        }
     });
 }
 

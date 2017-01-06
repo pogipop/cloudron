@@ -3,7 +3,6 @@
 exports = module.exports = {
     initialize: initialize,
 
-    installAdminCertificate: installAdminCertificate,
     renewAll: renewAll,
     setFallbackCertificate: setFallbackCertificate,
     setAdminCertificate: setAdminCertificate,
@@ -34,8 +33,6 @@ var acme = require('./cert/acme.js'),
     paths = require('./paths.js'),
     safe = require('safetydance'),
     settings = require('./settings.js'),
-    subdomains = require('./subdomains.js'),
-    sysinfo = require('./sysinfo.js'),
     user = require('./user.js'),
     util = require('util'),
     x509 = require('x509');
@@ -128,40 +125,6 @@ function initialize(callback) {
     }
 
     return callback();
-}
-
-function installAdminCertificate(callback) {
-    if (process.env.BOX_ENV === 'test') return callback();
-
-    debug('installAdminCertificate');
-
-    sysinfo.getIp(function (error, ip) {
-        if (error) return callback(error);
-
-        if (!config.fqdn()) {
-            var certFilePath = path.join(paths.NGINX_CERT_DIR, ip + '.cert');
-            var keyFilePath = path.join(paths.NGINX_CERT_DIR, ip + '.key');
-            var certCommandArgs = util.format('req -x509 -newkey rsa:2048 -keyout %s -out %s -days 3650 -subj /CN=%s -nodes', keyFilePath, certFilePath, ip);
-
-            var result = safe.child_process.spawnSync('/usr/bin/openssl', certCommandArgs.split(' '));
-            if (result.status !== 0) return callback(new CertificatesError(CertificatesError.INTERNAL_ERROR, 'unable to create cert for ip'));
-
-            nginx.configureAdmin(certFilePath, keyFilePath, ip, callback);
-        } else {
-            subdomains.waitForDns(config.adminFqdn(), ip, 'A', { interval: 30000, times: 50000 }, function (error) {
-                if (error) return callback(error);
-
-                ensureCertificate({ location: constants.ADMIN_LOCATION }, function (error, certFilePath, keyFilePath) {
-                    if (error) { // currently, this can never happen
-                        debug('Error obtaining certificate. Proceed anyway', error);
-                        return callback();
-                    }
-
-                    nginx.configureAdmin(certFilePath, keyFilePath, config.adminFqdn(), callback);
-                });
-            });
-        }
-    });
 }
 
 function isExpiringSync(certFilePath, hours) {

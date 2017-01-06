@@ -269,9 +269,9 @@ function start(callback) {
     async.series([
         auth.initialize,
         database.initialize,
-        cloudron.initialize, // keep this here because it reads activation state that others depend on
         certificates.initialize,
-        certificates.installAdminCertificate, // keep this before cron to block heartbeats until cert is ready
+        cloudron.initialize, // keep this here because it reads activation state that others depend on
+        cloudron.configureAdmin, // keep this before cron to block heartbeats until cert is ready
         platform.initialize,
         taskmanager.initialize,
         mailer.initialize,
