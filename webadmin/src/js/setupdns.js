@@ -50,16 +50,16 @@ app.controller('SetupDNSController', ['$scope', '$http', 'Client', function ($sc
                 return;
             }
 
-            $scope.busy = true;
-
             waitForDnsSetup();
        });
     };
 
     function waitForDnsSetup() {
+        $scope.busy = true;
+
         Client.getStatus(function (error, status) {
-            if (!error && status.configState.dns && status.configState.tls) {
-                window.location.href = 'https://my.' + $scope.dnsCredentials.domain + '/setup.html';
+            if (!error && status.configState.domain && status.configState.dns && status.configState.tls) {
+                window.location.href = 'https://my.' + status.configState.domain + '/setup.html';
             }
 
             setTimeout(waitForDnsSetup, 5000);
@@ -72,10 +72,8 @@ app.controller('SetupDNSController', ['$scope', '$http', 'Client', function ($sc
             return;
         }
 
-        if (status.activated || status.provider === 'caas') {
-            window.location.href = '/';
-            return;
-        }
+        // domain is currently like a lock flag
+        if (status.configState.domain) return waitForDnsSetup();
 
         if (status.provider === 'digitalocean') $scope.dnsCredentials.provider = 'digitalocean';
 
