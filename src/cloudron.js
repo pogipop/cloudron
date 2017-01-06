@@ -87,7 +87,7 @@ const BOX_AND_USER_TEMPLATE = {
 
 var gUpdatingDns = false,                // flag for dns update reentrancy
     gBoxAndUserDetails = null,         // cached cloudron details like region,size...
-    gConfigState = { domain: false, dns: false, tls: false, configured: false };
+    gConfigState = { domain: '', dns: false, tls: false, configured: false };
 
 function CloudronError(reason, errorOrMessage) {
     assert.strictEqual(typeof reason, 'string');
@@ -201,7 +201,7 @@ function configureAdmin(callback) {
 
             nginx.configureAdmin(certFilePath, keyFilePath, ip, callback);
         } else {
-            gConfigState.domain = true;
+            gConfigState.domain = config.fqdn();
 
             subdomains.waitForDns(config.adminFqdn(), ip, 'A', { interval: 30000, times: 50000 }, function (error) {
                 if (error) return callback(error);
