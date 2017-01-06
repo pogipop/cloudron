@@ -90,20 +90,13 @@ function dnsSetup(req, res, next) {
     assert.strictEqual(typeof req.body, 'object');
 
     if (typeof req.body.provider !== 'string') return next(new HttpError(400, 'provider is required'));
+    if (config.fqdn()) return next(new HttpError(409, 'Already setup'));
 
-    if (config.provider() === 'caas') return next(new HttpError(410, 'Not availabe for caas'));
-
-    // check if already activated
-    user.count(function (error, count) {
+    settings.setDnsConfig(req.body, function (error) {
+        if (error && error.reason === SettingsError.BAD_FIELD) return next(new HttpError(400, error.message));
         if (error) return next(new HttpError(500, error));
-        if (count > 0) return next(new HttpError(409, 'Already setup'));
 
-        settings.setDnsConfig(req.body, function (error) {
-            if (error && error.reason === SettingsError.BAD_FIELD) return next(new HttpError(400, error.message));
-            if (error) return next(new HttpError(500, error));
-
-            next(new HttpSuccess(200));
-        });
+        next(new HttpSuccess(200));
     });
 }
 
