@@ -448,6 +448,9 @@ angular.module('Application').controller('SettingsController', ['$scope', '$loca
     function getExpectedDnsRecords(callback) {
         callback = callback || function (error) { if (error) console.error(error); };
 
+        // nothing to check if mail is not enabled
+        if (!$scope.mailConfig.enabled) return;
+
         Client.getExpectedDnsRecords(function (error, dnsRecords) {
             if (error) return callback(error);
 
