@@ -70,6 +70,8 @@ var REBOOT_CMD = path.join(__dirname, 'scripts/reboot.sh'),
     UPDATE_CMD = path.join(__dirname, 'scripts/update.sh'),
     RETIRE_CMD = path.join(__dirname, 'scripts/retire.sh');
 
+var IP_BASED_SETUP_NAME = 'ip_based_setup'; // This will be used for cert and nginx config file names
+
 var NOOP_CALLBACK = function (error) { if (error) debug(error); };
 
 // result to not depend on the appstore
@@ -192,15 +194,17 @@ function configureAdmin(callback) {
     sysinfo.getIp(function (error, ip) {
         if (error) return callback(error);
 
-        if (!config.fqdn()) {
-            var certFilePath = path.join(paths.NGINX_CERT_DIR, ip + '.cert');
-            var keyFilePath = path.join(paths.NGINX_CERT_DIR, ip + '.key');
-            var certCommand = util.format('openssl req -x509 -newkey rsa:2048 -keyout %s -out %s -days 3650 -subj /CN=%s -nodes', keyFilePath, certFilePath, ip);
+        // always setup cert and nginx config for ip
+        // TODO we should only regenerate the cert if the ip changes?
+        var certFilePath = path.join(paths.NGINX_CERT_DIR, IP_BASED_SETUP_NAME + '.cert');
+        var keyFilePath = path.join(paths.NGINX_CERT_DIR, IP_BASED_SETUP_NAME + '.key');
+        var certCommand = util.format('openssl req -x509 -newkey rsa:2048 -keyout %s -out %s -days 3650 -subj /CN=%s -nodes', keyFilePath, certFilePath, ip);
 
-            safe.child_process.execSync(certCommand);
+        safe.child_process.execSync(certCommand);
 
-            nginx.configureAdmin(certFilePath, keyFilePath, ip, callback);
-        } else {
+        nginx.configureAdmin(certFilePath, keyFilePath, ip, callback);
+
+        if (config.fqdn()) {
             gConfigState.domain = config.fqdn();
 
             subdomains.waitForDns(config.adminFqdn(), ip, 'A', { interval: 30000, times: 50000 }, function (error) {
