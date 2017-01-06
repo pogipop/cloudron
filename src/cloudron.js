@@ -18,6 +18,7 @@ exports = module.exports = {
     migrate: migrate,
 
     isConfiguredSync: isConfiguredSync,
+    getConfigStateSync: getConfigStateSync,
 
     checkDiskSpace: checkDiskSpace,
 
@@ -87,7 +88,8 @@ const BOX_AND_USER_TEMPLATE = {
 
 var gUpdatingDns = false,                // flag for dns update reentrancy
     gBoxAndUserDetails = null,         // cached cloudron details like region,size...
-    gIsConfigured = null;                // cached configured state so that return value is synchronous. null means we are not initialized yet
+    gIsConfigured = null,              // cached configured state so that return value is synchronous. null means we are not initialized yet
+    gConfigState = { domain: false, dns: false, tls: false };
 
 function CloudronError(reason, errorOrMessage) {
     assert.strictEqual(typeof reason, 'string');
@@ -143,6 +145,10 @@ function uninitialize(callback) {
 
 function isConfiguredSync() {
     return gIsConfigured === true;
+}
+
+function getConfigStateSync() {
+    return gConfigState;
 }
 
 function isConfigured(callback) {
@@ -204,14 +210,20 @@ function configureAdmin(callback) {
 
             nginx.configureAdmin(certFilePath, keyFilePath, ip, callback);
         } else {
+            gConfigState.domain = true;
+
             subdomains.waitForDns(config.adminFqdn(), ip, 'A', { interval: 30000, times: 50000 }, function (error) {
                 if (error) return callback(error);
+
+                gConfigState.dns = true;
 
                 certificates.ensureCertificate({ location: constants.ADMIN_LOCATION }, function (error, certFilePath, keyFilePath) {
                     if (error) { // currently, this can never happen
                         debug('Error obtaining certificate. Proceed anyway', error);
                         return callback();
                     }
+
+                    gConfigState.tls = true;
 
                     nginx.configureAdmin(certFilePath, keyFilePath, config.adminFqdn(), callback);
                 });

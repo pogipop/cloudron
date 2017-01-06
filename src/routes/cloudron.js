@@ -101,14 +101,7 @@ function dnsSetup(req, res, next) {
 }
 
 function dnsReady(req, res, next) {
-    if (config.provider() === 'caas') return next(new HttpError(410, 'Not availabe for caas'));
-
-    if (!config.fqdn()) return next(new HttpSuccess(200, { domain: false, ssl: false, dns: false }));
-    if (!certificates.adminCertificateExists()) return next(new HttpSuccess(200, { domain: true, ssl: false, dns: false }));
-
-    // TODO also check for DNS
-
-    next(new HttpSuccess(200, { domain: true, ssl: true, dns: false }));
+    next(new HttpSuccess(200, cloudron.getConfigStateSync()));
 }
 
 function setupTokenAuth(req, res, next) {
