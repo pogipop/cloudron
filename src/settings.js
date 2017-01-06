@@ -343,6 +343,19 @@ function getDnsConfig(callback) {
     });
 }
 
+function validateManualDnsConfig(domain, dnsConfig, callback) {
+    const zoneName = domain;
+
+    if (process.env.BOX_ENV === 'test') return callback();
+
+    dns.resolveNs(zoneName, function (error, nameservers) {
+        if (error && error.code === 'ENOTFOUND') return callback(new SettingsError(SettingsError.BAD_FIELD, 'Unable to resolve nameservers for this domain'));
+        if (error || !nameservers) return callback(error || new Error('Unable to get nameservers'));
+
+        callback();
+    });
+}
+
 function validateRoute53Config(domain, dnsConfig, callback) {
     const zoneName = domain;
 
@@ -352,6 +365,7 @@ function validateRoute53Config(domain, dnsConfig, callback) {
         if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, 'Error getting IP:' + error.message));
 
         dns.resolveNs(zoneName, function (error, nameservers) {
+            if (error && error.code === 'ENOTFOUND') return callback(new SettingsError(SettingsError.BAD_FIELD, 'Unable to resolve nameservers for this domain'));
             if (error || !nameservers) return callback(error || new Error('Unable to get nameservers'));
 
             route53.getHostedZone(dnsConfig, zoneName, function (error, zone) {
@@ -389,6 +403,7 @@ function validateDigitalOceanConfig(domain, dnsConfig, callback) {
         if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, 'Error getting IP:' + error.message));
 
         dns.resolveNs(zoneName, function (error, nameservers) {
+            if (error && error.code === 'ENOTFOUND') return callback(new SettingsError(SettingsError.BAD_FIELD, 'Unable to resolve nameservers for this domain'));
             if (error || !nameservers) return callback(error || new Error('Unable to get nameservers'));
 
             digitalocean.upsert(dnsConfig, zoneName, 'my', 'A', [ ip ], function (error, changeId) {
@@ -424,11 +439,17 @@ function setDnsConfig(dnsConfig, callback) {
         };
 
         validator = validateRoute53Config.bind(null, dnsConfig.domain || config.fqdn());
-    } else if (dnsConfig.provider === 'caas' || dnsConfig.provider === 'noop' || dnsConfig.provider === 'manual') {
+    } else if (dnsConfig.provider === 'noop') {
         credentials = {
             provider: dnsConfig.provider
         };
         validator = function (caasConfig, next) { return next(); };
+    } else if (dnsConfig.provider === 'caas' || dnsConfig.provider === 'manual') {
+        credentials = {
+            provider: dnsConfig.provider
+        };
+
+        validator = validateManualDnsConfig.bind(null, dnsConfig.domain || config.fqdn());
     } else if (dnsConfig.provider === 'digitalocean') {
         if (typeof dnsConfig.token !== 'string') return callback(new SettingsError(SettingsError.BAD_FIELD, 'token must be a string'));
 
