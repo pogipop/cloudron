@@ -318,10 +318,8 @@ case an update fails, it can be [restored](/references/selfhosting.html#restore)
 
 ### Upgrade
 
-An **upgrade** requires a new OS image and thus involves creating the Cloudron from scratch.
-This process involves creating a new server with the latest code and restoring it from the
-last backup. Currently only Cloudrons using the **S3 backup storage** support upgrades.
-Read more about [backup storage](#s3), otherwise contact us in our [chat](https://chat.cloudron.io).
+An **upgrade** requires a new OS image. This process involves creating a new server from scratch
+with the latest code and restoring it from the last backup.
 
 To upgrade follow these steps closely:
 
@@ -329,13 +327,17 @@ To upgrade follow these steps closely:
 
 * List the latest backup - `cloudron machine backup list <domain>`
 
-* Make the latest box backup (files starting with `backup_`) public. This can be done from the AWS S3 console as seen here:
+* Make the backup available for the new cloudron instance:
 
-  <img src="/docs/img/aws_backup_public.png" class="shadow haze"><br/>
+  * `S3` - When storing backup ins S3, make the latest box backup public - files starting with `box_` (from v0.94.0) or `backup_`. This can be done from the AWS S3 console as seen here:
 
-* Copy the new public URL of the latest backup for use as the `--restore-url` below.
+    <img src="/docs/img/aws_backup_public.png" class="shadow haze"><br/>
 
-  <img src="/docs/img/aws_backup_link.png" class="shadow haze"><br/>
+    Copy the new public URL of the latest backup for use as the `--restore-url` below.
+
+    <img src="/docs/img/aws_backup_link.png" class="shadow haze"><br/>
+
+  * `File system` - When storing backups in `/var/backups`, you have to make the box and the app backups available to the new Cloudron instance's `/var/backups`. This can be achieved in a variety of ways depending on the situation: like scp'ing the backup files to the machine before installation, mounting the external backup hard drive into the new Cloudron's `/var/backup` OR downloading a copy of the backup using `cloudron machine backup download <domain>` and uploading them to the new machine. After doing so, pass `file:///var/backups/<path to box backup>` as the `--restore-url` below.
 
 * Create a new Cloudron by following the [installing](/references/selfhosting.html#installing) section.
   When running the setup script, pass in the `--encryption-key` and `--restore-url` flags.
