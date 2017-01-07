@@ -76,7 +76,7 @@ The `author` field contains the name and email of the app developer (or company)
 
 Example:
 ```
-  "author": "Cloudron Inc <girish@cloudron.io>"
+  "author": "Cloudron UG <girish@cloudron.io>"
 ```
 
 ## changelog
