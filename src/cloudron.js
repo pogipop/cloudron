@@ -138,7 +138,6 @@ function uninitialize(callback) {
     assert.strictEqual(typeof callback, 'function');
 
     exports.events.removeListener(exports.EVENT_CONFIGURED, addDnsRecords);
-    exports.events.removeListener(exports.EVENT_FIRST_RUN, installAppBundle);
 
     callback(null);
 }
