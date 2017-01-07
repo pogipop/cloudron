@@ -167,7 +167,7 @@ function processDockerEvents() {
 
                 // do not send mails for dev apps
                 if ((!app || app.appStoreId !== '') && (now - lastOomMailTime > OOM_MAIL_LIMIT)) {
-                    mailer.unexpectedExit(program, context); // app can be null if it's an addon crash
+                    mailer.oomEvent(program, context); // app can be null if it's an addon crash
                     lastOomMailTime = now;
                 }
             });

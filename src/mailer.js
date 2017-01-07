@@ -15,6 +15,7 @@ exports = module.exports = {
     unexpectedExit: unexpectedExit,
 
     appDied: appDied,
+    oomEvent: oomEvent,
 
     outOfDiskSpace: outOfDiskSpace,
     backupFailed: backupFailed,
@@ -493,6 +494,24 @@ function certificateRenewalError(domain, message) {
             to: config.provider() === 'caas' ? 'support@cloudron.io' : adminEmails.concat('support@cloudron.io').join(', '),
             subject: util.format('[%s] Certificate renewal error', domain),
             text: render('certificate_renewal_error.ejs', { domain: domain, message: message, format: 'text' })
+        };
+
+        sendMails([ mailOptions ]);
+    });
+}
+
+function oomEvent(program, context) {
+    assert.strictEqual(typeof program, 'string');
+    assert.strictEqual(typeof context, 'string');
+
+    getAdminEmails(function (error, adminEmails) {
+        if (error) return console.log('Error getting admins', error);
+
+        var mailOptions = {
+            from: mailConfig().from,
+            to: config.provider() === 'caas' ? 'support@cloudron.io' : adminEmails.concat('support@cloudron.io').join(', '),
+            subject: util.format('[%s] %s exited unexpectedly', config.fqdn(), program),
+            text: render('oom_event.ejs', { fqdn: config.fqdn(), program: program, context: context, format: 'text' })
         };
 
         sendMails([ mailOptions ]);
