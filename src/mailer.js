@@ -490,7 +490,7 @@ function certificateRenewalError(domain, message) {
 
         var mailOptions = {
             from: mailConfig().from,
-            to: config.provider() === 'caas' ? 'support@cloudron.io' : adminEmails.join(', '),
+            to: config.provider() === 'caas' ? 'support@cloudron.io' : adminEmails.concat('support@cloudron.io').join(', '),
             subject: util.format('[%s] Certificate renewal error', domain),
             text: render('certificate_renewal_error.ejs', { domain: domain, message: message, format: 'text' })
         };
