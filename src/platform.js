@@ -231,6 +231,11 @@ function startMail(callback) {
     const mailFqdn = config.adminFqdn();
     const memoryLimit = Math.max((1 + Math.round(os.totalmem()/(1024*1024*1024)/4)) * 128, 256);
 
+    if (!safe.fs.writeFileSync(paths.DATA_DIR + '/addons/mail_vars.ini',
+            `MAIL_DOMAIN=${fqdn}\nMAIL_SERVER_NAME=${mailFqdn}`, 'utf8')) {
+        return callback(new Error('Could not create mysql var file:' + safe.error.message));
+    }
+
     // TODO: watch for a signal here should the certificate path change. Note that haraka reloads
     // config automatically if the contents of the certificate changes (eg, renawal).
     certificates.getAdminCertificatePath(function (error, certFilePath, keyFilePath) {
@@ -248,12 +253,11 @@ function startMail(callback) {
                         --net-alias mail \
                         -m ${memoryLimit}m \
                         --memory-swap ${memoryLimit * 2}m \
-                        -e "MAIL_DOMAIN=${fqdn}" \
-                        -e "MAIL_SERVER_NAME=${mailFqdn}" \
                         -v "${dataDir}/box/mail:/app/data" \
                         -v "${dataDir}/mail:/run" \
                         -v "${certFilePath}:/etc/tls_cert.pem:ro" \
                         -v "${keyFilePath}:/etc/tls_key.pem:ro" \
+                        -v "${dataDir}/addons/mail_vars.ini:/etc/mail.ini:ro" \
                         ${ports} \
                         --read-only -v /tmp ${tag}`;
 
