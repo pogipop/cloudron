@@ -50,6 +50,7 @@ var apps = require('./apps.js'),
     os = require('os'),
     path = require('path'),
     paths = require('./paths.js'),
+    platform = require('./platform.js'),
     progress = require('./progress.js'),
     safe = require('safetydance'),
     settings = require('./settings.js'),
@@ -142,7 +143,8 @@ function onConfigured(callback) {
 
     async.series([
         addDnsRecords,
-        configureAdmin
+        configureAdmin,
+        platform.restartMail
     ], callback);
 }
 
