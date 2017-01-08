@@ -230,10 +230,12 @@ function startMail(callback) {
     const fqdn = config.fqdn();
     const mailFqdn = config.adminFqdn();
     const memoryLimit = Math.max((1 + Math.round(os.totalmem()/(1024*1024*1024)/4)) * 128, 256);
+    const alertsFrom = 'no-reply@' + config.fqdn();
+    const alertsTo = 'webmaster@cloudron.io';
 
     if (!safe.fs.writeFileSync(paths.DATA_DIR + '/addons/mail_vars.ini',
-            `MAIL_DOMAIN=${fqdn}\nMAIL_SERVER_NAME=${mailFqdn}`, 'utf8')) {
-        return callback(new Error('Could not create mysql var file:' + safe.error.message));
+        `mail_domain=${fqdn}\nmail_server_name=${mailFqdn}\nalerts_from=${alertsFrom}\nalerts_to=${alertsTo}`, 'utf8')) {
+        return callback(new Error('Could not create mail var file:' + safe.error.message));
     }
 
     // TODO: watch for a signal here should the certificate path change. Note that haraka reloads
