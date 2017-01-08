@@ -135,7 +135,7 @@ function initialize(callback) {
 function uninitialize(callback) {
     assert.strictEqual(typeof callback, 'function');
 
-    callback(null);
+    mailer.stop(callback);
 }
 
 function onConfigured(callback) {
@@ -144,7 +144,8 @@ function onConfigured(callback) {
     async.series([
         addDnsRecords,
         configureAdmin,
-        platform.restartMail
+        platform.restartMail,
+        mailer.start
     ], callback);
 }
 

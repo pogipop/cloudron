@@ -17,7 +17,6 @@ var assert = require('assert'),
     eventlog = require('./eventlog.js'),
     express = require('express'),
     http = require('http'),
-    mailer = require('./mailer.js'),
     middleware = require('./middleware'),
     passport = require('passport'),
     path = require('path'),
@@ -273,7 +272,6 @@ function start(callback) {
         cloudron.configureAdmin, // keep this before cron to block heartbeats until cert is ready
         platform.initialize,
         taskmanager.initialize,
-        mailer.initialize,
         cron.initialize,
         gHttpServer.listen.bind(gHttpServer, config.get('port'), '127.0.0.1'),
         gSysadminHttpServer.listen.bind(gSysadminHttpServer, config.get('sysadminPort'), '127.0.0.1'),
@@ -292,7 +290,6 @@ function stop(callback) {
         taskmanager.uninitialize,
         platform.uninitialize,
         cron.uninitialize,
-        mailer.uninitialize,
         database.uninitialize,
         gHttpServer.close.bind(gHttpServer),
         gSysadminHttpServer.close.bind(gSysadminHttpServer)

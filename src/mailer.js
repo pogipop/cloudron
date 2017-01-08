@@ -1,8 +1,8 @@
 'use strict';
 
 exports = module.exports = {
-    initialize: initialize,
-    uninitialize: uninitialize,
+    start: start,
+    stop: stop,
 
     userAdded: userAdded,
     userRemoved: userRemoved,
@@ -35,7 +35,6 @@ exports = module.exports = {
 
 var assert = require('assert'),
     async = require('async'),
-    cloudron = require('./cloudron.js'),
     config = require('./config.js'),
     debug = require('debug')('box:mailer'),
     dns = require('native-dns'),
@@ -57,22 +56,16 @@ var gMailQueue = [ ],
     gDnsReady = false,
     gCheckDnsTimerId = null;
 
-function initialize(callback) {
+function start(callback) {
     assert.strictEqual(typeof callback, 'function');
 
-    if (cloudron.getConfigStateSync().configured) {
-        checkDns();
-    } else {
-        cloudron.events.on(cloudron.EVENT_CONFIGURED, checkDns);
-    }
+    checkDns();
 
     callback(null);
 }
 
-function uninitialize(callback) {
+function stop(callback) {
     assert.strictEqual(typeof callback, 'function');
-
-    cloudron.events.removeListener(cloudron.EVENT_CONFIGURED, checkDns);
 
     // TODO: interrupt processQueue as well
     clearTimeout(gCheckDnsTimerId);
