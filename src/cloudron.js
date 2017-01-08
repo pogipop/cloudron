@@ -122,9 +122,6 @@ CloudronError.SELF_UPGRADE_NOT_SUPPORTED = 'Self upgrade not supported';
 function initialize(callback) {
     assert.strictEqual(typeof callback, 'function');
 
-    exports.events.on(exports.EVENT_CONFIGURED, addDnsRecords);
-    exports.events.on(exports.EVENT_CONFIGURED, configureAdmin);
-
     if (!fs.existsSync(paths.FIRST_RUN_FILE)) {
         debug('initialize: installing app bundle on first run');
         process.nextTick(installAppBundle);
@@ -137,9 +134,16 @@ function initialize(callback) {
 function uninitialize(callback) {
     assert.strictEqual(typeof callback, 'function');
 
-    exports.events.removeListener(exports.EVENT_CONFIGURED, addDnsRecords);
-
     callback(null);
+}
+
+function onConfigured(callback) {
+    callback = callback || NOOP_CALLBACK;
+
+    async.series([
+        addDnsRecords,
+        configureAdmin
+    ], callback);
 }
 
 function getConfigStateSync() {
@@ -175,6 +179,7 @@ function syncConfigState(callback) {
         if (configured) {
             gConfigState.configured = true;
             exports.events.emit(exports.EVENT_CONFIGURED);
+            onConfigured();
         } else {
             settings.events.once(settings.DNS_CONFIG_KEY, function () { syncConfigState(); }); // check again later
         }
