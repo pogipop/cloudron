@@ -25,6 +25,7 @@ var apps = require('./apps.js'),
     settings = require('./settings.js'),
     shell = require('./shell.js'),
     subdomains = require('./subdomains.js'),
+    user = require('./user.js'),
     util = require('util'),
     _ = require('underscore');
 
@@ -231,12 +232,6 @@ function startMail(callback) {
     const mailFqdn = config.adminFqdn();
     const memoryLimit = Math.max((1 + Math.round(os.totalmem()/(1024*1024*1024)/4)) * 128, 256);
     const alertsFrom = 'no-reply@' + config.fqdn();
-    const alertsTo = 'webmaster@cloudron.io';
-
-    if (!safe.fs.writeFileSync(paths.DATA_DIR + '/addons/mail_vars.ini',
-        `mail_domain=${fqdn}\nmail_server_name=${mailFqdn}\nalerts_from=${alertsFrom}\nalerts_to=${alertsTo}`, 'utf8')) {
-        return callback(new Error('Could not create mail var file:' + safe.error.message));
-    }
 
     // TODO: watch for a signal here should the certificate path change. Note that haraka reloads
     // config automatically if the contents of the certificate changes (eg, renawal).
@@ -248,35 +243,44 @@ function startMail(callback) {
 
             shell.execSync('startMail', 'docker rm -f mail || true');
 
-            var ports = mailConfig.enabled ? '-p 587:2525 -p 993:9993 -p 4190:4190 -p 25:2525' : '';
+            user.getOwner(function (error, owner) {
+                var alertsTo = [ 'webmaster@cloudron.io' ].concat(error ? [] : owner.email).join(',');
 
-            const cmd = `docker run --restart=always -d --name="mail" \
-                        --net cloudron \
-                        --net-alias mail \
-                        -m ${memoryLimit}m \
-                        --memory-swap ${memoryLimit * 2}m \
-                        -v "${dataDir}/box/mail:/app/data" \
-                        -v "${dataDir}/mail:/run" \
-                        -v "${certFilePath}:/etc/tls_cert.pem:ro" \
-                        -v "${keyFilePath}:/etc/tls_key.pem:ro" \
-                        -v "${dataDir}/addons/mail_vars.ini:/etc/mail.ini:ro" \
-                        ${ports} \
-                        --read-only -v /tmp ${tag}`;
+                if (!safe.fs.writeFileSync(paths.DATA_DIR + '/addons/mail_vars.ini',
+                    `mail_domain=${fqdn}\nmail_server_name=${mailFqdn}\nalerts_from=${alertsFrom}\nalerts_to=${alertsTo}`, 'utf8')) {
+                    return callback(new Error('Could not create mail var file:' + safe.error.message));
+                }
 
-            shell.execSync('startMail', cmd);
+                var ports = mailConfig.enabled ? '-p 587:2525 -p 993:9993 -p 4190:4190 -p 25:2525' : '';
 
-            if (!mailConfig.enabled || process.env.BOX_ENV === 'test') return callback();
+                const cmd = `docker run --restart=always -d --name="mail" \
+                            --net cloudron \
+                            --net-alias mail \
+                            -m ${memoryLimit}m \
+                            --memory-swap ${memoryLimit * 2}m \
+                            -v "${dataDir}/box/mail:/app/data" \
+                            -v "${dataDir}/mail:/run" \
+                            -v "${certFilePath}:/etc/tls_cert.pem:ro" \
+                            -v "${keyFilePath}:/etc/tls_key.pem:ro" \
+                            -v "${dataDir}/addons/mail_vars.ini:/etc/mail.ini:ro" \
+                            ${ports} \
+                            --read-only -v /tmp ${tag}`;
 
-            // Add MX and DMARC record. Note that DMARC policy depends on DKIM signing and thus works
-            // only if we use our internal mail server.
-            var records = [
-                { subdomain: '_dmarc', type: 'TXT', values: [ '"v=DMARC1; p=reject; pct=100"' ] },
-                { subdomain: '', type: 'MX', values: [ '10 ' + config.mailFqdn() + '.' ] }
-            ];
+                shell.execSync('startMail', cmd);
 
-            async.mapSeries(records, function (record, iteratorCallback) {
-                subdomains.upsert(record.subdomain, record.type, record.values, iteratorCallback);
-            }, callback);
+                if (!mailConfig.enabled || process.env.BOX_ENV === 'test') return callback();
+
+                // Add MX and DMARC record. Note that DMARC policy depends on DKIM signing and thus works
+                // only if we use our internal mail server.
+                var records = [
+                    { subdomain: '_dmarc', type: 'TXT', values: [ '"v=DMARC1; p=reject; pct=100"' ] },
+                    { subdomain: '', type: 'MX', values: [ '10 ' + config.mailFqdn() + '.' ] }
+                ];
+
+                async.mapSeries(records, function (record, iteratorCallback) {
+                    subdomains.upsert(record.subdomain, record.type, record.values, iteratorCallback);
+                }, callback);
+            });
         });
     });
 }
