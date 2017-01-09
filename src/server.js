@@ -263,8 +263,8 @@ function start(callback) {
     async.series([
         auth.initialize,
         database.initialize,
-        cloudron.initialize, // keep this here because it reads activation state that others depend on
-        cloudron.configureAdmin, // keep this before cron to block heartbeats until cert is ready
+        cloudron.initialize,
+        cloudron.configureAdmin,
         gHttpServer.listen.bind(gHttpServer, config.get('port'), '127.0.0.1'),
         gSysadminHttpServer.listen.bind(gSysadminHttpServer, config.get('sysadminPort'), '127.0.0.1'),
         eventlog.add.bind(null, eventlog.ACTION_START, { userId: null, username: 'boot' }, { version: config.version() })
