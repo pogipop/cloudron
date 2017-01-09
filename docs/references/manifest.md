@@ -186,9 +186,10 @@ Type: positive integer
 
 Required: yes
 
-The `httpPort` field contains the TCP port on which your app is listening for HTTP requests. This port
-is exposed to the world via subdomain/location that the user chooses at installation time. While not
-required, it is good practice to mark this port as `EXPOSE` in the Dockerfile.
+The `httpPort` field contains the TCP port on which your app is listening for HTTP requests. This
+is the HTTP port the Cloudron will use to access your app internally.
+
+While not required, it is good practice to mark this port as `EXPOSE` in the Dockerfile.
 
 Cloudron Apps are containerized and thus two applications can listen on the same port. In reality,
 they are in different network namespaces and do not conflict with each other.
