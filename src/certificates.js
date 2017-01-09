@@ -120,11 +120,11 @@ function ensureFallbackCertificate(callback) {
         debug('ensureFallbackCertificate: generating self-signed certificate');
         var certCommand = util.format('openssl req -x509 -newkey rsa:2048 -keyout %s -out %s -days 3650 -subj /CN=*.%s -nodes', fallbackKeyPath, fallbackCertPath, config.fqdn());
         safe.child_process.execSync(certCommand);
+        return callback();
     } else {
-        debug('ensureFallbackCertificate: skip generating self-signed certificate (no domain set)');
+        debug('ensureFallbackCertificate: cannot generate fallback certificate without domain');
+        return callback(new CertificatesError(CertificatesError.INTERNAL_ERROR, 'No domain set'));
     }
-
-    return callback();
 }
 
 function isExpiringSync(certFilePath, hours) {
