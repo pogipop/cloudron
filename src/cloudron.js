@@ -40,6 +40,7 @@ var apps = require('./apps.js'),
     clients = require('./clients.js'),
     config = require('./config.js'),
     constants = require('./constants.js'),
+    cron = require('./cron.js'),
     debug = require('debug')('box:cloudron'),
     df = require('node-df'),
     eventlog = require('./eventlog.js'),
@@ -139,6 +140,7 @@ function uninitialize(callback) {
     platform.events.removeListener(platform.EVENT_READY, onPlatformReady);
 
     async.series([
+        cron.uninitialize,
         taskmanager.pauseTasks,
         mailer.stop,
         platform.uninitialize
@@ -153,6 +155,7 @@ function onConfigured(callback) {
     platform.events.on(platform.EVENT_READY, onPlatformReady);
 
     async.series([
+        cron.initialize,
         certificates.ensureFallbackCertificate,
         platform.initialize, // requires fallback certs in mail container
         addDnsRecords,

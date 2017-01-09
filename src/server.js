@@ -10,7 +10,6 @@ var assert = require('assert'),
     auth = require('./auth.js'),
     clients = require('./clients.js'),
     cloudron = require('./cloudron.js'),
-    cron = require('./cron.js'),
     config = require('./config.js'),
     database = require('./database.js'),
     eventlog = require('./eventlog.js'),
@@ -19,8 +18,7 @@ var assert = require('assert'),
     middleware = require('./middleware'),
     passport = require('passport'),
     path = require('path'),
-    routes = require('./routes/index.js'),
-    taskmanager = require('./taskmanager.js');
+    routes = require('./routes/index.js');
 
 var gHttpServer = null;
 var gSysadminHttpServer = null;
@@ -267,7 +265,6 @@ function start(callback) {
         database.initialize,
         cloudron.initialize, // keep this here because it reads activation state that others depend on
         cloudron.configureAdmin, // keep this before cron to block heartbeats until cert is ready
-        cron.initialize,
         gHttpServer.listen.bind(gHttpServer, config.get('port'), '127.0.0.1'),
         gSysadminHttpServer.listen.bind(gSysadminHttpServer, config.get('sysadminPort'), '127.0.0.1'),
         eventlog.add.bind(null, eventlog.ACTION_START, { userId: null, username: 'boot' }, { version: config.version() })
@@ -281,7 +278,6 @@ function stop(callback) {
 
     async.series([
         cloudron.uninitialize,
-        cron.uninitialize,
         database.uninitialize,
         auth.uninitialize,
         gHttpServer.close.bind(gHttpServer),
