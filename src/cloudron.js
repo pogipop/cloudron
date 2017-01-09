@@ -24,11 +24,7 @@ exports = module.exports = {
     readDkimPublicKeySync: readDkimPublicKeySync,
     refreshDNS: refreshDNS,
 
-    configureAdmin: configureAdmin,
-
-    events: new (require('events').EventEmitter)(),
-
-    EVENT_CONFIGURED: 'configured'
+    configureAdmin: configureAdmin
 };
 
 var apps = require('./apps.js'),
@@ -206,7 +202,6 @@ function syncConfigState(callback) {
 
         if (configured) {
             gConfigState.configured = true;
-            exports.events.emit(exports.EVENT_CONFIGURED);
             onConfigured();
         } else {
             settings.events.once(settings.DNS_CONFIG_KEY, function () { syncConfigState(); }); // check again later
