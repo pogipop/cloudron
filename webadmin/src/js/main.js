@@ -26,6 +26,9 @@ angular.module('Application').controller('MainController', ['$scope', '$route', 
             if (error) console.error(error);
 
             window.location.href = '#/apps';
+
+            // now run configure checks which might show notifications
+            runConfigurationChecks();
         });
     };
 
@@ -193,11 +196,11 @@ angular.module('Application').controller('MainController', ['$scope', '$route', 
                         });
                     }
 
-                    // welcome screen
-                    if ($scope.user.showTutorial && $scope.user.admin) $scope.startTutorial();
-
-                    // configuration checks
-                    if ($scope.user.admin) runConfigurationChecks();
+                    if ($scope.user.admin) {
+                        // welcome screen or configure checks immediately
+                        if ($scope.user.showTutorial) $scope.startTutorial();
+                        else runConfigurationChecks();
+                    }
                 });
             });
         });
