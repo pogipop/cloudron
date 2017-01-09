@@ -14,6 +14,8 @@ exports = module.exports = {
     addClientTokenByUserId: addClientTokenByUserId,
     delToken: delToken,
 
+    addDefaultClients: addDefaultClients,
+
     // keep this in sync with start.sh ADMIN_SCOPES that generates the cid-webadmin
     SCOPE_APPS: 'apps',
     SCOPE_DEVELOPER: 'developer',
@@ -34,14 +36,16 @@ exports = module.exports = {
     TYPE_PROXY: 'addon-proxy'
 };
 
-var assert = require('assert'),
-    util = require('util'),
-    hat = require('hat'),
-    appdb = require('./appdb.js'),
-    tokendb = require('./tokendb.js'),
+var appdb = require('./appdb.js'),
+    assert = require('assert'),
     async = require('async'),
     clientdb = require('./clientdb.js'),
+    config = require('./config.js'),
     DatabaseError = require('./databaseerror.js'),
+    debug = require('debug')('box:clients'),
+    hat = require('hat'),
+    tokendb = require('./tokendb.js'),
+    util = require('util'),
     uuid = require('node-uuid');
 
 function ClientsError(reason, errorOrMessage) {
@@ -304,7 +308,7 @@ function delToken(clientId, tokenId, callback) {
     assert.strictEqual(typeof tokenId, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    get(clientId, function (error, result) {
+    get(clientId, function (error) {
         if (error) return callback(error);
 
         tokendb.del(tokenId, function (error) {
@@ -314,4 +318,21 @@ function delToken(clientId, tokenId, callback) {
             callback(null);
         });
     });
+}
+
+function addDefaultClients(callback) {
+    assert.strictEqual(typeof callback, 'function');
+
+    debug('Adding default clients');
+
+    // The domain might have changed, therefor we have to update the record
+    // !!! This needs to be in sync with the webadmin, specifically login_callback.js
+    const ADMIN_SCOPES="cloudron,developer,profile,users,apps,settings";
+
+    // id, appId, type, clientSecret, redirectURI, scope
+    async.series([
+        clientdb.upsert.bind(null, 'cid-webadmin', 'Settings', 'built-in', 'secret-webadmin', config.adminOrigin(), ADMIN_SCOPES),
+        clientdb.upsert.bind(null, 'cid-sdk', 'SDK', 'built-in', 'secret-sdk', config.adminOrigin(), '*,roleSdk'),
+        clientdb.upsert.bind(null, 'cid-cli', 'Cloudron Tool', 'built-in', 'secret-cli', config.adminOrigin(), '*, roleSdk')
+    ], callback);
 }

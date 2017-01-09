@@ -151,6 +151,7 @@ function onConfigured(callback) {
     platform.events.on(platform.EVENT_READY, onPlatformReady);
 
     async.series([
+        clients.addDefaultClients,
         cron.initialize,
         certificates.ensureFallbackCertificate,
         platform.initialize, // requires fallback certs in mail container

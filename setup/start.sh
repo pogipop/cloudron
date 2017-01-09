@@ -18,10 +18,6 @@ readonly script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 source "${script_dir}/argparser.sh" "$@" # this injects the arg_* variables used below
 
-# keep this is sync with config.js appFqdn()
-readonly admin_fqdn=$([[ "${arg_is_custom_domain}" == "true" ]] && echo "${ADMIN_LOCATION}.${arg_fqdn}" ||  echo "${ADMIN_LOCATION}-${arg_fqdn}")
-readonly admin_origin="https://${admin_fqdn}"
-
 readonly is_update=$([[ -f "${CONFIG_DIR}/cloudron.conf" ]] && echo "true" || echo "false")
 
 set_progress() {
@@ -289,19 +285,6 @@ if [[ ! -z "${arg_tls_config}" ]]; then
     mysql -u root -p${mysql_root_password} \
         -e "REPLACE INTO settings (name, value) VALUES (\"tls_config\", '$arg_tls_config')" box
 fi
-
-echo "==> Adding default clients"
-# The domain might have changed, therefor we have to update the record
-# !!! This needs to be in sync with the webadmin, specifically login_callback.js
-readonly ADMIN_SCOPES="cloudron,developer,profile,users,apps,settings"
-mysql -u root -p${mysql_root_password} \
-    -e "REPLACE INTO clients (id, appId, type, clientSecret, redirectURI, scope) VALUES (\"cid-webadmin\", \"Settings\", \"built-in\", \"secret-webadmin\", \"${admin_origin}\", \"${ADMIN_SCOPES}\")" box
-
-mysql -u root -p${mysql_root_password} \
-    -e "REPLACE INTO clients (id, appId, type, clientSecret, redirectURI, scope) VALUES (\"cid-sdk\", \"SDK\", \"built-in\", \"secret-sdk\", \"${admin_origin}\", \"*,roleSdk\")" box
-
-mysql -u root -p${mysql_root_password} \
-    -e "REPLACE INTO clients (id, appId, type, clientSecret, redirectURI, scope) VALUES (\"cid-cli\", \"Cloudron Tool\", \"built-in\", \"secret-cli\", \"${admin_origin}\", \"*,roleSdk\")" box
 
 set_progress "60" "Starting Cloudron"
 systemctl start cloudron.target

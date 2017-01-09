@@ -10,6 +10,8 @@ exports = module.exports = {
     getByAppId: getByAppId,
     getByAppIdAndType: getByAppIdAndType,
 
+    upsert: upsert,
+
     delByAppId: delByAppId,
     delByAppIdAndType: delByAppIdAndType,
 
@@ -105,6 +107,25 @@ function add(id, appId, type, clientSecret, redirectURI, scope, callback) {
     var data = [ id, appId, type, clientSecret, redirectURI, scope ];
 
     database.query('INSERT INTO clients (id, appId, type, clientSecret, redirectURI, scope) VALUES (?, ?, ?, ?, ?, ?)', data, function (error, result) {
+        if (error && error.code === 'ER_DUP_ENTRY') return callback(new DatabaseError(DatabaseError.ALREADY_EXISTS));
+        if (error || result.affectedRows === 0) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
+
+        callback(null);
+    });
+}
+
+function upsert(id, appId, type, clientSecret, redirectURI, scope, callback) {
+    assert.strictEqual(typeof id, 'string');
+    assert.strictEqual(typeof appId, 'string');
+    assert.strictEqual(typeof type, 'string');
+    assert.strictEqual(typeof clientSecret, 'string');
+    assert.strictEqual(typeof redirectURI, 'string');
+    assert.strictEqual(typeof scope, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    var data = [ id, appId, type, clientSecret, redirectURI, scope ];
+
+    database.query('REPLACE INTO clients (id, appId, type, clientSecret, redirectURI, scope) VALUES (?, ?, ?, ?, ?, ?)', data, function (error, result) {
         if (error && error.code === 'ER_DUP_ENTRY') return callback(new DatabaseError(DatabaseError.ALREADY_EXISTS));
         if (error || result.affectedRows === 0) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
 
