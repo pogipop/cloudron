@@ -8,7 +8,6 @@ exports = module.exports = {
 var assert = require('assert'),
     async = require('async'),
     auth = require('./auth.js'),
-    certificates = require('./certificates.js'),
     clients = require('./clients.js'),
     cloudron = require('./cloudron.js'),
     cron = require('./cron.js'),
@@ -20,7 +19,6 @@ var assert = require('assert'),
     middleware = require('./middleware'),
     passport = require('passport'),
     path = require('path'),
-    platform = require('./platform.js'),
     routes = require('./routes/index.js'),
     taskmanager = require('./taskmanager.js');
 
