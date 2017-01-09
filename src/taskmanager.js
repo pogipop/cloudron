@@ -1,8 +1,8 @@
 'use strict';
 
 exports = module.exports = {
-    initialize: initialize,
-    uninitialize: uninitialize,
+    resumeTasks: resumeTasks,
+    pauseTasks: pauseTasks,
 
     stopAppTask: stopAppTask,
     startAppTask: startAppTask,
@@ -16,7 +16,6 @@ var appdb = require('./appdb.js'),
     assert = require('assert'),
     async = require('async'),
     child_process = require('child_process'),
-    cloudron = require('./cloudron.js'),
     debug = require('debug')('box:taskmanager'),
     locker = require('./locker.js'),
     platform = require('./platform.js'),
@@ -30,27 +29,34 @@ var gPendingTasks = [ ];
 var TASK_CONCURRENCY = 3;
 var NOOP_CALLBACK = function (error) { if (error) console.error(error); };
 
-function initialize(callback) {
-    assert.strictEqual(typeof callback, 'function');
+// resume app tasks when platform is ready or after a crash
+function resumeTasks(callback) {
+    callback = callback || NOOP_CALLBACK;
+
+    debug('resuming tasks');
 
     locker.on('unlocked', startNextTask);
 
-    if (platform.isReadySync()) {
-        platformReady();
-    } else {
-        platform.events.on(platform.EVENT_READY, platformReady);
-    }
+    appdb.getAll(function (error, apps) {
+        if (error) return callback(error);
 
-    callback();
+        apps.forEach(function (app) {
+            if (app.installationState === appdb.ISTATE_INSTALLED && app.runState === appdb.RSTATE_RUNNING) return;
+
+            if (app.installationState === appdb.ISTATE_ERROR) return;
+
+            debug('Creating process for %s (%s) with state %s', app.location, app.id, app.installationState);
+            restartAppTask(app.id, NOOP_CALLBACK); // restart because the auto-installer could have queued up tasks already
+        });
+
+        callback(null);
+    });
 }
 
-function uninitialize(callback) {
+function pauseTasks(callback) {
     assert.strictEqual(typeof callback, 'function');
 
     gPendingTasks = [ ]; // clear this first, otherwise stopAppTask will resume them
-
-    cloudron.events.removeListener(cloudron.EVENT_CONFIGURED, resumeTasks);
-    platform.events.removeListener(platform.EVENT_READY, platformReady);
 
     locker.removeListener('unlocked', startNextTask);
 
@@ -74,38 +80,6 @@ function waitForPendingTasks(callback) {
     }
 
     checkTasks();
-}
-
-function platformReady() {
-    if (cloudron.getConfigStateSync().configured) {
-        debug('platformReady: configured, resuming tasks'); // cloudron-setup script relies on this log message
-        resumeTasks();
-    } else {
-        debug('platformReady: not configured yet. waiting for configured event');
-        cloudron.events.on(cloudron.EVENT_CONFIGURED, resumeTasks);
-    }
-}
-
-// resume app tasks when platform is ready or after a crash
-function resumeTasks(callback) {
-    callback = callback || NOOP_CALLBACK;
-
-    debug('resuming tasks');
-
-    appdb.getAll(function (error, apps) {
-        if (error) return callback(error);
-
-        apps.forEach(function (app) {
-            if (app.installationState === appdb.ISTATE_INSTALLED && app.runState === appdb.RSTATE_RUNNING) return;
-
-            if (app.installationState === appdb.ISTATE_ERROR) return;
-
-            debug('Creating process for %s (%s) with state %s', app.location, app.id, app.installationState);
-            restartAppTask(app.id, NOOP_CALLBACK); // restart because the auto-installer could have queued up tasks already
-        });
-
-        callback(null);
-    });
 }
 
 function startNextTask() {

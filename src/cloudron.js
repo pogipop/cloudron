@@ -59,6 +59,7 @@ var apps = require('./apps.js'),
     subdomains = require('./subdomains.js'),
     superagent = require('superagent'),
     sysinfo = require('./sysinfo.js'),
+    taskmanager = require('./taskmanager.js'),
     tokendb = require('./tokendb.js'),
     updateChecker = require('./updatechecker.js'),
     user = require('./user.js'),
@@ -135,7 +136,10 @@ function initialize(callback) {
 function uninitialize(callback) {
     assert.strictEqual(typeof callback, 'function');
 
+    platform.events.removeListener(platform.EVENT_READY, onPlatformReady);
+
     async.series([
+        taskmanager.pauseTasks,
         mailer.stop,
         platform.uninitialize
     ], callback);
@@ -144,12 +148,26 @@ function uninitialize(callback) {
 function onConfigured(callback) {
     callback = callback || NOOP_CALLBACK;
 
+    debug('onConfigured');
+
+    platform.events.on(platform.EVENT_READY, onPlatformReady);
+
     async.series([
         certificates.ensureFallbackCertificate,
         platform.initialize, // requires fallback certs in mail container
         addDnsRecords,
         configureAdmin,
         mailer.start
+    ], callback);
+}
+
+function onPlatformReady(callback) {
+    callback = callback || NOOP_CALLBACK;
+
+    debug('onPlatformReady');
+
+    async.series([
+        taskmanager.resumeTasks
     ], callback);
 }
 

@@ -267,7 +267,6 @@ function start(callback) {
         database.initialize,
         cloudron.initialize, // keep this here because it reads activation state that others depend on
         cloudron.configureAdmin, // keep this before cron to block heartbeats until cert is ready
-        taskmanager.initialize,
         cron.initialize,
         gHttpServer.listen.bind(gHttpServer, config.get('port'), '127.0.0.1'),
         gSysadminHttpServer.listen.bind(gSysadminHttpServer, config.get('sysadminPort'), '127.0.0.1'),
@@ -281,11 +280,10 @@ function stop(callback) {
     if (!gHttpServer) return callback(null);
 
     async.series([
-        auth.uninitialize,
         cloudron.uninitialize,
-        taskmanager.uninitialize,
         cron.uninitialize,
         database.uninitialize,
+        auth.uninitialize,
         gHttpServer.close.bind(gHttpServer),
         gSysadminHttpServer.close.bind(gSysadminHttpServer)
     ], function (error) {
