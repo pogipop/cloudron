@@ -301,7 +301,7 @@ angular.module('Application').controller('SettingsController', ['$scope', '$loca
         refresh: function () {
             $scope.email.refreshBusy = true;
 
-            getExpectedDnsRecords(function (error) {
+            showExpectedDnsRecords(function (error) {
                 if (error) console.error(error);
 
                 $scope.email.refreshBusy = false;
@@ -426,6 +426,8 @@ angular.module('Application').controller('SettingsController', ['$scope', '$loca
             if (error) return console.error(error);
 
             $scope.mailConfig = mailConfig;
+
+            showExpectedDnsRecords();
         });
     }
 
@@ -445,13 +447,13 @@ angular.module('Application').controller('SettingsController', ['$scope', '$loca
         });
     }
 
-    function getExpectedDnsRecords(callback) {
+    function showExpectedDnsRecords(callback) {
         callback = callback || function (error) { if (error) console.error(error); };
 
         // nothing to check if mail is not enabled
         if (!$scope.mailConfig.enabled) return;
 
-        Client.getExpectedDnsRecords(function (error, dnsRecords) {
+        Client.showExpectedDnsRecords(function (error, dnsRecords) {
             if (error) return callback(error);
 
             $scope.expectedDnsRecords = dnsRecords;
@@ -558,7 +560,6 @@ angular.module('Application').controller('SettingsController', ['$scope', '$loca
         getMailConfig();
         getBackupConfig();
         getDnsConfig();
-        getExpectedDnsRecords();
 
         if ($scope.config.provider === 'caas') {
             getPlans();
