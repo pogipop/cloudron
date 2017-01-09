@@ -18,7 +18,6 @@ var appdb = require('./appdb.js'),
     child_process = require('child_process'),
     debug = require('debug')('box:taskmanager'),
     locker = require('./locker.js'),
-    platform = require('./platform.js'),
     sendFailureLogs = require('./logcollector.js').sendFailureLogs,
     util = require('util'),
     _ = require('underscore');
@@ -28,6 +27,7 @@ var gPendingTasks = [ ];
 
 var TASK_CONCURRENCY = 3;
 var NOOP_CALLBACK = function (error) { if (error) console.error(error); };
+var gPaused = true;
 
 // resume app tasks when platform is ready or after a crash
 function resumeTasks(callback) {
@@ -36,6 +36,8 @@ function resumeTasks(callback) {
     debug('resuming tasks');
 
     locker.on('unlocked', startNextTask);
+
+    gPaused = false;
 
     appdb.getAll(function (error, apps) {
         if (error) return callback(error);
@@ -59,6 +61,8 @@ function pauseTasks(callback) {
     gPendingTasks = [ ]; // clear this first, otherwise stopAppTask will resume them
 
     locker.removeListener('unlocked', startNextTask);
+
+    gPaused = true;
 
     async.eachSeries(Object.keys(gActiveTasks), stopAppTask, callback);
 }
@@ -98,7 +102,7 @@ function startAppTask(appId, callback) {
         return callback(new Error(util.format('Task for %s is already active', appId)));
     }
 
-    if (!platform.isReadySync()) {
+    if (gPaused) {
         debug('Platform not ready yet, queueing task for %s', appId);
         gPendingTasks.push(appId);
         return callback();
