@@ -2,9 +2,10 @@
 
 set -euv -o pipefail
 
-readonly PROVIDER="${1:-generic}"
-
 readonly SOURCE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+readonly arg_provider="${1:-generic}"
+readonly arg_infraversionpath="${SOURCE_DIR}/${2:-}"
 
 function die {
     echo $1
@@ -62,16 +63,17 @@ apt-get install -y python   # Install python which is required for npm rebuild
 [[ "$(python --version 2>&1)" == "Python 2.7."* ]] || die "Expecting python version to be 2.7.x"
 
 echo "==> Downloading docker images"
-if [ -f ${SOURCE_DIR}/infra_version.js ]; then
-    images=$(node -e "var i = require('${SOURCE_DIR}/infra_version.js'); console.log(i.baseImages.join(' '), Object.keys(i.images).map(function (x) { return i.images[x].tag; }).join(' '));")
-
-    echo "Pulling images: ${images}"
-    for image in ${images}; do
-        docker pull "${image}"
-    done
-else
-    echo "No infra_versions.js found, skipping image download"
+if [ ! -f "${arg_infraversionpath}/infra_version.js" ]; then
+    echo "No infra_versions.js found"
+    exit 1
 fi
+
+images=$(node -e "var i = require('${arg_infraversionpath}/infra_version.js'); console.log(i.baseImages.join(' '), Object.keys(i.images).map(function (x) { return i.images[x].tag; }).join(' '));")
+
+echo -e "\tPulling docker images: ${images}"
+for image in ${images}; do
+    docker pull "${image}"
+done
 
 echo "==> Install collectd"
 if ! apt-get install -y collectd collectd-utils; then

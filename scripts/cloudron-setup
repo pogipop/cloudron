@@ -177,7 +177,7 @@ fi
 
 if [[ "${initBaseImage}" == "true" ]]; then
     echo "=> Installing base dependencies (this takes some time) ..."
-    if ! /bin/bash "${box_src_tmp_dir}/baseimage/initializeBaseUbuntuImage.sh" "${provider}" &>> "${LOG_FILE}"; then
+    if ! /bin/bash "${box_src_tmp_dir}/baseimage/initializeBaseUbuntuImage.sh" "${provider}" "../src" &>> "${LOG_FILE}"; then
         echo "Init script failed. See ${LOG_FILE} for details"
         exit 1
     fi
