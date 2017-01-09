@@ -145,7 +145,8 @@ function onConfigured(callback) {
     callback = callback || NOOP_CALLBACK;
 
     async.series([
-        platform.initialize,
+        certificates.ensureFallbackCertificate,
+        platform.initialize, // requires fallback certs in mail container
         addDnsRecords,
         configureAdmin,
         mailer.start

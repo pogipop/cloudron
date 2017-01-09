@@ -1,7 +1,7 @@
 'use strict';
 
 exports = module.exports = {
-    initialize: initialize,
+    ensureFallbackCertificate: ensureFallbackCertificate,
 
     renewAll: renewAll,
     setFallbackCertificate: setFallbackCertificate,
@@ -91,7 +91,7 @@ function getApi(app, callback) {
     });
 }
 
-function initialize(callback) {
+function ensureFallbackCertificate(callback) {
     // ensure a fallback certificate that much of our code requires
     var certFilePath = path.join(paths.APP_CERTS_DIR, 'host.cert');
     var keyFilePath = path.join(paths.APP_CERTS_DIR, 'host.key');
