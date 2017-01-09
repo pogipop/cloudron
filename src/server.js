@@ -270,7 +270,6 @@ function start(callback) {
         certificates.initialize,
         cloudron.initialize, // keep this here because it reads activation state that others depend on
         cloudron.configureAdmin, // keep this before cron to block heartbeats until cert is ready
-        platform.initialize,
         taskmanager.initialize,
         cron.initialize,
         gHttpServer.listen.bind(gHttpServer, config.get('port'), '127.0.0.1'),
@@ -288,7 +287,6 @@ function stop(callback) {
         auth.uninitialize,
         cloudron.uninitialize,
         taskmanager.uninitialize,
-        platform.uninitialize,
         cron.uninitialize,
         database.uninitialize,
         gHttpServer.close.bind(gHttpServer),

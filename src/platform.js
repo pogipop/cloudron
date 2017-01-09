@@ -7,9 +7,7 @@ exports = module.exports = {
     events: new (require('events').EventEmitter)(),
     EVENT_READY: 'ready',
 
-    isReadySync: isReadySync,
-
-    restartMail: startMail
+    isReadySync: isReadySync
 };
 
 var apps = require('./apps.js'),

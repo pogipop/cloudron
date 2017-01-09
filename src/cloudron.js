@@ -135,16 +135,19 @@ function initialize(callback) {
 function uninitialize(callback) {
     assert.strictEqual(typeof callback, 'function');
 
-    mailer.stop(callback);
+    async.series([
+        mailer.stop,
+        platform.uninitialize
+    ], callback);
 }
 
 function onConfigured(callback) {
     callback = callback || NOOP_CALLBACK;
 
     async.series([
+        platform.initialize,
         addDnsRecords,
         configureAdmin,
-        platform.restartMail,
         mailer.start
     ], callback);
 }
