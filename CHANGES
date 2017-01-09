@@ -698,3 +698,10 @@
 [0.93.0]
 * Smoother upgrades
 
+[0.94.0]
+* Cloudron domain can now be set after installation
+* Backups are now organized by directory
+* Document upgrading from Filesystem backend
+* Send certificate renewal errors, OOM errors to cloudron admins
+* Email bounce alerts are sent to the Cloudron owner
+
