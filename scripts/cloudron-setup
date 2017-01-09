@@ -176,7 +176,7 @@ if ! curl -sL "${sourceTarballUrl}" | tar -zxf - -C "${box_src_tmp_dir}"; then
 fi
 
 if [[ "${initBaseImage}" == "true" ]]; then
-    echo "=> Installing base dependencies (this takes some time) ..."
+    echo "=> Installing base dependencies and downloading docker images (this takes some time) ..."
     if ! /bin/bash "${box_src_tmp_dir}/baseimage/initializeBaseUbuntuImage.sh" "${provider}" "../src" &>> "${LOG_FILE}"; then
         echo "Init script failed. See ${LOG_FILE} for details"
         exit 1
@@ -192,8 +192,9 @@ fi
 echo -n "=> Waiting for cloudron to be ready (this takes some time) ..."
 while true; do
     echo -n "."
-    if journalctl -u box -a | grep "platformReady: " >/dev/null; then
-        break
+    if status=$(curl -q -f "http://localhost:3000/api/v1/cloudron/status" 2>/dev/null); then
+        [[ -z "$domain" ]] && break # with no domain, we are up and running
+        [[ "$status" == *"\"tls\": true"* ]] && break # with a domain, wait for the cert
     fi
     sleep 10
 done
