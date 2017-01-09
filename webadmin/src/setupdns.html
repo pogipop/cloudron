@@ -80,12 +80,13 @@
 
                                 <!-- Wildcard -->
                                 <p ng-show="dnsCredentials.provider === 'wildcard'">
-                                    <span class="text-danger">Before proceeding, a wildcard DNS A record has to be setup for this domain and IP!</span>
+                                    <span class="text-danger">A wildcard DNS <b>A</b> record has to be setup for <b>{{ dnsCredentials.domain || 'example.com' }}</b> to this IP!</span>
                                 </p>
 
                                 <!-- Manual -->
                                 <p ng-show="dnsCredentials.provider === 'manual'">
-                                    <span class="text-danger">Before proceeding, a DNS A record for my.{{ dnsCredentials.domain }} for this IP has to be created!</span><br/>
+                                    <span class="text-danger">A DNS <b>A</b> record for <b>my.{{ dnsCredentials.domain || 'example.com' }}</b> to this IP has to be created!</span><br/>
+                                    <br/>
                                     All DNS records have to be setup manually for each app installation.
                                 </p>
                             </div>
