@@ -66,7 +66,7 @@
 
                         <br/>
 
-                        <div class="form-group" ng-show="appConfigure.customAuth">
+                        <div class="form-group" ng-show="appConfigure.customAuth && !appConfigure.app.manifest.addons.email">
                             <label class="control-label">Access control</label>
                             <p>
                                 This app has it's own access control and does not integrate with Cloudron Auth.
