@@ -16,7 +16,6 @@ exports = module.exports = {
 
 var assert = require('assert'),
     async = require('async'),
-    certificates = require('../certificates.js'),
     cloudron = require('../cloudron.js'),
     CloudronError = cloudron.CloudronError,
     config = require('../config.js'),
@@ -29,7 +28,6 @@ var assert = require('assert'),
     SettingsError = settings.SettingsError,
     superagent = require('superagent'),
     updateChecker = require('../updatechecker.js'),
-    user = require('../user.js'),
     _ = require('underscore');
 
 function auditSource(req) {
