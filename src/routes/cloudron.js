@@ -88,6 +88,9 @@ function dnsSetup(req, res, next) {
 
     if (typeof req.body.provider !== 'string') return next(new HttpError(400, 'provider is required'));
     if (config.fqdn()) return next(new HttpError(409, 'Already setup'));
+    if (typeof req.body.domain !== 'string' || !req.body.domain) return next(new HttpError(400, 'domain is required'));
+
+    config.set('fqdn', req.body.domain);
 
     settings.setDnsConfig(req.body, function (error) {
         if (error && error.reason === SettingsError.BAD_FIELD) return next(new HttpError(400, error.message));

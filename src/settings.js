@@ -350,10 +350,7 @@ function setDnsConfig(dnsConfig, callback) {
     sysinfo.getIp(function (error, ip) {
         if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, 'Error getting IP:' + error.message));
 
-        // add the domain in case we do not change it with this request
-        if (!dnsConfig.domain) dnsConfig.domain = config.fqdn();
-
-        subdomains.verifyDnsConfig(dnsConfig, dnsConfig.domain, ip, function (error, result) {
+        subdomains.verifyDnsConfig(dnsConfig, config.fqdn(), ip, function (error, result) {
             if (error && error.reason === SubdomainError.ACCESS_DENIED) return callback(new SettingsError(SettingsError.BAD_FIELD, 'Error adding A record. Access denied'));
             if (error && error.reason === SubdomainError.NOT_FOUND) return callback(new SettingsError(SettingsError.BAD_FIELD, 'Zone not found'));
             if (error && error.reason === SubdomainError.EXTERNAL_ERROR) return callback(new SettingsError(SettingsError.BAD_FIELD, 'Error adding A record:' + error.message));
@@ -363,9 +360,6 @@ function setDnsConfig(dnsConfig, callback) {
 
             settingsdb.set(exports.DNS_CONFIG_KEY, JSON.stringify(result), function (error) {
                 if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
-
-                // sync the domain to the cloudron.conf
-                if (dnsConfig.domain) config.set('fqdn', dnsConfig.domain);
 
                 exports.events.emit(exports.DNS_CONFIG_KEY, dnsConfig);
 
