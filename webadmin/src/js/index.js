@@ -16,6 +16,7 @@ app.config(['NotificationProvider', function (NotificationProvider) {
         delay: 10000,
         startTop: 60,
         positionX: 'left',
+        maxCount: 3,
         templateUrl: 'templates/notification.html'
     });
 }]);
