@@ -149,7 +149,7 @@ angular.module('Application').controller('MainController', ['$scope', '$route', 
 
         // support local development with localhost check
         if (window.location.hostname !== status.adminFqdn && window.location.hostname !== 'localhost') {
-            window.location.href = status.adminFqdn + '/nakeddomain.html';
+            window.location.href = 'https://' + status.adminFqdn + '/nakeddomain.html';
             return;
         }
 
