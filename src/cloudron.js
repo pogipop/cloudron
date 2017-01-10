@@ -578,7 +578,7 @@ function addDnsRecords(callback) {
             records.push(webadminRecord);
             records.push(dkimRecord);
         } else {
-            // for non-custom domains, we show a nakeddomain.html page
+            // for non-custom domains, we show a noapp.html page
             var nakedDomainRecord = { subdomain: '', type: 'A', values: [ ip ] };
 
             records.push(nakedDomainRecord);
