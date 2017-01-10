@@ -7,6 +7,7 @@ angular.module('Application').controller('AppsController', ['$scope', '$location
     $scope.installedApps = Client.getInstalledApps();
     $scope.config = Client.getConfig();
     $scope.user = Client.getUserInfo();
+    $scope.dnsConfig = {};
     $scope.groups = [];
     $scope.users = [];
     $scope.restartAppBusy = false;
@@ -542,6 +543,17 @@ angular.module('Application').controller('AppsController', ['$scope', '$location
         });
     }
 
+    function fetchDnsConfig() {
+        Client.getDnsConfig(function (error, result) {
+            if (error) {
+                console.error(error);
+                return $timeout(fetchDnsConfig, 5000);
+            }
+
+            $scope.dnsConfig = result;
+        });
+    }
+
     Client.onReady(function () {
         Client.refreshUserInfo(function (error) {
             if (error) return console.error(error);
@@ -549,6 +561,7 @@ angular.module('Application').controller('AppsController', ['$scope', '$location
             if ($scope.user.admin) {
                 fetchUsers();
                 fetchGroups();
+                fetchDnsConfig();
             }
         });
     });

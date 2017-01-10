@@ -54,6 +54,11 @@
                             <br>
                         </p>
 
+                        <p class="text-center" ng-show="appConfigure.location && dnsConfig.provider === 'manual' && !dnsConfig.wildcard">
+                            <b>Do not forget, to add an A record for {{ appConfigure.location }}.{{ config.fqdn }}</b>
+                            <br>
+                        </p>
+
                         <div class="has-error text-center" ng-show="appConfigure.error.port">{{ appConfigure.error.port }}</div>
                         <div ng-repeat="(env, info) in appConfigure.portBindingsInfo">
                             <ng-form name="portInfo_form">
