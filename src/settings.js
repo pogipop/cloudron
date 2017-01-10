@@ -66,13 +66,11 @@ var assert = require('assert'),
     CronJob = require('cron').CronJob,
     DatabaseError = require('./databaseerror.js'),
     debug = require('debug')('box:settings'),
-    digitalocean = require('./dns/digitalocean.js'),
     dns = require('native-dns'),
     cloudron = require('./cloudron.js'),
     CloudronError = cloudron.CloudronError,
     moment = require('moment-timezone'),
     paths = require('./paths.js'),
-    route53 = require('./dns/route53.js'),
     safe = require('safetydance'),
     settingsdb = require('./settingsdb.js'),
     subdomains = require('./subdomains.js'),
@@ -343,125 +341,9 @@ function getDnsConfig(callback) {
     });
 }
 
-function validateManualDnsConfig(domain, dnsConfig, callback) {
-    const zoneName = domain;
-
-    if (process.env.BOX_ENV === 'test') return callback();
-
-    dns.resolveNs(zoneName, function (error, nameservers) {
-        if (error && error.code === 'ENOTFOUND') return callback(new SettingsError(SettingsError.BAD_FIELD, 'Unable to resolve nameservers for this domain'));
-        if (error || !nameservers) return callback(error || new Error('Unable to get nameservers'));
-
-        callback();
-    });
-}
-
-function validateRoute53Config(domain, dnsConfig, callback) {
-    const zoneName = domain;
-
-    if (process.env.BOX_ENV === 'test') return callback();
-
-    sysinfo.getIp(function (error, ip) {
-        if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, 'Error getting IP:' + error.message));
-
-        dns.resolveNs(zoneName, function (error, nameservers) {
-            if (error && error.code === 'ENOTFOUND') return callback(new SettingsError(SettingsError.BAD_FIELD, 'Unable to resolve nameservers for this domain'));
-            if (error || !nameservers) return callback(error || new Error('Unable to get nameservers'));
-
-            route53.getHostedZone(dnsConfig, zoneName, function (error, zone) {
-                if (error && error.reason === SubdomainError.ACCESS_DENIED) return callback(new SettingsError(SettingsError.BAD_FIELD, 'Error getting zone information: Access denied'));
-                if (error && error.reason === SubdomainError.NOT_FOUND) return callback(new SettingsError(SettingsError.BAD_FIELD, 'Zone not found'));
-                if (error && error.reason === SubdomainError.EXTERNAL_ERROR) return callback(new SettingsError(SettingsError.BAD_FIELD, 'Error getting zone information:' + error.message));
-                if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
-
-                if (!_.isEqual(zone.DelegationSet.NameServers.sort(), nameservers.sort())) {
-                    debug('validateRoute53Config: %j and %j do not match', nameservers, zone.DelegationSet.NameServers);
-                    return callback(new SettingsError(SettingsError.BAD_FIELD, 'Domain nameservers are not set to Route53'));
-                }
-
-                route53.upsert(dnsConfig, zoneName, 'my', 'A', [ ip ], function (error, changeId) {
-                    if (error && error.reason === SubdomainError.ACCESS_DENIED) return callback(new SettingsError(SettingsError.BAD_FIELD, 'Error adding A record. Access denied'));
-                    if (error && error.reason === SubdomainError.NOT_FOUND) return callback(new SettingsError(SettingsError.BAD_FIELD, 'Zone not found'));
-                    if (error && error.reason === SubdomainError.EXTERNAL_ERROR) return callback(new SettingsError(SettingsError.BAD_FIELD, 'Error adding A record:' + error.message));
-                    if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
-
-                    debug('validateRoute53Config: A record added with change id %s', changeId);
-
-                    callback();
-                });
-            });
-        });
-    });
-}
-
-function validateDigitalOceanConfig(domain, dnsConfig, callback) {
-    const zoneName = domain;
-
-    if (process.env.BOX_ENV === 'test') return callback();
-
-    sysinfo.getIp(function (error, ip) {
-        if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, 'Error getting IP:' + error.message));
-
-        dns.resolveNs(zoneName, function (error, nameservers) {
-            if (error && error.code === 'ENOTFOUND') return callback(new SettingsError(SettingsError.BAD_FIELD, 'Unable to resolve nameservers for this domain'));
-            if (error || !nameservers) return callback(error || new Error('Unable to get nameservers'));
-
-            digitalocean.upsert(dnsConfig, zoneName, 'my', 'A', [ ip ], function (error, changeId) {
-                if (error && error.reason === SubdomainError.ACCESS_DENIED) return callback(new SettingsError(SettingsError.BAD_FIELD, 'Error adding A record. Access denied'));
-                if (error && error.reason === SubdomainError.NOT_FOUND) return callback(new SettingsError(SettingsError.BAD_FIELD, 'Domain not found'));
-                if (error && error.reason === SubdomainError.EXTERNAL_ERROR) return callback(new SettingsError(SettingsError.BAD_FIELD, 'Error adding A record:' + error.message));
-                if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
-
-                debug('validateDigitalOceanConfig: A record added with change id %s', changeId);
-
-                callback();
-            });
-        });
-    });
-}
-
 function setDnsConfig(dnsConfig, callback) {
     assert.strictEqual(typeof dnsConfig, 'object');
     assert.strictEqual(typeof callback, 'function');
-
-    var credentials, validator;
-
-    if (dnsConfig.provider === 'route53') {
-        if (typeof dnsConfig.accessKeyId !== 'string') return callback(new SettingsError(SettingsError.BAD_FIELD, 'accessKeyId must be a string'));
-        if (typeof dnsConfig.secretAccessKey !== 'string') return callback(new SettingsError(SettingsError.BAD_FIELD, 'secretAccessKey must be a string'));
-
-        credentials = {
-            provider: dnsConfig.provider,
-            accessKeyId: dnsConfig.accessKeyId,
-            secretAccessKey: dnsConfig.secretAccessKey,
-            region: dnsConfig.region || 'us-east-1',
-            endpoint: dnsConfig.endpoint || null
-        };
-
-        validator = validateRoute53Config.bind(null, dnsConfig.domain || config.fqdn());
-    } else if (dnsConfig.provider === 'noop') {
-        credentials = {
-            provider: dnsConfig.provider
-        };
-        validator = function (caasConfig, next) { return next(); };
-    } else if (dnsConfig.provider === 'caas' || dnsConfig.provider === 'manual') {
-        credentials = {
-            provider: dnsConfig.provider
-        };
-
-        validator = validateManualDnsConfig.bind(null, dnsConfig.domain || config.fqdn());
-    } else if (dnsConfig.provider === 'digitalocean') {
-        if (typeof dnsConfig.token !== 'string') return callback(new SettingsError(SettingsError.BAD_FIELD, 'token must be a string'));
-
-        credentials = {
-            provider: dnsConfig.provider,
-            token: dnsConfig.token
-        };
-
-        validator = validateDigitalOceanConfig.bind(null, dnsConfig.domain || config.fqdn());
-    } else {
-        return callback(new SettingsError(SettingsError.BAD_FIELD, 'provider must be route53, digitalocean, noop, manual or caas'));
-    }
 
     sysinfo.getIp(function (error, ip) {
         if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, 'Error getting IP:' + error.message));
