@@ -7,6 +7,7 @@ angular.module('Application').controller('AppStoreController', ['$scope', '$loca
     $scope.user = Client.getUserInfo();
     $scope.users = [];
     $scope.groups = [];
+    $scope.dnsConfig = {};
     $scope.category = '';
     $scope.cachedCategory = ''; // used to cache the selected category while searching
     $scope.searchString = '';
@@ -512,6 +513,17 @@ angular.module('Application').controller('AppStoreController', ['$scope', '$loca
         });
     }
 
+    function fetchDnsConfig() {
+        Client.getDnsConfig(function (error, result) {
+            if (error) {
+                console.error(error);
+                return $timeout(fetchDnsConfig, 5000);
+            }
+
+            $scope.dnsConfig = result;
+        });
+    }
+
     function checkAppstoreAccount() {
         if (Client.getConfig().provider === 'caas') return;
         if (!$scope.user.admin) return;
@@ -557,6 +569,7 @@ angular.module('Application').controller('AppStoreController', ['$scope', '$loca
             if ($scope.user.admin) {
                 fetchUsers();
                 fetchGroups();
+                fetchDnsConfig();
             }
 
             $scope.ready = true;

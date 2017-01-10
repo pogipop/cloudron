@@ -27,6 +27,11 @@
                             </div>
                         </div>
 
+                        <p class="text-center" ng-show="appInstall.location && dnsConfig.provider === 'manual' && !dnsConfig.wildcard">
+                            <b>Do not forget, to add an A record for {{ appInstall.location }}.{{ config.fqdn }}</b>
+                            <br>
+                        </p>
+
                         <div class="has-error text-center" ng-show="appInstall.error.port">{{ appInstall.error.port }}</div>
                         <div ng-repeat="(env, info) in appInstall.portBindingsInfo">
                             <ng-form name="portInfo_form">
