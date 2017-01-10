@@ -5,6 +5,7 @@ module.exports = exports = {
     upsert: upsert,
     get: get,
     waitForDns: waitForDns,
+    verifyDnsConfig: verifyDnsConfig,
 
     SubdomainError: SubdomainError
 };
@@ -120,3 +121,13 @@ function waitForDns(domain, value, type, options, callback) {
     });
 }
 
+function verifyDnsConfig(domain, value, type, dnsConfig, callback) {
+    assert.strictEqual(typeof domain, 'string');
+    assert.strictEqual(typeof value, 'string');
+    assert(type === 'A' || type === 'CNAME');
+    assert(dnsConfig && typeof dnsConfig === 'object'); // the dns config to test with
+    assert(typeof dnsConfig.provider === 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    api(dnsConfig.provider).verifyDnsConfig(dnsConfig, domain, value, type, callback);
+}
