@@ -60,7 +60,7 @@ app.controller('SetupDNSController', ['$scope', '$http', 'Client', function ($sc
 
         Client.getStatus(function (error, status) {
             if (!error && status.adminFqdn && status.configState.dns && status.configState.tls) {
-                window.location.href = 'https://my.' + status.adminFqdn + '/setup.html';
+                window.location.href = 'https://' + status.adminFqdn + '/setup.html';
             }
 
             setTimeout(waitForDnsSetup, 5000);
