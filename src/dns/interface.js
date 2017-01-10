@@ -10,7 +10,8 @@ exports = module.exports = {
     upsert: upsert,
     get: get,
     del: del,
-    waitForDns: require('./waitfordns.js')
+    waitForDns: require('./waitfordns.js'),
+    verifyDnsConfig: verifyDnsConfig
 };
 
 var assert = require('assert'),
@@ -55,3 +56,13 @@ function del(dnsConfig, zoneName, subdomain, type, values, callback) {
     callback(new Error('not implemented'));
 }
 
+function verifyDnsConfig(dnsConfig, domain, ip, callback) {
+    assert.strictEqual(typeof dnsConfig, 'object');
+    assert.strictEqual(typeof domain, 'string');
+    assert.strictEqual(typeof ip, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    // Result: none, successful if no error
+
+    callback(new Error('not implemented'));
+}
