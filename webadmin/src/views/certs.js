@@ -188,7 +188,9 @@ angular.module('Application').controller('CertsController', ['$scope', '$locatio
         $scope.dnsCredentials.accessKeyId = $scope.dnsConfig.accessKeyId;
         $scope.dnsCredentials.secretAccessKey = $scope.dnsConfig.secretAccessKey;
         $scope.dnsCredentials.digitalOceanToken = $scope.dnsConfig.token;
+
         $scope.dnsCredentials.provider = $scope.dnsConfig.provider === 'caas' ? 'route53' : $scope.dnsConfig.provider;
+        $scope.dnsCredentials.provider = ($scope.dnsConfig.provider === 'manual' && $scope.dnsConfig.wildcard) ? 'wildcard' : $scope.dnsConfig.provider;
 
         $('#dnsCredentialsModal').modal('show');
     };
