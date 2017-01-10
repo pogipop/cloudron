@@ -88,7 +88,7 @@ const BOX_AND_USER_TEMPLATE = {
 
 var gUpdatingDns = false,                // flag for dns update reentrancy
     gBoxAndUserDetails = null,         // cached cloudron details like region,size...
-    gConfigState = { domain: '', dns: false, tls: false, configured: false };
+    gConfigState = { dns: false, tls: false, configured: false };
 
 function CloudronError(reason, errorOrMessage) {
     assert.strictEqual(typeof reason, 'string');
@@ -236,8 +236,6 @@ function configureAdmin(callback) {
             // skip my.domain.com setup if we don't have a domain
             if (!config.fqdn()) return callback(null);
 
-            gConfigState.domain = config.fqdn();
-
             subdomains.waitForDns(config.adminFqdn(), ip, 'A', { interval: 30000, times: 50000 }, function (error) {
                 if (error) return callback(error);
 
@@ -339,6 +337,7 @@ function getStatus(callback) {
                 apiServerOrigin: config.apiServerOrigin(), // used by CaaS tool
                 provider: config.provider(),
                 cloudronName: cloudronName,
+                adminFqdn: config.fqdn() ? config.adminFqdn() : null,
                 configState: gConfigState
             });
         });
