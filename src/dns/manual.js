@@ -56,14 +56,20 @@ function verifyDnsConfig(dnsConfig, domain, ip, callback) {
     assert.strictEqual(typeof callback, 'function');
 
     dns.resolveNs(domain, function (error, nameservers) {
-        if (error || !nameservers) return callback(error || new Error('Unable to get nameservers'));
+        if (error || !nameservers) return callback(new SubdomainError(SubdomainError.BAD_FIELD, 'Unable to get nameservers'));
+
+        // async.every only reports bools
+        var stashedError = null;
 
         async.every(nameservers, function (nameserver, callback) {
             // ns records cannot have cname
             dns.resolve4(nameserver, function (error, nsIps) {
-                if (error || !nsIps || nsIps.length === 0) return callback(new SubdomainError(SubdomainError.BAD_FIELD, 'Unable to resolve nameservers for this domain'));
+                if (error || !nsIps || nsIps.length === 0) {
+                    stashedError = new SubdomainError(SubdomainError.BAD_FIELD, 'Unable to resolve nameservers for this domain');
+                    return callback(false);
+                }
 
-                async.every(nsIps, function (nsIp, iteratorCallback) {
+                async.every(nsIps, function (nsIp, callback) {
                     var req = dns.Request({
                         question: dns.Question({ name: domain, type: 'A' }),
                         server: { address: nsIp },
@@ -72,20 +78,20 @@ function verifyDnsConfig(dnsConfig, domain, ip, callback) {
 
                     req.on('timeout', function () {
                         debug('nameserver %s (%s) timed out when trying to resolve %s', nameserver, nsIp, domain);
-                        return iteratorCallback(true); // should be ok if dns server is down
+                        return callback(true); // should be ok if dns server is down
                     });
 
                     req.on('message', function (error, message) {
                         if (error) {
                             debug('nameserver %s (%s) returned error trying to resolve %s: %s', nameserver, nsIp, domain, error);
-                            return iteratorCallback(false);
+                            return callback(false);
                         }
 
                         var answer = message.answer;
 
                         if (!answer || answer.length === 0) {
                             debug('bad answer from nameserver %s (%s) resolving %s (%s): %j', nameserver, nsIp, domain, 'A', message);
-                            return iteratorCallback(false);
+                            return callback(false);
                         }
 
                         debug('verifyDnsConfig: ns: %s (%s), name:%s Actual:%j Expecting:%s', nameserver, nsIp, domain, answer, ip);
@@ -94,16 +100,18 @@ function verifyDnsConfig(dnsConfig, domain, ip, callback) {
                             return a.address === ip;
                         });
 
-                        if (match) return iteratorCallback(true); // done!
+                        if (match) return callback(true); // done!
 
-                        iteratorCallback(false);
+                        callback(false);
                     });
 
                     req.send();
                 }, callback);
             });
-        }, function (error) {
-            if (error) return callback(new SubdomainError(SubdomainError.BAD_FIELD, 'Unable to resolve this domain'));
+        }, function (success) {
+            if (stashedError) return callback(stashedError);
+            if (!success) return callback(new SubdomainError(SubdomainError.BAD_FIELD, 'Unable to resolve this domain'));
+
             callback(null, { provider: dnsConfig.provider, wildcard: !!dnsConfig.wildcard });
         });
     });
