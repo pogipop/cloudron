@@ -62,5 +62,9 @@ function verifyDnsConfig(dnsConfig, domain, ip, callback) {
     assert.strictEqual(typeof ip, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    return callback(null);
+    var credentials = {
+        provider: dnsConfig.provider
+    };
+
+    return callback(null, credentials);
 }

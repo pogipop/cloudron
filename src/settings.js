@@ -463,18 +463,27 @@ function setDnsConfig(dnsConfig, callback) {
         return callback(new SettingsError(SettingsError.BAD_FIELD, 'provider must be route53, digitalocean, noop, manual or caas'));
     }
 
-    validator(credentials, function (error) {
-        if (error) return callback(error);
+    sysinfo.getIp(function (error, ip) {
+        if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, 'Error getting IP:' + error.message));
 
-        settingsdb.set(exports.DNS_CONFIG_KEY, JSON.stringify(credentials), function (error) {
+        subdomains.verifyDnsConfig(dnsConfig, dnsConfig.domain, ip, function (error, result) {
+            if (error && error.reason === SubdomainError.ACCESS_DENIED) return callback(new SettingsError(SettingsError.BAD_FIELD, 'Error adding A record. Access denied'));
+            if (error && error.reason === SubdomainError.NOT_FOUND) return callback(new SettingsError(SettingsError.BAD_FIELD, 'Zone not found'));
+            if (error && error.reason === SubdomainError.EXTERNAL_ERROR) return callback(new SettingsError(SettingsError.BAD_FIELD, 'Error adding A record:' + error.message));
+            if (error && error.reason === SubdomainError.BAD_FIELD) return callback(new SettingsError(SettingsError.BAD_FIELD, error.message));
+            if (error && error.reason === SubdomainError.INVALID_PROVIDER) return callback(new SettingsError(SettingsError.BAD_FIELD, error.message));
             if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
 
-            // sync the domain to the cloudron.conf
-            if (dnsConfig.domain) config.set('fqdn', dnsConfig.domain);
+            settingsdb.set(exports.DNS_CONFIG_KEY, JSON.stringify(result), function (error) {
+                if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
 
-            exports.events.emit(exports.DNS_CONFIG_KEY, dnsConfig);
+                // sync the domain to the cloudron.conf
+                if (dnsConfig.domain) config.set('fqdn', dnsConfig.domain);
 
-            callback(null);
+                exports.events.emit(exports.DNS_CONFIG_KEY, dnsConfig);
+
+                callback(null);
+            });
         });
     });
 }

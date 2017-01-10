@@ -62,7 +62,7 @@ function verifyDnsConfig(dnsConfig, domain, ip, callback) {
     assert.strictEqual(typeof ip, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    // Result: none, successful if no error
+    // Result: dnsConfig object
 
     callback(new Error('not implemented'));
 }

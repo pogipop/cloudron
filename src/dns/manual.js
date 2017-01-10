@@ -104,7 +104,7 @@ function verifyDnsConfig(dnsConfig, domain, ip, callback) {
             });
         }, function (error) {
             if (error) return callback(new SubdomainError(SubdomainError.BAD_FIELD, 'Unable to resolve this domain'));
-            callback(null);
+            callback(null, { provider: dnsConfig.provider, wildcard: !!dnsConfig.wildcard });
         });
     });
 }
