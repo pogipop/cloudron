@@ -20,22 +20,6 @@
     <!-- Bootstrap Core JavaScript -->
     <script src="3rdparty/js/bootstrap.min.js"></script>
 
-    <script>
-
-        $(function () {
-            'use strict';
-
-            var host = window.location.host;
-
-            // Special case the caas domains
-            if (host.match(/.*\.cloudron\.(me|eu|de)$/) || host.match(/.*\.selfhost\.io$/)) {
-                $('#settings-link').attr('href', '//my-' + host);
-            } else {
-                $('#settings-link').attr('href', '//my.' + host);
-            }
-        });
-
-    </script>
 </head>
 
 <body class="status-page">
@@ -48,7 +32,7 @@
         </h1>
         <br/>
         <h4>There is no app configured for this domain.</h4>
-        <h4>Use the <a id="settings-link">settings panel</a> and install an app leaving the location empty.</h4>
+        <h4>Use the <a href="/">settings panel</a> and install an app leaving the location empty.</h4>
 
         <footer>
             <span class="text-muted"><a href="https://cloudron.io" target="_blank">Cloudron</a> &copy; 2017 </span>
