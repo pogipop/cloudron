@@ -4,7 +4,8 @@ exports = module.exports = {
     upsert: upsert,
     get: get,
     del: del,
-    waitForDns: waitForDns
+    waitForDns: waitForDns,
+    verifyDnsConfig: verifyDnsConfig
 };
 
 var assert = require('assert'),
@@ -57,3 +58,11 @@ function waitForDns(domain, value, type, options, callback) {
     callback();
 }
 
+function verifyDnsConfig(dnsConfig, domain, ip, callback) {
+    assert.strictEqual(typeof dnsConfig, 'object');
+    assert.strictEqual(typeof domain, 'string');
+    assert.strictEqual(typeof ip, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    return callback(null);
+}
