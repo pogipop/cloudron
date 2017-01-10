@@ -42,6 +42,7 @@ SubdomainError.STILL_BUSY = 'Still busy';
 SubdomainError.MISSING_CREDENTIALS = 'Missing credentials';
 SubdomainError.INTERNAL_ERROR = 'Internal error';
 SubdomainError.ACCESS_DENIED = 'Access denied';
+SubdomainError.INVALID_PROVIDER = 'provider must be route53, digitalocean, noop, manual or caas';
 
 // choose which subdomain backend we use for test purpose we use route53
 function api(provider) {
@@ -121,13 +122,15 @@ function waitForDns(domain, value, type, options, callback) {
     });
 }
 
-function verifyDnsConfig(domain, value, type, dnsConfig, callback) {
-    assert.strictEqual(typeof domain, 'string');
-    assert.strictEqual(typeof value, 'string');
-    assert(type === 'A' || type === 'CNAME');
+function verifyDnsConfig(dnsConfig, domain, ip, callback) {
     assert(dnsConfig && typeof dnsConfig === 'object'); // the dns config to test with
     assert(typeof dnsConfig.provider === 'string');
+    assert.strictEqual(typeof domain, 'string');
+    assert.strictEqual(typeof ip, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    api(dnsConfig.provider).verifyDnsConfig(dnsConfig, domain, value, type, callback);
+    var backend = api(dnsConfig.provider);
+    if (!backend) return callback(new SubdomainError(SubdomainError.INVALID_PROVIDER));
+
+    api(dnsConfig.provider).verifyDnsConfig(dnsConfig, domain, ip, callback);
 }
