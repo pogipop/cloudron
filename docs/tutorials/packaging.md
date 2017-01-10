@@ -429,9 +429,8 @@ other Cloudron users. This can be done using:
   cloudron upload
 ```
 
-The app should now be visible in the Store view of your cloudron under
-the 'Testing' section. You can check if the icon, description and other details
-appear correctly.
+You should now be able to visit `/#/appstore/<appid>?version=<appversion>` on your
+Cloudron to check if the icon, description and other details appear correctly.
 
 Other Cloudron users can install your app on their Cloudron's using
 `cloudron install --appstore-id <appid@version>`.
