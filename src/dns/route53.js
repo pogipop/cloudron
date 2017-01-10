@@ -5,6 +5,7 @@ exports = module.exports = {
     get: get,
     del: del,
     waitForDns: require('./waitfordns.js'),
+    verifyDnsConfig: verifyDnsConfig,
 
     // not part of "dns" interface
     getHostedZone: getHostedZone
@@ -13,8 +14,10 @@ exports = module.exports = {
 var assert = require('assert'),
     AWS = require('aws-sdk'),
     debug = require('debug')('box:dns/route53'),
+    dns = require('native-dns'),
     SubdomainError = require('../subdomains.js').SubdomainError,
-    util = require('util');
+    util = require('util'),
+    _ = require('underscore');
 
 function getDnsCredentials(dnsConfig) {
     assert.strictEqual(typeof dnsConfig, 'object');
@@ -209,3 +212,31 @@ function del(dnsConfig, zoneName, subdomain, type, values, callback) {
     });
 }
 
+function verifyDnsConfig(dnsConfig, domain, ip, callback) {
+    assert.strictEqual(typeof dnsConfig, 'object');
+    assert.strictEqual(typeof domain, 'string');
+    assert.strictEqual(typeof ip, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    dns.resolveNs(domain, function (error, nameservers) {
+        if (error && error.code === 'ENOTFOUND') return callback(new SubdomainError(SubdomainError.BAD_FIELD, 'Unable to resolve nameservers for this domain'));
+        if (error || !nameservers) return callback(error || new Error('Unable to get nameservers'));
+
+        getHostedZone(dnsConfig, domain, function (error, zone) {
+            if (error) return callback(error);
+
+            if (!_.isEqual(zone.DelegationSet.NameServers.sort(), nameservers.sort())) {
+                debug('verifyDnsConfig: %j and %j do not match', nameservers, zone.DelegationSet.NameServers);
+                return callback(new SubdomainError(SubdomainError.BAD_FIELD, 'Domain nameservers are not set to Route53'));
+            }
+
+            upsert(dnsConfig, domain, 'my', 'A', [ ip ], function (error, changeId) {
+                if (error) return callback(new SubdomainError(SubdomainError.INTERNAL_ERROR, error));
+
+                debug('verifyDnsConfig: A record added with change id %s', changeId);
+
+                callback();
+            });
+        });
+    });
+}
