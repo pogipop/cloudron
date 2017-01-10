@@ -147,6 +147,12 @@ angular.module('Application').controller('MainController', ['$scope', '$route', 
             return;
         }
 
+        // support local development with localhost check
+        if (window.location.hostname !== status.adminFqdn && window.location.hostname !== 'localhost') {
+            window.location.href = status.adminFqdn + '/nakeddomain.html';
+            return;
+        }
+
         Client.refreshConfig(function (error) {
             if (error) return $scope.error(error);
 
