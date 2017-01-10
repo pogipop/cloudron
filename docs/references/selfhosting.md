@@ -291,7 +291,7 @@ reputation should be easy to get back.
     * AWS/EC2 - Fill the PTR [request form](https://aws-portal.amazon.com/gp/aws/html-forms-controller/contactus/ec2-email-limit-rdns-request.
 
     * Digital Ocean - Digital Ocean sets up a PTR record based on the droplet's name. So, simply rename
-    your droplet to `my.<domain>`.
+    your droplet to `my.<domain>`. Note that some new Digital Ocean accounts have [port 25 blocked](https://www.digitalocean.com/community/questions/port-25-smtp-external-access).
 
     * Scaleway - Edit your security group to allow email. You can also set a PTR record on the interface with your
     `my.<domain>`.
