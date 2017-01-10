@@ -106,7 +106,7 @@ app.filter('activeOAuthClients', function () {
 
 app.filter('prettyAppMessage', function () {
     return function (message) {
-        if (message === 'ETRYAGAIN') return 'Ensure that the DNS record for this location is setup correctly.';
+        if (message === 'ETRYAGAIN') return 'The DNS record for this location is not setup correctly. Please verify your DNS settings and restore this app.';
         return message;
     };
 });
@@ -127,6 +127,12 @@ app.filter('installationActive', function () {
 });
 
 app.filter('installationStateLabel', function() {
+    // for better DNS errors
+    function detailedError(app) {
+        if (app.installationProgress === 'ETRYAGAIN') return 'DNS Error';
+        return 'Error';
+    }
+
     return function(app) {
         var waiting = app.progress === 0 ? ' (Waiting)' : '';
 
@@ -140,7 +146,7 @@ app.filter('installationStateLabel', function() {
         case ISTATES.PENDING_UPDATE: return 'Updating' + waiting;
         case ISTATES.PENDING_FORCE_UPDATE: return 'Updating' + waiting;
         case ISTATES.PENDING_BACKUP: return 'Backing up' + waiting;
-        case ISTATES.ERROR: return 'Error';
+        case ISTATES.ERROR: return detailedError(app);
         case ISTATES.INSTALLED: {
             if (app.runState === 'running') {
                 if (!app.health) return 'Starting...'; // no data yet
