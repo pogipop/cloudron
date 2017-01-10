@@ -425,7 +425,8 @@ function sendAliveStatus(callback) {
         };
     }
 
-    function sendAliveStatusWithAppstoreConfig(appstoreConfig) {
+    function sendAliveStatusWithAppstoreConfig(backendSettings, appstoreConfig) {
+        assert.strictEqual(typeof backendSettings, 'object');
         assert.strictEqual(typeof appstoreConfig.userId, 'string');
         assert.strictEqual(typeof appstoreConfig.cloudronId, 'string');
         assert.strictEqual(typeof appstoreConfig.token, 'string');
@@ -434,7 +435,8 @@ function sendAliveStatus(callback) {
         var data = {
             domain: config.fqdn(),
             version: config.version(),
-            provider: config.provider()
+            provider: config.provider(),
+            backendSettings: backendSettings
         };
 
         superagent.post(url).send(data).query({ accessToken: appstoreConfig.token }).timeout(30 * 1000).end(function (error, result) {
@@ -446,25 +448,42 @@ function sendAliveStatus(callback) {
         });
     }
 
-    // Caas Cloudrons do not store appstore credentials in their local database
-    if (config.provider() === 'caas') {
-        if (!config.token()) return callback(new CloudronError(CloudronError.INTERNAL_ERROR, 'no token set'));
+    settings.getAll(function (error, result) {
+        if (error) return callback(new CloudronError(CloudronError.INTERNAL_ERROR, error));
 
-        var url = config.apiServerOrigin() + '/api/v1/exchangeBoxTokenWithUserToken';
-        superagent.post(url).query({ token: config.token() }).timeout(30 * 1000).end(function (error, result) {
-            if (error && !error.response) return callback(new CloudronError(CloudronError.EXTERNAL_ERROR, error));
-            if (result.statusCode !== 201) return callback(new CloudronError(CloudronError.EXTERNAL_ERROR, util.format('App purchase failed. %s %j', result.status, result.body)));
+        var backendSettings = {
+            dnsConfig: {
+                provider: result[settings.DNS_CONFIG_KEY].provider,
+                wildcard: result[settings.DNS_CONFIG_KEY].provider === 'manual' ? result[settings.DNS_CONFIG_KEY].wildcard : undefined
+            },
+            tlsConfig: {
+                provider: result[settings.TLS_CONFIG_KEY].provider
+            },
+            backupConfig: {
+                provider: result[settings.BACKUP_CONFIG_KEY].provider
+            }
+        };
 
-            sendAliveStatusWithAppstoreConfig(result.body);
-        });
-    } else {
-        settings.getAppstoreConfig(function (error, result) {
-            if (error) return callback(new CloudronError(CloudronError.INTERNAL_ERROR, error));
-            if (!result.token) return callback(new CloudronError(CloudronError.INTERNAL_ERROR, 'not registered yet'));
+        // Caas Cloudrons do not store appstore credentials in their local database
+        if (config.provider() === 'caas') {
+            if (!config.token()) return callback(new CloudronError(CloudronError.INTERNAL_ERROR, 'no token set'));
 
-            sendAliveStatusWithAppstoreConfig(result);
-        });
-    }
+            var url = config.apiServerOrigin() + '/api/v1/exchangeBoxTokenWithUserToken';
+            superagent.post(url).query({ token: config.token() }).timeout(30 * 1000).end(function (error, result) {
+                if (error && !error.response) return callback(new CloudronError(CloudronError.EXTERNAL_ERROR, error));
+                if (result.statusCode !== 201) return callback(new CloudronError(CloudronError.EXTERNAL_ERROR, util.format('App purchase failed. %s %j', result.status, result.body)));
+
+                sendAliveStatusWithAppstoreConfig(backendSettings, result.body);
+            });
+        } else {
+            settings.getAppstoreConfig(function (error, result) {
+                if (error) return callback(new CloudronError(CloudronError.INTERNAL_ERROR, error));
+                if (!result.token) return callback(new CloudronError(CloudronError.INTERNAL_ERROR, 'not registered yet'));
+
+                sendAliveStatusWithAppstoreConfig(backendSettings, result);
+            });
+        }
+    });
 }
 
 function readDkimPublicKeySync() {
