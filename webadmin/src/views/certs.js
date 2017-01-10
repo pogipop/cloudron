@@ -6,11 +6,13 @@ angular.module('Application').controller('CertsController', ['$scope', '$locatio
     $scope.config = Client.getConfig();
     $scope.dnsConfig = null;
 
+    // keep in sync with setupdns.js
     $scope.dnsProvider = [
-        { name: 'Manual/Wildcard', value: 'manual' },
-        { name: 'No-op', value: 'noop' },
         { name: 'AWS Route53', value: 'route53' },
-        { name: 'Digital Ocean', value: 'digitalocean' }
+        { name: 'Digital Ocean', value: 'digitalocean' },
+        { name: 'Wildcard', value: 'wildcard' },
+        { name: 'Manual (not recommended)', value: 'manual' },
+        { name: 'No-op (only for development)', value: 'noop' }
     ];
 
     $scope.defaultCert = {
@@ -118,6 +120,12 @@ angular.module('Application').controller('CertsController', ['$scope', '$locatio
             secretAccessKey: $scope.dnsCredentials.secretAccessKey,
             token: $scope.dnsCredentials.digitalOceanToken
         };
+
+        // special case the wildcard provider
+        if (data.provider === 'wildcard') {
+            data.provider = 'manual';
+            data.wildcard = true;
+        }
 
         var func;
         if (migrateDomain) {
