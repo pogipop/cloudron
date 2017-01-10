@@ -122,8 +122,8 @@ function initialize(callback) {
     assert.strictEqual(typeof callback, 'function');
 
     async.series([
-        syncConfigState,
-        installAppBundle
+        installAppBundle,
+        syncConfigState
     ], callback);
 }
 
@@ -200,11 +200,10 @@ function syncConfigState(callback) {
 
         if (configured) {
             gConfigState.configured = true;
-            onConfigured();
-        } else {
-            settings.events.once(settings.DNS_CONFIG_KEY, function () { syncConfigState(); }); // check again later
+            return onConfigured(callback);
         }
 
+        settings.events.once(settings.DNS_CONFIG_KEY, function () { syncConfigState(); }); // check again later
         callback();
     });
 }
