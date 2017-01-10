@@ -158,6 +158,7 @@ function getEmailDnsRecords(callback) {
 
     // check if DKIM is already setup
     dns.resolveTxt(records.dkim.subdomain + '.' + config.fqdn(), function (error, txtRecords) {
+        if (error && error.code === 'ENOTFOUND') return callback(null, records);    // not setup
         if (error) return callback(error);
 
         // ensure this is an array resolveTxt() returns undefined if no records are found
@@ -171,6 +172,7 @@ function getEmailDnsRecords(callback) {
 
         // check if SPF is already setup
         dns.resolveTxt(config.fqdn(), function (error, txtRecords) {
+            if (error && error.code === 'ENOTFOUND') return callback(null, records);    // not setup
             if (error) return callback(error);
 
             // ensure this is an array resolveTxt() returns undefined if no records are found
