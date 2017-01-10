@@ -348,6 +348,9 @@ function setDnsConfig(dnsConfig, callback) {
     sysinfo.getIp(function (error, ip) {
         if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, 'Error getting IP:' + error.message));
 
+        // add the domain in case we do not change it with this request
+        if (!dnsConfig.domain) dnsConfig.domain = config.fqdn();
+
         subdomains.verifyDnsConfig(dnsConfig, dnsConfig.domain, ip, function (error, result) {
             if (error && error.reason === SubdomainError.ACCESS_DENIED) return callback(new SettingsError(SettingsError.BAD_FIELD, 'Error adding A record. Access denied'));
             if (error && error.reason === SubdomainError.NOT_FOUND) return callback(new SettingsError(SettingsError.BAD_FIELD, 'Zone not found'));
