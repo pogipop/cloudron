@@ -121,13 +121,10 @@ CloudronError.SELF_UPGRADE_NOT_SUPPORTED = 'Self upgrade not supported';
 function initialize(callback) {
     assert.strictEqual(typeof callback, 'function');
 
-    if (!fs.existsSync(paths.FIRST_RUN_FILE)) {
-        debug('initialize: installing app bundle on first run');
-        process.nextTick(installAppBundle);
-        fs.writeFileSync(paths.FIRST_RUN_FILE, 'been there, done that', 'utf8');
-    }
-
-    syncConfigState(callback);
+    async.series([
+        syncConfigState,
+        installAppBundle
+    ], callback);
 }
 
 function uninitialize(callback) {
@@ -754,14 +751,14 @@ function doUpdate(boxUpdateInfo, callback) {
 }
 
 function installAppBundle(callback) {
-    callback = callback || NOOP_CALLBACK;
+    assert.strictEqual(typeof callback, 'function');
+
+    if (fs.existsSync(paths.FIRST_RUN_FILE)) return callback();
 
     var bundle = config.get('appBundle');
+    debug('initialize: installing app bundle on first run: %j', bundle);
 
-    if (!bundle || bundle.length === 0) {
-        debug('installAppBundle: no bundle set');
-        return callback();
-    }
+    if (!bundle || bundle.length === 0) return callback();
 
     async.eachSeries(bundle, function (appInfo, iteratorCallback) {
         debug('autoInstall: installing %s at %s', appInfo.appstoreId, appInfo.location);
@@ -776,6 +773,8 @@ function installAppBundle(callback) {
         apps.install(data, { userId: null, username: 'autoinstaller' }, iteratorCallback);
     }, function (error) {
         if (error) debug('autoInstallApps: ', error);
+
+        fs.writeFileSync(paths.FIRST_RUN_FILE, 'been there, done that', 'utf8');
 
         callback();
     });
