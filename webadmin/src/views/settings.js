@@ -453,7 +453,7 @@ angular.module('Application').controller('SettingsController', ['$scope', '$loca
         // nothing to check if mail is not enabled
         if (!$scope.mailConfig.enabled) return;
 
-        Client.showExpectedDnsRecords(function (error, dnsRecords) {
+        Client.getExpectedDnsRecords(function (error, dnsRecords) {
             if (error) return callback(error);
 
             $scope.expectedDnsRecords = dnsRecords;
