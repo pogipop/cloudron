@@ -13,7 +13,6 @@ var assert = require('assert'),
     debug = require('debug')('box:dns/noop'),
     dns = require('native-dns'),
     SubdomainError = require('../subdomains.js').SubdomainError,
-    sysinfo = require('../sysinfo.js'),
     util = require('util');
 
 function upsert(dnsConfig, zoneName, subdomain, type, values, callback) {
