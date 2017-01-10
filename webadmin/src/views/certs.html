@@ -16,8 +16,7 @@
 
                         <div class="form-group" ng-show="dnsConfig.provider !== 'caas'">
                             <label class="control-label" for="dnsCredentialsProvider">DNS API Provider</label>
-                            <select class="form-control" id="dnsCredentialsProvider" ng-model="dnsCredentials.provider" ng-options="a.value as a.name for a in dnsProvider">
-                            </select>
+                            <select class="form-control" id="dnsCredentialsProvider" ng-model="dnsCredentials.provider" ng-options="a.value as a.name for a in dnsProvider"></select>
                         </div>
 
                         <!-- Route53 -->
@@ -41,14 +40,14 @@
                             <input type="password" class="form-control" ng-model="dnsCredentials.password" id="dnsCredentialsPassword" name="password" ng-disabled="dnsCredentials.busy" required>
                         </div>
 
-                        <input class="ng-hide" type="submit" ng-disabled="dnsCredentialsForm.$invalid"/>
+                        <input class="ng-hide" type="submit" ng-disabled="dnsCredentialsForm.$invalid || dnsCredentials.busy"/>
                     </fieldset>
                 </form>
             </div>
             <div class="modal-footer ">
                 <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-                <button type="submit" class="btn btn-outline btn-success pull-right" ng-click="setDnsCredentials()"
-                    ng-disabled="dnsCredentialsForm.$invalid || busy"><i class="fa fa-spinner fa-pulse" ng-show="dnsCredentials.busy"></i>
+                <button type="submit" class="btn btn-outline btn-success pull-right" ng-click="setDnsCredentials()" ng-disabled="dnsCredentialsForm.$invalid || dnsCredentials.busy">
+                    <i class="fa fa-spinner fa-pulse" ng-show="dnsCredentials.busy"></i>
                     <span ng-show="dnsCredentials.customDomain === config.fqdn">Save</span>
                     <span ng-show="dnsCredentials.customDomain !== config.fqdn">Change Domain</span>
                 </button>
