@@ -37,11 +37,6 @@ angular.module('Application').controller('AppsController', ['$scope', '$location
         isAccessRestrictionValid: function () {
             var tmp = $scope.appConfigure.accessRestriction;
             return !!(tmp.users.length || tmp.groups.length);
-        },
-
-        isAltDomainValid: function () {
-            if (!$scope.appConfigure.usingAltDomain) return true;
-            return /.+\..+\..+/.test($scope.appConfigure.location); // 2 dots
         }
     };
 
