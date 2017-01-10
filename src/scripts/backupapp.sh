@@ -98,7 +98,7 @@ if [[ "$1" == "s3" ]]; then
         cat "${error_log}" && rm "${error_log}"
     done
 elif [[ "$1" == "filesystem" ]]; then
-    mkdir -p "${backup_folder}"
+    mkdir -p $(dirname "${backup_folder}/${backup_config_fileName}")
 
     echo "Storing backup config to ${backup_folder}/${backup_config_fileName}"
     cat "${app_data_snapshot}/config.json" > "${backup_folder}/${backup_config_fileName}"

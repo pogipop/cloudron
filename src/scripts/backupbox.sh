@@ -82,7 +82,7 @@ if [[ "$1" == "s3" ]]; then
 elif [[ "$1" == "filesystem" ]]; then
     echo "Storing backup to ${backup_folder}/${backup_fileName}"
 
-    mkdir -p "${backup_folder}"
+    mkdir -p $(dirname "${backup_folder}/${backup_fileName}")
 
     tar -czf - -C "${box_snapshot_dir}" . | openssl aes-256-cbc -e -pass "pass:${password}" > "${backup_folder}/${backup_fileName}"
 fi
