@@ -40,8 +40,9 @@ versionsUrl="https://s3.amazonaws.com/prod-cloudron-releases/versions.json"
 requestedVersion="latest"
 apiServer="https://api.cloudron.io"
 dataJson=""
+prerelease=false
 
-args=$(getopt -o "" -l "domain:,help,skip-baseimage-init,data:,provider:,encryption-key:,restore-url:,tls-provider:,version:,versions-url:,api-server:,dns-provider:" -n "$0" -- "$@")
+args=$(getopt -o "" -l "domain:,help,skip-baseimage-init,data:,provider:,encryption-key:,restore-url:,tls-provider:,version:,versions-url:,api-server:,dns-provider:,env:" -n "$0" -- "$@")
 eval set -- "${args}"
 
 while true; do
@@ -54,10 +55,22 @@ while true; do
     --tls-provider) tlsProvider="$2"; shift 2;;
     --dns-provider) dnsProvider="$2"; shift 2;;
     --version) requestedVersion="$2"; shift 2;;
+    --env)
+        if [[ "$2" == "dev" ]]; then
+            versionsUrl="https://s3.amazonaws.com/dev-cloudron-releases/versions.json"
+            tlsProvider="fallback"
+            prerelease="true"
+        elif [[ "$2" == "staging" ]]; then
+            versionsUrl="https://s3.amazonaws.com/staging-cloudron-releases/versions.json"
+            tlsProvider="fallback"
+            prerelease="true"
+        fi
+        shift 2;;
     --versions-url) versionsUrl="$2"; shift 2;;
     --api-server) apiServer="$2"; shift 2;;
     --skip-baseimage-init) initBaseImage="false"; shift;;
     --data) dataJson="$2"; shift 2;;
+    --prerelease) prerelease="true"; shift;;
     --) break;;
     *) echo "Unknown option $1"; exit 1;;
     esac
@@ -114,7 +127,8 @@ fi
 echo "=> Checking version"
 releaseJson=$(curl -s "${versionsUrl}")
 if [[ "$requestedVersion" == "latest" ]]; then
-    version=$(echo "${releaseJson}" | python3 -c 'import json,sys,collections;obj=json.load(sys.stdin, object_pairs_hook=collections.OrderedDict);latest=list(v for v in obj if "-pre" not in v)[-1];print(latest)')
+    pre=$([[ "${prerelease}" == "true" ]] && echo "null" || echo "-pre")
+    version=$(echo "${releaseJson}" | python3 -c "import json,sys,collections;obj=json.load(sys.stdin, object_pairs_hook=collections.OrderedDict);latest=list(v for v in obj if '${pre}' not in v)[-1];print(latest)")
 else
     version="${requestedVersion}"
 fi
@@ -142,6 +156,9 @@ if [[ -z "${dataJson}" ]]; then
             "provider": "filesystem",
             "backupFolder": "/var/backups",
             "key": "${encryptionKey}"
+        },
+        "updateConfig": {
+            "prerelease": ${prerelease}
         },
         "version": "${version}"
     }
