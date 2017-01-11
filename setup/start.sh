@@ -70,9 +70,13 @@ systemctl enable apparmor
 systemctl restart apparmor
 
 usermod yellowtent -a -G docker
-sed -e 's,^ExecStart=.*$,ExecStart=/usr/bin/docker daemon -H fd:// --log-driver=journald --exec-opt native.cgroupdriver=cgroupfs,' -i /lib/systemd/system/docker.service
+temp_file=$(mktemp)
+sed -e 's,^ExecStart=.*$,ExecStart=/usr/bin/docker daemon -H fd:// --log-driver=journald --exec-opt native.cgroupdriver=cgroupfs,' /lib/systemd/system/docker.service > "${temp_file}"
 systemctl enable docker
-systemctl restart docker
+if ! diff -q /lib/systemd/system/docker.service "${temp_file}" >/dev/null; then
+    mv "${temp_file}" /lib/systemd/system/docker.service
+    systemctl restart docker
+fi
 
 # caas has ssh on port 202 and we disable password login
 if [[ "${arg_provider}" == "caas" ]]; then
