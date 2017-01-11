@@ -892,6 +892,7 @@ function migrate(options, callback) {
         if (error && error.reason === SettingsError.BAD_FIELD) return callback(new CloudronError(CloudronError.BAD_FIELD, error.message));
         if (error) return callback(new CloudronError(CloudronError.INTERNAL_ERROR, error));
 
+        // TODO: should probably rollback dns config if migrate fails
         doMigrate(options, callback);
     });
 }
