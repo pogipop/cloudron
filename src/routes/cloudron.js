@@ -92,7 +92,7 @@ function dnsSetup(req, res, next) {
 
     config.set('fqdn', req.body.domain);
 
-    settings.setDnsConfig(req.body, function (error) {
+    settings.setDnsConfig(req.body, req.body.domain, function (error) {
         if (error && error.reason === SettingsError.BAD_FIELD) return next(new HttpError(400, error.message));
         if (error) return next(new HttpError(500, error));
 

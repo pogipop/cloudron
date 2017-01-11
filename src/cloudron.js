@@ -888,7 +888,7 @@ function migrate(options, callback) {
 
     var dnsConfig = _.pick(options, 'domain', 'provider', 'accessKeyId', 'secretAccessKey', 'region', 'endpoint');
 
-    settings.setDnsConfig(dnsConfig, function (error) {
+    settings.setDnsConfig(dnsConfig, options.domain, function (error) {
         if (error && error.reason === SettingsError.BAD_FIELD) return callback(new CloudronError(CloudronError.BAD_FIELD, error.message));
         if (error) return callback(new CloudronError(CloudronError.INTERNAL_ERROR, error));
 

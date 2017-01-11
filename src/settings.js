@@ -343,14 +343,15 @@ function getDnsConfig(callback) {
     });
 }
 
-function setDnsConfig(dnsConfig, callback) {
+function setDnsConfig(dnsConfig, domain, callback) {
     assert.strictEqual(typeof dnsConfig, 'object');
+    assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof callback, 'function');
 
     sysinfo.getIp(function (error, ip) {
         if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, 'Error getting IP:' + error.message));
 
-        subdomains.verifyDnsConfig(dnsConfig, config.fqdn(), ip, function (error, result) {
+        subdomains.verifyDnsConfig(dnsConfig, domain, ip, function (error, result) {
             if (error && error.reason === SubdomainError.ACCESS_DENIED) return callback(new SettingsError(SettingsError.BAD_FIELD, 'Error adding A record. Access denied'));
             if (error && error.reason === SubdomainError.NOT_FOUND) return callback(new SettingsError(SettingsError.BAD_FIELD, 'Zone not found'));
             if (error && error.reason === SubdomainError.EXTERNAL_ERROR) return callback(new SettingsError(SettingsError.BAD_FIELD, 'Error adding A record:' + error.message));
