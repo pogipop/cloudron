@@ -8,6 +8,7 @@
 
 var async = require('async'),
     AWS = require('aws-sdk'),
+    config = require('../config.js'),
     database = require('../database.js'),
     expect = require('expect.js'),
     nock = require('nock'),
@@ -32,7 +33,7 @@ describe('dns provider', function () {
                 provider: 'noop'
             };
 
-            settings.setDnsConfig(data, done);
+            settings.setDnsConfig(data, config.fqdn(), done);
         });
 
         it('upsert succeeds', function (done) {
@@ -73,7 +74,7 @@ describe('dns provider', function () {
                 token: TOKEN
             };
 
-            settings.setDnsConfig(data, done);
+            settings.setDnsConfig(data, config.fqdn(), done);
         });
 
         it('upsert non-existing record succeeds', function (done) {
@@ -397,7 +398,7 @@ describe('dns provider', function () {
             // Comment this out and replace the config with real tokens to test against AWS proper
             AWS.Route53 = Route53Mock;
 
-            settings.setDnsConfig(data, done);
+            settings.setDnsConfig(data, config.fqdn(), done);
         });
 
         it('upsert non-existing record succeeds', function (done) {

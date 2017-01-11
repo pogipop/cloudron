@@ -5,7 +5,8 @@
 
 'use strict';
 
-var database = require('../database.js'),
+var config = require('../config.js'),
+    database = require('../database.js'),
     expect = require('expect.js'),
     settings = require('../settings.js');
 
@@ -87,7 +88,7 @@ describe('Settings', function () {
         });
 
         it('can set dns config', function (done) {
-            settings.setDnsConfig({ provider: 'route53', accessKeyId: 'accessKeyId', secretAccessKey: 'secretAccessKey' }, function (error) {
+            settings.setDnsConfig({ provider: 'route53', accessKeyId: 'accessKeyId', secretAccessKey: 'secretAccessKey' }, config.fqdn(), function (error) {
                 expect(error).to.be(null);
                 done();
             });

@@ -229,7 +229,7 @@ describe('Apps', function () {
                 }, callback);
             },
 
-            settings.setDnsConfig.bind(null, { provider: 'route53', accessKeyId: 'accessKeyId', secretAccessKey: 'secretAccessKey', endpoint: 'http://localhost:5353' }),
+            settings.setDnsConfig.bind(null, { provider: 'route53', accessKeyId: 'accessKeyId', secretAccessKey: 'secretAccessKey', endpoint: 'http://localhost:5353' }, config.fqdn()),
             settings.setTlsConfig.bind(null, { provider: 'caas' }),
             settings.setBackupConfig.bind(null, { provider: 'caas', token: 'BACKUP_TOKEN', bucket: 'Bucket', prefix: 'Prefix' })
         ], function (error) {
@@ -1036,7 +1036,7 @@ describe('Apps', function () {
                     apiHockServer = http.createServer(apiHockInstance.handler).listen(port, callback);
                 },
 
-                settings.setDnsConfig.bind(null, { provider: 'route53', accessKeyId: 'accessKeyId', secretAccessKey: 'secretAccessKey', endpoint: 'http://localhost:5353' }),
+                settings.setDnsConfig.bind(null, { provider: 'route53', accessKeyId: 'accessKeyId', secretAccessKey: 'secretAccessKey', endpoint: 'http://localhost:5353' }, config.fqdn()),
 
                 settings.setTlsConfig.bind(null, { provider: 'caas' }),
 
