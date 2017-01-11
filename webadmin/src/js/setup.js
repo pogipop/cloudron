@@ -62,7 +62,7 @@ app.controller('SetupController', ['$scope', '$http', 'Client', function ($scope
 
         // if we are here from the ip first go to the real domain if already setup
         if (status.provider !== 'caas' && status.adminFqdn && status.adminFqdn !== window.location.hostname) {
-            window.location.href = 'https://my.' + status.adminFqdn + '/setup.html';
+            window.location.href = 'https://' + status.adminFqdn + '/setup.html';
             return;
         }
 
