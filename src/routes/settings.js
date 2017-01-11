@@ -34,6 +34,7 @@ exports = module.exports = {
 var assert = require('assert'),
     certificates = require('../certificates.js'),
     CertificatesError = require('../certificates.js').CertificatesError,
+    config = require('../config.js'),
     HttpError = require('connect-lastmile').HttpError,
     HttpSuccess = require('connect-lastmile').HttpSuccess,
     safe = require('safetydance'),
@@ -170,7 +171,7 @@ function setDnsConfig(req, res, next) {
 
     if (typeof req.body.provider !== 'string') return next(new HttpError(400, 'provider is required'));
 
-    settings.setDnsConfig(req.body, function (error) {
+    settings.setDnsConfig(req.body, config.fqdn(), function (error) {
         if (error && error.reason === SettingsError.BAD_FIELD) return next(new HttpError(400, error.message));
         if (error) return next(new HttpError(500, error));
 
