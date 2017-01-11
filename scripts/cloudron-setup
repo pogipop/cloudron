@@ -38,7 +38,7 @@ dnsProvider="manual"
 tlsProvider="le-prod"
 versionsUrl="https://s3.amazonaws.com/prod-cloudron-releases/versions.json"
 requestedVersion="latest"
-apiServer="https://api.cloudron.io"
+apiServerOrigin="https://api.cloudron.io"
 dataJson=""
 prerelease=false
 
@@ -57,17 +57,19 @@ while true; do
     --version) requestedVersion="$2"; shift 2;;
     --env)
         if [[ "$2" == "dev" ]]; then
+            apiServerOrigin="https://api.dev.cloudron.io"
             versionsUrl="https://s3.amazonaws.com/dev-cloudron-releases/versions.json"
             tlsProvider="fallback"
             prerelease="true"
         elif [[ "$2" == "staging" ]]; then
+            apiServerOrigin="https://api.staging.cloudron.io"
             versionsUrl="https://s3.amazonaws.com/staging-cloudron-releases/versions.json"
             tlsProvider="fallback"
             prerelease="true"
         fi
         shift 2;;
     --versions-url) versionsUrl="$2"; shift 2;;
-    --api-server) apiServer="$2"; shift 2;;
+    --api-server) apiServerOrigin="$2"; shift 2;;
     --skip-baseimage-init) initBaseImage="false"; shift;;
     --data) dataJson="$2"; shift 2;;
     --prerelease) prerelease="true"; shift;;
@@ -145,7 +147,7 @@ if [[ -z "${dataJson}" ]]; then
         "boxVersionsUrl": "${versionsUrl}",
         "fqdn": "${domain}",
         "provider": "${provider}",
-        "apiServerOrigin": "${apiServer}",
+        "apiServerOrigin": "${apiServerOrigin}",
         "tlsConfig": {
             "provider": "${tlsProvider}"
         },
@@ -170,7 +172,7 @@ EOF
         "boxVersionsUrl": "${versionsUrl}",
         "fqdn": "${domain}",
         "provider": "${provider}",
-        "apiServerOrigin": "${apiServer}",
+        "apiServerOrigin": "${apiServerOrigin}",
         "restore": {
             "url": "${restoreUrl}",
             "key": "${encryptionKey}"
