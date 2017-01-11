@@ -71,7 +71,8 @@ systemctl restart apparmor
 
 usermod yellowtent -a -G docker
 temp_file=$(mktemp)
-sed -e 's,^ExecStart=.*$,ExecStart=/usr/bin/docker daemon -H fd:// --log-driver=journald --exec-opt native.cgroupdriver=cgroupfs,' /lib/systemd/system/docker.service > "${temp_file}"
+# some apps do not work with aufs
+sed -e 's,^ExecStart=.*$,ExecStart=/usr/bin/docker daemon -H fd:// --log-driver=journald --exec-opt native.cgroupdriver=cgroupfs --storage-driver=devicemapper,' /lib/systemd/system/docker.service > "${temp_file}"
 systemctl enable docker
 if ! diff -q /lib/systemd/system/docker.service "${temp_file}" >/dev/null; then
     mv "${temp_file}" /lib/systemd/system/docker.service
