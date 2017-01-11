@@ -76,6 +76,7 @@ sed -e 's,^ExecStart=.*$,ExecStart=/usr/bin/docker daemon -H fd:// --log-driver=
 systemctl enable docker
 if ! diff -q /lib/systemd/system/docker.service "${temp_file}" >/dev/null; then
     mv "${temp_file}" /lib/systemd/system/docker.service
+    systemctl daemon-reload
     systemctl restart docker
 fi
 
