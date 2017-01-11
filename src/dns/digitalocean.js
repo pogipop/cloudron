@@ -186,7 +186,7 @@ function verifyDnsConfig(dnsConfig, domain, ip, callback) {
 
     dns.resolveNs(domain, function (error, nameservers) {
         if (error && error.code === 'ENOTFOUND') return callback(new SubdomainError(SubdomainError.BAD_FIELD, 'Unable to resolve nameservers for this domain'));
-        if (error || !nameservers) return callback(error || new Error('Unable to get nameservers'));
+        if (error || !nameservers) return callback(new SubdomainError(SubdomainError.BAD_FIELD, error ? error.message : 'Unable to get nameservers'));
 
         upsert(credentials, domain, 'my', 'A', [ ip ], function (error, changeId) {
             if (error) return callback(error);
