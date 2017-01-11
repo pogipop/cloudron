@@ -31,6 +31,9 @@ echo
 echo
 echo "docker"
 echo "------"
+docker info
+echo
+echo
 journalctl --all --no-pager -u docker -n 50
 echo
 echo
