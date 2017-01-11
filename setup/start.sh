@@ -66,6 +66,7 @@ mkdir -p /etc/iptables && iptables-save > /etc/iptables/rules.v4
 
 echo "==> Configuring docker"
 cp "${script_dir}/start/docker-cloudron-app.apparmor" /etc/apparmor.d/docker-cloudron-app
+systemctl enable apparmor
 systemctl restart apparmor
 
 usermod yellowtent -a -G docker
