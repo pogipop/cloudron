@@ -112,7 +112,7 @@ function verifyDnsConfig(dnsConfig, domain, ip, callback) {
             });
         }, function (success) {
             if (stashedError) return callback(stashedError);
-            if (!success) return callback(new SubdomainError(SubdomainError.BAD_FIELD, 'The domain ' + adminDomain + ' does not resolve to the servers IP'));
+            if (!success) return callback(new SubdomainError(SubdomainError.BAD_FIELD, 'The domain ' + adminDomain + ' does not resolve to the server\'s IP ' + ip));
 
             callback(null, { provider: dnsConfig.provider, wildcard: !!dnsConfig.wildcard });
         });
