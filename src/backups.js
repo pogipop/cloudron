@@ -355,7 +355,7 @@ function backupBoxAndApps(auditSource, callback) {
         progress.set(progress.BACKUP, step * processed, '');
 
         async.mapSeries(allApps, function iterator(app, iteratorCallback) {
-            progress.set(progress.BACKUP, step * processed,  'Backing up app at ' + (app.altDomain || config.appFqdn(app.location)));
+            progress.set(progress.BACKUP, step * processed,  'Backing up ' + (app.altDomain || config.appFqdn(app.location)));
 
             ++processed;
 
@@ -365,7 +365,7 @@ function backupBoxAndApps(auditSource, callback) {
                     return iteratorCallback(error);
                 }
 
-                progress.set(progress.BACKUP, step * processed, 'Backed up app at ' + (app.altDomain || config.appFqdn(app.location)));
+                progress.set(progress.BACKUP, step * processed, 'Backed up ' + (app.altDomain || config.appFqdn(app.location)));
 
                 iteratorCallback(null, backupId || null); // clear backupId if is in BAD_STATE and never backed up
             });
