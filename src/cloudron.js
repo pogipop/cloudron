@@ -8,6 +8,7 @@ exports = module.exports = {
     activate: activate,
     getConfig: getConfig,
     getStatus: getStatus,
+    dnsSetup: dnsSetup,
 
     sendHeartbeat: sendHeartbeat,
     sendAliveStatus: sendAliveStatus,
@@ -113,6 +114,7 @@ CloudronError.BAD_FIELD = 'Field error';
 CloudronError.INTERNAL_ERROR = 'Internal Error';
 CloudronError.EXTERNAL_ERROR = 'External Error';
 CloudronError.ALREADY_PROVISIONED = 'Already Provisioned';
+CloudronError.ALREADY_SETUP = 'Already Setup';
 CloudronError.BAD_STATE = 'Bad state';
 CloudronError.ALREADY_UPTODATE = 'No Update Available';
 CloudronError.NOT_FOUND = 'Not found';
@@ -204,6 +206,23 @@ function syncConfigState(callback) {
         }
 
         settings.events.once(settings.DNS_CONFIG_KEY, function () { syncConfigState(); }); // check again later
+        callback();
+    });
+}
+
+function dnsSetup(dnsConfig, domain, callback) {
+    assert.strictEqual(typeof dnsConfig, 'object');
+    assert.strictEqual(typeof domain, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    if (config.fqdn()) return callback(new CloudronError(CloudronError.ALREADY_SETUP));
+
+    config.set('fqdn', domain); // set fqdn only after dns config is valid, otherwise cannot re-setup if we failed
+
+    settings.setDnsConfig(dnsConfig, domain, function (error) {
+        if (error && error.reason === SettingsError.BAD_FIELD) return callback(new CloudronError(CloudronError.BAD_FIELD, error.message));
+        if (error) return callback(new CloudronError(CloudronError.INTERNAL_ERROR, error));
+
         callback();
     });
 }
