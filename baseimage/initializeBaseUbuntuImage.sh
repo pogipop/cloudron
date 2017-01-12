@@ -37,6 +37,7 @@ echo "==> Installing required packages"
 debconf-set-selections <<< 'mysql-server mysql-server/root_password password password'
 debconf-set-selections <<< 'mysql-server mysql-server/root_password_again password password'
 
+# this enables automatic security upgrades (https://help.ubuntu.com/community/AutomaticSecurityUpdates)
 apt-get -y install \
     acl \
     awscli \
@@ -52,6 +53,7 @@ apt-get -y install \
     pwgen \
     rcconf \
     swaks \
+    unattended-upgrades \
     unbound
 
 echo "==> Installing node.js"
