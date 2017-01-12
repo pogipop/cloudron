@@ -198,7 +198,9 @@ function syncConfigState(callback) {
     isConfigured(function (error, configured) {
         if (error) return callback(error);
 
-        debug('syncConfigState: configured = %s', configured);
+        debug('syncConfigState: configured = %s already configured = %s', configured, gConfigState.configured);
+
+        if (gConfigState.configured) return callback(); // required because we call syncConfigState directly from dnsSetup
 
         if (configured) {
             gConfigState.configured = true;
@@ -217,11 +219,12 @@ function dnsSetup(dnsConfig, domain, callback) {
 
     if (config.fqdn()) return callback(new CloudronError(CloudronError.ALREADY_SETUP));
 
-    config.set('fqdn', domain); // set fqdn only after dns config is valid, otherwise cannot re-setup if we failed
-
     settings.setDnsConfig(dnsConfig, domain, function (error) {
         if (error && error.reason === SettingsError.BAD_FIELD) return callback(new CloudronError(CloudronError.BAD_FIELD, error.message));
         if (error) return callback(new CloudronError(CloudronError.INTERNAL_ERROR, error));
+
+        config.set('fqdn', domain); // set fqdn only after dns config is valid, otherwise cannot re-setup if we failed
+        syncConfigState();
 
         callback();
     });
