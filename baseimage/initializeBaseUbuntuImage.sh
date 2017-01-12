@@ -17,21 +17,6 @@ export DEBIAN_FRONTEND=noninteractive
 apt-get -o Dpkg::Options::="--force-confdef" update -y
 apt-get -o Dpkg::Options::="--force-confdef" dist-upgrade -y
 
-# https://docs.docker.com/engine/installation/linux/ubuntulinux/
-echo "==> Installing Docker"
-apt-key adv --keyserver hkp://ha.pool.sks-keyservers.net:80 --recv-keys 58118E89F3A912897C070ADBF76221572C52609D
-echo "deb https://apt.dockerproject.org/repo ubuntu-xenial main" > /etc/apt/sources.list.d/docker.list
-apt-get -y update
-apt-get -y install \
-    aufs-tools \
-    linux-image-extra-$(uname -r) \
-    linux-image-extra-virtual \
-    docker-engine=1.12.5-0~ubuntu-xenial # apt-cache madison docker-engine
-
-echo "==> Enable memory accounting"
-sed -e 's/^GRUB_CMDLINE_LINUX="\(.*\)"$/GRUB_CMDLINE_LINUX="\1 cgroup_enable=memory swapaccount=1 panic_on_oops=1 panic=5"/' -i /etc/default/grub
-update-grub
-
 echo "==> Installing required packages"
 
 debconf-set-selections <<< 'mysql-server mysql-server/root_password password password'
@@ -63,6 +48,26 @@ ln -sf /usr/local/node-6.9.2/bin/node /usr/bin/node
 ln -sf /usr/local/node-6.9.2/bin/npm /usr/bin/npm
 apt-get install -y python   # Install python which is required for npm rebuild
 [[ "$(python --version 2>&1)" == "Python 2.7."* ]] || die "Expecting python version to be 2.7.x"
+
+# https://docs.docker.com/engine/installation/linux/ubuntulinux/
+echo "==> Installing Docker"
+apt-key adv --keyserver hkp://ha.pool.sks-keyservers.net:80 --recv-keys 58118E89F3A912897C070ADBF76221572C52609D
+echo "deb https://apt.dockerproject.org/repo ubuntu-xenial main" > /etc/apt/sources.list.d/docker.list
+apt-get -y update
+apt-get -y install docker-engine=1.12.5-0~ubuntu-xenial # apt-cache madison docker-engine
+storage_driver=$(docker info | grep "Storage Driver" | sed 's/.*: //')
+if [[ "${storage_driver}" != "devicemapper" ]]; then
+    echo "Docker is using "${storage_driver}" instead of devicemapper. Trying to fix this."
+    systemctl stop docker
+    rm -rf /var/lib/docker
+    sed -e 's,^ExecStart=.*$,ExecStart=/usr/bin/docker daemon -H fd:// --log-driver=journald --exec-opt native.cgroupdriver=cgroupfs --storage-driver=devicemapper,' -i /lib/systemd/system/docker.service
+    systemctl daemon-reload
+    systemctl start docker
+fi
+
+echo "==> Enable memory accounting"
+sed -e 's/^GRUB_CMDLINE_LINUX="\(.*\)"$/GRUB_CMDLINE_LINUX="\1 cgroup_enable=memory swapaccount=1 panic_on_oops=1 panic=5"/' -i /etc/default/grub
+update-grub
 
 echo "==> Downloading docker images"
 if [ ! -f "${arg_infraversionpath}/infra_version.js" ]; then
