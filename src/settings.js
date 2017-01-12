@@ -339,7 +339,7 @@ function getDnsConfig(callback) {
         if (error && error.reason === DatabaseError.NOT_FOUND) return callback(null, gDefaults[exports.DNS_CONFIG_KEY]);
         if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
 
-        callback(null, JSON.parse(value)); // accessKeyId, secretAccessKey, region
+        callback(null, JSON.parse(value));
     });
 }
 
