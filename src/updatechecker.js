@@ -198,24 +198,6 @@ function checkBoxUpdates(callback) {
 
             gBoxUpdateInfo = updateInfo;
 
-            // decide whether to send email
-            var state = loadState();
-
-            if (state.box === gBoxUpdateInfo.version) {
-                debug('Skipping notification of box update as user was already notified');
-                return callback();
-            }
-
-            if (semver.satisfies(gBoxUpdateInfo.version, '~' + config.version())) {
-                debug('Skipping notification of box update as this is a patch release');
-            } else {
-                mailer.boxUpdateAvailable(updateInfo.version, updateInfo.changelog);
-            }
-
-            state.box = updateInfo.version;
-
-            saveState(state);
-
             callback();
         });
     });
