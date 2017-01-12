@@ -5,9 +5,7 @@ exports = module.exports = {
     uninitialize: uninitialize,
 
     events: new (require('events').EventEmitter)(),
-    EVENT_READY: 'ready',
-
-    isReadySync: isReadySync
+    EVENT_READY: 'ready'
 };
 
 var apps = require('./apps.js'),
@@ -83,10 +81,6 @@ function uninitialize(callback) {
     gPlatformReadyTimer = null;
     settings.events.removeListener(settings.MAIL_CONFIG_KEY, startMail);
     callback();
-}
-
-function isReadySync() {
-    return gPlatformReadyTimer === null;
 }
 
 function removeOldImages(callback) {
