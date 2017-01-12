@@ -25,9 +25,15 @@ app.controller('Controller', ['$scope', '$http', '$interval', function ($scope, 
                     $scope.error = true;
                     $scope.message = data.update.message;
                 } else {
-                    $scope.title = 'Update in progress...';
-                    $scope.percent = data.update.percent;
-                    $scope.message = data.update.message;
+                    if (data.backup && data.backup.percent < 100) {
+                        $scope.title = 'Backup in progress...';
+                        $scope.percent = (data.backup.percent / 100) * 50;
+                        $scope.message = data.backup.message;
+                    } else {
+                        $scope.title = 'Update in progress...';
+                        $scope.percent = 50 + ((data.update.percent / 100) * 50);   // first half is backup
+                        $scope.message = data.update.message;
+                    }
                 }
             } else { // migrating
                 if (data.migrate.percent === -1) {
@@ -55,7 +61,7 @@ app.controller('Controller', ['$scope', '$http', '$interval', function ($scope, 
         });
     }
 
-    $interval(fetchProgress, 5000);
+    $interval(fetchProgress, 2000);
 
     fetchProgress();
 }]);

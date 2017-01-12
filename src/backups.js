@@ -355,6 +355,8 @@ function backupBoxAndApps(auditSource, callback) {
         progress.set(progress.BACKUP, processed, '');
 
         async.mapSeries(allApps, function iterator(app, iteratorCallback) {
+            progress.set(progress.BACKUP, processed,  'Backing up app at ' + app.location);
+
             ++processed;
 
             backupApp(app, app.manifest, prefix, function (error, backupId) {
@@ -374,6 +376,8 @@ function backupBoxAndApps(auditSource, callback) {
             }
 
             backupIds = backupIds.filter(function (id) { return id !== null; }); // remove apps in bad state that were never backed up
+
+            progress.set(progress.BACKUP, processed, 'Backing up system data');
 
             backupBoxWithAppBackupIds(backupIds, prefix, function (error, filename) {
                 progress.set(progress.BACKUP, 100, error ? error.message : '');

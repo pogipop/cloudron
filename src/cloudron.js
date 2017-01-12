@@ -759,6 +759,8 @@ function doUpdate(boxUpdateInfo, callback) {
 
         debug('updating box %s %j', boxUpdateInfo.sourceTarballUrl, data);
 
+        progress.set(progress.UPDATE, 5, 'Downloading and extracting new version');
+
         shell.sudo('update', [ UPDATE_CMD, boxUpdateInfo.sourceTarballUrl, JSON.stringify(data) ], function (error) {
             if (error) return updateError(error);
 
