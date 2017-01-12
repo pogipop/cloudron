@@ -93,6 +93,11 @@ if [[ -z "${dataJson}" ]]; then
         exit 1
     fi
 
+    if [[ "${tlsProvider}" != "fallback" && "${tlsProvider}" != "le-prod" && "${tlsProvider}" != "le-staging" ]]; then
+        echo "--tls-provider must be one of: le-prod, le-staging, fallback"
+        exit 1
+    fi
+
     if [[ -z "${dnsProvider}" ]]; then
         echo "--dns-provider is required (noop, manual)"
         exit 1
