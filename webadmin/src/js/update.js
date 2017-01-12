@@ -27,7 +27,7 @@ app.controller('Controller', ['$scope', '$http', '$interval', function ($scope, 
                 } else {
                     if (data.backup && data.backup.percent < 100) {
                         $scope.title = 'Backup in progress...';
-                        $scope.percent = (data.backup.percent / 100) * 50;
+                        $scope.percent = data.backup.percent < 0 ? 5 : (data.backup.percent / 100) * 50;    // never show 0 as it looks like nothing happens
                         $scope.message = data.backup.message;
                     } else {
                         $scope.title = 'Update in progress...';
