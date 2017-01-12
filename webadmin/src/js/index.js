@@ -17,7 +17,7 @@ app.config(['NotificationProvider', function (NotificationProvider) {
         startTop: 60,
         positionX: 'left',
         maxCount: 3,
-        templateUrl: 'templates/notification.html'
+        templateUrl: 'notification.html'
     });
 }]);
 
