@@ -59,12 +59,12 @@ while true; do
         if [[ "$2" == "dev" ]]; then
             apiServerOrigin="https://api.dev.cloudron.io"
             versionsUrl="https://s3.amazonaws.com/dev-cloudron-releases/versions.json"
-            tlsProvider="fallback"
+            tlsProvider="le-staging"
             prerelease="true"
         elif [[ "$2" == "staging" ]]; then
             apiServerOrigin="https://api.staging.cloudron.io"
             versionsUrl="https://s3.amazonaws.com/staging-cloudron-releases/versions.json"
-            tlsProvider="fallback"
+            tlsProvider="le-staging"
             prerelease="true"
         fi
         shift 2;;
