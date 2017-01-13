@@ -705,3 +705,10 @@
 * Send certificate renewal errors, OOM errors to cloudron admins
 * Email bounce alerts are sent to the Cloudron owner
 
+[0.94.1]
+* Suppress upgrade emails
+* Enable unattended upgrades
+* Standardize on using devicemapper for docker storage backend
+* Show detailed backup progress
+* Fix DNSBL issue in mail container
+
