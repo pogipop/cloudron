@@ -55,7 +55,6 @@ function initialize(callback) {
 
     async.series([
         stopContainers.bind(null, existingInfra),
-        createDockerNetwork,
         startAddons.bind(null, existingInfra),
         removeOldImages,
         startApps.bind(null, existingInfra),
@@ -115,10 +114,6 @@ function stopContainers(existingInfra, callback) {
     }
 
     callback();
-}
-
-function createDockerNetwork(callback) {
-    shell.execSync('createDockerNetwork', 'docker network create --subnet=172.18.0.0/16 cloudron || true', callback);
 }
 
 function startGraphite(callback) {

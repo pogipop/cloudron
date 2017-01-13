@@ -72,13 +72,14 @@ systemctl restart apparmor
 usermod yellowtent -a -G docker
 temp_file=$(mktemp)
 # some apps do not work with aufs
-sed -e 's,^ExecStart=.*$,ExecStart=/usr/bin/docker daemon -H fd:// --log-driver=journald --exec-opt native.cgroupdriver=cgroupfs --storage-driver=devicemapper,' /lib/systemd/system/docker.service > "${temp_file}"
+sed -e 's,^ExecStart=.*$,ExecStart=/usr/bin/docker daemon -H fd:// --log-driver=journald --exec-opt native.cgroupdriver=cgroupfs --storage-driver=devicemapper --dns=172.18.0.1 --dns-search=.,' /lib/systemd/system/docker.service > "${temp_file}"
 systemctl enable docker
 if ! diff -q /lib/systemd/system/docker.service "${temp_file}" >/dev/null; then
     mv "${temp_file}" /lib/systemd/system/docker.service
     systemctl daemon-reload
     systemctl restart docker
 fi
+docker network create --subnet=172.18.0.0/16 cloudron || true
 
 # caas has ssh on port 202 and we disable password login
 if [[ "${arg_provider}" == "caas" ]]; then
@@ -160,7 +161,9 @@ systemctl enable --now cron
 
 # DO uses Google nameservers by default. This causes RBL queries to fail (host 2.0.0.127.zen.spamhaus.org)
 # We do not use dnsmasq because it is not a recursive resolver and defaults to the value in the interfaces file (which is Google DNS!)
-systemctl enable --now unbound
+echo -e "server:\n\tinterface: 172.18.0.1\n\tinterface: 127.0.0.1\n\taccess-control: 127.0.0.1 allow\n\taccess-control: 172.18.0.1/16 allow" > /etc/unbound/unbound.conf.d/cloudron-network.conf
+systemctl enable unbound
+systemctl restart unbound
 
 echo "==> Configuring sudoers"
 rm -f /etc/sudoers.d/yellowtent
