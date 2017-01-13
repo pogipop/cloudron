@@ -108,17 +108,12 @@ SSH into your server and run the following commands:
 ```
 wget https://cloudron.io/cloudron-setup
 chmod +x cloudron-setup
-./cloudron-setup --domain <domain> --provider <digitalocean|ec2|generic|scaleway>
+./cloudron-setup --provider <digitalocean|ec2|generic|scaleway>
 ```
 
 The setup will take around 10-15 minutes.
 
-`cloudron-setup` takes the following arguments:
-
-* `--domain` is the domain name in which apps are installed. Currently, only Second Level
-Domains are supported. For example, `example.com`, `example.co.uk`, `example.rocks` will
-work fine. Choosing a domain name at any other level like `cloudron.example.com` will not
-work.
+**cloudron-setup** takes the following arguments:
 
 * `--provider` is the name of your VPS provider. If the name is not on the list, simply
 choose `generic`. In most cases, the `generic` provider mostly will work fine.
@@ -127,6 +122,11 @@ we have to add some vendor specific quirks. Please open a
 [bug report](https://git.cloudron.io/cloudron/box/issues) in that case.
 
 Optional arguments for installation:
+
+* `--domain` is the domain name in which apps are installed. Currently, only Second Level
+Domains are supported. For example, `example.com`, `example.co.uk`, `example.rocks` will
+work fine. Choosing a domain name at any other level like `cloudron.example.com` will not
+work.
 
 * `--tls-provider` is the name of the SSL/TLS certificate backend. Defaults to Let's encrypt.
 Specifying `fallback` will setup the Cloudron to use the fallback wildcard certificate.
@@ -142,11 +142,12 @@ the latest version. You can set this to an older version when restoring a Cloudr
 
 ## Finish setup
 
-Once the setup script completes, the server will reboot, then visit `https://my.<domain>` to complete the installation.
+Once the setup script completes, the server will reboot, then visit your server by its IP address to complete the installation.
 
 Please note the following:
 
-1. The website should already have a valid TLS certificate. If you see any certificate warnings, it means your Cloudron was not created correctly.
+1. The website will show a certificate warning, which needs to be accepted. Then a DNS setup page will be shown, which allows to setup
+the Cloudron with a domain.
 
 2. If you see a login screen, instead of a setup screen, it means that someone else got to your Cloudron first and set it up
 already! In this unlikely case, simply delete the server and start over.
