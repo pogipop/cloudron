@@ -129,7 +129,7 @@ describe('updatechecker - checkBoxUpdates', function () {
             expect(!error).to.be.ok();
             expect(updatechecker.getUpdateInfo().box.version).to.be('2.0.0');
 
-            checkMails(1, done);
+            checkMails(0, done);
         });
     });
 
@@ -182,7 +182,7 @@ describe('updatechecker - checkBoxUpdates', function () {
             updatechecker.checkBoxUpdates(function (error) {
                 expect(!error).to.be.ok();
                 expect(updatechecker.getUpdateInfo().box.version).to.be('2.0.0-pre0');
-                checkMails(1, done);
+                checkMails(0, done);
             });
         });
     });
