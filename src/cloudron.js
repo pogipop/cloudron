@@ -125,7 +125,7 @@ function initialize(callback) {
 
     async.series([
         installAppBundle,
-        syncConfigState
+        checkConfigState
     ], callback);
 }
 
@@ -145,7 +145,11 @@ function uninitialize(callback) {
 function onConfigured(callback) {
     callback = callback || NOOP_CALLBACK;
 
-    debug('onConfigured');
+    debug('onConfigured: current state: %j', gConfigState);
+
+    if (gConfigState.configured) return callback(); // re-entracy flag
+
+    gConfigState.configured = true;
 
     platform.events.on(platform.EVENT_READY, onPlatformReady);
 
@@ -174,42 +178,17 @@ function getConfigStateSync() {
     return gConfigState;
 }
 
-function isConfigured(callback) {
-    // set of rules to see if we have the configs required for cloudron to function
-    // note this checks for missing configs and not invalid configs
-
-    if (!config.fqdn()) return callback(null, false);
-
-    settings.getDnsConfig(function (error, dnsConfig) {
-        if (error) return callback(error);
-
-        if (!dnsConfig) return callback(null, false);
-
-        var isConfigured = (config.isCustomDomain() && (dnsConfig.provider === 'route53' || dnsConfig.provider === 'digitalocean' || dnsConfig.provider === 'noop' || dnsConfig.provider === 'manual')) ||
-                        (!config.isCustomDomain() && dnsConfig.provider === 'caas');
-
-        callback(null, isConfigured);
-    });
-}
-
-function syncConfigState(callback) {
+function checkConfigState(callback) {
     callback = callback || NOOP_CALLBACK;
 
-    isConfigured(function (error, configured) {
-        if (error) return callback(error);
+    if (!config.fqdn()) {
+        settings.events.once(settings.DNS_CONFIG_KEY, function () { checkConfigState(); }); // check again later
+        return callback(null);
+    }
 
-        debug('syncConfigState: configured = %s already configured = %s', configured, gConfigState.configured);
+    debug('checkConfigState: configured');
 
-        if (gConfigState.configured) return callback(); // required because we call syncConfigState directly from dnsSetup
-
-        if (configured) {
-            gConfigState.configured = true;
-            return onConfigured(callback);
-        }
-
-        settings.events.once(settings.DNS_CONFIG_KEY, function () { syncConfigState(); }); // check again later
-        callback();
-    });
+    onConfigured(callback);
 }
 
 function dnsSetup(dnsConfig, domain, callback) {
@@ -224,7 +203,8 @@ function dnsSetup(dnsConfig, domain, callback) {
         if (error) return callback(new CloudronError(CloudronError.INTERNAL_ERROR, error));
 
         config.set('fqdn', domain); // set fqdn only after dns config is valid, otherwise cannot re-setup if we failed
-        syncConfigState();
+
+        onConfigured(); // do not block
 
         callback();
     });
