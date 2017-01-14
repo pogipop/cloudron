@@ -152,7 +152,8 @@ function mailboxSearch(req, res, next) {
                 objectcategory: 'mailbox',
                 cn: mailbox.name,
                 uid: mailbox.name,
-                mail: mailbox.name + '@' + config.fqdn()
+                mail: mailbox.name + '@' + config.fqdn(),
+                ownerType: mailbox.ownerType
             }
         };
 
