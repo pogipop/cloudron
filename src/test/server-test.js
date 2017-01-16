@@ -6,7 +6,8 @@
 
 'use strict';
 
-var progress = require('../progress.js'),
+var async = require('async'),
+    progress = require('../progress.js'),
     config = require('../config.js'),
     database = require('../database.js'),
     expect = require('expect.js'),
@@ -214,6 +215,31 @@ describe('Server', function () {
         });
     });
 
+    describe('rate limit', function () {
+        before(function (done) {
+            server.start(done);
+        });
+
+        after(function (done) {
+            server.stop(done);
+            nock.cleanAll();
+        });
+
+        it('gets throttled after 200 requests', function (done) {
+            async.times(200, function (n, next) {
+                superagent.get(SERVER_URL + '/api/v1/cloudron/status', function (error, result) {
+                    expect(result.statusCode).to.equal(200);
+                    next();
+                });
+            }, function () {
+                superagent.get(SERVER_URL + '/api/v1/cloudron/status', function (error, result) {
+                    expect(result.statusCode).to.equal(429);
+                    done();
+                });
+            });
+        });
+    });
+
     describe('cors', function () {
         before(function (done) {
             server.start(function (error) {
@@ -275,4 +301,3 @@ describe('Server', function () {
         });
     });
 });
-
