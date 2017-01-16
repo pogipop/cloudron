@@ -1,6 +1,8 @@
 'use strict';
 
 angular.module('Application').controller('AppStoreController', ['$scope', '$location', '$timeout', '$routeParams', 'Client', 'AppStore', function ($scope, $location, $timeout, $routeParams, Client, AppStore) {
+    Client.onReady(function () { if (!Client.getUserInfo().admin) $location.path('/'); });
+
     $scope.ready = false;
     $scope.apps = [];
     $scope.config = Client.getConfig();
@@ -11,6 +13,8 @@ angular.module('Application').controller('AppStoreController', ['$scope', '$loca
     $scope.category = '';
     $scope.cachedCategory = ''; // used to cache the selected category while searching
     $scope.searchString = '';
+    $scope.cloudronDetails = null;
+    $scope.appstoreConfig = null;
 
     $scope.showRequestUpgrade = function () {
         // wait for dialog to be fully closed to avoid modal behavior breakage when moving to a different view already
@@ -251,24 +255,6 @@ angular.module('Application').controller('AppStoreController', ['$scope', '$loca
         password: '',
         register: false,
 
-        reset: function () {
-            $scope.appstoreLogin.busy = false;
-            $scope.appstoreLogin.error = {};
-            $scope.appstoreLogin.email = '';
-            $scope.appstoreLogin.password = '';
-            $scope.appstoreLogin.register = false;
-
-            $scope.appstoreLoginForm.$setUntouched();
-            $scope.appstoreLoginForm.$setPristine();
-        },
-
-        show: function () {
-            $('#appInstallModal').modal('hide');
-
-            $scope.appstoreLogin.reset();
-            $('#appstoreLoginModal').modal('show');
-        },
-
         submit: function () {
             $scope.appstoreLogin.error = {};
             $scope.appstoreLogin.busy = true;
@@ -318,8 +304,7 @@ angular.module('Application').controller('AppStoreController', ['$scope', '$loca
                             return;
                         }
 
-                        $scope.appstoreLogin.reset();
-                        $('#appstoreLoginModal').modal('hide');
+                        fetchAppstoreConfig();
                     });
                 });
             }
@@ -331,8 +316,7 @@ angular.module('Application').controller('AppStoreController', ['$scope', '$loca
                     $scope.appstoreLogin.busy = false;
 
                     if (error.statusCode === 409) {
-                        $scope.appstoreLogin.error.generic = 'An account with this email already exists';
-                        $scope.appstoreLogin.email = '';
+                        $scope.appstoreLogin.error.email = 'An account with this email already exists';
                         $scope.appstoreLogin.password = '';
                         $scope.appstoreLoginForm.email.$setPristine();
                         $scope.appstoreLoginForm.password.$setPristine();
@@ -526,40 +510,36 @@ angular.module('Application').controller('AppStoreController', ['$scope', '$loca
         });
     }
 
-    function checkAppstoreAccount() {
-        if (Client.getConfig().provider === 'caas') return;
-        if (!$scope.user.admin) return;
-
-        // only check after tutorial was shown
-        if ($scope.user.showTutorial) return setTimeout(checkAppstoreAccount, 5000);
+    function fetchAppstoreConfig(callback) {
+        callback = callback || function (error) { if (error) console.error(error); };
 
         Client.getAppstoreConfig(function (error, result) {
-            if (error) return console.error(error);
+            if (error) return callback(error);
 
-            if (!result.token || !result.cloudronId) {
-                $scope.appstoreLogin.show();
-                return;
-            }
+            if (!result.token || !result.cloudronId) return;
 
-            AppStore.getCloudronDetails(result, function (error) {
-                if (error) {
-                    console.error('Unable to get Cloudron details.', error);
-                    $scope.appstoreLogin.show();
-                    return;
-                }
+            $scope.appstoreConfig = result;
 
-                // All good
+            AppStore.getCloudronDetails(result, function (error, result) {
+                if (error) return callback(error);
+
+                $scope.cloudronDetails = result;
+
+                // clear busy state when a login/signup was performed
+                $scope.appstoreLogin.busy = false;
+
+                callback();
             });
         });
     }
 
-    function refresh() {
+    function init() {
         $scope.ready = false;
 
         getAppList(function (error, apps) {
             if (error) {
                 console.error(error);
-                return $timeout(refresh, 1000);
+                return $timeout(init, 1000);
             }
 
             $scope.apps = apps;
@@ -568,18 +548,18 @@ angular.module('Application').controller('AppStoreController', ['$scope', '$loca
             // hashChangeListener calls $apply, so make sure we don't double digest here
             setTimeout(hashChangeListener, 1);
 
-            if ($scope.user.admin) {
-                fetchUsers();
-                fetchGroups();
-                fetchDnsConfig();
-            }
+            fetchUsers();
+            fetchGroups();
+            fetchDnsConfig();
 
-            $scope.ready = true;
+            fetchAppstoreConfig(function (error) {
+                if (error) console.error(error);
+                $scope.ready = true;
+            });
         });
     }
 
-    Client.onReady(refresh);
-    Client.onReady(checkAppstoreAccount);
+    Client.onReady(init);
 
     $('#appInstallModal').on('hide.bs.modal', function () {
         $location.path('/appstore', false).search({ version: undefined });
@@ -592,7 +572,7 @@ angular.module('Application').controller('AppStoreController', ['$scope', '$loca
     });
 
     // setup all the dialog focus handling
-    ['appInstallModal', 'feedbackModal', 'appstoreLoginModal'].forEach(function (id) {
+    ['appInstallModal', 'feedbackModal'].forEach(function (id) {
         $('#' + id).on('shown.bs.modal', function () {
             $(this).find("[autofocus]:first").focus();
         });

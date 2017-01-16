@@ -188,61 +188,54 @@
     </div>
 </div>
 
-<!-- Modal appstore login -->
-<div class="modal fade" id="appstoreLoginModal" tabindex="-1" role="dialog">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h4 class="modal-title" ng-hide="appstoreLogin.register">Login to the Cloudron App Store</h4>
-                <h4 class="modal-title" ng-show="appstoreLogin.register">Sign up at the Cloudron App Store</h4>
-            </div>
-            <div class="modal-body">
-                <center>
-                    <img ng-src="{{ config.webServerOrigin }}/img/logo.png" width="128px" height="128px"/>
-                    <br/><br/>
-                    <p>For using the Cloudron App Store, you have to login with your <a href="{{ config.webServerOrigin }}" target="_blank">cloudron.io</a> account.</p>
-                    <br/>
-                    <small class="text-danger" ng-show="appstoreLogin.error.generic">{{ appstoreLogin.error.generic }}</small>
-                </center>
+<div ng-show="!ready" class="loading-banner">
+    <h1><i class="fa fa-circle-o-notch fa-spin"></i></h1>
+</div>
 
-                <form name="appstoreLoginForm" role="form" novalidate ng-submit="appstoreLogin.submit()" autocomplete="off">
-                    <input type="password" style="display: none;">
+<!-- appstore login -->
+<div ng-show="ready && !cloudronDetails" class="card card-small appstore-login ng-cloak">
+    <div class="row">
+        <div class="col-md-12">
+            <h1 ng-show="appstoreLogin.register">App Store Signup</h1>
+            <h1 ng-hide="appstoreLogin.register">App Store Login</h1>
+        </div>
+        <div class="col-md-12">
+            <p>For using the Cloudron App Store, you have to login with your <a href="{{ config.webServerOrigin }}" target="_blank">cloudron.io</a> account.</p>
+            <br/>
+            <small class="text-danger" ng-show="appstoreLogin.error.generic">{{ appstoreLogin.error.generic }}</small>
+        </div>
+        <div class="col-md-12">
+            <form name="appstoreLoginForm" role="form" novalidate ng-submit="appstoreLogin.submit()" autocomplete="off">
+                <input type="password" style="display: none;">
 
-                    <div class="form-group" ng-class="{ 'has-error': (appstoreLoginForm.email.$dirty && appstoreLoginForm.email.$invalid) || appstoreLogin.error.generic }">
-                        <label class="control-label">Email Address</label>
-                        <input type="email" class="form-control" ng-model="appstoreLogin.email" id="inputAppstoreLoginEmail" name="email" required autofocus>
-                        <div class="control-label" ng-show="(!appstoreLoginForm.email.$dirty && appstoreLogin.error.email) || (appstoreLoginForm.email.$dirty && appstoreLoginForm.email.$invalid) || appstoreLogin.error.email">
-                            <small ng-show="appstoreLoginForm.email.$error.required">A valid email address is required</small>
-                            <small ng-show="(appstoreLoginForm.email.$dirty && appstoreLoginForm.email.$invalid) && !appstoreLoginForm.email.$error.required">The Email address is not valid</small>
-                        </div>
+                <div class="form-group" ng-class="{ 'has-error': (appstoreLoginForm.email.$dirty && appstoreLoginForm.email.$invalid) || appstoreLogin.error.generic }">
+                    <label class="control-label">Email Address</label>
+                    <input type="email" class="form-control" ng-model="appstoreLogin.email" id="inputAppstoreLoginEmail" name="email" required autofocus>
+                    <div class="control-label" ng-show="(!appstoreLoginForm.email.$dirty && appstoreLogin.error.email) || (appstoreLoginForm.email.$dirty && appstoreLoginForm.email.$invalid) || appstoreLogin.error.email">
+                        <small class="text-danger" ng-show="appstoreLogin.error.email">{{ appstoreLogin.error.email }}</small>
                     </div>
+                </div>
 
-                    <div class="form-group" ng-class="{ 'has-error': (!appstoreLoginForm.password.$dirty && appstoreLogin.error.password) || (appstoreLoginForm.password.$dirty && appstoreLoginForm.password.$invalid) || appstoreLogin.error.generic }">
-                        <label class="control-label">Password</label>
-                        <input type="password" class="form-control" ng-model="appstoreLogin.password" id="inputAppstoreLoginPassword" name="password" required>
-                        <div class="control-label" ng-show="(!appstoreLoginForm.password.$dirty && appstoreLogin.error.password) || (appstoreLoginForm.password.$dirty && appstoreLoginForm.password.$invalid)">
-                            <small ng-show=" appstoreLoginForm.password.$dirty && appstoreLoginForm.password.$invalid">A password is required</small>
-                            <small ng-show="!appstoreLoginForm.password.$dirty && appstoreLogin.error.password">Wrong password</small>
-                        </div>
+                <div class="form-group" ng-class="{ 'has-error': (!appstoreLoginForm.password.$dirty && appstoreLogin.error.password) || (appstoreLoginForm.password.$dirty && appstoreLoginForm.password.$invalid) || appstoreLogin.error.generic }">
+                    <label class="control-label">Password</label>
+                    <input type="password" class="form-control" ng-model="appstoreLogin.password" id="inputAppstoreLoginPassword" name="password" required>
+                    <div class="control-label" ng-show="(!appstoreLoginForm.password.$dirty && appstoreLogin.error.password) || (appstoreLoginForm.password.$dirty && appstoreLoginForm.password.$invalid)">
+                        <small ng-show="!appstoreLoginForm.password.$dirty && appstoreLogin.error.password">Wrong password</small>
                     </div>
+                </div>
 
-                    <input class="ng-hide" type="submit" ng-disabled="appstoreLoginForm.$invalid"/>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <a class="pull-left" href="" ng-click="appstoreLogin.register = true" ng-hide="appstoreLogin.register">No Account yet?</a>
-                <a class="pull-left" href="" ng-click="appstoreLogin.register = false" ng-show="appstoreLogin.register">Already an Account?</a>
+                <a class="pull-left" href="" ng-click="appstoreLogin.register = true" ng-hide="appstoreLogin.register">Don't have an Account yet?</a>
+                <a class="pull-left" href="" ng-click="appstoreLogin.register = false" ng-show="appstoreLogin.register">Already have an Account?</a>
 
-                <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-success" ng-click="appstoreLogin.submit()" ng-disabled="appstoreLoginForm.$invalid || appstoreLogin.busy">
+                <button type="submit" class="btn btn-success pull-right" ng-disabled="appstoreLoginForm.$invalid || appstoreLogin.busy">
                     <i class="fa fa-spinner fa-pulse" ng-show="appstoreLogin.busy"></i> <span ng-hide="appstoreLogin.register">Login</span><span ng-show="appstoreLogin.register">Sign up</span>
                 </button>
-            </div>
+            </form>
         </div>
     </div>
 </div>
 
-<div>
+<div ng-show="ready && cloudronDetails" class="ng-cloak">
     <div class="row-no-margin">
         <div class="col-md-2">
         </div>
@@ -286,7 +279,7 @@
             <br/>
             <a href="" ng-click="feedback.show()">Missing an app? Let us know.</a>
         </div>
-        <div class="col-md-10" ng-show="ready && apps.length">
+        <div class="col-md-10" ng-show="apps.length">
             <div class="row-no-margin">
                 <div class="col-sm-1 appstore-item" ng-repeat="app in apps | orderBy:'installCount':true"">
                     <div class="appstore-item-content highlight" ng-click="gotoApp(app)" ng-class="{ 'appstore-item-content-testing': (app.publishState === 'testing' || app.publishState === 'pending_approval') }">
@@ -304,12 +297,9 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-10 animateMeOpacity loading-banner" ng-show="ready && !apps.length">
+        <div class="col-md-10 animateMeOpacity loading-banner" ng-show="!apps.length">
             <h3 class="text-muted">No applications in this category.</h3>
             <a href="" ng-click="feedback.show()"><h3>Let us know if you miss something.</h3></a>
-        </div>
-        <div class="col-md-10 animateMeOpacity loading-banner" ng-show="!ready">
-            <h2><i class="fa fa-spinner fa-pulse"></i> Loading</h2>
         </div>
     </div>
 </div>
