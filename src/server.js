@@ -18,6 +18,7 @@ var assert = require('assert'),
     middleware = require('./middleware'),
     passport = require('passport'),
     path = require('path'),
+    RateLimit = require('express-rate-limit'),
     routes = require('./routes/index.js');
 
 var gHttpServer = null;
@@ -40,12 +41,22 @@ function initializeExpressSync() {
     app.set('view engine', 'ejs');
     app.set('json spaces', 2); // pretty json
 
+    // for rate limiting
+    app.enable('trust proxy');
+
+    var limiter = new RateLimit({
+        windowMs: 60*1000,  // 1 minute
+        max: 200,           // limit each IP to 200 requests per windowMs
+        delayMs: 0          // disable delaying - full speed until the max limit is reached
+    });
+
     if (process.env.BOX_ENV !== 'test') app.use(middleware.morgan('Box :method :url :status :response-time ms - :res[content-length]', { immediate: false }));
 
     var router = new express.Router();
     router.del = router.delete; // amend router.del for readability further on
 
     app
+       .use(limiter)
        .use(middleware.timeout(REQUEST_TIMEOUT))
        .use(json)
        .use(urlencoded)
