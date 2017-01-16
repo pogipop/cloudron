@@ -516,7 +516,7 @@ angular.module('Application').controller('AppStoreController', ['$scope', '$loca
         Client.getAppstoreConfig(function (error, result) {
             if (error) return callback(error);
 
-            if (!result.token || !result.cloudronId) return;
+            if (!result.token || !result.cloudronId) return callback();
 
             $scope.appstoreConfig = result;
 
