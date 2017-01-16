@@ -578,5 +578,10 @@ angular.module('Application').controller('AppStoreController', ['$scope', '$loca
         });
     });
 
+    // autofocus if appstore login is shown
+    $scope.$watch('cloudronDetails', function (newValue, oldValue) {
+        if (!oldValue) setTimeout(function () { $('[name=appstoreLoginForm]').find('[autofocus]:first').focus(); }, 1000);
+    });
+
     $('.modal-backdrop').remove();
 }]);
