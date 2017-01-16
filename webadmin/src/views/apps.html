@@ -241,10 +241,9 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h4 class="modal-title">{{ appError.app.fqdn }}</h4>
+                <h4 class="modal-title">Error for {{ appError.app.fqdn }}</h4>
             </div>
             <div class="modal-body">
-                <p><b>There was an error:</b></p>
                 <p>{{appError.app.message | prettyAppMessage }}</p>
             </div>
             <div class="modal-footer">
