@@ -1,6 +1,7 @@
 'use strict';
 
 var appdb = require('./appdb.js'),
+    apps = require('./apps.js'),
     assert = require('assert'),
     async = require('async'),
     config = require('./config.js'),
@@ -111,13 +112,13 @@ function checkAppHealth(app, callback) {
 }
 
 function processApps(callback) {
-    appdb.getAll(function (error, apps) {
+    apps.getAll(function (error, result) {
         if (error) return callback(error);
 
-        async.each(apps, checkAppHealth, function (error) {
+        async.each(result, checkAppHealth, function (error) {
             if (error) console.error(error);
 
-            var alive = apps
+            var alive = result
                 .filter(function (a) { return a.installationState === appdb.ISTATE_INSTALLED && a.runState === appdb.RSTATE_RUNNING && a.health === appdb.HEALTH_HEALTHY; })
                 .map(function (a) { return (a.location || 'naked_domain') + '|' + a.manifest.id; }).join(', ');
 
