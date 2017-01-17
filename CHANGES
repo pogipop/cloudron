@@ -712,4 +712,6 @@
 * Show detailed backup progress
 * Fix DNSBL issue in mail container
 * Fix issue where bounce emails were not sent to aliases
+* Remove tutorial
+* Restart mail container on certificate change
 
