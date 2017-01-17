@@ -21,8 +21,7 @@ exports = module.exports = {
     sendInvite: sendInvite,
     setGroups: setGroups,
     setAliases: setAliases,
-    getAliases: getAliases,
-    setShowTutorial: setShowTutorial
+    getAliases: getAliases
 };
 
 var assert = require('assert'),
@@ -620,19 +619,6 @@ function sendInvite(userId, options, callback) {
 
             callback(null, userObject.resetToken);
         });
-    });
-}
-
-function setShowTutorial(userId, showTutorial, callback) {
-    assert.strictEqual(typeof userId, 'string');
-    assert.strictEqual(typeof showTutorial, 'boolean');
-    assert.strictEqual(typeof callback, 'function');
-
-    userdb.update(userId, { showTutorial: showTutorial }, function (error) {
-        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new UserError(UserError.NOT_FOUND, error));
-        if (error) return callback(new UserError(UserError.INTERNAL_ERROR, error));
-
-        callback(null);
     });
 }
 
