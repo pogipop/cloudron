@@ -38,6 +38,10 @@ function initialize(callback) {
 
     settings.events.on(settings.MAIL_CONFIG_KEY, function () { startMail(NOOP_CALLBACK); });
 
+    certificates.events.on(certificates.CERT_CHANGED, function (domain) {
+        if (domain === '*.' + config.fqdn() || domain === config.adminFqdn()) startMail(NOOP_CALLBACK);
+    });
+
     var existingInfra = { version: 'none' };
     if (fs.existsSync(paths.INFRA_VERSION_FILE)) {
         existingInfra = safe.JSON.parse(fs.readFileSync(paths.INFRA_VERSION_FILE, 'utf8'));
@@ -78,7 +82,7 @@ function initialize(callback) {
 function uninitialize(callback) {
     clearTimeout(gPlatformReadyTimer);
     gPlatformReadyTimer = null;
-    settings.events.removeListener(settings.MAIL_CONFIG_KEY, startMail);
+    // TODO: unregister event listeners
     callback();
 }
 
@@ -222,7 +226,8 @@ function startMail(callback) {
     const memoryLimit = Math.max((1 + Math.round(os.totalmem()/(1024*1024*1024)/4)) * 128, 256);
     const alertsFrom = 'no-reply@' + config.fqdn();
 
-    certificates.getMailCertificate(function (error, cert, key) {
+    // admin and mail share the same certificate
+    certificates.getAdminCertificate(function (error, cert, key) {
         if (error) return callback(error);
 
         if (!safe.fs.writeFileSync(paths.DATA_DIR + '/addons/tls_cert.pem', cert)) return callback(new Error('Could not create cert file:' + safe.error.message));
