@@ -160,7 +160,7 @@ function onConfigured(callback) {
         clients.addDefaultClients,
         cron.initialize,
         certificates.ensureFallbackCertificate,
-        platform.initialize, // requires fallback certs in mail container
+        platform.initialize, // requires fallback certs for mail container
         addDnsRecords,
         configureAdmin,
         mailer.start
