@@ -304,7 +304,7 @@ function userAdded(user, inviteSent) {
                 from: mailConfig().from,
                 to: adminEmails.join(', '),
                 subject: util.format('[%s] User %s added', config.fqdn(), user.alternateEmail || user.email),
-                text: render('user_added.ejs', templateData),
+                text: render('user_added.ejs', templateDataText),
                 html: render('user_added.ejs', templateDataHTML)
             };
 
