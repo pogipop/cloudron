@@ -57,16 +57,16 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h4 class="modal-title">Delete user {{ userremove.userInfo.username }}</h4>
+                <h4 class="modal-title">Delete user {{ userremove.userInfo.username || userremove.userInfo.email }}</h4>
             </div>
             <div class="modal-body">
                 <form name="userremove_form" role="form" ng-submit="userremove.submit()" autocomplete="off">
                     <input type="password" style="display: none;">
                     <div class="form-group" ng-class="{ 'has-error': (userremove_form.username.$dirty && userremove_form.username.$invalid) || (!userremove_form.username.$dirty && userremove.error.username) }">
-                        <label class="control-label">Just to be sure you really want to delete this user, please type the username or email</label>
+                        <label class="control-label">Please type the username or email of the user who should be deleted</label>
                         <div class="control-label" ng-show="(!userremove_form.username.$dirty && userremove.error.username) || (userremove_form.username.$dirty && userremove_form.username.$invalid)">
-                            <small ng-show="userremove_form.username.$dirty && userremove_form.username.$error.required">A username is required</small>
-                            <small ng-show="!userremove_form.username.$dirty && userremove.error.username">Username or Email does not match</small>
+                            <small ng-show="userremove_form.username.$dirty && userremove_form.username.$error.required">A username or email is required</small>
+                            <small ng-show="!userremove_form.username.$dirty && userremove.error.username">Username or email does not match</small>
                         </div>
                         <input type="text" class="form-control" ng-model="userremove.username" id="inputUserRemoveUsername" name="username" placeholder="Username or Email" required autofocus>
                     </div>
@@ -76,7 +76,7 @@
                             <small ng-show="userremove_form.password.$error.required && !userremove.error.password">A password is required</small>
                             <small ng-show="!useradd_form.email.$dirty && userremove.error.password">{{ userremove.error.password }}</small>
                         </div>
-                        <input type="password" class="form-control" ng-model="userremove.password" id="inputUserRemovePassword" name="password" placeholder="Password" required>
+                        <input type="password" class="form-control" ng-model="userremove.password" id="inputUserRemovePassword" name="password" placeholder="Your Password" required>
                     </div>
                     <input class="hide" type="submit" ng-disabled="userremove_form.$invalid || userremove.busy"/>
                 </form>
