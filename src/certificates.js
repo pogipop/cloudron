@@ -311,8 +311,8 @@ function setAdminCertificate(cert, key, callback) {
     assert.strictEqual(typeof callback, 'function');
 
     var vhost = config.adminFqdn();
-    var certFilePath = path.join(paths.APP_CERTS_DIR, vhost + '.cert');
-    var keyFilePath = path.join(paths.APP_CERTS_DIR, vhost + '.key');
+    var certFilePath = path.join(paths.APP_CERTS_DIR, vhost + '.user.cert');
+    var keyFilePath = path.join(paths.APP_CERTS_DIR, vhost + '.user.key');
 
     var error = validateCertificate(cert, key, vhost);
     if (error) return callback(new CertificatesError(CertificatesError.INVALID_CERT, error.message));
