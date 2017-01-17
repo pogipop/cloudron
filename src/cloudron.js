@@ -23,9 +23,7 @@ exports = module.exports = {
     checkDiskSpace: checkDiskSpace,
 
     readDkimPublicKeySync: readDkimPublicKeySync,
-    refreshDNS: refreshDNS,
-
-    configurePlainIP: configurePlainIP
+    refreshDNS: refreshDNS
 };
 
 var apps = require('./apps.js'),
@@ -125,7 +123,8 @@ function initialize(callback) {
 
     async.series([
         installAppBundle,
-        checkConfigState
+        checkConfigState,
+        configurePlainIP
     ], callback);
 }
 

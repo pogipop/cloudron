@@ -274,7 +274,6 @@ function start(callback) {
         auth.initialize,
         database.initialize,
         cloudron.initialize,
-        cloudron.configurePlainIP,
         gHttpServer.listen.bind(gHttpServer, config.get('port'), '127.0.0.1'),
         gSysadminHttpServer.listen.bind(gSysadminHttpServer, config.get('sysadminPort'), '127.0.0.1'),
         eventlog.add.bind(null, eventlog.ACTION_START, { userId: null, username: 'boot' }, { version: config.version() })
