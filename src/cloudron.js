@@ -495,7 +495,11 @@ function sendAliveStatus(callback) {
         } else {
             settings.getAppstoreConfig(function (error, result) {
                 if (error) return callback(new CloudronError(CloudronError.INTERNAL_ERROR, error));
-                if (!result.token) return callback(new CloudronError(CloudronError.INTERNAL_ERROR, 'not registered yet'));
+
+                if (!result.token) {
+                    debug('sendAliveStatus: Cloudron not yet registered');
+                    return callback(null);
+                }
 
                 sendAliveStatusWithAppstoreConfig(backendSettings, result);
             });
