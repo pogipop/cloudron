@@ -27,7 +27,7 @@ exports = module.exports = {
     getAppstoreConfig: getAppstoreConfig,
     setAppstoreConfig: setAppstoreConfig,
 
-    setCertificate: setCertificate,
+    setFallbackCertificate: setFallbackCertificate,
     setAdminCertificate: setAdminCertificate
 };
 
@@ -235,7 +235,7 @@ function setAppstoreConfig(req, res, next) {
 }
 
 // default fallback cert
-function setCertificate(req, res, next) {
+function setFallbackCertificate(req, res, next) {
     assert.strictEqual(typeof req.body, 'object');
 
     if (!req.body.cert || typeof req.body.cert !== 'string') return next(new HttpError(400, 'cert must be a string'));
