@@ -290,15 +290,22 @@ function userAdded(user, inviteSent) {
                 fqdn: config.fqdn(),
                 user: user,
                 inviteLink: inviteSent ? null : config.adminOrigin() + '/api/v1/session/account/setup.html?reset_token=' + user.resetToken,
-                format: 'text',
-                cloudronName: cloudronName
+                cloudronName: cloudronName,
+                cloudronAvatarUrl: config.adminOrigin() + '/api/v1/cloudron/avatar'
             };
+
+            var templateDataText = JSON.parse(JSON.stringify(templateData));
+            templateDataText.format = 'text';
+
+            var templateDataHTML = JSON.parse(JSON.stringify(templateData));
+            templateDataHTML.format = 'html';
 
             var mailOptions = {
                 from: mailConfig().from,
                 to: adminEmails.join(', '),
                 subject: util.format('%s: user %s added', cloudronName, user.alternateEmail || user.email),
-                text: render('user_added.ejs', templateData)
+                text: render('user_added.ejs', templateData),
+                html: render('user_added.ejs', templateDataHTML)
             };
 
             enqueue(mailOptions);

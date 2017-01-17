@@ -1,6 +1,6 @@
 <%if (format === 'text') { %>
 
-Hi <%= user.displayName || user.username || user.alternateEmail || user.email %>,
+Dear <%= user.displayName || user.username || user.alternateEmail || user.email %>,
 
 Welcome to <%= cloudronName %>!
 
@@ -12,7 +12,7 @@ You are receiving this email because you were invited by <%= invitor.email %>.
 <% } %>
 
 
-Powered by Cloudron.io
+Powered by https://cloudron.io
 
 <% } else { %>
 
