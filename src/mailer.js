@@ -221,7 +221,7 @@ function mailUserEventToAdmins(user, event) {
         var mailOptions = {
             from: mailConfig().from,
             to: adminEmails.join(', '),
-            subject: util.format('%s %s in Cloudron %s', user.username || user.alternateEmail || user.email, event, config.fqdn()),
+            subject: util.format('[%s] %s %s', config.fqdn(), user.username || user.alternateEmail || user.email, event),
             text: render('user_event.ejs', { fqdn: config.fqdn(), user: user, event: event, format: 'text' }),
         };
 
@@ -303,7 +303,7 @@ function userAdded(user, inviteSent) {
             var mailOptions = {
                 from: mailConfig().from,
                 to: adminEmails.join(', '),
-                subject: util.format('%s: user %s added', cloudronName, user.alternateEmail || user.email),
+                subject: util.format('[%s] User %s added', config.fqdn(), user.alternateEmail || user.email),
                 text: render('user_added.ejs', templateData),
                 html: render('user_added.ejs', templateDataHTML)
             };
@@ -358,7 +358,7 @@ function passwordReset(user) {
         var mailOptions = {
             from: mailConfig().from,
             to: user.alternateEmail || user.email,
-            subject: cloudronName + ': Password Reset',
+            subject: util.format('[%s] Password Reset', config.fqdn()),
             text: render('password_reset.ejs', templateDataText),
             html: render('password_reset.ejs', templateDataHTML)
         };
@@ -370,7 +370,7 @@ function passwordReset(user) {
 function appDied(app) {
     assert.strictEqual(typeof app, 'object');
 
-    debug('Sending mail for app %s @ %s died', app.id, app.location);
+    debug('Sending mail for app %s @ %s died', app.id, app.fqdn);
 
     getAdminEmails(function (error, adminEmails) {
         if (error) return console.log('Error getting admins', error);
@@ -378,8 +378,8 @@ function appDied(app) {
         var mailOptions = {
             from: mailConfig().from,
             to: config.provider() === 'caas' ? 'support@cloudron.io' : adminEmails.concat('support@cloudron.io').join(', '),
-            subject: util.format('App %s is down', app.location),
-            text: render('app_down.ejs', { fqdn: config.fqdn(), title: app.manifest.title, appFqdn: config.appFqdn(app.location), format: 'text' })
+            subject: util.format('[%s] App %s is down', config.fqdn(), app.fqdn),
+            text: render('app_down.ejs', { fqdn: config.fqdn(), title: app.manifest.title, appFqdn: app.fqdn, format: 'text' })
         };
 
         enqueue(mailOptions);
@@ -396,7 +396,7 @@ function appUpdateAvailable(app, updateInfo) {
          var mailOptions = {
             from: mailConfig().from,
             to: adminEmails.join(', '),
-            subject: util.format('%s has a new update available', app.fqdn),
+            subject: util.format('[%s] Update available for %s', config.fqdn(), app.fqdn),
             text: render('app_update_available.ejs', { fqdn: config.fqdn(), webadminUrl: config.adminOrigin(), app: app, updateInfo: updateInfo, format: 'text' })
         };
 
