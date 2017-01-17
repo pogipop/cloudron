@@ -93,7 +93,7 @@ function checkAppHealth(app, callback) {
         var healthCheckUrl = 'http://127.0.0.1:' + app.httpPort + manifest.healthCheckPath;
         superagent
             .get(healthCheckUrl)
-            .set('Host', app.altDomain || config.appFqdn(app.location)) // required for some apache configs with rewrite rules
+            .set('Host', app.fqdn) // required for some apache configs with rewrite rules
             .redirects(0)
             .timeout(HEALTHCHECK_INTERVAL)
             .end(function (error, res) {
