@@ -1,15 +1,18 @@
 'use strict';
 
 exports = module.exports = {
-    ensureFallbackCertificate: ensureFallbackCertificate,
-
-    renewAll: renewAll,
-    setFallbackCertificate: setFallbackCertificate,
-    setAdminCertificate: setAdminCertificate,
     CertificatesError: CertificatesError,
+
+    ensureFallbackCertificate: ensureFallbackCertificate,
+    setFallbackCertificate: setFallbackCertificate,
+
     validateCertificate: validateCertificate,
     ensureCertificate: ensureCertificate,
+
+    setAdminCertificate: setAdminCertificate,
     getAdminCertificatePath: getAdminCertificatePath,
+
+    renewAll: renewAll,
 
     // exported for testing
     _getApi: getApi
