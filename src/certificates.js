@@ -363,9 +363,10 @@ function ensureCertificate(app, callback) {
         debug('ensureCertificate: %s. certificate already exists at %s', domain, keyFilePath);
 
         if (!isExpiringSync(certFilePath, 24 * 1)) return callback(null, certFilePath, keyFilePath);
+        debug('ensureCertificate: %s cert require renewal', domain);
+    } else {
+        debug('ensureCertificate: %s cert does not exist', domain);
     }
-
-    debug('ensureCertificate: %s cert require renewal', domain);
 
     getApi(app, function (error, api, apiOptions) {
         if (error) return callback(error);
