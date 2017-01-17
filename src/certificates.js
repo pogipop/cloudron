@@ -10,7 +10,8 @@ exports = module.exports = {
     ensureCertificate: ensureCertificate,
 
     setAdminCertificate: setAdminCertificate,
-    getAdminCertificatePath: getAdminCertificatePath,
+
+    getMailCertificate: getMailCertificate,
 
     renewAll: renewAll,
 
@@ -339,6 +340,22 @@ function getAdminCertificatePath(callback) {
     if (fs.existsSync(certFilePath) && fs.existsSync(keyFilePath)) return callback(null, certFilePath, keyFilePath);
 
     getFallbackCertificatePath(callback);
+}
+
+function getMailCertificate(callback) {
+    assert.strictEqual(typeof callback, 'function');
+
+    getAdminCertificatePath(function (error, certFilePath, keyFilePath) {
+        if (error) return callback(error);
+
+        var cert = safe.fs.readFileSync(certFilePath);
+        if (!cert) return callback(new CertificatesError(CertificatesError.INTERNAL_ERROR, safe.error));
+
+        var key = safe.fs.readFileSync(keyFilePath);
+        if (!cert) return callback(new CertificatesError(CertificatesError.INTERNAL_ERROR, safe.error));
+
+        return callback(null, cert, key);
+    });
 }
 
 function ensureCertificate(app, callback) {

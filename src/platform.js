@@ -222,10 +222,11 @@ function startMail(callback) {
     const memoryLimit = Math.max((1 + Math.round(os.totalmem()/(1024*1024*1024)/4)) * 128, 256);
     const alertsFrom = 'no-reply@' + config.fqdn();
 
-    // TODO: watch for a signal here should the certificate path change. Note that haraka reloads
-    // config automatically if the contents of the certificate changes (eg, renawal).
-    certificates.getAdminCertificatePath(function (error, certFilePath, keyFilePath) {
+    certificates.getMailCertificate(function (error, cert, key) {
         if (error) return callback(error);
+
+        if (!safe.fs.writeFileSync(paths.DATA_DIR + '/addons/tls_cert.pem', cert)) return callback(new Error('Could not create cert file:' + safe.error.message));
+        if (!safe.fs.writeFileSync(paths.DATA_DIR + '/addons/tls_key.pem', key))  return callback(new Error('Could not create key file:' + safe.error.message));
 
         settings.getMailConfig(function (error, mailConfig) {
             if (error) return callback(error);
@@ -249,8 +250,8 @@ function startMail(callback) {
                             --memory-swap ${memoryLimit * 2}m \
                             -v "${dataDir}/box/mail:/app/data" \
                             -v "${dataDir}/mail:/run" \
-                            -v "${certFilePath}:/etc/tls_cert.pem:ro" \
-                            -v "${keyFilePath}:/etc/tls_key.pem:ro" \
+                            -v "${dataDir}/addons/tls_cert.pem:/etc/tls_cert.pem:ro" \
+                            -v "${dataDir}/addons/tls_key.pem:/etc/tls_key.pem:ro" \
                             -v "${dataDir}/addons/mail_vars.ini:/etc/mail.ini:ro" \
                             ${ports} \
                             --read-only -v /tmp ${tag}`;
