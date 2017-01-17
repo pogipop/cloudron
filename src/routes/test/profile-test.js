@@ -100,7 +100,6 @@ describe('Profile API', function () {
                 expect(result.body.username).to.equal(USERNAME_0.toLowerCase());
                 expect(result.body.email).to.equal(EMAIL_0.toLowerCase());
                 expect(result.body.admin).to.be.ok();
-                expect(result.body.showTutorial).to.be.ok();
                 expect(result.body.displayName).to.be.a('string');
                 expect(result.body.password).to.not.be.ok();
                 expect(result.body.salt).to.not.be.ok();
@@ -139,7 +138,6 @@ describe('Profile API', function () {
                 expect(result.body.username).to.equal(USERNAME_0.toLowerCase());
                 expect(result.body.email).to.equal(EMAIL_0.toLowerCase());
                 expect(result.body.admin).to.be.ok();
-                expect(result.body.showTutorial).to.be.ok();
                 expect(result.body.displayName).to.be.a('string');
                 expect(result.body.password).to.not.be.ok();
                 expect(result.body.salt).to.not.be.ok();

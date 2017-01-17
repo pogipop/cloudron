@@ -27,8 +27,7 @@ function get(req, res, next) {
         email: req.user.email,
         alternateEmail: req.user.alternateEmail,
         admin: req.user.admin,
-        displayName: req.user.displayName,
-        showTutorial: req.user.showTutorial
+        displayName: req.user.displayName
     }));
 }
 

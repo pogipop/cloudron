@@ -33,8 +33,7 @@ var USER_0 = {
     createdAt: 'sometime back',
     modifiedAt: 'now',
     resetToken: hat(256),
-    displayName: '',
-    showTutorial: false
+    displayName: ''
 };
 
 function setup(done) {

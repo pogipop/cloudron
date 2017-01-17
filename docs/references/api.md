@@ -964,24 +964,6 @@ Response (204):
 {}
 ```
 
-### Tutorial
-
-POST `/api/v1/profile/tutorial` <scope>profile</scope>
-
-Toggles display of the tutorial when the token owner logs in.
-
-Request:
-```
-{
-    showTutorial: <boolean>
-}
-```
-
-Response (204):
-```
-{}
-```
-
 ## Settings
 
 ### Get auto update pattern

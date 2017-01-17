@@ -176,8 +176,7 @@ function createUser(username, password, email, displayName, auditSource, options
                 createdAt: now,
                 modifiedAt: now,
                 resetToken: hat(256),
-                displayName: displayName,
-                showTutorial: true
+                displayName: displayName
             };
 
             asyncIf(!!username, mailboxdb.add.bind(null, username, user.id /* owner */, mailboxdb.TYPE_USER), function (error) {

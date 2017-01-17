@@ -31,8 +31,7 @@ var USER_0 = {
     createdAt: 'sometime back',
     modifiedAt: 'now',
     resetToken: hat(256),
-    displayName: '',
-    showTutorial: false
+    displayName: ''
 };
 
 var USER_1 = {
@@ -44,8 +43,7 @@ var USER_1 = {
     createdAt: 'sometime back',
     modifiedAt: 'now',
     resetToken: '',
-    displayName: 'Herbert 1',
-    showTutorial: false
+    displayName: 'Herbert 1'
 };
 
 var USER_2 = {
@@ -57,8 +55,7 @@ var USER_2 = {
     createdAt: 'sometime back',
     modifiedAt: 'now',
     resetToken: '',
-    displayName: 'Herbert 2',
-    showTutorial: false
+    displayName: 'Herbert 2'
 };
 
 describe('database', function () {

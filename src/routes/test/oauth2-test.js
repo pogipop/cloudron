@@ -146,8 +146,7 @@ describe('OAuth2', function () {
             createdAt: (new Date()).toUTCString(),
             modifiedAt: (new Date()).toUTCString(),
             resetToken: hat(256),
-            displayName: '',
-            showTutorial: false
+            displayName: ''
         };
 
         var APP_0 = {
@@ -1303,8 +1302,7 @@ describe('Password', function () {
         createdAt: (new Date()).toUTCString(),
         modifiedAt: (new Date()).toUTCString(),
         resetToken: hat(256),
-        displayName: '',
-        showTutorial: false
+        displayName: ''
     };
 
     // make csrf always succeed for testing

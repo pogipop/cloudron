@@ -30,8 +30,7 @@ describe('Apps', function () {
         createdAt: 'sometime back',
         modifiedAt: 'now',
         resetToken: hat(256),
-        displayName: '',
-        showTutorial: false
+        displayName: ''
     };
 
     var USER_0 = {
@@ -43,8 +42,7 @@ describe('Apps', function () {
         createdAt: 'sometime back',
         modifiedAt: 'now',
         resetToken: hat(256),
-        displayName: '',
-        showTutorial: false
+        displayName: ''
     };
 
     var USER_1 = {
@@ -56,8 +54,7 @@ describe('Apps', function () {
         createdAt: 'sometime back',
         modifiedAt: 'now',
         resetToken: hat(256),
-        displayName: '',
-        showTutorial: false
+        displayName: ''
     };
 
     var GROUP_0 = {
