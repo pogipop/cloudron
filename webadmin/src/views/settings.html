@@ -141,9 +141,10 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h4 class="modal-title">Configure Backup <sup><a ng-href="{{ config.webServerOrigin }}/references/selfhosting.html#backups" class="help" target="_blank"><i class="fa fa-question-circle"></i></a></sup></h4>
+                <h4 class="modal-title">Configure Backup Storage</h4>
             </div>
             <div class="modal-body">
+                <p>Only AWS S3 or API compatible services are supported. <sup><a ng-href="{{ config.webServerOrigin }}/references/selfhosting.html#backups" class="help" target="_blank"><i class="fa fa-question-circle"></i></a></sup></p>
                 <form name="configureBackupForm" role="form" novalidate ng-submit="configureBackup.submit()" autocomplete="off">
                     <fieldset>
                         <p class="has-error text-center" ng-show="configureBackup.error">{{ configureBackup.error.generic }}</p>
