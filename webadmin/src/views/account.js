@@ -167,13 +167,6 @@ angular.module('Application').controller('AccountController', ['$scope', 'Client
         }
     };
 
-    $scope.showTutorial = function () {
-        Client.setShowTutorial(true, function (error) {
-            if (error) return console.error(error);
-            $scope.$parent.startTutorial();
-        });
-    };
-
     // poor man's async
     function asyncForEach(items, handler, callback) {
         var cur = 0;

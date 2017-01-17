@@ -7,45 +7,6 @@ angular.module('Application').controller('MainController', ['$scope', '$route', 
     $scope.config = {};
     $scope.client = Client;
 
-    $scope.tutorialStep = -1;
-    $scope.tutorialSteps = [
-        { title: 'intro', page: '#/apps' },
-        { title: 'appstore', page: '#/appstore' },
-        { title: 'users', page: '#/users' }
-    ];
-
-    $scope.startTutorial = function () {
-        $scope.tutorialStep = 0;
-        if ($scope.tutorialSteps[$scope.tutorialStep]) window.location.href = $scope.tutorialSteps[$scope.tutorialStep].page;
-    };
-
-    $scope.endTutorial = function () {
-        $scope.tutorialStep = -1;
-
-        Client.setShowTutorial(false, function (error) {
-            if (error) console.error(error);
-
-            window.location.href = '#/apps';
-
-            // now run configure checks which might show notifications
-            runConfigurationChecks();
-        });
-    };
-
-    $scope.nextTutorialStep = function () {
-        $scope.tutorialStep += 1;
-
-        if ($scope.tutorialSteps[$scope.tutorialStep]) window.location.href = $scope.tutorialSteps[$scope.tutorialStep].page;
-
-        if ($scope.tutorialStep >= $scope.tutorialSteps.length) $scope.endTutorial();
-    };
-
-    $scope.prevTutorialStep = function () {
-        $scope.tutorialStep -= 1;
-
-        if ($scope.tutorialSteps[$scope.tutorialStep]) window.location.href = $scope.tutorialSteps[$scope.tutorialStep].page;
-    };
-
     $scope.update = {
         busy: false,
         error: {},
@@ -202,11 +163,7 @@ angular.module('Application').controller('MainController', ['$scope', '$route', 
                         });
                     }
 
-                    if ($scope.user.admin) {
-                        // welcome screen or configure checks immediately
-                        if ($scope.user.showTutorial) $scope.startTutorial();
-                        else runConfigurationChecks();
-                    }
+                    if ($scope.user.admin) runConfigurationChecks();
                 });
             });
         });
