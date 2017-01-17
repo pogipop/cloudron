@@ -711,4 +711,5 @@
 * Standardize on using devicemapper for docker storage backend
 * Show detailed backup progress
 * Fix DNSBL issue in mail container
+* Fix issue where bounce emails were not sent to aliases
 
