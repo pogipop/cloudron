@@ -25,7 +25,7 @@ exports = module.exports = {
     readDkimPublicKeySync: readDkimPublicKeySync,
     refreshDNS: refreshDNS,
 
-    configureAdmin: configureAdmin
+    configurePlainIP: configurePlainIP
 };
 
 var apps = require('./apps.js'),
@@ -145,6 +145,9 @@ function uninitialize(callback) {
 function onConfigured(callback) {
     callback = callback || NOOP_CALLBACK;
 
+    // if we hit here, the domain has to be set, this is a logic issue if it isn't
+    assert(config.fqdn());
+
     debug('onConfigured: current state: %j', gConfigState);
 
     if (gConfigState.configured) return callback(); // re-entracy flag
@@ -210,6 +213,38 @@ function dnsSetup(dnsConfig, domain, callback) {
     });
 }
 
+function configurePlainIP(callback) {
+    callback = callback || NOOP_CALLBACK;
+
+    if (process.env.BOX_ENV === 'test') return callback();
+
+    debug('configurePlainIP');
+
+    sysinfo.getIp(function (error, ip) {
+        if (error) return callback(error);
+
+        var certFilePath = path.join(paths.NGINX_CERT_DIR, IP_BASED_SETUP_NAME + '-' + ip + '.cert');
+        var keyFilePath = path.join(paths.NGINX_CERT_DIR, IP_BASED_SETUP_NAME + '-' + ip + '.key');
+
+        // check if we already have a cert for this IP, otherwise create one, this is mostly useful for servers with changing IPs
+        if (!fs.existsSync(certFilePath) || !fs.existsSync(keyFilePath)) {
+            debug('configurePlainIP: create new cert for %s', ip);
+
+            var certCommand = util.format('openssl req -x509 -newkey rsa:2048 -keyout %s -out %s -days 3650 -subj /CN=%s -nodes', keyFilePath, certFilePath, ip);
+            safe.child_process.execSync(certCommand);
+        }
+
+        // always create a configuration for the ip
+        nginx.configureAdmin(certFilePath, keyFilePath, IP_BASED_SETUP_NAME + '.conf', '', function (error) {
+            if (error) return callback(error);
+
+            debug('configurePlainIP: done');
+
+            callback(null);
+        });
+    });
+}
+
 function configureAdmin(callback) {
     callback = callback || NOOP_CALLBACK;
 
@@ -220,39 +255,20 @@ function configureAdmin(callback) {
     sysinfo.getIp(function (error, ip) {
         if (error) return callback(error);
 
-        var certFilePath = path.join(paths.NGINX_CERT_DIR, IP_BASED_SETUP_NAME + '-' + ip + '.cert');
-        var keyFilePath = path.join(paths.NGINX_CERT_DIR, IP_BASED_SETUP_NAME + '-' + ip + '.key');
-
-        // check if we already have a cert for this IP, otherwise create one, this is mostly useful for servers with changing IPs
-        if (!fs.existsSync(certFilePath) || !fs.existsSync(keyFilePath)) {
-            debug('configureAdmin: create new cert for %s', ip);
-
-            var certCommand = util.format('openssl req -x509 -newkey rsa:2048 -keyout %s -out %s -days 3650 -subj /CN=%s -nodes', keyFilePath, certFilePath, ip);
-            safe.child_process.execSync(certCommand);
-        }
-
-        // always create a configuration for the ip
-        nginx.configureAdmin(certFilePath, keyFilePath, IP_BASED_SETUP_NAME + '.conf', '', function (error) {
+        subdomains.waitForDns(config.adminFqdn(), ip, 'A', { interval: 30000, times: 50000 }, function (error) {
             if (error) return callback(error);
 
-            // skip my.domain.com setup if we don't have a domain
-            if (!config.fqdn()) return callback(null);
+            gConfigState.dns = true;
 
-            subdomains.waitForDns(config.adminFqdn(), ip, 'A', { interval: 30000, times: 50000 }, function (error) {
-                if (error) return callback(error);
+            certificates.ensureCertificate({ location: constants.ADMIN_LOCATION }, function (error, certFilePath, keyFilePath) {
+                if (error) { // currently, this can never happen
+                    debug('Error obtaining certificate. Proceed anyway', error);
+                    return callback();
+                }
 
-                gConfigState.dns = true;
+                gConfigState.tls = true;
 
-                certificates.ensureCertificate({ location: constants.ADMIN_LOCATION }, function (error, certFilePath, keyFilePath) {
-                    if (error) { // currently, this can never happen
-                        debug('Error obtaining certificate. Proceed anyway', error);
-                        return callback();
-                    }
-
-                    gConfigState.tls = true;
-
-                    nginx.configureAdmin(certFilePath, keyFilePath, constants.NGINX_ADMIN_CONFIG_FILE_NAME, config.adminFqdn(), callback);
-                });
+                nginx.configureAdmin(certFilePath, keyFilePath, constants.NGINX_ADMIN_CONFIG_FILE_NAME, config.adminFqdn(), callback);
             });
         });
     });
