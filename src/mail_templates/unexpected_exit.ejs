@@ -1,19 +1,20 @@
 <%if (format === 'text') { %>
 
-Dear Cloudron Team,
+Dear Cloudron Admin,
 
 Unfortunately <%= program %> on <%= fqdn %> exited unexpectedly!
 
-Please see some excerpt of the logs below.
-
-Thank you,
-Your Cloudron
+Please see some excerpt of the logs below:
 
 -------------------------------------
 
 <%- context %>
 
+-------------------------------------
+
+
+Powered by https://cloudron.io
+
 <% } else { %>
 
 <% } %>
-

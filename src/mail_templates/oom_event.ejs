@@ -1,6 +1,6 @@
 <%if (format === 'text') { %>
 
-Dear Cloudron Team,
+Dear Cloudron Admin,
 
 The <%= program %> on <%= fqdn %> exited unexpectedly!
 
@@ -9,14 +9,15 @@ you should give the program more memory.
 
 Please see some excerpt of the logs below.
 
-Thank you,
-Your Cloudron
-
 -------------------------------------
 
 <%- context %>
 
+-------------------------------------
+
+
+Powered by https://cloudron.io
+
 <% } else { %>
 
 <% } %>
-
