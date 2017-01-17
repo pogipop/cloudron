@@ -328,8 +328,13 @@ function getAdminCertificatePath(callback) {
     assert.strictEqual(typeof callback, 'function');
 
     var vhost = config.adminFqdn();
-    var certFilePath = path.join(paths.APP_CERTS_DIR, vhost + '.cert');
-    var keyFilePath = path.join(paths.APP_CERTS_DIR, vhost + '.key');
+    var certFilePath = path.join(paths.APP_CERTS_DIR, vhost + '.user.cert');
+    var keyFilePath = path.join(paths.APP_CERTS_DIR, vhost + '.user.key');
+
+    if (fs.existsSync(certFilePath) && fs.existsSync(keyFilePath)) return callback(null, certFilePath, keyFilePath);
+
+    certFilePath = path.join(paths.APP_CERTS_DIR, vhost + '.cert');
+    keyFilePath = path.join(paths.APP_CERTS_DIR, vhost + '.key');
 
     if (fs.existsSync(certFilePath) && fs.existsSync(keyFilePath)) return callback(null, certFilePath, keyFilePath);
 
