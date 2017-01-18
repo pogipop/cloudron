@@ -43,7 +43,7 @@ function initialize(callback) {
         if (domain === '*.' + config.fqdn() || domain === config.adminFqdn()) startMail(NOOP_CALLBACK);
     });
 
-    cloudron.events.on(cloudron.EVENT_ACTIVATED, createMailConfig);
+    cloudron.events.on(cloudron.EVENT_ACTIVATED, function () { createMailConfig(NOOP_CALLBACK); });
 
     var existingInfra = { version: 'none' };
     if (fs.existsSync(paths.INFRA_VERSION_FILE)) {
@@ -86,9 +86,8 @@ function uninitialize(callback) {
     clearTimeout(gPlatformReadyTimer);
     gPlatformReadyTimer = null;
 
-    cloudron.events.removeListener(cloudron.EVENT_ACTIVATED, createMailConfig);
-
     // TODO: unregister event listeners
+
     callback();
 }
 
@@ -220,6 +219,8 @@ function startMongodb(callback) {
 }
 
 function createMailConfig(callback) {
+    assert.strictEqual(typeof callback, 'function');
+
     const fqdn = config.fqdn();
     const mailFqdn = config.adminFqdn();
     const alertsFrom = 'no-reply@' + config.fqdn();
