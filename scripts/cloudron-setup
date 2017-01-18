@@ -42,7 +42,7 @@ apiServerOrigin="https://api.cloudron.io"
 dataJson=""
 prerelease=false
 
-args=$(getopt -o "" -l "domain:,help,skip-baseimage-init,data:,provider:,encryption-key:,restore-url:,tls-provider:,version:,versions-url:,api-server:,dns-provider:,env:" -n "$0" -- "$@")
+args=$(getopt -o "" -l "domain:,help,skip-baseimage-init,data:,provider:,encryption-key:,restore-url:,tls-provider:,version:,versions-url:,api-server:,dns-provider:,env:,prerelease" -n "$0" -- "$@")
 eval set -- "${args}"
 
 while true; do
