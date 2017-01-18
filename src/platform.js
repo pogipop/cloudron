@@ -228,7 +228,7 @@ function createMailConfig(callback) {
     user.getOwner(function (error, owner) {
         var alertsTo = [ 'webmaster@cloudron.io' ].concat(error ? [] : owner.email).join(',');
 
-        if (!safe.fs.writeFileSync(paths.DATA_DIR + '/addons/mail/mail_vars.ini',
+        if (!safe.fs.writeFileSync(paths.DATA_DIR + '/addons/mail/mail.ini',
             `mail_domain=${fqdn}\nmail_server_name=${mailFqdn}\nalerts_from=${alertsFrom}\nalerts_to=${alertsTo}`, 'utf8')) {
             return callback(new Error('Could not create mail var file:' + safe.error.message));
         }
