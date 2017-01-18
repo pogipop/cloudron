@@ -126,9 +126,9 @@ mkdir -p "${DATA_DIR}/mysql"
 mkdir -p "${DATA_DIR}/postgresql"
 mkdir -p "${DATA_DIR}/mongodb"
 mkdir -p "${DATA_DIR}/snapshots"
-mkdir -p "${DATA_DIR}/addons"
+mkdir -p "${DATA_DIR}/addons/mail"
 mkdir -p "${DATA_DIR}/collectd/collectd.conf.d"
-mkdir -p "${DATA_DIR}/acme" # acme challenges
+mkdir -p "${DATA_DIR}/acme"
 
 echo "==> Configuring journald"
 sed -e "s/^#SystemMaxUse=.*$/SystemMaxUse=100M/" \

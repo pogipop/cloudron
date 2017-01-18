@@ -227,9 +227,7 @@ function createMailConfig(callback) {
     user.getOwner(function (error, owner) {
         var alertsTo = [ 'webmaster@cloudron.io' ].concat(error ? [] : owner.email).join(',');
 
-        // be careful of how this file is created because mail_vars is a file mount
-        // and an inode change won't reflect in the container (https://github.com/docker/docker/issues/15793)
-        if (!safe.fs.writeFileSync(paths.DATA_DIR + '/addons/mail_vars.ini',
+        if (!safe.fs.writeFileSync(paths.DATA_DIR + '/addons/mail/mail_vars.ini',
             `mail_domain=${fqdn}\nmail_server_name=${mailFqdn}\nalerts_from=${alertsFrom}\nalerts_to=${alertsTo}`, 'utf8')) {
             return callback(new Error('Could not create mail var file:' + safe.error.message));
         }
@@ -252,8 +250,8 @@ function startMail(callback) {
     certificates.getAdminCertificate(function (error, cert, key) {
         if (error) return callback(error);
 
-        if (!safe.fs.writeFileSync(paths.DATA_DIR + '/addons/tls_cert.pem', cert)) return callback(new Error('Could not create cert file:' + safe.error.message));
-        if (!safe.fs.writeFileSync(paths.DATA_DIR + '/addons/tls_key.pem', key))  return callback(new Error('Could not create key file:' + safe.error.message));
+        if (!safe.fs.writeFileSync(paths.DATA_DIR + '/addons/mail/tls_cert.pem', cert)) return callback(new Error('Could not create cert file:' + safe.error.message));
+        if (!safe.fs.writeFileSync(paths.DATA_DIR + '/addons/mail/tls_key.pem', key))  return callback(new Error('Could not create key file:' + safe.error.message));
 
         settings.getMailConfig(function (error, mailConfig) {
             if (error) return callback(error);
@@ -272,9 +270,7 @@ function startMail(callback) {
                             --memory-swap ${memoryLimit * 2}m \
                             -v "${dataDir}/box/mail:/app/data" \
                             -v "${dataDir}/mail:/run" \
-                            -v "${dataDir}/addons/tls_cert.pem:/etc/tls_cert.pem:ro" \
-                            -v "${dataDir}/addons/tls_key.pem:/etc/tls_key.pem:ro" \
-                            -v "${dataDir}/addons/mail_vars.ini:/etc/mail.ini:ro" \
+                            -v "${dataDir}/addons/mail:/etc/mail" \
                             ${ports} \
                             --read-only -v /tmp ${tag}`;
 
