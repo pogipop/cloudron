@@ -11,6 +11,7 @@ exports = module.exports = {
 var apps = require('./apps.js'),
     assert = require('assert'),
     async = require('async'),
+    cloudron = require('./cloudron.js'),
     config = require('./config.js'),
     certificates = require('./certificates.js'),
     debug = require('debug')('box:platform'),
@@ -41,6 +42,8 @@ function initialize(callback) {
     certificates.events.on(certificates.EVENT_CERT_CHANGED, function (domain) {
         if (domain === '*.' + config.fqdn() || domain === config.adminFqdn()) startMail(NOOP_CALLBACK);
     });
+
+    cloudron.events.on(cloudron.EVENT_ACTIVATED, createMailConfig);
 
     var existingInfra = { version: 'none' };
     if (fs.existsSync(paths.INFRA_VERSION_FILE)) {
@@ -82,6 +85,9 @@ function initialize(callback) {
 function uninitialize(callback) {
     clearTimeout(gPlatformReadyTimer);
     gPlatformReadyTimer = null;
+
+    cloudron.events.removeListener(cloudron.EVENT_ACTIVATED, createMailConfig);
+
     // TODO: unregister event listeners
     callback();
 }
@@ -213,6 +219,25 @@ function startMongodb(callback) {
     callback();
 }
 
+function createMailConfig(callback) {
+    const fqdn = config.fqdn();
+    const mailFqdn = config.adminFqdn();
+    const alertsFrom = 'no-reply@' + config.fqdn();
+
+    user.getOwner(function (error, owner) {
+        var alertsTo = [ 'webmaster@cloudron.io' ].concat(error ? [] : owner.email).join(',');
+
+        // be careful of how this file is created because mail_vars is a file mount
+        // and an inode change won't reflect in the container (https://github.com/docker/docker/issues/15793)
+        if (!safe.fs.writeFileSync(paths.DATA_DIR + '/addons/mail_vars.ini',
+            `mail_domain=${fqdn}\nmail_server_name=${mailFqdn}\nalerts_from=${alertsFrom}\nalerts_to=${alertsTo}`, 'utf8')) {
+            return callback(new Error('Could not create mail var file:' + safe.error.message));
+        }
+
+        callback();
+    });
+}
+
 function startMail(callback) {
     // mail (note: 2525 is hardcoded in mail container and app use this port)
     // MAIL_SERVER_NAME is the hostname of the mailserver i.e server uses these certs
@@ -221,10 +246,7 @@ function startMail(callback) {
 
     const tag = infra.images.mail.tag;
     const dataDir = paths.DATA_DIR;
-    const fqdn = config.fqdn();
-    const mailFqdn = config.adminFqdn();
     const memoryLimit = Math.max((1 + Math.round(os.totalmem()/(1024*1024*1024)/4)) * 128, 256);
-    const alertsFrom = 'no-reply@' + config.fqdn();
 
     // admin and mail share the same certificate
     certificates.getAdminCertificate(function (error, cert, key) {
@@ -238,13 +260,8 @@ function startMail(callback) {
 
             shell.execSync('startMail', 'docker rm -f mail || true');
 
-            user.getOwner(function (error, owner) {
-                var alertsTo = [ 'webmaster@cloudron.io' ].concat(error ? [] : owner.email).join(',');
-
-                if (!safe.fs.writeFileSync(paths.DATA_DIR + '/addons/mail_vars.ini',
-                    `mail_domain=${fqdn}\nmail_server_name=${mailFqdn}\nalerts_from=${alertsFrom}\nalerts_to=${alertsTo}`, 'utf8')) {
-                    return callback(new Error('Could not create mail var file:' + safe.error.message));
-                }
+            createMailConfig(function (error) {
+                if (error) return callback(error);
 
                 var ports = mailConfig.enabled ? '-p 587:2525 -p 993:9993 -p 4190:4190 -p 25:2525' : '';
 

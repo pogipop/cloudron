@@ -23,7 +23,10 @@ exports = module.exports = {
     checkDiskSpace: checkDiskSpace,
 
     readDkimPublicKeySync: readDkimPublicKeySync,
-    refreshDNS: refreshDNS
+    refreshDNS: refreshDNS,
+
+    events: new (require('events').EventEmitter)(),
+    EVENT_ACTIVATED: 'activated'
 };
 
 var apps = require('./apps.js'),
@@ -331,6 +334,8 @@ function activate(username, password, email, displayName, ip, auditSource, callb
                 if (error) return callback(new CloudronError(CloudronError.INTERNAL_ERROR, error));
 
                 eventlog.add(eventlog.ACTION_ACTIVATE, auditSource, { });
+
+                exports.events.emit(exports.EVENT_ACTIVATED);
 
                 callback(null, { token: token, expires: expires });
             });
