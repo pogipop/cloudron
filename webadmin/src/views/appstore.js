@@ -13,7 +13,7 @@ angular.module('Application').controller('AppStoreController', ['$scope', '$loca
     $scope.category = '';
     $scope.cachedCategory = ''; // used to cache the selected category while searching
     $scope.searchString = '';
-    $scope.cloudronDetails = null;
+    $scope.validAppstoreAccount = false;
     $scope.appstoreConfig = null;
 
     $scope.showRequestUpgrade = function () {
@@ -513,6 +513,12 @@ angular.module('Application').controller('AppStoreController', ['$scope', '$loca
     function fetchAppstoreConfig(callback) {
         callback = callback || function (error) { if (error) console.error(error); };
 
+        // caas always has a valid appstore account
+        if ($scope.config.provider === 'caas') {
+            $scope.validAppstoreAccount = true;
+            return callback();
+        }
+
         Client.getAppstoreConfig(function (error, result) {
             if (error) return callback(error);
 
@@ -520,10 +526,10 @@ angular.module('Application').controller('AppStoreController', ['$scope', '$loca
 
             $scope.appstoreConfig = result;
 
-            AppStore.getCloudronDetails(result, function (error, result) {
+            AppStore.getCloudronDetails(result, function (error) {
                 if (error) return callback(error);
 
-                $scope.cloudronDetails = result;
+                $scope.validAppstoreAccount = true;
 
                 // clear busy state when a login/signup was performed
                 $scope.appstoreLogin.busy = false;
@@ -579,8 +585,8 @@ angular.module('Application').controller('AppStoreController', ['$scope', '$loca
     });
 
     // autofocus if appstore login is shown
-    $scope.$watch('cloudronDetails', function (newValue, oldValue) {
-        if (!oldValue) setTimeout(function () { $('[name=appstoreLoginForm]').find('[autofocus]:first').focus(); }, 1000);
+    $scope.$watch('validAppstoreAccount', function (newValue, oldValue) {
+        if (!newValue) setTimeout(function () { $('[name=appstoreLoginForm]').find('[autofocus]:first').focus(); }, 1000);
     });
 
     $('.modal-backdrop').remove();
