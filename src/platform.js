@@ -38,7 +38,7 @@ function initialize(callback) {
 
     settings.events.on(settings.MAIL_CONFIG_KEY, function () { startMail(NOOP_CALLBACK); });
 
-    certificates.events.on(certificates.CERT_CHANGED, function (domain) {
+    certificates.events.on(certificates.EVENT_CERT_CHANGED, function (domain) {
         if (domain === '*.' + config.fqdn() || domain === config.adminFqdn()) startMail(NOOP_CALLBACK);
     });
 

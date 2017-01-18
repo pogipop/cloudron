@@ -15,7 +15,7 @@ exports = module.exports = {
     renewAll: renewAll,
 
     events: new (require('events').EventEmitter)(),
-    CERT_CHANGED: 'cert_changed',
+    EVENT_CERT_CHANGED: 'cert_changed',
 
     // exported for testing
     _getApi: getApi
@@ -229,7 +229,7 @@ function renewAll(auditSource, callback) {
                     configureFunc(function (ignoredError) {
                         if (ignoredError) debug('fallbackExpiredCertificates: error reconfiguring app', ignoredError);
 
-                        exports.events.emit(exports.CERT_CHANGED, domain);
+                        exports.events.emit(exports.EVENT_CERT_CHANGED, domain);
 
                         iteratorCallback(); // move to next app
                     });
@@ -295,7 +295,7 @@ function setFallbackCertificate(cert, key, callback) {
     if (!safe.fs.writeFileSync(path.join(paths.NGINX_CERT_DIR, 'host.cert'), cert)) return callback(new CertificatesError(CertificatesError.INTERNAL_ERROR, safe.error.message));
     if (!safe.fs.writeFileSync(path.join(paths.NGINX_CERT_DIR, 'host.key'), key)) return callback(new CertificatesError(CertificatesError.INTERNAL_ERROR, safe.error.message));
 
-    exports.events.emit(exports.CERT_CHANGED, '*.' + config.fqdn());
+    exports.events.emit(exports.EVENT_CERT_CHANGED, '*.' + config.fqdn());
 
     nginx.reload(function (error) {
         if (error) return callback(new CertificatesError(CertificatesError.INTERNAL_ERROR, error));
@@ -327,7 +327,7 @@ function setAdminCertificate(cert, key, callback) {
     if (!safe.fs.writeFileSync(certFilePath, cert)) return callback(new CertificatesError(CertificatesError.INTERNAL_ERROR, safe.error.message));
     if (!safe.fs.writeFileSync(keyFilePath, key)) return callback(new CertificatesError(CertificatesError.INTERNAL_ERROR, safe.error.message));
 
-    exports.events.emit(exports.CERT_CHANGED, vhost);
+    exports.events.emit(exports.EVENT_CERT_CHANGED, vhost);
 
     nginx.configureAdmin(certFilePath, keyFilePath, constants.NGINX_ADMIN_CONFIG_FILE_NAME, config.adminFqdn(), callback);
 }
