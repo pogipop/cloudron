@@ -22,30 +22,7 @@ work, the Cloudron requires a way to programmatically configure the DNS entries 
 Note that the Cloudron will never overwrite _existing_ DNS entries and refuse to install
 apps on existing subdomains.
 
-# CLI Tool
-
-The [Cloudron tool](https://git.cloudron.io/cloudron/cloudron-cli) is useful for managing
-a Cloudron. <b class="text-danger">The Cloudron CLI tool has to be run on a Laptop or PC</b>
-
-## Linux & OS X
-
-Installing the CLI tool requires node.js and npm. The CLI tool can be installed using the following command:
-
-```
-npm install -g cloudron
-```
-
-Depending on your setup, you may need to run this as root.
-
-On OS X, it is known to work with the `openssl` package from homebrew.
-
-See [#14](https://git.cloudron.io/cloudron/cloudron-cli/issues/14) for more information.
-
-## Windows
-
-The CLI tool does not work on Windows. Please contact us on our [chat](https://chat.cloudron.io) if you want to help with Windows support.
-
-# Provider
+# Server Provider (VPS)
 
 DigitalOcean and EC2 (Amazon Web Services) are frequently tested by us.
 
@@ -184,7 +161,7 @@ IP of the server created above. If your DNS provider has an API, please open an
 
 Once the domain setup is done, the Cloudron will configure the DNS and get a SSL certificate. It will automatically redirect to `https://my.<domain>`.
 
-## Backups
+# Backups
 
 The Cloudron creates encrypted backups once a day. Each app is backed up independently and these
 backups have the prefix `app_`. The platform state is backed up independently with the
@@ -194,7 +171,7 @@ By default, backups reside in `/var/backups`. Please note that having backups re
 physical machine as the Cloudron server instance is dangerous and it must be changed to
 an external storage location like `S3` as soon as possible.
 
-### Amazon S3
+## Amazon S3
 
 Provide S3 backup credentials in the `Settings` page and leave the endpoint field empty.
 
@@ -226,7 +203,7 @@ for most use-cases.
 }
 ```
 
-### Minio S3
+## Minio S3
 
 [Minio](https://minio.io/) is a distributed object storage server, providing the same API as Amazon S3.
 Since Cloudron supports S3, any API compatible solution should be supported as well, if this is not the case, let us know.
@@ -280,8 +257,35 @@ reputation should be easy to get back.
 * Check if your IP is listed in any DNSBL list [here](http://multirbl.valli.org/). In most cases,
 you can apply for removal of your IP by filling out a form at the DNSBL manager site.
 
+* When using wildcard or manual DNS backends, you have to setup the DMARC, MX records manually.
+
 * Finally, check your spam score at [mail-tester.com](https://www.mail-tester.com/). The Cloudron
 should get 100%, if not please let us know.
+
+# CLI Tool
+
+The [Cloudron tool](https://git.cloudron.io/cloudron/cloudron-cli) is useful for managing
+a Cloudron. <b class="text-danger">The Cloudron CLI tool has to be installed & run on a Laptop or PC</b>
+
+Once installed, you can install, configure, list, backup and restore apps from the command line.
+
+## Linux & OS X
+
+Installing the CLI tool requires node.js and npm. The CLI tool can be installed using the following command:
+
+```
+npm install -g cloudron
+```
+
+Depending on your setup, you may need to run this as root.
+
+On OS X, it is known to work with the `openssl` package from homebrew.
+
+See [#14](https://git.cloudron.io/cloudron/cloudron-cli/issues/14) for more information.
+
+## Windows
+
+The CLI tool does not work on Windows. Please contact us on our [chat](https://chat.cloudron.io) if you want to help with Windows support.
 
 # Updates
 
