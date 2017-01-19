@@ -718,4 +718,6 @@
 [0.97.0]
 * Fix missing app icon issue
 * Fix issue where box sends out crash reports incessantly
+* (API) Allow memory limit to be set to -1 (unlimited)
+* (API) Move developmentMode flag from manifest to apps route
 
