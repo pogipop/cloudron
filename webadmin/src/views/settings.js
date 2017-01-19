@@ -100,16 +100,26 @@ angular.module('Application').controller('SettingsController', ['$scope', '$loca
     $scope.createBackup = {
         busy: false,
         percent: 100,
+        errorMessage: '',
 
         doCreateBackup: function () {
-            $('#createBackupModal').modal('hide');
             $scope.createBackup.busy = true;
-            $scope.createBackup.percent = 100;
+            $scope.createBackup.percent = 0;
+            $scope.createBackup.errorMessage = '';
 
             Client.backup(function (error) {
                 if (error) {
-                    console.error(error);
+                    if (error.statusCode === 409) {
+                        $scope.createBackup.errorMessage = 'App task is currently in progress. Please retry later.';
+                    } else {
+                        $scope.createBackup.errorMessage = error.message;
+                        console.error(error);
+                    }
+
                     $scope.createBackup.busy = false;
+                    $('#createBackupFailedModal').modal('show');
+
+                    return;
                 }
 
                 function checkIfDone() {
@@ -131,10 +141,6 @@ angular.module('Application').controller('SettingsController', ['$scope', '$loca
 
                 checkIfDone();
             });
-        },
-
-        showCreateBackup: function () {
-            $('#createBackupModal').modal('show');
         }
     };
 
