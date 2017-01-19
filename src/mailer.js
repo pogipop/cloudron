@@ -48,6 +48,8 @@ var assert = require('assert'),
     util = require('util'),
     _ = require('underscore');
 
+var NOOP_CALLBACK = function (error) { if (error) console.error(error); };
+
 var MAIL_TEMPLATES_DIR = path.join(__dirname, 'mail_templates');
 
 var gMailQueue = [ ],
@@ -149,14 +151,15 @@ function processQueue() {
 
 // note : this function should NOT access the database. it is called by the crashnotifier
 // which does not initialize mailer or the databse
-function sendMails(queue) {
+function sendMails(queue, callback) {
     assert(util.isArray(queue));
+    callback = callback || NOOP_CALLBACK;
 
     docker.getContainer('mail').inspect(function (error, data) {
-        if (error) return console.error(error);
+        if (error) return callback(error);
 
         var mailServerIp = safe.query(data, 'NetworkSettings.Networks.cloudron.IPAddress');
-        if (!mailServerIp) return debug('Error querying mail server IP');
+        if (!mailServerIp) return callback('Error querying mail server IP');
 
         var transport = nodemailer.createTransport(smtpTransport({
             host: mailServerIp,
@@ -173,6 +176,8 @@ function sendMails(queue) {
             callback(null);
         }, function done() {
             debug('Done processing mail queue');
+
+            callback(null);
         });
     });
 }
@@ -474,9 +479,10 @@ function oomEvent(program, context) {
 
 // this function bypasses the queue intentionally. it is also expected to work without the mailer module initialized
 // NOTE: crashnotifier should be able to send mail when there is no db
-function unexpectedExit(program, context) {
+function unexpectedExit(program, context, callback) {
     assert.strictEqual(typeof program, 'string');
     assert.strictEqual(typeof context, 'string');
+    assert.strictEqual(typeof callback, 'function');
 
     var mailOptions = {
         from: mailConfig().from,
@@ -485,7 +491,7 @@ function unexpectedExit(program, context) {
         text: render('unexpected_exit.ejs', { fqdn: config.fqdn(), program: program, context: context, format: 'text' })
     };
 
-    sendMails([ mailOptions ]);
+    sendMails([ mailOptions ], callback);
 }
 
 function sendFeedback(user, type, subject, description) {
