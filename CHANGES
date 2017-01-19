@@ -715,3 +715,6 @@
 * Remove tutorial
 * Restart mail container on certificate change
 
+[0.97.0]
+* Fix missing app icon issue
+
