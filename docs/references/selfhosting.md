@@ -358,6 +358,14 @@ You can SSH into your Cloudron and collect logs:
 * `docker ps` will give you the list of containers. The addon containers are named as `mail`, `postgresql`,
    `mysql` etc. If you want to get a specific container's log output, `journalctl -a CONTAINER_ID=<container_id>`.
 
+# Alerts
+
+The Cloudron will notify the Cloudron administrator via email if apps go down, run out of memory, have updates
+available etc.
+
+You will have to setup a 3rd party service like [Cloud Watch](https://aws.amazon.com/cloudwatch/) or [UptimeRobot](http://uptimerobot.com/) to monitor the Cloudron itself. You can use `https://my.<domain>/api/v1/cloudron/status`
+as the health check URL.
+
 # Help
 
 If you run into any problems, join us at our [chat](https://chat.cloudron.io) or [email us](mailto:support@cloudron.io).
