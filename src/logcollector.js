@@ -21,7 +21,7 @@ function collectLogs(unitName, callback) {
     assert.strictEqual(typeof callback, 'function');
 
     var logs = safe.child_process.execSync('sudo ' + COLLECT_LOGS_CMD + ' ' + unitName, { encoding: 'utf8' });
-    logs = '\n\n======= ' + unitName + ' =======\n\n' + logs + '\n\n';
+    logs = '\n==============================\n' + logs + '\n';
 
     callback(null, logs);
 }
