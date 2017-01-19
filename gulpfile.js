@@ -43,9 +43,9 @@ gulp.task('3rdparty', function () {
 gulp.task('js', ['js-index', 'js-setup', 'js-setupdns', 'js-update'], function () {});
 
 var oauth = {
-    clientId: argv.clientId || process.env.CLOUDRON_CLIENT_ID || 'cid-webadmin',
-    clientSecret: argv.clientSecret || process.env.CLOUDRON_CLIENT_SECRET || 'unused',
-    apiOrigin: argv.apiOrigin || process.env.CLOUDRON_API_ORIGIN || ''
+    clientId: argv.clientId || 'cid-webadmin',
+    clientSecret: argv.clientSecret || 'unused',
+    apiOrigin: argv.apiOrigin || ''
 };
 
 console.log();
