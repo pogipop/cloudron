@@ -16,10 +16,6 @@ readonly box_src_tmp_dir="$(realpath ${script_dir}/..)"
 
 readonly is_update=$([[ -f "${CLOUDRON_CONF}" ]] && echo "yes" || echo "no")
 
-# create a provision file for testing. %q escapes args. %q is reused as much as necessary to satisfy $@
-(echo -e "#!/bin/bash\n"; printf "%q " "${script_dir}/installer.sh" "$@") > /root/provision.sh
-chmod +x /root/provision.sh
-
 arg_data=""
 
 args=$(getopt -o "" -l "data:,data-file:" -n "$0" -- "$@")
