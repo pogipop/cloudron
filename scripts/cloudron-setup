@@ -201,11 +201,12 @@ if ! curl -sL "${sourceTarballUrl}" | tar -zxf - -C "${box_src_tmp_dir}"; then
 fi
 
 if [[ "${initBaseImage}" == "true" ]]; then
-    echo "=> Installing base dependencies and downloading docker images (this takes some time) ..."
+    echo -n "=> Installing base dependencies and downloading docker images (this takes some time) ..."
     if ! /bin/bash "${box_src_tmp_dir}/baseimage/initializeBaseUbuntuImage.sh" "${provider}" "../src" &>> "${LOG_FILE}"; then
         echo "Init script failed. See ${LOG_FILE} for details"
         exit 1
     fi
+    echo ""
 fi
 
 echo "=> Installing version ${version} (this takes some time) ..."
