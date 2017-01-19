@@ -541,7 +541,8 @@ describe('database', function () {
             memoryLimit: 4294967296,
             altDomain: null,
             xFrameOptions: 'DENY',
-            sso: true
+            sso: true,
+            readonlyRootfs: true
         };
         var APP_1 = {
             id: 'appid-1',
@@ -562,7 +563,8 @@ describe('database', function () {
             memoryLimit: 0,
             altDomain: null,
             xFrameOptions: 'SAMEORIGIN',
-            sso: true
+            sso: true,
+            readonlyRootfs: true
         };
 
         it('add fails due to missing arguments', function () {
