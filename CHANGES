@@ -717,4 +717,5 @@
 
 [0.97.0]
 * Fix missing app icon issue
+* Fix issue where box sends out crash reports incessantly
 
