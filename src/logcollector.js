@@ -53,8 +53,9 @@ function sendFailureLogs(processName, options) {
 
         var stashedLogs = safe.fs.readFileSync(CRASH_LOG_STASH_FILE, 'utf8');
         var compiledLogs = stashedLogs ? (stashedLogs + newLogs) : newLogs;
+        var mailSubject = processName + (stashedLogs ? ' and others' : '');
 
-        mailer.unexpectedExit(processName, compiledLogs, function (error) {
+        mailer.unexpectedExit(mailSubject, compiledLogs, function (error) {
             if (error) {
                 console.log('Error sending crashlog. Stashing logs.');
                 return stashLogs(newLogs);
