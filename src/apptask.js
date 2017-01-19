@@ -190,6 +190,9 @@ function downloadIcon(app, callback) {
     assert.strictEqual(typeof app, 'object');
     assert.strictEqual(typeof callback, 'function');
 
+    // nothing to download if we dont have an appStoreId
+    if (!app.appStoreId) return callback(null);
+
     debugApp(app, 'Downloading icon of %s@%s', app.appStoreId, app.manifest.version);
 
     var iconUrl = config.apiServerOrigin() + '/api/v1/apps/' + app.appStoreId + '/versions/' + app.manifest.version + '/icon';
