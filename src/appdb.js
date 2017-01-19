@@ -58,7 +58,7 @@ var assert = require('assert'),
 var APPS_FIELDS_PREFIXED = [ 'apps.id', 'apps.appStoreId', 'apps.installationState', 'apps.installationProgress', 'apps.runState',
     'apps.health', 'apps.containerId', 'apps.manifestJson', 'apps.httpPort', 'apps.location', 'apps.dnsRecordId',
     'apps.accessRestrictionJson', 'apps.lastBackupId', 'apps.oldConfigJson', 'apps.memoryLimit', 'apps.altDomain',
-    'apps.xFrameOptions', 'apps.sso', 'apps.readonlyRootfs' ].join(',');
+    'apps.xFrameOptions', 'apps.sso', 'apps.readonlyRootfs', 'apps.developmentMode' ].join(',');
 
 var PORT_BINDINGS_FIELDS = [ 'hostPort', 'environmentVariable', 'appId' ].join(',');
 
@@ -97,6 +97,7 @@ function postProcess(result) {
 
     result.sso = !!result.sso; // make it bool
     result.readonlyRootfs = !!result.readonlyRootfs; // make it bool
+    result.developmentMode = !!result.developmentMode; // make it bool
 }
 
 function get(id, callback) {
@@ -185,11 +186,12 @@ function add(id, appStoreId, manifest, location, portBindings, data, callback) {
     var lastBackupId = data.lastBackupId || null; // used when cloning
     var sso = 'sso' in data ? data.sso : null;
     var readonlyRootfs = 'readonlyRootfs' in data ? data.readonlyRootfs : true;
+    var developmentMode = 'developmentMode' in data ? data.developmentMode : false;
 
     var queries = [ ];
     queries.push({
-        query: 'INSERT INTO apps (id, appStoreId, manifestJson, installationState, location, accessRestrictionJson, memoryLimit, altDomain, xFrameOptions, lastBackupId, sso, readonlyRootfs) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-        args: [ id, appStoreId, manifestJson, installationState, location, accessRestrictionJson, memoryLimit, altDomain, xFrameOptions, lastBackupId, sso, readonlyRootfs ]
+        query: 'INSERT INTO apps (id, appStoreId, manifestJson, installationState, location, accessRestrictionJson, memoryLimit, altDomain, xFrameOptions, lastBackupId, sso, readonlyRootfs, developmentMode) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        args: [ id, appStoreId, manifestJson, installationState, location, accessRestrictionJson, memoryLimit, altDomain, xFrameOptions, lastBackupId, sso, readonlyRootfs, developmentMode ]
     });
 
     Object.keys(portBindings).forEach(function (env) {

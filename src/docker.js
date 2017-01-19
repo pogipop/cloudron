@@ -127,7 +127,6 @@ function createSubcontainer(app, name, cmd, options, callback) {
         isAppContainer = !cmd; // non app-containers are like scheduler containers
 
     var manifest = app.manifest;
-    var developmentMode = !!manifest.developmentMode;
     var exposedPorts = {}, dockerPortBindings = { };
     var domain = app.altDomain || config.appFqdn(app.location);
     var stdEnv = [
@@ -178,7 +177,7 @@ function createSubcontainer(app, name, cmd, options, callback) {
             name: name, // used for filtering logs
             Tty: isAppContainer,
             Image: app.manifest.dockerImage,
-            Cmd: (isAppContainer && developmentMode) ? [ '/bin/bash', '-c', 'echo "Development mode. Use cloudron exec to debug. Sleeping" && sleep infinity' ] : cmd,
+            Cmd: (isAppContainer && app.developmentMode) ? [ '/bin/bash', '-c', 'echo "Development mode. Use cloudron exec to debug. Sleeping" && sleep infinity' ] : cmd,
             Env: stdEnv.concat(addonEnv).concat(portEnv),
             ExposedPorts: isAppContainer ? exposedPorts : { },
             Volumes: { // see also ReadonlyRootfs

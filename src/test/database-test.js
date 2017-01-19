@@ -542,7 +542,8 @@ describe('database', function () {
             altDomain: null,
             xFrameOptions: 'DENY',
             sso: true,
-            readonlyRootfs: true
+            readonlyRootfs: true,
+            developmentMode: false
         };
         var APP_1 = {
             id: 'appid-1',
@@ -564,7 +565,8 @@ describe('database', function () {
             altDomain: null,
             xFrameOptions: 'SAMEORIGIN',
             sso: true,
-            readonlyRootfs: true
+            readonlyRootfs: true,
+            developmentMode: false
         };
 
         it('add fails due to missing arguments', function () {

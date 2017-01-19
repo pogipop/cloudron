@@ -480,7 +480,8 @@ function install(data, auditSource, callback) {
         altDomain = data.altDomain || null,
         xFrameOptions = data.xFrameOptions || 'SAMEORIGIN',
         sso = 'sso' in data ? data.sso : null,
-        readonlyRootfs = 'readonlyRootfs' in data ? data.readonlyRootfs : true;
+        readonlyRootfs = 'readonlyRootfs' in data ? data.readonlyRootfs : true,
+        developmentMode = 'developmentMode' in data ? data.developmentMode : true;
 
     assert(data.appStoreId || data.manifest); // atleast one of them is required
 
@@ -538,7 +539,8 @@ function install(data, auditSource, callback) {
                 altDomain: altDomain,
                 xFrameOptions: xFrameOptions,
                 sso: sso,
-                readonlyRootfs: readonlyRootfs
+                readonlyRootfs: readonlyRootfs,
+                developmentMode: developmentMode
             };
 
             var from = (location ? location : manifest.title.toLowerCase().replace(/[^a-zA-Z0-9]/g, '')) + '.app';
@@ -621,6 +623,12 @@ function configure(appId, data, auditSource, callback) {
             values.readonlyRootfs = data.readonlyRootfs;
         } else {
             values.readonlyRootfs = app.readonlyRootfs;
+        }
+
+        if ('developmentMode' in data) {
+            values.developmentMode = data.developmentMode;
+        } else {
+            values.developmentMode = app.developmentMode;
         }
 
         // save cert to data/box/certs. TODO: move this to apptask when we have a real task queue
@@ -710,7 +718,7 @@ function update(appId, data, auditSource, callback) {
             // this allows cloudron install -f --app <appid> for an app installed from the appStore
             if (app.manifest.id !== values.manifest.id) {
                 if (!data.force) return callback(new AppsError(AppsError.BAD_FIELD, 'manifest id does not match. force to override'));
-                // clear appStoreId so that this app does not get updates anymore. this will mark it as a dev app
+                // clear appStoreId so that this app does not get updates anymore
                 values.appStoreId = '';
             }
 

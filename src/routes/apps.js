@@ -127,6 +127,7 @@ function installApp(req, res, next) {
     if ('sso' in data && typeof data.sso !== 'boolean') return next(new HttpError(400, 'sso must be a boolean'));
 
     if ('readonlyRootfs' in data && typeof data.readonlyRootfs !== 'boolean') return next(new HttpError(400, 'readonlyRootfs is not a boolean'));
+    if ('developmentMode' in data && typeof data.developmentMode !== 'boolean') return next(new HttpError(400, 'developmentMode is not a boolean'));
 
     debug('Installing app :%j', data);
 
@@ -165,6 +166,7 @@ function configureApp(req, res, next) {
     if (data.xFrameOptions && typeof data.xFrameOptions !== 'string') return next(new HttpError(400, 'xFrameOptions must be a string'));
 
     if ('readonlyRootfs' in data && typeof data.readonlyRootfs !== 'boolean') return next(new HttpError(400, 'readonlyRootfs is not a boolean'));
+    if ('developmentMode' in data && typeof data.developmentMode !== 'boolean') return next(new HttpError(400, 'developmentMode is not a boolean'));
 
     debug('Configuring app id:%s data:%j', req.params.id, data);
 
