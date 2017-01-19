@@ -109,11 +109,13 @@ angular.module('Application').controller('SettingsController', ['$scope', '$loca
 
             Client.backup(function (error) {
                 if (error) {
-                    if (error.statusCode === 409) {
+                    if (error.statusCode === 409 && error.message.indexOf('full_backup') !== -1) {
+                        $scope.createBackup.errorMessage = 'Backup already in progress. Please retry later.';
+                    } else if (error.statusCode === 409) {
                         $scope.createBackup.errorMessage = 'App task is currently in progress. Please retry later.';
                     } else {
-                        $scope.createBackup.errorMessage = error.message;
                         console.error(error);
+                        $scope.createBackup.errorMessage = error.message;
                     }
 
                     $scope.createBackup.busy = false;
