@@ -15,6 +15,7 @@ var COLLECT_LOGS_CMD = path.join(__dirname, 'scripts/collectlogs.sh');
 var CRASH_LOG_TIMESTAMP_OFFSET = 1000 * 60 * 30; // 30 min
 var CRASH_LOG_TIMESTAMP_FILE = '/tmp/crashlog.timestamp';
 var CRASH_LOG_STASH_FILE = '/tmp/crashlog';
+var CRASH_LOG_FILE_LIMIT = 2 * 1024 * 1024; // 2mb
 
 function collectLogs(unitName, callback) {
     assert.strictEqual(typeof unitName, 'string');
@@ -27,6 +28,12 @@ function collectLogs(unitName, callback) {
 }
 
 function stashLogs(logs) {
+    var stat = safe.fs.statSync(CRASH_LOG_STASH_FILE);
+    if (stat && (stat.size > CRASH_LOG_FILE_LIMIT)) {
+        console.error('Dropping logs since crash file has become too big');
+        return;
+    }
+
     // append here
     safe.fs.writeFileSync(CRASH_LOG_STASH_FILE, logs, { flag: 'a' });
 }
