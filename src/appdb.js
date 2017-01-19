@@ -1,5 +1,3 @@
-/* jslint node:true */
-
 'use strict';
 
 exports = module.exports = {
@@ -186,11 +184,12 @@ function add(id, appStoreId, manifest, location, portBindings, data, callback) {
     var installationState = data.installationState || exports.ISTATE_PENDING_INSTALL;
     var lastBackupId = data.lastBackupId || null; // used when cloning
     var sso = 'sso' in data ? data.sso : null;
+    var readonlyRootfs = 'readonlyRootfs' in data ? data.readonlyRootfs : true;
 
     var queries = [ ];
     queries.push({
-        query: 'INSERT INTO apps (id, appStoreId, manifestJson, installationState, location, accessRestrictionJson, memoryLimit, altDomain, xFrameOptions, lastBackupId, sso) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-        args: [ id, appStoreId, manifestJson, installationState, location, accessRestrictionJson, memoryLimit, altDomain, xFrameOptions, lastBackupId, sso ]
+        query: 'INSERT INTO apps (id, appStoreId, manifestJson, installationState, location, accessRestrictionJson, memoryLimit, altDomain, xFrameOptions, lastBackupId, sso, readonlyRootfs) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        args: [ id, appStoreId, manifestJson, installationState, location, accessRestrictionJson, memoryLimit, altDomain, xFrameOptions, lastBackupId, sso, readonlyRootfs ]
     });
 
     Object.keys(portBindings).forEach(function (env) {
