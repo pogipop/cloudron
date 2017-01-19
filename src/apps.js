@@ -207,6 +207,9 @@ function validateMemoryLimit(manifest, memoryLimit) {
     // this is needed so an app update can change the value in the manifest, and if not set by the user, the new value should be used
     if (memoryLimit === 0) return null;
 
+    // a special value that indicates unlimited memory
+    if (memoryLimit === -1) return null;
+
     if (memoryLimit < min) return new AppsError(AppsError.BAD_FIELD, 'memoryLimit too small');
     if (memoryLimit > max) return new AppsError(AppsError.BAD_FIELD, 'memoryLimit too large');
 
@@ -714,7 +717,8 @@ function update(appId, data, auditSource, callback) {
             if (!app.readonlyRootfs && !data.force) return callback(new AppsError(AppsError.BAD_STATE, 'rootfs is not readonly'));
 
             // Ensure we update the memory limit in case the new app requires more memory as a minimum
-            if (values.manifest.memoryLimit && app.memoryLimit < values.manifest.memoryLimit) {
+            // 0 and -1 are special values for memory limit indicating unset and unlimited
+            if (app.memoryLimit > 0 && values.manifest.memoryLimit && app.memoryLimit < values.manifest.memoryLimit) {
                 values.memoryLimit = values.manifest.memoryLimit;
             }
 

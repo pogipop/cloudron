@@ -152,6 +152,8 @@ If `altDomain` is set, the app can be accessed from `https://<altDomain>`.
 * `SAMEORIGIN` - allows embedding from the same domain as the app. This is the default.
 * `ALLOW-FROM https://example.com/` - allows this app to be embedded from example.com
 
+`memoryLimit` is the maximum memory this app can use (in bytes) including swap. If set to 0, the app uses the `memoryLimit` value set in the manifest. If set to -1, the app gets unlimited memory.
+
 If `readonlyRootfs` is false, then the app's rootfs can be modified post installation. This is useful for debugging as it allows the app's code to be modified post installation. Apps that have a readonly rootfs cannot
 be updated to a newer version (because it is not safe to update them).
 

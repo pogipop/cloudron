@@ -157,8 +157,7 @@ function createSubcontainer(app, name, cmd, options, callback) {
     // first check db record, then manifest
     var memoryLimit = app.memoryLimit || manifest.memoryLimit || 0;
 
-    if (developmentMode) {
-        // developerMode does not restrict memory usage
+    if (memoryLimit === -1) { // unrestricted
         memoryLimit = 0;
     } else if (memoryLimit === 0 || memoryLimit < constants.DEFAULT_MEMORY_LIMIT) { // ensure we never go below minimum (in case we change the default)
         memoryLimit = constants.DEFAULT_MEMORY_LIMIT;
