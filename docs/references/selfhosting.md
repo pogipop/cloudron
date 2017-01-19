@@ -1,8 +1,7 @@
 # Overview
 
 The Cloudron platform can be installed on public cloud servers from EC2, Digital Ocean, Hetzner,
-Linode, OVH, Scaleway, Vultr etc. Running Cloudron on a home server or company intranet is work
-in progress.
+Linode, OVH, Scaleway, Vultr etc. Cloudron also runs well on a home server or company intranet.
 
 If you run into any trouble following this guide, ask us at our [chat](https://chat.cloudron.io).
 
@@ -22,7 +21,7 @@ work, the Cloudron requires a way to programmatically configure the DNS entries 
 Note that the Cloudron will never overwrite _existing_ DNS entries and refuse to install
 apps on existing subdomains.
 
-# Server Provider (VPS)
+# Cloud Server
 
 DigitalOcean and EC2 (Amazon Web Services) are frequently tested by us.
 
@@ -42,20 +41,6 @@ In addition to those, the Cloudron community has successfully installed the plat
 Please let us know if any of them requires tweaks or adjustments.
 
 # Installing
-
-## Choose Domain
-
-A domain name is required when installing the Cloudron. Currently, only Second Level Domains
-are supported. For example, `example.com`, `example.co.uk` will work fine. Choosing a domain
-name at any other level like `cloudron.example.com` will not work.
-
-The domain name must use one of the following name servers:
-* AWS Route 53
-* Digital Ocean
-* Wildcard - If your domain does not use any of the name servers above, you can manually add
-a wildcard (`*`) DNS entry.
-
-You will have to provide the DNS API credentials after you complete the installation.
 
 ## Create server
 
@@ -108,9 +93,18 @@ the latest version. You can set this to an older version when restoring a Cloudr
 
 ## Domain setup
 
-Once the setup script completes, the server will reboot, then visit your server by its IP address (`https://ip`) to complete the installation.
+## Choose Domain
 
-The setup website will show a certificate warning. Accept the self-signed certificate and proceed to the domain setup.
+
+Once the setup script completes, the server will reboot, then visit your server by its
+IP address (`https://ip`) to complete the installation.
+
+The setup website will show a certificate warning. Accept the self-signed certificate
+and proceed to the domain setup.
+
+Currently, only Second Level Domains are supported. For example, `example.com`, 
+`example.co.uk` will work fine. Choosing a domain name at any other level like
+`cloudron.example.com` will not work.
 
 ### Route 53
 
