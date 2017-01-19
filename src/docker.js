@@ -54,14 +54,6 @@ function debugApp(app, args) {
     debug(prefix + ' ' + util.format.apply(util, Array.prototype.slice.call(arguments, 1)));
 }
 
-function targetBoxVersion(manifest) {
-    if ('targetBoxVersion' in manifest) return manifest.targetBoxVersion;
-
-    if ('minBoxVersion' in manifest) return manifest.minBoxVersion;
-
-    return '99999.99999.99999'; // compatible with the latest version
-}
-
 function pullImage(manifest, callback) {
     var docker = exports.connection;
 
