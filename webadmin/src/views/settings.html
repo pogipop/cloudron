@@ -362,15 +362,20 @@
         </div>
     </div>
 
-    <!-- If a backup is blocked (not triggered), the UI does not give feedback currently. This button is only available in dev at the moment! -->
     <div class="row" ng-show="backupConfig.provider !== 'caas' || config.isDev">
         <br/>
-        <div class="col-xs-6">
+        <div class="col-md-12">
             <div ng-show="createBackup.busy" class="progress progress-striped active animateMe">
-                <div class="progress-bar progress-bar-success" role="progressbar" style="width: {{ createBackup.percent }}%">Backup in progress</div>
+                <div class="progress-bar progress-bar-success" role="progressbar" style="width: {{ createBackup.percent }}%">{{ createBackup.percent }}%</div>
             </div>
+            <br/>
         </div>
-        <div class="col-xs-6 text-right">
+    </div>
+    <div class="row" ng-show="backupConfig.provider !== 'caas' || config.isDev">
+        <div class="col-md-6">
+            <p ng-show="createBackup.busy">{{ createBackup.message }}</p>
+        </div>
+        <div class="col-md-6 text-right">
             <button class="btn btn-outline btn-primary pull-right" ng-click="configureBackup.show()" ng-disabled="createBackup.busy">Configure</button>
 
             <button class="btn btn-outline btn-primary" ng-click="createBackup.doCreateBackup()" ng-disabled="createBackup.busy" style="margin-right: 10px">Backup now</button>

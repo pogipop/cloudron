@@ -100,11 +100,13 @@ angular.module('Application').controller('SettingsController', ['$scope', '$loca
     $scope.createBackup = {
         busy: false,
         percent: 100,
+        message: '',
         errorMessage: '',
 
         doCreateBackup: function () {
             $scope.createBackup.busy = true;
             $scope.createBackup.percent = 0;
+            $scope.createBackup.message = '';
             $scope.createBackup.errorMessage = '';
 
             Client.backup(function (error) {
@@ -131,12 +133,15 @@ angular.module('Application').controller('SettingsController', ['$scope', '$loca
                         // check if we are done
                         if (!data.backup || data.backup.percent >= 100) {
                             if (data.backup && data.backup.message) console.error('Backup message: ' + data.backup.message); // backup error message
-                            fetchBackups();
+
                             $scope.createBackup.busy = false;
-                            return;
+                            $scope.createBackup.message = '';
+
+                            return fetchBackups();
                         }
 
                         $scope.createBackup.percent = data.backup.percent;
+                        $scope.createBackup.message = data.backup.message;
                         window.setTimeout(checkIfDone, 250);
                     });
                 }
