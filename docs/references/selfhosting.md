@@ -95,12 +95,6 @@ Since Linode does not manage SSH keys, be sure to add the public key to
 Use the [boot script](https://github.com/scaleway-community/scaleway-docker/issues/2) to
 enable memory accouting.
 
-## Setup `my` subdomain
-
-The Cloudron web interface is installed at the `my` subdomain of your domain.
-Add a `A` DNS record for the `my` subdomain with the IP of the server created
-above. Doing this will allow the Cloudron to start up with a valid TLS certificate.
-
 ## Run setup
 
 SSH into your server and run the following commands:
@@ -123,11 +117,6 @@ we have to add some vendor specific quirks. Please open a
 
 Optional arguments for installation:
 
-* `--domain` is the domain name in which apps are installed. Currently, only Second Level
-Domains are supported. For example, `example.com`, `example.co.uk`, `example.rocks` will
-work fine. Choosing a domain name at any other level like `cloudron.example.com` will not
-work.
-
 * `--tls-provider` is the name of the SSL/TLS certificate backend. Defaults to Let's encrypt.
 Specifying `fallback` will setup the Cloudron to use the fallback wildcard certificate.
 Initially a self-signed one is provided, which can be overwritten later in the admin interface.
@@ -140,24 +129,11 @@ the latest version. You can set this to an older version when restoring a Cloudr
 
 * `--restore-url` is a backup URL to restore from.
 
-## Finish setup
+## Domain setup
 
-Once the setup script completes, the server will reboot, then visit your server by its IP address to complete the installation.
+Once the setup script completes, the server will reboot, then visit your server by its IP address (`https://ip`) to complete the installation.
 
-Please note the following:
-
-1. The website will show a certificate warning, which needs to be accepted. Then a DNS setup page will be shown, which allows to setup
-the Cloudron with a domain.
-
-2. If you see a login screen, instead of a setup screen, it means that someone else got to your Cloudron first and set it up
-already! In this unlikely case, simply delete the server and start over.
-
-Once the setup is done, you can access the admin page in the future at `https://my.<domain>`.
-
-## DNS
-
-Cloudron has to be given the API credentials for configuring your domain under `Certs & Domains`
-in the web UI.
+The setup website will show a certificate warning. Accept the self-signed certificate and proceed to the domain setup.
 
 ### Route 53
 
@@ -203,6 +179,10 @@ Create an API token with read+write access and choose `Digital Ocean` as the DNS
 If your domain *does not* use Route 53 or Digital Ocean, setup a wildcard (`*`) DNS `A` record that points to the
 IP of the server created above. If your DNS provider has an API, please open an
 [issue](https://git.cloudron.io/cloudron/box/issues) and we may be able to support it.
+
+## Finish Setup
+
+Once the domain setup is done, the Cloudron will configure the DNS and get a SSL certificate. It will automatically redirect to `https://my.<domain>`.
 
 ## Backups
 
