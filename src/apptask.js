@@ -356,7 +356,6 @@ function install(app, callback) {
         addons.teardownAddons.bind(null, app, app.manifest.addons),
         deleteVolume.bind(null, app),
         unregisterSubdomain.bind(null, app, app.location),
-        // removeIcon.bind(null, app), // do not remove icon for non-appstore installs
 
         reserveHttpPort.bind(null, app),
 
@@ -456,7 +455,6 @@ function restore(app, callback) {
 
              docker.deleteImage(app.oldConfig.manifest, done);
         },
-        removeIcon.bind(null, app),
 
         reserveHttpPort.bind(null, app),
 
@@ -595,7 +593,6 @@ function update(app, callback) {
 
              docker.deleteImage(app.oldConfig.manifest, done);
         },
-        // removeIcon.bind(null, app), // do not remove icon, otherwise the UI breaks for a short time...
 
         function (next) {
             if (app.installationState === appdb.ISTATE_PENDING_FORCE_UPDATE) return next(null);
