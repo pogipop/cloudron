@@ -12,7 +12,7 @@ var assert = require('assert'),
 
 var COLLECT_LOGS_CMD = path.join(__dirname, 'scripts/collectlogs.sh');
 
-var CRASH_LOG_TIMESTAMP_OFFSET = 1000 * 60 * 30; // 30 min
+var CRASH_LOG_TIMESTAMP_OFFSET = 1000 * 60 * 60; // 60 min
 var CRASH_LOG_TIMESTAMP_FILE = '/tmp/crashlog.timestamp';
 var CRASH_LOG_STASH_FILE = '/tmp/crashlog';
 var CRASH_LOG_FILE_LIMIT = 2 * 1024 * 1024; // 2mb
