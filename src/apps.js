@@ -476,7 +476,8 @@ function install(data, auditSource, callback) {
         memoryLimit = data.memoryLimit || 0,
         altDomain = data.altDomain || null,
         xFrameOptions = data.xFrameOptions || 'SAMEORIGIN',
-        sso = 'sso' in data ? data.sso : null;
+        sso = 'sso' in data ? data.sso : null,
+        readonlyRootfs = 'readonlyRootfs' in data ? data.readonlyRootfs : true;
 
     assert(data.appStoreId || data.manifest); // atleast one of them is required
 
@@ -533,7 +534,8 @@ function install(data, auditSource, callback) {
                 memoryLimit: memoryLimit,
                 altDomain: altDomain,
                 xFrameOptions: xFrameOptions,
-                sso: sso
+                sso: sso,
+                readonlyRootfs: readonlyRootfs
             };
 
             var from = (location ? location : manifest.title.toLowerCase().replace(/[^a-zA-Z0-9]/g, '')) + '.app';
@@ -610,6 +612,12 @@ function configure(appId, data, auditSource, callback) {
             values.xFrameOptions = data.xFrameOptions;
             error = validateXFrameOptions(values.xFrameOptions);
             if (error) return callback(error);
+        }
+
+        if ('readonlyRootfs' in data) {
+            values.readonlyRootfs = data.readonlyRootfs;
+        } else {
+            values.readonlyRootfs = app.readonlyRootfs;
         }
 
         // save cert to data/box/certs. TODO: move this to apptask when we have a real task queue
@@ -702,6 +710,8 @@ function update(appId, data, auditSource, callback) {
                 // clear appStoreId so that this app does not get updates anymore. this will mark it as a dev app
                 values.appStoreId = '';
             }
+
+            if (!app.readonlyRootfs && !data.force) return callback(new AppsError(AppsError.BAD_STATE, 'rootfs is not readonly'));
 
             // Ensure we update the memory limit in case the new app requires more memory as a minimum
             if (values.manifest.memoryLimit && app.memoryLimit < values.manifest.memoryLimit) {

@@ -197,7 +197,7 @@ function createSubcontainer(app, name, cmd, options, callback) {
                 MemorySwap: memoryLimit, // Memory + Swap
                 PortBindings: isAppContainer ? dockerPortBindings : { },
                 PublishAllPorts: false,
-                ReadonlyRootfs: !developmentMode, // see also Volumes in startContainer
+                ReadonlyRootfs: app.readonlyRootfs,
                 RestartPolicy: {
                     "Name": isAppContainer ? "always" : "no",
                     "MaximumRetryCount": 0

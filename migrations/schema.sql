@@ -67,6 +67,7 @@ CREATE TABLE IF NOT EXISTS apps(
     altDomain VARCHAR(256),
     xFrameOptions VARCHAR(512),
     sso BOOLEAN DEFAULT 1, // whether user chose to enable SSO
+    readonlyRootfs BOOLEAN DEFAULT 1, // readonly rootfs
 
     lastBackupId VARCHAR(128), // tracks last valid backup, can be removed
 

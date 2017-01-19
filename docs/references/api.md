@@ -118,7 +118,8 @@ Request:
     key: <string>,                   // pem encoded TLS key
     memoryLimit: <number>,           // memory constraint in bytes
     altDomain: <string>,             // alternate domain from which this app can be reached
-    xFrameOptions: <string>          // set X-Frame-Options header, to control which websites can embed this app
+    xFrameOptions: <string>,         // set X-Frame-Options header, to control which websites can embed this app
+    readonlyRootfs: <boolean>        // whether the app's rootfs is readonly
 }
 ```
 
@@ -150,6 +151,9 @@ If `altDomain` is set, the app can be accessed from `https://<altDomain>`.
 * `DENY` - to prevent embedding from any website
 * `SAMEORIGIN` - allows embedding from the same domain as the app. This is the default.
 * `ALLOW-FROM https://example.com/` - allows this app to be embedded from example.com
+
+If `readonlyRootfs` is false, then the app's rootfs can be modified post installation. This is useful for debugging as it allows the app's code to be modified post installation. Apps that have a readonly rootfs cannot
+be updated to a newer version (because it is not safe to update them).
 
 Read more about the options at [MDN](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Frame-Options).
 
@@ -464,7 +468,8 @@ Request:
     key: <string>,                  // pem encoded TLS key
     memoryLimit: <number>,          // memory constraint in bytes
     altDomain: <string>,            // alternate domain from which this app can be reached
-    xFrameOptions: <string>         // set X-Frame-Options header, to control which websites can embed this app
+    xFrameOptions: <string>,        // set X-Frame-Options header, to control which websites can embed this app
+    readonlyRootfs: <boolean>       // whether the app's rootfs is readonly
 ```
 
 All values are optional. See [Install app](/references/api.html#install-app) API for field descriptions.
