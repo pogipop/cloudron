@@ -93,9 +93,6 @@ the latest version. You can set this to an older version when restoring a Cloudr
 
 ## Domain setup
 
-## Choose Domain
-
-
 Once the setup script completes, the server will reboot, then visit your server by its
 IP address (`https://ip`) to complete the installation.
 
