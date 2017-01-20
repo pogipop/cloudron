@@ -40,6 +40,15 @@ gulp.task('3rdparty', function () {
 // JavaScript
 // --------------
 
+if (argv.help || argv.h) {
+    console.log('Supported arguments for "gulp develop":');
+    console.log(' --client-id <clientId>');
+    console.log(' --client-secret <clientSecret>');
+    console.log(' --api-origin <cloudron api uri>');
+
+    process.exit(1);
+}
+
 gulp.task('js', ['js-index', 'js-setup', 'js-setupdns', 'js-update'], function () {});
 
 var oauth = {
