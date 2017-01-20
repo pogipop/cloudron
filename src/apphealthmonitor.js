@@ -50,7 +50,7 @@ function setHealth(app, health, callback) {
 
         debugApp(app, 'marking as unhealthy since not seen for more than %s minutes', UNHEALTHY_THRESHOLD/(60 * 1000));
 
-        if (app.developmentMode) mailer.appDied(app); // do not send mails for dev apps
+        if (app.debugMode) mailer.appDied(app); // do not send mails for dev apps
         gHealthInfo[app.id].emailSent = true;
     } else {
         debugApp(app, 'waiting for sometime to update the app health');
@@ -166,7 +166,7 @@ function processDockerEvents() {
                 debug('OOM Context: %s', context);
 
                 // do not send mails for dev apps
-                if ((!app || !app.developmentMode) && (now - lastOomMailTime > OOM_MAIL_LIMIT)) {
+                if ((!app || !app.debugMode) && (now - lastOomMailTime > OOM_MAIL_LIMIT)) {
                     mailer.oomEvent(program, context); // app can be null if it's an addon crash
                     lastOomMailTime = now;
                 }

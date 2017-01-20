@@ -150,20 +150,6 @@ Example:
   "description:": "file://DESCRIPTION.md"
 ```
 
-## developmentMode
-
-Type: boolean
-
-Required: no
-
-Setting `developmentMode` to true disables readonly rootfs and the default memory limit. In addition,
-the application *pauses* on start and can be started manually using `cloudron exec`.  Note that you
-cannot submit an app to the store with this field turned on.
-
-This mode can be used to identify the files being modified by your application - often required to
-debug situations where your app does not run on a readonly rootfs. Run your app using `cloudron exec`
-and use `find / -mmin -30` to find file that have been changed or created in the last 30 minutes.
-
 ## healthCheckPath
 
 Type: url path

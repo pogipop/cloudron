@@ -302,6 +302,9 @@ function updateWithConstraints(id, app, constraints, callback) {
         } else if (p === 'accessRestriction') {
             fields.push('accessRestrictionJson = ?');
             values.push(JSON.stringify(app[p]));
+        } else if (p === 'debugMode') {
+            fields.push('debugModeJson = ?');
+            values.push(JSON.stringify(app[p]));
         } else if (p !== 'portBindings') {
             fields.push(p + ' = ?');
             values.push(app[p]);

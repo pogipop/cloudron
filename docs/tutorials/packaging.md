@@ -271,14 +271,18 @@ You can also execute arbitrary commands:
 $ cloudron exec env # display the env variables that your app is running with
 ```
 
-### DevelopmentMode
+### Debugging
 
-When debugging complex startup scripts, one can specify `"developmentMode": true,` in the CloudronManifest.json.
-This will ignore the `RUN` command, specified in the Dockerfile and allows the developer to interactively test
-the startup scripts using `cloudron exec`.
+An app can be placed in `debug` mode by passing `--debug` to `cloudron install` or `cloudron configure`.
+Doing so, runs the app in a non-readonly rootfs and unlimited memory. By default, this will also ignore
+the `RUN` command specified in the Dockerfile. The developer can then interactively test the app and
+startup scripts using `cloudron exec`.
 
-**Note:** that an app running in this mode has full read/write access to the filesystem and all memory limits are lifted.
+This mode can be used to identify the files being modified by your application - often required to
+debug situations where your app does not run on a readonly rootfs. Run your app using `cloudron exec`
+and use `find / -mmin -30` to find file that have been changed or created in the last 30 minutes.
 
+You can turn off debugging mode using `cloudron configure --no-debug`.
 
 # Addons
 
