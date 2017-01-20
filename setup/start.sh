@@ -111,12 +111,20 @@ fi
 
 # keep these in sync with paths.js
 echo "==> Ensuring directories"
-[[ "${is_update}" == "false" ]] && btrfs subvolume create "${DATA_DIR}/box"
+btrfs subvolume create "${DATA_DIR}/box" &> /dev/null || true
+if ! btrfs subvolume show "${DATA_DIR}/mail" &> /dev/null; then
+    # Migrate mail data to new format
+    # if the mail container is running, it will error when it tries to write anything
+    rm -rf "${DATA_DIR}/mail" # this used to be mail container's run directory
+    btrfs subvolume create "${DATA_DIR}/mail"
+    [[ -d "${DATA_DIR}/box/mail" ]] && mv "${DATA_DIR}/box/mail/"* "${DATA_DIR}/mail"
+    rm -rf "${DATA_DIR}/box/mail"
+fi
 mkdir -p "${DATA_DIR}/box/appicons"
 mkdir -p "${DATA_DIR}/box/certs"
 mkdir -p "${DATA_DIR}/box/acme" # acme keys
 mkdir -p "${DATA_DIR}/graphite"
-mkdir -p "${DATA_DIR}/box/mail/dkim"
+mkdir -p "${DATA_DIR}/mail/dkim"
 
 mkdir -p "${DATA_DIR}/mysql"
 mkdir -p "${DATA_DIR}/postgresql"
@@ -209,7 +217,7 @@ if [[ -n "${arg_restore_url}" ]]; then
     echo "==> Downloading backup: ${arg_restore_url} and key: ${arg_restore_key}"
 
     while true; do
-        if $curl -L "${arg_restore_url}" | openssl aes-256-cbc -d -pass "pass:${arg_restore_key}" | tar -zxf - -C "${DATA_DIR}/box"; then break; fi
+        if $curl -L "${arg_restore_url}" | openssl aes-256-cbc -d -pass "pass:${arg_restore_key}" | tar -zxf - --overwrite -C "${DATA_DIR}"; then break; fi
         echo "Failed to download data, trying again"
     done
 
@@ -265,10 +273,8 @@ CONF_END
 echo "==> Changing ownership"
 chown "${USER}:${USER}" -R "${CONFIG_DIR}"
 chown "${USER}:${USER}" -R "${DATA_DIR}/nginx" "${DATA_DIR}/collectd" "${DATA_DIR}/addons" "${DATA_DIR}/acme"
-# during updates, do not trample mail ownership behind the the mail container's back
-find "${DATA_DIR}/box" -mindepth 1 -maxdepth 1 -not -path "${DATA_DIR}/box/mail" -print0 | xargs -0 chown -R "${USER}:${USER}"
-chown "${USER}:${USER}" "${DATA_DIR}/box"
-chown "${USER}:${USER}" -R "${DATA_DIR}/box/mail/dkim" # this is owned by box currently since it generates the keys
+chown "${USER}:${USER}" -R "${DATA_DIR}/box"
+chown "${USER}:${USER}" -R "${DATA_DIR}/mail/dkim" # this is owned by box currently since it generates the keys
 chown "${USER}:${USER}" "${DATA_DIR}/INFRA_VERSION" 2>/dev/null || true
 chown "${USER}:${USER}" "${DATA_DIR}"
 

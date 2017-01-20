@@ -18,7 +18,7 @@ exports = module.exports = {
     // this is not part of appdata because an icon may be set before install
     APPICONS_DIR: path.join(config.baseDir(), 'data/box/appicons'),
     APP_CERTS_DIR: path.join(config.baseDir(), 'data/box/certs'),
-    MAIL_DATA_DIR: path.join(config.baseDir(), 'data/box/mail'),
+    MAIL_DATA_DIR: path.join(config.baseDir(), 'data/mail'),
 
     CLOUDRON_AVATAR_FILE: path.join(config.baseDir(), 'data/box/avatar.png'),
     CLOUDRON_DEFAULT_AVATAR_FILE: path.join(__dirname + '/../assets/avatar.png'),

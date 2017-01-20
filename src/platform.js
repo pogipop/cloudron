@@ -269,11 +269,10 @@ function startMail(callback) {
                             --net-alias mail \
                             -m ${memoryLimit}m \
                             --memory-swap ${memoryLimit * 2}m \
-                            -v "${dataDir}/box/mail:/app/data" \
-                            -v "${dataDir}/mail:/run" \
+                            -v "${dataDir}/mail:/app/data" \
                             -v "${dataDir}/addons/mail:/etc/mail" \
                             ${ports} \
-                            --read-only -v /tmp ${tag}`;
+                            --read-only -v /run -v /tmp ${tag}`;
 
                 shell.execSync('startMail', cmd);
 
