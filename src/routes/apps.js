@@ -55,7 +55,9 @@ function removeInternalAppFields(app) {
         memoryLimit: app.memoryLimit,
         altDomain: app.altDomain,
         xFrameOptions: app.xFrameOptions,
-        sso: app.sso
+        sso: app.sso,
+        readonlyRootfs: app.readonlyRootfs,
+        developmentMode: app.developmentMode
     };
 }
 
