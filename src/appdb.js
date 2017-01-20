@@ -58,7 +58,7 @@ var assert = require('assert'),
 var APPS_FIELDS_PREFIXED = [ 'apps.id', 'apps.appStoreId', 'apps.installationState', 'apps.installationProgress', 'apps.runState',
     'apps.health', 'apps.containerId', 'apps.manifestJson', 'apps.httpPort', 'apps.location', 'apps.dnsRecordId',
     'apps.accessRestrictionJson', 'apps.lastBackupId', 'apps.oldConfigJson', 'apps.memoryLimit', 'apps.altDomain',
-    'apps.xFrameOptions', 'apps.sso', 'apps.readonlyRootfs', 'apps.developmentMode' ].join(',');
+    'apps.xFrameOptions', 'apps.sso', 'apps.debugModeJson' ].join(',');
 
 var PORT_BINDINGS_FIELDS = [ 'hostPort', 'environmentVariable', 'appId' ].join(',');
 
@@ -96,8 +96,10 @@ function postProcess(result) {
     result.xFrameOptions = result.xFrameOptions || 'SAMEORIGIN';
 
     result.sso = !!result.sso; // make it bool
-    result.readonlyRootfs = !!result.readonlyRootfs; // make it bool
-    result.developmentMode = !!result.developmentMode; // make it bool
+
+    assert(result.debugModeJson === null || typeof result.debugModeJson === 'string');
+    result.debugMode = safe.JSON.parse(result.debugModeJson);
+    delete result.debugModeJson;
 }
 
 function get(id, callback) {
@@ -185,13 +187,12 @@ function add(id, appStoreId, manifest, location, portBindings, data, callback) {
     var installationState = data.installationState || exports.ISTATE_PENDING_INSTALL;
     var lastBackupId = data.lastBackupId || null; // used when cloning
     var sso = 'sso' in data ? data.sso : null;
-    var readonlyRootfs = 'readonlyRootfs' in data ? data.readonlyRootfs : true;
-    var developmentMode = 'developmentMode' in data ? data.developmentMode : false;
+    var debugModeJson = data.debugMode ? JSON.stringify(data.debugMode) : null;
 
     var queries = [ ];
     queries.push({
-        query: 'INSERT INTO apps (id, appStoreId, manifestJson, installationState, location, accessRestrictionJson, memoryLimit, altDomain, xFrameOptions, lastBackupId, sso, readonlyRootfs, developmentMode) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-        args: [ id, appStoreId, manifestJson, installationState, location, accessRestrictionJson, memoryLimit, altDomain, xFrameOptions, lastBackupId, sso, readonlyRootfs, developmentMode ]
+        query: 'INSERT INTO apps (id, appStoreId, manifestJson, installationState, location, accessRestrictionJson, memoryLimit, altDomain, xFrameOptions, lastBackupId, sso, debugModeJson) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        args: [ id, appStoreId, manifestJson, installationState, location, accessRestrictionJson, memoryLimit, altDomain, xFrameOptions, lastBackupId, sso, debugModeJson ]
     });
 
     Object.keys(portBindings).forEach(function (env) {

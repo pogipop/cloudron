@@ -177,7 +177,7 @@ function createSubcontainer(app, name, cmd, options, callback) {
             name: name, // used for filtering logs
             Tty: isAppContainer,
             Image: app.manifest.dockerImage,
-            Cmd: (isAppContainer && app.developmentMode) ? [ '/bin/bash', '-c', 'echo "Development mode. Use cloudron exec to debug. Sleeping" && sleep infinity' ] : cmd,
+            Cmd: (isAppContainer && app.debugMode && app.debugMode.cmd) ? app.debugMode.cmd : cmd,
             Env: stdEnv.concat(addonEnv).concat(portEnv),
             ExposedPorts: isAppContainer ? exposedPorts : { },
             Volumes: { // see also ReadonlyRootfs
@@ -195,7 +195,7 @@ function createSubcontainer(app, name, cmd, options, callback) {
                 MemorySwap: memoryLimit, // Memory + Swap
                 PortBindings: isAppContainer ? dockerPortBindings : { },
                 PublishAllPorts: false,
-                ReadonlyRootfs: app.readonlyRootfs,
+                ReadonlyRootfs: app.debugMode ? !!app.debugMode.readonlyRootfs : true,
                 RestartPolicy: {
                     "Name": isAppContainer ? "always" : "no",
                     "MaximumRetryCount": 0

@@ -230,6 +230,16 @@ function validateXFrameOptions(xFrameOptions) {
     return (uri.protocol === 'http:' || uri.protocol === 'https:') ? null : new AppsError(AppsError.BAD_FIELD, 'xFrameOptions ALLOW-FROM uri must be a valid http[s] uri' );
 }
 
+function validateDebugMode(debugMode) {
+    assert.strictEqual(typeof debugMode, 'object');
+
+    if (debugMode === null) return null;
+    if ('cmd' in debugMode && debugMode.cmd !== null && !Array.isArray(debugMode.cmd)) return new AppsError(AppsError.BAD_FIELD, 'debugMode.cmd must be an array or null' );
+    if ('readonlyRootfs' in debugMode && typeof debugMode.readonlyRootfs !== 'boolean') return new AppsError(AppsError.BAD_FIELD, 'debugMode.readonlyRootfs must be a boolean' );
+
+    return null;
+}
+
 function getDuplicateErrorDetails(location, portBindings, error) {
     assert.strictEqual(typeof location, 'string');
     assert.strictEqual(typeof portBindings, 'object');
@@ -480,8 +490,7 @@ function install(data, auditSource, callback) {
         altDomain = data.altDomain || null,
         xFrameOptions = data.xFrameOptions || 'SAMEORIGIN',
         sso = 'sso' in data ? data.sso : null,
-        readonlyRootfs = 'readonlyRootfs' in data ? data.readonlyRootfs : true,
-        developmentMode = 'developmentMode' in data ? data.developmentMode : false;
+        debugMode = data.debugMode || null;
 
     assert(data.appStoreId || data.manifest); // atleast one of them is required
 
@@ -507,6 +516,9 @@ function install(data, auditSource, callback) {
         if (error) return callback(error);
 
         error = validateXFrameOptions(xFrameOptions);
+        if (error) return callback(error);
+
+        error = validateDebugMode(debugMode);
         if (error) return callback(error);
 
         if ('sso' in data && !('optionalSso' in manifest)) return callback(new AppsError(AppsError.BAD_FIELD, 'sso can only be specified for apps with optionalSso'));
@@ -539,8 +551,7 @@ function install(data, auditSource, callback) {
                 altDomain: altDomain,
                 xFrameOptions: xFrameOptions,
                 sso: sso,
-                readonlyRootfs: readonlyRootfs,
-                developmentMode: developmentMode
+                debugMode: debugMode
             };
 
             var from = (location ? location : manifest.title.toLowerCase().replace(/[^a-zA-Z0-9]/g, '')) + '.app';
@@ -619,16 +630,10 @@ function configure(appId, data, auditSource, callback) {
             if (error) return callback(error);
         }
 
-        if ('readonlyRootfs' in data) {
-            values.readonlyRootfs = data.readonlyRootfs;
-        } else {
-            values.readonlyRootfs = app.readonlyRootfs;
-        }
-
-        if ('developmentMode' in data) {
-            values.developmentMode = data.developmentMode;
-        } else {
-            values.developmentMode = app.developmentMode;
+        if ('debugMode' in data) {
+            values.debugMode = data.debugMode;
+            error = validateDebugMode(values.debugMode);
+            if (error) return callback(error);
         }
 
         // save cert to data/box/certs. TODO: move this to apptask when we have a real task queue
@@ -722,7 +727,8 @@ function update(appId, data, auditSource, callback) {
                 values.appStoreId = '';
             }
 
-            if (!app.readonlyRootfs && !data.force) return callback(new AppsError(AppsError.BAD_STATE, 'rootfs is not readonly'));
+            // do not update apps in debug mode
+            if (app.debugMode && !data.force) return callback(new AppsError(AppsError.BAD_STATE, 'debug mode enabled. force to override'));
 
             // Ensure we update the memory limit in case the new app requires more memory as a minimum
             // 0 and -1 are special values for memory limit indicating unset and unlimited
