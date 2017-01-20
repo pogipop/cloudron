@@ -481,7 +481,7 @@ function install(data, auditSource, callback) {
         xFrameOptions = data.xFrameOptions || 'SAMEORIGIN',
         sso = 'sso' in data ? data.sso : null,
         readonlyRootfs = 'readonlyRootfs' in data ? data.readonlyRootfs : true,
-        developmentMode = 'developmentMode' in data ? data.developmentMode : true;
+        developmentMode = 'developmentMode' in data ? data.developmentMode : false;
 
     assert(data.appStoreId || data.manifest); // atleast one of them is required
 
