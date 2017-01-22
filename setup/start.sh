@@ -112,10 +112,19 @@ fi
 # keep these in sync with paths.js
 echo "==> Ensuring directories"
 btrfs subvolume create "${DATA_DIR}/box" &> /dev/null || true
+if ! btrfs subvolume show "${DATA_DIR}/mail" &> /dev/null; then
+    # Migrate mail data to new format
+    # if the mail container is running, it will error when it tries to write anything
+    rm -rf "${DATA_DIR}/mail" # this used to be mail container's run directory
+    btrfs subvolume create "${DATA_DIR}/mail"
+    [[ -d "${DATA_DIR}/box/mail" ]] && mv "${DATA_DIR}/box/mail/"* "${DATA_DIR}/mail"
+    rm -rf "${DATA_DIR}/box/mail"
+fi
 mkdir -p "${DATA_DIR}/box/appicons"
 mkdir -p "${DATA_DIR}/box/certs"
 mkdir -p "${DATA_DIR}/box/acme" # acme keys
 mkdir -p "${DATA_DIR}/graphite"
+mkdir -p "${DATA_DIR}/mail/dkim"
 
 mkdir -p "${DATA_DIR}/mysql"
 mkdir -p "${DATA_DIR}/postgresql"
@@ -225,17 +234,6 @@ set -eu
 cd "${BOX_SRC_DIR}"
 BOX_ENV=cloudron DATABASE_URL=mysql://root:${mysql_root_password}@localhost/box "${BOX_SRC_DIR}/node_modules/.bin/db-migrate" up
 EOF
-
-if ! btrfs subvolume show "${DATA_DIR}/mail" &> /dev/null; then
-    # Migrate mail data to new format
-    # if the mail container is running, it will error when it tries to write anything
-    rm -rf "${DATA_DIR}/mail" # this used to be mail container's run directory
-    btrfs subvolume create "${DATA_DIR}/mail"
-    [[ -d "${DATA_DIR}/box/mail" ]] && mv "${DATA_DIR}/box/mail/"* "${DATA_DIR}/mail"
-    rm -rf "${DATA_DIR}/box/mail"
-fi
-
-mkdir -p "${DATA_DIR}/mail/dkim"
 
 echo "==> Creating cloudron.conf"
 cat > "${CONFIG_DIR}/cloudron.conf" <<CONF_END
