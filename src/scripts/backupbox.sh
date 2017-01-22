@@ -46,18 +46,21 @@ if [[ "$1" == "filesystem" ]]; then
 fi
 
 # perform backup
-now=$(date "+%Y-%m-%d-%H%M%S")
 BOX_DATA_DIR="${HOME}/data/box"
 MAIL_DATA_DIR="${HOME}/data/mail"
 snapshot_dir="${HOME}/data/snapshots"
-box_snapshot_dir="${snapshot_dir}/box-${now}"
-mail_snapshot_dir="${snapshot_dir}/mail-${now}"
+box_snapshot_dir="${snapshot_dir}/box"
+mail_snapshot_dir="${snapshot_dir}/mail"
 
 echo "Creating MySQL dump"
 mysqldump -u root -ppassword --single-transaction --routines --triggers box > "${BOX_DATA_DIR}/box.mysqldump"
 
-echo "Snapshoting backup as backup-${now}"
+echo "Snapshotting box"
+btrfs subvolume delete "${box_snapshot_dir}" || true
 btrfs subvolume snapshot -r "${BOX_DATA_DIR}" "${box_snapshot_dir}"
+
+echo "Snapshotting mail"
+btrfs subvolume delete "${mail_snapshot_dir}" || true
 btrfs subvolume snapshot -r "${MAIL_DATA_DIR}" "${mail_snapshot_dir}"
 
 # will be checked at the end
