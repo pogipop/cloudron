@@ -169,7 +169,7 @@ After=network.target
 [Service]
 PIDFile=/run/unbound.pid
 ExecStart=/usr/sbin/unbound -d
-ExecReload=/bin/kill -HUP $MAINPID
+ExecReload=/bin/kill -HUP \$MAINPID
 Restart=always
 
 [Install]
