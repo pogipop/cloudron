@@ -482,6 +482,9 @@ function sendAliveStatus(callback) {
             },
             backupConfig: {
                 provider: result[settings.BACKUP_CONFIG_KEY].provider
+            },
+            mailConfig: {
+                enabled: result[settings.MAIL_CONFIG_KEY].enabled
             }
         };
 
