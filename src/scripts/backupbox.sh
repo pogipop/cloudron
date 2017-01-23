@@ -37,9 +37,7 @@ if [[ "$1" == "s3" ]]; then
     if [ $# -gt 7 ]; then
         export AWS_SESSION_TOKEN="$8"
     fi
-fi
-
-if [[ "$1" == "filesystem" ]]; then
+elif [[ "$1" == "filesystem" ]]; then
     readonly backup_folder="$2"
     readonly backup_fileName="$3"
     readonly password="$4"
