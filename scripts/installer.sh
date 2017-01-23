@@ -64,9 +64,5 @@ rm -rf "${BOX_SRC_DIR}"
 mv "${box_src_tmp_dir}" "${BOX_SRC_DIR}"
 chown -R "${USER}:${USER}" "${BOX_SRC_DIR}"
 
-# create a start file for testing. %q escapes args
-(echo -e "#!/bin/bash\n"; printf "%q " "${BOX_SRC_DIR}/setup/start.sh" --data "${arg_data}") > /home/yellowtent/setup_start.sh
-chmod +x /home/yellowtent/setup_start.sh
-
 echo "==> installer: calling box setup script"
 "${BOX_SRC_DIR}/setup/start.sh" --data "${arg_data}"
