@@ -490,8 +490,6 @@ function sendAliveStatus(callback) {
 
         // Caas Cloudrons do not store appstore credentials in their local database
         if (config.provider() === 'caas') {
-            if (!config.token()) return callback(new CloudronError(CloudronError.INTERNAL_ERROR, 'no token set'));
-
             var url = config.apiServerOrigin() + '/api/v1/exchangeBoxTokenWithUserToken';
             superagent.post(url).query({ token: config.token() }).timeout(30 * 1000).end(function (error, result) {
                 if (error && !error.response) return callback(new CloudronError(CloudronError.EXTERNAL_ERROR, error));
