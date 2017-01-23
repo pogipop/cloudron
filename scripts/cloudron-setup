@@ -7,6 +7,11 @@ if [[ ${EUID} -ne 0 ]]; then
     exit 1
 fi
 
+if [[ $(lsb_release -rs) != "16.04" ]]; then
+    echo "Cloudron requires Ubuntu 16.04" > /dev/stderr
+    exit 1
+fi
+
 # change this to a hash when we make a upgrade release
 readonly LOG_FILE="/var/log/cloudron-setup.log"
 readonly MINIMUM_DISK_SIZE_GB="19" # this is the size of "/" and required to fit in docker images 19 is a safe bet for different reporting on 20GB min
