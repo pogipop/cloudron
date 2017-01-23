@@ -148,6 +148,7 @@ sed -e "s/^WatchdogSec=.*$/WatchdogSec=3min/" \
 usermod -a -G systemd-journal yellowtent
 mkdir -p /var/log/journal  # in some images, this directory is not created making system log to /run/systemd instead
 chown root:systemd-journal /var/log/journal
+systemctl daemon-reload
 systemctl restart systemd-journald
 setfacl -n -m u:yellowtent:r /var/log/journal/*/system.journal
 
