@@ -114,7 +114,7 @@ echo "==> Ensuring directories"
 btrfs subvolume create "${DATA_DIR}/box" &> /dev/null || true
 if ! btrfs subvolume show "${DATA_DIR}/mail" &> /dev/null; then
     # Migrate mail data to new format
-    # if the mail container is running, it will error when it tries to write anything
+    docker stop mail || true # otherwise the move below might fail if mail container writes in the middle
     rm -rf "${DATA_DIR}/mail" # this used to be mail container's run directory
     btrfs subvolume create "${DATA_DIR}/mail"
     [[ -d "${DATA_DIR}/box/mail" ]] && mv "${DATA_DIR}/box/mail/"* "${DATA_DIR}/mail"
