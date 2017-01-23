@@ -103,7 +103,8 @@ angular.module('Application').controller('MainController', ['$scope', '$route', 
     Client.getStatus(function (error, status) {
         if (error) return $scope.error(error);
 
-        if (!status.activated) {
+        if (!status.adminFqdn) {
+            console.log('You have on domain, redirecting', status.configState.configured);
             window.location.href = status.configState.configured ? '/setup.html' : '/setupdns.html';
             return;
         }

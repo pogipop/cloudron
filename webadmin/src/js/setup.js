@@ -66,14 +66,14 @@ app.controller('SetupController', ['$scope', '$http', 'Client', function ($scope
             return;
         }
 
-        if (status.activated) {
-            window.location.href = '/';
-            return;
-        }
-
         // if we don't have a domain yet, first go to domain setup
         if (!status.adminFqdn) {
             window.location.href = '/setupdns.html';
+            return;
+        }
+
+        if (status.activated) {
+            window.location.href = '/';
             return;
         }
 
