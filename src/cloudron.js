@@ -428,7 +428,7 @@ function getConfig(callback) {
 }
 
 function sendHeartbeat() {
-    if (!config.token() || !config.fqdn()) return;
+    if (config.provider() !== 'caas') return;
 
     var url = config.apiServerOrigin() + '/api/v1/boxes/' + config.fqdn() + '/heartbeat';
     superagent.post(url).query({ token: config.token(), version: config.version() }).timeout(30 * 1000).end(function (error, result) {
