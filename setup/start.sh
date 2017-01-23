@@ -154,20 +154,39 @@ setfacl -n -m u:yellowtent:r /var/log/journal/*/system.journal
 echo "==> Creating config directory"
 rm -rf "${CONFIG_DIR}" && mkdir "${CONFIG_DIR}"
 
+echo "==> Setting up unbound"
+# DO uses Google nameservers by default. This causes RBL queries to fail (host 2.0.0.127.zen.spamhaus.org)
+# We do not use dnsmasq because it is not a recursive resolver and defaults to the value in the interfaces file (which is Google DNS!)
+# We listen on 0.0.0.0 because there is no way control ordering of docker (which creates the 172.18.0.0/16) and unbound
+echo -e "server:\n\tinterface: 0.0.0.0\n\taccess-control: 127.0.0.1 allow\n\taccess-control: 172.18.0.1/16 allow" > /etc/unbound/unbound.conf.d/cloudron-network.conf
+
+# The default ubuntu unbound service uses SysV fallback mode, we want a proper unit file so unbound gets restarted correctly
+cat > "/etc/systemd/system/unbound.service" <<UNBOUND_END
+[Unit]
+Description=Unbound DNS Resolver
+After=network.target
+
+[Service]
+PIDFile=/run/unbound.pid
+ExecStart=/usr/sbin/unbound -d
+ExecReload=/bin/kill -HUP $MAINPID
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+UNBOUND_END
+
 echo "==> Adding systemd services"
 cp -r "${script_dir}/start/systemd/." /etc/systemd/system/
 systemctl daemon-reload
+systemctl enable unbound
 systemctl enable cloudron.target
 systemctl enable iptables-restore
 
 # For logrotate
 systemctl enable --now cron
 
-# DO uses Google nameservers by default. This causes RBL queries to fail (host 2.0.0.127.zen.spamhaus.org)
-# We do not use dnsmasq because it is not a recursive resolver and defaults to the value in the interfaces file (which is Google DNS!)
-# We listen on 0.0.0.0 because there is no way control ordering of docker (which creates the 172.18.0.0/16) and unbound
-echo -e "server:\n\tinterface: 0.0.0.0\n\taccess-control: 127.0.0.1 allow\n\taccess-control: 172.18.0.1/16 allow" > /etc/unbound/unbound.conf.d/cloudron-network.conf
-systemctl enable unbound
+# ensure unbound runs
 systemctl restart unbound
 
 echo "==> Configuring sudoers"
