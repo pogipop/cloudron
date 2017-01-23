@@ -299,9 +299,9 @@ with the latest code and restoring it from the last backup.
 
 To upgrade follow these steps closely:
 
-* Create a new backup - `cloudron machine backup create <domain>`
+* Create a new backup - `cloudron machine backup create`
 
-* List the latest backup - `cloudron machine backup list <domain>`
+* List the latest backup - `cloudron machine backup list`
 
 * Make the backup available for the new cloudron instance:
 
@@ -313,7 +313,7 @@ To upgrade follow these steps closely:
 
     <img src="/docs/img/aws_backup_link.png" class="shadow haze"><br/>
 
-  * `File system` - When storing backups in `/var/backups`, you have to make the box and the app backups available to the new Cloudron instance's `/var/backups`. This can be achieved in a variety of ways depending on the situation: like scp'ing the backup files to the machine before installation, mounting the external backup hard drive into the new Cloudron's `/var/backup` OR downloading a copy of the backup using `cloudron machine backup download <domain>` and uploading them to the new machine. After doing so, pass `file:///var/backups/<path to box backup>` as the `--restore-url` below.
+  * `File system` - When storing backups in `/var/backups`, you have to make the box and the app backups available to the new Cloudron instance's `/var/backups`. This can be achieved in a variety of ways depending on the situation: like scp'ing the backup files to the machine before installation, mounting the external backup hard drive into the new Cloudron's `/var/backup` OR downloading a copy of the backup using `cloudron machine backup download` and uploading them to the new machine. After doing so, pass `file:///var/backups/<path to box backup>` as the `--restore-url` below.
 
 * Create a new Cloudron by following the [installing](/references/selfhosting.html#installing) section.
   When running the setup script, pass in the `--encryption-key` and `--restore-url` flags.
@@ -324,7 +324,7 @@ Similar to the initial installation, a Cloudron upgrade looks like:
 $ ssh root@newserverip
 > wget https://cloudron.io/cloudron-setup
 > chmod +x cloudron-setup
-> ./cloudron-setup --domain <domain> --provider <digitalocean|ec2|generic|scaleway> --encryption-key <key> --restore-url <publicS3Url>
+> ./cloudron-setup --provider <digitalocean|ec2|generic|scaleway> --encryption-key <key> --restore-url <publicS3Url>
 ```
 
  * Finally, once you see the newest version being displayed in your Cloudron webinterface, you can safely delete the old server instance.
@@ -333,7 +333,7 @@ $ ssh root@newserverip
 
 To restore a Cloudron from a specific backup:
 
-* Select the backup - `cloudron machine backup list <domain>`
+* Select the backup - `cloudron machine backup list`
 
 * Make the box backup public (this can be done from the S3 console). Also, copy the URL of
   the backup for use as the `restore-url` below.
