@@ -10,7 +10,7 @@ readonly source_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")"/../.. && pwd)"
 rm -rf $HOME/.cloudron_test 2>/dev/null || true # some of those docker container data requires sudo to be removed
 mkdir -p $HOME/.cloudron_test
 cd $HOME/.cloudron_test
-mkdir -p data/appdata data/box/appicons data/mail data/nginx/cert data/nginx/applications data/collectd/collectd.conf.d data/addons configs data/box/certs data/mail/dkim/localhost data/mail/dkim/foobar.com
+mkdir -p data/appdata data/box/appicons data/mail data/addons/mail data/nginx/cert data/nginx/applications data/collectd/collectd.conf.d data/addons configs data/box/certs data/mail/dkim/localhost data/mail/dkim/foobar.com
 
 # put cert
 openssl req -x509 -newkey rsa:2048 -keyout data/nginx/cert/host.key -out data/nginx/cert/host.cert -days 3650 -subj '/CN=localhost' -nodes
