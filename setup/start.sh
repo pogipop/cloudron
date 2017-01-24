@@ -10,7 +10,6 @@ readonly BOX_SRC_DIR="/home/${USER}/box"
 readonly DATA_DIR="/home/${USER}/data"
 readonly CONFIG_DIR="/home/${USER}/configs"
 readonly SETUP_PROGRESS_JSON="/home/${USER}/setup/website/progress.json"
-readonly ADMIN_LOCATION="my" # keep this in sync with constants.js
 
 readonly curl="curl --fail --connect-timeout 20 --retry 10 --retry-delay 2 --max-time 2400"
 
