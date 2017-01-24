@@ -44,21 +44,15 @@ elif [[ "$1" == "filesystem" ]]; then
 fi
 
 # perform backup
-BOX_DATA_DIR="${HOME}/data/box"
+BOX_DATA_DIR="${HOME}/boxdata"
 MAIL_DATA_DIR="${HOME}/data/mail"
-snapshot_dir="${HOME}/data/snapshots"
-box_snapshot_dir="${snapshot_dir}/box"
-mail_snapshot_dir="${snapshot_dir}/mail"
+mail_snapshot_dir="${HOME}/data/snapshots/mail"
 
 echo "Creating MySQL dump"
 mysqldump -u root -ppassword --single-transaction --routines --triggers box > "${BOX_DATA_DIR}/box.mysqldump"
 
-echo "Snapshotting box"
-btrfs subvolume delete "${box_snapshot_dir}" || true
-btrfs subvolume snapshot -r "${BOX_DATA_DIR}" "${box_snapshot_dir}"
-
 echo "Snapshotting mail"
-btrfs subvolume delete "${mail_snapshot_dir}" || true
+btrfs subvolume delete "${mail_snapshot_dir}" &> /dev/null || true
 btrfs subvolume snapshot -r "${MAIL_DATA_DIR}" "${mail_snapshot_dir}"
 
 # will be checked at the end
@@ -77,7 +71,7 @@ if [[ "$1" == "s3" ]]; then
 
         # use aws instead of curl because curl will always read entire stream memory to set Content-Length
         # aws will do multipart upload
-        if tar -czf - -C "${snapshot_dir}" box mail \
+        if tar -czf - -C "${HOME}" --transform="s,^boxdata/\?,box/," --transform="s,^data/mail/\?,mail/," --show-transformed-names boxdata data/mail \
                | openssl aes-256-cbc -e -pass "pass:${password}" \
                | aws ${optional_args} s3 cp - "${s3_url}" 2>"${error_log}"; then
             break
@@ -89,11 +83,11 @@ elif [[ "$1" == "filesystem" ]]; then
 
     mkdir -p $(dirname "${backup_folder}/${backup_fileName}")
 
-    tar -czf - -C "${snapshot_dir}" box mail | openssl aes-256-cbc -e -pass "pass:${password}" > "${backup_folder}/${backup_fileName}"
+    tar -czf - -C "${HOME}"  --transform="s,^boxdata/\?,box/," --transform="s,^data/mail/\?,mail/," --show-transformed-names boxdata data/mail \
+        | openssl aes-256-cbc -e -pass "pass:${password}" > "${backup_folder}/${backup_fileName}"
 fi
 
 echo "Deleting backup snapshot"
-btrfs subvolume delete "${box_snapshot_dir}"
 btrfs subvolume delete "${mail_snapshot_dir}"
 
 if [[ ${try} -eq 5 ]]; then

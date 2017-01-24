@@ -18,7 +18,7 @@ readonly swap_size=$((${physical_memory} - ${existing_swap})) # if you change th
 readonly app_count=$((${physical_memory} / 200)) # estimated app count
 readonly disk_size_bytes=$(fdisk -l ${disk_device} | grep "Disk ${disk_device}" | awk '{ printf "%d", $5 }') # can't rely on fdisk human readable units, using bytes instead
 readonly disk_size=$((${disk_size_bytes}/1024/1024))
-readonly system_size=10240 # 10 gigs for system libs, apps images, installer, box code and tmp
+readonly system_size=10240 # 10 gigs for system libs, apps images, installer, box code, data and tmp
 readonly ext4_reserved=$((disk_size * 5 / 100)) # this can be changes using tune2fs -m percent /dev/vda1
 
 echo "Disk device: ${disk_device}"

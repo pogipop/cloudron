@@ -9,7 +9,7 @@ exports = module.exports = {
     INFRA_VERSION_FILE: path.join(config.baseDir(), 'data/INFRA_VERSION'),
 
     DATA_DIR: path.join(config.baseDir(), 'data'),
-    BOX_DATA_DIR: path.join(config.baseDir(), 'data/box'),
+    BOX_DATA_DIR: path.join(config.baseDir(), 'boxdata'),
 
     ACME_CHALLENGES_DIR: path.join(config.baseDir(), 'data/acme'),
     ADDON_CONFIG_DIR: path.join(config.baseDir(), 'data/addons'),
@@ -20,10 +20,10 @@ exports = module.exports = {
     NGINX_CERT_DIR: path.join(config.baseDir(), 'data/nginx/cert'),
 
     // this is not part of appdata because an icon may be set before install
-    ACME_ACCOUNT_KEY_FILE: path.join(config.baseDir(), 'data/box/acme/acme.key'),
-    APP_ICONS_DIR: path.join(config.baseDir(), 'data/box/appicons'),
-    APP_CERTS_DIR: path.join(config.baseDir(), 'data/box/certs'),
-    CLOUDRON_AVATAR_FILE: path.join(config.baseDir(), 'data/box/avatar.png'),
-    FIRST_RUN_FILE: path.join(config.baseDir(), 'data/box/first_run'),
-    UPDATE_CHECKER_FILE: path.join(config.baseDir(), 'data/box/updatechecker.json')
+    ACME_ACCOUNT_KEY_FILE: path.join(config.baseDir(), 'boxdata/acme/acme.key'),
+    APP_ICONS_DIR: path.join(config.baseDir(), 'boxdata/appicons'),
+    APP_CERTS_DIR: path.join(config.baseDir(), 'boxdata/certs'),
+    CLOUDRON_AVATAR_FILE: path.join(config.baseDir(), 'boxdata/avatar.png'),
+    FIRST_RUN_FILE: path.join(config.baseDir(), 'boxdata/first_run'),
+    UPDATE_CHECKER_FILE: path.join(config.baseDir(), 'boxdata/updatechecker.json')
 };

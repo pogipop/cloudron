@@ -563,7 +563,7 @@ function install(data, auditSource, callback) {
                     if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(getDuplicateErrorDetails(location, portBindings, error));
                     if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
 
-                    // save cert to data/box/certs
+                    // save cert to boxdata/certs
                     if (cert && key) {
                         if (!safe.fs.writeFileSync(path.join(paths.APP_CERTS_DIR, config.appFqdn(location) + '.user.cert'), cert)) return callback(new AppsError(AppsError.INTERNAL_ERROR, 'Error saving cert: ' + safe.error.message));
                         if (!safe.fs.writeFileSync(path.join(paths.APP_CERTS_DIR, config.appFqdn(location) + '.user.key'), key)) return callback(new AppsError(AppsError.INTERNAL_ERROR, 'Error saving key: ' + safe.error.message));
@@ -636,7 +636,7 @@ function configure(appId, data, auditSource, callback) {
             if (error) return callback(error);
         }
 
-        // save cert to data/box/certs. TODO: move this to apptask when we have a real task queue
+        // save cert to boxdata/certs. TODO: move this to apptask when we have a real task queue
         if ('cert' in data && 'key' in data) {
             if (data.cert && data.key) {
                 error = certificates.validateCertificate(data.cert, data.key, config.appFqdn(location));

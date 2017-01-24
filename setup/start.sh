@@ -6,10 +6,12 @@ echo "==> Cloudron Start"
 
 readonly USER="yellowtent"
 readonly DATA_FILE="/root/user_data.img"
-readonly BOX_SRC_DIR="/home/${USER}/box"
-readonly DATA_DIR="/home/${USER}/data"
-readonly CONFIG_DIR="/home/${USER}/configs"
-readonly SETUP_PROGRESS_JSON="/home/${USER}/setup/website/progress.json"
+readonly HOME_DIR="/home/${USER}"
+readonly BOX_SRC_DIR="${HOME_DIR}/box"
+readonly DATA_DIR="${HOME_DIR}/data" # app and platform data
+readonly BOX_DATA_DIR="${HOME_DIR}/boxdata" # box data
+readonly CONFIG_DIR="${HOME_DIR}/configs"
+readonly SETUP_PROGRESS_JSON="${HOME_DIR}/setup/website/progress.json"
 
 readonly curl="curl --fail --connect-timeout 20 --retry 10 --retry-delay 2 --max-time 2400"
 
@@ -108,7 +110,6 @@ fi
 
 # keep these in sync with paths.js
 echo "==> Ensuring directories"
-btrfs subvolume create "${DATA_DIR}/box" &> /dev/null || true
 if ! btrfs subvolume show "${DATA_DIR}/mail" &> /dev/null; then
     # Migrate mail data to new format
     docker stop mail || true # otherwise the move below might fail if mail container writes in the middle
@@ -117,9 +118,6 @@ if ! btrfs subvolume show "${DATA_DIR}/mail" &> /dev/null; then
     [[ -d "${DATA_DIR}/box/mail" ]] && mv "${DATA_DIR}/box/mail/"* "${DATA_DIR}/mail"
     rm -rf "${DATA_DIR}/box/mail"
 fi
-mkdir -p "${DATA_DIR}/box/appicons"
-mkdir -p "${DATA_DIR}/box/certs"
-mkdir -p "${DATA_DIR}/box/acme" # acme keys
 mkdir -p "${DATA_DIR}/graphite"
 mkdir -p "${DATA_DIR}/mail/dkim"
 
@@ -130,6 +128,15 @@ mkdir -p "${DATA_DIR}/snapshots"
 mkdir -p "${DATA_DIR}/addons/mail"
 mkdir -p "${DATA_DIR}/collectd/collectd.conf.d"
 mkdir -p "${DATA_DIR}/acme"
+
+if btrfs subvolume show "${DATA_DIR}/box" &> /dev/null; then
+    # Migrate box data out of data volume
+    mv "${DATA_DIR}/box" "${BOX_DATA_DIR}"
+    btrfs subvolume delete "${DATA_DIR}/box"
+fi
+mkdir -p "${BOX_DATA_DIR}/appicons"
+mkdir -p "${BOX_DATA_DIR}/certs"
+mkdir -p "${BOX_DATA_DIR}/acme" # acme keys
 
 echo "==> Configuring journald"
 sed -e "s/^#SystemMaxUse=.*$/SystemMaxUse=100M/" \
@@ -207,7 +214,7 @@ cp "${script_dir}/start/nginx/nginx.conf" "${DATA_DIR}/nginx/nginx.conf"
 cp "${script_dir}/start/nginx/mime.types" "${DATA_DIR}/nginx/mime.types"
 
 # bookkeep the version as part of data
-echo "{ \"version\": \"${arg_version}\", \"boxVersionsUrl\": \"${arg_box_versions_url}\" }" > "${DATA_DIR}/box/version"
+echo "{ \"version\": \"${arg_version}\", \"boxVersionsUrl\": \"${arg_box_versions_url}\" }" > "${BOX_DATA_DIR}/version"
 
 # remove old snapshots. if we do want to keep this around, we will have to fix the chown -R below
 # which currently fails because these are readonly fs
@@ -234,14 +241,15 @@ if [[ -n "${arg_restore_url}" ]]; then
     echo "==> Downloading backup: ${arg_restore_url} and key: ${arg_restore_key}"
 
     while true; do
-        if $curl -L "${arg_restore_url}" | openssl aes-256-cbc -d -pass "pass:${arg_restore_key}" | tar -zxf - --overwrite -C "${DATA_DIR}"; then break; fi
+        if $curl -L "${arg_restore_url}" | openssl aes-256-cbc -d -pass "pass:${arg_restore_key}" \
+            | tar -zxf - --overwrite --transform="s,^box/\?,boxdata/," --transform="s,^mail/\?,data/mail/," --show-transformed-names -C "${HOME_DIR}"; then break; fi
         echo "Failed to download data, trying again"
     done
 
     set_progress "35" "Setting up MySQL"
-    if [[ -f "${DATA_DIR}/box/box.mysqldump" ]]; then
+    if [[ -f "${BOX_DATA_DIR}/box.mysqldump" ]]; then
         echo "==> Importing existing database into MySQL"
-        mysql -u root -p${mysql_root_password} box < "${DATA_DIR}/box/box.mysqldump"
+        mysql -u root -p${mysql_root_password} box < "${BOX_DATA_DIR}/box.mysqldump"
     fi
 fi
 
@@ -290,7 +298,7 @@ CONF_END
 echo "==> Changing ownership"
 chown "${USER}:${USER}" -R "${CONFIG_DIR}"
 chown "${USER}:${USER}" -R "${DATA_DIR}/nginx" "${DATA_DIR}/collectd" "${DATA_DIR}/addons" "${DATA_DIR}/acme"
-chown "${USER}:${USER}" -R "${DATA_DIR}/box"
+chown "${USER}:${USER}" -R "${BOX_DATA_DIR}"
 chown "${USER}:${USER}" -R "${DATA_DIR}/mail/dkim" # this is owned by box currently since it generates the keys
 chown "${USER}:${USER}" "${DATA_DIR}/INFRA_VERSION" 2>/dev/null || true
 chown "${USER}:${USER}" "${DATA_DIR}"
