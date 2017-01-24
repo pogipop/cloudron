@@ -9,7 +9,7 @@ readonly DATA_FILE="/root/user_data.img"
 readonly BOX_SRC_DIR="/home/${USER}/box"
 readonly DATA_DIR="/home/${USER}/data"
 readonly CONFIG_DIR="/home/${USER}/configs"
-readonly SETUP_PROGRESS_JSON="/home/yellowtent/setup/website/progress.json"
+readonly SETUP_PROGRESS_JSON="/home/${USER}/setup/website/progress.json"
 readonly ADMIN_LOCATION="my" # keep this in sync with constants.js
 
 readonly curl="curl --fail --connect-timeout 20 --retry 10 --retry-delay 2 --max-time 2400"
@@ -69,7 +69,7 @@ cp "${script_dir}/start/docker-cloudron-app.apparmor" /etc/apparmor.d/docker-clo
 systemctl enable apparmor
 systemctl restart apparmor
 
-usermod yellowtent -a -G docker
+usermod ${USER} -a -G docker
 temp_file=$(mktemp)
 # some apps do not work with aufs
 sed -e 's,^ExecStart=.*$,ExecStart=/usr/bin/docker daemon -H fd:// --log-driver=journald --exec-opt native.cgroupdriver=cgroupfs --storage-driver=devicemapper --dns=172.18.0.1 --dns-search=.,' /lib/systemd/system/docker.service > "${temp_file}"
@@ -145,12 +145,12 @@ sed -e "s/^WatchdogSec=.*$/WatchdogSec=3min/" \
     -i /lib/systemd/system/systemd-journald.service
 
 # Give user access to system logs
-usermod -a -G systemd-journal yellowtent
+usermod -a -G systemd-journal ${USER}
 mkdir -p /var/log/journal  # in some images, this directory is not created making system log to /run/systemd instead
 chown root:systemd-journal /var/log/journal
 systemctl daemon-reload
 systemctl restart systemd-journald
-setfacl -n -m u:yellowtent:r /var/log/journal/*/system.journal
+setfacl -n -m u:${USER}:r /var/log/journal/*/system.journal
 
 echo "==> Creating config directory"
 rm -rf "${CONFIG_DIR}" && mkdir "${CONFIG_DIR}"
@@ -191,8 +191,8 @@ systemctl enable --now cron
 systemctl restart unbound
 
 echo "==> Configuring sudoers"
-rm -f /etc/sudoers.d/yellowtent
-cp "${script_dir}/start/sudoers" /etc/sudoers.d/yellowtent
+rm -f /etc/sudoers.d/${USER}
+cp "${script_dir}/start/sudoers" /etc/sudoers.d/${USER}
 
 echo "==> Configuring collectd"
 rm -rf /etc/collectd
