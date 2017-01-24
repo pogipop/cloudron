@@ -17,8 +17,6 @@ readonly script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 source "${script_dir}/argparser.sh" "$@" # this injects the arg_* variables used below
 
-readonly is_update=$([[ -f "${CONFIG_DIR}/cloudron.conf" ]] && echo "true" || echo "false")
-
 set_progress() {
     local percent="$1"
     local message="$2"
