@@ -21,7 +21,7 @@ exports = module.exports = {
 
     // this is not part of appdata because an icon may be set before install
     ACME_ACCOUNT_KEY_FILE: path.join(config.baseDir(), 'data/box/acme/acme.key'),
-    APPICONS_DIR: path.join(config.baseDir(), 'data/box/appicons'),
+    APP_ICONS_DIR: path.join(config.baseDir(), 'data/box/appicons'),
     APP_CERTS_DIR: path.join(config.baseDir(), 'data/box/certs'),
     CLOUDRON_AVATAR_FILE: path.join(config.baseDir(), 'data/box/avatar.png'),
     FIRST_RUN_FILE: path.join(config.baseDir(), 'data/box/first_run'),

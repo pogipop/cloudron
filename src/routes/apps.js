@@ -87,7 +87,7 @@ function getApps(req, res, next) {
 function getAppIcon(req, res, next) {
     assert.strictEqual(typeof req.params.id, 'string');
 
-    var iconPath = paths.APPICONS_DIR + '/' + req.params.id + '.png';
+    var iconPath = paths.APP_ICONS_DIR + '/' + req.params.id + '.png';
     fs.exists(iconPath, function (exists) {
         if (!exists) return next(new HttpError(404, 'No such icon'));
         res.sendFile(iconPath);

@@ -275,7 +275,7 @@ function getAppConfig(app) {
 }
 
 function getIconUrlSync(app) {
-    var iconPath = paths.APPICONS_DIR + '/' + app.id + '.png';
+    var iconPath = paths.APP_ICONS_DIR + '/' + app.id + '.png';
     return fs.existsSync(iconPath) ? '/api/v1/apps/' + app.id + '/icon' : null;
 }
 
@@ -532,7 +532,7 @@ function install(data, auditSource, callback) {
         if (icon) {
             if (!validator.isBase64(icon)) return callback(new AppsError(AppsError.BAD_FIELD, 'icon is not base64'));
 
-            if (!safe.fs.writeFileSync(path.join(paths.APPICONS_DIR, appId + '.png'), new Buffer(icon, 'base64'))) {
+            if (!safe.fs.writeFileSync(path.join(paths.APP_ICONS_DIR, appId + '.png'), new Buffer(icon, 'base64'))) {
                 return callback(new AppsError(AppsError.INTERNAL_ERROR, 'Error saving icon:' + safe.error.message));
             }
         }
@@ -707,11 +707,11 @@ function update(appId, data, auditSource, callback) {
             if (data.icon) {
                 if (!validator.isBase64(data.icon)) return callback(new AppsError(AppsError.BAD_FIELD, 'icon is not base64'));
 
-                if (!safe.fs.writeFileSync(path.join(paths.APPICONS_DIR, appId + '.png'), new Buffer(data.icon, 'base64'))) {
+                if (!safe.fs.writeFileSync(path.join(paths.APP_ICONS_DIR, appId + '.png'), new Buffer(data.icon, 'base64'))) {
                     return callback(new AppsError(AppsError.INTERNAL_ERROR, 'Error saving icon:' + safe.error.message));
                 }
             } else {
-                safe.fs.unlinkSync(path.join(paths.APPICONS_DIR, appId + '.png'));
+                safe.fs.unlinkSync(path.join(paths.APP_ICONS_DIR, appId + '.png'));
             }
         }
 

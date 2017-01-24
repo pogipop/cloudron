@@ -206,7 +206,7 @@ function downloadIcon(app, callback) {
                 if (error && !error.response) return retryCallback(new Error('Network error downloading icon:' + error.message));
                 if (res.statusCode !== 200) return retryCallback(null); // ignore error. this can also happen for apps installed with cloudron-cli
 
-                if (!safe.fs.writeFileSync(path.join(paths.APPICONS_DIR, app.id + '.png'), res.body)) return retryCallback(new Error('Error saving icon:' + safe.error.message));
+                if (!safe.fs.writeFileSync(path.join(paths.APP_ICONS_DIR, app.id + '.png'), res.body)) return retryCallback(new Error('Error saving icon:' + safe.error.message));
 
                 retryCallback(null);
         });
@@ -281,7 +281,7 @@ function removeIcon(app, callback) {
     assert.strictEqual(typeof app, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    fs.unlink(path.join(paths.APPICONS_DIR, app.id + '.png'), function (error) {
+    fs.unlink(path.join(paths.APP_ICONS_DIR, app.id + '.png'), function (error) {
         if (error && error.code !== 'ENOENT') debugApp(app, 'cannot remove icon : %s', error);
         callback(null);
     });
