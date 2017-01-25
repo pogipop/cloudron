@@ -335,11 +335,14 @@ To restore a Cloudron from a specific backup:
 
 * Select the backup - `cloudron machine backup list`
 
-* Make the box backup public (this can be done from the S3 console). Also, copy the URL of
-  the backup for use as the `restore-url` below.
+* Make the backup public
+
+  * `S3` - Make the box backup publicly readable - files starting with `box_` (from v0.94.0) or `backup_`. This can be done from the AWS S3 console. Once the box has restored, you can make it private again.
+
+  * `File system` - When storing backups in `/var/backups`, you have to make the box and the app backups available to the new Cloudron instance's `/var/backups`. This can be achieved in a variety of ways depending on the situation: like scp'ing the backup files to the new machine before Cloudron installation OR mounting an external backup hard drive into the new Cloudron's `/var/backup` OR downloading a copy of the backup using `cloudron machine backup download` and uploading them to the new machine. After doing so, pass `file:///var/backups/<path to box backup>` as the `--restore-url` below.
 
 * Create a new Cloudron by following the [installing](/references/selfhosting.html#installing) section.
-  When running the setup script, pass in the `version`, `restore-key` and `restore-url` flags.
+  When running the setup script, pass in the `version`, `encryption-key` and `restore-url` flags.
   The `version` field is the version of the Cloudron that the backup corresponds to (it is embedded
   in the backup file name).
 
