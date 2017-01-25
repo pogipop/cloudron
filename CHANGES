@@ -721,3 +721,9 @@
 * (API) Allow memory limit to be set to -1 (unlimited)
 * (API) Move developmentMode flag from manifest to apps route
 
+[0.98.0]
+* Send stat on whether email is enabled
+* Fix bug where heartbeat was sent for self-hosted Cloudrons
+* Make Cloudron function even when disk is full
+* Fix thunderbird connection issue
+
