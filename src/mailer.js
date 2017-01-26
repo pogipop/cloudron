@@ -56,6 +56,17 @@ var gMailQueue = [ ],
     gDnsReady = false,
     gCheckDnsTimerId = null;
 
+function splatchError(error) {
+    var result = { };
+    Object.getOwnPropertyNames(error).forEach(function (key) {
+        var value = this[key];
+        if (value instanceof Error) value = splatchError(value);
+        result[key] = value;
+    }, error /* thisArg */);
+
+    return util.inspect(result, { depth: null, showHidden: true });
+}
+
 function start(callback) {
     assert.strictEqual(typeof callback, 'function');
 
@@ -426,7 +437,9 @@ function outOfDiskSpace(message) {
     });
 }
 
-function backupFailed(message) {
+function backupFailed(error) {
+    var message = splatchError(error);
+
     getAdminEmails(function (error, adminEmails) {
         if (error) return console.log('Error getting admins', error);
 

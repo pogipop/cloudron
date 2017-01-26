@@ -402,7 +402,7 @@ function backup(auditSource, callback) {
     backupBoxAndApps(auditSource, function (error) { // start the backup operation in the background
         if (error) {
             debug('backup failed.', error);
-            mailer.backupFailed(JSON.stringify(error));
+            mailer.backupFailed(error);
         }
 
         locker.unlock(locker.OP_FULL_BACKUP);
