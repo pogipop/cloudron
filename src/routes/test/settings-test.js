@@ -10,6 +10,7 @@ var appdb = require('../../appdb.js'),
     child_process = require('child_process'),
     cloudron = require('../../cloudron.js'),
     config = require('../../config.js'),
+    constants = require('../../constants.js'),
     database = require('../../database.js'),
     expect = require('expect.js'),
     path = require('path'),
@@ -119,10 +120,10 @@ describe('Settings API', function () {
 
             superagent.post(SERVER_URL + '/api/v1/settings/autoupdate_pattern')
                    .query({ access_token: token })
-                   .send({ pattern: 'never' })
+                   .send({ pattern: constants.AUTOUPDATE_PATTERN_NEVER })
                    .end(function (err, res) {
                 expect(res.statusCode).to.equal(200);
-                expect(eventPattern).to.eql('never');
+                expect(eventPattern).to.eql(constants.AUTOUPDATE_PATTERN_NEVER);
                 done();
             });
         });
