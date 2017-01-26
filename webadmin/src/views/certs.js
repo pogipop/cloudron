@@ -187,7 +187,7 @@ angular.module('Application').controller('CertsController', ['$scope', '$locatio
         $scope.dnsCredentials.customDomain = $scope.config.fqdn;
         $scope.dnsCredentials.accessKeyId = $scope.dnsConfig.accessKeyId;
         $scope.dnsCredentials.secretAccessKey = $scope.dnsConfig.secretAccessKey;
-        $scope.dnsCredentials.digitalOceanToken = $scope.dnsConfig.token;
+        $scope.dnsCredentials.digitalOceanToken = $scope.dnsConfig.provider === 'digitalocean' ? $scope.dnsConfig.token : '';
 
         $scope.dnsCredentials.provider = $scope.dnsConfig.provider === 'caas' ? 'route53' : $scope.dnsConfig.provider;
         $scope.dnsCredentials.provider = ($scope.dnsCredentials.provider === 'manual' && $scope.dnsConfig.wildcard) ? 'wildcard' : $scope.dnsCredentials.provider;
