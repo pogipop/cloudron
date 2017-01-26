@@ -9,9 +9,9 @@
                     <fieldset>
                         <p class="has-error text-center" ng-show="dnsCredentials.error">{{ dnsCredentials.error }}</p>
 
-                        <div class="form-group" ng-class="{ 'has-error': false }" uib-tooltip="{{ dnsConfig.provider === 'caas' ? '' : 'Currently domain change is not supported' }}">
+                        <div class="form-group" ng-class="{ 'has-error': dnsCredentialsForm.customDomainId.$invalid }" uib-tooltip="{{ dnsConfig.provider === 'caas' ? '' : 'Currently domain change is not supported' }}">
                             <label class="control-label" for="customDomainId">Domain Name</label>
-                            <input type="text" class="form-control" ng-model="dnsCredentials.customDomain" id="customDomainId" name="customDomainId" ng-disabled="dnsCredentials.busy || dnsConfig.provider !== 'caas'" ng-minlength="4" ng-maxlength="128" placeholder="example.com" required autofocus>
+                            <input type="text" class="form-control" ng-model="dnsCredentials.customDomain" id="customDomainId" name="customDomainId" ng-disabled="dnsCredentials.busy || dnsConfig.provider !== 'caas'" domain-validator placeholder="example.com" required autofocus>
                         </div>
 
                         <div class="form-group">
@@ -35,7 +35,7 @@
                             <input type="text" class="form-control" ng-model="dnsCredentials.digitalOceanToken" id="dnsCredentialsDigitalOceanToken" name="digitalOceanToken" ng-disabled="dnsCredentials.busy" ng-required="dnsCredentials.provider === 'digitalocean'">
                         </div>
 
-                        <div class="form-group" ng-class="{ 'has-error': false }" ng-if="config.fqdn !== dnsCredentials.customDomain">
+                        <div class="form-group" ng-class="{ 'has-error': false }" ng-if="config.fqdn !== dnsCredentials.customDomain && !dnsCredentialsForm.customDomainId.$invalid">
                             <label class="control-label" for="dnsCredentialsPassword">Provide your password to confirm this action</label>
                             <input type="password" class="form-control" ng-model="dnsCredentials.password" id="dnsCredentialsPassword" name="password" ng-disabled="dnsCredentials.busy" required>
                         </div>
