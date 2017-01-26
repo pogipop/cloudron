@@ -23,12 +23,7 @@ server_ip=""
 destroy_server="yes"
 deploy_env="prod"
 
-# Only GNU getopt supports long options. OS X comes bundled with the BSD getopt
-# brew install gnu-getopt to get the GNU getopt on OS X
-[[ $(uname -s) == "Darwin" ]] && GNU_GETOPT="/usr/local/opt/gnu-getopt/bin/getopt" || GNU_GETOPT="getopt"
-readonly GNU_GETOPT
-
-args=$(${GNU_GETOPT} -o "" -l "revision:,name:,no-destroy,env:" -n "$0" -- "$@")
+args=$(getopt -o "" -l "revision:,name:,no-destroy,env:" -n "$0" -- "$@")
 eval set -- "${args}"
 
 while true; do
@@ -42,8 +37,7 @@ while true; do
     esac
 done
 
-export AWS_DEFAULT_PROFILE="personal"
-export AWS_DEFAULT_REGION="eu-central-1"
+export AWS_DEFAULT_REGION="eu-central-1"    # we have to use us-east-1 to publish
 
 # TODO fix this
 export AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY}"
@@ -103,7 +97,7 @@ echo "=> Waiting for ssh connection"
 while true; do
     echo -n "."
 
-    if $SSH ubuntu@${server_ip} ls; then
+    if $SSH ubuntu@${server_ip} echo "hello"; then
         echo ""
         break
     fi
@@ -161,7 +155,7 @@ if [[ "${destroy_server}" == "yes" ]]; then
 
         echo -n "."
         sleep 5
-
+    done
 fi
 
 echo ""
