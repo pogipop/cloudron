@@ -726,4 +726,6 @@
 * Fix bug where heartbeat was sent for self-hosted Cloudrons
 * Make Cloudron function even when disk is full
 * Fix thunderbird connection issue
+* Send more detailed logs for backup failures
+* Restart nginx if it crashed automatically
 
