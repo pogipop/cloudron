@@ -9,9 +9,9 @@
                     <fieldset>
                         <p class="has-error text-center" ng-show="dnsCredentials.error">{{ dnsCredentials.error }}</p>
 
-                        <div class="form-group" ng-class="{ 'has-error': dnsCredentialsForm.customDomainId.$invalid }" uib-tooltip="{{ dnsConfig.provider === 'caas' ? '' : 'Currently domain change is not supported' }}">
+                        <div class="form-group" ng-class="{ 'has-error': dnsCredentialsForm.customDomainId.$invalid }" uib-tooltip="{{ config.provider === 'caas' ? '' : 'Currently domain change is not supported' }}">
                             <label class="control-label" for="customDomainId">Domain Name</label>
-                            <input type="text" class="form-control" ng-model="dnsCredentials.customDomain" id="customDomainId" name="customDomainId" ng-disabled="dnsCredentials.busy || dnsConfig.provider !== 'caas'" domain-validator placeholder="example.com" required autofocus>
+                            <input type="text" class="form-control" ng-model="dnsCredentials.customDomain" id="customDomainId" name="customDomainId" ng-disabled="dnsCredentials.busy || config.provider !== 'caas'" domain-validator placeholder="example.com" required autofocus>
                         </div>
 
                         <div class="form-group">
