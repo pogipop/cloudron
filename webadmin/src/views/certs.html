@@ -14,7 +14,7 @@
                             <input type="text" class="form-control" ng-model="dnsCredentials.customDomain" id="customDomainId" name="customDomainId" ng-disabled="dnsCredentials.busy || dnsConfig.provider !== 'caas'" ng-minlength="4" ng-maxlength="128" placeholder="example.com" required autofocus>
                         </div>
 
-                        <div class="form-group" ng-show="dnsConfig.provider !== 'caas'">
+                        <div class="form-group">
                             <label class="control-label" for="dnsCredentialsProvider">DNS API Provider</label>
                             <select class="form-control" id="dnsCredentialsProvider" ng-model="dnsCredentials.provider" ng-options="a.value as a.name for a in dnsProvider"></select>
                         </div>
