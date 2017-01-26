@@ -915,7 +915,7 @@ function migrate(options, callback) {
 
     if (!options.domain) return doMigrate(options, callback);
 
-    var dnsConfig = _.pick(options, 'domain', 'provider', 'accessKeyId', 'secretAccessKey', 'region', 'endpoint');
+    var dnsConfig = _.pick(options, 'domain', 'provider', 'accessKeyId', 'secretAccessKey', 'region', 'endpoint', 'token');
 
     settings.setDnsConfig(dnsConfig, options.domain, function (error) {
         if (error && error.reason === SettingsError.BAD_FIELD) return callback(new CloudronError(CloudronError.BAD_FIELD, error.message));
