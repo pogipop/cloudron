@@ -336,4 +336,4 @@ systemctl start cloudron.target
 
 sleep 2 # give systemd sometime to start the processes
 
-set_progress "100" "Done"
+set_progress "90" "Done"
