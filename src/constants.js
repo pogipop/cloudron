@@ -36,6 +36,8 @@ exports = module.exports = {
 
     DEMO_USERNAME: 'cloudron',
 
-    DKIM_SELECTOR: 'cloudron'
+    DKIM_SELECTOR: 'cloudron',
+
+    AUTOUPDATE_PATTERN_NEVER: 'never'
 };
 

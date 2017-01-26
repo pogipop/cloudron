@@ -203,7 +203,7 @@ function setAutoupdatePattern(pattern, callback) {
     assert.strictEqual(typeof pattern, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    if (pattern !== 'never') { // check if pattern is valid
+    if (pattern !== constants.AUTOUPDATE_PATTERN_NEVER) { // check if pattern is valid
         var job = safe.safeCall(function () { return new CronJob(pattern); });
         if (!job) return callback(new SettingsError(SettingsError.BAD_FIELD, 'Invalid pattern'));
     }

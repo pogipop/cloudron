@@ -11,6 +11,7 @@ var apps = require('./apps.js'),
     certificates = require('./certificates.js'),
     cloudron = require('./cloudron.js'),
     config = require('./config.js'),
+    constants = require('./constants.js'),
     CronJob = require('cron').CronJob,
     debug = require('debug')('box:cron'),
     eventlog = require('./eventlog.js'),
@@ -175,7 +176,7 @@ function autoupdatePatternChanged(pattern) {
 
     if (gAutoupdaterJob) gAutoupdaterJob.stop();
 
-    if (pattern === 'never') return;
+    if (pattern === constants.AUTOUPDATE_PATTERN_NEVER) return;
 
     gAutoupdaterJob = new CronJob({
         cronTime: pattern,
