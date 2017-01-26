@@ -129,9 +129,10 @@ mkdir -p "${DATA_DIR}/addons/mail"
 mkdir -p "${DATA_DIR}/collectd/collectd.conf.d"
 mkdir -p "${DATA_DIR}/acme"
 
+mkdir -p "${BOX_DATA_DIR}"
 if btrfs subvolume show "${DATA_DIR}/box" &> /dev/null; then
     # Migrate box data out of data volume
-    mv "${DATA_DIR}/box" "${BOX_DATA_DIR}"
+    mv "${DATA_DIR}/box/"* "${BOX_DATA_DIR}"
     btrfs subvolume delete "${DATA_DIR}/box"
 fi
 mkdir -p "${BOX_DATA_DIR}/appicons"
