@@ -414,6 +414,8 @@ function backup(auditSource, callback) {
 function ensureBackup(auditSource, callback) {
     assert.strictEqual(typeof auditSource, 'object');
 
+    debug('ensureBackup: %j', auditSource);
+
     getPaged(1, 1, function (error, backups) {
         if (error) {
             debug('Unable to list backups', error);
