@@ -7,6 +7,8 @@ User <%= user.username || user.alternateEmail || user.email %> <%= event %> in t
 
 Powered by https://cloudron.io
 
+Sent at: <%= new Date().toUTCString() %>
+
 <% } else { %>
 
 <% } %>
