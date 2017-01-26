@@ -20,7 +20,9 @@ app.controller('Controller', ['$scope', '$http', '$interval', function ($scope, 
             if (!data.update && !data.migrate) return $scope.loadWebadmin();
 
             if (data.update) {
-                if (data.update.percent === -1) {
+                if (data.update.percent >= 100) {
+                    return $scope.loadWebadmin();
+                } else if (data.update.percent === -1) {
                     $scope.title = 'Update Error';
                     $scope.error = true;
                     $scope.message = data.update.message;
