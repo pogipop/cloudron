@@ -9,6 +9,7 @@
 var appdb = require('../appdb.js'),
     async = require('async'),
     config = require('../config.js'),
+    constants = require('../constants.js'),
     database = require('../database.js'),
     deepExtend = require('deep-extend'),
     expect = require('expect.js'),
@@ -86,7 +87,8 @@ describe('updatechecker - checkBoxUpdates', function () {
         async.series([
             database.initialize,
             mailer._clearMailQueue,
-            user.createOwner.bind(null, USER_0.username, USER_0.password, USER_0.email, USER_0.displayName, AUDIT_SOURCE)
+            user.createOwner.bind(null, USER_0.username, USER_0.password, USER_0.email, USER_0.displayName, AUDIT_SOURCE),
+            settings.setAutoupdatePattern.bind(null, constants.AUTOUPDATE_PATTERN_NEVER)
         ], done);
     });
 
@@ -109,6 +111,7 @@ describe('updatechecker - checkBoxUpdates', function () {
         updatechecker.checkBoxUpdates(function (error) {
             expect(!error).to.be.ok();
             expect(updatechecker.getUpdateInfo().box).to.be(null);
+            expect(scope.isDone()).to.be.ok();
 
             checkMails(0, done);
         });
@@ -128,6 +131,7 @@ describe('updatechecker - checkBoxUpdates', function () {
         updatechecker.checkBoxUpdates(function (error) {
             expect(!error).to.be.ok();
             expect(updatechecker.getUpdateInfo().box.version).to.be('2.0.0');
+            expect(scope.isDone()).to.be.ok();
 
             checkMails(1, done);
         });
@@ -146,8 +150,9 @@ describe('updatechecker - checkBoxUpdates', function () {
         updatechecker.checkBoxUpdates(function (error) {
             expect(!error).to.be.ok();
             expect(updatechecker.getUpdateInfo().box.version).to.be('2.0.0');
+            expect(scope.isDone()).to.be.ok();
 
-            checkMails(0, done); // already notified for 2.0.0
+            checkMails(1, done); // already notified for 2.0.0
         });
     });
 
@@ -163,6 +168,8 @@ describe('updatechecker - checkBoxUpdates', function () {
         updatechecker.checkBoxUpdates(function (error) {
             expect(!error).to.be.ok();
             expect(updatechecker.getUpdateInfo().box).to.be(null);
+            expect(scope.isDone()).to.be.ok();
+
             checkMails(0, done);
         });
     });
@@ -182,6 +189,8 @@ describe('updatechecker - checkBoxUpdates', function () {
             updatechecker.checkBoxUpdates(function (error) {
                 expect(!error).to.be.ok();
                 expect(updatechecker.getUpdateInfo().box.version).to.be('2.0.0-pre0');
+                expect(scope.isDone()).to.be.ok();
+
                 checkMails(1, done);
             });
         });
@@ -198,6 +207,8 @@ describe('updatechecker - checkBoxUpdates', function () {
             updatechecker.checkBoxUpdates(function (error) {
                 expect(!error).to.be.ok();
                 expect(updatechecker.getUpdateInfo().box.version).to.be('1.0.1'); // got the update
+                expect(scope.isDone()).to.be.ok();
+
                 checkMails(0, done); // but no email sent since patch release
             });
     });
@@ -214,6 +225,8 @@ describe('updatechecker - checkBoxUpdates', function () {
         updatechecker.checkBoxUpdates(function (error) {
             expect(error).to.be.ok();
             expect(updatechecker.getUpdateInfo().box).to.be(null);
+            expect(scope.isDone()).to.be.ok();
+
             checkMails(0, done);
         });
     });
@@ -252,7 +265,8 @@ describe('updatechecker - checkAppUpdates', function () {
             database._clear,
             mailer._clearMailQueue,
             appdb.add.bind(null, APP_0.id, APP_0.appStoreId, APP_0.manifest, APP_0.location, APP_0.portBindings, APP_0),
-            user.createOwner.bind(null, USER_0.username, USER_0.password, USER_0.email, USER_0.displayName, AUDIT_SOURCE)
+            user.createOwner.bind(null, USER_0.username, USER_0.password, USER_0.email, USER_0.displayName, AUDIT_SOURCE),
+            settings.setAutoupdatePattern.bind(null, constants.AUTOUPDATE_PATTERN_NEVER)
         ], done);
     });
 
@@ -271,6 +285,8 @@ describe('updatechecker - checkAppUpdates', function () {
         updatechecker.checkAppUpdates(function (error) {
             expect(!error).to.be.ok();
             expect(updatechecker.getUpdateInfo().apps).to.eql({});
+            expect(scope.isDone()).to.be.ok();
+
             checkMails(0, done);
         });
     });
@@ -286,6 +302,8 @@ describe('updatechecker - checkAppUpdates', function () {
         updatechecker.checkAppUpdates(function (error) {
             expect(!error).to.be.ok();
             expect(updatechecker.getUpdateInfo().apps).to.eql({});
+            expect(scope.isDone()).to.be.ok();
+
             checkMails(0, done);
         });
     });
@@ -301,6 +319,8 @@ describe('updatechecker - checkAppUpdates', function () {
         updatechecker.checkAppUpdates(function (error) {
             expect(!error).to.be.ok();
             expect(updatechecker.getUpdateInfo().apps).to.eql({ 'appid-0': { manifest: { version: '2.0.0' } } });
+            expect(scope.isDone()).to.be.ok();
+
             checkMails(1, done);
         });
     });
@@ -316,6 +336,8 @@ describe('updatechecker - checkAppUpdates', function () {
         updatechecker.checkAppUpdates(function (error) {
             expect(!error).to.be.ok();
             expect(updatechecker.getUpdateInfo().apps).to.eql({ 'appid-0': { manifest: { version: '1.0.1' } } }); // got the update
+            expect(scope.isDone()).to.be.ok();
+
             checkMails(0, done); // but no email sent since patch release
         });
     });
