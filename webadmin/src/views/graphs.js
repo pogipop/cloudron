@@ -151,6 +151,22 @@ angular.module('Application').controller('GraphsController', ['$scope', '$locati
         });
     };
 
+    // poor man's async
+    function asyncForEach(items, handler, callback) {
+        var cur = 0;
+
+        if (items.length === 0) return callback();
+
+        (function iterator() {
+            handler(items[cur], function () {
+                if (cur >= items.length-1) return callback();
+                ++cur;
+
+                iterator();
+            });
+        })();
+    }
+
     $scope.updateMemoryAppsChart = function () {
         var targets = [];
         var targetsInfo = [];
@@ -164,10 +180,24 @@ angular.module('Application').controller('GraphsController', ['$scope', '$locati
             });
         });
 
-        Client.graphs(targets, '-1min', function (error, result) {
+        // we split up the request, to avoid too large query strings into graphite
+        var tmp = [];
+        var aggregatedResult= [];
+
+        while (targets.length > 0) tmp.push(targets.splice(0, 10));
+
+        asyncForEach(tmp, function (targets, callback) {
+            Client.graphs(targets, '-1min', function (error, result) {
+                if (error) return callback(error);
+
+                aggregatedResult = aggregatedResult.concat(result);
+
+                callback(null);
+            });
+        }, function (error) {
             if (error) return console.log(error);
 
-            $scope.memoryUsageApps = result.map(function (data, index) {
+            $scope.memoryUsageApps = aggregatedResult.map(function (data, index) {
                 return {
                     value: bytesToMegaBytes(data.datapoints[0][0]),
                     color: targetsInfo[index].color,
