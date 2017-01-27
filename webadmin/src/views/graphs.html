@@ -56,24 +56,31 @@
             <br/>
 
             <div class="row">
-                <div class="col-md-4 col-md-offset-2">
-                    <h4>Apps</h4>
+                <div class="col-md-6">
+                    <h3>Apps</h3>
+                </div>
+                <div class="col-md-6">
+                    <h3>System</h3>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-3">
                     <canvas id="memoryUsageAppsChart" width="200" height="200"></canvas>
-                    <p>
-                        <span ng-repeat="data in memoryUsageApps">
-                            <span style="color: {{data.color}};" class="memory-chart-label">{{ data.label }} {{ data.value }} MB</span>
-                            &nbsp;
-                        </span>
+                </div>
+                <div class="col-md-3 text-left">
+                    <p ng-repeat="data in memoryUsageApps">
+                        <span style="color: {{data.color}};" class="memory-chart-label">{{ data.label }} {{ data.value }} MB</span>
+                        &nbsp;
                     </p>
                 </div>
-                <div class="col-md-4">
-                    <h4>System</h4>
+                <div class="col-md-3">
                     <canvas id="memoryUsageSystemChart" width="200" height="200"></canvas>
-                    <p>
-                        <span ng-repeat="data in memoryUsageSystem">
-                            <span style="color: {{data.color}};" class="memory-chart-label">{{ data.label }} {{ data.value }} MB</span>
-                            &nbsp;
-                        </span>
+                </div>
+                <div class="col-md-3 text-left">
+                    <p ng-repeat="data in memoryUsageSystem">
+                        <span style="color: {{data.color}};" class="memory-chart-label">{{ data.label }} {{ data.value }} MB</span>
+                        &nbsp;
                     </p>
                 </div>
             </div>
