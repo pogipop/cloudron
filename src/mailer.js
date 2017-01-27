@@ -8,6 +8,7 @@ exports = module.exports = {
     userRemoved: userRemoved,
     adminChanged: adminChanged,
     passwordReset: passwordReset,
+    boxUpdateAvailable: boxUpdateAvailable,
     appUpdateAvailable: appUpdateAvailable,
 
     sendInvite: sendInvite,
@@ -399,6 +400,50 @@ function appDied(app) {
         };
 
         enqueue(mailOptions);
+    });
+}
+
+function boxUpdateAvailable(newBoxVersion, changelog) {
+    assert.strictEqual(typeof newBoxVersion, 'string');
+    assert(util.isArray(changelog));
+
+    getAdminEmails(function (error, adminEmails) {
+        if (error) return console.log('Error getting admins', error);
+
+        settings.getCloudronName(function (error, cloudronName) {
+            if (error) {
+                console.error(error);
+                cloudronName = 'Cloudron';
+            }
+
+            var converter = new showdown.Converter();
+
+            var templateData = {
+                fqdn: config.fqdn(),
+                webadminUrl: config.adminOrigin(),
+                newBoxVersion: newBoxVersion,
+                changelog: changelog,
+                changelogHTML: changelog.map(function (e) { return converter.makeHtml(e); }),
+                cloudronName: cloudronName,
+                cloudronAvatarUrl: config.adminOrigin() + '/api/v1/cloudron/avatar'
+            };
+
+            var templateDataText = JSON.parse(JSON.stringify(templateData));
+            templateDataText.format = 'text';
+
+            var templateDataHTML = JSON.parse(JSON.stringify(templateData));
+            templateDataHTML.format = 'html';
+
+             var mailOptions = {
+                from: mailConfig().from,
+                to: adminEmails.join(', '),
+                subject: util.format('%s has a new update available', config.fqdn()),
+                text: render('box_update_available.ejs', templateDataText),
+                html: render('box_update_available.ejs', templateDataHTML)
+            };
+
+            enqueue(mailOptions);
+        });
     });
 }
 
