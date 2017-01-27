@@ -80,7 +80,7 @@ function checkMails(number, done) {
     }, 500);
 }
 
-describe('updatechecker - checkBoxUpdates', function () {
+describe('updatechecker - box - manual', function () {
     before(function (done) {
         config.set('version', '1.0.0');
         config.set('boxVersionsUrl', 'http://localhost:4444/release.json');
@@ -92,11 +92,11 @@ describe('updatechecker - checkBoxUpdates', function () {
         ], done);
     });
 
-    function after(done) {
+    after(function (done) {
         mailer._clearMailQueue();
 
         database._clear(done);
-    }
+    });
 
     it('no updates', function (done) {
         nock.cleanAll();
@@ -232,7 +232,45 @@ describe('updatechecker - checkBoxUpdates', function () {
     });
 });
 
-describe('updatechecker - checkAppUpdates', function () {
+describe('updatechecker - box - automatic', function () {
+    before(function (done) {
+        config.set('version', '1.0.0');
+        config.set('boxVersionsUrl', 'http://localhost:4444/release.json');
+        async.series([
+            database.initialize,
+            mailer._clearMailQueue,
+            user.createOwner.bind(null, USER_0.username, USER_0.password, USER_0.email, USER_0.displayName, AUDIT_SOURCE)
+        ], done);
+    });
+
+    after(function (done) {
+        mailer._clearMailQueue();
+
+        database._clear(done);
+    });
+
+    it('new version', function (done) {
+        nock.cleanAll();
+
+        var releaseCopy = deepExtend({}, RELEASES);
+        delete releaseCopy['2.0.0-pre0'];
+        releaseCopy['1.0.0'].next = '2.0.0';
+
+        var scope = nock('http://localhost:4444')
+            .get('/release.json')
+            .reply(200, releaseCopy);
+
+        updatechecker.checkBoxUpdates(function (error) {
+            expect(!error).to.be.ok();
+            expect(updatechecker.getUpdateInfo().box.version).to.be('2.0.0');
+            expect(scope.isDone()).to.be.ok();
+
+            checkMails(0, done);
+        });
+    });
+});
+
+describe('updatechecker - app - manual', function () {
     var APP_0 = {
         id: 'appid-0',
         appStoreId: 'io.cloudron.app',
@@ -348,6 +386,65 @@ describe('updatechecker - checkAppUpdates', function () {
         updatechecker.checkAppUpdates(function (error) {
             expect(!error).to.be.ok();
             expect(updatechecker.getUpdateInfo().apps).to.eql({ });
+            checkMails(0, done);
+        });
+    });
+});
+
+describe('updatechecker - app - automatic', function () {
+    var APP_0 = {
+        id: 'appid-0',
+        appStoreId: 'io.cloudron.app',
+        installationState: appdb.ISTATE_PENDING_INSTALL,
+        installationProgress: null,
+        runState: null,
+        location: 'some-location-0',
+        manifest: {
+            version: '1.0.0', dockerImage: 'docker/app0', healthCheckPath: '/', httpPort: 80, title: 'app0',
+            tcpPorts: {
+                PORT: {
+                    description: 'this is a port that i expose',
+                    containerPort: '1234'
+                }
+            }
+        },
+        httpPort: null,
+        containerId: null,
+        portBindings: { PORT: 5678 },
+        healthy: null,
+        accessRestriction: null,
+        memoryLimit: 0
+    };
+
+    before(function (done) {
+        config.set('version', '1.0.0');
+        config.set('apiServerOrigin', 'http://localhost:4444');
+        async.series([
+            database.initialize,
+            database._clear,
+            mailer._clearMailQueue,
+            appdb.add.bind(null, APP_0.id, APP_0.appStoreId, APP_0.manifest, APP_0.location, APP_0.portBindings, APP_0),
+            user.createOwner.bind(null, USER_0.username, USER_0.password, USER_0.email, USER_0.displayName, AUDIT_SOURCE)
+        ], done);
+    });
+
+    after(function (done) {
+        database._clear(done);
+    });
+
+    it('offers new version', function (done) {
+        nock.cleanAll();
+
+        var scope = nock('http://localhost:4444')
+            .get('/api/v1/apps/io.cloudron.app/versions/1.0.0/update')
+            .query({ boxVersion: config.version() })
+            .reply(200, { update: { manifest: { version: '2.0.0' } } } );
+
+        updatechecker.checkAppUpdates(function (error) {
+            expect(!error).to.be.ok();
+            expect(updatechecker.getUpdateInfo().apps).to.eql({ 'appid-0': { manifest: { version: '2.0.0' } } });
+            expect(scope.isDone()).to.be.ok();
+
             checkMails(0, done);
         });
     });
