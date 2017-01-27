@@ -383,5 +383,50 @@
     </div>
 </div>
 
+<div class="section-header">
+    <div class="text-left">
+        <h3>Updates</h3>
+    </div>
+</div>
+
+<div class="card" style="margin-bottom: 15px;">
+    <div class="row">
+        <div class="col-md-12">
+            Configure the auto-update schedule for the platform and for the installed apps:<br/>
+            <br/>
+            <p class="text-danger text-center" ng-show="autoUpdate.error">{{ autoUpdate.error }}</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="radio">
+              <label>
+                <input type="radio" name="scheduleRadio" ng-model="autoUpdate.pattern" value="00 00 1,3,5,23 * * *">
+                Every night
+              </label>
+            </div>
+            <div class="radio">
+              <label>
+                <input type="radio" name="scheduleRadio" ng-model="autoUpdate.pattern" value="00 00 1,3,5,23 * * 6">
+                Saturday night
+              </label>
+            </div>
+            <div class="radio">
+              <label>
+                <input type="radio" name="scheduleRadio" ng-model="autoUpdate.pattern" value="never">
+                Never (Updates have to be triggered manually)
+              </label>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <button class="btn btn-outline btn-primary pull-right" ng-click="autoUpdate.submit()" ng-disabled="autoUpdate.busy || autoUpdate.pattern === autoUpdate.currentPattern"><i class="fa fa-circle-o-notch fa-spin" ng-show="autoUpdate.busy"></i> Save</button>
+        </div>
+    </div>
+</div>
+
 <!-- Offset the footer -->
 <br/><br/>

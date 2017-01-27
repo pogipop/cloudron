@@ -420,6 +420,27 @@ angular.module('Application').controller('SettingsController', ['$scope', '$loca
         }
     };
 
+    $scope.autoUpdate = {
+        busy: false,
+        error: '',
+        pattern: '',
+        currentPattern: '',
+
+        submit: function () {
+            if ($scope.autoUpdate.pattern === $scope.autoUpdate.currentPattern) return;
+
+            $scope.autoUpdate.error = '';
+            $scope.autoUpdate.busy = true;
+
+            Client.setAutoupdatePattern($scope.autoUpdate.pattern, function (error) {
+                if (error) $scope.autoUpdate.error = error.message;
+                else $scope.autoUpdate.currentPattern = $scope.autoUpdate.pattern;
+
+                $scope.autoUpdate.busy = false;
+            });
+        }
+    };
+
     function fetchBackups() {
         Client.getBackups(function (error, backups) {
             if (error) return console.error(error);
@@ -457,6 +478,15 @@ angular.module('Application').controller('SettingsController', ['$scope', '$loca
             if (error) return console.error(error);
 
             $scope.dnsConfig = dnsConfig;
+        });
+    }
+
+    function getAutoupdatePattern() {
+        Client.getAutoupdatePattern(function (error, result) {
+            if (error) return console.error(error);
+
+            $scope.autoUpdate.currentPattern = result.pattern;
+            $scope.autoUpdate.pattern = result.pattern;
         });
     }
 
@@ -573,6 +603,7 @@ angular.module('Application').controller('SettingsController', ['$scope', '$loca
         getMailConfig();
         getBackupConfig();
         getDnsConfig();
+        getAutoupdatePattern();
 
         if ($scope.config.provider === 'caas') {
             getPlans();
