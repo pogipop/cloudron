@@ -44,13 +44,6 @@ Applications can be broadly categorized based on their user management as follow
 
 * No user
   * Such apps have no concept of logged-in user.
-  * The Cloudron provides a `website visibility` setting that allows a Cloudron admin to optionally
-    install an OAuth proxy in front of such applications. In such a case, a user visiting the website first
-    authenticates with the OAuth proxy and once authenticated is allowed into the application.
-  * When an OAuth proxy is installed, such applications can use the `X-Authenticated-User` header from the
-    [ICAP Extensions](https://tools.ietf.org/html/draft-stecher-icap-subid-00#section-3.4) de facto standard.
-    This value can be used for display purposes or creating meta data for a document.
-
 
 * Single user
   * Such apps only have a single user who is usually also the `admin`.
