@@ -12,6 +12,7 @@ exports = module.exports = {
 var apps = require('./apps.js'),
     async = require('async'),
     config = require('./config.js'),
+    constants = require('./constants.js'),
     debug = require('debug')('box:updatechecker'),
     mailer = require('./mailer.js'),
     paths = require('./paths.js'),
@@ -162,8 +163,15 @@ function checkAppUpdates(callback) {
                 } else if (semver.satisfies(newState[app.id], '~' + app.manifest.version)) {
                     debug('Skipping notification of app update as this is a patch release');
                 } else {
-                    debug('Notifying user of app update for %s from %s to %s', app.id, app.manifest.version, updateInfo.manifest.version);
-                    mailer.appUpdateAvailable(app, updateInfo);
+                    // only send notifications if update pattern is 'never'
+                    settings.getAutoupdatePattern(function (error, result) {
+                        if (error) return console.error(error);
+                        if (result !== constants.AUTOUPDATE_PATTERN_NEVER) return;
+
+                        debug('Notifying user of app update for %s from %s to %s', app.id, app.manifest.version, updateInfo.manifest.version);
+
+                        mailer.appUpdateAvailable(app, updateInfo);
+                    });
                 }
 
                 iteratorDone();
@@ -209,7 +217,13 @@ function checkBoxUpdates(callback) {
             if (semver.satisfies(gBoxUpdateInfo.version, '~' + config.version())) {
                 debug('Skipping notification of box update as this is a patch release');
             } else {
-                mailer.boxUpdateAvailable(updateInfo.version, updateInfo.changelog);
+                // only send notifications if update pattern is 'never'
+                settings.getAutoupdatePattern(function (error, result) {
+                    if (error) return console.error(error);
+                    if (result !== constants.AUTOUPDATE_PATTERN_NEVER) return;
+
+                    mailer.boxUpdateAvailable(updateInfo.version, updateInfo.changelog);
+                });
             }
 
             state.box = updateInfo.version;
