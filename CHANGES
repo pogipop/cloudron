@@ -729,4 +729,5 @@
 * Send more detailed logs for backup failures
 * Restart nginx if it crashed automatically
 * Support all DNS providers for managed Cloudrons
+* Add granular configuration for auto-updates
 
