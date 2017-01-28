@@ -422,6 +422,7 @@ angular.module('Application').controller('SettingsController', ['$scope', '$loca
 
     $scope.autoUpdate = {
         busy: false,
+        success: false,
         error: '',
         pattern: '',
         currentPattern: '',
@@ -431,12 +432,14 @@ angular.module('Application').controller('SettingsController', ['$scope', '$loca
 
             $scope.autoUpdate.error = '';
             $scope.autoUpdate.busy = true;
+            $scope.autoUpdate.success = false;
 
             Client.setAutoupdatePattern($scope.autoUpdate.pattern, function (error) {
                 if (error) $scope.autoUpdate.error = error.message;
                 else $scope.autoUpdate.currentPattern = $scope.autoUpdate.pattern;
 
                 $scope.autoUpdate.busy = false;
+                $scope.autoUpdate.success = true;
             });
         }
     };

@@ -394,7 +394,7 @@
         <div class="col-md-12">
             Configure the auto-update schedule for the platform and for the installed apps:<br/>
             <br/>
-            <p class="text-danger text-center" ng-show="autoUpdate.error">{{ autoUpdate.error }}</p>
+            <p class="text-danger text-center text-bold" ng-show="autoUpdate.error">{{ autoUpdate.error }}</p>
         </div>
     </div>
 
@@ -423,7 +423,8 @@
 
     <div class="row">
         <div class="col-md-12">
-            <button class="btn btn-outline btn-primary pull-right" ng-click="autoUpdate.submit()" ng-disabled="autoUpdate.busy || autoUpdate.pattern === autoUpdate.currentPattern"><i class="fa fa-circle-o-notch fa-spin" ng-show="autoUpdate.busy"></i> Save</button>
+            <p class="text-success pull-right text-bold" ng-show="autoUpdate.success && autoUpdate.pattern === autoUpdate.currentPattern">Saved</p>
+            <button class="btn btn-outline btn-primary pull-right" ng-hide="autoUpdate.success && autoUpdate.pattern === autoUpdate.currentPattern" ng-click="autoUpdate.submit()" ng-disabled="autoUpdate.busy || autoUpdate.pattern === autoUpdate.currentPattern"><i class="fa fa-circle-o-notch fa-spin" ng-show="autoUpdate.busy"></i> Save</button>
         </div>
     </div>
 </div>
