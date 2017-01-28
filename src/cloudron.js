@@ -222,28 +222,22 @@ function configurePlainIP(callback) {
 
     if (process.env.BOX_ENV === 'test' || config.fqdn()) return callback();
 
-    sysinfo.getIp(function (error, ip) {
+    var certFilePath = path.join(paths.NGINX_CERT_DIR, IP_BASED_SETUP_NAME + '.cert');
+    var keyFilePath = path.join(paths.NGINX_CERT_DIR, IP_BASED_SETUP_NAME + '.key');
+
+    if (!fs.existsSync(certFilePath) || !fs.existsSync(keyFilePath)) {
+        debug('configurePlainIP: create new cert');
+
+        var certCommand = util.format('openssl req -x509 -newkey rsa:2048 -keyout %s -out %s -days 3650 -subj /CN=%s -nodes', keyFilePath, certFilePath, 'localhost');
+        safe.child_process.execSync(certCommand);
+    }
+
+    nginx.configureAdmin(certFilePath, keyFilePath, IP_BASED_SETUP_NAME + '.conf', '', function (error) {
         if (error) return callback(error);
 
-        var certFilePath = path.join(paths.NGINX_CERT_DIR, IP_BASED_SETUP_NAME + '-' + ip + '.cert');
-        var keyFilePath = path.join(paths.NGINX_CERT_DIR, IP_BASED_SETUP_NAME + '-' + ip + '.key');
+        debug('configurePlainIP: done');
 
-        // check if we already have a cert for this IP, otherwise create one, this is mostly useful for servers with changing IPs
-        if (!fs.existsSync(certFilePath) || !fs.existsSync(keyFilePath)) {
-            debug('configurePlainIP: create new cert for %s', ip);
-
-            var certCommand = util.format('openssl req -x509 -newkey rsa:2048 -keyout %s -out %s -days 3650 -subj /CN=%s -nodes', keyFilePath, certFilePath, ip);
-            safe.child_process.execSync(certCommand);
-        }
-
-        // always create a configuration for the ip
-        nginx.configureAdmin(certFilePath, keyFilePath, IP_BASED_SETUP_NAME + '.conf', '', function (error) {
-            if (error) return callback(error);
-
-            debug('configurePlainIP: done');
-
-            callback(null);
-        });
+        callback(null);
     });
 }
 
