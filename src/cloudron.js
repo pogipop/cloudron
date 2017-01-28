@@ -218,9 +218,9 @@ function dnsSetup(dnsConfig, domain, callback) {
 function configurePlainIP(callback) {
     callback = callback || NOOP_CALLBACK;
 
-    if (process.env.BOX_ENV === 'test') return callback();
+    debug('configurePlainIP: domain %s', config.fqdn());
 
-    debug('configurePlainIP');
+    if (process.env.BOX_ENV === 'test' || config.fqdn()) return callback();
 
     sysinfo.getIp(function (error, ip) {
         if (error) return callback(error);
