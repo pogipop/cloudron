@@ -14,7 +14,8 @@ exports = module.exports = {
     configureAdmin: configureAdmin,
     configureApp: configureApp,
     unconfigureApp: unconfigureApp,
-    reload: reload
+    reload: reload,
+    removeAppConfigs: removeAppConfigs
 };
 
 var NGINX_APPCONFIG_EJS = fs.readFileSync(__dirname + '/../setup/start/nginx/appconfig.ejs', { encoding: 'utf8' }),
@@ -94,4 +95,10 @@ function unconfigureApp(app, callback) {
 
 function reload(callback) {
     shell.sudo('reload', [ RELOAD_NGINX_CMD ], callback);
+}
+
+function removeAppConfigs() {
+    for (var appConfigFile of fs.readdirSync(paths.NGINX_APPCONFIG_DIR)) {
+        fs.unlinkSync(path.join(paths.NGINX_APPCONFIG_DIR, appConfigFile));
+    }
 }

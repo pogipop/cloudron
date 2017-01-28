@@ -18,6 +18,7 @@ var apps = require('./apps.js'),
     fs = require('fs'),
     hat = require('hat'),
     infra = require('./infra_version.js'),
+    nginx = require('./nginx.js'),
     os = require('os'),
     paths = require('./paths.js'),
     safe = require('safetydance'),
@@ -323,6 +324,7 @@ function startApps(existingInfra, callback) {
         apps.restoreInstalledApps(callback);
     } else {
         debug('startApps: reconfiguring installed apps');
+        nginx.removeAppConfigs(); // should we change the cert location, nginx will not start
         apps.configureInstalledApps(callback);
     }
 }
