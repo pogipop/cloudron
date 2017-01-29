@@ -15,13 +15,11 @@ angular.module('Application').controller('UsersController', ['$scope', '$locatio
         busy: false,
         error: {},
         userInfo: {},
-        username: '',
         password: '',
 
         show: function (userInfo) {
             $scope.userremove.error.username = null;
             $scope.userremove.error.password = null;
-            $scope.userremove.username = '';
             $scope.userremove.password = '';
             $scope.userremove.userInfo = userInfo;
 
@@ -32,17 +30,7 @@ angular.module('Application').controller('UsersController', ['$scope', '$locatio
         },
 
         submit: function () {
-            $scope.userremove.error.username = null;
             $scope.userremove.error.password = null;
-
-            if ($scope.userremove.username !== $scope.userremove.userInfo.username && $scope.userremove.username !== $scope.userremove.userInfo.email && $scope.userremove.username !== $scope.userremove.userInfo.alternateEmail) {
-                $scope.userremove.error.username = true;
-                $scope.userremove.username = '';
-                $scope.userremove_form.username.$setPristine();
-                $('#inputUserRemoveUsername').focus();
-                return;
-            }
-
             $scope.userremove.busy = true;
 
             Client.removeUser($scope.userremove.userInfo.id, $scope.userremove.password, function (error) {
@@ -58,7 +46,6 @@ angular.module('Application').controller('UsersController', ['$scope', '$locatio
                 if (error) return console.error('Unable to delete user.', error);
 
                 $scope.userremove.userInfo = {};
-                $scope.userremove.username = '';
                 $scope.userremove.password = '';
 
                 $scope.userremove_form.$setPristine();

@@ -19,26 +19,26 @@
                     </div>
 
                     <div class="form-group" ng-class="{ 'has-error': (useradd_form.username.$dirty && useradd_form.username.$invalid) || (!useradd_form.username.$dirty && useradd.error.username) }">
-                        <label class="control-label">Username (optional)</label>
+                        <label class="control-label">Username</label>
                         <div class="control-label" ng-show="(!useradd_form.username.$dirty && useradd.error.username) || (useradd_form.username.$dirty && useradd_form.username.$invalid) || (!useradd_form.username.$dirty && useradd.error.username)">
                             <small ng-show="useradd_form.username.$error.username">This is not a valid username</small>
                             <small ng-show="!useradd_form.username.$dirty && useradd.error.username">{{ useradd.error.username }}</small>
                         </div>
-                        <input type="text" class="form-control" ng-model="useradd.username" name="username" id="inputUserAddUsername" placeholder="If empty, user can choose on sign up">
+                        <input type="text" class="form-control" ng-model="useradd.username" name="username" id="inputUserAddUsername" placeholder="Leave this empty to let the user choose on sign up">
                     </div>
 
                     <div class="form-group" ng-class="{ 'has-error': (useradd_form.displayName.$dirty && useradd_form.displayName.$invalid) || (!useradd_form.displayName.$dirty && useradd.error.displayName) }">
-                        <label class="control-label">Display Name (optional)</label>
+                        <label class="control-label">Display Name</label>
                         <div class="control-label" ng-show="(!useradd_form.displayName.$dirty && useradd.error.displayName) || (useradd_form.displayName.$dirty && useradd_form.displayName.$invalid) || (!useradd_form.displayName.$dirty && useradd.error.displayName)">
                             <small ng-show="useradd_form.displayName.$error.displayName">This is not a valid displayName</small>
                             <small ng-show="!useradd_form.displayName.$dirty && useradd.error.displayName">{{ useradd.error.displayName }}</small>
                         </div>
-                        <input type="text" class="form-control" ng-model="useradd.displayName" name="displayName" id="inputUserAddDisplayName" placeholder="If empty, user can choose on sign up">
+                        <input type="text" class="form-control" ng-model="useradd.displayName" name="displayName" id="inputUserAddDisplayName" placeholder="Leave this empty to let the user choose on sign up">
                     </div>
 
                     <div class="checkbox">
                         <label>
-                            <input type="checkbox" ng-model="useradd.sendInvite" id="inputUserAddSendInvite"> Send invite
+                            <input type="checkbox" ng-model="useradd.sendInvite" id="inputUserAddSendInvite"> Send an invitation email now
                         </label>
                     </div>
                     <input class="ng-hide" type="submit" ng-disabled="useradd_form.$invalid || useradd.busy"/>
@@ -62,21 +62,13 @@
             <div class="modal-body">
                 <form name="userremove_form" role="form" ng-submit="userremove.submit()" autocomplete="off">
                     <input type="password" style="display: none;">
-                    <div class="form-group" ng-class="{ 'has-error': (userremove_form.username.$dirty && userremove_form.username.$invalid) || (!userremove_form.username.$dirty && userremove.error.username) }">
-                        <label class="control-label">Please type the username or email of the user who should be deleted</label>
-                        <div class="control-label" ng-show="(!userremove_form.username.$dirty && userremove.error.username) || (userremove_form.username.$dirty && userremove_form.username.$invalid)">
-                            <small ng-show="userremove_form.username.$dirty && userremove_form.username.$error.required">A username or email is required</small>
-                            <small ng-show="!userremove_form.username.$dirty && userremove.error.username">Username or email does not match</small>
-                        </div>
-                        <input type="text" class="form-control" ng-model="userremove.username" id="inputUserRemoveUsername" name="username" placeholder="Username or Email" required autofocus>
-                    </div>
                     <div class="form-group" ng-class="{ 'has-error': (userremove_form.password.$dirty && userremove_form.password.$invalid) || (!userremove_form.password.$dirty && userremove.error.password)}">
-                        <label class="control-label">Give your password to verify that you are performing that action</label>
+                        <label class="control-label">Give your password to verify this action</label>
+                        <input type="password" class="form-control" ng-model="userremove.password" id="inputUserRemovePassword" name="password" placeholder="Your Password" required autofocus>
                         <div class="control-label" ng-show="(!userremove_form.password.$dirty && userremove.error.password) || (userremove_form.password.$dirty && userremove_form.password.$invalid)">
                             <small ng-show="userremove_form.password.$error.required && !userremove.error.password">A password is required</small>
                             <small ng-show="!useradd_form.email.$dirty && userremove.error.password">{{ userremove.error.password }}</small>
                         </div>
-                        <input type="password" class="form-control" ng-model="userremove.password" id="inputUserRemovePassword" name="password" placeholder="Your Password" required>
                     </div>
                     <input class="hide" type="submit" ng-disabled="userremove_form.$invalid || userremove.busy"/>
                 </form>
@@ -104,7 +96,7 @@
                         <input type="email" class="form-control" placeholder="Will be assigned when user signs up" ng-model="useredit.userInfo.email" disabled>
                     </div>
                     <div class="form-group" ng-class="{ 'has-error': (useredit_form.email.$dirty && useredit_form.email.$invalid) || (!useredit_form.email.$dirty && useredit.error.email) }">
-                        <label class="control-label" ng-show="mailConfig.enabled" uib-tooltip="Email used for password recovery">Alternate Email</label>
+                        <label class="control-label" ng-show="mailConfig.enabled">Password recovery email</label>
                         <label class="control-label" ng-hide="mailConfig.enabled">Email</label>
                         <div class="control-label" ng-show="(!useredit_form.email.$dirty && useredit.error.email) || (useredit_form.email.$dirty && useredit_form.email.$invalid) || (!useredit_form.email.$dirty && useredit.error.email)">
                             <small ng-show="useredit_form.email.$error.required">An email is required</small>
@@ -140,7 +132,7 @@
                     <div class="form-group" ng-hide="isMe(useredit.userInfo)">
                         <div class="checkbox">
                             <label>
-                                <input type="checkbox" ng-model="useredit.superuser"> Allow this user to manage apps, groups and other users
+                                <input type="checkbox" ng-model="useredit.superuser"> Make this user a Cloudron admin
                             </label>
                         </div>
                     </div>
@@ -202,7 +194,7 @@
                 <form name="groupRemoveForm" role="form" novalidate ng-submit="groupRemove.submit()" autocomplete="off">
                     <input type="password" style="display: none;">
                     <div class="form-group" ng-class="{ 'has-error': (groupRemoveForm.password.$dirty && groupRemoveForm.password.$invalid) || (!groupRemoveForm.password.$dirty && groupRemove.error.password)}">
-                        <label class="control-label" for="groupRemovePasswordInput">Give your password to verify that you are performing that action</label>
+                        <label class="control-label" for="groupRemovePasswordInput">Give your password to verify this action</label>
                         <div class="control-label" ng-show="(!groupRemoveForm.password.$dirty && groupRemove.error.password) || (groupRemoveForm.password.$dirty && groupRemoveForm.password.$invalid)">
                             <small ng-show="groupRemoveForm.password.$error.required && !groupRemove.error.password">A password is required</small>
                             <small ng-show="!groupRemoveForm.password.$dirty && groupRemove.error.password">{{ groupRemove.error.password }}</small>
@@ -244,10 +236,11 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
+                <h4 class="modal-title">About Users</h4>
             </div>
             <div class="modal-body">
                 <p>Each user has a mailbox at <b><i>username</i>@{{ config.fqdn }}</b>.</p>
-                <p>Please refer to the <a href="https://cloudron.io/references/usermanual.html#email" target="_blank">user documentation</a> how to use Cloudron email accounts.</p>
+                <p>Please refer to the <a href="https://cloudron.io/references/usermanual.html#email" target="_blank">user documentation</a> onhow to use Cloudron email accounts.</p>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-default" data-dismiss="modal">OK</button>
@@ -261,10 +254,10 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
+                <h4 class="modal-title">About Groups</h4>
             </div>
             <div class="modal-body">
-                <p>Add users to groups and assign one or more groups to an app to control access to the app.</p>
-                <p>Each group additionally serves as an email list at <b><i>groupname</i>@{{ config.fqdn }}</b>. Any email sent to this address will be forwarded to all group members.</p>
+                <p>Each group serves as an email list at <b><i>groupname</i>@{{ config.fqdn }}</b>. Any email sent to this address will be forwarded to each group member.</p>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-default" data-dismiss="modal">OK</button>
@@ -306,7 +299,7 @@
                         <tbody>
                             <tr ng-repeat="user in users">
                                 <td>
-                                    <i class="fa fa-briefcase arrow" ng-show="user.admin" uib-tooltip="This user can manage apps, groups and other users"></i>
+                                    <i class="fa fa-briefcase arrow" ng-show="user.admin" uib-tooltip="This user is an admin and can manage apps, groups and other users"></i>
                                 </td>
                                 <td class="hand elide-table-cell" ng-click="useredit.show(user)" ng-show="user.username">
                                     {{ user.username }} &nbsp; <span class="text-muted" ng-hide="mailConfig.enabled">{{ user.email }}</span>
@@ -322,7 +315,7 @@
 
                                 </td>
                                 <td class="text-right no-wrap" style="vertical-align: bottom">
-                                    <button ng-show="!isMe(user)" class="btn btn-xs btn-default" ng-click="sendInvite(user)" title="Send Invite"><i class="fa fa-paper-plane-o"></i></button>
+                                    <button ng-show="!isMe(user)" class="btn btn-xs btn-default" ng-click="sendInvite(user)" title="Send invitation email"><i class="fa fa-paper-plane-o"></i></button>
                                     <button class="btn btn-xs btn-default" ng-click="useredit.show(user)" title="Edit User Profile"><i class="fa fa-pencil"></i></button>
                                     <button ng-show="!isMe(user)" class="btn btn-xs btn-danger" ng-click="userremove.show(user)" title="Remove User"><i class="fa fa-trash-o"></i></button>
                                 </td>
@@ -353,6 +346,9 @@
             </div>
             <div class="row animateMeOpacity ng-hide" ng-show="ready">
                 <div class="col-lg-12">
+                    Groups can be used to control access to an app.
+                    <br/>
+                    <br/>
                     <table class="table table-hover">
                         <thead>
                             <tr>
