@@ -34,6 +34,10 @@
         app.controller('Controller', ['$scope', '$http', function ($scope, $http) {
             $scope.errorMessage = '';
             $scope.statusOk = false;
+            $scope.avatarUrl = '/api/v1/cloudron/avatar?' + Math.random();
+
+            var favicon = $('#favicon');
+            if (favicon) favicon.attr('href', $scope.avatarUrl);
 
             // try to fetch the cloudron status
             $http.get('/api/v1/cloudron/status').success(function(data, status) {
@@ -58,7 +62,7 @@
 
 <div class="wrapper">
     <div class="content">
-        <img src="/api/v1/cloudron/avatar" onerror="this.src = '/img/logo_inverted_192.png'"/>
+        <img ng-src="avatarUrl" onerror="this.src = '/img/logo_inverted_192.png'"/>
         <h1> Cloudron </h1>
 
         <div ng-show="errorCode == 0">

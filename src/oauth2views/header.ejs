@@ -6,7 +6,7 @@
 
     <title> <%= title %> </title>
 
-    <link href="/api/v1/cloudron/avatar" rel="icon" type="image/png">
+    <link href="/api/v1/cloudron/avatar?<%= Math.random() %>" rel="icon" type="image/png">
 
     <!-- Theme CSS -->
     <link href="<%= adminOrigin %>/theme.css" rel="stylesheet">
@@ -32,7 +32,7 @@
     <nav class="navbar navbar-default navbar-static-top shadow" role="navigation" style="margin-bottom: 0">
         <div class="container-fluid">
             <div class="navbar-header">
-                <span class="navbar-brand navbar-brand-icon"><img src="/api/v1/cloudron/avatar" width="40" height="40"/></span>
+                <span class="navbar-brand navbar-brand-icon"><img src="/api/v1/cloudron/avatar?<%= Math.random() %>" width="40" height="40"/></span>
                 <span class="navbar-brand"><%= cloudronName %></span>
             </div>
         </div>
