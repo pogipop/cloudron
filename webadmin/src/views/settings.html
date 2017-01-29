@@ -158,7 +158,7 @@
 
                         <div class="form-group" ng-class="{ 'has-error': configureBackup.error.prefix }">
                             <label class="control-label" for="inputConfigureBackupPrefix">Prefix</label>
-                            <input type="text" class="form-control" ng-model="configureBackup.prefix" id="inputConfigureBackupPrefix" name="prefix" ng-disabled="configureBackup.busy" placeholder="Prefix for all backup file names" required>
+                            <input type="text" class="form-control" ng-model="configureBackup.prefix" id="inputConfigureBackupPrefix" name="prefix" ng-disabled="configureBackup.busy" placeholder="Prefix for backup file names" required>
                         </div>
 
                         <div class="form-group" ng-class="{ 'has-error': configureBackup.error.region }">
@@ -183,7 +183,7 @@
 
                         <div class="form-group" ng-class="{ 'has-error': configureBackup.error.key }">
                             <label class="control-label" for="inputConfigureBackupKey">Encryption key (optional)</label>
-                            <input type="text" class="form-control" ng-model="configureBackup.key" id="inputConfigureBackupKey" name="prefix" ng-disabled="configureBackup.busy" placeholder="Encryption key for all backups">
+                            <input type="text" class="form-control" ng-model="configureBackup.key" id="inputConfigureBackupKey" name="prefix" ng-disabled="configureBackup.busy" placeholder="Encryption key for backups">
                         </div>
 
                         <input class="ng-hide" type="submit" ng-disabled="configureBackupForm.$invalid"/>
@@ -293,7 +293,7 @@
             The <a href="https://cloudron.io/references/usermanual.html#email" target="_blank">User manual</a> has information on how to setup email clients.
             <br/>
             <br/>
-            Apps can send email regardless of this setting. If this option is enabled, apps are able to receive emails.
+            Apps can send email regardless of this setting. Enable this option to allow apps to receive emails.
         </div>
     </div>
     <br/>
@@ -371,7 +371,7 @@
         <br/>
         <div class="col-md-12">
             <div ng-show="createBackup.busy" class="progress progress-striped active animateMe">
-                <div class="progress-bar progress-bar-success" role="progressbar" style="width: {{ createBackup.percent }}%">{{ createBackup.percent }}%</div>
+                <div class="progress-bar progress-bar-success" role="progressbar" style="width: {{ createBackup.percent }}%"></div>
             </div>
             <br/>
         </div>
@@ -397,7 +397,7 @@
 <div class="card" style="margin-bottom: 15px;">
     <div class="row">
         <div class="col-md-12">
-            <p>Configure the auto-update schedule for the platform and the apps:</p>
+            <p>Configure the update schedule for the platform and the apps</p>
             <p class="text-danger" ng-show="autoUpdate.error"><br/>{{ autoUpdate.error }}</p>
         </div>
     </div>
@@ -419,7 +419,7 @@
             <div class="radio">
               <label>
                 <input type="radio" name="scheduleRadio" ng-model="autoUpdate.pattern" value="never">
-                Never (Updates have to be triggered manually)
+                Update manually
               </label>
             </div>
         </div>
