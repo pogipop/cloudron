@@ -561,6 +561,8 @@ angular.module('Application').controller('AppStoreController', ['$scope', '$loca
             fetchAppstoreConfig(function (error) {
                 if (error) console.error(error);
                 $scope.ready = true;
+
+                setTimeout(function () { $('#appstoreSearch').focus(); }, 1000);
             });
         });
     }
