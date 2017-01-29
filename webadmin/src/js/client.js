@@ -114,7 +114,6 @@ angular.module('Application').service('Client', ['$http', 'md5', 'Notification',
             isDev: false,
             progress: {},
             isCustomDomain: false,
-            developerMode: false,
             region: null,
             size: null,
             memory: 0
@@ -257,20 +256,6 @@ angular.module('Application').service('Client', ['$http', 'md5', 'Notification',
         get('/api/v1/profile').success(function(data, status) {
             if (status !== 200 || typeof data !== 'object') return callback(new ClientError(status, data));
             callback(null, data);
-        }).error(defaultErrorHandler(callback));
-    };
-
-    Client.prototype.changeDeveloperMode = function (enabled, password, callback) {
-        var that = this;
-
-        var data = { password: password, enabled: enabled };
-        post('/api/v1/developer', data).success(function (data, status) {
-            if (status !== 200) return callback(new ClientError(status, data));
-
-            // will get overriden after polling for config, but ensures quick UI update
-            that._config.developerMode = enabled;
-
-            callback(null);
         }).error(defaultErrorHandler(callback));
     };
 
@@ -586,8 +571,6 @@ angular.module('Application').service('Client', ['$http', 'md5', 'Notification',
     };
 
     Client.prototype.getNonApprovedApps = function (callback) {
-        if (!this._config.developerMode) return callback(null, []);
-
         get('/api/v1/developer/apps').success(function (data, status) {
             if (status !== 200 || typeof data !== 'object') return callback(new ClientError(status, data));
             callback(null, data.apps || []);
