@@ -197,11 +197,11 @@
 <div ng-show="ready && !validAppstoreAccount" class="card card-small appstore-login ng-cloak">
     <div class="row">
         <div class="col-md-12">
-            <h1 ng-show="appstoreLogin.register">App Store Signup</h1>
-            <h1 ng-hide="appstoreLogin.register">App Store Login</h1>
+            <h1 ng-show="appstoreLogin.register">Sign up with Cloudron App Store</h1>
+            <h1 ng-hide="appstoreLogin.register">Login to Cloudron App Store</h1>
         </div>
         <div class="col-md-12">
-            <p>For using the Cloudron App Store, you have to login with your <a href="{{ config.webServerOrigin }}" target="_blank">cloudron.io</a> account.</p>
+            <p>An App Store account gives you access to apps and updates.</p>
             <br/>
             <small class="text-danger" ng-show="appstoreLogin.error.generic">{{ appstoreLogin.error.generic }}</small>
         </div>
