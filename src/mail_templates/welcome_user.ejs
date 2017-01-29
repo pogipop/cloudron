@@ -4,7 +4,7 @@ Dear <%= user.displayName || user.username || user.alternateEmail || user.email 
 
 Welcome to <%= cloudronName %>!
 
-To get started, activate your account:
+Follow the link to get started.
 <%= setupLink %>
 
 <% if (invitor && invitor.email) { %>
@@ -25,20 +25,20 @@ Powered by https://cloudron.io
 <h2>Welcome to <%= cloudronName %>!</h2>
 
 <p>
-    To get started, <a href="<%= setupLink %>">activate your account</a>.
+    <a href="<%= setupLink %>">Get started</a>.
 </p>
 
 <br/>
 <br/>
 
 <div style="font-size: 10px; color: #333333; background: #ffffff;">
-    Powered by <a href="https://cloudron.io">Cloudron</a>.
-
-    <br/>
-
     <% if (invitor && invitor.email) { %>
         You are receiving this email because you were invited by <%= invitor.email %>.
     <% } %>
+
+    <br/>
+
+    Powered by <a href="https://cloudron.io">Cloudron</a>
 </div>
 
 </center>
