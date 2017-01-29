@@ -46,7 +46,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-success" ng-click="useradd.submit()" ng-disabled="useradd_form.$invalid || useradd.busy"><i class="fa fa-spinner fa-pulse" ng-show="useradd.busy"></i> Add User</button>
+                <button type="button" class="btn btn-success" ng-click="useradd.submit()" ng-disabled="useradd_form.$invalid || useradd.busy"><i class="fa fa-circle-o-notch fa-spin" ng-show="useradd.busy"></i> Add User</button>
             </div>
         </div>
     </div>
@@ -75,7 +75,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-danger" ng-click="userremove.submit()" ng-disabled="userremove_form.$invalid || userremove.busy"><i class="fa fa-spinner fa-pulse" ng-show="userremove.busy"></i> Delete</button>
+                <button type="button" class="btn btn-danger" ng-click="userremove.submit()" ng-disabled="userremove_form.$invalid || userremove.busy"><i class="fa fa-circle-o-notch fa-spin" ng-show="userremove.busy"></i> Delete</button>
             </div>
         </div>
     </div>
@@ -141,7 +141,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-success" ng-click="useredit.submit()" ng-disabled="useredit_form.$invalid || useredit.busy"><i class="fa fa-spinner fa-pulse" ng-show="useredit.busy"></i> Save</button>
+                <button type="button" class="btn btn-success" ng-click="useredit.submit()" ng-disabled="useredit_form.$invalid || useredit.busy"><i class="fa fa-circle-o-notch fa-spin" ng-show="useredit.busy"></i> Save</button>
             </div>
         </div>
     </div>
@@ -171,7 +171,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-success" ng-click="groupAdd.submit()" ng-disabled="groupAddForm.$invalid || groupAdd.busy"><i class="fa fa-spinner fa-pulse" ng-show="groupAdd.busy"></i> Add Group</button>
+                <button type="button" class="btn btn-success" ng-click="groupAdd.submit()" ng-disabled="groupAddForm.$invalid || groupAdd.busy"><i class="fa fa-circle-o-notch fa-spin" ng-show="groupAdd.busy"></i> Add Group</button>
             </div>
         </div>
     </div>
@@ -206,7 +206,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-danger" ng-click="groupRemove.submit()" ng-disabled="groupRemoveForm.$invalid || groupRemove.busy"><i class="fa fa-spinner fa-pulse" ng-show="groupRemove.busy"></i> Delete</button>
+                <button type="button" class="btn btn-danger" ng-click="groupRemove.submit()" ng-disabled="groupRemoveForm.$invalid || groupRemove.busy"><i class="fa fa-circle-o-notch fa-spin" ng-show="groupRemove.busy"></i> Delete</button>
             </div>
         </div>
     </div>
@@ -231,41 +231,6 @@
     </div>
 </div>
 
-<!-- Modal user help -->
-<div class="modal fade" id="userHelpModal" tabindex="-1" role="dialog">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h4 class="modal-title">About Users</h4>
-            </div>
-            <div class="modal-body">
-                <p>Each user has a mailbox at <b><i>username</i>@{{ config.fqdn }}</b>.</p>
-                <p>Please refer to the <a href="https://cloudron.io/references/usermanual.html#email" target="_blank">user documentation</a> onhow to use Cloudron email accounts.</p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-default" data-dismiss="modal">OK</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Modal group help -->
-<div class="modal fade" id="groupHelpModal" tabindex="-1" role="dialog">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h4 class="modal-title">About Groups</h4>
-            </div>
-            <div class="modal-body">
-                <p>Each group serves as an email list at <b><i>groupname</i>@{{ config.fqdn }}</b>. Any email sent to this address will be forwarded to each group member.</p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-default" data-dismiss="modal">OK</button>
-            </div>
-        </div>
-    </div>
-</div>
-
 <div class="content-large">
 
     <br/>
@@ -273,7 +238,7 @@
     <div>
         <div class="text-left">
             <h1>
-                Users <sup ng-show="mailConfig.enabled"><a href="" class="help" ng-click="showUserHelp()"><i class="fa fa-question-circle"></i></a></sup> <button class="btn btn-primary btn-outline pull-right" ng-click="useradd.show()"><i class="fa fa-user-plus"></i> New User</button>
+                Users <button class="btn btn-primary btn-outline pull-right" ng-click="useradd.show()"><i class="fa fa-user-plus"></i> New User</button>
             </h1>
         </div>
     </div>
@@ -282,11 +247,15 @@
         <div class="grid-item-top">
             <div class="row ng-hide" ng-show="!ready">
                 <div class="col-lg-12 text-center">
-                    <h2><i class="fa fa-spinner fa-pulse"></i></h2>
+                    <h2><i class="fa fa-circle-o-notch fa-spin"></i></h2>
                 </div>
             </div>
             <div class="row animateMeOpacity ng-hide" ng-show="ready">
                 <div class="col-lg-12">
+                    Each user has a mailbox at <b><i>username</i>@{{ config.fqdn }}</b>.
+                    <span ng-show="mailConfig.enabled">Please refer to the <a href="https://cloudron.io/references/usermanual.html#email" target="_blank">user documentation</a> on how to use Cloudron email accounts.</span>
+                    <br/>
+                    <br/>
                     <table class="table table-hover">
                         <thead>
                             <tr>
@@ -332,7 +301,7 @@
     <div>
         <div class="text-left">
             <h1>
-                Groups <sup ng-show="mailConfig.enabled"><a href="" class="help" ng-click="showGroupHelp()"><i class="fa fa-question-circle"></i></a></sup> <button class="btn btn-primary btn-outline pull-right" ng-click="groupAdd.show()"><i class="fa fa-plus"></i> New Group</button>
+                Groups <button class="btn btn-primary btn-outline pull-right" ng-click="groupAdd.show()"><i class="fa fa-plus"></i> New Group</button>
             </h1>
         </div>
     </div>
@@ -341,12 +310,13 @@
         <div class="grid-item-top">
             <div class="row ng-hide" ng-show="!ready">
                 <div class="col-lg-12 text-center">
-                    <h2><i class="fa fa-spinner fa-pulse"></i></h2>
+                    <h2><i class="fa fa-circle-o-notch fa-spin"></i></h2>
                 </div>
             </div>
             <div class="row animateMeOpacity ng-hide" ng-show="ready">
                 <div class="col-lg-12">
                     Groups can be used to control access to an app.
+                    <span ng-show="mailConfig.enabled">Each group serves as an email list at <b><i>groupname</i>@{{ config.fqdn }}</b>. Any email sent to this address will be forwarded to each group member.</span>
                     <br/>
                     <br/>
                     <table class="table table-hover">

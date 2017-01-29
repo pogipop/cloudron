@@ -60,7 +60,7 @@
                         <div class="form-group" ng-class="{ 'has-error': (feedbackForm.description.$dirty && feedbackForm.description.$invalid) }">
                             <textarea class="form-control" name="description" rows="3" placeholder="Describe your idea or issue" ng-model="feedback.description" ng-minlength="1" required></textarea>
                         </div>
-                        <button type="submit" class="btn btn-primary" ng-disabled="feedbackForm.$invalid || feedback.busy"><i class="fa fa-spinner fa-pulse" ng-show="feedback.busy"></i> Submit</button>
+                        <button type="submit" class="btn btn-primary" ng-disabled="feedbackForm.$invalid || feedback.busy"><i class="fa fa-circle-o-notch fa-spin" ng-show="feedback.busy"></i> Submit</button>
                         <span ng-show="feedback.error" class="text-danger text-bold">{{feedback.error}}</span>
                         <span ng-show="feedback.success" class="text-success text-bold">Thank You!</span>
                     </form>

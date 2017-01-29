@@ -47,7 +47,7 @@
             <div class="modal-footer ">
                 <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
                 <button type="submit" class="btn btn-outline btn-success pull-right" ng-click="setDnsCredentials()" ng-disabled="dnsCredentialsForm.$invalid || dnsCredentials.busy">
-                    <i class="fa fa-spinner fa-pulse" ng-show="dnsCredentials.busy"></i>
+                    <i class="fa fa-circle-o-notch fa-spin" ng-show="dnsCredentials.busy"></i>
                     <span ng-show="dnsCredentials.customDomain === config.fqdn">Save</span>
                     <span ng-show="dnsCredentials.customDomain !== config.fqdn">Change Domain</span>
                 </button>
@@ -175,7 +175,7 @@
                             </span>
                         </div>
                     </div>
-                    <button type="submit" class="btn btn-outline btn-success pull-right" ng-disabled="defaultCertForm.$invalid || busy"><i class="fa fa-spinner fa-pulse" ng-show="defaultCert.busy"></i> Upload</button>
+                    <button type="submit" class="btn btn-outline btn-success pull-right" ng-disabled="defaultCertForm.$invalid || busy"><i class="fa fa-circle-o-notch fa-spin" ng-show="defaultCert.busy"></i> Upload</button>
                 </fieldset>
             </form>
         </div>
@@ -206,7 +206,7 @@
                             </span>
                         </div>
                     </div>
-                    <button type="submit" class="btn btn-outline btn-success pull-right" ng-disabled="adminCertForm.$invalid || busy"><i class="fa fa-spinner fa-pulse" ng-show="adminCert.busy"></i> Upload</button>
+                    <button type="submit" class="btn btn-outline btn-success pull-right" ng-disabled="adminCertForm.$invalid || busy"><i class="fa fa-circle-o-notch fa-spin" ng-show="adminCert.busy"></i> Upload</button>
                 </fieldset>
             </form>
         </div>

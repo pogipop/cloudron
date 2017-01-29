@@ -177,9 +177,9 @@
                 </fieldset>
             </div>
             <div class="modal-footer ">
-                <button type="button" class="btn btn-default pull-left" ng-click="restartApp(appConfigure.app)" ng-disabled="restartAppBusy"><i class="fa fa-spinner fa-pulse" ng-show="restartAppBusy"></i> Restart</button>
+                <button type="button" class="btn btn-default pull-left" ng-click="restartApp(appConfigure.app)" ng-disabled="restartAppBusy"><i class="fa fa-circle-o-notch fa-spin" ng-show="restartAppBusy"></i> Restart</button>
                 <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-success" ng-click="doConfigure()" ng-disabled="appConfigureForm.$invalid || appConfigure.busy || (appConfigure.accessRestrictionOption === 'groups' && !appConfigure.isAccessRestrictionValid()) || !appConfigure.isAltDomainValid()"><i class="fa fa-spinner fa-pulse" ng-show="appConfigure.busy"></i> Save</button>
+                <button type="button" class="btn btn-success" ng-click="doConfigure()" ng-disabled="appConfigureForm.$invalid || appConfigure.busy || (appConfigure.accessRestrictionOption === 'groups' && !appConfigure.isAccessRestrictionValid()) || !appConfigure.isAltDomainValid()"><i class="fa fa-circle-o-notch fa-spin" ng-show="appConfigure.busy"></i> Save</button>
             </div>
         </div>
     </div>
@@ -212,7 +212,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-success" ng-click="doRestore()" ng-disabled="appRestoreForm.$invalid || appRestore.busy"><i class="fa fa-spinner fa-pulse" ng-show="appRestore.busy"></i> Restore</button>
+                <button type="button" class="btn btn-success" ng-click="doRestore()" ng-disabled="appRestoreForm.$invalid || appRestore.busy"><i class="fa fa-circle-o-notch fa-spin" ng-show="appRestore.busy"></i> Restore</button>
             </div>
         </div>
     </div>
@@ -280,7 +280,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-danger" ng-click="doUninstall()" ng-disabled="appUninstallForm.$invalid || appUninstall.busy"><i class="fa fa-spinner fa-pulse" ng-show="appUninstall.busy"></i> Uninstall</button>
+                <button type="button" class="btn btn-danger" ng-click="doUninstall()" ng-disabled="appUninstallForm.$invalid || appUninstall.busy"><i class="fa fa-circle-o-notch fa-spin" ng-show="appUninstall.busy"></i> Uninstall</button>
             </div>
         </div>
     </div>
@@ -326,7 +326,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-danger" ng-click="doUpdate(appUpdateForm)" ng-disabled="appUpdateForm.$invalid || appUpdate.busy"><i class="fa fa-spinner fa-pulse" ng-show="appUpdate.busy"></i> Update</button>
+                <button type="button" class="btn btn-danger" ng-click="doUpdate(appUpdateForm)" ng-disabled="appUpdateForm.$invalid || appUpdate.busy"><i class="fa fa-circle-o-notch fa-spin" ng-show="appUpdate.busy"></i> Update</button>
             </div>
         </div>
     </div>

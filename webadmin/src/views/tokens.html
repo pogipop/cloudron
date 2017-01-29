@@ -24,8 +24,8 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-danger" ng-hide="config.developerMode" ng-click="doChangeDeveloperMode(developerModeChangeForm)" ng-disabled="developerModeChangeForm.$invalid || developerModeChange.busy"><i class="fa fa-spinner fa-pulse" ng-show="developerModeChange.busy"></i> Enable</button>
-                <button type="button" class="btn btn-success" ng-show="config.developerMode" ng-click="doChangeDeveloperMode(developerModeChangeForm)" ng-disabled="developerModeChangeForm.$invalid || developerModeChange.busy"><i class="fa fa-spinner fa-pulse" ng-show="developerModeChange.busy"></i> Disable</button>
+                <button type="button" class="btn btn-danger" ng-hide="config.developerMode" ng-click="doChangeDeveloperMode(developerModeChangeForm)" ng-disabled="developerModeChangeForm.$invalid || developerModeChange.busy"><i class="fa fa-circle-o-notch fa-spin" ng-show="developerModeChange.busy"></i> Enable</button>
+                <button type="button" class="btn btn-success" ng-show="config.developerMode" ng-click="doChangeDeveloperMode(developerModeChangeForm)" ng-disabled="developerModeChangeForm.$invalid || developerModeChange.busy"><i class="fa fa-circle-o-notch fa-spin" ng-show="developerModeChange.busy"></i> Disable</button>
             </div>
         </div>
     </div>
@@ -68,7 +68,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-success" ng-click="clientAdd.submit()" ng-disabled="clientAddForm.$invalid || clientAdd.busy"><i class="fa fa-spinner fa-pulse" ng-show="clientAdd.busy"></i> Add API Client</button>
+                <button type="button" class="btn btn-success" ng-click="clientAdd.submit()" ng-disabled="clientAddForm.$invalid || clientAdd.busy"><i class="fa fa-circle-o-notch fa-spin" ng-show="clientAdd.busy"></i> Add API Client</button>
             </div>
         </div>
     </div>
@@ -89,7 +89,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-danger" ng-click="clientRemove.submit()" ng-disabled="clientRemove.busy"><i class="fa fa-spinner fa-pulse" ng-show="clientRemove.busy"></i> Remove API Client</button>
+                <button type="button" class="btn btn-danger" ng-click="clientRemove.submit()" ng-disabled="clientRemove.busy"><i class="fa fa-circle-o-notch fa-spin" ng-show="clientRemove.busy"></i> Remove API Client</button>
             </div>
         </div>
     </div>
@@ -206,7 +206,7 @@
 
                                 <h4 class="text-muted">Tokens
                                     <div class="pull-right">
-                                        <button class="btn btn-xs btn-default" ng-click="removeAccessTokens(client)" ng-disabled="!client.activeTokens.length || client.busy"><i class="fa fa-spinner fa-pulse" ng-show="client.busy"></i> Revoke All</button>
+                                        <button class="btn btn-xs btn-default" ng-click="removeAccessTokens(client)" ng-disabled="!client.activeTokens.length || client.busy"><i class="fa fa-circle-o-notch fa-spin" ng-show="client.busy"></i> Revoke All</button>
                                         <button class="btn btn-xs btn-primary btn-outline" ng-click="tokenAdd.show(client)"><i class="fa fa-plus"></i> New Token</button>
                                     </div>
                                 </h4>
