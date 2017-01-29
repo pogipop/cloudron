@@ -20,23 +20,9 @@ app.controller('SetupController', ['$scope', '$http', 'Client', function ($scope
     $scope.provider = '';
     $scope.apiServerOrigin = '';
     $scope.setupToken = '';
-    $scope.createAppstoreAccount = true;
 
     $scope.activateCloudron = function () {
         $scope.busy = true;
-
-        function registerAppstoreAccountIfNeeded(callback) {
-            if (!$scope.createAppstoreAccount) return callback(null);
-            if ($scope.provider === 'caas') return callback(null);
-
-            $http.post($scope.apiServerOrigin + '/api/v1/users', { email: $scope.account.email, password: $scope.account.password }).success(function (data, status) {
-                if (status !== 201) return callback({ status: status, data: data });
-
-                Client.setAppstoreConfig({ userId: data.userId, token: data.accessToken }, callback);
-            }).error(function (data, status) {
-                callback({ status: status, data: data });
-            });
-        }
 
         Client.createAdmin($scope.account.username, $scope.account.password, $scope.account.email, $scope.account.displayName, $scope.setupToken, function (error) {
             if (error) {
@@ -46,11 +32,7 @@ app.controller('SetupController', ['$scope', '$http', 'Client', function ($scope
                 return;
             }
 
-            registerAppstoreAccountIfNeeded(function (error) {
-                if (error) console.error('Unable to create appstore account.', error);  // this is not fatal
-
-                window.location.href = '/';
-            });
+            window.location.href = '/';
         });
     };
 
@@ -89,7 +71,6 @@ app.controller('SetupController', ['$scope', '$http', 'Client', function ($scope
             }
 
             $scope.setupToken = search.setupToken;
-            $scope.createAppstoreAccount = false;
         }
 
         $scope.account.email = search.email || $scope.account.email;
