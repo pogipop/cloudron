@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, height=device-height" />
 
-    <title> Cloudron DNS Setup </title>
+    <title> Cloudron Setup </title>
 
     <!-- Theme CSS -->
     <link href="theme.css" rel="stylesheet">
@@ -48,17 +48,17 @@
                     <form name="dnsCredentialsForm" role="form" novalidate ng-submit="setDnsCredentials()" autocomplete="off">
                         <div class="row">
                             <div class="col-md-10 col-md-offset-1 text-center">
-                                <h1>DNS Setup</h1>
-                                <h3>Specify the domain for your Cloudron</h3>
+                                <h1>Cloudron Setup</h1>
+                                <h3>Provide the domain for your Cloudron</h3>
+                                <p>Apps will be installed on subdomains of that domain.</p>
                                 <div class="form-group" ng-class="{ 'has-error': dnsCredentialsForm.domain.$dirty && dnsCredentialsForm.domain.$invalid }">
                                     <input type="text" class="form-control" ng-model="dnsCredentials.domain" name="domain" ng-minlength="4" ng-maxlength="128" placeholder="example.com" required autofocus ng-disabled="dnsCredentials.busy">
                                 </div>
-                                <p>Apps will be installed on subdomains of that domain.</p>
                             </div>
                         </div>
                         <div class="row">
                             <div class="col-md-10 col-md-offset-1 text-center">
-                                <h3>DNS Provider Configuration</h3>
+                                <h3>DNS Configuration</h3>
                                 <p class="has-error text-center" ng-show="dnsCredentials.error">{{ dnsCredentials.error }}</p>
 
                                 <div class="form-group">
@@ -71,23 +71,28 @@
                                 </div>
                                 <div class="form-group" ng-class="{ 'has-error': dnsCredentialsForm.secretAccessKey.$dirty && dnsCredentialsForm.secretAccessKey.$invalid }" ng-show="dnsCredentials.provider === 'route53'">
                                     <input type="text" class="form-control" ng-model="dnsCredentials.secretAccessKey" name="secretAccessKey" placeholder="Secret Access Key" ng-required="dnsCredentials.provider === 'route53'" ng-disabled="dnsCredentials.busy">
+                                    <br/>
+                                    <span class="text-danger">This domain must be hosted on <a href="https://aws.amazon.com/route53/?nc2=h_m1" target="_blank">AWS Route53</a>.</span>
                                 </div>
 
                                 <!-- DigitalOcean -->
                                 <div class="form-group" ng-class="{ 'has-error': dnsCredentialsForm.digitalOceanToken.$dirty && dnsCredentialsForm.digitalOceanToken.$invalid }" ng-show="dnsCredentials.provider === 'digitalocean'">
                                     <input type="text" class="form-control" ng-model="dnsCredentials.digitalOceanToken" name="digitalOceanToken" placeholder="API Token" ng-required="dnsCredentials.provider === 'digitalocean'" ng-disabled="dnsCredentials.busy">
+                                    <br/>
+                                    <span class="text-danger">This domain must be hosted on <a href="https://www.digitalocean.com/community/tutorials/how-to-set-up-a-host-name-with-digitalocean#step-two%E2%80%94change-your-domain-server" target="_blank">DigitalOcean</a>.</span>
                                 </div>
 
                                 <!-- Wildcard -->
                                 <p ng-show="dnsCredentials.provider === 'wildcard'">
-                                    <span class="text-danger">A wildcard DNS <b>A</b> record has to be setup for <b>{{ dnsCredentials.domain || 'example.com' }}</b> to this IP!</span>
+                                    <span class="text-danger">Setup A records for <b>*.{{ dnsCredentials.domain || 'example.com' }}</b> and <b>{{ dnsCredentials.domain || 'example.com' }}</b> to this server's IP!</span>
                                 </p>
 
                                 <!-- Manual -->
                                 <p ng-show="dnsCredentials.provider === 'manual'">
-                                    <span class="text-danger">A DNS <b>A</b> record for <b>my.{{ dnsCredentials.domain || 'example.com' }}</b> to this IP has to be created!</span><br/>
-                                    <br/>
-                                    All DNS records have to be setup manually for each app installation.
+                                    <span class="text-danger">
+                                        Setup an A record for <b>my.{{ dnsCredentials.domain || 'example.com' }}</b> to this server's IP!<br/>
+                                        All DNS records have to be setup manually <i>before</i> each app installation.
+                                    </span>
                                 </p>
                             </div>
                         </div>

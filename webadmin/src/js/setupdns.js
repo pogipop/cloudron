@@ -9,6 +9,7 @@ app.controller('SetupDNSController', ['$scope', '$http', 'Client', function ($sc
     $scope.error = null;
     $scope.provider = '';
     $scope.showDNSSetup = false;
+
     // keep in sync with certs.js
     $scope.dnsProvider = [
         { name: 'AWS Route53', value: 'route53' },
