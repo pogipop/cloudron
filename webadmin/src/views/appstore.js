@@ -389,7 +389,7 @@ angular.module('Application').controller('AppStoreController', ['$scope', '$loca
 
         $scope.ready = false;
 
-        getAppList(function (error, apps) {
+        AppStore.getAppsFast(function (error, apps) {
             if (error) return $timeout($scope.showCategory.bind(null, event), 1000);
 
             if (!$scope.category) {
