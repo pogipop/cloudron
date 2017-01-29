@@ -70,17 +70,7 @@ angular.module('Application').controller('MainController', ['$scope', '$route', 
     };
 
     function runConfigurationChecks() {
-        // Check if a proper storage backend is configured
-        Client.getBackupConfig(function (error, result) {
-            if (error) return console.error(error);
 
-            if (result.provider === 'filesystem') {
-                var actionScope = $scope.$new(true);
-                actionScope.action = '/#/settings';
-
-                Client.notify('Backup Configuration', 'Please setup an external backup storage to avoid data loss', true, 'info', actionScope);
-            }
-        });
 
         // Check if all email DNS records are set up properly
         Client.getMailConfig(function (error, mailConfig) {

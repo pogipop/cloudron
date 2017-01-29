@@ -473,6 +473,14 @@ angular.module('Application').controller('SettingsController', ['$scope', '$loca
             if (error) return console.error(error);
 
             $scope.backupConfig = backupConfig;
+
+            // Check if a proper storage backend is configured
+            if (backupConfig.provider === 'filesystem') {
+                var actionScope = $scope.$new(true);
+                actionScope.action = '/#/settings';
+
+                Client.notify('Backup Configuration', 'Please setup an external backup storage to avoid data loss', false, 'info', actionScope);
+            }
         });
     }
 

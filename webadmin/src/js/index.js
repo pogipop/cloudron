@@ -13,7 +13,7 @@ var app = angular.module('Application', ['ngRoute', 'ngAnimate', 'ngSanitize', '
 
 app.config(['NotificationProvider', function (NotificationProvider) {
     NotificationProvider.setOptions({
-        delay: 10000,
+        delay: 5000,
         startTop: 60,
         positionX: 'left',
         maxCount: 3,
