@@ -31,7 +31,7 @@
 
                         <!-- DigitalOcean -->
                         <div class="form-group" ng-class="{ 'has-error': false }" ng-show="dnsCredentials.provider === 'digitalocean'">
-                            <label class="control-label" for="dnsCredentialsDigitalOceanToken">API token</label>
+                            <label class="control-label" for="dnsCredentialsDigitalOceanToken">DigitalOcean token</label>
                             <input type="text" class="form-control" ng-model="dnsCredentials.digitalOceanToken" id="dnsCredentialsDigitalOceanToken" name="digitalOceanToken" ng-disabled="dnsCredentials.busy" ng-required="dnsCredentials.provider === 'digitalocean'">
                         </div>
 
@@ -116,7 +116,7 @@
                 </tr>
 
                 <tr ng-show="config.isCustomDomain && dnsConfig.provider === 'digitalocean'">
-                    <td class="text-muted" style="vertical-align: top;">API token</td>
+                    <td class="text-muted" style="vertical-align: top;">DigitalOcean token</td>
                     <td class="text-right" style="vertical-align: top; white-space: nowrap;" ng-click-reveal="dnsConfig.token"><i>hidden</i></td>
                 </tr>
 
@@ -152,10 +152,10 @@
         <div class="col-md-12">
             <form name="defaultCertForm" ng-submit="setDefaultCert()">
                 <fieldset>
-                    <p>Certificates are obtained via <a href="https://letsencrypt.org/" target="_blank">Let’s Encrypt</a>.</p>
+                    <p>Certificates are automatically obtained and renewed from <a href="https://letsencrypt.org/" target="_blank">Let’s Encrypt</a>. See the current rate limit <a href="https://letsencrypt.org/docs/rate-limits/" target="_blank">here</a>.</p>
                     <br/>
                     <label class="control-label" for="defaultCertInput">Fallback Certificate</label>
-                    <p>This wildcard certificate that will be used for apps, if getting a Let’s Encrypt certificate failed. This might be due to rate limits on Let’s Encrypt side.</p>
+                    <p>This wildcard certificate will be used for apps, should getting a Let’s Encrypt certificate fail.</p>
                     <div class="has-error text-center" ng-show="defaultCert.error">{{ defaultCert.error }}</div>
                     <div class="text-success text-center" ng-show="defaultCert.success"><b>Upload successful</b></div>
                     <div class="form-group" ng-class="{ 'has-error': (!defaultCert.cert.$dirty && defaultCert.error) }">

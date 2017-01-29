@@ -1,104 +1,68 @@
 
 <br/>
 
-<div class="row">
-    <div class="col-md-12">
-        <h1>Graphs</h1>
-    </div>
-</div>
-
-<br/>
-
 <div class="graphs">
 
-    <div class="row shadow memory-app-container">
-        <h2>Disk Usage</h2>
-        <br/>
-        <div class="col-md-offset-2 col-md-4">
-            <h4>App Data <span class="badge">{{ diskUsage['data'].sum }} GB</span></h4>
-            <canvas id="dataDiskUsageChart" width="200" height="200"></canvas>
-            <p>
-                <span class="text-success">Free {{ diskUsage['data'].free }} GB</span>
-                &nbsp;
-                <span class="text-primary">Used {{ diskUsage['data'].used }} GB</span>
-            </p>
-        </div>
-        <div class="col-md-4">
-            <h4>System <span class="badge">{{ diskUsage['system'].sum }} GB</span></h4>
-            <canvas id="systemDiskUsageChart" width="200" height="200"></canvas>
-            <p>
-                <span class="text-success">Free {{ diskUsage['system'].free }} GB</span>
-                &nbsp;
-                <span class="text-primary">Used {{ diskUsage['system'].used }} GB</span>
-            </p>
-        </div>
-        <div class="col-md-2" style="text-align: justify;">
-            <h4>Description</h4>
-            App Data shows the virtual disk usage for application user data.
-            The full App Data disk size may not be entirely accounted for in the overall System usage numbers, depending on the utilization.
-            <br/>
-            <br/>
-            The System disk size includes application images, which may consume the majority of disk space. Running low on system disk space may indicate that too many apps are installed.
-        </div>
-    </div>
-
-    <br/>
-    <br/>
-
-    <div class="row shadow memory-app-container">
-        <div class="col-md-12">
+    <div class="row">
+        <div class="col-md-10 col-md-offset-1">
             <div class="row">
-                <div class="col-md-12">
+                <div class="col-md-12 text-left">
                     <h2>Memory</h2>
                 </div>
             </div>
 
-            <br/>
+            <div class="row shadow memory-app-container">
+                <div class="row">
+                    <div class="col-md-6"">
+                        <h3>Apps</h3>
+                        <canvas id="memoryUsageAppsChart" width="200" height="200"></canvas>
+                    </div>
+                    <div class="col-md-6">
+                        <h3>System</h3>
+                        <canvas id="memoryUsageSystemChart" width="200" height="200"></canvas>
+                    </div>
+                </div>
 
-            <div class="row">
-                <div class="col-md-6">
-                    <h3>Apps</h3>
-                </div>
-                <div class="col-md-6">
-                    <h3>System</h3>
-                </div>
-            </div>
+                <br/>
 
-            <div class="row">
-                <div class="col-md-3">
-                    <canvas id="memoryUsageAppsChart" width="200" height="200"></canvas>
-                </div>
-                <div class="col-md-3 text-left">
-                    <p ng-repeat="data in memoryUsageApps">
-                        <span style="color: {{data.color}};" class="memory-chart-label">{{ data.label }} {{ data.value }} MB</span>
-                        &nbsp;
-                    </p>
-                </div>
-                <div class="col-md-3">
-                    <canvas id="memoryUsageSystemChart" width="200" height="200"></canvas>
-                </div>
-                <div class="col-md-3 text-left">
-                    <p ng-repeat="data in memoryUsageSystem">
-                        <span style="color: {{data.color}};" class="memory-chart-label">{{ data.label }} {{ data.value }} MB</span>
-                        &nbsp;
-                    </p>
-                </div>
-            </div>
-
-            <br/>
-
-            <div class="row">
-                <div class="col-md-12">
+                <div class="row">
+                    <div class="col-md-12">
                         <h4 ng-show="activeApp === 'system'">System</h4>
                         <h4 ng-show="activeApp !== 'system'">{{ activeApp.location }}</h4>
-                    </ul>
+                        <br/>
+                        <canvas id="memoryAppChart" width="900" height="300"></canvas>
+                        <p>Memory consumption in MB.</p>
+                    </div>
                 </div>
-                <br/>
-                <canvas id="memoryAppChart" width="800" height="300"></canvas>
-                <p>Memory consumption over time in MB.</p>
             </div>
         </div>
     </div>
+
+    <br/>
+    <br/>
+
+    <div class="row">
+        <div class="col-md-10 col-md-offset-1">
+            <div class="row">
+                <div class="col-md-12 text-left">
+                    <h2>Disk Usage</h2>
+                </div>
+            </div>
+
+            <div class="row shadow memory-app-container">
+                <div class="col-md-12">
+                    <h4><span class="badge">{{ diskUsage['system'].sum }} GB</span></h4>
+                    <canvas id="systemDiskUsageChart" width="200" height="200"></canvas>
+                    <p>
+                        <span class="text-success">Free {{ diskUsage['system'].free }} GB</span>
+                        &nbsp;
+                        <span class="text-primary">Used {{ diskUsage['system'].used }} GB</span>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
 </div>
 
 <br/>

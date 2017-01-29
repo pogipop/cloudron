@@ -58,8 +58,8 @@ angular.module('Application').controller('GraphsController', ['$scope', '$locati
     $scope.setMemoryApp = function (app, color) {
         $scope.activeApp = app;
 
-        var timePeriod = 2 * 60;    // in minutes
-        var timeBucketSize = 30;    // in minutes
+        var timePeriod = 12 * 60;    // in minutes
+        var timeBucketSize = 60;    // in minutes
 
         var target;
         if (app === 'system') target = 'summarize(collectd.localhost.memory.memory-used, "' + timeBucketSize + 'min", "avg")';
@@ -70,7 +70,10 @@ angular.module('Application').controller('GraphsController', ['$scope', '$locati
 
             // translate the data from bytes to MB
             var data = result[0].datapoints.map(function (d) { return parseInt((d[0] / 1024 / 1024).toFixed(2)); });
-            var labels = data.map(function (d, index) { return '-' + (timePeriod - (index * timeBucketSize)) / 60 + 'h'; });
+            var labels = data.map(function (d, index) {
+                var dateTime = new Date(Date.now() - ((timePeriod - (index * timeBucketSize)) * 60 *1000));
+                return ('0' + dateTime.getHours()).slice(-2) + ':00';
+            });
 
             var tmp = {
                 labels: labels,
@@ -103,17 +106,13 @@ angular.module('Application').controller('GraphsController', ['$scope', '$locati
 
     $scope.updateDiskGraphs = function () {
         Client.graphs([
-            'averageSeries(collectd.localhost.df-loop*.df_complex-free)',
-            'averageSeries(collectd.localhost.df-loop*.df_complex-reserved)',
-            'averageSeries(collectd.localhost.df-loop*.df_complex-used)',
             'averageSeries(collectd.localhost.df-*d*.df_complex-free)',
             'averageSeries(collectd.localhost.df-*d*.df_complex-reserved)',
             'averageSeries(collectd.localhost.df-*d*.df_complex-used)'
         ], '-1min', function (error, data) {
             if (error) return console.log(error);
 
-            renderDisk('data', data[0], data[1], data[2]);
-            renderDisk('system', data[3], data[4], data[5]);
+            renderDisk('system', data[0], data[1], data[2]);
         });
     };
 
@@ -174,7 +173,7 @@ angular.module('Application').controller('GraphsController', ['$scope', '$locati
         $scope.installedApps.forEach(function (app) {
             targets.push('summarize(collectd.localhost.table-' + app.id + '-memory.gauge-rss, "1min", "avg")');
             targetsInfo.push({
-                label: app.location || 'naked domain',
+                label: app.location || 'bare domain',
                 color: getRandomColor(),
                 app: app
             });
