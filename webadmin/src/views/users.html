@@ -24,7 +24,7 @@
                             <small ng-show="useradd_form.username.$error.username">This is not a valid username</small>
                             <small ng-show="!useradd_form.username.$dirty && useradd.error.username">{{ useradd.error.username }}</small>
                         </div>
-                        <input type="text" class="form-control" ng-model="useradd.username" name="username" id="inputUserAddUsername" placeholder="Leave this empty to let the user choose on sign up">
+                        <input type="text" class="form-control" ng-model="useradd.username" name="username" id="inputUserAddUsername" placeholder="Optional">
                     </div>
 
                     <div class="form-group" ng-class="{ 'has-error': (useradd_form.displayName.$dirty && useradd_form.displayName.$invalid) || (!useradd_form.displayName.$dirty && useradd.error.displayName) }">
@@ -33,7 +33,7 @@
                             <small ng-show="useradd_form.displayName.$error.displayName">This is not a valid displayName</small>
                             <small ng-show="!useradd_form.displayName.$dirty && useradd.error.displayName">{{ useradd.error.displayName }}</small>
                         </div>
-                        <input type="text" class="form-control" ng-model="useradd.displayName" name="displayName" id="inputUserAddDisplayName" placeholder="Leave this empty to let the user choose on sign up">
+                        <input type="text" class="form-control" ng-model="useradd.displayName" name="displayName" id="inputUserAddDisplayName" placeholder="Optional">
                     </div>
 
                     <div class="checkbox">
@@ -252,10 +252,12 @@
             </div>
             <div class="row animateMeOpacity ng-hide" ng-show="ready">
                 <div class="col-lg-12">
-                    Each user has a mailbox at <b><i>username</i>@{{ config.fqdn }}</b>.
-                    <span ng-show="mailConfig.enabled">Please refer to the <a href="https://cloudron.io/references/usermanual.html#email" target="_blank">user documentation</a> on how to use Cloudron email accounts.</span>
-                    <br/>
-                    <br/>
+                    <span ng-show="mailConfig.enabled">
+                        Each user has a mailbox at <b><i>username</i>@{{ config.fqdn }}</b>.
+                        Please refer to the <a href="https://cloudron.io/references/usermanual.html#email" target="_blank">user documentation</a> on how to use Cloudron email accounts.
+                        <br/>
+                        <br/>
+                    </span>
                     <table class="table table-hover">
                         <thead>
                             <tr>
