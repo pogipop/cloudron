@@ -1,9 +1,9 @@
 'use strict';
 
+
 angular.module('Application').controller('AppsController', ['$scope', '$location', '$timeout', 'Client', 'AppStore', function ($scope, $location, $timeout, Client, AppStore) {
     $scope.HOST_PORT_MIN = 1024;
     $scope.HOST_PORT_MAX = 65535;
-
     $scope.installedApps = Client.getInstalledApps();
     $scope.config = Client.getConfig();
     $scope.user = Client.getUserInfo();

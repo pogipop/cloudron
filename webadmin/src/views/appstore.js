@@ -3,6 +3,9 @@
 angular.module('Application').controller('AppStoreController', ['$scope', '$location', '$timeout', '$routeParams', 'Client', 'AppStore', function ($scope, $location, $timeout, $routeParams, Client, AppStore) {
     Client.onReady(function () { if (!Client.getUserInfo().admin) $location.path('/'); });
 
+    $scope.HOST_PORT_MIN = 1024;
+    $scope.HOST_PORT_MAX = 65535;
+
     $scope.ready = false;
     $scope.apps = [];
     $scope.config = Client.getConfig();

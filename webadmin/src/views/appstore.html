@@ -36,45 +36,44 @@
                         <div ng-repeat="(env, info) in appInstall.portBindingsInfo">
                             <ng-form name="portInfo_form">
                                 <div class="form-group" ng-class="{ 'has-error': (!appInstallForm.itemName{{$index}}.$dirty && appInstall.error.port) || (portInfo_form.itemName{{$index}}.$dirty && portInfo_form.itemName{{$index}}.$invalid) }">
-                                    <label class="control-label" for="inputPortInfo{{env}}"><input type="checkbox" ng-model="appInstall.portBindingsEnabled[env]"> {{ info.description }} ({{ hostPortMin }} - {{ hostPortMax }})</label>
+                                    <label class="control-label" for="inputPortInfo{{env}}"><input type="checkbox" ng-model="appInstall.portBindingsEnabled[env]"> {{ info.description }} ({{ HOST_PORT_MIN }} - {{ HOST_PORT_MAX }})</label>
                                     <input type="number" class="form-control" ng-model="appInstall.portBindings[env]" ng-disabled="!appInstall.portBindingsEnabled[env]" id="inputPortInfo{{env}}" later-name="itemName{{$index}}" min="{{hostPortMin}}" max="{{hostPortMax}}" required>
                                 </div>
                             </ng-form>
                         </div>
 
-                        <div class="form-group" ng-show="appInstall.customAuth">
-                            <label class="control-label">Access control</label>
+                        <div class="form-group" ng-show="appInstall.customAuth && !appInstall.app.manifest.addons.email">
+                            <label class="control-label">User management</label>
                             <p>
-                                This app has it's own access control and does not use the Cloudron user management.
+                                This app has it's own user management.
                             </p>
                         </div>
 
                         <div class="form-group" ng-show="appInstall.app.manifest.addons.email">
-                            <label class="control-label">Access control</label>
+                            <label class="control-label">User management</label>
                             <p>
-                                This app authenticates all users using IMAP & SMTP and requires the mail server
-                                to be enabled (under settings).
+                                All users of this Cloudron have access.
                             </p>
                         </div>
 
                         <div class="form-group" ng-hide="appInstall.customAuth || appInstall.app.manifest.addons.email">
-                            <label class="control-label">Access control</label>
+                            <label class="control-label">User management</label>
                             <div class="radio" ng-show="appInstall.optionalSso">
                                 <label>
                                     <input type="radio" ng-model="appInstall.accessRestrictionOption" value="nosso">
-                                    Disable Cloudron user management
+                                    Leave user management to the app
                                 </label>
                             </div>
                             <div class="radio">
                                 <label>
                                     <input type="radio" ng-model="appInstall.accessRestrictionOption" value="any">
-                                    All users
+                                    Allow all users from this Cloudron
                                 </label>
                             </div>
                             <div class="radio">
                                 <label>
                                     <input type="radio" ng-model="appInstall.accessRestrictionOption" value="groups" ng-disabled="groups.length <= 1">
-                                    Restrict to groups <span class="label label-danger" ng-show="appInstall.accessRestrictionOption === 'groups' && !appInstall.isAccessRestrictionValid()">Select at least one group</span>
+                                    Only allow the following user groups <span class="label label-danger" ng-show="appInstall.accessRestrictionOption === 'groups' && !appInstall.isAccessRestrictionValid()">Select at least one group</span>
                                 </label>
                             </div>
                             <div ng-show="groups.length <= 1" style="margin-left: 20px;">No groups available. <a href="#/users">Create groups</a></div>
@@ -87,7 +86,9 @@
                             </div>
                         </div>
 
-                        <br/>
+                        <p ng-show="appInstall.app.manifest.addons.email" class="text-danger">
+                            This app only works if <a href="#/settings">Cloudron Email</a> is enabled.
+                        </p>
 
                         <div class="hide">
                         <label class="control-label" for="appInstallCertificateInput" ng-show="config.isCustomDomain">Certificate (optional)</label>
