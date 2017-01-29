@@ -3,15 +3,15 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h4 class="modal-title" ng-hide="config.developerMode">Enable API Access</h4>
-                <h4 class="modal-title" ng-show="config.developerMode">Disable API Access</h4>
+                <h4 class="modal-title" ng-hide="config.developerMode">Enable API access</h4>
+                <h4 class="modal-title" ng-show="config.developerMode">Disable API access</h4>
             </div>
             <div class="modal-body">
                 <form name="developerModeChangeForm" role="form" novalidate ng-submit="doChangeDeveloperMode(developerModeChangeForm)" autocomplete="off">
                     <fieldset>
                         <input type="password" style="display: none;">
                         <div class="form-group" ng-class="{ 'has-error': (!developerModeChangeForm.password.$dirty && developerModeChange.error.password) || (developerModeChangeForm.password.$dirty && developerModeChangeForm.password.$invalid) }">
-                            <label class="control-label" for="inputDeveloperModeChangePassword">Give your password to verify that you are performing that action</label>
+                            <label class="control-label" for="inputDeveloperModeChangePassword">Give your password to verify this action</label>
                             <div class="control-label" ng-show="(!developerModeChangeForm.password.$dirty && developerModeChange.error.password) || (developerModeChangeForm.password.$dirty && developerModeChangeForm.password.$invalid)">
                                 <small ng-show=" developerModeChangeForm.password.$dirty && developerModeChangeForm.password.$invalid">A password is required</small>
                                 <small ng-show="!developerModeChangeForm.password.$dirty && developerModeChange.error.password">Wrong password</small>
@@ -127,7 +127,7 @@
             The Cloudron <a href="https://cloudron.io/references/api.html" target="_blank">REST API</a> can be used to manage all aspects of the Cloudron like adding users and installing apps.
             <br/>
             <br/>
-            You can develop apps for the Cloudron using the <a href="https://cloudron.io/references/cli.html" target="_blank">CLI tool</a>. See the <a href="{{ config.webServerOrigin }}/documentation.html" target="_blank">docs</a> for more information.
+            You can develop apps for the Cloudron using the <a href="https://cloudron.io/references/cli.html" target="_blank">command-line tool</a>. See the <a href="{{ config.webServerOrigin }}/documentation.html" target="_blank">docs</a> for more information.
         </div>
     </div>
     <br/>

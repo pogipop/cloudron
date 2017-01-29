@@ -9,29 +9,29 @@
                     <fieldset>
                         <p class="has-error text-center" ng-show="dnsCredentials.error">{{ dnsCredentials.error }}</p>
 
-                        <div class="form-group" ng-class="{ 'has-error': dnsCredentialsForm.customDomainId.$invalid }" uib-tooltip="{{ config.provider === 'caas' ? '' : 'Currently domain change is not supported' }}">
-                            <label class="control-label" for="customDomainId">Domain Name</label>
+                        <div class="form-group" ng-class="{ 'has-error': dnsCredentialsForm.customDomainId.$invalid }" uib-tooltip="{{ config.provider === 'caas' ? '' : 'Changing the domain is not yet supported' }}">
+                            <label class="control-label" for="customDomainId">Domain name</label>
                             <input type="text" class="form-control" ng-model="dnsCredentials.customDomain" id="customDomainId" name="customDomainId" ng-disabled="dnsCredentials.busy || config.provider !== 'caas'" domain-validator placeholder="example.com" required autofocus>
                         </div>
 
                         <div class="form-group">
-                            <label class="control-label" for="dnsCredentialsProvider">DNS API Provider</label>
+                            <label class="control-label" for="dnsCredentialsProvider">DNS API provider</label>
                             <select class="form-control" id="dnsCredentialsProvider" ng-model="dnsCredentials.provider" ng-options="a.value as a.name for a in dnsProvider"></select>
                         </div>
 
                         <!-- Route53 -->
                         <div class="form-group" ng-class="{ 'has-error': false }" ng-show="dnsCredentials.provider === 'route53'">
-                            <label class="control-label" for="dnsCredentialsAccessKeyId">Access Key Id</label>
+                            <label class="control-label" for="dnsCredentialsAccessKeyId">Access key id</label>
                             <input type="text" class="form-control" ng-model="dnsCredentials.accessKeyId" id="dnsCredentialsAccessKeyId" name="accessKeyId" ng-disabled="dnsCredentials.busy" ng-minlength="16" ng-maxlength="32" ng-required="dnsCredentials.provider === 'route53'">
                         </div>
                         <div class="form-group" ng-class="{ 'has-error': false }" ng-show="dnsCredentials.provider === 'route53'">
-                            <label class="control-label" for="dnsCredentialsSecretAccessKey">Secret Access Key</label>
+                            <label class="control-label" for="dnsCredentialsSecretAccessKey">Secret access key</label>
                             <input type="text" class="form-control" ng-model="dnsCredentials.secretAccessKey" id="dnsCredentialsSecretAccessKey" name="secretAccessKey" ng-disabled="dnsCredentials.busy" ng-required="dnsCredentials.provider === 'route53'">
                         </div>
 
                         <!-- DigitalOcean -->
                         <div class="form-group" ng-class="{ 'has-error': false }" ng-show="dnsCredentials.provider === 'digitalocean'">
-                            <label class="control-label" for="dnsCredentialsDigitalOceanToken">API Token</label>
+                            <label class="control-label" for="dnsCredentialsDigitalOceanToken">API token</label>
                             <input type="text" class="form-control" ng-model="dnsCredentials.digitalOceanToken" id="dnsCredentialsDigitalOceanToken" name="digitalOceanToken" ng-disabled="dnsCredentials.busy" ng-required="dnsCredentials.provider === 'digitalocean'">
                         </div>
 
@@ -75,12 +75,12 @@
 
             <table width="100%">
                 <tr>
-                    <td class="text-muted" style="vertical-align: top;">Domain Name</td>
+                    <td class="text-muted" style="vertical-align: top;">Domain name</td>
                     <td class="text-right" style="vertical-align: top; white-space: nowrap;">{{ config.fqdn }}</td>
                 </tr>
 
                 <tr ng-hide="dnsConfig.provider === 'noop' || dnsConfig.provider === 'manual'">
-                    <td class="text-muted" style="vertical-align: top;">DNS Provider</td>
+                    <td class="text-muted" style="vertical-align: top;">DNS provider</td>
                     <td class="text-right" style="vertical-align: top; white-space: nowrap;">{{ dnsConfig.provider }}</td>
                 </tr>
 
@@ -107,16 +107,16 @@
                 </tr>
 
                 <tr ng-show="config.isCustomDomain && dnsConfig.provider === 'route53'">
-                    <td class="text-muted" style="vertical-align: top;">Access Key Id</td>
+                    <td class="text-muted" style="vertical-align: top;">Access key id</td>
                     <td class="text-right" style="vertical-align: top; white-space: nowrap;">{{ dnsConfig.accessKeyId || 'unset' }}</td>
                 </tr>
                 <tr ng-show="config.isCustomDomain && dnsConfig.provider === 'route53'">
-                    <td class="text-muted" style="vertical-align: top;">Secret Access Key</td>
+                    <td class="text-muted" style="vertical-align: top;">Secret access key</td>
                     <td class="text-right" style="vertical-align: top; white-space: nowrap;" ng-click-reveal="dnsConfig.secretAccessKey"><i>hidden</i></td>
                 </tr>
 
                 <tr ng-show="config.isCustomDomain && dnsConfig.provider === 'digitalocean'">
-                    <td class="text-muted" style="vertical-align: top;">API Token</td>
+                    <td class="text-muted" style="vertical-align: top;">API token</td>
                     <td class="text-right" style="vertical-align: top; white-space: nowrap;" ng-click-reveal="dnsConfig.token"><i>hidden</i></td>
                 </tr>
 
@@ -125,6 +125,7 @@
                     <td><br/></td>
                     <td></td>
                 </tr>
+
                 <tr>
                     <td class="text-muted" style="vertical-align: top;"></td>
                     <td class="text-right" style="vertical-align: top;"><button class="btn btn-outline btn-primary" ng-click="showChangeDnsCredentials()">Change</button></td>
@@ -151,10 +152,10 @@
         <div class="col-md-12">
             <form name="defaultCertForm" ng-submit="setDefaultCert()">
                 <fieldset>
-                    <p>By default, certificates are obtained via <a href="https://letsencrypt.org/" target="_blank">Let’s Encrypt</a>.</p>
+                    <p>Certificates are obtained via <a href="https://letsencrypt.org/" target="_blank">Let’s Encrypt</a>.</p>
                     <br/>
                     <label class="control-label" for="defaultCertInput">Fallback Certificate</label>
-                    <p>A wildcard certificate that will be used for apps, if getting a Let’s Encrypt certificate failed. This might be due to rate limits on Let’s Encrypt side.</p>
+                    <p>This wildcard certificate that will be used for apps, if getting a Let’s Encrypt certificate failed. This might be due to rate limits on Let’s Encrypt side.</p>
                     <div class="has-error text-center" ng-show="defaultCert.error">{{ defaultCert.error }}</div>
                     <div class="text-success text-center" ng-show="defaultCert.success"><b>Upload successful</b></div>
                     <div class="form-group" ng-class="{ 'has-error': (!defaultCert.cert.$dirty && defaultCert.error) }">

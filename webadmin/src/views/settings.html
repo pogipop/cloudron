@@ -70,10 +70,12 @@
                 The Cloudron will setup Email related DNS records automatically.
                 If this domain is already configured for Email with some other provider, it will <b>overwrite</b> those records, potentially breaking the setup.
                 Disabling Cloudron Email later will <b>not</b> put the old records back.
+                <br/>
+                <br/>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-success" ng-click="email.enable()">Enable</button>
+                <button type="button" class="btn btn-success" ng-click="email.enable()">I understand, enable</button>
             </div>
         </div>
     </div>
@@ -143,7 +145,7 @@
                 <h4 class="modal-title">Configure Backup Storage</h4>
             </div>
             <div class="modal-body">
-                <p>Only AWS S3 or API compatible services are supported. <sup><a ng-href="{{ config.webServerOrigin }}/references/selfhosting.html#backups" class="help" target="_blank"><i class="fa fa-question-circle"></i></a></sup></p>
+                <p>Only Amazon S3 or API compatible services are supported. <sup><a ng-href="{{ config.webServerOrigin }}/references/selfhosting.html#backups" class="help" target="_blank"><i class="fa fa-question-circle"></i></a></sup></p>
                 <form name="configureBackupForm" role="form" novalidate ng-submit="configureBackup.submit()" autocomplete="off">
                     <fieldset>
                         <p class="has-error text-center" ng-show="configureBackup.error">{{ configureBackup.error.generic }}</p>
@@ -160,27 +162,27 @@
                         </div>
 
                         <div class="form-group" ng-class="{ 'has-error': configureBackup.error.region }">
-                            <label class="control-label" for="inputConfigureBackupRegion">S3 Region</label>
+                            <label class="control-label" for="inputConfigureBackupRegion">Region</label>
                             <select class="form-control" name="region" id="inputConfigureBackupRegion" ng-model="configureBackup.region" ng-options="a.value as a.name for a in s3Regions" ng-disabled="configureBackup.busy" required></select>
                         </div>
 
                         <div class="form-group" ng-class="{ 'has-error': configureBackup.error.accessKeyId }">
-                            <label class="control-label" for="inputConfigureBackupAccessKeyId">Access Key Id</label>
+                            <label class="control-label" for="inputConfigureBackupAccessKeyId">Access key id</label>
                             <input type="text" class="form-control" ng-model="configureBackup.accessKeyId" id="inputConfigureBackupAccessKeyId" name="accessKeyId" ng-disabled="configureBackup.busy" required>
                         </div>
 
                         <div class="form-group" ng-class="{ 'has-error': configureBackup.error.secretAccessKey }">
-                            <label class="control-label" for="inputConfigureBackupSecretAccessKey">Secret Access Key</label>
+                            <label class="control-label" for="inputConfigureBackupSecretAccessKey">Secret access key</label>
                             <input type="text" class="form-control" ng-model="configureBackup.secretAccessKey" id="inputConfigureBackupSecretAccessKey" name="secretAccessKey" ng-disabled="configureBackup.busy" required>
                         </div>
 
                         <div class="form-group" ng-class="{ 'has-error': configureBackup.error.endpoint }">
                             <label class="control-label" for="inputConfigureBackupEndpoint">Endpoint (optional)</label>
-                            <input type="text" class="form-control" ng-model="configureBackup.endpoint" id="inputConfigureBackupEndpoint" name="endpoint" ng-disabled="configureBackup.busy" placeholder="URL of S3 compatible storage (Minio, Swift). Leave empty when using S3.">
+                            <input type="text" class="form-control" ng-model="configureBackup.endpoint" id="inputConfigureBackupEndpoint" name="endpoint" ng-disabled="configureBackup.busy" placeholder="URL of S3 compatible storage (Minio, Swift). Leave empty when using Amazon S3.">
                         </div>
 
                         <div class="form-group" ng-class="{ 'has-error': configureBackup.error.key }">
-                            <label class="control-label" for="inputConfigureBackupKey">Encryption Key (optional)</label>
+                            <label class="control-label" for="inputConfigureBackupKey">Encryption key (optional)</label>
                             <input type="text" class="form-control" ng-model="configureBackup.key" id="inputConfigureBackupKey" name="prefix" ng-disabled="configureBackup.busy" placeholder="Encryption key for all backups">
                         </div>
 
@@ -226,7 +228,7 @@
                     <td class="text-right" style="vertical-align: top; white-space: nowrap;">{{ config.cloudronName }} <a href="" ng-click="cloudronNameChange.show()"><i class="fa fa-pencil text-small"></i></a></td>
                 </tr>
                 <tr ng-show="appstoreConfig.profile">
-                    <td class="text-muted" style="vertical-align: top;">Appstore Account</td>
+                    <td class="text-muted" style="vertical-align: top;">App store account</td>
                     <td class="text-right" style="vertical-align: top; white-space: nowrap;">{{ appstoreConfig.profile.email }}</td>
                 </tr>
                 <tr ng-show="config.provider === 'caas'">
@@ -287,8 +289,11 @@
 <div class="card" style="margin-bottom: 15px;">
     <div class="row">
         <div class="col-md-12">
-            Cloudron has a built-in email server that allows users to send and receive email for your domain. Apps can still send email regardless of this setting.
-            The <a href="https://cloudron.io/references/usermanual.html#email" target="_blank">User manual</a> has information on how to setup your mail client.
+            Cloudron has a built-in email server that allows users to send and receive email for your domain.
+            The <a href="https://cloudron.io/references/usermanual.html#email" target="_blank">User manual</a> has information on how to setup email clients.
+            <br/>
+            <br/>
+            Apps can send email regardless of this setting. If this option is enabled, apps are able to receive emails.
         </div>
     </div>
     <br/>
@@ -354,7 +359,7 @@
 
     <div class="row">
         <div class="col-xs-6">
-            <span class="text-muted">Last Backup</span>
+            <span class="text-muted">Last backup</span>
         </div>
         <div class="col-xs-6 text-right">
             <span ng-show="lastBackup">{{ lastBackup.creationTime | prettyDate }}</span>
@@ -392,9 +397,8 @@
 <div class="card" style="margin-bottom: 15px;">
     <div class="row">
         <div class="col-md-12">
-            Configure the auto-update schedule for the platform and for the installed apps:<br/>
-            <br/>
-            <p class="text-danger text-center text-bold" ng-show="autoUpdate.error">{{ autoUpdate.error }}</p>
+            <p>Configure the auto-update schedule for the platform and the apps:</p>
+            <p class="text-danger" ng-show="autoUpdate.error"><br/>{{ autoUpdate.error }}</p>
         </div>
     </div>
 
