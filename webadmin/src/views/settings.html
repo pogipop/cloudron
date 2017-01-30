@@ -64,11 +64,11 @@
             <div class="modal-body" ng-show="dnsConfig.provider === 'noop'">
                 No DNS provider is setup. Required DNS records will be displayed and have to be manually setup.<br/>
                 <br/>
-                Contact us for help how to configure DNS manually by <a href="mailto:support@cloudron.io">Email</a> or <a href="https://chat.cloudron.io" target="_blank">Chat</a>
+                Contact us for help on how to configure DNS manually by <a href="mailto:support@cloudron.io">Email</a> or <a href="https://chat.cloudron.io" target="_blank">Chat</a>
             </div>
             <div class="modal-body" ng-show="dnsConfig.provider !== 'noop'">
                 The Cloudron will setup Email related DNS records automatically.
-                If this domain is already configured for Email with some other provider, it will <b>overwrite</b> those records, potentially breaking the setup.
+                If this domain is already configured to handle email with some other provider, it will <b>overwrite</b> those records.
                 Disabling Cloudron Email later will <b>not</b> put the old records back.
                 <br/>
                 <br/>
