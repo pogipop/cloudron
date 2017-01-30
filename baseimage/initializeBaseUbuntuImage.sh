@@ -64,6 +64,7 @@ apt-get -y --allow-downgrades install docker-engine=1.12.5-0~ubuntu-xenial # apt
 apt-mark hold docker-engine # do not update docker
 
 echo "==> Enable memory accounting"
+apt-get -y install grub2
 sed -e 's/^GRUB_CMDLINE_LINUX="\(.*\)"$/GRUB_CMDLINE_LINUX="\1 cgroup_enable=memory swapaccount=1 panic_on_oops=1 panic=5"/' -i /etc/default/grub
 update-grub
 
