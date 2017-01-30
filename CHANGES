@@ -731,3 +731,9 @@
 * Support all DNS providers for managed Cloudrons
 * Add granular configuration for auto-updates
 
+[0.99.0]
+* Fix bug where ports <= 1023 were not reserved
+* Cleanup graphs UI
+* Polish webadmin UI
+* Fix bug where hard disk size was detected incorrectly
+
