@@ -1,0 +1,14 @@
+# The default ubuntu unbound service uses SysV fallback mode, we want a proper unit file so unbound gets restarted correctly
+
+[Unit]
+Description=Unbound DNS Resolver
+After=network.target
+
+[Service]
+PIDFile=/run/unbound.pid
+ExecStart=/usr/sbin/unbound -d
+ExecReload=/bin/kill -HUP $MAINPID
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

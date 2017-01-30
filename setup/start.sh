@@ -166,22 +166,6 @@ echo "==> Setting up unbound"
 # We listen on 0.0.0.0 because there is no way control ordering of docker (which creates the 172.18.0.0/16) and unbound
 echo -e "server:\n\tinterface: 0.0.0.0\n\taccess-control: 127.0.0.1 allow\n\taccess-control: 172.18.0.1/16 allow" > /etc/unbound/unbound.conf.d/cloudron-network.conf
 
-# The default ubuntu unbound service uses SysV fallback mode, we want a proper unit file so unbound gets restarted correctly
-cat > "/etc/systemd/system/unbound.service" <<UNBOUND_END
-[Unit]
-Description=Unbound DNS Resolver
-After=network.target
-
-[Service]
-PIDFile=/run/unbound.pid
-ExecStart=/usr/sbin/unbound -d
-ExecReload=/bin/kill -HUP \$MAINPID
-Restart=always
-
-[Install]
-WantedBy=multi-user.target
-UNBOUND_END
-
 echo "==> Adding systemd services"
 cp -r "${script_dir}/start/systemd/." /etc/systemd/system/
 systemctl daemon-reload
