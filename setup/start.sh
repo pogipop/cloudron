@@ -67,12 +67,11 @@ echo "==> Configuring docker"
 cp "${script_dir}/start/docker-cloudron-app.apparmor" /etc/apparmor.d/docker-cloudron-app
 systemctl enable apparmor
 systemctl restart apparmor
-storage_driver=$([[ "${arg_provider}" == "scaleway" ]] && echo "overlay2" || echo "devicemapper")
 
 usermod ${USER} -a -G docker
 temp_file=$(mktemp)
 # create systemd drop-in. some apps do not work with aufs
-echo -e "[Service]\nExecStart=\nExecStart=/usr/bin/docker daemon -H fd:// --log-driver=journald --exec-opt native.cgroupdriver=cgroupfs --storage-driver=${storage_driver} --dns=172.18.0.1 --dns-search=." > "${temp_file}"
+echo -e "[Service]\nExecStart=\nExecStart=/usr/bin/docker daemon -H fd:// --log-driver=journald --exec-opt native.cgroupdriver=cgroupfs --storage-driver=devicemapper --dns=172.18.0.1 --dns-search=." > "${temp_file}"
 
 systemctl enable docker
 # restart docker if options changed
