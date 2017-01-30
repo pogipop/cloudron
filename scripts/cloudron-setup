@@ -20,7 +20,7 @@ readonly MINIMUM_MEMORY="990"      # this is mostly reported for 1GB main memory
 # copied from cloudron-resize-fs.sh
 readonly physical_memory=$(free -m | awk '/Mem:/ { print $2 }')
 readonly disk_device="$(for d in $(find /dev -type b); do [ "$(mountpoint -d /)" = "$(mountpoint -x $d)" ] && echo $d && break; done)"
-readonly disk_size_bytes=$(fdisk -l ${disk_device} | grep "Disk ${disk_device}" | awk '{ printf "%d", $5 }')
+readonly disk_size_bytes=$(fdisk -l ${disk_device} | grep "Disk ${disk_device}" | awk '{ printf $5 }')
 readonly disk_size_gb=$((${disk_size_bytes}/1024/1024/1024))
 
 # verify the system has minimum requirements met
