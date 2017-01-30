@@ -160,7 +160,7 @@
                 <p>You are logged into {{ activeClients.length + 1 }} app(s), including this session.</p>
                 <span ng-show="activeTokenCount > 1">
                     <hr/>
-                    <h4>Active Applications:</h4>
+                    <h4>Active Apps:</h4>
                     <p ng-repeat="client in activeClients"><b>{{ client.name }} - {{client.activeTokens.length}} time(s)</b></p>
                     <hr/>
                 </span>
