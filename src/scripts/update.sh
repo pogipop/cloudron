@@ -8,7 +8,7 @@ if [[ ${EUID} -ne 0 ]]; then
 fi
 
 readonly UPDATER_SERVICE="cloudron-updater"
-readonly DATA_FILE="/tmp/cloudron-update-data.json"
+readonly DATA_FILE="/root/cloudron-update-data.json"
 readonly curl="curl --fail --connect-timeout 20 --retry 10 --retry-delay 2 --max-time 300"
 
 if [[ $# == 1 && "$1" == "--check" ]]; then
