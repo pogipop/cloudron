@@ -56,16 +56,12 @@ echo "deb https://apt.dockerproject.org/repo ubuntu-xenial main" > /etc/apt/sour
 apt-get -y update
 
 # create systemd drop-in file
+storage_driver=$([[ "${arg_provider}" == "scaleway" ]] && echo "overlay2" || echo "devicemapper")
 mkdir -p /etc/systemd/system/docker.service.d
-echo -e "[Service]\nExecStart=\nExecStart=/usr/bin/docker daemon -H fd:// --log-driver=journald --exec-opt native.cgroupdriver=cgroupfs --storage-driver=devicemapper" > /etc/systemd/system/docker.service.d/cloudron.conf
+echo -e "[Service]\nExecStart=\nExecStart=/usr/bin/docker daemon -H fd:// --log-driver=journald --exec-opt native.cgroupdriver=cgroupfs --storage-driver=${storage_driver}" > /etc/systemd/system/docker.service.d/cloudron.conf
 
 apt-get -y install docker-engine=1.12.5-0~ubuntu-xenial # apt-cache madison docker-engine
 apt-mark hold docker-engine # do not update docker
-storage_driver=$(docker info | grep "Storage Driver" | sed 's/.*: //')
-if [[ "${storage_driver}" != "devicemapper" ]]; then
-    echo "Docker is using "${storage_driver}" instead of devicemapper"
-    exit 1
-fi
 
 echo "==> Enable memory accounting"
 sed -e 's/^GRUB_CMDLINE_LINUX="\(.*\)"$/GRUB_CMDLINE_LINUX="\1 cgroup_enable=memory swapaccount=1 panic_on_oops=1 panic=5"/' -i /etc/default/grub
