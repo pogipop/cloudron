@@ -54,16 +54,17 @@ echo "==> Installing Docker"
 apt-key adv --keyserver hkp://ha.pool.sks-keyservers.net:80 --recv-keys 58118E89F3A912897C070ADBF76221572C52609D
 echo "deb https://apt.dockerproject.org/repo ubuntu-xenial main" > /etc/apt/sources.list.d/docker.list
 apt-get -y update
+
+# create systemd drop-in file
+mkdir -p /etc/systemd/system/docker.service.d
+echo -e "[Service]\nExecStart=\nExecStart=/usr/bin/docker daemon -H fd:// --log-driver=journald --exec-opt native.cgroupdriver=cgroupfs --storage-driver=devicemapper" > /etc/systemd/system/docker.service.d/cloudron.conf
+
 apt-get -y install docker-engine=1.12.5-0~ubuntu-xenial # apt-cache madison docker-engine
-apt-mark hold docker-engine
+apt-mark hold docker-engine # do not update docker
 storage_driver=$(docker info | grep "Storage Driver" | sed 's/.*: //')
 if [[ "${storage_driver}" != "devicemapper" ]]; then
-    echo "Docker is using "${storage_driver}" instead of devicemapper. Trying to fix this."
-    systemctl stop docker
-    rm -rf /var/lib/docker
-    sed -e 's,^ExecStart=.*$,ExecStart=/usr/bin/docker daemon -H fd:// --log-driver=journald --exec-opt native.cgroupdriver=cgroupfs --storage-driver=devicemapper,' -i /lib/systemd/system/docker.service
-    systemctl daemon-reload
-    systemctl start docker
+    echo "Docker is using "${storage_driver}" instead of devicemapper"
+    exit 1
 fi
 
 echo "==> Enable memory accounting"

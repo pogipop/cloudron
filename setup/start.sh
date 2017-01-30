@@ -70,11 +70,13 @@ systemctl restart apparmor
 
 usermod ${USER} -a -G docker
 temp_file=$(mktemp)
-# some apps do not work with aufs
-sed -e 's,^ExecStart=.*$,ExecStart=/usr/bin/docker daemon -H fd:// --log-driver=journald --exec-opt native.cgroupdriver=cgroupfs --storage-driver=devicemapper --dns=172.18.0.1 --dns-search=.,' /lib/systemd/system/docker.service > "${temp_file}"
+# create systemd drop-in. some apps do not work with aufs
+echo -e "[Service]\nExecStart=\nExecStart=/usr/bin/docker daemon -H fd:// --log-driver=journald --exec-opt native.cgroupdriver=cgroupfs --storage-driver=devicemapper --dns=172.18.0.1 --dns-search=." > "${temp_file}"
+
 systemctl enable docker
-if ! diff -q /lib/systemd/system/docker.service "${temp_file}" >/dev/null; then
-    mv "${temp_file}" /lib/systemd/system/docker.service
+# restart docker if options changed
+if ! diff -q /etc/systemd/system/docker.service.d/cloudron.conf "${temp_file}" >/dev/null; then
+    mv "${temp_file}" /etc/systemd/system/docker.service.d/cloudron.conf
     systemctl daemon-reload
     systemctl restart docker
 fi
