@@ -116,8 +116,8 @@
                             </div>
                         </div>
 
-                        <p ng-show="appConfigure.app.manifest.addons.email" class="text-danger">
-                            This app only works if <a href="#/settings">Cloudron Email</a> is enabled.
+                        <p ng-show="!appConfigure.app.manifest.addons.email" class="text-danger">
+                            This app requires <a href="#/settings">Cloudron Email</a> to be enabled.
                         </p>
 
                         <a href="" ng-click="appConfigure.advancedVisible = true" ng-hide="appConfigure.advancedVisible">Advanced settings...</a>
