@@ -75,7 +75,8 @@ echo -e "[Service]\nExecStart=\nExecStart=/usr/bin/docker daemon -H fd:// --log-
 
 systemctl enable docker
 # restart docker if options changed
-if ! diff -q /etc/systemd/system/docker.service.d/cloudron.conf "${temp_file}" >/dev/null; then
+if [[ ! -f /etc/systemd/system/docker.service.d/cloudron.conf ]] || ! diff -q /etc/systemd/system/docker.service.d/cloudron.conf "${temp_file}" >/dev/null; then
+    mkdir -p /etc/systemd/system/docker.service.d
     mv "${temp_file}" /etc/systemd/system/docker.service.d/cloudron.conf
     systemctl daemon-reload
     systemctl restart docker
