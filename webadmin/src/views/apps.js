@@ -11,6 +11,7 @@ angular.module('Application').controller('AppsController', ['$scope', '$location
     $scope.groups = [];
     $scope.users = [];
     $scope.restartAppBusy = false;
+    $scope.mailConfig = {};
 
     $scope.appConfigure = {
         busy: false,
@@ -559,6 +560,14 @@ angular.module('Application').controller('AppsController', ['$scope', '$location
         });
     }
 
+    function getMailConfig() {
+        Client.getMailConfig(function (error, mailConfig) {
+            if (error) return console.error(error);
+
+            $scope.mailConfig = mailConfig;
+        });
+    }
+
     Client.onReady(function () {
         Client.refreshUserInfo(function (error) {
             if (error) return console.error(error);
@@ -567,6 +576,7 @@ angular.module('Application').controller('AppsController', ['$scope', '$location
                 fetchUsers();
                 fetchGroups();
                 fetchDnsConfig();
+                getMailConfig();
             }
         });
     });

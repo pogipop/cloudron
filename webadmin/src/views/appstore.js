@@ -18,6 +18,7 @@ angular.module('Application').controller('AppStoreController', ['$scope', '$loca
     $scope.searchString = '';
     $scope.validAppstoreAccount = false;
     $scope.appstoreConfig = null;
+    $scope.mailConfig = {};
 
     $scope.showRequestUpgrade = function () {
         // wait for dialog to be fully closed to avoid modal behavior breakage when moving to a different view already
@@ -542,6 +543,14 @@ angular.module('Application').controller('AppStoreController', ['$scope', '$loca
         });
     }
 
+    function getMailConfig() {
+        Client.getMailConfig(function (error, mailConfig) {
+            if (error) return console.error(error);
+
+            $scope.mailConfig = mailConfig;
+        });
+    }
+
     function init() {
         $scope.ready = false;
 
@@ -560,6 +569,7 @@ angular.module('Application').controller('AppStoreController', ['$scope', '$loca
             fetchUsers();
             fetchGroups();
             fetchDnsConfig();
+            getMailConfig();
 
             fetchAppstoreConfig(function (error) {
                 if (error) console.error(error);
