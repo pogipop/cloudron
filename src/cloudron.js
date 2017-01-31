@@ -71,8 +71,6 @@ var REBOOT_CMD = path.join(__dirname, 'scripts/reboot.sh'),
     UPDATE_CMD = path.join(__dirname, 'scripts/update.sh'),
     RETIRE_CMD = path.join(__dirname, 'scripts/retire.sh');
 
-var IP_BASED_SETUP_NAME = 'ip_based_setup'; // This will be used for cert and nginx config file names
-
 var NOOP_CALLBACK = function (error) { if (error) debug(error); };
 
 // result to not depend on the appstore
@@ -127,7 +125,7 @@ function initialize(callback) {
     async.series([
         installAppBundle,
         checkConfigState,
-        configurePlainIP
+        configureDefaultServer
     ], callback);
 }
 
@@ -215,27 +213,27 @@ function dnsSetup(dnsConfig, domain, callback) {
     });
 }
 
-function configurePlainIP(callback) {
+function configureDefaultServer(callback) {
     callback = callback || NOOP_CALLBACK;
 
-    debug('configurePlainIP: domain %s', config.fqdn());
+    debug('configureDefaultServer: domain %s', config.fqdn());
 
-    if (process.env.BOX_ENV === 'test' || config.fqdn()) return callback();
+    if (process.env.BOX_ENV === 'test') return callback();
 
-    var certFilePath = path.join(paths.NGINX_CERT_DIR, IP_BASED_SETUP_NAME + '.cert');
-    var keyFilePath = path.join(paths.NGINX_CERT_DIR, IP_BASED_SETUP_NAME + '.key');
+    var certFilePath = path.join(paths.NGINX_CERT_DIR,  'default.cert');
+    var keyFilePath = path.join(paths.NGINX_CERT_DIR, 'default.key');
 
     if (!fs.existsSync(certFilePath) || !fs.existsSync(keyFilePath)) {
-        debug('configurePlainIP: create new cert');
+        debug('configureDefaultServer: create new cert');
 
         var certCommand = util.format('openssl req -x509 -newkey rsa:2048 -keyout %s -out %s -days 3650 -subj /CN=%s -nodes', keyFilePath, certFilePath, 'localhost');
         safe.child_process.execSync(certCommand);
     }
 
-    nginx.configureAdmin(certFilePath, keyFilePath, IP_BASED_SETUP_NAME + '.conf', '', function (error) {
+    nginx.configureAdmin(certFilePath, keyFilePath, 'default.conf', '', function (error) {
         if (error) return callback(error);
 
-        debug('configurePlainIP: done');
+        debug('configureDefaultServer: done');
 
         callback(null);
     });
