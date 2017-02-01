@@ -736,4 +736,7 @@
 * Cleanup graphs UI
 * Polish webadmin UI
 * Fix bug where hard disk size was detected incorrectly
-* Use overlay2 as docker storage backend for scaleway
+
+[0.99.1]
+* Fix bug with duplicate nginx configs
+
