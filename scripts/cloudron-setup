@@ -47,8 +47,9 @@ requestedVersion="latest"
 apiServerOrigin="https://api.cloudron.io"
 dataJson=""
 prerelease=false
+sourceTarballUrl=""
 
-args=$(getopt -o "" -l "domain:,help,skip-baseimage-init,data:,provider:,encryption-key:,restore-url:,tls-provider:,version:,versions-url:,api-server:,dns-provider:,env:,prerelease" -n "$0" -- "$@")
+args=$(getopt -o "" -l "domain:,help,skip-baseimage-init,data:,provider:,encryption-key:,restore-url:,tls-provider:,version:,versions-url:,api-server:,dns-provider:,env:,prerelease,source-url:" -n "$0" -- "$@")
 eval set -- "${args}"
 
 while true; do
@@ -79,6 +80,7 @@ while true; do
     --skip-baseimage-init) initBaseImage="false"; shift;;
     --data) dataJson="$2"; shift 2;;
     --prerelease) prerelease="true"; shift;;
+    --source-url) sourceTarballUrl="$2"; version="0.0.1+custom"; shift 2;;
     --) break;;
     *) echo "Unknown option $1"; exit 1;;
     esac
@@ -138,16 +140,18 @@ if [[ "${initBaseImage}" == "true" ]]; then
 fi
 
 echo "=> Checking version"
-releaseJson=$(curl -s "${versionsUrl}")
-if [[ "$requestedVersion" == "latest" ]]; then
-    pre=$([[ "${prerelease}" == "true" ]] && echo "null" || echo "-pre")
-    version=$(echo "${releaseJson}" | python3 -c "import json,sys,collections;obj=json.load(sys.stdin, object_pairs_hook=collections.OrderedDict);latest=list(v for v in obj if '${pre}' not in v)[-1];print(latest)")
-else
-    version="${requestedVersion}"
-fi
-if ! sourceTarballUrl=$(echo "${releaseJson}" | python3 -c 'import json,sys;obj=json.load(sys.stdin);print(obj[sys.argv[1]]["sourceTarballUrl"])' "${version}"); then
-    echo "No source code for version ${requestedVersion}"
-    exit 1
+if [[ "${sourceTarballUrl}" == "" ]]; then
+    releaseJson=$(curl -s "${versionsUrl}")
+    if [[ "$requestedVersion" == "latest" ]]; then
+        pre=$([[ "${prerelease}" == "true" ]] && echo "null" || echo "-pre")
+        version=$(echo "${releaseJson}" | python3 -c "import json,sys,collections;obj=json.load(sys.stdin, object_pairs_hook=collections.OrderedDict);latest=list(v for v in obj if '${pre}' not in v)[-1];print(latest)")
+    else
+        version="${requestedVersion}"
+    fi
+    if ! sourceTarballUrl=$(echo "${releaseJson}" | python3 -c 'import json,sys;obj=json.load(sys.stdin);print(obj[sys.argv[1]]["sourceTarballUrl"])' "${version}"); then
+        echo "No source code for version ${requestedVersion}"
+        exit 1
+    fi
 fi
 
 # Build data
