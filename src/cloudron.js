@@ -155,6 +155,7 @@ function onConfigured(callback) {
     gConfigState.configured = true;
 
     platform.events.on(platform.EVENT_READY, onPlatformReady);
+    settings.events.on(settings.DNS_CONFIG_KEY, function () { refreshDNS(); });
 
     async.series([
         clients.addDefaultClients,
