@@ -477,7 +477,8 @@ function sendAliveStatus(callback) {
             },
             mailConfig: {
                 enabled: result[settings.MAIL_CONFIG_KEY].enabled
-            }
+            },
+            autoupdatePattern: result[settings.AUTOUPDATE_PATTERN_KEY]
         };
 
         // Caas Cloudrons do not store appstore credentials in their local database
