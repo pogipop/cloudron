@@ -2,30 +2,23 @@
 
 set -eu
 
-assertNotEmpty() {
-    : "${!1:? "$1 is not set."}"
-}
-
 # Only GNU getopt supports long options. OS X comes bundled with the BSD getopt
 # brew install gnu-getopt to get the GNU getopt on OS X
 [[ $(uname -s) == "Darwin" ]] && GNU_GETOPT="/usr/local/opt/gnu-getopt/bin/getopt" || GNU_GETOPT="getopt"
 readonly GNU_GETOPT
 
-args=$(${GNU_GETOPT} -o "" -l "revision:,output:,no-upload" -n "$0" -- "$@")
+args=$(${GNU_GETOPT} -o "" -l "revision:,output:" -n "$0" -- "$@")
 eval set -- "${args}"
 
 readonly SOURCE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
-delete_bundle="yes"
 commitish="HEAD"
-upload="yes"
 bundle_file=""
 
 while true; do
     case "$1" in
     --revision) commitish="$2"; shift 2;;
-    --output) bundle_file="$2"; delete_bundle="no"; shift 2;;
-    --no-upload) upload="no"; shift;;
+    --output) bundle_file="$2"; shift 2;;
     --) break;;
     *) echo "Unknown option $1"; exit 1;;
     esac
@@ -90,21 +83,5 @@ echo "Create final tarball"
 echo "Cleaning up ${bundle_dir}"
 rm -rf "${bundle_dir}"
 
-if [[ "${upload}" == "yes" ]]; then
-    echo "Uploading bundle to S3"
+echo "Tarball saved at ${bundle_file}"
 
-    assertNotEmpty AWS_DEV_ACCESS_KEY
-    assertNotEmpty AWS_DEV_SECRET_KEY
-
-    # That special header is needed to allow access with singed urls created with different aws credentials than the ones the file got uploaded
-    s3cmd --multipart-chunk-size-mb=5 --ssl --acl-public --access_key="${AWS_DEV_ACCESS_KEY}" --secret_key="${AWS_DEV_SECRET_KEY}" --no-mime-magic put "${bundle_file}" "s3://dev-cloudron-releases/box-${version}.tar.gz"
-
-    versions_file_url="https://dev-cloudron-releases.s3.amazonaws.com/box-${version}.tar.gz"
-    echo "The URL for the versions file is: ${versions_file_url}"
-fi
-
-if [[ "${delete_bundle}" == "no" ]]; then
-    echo "Tarball preserved at ${bundle_file}"
-else
-    rm "${bundle_file}"
-fi
