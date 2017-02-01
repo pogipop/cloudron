@@ -230,6 +230,8 @@ function configureDefaultServer(callback) {
         safe.child_process.execSync(certCommand);
     }
 
+    safe.fs.unlinkSync(path.join(paths.NGINX_APPCONFIG_DIR,'ip_based_setup.conf'));
+
     nginx.configureAdmin(certFilePath, keyFilePath, 'default.conf', '', function (error) {
         if (error) return callback(error);
 
