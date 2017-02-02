@@ -151,6 +151,9 @@ function getCloudronAvatar(req, res, next) {
 }
 
 function getEmailDnsRecords(req, res, next) {
+
+    req.clearTimeout();
+
     settings.getEmailDnsRecords(function (error, records) {
         if (error) return next(new HttpError(500, error));
 

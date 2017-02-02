@@ -267,7 +267,7 @@ function getEmailDnsRecords(callback) {
         });
     }
 
-    dns.platform.timeout = 8000;
+    dns.platform.timeout = 5000; // hack so that each query finish in 5 seconds
 
     async.series([
         checkMx,
