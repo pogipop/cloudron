@@ -141,14 +141,14 @@ function getEmailDnsRecords(callback) {
 
     function checkDkim(callback) {
         records.dkim = {
-            subdomain: constants.DKIM_SELECTOR + '._domainkey',
+            domain: constants.DKIM_SELECTOR + '._domainkey.' + config.fqdn(),
             type: 'TXT',
             expected: 'v=DKIM1; t=s; p=' + dkimKey,
             value: null,
             status: false
         };
 
-        dns.resolveTxt(records.dkim.subdomain + '.' + config.fqdn(), function (error, txtRecords) {
+        dns.resolveTxt(records.dkim.domain, function (error, txtRecords) {
             if (error && error.code === 'ENOTFOUND') return callback(null);    // not setup
             if (error) return callback(error);
 
@@ -164,7 +164,7 @@ function getEmailDnsRecords(callback) {
 
     function checkSpf(callback) {
         records.spf = {
-            subdomain: '',
+            domain: config.fqdn(),
             type: 'TXT',
             value: null,
             expected: null,
@@ -172,7 +172,7 @@ function getEmailDnsRecords(callback) {
         };
 
         // check if SPF is already setup
-        dns.resolveTxt(config.fqdn(), function (error, txtRecords) {
+        dns.resolveTxt(records.spf.domain, function (error, txtRecords) {
             if (error && error.code === 'ENOTFOUND') return callback(null);    // not setup
             if (error) return callback(error);
 
@@ -201,14 +201,14 @@ function getEmailDnsRecords(callback) {
 
     function checkMx(callback) {
         records.mx = {
-            subdomain: '',
+            domain: config.fqdn(),
             type: 'MX',
             value: null,
             expected: '10 ' + config.mailFqdn(),
             status: false
         };
 
-        dns.resolveMx(config.fqdn(), function (error, mxRecords) {
+        dns.resolveMx(records.mx.domain, function (error, mxRecords) {
             if (error && error.code === 'ENOTFOUND') return callback(null);    // not setup
             if (error) return callback(error);
 
@@ -221,14 +221,14 @@ function getEmailDnsRecords(callback) {
 
     function checkDmarc(callback) {
         records.dmarc = {
-            subdomain: '_dmarc',
+            domain: '_dmarc.' + config.fqdn(),
             type: 'TXT',
             value: null,
             expected: 'v=DMARC1; p=reject; pct=100',
             status: false
         };
 
-        dns.resolveTxt(records.dmarc.subdomain + '.' + config.fqdn(), function (error, txtRecords) {
+        dns.resolveTxt(records.dmarc.domain, function (error, txtRecords) {
             if (error && error.code === 'ENOTFOUND') return callback(null);    // not setup
             if (error) return callback(error);
 
@@ -243,7 +243,7 @@ function getEmailDnsRecords(callback) {
 
     function checkPtr(callback) {
         records.ptr = {
-            subdomain: '',
+            domain: null,
             type: 'PTR',
             value: null,
             expected: config.mailFqdn(),
@@ -252,6 +252,8 @@ function getEmailDnsRecords(callback) {
 
         sysinfo.getIp(function (error, ip) {
             if (error) return callback(error);
+
+            records.ptr.domain = ip.split('.').reverse().join('.') + '.in-addr.arpa';
 
             dns.reverse(ip, function (error, records) {
                 if (error && error.code === 'ENOTFOUND') return callback(null);    // not setup

@@ -299,7 +299,7 @@
     <br/>
     <div class="row">
         <div class="col-md-12" ng-show="mailConfig.enabled && (dnsConfig.provider === 'noop' || dnsConfig.provider === 'manual')">
-            Set the following DNS records for <b><tt>{{ config.fqdn }}</tt></b> to guarantee email functionality.
+            Set the following DNS records to guarantee email functionality.
 
             <div ng-repeat="record in expectedDnsRecordsTypes">
                <div class="row">
@@ -311,7 +311,7 @@
                         <a href="" data-toggle="collapse" data-parent="#accordion" data-target="#collapse_dns_{{ record.value }}">Advanced</a>
                         <div id="collapse_dns_{{ record.value }}" class="panel-collapse collapse">
                             <div class="panel-body">
-                                <p>Subdomain: <b ng-click-select><tt>{{ expectedDnsRecords[record.value].subdomain }}</tt></b></p>
+                                <p>Domain: <b ng-click-select><tt>{{ expectedDnsRecords[record.value].domain }}</tt></b></p>
                                 <p>Record type: <b ng-click-select><tt>{{ expectedDnsRecords[record.value].type }}</tt></b></p>
                                 <p style="overflow: auto; white-space: nowrap;">Expected value: <b ng-click-select><tt>{{ expectedDnsRecords[record.value].expected }}</tt></b></p>
                                 <p style="overflow: auto; white-space: nowrap;">Current value: <b ng-click-select><tt>{{ expectedDnsRecords[record.value].value ? expectedDnsRecords[record.value].value : '[not set]' }}</tt></b></p>
