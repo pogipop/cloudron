@@ -70,16 +70,22 @@ angular.module('Application').controller('MainController', ['$scope', '$route', 
     };
 
     function runConfigurationChecks() {
-        // Check if all email DNS records are set up properly
-        Client.getExpectedDnsRecords(function (error, result) {
+        // Check if all email DNS records are set up properly for non external DNS API
+        Client.getDnsConfig(function (error, result) {
             if (error) return console.error(error);
 
-            if (!result.spf.status || !result.dkim.status) {
-                var actionScope = $scope.$new(true);
-                actionScope.action = '/#/settings';
+            if (result.provider !== 'manual' && result.provider !== 'noop') return;
 
-                Client.notify('DNS Configuration', 'Please setup all required DNS records to guarantee correct mail delivery', true, 'info', actionScope);
-            }
+            Client.getExpectedDnsRecords(function (error, result) {
+                if (error) return console.error(error);
+
+                if (!result.spf.status || !result.dkim.status) {
+                    var actionScope = $scope.$new(true);
+                    actionScope.action = '/#/settings';
+
+                    Client.notify('DNS Configuration', 'Please setup all required DNS records to guarantee correct mail delivery', true, 'info', actionScope);
+                }
+            });
         });
     }
 
