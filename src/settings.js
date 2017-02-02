@@ -212,6 +212,9 @@ function getEmailDnsRecords(callback) {
             if (error && error.code === 'ENOTFOUND') return callback(null);    // not setup
             if (error) return callback(error);
 
+            // ensure this is an array resolveMx() returns undefined if no records are found
+            mxRecords = mxRecords || [];
+
             records.mx.status = mxRecords.length == 1 && mxRecords[0].exchange === config.mailFqdn();
             records.mx.value = mxRecords.map(function (r) { return r.priority + ' ' + r.exchange; }).join(' ');
 
