@@ -269,14 +269,24 @@ function getEmailDnsRecords(callback) {
 
     dns.platform.timeout = 5000; // hack so that each query finish in 5 seconds
 
+    function ignoreError(func) {
+        return function (callback) {
+            func(function (error) {
+                if (error) console.error('Ignored error:', error);
+
+                callback();
+            });
+        };
+    }
+
     async.series([
-        checkMx,
-        checkSpf,
-        checkDmarc,
-        checkDkim,
-        checkPtr
-    ], function (error) {
-        callback(error, records);
+        ignoreError(checkMx),
+        ignoreError(checkSpf),
+        ignoreError(checkDmarc),
+        ignoreError(checkDkim),
+        ignoreError(checkPtr)
+    ], function () {
+        callback(null, records);
     });
 }
 
