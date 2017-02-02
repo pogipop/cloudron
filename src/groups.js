@@ -60,7 +60,7 @@ GroupError.NOT_ALLOWED = 'Not Allowed';
 function validateGroupname(name) {
     assert.strictEqual(typeof name, 'string');
 
-    if (name.length < 2) return new GroupError(GroupError.BAD_FIELD, 'name must be atleast 2 chars');
+    if (name.length < 1) return new GroupError(GroupError.BAD_FIELD, 'name must be atleast 1 char');
     if (name.length >= 200) return new GroupError(GroupError.BAD_FIELD, 'name too long');
 
     if (constants.RESERVED_NAMES.indexOf(name) !== -1) return new GroupError(GroupError.BAD_FIELD, 'name is reserved');

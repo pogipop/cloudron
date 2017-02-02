@@ -42,7 +42,7 @@ function create(req, res, next) {
     var password = generatePassword();
     var email = req.body.email;
     var sendInvite = req.body.invite;
-    var username = req.body.username || '';
+    var username = 'username' in req.body ? req.body.username : null;
     var displayName = req.body.displayName || '';
 
     user.create(username, password, email, displayName, auditSource(req), { invitor: req.user, sendInvite: sendInvite }, function (error, user) {

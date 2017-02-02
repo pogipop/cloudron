@@ -89,10 +89,8 @@ UserError.BAD_TOKEN = 'Bad token';
 // keep this in sync with validateGroupname
 function validateUsername(username) {
     assert.strictEqual(typeof username, 'string');
-    // allow empty usernames
-    if (username === '') return null;
 
-    if (username.length <= 1) return new UserError(UserError.BAD_FIELD, 'Username must be atleast 2 chars');
+    if (username.length < 1) return new UserError(UserError.BAD_FIELD, 'Username must be atleast 1 char');
     if (username.length >= 200) return new UserError(UserError.BAD_FIELD, 'Username too long');
 
     if (constants.RESERVED_NAMES.indexOf(username) !== -1) return new UserError(UserError.BAD_FIELD, 'Username is reserved');
@@ -129,7 +127,7 @@ function validateDisplayName(name) {
 }
 
 function createUser(username, password, email, displayName, auditSource, options, callback) {
-    assert.strictEqual(typeof username, 'string');
+    assert(username === null || typeof username === 'string');
     assert.strictEqual(typeof password, 'string');
     assert.strictEqual(typeof email, 'string');
     assert.strictEqual(typeof displayName, 'string');
@@ -144,16 +142,18 @@ function createUser(username, password, email, displayName, auditSource, options
         sendInvite = options && options.sendInvite ? true : false,
         owner = options && options.owner ? true : false;
 
-    // We store usernames and email in lowercase
-    username = username.toLowerCase();
-    email = email.toLowerCase();
+    var error;
 
-    var error = validateUsername(username);
-    if (error) return callback(error);
+    if (username !== null) {
+        username = username.toLowerCase();
+        error = validateUsername(username);
+        if (error) return callback(error);
+    }
 
     error = validatePassword(password);
     if (error) return callback(new UserError(UserError.BAD_FIELD, error.message));
 
+    email = email.toLowerCase();
     error = validateEmail(email);
     if (error) return callback(error);
 

@@ -28,9 +28,6 @@ var USERS_FIELDS = [ 'id', 'username', 'email', 'password', 'salt', 'createdAt',
 function postProcess(result) {
     assert.strictEqual(typeof result, 'object');
 
-    // The username may be null or undefined in the db, let's ensure it is a string
-    result.username = result.username || '';
-
     return result;
 }
 
@@ -129,7 +126,7 @@ function getAllAdmins(callback) {
 
 function add(userId, user, callback) {
     assert.strictEqual(typeof userId, 'string');
-    assert.strictEqual(typeof user.username, 'string');
+    assert(user.username === null || typeof user.username === 'string');
     assert.strictEqual(typeof user.password, 'string');
     assert.strictEqual(typeof user.email, 'string');
     assert.strictEqual(typeof user.salt, 'string');
@@ -139,7 +136,7 @@ function add(userId, user, callback) {
     assert.strictEqual(typeof user.displayName, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    var data = [ userId, user.username || null, user.password, user.email, user.salt, user.createdAt, user.modifiedAt, user.resetToken, user.displayName ];
+    var data = [ userId, user.username, user.password, user.email, user.salt, user.createdAt, user.modifiedAt, user.resetToken, user.displayName ];
     database.query('INSERT INTO users (id, username, password, email, salt, createdAt, modifiedAt, resetToken, displayName) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', data, function (error, result) {
         if (error && error.code === 'ER_DUP_ENTRY') {
             var msg = error.message;
@@ -208,8 +205,8 @@ function update(userId, user, callback) {
         fields.push(k + ' = ?');
 
         if (k === 'username') {
-            assert.strictEqual(typeof user.username, 'string');
-            args.push(user.username || null);
+            assert(user.username === null || typeof user.username === 'string');
+            args.push(user.username);
         } else if (k === 'email') {
             assert.strictEqual(typeof user.email, 'string');
             args.push(user.email);

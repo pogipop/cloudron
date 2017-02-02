@@ -54,7 +54,7 @@ describe('Groups', function () {
     after(cleanup);
 
     it('cannot create group - too small', function (done) {
-        groups.create('a', function (error) {
+        groups.create('', function (error) {
             expect(error.reason).to.be(GroupError.BAD_FIELD);
             done();
         });
