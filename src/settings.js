@@ -255,11 +255,11 @@ function getEmailDnsRecords(callback) {
 
             records.ptr.domain = ip.split('.').reverse().join('.') + '.in-addr.arpa';
 
-            dns.reverse(ip, function (error, records) {
+            dns.reverse(ip, function (error, ptrRecords) {
                 if (error && error.code === 'ENOTFOUND') return callback(null);    // not setup
                 if (error) return callback(error);
 
-                records.ptr.value = records.join(' ');
+                records.ptr.value = ptrRecords.join(' ');
                 records.ptr.status = records.ptr.value === config.mailFqdn();
 
                 return callback();
