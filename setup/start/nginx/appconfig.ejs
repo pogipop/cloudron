@@ -26,7 +26,7 @@ server {
     ssl_prefer_server_ciphers on;
     ssl_protocols TLSv1 TLSv1.1 TLSv1.2; # don't use SSLv3 ref: POODLE
     ssl_ciphers 'EECDH+AESGCM:EDH+AESGCM:AES256+EECDH:AES256+EDH';
-    add_header Strict-Transport-Security "max-age=15768000; includeSubDomains";
+    add_header Strict-Transport-Security "max-age=15768000";
 
     # https://developer.mozilla.org/en-US/docs/Web/HTTP/X-Frame-Options
     add_header X-Frame-Options "<%= xFrameOptions %>";
