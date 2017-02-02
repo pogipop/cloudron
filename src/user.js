@@ -657,6 +657,8 @@ function getAliases(userId, callback) {
         if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new UserError(UserError.NOT_FOUND));
         if (error) return callback(new UserError(UserError.INTERNAL_ERROR, error));
 
+        if (!user.username) return callback(null, [ ]);
+
         mailboxdb.getAliasesForName(user.username, function (error, aliases) {
             if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new UserError(UserError.NOT_FOUND));
             if (error) return callback(new UserError(UserError.INTERNAL_ERROR, error));
