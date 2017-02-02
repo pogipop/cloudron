@@ -93,7 +93,7 @@
                     <td class="text-right" style="vertical-align: top; white-space: nowrap;">{{ config.fqdn }}</td>
                 </tr>
 
-                <tr ng-hide="dnsConfig.provider === 'noop' || dnsConfig.provider === 'manual'">
+                <tr>
                     <td class="text-muted" style="vertical-align: top;">DNS provider</td>
                     <td class="text-right" style="vertical-align: top; white-space: nowrap;">{{ dnsConfig.provider }}</td>
                 </tr>
@@ -101,8 +101,8 @@
                 <tr ng-show="dnsConfig.provider === 'manual' && !dnsConfig.wildcard">
                     <td colspan="2">
                         <br/>
-                        No DNS provider configured. All DNS records need to be setup manually.
-                        To avoid manual setup for each installed app, setup a wildcard DNS record or configure an external DNS provider.
+                        No DNS provider is configured. All DNS records need to be setup manually.
+                        To avoid manual setup for each installed app, set a DNS API provider.
                     </td>
                 </tr>
 
