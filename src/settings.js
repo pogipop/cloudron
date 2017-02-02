@@ -167,7 +167,7 @@ function getEmailDnsRecords(callback) {
             domain: config.fqdn(),
             type: 'TXT',
             value: null,
-            expected: null,
+            expected: 'v=spf1 a:' + config.adminFqdn() + ' ~all',
             status: false
         };
 
@@ -189,9 +189,7 @@ function getEmailDnsRecords(callback) {
 
             if (records.spf.status) {
                 records.spf.expected = records.spf.value;
-            } else if (i === txtRecords.length) {
-                records.spf.expected = 'v=spf1 a:' + config.adminFqdn() + ' ~all';
-            } else {
+            } else if (i !== txtRecords.length) {
                 records.spf.expected = 'v=spf1 a:' + config.adminFqdn() + ' ' + records.spf.value.slice('v=spf1 '.length);
             }
 
