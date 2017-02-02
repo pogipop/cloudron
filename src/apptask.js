@@ -213,15 +213,14 @@ function downloadIcon(app, callback) {
     }, callback);
 }
 
-function registerSubdomain(app, callback) {
+function registerSubdomain(app, overwrite, callback) {
     assert.strictEqual(typeof app, 'object');
+    assert.strictEqual(typeof overwrite, 'boolean');
     assert.strictEqual(typeof callback, 'function');
 
     sysinfo.getIp(function (error, ip) {
         if (error) return callback(error);
 
-        // even though the bare domain is already registered in the appstore, we still
-        // need to register it so that we have a dnsRecordId to wait for it to complete
         async.retry({ times: 200, interval: 5000 }, function (retryCallback) {
             debugApp(app, 'Registering subdomain location [%s]', app.location);
 
@@ -231,7 +230,7 @@ function registerSubdomain(app, callback) {
 
                 // refuse to update any existing DNS record for custom domains that we did not create
                 // note that the appstore sets up the naked domain for non-custom domains
-                if (config.isCustomDomain() && values.length !== 0 && !app.dnsRecordId) return retryCallback(null, new Error('DNS Record already exists'));
+                if (config.isCustomDomain() && values.length !== 0 && !overwrite) return retryCallback(null, new Error('DNS Record already exists'));
 
                 subdomains.upsert(app.location, 'A', [ ip ], function (error, changeId) {
                     if (error && (error.reason === SubdomainError.STILL_BUSY || error.reason === SubdomainError.EXTERNAL_ERROR)) return retryCallback(error); // try again
@@ -363,7 +362,7 @@ function install(app, callback) {
         downloadIcon.bind(null, app),
 
         updateApp.bind(null, app, { installationProgress: '30, Registering subdomain' }),
-        registerSubdomain.bind(null, app),
+        registerSubdomain.bind(null, app, false /* overwrite */),
 
         updateApp.bind(null, app, { installationProgress: '40, Downloading image' }),
         docker.downloadImage.bind(null, app.manifest),
@@ -462,7 +461,7 @@ function restore(app, callback) {
         downloadIcon.bind(null, app),
 
         updateApp.bind(null, app, { installationProgress: '55, Registering subdomain' }), // ip might change during upgrades
-        registerSubdomain.bind(null, app),
+        registerSubdomain.bind(null, app, true /* overwrite */),
 
         updateApp.bind(null, app, { installationProgress: '60, Downloading image' }),
         docker.downloadImage.bind(null, app.manifest),
@@ -525,7 +524,7 @@ function configure(app, callback) {
         reserveHttpPort.bind(null, app),
 
         updateApp.bind(null, app, { installationProgress: '35, Registering subdomain' }),
-        registerSubdomain.bind(null, app),
+        registerSubdomain.bind(null, app, true /* overwrite */),
 
         // re-setup addons since they rely on the app's fqdn (e.g oauth)
         updateApp.bind(null, app, { installationProgress: '50, Setting up addons' }),

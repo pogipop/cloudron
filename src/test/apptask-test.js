@@ -214,7 +214,7 @@ describe('apptask', function () {
             .post('/2013-04-01/hostedzone/ZONEID/rrset/')
             .reply(200, js2xml('ChangeResourceRecordSetsResponse', { ChangeInfo: { Id: 'RRID', Status: 'INSYNC' } }));
 
-        apptask._registerSubdomain(APP, function (error) {
+        apptask._registerSubdomain(APP, true /* overwrite */, function (error) {
             expect(error).to.be(null);
             expect(awsScope.isDone()).to.be.ok();
             done();
