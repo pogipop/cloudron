@@ -740,3 +740,7 @@
 [0.99.1]
 * Fix bug with duplicate nginx configs
 
+[0.100.0]
+* Improve DNS notifications for email
+* Do not enable HSTS for subdomains
+
