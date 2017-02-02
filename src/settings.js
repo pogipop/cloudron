@@ -139,7 +139,7 @@ function getEmailDnsRecords(callback) {
     var dkimKey = cloudron.readDkimPublicKeySync();
     if (!dkimKey) return callback(new CloudronError(CloudronError.INTERNAL_ERROR, new Error('Failed to read dkim public key')));
 
-    function checkDkim(callback) {
+    function checkDkim(ns, callback) {
         records.dkim = {
             domain: constants.DKIM_SELECTOR + '._domainkey.' + config.fqdn(),
             type: 'TXT',
@@ -148,7 +148,7 @@ function getEmailDnsRecords(callback) {
             status: false
         };
 
-        dns.resolveTxt(records.dkim.domain, function (error, txtRecords) {
+        dns.resolve(records.dkim.domain, 'TXT', ns, function (error, txtRecords) {
             if (error && error.code === 'ENOTFOUND') return callback(null);    // not setup
             if (error) return callback(error);
 
@@ -162,7 +162,7 @@ function getEmailDnsRecords(callback) {
         });
     }
 
-    function checkSpf(callback) {
+    function checkSpf(ns, callback) {
         records.spf = {
             domain: config.fqdn(),
             type: 'TXT',
@@ -172,7 +172,7 @@ function getEmailDnsRecords(callback) {
         };
 
         // check if SPF is already setup
-        dns.resolveTxt(records.spf.domain, function (error, txtRecords) {
+        dns.resolve(records.spf.domain, 'TXT', ns, function (error, txtRecords) {
             if (error && error.code === 'ENOTFOUND') return callback(null);    // not setup
             if (error) return callback(error);
 
@@ -199,7 +199,7 @@ function getEmailDnsRecords(callback) {
         });
     }
 
-    function checkMx(callback) {
+    function checkMx(ns, callback) {
         records.mx = {
             domain: config.fqdn(),
             type: 'MX',
@@ -208,7 +208,7 @@ function getEmailDnsRecords(callback) {
             status: false
         };
 
-        dns.resolveMx(records.mx.domain, function (error, mxRecords) {
+        dns.resolve(records.mx.domain, 'MX', ns, function (error, mxRecords) {
             if (error && error.code === 'ENOTFOUND') return callback(null);    // not setup
             if (error) return callback(error);
 
@@ -222,7 +222,7 @@ function getEmailDnsRecords(callback) {
         });
     }
 
-    function checkDmarc(callback) {
+    function checkDmarc(ns, callback) {
         records.dmarc = {
             domain: '_dmarc.' + config.fqdn(),
             type: 'TXT',
@@ -231,7 +231,7 @@ function getEmailDnsRecords(callback) {
             status: false
         };
 
-        dns.resolveTxt(records.dmarc.domain, function (error, txtRecords) {
+        dns.resolve(records.dmarc.domain, 'TXT', ns, function (error, txtRecords) {
             if (error && error.code === 'ENOTFOUND') return callback(null);    // not setup
             if (error) return callback(error);
 
@@ -270,8 +270,6 @@ function getEmailDnsRecords(callback) {
         });
     }
 
-    dns.platform.timeout = 5000; // hack so that each query finish in 5 seconds
-
     function ignoreError(what, func) {
         return function (callback) {
             func(function (error) {
@@ -282,11 +280,14 @@ function getEmailDnsRecords(callback) {
         };
     }
 
+    dns.platform.timeout = 5000; // hack so that each query finish in 5 seconds. this applies to _each_ ns
+    var ns = [ '127.0.0.1' ]; // unbound
+
     async.parallel([
-        ignoreError('mx', checkMx),
-        ignoreError('spf', checkSpf),
-        ignoreError('dmarc', checkDmarc),
-        ignoreError('dkim', checkDkim),
+        ignoreError('mx', checkMx.bind(null, ns)),
+        ignoreError('spf', checkSpf.bind(null, ns)),
+        ignoreError('dmarc', checkDmarc.bind(null, ns)),
+        ignoreError('dkim', checkDkim.bind(null, ns)),
         ignoreError('ptr', checkPtr)
     ], function () {
         callback(null, records);
