@@ -87,7 +87,7 @@ angular.module('Application').controller('UsersController', ['$scope', '$locatio
             $scope.useradd.error.username = null;
             $scope.useradd.error.displayName = null;
 
-            Client.createUser($scope.useradd.username, $scope.useradd.email, $scope.useradd.displayName, $scope.useradd.sendInvite, function (error) {
+            Client.createUser($scope.useradd.username || null, $scope.useradd.email, $scope.useradd.displayName, $scope.useradd.sendInvite, function (error) {
                 $scope.useradd.busy = false;
 
                 if (error && error.statusCode === 409) {

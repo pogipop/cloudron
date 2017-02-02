@@ -791,11 +791,12 @@ angular.module('Application').service('Client', ['$http', 'md5', 'Notification',
 
     Client.prototype.createUser = function (username, email, displayName, sendInvite, callback) {
         var data = {
-            username: username,
             email: email,
             displayName: displayName,
             invite: !!sendInvite
         };
+
+        if (username !== null) data.username = username;
 
         post('/api/v1/users', data).success(function(data, status) {
             if (status !== 201 || typeof data !== 'object') return callback(new ClientError(status, data));
