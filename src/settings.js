@@ -272,10 +272,10 @@ function getEmailDnsRecords(callback) {
 
     dns.platform.timeout = 5000; // hack so that each query finish in 5 seconds
 
-    function ignoreError(func) {
+    function ignoreError(what, func) {
         return function (callback) {
             func(function (error) {
-                if (error) console.error('Ignored error:', error);
+                if (error) console.error('Ignored error - ' + what + ':', error);
 
                 callback();
             });
@@ -283,11 +283,11 @@ function getEmailDnsRecords(callback) {
     }
 
     async.parallel([
-        ignoreError(checkMx),
-        ignoreError(checkSpf),
-        ignoreError(checkDmarc),
-        ignoreError(checkDkim),
-        ignoreError(checkPtr)
+        ignoreError('mx', checkMx),
+        ignoreError('spf', checkSpf),
+        ignoreError('dmarc', checkDmarc),
+        ignoreError('dkim', checkDkim),
+        ignoreError('ptr', checkPtr)
     ], function () {
         callback(null, records);
     });
