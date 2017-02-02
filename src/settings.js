@@ -282,7 +282,7 @@ function getEmailDnsRecords(callback) {
         };
     }
 
-    async.series([
+    async.parallel([
         ignoreError(checkMx),
         ignoreError(checkSpf),
         ignoreError(checkDmarc),
