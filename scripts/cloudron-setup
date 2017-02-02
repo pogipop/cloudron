@@ -242,6 +242,4 @@ else
     echo -e "Visit https://<IP> to finish setup once the server has rebooted.\n"
 fi
 
-if [[ "${initBaseImage}" == "true" ]]; then
-    systemctl reboot
-fi
+systemctl reboot
