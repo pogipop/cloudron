@@ -60,6 +60,7 @@ exports = module.exports = {
 };
 
 var assert = require('assert'),
+    async = require('async'),
     backups = require('./backups.js'),
     config = require('./config.js'),
     constants = require('./constants.js'),
@@ -138,41 +139,41 @@ function getEmailDnsRecords(callback) {
     var dkimKey = cloudron.readDkimPublicKeySync();
     if (!dkimKey) return callback(new CloudronError(CloudronError.INTERNAL_ERROR, new Error('Failed to read dkim public key')));
 
-    records.dkim = {
-        subdomain: constants.DKIM_SELECTOR + '._domainkey',
-        type: 'TXT',
-        expected: 'v=DKIM1; t=s; p=' + dkimKey,
-        value: null,
-        status: false
-    };
+    function checkDkim(callback) {
+        records.dkim = {
+            subdomain: constants.DKIM_SELECTOR + '._domainkey',
+            type: 'TXT',
+            expected: 'v=DKIM1; t=s; p=' + dkimKey,
+            value: null,
+            status: false
+        };
 
-    records.spf = {
-        subdomain: '',
-        type: 'TXT',
-        value: null,
-        expected: null,
-        status: false
-    };
+        dns.resolveTxt(records.dkim.subdomain + '.' + config.fqdn(), function (error, txtRecords) {
+            if (error && error.code === 'ENOTFOUND') return callback(null);    // not setup
+            if (error) return callback(error);
 
-    dns.platform.timeout = 8000;
+            // ensure this is an array resolveTxt() returns undefined if no records are found
+            txtRecords = txtRecords || [];
 
-    // check if DKIM is already setup
-    dns.resolveTxt(records.dkim.subdomain + '.' + config.fqdn(), function (error, txtRecords) {
-        if (error && error.code === 'ENOTFOUND') return callback(null, records);    // not setup
-        if (error) return callback(error);
-
-        // ensure this is an array resolveTxt() returns undefined if no records are found
-        txtRecords = txtRecords || [];
-
-        for (var i = 0; i < txtRecords.length; i++) {
-            records.dkim.value = txtRecords[i].join(' ');
+            records.dkim.value = txtRecords[0].join(' ');
             records.dkim.status = (records.dkim.value === records.dkim.expected);
-            break;
-        }
+
+            callback();
+        });
+    }
+
+    function checkSpf(callback) {
+        records.spf = {
+            subdomain: '',
+            type: 'TXT',
+            value: null,
+            expected: null,
+            status: false
+        };
 
         // check if SPF is already setup
         dns.resolveTxt(config.fqdn(), function (error, txtRecords) {
-            if (error && error.code === 'ENOTFOUND') return callback(null, records);    // not setup
+            if (error && error.code === 'ENOTFOUND') return callback(null);    // not setup
             if (error) return callback(error);
 
             // ensure this is an array resolveTxt() returns undefined if no records are found
@@ -194,8 +195,86 @@ function getEmailDnsRecords(callback) {
                 records.spf.expected = 'v=spf1 a:' + config.adminFqdn() + ' ' + records.spf.value.slice('v=spf1 '.length);
             }
 
-            return callback(null, records);
+            callback();
         });
+    }
+
+    function checkMx(callback) {
+        records.mx = {
+            subdomain: '',
+            type: 'MX',
+            value: null,
+            expected: '10 ' + config.mailFqdn(),
+            status: false
+        };
+
+        dns.resolveMx(config.fqdn(), function (error, mxRecords) {
+            if (error && error.code === 'ENOTFOUND') return callback(null);    // not setup
+            if (error) return callback(error);
+
+            records.mx.status = mxRecords.length == 1 && mxRecords[0].exchange === config.mailFqdn();
+            records.mx.value = mxRecords.map(function (r) { return r.priority + ' ' + r.exchange; }).join(' ');
+
+            callback();
+        });
+    }
+
+    function checkDmarc(callback) {
+        records.dmarc = {
+            subdomain: '_dmarc',
+            type: 'TXT',
+            value: null,
+            expected: 'v=DMARC1; p=reject; pct=100',
+            status: false
+        };
+
+        dns.resolveTxt(records.dmarc.subdomain + '.' + config.fqdn(), function (error, txtRecords) {
+            if (error && error.code === 'ENOTFOUND') return callback(null);    // not setup
+            if (error) return callback(error);
+
+            // ensure this is an array resolveTxt() returns undefined if no records are found
+            txtRecords = txtRecords || [];
+
+            records.dmarc.value = txtRecords[0].join(' ');
+            records.dmarc.status = (records.dmarc.value === records.dmarc.expected);
+            callback();
+        });
+    }
+
+    function checkPtr(callback) {
+        records.ptr = {
+            subdomain: '',
+            type: 'PTR',
+            value: null,
+            expected: config.mailFqdn(),
+            status: false
+        };
+
+        sysinfo.getIp(function (error, ip) {
+            if (error) return callback(error);
+
+            dns.reverse(ip, function (error, records) {
+                if (error && error.code === 'ENOTFOUND') return callback(null);    // not setup
+                if (error) return callback(error);
+
+                records.ptr.value = records.join(' ');
+                records.ptr.status = records.ptr.value === config.mailFqdn();
+
+                return callback();
+            });
+        });
+    }
+
+    dns.platform.timeout = 8000;
+
+    async.series([
+        checkMx,
+        checkSpf,
+        checkDmarc,
+        checkDkim,
+        checkPtr
+    ], function (error) {
+        callback(error, records);
     });
 }
 

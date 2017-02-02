@@ -10,8 +10,11 @@ angular.module('Application').controller('SettingsController', ['$scope', '$loca
     $scope.dnsConfig = {};
     $scope.expectedDnsRecords = {};
     $scope.expectedDnsRecordsTypes = [
+        { name: 'MX', value: 'mx' },
         { name: 'DKIM', value: 'dkim' },
-        { name: 'SPF', value: 'spf' }
+        { name: 'SPF', value: 'spf' },
+        { name: 'DMARC', value: 'dmarc' },
+        { name: 'PTR', value: 'ptr' }
     ];
     $scope.appstoreConfig = {};
 
