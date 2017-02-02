@@ -298,11 +298,11 @@
     </div>
     <br/>
     <div class="row">
-        <div class="col-md-12" ng-show="mailConfig.enabled && (dnsConfig.provider === 'noop' || dnsConfig.provider === 'manual')">
+        <div class="col-md-12" ng-show="(dnsConfig.provider === 'noop' || dnsConfig.provider === 'manual')">
             Set the following DNS records to guarantee email functionality.
 
             <div ng-repeat="record in expectedDnsRecordsTypes">
-               <div class="row">
+               <div class="row" ng-if="mailConfig.enabled || (record.name !== 'DMARC' && record.name !== 'MX')">
                     <div class="col-xs-12">
                         <h4 class="text-muted">
                             {{ record.name }} record <i ng-class="expectedDnsRecords[record.value].status ? 'fa fa-check-circle text-success' : 'fa fa-exclamation-triangle text-danger'" aria-hidden="true"></i>
