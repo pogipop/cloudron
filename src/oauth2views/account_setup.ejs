@@ -44,7 +44,7 @@ app.controller('Controller', ['$scope', function ($scope) {
                         <small ng-show="setupForm.username.$error.maxlength">The username is too long</small>
                         <small ng-show="setupForm.username.$dirty && setupForm.username.$invalid">Not a valid username</small>
                     </div>
-                    <input type="text" class="form-control" ng-model="username" name="username" ng-maxlength="512" ng-minlength="3" required autofocus>
+                    <input type="text" class="form-control" ng-model="username" name="username" required autofocus>
                 </div>
 <% } %>
 
