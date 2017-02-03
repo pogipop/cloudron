@@ -10,9 +10,7 @@ readonly SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 readonly SOURCE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")"/.. && pwd)"
 export JSON="${SOURCE_DIR}/node_modules/.bin/json"
 
-IMAGE_ID="ami-5aee2235" # ubuntu 16.04 eu-central-1
 INSTANCE_TYPE="t2.micro"
-SECURITY_GROUP="sg-19f5a770" # everything open on eu-central-1
 BLOCK_DEVICE="DeviceName=/dev/sda1,Ebs={VolumeSize=20,DeleteOnTermination=true,VolumeType=gp2}"
 SSH_KEY_NAME="id_rsa_yellowtent"
 
@@ -22,8 +20,9 @@ server_id=""
 server_ip=""
 destroy_server="yes"
 deploy_env="prod"
+image_id=""
 
-args=$(getopt -o "" -l "revision:,name:,no-destroy,env:" -n "$0" -- "$@")
+args=$(getopt -o "" -l "revision:,name:,no-destroy,env:,region:" -n "$0" -- "$@")
 eval set -- "${args}"
 
 while true; do
@@ -32,24 +31,43 @@ while true; do
     --revision) revision="$2"; shift 2;;
     --name) ami_name="$2"; shift 2;;
     --no-destroy) destroy_server="no"; shift 2;;
+    --region)
+        case "$2" in
+        "us-east-1")
+            image_id="ami-6edd3078"
+            security_group="sg-bcee70c0"
+            ;;
+        "eu-central-1")
+            image_id="ami-5aee2235"
+            security_group="sg-19f5a770" # everything open on eu-central-1
+            ;;
+        *)
+            echo "Unknown aws region $2"
+            exit 1
+            ;;
+        esac
+        export AWS_DEFAULT_REGION="$2"    # used by the aws cli tool
+        shift 2
+        ;;
     --) break;;
     *) echo "Unknown option $1"; exit 1;;
     esac
 done
 
-export AWS_DEFAULT_REGION="eu-central-1"    # we have to use us-east-1 to publish
-
 # TODO fix this
 export AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY}"
 export AWS_SECRET_ACCESS_KEY="${AWS_ACCESS_SECRET}"
-
-echo "=> Creating AMI"
 
 readonly ssh_keys="${HOME}/.ssh/id_rsa_yellowtent"
 readonly SSH="ssh -o IdentitiesOnly=yes -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -i ${ssh_keys}"
 
 if [[ ! -f "${ssh_keys}" ]]; then
     echo "caas ssh key is missing at ${ssh_keys} (pick it up from secrets repo)"
+    exit 1
+fi
+
+if [[ -z "${image_id}" ]]; then
+    echo "--region is required"
     exit 1
 fi
 
@@ -64,17 +82,16 @@ now=$(date "+%Y-%m-%d-%H%M%S")
 pretty_revision=$(get_pretty_revision "${revision}")
 
 if [[ -z "${ami_name}" ]]; then
-    # if you change this, change the regexp is appstore/janitor.js
-    ami_name="box-${deploy_env}-${pretty_revision}-${now}" # remove slashes
+    ami_name="box-${deploy_env}-${pretty_revision}-${now}"
 fi
 
 echo "=> Create EC2 instance"
-id=$(aws ec2 run-instances --image-id "${IMAGE_ID}" --instance-type "${INSTANCE_TYPE}" --security-group-ids "${SECURITY_GROUP}" --block-device-mappings "${BLOCK_DEVICE}" --key-name "${SSH_KEY_NAME}"\
+id=$(aws ec2 run-instances --image-id "${image_id}" --instance-type "${INSTANCE_TYPE}" --security-group-ids "${security_group}" --block-device-mappings "${BLOCK_DEVICE}" --key-name "${SSH_KEY_NAME}" --subnet-id "subnet-8c1a5ad7" \
     | $JSON Instances \
     | $JSON 0.InstanceId)
 
 [[ -z "$id" ]] && exit 1
-echo "Instance created with ID $id"
+echo "Instance created  ID $id"
 
 echo "=> Waiting for instance to get a public IP"
 while true; do
