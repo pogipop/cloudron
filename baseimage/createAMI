@@ -80,6 +80,20 @@ function get_pretty_revision() {
     echo "${sha1}"
 }
 
+function wait_for_ssh() {
+    echo "=> Waiting for ssh connection"
+    while true; do
+        echo -n "."
+
+        if $SSH ubuntu@${server_ip} echo "hello"; then
+            echo ""
+            break
+        fi
+
+        sleep 5
+    done
+}
+
 now=$(date "+%Y-%m-%d-%H%M%S")
 pretty_revision=$(get_pretty_revision "${revision}")
 
@@ -112,17 +126,7 @@ done
 
 echo "Got public IP ${server_ip}"
 
-echo "=> Waiting for ssh connection"
-while true; do
-    echo -n "."
-
-    if $SSH ubuntu@${server_ip} echo "hello"; then
-        echo ""
-        break
-    fi
-
-    sleep 5
-done
+wait_for_ssh
 
 echo "=> Fetching cloudron-setup"
 while true; do
@@ -138,6 +142,8 @@ done
 
 echo "=> Running cloudron-setup"
 $SSH ubuntu@${server_ip} sudo /bin/bash "cloudron-setup" --env "${deploy_env}" --provider "ec2"
+
+wait_for_ssh
 
 echo "=> Removing ssh key"
 $SSH ubuntu@${server_ip} sudo rm /home/ubuntu/.ssh/authorized_keys
