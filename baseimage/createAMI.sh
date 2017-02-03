@@ -35,11 +35,13 @@ while true; do
         case "$2" in
         "us-east-1")
             image_id="ami-6edd3078"
-            security_group="sg-bcee70c0"
+            security_group="sg-a5e17fd9"
+            subnet_id="subnet-b8fbc0f1"
             ;;
         "eu-central-1")
             image_id="ami-5aee2235"
             security_group="sg-19f5a770" # everything open on eu-central-1
+            subnet_id=""
             ;;
         *)
             echo "Unknown aws region $2"
@@ -86,7 +88,7 @@ if [[ -z "${ami_name}" ]]; then
 fi
 
 echo "=> Create EC2 instance"
-id=$(aws ec2 run-instances --image-id "${image_id}" --instance-type "${INSTANCE_TYPE}" --security-group-ids "${security_group}" --block-device-mappings "${BLOCK_DEVICE}" --key-name "${SSH_KEY_NAME}" --subnet-id "subnet-8c1a5ad7" \
+id=$(aws ec2 run-instances --image-id "${image_id}" --instance-type "${INSTANCE_TYPE}" --security-group-ids "${security_group}" --block-device-mappings "${BLOCK_DEVICE}" --key-name "${SSH_KEY_NAME}" --subnet-id "${subnet_id}" --associate-public-ip-address \
     | $JSON Instances \
     | $JSON 0.InstanceId)
 
@@ -136,6 +138,9 @@ done
 
 echo "=> Running cloudron-setup"
 $SSH ubuntu@${server_ip} sudo /bin/bash "cloudron-setup" --env "${deploy_env}" --provider "ec2"
+
+echo "=> Removing ssh key"
+$SSH ubuntu@${server_ip} sudo rm /home/ubuntu/.ssh/authorized_keys
 
 echo "=> Creating AMI"
 image_id=$(aws ec2 create-image --instance-id "${id}" --name "${ami_name}" | $JSON ImageId)
