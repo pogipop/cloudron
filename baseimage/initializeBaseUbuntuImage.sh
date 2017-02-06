@@ -58,7 +58,7 @@ apt-get -y update
 
 # create systemd drop-in file
 mkdir -p /etc/systemd/system/docker.service.d
-echo -e "[Service]\nExecStart=\nExecStart=/usr/bin/docker daemon -H fd:// --log-driver=journald --exec-opt native.cgroupdriver=cgroupfs --storage-driver=devicemapper" > /etc/systemd/system/docker.service.d/cloudron.conf
+echo -e "[Service]\nExecStart=\nExecStart=/usr/bin/dockerd -H fd:// --log-driver=journald --exec-opt native.cgroupdriver=cgroupfs --storage-driver=devicemapper" > /etc/systemd/system/docker.service.d/cloudron.conf
 
 apt-get -y --allow-downgrades install docker-engine=1.12.5-0~ubuntu-xenial # apt-cache madison docker-engine
 apt-mark hold docker-engine # do not update docker
