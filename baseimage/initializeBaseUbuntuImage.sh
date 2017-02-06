@@ -30,6 +30,7 @@ apt-get -y install \
     build-essential \
     cron \
     curl \
+    dmsetup \
     iptables \
     logrotate \
     mysql-server-5.7 \
