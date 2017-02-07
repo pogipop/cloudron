@@ -64,7 +64,7 @@ function saveSync() {
     fs.writeFileSync(cloudronConfigFileName, JSON.stringify(data, null, 4)); // functions are ignored by JSON.stringify
 }
 
-function _reset (callback) {
+function _reset(callback) {
     safe.fs.unlinkSync(cloudronConfigFileName);
 
     initConfig();

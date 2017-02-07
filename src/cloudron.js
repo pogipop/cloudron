@@ -122,6 +122,10 @@ CloudronError.SELF_UPGRADE_NOT_SUPPORTED = 'Self upgrade not supported';
 function initialize(callback) {
     assert.strictEqual(typeof callback, 'function');
 
+    gConfigState = { dns: false, tls: false, configured: false };
+    gUpdatingDns = false;
+    gBoxAndUserDetails = null;
+
     async.series([
         installAppBundle,
         checkConfigState,
