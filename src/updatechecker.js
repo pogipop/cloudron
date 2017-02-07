@@ -165,7 +165,7 @@ function checkAppUpdates(callback) {
                 } else {
                     // only send notifications if update pattern is 'never'
                     settings.getAutoupdatePattern(function (error, result) {
-                        if (error) return console.error(error);
+                        if (error) return debug(error);
                         if (result !== constants.AUTOUPDATE_PATTERN_NEVER) return;
 
                         debug('Notifying user of app update for %s from %s to %s', app.id, app.manifest.version, updateInfo.manifest.version);
@@ -219,7 +219,7 @@ function checkBoxUpdates(callback) {
             } else {
                 // only send notifications if update pattern is 'never'
                 settings.getAutoupdatePattern(function (error, result) {
-                    if (error) return console.error(error);
+                    if (error) return debug(error);
                     if (result !== constants.AUTOUPDATE_PATTERN_NEVER) return;
 
                     mailer.boxUpdateAvailable(updateInfo.version, updateInfo.changelog);

@@ -250,7 +250,7 @@ function getDuplicateErrorDetails(location, portBindings, error) {
 
     var match = error.message.match(/ER_DUP_ENTRY: Duplicate entry '(.*)' for key/);
     if (!match) {
-        console.error('Unexpected SQL error message.', error);
+        debug('Unexpected SQL error message.', error);
         return new AppsError(AppsError.INTERNAL_ERROR);
     }
 

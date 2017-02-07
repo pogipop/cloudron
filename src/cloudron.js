@@ -451,7 +451,7 @@ function sendHeartbeat() {
 function sendAliveStatus(callback) {
     if (typeof callback !== 'function') {
         callback = function (error) {
-            if (error && error.reason !== CloudronError.INTERNAL_ERROR) console.error(error);
+            if (error && error.reason !== CloudronError.INTERNAL_ERROR) debug(error);
             else if (error) debug(error);
         };
     }
@@ -684,7 +684,7 @@ function update(boxUpdateInfo, auditSource, callback) {
         debug('Starting upgrade');
         doUpgrade(boxUpdateInfo, function (error) {
             if (error) {
-                console.error('Upgrade failed with error:', error);
+                debug('Upgrade failed with error:', error);
                 locker.unlock(locker.OP_BOX_UPDATE);
             }
         });
@@ -692,7 +692,7 @@ function update(boxUpdateInfo, auditSource, callback) {
         debug('Starting update');
         doUpdate(boxUpdateInfo, function (error) {
             if (error) {
-                console.error('Update failed with error:', error);
+                debug('Update failed with error:', error);
                 locker.unlock(locker.OP_BOX_UPDATE);
             }
         });

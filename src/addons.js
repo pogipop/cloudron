@@ -287,7 +287,7 @@ function teardownOauth(app, options, callback) {
     debugApp(app, 'teardownOauth');
 
     clients.delByAppIdAndType(app.id, clients.TYPE_OAUTH, function (error) {
-        if (error && error.reason !== ClientsError.NOT_FOUND) console.error(error);
+        if (error && error.reason !== ClientsError.NOT_FOUND) debug(error);
 
         appdb.unsetAddonConfig(app.id, 'oauth', callback);
     });
@@ -332,7 +332,7 @@ function teardownSimpleAuth(app, options, callback) {
     debugApp(app, 'teardownSimpleAuth');
 
     clients.delByAppIdAndType(app.id, clients.TYPE_SIMPLE_AUTH, function (error) {
-        if (error && error.reason !== ClientsError.NOT_FOUND) console.error(error);
+        if (error && error.reason !== ClientsError.NOT_FOUND) debug(error);
 
         appdb.unsetAddonConfig(app.id, 'simpleauth', callback);
     });

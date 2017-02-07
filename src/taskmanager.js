@@ -26,7 +26,7 @@ var gActiveTasks = { };
 var gPendingTasks = [ ];
 
 var TASK_CONCURRENCY = 3;
-var NOOP_CALLBACK = function (error) { if (error) console.error(error); };
+var NOOP_CALLBACK = function (error) { if (error) debug(error); };
 var gPaused = true;
 
 // resume app tasks when platform is ready or after a crash

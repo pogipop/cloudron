@@ -449,7 +449,7 @@ function setGroups(userId, groupIds, callback) {
 
             if ((isAdmin && !wasAdmin) || (!isAdmin && wasAdmin)) {
                 getUser(userId, function (error, result) {
-                    if (error) return console.error('Failed to send admin change mail.', error);
+                    if (error) return debug('Failed to send admin change mail.', error);
 
                     mailer.adminChanged(result, isAdmin);
                 });
