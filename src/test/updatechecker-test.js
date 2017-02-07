@@ -15,6 +15,8 @@ var appdb = require('../appdb.js'),
     expect = require('expect.js'),
     mailer = require('../mailer.js'),
     nock = require('nock'),
+    paths = require('../paths.js'),
+    safe = require('safetydance'),
     settings = require('../settings.js'),
     updatechecker = require('../updatechecker.js'),
     user = require('../user.js'),
@@ -84,11 +86,13 @@ describe('updatechecker - box - manual', function () {
     before(function (done) {
         config.set('version', '1.0.0');
         config.set('boxVersionsUrl', 'http://localhost:4444/release.json');
+        safe.fs.unlinkSync(paths.UPDATE_CHECKER_FILE);
+
         async.series([
             database.initialize,
-            mailer._clearMailQueue,
             user.createOwner.bind(null, USER_0.username, USER_0.password, USER_0.email, USER_0.displayName, AUDIT_SOURCE),
-            settings.setAutoupdatePattern.bind(null, constants.AUTOUPDATE_PATTERN_NEVER)
+            settings.setAutoupdatePattern.bind(null, constants.AUTOUPDATE_PATTERN_NEVER),
+            mailer._clearMailQueue
         ], done);
     });
 
@@ -152,7 +156,7 @@ describe('updatechecker - box - manual', function () {
             expect(updatechecker.getUpdateInfo().box.version).to.be('2.0.0');
             expect(scope.isDone()).to.be.ok();
 
-            checkMails(1, done); // already notified for 2.0.0
+            checkMails(0, done); // already notified for 2.0.0
         });
     });
 
