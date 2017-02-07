@@ -271,7 +271,7 @@ function getEmailDnsRecords(callback) {
     function ignoreError(what, func) {
         return function (callback) {
             func(function (error) {
-                if (error) console.error('Ignored error - ' + what + ':', error);
+                if (error && process.env.BOX_ENV !== 'test') console.error('Ignored error - ' + what + ':', error);
 
                 callback();
             });
