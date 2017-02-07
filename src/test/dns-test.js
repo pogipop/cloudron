@@ -397,9 +397,15 @@ describe('dns provider', function () {
 
             // override route53 in AWS
             // Comment this out and replace the config with real tokens to test against AWS proper
+            AWS._originalRoute53 = AWS.Route53;
             AWS.Route53 = Route53Mock;
 
             settings.setDnsConfig(data, config.fqdn(), done);
+        });
+
+        after(function () {
+            AWS.Route53 = AWS._originalRoute53;
+            delete AWS._originalRoute53;
         });
 
         it('upsert non-existing record succeeds', function (done) {
