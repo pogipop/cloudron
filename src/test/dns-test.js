@@ -19,7 +19,8 @@ var async = require('async'),
 describe('dns provider', function () {
     before(function (done) {
         async.series([
-            database.initialize
+            database.initialize,
+            config._reset
         ], done);
     });
 

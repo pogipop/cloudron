@@ -116,9 +116,6 @@ function initConfig() {
     saveSync();
 }
 
-// cleanup any old config file we have for tests
-if (exports.TEST) safe.fs.unlinkSync(cloudronConfigFileName);
-
 initConfig();
 
 // set(obj) or set(key, value)

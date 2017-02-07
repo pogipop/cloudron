@@ -1,4 +1,3 @@
-/* jslint node:true */
 /* global it:false */
 /* global describe:false */
 /* global after:false */
@@ -6,19 +5,15 @@
 
 'use strict';
 
-var constants = require('../constants.js'),
+var config = require('../config.js'),
+    constants = require('../constants.js'),
     expect = require('expect.js'),
     fs = require('fs'),
-    path = require('path'),
-    paths = require('../paths.js'),
-    safe = require('safetydance');
-
-var config = null;
+    path = require('path');
 
 describe('config', function () {
     before(function () {
-        delete require.cache[require.resolve('../config.js')];
-        config = require('../config.js');
+        config._reset();
     });
 
     after(function () {

@@ -111,6 +111,7 @@ describe('Apps', function () {
     };
 
     before(function (done) {
+
         async.series([
             database.initialize,
             database._clear,
