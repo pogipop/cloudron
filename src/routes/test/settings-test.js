@@ -595,7 +595,7 @@ describe('Settings API', function () {
                 expect(res.body.spf.domain).to.eql(spfDomain);
                 expect(res.body.spf.type).to.eql('TXT');
                 expect(res.body.spf.value).to.eql(null);
-                expect(res.body.spf.expected).to.eql('v=spf1 a:my-foobar.com ~all');
+                expect(res.body.spf.expected).to.eql('v=spf1 a:' + config.adminFqdn() + ' ~all');
                 expect(res.body.spf.status).to.eql(false);
 
                 done();
@@ -623,7 +623,7 @@ describe('Settings API', function () {
                 expect(res.body.spf.domain).to.eql(config.fqdn());
                 expect(res.body.spf.type).to.eql('TXT');
                 expect(res.body.spf.value).to.eql(null);
-                expect(res.body.spf.expected).to.eql('v=spf1 a:my-foobar.com ~all');
+                expect(res.body.spf.expected).to.eql('v=spf1 a:' + config.adminFqdn() + ' ~all');
                 expect(res.body.spf.status).to.eql(false);
 
                 done();
@@ -633,7 +633,7 @@ describe('Settings API', function () {
         it('succeeds with no dkim and existing spf', function (done) {
             clearDnsAnswerQueue();
 
-            dnsAnswerQueue[spfDomain].TXT = [['v=spf1', 'a:my-foobar.com', '~all']];
+            dnsAnswerQueue[spfDomain].TXT = [['v=spf1', 'a:' + config.adminFqdn(), '~all']];
 
             superagent.get(SERVER_URL + '/api/v1/settings/email_dns_records')
                    .query({ access_token: token })
@@ -650,8 +650,8 @@ describe('Settings API', function () {
 
                 expect(res.body.spf.domain).to.eql(config.fqdn());
                 expect(res.body.spf.type).to.eql('TXT');
-                expect(res.body.spf.value).to.eql('v=spf1 a:my-foobar.com ~all');
-                expect(res.body.spf.expected).to.eql('v=spf1 a:my-foobar.com ~all');
+                expect(res.body.spf.value).to.eql('v=spf1 a:' + config.adminFqdn() + ' ~all');
+                expect(res.body.spf.expected).to.eql('v=spf1 a:' + config.adminFqdn() + ' ~all');
                 expect(res.body.spf.status).to.eql(true);
 
                 done();
@@ -679,7 +679,7 @@ describe('Settings API', function () {
                 expect(res.body.spf.domain).to.eql(config.fqdn());
                 expect(res.body.spf.type).to.eql('TXT');
                 expect(res.body.spf.value).to.eql('v=spf1 a:my-example.com ~all');
-                expect(res.body.spf.expected).to.eql('v=spf1 a:my-foobar.com a:my-example.com ~all');
+                expect(res.body.spf.expected).to.eql('v=spf1 a:' + config.adminFqdn() + ' a:my-example.com ~all');
                 expect(res.body.spf.status).to.eql(false);
 
                 done();
@@ -707,7 +707,7 @@ describe('Settings API', function () {
                 expect(res.body.spf.domain).to.eql(config.fqdn());
                 expect(res.body.spf.type).to.eql('TXT');
                 expect(res.body.spf.value).to.eql(null);
-                expect(res.body.spf.expected).to.eql('v=spf1 a:my-foobar.com ~all');
+                expect(res.body.spf.expected).to.eql('v=spf1 a:' + config.adminFqdn() + ' ~all');
                 expect(res.body.spf.status).to.eql(false);
 
                 done();
@@ -718,7 +718,7 @@ describe('Settings API', function () {
             clearDnsAnswerQueue();
 
             dnsAnswerQueue[dkimDomain].TXT = [['v=DKIM1;', 't=s;', 'p=' + cloudron.readDkimPublicKeySync()]];
-            dnsAnswerQueue[spfDomain].TXT = [['v=spf1', 'a:my-foobar.com', '~all']];
+            dnsAnswerQueue[spfDomain].TXT = [['v=spf1', 'a:' + config.adminFqdn(), '~all']];
 
             superagent.get(SERVER_URL + '/api/v1/settings/email_dns_records')
                    .query({ access_token: token })
@@ -735,8 +735,8 @@ describe('Settings API', function () {
 
                 expect(res.body.spf.domain).to.eql(config.fqdn());
                 expect(res.body.spf.type).to.eql('TXT');
-                expect(res.body.spf.value).to.eql('v=spf1 a:my-foobar.com ~all');
-                expect(res.body.spf.expected).to.eql('v=spf1 a:my-foobar.com ~all');
+                expect(res.body.spf.value).to.eql('v=spf1 a:' + config.adminFqdn() + ' ~all');
+                expect(res.body.spf.expected).to.eql('v=spf1 a:' + config.adminFqdn() + ' ~all');
                 expect(res.body.spf.status).to.eql(true);
 
                 done();

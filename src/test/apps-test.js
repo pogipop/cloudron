@@ -206,7 +206,7 @@ describe('Apps', function () {
                 expect(error).to.be(null);
                 expect(app).to.be.ok();
                 expect(app.iconUrl).to.be(null);
-                expect(app.fqdn).to.eql(APP_0.location + '-' + config.fqdn());
+                expect(app.fqdn).to.eql(APP_0.location + '.' + config.fqdn());
                 expect(app.memoryLimit).to.eql(0);
                 done();
             });
@@ -218,7 +218,7 @@ describe('Apps', function () {
                 expect(apps).to.be.an(Array);
                 expect(apps[0].id).to.be(APP_0.id);
                 expect(apps[0].iconUrl).to.be(null);
-                expect(apps[0].fqdn).to.eql(APP_0.location + '-' + config.fqdn());
+                expect(apps[0].fqdn).to.eql(APP_0.location + '.' + config.fqdn());
                 done();
             });
         });

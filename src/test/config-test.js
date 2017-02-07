@@ -37,10 +37,10 @@ describe('config', function () {
     });
 
     it('did set default values', function () {
-        expect(config.isCustomDomain()).to.equal(false);
+        expect(config.isCustomDomain()).to.equal(true);
         expect(config.fqdn()).to.equal('localhost');
-        expect(config.adminOrigin()).to.equal('https://' + constants.ADMIN_LOCATION + '-localhost');
-        expect(config.appFqdn('app')).to.equal('app-localhost');
+        expect(config.adminOrigin()).to.equal('https://' + constants.ADMIN_LOCATION + '.localhost');
+        expect(config.appFqdn('app')).to.equal('app.localhost');
         expect(config.zoneName()).to.equal('localhost');
     });
 

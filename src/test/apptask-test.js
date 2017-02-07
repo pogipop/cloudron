@@ -1,4 +1,3 @@
-/* jslint node:true */
 /* global it:false */
 /* global describe:false */
 /* global before:false */
@@ -64,24 +63,28 @@ var APP = {
     memoryLimit: 0
 };
 
- var awsHostedZones = {
-     HostedZones: [{
-         Id: '/hostedzone/ZONEID',
-         Name: 'localhost.',
-         CallerReference: '305AFD59-9D73-4502-B020-F4E6F889CB30',
-         ResourceRecordSetCount: 2,
-         ChangeInfo: {
-             Id: '/change/CKRTFJA0ANHXB',
-             Status: 'INSYNC'
-         }
-     }],
-    IsTruncated: false,
-    MaxItems: '100'
- };
+ var awsHostedZones;
 
 describe('apptask', function () {
     before(function (done) {
         config.set('version', '0.5.0');
+        config.set('fqdn', 'foobar.com');
+
+        awsHostedZones = {
+            HostedZones: [{
+                Id: '/hostedzone/ZONEID',
+                Name: config.fqdn() + '.',
+                CallerReference: '305AFD59-9D73-4502-B020-F4E6F889CB30',
+                ResourceRecordSetCount: 2,
+                ChangeInfo: {
+                    Id: '/change/CKRTFJA0ANHXB',
+                    Status: 'INSYNC'
+                }
+            }],
+            IsTruncated: false,
+            MaxItems: '100'
+        };
+
         async.series([
             database.initialize,
             appdb.add.bind(null, APP.id, APP.appStoreId, APP.manifest, APP.location, APP.portBindings, APP),
@@ -209,7 +212,7 @@ describe('apptask', function () {
             .get('/2013-04-01/hostedzone')
             .times(2)
             .reply(200, js2xml('ListHostedZonesResponse', awsHostedZones, { arrayMap: { HostedZones: 'HostedZone'} }))
-            .get('/2013-04-01/hostedzone/ZONEID/rrset?maxitems=1&name=applocation.localhost.&type=A')
+            .get('/2013-04-01/hostedzone/ZONEID/rrset?maxitems=1&name=applocation.' + config.fqdn() + '.&type=A')
             .reply(200, js2xml('ListResourceRecordSetsResponse', { ResourceRecordSets: [ ] }, { 'Content-Type': 'application/xml' }))
             .post('/2013-04-01/hostedzone/ZONEID/rrset/')
             .reply(200, js2xml('ChangeResourceRecordSetsResponse', { ChangeInfo: { Id: 'RRID', Status: 'INSYNC' } }));

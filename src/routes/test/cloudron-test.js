@@ -224,7 +224,7 @@ describe('Cloudron', function () {
                 expect(result.body.apiServerOrigin).to.eql('http://localhost:6060');
                 expect(result.body.webServerOrigin).to.eql(null);
                 expect(result.body.fqdn).to.eql(config.fqdn());
-                expect(result.body.isCustomDomain).to.eql(false);
+                expect(result.body.isCustomDomain).to.eql(true);
                 expect(result.body.progress).to.be.an('object');
                 expect(result.body.update).to.be.an('object');
                 expect(result.body.version).to.eql(config.version());
@@ -250,7 +250,7 @@ describe('Cloudron', function () {
                 expect(result.body.apiServerOrigin).to.eql('http://localhost:6060');
                 expect(result.body.webServerOrigin).to.eql(null);
                 expect(result.body.fqdn).to.eql(config.fqdn());
-                expect(result.body.isCustomDomain).to.eql(false);
+                expect(result.body.isCustomDomain).to.eql(true);
                 expect(result.body.progress).to.be.an('object');
                 expect(result.body.update).to.be.an('object');
                 expect(result.body.version).to.eql(config.version());

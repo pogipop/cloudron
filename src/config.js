@@ -79,7 +79,7 @@ function initConfig() {
     data.token = null;
     data.boxVersionsUrl = null;
     data.version = null;
-    data.isCustomDomain = false;
+    data.isCustomDomain = true;
     data.webServerOrigin = null;
     data.smtpPort = 2525; // // this value comes from mail container
     data.sysadminPort = 3001;
