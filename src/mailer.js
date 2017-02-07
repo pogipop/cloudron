@@ -50,7 +50,7 @@ var assert = require('assert'),
     util = require('util'),
     _ = require('underscore');
 
-var NOOP_CALLBACK = function (error) { if (error) console.error(error); };
+var NOOP_CALLBACK = function (error) { if (error) debug(error); };
 
 var MAIL_TEMPLATES_DIR = path.join(__dirname, 'mail_templates');
 
@@ -183,7 +183,7 @@ function sendMails(queue, callback) {
 
         async.mapSeries(queue, function iterator(mailOptions, callback) {
             transport.sendMail(mailOptions, function (error) {
-                if (error) return console.error(error); // TODO: requeue?
+                if (error) return debug(error); // TODO: requeue?
                 debug('Email sent to ' + mailOptions.to);
             });
             callback(null);
@@ -198,8 +198,8 @@ function sendMails(queue, callback) {
 function enqueue(mailOptions) {
     assert.strictEqual(typeof mailOptions, 'object');
 
-    if (!mailOptions.from) console.error('sender address is missing');
-    if (!mailOptions.to) console.error('recipient address is missing');
+    if (!mailOptions.from) debug('sender address is missing');
+    if (!mailOptions.to) debug('recipient address is missing');
 
     debug('Queued mail for ' + mailOptions.from + ' to ' + mailOptions.to);
     gMailQueue.push(mailOptions);
@@ -255,7 +255,7 @@ function sendInvite(user, invitor) {
 
     settings.getCloudronName(function (error, cloudronName) {
         if (error) {
-            console.error(error);
+            debug(error);
             cloudronName = 'Cloudron';
         }
 
@@ -300,7 +300,7 @@ function userAdded(user, inviteSent) {
 
         settings.getCloudronName(function (error, cloudronName) {
             if (error) {
-                console.error(error);
+                debug(error);
                 cloudronName = 'Cloudron';
             }
 
@@ -355,7 +355,7 @@ function passwordReset(user) {
 
     settings.getCloudronName(function (error, cloudronName) {
         if (error) {
-            console.error(error);
+            debug(error);
             cloudronName = 'Cloudron';
         }
 
@@ -413,7 +413,7 @@ function boxUpdateAvailable(newBoxVersion, changelog) {
 
         settings.getCloudronName(function (error, cloudronName) {
             if (error) {
-                console.error(error);
+                debug(error);
                 cloudronName = 'Cloudron';
             }
 
