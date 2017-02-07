@@ -166,6 +166,7 @@ function onConfigured(callback) {
         cron.initialize,
         certificates.ensureFallbackCertificate,
         platform.initialize, // requires fallback certs for mail container
+        ensureDkimKey,
         addDnsRecords,
         configureAdmin,
         mailer.start
@@ -512,12 +513,7 @@ function sendAliveStatus(callback) {
     });
 }
 
-function readDkimPublicKeySync() {
-    if (!config.fqdn()) {
-        debug('Cannot read dkim public key without a domain.', safe.error);
-        return null;
-    }
-
+function ensureDkimKey(callback) {
     var dkimPath = path.join(paths.MAIL_DATA_DIR, 'dkim/' + config.fqdn());
     var dkimPrivateKeyFile = path.join(dkimPath, 'private');
     var dkimPublicKeyFile = path.join(dkimPath, 'public');
@@ -535,6 +531,18 @@ function readDkimPublicKeySync() {
     } else {
         debug('DKIM keys already present');
     }
+
+    callback();
+}
+
+function readDkimPublicKeySync() {
+    if (!config.fqdn()) {
+        debug('Cannot read dkim public key without a domain.', safe.error);
+        return null;
+    }
+
+    var dkimPath = path.join(paths.MAIL_DATA_DIR, 'dkim/' + config.fqdn());
+    var dkimPublicKeyFile = path.join(dkimPath, 'public');
 
     var publicKey = safe.fs.readFileSync(dkimPublicKeyFile, 'utf8');
 
