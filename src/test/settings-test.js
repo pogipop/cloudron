@@ -5,26 +5,31 @@
 
 'use strict';
 
-var config = require('../config.js'),
+var async = require('async'),
+    config = require('../config.js'),
     database = require('../database.js'),
     expect = require('expect.js'),
     settings = require('../settings.js');
 
 function setup(done) {
-    // ensure data/config/mount paths
-    database.initialize(function (error) {
-        expect(error).to.be(null);
-
-        // a cloudron must have a backup config to startup
-        settings.setBackupConfig({ provider: 'caas', token: 'foo', key: 'key'}, function (error) {
-            expect(error).to.be(null);
-            done();
-        });
-    });
+    async.series([
+        database.initialize,
+        settings.initialize,
+        function (callback) {
+            // a cloudron must have a backup config to startup
+            settings.setBackupConfig({ provider: 'caas', token: 'foo', key: 'key'}, function (error) {
+                expect(error).to.be(null);
+                callback();
+            });
+        }
+    ], done);
 }
 
 function cleanup(done) {
-    database._clear(done);
+    async.series([
+        settings.uninitialize,
+        database._clear
+    ], done);
 }
 
 describe('Settings', function () {

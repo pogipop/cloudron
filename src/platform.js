@@ -4,7 +4,10 @@ exports = module.exports = {
     initialize: initialize,
     uninitialize: uninitialize,
 
-    events: new (require('events').EventEmitter)(),
+    start: start,
+
+    events: null,
+
     EVENT_READY: 'ready'
 };
 
@@ -34,6 +37,15 @@ var gPlatformReadyTimer = null;
 var NOOP_CALLBACK = function (error) { if (error) debug(error); };
 
 function initialize(callback) {
+    assert.strictEqual(typeof callback, 'function');
+
+    exports.events = new (require('events').EventEmitter)();
+    return callback();
+}
+
+function start(callback) {
+    assert.strictEqual(typeof callback, 'function');
+
     if (process.env.BOX_ENV === 'test' && !process.env.TEST_CREATE_INFRA) return callback();
 
     debug('initializing addon infrastructure');
@@ -87,7 +99,7 @@ function uninitialize(callback) {
     clearTimeout(gPlatformReadyTimer);
     gPlatformReadyTimer = null;
 
-    // TODO: unregister event listeners
+    exports.events = null;
 
     callback();
 }

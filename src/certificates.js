@@ -14,7 +14,11 @@ exports = module.exports = {
 
     renewAll: renewAll,
 
-    events: new (require('events').EventEmitter)(),
+    initialize: initialize,
+    uninitialize: uninitialize,
+
+    events: null,
+
     EVENT_CERT_CHANGED: 'cert_changed',
 
     // exported for testing
@@ -64,6 +68,20 @@ util.inherits(CertificatesError, Error);
 CertificatesError.INTERNAL_ERROR = 'Internal Error';
 CertificatesError.INVALID_CERT = 'Invalid certificate';
 CertificatesError.NOT_FOUND = 'Not Found';
+
+function initialize(callback) {
+    assert.strictEqual(typeof callback, 'function');
+
+    exports.events = new (require('events').EventEmitter)();
+    callback();
+}
+
+function uninitialize(callback) {
+    assert.strictEqual(typeof callback, 'function');
+
+    exports.events = null;
+    callback();
+}
 
 function getApi(app, callback) {
     assert.strictEqual(typeof app, 'object');

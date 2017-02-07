@@ -88,6 +88,7 @@ describe('apptask', function () {
         async.series([
             database.initialize,
             appdb.add.bind(null, APP.id, APP.appStoreId, APP.manifest, APP.location, APP.portBindings, APP),
+            settings.initialize,
             settings.setDnsConfig.bind(null, { provider: 'route53', accessKeyId: 'accessKeyId', secretAccessKey: 'secretAccessKey', endpoint: 'http://localhost:5353' }, config.fqdn()),
             settings.setTlsConfig.bind(null, { provider: 'caas' })
         ], done);

@@ -3,6 +3,9 @@
 exports = module.exports = {
     SettingsError: SettingsError,
 
+    initialize: initialize,
+    uninitialize: uninitialize,
+
     getEmailDnsRecords: getEmailDnsRecords,
 
     getAutoupdatePattern: getAutoupdatePattern,
@@ -56,7 +59,7 @@ exports = module.exports = {
     APPSTORE_CONFIG_KEY: 'appstore_config',
     MAIL_CONFIG_KEY: 'mail_config',
 
-    events: new (require('events').EventEmitter)()
+    events: null
 };
 
 var assert = require('assert'),
@@ -102,11 +105,6 @@ var gDefaults = (function () {
     return result;
 })();
 
-if (config.TEST) {
-    // avoid noisy warnings during npm test
-    exports.events.setMaxListeners(100);
-}
-
 function SettingsError(reason, errorOrMessage) {
     assert.strictEqual(typeof reason, 'string');
     assert(errorOrMessage instanceof Error || typeof errorOrMessage === 'string' || typeof errorOrMessage === 'undefined');
@@ -130,6 +128,20 @@ SettingsError.INTERNAL_ERROR = 'Internal Error';
 SettingsError.EXTERNAL_ERROR = 'External Error';
 SettingsError.NOT_FOUND = 'Not Found';
 SettingsError.BAD_FIELD = 'Bad Field';
+
+function initialize(callback) {
+    assert.strictEqual(typeof callback, 'function');
+
+    exports.events = new (require('events').EventEmitter)();
+    callback();
+}
+
+function uninitialize(callback) {
+    assert.strictEqual(typeof callback, 'function');
+
+    exports.events = null;
+    callback();
+}
 
 function getEmailDnsRecords(callback) {
     assert.strictEqual(typeof callback, 'function');

@@ -25,7 +25,8 @@ exports = module.exports = {
     readDkimPublicKeySync: readDkimPublicKeySync,
     refreshDNS: refreshDNS,
 
-    events: new (require('events').EventEmitter)(),
+    events: null,
+
     EVENT_ACTIVATED: 'activated'
 };
 
@@ -122,11 +123,16 @@ CloudronError.SELF_UPGRADE_NOT_SUPPORTED = 'Self upgrade not supported';
 function initialize(callback) {
     assert.strictEqual(typeof callback, 'function');
 
+    exports.events = new (require('events').EventEmitter)();
+
     gConfigState = { dns: false, tls: false, configured: false };
     gUpdatingDns = false;
     gBoxAndUserDetails = null;
 
     async.series([
+        certificates.initialize,
+        settings.initialize,
+        platform.initialize,
         installAppBundle,
         checkConfigState,
         configureDefaultServer
@@ -136,13 +142,17 @@ function initialize(callback) {
 function uninitialize(callback) {
     assert.strictEqual(typeof callback, 'function');
 
+    exports.events = null;
+
     platform.events.removeListener(platform.EVENT_READY, onPlatformReady);
 
     async.series([
         cron.uninitialize,
         taskmanager.pauseTasks,
         mailer.stop,
-        platform.uninitialize
+        platform.uninitialize,
+        certificates.uninitialize,
+        settings.uninitialize
     ], callback);
 }
 
@@ -165,7 +175,7 @@ function onConfigured(callback) {
         clients.addDefaultClients,
         cron.initialize,
         certificates.ensureFallbackCertificate,
-        platform.initialize, // requires fallback certs for mail container
+        platform.start, // requires fallback certs for mail container
         ensureDkimKey,
         addDnsRecords,
         configureAdmin,

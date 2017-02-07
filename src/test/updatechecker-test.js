@@ -1,4 +1,3 @@
-/* jslint node:true */
 /* global it:false */
 /* global describe:false */
 /* global before:false */
@@ -82,6 +81,15 @@ function checkMails(number, done) {
     }, 500);
 }
 
+function cleanup(done) {
+    mailer._clearMailQueue();
+
+    async.series([
+        settings.uninitialize,
+        database._clear
+    ], done);
+}
+
 describe('updatechecker - box - manual', function () {
     before(function (done) {
         config.set('version', '1.0.0');
@@ -90,17 +98,14 @@ describe('updatechecker - box - manual', function () {
 
         async.series([
             database.initialize,
+            settings.initialize,
             user.createOwner.bind(null, USER_0.username, USER_0.password, USER_0.email, USER_0.displayName, AUDIT_SOURCE),
             settings.setAutoupdatePattern.bind(null, constants.AUTOUPDATE_PATTERN_NEVER),
             mailer._clearMailQueue
         ], done);
     });
 
-    after(function (done) {
-        mailer._clearMailQueue();
-
-        database._clear(done);
-    });
+    after(cleanup);
 
     it('no updates', function (done) {
         nock.cleanAll();
@@ -242,16 +247,13 @@ describe('updatechecker - box - automatic', function () {
         config.set('boxVersionsUrl', 'http://localhost:4444/release.json');
         async.series([
             database.initialize,
+            settings.initialize,
             mailer._clearMailQueue,
             user.createOwner.bind(null, USER_0.username, USER_0.password, USER_0.email, USER_0.displayName, AUDIT_SOURCE)
         ], done);
     });
 
-    after(function (done) {
-        mailer._clearMailQueue();
-
-        database._clear(done);
-    });
+    after(cleanup);
 
     it('new version', function (done) {
         nock.cleanAll();
@@ -305,6 +307,7 @@ describe('updatechecker - app - manual', function () {
         async.series([
             database.initialize,
             database._clear,
+            settings.initialize,
             mailer._clearMailQueue,
             appdb.add.bind(null, APP_0.id, APP_0.appStoreId, APP_0.manifest, APP_0.location, APP_0.portBindings, APP_0),
             user.createOwner.bind(null, USER_0.username, USER_0.password, USER_0.email, USER_0.displayName, AUDIT_SOURCE),
@@ -312,9 +315,7 @@ describe('updatechecker - app - manual', function () {
         ], done);
     });
 
-    after(function (done) {
-        database._clear(done);
-    });
+    after(cleanup);
 
     it('no updates', function (done) {
         nock.cleanAll();
@@ -426,15 +427,14 @@ describe('updatechecker - app - automatic', function () {
         async.series([
             database.initialize,
             database._clear,
+            settings.initialize,
             mailer._clearMailQueue,
             appdb.add.bind(null, APP_0.id, APP_0.appStoreId, APP_0.manifest, APP_0.location, APP_0.portBindings, APP_0),
             user.createOwner.bind(null, USER_0.username, USER_0.password, USER_0.email, USER_0.displayName, AUDIT_SOURCE)
         ], done);
     });
 
-    after(function (done) {
-        database._clear(done);
-    });
+    after(cleanup);
 
     it('offers new version', function (done) {
         nock.cleanAll();
