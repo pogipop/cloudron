@@ -1,5 +1,4 @@
-var dbm = require('db-migrate');
-var type = dbm.dataType;
+'use strict';
 
 var fs = require('fs'),
     async = require('async'),

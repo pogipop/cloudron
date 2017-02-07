@@ -1,5 +1,4 @@
-var dbm = global.dbm || require('db-migrate');
-var type = dbm.dataType;
+'use strict';
 
 exports.up = function(db, callback) {
 	var cmd = "CREATE TABLE IF NOT EXISTS groupMembers(" +

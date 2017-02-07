@@ -1,4 +1,4 @@
-dbm = dbm || require('db-migrate');
+'use strict';
 
 exports.up = function(db, callback) {
     db.runSql('ALTER TABLE users MODIFY username VARCHAR(254) UNIQUE', [], function (error) {

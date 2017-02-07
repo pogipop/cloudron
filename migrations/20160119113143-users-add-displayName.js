@@ -1,4 +1,4 @@
-dbm = dbm || require('db-migrate');
+'use strict';
 
 exports.up = function(db, callback) {
     db.runSql('ALTER TABLE users ADD COLUMN displayName VARCHAR(512) DEFAULT ""', function (error) {

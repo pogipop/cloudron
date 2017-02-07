@@ -1,5 +1,4 @@
-var dbm = global.dbm || require('db-migrate');
-var type = dbm.dataType;
+'use strict';
 
 exports.up = function(db, callback) {
     db.runSql('DELETE FROM settings', [ ], callback);

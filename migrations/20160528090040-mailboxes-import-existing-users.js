@@ -1,5 +1,6 @@
-var dbm = global.dbm || require('db-migrate');
-var type = dbm.dataType;
+'use strict';
+
+var async = require('async');
 
 // imports mailbox entries for existing users
 exports.up = function(db, callback) {

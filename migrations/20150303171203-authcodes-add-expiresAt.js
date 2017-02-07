@@ -1,5 +1,4 @@
-dbm = dbm || require('db-migrate');
-var type = dbm.dataType;
+'use strict';
 
 exports.up = function(db, callback) {
     db.runSql('ALTER TABLE authcodes ADD COLUMN expiresAt BIGINT NOT NULL', function (error) {

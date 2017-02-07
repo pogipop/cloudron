@@ -1,5 +1,4 @@
-var dbm = global.dbm || require('db-migrate');
-var type = dbm.dataType;
+'use strict';
 
 exports.up = function(db, callback) {
     db.runSql('ALTER TABLE backups ADD COLUMN configJson TEXT', function (error) {
@@ -14,4 +13,3 @@ exports.down = function(db, callback) {
         callback(error);
     });
 };
-

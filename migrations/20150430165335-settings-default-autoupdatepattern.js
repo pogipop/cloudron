@@ -1,5 +1,4 @@
-dbm = dbm || require('db-migrate');
-var type = dbm.dataType;
+'use strict';
 
 exports.up = function(db, callback) {
     // everyday at 1am
@@ -8,5 +7,4 @@ exports.up = function(db, callback) {
 
 exports.down = function(db, callback) {
     db.runSql('DELETE * FROM settings WHERE name="autoupdate_pattern"', [ ], callback);
-}
-
+};

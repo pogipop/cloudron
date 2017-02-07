@@ -1,5 +1,5 @@
-var dbm = require('db-migrate');
-var type = dbm.dataType;
+'use strict';
+
 var url = require('url');
 
 exports.up = function(db, callback) {

@@ -1,5 +1,4 @@
-var dbm = global.dbm || require('db-migrate');
-var type = dbm.dataType;
+'use strict';
 
 exports.up = function(db, callback) {
     db.all('SELECT id FROM users', function (error, results) {
@@ -14,4 +13,3 @@ exports.up = function(db, callback) {
 exports.down = function(db, callback) {
     db.runSql('DELETE * FROM settings WHERE name="mail_config"', [ ], callback);
 };
-

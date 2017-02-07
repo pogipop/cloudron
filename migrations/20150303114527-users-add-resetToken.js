@@ -1,5 +1,4 @@
-dbm = dbm || require('db-migrate');
-var type = dbm.dataType;
+'use strict';
 
 exports.up = function(db, callback) {
     db.runSql('ALTER TABLE users ADD COLUMN resetToken VARCHAR(128) DEFAULT ""', function (error) {
@@ -14,4 +13,3 @@ exports.down = function(db, callback) {
         callback(error);
     });
 };
-

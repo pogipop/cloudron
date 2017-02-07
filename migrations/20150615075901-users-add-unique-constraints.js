@@ -1,5 +1,5 @@
-dbm = dbm || require('db-migrate');
-var type = dbm.dataType;
+'use strict';
+
 var async = require('async');
 
 exports.up = function(db, callback) {

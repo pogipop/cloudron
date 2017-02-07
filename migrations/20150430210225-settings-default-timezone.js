@@ -1,6 +1,6 @@
-dbm = dbm || require('db-migrate');
+'use strict';
+
 var safe = require('safetydance');
-var type = dbm.dataType;
 
 exports.up = function(db, callback) {
     var tz = safe.fs.readFileSync('/etc/timezone', 'utf8');
@@ -12,4 +12,3 @@ exports.up = function(db, callback) {
 exports.down = function(db, callback) {
     db.runSql('DELETE * FROM settings WHERE name="time_zone"', [ ], callback);
 };
-

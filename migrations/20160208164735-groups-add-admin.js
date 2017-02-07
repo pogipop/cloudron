@@ -1,6 +1,5 @@
 'use strict';
 
-var dbm = global.dbm || require('db-migrate');
 var async = require('async');
 
 var ADMIN_GROUP_ID = 'admin'; // see groups.js

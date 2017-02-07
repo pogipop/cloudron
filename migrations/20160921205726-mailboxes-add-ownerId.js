@@ -1,6 +1,6 @@
 'use strict';
 
-var dbm = dbm || require('db-migrate');
+var async = require('async');
 
 exports.up = function(db, callback) {
     async.series([
@@ -71,4 +71,3 @@ exports.down = function(db, callback) {
         });
     });
 };
-
