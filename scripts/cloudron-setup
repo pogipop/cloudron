@@ -46,10 +46,11 @@ versionsUrl="https://s3.amazonaws.com/prod-cloudron-releases/versions.json"
 requestedVersion="latest"
 apiServerOrigin="https://api.cloudron.io"
 dataJson=""
-prerelease=false
+prerelease="false"
 sourceTarballUrl=""
+rebootServer="true"
 
-args=$(getopt -o "" -l "domain:,help,skip-baseimage-init,data:,provider:,encryption-key:,restore-url:,tls-provider:,version:,versions-url:,api-server:,dns-provider:,env:,prerelease,source-url:" -n "$0" -- "$@")
+args=$(getopt -o "" -l "domain:,help,skip-baseimage-init,data:,provider:,encryption-key:,restore-url:,tls-provider:,version:,versions-url:,api-server:,dns-provider:,env:,prerelease,skip-reboot,source-url:" -n "$0" -- "$@")
 eval set -- "${args}"
 
 while true; do
@@ -78,6 +79,7 @@ while true; do
     --versions-url) versionsUrl="$2"; shift 2;;
     --api-server) apiServerOrigin="$2"; shift 2;;
     --skip-baseimage-init) initBaseImage="false"; shift;;
+    --skip-reboot) rebootServer="false"; shift;;
     --data) dataJson="$2"; shift 2;;
     --prerelease) prerelease="true"; shift;;
     --source-url) sourceTarballUrl="$2"; version="0.0.1+custom"; shift 2;;
@@ -234,12 +236,13 @@ while true; do
     sleep 10
 done
 
-echo -e "\n\nRebooting this server now to let bootloader changes take effect.\n"
-
 if [[ -n "${domain}" ]]; then
     echo -e "Visit https://my.${domain} to finish setup once the server has rebooted.\n"
 else
     echo -e "Visit https://<IP> to finish setup once the server has rebooted.\n"
 fi
 
-systemctl reboot
+if [[ "${rebootServer}" == "true" ]]; then
+    echo -e "\n\nRebooting this server now to let bootloader changes take effect.\n"
+    systemctl reboot
+fi
