@@ -188,7 +188,7 @@ function getEmailDnsRecords(callback) {
             if (error && error.code === 'ENOTFOUND') return callback(null);    // not setup
             if (error) return callback(error);
 
-            // ensure this is an array resolveTxt() returns undefined if no records are found
+            // ensure this is an array resolve() returns undefined if no records are found
             txtRecords = txtRecords || [];
 
             var i;
@@ -222,7 +222,7 @@ function getEmailDnsRecords(callback) {
             if (error && error.code === 'ENOTFOUND') return callback(null);    // not setup
             if (error) return callback(error);
 
-            // ensure this is an array resolveMx() returns undefined if no records are found
+            // ensure this is an array resolve() returns undefined if no records are found
             mxRecords = mxRecords || [];
 
             records.mx.status = mxRecords.length == 1 && mxRecords[0].exchange === config.mailFqdn();
@@ -245,11 +245,11 @@ function getEmailDnsRecords(callback) {
             if (error && error.code === 'ENOTFOUND') return callback(null);    // not setup
             if (error) return callback(error);
 
-            // ensure this is an array resolveTxt() returns undefined if no records are found
-            txtRecords = txtRecords || [];
+            if (txtRecords && txtRecords[0]) {
+                records.dmarc.value = txtRecords[0].join(' ');
+                records.dmarc.status = (records.dmarc.value === records.dmarc.expected);
+            }
 
-            records.dmarc.value = txtRecords[0].join(' ');
-            records.dmarc.status = (records.dmarc.value === records.dmarc.expected);
             callback();
         });
     }
