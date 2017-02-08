@@ -554,30 +554,25 @@ function install(data, auditSource, callback) {
                 altDomain: altDomain,
                 xFrameOptions: xFrameOptions,
                 sso: sso,
-                debugMode: debugMode
+                debugMode: debugMode,
+                fromEmail: (location ? location : manifest.title.toLowerCase().replace(/[^a-zA-Z0-9]/g, '')) + '.app'
             };
 
-            var from = (location ? location : manifest.title.toLowerCase().replace(/[^a-zA-Z0-9]/g, '')) + '.app';
-            mailboxdb.add(from, appId, mailboxdb.TYPE_APP, function (error) {
-                if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(new AppsError(AppsError.ALREADY_EXISTS, 'Mailbox already exists'));
+            appdb.add(appId, appStoreId, manifest, location, portBindings, data, function (error) {
+                if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(getDuplicateErrorDetails(location, portBindings, error));
                 if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
 
-                appdb.add(appId, appStoreId, manifest, location, portBindings, data, function (error) {
-                    if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(getDuplicateErrorDetails(location, portBindings, error));
-                    if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
+                // save cert to boxdata/certs
+                if (cert && key) {
+                    if (!safe.fs.writeFileSync(path.join(paths.APP_CERTS_DIR, config.appFqdn(location) + '.user.cert'), cert)) return callback(new AppsError(AppsError.INTERNAL_ERROR, 'Error saving cert: ' + safe.error.message));
+                    if (!safe.fs.writeFileSync(path.join(paths.APP_CERTS_DIR, config.appFqdn(location) + '.user.key'), key)) return callback(new AppsError(AppsError.INTERNAL_ERROR, 'Error saving key: ' + safe.error.message));
+                }
 
-                    // save cert to boxdata/certs
-                    if (cert && key) {
-                        if (!safe.fs.writeFileSync(path.join(paths.APP_CERTS_DIR, config.appFqdn(location) + '.user.cert'), cert)) return callback(new AppsError(AppsError.INTERNAL_ERROR, 'Error saving cert: ' + safe.error.message));
-                        if (!safe.fs.writeFileSync(path.join(paths.APP_CERTS_DIR, config.appFqdn(location) + '.user.key'), key)) return callback(new AppsError(AppsError.INTERNAL_ERROR, 'Error saving key: ' + safe.error.message));
-                    }
+                taskmanager.restartAppTask(appId);
 
-                    taskmanager.restartAppTask(appId);
+                eventlog.add(eventlog.ACTION_APP_INSTALL, auditSource, { appId: appId, location: location, manifest: manifest });
 
-                    eventlog.add(eventlog.ACTION_APP_INSTALL, auditSource, { appId: appId, location: location, manifest: manifest });
-
-                    callback(null, { id : appId });
-                });
+                callback(null, { id : appId });
             });
         });
     });
@@ -898,24 +893,19 @@ function clone(appId, data, auditSource, callback) {
                     accessRestriction: app.accessRestriction,
                     xFrameOptions: app.xFrameOptions,
                     lastBackupId: backupId,
-                    sso: !!app.sso
+                    sso: !!app.sso,
+                    fromEmail: (location ? location : manifest.title.toLowerCase().replace(/[^a-zA-Z0-9]/g, '')) + '.app'
                 };
 
-                var from = (location ? location : manifest.title.toLowerCase().replace(/[^a-zA-Z0-9]/g, '')) + '.app';
-                mailboxdb.add(from, newAppId, mailboxdb.TYPE_APP, function (error) {
-                    if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(new AppsError(AppsError.ALREADY_EXISTS, 'Mailbox already exists'));
+                appdb.add(newAppId, appStoreId, manifest, location, portBindings, data, function (error) {
+                    if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(getDuplicateErrorDetails(location, portBindings, error));
                     if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
 
-                    appdb.add(newAppId, appStoreId, manifest, location, portBindings, data, function (error) {
-                        if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(getDuplicateErrorDetails(location, portBindings, error));
-                        if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
+                    taskmanager.restartAppTask(newAppId);
 
-                        taskmanager.restartAppTask(newAppId);
+                    eventlog.add(eventlog.ACTION_APP_CLONE, auditSource, { appId: newAppId, oldAppId: appId, backupId: backupId, location: location, manifest: manifest });
 
-                        eventlog.add(eventlog.ACTION_APP_CLONE, auditSource, { appId: newAppId, oldAppId: appId, backupId: backupId, location: location, manifest: manifest });
-
-                        callback(null, { id : newAppId });
-                    });
+                    callback(null, { id : newAppId });
                 });
             });
         });

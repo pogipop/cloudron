@@ -52,6 +52,7 @@ var assert = require('assert'),
     async = require('async'),
     database = require('./database.js'),
     DatabaseError = require('./databaseerror'),
+    mailboxdb = require('./mailboxdb.js'),
     safe = require('safetydance'),
     util = require('util');
 
@@ -189,7 +190,7 @@ function add(id, appStoreId, manifest, location, portBindings, data, callback) {
     var sso = 'sso' in data ? data.sso : null;
     var debugModeJson = data.debugMode ? JSON.stringify(data.debugMode) : null;
 
-    var queries = [ ];
+    var queries = [];
     queries.push({
         query: 'INSERT INTO apps (id, appStoreId, manifestJson, installationState, location, accessRestrictionJson, memoryLimit, altDomain, xFrameOptions, lastBackupId, sso, debugModeJson) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
         args: [ id, appStoreId, manifestJson, installationState, location, accessRestrictionJson, memoryLimit, altDomain, xFrameOptions, lastBackupId, sso, debugModeJson ]
@@ -201,6 +202,14 @@ function add(id, appStoreId, manifest, location, portBindings, data, callback) {
             args: [ env, portBindings[env], id ]
         });
     });
+
+    // only allocate a mailbox if fromEmail is set
+    if (data.fromEmail) {
+        queries.push({
+            query: 'INSERT INTO mailboxes (name, ownerId, ownerType) VALUES (?, ?, ?)',
+            args: [ data.fromEmail, id, mailboxdb.TYPE_APP ]
+        });
+    }
 
     database.transaction(queries, function (error) {
         if (error && error.code === 'ER_DUP_ENTRY') return callback(new DatabaseError(DatabaseError.ALREADY_EXISTS, error.message));
