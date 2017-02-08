@@ -744,3 +744,7 @@
 * Improve DNS notifications for email
 * Do not enable HSTS for subdomains
 
+[0.100.1]
+* Fix crash when fetching mail records
+* Fix crash in LDAP server when username and displayName are empty
+
