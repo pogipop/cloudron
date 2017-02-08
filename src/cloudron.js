@@ -173,13 +173,13 @@ function onConfigured(callback) {
 
     async.series([
         clients.addDefaultClients,
-        cron.initialize,
         certificates.ensureFallbackCertificate,
         platform.start, // requires fallback certs for mail container
         ensureDkimKey,
         addDnsRecords,
         configureAdmin,
-        mailer.start
+        mailer.start,
+        cron.initialize // do not send heartbeats until we are "ready"
     ], callback);
 }
 
