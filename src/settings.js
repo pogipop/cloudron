@@ -164,11 +164,10 @@ function getEmailDnsRecords(callback) {
             if (error && error.code === 'ENOTFOUND') return callback(null);    // not setup
             if (error) return callback(error);
 
-            // ensure this is an array resolveTxt() returns undefined if no records are found
-            txtRecords = txtRecords || [];
-
-            records.dkim.value = txtRecords[0].join(' ');
-            records.dkim.status = (records.dkim.value === records.dkim.expected);
+            if (Array.isArray(txtRecords) && txtRecords.length !== 0) {
+                records.dkim.value = txtRecords[0].join(' ');
+                records.dkim.status = (records.dkim.value === records.dkim.expected);
+            }
 
             callback();
         });
@@ -183,13 +182,11 @@ function getEmailDnsRecords(callback) {
             status: false
         };
 
-        // check if SPF is already setup
         dns.resolve(records.spf.domain, records.spf.type, function (error, txtRecords) {
             if (error && error.code === 'ENOTFOUND') return callback(null);    // not setup
             if (error) return callback(error);
 
-            // ensure this is an array resolve() returns undefined if no records are found
-            txtRecords = txtRecords || [];
+            if (!Array.isArray(txtRecords)) return callback();
 
             var i;
             for (i = 0; i < txtRecords.length; i++) {
@@ -222,11 +219,10 @@ function getEmailDnsRecords(callback) {
             if (error && error.code === 'ENOTFOUND') return callback(null);    // not setup
             if (error) return callback(error);
 
-            // ensure this is an array resolve() returns undefined if no records are found
-            mxRecords = mxRecords || [];
-
-            records.mx.status = mxRecords.length == 1 && mxRecords[0].exchange === config.mailFqdn();
-            records.mx.value = mxRecords.map(function (r) { return r.priority + ' ' + r.exchange; }).join(' ');
+            if (Array.isArray(mxRecords) && mxRecords.length !== 0) {
+                records.mx.status = mxRecords.length == 1 && mxRecords[0].exchange === config.mailFqdn();
+                records.mx.value = mxRecords.map(function (r) { return r.priority + ' ' + r.exchange; }).join(' ');
+            }
 
             callback();
         });
@@ -245,7 +241,7 @@ function getEmailDnsRecords(callback) {
             if (error && error.code === 'ENOTFOUND') return callback(null);    // not setup
             if (error) return callback(error);
 
-            if (txtRecords && txtRecords[0]) {
+            if (Array.isArray(txtRecords) && txtRecords.length !== 0) {
                 records.dmarc.value = txtRecords[0].join(' ');
                 records.dmarc.status = (records.dmarc.value === records.dmarc.expected);
             }
@@ -272,8 +268,10 @@ function getEmailDnsRecords(callback) {
                 if (error && error.code === 'ENOTFOUND') return callback(null);    // not setup
                 if (error) return callback(error);
 
-                records.ptr.value = ptrRecords.join(' ');
-                records.ptr.status = records.ptr.value === config.mailFqdn();
+                if (Array.isArray(ptrRecords) && ptrRecords.length !== 0) {
+                    records.ptr.value = ptrRecords.join(' ');
+                    records.ptr.status = ptrRecords.some(function (v) { return v === config.mailFqdn(); });
+                }
 
                 return callback();
             });

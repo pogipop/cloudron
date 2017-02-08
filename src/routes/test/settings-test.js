@@ -531,7 +531,7 @@ describe('Settings API', function () {
     describe('email DNS records', function () {
         var resolve = null;
         var dnsAnswerQueue = [];
-        var dkimDomain, spfDomain;
+        var dkimDomain, spfDomain, mxDomain, dmarcDomain;
 
         before(function (done) {
             var dns = require('native-dns');
@@ -542,13 +542,15 @@ describe('Settings API', function () {
                 expect(hostname).to.be.a('string');
                 expect(callback).to.be.a('function');
 
-                if (!dnsAnswerQueue[hostname] || !dnsAnswerQueue[hostname][type]) return callback(new Error('no mock answer'));
+                if (!dnsAnswerQueue[hostname] || !(type in dnsAnswerQueue[hostname])) return callback(new Error('no mock answer'));
 
                 callback(null, dnsAnswerQueue[hostname][type]);
             };
 
             dkimDomain = 'cloudron._domainkey.' + config.fqdn();
             spfDomain = config.fqdn();
+            mxDomain = config.fqdn();
+            dmarcDomain = '_dmarc.' + config.fqdn();
 
             done();
         });
@@ -571,152 +573,167 @@ describe('Settings API', function () {
         });
 
         function clearDnsAnswerQueue() {
-          dnsAnswerQueue = { };
-          dnsAnswerQueue[dkimDomain] =  { };
-          dnsAnswerQueue[spfDomain] =  { };
+            dnsAnswerQueue = { };
+            dnsAnswerQueue[dkimDomain] =  { };
+            dnsAnswerQueue[spfDomain] =  { };
+            dnsAnswerQueue[mxDomain] =  { };
+            dnsAnswerQueue[dmarcDomain] =  { };
         }
 
-        it('succeeds without existing answers', function (done) {
+        it('succeeds with dns errors', function (done) {
             clearDnsAnswerQueue();
 
             superagent.get(SERVER_URL + '/api/v1/settings/email_dns_records')
                    .query({ access_token: token })
                    .end(function (err, res) {
                 expect(res.statusCode).to.equal(200);
-                expect(res.body.dkim).to.be.an('object');
-                expect(res.body.spf).to.be.an('object');
 
+                expect(res.body.dkim).to.be.an('object');
                 expect(res.body.dkim.domain).to.eql(dkimDomain);
                 expect(res.body.dkim.type).to.eql('TXT');
                 expect(res.body.dkim.value).to.eql(null);
                 expect(res.body.dkim.expected).to.eql('v=DKIM1; t=s; p=' + cloudron.readDkimPublicKeySync());
                 expect(res.body.dkim.status).to.eql(false);
 
+                expect(res.body.spf).to.be.an('object');
                 expect(res.body.spf.domain).to.eql(spfDomain);
                 expect(res.body.spf.type).to.eql('TXT');
                 expect(res.body.spf.value).to.eql(null);
                 expect(res.body.spf.expected).to.eql('v=spf1 a:' + config.adminFqdn() + ' ~all');
                 expect(res.body.spf.status).to.eql(false);
 
+                expect(res.body.dmarc).to.be.an('object');
+                expect(res.body.dmarc.type).to.eql('TXT');
+                expect(res.body.dmarc.value).to.eql(null);
+                expect(res.body.dmarc.expected).to.eql('v=DMARC1; p=reject; pct=100');
+                expect(res.body.dmarc.status).to.eql(false);
+
+                expect(res.body.mx).to.be.an('object');
+                expect(res.body.mx.type).to.eql('MX');
+                expect(res.body.mx.value).to.eql(null);
+                expect(res.body.mx.expected).to.eql('10 ' + config.mailFqdn());
+                expect(res.body.mx.status).to.eql(false);
+
+                expect(res.body.ptr).to.be.an('object');
+                expect(res.body.ptr.type).to.eql('PTR');
+                // expect(res.body.ptr.value).to.eql(null); this will be anything random
+                expect(res.body.ptr.expected).to.eql(config.mailFqdn());
+                expect(res.body.ptr.status).to.eql(false);
+
                 done();
             });
         });
 
-        it('succeeds with existing dkim and no spf', function (done) {
+        it('succeeds with "undefined" spf, dkim, dmarc, mx, ptr records', function (done) {
             clearDnsAnswerQueue();
 
-            dnsAnswerQueue[dkimDomain].TXT = [['v=DKIM1;', 't=s;', 'p=' + cloudron.readDkimPublicKeySync()]];
+            dnsAnswerQueue[dkimDomain].TXT = null;
+            dnsAnswerQueue[spfDomain].TXT = null;
+            dnsAnswerQueue[mxDomain].MX = null;
+            dnsAnswerQueue[dmarcDomain].TXT = null;
 
             superagent.get(SERVER_URL + '/api/v1/settings/email_dns_records')
                    .query({ access_token: token })
                    .end(function (err, res) {
                 expect(res.statusCode).to.equal(200);
-                expect(res.body.dkim).to.be.an('object');
+
                 expect(res.body.spf).to.be.an('object');
-
-                expect(res.body.dkim.domain).to.eql('cloudron._domainkey.' + config.fqdn());
-                expect(res.body.dkim.type).to.eql('TXT');
-                expect(res.body.dkim.value).to.eql('v=DKIM1; t=s; p=' + cloudron.readDkimPublicKeySync());
-                expect(res.body.dkim.expected).to.eql('v=DKIM1; t=s; p=' + cloudron.readDkimPublicKeySync());
-                expect(res.body.dkim.status).to.eql(true);
-
-                expect(res.body.spf.domain).to.eql(config.fqdn());
-                expect(res.body.spf.type).to.eql('TXT');
-                expect(res.body.spf.value).to.eql(null);
                 expect(res.body.spf.expected).to.eql('v=spf1 a:' + config.adminFqdn() + ' ~all');
                 expect(res.body.spf.status).to.eql(false);
+                expect(res.body.spf.value).to.eql(null);
+
+                expect(res.body.dkim).to.be.an('object');
+                expect(res.body.dkim.expected).to.eql('v=DKIM1; t=s; p=' + cloudron.readDkimPublicKeySync());
+                expect(res.body.dkim.status).to.eql(false);
+                expect(res.body.dkim.value).to.eql(null);
+
+                expect(res.body.dmarc).to.be.an('object');
+                expect(res.body.dmarc.expected).to.eql('v=DMARC1; p=reject; pct=100');
+                expect(res.body.dmarc.status).to.eql(false);
+                expect(res.body.dmarc.value).to.eql(null);
+
+                expect(res.body.mx).to.be.an('object');
+                expect(res.body.mx.status).to.eql(false);
+                expect(res.body.mx.expected).to.eql('10 ' + config.mailFqdn());
+                expect(res.body.mx.value).to.eql(null);
+
+                expect(res.body.ptr).to.be.an('object');
+                expect(res.body.ptr.expected).to.eql(config.mailFqdn());
+                expect(res.body.ptr.status).to.eql(false);
+                // expect(res.body.ptr.value).to.eql(null); this will be anything random
 
                 done();
             });
         });
 
-        it('succeeds with no dkim and existing spf', function (done) {
+        it('succeeds with all different spf, dkim, dmarc, mx, ptr records', function (done) {
             clearDnsAnswerQueue();
 
-            dnsAnswerQueue[spfDomain].TXT = [['v=spf1', 'a:' + config.adminFqdn(), '~all']];
+            dnsAnswerQueue[mxDomain].MX = [ { priority: '20', exchange: config.mailFqdn() }, { priority: '30', exchange: config.mailFqdn() } ];
+            dnsAnswerQueue[dmarcDomain].TXT = [['v=DMARC2; p=reject; pct=100']];
+            dnsAnswerQueue[dkimDomain].TXT = [['v=DKIM2; t=s; p=' + cloudron.readDkimPublicKeySync()]];
+            dnsAnswerQueue[spfDomain].TXT = [['v=spf1 a:random.com ~all']];
 
             superagent.get(SERVER_URL + '/api/v1/settings/email_dns_records')
                    .query({ access_token: token })
                    .end(function (err, res) {
                 expect(res.statusCode).to.equal(200);
-                expect(res.body.dkim).to.be.an('object');
-                expect(res.body.spf).to.be.an('object');
 
-                expect(res.body.dkim.domain).to.eql('cloudron._domainkey.' + config.fqdn());
-                expect(res.body.dkim.type).to.eql('TXT');
-                expect(res.body.dkim.value).to.eql(null);
+                expect(res.body.spf).to.be.an('object');
+                expect(res.body.spf.expected).to.eql('v=spf1 a:' + config.adminFqdn() + ' a:random.com ~all');
+                expect(res.body.spf.status).to.eql(false);
+                expect(res.body.spf.value).to.eql('v=spf1 a:random.com ~all');
+
+                expect(res.body.dkim).to.be.an('object');
                 expect(res.body.dkim.expected).to.eql('v=DKIM1; t=s; p=' + cloudron.readDkimPublicKeySync());
                 expect(res.body.dkim.status).to.eql(false);
+                expect(res.body.dkim.value).to.eql('v=DKIM2; t=s; p=' + cloudron.readDkimPublicKeySync());
 
-                expect(res.body.spf.domain).to.eql(config.fqdn());
+                expect(res.body.dmarc).to.be.an('object');
+                expect(res.body.dmarc.expected).to.eql('v=DMARC1; p=reject; pct=100');
+                expect(res.body.dmarc.status).to.eql(false);
+                expect(res.body.dmarc.value).to.eql('v=DMARC2; p=reject; pct=100');
+
+                expect(res.body.mx).to.be.an('object');
+                expect(res.body.mx.status).to.eql(false);
+                expect(res.body.mx.expected).to.eql('10 ' + config.mailFqdn());
+                expect(res.body.mx.value).to.eql('20 ' + config.mailFqdn() + ' 30 ' + config.mailFqdn());
+
+                expect(res.body.ptr).to.be.an('object');
+                expect(res.body.ptr.expected).to.eql(config.mailFqdn());
+                expect(res.body.ptr.status).to.eql(false);
+                // expect(res.body.ptr.value).to.eql(null); this will be anything random
+
+                done();
+            });
+        });
+
+        it('succeeds with existing embedded spf', function (done) {
+            clearDnsAnswerQueue();
+
+            dnsAnswerQueue[spfDomain].TXT = [['v=spf1 a:example.com a:' + config.mailFqdn() + ' ~all']];
+
+            superagent.get(SERVER_URL + '/api/v1/settings/email_dns_records')
+                   .query({ access_token: token })
+                   .end(function (err, res) {
+                expect(res.statusCode).to.equal(200);
+
+                expect(res.body.spf).to.be.an('object');
+                expect(res.body.spf.domain).to.eql(spfDomain);
                 expect(res.body.spf.type).to.eql('TXT');
-                expect(res.body.spf.value).to.eql('v=spf1 a:' + config.adminFqdn() + ' ~all');
-                expect(res.body.spf.expected).to.eql('v=spf1 a:' + config.adminFqdn() + ' ~all');
+                expect(res.body.spf.value).to.eql('v=spf1 a:example.com a:' + config.mailFqdn() + ' ~all');
+                expect(res.body.spf.expected).to.eql('v=spf1 a:example.com a:' + config.mailFqdn() + ' ~all');
                 expect(res.body.spf.status).to.eql(true);
 
                 done();
             });
         });
 
-        it('succeeds with existing extra spf', function (done) {
+        it('succeeds with all correct records', function (done) {
             clearDnsAnswerQueue();
 
-            dnsAnswerQueue[spfDomain].TXT = [['v=spf1', 'a:my-example.com', '~all']];
-
-            superagent.get(SERVER_URL + '/api/v1/settings/email_dns_records')
-                   .query({ access_token: token })
-                   .end(function (err, res) {
-                expect(res.statusCode).to.equal(200);
-                expect(res.body.dkim).to.be.an('object');
-                expect(res.body.spf).to.be.an('object');
-
-                expect(res.body.dkim.domain).to.eql('cloudron._domainkey.' + config.fqdn());
-                expect(res.body.dkim.type).to.eql('TXT');
-                expect(res.body.dkim.value).to.eql(null);
-                expect(res.body.dkim.expected).to.eql('v=DKIM1; t=s; p=' + cloudron.readDkimPublicKeySync());
-                expect(res.body.dkim.status).to.eql(false);
-
-                expect(res.body.spf.domain).to.eql(config.fqdn());
-                expect(res.body.spf.type).to.eql('TXT');
-                expect(res.body.spf.value).to.eql('v=spf1 a:my-example.com ~all');
-                expect(res.body.spf.expected).to.eql('v=spf1 a:' + config.adminFqdn() + ' a:my-example.com ~all');
-                expect(res.body.spf.status).to.eql(false);
-
-                done();
-            });
-        });
-
-        it('succeeds with wrong dkim', function (done) {
-            clearDnsAnswerQueue();
-
-            dnsAnswerQueue[dkimDomain].TXT = [['v=DKIM1;', 't=s;', 'p=foobar']];
-
-            superagent.get(SERVER_URL + '/api/v1/settings/email_dns_records')
-                   .query({ access_token: token })
-                   .end(function (err, res) {
-                expect(res.statusCode).to.equal(200);
-                expect(res.body.dkim).to.be.an('object');
-                expect(res.body.spf).to.be.an('object');
-
-                expect(res.body.dkim.domain).to.eql('cloudron._domainkey.' + config.fqdn());
-                expect(res.body.dkim.type).to.eql('TXT');
-                expect(res.body.dkim.value).to.eql('v=DKIM1; t=s; p=foobar');
-                expect(res.body.dkim.expected).to.eql('v=DKIM1; t=s; p=' + cloudron.readDkimPublicKeySync());
-                expect(res.body.dkim.status).to.eql(false);
-
-                expect(res.body.spf.domain).to.eql(config.fqdn());
-                expect(res.body.spf.type).to.eql('TXT');
-                expect(res.body.spf.value).to.eql(null);
-                expect(res.body.spf.expected).to.eql('v=spf1 a:' + config.adminFqdn() + ' ~all');
-                expect(res.body.spf.status).to.eql(false);
-
-                done();
-            });
-        });
-
-        it('succeeds with existing spf and dkim', function (done) {
-            clearDnsAnswerQueue();
-
+            dnsAnswerQueue[mxDomain].MX = [ { priority: '10', exchange: config.mailFqdn() } ];
+            dnsAnswerQueue[dmarcDomain].TXT = [['v=DMARC1; p=reject; pct=100']];
             dnsAnswerQueue[dkimDomain].TXT = [['v=DKIM1;', 't=s;', 'p=' + cloudron.readDkimPublicKeySync()]];
             dnsAnswerQueue[spfDomain].TXT = [['v=spf1', 'a:' + config.adminFqdn(), '~all']];
 
@@ -724,20 +741,30 @@ describe('Settings API', function () {
                    .query({ access_token: token })
                    .end(function (err, res) {
                 expect(res.statusCode).to.equal(200);
-                expect(res.body.dkim).to.be.an('object');
-                expect(res.body.spf).to.be.an('object');
 
-                expect(res.body.dkim.domain).to.eql('cloudron._domainkey.' + config.fqdn());
+                expect(res.body.dkim).to.be.an('object');
+                expect(res.body.dkim.domain).to.eql(dkimDomain);
                 expect(res.body.dkim.type).to.eql('TXT');
                 expect(res.body.dkim.value).to.eql('v=DKIM1; t=s; p=' + cloudron.readDkimPublicKeySync());
                 expect(res.body.dkim.expected).to.eql('v=DKIM1; t=s; p=' + cloudron.readDkimPublicKeySync());
                 expect(res.body.dkim.status).to.eql(true);
 
-                expect(res.body.spf.domain).to.eql(config.fqdn());
+                expect(res.body.spf).to.be.an('object');
+                expect(res.body.spf.domain).to.eql(spfDomain);
                 expect(res.body.spf.type).to.eql('TXT');
                 expect(res.body.spf.value).to.eql('v=spf1 a:' + config.adminFqdn() + ' ~all');
                 expect(res.body.spf.expected).to.eql('v=spf1 a:' + config.adminFqdn() + ' ~all');
                 expect(res.body.spf.status).to.eql(true);
+
+                expect(res.body.dmarc).to.be.an('object');
+                expect(res.body.dmarc.expected).to.eql('v=DMARC1; p=reject; pct=100');
+                expect(res.body.dmarc.status).to.eql(true);
+                expect(res.body.dmarc.value).to.eql('v=DMARC1; p=reject; pct=100');
+
+                expect(res.body.mx).to.be.an('object');
+                expect(res.body.mx.status).to.eql(true);
+                expect(res.body.mx.expected).to.eql('10 ' + config.mailFqdn());
+                expect(res.body.mx.value).to.eql('10 ' + config.mailFqdn());
 
                 done();
             });
