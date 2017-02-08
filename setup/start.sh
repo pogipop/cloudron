@@ -216,14 +216,18 @@ echo "==> Cleaning up snapshots"
 find "${DATA_DIR}/snapshots" -mindepth 1 -maxdepth 1 | xargs --no-run-if-empty btrfs subvolume delete
 
 # restart mysql to make sure it has latest config
-# wait for all running mysql jobs
-cp "${script_dir}/start/mysql.cnf" /etc/mysql/mysql.cnf
-while true; do
-    if ! systemctl list-jobs | grep mysql; then break; fi
-    echo "Waiting for mysql jobs..."
-    sleep 1
-done
-systemctl restart mysql
+if [[ ! -f /etc/mysql/mysql.cnf ]] || ! diff -q "${script_dir}/start/mysql.cnf" /etc/mysql/mysql.cnf >/dev/null; then
+    # wait for all running mysql jobs
+    cp "${script_dir}/start/mysql.cnf" /etc/mysql/mysql.cnf
+    while true; do
+        if ! systemctl list-jobs | grep mysql; then break; fi
+        echo "Waiting for mysql jobs..."
+        sleep 1
+    done
+    systemctl restart mysql
+else
+    systemctl start mysql
+fi
 
 readonly mysql_root_password="password"
 mysqladmin -u root -ppassword password password # reset default root password
