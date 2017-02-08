@@ -51,7 +51,7 @@ function userSearch(req, res, next) {
             var groups = [ GROUP_USERS_DN ];
             if (entry.admin) groups.push(GROUP_ADMINS_DN);
 
-            var displayName = entry.displayName || entry.username;
+            var displayName = entry.displayName || entry.username || ''; // displayName can be empty and username can be null
             var nameParts = displayName.split(' ');
             var firstName = nameParts[0];
             var lastName = nameParts.length > 1  ? nameParts[nameParts.length - 1] : ''; // choose last part, if it exists
