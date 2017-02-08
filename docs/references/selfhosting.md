@@ -237,10 +237,12 @@ reputation should be easy to get back.
 
 * Once your Cloudron is ready, setup a Reverse DNS PTR record to be setup for the `my` subdomain.
 
-    * AWS/EC2 - Fill the PTR [request form](https://aws-portal.amazon.com/gp/aws/html-forms-controller/contactus/ec2-email-limit-rdns-request.
+    * AWS EC2 & Lightsail - Fill the [PTR request form](https://aws-portal.amazon.com/gp/aws/html-forms-controller/contactus/ec2-email-limit-rdns-request).
 
     * Digital Ocean - Digital Ocean sets up a PTR record based on the droplet's name. So, simply rename
     your droplet to `my.<domain>`. Note that some new Digital Ocean accounts have [port 25 blocked](https://www.digitalocean.com/community/questions/port-25-smtp-external-access).
+
+    * Linode - Follow this [guide](https://www.linode.com/docs/networking/dns/setting-reverse-dns).
 
     * Scaleway - Edit your security group to allow email. You can also set a PTR record on the interface with your
     `my.<domain>`.
