@@ -52,9 +52,15 @@ function initialize(callback) {
     gHeartbeatJob = new CronJob({
         cronTime: '00 */1 * * * *', // every minute
         onTick: cloudron.sendHeartbeat,
-        start: true
+        start: false
     });
-    cloudron.sendHeartbeat(); // latest unpublished version of CronJob has runOnInit
+    // hack: send the first heartbeat only after we are running for 60 seconds
+    // required as we end up sending a heartbeat and then cloudron-setup reboots the server
+    setTimeout(function () {
+        if (!gHeartbeatJob) return; // already uninitalized
+        gHeartbeatJob.start();
+        cloudron.sendHeartbeat();
+    }, 1000 * 60);
 
     var randomHourMinute = Math.floor(60*Math.random());
     gAliveJob = new CronJob({
