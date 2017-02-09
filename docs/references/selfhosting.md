@@ -99,9 +99,9 @@ IP address (`https://ip`) to complete the installation.
 The setup website will show a certificate warning. Accept the self-signed certificate
 and proceed to the domain setup.
 
-Currently, only Second Level Domains are supported. For example, `example.com`, 
-`example.co.uk` will work fine. Choosing a domain name at any other level like
-`cloudron.example.com` will not work.
+Currently, only subdomains of the [Public Suffix List](https://publicsuffix.org/) are supported.
+For example, `example.com`,  `example.co.uk` will work fine. Choosing other non-registrable
+domain names like `cloudron.example.com` will not work.
 
 ### Route 53
 
