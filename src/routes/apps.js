@@ -249,6 +249,7 @@ function uninstallApp(req, res, next) {
     debug('Uninstalling app id:%s', req.params.id);
 
     apps.uninstall(req.params.id, auditSource(req), function (error) {
+        if (error && error.reason === AppsError.BILLING_REQUIRED) return next(new HttpError(402, 'Billing required'));
         if (error && error.reason === AppsError.NOT_FOUND) return next(new HttpError(404, 'No such app'));
         if (error) return next(new HttpError(500, error));
 

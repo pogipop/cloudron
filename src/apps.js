@@ -428,10 +428,13 @@ function unpurchase(appId, appstoreId, callback) {
 
         superagent.get(url).query({ accessToken: appstoreConfig.token }).timeout(30 * 1000).end(function (error, result) {
             if (error && !error.response) return callback(new AppsError(AppsError.EXTERNAL_ERROR, error));
+            if (result.statusCode === 403 || result.statusCode === 401) return callback(new AppsError(AppsError.BILLING_REQUIRED));
             if (result.statusCode === 404) return callback(null);   // was never purchased
+            if (result.statusCode !== 201 && result.statusCode !== 200) return callback(new AppsError(AppsError.EXTERNAL_ERROR, util.format('App purchase failed. %s %j', result.status, result.body)));
 
             superagent.del(url).query({ accessToken: appstoreConfig.token }).timeout(30 * 1000).end(function (error, result) {
                 if (error && !error.response) return callback(new AppsError(AppsError.EXTERNAL_ERROR, error));
+                if (result.statusCode === 403 || result.statusCode === 401) return callback(new AppsError(AppsError.BILLING_REQUIRED));
                 if (result.statusCode !== 204) return callback(new AppsError(AppsError.EXTERNAL_ERROR, util.format('App unpurchase failed. %s %j', result.status, result.body)));
 
                 callback(null);

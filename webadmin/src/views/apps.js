@@ -353,6 +353,8 @@ angular.module('Application').controller('AppsController', ['$scope', '$location
                 $scope.appUninstall.error.password = true;
                 $scope.appUninstallForm.password.$setPristine();
                 $('#appUninstallPasswordInput').focus();
+            } else if (error && error.statusCode === 402) { // unpurchase failed
+                Client.error('Relogin to Cloudron App Store');
             } else if (error) {
                 Client.error(error);
             } else {
