@@ -1,7 +1,7 @@
 'use strict';
 
 // create main application module
-var app = angular.module('Application', ['angular-md5', 'ui-notification']);
+var app = angular.module('Application', ['angular-md5', 'ui-notification', 'ngTld']);
 
 app.controller('SetupDNSController', ['$scope', '$http', 'Client', function ($scope, $http, Client) {
     $scope.initialized = false;
