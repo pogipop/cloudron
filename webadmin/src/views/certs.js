@@ -1,6 +1,6 @@
 'use strict';
 
-angular.module('Application').controller('CertsController', ['$scope', '$location', 'Client', function ($scope, $location, Client) {
+angular.module('Application').controller('CertsController', ['$scope', '$location', 'Client', 'ngTld', function ($scope, $location, Client, ngTld) {
     Client.onReady(function () { if (!Client.getUserInfo().admin) $location.path('/'); });
 
     $scope.config = Client.getConfig();
