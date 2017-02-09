@@ -11,7 +11,7 @@
 
                         <div class="form-group" ng-class="{ 'has-error': dnsCredentialsForm.customDomainId.$invalid }" uib-tooltip="{{ config.provider === 'caas' ? '' : 'Changing the domain is not yet supported' }}">
                             <label class="control-label" for="customDomainId">Domain name</label>
-                            <input type="text" class="form-control" ng-model="dnsCredentials.customDomain" id="customDomainId" name="customDomainId" ng-disabled="dnsCredentials.busy || config.provider !== 'caas'" domain-validator placeholder="example.com" required autofocus>
+                            <input type="text" class="form-control" ng-model="dnsCredentials.customDomain" id="customDomainId" name="customDomainId" ng-disabled="dnsCredentials.busy || config.provider !== 'caas'" placeholder="example.com" required autofocus>
                         </div>
 
                         <div class="form-group">
