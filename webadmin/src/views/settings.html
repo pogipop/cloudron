@@ -183,7 +183,7 @@
 
                         <div class="form-group" ng-class="{ 'has-error': configureBackup.error.key }">
                             <label class="control-label" for="inputConfigureBackupKey">Encryption key (optional)</label>
-                            <input type="text" class="form-control" ng-model="configureBackup.key" id="inputConfigureBackupKey" name="prefix" ng-disabled="configureBackup.busy" placeholder="Encryption key for backups">
+                            <input type="text" class="form-control" ng-model="configureBackup.key" id="inputConfigureBackupKey" name="prefix" ng-disabled="configureBackup.busy" placeholder="Passphrase used to encrypt the backups">
                         </div>
 
                         <input class="ng-hide" type="submit" ng-disabled="configureBackupForm.$invalid"/>

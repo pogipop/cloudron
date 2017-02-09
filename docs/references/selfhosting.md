@@ -194,6 +194,9 @@ for most use-cases.
 }
 ```
 
+The `Encryption key` is an arbitrary passphrase used to encrypt the backups. Keep the passphrase safe; it is
+required to decrypt the backups when restoring the Cloudron.
+
 ## Minio S3
 
 [Minio](https://minio.io/) is a distributed object storage server, providing the same API as Amazon S3.
@@ -219,6 +222,8 @@ The information to be copied to the Cloudron's backup settings form may look sim
 
 <img src="/docs/img/minio_backup_config.png" class="shadow"><br/>
 
+The `Encryption key` is an arbitrary passphrase used to encrypt the backups. Keep the passphrase safe; it is
+required to decrypt the backups when restoring the Cloudron.
 
 # Email
 
