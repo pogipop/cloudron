@@ -56,7 +56,7 @@
                                 <h3>Provide the domain for your Cloudron</h3>
                                 <p>Apps will be installed on subdomains of that domain.</p>
                                 <div class="form-group" ng-class="{ 'has-error': dnsCredentialsForm.domain.$dirty && dnsCredentialsForm.domain.$invalid }">
-                                    <input type="text" class="form-control" ng-model="dnsCredentials.domain" name="domain" ng-minlength="4" ng-maxlength="128" placeholder="example.com" required autofocus ng-disabled="dnsCredentials.busy">
+                                    <input type="text" class="form-control" ng-model="dnsCredentials.domain" name="domain" check-tld placeholder="example.com" required autofocus ng-disabled="dnsCredentials.busy">
                                 </div>
                             </div>
                         </div>

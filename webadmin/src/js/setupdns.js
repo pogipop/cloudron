@@ -3,7 +3,7 @@
 // create main application module
 var app = angular.module('Application', ['angular-md5', 'ui-notification', 'ngTld']);
 
-app.controller('SetupDNSController', ['$scope', '$http', 'Client', function ($scope, $http, Client) {
+app.controller('SetupDNSController', ['$scope', '$http', 'Client', 'ngTld', function ($scope, $http, Client, ngTld) {
     $scope.initialized = false;
     $scope.busy = false;
     $scope.error = null;
