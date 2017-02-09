@@ -1,10 +1,14 @@
+// !!!
+// This module is manually patched by us to not only report valid domains, but verify that subdomains are not accepted
+// !!!
+
 angular.module('ngTld', [])
     .factory('ngTld', ngTld)
     .directive('checkTld', checkTld);
 
 function ngTld() {
     var tldExists = function($path) {
-        return tld.tldExists($path.$viewValue);
+        return $path.$viewValue === tld.getDomain($path.$viewValue);
     }
 
     return {
