@@ -8,7 +8,8 @@ angular.module('ngTld', [])
 
 function ngTld() {
     var tldExists = function($path) {
-        return $path.$viewValue === tld.getDomain($path.$viewValue);
+        // https://github.com/oncletom/tld.js/issues/58
+        return ($path.$viewValue.slice(-1) !== '.') && $path.$viewValue === tld.getDomain($path.$viewValue);
     }
 
     return {
