@@ -928,18 +928,14 @@ function uninstall(appId, auditSource, callback) {
         unpurchase(appId, result.appStoreId, function (error) {
             if (error) return callback(error);
 
-            mailboxdb.delByOwnerId(appId, function (error) {
-                if (error && error.reason !== DatabaseError.NOT_FOUND) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
+            taskmanager.stopAppTask(appId, function () {
+                appdb.setInstallationCommand(appId, appdb.ISTATE_PENDING_UNINSTALL, function (error) {
+                    if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new AppsError(AppsError.NOT_FOUND, 'No such app'));
+                    if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
 
-                taskmanager.stopAppTask(appId, function () {
-                    appdb.setInstallationCommand(appId, appdb.ISTATE_PENDING_UNINSTALL, function (error) {
-                        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new AppsError(AppsError.NOT_FOUND, 'No such app'));
-                        if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
+                    eventlog.add(eventlog.ACTION_APP_UNINSTALL, auditSource, { appId: appId });
 
-                        eventlog.add(eventlog.ACTION_APP_UNINSTALL, auditSource, { appId: appId });
-
-                        taskmanager.startAppTask(appId, callback);
-                    });
+                    taskmanager.startAppTask(appId, callback);
                 });
             });
         });

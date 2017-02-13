@@ -251,6 +251,7 @@ function del(id, callback) {
     assert.strictEqual(typeof callback, 'function');
 
     var queries = [
+        { query: 'DELETE FROM mailboxes WHERE ownerId=?', args: [ id ] },
         { query: 'DELETE FROM appPortBindings WHERE appId = ?', args: [ id ] },
         { query: 'DELETE FROM apps WHERE id = ?', args: [ id ] }
     ];
