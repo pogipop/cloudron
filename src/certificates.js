@@ -279,6 +279,7 @@ function validateCertificate(cert, key, fqdn) {
     if (content.notAfter < new Date()) return new Error('cert expired');
 
     function matchesDomain(domain) {
+        if (typeof domain !== 'string') return false;
         if (domain === fqdn) return true;
         if (domain.indexOf('*') === 0 && domain.slice(2) === fqdn.slice(fqdn.indexOf('.') + 1)) return true;
 
