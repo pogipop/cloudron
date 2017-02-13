@@ -203,11 +203,11 @@ function add(id, appStoreId, manifest, location, portBindings, data, callback) {
         });
     });
 
-    // only allocate a mailbox if fromEmail is set
-    if (data.fromEmail) {
+    // only allocate a mailbox if mailboxName is set
+    if (data.mailboxName) {
         queries.push({
             query: 'INSERT INTO mailboxes (name, ownerId, ownerType) VALUES (?, ?, ?)',
-            args: [ data.fromEmail, id, mailboxdb.TYPE_APP ]
+            args: [ data.mailboxName, id, mailboxdb.TYPE_APP ]
         });
     }
 

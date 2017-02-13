@@ -558,7 +558,7 @@ function install(data, auditSource, callback) {
                 xFrameOptions: xFrameOptions,
                 sso: sso,
                 debugMode: debugMode,
-                fromEmail: (location ? location : manifest.title.toLowerCase().replace(/[^a-zA-Z0-9]/g, '')) + '.app'
+                mailboxName: (location ? location : manifest.title.toLowerCase().replace(/[^a-zA-Z0-9]/g, '')) + '.app'
             };
 
             appdb.add(appId, appStoreId, manifest, location, portBindings, data, function (error) {
@@ -897,7 +897,7 @@ function clone(appId, data, auditSource, callback) {
                     xFrameOptions: app.xFrameOptions,
                     lastBackupId: backupId,
                     sso: !!app.sso,
-                    fromEmail: (location ? location : manifest.title.toLowerCase().replace(/[^a-zA-Z0-9]/g, '')) + '.app'
+                    mailboxName: (location ? location : manifest.title.toLowerCase().replace(/[^a-zA-Z0-9]/g, '')) + '.app'
                 };
 
                 appdb.add(newAppId, appStoreId, manifest, location, portBindings, data, function (error) {
