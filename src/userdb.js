@@ -232,7 +232,13 @@ function update(userId, user, callback) {
     var queries = [];
     queries.push({ query: 'UPDATE users SET ' + fields.join(', ') + ' WHERE id = ?', args: args });
     if (user.username) {
-        queries.push({ query: 'UPDATE mailboxes SET name = ? WHERE ownerId = ? AND aliasTarget IS NULL' , args: [ user.username, userId ] });
+        // delete old mailbox
+        queries.push({ query: 'DELETE FROM mailboxes WHERE ownerId = ? AND aliasTarget IS NULL', args: [ userId ] });
+        // add new mailbox
+        queries.push({
+            query: 'INSERT INTO mailboxes (name, ownerId, ownerType) VALUES (?, ?, ?)',
+            args: [ user.username, userId, mailboxdb.TYPE_USER ]
+        });
     }
 
     database.transaction(queries, function (error, result) {
