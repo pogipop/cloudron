@@ -237,9 +237,9 @@ while true; do
 done
 
 if [[ -n "${domain}" ]]; then
-    echo -e "Visit https://my.${domain} to finish setup once the server has rebooted.\n"
+    echo -e "\n\nVisit https://my.${domain} to finish setup once the server has rebooted.\n"
 else
-    echo -e "Visit https://<IP> to finish setup once the server has rebooted.\n"
+    echo -e "\n\nVisit https://<IP> to finish setup once the server has rebooted.\n"
 fi
 
 if [[ "${rebootServer}" == "true" ]]; then
