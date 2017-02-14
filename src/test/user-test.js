@@ -1008,7 +1008,7 @@ describe('User', function () {
 
         it('can remove valid user', function (done) {
             user.remove(userObject.id, { }, function (error) {
-                expect(error).to.be(null);
+                expect(!error).to.be.ok();
                 done();
             });
         });

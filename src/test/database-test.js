@@ -1340,6 +1340,13 @@ describe('database', function () {
     });
 
     describe('mailboxes', function () {
+        before(function (done) {
+            async.series([
+                database.initialize,
+                database._clear
+            ], done);
+        });
+
         it('add user mailbox succeeds', function (done) {
             mailboxdb.add('girish', 'uid-0', mailboxdb.TYPE_USER, function (error, mailbox) {
                 expect(error).to.be(null);

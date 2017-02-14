@@ -21,7 +21,8 @@ var assert = require('assert'),
     constants = require('./constants.js'),
     database = require('./database.js'),
     debug = require('debug')('box:userdb'),
-    DatabaseError = require('./databaseerror');
+    DatabaseError = require('./databaseerror'),
+    mailboxdb = require('./mailboxdb.js');
 
 var USERS_FIELDS = [ 'id', 'username', 'email', 'password', 'salt', 'createdAt', 'modifiedAt', 'resetToken', 'displayName' ].join(',');
 
@@ -136,8 +137,19 @@ function add(userId, user, callback) {
     assert.strictEqual(typeof user.displayName, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    var data = [ userId, user.username, user.password, user.email, user.salt, user.createdAt, user.modifiedAt, user.resetToken, user.displayName ];
-    database.query('INSERT INTO users (id, username, password, email, salt, createdAt, modifiedAt, resetToken, displayName) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', data, function (error, result) {
+    var queries = [];
+    queries.push({
+        query: 'INSERT INTO users (id, username, password, email, salt, createdAt, modifiedAt, resetToken, displayName) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        args: [ userId, user.username, user.password, user.email, user.salt, user.createdAt, user.modifiedAt, user.resetToken, user.displayName ]
+    });
+    if (user.username) {
+        queries.push({
+            query: 'INSERT INTO mailboxes (name, ownerId, ownerType) VALUES (?, ?, ?)',
+            args: [ user.username, userId, mailboxdb.TYPE_USER ]
+        });
+    }
+
+    database.transaction(queries, function (error, result) {
         if (error && error.code === 'ER_DUP_ENTRY') {
             var msg = error.message;
             if (error.message.indexOf('users_email') !== -1) {
@@ -148,7 +160,7 @@ function add(userId, user, callback) {
 
             return callback(new DatabaseError(DatabaseError.ALREADY_EXISTS, msg));
         }
-        if (error || result.affectedRows !== 1) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
+        if (error || result[0].affectedRows !== 1) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
 
         callback(null);
     });
@@ -162,6 +174,7 @@ function del(userId, callback) {
     var queries = [];
     queries.push({ query: 'DELETE FROM groupMembers WHERE userId = ?', args: [ userId ] });
     queries.push({ query: 'DELETE FROM users WHERE id = ?', args: [ userId ] });
+    queries.push({ query: 'DELETE FROM mailboxes WHERE ownerId=?', args: [ userId ] });
 
     database.transaction(queries, function (error, result) {
         if (error && error.code === 'ER_NO_REFERENCED_ROW_2') return callback(new DatabaseError(DatabaseError.NOT_FOUND, error));
@@ -216,7 +229,13 @@ function update(userId, user, callback) {
     }
     args.push(userId);
 
-    database.query('UPDATE users SET ' + fields.join(', ') + ' WHERE id = ?', args, function (error, result) {
+    var queries = [];
+    queries.push({ query: 'UPDATE users SET ' + fields.join(', ') + ' WHERE id = ?', args: args });
+    if (user.username) {
+        queries.push({ query: 'UPDATE mailboxes SET name = ? WHERE ownerId = ? AND aliasTarget IS NULL' , args: [ user.username, userId ] });
+    }
+
+    database.transaction(queries, function (error, result) {
         if (error && error.code === 'ER_DUP_ENTRY') {
             var msg = error.message;
             if (error.message.indexOf('users_email') !== -1) {
@@ -228,7 +247,7 @@ function update(userId, user, callback) {
             return callback(new DatabaseError(DatabaseError.ALREADY_EXISTS, msg));
         }
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
-        if (result.affectedRows !== 1) return callback(new DatabaseError(DatabaseError.NOT_FOUND));
+        if (result[0].affectedRows !== 1) return callback(new DatabaseError(DatabaseError.NOT_FOUND));
 
         return callback(null);
     });

@@ -52,12 +52,6 @@ var CRYPTO_ITERATIONS = 10000; // iterations
 var CRYPTO_KEY_LENGTH = 512; // bits
 var CRYPTO_DIGEST = 'sha1'; // used to be the default in node 4.1.1 cannot change since it will affect existing db records
 
-function asyncIf(cond, func, next) {
-    if (!cond) return next();
-
-    func(next);
-}
-
 // http://dustinsenos.com/articles/customErrorsInNode
 // http://code.google.com/p/v8/wiki/JavaScriptStackTraceApi
 function UserError(reason, errorOrMessage) {
@@ -179,31 +173,26 @@ function createUser(username, password, email, displayName, auditSource, options
                 displayName: displayName
             };
 
-            asyncIf(!!username, mailboxdb.add.bind(null, username, user.id /* owner */, mailboxdb.TYPE_USER), function (error) {
+            userdb.add(user.id, user, function (error) {
                 if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(new UserError(UserError.ALREADY_EXISTS, error.message));
                 if (error) return callback(new UserError(UserError.INTERNAL_ERROR, error));
 
-                userdb.add(user.id, user, function (error) {
-                    if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(new UserError(UserError.ALREADY_EXISTS, error.message));
+                settings.getMailConfig(function (error, mailConfig) {
                     if (error) return callback(new UserError(UserError.INTERNAL_ERROR, error));
 
-                    settings.getMailConfig(function (error, mailConfig) {
-                        if (error) return callback(new UserError(UserError.INTERNAL_ERROR, error));
+                    if (mailConfig.enabled) {
+                        user.alternateEmail = user.email;
+                        user.email = user.username ? user.username + '@' + config.fqdn() : null;
+                    } else {
+                        user.alternateEmail = null;
+                    }
 
-                        if (mailConfig.enabled) {
-                            user.alternateEmail = user.email;
-                            user.email = user.username ? user.username + '@' + config.fqdn() : null;
-                        } else {
-                            user.alternateEmail = null;
-                        }
+                    callback(null, user);
 
-                        callback(null, user);
+                    eventlog.add(eventlog.ACTION_USER_ADD, auditSource, { userId: user.id, email: user.email });
 
-                        eventlog.add(eventlog.ACTION_USER_ADD, auditSource, { userId: user.id, email: user.email });
-
-                        if (!owner) mailer.userAdded(user, sendInvite);
-                        if (sendInvite) mailer.sendInvite(user, invitor);
-                    });
+                    if (!owner) mailer.userAdded(user, sendInvite);
+                    if (sendInvite) mailer.sendInvite(user, invitor);
                 });
             });
         });
@@ -298,7 +287,7 @@ function removeUser(userId, auditSource, callback) {
 
             eventlog.add(eventlog.ACTION_USER_REMOVE, auditSource, { userId: userId });
 
-            asyncIf(!!user.username, mailboxdb.delByOwnerId.bind(null, user.id), callback);
+            callback();
 
             mailer.userRemoved(user);
         });
@@ -408,25 +397,14 @@ function updateUser(userId, data, auditSource, callback) {
         if (error) return callback(error);
     }
 
-    userdb.get(userId, function (error, user) {
-        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new UserError(UserError.NOT_FOUND));
+    userdb.update(userId, data, function (error) {
+        if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(new UserError(UserError.ALREADY_EXISTS, error.message));
+        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new UserError(UserError.NOT_FOUND, error));
         if (error) return callback(new UserError(UserError.INTERNAL_ERROR, error));
 
-        asyncIf(data.username && user.username !== data.username, mailboxdb.add.bind(null, data.username, userId /* owner */, mailboxdb.TYPE_USER), function (error) {
-            if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(new UserError(UserError.ALREADY_EXISTS, error.message));
-            if (error) return callback(new UserError(UserError.INTERNAL_ERROR, error));
+        eventlog.add(eventlog.ACTION_USER_UPDATE, auditSource, { userId: userId });
 
-            userdb.update(userId, data, function (error) {
-                if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(new UserError(UserError.ALREADY_EXISTS, error.message));
-                if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new UserError(UserError.NOT_FOUND, error));
-                if (error) return callback(new UserError(UserError.INTERNAL_ERROR, error));
-
-                eventlog.add(eventlog.ACTION_USER_UPDATE, auditSource, { userId: userId });
-
-                // delete old mailbox
-                asyncIf(data.username && user.username && user.username !== data.username, mailboxdb.del.bind(null, user.username), callback);
-            });
-        });
+        callback();
     });
 }
 

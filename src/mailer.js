@@ -232,7 +232,7 @@ function mailUserEventToAdmins(user, event) {
     assert.strictEqual(typeof event, 'string');
 
     getAdminEmails(function (error, adminEmails) {
-        if (error) return console.log('Error getting admins', error);
+        if (error) return debug('Error getting admins', error);
 
         adminEmails = _.difference(adminEmails, [ user.email ]);
 
