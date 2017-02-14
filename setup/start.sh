@@ -205,6 +205,10 @@ if ! grep "^Restart=" /etc/systemd/system/multi-user.target.wants/nginx.service;
     echo -e "\n[Service]\nRestart=always\n" >> /etc/systemd/system/multi-user.target.wants/nginx.service
     systemctl daemon-reload
 fi
+# This is here, since the splash screen needs this file to be present :-(
+if [[ ! -f "${BOX_DATA_DIR}/dhparams.pem" ]]; then
+    openssl dhparam -out "${BOX_DATA_DIR}/dhparams.pem" 2048
+fi
 systemctl start nginx
 
 # bookkeep the version as part of data

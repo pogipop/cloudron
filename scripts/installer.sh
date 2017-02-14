@@ -50,16 +50,9 @@ if ! id "${USER}" 2>/dev/null; then
     useradd "${USER}" -m
 fi
 
-# This is here, since the splash screen needs this file to be present :-(
-readonly DATA_DIR="/home/${USER}/data"
-if [[ ! -f "${DATA_DIR}/nginx/cert/dhparams.pem" ]]; then
-    mkdir -p "${DATA_DIR}/nginx/cert/"
-    openssl dhparam -out "${DATA_DIR}/nginx/cert/dhparams.pem" 2048
-fi
-
 if [[ "${is_update}" == "yes" ]]; then
     echo "Setting up update splash screen"
-    "${box_src_tmp_dir}/setup/splashpage.sh" --data "${arg_data}" # show splash from new code
+    "${box_src_tmp_dir}/setup/splashpage.sh" --data "${arg_data}" || true # show splash from new code
     ${BOX_SRC_DIR}/setup/stop.sh # stop the old code
 fi
 
