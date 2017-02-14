@@ -248,6 +248,8 @@ function update(userId, user, callback) {
                 msg = 'email already exists';
             } else if (error.message.indexOf('users_username') !== -1) {
                 msg = 'username already exists';
+            } else {
+                msg = 'mailbox already exists';
             }
 
             return callback(new DatabaseError(DatabaseError.ALREADY_EXISTS, msg));
