@@ -97,12 +97,6 @@ if [[ "${arg_provider}" == "caas" ]]; then
 fi
 
 echo "==> Setup btrfs data"
-if ! grep -q loop.ko /lib/modules/`uname -r`/modules.builtin; then
-    # on scaleway loop is not built-in
-    echo "loop" >> /etc/modules
-    modprobe loop
-fi
-
 if [[ ! -d "${DATA_DIR}" ]]; then
     echo "==> Mounting loopback btrfs"
     truncate -s "8192m" "${DATA_FILE}" # 8gb start (this will get resized dynamically by cloudron-resize-fs.service)
