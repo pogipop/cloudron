@@ -352,12 +352,16 @@ Acme.prototype.createKeyAndCsr = function (domain, callback) {
 Acme.prototype.downloadChain = function (linkHeader, callback) {
     if (!linkHeader) return new AcmeError(AcmeError.EXTERNAL_ERROR, 'Empty link header when downloading certificate chain');
 
+    debug('downloadChain: linkHeader %s', linkHeader);
+
     var linkInfo = parseLinks(linkHeader);
     if (!linkInfo || !linkInfo.up) return new AcmeError(AcmeError.EXTERNAL_ERROR, 'Failed to parse link header when downloading certificate chain');
 
-    debug('downloadChain: downloading from %s', this.caOrigin + linkInfo.up);
+    var intermediateCertUrl = linkInfo.up.startsWith('https://') ? linkInfo.up : (this.caOrigin + linkInfo.up);
 
-    superagent.get(this.caOrigin + linkInfo.up).buffer().parse(function (res, done) {
+    debug('downloadChain: downloading from %s', intermediateCertUrl);
+
+    superagent.get(intermediateCertUrl).buffer().parse(function (res, done) {
         var data = [ ];
         res.on('data', function(chunk) { data.push(chunk); });
         res.on('end', function () { res.text = Buffer.concat(data); done(); });
