@@ -337,6 +337,9 @@ $ ssh root@newserverip
 > ./cloudron-setup --provider <digitalocean|ec2|generic|scaleway> --encryption-key <key> --restore-url <publicS3Url>
 ```
 
+Note: When upgrading an old version of Cloudron (<= 0.94.0), pass the `--version 0.94.1` flag and then continue updating
+from that.
+
  * Finally, once you see the newest version being displayed in your Cloudron webinterface, you can safely delete the old server instance.
 
 # Restore
