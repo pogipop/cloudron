@@ -92,15 +92,19 @@ done
 # validate arguments in the absence of data
 if [[ -z "${dataJson}" ]]; then
     if [[ -z "${provider}" ]]; then
-        echo "--provider is required (generic, scaleway, ec2, digitalocean)"
+        echo "--provider is required (digitalocean, ec2, lightsail, linode, ovh, scaleway, vultr or generic)"
         exit 1
     elif [[  \
-                "${provider}" != "generic" && \
-                "${provider}" != "scaleway" && \
+                "${provider}" != "digitalocean" && \
                 "${provider}" != "ec2" && \
-                "${provider}" != "digitalocean" \
+                "${provider}" != "lightsail" && \
+                "${provider}" != "linode" && \
+                "${provider}" != "ovh" && \
+                "${provider}" != "scaleway" && \
+                "${provider}" != "vultr" && \
+                "${provider}" != "generic" \
             ]]; then
-        echo "--provider must be one of: generic, scaleway, ec2, digitalocean"
+        echo "--provider must be one of: digitalocean, ec2, lightsail, linode, ovh, scaleway, vultr or generic"
         exit 1
     fi
 
