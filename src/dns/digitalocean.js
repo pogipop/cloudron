@@ -192,6 +192,11 @@ function verifyDnsConfig(dnsConfig, domain, ip, callback) {
         if (error && error.code === 'ENOTFOUND') return callback(new SubdomainError(SubdomainError.BAD_FIELD, 'Unable to resolve nameservers for this domain'));
         if (error || !nameservers) return callback(new SubdomainError(SubdomainError.BAD_FIELD, error ? error.message : 'Unable to get nameservers'));
 
+        if (nameservers.map(function (n) { return n.toLowerCase(); }).indexOf('ns1.digitalocean.com') === -1) {
+            debug('verifyDnsConfig: %j does not contains DO NS', nameservers);
+            return callback(new SubdomainError(SubdomainError.BAD_FIELD, 'Domain nameservers are not set to Digital Ocean'));
+        }
+
         upsert(credentials, domain, 'my', 'A', [ ip ], function (error, changeId) {
             if (error) return callback(error);
 
