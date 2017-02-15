@@ -7,12 +7,13 @@ var assert = require('assert'),
     debug = require('debug')('box:dns/waitfordns'),
     dns = require('native-dns'),
     SubdomainError = require('../subdomains.js').SubdomainError,
-    tld = require('tldjs');
+    tld = require('tldjs'),
+    util = require('util');
 
 // the first arg to callback is not an error argument; this is required for async.every
 function isChangeSynced(domain, value, type, nameserver, callback) {
     assert.strictEqual(typeof domain, 'string');
-    assert.strictEqual(typeof value, 'string');
+    assert(util.isRegExp(value));
     assert.strictEqual(typeof type, 'string');
     assert.strictEqual(typeof nameserver, 'string');
     assert.strictEqual(typeof callback, 'function');
@@ -52,7 +53,9 @@ function isChangeSynced(domain, value, type, nameserver, callback) {
                 debug('isChangeSynced: ns: %s (%s), name:%s Actual:%j Expecting:%s', nameserver, nsIp, domain, answer, value);
 
                 var match = answer.some(function (a) {
-                    return ((type === 'A' && a.address === value) || (type === 'CNAME' && a.data === value));
+                    return ((type === 'A' && value.test(a.address)) ||
+                            (type === 'CNAME' && value.test(a.data)) ||
+                            (type === 'TXT' && value.test(a.data.join(''))));
                 });
 
                 if (match) return iteratorCallback(true); // done!
@@ -68,12 +71,16 @@ function isChangeSynced(domain, value, type, nameserver, callback) {
 // check if IP change has propagated to every nameserver
 function waitForDns(domain, value, type, options, callback) {
     assert.strictEqual(typeof domain, 'string');
-    assert.strictEqual(typeof value, 'string');
-    assert(type === 'A' || type === 'CNAME');
+    assert(typeof value === 'string' || util.isRegExp(value));
+    assert(type === 'A' || type === 'CNAME' || type === 'TXT');
     assert(options && typeof options === 'object'); // { interval: 5000, times: 50000 }
     assert.strictEqual(typeof callback, 'function');
 
     var zoneName = tld.getDomain(domain);
+    if (typeof value === 'string') {
+        // http://stackoverflow.com/questions/3561493/is-there-a-regexp-escape-function-in-javascript
+        value = new RegExp('^' + value.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&') + '$');
+    }
     debug('waitForIp: domain %s to be %s in zone %s.', domain, value, zoneName);
 
     var attempt = 1;

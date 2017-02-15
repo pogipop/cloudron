@@ -110,8 +110,8 @@ function remove(subdomain, type, values, callback) {
 
 function waitForDns(domain, value, type, options, callback) {
     assert.strictEqual(typeof domain, 'string');
-    assert.strictEqual(typeof value, 'string');
-    assert(type === 'A' || type === 'CNAME');
+    assert(typeof value === 'string' || util.isRegExp(value));
+    assert(type === 'A' || type === 'CNAME' || type === 'TXT');
     assert(options && typeof options === 'object'); // { interval: 5000, times: 50000 }
     assert.strictEqual(typeof callback, 'function');
 
