@@ -241,7 +241,7 @@ function verifyDnsConfig(dnsConfig, domain, ip, callback) {
             }
 
             upsert(credentials, domain, 'my', 'A', [ ip ], function (error, changeId) {
-                if (error) return callback(new SubdomainError(SubdomainError.INTERNAL_ERROR, error));
+                if (error) return callback(error);
 
                 debug('verifyDnsConfig: A record added with change id %s', changeId);
 
