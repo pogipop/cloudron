@@ -85,6 +85,7 @@ function upsert(dnsConfig, zoneName, subdomain, type, values, callback) {
                   .end(function (error, result) {
                     if (error && !error.response) return callback(error);
                     if (result.statusCode === 403 || result.statusCode === 401) return callback(new SubdomainError(SubdomainError.ACCESS_DENIED, util.format('%s %j', result.statusCode, result.body)));
+                    if (result.statusCode === 422) return callback(new SubdomainError(SubdomainError.BAD_FIELD, result.body.message));
                     if (result.statusCode !== 201) return callback(new SubdomainError(SubdomainError.EXTERNAL_ERROR, util.format('%s %j', result.statusCode, result.body)));
 
                     return callback(null);
@@ -100,6 +101,7 @@ function upsert(dnsConfig, zoneName, subdomain, type, values, callback) {
 
                     if (error && !error.response) return callback(error);
                     if (result.statusCode === 403 || result.statusCode === 401) return callback(new SubdomainError(SubdomainError.ACCESS_DENIED, util.format('%s %j', result.statusCode, result.body)));
+                    if (result.statusCode === 422) return callback(new SubdomainError(SubdomainError.BAD_FIELD, result.body.message));
                     if (result.statusCode !== 200) return callback(new SubdomainError(SubdomainError.EXTERNAL_ERROR, util.format('%s %j', result.statusCode, result.body)));
 
                     return callback(null);
