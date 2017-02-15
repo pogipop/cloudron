@@ -46,6 +46,7 @@ var assert = require('assert'),
     settings = require('./settings.js'),
     showdown = require('showdown'),
     smtpTransport = require('nodemailer-smtp-transport'),
+    subdomains = require('./subdomains.js'),
     users = require('./user.js'),
     util = require('util'),
     _ = require('underscore');
@@ -55,8 +56,7 @@ var NOOP_CALLBACK = function (error) { if (error) debug(error); };
 var MAIL_TEMPLATES_DIR = path.join(__dirname, 'mail_templates');
 
 var gMailQueue = [ ],
-    gDnsReady = false,
-    gCheckDnsTimerId = null;
+    gDnsReady = false;
 
 function splatchError(error) {
     var result = { };
@@ -81,8 +81,6 @@ function stop(callback) {
     assert.strictEqual(typeof callback, 'function');
 
     // TODO: interrupt processQueue as well
-    clearTimeout(gCheckDnsTimerId);
-    gCheckDnsTimerId = null;
 
     debug(gMailQueue.length + ' mail items dropped');
     gMailQueue = [ ];
@@ -96,60 +94,13 @@ function mailConfig() {
     };
 }
 
-function getTxtRecords(callback) {
-    dns.resolveNs(config.zoneName(), function (error, nameservers) {
-        if (error || !nameservers) return callback(error || new Error('Unable to get nameservers'));
-
-        var nameserver = nameservers[0];
-
-        dns.resolve4(nameserver, function (error, nsIps) {
-            if (error || !nsIps || nsIps.length === 0) return callback(error);
-
-            var req = dns.Request({
-                question: dns.Question({ name: config.fqdn(), type: 'TXT' }),
-                server: { address: nsIps[0] },
-                timeout: 5000
-            });
-
-            req.on('timeout', function () { return callback(new Error('ETIMEOUT')); });
-
-            req.on('message', function (error, message) {
-                if (error || !message.answer || message.answer.length === 0) return callback(null, null);
-
-                var records = message.answer.map(function (a) { return a.data[0]; });
-                callback(null, records);
-            });
-
-            req.send();
-        });
-    });
-}
-
 // keep this in sync with the cloudron.js dns changes
 function checkDns() {
-    getTxtRecords(function (error, records) {
-        if (error || !records) {
-            debug('checkDns: DNS error or no records looking up TXT records for %s %s', config.fqdn(), error, records);
-            gCheckDnsTimerId = setTimeout(checkDns, 60000);
-            return;
-        }
-
-        var allowedToSendMail = false;
-
-        for (var i = 0; i < records.length; i++) {
-            if (records[i].indexOf('v=spf1 ') !== 0) continue; // not SPF
-
-            allowedToSendMail = records[i].indexOf('a:' + config.adminFqdn()) !== -1;
-            break; // only one SPF record can exist (https://support.google.com/a/answer/4568483?hl=en)
-        }
-
-        if (!allowedToSendMail) {
-            debug('checkDns: SPF records disallow sending email from cloudron. %j', records);
-            gCheckDnsTimerId = setTimeout(checkDns, 60000);
-            return;
-        }
+    subdomains.waitForDns(config.fqdn(), new RegExp('^v=spf1 .*a:' + config.adminFqdn().replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&') + '.*'), 'TXT', { interval: 60000, times: Infinity }, function (error) {
+        if (error) return debug(error); // can never happen
 
         debug('checkDns: SPF check passed. commencing mail processing');
+
         gDnsReady = true;
         processQueue();
     });
