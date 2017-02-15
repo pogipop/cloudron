@@ -334,7 +334,7 @@ Similar to the initial installation, a Cloudron upgrade looks like:
 $ ssh root@newserverip
 > wget https://cloudron.io/cloudron-setup
 > chmod +x cloudron-setup
-> ./cloudron-setup --provider <digitalocean|ec2|generic|scaleway> --encryption-key <key> --restore-url <publicS3Url>
+> ./cloudron-setup --provider <digitalocean|ec2|generic|scaleway> --domain <example.com> --encryption-key <key> --restore-url <publicS3Url>
 ```
 
 Note: When upgrading an old version of Cloudron (<= 0.94.0), pass the `--version 0.94.1` flag and then continue updating
@@ -355,7 +355,7 @@ To restore a Cloudron from a specific backup:
   * `File system` - When storing backups in `/var/backups`, you have to make the box and the app backups available to the new Cloudron instance's `/var/backups`. This can be achieved in a variety of ways depending on the situation: like scp'ing the backup files to the new machine before Cloudron installation OR mounting an external backup hard drive into the new Cloudron's `/var/backup` OR downloading a copy of the backup using `cloudron machine backup download` and uploading them to the new machine. After doing so, pass `file:///var/backups/<path to box backup>` as the `--restore-url` below.
 
 * Create a new Cloudron by following the [installing](/references/selfhosting.html#installing) section.
-  When running the setup script, pass in the `version`, `encryption-key` and `restore-url` flags.
+  When running the setup script, pass in the `version`, `encryption-key`, `domain` and `restore-url` flags.
   The `version` field is the version of the Cloudron that the backup corresponds to (it is embedded
   in the backup file name).
 
