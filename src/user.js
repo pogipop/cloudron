@@ -397,14 +397,19 @@ function updateUser(userId, data, auditSource, callback) {
         if (error) return callback(error);
     }
 
-    userdb.update(userId, data, function (error) {
-        if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(new UserError(UserError.ALREADY_EXISTS, error.message));
-        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new UserError(UserError.NOT_FOUND, error));
+    userdb.get(userId, function (error) {
+        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new UserError(UserError.NOT_FOUND));
         if (error) return callback(new UserError(UserError.INTERNAL_ERROR, error));
 
-        eventlog.add(eventlog.ACTION_USER_UPDATE, auditSource, { userId: userId });
+        userdb.update(userId, data, function (error) {
+            if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(new UserError(UserError.ALREADY_EXISTS, error.message));
+            if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new UserError(UserError.NOT_FOUND, error));
+            if (error) return callback(new UserError(UserError.INTERNAL_ERROR, error));
 
-        callback();
+            eventlog.add(eventlog.ACTION_USER_UPDATE, auditSource, { userId: userId });
+
+            callback();
+        });
     });
 }
 

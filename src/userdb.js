@@ -257,7 +257,7 @@ function update(userId, user, callback) {
             return callback(new DatabaseError(DatabaseError.ALREADY_EXISTS, msg));
         }
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
-        if (result[0].affectedRows !== 1) return callback(new DatabaseError(DatabaseError.NOT_FOUND));
+        if (result[0].affectedRows !== 1) return callback(new DatabaseError(DatabaseError.NOT_FOUND)); // mailbox?
 
         return callback(null);
     });
