@@ -182,6 +182,7 @@ function getEmailDnsRecords(callback) {
             status: false
         };
 
+        // https://agari.zendesk.com/hc/en-us/articles/202952749-How-long-can-my-SPF-record-be-
         dns.resolve(records.spf.domain, records.spf.type, function (error, txtRecords) {
             if (error && error.code === 'ENOTFOUND') return callback(null);    // not setup
             if (error) return callback(error);
@@ -190,9 +191,9 @@ function getEmailDnsRecords(callback) {
 
             var i;
             for (i = 0; i < txtRecords.length; i++) {
-                if (txtRecords[i].join(' ').indexOf('v=spf1 ') !== 0) continue; // not SPF
-                records.spf.value = txtRecords[i].join(' ');
-                records.spf.status = records.spf.value.indexOf(' a:' + config.adminFqdn() + ' ') !== -1;
+                if (txtRecords[i].join('').indexOf('v=spf1 ') !== 0) continue; // not SPF
+                records.spf.value = txtRecords[i].join('');
+                records.spf.status = records.spf.value.indexOf(' a:' + config.adminFqdn()) !== -1;
                 break;
             }
 

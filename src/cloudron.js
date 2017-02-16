@@ -568,6 +568,7 @@ function readDkimPublicKeySync() {
 }
 
 // NOTE: if you change the SPF record here, be sure the wait check in mailer.js
+// https://agari.zendesk.com/hc/en-us/articles/202952749-How-long-can-my-SPF-record-be-
 function txtRecordsWithSpf(callback) {
     assert.strictEqual(typeof callback, 'function');
 
@@ -576,21 +577,25 @@ function txtRecordsWithSpf(callback) {
 
         debug('txtRecordsWithSpf: current txt records - %j', txtRecords);
 
-        var i, validSpf;
+        var i, matches, validSpf;
 
         for (i = 0; i < txtRecords.length; i++) {
-            if (txtRecords[i].indexOf('"v=spf1 ') !== 0) continue; // not SPF
+            matches = txtRecords[i].match(/^("?v=spf1) /); // DO backend may return without quotes
+            if (matches === null) continue;
 
-            validSpf = txtRecords[i].indexOf(' a:' + config.adminFqdn() + ' ') !== -1;
-            break;
+            // this won't work if the entry is arbitrarily "split" across quoted strings
+            validSpf = txtRecords[i].indexOf('a:' + config.adminFqdn()) !== -1;
+            break; // there can only be one SPF record
         }
 
         if (validSpf) return callback(null, null);
 
-        if (i == txtRecords.length) {
-            txtRecords[i] = '"v=spf1 a:' + config.adminFqdn() + ' ~all"';
-        } else {
-            txtRecords[i] = '"v=spf1 a:' + config.adminFqdn() + ' ' + txtRecords[i].slice('"v=spf1 '.length);
+        if (!matches) { // no spf record was found, create one
+            txtRecords.push('"v=spf1 a:' + config.adminFqdn() + ' ~all"');
+            debug('txtRecordsWithSpf: adding txt record');
+        } else { // just add ourself
+            txtRecords[i] = matches[1] + ' a:' + config.adminFqdn() + txtRecords[i].slice(matches[0].length);
+            debug('txtRecordsWithSpf: inserting txt record');
         }
 
         return callback(null, txtRecords);

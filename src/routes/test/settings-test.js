@@ -735,7 +735,7 @@ describe('Settings API', function () {
             dnsAnswerQueue[mxDomain].MX = [ { priority: '10', exchange: config.mailFqdn() } ];
             dnsAnswerQueue[dmarcDomain].TXT = [['v=DMARC1; p=reject; pct=100']];
             dnsAnswerQueue[dkimDomain].TXT = [['v=DKIM1;', 't=s;', 'p=' + cloudron.readDkimPublicKeySync()]];
-            dnsAnswerQueue[spfDomain].TXT = [['v=spf1', 'a:' + config.adminFqdn(), '~all']];
+            dnsAnswerQueue[spfDomain].TXT = [['v=spf1', ' a:' + config.adminFqdn(), ' ~all']];
 
             superagent.get(SERVER_URL + '/api/v1/settings/email_dns_records')
                    .query({ access_token: token })
