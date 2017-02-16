@@ -108,6 +108,7 @@ function removeOldImages(callback) {
     debug('removing old addon images');
 
     for (var imageName in infra.images) {
+        if (imageName === 'redis') continue; // see #223
         var image = infra.images[imageName];
         debug('cleaning up images of %j', image);
         var cmd = 'docker images "%s" | tail -n +2 | awk \'{ print $1 ":" $2 }\' | grep -v "%s" | xargs --no-run-if-empty docker rmi';
@@ -127,6 +128,7 @@ function stopContainers(existingInfra, callback) {
         assert(typeof infra.images, 'object');
         var changedAddons = [ ];
         for (var imageName in infra.images) {
+            if (imageName === 'redis') continue; // see #223
             if (infra.images[imageName].tag !== existingInfra.images[imageName].tag) changedAddons.push(imageName);
         }
 
