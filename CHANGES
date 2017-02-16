@@ -748,3 +748,13 @@
 * Fix crash when fetching mail records
 * Fix crash in LDAP server when username and displayName are empty
 
+[0.101.0]
+* Better error handling of unpurchase errors
+* Validate that cloudron domain name is a subdomain of public suffic list
+* Add canada and london to S3 backup regions
+* Bundle Font Awesome as part of webadmin
+* Fix crash in custom certiicate validation
+* Get A+ rating in SSL Check
+* More robust detection and injection of SPF record
+* Add azure, lightsail, linode, ovh, vultr to provider list
+
