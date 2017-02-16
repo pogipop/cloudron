@@ -55,9 +55,10 @@
                                 <h1>Cloudron Setup</h1>
                                 <h3>Provide the domain for your Cloudron</h3>
                                 <p>Apps will be installed on subdomains of that domain.</p>
-                                <div class="form-group" ng-class="{ 'has-error': dnsCredentialsForm.domain.$dirty && dnsCredentialsForm.domain.$invalid }">
+                                <div class="form-group" style="margin-bottom: 0;" ng-class="{ 'has-error': dnsCredentialsForm.domain.$dirty && dnsCredentialsForm.domain.$invalid }">
                                     <input type="text" class="form-control" ng-model="dnsCredentials.domain" name="domain" check-tld placeholder="example.com" required autofocus ng-disabled="dnsCredentials.busy">
                                 </div>
+                                <p>&nbsp;<span ng-show="dnsCredentialsForm.domain.$error.invalidSubdomain" class="text-danger">Subdomains are <a href="https://cloudron.io/references/selfhosting.html#domain-setup" target="_blank" title="Domain documentation">not supported</a></span></p>
                             </div>
                         </div>
                         <div class="row">

@@ -637,6 +637,11 @@ h1, h2, h3 {
 .has-error,
 .text-danger {
     color: $brand-danger;
+
+    a {
+        text-decoration: underline;
+        color: $brand-danger;
+    }
 }
 
 footer {
