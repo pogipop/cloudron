@@ -44,8 +44,7 @@ function getApi(callback) {
         case 'digitalocean': return callback(null, generic);
         case 'ec2': return callback(null, ec2);
         case 'scaleway': return callback(null, scaleway);
-        case 'generic': return callback(null, generic);
-        default: return callback(new Error('Unknown provider ' + config.provider()));
+        default: return callback(null, generic);
     }
 }
 
