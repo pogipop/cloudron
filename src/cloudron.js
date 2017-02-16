@@ -594,7 +594,7 @@ function txtRecordsWithSpf(callback) {
             txtRecords.push('"v=spf1 a:' + config.adminFqdn() + ' ~all"');
             debug('txtRecordsWithSpf: adding txt record');
         } else { // just add ourself
-            txtRecords[i] = matches[1] + ' a:' + config.adminFqdn() + txtRecords[i].slice(matches[0].length);
+            txtRecords[i] = matches[1] + ' a:' + config.adminFqdn() + txtRecords[i].slice(matches[1].length);
             debug('txtRecordsWithSpf: inserting txt record');
         }
 
