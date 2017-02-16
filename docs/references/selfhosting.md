@@ -36,7 +36,7 @@ In addition to those, the Cloudron community has successfully installed the plat
 * [OVH](https://www.ovh.com/)
 * [Scaleway](https://www.scaleway.com/)
 * [So you Start](https://www.soyoustart.com/)
-* [Vultr](http://www.vultr.com/?ref=7063201)
+* [Vultr](http://www.vultr.com/?ref=7110116-3B)
 
 Please let us know if any of them requires tweaks or adjustments.
 
