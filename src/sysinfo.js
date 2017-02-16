@@ -43,6 +43,7 @@ function getApi(callback) {
         case 'caas': return callback(null, caas);
         case 'digitalocean': return callback(null, generic);
         case 'ec2': return callback(null, ec2);
+        case 'lightsail': return callback(null, ec2);
         case 'scaleway': return callback(null, scaleway);
         default: return callback(null, generic);
     }
