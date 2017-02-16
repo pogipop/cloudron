@@ -749,6 +749,7 @@
 * Fix crash in LDAP server when username and displayName are empty
 
 [0.101.0]
+* New base image 0.10.0
 * Better error handling of unpurchase errors
 * Validate that cloudron domain name is a subdomain of public suffic list
 * Add canada and london to S3 backup regions
