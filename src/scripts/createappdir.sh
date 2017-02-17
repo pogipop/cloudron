@@ -19,7 +19,12 @@ fi
 
 if [[ "${BOX_ENV}" == "cloudron" ]]; then
     readonly app_data_dir="${HOME}/data/$1"
-    btrfs subvolume create "${app_data_dir}"
+
+    # Only create subvolume if it does not exist
+    if [[ ! -d "${app_data_dir}" ]]; then
+        btrfs subvolume create "${app_data_dir}"
+    fi
+
     mkdir -p "${app_data_dir}/data"
     chown -R yellowtent:yellowtent "${app_data_dir}"
 else
