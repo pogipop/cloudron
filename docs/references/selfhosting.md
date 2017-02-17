@@ -244,8 +244,18 @@ reputation should be easy to get back.
 
 ## Checklist
 
-* Once your Cloudron is ready, setup a Reverse DNS PTR record to be setup for the `my` subdomain.
+* If you are unable to receive mail, first thing to check is if your VPS provider lets you
+  receive mail on port 25.
+
+    * Digital Ocean - New accounts frequently have port 25 blocked. Write to their support to
+      unblock your server.
+
+    * EC2, Lightsail & Scaleway - Edit your security group to allow email.
+
+* Setup a Reverse DNS PTR record to be setup for the `my` subdomain.
   **Note:** PTR records are a feature of your VPS provider and not your domain provider.
+
+    * You can verify the PTR record [https://mxtoolbox.com/ReverseLookup.aspx](here).
 
     * AWS EC2 & Lightsail - Fill the [PTR request form](https://aws-portal.amazon.com/gp/aws/html-forms-controller/contactus/ec2-email-limit-rdns-request).
 
@@ -256,8 +266,6 @@ reputation should be easy to get back.
 
     * Scaleway - Edit your security group to allow email. You can also set a PTR record on the interface with your
     `my.<domain>`.
-
-* You can verify the PTR record [https://mxtoolbox.com/ReverseLookup.aspx](here).
 
 * Check if your IP is listed in any DNSBL list [here](http://multirbl.valli.org/). In most cases,
 you can apply for removal of your IP by filling out a form at the DNSBL manager site.
