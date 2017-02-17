@@ -4,6 +4,12 @@ Dear Cloudron Admin,
 
 The certificate for <%= domain %> could not be renewed.
 
+The Cloudron will attempt to renew the certificate every 12 hours
+until the certificate expires (at which point it will switch to
+using the fallback certificate).
+
+The error was:
+
 -------------------------------------
 
 <%- message %>
