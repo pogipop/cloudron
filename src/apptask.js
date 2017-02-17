@@ -526,6 +526,12 @@ function configure(app, callback) {
         updateApp.bind(null, app, { installationProgress: '35, Registering subdomain' }),
         registerSubdomain.bind(null, app, true /* overwrite */),
 
+        updateApp.bind(null, app, { installationProgress: '40, Downloading image' }),
+        docker.downloadImage.bind(null, app.manifest),
+
+        updateApp.bind(null, app, { installationProgress: '45, Ensuring volume' }),
+        createVolume.bind(null, app),
+
         // re-setup addons since they rely on the app's fqdn (e.g oauth)
         updateApp.bind(null, app, { installationProgress: '50, Setting up addons' }),
         addons.setupAddons.bind(null, app, app.manifest.addons),
