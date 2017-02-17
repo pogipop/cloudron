@@ -19,7 +19,7 @@ The Cloudron requires a domain name when it is installed. Apps are installed int
 The `my` subdomain is special and is the location of the Cloudron web interface. For this to
 work, the Cloudron requires a way to programmatically configure the DNS entries of the domain.
 Note that the Cloudron will never overwrite _existing_ DNS entries and refuse to install
-apps on existing subdomains.
+apps on existing subdomains (so, it is safe to reuse an existing domain that runs other services).
 
 # Cloud Server
 
@@ -46,6 +46,10 @@ Please let us know if any of them requires tweaks or adjustments.
 
 Create an `Ubuntu 16.04 (Xenial)` server with at-least `1gb` RAM. Do not make any changes
 to vanilla ubuntu. Be sure to allocate a static IPv4 address for your server.
+
+Cloudron has a built-in firewall and ports are opened and closed dynamically, as and when
+apps are installed, re-configured or removed. For this reason, be sure to open all TCP and
+UDP traffic to the server.
 
 ### Linode
 
