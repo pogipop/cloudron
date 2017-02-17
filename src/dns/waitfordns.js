@@ -10,7 +10,6 @@ var assert = require('assert'),
     tld = require('tldjs'),
     util = require('util');
 
-// the first arg to callback is not an error argument; this is required for async.every
 function isChangeSynced(domain, value, type, nameserver, callback) {
     assert.strictEqual(typeof domain, 'string');
     assert(util.isRegExp(value));
@@ -34,20 +33,20 @@ function isChangeSynced(domain, value, type, nameserver, callback) {
 
             req.on('timeout', function () {
                 debug('nameserver %s (%s) timed out when trying to resolve %s', nameserver, nsIp, domain);
-                return iteratorCallback(true); // should be ok if dns server is down
+                return iteratorCallback(null, true); // should be ok if dns server is down
             });
 
             req.on('message', function (error, message) {
                 if (error) {
                     debug('nameserver %s (%s) returned error trying to resolve %s: %s', nameserver, nsIp, domain, error);
-                    return iteratorCallback(false);
+                    return iteratorCallback(null, false);
                 }
 
                 var answer = message.answer;
 
                 if (!answer || answer.length === 0) {
                     debug('bad answer from nameserver %s (%s) resolving %s (%s): %j', nameserver, nsIp, domain, type, message);
-                    return iteratorCallback(false);
+                    return iteratorCallback(null, false);
                 }
 
                 debug('isChangeSynced: ns: %s (%s), name:%s Actual:%j Expecting:%s', nameserver, nsIp, domain, answer, value);
@@ -58,9 +57,9 @@ function isChangeSynced(domain, value, type, nameserver, callback) {
                             (type === 'TXT' && value.test(a.data.join(''))));
                 });
 
-                if (match) return iteratorCallback(true); // done!
+                if (match) return iteratorCallback(null, true); // done!
 
-                iteratorCallback(false);
+                iteratorCallback(null, false);
             });
 
             req.send();
@@ -90,7 +89,7 @@ function waitForDns(domain, value, type, options, callback) {
         dns.resolveNs(zoneName, function (error, nameservers) {
             if (error || !nameservers) return retryCallback(error || new SubdomainError(SubdomainError.EXTERNAL_ERROR, 'Unable to get nameservers'));
 
-            async.every(nameservers, isChangeSynced.bind(null, domain, value, type), function (synced) {
+            async.every(nameservers, isChangeSynced.bind(null, domain, value, type), function (error, synced) {
                 debug('waitForIp: %s %s ns: %j', domain, synced ? 'done' : 'not done', nameservers);
 
                 retryCallback(synced ? null : new SubdomainError(SubdomainError.EXTERNAL_ERROR, 'ETRYAGAIN'));

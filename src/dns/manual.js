@@ -60,18 +60,14 @@ function verifyDnsConfig(dnsConfig, domain, ip, callback) {
     dns.resolveNs(domain, function (error, nameservers) {
         if (error || !nameservers) return callback(new SubdomainError(SubdomainError.BAD_FIELD, 'Unable to get nameservers'));
 
-        // async.every only reports bools
-        var stashedError = null;
-
-        async.every(nameservers, function (nameserver, callback) {
+        async.every(nameservers, function (nameserver, everyNsCallback) {
             // ns records cannot have cname
             dns.resolve4(nameserver, function (error, nsIps) {
                 if (error || !nsIps || nsIps.length === 0) {
-                    stashedError = new SubdomainError(SubdomainError.BAD_FIELD, 'Unable to resolve nameservers for this domain');
-                    return callback(false);
+                    return everyNsCallback(new SubdomainError(SubdomainError.BAD_FIELD, 'Unable to resolve nameservers for this domain'));
                 }
 
-                async.every(nsIps, function (nsIp, callback) {
+                async.every(nsIps, function (nsIp, everyIpCallback) {
                     var req = dns.Request({
                         question: dns.Question({ name: adminDomain, type: 'A' }),
                         server: { address: nsIp },
@@ -80,20 +76,20 @@ function verifyDnsConfig(dnsConfig, domain, ip, callback) {
 
                     req.on('timeout', function () {
                         debug('nameserver %s (%s) timed out when trying to resolve %s', nameserver, nsIp, adminDomain);
-                        return callback(true); // should be ok if dns server is down
+                        return everyIpCallback(null, true); // should be ok if dns server is down
                     });
 
                     req.on('message', function (error, message) {
                         if (error) {
                             debug('nameserver %s (%s) returned error trying to resolve %s: %s', nameserver, nsIp, adminDomain, error);
-                            return callback(false);
+                            return everyIpCallback(null, false);
                         }
 
                         var answer = message.answer;
 
                         if (!answer || answer.length === 0) {
                             debug('bad answer from nameserver %s (%s) resolving %s (%s): %j', nameserver, nsIp, adminDomain, 'A', message);
-                            return callback(false);
+                            return everyIpCallback(null, false);
                         }
 
                         debug('verifyDnsConfig: ns: %s (%s), name:%s Actual:%j Expecting:%s', nameserver, nsIp, adminDomain, answer, ip);
@@ -102,16 +98,16 @@ function verifyDnsConfig(dnsConfig, domain, ip, callback) {
                             return a.address === ip;
                         });
 
-                        if (match) return callback(true); // done!
+                        if (match) return everyIpCallback(null, true); // done!
 
-                        callback(false);
+                        everyIpCallback(null, false);
                     });
 
                     req.send();
-                }, callback);
+                }, everyNsCallback);
             });
-        }, function (success) {
-            if (stashedError) return callback(stashedError);
+        }, function (error, success) {
+            if (error) return callback(error);
             if (!success) return callback(new SubdomainError(SubdomainError.BAD_FIELD, 'The domain ' + adminDomain + ' does not resolve to the server\'s IP ' + ip));
 
             callback(null, { provider: dnsConfig.provider, wildcard: !!dnsConfig.wildcard });

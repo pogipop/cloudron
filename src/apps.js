@@ -296,11 +296,9 @@ function hasAccessTo(app, user, callback) {
     if (!app.accessRestriction.groups) return callback(null, false);
 
     async.some(app.accessRestriction.groups, function (groupId, iteratorDone) {
-        groups.isMember(groupId, user.id, function (error, member) {
-            iteratorDone(!error && member); // async.some does not take error argument in callback
-        });
-    }, function (result) {
-        callback(null, result);
+        groups.isMember(groupId, user.id, iteratorDone);
+    }, function (error, result) {
+        callback(null, !error && result);
     });
 }
 
@@ -360,11 +358,9 @@ function getAllByUser(user, callback) {
     getAll(function (error, result) {
         if (error) return callback(error);
 
-        async.filter(result, function (app, callback) {
-            hasAccessTo(app, user, function (error, hasAccess) {
-                callback(hasAccess);
-            });
-        }, callback.bind(null, null));  // never error
+        async.filter(result, function (app, iteratorDone) {
+            hasAccessTo(app, user, iteratorDone);
+        }, callback);
     });
 }
 
