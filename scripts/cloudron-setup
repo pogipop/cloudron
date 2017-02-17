@@ -18,6 +18,8 @@ readonly DATA_FILE="/root/cloudron-install-data.json"
 readonly MINIMUM_DISK_SIZE_GB="19" # this is the size of "/" and required to fit in docker images 19 is a safe bet for different reporting on 20GB min
 readonly MINIMUM_MEMORY="990"      # this is mostly reported for 1GB main memory (DO 992, EC2 990)
 
+readonly curl="curl --fail --connect-timeout 20 --retry 10 --retry-delay 2 --max-time 2400"
+
 # copied from cloudron-resize-fs.sh
 readonly physical_memory=$(free -m | awk '/Mem:/ { print $2 }')
 readonly disk_device="$(for d in $(find /dev -type b); do [ "$(mountpoint -d /)" = "$(mountpoint -x $d)" ] && echo $d && break; done)"
@@ -149,7 +151,7 @@ fi
 
 echo "=> Checking version"
 if [[ "${sourceTarballUrl}" == "" ]]; then
-    releaseJson=$(curl -s "${versionsUrl}")
+    releaseJson=$($curl -s "${versionsUrl}")
     if [[ "$requestedVersion" == "latest" ]]; then
         pre=$([[ "${prerelease}" == "true" ]] && echo "null" || echo "-pre")
         version=$(echo "${releaseJson}" | python3 -c "import json,sys,collections;obj=json.load(sys.stdin, object_pairs_hook=collections.OrderedDict);latest=list(v for v in obj if '${pre}' not in v)[-1];print(latest)")
@@ -212,7 +214,7 @@ fi
 echo "=> Downloading version ${version} ..."
 box_src_tmp_dir=$(mktemp -dt box-src-XXXXXX)
 
-if ! curl -sL "${sourceTarballUrl}" | tar -zxf - -C "${box_src_tmp_dir}"; then
+if ! $curl -sL "${sourceTarballUrl}" | tar -zxf - -C "${box_src_tmp_dir}"; then
     echo "Could not download source tarball. See ${LOG_FILE} for details"
     exit 1
 fi
@@ -237,7 +239,7 @@ rm "${DATA_FILE}"
 echo -n "=> Waiting for cloudron to be ready (this takes some time) ..."
 while true; do
     echo -n "."
-    if status=$(curl -q -f "http://localhost:3000/api/v1/cloudron/status" 2>/dev/null); then
+    if status=$($curl -q -f "http://localhost:3000/api/v1/cloudron/status" 2>/dev/null); then
         [[ -z "$domain" ]] && break # with no domain, we are up and running
         [[ "$status" == *"\"tls\": true"* ]] && break # with a domain, wait for the cert
     fi
