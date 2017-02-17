@@ -389,6 +389,8 @@ field in the manifest.
 Design your application runtime for concurrent use by 50 users. The Cloudron is not designed for
 concurrent access by 100s or 1000s of users.
 
+An app can determine it's memory limit by reading `/sys/fs/cgroup/memory/memory.limit_in_bytes`.
+
 ## Authentication
 
 Apps should integrate with one of the [authentication strategies](/references/authentication.html).
