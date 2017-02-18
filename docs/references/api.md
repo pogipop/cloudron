@@ -449,7 +449,7 @@ POST `/api/v1/apps/:appId/configure` <scope>admin</scope>
 
 Re-configures an existing app with id `appId`.
 
-Configuring an app won't preserve existing data. Cloudron apps are written in a way to support reconfiguring
+Configuring an app preserves existing data. Cloudron apps are written in a way to support reconfiguring
 any of the parameters listed below without loss of data.
 
 Request:
@@ -1116,7 +1116,7 @@ POST `/api/v1/settings/mail_config` <scope>admin</scope> <scope>internal</scope>
 
 Sets the email configuration. The Cloudron has a built-in email server for users.
 This configuration can be used to enable or disable the email server. Note that
-the Cloudron will always be able to send email on behalf of apps, regardless of 
+the Cloudron will always be able to send email on behalf of apps, regardless of
 this setting.
 
 Request:

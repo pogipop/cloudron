@@ -16,12 +16,13 @@
     </div>
 </div>
 
-<!-- Modal configure app -->
+<!-- Modal configure/repair app -->
 <div class="modal fade" id="appConfigureModal" tabindex="-1" role="dialog">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h4 class="modal-title">Configure {{ appConfigure.app.fqdn }}</h4>
+                <h4 class="modal-title" ng-show="(appConfigure.app | installError)">Repair</h4>
+                <h4 class="modal-title" ng-hide="(appConfigure.app | installError)">Configure</h4>
             </div>
             <div class="modal-body">
                 <fieldset>
@@ -193,8 +194,7 @@
                 <h4 class="modal-title">Really restore {{ appRestore.app.fqdn }} ?</h4>
             </div>
             <div class="modal-body">
-                <p ng-show="appRestore.app.lastBackupId !== null">Restoring the app will lose all content generated since last backup of this app!</p>
-                <p ng-show="appRestore.app.lastBackupId === null">This app was never backed up. Restoring the app will lose all content!</p>
+                <p>Restoring the app will lose all content generated since last backup of this app.</p>
                 <fieldset>
                     <form role="form" name="appRestoreForm" ng-submit="doRestore()" autocomplete="off">
                         <div class="form-group" ng-class="{ 'has-error': (appRestoreForm.password.$dirty && appRestoreForm.password.$invalid) || (!appRestoreForm.password.$dirty && appRestore.error.password) }">
@@ -386,12 +386,13 @@
                     <div class="grid-item-bottom-mobile" ng-show="user.admin">
                         <div class="row">
                             <div class="col-xs-4 text-left">
-                                <a href="" ng-click="showRestore(app)" ng-show="app.lastBackupId != null || (app | installError) === true">
+                                <a href="" ng-click="showRestore(app)" ng-show="app.lastBackupId != null">
                                     <i class="fa fa-undo scale"></i>
                                 </a>
 
                                 <a href="" ng-click="showConfigure(app)" ng-show="app.installationState === 'installed' || app.installationState === 'pending_configure' || (app | installError)">
-                                    <i class="fa fa-wrench scale"></i>
+                                    <i ng-hide="(app | installError)" class="fa fa-pencil scale"></i>
+                                    <i ng-show="(app | installError)" class="fa fa-wrench scale"></i>
                                 </a>
                             </div>
                             <div class="col-xs-4 text-center"></div>
@@ -407,12 +408,16 @@
                             <a href="" ng-click="showUninstall(app)" title="Uninstall App"><i class="fa fa-remove scale"></i></a>
                         </div>
 
-                        <div ng-show="app.lastBackupId !== null || (app | installError) === true">
+                        <div ng-show="app.lastBackupId !== null">
                             <a href="" ng-click="showRestore(app)" title="Restore App"><i class="fa fa-undo scale"></i></a>
                         </div>
 
-                        <div ng-show="app.installationState === 'installed' || app.installationState === 'pending_configure' || (app | installError)">
-                            <a href="" ng-click="showConfigure(app)" title="Configure App"><i class="fa fa-wrench scale"></i></a>
+                        <div ng-show="app.installationState === 'installed' || app.installationState === 'pending_configure'">
+                            <a href="" ng-click="showConfigure(app)" title="Configure App"><i class="fa fa-pencil scale"></i></a>
+                        </div>
+
+                        <div ng-show="app | installError">
+                            <a href="" ng-click="showConfigure(app)" title="Repair App"><i class="fa fa-wrench scale"></i></a>
                         </div>
 
                         <div ng-show="hasPostInstallMessage(app)">
