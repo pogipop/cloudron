@@ -93,26 +93,6 @@ Example:
   "changelog": "* Add support for IE8 \n* New logo"
 ```
 
-## configurePath
-
-Type: path string
-
-Required: no
-
-The `configurePath` can be used to specify the absolute path to the configuration / settings
-page of the app. When this path is present, an absoluted URL is constructed from the app's
-install location this path and presented to the user in the configuration dialog of the app.
-
-This is useful for apps that have a main page which does not display a configuration / settings
-url (i.e) it's hidden for aesthetic reasons. For example, a blogging app like wordpress might
-keep the admin page url hidden in the main page. Setting the configurationPath makes the
-configuration url discoverable by the user.
-
-Example:
-```
-  "configurePath": "/wp-admin"
-```
-
 ## contactEmail
 
 Type: email
