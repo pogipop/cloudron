@@ -105,10 +105,13 @@ angular.module('Application').controller('GraphsController', ['$scope', '$locati
     };
 
     $scope.updateDiskGraphs = function () {
+        // https://graphite.readthedocs.io/en/latest/render_api.html#paths-and-wildcards
+        // on scaleway, for some reason docker devices are collected as part of collectd
+        // until we figure why just hardcode popular disk devices - https://www.mjmwired.net/kernel/Documentation/devices.txt
         Client.graphs([
-            'averageSeries(collectd.localhost.df-*d*.df_complex-free)',
-            'averageSeries(collectd.localhost.df-*d*.df_complex-reserved)',
-            'averageSeries(collectd.localhost.df-*d*.df_complex-used)'
+            'averageSeries(collectd.localhost.df-{sd,hd,vd,md,ad,nb,vd,ub,xvd}*.df_complex-free)',
+            'averageSeries(collectd.localhost.df-{sd,hd,vd,md,ad,nb,vd,ub,xvd}*.df_complex-reserved)',
+            'averageSeries(collectd.localhost.df-{sd,hd,vd,md,ad,nb,vd,ub,xvd}*.df_complex-used)'
         ], '-1min', function (error, data) {
             if (error) return console.log(error);
 
