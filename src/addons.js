@@ -112,12 +112,6 @@ var KNOWN_ADDONS = {
         teardown: teardownSimpleAuth,
         backup: NOOP,
         restore: setupSimpleAuth
-    },
-    _docker: {
-        setup: NOOP,
-        teardown: NOOP,
-        backup: NOOP,
-        restore: NOOP
     }
 };
 
@@ -219,7 +213,6 @@ function getBindsSync(app, addons) {
 
     for (var addon in addons) {
         switch (addon) {
-        case '_docker': binds.push('/var/run/docker.sock:/var/run/docker.sock:rw'); break;
         case 'localstorage': binds.push(path.join(paths.DATA_DIR, app.id, 'data') + ':/app/data:rw'); break;
         default: break;
         }
