@@ -467,7 +467,11 @@ function sendAliveStatus(callback) {
             domain: config.fqdn(),
             version: config.version(),
             provider: config.provider(),
-            backendSettings: backendSettings
+            backendSettings: backendSettings,
+            machine: {
+                cpus: os.cpus(),
+                totalmem: os.totalmem()
+            }
         };
 
         superagent.post(url).send(data).query({ accessToken: appstoreConfig.token }).timeout(30 * 1000).end(function (error, result) {
