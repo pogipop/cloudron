@@ -765,4 +765,5 @@
 * Ensure we download docker images and have an app data volume on app re-configure
 * Improve certificate renewal erorr message
 * Fix disk usage graph
+* Show Repair UI for errored apps
 
