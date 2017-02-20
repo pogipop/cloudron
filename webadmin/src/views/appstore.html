@@ -225,10 +225,18 @@
                     </div>
                 </div>
 
+                <div class="checkbox" ng-show="appstoreLogin.register">
+                    <label>
+                        <input type="checkbox" ng-model="appstoreLogin.termsAccepted">I agree to Cloudron <a href="https://cloudron.io/legal/terms.html" target="_blank">terms</a>
+                    </label>
+                </div>
+
+                <br/>
+
                 <a class="pull-left" href="" ng-click="appstoreLogin.register = true" ng-hide="appstoreLogin.register">Don't have an Account yet?</a>
                 <a class="pull-left" href="" ng-click="appstoreLogin.register = false" ng-show="appstoreLogin.register">Already have an Account?</a>
 
-                <button type="submit" class="btn btn-success pull-right" ng-disabled="appstoreLoginForm.$invalid || appstoreLogin.busy">
+                <button type="submit" class="btn btn-success pull-right" ng-disabled="appstoreLoginForm.$invalid || appstoreLogin.busy || (appstoreLogin.register && !appstoreLogin.termsAccepted)">
                     <i class="fa fa-circle-o-notch fa-spin" ng-show="appstoreLogin.busy"></i> <span ng-hide="appstoreLogin.register">Login</span><span ng-show="appstoreLogin.register">Sign up</span>
                 </button>
             </form>

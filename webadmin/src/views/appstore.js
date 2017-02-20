@@ -258,6 +258,7 @@ angular.module('Application').controller('AppStoreController', ['$scope', '$loca
         email: '',
         password: '',
         register: true,
+        termsAccepted: false,
 
         submit: function () {
             $scope.appstoreLogin.error = {};
