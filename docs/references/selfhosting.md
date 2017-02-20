@@ -34,6 +34,7 @@ In addition to those, the Cloudron community has successfully installed the plat
 * [hosttech](https://www.hosttech.ch/?promocode=53619290)
 * [Linode](https://www.linode.com/?r=f68d816692c49141e91dd4cef3305da457ac0f75)
 * [OVH](https://www.ovh.com/)
+* [Rosehosting](https://secure.rosehosting.com/clientarea/?affid=661)
 * [Scaleway](https://www.scaleway.com/)
 * [So you Start](https://www.soyoustart.com/)
 * [Vultr](http://www.vultr.com/?ref=7110116-3B)
