@@ -223,7 +223,8 @@ function verify(userId, password, callback) {
     getUser(userId, function (error, user) {
         if (error) return callback(error);
 
-        if (verifyGhost(user.username, password)) return callback(null, user);
+        // for just invited users the username may be still null
+        if (user.username && verifyGhost(user.username, password)) return callback(null, user);
 
         var saltBinary = new Buffer(user.salt, 'hex');
         crypto.pbkdf2(password, saltBinary, CRYPTO_ITERATIONS, CRYPTO_KEY_LENGTH, CRYPTO_DIGEST, function (error, derivedKey) {
