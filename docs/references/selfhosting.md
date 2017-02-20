@@ -50,7 +50,7 @@ to vanilla ubuntu. Be sure to allocate a static IPv4 address for your server.
 
 Cloudron has a built-in firewall and ports are opened and closed dynamically, as and when
 apps are installed, re-configured or removed. For this reason, be sure to open all TCP and
-UDP traffic to the server.
+UDP traffic to the server and leave the traffic management to the Cloudron.
 
 ### Linode
 
