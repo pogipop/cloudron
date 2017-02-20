@@ -759,3 +759,10 @@
 * More robust detection and injection of SPF record
 * Add azure, lightsail, linode, ovh, vultr to provider list
 
+[0.102.0]
+* Fix issue where SPF record check was only done 5 times (updated 'async')
+* Make auto-generated self-signed cert load quickly on Firefox
+* Ensure we download docker images and have an app data volume on app re-configure
+* Improve certificate renewal erorr message
+* Fix disk usage graph
+
