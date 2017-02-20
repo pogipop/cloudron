@@ -10,7 +10,7 @@ exports = module.exports = {
 
 var assert = require('assert'),
     async = require('async'),
-    debug = require('debug')('box:dns/noop'),
+    debug = require('debug')('box:dns/manual'),
     dns = require('native-dns'),
     SubdomainError = require('../subdomains.js').SubdomainError,
     util = require('util');
