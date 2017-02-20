@@ -26,10 +26,12 @@ if [[ "${BOX_ENV}" == "cloudron" ]]; then
     fi
 
     mkdir -p "${app_data_dir}/data"
-    chown -R yellowtent:yellowtent "${app_data_dir}"
+    # only the top level ownership is changed because containers own the subdirectores
+    # and will chown them as necessary
+    chown yellowtent:yellowtent "${app_data_dir}"
 else
     readonly app_data_dir="${HOME}/.cloudron_test/data/$1"
     mkdir -p "${app_data_dir}/data"
-    chown -R ${SUDO_USER}:${SUDO_USER} "${app_data_dir}"
+    chown ${SUDO_USER}:${SUDO_USER} "${app_data_dir}"
 fi
 
