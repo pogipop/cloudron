@@ -5,8 +5,8 @@ This tutorial outlines how to package an existing web application for the Cloudr
 If you are aware of Docker and Heroku, you should feel at home packaging for the
 Cloudron. Roughly, the steps involved are:
 
-* Create a Dockerfile for your application. If your application already has
-  a Dockerfile, you should able to reuse most of it. By virtue of Docker, the Cloudron
+* Create a Dockerfile for your application. If your application already has a Dockerfile, it 
+  is a good starting point for packaging for the Cloudron. By virtue of Docker, the Cloudron
   is able to run apps written in any language/framework.
 
 * Create a CloudronManifest.json that provides information like title, author, description
@@ -88,7 +88,7 @@ CMD [ "/usr/local/node-4.4.7/bin/node", "/app/code/server.js" ]
 
 The `FROM` command specifies that we want to start off with Cloudron's [base image](/references/baseimage.html).
 All Cloudron apps **must** start from this base image. This approach conserves space on the Cloudron since
-Docker images tend to be quiet large.
+Docker images tend to be quiet large and also helps us to do a security audit on apps more easily.
 
 The `ADD` command copies the source code of the app into the directory `/app/code`. There is nothing special
 about the `/app/code` directory and it is merely a convention we use to store the application code.
