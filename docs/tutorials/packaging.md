@@ -88,7 +88,7 @@ CMD [ "/usr/local/node-4.4.7/bin/node", "/app/code/server.js" ]
 
 The `FROM` command specifies that we want to start off with Cloudron's [base image](/references/baseimage.html).
 All Cloudron apps **must** start from this base image. This approach conserves space on the Cloudron since
-Docker images tend to be quiet large and also helps us to do a security audit on apps more easily.
+Docker images tend to be quite large and also helps us to do a security audit on apps more easily.
 
 The `ADD` command copies the source code of the app into the directory `/app/code`. There is nothing special
 about the `/app/code` directory and it is merely a convention we use to store the application code.
