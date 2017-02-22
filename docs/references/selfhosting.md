@@ -69,7 +69,7 @@ SSH into your server and run the following commands:
 ```
 wget https://cloudron.io/cloudron-setup
 chmod +x cloudron-setup
-./cloudron-setup --provider <azure|digitalocean|ec2|lightsail|linode|ovh|scaleway|vultr|generic>
+./cloudron-setup --provider <azure|digitalocean|ec2|lightsail|linode|ovh|rosehosting|scaleway|vultr|generic>
 ```
 
 The setup will take around 10-15 minutes.
