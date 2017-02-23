@@ -767,3 +767,8 @@
 * Fix disk usage graph
 * Show Repair UI for errored apps
 
+[0.102.1]
+* Add terms link when signing up for Cloudron.io account
+* Fix issue where Cloudrons with many apps (> 35) were unable to backup
+* Improve wording of DNS Setup
+
