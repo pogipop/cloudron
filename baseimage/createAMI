@@ -69,7 +69,7 @@ if [[ ! -f "${ssh_keys}" ]]; then
 fi
 
 if [[ -z "${image_id}" ]]; then
-    echo "--region is required"
+    echo "--region is required (us-east-1 or eu-central-1)"
     exit 1
 fi
 
