@@ -105,7 +105,7 @@ CREATE TABLE IF NOT EXISTS backups(
     creationTime TIMESTAMP,
     version VARCHAR(128) NOT NULL, /* app version or box version */
     type VARCHAR(16) NOT NULL, /* 'box' or 'app' */
-    dependsOn VARCHAR(4096), /* comma separate list of objects this backup depends on */
+    dependsOn TEXT, /* comma separate list of objects this backup depends on */
     state VARCHAR(16) NOT NULL,
 
     PRIMARY KEY (filename));
