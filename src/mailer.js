@@ -493,6 +493,8 @@ function unexpectedExit(program, context, callback) {
     assert.strictEqual(typeof context, 'string');
     assert.strictEqual(typeof callback, 'function');
 
+    if (config.provider() !== 'caas') return callback(); // no way to get admins without db access
+
     var mailOptions = {
         from: mailConfig().from,
         to: 'support@cloudron.io',
