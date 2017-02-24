@@ -218,7 +218,7 @@ function registerSubdomain(app, overwrite, callback) {
     assert.strictEqual(typeof overwrite, 'boolean');
     assert.strictEqual(typeof callback, 'function');
 
-    sysinfo.getIp(function (error, ip) {
+    sysinfo.getPublicIp(function (error, ip) {
         if (error) return callback(error);
 
         async.retry({ times: 200, interval: 5000 }, function (retryCallback) {
@@ -257,7 +257,7 @@ function unregisterSubdomain(app, location, callback) {
         return callback(null);
     }
 
-    sysinfo.getIp(function (error, ip) {
+    sysinfo.getPublicIp(function (error, ip) {
         if (error) return callback(error);
 
         async.retry({ times: 30, interval: 5000 }, function (retryCallback) {
@@ -295,7 +295,7 @@ function waitForDnsPropagation(app, callback) {
         return callback(null);
     }
 
-    sysinfo.getIp(function (error, ip) {
+    sysinfo.getPublicIp(function (error, ip) {
         if (error) return callback(error);
 
         subdomains.waitForDns(config.appFqdn(app.location), ip, 'A', { interval: 5000, times: 120 }, callback);

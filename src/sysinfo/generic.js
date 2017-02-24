@@ -1,7 +1,7 @@
 'use strict';
 
 exports = module.exports = {
-    getIp: getIp
+    getPublicIp: getPublicIp
 };
 
 var assert = require('assert'),
@@ -10,7 +10,7 @@ var assert = require('assert'),
     superagent = require('superagent'),
     SysInfoError = require('../sysinfo.js').SysInfoError;
 
-function getIp(callback) {
+function getPublicIp(callback) {
     assert.strictEqual(typeof callback, 'function');
 
     async.retry({ times: 10, interval: 5000 }, function (callback) {

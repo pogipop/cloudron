@@ -264,7 +264,7 @@ function configureAdmin(callback) {
 
     debug('configureAdmin');
 
-    sysinfo.getIp(function (error, ip) {
+    sysinfo.getPublicIp(function (error, ip) {
         if (error) return callback(error);
 
         subdomains.waitForDns(config.adminFqdn(), ip, 'A', { interval: 30000, times: 50000 }, function (error) {
@@ -621,7 +621,7 @@ function addDnsRecords(callback) {
     var dkimKey = readDkimPublicKeySync();
     if (!dkimKey) return callback(new CloudronError(CloudronError.INTERNAL_ERROR, new Error('Failed to read dkim public key')));
 
-    sysinfo.getIp(function (error, ip) {
+    sysinfo.getPublicIp(function (error, ip) {
         if (error) return callback(new CloudronError(CloudronError.INTERNAL_ERROR, error));
 
         var webadminRecord = { subdomain: constants.ADMIN_LOCATION, type: 'A', values: [ ip ] };
@@ -957,7 +957,7 @@ function migrate(options, callback) {
 function refreshDNS(callback) {
     callback = callback || NOOP_CALLBACK;
 
-    sysinfo.getIp(function (error, ip) {
+    sysinfo.getPublicIp(function (error, ip) {
         if (error) return callback(new CloudronError(CloudronError.INTERNAL_ERROR, error));
 
         debug('refreshDNS: current ip %s', ip);

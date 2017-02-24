@@ -1,7 +1,7 @@
 'use strict';
 
 exports = module.exports = {
-    getIp: getIp
+    getPublicIp: getPublicIp
 };
 
 var assert = require('assert'),
@@ -9,7 +9,7 @@ var assert = require('assert'),
     safe = require('safetydance'),
     SysInfoError = require('../sysinfo.js').SysInfoError;
 
-function getIp(callback) {
+function getPublicIp(callback) {
     assert.strictEqual(typeof callback, 'function');
 
     if (process.env.BOX_ENV === 'test') return callback(null, '127.0.0.1');

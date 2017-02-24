@@ -260,7 +260,7 @@ function getEmailDnsRecords(callback) {
             status: false
         };
 
-        sysinfo.getIp(function (error, ip) {
+        sysinfo.getPublicIp(function (error, ip) {
             if (error) return callback(error);
 
             records.ptr.domain = ip.split('.').reverse().join('.') + '.in-addr.arpa';
@@ -453,7 +453,7 @@ function setDnsConfig(dnsConfig, domain, callback) {
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    sysinfo.getIp(function (error, ip) {
+    sysinfo.getPublicIp(function (error, ip) {
         if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, 'Error getting IP:' + error.message));
 
         subdomains.verifyDnsConfig(dnsConfig, domain, ip, function (error, result) {

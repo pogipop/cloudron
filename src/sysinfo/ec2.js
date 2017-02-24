@@ -1,7 +1,7 @@
 'use strict';
 
 exports = module.exports = {
-    getIp: getIp
+    getPublicIp: getPublicIp
 };
 
 var assert = require('assert'),
@@ -9,7 +9,7 @@ var assert = require('assert'),
     SysInfoError = require('../sysinfo.js').SysInfoError,
     util = require('util');
 
-function getIp(callback) {
+function getPublicIp(callback) {
     assert.strictEqual(typeof callback, 'function');
 
     superagent.get('http://169.254.169.254/latest/meta-data/public-ipv4').timeout(30 * 1000).end(function (error, result) {

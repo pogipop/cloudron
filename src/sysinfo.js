@@ -3,7 +3,7 @@
 exports = module.exports = {
     SysInfoError: SysInfoError,
 
-    getIp: getIp
+    getPublicIp: getPublicIp
 };
 
 var assert = require('assert'),
@@ -49,12 +49,12 @@ function getApi(callback) {
     }
 }
 
-function getIp(callback) {
+function getPublicIp(callback) {
     assert.strictEqual(typeof callback, 'function');
 
     getApi(function (error, api) {
         if (error) return callback(error);
 
-        api.getIp(callback);
+        api.getPublicIp(callback);
     });
 }

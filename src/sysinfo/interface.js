@@ -7,12 +7,12 @@
 // -------------------------------------------
 
 exports = module.exports = {
-    getIp: getIp
+    getPublicIp: getPublicIp
 };
 
 var assert = require('assert');
 
-function getIp(callback) {
+function getPublicIp(callback) {
     assert.strictEqual(typeof callback, 'function');
 
     callback(new Error('not implemented'));

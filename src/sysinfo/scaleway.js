@@ -1,13 +1,13 @@
 'use strict';
 
 exports = module.exports = {
-    getIp: getIp
+    getPublicIp: getPublicIp
 };
 
 var assert = require('assert'),
     superagent = require('superagent');
 
-function getIp(callback) {
+function getPublicIp(callback) {
     assert.strictEqual(typeof callback, 'function');
 
     superagent.get('http://169.254.42.42/conf').timeout(30 * 1000).end(function (error, result) {
