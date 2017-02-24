@@ -442,7 +442,7 @@ function backupFailed(error) {
 
         var mailOptions = {
             from: mailConfig().from,
-            to: config.provider() === 'caas' ? 'support@cloudron.io' : adminEmails.concat('support@cloudron.io').join(', '),
+            to: config.provider() === 'caas' ? 'support@cloudron.io' : adminEmails.join(', '),
             subject: util.format('[%s] Failed to backup', config.fqdn()),
             text: render('backup_failed.ejs', { fqdn: config.fqdn(), message: message, format: 'text' })
         };
@@ -460,7 +460,7 @@ function certificateRenewalError(domain, message) {
 
         var mailOptions = {
             from: mailConfig().from,
-            to: config.provider() === 'caas' ? 'support@cloudron.io' : adminEmails.concat('support@cloudron.io').join(', '),
+            to: config.provider() === 'caas' ? 'support@cloudron.io' : adminEmails.join(', '),
             subject: util.format('[%s] Certificate renewal error', domain),
             text: render('certificate_renewal_error.ejs', { domain: domain, message: message, format: 'text' })
         };
@@ -478,7 +478,7 @@ function oomEvent(program, context) {
 
         var mailOptions = {
             from: mailConfig().from,
-            to: config.provider() === 'caas' ? 'support@cloudron.io' : adminEmails.concat('support@cloudron.io').join(', '),
+            to: config.provider() === 'caas' ? 'support@cloudron.io' : adminEmails.join(', '),
             subject: util.format('[%s] %s exited unexpectedly', config.fqdn(), program),
             text: render('oom_event.ejs', { fqdn: config.fqdn(), program: program, context: context, format: 'text' })
         };
