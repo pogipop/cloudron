@@ -241,7 +241,8 @@ function createMailConfig(callback) {
     const alertsFrom = 'no-reply@' + config.fqdn();
 
     user.getOwner(function (error, owner) {
-        var alertsTo = [ 'webmaster@cloudron.io' ].concat(error ? [] : owner.email).join(',');
+        var alertsTo = config.provider() === 'caas' ? 'support@cloudron.io' : [ ];
+        alertsTo.concat(error ? [] : owner.email).join(',');
 
         if (!safe.fs.writeFileSync(paths.DATA_DIR + '/addons/mail/mail.ini',
             `mail_domain=${fqdn}\nmail_server_name=${mailFqdn}\nalerts_from=${alertsFrom}\nalerts_to=${alertsTo}`, 'utf8')) {
