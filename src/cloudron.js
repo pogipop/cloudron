@@ -242,7 +242,8 @@ function configureDefaultServer(callback) {
     if (!fs.existsSync(certFilePath) || !fs.existsSync(keyFilePath)) {
         debug('configureDefaultServer: create new cert');
 
-        var certCommand = util.format('openssl req -x509 -newkey rsa:2048 -keyout %s -out %s -days 3650 -subj /CN=%s -nodes', keyFilePath, certFilePath, 'cloudron');
+        var cn = 'cloudron-' + (new Date()).toISOString(); // randomize date a bit to keep firefox happy
+        var certCommand = util.format('openssl req -x509 -newkey rsa:2048 -keyout %s -out %s -days 3650 -subj /CN=%s -nodes', keyFilePath, certFilePath, cn);
         safe.child_process.execSync(certCommand);
     }
 
