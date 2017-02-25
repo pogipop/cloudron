@@ -20,6 +20,7 @@ describe('dns provider', function () {
     before(function (done) {
         async.series([
             database.initialize,
+            settings.initialize,
             config._reset
         ], done);
     });

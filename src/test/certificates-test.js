@@ -15,6 +15,8 @@ var async = require('async'),
 function setup(done) {
     async.series([
         database.initialize,
+        settings.initialize,
+        certificates.initialize,
         database._clear
     ], done);
 }
