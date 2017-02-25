@@ -4957,18 +4957,6 @@
       "from": "wrappy@>=1.0.0 <2.0.0",
       "resolved": "https://registry.npmjs.org/wrappy/-/wrappy-1.0.2.tgz"
     },
-    "x509": {
-      "version": "0.2.6",
-      "from": "x509@>=0.2.4 <0.3.0",
-      "resolved": "https://registry.npmjs.org/x509/-/x509-0.2.6.tgz",
-      "dependencies": {
-        "nan": {
-          "version": "2.2.0",
-          "from": "nan@2.2.0",
-          "resolved": "https://registry.npmjs.org/nan/-/nan-2.2.0.tgz"
-        }
-      }
-    },
     "xml2js": {
       "version": "0.4.15",
       "from": "xml2js@0.4.15",

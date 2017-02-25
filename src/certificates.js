@@ -43,8 +43,7 @@ var acme = require('./cert/acme.js'),
     safe = require('safetydance'),
     settings = require('./settings.js'),
     user = require('./user.js'),
-    util = require('util'),
-    x509 = require('x509');
+    util = require('util');
 
 function CertificatesError(reason, errorOrMessage) {
     assert.strictEqual(typeof reason, 'string');
@@ -268,16 +267,6 @@ function validateCertificate(cert, key, fqdn) {
     if (!cert && key) return new Error('missing cert');
     if (cert && !key) return new Error('missing key');
 
-    var content;
-    try {
-        content = x509.parseCert(cert);
-    } catch (e) {
-        return new Error('invalid cert: ' + e.message);
-    }
-
-    // check expiration
-    if (content.notAfter < new Date()) return new Error('cert expired');
-
     function matchesDomain(domain) {
         if (typeof domain !== 'string') return false;
         if (domain === fqdn) return true;
@@ -286,14 +275,32 @@ function validateCertificate(cert, key, fqdn) {
         return false;
     }
 
-    // check domain
-    var domains = content.altNames.concat(content.subject.commonName);
+    // get commonName (http://stackoverflow.com/questions/17353122/parsing-strings-crt-files)
+    var result = safe.child_process.execSync('openssl x509 -noout -subject | sed -r "s|.*CN=(.*)|\\1|; s|/[^/]*=.*$||"', { encoding: 'utf8', input: cert });
+    if (!result) return new Error(util.format('could not get CN'));
+    var commonName = result.trim();
+    debug('validateCertificate: detected commonName as %s', commonName);
+
+    // https://github.com/drwetter/testssl.sh/pull/383
+    var cmd = `openssl x509 -noout -text | grep -A3 "Subject Alternative Name" | \
+               grep "DNS:" | \
+               sed -e "s/DNS://g" -e "s/ //g" -e "s/,/ /g" -e "s/othername:<unsupported>//g"`;
+    result = safe.child_process.execSync(cmd, { encoding: 'utf8', input: cert });
+    var altNames = result ? [ ] : result.trim().split(' '); // might fail if cert has no SAN
+    debug('validateCertificate: detected altNames as %j', altNames);
+
+    // check altNames
+    var domains = altNames.concat(commonName);
     if (!domains.some(matchesDomain)) return new Error(util.format('cert is not valid for this domain. Expecting %s in %j', fqdn, domains));
 
     // http://httpd.apache.org/docs/2.0/ssl/ssl_faq.html#verify
     var certModulus = safe.child_process.execSync('openssl x509 -noout -modulus', { encoding: 'utf8', input: cert });
     var keyModulus = safe.child_process.execSync('openssl rsa -noout -modulus', { encoding: 'utf8', input: key });
     if (certModulus !== keyModulus) return new Error('key does not match the cert');
+
+   // check expiration
+    result = safe.child_process.execSync('openssl x509 -checkend 0', { encoding: 'utf8', input: cert });
+    if (!result) return new Error('cert expired');
 
     return null;
 }
