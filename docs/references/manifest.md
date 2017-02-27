@@ -47,12 +47,14 @@ Type: object
 Required: no
 
 Allowed keys
+* [email](addons.html#email)
 * [ldap](addons.html#ldap)
 * [localstorage](addons.html#localstorage)
 * [mongodb](addons.html#mongodb)
 * [mysql](addons.html#mysql)
 * [oauth](addons.html#oauth)
 * [postgresql](addons.html#postgresql)
+* [recvmail](addons.html#recvmail)
 * [redis](addons.html#redis)
 * [sendmail](addons.html#sendmail)
 
