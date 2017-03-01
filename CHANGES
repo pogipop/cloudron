@@ -772,3 +772,7 @@
 * Fix issue where Cloudrons with many apps (> 35) were unable to backup
 * Improve wording of DNS Setup
 
+[0.103.0]
+* Do not send crash logs and other notifications to support@cloudron.io for self-hosted instances
+* Make auto-generated self-signed cert load quickly on Firefox (take 2)
+
