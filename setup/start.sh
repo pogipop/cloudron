@@ -199,10 +199,6 @@ if ! grep "^Restart=" /etc/systemd/system/multi-user.target.wants/nginx.service;
     echo -e "\n[Service]\nRestart=always\n" >> /etc/systemd/system/multi-user.target.wants/nginx.service
     systemctl daemon-reload
 fi
-# This is here, since the splash screen needs this file to be present :-(
-if [[ ! -f "${BOX_DATA_DIR}/dhparams.pem" ]]; then
-    openssl dhparam -out "${BOX_DATA_DIR}/dhparams.pem" 2048
-fi
 systemctl start nginx
 
 # bookkeep the version as part of data
@@ -318,6 +314,11 @@ fi
 if [[ ! -z "${arg_tls_config}" ]]; then
     mysql -u root -p${mysql_root_password} \
         -e "REPLACE INTO settings (name, value) VALUES (\"tls_config\", '$arg_tls_config')" box
+fi
+
+echo "==> Generating dhparams (takes forever)"
+if [[ ! -f "${BOX_DATA_DIR}/dhparams.pem" ]]; then
+    openssl dhparam -out "${BOX_DATA_DIR}/dhparams.pem" 2048
 fi
 
 set_progress "60" "Starting Cloudron"
