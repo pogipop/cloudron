@@ -209,7 +209,8 @@ Response (200):
     portBindings: {                  // mapping from application ports to public ports
     },
     iconUrl: <url>,                  // a relative url providing the icon
-    memoryLimit: <number>            // memory constraint in bytes
+    memoryLimit: <number>,           // memory constraint in bytes
+    sso: <boolean>                   // Enable single sign-on
 }
 ```
 
@@ -256,6 +257,8 @@ is integrated with Cloudron Authentication.
 `lastBackupId` is the last valid backup id. The [restore API](/references/api.html#restore-app) can be used to restore the app to this backup.
 
 `manifest` is the [application manifest](/references/manifest.html).
+
+For apps that support optional single sign-on, the `sso` field can be used to disable Cloudron authentication. By default, single sign-on is enabled.
 
 ### List apps
 
