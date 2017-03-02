@@ -216,7 +216,7 @@ app.filter('prettyDate', function () {
             day_diff = Math.floor(diff / 86400);
 
         if (isNaN(day_diff) || day_diff < 0)
-            return;
+            return 'just now';
 
         return day_diff === 0 && (
                 diff < 60 && 'just now' ||
