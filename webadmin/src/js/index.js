@@ -269,6 +269,7 @@ var ACTION_APP_RESTORE = 'app.restore';
 var ACTION_APP_UNINSTALL = 'app.uninstall';
 var ACTION_APP_UPDATE = 'app.update';
 var ACTION_APP_UPDATE = 'app.update';
+var ACTION_APP_LOGIN = 'app.login';
 var ACTION_BACKUP_FINISH = 'backup.finish';
 var ACTION_BACKUP_START = 'backup.start';
 var ACTION_CERTIFICATE_RENEWAL = 'certificate.renew';
@@ -293,6 +294,7 @@ app.filter('eventLogDetails', function() {
         case ACTION_APP_RESTORE: return 'App ' + data.appId + ' restored';
         case ACTION_APP_UNINSTALL: return 'App ' + data.appId + ' uninstalled';
         case ACTION_APP_UPDATE: return 'App ' + data.appId + ' updated to version ' + data.toManifest.id + '@' + data.toManifest.version;
+        case ACTION_APP_LOGIN: return 'App ' + data.appId + ' logged in';
         case ACTION_BACKUP_START: return 'Backup started';
         case ACTION_BACKUP_FINISH: return 'Backup finished. ' + (errorMessage ? ('error: ' + errorMessage) : ('id: ' + data.filename));
         case ACTION_CERTIFICATE_RENEWAL: return 'Certificate renewal for ' + data.domain + (errorMessage ? ' failed' : 'succeeded');
