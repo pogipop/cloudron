@@ -776,3 +776,6 @@
 * Do not send crash logs and other notifications to support@cloudron.io for self-hosted instances
 * Make auto-generated self-signed cert load quickly on Firefox (take 2)
 
+[0.103.1]
+* (mail) Fix crash when sending mails to groups with just 1 user
+
