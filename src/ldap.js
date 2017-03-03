@@ -72,6 +72,7 @@ function userSearch(req, res, next) {
                     givenName: firstName,
                     username: entry.username,
                     samaccountname: entry.username,      // to support ActiveDirectory clients
+                    isadmin: entry.admin ? 1 : 0,
                     memberof: groups
                 }
             };
