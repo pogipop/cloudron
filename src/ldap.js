@@ -46,6 +46,9 @@ function userSearch(req, res, next) {
 
         // send user objects
         result.forEach(function (entry) {
+            // skip entries with empty username. Some apps like owncloud can't deal with this
+            if (!entry.username) return;
+
             var dn = ldap.parseDN('cn=' + entry.id + ',ou=users,dc=cloudron');
 
             var groups = [ GROUP_USERS_DN ];
