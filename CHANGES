@@ -778,4 +778,6 @@
 
 [0.103.1]
 * (mail) Fix crash when sending mails to groups with just 1 user
+* (ldap) Fix misbehaving apps by not sending non-activated user accounts
+* (ldap) Add isadmin attribute to better map users in apps
 
