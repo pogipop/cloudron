@@ -45,8 +45,9 @@ Please let us know if any of them requires tweaks or adjustments.
 
 ## Create server
 
-Create an `Ubuntu 16.04 (Xenial)` server with at-least `1gb` RAM. Do not make any changes
-to vanilla ubuntu. Be sure to allocate a static IPv4 address for your server.
+Create an `Ubuntu 16.04 (Xenial)` server with at-least `1gb` RAM and 20GB disk space.
+Do not make any changes to vanilla ubuntu. Be sure to allocate a static IPv4 address
+for your server.
 
 Cloudron has a built-in firewall and ports are opened and closed dynamically, as and when
 apps are installed, re-configured or removed. For this reason, be sure to open all TCP and
