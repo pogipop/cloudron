@@ -40,8 +40,8 @@ angular.module('Application').controller('SupportController', ['$scope', '$locat
         });
     };
 
-    var CLOUDRON_SUPPORT_PUBLIC_KEY = '';
-    var CLOUDRON_SUPPORT_PUBLIC_KEY_IDENTIFIER = '';
+    var CLOUDRON_SUPPORT_PUBLIC_KEY = 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDQVilclYAIu+ioDp/sgzzFz6YU0hPcRYY7ze/LiF/lC7uQqK062O54BFXTvQ3ehtFZCx3bNckjlT2e6gB8Qq07OM66De4/S/g+HJW4TReY2ppSPMVNag0TNGxDzVH8pPHOysAm33LqT2b6L/wEXwC6zWFXhOhHjcMqXvi8Ejaj20H1HVVcf/j8qs5Thkp9nAaFTgQTPu8pgwD8wDeYX1hc9d0PYGesTADvo6HF4hLEoEnefLw7PaStEbzk2fD3j7/g5r5HcgQQXBe74xYZ/1gWOX2pFNuRYOBSEIrNfJEjFJsqk3NR1+ZoMGK7j+AZBR4k0xbrmncQLcQzl6MMDzkp support@cloudron.io';
+    var CLOUDRON_SUPPORT_PUBLIC_KEY_IDENTIFIER = 'support@cloudron.io';
 
     $scope.toggleSshSupport = function () {
         if ($scope.sshSupportEnabled) {
