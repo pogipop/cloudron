@@ -7,18 +7,11 @@
 
 var ssh = require('../../ssh.js'),
     async = require('async'),
-    child_process = require('child_process'),
-    cloudron = require('../../cloudron.js'),
     config = require('../../config.js'),
-    constants = require('../../constants.js'),
     database = require('../../database.js'),
     expect = require('expect.js'),
-    path = require('path'),
-    paths = require('../../paths.js'),
     superagent = require('superagent'),
     server = require('../../server.js'),
-    settings = require('../../settings.js'),
-    fs = require('fs'),
     nock = require('nock');
 
 var SERVER_URL = 'http://localhost:' + config.get('port');
