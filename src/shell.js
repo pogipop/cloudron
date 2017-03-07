@@ -3,7 +3,8 @@
 exports = module.exports = {
     exec: exec,
     execSync: execSync,
-    sudo: sudo
+    sudo: sudo,
+    sudoSync: sudoSync
 };
 
 var assert = require('assert'),
@@ -69,4 +70,21 @@ function sudo(tag, args, callback) {
     // -S makes sudo read stdin for password
     var cp = exec(tag, SUDO, [ '-S' ].concat(args), callback);
     cp.stdin.end();
+}
+
+function sudoSync(tag, cmd, callback) {
+    assert.strictEqual(typeof tag, 'string');
+    assert.strictEqual(typeof cmd, 'string');
+
+    // -S makes sudo read stdin for password
+    cmd = 'sudo -S ' + cmd;
+    debug(cmd);
+
+    try {
+        child_process.execSync(cmd, { stdio: 'inherit' });
+    } catch (e) {
+        if (callback) return callback(e);
+        throw e;
+    }
+    if (callback) callback();
 }
