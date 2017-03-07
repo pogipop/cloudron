@@ -105,6 +105,9 @@ function initializeExpressSync() {
     router.post('/api/v1/cloudron/reboot', cloudronScope, routes.cloudron.reboot);
     router.post('/api/v1/cloudron/migrate', cloudronScope, routes.user.requireAdmin, routes.user.verifyPassword, routes.cloudron.migrate);
     router.get ('/api/v1/cloudron/graphs', cloudronScope, routes.graphs.getGraphs);
+    router.get ('/api/v1/cloudron/ssh/authorized_keys', cloudronScope, routes.ssh.getAuthorizedKeys);
+    router.put ('/api/v1/cloudron/ssh/authorized_keys', cloudronScope, routes.ssh.addAuthorizedKey);
+    router.del ('/api/v1/cloudron/ssh/authorized_keys', cloudronScope, routes.ssh.delAuthorizedKey);
 
     // feedback
     router.post('/api/v1/cloudron/feedback', usersScope, routes.cloudron.feedback);
