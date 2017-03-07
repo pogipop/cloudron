@@ -261,7 +261,7 @@ app.filter('postInstallMessage', function () {
 });
 
 
-// keep this in sync with eventlog.js
+// keep this in sync with eventlog.js and CLI tool
 var ACTION_ACTIVATE = 'cloudron.activate';
 var ACTION_APP_CONFIGURE = 'app.configure';
 var ACTION_APP_INSTALL = 'app.install';
@@ -282,6 +282,7 @@ var ACTION_USER_REMOVE = 'user.remove';
 var ACTION_USER_UPDATE = 'user.update';
 
 app.filter('eventLogDetails', function() {
+    // NOTE: if you change this, the CLI tool (cloudron machine eventlog) probably needs fixing as well
     return function(eventLog) {
         var source = eventLog.source;
         var data = eventLog.data;

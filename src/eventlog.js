@@ -8,7 +8,7 @@ exports = module.exports = {
     getAllPaged: getAllPaged,
     cleanup: cleanup,
 
-    // keep in sync with webadmin index.js filter
+    // keep in sync with webadmin index.js filter and CLI tool
     ACTION_ACTIVATE: 'cloudron.activate',
     ACTION_APP_CLONE: 'app.clone',
     ACTION_APP_CONFIGURE: 'app.configure',
