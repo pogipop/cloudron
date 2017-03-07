@@ -19,7 +19,7 @@ var assert = require('assert'),
     shell = require('./shell.js'),
     util = require('util');
 
-var AUTHORIZED_KEYS_FILEPATH = config.TEST ? path.join(config.baseDir(), 'authorized_keys') : (config.provider() === 'ec2' ? '/home/ubuntu/.ssh/authorized_keys' : '/root/.ssh/authorized_keys');
+var AUTHORIZED_KEYS_FILEPATH = config.TEST ? path.join(config.baseDir(), 'authorized_keys') : ((config.provider() === 'ec2' || config.provider() === 'lightsail') ? '/home/ubuntu/.ssh/authorized_keys' : '/root/.ssh/authorized_keys');
 var AUTHORIZED_KEYS_TMP_FILEPATH = '/tmp/.authorized_keys';
 var AUTHORIZED_KEYS_CMD = path.join(__dirname, 'scripts/authorized_keys.sh');
 var VALID_KEY_TYPES = ['ssh-rsa'];  // TODO add all supported ones
@@ -72,7 +72,7 @@ function saveKeys(keys) {
         return false;
     }
 
-    var user = config.TEST ? process.env.USER : (config.provider() === 'ec2' ? 'ubuntu' : 'root');
+    var user = config.TEST ? process.env.USER : ((config.provider() === 'ec2' || config.provider() === 'lightsail') ? 'ubuntu' : 'root');
     shell.sudoSync('authorized_keys', util.format('%s %s %s %s', AUTHORIZED_KEYS_CMD, user, AUTHORIZED_KEYS_TMP_FILEPATH, AUTHORIZED_KEYS_FILEPATH));
 
     return true;
