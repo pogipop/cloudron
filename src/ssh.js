@@ -53,6 +53,25 @@ function clear(callback) {
     });
 }
 
+function saveKeys(keys) {
+    assert(Array.isArray(keys));
+
+    if (!safe.fs.writeFileSync(AUTHORIZED_KEYS_FILEPATH, keys.map(function (k) { return k.key; }).join('\n'))) {
+        console.error(safe.error);
+        return false;
+    }
+
+    try {
+        // 600 = rw-------
+        fs.chmodSync(AUTHORIZED_KEYS_FILEPATH, '600');
+    } catch (e) {
+        console.error('Failed to adjust permissions of %s', AUTHORIZED_KEYS_FILEPATH, e);
+        return false;
+    }
+
+    return true;
+}
+
 function getKeys() {
     var content = safe.fs.readFileSync(AUTHORIZED_KEYS_FILEPATH, 'utf8');
     if (!content) return [];
@@ -100,10 +119,7 @@ function addAuthorizedKey(key, callback) {
     if (index !== -1) keys[index] = { identifier: identifier, key: key };
     else keys.push({ identifier: identifier, key: key });
 
-    if (!safe.fs.writeFileSync(AUTHORIZED_KEYS_FILEPATH, keys.map(function (k) { return k.key; }).join('\n'))) {
-        console.error(safe.error);
-        return callback(new SshError(SshError.INTERNAL_ERROR, safe.error));
-    }
+    if (!saveKeys(keys)) return callback(new SshError(SshError.INTERNAL_ERROR));
 
     callback();
 }
@@ -119,10 +135,7 @@ function delAuthorizedKey(identifier, callback) {
     // now remove the key
     keys.splice(index, 1);
 
-    if (!safe.fs.writeFileSync(AUTHORIZED_KEYS_FILEPATH, keys.map(function (k) { return k.key; }).join('\n'))) {
-        console.error(safe.error);
-        return callback(new SshError(SshError.INTERNAL_ERROR, safe.error));
-    }
+    if (!saveKeys(keys)) return callback(new SshError(SshError.INTERNAL_ERROR));
 
     callback();
 }
