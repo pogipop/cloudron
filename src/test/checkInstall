@@ -19,7 +19,8 @@ scripts=("${SOURCE_DIR}/src/scripts/rmappdir.sh" \
          "${SOURCE_DIR}/src/scripts/reboot.sh" \
          "${SOURCE_DIR}/src/scripts/update.sh" \
          "${SOURCE_DIR}/src/scripts/collectlogs.sh" \
-         "${SOURCE_DIR}/src/scripts/reloadcollectd.sh")
+         "${SOURCE_DIR}/src/scripts/reloadcollectd.sh" \
+         "${SOURCE_DIR}/src/scripts/authorized_keys.sh")
 
 for script in "${scripts[@]}"; do
     if [[ $(sudo -n "${script}" --check 2>/dev/null) != "OK" ]]; then
@@ -49,4 +50,3 @@ if [[ "${image_missing}" == "true" ]]; then
     echo "Pull above images before running tests"
     exit 1
 fi
-
