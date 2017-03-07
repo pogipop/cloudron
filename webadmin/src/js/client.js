@@ -477,6 +477,27 @@ angular.module('Application').service('Client', ['$http', 'md5', 'Notification',
         }).error(defaultErrorHandler(callback));
     };
 
+    Client.prototype.addAuthorizedKey = function (key, callback) {
+        put('/api/v1/cloudron/ssh/authorized_keys', { key: key }).success(function (data, status) {
+            if (status !== 201) return callback(new ClientError(status, data));
+            callback(null);
+        }).error(defaultErrorHandler(callback));
+    };
+
+    Client.prototype.delAuthorizedKey = function (identifier, callback) {
+        del('/api/v1/cloudron/ssh/authorized_keys/' + identifier).success(function (data, status) {
+            if (status !== 202) return callback(new ClientError(status, data));
+            callback(null);
+        }).error(defaultErrorHandler(callback));
+    };
+
+    Client.prototype.getAuthorizedKeys = function (callback) {
+        get('/api/v1/cloudron/ssh/authorized_keys').success(function (data, status) {
+            if (status !== 200 || typeof data !== 'object') return callback(new ClientError(status, data));
+            callback(null, data.keys);
+        }).error(defaultErrorHandler(callback));
+    };
+
     Client.prototype.getBackups = function (callback) {
         get('/api/v1/backups').success(function (data, status) {
             if (status !== 200 || typeof data !== 'object') return callback(new ClientError(status, data));
