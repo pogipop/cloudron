@@ -12,6 +12,8 @@ angular.module('Application').controller('SupportController', ['$scope', '$locat
         description: ''
     };
 
+    $scope.sshSupportEnabled = false;
+
     function resetFeedback() {
         $scope.feedback.subject = '';
         $scope.feedback.description = '';
@@ -37,6 +39,31 @@ angular.module('Application').controller('SupportController', ['$scope', '$locat
             $scope.feedback.busy = false;
         });
     };
+
+    var CLOUDRON_SUPPORT_PUBLIC_KEY = '';
+    var CLOUDRON_SUPPORT_PUBLIC_KEY_IDENTIFIER = '';
+
+    $scope.toggleSshSupport = function () {
+        if ($scope.sshSupportEnabled) {
+            Client.delAuthorizedKey(CLOUDRON_SUPPORT_PUBLIC_KEY_IDENTIFIER, function (error) {
+                if (error) return console.error(error);
+                $scope.sshSupportEnabled = false;
+            });
+        } else {
+            Client.addAuthorizedKey(CLOUDRON_SUPPORT_PUBLIC_KEY, function (error) {
+                if (error) return console.error(error);
+                $scope.sshSupportEnabled = true;
+            });
+        }
+    };
+
+    Client.onReady(function () {
+        Client.getAuthorizedKeys(function (error, keys) {
+            if (error) return console.error(error);
+
+            $scope.sshSupportEnabled = keys.some(function (k) { return k.key === CLOUDRON_SUPPORT_PUBLIC_KEY; });
+        });
+    });
 
     $('.modal-backdrop').remove();
 }]);
