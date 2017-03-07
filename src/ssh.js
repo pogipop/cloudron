@@ -16,9 +16,12 @@ var assert = require('assert'),
     fs = require('fs'),
     path = require('path'),
     safe = require('safetydance'),
+    shell = require('./shell.js'),
     util = require('util');
 
 var AUTHORIZED_KEYS_FILEPATH = config.TEST ? path.join(config.baseDir(), 'authorized_keys') : '/root/.ssh/authorized_keys';
+var AUTHORIZED_KEYS_TMP_FILEPATH = '/tmp/.authorized_keys';
+var AUTHORIZED_KEYS_CMD = path.join(__dirname, 'scripts/authorized_keys.sh');
 var VALID_KEY_TYPES = ['ssh-rsa'];  // TODO add all supported ones
 var VALID_MIN_KEY_LENGTH = 370;     // TODO verify this length requirement
 
@@ -56,24 +59,29 @@ function clear(callback) {
 function saveKeys(keys) {
     assert(Array.isArray(keys));
 
-    if (!safe.fs.writeFileSync(AUTHORIZED_KEYS_FILEPATH, keys.map(function (k) { return k.key; }).join('\n'))) {
+    if (!safe.fs.writeFileSync(AUTHORIZED_KEYS_TMP_FILEPATH, keys.map(function (k) { return k.key; }).join('\n'))) {
         console.error(safe.error);
         return false;
     }
 
     try {
         // 600 = rw-------
-        fs.chmodSync(AUTHORIZED_KEYS_FILEPATH, '600');
+        fs.chmodSync(AUTHORIZED_KEYS_TMP_FILEPATH, '600');
     } catch (e) {
-        console.error('Failed to adjust permissions of %s', AUTHORIZED_KEYS_FILEPATH, e);
+        console.error('Failed to adjust permissions of %s', AUTHORIZED_KEYS_TMP_FILEPATH, e);
         return false;
     }
+
+    // TODO make ec2 work
+    shell.sudoSync('authorized_keys', util.format('%s %s %s %s', AUTHORIZED_KEYS_CMD, config.TEST ? process.env.USER : 'root', AUTHORIZED_KEYS_TMP_FILEPATH, AUTHORIZED_KEYS_FILEPATH));
 
     return true;
 }
 
 function getKeys() {
-    var content = safe.fs.readFileSync(AUTHORIZED_KEYS_FILEPATH, 'utf8');
+    shell.sudoSync('authorized_keys', util.format('%s %s %s %s', AUTHORIZED_KEYS_CMD, process.env.USER, AUTHORIZED_KEYS_FILEPATH, AUTHORIZED_KEYS_TMP_FILEPATH));
+
+    var content = safe.fs.readFileSync(AUTHORIZED_KEYS_TMP_FILEPATH, 'utf8');
     if (!content) return [];
 
     var keys = content.split('\n')
