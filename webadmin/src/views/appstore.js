@@ -156,6 +156,9 @@ angular.module('Application').controller('AppStoreController', ['$scope', '$loca
                 sso: !$scope.appInstall.optionalSso ? undefined : ($scope.appInstall.accessRestrictionOption !== 'nosso')
             };
 
+            // add sso property for the postInstall message to be shown correctly
+            $scope.appInstall.app.sso = data.sso;
+
             Client.installApp($scope.appInstall.app.id, $scope.appInstall.app.manifest, $scope.appInstall.app.title, data, function (error) {
                 if (error) {
                     if (error.statusCode === 409 && (error.message.indexOf('is reserved') !== -1 || error.message.indexOf('is already in use') !== -1)) {
