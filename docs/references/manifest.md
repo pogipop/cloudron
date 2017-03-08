@@ -280,6 +280,10 @@ The intended use of this field is to display some post installation steps that t
 complete the installation. For example, displaying the default admin credentials and informing the user to
 to change it.
 
+The message can have the following special tags:
+* `<sso> ... </sso>` - Content in `sso` blocks are shown if SSO enabled.
+* `<nosso> ... </nosso>`- Content in `nosso` blocks are shows when SSO is disabled.
+
 ## optionalSso
 
 Type: boolean

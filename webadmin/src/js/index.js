@@ -253,7 +253,11 @@ app.filter('postInstallMessage', function () {
         if (!app) return text;
 
         var parts = text.split(SSO_MARKER);
-        if (parts.length === 1) return text;
+        if (parts.length === 1) {
+            // [^] matches even newlines. '?' makes it non-greedy
+            if (app.sso) return text.replace(/\<nosso\>[^]*?\<\/nosso\>/g, '');
+            else return text.replace(/\<sso\>[^]*?\<\/sso\>/g, '');
+        }
 
         if (app.sso) return parts[1];
         else return parts[0];
