@@ -266,8 +266,7 @@ reputation should be easy to get back.
 
     * Linode - Follow this [guide](https://www.linode.com/docs/networking/dns/setting-reverse-dns).
 
-    * Scaleway - Edit your security group to allow email. You can also set a PTR record on the interface with your
-    `my.<domain>`.
+    * Scaleway - Edit your security group to allow email and [reboot the server](https://community.online.net/t/security-group-not-working/2096) for the change to take effect. You can also set a PTR record on the interface with your `my.<domain>`.
 
 * Check if your IP is listed in any DNSBL list [here](http://multirbl.valli.org/). In most cases,
 you can apply for removal of your IP by filling out a form at the DNSBL manager site.
