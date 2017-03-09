@@ -259,7 +259,7 @@
         <div class="col-xs-12 text-right">
             <a href="{{ config.webServerOrigin }}/console.html#/userprofile" target="_blank">Change payment method</a>
             or
-            <a href="{{ config.webServerOrigin }}/console.html" target="_blank">cancel this Cloudron</a>
+            <a href="{{ config.webServerOrigin }}/console.html" target="_blank">Cancel this Cloudron</a>
         </div>
     </div>
     <div class="row">
@@ -293,9 +293,6 @@
         <div class="col-md-12">
             Cloudron has a built-in email server that allows users to send and receive email for your domain.
             The <a href="https://cloudron.io/references/usermanual.html#email" target="_blank">User manual</a> has information on how to setup email clients.
-            <br/>
-            <br/>
-            Apps can send email regardless of this setting. Enable this option to allow apps to receive emails.
         </div>
     </div>
     <br/>
@@ -328,6 +325,9 @@
     <div class="row">
         <div class="col-md-12" ng-show="dnsConfig.provider !== 'caas'">
             <button ng-class="mailConfig.enabled ? 'btn btn-danger pull-right' : 'btn btn-primary pull-right'" ng-click="email.toggle()" ng-enabled="mailConfig">{{ mailConfig.enabled ? "Disable Email" : "Enable Email" }}</button>
+        </div>
+        <div class="col-md-12" ng-show="dnsConfig.provider === 'caas'">
+            <span class="text-danger text-bold">This feature requires the Cloudron to be on <a href="https://cloudron.io/references/usermanual.html#entire-cloudron-on-a-custom-domain" target="_blank">custom domain</a>.</span>
         </div>
     </div>
 </div>
