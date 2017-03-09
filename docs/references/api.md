@@ -199,7 +199,8 @@ Response (200):
     health: <enum>,                  // health of the application
     location: <string>,              // subdomain on which app is installed
     fqdn: <string>,                  // the FQDN of this app
-    altDomain: <string>              // alternate domain from which this app can be reached
+    altDomain: <string>,             // alternate domain from which this app can be reached
+    cnameTarget: <string> || null,   // If altDomain is set, this contains the CNAME location for the app
     accessRestriction: null || {     // list of users and groups who can access this application
         users: [ ],
         groups: [ ]
@@ -281,7 +282,8 @@ Response (200):
             health: <enum>,                  // health of the application
             location: <string>,              // subdomain on which app is installed
             fqdn: <string>,                  // the FQDN of this app
-            altDomain: <string>              // alternate domain from which this app can be reached
+            altDomain: <string>,             // alternate domain from which this app can be reached
+            cnameTarget: <string> || null,   // If altDomain is set, this contains the CNAME location for the app
             accessRestriction: null || {     // list of users and groups who can access this application
                 users: [ ],
                 groups: [ ]
