@@ -776,8 +776,12 @@
 * Do not send crash logs and other notifications to support@cloudron.io for self-hosted instances
 * Make auto-generated self-signed cert load quickly on Firefox (take 2)
 
-[0.103.1]
+[0.104.0]
 * (mail) Fix crash when sending mails to groups with just 1 user
-* (ldap) Fix misbehaving apps by not sending non-activated user accounts
 * (ldap) Add isadmin attribute to better map users in apps
-
+* (ldap) Hide users which have not yet set a username in ldap searches
+* (core) Add SSH authorized_keys management
+* (core) Add additional security related headers to the nginx reverse proxy
+* (ui) Add remote SSH support option
+* (ui) Fix eventlog display
+* (ui) Fix CNAME setup information
