@@ -74,12 +74,12 @@ angular.module('Application').controller('MainController', ['$scope', '$route', 
         Client.getDnsConfig(function (error, result) {
             if (error) return console.error(error);
 
-            if (result.provider !== 'manual' && result.provider !== 'noop') return;
+            if (result.provider === 'caas') return;
 
             Client.getExpectedDnsRecords(function (error, result) {
                 if (error) return console.error(error);
 
-                if (!result.spf.status || !result.dkim.status) {
+                if (!result.spf.status || !result.dkim.status || !result.ptr.status) {
                     var actionScope = $scope.$new(true);
                     actionScope.action = '/#/settings';
 

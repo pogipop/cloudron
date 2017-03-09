@@ -61,16 +61,16 @@
             <div class="modal-header">
                 <h4 class="modal-title">Cloudron Email Server</h4>
             </div>
-            <div class="modal-body" ng-show="dnsConfig.provider === 'noop'">
-                No DNS provider is setup. Required DNS records will be displayed and have to be manually setup.<br/>
-                <br/>
-                Contact us for help on how to configure DNS manually by <a href="mailto:support@cloudron.io">Email</a> or <a href="https://chat.cloudron.io" target="_blank">Chat</a>
+            <div class="modal-body" ng-show="dnsConfig.provider === 'noop' || dnsConfig.provider === 'manual'">
+                No DNS provider is setup. Displayed DNS records will have to be setup manually.<br/>
             </div>
-            <div class="modal-body" ng-show="dnsConfig.provider !== 'noop'">
+            <div class="modal-body" ng-show="dnsConfig.provider === 'route53' || dnsConfig.provider === 'digitalocean'">
                 The Cloudron will setup Email related DNS records automatically.
                 If this domain is already configured to handle email with some other provider, it will <b>overwrite</b> those records.
+                <br/><br/>
                 Disabling Cloudron Email later will <b>not</b> put the old records back.
-                <br/>
+                <br/><br/>
+                Status of DNS Records will show an error when DNS is propagating (~5 minutes).
                 <br/>
             </div>
             <div class="modal-footer">
@@ -297,8 +297,8 @@
     </div>
     <br/>
     <div class="row">
-        <div class="col-md-12" ng-show="(dnsConfig.provider === 'noop' || dnsConfig.provider === 'manual')">
-            Set the following DNS records to guarantee email functionality.
+        <div class="col-md-12" ng-show="(dnsConfig.provider !== 'caas')">
+            Set the following DNS records to guarantee email delivery.
 
             <div ng-repeat="record in expectedDnsRecordsTypes">
                <div class="row" ng-if="mailConfig.enabled || (record.name !== 'DMARC' && record.name !== 'MX')">
