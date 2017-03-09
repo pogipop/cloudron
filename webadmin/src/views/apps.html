@@ -51,7 +51,7 @@
                         </div>
 
                         <p class="text-center" ng-show="appConfigure.usingAltDomain && appConfigure.location && appConfigure.isAltDomainValid()">
-                            Add a CNAME record for {{ appConfigure.location }} to {{ appConfigure.app.fqdn }}
+                            Add a CNAME record for <b>{{ appConfigure.location }}</b> to <b>{{ appConfigure.app.cnameTarget || appConfigure.app.fqdn }}</b>
                             <br>
                         </p>
 
