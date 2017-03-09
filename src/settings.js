@@ -6,7 +6,7 @@ exports = module.exports = {
     initialize: initialize,
     uninitialize: uninitialize,
 
-    getEmailDnsRecords: getEmailDnsRecords,
+    getEmailStatus: getEmailStatus,
 
     getAutoupdatePattern: getAutoupdatePattern,
     setAutoupdatePattern: setAutoupdatePattern,
@@ -74,6 +74,7 @@ var assert = require('assert'),
     cloudron = require('./cloudron.js'),
     CloudronError = cloudron.CloudronError,
     moment = require('moment-timezone'),
+    net = require('net'),
     paths = require('./paths.js'),
     safe = require('safetydance'),
     settingsdb = require('./settingsdb.js'),
@@ -143,10 +144,10 @@ function uninitialize(callback) {
     callback();
 }
 
-function getEmailDnsRecords(callback) {
+function getEmailStatus(callback) {
     assert.strictEqual(typeof callback, 'function');
 
-    var records = {};
+    var records = {}, outboundPort25 = {};
 
     var dkimKey = cloudron.readDkimPublicKeySync();
     if (!dkimKey) return callback(new CloudronError(CloudronError.INTERNAL_ERROR, new Error('Failed to read dkim public key')));
@@ -279,6 +280,44 @@ function getEmailDnsRecords(callback) {
         });
     }
 
+    function checkOutbound25(callback) {
+        var smtpServer = _.sample([
+            'smtp.gmail.com',
+            'smtp.live.com',
+            'smtp.mail.yahoo.com',
+            'smtp.o2.ie',
+            'smtp.comcast.net',
+            'outgoing.verizon.net'
+        ]);
+
+        outboundPort25 = {
+            value: 'OK',
+            status: false
+        };
+
+        var client = new net.Socket();
+        client.setTimeout(5000);
+        client.connect(25, smtpServer);
+        client.on('connect', function () {
+            outboundPort25.status = true;
+            outboundPort25.value = 'OK';
+            client.end();
+            callback();
+        });
+        client.on('timeout', function () {
+            outboundPort25.status = false;
+            outboundPort25.value = 'Connect to ' + smtpServer + ' timed out';
+            client.destroy();
+            callback(new Error('Timeout'));
+        });
+        client.on('error', function (error) {
+            outboundPort25.status = false;
+            outboundPort25.value = 'Connect to ' + smtpServer + ' failed: ' + error.message;
+            client.destroy();
+            callback(error);
+        });
+    }
+
     function ignoreError(what, func) {
         return function (callback) {
             func(function (error) {
@@ -298,9 +337,10 @@ function getEmailDnsRecords(callback) {
         ignoreError('spf', checkSpf),
         ignoreError('dmarc', checkDmarc),
         ignoreError('dkim', checkDkim),
-        ignoreError('ptr', checkPtr)
+        ignoreError('ptr', checkPtr),
+        ignoreError('port25', checkOutbound25)
     ], function () {
-        callback(null, records);
+        callback(null, { dns: records, outboundPort25: outboundPort25 } );
     });
 }
 

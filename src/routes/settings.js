@@ -10,7 +10,7 @@ exports = module.exports = {
     getCloudronAvatar: getCloudronAvatar,
     setCloudronAvatar: setCloudronAvatar,
 
-    getEmailDnsRecords: getEmailDnsRecords,
+    getEmailStatus: getEmailStatus,
 
     getDnsConfig: getDnsConfig,
     setDnsConfig: setDnsConfig,
@@ -150,8 +150,8 @@ function getCloudronAvatar(req, res, next) {
     });
 }
 
-function getEmailDnsRecords(req, res, next) {
-    settings.getEmailDnsRecords(function (error, records) {
+function getEmailStatus(req, res, next) {
+    settings.getEmailStatus(function (error, records) {
         if (error) return next(new HttpError(500, error));
 
         next(new HttpSuccess(200, records));

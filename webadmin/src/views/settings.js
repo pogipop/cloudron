@@ -8,6 +8,7 @@ angular.module('Application').controller('SettingsController', ['$scope', '$loca
     $scope.config = Client.getConfig();
     $scope.backupConfig = {};
     $scope.dnsConfig = {};
+    $scope.outboundPort25 = {};
     $scope.expectedDnsRecords = {};
     $scope.expectedDnsRecordsTypes = [
         { name: 'MX', value: 'mx' },
@@ -509,10 +510,11 @@ angular.module('Application').controller('SettingsController', ['$scope', '$loca
     function showExpectedDnsRecords(callback) {
         callback = callback || function (error) { if (error) console.error(error); };
 
-        Client.getExpectedDnsRecords(function (error, dnsRecords) {
+        Client.getEmailStatus(function (error, result) {
             if (error) return callback(error);
 
-            $scope.expectedDnsRecords = dnsRecords;
+            $scope.expectedDnsRecords = result.dns;
+            $scope.outboundPort25 = result.outboundPort25;
 
             callback(null);
         });

@@ -76,10 +76,10 @@ angular.module('Application').controller('MainController', ['$scope', '$route', 
 
             if (result.provider === 'caas') return;
 
-            Client.getExpectedDnsRecords(function (error, result) {
+            Client.getEmailStatus(function (error, result) {
                 if (error) return console.error(error);
 
-                if (!result.spf.status || !result.dkim.status || !result.ptr.status) {
+                if (!result.dns.spf.status || !result.dns.dkim.status || !result.dns.ptr.status || !result.outboundPort25.status) {
                     var actionScope = $scope.$new(true);
                     actionScope.action = '/#/settings';
 
