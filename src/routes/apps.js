@@ -54,6 +54,7 @@ function removeInternalAppFields(app) {
         fqdn: app.fqdn,
         memoryLimit: app.memoryLimit,
         altDomain: app.altDomain,
+        cnameTarget: app.cnameTarget,
         xFrameOptions: app.xFrameOptions,
         sso: app.sso,
         debugMode: app.debugMode

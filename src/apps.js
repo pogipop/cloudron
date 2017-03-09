@@ -312,6 +312,7 @@ function get(appId, callback) {
 
         app.iconUrl = getIconUrlSync(app);
         app.fqdn = app.altDomain || config.appFqdn(app.location);
+        app.cnameTarget = app.altDomain ? config.appFqdn(app.location) : null;
 
         callback(null, app);
     });
@@ -330,6 +331,7 @@ function getByIpAddress(ip, callback) {
 
             app.iconUrl = getIconUrlSync(app);
             app.fqdn = app.altDomain || config.appFqdn(app.location);
+            app.cnameTarget = app.altDomain ? config.appFqdn(app.location) : null;
 
             callback(null, app);
         });
@@ -345,6 +347,7 @@ function getAll(callback) {
         apps.forEach(function (app) {
             app.iconUrl = getIconUrlSync(app);
             app.fqdn = app.altDomain || config.appFqdn(app.location);
+            app.cnameTarget = app.altDomain ? config.appFqdn(app.location) : null;
         });
 
         callback(null, apps);
