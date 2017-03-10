@@ -2,6 +2,7 @@
 
 angular.module('Application').controller('SupportController', ['$scope', '$location', 'Client', function ($scope, $location, Client) {
     $scope.config = Client.getConfig();
+    $scope.user = Client.getUserInfo();
 
     $scope.feedback = {
         error: null,
