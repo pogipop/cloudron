@@ -15,8 +15,7 @@ var assert = require('assert'),
     UserError = user.UserError,
     ldap = require('ldapjs'),
     mailboxdb = require('./mailboxdb.js'),
-    safe = require('safetydance'),
-    util = require('util');
+    safe = require('safetydance');
 
 var gServer = null;
 
