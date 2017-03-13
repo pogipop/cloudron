@@ -105,40 +105,48 @@ function userSearch(req, res, next) {
 function groupSearch(req, res, next) {
     debug('group search: dn %s, scope %s, filter %s (from %s)', req.dn.toString(), req.scope, req.filter.toString(), req.connection.ldap.id);
 
-    user.list(function (error, result){
-        if (error) return next(new ldap.OperationsError(error.toString()));
+    getAppByRequest(req, function (error, app) {
+        if (error) return next(error);
 
-        var groups = [{
-            name: 'users',
-            admin: false
-        }, {
-            name: 'admins',
-            admin: true
-        }];
+        user.list(function (error, result){
+            if (error) return next(new ldap.OperationsError(error.toString()));
 
-        groups.forEach(function (group) {
-            var dn = ldap.parseDN('cn=' + group.name + ',ou=groups,dc=cloudron');
-            var members = group.admin ? result.filter(function (entry) { return entry.admin; }) : result;
+            async.filter(result, apps.hasAccessTo.bind(null, app), function (error, result) {
+                if (error) return next(new ldap.OperationsError(error.toString()));
 
-            var obj = {
-                dn: dn.toString(),
-                attributes: {
-                    objectclass: ['group'],
-                    cn: group.name,
-                    memberuid: members.map(function(entry) { return entry.id; })
-                }
-            };
+                var groups = [{
+                    name: 'users',
+                    admin: false
+                }, {
+                    name: 'admins',
+                    admin: true
+                }];
 
-            // ensure all filter values are also lowercase
-            var lowerCaseFilter = safe(function () { return ldap.parseFilter(req.filter.toString().toLowerCase()); }, null);
-            if (!lowerCaseFilter) return next(new ldap.OperationsError(safe.error.toString()));
+                groups.forEach(function (group) {
+                    var dn = ldap.parseDN('cn=' + group.name + ',ou=groups,dc=cloudron');
+                    var members = group.admin ? result.filter(function (entry) { return entry.admin; }) : result;
 
-            if ((req.dn.equals(dn) || req.dn.parentOf(dn)) && lowerCaseFilter.matches(obj.attributes)) {
-                res.send(obj);
-            }
+                    var obj = {
+                        dn: dn.toString(),
+                        attributes: {
+                            objectclass: ['group'],
+                            cn: group.name,
+                            memberuid: members.map(function(entry) { return entry.id; })
+                        }
+                    };
+
+                    // ensure all filter values are also lowercase
+                    var lowerCaseFilter = safe(function () { return ldap.parseFilter(req.filter.toString().toLowerCase()); }, null);
+                    if (!lowerCaseFilter) return next(new ldap.OperationsError(safe.error.toString()));
+
+                    if ((req.dn.equals(dn) || req.dn.parentOf(dn)) && lowerCaseFilter.matches(obj.attributes)) {
+                        res.send(obj);
+                    }
+                });
+
+                res.end();
+            });
         });
-
-        res.end();
     });
 }
 
