@@ -148,7 +148,7 @@ angular.module('Application').controller('SettingsController', ['$scope', '$loca
 
                         $scope.createBackup.percent = data.backup.percent;
                         $scope.createBackup.message = data.backup.message;
-                        window.setTimeout(checkIfDone, 250);
+                        window.setTimeout(checkIfDone, 500);
                     });
                 }
 
