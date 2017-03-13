@@ -194,7 +194,7 @@ mkdir -p "${DATA_DIR}/nginx/applications"
 mkdir -p "${DATA_DIR}/nginx/cert"
 cp "${script_dir}/start/nginx/nginx.conf" "${DATA_DIR}/nginx/nginx.conf"
 cp "${script_dir}/start/nginx/mime.types" "${DATA_DIR}/nginx/mime.types"
-if ! grep "^Restart=" /etc/systemd/system/multi-user.target.wants/nginx.service; then
+if ! grep -q "^Restart=" /etc/systemd/system/multi-user.target.wants/nginx.service; then
     # default nginx service file does not restart on crash
     echo -e "\n[Service]\nRestart=always\n" >> /etc/systemd/system/multi-user.target.wants/nginx.service
     systemctl daemon-reload
