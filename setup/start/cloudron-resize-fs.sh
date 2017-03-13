@@ -13,10 +13,10 @@ disk_device="$(for d in $(find /dev -type b); do [ "$(mountpoint -d /)" = "$(mou
 existing_swap=$(cat /proc/meminfo | grep SwapTotal | awk '{ printf "%.0f", $2/1024 }')
 
 # all sizes are in mb
-readonly physical_memory=$(free -m | awk '/Mem:/ { print $2 }')
+readonly physical_memory=$(LC_ALL=C free -m | awk '/Mem:/ { print $2 }')
 readonly swap_size=$((${physical_memory} - ${existing_swap})) # if you change this, fix enoughResourcesAvailable() in client.js
 readonly app_count=$((${physical_memory} / 200)) # estimated app count
-readonly disk_size_bytes=$(fdisk -l ${disk_device} | grep "Disk ${disk_device}" | awk '{ printf $5 }') # can't rely on fdisk human readable units, using bytes instead
+readonly disk_size_bytes=$(LC_ALL=C fdisk -l ${disk_device} | grep "Disk ${disk_device}" | awk '{ printf $5 }') # can't rely on fdisk human readable units, using bytes instead
 readonly disk_size=$((${disk_size_bytes}/1024/1024))
 readonly system_size=10240 # 10 gigs for system libs, apps images, installer, box code, data and tmp
 readonly ext4_reserved=$((disk_size * 5 / 100)) # this can be changes using tune2fs -m percent /dev/vda1
