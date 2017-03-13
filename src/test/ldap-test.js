@@ -38,6 +38,12 @@ var USER_1 = {
     email: 'USER1@email.com',
     displayName: 'User 1'
 };
+var USER_2 = {
+    username: 'Username2',
+    password: 'Username2pass?12345',
+    email: 'USER2@email.com',
+    displayName: 'User 2'
+};
 
 var GROUP_ID, GROUP_NAME = 'developers';
 
@@ -94,6 +100,15 @@ function setup(done) {
                 if (error) return callback(error);
 
                 USER_1.id = result.id;
+
+                callback(null);
+            });
+        },
+        function (callback) {
+            user.create(USER_2.username, USER_2.password, USER_2.email, USER_0.displayName, AUDIT_SOURCE, { invitor: USER_0 }, function (error, result) {
+                if (error) return callback(error);
+
+                USER_2.id = result.id;
 
                 callback(null);
             });
@@ -409,6 +424,66 @@ describe('Ldap', function () {
                 });
             });
         });
+
+        it ('does not list users who have no access', function (done) {
+            appdb.update(APP_0.id, { accessRestriction: { users: [], groups: [] } }, function (error) {
+                expect(error).to.be(null);
+
+                var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + config.get('ldapPort') });
+
+                var opts = {
+                    filter: 'objectcategory=person'
+                };
+
+                client.search('ou=users,dc=cloudron', opts, function (error, result) {
+                    expect(error).to.be(null);
+                    expect(result).to.be.an(EventEmitter);
+
+                    var entries = [];
+
+                    result.on('searchEntry', function (entry) { entries.push(entry.object); });
+                    result.on('error', done);
+                    result.on('end', function (result) {
+                        expect(result.status).to.equal(0);
+                        expect(entries.length).to.equal(0);
+
+                        appdb.update(APP_0.id, { accessRestriction: null }, done);
+                    });
+                });
+            });
+        });
+
+        it ('does not list users who have access', function (done) {
+            appdb.update(APP_0.id, { accessRestriction: { users: [], groups: [ GROUP_ID ] } }, function (error) {
+                expect(error).to.be(null);
+
+                var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + config.get('ldapPort') });
+
+                var opts = {
+                    filter: 'objectcategory=person'
+                };
+
+                client.search('ou=users,dc=cloudron', opts, function (error, result) {
+                    expect(error).to.be(null);
+                    expect(result).to.be.an(EventEmitter);
+
+                    var entries = [];
+
+                    result.on('searchEntry', function (entry) { entries.push(entry.object); });
+                    result.on('error', done);
+                    result.on('end', function (result) {
+                        expect(result.status).to.equal(0);
+                        expect(entries.length).to.equal(2);
+                        entries.sort(function (a, b) { return a.username > b.username; });
+
+                        expect(entries[0].username).to.equal(USER_0.username.toLowerCase());
+                        expect(entries[1].username).to.equal(USER_1.username.toLowerCase());
+
+                        appdb.update(APP_0.id, { accessRestriction: null }, done);
+                    });
+                });
+            });
+        });
     });
 
     describe('search groups', function () {
@@ -435,9 +510,10 @@ describe('Ldap', function () {
                     entries.sort(function (a, b) { return a.username < b.username; });
 
                     expect(entries[0].cn).to.equal('users');
-                    expect(entries[0].memberuid.length).to.equal(2);
+                    expect(entries[0].memberuid.length).to.equal(3);
                     expect(entries[0].memberuid[0]).to.equal(USER_0.id);
                     expect(entries[0].memberuid[1]).to.equal(USER_1.id);
+                    expect(entries[0].memberuid[2]).to.equal(USER_2.id);
                     expect(entries[1].cn).to.equal('admins');
                     // if only one entry, the array becomes a string :-/
                     expect(entries[1].memberuid).to.equal(USER_0.id);
@@ -465,9 +541,10 @@ describe('Ldap', function () {
                     expect(result.status).to.equal(0);
                     expect(entries.length).to.equal(2);
                     expect(entries[0].cn).to.equal('users');
-                    expect(entries[0].memberuid.length).to.equal(2);
+                    expect(entries[0].memberuid.length).to.equal(3);
                     expect(entries[0].memberuid[0]).to.equal(USER_0.id);
                     expect(entries[0].memberuid[1]).to.equal(USER_1.id);
+                    expect(entries[0].memberuid[2]).to.equal(USER_2.id);
                     expect(entries[1].cn).to.equal('admins');
                     // if only one entry, the array becomes a string :-/
                     expect(entries[1].memberuid).to.equal(USER_0.id);
@@ -495,7 +572,7 @@ describe('Ldap', function () {
                     expect(result.status).to.equal(0);
                     expect(entries.length).to.equal(1);
                     expect(entries[0].cn).to.equal('users');
-                    expect(entries[0].memberuid.length).to.equal(2);
+                    expect(entries[0].memberuid.length).to.equal(3);
                     done();
                 });
             });

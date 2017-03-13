@@ -7,6 +7,7 @@ exports = module.exports = {
 
 var assert = require('assert'),
     apps = require('./apps.js'),
+    async = require('async'),
     config = require('./config.js'),
     DatabaseError = require('./databaseerror.js'),
     debug = require('debug')('box:ldap'),
@@ -40,56 +41,64 @@ function getAppByRequest(req, callback) {
 function userSearch(req, res, next) {
     debug('user search: dn %s, scope %s, filter %s (from %s)', req.dn.toString(), req.scope, req.filter.toString(), req.connection.ldap.id);
 
-    user.list(function (error, result) {
-        if (error) return next(new ldap.OperationsError(error.toString()));
+    getAppByRequest(req, function (error, app) {
+        if (error) return next(error);
 
-        // send user objects
-        result.forEach(function (entry) {
-            // skip entries with empty username. Some apps like owncloud can't deal with this
-            if (!entry.username) return;
+        user.list(function (error, result) {
+            if (error) return next(new ldap.OperationsError(error.toString()));
 
-            var dn = ldap.parseDN('cn=' + entry.id + ',ou=users,dc=cloudron');
+            async.filter(result, apps.hasAccessTo.bind(null, app), function (error, result) {
+                if (error) return next(new ldap.OperationsError(error.toString()));
 
-            var groups = [ GROUP_USERS_DN ];
-            if (entry.admin) groups.push(GROUP_ADMINS_DN);
+                // send user objects
+                result.forEach(function (entry) {
+                    // skip entries with empty username. Some apps like owncloud can't deal with this
+                    if (!entry.username) return;
 
-            var displayName = entry.displayName || entry.username || ''; // displayName can be empty and username can be null
-            var nameParts = displayName.split(' ');
-            var firstName = nameParts[0];
-            var lastName = nameParts.length > 1  ? nameParts[nameParts.length - 1] : ''; // choose last part, if it exists
+                    var dn = ldap.parseDN('cn=' + entry.id + ',ou=users,dc=cloudron');
 
-            var obj = {
-                dn: dn.toString(),
-                attributes: {
-                    objectclass: ['user'],
-                    objectcategory: 'person',
-                    cn: entry.id,
-                    uid: entry.id,
-                    mail: entry.email,
-                    mailAlternateAddress: entry.alternateEmail,
-                    displayname: displayName,
-                    givenName: firstName,
-                    username: entry.username,
-                    samaccountname: entry.username,      // to support ActiveDirectory clients
-                    isadmin: entry.admin ? 1 : 0,
-                    memberof: groups
-                }
-            };
+                    var groups = [ GROUP_USERS_DN ];
+                    if (entry.admin) groups.push(GROUP_ADMINS_DN);
 
-            // http://www.zytrax.com/books/ldap/ape/core-schema.html#sn has 'name' as SUP which is a DirectoryString
-            // which is required to have atleast one character if present
-            if (lastName.length !== 0) obj.attributes.sn = lastName;
+                    var displayName = entry.displayName || entry.username || ''; // displayName can be empty and username can be null
+                    var nameParts = displayName.split(' ');
+                    var firstName = nameParts[0];
+                    var lastName = nameParts.length > 1  ? nameParts[nameParts.length - 1] : ''; // choose last part, if it exists
 
-            // ensure all filter values are also lowercase
-            var lowerCaseFilter = safe(function () { return ldap.parseFilter(req.filter.toString().toLowerCase()); }, null);
-            if (!lowerCaseFilter) return next(new ldap.OperationsError(safe.error.toString()));
+                    var obj = {
+                        dn: dn.toString(),
+                        attributes: {
+                            objectclass: ['user'],
+                            objectcategory: 'person',
+                            cn: entry.id,
+                            uid: entry.id,
+                            mail: entry.email,
+                            mailAlternateAddress: entry.alternateEmail,
+                            displayname: displayName,
+                            givenName: firstName,
+                            username: entry.username,
+                            samaccountname: entry.username,      // to support ActiveDirectory clients
+                            isadmin: entry.admin ? 1 : 0,
+                            memberof: groups
+                        }
+                    };
 
-            if ((req.dn.equals(dn) || req.dn.parentOf(dn)) && lowerCaseFilter.matches(obj.attributes)) {
-                res.send(obj);
-            }
+                    // http://www.zytrax.com/books/ldap/ape/core-schema.html#sn has 'name' as SUP which is a DirectoryString
+                    // which is required to have atleast one character if present
+                    if (lastName.length !== 0) obj.attributes.sn = lastName;
+
+                    // ensure all filter values are also lowercase
+                    var lowerCaseFilter = safe(function () { return ldap.parseFilter(req.filter.toString().toLowerCase()); }, null);
+                    if (!lowerCaseFilter) return next(new ldap.OperationsError(safe.error.toString()));
+
+                    if ((req.dn.equals(dn) || req.dn.parentOf(dn)) && lowerCaseFilter.matches(obj.attributes)) {
+                        res.send(obj);
+                    }
+                });
+
+                res.end();
+            });
         });
-
-        res.end();
     });
 }
 
