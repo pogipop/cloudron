@@ -38,115 +38,115 @@ function getAppByRequest(req, callback) {
     });
 }
 
+function getUsersWithAccessToApp(req, callback) {
+    getAppByRequest(req, function (error, app) {
+        if (error) return callback(error);
+
+        user.list(function (error, result){
+            if (error) return callback(new ldap.OperationsError(error.toString()));
+
+            async.filter(result, apps.hasAccessTo.bind(null, app), function (error, result) {
+                if (error) return callback(new ldap.OperationsError(error.toString()));
+
+                callback(null, result);
+            });
+        });
+    });
+}
+
 function userSearch(req, res, next) {
     debug('user search: dn %s, scope %s, filter %s (from %s)', req.dn.toString(), req.scope, req.filter.toString(), req.connection.ldap.id);
 
-    getAppByRequest(req, function (error, app) {
+    getUsersWithAccessToApp(req, function (error, result) {
         if (error) return next(error);
 
-        user.list(function (error, result) {
-            if (error) return next(new ldap.OperationsError(error.toString()));
+        // send user objects
+        result.forEach(function (entry) {
+            // skip entries with empty username. Some apps like owncloud can't deal with this
+            if (!entry.username) return;
 
-            async.filter(result, apps.hasAccessTo.bind(null, app), function (error, result) {
-                if (error) return next(new ldap.OperationsError(error.toString()));
+            var dn = ldap.parseDN('cn=' + entry.id + ',ou=users,dc=cloudron');
 
-                // send user objects
-                result.forEach(function (entry) {
-                    // skip entries with empty username. Some apps like owncloud can't deal with this
-                    if (!entry.username) return;
+            var groups = [ GROUP_USERS_DN ];
+            if (entry.admin) groups.push(GROUP_ADMINS_DN);
 
-                    var dn = ldap.parseDN('cn=' + entry.id + ',ou=users,dc=cloudron');
+            var displayName = entry.displayName || entry.username || ''; // displayName can be empty and username can be null
+            var nameParts = displayName.split(' ');
+            var firstName = nameParts[0];
+            var lastName = nameParts.length > 1  ? nameParts[nameParts.length - 1] : ''; // choose last part, if it exists
 
-                    var groups = [ GROUP_USERS_DN ];
-                    if (entry.admin) groups.push(GROUP_ADMINS_DN);
+            var obj = {
+                dn: dn.toString(),
+                attributes: {
+                    objectclass: ['user'],
+                    objectcategory: 'person',
+                    cn: entry.id,
+                    uid: entry.id,
+                    mail: entry.email,
+                    mailAlternateAddress: entry.alternateEmail,
+                    displayname: displayName,
+                    givenName: firstName,
+                    username: entry.username,
+                    samaccountname: entry.username,      // to support ActiveDirectory clients
+                    isadmin: entry.admin ? 1 : 0,
+                    memberof: groups
+                }
+            };
 
-                    var displayName = entry.displayName || entry.username || ''; // displayName can be empty and username can be null
-                    var nameParts = displayName.split(' ');
-                    var firstName = nameParts[0];
-                    var lastName = nameParts.length > 1  ? nameParts[nameParts.length - 1] : ''; // choose last part, if it exists
+            // http://www.zytrax.com/books/ldap/ape/core-schema.html#sn has 'name' as SUP which is a DirectoryString
+            // which is required to have atleast one character if present
+            if (lastName.length !== 0) obj.attributes.sn = lastName;
 
-                    var obj = {
-                        dn: dn.toString(),
-                        attributes: {
-                            objectclass: ['user'],
-                            objectcategory: 'person',
-                            cn: entry.id,
-                            uid: entry.id,
-                            mail: entry.email,
-                            mailAlternateAddress: entry.alternateEmail,
-                            displayname: displayName,
-                            givenName: firstName,
-                            username: entry.username,
-                            samaccountname: entry.username,      // to support ActiveDirectory clients
-                            isadmin: entry.admin ? 1 : 0,
-                            memberof: groups
-                        }
-                    };
+            // ensure all filter values are also lowercase
+            var lowerCaseFilter = safe(function () { return ldap.parseFilter(req.filter.toString().toLowerCase()); }, null);
+            if (!lowerCaseFilter) return next(new ldap.OperationsError(safe.error.toString()));
 
-                    // http://www.zytrax.com/books/ldap/ape/core-schema.html#sn has 'name' as SUP which is a DirectoryString
-                    // which is required to have atleast one character if present
-                    if (lastName.length !== 0) obj.attributes.sn = lastName;
-
-                    // ensure all filter values are also lowercase
-                    var lowerCaseFilter = safe(function () { return ldap.parseFilter(req.filter.toString().toLowerCase()); }, null);
-                    if (!lowerCaseFilter) return next(new ldap.OperationsError(safe.error.toString()));
-
-                    if ((req.dn.equals(dn) || req.dn.parentOf(dn)) && lowerCaseFilter.matches(obj.attributes)) {
-                        res.send(obj);
-                    }
-                });
-
-                res.end();
-            });
+            if ((req.dn.equals(dn) || req.dn.parentOf(dn)) && lowerCaseFilter.matches(obj.attributes)) {
+                res.send(obj);
+            }
         });
+
+        res.end();
     });
 }
 
 function groupSearch(req, res, next) {
     debug('group search: dn %s, scope %s, filter %s (from %s)', req.dn.toString(), req.scope, req.filter.toString(), req.connection.ldap.id);
 
-    getAppByRequest(req, function (error, app) {
+    getUsersWithAccessToApp(req, function (error, result) {
         if (error) return next(error);
 
-        user.list(function (error, result){
-            if (error) return next(new ldap.OperationsError(error.toString()));
+        var groups = [{
+            name: 'users',
+            admin: false
+        }, {
+            name: 'admins',
+            admin: true
+        }];
 
-            async.filter(result, apps.hasAccessTo.bind(null, app), function (error, result) {
-                if (error) return next(new ldap.OperationsError(error.toString()));
+        groups.forEach(function (group) {
+            var dn = ldap.parseDN('cn=' + group.name + ',ou=groups,dc=cloudron');
+            var members = group.admin ? result.filter(function (entry) { return entry.admin; }) : result;
 
-                var groups = [{
-                    name: 'users',
-                    admin: false
-                }, {
-                    name: 'admins',
-                    admin: true
-                }];
+            var obj = {
+                dn: dn.toString(),
+                attributes: {
+                    objectclass: ['group'],
+                    cn: group.name,
+                    memberuid: members.map(function(entry) { return entry.id; })
+                }
+            };
 
-                groups.forEach(function (group) {
-                    var dn = ldap.parseDN('cn=' + group.name + ',ou=groups,dc=cloudron');
-                    var members = group.admin ? result.filter(function (entry) { return entry.admin; }) : result;
+            // ensure all filter values are also lowercase
+            var lowerCaseFilter = safe(function () { return ldap.parseFilter(req.filter.toString().toLowerCase()); }, null);
+            if (!lowerCaseFilter) return next(new ldap.OperationsError(safe.error.toString()));
 
-                    var obj = {
-                        dn: dn.toString(),
-                        attributes: {
-                            objectclass: ['group'],
-                            cn: group.name,
-                            memberuid: members.map(function(entry) { return entry.id; })
-                        }
-                    };
-
-                    // ensure all filter values are also lowercase
-                    var lowerCaseFilter = safe(function () { return ldap.parseFilter(req.filter.toString().toLowerCase()); }, null);
-                    if (!lowerCaseFilter) return next(new ldap.OperationsError(safe.error.toString()));
-
-                    if ((req.dn.equals(dn) || req.dn.parentOf(dn)) && lowerCaseFilter.matches(obj.attributes)) {
-                        res.send(obj);
-                    }
-                });
-
-                res.end();
-            });
+            if ((req.dn.equals(dn) || req.dn.parentOf(dn)) && lowerCaseFilter.matches(obj.attributes)) {
+                res.send(obj);
+            }
         });
+
+        res.end();
     });
 }
 
