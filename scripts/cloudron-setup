@@ -97,6 +97,7 @@ if [[ -z "${dataJson}" ]]; then
         echo "--provider is required (azure, digitalocean, ec2, lightsail, linode, ovh, scaleway, vultr or generic)"
         exit 1
     elif [[  \
+                "${provider}" != "ami" && \
                 "${provider}" != "azure" && \
                 "${provider}" != "digitalocean" && \
                 "${provider}" != "ec2" && \
