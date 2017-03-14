@@ -11,6 +11,11 @@ readonly ADMIN_LOCATION="my" # keep this in sync with constants.js
 
 echo "Setting up nginx update page"
 
+if [[ ! -f "${DATA_DIR}/nginx/applications/admin.conf" ]]; then
+    echo "No admin.conf found. This Cloudron has no domain yet. Skip splash setup"
+    exit 0;
+fi
+
 source "${script_dir}/argparser.sh" "$@" # this injects the arg_* variables used below
 
 # keep this is sync with config.js appFqdn()
