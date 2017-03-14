@@ -90,21 +90,33 @@ function dnsSetup(req, res, next) {
 function setupTokenAuth(req, res, next) {
     assert.strictEqual(typeof req.query, 'object');
 
-    // skip setupToken auth for non caas case
-    if (config.provider() !== 'caas') return next();
+    if (config.provider() === 'caas') {
+        if (typeof req.query.setupToken !== 'string' || !req.query.setupToken) return next(new HttpError(400, 'setupToken must be a non empty string'));
 
-    if (typeof req.query.setupToken !== 'string') return next(new HttpError(400, 'no setupToken provided'));
-
-    superagent.get(config.apiServerOrigin() + '/api/v1/boxes/' + config.fqdn() + '/setup/verify').query({ setupToken:req.query.setupToken })
+        superagent.get(config.apiServerOrigin() + '/api/v1/boxes/' + config.fqdn() + '/setup/verify').query({ setupToken:req.query.setupToken })
         .timeout(30 * 1000)
         .end(function (error, result) {
-        if (error && !error.response) return next(new HttpError(500, error));
-        if (result.statusCode === 403) return next(new HttpError(403, 'Invalid token'));
-        if (result.statusCode === 409) return next(new HttpError(409, 'Already setup'));
-        if (result.statusCode !== 200) return next(new HttpError(500, result.text || 'Internal error'));
+            if (error && !error.response) return next(new HttpError(500, error));
+            if (result.statusCode === 403) return next(new HttpError(403, 'Invalid token'));
+            if (result.statusCode === 409) return next(new HttpError(409, 'Already setup'));
+            if (result.statusCode !== 200) return next(new HttpError(500, result.text || 'Internal error'));
 
+            next();
+        });
+    } else if (config.provider() === 'ami') {
+        if (typeof req.query.setupToken !== 'string' || !req.query.setupToken) return next(new HttpError(400, 'setupToken must be a non empty string'));
+
+        superagent.get('http://169.254.169.254/latest/meta-data/instance-id').timeout(30 * 1000).end(function (error, result) {
+            if (error && !error.response) return next(new HttpError(500, error));
+            if (result.statusCode !== 200) return next(new HttpError(500, 'Unable to get meta data'));
+
+            if (result.text !== req.query.setupToken) return next(new HttpError(403, 'Invalid token'));
+
+            next();
+        });
+    } else {
         next();
-    });
+    }
 }
 
 function getStatus(req, res, next) {
