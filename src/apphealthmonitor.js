@@ -50,7 +50,7 @@ function setHealth(app, health, callback) {
 
         debugApp(app, 'marking as unhealthy since not seen for more than %s minutes', UNHEALTHY_THRESHOLD/(60 * 1000));
 
-        if (app.debugMode) mailer.appDied(app); // do not send mails for dev apps
+        if (!app.debugMode) mailer.appDied(app); // do not send mails for dev apps
         gHealthInfo[app.id].emailSent = true;
     } else {
         debugApp(app, 'waiting for sometime to update the app health');
