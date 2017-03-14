@@ -78,6 +78,11 @@ app.controller('SetupDNSController', ['$scope', '$http', 'Client', 'ngTld', func
         if (status.adminFqdn) return waitForDnsSetup();
 
         if (status.provider === 'digitalocean') $scope.dnsCredentials.provider = 'digitalocean';
+        if (status.provider === 'ami') {
+            // remove route53 on ami
+            $scope.dnsProvider.shift();
+            $scope.dnsCredentials.provider = 'wildcard';
+        }
 
         $scope.provider = status.provider;
         $scope.initialized = true;
