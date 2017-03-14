@@ -33,15 +33,6 @@ function auditSource(req) {
     return { ip: ip, username: req.user ? req.user.username : null, userId: req.user ? req.user.id : null };
 }
 
-/**
- * Creating an admin user and activate the cloudron.
- *
- * @apiParam {string} username The administrator's user name
- * @apiParam {string} password The administrator's password
- * @apiParam {string} email The administrator's email address
- *
- * @apiSuccess (Created 201) {string} token A valid access token
- */
 function activate(req, res, next) {
     assert.strictEqual(typeof req.body, 'object');
     assert.strictEqual(typeof req.query.setupToken, 'string');
