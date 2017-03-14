@@ -44,6 +44,7 @@ function getApi(callback) {
         case 'digitalocean': return callback(null, generic);
         case 'ec2': return callback(null, ec2);
         case 'lightsail': return callback(null, ec2);
+        case 'ami': return callback(null, ec2);
         case 'scaleway': return callback(null, scaleway);
         default: return callback(null, generic);
     }
