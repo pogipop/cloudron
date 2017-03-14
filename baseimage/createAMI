@@ -141,7 +141,7 @@ while true; do
 done
 
 echo "=> Running cloudron-setup"
-$SSH ubuntu@${server_ip} sudo /bin/bash "cloudron-setup" --env "${deploy_env}" --provider "ec2" --skip-reboot
+$SSH ubuntu@${server_ip} sudo /bin/bash "cloudron-setup" --env "${deploy_env}" --provider "ami" --skip-reboot
 
 wait_for_ssh
 
