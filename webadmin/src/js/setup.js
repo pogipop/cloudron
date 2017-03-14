@@ -20,15 +20,20 @@ app.controller('SetupController', ['$scope', '$http', 'Client', function ($scope
     $scope.provider = '';
     $scope.apiServerOrigin = '';
     $scope.setupToken = '';
+    $scope.instanceId = '';
 
     $scope.activateCloudron = function () {
         $scope.busy = true;
 
-        Client.createAdmin($scope.account.username, $scope.account.password, $scope.account.email, $scope.account.displayName, $scope.setupToken, function (error) {
-            if (error) {
+        Client.createAdmin($scope.account.username, $scope.account.password, $scope.account.email, $scope.account.displayName, $scope.setupToken || $scope.instanceId, function (error) {
+            $scope.busy = false;
+
+            if (error && error.statusCode === 403) {
+                $scope.error = $scope.provider === 'ami' ? 'Wrong instance id' : 'Wrong setup token';
+                return;
+            } else if (error) {
                 console.error('Internal error', error);
                 $scope.error = error;
-                $scope.busy = false;
                 return;
             }
 
@@ -77,6 +82,7 @@ app.controller('SetupController', ['$scope', '$http', 'Client', function ($scope
         $scope.account.displayName = search.displayName || $scope.account.displayName;
         $scope.account.requireEmail = !search.email;
         $scope.provider = status.provider;
+        $scope.instanceId = search.instanceId;
         $scope.apiServerOrigin = status.apiServerOrigin;
 
         $scope.initialized = true;

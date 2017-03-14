@@ -77,6 +77,11 @@
                                         <small ng-show="setupForm.password.$dirty && setupForm.password.$invalid">Password must be 8-30 character with at least one uppercase, one numeric and one special character</small>
                                     </div>
                                 </div>
+                                <div class="form-group" ng-class="{ 'has-error': setupForm.instanceId.$dirty && (setupForm.instanceId.$invalid || error) }" ng-show="provider === 'ami'">
+                                    <p>Provide the EC2 instance id to proof you are the owner</p>
+                                    <input type="text" class="form-control" ng-model="instanceId" id="inputInstanceId" name="instanceId" placeholder="AWS EC2 instance id" ng-maxlength="20" ng-minlength="10" required autocomplete="off">
+                                    <p ng-show="error" class="has-error">{{ error }}</p>
+                                </div>
                             </div>
                         </div>
                         <div class="row">
