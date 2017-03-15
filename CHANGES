@@ -785,3 +785,10 @@
 * (ui) Add remote SSH support option
 * (ui) Fix eventlog display
 * (ui) Fix CNAME setup information
+
+[0.105.0]
+* Always show email related checks
+* Show outbound SMTP port 25 status
+* Hide remote feature for normal users
+* Only list users via ldap searches who have access to the app
+* Fix installation issue on servers with a differente locale set
