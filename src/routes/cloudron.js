@@ -35,7 +35,6 @@ function auditSource(req) {
 
 function activate(req, res, next) {
     assert.strictEqual(typeof req.body, 'object');
-    assert.strictEqual(typeof req.query.setupToken, 'string');
 
     if (typeof req.body.username !== 'string') return next(new HttpError(400, 'username must be string'));
     if (typeof req.body.password !== 'string') return next(new HttpError(400, 'password must be string'));
