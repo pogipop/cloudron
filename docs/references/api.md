@@ -659,6 +659,38 @@ curl -L <url> | openssl aes-256-cbc -d -pass "pass:$<backupKey>" | tar -zxf -
 
 ## Cloudron
 
+### Activate the Cloudron
+
+POST `/api/v1/cloudron/activate`
+
+Activates the Cloudron with an admin username and password.
+
+Request:
+```
+{
+    username: <string>,     // the admin username
+    password: <string>,     // the admin password
+    email: <email>          // the admin email
+}
+```
+
+Response (201):
+```
+{
+  "token": "771ee724a66aa557f95af06b4e6c27992f9230f6b1d65d5fbaa34cae9318d453",
+  "expires": 1490224113353
+}
+
+```
+
+The `token` parameter can be used to make further API calls.
+
+Curl example to activate the cloudron:
+
+```
+curl -X POST -H "Content-Type: application/json" -d '{"username": "girish", "password":"MySecret123#", "email": "girish@cloudron.io" }' https://my.cloudron.info/api/v1/cloudron/activate
+```
+
 ### Update the Cloudron
 
 POST `/api/v1/cloudron/update` <scope>admin</scope>
@@ -687,8 +719,9 @@ Gets information about an in-progress Cloudron update or backup.
 
 `update` or `backup` is `null` when there is no such activity in progress.
 
-```
 Response (200):
+
+```
 {
     update: null || { percent: <number>, message: <string> },
     backup: null || { percent: <number>, message: <string> }
