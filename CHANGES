@@ -792,3 +792,11 @@
 * Hide remote feature for normal users
 * Only list users via ldap searches who have access to the app
 * Fix installation issue on servers with a differente locale set
+
+[0.105.1]
+* Fix crash when setupToken is not provided in activate API
+* Add inline Docker GPG key
+* Re-download icon when repairing app
+* Fix issue where pre-installed apps were not installed correctly
+* Fix issue where new cloudrons could not be activated
+
