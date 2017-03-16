@@ -523,6 +523,9 @@ function configure(app, callback) {
 
         reserveHttpPort.bind(null, app),
 
+        updateApp.bind(null, app, { installationProgress: '20, Downloading icon' }),
+        downloadIcon.bind(null, app),
+
         updateApp.bind(null, app, { installationProgress: '35, Registering subdomain' }),
         registerSubdomain.bind(null, app, true /* overwrite */),
 
