@@ -67,7 +67,7 @@ function start(callback) {
     // short-circuit for the restart case
     if (_.isEqual(infra, existingInfra)) {
         debug('platform is uptodate at version %s', infra.version);
-        process.nextTick(function () { exports.events.emit(exports.EVENT_READY); });
+        emitPlatformReady();
         return callback();
     }
 
@@ -82,14 +82,7 @@ function start(callback) {
     ], function (error) {
         if (error) return callback(error);
 
-        // give 30 seconds for the platform to "settle". For example, mysql might still be initing the
-        // database dir and we cannot call service scripts until that's done.
-        // TODO: make this smarter to not wait for 30secs for the crash-restart case
-        gPlatformReadyTimer = setTimeout(function () {
-            debug('emitting platform ready');
-            gPlatformReadyTimer = null;
-            exports.events.emit(exports.EVENT_READY);
-        }, 30000);
+        emitPlatformReady();
 
         callback();
     });
@@ -102,6 +95,17 @@ function uninitialize(callback) {
     exports.events = null;
 
     callback();
+}
+
+function emitPlatformReady() {
+    // give 30 seconds for the platform to "settle". For example, mysql might still be initing the
+    // database dir and we cannot call service scripts until that's done.
+    // TODO: make this smarter to not wait for 30secs for the crash-restart case
+    gPlatformReadyTimer = setTimeout(function () {
+        debug('emitting platform ready');
+        gPlatformReadyTimer = null;
+        exports.events.emit(exports.EVENT_READY);
+    }, 30000);
 }
 
 function removeOldImages(callback) {
