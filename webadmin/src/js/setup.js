@@ -26,12 +26,12 @@ app.controller('SetupController', ['$scope', '$http', 'Client', function ($scope
         $scope.busy = true;
 
         Client.createAdmin($scope.account.username, $scope.account.password, $scope.account.email, $scope.account.displayName, $scope.setupToken || $scope.instanceId, function (error) {
-            $scope.busy = false;
-
             if (error && error.statusCode === 403) {
+                $scope.busy = false;
                 $scope.error = $scope.provider === 'ami' ? 'Wrong instance id' : 'Wrong setup token';
                 return;
             } else if (error) {
+                $scope.busy = false;
                 console.error('Internal error', error);
                 $scope.error = error;
                 return;
