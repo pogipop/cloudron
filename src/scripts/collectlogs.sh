@@ -21,7 +21,7 @@ readonly program_name=$1
 
 echo "${program_name}.log"
 echo "-------------------"
-journalctl --all --no-pager -u ${program_name} -n 300
+journalctl --all --no-pager -u ${program_name} -n 800
 echo
 echo
 echo "dmesg"
