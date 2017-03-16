@@ -649,7 +649,10 @@ angular.module('Application').service('Client', ['$http', 'md5', 'Notification',
             displayName: displayName
         };
 
-        post('/api/v1/cloudron/activate?setupToken=' + setupToken, data).success(function(data, status) {
+        var query = '';
+        if (setupToken) query = '?setupToken=' + setupToken;
+
+        post('/api/v1/cloudron/activate' + query, data).success(function(data, status) {
             if (status !== 201 || typeof data !== 'object') return callback(new ClientError(status, data));
 
             that.setToken(data.token);
