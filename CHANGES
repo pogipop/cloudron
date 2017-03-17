@@ -800,3 +800,6 @@
 * Fix issue where pre-installed apps were not installed correctly
 * Fix issue where new cloudrons could not be activated
 
+[0.106.0]
+* (mail) Fix email forwarding to external domains
+
