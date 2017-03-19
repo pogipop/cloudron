@@ -29,7 +29,6 @@ Cloudron provides multiple authentication strategies.
 
 * OAuth 2.0 provided by the [OAuth addon](/references/addons.html#oauth)
 * LDAP provided by the [LDAP addon](/references/addons.html#ldap)
-* Simple Auth provided by [Simple Auth addon](/references/addons.html#simpleauth)
 
 # Choosing a strategy
 

@@ -30,7 +30,6 @@ var appdb = require('../../appdb.js'),
     safe = require('safetydance'),
     server = require('../../server.js'),
     settings = require('../../settings.js'),
-    simpleauth = require('../../simpleauth.js'),
     superagent = require('superagent'),
     taskmanager = require('../../taskmanager.js'),
     tokendb = require('../../tokendb.js'),
@@ -42,7 +41,7 @@ var SERVER_URL = 'http://localhost:' + config.get('port');
 
 // Test image information
 var TEST_IMAGE_REPO = 'cloudron/test';
-var TEST_IMAGE_TAG = '19.0.1';
+var TEST_IMAGE_TAG = '20.0.0';
 var TEST_IMAGE = TEST_IMAGE_REPO + ':' + TEST_IMAGE_TAG;
 // var TEST_IMAGE_ID = child_process.execSync('docker inspect --format={{.Id}} ' + TEST_IMAGE).toString('utf8').trim();
 
@@ -174,7 +173,6 @@ function startBox(done) {
 
         server.start.bind(server),
         ldap.start,
-        simpleauth.start,
 
         function (callback) {
             var scope1 = nock(config.apiServerOrigin()).get('/api/v1/boxes/' + config.fqdn() + '/setup/verify?setupToken=somesetuptoken').reply(200, {});
@@ -257,7 +255,6 @@ function stopBox(done) {
         appdb._clear,
         server.stop,
         ldap.stop,
-        simpleauth.stop,
         config._reset
     ], done);
 }

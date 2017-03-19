@@ -803,4 +803,5 @@
 [0.106.0]
 * (mail) Fix email forwarding to external domains
 * (mail) Set maximum email size to 25MB
+* Remove SimpleAuth addon
 

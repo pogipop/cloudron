@@ -32,7 +32,6 @@ exports = module.exports = {
     TYPE_EXTERNAL: 'external',
     TYPE_BUILT_IN: 'built-in',
     TYPE_OAUTH: 'addon-oauth',
-    TYPE_SIMPLE_AUTH: 'addon-simpleauth',
     TYPE_PROXY: 'addon-proxy'
 };
 
@@ -192,7 +191,6 @@ function getAll(callback) {
 
                 if (record.type === exports.TYPE_PROXY) record.name = result.manifest.title + ' Website Proxy';
                 if (record.type === exports.TYPE_OAUTH) record.name = result.manifest.title + ' OAuth';
-                if (record.type === exports.TYPE_SIMPLE_AUTH) record.name = result.manifest.title + ' Simple Auth';
 
                 record.location = result.location;
 

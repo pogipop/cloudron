@@ -152,7 +152,6 @@ function validatePortBindings(portBindings, tcpPorts) {
         config.get('sysadminPort'), /* sysadmin app server (lo) */
         config.get('smtpPort'), /* internal smtp port (lo) */
         config.get('ldapPort'), /* ldap server (lo) */
-        config.get('simpleAuthPort'), /* simple auth server (lo) */
         3306, /* mysql (lo) */
         4190, /* managesieve */
         8000 /* graphite (lo) */
@@ -528,7 +527,7 @@ function install(data, auditSource, callback) {
 
         if ('sso' in data && !('optionalSso' in manifest)) return callback(new AppsError(AppsError.BAD_FIELD, 'sso can only be specified for apps with optionalSso'));
         // if sso was unspecified, enable it by default if possible
-        if (sso === null) sso = !!manifest.addons['simpleauth'] || !!manifest.addons['ldap'] || !!manifest.addons['oauth'];
+        if (sso === null) sso = !!manifest.addons['ldap'] || !!manifest.addons['oauth'];
 
         if (altDomain !== null && !validator.isFQDN(altDomain)) return callback(new AppsError(AppsError.BAD_FIELD, 'Invalid alt domain'));
 

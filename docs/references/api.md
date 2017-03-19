@@ -62,7 +62,7 @@ curl -H "Content-Type: application/json" -H "Authorization: Bearer <token>" http
 ## OAuth
 
 OAuth authentication is meant to be used by apps. An app can get an OAuth token using the
-[oauth](addons.html#oauth) or [simpleauth](addons.html#simpleauth) addon.
+[oauth](addons.html#oauth) addon.
 
 Tokens obtained via OAuth have a restricted scope wherein they can only access the user's profile.
 This restriction is so that apps cannot make undesired changes to the user's Cloudron.
@@ -844,7 +844,7 @@ Response (200):
 * user.remove
 * user.update
 
-`source` contains information on the originator of the action. For example, for user.login, this contains the IP address, the appId and the authType (ldap or simpleauth or oauth).
+`source` contains information on the originator of the action. For example, for user.login, this contains the IP address, the appId and the authType (ldap or oauth).
 
 `data` contains information on the event itself. For example, for user.login, this contains the userId that logged in. For app.install, it contains the manifest and location of the app that was installed.
 

@@ -106,12 +106,6 @@ var KNOWN_ADDONS = {
         teardown: NOOP,
         backup: NOOP,
         restore: NOOP
-    },
-    simpleauth: {
-        setup: setupSimpleAuth,
-        teardown: teardownSimpleAuth,
-        backup: NOOP,
-        restore: setupSimpleAuth
     }
 };
 
@@ -283,51 +277,6 @@ function teardownOauth(app, options, callback) {
         if (error && error.reason !== ClientsError.NOT_FOUND) debug(error);
 
         appdb.unsetAddonConfig(app.id, 'oauth', callback);
-    });
-}
-
-function setupSimpleAuth(app, options, callback) {
-    assert.strictEqual(typeof app, 'object');
-    assert.strictEqual(typeof options, 'object');
-    assert.strictEqual(typeof callback, 'function');
-
-    if (!app.sso) return callback(null);
-
-    var appId = app.id;
-    var scope = 'profile';
-
-    clients.delByAppIdAndType(app.id, clients.TYPE_SIMPLE_AUTH, function (error) { // remove existing creds
-        if (error && error.reason !== ClientsError.NOT_FOUND) return callback(error);
-
-        clients.add(appId, clients.TYPE_SIMPLE_AUTH, '', scope, function (error, result) {
-            if (error) return callback(error);
-
-            var env = [
-                'SIMPLE_AUTH_SERVER=172.18.0.1',
-                'SIMPLE_AUTH_PORT=' + config.get('simpleAuthPort'),
-                'SIMPLE_AUTH_URL=http://172.18.0.1:' + config.get('simpleAuthPort'), // obsolete, remove
-                'SIMPLE_AUTH_ORIGIN=http://172.18.0.1:' + config.get('simpleAuthPort'),
-                'SIMPLE_AUTH_CLIENT_ID=' + result.id
-            ];
-
-            debugApp(app, 'Setting simple auth addon config to %j', env);
-
-            appdb.setAddonConfig(appId, 'simpleauth', env, callback);
-        });
-    });
-}
-
-function teardownSimpleAuth(app, options, callback) {
-    assert.strictEqual(typeof app, 'object');
-    assert.strictEqual(typeof options, 'object');
-    assert.strictEqual(typeof callback, 'function');
-
-    debugApp(app, 'teardownSimpleAuth');
-
-    clients.delByAppIdAndType(app.id, clients.TYPE_SIMPLE_AUTH, function (error) {
-        if (error && error.reason !== ClientsError.NOT_FOUND) debug(error);
-
-        appdb.unsetAddonConfig(app.id, 'simpleauth', callback);
     });
 }
 

@@ -118,7 +118,7 @@ angular.module('Application').controller('AppStoreController', ['$scope', '$loca
 
             var manifest = app.manifest;
             $scope.appInstall.optionalSso = !!manifest.optionalSso;
-            $scope.appInstall.customAuth = !(manifest.addons['simpleauth'] || manifest.addons['ldap'] || manifest.addons['oauth']);
+            $scope.appInstall.customAuth = !(manifest.addons['ldap'] || manifest.addons['oauth']);
             $scope.appInstall.accessRestrictionOption = 'any';
 
             // set default ports
