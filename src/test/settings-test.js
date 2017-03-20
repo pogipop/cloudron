@@ -188,5 +188,20 @@ describe('Settings', function () {
                 done();
             });
         });
+
+        it('can set open registration', function (done) {
+            settings.setOpenRegistration(true, function (error) {
+                expect(error).to.be(null);
+                done();
+            });
+        });
+
+        it('can get open registration', function (done) {
+            settings.getOpenRegistration(function (error, enabled) {
+                expect(error).to.be(null);
+                expect(enabled).to.equal(true);
+                done();
+            });
+        });
     });
 });
