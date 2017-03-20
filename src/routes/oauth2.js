@@ -11,6 +11,7 @@ var appdb = require('../appdb'),
     DatabaseError = require('../databaseerror'),
     debug = require('debug')('box:routes/oauth2'),
     eventlog = require('../eventlog.js'),
+    generatePassword = require('../password.js').generate,
     hat = require('hat'),
     HttpError = require('connect-lastmile').HttpError,
     middleware = require('../middleware/index.js'),
@@ -357,6 +358,77 @@ function accountSetup(req, res, next) {
     });
 }
 
+// -> POST /api/v1/session/account/setup
+function accountSetup(req, res, next) {
+    assert.strictEqual(typeof req.body, 'object');
+
+    if (typeof req.body.resetToken !== 'string') return next(new HttpError(400, 'Missing resetToken'));
+    if (typeof req.body.password !== 'string') return next(new HttpError(400, 'Missing password'));
+    if (typeof req.body.username !== 'string') return next(new HttpError(400, 'Missing username'));
+    if (typeof req.body.displayName !== 'string') return next(new HttpError(400, 'Missing displayName'));
+
+    debug('accountSetup: with token %s.', req.body.resetToken);
+
+    user.getByResetToken(req.body.resetToken, function (error, userObject) {
+        if (error) return sendError(req, res, 'Invalid Reset Token');
+
+        var data = _.pick(req.body, 'username', 'displayName');
+        user.update(userObject.id, data, auditSource(req), function (error) {
+            if (error && error.reason === UserError.ALREADY_EXISTS) return renderAccountSetupSite(res, req, userObject, 'Username already exists');
+            if (error && error.reason === UserError.BAD_FIELD) return renderAccountSetupSite(res, req, userObject, error.message);
+            if (error && error.reason === UserError.NOT_FOUND) return renderAccountSetupSite(res, req, userObject, 'No such user');
+            if (error) return next(new HttpError(500, error));
+
+            userObject.username = req.body.username;
+            userObject.displayName = req.body.displayName;
+
+            // setPassword clears the resetToken
+            user.setPassword(userObject.id, req.body.password, function (error, result) {
+                if (error && error.reason === UserError.BAD_FIELD) return renderAccountSetupSite(res, req, userObject, error.message);
+
+                if (error) return next(new HttpError(500, error));
+
+                res.redirect(util.format('%s?accessToken=%s&expiresAt=%s', config.adminOrigin(), result.token, result.expiresAt));
+            });
+        });
+    });
+}
+
+function renderAccountCreateSite(res, req, error, success) {
+    renderTemplate(res, 'account_create', {
+        error: error,
+        success: !!success,
+        csrf: req.csrfToken(),
+        title: 'Account Create'
+    });
+}
+
+// -> GET /api/v1/session/account/create.html
+function accountCreateSite(req, res) {
+    renderAccountCreateSite(res, req, '', '');
+}
+
+// -> POST /api/v1/session/account/create
+function accountCreate(req, res, next) {
+    assert.strictEqual(typeof req.body, 'object');
+
+    if (typeof req.body.email !== 'string') return next(new HttpError(400, 'Missing email'));
+
+    debug('accountCreate: with email %s.', req.body.email);
+
+    var ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress || null;
+    var auditSource = { ip: ip, username: req.body.email, userId: null };
+
+    user.create('', generatePassword(), req.body.email, '', auditSource, { sendInvite: true }, function (error, result) {
+        if (error && error.reason === UserError.ALREADY_EXISTS) return renderAccountCreateSite(res, req, 'User with this email address already exists');
+        if (error) return sendError(req, res, 'Internal Error');
+
+        debug('accountCreate: success for email %s now with id %s', req.body.remail, result.id);
+
+        renderAccountCreateSite(res, req, '', true);
+    });
+}
+
 // -> GET /api/v1/session/password/reset.html
 function passwordResetSite(req, res, next) {
     if (!req.query.reset_token) return next(new HttpError(400, 'Missing reset_token'));
@@ -555,6 +627,8 @@ exports = module.exports = {
     passwordReset: passwordReset,
     accountSetupSite: accountSetupSite,
     accountSetup: accountSetup,
+    accountCreateSite: accountCreateSite,
+    accountCreate: accountCreate,
     authorization: authorization,
     token: token,
     validateRequestedScopes: validateRequestedScopes,

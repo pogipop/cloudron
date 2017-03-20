@@ -1,0 +1,48 @@
+<% include header %>
+
+<!-- tester -->
+
+<script>
+
+'use strict';
+
+// very basic angular app
+var app = angular.module('Application', []);
+app.controller('Controller', ['$scope', function ($scope) {
+    $scope.success = <%= success %>;
+    $scope.error = '<%= error %>';
+}]);
+
+</script>
+
+<center>
+    <br/>
+    <h4>Welcome to <%= cloudronName %>.</h4>
+</center>
+
+<div class="container" ng-app="Application" ng-controller="Controller">
+    <div class="row">
+        <div class="col-md-6 col-md-offset-3" ng-show="!success">
+            <h2>Create your account by providing an email address.</h2>
+            <form action="/api/v1/session/account/create" method="post" name="createForm" autocomplete="off" role="form" novalidate>
+                <input type="password" style="display: none;">
+                <input type="hidden" name="_csrf" value="<%= csrf %>"/>
+
+                <div class="form-group" ng-class="{ 'has-error': createForm.email.$dirty && createForm.email.$invalid }">
+                    <label class="control-label" for="inputEmail">Email</label>
+                    <div class="control-label" ng-show="createForm.email.$dirty && createForm.email.$invalid">
+                        <small ng-show="createForm.email.$dirty && createForm.email.$invalid">Must be a valid email address</small>
+                        <small ng-show="!createForm.email.$dirty && error">{{{ error }}}</small>
+                    </div>
+                    <input type="email" class="form-control" id="inputEmail" ng-model="email" name="email" autofocus required>
+                </div>
+                <input class="btn btn-primary btn-outline pull-right" type="submit" value="Create" ng-disabled="createForm.$invalid"/>
+            </form>
+        </div>
+        <div class="col-md-6 col-md-offset-3" ng-show="success">
+            <h2>You have received an email invitation to this Cloudron to finish the signup.</h2>
+        </div>
+    </div>
+</div>
+
+<% include footer %>

@@ -148,6 +148,8 @@ function initializeExpressSync() {
     router.post('/api/v1/session/password/reset', csrf, routes.oauth2.passwordReset);
     router.get ('/api/v1/session/account/setup.html', csrf, routes.oauth2.accountSetupSite);
     router.post('/api/v1/session/account/setup', csrf, routes.oauth2.accountSetup);
+    router.get ('/api/v1/session/account/create.html', csrf, routes.oauth2.accountCreateSite);
+    router.post('/api/v1/session/account/create', csrf, routes.oauth2.accountCreate);
 
     // oauth2 routes
     router.get ('/api/v1/oauth/dialog/authorize', routes.oauth2.authorization);
