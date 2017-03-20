@@ -53,6 +53,10 @@ Cloudron has a built-in firewall and ports are opened and closed dynamically, as
 apps are installed, re-configured or removed. For this reason, be sure to open all TCP and
 UDP traffic to the server and leave the traffic management to the Cloudron.
 
+### Kimsufi
+
+Be sure to check the "use the distribution kernel" checkbox in the personalized installation mode.
+
 ### Linode
 
 Since Linode does not manage SSH keys, be sure to add the public key to
