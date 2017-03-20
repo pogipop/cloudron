@@ -15,15 +15,17 @@ app.controller('Controller', ['$scope', function ($scope) {
 
 </script>
 
-<center>
-    <br/>
-    <h4>Welcome to <%= cloudronName %>.</h4>
-</center>
-
-<div class="container" ng-app="Application" ng-controller="Controller">
+<div class="container" ng-app="Application" ng-controller="Controller" ng-cloak>
+    <div class="row">
+        <div class="col-md-12 text-center">
+            <br/>
+            <h1>Welcome to <%= cloudronName %></h1>
+            <h3 ng-hide="success">Create your account by providing an email address.</h3>
+            <h3 ng-show="success">You have received an email invitation to this Cloudron to finish the signup.</h3>
+        </div>
+    </div>
     <div class="row">
         <div class="col-md-6 col-md-offset-3" ng-show="!success">
-            <h2>Create your account by providing an email address.</h2>
             <form action="/api/v1/session/account/create" method="post" name="createForm" autocomplete="off" role="form" novalidate>
                 <input type="password" style="display: none;">
                 <input type="hidden" name="_csrf" value="<%= csrf %>"/>
@@ -38,9 +40,6 @@ app.controller('Controller', ['$scope', function ($scope) {
                 </div>
                 <input class="btn btn-primary btn-outline pull-right" type="submit" value="Create" ng-disabled="createForm.$invalid"/>
             </form>
-        </div>
-        <div class="col-md-6 col-md-offset-3" ng-show="success">
-            <h2>You have received an email invitation to this Cloudron to finish the signup.</h2>
         </div>
     </div>
 </div>
