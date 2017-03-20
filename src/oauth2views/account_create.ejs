@@ -22,6 +22,7 @@ app.controller('Controller', ['$scope', function ($scope) {
             <h1>Welcome to <%= cloudronName %></h1>
             <h3 ng-hide="success">Create your account by providing an email address.</h3>
             <h3 ng-show="success">You have received an email invitation to this Cloudron to finish the signup.</h3>
+            <br/><br/>
         </div>
     </div>
     <div class="row">
@@ -32,11 +33,11 @@ app.controller('Controller', ['$scope', function ($scope) {
 
                 <div class="form-group" ng-class="{ 'has-error': createForm.email.$dirty && createForm.email.$invalid }">
                     <label class="control-label" for="inputEmail">Email</label>
+                    <input type="email" class="form-control" id="inputEmail" ng-model="email" name="email" autofocus required>
                     <div class="control-label" ng-show="createForm.email.$dirty && createForm.email.$invalid">
                         <small ng-show="createForm.email.$dirty && createForm.email.$invalid">Must be a valid email address</small>
                         <small ng-show="!createForm.email.$dirty && error">{{ error }}</small>
                     </div>
-                    <input type="email" class="form-control" id="inputEmail" ng-model="email" name="email" autofocus required>
                 </div>
                 <input class="btn btn-primary btn-outline pull-right" type="submit" value="Create" ng-disabled="createForm.$invalid"/>
             </form>
