@@ -189,6 +189,14 @@ describe('Settings', function () {
             });
         });
 
+        it('can get open registration default value', function (done) {
+            settings.getOpenRegistration(function (error, enabled) {
+                expect(error).to.be(null);
+                expect(enabled).to.equal(false);
+                done();
+            });
+        });
+
         it('can set open registration', function (done) {
             settings.setOpenRegistration(true, function (error) {
                 expect(error).to.be(null);

@@ -106,6 +106,7 @@ var gDefaults = (function () {
     result[exports.UPDATE_CONFIG_KEY] = { prerelease: false };
     result[exports.APPSTORE_CONFIG_KEY] = {};
     result[exports.MAIL_CONFIG_KEY] = { enabled: false };
+    result[exports.OPEN_REGISTRATION_KEY] = false;
 
     return result;
 })();
