@@ -6,6 +6,7 @@ angular.module('Application').controller('SettingsController', ['$scope', '$loca
     $scope.client = Client;
     $scope.user = Client.getUserInfo();
     $scope.config = Client.getConfig();
+    $scope.openRegistrationEnabled = false;
     $scope.backupConfig = {};
     $scope.dnsConfig = {};
     $scope.outboundPort25 = {};
@@ -507,6 +508,14 @@ angular.module('Application').controller('SettingsController', ['$scope', '$loca
         });
     }
 
+    function getOpenRegistration() {
+        Client.getOpenRegistration(function (error, enabled) {
+            if (error) return console.error(error);
+
+            $scope.openRegistrationEnabled = enabled;
+        });
+    }
+
     function showExpectedDnsRecords(callback) {
         callback = callback || function (error) { if (error) console.error(error); };
 
@@ -613,12 +622,20 @@ angular.module('Application').controller('SettingsController', ['$scope', '$loca
         }
     };
 
+    $scope.toggleOpenRegistration = function () {
+        Client.setOpenRegistration(!$scope.openRegistrationEnabled, function (error) {
+            if (error) return console.error(error);
+            $scope.openRegistrationEnabled = !$scope.openRegistrationEnabled;
+        });
+    };
+
     Client.onReady(function () {
         fetchBackups();
         getMailConfig();
         getBackupConfig();
         getDnsConfig();
         getAutoupdatePattern();
+        getOpenRegistration();
 
         if ($scope.config.provider === 'caas') {
             getPlans();

@@ -450,5 +450,27 @@
     </div>
 </div>
 
+<div class="section-header">
+    <div class="text-left">
+        <h3>User Registration</h3>
+    </div>
+</div>
+
+<div class="card" style="margin-bottom: 15px;">
+    <div class="row">
+        <div class="col-md-12">
+            <p>
+                By default the Cloudron only allows admins to invite other users.<br/>
+                You may enable user registration, allowing users to signup without such an invite.
+            </p>
+            <p ng-show="openRegistrationEnabled">
+                <a href="/api/v1/session/account/create.html" target="_blank">Signup Link</a>
+            </p>
+            <br/>
+            <button class="btn" ng-class="{ 'btn-danger': !openRegistrationEnabled, 'btn-primary': openRegistrationEnabled }" ng-click="toggleOpenRegistration()">{{ openRegistrationEnabled ? 'Disable user registration' : 'Enable user registration' }}</button>
+        </div>
+    </div>
+</div>
+
 <!-- Offset the footer -->
 <br/><br/>

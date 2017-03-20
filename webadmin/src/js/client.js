@@ -439,6 +439,20 @@ angular.module('Application').service('Client', ['$http', 'md5', 'Notification',
         }).error(defaultErrorHandler(callback));
     };
 
+    Client.prototype.setOpenRegistration = function (enabled, callback) {
+        post('/api/v1/settings/open_registration', { enabled: enabled }).success(function(data, status) {
+            if (status !== 200) return callback(new ClientError(status, data));
+            callback(null);
+        }).error(defaultErrorHandler(callback));
+    };
+
+    Client.prototype.getOpenRegistration = function (callback) {
+        get('/api/v1/settings/open_registration').success(function(data, status) {
+            if (status !== 200) return callback(new ClientError(status, data));
+            callback(null, data.enabled);
+        }).error(defaultErrorHandler(callback));
+    };
+
     Client.prototype.getEmailStatus = function (callback) {
         get('/api/v1/settings/email_status').success(function(data, status) {
             if (status !== 200) return callback(new ClientError(status, data));
