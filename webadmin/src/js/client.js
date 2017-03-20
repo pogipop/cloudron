@@ -1,7 +1,6 @@
 'use strict';
 
 /* global angular */
-/* global EventSource */
 
 angular.module('Application').service('Client', ['$http', 'md5', 'Notification', function ($http, md5, Notification) {
     var client = null;
@@ -611,11 +610,6 @@ angular.module('Application').service('Client', ['$http', 'md5', 'Notification',
 
         if (appFound) return callback(null, appFound);
         else return callback(new Error('App not found'));
-    };
-
-    Client.prototype.getAppLogStream = function (appId) {
-        var source = new EventSource(client.apiOrigin + '/api/v1/apps/' + appId + '/logstream');
-        return source;
     };
 
     Client.prototype.getAppIconUrls = function (app) {
