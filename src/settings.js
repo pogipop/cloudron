@@ -44,6 +44,9 @@ exports = module.exports = {
     getMailConfig: getMailConfig,
     setMailConfig: setMailConfig,
 
+    getOpenRegistration: getOpenRegistration,
+    setOpenRegistration: setOpenRegistration,
+
     getDefaultSync: getDefaultSync,
     getAll: getAll,
 
@@ -58,6 +61,7 @@ exports = module.exports = {
     UPDATE_CONFIG_KEY: 'update_config',
     APPSTORE_CONFIG_KEY: 'appstore_config',
     MAIL_CONFIG_KEY: 'mail_config',
+    OPEN_REGISTRATION_KEY: 'open_registration',
 
     events: null
 };
@@ -642,6 +646,31 @@ function setMailConfig(mailConfig, callback) {
         exports.events.emit(exports.MAIL_CONFIG_KEY, mailConfig);
 
         callback(null);
+    });
+}
+
+function getOpenRegistration(callback) {
+    assert.strictEqual(typeof callback, 'function');
+
+    settingsdb.get(exports.OPEN_REGISTRATION_KEY, function (error, value) {
+        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(null, gDefaults[exports.OPEN_REGISTRATION_KEY]);
+        if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
+
+        // settingsdb holds string values only
+        callback(null, !!value);
+    });
+}
+
+function setOpenRegistration(enabled, callback) {
+    assert.strictEqual(typeof enabled, 'boolean');
+    assert.strictEqual(typeof callback, 'function');
+
+    settingsdb.set(exports.OPEN_REGISTRATION_KEY, enabled ? 'enabled' : '', function (error) {
+        if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
+
+        exports.events.emit(exports.OPEN_REGISTRATION_KEY, enabled);
+
+        return callback(null);
     });
 }
 
