@@ -423,12 +423,12 @@ function accountCreate(req, res, next) {
 
     settings.getOpenRegistration(function (error, enabled) {
         if (error) return next(new HttpError(500, error));
-        if (!enabled) return sendError(req, res, 'User creation is not allowed on this Cloudron');
+        if (!enabled) return sendError(req, res, 'User signup is not allowed on this Cloudron');
 
         var ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress || null;
         var auditSource = { ip: ip, username: req.body.email, userId: null };
 
-        user.create('', generatePassword(), req.body.email, '', auditSource, { sendInvite: true }, function (error, result) {
+        user.create(null, generatePassword(), req.body.email, '', auditSource, { sendInvite: true }, function (error, result) {
             if (error && error.reason === UserError.ALREADY_EXISTS) return renderAccountCreateSite(res, req, 'User with this email address already exists');
             if (error) return sendError(req, res, 'Internal Error');
 
