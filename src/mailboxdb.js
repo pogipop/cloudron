@@ -6,7 +6,6 @@ exports = module.exports = {
 
     listAliases: listAliases,
     listMailboxes: listMailboxes,
-    // listGroups: listGroups, // this is beyond my SQL skillz
 
     getMailbox: getMailbox,
     getGroup: getGroup,
