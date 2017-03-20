@@ -7,6 +7,7 @@ angular.module('Application').controller('SettingsController', ['$scope', '$loca
     $scope.user = Client.getUserInfo();
     $scope.config = Client.getConfig();
     $scope.openRegistrationEnabled = false;
+    $scope.signupLink = '';
     $scope.backupConfig = {};
     $scope.dnsConfig = {};
     $scope.outboundPort25 = {};
@@ -513,6 +514,8 @@ angular.module('Application').controller('SettingsController', ['$scope', '$loca
             if (error) return console.error(error);
 
             $scope.openRegistrationEnabled = enabled;
+
+            $scope.signupLink = window.location.origin + '/api/v1/session/account/create.html';
         });
     }
 
