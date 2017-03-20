@@ -464,7 +464,7 @@
                 You may enable user registration, allowing users to signup without such an invite.
             </p>
             <p ng-show="openRegistrationEnabled">
-                The user signup link is: <a ng-href="signupLink" target="_blank">{{ signupLink }}</a>
+                The user signup link is: <a ng-href="{{ signupLink }}" target="_blank">{{ signupLink }}</a>
             </p>
             <br/>
             <button class="btn btn-primary pull-right" ng-click="toggleOpenRegistration()">{{ openRegistrationEnabled ? 'Disable user registration' : 'Enable user registration' }}</button>
