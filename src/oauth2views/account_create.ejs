@@ -19,8 +19,8 @@ app.controller('Controller', ['$scope', function ($scope) {
     <div class="row">
         <div class="col-md-12 text-center">
             <br/>
-            <h1>Welcome to <%= cloudronName %></h1>
-            <h3 ng-hide="success">Create your account by providing an email address.</h3>
+            <h4 ng-hide="success">Hello there, welcome to <%= cloudronName %>.</h4>
+            <h2 ng-hide="success">Sign up with your email address.</h2>
             <h3 ng-show="success">You have received an email invitation to this Cloudron to finish the signup.</h3>
             <br/><br/>
         </div>
@@ -31,10 +31,10 @@ app.controller('Controller', ['$scope', function ($scope) {
                 <input type="password" style="display: none;">
                 <input type="hidden" name="_csrf" value="<%= csrf %>"/>
 
-                <div class="form-group" ng-class="{ 'has-error': createForm.email.$dirty && createForm.email.$invalid }">
+                <div class="form-group" ng-class="{ 'has-error': (createForm.email.$dirty && createForm.email.$invalid) || (!createForm.email.$dirty && error) }">
                     <label class="control-label" for="inputEmail">Email</label>
                     <input type="email" class="form-control" id="inputEmail" ng-model="email" name="email" autofocus required>
-                    <div class="control-label" ng-show="createForm.email.$dirty && createForm.email.$invalid">
+                    <div class="control-label" ng-show="(createForm.email.$dirty && createForm.email.$invalid) || (!createForm.email.$dirty && error)">
                         <small ng-show="createForm.email.$dirty && createForm.email.$invalid">Must be a valid email address</small>
                         <small ng-show="!createForm.email.$dirty && error">{{ error }}</small>
                     </div>
