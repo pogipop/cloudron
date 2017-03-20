@@ -770,4 +770,45 @@ describe('Settings API', function () {
             });
         });
     });
+
+    describe('open_registration', function () {
+        it('get open_registration succeeds without being set', function (done) {
+            superagent.get(SERVER_URL + '/api/v1/settings/open_registration')
+                   .query({ access_token: token })
+                   .end(function (err, res) {
+                expect(res.statusCode).to.equal(200);
+                expect(res.body.enabled).to.equal(false);
+                done();
+            });
+        });
+
+        it('cannot set without data', function (done) {
+            superagent.post(SERVER_URL + '/api/v1/settings/open_registration')
+                   .query({ access_token: token })
+                   .end(function (err, res) {
+                expect(res.statusCode).to.equal(400);
+                done();
+            });
+        });
+
+        it('set succeeds', function (done) {
+            superagent.post(SERVER_URL + '/api/v1/settings/open_registration')
+                   .query({ access_token: token })
+                   .send({ enabled: true })
+                   .end(function (err, res) {
+                expect(res.statusCode).to.equal(200);
+                done();
+            });
+        });
+
+        it('get succeeds', function (done) {
+            superagent.get(SERVER_URL + '/api/v1/settings/open_registration')
+                   .query({ access_token: token })
+                   .end(function (err, res) {
+                expect(res.statusCode).to.equal(200);
+                expect(res.body.enabled).to.equal(true);
+                done();
+            });
+        });
+    });
 });
