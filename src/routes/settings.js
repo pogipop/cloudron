@@ -241,7 +241,7 @@ function getOpenRegistration(req, res, next) {
     settings.getOpenRegistration(function (error, enabled) {
         if (error) return next(new HttpError(500, error));
 
-        next(new HttpSuccess(200, enabled));
+        next(new HttpSuccess(200, { enabled: enabled }));
     });
 }
 
