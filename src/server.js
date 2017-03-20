@@ -203,6 +203,8 @@ function initializeExpressSync() {
     router.post('/api/v1/settings/appstore_config',    settingsScope, routes.user.requireAdmin, routes.settings.setAppstoreConfig);
     router.get ('/api/v1/settings/mail_config',        settingsScope, routes.user.requireAdmin, routes.settings.getMailConfig);
     router.post('/api/v1/settings/mail_config',        settingsScope, routes.user.requireAdmin, routes.settings.setMailConfig);
+    router.get ('/api/v1/settings/open_registration',  settingsScope, routes.user.requireAdmin, routes.settings.getOpenRegistration);
+    router.post('/api/v1/settings/open_registration',  settingsScope, routes.user.requireAdmin, routes.settings.setOpenRegistration);
 
     // eventlog route
     router.get('/api/v1/eventlog', settingsScope, routes.user.requireAdmin, routes.eventlog.get);

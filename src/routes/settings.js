@@ -27,6 +27,9 @@ exports = module.exports = {
     getAppstoreConfig: getAppstoreConfig,
     setAppstoreConfig: setAppstoreConfig,
 
+    getOpenRegistration: getOpenRegistration,
+    setOpenRegistration: setOpenRegistration,
+
     setFallbackCertificate: setFallbackCertificate,
     setAdminCertificate: setAdminCertificate
 };
@@ -231,6 +234,27 @@ function setAppstoreConfig(req, res, next) {
 
             next(new HttpSuccess(202, result));
         });
+    });
+}
+
+function getOpenRegistration(req, res, next) {
+    settings.getOpenRegistration(function (error, enabled) {
+        if (error) return next(new HttpError(500, error));
+
+        next(new HttpSuccess(200, enabled));
+    });
+}
+
+function setOpenRegistration(req, res, next) {
+    assert.strictEqual(typeof req.body, 'object');
+
+    if (typeof req.body.enabled !== 'boolean') return next(new HttpError(400, 'enabled is required'));
+
+    settings.setOpenRegistration(req.body.enabled, function (error) {
+        if (error && error.reason === SettingsError.BAD_FIELD) return next(new HttpError(400, error.message));
+        if (error) return next(new HttpError(500, error));
+
+        next(new HttpSuccess(200));
     });
 }
 
