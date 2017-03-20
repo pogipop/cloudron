@@ -412,7 +412,7 @@
                             <a href="" ng-click="showRestore(app)" title="Restore App"><i class="fa fa-undo scale"></i></a>
                         </div>
 
-                        <div ng-show="app.installationState === 'installed' || app.installationState === 'pending_configure'">
+                        <div ng-show="(app.installationState === 'installed' || app.installationState === 'pending_configure') && !(app | installError)">
                             <a href="" ng-click="showConfigure(app)" title="Configure App"><i class="fa fa-pencil scale"></i></a>
                         </div>
 
