@@ -404,8 +404,13 @@ function renderAccountCreateSite(res, req, error, success) {
 }
 
 // -> GET /api/v1/session/account/create.html
-function accountCreateSite(req, res) {
-    renderAccountCreateSite(res, req, '', '');
+function accountCreateSite(req, res, next) {
+    settings.getOpenRegistration(function (error, enabled) {
+        if (error) return next(new HttpError(500, error));
+        if (!enabled) return sendError(req, res, 'User creation is not allowed on this Cloudron');
+
+        renderAccountCreateSite(res, req, '', '');
+    });
 }
 
 // -> POST /api/v1/session/account/create
@@ -416,16 +421,21 @@ function accountCreate(req, res, next) {
 
     debug('accountCreate: with email %s.', req.body.email);
 
-    var ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress || null;
-    var auditSource = { ip: ip, username: req.body.email, userId: null };
+    settings.getOpenRegistration(function (error, enabled) {
+        if (error) return next(new HttpError(500, error));
+        if (!enabled) return sendError(req, res, 'User creation is not allowed on this Cloudron');
 
-    user.create('', generatePassword(), req.body.email, '', auditSource, { sendInvite: true }, function (error, result) {
-        if (error && error.reason === UserError.ALREADY_EXISTS) return renderAccountCreateSite(res, req, 'User with this email address already exists');
-        if (error) return sendError(req, res, 'Internal Error');
+        var ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress || null;
+        var auditSource = { ip: ip, username: req.body.email, userId: null };
 
-        debug('accountCreate: success for email %s now with id %s', req.body.remail, result.id);
+        user.create('', generatePassword(), req.body.email, '', auditSource, { sendInvite: true }, function (error, result) {
+            if (error && error.reason === UserError.ALREADY_EXISTS) return renderAccountCreateSite(res, req, 'User with this email address already exists');
+            if (error) return sendError(req, res, 'Internal Error');
 
-        renderAccountCreateSite(res, req, '', true);
+            debug('accountCreate: success for email %s now with id %s', req.body.remail, result.id);
+
+            renderAccountCreateSite(res, req, '', true);
+        });
     });
 }
 
