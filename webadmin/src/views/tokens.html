@@ -47,7 +47,7 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h4 class="modal-title">Remove API Client</h4>
+                <h4 class="modal-title">Remove OAuth Client</h4>
             </div>
             <div class="modal-body">
                 <p>
@@ -57,7 +57,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-danger" ng-click="clientRemove.submit()" ng-disabled="clientRemove.busy"><i class="fa fa-circle-o-notch fa-spin" ng-show="clientRemove.busy"></i> Remove API Client</button>
+                <button type="button" class="btn btn-danger" ng-click="clientRemove.submit()" ng-disabled="clientRemove.busy"><i class="fa fa-circle-o-notch fa-spin" ng-show="clientRemove.busy"></i> Remove OAuth Client</button>
             </div>
         </div>
     </div>
@@ -156,7 +156,7 @@
                         <a href="" data-toggle="collapse" data-parent="#accordion" data-target="#collapse{{client.id}}">Advanced</a>
                         <div id="collapse{{client.id}}" class="panel-collapse collapse">
                             <div class="panel-body">
-                                <h4 class="text-muted">Credentials <button class="btn btn-xs btn-danger pull-right" ng-click="clientRemove.show(client)" title="Remove API Client" ng-show="client.type === 'external'">Remove API Client</button></h4>
+                                <h4 class="text-muted">Credentials <button class="btn btn-xs btn-danger pull-right" ng-click="clientRemove.show(client)" title="Remove OAuth Client" ng-show="client.type === 'external'">Remove OAuth Client</button></h4>
                                 <hr/>
                                 <p>Scope: <b ng-click-select>{{ client.scope }}</b></p>
                                 <p>RedirectURI: <b ng-click-select>{{ client.redirectURI }}</b></p>
