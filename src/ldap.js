@@ -16,6 +16,7 @@ var assert = require('assert'),
     UserError = user.UserError,
     ldap = require('ldapjs'),
     mailboxdb = require('./mailboxdb.js'),
+    rateLimit = require('ldapjs-rate-limit'),
     safe = require('safetydance');
 
 var gServer = null;
@@ -345,27 +346,30 @@ function start(callback) {
         fatal: console.error
     };
 
+    // This allows 60 requests per minute per client (ip) and does not delay any in between
+    var limit = rateLimit({ max: 60, windowMs: 60000, delayAfter: 0 });
+
     gServer = ldap.createServer({ log: logger });
 
-    gServer.search('ou=users,dc=cloudron', userSearch);
-    gServer.search('ou=groups,dc=cloudron', groupSearch);
-    gServer.bind('ou=users,dc=cloudron', authenticateUser, authorizeUserForApp);
+    gServer.search('ou=users,dc=cloudron', limit, userSearch);
+    gServer.search('ou=groups,dc=cloudron', limit, groupSearch);
+    gServer.bind('ou=users,dc=cloudron', limit, authenticateUser, authorizeUserForApp);
 
     // http://www.ietf.org/proceedings/43/I-D/draft-srivastava-ldap-mail-00.txt
-    gServer.search('ou=mailboxes,dc=cloudron', mailboxSearch);
-    gServer.search('ou=mailaliases,dc=cloudron', mailAliasSearch);
-    gServer.search('ou=mailinglists,dc=cloudron', mailingListSearch);
+    gServer.search('ou=mailboxes,dc=cloudron', limit, mailboxSearch);
+    gServer.search('ou=mailaliases,dc=cloudron', limit, mailAliasSearch);
+    gServer.search('ou=mailinglists,dc=cloudron', limit, mailingListSearch);
 
-    gServer.bind('ou=mailboxes,dc=cloudron', authenticateMailbox);
+    gServer.bind('ou=mailboxes,dc=cloudron', limit, authenticateMailbox);
 
     // this is the bind for addons (after bind, they might search and authenticate)
-    gServer.bind('ou=addons,dc=cloudron', function(req, res, next) {
+    gServer.bind('ou=addons,dc=cloudron', limit, function(req, res, next) {
         debug('addons bind: %s', req.dn.toString()); // note: cn can be email or id
         res.end();
     });
 
     // this is the bind for apps (after bind, they might search and authenticate user)
-    gServer.bind('ou=apps,dc=cloudron', function(req, res, next) {
+    gServer.bind('ou=apps,dc=cloudron', limit, function(req, res, next) {
         // TODO: validate password
         debug('application bind: %s', req.dn.toString());
         res.end();
