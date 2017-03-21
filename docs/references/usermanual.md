@@ -341,6 +341,18 @@ beyond it's control, Cloudron admins will get a notification about it.
 All the operations listed in this manual like installing app, configuring users and groups, are
 completely programmable with a [REST API](/references/api.html).
 
+# OAuth Provider
+
+Cloudron is an OAuth 2.0 provider. To integrate Cloudron login into an external application, create
+an OAuth application under `API Access`.
+
+You can use the following OAuth URLs to add Cloudron in the external app:
+```
+authorizationURL: https://my.<domain>/api/v1/oauth/dialog/authorize
+
+tokenURL:         https://my.<domain>/api/v1/oauth/token
+```
+
 # Moving to a larger Cloudron
 
 When using a Cloudron from cloudron.io, it is easy to migrate your apps and data to a bigger server.
