@@ -805,3 +805,6 @@
 * (mail) Set maximum email size to 25MB
 * Remove SimpleAuth addon
 
+[0.107.0]
+* Support CSP for webinterface and OAuth views
+
