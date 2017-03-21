@@ -2,17 +2,18 @@
 
 'use strict';
 
-var ejs = require('gulp-ejs'),
-    gulp = require('gulp'),
-    del = require('del'),
-    concat = require('gulp-concat'),
-    uglify = require('gulp-uglify'),
-    serve = require('gulp-serve'),
-    sass = require('gulp-sass'),
-    sourcemaps = require('gulp-sourcemaps'),
-    cssnano = require('gulp-cssnano'),
+var argv = require('yargs').argv,
     autoprefixer = require('gulp-autoprefixer'),
-    argv = require('yargs').argv;
+    concat = require('gulp-concat'),
+    cssnano = require('gulp-cssnano'),
+    del = require('del'),
+    ejs = require('gulp-ejs'),
+    gulp = require('gulp'),
+    sass = require('gulp-sass'),
+    serve = require('gulp-serve'),
+    sourcemaps = require('gulp-sourcemaps'),
+    uglify = require('gulp-uglify'),
+    url = require('url');
 
 gulp.task('3rdparty', function () {
     gulp.src([
@@ -54,14 +55,16 @@ gulp.task('js', ['js-index', 'js-setup', 'js-setupdns', 'js-update'], function (
 var oauth = {
     clientId: argv.clientId || 'cid-webadmin',
     clientSecret: argv.clientSecret || 'unused',
-    apiOrigin: argv.apiOrigin || ''
+    apiOrigin: argv.apiOrigin || '',
+    apiOriginHostname: argv.apiOrigin ? url.parse(argv.apiOrigin).hostname : ''
 };
 
 console.log();
 console.log('Using OAuth credentials:');
-console.log(' ClientId:     %s', oauth.clientId);
-console.log(' ClientSecret: %s', oauth.clientSecret);
-console.log(' Cloudron API: %s', oauth.apiOrigin || 'default');
+console.log(' ClientId:      %s', oauth.clientId);
+console.log(' ClientSecret:  %s', oauth.clientSecret);
+console.log(' Cloudron API:  %s', oauth.apiOrigin || 'default');
+console.log(' Cloudron Host: %s', oauth.apiOriginHostname);
 console.log();
 
 
@@ -140,7 +143,7 @@ gulp.task('js-update', function () {
 // --------------
 
 gulp.task('html', ['html-views', 'html-update', 'html-templates'], function () {
-    return gulp.src('webadmin/src/*.html').pipe(gulp.dest('webadmin/dist'));
+    return gulp.src('webadmin/src/*.html').pipe(ejs({ apiOriginHostname: oauth.apiOriginHostname }, { ext: '.html' })).pipe(gulp.dest('webadmin/dist'));
 });
 
 gulp.task('html-update', function () {
