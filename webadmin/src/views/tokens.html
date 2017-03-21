@@ -16,6 +16,13 @@
                         </div>
                         <input type="text" class="form-control" ng-model="clientAdd.name" name="name" id="clientAddName" required autofocus>
                     </div>
+                    <div class="form-group" ng-class="{ 'has-error': (clientAddForm.redirectURI.$dirty && clientAddForm.redirectURI.$invalid) || (!clientAddForm.redirectURI.$dirty && clientAdd.error.redirectURI) }">
+                        <label class="control-label">Authorization callback URL</label>
+                        <div class="control-label" ng-show="!clientAddForm.redirectURI.$dirty && clientAdd.error.redirectURI">
+                            <small ng-show="!clientAddForm.redirectURI.$dirty && clientAdd.error.redirectURI">{{ clientAdd.error.redirectURI }}</small>
+                        </div>
+                        <input type="text" class="form-control" ng-model="clientAdd.redirectURI" name="redirectURI" id="clientAddRedirectURI" required>
+                    </div>
                     <div class="form-group" ng-class="{ 'has-error': (clientAddForm.scope.$dirty && clientAddForm.scope.$invalid) || (!clientAddForm.scope.$dirty && clientAdd.error.scope) }">
                         <label class="control-label">Scope</label>
                         <div class="control-label" ng-show="(!clientAddForm.scope.$dirty && clientAdd.error.scope) || (clientAddForm.scope.$dirty && clientAddForm.scope.$invalid)">
@@ -23,13 +30,6 @@
                             <small ng-show="!clientAddForm.scope.$dirty && clientAdd.error.scope">{{ clientAdd.error.scope }}</small>
                         </div>
                         <input type="text" class="form-control" ng-model="clientAdd.scope" name="scope" id="clientAddScope" placeholder="Specify any number of scope separated by a comma ','" required>
-                    </div>
-                    <div class="form-group" ng-class="{ 'has-error': (clientAddForm.redirectURI.$dirty && clientAddForm.redirectURI.$invalid) || (!clientAddForm.redirectURI.$dirty && clientAdd.error.redirectURI) }">
-                        <label class="control-label">Authorization callback URL</label>
-                        <div class="control-label" ng-show="!clientAddForm.redirectURI.$dirty && clientAdd.error.redirectURI">
-                            <small ng-show="!clientAddForm.redirectURI.$dirty && clientAdd.error.redirectURI">{{ clientAdd.error.redirectURI }}</small>
-                        </div>
-                        <input type="text" class="form-control" ng-model="clientAdd.redirectURI" name="redirectURI" id="clientAddRedirectURI" required>
                     </div>
                     <input class="hide" type="submit" ng-disabled="clientAddForm.$invalid || clientAdd.busy"/>
                 </form>
