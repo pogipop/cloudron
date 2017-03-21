@@ -19,7 +19,7 @@ angular.module('Application').controller('TokensController', ['$scope', 'Client'
 
             $scope.clientAdd.error = {};
             $scope.clientAdd.name = '';
-            $scope.clientAdd.scope = '*';
+            $scope.clientAdd.scope = 'profile';
             $scope.clientAdd.redirectURI = '';
 
             $scope.clientAddForm.$setUntouched();
