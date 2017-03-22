@@ -807,4 +807,5 @@
 
 [0.107.0]
 * Support CSP for webinterface and OAuth views
+* (mail) Fix issue where Cloudron is only used to send emails
 
