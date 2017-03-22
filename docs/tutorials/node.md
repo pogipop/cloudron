@@ -42,12 +42,12 @@ Creating an application for Cloudron can be summarized as follows:
 1. Create a web application using any language/framework. This web application must run a HTTP server
    and can optionally provide other services using custom protocols (like git, ssh, TCP etc).
 
-2. Create a [Dockerfile](http://docs.docker.com/engine/reference/builder/) that specifies how to create 
+2. Create a [Dockerfile](http://docs.docker.com/engine/reference/builder/) that specifies how to create
    an application ```image```. An ```image``` is essentially a bundle of the application source code
    and it's dependencies.
 
 3. Create a [CloudronManifest.json](/references/manifest.html) file that provides essential information
-   about the app. This includes information required for the Cloudron Store like title, version, icon and 
+   about the app. This includes information required for the Cloudron Store like title, version, icon and
    runtime requirements like `addons`.
 
 ## Simple Web application
@@ -79,7 +79,7 @@ FROM cloudron/base:0.10.0
 
 ADD server.js /app/code/server.js
 
-CMD [ "/usr/local/node-0.12.7/bin/node", "/app/code/server.js" ]
+CMD [ "/usr/local/node-6.9.5/bin/node", "/app/code/server.js" ]
 ```
 
 The `FROM` command specifies that we want to start off with Cloudron's [base image](/references/baseimage.html).
@@ -90,7 +90,7 @@ While this example only copies a single file, the ADD command can be used to cop
 See the [Dockerfile](https://docs.docker.com/reference/builder/#add) documentation for more details.
 
 The `CMD` command specifies how to run the server. There are multiple versions of node available under `/usr/local`. We
-choose node v0.12.7 for our app.
+choose node v6.9.5 for our app.
 
 ## CloudronManifest.json
 
@@ -176,7 +176,7 @@ Step 0 : FROM cloudron/base:0.10.0
 Step 1 : ADD server.js /app/code
  ---> b09b97ecdfbc
 Removing intermediate container 03c1e1f77acb
-Step 2 : CMD /usr/local/node-0.12.7/bin/node /app/code/main.js
+Step 2 : CMD /usr/local/node-6.9.5/bin/node /app/code/main.js
  ---> Running in 370f59d87ab2
  ---> 53b51eabcb89
 Removing intermediate container 370f59d87ab2
@@ -335,13 +335,15 @@ File `tutorial/Dockerfile`
 ```dockerfile
 FROM cloudron/base:0.10.0
 
+ENV PATH /usr/local/node-6.9.5/bin:$PATH
+
 ADD server.js /app/code/server.js
 ADD package.json /app/code/package.json
 
 WORKDIR /app/code
 RUN npm install --production
 
-CMD [ "/usr/local/node-0.12.7/bin/node", "/app/code/server.js" ]
+CMD [ "node", "/app/code/server.js" ]
 ```
 
 Notice the new `RUN` command which installs the node module dependencies in package.json using `npm install`.
