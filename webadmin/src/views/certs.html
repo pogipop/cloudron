@@ -28,16 +28,12 @@
                         <div class="form-group" ng-class="{ 'has-error': false }" ng-show="dnsCredentials.provider === 'route53'">
                             <label class="control-label" for="dnsCredentialsSecretAccessKey">Secret access key</label>
                             <input type="text" class="form-control" ng-model="dnsCredentials.secretAccessKey" id="dnsCredentialsSecretAccessKey" name="secretAccessKey" ng-disabled="dnsCredentials.busy" ng-required="dnsCredentials.provider === 'route53'">
-                            <br/>
-                            <p>This domain must be hosted on <a href="https://aws.amazon.com/route53/?nc2=h_m1" target="_blank">AWS Route53</a>.</p>
                         </div>
 
                         <!-- DigitalOcean -->
                         <div class="form-group" ng-class="{ 'has-error': false }" ng-show="dnsCredentials.provider === 'digitalocean'">
                             <label class="control-label" for="dnsCredentialsDigitalOceanToken">DigitalOcean token</label>
                             <input type="text" class="form-control" ng-model="dnsCredentials.digitalOceanToken" id="dnsCredentialsDigitalOceanToken" name="digitalOceanToken" ng-disabled="dnsCredentials.busy" ng-required="dnsCredentials.provider === 'digitalocean'">
-                            <br/>
-                            <p>This domain must be hosted on <a href="https://www.digitalocean.com/community/tutorials/how-to-set-up-a-host-name-with-digitalocean#step-two%E2%80%94change-your-domain-server" target="_blank">DigitalOcean</a>.</p>
                         </div>
 
                         <div class="form-group" ng-class="{ 'has-error': false }">
@@ -49,12 +45,18 @@
                     </fieldset>
                 </form>
 
-                <!-- Wildcard -->
+                <p ng-show="dnsCredentials.provider === 'route53'">
+                    This domain must be hosted on <a href="https://www.digitalocean.com/community/tutorials/how-to-set-up-a-host-name-with-digitalocean#step-two%E2%80%94change-your-domain-server" target="_blank">DigitalOcean</a>.
+                </p>
+
+                <p ng-show="dnsCredentials.provider === 'digitalocean'">
+                    This domain must be hosted on <a href="https://aws.amazon.com/route53/?nc2=h_m1" target="_blank">AWS Route53</a>.
+                </p>
+
                 <p ng-show="dnsCredentials.provider === 'wildcard'">
                     Setup <i>A</i> records for <b>*.{{ dnsCredentials.domain || 'example.com' }}</b> and <b>{{ dnsCredentials.domain || 'example.com' }}</b> to this server's IP.
                 </p>
 
-                <!-- Manual -->
                 <p ng-show="dnsCredentials.provider === 'manual'">
                     Setup an <i>A</i> record for <b>my.{{ dnsCredentials.domain || 'example.com' }}</b> to this server's IP. All DNS records have to be setup manually <i>before</i> each app installation.
                 </p>
