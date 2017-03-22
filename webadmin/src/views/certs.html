@@ -40,7 +40,7 @@
                             <p>This domain must be hosted on <a href="https://www.digitalocean.com/community/tutorials/how-to-set-up-a-host-name-with-digitalocean#step-two%E2%80%94change-your-domain-server" target="_blank">DigitalOcean</a>.</p>
                         </div>
 
-                        <div class="form-group" ng-class="{ 'has-error': false }" ng-if="config.fqdn !== dnsCredentials.customDomain && !dnsCredentialsForm.customDomainId.$invalid">
+                        <div class="form-group" ng-class="{ 'has-error': false }">
                             <label class="control-label" for="dnsCredentialsPassword">Provide your password to confirm this action</label>
                             <input type="password" class="form-control" ng-model="dnsCredentials.password" id="dnsCredentialsPassword" name="password" ng-disabled="dnsCredentials.busy" required>
                         </div>
