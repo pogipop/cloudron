@@ -297,6 +297,15 @@
     </div>
     <br/>
     <div class="row">
+        <div class="col-md-12" ng-show="dnsConfig.provider !== 'caas'">
+            <button ng-class="mailConfig.enabled ? 'btn btn-danger' : 'btn btn-primary'" ng-click="email.toggle()" ng-enabled="mailConfig">{{ mailConfig.enabled ? "Disable Email" : "Enable Email" }}</button>
+        </div>
+        <div class="col-md-12" ng-show="dnsConfig.provider === 'caas'">
+            <span class="text-danger text-bold">This feature requires the Cloudron to be on <a href="https://cloudron.io/references/usermanual.html#entire-cloudron-on-a-custom-domain" target="_blank">custom domain</a>.</span>
+        </div>
+    </div>
+    <br/>
+    <div class="row">
         <div class="col-md-12" ng-show="(dnsConfig.provider !== 'caas')">
             Set the following DNS records to guarantee email delivery.
 
@@ -334,15 +343,6 @@
                     </div>
                 </div>
             </div>
-        </div>
-    </div>
-    <br/>
-    <div class="row">
-        <div class="col-md-12" ng-show="dnsConfig.provider !== 'caas'">
-            <button ng-class="mailConfig.enabled ? 'btn btn-danger pull-right' : 'btn btn-primary pull-right'" ng-click="email.toggle()" ng-enabled="mailConfig">{{ mailConfig.enabled ? "Disable Email" : "Enable Email" }}</button>
-        </div>
-        <div class="col-md-12" ng-show="dnsConfig.provider === 'caas'">
-            <span class="text-danger text-bold">This feature requires the Cloudron to be on <a href="https://cloudron.io/references/usermanual.html#entire-cloudron-on-a-custom-domain" target="_blank">custom domain</a>.</span>
         </div>
     </div>
 </div>
