@@ -289,6 +289,7 @@ function startMail(callback) {
                             --net-alias mail \
                             -m ${memoryLimit}m \
                             --memory-swap ${memoryLimit * 2}m \
+                            --env ENABLE_MDA=${mailConfig.enabled} \
                             -v "${dataDir}/mail:/app/data" \
                             -v "${dataDir}/addons/mail:/etc/mail" \
                             ${ports} \
