@@ -46,19 +46,19 @@
                 </form>
 
                 <p ng-show="dnsCredentials.provider === 'route53'">
-                    This domain must be hosted on <a href="https://www.digitalocean.com/community/tutorials/how-to-set-up-a-host-name-with-digitalocean#step-two%E2%80%94change-your-domain-server" target="_blank">DigitalOcean</a>.
-                </p>
-
-                <p ng-show="dnsCredentials.provider === 'digitalocean'">
                     This domain must be hosted on <a href="https://aws.amazon.com/route53/?nc2=h_m1" target="_blank">AWS Route53</a>.
                 </p>
 
+                <p ng-show="dnsCredentials.provider === 'digitalocean'">
+                    This domain must be hosted on <a href="https://www.digitalocean.com/community/tutorials/how-to-set-up-a-host-name-with-digitalocean#step-two%E2%80%94change-your-domain-server" target="_blank">DigitalOcean</a>.
+                </p>
+
                 <p ng-show="dnsCredentials.provider === 'wildcard'">
-                    Setup <i>A</i> records for <b>*.{{ dnsCredentials.domain || 'example.com' }}</b> and <b>{{ dnsCredentials.domain || 'example.com' }}</b> to this server's IP.
+                    Setup <i>A</i> records for <b>*.{{ dnsCredentials.customDomain || 'example.com' }}</b> and <b>{{ dnsCredentials.customDomain || 'example.com' }}</b> to this server's IP.
                 </p>
 
                 <p ng-show="dnsCredentials.provider === 'manual'">
-                    Setup an <i>A</i> record for <b>my.{{ dnsCredentials.domain || 'example.com' }}</b> to this server's IP. All DNS records have to be setup manually <i>before</i> each app installation.
+                    Setup an <i>A</i> record for <b>my.{{ dnsCredentials.customDomain || 'example.com' }}</b> to this server's IP. All DNS records have to be setup manually <i>before</i> each app installation.
                 </p>
             </div>
             <div class="modal-footer ">

@@ -184,7 +184,8 @@ angular.module('Application').controller('CertsController', ['$scope', '$locatio
     $scope.showChangeDnsCredentials = function () {
         dnsCredentialsReset();
 
-        $scope.dnsCredentials.customDomain = $scope.config.fqdn;
+        // clear the input box for non-custom domain
+        $scope.dnsCredentials.customDomain = $scope.config.isCustomDomain ? $scope.config.fqdn : '';
         $scope.dnsCredentials.accessKeyId = $scope.dnsConfig.accessKeyId;
         $scope.dnsCredentials.secretAccessKey = $scope.dnsConfig.secretAccessKey;
         $scope.dnsCredentials.digitalOceanToken = $scope.dnsConfig.provider === 'digitalocean' ? $scope.dnsConfig.token : '';
