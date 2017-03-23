@@ -10,11 +10,9 @@ readonly USER_DATA_DIR="/home/yellowtent/data"
 # detect device of rootfs (http://forums.fedoraforum.org/showthread.php?t=270316)
 disk_device="$(for d in $(find /dev -type b); do [ "$(mountpoint -d /)" = "$(mountpoint -x $d)" ] && echo $d && break; done)"
 
-existing_swap=$(cat /proc/meminfo | grep SwapTotal | awk '{ printf "%.0f", $2/1024 }')
-
 # all sizes are in mb
 readonly physical_memory=$(LC_ALL=C free -m | awk '/Mem:/ { print $2 }')
-readonly swap_size=$((${physical_memory} - ${existing_swap})) # if you change this, fix enoughResourcesAvailable() in client.js
+readonly swap_size=$((${physical_memory} > 4096 ? 4096 : ${physical_memory})) # min(RAM, 4GB) if you change this, fix enoughResourcesAvailable() in client.js
 readonly app_count=$((${physical_memory} / 200)) # estimated app count
 readonly disk_size_bytes=$(LC_ALL=C df | grep "${disk_device}" | awk '{ printf $2 }')
 readonly disk_size=$((${disk_size_bytes}/1024))
@@ -27,15 +25,28 @@ echo "Estimated app count: ${app_count}"
 echo "Disk size: ${disk_size}M"
 
 # Allocate swap for general app usage
-if [[ ! -f "${APPS_SWAP_FILE}" && ${swap_size} -gt 0 ]]; then
-    echo "Creating Apps swap file of size ${swap_size}M"
-    fallocate -l "${swap_size}m" "${APPS_SWAP_FILE}"
+readonly current_swap=$(swapon --show="name,size" --noheadings --bytes | awk 'BEGIN{s=0}{s+=$2}END{printf "%.0f", s/1024/1024}')
+readonly needed_swap_size=$((swap_size - current_swap))
+if [[ ${needed_swap_size} -gt 0 ]]; then
+    echo "Need more swap of ${needed_swap_size}M"
+    # compute size of apps.swap ignoring what is already set
+    without_apps_swap=$(swapon --show="name,size" --noheadings --bytes | awk 'BEGIN{s=0}{if ($1!="/apps.swap") s+=$2}END{printf "%.0f", s/1024/1024}')
+    apps_swap_size=$((swap_size - without_apps_swap))
+    echo "Creating Apps swap file of size ${apps_swap_size}M"
+    if [[ -f "${APPS_SWAP_FILE}" ]]; then
+        echo "Swapping off before resizing swap"
+        swapoff "${APPS_SWAP_FILE}" || true
+    fi
+    fallocate -l "${apps_swap_size}m" "${APPS_SWAP_FILE}"
     chmod 600 "${APPS_SWAP_FILE}"
     mkswap "${APPS_SWAP_FILE}"
     swapon "${APPS_SWAP_FILE}"
-    echo "${APPS_SWAP_FILE}  none  swap  sw  0 0" >> /etc/fstab
+    if ! grep -q "${APPS_SWAP_FILE}" /etc/fstab; then
+        echo "Adding swap to fstab"
+        echo "${APPS_SWAP_FILE}  none  swap  sw  0 0" >> /etc/fstab
+    fi
 else
-    echo "Apps Swap file already exists"
+    echo "Swap requirements already met"
 fi
 
 # see start.sh for the initial default size of 8gb. On small disks the calculation might be lower than 8gb resulting in a failure to resize here.
