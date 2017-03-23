@@ -92,6 +92,13 @@ angular.module('Application').controller('MainController', ['$scope', '$route', 
     Client.getStatus(function (error, status) {
         if (error) return $scope.error(error);
 
+        // WARNING if anything about the routing is changed here test these use-cases:
+        //
+        // 1. Caas
+        // 2. selfhosted with --domain argument
+        // 3. selfhosted restore
+        // 4. local development with gulp develop
+
         if (!status.activated) {
             console.log('You have on domain, redirecting', status.configState.configured);
             window.location.href = status.configState.configured ? '/setup.html' : '/setupdns.html';
@@ -100,7 +107,7 @@ angular.module('Application').controller('MainController', ['$scope', '$route', 
 
         // support local development with localhost check
         if (window.location.hostname !== status.adminFqdn && window.location.hostname !== 'localhost') {
-            window.location.href = 'https://' + status.adminFqdn + '/noapp.html';
+            window.location.href = '/setupdns.html';
             return;
         }
 
