@@ -1004,8 +1004,6 @@ angular.module('Application').service('Client', ['$http', 'md5', 'Notification',
         var totalMemory = roundedMemory * 1.2; // cloudron-system-setup.sh creates equal amount of swap. 1.2 factor is arbitrary
         var available = (totalMemory || 0) - used;
 
-        console.log(needed, used, roundedMemory, totalMemory, available);
-
         return (available - needed) >= 0;
     };
 
