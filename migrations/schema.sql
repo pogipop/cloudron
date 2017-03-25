@@ -97,6 +97,7 @@ CREATE TABLE IF NOT EXISTS settings(
 CREATE TABLE IF NOT EXISTS appAddonConfigs(
     appId VARCHAR(128) NOT NULL,
     addonId VARCHAR(32) NOT NULL,
+    name VARCHAR(128) NOT NULL,
     value VARCHAR(512) NOT NULL,
     FOREIGN KEY(appId) REFERENCES apps(id));
 
