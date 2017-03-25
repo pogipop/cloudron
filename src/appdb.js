@@ -413,11 +413,11 @@ function setAddonConfig(appId, addonId, env, callback) {
 
         if (env.length === 0) return callback(null);
 
-        var query = 'INSERT INTO appAddonConfigs(appId, addonId, value) VALUES ';
+        var query = 'INSERT INTO appAddonConfigs(appId, addonId, name, value) VALUES ';
         var args = [ ], queryArgs = [ ];
         for (var i = 0; i < env.length; i++) {
-            args.push(appId, addonId, env[i]);
-            queryArgs.push('(?, ?, ?)');
+            args.push(appId, addonId, env[i].name, env[i].value);
+            queryArgs.push('(?, ?, ?, ?)');
         }
 
         database.query(query + queryArgs.join(','), args, function (error) {
@@ -456,13 +456,10 @@ function getAddonConfig(appId, addonId, callback) {
     assert.strictEqual(typeof addonId, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    database.query('SELECT value FROM appAddonConfigs WHERE appId = ? AND addonId = ?', [ appId, addonId ], function (error, results) {
+    database.query('SELECT name, value FROM appAddonConfigs WHERE appId = ? AND addonId = ?', [ appId, addonId ], function (error, results) {
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
 
-        var config = [ ];
-        results.forEach(function (v) { config.push(v.value); });
-
-        callback(null, config);
+        callback(null, results);
     });
 }
 
@@ -470,13 +467,9 @@ function getAddonConfigByAppId(appId, callback) {
     assert.strictEqual(typeof appId, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    database.query('SELECT value FROM appAddonConfigs WHERE appId = ?', [ appId ], function (error, results) {
+    database.query('SELECT name, value FROM appAddonConfigs WHERE appId = ?', [ appId ], function (error, results) {
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
 
-        var config = [ ];
-        results.forEach(function (v) { config.push(v.value); });
-
-        callback(null, config);
+        callback(null, results);
     });
 }
-

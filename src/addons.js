@@ -194,7 +194,11 @@ function getEnvironment(app, callback) {
     assert.strictEqual(typeof app, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    appdb.getAddonConfigByAppId(app.id, callback);
+    appdb.getAddonConfigByAppId(app.id, function (error, result) {
+        if (error) return callback(error);
+
+        return callback(null, result.map(function (e) { return e.name + '=' + e.value; }));
+    });
 }
 
 function getBindsSync(app, addons) {
@@ -254,9 +258,9 @@ function setupOauth(app, options, callback) {
             if (error) return callback(error);
 
             var env = [
-                'OAUTH_CLIENT_ID=' + result.id,
-                'OAUTH_CLIENT_SECRET=' + result.clientSecret,
-                'OAUTH_ORIGIN=' + config.adminOrigin()
+                { name: 'OAUTH_CLIENT_ID', value: result.id },
+                { name: 'OAUTH_CLIENT_SECRET', value: result.clientSecret },
+                { name: 'OAUTH_ORIGIN', value: config.adminOrigin() }
             ];
 
             debugApp(app, 'Setting oauth addon config to %j', env);
@@ -287,13 +291,13 @@ function setupEmail(app, options, callback) {
 
     // note that "external" access info can be derived from MAIL_DOMAIN (since it's part of user documentation)
     var env = [
-        'MAIL_SMTP_SERVER=mail',
-        'MAIL_SMTP_PORT=2525',
-        'MAIL_IMAP_SERVER=mail',
-        'MAIL_IMAP_PORT=9993',
-        'MAIL_SIEVE_SERVER=mail',
-        'MAIL_SIEVE_PORT=4190',
-        'MAIL_DOMAIN=' + config.fqdn()
+        { name: 'MAIL_SMTP_SERVER', value: 'mail' },
+        { name: 'MAIL_SMTP_PORT', value: '2525' },
+        { name: 'MAIL_IMAP_SERVER', value: 'mail' },
+        { name: 'MAIL_IMAP_PORT', value: '9993' },
+        { name: 'MAIL_SIEVE_SERVER', value: 'mail' },
+        { name: 'MAIL_SIEVE_PORT', value: '4190' },
+        { name: 'MAIL_DOMAIN', value: config.fqdn() }
     ];
 
     debugApp(app, 'Setting up Email');
@@ -319,13 +323,13 @@ function setupLdap(app, options, callback) {
     if (!app.sso) return callback(null);
 
     var env = [
-        'LDAP_SERVER=172.18.0.1',
-        'LDAP_PORT=' + config.get('ldapPort'),
-        'LDAP_URL=ldap://172.18.0.1:' + config.get('ldapPort'),
-        'LDAP_USERS_BASE_DN=ou=users,dc=cloudron',
-        'LDAP_GROUPS_BASE_DN=ou=groups,dc=cloudron',
-        'LDAP_BIND_DN=cn='+ app.id + ',ou=apps,dc=cloudron',
-        'LDAP_BIND_PASSWORD=' + hat(4 * 128) // this is ignored
+        { name: 'LDAP_SERVER', value: '172.18.0.1' },
+        { name: 'LDAP_PORT', value: '' + config.get('ldapPort') },
+        { name: 'LDAP_URL', value: 'ldap://172.18.0.1:' + config.get('ldapPort') },
+        { name: 'LDAP_USERS_BASE_DN', value: 'ou=users,dc=cloudron' },
+        { name: 'LDAP_GROUPS_BASE_DN', value: 'ou=groups,dc=cloudron' },
+        { name: 'LDAP_BIND_DN', value: 'cn='+ app.id + ',ou=apps,dc=cloudron' },
+        { name: 'LDAP_BIND_PASSWORD', value: hat(4 * 128) } // this is ignored
     ];
 
     debugApp(app, 'Setting up LDAP');
@@ -356,12 +360,12 @@ function setupSendMail(app, options, callback) {
         var mailbox = results.filter(function (r) { return !r.aliasTarget; })[0];
 
         var env = [
-            "MAIL_SMTP_SERVER=mail",
-            "MAIL_SMTP_PORT=2525",
-            "MAIL_SMTP_USERNAME=" + mailbox.name,
-            "MAIL_SMTP_PASSWORD=" + app.id,
-            "MAIL_FROM=" + mailbox.name + '@' + config.fqdn(),
-            "MAIL_DOMAIN=" + config.fqdn()
+            { name: 'MAIL_SMTP_SERVER', value: 'mail' },
+            { name: 'MAIL_SMTP_PORT', value: '2525' },
+            { name: 'MAIL_SMTP_USERNAME', value: mailbox.name },
+            { name: 'MAIL_SMTP_PASSWORD', value: app.id },
+            { name: 'MAIL_FROM', value: mailbox.name + '@' + config.fqdn() },
+            { name: 'MAIL_DOMAIN', value: config.fqdn() }
         ];
         debugApp(app, 'Setting sendmail addon config to %j', env);
         appdb.setAddonConfig(app.id, 'sendmail', env, callback);
@@ -391,12 +395,12 @@ function setupRecvMail(app, options, callback) {
         var mailbox = results.filter(function (r) { return !r.aliasTarget; })[0];
 
         var env = [
-            "MAIL_IMAP_SERVER=mail",
-            "MAIL_IMAP_PORT=9993",
-            "MAIL_IMAP_USERNAME=" + mailbox.name,
-            "MAIL_IMAP_PASSWORD=" + app.id,
-            "MAIL_TO=" + mailbox.name + '@' + config.fqdn(),
-            "MAIL_DOMAIN=" + config.fqdn()
+            { name: 'MAIL_IMAP_SERVER', value: 'mail' },
+            { name: 'MAIL_IMAP_PORT', value: '9993' },
+            { name: 'MAIL_IMAP_USERNAME', value: mailbox.name },
+            { name: 'MAIL_IMAP_PASSWORD', value: app.id },
+            { name: 'MAIL_TO', value: mailbox.name + '@' + config.fqdn() },
+            { name: 'MAIL_DOMAIN', value: config.fqdn() }
         ];
 
         debugApp(app, 'Setting sendmail addon config to %j', env);
@@ -426,7 +430,9 @@ function setupMySql(app, options, callback) {
     docker.execContainer('mysql', cmd, { bufferStdout: true }, function (error, stdout) {
         if (error) return callback(error);
 
-        var env = stdout.toString('utf8').split('\n').slice(0, -1); // remove trailing newline
+        var result = stdout.toString('utf8').split('\n').slice(0, -1); // remove trailing newline
+        var env = result.map(function (r) { var idx = r.indexOf('='); return { name: r.substr(0, idx), value: r.substr(idx + 1) }; });
+
         debugApp(app, 'Setting mysql addon config to %j', env);
         appdb.setAddonConfig(app.id, 'mysql', env, callback);
     });
@@ -489,7 +495,9 @@ function setupPostgreSql(app, options, callback) {
     docker.execContainer('postgresql', cmd, { bufferStdout: true }, function (error, stdout) {
         if (error) return callback(error);
 
-        var env = stdout.toString('utf8').split('\n').slice(0, -1); // remove trailing newline
+        var result = stdout.toString('utf8').split('\n').slice(0, -1); // remove trailing newline
+        var env = result.map(function (r) { var idx = r.indexOf('='); return { name: r.substr(0, idx), value: r.substr(idx + 1) }; });
+
         debugApp(app, 'Setting postgresql addon config to %j', env);
         appdb.setAddonConfig(app.id, 'postgresql', env, callback);
     });
@@ -553,7 +561,9 @@ function setupMongoDb(app, options, callback) {
     docker.execContainer('mongodb', cmd, { bufferStdout: true }, function (error, stdout) {
         if (error) return callback(error);
 
-        var env = stdout.toString('utf8').split('\n').slice(0, -1); // remove trailing newline
+        var result = stdout.toString('utf8').split('\n').slice(0, -1); // remove trailing newline
+        var env = result.map(function (r) { var idx = r.indexOf('='); return { name: r.substr(0, idx), value: r.substr(idx + 1) }; });
+
         debugApp(app, 'Setting mongodb addon config to %j', env);
         appdb.setAddonConfig(app.id, 'mongodb', env, callback);
     });
@@ -631,10 +641,10 @@ function setupRedis(app, options, callback) {
                 --read-only -v /tmp -v /run ${tag}`;
 
     var env = [
-        'REDIS_URL=redis://redisuser:' + redisPassword + '@redis-' + app.id,
-        'REDIS_PASSWORD=' + redisPassword,
-        'REDIS_HOST=' + redisName,
-        'REDIS_PORT=6379'
+        { name: 'REDIS_URL', value: 'redis://redisuser:' + redisPassword + '@redis-' + app.id },
+        { name: 'REDIS_PASSWORD', value: redisPassword },
+        { name: 'REDIS_HOST', value: redisName },
+        { name: 'REDIS_PORT', value: '6379' }
     ];
 
     async.series([
