@@ -124,3 +124,7 @@ if ! apt-get install -y collectd collectd-utils; then
     sed -e 's/^FQDNLookup true/FQDNLookup false/' -i /etc/collectd/collectd.conf
 fi
 
+# Disable bind for good measure (on online.net, kimsufi servers these are pre-installed and conflicts with unbound)
+systemctl stop bind9 || true
+systemctl disable bind9 || true
+
