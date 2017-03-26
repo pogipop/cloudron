@@ -7,19 +7,15 @@ readonly APPS_SWAP_FILE="/apps.swap"
 readonly USER_DATA_FILE="/root/user_data.img"
 readonly USER_DATA_DIR="/home/yellowtent/data"
 
-# detect device of rootfs (http://forums.fedoraforum.org/showthread.php?t=270316)
-disk_device="$(for d in $(find /dev -type b); do [ "$(mountpoint -d /)" = "$(mountpoint -x $d)" ] && echo $d && break; done)"
-
 # all sizes are in mb
 readonly physical_memory=$(LC_ALL=C free -m | awk '/Mem:/ { print $2 }')
 readonly swap_size=$((${physical_memory} > 4096 ? 4096 : ${physical_memory})) # min(RAM, 4GB) if you change this, fix enoughResourcesAvailable() in client.js
 readonly app_count=$((${physical_memory} / 200)) # estimated app count
-readonly disk_size_bytes=$(LC_ALL=C df | grep "${disk_device}" | awk '{ printf $2 }')
+readonly disk_size_bytes=$(LC_ALL=C df --output=size / | tail -n1)
 readonly disk_size=$((${disk_size_bytes}/1024))
 readonly system_size=10240 # 10 gigs for system libs, apps images, installer, box code, data and tmp
 readonly ext4_reserved=$((disk_size * 5 / 100)) # this can be changes using tune2fs -m percent /dev/vda1
 
-echo "Disk device: ${disk_device}"
 echo "Physical memory: ${physical_memory}"
 echo "Estimated app count: ${app_count}"
 echo "Disk size: ${disk_size}M"
