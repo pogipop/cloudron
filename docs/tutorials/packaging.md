@@ -5,7 +5,7 @@ This tutorial outlines how to package an existing web application for the Cloudr
 If you are aware of Docker and Heroku, you should feel at home packaging for the
 Cloudron. Roughly, the steps involved are:
 
-* Create a Dockerfile for your application. If your application already has a Dockerfile, it 
+* Create a Dockerfile for your application. If your application already has a Dockerfile, it
   is a good starting point for packaging for the Cloudron. By virtue of Docker, the Cloudron
   is able to run apps written in any language/framework.
 
@@ -485,6 +485,186 @@ on their Cloudron.
 
 The button can be added to just about any website including the application's website
 and README.md files in GitHub repositories.
+
+# Tricks and common patterns
+
+## Build script
+
+Cloudron uses Docker in the backend, so the package build script is a regular `Dockerfile`.
+
+### Dockerfile notes
+
+Do not forget to create the directory for the code of the app:
+```sh
+RUN mkdir -p /app/code
+WORKDIR /app/code
+```
+
+At the end of the Dockerfile you should add your start script (`start.sh`) and set it as the default command.
+Ensure that the `start.sh` is executable in the app package repo. This can be done with `chmod +x start.sh`.
+```docker
+ADD start.sh /app/code/start.sh
+CMD [ "/app/code/start.sh" ]
+```
+
+
+### Download and unpack archives
+
+When packaging an app you often want to download and extract archives (e.g. from github).
+This can be done in one line by combining `wget` and `tar` like this:
+
+```docker
+ENV VERSION 1.6.2
+RUN wget "https://github.com/FreshRSS/FreshRSS/archive/${VERSION}.tar.gz" -O - \
+    | tar -xz -C /app/code --strip-components=1
+```
+
+The `--strip-components=1` causes the topmost directory in the archive to be skipped.
+
+
+## Start script
+
+The main pattern here is to use a shell script as the app entry point. This is commonly named `start.sh`.
+
+### Initialize data directory once
+
+One common pattern is to initialize the data directory with some commands once depending on the existence of a special `.initialized` file.
+
+```sh
+if ! [ -f /app/data/.initialized ]; then
+  echo "Fresh installation, setting up data directory..."
+  # Setup commands here
+  touch /app/data/.initialized
+  echo "Done."
+fi
+```
+
+To copy over some files from the code directory you can use the following command:
+
+```sh
+rsync -a /app/code/config/ /app/data/config/
+```
+
+
+### Chown data directory
+
+Since the app containers use other user ids than the host, it is sometimes necessary to change the permissions on the data directory:
+
+```sh
+chown -R cloudron.cloudron /app/data
+```
+
+For Apache+PHP apps you might need to change permissions to `www-data.www-data` instead.
+
+
+### Periodic tasks
+
+Sometimes a set of commands needs to be run periodically in parallel to the main program of the app. This can be done in the `start.sh` with the following commands:
+
+```sh
+while true; do
+  sleep 60
+  # Task that needs to run every minute
+done &
+```
+
+
+### Persisting random values
+
+Some apps need a random value that is initialized once and does not change afterwards (e.g. a salt for security purposes). This can be accomplished by creating a random value and storing it in a file in the data directory like this:
+
+```sh
+if ! [ -e /app/data/.salt ]; then
+  dd if=/dev/urandom bs=1 count=1024 2>/dev/null | sha1sum | awk '{ print $1 }' > /app/data/.salt
+fi
+SALT=$(cat /app/data/.salt)
+```
+
+### Patching the app source
+
+When nothing else helps, you can still patch the original sources so that the app works. Patch is a safe way to modify sources, as it fails when the expected original sources changed too much.
+
+First create a backup copy of the full sources (to be able to calculate the differences):
+
+```sh
+cp -a extensions extensions-orig
+```
+
+Then modify the sources in the original path and when finished, create a patch like this:
+
+```sh
+diff -Naru extensions-orig/ extensions/ > change-ttrss-file-path.patch
+```
+
+Add and apply this patch to the sources in the Dockerfile:
+
+```docker
+ADD change-ttrss-file-path.patch /app/code/change-ttrss-file-path.patch
+RUN patch -p1 -d /app/code/extensions < /app/code/change-ttrss-file-path.patch
+```
+
+The `-p1` causes patch to ignore the topmost directory in the patch.
+
+## Specific software and languages
+
+### Apache
+
+Apache requires some configuration changes to work properly with Cloudron. The following commands configure Apache in the following way:
+
+* Disable all default sites
+* Print errors into the app's log and disable other logs
+* Limit server processes to `5` (good default value)
+* Change the port number to CLoudrons default `8000`
+
+```docker
+RUN rm /etc/apache2/sites-enabled/* \
+    && sed -e 's,^ErrorLog.*,ErrorLog "/dev/stderr",' -i /etc/apache2/apache2.conf \
+    && sed -e "s,MaxSpareServers[^:].*,MaxSpareServers 5," -i /etc/apache2/mods-available/mpm_prefork.conf \
+    && a2disconf other-vhosts-access-log \
+    && echo "Listen 8000" > /etc/apache2/ports.conf
+```
+
+Afterwards, add your site config to Apache:
+
+```docker
+ADD apache2.conf /etc/apache2/sites-available/app.conf
+RUN a2ensite app
+```
+
+In `start.sh` Apache can be started using these commands:
+
+```sh
+echo "Starting apache..."
+APACHE_CONFDIR="" source /etc/apache2/envvars
+rm -f "${APACHE_PID_FILE}"
+exec /usr/sbin/apache2 -DFOREGROUND
+```
+
+
+### PHP
+
+PHP wants to store session data at `/var/lib/php/sessions` which is read-only in Cloudron. To fix this problem you can move this data to `/run/php/sessions` with these commands:
+
+```docker
+RUN rm -rf /var/lib/php/sessions && ln -s /run/php/sessions /var/lib/php/sessions
+```
+
+Don't forget to create this directory in the `start.sh`:
+
+```sh
+mkdir -p /run/php/sessions
+```
+
+
+### Java
+
+Java scales its memory usage dynamically according to the available system memory. Due to how Docker works, Java sees the hosts total memory instead of the memory limit of the app. To restrict Java to the apps memory limit it is necessary to add a special parameter to Java calls.
+
+```sh
+LIMIT=$(($(cat /sys/fs/cgroup/memory/memory.memsw.limit_in_bytes)/2**20))
+export JAVA_OPTS="-XX:MaxRAM=${LIMIT}M"
+java ${JAVA_OPTS} -jar ...
+```
 
 # Next steps
 
