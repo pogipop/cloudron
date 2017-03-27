@@ -22,8 +22,7 @@ readonly curl="curl --fail --connect-timeout 20 --retry 10 --retry-delay 2 --max
 
 # copied from cloudron-resize-fs.sh
 readonly physical_memory=$(LC_ALL=C free -m | awk '/Mem:/ { print $2 }')
-readonly disk_device="$(for d in $(find /dev -type b); do [ "$(mountpoint -d /)" = "$(mountpoint -x $d)" ] && echo $d && break; done)"
-readonly disk_size_bytes=$(LC_ALL=C df | grep "${disk_device}" | awk '{ printf $2 }')
+readonly disk_size_bytes=$(LC_ALL=C df --output=size / | tail -n1)
 readonly disk_size_gb=$((${disk_size_bytes}/1024/1024))
 
 # verify the system has minimum requirements met
@@ -33,7 +32,7 @@ if [[ "${physical_memory}" -lt "${MINIMUM_MEMORY}" ]]; then
 fi
 
 if [[ "${disk_size_gb}" -lt "${MINIMUM_DISK_SIZE_GB}" ]]; then
-    echo "Error: Cloudron requires atleast 20GB disk space (Disk space on ${disk_device} is ${disk_size_gb}GB)"
+    echo "Error: Cloudron requires atleast 20GB disk space (Disk space on / is ${disk_size_gb}GB)"
     exit 1
 fi
 
