@@ -789,7 +789,7 @@ describe('database', function () {
         });
 
         it('setAddonConfig succeeds', function (done) {
-            appdb.setAddonConfig(APP_1.id, 'addonid1', [ { name: 'ENV1', value: 'env' }, { name: 'ENV2', value: 'env' } ], function (error) {
+            appdb.setAddonConfig(APP_1.id, 'addonid1', [ { name: 'ENV1', value: 'env' }, { name: 'ENV2', value: 'env2' } ], function (error) {
                 expect(error).to.be(null);
                 done();
             });
@@ -805,7 +805,7 @@ describe('database', function () {
         it('getAddonConfig succeeds', function (done) {
             appdb.getAddonConfig(APP_1.id, 'addonid1', function (error, results) {
                 expect(error).to.be(null);
-                expect(results).to.eql([ { name: 'ENV1', value: 'env' }, { name: 'ENV2', value: 'env' } ]);
+                expect(results).to.eql([ { name: 'ENV1', value: 'env' }, { name: 'ENV2', value: 'env2' } ]);
                 done();
             });
         });
@@ -813,7 +813,22 @@ describe('database', function () {
         it('getAddonConfigByAppId succeeds', function (done) {
             appdb.getAddonConfigByAppId(APP_1.id, function (error, results) {
                 expect(error).to.be(null);
-                expect(results).to.eql([ { name: 'ENV1', value: 'env' }, { name: 'ENV2', value: 'env' }, { name: 'ENV3', value: 'env' } ]);
+                expect(results).to.eql([ { name: 'ENV1', value: 'env' }, { name: 'ENV2', value: 'env2' }, { name: 'ENV3', value: 'env' } ]);
+                done();
+            });
+        });
+
+        it('getAddonConfigByName succeeds', function (done) {
+            appdb.getAddonConfigByName(APP_1.id, 'addonid1', 'ENV2', function (error, value) {
+                expect(error).to.be(null);
+                expect(value).to.be('env2');
+                done();
+            });
+        });
+
+        it('getAddonConfigByName of unknown value succeeds', function (done) {
+            appdb.getAddonConfigByName(APP_1.id, 'addonid1', 'NOPE', function (error, value) {
+                expect(error.reason).to.be(DatabaseError.NOT_FOUND);
                 done();
             });
         });

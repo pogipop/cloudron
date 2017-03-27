@@ -14,6 +14,7 @@ exports = module.exports = {
     setAddonConfig: setAddonConfig,
     getAddonConfig: getAddonConfig,
     getAddonConfigByAppId: getAddonConfigByAppId,
+    getAddonConfigByName: getAddonConfigByName,
     unsetAddonConfig: unsetAddonConfig,
     unsetAddonConfigByAppId: unsetAddonConfigByAppId,
 
@@ -471,5 +472,19 @@ function getAddonConfigByAppId(appId, callback) {
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
 
         callback(null, results);
+    });
+}
+
+function getAddonConfigByName(appId, addonId, name, callback) {
+    assert.strictEqual(typeof appId, 'string');
+    assert.strictEqual(typeof addonId, 'string');
+    assert.strictEqual(typeof name, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    database.query('SELECT value FROM appAddonConfigs WHERE appId = ? AND addonId = ? AND name = ?', [ appId, addonId, name ], function (error, results) {
+        if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
+        if (results.length === 0) return callback(new DatabaseError(DatabaseError.NOT_FOUND));
+
+        callback(null, results[0].value);
     });
 }
