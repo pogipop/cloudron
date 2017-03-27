@@ -16,6 +16,7 @@ var appdb = require('../appdb.js'),
     groups = require('../groups.js'),
     http = require('http'),
     ldapServer = require('../ldap.js'),
+    mailboxdb = require('../mailboxdb.js'),
     settings = require('../settings.js'),
     settingsdb = require('../settingsdb.js'),
     ldap = require('ldapjs'),
@@ -86,6 +87,10 @@ function setup(done) {
         ldapServer.start.bind(null),
         appdb.add.bind(null, APP_0.id, APP_0.appStoreId, APP_0.manifest, APP_0.location, APP_0.portBindings, APP_0),
         appdb.update.bind(null, APP_0.id, { containerId: APP_0.containerId }),
+        appdb.setAddonConfig.bind(null, APP_0.id, 'sendmail', [{ name: 'MAIL_SMTP_PASSWORD', value : 'sendmailpassword' }]),
+        appdb.setAddonConfig.bind(null, APP_0.id, 'recvmail', [{ name: 'MAIL_IMAP_PASSWORD', value : 'recvmailpassword' }]),
+        mailboxdb.add.bind(null, APP_0.location + '.app', APP_0.id, mailboxdb.TYPE_APP),
+
         function (callback) {
             user.createOwner(USER_0.username, USER_0.password, USER_0.email, USER_0.displayName, AUDIT_SOURCE, function (error, result) {
                 if (error) return callback(error);
@@ -734,7 +739,7 @@ describe('Ldap', function () {
         });
     });
 
-    describe('sendmail bind', function () {
+    describe('user sendmail bind', function () {
         it('does not allow with invalid password', function (done) {
             var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + config.get('ldapPort') });
 
@@ -768,7 +773,35 @@ describe('Ldap', function () {
         });
     });
 
-    describe('recvmail bind', function () {
+    describe('app sendmail bind', function () {
+        it('does not allow with invalid app', function (done) {
+            var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + config.get('ldapPort') });
+
+            client.bind('cn=hacker.app,ou=sendmail,dc=cloudron', 'nope', function (error) {
+                expect(error).to.be.a(ldap.NoSuchObjectError);
+                done();
+            });
+        });
+
+        it('does not allow with invalid password', function (done) {
+            var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + config.get('ldapPort') });
+
+            client.bind('cn=' + APP_0.location + '.app,ou=sendmail,dc=cloudron', 'nope', function (error) {
+                expect(error).to.be.a(ldap.InvalidCredentialsError);
+                done();
+            });
+        });
+
+        it('allows with valid password', function (done) {
+            var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + config.get('ldapPort') });
+
+            client.bind('cn=' + APP_0.location + '.app,ou=sendmail,dc=cloudron', 'sendmailpassword', function (error) {
+                done(error);
+            });
+        });
+    });
+
+    describe('user recvmail bind', function () {
         it('does not allow with invalid password', function (done) {
             var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + config.get('ldapPort') });
 
@@ -798,6 +831,34 @@ describe('Ldap', function () {
 
                     settingsdb.set(settings.MAIL_CONFIG_KEY, JSON.stringify({ enabled: false }), done);
                 });
+            });
+        });
+    });
+
+    describe('app recvmail bind', function () {
+        it('does not allow with invalid app', function (done) {
+            var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + config.get('ldapPort') });
+
+            client.bind('cn=hacker.app,ou=recvmail,dc=cloudron', 'nope', function (error) {
+                expect(error).to.be.a(ldap.NoSuchObjectError);
+                done();
+            });
+        });
+
+        it('does not allow with invalid password', function (done) {
+            var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + config.get('ldapPort') });
+
+            client.bind('cn=' + APP_0.location + '.app,ou=recvmail,dc=cloudron', 'nope', function (error) {
+                expect(error).to.be.a(ldap.InvalidCredentialsError);
+                done();
+            });
+        });
+
+        it('allows with valid password', function (done) {
+            var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + config.get('ldapPort') });
+
+            client.bind('cn=' + APP_0.location + '.app,ou=recvmail,dc=cloudron', 'recvmailpassword', function (error) {
+                done(error);
             });
         });
     });

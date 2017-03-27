@@ -326,7 +326,8 @@ function authenticateMailbox(req, res, next) {
             else return next(new ldap.OperationsError('Invalid DN'));
 
             appdb.getAddonConfigByName(mailbox.ownerId, addonId, name, function (error, value) {
-                if (error || req.credentials !== value) return next(new ldap.NoSuchObjectError(req.dn.toString()));
+                if (error) return next(new ldap.OperationsError(error.message));
+                if (req.credentials !== value) return next(new ldap.InvalidCredentialsError(req.dn.toString()));
 
                 eventlog.add(eventlog.ACTION_APP_LOGIN, { authType: 'ldap', mailboxId: name }, { appId: mailbox.ownerId, addonId: addonId });
                 return res.end();
