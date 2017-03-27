@@ -886,7 +886,8 @@
     "defaults": {
       "version": "1.0.3",
       "from": "defaults@>=1.0.3 <2.0.0",
-      "resolved": "https://registry.npmjs.org/defaults/-/defaults-1.0.3.tgz"
+      "resolved": "https://registry.npmjs.org/defaults/-/defaults-1.0.3.tgz",
+      "dev": true
     },
     "defined": {
       "version": "1.0.0",
@@ -1170,11 +1171,6 @@
           "resolved": "https://registry.npmjs.org/qs/-/qs-6.2.0.tgz"
         }
       }
-    },
-    "express-rate-limit": {
-      "version": "2.6.0",
-      "from": "express-rate-limit@>=2.6.0 <3.0.0",
-      "resolved": "https://registry.npmjs.org/express-rate-limit/-/express-rate-limit-2.6.0.tgz"
     },
     "express-session": {
       "version": "1.15.1",
