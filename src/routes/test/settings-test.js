@@ -564,7 +564,7 @@ describe('Settings API', function () {
         });
 
         it('does not fail when dns errors', function (done) {
-            superagent.get(SERVER_URL + '/api/v1/settings/email_dns_records')
+            superagent.get(SERVER_URL + '/api/v1/settings/email_status')
                    .query({ access_token: token })
                    .end(function (err, res) {
                 expect(res.statusCode).to.equal(200);
@@ -583,7 +583,7 @@ describe('Settings API', function () {
         it('succeeds with dns errors', function (done) {
             clearDnsAnswerQueue();
 
-            superagent.get(SERVER_URL + '/api/v1/settings/email_dns_records')
+            superagent.get(SERVER_URL + '/api/v1/settings/email_status')
                    .query({ access_token: token })
                    .end(function (err, res) {
                 expect(res.statusCode).to.equal(200);
@@ -632,7 +632,7 @@ describe('Settings API', function () {
             dnsAnswerQueue[mxDomain].MX = null;
             dnsAnswerQueue[dmarcDomain].TXT = null;
 
-            superagent.get(SERVER_URL + '/api/v1/settings/email_dns_records')
+            superagent.get(SERVER_URL + '/api/v1/settings/email_status')
                    .query({ access_token: token })
                    .end(function (err, res) {
                 expect(res.statusCode).to.equal(200);
@@ -674,7 +674,7 @@ describe('Settings API', function () {
             dnsAnswerQueue[dkimDomain].TXT = [['v=DKIM2; t=s; p=' + cloudron.readDkimPublicKeySync()]];
             dnsAnswerQueue[spfDomain].TXT = [['v=spf1 a:random.com ~all']];
 
-            superagent.get(SERVER_URL + '/api/v1/settings/email_dns_records')
+            superagent.get(SERVER_URL + '/api/v1/settings/email_status')
                    .query({ access_token: token })
                    .end(function (err, res) {
                 expect(res.statusCode).to.equal(200);
@@ -713,7 +713,7 @@ describe('Settings API', function () {
 
             dnsAnswerQueue[spfDomain].TXT = [['v=spf1 a:example.com a:' + config.mailFqdn() + ' ~all']];
 
-            superagent.get(SERVER_URL + '/api/v1/settings/email_dns_records')
+            superagent.get(SERVER_URL + '/api/v1/settings/email_status')
                    .query({ access_token: token })
                    .end(function (err, res) {
                 expect(res.statusCode).to.equal(200);
@@ -737,7 +737,7 @@ describe('Settings API', function () {
             dnsAnswerQueue[dkimDomain].TXT = [['v=DKIM1;', 't=s;', 'p=' + cloudron.readDkimPublicKeySync()]];
             dnsAnswerQueue[spfDomain].TXT = [['v=spf1', ' a:' + config.adminFqdn(), ' ~all']];
 
-            superagent.get(SERVER_URL + '/api/v1/settings/email_dns_records')
+            superagent.get(SERVER_URL + '/api/v1/settings/email_status')
                    .query({ access_token: token })
                    .end(function (err, res) {
                 expect(res.statusCode).to.equal(200);
