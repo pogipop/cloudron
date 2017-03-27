@@ -533,6 +533,8 @@ describe('Settings API', function () {
         var dnsAnswerQueue = [];
         var dkimDomain, spfDomain, mxDomain, dmarcDomain;
 
+        this.timeout(10000);
+
         before(function (done) {
             var dns = require('native-dns');
 
@@ -588,37 +590,37 @@ describe('Settings API', function () {
                    .end(function (err, res) {
                 expect(res.statusCode).to.equal(200);
 
-                expect(res.body.dkim).to.be.an('object');
-                expect(res.body.dkim.domain).to.eql(dkimDomain);
-                expect(res.body.dkim.type).to.eql('TXT');
-                expect(res.body.dkim.value).to.eql(null);
-                expect(res.body.dkim.expected).to.eql('v=DKIM1; t=s; p=' + cloudron.readDkimPublicKeySync());
-                expect(res.body.dkim.status).to.eql(false);
+                expect(res.body.dns.dkim).to.be.an('object');
+                expect(res.body.dns.dkim.domain).to.eql(dkimDomain);
+                expect(res.body.dns.dkim.type).to.eql('TXT');
+                expect(res.body.dns.dkim.value).to.eql(null);
+                expect(res.body.dns.dkim.expected).to.eql('v=DKIM1; t=s; p=' + cloudron.readDkimPublicKeySync());
+                expect(res.body.dns.dkim.status).to.eql(false);
 
-                expect(res.body.spf).to.be.an('object');
-                expect(res.body.spf.domain).to.eql(spfDomain);
-                expect(res.body.spf.type).to.eql('TXT');
-                expect(res.body.spf.value).to.eql(null);
-                expect(res.body.spf.expected).to.eql('v=spf1 a:' + config.adminFqdn() + ' ~all');
-                expect(res.body.spf.status).to.eql(false);
+                expect(res.body.dns.spf).to.be.an('object');
+                expect(res.body.dns.spf.domain).to.eql(spfDomain);
+                expect(res.body.dns.spf.type).to.eql('TXT');
+                expect(res.body.dns.spf.value).to.eql(null);
+                expect(res.body.dns.spf.expected).to.eql('v=spf1 a:' + config.adminFqdn() + ' ~all');
+                expect(res.body.dns.spf.status).to.eql(false);
 
-                expect(res.body.dmarc).to.be.an('object');
-                expect(res.body.dmarc.type).to.eql('TXT');
-                expect(res.body.dmarc.value).to.eql(null);
-                expect(res.body.dmarc.expected).to.eql('v=DMARC1; p=reject; pct=100');
-                expect(res.body.dmarc.status).to.eql(false);
+                expect(res.body.dns.dmarc).to.be.an('object');
+                expect(res.body.dns.dmarc.type).to.eql('TXT');
+                expect(res.body.dns.dmarc.value).to.eql(null);
+                expect(res.body.dns.dmarc.expected).to.eql('v=DMARC1; p=reject; pct=100');
+                expect(res.body.dns.dmarc.status).to.eql(false);
 
-                expect(res.body.mx).to.be.an('object');
-                expect(res.body.mx.type).to.eql('MX');
-                expect(res.body.mx.value).to.eql(null);
-                expect(res.body.mx.expected).to.eql('10 ' + config.mailFqdn());
-                expect(res.body.mx.status).to.eql(false);
+                expect(res.body.dns.mx).to.be.an('object');
+                expect(res.body.dns.mx.type).to.eql('MX');
+                expect(res.body.dns.mx.value).to.eql(null);
+                expect(res.body.dns.mx.expected).to.eql('10 ' + config.mailFqdn());
+                expect(res.body.dns.mx.status).to.eql(false);
 
-                expect(res.body.ptr).to.be.an('object');
-                expect(res.body.ptr.type).to.eql('PTR');
+                expect(res.body.dns.ptr).to.be.an('object');
+                expect(res.body.dns.ptr.type).to.eql('PTR');
                 // expect(res.body.ptr.value).to.eql(null); this will be anything random
-                expect(res.body.ptr.expected).to.eql(config.mailFqdn());
-                expect(res.body.ptr.status).to.eql(false);
+                expect(res.body.dns.ptr.expected).to.eql(config.mailFqdn());
+                expect(res.body.dns.ptr.status).to.eql(false);
 
                 done();
             });
@@ -637,29 +639,29 @@ describe('Settings API', function () {
                    .end(function (err, res) {
                 expect(res.statusCode).to.equal(200);
 
-                expect(res.body.spf).to.be.an('object');
-                expect(res.body.spf.expected).to.eql('v=spf1 a:' + config.adminFqdn() + ' ~all');
-                expect(res.body.spf.status).to.eql(false);
-                expect(res.body.spf.value).to.eql(null);
+                expect(res.body.dns.spf).to.be.an('object');
+                expect(res.body.dns.spf.expected).to.eql('v=spf1 a:' + config.adminFqdn() + ' ~all');
+                expect(res.body.dns.spf.status).to.eql(false);
+                expect(res.body.dns.spf.value).to.eql(null);
 
-                expect(res.body.dkim).to.be.an('object');
-                expect(res.body.dkim.expected).to.eql('v=DKIM1; t=s; p=' + cloudron.readDkimPublicKeySync());
-                expect(res.body.dkim.status).to.eql(false);
-                expect(res.body.dkim.value).to.eql(null);
+                expect(res.body.dns.dkim).to.be.an('object');
+                expect(res.body.dns.dkim.expected).to.eql('v=DKIM1; t=s; p=' + cloudron.readDkimPublicKeySync());
+                expect(res.body.dns.dkim.status).to.eql(false);
+                expect(res.body.dns.dkim.value).to.eql(null);
 
-                expect(res.body.dmarc).to.be.an('object');
-                expect(res.body.dmarc.expected).to.eql('v=DMARC1; p=reject; pct=100');
-                expect(res.body.dmarc.status).to.eql(false);
-                expect(res.body.dmarc.value).to.eql(null);
+                expect(res.body.dns.dmarc).to.be.an('object');
+                expect(res.body.dns.dmarc.expected).to.eql('v=DMARC1; p=reject; pct=100');
+                expect(res.body.dns.dmarc.status).to.eql(false);
+                expect(res.body.dns.dmarc.value).to.eql(null);
 
-                expect(res.body.mx).to.be.an('object');
-                expect(res.body.mx.status).to.eql(false);
-                expect(res.body.mx.expected).to.eql('10 ' + config.mailFqdn());
-                expect(res.body.mx.value).to.eql(null);
+                expect(res.body.dns.mx).to.be.an('object');
+                expect(res.body.dns.mx.status).to.eql(false);
+                expect(res.body.dns.mx.expected).to.eql('10 ' + config.mailFqdn());
+                expect(res.body.dns.mx.value).to.eql(null);
 
-                expect(res.body.ptr).to.be.an('object');
-                expect(res.body.ptr.expected).to.eql(config.mailFqdn());
-                expect(res.body.ptr.status).to.eql(false);
+                expect(res.body.dns.ptr).to.be.an('object');
+                expect(res.body.dns.ptr.expected).to.eql(config.mailFqdn());
+                expect(res.body.dns.ptr.status).to.eql(false);
                 // expect(res.body.ptr.value).to.eql(null); this will be anything random
 
                 done();
@@ -679,30 +681,32 @@ describe('Settings API', function () {
                    .end(function (err, res) {
                 expect(res.statusCode).to.equal(200);
 
-                expect(res.body.spf).to.be.an('object');
-                expect(res.body.spf.expected).to.eql('v=spf1 a:' + config.adminFqdn() + ' a:random.com ~all');
-                expect(res.body.spf.status).to.eql(false);
-                expect(res.body.spf.value).to.eql('v=spf1 a:random.com ~all');
+                expect(res.body.dns.spf).to.be.an('object');
+                expect(res.body.dns.spf.expected).to.eql('v=spf1 a:' + config.adminFqdn() + ' a:random.com ~all');
+                expect(res.body.dns.spf.status).to.eql(false);
+                expect(res.body.dns.spf.value).to.eql('v=spf1 a:random.com ~all');
 
-                expect(res.body.dkim).to.be.an('object');
-                expect(res.body.dkim.expected).to.eql('v=DKIM1; t=s; p=' + cloudron.readDkimPublicKeySync());
-                expect(res.body.dkim.status).to.eql(false);
-                expect(res.body.dkim.value).to.eql('v=DKIM2; t=s; p=' + cloudron.readDkimPublicKeySync());
+                expect(res.body.dns.dkim).to.be.an('object');
+                expect(res.body.dns.dkim.expected).to.eql('v=DKIM1; t=s; p=' + cloudron.readDkimPublicKeySync());
+                expect(res.body.dns.dkim.status).to.eql(false);
+                expect(res.body.dns.dkim.value).to.eql('v=DKIM2; t=s; p=' + cloudron.readDkimPublicKeySync());
 
-                expect(res.body.dmarc).to.be.an('object');
-                expect(res.body.dmarc.expected).to.eql('v=DMARC1; p=reject; pct=100');
-                expect(res.body.dmarc.status).to.eql(false);
-                expect(res.body.dmarc.value).to.eql('v=DMARC2; p=reject; pct=100');
+                expect(res.body.dns.dmarc).to.be.an('object');
+                expect(res.body.dns.dmarc.expected).to.eql('v=DMARC1; p=reject; pct=100');
+                expect(res.body.dns.dmarc.status).to.eql(false);
+                expect(res.body.dns.dmarc.value).to.eql('v=DMARC2; p=reject; pct=100');
 
-                expect(res.body.mx).to.be.an('object');
-                expect(res.body.mx.status).to.eql(false);
-                expect(res.body.mx.expected).to.eql('10 ' + config.mailFqdn());
-                expect(res.body.mx.value).to.eql('20 ' + config.mailFqdn() + ' 30 ' + config.mailFqdn());
+                expect(res.body.dns.mx).to.be.an('object');
+                expect(res.body.dns.mx.status).to.eql(false);
+                expect(res.body.dns.mx.expected).to.eql('10 ' + config.mailFqdn());
+                expect(res.body.dns.mx.value).to.eql('20 ' + config.mailFqdn() + ' 30 ' + config.mailFqdn());
 
-                expect(res.body.ptr).to.be.an('object');
-                expect(res.body.ptr.expected).to.eql(config.mailFqdn());
-                expect(res.body.ptr.status).to.eql(false);
+                expect(res.body.dns.ptr).to.be.an('object');
+                expect(res.body.dns.ptr.expected).to.eql(config.mailFqdn());
+                expect(res.body.dns.ptr.status).to.eql(false);
                 // expect(res.body.ptr.value).to.eql(null); this will be anything random
+
+                expect(res.body.outboundPort25).to.be.an('object');
 
                 done();
             });
@@ -718,12 +722,12 @@ describe('Settings API', function () {
                    .end(function (err, res) {
                 expect(res.statusCode).to.equal(200);
 
-                expect(res.body.spf).to.be.an('object');
-                expect(res.body.spf.domain).to.eql(spfDomain);
-                expect(res.body.spf.type).to.eql('TXT');
-                expect(res.body.spf.value).to.eql('v=spf1 a:example.com a:' + config.mailFqdn() + ' ~all');
-                expect(res.body.spf.expected).to.eql('v=spf1 a:example.com a:' + config.mailFqdn() + ' ~all');
-                expect(res.body.spf.status).to.eql(true);
+                expect(res.body.dns.spf).to.be.an('object');
+                expect(res.body.dns.spf.domain).to.eql(spfDomain);
+                expect(res.body.dns.spf.type).to.eql('TXT');
+                expect(res.body.dns.spf.value).to.eql('v=spf1 a:example.com a:' + config.mailFqdn() + ' ~all');
+                expect(res.body.dns.spf.expected).to.eql('v=spf1 a:example.com a:' + config.mailFqdn() + ' ~all');
+                expect(res.body.dns.spf.status).to.eql(true);
 
                 done();
             });
@@ -742,29 +746,29 @@ describe('Settings API', function () {
                    .end(function (err, res) {
                 expect(res.statusCode).to.equal(200);
 
-                expect(res.body.dkim).to.be.an('object');
-                expect(res.body.dkim.domain).to.eql(dkimDomain);
-                expect(res.body.dkim.type).to.eql('TXT');
-                expect(res.body.dkim.value).to.eql('v=DKIM1; t=s; p=' + cloudron.readDkimPublicKeySync());
-                expect(res.body.dkim.expected).to.eql('v=DKIM1; t=s; p=' + cloudron.readDkimPublicKeySync());
-                expect(res.body.dkim.status).to.eql(true);
+                expect(res.body.dns.dkim).to.be.an('object');
+                expect(res.body.dns.dkim.domain).to.eql(dkimDomain);
+                expect(res.body.dns.dkim.type).to.eql('TXT');
+                expect(res.body.dns.dkim.value).to.eql('v=DKIM1; t=s; p=' + cloudron.readDkimPublicKeySync());
+                expect(res.body.dns.dkim.expected).to.eql('v=DKIM1; t=s; p=' + cloudron.readDkimPublicKeySync());
+                expect(res.body.dns.dkim.status).to.eql(true);
 
-                expect(res.body.spf).to.be.an('object');
-                expect(res.body.spf.domain).to.eql(spfDomain);
-                expect(res.body.spf.type).to.eql('TXT');
-                expect(res.body.spf.value).to.eql('v=spf1 a:' + config.adminFqdn() + ' ~all');
-                expect(res.body.spf.expected).to.eql('v=spf1 a:' + config.adminFqdn() + ' ~all');
-                expect(res.body.spf.status).to.eql(true);
+                expect(res.body.dns.spf).to.be.an('object');
+                expect(res.body.dns.spf.domain).to.eql(spfDomain);
+                expect(res.body.dns.spf.type).to.eql('TXT');
+                expect(res.body.dns.spf.value).to.eql('v=spf1 a:' + config.adminFqdn() + ' ~all');
+                expect(res.body.dns.spf.expected).to.eql('v=spf1 a:' + config.adminFqdn() + ' ~all');
+                expect(res.body.dns.spf.status).to.eql(true);
 
-                expect(res.body.dmarc).to.be.an('object');
-                expect(res.body.dmarc.expected).to.eql('v=DMARC1; p=reject; pct=100');
-                expect(res.body.dmarc.status).to.eql(true);
-                expect(res.body.dmarc.value).to.eql('v=DMARC1; p=reject; pct=100');
+                expect(res.body.dns.dmarc).to.be.an('object');
+                expect(res.body.dns.dmarc.expected).to.eql('v=DMARC1; p=reject; pct=100');
+                expect(res.body.dns.dmarc.status).to.eql(true);
+                expect(res.body.dns.dmarc.value).to.eql('v=DMARC1; p=reject; pct=100');
 
-                expect(res.body.mx).to.be.an('object');
-                expect(res.body.mx.status).to.eql(true);
-                expect(res.body.mx.expected).to.eql('10 ' + config.mailFqdn());
-                expect(res.body.mx.value).to.eql('10 ' + config.mailFqdn());
+                expect(res.body.dns.mx).to.be.an('object');
+                expect(res.body.dns.mx.status).to.eql(true);
+                expect(res.body.dns.mx.expected).to.eql('10 ' + config.mailFqdn());
+                expect(res.body.dns.mx.value).to.eql('10 ' + config.mailFqdn());
 
                 done();
             });
