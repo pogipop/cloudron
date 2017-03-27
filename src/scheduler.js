@@ -43,7 +43,7 @@ function sync(callback) {
             debug('sync: checking apps %j', allAppIds);
             async.eachSeries(allApps, function (app, iteratorDone) {
                 var appState = gState[app.id] || null;
-                var schedulerConfig = app.manifest.addons.scheduler || null;
+                var schedulerConfig = app.manifest.addons ? app.manifest.addons.scheduler : null;
 
                 if (!appState && !schedulerConfig) return iteratorDone(); // nothing changed
 
