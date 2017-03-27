@@ -734,11 +734,11 @@ describe('Ldap', function () {
         });
     });
 
-    describe('bind mailbox', function () {
+    describe('sendmail bind', function () {
         it('does not allow with invalid password', function (done) {
             var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + config.get('ldapPort') });
 
-            client.bind('cn=' + USER_0.username + ',ou=mailboxes,dc=cloudron', USER_0.password + 'nope', function (error) {
+            client.bind('cn=' + USER_0.username + ',ou=sendmail,dc=cloudron', USER_0.password + 'nope', function (error) {
                 expect(error).to.be.a(ldap.InvalidCredentialsError);
                 done();
             });
@@ -747,7 +747,7 @@ describe('Ldap', function () {
         it('allows with valid password', function (done) {
             var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + config.get('ldapPort') });
 
-            client.bind('cn=' + USER_0.username + ',ou=mailboxes,dc=cloudron', USER_0.password, function (error) {
+            client.bind('cn=' + USER_0.username + ',ou=sendmail,dc=cloudron', USER_0.password, function (error) {
                 done(error);
             });
         });
@@ -759,7 +759,7 @@ describe('Ldap', function () {
 
                 var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + config.get('ldapPort') });
 
-                client.bind('cn=' + USER_0.username + '@' + config.fqdn() + ',ou=mailboxes,dc=cloudron', USER_0.password, function (error) {
+                client.bind('cn=' + USER_0.username + '@' + config.fqdn() + ',ou=sendmail,dc=cloudron', USER_0.password, function (error) {
                     expect(error).not.to.be.ok();
 
                     settingsdb.set(settings.MAIL_CONFIG_KEY, JSON.stringify({ enabled: false }), done);
@@ -767,4 +767,39 @@ describe('Ldap', function () {
             });
         });
     });
+
+    describe('recvmail bind', function () {
+        it('does not allow with invalid password', function (done) {
+            var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + config.get('ldapPort') });
+
+            client.bind('cn=' + USER_0.username + ',ou=recvmail,dc=cloudron', USER_0.password + 'nope', function (error) {
+                expect(error).to.be.a(ldap.InvalidCredentialsError);
+                done();
+            });
+        });
+
+        it('allows with valid password', function (done) {
+            var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + config.get('ldapPort') });
+
+            client.bind('cn=' + USER_0.username + ',ou=recvmail,dc=cloudron', USER_0.password, function (error) {
+                done(error);
+            });
+        });
+
+        it('allows with valid email', function (done) {
+            // user settingsdb instead of settings, to not trigger further events
+            settingsdb.set(settings.MAIL_CONFIG_KEY, JSON.stringify({ enabled: true }), function (error) {
+                expect(error).not.to.be.ok();
+
+                var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + config.get('ldapPort') });
+
+                client.bind('cn=' + USER_0.username + '@' + config.fqdn() + ',ou=recvmail,dc=cloudron', USER_0.password, function (error) {
+                    expect(error).not.to.be.ok();
+
+                    settingsdb.set(settings.MAIL_CONFIG_KEY, JSON.stringify({ enabled: false }), done);
+                });
+            });
+        });
+    });
+
 });

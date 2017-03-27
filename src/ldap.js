@@ -6,6 +6,7 @@ exports = module.exports = {
 };
 
 var assert = require('assert'),
+    appdb = require('./appdb.js'),
     apps = require('./apps.js'),
     async = require('async'),
     config = require('./config.js'),
@@ -318,18 +319,27 @@ function authenticateMailbox(req, res, next) {
         if (error) return next(new ldap.OperationsError(error.message));
 
         if (mailbox.ownerType === mailboxdb.TYPE_APP) {
-            if (req.credentials !== mailbox.ownerId) return next(new ldap.NoSuchObjectError(req.dn.toString()));
-            eventlog.add(eventlog.ACTION_APP_LOGIN, { authType: 'ldap', mailboxId: name }, { appId: mailbox.ownerId });
-            return res.end();
+            var addonId = req.dn.rdns[1].attrs.ou.value.toLowerCase(); // 'sendmail' or 'recvmail'
+            var name;
+            if (addonId === 'sendmail') name = 'MAIL_SMTP_PASSWORD';
+            else if (addonId === 'recvmail') name = 'MAIL_IMAP_PASSWORD';
+            else return next(new ldap.OperationsError('Invalid DN'));
+
+            appdb.getAddonConfigByName(mailbox.ownerId, addonId, name, function (error, value) {
+                if (error || req.credentials !== value) return next(new ldap.NoSuchObjectError(req.dn.toString()));
+
+                eventlog.add(eventlog.ACTION_APP_LOGIN, { authType: 'ldap', mailboxId: name }, { appId: mailbox.ownerId, addonId: addonId });
+                return res.end();
+            });
+        } else if (mailbox.ownerType === mailboxdb.TYPE_USER) {
+            authenticateUser(req, res, function (error) {
+                if (error) return next(error);
+                eventlog.add(eventlog.ACTION_USER_LOGIN, { authType: 'ldap', mailboxId: name }, { userId: req.user.username });
+                res.end();
+            });
+        } else {
+            return next(new ldap.OperationsError('Unknown ownerType for mailbox'));
         }
-
-        assert.strictEqual(mailbox.ownerType, mailboxdb.TYPE_USER);
-
-        authenticateUser(req, res, function (error) {
-            if (error) return next(error);
-            eventlog.add(eventlog.ACTION_USER_LOGIN, { authType: 'ldap', mailboxId: name }, { userId: req.user.username });
-            res.end();
-        });
     });
 }
 
@@ -356,7 +366,8 @@ function start(callback) {
     gServer.search('ou=mailaliases,dc=cloudron', mailAliasSearch);
     gServer.search('ou=mailinglists,dc=cloudron', mailingListSearch);
 
-    gServer.bind('ou=mailboxes,dc=cloudron', authenticateMailbox);
+    gServer.bind('ou=recvmail,dc=cloudron', authenticateMailbox);
+    gServer.bind('ou=sendmail,dc=cloudron', authenticateMailbox);
 
     // this is the bind for addons (after bind, they might search and authenticate)
     gServer.bind('ou=addons,dc=cloudron', function(req, res, next) {
