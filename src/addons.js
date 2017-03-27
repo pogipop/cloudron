@@ -358,12 +358,13 @@ function setupSendMail(app, options, callback) {
         if (error) return callback(error);
 
         var mailbox = results.filter(function (r) { return !r.aliasTarget; })[0];
+        var password = generatePassword(64, false /* memorable */, /[\w\d_]/);
 
         var env = [
             { name: 'MAIL_SMTP_SERVER', value: 'mail' },
             { name: 'MAIL_SMTP_PORT', value: '2525' },
             { name: 'MAIL_SMTP_USERNAME', value: mailbox.name },
-            { name: 'MAIL_SMTP_PASSWORD', value: app.id },
+            { name: 'MAIL_SMTP_PASSWORD', value: password },
             { name: 'MAIL_FROM', value: mailbox.name + '@' + config.fqdn() },
             { name: 'MAIL_DOMAIN', value: config.fqdn() }
         ];
@@ -393,12 +394,13 @@ function setupRecvMail(app, options, callback) {
         if (error) return callback(error);
 
         var mailbox = results.filter(function (r) { return !r.aliasTarget; })[0];
+        var password = generatePassword(64, false /* memorable */, /[\w\d_]/);
 
         var env = [
             { name: 'MAIL_IMAP_SERVER', value: 'mail' },
             { name: 'MAIL_IMAP_PORT', value: '9993' },
             { name: 'MAIL_IMAP_USERNAME', value: mailbox.name },
-            { name: 'MAIL_IMAP_PASSWORD', value: app.id },
+            { name: 'MAIL_IMAP_PASSWORD', value: password },
             { name: 'MAIL_TO', value: mailbox.name + '@' + config.fqdn() },
             { name: 'MAIL_DOMAIN', value: config.fqdn() }
         ];
