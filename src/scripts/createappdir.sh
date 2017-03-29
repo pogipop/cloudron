@@ -18,20 +18,14 @@ if [[ "$1" == "--check" ]]; then
 fi
 
 if [[ "${BOX_ENV}" == "cloudron" ]]; then
-    readonly app_data_dir="${HOME}/data/$1"
-
-    # Only create subvolume if it does not exist
-    if [[ ! -d "${app_data_dir}" ]]; then
-        btrfs subvolume create "${app_data_dir}"
-    fi
+    readonly app_data_dir="${HOME}/appsdata/$1"
 
     mkdir -p "${app_data_dir}/data"
     # only the top level ownership is changed because containers own the subdirectores
     # and will chown them as necessary
     chown yellowtent:yellowtent "${app_data_dir}"
 else
-    readonly app_data_dir="${HOME}/.cloudron_test/data/$1"
+    readonly app_data_dir="${HOME}/.cloudron_test/appsdata/$1"
     mkdir -p "${app_data_dir}/data"
     chown ${SUDO_USER}:${SUDO_USER} "${app_data_dir}"
 fi
-
