@@ -1,0 +1,12 @@
+[Unit]
+Description=Cloudron Firewall
+After=docker.service
+PartOf=docker.service
+
+[Service]
+Type=oneshot
+ExecStart="/home/yellowtent/box/setup/start/cloudron-firewall.sh"
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
