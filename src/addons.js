@@ -358,7 +358,7 @@ function setupSendMail(app, options, callback) {
         if (error) return callback(error);
 
         var mailbox = results.filter(function (r) { return !r.aliasTarget; })[0];
-        var password = generatePassword(64, false /* memorable */, /[\w\d_]/);
+        var password = generatePassword(128, false /* memorable */, /[\w\d_]/);
 
         var env = [
             { name: 'MAIL_SMTP_SERVER', value: 'mail' },
@@ -394,7 +394,7 @@ function setupRecvMail(app, options, callback) {
         if (error) return callback(error);
 
         var mailbox = results.filter(function (r) { return !r.aliasTarget; })[0];
-        var password = generatePassword(64, false /* memorable */, /[\w\d_]/);
+        var password = generatePassword(128, false /* memorable */, /[\w\d_]/);
 
         var env = [
             { name: 'MAIL_IMAP_SERVER', value: 'mail' },
@@ -622,7 +622,7 @@ function setupRedis(app, options, callback) {
     assert.strictEqual(typeof options, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    var redisPassword = generatePassword(64, false /* memorable */, /[\w\d_]/); // ensure no / in password for being sed friendly (and be uri friendly)
+    var redisPassword = generatePassword(128, false /* memorable */, /[\w\d_]/); // ensure no / in password for being sed friendly (and be uri friendly)
     var redisVarsFile = path.join(paths.ADDON_CONFIG_DIR, 'redis-' + app.id + '_vars.sh');
     var redisDataDir = path.join(paths.DATA_DIR, app.id + '/redis');
 
