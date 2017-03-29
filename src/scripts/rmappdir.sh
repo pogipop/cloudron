@@ -18,13 +18,9 @@ if [[ "$1" == "--check" ]]; then
 fi
 
 if [[ "${BOX_ENV}" == "cloudron" ]]; then
-    readonly app_data_dir="${HOME}/data/$1"
-    if [[ -d "${app_data_dir}" ]]; then
-        find "${app_data_dir}" -mindepth 1 -delete
-        rm -rf "${app_data_dir}" || btrfs subvolume delete "${app_data_dir}"
-    fi
+    readonly app_data_dir="${HOME}/appsdata/$1"
+    rm -rf "${app_data_dir}"
 else
-    readonly app_data_dir="${HOME}/.cloudron_test/data/$1"
+    readonly app_data_dir="${HOME}/.cloudron_test/appsdata/$1"
     rm -rf "${app_data_dir}"
 fi
-
