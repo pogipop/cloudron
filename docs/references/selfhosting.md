@@ -378,6 +378,62 @@ To restore a Cloudron from a specific backup:
 
 * Make the box backup private, once the upgrade is complete.
 
+# Security
+
+Security is a core feature of the Cloudron and we continue to push out updates to tighten the Cloudron's security policy. Our goal is that Cloudron users should be able to rely on Cloudron being secure out of the box without having to do manual configuration.
+
+This section lists various security measures in place to protect the Cloudron.
+
+## HTTP Security
+
+*   Cloudron admin has a CSP policy that prevents XSS attacks.
+*   Cloudron set various security related HTTP headers like `X-XSS-Protection`, `X-Download-Options`,
+    `X-Content-Type-Options`, `X-Permitted-Cross-Domain-Policies`, `X-Frame-Options` across all apps.
+
+## SSL
+
+*   Cloudron enforces HTTPS across all apps. HTTP requests are automatically redirected to
+    HTTPS.
+*   The Cloudron automatically installs and renews certificates for your apps as needed. Should
+    installation of certificate fail for reasons beyond it's control, Cloudron admins will get a notification about it.
+*   Cloudron sets the `Strict-Transport-Security` header to protect apps against downgrade attacks
+    and cookie hijacking
+*   Cloudron has A+ rating for SSL from [SSL Labs](https://cloudron.io/blog/2017-02-22-release-0.102.0.html).
+
+## App isolation
+
+*   Apps are isolated completely from one another. One app cannot tamper with another apps' database or
+    local files. We achieve this using Linux Containers.
+*   Apps run with a read-only rootfs preventing attacks where the application code can be tampered with.
+*   Apps can only connect to addons like databases, LDAP, email relay using authentication.
+
+## Email
+
+*   Cloudron checks against the [Zen Spamhaus DNSBL](https://www.spamhaus.org/zen/) before accepting mail.
+*   Email can only be accessed with IMAP over TLS (IMAPS).
+*   Email can only be relayed (including same-domain emails) by authenticated users using SMTP/STARTTLS.
+*   Cloudron ensures that `MAIL FROM` is the same as the authenticated user. Users cannot spoof each other.
+*   All outbound mails from Cloudron are `DKIM` signed.
+*   Cloudron automatically sets up SPF, DMARC policies in the DNS for best email delivery.
+*   All incoming mail is scanned via `Spamassasin`.
+
+## Firewall
+
+*   Cloudron blocks all incoming ports except 22 (ssh), 80 (http), 443 (https)
+*   When email is enabled, Cloudron allows 25 (SMTP), 587 (MSA), 993 (IMAPS) and 4190 (WebSieve)
+
+## Rate limits
+
+The goal of rate limits is to prevent password brute force attacks.
+
+*   Cloudron password verification routes are limited to 1 request per second per IP.
+*   HTTP and HTTPS requests are rate limited to 250 requests in 5 seconds per IP.
+*   SSH access is rate-limited to max of 10 connections in 10 seconds per IP.
+*   With email enabled, Port 25, 587, 993, 4190 are rate limited to 10 connections in 10 seconds per IP.
+*   Connections to internal addons like PostgreSQL, MongoDB, Redis are rate limited to 250 connections
+    in 10 seconds per IP.
+*   Apps can only authenticate (LDAP, IMAP, Sieve) at the rate of 10 connections in 10 seconds per IP.
+
 # Debug
 
 You can SSH into your Cloudron and collect logs:
