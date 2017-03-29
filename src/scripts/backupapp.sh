@@ -50,11 +50,7 @@ elif [[ "$1" == "filesystem" ]]; then
 fi
 
 # perform backup
-readonly now=$(date "+%Y-%m-%d-%H%M%S")
 readonly app_data_dir="${APPS_DATA_DIR}/${app_id}"
-readonly app_data_snapshot="${APPS_DATA_DIR}/snapshots/${app_id}-${now}"
-
-btrfs subvolume snapshot -r "${app_data_dir}" "${app_data_snapshot}"
 
 # will be checked at the end
 try=0
@@ -73,24 +69,18 @@ if [[ "$1" == "s3" ]]; then
 
         # use aws instead of curl because curl will always read entire stream memory to set Content-Length
         # aws will do multipart upload
-        if cat "${app_data_snapshot}/config.json" \
+        if cat "${app_data_dir}/config.json" \
                |  aws ${optional_args} s3 cp - "${s3_config_url}" 2>"${error_log}"; then
             break
         fi
         cat "${error_log}" && rm "${error_log}"
     done
 
-    if [[ ${try} -eq 5 ]]; then
-        echo "Backup failed uploading config.json"
-        btrfs subvolume delete "${app_data_snapshot}"
-        exit 3
-    fi
-
     for try in `seq 1 5`; do
         echo "Uploading backup to ${s3_data_url} (try ${try})"
         error_log=$(mktemp)
 
-        if tar -czf - -C "${app_data_snapshot}" . \
+        if tar -czf - -C "${app_data_dir}" . \
                | openssl aes-256-cbc -e -pass "pass:${password}" \
                |  aws ${optional_args} s3 cp - "${s3_data_url}" 2>"${error_log}"; then
             break
@@ -101,13 +91,11 @@ elif [[ "$1" == "filesystem" ]]; then
     mkdir -p $(dirname "${backup_folder}/${backup_config_fileName}")
 
     echo "Storing backup config to ${backup_folder}/${backup_config_fileName}"
-    cat "${app_data_snapshot}/config.json" > "${backup_folder}/${backup_config_fileName}"
+    cat "${app_data_dir}/config.json" > "${backup_folder}/${backup_config_fileName}"
 
     echo "Storing backup data to ${backup_folder}/${backup_data_fileName}"
-    tar -czf - -C "${app_data_snapshot}" . | openssl aes-256-cbc -e -pass "pass:${password}" > "${backup_folder}/${backup_data_fileName}"
+    tar -czf - -C "${app_data_dir}" . | openssl aes-256-cbc -e -pass "pass:${password}" > "${backup_folder}/${backup_data_fileName}"
 fi
-
-btrfs subvolume delete "${app_data_snapshot}"
 
 if [[ ${try} -eq 5 ]]; then
     echo "Backup failed uploading backup tarball"
