@@ -69,6 +69,9 @@ if [[ "${arg_provider}" == "caas" ]]; then
     systemctl reload sshd
 fi
 
+mkdir -p "${APPS_DATA_DIR}"
+mkdir -p "${PLATFORM_DATA_DIR}"
+
 # keep these in sync with paths.js
 echo "==> Ensuring directories"
 if [[ ! -d "${PLATFORM_DATA_DIR}/mail" ]]; then
@@ -93,7 +96,6 @@ mkdir -p "${PLATFORM_DATA_DIR}/addons/mail"
 mkdir -p "${PLATFORM_DATA_DIR}/collectd/collectd.conf.d"
 mkdir -p "${PLATFORM_DATA_DIR}/acme"
 
-mkdir -p "${APPS_DATA_DIR}"
 mkdir -p "${BOX_DATA_DIR}"
 # FIXME THIS IS NOT NEEDED ANYMORE I GUESS?? unless we support restore from any backup version
 # if btrfs subvolume show "${DATA_DIR}/box" &> /dev/null; then
