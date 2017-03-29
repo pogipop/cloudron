@@ -215,7 +215,7 @@ function startPostgresql(callback) {
 
 function startMongodb(callback) {
     const tag = infra.images.mongodb.tag;
-    const dataDir = paths.PLATFORM_CONFIG_DIR;
+    const dataDir = paths.PLATFORM_DATA_DIR;
     const rootPassword = hat(8 * 128);
     const memoryLimit = (1 + Math.round(os.totalmem()/(1024*1024*1024)/4)) * 200;
 
