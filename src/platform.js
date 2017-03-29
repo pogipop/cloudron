@@ -146,7 +146,7 @@ function stopContainers(existingInfra, callback) {
 
 function startGraphite(callback) {
     const tag = infra.images.graphite.tag;
-    const dataDir = paths.DATA_DIR;
+    const dataDir = paths.PLATFORM_DATA_DIR;
 
     const cmd = `docker run --restart=always -d --name="graphite" \
                 --net cloudron \
@@ -166,11 +166,11 @@ function startGraphite(callback) {
 
 function startMysql(callback) {
     const tag = infra.images.mysql.tag;
-    const dataDir = paths.DATA_DIR;
+    const dataDir = paths.PLATFORM_DATA_DIR;
     const rootPassword = hat(8 * 128);
     const memoryLimit = (1 + Math.round(os.totalmem()/(1024*1024*1024)/4)) * 256;
 
-    if (!safe.fs.writeFileSync(paths.DATA_DIR + '/addons/mysql_vars.sh',
+    if (!safe.fs.writeFileSync(paths.ADDON_CONFIG_DIR + '/mysql_vars.sh',
             'MYSQL_ROOT_PASSWORD=' + rootPassword +'\nMYSQL_ROOT_HOST=172.18.0.1', 'utf8')) {
         return callback(new Error('Could not create mysql var file:' + safe.error.message));
     }
@@ -191,11 +191,11 @@ function startMysql(callback) {
 
 function startPostgresql(callback) {
     const tag = infra.images.postgresql.tag;
-    const dataDir = paths.DATA_DIR;
+    const dataDir = paths.PLATFORM_DATA_DIR;
     const rootPassword = hat(8 * 128);
     const memoryLimit = (1 + Math.round(os.totalmem()/(1024*1024*1024)/4)) * 256;
 
-    if (!safe.fs.writeFileSync(paths.DATA_DIR + '/addons/postgresql_vars.sh', 'POSTGRESQL_ROOT_PASSWORD=' + rootPassword, 'utf8')) {
+    if (!safe.fs.writeFileSync(paths.ADDON_CONFIG_DIR + '/postgresql_vars.sh', 'POSTGRESQL_ROOT_PASSWORD=' + rootPassword, 'utf8')) {
         return callback(new Error('Could not create postgresql var file:' + safe.error.message));
     }
 
@@ -215,11 +215,11 @@ function startPostgresql(callback) {
 
 function startMongodb(callback) {
     const tag = infra.images.mongodb.tag;
-    const dataDir = paths.DATA_DIR;
+    const dataDir = paths.PLATFORM_CONFIG_DIR;
     const rootPassword = hat(8 * 128);
     const memoryLimit = (1 + Math.round(os.totalmem()/(1024*1024*1024)/4)) * 200;
 
-    if (!safe.fs.writeFileSync(paths.DATA_DIR + '/addons/mongodb_vars.sh', 'MONGODB_ROOT_PASSWORD=' + rootPassword, 'utf8')) {
+    if (!safe.fs.writeFileSync(paths.ADDON_CONFIG_DIR + '/mongodb_vars.sh', 'MONGODB_ROOT_PASSWORD=' + rootPassword, 'utf8')) {
         return callback(new Error('Could not create mongodb var file:' + safe.error.message));
     }
 
@@ -248,7 +248,7 @@ function createMailConfig(callback) {
         var alertsTo = config.provider() === 'caas' ? [ 'support@cloudron.io' ] : [ ];
         alertsTo.concat(error ? [] : owner.email).join(',');
 
-        if (!safe.fs.writeFileSync(paths.DATA_DIR + '/addons/mail/mail.ini',
+        if (!safe.fs.writeFileSync(paths.ADDON_CONFIG_DIR + '/mail/mail.ini',
             `mail_domain=${fqdn}\nmail_server_name=${mailFqdn}\nalerts_from=${alertsFrom}\nalerts_to=${alertsTo}`, 'utf8')) {
             return callback(new Error('Could not create mail var file:' + safe.error.message));
         }
@@ -264,15 +264,15 @@ function startMail(callback) {
     // mail container uses /app/data for backed up data and /run for restart-able data
 
     const tag = infra.images.mail.tag;
-    const dataDir = paths.DATA_DIR;
+    const dataDir = paths.PLATFORM_DATA_DIR;
     const memoryLimit = Math.max((1 + Math.round(os.totalmem()/(1024*1024*1024)/4)) * 128, 256);
 
     // admin and mail share the same certificate
     certificates.getAdminCertificate(function (error, cert, key) {
         if (error) return callback(error);
 
-        if (!safe.fs.writeFileSync(paths.DATA_DIR + '/addons/mail/tls_cert.pem', cert)) return callback(new Error('Could not create cert file:' + safe.error.message));
-        if (!safe.fs.writeFileSync(paths.DATA_DIR + '/addons/mail/tls_key.pem', key))  return callback(new Error('Could not create key file:' + safe.error.message));
+        if (!safe.fs.writeFileSync(paths.ADDON_CONFIG_DIR + '/mail/tls_cert.pem', cert)) return callback(new Error('Could not create cert file:' + safe.error.message));
+        if (!safe.fs.writeFileSync(paths.ADDON_CONFIG_DIR + '/mail/tls_key.pem', key))  return callback(new Error('Could not create key file:' + safe.error.message));
 
         settings.getMailConfig(function (error, mailConfig) {
             if (error) return callback(error);

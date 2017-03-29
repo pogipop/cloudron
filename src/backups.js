@@ -318,7 +318,7 @@ function backupApp(app, manifest, prefix, callback) {
         appConfig.manifest = manifest;
         backupFunction = createNewAppBackup.bind(null, app, manifest, prefix);
 
-        if (!safe.fs.writeFileSync(path.join(paths.DATA_DIR, app.id + '/config.json'), JSON.stringify(appConfig), 'utf8')) {
+        if (!safe.fs.writeFileSync(path.join(paths.APPS_DATA_DIR, app.id + '/config.json'), JSON.stringify(appConfig), 'utf8')) {
             return callback(safe.error);
         }
     }

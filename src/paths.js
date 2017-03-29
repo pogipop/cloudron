@@ -6,18 +6,20 @@ var config = require('./config.js'),
 // keep these values in sync with start.sh
 exports = module.exports = {
     CLOUDRON_DEFAULT_AVATAR_FILE: path.join(__dirname + '/../assets/avatar.png'),
-    INFRA_VERSION_FILE: path.join(config.baseDir(), 'data/INFRA_VERSION'),
+    INFRA_VERSION_FILE: path.join(config.baseDir(), 'platformdata/INFRA_VERSION'),
 
-    DATA_DIR: path.join(config.baseDir(), 'data'),
+    OLD_DATA_DIR: path.join(config.baseDir(), 'data'),
+    PLATFORM_DATA_DIR: path.join(config.baseDir(), 'platformdata'),
+    APPS_DATA_DIR: path.join(config.baseDir(), 'appsdata'),
     BOX_DATA_DIR: path.join(config.baseDir(), 'boxdata'),
 
-    ACME_CHALLENGES_DIR: path.join(config.baseDir(), 'data/acme'),
-    ADDON_CONFIG_DIR: path.join(config.baseDir(), 'data/addons'),
-    COLLECTD_APPCONFIG_DIR: path.join(config.baseDir(), 'data/collectd/collectd.conf.d'),
-    MAIL_DATA_DIR: path.join(config.baseDir(), 'data/mail'),
-    NGINX_CONFIG_DIR: path.join(config.baseDir(), 'data/nginx'),
-    NGINX_APPCONFIG_DIR: path.join(config.baseDir(), 'data/nginx/applications'),
-    NGINX_CERT_DIR: path.join(config.baseDir(), 'data/nginx/cert'),
+    ACME_CHALLENGES_DIR: path.join(config.baseDir(), 'platformdata/acme'),
+    ADDON_CONFIG_DIR: path.join(config.baseDir(), 'platformdata/addons'),
+    COLLECTD_APPCONFIG_DIR: path.join(config.baseDir(), 'platformdata/collectd/collectd.conf.d'),
+    MAIL_DATA_DIR: path.join(config.baseDir(), 'platformdata/mail'),
+    NGINX_CONFIG_DIR: path.join(config.baseDir(), 'platformdata/nginx'),
+    NGINX_APPCONFIG_DIR: path.join(config.baseDir(), 'platformdata/nginx/applications'),
+    NGINX_CERT_DIR: path.join(config.baseDir(), 'platformdata/nginx/cert'),
 
     // this is not part of appdata because an icon may be set before install
     ACME_ACCOUNT_KEY_FILE: path.join(config.baseDir(), 'boxdata/acme/acme.key'),

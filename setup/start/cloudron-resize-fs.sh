@@ -2,10 +2,7 @@
 
 set -eu -o pipefail
 
-readonly USER_HOME="/home/yellowtent"
 readonly APPS_SWAP_FILE="/apps.swap"
-readonly USER_DATA_FILE="/root/user_data.img"
-readonly USER_DATA_DIR="/home/yellowtent/data"
 
 # all sizes are in mb
 readonly physical_memory=$(LC_ALL=C free -m | awk '/Mem:/ { print $2 }')
@@ -44,14 +41,3 @@ if [[ ${needed_swap_size} -gt 0 ]]; then
 else
     echo "Swap requirements already met"
 fi
-
-# see start.sh for the initial default size of 8gb. On small disks the calculation might be lower than 8gb resulting in a failure to resize here.
-echo "Resizing data volume"
-home_data_size=$((disk_size - system_size - swap_size - ext4_reserved))
-echo "Resizing up btrfs user data to size ${home_data_size}M"
-umount "${USER_DATA_DIR}" || true
-# Do not preallocate (non-sparse). Doing so overallocates for data too much in advance and causes problems when using many apps with smaller data
-# fallocate -l "${home_data_size}m" "${USER_DATA_FILE}" # does not overwrite existing data
-truncate -s "${home_data_size}m" "${USER_DATA_FILE}" # this will shrink it if the file had existed. this is useful when running this script on a live system
-mount -t btrfs -o loop,nosuid "${USER_DATA_FILE}" ${USER_DATA_DIR}
-btrfs filesystem resize max "${USER_DATA_DIR}"

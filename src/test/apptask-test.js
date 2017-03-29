@@ -130,7 +130,7 @@ describe('apptask', function () {
 
     it('create volume', function (done) {
         apptask._createVolume(APP, function (error) {
-            expect(fs.existsSync(paths.DATA_DIR + '/' + APP.id + '/data')).to.be(true);
+            expect(fs.existsSync(paths.APPS_DATA_DIR + '/' + APP.id + '/data')).to.be(true);
             expect(error).to.be(null);
             done();
         });
@@ -138,7 +138,7 @@ describe('apptask', function () {
 
     it('delete volume', function (done) {
         apptask._deleteVolume(APP, function (error) {
-            expect(!fs.existsSync(paths.DATA_DIR + '/' + APP.id + '/data')).to.be(true);
+            expect(!fs.existsSync(paths.APPS_DATA_DIR + '/' + APP.id + '/data')).to.be(true);
             expect(error).to.be(null);
             done();
         });
@@ -241,5 +241,3 @@ describe('apptask', function () {
         });
     });
 });
-
-

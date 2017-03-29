@@ -5,10 +5,13 @@ set -eu -o pipefail
 echo "==> Cloudron Start"
 
 readonly USER="yellowtent"
-readonly DATA_FILE="/root/user_data.img"
+# FIXME Remove this and the btrfs aspect
+# readonly DATA_FILE="/root/user_data.img"
 readonly HOME_DIR="/home/${USER}"
 readonly BOX_SRC_DIR="${HOME_DIR}/box"
-readonly DATA_DIR="${HOME_DIR}/data" # app and platform data
+readonly OLD_DATA_DIR="${HOME_DIR}/data";
+readonly PLATFORM_DATA_DIR="${HOME_DIR}/platformdata" # platform data
+readonly APPS_DATA_DIR="${HOME_DIR}/appsdata" # app data
 readonly BOX_DATA_DIR="${HOME_DIR}/boxdata" # box data
 readonly CONFIG_DIR="${HOME_DIR}/configs"
 readonly SETUP_PROGRESS_JSON="${HOME_DIR}/setup/website/progress.json"
@@ -66,42 +69,38 @@ if [[ "${arg_provider}" == "caas" ]]; then
     systemctl reload sshd
 fi
 
-echo "==> Setup btrfs data"
-if [[ ! -d "${DATA_DIR}" ]]; then
-    echo "==> Mounting loopback btrfs"
-    truncate -s "8192m" "${DATA_FILE}" # 8gb start (this will get resized dynamically by cloudron-resize-fs.service)
-    mkfs.btrfs -L UserDataHome "${DATA_FILE}"
-    mkdir -p "${DATA_DIR}"
-    mount -t btrfs -o loop,nosuid "${DATA_FILE}" ${DATA_DIR}
-fi
-
 # keep these in sync with paths.js
 echo "==> Ensuring directories"
-if ! btrfs subvolume show "${DATA_DIR}/mail" &> /dev/null; then
-    # Migrate mail data to new format
-    docker stop mail || true # otherwise the move below might fail if mail container writes in the middle
-    rm -rf "${DATA_DIR}/mail" # this used to be mail container's run directory
-    btrfs subvolume create "${DATA_DIR}/mail"
-    [[ -d "${DATA_DIR}/box/mail" ]] && mv "${DATA_DIR}/box/mail/"* "${DATA_DIR}/mail"
-    rm -rf "${DATA_DIR}/box/mail"
+if [[ ! -d "${PLATFORM_DATA_DIR}/mail" ]]; then
+    if [[ -d "${OLD_DATA_DIR}/mail" ]]; then
+        echo "==> Migrate old mail data"
+        # Migrate mail data to new format
+        docker stop mail || true # otherwise the move below might fail if mail container writes in the middle
+        mv "${OLD_DATA_DIR}/mail" "${PLATFORM_DATA_DIR}/mail" # this used to be mail container's run directory
+    else
+        echo "==> Create new mail data dir"
+        mkdir "${PLATFORM_DATA_DIR}/mail"
+    fi
 fi
-mkdir -p "${DATA_DIR}/graphite"
-mkdir -p "${DATA_DIR}/mail/dkim"
+mkdir -p "${PLATFORM_DATA_DIR}/graphite"
+mkdir -p "${PLATFORM_DATA_DIR}/mail/dkim"
 
-mkdir -p "${DATA_DIR}/mysql"
-mkdir -p "${DATA_DIR}/postgresql"
-mkdir -p "${DATA_DIR}/mongodb"
-mkdir -p "${DATA_DIR}/snapshots"
-mkdir -p "${DATA_DIR}/addons/mail"
-mkdir -p "${DATA_DIR}/collectd/collectd.conf.d"
-mkdir -p "${DATA_DIR}/acme"
+mkdir -p "${PLATFORM_DATA_DIR}/mysql"
+mkdir -p "${PLATFORM_DATA_DIR}/postgresql"
+mkdir -p "${PLATFORM_DATA_DIR}/mongodb"
+mkdir -p "${PLATFORM_DATA_DIR}/snapshots"
+mkdir -p "${PLATFORM_DATA_DIR}/addons/mail"
+mkdir -p "${PLATFORM_DATA_DIR}/collectd/collectd.conf.d"
+mkdir -p "${PLATFORM_DATA_DIR}/acme"
 
+mkdir -p "${APPS_DATA_DIR}"
 mkdir -p "${BOX_DATA_DIR}"
-if btrfs subvolume show "${DATA_DIR}/box" &> /dev/null; then
-    # Migrate box data out of data volume
-    mv "${DATA_DIR}/box/"* "${BOX_DATA_DIR}"
-    btrfs subvolume delete "${DATA_DIR}/box"
-fi
+# FIXME THIS IS NOT NEEDED ANYMORE I GUESS?? unless we support restore from any backup version
+# if btrfs subvolume show "${DATA_DIR}/box" &> /dev/null; then
+#     # Migrate box data out of data volume
+#     mv "${DATA_DIR}/box/"* "${BOX_DATA_DIR}"
+#     btrfs subvolume delete "${DATA_DIR}/box"
+# fi
 mkdir -p "${BOX_DATA_DIR}/appicons"
 mkdir -p "${BOX_DATA_DIR}/certs"
 mkdir -p "${BOX_DATA_DIR}/acme" # acme keys
@@ -156,18 +155,18 @@ cp "${script_dir}/start/sudoers" /etc/sudoers.d/${USER}
 
 echo "==> Configuring collectd"
 rm -rf /etc/collectd
-ln -sfF "${DATA_DIR}/collectd" /etc/collectd
-cp "${script_dir}/start/collectd.conf" "${DATA_DIR}/collectd/collectd.conf"
+ln -sfF "${PLATFORM_DATA_DIR}/collectd" /etc/collectd
+cp "${script_dir}/start/collectd.conf" "${PLATFORM_DATA_DIR}/collectd/collectd.conf"
 systemctl restart collectd
 
 echo "==> Configuring nginx"
 # link nginx config to system config
 unlink /etc/nginx 2>/dev/null || rm -rf /etc/nginx
-ln -s "${DATA_DIR}/nginx" /etc/nginx
-mkdir -p "${DATA_DIR}/nginx/applications"
-mkdir -p "${DATA_DIR}/nginx/cert"
-cp "${script_dir}/start/nginx/nginx.conf" "${DATA_DIR}/nginx/nginx.conf"
-cp "${script_dir}/start/nginx/mime.types" "${DATA_DIR}/nginx/mime.types"
+ln -s "${PLATFORM_DATA_DIR}/nginx" /etc/nginx
+mkdir -p "${PLATFORM_DATA_DIR}/nginx/applications"
+mkdir -p "${PLATFORM_DATA_DIR}/nginx/cert"
+cp "${script_dir}/start/nginx/nginx.conf" "${PLATFORM_DATA_DIR}/nginx/nginx.conf"
+cp "${script_dir}/start/nginx/mime.types" "${PLATFORM_DATA_DIR}/nginx/mime.types"
 if ! grep -q "^Restart=" /etc/systemd/system/multi-user.target.wants/nginx.service; then
     # default nginx service file does not restart on crash
     echo -e "\n[Service]\nRestart=always\n" >> /etc/systemd/system/multi-user.target.wants/nginx.service
@@ -177,11 +176,6 @@ systemctl start nginx
 
 # bookkeep the version as part of data
 echo "{ \"version\": \"${arg_version}\", \"boxVersionsUrl\": \"${arg_box_versions_url}\" }" > "${BOX_DATA_DIR}/version"
-
-# remove old snapshots. if we do want to keep this around, we will have to fix the chown -R below
-# which currently fails because these are readonly fs
-echo "==> Cleaning up snapshots"
-find "${DATA_DIR}/snapshots" -mindepth 1 -maxdepth 1 | xargs --no-run-if-empty btrfs subvolume delete
 
 # restart mysql to make sure it has latest config
 if [[ ! -f /etc/mysql/mysql.cnf ]] || ! diff -q "${script_dir}/start/mysql.cnf" /etc/mysql/mysql.cnf >/dev/null; then
@@ -208,7 +202,7 @@ if [[ -n "${arg_restore_url}" ]]; then
 
     while true; do
         if $curl -L "${arg_restore_url}" | openssl aes-256-cbc -d -pass "pass:${arg_restore_key}" \
-            | tar -zxf - --overwrite --transform="s,^box/\?,boxdata/," --transform="s,^mail/\?,data/mail/," --show-transformed-names -C "${HOME_DIR}"; then break; fi
+            | tar -zxf - --overwrite --transform="s,^box/\?,boxdata/," --transform="s,^mail/\?,platformdata/mail/," --show-transformed-names -C "${HOME_DIR}"; then break; fi
         echo "Failed to download data, trying again"
     done
 
@@ -263,11 +257,11 @@ CONF_END
 
 echo "==> Changing ownership"
 chown "${USER}:${USER}" -R "${CONFIG_DIR}"
-chown "${USER}:${USER}" -R "${DATA_DIR}/nginx" "${DATA_DIR}/collectd" "${DATA_DIR}/addons" "${DATA_DIR}/acme"
+chown "${USER}:${USER}" -R "${PLATFORM_DATA_DIR}/nginx" "${PLATFORM_DATA_DIR}/collectd" "${PLATFORM_DATA_DIR}/addons" "${PLATFORM_DATA_DIR}/acme"
 chown "${USER}:${USER}" -R "${BOX_DATA_DIR}"
-chown "${USER}:${USER}" -R "${DATA_DIR}/mail/dkim" # this is owned by box currently since it generates the keys
-chown "${USER}:${USER}" "${DATA_DIR}/INFRA_VERSION" 2>/dev/null || true
-chown "${USER}:${USER}" "${DATA_DIR}"
+chown "${USER}:${USER}" -R "${PLATFORM_DATA_DIR}/mail/dkim" # this is owned by box currently since it generates the keys
+chown "${USER}:${USER}" "${PLATFORM_DATA_DIR}/INFRA_VERSION" 2>/dev/null || true
+chown "${USER}:${USER}" "${PLATFORM_DATA_DIR}"
 
 echo "==> Adding automated configs"
 if [[ ! -z "${arg_backup_config}" ]]; then

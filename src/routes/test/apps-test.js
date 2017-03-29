@@ -747,7 +747,7 @@ describe('App installation', function () {
     });
 
     it('installation - volume created', function (done) {
-        expect(fs.existsSync(paths.DATA_DIR + '/' + APP_ID));
+        expect(fs.existsSync(paths.APPS_DATA_DIR + '/' + APP_ID));
         done();
     });
 
@@ -784,9 +784,9 @@ describe('App installation', function () {
 
             // support newer docker versions
             if (data.Volumes) {
-                expect(data.Volumes['/app/data']).to.eql(paths.DATA_DIR + '/' + APP_ID + '/data');
+                expect(data.Volumes['/app/data']).to.eql(paths.APPS_DATA_DIR + '/' + APP_ID + '/data');
             } else {
-                expect(data.Mounts.filter(function (mount) { return mount.Destination === '/app/data'; })[0].Source).to.eql(paths.DATA_DIR + '/' + APP_ID + '/data');
+                expect(data.Mounts.filter(function (mount) { return mount.Destination === '/app/data'; })[0].Source).to.eql(paths.APPS_DATA_DIR + '/' + APP_ID + '/data');
             }
 
             done();
@@ -1140,7 +1140,7 @@ describe('App installation', function () {
     });
 
     it('uninstalled - volume destroyed', function (done) {
-        expect(!fs.existsSync(paths.DATA_DIR + '/' + APP_ID));
+        expect(!fs.existsSync(paths.APPS_DATA_DIR + '/' + APP_ID));
         done();
     });
 

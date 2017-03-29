@@ -211,7 +211,7 @@ function getBindsSync(app, addons) {
 
     for (var addon in addons) {
         switch (addon) {
-        case 'localstorage': binds.push(path.join(paths.DATA_DIR, app.id, 'data') + ':/app/data:rw'); break;
+        case 'localstorage': binds.push(path.join(paths.APPS_DATA_DIR, app.id, 'data') + ':/app/data:rw'); break;
         default: break;
         }
     }
@@ -461,7 +461,7 @@ function backupMySql(app, options, callback) {
 
     callback = once(callback); // ChildProcess exit may or may not be called after error
 
-    var output = fs.createWriteStream(path.join(paths.DATA_DIR, app.id, 'mysqldump'));
+    var output = fs.createWriteStream(path.join(paths.APPS_DATA_DIR, app.id, 'mysqldump'));
     output.on('error', callback);
 
     var cmd = [ '/addons/mysql/service.sh', options.multipleDatabases ? 'backup-prefix' : 'backup', app.id ];
@@ -477,7 +477,7 @@ function restoreMySql(app, options, callback) {
 
         debugApp(app, 'restoreMySql');
 
-        var input = fs.createReadStream(path.join(paths.DATA_DIR, app.id, 'mysqldump'));
+        var input = fs.createReadStream(path.join(paths.APPS_DATA_DIR, app.id, 'mysqldump'));
         input.on('error', callback);
 
         var cmd = [ '/addons/mysql/service.sh', options.multipleDatabases ? 'restore-prefix' : 'restore', app.id ];
@@ -526,7 +526,7 @@ function backupPostgreSql(app, options, callback) {
 
     callback = once(callback); // ChildProcess exit may or may not be called after error
 
-    var output = fs.createWriteStream(path.join(paths.DATA_DIR, app.id, 'postgresqldump'));
+    var output = fs.createWriteStream(path.join(paths.APPS_DATA_DIR, app.id, 'postgresqldump'));
     output.on('error', callback);
 
     var cmd = [ '/addons/postgresql/service.sh', 'backup', app.id ];
@@ -542,7 +542,7 @@ function restorePostgreSql(app, options, callback) {
 
         debugApp(app, 'restorePostgreSql');
 
-        var input = fs.createReadStream(path.join(paths.DATA_DIR, app.id, 'postgresqldump'));
+        var input = fs.createReadStream(path.join(paths.APPS_DATA_DIR, app.id, 'postgresqldump'));
         input.on('error', callback);
 
         var cmd = [ '/addons/postgresql/service.sh', 'restore', app.id ];
@@ -592,7 +592,7 @@ function backupMongoDb(app, options, callback) {
 
     callback = once(callback); // ChildProcess exit may or may not be called after error
 
-    var output = fs.createWriteStream(path.join(paths.DATA_DIR, app.id, 'mongodbdump'));
+    var output = fs.createWriteStream(path.join(paths.APPS_DATA_DIR, app.id, 'mongodbdump'));
     output.on('error', callback);
 
     var cmd = [ '/addons/mongodb/service.sh', 'backup', app.id ];
@@ -608,7 +608,7 @@ function restoreMongoDb(app, options, callback) {
 
         debugApp(app, 'restoreMongoDb');
 
-        var input = fs.createReadStream(path.join(paths.DATA_DIR, app.id, 'mongodbdump'));
+        var input = fs.createReadStream(path.join(paths.APPS_DATA_DIR, app.id, 'mongodbdump'));
         input.on('error', callback);
 
         var cmd = [ '/addons/mongodb/service.sh', 'restore', app.id ];
@@ -624,7 +624,7 @@ function setupRedis(app, options, callback) {
 
     var redisPassword = generatePassword(128, false /* memorable */, /[\w\d_]/); // ensure no / in password for being sed friendly (and be uri friendly)
     var redisVarsFile = path.join(paths.ADDON_CONFIG_DIR, 'redis-' + app.id + '_vars.sh');
-    var redisDataDir = path.join(paths.DATA_DIR, app.id + '/redis');
+    var redisDataDir = path.join(paths.APPS_DATA_DIR, app.id + '/redis');
 
     if (!safe.fs.writeFileSync(redisVarsFile, 'REDIS_PASSWORD=' + redisPassword)) {
         return callback(new Error('Error writing redis config'));

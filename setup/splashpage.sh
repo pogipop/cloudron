@@ -6,12 +6,12 @@ readonly SETUP_WEBSITE_DIR="/home/yellowtent/setup/website"
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 readonly box_src_dir="$(realpath ${script_dir}/..)"
-readonly DATA_DIR="/home/yellowtent/data"
+readonly PLATFORM_DATA_DIR="/home/yellowtent/platformdata"
 readonly ADMIN_LOCATION="my" # keep this in sync with constants.js
 
 echo "Setting up nginx update page"
 
-if [[ ! -f "${DATA_DIR}/nginx/applications/admin.conf" ]]; then
+if [[ ! -f "${PLATFORM_DATA_DIR}/nginx/applications/admin.conf" ]]; then
     echo "No admin.conf found. This Cloudron has no domain yet. Skip splash setup"
     exit
 fi
@@ -29,16 +29,16 @@ cp -r "${script_dir}/splash/website/"* "${SETUP_WEBSITE_DIR}"
 # create nginx config
 readonly current_infra=$(node -e "console.log(require('${script_dir}/../src/infra_version.js').version);")
 existing_infra="none"
-[[ -f "${DATA_DIR}/INFRA_VERSION" ]] && existing_infra=$(node -e "console.log(JSON.parse(require('fs').readFileSync('${DATA_DIR}/INFRA_VERSION', 'utf8')).version);")
+[[ -f "${PLATFORM_DATA_DIR}/INFRA_VERSION" ]] && existing_infra=$(node -e "console.log(JSON.parse(require('fs').readFileSync('${PLATFORM_DATA_DIR}/INFRA_VERSION', 'utf8')).version);")
 if [[ "${arg_retire_reason}" != "" || "${existing_infra}" != "${current_infra}" ]]; then
     echo "Showing progress bar on all subdomains in retired mode or infra update. retire: ${arg_retire_reason} existing: ${existing_infra} current: ${current_infra}"
-    rm -f ${DATA_DIR}/nginx/applications/*
+    rm -f ${PLATFORM_DATA_DIR}/nginx/applications/*
     ${box_src_dir}/node_modules/.bin/ejs-cli -f "${script_dir}/start/nginx/appconfig.ejs" \
-        -O "{ \"vhost\": \"~^(.+)\$\", \"adminOrigin\": \"${admin_origin}\", \"endpoint\": \"splash\", \"sourceDir\": \"${SETUP_WEBSITE_DIR}\", \"certFilePath\": \"cert/host.cert\", \"keyFilePath\": \"cert/host.key\", \"xFrameOptions\": \"SAMEORIGIN\" }" > "${DATA_DIR}/nginx/applications/admin.conf"
+        -O "{ \"vhost\": \"~^(.+)\$\", \"adminOrigin\": \"${admin_origin}\", \"endpoint\": \"splash\", \"sourceDir\": \"${SETUP_WEBSITE_DIR}\", \"certFilePath\": \"cert/host.cert\", \"keyFilePath\": \"cert/host.key\", \"xFrameOptions\": \"SAMEORIGIN\" }" > "${PLATFORM_DATA_DIR}/nginx/applications/admin.conf"
 else
     echo "Show progress bar only on admin domain for normal update"
     ${box_src_dir}/node_modules/.bin/ejs-cli -f "${script_dir}/start/nginx/appconfig.ejs" \
-        -O "{ \"vhost\": \"${admin_fqdn}\", \"adminOrigin\": \"${admin_origin}\", \"endpoint\": \"splash\", \"sourceDir\": \"${SETUP_WEBSITE_DIR}\", \"certFilePath\": \"cert/host.cert\", \"keyFilePath\": \"cert/host.key\", \"xFrameOptions\": \"SAMEORIGIN\" }" > "${DATA_DIR}/nginx/applications/admin.conf"
+        -O "{ \"vhost\": \"${admin_fqdn}\", \"adminOrigin\": \"${admin_origin}\", \"endpoint\": \"splash\", \"sourceDir\": \"${SETUP_WEBSITE_DIR}\", \"certFilePath\": \"cert/host.cert\", \"keyFilePath\": \"cert/host.key\", \"xFrameOptions\": \"SAMEORIGIN\" }" > "${PLATFORM_DATA_DIR}/nginx/applications/admin.conf"
 fi
 
 if [[ "${arg_retire_reason}" == "migrate" ]]; then
