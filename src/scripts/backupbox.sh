@@ -45,15 +45,9 @@ fi
 
 # perform backup
 BOX_DATA_DIR="${HOME}/boxdata"
-MAIL_DATA_DIR="${HOME}/data/mail"
-mail_snapshot_dir="${HOME}/data/snapshots/mail"
 
 echo "Creating MySQL dump"
 mysqldump -u root -ppassword --single-transaction --routines --triggers box > "${BOX_DATA_DIR}/box.mysqldump"
-
-echo "Snapshotting mail"
-btrfs subvolume delete "${mail_snapshot_dir}" &> /dev/null || true
-btrfs subvolume snapshot -r "${MAIL_DATA_DIR}" "${mail_snapshot_dir}"
 
 # will be checked at the end
 try=0
@@ -71,7 +65,7 @@ if [[ "$1" == "s3" ]]; then
 
         # use aws instead of curl because curl will always read entire stream memory to set Content-Length
         # aws will do multipart upload
-        if tar -czf - -C "${HOME}" --transform="s,^boxdata/\?,box/," --transform="s,^data/mail/\?,mail/," --show-transformed-names boxdata data/mail \
+        if tar -czf - -C "${HOME}" --transform="s,^boxdata/\?,box/," --transform="s,^platformdata/mail/\?,mail/," --show-transformed-names boxdata platformdata/mail \
                | openssl aes-256-cbc -e -pass "pass:${password}" \
                | aws ${optional_args} s3 cp - "${s3_url}" 2>"${error_log}"; then
             break
@@ -83,12 +77,9 @@ elif [[ "$1" == "filesystem" ]]; then
 
     mkdir -p $(dirname "${backup_folder}/${backup_fileName}")
 
-    tar -czf - -C "${HOME}"  --transform="s,^boxdata/\?,box/," --transform="s,^data/mail/\?,mail/," --show-transformed-names boxdata data/mail \
+    tar -czf - -C "${HOME}"  --transform="s,^boxdata/\?,box/," --transform="s,^platformdata/mail/\?,mail/," --show-transformed-names boxdata platformdata/mail \
         | openssl aes-256-cbc -e -pass "pass:${password}" > "${backup_folder}/${backup_fileName}"
 fi
-
-echo "Deleting backup snapshot"
-btrfs subvolume delete "${mail_snapshot_dir}"
 
 if [[ ${try} -eq 5 ]]; then
     echo "Backup failed"
