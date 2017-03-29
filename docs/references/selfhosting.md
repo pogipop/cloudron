@@ -426,13 +426,13 @@ This section lists various security measures in place to protect the Cloudron.
 
 The goal of rate limits is to prevent password brute force attacks.
 
-*   Cloudron password verification routes are limited to 1 request per second per IP.
-*   HTTP and HTTPS requests are rate limited to 250 requests in 5 seconds per IP.
-*   SSH access is rate-limited to max of 10 connections in 10 seconds per IP.
-*   With email enabled, Port 25, 587, 993, 4190 are rate limited to 10 connections in 10 seconds per IP.
-*   Connections to internal addons like PostgreSQL, MongoDB, Redis are rate limited to 250 connections
-    in 10 seconds per IP.
-*   Apps can only authenticate (LDAP, IMAP, Sieve) at the rate of 10 connections in 10 seconds per IP.
+*   Cloudron password verification routes - 1 request per second per IP.
+*   HTTP and HTTPS requests - 250 requests per 5 seconds per IP.
+*   SSH access - 10 connections per 10 seconds per IP.
+*   Email access (Port 25, 587, 993, 4190) - 10 connections per 10 seconds per IP/App.
+*   Database addons access - 250 connections in 10 seconds per app.
+*   Email addon access - 10 connections per 10 seconds per app.
+*   Auth addon access - 10 connections per 10 seconds per app.
 
 # Debug
 
