@@ -17,7 +17,7 @@ if [ $# -lt 3 ]; then
     exit 1
 fi
 
-readonly DATA_DIR="${HOME}/data"
+readonly APPS_DATA_DIR="${HOME}/appsdata"
 readonly curl="curl --fail --connect-timeout 20 --retry 10 --retry-delay 2 --max-time 2400"
 
 app_id="$1"
@@ -33,8 +33,8 @@ for try in `seq 1 5`; do
 
     if $curl -L "${restore_url}" \
         | openssl aes-256-cbc -d -pass "pass:${restore_key}" \
-        | tar -zxf - -C "${DATA_DIR}/${app_id}" 2>"${error_log}"; then
-        chown -R yellowtent:yellowtent "${DATA_DIR}/${app_id}"
+        | tar -zxf - -C "${APPS_DATA_DIR}/${app_id}" 2>"${error_log}"; then
+        chown -R yellowtent:yellowtent "${APPS_DATA_DIR}/${app_id}"
         break
     fi
     cat "${error_log}" && rm "${error_log}"
@@ -46,4 +46,3 @@ if [[ ${try} -eq 5 ]]; then
 else
     echo "restore successful"
 fi
-

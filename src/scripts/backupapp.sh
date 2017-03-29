@@ -12,7 +12,7 @@ if [[ $# == 1 && "$1" == "--check" ]]; then
     exit 0
 fi
 
-readonly DATA_DIR="${HOME}/data"
+readonly APPS_DATA_DIR="${HOME}/appsdata"
 
 # verify argument count
 if [[ "$1" == "s3" && $# -lt 9 ]]; then
@@ -51,8 +51,8 @@ fi
 
 # perform backup
 readonly now=$(date "+%Y-%m-%d-%H%M%S")
-readonly app_data_dir="${DATA_DIR}/${app_id}"
-readonly app_data_snapshot="${DATA_DIR}/snapshots/${app_id}-${now}"
+readonly app_data_dir="${APPS_DATA_DIR}/${app_id}"
+readonly app_data_snapshot="${APPS_DATA_DIR}/snapshots/${app_id}-${now}"
 
 btrfs subvolume snapshot -r "${app_data_dir}" "${app_data_snapshot}"
 
