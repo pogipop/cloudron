@@ -21,4 +21,3 @@ exports = module.exports = {
         'graphite': { repo: 'cloudron/graphite', tag: 'cloudron/graphite:0.11.0' }
     }
 };
-

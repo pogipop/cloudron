@@ -25,6 +25,7 @@ var apps = require('./apps.js'),
     os = require('os'),
     paths = require('./paths.js'),
     safe = require('safetydance'),
+    semver = require('semver'),
     settings = require('./settings.js'),
     shell = require('./shell.js'),
     subdomains = require('./subdomains.js'),
@@ -125,7 +126,8 @@ function removeOldImages(callback) {
 function stopContainers(existingInfra, callback) {
     // TODO: be nice and stop addons cleanly (example, shutdown commands)
 
-    if (existingInfra.version !== infra.version) { // infra upgrade
+    // always stop addons to restart them on any infra change, regardless of minor or major update
+    if (existingInfra.version !== infra.version) {
         debug('stopping all containers for infra upgrade');
         shell.execSync('stopContainers', 'docker ps -qa | xargs --no-run-if-empty docker rm -f');
     } else {
@@ -317,6 +319,7 @@ function startMail(callback) {
 function startAddons(existingInfra, callback) {
     var startFuncs = [ ];
 
+    // always start addons on any infra change, regardless of minor or major update
     if (existingInfra.version !== infra.version) {
         debug('startAddons: no existing infra or infra upgrade. starting all addons');
         startFuncs.push(startGraphite, startMysql, startPostgresql, startMongodb, startMail);
@@ -336,10 +339,15 @@ function startAddons(existingInfra, callback) {
 }
 
 function startApps(existingInfra, callback) {
+    // Infra version change strategy:
+    // * no existing version - restore apps
+    // * major versions - restore apps
+    // * minor versions - reconfigure apps
+
     if (existingInfra.version === infra.version) {
         debug('startApp: apps are already uptodate');
         callback();
-    } else if (existingInfra.version === 'none') {
+    } else if (existingInfra.version === 'none' || semver.major(existingInfra.version) !== semver.major(infra.version)) {
         debug('startApps: restoring installed apps');
         apps.restoreInstalledApps(callback);
     } else {
