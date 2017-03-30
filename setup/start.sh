@@ -80,7 +80,9 @@ if [[ ! -d "${PLATFORM_DATA_DIR}/mail" ]]; then
         echo "==> Migrate old mail data"
         # Migrate mail data to new format
         docker stop mail || true # otherwise the move below might fail if mail container writes in the middle
-        mv -f "${OLD_DATA_DIR}/mail" "${PLATFORM_DATA_DIR}/mail" # this used to be mail container's run directory
+        mkdir -p "${PLATFORM_DATA_DIR}/mail"
+        # we can't move the whole folder as it is a btrfs subvolume mount
+        mv -f "${OLD_DATA_DIR}/mail/"* "${PLATFORM_DATA_DIR}/mail/" # this used to be mail container's run directory
     else
         echo "==> Create new mail data dir"
         mkdir -p "${PLATFORM_DATA_DIR}/mail"
