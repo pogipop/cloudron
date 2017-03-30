@@ -422,6 +422,10 @@ This section lists various security measures in place to protect the Cloudron.
 *   Cloudron blocks all incoming ports except 22 (ssh), 80 (http), 443 (https)
 *   When email is enabled, Cloudron allows 25 (SMTP), 587 (MSA), 993 (IMAPS) and 4190 (WebSieve)
 
+## OS Updates
+
+*   Ubuntu [automatic security updates](https://help.ubuntu.com/community/AutomaticSecurityUpdates) are enabled
+
 ## Rate limits
 
 The goal of rate limits is to prevent password brute force attacks.
