@@ -428,7 +428,7 @@ The goal of rate limits is to prevent password brute force attacks.
 
 *   Cloudron password verification routes - 10 requests per second per IP.
 *   HTTP and HTTPS requests - 5000 requests per second per IP.
-*   SSH access - 3 connections per second per IP.
+*   SSH access - 5 connections per 10 seconds per IP.
 *   Email access (Port 25, 587, 993, 4190) - 50 connections per second per IP/App.
 *   Database addons access - 5000 connections per second per app (addons use 128 byte passwords).
 *   Email relay access - 500 connections per second per app.
