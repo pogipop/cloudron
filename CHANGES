@@ -809,3 +809,11 @@
 * Support CSP for webinterface and OAuth views
 * (mail) Fix issue where Cloudron is only used to send emails
 
+[0.108.0]
+* Redirect to /setupdns.html when restoring
+* Fix setting custom avatar
+* Do not allocate more than 4GB swap
+* Generate real passwords for sendmail/recvmail addons
+* Rate limit all authentication routes to prevent password brute force
+* Generate 128 byte password for MySQL multi-db addon
+
