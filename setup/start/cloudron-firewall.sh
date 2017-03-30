@@ -38,8 +38,7 @@ iptables -t filter -A CLOUDRON_RATELIMIT_LOG -j DROP
 
 # http https
 for port in 80 443; do
-    iptables -A CLOUDRON_RATELIMIT -p tcp --dport ${port} -m state --state NEW -m recent --set --name "public-${port}"
-    iptables -A CLOUDRON_RATELIMIT -p tcp --dport ${port} -m state --state NEW -m recent --update --name "public-${port}" --seconds 1 --hitcount 5000 -j CLOUDRON_RATELIMIT_LOG
+    iptables -A CLOUDRON_RATELIMIT -p tcp --syn --dport ${port} -m connlimit --connlimit-above 5000 -j CLOUDRON_RATELIMIT_LOG
 done
 
 # ssh smtp ssh msa imap sieve
@@ -52,26 +51,17 @@ done
 
 # docker translates (dnat) 25, 587, 993, 4190 in the PREROUTING step
 for port in 2525 4190 9993; do
-    iptables -A CLOUDRON_RATELIMIT -p tcp ! -s 172.18.0.0/16 -d 172.18.0.0/16 --dport ${port} -m state --state NEW -m recent --set --name "public-${port}"
-    iptables -A CLOUDRON_RATELIMIT -p tcp ! -s 172.18.0.0/16 -d 172.18.0.0/16 --dport ${port} -m state --state NEW -m recent --update --name "public-${port}" --seconds 1 --hitcount 50 -j CLOUDRON_RATELIMIT_LOG
+    iptables -A CLOUDRON_RATELIMIT -p tcp --syn ! -s 172.18.0.0/16 -d 172.18.0.0/16 --dport ${port} -m connlimit --connlimit-above 50 -j CLOUDRON_RATELIMIT_LOG
 done
 
-# ldap, imap, sieve
-for port in 3002 4190 9993; do
-    iptables -A CLOUDRON_RATELIMIT -p tcp -s 172.18.0.0/16 -d 172.18.0.0/16 --dport ${port} -m state --state NEW -m recent --set --name "private-${port}"
-    iptables -A CLOUDRON_RATELIMIT -p tcp -s 172.18.0.0/16 -d 172.18.0.0/16 --dport ${port} -m state --state NEW -m recent --update --name "private-${port}" --seconds 1 --hitcount 500 -j CLOUDRON_RATELIMIT_LOG
+# msa, ldap, imap, sieve
+for port in 2525 3002 4190 9993; do
+    iptables -A CLOUDRON_RATELIMIT -p tcp --syn -s 172.18.0.0/16 -d 172.18.0.0/16 --dport ${port} -m connlimit --connlimit-above 500 -j CLOUDRON_RATELIMIT_LOG
 done
 
 # cloudron docker network: mysql postgresql redis mongodb
 for port in 3306 5432 6379 27017; do
-    iptables -A CLOUDRON_RATELIMIT -p tcp -s 172.18.0.0/16 -d 172.18.0.0/16 --dport ${port} -m state --state NEW -m recent --set --name "private-${port}"
-    iptables -A CLOUDRON_RATELIMIT -p tcp -s 172.18.0.0/16 -d 172.18.0.0/16 --dport ${port} -m state --state NEW -m recent --update --name "private-${port}" --seconds 1 --hitcount 5000 -j CLOUDRON_RATELIMIT_LOG
-done
-
-# cloudron docker network: mail relay
-for port in 2525; do
-    iptables -A CLOUDRON_RATELIMIT -p tcp -s 172.18.0.0/16 -d 172.18.0.0/16 --dport ${port} -m state --state NEW -m recent --set --name "private-${port}"
-    iptables -A CLOUDRON_RATELIMIT -p tcp -s 172.18.0.0/16 -d 172.18.0.0/16 --dport ${port} -m state --state NEW -m recent --update --name "private-${port}" --seconds 1 --hitcount 500 -j CLOUDRON_RATELIMIT_LOG
+    iptables -A CLOUDRON_RATELIMIT -p tcp --syn -s 172.18.0.0/16 -d 172.18.0.0/16 --dport ${port} -m connlimit --connlimit-above 5000 -j CLOUDRON_RATELIMIT_LOG
 done
 
 # For ssh, http, https
