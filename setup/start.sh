@@ -69,6 +69,7 @@ if [[ "${arg_provider}" == "caas" ]]; then
     systemctl reload sshd
 fi
 
+mkdir -p "${BOX_DATA_DIR}"
 mkdir -p "${APPS_DATA_DIR}"
 mkdir -p "${PLATFORM_DATA_DIR}"
 
@@ -79,15 +80,15 @@ if [[ ! -d "${PLATFORM_DATA_DIR}/mail" ]]; then
         echo "==> Migrate old mail data"
         # Migrate mail data to new format
         docker stop mail || true # otherwise the move below might fail if mail container writes in the middle
-        mv "${OLD_DATA_DIR}/mail" "${PLATFORM_DATA_DIR}/mail" # this used to be mail container's run directory
+        mv -f "${OLD_DATA_DIR}/mail" "${PLATFORM_DATA_DIR}/mail" # this used to be mail container's run directory
     else
         echo "==> Create new mail data dir"
-        mkdir "${PLATFORM_DATA_DIR}/mail"
+        mkdir -p "${PLATFORM_DATA_DIR}/mail"
     fi
 fi
+
 mkdir -p "${PLATFORM_DATA_DIR}/graphite"
 mkdir -p "${PLATFORM_DATA_DIR}/mail/dkim"
-
 mkdir -p "${PLATFORM_DATA_DIR}/mysql"
 mkdir -p "${PLATFORM_DATA_DIR}/postgresql"
 mkdir -p "${PLATFORM_DATA_DIR}/mongodb"
@@ -96,7 +97,6 @@ mkdir -p "${PLATFORM_DATA_DIR}/addons/mail"
 mkdir -p "${PLATFORM_DATA_DIR}/collectd/collectd.conf.d"
 mkdir -p "${PLATFORM_DATA_DIR}/acme"
 
-mkdir -p "${BOX_DATA_DIR}"
 # FIXME THIS IS NOT NEEDED ANYMORE I GUESS?? unless we support restore from any backup version
 # if btrfs subvolume show "${DATA_DIR}/box" &> /dev/null; then
 #     # Migrate box data out of data volume
