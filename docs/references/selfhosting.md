@@ -272,8 +272,8 @@ reputation should be easy to get back.
 
     * Scaleway - Edit your security group to allow email and [reboot the server](https://community.online.net/t/security-group-not-working/2096) for the change to take effect. You can also set a PTR record on the interface with your `my.<domain>`.
 
-* Check if your IP is listed in any DNSBL list [here](http://multirbl.valli.org/). In most cases,
-you can apply for removal of your IP by filling out a form at the DNSBL manager site.
+* Check if your IP is listed in any DNSBL list [here](http://multirbl.valli.org/) and [here](www.blk.mx).
+  In most cases, you can apply for removal of your IP by filling out a form at the DNSBL manager site.
 
 * When using wildcard or manual DNS backends, you have to setup the DMARC, MX records manually.
 
