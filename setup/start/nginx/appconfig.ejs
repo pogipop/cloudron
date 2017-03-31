@@ -45,6 +45,8 @@ server {
     proxy_hide_header X-Content-Type-Options;
     add_header X-Permitted-Cross-Domain-Policies "none";
     proxy_hide_header X-Permitted-Cross-Domain-Policies;
+    add_header Referrer-Policy "no-referrer-when-downgrade";
+    proxy_hide_header Referrer-Policy;
 
     proxy_http_version 1.1;
     proxy_intercept_errors on;
