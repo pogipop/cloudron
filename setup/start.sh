@@ -5,8 +5,6 @@ set -eu -o pipefail
 echo "==> Cloudron Start"
 
 readonly USER="yellowtent"
-# FIXME Remove this and the btrfs aspect
-# readonly DATA_FILE="/root/user_data.img"
 readonly HOME_DIR="/home/${USER}"
 readonly BOX_SRC_DIR="${HOME_DIR}/box"
 readonly OLD_DATA_DIR="${HOME_DIR}/data";
@@ -99,15 +97,21 @@ mkdir -p "${PLATFORM_DATA_DIR}/addons/mail"
 mkdir -p "${PLATFORM_DATA_DIR}/collectd/collectd.conf.d"
 mkdir -p "${PLATFORM_DATA_DIR}/acme"
 
-# FIXME THIS IS NOT NEEDED ANYMORE I GUESS?? unless we support restore from any backup version
-# if btrfs subvolume show "${DATA_DIR}/box" &> /dev/null; then
-#     # Migrate box data out of data volume
-#     mv "${DATA_DIR}/box/"* "${BOX_DATA_DIR}"
-#     btrfs subvolume delete "${DATA_DIR}/box"
-# fi
 mkdir -p "${BOX_DATA_DIR}/appicons"
 mkdir -p "${BOX_DATA_DIR}/certs"
 mkdir -p "${BOX_DATA_DIR}/acme" # acme keys
+
+echo "==> Check for old btrfs volumes"
+if df "${OLD_DATA_DIR}"; then
+    echo "==> Cleanup btrfs volumes"
+    # First stop docker and thus the apps to be able to unmount
+    systemctl stop docker
+    umount "${OLD_DATA_DIR}"
+    rm -rf "/root/user_data.img"
+    systemctl start docker
+else
+    echo "==> No btrfs volumes found";
+fi
 
 echo "==> Configuring journald"
 sed -e "s/^#SystemMaxUse=.*$/SystemMaxUse=100M/" \
