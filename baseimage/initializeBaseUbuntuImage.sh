@@ -26,7 +26,6 @@ debconf-set-selections <<< 'mysql-server mysql-server/root_password_again passwo
 apt-get -y install \
     acl \
     awscli \
-    btrfs-tools \
     build-essential \
     cron \
     curl \
@@ -127,4 +126,3 @@ fi
 # Disable bind for good measure (on online.net, kimsufi servers these are pre-installed and conflicts with unbound)
 systemctl stop bind9 || true
 systemctl disable bind9 || true
-
