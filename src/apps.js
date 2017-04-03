@@ -529,7 +529,7 @@ function install(data, auditSource, callback) {
         // if sso was unspecified, enable it by default if possible
         if (sso === null) sso = !!manifest.addons['ldap'] || !!manifest.addons['oauth'];
 
-        if (altDomain !== null && !validator.isFQDN(altDomain)) return callback(new AppsError(AppsError.BAD_FIELD, 'Invalid alt domain'));
+        if (altDomain !== null && !validator.isFQDN(altDomain)) return callback(new AppsError(AppsError.BAD_FIELD, 'Invalid external domain'));
 
         var appId = uuid.v4();
 
@@ -606,7 +606,7 @@ function configure(appId, data, auditSource, callback) {
 
         if ('altDomain' in data) {
             values.altDomain = data.altDomain;
-            if (values.altDomain !== null && !validator.isFQDN(values.altDomain)) return callback(new AppsError(AppsError.BAD_FIELD, 'Invalid alt domain'));
+            if (values.altDomain !== null && !validator.isFQDN(values.altDomain)) return callback(new AppsError(AppsError.BAD_FIELD, 'Invalid external domain'));
         }
 
         if ('portBindings' in data) {
