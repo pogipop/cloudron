@@ -7,13 +7,13 @@ angular.module('ngTld', [])
     .directive('checkTld', checkTld);
 
 function ngTld() {
-    function tldExists($path) {
+    function tldExists(path) {
         // https://github.com/oncletom/tld.js/issues/58
-        return ($path.$viewValue.slice(-1) !== '.') && $path.$viewValue === tld.getDomain($path.$viewValue);
+        return (path.slice(-1) !== '.') && path === tld.getDomain(path);
     }
 
-    function isSubdomain($path) {
-        return ($path.$viewValue.slice(-1) !== '.') && !!tld.getDomain($path.$viewValue) && $path.$viewValue !== tld.getDomain($path.$viewValue);
+    function isSubdomain(path) {
+        return (path.slice(-1) !== '.') && !!tld.getDomain(path) && path !== tld.getDomain(path);
     }
 
     return {
@@ -28,11 +28,11 @@ function checkTld(ngTld) {
         require: 'ngModel',
         link: function(scope, element, attr, ngModel) {
             ngModel.$validators.invalidTld = function(modelValue, viewValue) {
-                return ngTld.tldExists(ngModel);
+                return ngTld.tldExists(ngModel.$viewValue);
             };
 
             ngModel.$validators.invalidSubdomain = function(modelValue, viewValue) {
-                return !ngTld.isSubdomain(ngModel);
+                return !ngTld.isSubdomain(ngModel.$viewValue);
             };
         }
     };
