@@ -86,5 +86,10 @@ app.controller('SetupController', ['$scope', '$http', 'Client', function ($scope
         $scope.apiServerOrigin = status.apiServerOrigin;
 
         $scope.initialized = true;
+
+        // Ensure we have a good autofocus
+        setTimeout(function () {
+            $(document).find("[autofocus]:first").focus();
+        }, 250);
     });
 }]);
