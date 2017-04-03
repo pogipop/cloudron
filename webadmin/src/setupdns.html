@@ -102,6 +102,17 @@
                                 </p>
                             </div>
                         </div>
+                        <div class="row" ng-show="provider === 'ami'">
+                            <div class="col-md-10 col-md-offset-1 text-center">
+                                <br/>
+                                <h3>Owner verification</h3>
+                                <p>Provide the EC2 instance id to verify you have access to this server.</p>
+                                <div class="form-group" ng-class="{ 'has-error': dnsCredentialsForm.instanceId.$dirty && (dnsCredentialsForm.instanceId.$invalid || error) }">
+                                    <input type="text" class="form-control" ng-model="instanceId" id="inputInstanceId" name="instanceId" placeholder="AWS EC2 instance id" ng-maxlength="20" ng-minlength="10" ng-required="provider === 'ami'" autocomplete="off">
+                                </div>
+                                <p>&nbsp;<span ng-show="error" class="text-danger">{{ error }}</span></p>
+                            </div>
+                        </div>
                         <div class="row">
                             <div class="col-md-12 text-center">
                                 <button type="submit" class="btn btn-primary" ng-disabled="dnsCredentialsForm.$invalid"/><i class="fa fa-circle-o-notch fa-spin" ng-show="dnsCredentials.busy"></i> Next</button>

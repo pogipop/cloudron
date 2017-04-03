@@ -4,11 +4,14 @@
 var app = angular.module('Application', ['angular-md5', 'ui-notification', 'ngTld']);
 
 app.controller('SetupDNSController', ['$scope', '$http', 'Client', 'ngTld', function ($scope, $http, Client, ngTld) {
+    var search = decodeURIComponent(window.location.search).slice(1).split('&').map(function (item) { return item.split('='); }).reduce(function (o, k) { o[k[0]] = k[1]; return o; }, {});
+
     $scope.initialized = false;
     $scope.busy = false;
     $scope.error = null;
     $scope.provider = '';
     $scope.showDNSSetup = false;
+    $scope.instanceId = '';
 
     // keep in sync with certs.js
     $scope.dnsProvider = [
@@ -36,7 +39,8 @@ app.controller('SetupDNSController', ['$scope', '$http', 'Client', 'ngTld', func
             provider: $scope.dnsCredentials.provider,
             accessKeyId: $scope.dnsCredentials.accessKeyId,
             secretAccessKey: $scope.dnsCredentials.secretAccessKey,
-            token: $scope.dnsCredentials.digitalOceanToken
+            token: $scope.dnsCredentials.digitalOceanToken,
+            providerToken: $scope.instanceId
         };
 
         // special case the wildcard provider
@@ -46,7 +50,11 @@ app.controller('SetupDNSController', ['$scope', '$http', 'Client', 'ngTld', func
         }
 
         Client.setupDnsConfig(data, function (error) {
-            if (error) {
+            if (error && error.statusCode === 403) {
+                $scope.dnsCredentials.busy = false;
+                $scope.error = 'Wrong instance id provided.';
+                return;
+            } else if (error) {
                 $scope.dnsCredentials.busy = false;
                 $scope.dnsCredentials.error = error.message;
                 return;
@@ -84,6 +92,7 @@ app.controller('SetupDNSController', ['$scope', '$http', 'Client', 'ngTld', func
             $scope.dnsCredentials.provider = 'wildcard';
         }
 
+        $scope.instanceId = search.instanceId;
         $scope.provider = status.provider;
         $scope.initialized = true;
     });

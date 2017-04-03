@@ -4,6 +4,7 @@ exports = module.exports = {
     activate: activate,
     dnsSetup: dnsSetup,
     setupTokenAuth: setupTokenAuth,
+    providerTokenAuth: providerTokenAuth,
     getStatus: getStatus,
     reboot: reboot,
     migrate: migrate,
@@ -102,14 +103,22 @@ function setupTokenAuth(req, res, next) {
 
             next();
         });
-    } else if (config.provider() === 'ami') {
-        if (typeof req.query.setupToken !== 'string' || !req.query.setupToken) return next(new HttpError(400, 'setupToken must be a non empty string'));
+    } else {
+        next();
+    }
+}
+
+function providerTokenAuth(req, res, next) {
+    assert.strictEqual(typeof req.body, 'object');
+
+    if (config.provider() === 'ami') {
+        if (typeof req.body.providerToken !== 'string' || !req.body.providerToken) return next(new HttpError(400, 'providerToken must be a non empty string'));
 
         superagent.get('http://169.254.169.254/latest/meta-data/instance-id').timeout(30 * 1000).end(function (error, result) {
             if (error && !error.response) return next(new HttpError(500, error));
             if (result.statusCode !== 200) return next(new HttpError(500, 'Unable to get meta data'));
 
-            if (result.text !== req.query.setupToken) return next(new HttpError(403, 'Invalid token'));
+            if (result.text !== req.body.providerToken) return next(new HttpError(403, 'Invalid providerToken'));
 
             next();
         });
