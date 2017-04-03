@@ -33,6 +33,8 @@ app.controller('SetupDNSController', ['$scope', '$http', 'Client', 'ngTld', func
 
     $scope.setDnsCredentials = function () {
         $scope.dnsCredentials.busy = true;
+        $scope.dnsCredentials.error = null;
+        $scope.error = null;
 
         var data = {
             domain: $scope.dnsCredentials.domain,
