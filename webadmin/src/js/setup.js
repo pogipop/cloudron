@@ -1,7 +1,7 @@
 'use strict';
 
 // create main application module
-var app = angular.module('Application', ['angular-md5', 'ui-notification']);
+var app = angular.module('Application', ['angular-md5', 'ui-notification', 'ui.bootstrap']);
 
 app.controller('SetupController', ['$scope', '$http', 'Client', function ($scope, $http, Client) {
     // Stupid angular location provider either wants html5 location mode or not, do the query parsing on my own
