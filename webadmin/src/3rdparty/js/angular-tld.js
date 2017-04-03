@@ -1,6 +1,7 @@
 // !!!
 // This module is manually patched by us to not only report valid domains, but verify that subdomains are not accepted
 // !!!
+'use strict';
 
 angular.module('ngTld', [])
     .factory('ngTld', ngTld)
@@ -16,9 +17,14 @@ function ngTld() {
         return (path.slice(-1) !== '.') && !!tld.getDomain(path) && path !== tld.getDomain(path);
     }
 
+    function isNakedDomain(path) {
+        return (path.slice(-1) !== '.') && !!tld.getDomain(path) && path === tld.getDomain(path);
+    }
+
     return {
         tldExists: tldExists,
-        isSubdomain: isSubdomain
+        isSubdomain: isSubdomain,
+        isNakedDomain: isNakedDomain
     };
 }
 
@@ -37,4 +43,3 @@ function checkTld(ngTld) {
         }
     };
 }
-

@@ -50,8 +50,13 @@
                             </div>
                         </div>
 
-                        <p class="text-center" ng-show="appConfigure.usingAltDomain && appConfigure.location && appConfigure.isAltDomainValid()">
+                        <p class="text-center" ng-show="appConfigure.usingAltDomain && appConfigure.location && appConfigure.isAltDomainSubdomain()">
                             Add a CNAME record for <b>{{ appConfigure.location }}</b> to <b>{{ appConfigure.app.cnameTarget || appConfigure.app.fqdn }}</b>
+                            <br>
+                        </p>
+
+                        <p class="text-center" ng-show="appConfigure.usingAltDomain && appConfigure.location && appConfigure.isAltDomainNaked()">
+                            Add an A record for <b>{{ appConfigure.location }}</b> to this Cloudron's public IP</b>
                             <br>
                         </p>
 

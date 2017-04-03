@@ -50,6 +50,7 @@ var addons = require('./addons.js'),
     subdomains = require('./subdomains.js'),
     superagent = require('superagent'),
     sysinfo = require('./sysinfo.js'),
+    tld = require('tldjs'),
     util = require('util'),
     _ = require('underscore');
 
@@ -307,7 +308,16 @@ function waitForAltDomainDnsPropagation(app, callback) {
 
     // try for 10 minutes before giving up. this allows the user to "reconfigure" the app in the case where
     // an app has an external domain and cloudron is migrated to custom domain.
-    subdomains.waitForDns(app.altDomain, config.appFqdn(app.location), 'CNAME', { interval: 10000, times: 60 }, callback);
+    var isNakedDomain = tld.getDomain(app.altDomain) === app.altDomain;
+    if (isNakedDomain) { // check naked domains with A record since CNAME records don't work there
+        sysinfo.getPublicIp(function (error, ip) {
+            if (error) return callback(error);
+
+            subdomains.waitForDns(app.altDomain, ip, 'A', { interval: 10000, times: 60 }, callback);
+        });
+    } else {
+        subdomains.waitForDns(app.altDomain, config.appFqdn(app.location), 'CNAME', { interval: 10000, times: 60 }, callback);
+    }
 }
 
 // updates the app object and the database
@@ -404,7 +414,7 @@ function install(app, callback) {
         updateApp.bind(null, app, { installationProgress: '85, Waiting for DNS propagation' }),
         exports._waitForDnsPropagation.bind(null, app),
 
-        updateApp.bind(null, app, { installationProgress: '90, Waiting for External Domain CNAME setup' }),
+        updateApp.bind(null, app, { installationProgress: '90, Waiting for External Domain setup' }),
         exports._waitForAltDomainDnsPropagation.bind(null, app), // required when restoring and !lastBackupId
 
         updateApp.bind(null, app, { installationProgress: '95, Configure nginx' }),
@@ -492,7 +502,7 @@ function configure(app, callback) {
         updateApp.bind(null, app, { installationProgress: '80, Waiting for DNS propagation' }),
         exports._waitForDnsPropagation.bind(null, app),
 
-        updateApp.bind(null, app, { installationProgress: '85, Waiting for External Domain CNAME setup' }),
+        updateApp.bind(null, app, { installationProgress: '85, Waiting for External Domain setup' }),
         exports._waitForAltDomainDnsPropagation.bind(null, app),
 
         updateApp.bind(null, app, { installationProgress: '90, Configuring Nginx' }),

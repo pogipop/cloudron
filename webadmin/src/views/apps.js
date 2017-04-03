@@ -1,7 +1,7 @@
 'use strict';
 
 
-angular.module('Application').controller('AppsController', ['$scope', '$location', '$timeout', 'Client', 'AppStore', function ($scope, $location, $timeout, Client, AppStore) {
+angular.module('Application').controller('AppsController', ['$scope', '$location', '$timeout', 'Client', 'ngTld', 'AppStore', function ($scope, $location, $timeout, Client, ngTld, AppStore) {
     $scope.HOST_PORT_MIN = 1024;
     $scope.HOST_PORT_MAX = 65535;
     $scope.installedApps = Client.getInstalledApps();
@@ -42,8 +42,15 @@ angular.module('Application').controller('AppsController', ['$scope', '$location
         },
 
         isAltDomainValid: function () {
-            if (!$scope.appConfigure.usingAltDomain) return true;
-            return /.+\..+\..+/.test($scope.appConfigure.location); // 2 dots
+            return ngTld.tldExists($scope.appConfigure.location);
+        },
+
+        isAltDomainSubdomain: function () {
+            return ngTld.isSubdomain($scope.appConfigure.location);
+        },
+
+        isAltDomainNaked: function () {
+            return ngTld.isNakedDomain($scope.appConfigure.location);
         }
     };
 
