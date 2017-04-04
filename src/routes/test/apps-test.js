@@ -41,7 +41,7 @@ var SERVER_URL = 'http://localhost:' + config.get('port');
 
 // Test image information
 var TEST_IMAGE_REPO = 'cloudron/test';
-var TEST_IMAGE_TAG = '20.0.0';
+var TEST_IMAGE_TAG = '22.0.0';
 var TEST_IMAGE = TEST_IMAGE_REPO + ':' + TEST_IMAGE_TAG;
 // var TEST_IMAGE_ID = child_process.execSync('docker inspect --format={{.Id}} ' + TEST_IMAGE).toString('utf8').trim();
 
@@ -758,7 +758,10 @@ describe('App installation', function () {
             superagent.get('http://localhost:' + appEntry.httpPort + appResult.manifest.healthCheckPath)
                 .end(function (err, res) {
                 if (err || res.statusCode !== 200) {
-                    if (--tryCount === 0) return done(new Error('Timedout'));
+                    if (--tryCount === 0) {
+                        console.log('Unable to curl http://localhost:' + appEntry.httpPort + appResult.manifest.healthCheckPath);
+                        return done(new Error('Timedout'));
+                    }
                     return setTimeout(healthCheck, 2000);
                 }
 
