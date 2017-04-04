@@ -97,7 +97,7 @@ server {
             proxy_read_timeout 30m;
         }
 
-        # graphite paths
+        # graphite paths (uncomment block below and visit /graphite/index.html)
         # location ~ ^/(graphite|content|metrics|dashboard|render|browser|composer)/ {
         #     proxy_pass   http://127.0.0.1:8000;
         #     client_max_body_size 1m;
