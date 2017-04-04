@@ -347,7 +347,7 @@ function startApps(existingInfra, callback) {
     if (existingInfra.version === infra.version) {
         debug('startApp: apps are already uptodate');
         callback();
-    } else if (existingInfra.version === 'none' || semver.major(existingInfra.version) !== semver.major(infra.version)) {
+    } else if (existingInfra.version === 'none' || !semver.valid(existingInfra.version) || semver.major(existingInfra.version) !== semver.major(infra.version)) {
         debug('startApps: restoring installed apps');
         apps.restoreInstalledApps(callback);
     } else {
