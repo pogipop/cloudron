@@ -104,11 +104,10 @@ mkdir -p "${BOX_DATA_DIR}/acme" # acme keys
 echo "==> Check for old btrfs volumes"
 if df "${OLD_DATA_DIR}"; then
     echo "==> Cleanup btrfs volumes"
-    # First stop docker and thus the apps to be able to unmount
-    systemctl stop docker
+    # First stop all container to be able to unmount
+    docker ps -q | xargs docker stop
     umount "${OLD_DATA_DIR}"
     rm -rf "/root/user_data.img"
-    systemctl start docker
 else
     echo "==> No btrfs volumes found";
 fi
