@@ -13,6 +13,7 @@ exports = module.exports = {
 
 var assert = require('assert'),
     config = require('./config.js'),
+    debug = require('debug')('box:ssh'),
     fs = require('fs'),
     path = require('path'),
     safe = require('safetydance'),
@@ -50,17 +51,16 @@ SshError.INTERNAL_ERROR = 'Internal Error';
 
 function clear(callback) {
     assert.strictEqual(typeof callback, 'function');
-    fs.unlink(AUTHORIZED_KEYS_FILEPATH, function (error) {
-        if (error && error.code !== 'ENOENT') return callback(error);
-        callback();
-    });
+
+    safe.fs.unlinkSync(AUTHORIZED_KEYS_FILEPATH);
+    callback();
 }
 
 function saveKeys(keys) {
     assert(Array.isArray(keys));
 
     if (!safe.fs.writeFileSync(AUTHORIZED_KEYS_TMP_FILEPATH, keys.map(function (k) { return k.key; }).join('\n'))) {
-        console.error(safe.error);
+        debug('Error writing to temporary file', safe.error);
         return false;
     }
 
@@ -68,7 +68,7 @@ function saveKeys(keys) {
         // 600 = rw-------
         fs.chmodSync(AUTHORIZED_KEYS_TMP_FILEPATH, '600');
     } catch (e) {
-        console.error('Failed to adjust permissions of %s', AUTHORIZED_KEYS_TMP_FILEPATH, e);
+        debug('Failed to adjust permissions of %s %j', AUTHORIZED_KEYS_TMP_FILEPATH, e);
         return false;
     }
 
