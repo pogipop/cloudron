@@ -89,6 +89,8 @@ function getKeys() {
         .map(function (k) { return { identifier: k.split(' ')[2], key: k }; })
         .filter(function (k) { return k.identifier && k.key; });
 
+    safe.fs.unlinkSync(AUTHORIZED_KEYS_TMP_FILEPATH);
+
     return keys;
 }
 
