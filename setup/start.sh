@@ -144,7 +144,6 @@ cp -r "${script_dir}/start/systemd/." /etc/systemd/system/
 systemctl daemon-reload
 systemctl enable unbound
 systemctl enable cloudron.target
-systemctl disable iptables-restore || true # old versions of cloudron had this service
 systemctl enable cloudron-firewall
 
 # update firewall rules
