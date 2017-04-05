@@ -102,7 +102,7 @@ mkdir -p "${BOX_DATA_DIR}/certs"
 mkdir -p "${BOX_DATA_DIR}/acme" # acme keys
 
 echo "==> Check for old btrfs volumes"
-if df "${OLD_DATA_DIR}"; then
+if mountpoint -q "${OLD_DATA_DIR}"; then
     echo "==> Cleanup btrfs volumes"
     # First stop all container to be able to unmount
     docker ps -q | xargs docker stop
