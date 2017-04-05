@@ -902,12 +902,18 @@ angular.module('Application').service('Client', ['$http', 'md5', 'Notification',
         app.iconUrl = icons.cloudron;
         app.iconUrlStore = icons.store;
 
+        // FIXME have a real message structure, not some string to randomly parse
         // extract progress percentage
         var installationProgress = app.installationProgress || '';
         var progress = parseInt(installationProgress.split(',')[0], 10);
-        if (isNaN(progress)) progress = 0;
-        app.progress = progress;
-        app.message = installationProgress.replace(/.*, /,'');
+        // Unfortunatelly some errors are not actual progress messages, but still have a number in fron like a http status code
+        if (isNaN(progress) || progress > 100) {
+            app.progress = 0;
+            app.message = installationProgress;
+        } else {
+            app.progress = progress;
+            app.message = installationProgress.replace(/.*, /,'');
+        }
 
         return app;
     };
