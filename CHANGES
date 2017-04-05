@@ -817,3 +817,9 @@
 * Rate limit all authentication routes to prevent password brute force
 * Generate 128 byte password for MySQL multi-db addon
 
+[0.109.0]
+* Add Referrer-policy
+* Add tooltip for admin email field explaining it is local & private
+* Verify AMI instance id during DNS setup instead of admin account setup
+* Split platform and app data folders and get rid of btrfs volumes
+
