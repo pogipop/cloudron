@@ -18,6 +18,10 @@ var assert = require('assert'),
 
 var DIGITALOCEAN_ENDPOINT = 'https://api.digitalocean.com';
 
+function formatError(response) {
+    return util.format('DigitalOcean DNS error [%s] %j', response.statusCode, response.body);
+}
+
 function getInternal(dnsConfig, zoneName, subdomain, type, callback) {
     assert.strictEqual(typeof dnsConfig, 'object');
     assert.strictEqual(typeof zoneName, 'string');
@@ -30,9 +34,9 @@ function getInternal(dnsConfig, zoneName, subdomain, type, callback) {
       .timeout(30 * 1000)
       .end(function (error, result) {
         if (error && !error.response) return callback(error);
-        if (result.statusCode === 404) return callback(new SubdomainError(SubdomainError.NOT_FOUND, util.format('%s %j', result.statusCode, result.body)));
-        if (result.statusCode === 403 || result.statusCode === 401) return callback(new SubdomainError(SubdomainError.ACCESS_DENIED, util.format('%s %j', result.statusCode, result.body)));
-        if (result.statusCode !== 200) return callback(new SubdomainError(SubdomainError.EXTERNAL_ERROR, util.format('%s %j', result.statusCode, result.body)));
+        if (result.statusCode === 404) return callback(new SubdomainError(SubdomainError.NOT_FOUND, formatError(result)));
+        if (result.statusCode === 403 || result.statusCode === 401) return callback(new SubdomainError(SubdomainError.ACCESS_DENIED, formatError(result)));
+        if (result.statusCode !== 200) return callback(new SubdomainError(SubdomainError.EXTERNAL_ERROR, formatError(result)));
 
         var tmp = result.body.domain_records.filter(function (record) {
             return (record.type === type && record.name === subdomain);
@@ -84,9 +88,9 @@ function upsert(dnsConfig, zoneName, subdomain, type, values, callback) {
                   .timeout(30 * 1000)
                   .end(function (error, result) {
                     if (error && !error.response) return callback(error);
-                    if (result.statusCode === 403 || result.statusCode === 401) return callback(new SubdomainError(SubdomainError.ACCESS_DENIED, util.format('%s %j', result.statusCode, result.body)));
+                    if (result.statusCode === 403 || result.statusCode === 401) return callback(new SubdomainError(SubdomainError.ACCESS_DENIED, formatError(result)));
                     if (result.statusCode === 422) return callback(new SubdomainError(SubdomainError.BAD_FIELD, result.body.message));
-                    if (result.statusCode !== 201) return callback(new SubdomainError(SubdomainError.EXTERNAL_ERROR, util.format('%s %j', result.statusCode, result.body)));
+                    if (result.statusCode !== 201) return callback(new SubdomainError(SubdomainError.EXTERNAL_ERROR, formatError(result)));
 
                     return callback(null);
                 });
@@ -100,9 +104,9 @@ function upsert(dnsConfig, zoneName, subdomain, type, values, callback) {
                     ++i;
 
                     if (error && !error.response) return callback(error);
-                    if (result.statusCode === 403 || result.statusCode === 401) return callback(new SubdomainError(SubdomainError.ACCESS_DENIED, util.format('%s %j', result.statusCode, result.body)));
+                    if (result.statusCode === 403 || result.statusCode === 401) return callback(new SubdomainError(SubdomainError.ACCESS_DENIED, formatError(result)));
                     if (result.statusCode === 422) return callback(new SubdomainError(SubdomainError.BAD_FIELD, result.body.message));
-                    if (result.statusCode !== 200) return callback(new SubdomainError(SubdomainError.EXTERNAL_ERROR, util.format('%s %j', result.statusCode, result.body)));
+                    if (result.statusCode !== 200) return callback(new SubdomainError(SubdomainError.EXTERNAL_ERROR, formatError(result)));
 
                     return callback(null);
                 });
@@ -165,8 +169,8 @@ function del(dnsConfig, zoneName, subdomain, type, values, callback) {
           .end(function (error, result) {
             if (error && !error.response) return callback(error);
             if (result.statusCode === 404) return callback(null);
-            if (result.statusCode === 403 || result.statusCode === 401) return callback(new SubdomainError(SubdomainError.ACCESS_DENIED, util.format('%s %j', result.statusCode, result.body)));
-            if (result.statusCode !== 204) return callback(new SubdomainError(SubdomainError.EXTERNAL_ERROR, util.format('%s %j', result.statusCode, result.body)));
+            if (result.statusCode === 403 || result.statusCode === 401) return callback(new SubdomainError(SubdomainError.ACCESS_DENIED, formatError(result)));
+            if (result.statusCode !== 204) return callback(new SubdomainError(SubdomainError.EXTERNAL_ERROR, formatError(result)));
 
             debug('del: done');
 
