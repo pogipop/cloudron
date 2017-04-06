@@ -94,6 +94,9 @@ Specifying `fallback` will setup the Cloudron to use the fallback wildcard certi
 Initially a self-signed one is provided, which can be overwritten later in the admin interface.
 This may be useful for non-public installations.
 
+
+* `--data-dir` is the path where Cloudron will store platform and application data.
+
 Optional arguments used for update and restore:
 
 * `--version` is the version of Cloudron to install. By default, the setup script installs
@@ -446,6 +449,27 @@ The goal of rate limits is to prevent password brute force attacks.
 
 *   Cloudron requires user passwords to have 1 uppercase, 1 number and 1 symbol.
 *   Minimum length for user passwords is 8
+
+# Data directory
+
+If you are installing a brand new Cloudron, you can configure the data directory
+that Cloudron uses by passing the `--data-dir` option to `cloudron-setup`.
+
+```
+./cloudron-setup --provider digitalocean --data-dir /var/cloudrondata
+```
+
+If you have an existing Cloudron, we recommend moving the existing data directory
+to a new location as follows:
+
+```
+    systemctl stop box docker
+    mv /home/yellowtent/data/appdata /var/cloudrondata
+    ln -s /var/cloudrondata/appdata /home/yellowtent/data/appdata
+    mv /home/yellowtent/data/platformdata /var/cloudrondata
+    ln -s /var/cloudrondata/platformdata /home/yellowtent/data/platformdata
+    systemctl start box docker
+```
 
 # Debug
 
