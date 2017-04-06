@@ -642,7 +642,7 @@ Once your app is ready, you can upload it to the store for `beta testing` by
 other Cloudron users. This can be done using:
 
 ```
-  cloudron upload
+  cloudron appstore upload
 ```
 
 You should now be able to visit `/#/appstore/<appid>?version=<appversion>` on your
@@ -656,7 +656,7 @@ Other Cloudron users can install your app on their Cloudron's using
 Once you are satisfied with the beta testing, you can submit it for review.
 
 ```
-  cloudron submit
+  cloudron appstore submit
 ```
 
 The cloudron.io team will review the app and publish the app to the store.
