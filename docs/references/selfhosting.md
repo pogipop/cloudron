@@ -406,6 +406,9 @@ This section lists various security measures in place to protect the Cloudron.
     local files. We achieve this using Linux Containers.
 *   Apps run with a read-only rootfs preventing attacks where the application code can be tampered with.
 *   Apps can only connect to addons like databases, LDAP, email relay using authentication.
+*   Apps are run with an AppArmor profile that disables many system calls and restricts access to `proc`
+    and `sys` filesystems.
+*   Most apps are run as non-root user. In the future, we intend to implement user namespaces.
 
 ## Email
 
