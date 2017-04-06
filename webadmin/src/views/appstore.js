@@ -20,15 +20,15 @@ angular.module('Application').controller('AppStoreController', ['$scope', '$loca
     $scope.appstoreConfig = null;
     $scope.mailConfig = {};
 
-    $scope.showRequestUpgrade = function () {
+    $scope.showView = function (view) {
         // wait for dialog to be fully closed to avoid modal behavior breakage when moving to a different view already
-        $('#appInstallModal').on('hidden.bs.modal', function () {
+        $('.modal').on('hidden.bs.modal', function () {
             $scope.appInstall.reset();
-            $('#appInstallModal').off('hidden.bs.modal');
-            $location.path('/settings');
+            $('.modal').off('hidden.bs.modal');
+            $location.path(view);
         });
 
-        $('#appInstallModal').modal('hide');
+        $('.modal').modal('hide');
     };
 
     $scope.appInstall = {

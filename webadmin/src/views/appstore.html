@@ -76,7 +76,7 @@
                                     Only allow the following user groups <span class="label label-danger" ng-show="appInstall.accessRestrictionOption === 'groups' && !appInstall.isAccessRestrictionValid()">Select at least one group</span>
                                 </label>
                             </div>
-                            <div ng-show="groups.length <= 1" style="margin-left: 20px;">No groups available. <a href="#/users">Create groups</a></div>
+                            <div ng-show="groups.length <= 1" style="margin-left: 20px;">No groups available. <a href="" ng-click="showView('/users')">Create groups</a></div>
                             <div>
                                 <div style="margin-left: 20px;">
                                     <span ng-repeat="group in groups | ignoreAdminGroup">
@@ -139,7 +139,7 @@
             <div class="modal-footer">
                 <button type="button" class="btn btn-default" ng-show="appInstall.state !== 'postInstall'" data-dismiss="modal">Close</button>
                 <button type="button" class="btn btn-default" ng-show="appInstall.state === 'postInstall'" data-dismiss="modal" ng-click="appInstall.switchToAppsView()">Got it</button>
-                <button type="button" class="btn btn-success" ng-show="config.provider === 'caas' && user.admin && appInstall.state === 'resourceConstraint'" ng-click="showRequestUpgrade()">Upgrade Cloudron</button>
+                <button type="button" class="btn btn-success" ng-show="config.provider === 'caas' && user.admin && appInstall.state === 'resourceConstraint'" ng-click="showView('/settings')">Upgrade Cloudron</button>
                 <button type="button" class="btn btn-danger" ng-show="(config.isDev || config.provider !== 'caas') && user.admin && appInstall.state === 'resourceConstraint'" ng-click="appInstall.showForm(true)">Install anyway</button>
                 <button type="button" class="btn btn-success" ng-show="appInstall.state === 'appInfo' && user.admin" ng-click="appInstall.showForm()">Install</button>
                 <button type="button" class="btn btn-success" ng-show="appInstall.state === 'installForm' && user.admin" ng-click="appInstall.submit()" ng-disabled="appInstallForm.$invalid || appInstall.busy"><i class="fa fa-circle-o-notch fa-spin" ng-show="appInstall.busy"></i> Install</button>
