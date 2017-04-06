@@ -9,6 +9,7 @@ fi
 
 readonly USER=yellowtent
 readonly BOX_SRC_DIR=/home/${USER}/box
+readonly BASE_DATA_DIR=/home/${USER}
 readonly CLOUDRON_CONF=/home/yellowtent/configs/cloudron.conf
 
 readonly script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -17,14 +18,16 @@ readonly box_src_tmp_dir="$(realpath ${script_dir}/..)"
 readonly is_update=$([[ -f "${CLOUDRON_CONF}" ]] && echo "yes" || echo "no")
 
 arg_data=""
+arg_data_dir=""
 
-args=$(getopt -o "" -l "data:,data-file:" -n "$0" -- "$@")
+args=$(getopt -o "" -l "data:,data-file:,data-dir:" -n "$0" -- "$@")
 eval set -- "${args}"
 
 while true; do
     case "$1" in
     --data) arg_data="$2"; shift 2;;
     --data-file) arg_data=$(cat $2); shift 2;;
+    --data-dir) arg_data_dir="$2"; shift 2;;
     --) break;;
     *) echo "Unknown option $1"; exit 1;;
     esac
@@ -54,6 +57,15 @@ if [[ "${is_update}" == "yes" ]]; then
     echo "Setting up update splash screen"
     "${box_src_tmp_dir}/setup/splashpage.sh" --data "${arg_data}" || true # show splash from new code
     ${BOX_SRC_DIR}/setup/stop.sh # stop the old code
+fi
+
+# setup links to data directory
+if [[ "${arg_data_dir}" != "" ]]; then
+    echo "==> installer: setting up links to data directory"
+    mkdir "${arg_data_dir}/appsdata"
+    ln -s "${arg_data_dir}/appsdata" "${BASE_DATA_DIR}/appsdata"
+    mkdir "${arg_data_dir}/platformdata"
+    ln -s "${arg_data_dir}/platformdata" "${BASE_DATA_DIR}/platformdata"
 fi
 
 # ensure we are not inside the source directory, which we will remove now

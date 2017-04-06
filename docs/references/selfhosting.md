@@ -464,10 +464,10 @@ to a new location as follows:
 
 ```
     systemctl stop box docker
-    mv /home/yellowtent/data/appdata /var/cloudrondata
-    ln -s /var/cloudrondata/appdata /home/yellowtent/data/appdata
+    mv /home/yellowtent/data/appsdata /var/cloudrondata
+    ln -s /var/cloudrondata/appsdata /home/yellowtent/appsdata
     mv /home/yellowtent/data/platformdata /var/cloudrondata
-    ln -s /var/cloudrondata/platformdata /home/yellowtent/data/platformdata
+    ln -s /var/cloudrondata/platformdata /home/yellowtent/platformdata
     systemctl start box docker
 ```
 
