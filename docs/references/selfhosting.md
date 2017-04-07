@@ -460,15 +460,18 @@ that Cloudron uses by passing the `--data-dir` option to `cloudron-setup`.
 ```
 
 If you have an existing Cloudron, we recommend moving the existing data directory
-to a new location as follows:
+to a new location as follows (`DATA_DIR` is the location to move your data):
 
 ```
-    systemctl stop box docker
-    mv /home/yellowtent/data/appsdata /var/cloudrondata
-    ln -s /var/cloudrondata/appsdata /home/yellowtent/appsdata
-    mv /home/yellowtent/data/platformdata /var/cloudrondata
-    ln -s /var/cloudrondata/platformdata /home/yellowtent/platformdata
-    systemctl start box docker
+    systemctl stop cloudron.target
+    systemctl stop docker
+    DATA_DIR="/var/data"
+    mv /home/yellowtent/appsdata "${DATA_DIR}"
+    ln -s "${DATA_DIR}/appsdata" /home/yellowtent/appsdata
+    mv /home/yellowtent/platformdata "${DATA_DIR}"
+    ln -s "${DATA_DIR}/platformdata" /home/yellowtent/platformdata
+    systemctl start docker
+    systemctl start cloudron.target
 ```
 
 # Debug
