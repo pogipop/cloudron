@@ -83,7 +83,7 @@ angular.module('Application').controller('MainController', ['$scope', '$route', 
                     var actionScope = $scope.$new(true);
                     actionScope.action = '/#/settings';
 
-                    Client.notify('DNS Configuration', 'Please setup all required DNS records to guarantee correct mail delivery', true, 'info', actionScope);
+                    Client.notify('DNS Configuration', 'Please setup all required DNS records to guarantee correct mail delivery', false, 'info', actionScope);
                 }
             });
         });
