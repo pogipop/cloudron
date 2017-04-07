@@ -108,14 +108,21 @@ angular.module('Application').controller('GraphsController', ['$scope', '$locati
         // https://graphite.readthedocs.io/en/latest/render_api.html#paths-and-wildcards
         // on scaleway, for some reason docker devices are collected as part of collectd
         // until we figure why just hardcode popular disk devices - https://www.mjmwired.net/kernel/Documentation/devices.txt
-        Client.graphs([
-            'averageSeries(collectd.localhost.df-{sd,hd,vd,md,ad,nb,vd,ub,xvd}*.df_complex-free)',
-            'averageSeries(collectd.localhost.df-{sd,hd,vd,md,ad,nb,vd,ub,xvd}*.df_complex-reserved)',
-            'averageSeries(collectd.localhost.df-{sd,hd,vd,md,ad,nb,vd,ub,xvd}*.df_complex-used)'
-        ], '-1min', function (error, data) {
+        Client.disks(function (error, disks) {
             if (error) return console.log(error);
 
-            renderDisk('system', data[0], data[1], data[2]);
+            // We have to see if this is sufficient for all server configurations
+            var appDataDiskName = disks.appsDataDisk.slice(disks.appsDataDisk.lastIndexOf('/') + 1)
+
+            Client.graphs([
+                'absolute(collectd.localhost.df-' + appDataDiskName + '.df_complex-free)',
+                'absolute(collectd.localhost.df-' + appDataDiskName + '.df_complex-reserved)',
+                'absolute(collectd.localhost.df-' + appDataDiskName + '.df_complex-used)'
+            ], '-1min', function (error, data) {
+                if (error) return console.log(error);
+
+                renderDisk('system', data[0], data[1], data[2]);
+            });
         });
     };
 
