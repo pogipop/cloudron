@@ -126,6 +126,11 @@ if [[ -z "${dataJson}" ]]; then
         echo "--dns-provider must be one of : manual, noop"
         exit 1
     fi
+
+    if [[ -n "${baseDataDir}" && ! -d "${baseDataDir}" ]]; then
+        echo "${baseDataDir} does not exist"
+        exit 1
+    fi
 fi
 
 echo ""

@@ -60,7 +60,7 @@ if [[ "${is_update}" == "yes" ]]; then
 fi
 
 # setup links to data directory
-if [[ "${arg_data_dir}" != "" ]]; then
+if [[ -n "${arg_data_dir}" ]]; then
     echo "==> installer: setting up links to data directory"
     mkdir "${arg_data_dir}/appsdata"
     ln -s "${arg_data_dir}/appsdata" "${BASE_DATA_DIR}/appsdata"
