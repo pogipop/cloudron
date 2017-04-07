@@ -794,6 +794,20 @@ Response (200):
 }
 ```
 
+### Get disks
+
+GET `/api/v1/cloudron/disks` <scope>admin</scope>
+
+Gets information on the disks being used on the Cloudron server.
+
+```
+Response (200):
+{
+    boxDataDisk: <string>,            // Disk used for storing box data
+    platformDataDisk: <string>,       // Disk used for addon databases and email
+    appsDataDisk: <string>            // Disk used for apps' local storage
+}
+```
 
 ## Eventlog
 

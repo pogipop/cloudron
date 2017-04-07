@@ -387,7 +387,6 @@ function getDisks(callback) {
         appsDataDisk: null
     };
 
-    // TODO check if this actually is correct with the symlinks!
     df.file(paths.BOX_DATA_DIR).then(function (result) {
         disks.boxDataDisk = result.filesystem;
 
