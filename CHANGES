@@ -823,3 +823,7 @@
 * Verify AMI instance id during DNS setup instead of admin account setup
 * Split platform and app data folders and get rid of btrfs volumes
 
+[0.109.1]
+* Fix disk usage graphs
+* Add --data-dir to cloudron-setup that allows customizing data location
+
