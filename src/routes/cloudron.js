@@ -10,6 +10,7 @@ exports = module.exports = {
     migrate: migrate,
     getProgress: getProgress,
     getConfig: getConfig,
+    getDisks: getDisks,
     update: update,
     feedback: feedback,
     checkForUpdates: checkForUpdates
@@ -176,6 +177,13 @@ function getConfig(req, res, next) {
         if (error) return next(new HttpError(500, error));
 
         next(new HttpSuccess(200, cloudronConfig));
+    });
+}
+
+function getDisks(req, res, next) {
+    cloudron.getDisks(function (error, result) {
+        if (error) return next(new HttpError(500, error));
+        next(new HttpSuccess(200, result));
     });
 }
 
