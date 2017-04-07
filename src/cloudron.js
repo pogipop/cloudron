@@ -8,6 +8,7 @@ exports = module.exports = {
     activate: activate,
     getConfig: getConfig,
     getStatus: getStatus,
+    getDisks: getDisks,
     dnsSetup: dnsSetup,
 
     sendHeartbeat: sendHeartbeat,
@@ -41,7 +42,7 @@ var apps = require('./apps.js'),
     constants = require('./constants.js'),
     cron = require('./cron.js'),
     debug = require('debug')('box:cloudron'),
-    df = require('node-df'),
+    df = require('@sindresorhus/df'),
     eventlog = require('./eventlog.js'),
     fs = require('fs'),
     locker = require('./locker.js'),
@@ -374,6 +375,33 @@ function getStatus(callback) {
                 configState: gConfigState
             });
         });
+    });
+}
+
+function getDisks(callback) {
+    assert.strictEqual(typeof callback, 'function');
+
+    var disks = {
+        boxDataDisk: null,
+        platformDataDisk: null,
+        appsDataDisk: null
+    };
+
+    // TODO check if this actually is correct with the symlinks!
+    df.file(paths.BOX_DATA_DIR).then(function (result) {
+        disks.boxDataDisk = result.filesystem;
+
+        return df.file(paths.PLATFORM_DATA_DIR);
+    }).then(function (result) {
+        disks.platformDataDisk = result.filesystem;
+
+        return df.file(paths.APPS_DATA_DIR);
+    }).then(function (result) {
+        disks.appsDataDisk = result.filesystem;
+
+        callback(null, disks);
+    }).catch(function (error) {
+        callback(new CloudronError(CloudronError.INTERNAL_ERROR, error));
     });
 }
 
@@ -860,22 +888,40 @@ function checkDiskSpace(callback) {
 
     debug('Checking disk space');
 
-    df(function (error, entries) {
+    getDisks(function (error, disks) {
         if (error) {
             debug('df error %s', error.message);
-            mailer.outOfDiskSpace(error.message);
             return callback();
         }
 
-        var oos = entries.some(function (entry) {
-            return (entry.mount === '/' && entry.available <= (1.25 * 1024 * 1024)); // 1.5G
+        df().then(function (entries) {
+            /*
+                [{
+                filesystem: '/dev/disk1',
+                size: 499046809600,
+                used: 443222245376,
+                available: 55562420224,
+                capacity: 0.89,
+                mountpoint: '/'
+            }, ...]
+            */
+            var oos = entries.some(function (entry) {
+                // ignore other filesystems but where box, app and platform data is
+                if (entry.filesystem !== disks.boxDataDisk && entry.filesystem !== disks.platformDataDisk && entry.filesystem !== disks.appsDataDisk) return false;
+
+                return (entry.available <= (1.25 * 1024 * 1024 * 1024)); // 1.5G
+            });
+
+            debug('Disk space checked. ok: %s', !oos);
+
+            if (oos) mailer.outOfDiskSpace(JSON.stringify(entries, null, 4));
+
+            callback();
+        }).catch(function (error) {
+            debug('df error %s', error.message);
+            mailer.outOfDiskSpace(error.message);
+            return callback();
         });
-
-        debug('Disk space checked. ok: %s', !oos);
-
-        if (oos) mailer.outOfDiskSpace(JSON.stringify(entries, null, 4));
-
-        callback();
     });
 }
 
