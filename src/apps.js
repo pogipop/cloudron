@@ -869,6 +869,7 @@ function clone(appId, data, auditSource, callback) {
 
         backups.getRestoreConfig(backupId, function (error, restoreConfig) {
             if (error && error.reason === BackupsError.EXTERNAL_ERROR) return callback(new AppsError(AppsError.EXTERNAL_ERROR, error.message));
+            if (error && error.reason === BackupsError.NOT_FOUND) return callback(new AppsError(AppsError.EXTERNAL_ERROR, error.message));
             if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
 
             if (!restoreConfig) callback(new AppsError(AppsError.EXTERNAL_ERROR, 'Could not get restore config'));
