@@ -43,7 +43,13 @@ function initializeExpressSync() {
     // for rate limiting
     app.enable('trust proxy');
 
-    if (process.env.BOX_ENV !== 'test') app.use(middleware.morgan('Box :method :url :status :response-time ms - :res[content-length]', { immediate: false }));
+    if (process.env.BOX_ENV !== 'test') {
+        app.use(middleware.morgan('Box :method :url :status :response-time ms - :res[content-length]', {
+            immediate: false,
+            // only log failed requests by default
+            skip: function (req, res) { return res.statusCode < 400; }
+        }));
+    }
 
     var router = new express.Router();
     router.del = router.delete; // amend router.del for readability further on
