@@ -6,7 +6,7 @@
 
 exports = module.exports = {
     // a version bump means that all app containers are recreated
-    'version': '48.0.0',
+    'version': '48.1.0',
 
     'baseImages': [ 'cloudron/base:0.10.0' ],
 
