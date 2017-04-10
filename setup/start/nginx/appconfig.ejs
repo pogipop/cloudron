@@ -76,6 +76,9 @@ server {
         proxy_buffers           4 256k;
         proxy_busy_buffers_size 256k;
 
+        # No buffering to temp files, it fails for large downloads
+        proxy_max_temp_file_size 0;
+
         # Disable check to allow unlimited body sizes
         client_max_body_size 0;
 
