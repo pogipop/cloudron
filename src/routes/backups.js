@@ -3,7 +3,6 @@
 exports = module.exports = {
     get: get,
     create: create,
-    createDownloadUrl: createDownloadUrl,
     download: download
 };
 
@@ -44,22 +43,13 @@ function create(req, res, next) {
     });
 }
 
-function createDownloadUrl(req, res, next) {
-    assert.strictEqual(typeof req.params.backupId, 'string');
-
-    backups.getRestoreUrl(req.params.backupId, function (error, result) {
-        if (error) return next(new HttpError(500, error));
-
-        next(new HttpSuccess(200, result));
-    });
-}
-
 function download(req, res, next) {
     assert.strictEqual(typeof req.params.backupId, 'string');
 
-    backups.getLocalDownloadPath(req.params.backupId, function (error, result) {
+    backups.getDownloadStream(req.params.backupId, function (error, result) {
+        if (error && error.reason === BackupsError.NOT_FOUND) return next(new HttpError(404, error.message));
         if (error) return next(new HttpError(500, error));
 
-        res.sendFile(result);
+        result.pipe(res);
     });
 }

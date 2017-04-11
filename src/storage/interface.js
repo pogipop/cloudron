@@ -7,8 +7,9 @@
 // -------------------------------------------
 
 exports = module.exports = {
-    getBoxBackupDetails: getBoxBackupDetails,
-    getAppBackupDetails: getAppBackupDetails,
+    backupBegin: backupBegin,
+    backupDirectory: backupDirectory,
+    backupFinalize: backupFinalize,
 
     getRestoreUrl: getRestoreUrl,
     getAppRestoreConfig: getAppRestoreConfig,
@@ -24,26 +25,34 @@ exports = module.exports = {
 
 var assert = require('assert');
 
-function getBoxBackupDetails(apiConfig, id, callback) {
+function backupBegin(apiConfig, backupId, callback) {
     assert.strictEqual(typeof apiConfig, 'object');
-    assert.strictEqual(typeof id, 'string');
+    assert.strictEqual(typeof backupId, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    // Result: { backupScriptArguments: [] }
-    // The resulting array consists of string passed down 1to1 to the backupbox.sh
+    // Result: none
 
     callback(new Error('not implemented'));
 }
 
-function getAppBackupDetails(apiConfig, appId, dataId, configId, callback) {
+function backupDirectory(apiConfig, backupId, source, destination, callback) {
     assert.strictEqual(typeof apiConfig, 'object');
-    assert.strictEqual(typeof appId, 'string');
-    assert.strictEqual(typeof dataId, 'string');
-    assert.strictEqual(typeof configId, 'string');
+    assert.strictEqual(typeof backupId, 'string');
+    assert.strictEqual(typeof source, 'string');
+    assert.strictEqual(typeof destination, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    // Result: { backupScriptArguments: [] }
-    // The resulting array consists of string passed down 1to1 to the backupapp.sh
+    // Result: none
+
+    callback(new Error('not implemented'));
+}
+
+function backupFinalize(apiConfig, backupId, callback) {
+    assert.strictEqual(typeof apiConfig, 'object');
+    assert.strictEqual(typeof backupId, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    // Result: none
 
     callback(new Error('not implemented'));
 }

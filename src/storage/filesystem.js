@@ -1,14 +1,13 @@
 'use strict';
 
 exports = module.exports = {
-    getBoxBackupDetails: getBoxBackupDetails,
-    getAppBackupDetails: getAppBackupDetails,
+    backup: backup,
+    restore: restore,
 
-    getRestoreUrl: getRestoreUrl,
     getAppRestoreConfig: getAppRestoreConfig,
-    getLocalFilePath: getLocalFilePath,
+    getDownloadStream: getDownloadStream,
 
-    copyObject: copyObject,
+    copyBackup: copyBackup,
     removeBackup: removeBackup,
 
     backupDone: backupDone,
@@ -19,60 +18,119 @@ exports = module.exports = {
 var assert = require('assert'),
     async = require('async'),
     BackupsError = require('../backups.js').BackupsError,
-    checksum = require('checksum'),
+    debug = require('debug')('box:storage/filesystem'),
     fs = require('fs'),
     path = require('path'),
+    mkdirp = require('mkdirp'),
+    once = require('once'),
     safe = require('safetydance'),
     SettingsError = require('../settings.js').SettingsError,
     shell = require('../shell.js'),
-    util = require('util');
+    tar = require('tar-fs'),
+    archiver = require('archiver');
 
 var FALLBACK_BACKUP_FOLDER = '/var/backups';
 var RMBACKUP_CMD = path.join(__dirname, '../scripts/rmbackup.sh');
 
-function getBoxBackupDetails(apiConfig, id, callback) {
+function backup(apiConfig, backupId, sourceDirectories, callback) {
     assert.strictEqual(typeof apiConfig, 'object');
-    assert.strictEqual(typeof id, 'string');
+    assert.strictEqual(typeof backupId, 'string');
+    assert(Array.isArray(sourceDirectories));
     assert.strictEqual(typeof callback, 'function');
 
-    var backupFolder = apiConfig.backupFolder || FALLBACK_BACKUP_FOLDER;
+    callback = once(callback);
 
-    var details = {
-        backupScriptArguments: [ 'filesystem', backupFolder, id, apiConfig.key ]
-    };
+    var backupFilePath = path.join(apiConfig.backupFolder || FALLBACK_BACKUP_FOLDER, backupId + '.tar.gz');
 
-    callback(null, details);
-}
+    debug('[%s] backup: %j -> %s', backupId, sourceDirectories, backupFilePath);
 
-function getAppBackupDetails(apiConfig, appId, dataId, configId, callback) {
-    assert.strictEqual(typeof apiConfig, 'object');
-    assert.strictEqual(typeof appId, 'string');
-    assert.strictEqual(typeof dataId, 'string');
-    assert.strictEqual(typeof configId, 'string');
-    assert.strictEqual(typeof callback, 'function');
+    mkdirp(path.dirname(backupFilePath), function (error) {
+        if (error) return callback(error);
 
-    var backupFolder = apiConfig.backupFolder || FALLBACK_BACKUP_FOLDER;
+        var fileStream = fs.createWriteStream(backupFilePath);
+        var archive = archiver('tar', { gzip: true });
 
-    var details = {
-        backupScriptArguments: [ 'filesystem', appId, backupFolder, configId, dataId, apiConfig.key ]
-    };
+        fileStream.on('error', function (error) {
+            console.error('[%s] backup: out stream error.', error);
+        });
 
-    callback(null, details);
-}
+        archive.on('error', function (error) {
+            console.error('[%s] backup: archive stream error.', error);
+        });
 
-function getRestoreUrl(apiConfig, filename, callback) {
-    assert.strictEqual(typeof apiConfig, 'object');
-    assert.strictEqual(typeof filename, 'string');
-    assert.strictEqual(typeof callback, 'function');
+        fileStream.on('close', function () {
+            debug('[%s] backup: done.', backupId);
+            callback();
+        });
 
-    var backupFolder = apiConfig.backupFolder || FALLBACK_BACKUP_FOLDER;
-    var restoreUrl = 'file://' + path.join(backupFolder, filename);
-
-    checksum.file(path.join(backupFolder, filename), function (error, result) {
-        if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, util.format('Failed to calculate checksum:', error)));
-
-        callback(null, { url: restoreUrl, sha1: result });
+        archive.pipe(fileStream);
+        sourceDirectories.forEach(function (directoryMap) {
+            archive.directory(directoryMap.source, directoryMap.destination);
+        });
+        archive.finalize();
     });
+}
+
+function restore(apiConfig, backupId, destinationDirectories, callback) {
+    assert.strictEqual(typeof apiConfig, 'object');
+    assert.strictEqual(typeof backupId, 'string');
+    assert(Array.isArray(destinationDirectories));
+    assert.strictEqual(typeof callback, 'function');
+
+    var sourceFilePath = path.join(apiConfig.backupFolder || FALLBACK_BACKUP_FOLDER, backupId + '.tar.gz');
+
+    debug('[%s] restore: %s -> %j', backupId, sourceFilePath, destinationDirectories);
+
+    if (!fs.existsSync(sourceFilePath)) return callback(new BackupsError(BackupsError.NOT_FOUND, 'backup file does not exist'));
+
+    async.eachSeries(destinationDirectories, function (directory, callback) {
+        debug('[%s] restore: directory %s -> %s', backupId, directory.source, directory.destination);
+
+        mkdirp(directory, function (error) {
+            if (error) return callback(error);
+
+            var fileStream = fs.createReadStream(sourceFilePath);
+            var extract = tar.extract(directory);
+
+            fileStream.on('error', function (error) {
+                console.error('[%s] restore: file stream error.', error);
+                callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
+            });
+
+            extract.on('error', function (error) {
+                console.error('[%s] restore: extract stream error.', error);
+                callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
+            });
+
+            extract.on('end', function () {
+                debug('[%s] restore: directory %s done.', backupId, directory.source);
+                callback();
+            });
+
+            fileStream.pipe(extract);
+        });
+    }, function (error) {
+        if (error) return callback(error);
+
+        debug('[%s] restore: done', backupId);
+
+        callback();
+    });
+}
+
+function getDownloadStream(apiConfig, backupId, callback) {
+    assert.strictEqual(typeof apiConfig, 'object');
+    assert.strictEqual(typeof backupId, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    var backupFilePath = path.join(apiConfig.backupFolder || FALLBACK_BACKUP_FOLDER, backupId);
+
+    debug('[%s] getDownloadStream: %s %s', backupId, backupId, backupFilePath);
+
+    if (!fs.existsSync(backupFilePath)) return callback(new BackupsError(BackupsError.NOT_FOUND, 'backup file does not exist'));
+
+    var stream = fs.createReadStream(backupFilePath);
+    callback(null, stream);
 }
 
 function getAppRestoreConfig(apiConfig, backupId, callback) {
@@ -80,50 +138,47 @@ function getAppRestoreConfig(apiConfig, backupId, callback) {
     assert.strictEqual(typeof backupId, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    var backupFolder = apiConfig.backupFolder || FALLBACK_BACKUP_FOLDER;
-    var configFilename = backupId.replace(/\.tar\.gz$/, '.json');
+    callback = once(callback);
 
-    var restoreConfig = safe.require(path.join(backupFolder, configFilename));
-    if (!restoreConfig) return callback(new BackupsError(BackupsError.NOT_FOUND, 'No app backup config found for ' + configFilename));
+    var sourceFilePath = path.join(apiConfig.backupFolder || FALLBACK_BACKUP_FOLDER, backupId + '.json');
+
+    debug('[%s] getAppRestoreConfig: %s', backupId, sourceFilePath);
+
+    if (!fs.existsSync(sourceFilePath)) return callback(new BackupsError(BackupsError.NOT_FOUND, 'restore config file does not exist'));
+
+    var restoreConfig = safe.require(sourceFilePath);
+    if (!restoreConfig) {
+        console.error('[%s] getAppRestoreConfig: failed', safe.error);
+        return callback(new BackupsError(BackupsError.INTERNAL_ERROR, safe.error));
+    }
 
     callback(null, restoreConfig);
 }
 
-function getLocalFilePath(apiConfig, filename, callback) {
+function copyBackup(apiConfig, oldBackupId, newBackupId, callback) {
     assert.strictEqual(typeof apiConfig, 'object');
-    assert.strictEqual(typeof filename, 'string');
+    assert.strictEqual(typeof oldBackupId, 'string');
+    assert.strictEqual(typeof newBackupId, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    var backupFolder = apiConfig.backupFolder || FALLBACK_BACKUP_FOLDER;
+    callback = once(callback);
 
-    callback(null, { filePath: path.join(backupFolder, filename) });
-}
+    var oldBackupFilePath = path.join(apiConfig.backupFolder || FALLBACK_BACKUP_FOLDER, oldBackupId + '.tar.gz');
+    var newBackupFilePath = path.join(apiConfig.backupFolder || FALLBACK_BACKUP_FOLDER, newBackupId + '.tar.gz');
 
-function copyObject(apiConfig, from, to, callback) {
-    assert.strictEqual(typeof apiConfig, 'object');
-    assert.strictEqual(typeof from, 'string');
-    assert.strictEqual(typeof to, 'string');
-    assert.strictEqual(typeof callback, 'function');
+    // FIXME this most likely has a permissions issue as this process runs as yellowtent not root
+    mkdirp(path.dirname(newBackupFilePath), function (error) {
+        if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
 
-    var calledBack = false;
-    function done (error) {
-        if (!calledBack) callback(error);
-        calledBack = true;
-    }
+        var readStream = fs.createReadStream(oldBackupFilePath);
+        var writeStream = fs.createWriteStream(newBackupFilePath);
 
-    var backupFolder = apiConfig.backupFolder || FALLBACK_BACKUP_FOLDER;
-    var readStream = fs.createReadStream(path.join(backupFolder, from));
-    var writeStream = fs.createWriteStream(path.join(backupFolder, to));
+        readStream.on('error', callback);
+        writeStream.on('error', callback);
+        writeStream.on('close', callback);
 
-    readStream.on('error', done);
-    writeStream.on('error', done);
-
-    writeStream.on('close', function () {
-        // avoid passing arguments
-        done(null);
+        readStream.pipe(writeStream);
     });
-
-    readStream.pipe(writeStream);
 }
 
 function removeBackup(apiConfig, backupId, appBackupIds, callback) {
@@ -132,11 +187,8 @@ function removeBackup(apiConfig, backupId, appBackupIds, callback) {
     assert(Array.isArray(appBackupIds));
     assert.strictEqual(typeof callback, 'function');
 
-    var backupFolder = apiConfig.backupFolder || FALLBACK_BACKUP_FOLDER;
-    var appBackupJSONFiles = appBackupIds.map(function (id) { return id.replace(/\.tar\.gz$/, '.json'); });
-
-    async.each([backupId].concat(appBackupIds).concat(appBackupJSONFiles), function (id, callback) {
-        var filePath = path.join(backupFolder, id);
+    async.each([backupId].concat(appBackupIds), function (id, callback) {
+        var filePath = path.join(apiConfig.backupFolder || FALLBACK_BACKUP_FOLDER, id + '.tar.gz');
 
         shell.sudo('deleteBackup', [ RMBACKUP_CMD, filePath ], function (error) {
             if (error) console.error('Unable to remove %s. Not fatal.', filePath, safe.error);
@@ -162,4 +214,3 @@ function backupDone(filename, app, appBackupIds, callback) {
 
     callback();
 }
-

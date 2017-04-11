@@ -219,7 +219,6 @@ function initializeExpressSync() {
     // backup routes
     router.get ('/api/v1/backups', settingsScope, routes.user.requireAdmin, routes.backups.get);
     router.post('/api/v1/backups', settingsScope, routes.user.requireAdmin, routes.backups.create);
-    router.post('/api/v1/backups/:backupId/download_url', appsScope, routes.user.requireAdmin, routes.backups.createDownloadUrl);
     router.get ('/api/v1/backups/:backupId/download', appsScope, routes.user.requireAdmin, routes.backups.download);
 
     // disable server socket "idle" timeout. we use the timeout middleware to handle timeouts on a route level

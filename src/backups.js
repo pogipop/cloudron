@@ -8,7 +8,8 @@ exports = module.exports = {
     getPaged: getPaged,
     getByAppIdPaged: getByAppIdPaged,
 
-    getRestoreUrl: getRestoreUrl,
+    getDownloadStream: getDownloadStream,
+
     getRestoreConfig: getRestoreConfig,
 
     ensureBackup: ensureBackup,
@@ -18,8 +19,6 @@ exports = module.exports = {
     restoreApp: restoreApp,
 
     backupBoxAndApps: backupBoxAndApps,
-
-    getLocalDownloadPath: getLocalDownloadPath,
 
     removeBackup: removeBackup
 };
@@ -147,30 +146,6 @@ function getRestoreConfig(backupId, callback) {
     });
 }
 
-function getRestoreUrl(backupId, callback) {
-    assert.strictEqual(typeof backupId, 'string');
-    assert.strictEqual(typeof callback, 'function');
-
-    settings.getBackupConfig(function (error, backupConfig) {
-        if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
-
-        api(backupConfig.provider).getRestoreUrl(backupConfig, backupId, function (error, result) {
-            if (error) return callback(error);
-
-            var obj = {
-                id: backupId,
-                url: result.url,
-                backupKey: backupConfig.key,
-                sha1: result.sha1 || null       // not supported by all backends
-            };
-
-            debug('getRestoreUrl: id:%s url:%s backupKey:%s sha1:%s', obj.id, obj.url, obj.backupKey, obj.sha1);
-
-            callback(null, obj);
-        });
-    });
-}
-
 function copyLastBackup(app, manifest, prefix, callback) {
     assert.strictEqual(typeof app, 'object');
     assert.strictEqual(typeof app.lastBackupId, 'string');
@@ -179,27 +154,17 @@ function copyLastBackup(app, manifest, prefix, callback) {
     assert.strictEqual(typeof callback, 'function');
 
     var timestamp = (new Date()).toISOString().replace(/[T.]/g, '-').replace(/[:Z]/g,'');
-    var toFilenameArchive = util.format('%s/app_%s_%s_v%s.tar.gz', prefix, app.id, timestamp, manifest.version);
-    var toFilenameConfig = util.format('%s/app_%s_%s_v%s.json', prefix, app.id, timestamp, manifest.version);
+    var newBackupId = util.format('%s/app_%s_%s_v%s.tar.gz', prefix, app.id, timestamp, manifest.version);
 
     settings.getBackupConfig(function (error, backupConfig) {
         if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
 
-        debug('copyLastBackup: copying archive %s to %s', app.lastBackupId, toFilenameArchive);
+        debug('copyLastBackup: copying backup %s to %s', app.lastBackupId, newBackupId);
 
-        api(backupConfig.provider).copyObject(backupConfig, app.lastBackupId, toFilenameArchive, function (error) {
+        api(backupConfig.provider).copyBackup(backupConfig, app.lastBackupId, newBackupId, function (error) {
             if (error) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error));
 
-            // TODO change that logic by adjusting app.lastBackupId to not contain the file type
-            var configFileId = app.lastBackupId.slice(0, -'.tar.gz'.length) + '.json';
-
-            debug('copyLastBackup: copying config %s to %s', configFileId, toFilenameConfig);
-
-            api(backupConfig.provider).copyObject(backupConfig, configFileId, toFilenameConfig, function (error) {
-                if (error) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error));
-
-                return callback(null, toFilenameArchive);
-            });
+            callback(null, newBackupId);
         });
     });
 }
@@ -209,29 +174,23 @@ function backupBoxWithAppBackupIds(appBackupIds, prefix, callback) {
     assert.strictEqual(typeof prefix, 'string');
 
     var timestamp = (new Date()).toISOString().replace(/[T.]/g, '-').replace(/[:Z]/g,'');
-    var filebase = util.format('%s/box_%s_v%s', prefix, timestamp, config.version());
-    var filename = filebase + '.tar.gz';
+    var backupId = util.format('%s/box_%s_v%s', prefix, timestamp, config.version());
 
     settings.getBackupConfig(function (error, backupConfig) {
         if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
 
-        api(backupConfig.provider).getBoxBackupDetails(backupConfig, filename, function (error, result) {
-            if (error) return callback(error);
+        shell.sudo('backupBox', [ BACKUP_BOX_CMD, backupId ], function (error) {
+            if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
 
-            debug('backupBoxWithAppBackupIds: backup details %j', result);
+            debug('backupBoxWithAppBackupIds: success');
 
-            shell.sudo('backupBox', [ BACKUP_BOX_CMD ].concat(result.backupScriptArguments), function (error) {
+            backupdb.add({ id: backupId, version: config.version(), type: backupdb.BACKUP_TYPE_BOX, dependsOn: appBackupIds }, function (error) {
                 if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
 
-                debug('backupBoxWithAppBackupIds: success');
-
-                backupdb.add({ id: filename, version: config.version(), type: backupdb.BACKUP_TYPE_BOX, dependsOn: appBackupIds }, function (error) {
-                    if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
-
-                    api(backupConfig.provider).backupDone(filename, null /* app */, appBackupIds, function (error) {
-                        if (error) return callback(error);
-                        callback(null, filename);
-                    });
+                // FIXME this is only needed for caas, is it really???
+                api(backupConfig.provider).backupDone(backupId, null /* app */, appBackupIds, function (error) {
+                    if (error) return callback(error);
+                    callback(null, backupId);
                 });
             });
         });
@@ -254,31 +213,21 @@ function createNewAppBackup(app, manifest, prefix, callback) {
     assert.strictEqual(typeof callback, 'function');
 
     var timestamp = (new Date()).toISOString().replace(/[T.]/g, '-').replace(/[:Z]/g,'');
-    var filebase = util.format('%s/app_%s_%s_v%s', prefix, app.id, timestamp, manifest.version);
-    var configFilename = filebase + '.json', dataFilename = filebase + '.tar.gz';
+    var backupId = util.format('%s/app_%s_%s_v%s', prefix, app.id, timestamp, config.version());
 
-    settings.getBackupConfig(function (error, backupConfig) {
+    // FIXME move addon backup into backuptask
+    async.series([
+        addons.backupAddons.bind(null, app, manifest.addons),
+        shell.sudo.bind(null, 'backupApp', [ BACKUP_APP_CMD, backupId, app.id ])
+    ], function (error) {
         if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
 
-        api(backupConfig.provider).getAppBackupDetails(backupConfig, app.id, dataFilename, configFilename, function (error, result) {
-            if (error) return callback(error);
+        debugApp(app, 'createNewAppBackup: %s done', backupId);
 
-            debug('createNewAppBackup: backup details %j', result);
+        backupdb.add({ id: backupId, version: manifest.version, type: backupdb.BACKUP_TYPE_APP, dependsOn: [ ] }, function (error) {
+            if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
 
-            async.series([
-                addons.backupAddons.bind(null, app, manifest.addons),
-                shell.sudo.bind(null, 'backupApp', [ BACKUP_APP_CMD ].concat(result.backupScriptArguments))
-            ], function (error) {
-                if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
-
-                debugApp(app, 'createNewAppBackup: %s done', dataFilename);
-
-                backupdb.add({ id: dataFilename, version: manifest.version, type: backupdb.BACKUP_TYPE_APP, dependsOn: [ ] }, function (error) {
-                    if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
-
-                    callback(null, dataFilename);
-                });
-            });
+            callback(null, backupId);
         });
     });
 }
@@ -438,32 +387,34 @@ function restoreApp(app, addonsToRestore, backupId, callback) {
     assert.strictEqual(typeof callback, 'function');
     assert(app.lastBackupId);
 
-    getRestoreUrl(backupId, function (error, result) {
-        if (error) return callback(error);
+    settings.getBackupConfig(function (error, backupConfig) {
+        if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
 
-        debugApp(app, 'restoreApp: restoreUrl:%s', result.url);
+        var directoryMapping = [{
+            source: '/',
+            destination: path.join(paths.APPS_DATA_DIR, app.id)
+        }];
 
-        shell.sudo('restoreApp', [ RESTORE_APP_CMD,  app.id, result.url, result.backupKey, result.sessionToken ], function (error) {
-            if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
-
-            addons.restoreAddons(app, addonsToRestore, callback);
-        });
+        async.series([
+            api(backupConfig.provider).restore.bind(null, backupConfig, backupId, directoryMapping),
+            addons.restoreAddons.bind(null, app, addonsToRestore)
+        ], callback);
     });
 }
 
-function getLocalDownloadPath(backupId, callback) {
+function getDownloadStream(backupId, callback) {
     assert.strictEqual(typeof backupId, 'string');
     assert.strictEqual(typeof callback, 'function');
 
     settings.getBackupConfig(function (error, backupConfig) {
         if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
 
-        api(backupConfig.provider).getLocalFilePath(backupConfig, backupId, function (error, result) {
+        api(backupConfig.provider).getDownloadStream(backupConfig, backupId, function (error, result) {
             if (error) return callback(error);
 
-            debug('getLocalDownloadPath: id:%s path:%s', backupId, result.filePath);
+            debug('getDownloadStream: %s', backupId);
 
-            callback(null, result.filePath);
+            callback(null, result);
         });
     });
 }
