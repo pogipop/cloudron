@@ -113,6 +113,8 @@ function installApp(req, res, next) {
     if (('portBindings' in data) && typeof data.portBindings !== 'object') return next(new HttpError(400, 'portBindings must be an object'));
     if ('icon' in data && typeof data.icon !== 'string') return next(new HttpError(400, 'icon is not a string'));
 
+    if (data.backupId && typeof data.backupId !== 'string') return next(new HttpError(400, 'backupId must be string or null'));
+
     // falsy values in cert and key unset the cert
     if (data.key && typeof data.cert !== 'string') return next(new HttpError(400, 'cert must be a string'));
     if (data.cert && typeof data.key !== 'string') return next(new HttpError(400, 'key must be a string'));

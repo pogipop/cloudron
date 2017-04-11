@@ -343,6 +343,8 @@ function install(app, callback) {
     assert.strictEqual(typeof app, 'object');
     assert.strictEqual(typeof callback, 'function');
 
+    var backupId = app.lastBackupId;
+
     async.series([
         verifyManifest.bind(null, app),
 
@@ -372,6 +374,15 @@ function install(app, callback) {
 
         updateApp.bind(null, app, { installationProgress: '60, Setting up addons' }),
         addons.setupAddons.bind(null, app, app.manifest.addons),
+
+        function restoreFromBackup(next) {
+            if (!backupId) return next();
+
+            async.series([
+                updateApp.bind(null, app, { installationProgress: '65, Download backup and restore addons' }),
+                backups.restoreApp.bind(null, app, app.manifest.addons, backupId),
+            ], next);
+        },
 
         updateApp.bind(null, app, { installationProgress: '70, Creating container' }),
         createContainer.bind(null, app),

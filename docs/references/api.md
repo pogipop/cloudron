@@ -117,6 +117,7 @@ Request:
     cert: <string>,                  // pem encoded TLS cert
     key: <string>,                   // pem encoded TLS key
     memoryLimit: <number>,           // memory constraint in bytes
+    backupId: <string>,              // initialize the app from this backup
     altDomain: <string>,             // alternate domain from which this app can be reached
     xFrameOptions: <string>          // set X-Frame-Options header, to control which websites can embed this app
 }
@@ -152,6 +153,8 @@ If `altDomain` is set, the app can be accessed from `https://<altDomain>`.
 * `ALLOW-FROM https://example.com/` - allows this app to be embedded from example.com
 
 `memoryLimit` is the maximum memory this app can use (in bytes) including swap. If set to 0, the app uses the `memoryLimit` value set in the manifest. If set to -1, the app gets unlimited memory.
+
+If `backupId` is provided the app will be initialized with the data from the backup.
 
 Read more about the options at [MDN](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Frame-Options).
 

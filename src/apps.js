@@ -494,7 +494,8 @@ function install(data, auditSource, callback) {
         altDomain = data.altDomain || null,
         xFrameOptions = data.xFrameOptions || 'SAMEORIGIN',
         sso = 'sso' in data ? data.sso : null,
-        debugMode = data.debugMode || null;
+        debugMode = data.debugMode || null,
+        backupId = data.backupId || null;
 
     assert(data.appStoreId || data.manifest); // atleast one of them is required
 
@@ -556,7 +557,8 @@ function install(data, auditSource, callback) {
                 xFrameOptions: xFrameOptions,
                 sso: sso,
                 debugMode: debugMode,
-                mailboxName: (location ? location : manifest.title.toLowerCase().replace(/[^a-zA-Z0-9]/g, '')) + '.app'
+                mailboxName: (location ? location : manifest.title.toLowerCase().replace(/[^a-zA-Z0-9]/g, '')) + '.app',
+                lastBackupId: backupId
             };
 
             appdb.add(appId, appStoreId, manifest, location, portBindings, data, function (error) {
@@ -571,7 +573,7 @@ function install(data, auditSource, callback) {
 
                 taskmanager.restartAppTask(appId);
 
-                eventlog.add(eventlog.ACTION_APP_INSTALL, auditSource, { appId: appId, location: location, manifest: manifest });
+                eventlog.add(eventlog.ACTION_APP_INSTALL, auditSource, { appId: appId, location: location, manifest: manifest, backupId: backupId });
 
                 callback(null, { id : appId });
             });
