@@ -354,9 +354,16 @@ function install(app, callback) {
         removeCollectdProfile.bind(null, app),
         stopApp.bind(null, app),
         deleteContainers.bind(null, app),
-        addons.teardownAddons.bind(null, app, app.manifest.addons),
+        // oldConfig can be null during upgrades
+        addons.teardownAddons.bind(null, app, app.oldConfig ? app.oldConfig.manifest.addons : app.manifest.addons),
         deleteVolume.bind(null, app),
-        unregisterSubdomain.bind(null, app, app.location),
+
+        // for restore case
+        function deleteImageIfChanged(done) {
+             if (!app.oldConfig || (app.oldConfig.manifest.dockerImage === app.manifest.dockerImage)) return done();
+
+             docker.deleteImage(app.oldConfig.manifest, done);
+        },
 
         reserveHttpPort.bind(null, app),
 
@@ -433,84 +440,6 @@ function backup(app, callback) {
             debugApp(app, 'error backing up app: %s', error);
             return updateApp(app, { installationState: appdb.ISTATE_INSTALLED, installationProgress: error.message }, callback.bind(null, error)); // return to installed state intentionally
         }
-        callback(null);
-    });
-}
-
-// restore is also called for upgrades and infra updates. note that in those cases it is possible there is no backup
-function restore(app, callback) {
-    assert.strictEqual(typeof app, 'object');
-    assert.strictEqual(typeof callback, 'function');
-
-    // we don't have a backup, same as re-install. this allows us to install from install failures (update failures always
-    // have a backupId)
-    if (!app.lastBackupId) {
-        debugApp(app, 'No lastBackupId. reinstalling');
-        return install(app, callback);
-    }
-
-    var backupId = app.lastBackupId;
-
-    async.series([
-        updateApp.bind(null, app, { installationProgress: '10, Cleaning up old install' }),
-        unconfigureNginx.bind(null, app),
-        removeCollectdProfile.bind(null, app),
-        stopApp.bind(null, app),
-        deleteContainers.bind(null, app),
-         // oldConfig can be null during upgrades
-        addons.teardownAddons.bind(null, app, app.oldConfig ? app.oldConfig.manifest.addons : null),
-        deleteVolume.bind(null, app),
-        function deleteImageIfChanged(done) {
-             if (!app.oldConfig || (app.oldConfig.manifest.dockerImage === app.manifest.dockerImage)) return done();
-
-             docker.deleteImage(app.oldConfig.manifest, done);
-        },
-
-        reserveHttpPort.bind(null, app),
-
-        updateApp.bind(null, app, { installationProgress: '40, Downloading icon' }),
-        downloadIcon.bind(null, app),
-
-        updateApp.bind(null, app, { installationProgress: '55, Registering subdomain' }), // ip might change during upgrades
-        registerSubdomain.bind(null, app, true /* overwrite */),
-
-        updateApp.bind(null, app, { installationProgress: '60, Downloading image' }),
-        docker.downloadImage.bind(null, app.manifest),
-
-        updateApp.bind(null, app, { installationProgress: '65, Creating volume' }),
-        createVolume.bind(null, app),
-
-        updateApp.bind(null, app, { installationProgress: '70, Download backup and restore addons' }),
-        backups.restoreApp.bind(null, app, app.manifest.addons, backupId),
-
-        updateApp.bind(null, app, { installationProgress: '75, Creating container' }),
-        createContainer.bind(null, app),
-
-        updateApp.bind(null, app, { installationProgress: '80, Setting up collectd profile' }),
-        addCollectdProfile.bind(null, app),
-
-        runApp.bind(null, app),
-
-        updateApp.bind(null, app, { installationProgress: '85, Waiting for DNS propagation' }),
-        exports._waitForDnsPropagation.bind(null, app),
-
-        updateApp.bind(null, app, { installationProgress: '90, Waiting for External Domain CNAME setup' }),
-        exports._waitForAltDomainDnsPropagation.bind(null, app),
-
-        updateApp.bind(null, app, { installationProgress: '95, Configuring Nginx' }),
-        configureNginx.bind(null, app),
-
-        // done!
-        function (callback) {
-            debugApp(app, 'restored');
-            updateApp(app, { installationState: appdb.ISTATE_INSTALLED, installationProgress: '', health: null }, callback);
-        }
-    ], function seriesDone(error) {
-        if (error) {
-            debugApp(app, 'Error installing app: %s', error);
-            return updateApp(app, { installationState: appdb.ISTATE_ERROR, installationProgress: error.message }, callback.bind(null, error));
-        }
-
         callback(null);
     });
 }
@@ -751,13 +680,17 @@ function startTask(appId, callback) {
         switch (app.installationState) {
         case appdb.ISTATE_PENDING_UNINSTALL: return uninstall(app, callback);
         case appdb.ISTATE_PENDING_CONFIGURE: return configure(app, callback);
+
         case appdb.ISTATE_PENDING_UPDATE: return update(app, callback);
-        case appdb.ISTATE_PENDING_RESTORE: return restore(app, callback);
+        case appdb.ISTATE_PENDING_FORCE_UPDATE: return update(app, callback);
+
+        case appdb.ISTATE_PENDING_INSTALL: return install(app, callback);
+        case appdb.ISTATE_PENDING_CLONE: return install(app, callback);
+        case appdb.ISTATE_PENDING_RESTORE: return install(app, callback);
+
         case appdb.ISTATE_PENDING_BACKUP: return backup(app, callback);
         case appdb.ISTATE_INSTALLED: return handleRunCommand(app, callback);
-        case appdb.ISTATE_PENDING_INSTALL: return install(app, callback);
-        case appdb.ISTATE_PENDING_CLONE: return restore(app, callback);
-        case appdb.ISTATE_PENDING_FORCE_UPDATE: return update(app, callback);
+
         case appdb.ISTATE_ERROR:
             debugApp(app, 'Internal error. apptask launched with error status.');
             return callback(null);
