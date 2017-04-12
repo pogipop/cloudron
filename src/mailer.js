@@ -95,6 +95,8 @@ function mailConfig() {
 
 // keep this in sync with the cloudron.js dns changes
 function checkDns() {
+    if (process.env.BOX_ENV === 'test') return;
+
     subdomains.waitForDns(config.fqdn(), new RegExp('^v=spf1 .*a:' + config.adminFqdn().replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&') + '.*'), 'TXT', { interval: 60000, times: Infinity }, function (error) {
         if (error) return debug(error); // can never happen
 
