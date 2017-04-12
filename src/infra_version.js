@@ -5,7 +5,8 @@
 // Do not require anything here!
 
 exports = module.exports = {
-    // a version bump means that all app containers are recreated
+    // a major version makes all apps restore from backup
+    // a minor version makes all apps re-configure themselves
     'version': '48.1.0',
 
     'baseImages': [ 'cloudron/base:0.10.0' ],
