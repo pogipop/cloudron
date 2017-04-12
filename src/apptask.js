@@ -222,7 +222,7 @@ function registerSubdomain(app, overwrite, callback) {
         if (error) return callback(error);
 
         async.retry({ times: 200, interval: 5000 }, function (retryCallback) {
-            debugApp(app, 'Registering subdomain location [%s]', app.location);
+            debugApp(app, 'Registering subdomain location [%s] overwrite: %s', app.location, overwrite);
 
             // get the current record before updating it
             subdomains.get(app.location, 'A', function (error, values) {
@@ -343,7 +343,7 @@ function install(app, callback) {
     assert.strictEqual(typeof app, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    var backupId = app.lastBackupId;
+    const backupId = app.lastBackupId, isRestoring = app.installationState === appdb.ISTATE_PENDING_RESTORE;
 
     async.series([
         verifyManifest.bind(null, app),
@@ -371,7 +371,7 @@ function install(app, callback) {
         downloadIcon.bind(null, app),
 
         updateApp.bind(null, app, { installationProgress: '30, Registering subdomain' }),
-        registerSubdomain.bind(null, app, false /* overwrite */),
+        registerSubdomain.bind(null, app, isRestoring /* overwrite */),
 
         updateApp.bind(null, app, { installationProgress: '40, Downloading image' }),
         docker.downloadImage.bind(null, app.manifest),
