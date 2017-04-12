@@ -386,7 +386,7 @@
                     <div class="grid-item-bottom-mobile" ng-show="user.admin">
                         <div class="row">
                             <div class="col-xs-4 text-left">
-                                <a href="" ng-click="showRestore(app)" ng-show="app.lastBackupId != null">
+                                <a href="" ng-click="showRestore(app)">
                                     <i class="fa fa-undo scale"></i>
                                 </a>
 
@@ -408,7 +408,7 @@
                             <a href="" ng-click="showUninstall(app)" title="Uninstall App"><i class="fa fa-remove scale"></i></a>
                         </div>
 
-                        <div ng-show="app.lastBackupId !== null">
+                        <div>
                             <a href="" ng-click="showRestore(app)" title="Restore App"><i class="fa fa-undo scale"></i></a>
                         </div>
 
