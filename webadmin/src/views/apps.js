@@ -58,7 +58,13 @@ angular.module('Application').controller('AppsController', ['$scope', '$location
         busy: false,
         error: {},
         app: {},
-        password: ''
+        password: '',
+        backups: [ ],
+        selectedBackup: null,
+
+        selectBackup: function (backup) {
+            $scope.appRestore.selectedBackup = backup;
+        }
     };
 
     $scope.appPostInstall = {
@@ -125,6 +131,8 @@ angular.module('Application').controller('AppsController', ['$scope', '$location
         $scope.appRestore.error = {};
         $scope.appRestore.app = {};
         $scope.appRestore.password = '';
+        $scope.appRestore.selectedBackup = null;
+        $scope.appRestore.backups = [];
 
         $scope.appRestoreForm.$setPristine();
         $scope.appRestoreForm.$setUntouched();
@@ -308,8 +316,19 @@ angular.module('Application').controller('AppsController', ['$scope', '$location
         $scope.reset();
 
         $scope.appRestore.app = app;
+        $scope.appRestore.busy = true;
 
         $('#appRestoreModal').modal('show');
+
+        Client.getAppBackups(app.id, function (error, backups) {
+            if (error) {
+                Client.error(error)
+            } else {
+                $scope.appRestore.backups = backups;
+                if (backups.length) $scope.appRestore.selectedBackup = backups[0]; // pre-select first backup
+                $scope.appRestore.busy = false;
+            }
+        });
 
         return false; // prevent propagation and default
     };
@@ -318,7 +337,7 @@ angular.module('Application').controller('AppsController', ['$scope', '$location
         $scope.appRestore.busy = true;
         $scope.appRestore.error.password = null;
 
-        Client.restoreApp($scope.appRestore.app.id, $scope.appRestore.app.lastBackupId, $scope.appRestore.password, function (error) {
+        Client.restoreApp($scope.appRestore.app.id, $scope.appRestore.selectedBackup.id, $scope.appRestore.password, function (error) {
             if (error && error.statusCode === 403) {
                 $scope.appRestore.password = '';
                 $scope.appRestore.error.password = true;

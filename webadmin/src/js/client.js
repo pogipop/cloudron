@@ -535,6 +535,20 @@ angular.module('Application').service('Client', ['$http', 'md5', 'Notification',
         }).error(defaultErrorHandler(callback));
     };
 
+    Client.prototype.getAppBackups = function (callback) {
+        get('/api/v1/backups').success(function (data, status) {
+            if (status !== 200 || typeof data !== 'object') return callback(new ClientError(status, data));
+            callback(null, data.backups);
+        }).error(defaultErrorHandler(callback));
+    };
+
+    Client.prototype.getAppBackups = function (appId, callback) {
+        get('/api/v1/apps/' + appId + '/backups').success(function (data, status) {
+            if (status !== 200 || typeof data !== 'object') return callback(new ClientError(status, data));
+            callback(null, data.backups);
+        }).error(defaultErrorHandler(callback));
+    };
+
     Client.prototype.getUsers = function (callback) {
         get('/api/v1/users').success(function (data, status) {
             if (status !== 200 || typeof data !== 'object') return callback(new ClientError(status, data));
