@@ -423,19 +423,19 @@
         <div class="col-md-12">
             <div class="radio">
               <label>
-                <input type="radio" name="scheduleRadio" ng-model="autoUpdate.pattern" value="00 00 1,3,5,23 * * *">
+                <input type="radio" name="scheduleRadio" ng-change="autoUpdate.success = false" ng-model="autoUpdate.pattern" value="00 00 1,3,5,23 * * *">
                 Every night
               </label>
             </div>
             <div class="radio">
               <label>
-                <input type="radio" name="scheduleRadio" ng-model="autoUpdate.pattern" value="00 00 1,3,5,23 * * 6">
+                <input type="radio" name="scheduleRadio" ng-change="autoUpdate.success = false" ng-model="autoUpdate.pattern" value="00 00 1,3,5,23 * * 6">
                 Saturday night
               </label>
             </div>
             <div class="radio">
               <label>
-                <input type="radio" name="scheduleRadio" ng-model="autoUpdate.pattern" value="never">
+                <input type="radio" name="scheduleRadio" ng-change="autoUpdate.success = false" ng-model="autoUpdate.pattern" value="never">
                 Update manually (Not recommended)
               </label>
             </div>
@@ -443,9 +443,15 @@
     </div>
 
     <div class="row">
-        <div class="col-md-12">
-            <p class="text-success pull-right text-bold" ng-show="autoUpdate.success && autoUpdate.pattern === autoUpdate.currentPattern">Saved</p>
-            <button class="btn btn-outline btn-primary pull-right" ng-hide="autoUpdate.success && autoUpdate.pattern === autoUpdate.currentPattern" ng-click="autoUpdate.submit()" ng-disabled="autoUpdate.busy || autoUpdate.pattern === autoUpdate.currentPattern"><i class="fa fa-circle-o-notch fa-spin" ng-show="autoUpdate.busy"></i> Save</button>
+        <div class="col-md-6">
+            <i class="fa fa-circle-o-notch fa-spin" ng-show="autoUpdate.busy"></i>
+            <span class="text-success text-bold" ng-show="autoUpdate.success && autoUpdate.pattern === autoUpdate.currentPattern">Saved</span>
+        </div>
+
+        <div class="col-md-6 text-right">
+            <button class="btn btn-outline btn-primary pull-right" ng-click="autoUpdate.submit()" ng-disabled="autoUpdate.busy || autoUpdate.pattern === autoUpdate.currentPattern"> Save</button>
+
+            <button class="btn btn-outline btn-primary" ng-click="autoUpdate.checkNow()" ng-disabled="autoUpdate.busy" style="margin-right: 10px">Check now</button>
         </div>
     </div>
 </div>

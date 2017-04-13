@@ -433,6 +433,16 @@ angular.module('Application').controller('SettingsController', ['$scope', '$loca
         pattern: '',
         currentPattern: '',
 
+        checkNow: function () {
+            $scope.autoUpdate.busy = true;
+
+            Client.checkForUpdates(function (error) {
+                if (error) $scope.autoUpdate.error = error.message;
+
+                $scope.autoUpdate.busy = false;
+            });
+        },
+
         submit: function () {
             if ($scope.autoUpdate.pattern === $scope.autoUpdate.currentPattern) return;
 

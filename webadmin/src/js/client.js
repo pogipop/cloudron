@@ -432,6 +432,13 @@ angular.module('Application').service('Client', ['$http', 'md5', 'Notification',
         }).error(defaultErrorHandler(callback));
     };
 
+    Client.prototype.checkForUpdates = function (callback) {
+        post('/api/v1/cloudron/check_for_updates', { }).success(function(data, status) {
+            if (status !== 200) return callback(new ClientError(status, data));
+            callback(null);
+        }).error(defaultErrorHandler(callback));
+    };
+
     Client.prototype.getAutoupdatePattern = function (callback) {
         get('/api/v1/settings/autoupdate_pattern').success(function(data, status) {
             if (status !== 200) return callback(new ClientError(status, data));
