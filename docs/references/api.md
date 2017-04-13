@@ -694,6 +694,23 @@ Curl example to activate the cloudron:
 curl -X POST -H "Content-Type: application/json" -d '{"username": "girish", "password":"MySecret123#", "email": "girish@cloudron.io" }' https://my.cloudron.info/api/v1/cloudron/activate
 ```
 
+### Check for updates
+
+POST `/api/v1/check_for_updates` <scope>admin</scope>
+
+Checks for any available updates for the Cloudron and the installed apps.
+
+Response (200):
+```
+{
+    box: null|<object>,            // object containing information about update
+    apps: {                        // update info (if any) for each app
+        <appid>: <object>,
+        ...
+    }
+}
+```
+
 ### Update the Cloudron
 
 POST `/api/v1/cloudron/update` <scope>admin</scope>
