@@ -445,7 +445,7 @@ function unpurchase(appId, appstoreId, callback) {
         var url = config.apiServerOrigin() + '/api/v1/exchangeBoxTokenWithUserToken';
         superagent.post(url).query({ token: config.token() }).timeout(30 * 1000).end(function (error, result) {
             if (error && !error.response) return callback(new AppsError(AppsError.EXTERNAL_ERROR, error));
-            if (result.statusCode !== 201) return callback(new AppsError(AppsError.EXTERNAL_ERROR, util.format('App purchase failed. %s %j', result.status, result.body)));
+            if (result.statusCode !== 201) return callback(new AppsError(AppsError.EXTERNAL_ERROR, util.format('App unpurchase failed. %s %j', result.status, result.body)));
 
             unpurchaseWithAppstoreConfig(result.body);
         });
