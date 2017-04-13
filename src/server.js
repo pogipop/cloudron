@@ -18,7 +18,8 @@ var assert = require('assert'),
     middleware = require('./middleware'),
     passport = require('passport'),
     path = require('path'),
-    routes = require('./routes/index.js');
+    routes = require('./routes/index.js'),
+    uuid = require('node-uuid');
 
 var gHttpServer = null;
 var gSysadminHttpServer = null;
@@ -60,7 +61,17 @@ function initializeExpressSync() {
        .use(urlencoded)
        .use(middleware.cookieParser())
        .use(middleware.cors({ origins: [ '*' ], allowCredentials: false }))
-       .use(middleware.session({ secret: 'yellow is blue', resave: true, saveUninitialized: true, cookie: { path: '/', httpOnly: true, secure: true, maxAge: 600000 } }))
+       .use(middleware.session({
+           secret: uuid.v4(),   // we only use the session during oauth, and already have an in-memory session store, so we can safely change that during restarts
+           resave: true,
+           saveUninitialized: true,
+           cookie: {
+               path: '/',
+               httpOnly: true,
+               secure: true,
+               maxAge: 600000
+           }
+       }))
        .use(passport.initialize())
        .use(passport.session())
        .use(router)
