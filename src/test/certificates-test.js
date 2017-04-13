@@ -125,13 +125,13 @@ describe('Certificates', function () {
             });
         });
 
-        it('returns non-prod caas for dev cloudron', function (done) {
+        it('returns prod caas for dev cloudron', function (done) {
             config.set('boxVersionsUrl', 'http://dev/release.json');
 
             certificates._getApi({ }, function (error, api, options) {
                 expect(error).to.be(null);
                 expect(api._name).to.be('caas');
-                expect(options.prod).to.be(false);
+                expect(options.prod).to.be(true);
                 done();
             });
         });
@@ -147,13 +147,13 @@ describe('Certificates', function () {
             });
         });
 
-        it('returns non-prod acme with altDomain in dev cloudron', function (done) {
+        it('returns prod acme with altDomain in dev cloudron', function (done) {
             config.set('boxVersionsUrl', 'http://dev/release.json');
 
             certificates._getApi({ altDomain: 'foo.something.com' }, function (error, api, options) {
                 expect(error).to.be(null);
                 expect(api._name).to.be('acme');
-                expect(options.prod).to.be(false);
+                expect(options.prod).to.be(true);
                 done();
             });
         });

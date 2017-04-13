@@ -790,7 +790,6 @@ Response (200):
 {
     apiServerOrigin: <string>,        // Always https://api.cloudron.io
     webServerOrigin: <string>,        // Always https://cloudron.io
-    isDev: <boolean>,                 // internal
     fqdn: <fqdn>,                     // The FQDN
     ip: <ip>,                         // The public IP
     version: <semver>,                // Current version

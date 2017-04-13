@@ -442,7 +442,6 @@ function getConfig(callback) {
                 callback(null, {
                     apiServerOrigin: config.apiServerOrigin(),
                     webServerOrigin: config.webServerOrigin(),
-                    isDev: config.isDev(),
                     fqdn: config.fqdn(),
                     version: config.version(),
                     update: updateChecker.getUpdateInfo(),

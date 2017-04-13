@@ -96,7 +96,7 @@ function getApi(app, callback) {
 
         var options = { };
         if (tlsConfig.provider === 'caas') {
-            options.prod = !config.isDev(); // with altDomain, we will choose acme setting based on this
+            options.prod = true; // with altDomain, we will choose acme setting based on this
         } else { // acme
             options.prod = tlsConfig.provider.match(/.*-prod/) !== null;
         }

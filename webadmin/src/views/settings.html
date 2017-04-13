@@ -354,7 +354,7 @@
 </div>
 
 <div class="card" style="margin-bottom: 15px;">
-    <div class="row" ng-show="backupConfig.provider !== 'caas' || config.isDev">
+    <div class="row" ng-show="backupConfig.provider !== 'caas'">
         <div class="col-xs-6">
             <span class="text-muted">Provider</span>
         </div>
@@ -362,7 +362,7 @@
             <span>{{ backupConfig.provider === 'caas' ? 'cloudron.io' : backupConfig.provider }}</span>
         </div>
     </div>
-    <div class="row" ng-show="backupConfig.provider !== 'caas' || config.isDev">
+    <div class="row" ng-show="backupConfig.provider !== 'caas'">
         <div class="col-xs-6">
             <span class="text-muted">Location</span>
         </div>
@@ -384,7 +384,7 @@
         </div>
     </div>
 
-    <div class="row" ng-show="backupConfig.provider !== 'caas' || config.isDev">
+    <div class="row" ng-show="backupConfig.provider !== 'caas'">
         <br/>
         <div class="col-md-12">
             <div ng-show="createBackup.busy" class="progress progress-striped active animateMe">
@@ -393,7 +393,7 @@
             <br/>
         </div>
     </div>
-    <div class="row" ng-show="backupConfig.provider !== 'caas' || config.isDev">
+    <div class="row" ng-show="backupConfig.provider !== 'caas'">
         <div class="col-md-6">
             <p ng-show="createBackup.busy">{{ createBackup.message }}</p>
         </div>

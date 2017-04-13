@@ -32,7 +32,6 @@ exports = module.exports = {
     appFqdn: appFqdn,
     zoneName: zoneName,
 
-    isDev: isDev,
     isDemo: isDemo,
 
     tlsCert: tlsCert,
@@ -202,10 +201,6 @@ function zoneName() {
 
 function database() {
     return get('database');
-}
-
-function isDev() {
-    return /dev/i.test(get('boxVersionsUrl'));
 }
 
 function isDemo() {
