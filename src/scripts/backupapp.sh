@@ -51,6 +51,7 @@ fi
 
 # perform backup
 readonly app_data_dir="${APPS_DATA_DIR}/${app_id}"
+readonly tar_bin="/home/yellowtent/box/helper/tarjs"
 
 # will be checked at the end
 try=0
@@ -80,7 +81,7 @@ if [[ "$1" == "s3" ]]; then
         echo "Uploading backup to ${s3_data_url} (try ${try})"
         error_log=$(mktemp)
 
-        if tar -czf - -C "${app_data_dir}" . \
+        if ${tar_bin} "${app_data_dir}" . \
                | openssl aes-256-cbc -e -pass "pass:${password}" \
                |  aws ${optional_args} s3 cp - "${s3_data_url}" 2>"${error_log}"; then
             break
@@ -94,7 +95,7 @@ elif [[ "$1" == "filesystem" ]]; then
     cat "${app_data_dir}/config.json" > "${backup_folder}/${backup_config_fileName}"
 
     echo "Storing backup data to ${backup_folder}/${backup_data_fileName}"
-    tar -czf - -C "${app_data_dir}" . | openssl aes-256-cbc -e -pass "pass:${password}" > "${backup_folder}/${backup_data_fileName}"
+    ${tar_bin} "${app_data_dir}" . | openssl aes-256-cbc -e -pass "pass:${password}" > "${backup_folder}/${backup_data_fileName}"
 fi
 
 if [[ ${try} -eq 5 ]]; then

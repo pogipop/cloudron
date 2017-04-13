@@ -63,6 +63,7 @@
     "split": "^1.0.0",
     "superagent": "^1.8.3",
     "supererror": "^0.7.1",
+    "tar-fs": "^1.15.2",
     "tldjs": "^1.6.2",
     "underscore": "^1.7.0",
     "valid-url": "^1.0.9",
