@@ -830,4 +830,4 @@
 * (mysql) Use utf8mb4 encoding for databases and backups
 * Allow installing a new app from a backup
 * Fix download of large files (> 1GB)
-
+* Fix app backup regression
