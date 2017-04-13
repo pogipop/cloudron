@@ -46,6 +46,7 @@ exports = module.exports = {
 var addons = require('./addons.js'),
     appdb = require('./appdb.js'),
     appstore = require('./appstore.js'),
+    AppstoreError = require('./appstore.js').AppstoreError,
     assert = require('assert'),
     async = require('async'),
     backups = require('./backups.js'),
@@ -455,7 +456,10 @@ function install(data, auditSource, callback) {
         debug('Will install app with id : ' + appId);
 
         appstore.purchase(appId, appStoreId, function (error) {
-            if (error) return callback(error);
+            if (error && error.reason === AppstoreError.NOT_FOUND) return callback(new AppsError(AppsError.NOT_FOUND));
+            if (error && error.reason === AppstoreError.BILLING_REQUIRED) return callback(new AppsError(AppsError.BILLING_REQUIRED, error.message));
+            if (error && error.reason === AppstoreError.EXTERNAL_ERROR) return callback(new AppsError(AppsError.EXTERNAL_ERROR, error.message));
+            if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
 
             var data = {
                 accessRestriction: accessRestriction,
@@ -796,7 +800,10 @@ function clone(appId, data, auditSource, callback) {
             var newAppId = uuid.v4(), appStoreId = app.appStoreId, manifest = restoreConfig.manifest;
 
             appstore.purchase(newAppId, appStoreId, function (error) {
-                if (error) return callback(error);
+                if (error && error.reason === AppstoreError.NOT_FOUND) return callback(new AppsError(AppsError.NOT_FOUND));
+                if (error && error.reason === AppstoreError.BILLING_REQUIRED) return callback(new AppsError(AppsError.BILLING_REQUIRED, error.message));
+                if (error && error.reason === AppstoreError.EXTERNAL_ERROR) return callback(new AppsError(AppsError.EXTERNAL_ERROR, error.message));
+                if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
 
                 var data = {
                     installationState: appdb.ISTATE_PENDING_CLONE,
@@ -834,7 +841,10 @@ function uninstall(appId, auditSource, callback) {
         if (error) return callback(error);
 
         appstore.unpurchase(appId, result.appStoreId, function (error) {
-            if (error) return callback(error);
+            if (error && error.reason === AppstoreError.NOT_FOUND) return callback(new AppsError(AppsError.NOT_FOUND));
+            if (error && error.reason === AppstoreError.BILLING_REQUIRED) return callback(new AppsError(AppsError.BILLING_REQUIRED, error.message));
+            if (error && error.reason === AppstoreError.EXTERNAL_ERROR) return callback(new AppsError(AppsError.EXTERNAL_ERROR, error.message));
+            if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
 
             taskmanager.stopAppTask(appId, function () {
                 appdb.setInstallationCommand(appId, appdb.ISTATE_PENDING_UNINSTALL, function (error) {

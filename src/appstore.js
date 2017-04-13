@@ -4,7 +4,9 @@ exports = module.exports = {
     purchase: purchase,
     unpurchase: unpurchase,
 
-    sendAliveStatus: sendAliveStatus
+    sendAliveStatus: sendAliveStatus,
+
+    AppstoreError: AppstoreError
 };
 
 var assert = require('assert'),
