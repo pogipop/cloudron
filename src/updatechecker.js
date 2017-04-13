@@ -10,6 +10,7 @@ exports = module.exports = {
 };
 
 var apps = require('./apps.js'),
+    appstore = require('./appstore.js'),
     async = require('async'),
     config = require('./config.js'),
     constants = require('./constants.js'),
@@ -55,21 +56,6 @@ function resetAppUpdateInfo(appId) {
     } else {
         delete gAppUpdateInfo[appId];
     }
-}
-
-function getAppUpdate(app, callback) {
-    superagent
-       .get(config.apiServerOrigin() + '/api/v1/apps/' + app.appStoreId + '/versions/' + app.manifest.version + '/update')
-        .query({ boxVersion: config.version() })
-        .timeout(10 * 1000)
-        .end(function (error, result) {
-
-        if (error && !error.response) return callback(error);
-
-        if (result.statusCode !== 200 || !('update' in result.body)) return callback(new Error(util.format('Bad response: %s %s', result.statusCode, result.text)));
-
-        callback(null, result.body.update);
-    });
 }
 
 function getBoxUpdates(callback) {
@@ -135,7 +121,7 @@ function checkAppUpdates(callback) {
         async.eachSeries(apps, function (app, iteratorDone) {
             if (app.appStoreId === '') return iteratorDone(); // appStoreId can be '' for dev apps
 
-            getAppUpdate(app, function (error, updateInfo) {
+            appstore.getAppUpdate(app, function (error, updateInfo) {
                 if (error) {
                     debug('Error getting app update info for %s', app.id, error);
                     return iteratorDone();  // continue to next

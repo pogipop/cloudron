@@ -6,6 +6,8 @@ exports = module.exports = {
 
     sendAliveStatus: sendAliveStatus,
 
+    getAppUpdate: getAppUpdate,
+
     AppstoreError: AppstoreError
 };
 
@@ -44,6 +46,8 @@ AppstoreError.BILLING_REQUIRED = 'Billing Required';
 var NOOP_CALLBACK = function (error) { if (error) debug(error); };
 
 function getAppstoreConfig(callback) {
+    assert.strictEqual(typeof callback, 'function');
+
     // Caas Cloudrons do not store appstore credentials in their local database
     if (config.provider() === 'caas') {
         var url = config.apiServerOrigin() + '/api/v1/exchangeBoxTokenWithUserToken';
@@ -162,6 +166,25 @@ function sendAliveStatus(data, callback) {
 
                 callback(null);
             });
+        });
+    });
+}
+
+function getAppUpdate(app, callback) {
+    assert.strictEqual(typeof app, 'object');
+    assert.strictEqual(typeof callback, 'function');
+
+    getAppstoreConfig(function (error, appstoreConfig) {
+        if (error) return callback(error);
+
+        var url = config.apiServerOrigin() + '/api/v1/users/' + appstoreConfig.userId + '/cloudrons/' + appstoreConfig.cloudronId + '/appupdate';
+
+        superagent.get(url).query({ boxVersion: config.version(), appId: app.appStoreId, appVersion: app.manifest.version }).timeout(10 * 1000).end(function (error, result) {
+            if (error && !error.response) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, error));
+            if (result.statusCode === 204) return callback(null); // no update
+            if (result.statusCode !== 200) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, util.format('Bad response: %s %s', result.statusCode, result.text)));
+
+            callback(null, result.body);
         });
     });
 }
