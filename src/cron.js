@@ -105,13 +105,12 @@ function recreateJobs(tz) {
         timeZone: tz
     });
 
-    // randomized pattern per cloudron every 10 min
-    var randomMinute = Math.floor(10*Math.random());
-    var random10MinPattern = [0,1,2,3,4,5].map(function (n) { return n*10+randomMinute; }).join(',');
+    // randomized pattern per cloudron every hour
+    var randomMinute = Math.floor(60*Math.random());
 
     if (gBoxUpdateCheckerJob) gBoxUpdateCheckerJob.stop();
     gBoxUpdateCheckerJob = new CronJob({
-        cronTime: '00 ' + random10MinPattern + ' * * * *', // every 10 minutes
+        cronTime: '00 ' + randomMinute + ' * * * *', // once an hour
         onTick: updateChecker.checkBoxUpdates,
         start: true,
         timeZone: tz
@@ -119,7 +118,7 @@ function recreateJobs(tz) {
 
     if (gAppUpdateCheckerJob) gAppUpdateCheckerJob.stop();
     gAppUpdateCheckerJob = new CronJob({
-        cronTime: '00 ' + random10MinPattern + ' * * * *', // every 10 minutes
+        cronTime: '00 ' + randomMinute + ' * * * *', // once an hour
         onTick: updateChecker.checkAppUpdates,
         start: true,
         timeZone: tz
