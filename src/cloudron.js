@@ -32,6 +32,7 @@ exports = module.exports = {
 };
 
 var apps = require('./apps.js'),
+    appstore = require('./appstore.js'),
     assert = require('assert'),
     async = require('async'),
     backups = require('./backups.js'),
@@ -484,33 +485,6 @@ function sendAliveStatus(callback) {
         };
     }
 
-    function sendAliveStatusWithAppstoreConfig(backendSettings, appstoreConfig) {
-        assert.strictEqual(typeof backendSettings, 'object');
-        assert.strictEqual(typeof appstoreConfig.userId, 'string');
-        assert.strictEqual(typeof appstoreConfig.cloudronId, 'string');
-        assert.strictEqual(typeof appstoreConfig.token, 'string');
-
-        var url = config.apiServerOrigin() + '/api/v1/users/' + appstoreConfig.userId + '/cloudrons/' + appstoreConfig.cloudronId + '/alive';
-        var data = {
-            domain: config.fqdn(),
-            version: config.version(),
-            provider: config.provider(),
-            backendSettings: backendSettings,
-            machine: {
-                cpus: os.cpus(),
-                totalmem: os.totalmem()
-            }
-        };
-
-        superagent.post(url).send(data).query({ accessToken: appstoreConfig.token }).timeout(30 * 1000).end(function (error, result) {
-            if (error && !error.response) return callback(new CloudronError(CloudronError.EXTERNAL_ERROR, error));
-            if (result.statusCode === 404) return callback(new CloudronError(CloudronError.NOT_FOUND));
-            if (result.statusCode !== 201) return callback(new CloudronError(CloudronError.EXTERNAL_ERROR, util.format('Sending alive status failed. %s %j', result.status, result.body)));
-
-            callback(null);
-        });
-    }
-
     settings.getAll(function (error, result) {
         if (error) return callback(new CloudronError(CloudronError.INTERNAL_ERROR, error));
 
@@ -532,27 +506,18 @@ function sendAliveStatus(callback) {
             timeZone: result[settings.TIME_ZONE_KEY]
         };
 
-        // Caas Cloudrons do not store appstore credentials in their local database
-        if (config.provider() === 'caas') {
-            var url = config.apiServerOrigin() + '/api/v1/exchangeBoxTokenWithUserToken';
-            superagent.post(url).query({ token: config.token() }).timeout(30 * 1000).end(function (error, result) {
-                if (error && !error.response) return callback(new CloudronError(CloudronError.EXTERNAL_ERROR, error));
-                if (result.statusCode !== 201) return callback(new CloudronError(CloudronError.EXTERNAL_ERROR, util.format('Token exchange failed. %s %j', result.status, result.body)));
+        var data = {
+            domain: config.fqdn(),
+            version: config.version(),
+            provider: config.provider(),
+            backendSettings: backendSettings,
+            machine: {
+                cpus: os.cpus(),
+                totalmem: os.totalmem()
+            }
+        };
 
-                sendAliveStatusWithAppstoreConfig(backendSettings, result.body);
-            });
-        } else {
-            settings.getAppstoreConfig(function (error, result) {
-                if (error) return callback(new CloudronError(CloudronError.INTERNAL_ERROR, error));
-
-                if (!result.token) {
-                    debug('sendAliveStatus: Cloudron not yet registered');
-                    return callback(null);
-                }
-
-                sendAliveStatusWithAppstoreConfig(backendSettings, result);
-            });
-        }
+        appstore.sendAliveStatus(data, callback);
     });
 }
 
