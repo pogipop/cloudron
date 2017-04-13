@@ -6,6 +6,7 @@ exports = module.exports = {
 };
 
 var apps = require('./apps.js'),
+    appstore = require('./appstore.js'),
     assert = require('assert'),
     backups = require('./backups.js'),
     certificates = require('./certificates.js'),
@@ -65,7 +66,7 @@ function initialize(callback) {
     var randomHourMinute = Math.floor(60*Math.random());
     gAliveJob = new CronJob({
         cronTime: '00 ' + randomHourMinute + ' * * * *', // every hour on a random minute
-        onTick: cloudron.sendAliveStatus,
+        onTick: appstore.sendAliveStatus,
         start: true
     });
 

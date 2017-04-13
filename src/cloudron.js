@@ -12,7 +12,6 @@ exports = module.exports = {
     dnsSetup: dnsSetup,
 
     sendHeartbeat: sendHeartbeat,
-    sendAliveStatus: sendAliveStatus,
 
     updateToLatest: updateToLatest,
     reboot: reboot,
@@ -32,7 +31,6 @@ exports = module.exports = {
 };
 
 var apps = require('./apps.js'),
-    appstore = require('./appstore.js'),
     assert = require('assert'),
     async = require('async'),
     backups = require('./backups.js'),
@@ -474,50 +472,6 @@ function sendHeartbeat() {
         if (error && !error.response) debug('Network error sending heartbeat.', error);
         else if (result.statusCode !== 200) debug('Server responded to heartbeat with %s %s', result.statusCode, result.text);
         else debug('Heartbeat sent to %s', url);
-    });
-}
-
-function sendAliveStatus(callback) {
-    if (typeof callback !== 'function') {
-        callback = function (error) {
-            if (error && error.reason !== CloudronError.INTERNAL_ERROR) debug(error);
-            else if (error) debug(error);
-        };
-    }
-
-    settings.getAll(function (error, result) {
-        if (error) return callback(new CloudronError(CloudronError.INTERNAL_ERROR, error));
-
-        var backendSettings = {
-            dnsConfig: {
-                provider: result[settings.DNS_CONFIG_KEY].provider,
-                wildcard: result[settings.DNS_CONFIG_KEY].provider === 'manual' ? result[settings.DNS_CONFIG_KEY].wildcard : undefined
-            },
-            tlsConfig: {
-                provider: result[settings.TLS_CONFIG_KEY].provider
-            },
-            backupConfig: {
-                provider: result[settings.BACKUP_CONFIG_KEY].provider
-            },
-            mailConfig: {
-                enabled: result[settings.MAIL_CONFIG_KEY].enabled
-            },
-            autoupdatePattern: result[settings.AUTOUPDATE_PATTERN_KEY],
-            timeZone: result[settings.TIME_ZONE_KEY]
-        };
-
-        var data = {
-            domain: config.fqdn(),
-            version: config.version(),
-            provider: config.provider(),
-            backendSettings: backendSettings,
-            machine: {
-                cpus: os.cpus(),
-                totalmem: os.totalmem()
-            }
-        };
-
-        appstore.sendAliveStatus(data, callback);
     });
 }
 
