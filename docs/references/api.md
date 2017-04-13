@@ -759,7 +759,6 @@ Response (200):
 {
     activated: <boolean>,
     version: <semver>,
-    boxVersionsUrl: <url>,     // Location of the Cloudron versions file to check for updates
     apiServerOrigin: <url>,    // Always https://api.cloudron.io
     provider: <string>,
     cloudronName: <string>

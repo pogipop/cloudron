@@ -181,7 +181,7 @@ fi
 systemctl start nginx
 
 # bookkeep the version as part of data
-echo "{ \"version\": \"${arg_version}\", \"boxVersionsUrl\": \"${arg_box_versions_url}\" }" > "${BOX_DATA_DIR}/version"
+echo "{ \"version\": \"${arg_version}\", \"apiServerOrigin\": \"${arg_api_server_origin}\" }" > "${BOX_DATA_DIR}/version"
 
 # restart mysql to make sure it has latest config
 if [[ ! -f /etc/mysql/mysql.cnf ]] || ! diff -q "${script_dir}/start/mysql.cnf" /etc/mysql/mysql.cnf >/dev/null; then
@@ -235,7 +235,6 @@ cat > "${CONFIG_DIR}/cloudron.conf" <<CONF_END
     "webServerOrigin": "${arg_web_server_origin}",
     "fqdn": "${arg_fqdn}",
     "isCustomDomain": ${arg_is_custom_domain},
-    "boxVersionsUrl": "${arg_box_versions_url}",
     "provider": "${arg_provider}",
     "isDemo": ${arg_is_demo},
     "database": {

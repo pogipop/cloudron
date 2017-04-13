@@ -177,7 +177,6 @@ if [[ -z "${dataJson}" ]]; then
     if [[ -z "${restoreUrl}" ]]; then
         data=$(cat <<EOF
     {
-        "boxVersionsUrl": "${versionsUrl}",
         "fqdn": "${domain}",
         "provider": "${provider}",
         "apiServerOrigin": "${apiServerOrigin}",
@@ -202,7 +201,6 @@ EOF
     else
         data=$(cat <<EOF
     {
-        "boxVersionsUrl": "${versionsUrl}",
         "fqdn": "${domain}",
         "provider": "${provider}",
         "apiServerOrigin": "${apiServerOrigin}",

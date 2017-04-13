@@ -115,8 +115,6 @@ describe('Certificates', function () {
         after(cleanup);
 
         it('returns prod caas for prod cloudron', function (done) {
-            config.set('boxVersionsUrl', 'http://prod/release.json');
-
             certificates._getApi({ }, function (error, api, options) {
                 expect(error).to.be(null);
                 expect(api._name).to.be('caas');
@@ -126,8 +124,6 @@ describe('Certificates', function () {
         });
 
         it('returns prod caas for dev cloudron', function (done) {
-            config.set('boxVersionsUrl', 'http://dev/release.json');
-
             certificates._getApi({ }, function (error, api, options) {
                 expect(error).to.be(null);
                 expect(api._name).to.be('caas');
@@ -137,8 +133,6 @@ describe('Certificates', function () {
         });
 
         it('returns prod-acme with altDomain in prod cloudron', function (done) {
-            config.set('boxVersionsUrl', 'http://prod/release.json');
-
             certificates._getApi({ altDomain: 'foo.something.com' }, function (error, api, options) {
                 expect(error).to.be(null);
                 expect(api._name).to.be('acme');
@@ -148,8 +142,6 @@ describe('Certificates', function () {
         });
 
         it('returns prod acme with altDomain in dev cloudron', function (done) {
-            config.set('boxVersionsUrl', 'http://dev/release.json');
-
             certificates._getApi({ altDomain: 'foo.something.com' }, function (error, api, options) {
                 expect(error).to.be(null);
                 expect(api._name).to.be('acme');
@@ -170,8 +162,6 @@ describe('Certificates', function () {
         after(cleanup);
 
         it('returns prod acme in prod cloudron', function (done) {
-            config.set('boxVersionsUrl', 'http://prod/release.json');
-
             certificates._getApi({ }, function (error, api, options) {
                 expect(error).to.be(null);
                 expect(api._name).to.be('acme');
@@ -181,8 +171,6 @@ describe('Certificates', function () {
         });
 
         it('returns prod acme with altDomain in prod cloudron', function (done) {
-            config.set('boxVersionsUrl', 'http://prod/release.json');
-
             certificates._getApi({ altDomain: 'foo.bar.com' }, function (error, api, options) {
                 expect(error).to.be(null);
                 expect(api._name).to.be('acme');
@@ -192,8 +180,6 @@ describe('Certificates', function () {
         });
 
         it('returns prod acme in dev cloudron', function (done) {
-            config.set('boxVersionsUrl', 'http://dev/release.json');
-
             certificates._getApi({ }, function (error, api, options) {
                 expect(error).to.be(null);
                 expect(api._name).to.be('acme');
@@ -214,8 +200,6 @@ describe('Certificates', function () {
         after(cleanup);
 
         it('returns staging acme in prod cloudron', function (done) {
-            config.set('boxVersionsUrl', 'http://prod/release.json');
-
             certificates._getApi({ }, function (error, api, options) {
                 expect(error).to.be(null);
                 expect(api._name).to.be('acme');
@@ -225,8 +209,6 @@ describe('Certificates', function () {
         });
 
         it('returns staging acme in dev cloudron', function (done) {
-            config.set('boxVersionsUrl', 'http://dev/release.json');
-
             certificates._getApi({ }, function (error, api, options) {
                 expect(error).to.be(null);
                 expect(api._name).to.be('acme');
@@ -236,8 +218,6 @@ describe('Certificates', function () {
         });
 
         it('returns staging acme with altDomain in prod cloudron', function (done) {
-            config.set('boxVersionsUrl', 'http://prod/release.json');
-
             certificates._getApi({ altDomain: 'foo.bar.com' }, function (error, api, options) {
                 expect(error).to.be(null);
                 expect(api._name).to.be('acme');

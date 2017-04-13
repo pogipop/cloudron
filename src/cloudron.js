@@ -366,7 +366,6 @@ function getStatus(callback) {
             callback(null, {
                 activated: count !== 0,
                 version: config.version(),
-                boxVersionsUrl: config.get('boxVersionsUrl'),
                 apiServerOrigin: config.apiServerOrigin(), // used by CaaS tool
                 provider: config.provider(),
                 cloudronName: cloudronName,
@@ -754,8 +753,7 @@ function doUpdate(boxUpdateInfo, callback) {
                 webServerOrigin: config.webServerOrigin()
             },
 
-            version: boxUpdateInfo.version,
-            boxVersionsUrl: config.get('boxVersionsUrl')
+            version: boxUpdateInfo.version
         };
 
         debug('updating box %s %j', boxUpdateInfo.sourceTarballUrl, data);

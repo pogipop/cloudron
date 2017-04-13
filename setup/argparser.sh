@@ -5,7 +5,6 @@ json="${source_dir}/../node_modules/.bin/json"
 
 # IMPORTANT: Fix cloudron.js:doUpdate if you add/remove any arg. keep these sorted for readability
 arg_api_server_origin=""
-arg_box_versions_url=""
 arg_fqdn=""
 arg_is_custom_domain="false"
 arg_restore_key=""
@@ -50,8 +49,6 @@ while true; do
         [[ "${arg_api_server_origin}" == "" ]] && arg_api_server_origin="https://api.cloudron.io"
         arg_web_server_origin=$(echo "$2" | $json webServerOrigin)
         [[ "${arg_web_server_origin}" == "" ]] && arg_web_server_origin="https://cloudron.io"
-        arg_box_versions_url=$(echo "$2" | $json boxVersionsUrl)
-        [[ "${arg_box_versions_url}" == "" ]] && arg_box_versions_url="https://s3.amazonaws.com/prod-cloudron-releases/versions.json"
 
         # TODO check if an where this is used
         arg_version=$(echo "$2" | $json version)
@@ -97,7 +94,6 @@ done
 
 echo "Parsed arguments:"
 echo "api server: ${arg_api_server_origin}"
-echo "box versions url: ${arg_box_versions_url}"
 echo "fqdn: ${arg_fqdn}"
 echo "custom domain: ${arg_is_custom_domain}"
 echo "restore key: ${arg_restore_key}"

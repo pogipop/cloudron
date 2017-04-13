@@ -93,7 +93,6 @@ function cleanup(done) {
 describe('updatechecker - box - manual', function () {
     before(function (done) {
         config.set('version', '1.0.0');
-        config.set('boxVersionsUrl', 'http://localhost:4444/release.json');
         safe.fs.unlinkSync(paths.UPDATE_CHECKER_FILE);
 
         async.series([
@@ -244,7 +243,6 @@ describe('updatechecker - box - manual', function () {
 describe('updatechecker - box - automatic', function () {
     before(function (done) {
         config.set('version', '1.0.0');
-        config.set('boxVersionsUrl', 'http://localhost:4444/release.json');
         async.series([
             database.initialize,
             settings.initialize,

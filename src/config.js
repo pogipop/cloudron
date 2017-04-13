@@ -76,7 +76,6 @@ function initConfig() {
     data.fqdn = 'localhost';
 
     data.token = null;
-    data.boxVersionsUrl = null;
     data.version = null;
     data.isCustomDomain = true;
     data.webServerOrigin = null;
