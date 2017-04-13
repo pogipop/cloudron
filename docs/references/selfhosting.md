@@ -399,8 +399,8 @@ This section lists various security measures in place to protect the Cloudron.
     HTTPS.
 *   The Cloudron automatically installs and renews certificates for your apps as needed. Should
     installation of certificate fail for reasons beyond it's control, Cloudron admins will get a notification about it.
-*   Cloudron sets the `Strict-Transport-Security` header to protect apps against downgrade attacks
-    and cookie hijacking
+*   Cloudron sets the `Strict-Transport-Security` header (HSTS) to protect apps against downgrade attacks
+    and cookie hijacking.
 *   Cloudron has A+ rating for SSL from [SSL Labs](https://cloudron.io/blog/2017-02-22-release-0.102.0.html).
 
 ## App isolation
@@ -412,6 +412,8 @@ This section lists various security measures in place to protect the Cloudron.
 *   Apps are run with an AppArmor profile that disables many system calls and restricts access to `proc`
     and `sys` filesystems.
 *   Most apps are run as non-root user. In the future, we intend to implement user namespaces.
+*   Each app is run in it's own subdomain as opposed to sub-paths. This ensures that XSS vulnerabilities
+    in one app doesn't [compromise](https://security.stackexchange.com/questions/24155/preventing-insecure-webapp-on-subdomain-compromise-security-of-main-webapp) other apps.
 
 ## Email
 
