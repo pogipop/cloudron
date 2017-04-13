@@ -19,9 +19,7 @@ var apps = require('./apps.js'),
     paths = require('./paths.js'),
     safe = require('safetydance'),
     semver = require('semver'),
-    settings = require('./settings.js'),
-    superagent = require('superagent'),
-    util = require('util');
+    settings = require('./settings.js');
 
 var gAppUpdateInfo = { }, // id -> update info { creationDate, manifest }
     gBoxUpdateInfo = null; // { version, changelog, upgrade, sourceTarballUrl }
@@ -56,54 +54,6 @@ function resetAppUpdateInfo(appId) {
     } else {
         delete gAppUpdateInfo[appId];
     }
-}
-
-function getBoxUpdates(callback) {
-    var currentVersion = config.version();
-
-    // do not crash if boxVersionsUrl is not set
-    if (!config.get('boxVersionsUrl')) return callback(null, null);
-
-    superagent
-        .get(config.get('boxVersionsUrl'))
-        .timeout(10 * 1000)
-        .end(function (error, result) {
-        if (error && !error.response) return callback(error);
-        if (result.statusCode !== 200) return callback(new Error(util.format('Bad status: %s %s', result.statusCode, result.text)));
-
-        var versions = safe.JSON.parse(result.text);
-
-        if (!versions || typeof versions !== 'object') return callback(new Error('versions is not in valid format:' + safe.error));
-
-        var latestVersion = Object.keys(versions).sort(semver.compare).pop();
-        debug('checkBoxUpdates: Latest version is %s etag:%s', latestVersion, result.header['etag']);
-
-        if (!latestVersion) return callback(new Error('No version available'));
-
-        var nextVersion = null, nextVersionInfo = null;
-        var currentVersionInfo = versions[currentVersion];
-        if (!currentVersionInfo) {
-            debug('Cloudron runs on unknown version %s. Offering to update to latest version', currentVersion);
-            nextVersion = latestVersion;
-            nextVersionInfo = versions[latestVersion];
-        } else {
-            nextVersion = currentVersionInfo.next;
-            nextVersionInfo = nextVersion ? versions[nextVersion] : null;
-        }
-
-        if (nextVersionInfo && typeof nextVersionInfo === 'object') {
-            debug('new version %s available. imageId: %d code: %s', nextVersion, nextVersionInfo.imageId, nextVersionInfo.sourceTarballUrl);
-            callback(null, {
-                version: nextVersion,
-                changelog: nextVersionInfo.changelog,
-                upgrade: nextVersionInfo.upgrade,
-                sourceTarballUrl: nextVersionInfo.sourceTarballUrl
-            });
-        } else {
-            debug('no new version available.');
-            callback(null, null);
-        }
-    });
 }
 
 function checkAppUpdates(callback) {
@@ -177,7 +127,7 @@ function checkBoxUpdates(callback) {
 
     gBoxUpdateInfo = null;
 
-    getBoxUpdates(function (error, updateInfo) {
+    appstore.getBoxUpdate(function (error, updateInfo) {
         if (error || !updateInfo) return callback(error);
 
         settings.getUpdateConfig(function (error, updateConfig) {

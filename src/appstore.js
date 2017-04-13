@@ -7,6 +7,7 @@ exports = module.exports = {
     sendAliveStatus: sendAliveStatus,
 
     getAppUpdate: getAppUpdate,
+    getBoxUpdate: getBoxUpdate,
 
     AppstoreError: AppstoreError
 };
@@ -170,6 +171,25 @@ function sendAliveStatus(data, callback) {
     });
 }
 
+function getBoxUpdate(callback) {
+    assert.strictEqual(typeof callback, 'function');
+
+    getAppstoreConfig(function (error, appstoreConfig) {
+        if (error) return callback(error);
+
+        var url = config.apiServerOrigin() + '/api/v1/users/' + appstoreConfig.userId + '/cloudrons/' + appstoreConfig.cloudronId + '/boxupdate';
+
+        superagent.get(url).query({ boxVersion: config.version() }).timeout(10 * 1000).end(function (error, result) {
+            if (error && !error.response) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, error));
+            if (result.statusCode === 204) return callback(null); // no update
+            if (result.statusCode !== 200) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, util.format('Bad response: %s %s', result.statusCode, result.text)));
+
+            // { version, changelog, upgrade, sourceTarballUrl}
+            callback(null, result.body);
+        });
+    });
+}
+
 function getAppUpdate(app, callback) {
     assert.strictEqual(typeof app, 'object');
     assert.strictEqual(typeof callback, 'function');
@@ -184,6 +204,7 @@ function getAppUpdate(app, callback) {
             if (result.statusCode === 204) return callback(null); // no update
             if (result.statusCode !== 200) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, util.format('Bad response: %s %s', result.statusCode, result.text)));
 
+            // { id, creationDate, manifest }
             callback(null, result.body);
         });
     });
