@@ -184,7 +184,7 @@ TokenURL = ${API_ORIGIN}/api/v1/oauth/token
 The token obtained via OAuth has a restricted scope wherein they can only access the [profile API](/references/api.html#profile). This restriction
 is so that apps cannot make undesired changes to the user's Cloudron.
 
-We currently provide OAuth2 integration for Ruby [omniauth](https://github.com/cloudron-io/omniauth-cloudron) and Node.js [passport](https://github.com/cloudron-io/passport-cloudron).
+We currently provide OAuth2 integration for Ruby [omniauth](https://git.cloudron.io/cloudron/omniauth-cloudron) and Node.js [passport](https://git.cloudron.io/cloudron/passport-cloudron).
 
 ## postgresql
 
@@ -317,4 +317,3 @@ cloudron exec
 
 > swaks --server "${MAIL_SMTP_SERVER}" -p "${MAIL_SMTP_PORT}" --from "${MAIL_SMTP_USERNAME}@${MAIL_DOMAIN}" --body "Test mail from cloudron app at $(hostname -f)" --auth-user "${MAIL_SMTP_USERNAME}" --auth-password "${MAIL_SMTP_PASSWORD}"
 ```
-
