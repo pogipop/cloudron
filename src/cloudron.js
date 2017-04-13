@@ -490,7 +490,7 @@ function sendAliveStatus(callback) {
         assert.strictEqual(typeof appstoreConfig.cloudronId, 'string');
         assert.strictEqual(typeof appstoreConfig.token, 'string');
 
-        var url = config.apiServerOrigin() + '/api/v1/users/' + appstoreConfig.userId + '/cloudrons/' + appstoreConfig.cloudronId;
+        var url = config.apiServerOrigin() + '/api/v1/users/' + appstoreConfig.userId + '/cloudrons/' + appstoreConfig.cloudronId + '/alive';
         var data = {
             domain: config.fqdn(),
             version: config.version(),
