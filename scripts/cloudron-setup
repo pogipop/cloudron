@@ -44,8 +44,7 @@ encryptionKey=""
 restoreUrl=""
 dnsProvider="manual"
 tlsProvider="le-prod"
-versionsUrl="https://s3.amazonaws.com/prod-cloudron-releases/versions.json"
-requestedVersion="latest"
+requestedVersion=""
 apiServerOrigin="https://api.cloudron.io"
 dataJson=""
 prerelease="false"
@@ -53,7 +52,7 @@ sourceTarballUrl=""
 rebootServer="true"
 baseDataDir=""
 
-args=$(getopt -o "" -l "domain:,help,skip-baseimage-init,data:,data-dir:,provider:,encryption-key:,restore-url:,tls-provider:,version:,versions-url:,api-server:,dns-provider:,env:,prerelease,skip-reboot,source-url:" -n "$0" -- "$@")
+args=$(getopt -o "" -l "domain:,help,skip-baseimage-init,data:,data-dir:,provider:,encryption-key:,restore-url:,tls-provider:,version:,api-server:,dns-provider:,env:,prerelease,skip-reboot,source-url:" -n "$0" -- "$@")
 eval set -- "${args}"
 
 while true; do
@@ -69,17 +68,14 @@ while true; do
     --env)
         if [[ "$2" == "dev" ]]; then
             apiServerOrigin="https://api.dev.cloudron.io"
-            versionsUrl="https://s3.amazonaws.com/dev-cloudron-releases/versions.json"
             tlsProvider="le-staging"
             prerelease="true"
         elif [[ "$2" == "staging" ]]; then
             apiServerOrigin="https://api.staging.cloudron.io"
-            versionsUrl="https://s3.amazonaws.com/staging-cloudron-releases/versions.json"
             tlsProvider="le-staging"
             prerelease="true"
         fi
         shift 2;;
-    --versions-url) versionsUrl="$2"; shift 2;;
     --api-server) apiServerOrigin="$2"; shift 2;;
     --skip-baseimage-init) initBaseImage="false"; shift;;
     --skip-reboot) rebootServer="false"; shift;;
@@ -135,7 +131,7 @@ fi
 
 echo ""
 echo "##############################################"
-echo "        Cloudron Setup (${requestedVersion})  "
+echo "         Cloudron Setup (${requestedVersion:-latest})"
 echo "##############################################"
 echo ""
 echo " Follow setup logs in a second terminal with:"
@@ -159,15 +155,19 @@ fi
 
 echo "=> Checking version"
 if [[ "${sourceTarballUrl}" == "" ]]; then
-    releaseJson=$($curl -s "${versionsUrl}")
-    if [[ "$requestedVersion" == "latest" ]]; then
-        pre=$([[ "${prerelease}" == "true" ]] && echo "null" || echo "-pre")
-        version=$(echo "${releaseJson}" | python3 -c "import json,sys,collections;obj=json.load(sys.stdin, object_pairs_hook=collections.OrderedDict);latest=list(v for v in obj if '${pre}' not in v)[-1];print(latest)")
+    if ! releaseJson=$($curl -s "${apiServerOrigin}/api/v1/releases?prerelease=${prerelease}&boxVersion=${requestedVersion}"); then
+        echo "Failed to get release information"
+        exit 1
+    fi
+
+    if [[ "$requestedVersion" == "" ]]; then
+        version=$(echo "${releaseJson}" | python3 -c 'import json,sys;obj=json.load(sys.stdin);print(obj["version"])')
     else
         version="${requestedVersion}"
     fi
-    if ! sourceTarballUrl=$(echo "${releaseJson}" | python3 -c 'import json,sys;obj=json.load(sys.stdin);print(obj[sys.argv[1]]["sourceTarballUrl"])' "${version}"); then
-        echo "No source code for version ${requestedVersion}"
+
+    if ! sourceTarballUrl=$(echo "${releaseJson}" | python3 -c 'import json,sys;obj=json.load(sys.stdin);print(obj["info"]["sourceTarballUrl"])'); then
+        echo "No source code for version '${requestedVersion:-latest}'"
         exit 1
     fi
 fi
