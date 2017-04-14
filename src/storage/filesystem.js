@@ -111,7 +111,7 @@ function restore(apiConfig, backupId, destinationDirectories, callback) {
                 callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
             });
 
-            extract.on('end', function () {
+            extract.on('finish', function () {
                 debug('[%s] restore: directory %s done.', backupId, directory.source);
                 callback();
             });
