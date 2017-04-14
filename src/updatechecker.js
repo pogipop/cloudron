@@ -96,8 +96,6 @@ function checkAppUpdates(callback) {
 
                 if (oldState[app.id] === newState[app.id]) {
                     debug('Skipping notification of app update %s since user was already notified', app.id);
-                } else if (semver.satisfies(newState[app.id], '~' + app.manifest.version)) {
-                    debug('Skipping notification of app update as this is a patch release');
                 } else {
                     // only send notifications if update pattern is 'never'
                     settings.getAutoupdatePattern(function (error, result) {
@@ -150,23 +148,17 @@ function checkBoxUpdates(callback) {
                 return callback();
             }
 
-            if (semver.satisfies(gBoxUpdateInfo.version, '~' + config.version())) {
-                debug('Skipping notification of box update as this is a patch release');
-            } else {
-                // only send notifications if update pattern is 'never'
-                settings.getAutoupdatePattern(function (error, result) {
-                    if (error) return debug(error);
-                    if (result !== constants.AUTOUPDATE_PATTERN_NEVER) return;
-
-                    mailer.boxUpdateAvailable(updateInfo.version, updateInfo.changelog);
-                });
-            }
-
             state.box = updateInfo.version;
 
             saveState(state);
 
-            callback();
+            // only send notifications if update pattern is 'never'
+            settings.getAutoupdatePattern(function (error, result) {
+                if (error) debug(error);
+                else if (result === constants.AUTOUPDATE_PATTERN_NEVER) mailer.boxUpdateAvailable(updateInfo.version, updateInfo.changelog);
+
+                callback();
+            });
         });
     });
 }
