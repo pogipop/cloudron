@@ -14,8 +14,6 @@ if [[ $# == 1 && "$1" == "--check" ]]; then
     exit 0
 fi
 
-readonly APPS_DATA_DIR="${HOME}/appsdata"
-
 # verify argument count
 if [[ $# -lt 2 ]]; then
     echo "Usage: backupbox.sh <backupId> <appId>"
