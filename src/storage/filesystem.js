@@ -30,6 +30,7 @@ var assert = require('assert'),
     shell = require('../shell.js'),
     tar = require('tar-fs'),
     zlib = require('zlib'),
+    crypto = require('crypto'),
     archiver = require('archiver');
 
 var FALLBACK_BACKUP_FOLDER = '/var/backups';
@@ -53,9 +54,14 @@ function backup(apiConfig, backupId, sourceDirectories, callback) {
 
         var fileStream = fs.createWriteStream(backupFilePath);
         var archive = archiver('tar', { gzip: true });
+        var cipher = crypto.createCipher('aes-256-cbc', apiConfig.key || '');
 
         fileStream.on('error', function (error) {
             console.error('[%s] backup: out stream error.', error);
+        });
+
+        cipher.on('error', function (error) {
+            console.error('[%s] backup: cipher stream error.', error);
         });
 
         archive.on('error', function (error) {
@@ -67,7 +73,7 @@ function backup(apiConfig, backupId, sourceDirectories, callback) {
             callback();
         });
 
-        archive.pipe(fileStream);
+        archive.pipe(cipher).pipe(fileStream);
         sourceDirectories.forEach(function (directoryMap) {
             archive.directory(directoryMap.source, directoryMap.destination);
         });
@@ -94,11 +100,17 @@ function restore(apiConfig, backupId, destinationDirectories, callback) {
             if (error) return callback(error);
 
             var fileStream = fs.createReadStream(sourceFilePath);
+            var decipher = crypto.createDecipher('aes-256-cbc', apiConfig.key || '');
             var gunzipStream = zlib.createGunzip({});
             var extract = tar.extract(directory.destination);
 
             fileStream.on('error', function (error) {
                 console.error('[%s] restore: file stream error.', error);
+                callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
+            });
+
+            decipher.on('error', function (error) {
+                console.error('[%s] restore: decipher stream error.', error);
                 callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
             });
 
@@ -117,7 +129,7 @@ function restore(apiConfig, backupId, destinationDirectories, callback) {
                 callback();
             });
 
-            fileStream.pipe(gunzipStream).pipe(extract);
+            fileStream.pipe(decipher).pipe(gunzipStream).pipe(extract);
         });
     }, function (error) {
         if (error) return callback(error);
