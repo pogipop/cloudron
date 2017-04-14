@@ -68,7 +68,7 @@ function initializeExpressSync() {
            cookie: {
                path: '/',
                httpOnly: true,
-               secure: true,
+               secure: process.env.BOX_ENV !== 'test',
                maxAge: 600000
            }
        }))
