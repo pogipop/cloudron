@@ -29,6 +29,7 @@ var assert = require('assert'),
     SettingsError = require('../settings.js').SettingsError,
     shell = require('../shell.js'),
     tar = require('tar-fs'),
+    zlib = require('zlib'),
     archiver = require('archiver');
 
 var FALLBACK_BACKUP_FOLDER = '/var/backups';
@@ -92,10 +93,16 @@ function restore(apiConfig, backupId, destinationDirectories, callback) {
             if (error) return callback(error);
 
             var fileStream = fs.createReadStream(sourceFilePath);
-            var extract = tar.extract(directory);
+            var gunzipStream = zlib.createGunzip({});
+            var extract = tar.extract(directory.destination);
 
             fileStream.on('error', function (error) {
                 console.error('[%s] restore: file stream error.', error);
+                callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
+            });
+
+            gunzipStream.on('error', function (error) {
+                console.error('[%s] restore: gunzip stream error.', error);
                 callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
             });
 
@@ -109,7 +116,7 @@ function restore(apiConfig, backupId, destinationDirectories, callback) {
                 callback();
             });
 
-            fileStream.pipe(extract);
+            fileStream.pipe(gunzipStream).pipe(extract);
         });
     }, function (error) {
         if (error) return callback(error);
