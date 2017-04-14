@@ -10,7 +10,6 @@ var appdb = require('../appdb.js'),
     config = require('../config.js'),
     constants = require('../constants.js'),
     database = require('../database.js'),
-    deepExtend = require('deep-extend'),
     expect = require('expect.js'),
     mailer = require('../mailer.js'),
     nock = require('nock'),
@@ -19,8 +18,7 @@ var appdb = require('../appdb.js'),
     settings = require('../settings.js'),
     settingsdb = require('../settingsdb.js'),
     updatechecker = require('../updatechecker.js'),
-    user = require('../user.js'),
-    _ = require('underscore');
+    user = require('../user.js');
 
 // owner
 var USER_0 = {
@@ -54,7 +52,9 @@ function cleanup(done) {
 
 describe('updatechecker - box - manual (mail)', function () {
     before(function (done) {
+        config._reset();
         config.set('version', '1.0.0');
+        config.set('apiServerOrigin', 'http://localhost:4444');
         config.set('provider', 'notcaas');
         safe.fs.unlinkSync(paths.UPDATE_CHECKER_FILE);
 
@@ -165,6 +165,7 @@ describe('updatechecker - box - manual (mail)', function () {
 describe('updatechecker - box - automatic', function () {
     before(function (done) {
         config.set('version', '1.0.0');
+        config.set('apiServerOrigin', 'http://localhost:4444');
         config.set('provider', 'notcaas');
         async.series([
             database.initialize,

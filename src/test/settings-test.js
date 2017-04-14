@@ -12,6 +12,8 @@ var async = require('async'),
     settings = require('../settings.js');
 
 function setup(done) {
+    config.set('provider', 'caas');
+
     async.series([
         database.initialize,
         settings.initialize,
