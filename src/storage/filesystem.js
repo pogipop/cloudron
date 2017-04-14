@@ -4,7 +4,9 @@ exports = module.exports = {
     backup: backup,
     restore: restore,
 
+    saveAppRestoreConfig: saveAppRestoreConfig,
     getAppRestoreConfig: getAppRestoreConfig,
+
     getDownloadStream: getDownloadStream,
 
     copyBackup: copyBackup,
@@ -45,7 +47,7 @@ function backup(apiConfig, backupId, sourceDirectories, callback) {
     debug('[%s] backup: %j -> %s', backupId, sourceDirectories, backupFilePath);
 
     mkdirp(path.dirname(backupFilePath), function (error) {
-        if (error) return callback(error);
+        if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
 
         var fileStream = fs.createWriteStream(backupFilePath);
         var archive = archiver('tar', { gzip: true });
@@ -131,6 +133,29 @@ function getDownloadStream(apiConfig, backupId, callback) {
 
     var stream = fs.createReadStream(backupFilePath);
     callback(null, stream);
+}
+
+function saveAppRestoreConfig(apiConfig, backupId, restoreConfig, callback) {
+    assert.strictEqual(typeof apiConfig, 'object');
+    assert.strictEqual(typeof backupId, 'string');
+    assert.strictEqual(typeof restoreConfig, 'object');
+    assert.strictEqual(typeof callback, 'function');
+
+    var backupFilePath = path.join(apiConfig.backupFolder || FALLBACK_BACKUP_FOLDER, backupId + '.json');
+
+    debug('[%s] saveAppRestoreConfig: %j -> %s', backupId, restoreConfig, backupFilePath);
+
+    mkdirp(path.dirname(backupFilePath), function (error) {
+        if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
+
+        fs.writeFile(backupFilePath, JSON.stringify(restoreConfig), function (error) {
+            if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
+
+            debug('[%s] saveAppRestoreConfig: done', backupId);
+
+            callback();
+        });
+    });
 }
 
 function getAppRestoreConfig(apiConfig, backupId, callback) {

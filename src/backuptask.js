@@ -46,12 +46,18 @@ function backupApp(backupId, appId, callback) {
     settings.getBackupConfig(function (error, backupConfig) {
         if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
 
-        var backupMapping = [{
-            source: path.join(paths.APPS_DATA_DIR, appId),
-            destination: '/'
-        }];
+        var restoreConfig = require(path.join(paths.APPS_DATA_DIR, appId, 'config.json'));
 
-        api(backupConfig.provider).backup(backupConfig, backupId, backupMapping, callback);
+        api(backupConfig.provider).saveAppRestoreConfig(backupConfig, backupId, restoreConfig, function (error) {
+            if (error) return callback(error);
+
+            var backupMapping = [{
+                source: path.join(paths.APPS_DATA_DIR, appId),
+                destination: '/'
+            }];
+
+            api(backupConfig.provider).backup(backupConfig, backupId, backupMapping, callback);
+        });
     });
 }
 
