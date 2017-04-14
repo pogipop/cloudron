@@ -88,7 +88,7 @@ function restore(apiConfig, backupId, destinationDirectories, callback) {
     async.eachSeries(destinationDirectories, function (directory, callback) {
         debug('[%s] restore: directory %s -> %s', backupId, directory.source, directory.destination);
 
-        mkdirp(directory, function (error) {
+        mkdirp(directory.destination, function (error) {
             if (error) return callback(error);
 
             var fileStream = fs.createReadStream(sourceFilePath);
