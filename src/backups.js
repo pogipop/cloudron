@@ -154,7 +154,7 @@ function copyLastBackup(app, manifest, prefix, callback) {
     assert.strictEqual(typeof callback, 'function');
 
     var timestamp = (new Date()).toISOString().replace(/[T.]/g, '-').replace(/[:Z]/g,'');
-    var newBackupId = util.format('%s/app_%s_%s_v%s.tar.gz', prefix, app.id, timestamp, manifest.version);
+    var newBackupId = util.format('%s/app_%s_%s_v%s', prefix, app.id, timestamp, manifest.version);
 
     settings.getBackupConfig(function (error, backupConfig) {
         if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));

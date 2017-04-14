@@ -34,6 +34,9 @@ yellowtent ALL=(root) NOPASSWD: /home/yellowtent/box/src/scripts/retire.sh
 Defaults!/home/yellowtent/box/src/scripts/rmbackup.sh env_keep="HOME BOX_ENV"
 yellowtent ALL=(root) NOPASSWD: /home/yellowtent/box/src/scripts/rmbackup.sh
 
+Defaults!/home/yellowtent/box/src/scripts/cpbackup.sh env_keep="HOME BOX_ENV"
+yellowtent ALL=(root) NOPASSWD: /home/yellowtent/box/src/scripts/cpbackup.sh
+
 Defaults!/home/yellowtent/box/src/scripts/update.sh env_keep="HOME BOX_ENV"
 yellowtent ALL=(root) NOPASSWD: /home/yellowtent/box/src/scripts/update.sh
 

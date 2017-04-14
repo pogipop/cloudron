@@ -33,7 +33,8 @@ var assert = require('assert'),
     archiver = require('archiver');
 
 var FALLBACK_BACKUP_FOLDER = '/var/backups';
-var RMBACKUP_CMD = path.join(__dirname, '../scripts/rmbackup.sh');
+var COPY_BACKUP_CMD = path.join(__dirname, '../scripts/cpbackup.sh');
+var REMOVE_BACKUP_CMD = path.join(__dirname, '../scripts/rmbackup.sh');
 
 function backup(apiConfig, backupId, sourceDirectories, callback) {
     assert.strictEqual(typeof apiConfig, 'object');
@@ -132,7 +133,7 @@ function getDownloadStream(apiConfig, backupId, callback) {
     assert.strictEqual(typeof backupId, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    var backupFilePath = path.join(apiConfig.backupFolder || FALLBACK_BACKUP_FOLDER, backupId);
+    var backupFilePath = path.join(apiConfig.backupFolder || FALLBACK_BACKUP_FOLDER, backupId + '.tar.gz');
 
     debug('[%s] getDownloadStream: %s %s', backupId, backupId, backupFilePath);
 
@@ -170,8 +171,6 @@ function getAppRestoreConfig(apiConfig, backupId, callback) {
     assert.strictEqual(typeof backupId, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    callback = once(callback);
-
     var sourceFilePath = path.join(apiConfig.backupFolder || FALLBACK_BACKUP_FOLDER, backupId + '.json');
 
     debug('[%s] getAppRestoreConfig: %s', backupId, sourceFilePath);
@@ -195,21 +194,19 @@ function copyBackup(apiConfig, oldBackupId, newBackupId, callback) {
 
     callback = once(callback);
 
-    var oldBackupFilePath = path.join(apiConfig.backupFolder || FALLBACK_BACKUP_FOLDER, oldBackupId + '.tar.gz');
-    var newBackupFilePath = path.join(apiConfig.backupFolder || FALLBACK_BACKUP_FOLDER, newBackupId + '.tar.gz');
+    var oldBackupFilePath = path.join(apiConfig.backupFolder || FALLBACK_BACKUP_FOLDER, oldBackupId);
+    var newBackupFilePath = path.join(apiConfig.backupFolder || FALLBACK_BACKUP_FOLDER, newBackupId);
 
-    // FIXME this most likely has a permissions issue as this process runs as yellowtent not root
-    mkdirp(path.dirname(newBackupFilePath), function (error) {
-        if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
+    async.series([
+        shell.sudo.bind(null, 'copyBackup', [ COPY_BACKUP_CMD, oldBackupFilePath + '.tar.gz', newBackupFilePath + '.tar.gz' ]),
+        shell.sudo.bind(null, 'copyBackup', [ COPY_BACKUP_CMD, oldBackupFilePath + '.json', newBackupFilePath + '.json' ])
+    ], function (error) {
+        if (error) {
+            console.error('Unable to copy backup %s -> %s.', oldBackupFilePath, newBackupFilePath, safe.error);
+            return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
+        }
 
-        var readStream = fs.createReadStream(oldBackupFilePath);
-        var writeStream = fs.createWriteStream(newBackupFilePath);
-
-        readStream.on('error', callback);
-        writeStream.on('error', callback);
-        writeStream.on('close', callback);
-
-        readStream.pipe(writeStream);
+        callback();
     });
 }
 
@@ -222,7 +219,7 @@ function removeBackup(apiConfig, backupId, appBackupIds, callback) {
     async.each([backupId].concat(appBackupIds), function (id, callback) {
         var filePath = path.join(apiConfig.backupFolder || FALLBACK_BACKUP_FOLDER, id + '.tar.gz');
 
-        shell.sudo('deleteBackup', [ RMBACKUP_CMD, filePath ], function (error) {
+        shell.sudo('deleteBackup', [ REMOVE_BACKUP_CMD, filePath ], function (error) {
             if (error) console.error('Unable to remove %s. Not fatal.', filePath, safe.error);
             callback();
         });
