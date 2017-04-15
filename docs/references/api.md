@@ -1038,6 +1038,36 @@ Response (204):
 
 ## Settings
 
+### Get Appstore Config
+
+GET `/api/v1/settings/appstore_config` <scope>admin</scope>
+
+Response (200):
+```
+{
+    userId: <string>,            // the appstore userId
+    token:  <string>,            // appstore token
+    cloudronId: <string>         // cloudron id
+}
+```
+
+### Set Appstore Config
+
+POST  `/api/v1/settings/appstore_config` <scope>admin</scope>
+
+Sets the credentials used for the Cloudron Store.
+
+Request:
+```
+{
+    userId: <string>,     // the appstore userId
+    token:  <string>      // token from appstore
+}
+```
+
+You can get the `userId` and `token` by sending a `/api/v1/login` POST request to `api.cloudron.io`
+with the `email` and `password` fields set in the request.
+
 ### Get auto update pattern
 
 GET `/api/v1/settings/autoupdate_pattern` <scope>admin</scope>
