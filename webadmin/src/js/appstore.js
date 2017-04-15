@@ -133,11 +133,13 @@ angular.module('Application').service('AppStore', ['$http', '$base64', 'Client',
     AppStore.prototype.login = function (email, password, callback) {
         if (Client.getConfig().apiServerOrigin === null) return callback(new AppStoreError(420, 'Enhance Your Calm'));
 
-        var headers = {
-            authorization: 'Basic ' + $base64.encode(email + ':' + password)
+        var data = {
+            email: email,
+            password: password,
+            persistent: true
         };
 
-        $http.get(Client.getConfig().apiServerOrigin + '/api/v1/login?persistent', { headers: headers }).success(function (data, status) {
+        $http.post(Client.getConfig().apiServerOrigin + '/api/v1/login', data).success(function (data, status) {
             if (status !== 200) return callback(new AppStoreError(status, data));
             return callback(null, data);
         }).error(function (data, status) {
@@ -148,7 +150,7 @@ angular.module('Application').service('AppStore', ['$http', '$base64', 'Client',
     AppStore.prototype.logout = function (email, password, callback) {
         if (Client.getConfig().apiServerOrigin === null) return callback(new AppStoreError(420, 'Enhance Your Calm'));
 
-        $http.get(Client.getConfig().apiServerOrigin + '/api/v1/logout').success(function (data, status) {
+        $http.post(Client.getConfig().apiServerOrigin + '/api/v1/logout').success(function (data, status) {
             if (status !== 200) return callback(new AppStoreError(status, data));
             return callback(null);
         }).error(function (data, status) {
