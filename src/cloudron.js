@@ -30,7 +30,8 @@ exports = module.exports = {
     EVENT_ACTIVATED: 'activated'
 };
 
-var apps = require('./apps.js'),
+var appdb = require('./appdb.js'),
+    apps = require('./apps.js'),
     assert = require('assert'),
     async = require('async'),
     backups = require('./backups.js'),
@@ -932,6 +933,9 @@ function refreshDNS(callback) {
                 if (error) return callback(error);
 
                 async.each(result, function (app, callback) {
+                    // do not change state of installing apps since apptask will error if dns record already exists
+                    if (app.installationState !== appdb.ISTATE_INSTALLED) return callback();
+
                     subdomains.upsert(app.location, 'A', [ ip ], callback);
                 }, function (error) {
                     if (error) return callback(error);
