@@ -170,7 +170,7 @@ function onConfigured(callback) {
     gConfigState.configured = true;
 
     platform.events.on(platform.EVENT_READY, onPlatformReady);
-    settings.events.on(settings.DNS_CONFIG_KEY, function () { refreshDNS(); });
+    settings.events.on(settings.DNS_CONFIG_KEY, function () { addDnsRecords(); });
 
     async.series([
         clients.addDefaultClients,
@@ -916,6 +916,7 @@ function migrate(options, callback) {
     });
 }
 
+// called for dynamic dns setups where we have to update the IP
 function refreshDNS(callback) {
     callback = callback || NOOP_CALLBACK;
 
