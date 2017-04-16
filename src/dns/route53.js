@@ -41,6 +41,7 @@ function getZoneByName(dnsConfig, zoneName, callback) {
     var route53 = new AWS.Route53(getDnsCredentials(dnsConfig));
     route53.listHostedZones({}, function (error, result) {
         if (error && error.code === 'AccessDenied') return callback(new SubdomainError(SubdomainError.ACCESS_DENIED, error.message));
+        if (error && error.code === 'InvalidClientTokenId') return callback(new SubdomainError(SubdomainError.ACCESS_DENIED, error.message));
         if (error) return callback(new SubdomainError(SubdomainError.EXTERNAL_ERROR, error.message));
 
         var zone = result.HostedZones.filter(function (zone) {
@@ -64,6 +65,7 @@ function getHostedZone(dnsConfig, zoneName, callback) {
         var route53 = new AWS.Route53(getDnsCredentials(dnsConfig));
         route53.getHostedZone({ Id: zone.Id }, function (error, result) {
             if (error && error.code === 'AccessDenied') return callback(new SubdomainError(SubdomainError.ACCESS_DENIED, error.message));
+            if (error && error.code === 'InvalidClientTokenId') return callback(new SubdomainError(SubdomainError.ACCESS_DENIED, error.message));
             if (error) return callback(new SubdomainError(SubdomainError.EXTERNAL_ERROR, error.message));
 
             callback(null, result);
@@ -105,6 +107,7 @@ function add(dnsConfig, zoneName, subdomain, type, values, callback) {
         var route53 = new AWS.Route53(getDnsCredentials(dnsConfig));
         route53.changeResourceRecordSets(params, function(error, result) {
             if (error && error.code === 'AccessDenied') return callback(new SubdomainError(SubdomainError.ACCESS_DENIED, error.message));
+            if (error && error.code === 'InvalidClientTokenId') return callback(new SubdomainError(SubdomainError.ACCESS_DENIED, error.message));
             if (error && error.code === 'PriorRequestNotComplete') return callback(new SubdomainError(SubdomainError.STILL_BUSY, error.message));
             if (error && error.code === 'InvalidChangeBatch') return callback(new SubdomainError(SubdomainError.BAD_FIELD, error.message));
             if (error) return callback(new SubdomainError(SubdomainError.EXTERNAL_ERROR, error.message));
@@ -145,6 +148,7 @@ function get(dnsConfig, zoneName, subdomain, type, callback) {
         var route53 = new AWS.Route53(getDnsCredentials(dnsConfig));
         route53.listResourceRecordSets(params, function (error, result) {
             if (error && error.code === 'AccessDenied') return callback(new SubdomainError(SubdomainError.ACCESS_DENIED, error.message));
+            if (error && error.code === 'InvalidClientTokenId') return callback(new SubdomainError(SubdomainError.ACCESS_DENIED, error.message));
             if (error) return callback(new SubdomainError(SubdomainError.EXTERNAL_ERROR, error.message));
             if (result.ResourceRecordSets.length === 0) return callback(null, [ ]);
             if (result.ResourceRecordSets[0].Name !== params.StartRecordName || result.ResourceRecordSets[0].Type !== params.StartRecordType) return callback(null, [ ]);
@@ -190,6 +194,7 @@ function del(dnsConfig, zoneName, subdomain, type, values, callback) {
         var route53 = new AWS.Route53(getDnsCredentials(dnsConfig));
         route53.changeResourceRecordSets(params, function(error, result) {
             if (error && error.code === 'AccessDenied') return callback(new SubdomainError(SubdomainError.ACCESS_DENIED, error.message));
+            if (error && error.code === 'InvalidClientTokenId') return callback(new SubdomainError(SubdomainError.ACCESS_DENIED, error.message));
             if (error && error.message && error.message.indexOf('it was not found') !== -1) {
                 debug('del: resource record set not found.', error);
                 return callback(new SubdomainError(SubdomainError.NOT_FOUND, error.message));
