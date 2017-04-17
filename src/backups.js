@@ -181,8 +181,8 @@ function backupBoxWithAppBackupIds(appBackupIds, prefix, callback) {
     settings.getBackupConfig(function (error, backupConfig) {
         if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
 
-        var mysqlDumpArgs = 'mysqldump -u root -ppassword --single-transaction --routines --triggers box > "' + paths.BOX_DATA_DIR + '/box.mysqldump"';
-        shell.exec('backupBox', '/bin/bash', mysqlDumpArgs.split(' '), function (error) {
+        var mysqlDumpArgs = ['-c', '/usr/bin/mysqldump -u root -ppassword --single-transaction --routines --triggers box > "' + paths.BOX_DATA_DIR + '/box.mysqldump"' ];
+        shell.exec('backupBox', '/bin/bash', mysqlDumpArgs, function (error) {
             if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
 
             shell.sudo('backupBox', [ BACKUPTASK_CMD, backupId ], function (error) {
