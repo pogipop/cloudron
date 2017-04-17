@@ -41,7 +41,7 @@ function copyFile(source, destination, callback) {
     callback = once(callback);
 
     var readStream = fs.createReadStream(source);
-    var writeStream = fs.createWriteStream(destination);
+    var writeStream = fs.createWriteStream(destination, { mode: 0o777 });
 
     readStream.on('error', callback);
     writeStream.on('error', callback);
@@ -62,10 +62,10 @@ function backup(apiConfig, backupId, sourceDirectories, callback) {
 
     debug('[%s] backup: %j -> %s', backupId, sourceDirectories, backupFilePath);
 
-    mkdirp(path.dirname(backupFilePath), function (error) {
+    mkdirp(path.dirname(backupFilePath), { mode: 0o777 }, function (error) {
         if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
 
-        var fileStream = fs.createWriteStream(backupFilePath);
+        var fileStream = fs.createWriteStream(backupFilePath, { mode: 0o777 });
         var archive = archiver('tar', { gzip: true });
         var cipher = crypto.createCipher('aes-256-cbc', apiConfig.key || '');
 
