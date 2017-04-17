@@ -16,9 +16,6 @@ yellowtent ALL=(root) NOPASSWD: /home/yellowtent/box/src/scripts/backupbox.sh
 Defaults!/home/yellowtent/box/src/scripts/backupapp.sh env_keep="HOME BOX_ENV"
 yellowtent ALL=(root) NOPASSWD: /home/yellowtent/box/src/scripts/backupapp.sh
 
-Defaults!/home/yellowtent/box/src/scripts/restoreapp.sh env_keep="HOME BOX_ENV"
-yellowtent ALL=(root) NOPASSWD: /home/yellowtent/box/src/scripts/restoreapp.sh
-
 Defaults!/home/yellowtent/box/src/scripts/reboot.sh env_keep="HOME BOX_ENV"
 yellowtent ALL=(root) NOPASSWD: /home/yellowtent/box/src/scripts/reboot.sh
 

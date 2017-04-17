@@ -48,8 +48,7 @@ var addons = require('./addons.js'),
     util = require('util');
 
 var BACKUP_BOX_CMD = path.join(__dirname, 'scripts/backupbox.sh'),
-    BACKUP_APP_CMD = path.join(__dirname, 'scripts/backupapp.sh'),
-    RESTORE_APP_CMD = path.join(__dirname, 'scripts/restoreapp.sh');
+    BACKUP_APP_CMD = path.join(__dirname, 'scripts/backupapp.sh');
 
 var NOOP_CALLBACK = function (error) { if (error) debug(error); };
 
