@@ -161,10 +161,14 @@ function copyLastBackup(app, manifest, prefix, callback) {
 
         debug('copyLastBackup: copying backup %s to %s', app.lastBackupId, newBackupId);
 
-        api(backupConfig.provider).copyBackup(backupConfig, app.lastBackupId, newBackupId, function (error) {
+        api(backupConfig.provider).copyAppRestoreConfig(backupConfig, app.lastBackupId, newBackupId, function (error) {
             if (error) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error));
 
-            callback(null, newBackupId);
+            api(backupConfig.provider).copyBackup(backupConfig, app.lastBackupId, newBackupId, function (error) {
+                if (error) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error));
+
+                callback(null, newBackupId);
+            });
         });
     });
 }
