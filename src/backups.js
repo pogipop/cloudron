@@ -439,12 +439,16 @@ function removeBackup(backupId, appBackupIds, callback) {
         api(backupConfig.provider).removeBackup(backupConfig, backupId, appBackupIds, function (error) {
             if (error) return callback(error);
 
-            backupdb.del(backupId, function (error) {
-                if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
+            api(backupConfig.provider).removeAppRestoreConfig(backupConfig, backupId, appBackupIds, function (error) {
+                if (error) return callback(error);
 
-                debug('removeBackup: %s done', backupId);
+                backupdb.del(backupId, function (error) {
+                    if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
 
-                callback(null);
+                    debug('removeBackup: %s done', backupId);
+
+                    callback(null);
+                });
             });
         });
     });

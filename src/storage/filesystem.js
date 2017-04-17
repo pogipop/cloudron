@@ -4,14 +4,16 @@ exports = module.exports = {
     backup: backup,
     restore: restore,
     copyBackup: copyBackup,
+    removeBackup: removeBackup,
 
+    // Once we don't rely on the restore config anymore, we can remove that api
     saveAppRestoreConfig: saveAppRestoreConfig,
     getAppRestoreConfig: getAppRestoreConfig,
     copyAppRestoreConfig: copyAppRestoreConfig,
+    removeAppRestoreConfig: removeAppRestoreConfig,
 
     getDownloadStream: getDownloadStream,
 
-    removeBackup: removeBackup,
     backupDone: backupDone,
 
     testConfig: testConfig
@@ -27,14 +29,12 @@ var assert = require('assert'),
     once = require('once'),
     safe = require('safetydance'),
     SettingsError = require('../settings.js').SettingsError,
-    shell = require('../shell.js'),
     tar = require('tar-fs'),
     zlib = require('zlib'),
     crypto = require('crypto'),
     archiver = require('archiver');
 
 var FALLBACK_BACKUP_FOLDER = '/var/backups';
-var REMOVE_BACKUP_CMD = path.join(__dirname, '../scripts/rmbackup.sh');
 
 // internal only
 function copyFile(source, destination, callback) {
@@ -195,6 +195,22 @@ function copyBackup(apiConfig, oldBackupId, newBackupId, callback) {
     });
 }
 
+function removeBackup(apiConfig, backupId, appBackupIds, callback) {
+    assert.strictEqual(typeof apiConfig, 'object');
+    assert.strictEqual(typeof backupId, 'string');
+    assert(Array.isArray(appBackupIds));
+    assert.strictEqual(typeof callback, 'function');
+
+    async.each([backupId].concat(appBackupIds), function (id, callback) {
+        var filePath = path.join(apiConfig.backupFolder || FALLBACK_BACKUP_FOLDER, id + '.tar.gz');
+
+        fs.unlink(filePath, function (error) {
+            if (error) console.error('Unable to remove %s. Not fatal.', filePath, safe.error);
+            callback();
+        });
+    }, callback);
+}
+
 function getDownloadStream(apiConfig, backupId, callback) {
     assert.strictEqual(typeof apiConfig, 'object');
     assert.strictEqual(typeof backupId, 'string');
@@ -272,16 +288,16 @@ function copyAppRestoreConfig(apiConfig, oldBackupId, newBackupId, callback) {
     });
 }
 
-function removeBackup(apiConfig, backupId, appBackupIds, callback) {
+function removeAppRestoreConfig(apiConfig, backupId, appBackupIds, callback) {
     assert.strictEqual(typeof apiConfig, 'object');
     assert.strictEqual(typeof backupId, 'string');
     assert(Array.isArray(appBackupIds));
     assert.strictEqual(typeof callback, 'function');
 
     async.each([backupId].concat(appBackupIds), function (id, callback) {
-        var filePath = path.join(apiConfig.backupFolder || FALLBACK_BACKUP_FOLDER, id + '.tar.gz');
+        var filePath = path.join(apiConfig.backupFolder || FALLBACK_BACKUP_FOLDER, id + '.json');
 
-        shell.sudo('deleteBackup', [ REMOVE_BACKUP_CMD, filePath ], function (error) {
+        fs.unlink(filePath, function (error) {
             if (error) console.error('Unable to remove %s. Not fatal.', filePath, safe.error);
             callback();
         });
