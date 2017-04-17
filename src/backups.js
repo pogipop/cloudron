@@ -47,8 +47,7 @@ var addons = require('./addons.js'),
     SettingsError = require('./settings.js').SettingsError,
     util = require('util');
 
-var BACKUP_BOX_CMD = path.join(__dirname, 'scripts/backupbox.sh'),
-    BACKUP_APP_CMD = path.join(__dirname, 'scripts/backupapp.sh');
+var BACKUPTASK_CMD = path.join(__dirname, 'backuptask.js');
 
 var NOOP_CALLBACK = function (error) { if (error) debug(error); };
 
@@ -182,18 +181,23 @@ function backupBoxWithAppBackupIds(appBackupIds, prefix, callback) {
     settings.getBackupConfig(function (error, backupConfig) {
         if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
 
-        shell.sudo('backupBox', [ BACKUP_BOX_CMD, backupId ], function (error) {
+        var mysqlDumpArgs = 'mysqldump -u root -ppassword --single-transaction --routines --triggers box > "' + paths.BOX_DATA_DIR + '/box.mysqldump"';
+        shell.exec('backupBox', '/bin/bash', mysqlDumpArgs.split(' '), function (error) {
             if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
 
-            debug('backupBoxWithAppBackupIds: success');
-
-            backupdb.add({ id: backupId, version: config.version(), type: backupdb.BACKUP_TYPE_BOX, dependsOn: appBackupIds }, function (error) {
+            shell.sudo('backupBox', [ BACKUPTASK_CMD, backupId ], function (error) {
                 if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
 
-                // FIXME this is only needed for caas, is it really???
-                api(backupConfig.provider).backupDone(backupId, null /* app */, appBackupIds, function (error) {
-                    if (error) return callback(error);
-                    callback(null, backupId);
+                debug('backupBoxWithAppBackupIds: success');
+
+                backupdb.add({ id: backupId, version: config.version(), type: backupdb.BACKUP_TYPE_BOX, dependsOn: appBackupIds }, function (error) {
+                    if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
+
+                    // FIXME this is only needed for caas, is it really???
+                    api(backupConfig.provider).backupDone(backupId, null /* app */, appBackupIds, function (error) {
+                        if (error) return callback(error);
+                        callback(null, backupId);
+                    });
                 });
             });
         });
@@ -221,7 +225,7 @@ function createNewAppBackup(app, manifest, prefix, callback) {
     // FIXME move addon backup into backuptask
     async.series([
         addons.backupAddons.bind(null, app, manifest.addons),
-        shell.sudo.bind(null, 'backupApp', [ BACKUP_APP_CMD, backupId, app.id ])
+        shell.sudo.bind(null, 'backupApp', [ BACKUPTASK_CMD, backupId, app.id ])
     ], function (error) {
         if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
 

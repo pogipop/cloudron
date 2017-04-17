@@ -2,6 +2,16 @@
 
 'use strict';
 
+if (process.geteuid() !== 0) {
+    console.log('This script should be run as root.');
+    process.exit(1);
+}
+
+if (process.argv[2] === '--check') {
+    console.log('OK');
+    process.exit(0);
+}
+
 require('supererror')({ splatchError: true });
 
 // remove timestamp from debug() based output
@@ -82,31 +92,30 @@ function backupBox(backupId, callback) {
     });
 }
 
-if (require.main === module) {
-    var backupId = process.argv[2];
-    var appId = process.argv[3];
+// Main process starts here
+var backupId = process.argv[2];
+var appId = process.argv[3];
 
-    if (appId) debug('Backuptask for the app %s with id %s', appId, backupId);
-    else debug('Backuptask for the whole Cloudron with id %s', backupId);
+if (appId) debug('Backuptask for the app %s with id %s', appId, backupId);
+else debug('Backuptask for the whole Cloudron with id %s', backupId);
 
-    process.on('SIGTERM', function () {
-        process.exit(0);
-    });
+process.on('SIGTERM', function () {
+    process.exit(0);
+});
 
-    initialize(function (error) {
-        if (error) throw error;
+initialize(function (error) {
+    if (error) throw error;
 
-        function resultHandler(error) {
-            if (error) debug('Backuptask completed with error', error);
+    function resultHandler(error) {
+        if (error) debug('Backuptask completed with error', error);
 
-            debug('Backuptask completed');
+        debug('Backuptask completed');
 
-            // https://nodejs.org/api/process.html are exit codes used by node. apps.js uses the value below
-            // to check apptask crashes
-            process.exit(error ? 50 : 0);
-        }
+        // https://nodejs.org/api/process.html are exit codes used by node. apps.js uses the value below
+        // to check apptask crashes
+        process.exit(error ? 50 : 0);
+    }
 
-        if (appId) backupApp(backupId, appId, resultHandler);
-        else backupBox(backupId, resultHandler);
-    });
-}
+    if (appId) backupApp(backupId, appId, resultHandler);
+    else backupBox(backupId, resultHandler);
+});
