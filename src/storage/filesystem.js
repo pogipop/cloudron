@@ -40,8 +40,9 @@ var FALLBACK_BACKUP_FOLDER = '/var/backups';
 function copyFile(source, destination, callback) {
     callback = once(callback);
 
+    // not run as root, permissions are fine
     var readStream = fs.createReadStream(source);
-    var writeStream = fs.createWriteStream(destination, { mode: 0o777 });
+    var writeStream = fs.createWriteStream(destination);
 
     readStream.on('error', callback);
     writeStream.on('error', callback);
@@ -57,6 +58,14 @@ function backup(apiConfig, backupId, sourceDirectories, callback) {
     assert.strictEqual(typeof callback, 'function');
 
     callback = once(callback);
+
+    // to allow setting 777 for real
+    var oldUmask = process.umask(0);
+    var oldCallback = callback;
+    callback = function (error) {
+        process.umask(oldUmask);
+        oldCallback(error);
+    };
 
     var backupFilePath = path.join(apiConfig.backupFolder || FALLBACK_BACKUP_FOLDER, backupId + '.tar.gz');
 
@@ -232,14 +241,22 @@ function saveAppRestoreConfig(apiConfig, backupId, restoreConfig, callback) {
     assert.strictEqual(typeof restoreConfig, 'object');
     assert.strictEqual(typeof callback, 'function');
 
+    // to allow setting 777 for real
+    var oldUmask = process.umask(0);
+    var oldCallback = callback;
+    callback = function (error) {
+        process.umask(oldUmask);
+        oldCallback(error);
+    };
+
     var backupFilePath = path.join(apiConfig.backupFolder || FALLBACK_BACKUP_FOLDER, backupId + '.json');
 
     debug('[%s] saveAppRestoreConfig: %j -> %s', backupId, restoreConfig, backupFilePath);
 
-    mkdirp(path.dirname(backupFilePath), function (error) {
+    mkdirp(path.dirname(backupFilePath), { mode: 0o777 }, function (error) {
         if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
 
-        fs.writeFile(backupFilePath, JSON.stringify(restoreConfig), function (error) {
+        fs.writeFile(backupFilePath, JSON.stringify(restoreConfig), { mode: 0o777 }, function (error) {
             if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
 
             debug('[%s] saveAppRestoreConfig: done', backupId);
