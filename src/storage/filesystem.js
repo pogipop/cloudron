@@ -3,15 +3,15 @@
 exports = module.exports = {
     backup: backup,
     restore: restore,
+    copyBackup: copyBackup,
 
     saveAppRestoreConfig: saveAppRestoreConfig,
     getAppRestoreConfig: getAppRestoreConfig,
+    copyAppRestoreConfig: copyAppRestoreConfig,
 
     getDownloadStream: getDownloadStream,
 
-    copyBackup: copyBackup,
     removeBackup: removeBackup,
-
     backupDone: backupDone,
 
     testConfig: testConfig
@@ -34,8 +34,21 @@ var assert = require('assert'),
     archiver = require('archiver');
 
 var FALLBACK_BACKUP_FOLDER = '/var/backups';
-var COPY_BACKUP_CMD = path.join(__dirname, '../scripts/cpbackup.sh');
 var REMOVE_BACKUP_CMD = path.join(__dirname, '../scripts/rmbackup.sh');
+
+// internal only
+function copyFile(source, destination, callback) {
+    callback = once(callback);
+
+    var readStream = fs.createReadStream(source);
+    var writeStream = fs.createWriteStream(destination);
+
+    readStream.on('error', callback);
+    writeStream.on('error', callback);
+    writeStream.on('close', callback);
+
+    readStream.pipe(writeStream);
+}
 
 function backup(apiConfig, backupId, sourceDirectories, callback) {
     assert.strictEqual(typeof apiConfig, 'object');
@@ -57,26 +70,31 @@ function backup(apiConfig, backupId, sourceDirectories, callback) {
         var cipher = crypto.createCipher('aes-256-cbc', apiConfig.key || '');
 
         fileStream.on('error', function (error) {
-            console.error('[%s] backup: out stream error.', error);
+            console.error('[%s] backup: out stream error.', backupId, error);
         });
 
         cipher.on('error', function (error) {
-            console.error('[%s] backup: cipher stream error.', error);
+            console.error('[%s] backup: cipher stream error.', backupId, error);
         });
 
         archive.on('error', function (error) {
-            console.error('[%s] backup: archive stream error.', error);
+            console.error('[%s] backup: archive stream error.', backupId, error);
         });
 
         fileStream.on('close', function () {
             debug('[%s] backup: done.', backupId);
-            callback();
+            callback(null);
         });
 
         archive.pipe(cipher).pipe(fileStream);
-        sourceDirectories.forEach(function (directoryMap) {
-            archive.directory(directoryMap.source, directoryMap.destination);
+
+        sourceDirectories.forEach(function (directory) {
+            // archive does not like destination beginning with a slash
+            directory.destination = path.normalize(directory.destination).replace(/^\//, '');
+
+            archive.directory(directory.source, directory.destination);
         });
+
         archive.finalize();
     });
 }
@@ -96,13 +114,29 @@ function restore(apiConfig, backupId, destinationDirectories, callback) {
     async.eachSeries(destinationDirectories, function (directory, callback) {
         debug('[%s] restore: directory %s -> %s', backupId, directory.source, directory.destination);
 
+        // tar-fs reports without slash at the beginning
+        directory.source = path.normalize(directory.source).replace(/^\//, '');
+
         mkdirp(directory.destination, function (error) {
             if (error) return callback(error);
 
             var fileStream = fs.createReadStream(sourceFilePath);
             var decipher = crypto.createDecipher('aes-256-cbc', apiConfig.key || '');
             var gunzipStream = zlib.createGunzip({});
-            var extract = tar.extract(directory.destination);
+
+            var IGNORE_PREFIX = '__ignore__';
+
+            var extract = tar.extract(directory.destination, {
+                ignore: function (name, header) { return header.name.startsWith(IGNORE_PREFIX); },
+                map: function (header) {
+                    // ignore is called after map, we mark everything we dont want!
+                    // else slice off the mapping prefix
+                    if (!header.name.startsWith(directory.source)) header.name = IGNORE_PREFIX + header.name;
+                    else header.name = header.name.slice(directory.source.length);
+
+                    return header;
+                }
+            });
 
             fileStream.on('error', function (error) {
                 console.error('[%s] restore: file stream error.', error);
@@ -135,6 +169,27 @@ function restore(apiConfig, backupId, destinationDirectories, callback) {
         if (error) return callback(error);
 
         debug('[%s] restore: done', backupId);
+
+        callback(null);
+    });
+}
+
+function copyBackup(apiConfig, oldBackupId, newBackupId, callback) {
+    assert.strictEqual(typeof apiConfig, 'object');
+    assert.strictEqual(typeof oldBackupId, 'string');
+    assert.strictEqual(typeof newBackupId, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    callback = once(callback);
+
+    var oldFilePath = path.join(apiConfig.backupFolder || FALLBACK_BACKUP_FOLDER, oldBackupId + '.tar.gz');
+    var newFilePath = path.join(apiConfig.backupFolder || FALLBACK_BACKUP_FOLDER, newBackupId + '.tar.gz');
+
+    copyFile(oldFilePath, newFilePath, function (error) {
+        if (error) {
+            console.error('Unable to copy backup %s -> %s.', oldFilePath, newFilePath, error);
+            return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
+        }
 
         callback();
     });
@@ -198,27 +253,22 @@ function getAppRestoreConfig(apiConfig, backupId, callback) {
     callback(null, restoreConfig);
 }
 
-function copyBackup(apiConfig, oldBackupId, newBackupId, callback) {
+function copyAppRestoreConfig(apiConfig, oldBackupId, newBackupId, callback) {
     assert.strictEqual(typeof apiConfig, 'object');
     assert.strictEqual(typeof oldBackupId, 'string');
     assert.strictEqual(typeof newBackupId, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    callback = once(callback);
+    var oldFilePath = path.join(apiConfig.backupFolder || FALLBACK_BACKUP_FOLDER, oldBackupId) + '.json';
+    var newFilePath = path.join(apiConfig.backupFolder || FALLBACK_BACKUP_FOLDER, newBackupId + '.json');
 
-    var oldBackupFilePath = path.join(apiConfig.backupFolder || FALLBACK_BACKUP_FOLDER, oldBackupId);
-    var newBackupFilePath = path.join(apiConfig.backupFolder || FALLBACK_BACKUP_FOLDER, newBackupId);
-
-    async.series([
-        shell.sudo.bind(null, 'copyBackup', [ COPY_BACKUP_CMD, oldBackupFilePath + '.tar.gz', newBackupFilePath + '.tar.gz' ]),
-        shell.sudo.bind(null, 'copyBackup', [ COPY_BACKUP_CMD, oldBackupFilePath + '.json', newBackupFilePath + '.json' ])
-    ], function (error) {
+    copyFile(oldFilePath, newFilePath, function (error) {
         if (error) {
-            console.error('Unable to copy backup %s -> %s.', oldBackupFilePath, newBackupFilePath, safe.error);
+            console.error('Unable to copy app restore config %s -> %s.', oldFilePath, newFilePath, error);
             return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
         }
 
-        callback();
+        callback(null);
     });
 }
 
