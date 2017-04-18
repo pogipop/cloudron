@@ -4,34 +4,40 @@ var async = require('async');
 
 // from apps.js DO NOT UPDATE WHEN apps.js changes, as this is part of db migration!!
 function postProcess(result) {
-    result.manifest = JSON.parse(result.manifestJson);
-    delete result.manifestJson;
+    try {
+        result.manifest = JSON.parse(result.manifestJson);
+        delete result.manifestJson;
 
-    result.oldConfig = JSON.parse(result.oldConfigJson);
-    delete result.oldConfigJson;
+        result.oldConfig = JSON.parse(result.oldConfigJson);
+        delete result.oldConfigJson;
 
-    result.portBindings = { };
-    var hostPorts = result.hostPorts === null ? [ ] : result.hostPorts.split(',');
-    var environmentVariables = result.environmentVariables === null ? [ ] : result.environmentVariables.split(',');
+        result.portBindings = { };
+        var hostPorts = result.hostPorts === null ? [ ] : result.hostPorts.split(',');
+        var environmentVariables = result.environmentVariables === null ? [ ] : result.environmentVariables.split(',');
 
-    delete result.hostPorts;
-    delete result.environmentVariables;
+        delete result.hostPorts;
+        delete result.environmentVariables;
 
-    for (var i = 0; i < environmentVariables.length; i++) {
-        result.portBindings[environmentVariables[i]] = parseInt(hostPorts[i], 10);
+        for (var i = 0; i < environmentVariables.length; i++) {
+            result.portBindings[environmentVariables[i]] = parseInt(hostPorts[i], 10);
+        }
+
+        result.accessRestriction = JSON.parse(result.accessRestrictionJson);
+        if (result.accessRestriction && !result.accessRestriction.users) result.accessRestriction.users = [];
+        delete result.accessRestrictionJson;
+
+        // TODO remove later once all apps have this attribute
+        result.xFrameOptions = result.xFrameOptions || 'SAMEORIGIN';
+
+        result.sso = !!result.sso; // make it bool
+
+        result.debugMode = JSON.parse(result.debugModeJson);
+        delete result.debugModeJson;
+    } catch (e) {
+        console.error('Failed to get restoreConfig for app.', e);
+        console.error('Falling back to empty values to make the update succeed.');
+        result.manifest = null;
     }
-
-    result.accessRestriction = JSON.parse(result.accessRestrictionJson);
-    if (result.accessRestriction && !result.accessRestriction.users) result.accessRestriction.users = [];
-    delete result.accessRestrictionJson;
-
-    // TODO remove later once all apps have this attribute
-    result.xFrameOptions = result.xFrameOptions || 'SAMEORIGIN';
-
-    result.sso = !!result.sso; // make it bool
-
-    result.debugMode = JSON.parse(result.debugModeJson);
-    delete result.debugModeJson;
 }
 
 // from apps.js DO NOT UPDATE WHEN apps.js changes, as this is part of db migration!!
@@ -58,6 +64,8 @@ exports.up = function(db, callback) {
                 apps.forEach(postProcess);
 
                 async.eachSeries(apps, function (app, next) {
+                    if (app.manifest === null) return next();
+
                     db.all('SELECT * FROM backups WHERE type="app" AND id LIKE "%app%\\_' + app.id + '\\_%"', function (error, backups) {
                         if (error) return next(error);
 
