@@ -111,10 +111,10 @@ function initializeExpressSync() {
     router.get ('/api/v1/cloudron/config', cloudronScope, routes.cloudron.getConfig);
     router.post('/api/v1/cloudron/update', cloudronScope, routes.user.requireAdmin, routes.user.verifyPassword, routes.cloudron.update);
     router.post('/api/v1/cloudron/check_for_updates', cloudronScope, routes.user.requireAdmin, routes.cloudron.checkForUpdates);
-    router.post('/api/v1/cloudron/reboot', cloudronScope, routes.cloudron.reboot);
+    router.post('/api/v1/cloudron/reboot', cloudronScope, routes.user.requireAdmin, routes.cloudron.reboot);
     router.post('/api/v1/cloudron/migrate', cloudronScope, routes.user.requireAdmin, routes.user.verifyPassword, routes.cloudron.migrate);
-    router.get ('/api/v1/cloudron/graphs', cloudronScope, routes.graphs.getGraphs);
-    router.get ('/api/v1/cloudron/disks', cloudronScope, routes.cloudron.getDisks);
+    router.get ('/api/v1/cloudron/graphs', cloudronScope, routes.user.requireAdmin, routes.graphs.getGraphs);
+    router.get ('/api/v1/cloudron/disks', cloudronScope, routes.user.requireAdmin, routes.cloudron.getDisks);
     router.get ('/api/v1/cloudron/ssh/authorized_keys', cloudronScope, routes.user.requireAdmin, routes.ssh.getAuthorizedKeys);
     router.put ('/api/v1/cloudron/ssh/authorized_keys', cloudronScope, routes.user.requireAdmin, routes.ssh.addAuthorizedKey);
     router.get ('/api/v1/cloudron/ssh/authorized_keys/:identifier', cloudronScope, routes.user.requireAdmin, routes.ssh.getAuthorizedKey);
