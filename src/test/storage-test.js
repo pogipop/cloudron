@@ -18,7 +18,8 @@ var async = require('async'),
     s3 = require('../storage/s3.js'),
     filesystem = require('../storage/filesystem.js'),
     expect = require('expect.js'),
-    settings = require('../settings.js');
+    settings = require('../settings.js'),
+    stream = require('stream');
 
 function setup(done) {
     config.set('provider', 'caas');
@@ -118,7 +119,7 @@ describe('Storage', function () {
                 });
             });
         });
-        
+
         after(function (done) {
             cleanup(function (error) {
                 expect(error).to.be(null);
@@ -212,13 +213,150 @@ describe('Storage', function () {
         it('can get backup download stream', function (done) {
             filesystem.getDownloadStream(gBackupConfig, gBackupId_2, function (error, result) {
                 expect(error).to.be(null);
-                expect(result).to.be.a(fs.ReadStream);
+                expect(result).to.be.a(stream.Readable);
                 done();
-            })
+            });
         });
 
         it('can remove backup copy', function (done) {
             filesystem.removeBackup(gBackupConfig, gBackupId_2, [], done);
+        });
+    });
+
+    describe('s3', function () {
+        this.timeout(10000);
+
+        var gBackupId_1 = 'someprefix/one';
+        var gBackupId_2 = 'someprefix/two';
+        var gTmpFolder;
+        var gSourceFolder;
+        var gDestinationFolder;
+        var gBackupConfig = {
+            provider: 's3',
+            key: 'key',
+            prefix: 'unit.test',
+            bucket: 'cloudron-storage-test',
+            accessKeyId: '',
+            secretAccessKey: '',
+            region: 'eu-central-1'
+        };
+
+        before(function (done) {
+            setup(function (error) {
+                expect(error).to.be(null);
+
+                gTmpFolder = fs.mkdtempSync(path.join(os.tmpdir(), 's3-backup-test_'));
+                gSourceFolder = path.join(__dirname, 'storage');
+                gDestinationFolder = path.join(gTmpFolder, 'destination/');
+
+                settings.setBackupConfig(gBackupConfig, function (error) {
+                    expect(error).to.be(null);
+
+                    done();
+                });
+            });
+        });
+
+        after(function (done) {
+            cleanup(function (error) {
+                expect(error).to.be(null);
+                rimraf(gTmpFolder, done);
+            });
+        });
+
+        it('can backup', function (done) {
+            var backupMapping = [{
+                source: path.join(gSourceFolder, 'data'),
+                destination: '/datadir'
+            }, {
+                source: path.join(gSourceFolder, 'addon'),
+                destination: '/addondir/'
+            }];
+
+            s3.backup(gBackupConfig, gBackupId_1, backupMapping, function (error) {
+                expect(error).to.be(null);
+
+                done();
+            });
+        });
+
+        it('can restore', function (done) {
+            var restoreMapping = [{
+                source: '/datadir',
+                destination: path.join(gDestinationFolder, 'data')
+            }, {
+                source: '/addondir',
+                destination: path.join(gDestinationFolder, 'addon')
+            }];
+
+            s3.restore(gBackupConfig, gBackupId_1, restoreMapping, function (error) {
+                expect(error).to.be(null);
+
+                compareDirectories(gSourceFolder, gDestinationFolder, function (error) {
+                    expect(error).to.equal(null);
+                    rimraf(gDestinationFolder, done);
+                });
+            });
+        });
+
+        it('can copy backup', function (done) {
+            // will be verified after removing the first and restoring from the copy
+            s3.copyBackup(gBackupConfig, gBackupId_1, gBackupId_2, done);
+        });
+
+        it('can remove backup', function (done) {
+            // will be verified with next test trying to restore the removed one
+            s3.removeBackup(gBackupConfig, gBackupId_1, [], done);
+        });
+
+        it('cannot restore deleted backup', function (done) {
+            var restoreMapping = [{
+                source: '/datadir',
+                destination: path.join(gDestinationFolder, 'data')
+            }];
+
+            s3.restore(gBackupConfig, gBackupId_1, restoreMapping, function (error) {
+                expect(error).to.be.an('object');
+                expect(error.reason).to.equal(BackupsError.NOT_FOUND);
+
+                done();
+            });
+        });
+
+        it('can restore backup copy', function (done) {
+            var restoreMapping = [{
+                source: '/datadir',
+                destination: path.join(gDestinationFolder, 'data')
+            }, {
+                source: '/addondir',
+                destination: path.join(gDestinationFolder, 'addon')
+            }];
+
+            s3.restore(gBackupConfig, gBackupId_2, restoreMapping, function (error) {
+                expect(error).to.be(null);
+
+                rimraf(gDestinationFolder, done);
+            });
+        });
+
+        it('cannot get backup download stream from deleted backup', function (done) {
+            s3.getDownloadStream(gBackupConfig, gBackupId_1, function (error) {
+                expect(error).to.be.an('object');
+                expect(error.reason).to.equal(BackupsError.NOT_FOUND);
+                done();
+            });
+        });
+
+        it('can get backup download stream', function (done) {
+            s3.getDownloadStream(gBackupConfig, gBackupId_2, function (error, result) {
+                expect(error).to.be(null);
+                expect(result).to.be.a(stream.Readable);
+                done();
+            });
+        });
+
+        it('can remove backup copy', function (done) {
+            s3.removeBackup(gBackupConfig, gBackupId_2, [], done);
         });
     });
 });
