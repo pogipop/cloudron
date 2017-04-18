@@ -81,7 +81,7 @@ exports.up = function(db, callback) {
                         };
 
                         async.eachSeries(backups, function (backup, next) {
-                            db.runSql('UPDATE backups SET restoreConfigJson=? WHERE id=?', [ JSON.stringify(restoreConfig), backup.id ], next);
+                            db.runSql('UPDATE backups SET restoreConfigJson=?,creationTime=creationTime WHERE id=?', [ JSON.stringify(restoreConfig), backup.id ], next);
                         }, next);
                     });
                 }, callback);
