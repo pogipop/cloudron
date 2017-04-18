@@ -294,7 +294,7 @@ function setTimeZone(ip, callback) {
 
     debug('setTimeZone ip:%s', ip);
 
-    superagent.get('https://geolocation.cloudron.io/json').timeout(10 * 1000).end(function (error, result) {
+    superagent.get('https://geolocation.cloudron.io/json').query({ ip: ip }).timeout(10 * 1000).end(function (error, result) {
         if ((error && !error.response) || result.statusCode !== 200) {
             debug('Failed to get geo location: %s', error.message);
             return callback(null);
