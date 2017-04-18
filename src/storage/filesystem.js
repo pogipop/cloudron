@@ -6,12 +6,6 @@ exports = module.exports = {
     copyBackup: copyBackup,
     removeBackup: removeBackup,
 
-    // Once we don't rely on the restore config anymore, we can remove that api
-    saveAppRestoreConfig: saveAppRestoreConfig,
-    getAppRestoreConfig: getAppRestoreConfig,
-    copyAppRestoreConfig: copyAppRestoreConfig,
-    removeAppRestoreConfig: removeAppRestoreConfig,
-
     getDownloadStream: getDownloadStream,
 
     backupDone: backupDone,
@@ -233,92 +227,6 @@ function getDownloadStream(apiConfig, backupId, callback) {
 
     var stream = fs.createReadStream(backupFilePath);
     callback(null, stream);
-}
-
-function saveAppRestoreConfig(apiConfig, backupId, restoreConfig, callback) {
-    assert.strictEqual(typeof apiConfig, 'object');
-    assert.strictEqual(typeof backupId, 'string');
-    assert.strictEqual(typeof restoreConfig, 'object');
-    assert.strictEqual(typeof callback, 'function');
-
-    // to allow setting 777 for real
-    var oldUmask = process.umask(0);
-    var oldCallback = callback;
-    callback = function (error) {
-        process.umask(oldUmask);
-        oldCallback(error);
-    };
-
-    var backupFilePath = path.join(apiConfig.backupFolder || FALLBACK_BACKUP_FOLDER, backupId + '.json');
-
-    debug('[%s] saveAppRestoreConfig: %j -> %s', backupId, restoreConfig, backupFilePath);
-
-    mkdirp(path.dirname(backupFilePath), { mode: 0o777 }, function (error) {
-        if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
-
-        fs.writeFile(backupFilePath, JSON.stringify(restoreConfig), { mode: 0o777 }, function (error) {
-            if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
-
-            debug('[%s] saveAppRestoreConfig: done', backupId);
-
-            callback();
-        });
-    });
-}
-
-function getAppRestoreConfig(apiConfig, backupId, callback) {
-    assert.strictEqual(typeof apiConfig, 'object');
-    assert.strictEqual(typeof backupId, 'string');
-    assert.strictEqual(typeof callback, 'function');
-
-    var sourceFilePath = path.join(apiConfig.backupFolder || FALLBACK_BACKUP_FOLDER, backupId + '.json');
-
-    debug('[%s] getAppRestoreConfig: %s', backupId, sourceFilePath);
-
-    if (!fs.existsSync(sourceFilePath)) return callback(new BackupsError(BackupsError.NOT_FOUND, 'restore config file does not exist'));
-
-    var restoreConfig = safe.require(sourceFilePath);
-    if (!restoreConfig) {
-        console.error('[%s] getAppRestoreConfig: failed', safe.error);
-        return callback(new BackupsError(BackupsError.INTERNAL_ERROR, safe.error));
-    }
-
-    callback(null, restoreConfig);
-}
-
-function copyAppRestoreConfig(apiConfig, oldBackupId, newBackupId, callback) {
-    assert.strictEqual(typeof apiConfig, 'object');
-    assert.strictEqual(typeof oldBackupId, 'string');
-    assert.strictEqual(typeof newBackupId, 'string');
-    assert.strictEqual(typeof callback, 'function');
-
-    var oldFilePath = path.join(apiConfig.backupFolder || FALLBACK_BACKUP_FOLDER, oldBackupId) + '.json';
-    var newFilePath = path.join(apiConfig.backupFolder || FALLBACK_BACKUP_FOLDER, newBackupId + '.json');
-
-    copyFile(oldFilePath, newFilePath, function (error) {
-        if (error) {
-            console.error('Unable to copy app restore config %s -> %s.', oldFilePath, newFilePath, error);
-            return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
-        }
-
-        callback(null);
-    });
-}
-
-function removeAppRestoreConfig(apiConfig, backupId, appBackupIds, callback) {
-    assert.strictEqual(typeof apiConfig, 'object');
-    assert.strictEqual(typeof backupId, 'string');
-    assert(Array.isArray(appBackupIds));
-    assert.strictEqual(typeof callback, 'function');
-
-    async.each([backupId].concat(appBackupIds), function (id, callback) {
-        var filePath = path.join(apiConfig.backupFolder || FALLBACK_BACKUP_FOLDER, id + '.json');
-
-        fs.unlink(filePath, function (error) {
-            if (error) console.error('Unable to remove %s. Not fatal.', filePath, safe.error);
-            callback();
-        });
-    }, callback);
 }
 
 function testConfig(apiConfig, callback) {
