@@ -24,7 +24,6 @@ var archiver = require('archiver'),
     once = require('once'),
     path = require('path'),
     SettingsError = require('../settings.js').SettingsError,
-    shell = require('../shell.js'),
     tar = require('tar-fs'),
     zlib = require('zlib');
 
@@ -259,14 +258,12 @@ function testConfig(apiConfig, callback) {
     if (typeof apiConfig.prefix !== 'string') return callback(new SettingsError(SettingsError.BAD_FIELD, 'prefix must be a string'));
 
     // attempt to upload and delete a file with new credentials
-    // First use the javascript api, to get better feedback, then use aws cli tool
-    // The javascript api always autodetects the correct settings, regardless of the region provided, the cli tool does not
     getBackupCredentials(apiConfig, function (error, credentials) {
         if (error) return callback(error);
 
         var params = {
             Bucket: apiConfig.bucket,
-            Key: apiConfig.prefix + '/testfile',
+            Key: apiConfig.prefix + '/cloudron-testfile',
             Body: 'testcontent'
         };
 
@@ -276,23 +273,13 @@ function testConfig(apiConfig, callback) {
 
             var params = {
                 Bucket: apiConfig.bucket,
-                Key: apiConfig.prefix + '/testfile'
+                Key: apiConfig.prefix + '/cloudron-testfile'
             };
 
             s3.deleteObject(params, function (error) {
                 if (error) return callback(new SettingsError(SettingsError.EXTERNAL_ERROR, error.message));
 
-                // now perform the same as what we do in the backup shell scripts
-                var BACKUP_TEST_CMD = require('path').join(__dirname, '../scripts/backuptests3.sh');
-                var tmpUrl = 's3://' + apiConfig.bucket + '/' + apiConfig.prefix + '/testfile';
-                var args = [ tmpUrl, credentials.accessKeyId, credentials.secretAccessKey, credentials.region, credentials.endpoint || '' ];
-
-                // if this fails the region is wrong, otherwise we would have failed earlier.
-                shell.exec('backupTestS3', BACKUP_TEST_CMD, args, function (error) {
-                    if (error) return callback(new SettingsError(SettingsError.EXTERNAL_ERROR, 'Wrong region'));
-
-                    callback();
-                });
+                callback();
             });
         });
     });
