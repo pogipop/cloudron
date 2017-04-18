@@ -460,8 +460,11 @@ The goal of rate limits is to prevent password brute force attacks.
     all certificates to [Certificate Transparency Logs](https://www.certificate-transparency.org/).
     This means that the apps that you install and use are going to be guessable. For example,
     [crt.sh](https://crt.sh) can display all your subdomains and you can visit those subdomains and
-    guess the app. Generally, this is not a problem because Cloudron does not use DNS for security.
-    If you still want to avoid this, you can always use a wildcard certificate.
+    guess the app. Generally, this is not a problem because using hidden DNS names is not a security
+    measure. If you want to avoid this, you can always use a wildcard certificate.
+*   Cloudron does not collect any user information and this is not our business model. We collect
+    information regarding the configured backend types. This helps us focus on improving backends
+    based on their use. You can review the specific code [here](https://git.cloudron.io/cloudron/box/blob/master/src/appstore.js#L124).
 
 # Data directory
 
