@@ -472,7 +472,7 @@ If you are installing a brand new Cloudron, you can configure the data directory
 that Cloudron uses by passing the `--data-dir` option to `cloudron-setup`.
 
 ```
-./cloudron-setup --provider digitalocean --data-dir /var/cloudrondata
+./cloudron-setup --provider <digitalocean|ec2|generic|scaleway> --data-dir /var/cloudrondata
 ```
 
 If you have an existing Cloudron, we recommend moving the existing data directory
