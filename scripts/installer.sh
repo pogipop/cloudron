@@ -71,6 +71,19 @@ fi
 # ensure we are not inside the source directory, which we will remove now
 cd /root
 
+echo "==> installer: updating packages"
+if [[ $(docker version --format {{.Client.Version}}) != "17.03.1-ce" ]]; then
+    curl -sL https://download.docker.com/linux/ubuntu/dists/xenial/pool/stable/amd64/docker-ce_17.03.1~ce-0~ubuntu-xenial_amd64.deb -o /tmp/docker.deb
+    # https://download.docker.com/linux/ubuntu/dists/xenial/stable/binary-amd64/Packages
+    if [[ $(md5sum /tmp/docker.deb | cut -d' ' -f1) != "d6d175900edd243abbdb253990b2fe59" ]]; then
+        echo "docker binary download is corrupt"
+        exit 5
+    fi
+    apt-get remove -y --allow-change-held-packages docker-engine || true
+    dpkg -i /tmp/docker.deb
+    rm /tmp/docker.deb
+fi
+
 echo "==> installer: switching the box code"
 rm -rf "${BOX_SRC_DIR}"
 mv "${box_src_tmp_dir}" "${BOX_SRC_DIR}"
