@@ -452,6 +452,11 @@ The goal of rate limits is to prevent password brute force attacks.
 *   Cloudron requires user passwords to have 1 uppercase, 1 number and 1 symbol.
 *   Minimum length for user passwords is 8
 
+## Privacy
+
+*   Cloudron apps have a default `Referrer-Policy` of `no-referrer-when-downgrade`.
+*   Backups are optionally encrypted with AES-256-CBC.
+
 # Data directory
 
 If you are installing a brand new Cloudron, you can configure the data directory
