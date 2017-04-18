@@ -217,7 +217,7 @@ function removeBackup(apiConfig, backupId, appBackupIds, callback) {
         var filePath = getBackupFilePath(apiConfig, id);
 
         fs.unlink(filePath, function (error) {
-            if (error) console.error('Unable to remove %s. Not fatal.', filePath, safe.error);
+            if (error) console.error('Unable to remove %s. Not fatal.', filePath, error);
             callback();
         });
     }, callback);
