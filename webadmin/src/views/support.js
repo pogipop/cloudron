@@ -13,6 +13,11 @@ angular.module('Application').controller('SupportController', ['$scope', '$locat
         description: ''
     };
 
+    $scope.logs = {
+        types: null,
+        selectedUrl: '' // index into types
+    };
+
     $scope.sshSupportEnabled = false;
 
     function resetFeedback() {
@@ -58,6 +63,18 @@ angular.module('Application').controller('SupportController', ['$scope', '$locat
         }
     };
 
+    $scope.populateLogTypes = function () {
+        $scope.logs.types = [
+            { id: 'system', name: 'System', url: Client.makeURL('/api/v1/cloudron/logs?unit=all') },
+            { id: 'box', name: 'Box', url: Client.makeURL('/api/v1/cloudron/logs?unit=box') },
+            { id: 'mail', name: 'Mail', url: Client.makeURL('/api/v1/cloudron/logs?unit=mail') }
+        ];
+
+        Client.getInstalledApps().forEach(function (app) {
+            $scope.logs.types.push({ id: app.id, name: app.fqdn, url: Client.makeURL('/api/v1/apps/' + app.id + '/logs') });
+        });
+    };
+
     Client.onReady(function () {
         Client.getAuthorizedKeys(function (error, keys) {
             if (error) return console.error(error);
@@ -65,6 +82,8 @@ angular.module('Application').controller('SupportController', ['$scope', '$locat
             $scope.sshSupportEnabled = keys.some(function (k) { return k.key === CLOUDRON_SUPPORT_PUBLIC_KEY; });
         });
     });
+
+    Client.onReady($scope.populateLogTypes);
 
     $('.modal-backdrop').remove();
 }]);

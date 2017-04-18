@@ -396,6 +396,14 @@ angular.module('Application').service('Client', ['$http', 'md5', 'Notification',
         }).error(defaultErrorHandler(callback));
     };
 
+    Client.prototype.makeURL = function (url) {
+        if (url.indexOf('?') === -1) {
+            return this.apiOrigin + url + '?access_token=' + token;
+        } else {
+            return this.apiOrigin + url + '&access_token=' + token;
+        }
+    };
+
     Client.prototype.setBackupConfig = function (backupConfig, callback) {
         post('/api/v1/settings/backup_config', backupConfig).success(function(data, status) {
             if (status !== 200) return callback(new ClientError(status, data));
@@ -541,10 +549,10 @@ angular.module('Application').service('Client', ['$http', 'md5', 'Notification',
         }).error(defaultErrorHandler(callback));
     };
 
-    Client.prototype.getAppBackups = function (callback) {
-        get('/api/v1/backups').success(function (data, status) {
+    Client.prototype.getAppLogs = function (appId, callback) {
+        get('/api/v1/apps/' + appId + '/logs').success(function (data, status) {
             if (status !== 200 || typeof data !== 'object') return callback(new ClientError(status, data));
-            callback(null, data.backups);
+            callback(null);
         }).error(defaultErrorHandler(callback));
     };
 
