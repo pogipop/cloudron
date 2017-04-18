@@ -41,7 +41,6 @@ var addons = require('./addons.js'),
     paths = require('./paths.js'),
     progress = require('./progress.js'),
     s3 = require('./storage/s3.js'),
-    safe = require('safetydance'),
     shell = require('./shell.js'),
     settings = require('./settings.js'),
     SettingsError = require('./settings.js').SettingsError,
@@ -190,7 +189,7 @@ function backupBoxWithAppBackupIds(appBackupIds, prefix, callback) {
 
                 debug('backupBoxWithAppBackupIds: success');
 
-                backupdb.add({ id: backupId, version: config.version(), type: backupdb.BACKUP_TYPE_BOX, dependsOn: appBackupIds }, function (error) {
+                backupdb.add({ id: backupId, version: config.version(), type: backupdb.BACKUP_TYPE_BOX, dependsOn: appBackupIds, restoreConfig: null }, function (error) {
                     if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
 
                     // FIXME this is only needed for caas, is it really???
@@ -231,7 +230,10 @@ function createNewAppBackup(app, manifest, prefix, callback) {
 
         debugApp(app, 'createNewAppBackup: %s done', backupId);
 
-        backupdb.add({ id: backupId, version: manifest.version, type: backupdb.BACKUP_TYPE_APP, dependsOn: [ ] }, function (error) {
+        var restoreConfig = apps.getAppConfig(app);
+        restoreConfig.manifest = manifest;
+
+        backupdb.add({ id: backupId, version: manifest.version, type: backupdb.BACKUP_TYPE_APP, dependsOn: [ ], restoreConfig: restoreConfig }, function (error) {
             if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
 
             callback(null, backupId);
@@ -270,13 +272,7 @@ function backupApp(app, manifest, prefix, callback) {
         // s3 does not allow changing creation time, so copying the last backup is easy way out for now
         backupFunction = copyLastBackup.bind(null, app, manifest, prefix);
     } else {
-        var appConfig = apps.getAppConfig(app);
-        appConfig.manifest = manifest;
         backupFunction = createNewAppBackup.bind(null, app, manifest, prefix);
-
-        if (!safe.fs.writeFileSync(path.join(paths.APPS_DATA_DIR, app.id + '/config.json'), JSON.stringify(appConfig), 'utf8')) {
-            return callback(safe.error);
-        }
     }
 
     backupFunction(function (error, backupId) {
