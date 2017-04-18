@@ -35,6 +35,7 @@ var addons = require('./addons.js'),
     debug = require('debug')('box:backups'),
     eventlog = require('./eventlog.js'),
     filesystem = require('./storage/filesystem.js'),
+    fs = require('fs'),
     locker = require('./locker.js'),
     mailer = require('./mailer.js'),
     path = require('path'),
@@ -214,17 +215,17 @@ function createNewAppBackup(app, manifest, prefix, callback) {
     var timestamp = (new Date()).toISOString().replace(/[T.]/g, '-').replace(/[:Z]/g,'');
     var backupId = util.format('%s/app_%s_%s_v%s', prefix, app.id, timestamp, config.version());
 
-    // FIXME move addon backup into backuptask
+    var restoreConfig = apps.getAppConfig(app);
+    restoreConfig.manifest = manifest;
+
     async.series([
+        fs.writeFile.bind(null, path.join(paths.APPS_DATA_DIR, app.id + '/config.json'), JSON.stringify(restoreConfig)),
         addons.backupAddons.bind(null, app, manifest.addons),
         shell.sudo.bind(null, 'backupApp', [ BACKUPTASK_CMD, backupId, app.id ])
     ], function (error) {
         if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
 
         debugApp(app, 'createNewAppBackup: %s done', backupId);
-
-        var restoreConfig = apps.getAppConfig(app);
-        restoreConfig.manifest = manifest;
 
         backupdb.add({ id: backupId, version: manifest.version, type: backupdb.BACKUP_TYPE_APP, dependsOn: [ ], restoreConfig: restoreConfig }, function (error) {
             if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
