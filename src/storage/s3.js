@@ -160,6 +160,8 @@ function restore(apiConfig, backupId, destinationDirectories, callback) {
                 });
 
                 s3get.on('error', function (error) {
+                    if (error.code === 'NoSuchKey') return callback(new BackupsError(BackupsError.NOT_FOUND));
+
                     console.error('[%s] restore: s3 stream error.', backupId, error);
                     callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error));
                 });
@@ -213,6 +215,7 @@ function copyBackup(apiConfig, oldBackupId, newBackupId, callback) {
 
         var s3 = new AWS.S3(credentials);
         s3.copyObject(params, function (error, result) {
+            if (error && error.code === 'NoSuchKey') return callback(new BackupsError(BackupsError.NOT_FOUND));
             if (error) {
                 console.error('copyBackup: s3 copy error.', error);
                 return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error));
