@@ -456,6 +456,12 @@ The goal of rate limits is to prevent password brute force attacks.
 
 *   Cloudron apps have a default `Referrer-Policy` of `no-referrer-when-downgrade`.
 *   Backups are optionally encrypted with AES-256-CBC.
+*   Let's Encrypt [submits](https://letsencrypt.org/certificates/)
+    all certificates to [Certificate Transparency Logs](https://www.certificate-transparency.org/).
+    This means that the apps that you install and use are going to be guessable. For example,
+    [crt.sh](https://crt.sh) can display all your subdomains and you can visit those subdomains and
+    guess the app. Generally, this is not a problem because Cloudron does not use DNS for security.
+    If you still want to avoid this, you can always use a wildcard certificate.
 
 # Data directory
 
