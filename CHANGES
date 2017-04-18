@@ -831,3 +831,8 @@
 * Allow installing a new app from a backup
 * Fix download of large files (> 1GB)
 * Fix app backup regression
+
+[0.120.0]
+* Update Docker to 17.03.1-ce
+* Rework backup backend logic
+
