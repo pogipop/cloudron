@@ -29,6 +29,7 @@ var assert = require('assert'),
     archiver = require('archiver');
 
 var FALLBACK_BACKUP_FOLDER = '/var/backups';
+var FILE_TYPE = '.tar.gz';
 
 // internal only
 function copyFile(source, destination, callback) {
@@ -43,6 +44,13 @@ function copyFile(source, destination, callback) {
     writeStream.on('close', callback);
 
     readStream.pipe(writeStream);
+}
+
+function getBackupFilePath(apiConfig, backupId) {
+    assert.strictEqual(typeof apiConfig, 'object');
+    assert.strictEqual(typeof backupId, 'string');
+
+    return path.join(apiConfig.backupFolder || FALLBACK_BACKUP_FOLDER, backupId.endsWith(FILE_TYPE) ? backupId : backupId+FILE_TYPE);
 }
 
 function backup(apiConfig, backupId, sourceDirectories, callback) {
@@ -61,7 +69,7 @@ function backup(apiConfig, backupId, sourceDirectories, callback) {
         oldCallback(error);
     };
 
-    var backupFilePath = path.join(apiConfig.backupFolder || FALLBACK_BACKUP_FOLDER, backupId + '.tar.gz');
+    var backupFilePath = getBackupFilePath(apiConfig, backupId);
 
     debug('[%s] backup: %j -> %s', backupId, sourceDirectories, backupFilePath);
 
@@ -108,7 +116,7 @@ function restore(apiConfig, backupId, destinationDirectories, callback) {
     assert(Array.isArray(destinationDirectories));
     assert.strictEqual(typeof callback, 'function');
 
-    var sourceFilePath = path.join(apiConfig.backupFolder || FALLBACK_BACKUP_FOLDER, backupId + '.tar.gz');
+    var sourceFilePath = getBackupFilePath(apiConfig, backupId);
 
     debug('[%s] restore: %s -> %j', backupId, sourceFilePath, destinationDirectories);
 
@@ -185,8 +193,8 @@ function copyBackup(apiConfig, oldBackupId, newBackupId, callback) {
 
     callback = once(callback);
 
-    var oldFilePath = path.join(apiConfig.backupFolder || FALLBACK_BACKUP_FOLDER, oldBackupId + '.tar.gz');
-    var newFilePath = path.join(apiConfig.backupFolder || FALLBACK_BACKUP_FOLDER, newBackupId + '.tar.gz');
+    var oldFilePath = getBackupFilePath(apiConfig, oldBackupId);
+    var newFilePath = getBackupFilePath(apiConfig, newBackupId);
 
     copyFile(oldFilePath, newFilePath, function (error) {
         if (error) {
@@ -205,7 +213,7 @@ function removeBackup(apiConfig, backupId, appBackupIds, callback) {
     assert.strictEqual(typeof callback, 'function');
 
     async.each([backupId].concat(appBackupIds), function (id, callback) {
-        var filePath = path.join(apiConfig.backupFolder || FALLBACK_BACKUP_FOLDER, id + '.tar.gz');
+        var filePath = getBackupFilePath(apiConfig, id);
 
         fs.unlink(filePath, function (error) {
             if (error) console.error('Unable to remove %s. Not fatal.', filePath, safe.error);
@@ -219,7 +227,7 @@ function getDownloadStream(apiConfig, backupId, callback) {
     assert.strictEqual(typeof backupId, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    var backupFilePath = path.join(apiConfig.backupFolder || FALLBACK_BACKUP_FOLDER, backupId + '.tar.gz');
+    var backupFilePath = getBackupFilePath(apiConfig, backupId);
 
     debug('[%s] getDownloadStream: %s %s', backupId, backupId, backupFilePath);
 
