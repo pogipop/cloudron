@@ -1,28 +1,36 @@
 'use strict';
 
 exports = module.exports = {
-    getBoxBackupDetails: getBoxBackupDetails,
-    getAppBackupDetails: getAppBackupDetails,
-
-    getRestoreUrl: getRestoreUrl,
-    getAppRestoreConfig: getAppRestoreConfig,
-    getLocalFilePath: getLocalFilePath,
-
-    copyObject: copyObject,
+    backup: backup,
+    restore: restore,
+    copyBackup: copyBackup,
     removeBackup: removeBackup,
+
+    getDownloadStream: getDownloadStream,
 
     backupDone: backupDone,
 
     testConfig: testConfig
 };
 
-var assert = require('assert'),
+var archiver = require('archiver'),
+    assert = require('assert'),
+    async = require('async'),
     AWS = require('aws-sdk'),
-    safe = require('safetydance'),
+    BackupsError = require('../backups.js').BackupsError,
+    crypto = require('crypto'),
+    debug = require('debug')('box:storage/s3'),
+    mkdirp = require('mkdirp'),
+    once = require('once'),
+    path = require('path'),
     SettingsError = require('../settings.js').SettingsError,
     shell = require('../shell.js'),
-    superagent = require('superagent');
+    tar = require('tar-fs'),
+    zlib = require('zlib');
 
+var FILE_TYPE = '.tar.gz';
+
+// internal only
 function getBackupCredentials(apiConfig, callback) {
     assert.strictEqual(typeof apiConfig, 'object');
     assert.strictEqual(typeof callback, 'function');
@@ -42,108 +50,176 @@ function getBackupCredentials(apiConfig, callback) {
     callback(null, credentials);
 }
 
-function getBoxBackupDetails(apiConfig, id, callback) {
+function getBackupFilePath(apiConfig, backupId) {
     assert.strictEqual(typeof apiConfig, 'object');
-    assert.strictEqual(typeof id, 'string');
-    assert.strictEqual(typeof callback, 'function');
+    assert.strictEqual(typeof backupId, 'string');
 
-    var s3Url = 's3://' + apiConfig.bucket + '/' + apiConfig.prefix + '/' + id;
-    var region = apiConfig.region || 'us-east-1';
-
-    var details = {
-        backupScriptArguments: [ 's3', s3Url, apiConfig.accessKeyId, apiConfig.secretAccessKey, region, apiConfig.endpoint || '', apiConfig.key ]
-    };
-
-    callback(null, details);
+    return path.join(apiConfig.prefix, backupId.endsWith(FILE_TYPE) ? backupId : backupId+FILE_TYPE);
 }
 
-function getAppBackupDetails(apiConfig, appId, dataId, configId, callback) {
+// storage api
+function backup(apiConfig, backupId, sourceDirectories, callback) {
     assert.strictEqual(typeof apiConfig, 'object');
-    assert.strictEqual(typeof appId, 'string');
-    assert.strictEqual(typeof dataId, 'string');
-    assert.strictEqual(typeof configId, 'string');
+    assert.strictEqual(typeof backupId, 'string');
+    assert(Array.isArray(sourceDirectories));
     assert.strictEqual(typeof callback, 'function');
 
-    var s3DataUrl = 's3://' + apiConfig.bucket + '/' + apiConfig.prefix + '/' + dataId;
-    var s3ConfigUrl = 's3://' + apiConfig.bucket + '/' + apiConfig.prefix + '/' + configId;
-    var region = apiConfig.region || 'us-east-1';
+    callback = once(callback);
 
-    var details = {
-        backupScriptArguments: [ 's3', appId, s3ConfigUrl, s3DataUrl, apiConfig.accessKeyId, apiConfig.secretAccessKey, region, apiConfig.endpoint || '', apiConfig.key ]
-    };
+    var backupFilePath = getBackupFilePath(apiConfig, backupId);
 
-    callback(null, details);
-}
-
-function getRestoreUrl(apiConfig, filename, callback) {
-    assert.strictEqual(typeof apiConfig, 'object');
-    assert.strictEqual(typeof filename, 'string');
-    assert.strictEqual(typeof callback, 'function');
+    debug('[%s] backup: %j -> %s', backupId, sourceDirectories, backupFilePath);
 
     getBackupCredentials(apiConfig, function (error, credentials) {
         if (error) return callback(error);
 
-        var s3 = new AWS.S3(credentials);
+        var archive = archiver('tar', { gzip: true });
+        var encrypt = crypto.createCipher('aes-256-cbc', apiConfig.key || '');
+
+        encrypt.on('error', function (error) {
+            console.error('[%s] backup: cipher stream error.', backupId, error);
+        });
+
+        archive.on('error', function (error) {
+            console.error('[%s] backup: archive stream error.', backupId, error);
+        });
+
+        archive.pipe(encrypt);
+
+        sourceDirectories.forEach(function (directory) {
+            // archive does not like destination beginning with a slash
+            directory.destination = path.normalize(directory.destination).replace(/^\//, '');
+
+            archive.directory(directory.source, directory.destination);
+        });
+
+        archive.finalize();
 
         var params = {
             Bucket: apiConfig.bucket,
-            Key: apiConfig.prefix + '/' + filename,
-            Expires: 60 * 60 * 24 /* 1 day */
+            Key: backupFilePath,
+            Body: encrypt
         };
 
-        var url = s3.getSignedUrl('getObject', params);
+        var s3 = new AWS.S3(credentials);
+        s3.upload(params, function (error, result) {
+            if (error) {
+                console.error('[%s] backup: s3 upload error.', backupId, error);
+                return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error));
+            }
 
-        callback(null, { url: url });
-    });
-}
-
-function getAppRestoreConfig(apiConfig, backupId, callback) {
-    assert.strictEqual(typeof apiConfig, 'object');
-    assert.strictEqual(typeof backupId, 'string');
-    assert.strictEqual(typeof callback, 'function');
-
-    var configFilename = backupId.replace(/\.tar\.gz$/, '.json');
-
-    getRestoreUrl(apiConfig, configFilename, function (error, result) {
-        if (error) return callback(error);
-
-        superagent.get(result.url).buffer(true).timeout(30 * 1000).end(function (error, response) {
-            if (error && !error.response) return callback(new Error(error.message));
-            if (response.statusCode !== 200) return callback(new Error('Invalid response code when getting config.json : ' + response.statusCode));
-
-            var config = safe.JSON.parse(response.text);
-            if (!config) return callback(new Error('Error in config:' + safe.error.message));
-
-            return callback(null, config);
+            callback(null);
         });
     });
 }
 
-function getLocalFilePath(apiConfig, filename, callback) {
+function restore(apiConfig, backupId, destinationDirectories, callback) {
     assert.strictEqual(typeof apiConfig, 'object');
-    assert.strictEqual(typeof filename, 'string');
+    assert.strictEqual(typeof backupId, 'string');
+    assert(Array.isArray(destinationDirectories));
     assert.strictEqual(typeof callback, 'function');
 
-    callback(new Error('not supported'));
+    var backupFilePath = getBackupFilePath(apiConfig, backupId);
+
+    debug('[%s] restore: %s -> %j', backupId, backupFilePath, destinationDirectories);
+
+    getBackupCredentials(apiConfig, function (error, credentials) {
+        if (error) return callback(error);
+
+        async.eachSeries(destinationDirectories, function (directory, callback) {
+            debug('[%s] restore: directory %s -> %s', backupId, directory.source, directory.destination);
+
+            // tar-fs reports without slash at the beginning
+            directory.source = path.normalize(directory.source).replace(/^\//, '');
+
+            mkdirp(directory.destination, function (error) {
+                if (error) return callback(error);
+
+                var params = {
+                    Bucket: apiConfig.bucket,
+                    Key: backupFilePath
+                };
+
+                var s3 = new AWS.S3(credentials);
+
+                var s3get = s3.getObject(params).createReadStream();
+                var decrypt = crypto.createDecipher('aes-256-cbc', apiConfig.key || '');
+                var gunzip = zlib.createGunzip({});
+
+                var IGNORE_PREFIX = '__ignore__';
+                var extract = tar.extract(directory.destination, {
+                    ignore: function (name, header) { return header.name.startsWith(IGNORE_PREFIX); },
+                    map: function (header) {
+                        // ignore is called after map, we mark everything we dont want!
+                        // else slice off the mapping prefix
+                        if (!header.name.startsWith(directory.source)) header.name = IGNORE_PREFIX + header.name;
+                        else header.name = header.name.slice(directory.source.length);
+
+                        return header;
+                    }
+                });
+
+                s3get.on('error', function (error) {
+                    console.error('[%s] restore: s3 stream error.', backupId, error);
+                    callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error));
+                });
+
+                decrypt.on('error', function (error) {
+                    console.error('[%s] restore: decipher stream error.', error);
+                    callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
+                });
+
+                gunzip.on('error', function (error) {
+                    console.error('[%s] restore: gunzip stream error.', error);
+                    callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
+                });
+
+                extract.on('error', function (error) {
+                    console.error('[%s] restore: extract stream error.', error);
+                    callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
+                });
+
+                extract.on('finish', function () {
+                    debug('[%s] restore: directory %s done.', backupId, directory.source);
+                    callback();
+                });
+
+                s3get.pipe(decrypt).pipe(gunzip).pipe(extract);
+            });
+        }, function (error) {
+            if (error) return callback(error);
+
+            debug('[%s] restore: done', backupId);
+
+            callback(null);
+        });
+    });
 }
 
-function copyObject(apiConfig, from, to, callback) {
+function copyBackup(apiConfig, oldBackupId, newBackupId, callback) {
     assert.strictEqual(typeof apiConfig, 'object');
-    assert.strictEqual(typeof from, 'string');
-    assert.strictEqual(typeof to, 'string');
+    assert.strictEqual(typeof oldBackupId, 'string');
+    assert.strictEqual(typeof newBackupId, 'string');
     assert.strictEqual(typeof callback, 'function');
 
     getBackupCredentials(apiConfig, function (error, credentials) {
         if (error) return callback(error);
 
         var params = {
-            Bucket: apiConfig.bucket, // target bucket
-            Key: apiConfig.prefix + '/' + to, // target file
-            CopySource: apiConfig.bucket + '/' + apiConfig.prefix + '/' + from, // source
+            Bucket: apiConfig.bucket,
+            Key: getBackupFilePath(apiConfig, newBackupId),
+            CopySource: path.join(apiConfig.bucket, getBackupFilePath(apiConfig, oldBackupId))
         };
 
         var s3 = new AWS.S3(credentials);
-        s3.copyObject(params, callback);
+        s3.copyObject(params, function (error, result) {
+            if (error) {
+                console.error('copyBackup: s3 copy error.', error);
+                return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error));
+            }
+
+            callback(null);
+        });
     });
 }
 
@@ -154,6 +230,18 @@ function removeBackup(apiConfig, backupId, appBackupIds, callback) {
     assert.strictEqual(typeof callback, 'function');
 
     // Result: none
+
+    callback(new Error('not implemented'));
+}
+
+function getDownloadStream(apiConfig, backupId, callback) {
+    assert.strictEqual(typeof apiConfig, 'object');
+    assert.strictEqual(typeof backupId, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    var backupFilePath = getBackupFilePath(apiConfig, backupId);
+
+    debug('[%s] getDownloadStream: %s %s', backupId, backupId, backupFilePath);
 
     callback(new Error('not implemented'));
 }
@@ -215,4 +303,3 @@ function backupDone(filename, app, appBackupIds, callback) {
 
     callback();
 }
-
