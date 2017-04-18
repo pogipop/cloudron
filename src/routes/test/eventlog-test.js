@@ -87,7 +87,7 @@ describe('Eventlog API', function () {
 
     describe('get', function () {
         it('fails due to wrong token', function (done) {
-            superagent.get(SERVER_URL + '/api/v1/eventlog')
+            superagent.get(SERVER_URL + '/api/v1/cloudron/eventlog')
                    .query({ access_token: token.toUpperCase() })
                    .end(function (error, result) {
                 expect(result.statusCode).to.equal(401);
@@ -96,7 +96,7 @@ describe('Eventlog API', function () {
         });
 
         it('fails for non-admin', function (done) {
-            superagent.get(SERVER_URL + '/api/v1/eventlog')
+            superagent.get(SERVER_URL + '/api/v1/cloudron/eventlog')
                    .query({ access_token: token_1, page: 1, per_page: 10 })
                    .end(function (error, result) {
                 expect(result.statusCode).to.equal(403);
@@ -106,7 +106,7 @@ describe('Eventlog API', function () {
         });
 
         it('succeeds for admin', function (done) {
-            superagent.get(SERVER_URL + '/api/v1/eventlog')
+            superagent.get(SERVER_URL + '/api/v1/cloudron/eventlog')
                    .query({ access_token: token, page: 1, per_page: 10 })
                    .end(function (error, result) {
                 expect(result.statusCode).to.equal(200);
@@ -117,7 +117,7 @@ describe('Eventlog API', function () {
         });
 
         it('succeeds with action', function (done) {
-            superagent.get(SERVER_URL + '/api/v1/eventlog')
+            superagent.get(SERVER_URL + '/api/v1/cloudron/eventlog')
                    .query({ access_token: token, page: 1, per_page: 10, action: 'cloudron.activate' })
                    .end(function (error, result) {
                 expect(result.statusCode).to.equal(200);
@@ -128,7 +128,7 @@ describe('Eventlog API', function () {
         });
 
         it('succeeds with search', function (done) {
-            superagent.get(SERVER_URL + '/api/v1/eventlog')
+            superagent.get(SERVER_URL + '/api/v1/cloudron/eventlog')
                    .query({ access_token: token, page: 1, per_page: 10, search: EMAIL })
                    .end(function (error, result) {
                 expect(result.statusCode).to.equal(200);
@@ -139,7 +139,7 @@ describe('Eventlog API', function () {
         });
 
         it('succeeds with search', function (done) {
-            superagent.get(SERVER_URL + '/api/v1/eventlog')
+            superagent.get(SERVER_URL + '/api/v1/cloudron/eventlog')
                    .query({ access_token: token, page: 1, per_page: 10, search: EMAIL, action: 'cloudron.activate' })
                    .end(function (error, result) {
                 expect(result.statusCode).to.equal(200);

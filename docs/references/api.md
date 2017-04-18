@@ -827,11 +827,9 @@ Response (200):
 }
 ```
 
-## Eventlog
-
 ### List events
 
-GET `/api/v1/eventlog` <scope>admin</scope>
+GET `/api/v1/cloudron/eventlog` <scope>admin</scope>
 
 Lists all the past events.
 
@@ -882,7 +880,7 @@ Response (200):
 
 To list all the app installation events:
 ```
-curl -X GET -H 'Authorization: Bearer cb0463455a6606482be7956fc3abd53330ae23244e3492cda3914a2c5154c47e' https://my-demo.cloudron.me/api/v1/eventlog?action=app.install
+curl -X GET -H 'Authorization: Bearer cb0463455a6606482be7956fc3abd53330ae23244e3492cda3914a2c5154c47e' https://my-demo.cloudron.me/api/v1/cloudron/eventlog?action=app.install
 ```
 
 ## Groups

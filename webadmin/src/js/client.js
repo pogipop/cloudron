@@ -527,7 +527,7 @@ angular.module('Application').service('Client', ['$http', 'md5', 'Notification',
             }
         };
 
-        get('/api/v1/eventlog', config).success(function (data, status) {
+        get('/api/v1/cloudron/eventlog', config).success(function (data, status) {
             if (status !== 200 || typeof data !== 'object') return callback(new ClientError(status, data));
 
             callback(null, data.eventlogs);
