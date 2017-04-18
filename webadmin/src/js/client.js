@@ -810,7 +810,7 @@ angular.module('Application').service('Client', ['$http', 'md5', 'Notification',
             description: description
         };
 
-        post('/api/v1/cloudron/feedback', data).success(function (data, status) {
+        post('/api/v1/feedback', data).success(function (data, status) {
             if (status !== 201) return callback(new ClientError(status, data));
             callback(null);
         }).error(defaultErrorHandler(callback));

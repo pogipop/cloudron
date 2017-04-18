@@ -463,7 +463,7 @@ describe('Cloudron', function () {
         after(cleanup);
 
         it('fails without token', function (done) {
-            superagent.post(SERVER_URL + '/api/v1/cloudron/feedback')
+            superagent.post(SERVER_URL + '/api/v1/feedback')
                    .send({ type: 'ticket', subject: 'some subject', description: 'some description' })
                    .end(function (error, result) {
                 expect(result.statusCode).to.equal(401);
@@ -472,7 +472,7 @@ describe('Cloudron', function () {
         });
 
         it('fails without type', function (done) {
-            superagent.post(SERVER_URL + '/api/v1/cloudron/feedback')
+            superagent.post(SERVER_URL + '/api/v1/feedback')
                    .send({ subject: 'some subject', description: 'some description' })
                    .query({ access_token: token })
                    .end(function (error, result) {
@@ -482,7 +482,7 @@ describe('Cloudron', function () {
         });
 
         it('fails with empty type', function (done) {
-            superagent.post(SERVER_URL + '/api/v1/cloudron/feedback')
+            superagent.post(SERVER_URL + '/api/v1/feedback')
                    .send({ type: '', subject: 'some subject', description: 'some description' })
                    .query({ access_token: token })
                    .end(function (error, result) {
@@ -492,7 +492,7 @@ describe('Cloudron', function () {
         });
 
         it('fails with unknown type', function (done) {
-            superagent.post(SERVER_URL + '/api/v1/cloudron/feedback')
+            superagent.post(SERVER_URL + '/api/v1/feedback')
                    .send({ type: 'foobar', subject: 'some subject', description: 'some description' })
                    .query({ access_token: token })
                    .end(function (error, result) {
@@ -502,7 +502,7 @@ describe('Cloudron', function () {
         });
 
         it('succeeds with ticket type', function (done) {
-            superagent.post(SERVER_URL + '/api/v1/cloudron/feedback')
+            superagent.post(SERVER_URL + '/api/v1/feedback')
                    .send({ type: 'ticket', subject: 'some subject', description: 'some description' })
                    .query({ access_token: token })
                    .end(function (error, result) {
@@ -512,7 +512,7 @@ describe('Cloudron', function () {
         });
 
         it('succeeds with app type', function (done) {
-            superagent.post(SERVER_URL + '/api/v1/cloudron/feedback')
+            superagent.post(SERVER_URL + '/api/v1/feedback')
                    .send({ type: 'app_missing', subject: 'some subject', description: 'some description' })
                    .query({ access_token: token })
                    .end(function (error, result) {
@@ -522,7 +522,7 @@ describe('Cloudron', function () {
         });
 
         it('fails without description', function (done) {
-            superagent.post(SERVER_URL + '/api/v1/cloudron/feedback')
+            superagent.post(SERVER_URL + '/api/v1/feedback')
                    .send({ type: 'ticket', subject: 'some subject' })
                    .query({ access_token: token })
                    .end(function (error, result) {
@@ -532,7 +532,7 @@ describe('Cloudron', function () {
         });
 
         it('fails with empty subject', function (done) {
-            superagent.post(SERVER_URL + '/api/v1/cloudron/feedback')
+            superagent.post(SERVER_URL + '/api/v1/feedback')
                    .send({ type: 'ticket', subject: '', description: 'some description' })
                    .query({ access_token: token })
                    .end(function (error, result) {
@@ -542,7 +542,7 @@ describe('Cloudron', function () {
         });
 
         it('fails with empty description', function (done) {
-            superagent.post(SERVER_URL + '/api/v1/cloudron/feedback')
+            superagent.post(SERVER_URL + '/api/v1/feedback')
                    .send({ type: 'ticket', subject: 'some subject', description: '' })
                    .query({ access_token: token })
                    .end(function (error, result) {
@@ -552,7 +552,7 @@ describe('Cloudron', function () {
         });
 
         it('succeeds with feedback type', function (done) {
-            superagent.post(SERVER_URL + '/api/v1/cloudron/feedback')
+            superagent.post(SERVER_URL + '/api/v1/feedback')
                    .send({ type: 'feedback', subject: 'some subject', description: 'some description' })
                    .query({ access_token: token })
                    .end(function (error, result) {
@@ -562,7 +562,7 @@ describe('Cloudron', function () {
         });
 
         it('fails without subject', function (done) {
-            superagent.post(SERVER_URL + '/api/v1/cloudron/feedback')
+            superagent.post(SERVER_URL + '/api/v1/feedback')
                    .send({ type: 'ticket', description: 'some description' })
                    .query({ access_token: token })
                    .end(function (error, result) {
