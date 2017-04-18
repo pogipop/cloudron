@@ -87,6 +87,7 @@
     "istanbul": "*",
     "js2xmlparser": "^1.0.0",
     "mocha": "*",
+    "mock-aws-s3": "^2.4.0",
     "nock": "^9.0.2",
     "node-sass": "^3.0.0-alpha.0",
     "readdirp": "https://registry.npmjs.org/readdirp/-/readdirp-2.1.0.tgz",

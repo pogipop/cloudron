@@ -10,7 +10,11 @@ exports = module.exports = {
 
     backupDone: backupDone,
 
-    testConfig: testConfig
+    testConfig: testConfig,
+
+    // Used to mock AWS
+    _mockInject: mockInject,
+    _mockRestore: mockRestore
 };
 
 var archiver = require('archiver'),
@@ -28,6 +32,17 @@ var archiver = require('archiver'),
     zlib = require('zlib');
 
 var FILE_TYPE = '.tar.gz';
+
+// test only
+var originalAWS;
+function mockInject(mock) {
+    originalAWS = AWS;
+    AWS = mock;
+}
+
+function mockRestore() {
+    AWS = originalAWS;
+}
 
 // internal only
 function getBackupCredentials(apiConfig, callback) {
@@ -159,7 +174,8 @@ function restore(apiConfig, backupId, destinationDirectories, callback) {
                 });
 
                 s3get.on('error', function (error) {
-                    if (error.code === 'NoSuchKey') return callback(new BackupsError(BackupsError.NOT_FOUND));
+                    // TODO ENOENT for the mock, fix upstream!
+                    if (error.code === 'NoSuchKey' || error.code === 'ENOENT') return callback(new BackupsError(BackupsError.NOT_FOUND));
 
                     console.error('[%s] restore: s3 stream error.', backupId, error);
                     callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error));
@@ -269,7 +285,8 @@ function getDownloadStream(apiConfig, backupId, callback) {
         var s3 = new AWS.S3(credentials);
 
         s3.headObject(params, function (error, result) {
-            if (error && error.code === 'NotFound') return callback(new BackupsError(BackupsError.NOT_FOUND));
+            // TODO ENOENT for the mock, fix upstream!
+            if (error && (error.code === 'NotFound' || error.code === 'ENOENT')) return callback(new BackupsError(BackupsError.NOT_FOUND));
             if (error) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error));
 
             var s3get = s3.getObject(params).createReadStream();

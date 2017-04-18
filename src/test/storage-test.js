@@ -10,7 +10,9 @@ var async = require('async'),
     os = require('os'),
     path = require('path'),
     readdirp = require('readdirp'),
+    MockS3 = require('mock-aws-s3'),
     rimraf = require('rimraf'),
+    mkdirp = require('mkdirp'),
     BackupsError = require('../backups.js').BackupsError,
     config = require('../config.js'),
     database = require('../database.js'),
@@ -236,12 +238,16 @@ describe('Storage', function () {
             key: 'key',
             prefix: 'unit.test',
             bucket: 'cloudron-storage-test',
-            accessKeyId: '',
-            secretAccessKey: '',
+            accessKeyId: 'testkeyid',
+            secretAccessKey: 'testsecret',
             region: 'eu-central-1'
         };
 
         before(function (done) {
+            MockS3.config.basePath = path.join(os.tmpdir(), 's3-backup-test-buckets/');
+
+            s3._mockInject(MockS3);
+
             setup(function (error) {
                 expect(error).to.be(null);
 
@@ -258,6 +264,9 @@ describe('Storage', function () {
         });
 
         after(function (done) {
+            s3._mockRestore();
+            rimraf.sync(MockS3.config.basePath);
+
             cleanup(function (error) {
                 expect(error).to.be(null);
                 rimraf(gTmpFolder, done);

@@ -1425,6 +1425,32 @@
       "resolved": "https://registry.npmjs.org/fs-exists-sync/-/fs-exists-sync-0.1.0.tgz",
       "dev": true
     },
+    "fs-extra": {
+      "version": "0.6.4",
+      "from": "fs-extra@0.6.4",
+      "resolved": "https://registry.npmjs.org/fs-extra/-/fs-extra-0.6.4.tgz",
+      "dev": true,
+      "dependencies": {
+        "mkdirp": {
+          "version": "0.3.5",
+          "from": "mkdirp@>=0.3.0 <0.4.0",
+          "resolved": "http://registry.npmjs.org/mkdirp/-/mkdirp-0.3.5.tgz",
+          "dev": true
+        },
+        "ncp": {
+          "version": "0.4.2",
+          "from": "ncp@>=0.4.2 <0.5.0",
+          "resolved": "https://registry.npmjs.org/ncp/-/ncp-0.4.2.tgz",
+          "dev": true
+        },
+        "rimraf": {
+          "version": "2.2.8",
+          "from": "rimraf@>=2.2.0 <2.3.0",
+          "resolved": "https://registry.npmjs.org/rimraf/-/rimraf-2.2.8.tgz",
+          "dev": true
+        }
+      }
+    },
     "fs.realpath": {
       "version": "1.0.0",
       "from": "fs.realpath@>=1.0.0 <2.0.0",
@@ -2334,6 +2360,12 @@
       "resolved": "https://registry.npmjs.org/json3/-/json3-3.3.2.tgz",
       "dev": true
     },
+    "jsonfile": {
+      "version": "1.0.1",
+      "from": "jsonfile@>=1.0.1 <1.1.0",
+      "resolved": "https://registry.npmjs.org/jsonfile/-/jsonfile-1.0.1.tgz",
+      "dev": true
+    },
     "jsonify": {
       "version": "0.0.0",
       "from": "jsonify@>=0.0.0 <0.1.0",
@@ -2769,6 +2801,12 @@
           "dev": true
         }
       }
+    },
+    "mock-aws-s3": {
+      "version": "2.4.0",
+      "from": "mock-aws-s3@latest",
+      "resolved": "https://registry.npmjs.org/mock-aws-s3/-/mock-aws-s3-2.4.0.tgz",
+      "dev": true
     },
     "moment": {
       "version": "2.18.1",
