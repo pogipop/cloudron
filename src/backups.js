@@ -131,15 +131,12 @@ function getRestoreConfig(backupId, callback) {
     assert.strictEqual(typeof backupId, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    settings.getBackupConfig(function (error, backupConfig) {
+    backupdb.get(backupId, function (error, result) {
+        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new BackupsError(BackupsError.NOT_FOUND, error));
         if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
+        if (!result.restoreConfig)  return callback(new BackupsError(BackupsError.NOT_FOUND, error));
 
-        api(backupConfig.provider).getAppRestoreConfig(backupConfig, backupId, function (error, result) {
-            if (error && error.reason === BackupsError.NOT_FOUND) return callback(error);
-            if (error) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error));
-
-            callback(null, result);
-        });
+        callback(null, result.restoreConfig);
     });
 }
 
@@ -158,14 +155,10 @@ function copyLastBackup(app, manifest, prefix, callback) {
 
         debug('copyLastBackup: copying backup %s to %s', app.lastBackupId, newBackupId);
 
-        api(backupConfig.provider).copyAppRestoreConfig(backupConfig, app.lastBackupId, newBackupId, function (error) {
+        api(backupConfig.provider).copyBackup(backupConfig, app.lastBackupId, newBackupId, function (error) {
             if (error) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error));
 
-            api(backupConfig.provider).copyBackup(backupConfig, app.lastBackupId, newBackupId, function (error) {
-                if (error) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error));
-
-                callback(null, newBackupId);
-            });
+            callback(null, newBackupId);
         });
     });
 }
@@ -435,16 +428,12 @@ function removeBackup(backupId, appBackupIds, callback) {
         api(backupConfig.provider).removeBackup(backupConfig, backupId, appBackupIds, function (error) {
             if (error) return callback(error);
 
-            api(backupConfig.provider).removeAppRestoreConfig(backupConfig, backupId, appBackupIds, function (error) {
-                if (error) return callback(error);
+            backupdb.del(backupId, function (error) {
+                if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
 
-                backupdb.del(backupId, function (error) {
-                    if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
+                debug('removeBackup: %s done', backupId);
 
-                    debug('removeBackup: %s done', backupId);
-
-                    callback(null);
-                });
+                callback(null);
             });
         });
     });
