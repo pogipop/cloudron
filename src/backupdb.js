@@ -3,9 +3,10 @@
 var assert = require('assert'),
     database = require('./database.js'),
     DatabaseError = require('./databaseerror.js'),
+    safe = require('safetydance'),
     util = require('util');
 
-var BACKUPS_FIELDS = [ 'id', 'creationTime', 'version', 'type', 'dependsOn', 'state', ];
+var BACKUPS_FIELDS = [ 'id', 'creationTime', 'version', 'type', 'dependsOn', 'state', 'restoreConfigJson' ];
 
 exports = module.exports = {
     add: add,
@@ -26,6 +27,9 @@ function postProcess(result) {
     assert.strictEqual(typeof result, 'object');
 
     result.dependsOn = result.dependsOn ? result.dependsOn.split(',') : [ ];
+
+    result.restoreConfig = result.restoreConfigJson ? safe.JSON.parse(result.restoreConfigJson) : null;
+    delete result.restoreConfigJson;
 }
 
 function getPaged(page, perPage, callback) {
@@ -81,12 +85,14 @@ function add(backup, callback) {
     assert.strictEqual(typeof backup.version, 'string');
     assert(backup.type === exports.BACKUP_TYPE_APP || backup.type === exports.BACKUP_TYPE_BOX);
     assert(util.isArray(backup.dependsOn));
+    assert.strictEqual(typeof backup.restoreConfig, 'object');
     assert.strictEqual(typeof callback, 'function');
 
     var creationTime = backup.creationTime || new Date(); // allow tests to set the time
+    var restoreConfig = backup.restoreConfig ? JSON.stringify(backup.restoreConfig) : '';
 
-    database.query('INSERT INTO backups (id, version, type, creationTime, state, dependsOn) VALUES (?, ?, ?, ?, ?, ?)',
-        [ backup.id, backup.version, backup.type, creationTime, exports.BACKUP_STATE_NORMAL, backup.dependsOn.join(',') ],
+    database.query('INSERT INTO backups (id, version, type, creationTime, state, dependsOn, restoreConfigJson) VALUES (?, ?, ?, ?, ?, ?, ?)',
+        [ backup.id, backup.version, backup.type, creationTime, exports.BACKUP_STATE_NORMAL, backup.dependsOn.join(','), restoreConfig ],
         function (error) {
         if (error && error.code === 'ER_DUP_ENTRY') return callback(new DatabaseError(DatabaseError.ALREADY_EXISTS));
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));

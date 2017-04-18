@@ -1020,7 +1020,8 @@ describe('database', function () {
                 id: 'backup-box',
                 version: '1.0.0',
                 type: backupdb.BACKUP_TYPE_BOX,
-                dependsOn: [ 'dep1' ]
+                dependsOn: [ 'dep1' ],
+                restoreConfig: null
             };
 
             backupdb.add(backup, function (error) {
@@ -1036,6 +1037,7 @@ describe('database', function () {
                 expect(result.type).to.be(backupdb.BACKUP_TYPE_BOX);
                 expect(result.creationTime).to.be.a(Date);
                 expect(result.dependsOn).to.eql(['dep1']);
+                expect(result.restoreConfig).to.eql(null);
                 done();
             });
         });
@@ -1058,6 +1060,7 @@ describe('database', function () {
                 expect(results[0].id).to.be('backup-box');
                 expect(results[0].version).to.be('1.0.0');
                 expect(results[0].dependsOn).to.eql(['dep1']);
+                expect(results[0].restoreConfig).to.eql(null);
 
                 done();
             });
@@ -1082,7 +1085,8 @@ describe('database', function () {
                 id: 'app_appid_123',
                 version: '1.0.0',
                 type: backupdb.BACKUP_TYPE_APP,
-                dependsOn: [ ]
+                dependsOn: [ ],
+                restoreConfig: { manifest: { foo: 'bar' } }
             };
 
             backupdb.add(backup, function (error) {
@@ -1098,6 +1102,7 @@ describe('database', function () {
                 expect(result.type).to.be(backupdb.BACKUP_TYPE_APP);
                 expect(result.creationTime).to.be.a(Date);
                 expect(result.dependsOn).to.eql([]);
+                expect(result.restoreConfig).to.eql({ manifest: { foo: 'bar' } });
                 done();
             });
         });
@@ -1111,6 +1116,7 @@ describe('database', function () {
                 expect(results[0].id).to.be('app_appid_123');
                 expect(results[0].version).to.be('1.0.0');
                 expect(results[0].dependsOn).to.eql([]);
+                expect(results[0].restoreConfig).to.eql({ manifest: { foo: 'bar' } });
 
                 done();
             });
