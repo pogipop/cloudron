@@ -108,6 +108,7 @@ CREATE TABLE IF NOT EXISTS backups(
     type VARCHAR(16) NOT NULL, /* 'box' or 'app' */
     dependsOn TEXT, /* comma separate list of objects this backup depends on */
     state VARCHAR(16) NOT NULL,
+    restoreConfig TEXT, /* JSON including the manifest of the backed up app */
 
     PRIMARY KEY (filename));
 
