@@ -294,26 +294,22 @@ function setTimeZone(ip, callback) {
 
     debug('setTimeZone ip:%s', ip);
 
-    // https://github.com/bluesmoon/node-geoip
-    // https://github.com/runk/node-maxmind
-    // { url: 'http://freegeoip.net/json/%s', jpath: 'time_zone' },
-    // { url: 'http://ip-api.com/json/%s', jpath: 'timezone' },
-    // { url: 'http://geoip.nekudo.com/api/%s', jpath: 'time_zone }
-
-    superagent.get('http://ip-api.com/json/' + ip).timeout(10 * 1000).end(function (error, result) {
+    superagent.get('https://geolocation.cloudron.io/json').timeout(10 * 1000).end(function (error, result) {
         if ((error && !error.response) || result.statusCode !== 200) {
             debug('Failed to get geo location: %s', error.message);
             return callback(null);
         }
 
-        if (!result.body.timezone || typeof result.body.timezone !== 'string') {
+        var timezone = safe.query(result.body, 'location.time_zone');
+
+        if (!timezone || typeof timezone !== 'string') {
             debug('No timezone in geoip response : %j', result.body);
             return callback(null);
         }
 
-        debug('Setting timezone to ', result.body.timezone);
+        debug('Setting timezone to ', timezone);
 
-        settings.setTimeZone(result.body.timezone, callback);
+        settings.setTimeZone(timezone, callback);
     });
 }
 
