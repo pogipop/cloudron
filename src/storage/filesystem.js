@@ -13,20 +13,20 @@ exports = module.exports = {
     testConfig: testConfig
 };
 
-var assert = require('assert'),
+var archiver = require('archiver'),
+    assert = require('assert'),
     async = require('async'),
     BackupsError = require('../backups.js').BackupsError,
+    crypto = require('crypto'),
     debug = require('debug')('box:storage/filesystem'),
     fs = require('fs'),
-    path = require('path'),
     mkdirp = require('mkdirp'),
     once = require('once'),
+    path = require('path'),
     safe = require('safetydance'),
     SettingsError = require('../settings.js').SettingsError,
     tar = require('tar-fs'),
-    zlib = require('zlib'),
-    crypto = require('crypto'),
-    archiver = require('archiver');
+    zlib = require('zlib');
 
 var FALLBACK_BACKUP_FOLDER = '/var/backups';
 var FILE_TYPE = '.tar.gz';
@@ -53,6 +53,7 @@ function getBackupFilePath(apiConfig, backupId) {
     return path.join(apiConfig.backupFolder || FALLBACK_BACKUP_FOLDER, backupId.endsWith(FILE_TYPE) ? backupId : backupId+FILE_TYPE);
 }
 
+// storage api
 function backup(apiConfig, backupId, sourceDirectories, callback) {
     assert.strictEqual(typeof apiConfig, 'object');
     assert.strictEqual(typeof backupId, 'string');
