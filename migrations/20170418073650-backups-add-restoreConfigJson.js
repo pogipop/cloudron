@@ -48,7 +48,7 @@ var APPS_FIELDS_PREFIXED = [ 'apps.id', 'apps.appStoreId', 'apps.installationSta
 
 exports.up = function(db, callback) {
     async.series([
-        db.runSql.bind(db, 'ALTER TABLE backups ADD COLUMN restoreConfig TEXT'),
+        db.runSql.bind(db, 'ALTER TABLE backups ADD COLUMN restoreConfigJson TEXT'),
         // fill all the backups with restoreConfigs from current apps
         function addRestoreConfigs(callback) {
             console.log('Importing restoreConfigs');
@@ -81,7 +81,7 @@ exports.up = function(db, callback) {
                         };
 
                         async.eachSeries(backups, function (backup, next) {
-                            db.runSql('UPDATE backups SET restoreConfig=? WHERE id=?', [ JSON.stringify(restoreConfig), backup.id ], next);
+                            db.runSql('UPDATE backups SET restoreConfigJson=? WHERE id=?', [ JSON.stringify(restoreConfig), backup.id ], next);
                         }, next);
                     });
                 }, callback);
@@ -91,5 +91,5 @@ exports.up = function(db, callback) {
 };
 
 exports.down = function(db, callback) {
-    db.runSql('ALTER TABLE backups DROP COLUMN restoreConfig', callback);
+    db.runSql('ALTER TABLE backups DROP COLUMN restoreConfigJson', callback);
 };
