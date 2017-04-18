@@ -12,6 +12,7 @@ readonly BOX_SRC_DIR=/home/${USER}/box
 readonly BASE_DATA_DIR=/home/${USER}
 readonly CLOUDRON_CONF=/home/yellowtent/configs/cloudron.conf
 
+readonly curl="curl --fail --connect-timeout 20 --retry 10 --retry-delay 2 --max-time 2400"
 readonly script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 readonly box_src_tmp_dir="$(realpath ${script_dir}/..)"
 
@@ -73,7 +74,7 @@ cd /root
 
 echo "==> installer: updating packages"
 if [[ $(docker version --format {{.Client.Version}}) != "17.03.1-ce" ]]; then
-    curl -sL https://download.docker.com/linux/ubuntu/dists/xenial/pool/stable/amd64/docker-ce_17.03.1~ce-0~ubuntu-xenial_amd64.deb -o /tmp/docker.deb
+    $curl -sL https://download.docker.com/linux/ubuntu/dists/xenial/pool/stable/amd64/docker-ce_17.03.1~ce-0~ubuntu-xenial_amd64.deb -o /tmp/docker.deb
     # https://download.docker.com/linux/ubuntu/dists/xenial/stable/binary-amd64/Packages
     if [[ $(md5sum /tmp/docker.deb | cut -d' ' -f1) != "d6d175900edd243abbdb253990b2fe59" ]]; then
         echo "docker binary download is corrupt"
