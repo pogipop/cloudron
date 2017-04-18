@@ -10,6 +10,7 @@ exports = module.exports = {
     getStatus: getStatus,
     getDisks: getDisks,
     dnsSetup: dnsSetup,
+    getLogs: getLogs,
 
     sendHeartbeat: sendHeartbeat,
 
@@ -57,6 +58,8 @@ var appdb = require('./appdb.js'),
     settings = require('./settings.js'),
     SettingsError = settings.SettingsError,
     shell = require('./shell.js'),
+    spawn = require('child_process').spawn,
+    split = require('split'),
     subdomains = require('./subdomains.js'),
     superagent = require('superagent'),
     sysinfo = require('./sysinfo.js'),
@@ -944,4 +947,40 @@ function refreshDNS(callback) {
             });
         });
     });
+}
+
+function getLogs(units, lines, follow, callback) {
+    assert(Array.isArray(units));
+    assert.strictEqual(typeof lines, 'number');
+    assert.strictEqual(typeof follow, 'boolean');
+    assert.strictEqual(typeof callback, 'function');
+
+    debug('Getting logs for %j', units);
+
+    var args = [ '--output=json', '--no-pager', '--lines=' + lines ];
+    units.forEach(function (u) {
+        if (u === 'box') args.push('--unit=box');
+        else if (u === 'mail') args.push('CONTAINER_ID=mail');
+    });
+    if (follow) args.push('--follow');
+
+    var cp = spawn('/bin/journalctl', args);
+
+    var transformStream = split(function mapper(line) {
+        var obj = safe.JSON.parse(line);
+        if (!obj) return undefined;
+
+        return JSON.stringify({
+            realtimeTimestamp: obj.__REALTIME_TIMESTAMP,
+            monotonicTimestamp: obj.__MONOTONIC_TIMESTAMP,
+            message: obj.MESSAGE,
+            source: obj.SYSLOG_IDENTIFIER || ''
+        }) + '\n';
+    });
+
+    transformStream.close = cp.kill.bind(cp, 'SIGKILL'); // closing stream kills the child process
+
+    cp.stdout.pipe(transformStream);
+
+    return callback(null, transformStream);
 }

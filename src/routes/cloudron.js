@@ -13,7 +13,8 @@ exports = module.exports = {
     getDisks: getDisks,
     update: update,
     feedback: feedback,
-    checkForUpdates: checkForUpdates
+    checkForUpdates: checkForUpdates,
+    getLogs: getLogs
 };
 
 var assert = require('assert'),
@@ -222,4 +223,25 @@ function feedback(req, res, next) {
     mailer.sendFeedback(req.user, req.body.type, req.body.subject, req.body.description);
 
     next(new HttpSuccess(201, {}));
+}
+
+function getLogs(req, res, next) {
+    var lines = req.query.lines ? parseInt(req.query.lines, 10) : 100;
+    if (isNaN(lines)) return next(new HttpError(400, 'lines must be a number'));
+
+    var units = req.query.units || 'all';
+    debug('Getting logs of unit:%s', units);
+
+    cloudron.getLogs(units.split(','), lines, false /* follow */, function (error, logStream) {
+        if (error && error.reason === CloudronError.BAD_FIELD) return next(new HttpError(404, 'Invalid type'));
+        if (error) return next(new HttpError(500, error));
+
+        res.writeHead(200, {
+            'Content-Type': 'application/x-logs',
+            'Content-Disposition': 'attachment; filename="log.txt"',
+            'Cache-Control': 'no-cache',
+            'X-Accel-Buffering': 'no' // disable nginx buffering
+        });
+        logStream.pipe(res);
+    });
 }

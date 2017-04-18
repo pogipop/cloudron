@@ -827,6 +827,32 @@ Response (200):
 }
 ```
 
+### Get logs
+
+GET `/api/v1/cloudron/logs` <scope>admin</scope>
+
+Get the system logs.
+
+The `lines` query parameter can be used to specify the number of log lines to download.
+
+The `units` query parameters can be set to `box` or `mail` to get logs of specific units.
+
+The response has `Content-Type` set to 'application/x-logs' and `Content-Disposition` set to
+`attachment; filename="log.txt`.
+
+Response(200):
+
+```
+Line delimited JSON.
+
+    {
+        realtimeTimestamp: <number>,          // wallclock timestamp
+        monotonicTimestamp: <number>,         // time passed since boot
+        message: [ <byte>,... ],              // utf8 buffer
+        source: <process name>                // source of this message
+    }
+```
+
 ### List events
 
 GET `/api/v1/cloudron/eventlog` <scope>admin</scope>
