@@ -75,6 +75,7 @@ var assert = require('assert'),
     CloudronError = cloudron.CloudronError,
     moment = require('moment-timezone'),
     net = require('net'),
+    once = require('once'),
     paths = require('./paths.js'),
     safe = require('safetydance'),
     settingsdb = require('./settingsdb.js'),
@@ -281,6 +282,10 @@ function getEmailStatus(callback) {
     }
 
     function checkOutbound25(callback) {
+        assert.strictEqual(typeof callback, 'function');
+
+        callback = once(callback);
+
         var smtpServer = _.sample([
             'smtp.gmail.com',
             'smtp.live.com',
