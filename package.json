@@ -14,7 +14,7 @@
   ],
   "dependencies": {
     "@sindresorhus/df": "^2.1.0",
-    "archiver": "git+https://github.com/cloudron-io/node-archiver.git",
+    "archiver": "git+https://github.com/cloudron-io/node-archiver.git#cloudron-release",
     "async": "^2.1.4",
     "aws-sdk": "^2.41.0",
     "body-parser": "^1.13.1",
