@@ -116,7 +116,7 @@ function backup(apiConfig, backupId, sourceDirectories, callback) {
         };
 
         var s3 = new AWS.S3(credentials);
-        s3.upload(params, function (error, result) {
+        s3.upload(params, function (error) {
             if (error) {
                 console.error('[%s] backup: s3 upload error.', backupId, error);
                 return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error));
@@ -229,7 +229,7 @@ function copyBackup(apiConfig, oldBackupId, newBackupId, callback) {
         };
 
         var s3 = new AWS.S3(credentials);
-        s3.copyObject(params, function (error, result) {
+        s3.copyObject(params, function (error) {
             if (error && error.code === 'NoSuchKey') return callback(new BackupsError(BackupsError.NOT_FOUND));
             if (error) {
                 console.error('copyBackup: s3 copy error.', error);
@@ -284,7 +284,7 @@ function getDownloadStream(apiConfig, backupId, callback) {
 
         var s3 = new AWS.S3(credentials);
 
-        s3.headObject(params, function (error, result) {
+        s3.headObject(params, function (error) {
             // TODO ENOENT for the mock, fix upstream!
             if (error && (error.code === 'NotFound' || error.code === 'ENOENT')) return callback(new BackupsError(BackupsError.NOT_FOUND));
             if (error) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error));

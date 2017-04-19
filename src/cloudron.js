@@ -969,7 +969,7 @@ function getLogs(options, callback) {
         if (u === 'box') args.push('--unit=box');
         else if (u === 'mail') args.push('CONTAINER_NAME=mail');
     });
-    if (format == 'short') args.push('--output=short', '-a'); else args.push('--output=json');
+    if (format === 'short') args.push('--output=short', '-a'); else args.push('--output=json');
     if (follow) args.push('--follow');
 
     var cp = spawn('/bin/journalctl', args);

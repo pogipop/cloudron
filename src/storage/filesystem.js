@@ -23,7 +23,6 @@ var archiver = require('archiver'),
     mkdirp = require('mkdirp'),
     once = require('once'),
     path = require('path'),
-    safe = require('safetydance'),
     SettingsError = require('../settings.js').SettingsError,
     tar = require('tar-fs'),
     zlib = require('zlib');
