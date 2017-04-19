@@ -230,9 +230,15 @@ function getLogs(req, res, next) {
     if (isNaN(lines)) return next(new HttpError(400, 'lines must be a number'));
 
     var units = req.query.units || 'all';
-    debug('Getting logs of unit:%s', units);
 
-    cloudron.getLogs(units.split(','), lines, false /* follow */, function (error, logStream) {
+    var options = {
+        lines: lines,
+        follow: false,
+        units: units.split(','),
+        format: req.query.format
+    };
+
+    cloudron.getLogs(options, function (error, logStream) {
         if (error && error.reason === CloudronError.BAD_FIELD) return next(new HttpError(404, 'Invalid type'));
         if (error) return next(new HttpError(500, error));
 

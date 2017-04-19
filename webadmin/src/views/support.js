@@ -65,13 +65,13 @@ angular.module('Application').controller('SupportController', ['$scope', '$locat
 
     $scope.populateLogTypes = function () {
         $scope.logs.types = [
-            { id: 'system', name: 'System', url: Client.makeURL('/api/v1/cloudron/logs?unit=all') },
-            { id: 'box', name: 'Box', url: Client.makeURL('/api/v1/cloudron/logs?unit=box') },
-            { id: 'mail', name: 'Mail', url: Client.makeURL('/api/v1/cloudron/logs?unit=mail') }
+            { name: 'System (All)', url: Client.makeURL('/api/v1/cloudron/logs?units=all') },
+            { name: 'Box', url: Client.makeURL('/api/v1/cloudron/logs?units=box') },
+            { name: 'Mail', url: Client.makeURL('/api/v1/cloudron/logs?units=mail') }
         ];
 
         Client.getInstalledApps().forEach(function (app) {
-            $scope.logs.types.push({ id: app.id, name: app.fqdn, url: Client.makeURL('/api/v1/apps/' + app.id + '/logs') });
+            $scope.logs.types.push({ name: app.fqdn, url: Client.makeURL('/api/v1/apps/' + app.id + '/logs') });
         });
     };
 

@@ -674,10 +674,9 @@ function appLogFilter(app) {
     return names.map(function (name) { return 'CONTAINER_NAME=' + name; });
 }
 
-function getLogs(appId, lines, follow, callback) {
+function getLogs(appId, options, callback) {
     assert.strictEqual(typeof appId, 'string');
-    assert.strictEqual(typeof lines, 'number');
-    assert.strictEqual(typeof follow, 'boolean');
+    assert(options && typeof options === 'object');
     assert.strictEqual(typeof callback, 'function');
 
     debug('Getting logs for %s', appId);
@@ -686,13 +685,21 @@ function getLogs(appId, lines, follow, callback) {
         if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new AppsError(AppsError.NOT_FOUND));
         if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
 
-        var args = [ '--output=json', '--no-pager', '--lines=' + lines ];
+
+        var lines = options.lines || 100,
+            follow = !!options.follow,
+            format = options.format || 'json';
+
+        var args = [ '--no-pager', '--lines=' + lines ];
         if (follow) args.push('--follow');
+        if (format == 'short') args.push('--output=short', '-a'); else args.push('--output=json');
         args = args.concat(appLogFilter(app));
 
         var cp = spawn('/bin/journalctl', args);
 
         var transformStream = split(function mapper(line) {
+            if (format !== 'json') return line + '\n';
+
             var obj = safe.JSON.parse(line);
             if (!obj) return undefined;
 

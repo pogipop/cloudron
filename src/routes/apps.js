@@ -360,7 +360,13 @@ function getLogs(req, res, next) {
 
     debug('Getting logs of app id:%s', req.params.id);
 
-    apps.getLogs(req.params.id, lines, false /* follow */, function (error, logStream) {
+    var options = {
+        lines: lines,
+        follow: false,
+        format: req.query.format
+    };
+
+    apps.getLogs(req.params.id, options, function (error, logStream) {
         if (error && error.reason === AppsError.NOT_FOUND) return next(new HttpError(404, 'No such app'));
         if (error && error.reason === AppsError.BAD_STATE) return next(new HttpError(412, error.message));
         if (error) return next(new HttpError(500, error));

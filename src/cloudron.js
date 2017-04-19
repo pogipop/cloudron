@@ -949,24 +949,34 @@ function refreshDNS(callback) {
     });
 }
 
-function getLogs(units, lines, follow, callback) {
+function getLogs(options, callback) {
+    assert(options && typeof options === 'object');
+    assert.strictEqual(typeof callback, 'function');
+
+    var units = options.units || [],
+        lines = options.lines || 100,
+        format = options.format || 'json',
+        follow = !!options.follow;
+
     assert(Array.isArray(units));
     assert.strictEqual(typeof lines, 'number');
-    assert.strictEqual(typeof follow, 'boolean');
-    assert.strictEqual(typeof callback, 'function');
+    assert.strictEqual(typeof format, 'string');
 
     debug('Getting logs for %j', units);
 
-    var args = [ '--output=json', '--no-pager', '--lines=' + lines ];
+    var args = [ '--no-pager', '--lines=' + lines ];
     units.forEach(function (u) {
         if (u === 'box') args.push('--unit=box');
-        else if (u === 'mail') args.push('CONTAINER_ID=mail');
+        else if (u === 'mail') args.push('CONTAINER_NAME=mail');
     });
+    if (format == 'short') args.push('--output=short', '-a'); else args.push('--output=json');
     if (follow) args.push('--follow');
 
     var cp = spawn('/bin/journalctl', args);
 
     var transformStream = split(function mapper(line) {
+        if (format !== 'json') return line + '\n';
+
         var obj = safe.JSON.parse(line);
         if (!obj) return undefined;
 
