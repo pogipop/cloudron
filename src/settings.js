@@ -75,7 +75,6 @@ var assert = require('assert'),
     CloudronError = cloudron.CloudronError,
     moment = require('moment-timezone'),
     net = require('net'),
-    once = require('once'),
     paths = require('./paths.js'),
     safe = require('safetydance'),
     settingsdb = require('./settingsdb.js'),
@@ -284,8 +283,6 @@ function getEmailStatus(callback) {
     function checkOutbound25(callback) {
         assert.strictEqual(typeof callback, 'function');
 
-        callback = once(callback);
-
         var smtpServer = _.sample([
             'smtp.gmail.com',
             'smtp.live.com',
@@ -306,7 +303,7 @@ function getEmailStatus(callback) {
         client.on('connect', function () {
             outboundPort25.status = true;
             outboundPort25.value = 'OK';
-            client.end();
+            client.destroy(); // do not use end() because it still triggers timeout
             callback();
         });
         client.on('timeout', function () {
