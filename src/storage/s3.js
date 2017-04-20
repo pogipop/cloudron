@@ -91,14 +91,17 @@ function backup(apiConfig, backupId, source, callback) {
 
         pack.on('error', function (error) {
             console.error('[%s] backup: tar stream error.', backupId, error);
+            callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
         });
 
         gzip.on('error', function (error) {
             console.error('[%s] backup: gzip stream error.', backupId, error);
+            callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
         });
 
         encrypt.on('error', function (error) {
             console.error('[%s] backup: encrypt stream error.', backupId, error);
+            callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
         });
 
         pack.pipe(gzip).pipe(encrypt);
