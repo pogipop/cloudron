@@ -17,9 +17,7 @@ exports = module.exports = {
     _mockRestore: mockRestore
 };
 
-var archiver = require('archiver'),
-    assert = require('assert'),
-    async = require('async'),
+var assert = require('assert'),
     AWS = require('aws-sdk'),
     BackupsError = require('../backups.js').BackupsError,
     crypto = require('crypto'),
@@ -72,42 +70,38 @@ function getBackupFilePath(apiConfig, backupId) {
 }
 
 // storage api
-function backup(apiConfig, backupId, sourceDirectories, callback) {
+function backup(apiConfig, backupId, source, callback) {
     assert.strictEqual(typeof apiConfig, 'object');
     assert.strictEqual(typeof backupId, 'string');
-    assert(Array.isArray(sourceDirectories));
+    assert.strictEqual(typeof source, 'string');
     assert.strictEqual(typeof callback, 'function');
 
     callback = once(callback);
 
     var backupFilePath = getBackupFilePath(apiConfig, backupId);
 
-    debug('[%s] backup: %j -> %s', backupId, sourceDirectories, backupFilePath);
+    debug('[%s] backup: %s -> %s', backupId, source, backupFilePath);
 
     getBackupCredentials(apiConfig, function (error, credentials) {
         if (error) return callback(error);
 
-        var archive = archiver('tar', { gzip: true });
+        var pack = tar.pack(source);
+        var gzip = zlib.createGzip({});
         var encrypt = crypto.createCipher('aes-256-cbc', apiConfig.key || '');
 
+        pack.on('error', function (error) {
+            console.error('[%s] backup: tar stream error.', backupId, error);
+        });
+
+        gzip.on('error', function (error) {
+            console.error('[%s] backup: gzip stream error.', backupId, error);
+        });
+
         encrypt.on('error', function (error) {
-            console.error('[%s] backup: cipher stream error.', backupId, error);
+            console.error('[%s] backup: encrypt stream error.', backupId, error);
         });
 
-        archive.on('error', function (error) {
-            console.error('[%s] backup: archive stream error.', backupId, error);
-        });
-
-        archive.pipe(encrypt);
-
-        sourceDirectories.forEach(function (directory) {
-            // archive does not like destination beginning with a slash
-            directory.destination = path.normalize(directory.destination).replace(/^\//, '');
-
-            archive.directory(directory.source, directory.destination);
-        });
-
-        archive.finalize();
+        pack.pipe(gzip).pipe(encrypt);
 
         var params = {
             Bucket: apiConfig.bucket,
@@ -127,88 +121,63 @@ function backup(apiConfig, backupId, sourceDirectories, callback) {
     });
 }
 
-function restore(apiConfig, backupId, destinationDirectories, callback) {
+function restore(apiConfig, backupId, destination, callback) {
     assert.strictEqual(typeof apiConfig, 'object');
     assert.strictEqual(typeof backupId, 'string');
-    assert(Array.isArray(destinationDirectories));
+    assert.strictEqual(typeof destination, 'string');
     assert.strictEqual(typeof callback, 'function');
 
     var backupFilePath = getBackupFilePath(apiConfig, backupId);
 
-    debug('[%s] restore: %s -> %j', backupId, backupFilePath, destinationDirectories);
+    debug('[%s] restore: %s -> %s', backupId, backupFilePath, destination);
 
     getBackupCredentials(apiConfig, function (error, credentials) {
         if (error) return callback(error);
 
-        async.eachSeries(destinationDirectories, function (directory, callback) {
-            debug('[%s] restore: directory %s -> %s', backupId, directory.source, directory.destination);
-
-            // tar-fs reports without slash at the beginning
-            directory.source = path.normalize(directory.source).replace(/^\//, '');
-
-            mkdirp(directory.destination, function (error) {
-                if (error) return callback(error);
-
-                var params = {
-                    Bucket: apiConfig.bucket,
-                    Key: backupFilePath
-                };
-
-                var s3 = new AWS.S3(credentials);
-
-                var s3get = s3.getObject(params).createReadStream();
-                var decrypt = crypto.createDecipher('aes-256-cbc', apiConfig.key || '');
-                var gunzip = zlib.createGunzip({});
-
-                var IGNORE_PREFIX = '__ignore__';
-                var extract = tar.extract(directory.destination, {
-                    ignore: function (name, header) { return header.name.startsWith(IGNORE_PREFIX); },
-                    map: function (header) {
-                        // ignore is called after map, we mark everything we dont want!
-                        // else slice off the mapping prefix
-                        if (!header.name.startsWith(directory.source)) header.name = IGNORE_PREFIX + header.name;
-                        else header.name = header.name.slice(directory.source.length);
-
-                        return header;
-                    }
-                });
-
-                s3get.on('error', function (error) {
-                    // TODO ENOENT for the mock, fix upstream!
-                    if (error.code === 'NoSuchKey' || error.code === 'ENOENT') return callback(new BackupsError(BackupsError.NOT_FOUND));
-
-                    console.error('[%s] restore: s3 stream error.', backupId, error);
-                    callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error));
-                });
-
-                decrypt.on('error', function (error) {
-                    console.error('[%s] restore: decipher stream error.', error);
-                    callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
-                });
-
-                gunzip.on('error', function (error) {
-                    console.error('[%s] restore: gunzip stream error.', error);
-                    callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
-                });
-
-                extract.on('error', function (error) {
-                    console.error('[%s] restore: extract stream error.', error);
-                    callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
-                });
-
-                extract.on('finish', function () {
-                    debug('[%s] restore: directory %s done.', backupId, directory.source);
-                    callback();
-                });
-
-                s3get.pipe(decrypt).pipe(gunzip).pipe(extract);
-            });
-        }, function (error) {
+        mkdirp(destination, function (error) {
             if (error) return callback(error);
 
-            debug('[%s] restore: done', backupId);
+            var params = {
+                Bucket: apiConfig.bucket,
+                Key: backupFilePath
+            };
 
-            callback(null);
+            var s3 = new AWS.S3(credentials);
+
+            var s3get = s3.getObject(params).createReadStream();
+            var decrypt = crypto.createDecipher('aes-256-cbc', apiConfig.key || '');
+            var gunzip = zlib.createGunzip({});
+            var extract = tar.extract(destination);
+
+            s3get.on('error', function (error) {
+                // TODO ENOENT for the mock, fix upstream!
+                if (error.code === 'NoSuchKey' || error.code === 'ENOENT') return callback(new BackupsError(BackupsError.NOT_FOUND));
+
+                console.error('[%s] restore: s3 stream error.', backupId, error);
+                callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error));
+            });
+
+            decrypt.on('error', function (error) {
+                console.error('[%s] restore: decipher stream error.', error);
+                callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
+            });
+
+            gunzip.on('error', function (error) {
+                console.error('[%s] restore: gunzip stream error.', error);
+                callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
+            });
+
+            extract.on('error', function (error) {
+                console.error('[%s] restore: extract stream error.', error);
+                callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
+            });
+
+            extract.on('finish', function () {
+                debug('[%s] restore: done.', backupId);
+                callback();
+            });
+
+            s3get.pipe(decrypt).pipe(gunzip).pipe(extract);
         });
     });
 }

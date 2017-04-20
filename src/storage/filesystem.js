@@ -61,21 +61,25 @@ function backup(apiConfig, backupId, source, callback) {
     mkdirp(path.dirname(backupFilePath), { mode: 0o777 }, function (error) {
         if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
 
-        var fileStream = fs.createWriteStream(backupFilePath, { mode: 0o777 });
         var pack = tar.pack(source);
         var gzip = zlib.createGzip({});
-        var cipher = crypto.createCipher('aes-256-cbc', apiConfig.key || '');
+        var encrypt = crypto.createCipher('aes-256-cbc', apiConfig.key || '');
+        var fileStream = fs.createWriteStream(backupFilePath, { mode: 0o777 });
 
-        fileStream.on('error', function (error) {
-            console.error('[%s] backup: out stream error.', backupId, error);
-        });
-
-        cipher.on('error', function (error) {
-            console.error('[%s] backup: cipher stream error.', backupId, error);
+        pack.on('error', function (error) {
+            console.error('[%s] backup: tar stream error.', backupId, error);
         });
 
         gzip.on('error', function (error) {
             console.error('[%s] backup: gzip stream error.', backupId, error);
+        });
+
+        encrypt.on('error', function (error) {
+            console.error('[%s] backup: encrypt stream error.', backupId, error);
+        });
+
+        fileStream.on('error', function (error) {
+            console.error('[%s] backup: out stream error.', backupId, error);
         });
 
         fileStream.on('close', function () {
@@ -83,7 +87,7 @@ function backup(apiConfig, backupId, source, callback) {
             callback(null);
         });
 
-        pack.pipe(gzip).pipe(cipher).pipe(fileStream);
+        pack.pipe(gzip).pipe(encrypt).pipe(fileStream);
     });
 }
 
