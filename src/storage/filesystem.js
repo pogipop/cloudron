@@ -22,6 +22,7 @@ var assert = require('assert'),
     mkdirp = require('mkdirp'),
     once = require('once'),
     path = require('path'),
+    safe = require('safetydance'),
     SettingsError = require('../settings.js').SettingsError,
     tar = require('tar-fs'),
     zlib = require('zlib');
@@ -46,19 +47,11 @@ function backup(apiConfig, backupId, sourceDirectories, callback) {
 
     callback = once(callback);
 
-    // to allow setting 776 for real
-    var oldUmask = process.umask(0);
-    var oldCallback = callback;
-    callback = function (error) {
-        process.umask(oldUmask);
-        oldCallback(error);
-    };
-
     var backupFilePath = getBackupFilePath(apiConfig, backupId);
 
     debug('[%s] backup: %j -> %s', backupId, sourceDirectories, backupFilePath);
 
-    mkdirp(path.dirname(backupFilePath), { mode: 0o777 }, function (error) {
+    mkdirp(path.dirname(backupFilePath), function (error) {
         if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
 
         var pack = tar.pack('/', {
@@ -73,7 +66,7 @@ function backup(apiConfig, backupId, sourceDirectories, callback) {
 
         var gzip = zlib.createGzip({});
         var encrypt = crypto.createCipher('aes-256-cbc', apiConfig.key || '');
-        var fileStream = fs.createWriteStream(backupFilePath, { mode: 0o776 });
+        var fileStream = fs.createWriteStream(backupFilePath);
 
         pack.on('error', function (error) {
             console.error('[%s] backup: tar stream error.', backupId, error);
@@ -96,7 +89,12 @@ function backup(apiConfig, backupId, sourceDirectories, callback) {
         });
 
         fileStream.on('close', function () {
+            debug('[%s] backup: changing ownership.', backupId);
+
+            if (!safe.child_process.execSync('chown -R yellowtent:yellowtent ' + path.dirname(backupFilePath))) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, safe.error.message));
+
             debug('[%s] backup: done.', backupId);
+
             callback(null);
         });
 
@@ -166,15 +164,7 @@ function copyBackup(apiConfig, oldBackupId, newBackupId, callback) {
 
     debug('copyBackup: %s -> %s', oldFilePath, newFilePath);
 
-    // to allow setting 776 for real
-    var oldUmask = process.umask(0);
-    var oldCallback = callback;
-    callback = function (error) {
-        process.umask(oldUmask);
-        oldCallback(error);
-    };
-
-    mkdirp(path.dirname(newFilePath), { mode: 0o777 }, function (error) {
+    mkdirp(path.dirname(newFilePath), function (error) {
         if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
 
         var readStream = fs.createReadStream(oldFilePath);
@@ -190,7 +180,11 @@ function copyBackup(apiConfig, oldBackupId, newBackupId, callback) {
             callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
         });
 
-        writeStream.on('close', callback);
+        writeStream.on('close', function () {
+            if (!safe.child_process.execSync('chown -R yellowtent:yellowtent ' + path.dirname(newFilePath))) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, safe.error.message));
+
+            callback();
+        });
 
         readStream.pipe(writeStream);
     });
