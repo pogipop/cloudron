@@ -204,6 +204,7 @@ function createSubcontainer(app, name, cmd, options, callback) {
                 VolumesFrom: isAppContainer ? null : [ app.containerId + ":rw" ],
                 NetworkMode: isAppContainer ? 'cloudron' : ('container:' + app.containerId), // share network namespace with parent
                 Dns: ['172.18.0.1'], // use internal dns
+                DnsSearch: ['.'], // use internal dns
                 SecurityOpt: enableSecurityOpt ? [ "apparmor:docker-cloudron-app" ] : null // profile available only on cloudron
             }
         };
