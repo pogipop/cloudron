@@ -56,7 +56,7 @@ echo "==> Installing Docker"
 mkdir -p /etc/systemd/system/docker.service.d
 echo -e "[Service]\nExecStart=\nExecStart=/usr/bin/dockerd -H fd:// --log-driver=journald --exec-opt native.cgroupdriver=cgroupfs --storage-driver=devicemapper" > /etc/systemd/system/docker.service.d/cloudron.conf
 
-curl -sL https://download.docker.com/linux/ubuntu/dists/xenial/pool/stable/amd64/docker-ce_17.03.1~ce-0~ubuntu-xenial_amd64.deb -O /tmp/docker.deb
+curl -sL https://download.docker.com/linux/ubuntu/dists/xenial/pool/stable/amd64/docker-ce_17.03.1~ce-0~ubuntu-xenial_amd64.deb -o /tmp/docker.deb
 dpkg -i /tmp/docker.deb
 rm /tmp/docker.deb
 
