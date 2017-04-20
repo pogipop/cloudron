@@ -38,10 +38,10 @@ function getBackupFilePath(apiConfig, backupId) {
 }
 
 // storage api
-function backup(apiConfig, backupId, source, callback) {
+function backup(apiConfig, backupId, sourceDirectories, callback) {
     assert.strictEqual(typeof apiConfig, 'object');
     assert.strictEqual(typeof backupId, 'string');
-    assert.strictEqual(typeof source, 'string');
+    assert(Array.isArray(sourceDirectories));
     assert.strictEqual(typeof callback, 'function');
 
     callback = once(callback);
@@ -56,12 +56,21 @@ function backup(apiConfig, backupId, source, callback) {
 
     var backupFilePath = getBackupFilePath(apiConfig, backupId);
 
-    debug('[%s] backup: %s -> %s', backupId, source, backupFilePath);
+    debug('[%s] backup: %j -> %s', backupId, sourceDirectories, backupFilePath);
 
     mkdirp(path.dirname(backupFilePath), { mode: 0o777 }, function (error) {
         if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
 
-        var pack = tar.pack(source);
+        var pack = tar.pack('/', {
+            entries: sourceDirectories.map(function (m) { return m.source; }),
+            map: function(header) {
+                sourceDirectories.forEach(function (m) {
+                    header.name = header.name.replace(new RegExp('^' + m.source + '(/?)'), m.destination + '$1');
+                });
+                return header;
+            }
+        });
+
         var gzip = zlib.createGzip({});
         var encrypt = crypto.createCipher('aes-256-cbc', apiConfig.key || '');
         var fileStream = fs.createWriteStream(backupFilePath, { mode: 0o776 });
