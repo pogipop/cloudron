@@ -47,6 +47,7 @@ var addons = require('./addons.js'),
     SettingsError = require('./settings.js').SettingsError,
     util = require('util');
 
+var NODE_CMD = path.join(__dirname, './scripts/node.sh');
 var BACKUPTASK_CMD = path.join(__dirname, 'backuptask.js');
 
 var NOOP_CALLBACK = function (error) { if (error) debug(error); };
@@ -178,7 +179,7 @@ function backupBoxWithAppBackupIds(appBackupIds, prefix, callback) {
         shell.exec('backupBox', '/bin/bash', mysqlDumpArgs, function (error) {
             if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
 
-            shell.sudo('backupBox', [ BACKUPTASK_CMD, backupId ], function (error) {
+            shell.sudo('backupBox', [ NODE_CMD, BACKUPTASK_CMD, backupId ], function (error) {
                 if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
 
                 debug('backupBoxWithAppBackupIds: success');
@@ -221,7 +222,7 @@ function createNewAppBackup(app, manifest, prefix, callback) {
     async.series([
         fs.writeFile.bind(null, path.join(paths.APPS_DATA_DIR, app.id + '/config.json'), JSON.stringify(restoreConfig)),
         addons.backupAddons.bind(null, app, manifest.addons),
-        shell.sudo.bind(null, 'backupApp', [ BACKUPTASK_CMD, backupId, app.id ])
+        shell.sudo.bind(null, 'backupApp', [ NODE_CMD, BACKUPTASK_CMD, backupId, app.id ])
     ], function (error) {
         if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
 
