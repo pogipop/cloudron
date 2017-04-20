@@ -101,6 +101,10 @@ mkdir -p "${BOX_DATA_DIR}/appicons"
 mkdir -p "${BOX_DATA_DIR}/certs"
 mkdir -p "${BOX_DATA_DIR}/acme" # acme keys
 
+# ensure backups folder exists and is writeable
+mkdir -p /var/backups
+chmod 777 /var/backups
+
 echo "==> Check for old btrfs volumes"
 if mountpoint -q "${OLD_DATA_DIR}"; then
     echo "==> Cleanup btrfs volumes"

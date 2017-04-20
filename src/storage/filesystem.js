@@ -46,7 +46,7 @@ function backup(apiConfig, backupId, source, callback) {
 
     callback = once(callback);
 
-    // to allow setting 777 for real
+    // to allow setting 776 for real
     var oldUmask = process.umask(0);
     var oldCallback = callback;
     callback = function (error) {
@@ -64,7 +64,7 @@ function backup(apiConfig, backupId, source, callback) {
         var pack = tar.pack(source);
         var gzip = zlib.createGzip({});
         var encrypt = crypto.createCipher('aes-256-cbc', apiConfig.key || '');
-        var fileStream = fs.createWriteStream(backupFilePath, { mode: 0o777 });
+        var fileStream = fs.createWriteStream(backupFilePath, { mode: 0o776 });
 
         pack.on('error', function (error) {
             console.error('[%s] backup: tar stream error.', backupId, error);
@@ -153,22 +153,34 @@ function copyBackup(apiConfig, oldBackupId, newBackupId, callback) {
 
     debug('copyBackup: %s -> %s', oldFilePath, newFilePath);
 
-    var readStream = fs.createReadStream(oldFilePath);
-    var writeStream = fs.createWriteStream(newFilePath);
+    // to allow setting 776 for real
+    var oldUmask = process.umask(0);
+    var oldCallback = callback;
+    callback = function (error) {
+        process.umask(oldUmask);
+        oldCallback(error);
+    };
 
-    readStream.on('error', function (error) {
-        console.error('copyBackup: read stream error.', error);
-        callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
+    mkdirp(path.dirname(newFilePath), { mode: 0o777 }, function (error) {
+        if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
+
+        var readStream = fs.createReadStream(oldFilePath);
+        var writeStream = fs.createWriteStream(newFilePath);
+
+        readStream.on('error', function (error) {
+            console.error('copyBackup: read stream error.', error);
+            callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
+        });
+
+        writeStream.on('error', function (error) {
+            console.error('copyBackup: write stream error.', error);
+            callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
+        });
+
+        writeStream.on('close', callback);
+
+        readStream.pipe(writeStream);
     });
-
-    writeStream.on('error', function (error) {
-        console.error('copyBackup: write stream error.', error);
-        callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
-    });
-
-    writeStream.on('close', callback);
-
-    readStream.pipe(writeStream);
 }
 
 function removeBackup(apiConfig, backupId, appBackupIds, callback) {
