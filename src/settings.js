@@ -333,6 +333,7 @@ function getEmailStatus(callback) {
     dns.platform.timeout = 5000; // hack so that each query finish in 5 seconds. this applies to _each_ ns
     dns.platform.name_servers = [ { address: '127.0.0.1', port: 53 } ];
     dns.platform.attempts = 1;
+    dns.platform.hosts.purge(); // otherwise, reverse() uses /etc/hosts
 
     async.parallel([
         ignoreError('mx', checkMx),
