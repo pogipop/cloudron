@@ -32,10 +32,10 @@ function backup(apiConfig, backupId, sourceDirectories, callback) {
     callback(new Error('not implemented'));
 }
 
-function restore(apiConfig, backupId, destinationDirectories, callback) {
+function restore(apiConfig, backupId, destination, callback) {
     assert.strictEqual(typeof apiConfig, 'object');
     assert.strictEqual(typeof backupId, 'string');
-    assert(Array.isArray(destinationDirectories));
+    assert.strictEqual(typeof destination, 'string');
     assert.strictEqual(typeof callback, 'function');
 
     // Result: none
