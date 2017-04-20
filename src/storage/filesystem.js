@@ -13,8 +13,7 @@ exports = module.exports = {
     testConfig: testConfig
 };
 
-var archiver = require('archiver'),
-    assert = require('assert'),
+var assert = require('assert'),
     async = require('async'),
     BackupsError = require('../backups.js').BackupsError,
     crypto = require('crypto'),
@@ -31,20 +30,6 @@ var FALLBACK_BACKUP_FOLDER = '/var/backups';
 var FILE_TYPE = '.tar.gz';
 
 // internal only
-function copyFile(source, destination, callback) {
-    callback = once(callback);
-
-    // not run as root, permissions are fine
-    var readStream = fs.createReadStream(source);
-    var writeStream = fs.createWriteStream(destination);
-
-    readStream.on('error', callback);
-    writeStream.on('error', callback);
-    writeStream.on('close', callback);
-
-    readStream.pipe(writeStream);
-}
-
 function getBackupFilePath(apiConfig, backupId) {
     assert.strictEqual(typeof apiConfig, 'object');
     assert.strictEqual(typeof backupId, 'string');
@@ -53,10 +38,10 @@ function getBackupFilePath(apiConfig, backupId) {
 }
 
 // storage api
-function backup(apiConfig, backupId, sourceDirectories, callback) {
+function backup(apiConfig, backupId, source, callback) {
     assert.strictEqual(typeof apiConfig, 'object');
     assert.strictEqual(typeof backupId, 'string');
-    assert(Array.isArray(sourceDirectories));
+    assert.strictEqual(typeof source, 'string');
     assert.strictEqual(typeof callback, 'function');
 
     callback = once(callback);
@@ -71,13 +56,14 @@ function backup(apiConfig, backupId, sourceDirectories, callback) {
 
     var backupFilePath = getBackupFilePath(apiConfig, backupId);
 
-    debug('[%s] backup: %j -> %s', backupId, sourceDirectories, backupFilePath);
+    debug('[%s] backup: %s -> %s', backupId, source, backupFilePath);
 
     mkdirp(path.dirname(backupFilePath), { mode: 0o777 }, function (error) {
         if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
 
         var fileStream = fs.createWriteStream(backupFilePath, { mode: 0o777 });
-        var archive = archiver('tar', { gzip: true });
+        var pack = tar.pack(source);
+        var gzip = zlib.createGzip({});
         var cipher = crypto.createCipher('aes-256-cbc', apiConfig.key || '');
 
         fileStream.on('error', function (error) {
@@ -88,8 +74,8 @@ function backup(apiConfig, backupId, sourceDirectories, callback) {
             console.error('[%s] backup: cipher stream error.', backupId, error);
         });
 
-        archive.on('error', function (error) {
-            console.error('[%s] backup: archive stream error.', backupId, error);
+        gzip.on('error', function (error) {
+            console.error('[%s] backup: gzip stream error.', backupId, error);
         });
 
         fileStream.on('close', function () {
@@ -97,91 +83,56 @@ function backup(apiConfig, backupId, sourceDirectories, callback) {
             callback(null);
         });
 
-        archive.pipe(cipher).pipe(fileStream);
-
-        sourceDirectories.forEach(function (directory) {
-            // archive does not like destination beginning with a slash
-            directory.destination = path.normalize(directory.destination).replace(/^\//, '');
-
-            archive.directory(directory.source, directory.destination);
-        });
-
-        archive.finalize();
+        pack.pipe(gzip).pipe(cipher).pipe(fileStream);
     });
 }
 
-function restore(apiConfig, backupId, destinationDirectories, callback) {
+function restore(apiConfig, backupId, destination, callback) {
     assert.strictEqual(typeof apiConfig, 'object');
     assert.strictEqual(typeof backupId, 'string');
-    assert(Array.isArray(destinationDirectories));
+    assert.strictEqual(typeof destination, 'string');
     assert.strictEqual(typeof callback, 'function');
 
     var sourceFilePath = getBackupFilePath(apiConfig, backupId);
 
-    debug('[%s] restore: %s -> %j', backupId, sourceFilePath, destinationDirectories);
+    debug('[%s] restore: %s -> %s', backupId, sourceFilePath, destination);
 
     if (!fs.existsSync(sourceFilePath)) return callback(new BackupsError(BackupsError.NOT_FOUND, 'backup file does not exist'));
 
-    async.eachSeries(destinationDirectories, function (directory, callback) {
-        debug('[%s] restore: directory %s -> %s', backupId, directory.source, directory.destination);
-
-        // tar-fs reports without slash at the beginning
-        directory.source = path.normalize(directory.source).replace(/^\//, '');
-
-        mkdirp(directory.destination, function (error) {
-            if (error) return callback(error);
-
-            var fileStream = fs.createReadStream(sourceFilePath);
-            var decipher = crypto.createDecipher('aes-256-cbc', apiConfig.key || '');
-            var gunzipStream = zlib.createGunzip({});
-
-            var IGNORE_PREFIX = '__ignore__';
-
-            var extract = tar.extract(directory.destination, {
-                ignore: function (name, header) { return header.name.startsWith(IGNORE_PREFIX); },
-                map: function (header) {
-                    // ignore is called after map, we mark everything we dont want!
-                    // else slice off the mapping prefix
-                    if (!header.name.startsWith(directory.source)) header.name = IGNORE_PREFIX + header.name;
-                    else header.name = header.name.slice(directory.source.length);
-
-                    return header;
-                }
-            });
-
-            fileStream.on('error', function (error) {
-                console.error('[%s] restore: file stream error.', error);
-                callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
-            });
-
-            decipher.on('error', function (error) {
-                console.error('[%s] restore: decipher stream error.', error);
-                callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
-            });
-
-            gunzipStream.on('error', function (error) {
-                console.error('[%s] restore: gunzip stream error.', error);
-                callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
-            });
-
-            extract.on('error', function (error) {
-                console.error('[%s] restore: extract stream error.', error);
-                callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
-            });
-
-            extract.on('finish', function () {
-                debug('[%s] restore: directory %s done.', backupId, directory.source);
-                callback();
-            });
-
-            fileStream.pipe(decipher).pipe(gunzipStream).pipe(extract);
-        });
-    }, function (error) {
+    mkdirp(destination, function (error) {
         if (error) return callback(error);
 
-        debug('[%s] restore: done', backupId);
+        var fileStream = fs.createReadStream(sourceFilePath);
+        var decipher = crypto.createDecipher('aes-256-cbc', apiConfig.key || '');
+        var gunzip = zlib.createGunzip({});
+        var extract = tar.extract(destination);
 
-        callback(null);
+        fileStream.on('error', function (error) {
+            console.error('[%s] restore: file stream error.', error);
+            callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
+        });
+
+        decipher.on('error', function (error) {
+            console.error('[%s] restore: decipher stream error.', error);
+            callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
+        });
+
+        gunzip.on('error', function (error) {
+            console.error('[%s] restore: gunzip stream error.', error);
+            callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
+        });
+
+        extract.on('error', function (error) {
+            console.error('[%s] restore: extract stream error.', error);
+            callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
+        });
+
+        extract.on('finish', function () {
+            debug('[%s] restore: %s done.', backupId);
+            callback();
+        });
+
+        fileStream.pipe(decipher).pipe(gunzip).pipe(extract);
     });
 }
 
@@ -196,14 +147,24 @@ function copyBackup(apiConfig, oldBackupId, newBackupId, callback) {
     var oldFilePath = getBackupFilePath(apiConfig, oldBackupId);
     var newFilePath = getBackupFilePath(apiConfig, newBackupId);
 
-    copyFile(oldFilePath, newFilePath, function (error) {
-        if (error) {
-            console.error('Unable to copy backup %s -> %s.', oldFilePath, newFilePath, error);
-            return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
-        }
+    debug('copyBackup: %s -> %s', oldFilePath, newFilePath);
 
-        callback();
+    var readStream = fs.createReadStream(oldFilePath);
+    var writeStream = fs.createWriteStream(newFilePath);
+
+    readStream.on('error', function (error) {
+        console.error('copyBackup: read stream error.', error);
+        callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
     });
+
+    writeStream.on('error', function (error) {
+        console.error('copyBackup: write stream error.', error);
+        callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
+    });
+
+    writeStream.on('close', callback);
+
+    readStream.pipe(writeStream);
 }
 
 function removeBackup(apiConfig, backupId, appBackupIds, callback) {
