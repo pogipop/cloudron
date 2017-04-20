@@ -79,11 +79,6 @@ function backupBox(backupId, callback) {
 var backupId = process.argv[2];
 var appId = process.argv[3];
 
-if (!backupId) {
-    console.error('Usage: restoreapptask.js <backupId> [appId]');
-    process.exit(1);
-}
-
 if (appId) debug('Backuptask for the app %s with id %s', appId, backupId);
 else debug('Backuptask for the whole Cloudron with id %s', backupId);
 
