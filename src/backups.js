@@ -215,7 +215,7 @@ function createNewAppBackup(app, manifest, prefix, callback) {
     assert.strictEqual(typeof callback, 'function');
 
     var timestamp = (new Date()).toISOString().replace(/[T.]/g, '-').replace(/[:Z]/g,'');
-    var backupId = util.format('%s/app_%s_%s_v%s', prefix, app.id, timestamp, config.version());
+    var backupId = util.format('%s/app_%s_%s_v%s', prefix, app.id, timestamp, manifest.version);
 
     var restoreConfig = apps.getAppConfig(app);
     restoreConfig.manifest = manifest;
