@@ -26,7 +26,7 @@ var assert = require('assert'),
     tar = require('tar-fs'),
     zlib = require('zlib');
 
-var FILE_TYPE = '.tar.gz';
+var FILE_TYPE = '.tar.gz.enc';
 
 // internal only
 function getBackupCredentials(apiConfig, callback) {

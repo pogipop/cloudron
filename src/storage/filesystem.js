@@ -27,7 +27,7 @@ var assert = require('assert'),
     zlib = require('zlib');
 
 var FALLBACK_BACKUP_FOLDER = '/var/backups';
-var FILE_TYPE = '.tar.gz';
+var FILE_TYPE = '.tar.gz.enc';
 
 // internal only
 function getBackupFilePath(apiConfig, backupId) {
