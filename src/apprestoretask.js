@@ -35,39 +35,17 @@ function initialize(callback) {
     database.initialize(callback);
 }
 
-function backupApp(backupId, appId, callback) {
+function restoreApp(backupId, appId, callback) {
     assert.strictEqual(typeof backupId, 'string');
     assert.strictEqual(typeof appId, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    debug('Start app backup with id %s for %s', backupId, appId);
+    debug('Start app restore with id %s for %s', backupId, appId);
 
     settings.getBackupConfig(function (error, backupConfig) {
         if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
 
-        api(backupConfig.provider).backup(backupConfig, backupId, path.join(paths.APPS_DATA_DIR, appId), callback);
-    });
-}
-
-function backupBox(backupId, callback) {
-    assert.strictEqual(typeof backupId, 'string');
-    assert.strictEqual(typeof callback, 'function');
-
-    debug('Start box backup with id %s', backupId);
-
-    settings.getBackupConfig(function (error, backupConfig) {
-        if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
-
-        // FIXME THIS IS NOT WORKING WE ONLY BACKUP BOX_DATA_DIR AS SUCH
-        // var backupMapping = [{
-        //     source: paths.BOX_DATA_DIR,
-        //     destination: '/box/'
-        // }, {
-        //     source: path.join(paths.PLATFORM_DATA_DIR, 'mail'),
-        //     destination: '/mail/'
-        // }];
-
-        api(backupConfig.provider).backup(backupConfig, backupId, paths.BOX_DATA_DIR, callback);
+        api(backupConfig.provider).restore(backupConfig, backupId, path.join(paths.APPS_DATA_DIR, appId), callback);
     });
 }
 
@@ -75,13 +53,12 @@ function backupBox(backupId, callback) {
 var backupId = process.argv[2];
 var appId = process.argv[3];
 
-if (!backupId) {
-    console.error('Usage: restoreapptask.js <backupId> [appId]');
+if (!backupId || !appId) {
+    console.error('Usage: restoreapptask.js <backupId> <appId>');
     process.exit(1);
 }
 
-if (appId) debug('Backuptask for the app %s with id %s', appId, backupId);
-else debug('Backuptask for the whole Cloudron with id %s', backupId);
+debug('Apprestoretask for the app %s with id %s', appId, backupId);
 
 process.on('SIGTERM', function () {
     process.exit(0);
@@ -91,15 +68,14 @@ initialize(function (error) {
     if (error) throw error;
 
     function resultHandler(error) {
-        if (error) debug('Backuptask completed with error', error);
+        if (error) debug('Apprestoretask completed with error', error);
 
-        debug('Backuptask completed');
+        debug('Apprestoretask completed');
 
         // https://nodejs.org/api/process.html are exit codes used by node. apps.js uses the value below
         // to check apptask crashes
         process.exit(error ? 50 : 0);
     }
 
-    if (appId) backupApp(backupId, appId, resultHandler);
-    else backupBox(backupId, resultHandler);
+    restoreApp(backupId, appId, resultHandler);
 });

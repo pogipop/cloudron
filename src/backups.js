@@ -49,6 +49,7 @@ var addons = require('./addons.js'),
 
 var NODE_CMD = path.join(__dirname, './scripts/node.sh');
 var BACKUPTASK_CMD = path.join(__dirname, 'backuptask.js');
+var APPRESTORETASK_CMD = path.join(__dirname, 'apprestoretask.js');
 
 var NOOP_CALLBACK = function (error) { if (error) debug(error); };
 
@@ -385,14 +386,10 @@ function restoreApp(app, addonsToRestore, backupId, callback) {
     assert.strictEqual(typeof callback, 'function');
     assert(app.lastBackupId);
 
-    settings.getBackupConfig(function (error, backupConfig) {
-        if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
-
-        async.series([
-            api(backupConfig.provider).restore.bind(null, backupConfig, backupId, path.join(paths.APPS_DATA_DIR, app.id)),
-            addons.restoreAddons.bind(null, app, addonsToRestore)
-        ], callback);
-    });
+    async.series([
+        shell.sudo.bind(null, 'restoreApp', [ NODE_CMD, APPRESTORETASK_CMD, backupId, app.id ]),
+        addons.restoreAddons.bind(null, app, addonsToRestore)
+    ], callback);
 }
 
 function getDownloadStream(backupId, callback) {
