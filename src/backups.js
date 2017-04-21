@@ -159,7 +159,7 @@ function copyLastBackup(app, manifest, prefix, callback) {
         debug('copyLastBackup: copying backup %s to %s', app.lastBackupId, newBackupId);
 
         api(backupConfig.provider).copyBackup(backupConfig, app.lastBackupId, newBackupId, function (error) {
-            if (error) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error));
+            if (error) return callback(error);
 
             callback(null, newBackupId);
         });
