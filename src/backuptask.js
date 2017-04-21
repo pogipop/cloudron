@@ -10,14 +10,15 @@ require('debug').formatArgs = function formatArgs(args) {
 };
 
 var assert = require('assert'),
+    BackupsError = require('./backups.js').BackupsError,
+    caas = require('./storage/caas.js'),
     database = require('./database.js'),
     debug = require('debug')('box:backuptask'),
+    filesystem = require('./storage/filesystem.js'),
     path = require('path'),
     paths = require('./paths.js'),
-    filesystem = require('./storage/filesystem.js'),
-    caas = require('./storage/caas.js'),
     s3 = require('./storage/s3.js'),
-    BackupsError = require('./backups.js').BackupsError,
+    safe = require('safetydance'),
     settings = require('./settings.js');
 
 function api(provider) {
@@ -90,9 +91,11 @@ initialize(function (error) {
     if (error) throw error;
 
     function resultHandler(error) {
-        if (error) debug('Backuptask completed with error', error);
+        if (error) debug('completed with error', error);
 
-        debug('Backuptask completed');
+        debug('completed');
+
+        safe.fs.writeFileSync(paths.BACKUP_RESULT_FILE, error ? error.message : '');
 
         // https://nodejs.org/api/process.html are exit codes used by node. apps.js uses the value below
         // to check apptask crashes

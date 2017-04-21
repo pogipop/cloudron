@@ -50,8 +50,12 @@ function exec(tag, file, args, callback) {
 
     cp.on('exit', function (code, signal) {
         if (code || signal) debug(tag + ' code: %s, signal: %s', code, signal);
+        if (code === 0) return callback();
 
-        callback(code === 0 ? null : new Error(util.format(tag + ' exited with error %s signal %s', code, signal)));
+        var e = new Error(util.format(tag + ' exited with error %s signal %s', code, signal));
+        e.code = code;
+        e.signal = signal;
+        callback(e);
     });
 
     cp.on('error', function (error) {
@@ -70,6 +74,7 @@ function sudo(tag, args, callback) {
     // -S makes sudo read stdin for password
     var cp = exec(tag, SUDO, [ '-S' ].concat(args), callback);
     cp.stdin.end();
+    return cp;
 }
 
 function sudoSync(tag, cmd, callback) {

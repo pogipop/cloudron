@@ -35,13 +35,13 @@ var addons = require('./addons.js'),
     debug = require('debug')('box:backups'),
     eventlog = require('./eventlog.js'),
     filesystem = require('./storage/filesystem.js'),
-    fs = require('fs'),
     locker = require('./locker.js'),
     mailer = require('./mailer.js'),
     path = require('path'),
     paths = require('./paths.js'),
     progress = require('./progress.js'),
     s3 = require('./storage/s3.js'),
+    safe = require('safetydance'),
     shell = require('./shell.js'),
     settings = require('./settings.js'),
     SettingsError = require('./settings.js').SettingsError,
@@ -166,6 +166,23 @@ function copyLastBackup(app, manifest, prefix, callback) {
     });
 }
 
+function runBackupTask(backupId, appId, callback) {
+    assert.strictEqual(typeof backupId, 'string');
+    assert(appId === null || typeof backupId === 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    shell.sudo('backup' + (appId ? 'App' : 'Box'), [ NODE_CMD, BACKUPTASK_CMD, backupId ].concat(appId ? [ appId ] : [ ]), function (error) {
+        if (error && (error.code === null /* signal */ || (error.code !== 0 && error.code !== 50))) { // backuptask crashed
+            return callback(new BackupsError(BackupsError.INTERNAL_ERROR, 'backuptask crashed'));
+        } else if (error && error.code === 50) { // exited with error
+            var result = safe.fs.readFileSync(paths.BACKUP_RESULT_FILE, 'utf8') || safe.error.message;
+            return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, result));
+        }
+
+        callback();
+    });
+}
+
 function backupBoxWithAppBackupIds(appBackupIds, prefix, callback) {
     assert(Array.isArray(appBackupIds));
     assert.strictEqual(typeof prefix, 'string');
@@ -180,8 +197,8 @@ function backupBoxWithAppBackupIds(appBackupIds, prefix, callback) {
         shell.exec('backupBox', '/bin/bash', mysqlDumpArgs, function (error) {
             if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
 
-            shell.sudo('backupBox', [ NODE_CMD, BACKUPTASK_CMD, backupId ], function (error) {
-                if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
+            runBackupTask(backupId, null /* appId */, function (error) {
+                if (error) return callback(error);
 
                 debug('backupBoxWithAppBackupIds: success');
 
@@ -220,19 +237,23 @@ function createNewAppBackup(app, manifest, prefix, callback) {
     var restoreConfig = apps.getAppConfig(app);
     restoreConfig.manifest = manifest;
 
-    async.series([
-        fs.writeFile.bind(null, path.join(paths.APPS_DATA_DIR, app.id + '/config.json'), JSON.stringify(restoreConfig)),
-        addons.backupAddons.bind(null, app, manifest.addons),
-        shell.sudo.bind(null, 'backupApp', [ NODE_CMD, BACKUPTASK_CMD, backupId, app.id ])
-    ], function (error) {
-        if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
+    if (!safe.fs.writeFileSync(path.join(paths.APPS_DATA_DIR, app.id + '/config.json'), JSON.stringify(restoreConfig))) {
+        return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, 'Error creating config.json: ' + safe.error.message));
+    }
 
-        debugApp(app, 'createNewAppBackup: %s done', backupId);
+    addons.backupAddons(app, manifest.addons, function (error) {
+        if (error) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
 
-        backupdb.add({ id: backupId, version: manifest.version, type: backupdb.BACKUP_TYPE_APP, dependsOn: [ ], restoreConfig: restoreConfig }, function (error) {
-            if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
+        runBackupTask(backupId, app.id, function (error) {
+            if (error) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
 
-            callback(null, backupId);
+            debugApp(app, 'createNewAppBackup: %s done', backupId);
+
+            backupdb.add({ id: backupId, version: manifest.version, type: backupdb.BACKUP_TYPE_APP, dependsOn: [ ], restoreConfig: restoreConfig }, function (error) {
+                if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
+
+                callback(null, backupId);
+            });
         });
     });
 }
