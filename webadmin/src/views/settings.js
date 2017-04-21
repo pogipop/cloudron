@@ -50,6 +50,11 @@ angular.module('Application').controller('SettingsController', ['$scope', '$loca
         { name: 'US West (Oregon)', value: 'us-west-2' },
     ];
 
+    $scope.storageProvider = [
+        { name: 'Amazon S3', value: 's3' },
+        { name: 'Filesystem (not recommended)', value: 'filesystem' }
+    ];
+
     $scope.planChange = {
         busy: false,
         error: {},
@@ -332,18 +337,20 @@ angular.module('Application').controller('SettingsController', ['$scope', '$loca
         busy: false,
         error: {},
 
-        provider: 's3',
+        provider: '',
         bucket: '',
         prefix: '',
         accessKeyId: '',
         secretAccessKey: '',
         region: '',
         endpoint: '',
+        backupFoler: '',
 
         show: function () {
             $scope.configureBackup.error = {};
             $scope.configureBackup.busy = false;
 
+            $scope.configureBackup.provider = $scope.backupConfig.provider;
             $scope.configureBackup.bucket = $scope.backupConfig.bucket;
             $scope.configureBackup.prefix = $scope.backupConfig.prefix;
             $scope.configureBackup.region = $scope.backupConfig.region;
@@ -351,6 +358,7 @@ angular.module('Application').controller('SettingsController', ['$scope', '$loca
             $scope.configureBackup.secretAccessKey = $scope.backupConfig.secretAccessKey;
             $scope.configureBackup.endpoint = $scope.backupConfig.endpoint;
             $scope.configureBackup.key = $scope.backupConfig.key;
+            $scope.configureBackup.backupFolder = $scope.backupConfig.backupFolder;
 
             $('#configureBackupModal').modal('show');
         },
@@ -365,7 +373,8 @@ angular.module('Application').controller('SettingsController', ['$scope', '$loca
                 prefix: $scope.configureBackup.prefix,
                 accessKeyId: $scope.configureBackup.accessKeyId,
                 secretAccessKey: $scope.configureBackup.secretAccessKey,
-                key: $scope.configureBackup.key
+                key: $scope.configureBackup.key,
+                backupFolder: $scope.configureBackup.backupFolder
             };
 
             if ($scope.configureBackup.region) backupConfig.region = $scope.configureBackup.region;
@@ -406,8 +415,14 @@ angular.module('Application').controller('SettingsController', ['$scope', '$loca
                         } else {
                             $('#inputConfigureBackupBucket').focus();
                         }
+                    } else if (error.statusCode === 400) {
+                        $scope.configureBackup.error.generic = error.message;
+                        
+                        if ($scope.configureBackup.provider === 'filesystem') {
+                            $scope.configureBackup.error.backupFolder = true;
+                        }
                     } else {
-                        console.error('Unable to change name.', error);
+                        console.error('Unable to change provider.', error);
                     }
 
                     return;
