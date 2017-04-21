@@ -17,6 +17,7 @@ var assert = require('assert'),
     async = require('async'),
     BackupsError = require('../backups.js').BackupsError,
     crypto = require('crypto'),
+    config = require('../config.js'),
     debug = require('debug')('box:storage/filesystem'),
     fs = require('fs'),
     mkdirp = require('mkdirp'),
@@ -28,6 +29,7 @@ var assert = require('assert'),
 
 var FALLBACK_BACKUP_FOLDER = '/var/backups';
 var FILE_TYPE = '.tar.gz.enc';
+var BACKUP_USER = config.TEST ? process.env.USER : 'yellowtent';
 
 // internal only
 function getBackupFilePath(apiConfig, backupId) {
@@ -90,7 +92,7 @@ function backup(apiConfig, backupId, sourceDirectories, callback) {
         fileStream.on('close', function () {
             debug('[%s] backup: changing ownership.', backupId);
 
-            if (!safe.child_process.execSync('chown -R yellowtent:yellowtent ' + path.dirname(backupFilePath))) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, safe.error.message));
+            if (!safe.child_process.execSync('chown -R ' + BACKUP_USER + ':' + BACKUP_USER + ' ' + path.dirname(backupFilePath))) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, safe.error.message));
 
             debug('[%s] backup: done.', backupId);
 
@@ -143,7 +145,7 @@ function restore(apiConfig, backupId, destination, callback) {
 
         extract.on('finish', function () {
             debug('[%s] restore: %s done.', backupId);
-            callback();
+            callback(null);
         });
 
         fileStream.pipe(decipher).pipe(gunzip).pipe(extract);
@@ -180,7 +182,7 @@ function copyBackup(apiConfig, oldBackupId, newBackupId, callback) {
         });
 
         writeStream.on('close', function () {
-            if (!safe.child_process.execSync('chown -R yellowtent:yellowtent ' + path.dirname(newFilePath))) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, safe.error.message));
+            if (!safe.child_process.execSync('chown -R ' + BACKUP_USER + ':' + BACKUP_USER + ' ' + path.dirname(newFilePath))) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, safe.error.message));
 
             callback();
         });

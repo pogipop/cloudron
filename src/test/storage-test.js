@@ -21,6 +21,7 @@ var async = require('async'),
     filesystem = require('../storage/filesystem.js'),
     expect = require('expect.js'),
     settings = require('../settings.js'),
+    SettingsError = settings.SettingsError,
     stream = require('stream');
 
 function setup(done) {
@@ -114,18 +115,34 @@ describe('Storage', function () {
                 gSourceFolder = path.join(__dirname, 'storage');
                 gDestinationFolder = path.join(gTmpFolder, 'destination/');
 
-                settings.setBackupConfig(gBackupConfig, function (error) {
-                    expect(error).to.be(null);
-
-                    done();
-                });
+                done();
             });
         });
 
         after(function (done) {
             cleanup(function (error) {
                 expect(error).to.be(null);
-                rimraf(gTmpFolder, done);
+                done()
+                // rimraf(gTmpFolder, done);
+            });
+        });
+
+        it('fails to set backup config for non-existing folder', function (done) {
+            settings.setBackupConfig(gBackupConfig, function (error) {
+                expect(error).to.be.a(SettingsError);
+                expect(error.reason).to.equal(SettingsError.BAD_FIELD);
+
+                done();
+            });
+        });
+
+        it('succeeds to set backup config', function (done) {
+            mkdirp.sync(gBackupConfig.backupFolder);
+
+            settings.setBackupConfig(gBackupConfig, function (error) {
+                expect(error).to.be(null);
+
+                done();
             });
         });
 
@@ -146,20 +163,17 @@ describe('Storage', function () {
         });
 
         it('can restore', function (done) {
-            var restoreMapping = [{
-                source: '/datadir',
-                destination: path.join(gDestinationFolder, 'data')
-            }, {
-                source: '/addondir',
-                destination: path.join(gDestinationFolder, 'addon')
-            }];
-
-            filesystem.restore(gBackupConfig, gBackupId_1, restoreMapping, function (error) {
+            filesystem.restore(gBackupConfig, gBackupId_1, gDestinationFolder, function (error) {
                 expect(error).to.be(null);
 
-                compareDirectories(gSourceFolder, gDestinationFolder, function (error) {
+                compareDirectories(path.join(gSourceFolder, 'data'), path.join(gDestinationFolder, 'datadir'), function (error) {
                     expect(error).to.equal(null);
-                    rimraf(gDestinationFolder, done);
+
+                    compareDirectories(path.join(gSourceFolder, 'addon'), path.join(gDestinationFolder, 'addondir'), function (error) {
+                        expect(error).to.equal(null);
+
+                        rimraf(gDestinationFolder, done);
+                    });
                 });
             });
         });
@@ -175,12 +189,7 @@ describe('Storage', function () {
         });
 
         it('cannot restore deleted backup', function (done) {
-            var restoreMapping = [{
-                source: '/datadir',
-                destination: path.join(gDestinationFolder, 'data')
-            }];
-
-            filesystem.restore(gBackupConfig, gBackupId_1, restoreMapping, function (error) {
+            filesystem.restore(gBackupConfig, gBackupId_1, gDestinationFolder, function (error) {
                 expect(error).to.be.an('object');
                 expect(error.reason).to.equal(BackupsError.NOT_FOUND);
 
@@ -189,18 +198,18 @@ describe('Storage', function () {
         });
 
         it('can restore backup copy', function (done) {
-            var restoreMapping = [{
-                source: '/datadir',
-                destination: path.join(gDestinationFolder, 'data')
-            }, {
-                source: '/addondir',
-                destination: path.join(gDestinationFolder, 'addon')
-            }];
-
-            filesystem.restore(gBackupConfig, gBackupId_2, restoreMapping, function (error) {
+            filesystem.restore(gBackupConfig, gBackupId_2, gDestinationFolder, function (error) {
                 expect(error).to.be(null);
 
-                rimraf(gDestinationFolder, done);
+                compareDirectories(path.join(gSourceFolder, 'data'), path.join(gDestinationFolder, 'datadir'), function (error) {
+                    expect(error).to.equal(null);
+
+                    compareDirectories(path.join(gSourceFolder, 'addon'), path.join(gDestinationFolder, 'addondir'), function (error) {
+                        expect(error).to.equal(null);
+
+                        rimraf(gDestinationFolder, done);
+                    });
+                });
             });
         });
 
@@ -290,20 +299,17 @@ describe('Storage', function () {
         });
 
         it('can restore', function (done) {
-            var restoreMapping = [{
-                source: '/datadir',
-                destination: path.join(gDestinationFolder, 'data')
-            }, {
-                source: '/addondir',
-                destination: path.join(gDestinationFolder, 'addon')
-            }];
-
-            s3.restore(gBackupConfig, gBackupId_1, restoreMapping, function (error) {
+            s3.restore(gBackupConfig, gBackupId_1, gDestinationFolder, function (error) {
                 expect(error).to.be(null);
 
-                compareDirectories(gSourceFolder, gDestinationFolder, function (error) {
+                compareDirectories(path.join(gSourceFolder, 'data'), path.join(gDestinationFolder, 'datadir'), function (error) {
                     expect(error).to.equal(null);
-                    rimraf(gDestinationFolder, done);
+
+                    compareDirectories(path.join(gSourceFolder, 'addon'), path.join(gDestinationFolder, 'addondir'), function (error) {
+                        expect(error).to.equal(null);
+
+                        rimraf(gDestinationFolder, done);
+                    });
                 });
             });
         });
@@ -319,12 +325,7 @@ describe('Storage', function () {
         });
 
         it('cannot restore deleted backup', function (done) {
-            var restoreMapping = [{
-                source: '/datadir',
-                destination: path.join(gDestinationFolder, 'data')
-            }];
-
-            s3.restore(gBackupConfig, gBackupId_1, restoreMapping, function (error) {
+            s3.restore(gBackupConfig, gBackupId_1, gDestinationFolder, function (error) {
                 expect(error).to.be.an('object');
                 expect(error.reason).to.equal(BackupsError.NOT_FOUND);
 
@@ -333,18 +334,18 @@ describe('Storage', function () {
         });
 
         it('can restore backup copy', function (done) {
-            var restoreMapping = [{
-                source: '/datadir',
-                destination: path.join(gDestinationFolder, 'data')
-            }, {
-                source: '/addondir',
-                destination: path.join(gDestinationFolder, 'addon')
-            }];
-
-            s3.restore(gBackupConfig, gBackupId_2, restoreMapping, function (error) {
+            s3.restore(gBackupConfig, gBackupId_2, gDestinationFolder, function (error) {
                 expect(error).to.be(null);
 
-                rimraf(gDestinationFolder, done);
+                compareDirectories(path.join(gSourceFolder, 'data'), path.join(gDestinationFolder, 'datadir'), function (error) {
+                    expect(error).to.equal(null);
+
+                    compareDirectories(path.join(gSourceFolder, 'addon'), path.join(gDestinationFolder, 'addondir'), function (error) {
+                        expect(error).to.equal(null);
+
+                        rimraf(gDestinationFolder, done);
+                    });
+                });
             });
         });
 

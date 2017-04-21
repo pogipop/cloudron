@@ -185,7 +185,7 @@ function restore(apiConfig, backupId, destination, callback) {
 
             extract.on('finish', function () {
                 debug('[%s] restore: done.', backupId);
-                callback();
+                callback(null);
             });
 
             s3get.pipe(decrypt).pipe(gunzip).pipe(extract);
