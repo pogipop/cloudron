@@ -49,7 +49,7 @@ function getBackupCredentials(apiConfig, callback) {
     assert(apiConfig.accessKeyId && apiConfig.secretAccessKey);
 
     var credentials = {
-        signatureVersion: 'v4',
+        signatureVersion: apiConfig.signatureVersion || 'v4',
         s3ForcePathStyle: true,
         accessKeyId: apiConfig.accessKeyId,
         secretAccessKey: apiConfig.secretAccessKey,
@@ -299,6 +299,7 @@ function testConfig(apiConfig, callback) {
     if (typeof apiConfig.secretAccessKey !== 'string') return callback(new BackupsError(BackupsError.BAD_FIELD, 'secretAccessKey must be a string'));
     if (typeof apiConfig.bucket !== 'string') return callback(new BackupsError(BackupsError.BAD_FIELD, 'bucket must be a string'));
     if (typeof apiConfig.prefix !== 'string') return callback(new BackupsError(BackupsError.BAD_FIELD, 'prefix must be a string'));
+    if ('signatureVersion' in apiConfig && typeof apiConfig.prefix !== 'string') return callback(new BackupsError(BackupsError.BAD_FIELD, 'signatureVersion must be a string'));
 
     // attempt to upload and delete a file with new credentials
     getBackupCredentials(apiConfig, function (error, credentials) {
