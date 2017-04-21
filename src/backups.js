@@ -82,6 +82,7 @@ util.inherits(BackupsError, Error);
 BackupsError.EXTERNAL_ERROR = 'external error';
 BackupsError.INTERNAL_ERROR = 'internal error';
 BackupsError.BAD_STATE = 'bad state';
+BackupsError.BAD_FIELD = 'bad field';
 BackupsError.NOT_FOUND = 'not found';
 BackupsError.MISSING_CREDENTIALS = 'missing credentials';
 

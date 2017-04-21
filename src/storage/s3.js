@@ -25,7 +25,6 @@ var assert = require('assert'),
     mkdirp = require('mkdirp'),
     once = require('once'),
     path = require('path'),
-    SettingsError = require('../settings.js').SettingsError,
     tar = require('tar-fs'),
     zlib = require('zlib');
 
@@ -296,10 +295,10 @@ function testConfig(apiConfig, callback) {
     assert.strictEqual(typeof apiConfig, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    if (typeof apiConfig.accessKeyId !== 'string') return callback(new SettingsError(SettingsError.BAD_FIELD, 'accessKeyId must be a string'));
-    if (typeof apiConfig.secretAccessKey !== 'string') return callback(new SettingsError(SettingsError.BAD_FIELD, 'secretAccessKey must be a string'));
-    if (typeof apiConfig.bucket !== 'string') return callback(new SettingsError(SettingsError.BAD_FIELD, 'bucket must be a string'));
-    if (typeof apiConfig.prefix !== 'string') return callback(new SettingsError(SettingsError.BAD_FIELD, 'prefix must be a string'));
+    if (typeof apiConfig.accessKeyId !== 'string') return callback(new BackupsError(BackupsError.BAD_FIELD, 'accessKeyId must be a string'));
+    if (typeof apiConfig.secretAccessKey !== 'string') return callback(new BackupsError(BackupsError.BAD_FIELD, 'secretAccessKey must be a string'));
+    if (typeof apiConfig.bucket !== 'string') return callback(new BackupsError(BackupsError.BAD_FIELD, 'bucket must be a string'));
+    if (typeof apiConfig.prefix !== 'string') return callback(new BackupsError(BackupsError.BAD_FIELD, 'prefix must be a string'));
 
     // attempt to upload and delete a file with new credentials
     getBackupCredentials(apiConfig, function (error, credentials) {
@@ -313,7 +312,7 @@ function testConfig(apiConfig, callback) {
 
         var s3 = new AWS.S3(credentials);
         s3.putObject(params, function (error) {
-            if (error) return callback(new SettingsError(SettingsError.EXTERNAL_ERROR, error.message));
+            if (error) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
 
             var params = {
                 Bucket: apiConfig.bucket,
@@ -321,7 +320,7 @@ function testConfig(apiConfig, callback) {
             };
 
             s3.deleteObject(params, function (error) {
-                if (error) return callback(new SettingsError(SettingsError.EXTERNAL_ERROR, error.message));
+                if (error) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
 
                 callback();
             });

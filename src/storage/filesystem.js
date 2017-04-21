@@ -23,7 +23,6 @@ var assert = require('assert'),
     once = require('once'),
     path = require('path'),
     safe = require('safetydance'),
-    SettingsError = require('../settings.js').SettingsError,
     tar = require('tar-fs'),
     zlib = require('zlib');
 
@@ -225,7 +224,7 @@ function testConfig(apiConfig, callback) {
     assert.strictEqual(typeof apiConfig, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    if (typeof apiConfig.backupFolder !== 'string') return callback(new SettingsError(SettingsError.BAD_FIELD, 'backupFolder must be string'));
+    if (typeof apiConfig.backupFolder !== 'string') return callback(new BackupsError(BackupsError.BAD_FIELD, 'backupFolder must be string'));
 
     callback();
 }

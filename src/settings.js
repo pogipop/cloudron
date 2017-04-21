@@ -65,6 +65,7 @@ exports = module.exports = {
 var assert = require('assert'),
     async = require('async'),
     backups = require('./backups.js'),
+    BackupsError = backups.BackupsError,
     config = require('./config.js'),
     constants = require('./constants.js'),
     CronJob = require('cron').CronJob,
@@ -588,7 +589,9 @@ function setBackupConfig(backupConfig, callback) {
     assert.strictEqual(typeof callback, 'function');
 
     backups.testConfig(backupConfig, function (error) {
-        if (error) return callback(error);
+        if (error && error.reason === BackupsError.BAD_FIELD) return callback(new SettingsError(SettingsError.BAD_FIELD, error.message));
+        if (error && error.reason === BackupsError.EXTERNAL_ERROR) return callback(new SettingsError(SettingsError.EXTERNAL_ERROR, error.message));
+        if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
 
         settingsdb.set(exports.BACKUP_CONFIG_KEY, JSON.stringify(backupConfig), function (error) {
             if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));

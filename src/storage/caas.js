@@ -24,7 +24,6 @@ var archiver = require('archiver'),
     mkdirp = require('mkdirp'),
     once = require('once'),
     path = require('path'),
-    SettingsError = require('../settings.js').SettingsError,
     superagent = require('superagent'),
     tar = require('tar-fs'),
     zlib = require('zlib');
@@ -308,7 +307,7 @@ function testConfig(apiConfig, callback) {
     assert.strictEqual(typeof apiConfig, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    if (config.provider() !== 'caas') return callback(new SettingsError(SettingsError.BAD_FIELD, 'instance provider must be caas'));
+    if (config.provider() !== 'caas') return callback(new BackupsError(BackupsError.BAD_FIELD, 'instance provider must be caas'));
 
     callback();
 }
