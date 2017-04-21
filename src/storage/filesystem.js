@@ -24,6 +24,7 @@ var assert = require('assert'),
     once = require('once'),
     path = require('path'),
     safe = require('safetydance'),
+    spawn = require('child_process').spawn,
     tar = require('tar-fs'),
     zlib = require('zlib');
 
@@ -109,7 +110,8 @@ function restore(apiConfig, backupId, destination, callback) {
     assert.strictEqual(typeof destination, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    var sourceFilePath = getBackupFilePath(apiConfig, backupId);
+    var isOldFormat = backupId.endsWith('.tar.gz');
+    var sourceFilePath = isOldFormat ? path.join(apiConfig.backupFolder || FALLBACK_BACKUP_FOLDER, backupId) : getBackupFilePath(apiConfig, backupId);
 
     debug('[%s] restore: %s -> %s', backupId, sourceFilePath, destination);
 
@@ -119,7 +121,15 @@ function restore(apiConfig, backupId, destination, callback) {
         if (error) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
 
         var fileStream = fs.createReadStream(sourceFilePath);
-        var decipher = crypto.createDecipher('aes-256-cbc', apiConfig.key || '');
+        var decrypt;
+
+        if (isOldFormat) {
+            let args = ['aes-256-cbc', '-d', '-pass', 'pass:' + apiConfig.key];
+            decrypt = spawn('openssl', args, { stdio: [ 'pipe', 'pipe', process.stderr ]});
+        } else {
+            decrypt = crypto.createDecipher('aes-256-cbc', apiConfig.key || '');
+        }
+
         var gunzip = zlib.createGunzip({});
         var extract = tar.extract(destination);
 
@@ -128,8 +138,8 @@ function restore(apiConfig, backupId, destination, callback) {
             callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
         });
 
-        decipher.on('error', function (error) {
-            console.error('[%s] restore: decipher stream error.', error);
+        decrypt.on('error', function (error) {
+            console.error('[%s] restore: decrypt stream error.', error);
             callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
         });
 
@@ -148,7 +158,12 @@ function restore(apiConfig, backupId, destination, callback) {
             callback(null);
         });
 
-        fileStream.pipe(decipher).pipe(gunzip).pipe(extract);
+        if (isOldFormat) {
+            fileStream.pipe(decrypt.stdin);
+            decrypt.stdout.pipe(gunzip).pipe(extract);
+        } else {
+            fileStream.pipe(decrypt).pipe(gunzip).pipe(extract);
+        }
     });
 }
 
