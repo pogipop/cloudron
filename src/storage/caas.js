@@ -23,6 +23,7 @@ var assert = require('assert'),
     once = require('once'),
     path = require('path'),
     progress = require('progress-stream'),
+    spawn = require('child_process').spawn,
     superagent = require('superagent'),
     tar = require('tar-fs'),
     zlib = require('zlib');
@@ -137,7 +138,8 @@ function restore(apiConfig, backupId, destination, callback) {
     assert.strictEqual(typeof destination, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    var backupFilePath = getBackupFilePath(apiConfig, backupId);
+    var isOldFormat = backupId.endsWith('.tar.gz');
+    var backupFilePath = isOldFormat ? path.join(apiConfig.prefix, backupId) : getBackupFilePath(apiConfig, backupId);
 
     debug('[%s] restore: %s -> %s', backupId, backupFilePath, destination);
 
@@ -153,9 +155,17 @@ function restore(apiConfig, backupId, destination, callback) {
             };
 
             var s3 = new AWS.S3(credentials);
-
             var s3get = s3.getObject(params).createReadStream();
-            var decrypt = crypto.createDecipher('aes-256-cbc', apiConfig.key || '');
+
+            var decrypt;
+
+            if (isOldFormat) {
+                let args = ['aes-256-cbc', '-d', '-pass', 'pass:' + apiConfig.key];
+                decrypt = spawn('openssl', args, { stdio: [ 'pipe', 'pipe', process.stderr ]});
+            } else {
+                decrypt = crypto.createDecipher('aes-256-cbc', apiConfig.key || '');
+            }
+
             var gunzip = zlib.createGunzip({});
             var progressStream = progress({ time: 10000 }); // display a progress every 10 seconds
             var extract = tar.extract(destination);
@@ -192,7 +202,12 @@ function restore(apiConfig, backupId, destination, callback) {
                 callback();
             });
 
-            s3get.pipe(progressStream).pipe(decrypt).pipe(gunzip).pipe(extract);
+            if (isOldFormat) {
+                s3get.pipe(progressStream).pipe(decrypt.stdin);
+                decrypt.stdout.pipe(gunzip).pipe(extract);
+            } else {
+                s3get.pipe(progressStream).pipe(decrypt).pipe(gunzip).pipe(extract);
+            }
         });
     });
 }
