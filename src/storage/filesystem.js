@@ -115,7 +115,7 @@ function restore(apiConfig, backupId, destination, callback) {
     if (!fs.existsSync(sourceFilePath)) return callback(new BackupsError(BackupsError.NOT_FOUND, 'backup file does not exist'));
 
     mkdirp(destination, function (error) {
-        if (error) return callback(error);
+        if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
 
         var fileStream = fs.createReadStream(sourceFilePath);
         var decipher = crypto.createDecipher('aes-256-cbc', apiConfig.key || '');
