@@ -293,27 +293,29 @@ function testConfig(apiConfig, callback) {
     callback();
 }
 
-function backupDone(filename, app, appBackupIds, callback) {
-    assert.strictEqual(typeof filename, 'string');
-    assert(!app || typeof app === 'object');
-    assert(!appBackupIds || Array.isArray(appBackupIds));
+function backupDone(backupId, appBackupIds, callback) {
+    assert.strictEqual(typeof backupId, 'string');
+    assert(Array.isArray(appBackupIds));
     assert.strictEqual(typeof callback, 'function');
 
-    debug('backupDone %s', filename);
+    // Caas expects filenames instead of backupIds, this means no prefix but a file type extension
+    var boxBackupFilename = backupId + FILE_TYPE;
+    var appBackupFilenames = appBackupIds.map(function (id) { return id + FILE_TYPE; });
+
+    debug('[%s] backupDone: %s apps %j', backupId, boxBackupFilename, appBackupFilenames);
 
     var url = config.apiServerOrigin() + '/api/v1/boxes/' + config.fqdn() + '/backupDone';
     var data = {
         boxVersion: config.version(),
-        restoreKey: filename,
-        appId: app ? app.id : null,
-        appVersion: app ? app.manifest.version : null,
-        appBackupIds: appBackupIds
+        restoreKey: boxBackupFilename,
+        appId: null,        // now unused
+        appVersion: null,   // now unused
+        appBackupIds: appBackupFilenames
     };
 
     superagent.post(url).send(data).query({ token: config.token() }).timeout(30 * 1000).end(function (error, result) {
-        if (error && !error.response) return callback(error);
-        if (result.statusCode !== 200) return callback(new Error(result.text));
-        if (!result.body) return callback(new Error('Unexpected response'));
+        if (error && !error.response) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error));
+        if (result.statusCode !== 200) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, result.text));
 
         return callback(null);
     });

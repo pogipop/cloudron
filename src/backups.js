@@ -167,7 +167,7 @@ function copyLastBackup(app, manifest, prefix, callback) {
 }
 
 function backupBoxWithAppBackupIds(appBackupIds, prefix, callback) {
-    assert(util.isArray(appBackupIds));
+    assert(Array.isArray(appBackupIds));
     assert.strictEqual(typeof prefix, 'string');
 
     var timestamp = (new Date()).toISOString().replace(/[T.]/g, '-').replace(/[:Z]/g,'');
@@ -188,8 +188,8 @@ function backupBoxWithAppBackupIds(appBackupIds, prefix, callback) {
                 backupdb.add({ id: backupId, version: config.version(), type: backupdb.BACKUP_TYPE_BOX, dependsOn: appBackupIds, restoreConfig: null }, function (error) {
                     if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
 
-                    // FIXME this is only needed for caas, is it really???
-                    api(backupConfig.provider).backupDone(backupId, null /* app */, appBackupIds, function (error) {
+                    // FIXME this is only needed for caas, hopefully we can remove that in the future
+                    api(backupConfig.provider).backupDone(backupId, appBackupIds, function (error) {
                         if (error) return callback(error);
                         callback(null, backupId);
                     });

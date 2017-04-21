@@ -84,10 +84,9 @@ function testConfig(apiConfig, callback) {
     callback(new Error('not implemented'));
 }
 
-function backupDone(filename, app, appBackupIds, callback) {
-    assert.strictEqual(typeof filename, 'string');
-    assert(!app || typeof app === 'object');
-    assert(!appBackupIds || Array.isArray(appBackupIds));
+function backupDone(backupId, appBackupIds, callback) {
+    assert.strictEqual(typeof backupId, 'string');
+    assert(Array.isArray(appBackupIds));
     assert.strictEqual(typeof callback, 'function');
 
     callback(new Error('not implemented'));
