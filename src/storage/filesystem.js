@@ -16,18 +16,14 @@ exports = module.exports = {
 var assert = require('assert'),
     async = require('async'),
     BackupsError = require('../backups.js').BackupsError,
-    crypto = require('crypto'),
     config = require('../config.js'),
     debug = require('debug')('box:storage/filesystem'),
     fs = require('fs'),
     mkdirp = require('mkdirp'),
     once = require('once'),
     path = require('path'),
-    progress = require('progress-stream'),
     safe = require('safetydance'),
-    spawn = require('child_process').spawn,
-    tar = require('tar-fs'),
-    zlib = require('zlib');
+    targz = require('./targz.js');
 
 var FALLBACK_BACKUP_FOLDER = '/var/backups';
 var FILE_TYPE = '.tar.gz.enc';
@@ -57,39 +53,7 @@ function backup(apiConfig, backupId, sourceDirectories, callback) {
     mkdirp(path.dirname(backupFilePath), function (error) {
         if (error) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
 
-        var pack = tar.pack('/', {
-            entries: sourceDirectories.map(function (m) { return m.source; }),
-            map: function(header) {
-                sourceDirectories.forEach(function (m) {
-                    header.name = header.name.replace(new RegExp('^' + m.source + '(/?)'), m.destination + '$1');
-                });
-                return header;
-            }
-        });
-
-        var gzip = zlib.createGzip({});
-        var encrypt = crypto.createCipher('aes-256-cbc', apiConfig.key || '');
-        var progressStream = progress({ time: 10000 }); // display a progress every 10 seconds
         var fileStream = fs.createWriteStream(backupFilePath);
-
-        pack.on('error', function (error) {
-            console.error('[%s] backup: tar stream error.', backupId, error);
-            callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
-        });
-
-        gzip.on('error', function (error) {
-            console.error('[%s] backup: gzip stream error.', backupId, error);
-            callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
-        });
-
-        encrypt.on('error', function (error) {
-            console.error('[%s] backup: encrypt stream error.', backupId, error);
-            callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
-        });
-
-        progressStream.on('progress', function(progress) {
-            debug('[%s] backup: %s @ %s', backupId, Math.round(progress.transferred/1024/1024) + 'M', Math.round(progress.speed/1024/1024) + 'Mbps');
-        });
 
         fileStream.on('error', function (error) {
             console.error('[%s] backup: out stream error.', backupId, error);
@@ -106,7 +70,7 @@ function backup(apiConfig, backupId, sourceDirectories, callback) {
             callback(null);
         });
 
-        pack.pipe(gzip).pipe(encrypt).pipe(progressStream).pipe(fileStream);
+        targz.create(sourceDirectories, apiConfig.key || '', fileStream, callback);
     });
 }
 
@@ -116,6 +80,8 @@ function restore(apiConfig, backupId, destination, callback) {
     assert.strictEqual(typeof destination, 'string');
     assert.strictEqual(typeof callback, 'function');
 
+    callback = once(callback);
+
     var isOldFormat = backupId.endsWith('.tar.gz');
     var sourceFilePath = isOldFormat ? path.join(apiConfig.backupFolder || FALLBACK_BACKUP_FOLDER, backupId) : getBackupFilePath(apiConfig, backupId);
 
@@ -123,59 +89,14 @@ function restore(apiConfig, backupId, destination, callback) {
 
     if (!fs.existsSync(sourceFilePath)) return callback(new BackupsError(BackupsError.NOT_FOUND, 'backup file does not exist'));
 
-    mkdirp(destination, function (error) {
-        if (error) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
+    var fileStream = fs.createReadStream(sourceFilePath);
 
-        var fileStream = fs.createReadStream(sourceFilePath);
-        var decrypt;
-
-        if (isOldFormat) {
-            let args = ['aes-256-cbc', '-d', '-pass', 'pass:' + apiConfig.key];
-            decrypt = spawn('openssl', args, { stdio: [ 'pipe', 'pipe', process.stderr ]});
-        } else {
-            decrypt = crypto.createDecipher('aes-256-cbc', apiConfig.key || '');
-        }
-
-        var gunzip = zlib.createGunzip({});
-        var progressStream = progress({ time: 10000 }); // display a progress every 10 seconds
-        var extract = tar.extract(destination);
-
-        fileStream.on('error', function (error) {
-            console.error('[%s] restore: file stream error.', error);
-            callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
-        });
-
-        progressStream.on('progress', function(progress) {
-            debug('[%s] restore: %s @ %s', backupId, Math.round(progress.transferred/1024/1024) + 'M', Math.round(progress.speed/1024/1024) + 'Mbps');
-        });
-
-        decrypt.on('error', function (error) {
-            console.error('[%s] restore: decrypt stream error.', error);
-            callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
-        });
-
-        gunzip.on('error', function (error) {
-            console.error('[%s] restore: gunzip stream error.', error);
-            callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
-        });
-
-        extract.on('error', function (error) {
-            console.error('[%s] restore: extract stream error.', error);
-            callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
-        });
-
-        extract.on('finish', function () {
-            debug('[%s] restore: %s done.', backupId);
-            callback(null);
-        });
-
-        if (isOldFormat) {
-            fileStream.pipe(progressStream).pipe(decrypt.stdin);
-            decrypt.stdout.pipe(gunzip).pipe(extract);
-        } else {
-            fileStream.pipe(progressStream).pipe(decrypt).pipe(gunzip).pipe(extract);
-        }
+    fileStream.on('error', function (error) {
+        console.error('restore: file stream error.', error);
+        callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
     });
+
+    targz.extract(fileStream, isOldFormat, destination, apiConfig.key || '', callback);
 }
 
 function copyBackup(apiConfig, oldBackupId, newBackupId, callback) {

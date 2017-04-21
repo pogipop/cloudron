@@ -19,14 +19,11 @@ var assert = require('assert'),
     config = require('../config.js'),
     crypto = require('crypto'),
     debug = require('debug')('box:storage/caas'),
-    mkdirp = require('mkdirp'),
     once = require('once'),
+    PassThrough = require('stream').PassThrough,
     path = require('path'),
-    progress = require('progress-stream'),
-    spawn = require('child_process').spawn,
     superagent = require('superagent'),
-    tar = require('tar-fs'),
-    zlib = require('zlib');
+    targz = require('./targz.js');
 
 var FILE_TYPE = '.tar.gz.enc';
 
@@ -79,45 +76,12 @@ function backup(apiConfig, backupId, sourceDirectories, callback) {
     getBackupCredentials(apiConfig, function (error, credentials) {
         if (error) return callback(error);
 
-        var pack = tar.pack('/', {
-            entries: sourceDirectories.map(function (m) { return m.source; }),
-            map: function(header) {
-                sourceDirectories.forEach(function (m) {
-                    header.name = header.name.replace(new RegExp('^' + m.source + '(/?)'), m.destination + '$1');
-                });
-                return header;
-            }
-        });
-
-        var gzip = zlib.createGzip({});
-        var encrypt = crypto.createCipher('aes-256-cbc', apiConfig.key || '');
-        var progressStream = progress({ time: 10000 }); // display a progress every 10 seconds
-
-        pack.on('error', function (error) {
-            console.error('[%s] backup: tar stream error.', backupId, error);
-            callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
-        });
-
-        gzip.on('error', function (error) {
-            console.error('[%s] backup: gzip stream error.', backupId, error);
-            callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
-        });
-
-        encrypt.on('error', function (error) {
-            console.error('[%s] backup: encrypt stream error.', backupId, error);
-            callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
-        });
-
-        progressStream.on('progress', function(progress) {
-            debug('[%s] backup: %s @ %s', backupId, Math.round(progress.transferred/1024/1024) + 'M', Math.round(progress.speed/1024/1024) + 'Mbps');
-        });
-
-        pack.pipe(gzip).pipe(encrypt).pipe(progressStream);
+        var passThrough = new PassThrough();
 
         var params = {
             Bucket: apiConfig.bucket,
             Key: backupFilePath,
-            Body: progressStream
+            Body: passThrough
         };
 
         var s3 = new AWS.S3(credentials);
@@ -129,6 +93,8 @@ function backup(apiConfig, backupId, sourceDirectories, callback) {
 
             callback(null);
         });
+
+        targz.create(sourceDirectories, apiConfig.key, passThrough, callback);
     });
 }
 
@@ -138,6 +104,8 @@ function restore(apiConfig, backupId, destination, callback) {
     assert.strictEqual(typeof destination, 'string');
     assert.strictEqual(typeof callback, 'function');
 
+    callback = once(callback);
+
     var isOldFormat = backupId.endsWith('.tar.gz');
     var backupFilePath = isOldFormat ? path.join(apiConfig.prefix, backupId) : getBackupFilePath(apiConfig, backupId);
 
@@ -146,69 +114,23 @@ function restore(apiConfig, backupId, destination, callback) {
     getBackupCredentials(apiConfig, function (error, credentials) {
         if (error) return callback(error);
 
-        mkdirp(destination, function (error) {
-            if (error) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
+        var params = {
+            Bucket: apiConfig.bucket,
+            Key: backupFilePath
+        };
 
-            var params = {
-                Bucket: apiConfig.bucket,
-                Key: backupFilePath
-            };
+        var s3 = new AWS.S3(credentials);
+        var s3get = s3.getObject(params).createReadStream();
 
-            var s3 = new AWS.S3(credentials);
-            var s3get = s3.getObject(params).createReadStream();
+        s3get.on('error', function (error) {
+            // TODO ENOENT for the mock, fix upstream!
+            if (error.code === 'NoSuchKey' || error.code === 'ENOENT') return callback(new BackupsError(BackupsError.NOT_FOUND));
 
-            var decrypt;
-
-            if (isOldFormat) {
-                let args = ['aes-256-cbc', '-d', '-pass', 'pass:' + apiConfig.key];
-                decrypt = spawn('openssl', args, { stdio: [ 'pipe', 'pipe', process.stderr ]});
-            } else {
-                decrypt = crypto.createDecipher('aes-256-cbc', apiConfig.key || '');
-            }
-
-            var gunzip = zlib.createGunzip({});
-            var progressStream = progress({ time: 10000 }); // display a progress every 10 seconds
-            var extract = tar.extract(destination);
-
-            s3get.on('error', function (error) {
-                // TODO ENOENT for the mock, fix upstream!
-                if (error.code === 'NoSuchKey' || error.code === 'ENOENT') return callback(new BackupsError(BackupsError.NOT_FOUND));
-
-                console.error('[%s] restore: s3 stream error.', backupId, error);
-                callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
-            });
-
-            progressStream.on('progress', function(progress) {
-                debug('[%s] restore: %s @ %s', backupId, Math.round(progress.transferred/1024/1024) + 'M', Math.round(progress.speed/1024/1024) + 'Mbps');
-            });
-
-            decrypt.on('error', function (error) {
-                console.error('[%s] restore: decipher stream error.', error);
-                callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
-            });
-
-            gunzip.on('error', function (error) {
-                console.error('[%s] restore: gunzip stream error.', error);
-                callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
-            });
-
-            extract.on('error', function (error) {
-                console.error('[%s] restore: extract stream error.', error);
-                callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
-            });
-
-            extract.on('finish', function () {
-                debug('[%s] restore: done.', backupId);
-                callback();
-            });
-
-            if (isOldFormat) {
-                s3get.pipe(progressStream).pipe(decrypt.stdin);
-                decrypt.stdout.pipe(gunzip).pipe(extract);
-            } else {
-                s3get.pipe(progressStream).pipe(decrypt).pipe(gunzip).pipe(extract);
-            }
+            console.error('[%s] restore: s3 stream error.', backupId, error);
+            callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
         });
+
+        targz.extract(s3get, isOldFormat, destination, apiConfig.key || '', callback);
     });
 }
 
