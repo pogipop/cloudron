@@ -835,4 +835,6 @@
 [0.120.0]
 * Update Docker to 17.03.1-ce
 * Rework backup backend logic
+* Add UI to download logs
+* Fix crash when checking mail dns settings
 
