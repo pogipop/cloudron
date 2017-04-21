@@ -211,8 +211,8 @@ if [[ -n "${arg_restore_url}" ]]; then
     echo "==> Downloading backup: ${arg_restore_url} and key: ${arg_restore_key}"
 
     while true; do
-        if $curl -L "${arg_restore_url}" | openssl aes-256-cbc -d -pass "pass:${arg_restore_key}" \
-            | tar -zxf - --overwrite --transform="s,^box/\?,boxdata/," --transform="s,^mail/\?,platformdata/mail/," --show-transformed-names -C "${HOME_DIR}"; then break; fi
+        if $curl -L "${arg_restore_url}" | openssl aes-256-cbc -d -nosalt -pass "pass:${arg_restore_key}" \
+        | tar -zxf - --overwrite --transform="s,^box/\?,boxdata/," --transform="s,^mail/\?,platformdata/mail/," --show-transformed-names -C "${HOME_DIR}"; then break; fi
         echo "Failed to download data, trying again"
     done
 
