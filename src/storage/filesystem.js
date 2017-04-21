@@ -51,7 +51,7 @@ function backup(apiConfig, backupId, sourceDirectories, callback) {
     debug('[%s] backup: %j -> %s', backupId, sourceDirectories, backupFilePath);
 
     mkdirp(path.dirname(backupFilePath), function (error) {
-        if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
+        if (error) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
 
         var pack = tar.pack('/', {
             entries: sourceDirectories.map(function (m) { return m.source; }),
@@ -69,22 +69,22 @@ function backup(apiConfig, backupId, sourceDirectories, callback) {
 
         pack.on('error', function (error) {
             console.error('[%s] backup: tar stream error.', backupId, error);
-            callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
+            callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
         });
 
         gzip.on('error', function (error) {
             console.error('[%s] backup: gzip stream error.', backupId, error);
-            callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
+            callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
         });
 
         encrypt.on('error', function (error) {
             console.error('[%s] backup: encrypt stream error.', backupId, error);
-            callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
+            callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
         });
 
         fileStream.on('error', function (error) {
             console.error('[%s] backup: out stream error.', backupId, error);
-            callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
+            callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
         });
 
         fileStream.on('close', function () {
@@ -114,7 +114,7 @@ function restore(apiConfig, backupId, destination, callback) {
     if (!fs.existsSync(sourceFilePath)) return callback(new BackupsError(BackupsError.NOT_FOUND, 'backup file does not exist'));
 
     mkdirp(destination, function (error) {
-        if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
+        if (error) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
 
         var fileStream = fs.createReadStream(sourceFilePath);
         var decipher = crypto.createDecipher('aes-256-cbc', apiConfig.key || '');
@@ -123,22 +123,22 @@ function restore(apiConfig, backupId, destination, callback) {
 
         fileStream.on('error', function (error) {
             console.error('[%s] restore: file stream error.', error);
-            callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
+            callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
         });
 
         decipher.on('error', function (error) {
             console.error('[%s] restore: decipher stream error.', error);
-            callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
+            callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
         });
 
         gunzip.on('error', function (error) {
             console.error('[%s] restore: gunzip stream error.', error);
-            callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
+            callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
         });
 
         extract.on('error', function (error) {
             console.error('[%s] restore: extract stream error.', error);
-            callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
+            callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
         });
 
         extract.on('finish', function () {
@@ -164,19 +164,19 @@ function copyBackup(apiConfig, oldBackupId, newBackupId, callback) {
     debug('copyBackup: %s -> %s', oldFilePath, newFilePath);
 
     mkdirp(path.dirname(newFilePath), function (error) {
-        if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
+        if (error) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
 
         var readStream = fs.createReadStream(oldFilePath);
         var writeStream = fs.createWriteStream(newFilePath);
 
         readStream.on('error', function (error) {
             console.error('copyBackup: read stream error.', error);
-            callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
+            callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
         });
 
         writeStream.on('error', function (error) {
             console.error('copyBackup: write stream error.', error);
-            callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
+            callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
         });
 
         writeStream.on('close', function () {
