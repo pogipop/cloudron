@@ -80,6 +80,12 @@ if [[ $(docker version --format {{.Client.Version}}) != "17.03.1-ce" ]]; then
         echo "docker binary download is corrupt"
         exit 5
     fi
+
+    echo "Waiting for all dpkg tasks to finish..."
+    while fuser /var/lib/dpkg/lock; do
+        sleep 1
+    done
+
     apt-get remove -y --allow-change-held-packages docker-engine || true
     apt install /tmp/docker.deb
     rm /tmp/docker.deb
