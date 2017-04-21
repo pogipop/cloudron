@@ -99,17 +99,17 @@ function backup(apiConfig, backupId, sourceDirectories, callback) {
 
         pack.on('error', function (error) {
             console.error('[%s] backup: tar stream error.', backupId, error);
-            callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
+            callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
         });
 
         gzip.on('error', function (error) {
             console.error('[%s] backup: gzip stream error.', backupId, error);
-            callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
+            callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
         });
 
         encrypt.on('error', function (error) {
             console.error('[%s] backup: encrypt stream error.', backupId, error);
-            callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
+            callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
         });
 
         pack.pipe(gzip).pipe(encrypt);
@@ -124,7 +124,7 @@ function backup(apiConfig, backupId, sourceDirectories, callback) {
         s3.upload(params, function (error) {
             if (error) {
                 console.error('[%s] backup: s3 upload error.', backupId, error);
-                return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error));
+                return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
             }
 
             callback(null);
@@ -146,7 +146,7 @@ function restore(apiConfig, backupId, destination, callback) {
         if (error) return callback(error);
 
         mkdirp(destination, function (error) {
-            if (error) return callback(error);
+            if (error) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
 
             var params = {
                 Bucket: apiConfig.bucket,
@@ -165,22 +165,22 @@ function restore(apiConfig, backupId, destination, callback) {
                 if (error.code === 'NoSuchKey' || error.code === 'ENOENT') return callback(new BackupsError(BackupsError.NOT_FOUND));
 
                 console.error('[%s] restore: s3 stream error.', backupId, error);
-                callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error));
+                callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
             });
 
             decrypt.on('error', function (error) {
                 console.error('[%s] restore: decipher stream error.', error);
-                callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
+                callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
             });
 
             gunzip.on('error', function (error) {
                 console.error('[%s] restore: gunzip stream error.', error);
-                callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
+                callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
             });
 
             extract.on('error', function (error) {
                 console.error('[%s] restore: extract stream error.', error);
-                callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
+                callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
             });
 
             extract.on('finish', function () {
@@ -210,10 +210,10 @@ function copyBackup(apiConfig, oldBackupId, newBackupId, callback) {
 
         var s3 = new AWS.S3(credentials);
         s3.copyObject(params, function (error) {
-            if (error && error.code === 'NoSuchKey') return callback(new BackupsError(BackupsError.NOT_FOUND));
+            if (error && error.code === 'NoSuchKey') return callback(new BackupsError(BackupsError.NOT_FOUND, 'Old backup not found'));
             if (error) {
                 console.error('copyBackup: s3 copy error.', error);
-                return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error));
+                return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
             }
 
             callback(null);
@@ -267,7 +267,7 @@ function getDownloadStream(apiConfig, backupId, callback) {
         s3.headObject(params, function (error) {
             // TODO ENOENT for the mock, fix upstream!
             if (error && (error.code === 'NotFound' || error.code === 'ENOENT')) return callback(new BackupsError(BackupsError.NOT_FOUND));
-            if (error) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error));
+            if (error) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
 
             var s3get = s3.getObject(params).createReadStream();
             var decrypt = crypto.createDecipher('aes-256-cbc', apiConfig.key || '');
@@ -276,12 +276,12 @@ function getDownloadStream(apiConfig, backupId, callback) {
                 if (error.code === 'NoSuchKey') return callback(new BackupsError(BackupsError.NOT_FOUND));
 
                 console.error('[%s] getDownloadStream: s3 stream error.', backupId, error);
-                callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error));
+                callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
             });
 
             decrypt.on('error', function (error) {
                 console.error('[%s] getDownloadStream: decipher stream error.', error);
-                callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
+                callback(new BackupsError(BackupsError.INTERNAL_ERROR, error.message));
             });
 
             s3get.pipe(decrypt);
