@@ -224,9 +224,21 @@ function testConfig(apiConfig, callback) {
     assert.strictEqual(typeof apiConfig, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    if (typeof apiConfig.backupFolder !== 'string') return callback(new BackupsError(BackupsError.BAD_FIELD, 'backupFolder must be string'));
+    if ('backupFolder' in apiConfig && typeof apiConfig.backupFolder !== 'string') return callback(new BackupsError(BackupsError.BAD_FIELD, 'backupFolder must be string'));
 
-    callback();
+    // default value will be used
+    if (!apiConfig.backupFolder) return callback();
+
+    fs.stat(apiConfig.backupFolder, function (error, result) {
+        if (error) {
+            debug('testConfig: %s', apiConfig.backupFolder, error);
+            return callback(new BackupsError(BackupsError.BAD_FIELD, 'Directory does not exist or cannot be accessed'));
+        }
+
+        if (!result.isDirectory()) return callback(new BackupsError(BackupsError.BAD_FIELD, 'Backup location is not a directory'));
+
+        callback(null);
+    });
 }
 
 function backupDone(backupId, appBackupIds, callback) {
