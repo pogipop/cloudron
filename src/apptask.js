@@ -379,16 +379,18 @@ function install(app, callback) {
         updateApp.bind(null, app, { installationProgress: '50, Creating volume' }),
         createVolume.bind(null, app),
 
-        updateApp.bind(null, app, { installationProgress: '60, Setting up addons' }),
-        addons.setupAddons.bind(null, app, app.manifest.addons),
-
         function restoreFromBackup(next) {
-            if (!backupId) return next();
-
-            async.series([
-                updateApp.bind(null, app, { installationProgress: '65, Download backup and restore addons' }),
-                backups.restoreApp.bind(null, app, app.manifest.addons, backupId),
-            ], next);
+            if (!backupId) {
+                async.series([
+                    updateApp.bind(null, app, { installationProgress: '60, Setting up addons' }),
+                    addons.setupAddons.bind(null, app, app.manifest.addons),
+                ], next);
+            } else {
+                async.series([
+                    updateApp.bind(null, app, { installationProgress: '60, Download backup and restoring addons' }),
+                    backups.restoreApp.bind(null, app, app.manifest.addons, backupId),
+                ], next);
+            }
         },
 
         updateApp.bind(null, app, { installationProgress: '70, Creating container' }),
