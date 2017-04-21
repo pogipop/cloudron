@@ -23,6 +23,7 @@ var assert = require('assert'),
     mkdirp = require('mkdirp'),
     once = require('once'),
     path = require('path'),
+    progress = require('progress-stream'),
     safe = require('safetydance'),
     spawn = require('child_process').spawn,
     tar = require('tar-fs'),
@@ -68,6 +69,7 @@ function backup(apiConfig, backupId, sourceDirectories, callback) {
 
         var gzip = zlib.createGzip({});
         var encrypt = crypto.createCipher('aes-256-cbc', apiConfig.key || '');
+        var progressStream = progress({ time: 10000 }); // display a progress every 10 seconds
         var fileStream = fs.createWriteStream(backupFilePath);
 
         pack.on('error', function (error) {
@@ -85,6 +87,10 @@ function backup(apiConfig, backupId, sourceDirectories, callback) {
             callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
         });
 
+        progressStream.on('progress', function(progress) {
+            debug('[%s] backup: %s @ %s', backupId, Math.round(progress.transferred/1024/1024) + 'M', Math.round(progress.speed/1024/1024) + 'Mbps');
+        });
+
         fileStream.on('error', function (error) {
             console.error('[%s] backup: out stream error.', backupId, error);
             callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
@@ -100,7 +106,7 @@ function backup(apiConfig, backupId, sourceDirectories, callback) {
             callback(null);
         });
 
-        pack.pipe(gzip).pipe(encrypt).pipe(fileStream);
+        pack.pipe(gzip).pipe(encrypt).pipe(progressStream).pipe(fileStream);
     });
 }
 
@@ -131,11 +137,16 @@ function restore(apiConfig, backupId, destination, callback) {
         }
 
         var gunzip = zlib.createGunzip({});
+        var progressStream = progress({ time: 10000 }); // display a progress every 10 seconds
         var extract = tar.extract(destination);
 
         fileStream.on('error', function (error) {
             console.error('[%s] restore: file stream error.', error);
             callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
+        });
+
+        progressStream.on('progress', function(progress) {
+            debug('[%s] restore: %s @ %s', backupId, Math.round(progress.transferred/1024/1024) + 'M', Math.round(progress.speed/1024/1024) + 'Mbps');
         });
 
         decrypt.on('error', function (error) {
@@ -159,10 +170,10 @@ function restore(apiConfig, backupId, destination, callback) {
         });
 
         if (isOldFormat) {
-            fileStream.pipe(decrypt.stdin);
+            fileStream.pipe(progressStream).pipe(decrypt.stdin);
             decrypt.stdout.pipe(gunzip).pipe(extract);
         } else {
-            fileStream.pipe(decrypt).pipe(gunzip).pipe(extract);
+            fileStream.pipe(progressStream).pipe(decrypt).pipe(gunzip).pipe(extract);
         }
     });
 }

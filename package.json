@@ -14,7 +14,6 @@
   ],
   "dependencies": {
     "@sindresorhus/df": "^2.1.0",
-    "archiver": "git+https://github.com/cloudron-io/node-archiver.git#cloudron-release",
     "async": "^2.1.4",
     "aws-sdk": "^2.41.0",
     "body-parser": "^1.13.1",
@@ -56,6 +55,7 @@
     "passport-local": "^1.0.0",
     "passport-oauth2-client-password": "^0.1.2",
     "password-generator": "^2.0.2",
+    "progress-stream": "^2.0.0",
     "proxy-middleware": "^0.13.0",
     "safetydance": "^0.1.1",
     "semver": "^4.3.6",

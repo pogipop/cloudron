@@ -22,6 +22,7 @@ var assert = require('assert'),
     mkdirp = require('mkdirp'),
     once = require('once'),
     path = require('path'),
+    progress = require('progress-stream'),
     superagent = require('superagent'),
     tar = require('tar-fs'),
     zlib = require('zlib');
@@ -89,6 +90,7 @@ function backup(apiConfig, backupId, sourceDirectories, callback) {
 
         var gzip = zlib.createGzip({});
         var encrypt = crypto.createCipher('aes-256-cbc', apiConfig.key || '');
+        var progressStream = progress({ time: 10000 }); // display a progress every 10 seconds
 
         pack.on('error', function (error) {
             console.error('[%s] backup: tar stream error.', backupId, error);
@@ -105,12 +107,16 @@ function backup(apiConfig, backupId, sourceDirectories, callback) {
             callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
         });
 
-        pack.pipe(gzip).pipe(encrypt);
+        progressStream.on('progress', function(progress) {
+            debug('[%s] backup: %s @ %s', backupId, Math.round(progress.transferred/1024/1024) + 'M', Math.round(progress.speed/1024/1024) + 'Mbps');
+        });
+
+        pack.pipe(gzip).pipe(encrypt).pipe(progressStream);
 
         var params = {
             Bucket: apiConfig.bucket,
             Key: backupFilePath,
-            Body: encrypt
+            Body: progressStream
         };
 
         var s3 = new AWS.S3(credentials);
@@ -151,6 +157,7 @@ function restore(apiConfig, backupId, destination, callback) {
             var s3get = s3.getObject(params).createReadStream();
             var decrypt = crypto.createDecipher('aes-256-cbc', apiConfig.key || '');
             var gunzip = zlib.createGunzip({});
+            var progressStream = progress({ time: 10000 }); // display a progress every 10 seconds
             var extract = tar.extract(destination);
 
             s3get.on('error', function (error) {
@@ -159,6 +166,10 @@ function restore(apiConfig, backupId, destination, callback) {
 
                 console.error('[%s] restore: s3 stream error.', backupId, error);
                 callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
+            });
+
+            progressStream.on('progress', function(progress) {
+                debug('[%s] restore: %s @ %s', backupId, Math.round(progress.transferred/1024/1024) + 'M', Math.round(progress.speed/1024/1024) + 'Mbps');
             });
 
             decrypt.on('error', function (error) {
@@ -181,7 +192,7 @@ function restore(apiConfig, backupId, destination, callback) {
                 callback();
             });
 
-            s3get.pipe(decrypt).pipe(gunzip).pipe(extract);
+            s3get.pipe(progressStream).pipe(decrypt).pipe(gunzip).pipe(extract);
         });
     });
 }
