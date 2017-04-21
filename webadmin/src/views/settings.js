@@ -369,13 +369,18 @@ angular.module('Application').controller('SettingsController', ['$scope', '$loca
 
             var backupConfig = {
                 provider: $scope.configureBackup.provider,
-                bucket: $scope.configureBackup.bucket,
-                prefix: $scope.configureBackup.prefix,
-                accessKeyId: $scope.configureBackup.accessKeyId,
-                secretAccessKey: $scope.configureBackup.secretAccessKey,
-                key: $scope.configureBackup.key,
-                backupFolder: $scope.configureBackup.backupFolder
+                key: $scope.configureBackup.key
             };
+
+            // only set provider specific fields, this will clear them in the db
+            if (backupConfig.provider === 's3') {
+                backupConfig.bucket = $scope.configureBackup.bucket;
+                backupConfig.prefix = $scope.configureBackup.prefix;
+                backupConfig.accessKeyId = $scope.configureBackup.accessKeyId;
+                backupConfig.secretAccessKey = $scope.configureBackup.secretAccessKey;
+            } else if (backupConfig.provider === 'filesystem') {
+                backupConfig.backupFolder = $scope.configureBackup.backupFolder;
+            }
 
             if ($scope.configureBackup.region) backupConfig.region = $scope.configureBackup.region;
             if ($scope.configureBackup.endpoint) backupConfig.endpoint = $scope.configureBackup.endpoint;
@@ -417,7 +422,7 @@ angular.module('Application').controller('SettingsController', ['$scope', '$loca
                         }
                     } else if (error.statusCode === 400) {
                         $scope.configureBackup.error.generic = error.message;
-                        
+
                         if ($scope.configureBackup.provider === 'filesystem') {
                             $scope.configureBackup.error.backupFolder = true;
                         }
