@@ -145,13 +145,12 @@
                 <h4 class="modal-title">Configure Backup Storage</h4>
             </div>
             <div class="modal-body">
-                <p>Amazon S3 or API compatible services are supported. <sup><a ng-href="{{ config.webServerOrigin }}/references/selfhosting.html#backups" class="help" target="_blank"><i class="fa fa-question-circle"></i></a></sup></p>
                 <form name="configureBackupForm" role="form" novalidate ng-submit="configureBackup.submit()" autocomplete="off">
                     <fieldset>
                         <p class="has-error text-center" ng-show="configureBackup.error">{{ configureBackup.error.generic }}</p>
 
                         <div class="form-group">
-                            <label class="control-label" for="storageProviderProvider">Storage provider</label>
+                            <label class="control-label" for="storageProviderProvider">Storage provider <sup><a ng-href="{{ config.webServerOrigin }}/references/selfhosting.html#backups" class="help" target="_blank"><i class="fa fa-question-circle"></i></a></sup></label>
                             <select class="form-control" id="storageProviderProvider" ng-model="configureBackup.provider" ng-options="a.value as a.name for a in storageProvider"></select>
                         </div>
 
