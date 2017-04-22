@@ -87,7 +87,7 @@ if [[ $(docker version --format {{.Client.Version}}) != "17.03.1-ce" ]]; then
     done
 
     apt-get remove -y --allow-change-held-packages docker-engine || true
-    apt install /tmp/docker.deb
+    apt install -y /tmp/docker.deb
     rm /tmp/docker.deb
 fi
 
