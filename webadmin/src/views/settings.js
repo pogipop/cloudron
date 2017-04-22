@@ -349,7 +349,17 @@ angular.module('Application').controller('SettingsController', ['$scope', '$loca
         secretAccessKey: '',
         region: '',
         endpoint: '',
-        backupFoler: '',
+        backupFolder: '',
+
+        clearForm: function () {
+            $scope.configureBackup.bucket = '';
+            $scope.configureBackup.prefix = '';
+            $scope.configureBackup.accessKeyId = '';
+            $scope.configureBackup.secretAccessKey = '';
+            $scope.configureBackup.endpoint = '';
+            $scope.configureBackup.region = '';
+            $scope.configureBackup.backupFolder = '';
+        },
 
         show: function () {
             $scope.configureBackup.error = {};
