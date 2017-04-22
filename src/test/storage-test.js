@@ -213,22 +213,6 @@ describe('Storage', function () {
             });
         });
 
-        it('cannot get backup download stream from deleted backup', function (done) {
-            filesystem.getDownloadStream(gBackupConfig, gBackupId_1, function (error) {
-                expect(error).to.be.an('object');
-                expect(error.reason).to.equal(BackupsError.NOT_FOUND);
-                done();
-            });
-        });
-
-        it('can get backup download stream', function (done) {
-            filesystem.getDownloadStream(gBackupConfig, gBackupId_2, function (error, result) {
-                expect(error).to.be(null);
-                expect(result).to.be.a(stream.Readable);
-                done();
-            });
-        });
-
         it('can remove backup copy', function (done) {
             filesystem.removeBackup(gBackupConfig, gBackupId_2, [], done);
         });
@@ -346,22 +330,6 @@ describe('Storage', function () {
                         rimraf(gDestinationFolder, done);
                     });
                 });
-            });
-        });
-
-        it('cannot get backup download stream from deleted backup', function (done) {
-            s3.getDownloadStream(gBackupConfig, gBackupId_1, function (error) {
-                expect(error).to.be.an('object');
-                expect(error.reason).to.equal(BackupsError.NOT_FOUND);
-                done();
-            });
-        });
-
-        it('can get backup download stream', function (done) {
-            s3.getDownloadStream(gBackupConfig, gBackupId_2, function (error, result) {
-                expect(error).to.be(null);
-                expect(result).to.be.a(stream.Readable);
-                done();
             });
         });
 

@@ -12,8 +12,6 @@ exports = module.exports = {
     copyBackup: copyBackup,
     removeBackup: removeBackup,
 
-    getDownloadStream: getDownloadStream,
-
     backupDone: backupDone,
 
     testConfig: testConfig
@@ -61,16 +59,6 @@ function removeBackup(apiConfig, backupId, appBackupIds, callback) {
     assert.strictEqual(typeof callback, 'function');
 
     // Result: none
-
-    callback(new Error('not implemented'));
-}
-
-function getDownloadStream(apiConfig, backupId, callback) {
-    assert.strictEqual(typeof apiConfig, 'object');
-    assert.strictEqual(typeof backupId, 'string');
-    assert.strictEqual(typeof callback, 'function');
-
-    // Result: ReadStream to a tar.gz (not encrypted)
 
     callback(new Error('not implemented'));
 }

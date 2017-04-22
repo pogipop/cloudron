@@ -8,8 +8,6 @@ exports = module.exports = {
     getPaged: getPaged,
     getByAppIdPaged: getByAppIdPaged,
 
-    getDownloadStream: getDownloadStream,
-
     getRestoreConfig: getRestoreConfig,
 
     ensureBackup: ensureBackup,
@@ -414,23 +412,6 @@ function restoreApp(app, addonsToRestore, backupId, callback) {
             api(backupConfig.provider).restore.bind(null, backupConfig, backupId, path.join(paths.APPS_DATA_DIR, app.id)),
             addons.restoreAddons.bind(null, app, addonsToRestore)
         ], callback);
-    });
-}
-
-function getDownloadStream(backupId, callback) {
-    assert.strictEqual(typeof backupId, 'string');
-    assert.strictEqual(typeof callback, 'function');
-
-    settings.getBackupConfig(function (error, backupConfig) {
-        if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
-
-        api(backupConfig.provider).getDownloadStream(backupConfig, backupId, function (error, result) {
-            if (error) return callback(error);
-
-            debug('getDownloadStream: %s', backupId);
-
-            callback(null, result);
-        });
     });
 }
 

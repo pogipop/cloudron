@@ -6,8 +6,6 @@ exports = module.exports = {
     copyBackup: copyBackup,
     removeBackup: removeBackup,
 
-    getDownloadStream: getDownloadStream,
-
     backupDone: backupDone,
 
     testConfig: testConfig
@@ -152,21 +150,6 @@ function removeBackup(apiConfig, backupId, appBackupIds, callback) {
             callback();
         });
     }, callback);
-}
-
-function getDownloadStream(apiConfig, backupId, callback) {
-    assert.strictEqual(typeof apiConfig, 'object');
-    assert.strictEqual(typeof backupId, 'string');
-    assert.strictEqual(typeof callback, 'function');
-
-    var backupFilePath = getBackupFilePath(apiConfig, backupId);
-
-    debug('[%s] getDownloadStream: %s %s', backupId, backupId, backupFilePath);
-
-    if (!fs.existsSync(backupFilePath)) return callback(new BackupsError(BackupsError.NOT_FOUND, 'backup file does not exist'));
-
-    var stream = fs.createReadStream(backupFilePath);
-    callback(null, stream);
 }
 
 function testConfig(apiConfig, callback) {

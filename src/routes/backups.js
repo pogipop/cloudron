@@ -2,12 +2,10 @@
 
 exports = module.exports = {
     get: get,
-    create: create,
-    download: download
+    create: create
 };
 
-var assert = require('assert'),
-    backups = require('../backups.js'),
+var backups = require('../backups.js'),
     BackupsError = require('../backups.js').BackupsError,
     HttpError = require('connect-lastmile').HttpError,
     HttpSuccess = require('connect-lastmile').HttpSuccess;
@@ -40,16 +38,5 @@ function create(req, res, next) {
         if (error) return next(new HttpError(500, error));
 
         next(new HttpSuccess(202, {}));
-    });
-}
-
-function download(req, res, next) {
-    assert.strictEqual(typeof req.params.backupId, 'string');
-
-    backups.getDownloadStream(req.params.backupId, function (error, result) {
-        if (error && error.reason === BackupsError.NOT_FOUND) return next(new HttpError(404, error.message));
-        if (error) return next(new HttpError(500, error));
-
-        result.pipe(res);
     });
 }

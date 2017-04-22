@@ -6,8 +6,6 @@ exports = module.exports = {
     copyBackup: copyBackup,
     removeBackup: removeBackup,
 
-    getDownloadStream: getDownloadStream,
-
     backupDone: backupDone,
 
     testConfig: testConfig,
@@ -20,7 +18,6 @@ exports = module.exports = {
 var assert = require('assert'),
     AWS = require('aws-sdk'),
     BackupsError = require('../backups.js').BackupsError,
-    crypto = require('crypto'),
     debug = require('debug')('box:storage/s3'),
     once = require('once'),
     PassThrough = require('stream').PassThrough,
@@ -188,54 +185,6 @@ function removeBackup(apiConfig, backupId, appBackupIds, callback) {
         s3.deleteObject(params, function (error) {
             if (error) console.error('Unable to remove %s. Not fatal.', params.Key, error);
             callback(null);
-        });
-    });
-}
-
-function getDownloadStream(apiConfig, backupId, callback) {
-    assert.strictEqual(typeof apiConfig, 'object');
-    assert.strictEqual(typeof backupId, 'string');
-    assert.strictEqual(typeof callback, 'function');
-
-    callback = once(callback);
-
-    var backupFilePath = getBackupFilePath(apiConfig, backupId);
-
-    debug('[%s] getDownloadStream: %s %s', backupId, backupId, backupFilePath);
-
-    getBackupCredentials(apiConfig, function (error, credentials) {
-        if (error) return callback(error);
-
-        var params = {
-            Bucket: apiConfig.bucket,
-            Key: backupFilePath
-        };
-
-        var s3 = new AWS.S3(credentials);
-
-        s3.headObject(params, function (error) {
-            // TODO ENOENT for the mock, fix upstream!
-            if (error && (error.code === 'NotFound' || error.code === 'ENOENT')) return callback(new BackupsError(BackupsError.NOT_FOUND));
-            if (error) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
-
-            var s3get = s3.getObject(params).createReadStream();
-            var decrypt = crypto.createDecipher('aes-256-cbc', apiConfig.key || '');
-
-            s3get.on('error', function (error) {
-                if (error.code === 'NoSuchKey') return callback(new BackupsError(BackupsError.NOT_FOUND));
-
-                console.error('[%s] getDownloadStream: s3 stream error.', backupId, error);
-                callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
-            });
-
-            decrypt.on('error', function (error) {
-                console.error('[%s] getDownloadStream: decipher stream error.', error);
-                callback(new BackupsError(BackupsError.INTERNAL_ERROR, error.message));
-            });
-
-            s3get.pipe(decrypt);
-
-            callback(null, decrypt);
         });
     });
 }
