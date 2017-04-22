@@ -161,6 +161,11 @@
                         </div>
 
                         <!-- S3/Minio -->
+                        <div class="form-group" ng-class="{ 'has-error': configureBackup.error.endpoint }" ng-show="configureBackup.provider === 'minio'">
+                            <label class="control-label" for="inputConfigureBackupEndpoint">Endpoint</label>
+                            <input type="text" class="form-control" ng-model="configureBackup.endpoint" id="inputConfigureBackupEndpoint" name="endpoint" ng-disabled="configureBackup.busy" placeholder="URL of Minio" ng-required="configureBackup.provider === 'minio'">
+                        </div>
+
                         <div class="form-group" ng-class="{ 'has-error': configureBackup.error.bucket }" ng-show="s3like(configureBackup.provider)">
                             <label class="control-label" for="inputConfigureBackupBucket">Bucket name</label>
                             <input type="text" class="form-control" ng-model="configureBackup.bucket" id="inputConfigureBackupBucket" name="bucket" ng-disabled="configureBackup.busy" ng-required="s3like(configureBackup.provider)">
@@ -184,11 +189,6 @@
                         <div class="form-group" ng-class="{ 'has-error': configureBackup.error.secretAccessKey }" ng-show="s3like(configureBackup.provider)">
                             <label class="control-label" for="inputConfigureBackupSecretAccessKey">Secret access key</label>
                             <input type="text" class="form-control" ng-model="configureBackup.secretAccessKey" id="inputConfigureBackupSecretAccessKey" name="secretAccessKey" ng-disabled="configureBackup.busy" ng-required="s3like(configureBackup.provider)">
-                        </div>
-
-                        <div class="form-group" ng-class="{ 'has-error': configureBackup.error.endpoint }" ng-show="configureBackup.provider === 'minio'">
-                            <label class="control-label" for="inputConfigureBackupEndpoint">Endpoint</label>
-                            <input type="text" class="form-control" ng-model="configureBackup.endpoint" id="inputConfigureBackupEndpoint" name="endpoint" ng-disabled="configureBackup.busy" placeholder="URL of Minio" ng-required="configureBackup.provider === 'minio'">
                         </div>
 
                         <div class="form-group" ng-class="{ 'has-error': configureBackup.error.key }">
