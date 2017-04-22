@@ -89,6 +89,7 @@ function api(provider) {
         case 'caas': return caas;
         case 's3': return s3;
         case 'filesystem': return filesystem;
+        case 'minio': return s3;
         default: return null;
     }
 }

@@ -161,15 +161,15 @@
                             <input type="text" class="form-control" ng-model="configureBackup.backupFolder" id="inputConfigureBackupFolder" name="backupFolder" ng-disabled="configureBackup.busy" placeholder="Leave empty for default /var/backups">
                         </div>
 
-                        <!-- S3 -->
-                        <div class="form-group" ng-class="{ 'has-error': configureBackup.error.bucket }" ng-show="configureBackup.provider === 's3'">
+                        <!-- S3/Minio -->
+                        <div class="form-group" ng-class="{ 'has-error': configureBackup.error.bucket }" ng-show="s3like(configureBackup.provider)">
                             <label class="control-label" for="inputConfigureBackupBucket">Bucket name</label>
-                            <input type="text" class="form-control" ng-model="configureBackup.bucket" id="inputConfigureBackupBucket" name="bucket" ng-disabled="configureBackup.busy" ng-required="configureBackup.provider === 's3'">
+                            <input type="text" class="form-control" ng-model="configureBackup.bucket" id="inputConfigureBackupBucket" name="bucket" ng-disabled="configureBackup.busy" ng-required="s3like(configureBackup.provider)">
                         </div>
 
-                        <div class="form-group" ng-class="{ 'has-error': configureBackup.error.prefix }" ng-show="configureBackup.provider === 's3'">
+                        <div class="form-group" ng-class="{ 'has-error': configureBackup.error.prefix }" ng-show="s3like(configureBackup.provider)">
                             <label class="control-label" for="inputConfigureBackupPrefix">Prefix</label>
-                            <input type="text" class="form-control" ng-model="configureBackup.prefix" id="inputConfigureBackupPrefix" name="prefix" ng-disabled="configureBackup.busy" placeholder="Prefix for backup file names" ng-required="configureBackup.provider === 's3'">
+                            <input type="text" class="form-control" ng-model="configureBackup.prefix" id="inputConfigureBackupPrefix" name="prefix" ng-disabled="configureBackup.busy" placeholder="Prefix for backup file names" ng-required="s3like(configureBackup.provider)">
                         </div>
 
                         <div class="form-group" ng-class="{ 'has-error': configureBackup.error.region }" ng-show="configureBackup.provider === 's3'">
@@ -177,19 +177,19 @@
                             <select class="form-control" name="region" id="inputConfigureBackupRegion" ng-model="configureBackup.region" ng-options="a.value as a.name for a in s3Regions" ng-disabled="configureBackup.busy" ng-required="configureBackup.provider === 's3'"></select>
                         </div>
 
-                        <div class="form-group" ng-class="{ 'has-error': configureBackup.error.accessKeyId }" ng-show="configureBackup.provider === 's3'">
+                        <div class="form-group" ng-class="{ 'has-error': configureBackup.error.accessKeyId }" ng-show="s3like(configureBackup.provider)">
                             <label class="control-label" for="inputConfigureBackupAccessKeyId">Access key id</label>
-                            <input type="text" class="form-control" ng-model="configureBackup.accessKeyId" id="inputConfigureBackupAccessKeyId" name="accessKeyId" ng-disabled="configureBackup.busy" ng-required="configureBackup.provider === 's3'">
+                            <input type="text" class="form-control" ng-model="configureBackup.accessKeyId" id="inputConfigureBackupAccessKeyId" name="accessKeyId" ng-disabled="configureBackup.busy" ng-required="s3like(configureBackup.provider)">
                         </div>
 
-                        <div class="form-group" ng-class="{ 'has-error': configureBackup.error.secretAccessKey }" ng-show="configureBackup.provider === 's3'">
+                        <div class="form-group" ng-class="{ 'has-error': configureBackup.error.secretAccessKey }" ng-show="s3like(configureBackup.provider)">
                             <label class="control-label" for="inputConfigureBackupSecretAccessKey">Secret access key</label>
-                            <input type="text" class="form-control" ng-model="configureBackup.secretAccessKey" id="inputConfigureBackupSecretAccessKey" name="secretAccessKey" ng-disabled="configureBackup.busy" ng-required="configureBackup.provider === 's3'">
+                            <input type="text" class="form-control" ng-model="configureBackup.secretAccessKey" id="inputConfigureBackupSecretAccessKey" name="secretAccessKey" ng-disabled="configureBackup.busy" ng-required="s3like(configureBackup.provider)">
                         </div>
 
-                        <div class="form-group" ng-class="{ 'has-error': configureBackup.error.endpoint }" ng-show="configureBackup.provider === 's3'">
-                            <label class="control-label" for="inputConfigureBackupEndpoint">Endpoint (optional)</label>
-                            <input type="text" class="form-control" ng-model="configureBackup.endpoint" id="inputConfigureBackupEndpoint" name="endpoint" ng-disabled="configureBackup.busy" placeholder="URL of S3 compatible storage (Minio, Swift). Leave empty when using Amazon S3.">
+                        <div class="form-group" ng-class="{ 'has-error': configureBackup.error.endpoint }" ng-show="configureBackup.provider === 'minio'">
+                            <label class="control-label" for="inputConfigureBackupEndpoint">Endpoint</label>
+                            <input type="text" class="form-control" ng-model="configureBackup.endpoint" id="inputConfigureBackupEndpoint" name="endpoint" ng-disabled="configureBackup.busy" placeholder="URL of Minio" ng-required="configureBackup.provider === 'minio'">
                         </div>
 
                         <div class="form-group" ng-class="{ 'has-error': configureBackup.error.key }">
@@ -379,7 +379,7 @@
         </div>
         <div class="col-xs-6 text-right">
             <span ng-show="backupConfig.provider === 'filesystem'">{{ backupConfig.backupFolder || '/var/backups' }}</span>
-            <span ng-show="backupConfig.provider === 's3'">{{ backupConfig.region + '   ' + backupConfig.bucket + '/' + backupConfig.prefix }}</span>
+            <span ng-show="s3like(backupConfig.provider)">{{ backupConfig.region + '   ' + backupConfig.bucket + '/' + backupConfig.prefix }}</span>
         </div>
     </div>
 

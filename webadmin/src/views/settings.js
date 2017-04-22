@@ -52,7 +52,8 @@ angular.module('Application').controller('SettingsController', ['$scope', '$loca
 
     $scope.storageProvider = [
         { name: 'Amazon S3', value: 's3' },
-        { name: 'Filesystem (not recommended)', value: 'filesystem' }
+        { name: 'Filesystem (not recommended)', value: 'filesystem' },
+        { name: 'Minio', value: 'minio' }
     ];
 
     $scope.planChange = {
@@ -333,6 +334,10 @@ angular.module('Application').controller('SettingsController', ['$scope', '$loca
         }
     };
 
+    $scope.s3like = function (provider) {
+        return provider === 's3' || provider === 'minio';
+    };
+
     $scope.configureBackup = {
         busy: false,
         error: {},
@@ -373,17 +378,22 @@ angular.module('Application').controller('SettingsController', ['$scope', '$loca
             };
 
             // only set provider specific fields, this will clear them in the db
-            if (backupConfig.provider === 's3') {
+            if ($scope.s3like(backupConfig.provider)) {
                 backupConfig.bucket = $scope.configureBackup.bucket;
                 backupConfig.prefix = $scope.configureBackup.prefix;
                 backupConfig.accessKeyId = $scope.configureBackup.accessKeyId;
                 backupConfig.secretAccessKey = $scope.configureBackup.secretAccessKey;
+
+                if (backupConfig.provider === 's3') {
+                    if ($scope.configureBackup.region) backupConfig.region = $scope.configureBackup.region;
+                } else if (backupConfig.provider === 'minio') {
+                    backupConfig.region = 'us-east-1';
+                }
+
+                if ($scope.configureBackup.endpoint) backupConfig.endpoint = $scope.configureBackup.endpoint;
             } else if (backupConfig.provider === 'filesystem') {
                 backupConfig.backupFolder = $scope.configureBackup.backupFolder;
             }
-
-            if ($scope.configureBackup.region) backupConfig.region = $scope.configureBackup.region;
-            if ($scope.configureBackup.endpoint) backupConfig.endpoint = $scope.configureBackup.endpoint;
 
             Client.setBackupConfig(backupConfig, function (error) {
                 $scope.configureBackup.busy = false;
