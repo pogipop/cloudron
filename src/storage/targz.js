@@ -8,7 +8,7 @@ exports = module.exports = {
 var assert = require('assert'),
     BackupsError = require('../backups.js').BackupsError,
     crypto = require('crypto'),
-    debug = require('debug')('box:storage/filesystem'),
+    debug = require('debug')('box:storage/targz'),
     mkdirp = require('mkdirp'),
     progress = require('progress-stream'),
     spawn = require('child_process').spawn,
