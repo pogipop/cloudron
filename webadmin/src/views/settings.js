@@ -56,6 +56,13 @@ angular.module('Application').controller('SettingsController', ['$scope', '$loca
         { name: 'Minio', value: 'minio' }
     ];
 
+    $scope.retentionTimes = [
+        { name: '2 days', value: 2 * 24 * 60 * 60 },
+        { name: '1 week', value:  7 * 24 * 60 * 60},
+        { name: '1 month', value: 30 * 24 * 60 * 60},
+        { name: 'Forever', value: -1 }
+    ];
+
     $scope.planChange = {
         busy: false,
         error: {},
@@ -350,6 +357,7 @@ angular.module('Application').controller('SettingsController', ['$scope', '$loca
         region: '',
         endpoint: '',
         backupFolder: '',
+        retentionSecs: -1,
 
         clearForm: function () {
             $scope.configureBackup.bucket = '';
@@ -359,6 +367,7 @@ angular.module('Application').controller('SettingsController', ['$scope', '$loca
             $scope.configureBackup.endpoint = '';
             $scope.configureBackup.region = '';
             $scope.configureBackup.backupFolder = '';
+            $scope.configureBackup.retentionSecs = -1;
         },
 
         show: function () {
@@ -374,6 +383,7 @@ angular.module('Application').controller('SettingsController', ['$scope', '$loca
             $scope.configureBackup.endpoint = $scope.backupConfig.endpoint;
             $scope.configureBackup.key = $scope.backupConfig.key;
             $scope.configureBackup.backupFolder = $scope.backupConfig.backupFolder;
+            $scope.configureBackup.retentionSecs = $scope.backupConfig.retentionSecs;
 
             $('#configureBackupModal').modal('show');
         },

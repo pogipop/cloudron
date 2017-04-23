@@ -115,16 +115,17 @@ function cleanupBackups(callback) {
     settings.getBackupConfig(function (error, backupConfig) {
         if (error) return callback(error);
 
-        // nothing to do here
-        if (backupConfig.provider !== 'filesystem') return callback();
+        if (backupConfig.retentionSecs < 0) return callback();
 
         backups.getPaged(1, 1000, function (error, result) {
             if (error) return callback(error);
 
-            // sort with latest backups first in the array and slice 2
-            var toCleanup = result.sort(function (a, b) { return b.creationTime.getTime() - a.creationTime.getTime(); }).slice(2);
+            var now = new Date();
+            var toCleanup = result.filter(function (a) {
+                return (now - a.creationTime) > (backupConfig.retentionSecs * 1000);
+            });
 
-            debug('cleanupBackups: about to clean: ', toCleanup);
+            debug('cleanupBackups: about to clean: %j', toCleanup);
 
             async.each(toCleanup, function (backup, callback) {
                 backups.removeBackup(backup.id, backup.dependsOn, function (error) {
