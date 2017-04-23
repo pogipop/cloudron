@@ -86,8 +86,16 @@ if [[ $(docker version --format {{.Client.Version}}) != "17.03.1-ce" ]]; then
         sleep 1
     done
 
-    apt-get remove -y --allow-change-held-packages docker-engine || true
-    apt install -y /tmp/docker.deb
+    if ! apt-get remove -y --allow-change-held-packages docker-engine; then
+        echo "Failed to remove outdated docker-engine"
+        exit 5
+    fi
+
+    if ! apt install -y /tmp/docker.deb; then
+        echo "Failed to install docker"
+        exit 5
+    fi
+
     rm /tmp/docker.deb
 fi
 
