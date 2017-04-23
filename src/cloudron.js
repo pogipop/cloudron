@@ -869,12 +869,10 @@ function doMigrate(options, callback) {
     progress.set(progress.MIGRATE, 10, 'Backing up for migration');
 
     // initiate the migration in the background
-    backups.backupBoxAndApps({ userId: null, username: 'migrator' }, function (error, backupId) {
+    backups.backupBoxAndApps({ userId: null, username: 'migrator' }, function (error) {
         if (error) return unlock(error);
 
         debug('migrate: domain: %s size %s region %s', options.domain, options.size, options.region);
-
-        options.restoreKey = backupId + '.tar.gz.enc';
 
         superagent
           .post(config.apiServerOrigin() + '/api/v1/boxes/' + config.fqdn() + '/migrate')
