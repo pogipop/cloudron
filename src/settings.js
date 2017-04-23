@@ -97,7 +97,8 @@ var gDefaults = (function () {
     result[exports.BACKUP_CONFIG_KEY] = {
         provider: 'filesystem',
         key: '',
-        backupFolder: '/var/backups'
+        backupFolder: '/var/backups',
+        retentionSecs: 172800
     };
     result[exports.TLS_CONFIG_KEY] = { provider: 'letsencrypt-prod' };
     result[exports.UPDATE_CONFIG_KEY] = { prerelease: false };

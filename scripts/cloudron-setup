@@ -196,7 +196,8 @@ if [[ -z "${dataJson}" ]]; then
         "backupConfig" : {
             "provider": "filesystem",
             "backupFolder": "/var/backups",
-            "key": "${encryptionKey}"
+            "key": "${encryptionKey}",
+            "retentionSecs": 172800
         },
         "updateConfig": {
             "prerelease": ${prerelease}
