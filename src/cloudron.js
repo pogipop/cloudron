@@ -874,7 +874,7 @@ function doMigrate(options, callback) {
 
         debug('migrate: domain: %s size %s region %s', options.domain, options.size, options.region);
 
-        options.restoreKey = backupId;
+        options.restoreKey = backupId + '.tar.gz.enc';
 
         superagent
           .post(config.apiServerOrigin() + '/api/v1/boxes/' + config.fqdn() + '/migrate')
