@@ -135,8 +135,8 @@ function recreateJobs(tz) {
 
     if (gCleanupBackupsJob) gCleanupBackupsJob.stop();
     gCleanupBackupsJob = new CronJob({
-        cronTime: '00 */30 * * * *', // every 30 minutes
-        onTick: janitor.cleanupBackups,
+        cronTime: '00 00 */4 * * *', // every 4 hours
+        onTick: backups.cleanup,
         start: true,
         timeZone: tz
     });

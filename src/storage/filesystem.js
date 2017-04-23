@@ -4,7 +4,7 @@ exports = module.exports = {
     backup: backup,
     restore: restore,
     copyBackup: copyBackup,
-    removeBackup: removeBackup,
+    removeBackups: removeBackups,
 
     backupDone: backupDone,
 
@@ -136,19 +136,23 @@ function copyBackup(apiConfig, oldBackupId, newBackupId, callback) {
     });
 }
 
-function removeBackup(apiConfig, backupId, appBackupIds, callback) {
+function removeBackups(apiConfig, backupIds, callback) {
     assert.strictEqual(typeof apiConfig, 'object');
-    assert.strictEqual(typeof backupId, 'string');
-    assert(Array.isArray(appBackupIds));
+    assert(Array.isArray(backupIds));
     assert.strictEqual(typeof callback, 'function');
 
-    async.each([backupId].concat(appBackupIds), function (id, callback) {
+    async.eachSeries(backupIds, function (id, callback) {
         var filePath = getBackupFilePath(apiConfig, id);
 
-        fs.unlink(filePath, function (error) {
-            if (error) console.error('Unable to remove %s. Not fatal.', filePath, error);
-            callback();
-        });
+        if (!safe.fs.unlinkSync(filePath)) {
+            debug('removeBackups: Unable to remove %s : %s', filePath, safe.error.message);
+            return callback();
+        }
+
+        safe.fs.rmdirSync(path.dirname(filePath)); // try to cleanup empty directories
+
+        callback();
+
     }, callback);
 }
 

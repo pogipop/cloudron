@@ -18,7 +18,7 @@ exports = module.exports = {
 
     backupBoxAndApps: backupBoxAndApps,
 
-    removeBackup: removeBackup
+    cleanup: cleanup
 };
 
 var addons = require('./addons.js'),
@@ -421,25 +421,47 @@ function restoreApp(app, addonsToRestore, backupId, callback) {
     });
 }
 
-function removeBackup(backupId, appBackupIds, callback) {
-    assert.strictEqual(typeof backupId, 'string');
-    assert(util.isArray(appBackupIds));
-    assert.strictEqual(typeof callback, 'function');
+function cleanup(callback) {
+    assert(!callback || typeof callback === 'function'); // callback is null when called from cronjob
 
-    debug('removeBackup: %s', backupId);
+    callback = callback || NOOP_CALLBACK;
 
     settings.getBackupConfig(function (error, backupConfig) {
-        if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
+        if (error) return callback(error);
 
-        api(backupConfig.provider).removeBackup(backupConfig, backupId, appBackupIds, function (error) {
+        if (backupConfig.retentionSecs < 0) {
+            debug('cleanup: keeping all backups');
+            return callback();
+        }
+
+        getPaged(1, 1000, function (error, result) {
             if (error) return callback(error);
 
-            backupdb.del(backupId, function (error) {
-                if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
+            var now = new Date();
 
-                debug('removeBackup: %s done', backupId);
+            async.eachSeries(result, function iterator(backup, iteratorDone) {
+                if ((now - backup.creationTime) < (backupConfig.retentionSecs * 1000)) return iteratorDone();
 
-                callback(null);
+                debug('cleanup: removing %j', backup.id);
+
+                var backupIds = [].concat(backup.id, backup.dependsOn);
+
+                api(backupConfig.provider).removeBackups(backupConfig, backupIds, function (error) {
+                    if (error) {
+                        debug('cleanup: error removing backup %j : %s', backup, error.message);
+                        iteratorDone();
+                    }
+
+                    backupdb.del(backup.id, function (error) {
+                        if (error) debug('cleanup: error removing from database', error);
+                        else debug('cleanup: removed %j', backupIds);
+
+                        iteratorDone();
+                    });
+                });
+            }, function () {
+                debug('cleanup: done cleaning backups');
+                callback();
             });
         });
     });

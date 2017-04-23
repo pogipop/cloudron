@@ -394,7 +394,8 @@ angular.module('Application').controller('SettingsController', ['$scope', '$loca
 
             var backupConfig = {
                 provider: $scope.configureBackup.provider,
-                key: $scope.configureBackup.key
+                key: $scope.configureBackup.key,
+                retentionSecs: $scope.configureBackup.retentionSecs
             };
 
             // only set provider specific fields, this will clear them in the db

@@ -4,7 +4,7 @@ exports = module.exports = {
     backup: backup,
     restore: restore,
     copyBackup: copyBackup,
-    removeBackup: removeBackup,
+    removeBackups: removeBackups,
 
     backupDone: backupDone,
 
@@ -159,10 +159,9 @@ function copyBackup(apiConfig, oldBackupId, newBackupId, callback) {
     });
 }
 
-function removeBackup(apiConfig, backupId, appBackupIds, callback) {
+function removeBackups(apiConfig, backupIds, callback) {
     assert.strictEqual(typeof apiConfig, 'object');
-    assert.strictEqual(typeof backupId, 'string');
-    assert(Array.isArray(appBackupIds));
+    assert(Array.isArray(backupIds));
     assert.strictEqual(typeof callback, 'function');
 
     getBackupCredentials(apiConfig, function (error, credentials) {
@@ -170,11 +169,17 @@ function removeBackup(apiConfig, backupId, appBackupIds, callback) {
 
         var params = {
             Bucket: apiConfig.bucket,
-            Key:  getBackupFilePath(apiConfig, backupId)
+            Delete: {
+                Objects: [ ] // { Key }
+            }
         };
 
+        backupIds.forEach(function (backupId) {
+            params.Delete.Objects.push({ Key: getBackupFilePath(apiConfig, backupId) });
+        });
+
         var s3 = new AWS.S3(credentials);
-        s3.deleteObject(params, function (error) {
+        s3.deleteObjects(params, function (error) {
             if (error) console.error('Unable to remove %s. Not fatal.', params.Key, error);
             callback(null);
         });

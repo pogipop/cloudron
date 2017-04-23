@@ -145,6 +145,8 @@
                 <h4 class="modal-title">Configure Backup Storage</h4>
             </div>
             <div class="modal-body">
+                <p>Cloudron makes a complete backup of your system every day.</p>
+
                 <form name="configureBackupForm" role="form" novalidate ng-submit="configureBackup.submit()" autocomplete="off">
                     <fieldset>
                         <p class="has-error text-center" ng-show="configureBackup.error">{{ configureBackup.error.generic }}</p>

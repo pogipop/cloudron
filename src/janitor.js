@@ -3,16 +3,13 @@
 var assert = require('assert'),
     async = require('async'),
     authcodedb = require('./authcodedb.js'),
-    backups = require('./backups.js'),
     debug = require('debug')('box:src/janitor'),
     docker = require('./docker.js').connection,
-    settings = require('./settings.js'),
     tokendb = require('./tokendb.js');
 
 exports = module.exports = {
     cleanupTokens: cleanupTokens,
-    cleanupDockerVolumes: cleanupDockerVolumes,
-    cleanupBackups: cleanupBackups
+    cleanupDockerVolumes: cleanupDockerVolumes
 };
 
 var NOOP_CALLBACK = function () { };
@@ -102,40 +99,5 @@ function cleanupDockerVolumes(callback) {
                 iteratorDone(); // intentionally ignore error
             });
         }, callback);
-    });
-}
-
-function cleanupBackups(callback) {
-    assert(!callback || typeof callback === 'function'); // callback is null when called from cronjob
-
-    callback = callback || NOOP_CALLBACK;
-
-    debug('Cleaning backups');
-
-    settings.getBackupConfig(function (error, backupConfig) {
-        if (error) return callback(error);
-
-        if (backupConfig.retentionSecs < 0) return callback();
-
-        backups.getPaged(1, 1000, function (error, result) {
-            if (error) return callback(error);
-
-            var now = new Date();
-            var toCleanup = result.filter(function (a) {
-                return (now - a.creationTime) > (backupConfig.retentionSecs * 1000);
-            });
-
-            debug('cleanupBackups: about to clean: %j', toCleanup);
-
-            async.each(toCleanup, function (backup, callback) {
-                backups.removeBackup(backup.id, backup.dependsOn, function (error) {
-                    if (error) console.error(error);
-
-                    debug('cleanupBackups: %s, %s done', backup.id, backup.dependsOn.join(', '));
-
-                    callback();
-                });
-            }, callback);
-        });
     });
 }

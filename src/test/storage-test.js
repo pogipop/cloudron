@@ -185,7 +185,7 @@ describe('Storage', function () {
 
         it('can remove backup', function (done) {
             // will be verified with next test trying to restore the removed one
-            filesystem.removeBackup(gBackupConfig, gBackupId_1, [], done);
+            filesystem.removeBackups(gBackupConfig, [ gBackupId_1 ], done);
         });
 
         it('cannot restore deleted backup', function (done) {
@@ -214,7 +214,7 @@ describe('Storage', function () {
         });
 
         it('can remove backup copy', function (done) {
-            filesystem.removeBackup(gBackupConfig, gBackupId_2, [], done);
+            filesystem.removeBackups(gBackupConfig, [ gBackupId_2 ], done);
         });
     });
 
@@ -305,7 +305,7 @@ describe('Storage', function () {
 
         it('can remove backup', function (done) {
             // will be verified with next test trying to restore the removed one
-            s3.removeBackup(gBackupConfig, gBackupId_1, [], done);
+            s3.removeBackups(gBackupConfig, [ gBackupId_1 ], done);
         });
 
         it('cannot restore deleted backup', function (done) {
@@ -334,7 +334,7 @@ describe('Storage', function () {
         });
 
         it('can remove backup copy', function (done) {
-            s3.removeBackup(gBackupConfig, gBackupId_2, [], done);
+            s3.removeBackups(gBackupConfig, [ gBackupId_2 ], done);
         });
     });
 });

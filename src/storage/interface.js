@@ -10,7 +10,7 @@ exports = module.exports = {
     backup: backup,
     restore: restore,
     copyBackup: copyBackup,
-    removeBackup: removeBackup,
+    removeBackups: removeBackups,
 
     backupDone: backupDone,
 
@@ -52,10 +52,9 @@ function copyBackup(apiConfig, oldBackupId, newBackupId, callback) {
     callback(new Error('not implemented'));
 }
 
-function removeBackup(apiConfig, backupId, appBackupIds, callback) {
+function removeBackups(apiConfig, backupIds, callback) {
     assert.strictEqual(typeof apiConfig, 'object');
-    assert.strictEqual(typeof backupId, 'string');
-    assert(Array.isArray(appBackupIds));
+    assert(Array.isArray(backupIds));
     assert.strictEqual(typeof callback, 'function');
 
     // Result: none
