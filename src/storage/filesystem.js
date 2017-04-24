@@ -141,18 +141,16 @@ function removeBackups(apiConfig, backupIds, callback) {
     assert(Array.isArray(backupIds));
     assert.strictEqual(typeof callback, 'function');
 
-    async.eachSeries(backupIds, function (id, callback) {
+    async.eachSeries(backupIds, function (id, iteratorCallback) {
         var filePath = getBackupFilePath(apiConfig, id);
 
         if (!safe.fs.unlinkSync(filePath)) {
             debug('removeBackups: Unable to remove %s : %s', filePath, safe.error.message);
-            return callback();
         }
 
         safe.fs.rmdirSync(path.dirname(filePath)); // try to cleanup empty directories
 
-        callback();
-
+        iteratorCallback();
     }, callback);
 }
 
