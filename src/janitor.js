@@ -3,7 +3,7 @@
 var assert = require('assert'),
     async = require('async'),
     authcodedb = require('./authcodedb.js'),
-    debug = require('debug')('box:src/janitor'),
+    debug = require('debug')('box:janitor'),
     docker = require('./docker.js').connection,
     tokendb = require('./tokendb.js');
 

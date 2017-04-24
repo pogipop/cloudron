@@ -2,7 +2,7 @@
 
 var assert = require('assert'),
     config = require('./config.js'),
-    debug = require('debug')('box:src/nginx'),
+    debug = require('debug')('box:nginx'),
     ejs = require('ejs'),
     fs = require('fs'),
     path = require('path'),

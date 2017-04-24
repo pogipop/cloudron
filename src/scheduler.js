@@ -10,7 +10,7 @@ var appdb = require('./appdb.js'),
     async = require('async'),
     config = require('./config.js'),
     CronJob = require('cron').CronJob,
-    debug = require('debug')('box:src/scheduler'),
+    debug = require('debug')('box:scheduler'),
     docker = require('./docker.js'),
     _ = require('underscore');
 
