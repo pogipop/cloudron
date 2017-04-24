@@ -98,7 +98,7 @@ function backup(apiConfig, backupId, sourceDirectories, callback) {
             callback(null);
         });
 
-        targz.create(sourceDirectories, apiConfig.key, passThrough, callback);
+        targz.create(sourceDirectories, apiConfig.key || '', passThrough, callback);
     });
 }
 

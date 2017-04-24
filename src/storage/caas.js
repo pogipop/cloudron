@@ -34,7 +34,7 @@ function getBackupCredentials(apiConfig, callback) {
     superagent.post(url).query({ token: apiConfig.token }).timeout(30 * 1000).end(function (error, result) {
         if (error && !error.response) return callback(error);
         if (result.statusCode !== 201) return callback(new Error(result.text));
-        if (!result.body || !result.body.credentials) return callback(new Error('Unexpected response'));
+        if (!result.body || !result.body.credentials) return callback(new Error('Unexpected response: ' + JSON.stringify(result.headers)));
 
         var credentials = {
             signatureVersion: 'v4',
@@ -91,7 +91,7 @@ function backup(apiConfig, backupId, sourceDirectories, callback) {
             callback(null);
         });
 
-        targz.create(sourceDirectories, apiConfig.key, passThrough, callback);
+        targz.create(sourceDirectories, apiConfig.key || '', passThrough, callback);
     });
 }
 

@@ -268,7 +268,7 @@ describe('Cloudron', function () {
 
     });
 
-    describe('migrate', function () {
+    xdescribe('migrate', function () {
         before(function (done) {
             async.series([
                 setup,
