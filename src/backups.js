@@ -437,15 +437,20 @@ function cleanup(callback) {
         getPaged(1, 1000, function (error, result) {
             if (error) return callback(error);
 
+            if (result.length === 0) return callback();
+
             // ensure we keep at least the last backup to ensure we have one if backup creation failed for some reason
+            var referencedAppBackups = result[0].dependsOn;
             result = result.slice(1);
 
             var now = new Date();
 
             async.eachSeries(result, function iterator(backup, iteratorDone) {
+                referencedAppBackups = referencedAppBackups.concat(backup.dependsOn);
+
                 if ((now - backup.creationTime) < (backupConfig.retentionSecs * 1000)) return iteratorDone();
 
-                debug('cleanup: removing %j', backup.id);
+                debug('cleanup: removing %s', backup.id);
 
                 var backupIds = [].concat(backup.id, backup.dependsOn);
 
@@ -463,8 +468,36 @@ function cleanup(callback) {
                     });
                 });
             }, function () {
-                debug('cleanup: done cleaning backups');
-                callback();
+                debug('cleanup: done cleaning box backups');
+
+                backupdb.getPaged(backupdb.BACKUP_TYPE_APP, 1, 1000, function (error, result) {
+                    if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
+
+                    async.eachSeries(result, function iterator(backup, iteratorDone) {
+                        if (referencedAppBackups.indexOf(backup.id) !== -1) return iteratorDone();
+                        if ((now - backup.creationTime) < (backupConfig.retentionSecs * 1000)) return iteratorDone();
+
+                        debug('cleanup: removing %s', backup.id);
+
+                        api(backupConfig.provider).removeBackups(backupConfig, [ backup.id ], function (error) {
+                            if (error) {
+                                debug('cleanup: error removing backup %j : %s', backup, error.message);
+                                iteratorDone();
+                            }
+
+                            backupdb.del(backup.id, function (error) {
+                                if (error) debug('cleanup: error removing from database', error);
+                                else debug('cleanup: removed %s', backup.id);
+
+                                iteratorDone();
+                            });
+                        });
+                    }, function () {
+                        debug('cleanup: done cleaning app backups');
+
+                        callback();
+                    });
+                });
             });
         });
     });

@@ -14,7 +14,7 @@ var async = require('async'),
     expect = require('expect.js'),
     settings = require('../settings.js');
 
-describe('janitor', function () {
+describe('backups', function () {
     before(function (done) {
         async.series([
             database.initialize,
@@ -128,8 +128,34 @@ describe('janitor', function () {
                     expect(result.length).to.equal(1);
                     expect(result[0].id).to.equal(BACKUP_1.id);
 
-                    done();
+                    // check that app backups are also still there
+                    backupdb.get(BACKUP_1_APP_0.id, function (error, result) {
+                        expect(error).to.not.be.ok();
+                        expect(result.id).to.equal(BACKUP_1_APP_0.id);
+
+                        done();
+                    });
                 });
+            });
+        });
+
+        it('succeeds for app backups not referenced by a box backup', function (done) {
+            async.eachSeries([BACKUP_0_APP_0, BACKUP_0_APP_1], backupdb.add, function (error) {
+                expect(error).to.not.be.ok();
+
+                // wait for expiration
+                setTimeout(function () {
+                    backups.cleanup(function (error) {
+                        expect(error).to.not.be.ok();
+
+                        backupdb.getPaged(backupdb.BACKUP_TYPE_APP, 1, 1000, function (error, result) {
+                            expect(error).to.not.be.ok();
+                            expect(result.length).to.equal(2);
+
+                            done();
+                        });
+                    });
+                }, 2000);
             });
         });
     });
