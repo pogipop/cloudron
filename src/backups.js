@@ -437,6 +437,9 @@ function cleanup(callback) {
         getPaged(1, 1000, function (error, result) {
             if (error) return callback(error);
 
+            // ensure we keep at least the last backup to ensure we have one if backup creation failed for some reason
+            result = result.slice(1);
+
             var now = new Date();
 
             async.eachSeries(result, function iterator(backup, iteratorDone) {
