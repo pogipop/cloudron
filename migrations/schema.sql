@@ -69,9 +69,9 @@ CREATE TABLE IF NOT EXISTS apps(
     sso BOOLEAN DEFAULT 1, // whether user chose to enable SSO
     debugModeJson TEXT, // options for development mode
 
-    lastBackupId VARCHAR(128), // tracks last valid backup, can be removed
-
-    oldConfigJson TEXT, // used to pass old config for apptask, can be removed when we use a queue
+    // the following fields do not belong here, they can be removed when we use a queue for apptask
+    lastBackupId VARCHAR(128), // used to pass backupId to restore from to apptask
+    oldConfigJson TEXT, // used to pass old config for apptask
 
     PRIMARY KEY(id));
 
