@@ -86,15 +86,22 @@ if [[ $(docker version --format {{.Client.Version}}) != "17.03.1-ce" ]]; then
         sleep 1
     done
 
-    if ! apt-get remove -y --allow-change-held-packages docker-engine; then
-        echo "Failed to remove outdated docker-engine"
-        exit 5
+    while ! dpkg --force-confold --configure -a; do
+        echo "Failed to fix packages. Retry"
+        sleep 1
+    done
+
+    if dpkg --status docker-engine; then
+        while ! apt-get remove -y --allow-change-held-packages docker-engine; do
+            echo "Failed to remove outdated docker-engine. Retry"
+            sleep 1
+        done
     fi
 
-    if ! apt install -y /tmp/docker.deb; then
-        echo "Failed to install docker"
-        exit 5
-    fi
+    while ! apt install -y /tmp/docker.deb; do
+        echo "Failed to install docker. Retry"
+        sleep 1
+    done
 
     rm /tmp/docker.deb
 fi
