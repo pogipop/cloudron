@@ -52,7 +52,7 @@ angular.module('Application').controller('SettingsController', ['$scope', '$loca
 
     $scope.storageProvider = [
         { name: 'Amazon S3', value: 's3' },
-        { name: 'Filesystem (not recommended)', value: 'filesystem' },
+        { name: 'Filesystem', value: 'filesystem' },
         { name: 'Minio', value: 'minio' }
     ];
 
