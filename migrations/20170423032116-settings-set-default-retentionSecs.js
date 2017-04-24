@@ -2,7 +2,7 @@
 
 exports.up = function(db, callback) {
     db.all('SELECT value FROM settings WHERE name="backup_config"', function (error, results) {
-        if (error) return callback(error);
+        if (error || results.length === 0) return callback(error);
 
         var backupConfig = JSON.parse(results[0].value);
         if (backupConfig.provider === 'filesystem') {

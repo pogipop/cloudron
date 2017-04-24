@@ -19,5 +19,6 @@ fi
 
 echo "Running node with memory constraints"
 
-exec env "DEBUG=box*,connect-lastmile" "BOX_ENV=cloudron" "NODE_ENV=production" /usr/bin/node --max_old_space_size=150 "$@"
+# note BOX_ENV and NODE_ENV are derived from parent process
+exec env "DEBUG=box*,connect-lastmile" /usr/bin/node --max_old_space_size=150 "$@"
 

@@ -192,7 +192,12 @@ function backupBoxWithAppBackupIds(appBackupIds, prefix, callback) {
     settings.getBackupConfig(function (error, backupConfig) {
         if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
 
-        var mysqlDumpArgs = ['-c', '/usr/bin/mysqldump -u root -ppassword --single-transaction --routines --triggers box > "' + paths.BOX_DATA_DIR + '/box.mysqldump"' ];
+        var password = config.database().password ? '-p' + config.database().password : '--skip-password';
+        var mysqlDumpArgs = [
+            '-c',
+            `/usr/bin/mysqldump -u root ${password} --single-transaction --routines \
+                --triggers ${config.database().name} > "${paths.BOX_DATA_DIR}/box.mysqldump"`
+        ];
         shell.exec('backupBox', '/bin/bash', mysqlDumpArgs, function (error) {
             if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
 
