@@ -837,4 +837,9 @@
 * Rework backup backend logic
 * Add UI to download logs
 * Fix crash when checking mail dns settings
+* Allow backup retention duration to be configured
+* Add minio backend for backups
+* Fix issue where Cloudron's with errored apps won't backup when using fs backend
+* Fix DNS check issue where PTR records was read from hosts file
+
 
