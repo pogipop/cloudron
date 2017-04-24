@@ -109,7 +109,7 @@ function getPaged(page, perPage, callback) {
     assert(typeof perPage === 'number' && perPage > 0);
     assert.strictEqual(typeof callback, 'function');
 
-    backupdb.getPaged(page, perPage, function (error, results) {
+    backupdb.getPaged(backupdb.BACKUP_TYPE_BOX, page, perPage, function (error, results) {
         if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
 
         callback(null, results);

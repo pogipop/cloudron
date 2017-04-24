@@ -1052,7 +1052,7 @@ describe('database', function () {
         });
 
         it('getPaged succeeds', function (done) {
-            backupdb.getPaged(1, 5, function (error, results) {
+            backupdb.getPaged(backupdb.BACKUP_TYPE_BOX, 1, 5, function (error, results) {
                 expect(error).to.be(null);
                 expect(results).to.be.an(Array);
                 expect(results.length).to.be(1);

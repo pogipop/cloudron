@@ -32,13 +32,14 @@ function postProcess(result) {
     delete result.restoreConfigJson;
 }
 
-function getPaged(page, perPage, callback) {
+function getPaged(type, page, perPage, callback) {
+    assert(type === exports.BACKUP_TYPE_APP || type === exports.BACKUP_TYPE_BOX);
     assert(typeof page === 'number' && page > 0);
     assert(typeof perPage === 'number' && perPage > 0);
     assert.strictEqual(typeof callback, 'function');
 
     database.query('SELECT ' + BACKUPS_FIELDS + ' FROM backups WHERE type = ? AND state = ? ORDER BY creationTime DESC LIMIT ?,?',
-        [ exports.BACKUP_TYPE_BOX, exports.BACKUP_STATE_NORMAL, (page-1)*perPage, perPage ], function (error, results) {
+        [ type, exports.BACKUP_STATE_NORMAL, (page-1)*perPage, perPage ], function (error, results) {
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
 
         results.forEach(function (result) { postProcess(result); });
