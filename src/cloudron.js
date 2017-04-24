@@ -63,7 +63,6 @@ var appdb = require('./appdb.js'),
     subdomains = require('./subdomains.js'),
     superagent = require('superagent'),
     sysinfo = require('./sysinfo.js'),
-    taskmanager = require('./taskmanager.js'),
     tokendb = require('./tokendb.js'),
     updateChecker = require('./updatechecker.js'),
     user = require('./user.js'),
@@ -136,7 +135,6 @@ function initialize(callback) {
     async.series([
         certificates.initialize,
         settings.initialize,
-        platform.initialize,
         installAppBundle,
         checkConfigState,
         configureDefaultServer
@@ -148,13 +146,10 @@ function uninitialize(callback) {
 
     exports.events = null;
 
-    platform.events.removeListener(platform.EVENT_READY, onPlatformReady);
-
     async.series([
         cron.uninitialize,
-        taskmanager.pauseTasks,
         mailer.stop,
-        platform.uninitialize,
+        platform.stop,
         certificates.uninitialize,
         settings.uninitialize
     ], callback);
@@ -172,7 +167,6 @@ function onConfigured(callback) {
 
     gConfigState.configured = true;
 
-    platform.events.on(platform.EVENT_READY, onPlatformReady);
     settings.events.on(settings.DNS_CONFIG_KEY, function () { addDnsRecords(); });
 
     async.series([
@@ -184,16 +178,6 @@ function onConfigured(callback) {
         configureAdmin,
         mailer.start,
         cron.initialize // do not send heartbeats until we are "ready"
-    ], callback);
-}
-
-function onPlatformReady(callback) {
-    callback = callback || NOOP_CALLBACK;
-
-    debug('onPlatformReady');
-
-    async.series([
-        taskmanager.resumeTasks
     ], callback);
 }
 

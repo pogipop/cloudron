@@ -1,14 +1,8 @@
 'use strict';
 
 exports = module.exports = {
-    initialize: initialize,
-    uninitialize: uninitialize,
-
     start: start,
-
-    events: null,
-
-    EVENT_READY: 'ready'
+    stop: stop
 };
 
 var apps = require('./apps.js'),
@@ -29,6 +23,7 @@ var apps = require('./apps.js'),
     settings = require('./settings.js'),
     shell = require('./shell.js'),
     subdomains = require('./subdomains.js'),
+    taskmanager = require('./taskmanager.js'),
     user = require('./user.js'),
     util = require('util'),
     _ = require('underscore');
@@ -36,13 +31,6 @@ var apps = require('./apps.js'),
 var gPlatformReadyTimer = null;
 
 var NOOP_CALLBACK = function (error) { if (error) debug(error); };
-
-function initialize(callback) {
-    assert.strictEqual(typeof callback, 'function');
-
-    exports.events = new (require('events').EventEmitter)();
-    return callback();
-}
 
 function start(callback) {
     assert.strictEqual(typeof callback, 'function');
@@ -89,13 +77,11 @@ function start(callback) {
     });
 }
 
-function uninitialize(callback) {
+function stop(callback) {
     clearTimeout(gPlatformReadyTimer);
     gPlatformReadyTimer = null;
-
     exports.events = null;
-
-    callback();
+    taskmanager.pauseTasks(callback);
 }
 
 function emitPlatformReady() {
@@ -105,7 +91,7 @@ function emitPlatformReady() {
     gPlatformReadyTimer = setTimeout(function () {
         debug('emitting platform ready');
         gPlatformReadyTimer = null;
-        exports.events.emit(exports.EVENT_READY);
+        taskmanager.resumeTasks();
     }, 30000);
 }
 
