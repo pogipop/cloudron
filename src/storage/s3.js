@@ -91,7 +91,7 @@ function backup(apiConfig, backupId, sourceDirectories, callback) {
         var s3 = new AWS.S3(credentials);
         s3.upload(params, function (error) {
             if (error) {
-                console.error('[%s] backup: s3 upload error.', backupId, error);
+                debug('[%s] backup: s3 upload error.', backupId, error);
                 return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
             }
 
@@ -131,7 +131,7 @@ function restore(apiConfig, backupId, destination, callback) {
             // TODO ENOENT for the mock, fix upstream!
             if (error.code === 'NoSuchKey' || error.code === 'ENOENT') return callback(new BackupsError(BackupsError.NOT_FOUND));
 
-            console.error('[%s] restore: s3 stream error.', backupId, error);
+            debug('[%s] restore: s3 stream error.', backupId, error);
             callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
         });
 
@@ -158,7 +158,7 @@ function copyBackup(apiConfig, oldBackupId, newBackupId, callback) {
         s3.copyObject(params, function (error) {
             if (error && error.code === 'NoSuchKey') return callback(new BackupsError(BackupsError.NOT_FOUND, 'Old backup not found'));
             if (error) {
-                console.error('copyBackup: s3 copy error.', error);
+                debug('copyBackup: s3 copy error.', error);
                 return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
             }
 
@@ -187,8 +187,10 @@ function removeBackups(apiConfig, backupIds, callback) {
         });
 
         var s3 = new AWS.S3(credentials);
-        s3.deleteObjects(params, function (error) {
-            if (error) console.error('Unable to remove %s. Not fatal.', params.Key, error);
+        s3.deleteObjects(params, function (error, data) {
+            if (error) debug('removeBackups: Unable to remove %s. Not fatal.', params.Key, error);
+            else debug('removeBackups: Deleted: %j Errors: %j', data.Deleted, data.Errors);
+
             callback(null);
         });
     });

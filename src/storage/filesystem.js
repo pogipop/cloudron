@@ -54,7 +54,7 @@ function backup(apiConfig, backupId, sourceDirectories, callback) {
         var fileStream = fs.createWriteStream(backupFilePath);
 
         fileStream.on('error', function (error) {
-            console.error('[%s] backup: out stream error.', backupId, error);
+            debug('[%s] backup: out stream error.', backupId, error);
             callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
         });
 
@@ -90,7 +90,7 @@ function restore(apiConfig, backupId, destination, callback) {
     var fileStream = fs.createReadStream(sourceFilePath);
 
     fileStream.on('error', function (error) {
-        console.error('restore: file stream error.', error);
+        debug('restore: file stream error.', error);
         callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
     });
 
@@ -117,12 +117,12 @@ function copyBackup(apiConfig, oldBackupId, newBackupId, callback) {
         var writeStream = fs.createWriteStream(newFilePath);
 
         readStream.on('error', function (error) {
-            console.error('copyBackup: read stream error.', error);
+            debug('copyBackup: read stream error.', error);
             callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
         });
 
         writeStream.on('error', function (error) {
-            console.error('copyBackup: write stream error.', error);
+            debug('copyBackup: write stream error.', error);
             callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
         });
 

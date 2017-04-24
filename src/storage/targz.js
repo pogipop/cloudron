@@ -35,17 +35,17 @@ function create(sourceDirectories, key, outStream, callback) {
     var progressStream = progress({ time: 10000 }); // display a progress every 10 seconds
 
     pack.on('error', function (error) {
-        console.error('backup: tar stream error.', error);
+        debug('backup: tar stream error.', error);
         callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
     });
 
     gzip.on('error', function (error) {
-        console.error('backup: gzip stream error.', error);
+        debug('backup: gzip stream error.', error);
         callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
     });
 
     encrypt.on('error', function (error) {
-        console.error('backup: encrypt stream error.', error);
+        debug('backup: encrypt stream error.', error);
         callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
     });
 
@@ -83,17 +83,17 @@ function extract(inStream, isOldFormat, destination, key, callback) {
         });
 
         decrypt.on('error', function (error) {
-            console.error('restore: decrypt stream error.', error);
+            debug('restore: decrypt stream error.', error);
             callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
         });
 
         gunzip.on('error', function (error) {
-            console.error('restore: gunzip stream error.', error);
+            debug('restore: gunzip stream error.', error);
             callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
         });
 
         extract.on('error', function (error) {
-            console.error('restore: extract stream error.', error);
+            debug('restore: extract stream error.', error);
             callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
         });
 
