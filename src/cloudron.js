@@ -24,11 +24,7 @@ exports = module.exports = {
     checkDiskSpace: checkDiskSpace,
 
     readDkimPublicKeySync: readDkimPublicKeySync,
-    refreshDNS: refreshDNS,
-
-    events: null,
-
-    EVENT_ACTIVATED: 'activated'
+    refreshDNS: refreshDNS
 };
 
 var appdb = require('./appdb.js'),
@@ -126,8 +122,6 @@ CloudronError.SELF_UPGRADE_NOT_SUPPORTED = 'Self upgrade not supported';
 function initialize(callback) {
     assert.strictEqual(typeof callback, 'function');
 
-    exports.events = new (require('events').EventEmitter)();
-
     gConfigState = { dns: false, tls: false, configured: false };
     gUpdatingDns = false;
     gBoxAndUserDetails = null;
@@ -143,8 +137,6 @@ function initialize(callback) {
 
 function uninitialize(callback) {
     assert.strictEqual(typeof callback, 'function');
-
-    exports.events = null;
 
     async.series([
         cron.uninitialize,
@@ -322,7 +314,7 @@ function activate(username, password, email, displayName, ip, auditSource, callb
 
                 eventlog.add(eventlog.ACTION_ACTIVATE, auditSource, { });
 
-                exports.events.emit(exports.EVENT_ACTIVATED);
+                platform.createMailConfig(NOOP_CALLBACK); // bounces can now be sent to the cloudron owner
 
                 callback(null, { token: token, expires: expires });
             });

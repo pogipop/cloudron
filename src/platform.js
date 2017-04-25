@@ -2,13 +2,14 @@
 
 exports = module.exports = {
     start: start,
-    stop: stop
+    stop: stop,
+
+    createMailConfig: createMailConfig
 };
 
 var apps = require('./apps.js'),
     assert = require('assert'),
     async = require('async'),
-    cloudron = require('./cloudron.js'),
     config = require('./config.js'),
     certificates = require('./certificates.js'),
     debug = require('debug')('box:platform'),
@@ -44,8 +45,6 @@ function start(callback) {
     certificates.events.on(certificates.EVENT_CERT_CHANGED, function (domain) {
         if (domain === '*.' + config.fqdn() || domain === config.adminFqdn()) startMail(NOOP_CALLBACK);
     });
-
-    cloudron.events.on(cloudron.EVENT_ACTIVATED, function () { createMailConfig(NOOP_CALLBACK); });
 
     var existingInfra = { version: 'none' };
     if (fs.existsSync(paths.INFRA_VERSION_FILE)) {
