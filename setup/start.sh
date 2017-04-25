@@ -42,7 +42,7 @@ systemctl restart apparmor
 usermod ${USER} -a -G docker
 temp_file=$(mktemp)
 # create systemd drop-in. some apps do not work with aufs
-echo -e "[Service]\nExecStart=\nExecStart=/usr/bin/dockerd -H fd:// --log-driver=journald --exec-opt native.cgroupdriver=cgroupfs --storage-driver=devicemapper --dns=172.18.0.1 --dns-search=." > "${temp_file}"
+echo -e "[Service]\nExecStart=\nExecStart=/usr/bin/dockerd -H fd:// --log-driver=journald --exec-opt native.cgroupdriver=cgroupfs --storage-driver=devicemapper" > "${temp_file}"
 
 systemctl enable docker
 # restart docker if options changed
