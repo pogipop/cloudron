@@ -155,6 +155,8 @@ function startGraphite(callback) {
                 --net-alias graphite \
                 -m 75m \
                 --memory-swap 150m \
+                --dns 172.18.0.1 \
+                --dns-search=. \
                 -p 127.0.0.1:2003:2003 \
                 -p 127.0.0.1:2004:2004 \
                 -p 127.0.0.1:8000:8000 \
@@ -182,6 +184,8 @@ function startMysql(callback) {
                 --net-alias mysql \
                 -m ${memoryLimit}m \
                 --memory-swap ${memoryLimit * 2}m \
+                --dns 172.18.0.1 \
+                --dns-search=. \
                 -v "${dataDir}/mysql:/var/lib/mysql" \
                 -v "${dataDir}/addons/mysql_vars.sh:/etc/mysql/mysql_vars.sh:ro" \
                 --read-only -v /tmp -v /run "${tag}"`;
@@ -206,6 +210,8 @@ function startPostgresql(callback) {
                 --net-alias postgresql \
                 -m ${memoryLimit}m \
                 --memory-swap ${memoryLimit * 2}m \
+                --dns 172.18.0.1 \
+                --dns-search=. \
                 -v "${dataDir}/postgresql:/var/lib/postgresql" \
                 -v "${dataDir}/addons/postgresql_vars.sh:/etc/postgresql/postgresql_vars.sh:ro" \
                 --read-only -v /tmp -v /run "${tag}"`;
@@ -230,6 +236,8 @@ function startMongodb(callback) {
                 --net-alias mongodb \
                 -m ${memoryLimit}m \
                 --memory-swap ${memoryLimit * 2}m \
+                --dns 172.18.0.1 \
+                --dns-search=. \
                 -v "${dataDir}/mongodb:/var/lib/mongodb" \
                 -v "${dataDir}/addons/mongodb_vars.sh:/etc/mongodb_vars.sh:ro" \
                 --read-only -v /tmp -v /run "${tag}"`;
@@ -291,6 +299,8 @@ function startMail(callback) {
                             --net-alias mail \
                             -m ${memoryLimit}m \
                             --memory-swap ${memoryLimit * 2}m \
+                            --dns 172.18.0.1 \
+                            --dns-search=. \
                             --env ENABLE_MDA=${mailConfig.enabled} \
                             -v "${dataDir}/mail:/app/data" \
                             -v "${dataDir}/addons/mail:/etc/mail" \
