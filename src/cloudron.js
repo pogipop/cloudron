@@ -167,14 +167,13 @@ function onConfigured(callback) {
 
     gConfigState.configured = true;
 
-    settings.events.on(settings.DNS_CONFIG_KEY, function () { addDnsRecords(); });
+    settings.events.on(settings.DNS_CONFIG_KEY, function () { configureAdmin(); });
 
     async.series([
         clients.addDefaultClients,
         certificates.ensureFallbackCertificate,
         platform.start, // requires fallback certs for mail container
         ensureDkimKey,
-        addDnsRecords,
         configureAdmin,
         mailer.start,
         cron.initialize // do not send heartbeats until we are "ready"
@@ -256,20 +255,24 @@ function configureAdmin(callback) {
     sysinfo.getPublicIp(function (error, ip) {
         if (error) return callback(error);
 
-        subdomains.waitForDns(config.adminFqdn(), ip, 'A', { interval: 30000, times: 50000 }, function (error) {
+        addDnsRecords(function (error) {
             if (error) return callback(error);
 
-            gConfigState.dns = true;
+            subdomains.waitForDns(config.adminFqdn(), ip, 'A', { interval: 30000, times: 50000 }, function (error) {
+                if (error) return callback(error);
 
-            certificates.ensureCertificate({ location: constants.ADMIN_LOCATION }, function (error, certFilePath, keyFilePath) {
-                if (error) { // currently, this can never happen
-                    debug('Error obtaining certificate. Proceed anyway', error);
-                    return callback();
-                }
+                gConfigState.dns = true;
 
-                gConfigState.tls = true;
+                certificates.ensureCertificate({ location: constants.ADMIN_LOCATION }, function (error, certFilePath, keyFilePath) {
+                    if (error) { // currently, this can never happen
+                        debug('Error obtaining certificate. Proceed anyway', error);
+                        return callback();
+                    }
 
-                nginx.configureAdmin(certFilePath, keyFilePath, constants.NGINX_ADMIN_CONFIG_FILE_NAME, config.adminFqdn(), callback);
+                    gConfigState.tls = true;
+
+                    nginx.configureAdmin(certFilePath, keyFilePath, constants.NGINX_ADMIN_CONFIG_FILE_NAME, config.adminFqdn(), callback);
+                });
             });
         });
     });
