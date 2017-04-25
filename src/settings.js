@@ -108,6 +108,8 @@ var gDefaults = (function () {
     return result;
 })();
 
+var NOOP_CALLBACK = function (error) { if (error) debug(error); };
+
 function SettingsError(reason, errorOrMessage) {
     assert.strictEqual(typeof reason, 'string');
     assert(errorOrMessage instanceof Error || typeof errorOrMessage === 'string' || typeof errorOrMessage === 'undefined');
@@ -513,6 +515,8 @@ function setDnsConfig(dnsConfig, domain, callback) {
                 if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
 
                 exports.events.emit(exports.DNS_CONFIG_KEY, dnsConfig);
+
+                cloudron.configureWebadmin(NOOP_CALLBACK); // do not block
 
                 callback(null);
             });

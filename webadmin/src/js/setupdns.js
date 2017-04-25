@@ -70,7 +70,7 @@ app.controller('SetupDNSController', ['$scope', '$http', 'Client', 'ngTld', func
         $scope.busy = true;
 
         Client.getStatus(function (error, status) {
-            if (!error && status.adminFqdn && status.configState.dns && status.configState.tls) {
+            if (!error && status.adminFqdn && status.webadminStatus.dns && status.webadminStatus.tls) {
                 window.location.href = 'https://' + status.adminFqdn + '/setup.html';
             }
 

@@ -19,12 +19,11 @@ exports = module.exports = {
     retire: retire,
     migrate: migrate,
 
-    getConfigStateSync: getConfigStateSync,
-
     checkDiskSpace: checkDiskSpace,
 
     readDkimPublicKeySync: readDkimPublicKeySync,
-    refreshDNS: refreshDNS
+    refreshDNS: refreshDNS,
+    configureWebadmin: configureWebadmin
 };
 
 var appdb = require('./appdb.js'),
@@ -86,9 +85,8 @@ const BOX_AND_USER_TEMPLATE = {
     }
 };
 
-var gUpdatingDns = false,                // flag for dns update reentrancy
-    gBoxAndUserDetails = null,         // cached cloudron details like region,size...
-    gConfigState = { dns: false, tls: false, configured: false };
+var gBoxAndUserDetails = null,         // cached cloudron details like region,size...
+    gWebadminStatus = { dns: false, tls: false, configuring: false };
 
 function CloudronError(reason, errorOrMessage) {
     assert.strictEqual(typeof reason, 'string');
@@ -122,8 +120,7 @@ CloudronError.SELF_UPGRADE_NOT_SUPPORTED = 'Self upgrade not supported';
 function initialize(callback) {
     assert.strictEqual(typeof callback, 'function');
 
-    gConfigState = { dns: false, tls: false, configured: false };
-    gUpdatingDns = false;
+    gWebadminStatus = { dns: false, tls: false, configuring: false };
     gBoxAndUserDetails = null;
 
     async.series([
@@ -132,7 +129,13 @@ function initialize(callback) {
         installAppBundle,
         configureDefaultServer,
         onDomainConfigured
-    ], callback);
+    ], function (error) {
+        if (error) return callback(error);
+
+        configureWebadmin(NOOP_CALLBACK); // for restore() and caas initial setup. do not block
+
+        callback();
+    });
 }
 
 function uninitialize(callback) {
@@ -150,32 +153,16 @@ function uninitialize(callback) {
 function onDomainConfigured(callback) {
     callback = callback || NOOP_CALLBACK;
 
-    if (!config.fqdn()) {
-        settings.events.once(settings.DNS_CONFIG_KEY, function () { onDomainConfigured(); }); // check again later
-        return callback(null);
-    }
-
-    debug('onDomainConfigured: current state: %j', gConfigState);
-
-    if (gConfigState.configured) return callback(); // re-entracy flag
-
-    gConfigState.configured = true;
-
-    settings.events.on(settings.DNS_CONFIG_KEY, function () { configureAdmin(); });
+    if (!config.fqdn()) return callback();
 
     async.series([
         clients.addDefaultClients,
         certificates.ensureFallbackCertificate,
-        platform.start, // requires fallback certs for mail container
         ensureDkimKey,
-        configureAdmin,
-        mailer.start,
-        cron.initialize // do not send heartbeats until we are "ready"
+        platform.start, // requires fallback certs for mail container
+        mailer.start, // this requires the "mail" container to be running
+        cron.initialize
     ], callback);
-}
-
-function getConfigStateSync() {
-    return gConfigState;
 }
 
 function dnsSetup(dnsConfig, domain, callback) {
@@ -191,7 +178,10 @@ function dnsSetup(dnsConfig, domain, callback) {
 
         config.set('fqdn', domain); // set fqdn only after dns config is valid, otherwise cannot re-setup if we failed
 
-        onDomainConfigured(); // do not block
+        async.series([ // do not block
+            onDomainConfigured,
+            configureWebadmin
+        ], NOOP_CALLBACK);
 
         callback();
     });
@@ -226,33 +216,38 @@ function configureDefaultServer(callback) {
     });
 }
 
-function configureAdmin(callback) {
+function configureWebadmin(callback) {
     callback = callback || NOOP_CALLBACK;
 
-    if (process.env.BOX_ENV === 'test') return callback();
+    debug('configureWebadmin: fqdn:%s status:%j', config.fqdn(), gWebadminStatus);
 
-    debug('configureAdmin');
+    if (process.env.BOX_ENV === 'test' || !config.fqdn() || gWebadminStatus.configuring) return callback();
+
+    gWebadminStatus.configuring = true; // re-entracy guard
+
+    function done(error) {
+        gWebadminStatus.configuring = false;
+        debug('configureWebadmin: done error:%j', error);
+        callback(error);
+    }
 
     sysinfo.getPublicIp(function (error, ip) {
-        if (error) return callback(error);
+        if (error) return done(error);
 
         addDnsRecords(ip, function (error) {
-            if (error) return callback(error);
+            if (error) return done(error);
 
             subdomains.waitForDns(config.adminFqdn(), ip, 'A', { interval: 30000, times: 50000 }, function (error) {
-                if (error) return callback(error);
+                if (error) return done(error);
 
-                gConfigState.dns = true;
+                gWebadminStatus.dns = true;
 
                 certificates.ensureCertificate({ location: constants.ADMIN_LOCATION }, function (error, certFilePath, keyFilePath) {
-                    if (error) { // currently, this can never happen
-                        debug('Error obtaining certificate. Proceed anyway', error);
-                        return callback();
-                    }
+                    if (error) return done(error);
 
-                    gConfigState.tls = true;
+                    gWebadminStatus.tls = true;
 
-                    nginx.configureAdmin(certFilePath, keyFilePath, constants.NGINX_ADMIN_CONFIG_FILE_NAME, config.adminFqdn(), callback);
+                    nginx.configureAdmin(certFilePath, keyFilePath, constants.NGINX_ADMIN_CONFIG_FILE_NAME, config.adminFqdn(), done);
                 });
             });
         });
@@ -338,7 +333,7 @@ function getStatus(callback) {
                 provider: config.provider(),
                 cloudronName: cloudronName,
                 adminFqdn: config.fqdn() ? config.adminFqdn() : null,
-                configState: gConfigState
+                webadminStatus: gWebadminStatus
             });
         });
     });
@@ -442,6 +437,8 @@ function sendHeartbeat() {
 }
 
 function ensureDkimKey(callback) {
+    assert(config.fqdn(), 'fqdn is not set');
+
     var dkimPath = path.join(paths.MAIL_DATA_DIR, 'dkim/' + config.fqdn());
     var dkimPrivateKeyFile = path.join(dkimPath, 'private');
     var dkimPublicKeyFile = path.join(dkimPath, 'public');
@@ -526,12 +523,6 @@ function addDnsRecords(ip, callback) {
 
     if (process.env.BOX_ENV === 'test') return callback();
 
-    if (gUpdatingDns) {
-        debug('addDnsRecords: dns update already in progress');
-        return callback();
-    }
-    gUpdatingDns = true;
-
     var dkimKey = readDkimPublicKeySync();
     if (!dkimKey) return callback(new CloudronError(CloudronError.INTERNAL_ERROR, new Error('Failed to read dkim public key')));
 
@@ -572,8 +563,6 @@ function addDnsRecords(ip, callback) {
             });
         });
     }, function (error) {
-        gUpdatingDns = false;
-
         debug('addDnsRecords: done updating records with error:', error);
 
         callback(error);

@@ -109,8 +109,8 @@ angular.module('Application').controller('MainController', ['$scope', '$route', 
         // 4. local development with gulp develop
 
         if (!status.activated) {
-            console.log('You have on domain, redirecting', status.configState.configured);
-            window.location.href = status.configState.configured ? '/setup.html' : '/setupdns.html';
+            console.log('Not activated yet, redirecting', status);
+            window.location.href = status.adminFqdn ? '/setup.html' : '/setupdns.html';
             return;
         }
 
