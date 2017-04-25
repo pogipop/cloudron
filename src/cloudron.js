@@ -136,8 +136,8 @@ function initialize(callback) {
         certificates.initialize,
         settings.initialize,
         installAppBundle,
-        checkConfigState,
-        configureDefaultServer
+        configureDefaultServer,
+        onDomainConfigured
     ], callback);
 }
 
@@ -155,13 +155,15 @@ function uninitialize(callback) {
     ], callback);
 }
 
-function onConfigured(callback) {
+function onDomainConfigured(callback) {
     callback = callback || NOOP_CALLBACK;
 
-    // if we hit here, the domain has to be set, this is a logic issue if it isn't
-    assert(config.fqdn());
+    if (!config.fqdn()) {
+        settings.events.once(settings.DNS_CONFIG_KEY, function () { onDomainConfigured(); }); // check again later
+        return callback(null);
+    }
 
-    debug('onConfigured: current state: %j', gConfigState);
+    debug('onDomainConfigured: current state: %j', gConfigState);
 
     if (gConfigState.configured) return callback(); // re-entracy flag
 
@@ -184,19 +186,6 @@ function getConfigStateSync() {
     return gConfigState;
 }
 
-function checkConfigState(callback) {
-    callback = callback || NOOP_CALLBACK;
-
-    if (!config.fqdn()) {
-        settings.events.once(settings.DNS_CONFIG_KEY, function () { checkConfigState(); }); // check again later
-        return callback(null);
-    }
-
-    debug('checkConfigState: configured');
-
-    onConfigured(callback);
-}
-
 function dnsSetup(dnsConfig, domain, callback) {
     assert.strictEqual(typeof dnsConfig, 'object');
     assert.strictEqual(typeof domain, 'string');
@@ -210,7 +199,7 @@ function dnsSetup(dnsConfig, domain, callback) {
 
         config.set('fqdn', domain); // set fqdn only after dns config is valid, otherwise cannot re-setup if we failed
 
-        onConfigured(); // do not block
+        onDomainConfigured(); // do not block
 
         callback();
     });
