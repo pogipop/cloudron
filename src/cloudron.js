@@ -255,7 +255,7 @@ function configureAdmin(callback) {
     sysinfo.getPublicIp(function (error, ip) {
         if (error) return callback(error);
 
-        addDnsRecords(function (error) {
+        addDnsRecords(ip, function (error) {
             if (error) return callback(error);
 
             subdomains.waitForDns(config.adminFqdn(), ip, 'A', { interval: 30000, times: 50000 }, function (error) {
@@ -539,7 +539,8 @@ function txtRecordsWithSpf(callback) {
     });
 }
 
-function addDnsRecords(callback) {
+function addDnsRecords(ip, callback) {
+    assert.strictEqual(typeof ip, 'string');
     callback = callback || NOOP_CALLBACK;
 
     if (process.env.BOX_ENV === 'test') return callback();
@@ -553,52 +554,48 @@ function addDnsRecords(callback) {
     var dkimKey = readDkimPublicKeySync();
     if (!dkimKey) return callback(new CloudronError(CloudronError.INTERNAL_ERROR, new Error('Failed to read dkim public key')));
 
-    sysinfo.getPublicIp(function (error, ip) {
-        if (error) return callback(new CloudronError(CloudronError.INTERNAL_ERROR, error));
+    var webadminRecord = { subdomain: constants.ADMIN_LOCATION, type: 'A', values: [ ip ] };
+    // t=s limits the domainkey to this domain and not it's subdomains
+    var dkimRecord = { subdomain: constants.DKIM_SELECTOR + '._domainkey', type: 'TXT', values: [ '"v=DKIM1; t=s; p=' + dkimKey + '"' ] };
 
-        var webadminRecord = { subdomain: constants.ADMIN_LOCATION, type: 'A', values: [ ip ] };
-        // t=s limits the domainkey to this domain and not it's subdomains
-        var dkimRecord = { subdomain: constants.DKIM_SELECTOR + '._domainkey', type: 'TXT', values: [ '"v=DKIM1; t=s; p=' + dkimKey + '"' ] };
+    var records = [ ];
+    if (config.isCustomDomain()) {
+        records.push(webadminRecord);
+        records.push(dkimRecord);
+    } else {
+        // for non-custom domains, we show a noapp.html page
+        var nakedDomainRecord = { subdomain: '', type: 'A', values: [ ip ] };
 
-        var records = [ ];
-        if (config.isCustomDomain()) {
-            records.push(webadminRecord);
-            records.push(dkimRecord);
-        } else {
-            // for non-custom domains, we show a noapp.html page
-            var nakedDomainRecord = { subdomain: '', type: 'A', values: [ ip ] };
+        records.push(nakedDomainRecord);
+        records.push(webadminRecord);
+        records.push(dkimRecord);
+    }
 
-            records.push(nakedDomainRecord);
-            records.push(webadminRecord);
-            records.push(dkimRecord);
-        }
+    debug('addDnsRecords: %j', records);
 
-        debug('addDnsRecords: %j', records);
+    async.retry({ times: 10, interval: 20000 }, function (retryCallback) {
+        txtRecordsWithSpf(function (error, txtRecords) {
+            if (error) return retryCallback(error);
 
-        async.retry({ times: 10, interval: 20000 }, function (retryCallback) {
-            txtRecordsWithSpf(function (error, txtRecords) {
-                if (error) return retryCallback(error);
+            if (txtRecords) records.push({ subdomain: '', type: 'TXT', values: txtRecords });
 
-                if (txtRecords) records.push({ subdomain: '', type: 'TXT', values: txtRecords });
+            debug('addDnsRecords: will update %j', records);
 
-                debug('addDnsRecords: will update %j', records);
+            async.mapSeries(records, function (record, iteratorCallback) {
+                subdomains.upsert(record.subdomain, record.type, record.values, iteratorCallback);
+            }, function (error, changeIds) {
+                if (error) debug('addDnsRecords: failed to update : %s. will retry', error);
+                else debug('addDnsRecords: records %j added with changeIds %j', records, changeIds);
 
-                async.mapSeries(records, function (record, iteratorCallback) {
-                    subdomains.upsert(record.subdomain, record.type, record.values, iteratorCallback);
-                }, function (error, changeIds) {
-                    if (error) debug('addDnsRecords: failed to update : %s. will retry', error);
-                    else debug('addDnsRecords: records %j added with changeIds %j', records, changeIds);
-
-                    retryCallback(error);
-                });
+                retryCallback(error);
             });
-        }, function (error) {
-            gUpdatingDns = false;
-
-            debug('addDnsRecords: done updating records with error:', error);
-
-            callback(error);
         });
+    }, function (error) {
+        gUpdatingDns = false;
+
+        debug('addDnsRecords: done updating records with error:', error);
+
+        callback(error);
     });
 }
 
@@ -909,7 +906,7 @@ function refreshDNS(callback) {
 
         debug('refreshDNS: current ip %s', ip);
 
-        addDnsRecords(function (error) {
+        addDnsRecords(ip, function (error) {
             if (error) return callback(error);
 
             debug('refreshDNS: done for system records');
