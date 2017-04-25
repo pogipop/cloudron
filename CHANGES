@@ -842,4 +842,6 @@
 * Fix issue where Cloudron's with errored apps won't backup when using fs backend
 * Fix DNS check issue where PTR records was read from hosts file
 
+[0.120.1]
+* Fix managed Cloudron backup cleanup
 
