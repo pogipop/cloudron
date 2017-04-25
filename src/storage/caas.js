@@ -179,7 +179,7 @@ function removeBackups(apiConfig, backupIds, callback) {
         });
 
         var s3 = new AWS.S3(credentials);
-        s3.deleteObjects(params, function (error) {
+        s3.deleteObjects(params, function (error, data) {
             if (error) debug('Unable to remove %s. Not fatal.', params.Key, error);
             else debug('removeBackups: Deleted: %j Errors: %j', data.Deleted, data.Errors);
 
