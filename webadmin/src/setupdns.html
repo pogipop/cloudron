@@ -89,12 +89,12 @@
 
                                 <!-- Cloudflare -->
                                 <div class="form-group" ng-class="{ 'has-error': dnsCredentialsForm.cloudflareToken.$dirty && dnsCredentialsForm.cloudflareToken.$invalid }" ng-show="dnsCredentials.provider === 'cloudflare'">
-                                    <input type="text" class="form-control" ng-model="dnsCredentials.cloudflareToken" name="cloudflareToken" placeholder="API Token" ng-minlength="16" ng-maxlength="32" ng-required="dnsCredentials.provider === 'cloudflare'" ng-disabled="dnsCredentials.busy">
+                                    <input type="text" class="form-control" ng-model="dnsCredentials.cloudflareToken" name="cloudflareToken" placeholder="API Token" ng-required="dnsCredentials.provider === 'cloudflare'" ng-disabled="dnsCredentials.busy">
                                 </div>
-                                <div class="form-group" ng-class="{ 'has-error': dnsCredentialsForm.secretAccessKey.$dirty && dnsCredentialsForm.secretAccessKey.$invalid }" ng-show="dnsCredentials.provider === 'cloudflare'">
-                                    <input type="text" class="form-control" ng-model="dnsCredentials.secretAccessKey" name="secretAccessKey" placeholder="Secret Access Key" ng-required="dnsCredentials.provider === 'cloudflare'" ng-disabled="dnsCredentials.busy">
+                                <div class="form-group" ng-class="{ 'has-error': dnsCredentialsForm.cloudflareEmail.$dirty && dnsCredentialsForm.cloudflareEmail.$invalid }" ng-show="dnsCredentials.provider === 'cloudflare'">
+                                    <input type="email" class="form-control" ng-model="dnsCredentials.cloudflareEmail" name="cloudflareEmail" placeholder="Email" ng-required="dnsCredentials.provider === 'cloudflare'" ng-disabled="dnsCredentials.busy">
                                     <br/>
-                                    <span>{{ dnsCredentials.domain || 'The domain' }} must be hosted on <a href="https://aws.amazon.com/route53/?nc2=h_m1" target="_blank">AWS Route53</a>.</span>
+                                    <span>{{ dnsCredentials.domain || 'The domain' }} must be hosted on <a href="https://www.cloudflare.com" target="_blank">Cloudflare</a>.</span>
                                 </div>
 
                                 <!-- Wildcard -->

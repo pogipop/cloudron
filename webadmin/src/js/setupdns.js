@@ -41,6 +41,7 @@ app.controller('SetupDNSController', ['$scope', '$http', 'Client', function ($sc
     $scope.dnsProvider = [
         { name: 'AWS Route53', value: 'route53' },
         { name: 'Digital Ocean', value: 'digitalocean' },
+        { name: 'Cloudflare', value: 'cloudflare' },
         { name: 'Wildcard', value: 'wildcard' },
         { name: 'Manual (not recommended)', value: 'manual' },
         { name: 'No-op (only for development)', value: 'noop' }
@@ -64,9 +65,6 @@ app.controller('SetupDNSController', ['$scope', '$http', 'Client', function ($sc
             domain: $scope.dnsCredentials.domain,
             zoneName: $scope.explicitZone,
             provider: $scope.dnsCredentials.provider,
-            accessKeyId: $scope.dnsCredentials.accessKeyId,
-            secretAccessKey: $scope.dnsCredentials.secretAccessKey,
-            token: $scope.dnsCredentials.digitalOceanToken,
             providerToken: $scope.instanceId
         };
 
@@ -74,6 +72,16 @@ app.controller('SetupDNSController', ['$scope', '$http', 'Client', function ($sc
         if (data.provider === 'wildcard') {
             data.provider = 'manual';
             data.wildcard = true;
+        }
+
+        if (data.provider === 'route53') {
+            data.accessKeyId = $scope.dnsCredentials.accessKeyId;
+            data.secretAccessKey = $scope.dnsCredentials.secretAccessKey;
+        } else if (data.provider === 'digitalocean') {
+            data.token = $scope.dnsCredentials.digitalOceanToken;
+        } else if (data.provider === 'cloudflare') {
+            data.email = $scope.dnsCredentials.cloudflareEmail;
+            data.token = $scope.dnsCredentials.cloudflareToken;
         }
 
         Client.setupDnsConfig(data, function (error) {
