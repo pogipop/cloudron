@@ -73,38 +73,7 @@ fi
 cd /root
 
 echo "==> installer: updating packages"
-if [[ $(docker version --format {{.Client.Version}}) != "17.03.1-ce" ]]; then
-    $curl -sL https://download.docker.com/linux/ubuntu/dists/xenial/pool/stable/amd64/docker-ce_17.03.1~ce-0~ubuntu-xenial_amd64.deb -o /tmp/docker.deb
-    # https://download.docker.com/linux/ubuntu/dists/xenial/stable/binary-amd64/Packages
-    if [[ $(md5sum /tmp/docker.deb | cut -d' ' -f1) != "d6d175900edd243abbdb253990b2fe59" ]]; then
-        echo "docker binary download is corrupt"
-        exit 5
-    fi
-
-    echo "Waiting for all dpkg tasks to finish..."
-    while fuser /var/lib/dpkg/lock; do
-        sleep 1
-    done
-
-    while ! dpkg --force-confold --configure -a; do
-        echo "Failed to fix packages. Retry"
-        sleep 1
-    done
-
-    if dpkg --status docker-engine; then
-        while ! apt-get remove -y --allow-change-held-packages docker-engine; do
-            echo "Failed to remove outdated docker-engine. Retry"
-            sleep 1
-        done
-    fi
-
-    while ! apt install -y /tmp/docker.deb; do
-        echo "Failed to install docker. Retry"
-        sleep 1
-    done
-
-    rm /tmp/docker.deb
-fi
+# add logic to update apt packages here
 
 echo "==> installer: switching the box code"
 rm -rf "${BOX_SRC_DIR}"
