@@ -5,6 +5,7 @@ angular.module('Application').controller('MainController', ['$scope', '$route', 
     $scope.user = Client.getUserInfo();
     $scope.installedApps = Client.getInstalledApps();
     $scope.config = {};
+    $scope.status = {};
     $scope.client = Client;
 
     $scope.update = {
@@ -73,13 +74,22 @@ angular.module('Application').controller('MainController', ['$scope', '$route', 
         Client.getDnsConfig(function (error, result) {
             if (error) return console.error(error);
 
+            var actionScope;
+
             // check if we have aws credentials if selfhosting
             if ($scope.config.isCustomDomain) {
                 if (result.provider === 'route53' && (!result.accessKeyId || !result.secretAccessKey)) {
-                    var actionScope = $scope.$new(true);
+                    actionScope = $scope.$new(true);
                     actionScope.action = '/#/certs';
                     Client.notify('Missing AWS credentials', 'Please provide AWS credentials, click here to add them.', true, 'error', actionScope);
                 }
+            }
+
+            // warn user if dns config is not working
+            if (!$scope.status.webadminStatus.dns) {
+                actionScope = $scope.$new(true);
+                actionScope.action = '/#/certs';
+                Client.notify('Invalid Domain Config', 'Unable to update DNS. Click here to update it.', true, 'error', actionScope);
             }
 
             if (result.provider === 'caas') return;
@@ -119,6 +129,8 @@ angular.module('Application').controller('MainController', ['$scope', '$route', 
             window.location.href = '/setupdns.html';
             return;
         }
+
+        $scope.status = status;
 
         Client.refreshConfig(function (error) {
             if (error) return $scope.error(error);
