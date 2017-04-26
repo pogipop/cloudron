@@ -230,10 +230,14 @@ function verifyDnsConfig(dnsConfig, domain, ip, callback) {
     assert.strictEqual(typeof ip, 'string');
     assert.strictEqual(typeof callback, 'function');
 
+    if (!dnsConfig.token || typeof dnsConfig.token !== 'string') return callback(new SubdomainError(SubdomainError.BAD_FIELD, 'token must be a non-empty string'));
+    if (!dnsConfig.email || typeof dnsConfig.email !== 'string') return callback(new SubdomainError(SubdomainError.BAD_FIELD, 'email must be a non-empty string'));
+
     // Result: dnsConfig object
     var credentials = {
         provider: dnsConfig.provider,
-        token: dnsConfig.token
+        token: dnsConfig.token,
+        email: dnsConfig.email
     };
 
     if (process.env.BOX_ENV === 'test') return callback(null, credentials); // this shouldn't be here
