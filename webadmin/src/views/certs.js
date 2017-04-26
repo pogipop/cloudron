@@ -10,6 +10,7 @@ angular.module('Application').controller('CertsController', ['$scope', '$locatio
     $scope.dnsProvider = [
         { name: 'AWS Route53', value: 'route53' },
         { name: 'Digital Ocean', value: 'digitalocean' },
+        { name: 'Cloudflare', value: 'cloudflare' },
         { name: 'Wildcard', value: 'wildcard' },
         { name: 'Manual (not recommended)', value: 'manual' },
         { name: 'No-op (only for development)', value: 'noop' }
@@ -43,6 +44,8 @@ angular.module('Application').controller('CertsController', ['$scope', '$locatio
         accessKeyId: '',
         secretAccessKey: '',
         digitalOceanToken: '',
+        cloudflareToken: '',
+        cloudflareEmail: '',
         provider: 'route53',
         password: ''
     };
@@ -115,16 +118,23 @@ angular.module('Application').controller('CertsController', ['$scope', '$locatio
         var migrateDomain = $scope.dnsCredentials.customDomain !== $scope.config.fqdn;
 
         var data = {
-            provider: $scope.dnsCredentials.provider,
-            accessKeyId: $scope.dnsCredentials.accessKeyId,
-            secretAccessKey: $scope.dnsCredentials.secretAccessKey,
-            token: $scope.dnsCredentials.digitalOceanToken
+            provider: $scope.dnsCredentials.provider
         };
 
         // special case the wildcard provider
         if (data.provider === 'wildcard') {
             data.provider = 'manual';
             data.wildcard = true;
+        }
+
+        if (data.provider === 'route53') {
+            data.accessKeyId = $scope.dnsCredentials.accessKeyId;
+            data.secretAccessKey = $scope.dnsCredentials.secretAccessKey;
+        } else if (data.provider === 'digitalocean') {
+            data.token = $scope.dnsCredentials.digitalOceanToken;
+        } else if (data.provider === 'cloudflare') {
+            data.token = $scope.dnsCredentials.cloudflareToken;
+            data.email = $scope.dnsCredentials.cloudflareEmail;
         }
 
         var func;
@@ -140,10 +150,6 @@ angular.module('Application').controller('CertsController', ['$scope', '$locatio
                 $scope.dnsCredentials.error = error.message;
             } else {
                 $scope.dnsCredentials.success = true;
-
-                $scope.dnsConfig.accessKeyId = $scope.dnsCredentials.accessKeyId;
-                $scope.dnsConfig.secretAccessKey = $scope.dnsCredentials.secretAccessKey;
-                $scope.dnsConfig.token = $scope.dnsCredentials.digitalOceanToken;
 
                 $('#dnsCredentialsModal').modal('hide');
 
@@ -173,6 +179,8 @@ angular.module('Application').controller('CertsController', ['$scope', '$locatio
         $scope.dnsCredentials.accessKeyId = '';
         $scope.dnsCredentials.secretAccessKey = '';
         $scope.dnsCredentials.digitalOceanToken = '';
+        $scope.dnsCredentials.cloudflareToken = '';
+        $scope.dnsCredentials.cloudflareEmail = '';
         $scope.dnsCredentials.password = '';
 
         $scope.dnsCredentialsForm.$setPristine();
@@ -189,6 +197,8 @@ angular.module('Application').controller('CertsController', ['$scope', '$locatio
         $scope.dnsCredentials.accessKeyId = $scope.dnsConfig.accessKeyId;
         $scope.dnsCredentials.secretAccessKey = $scope.dnsConfig.secretAccessKey;
         $scope.dnsCredentials.digitalOceanToken = $scope.dnsConfig.provider === 'digitalocean' ? $scope.dnsConfig.token : '';
+        $scope.dnsCredentials.cloudflareToken = $scope.dnsConfig.provider === 'cloudflare' ? $scope.dnsConfig.token : '';
+        $scope.dnsCredentials.cloudflareEmail = $scope.dnsConfig.email;
 
         $scope.dnsCredentials.provider = $scope.dnsConfig.provider === 'caas' ? 'route53' : $scope.dnsConfig.provider;
         $scope.dnsCredentials.provider = ($scope.dnsCredentials.provider === 'manual' && $scope.dnsConfig.wildcard) ? 'wildcard' : $scope.dnsCredentials.provider;
