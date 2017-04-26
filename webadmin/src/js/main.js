@@ -76,15 +76,6 @@ angular.module('Application').controller('MainController', ['$scope', '$route', 
 
             var actionScope;
 
-            // check if we have aws credentials if selfhosting
-            if ($scope.config.isCustomDomain) {
-                if (result.provider === 'route53' && (!result.accessKeyId || !result.secretAccessKey)) {
-                    actionScope = $scope.$new(true);
-                    actionScope.action = '/#/certs';
-                    Client.notify('Missing AWS credentials', 'Please provide AWS credentials, click here to add them.', true, 'error', actionScope);
-                }
-            }
-
             // warn user if dns config is not working
             if (!$scope.status.webadminStatus.dns) {
                 actionScope = $scope.$new(true);
