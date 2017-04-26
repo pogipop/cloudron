@@ -76,8 +76,8 @@ angular.module('Application').controller('MainController', ['$scope', '$route', 
 
             var actionScope;
 
-            // warn user if dns config is not working
-            if (!$scope.status.webadminStatus.dns) {
+            // warn user if dns config is not working (the 'configuring' flag detects if configureWebadmin is 'active')
+            if (!$scope.status.webadminStatus.configuring && !$scope.status.webadminStatus.dns) {
                 actionScope = $scope.$new(true);
                 actionScope.action = '/#/certs';
                 Client.notify('Invalid Domain Config', 'Unable to update DNS. Click here to update it.', true, 'error', actionScope);
