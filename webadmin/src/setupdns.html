@@ -87,6 +87,16 @@
                                     <span ng-show="isDomain || explicitZone"><b>{{ explicitZone ? explicitZone : (dnsCredentials.domain | zoneName) }}</b> must be hosted on <a href="https://www.digitalocean.com/community/tutorials/how-to-set-up-a-host-name-with-digitalocean#step-two%E2%80%94change-your-domain-server" target="_blank">DigitalOcean</a>.</span>
                                 </div>
 
+                                <!-- Cloudflare -->
+                                <div class="form-group" ng-class="{ 'has-error': dnsCredentialsForm.cloudflareToken.$dirty && dnsCredentialsForm.cloudflareToken.$invalid }" ng-show="dnsCredentials.provider === 'cloudflare'">
+                                    <input type="text" class="form-control" ng-model="dnsCredentials.cloudflareToken" name="cloudflareToken" placeholder="API Token" ng-minlength="16" ng-maxlength="32" ng-required="dnsCredentials.provider === 'cloudflare'" ng-disabled="dnsCredentials.busy">
+                                </div>
+                                <div class="form-group" ng-class="{ 'has-error': dnsCredentialsForm.secretAccessKey.$dirty && dnsCredentialsForm.secretAccessKey.$invalid }" ng-show="dnsCredentials.provider === 'cloudflare'">
+                                    <input type="text" class="form-control" ng-model="dnsCredentials.secretAccessKey" name="secretAccessKey" placeholder="Secret Access Key" ng-required="dnsCredentials.provider === 'cloudflare'" ng-disabled="dnsCredentials.busy">
+                                    <br/>
+                                    <span>{{ dnsCredentials.domain || 'The domain' }} must be hosted on <a href="https://aws.amazon.com/route53/?nc2=h_m1" target="_blank">AWS Route53</a>.</span>
+                                </div>
+
                                 <!-- Wildcard -->
                                 <p ng-show="dnsCredentials.provider === 'wildcard'">
                                     <span>Setup A records for <b>*.{{ dnsCredentials.domain || 'example.com' }}</b> and <b>{{ dnsCredentials.domain || 'example.com' }}</b> to this server's IP.</span>

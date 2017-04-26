@@ -15,6 +15,9 @@ exports = module.exports = {
 };
 
 var assert = require('assert'),
+    async = require('async'),
+    dns = require('dns'),
+    _ = require('underscore'),
     SubdomainError = require('../subdomains.js').SubdomainError,
     superagent = require('superagent'),
     debug = require('debug')('box:dns/cloudflare'),
@@ -39,7 +42,7 @@ function getZoneByName(dnsConfig, zoneName, callback) {
         if (result.statusCode === 404) return callback(new SubdomainError(SubdomainError.NOT_FOUND, util.format('%s %j', result.statusCode, result.body)));
         if (result.statusCode === 403 || result.statusCode === 401) return callback(new SubdomainError(SubdomainError.ACCESS_DENIED, util.format('%s %j', result.statusCode, result.body)));
         if (result.statusCode !== 200) return callback(new SubdomainError(SubdomainError.EXTERNAL_ERROR, util.format('%s %j', result.statusCode, result.body)));
-        if (result.body.success != true) return callback(new SubdomainError(SubdomainError.EXTERNAL_ERROR, util.format('%s %j', result.statusCode, result.body)));
+        if (result.body.success !== true) return callback(new SubdomainError(SubdomainError.EXTERNAL_ERROR, util.format('%s %j', result.statusCode, result.body)));
 
         if(result.body.result.length) {
             return callback(null, result.body.result[0]);
@@ -70,7 +73,7 @@ function getDNSRecordsByZoneName(dnsConfig, zoneName, subdomain, type, callback)
               if (result.statusCode === 404) return callback(new SubdomainError(SubdomainError.NOT_FOUND, util.format('%s %j', result.statusCode, result.body)));
               if (result.statusCode === 403 || result.statusCode === 401) return callback(new SubdomainError(SubdomainError.ACCESS_DENIED, util.format('%s %j', result.statusCode, result.body)));
               if (result.statusCode !== 200) return callback(new SubdomainError(SubdomainError.EXTERNAL_ERROR, util.format('%s %j', result.statusCode, result.body)));
-              if (result.body.success != true) return callback(new SubdomainError(SubdomainError.EXTERNAL_ERROR, util.format('%s %j', result.statusCode, result.body)));
+              if (result.body.success !== true) return callback(new SubdomainError(SubdomainError.EXTERNAL_ERROR, util.format('%s %j', result.statusCode, result.body)));
               if (result.body.result.length <= 0) {
                   return callback(new SubdomainError(SubdomainError.EXTERNAL_ERROR, util.format('%s %s', result.statusCode, 'No Dns record found')));
               }
@@ -108,8 +111,6 @@ function upsert(dnsConfig, zoneName, subdomain, type, values, callback) {
         var i = 0;
 
         async.eachSeries(values, function (value, callback) {
-            var priority = null;
-
             var data = {
                 type: type,
                 name: fqdn,
@@ -127,12 +128,12 @@ function upsert(dnsConfig, zoneName, subdomain, type, values, callback) {
                     if (result.statusCode === 403 || result.statusCode === 401) return callback(new SubdomainError(SubdomainError.ACCESS_DENIED, util.format('%s %j', result.statusCode, result.body)));
                     if (result.statusCode === 422) return callback(new SubdomainError(SubdomainError.BAD_FIELD, result.body.message));
                     if (result.statusCode !== 201) return callback(new SubdomainError(SubdomainError.EXTERNAL_ERROR, util.format('%s %j', result.statusCode, result.body)));
-                    if (result.body.success != true) return callback(new SubdomainError(SubdomainError.EXTERNAL_ERROR, util.format('%s %j', result.statusCode, result.body)));
+                    if (result.body.success !== true) return callback(new SubdomainError(SubdomainError.EXTERNAL_ERROR, util.format('%s %j', result.statusCode, result.body)));
 
                     return callback(null);
                 });
             } else {
-                superagent.put(CLOUDFLARE_ENDPOINT + '/zones/'+ zoneId + '/dns_records/' + dns_records[i].id)
+                superagent.put(CLOUDFLARE_ENDPOINT + '/zones/'+ zoneId + '/dns_records/' + dnsRecords[i].id)
                   .set('X-Auth-Key',dnsConfig.token)
                   .set('X-Auth-Email',dnsConfig.email)
                   .send(data)
@@ -145,7 +146,7 @@ function upsert(dnsConfig, zoneName, subdomain, type, values, callback) {
                     if (result.statusCode === 403 || result.statusCode === 401) return callback(new SubdomainError(SubdomainError.ACCESS_DENIED, util.format('%s %j', result.statusCode, result.body)));
                     if (result.statusCode === 422) return callback(new SubdomainError(SubdomainError.BAD_FIELD, result.body.message));
                     if (result.statusCode !== 200) return callback(new SubdomainError(SubdomainError.EXTERNAL_ERROR, util.format('%s %j', result.statusCode, result.body)));
-                    if (result.body.success != true) return callback(new SubdomainError(SubdomainError.EXTERNAL_ERROR, util.format('%s %j', result.statusCode, result.body)));
+                    if (result.body.success !== true) return callback(new SubdomainError(SubdomainError.EXTERNAL_ERROR, util.format('%s %j', result.statusCode, result.body)));
 
                     return callback(null);
                 });
@@ -155,7 +156,7 @@ function upsert(dnsConfig, zoneName, subdomain, type, values, callback) {
 
             callback(null, 'unused');
         });
-    })
+    });
 }
 
 // get specific DNS record
@@ -166,7 +167,6 @@ function get(dnsConfig, zoneName, subdomain, type, callback) {
     assert.strictEqual(typeof type, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    var fqdn = subdomain === '' ? zoneName : subdomain + '.' + zoneName;
     // Result: Array of matching DNS records in string format
     getDNSRecordsByZoneName(dnsConfig, zoneName, subdomain, type, function(error, result) {
         if (error) return callback(error);
@@ -186,7 +186,7 @@ function del(dnsConfig, zoneName, subdomain, type, values, callback) {
     assert.strictEqual(typeof type, 'string');
     assert(util.isArray(values));
     assert.strictEqual(typeof callback, 'function');
-    var fqdn = subdomain === '' ? zoneName : subdomain + '.' + zoneName;
+
     getDNSRecordsByZoneName(dnsConfig, zoneName, subdomain, type, function(error, result) {
         if (error) return callback(error);
         if (result.length === 0) return callback(null);
