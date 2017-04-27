@@ -22,6 +22,7 @@ var assert = require('assert'),
     once = require('once'),
     PassThrough = require('stream').PassThrough,
     path = require('path'),
+    S3BlockReadStream = require('s3-block-read-stream'),
     targz = require('./targz.js');
 
 // test only
@@ -125,9 +126,9 @@ function restore(apiConfig, backupId, destination, callback) {
 
         var s3 = new AWS.S3(credentials);
 
-        var s3get = s3.getObject(params).createReadStream();
+        var multipartDownload = new S3BlockReadStream(s3, params, { blockSize: 64 * 1024 * 1024, logCallback: debug });
 
-        s3get.on('error', function (error) {
+        multipartDownload.on('error', function (error) {
             // TODO ENOENT for the mock, fix upstream!
             if (error.code === 'NoSuchKey' || error.code === 'ENOENT') return callback(new BackupsError(BackupsError.NOT_FOUND));
 
@@ -135,7 +136,7 @@ function restore(apiConfig, backupId, destination, callback) {
             callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
         });
 
-        targz.extract(s3get, destination, apiConfig.key || null, callback);
+        targz.extract(multipartDownload, destination, apiConfig.key || null, callback);
     });
 }
 
