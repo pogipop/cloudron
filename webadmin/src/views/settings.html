@@ -179,7 +179,7 @@
 
                         <div class="form-group" ng-class="{ 'has-error': configureBackup.error.prefix }" ng-show="s3like(configureBackup.provider)">
                             <label class="control-label" for="inputConfigureBackupPrefix">Prefix</label>
-                            <input type="text" class="form-control" ng-model="configureBackup.prefix" id="inputConfigureBackupPrefix" name="prefix" ng-disabled="configureBackup.busy" placeholder="Prefix for backup file names" ng-required="s3like(configureBackup.provider)">
+                            <input type="text" class="form-control" ng-model="configureBackup.prefix" id="inputConfigureBackupPrefix" name="prefix" ng-disabled="configureBackup.busy" placeholder="Prefix for backup file names">
                         </div>
 
                         <div class="form-group" ng-class="{ 'has-error': configureBackup.error.region }" ng-show="configureBackup.provider === 's3'">
