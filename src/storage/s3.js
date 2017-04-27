@@ -89,7 +89,8 @@ function backup(apiConfig, backupId, sourceDirectories, callback) {
         };
 
         var s3 = new AWS.S3(credentials);
-        s3.upload(params, function (error) {
+        // s3.upload automatically does a multi-part upload. we set queueSize to 1 to reduce memory usage
+        s3.upload(params, { partSize: 10 * 1024 * 1024, queueSize: 1 }, function (error) {
             if (error) {
                 debug('[%s] backup: s3 upload error.', backupId, error);
                 return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
