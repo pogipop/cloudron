@@ -11,7 +11,6 @@ var assert = require('assert'),
     debug = require('debug')('box:storage/targz'),
     mkdirp = require('mkdirp'),
     progress = require('progress-stream'),
-    spawn = require('child_process').spawn,
     tar = require('tar-fs'),
     zlib = require('zlib');
 
@@ -56,8 +55,7 @@ function create(sourceDirectories, key, outStream, callback) {
     pack.pipe(gzip).pipe(encrypt).pipe(progressStream).pipe(outStream);
 }
 
-function extract(inStream, isOldFormat, destination, key, callback) {
-    assert.strictEqual(typeof isOldFormat, 'boolean');
+function extract(inStream, destination, key, callback) {
     assert.strictEqual(typeof destination, 'string');
     assert.strictEqual(typeof key, 'string');
     assert.strictEqual(typeof callback, 'function');
@@ -65,14 +63,7 @@ function extract(inStream, isOldFormat, destination, key, callback) {
     mkdirp(destination, function (error) {
         if (error) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
 
-        var decrypt;
-
-        if (isOldFormat) {
-            let args = ['aes-256-cbc', '-d', '-pass', 'pass:' + key];
-            decrypt = spawn('openssl', args, { stdio: [ 'pipe', 'pipe', process.stderr ]});
-        } else {
-            decrypt = crypto.createDecipher('aes-256-cbc', key);
-        }
+        var decrypt = crypto.createDecipher('aes-256-cbc', key);
 
         var gunzip = zlib.createGunzip({});
         var progressStream = progress({ time: 10000 }); // display a progress every 10 seconds
@@ -102,11 +93,6 @@ function extract(inStream, isOldFormat, destination, key, callback) {
             callback(null);
         });
 
-        if (isOldFormat) {
-            inStream.pipe(progressStream).pipe(decrypt.stdin);
-            decrypt.stdout.pipe(gunzip).pipe(extract);
-        } else {
-            inStream.pipe(progressStream).pipe(decrypt).pipe(gunzip).pipe(extract);
-        }
+        inStream.pipe(progressStream).pipe(decrypt).pipe(gunzip).pipe(extract);
     });
 }

@@ -110,8 +110,7 @@ function restore(apiConfig, backupId, destination, callback) {
 
     callback = once(callback);
 
-    var isOldFormat = backupId.endsWith('.tar.gz');
-    var backupFilePath = isOldFormat ? path.join(apiConfig.prefix, backupId) : getBackupFilePath(apiConfig, backupId);
+    var backupFilePath = getBackupFilePath(apiConfig, backupId);
 
     debug('[%s] restore: %s -> %s', backupId, backupFilePath, destination);
 
@@ -135,7 +134,7 @@ function restore(apiConfig, backupId, destination, callback) {
             callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
         });
 
-        targz.extract(s3get, isOldFormat, destination, apiConfig.key || '', callback);
+        targz.extract(s3get, destination, apiConfig.key || '', callback);
     });
 }
 
