@@ -54,6 +54,8 @@ function getBackupFilePath(apiConfig, backupId) {
     assert.strictEqual(typeof apiConfig, 'object');
     assert.strictEqual(typeof backupId, 'string');
 
+    const FILE_TYPE = apiConfig.key ? '.tar.gz.enc' : '.tar.gz';
+
     return path.join(apiConfig.prefix, backupId.endsWith(FILE_TYPE) ? backupId : backupId+FILE_TYPE);
 }
 
@@ -92,7 +94,7 @@ function backup(apiConfig, backupId, sourceDirectories, callback) {
             callback(null);
         });
 
-        targz.create(sourceDirectories, apiConfig.key || '', passThrough, callback);
+        targz.create(sourceDirectories, apiConfig.key || null, passThrough, callback);
     });
 }
 
@@ -127,7 +129,7 @@ function restore(apiConfig, backupId, destination, callback) {
             callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
         });
 
-        targz.extract(s3get, destination, apiConfig.key || '', callback);
+        targz.extract(s3get, destination, apiConfig.key || null, callback);
     });
 }
 

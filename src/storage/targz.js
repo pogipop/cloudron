@@ -16,7 +16,7 @@ var assert = require('assert'),
 
 function create(sourceDirectories, key, outStream, callback) {
     assert(Array.isArray(sourceDirectories));
-    assert.strictEqual(typeof key, 'string');
+    assert(key === null || typeof key === 'string');
     assert.strictEqual(typeof callback, 'function');
 
     var pack = tar.pack('/', {
@@ -30,7 +30,6 @@ function create(sourceDirectories, key, outStream, callback) {
     });
 
     var gzip = zlib.createGzip({});
-    var encrypt = crypto.createCipher('aes-256-cbc', key);
     var progressStream = progress({ time: 10000 }); // display a progress every 10 seconds
 
     pack.on('error', function (error) {
@@ -43,27 +42,29 @@ function create(sourceDirectories, key, outStream, callback) {
         callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
     });
 
-    encrypt.on('error', function (error) {
-        debug('backup: encrypt stream error.', error);
-        callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
-    });
-
     progressStream.on('progress', function(progress) {
         debug('backup: %s@%s', Math.round(progress.transferred/1024/1024) + 'M', Math.round(progress.speed/1024/1024) + 'Mbps');
     });
 
-    pack.pipe(gzip).pipe(encrypt).pipe(progressStream).pipe(outStream);
+    if (key !== null) {
+        var encrypt = crypto.createCipher('aes-256-cbc', key);
+        encrypt.on('error', function (error) {
+            debug('backup: encrypt stream error.', error);
+            callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
+        });
+        pack.pipe(gzip).pipe(encrypt).pipe(progressStream).pipe(outStream);
+    } else {
+        pack.pipe(gzip).pipe(progressStream).pipe(outStream);
+    }
 }
 
 function extract(inStream, destination, key, callback) {
     assert.strictEqual(typeof destination, 'string');
-    assert.strictEqual(typeof key, 'string');
+    assert(key === null || typeof key === 'string');
     assert.strictEqual(typeof callback, 'function');
 
     mkdirp(destination, function (error) {
         if (error) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
-
-        var decrypt = crypto.createDecipher('aes-256-cbc', key);
 
         var gunzip = zlib.createGunzip({});
         var progressStream = progress({ time: 10000 }); // display a progress every 10 seconds
@@ -71,11 +72,6 @@ function extract(inStream, destination, key, callback) {
 
         progressStream.on('progress', function(progress) {
             debug('restore: %s@%s', Math.round(progress.transferred/1024/1024) + 'M', Math.round(progress.speed/1024/1024) + 'Mbps');
-        });
-
-        decrypt.on('error', function (error) {
-            debug('restore: decrypt stream error.', error);
-            callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
         });
 
         gunzip.on('error', function (error) {
@@ -93,6 +89,15 @@ function extract(inStream, destination, key, callback) {
             callback(null);
         });
 
-        inStream.pipe(progressStream).pipe(decrypt).pipe(gunzip).pipe(extract);
+        if (key !== null) {
+            var decrypt = crypto.createDecipher('aes-256-cbc', key);
+            decrypt.on('error', function (error) {
+                debug('restore: decrypt stream error.', error);
+                callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
+            });
+            inStream.pipe(progressStream).pipe(decrypt).pipe(gunzip).pipe(extract);
+        } else {
+            inStream.pipe(progressStream).pipe(gunzip).pipe(extract);
+        }
     });
 }
