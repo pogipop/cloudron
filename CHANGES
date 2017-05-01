@@ -852,4 +852,5 @@
 * Drop the '.enc' extension for non-encrypted backups
 * Do not encrypt backups when the backup key is empty
 * Do a multipart S3 download for slow internet connections
+* Support naked domains as external location
 
