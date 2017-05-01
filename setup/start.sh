@@ -211,13 +211,13 @@ if [[ -n "${arg_restore_url}" ]]; then
     openssl_password=""
     if [[ "${arg_restore_url}" == *.tar.gz.enc || -n "${arg_restore_key}" ]]; then
         echo "==> Downloading encrypted backup: ${arg_restore_url} and key: ${arg_restore_key}"
-        openssl_password="-nosalt -pass 'pass:${arg_restore_key}'"
+        openssl_password=(-nosalt -pass "pass:${arg_restore_key}")
     else
         echo "==> Downloading backup: ${arg_restore_url}"
     fi
 
     while true; do
-        if $curl -L "${arg_restore_url}" | openssl aes-256-cbc -d ${openssl_password} \
+        if $curl -L "${arg_restore_url}" | openssl aes-256-cbc -d "${openssl_password[@]}" \
         | tar -zxf - --overwrite --transform="s,^box/\?,boxdata/," --transform="s,^mail/\?,platformdata/mail/," --show-transformed-names -C "${HOME_DIR}"; then break; fi
         echo "Failed to download data, trying again"
     done
