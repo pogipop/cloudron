@@ -20,13 +20,15 @@ function create(sourceDirectories, key, outStream, callback) {
     assert.strictEqual(typeof callback, 'function');
 
     var pack = tar.pack('/', {
+        dereference: false, // pack the symlink and not what it points to
         entries: sourceDirectories.map(function (m) { return m.source; }),
         map: function(header) {
             sourceDirectories.forEach(function (m) {
                 header.name = header.name.replace(new RegExp('^' + m.source + '(/?)'), m.destination + '$1');
             });
             return header;
-        }
+        },
+        strict: false // do not error for unknown types (skip fifo, char/block devices)
     });
 
     var gzip = zlib.createGzip({});
