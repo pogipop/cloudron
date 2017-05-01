@@ -217,7 +217,7 @@ if [[ -n "${arg_restore_url}" ]]; then
     fi
 
     while true; do
-        if $curl -L "${arg_restore_url}" | openssl aes-256-cbc -d "${openssl_password}" \
+        if $curl -L "${arg_restore_url}" | openssl aes-256-cbc -d ${openssl_password} \
         | tar -zxf - --overwrite --transform="s,^box/\?,boxdata/," --transform="s,^mail/\?,platformdata/mail/," --show-transformed-names -C "${HOME_DIR}"; then break; fi
         echo "Failed to download data, trying again"
     done
