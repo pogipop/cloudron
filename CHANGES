@@ -845,3 +845,11 @@
 [0.120.1]
 * Fix managed Cloudron backup cleanup
 
+[0.130.0]
+* Use Cloudron DNS server only for containers created by Cloudron
+* Make Cloudron always start even if DNS credentials are invalid
+* Show warning if DNS configuration is not valid
+* Drop the '.enc' extension for non-encrypted backups
+* Do not encrypt backups when the backup key is empty
+* Do a multipart S3 download for slow internet connections
+
