@@ -68,7 +68,7 @@ function backup(apiConfig, backupId, sourceDirectories, callback) {
             callback(null);
         });
 
-        targz.create(sourceDirectories, apiConfig.key || '', fileStream, callback);
+        targz.create(sourceDirectories, apiConfig.key || null, fileStream, callback);
     });
 }
 
@@ -80,8 +80,7 @@ function restore(apiConfig, backupId, destination, callback) {
 
     callback = once(callback);
 
-    var isOldFormat = backupId.endsWith('.tar.gz');
-    var sourceFilePath = isOldFormat ? path.join(apiConfig.backupFolder || FALLBACK_BACKUP_FOLDER, backupId) : getBackupFilePath(apiConfig, backupId);
+    var sourceFilePath = getBackupFilePath(apiConfig, backupId);
 
     debug('[%s] restore: %s -> %s', backupId, sourceFilePath, destination);
 
@@ -94,7 +93,7 @@ function restore(apiConfig, backupId, destination, callback) {
         callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
     });
 
-    targz.extract(fileStream, isOldFormat, destination, apiConfig.key || '', callback);
+    targz.extract(fileStream, destination, apiConfig.key || null, callback);
 }
 
 function copyBackup(apiConfig, oldBackupId, newBackupId, callback) {
