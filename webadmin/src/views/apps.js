@@ -42,7 +42,7 @@ angular.module('Application').controller('AppsController', ['$scope', '$location
         },
 
         isAltDomainValid: function () {
-            return ngTld.tldExists($scope.appConfigure.location);
+            return ngTld.isValid($scope.appConfigure.location);
         },
 
         isAltDomainSubdomain: function () {

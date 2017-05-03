@@ -178,14 +178,14 @@
                             </div>
                             <input type="password" class="form-control" ng-model="appConfigure.password" id="appConfigurePasswordInput" name="password" required>
                         </div>
-                        <input class="ng-hide" type="submit" ng-disabled="appConfigureForm.$invalid || busy || (appConfigure.accessRestrictionOption === 'groups' && !appConfigure.isAccessRestrictionValid())"/>
+                        <input class="ng-hide" type="submit" ng-disabled="appConfigureForm.$invalid || appConfigure.busy || (appConfigure.accessRestrictionOption === 'groups' && !appConfigure.isAccessRestrictionValid()) || (appConfigure.usingAltDomain && !appConfigure.isAltDomainValid())"/>
                     </form>
                 </fieldset>
             </div>
             <div class="modal-footer ">
                 <button type="button" class="btn btn-default pull-left" ng-click="restartApp(appConfigure.app)" ng-disabled="restartAppBusy"><i class="fa fa-circle-o-notch fa-spin" ng-show="restartAppBusy"></i> Restart</button>
                 <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-success" ng-click="doConfigure()" ng-disabled="appConfigureForm.$invalid || appConfigure.busy || (appConfigure.accessRestrictionOption === 'groups' && !appConfigure.isAccessRestrictionValid()) || !appConfigure.isAltDomainValid()"><i class="fa fa-circle-o-notch fa-spin" ng-show="appConfigure.busy"></i> Save</button>
+                <button type="button" class="btn btn-success" ng-click="doConfigure()" ng-disabled="appConfigureForm.$invalid || appConfigure.busy || (appConfigure.accessRestrictionOption === 'groups' && !appConfigure.isAccessRestrictionValid()) || (appConfigure.usingAltDomain && !appConfigure.isAltDomainValid())"><i class="fa fa-circle-o-notch fa-spin" ng-show="appConfigure.busy"></i> Save</button>
             </div>
         </div>
     </div>

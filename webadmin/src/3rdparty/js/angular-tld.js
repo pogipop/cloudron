@@ -8,9 +8,9 @@ angular.module('ngTld', [])
     .directive('checkTld', checkTld);
 
 function ngTld() {
-    function tldExists(path) {
+    function isValid(path) {
         // https://github.com/oncletom/tld.js/issues/58
-        return (path.slice(-1) !== '.') && path === tld.getDomain(path);
+        return (path.slice(-1) !== '.') && tld.isValid(path);
     }
 
     function isSubdomain(path) {
@@ -22,7 +22,7 @@ function ngTld() {
     }
 
     return {
-        tldExists: tldExists,
+        isValid: isValid,
         isSubdomain: isSubdomain,
         isNakedDomain: isNakedDomain
     };
