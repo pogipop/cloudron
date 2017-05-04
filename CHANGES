@@ -856,3 +856,6 @@
 
 [0.130.1]
 * Fix app configure dialog regression
+
+[0.130.2]
+* Fix app configure dialog regression and dns setup screen
