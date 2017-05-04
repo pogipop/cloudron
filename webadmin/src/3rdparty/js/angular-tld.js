@@ -13,6 +13,10 @@ function ngTld() {
         return (path.slice(-1) !== '.') && tld.isValid(path);
     }
 
+    function tldExists(path) {
+        return (path.slice(-1) !== '.') && path === tld.getDomain(path);
+    }
+
     function isSubdomain(path) {
         return (path.slice(-1) !== '.') && !!tld.getDomain(path) && path !== tld.getDomain(path);
     }
@@ -23,6 +27,7 @@ function ngTld() {
 
     return {
         isValid: isValid,
+        tldExists: tldExists,
         isSubdomain: isSubdomain,
         isNakedDomain: isNakedDomain
     };
