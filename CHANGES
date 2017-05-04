@@ -854,3 +854,5 @@
 * Do a multipart S3 download for slow internet connections
 * Support naked domains as external location
 
+[0.130.1]
+* Fix app configure dialog regression
