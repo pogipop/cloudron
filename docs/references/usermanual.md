@@ -160,8 +160,8 @@ domain. For this, open the app's configure dialog and choose `External Domain` i
 
 <img src="/docs/img/app_external_domain.png" class="shadow">
 
-This dialog will suggest you to add a `CNAME` record. Once you setup a CNAME record with your DNS provider,
-the app will be accessible from that external domain.
+This dialog will suggest you to add a `CNAME` record (for subdomains) or an `A` record (for naked domains).
+Once you setup a record with your DNS provider, the app will be accessible from that external domain.
 
 ## Entire Cloudron on a custom domain
 
