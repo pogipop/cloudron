@@ -153,6 +153,8 @@ function verifyPassword(req, res, next) {
         if (error && error.reason === UserError.NOT_FOUND) return next(new HttpError(403, 'Password incorrect'));
         if (error) return next(new HttpError(500, error));
 
+        req.body.password = '<redacted>'; // this will prevent logs from displaying plain text password
+
         next();
     });
 }
