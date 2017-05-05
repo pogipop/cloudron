@@ -23,16 +23,20 @@ app.controller('SetupController', ['$scope', '$http', 'Client', function ($scope
 
     $scope.activateCloudron = function () {
         $scope.busy = true;
+        $scope.error = null;
 
         Client.createAdmin($scope.account.username, $scope.account.password, $scope.account.email, $scope.account.displayName, $scope.setupToken, function (error) {
-            if (error && error.statusCode === 403) {
+            if (error && error.statusCode === 400) {
                 $scope.busy = false;
-                $scope.error = $scope.provider === 'ami' ? 'Wrong instance id' : 'Wrong setup token';
+                $scope.error = { username: error.message };
+                $scope.account.username = '';
+                $scope.setupForm.username.$setPristine();
+                setTimeout(function () { $('#inputUsername').focus(); }, 200);
                 return;
             } else if (error) {
                 $scope.busy = false;
                 console.error('Internal error', error);
-                $scope.error = error;
+                $scope.error = { generic: error.message };
                 return;
             }
 

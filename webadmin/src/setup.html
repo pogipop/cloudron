@@ -72,7 +72,8 @@
                                 <div ng-show="account.requireEmail" class="form-group" ng-class="{ 'has-error': setupForm.email.$dirty && setupForm.email.$invalid }">
                                     <input type="email" class="form-control" ng-model="account.email" id="inputEmail" name="email" placeholder="Email" required autocomplete="off" tooltip-trigger="focus" uib-tooltip="This email address is local to your Cloudron and used for notifications and password reset.">
                                 </div>
-                                <div class="form-group" ng-class="{ 'has-error': setupForm.username.$dirty && setupForm.username.$invalid }">
+                                <div class="form-group" ng-class="{ 'has-error': (setupForm.username.$dirty && setupForm.username.$invalid) || (!setupForm.username.$dirty && error.username) }">
+                                    <p ng-show="!setupForm.username.$dirty && error.username">{{ error.username }}</p>
                                     <input type="text" class="form-control" ng-model="account.username" id="inputUsername" name="username" placeholder="Username" ng-maxlength="512" ng-minlength="3" required autocomplete="off">
                                 </div>
                                 <div class="form-group" ng-class="{ 'has-error': setupForm.password.$dirty && setupForm.password.$invalid }">
