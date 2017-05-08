@@ -482,6 +482,7 @@ to a new location as follows (`DATA_DIR` is the location to move your data):
     systemctl stop cloudron.target
     systemctl stop docker
     DATA_DIR="/var/data"
+    mkdir -p "${DATA_DIR}"
     mv /home/yellowtent/appsdata "${DATA_DIR}"
     ln -s "${DATA_DIR}/appsdata" /home/yellowtent/appsdata
     mv /home/yellowtent/platformdata "${DATA_DIR}"
