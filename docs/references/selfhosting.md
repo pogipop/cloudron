@@ -95,7 +95,8 @@ Initially a self-signed one is provided, which can be overwritten later in the a
 This may be useful for non-public installations.
 
 
-* `--data-dir` is the path where Cloudron will store platform and application data.
+* `--data-dir` is the path where Cloudron will store platform and application data. Note: data
+directory must be an `ext4` filesystem.
 
 Optional arguments used for update and restore:
 
@@ -470,6 +471,8 @@ The goal of rate limits is to prevent password brute force attacks.
 
 If you are installing a brand new Cloudron, you can configure the data directory
 that Cloudron uses by passing the `--data-dir` option to `cloudron-setup`.
+
+Note: data directory must be an `ext4` filesystem.
 
 ```
 ./cloudron-setup --provider <digitalocean|ec2|generic|scaleway> --data-dir /var/cloudrondata
