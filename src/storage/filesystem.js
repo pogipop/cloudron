@@ -24,13 +24,14 @@ var assert = require('assert'),
     targz = require('./targz.js');
 
 var FALLBACK_BACKUP_FOLDER = '/var/backups';
-var FILE_TYPE = '.tar.gz.enc';
 var BACKUP_USER = config.TEST ? process.env.USER : 'yellowtent';
 
 // internal only
 function getBackupFilePath(apiConfig, backupId) {
     assert.strictEqual(typeof apiConfig, 'object');
     assert.strictEqual(typeof backupId, 'string');
+
+    const FILE_TYPE = apiConfig.key ? '.tar.gz.enc' : '.tar.gz';
 
     return path.join(apiConfig.backupFolder || FALLBACK_BACKUP_FOLDER, backupId.endsWith(FILE_TYPE) ? backupId : backupId+FILE_TYPE);
 }
