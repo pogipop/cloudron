@@ -100,7 +100,7 @@ function initialize(callback) {
             var info = { scope: token.scope };
 
             user.get(token.identifier, function (error, user) {
-                if (error && error.reason === DatabaseError.NOT_FOUND) return callback(null, false);
+                if (error && error.reason === UserError.NOT_FOUND) return callback(null, false);
                 if (error) return callback(error);
 
                 callback(null, user, info);
