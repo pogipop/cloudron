@@ -859,3 +859,10 @@
 
 [0.130.2]
 * Fix app configure dialog regression and dns setup screen
+
+[0.130.3]
+* Show error message if setup fails due to reserved username
+* (security) Do not print password in the logs in the configure route
+* Fix restore of unencrypted backups
+* Fix bug where FS backups have incorrect extension for unencrypted backups
+
