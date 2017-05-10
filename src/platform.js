@@ -84,14 +84,14 @@ function stop(callback) {
 }
 
 function emitPlatformReady() {
-    // give 30 seconds for the platform to "settle". For example, mysql might still be initing the
+    // give some time for the platform to "settle". For example, mysql might still be initing the
     // database dir and we cannot call service scripts until that's done.
-    // TODO: make this smarter to not wait for 30secs for the crash-restart case
+    // TODO: make this smarter to not wait for 15secs for the crash-restart case
     gPlatformReadyTimer = setTimeout(function () {
         debug('emitting platform ready');
         gPlatformReadyTimer = null;
         taskmanager.resumeTasks();
-    }, 30000);
+    }, 15000);
 }
 
 function removeOldImages(callback) {
@@ -177,7 +177,7 @@ function startMysql(callback) {
 
     shell.execSync('startMysql', cmd);
 
-    callback();
+    setTimeout(callback, 5000);
 }
 
 function startPostgresql(callback) {
@@ -203,7 +203,7 @@ function startPostgresql(callback) {
 
     shell.execSync('startPostgresql', cmd);
 
-    callback();
+    setTimeout(callback, 5000);
 }
 
 function startMongodb(callback) {
@@ -229,7 +229,7 @@ function startMongodb(callback) {
 
     shell.execSync('startMongodb', cmd);
 
-    callback();
+    setTimeout(callback, 5000);
 }
 
 function createMailConfig(callback) {
