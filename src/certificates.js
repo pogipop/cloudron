@@ -267,40 +267,9 @@ function validateCertificate(cert, key, fqdn) {
     if (!cert && key) return new Error('missing cert');
     if (cert && !key) return new Error('missing key');
 
-    function matchesDomain(domain) {
-        if (typeof domain !== 'string') return false;
-        if (domain === fqdn) return true;
-        if (domain.indexOf('*') === 0 && domain.slice(2) === fqdn.slice(fqdn.indexOf('.') + 1)) return true;
-
-        return false;
-    }
-
-    // get commonName (http://stackoverflow.com/questions/17353122/parsing-strings-crt-files)
-    // openssl 1.1.0e prints whitespace around = signs, the one on ubuntu, version 1.0.2g does not
-    var result = safe.child_process.execSync('openssl x509 -noout -subject', { encoding: 'utf8', input: cert });
+    var result = safe.child_process.execSync('openssl x509 -noout -checkhost "' + fqdn + '"', { encoding: 'utf8', input: cert });
     if (!result) return new Error(util.format('could not get cert subject'));
-
-    var cnPart = result.replace('\n', '').slice('subject='.length).split(',').map(function (p) { return p.trim(); }).filter(function (p) { return p.startsWith('CN'); })[0];
-    if (!cnPart) return new Error(util.format('could not get CN from subject'));
-
-    var commonName = cnPart.split('=')[1];
-    if (!commonName) return new Error(util.format('CN in subject is malformed'));
-
-    commonName = commonName.trim();
-
-    debug('validateCertificate: detected commonName as %s', commonName);
-
-    // https://github.com/drwetter/testssl.sh/pull/383
-    var cmd = `openssl x509 -noout -text | grep -A3 "Subject Alternative Name" | \
-               grep "DNS:" | \
-               sed -e "s/DNS://g" -e "s/ //g" -e "s/,/ /g" -e "s/othername:<unsupported>//g"`;
-    result = safe.child_process.execSync(cmd, { encoding: 'utf8', input: cert });
-    var altNames = result ? [ ] : result.trim().split(' '); // might fail if cert has no SAN
-    debug('validateCertificate: detected altNames as %j', altNames);
-
-    // check altNames
-    var domains = altNames.concat(commonName);
-    if (!domains.some(matchesDomain)) return new Error(util.format('cert is not valid for this domain. Expecting %s in %j', fqdn, domains));
+    if (result.indexOf('does match certificate') === -1) return new Error(util.format('cert is not valid for this domain. Expecting %s in %j'));
 
     // http://httpd.apache.org/docs/2.0/ssl/ssl_faq.html#verify
     var certModulus = safe.child_process.execSync('openssl x509 -noout -modulus', { encoding: 'utf8', input: cert });
