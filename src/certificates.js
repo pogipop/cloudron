@@ -263,13 +263,34 @@ function validateCertificate(cert, key, fqdn) {
     assert(key === null || typeof key === 'string');
     assert.strictEqual(typeof fqdn, 'string');
 
+    function matchesDomain(domain) {
+        if (typeof domain !== 'string') return false;
+        if (domain === fqdn) return true;
+        if (domain.indexOf('*') === 0 && domain.slice(2) === fqdn.slice(fqdn.indexOf('.') + 1)) return true;
+
+        return false;
+    }
+
     if (cert === null && key === null) return null;
     if (!cert && key) return new Error('missing cert');
     if (cert && !key) return new Error('missing key');
 
     var result = safe.child_process.execSync('openssl x509 -noout -checkhost "' + fqdn + '"', { encoding: 'utf8', input: cert });
     if (!result) return new Error(util.format('could not get cert subject'));
-    if (result.indexOf('does match certificate') === -1) return new Error(util.format('cert is not valid for this domain. Expecting %s in %j'));
+
+    // if no match, check alt names
+    if (result.indexOf('does match certificate') === -1) {
+        // https://github.com/drwetter/testssl.sh/pull/383
+        var cmd = `openssl x509 -noout -text | grep -A3 "Subject Alternative Name" | \
+                   grep "DNS:" | \
+                   sed -e "s/DNS://g" -e "s/ //g" -e "s/,/ /g" -e "s/othername:<unsupported>//g"`;
+        result = safe.child_process.execSync(cmd, { encoding: 'utf8', input: cert });
+        var altNames = result ? [ ] : result.trim().split(' '); // might fail if cert has no SAN
+        debug('validateCertificate: detected altNames as %j', altNames);
+
+        // check altNames
+        if (!altNames.some(matchesDomain)) return new Error(util.format('cert is not valid for this domain. Expecting %s in %j', fqdn, altNames));
+    }
 
     // http://httpd.apache.org/docs/2.0/ssl/ssl_faq.html#verify
     var certModulus = safe.child_process.execSync('openssl x509 -noout -modulus', { encoding: 'utf8', input: cert });
