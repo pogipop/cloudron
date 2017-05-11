@@ -577,6 +577,17 @@ angular.module('Application').controller('SettingsController', ['$scope', '$loca
             $scope.expectedDnsRecords = result.dns;
             $scope.outboundPort25 = result.outboundPort25;
 
+            // open the record details if they are not correct
+            for (var type in $scope.expectedDnsRecords) {
+                if (!$scope.expectedDnsRecords[type].status) {
+                    $('#collapse_dns_' + type).collapse('show');
+                }
+            }
+
+            if (!$scope.outboundPort25.status) {
+                $('#collapse_dns_port').collapse('show');
+            }
+
             callback(null);
         });
     }
