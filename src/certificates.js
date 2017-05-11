@@ -277,9 +277,17 @@ function validateCertificate(cert, key, fqdn) {
 
     // get commonName (http://stackoverflow.com/questions/17353122/parsing-strings-crt-files)
     // openssl 1.1.0e prints whitespace around = signs, the one on ubuntu, version 1.0.2g does not
-    var result = safe.child_process.execSync('openssl x509 -noout -subject | sed -r "s|.*CN.*=(.*)|\\1|; s|/[^/]*=.*$||"', { encoding: 'utf8', input: cert });
-    if (!result) return new Error(util.format('could not get CN'));
-    var commonName = result.trim();
+    var result = safe.child_process.execSync('openssl x509 -noout -subject', { encoding: 'utf8', input: cert });
+    if (!result) return new Error(util.format('could not get cert subject'));
+
+    var cnPart = result.replace('\n', '').slice('subject='.length).split(',').map(function (p) { return p.trim(); }).filter(function (p) { return p.startsWith('CN'); })[0];
+    if (!cnPart) return new Error(util.format('could not get CN from subject'));
+
+    var commonName = cnPart.split('=')[1];
+    if (!commonName) return new Error(util.format('CN in subject is malformed'));
+
+    commonName = commonName.trim();
+
     debug('validateCertificate: detected commonName as %s', commonName);
 
     // https://github.com/drwetter/testssl.sh/pull/383
