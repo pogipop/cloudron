@@ -276,7 +276,8 @@ function validateCertificate(cert, key, fqdn) {
     }
 
     // get commonName (http://stackoverflow.com/questions/17353122/parsing-strings-crt-files)
-    var result = safe.child_process.execSync('openssl x509 -noout -subject | sed -r "s|.*CN=(.*)|\\1|; s|/[^/]*=.*$||"', { encoding: 'utf8', input: cert });
+    // openssl 1.1.0e prints whitespace around = signs, the one on ubuntu, version 1.0.2g does not
+    var result = safe.child_process.execSync('openssl x509 -noout -subject | sed -r "s|.*CN.*=(.*)|\\1|; s|/[^/]*=.*$||"', { encoding: 'utf8', input: cert });
     if (!result) return new Error(util.format('could not get CN'));
     var commonName = result.trim();
     debug('validateCertificate: detected commonName as %s', commonName);
