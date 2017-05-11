@@ -179,7 +179,7 @@ Initiate a build using ```cloudron build```:
 $ cloudron build
 Building io.cloudron.tutorial@0.0.1
 
-Appstore login:
+cloudron.io login:
 Email: ramakrishnan.girish@gmail.com         # cloudron.io account
 Password:                                    # Enter password
 Login successful.
@@ -627,14 +627,28 @@ export JAVA_OPTS="-XX:MaxRAM=${LIMIT}M"
 java ${JAVA_OPTS} -jar ...
 ```
 
-# Beta Testing
+# App Store
 
-## Metadata
+## Requirements
 
-Publishing to the Cloudron Store requires apps to have meta data specified in the `CloudronManifest.json`.
+The Cloudron Store is a mechanism to share your app with others who use Cloudron. Currently, to ensure that
+apps are maintained, secure and well supported there are some restrictions imposed on apps submitted to
+the Cloudron Store. See [#292](https://git.cloudron.io/cloudron/box/issues/292) and [#327](https://git.cloudron.io/cloudron/box/issues/327) for an in-depth discussion.
 
-The `cloudron` tool will notify if any such information is missing, prior to uploading.
-See more information for each field [here](/references/manifest.html).
+The following criteria must be met before submitting an app for review:
+
+* You must be willing to relocate your app packaging code to the [Cloudron Git Repo](https://git.cloudron.io/cloudron/).
+
+* Contributed apps must have browser tests. You can see the various [app repos](https://git.cloudron.io/cloudron/) to get an idea on how to write these tests. The Cloudron team can help you write the tests.
+
+* For all practical purposes, you are the maintainer of the app and Cloudron team will not commit to the repo
+  directly. Any changes will be submitted as Merge Requests.
+
+* You agree that the Cloudron team can take over the responsibility of progressing the app further if you become unresponsive (48 hours), lose interest, lack time etc. Please send us an email if your priorities change.
+
+* You must sign the [Cloudron CLA](https://cla.cloudron.io/).
+
+As a token of our appreciation, 3rd party app authors can use the Cloudron for personal or business use for free.
 
 ## Upload for Testing
 
@@ -651,7 +665,7 @@ Cloudron to check if the icon, description and other details appear correctly.
 Other Cloudron users can install your app on their Cloudron's using
 `cloudron install --appstore-id <appid@version>`.
 
-# Publishing
+## Publishing
 
 Once you are satisfied with the beta testing, you can submit it for review.
 
@@ -661,9 +675,7 @@ Once you are satisfied with the beta testing, you can submit it for review.
 
 The cloudron.io team will review the app and publish the app to the store.
 
-# Updating the app
-
-## Versioning
+## Versioning and Updates
 
 To create an update for an app, simply bump up the [semver version](/references/manifest.html#version) field in
 the manifest and publish a new version to the store.
