@@ -866,3 +866,8 @@
 * Fix restore of unencrypted backups
 * Fix bug where FS backups have incorrect extension for unencrypted backups
 
+[0.140.0]
+* HTTP2 support
+* Condense the dns checks in the settings view
+* Document new app store submission guidelines
+
