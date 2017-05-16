@@ -95,3 +95,8 @@ fi
 # Disable bind for good measure (on online.net, kimsufi servers these are pre-installed and conflicts with unbound)
 systemctl stop bind9 || true
 systemctl disable bind9 || true
+
+# on ovh images dnsmasq seems to run by default
+systemctl stop dnsmasq || true
+systemctl disable dnsmasq || true
+
