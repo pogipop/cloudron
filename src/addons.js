@@ -20,6 +20,7 @@ var appdb = require('./appdb.js'),
     async = require('async'),
     clients = require('./clients.js'),
     config = require('./config.js'),
+    constants = require('./constants.js'),
     ClientsError = clients.ClientsError,
     debug = require('debug')('box:addons'),
     docker = require('./docker.js'),
@@ -632,12 +633,23 @@ function setupRedis(app, options, callback) {
 
     if (!safe.fs.mkdirSync(redisDataDir) && safe.error.code !== 'EEXIST') return callback(new Error('Error creating redis data dir:' + safe.error));
 
+    // Compute redis memory limit based on app's memory limit (this is arbitrary)
+    var memoryLimit = app.memoryLimit || app.manifest.memoryLimit || 0;
+
+    if (memoryLimit === -1) { // unrestricted
+        memoryLimit = 0;
+    } else if (memoryLimit === 0 || memoryLimit < constants.DEFAULT_MEMORY_LIMIT) { // ensure we never go below minimum (in case we change the default)
+        memoryLimit = 150 * 1024 * 1024; // 150m
+    } else {
+        memoryLimit = 300 * 1024 * 1024; // 300m
+    }
+
     const tag = infra.images.redis.tag, redisName = 'redis-' + app.id;
     const cmd = `docker run --restart=always -d --name=${redisName} \
                 --net cloudron \
                 --net-alias ${redisName} \
-                -m 100m \
-                --memory-swap 150m \
+                -m ${memoryLimit/2} \
+                --memory-swap ${memoryLimit} \
                 --dns 172.18.0.1 \
                 --dns-search=. \
                 -v ${redisVarsFile}:/etc/redis/redis_vars.sh:ro \
