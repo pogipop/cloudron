@@ -53,7 +53,8 @@ angular.module('Application').controller('SettingsController', ['$scope', '$loca
     $scope.storageProvider = [
         { name: 'Amazon S3', value: 's3' },
         { name: 'Filesystem', value: 'filesystem' },
-        { name: 'Minio', value: 'minio' }
+        { name: 'Minio', value: 'minio' },
+        { name: 'No-op (Only for testing)', value: 'noop' }
     ];
 
     $scope.retentionTimes = [

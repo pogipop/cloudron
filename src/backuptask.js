@@ -15,6 +15,7 @@ var assert = require('assert'),
     database = require('./database.js'),
     debug = require('debug')('box:backuptask'),
     filesystem = require('./storage/filesystem.js'),
+    noop = require('./storage/noop.js'),
     path = require('path'),
     paths = require('./paths.js'),
     s3 = require('./storage/s3.js'),
@@ -27,6 +28,7 @@ function api(provider) {
         case 's3': return s3;
         case 'filesystem': return filesystem;
         case 'minio': return s3;
+        case 'noop': return noop;
         default: return null;
     }
 }

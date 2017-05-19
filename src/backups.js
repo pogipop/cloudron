@@ -35,6 +35,7 @@ var addons = require('./addons.js'),
     filesystem = require('./storage/filesystem.js'),
     locker = require('./locker.js'),
     mailer = require('./mailer.js'),
+    noop = require('./storage/noop.js'),
     path = require('path'),
     paths = require('./paths.js'),
     progress = require('./progress.js'),
@@ -90,6 +91,7 @@ function api(provider) {
         case 's3': return s3;
         case 'filesystem': return filesystem;
         case 'minio': return s3;
+        case 'noop': return noop;
         default: return null;
     }
 }
