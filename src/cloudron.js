@@ -708,7 +708,7 @@ function doUpdate(boxUpdateInfo, callback) {
             version: boxUpdateInfo.version
         };
 
-        debug('updating box %s %j', boxUpdateInfo.sourceTarballUrl, data);
+        debug('updating box %s %j', boxUpdateInfo.sourceTarballUrl, _.omit(data, 'tlsCert', 'tlsKey', 'token', 'appstore', 'caas'));
 
         progress.set(progress.UPDATE, 5, 'Downloading and extracting new version');
 
