@@ -25,7 +25,6 @@ readonly sourceTarballUrl="${1}"
 readonly data="${2}"
 
 echo "Updating Cloudron with ${sourceTarballUrl}"
-echo "${data}"
 
 # TODO: pre-download tarball
 box_src_tmp_dir=$(mktemp -dt box-src-XXXXXX)
