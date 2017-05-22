@@ -83,7 +83,7 @@ FROM cloudron/base:0.10.0
 
 ADD server.js /app/code/server.js
 
-CMD [ "/usr/local/node-4.4.7/bin/node", "/app/code/server.js" ]
+CMD [ "/usr/local/node-4.7.3/bin/node", "/app/code/server.js" ]
 ```
 
 The `FROM` command specifies that we want to start off with Cloudron's [base image](/references/baseimage.html).
@@ -94,7 +94,7 @@ The `ADD` command copies the source code of the app into the directory `/app/cod
 about the `/app/code` directory and it is merely a convention we use to store the application code.
 
 The `CMD` command specifies how to run the server. The base image already contains many different versions of
-node.js. We use Node 4.4.7 here.
+node.js. We use Node 4.7.3 here.
 
 This Dockerfile can be built and run locally as:
 ```
