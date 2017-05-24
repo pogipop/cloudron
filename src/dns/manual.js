@@ -10,6 +10,7 @@ exports = module.exports = {
 
 var assert = require('assert'),
     async = require('async'),
+    constants = require('../constants.js'),
     debug = require('debug')('box:dns/manual'),
     dns = require('native-dns'),
     SubdomainError = require('../subdomains.js').SubdomainError,
@@ -55,7 +56,7 @@ function verifyDnsConfig(dnsConfig, domain, ip, callback) {
     assert.strictEqual(typeof ip, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    var adminDomain = 'my.' + domain;
+    var adminDomain = constants.ADMIN_LOCATION + '.' + domain;
 
     dns.resolveNs(domain, function (error, nameservers) {
         if (error || !nameservers) return callback(new SubdomainError(SubdomainError.BAD_FIELD, 'Unable to get nameservers'));
