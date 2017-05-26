@@ -71,7 +71,7 @@ var assert = require('assert'),
     CronJob = require('cron').CronJob,
     DatabaseError = require('./databaseerror.js'),
     debug = require('debug')('box:settings'),
-    dns = require('native-dns'),
+    dig = require('./dig.js'),
     cloudron = require('./cloudron.js'),
     CloudronError = cloudron.CloudronError,
     moment = require('moment-timezone'),
@@ -151,6 +151,8 @@ function uninitialize(callback) {
 function getEmailStatus(callback) {
     assert.strictEqual(typeof callback, 'function');
 
+    var digOptions = { server: '127.0.0.1', port: 53, timeout: 5000 };
+
     var records = {}, outboundPort25 = {};
 
     var dkimKey = cloudron.readDkimPublicKeySync();
@@ -160,17 +162,17 @@ function getEmailStatus(callback) {
         records.dkim = {
             domain: constants.DKIM_SELECTOR + '._domainkey.' + config.fqdn(),
             type: 'TXT',
-            expected: 'v=DKIM1; t=s; p=' + dkimKey,
+            expected: '"v=DKIM1; t=s; p=' + dkimKey + '"',
             value: null,
             status: false
         };
 
-        dns.resolve(records.dkim.domain, records.dkim.type, function (error, txtRecords) {
+        dig.resolve(records.dkim.domain, records.dkim.type, digOptions, function (error, txtRecords) {
             if (error && error.code === 'ENOTFOUND') return callback(null);    // not setup
             if (error) return callback(error);
 
             if (Array.isArray(txtRecords) && txtRecords.length !== 0) {
-                records.dkim.value = txtRecords[0].join(' ');
+                records.dkim.value = txtRecords[0];
                 records.dkim.status = (records.dkim.value === records.dkim.expected);
             }
 
@@ -183,12 +185,12 @@ function getEmailStatus(callback) {
             domain: config.fqdn(),
             type: 'TXT',
             value: null,
-            expected: 'v=spf1 a:' + config.adminFqdn() + ' ~all',
+            expected: '"v=spf1 a:' + config.adminFqdn() + ' ~all"',
             status: false
         };
 
         // https://agari.zendesk.com/hc/en-us/articles/202952749-How-long-can-my-SPF-record-be-
-        dns.resolve(records.spf.domain, records.spf.type, function (error, txtRecords) {
+        dig.resolve(records.spf.domain, records.spf.type, digOptions, function (error, txtRecords) {
             if (error && error.code === 'ENOTFOUND') return callback(null);    // not setup
             if (error) return callback(error);
 
@@ -196,8 +198,8 @@ function getEmailStatus(callback) {
 
             var i;
             for (i = 0; i < txtRecords.length; i++) {
-                if (txtRecords[i].join('').indexOf('v=spf1 ') !== 0) continue; // not SPF
-                records.spf.value = txtRecords[i].join('');
+                if (txtRecords[i].indexOf('"v=spf1 ') !== 0) continue; // not SPF
+                records.spf.value = txtRecords[i];
                 records.spf.status = records.spf.value.indexOf(' a:' + config.adminFqdn()) !== -1;
                 break;
             }
@@ -205,7 +207,7 @@ function getEmailStatus(callback) {
             if (records.spf.status) {
                 records.spf.expected = records.spf.value;
             } else if (i !== txtRecords.length) {
-                records.spf.expected = 'v=spf1 a:' + config.adminFqdn() + ' ' + records.spf.value.slice('v=spf1 '.length);
+                records.spf.expected = '"v=spf1 a:' + config.adminFqdn() + ' ' + records.spf.value.slice('"v=spf1 '.length);
             }
 
             callback();
@@ -217,16 +219,16 @@ function getEmailStatus(callback) {
             domain: config.fqdn(),
             type: 'MX',
             value: null,
-            expected: '10 ' + config.mailFqdn(),
+            expected: '10 ' + config.mailFqdn() + '.',
             status: false
         };
 
-        dns.resolve(records.mx.domain, records.mx.type, function (error, mxRecords) {
+        dig.resolve(records.mx.domain, records.mx.type, digOptions, function (error, mxRecords) {
             if (error && error.code === 'ENOTFOUND') return callback(null);    // not setup
             if (error) return callback(error);
 
             if (Array.isArray(mxRecords) && mxRecords.length !== 0) {
-                records.mx.status = mxRecords.length == 1 && mxRecords[0].exchange === config.mailFqdn();
+                records.mx.status = mxRecords.length == 1 && mxRecords[0].exchange === (config.mailFqdn() + '.');
                 records.mx.value = mxRecords.map(function (r) { return r.priority + ' ' + r.exchange; }).join(' ');
             }
 
@@ -239,16 +241,16 @@ function getEmailStatus(callback) {
             domain: '_dmarc.' + config.fqdn(),
             type: 'TXT',
             value: null,
-            expected: 'v=DMARC1; p=reject; pct=100',
+            expected: '"v=DMARC1; p=reject; pct=100"',
             status: false
         };
 
-        dns.resolve(records.dmarc.domain, records.dmarc.type, function (error, txtRecords) {
+        dig.resolve(records.dmarc.domain, records.dmarc.type, digOptions, function (error, txtRecords) {
             if (error && error.code === 'ENOTFOUND') return callback(null);    // not setup
             if (error) return callback(error);
 
             if (Array.isArray(txtRecords) && txtRecords.length !== 0) {
-                records.dmarc.value = txtRecords[0].join(' ');
+                records.dmarc.value = txtRecords[0];
                 records.dmarc.status = (records.dmarc.value === records.dmarc.expected);
             }
 
@@ -261,7 +263,7 @@ function getEmailStatus(callback) {
             domain: null,
             type: 'PTR',
             value: null,
-            expected: config.mailFqdn(),
+            expected: config.mailFqdn() + '.',
             status: false
         };
 
@@ -270,13 +272,13 @@ function getEmailStatus(callback) {
 
             records.ptr.domain = ip.split('.').reverse().join('.') + '.in-addr.arpa';
 
-            dns.reverse(ip, function (error, ptrRecords) {
+            dig.resolve(ip, 'PTR', digOptions, function (error, ptrRecords) {
                 if (error && error.code === 'ENOTFOUND') return callback(null);    // not setup
                 if (error) return callback(error);
 
                 if (Array.isArray(ptrRecords) && ptrRecords.length !== 0) {
                     records.ptr.value = ptrRecords.join(' ');
-                    records.ptr.status = ptrRecords.some(function (v) { return v === config.mailFqdn(); });
+                    records.ptr.status = ptrRecords.some(function (v) { return v === records.ptr.expected; });
                 }
 
                 return callback();
@@ -333,11 +335,6 @@ function getEmailStatus(callback) {
             });
         };
     }
-
-    dns.platform.timeout = 5000; // hack so that each query finish in 5 seconds. this applies to _each_ ns
-    if (config.CLOUDRON) dns.platform.name_servers = [ { address: '127.0.0.1', port: 53 } ];
-    dns.platform.attempts = 1;
-    dns.platform.hosts.purge(); // otherwise, reverse() uses /etc/hosts
 
     async.parallel([
         ignoreError('mx', checkMx),

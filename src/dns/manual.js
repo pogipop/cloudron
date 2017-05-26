@@ -12,7 +12,8 @@ var assert = require('assert'),
     async = require('async'),
     constants = require('../constants.js'),
     debug = require('debug')('box:dns/manual'),
-    dns = require('native-dns'),
+    dig = require('../dig.js'),
+    dns = require('dns'),
     SubdomainError = require('../subdomains.js').SubdomainError,
     util = require('util');
 
@@ -69,42 +70,30 @@ function verifyDnsConfig(dnsConfig, domain, ip, callback) {
                 }
 
                 async.every(nsIps, function (nsIp, everyIpCallback) {
-                    var req = dns.Request({
-                        question: dns.Question({ name: adminDomain, type: 'A' }),
-                        server: { address: nsIp },
-                        timeout: 5000
-                    });
+                    dig.resolve(adminDomain, 'A', { server: nsIp, timeout: 5000 }, function (error, answer) {
+                        if (error && error.code === 'ETIMEDOUT') {
+                            debug('nameserver %s (%s) timed out when trying to resolve %s', nameserver, nsIp, adminDomain);
+                            return everyIpCallback(null, true); // should be ok if dns server is down
+                        }
 
-                    req.on('timeout', function () {
-                        debug('nameserver %s (%s) timed out when trying to resolve %s', nameserver, nsIp, adminDomain);
-                        return everyIpCallback(null, true); // should be ok if dns server is down
-                    });
-
-                    req.on('message', function (error, message) {
                         if (error) {
                             debug('nameserver %s (%s) returned error trying to resolve %s: %s', nameserver, nsIp, adminDomain, error);
                             return everyIpCallback(null, false);
                         }
 
-                        var answer = message.answer;
-
                         if (!answer || answer.length === 0) {
-                            debug('bad answer from nameserver %s (%s) resolving %s (%s): %j', nameserver, nsIp, adminDomain, 'A', message);
+                            debug('bad answer from nameserver %s (%s) resolving %s (%s): %j', nameserver, nsIp, adminDomain, 'A', answer);
                             return everyIpCallback(null, false);
                         }
 
                         debug('verifyDnsConfig: ns: %s (%s), name:%s Actual:%j Expecting:%s', nameserver, nsIp, adminDomain, answer, ip);
 
-                        var match = answer.some(function (a) {
-                            return a.address === ip;
-                        });
+                        var match = answer.some(function (a) { return a === ip; });
 
                         if (match) return everyIpCallback(null, true); // done!
 
                         everyIpCallback(null, false);
                     });
-
-                    req.send();
                 }, everyNsCallback);
             });
         }, function (error, success) {

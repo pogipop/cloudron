@@ -5,7 +5,8 @@ exports = module.exports = waitForDns;
 var assert = require('assert'),
     async = require('async'),
     debug = require('debug')('box:dns/waitfordns'),
-    dns = require('native-dns'),
+    dig = require('../dig.js'),
+    dns = require('dns'),
     SubdomainError = require('../subdomains.js').SubdomainError,
     tld = require('tldjs'),
     util = require('util');
@@ -25,45 +26,36 @@ function isChangeSynced(domain, value, type, nameserver, callback) {
         }
 
         async.every(nsIps, function (nsIp, iteratorCallback) {
-            var req = dns.Request({
-                question: dns.Question({ name: domain, type: type }),
-                server: { address: nsIp },
-                timeout: 5000
-            });
+            dig.resolve(domain, type, { server: nsIp, timeout: 5000 }, function (error, answer) {
+                if (error && error.code === 'ETIMEDOUT') {
+                    debug('nameserver %s (%s) timed out when trying to resolve %s', nameserver, nsIp, domain);
+                    return iteratorCallback(null, true); // should be ok if dns server is down
+                }
 
-            req.on('timeout', function () {
-                debug('nameserver %s (%s) timed out when trying to resolve %s', nameserver, nsIp, domain);
-                return iteratorCallback(null, true); // should be ok if dns server is down
-            });
-
-            req.on('message', function (error, message) {
                 if (error) {
                     debug('nameserver %s (%s) returned error trying to resolve %s: %s', nameserver, nsIp, domain, error);
                     return iteratorCallback(null, false);
                 }
 
-                var answer = message.answer;
-
                 if (!answer || answer.length === 0) {
-                    debug('bad answer from nameserver %s (%s) resolving %s (%s): %j', nameserver, nsIp, domain, type, message);
+                    debug('bad answer from nameserver %s (%s) resolving %s (%s): %j', nameserver, nsIp, domain, type, answer);
                     return iteratorCallback(null, false);
                 }
 
                 debug('isChangeSynced: ns: %s (%s), name:%s Actual:%j Expecting:%s', nameserver, nsIp, domain, answer, value);
 
                 var match = answer.some(function (a) {
-                    return ((type === 'A' && value.test(a.address)) ||
-                            (type === 'CNAME' && value.test(a.data)) ||
-                            (type === 'TXT' && value.test(a.data.join(''))));
+                    return ((type === 'A' && value.test(a)) ||
+                            (type === 'CNAME' && value.test(a)) ||
+                            (type === 'TXT' && value.test(a)));
                 });
 
                 if (match) return iteratorCallback(null, true); // done!
 
                 iteratorCallback(null, false);
             });
-
-            req.send();
         }, callback);
+
     });
  }
 
