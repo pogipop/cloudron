@@ -13,6 +13,7 @@ exports = module.exports = {
     getPaged: getPaged,
     get: get,
     del: del,
+    update: update,
     getByAppIdPaged: getByAppIdPaged,
 
     _clear: clear,
@@ -21,6 +22,8 @@ exports = module.exports = {
     BACKUP_TYPE_BOX: 'box',
 
     BACKUP_STATE_NORMAL: 'normal', // should rename to created to avoid listing in UI?
+    BACKUP_STATE_CREATING: 'creating',
+    BACKUP_STATE_ERROR: 'error'
 };
 
 function postProcess(result) {
@@ -96,6 +99,26 @@ function add(backup, callback) {
         [ backup.id, backup.version, backup.type, creationTime, exports.BACKUP_STATE_NORMAL, backup.dependsOn.join(','), restoreConfig ],
         function (error) {
         if (error && error.code === 'ER_DUP_ENTRY') return callback(new DatabaseError(DatabaseError.ALREADY_EXISTS));
+        if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
+
+        callback(null);
+    });
+}
+
+function update(id, backup, callback) {
+    assert.strictEqual(typeof id, 'string');
+    assert.strictEqual(typeof backup, 'object');
+    assert.strictEqual(typeof callback, 'function');
+
+    var fields = [ ], values = [ ];
+    for (var p in backup) {
+        fields.push(p + ' = ?');
+        values.push(backup[p]);
+    }
+    values.push(id);
+
+    database.query('UPDATE backups SET ' + fields.join(', ') + ' WHERE id = ?', values, function (error) {
+        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new DatabaseError(DatabaseError.NOT_FOUND));
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
 
         callback(null);

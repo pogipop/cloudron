@@ -203,18 +203,22 @@ function backupBoxWithAppBackupIds(appBackupIds, prefix, callback) {
         shell.exec('backupBox', '/bin/bash', mysqlDumpArgs, function (error) {
             if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
 
-            runBackupTask(backupId, null /* appId */, function (error) {
-                if (error) return callback(error);
+            backupdb.add({ id: backupId, version: config.version(), type: backupdb.BACKUP_TYPE_BOX, dependsOn: appBackupIds, restoreConfig: null }, function (error) {
+                if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
 
-                debug('backupBoxWithAppBackupIds: success');
+                runBackupTask(backupId, null /* appId */, function (backupTaskError) {
+                    const state = backupTaskError ? backupdb.BACKUP_STATE_ERROR : backupdb.BACKUP_STATE_NORMAL;
+                    debug('backupBoxWithAppBackupIds: %s', state);
 
-                backupdb.add({ id: backupId, version: config.version(), type: backupdb.BACKUP_TYPE_BOX, dependsOn: appBackupIds, restoreConfig: null }, function (error) {
-                    if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
+                    backupdb.update(backupId, { state: state }, function (error) {
+                        if (backupTaskError) return callback(backupTaskError);
+                        if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
 
-                    // FIXME this is only needed for caas, hopefully we can remove that in the future
-                    api(backupConfig.provider).backupDone(backupId, appBackupIds, function (error) {
-                        if (error) return callback(error);
-                        callback(null, backupId);
+                        // FIXME this is only needed for caas, hopefully we can remove that in the future
+                        api(backupConfig.provider).backupDone(backupId, appBackupIds, function (error) {
+                            if (error) return callback(error);
+                            callback(null, backupId);
+                        });
                     });
                 });
             });
@@ -250,15 +254,20 @@ function createNewAppBackup(app, manifest, prefix, callback) {
     addons.backupAddons(app, manifest.addons, function (error) {
         if (error) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
 
-        runBackupTask(backupId, app.id, function (error) {
-            if (error) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
+        backupdb.add({ id: backupId, version: manifest.version, type: backupdb.BACKUP_TYPE_APP, dependsOn: [ ], restoreConfig: restoreConfig }, function (error) {
+            if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
 
-            debugApp(app, 'createNewAppBackup: %s done', backupId);
+            runBackupTask(backupId, app.id, function (backupTaskError) {
+                const state = backupTaskError ? backupdb.BACKUP_STATE_ERROR : backupdb.BACKUP_STATE_NORMAL;
 
-            backupdb.add({ id: backupId, version: manifest.version, type: backupdb.BACKUP_TYPE_APP, dependsOn: [ ], restoreConfig: restoreConfig }, function (error) {
-                if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
+                debugApp(app, 'createNewAppBackup: %s done with state %s', backupId, state);
 
-                callback(null, backupId);
+                backupdb.update(backupId, { state: state }, function (error) {
+                    if (backupTaskError) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, backupTaskError.message));
+                    if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
+
+                    callback(null, backupId);
+                });
             });
         });
     });
