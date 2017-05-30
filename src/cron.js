@@ -92,7 +92,7 @@ function recreateJobs(tz) {
 
     if (gBackupJob) gBackupJob.stop();
     gBackupJob = new CronJob({
-        cronTime: '00 00 */4 * * *', // every 4 hours. backups.ensureBackup() will only trigger a backup once per day
+        cronTime: '00 00 */6 * * *', // every 6 hours. backups.ensureBackup() will only trigger a backup once per day
         onTick: backups.ensureBackup.bind(null, AUDIT_SOURCE, NOOP_CALLBACK),
         start: true,
         timeZone: tz
@@ -135,7 +135,7 @@ function recreateJobs(tz) {
 
     if (gCleanupBackupsJob) gCleanupBackupsJob.stop();
     gCleanupBackupsJob = new CronJob({
-        cronTime: '00 00 */4 * * *', // every 4 hours
+        cronTime: '00 45 */6 * * *', // every 6 hours. try not to overlap with ensureBackup job
         onTick: backups.cleanup,
         start: true,
         timeZone: tz
