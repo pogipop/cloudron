@@ -173,7 +173,13 @@ function runBackupTask(backupId, appId, callback) {
     assert(appId === null || typeof backupId === 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    shell.sudo('backup' + (appId ? 'App' : 'Box'), [ NODE_CMD, BACKUPTASK_CMD, backupId ].concat(appId ? [ appId ] : [ ]), function (error) {
+    var killTimerId = null;
+
+    var cp = shell.sudo('backup' + (appId ? 'App' : 'Box'), [ NODE_CMD, BACKUPTASK_CMD, backupId ].concat(appId ? [ appId ] : [ ]), function (error) {
+
+        clearTimeout(killTimerId);
+        cp = null;
+
         if (error && (error.code === null /* signal */ || (error.code !== 0 && error.code !== 50))) { // backuptask crashed
             return callback(new BackupsError(BackupsError.INTERNAL_ERROR, 'backuptask crashed'));
         } else if (error && error.code === 50) { // exited with error
@@ -183,6 +189,11 @@ function runBackupTask(backupId, appId, callback) {
 
         callback();
     });
+
+    killTimerId = setTimeout(function () {
+        debug('runBackupTask: backup task taking too long. killing');
+        cp.kill();
+    }, 4 * 60 * 60 * 1000); // 4 hours
 }
 
 function backupBoxWithAppBackupIds(appBackupIds, prefix, callback) {
