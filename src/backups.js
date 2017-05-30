@@ -5,7 +5,7 @@ exports = module.exports = {
 
     testConfig: testConfig,
 
-    getPaged: getPaged,
+    getByStatePaged: getByStatePaged,
     getByAppIdPaged: getByAppIdPaged,
 
     getRestoreConfig: getRestoreConfig,
@@ -106,12 +106,13 @@ function testConfig(backupConfig, callback) {
     api(backupConfig.provider).testConfig(backupConfig, callback);
 }
 
-function getPaged(page, perPage, callback) {
+function getByStatePaged(state, page, perPage, callback) {
+    assert.strictEqual(typeof state, 'string');
     assert(typeof page === 'number' && page > 0);
     assert(typeof perPage === 'number' && perPage > 0);
     assert.strictEqual(typeof callback, 'function');
 
-    backupdb.getPaged(backupdb.BACKUP_TYPE_BOX, page, perPage, function (error, results) {
+    backupdb.getByTypeAndStatePaged(backupdb.BACKUP_TYPE_BOX, state, page, perPage, function (error, results) {
         if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
 
         callback(null, results);
@@ -400,7 +401,7 @@ function ensureBackup(auditSource, callback) {
 
     debug('ensureBackup: %j', auditSource);
 
-    getPaged(1, 1, function (error, backups) {
+    getByStatePaged(backupdb.BACKUP_STATE_NORMAL, 1, 1, function (error, backups) {
         if (error) {
             debug('Unable to list backups', error);
             return callback(error); // no point trying to backup if appstore is down
@@ -448,7 +449,7 @@ function cleanupAppBackups(backupConfig, referencedAppBackups, callback) {
             referencedAppBackups.push(app.lastBackupId);
         });
 
-        backupdb.getPaged(backupdb.BACKUP_TYPE_APP, 1, 1000, function (error, appBackups) {
+        backupdb.getByTypePaged(backupdb.BACKUP_TYPE_APP, 1, 1000, function (error, appBackups) {
             if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
 
             async.eachSeries(appBackups, function iterator(backup, iteratorDone) {
@@ -486,7 +487,7 @@ function cleanupBoxBackups(backupConfig, callback) {
     const now = new Date();
     var referencedAppBackups = [];
 
-    getPaged(1, 1000, function (error, boxBackups) {
+    backupdb.getByTypePaged(backupdb.BACKUP_TYPE_BOX, 1, 1000, function (error, boxBackups) {
         if (error) return callback(error);
 
         if (boxBackups.length === 0) return callback(null, []);

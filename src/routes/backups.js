@@ -5,7 +5,8 @@ exports = module.exports = {
     create: create
 };
 
-var backups = require('../backups.js'),
+var backupdb = require('../backupdb.js'),
+    backups = require('../backups.js'),
     BackupsError = require('../backups.js').BackupsError,
     HttpError = require('connect-lastmile').HttpError,
     HttpSuccess = require('connect-lastmile').HttpSuccess;
@@ -22,7 +23,7 @@ function get(req, res, next) {
     var perPage = typeof req.query.per_page !== 'undefined'? parseInt(req.query.per_page) : 25;
     if (!perPage || perPage < 0) return next(new HttpError(400, 'per_page query param has to be a postive number'));
 
-    backups.getPaged(page, perPage, function (error, result) {
+    backups.getByStatePaged(backupdb.BACKUP_STATE_NORMAL, page, perPage, function (error, result) {
         if (error && error.reason === BackupsError.EXTERNAL_ERROR) return next(new HttpError(503, error.message));
         if (error) return next(new HttpError(500, error));
 

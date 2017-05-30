@@ -10,7 +10,10 @@ var BACKUPS_FIELDS = [ 'id', 'creationTime', 'version', 'type', 'dependsOn', 'st
 
 exports = module.exports = {
     add: add,
-    getPaged: getPaged,
+
+    getByTypeAndStatePaged: getByTypeAndStatePaged,
+    getByTypePaged: getByTypePaged,
+
     get: get,
     del: del,
     update: update,
@@ -35,14 +38,31 @@ function postProcess(result) {
     delete result.restoreConfigJson;
 }
 
-function getPaged(type, page, perPage, callback) {
+function getByTypeAndStatePaged(type, state, page, perPage, callback) {
     assert(type === exports.BACKUP_TYPE_APP || type === exports.BACKUP_TYPE_BOX);
+    assert.strictEqual(typeof state, 'string');
     assert(typeof page === 'number' && page > 0);
     assert(typeof perPage === 'number' && perPage > 0);
     assert.strictEqual(typeof callback, 'function');
 
     database.query('SELECT ' + BACKUPS_FIELDS + ' FROM backups WHERE type = ? AND state = ? ORDER BY creationTime DESC LIMIT ?,?',
-        [ type, exports.BACKUP_STATE_NORMAL, (page-1)*perPage, perPage ], function (error, results) {
+        [ type, state, (page-1)*perPage, perPage ], function (error, results) {
+        if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
+
+        results.forEach(function (result) { postProcess(result); });
+
+        callback(null, results);
+    });
+}
+
+function getByTypePaged(type, page, perPage, callback) {
+    assert(type === exports.BACKUP_TYPE_APP || type === exports.BACKUP_TYPE_BOX);
+    assert(typeof page === 'number' && page > 0);
+    assert(typeof perPage === 'number' && perPage > 0);
+    assert.strictEqual(typeof callback, 'function');
+
+    database.query('SELECT ' + BACKUPS_FIELDS + ' FROM backups WHERE type = ? ORDER BY creationTime DESC LIMIT ?,?',
+        [ type, (page-1)*perPage, perPage ], function (error, results) {
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
 
         results.forEach(function (result) { postProcess(result); });

@@ -103,7 +103,7 @@ describe('backups', function () {
                 backups.cleanup(function (error) {
                     expect(error).to.not.be.ok();
 
-                    backups.getPaged(1, 1000, function (error, result) {
+                    backupdb.getByTypePaged(backupdb.BACKUP_TYPE_BOX, 1, 1000, function (error, result) {
                         expect(error).to.not.be.ok();
                         expect(result.length).to.equal(1);
                         expect(result[0].id).to.equal(BACKUP_1.id);
@@ -124,7 +124,7 @@ describe('backups', function () {
             backups.cleanup(function (error) {
                 expect(error).to.not.be.ok();
 
-                backups.getPaged(1, 1000, function (error, result) {
+                backupdb.getByTypePaged(backupdb.BACKUP_TYPE_BOX, 1, 1000, function (error, result) {
                     expect(error).to.not.be.ok();
                     expect(result.length).to.equal(1);
                     expect(result[0].id).to.equal(BACKUP_1.id);
@@ -149,7 +149,7 @@ describe('backups', function () {
                     backups.cleanup(function (error) {
                         expect(error).to.not.be.ok();
 
-                        backupdb.getPaged(backupdb.BACKUP_TYPE_APP, 1, 1000, function (error, result) {
+                        backupdb.getByTypePaged(backupdb.BACKUP_TYPE_APP, 1, 1000, function (error, result) {
                             expect(error).to.not.be.ok();
                             expect(result.length).to.equal(2);
 
@@ -198,7 +198,7 @@ describe('backups', function () {
                         backups.cleanup(function (error) {
                             expect(error).to.not.be.ok();
 
-                            backupdb.getPaged(backupdb.BACKUP_TYPE_APP, 1, 1000, function (error, result) {
+                            backupdb.getByTypePaged(backupdb.BACKUP_TYPE_APP, 1, 1000, function (error, result) {
                                 expect(error).to.not.be.ok();
                                 expect(result.length).to.equal(3);
 
