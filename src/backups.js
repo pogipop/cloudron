@@ -449,6 +449,7 @@ function cleanupAppBackups(backupConfig, referencedAppBackups, callback) {
             referencedAppBackups.push(app.lastBackupId);
         });
 
+        // we clean app backups of any state because the ones to keep are determined by the box cleanup code
         backupdb.getByTypePaged(backupdb.BACKUP_TYPE_APP, 1, 1000, function (error, appBackups) {
             if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
 
@@ -492,9 +493,17 @@ function cleanupBoxBackups(backupConfig, callback) {
 
         if (boxBackups.length === 0) return callback(null, []);
 
-        // ensure we keep at least the last backup to ensure we have one if backup creation failed for some reason
-        referencedAppBackups = boxBackups[0].dependsOn;
-        boxBackups = boxBackups.slice(1);
+        // search for the first valid backup
+        var i;
+        for (i = 0; i < boxBackups.length; i++) {
+            if (boxBackups[i].state === backupdb.BACKUP_STATE_NORMAL) break;
+        }
+
+        // keep the first valid backup
+        if (i !== boxBackups.length) {
+            referencedAppBackups = boxBackups[i].dependsOn;
+            boxBackups.splice(i, 1);
+        }
 
         async.eachSeries(boxBackups, function iterator(backup, iteratorDone) {
             referencedAppBackups = referencedAppBackups.concat(backup.dependsOn);
