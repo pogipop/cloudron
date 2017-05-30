@@ -871,3 +871,12 @@
 * Condense the dns checks in the settings view
 * Document new app store submission guidelines
 
+[0.150.0]
+* Disable dnsmasq on OVH
+* Scale redis memory based on the app's memory limit
+* (security) Do not print the ssl cert in debug logs
+* Add noop storage backend to temporarily disable backups
+* Replace native-dns module with dig to prevent spurious crashes
+* Cleanup unfinished and errored backups
+* Set a timelimit of 4 hours for backup to finish
+
