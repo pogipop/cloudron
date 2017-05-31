@@ -316,7 +316,7 @@ function waitForAltDomainDnsPropagation(app, callback) {
             subdomains.waitForDns(app.altDomain, ip, 'A', { interval: 10000, times: 60 }, callback);
         });
     } else {
-        subdomains.waitForDns(app.altDomain, config.appFqdn(app.location), 'CNAME', { interval: 10000, times: 60 }, callback);
+        subdomains.waitForDns(app.altDomain, config.appFqdn(app.location) + '.', 'CNAME', { interval: 10000, times: 60 }, callback);
     }
 }
 
