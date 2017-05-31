@@ -9,7 +9,7 @@ if (search.accessToken) localStorage.token = search.accessToken;
 
 
 // create main application module
-var app = angular.module('Application', ['ngRoute', 'ngAnimate', 'ngSanitize', 'angular-md5', 'base64', 'slick', 'ui-notification', 'ui.bootstrap', 'ui.bootstrap-slider', 'ngTld']);
+var app = angular.module('Application', ['ngFitText', 'ngRoute', 'ngAnimate', 'ngSanitize', 'angular-md5', 'base64', 'slick', 'ui-notification', 'ui.bootstrap', 'ui.bootstrap-slider', 'ngTld']);
 
 app.config(['NotificationProvider', function (NotificationProvider) {
     NotificationProvider.setOptions({
@@ -467,3 +467,12 @@ app.directive('tagInput', function () {
             '</div>'
     };
 });
+
+app.config(['fitTextConfigProvider', function (fitTextConfigProvider) {
+  fitTextConfigProvider.config = {
+    loadDelay: 100,
+    compressor: 1,
+    min: 8,
+    max: 24
+  };
+}]);
