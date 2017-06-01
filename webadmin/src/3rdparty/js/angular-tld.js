@@ -39,11 +39,11 @@ function checkTld(ngTld) {
         require: 'ngModel',
         link: function(scope, element, attr, ngModel) {
             ngModel.$validators.invalidTld = function(modelValue, viewValue) {
-                return ngTld.tldExists(ngModel.$viewValue);
+                return ngTld.tldExists(ngModel.$viewValue.toLowerCase());
             };
 
             ngModel.$validators.invalidSubdomain = function(modelValue, viewValue) {
-                return !ngTld.isSubdomain(ngModel.$viewValue);
+                return !ngTld.isSubdomain(ngModel.$viewValue.toLowerCase());
             };
         }
     };
