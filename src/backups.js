@@ -522,6 +522,8 @@ function cleanupBoxBackups(backupConfig, callback) {
         async.eachSeries(boxBackups, function iterator(backup, iteratorDone) {
             referencedAppBackups = referencedAppBackups.concat(backup.dependsOn);
 
+            // TODO: errored backups should probably be cleaned up before retention time, but we will
+            // have to be careful not to remove any backup currently being created
             if ((now - backup.creationTime) < (backupConfig.retentionSecs * 1000)) return iteratorDone();
 
             debug('cleanup: removing %s', backup.id);
