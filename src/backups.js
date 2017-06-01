@@ -155,15 +155,29 @@ function copyLastBackup(app, manifest, prefix, callback) {
     var timestamp = (new Date()).toISOString().replace(/[T.]/g, '-').replace(/[:Z]/g,'');
     var newBackupId = util.format('%s/app_%s_%s_v%s', prefix, app.id, timestamp, manifest.version);
 
+    var restoreConfig = apps.getAppConfig(app);
+    restoreConfig.manifest = manifest;
+
     settings.getBackupConfig(function (error, backupConfig) {
         if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
 
         debug('copyLastBackup: copying backup %s to %s', app.lastBackupId, newBackupId);
 
-        api(backupConfig.provider).copyBackup(backupConfig, app.lastBackupId, newBackupId, function (error) {
-            if (error) return callback(error);
+        backupdb.add({ id: newBackupId, version: manifest.version, type: backupdb.BACKUP_TYPE_APP, dependsOn: [ ], restoreConfig: restoreConfig }, function (error) {
+            if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
 
-            callback(null, newBackupId);
+            api(backupConfig.provider).copyBackup(backupConfig, app.lastBackupId, newBackupId, function (copyBackupError) {
+                const state = copyBackupError ? backupdb.BACKUP_STATE_ERROR : backupdb.BACKUP_STATE_NORMAL;
+
+                debugApp(app, 'copyLastBackup: %s done with state %s', newBackupId, state);
+
+                backupdb.update(newBackupId, { state: state }, function (error) {
+                    if (copyBackupError) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, copyBackupError.message));
+                    if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
+
+                    callback(null, newBackupId);
+                });
+            });
         });
     });
 }
