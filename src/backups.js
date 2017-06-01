@@ -512,8 +512,11 @@ function cleanupBoxBackups(backupConfig, callback) {
 
         // keep the first valid backup
         if (i !== boxBackups.length) {
+            debug('cleanup: preserving box backup %j', boxBackups[i]);
             referencedAppBackups = boxBackups[i].dependsOn;
             boxBackups.splice(i, 1);
+        } else {
+            debug('cleanup: no box backup to preserve');
         }
 
         async.eachSeries(boxBackups, function iterator(backup, iteratorDone) {
