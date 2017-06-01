@@ -636,12 +636,12 @@ function setupRedis(app, options, callback) {
     // Compute redis memory limit based on app's memory limit (this is arbitrary)
     var memoryLimit = app.memoryLimit || app.manifest.memoryLimit || 0;
 
-    if (memoryLimit === -1) { // unrestricted
+    if (memoryLimit === -1) { // unrestricted (debug mode)
         memoryLimit = 0;
-    } else if (memoryLimit === 0 || memoryLimit < constants.DEFAULT_MEMORY_LIMIT) { // ensure we never go below minimum (in case we change the default)
+    } else if (memoryLimit === 0 || memoryLimit <= (2 * 1024 * 1024 * 1024)) { // less than 2G (ram+swap)
         memoryLimit = 150 * 1024 * 1024; // 150m
     } else {
-        memoryLimit = 300 * 1024 * 1024; // 300m
+        memoryLimit = 600 * 1024 * 1024; // 600m
     }
 
     const tag = infra.images.redis.tag, redisName = 'redis-' + app.id;
