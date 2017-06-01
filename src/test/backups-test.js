@@ -159,55 +159,5 @@ describe('backups', function () {
                 }, 2000);
             });
         });
-
-        it('succeeds for app backups not referenced by a box backup or app', function (done) {
-            var APP_0 = {
-                id: 'appid-0',
-                appStoreId: 'appStoreId-0',
-                dnsRecordId: null,
-                installationState: appdb.ISTATE_PENDING_INSTALL,
-                installationProgress: null,
-                runState: null,
-                location: 'some-location-0',
-                manifest: { version: '0.1', dockerImage: 'docker/app0', healthCheckPath: '/', httpPort: 80, title: 'app0' },
-                httpPort: null,
-                containerId: null,
-                portBindings: { port: 5678 },
-                health: null,
-                accessRestriction: null,
-                lastBackupId: null,
-                oldConfig: null,
-                memoryLimit: 4294967296,
-                altDomain: null,
-                xFrameOptions: 'DENY',
-                sso: true,
-                debugMode: null
-            };
-
-            async.eachSeries([BACKUP_0_APP_0, BACKUP_0_APP_1], backupdb.add, function (error) {
-                expect(error).to.not.be.ok();
-
-                // wait for expiration
-                setTimeout(function () {
-                    // now reference one backup
-                    APP_0.lastBackupId = BACKUP_0_APP_0.id;
-
-                    appdb.add(APP_0.id, APP_0.appStoreId, APP_0.manifest, APP_0.location, APP_0.portBindings, APP_0, function (error) {
-                        expect(error).to.not.be.ok();
-
-                        backups.cleanup(function (error) {
-                            expect(error).to.not.be.ok();
-
-                            backupdb.getByTypePaged(backupdb.BACKUP_TYPE_APP, 1, 1000, function (error, result) {
-                                expect(error).to.not.be.ok();
-                                expect(result.length).to.equal(3);
-
-                                done();
-                            });
-                        });
-                    });
-                }, 2000);
-            });
-        });
     });
 });
