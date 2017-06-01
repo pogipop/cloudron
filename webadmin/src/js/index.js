@@ -470,8 +470,8 @@ app.directive('tagInput', function () {
 
 app.config(['fitTextConfigProvider', function (fitTextConfigProvider) {
   fitTextConfigProvider.config = {
-    loadDelay: 100,
-    compressor: 1,
+    loadDelay: 250,
+    compressor: 0.8,
     min: 8,
     max: 24
   };
