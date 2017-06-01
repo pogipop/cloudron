@@ -80,7 +80,7 @@ function dnsSetup(req, res, next) {
     if (typeof req.body.provider !== 'string') return next(new HttpError(400, 'provider is required'));
     if (typeof req.body.domain !== 'string' || !req.body.domain) return next(new HttpError(400, 'domain is required'));
 
-    cloudron.dnsSetup(req.body, req.body.domain, function (error) {
+    cloudron.dnsSetup(req.body, req.body.domain.toLowerCase(), function (error) {
         if (error && error.reason === CloudronError.ALREADY_SETUP) return next(new HttpError(409, error.message));
         if (error && error.reason === CloudronError.BAD_FIELD) return next(new HttpError(400, error.message));
         if (error) return next(new HttpError(500, error));
