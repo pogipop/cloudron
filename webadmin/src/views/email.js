@@ -72,8 +72,6 @@ angular.module('Application').controller('EmailController', ['$scope', '$locatio
             if (error) return console.error(error);
 
             $scope.mailConfig = mailConfig;
-
-            showExpectedDnsRecords();
         });
     }
 
@@ -112,6 +110,7 @@ angular.module('Application').controller('EmailController', ['$scope', '$locatio
     Client.onReady(function () {
         getMailConfig();
         getDnsConfig();
+        $scope.email.refresh();
     });
 
     $('.modal-backdrop').remove();
