@@ -46,6 +46,9 @@ app.config(['$routeProvider', function ($routeProvider) {
     }).when('/certs', {
         controller: 'CertsController',
         templateUrl: 'views/certs.html'
+    }).when('/email', {
+        controller: 'EmailController',
+        templateUrl: 'views/email.html'
     }).when('/settings', {
         controller: 'SettingsController',
         templateUrl: 'views/settings.html'

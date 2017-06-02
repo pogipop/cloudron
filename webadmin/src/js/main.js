@@ -91,7 +91,7 @@ angular.module('Application').controller('MainController', ['$scope', '$route', 
 
                 if (!result.dns.spf.status || !result.dns.dkim.status || !result.dns.ptr.status || !result.outboundPort25.status) {
                     var actionScope = $scope.$new(true);
-                    actionScope.action = '/#/settings';
+                    actionScope.action = '/#/email';
 
                     Client.notify('DNS Configuration', 'Please setup all required DNS records to guarantee correct mail delivery', false, 'info', actionScope);
                 }

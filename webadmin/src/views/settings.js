@@ -7,19 +7,7 @@ angular.module('Application').controller('SettingsController', ['$scope', '$loca
     $scope.user = Client.getUserInfo();
     $scope.config = Client.getConfig();
     $scope.backupConfig = {};
-    $scope.dnsConfig = {};
-    $scope.outboundPort25 = {};
-    $scope.expectedDnsRecords = {};
-    $scope.expectedDnsRecordsTypes = [
-        { name: 'MX', value: 'mx' },
-        { name: 'DKIM', value: 'dkim' },
-        { name: 'SPF', value: 'spf' },
-        { name: 'DMARC', value: 'dmarc' },
-        { name: 'PTR', value: 'ptr' }
-    ];
     $scope.appstoreConfig = {};
-
-    $scope.mailConfig = null;
 
     $scope.lastBackup = null;
     $scope.backups = [];
@@ -303,45 +291,6 @@ angular.module('Application').controller('SettingsController', ['$scope', '$loca
         }
     };
 
-    $scope.email = {
-        refreshBusy: false,
-
-        toggle: function () {
-            if ($scope.mailConfig.enabled) return $scope.email.disable();
-
-            // show warning first
-            $('#enableEmailModal').modal('show');
-        },
-
-        enable: function () {
-            $('#enableEmailModal').modal('hide');
-
-            Client.setMailConfig({ enabled: true }, function (error) {
-                if (error) return console.error(error);
-
-                $scope.mailConfig.enabled = true;
-            });
-        },
-
-        disable: function () {
-            Client.setMailConfig({ enabled: false }, function (error) {
-                if (error) return console.error(error);
-
-                $scope.mailConfig.enabled = false;
-            });
-        },
-
-        refresh: function () {
-            $scope.email.refreshBusy = true;
-
-            showExpectedDnsRecords(function (error) {
-                if (error) console.error(error);
-
-                $scope.email.refreshBusy = false;
-            });
-        }
-    };
-
     $scope.s3like = function (provider) {
         return provider === 's3' || provider === 'minio';
     };
@@ -526,16 +475,6 @@ angular.module('Application').controller('SettingsController', ['$scope', '$loca
         });
     }
 
-    function getMailConfig() {
-        Client.getMailConfig(function (error, mailConfig) {
-            if (error) return console.error(error);
-
-            $scope.mailConfig = mailConfig;
-
-            showExpectedDnsRecords();
-        });
-    }
-
     function getBackupConfig() {
         Client.getBackupConfig(function (error, backupConfig) {
             if (error) return console.error(error);
@@ -552,44 +491,12 @@ angular.module('Application').controller('SettingsController', ['$scope', '$loca
         });
     }
 
-    function getDnsConfig() {
-        Client.getDnsConfig(function (error, dnsConfig) {
-            if (error) return console.error(error);
-
-            $scope.dnsConfig = dnsConfig;
-        });
-    }
-
     function getAutoupdatePattern() {
         Client.getAutoupdatePattern(function (error, result) {
             if (error) return console.error(error);
 
             $scope.autoUpdate.currentPattern = result.pattern;
             $scope.autoUpdate.pattern = result.pattern;
-        });
-    }
-
-    function showExpectedDnsRecords(callback) {
-        callback = callback || function (error) { if (error) console.error(error); };
-
-        Client.getEmailStatus(function (error, result) {
-            if (error) return callback(error);
-
-            $scope.expectedDnsRecords = result.dns;
-            $scope.outboundPort25 = result.outboundPort25;
-
-            // open the record details if they are not correct
-            for (var type in $scope.expectedDnsRecords) {
-                if (!$scope.expectedDnsRecords[type].status) {
-                    $('#collapse_dns_' + type).collapse('show');
-                }
-            }
-
-            if (!$scope.outboundPort25.status) {
-                $('#collapse_dns_port').collapse('show');
-            }
-
-            callback(null);
         });
     }
 
@@ -688,9 +595,7 @@ angular.module('Application').controller('SettingsController', ['$scope', '$loca
 
     Client.onReady(function () {
         fetchBackups();
-        getMailConfig();
         getBackupConfig();
-        getDnsConfig();
         getAutoupdatePattern();
 
         if ($scope.config.provider === 'caas') {

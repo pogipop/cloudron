@@ -221,6 +221,23 @@
     </div>
 </div>
 
+<!-- Modal subscription required -->
+<div class="modal" id="subscriptionRequiredModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+            </div>
+            <div class="modal-body">
+                The Cloudron Email server is only available in the paid plans.<br/>
+                <br/>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-dismiss="modal">OK</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <br/>
 
 <div class="section-header">
@@ -299,75 +316,6 @@
     <div class="row">
         <div class="col-xs-12">
             <button class="btn btn-primary pull-right" ng-disabled="planChange.requestedPlan.name === currentPlan.name" ng-click="planChange.showChangePlan()">Change Plan</button>
-        </div>
-    </div>
-</div>
-
-<div class="section-header">
-    <div class="text-left">
-        <h3>Email</h3>
-    </div>
-</div>
-
-<div class="card" style="margin-bottom: 15px;">
-    <div class="row">
-        <div class="col-md-12">
-            Cloudron has a built-in email server that allows users to send and receive email for your domain.
-            The <a href="https://cloudron.io/references/usermanual.html#email" target="_blank">User manual</a> has information on how to setup email clients.
-        </div>
-    </div>
-    <br/>
-    <div class="row">
-        <div class="col-md-12" ng-show="dnsConfig.provider !== 'caas'">
-            <button ng-class="mailConfig.enabled ? 'btn btn-danger' : 'btn btn-primary'" ng-click="email.toggle()" ng-enabled="mailConfig">{{ mailConfig.enabled ? "Disable Email" : "Enable Email" }}</button>
-        </div>
-        <div class="col-md-12" ng-show="dnsConfig.provider === 'caas'">
-            <span class="text-danger text-bold">This feature requires the Cloudron to be on <a href="https://cloudron.io/references/usermanual.html#entire-cloudron-on-a-custom-domain" target="_blank">custom domain</a>.</span>
-        </div>
-    </div>
-    <br/>
-    <div class="row">
-        <div class="col-md-12" ng-show="(dnsConfig.provider !== 'caas')">
-            Set the following DNS records to guarantee email delivery:
-
-            <br/><br/>
-
-            <div ng-repeat="record in expectedDnsRecordsTypes">
-               <div class="row" ng-if="mailConfig.enabled || (record.name !== 'DMARC' && record.name !== 'MX')">
-                    <div class="col-xs-12">
-                        <p class="text-muted">
-                            <i ng-class="expectedDnsRecords[record.value].status ? 'fa fa-check-circle text-success' : 'fa fa-exclamation-triangle text-danger'"></i> &nbsp;
-                            <a href="" data-toggle="collapse" data-parent="#accordion" data-target="#collapse_dns_{{ record.value }}">{{ record.name }} record</a>
-                            <button class="btn btn-xs btn-default" ng-click="email.refresh()" ng-disabled="email.refreshBusy" ng-show="!expectedDnsRecords[record.value].status"><i class="fa fa-refresh" ng-class="{ 'fa-pulse': email.refreshBusy }"></i></button>
-                        </p>
-                        <div id="collapse_dns_{{ record.value }}" class="panel-collapse collapse">
-                            <div class="panel-body">
-                                <p>Domain: <b ng-click-select><tt>{{ expectedDnsRecords[record.value].domain }}</tt></b></p>
-                                <p>Record type: <b ng-click-select><tt>{{ expectedDnsRecords[record.value].type }}</tt></b></p>
-                                <p style="overflow: auto; white-space: nowrap;">Expected value: <b ng-click-select><tt>{{ expectedDnsRecords[record.value].expected }}</tt></b></p>
-                                <p style="overflow: auto; white-space: nowrap;">Current value: <b ng-click-select><tt>{{ expectedDnsRecords[record.value].value ? expectedDnsRecords[record.value].value : '[not set]' }}</tt></b></p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="row">
-                <div class="col-xs-12">
-                    <p class="text-muted">
-                        <i ng-class="outboundPort25.status ? 'fa fa-check-circle text-success' : 'fa fa-exclamation-triangle text-danger'"></i> &nbsp;
-                        <a href="" data-toggle="collapse" data-parent="#accordion" data-target="#collapse_dns_port">
-                            Outbound SMTP (Port 25)
-                        </a>
-                        <button class="btn btn-xs btn-default" ng-click="email.refresh()" ng-disabled="email.refreshBusy" ng-show="!outboundPort25.status"><i class="fa fa-refresh" ng-class="{ 'fa-pulse': email.refreshBusy }"></i></button>
-                    </p>
-                    <div id="collapse_dns_port" class="panel-collapse collapse">
-                        <div class="panel-body">
-                            <p><b> {{ outboundPort25.value }} </b> </p>
-                        </div>
-                    </div>
-                </div>
-            </div>
         </div>
     </div>
 </div>
