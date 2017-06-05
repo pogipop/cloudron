@@ -58,13 +58,13 @@
     </div>
 </div>
 
-<div class="section-header" ng-show="(dnsConfig.provider !== 'caas')">
+<div class="section-header" ng-show="dnsConfig.provider && dnsConfig.provider !== 'caas'">
     <div class="text-left">
         <h3>DNS Records</h3>
     </div>
 </div>
 
-<div class="card" style="margin-bottom: 15px;" ng-show="(dnsConfig.provider !== 'caas')">
+<div class="card" style="margin-bottom: 15px;" ng-show="dnsConfig.provider && dnsConfig.provider !== 'caas'">
     <div class="row">
         <div class="col-md-12">
             Set the following DNS records to guarantee email delivery:
