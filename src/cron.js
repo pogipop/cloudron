@@ -19,6 +19,7 @@ var apps = require('./apps.js'),
     janitor = require('./janitor.js'),
     scheduler = require('./scheduler.js'),
     settings = require('./settings.js'),
+    semver = require('semver'),
     updateChecker = require('./updatechecker.js');
 
 var gAutoupdaterJob = null,
@@ -189,8 +190,12 @@ function autoupdatePatternChanged(pattern) {
         onTick: function() {
             var updateInfo = updateChecker.getUpdateInfo();
             if (updateInfo.box) {
-                debug('Starting autoupdate to %j', updateInfo.box);
-                cloudron.updateToLatest(AUDIT_SOURCE, NOOP_CALLBACK);
+                if (semver.major(updateInfo.version) === semver.major(config.version())) {
+                    debug('Starting autoupdate to %j', updateInfo.box);
+                    cloudron.updateToLatest(AUDIT_SOURCE, NOOP_CALLBACK);
+                } else {
+                    debug('Block automatic update for major version');
+                }
             } else if (updateInfo.apps) {
                 debug('Starting app update to %j', updateInfo.apps);
                 apps.updateApps(updateInfo.apps, AUDIT_SOURCE, NOOP_CALLBACK);
