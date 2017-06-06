@@ -1,6 +1,6 @@
 'use strict';
 
-angular.module('Application').controller('EmailController', ['$scope', '$location', '$rootScope', 'Client', 'AppStore', function ($scope, $location, $rootScope, Client, AppStore) {
+angular.module('Application').controller('EmailController', ['$scope', '$location', '$rootScope', 'Client', function ($scope, $location, $rootScope, Client) {
     Client.onReady(function () { if (!Client.getUserInfo().admin) $location.path('/'); });
 
     $scope.client = Client;
