@@ -180,5 +180,16 @@ angular.module('Application').service('AppStore', ['$http', '$base64', 'Client',
         });
     };
 
+    AppStore.prototype.getSubscription = function (appstoreConfig, callback) {
+        if (Client.getConfig().apiServerOrigin === null) return callback(new AppStoreError(420, 'Enhance Your Calm'));
+
+        $http.get(Client.getConfig().apiServerOrigin + '/api/v1/users/' + appstoreConfig.userId + '/cloudrons/' + appstoreConfig.cloudronId + '/subscription', { params: { accessToken: appstoreConfig.token }}).success(function (data, status) {
+            if (status !== 200) return callback(new AppStoreError(status, data));
+            return callback(null, data.subscription);
+        }).error(function (data, status) {
+            return callback(new AppStoreError(status, data));
+        });
+    };
+
     return new AppStore();
 }]);
