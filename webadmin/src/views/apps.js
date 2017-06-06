@@ -393,7 +393,7 @@ angular.module('Application').controller('AppsController', ['$scope', '$location
     };
 
     $scope.showUpdate = function (app, updateManifest) {
-        if ($scope.$parent.currentSubscription.plan && $scope.$parent.currentSubscription.plan.id === 'free') {
+        if (!updateManifest.dockerImage) {
             $('#setupSubscriptionModal').modal('show');
             return;
         }
