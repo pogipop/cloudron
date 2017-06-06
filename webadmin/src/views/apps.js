@@ -329,7 +329,7 @@ angular.module('Application').controller('AppsController', ['$scope', '$location
 
         Client.getAppBackups(app.id, function (error, backups) {
             if (error) {
-                Client.error(error)
+                Client.error(error);
             } else {
                 $scope.appRestore.backups = backups;
                 if (backups.length) $scope.appRestore.selectedBackup = backups[0]; // pre-select first backup
@@ -393,6 +393,11 @@ angular.module('Application').controller('AppsController', ['$scope', '$location
     };
 
     $scope.showUpdate = function (app) {
+        if ($scope.$parent.currentSubscription.plan && $scope.$parent.currentSubscription.plan.id === 'free') {
+            $('#setupSubscriptionModal').modal('show');
+            return;
+        }
+
         $scope.reset();
 
         $scope.appUpdate.app = app;

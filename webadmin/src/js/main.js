@@ -33,14 +33,18 @@ angular.module('Application').controller('MainController', ['$scope', '$route', 
     };
 
     $scope.showUpdateModal = function (form) {
-        $scope.update.error.generic = null;
-        $scope.update.error.password = null;
-        $scope.update.password = '';
+        if ($scope.currentSubscription.plan && $scope.currentSubscription.plan.id === 'free') {
+            $('#setupSubscriptionModal').modal('show');
+        } else {
+            $scope.update.error.generic = null;
+            $scope.update.error.password = null;
+            $scope.update.password = '';
 
-        form.$setPristine();
-        form.$setUntouched();
+            form.$setPristine();
+            form.$setUntouched();
 
-        $('#updateModal').modal('show');
+            $('#updateModal').modal('show');
+        }
     };
 
     $scope.doUpdate = function () {
