@@ -1,6 +1,6 @@
 'use strict';
 
-angular.module('Application').controller('SettingsController', ['$scope', '$location', '$rootScope', 'Client', 'AppStore', function ($scope, $location, $rootScope, Client, AppStore) {
+angular.module('Application').controller('SettingsController', ['$scope', '$location', '$rootScope', '$timeout', 'Client', 'AppStore', function ($scope, $location, $rootScope, $timeout, Client, AppStore) {
     Client.onReady(function () { if (!Client.getUserInfo().admin) $location.path('/'); });
 
     $scope.client = Client;
@@ -19,6 +19,8 @@ angular.module('Application').controller('SettingsController', ['$scope', '$loca
 
     $scope.availablePlans = [];
     $scope.currentPlan = null;
+
+    $scope.currentSubscription = null;
 
     // List is from http://docs.aws.amazon.com/general/latest/gr/rande.html#s3_region
     $scope.s3Regions = [
@@ -500,6 +502,17 @@ angular.module('Application').controller('SettingsController', ['$scope', '$loca
         });
     }
 
+    function getSubscription() {
+        AppStore.getSubscription($scope.appstoreConfig, function (error, result) {
+            if (error) return console.error(error);
+
+            $scope.currentSubscription = result;
+
+            // check again to give more immediate feedback once a subscription was setup
+            if (result.plan.id === 'free') $timeout(getSubscription, 5000);
+        });
+    }
+
     function getPlans() {
         AppStore.getSizes(function (error, result) {
             if (error) return console.error(error);
@@ -614,6 +627,8 @@ angular.module('Application').controller('SettingsController', ['$scope', '$loca
                         if (error) return console.error(error);
 
                         $scope.appstoreConfig.profile = result;
+
+                        getSubscription();
                     });
                 }
             });

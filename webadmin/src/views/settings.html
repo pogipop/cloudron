@@ -265,10 +265,6 @@
                     <td class="text-muted" style="vertical-align: top;">Name</td>
                     <td class="text-right" style="vertical-align: top; white-space: nowrap;">{{ config.cloudronName }} <a href="" ng-click="cloudronNameChange.show()"><i class="fa fa-pencil text-small"></i></a></td>
                 </tr>
-                <tr ng-show="appstoreConfig.profile">
-                    <td class="text-muted" style="vertical-align: top;">App store account</td>
-                    <td class="text-right" style="vertical-align: top; white-space: nowrap;">{{ appstoreConfig.profile.email }}</td>
-                </tr>
                 <tr ng-show="config.provider === 'caas'">
                     <td class="text-muted" style="vertical-align: top;">Model</td>
                     <td class="text-right" style="vertical-align: top; white-space: nowrap;">{{ config.size }} - {{ config.region }}</td>
@@ -316,6 +312,44 @@
     <div class="row">
         <div class="col-xs-12">
             <button class="btn btn-primary pull-right" ng-disabled="planChange.requestedPlan.name === currentPlan.name" ng-click="planChange.showChangePlan()">Change Plan</button>
+        </div>
+    </div>
+</div>
+
+<div class="section-header" ng-show="backupConfig.provider !== 'caas'">
+    <div class="text-left">
+        <h3>Cloudron.io Account</h3>
+    </div>
+</div>
+
+<div class="card" style="margin-bottom: 15px;" ng-show="backupConfig.provider !== 'caas'">
+    <div class="row" ng-show="currentSubscription.plan.id === 'free'">
+        <div class="col-xs-12">
+            A cloudron.io subscription will provide you with effortless automatic app and platform updates.
+        </div>
+    </div>
+    <br/>
+    <div class="row">
+        <div class="col-xs-6">
+            <span class="text-muted">Account Email</span>
+        </div>
+        <div class="col-xs-6 text-right">
+            <a ng-href="{{ config.webServerOrigin + '/console.html#/userprofile' }}" target="_blank">{{ appstoreConfig.profile.email }}</a>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-xs-6">
+            <span class="text-muted">Subscription</span>
+        </div>
+        <div class="col-xs-6 text-right">
+            <span>{{ currentSubscription.plan.name }}</span>
+        </div>
+    </div>
+    <br/>
+    <div class="row">
+        <div class="col-xs-12">
+            <a class="btn btn-primary pull-right" ng-href="{{ config.webServerOrigin + '/console.html#/userprofile?view=subscription' }}" target="_blank" ng-show="currentSubscription.plan && currentSubscription.plan.id !== 'free'">Change Subscription</a>
+            <a class="btn btn-success pull-right" ng-href="{{ config.webServerOrigin + '/console.html#/userprofile?view=subscription' }}" target="_blank" ng-show="currentSubscription.plan.id === 'free'">Setup Subscription</a>
         </div>
     </div>
 </div>
