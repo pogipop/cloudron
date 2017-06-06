@@ -1,12 +1,14 @@
 'use strict';
 
-angular.module('Application').controller('MainController', ['$scope', '$route', '$interval', 'Client', function ($scope, $route, $interval, Client) {
+angular.module('Application').controller('MainController', ['$scope', '$route', '$interval', '$timeout', 'Client', 'AppStore', function ($scope, $route, $interval, $timeout, Client, AppStore) {
     $scope.initialized = false;
     $scope.user = Client.getUserInfo();
     $scope.installedApps = Client.getInstalledApps();
     $scope.config = {};
     $scope.status = {};
     $scope.client = Client;
+    $scope.currentSubscription = null;
+    $scope.appstoreConfig = {};
 
     $scope.update = {
         busy: false,
@@ -99,6 +101,31 @@ angular.module('Application').controller('MainController', ['$scope', '$route', 
         });
     }
 
+    function getSubscription() {
+        Client.getAppstoreConfig(function (error, result) {
+            if (error) return console.error(error);
+
+            if (result.token) {
+                $scope.appstoreConfig = result;
+
+                AppStore.getProfile(result.token, function (error, result) {
+                    if (error) return console.error(error);
+
+                    $scope.appstoreConfig.profile = result;
+
+                    AppStore.getSubscription($scope.appstoreConfig, function (error, result) {
+                        if (error) return console.error(error);
+
+                        $scope.currentSubscription = result;
+
+                        // check again to give more immediate feedback once a subscription was setup
+                        if (result.plan.id === 'free') $timeout(getSubscription, 5000);
+                    });
+                });
+            }
+        });
+    }
+
     Client.getStatus(function (error, status) {
         if (error) return $scope.error(error);
 
@@ -159,7 +186,11 @@ angular.module('Application').controller('MainController', ['$scope', '$route', 
 
                     $scope.initialized = true;
 
-                    if ($scope.user.admin) runConfigurationChecks();
+                    if ($scope.user.admin) {
+                        runConfigurationChecks();
+
+                        if ($scope.config.provider !== 'caas') getSubscription();
+                    }
                 });
             });
         });

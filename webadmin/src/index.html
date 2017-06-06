@@ -139,6 +139,26 @@
         </div>
     </div>
 
+    <!-- Modal setup subscription -->
+    <div class="modal fade" id="setupSubscriptionModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title" id="updateModalLabel">Setup Auto Update Subscription</h4>
+                </div>
+                <div class="modal-body">
+                    To get effortless automatic app and platform updates, subscribe to our Cloudron.io plans.<br/>
+                    <br/>
+                    See detailed information <a ng-href="{{ config.webServerOrigin + '/pricing.html' }}" target="_blank">here</a>.
+                </div>
+                <div class="modal-footer">
+                    <a class="btn btn-success" ng-href="{{ config.webServerOrigin + '/console.html#/userprofile?view=subscriptions' }}" target="_blank">Setup</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="animateMe ng-hide" ng-show="initialized">
 
         <!-- Navigation -->
@@ -161,6 +181,11 @@
                         <li ng-show="config.update.box && user.admin">
                             <a ng-href="" ng-click="showUpdateModal(update_form)" style="cursor: pointer">
                                 <span class="badge badge-success">Update available</span>
+                            </a>
+                        </li>
+                        <li ng-show="currentSubscription.plan && currentSubscription.plan.id === 'free' && !config.update.box && user.admin">
+                            <a ng-href="" style="cursor: pointer" data-toggle="modal" data-target="#setupSubscriptionModal">
+                                <span class="badge badge-success">Setup Auto Update Subscription</span>
                             </a>
                         </li>
                         <li>
