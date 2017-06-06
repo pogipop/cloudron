@@ -159,6 +159,28 @@
         </div>
     </div>
 
+    <!-- Modal version 1.0 -->
+    <div class="modal fade" id="version1Modal" tabindex="-1" role="dialog">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-body">
+                    <h3>We are happy to announce Cloudron version 1.0!</h3>
+                    <p>
+                        With this release we introduce the Cloudron.io effortless app and platform update subscription.
+                    </p>
+                    <h4 class="text-success">
+                        As an early adopter, you will get a 25% discount.
+                    </h4>
+                    See detailed information <a ng-href="{{ config.webServerOrigin + '/pricing.html' }}" target="_blank">here</a>.
+                </div>
+                <div class="modal-footer">
+                    <a class="btn btn-default pull-left" ng-click="showUpdateModalFromVersion1Modal()">Maybe later</a>
+                    <a class="btn btn-success" ng-href="{{ config.webServerOrigin + '/console.html#/userprofile?view=subscriptions' }}" target="_blank">Setup Update Subscription</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="animateMe ng-hide" ng-show="initialized">
 
         <!-- Navigation -->

@@ -32,17 +32,27 @@ angular.module('Application').controller('MainController', ['$scope', '$route', 
         window.location.href = '/error.html';
     };
 
+    $scope.showUpdateModalFromVersion1Modal = function () {
+        $('#version1Modal').modal('hide');
+        $('#updateModal').modal('show');
+    };
+
     $scope.showUpdateModal = function (form) {
+        $scope.update.error.generic = null;
+        $scope.update.error.password = null;
+        $scope.update.password = '';
+
+        form.$setPristine();
+        form.$setUntouched();
+
+
         if ($scope.currentSubscription.plan && $scope.currentSubscription.plan.id === 'free') {
-            $('#setupSubscriptionModal').modal('show');
+            if ($scope.config.update.box.version === '1.0.0') {
+                $('#version1Modal').modal('show');
+            } else {
+                $('#setupSubscriptionModal').modal('show');
+            }
         } else {
-            $scope.update.error.generic = null;
-            $scope.update.error.password = null;
-            $scope.update.password = '';
-
-            form.$setPristine();
-            form.$setUntouched();
-
             $('#updateModal').modal('show');
         }
     };
