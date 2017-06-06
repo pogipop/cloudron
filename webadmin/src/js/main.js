@@ -45,8 +45,7 @@ angular.module('Application').controller('MainController', ['$scope', '$route', 
         form.$setPristine();
         form.$setUntouched();
 
-
-        if ($scope.currentSubscription.plan && $scope.currentSubscription.plan.id === 'free') {
+        if ($scope.currentSubscription && $scope.currentSubscription.plan && $scope.currentSubscription.plan.id === 'free') {
             if ($scope.config.update.box.version === '1.0.0') {
                 $('#version1Modal').modal('show');
             } else {
