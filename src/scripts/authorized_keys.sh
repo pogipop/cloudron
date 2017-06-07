@@ -24,6 +24,9 @@ if [[ $# -lt 3 ]]; then
 fi
 
 if [[ -f "$2" ]]; then
+    # on some vanilla ubuntu installs, the .ssh directory does not exist
+    mkdir -p "$(dirname $3)"
+
     cp "$2" "$3"
     chown "$1":"$1" "$3"
 fi
