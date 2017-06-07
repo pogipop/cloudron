@@ -199,12 +199,8 @@
                     <ul class="nav navbar-nav navbar-right">
                         <li ng-show="config.update.box && user.admin">
                             <a ng-href="" ng-click="showUpdateModal(update_form)" style="cursor: pointer">
-                                <span class="badge badge-success">Update available</span>
-                            </a>
-                        </li>
-                        <li ng-show="currentSubscription.plan && currentSubscription.plan.id === 'free' && !config.update.box && user.admin">
-                            <a ng-href="" style="cursor: pointer" data-toggle="modal" data-target="#setupSubscriptionModal">
-                                <span class="badge badge-success">Setup Auto Update Subscription</span>
+                                <span ng-show="config.update.box.version !== '1.0.0'" class="badge badge-success">Update available</span>
+                                <span ng-show="config.update.box.version === '1.0.0'" class="badge badge-success">Setup Cloudron Subscription</span>
                             </a>
                         </li>
                         <li>
