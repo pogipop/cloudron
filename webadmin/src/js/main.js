@@ -132,7 +132,7 @@ angular.module('Application').controller('MainController', ['$scope', '$route', 
                         $scope.currentSubscription = result;
 
                         // check again to give more immediate feedback once a subscription was setup
-                        if (result.plan.id === 'free') $timeout(getSubscription, 5000);
+                        if (result.plan.id === 'free') $timeout(getSubscription, 10000);
                     });
                 });
             }
