@@ -62,11 +62,6 @@ Be sure to check the "use the distribution kernel" checkbox in the personalized 
 Since Linode does not manage SSH keys, be sure to add the public key to
 `/root/.ssh/authorized_keys`.
 
-### Scaleway
-
-Use the [boot script](https://github.com/scaleway-community/scaleway-docker/issues/2) to
-enable memory accounting.
-
 ## Run setup
 
 SSH into your server and run the following commands:
