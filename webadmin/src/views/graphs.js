@@ -111,8 +111,10 @@ angular.module('Application').controller('GraphsController', ['$scope', '$locati
         Client.disks(function (error, disks) {
             if (error) return console.log(error);
 
-            // We have to see if this is sufficient for all server configurations
-            var appDataDiskName = disks.appsDataDisk.slice(disks.appsDataDisk.lastIndexOf('/') + 1)
+            // /dev/sda1 -> sda1
+            // /dev/mapper/foo -> mapper_foo (see #348)
+            var appDataDiskName = disks.appsDataDisk.slice(disks.appsDataDisk.indexOf('/', 1) + 1)
+            appDataDiskName = appDataDiskName.replace(/\//g, '_');
 
             Client.graphs([
                 'absolute(collectd.localhost.df-' + appDataDiskName + '.df_complex-free)',
