@@ -880,3 +880,8 @@
 * Cleanup unfinished and errored backups
 * Set a timelimit of 4 hours for backup to finish
 
+[0.160.0]
+* Fix disk graphs when using device mapper
+* Prevent email view from flickering
+* Prepare for 1.0
+
