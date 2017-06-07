@@ -65,7 +65,7 @@ Since Linode does not manage SSH keys, be sure to add the public key to
 ### Scaleway
 
 Use the [boot script](https://github.com/scaleway-community/scaleway-docker/issues/2) to
-enable memory accouting.
+enable memory accounting.
 
 ## Run setup
 
