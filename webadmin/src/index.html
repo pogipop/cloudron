@@ -199,8 +199,8 @@
                     <ul class="nav navbar-nav navbar-right">
                         <li ng-show="config.update.box && user.admin">
                             <a ng-href="" ng-click="showUpdateModal(update_form)" style="cursor: pointer">
-                                <span ng-show="config.update.box.version !== '1.0.0'" class="badge badge-success">Update available</span>
-                                <span ng-show="config.update.box.version === '1.0.0'" class="badge badge-success">Setup Cloudron Subscription</span>
+                                <span ng-show="config.update.box.version !== '1.0.0' || config.provider === 'caas'" class="badge badge-success">Update available</span>
+                                <span ng-show="config.update.box.version === '1.0.0' && config.provider !== 'caas'" class="badge badge-success">Setup Cloudron Subscription</span>
                             </a>
                         </li>
                         <li>
