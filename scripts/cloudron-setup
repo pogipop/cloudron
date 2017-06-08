@@ -46,6 +46,7 @@ dnsProvider="manual"
 tlsProvider="le-prod"
 requestedVersion=""
 apiServerOrigin="https://api.cloudron.io"
+webServerOrigin="https://cloudron.io"
 dataJson=""
 prerelease="false"
 sourceTarballUrl=""
@@ -55,7 +56,7 @@ baseDataDir=""
 # TODO this is still there for the restore case, see other occasions below
 versionsUrl="https://s3.amazonaws.com/prod-cloudron-releases/versions.json"
 
-args=$(getopt -o "" -l "domain:,help,skip-baseimage-init,data:,data-dir:,provider:,encryption-key:,restore-url:,tls-provider:,version:,api-server:,dns-provider:,env:,prerelease,skip-reboot,source-url:" -n "$0" -- "$@")
+args=$(getopt -o "" -l "domain:,help,skip-baseimage-init,data:,data-dir:,provider:,encryption-key:,restore-url:,tls-provider:,version:,dns-provider:,env:,prerelease,skip-reboot,source-url:" -n "$0" -- "$@")
 eval set -- "${args}"
 
 while true; do
@@ -72,16 +73,17 @@ while true; do
         if [[ "$2" == "dev" ]]; then
             versionsUrl="https://s3.amazonaws.com/dev-cloudron-releases/versions.json"
             apiServerOrigin="https://api.dev.cloudron.io"
+            webServerOrigin="https://dev.cloudron.io"
             tlsProvider="le-staging"
             prerelease="true"
         elif [[ "$2" == "staging" ]]; then
             versionsUrl="https://s3.amazonaws.com/staging-cloudron-releases/versions.json"
             apiServerOrigin="https://api.staging.cloudron.io"
+            webServerOrigin="https://staging.cloudron.io"
             tlsProvider="le-staging"
             prerelease="true"
         fi
         shift 2;;
-    --api-server) apiServerOrigin="$2"; shift 2;;
     --skip-baseimage-init) initBaseImage="false"; shift;;
     --skip-reboot) rebootServer="false"; shift;;
     --data) dataJson="$2"; shift 2;;
@@ -187,6 +189,7 @@ if [[ -z "${dataJson}" ]]; then
         "fqdn": "${domain}",
         "provider": "${provider}",
         "apiServerOrigin": "${apiServerOrigin}",
+        "webServerOrigin": "${webServerOrigin}",
         "tlsConfig": {
             "provider": "${tlsProvider}"
         },
@@ -213,6 +216,7 @@ EOF
         "fqdn": "${domain}",
         "provider": "${provider}",
         "apiServerOrigin": "${apiServerOrigin}",
+        "webServerOrigin": "${webServerOrigin}",
         "restore": {
             "url": "${restoreUrl}",
             "key": "${encryptionKey}"
