@@ -190,7 +190,7 @@ function autoupdatePatternChanged(pattern) {
         onTick: function() {
             var updateInfo = updateChecker.getUpdateInfo();
             if (updateInfo.box) {
-                if (semver.major(updateInfo.version) === semver.major(config.version())) {
+                if (semver.major(updateInfo.box.version) === semver.major(config.version())) {
                     debug('Starting autoupdate to %j', updateInfo.box);
                     cloudron.updateToLatest(AUDIT_SOURCE, NOOP_CALLBACK);
                 } else {
