@@ -153,7 +153,7 @@
                     See detailed information <a ng-href="{{ config.webServerOrigin + '/pricing.html' }}" target="_blank">here</a>.
                 </div>
                 <div class="modal-footer">
-                    <a class="btn btn-success" ng-href="{{ config.webServerOrigin + '/console.html#/userprofile?view=subscriptions' }}" target="_blank">Setup</a>
+                    <a class="btn btn-success" ng-href="{{ config.webServerOrigin + '/console.html#/userprofile?view=subscriptions' + appstoreConfig.profile.email }}" target="_blank">Setup</a>
                 </div>
             </div>
         </div>
@@ -172,7 +172,7 @@
                 </div>
                 <div class="modal-footer">
                     <a class="btn btn-default pull-left" ng-click="showUpdateModalFromVersion1Modal()">Maybe later</a>
-                    <a class="btn btn-success" ng-href="{{ config.webServerOrigin + '/console.html#/userprofile?view=subscriptions' }}" target="_blank">Setup Update Subscription</a>
+                    <a class="btn btn-success" ng-href="{{ config.webServerOrigin + '/console.html#/userprofile?view=subscriptions' + appstoreConfig.profile.email }}" target="_blank">Setup Update Subscription</a>
                 </div>
             </div>
         </div>
