@@ -171,8 +171,7 @@
                     </p>
                 </div>
                 <div class="modal-footer">
-                    <a class="btn btn-default pull-left" ng-click="showUpdateModalFromVersion1Modal()">Maybe later</a>
-                    <a class="btn btn-success" ng-href="{{ config.webServerOrigin + '/console.html#/userprofile?view=subscriptions&email=' + appstoreConfig.profile.email }}" target="_blank">Setup Update Subscription</a>
+                    <a class="btn btn-success" ng-href="{{ config.webServerOrigin + '/console.html#/userprofile?view=subscriptions&email=' + appstoreConfig.profile.email + '&cloudronId=' + appstoreConfig.cloudronId }}" target="_blank">Choose Your Options</a>
                 </div>
             </div>
         </div>
@@ -199,8 +198,7 @@
                     <ul class="nav navbar-nav navbar-right">
                         <li ng-show="config.update.box && user.admin">
                             <a ng-href="" ng-click="showUpdateModal(update_form)" style="cursor: pointer">
-                                <span ng-show="config.update.box.version !== '1.0.0' || config.provider === 'caas'" class="badge badge-success">Update available</span>
-                                <span ng-show="config.update.box.version === '1.0.0' && config.provider !== 'caas'" class="badge badge-success">Setup Cloudron Subscription</span>
+                                <span class="badge badge-success">Update available</span>
                             </a>
                         </li>
                         <li>

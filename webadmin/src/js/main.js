@@ -45,11 +45,21 @@ angular.module('Application').controller('MainController', ['$scope', '$route', 
         form.$setPristine();
         form.$setUntouched();
 
-        if ($scope.currentSubscription && $scope.currentSubscription.plan && $scope.currentSubscription.plan.id === 'free') {
-            if ($scope.config.update.box.version === '1.0.0') {
+        if (!$scope.config.update.box.sourceTarballUrl) {
+            // no sourceTarballUrl means we can't update here this is only from 1.0 on
+            // this will also handle the 'undecided' and 'free' plan, since the server does not send the url in this case
+            $('#setupSubscriptionModal').modal('show');
+        } else if ($scope.config.provider === 'caas') {
+            $('#updateModal').modal('show');
+        } else if (!$scope.currentSubscription || !$scope.currentSubscription.plan) {
+            // do nothing as we were not able to get a subscription, yet
+        } else if ($scope.config.update.box.version === '1.0.0') {
+            // special case for updating to 1.0
+            if ($scope.currentSubscription.plan.id === 'undecided') {
                 $('#version1Modal').modal('show');
             } else {
-                $('#setupSubscriptionModal').modal('show');
+                // user selected a plan already, let him update
+                $('#updateModal').modal('show');
             }
         } else {
             $('#updateModal').modal('show');
@@ -132,7 +142,7 @@ angular.module('Application').controller('MainController', ['$scope', '$route', 
                         $scope.currentSubscription = result;
 
                         // check again to give more immediate feedback once a subscription was setup
-                        if (result.plan.id === 'free') $timeout(getSubscription, 10000);
+                        if (result.plan.id === 'undecided') $timeout(getSubscription, 10000);
                     });
                 });
             }
