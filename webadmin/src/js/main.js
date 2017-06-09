@@ -32,9 +32,29 @@ angular.module('Application').controller('MainController', ['$scope', '$route', 
         window.location.href = '/error.html';
     };
 
-    $scope.showUpdateModalFromVersion1Modal = function () {
-        $('#version1Modal').modal('hide');
-        $('#updateModal').modal('show');
+    $scope.waitingForPlanSelection = false;
+    $('#version1Modal').on('hide.bs.modal', function () {
+        $scope.waitingForPlanSelection = false;
+    });
+
+    $scope.waitForPlanSelection = function () {
+        if ($scope.waitingForPlanSelection) return;
+
+        $scope.waitingForPlanSelection = true;
+
+        function checkPlan() {
+            if (!$scope.waitingForPlanSelection) return;
+
+            if ($scope.currentSubscription.plan.id !== 'undecided') {
+                $scope.waitingForPlanSelection = false;
+                $('#version1Modal').modal('hide');
+                $('#updateModal').modal('show');
+            } else {
+                $timeout(checkPlan, 1000);
+            }
+        }
+
+        checkPlan();
     };
 
     $scope.showUpdateModal = function (form) {
@@ -142,7 +162,7 @@ angular.module('Application').controller('MainController', ['$scope', '$route', 
                         $scope.currentSubscription = result;
 
                         // check again to give more immediate feedback once a subscription was setup
-                        if (result.plan.id === 'undecided') $timeout(getSubscription, 10000);
+                        if (result.plan.id === 'undecided') $timeout(getSubscription, 5000);
                     });
                 });
             }

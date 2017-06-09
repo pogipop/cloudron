@@ -183,7 +183,7 @@
                     </p>
                 </div>
                 <div class="modal-footer">
-                    <a class="btn btn-success" ng-href="{{ config.webServerOrigin + '/console.html#/userprofile?view=subscriptions&email=' + appstoreConfig.profile.email + '&cloudronId=' + appstoreConfig.cloudronId }}" target="_blank">Setup Subscription</a>
+                    <a class="btn btn-success" ng-click="waitForPlanSelection()" ng-href="{{ config.webServerOrigin + '/console.html#/userprofile?view=subscriptions&email=' + appstoreConfig.profile.email + '&cloudronId=' + appstoreConfig.cloudronId }}" target="_blank"><i class="fa fa-circle-o-notch fa-spin" ng-show="waitingForPlanSelection"></i> Setup Subscription</a>
                 </div>
             </div>
         </div>
