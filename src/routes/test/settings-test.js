@@ -28,7 +28,7 @@ var token = null;
 
 var server;
 function setup(done) {
-    config.set('fqdn', 'foobar.com');
+    config.setFqdn('foobar.com');
 
     async.series([
         server.start.bind(server),

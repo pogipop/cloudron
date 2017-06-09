@@ -27,7 +27,7 @@ function setup(done) {
     nock.cleanAll();
     config._reset();
     config.set('version', '0.5.0');
-    config.set('fqdn', 'localhost');
+    config.setFqdn('localhost');
 
     server.start(function (error) {
         if (error) return done(error);

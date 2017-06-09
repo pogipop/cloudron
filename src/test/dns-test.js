@@ -18,10 +18,11 @@ var async = require('async'),
 
 describe('dns provider', function () {
     before(function (done) {
+        config._reset();
+
         async.series([
             database.initialize,
-            settings.initialize,
-            config._reset
+            settings.initialize
         ], done);
     });
 
@@ -34,6 +35,9 @@ describe('dns provider', function () {
             var data = {
                 provider: 'noop'
             };
+
+            config.setFqdn('example.com');
+            config.setZoneName('example.com');
 
             settings.setDnsConfig(data, config.fqdn(), done);
         });
@@ -76,6 +80,9 @@ describe('dns provider', function () {
                 token: TOKEN
             };
 
+            config.setFqdn('example.com');
+            config.setZoneName('example.com');
+
             settings.setDnsConfig(data, config.fqdn(), done);
         });
 
@@ -93,10 +100,10 @@ describe('dns provider', function () {
             };
 
             var req1 = nock(DIGITALOCEAN_ENDPOINT).filteringRequestBody(function () { return false; })
-                .get('/v2/domains/localhost/records')
+                .get('/v2/domains/' + config.zoneName() + '/records')
                 .reply(200, { domain_records: [] });
             var req2 = nock(DIGITALOCEAN_ENDPOINT).filteringRequestBody(function () { return false; })
-                .post('/v2/domains/localhost/records')
+                .post('/v2/domains/' + config.zoneName() + '/records')
                 .reply(201, { domain_record: DOMAIN_RECORD_0 });
 
             subdomains.upsert('test', 'A', [ '1.2.3.4' ], function (error, result) {
@@ -143,10 +150,10 @@ describe('dns provider', function () {
             };
 
             var req1 = nock(DIGITALOCEAN_ENDPOINT).filteringRequestBody(function () { return false; })
-                .get('/v2/domains/localhost/records')
+                .get('/v2/domains/' + config.zoneName() + '/records')
                 .reply(200, { domain_records: [ DOMAIN_RECORD_0, DOMAIN_RECORD_1 ] });
             var req2 = nock(DIGITALOCEAN_ENDPOINT).filteringRequestBody(function () { return false; })
-                .put('/v2/domains/localhost/records/' + DOMAIN_RECORD_1.id)
+                .put('/v2/domains/' + config.zoneName() + '/records/' + DOMAIN_RECORD_1.id)
                 .reply(200, { domain_records: DOMAIN_RECORD_1_NEW });
 
             subdomains.upsert('test', 'A', [ DOMAIN_RECORD_1_NEW.data ], function (error, result) {
@@ -223,16 +230,16 @@ describe('dns provider', function () {
             };
 
             var req1 = nock(DIGITALOCEAN_ENDPOINT).filteringRequestBody(function () { return false; })
-                .get('/v2/domains/localhost/records')
+                .get('/v2/domains/' + config.zoneName() + '/records')
                 .reply(200, { domain_records: [ DOMAIN_RECORD_0, DOMAIN_RECORD_1, DOMAIN_RECORD_2 ] });
             var req2 = nock(DIGITALOCEAN_ENDPOINT).filteringRequestBody(function () { return false; })
-                .put('/v2/domains/localhost/records/' + DOMAIN_RECORD_1.id)
+                .put('/v2/domains/' + config.zoneName() + '/records/' + DOMAIN_RECORD_1.id)
                 .reply(200, { domain_records: DOMAIN_RECORD_1_NEW });
             var req3 = nock(DIGITALOCEAN_ENDPOINT).filteringRequestBody(function () { return false; })
-                .put('/v2/domains/localhost/records/' + DOMAIN_RECORD_2.id)
+                .put('/v2/domains/' + config.zoneName() + '/records/' + DOMAIN_RECORD_2.id)
                 .reply(200, { domain_records: DOMAIN_RECORD_2_NEW });
             var req4 = nock(DIGITALOCEAN_ENDPOINT).filteringRequestBody(function () { return false; })
-                .post('/v2/domains/localhost/records')
+                .post('/v2/domains/' + config.zoneName() + '/records')
                 .reply(201, { domain_records: DOMAIN_RECORD_2_NEW });
 
             subdomains.upsert('', 'TXT', [ DOMAIN_RECORD_2_NEW.data, DOMAIN_RECORD_1_NEW.data, DOMAIN_RECORD_3_NEW.data ], function (error, result) {
@@ -271,7 +278,7 @@ describe('dns provider', function () {
             };
 
             var req1 = nock(DIGITALOCEAN_ENDPOINT).filteringRequestBody(function () { return false; })
-                .get('/v2/domains/localhost/records')
+                .get('/v2/domains/' + config.zoneName() + '/records')
                 .reply(200, { domain_records: [ DOMAIN_RECORD_0, DOMAIN_RECORD_1 ] });
 
             subdomains.get('test', 'A', function (error, result) {
@@ -309,10 +316,10 @@ describe('dns provider', function () {
             };
 
             var req1 = nock(DIGITALOCEAN_ENDPOINT).filteringRequestBody(function () { return false; })
-                .get('/v2/domains/localhost/records')
+                .get('/v2/domains/' + config.zoneName() + '/records')
                 .reply(200, { domain_records: [ DOMAIN_RECORD_0, DOMAIN_RECORD_1 ] });
             var req2 = nock(DIGITALOCEAN_ENDPOINT).filteringRequestBody(function () { return false; })
-                .delete('/v2/domains/localhost/records/' + DOMAIN_RECORD_1.id)
+                .delete('/v2/domains/' + config.zoneName() + '/records/' + DOMAIN_RECORD_1.id)
                 .reply(204, {});
 
             subdomains.remove('test', 'A', ['1.2.3.4'], function (error) {
@@ -326,13 +333,16 @@ describe('dns provider', function () {
     });
 
     describe('route53', function () {
+        config.setFqdn('example.com');
+        config.setZoneName('example.com');
+
         // do not clear this with [] but .length = 0 so we don't loose the reference in mockery
         var awsAnswerQueue = [];
 
         var AWS_HOSTED_ZONES = {
             HostedZones: [{
                 Id: '/hostedzone/Z34G16B38TNZ9L',
-                Name: 'localhost.',
+                Name: config.zoneName() + '.',
                 CallerReference: '305AFD59-9D73-4502-B020-F4E6F889CB30',
                 ResourceRecordSetCount: 2,
                 ChangeInfo: {
@@ -470,7 +480,7 @@ describe('dns provider', function () {
             awsAnswerQueue.push([null, AWS_HOSTED_ZONES]);
             awsAnswerQueue.push([null, {
                 ResourceRecordSets: [{
-                    Name: 'test.localhost.',
+                    Name: 'test.' + config.zoneName() + '.',
                     Type: 'A',
                     ResourceRecords: [{
                         Value: '1.2.3.4'

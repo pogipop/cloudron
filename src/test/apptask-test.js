@@ -68,7 +68,8 @@ var APP = {
 describe('apptask', function () {
     before(function (done) {
         config.set('version', '0.5.0');
-        config.set('fqdn', 'foobar.com');
+        config.setFqdn('foobar.com');
+        config.setZoneName('foobar.com');
         config.set('provider', 'caas');
 
         awsHostedZones = {

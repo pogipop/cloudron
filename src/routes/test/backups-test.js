@@ -28,7 +28,7 @@ function setup(done) {
     nock.cleanAll();
     config._reset();
     config.setVersion('1.2.3');
-    config.set('fqdn', 'localhost');
+    config.setFqdn('localhost');
 
     async.series([
         server.start.bind(server),

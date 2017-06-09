@@ -17,6 +17,7 @@ exports = module.exports = {
     apiServerOrigin: apiServerOrigin,
     webServerOrigin: webServerOrigin,
     fqdn: fqdn,
+    setFqdn: setFqdn,
     token: token,
     version: version,
     setVersion: setVersion,
@@ -31,6 +32,7 @@ exports = module.exports = {
     mailFqdn: mailFqdn,
     appFqdn: appFqdn,
     zoneName: zoneName,
+    setZoneName: setZoneName,
 
     isDemo: isDemo,
 
@@ -46,6 +48,7 @@ var assert = require('assert'),
     fs = require('fs'),
     path = require('path'),
     safe = require('safetydance'),
+    tld = require('tldjs'),
     _ = require('underscore');
 
 var homeDir = process.env.HOME || process.env.HOMEPATH || process.env.USERPROFILE;
@@ -74,6 +77,7 @@ function _reset(callback) {
 function initConfig() {
     // setup defaults
     data.fqdn = 'localhost';
+    data.zoneName = '';
 
     data.token = null;
     data.version = null;
@@ -143,8 +147,24 @@ function webServerOrigin() {
     return get('webServerOrigin');
 }
 
+function setFqdn(fqdn) {
+    set('fqdn', fqdn);
+}
+
 function fqdn() {
     return get('fqdn');
+}
+
+function setZoneName(zone) {
+    set('zoneName', zone);
+}
+
+function zoneName() {
+    var zone = get('zoneName');
+    if (zone) return zone;
+
+    // TODO: move this to migration code path instead
+    return tld.getDomain(fqdn()) || '';
 }
 
 // keep this in sync with start.sh admin.conf generation code
@@ -189,13 +209,6 @@ function setVersion(version) {
 
 function isCustomDomain() {
     return get('isCustomDomain');
-}
-
-function zoneName() {
-    if (isCustomDomain()) return fqdn(); // the appstore sets up the custom domain as a zone
-
-    // for shared domain name, strip out the hostname
-    return fqdn().substr(fqdn().indexOf('.') + 1);
 }
 
 function database() {

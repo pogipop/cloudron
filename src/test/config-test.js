@@ -41,7 +41,7 @@ describe('config', function () {
         expect(config.fqdn()).to.equal('localhost');
         expect(config.adminOrigin()).to.equal('https://' + constants.ADMIN_LOCATION + '.localhost');
         expect(config.appFqdn('app')).to.equal('app.localhost');
-        expect(config.zoneName()).to.equal('localhost');
+        expect(config.zoneName()).to.equal('');
     });
 
     it('set saves value in file', function (done) {
@@ -63,7 +63,7 @@ describe('config', function () {
     });
 
     it('uses dotted locations with custom domain', function () {
-        config.set('fqdn', 'example.com');
+        config.setFqdn('example.com');
         config.set('isCustomDomain', true);
 
         expect(config.isCustomDomain()).to.equal(true);
@@ -74,7 +74,7 @@ describe('config', function () {
     });
 
     it('uses hyphen locations with non-custom domain', function () {
-        config.set('fqdn', 'test.example.com');
+        config.setFqdn('test.example.com');
         config.set('isCustomDomain', false);
 
         expect(config.isCustomDomain()).to.equal(false);
@@ -95,4 +95,3 @@ describe('config', function () {
     });
 
 });
-

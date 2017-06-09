@@ -58,6 +58,7 @@ var appdb = require('./appdb.js'),
     subdomains = require('./subdomains.js'),
     superagent = require('superagent'),
     sysinfo = require('./sysinfo.js'),
+    tld = require('tldjs'),
     tokendb = require('./tokendb.js'),
     updateChecker = require('./updatechecker.js'),
     user = require('./user.js'),
@@ -176,7 +177,8 @@ function dnsSetup(dnsConfig, domain, callback) {
         if (error && error.reason === SettingsError.BAD_FIELD) return callback(new CloudronError(CloudronError.BAD_FIELD, error.message));
         if (error) return callback(new CloudronError(CloudronError.INTERNAL_ERROR, error));
 
-        config.set('fqdn', domain); // set fqdn only after dns config is valid, otherwise cannot re-setup if we failed
+        config.setFqdn(domain); // set fqdn only after dns config is valid, otherwise cannot re-setup if we failed
+        config.setZoneName(tld.getDomain(domain));
 
         async.series([ // do not block
             onDomainConfigured,
