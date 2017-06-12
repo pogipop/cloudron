@@ -180,9 +180,10 @@ function del(dnsConfig, zoneName, subdomain, type, values, callback) {
     });
 }
 
-function verifyDnsConfig(dnsConfig, domain, ip, callback) {
+function verifyDnsConfig(dnsConfig, domain, zoneName, ip, callback) {
     assert.strictEqual(typeof dnsConfig, 'object');
     assert.strictEqual(typeof domain, 'string');
+    assert.strictEqual(typeof zoneName, 'string');
     assert.strictEqual(typeof ip, 'string');
     assert.strictEqual(typeof callback, 'function');
 
@@ -193,7 +194,7 @@ function verifyDnsConfig(dnsConfig, domain, ip, callback) {
 
     if (process.env.BOX_ENV === 'test') return callback(null, credentials); // this shouldn't be here
 
-    dns.resolveNs(domain, function (error, nameservers) {
+    dns.resolveNs(zoneName, function (error, nameservers) {
         if (error && error.code === 'ENOTFOUND') return callback(new SubdomainError(SubdomainError.BAD_FIELD, 'Unable to resolve nameservers for this domain'));
         if (error || !nameservers) return callback(new SubdomainError(SubdomainError.BAD_FIELD, error ? error.message : 'Unable to get nameservers'));
 
@@ -202,7 +203,9 @@ function verifyDnsConfig(dnsConfig, domain, ip, callback) {
             return callback(new SubdomainError(SubdomainError.BAD_FIELD, 'Domain nameservers are not set to Digital Ocean'));
         }
 
-        upsert(credentials, domain, constants.ADMIN_LOCATION, 'A', [ ip ], function (error, changeId) {
+        const name = constants.ADMIN_LOCATION + (domain === zoneName ? '' :  '.' + domain.slice(0, - zoneName.length - 1));
+
+        upsert(credentials, zoneName, name, 'A', [ ip ], function (error, changeId) {
             if (error) return callback(error);
 
             debug('verifyDnsConfig: A record added with change id %s', changeId);

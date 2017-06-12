@@ -166,19 +166,24 @@ function onDomainConfigured(callback) {
     ], callback);
 }
 
-function dnsSetup(dnsConfig, domain, callback) {
+function dnsSetup(dnsConfig, domain, zoneName, callback) {
     assert.strictEqual(typeof dnsConfig, 'object');
     assert.strictEqual(typeof domain, 'string');
+    assert.strictEqual(typeof zoneName, 'string');
     assert.strictEqual(typeof callback, 'function');
 
     if (config.fqdn()) return callback(new CloudronError(CloudronError.ALREADY_SETUP));
 
-    settings.setDnsConfig(dnsConfig, domain, function (error) {
+    if (!zoneName) zoneName = tld.getDomain(domain) || '';
+
+    debug('dnsSetup: Setting up Cloudron with domain %s and zone %s', domain, zoneName);
+
+    settings.setDnsConfig(dnsConfig, domain, zoneName, function (error) {
         if (error && error.reason === SettingsError.BAD_FIELD) return callback(new CloudronError(CloudronError.BAD_FIELD, error.message));
         if (error) return callback(new CloudronError(CloudronError.INTERNAL_ERROR, error));
 
         config.setFqdn(domain); // set fqdn only after dns config is valid, otherwise cannot re-setup if we failed
-        config.setZoneName(tld.getDomain(domain));
+        config.setZoneName(zoneName);
 
         async.series([ // do not block
             onDomainConfigured,
@@ -857,9 +862,9 @@ function migrate(options, callback) {
 
     if (!options.domain) return doMigrate(options, callback);
 
-    var dnsConfig = _.pick(options, 'domain', 'provider', 'accessKeyId', 'secretAccessKey', 'region', 'endpoint', 'token');
+    var dnsConfig = _.pick(options, 'domain', 'provider', 'accessKeyId', 'secretAccessKey', 'region', 'endpoint', 'token', 'zoneName');
 
-    settings.setDnsConfig(dnsConfig, options.domain, function (error) {
+    settings.setDnsConfig(dnsConfig, options.domain, options.zoneName || '', function (error) {
         if (error && error.reason === SettingsError.BAD_FIELD) return callback(new CloudronError(CloudronError.BAD_FIELD, error.message));
         if (error) return callback(new CloudronError(CloudronError.INTERNAL_ERROR, error));
 

@@ -56,9 +56,10 @@ function del(dnsConfig, zoneName, subdomain, type, values, callback) {
     callback(new Error('not implemented'));
 }
 
-function verifyDnsConfig(dnsConfig, domain, ip, callback) {
+function verifyDnsConfig(dnsConfig, domain, zoneName, ip, callback) {
     assert.strictEqual(typeof dnsConfig, 'object');
     assert.strictEqual(typeof domain, 'string');
+    assert.strictEqual(typeof zoneName, 'string');
     assert.strictEqual(typeof ip, 'string');
     assert.strictEqual(typeof callback, 'function');
 

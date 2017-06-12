@@ -130,15 +130,16 @@ function waitForDns(domain, value, type, options, callback) {
     });
 }
 
-function verifyDnsConfig(dnsConfig, domain, ip, callback) {
+function verifyDnsConfig(dnsConfig, domain, zoneName, ip, callback) {
     assert(dnsConfig && typeof dnsConfig === 'object'); // the dns config to test with
     assert(typeof dnsConfig.provider === 'string');
     assert.strictEqual(typeof domain, 'string');
+    assert.strictEqual(typeof zoneName, 'string');
     assert.strictEqual(typeof ip, 'string');
     assert.strictEqual(typeof callback, 'function');
 
     var backend = api(dnsConfig.provider);
     if (!backend) return callback(new SubdomainError(SubdomainError.INVALID_PROVIDER));
 
-    api(dnsConfig.provider).verifyDnsConfig(dnsConfig, domain, ip, callback);
+    api(dnsConfig.provider).verifyDnsConfig(dnsConfig, domain, zoneName, ip, callback);
 }

@@ -199,7 +199,7 @@ function setDnsConfig(req, res, next) {
 
     if (typeof req.body.provider !== 'string') return next(new HttpError(400, 'provider is required'));
 
-    settings.setDnsConfig(req.body, config.fqdn(), function (error) {
+    settings.setDnsConfig(req.body, config.fqdn(), config.zoneName(), function (error) {
         if (error && error.reason === SettingsError.BAD_FIELD) return next(new HttpError(400, error.message));
         if (error) return next(new HttpError(500, error));
 
