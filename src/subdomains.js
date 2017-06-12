@@ -118,7 +118,7 @@ function waitForDns(domain, value, type, options, callback) {
     settings.getDnsConfig(function (error, dnsConfig) {
         if (error) return callback(new SubdomainError(SubdomainError.INTERNAL_ERROR, error));
 
-        api(dnsConfig.provider).waitForDns(domain, value, type, options, callback);
+        api(dnsConfig.provider).waitForDns(domain, config.zoneName(), value, type, options, callback);
     });
 }
 

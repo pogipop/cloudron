@@ -60,14 +60,14 @@ function isChangeSynced(domain, value, type, nameserver, callback) {
  }
 
 // check if IP change has propagated to every nameserver
-function waitForDns(domain, value, type, options, callback) {
+function waitForDns(domain, zoneName, value, type, options, callback) {
     assert.strictEqual(typeof domain, 'string');
+    assert.strictEqual(typeof zoneName, 'string');
     assert(typeof value === 'string' || util.isRegExp(value));
     assert(type === 'A' || type === 'CNAME' || type === 'TXT');
     assert(options && typeof options === 'object'); // { interval: 5000, times: 50000 }
     assert.strictEqual(typeof callback, 'function');
 
-    var zoneName = tld.getDomain(domain);
     if (typeof value === 'string') {
         // http://stackoverflow.com/questions/3561493/is-there-a-regexp-escape-function-in-javascript
         value = new RegExp('^' + value.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&') + '$');
