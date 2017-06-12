@@ -17,6 +17,7 @@ angular.module('Application').controller('EmailController', ['$scope', '$locatio
         { name: 'PTR', value: 'ptr' }
     ];
     $scope.mailConfig = null;
+    $scope.users = [];
 
     $scope.showView = function (view) {
         // wait for dialog to be fully closed to avoid modal behavior breakage when moving to a different view already
@@ -26,6 +27,21 @@ angular.module('Application').controller('EmailController', ['$scope', '$locatio
         });
 
         $('.modal').modal('hide');
+    };
+
+    $scope.catchall = {
+        addresses: [],
+        busy: false,
+
+        submit: function () {
+            $scope.catchall.busy = true;
+
+            Client.setCatchallAddresses($scope.catchall.addresses, function (error) {
+                if (error) console.error('Unable to add catchall address.', error);
+
+                $scope.catchall.busy = false;
+            });
+        }
     };
 
     $scope.email = {
@@ -107,9 +123,31 @@ angular.module('Application').controller('EmailController', ['$scope', '$locatio
         });
     }
 
+    function getUsers() {
+        Client.getUsers(function (error, result) {
+            if (error) return console.error('Unable to get user listing.', error);
+
+            // only allow users with a Cloudron email address
+            $scope.catchall.availableAddresses = result.filter(function (u) { return !!u.email; }).map(function (u) { return u.email; });
+        });
+    }
+
+    function getCatchallAddresses() {
+        Client.getCatchallAddresses(function (error, result) {
+            if (error) return console.error('Unable to get catchall address listing.', error);
+
+            // dedupe in case to avoid angular breakage
+            $scope.catchall.addresses = result.filter(function(item, pos, self) {
+                return self.indexOf(item) == pos;
+            });
+        });
+    }
+
     Client.onReady(function () {
         getMailConfig();
         getDnsConfig();
+        getUsers();
+        getCatchallAddresses();
         $scope.email.refresh();
     });
 

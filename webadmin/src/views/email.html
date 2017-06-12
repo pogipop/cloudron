@@ -58,6 +58,21 @@
     </div>
 </div>
 
+<div class="section-header" ng-show="mailConfig.enabled && false">
+    <div class="text-left">
+        <h3>Catch-All</h3>
+    </div>
+</div>
+
+<div class="card" style="margin-bottom: 15px;" ng-show="mailConfig.enabled && false">
+    <div class="row">
+        <div class="col-md-12">
+            Catch all Emails sent to non existing addresses and forward to those accounts:
+            <multiselect ng-model="catchall.addresses" options="address for address in catchall.availableAddresses" data-multiple="true"></multiselect>
+            <button class="btn btn-outline btn-primary" ng-disabled="catchall.busy" ng-click="catchall.submit()"><i class="fa fa-circle-o-notch fa-spin" ng-show="catchall.busy"></i> Save</button>        </div>
+    </div>
+</div>
+
 <div class="section-header" ng-show="dnsConfig.provider && dnsConfig.provider !== 'caas'">
     <div class="text-left">
         <h3>DNS Records</h3>
