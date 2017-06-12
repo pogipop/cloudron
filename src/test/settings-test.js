@@ -181,6 +181,26 @@ describe('Settings', function () {
             });
         });
 
+        it('can get catch all address', function (done) {
+            settings.getCatchAllAddress(function (error, address) {
+                expect(error).to.be(null);
+                expect(address).to.eql([ ]);
+                done();
+            });
+        });
+
+        it('can set catch all address', function (done) {
+            settings.setCatchAllAddress([ "user1", "user2" ], function (error) {
+                expect(error).to.be(null);
+
+                settings.getCatchAllAddress(function (error, address) {
+                    expect(error).to.be(null);
+                    expect(address).to.eql([ "user1", "user2" ]);
+                    done();
+                });
+            });
+        });
+
         it('can get all values', function (done) {
             settings.getAll(function (error, allSettings) {
                 expect(error).to.be(null);

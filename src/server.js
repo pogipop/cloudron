@@ -211,6 +211,8 @@ function initializeExpressSync() {
     router.post('/api/v1/settings/appstore_config',    settingsScope, routes.user.requireAdmin, routes.settings.setAppstoreConfig);
     router.get ('/api/v1/settings/mail_config',        settingsScope, routes.user.requireAdmin, routes.settings.getMailConfig);
     router.post('/api/v1/settings/mail_config',        settingsScope, routes.user.requireAdmin, routes.settings.setMailConfig);
+    router.get ('/api/v1/settings/catch_all_address',  settingsScope, routes.user.requireAdmin, routes.settings.getCatchAllAddress);
+    router.put ('/api/v1/settings/catch_all_address',  settingsScope, routes.user.requireAdmin, routes.settings.setCatchAllAddress);
 
     // feedback
     router.post('/api/v1/feedback', usersScope, routes.cloudron.feedback);

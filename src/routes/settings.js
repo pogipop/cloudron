@@ -24,6 +24,9 @@ exports = module.exports = {
     getMailConfig: getMailConfig,
     setMailConfig: setMailConfig,
 
+    getCatchAllAddress: getCatchAllAddress,
+    setCatchAllAddress: setCatchAllAddress,
+
     getAppstoreConfig: getAppstoreConfig,
     setAppstoreConfig: setAppstoreConfig,
 
@@ -118,6 +121,31 @@ function setMailConfig(req, res, next) {
     if (typeof req.body.enabled !== 'boolean') return next(new HttpError(400, 'enabled is required'));
 
     settings.setMailConfig({ enabled: req.body.enabled }, function (error) {
+        if (error && error.reason === SettingsError.BAD_FIELD) return next(new HttpError(400, error.message));
+        if (error) return next(new HttpError(500, error));
+
+        next(new HttpSuccess(200));
+    });
+}
+
+function getCatchAllAddress(req, res, next) {
+    settings.getCatchAllAddress(function (error, address) {
+        if (error) return next(new HttpError(500, error));
+
+        next(new HttpSuccess(200, { address: address }));
+    });
+}
+
+function setCatchAllAddress(req, res, next) {
+    assert.strictEqual(typeof req.body, 'object');
+
+    if (!req.body.address || !Array.isArray(req.body.address)) return next(new HttpError(400, 'address array is required'));
+
+    for (var i = 0; i < req.body.address.length; i++) {
+        if (typeof req.body.address[i] !== 'string') return next(new HttpError(400, 'address must be an array of string'));
+    }
+
+    settings.setCatchAllAddress(req.body.address, function (error) {
         if (error && error.reason === SettingsError.BAD_FIELD) return next(new HttpError(400, error.message));
         if (error) return next(new HttpError(500, error));
 

@@ -44,6 +44,9 @@ exports = module.exports = {
     getMailConfig: getMailConfig,
     setMailConfig: setMailConfig,
 
+    setCatchAllAddress: setCatchAllAddress,
+    getCatchAllAddress: getCatchAllAddress,
+
     getDefaultSync: getDefaultSync,
     getAll: getAll,
 
@@ -58,6 +61,7 @@ exports = module.exports = {
     UPDATE_CONFIG_KEY: 'update_config',
     APPSTORE_CONFIG_KEY: 'appstore_config',
     MAIL_CONFIG_KEY: 'mail_config',
+    CATCH_ALL_ADDRESS: 'catch_all_address',
 
     events: null
 };
@@ -77,6 +81,7 @@ var assert = require('assert'),
     moment = require('moment-timezone'),
     net = require('net'),
     paths = require('./paths.js'),
+    platform = require('./platform.js'),
     safe = require('safetydance'),
     settingsdb = require('./settingsdb.js'),
     subdomains = require('./subdomains.js'),
@@ -104,6 +109,7 @@ var gDefaults = (function () {
     result[exports.UPDATE_CONFIG_KEY] = { prerelease: false };
     result[exports.APPSTORE_CONFIG_KEY] = {};
     result[exports.MAIL_CONFIG_KEY] = { enabled: false };
+    result[exports.CATCH_ALL_ADDRESS] = [ ];
 
     return result;
 })();
@@ -648,6 +654,32 @@ function setMailConfig(mailConfig, callback) {
         if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
 
         exports.events.emit(exports.MAIL_CONFIG_KEY, mailConfig);
+
+        callback(null);
+    });
+}
+
+function getCatchAllAddress(callback) {
+    assert.strictEqual(typeof callback, 'function');
+
+    settingsdb.get(exports.CATCH_ALL_ADDRESS, function (error, value) {
+        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(null, gDefaults[exports.CATCH_ALL_ADDRESS]);
+        if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
+
+        callback(null, JSON.parse(value));
+    });
+}
+
+function setCatchAllAddress(address, callback) {
+    assert(Array.isArray(address));
+    assert.strictEqual(typeof callback, 'function');
+
+    settingsdb.set(exports.CATCH_ALL_ADDRESS, JSON.stringify(address), function (error) {
+        if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
+
+        exports.events.emit(exports.CATCH_ALL_ADDRESS, address);
+
+        platform.createMailConfig(NOOP_CALLBACK);
 
         callback(null);
     });

@@ -239,16 +239,22 @@ function createMailConfig(callback) {
     const mailFqdn = config.adminFqdn();
     const alertsFrom = 'no-reply@' + config.fqdn();
 
+    debug('createMailConfig: generating mail config');
+
     user.getOwner(function (error, owner) {
         var alertsTo = config.provider() === 'caas' ? [ 'support@cloudron.io' ] : [ ];
         alertsTo.concat(error ? [] : owner.email).join(',');
 
-        if (!safe.fs.writeFileSync(paths.ADDON_CONFIG_DIR + '/mail/mail.ini',
-            `mail_domain=${fqdn}\nmail_server_name=${mailFqdn}\nalerts_from=${alertsFrom}\nalerts_to=${alertsTo}`, 'utf8')) {
-            return callback(new Error('Could not create mail var file:' + safe.error.message));
-        }
+        settings.getCatchAllAddress(function (error, address) {
+            var catchAll = address.join(',');
 
-        callback();
+            if (!safe.fs.writeFileSync(paths.ADDON_CONFIG_DIR + '/mail/mail.ini',
+                `mail_domain=${fqdn}\nmail_server_name=${mailFqdn}\nalerts_from=${alertsFrom}\nalerts_to=${alertsTo}\ncatch_all=${catchAll}\n`, 'utf8')) {
+                return callback(new Error('Could not create mail var file:' + safe.error.message));
+            }
+
+            callback();
+        });
     });
 }
 

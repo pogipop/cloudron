@@ -315,6 +315,57 @@ describe('Settings API', function () {
         });
     });
 
+    describe('catch_all', function () {
+        it('get catch_all succeeds', function (done) {
+            superagent.get(SERVER_URL + '/api/v1/settings/catch_all_address')
+                   .query({ access_token: token })
+                   .end(function (err, res) {
+                expect(res.statusCode).to.equal(200);
+                expect(res.body).to.eql({ address: [ ] });
+                done();
+            });
+        });
+
+        it('cannot set without address field', function (done) {
+            superagent.put(SERVER_URL + '/api/v1/settings/catch_all_address')
+                   .query({ access_token: token })
+                   .end(function (err, res) {
+                expect(res.statusCode).to.equal(400);
+                done();
+            });
+        });
+
+        it('cannot set with bad address field', function (done) {
+            superagent.put(SERVER_URL + '/api/v1/settings/catch_all_address')
+                   .query({ access_token: token })
+                   .send({ address: [ "user1", 123 ] })
+                   .end(function (err, res) {
+                expect(res.statusCode).to.equal(400);
+                done();
+            });
+        });
+
+        it('set succeeds', function (done) {
+            superagent.put(SERVER_URL + '/api/v1/settings/catch_all_address')
+                   .query({ access_token: token })
+                   .send({ address: [ "user1" ] })
+                   .end(function (err, res) {
+                expect(res.statusCode).to.equal(200);
+                done();
+            });
+        });
+
+        it('get succeeds', function (done) {
+            superagent.get(SERVER_URL + '/api/v1/settings/catch_all_address')
+                   .query({ access_token: token })
+                   .end(function (err, res) {
+                expect(res.statusCode).to.equal(200);
+                expect(res.body).to.eql({ address: [ "user1" ] });
+                done();
+            });
+        });
+    });
+
     describe('Certificates API', function () {
         var validCert0, validKey0, // foobar.com
             validCert1, validKey1; // *.foobar.com

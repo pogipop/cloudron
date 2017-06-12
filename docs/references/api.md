@@ -1196,6 +1196,34 @@ Request:
 }
 ```
 
+### Get Catch All Address
+
+GET `/api/v1/settings/catch_all_address` <scope>admin</scope>
+
+Gets the address(es) to which emails addressed to a non-existent mailbox are forwarded to.
+Configuring a catch-all address can help avoid losing emails due to misspelling.
+
+Response(200):
+```
+{
+  "address": [ <string> ] // array of mailbox names
+}
+```
+
+### Set Catch All Address
+
+PUT `/api/v1/settings/catch_all_address` <scope>admin</scope>
+
+Sets the address(es) to which emails addressed to a non-existent mailbox are forwarded.
+Configuring a catch-all address can help avoid losing emails due to misspelling.
+
+Request:
+```
+{
+    "address": [ <string> ] // array of mailbox names
+}
+```
+
 ### Get DNS Configuration
 
 GET `/api/v1/settings/dns_config` <scope>admin</scope> <scope>internal</scope>
@@ -1221,7 +1249,7 @@ This is currently internal API and is documented here for completeness.
 
 ### Get Email Configuration
 
-GET `/api/v1/settings/mail_config` <scope>admin</scope> <scope>internal</scope>
+GET `/api/v1/settings/mail_config` <scope>admin</scope>
 
 Gets the email configuration. The Cloudron has a built-in email server for users.
 This configuration can be used to disable the server. Note that the Cloudron will
@@ -1236,7 +1264,7 @@ Response(200):
 
 ### Set Email Configuration
 
-POST `/api/v1/settings/mail_config` <scope>admin</scope> <scope>internal</scope>
+POST `/api/v1/settings/mail_config` <scope>admin</scope>
 
 Sets the email configuration. The Cloudron has a built-in email server for users.
 This configuration can be used to enable or disable the email server. Note that
