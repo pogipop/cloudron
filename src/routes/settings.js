@@ -149,7 +149,7 @@ function setCatchAllAddress(req, res, next) {
         if (error && error.reason === SettingsError.BAD_FIELD) return next(new HttpError(400, error.message));
         if (error) return next(new HttpError(500, error));
 
-        next(new HttpSuccess(200));
+        next(new HttpSuccess(200, {}));
     });
 }
 
