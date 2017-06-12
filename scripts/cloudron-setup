@@ -105,6 +105,7 @@ if [[ -z "${dataJson}" ]]; then
                 "${provider}" != "azure" && \
                 "${provider}" != "digitalocean" && \
                 "${provider}" != "ec2" && \
+                "${provider}" != "gce" && \
                 "${provider}" != "lightsail" && \
                 "${provider}" != "linode" && \
                 "${provider}" != "ovh" && \
@@ -113,7 +114,7 @@ if [[ -z "${dataJson}" ]]; then
                 "${provider}" != "vultr" && \
                 "${provider}" != "generic" \
             ]]; then
-        echo "--provider must be one of: azure, digitalocean, ec2, lightsail, linode, ovh, rosehosting, scaleway, vultr or generic"
+        echo "--provider must be one of: azure, digitalocean, ec2, gce, lightsail, linode, ovh, rosehosting, scaleway, vultr or generic"
         exit 1
     fi
 
