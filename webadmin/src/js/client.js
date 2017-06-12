@@ -404,6 +404,20 @@ angular.module('Application').service('Client', ['$http', 'md5', 'Notification',
         }
     };
 
+    Client.prototype.setCatchallAddresses = function (addresses, callback) {
+        put('/api/v1/settings/catch_all_address', { address: addresses }).success(function(data, status) {
+            if (status !== 200) return callback(new ClientError(status, data));
+            callback(null);
+        }).error(defaultErrorHandler(callback));
+    };
+
+    Client.prototype.getCatchallAddresses = function (callback) {
+        get('/api/v1/settings/catch_all_address').success(function(data, status) {
+            if (status !== 200) return callback(new ClientError(status, data));
+            callback(null, data.address);
+        }).error(defaultErrorHandler(callback));
+    };
+
     Client.prototype.setBackupConfig = function (backupConfig, callback) {
         post('/api/v1/settings/backup_config', backupConfig).success(function(data, status) {
             if (status !== 200) return callback(new ClientError(status, data));
