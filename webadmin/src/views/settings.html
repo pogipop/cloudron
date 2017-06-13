@@ -323,7 +323,7 @@
 </div>
 
 <div class="card" style="margin-bottom: 15px;" ng-show="backupConfig.provider !== 'caas'">
-    <div class="row" ng-show="currentSubscription.plan.id === 'free'">
+    <div class="row" ng-show="currentSubscription.plan.id === 'free' || currentSubscription.plan.id === 'undecided'">
         <div class="col-xs-12">
             With a paid plan, you get continuous updates for the Cloudron and apps. This ensures you are running the latest versions of apps and keeps your server secure. All paid plans come with support via <a href="mailto:support@cloudron.io">email</a> and <a target="_blank" href="https://chat.cloudron.io">live chat</a>.
         </div>
@@ -348,8 +348,8 @@
     <br/>
     <div class="row">
         <div class="col-xs-12">
-            <a class="btn btn-primary pull-right" ng-href="{{ config.webServerOrigin + '/console.html#/userprofile?view=subscriptions&email=' + appstoreConfig.profile.email }}" target="_blank" ng-show="currentSubscription.plan && currentSubscription.plan.id !== 'free'">Configure</a>
-            <a class="btn btn-success pull-right" ng-href="{{ config.webServerOrigin + '/console.html#/userprofile?view=subscriptions&email=' + appstoreConfig.profile.email + '&cloudronId=' + appstoreConfig.cloudronId }}" target="_blank" ng-show="currentSubscription.plan.id === 'free'">Setup Subscription</a>
+            <a class="btn btn-primary pull-right" ng-href="{{ config.webServerOrigin + '/console.html#/userprofile?view=subscriptions&email=' + appstoreConfig.profile.email }}" target="_blank" ng-show="currentSubscription.plan && currentSubscription.plan.id !== 'free' && currentSubscription.plan.id !== 'undecided'">Configure</a>
+            <a class="btn btn-success pull-right" ng-href="{{ config.webServerOrigin + '/console.html#/userprofile?view=subscriptions&email=' + appstoreConfig.profile.email + '&cloudronId=' + appstoreConfig.cloudronId }}" target="_blank" ng-show="currentSubscription.plan.id === 'free' || currentSubscription.plan.id === 'undecided'">Setup Subscription</a>
         </div>
     </div>
 </div>
