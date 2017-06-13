@@ -58,6 +58,14 @@ function api(provider) {
     }
 }
 
+function getName(subdomain) {
+    if (config.fqdn() === config.zoneName()) return subdomain;
+
+    var part = config.fqdn().slice(0, -config.zoneName().length - 1);
+
+    return subdomain === '' ? part : subdomain + '.' + part;
+}
+
 function get(subdomain, type, callback) {
     assert.strictEqual(typeof subdomain, 'string');
     assert.strictEqual(typeof type, 'string');
@@ -66,7 +74,7 @@ function get(subdomain, type, callback) {
     settings.getDnsConfig(function (error, dnsConfig) {
         if (error) return callback(new SubdomainError(SubdomainError.INTERNAL_ERROR, error));
 
-        api(dnsConfig.provider).get(dnsConfig, config.zoneName(), subdomain, type, function (error, values) {
+        api(dnsConfig.provider).get(dnsConfig, config.zoneName(), getName(subdomain), type, function (error, values) {
             if (error) return callback(error);
 
             callback(null, values);
@@ -83,7 +91,7 @@ function upsert(subdomain, type, values, callback) {
     settings.getDnsConfig(function (error, dnsConfig) {
         if (error) return callback(new SubdomainError(SubdomainError.INTERNAL_ERROR, error));
 
-        api(dnsConfig.provider).upsert(dnsConfig, config.zoneName(), subdomain, type, values, function (error, changeId) {
+        api(dnsConfig.provider).upsert(dnsConfig, config.zoneName(), getName(subdomain), type, values, function (error, changeId) {
             if (error) return callback(error);
 
             callback(null, changeId);
@@ -100,7 +108,7 @@ function remove(subdomain, type, values, callback) {
     settings.getDnsConfig(function (error, dnsConfig) {
         if (error) return callback(new SubdomainError(SubdomainError.INTERNAL_ERROR, error));
 
-        api(dnsConfig.provider).del(dnsConfig, config.zoneName(), subdomain, type, values, function (error) {
+        api(dnsConfig.provider).del(dnsConfig, config.zoneName(), getName(subdomain), type, values, function (error) {
             if (error && error.reason !== SubdomainError.NOT_FOUND) return callback(error);
 
             callback(null);
