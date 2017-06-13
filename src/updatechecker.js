@@ -12,7 +12,6 @@ exports = module.exports = {
 var apps = require('./apps.js'),
     appstore = require('./appstore.js'),
     async = require('async'),
-    config = require('./config.js'),
     constants = require('./constants.js'),
     debug = require('debug')('box:updatechecker'),
     mailer = require('./mailer.js'),
