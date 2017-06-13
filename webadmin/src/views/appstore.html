@@ -153,9 +153,14 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h4 class="modal-title">App Feedback</h4>
+                <h4 class="modal-title">Missing App Feedback</h4>
             </div>
             <div class="modal-body">
+                <p>
+                    Please see all previously requested apps <a href="https://git.cloudron.io/cloudron/app-requests/issues" target="_blank">here</a> first.
+                    If an app was already requested, leave a comment or give a +1, to allow us prioritize better.
+                </p>
+                <br/>
                 <fieldset>
                     <form name="feedbackForm" ng-submit="feedback.submit()">
                         <div ng-show="feedback.error" class="text-danger text-bold">{{feedback.error}}</div>
