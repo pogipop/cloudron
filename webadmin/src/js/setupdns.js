@@ -3,7 +3,7 @@
 // create main application module
 var app = angular.module('Application', ['angular-md5', 'ui-notification', 'ngTld']);
 
-app.controller('SetupDNSController', ['$scope', '$http', 'Client', 'ngTld', function ($scope, $http, Client, ngTld) {
+app.controller('SetupDNSController', ['$scope', '$http', 'Client', 'ngTld', '$location', function ($scope, $http, Client, ngTld, $location) {
     var search = decodeURIComponent(window.location.search).slice(1).split('&').map(function (item) { return item.split('='); }).reduce(function (o, k) { o[k[0]] = k[1]; return o; }, {});
 
     $scope.initialized = false;
@@ -38,6 +38,7 @@ app.controller('SetupDNSController', ['$scope', '$http', 'Client', 'ngTld', func
 
         var data = {
             domain: $scope.dnsCredentials.domain,
+            zoneName: $location.search().zone || '',
             provider: $scope.dnsCredentials.provider,
             accessKeyId: $scope.dnsCredentials.accessKeyId,
             secretAccessKey: $scope.dnsCredentials.secretAccessKey,
