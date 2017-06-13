@@ -35,6 +35,13 @@ angular.module('Application').controller('MainController', ['$scope', '$route', 
     $scope.waitingForPlanSelection = false;
     $('#setupSubscriptionModal').on('hide.bs.modal', function () {
         $scope.waitingForPlanSelection = false;
+
+        // check for updates to stay in sync
+        Client.checkForUpdates(function (error) {
+            if (error) return console.error(error);
+
+            Client.refreshConfig();
+        });
     });
 
     $scope.waitForPlanSelection = function () {
