@@ -608,27 +608,30 @@ function update(boxUpdateInfo, auditSource, callback) {
     callback(null);
 }
 
-
 function updateToLatest(auditSource, callback) {
     assert.strictEqual(typeof auditSource, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    var boxUpdateInfo = updateChecker.getUpdateInfo().box;
-    if (!boxUpdateInfo) return callback(new CloudronError(CloudronError.ALREADY_UPTODATE, 'No update available'));
-    if (!boxUpdateInfo.sourceTarballUrl) return callback(new CloudronError(CloudronError.BAD_STATE, 'No automatic update available'));
+    updateChecker.checkBoxUpdates(function (error) {
+        if (error) return callback(error);
 
-    // check if this is just a version number change
-    if (config.version().match(/[-+]/) !== null && config.version().replace(/[-+].*/, '') === boxUpdateInfo.version) {
-        doShortCircuitUpdate(boxUpdateInfo, function (error) {
-            if (error) debug('Short-circuit update failed', error);
-        });
+        var boxUpdateInfo = updateChecker.getUpdateInfo().box;
+        if (!boxUpdateInfo) return callback(new CloudronError(CloudronError.ALREADY_UPTODATE, 'No update available'));
+        if (!boxUpdateInfo.sourceTarballUrl) return callback(new CloudronError(CloudronError.BAD_STATE, 'No automatic update available'));
 
-        return callback(null);
-    }
+        // check if this is just a version number change
+        if (config.version().match(/[-+]/) !== null && config.version().replace(/[-+].*/, '') === boxUpdateInfo.version) {
+            doShortCircuitUpdate(boxUpdateInfo, function (error) {
+                if (error) debug('Short-circuit update failed', error);
+            });
 
-    if (boxUpdateInfo.upgrade && config.provider() !== 'caas') return callback(new CloudronError(CloudronError.SELF_UPGRADE_NOT_SUPPORTED));
+            return callback(null);
+        }
 
-    update(boxUpdateInfo, auditSource, callback);
+        if (boxUpdateInfo.upgrade && config.provider() !== 'caas') return callback(new CloudronError(CloudronError.SELF_UPGRADE_NOT_SUPPORTED));
+
+        update(boxUpdateInfo, auditSource, callback);
+    });
 }
 
 function doShortCircuitUpdate(boxUpdateInfo, callback) {
