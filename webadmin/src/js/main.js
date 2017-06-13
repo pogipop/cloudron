@@ -33,7 +33,7 @@ angular.module('Application').controller('MainController', ['$scope', '$route', 
     };
 
     $scope.waitingForPlanSelection = false;
-    $('#version1Modal').on('hide.bs.modal', function () {
+    $('#setupSubscriptionModal').on('hide.bs.modal', function () {
         $scope.waitingForPlanSelection = false;
     });
 
@@ -45,16 +45,27 @@ angular.module('Application').controller('MainController', ['$scope', '$route', 
         function checkPlan() {
             if (!$scope.waitingForPlanSelection) return;
 
-            if ($scope.currentSubscription.plan.id !== 'undecided') {
-                $scope.waitingForPlanSelection = false;
-                $('#version1Modal').modal('hide');
-                $('#updateModal').modal('show');
-            } else {
-                $timeout(checkPlan, 1000);
-            }
+            AppStore.getSubscription($scope.appstoreConfig, function (error, result) {
+                if (error) return console.error(error);
+
+                $scope.currentSubscription = result;
+
+                // check again to give more immediate feedback once a subscription was setup
+                if (result.plan.id === 'undecided' || result.plan.id === 'free') {
+                    $timeout(checkPlan, 5000);
+                } else {
+                    $scope.waitingForPlanSelection = false;
+                    $('#setupSubscriptionModal').modal('hide');
+                    if ($scope.config.update && $scope.config.update.box) $('#updateModal').modal('show');
+                }
+            });
         }
 
         checkPlan();
+    };
+
+    $scope.showSubscriptionModal = function () {
+        $('#setupSubscriptionModal').modal('show');
     };
 
     $scope.showUpdateModal = function (form) {
@@ -73,14 +84,6 @@ angular.module('Application').controller('MainController', ['$scope', '$route', 
             $('#updateModal').modal('show');
         } else if (!$scope.currentSubscription || !$scope.currentSubscription.plan) {
             // do nothing as we were not able to get a subscription, yet
-        } else if ($scope.config.update.box.version === '1.0.0') {
-            // special case for updating to 1.0
-            if ($scope.currentSubscription.plan.id === 'undecided') {
-                $('#version1Modal').modal('show');
-            } else {
-                // user selected a plan already, let him update
-                $('#updateModal').modal('show');
-            }
         } else {
             $('#updateModal').modal('show');
         }
@@ -160,9 +163,6 @@ angular.module('Application').controller('MainController', ['$scope', '$route', 
                         if (error) return console.error(error);
 
                         $scope.currentSubscription = result;
-
-                        // check again to give more immediate feedback once a subscription was setup
-                        if (result.plan.id === 'undecided') $timeout(getSubscription, 5000);
                     });
                 });
             }

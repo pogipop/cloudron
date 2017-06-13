@@ -148,7 +148,7 @@
                     <h4 class="modal-title" id="updateModalLabel">Setup Subscription</h4>
                 </div>
                 <div class="modal-body">
-                    <p>
+                    <p ng-show="config.update.box">
                         You can update to the next version once you have selected a <a ng-href="{{ config.webServerOrigin + '/pricing.html' }}" target="_blank">paid plan</a>.
                     </p>
                     <p>
@@ -156,34 +156,7 @@
                     </p>
                 </div>
                 <div class="modal-footer">
-                    <a class="btn btn-success" ng-href="{{ config.webServerOrigin + '/console.html#/userprofile?view=subscriptions&email=' + appstoreConfig.profile.email }}" target="_blank">Setup Subscription</a>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal version 1.0 -->
-    <div class="modal fade" id="version1Modal" tabindex="-1" role="dialog">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-body">
-                    <h3>Cloudron 1.0 is here!</h3>
-                    <p>
-                        Your Cloudron will update to 1.0 once you have selected a  <a ng-href="{{ config.webServerOrigin + '/pricing.html' }}" target="_blank">plan</a>.
-                    </p>
-                    <p>
-                        With a paid plan, you get continuous updates for the Cloudron and apps just like you had until now. This ensures you are running the latest versions of apps and keeps your server secure. All paid plans come with support via <a href="mailto:support@cloudron.io">email</a> and <a target="_blank" href="https://chat.cloudron.io">live chat</a>.
-                    </p>
-                    <p>
-                        With the free plan, you can keep the Cloudron and Apps updated on your own
-                        following the instructions in our <a href="https://git.cloudron.io/cloudron/box/wikis/home" target="_blank">wiki</a>.
-                    </p>
-                    <p>
-                        You can read more about our pricing changes in our <a href="https://cloudron.io/blog/2017-06-06-pricing.html" target="_blank">blog</a>.
-                    </p>
-                </div>
-                <div class="modal-footer">
-                    <a class="btn btn-success" ng-click="waitForPlanSelection()" ng-href="{{ config.webServerOrigin + '/console.html#/userprofile?view=subscriptions&email=' + appstoreConfig.profile.email + '&cloudronId=' + appstoreConfig.cloudronId }}" target="_blank"><i class="fa fa-circle-o-notch fa-spin" ng-show="waitingForPlanSelection"></i> Setup Subscription</a>
+                    <a class="btn btn-success" ng-click="waitForPlanSelection()" ng-href="{{ config.webServerOrigin + '/console.html#/userprofile?view=subscriptions&email=' + appstoreConfig.profile.email + '&cloudronId=' + appstoreConfig.cloudronId }}" target="_blank" ng-disabled="waitingForPlanSelection"><i class="fa fa-circle-o-notch fa-spin" ng-show="waitingForPlanSelection"></i> Setup Subscription</a>
                 </div>
             </div>
         </div>
@@ -211,6 +184,11 @@
                         <li ng-show="config.update.box && user.admin">
                             <a ng-href="" ng-click="showUpdateModal(update_form)" style="cursor: pointer">
                                 <span class="badge badge-success">Update available</span>
+                            </a>
+                        </li>
+                        <li ng-show="appstoreConfig && !config.update.box && user.admin && (currentSubscription.plan.id === 'undecided' || currentSubscription.plan.id === 'free')">
+                            <a ng-href="" ng-click="showSubscriptionModal()" style="cursor: pointer">
+                                <span class="badge badge-success">Setup automatic updates</span>
                             </a>
                         </li>
                         <li>
