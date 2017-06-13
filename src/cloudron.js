@@ -608,30 +608,27 @@ function update(boxUpdateInfo, auditSource, callback) {
     callback(null);
 }
 
+
 function updateToLatest(auditSource, callback) {
     assert.strictEqual(typeof auditSource, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    updateChecker.checkBoxUpdates(function (error) {
-        if (error) return callback(error);
+    var boxUpdateInfo = updateChecker.getUpdateInfo().box;
+    if (!boxUpdateInfo) return callback(new CloudronError(CloudronError.ALREADY_UPTODATE, 'No update available'));
+    if (!boxUpdateInfo.sourceTarballUrl) return callback(new CloudronError(CloudronError.BAD_STATE, 'No automatic update available'));
 
-        var boxUpdateInfo = updateChecker.getUpdateInfo().box;
-        if (!boxUpdateInfo) return callback(new CloudronError(CloudronError.ALREADY_UPTODATE, 'No update available'));
-        if (!boxUpdateInfo.sourceTarballUrl) return callback(new CloudronError(CloudronError.BAD_STATE, 'No automatic update available'));
+    // check if this is just a version number change
+    if (config.version().match(/[-+]/) !== null && config.version().replace(/[-+].*/, '') === boxUpdateInfo.version) {
+        doShortCircuitUpdate(boxUpdateInfo, function (error) {
+            if (error) debug('Short-circuit update failed', error);
+        });
 
-        // check if this is just a version number change
-        if (config.version().match(/[-+]/) !== null && config.version().replace(/[-+].*/, '') === boxUpdateInfo.version) {
-            doShortCircuitUpdate(boxUpdateInfo, function (error) {
-                if (error) debug('Short-circuit update failed', error);
-            });
+        return callback(null);
+    }
 
-            return callback(null);
-        }
+    if (boxUpdateInfo.upgrade && config.provider() !== 'caas') return callback(new CloudronError(CloudronError.SELF_UPGRADE_NOT_SUPPORTED));
 
-        if (boxUpdateInfo.upgrade && config.provider() !== 'caas') return callback(new CloudronError(CloudronError.SELF_UPGRADE_NOT_SUPPORTED));
-
-        update(boxUpdateInfo, auditSource, callback);
-    });
+    update(boxUpdateInfo, auditSource, callback);
 }
 
 function doShortCircuitUpdate(boxUpdateInfo, callback) {
