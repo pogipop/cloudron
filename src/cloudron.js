@@ -615,6 +615,7 @@ function updateToLatest(auditSource, callback) {
 
     var boxUpdateInfo = updateChecker.getUpdateInfo().box;
     if (!boxUpdateInfo) return callback(new CloudronError(CloudronError.ALREADY_UPTODATE, 'No update available'));
+    if (!boxUpdateInfo.sourceTarballUrl) return callback(new CloudronError(CloudronError.BAD_STATE, 'No automatic update available'));
 
     // check if this is just a version number change
     if (config.version().match(/[-+]/) !== null && config.version().replace(/[-+].*/, '') === boxUpdateInfo.version) {
