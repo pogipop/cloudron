@@ -218,9 +218,9 @@ function del(dnsConfig, zoneName, subdomain, type, values, callback) {
     });
 }
 
-function verifyDnsConfig(dnsConfig, domain, zoneName, ip, callback) {
+function verifyDnsConfig(dnsConfig, fqdn, zoneName, ip, callback) {
     assert.strictEqual(typeof dnsConfig, 'object');
-    assert.strictEqual(typeof domain, 'string');
+    assert.strictEqual(typeof fqdn, 'string');
     assert.strictEqual(typeof zoneName, 'string');
     assert.strictEqual(typeof ip, 'string');
     assert.strictEqual(typeof callback, 'function');
@@ -247,7 +247,7 @@ function verifyDnsConfig(dnsConfig, domain, zoneName, ip, callback) {
                 return callback(new SubdomainError(SubdomainError.BAD_FIELD, 'Domain nameservers are not set to Route53'));
             }
 
-            const name = constants.ADMIN_LOCATION + (domain === zoneName ? '' :  '.' + domain.slice(0, - zoneName.length - 1));
+            const name = constants.ADMIN_LOCATION + (fqdn === zoneName ? '' :  '.' + fqdn.slice(0, - zoneName.length - 1));
 
             upsert(credentials, zoneName, name, 'A', [ ip ], function (error, changeId) {
                 if (error) return callback(error);
