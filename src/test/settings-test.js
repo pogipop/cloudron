@@ -95,7 +95,7 @@ describe('Settings', function () {
         });
 
         it('can set dns config', function (done) {
-            settings.setDnsConfig({ provider: 'route53', accessKeyId: 'accessKeyId', secretAccessKey: 'secretAccessKey' }, config.fqdn(), function (error) {
+            settings.setDnsConfig({ provider: 'route53', accessKeyId: 'accessKeyId', secretAccessKey: 'secretAccessKey' }, config.fqdn(), config.zoneName(), function (error) {
                 expect(error).to.be(null);
                 done();
             });

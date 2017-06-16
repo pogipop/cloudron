@@ -39,7 +39,7 @@ describe('dns provider', function () {
             config.setFqdn('example.com');
             config.setZoneName('example.com');
 
-            settings.setDnsConfig(data, config.fqdn(), done);
+            settings.setDnsConfig(data, config.fqdn(), config.zoneName(), done);
         });
 
         it('upsert succeeds', function (done) {
@@ -83,7 +83,7 @@ describe('dns provider', function () {
             config.setFqdn('example.com');
             config.setZoneName('example.com');
 
-            settings.setDnsConfig(data, config.fqdn(), done);
+            settings.setDnsConfig(data, config.fqdn(), config.zoneName(), done);
         });
 
         it('upsert non-existing record succeeds', function (done) {
@@ -411,7 +411,7 @@ describe('dns provider', function () {
             AWS._originalRoute53 = AWS.Route53;
             AWS.Route53 = Route53Mock;
 
-            settings.setDnsConfig(data, config.fqdn(), done);
+            settings.setDnsConfig(data, config.fqdn(), config.zoneName(), done);
         });
 
         after(function () {
