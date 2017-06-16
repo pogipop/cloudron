@@ -28,7 +28,6 @@
 
     <!-- Angular directives for tldjs -->
     <script src="3rdparty/js/tld.js"></script>
-    <script src="3rdparty/js/angular-tld.js"></script>
 
     <!-- Setup Application -->
     <script src="js/setupdns.js"></script>
@@ -77,14 +76,14 @@
                                 <div class="form-group" ng-class="{ 'has-error': dnsCredentialsForm.secretAccessKey.$dirty && dnsCredentialsForm.secretAccessKey.$invalid }" ng-show="dnsCredentials.provider === 'route53'">
                                     <input type="text" class="form-control" ng-model="dnsCredentials.secretAccessKey" name="secretAccessKey" placeholder="Secret Access Key" ng-required="dnsCredentials.provider === 'route53'" ng-disabled="dnsCredentials.busy">
                                     <br/>
-                                    <span>The domain {{ dnsCredentials.domain }} must be hosted on <a href="https://aws.amazon.com/route53/?nc2=h_m1" target="_blank">AWS Route53</a>.</span>
+                                    <span ng-show="dnsCredentials.domain || explicitZone"><b>{{ (explicitZone ? explicitZone : dnsCredentials.domain) | zoneName }}</b> must be hosted on <a href="https://aws.amazon.com/route53/?nc2=h_m1" target="_blank">AWS Route53</a>.</span>
                                 </div>
 
                                 <!-- DigitalOcean -->
                                 <div class="form-group" ng-class="{ 'has-error': dnsCredentialsForm.digitalOceanToken.$dirty && dnsCredentialsForm.digitalOceanToken.$invalid }" ng-show="dnsCredentials.provider === 'digitalocean'">
                                     <input type="text" class="form-control" ng-model="dnsCredentials.digitalOceanToken" name="digitalOceanToken" placeholder="API Token" ng-required="dnsCredentials.provider === 'digitalocean'" ng-disabled="dnsCredentials.busy">
                                     <br/>
-                                    <span>The domain {{ dnsCredentials.domain }} must be hosted on <a href="https://www.digitalocean.com/community/tutorials/how-to-set-up-a-host-name-with-digitalocean#step-two%E2%80%94change-your-domain-server" target="_blank">DigitalOcean</a>.</span>
+                                    <span ng-show="dnsCredentials.domain || explicitZone"><b>{{ (explicitZone ? explicitZone : dnsCredentials.domain) | zoneName }}</b> must be hosted on <a href="https://www.digitalocean.com/community/tutorials/how-to-set-up-a-host-name-with-digitalocean#step-two%E2%80%94change-your-domain-server" target="_blank">DigitalOcean</a>.</span>
                                 </div>
 
                                 <!-- Wildcard -->
