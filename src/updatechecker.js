@@ -95,30 +95,34 @@ function checkAppUpdates(callback) {
 
                 if (oldState[app.id] === newState[app.id]) {
                     debug('Skipping notification of app update %s since user was already notified', app.id);
+                    iteratorDone();
                 } else {
                     settings.getSubscription(function (error, result) {
-                        if (error) return debug(error);
+                        if (error) {
+                            debug(error);
+                            return iteratorDone();
+                        }
 
                         // always send notifications if user is on the free plan
                         if (result.plan.id === 'free' || result.plan.id === 'undecided') {
                             debug('Notifying user of app update for %s from %s to %s', app.id, app.manifest.version, updateInfo.manifest.version);
                             mailer.appUpdateAvailable(app, updateInfo);
-                            return;
+                            return iteratorDone();
                         }
 
                         // only send notifications if update pattern is 'never'
                         settings.getAutoupdatePattern(function (error, result) {
-                            if (error) return debug(error);
-                            if (result !== constants.AUTOUPDATE_PATTERN_NEVER) return;
+                            if (error) {
+                                debug(error);
+                            } else if (result === constants.AUTOUPDATE_PATTERN_NEVER) {
+                                debug('Notifying user of app update for %s from %s to %s', app.id, app.manifest.version, updateInfo.manifest.version);
+                                mailer.appUpdateAvailable(app, updateInfo);
+                            }
 
-                            debug('Notifying user of app update for %s from %s to %s', app.id, app.manifest.version, updateInfo.manifest.version);
-
-                            mailer.appUpdateAvailable(app, updateInfo);
+                            iteratorDone();
                         });
                     });
                 }
-
-                iteratorDone();
             });
         }, function () {
             newState.box = loadState().box; // preserve the latest box state information
@@ -158,16 +162,31 @@ function checkBoxUpdates(callback) {
                 return callback();
             }
 
-            state.box = updateInfo.version;
+            settings.getSubscription(function (error, result) {
+                if (error) {
+                    debug(error);
+                    return callback();
+                }
 
-            saveState(state);
+                function done() {
+                    state.box = updateInfo.version;
+                    saveState(state);
+                    callback();
+                }
 
-            // only send notifications if update pattern is 'never'
-            settings.getAutoupdatePattern(function (error, result) {
-                if (error) debug(error);
-                else if (result === constants.AUTOUPDATE_PATTERN_NEVER) mailer.boxUpdateAvailable(updateInfo.version, updateInfo.changelog);
+                // always send notifications if user is on the free plan
+                if (result.plan.id === 'free' || result.plan.id === 'undecided') {
+                    mailer.boxUpdateAvailable(updateInfo.version, updateInfo.changelog);
+                    return done();
+                }
 
-                callback();
+                // only send notifications if update pattern is 'never'
+                settings.getAutoupdatePattern(function (error, result) {
+                    if (error) debug(error);
+                    else if (result === constants.AUTOUPDATE_PATTERN_NEVER) mailer.boxUpdateAvailable(updateInfo.version, updateInfo.changelog);
+
+                    done();
+                });
             });
         });
     });
