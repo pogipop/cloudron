@@ -96,14 +96,25 @@ function checkAppUpdates(callback) {
                 if (oldState[app.id] === newState[app.id]) {
                     debug('Skipping notification of app update %s since user was already notified', app.id);
                 } else {
-                    // only send notifications if update pattern is 'never'
-                    settings.getAutoupdatePattern(function (error, result) {
+                    settings.getSubscription(function (error, result) {
                         if (error) return debug(error);
-                        if (result !== constants.AUTOUPDATE_PATTERN_NEVER) return;
 
-                        debug('Notifying user of app update for %s from %s to %s', app.id, app.manifest.version, updateInfo.manifest.version);
+                        // always send notifications if user is on the free plan
+                        if (result.plan.id === 'free' || result.plan.id === 'undecided') {
+                            debug('Notifying user of app update for %s from %s to %s', app.id, app.manifest.version, updateInfo.manifest.version);
+                            mailer.appUpdateAvailable(app, updateInfo);
+                            return;
+                        }
 
-                        mailer.appUpdateAvailable(app, updateInfo);
+                        // only send notifications if update pattern is 'never'
+                        settings.getAutoupdatePattern(function (error, result) {
+                            if (error) return debug(error);
+                            if (result !== constants.AUTOUPDATE_PATTERN_NEVER) return;
+
+                            debug('Notifying user of app update for %s from %s to %s', app.id, app.manifest.version, updateInfo.manifest.version);
+
+                            mailer.appUpdateAvailable(app, updateInfo);
+                        });
                     });
                 }
 
