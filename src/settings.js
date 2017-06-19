@@ -8,6 +8,8 @@ exports = module.exports = {
 
     getEmailStatus: getEmailStatus,
 
+    getSubscription: getSubscription,
+
     getAutoupdatePattern: getAutoupdatePattern,
     setAutoupdatePattern: setAutoupdatePattern,
 
@@ -351,6 +353,25 @@ function getEmailStatus(callback) {
         ignoreError('port25', checkOutbound25)
     ], function () {
         callback(null, { dns: records, outboundPort25: outboundPort25 } );
+    });
+}
+
+function getSubscription(callback) {
+    assert.strictEqual(typeof callback, 'function');
+
+    getAppstoreConfig(function (error, result) {
+        if (error) return callback(error);
+
+        const url = config.apiServerOrigin() + '/api/v1/users/' + result.userId + '/cloudrons/' + result.cloudronId + '/subscription';
+        superagent.get(url).query({ accessToken: result.token }).timeout(30 * 1000).end(function (error, result) {
+            if (error && !error.response) return callback(new SettingsError(SettingsError.EXTERNAL_ERROR, error.message));
+            if (result.statusCode === 401) return callback(new SettingsError(SettingsError.EXTERNAL_ERROR, 'invalid appstore token'));
+            if (result.statusCode === 403) return callback(new SettingsError(SettingsError.EXTERNAL_ERROR, 'wrong user'));
+            if (result.statusCode === 502) return callback(new SettingsError(SettingsError.EXTERNAL_ERROR, 'stripe error'));
+            if (result.statusCode !== 200) return callback(new SettingsError(SettingsError.EXTERNAL_ERROR, 'unknown error'));
+
+            callback(null, result.body.subscription);
+        });
     });
 }
 
