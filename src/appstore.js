@@ -85,6 +85,7 @@ function purchase(appId, appstoreId, callback) {
             if (error && !error.response) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, error));
             if (result.statusCode === 404) return callback(new AppstoreError(AppstoreError.NOT_FOUND));
             if (result.statusCode === 403 || result.statusCode === 401) return callback(new AppstoreError(AppstoreError.BILLING_REQUIRED));
+            if (result.statusCode === 402) return callback(new AppstoreError(AppstoreError.BILLING_REQUIRED, result.body.message));
             if (result.statusCode !== 201 && result.statusCode !== 200) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, util.format('App purchase failed. %s %j', result.status, result.body)));
 
             callback(null);
