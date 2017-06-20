@@ -100,7 +100,7 @@ function checkAppUpdates(callback) {
 
                 settings.getSubscription(function (error, result) {
                     if (error) {
-                        debug(error);
+                        debug('Error getting subscription for %s', app.id, error);
                         return iteratorDone();
                     }
 
