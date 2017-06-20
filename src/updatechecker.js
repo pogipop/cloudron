@@ -163,10 +163,7 @@ function checkBoxUpdates(callback) {
             }
 
             settings.getSubscription(function (error, result) {
-                if (error) {
-                    debug(error);
-                    return callback();
-                }
+                if (error) return callback(error);
 
                 function done() {
                     state.box = updateInfo.version;
