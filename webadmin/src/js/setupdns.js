@@ -1,5 +1,7 @@
 'use strict';
 
+/* global tld */
+
 // create main application module
 var app = angular.module('Application', ['angular-md5', 'ui-notification']);
 
@@ -19,6 +21,21 @@ app.controller('SetupDNSController', ['$scope', '$http', 'Client', function ($sc
     $scope.showDNSSetup = false;
     $scope.instanceId = '';
     $scope.explicitZone = search.zone || '';
+    $scope.isDomain = false;
+    $scope.isSubdomain = false;
+
+    $scope.$watch('dnsCredentials.domain', function (newVal) {
+        if (!newVal) {
+            $scope.isDomain = false;
+            $scope.isSubdomain = false;
+        } else if (!tld.getDomain(newVal) || newVal[newVal.length-1] === '.') {
+            $scope.isDomain = false;
+            $scope.isSubdomain = false;
+        } else {
+            $scope.isDomain = true;
+            $scope.isSubdomain = tld.getDomain(newVal) !== newVal;
+        }
+    });
 
     // keep in sync with certs.js
     $scope.dnsProvider = [
