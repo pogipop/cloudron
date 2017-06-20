@@ -150,7 +150,7 @@ angular.module('Application').controller('EmailController', ['$scope', '$locatio
 
             if (!result.token) return;
 
-            AppStore.getSubscription($scope.appstoreConfig, function (error, result) {
+            AppStore.getSubscription(result, function (error, result) {
                 if (error) return console.error(error);
 
                 $scope.isPaying = result.plan.id !== 'free' && result.plan.id !== 'undecided';
