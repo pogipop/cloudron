@@ -1,6 +1,6 @@
 'use strict';
 
-angular.module('Application').controller('EmailController', ['$scope', '$location', '$rootScope', 'Client', function ($scope, $location, $rootScope, Client) {
+angular.module('Application').controller('EmailController', ['$scope', '$location', '$rootScope', 'Client', 'AppStore', function ($scope, $location, $rootScope, Client, AppStore) {
     Client.onReady(function () { if (!Client.getUserInfo().admin) $location.path('/'); });
 
     $scope.client = Client;
@@ -18,6 +18,7 @@ angular.module('Application').controller('EmailController', ['$scope', '$locatio
     ];
     $scope.mailConfig = null;
     $scope.users = [];
+    $scope.isPaying = false;
 
     $scope.showView = function (view) {
         // wait for dialog to be fully closed to avoid modal behavior breakage when moving to a different view already
@@ -143,9 +144,24 @@ angular.module('Application').controller('EmailController', ['$scope', '$locatio
         });
     }
 
+    function getSubscription() {
+        Client.getAppstoreConfig(function (error, result) {
+            if (error) return console.error(error);
+
+            if (!result.token) return;
+
+            AppStore.getSubscription($scope.appstoreConfig, function (error, result) {
+                if (error) return console.error(error);
+
+                $scope.isPaying = result.plan.id !== 'free' && result.plan.id !== 'undecided';
+            });
+        });
+    }
+
     Client.onReady(function () {
         getMailConfig();
         getDnsConfig();
+        getSubscription();
         getUsers();
         getCatchallAddresses();
         $scope.email.refresh();

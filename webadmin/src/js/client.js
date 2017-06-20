@@ -114,7 +114,8 @@ angular.module('Application').service('Client', ['$http', 'md5', 'Notification',
             isCustomDomain: false,
             region: null,
             size: null,
-            memory: 0
+            memory: 0,
+            isPaying: false
         };
         this._installedApps = [];
         this._clientId = '<%= oauth.clientId %>';
