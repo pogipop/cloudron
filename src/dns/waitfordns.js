@@ -8,7 +8,6 @@ var assert = require('assert'),
     dig = require('../dig.js'),
     dns = require('dns'),
     SubdomainError = require('../subdomains.js').SubdomainError,
-    tld = require('tldjs'),
     util = require('util');
 
 function isChangeSynced(domain, value, type, nameserver, callback) {
@@ -38,7 +37,7 @@ function isChangeSynced(domain, value, type, nameserver, callback) {
                 }
 
                 if (!answer || answer.length === 0) {
-                    debug('bad answer from nameserver %s (%s) resolving %s (%s): %j', nameserver, nsIp, domain, type, answer);
+                    debug('bad answer from nameserver %s (%s) resolving %s (%s)', nameserver, nsIp, domain, type);
                     return iteratorCallback(null, false);
                 }
 
@@ -72,6 +71,7 @@ function waitForDns(domain, zoneName, value, type, options, callback) {
         // http://stackoverflow.com/questions/3561493/is-there-a-regexp-escape-function-in-javascript
         value = new RegExp('^' + value.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&') + '$');
     }
+
     debug('waitForIp: domain %s to be %s in zone %s.', domain, value, zoneName);
 
     var attempt = 1;

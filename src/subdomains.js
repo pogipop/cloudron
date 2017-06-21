@@ -13,6 +13,7 @@ module.exports = exports = {
 var assert = require('assert'),
     config = require('./config.js'),
     settings = require('./settings.js'),
+    tld = require('tldjs'),
     util = require('util');
 
 function SubdomainError(reason, errorOrMessage) {
@@ -129,7 +130,12 @@ function waitForDns(domain, value, type, options, callback) {
     settings.getDnsConfig(function (error, dnsConfig) {
         if (error) return callback(new SubdomainError(SubdomainError.INTERNAL_ERROR, error));
 
-        api(dnsConfig.provider).waitForDns(domain, config.zoneName(), value, type, options, callback);
+        var zoneName = config.zoneName();
+
+        // if the domain is on another zone in case of external domain, use the correct zone
+        if (!domain.endsWith(zoneName)) zoneName = tld.getDomain(domain);
+
+        api(dnsConfig.provider).waitForDns(domain, zoneName, value, type, options, callback);
     });
 }
 
