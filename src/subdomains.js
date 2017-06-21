@@ -59,6 +59,9 @@ function api(provider) {
 }
 
 function getName(subdomain) {
+    // support special caas domains
+    if (!config.isCustomDomain()) return subdomain;
+
     if (config.fqdn() === config.zoneName()) return subdomain;
 
     var part = config.fqdn().slice(0, -config.zoneName().length - 1);
