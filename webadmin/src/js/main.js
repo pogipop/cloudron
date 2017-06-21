@@ -154,7 +154,7 @@ angular.module('Application').controller('MainController', ['$scope', '$route', 
         });
     }
 
-    function getSubscription() {
+    $scope.getSubscription = function () {
         Client.getAppstoreConfig(function (error, result) {
             if (error) return console.error(error);
 
@@ -239,7 +239,7 @@ angular.module('Application').controller('MainController', ['$scope', '$route', 
                     if ($scope.user.admin) {
                         runConfigurationChecks();
 
-                        if ($scope.config.provider !== 'caas') getSubscription();
+                        if ($scope.config.provider !== 'caas') $scope.getSubscription();
                     }
                 });
             });

@@ -310,6 +310,9 @@ angular.module('Application').controller('AppStoreController', ['$scope', '$loca
                             return;
                         }
 
+                        // check subscription right away after login
+                        $scope.$parent.getSubscription();
+
                         fetchAppstoreConfig();
                     });
                 });
