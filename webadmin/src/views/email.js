@@ -145,6 +145,11 @@ angular.module('Application').controller('EmailController', ['$scope', '$locatio
     }
 
     function getSubscription() {
+        if ($scope.config.provider === 'caas') {
+            $scope.isPaying = true;
+            return;
+        }
+
         Client.getAppstoreConfig(function (error, result) {
             if (error) return console.error(error);
 
