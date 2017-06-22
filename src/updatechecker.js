@@ -98,7 +98,7 @@ function checkAppUpdates(callback) {
                     return iteratorDone();
                 }
 
-                settings.getSubscription(function (error, result) {
+                appstore.getSubscription(function (error, result) {
                     if (error) {
                         debug('Error getting subscription for %s', app.id, error);
                         return iteratorDone();
@@ -162,7 +162,7 @@ function checkBoxUpdates(callback) {
                 return callback();
             }
 
-            settings.getSubscription(function (error, result) {
+            appstore.getSubscription(function (error, result) {
                 if (error) return callback(error);
 
                 function done() {
