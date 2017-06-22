@@ -129,7 +129,7 @@ angular.module('Application').controller('EmailController', ['$scope', '$locatio
             if (error) return console.error('Unable to get user listing.', error);
 
             // only allow users with a Cloudron email address
-            $scope.catchall.availableAddresses = result.filter(function (u) { return !!u.email; }).map(function (u) { return u.email; });
+            $scope.catchall.availableAddresses = result.filter(function (u) { return !!u.email; }).map(function (u) { return u.username; });
         });
     }
 
