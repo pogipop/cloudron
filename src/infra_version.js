@@ -7,14 +7,14 @@
 exports = module.exports = {
     // a major version makes all apps restore from backup
     // a minor version makes all apps re-configure themselves
-    'version': '48.3.0',
+    'version': '48.4.0',
 
     'baseImages': [ 'cloudron/base:0.10.0' ],
 
     // Note that if any of the databases include an upgrade, bump the infra version above
     // This is because we upgrade using dumps instead of mysql_upgrade, pg_upgrade etc
     'images': {
-        'mysql': { repo: 'cloudron/mysql', tag: 'cloudron/mysql:0.17.0' },
+        'mysql': { repo: 'cloudron/mysql', tag: 'cloudron/mysql:0.18.0' },
         'postgresql': { repo: 'cloudron/postgresql', tag: 'cloudron/postgresql:0.17.0' },
         'mongodb': { repo: 'cloudron/mongodb', tag: 'cloudron/mongodb:0.13.0' },
         'redis': { repo: 'cloudron/redis', tag: 'cloudron/redis:0.11.0' },
