@@ -84,10 +84,12 @@ var assert = require('assert'),
     CloudronError = cloudron.CloudronError,
     moment = require('moment-timezone'),
     net = require('net'),
+    nodemailer = require('nodemailer'),
     paths = require('./paths.js'),
     platform = require('./platform.js'),
     safe = require('safetydance'),
     settingsdb = require('./settingsdb.js'),
+    smtpTransport = require('nodemailer-smtp-transport'),
     subdomains = require('./subdomains.js'),
     SubdomainError = subdomains.SubdomainError,
     superagent = require('superagent'),
@@ -680,14 +682,27 @@ function setMailRelay(relay, callback) {
     assert.strictEqual(typeof relay, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    settingsdb.set(exports.MAIL_RELAY_KEY, JSON.stringify(relay), function (error) {
-        if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
+    var transporter = nodemailer.createTransport(smtpTransport({
+        host: relay.host,
+        port: relay.port,
+        auth: {
+            user: relay.username,
+            pass: relay.password
+        }
+    }));
 
-        exports.events.emit(exports.MAIL_RELAY_KEY, relay);
+    transporter.verify(function(error) {
+       if (error) return callback(new SettingsError(SettingsError.BAD_FIELD, error.message));
 
-        platform.createMailConfig(NOOP_CALLBACK);
+        settingsdb.set(exports.MAIL_RELAY_KEY, JSON.stringify(relay), function (error) {
+            if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
 
-        callback(null);
+            exports.events.emit(exports.MAIL_RELAY_KEY, relay);
+
+            platform.createMailConfig(NOOP_CALLBACK);
+
+            callback(null);
+        });
     });
 }
 

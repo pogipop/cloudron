@@ -95,11 +95,13 @@ angular.module('Application').controller('EmailController', ['$scope', '$locatio
     ];
 
     $scope.mailRelay = {
-        error: {},
+        error: null,
         busy: false,
         preset: $scope.mailRelayPresets[0],
 
         presetChanged: function () {
+            $scope.mailRelay.error = null;
+
             $scope.mailRelay.relay.enabled = $scope.mailRelay.preset.enabled;
             $scope.mailRelay.relay.presetId = $scope.mailRelay.preset.id;
             $scope.mailRelay.relay.host = $scope.mailRelay.preset.host;
@@ -119,10 +121,13 @@ angular.module('Application').controller('EmailController', ['$scope', '$locatio
         },
 
         submit: function () {
+            $scope.mailRelay.error = null;
             $scope.mailRelay.busy = true;
 
             Client.setMailRelay($scope.mailRelay.relay, function (error) {
-                if (error) console.error('Unable to set relay', error);
+                if (error) {
+                    $scope.mailRelay.error = error.message;
+                }
 
                 $scope.mailRelay.busy = false;
             });
