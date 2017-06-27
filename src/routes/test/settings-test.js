@@ -315,6 +315,58 @@ describe('Settings API', function () {
         });
     });
 
+    describe('mail relay', function () {
+        it('get mail relay succeeds', function (done) {
+            superagent.get(SERVER_URL + '/api/v1/settings/mail_relay')
+                   .query({ access_token: token })
+                   .end(function (err, res) {
+                expect(res.statusCode).to.equal(200);
+                expect(res.body).to.eql({ enabled: false });
+                done();
+            });
+        });
+
+        it('cannot set without enabled field', function (done) {
+            superagent.post(SERVER_URL + '/api/v1/settings/mail_relay')
+                   .query({ access_token: token })
+                   .send({ })
+                   .end(function (err, res) {
+                expect(res.statusCode).to.equal(400);
+                done();
+            });
+        });
+
+        it('cannot set with bad host', function (done) {
+            superagent.post(SERVER_URL + '/api/v1/settings/mail_relay')
+                   .query({ access_token: token })
+                   .send({ enabled: true, host: true })
+                   .end(function (err, res) {
+                expect(res.statusCode).to.equal(400);
+                done();
+            });
+        });
+
+        it('set succeeds', function (done) {
+            superagent.post(SERVER_URL + '/api/v1/settings/mail_relay')
+                   .query({ access_token: token })
+                   .send({ enabled: true, host: 'host', port: 25, username: 'u', password: 'p', tls: true })
+                   .end(function (err, res) {
+                expect(res.statusCode).to.equal(200);
+                done();
+            });
+        });
+
+        it('get succeeds', function (done) {
+            superagent.get(SERVER_URL + '/api/v1/settings/mail_relay')
+                   .query({ access_token: token })
+                   .end(function (err, res) {
+                expect(res.statusCode).to.equal(200);
+                expect(res.body).to.eql({ enabled: true, host: 'host', port: 25, username: 'u', password: 'p', tls: true });
+                done();
+            });
+        });
+    });
+
     describe('catch_all', function () {
         it('get catch_all succeeds', function (done) {
             superagent.get(SERVER_URL + '/api/v1/settings/catch_all_address')

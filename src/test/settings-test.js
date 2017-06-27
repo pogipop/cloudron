@@ -181,6 +181,26 @@ describe('Settings', function () {
             });
         });
 
+        it('can get mail relay', function (done) {
+            settings.getMailRelay(function (error, address) {
+                expect(error).to.be(null);
+                expect(address).to.eql({ enabled: false });
+                done();
+            });
+        });
+
+        it('can set mail relay', function (done) {
+            settings.setMailRelay({ enabled: true, host: 'mx.foo.com', port: 25 }, function (error) {
+                expect(error).to.be(null);
+
+                settings.getMailRelay(function (error, address) {
+                    expect(error).to.be(null);
+                    expect(address).to.eql({ enabled: true, host: 'mx.foo.com', port: 25 });
+                    done();
+                });
+            });
+        });
+
         it('can get catch all address', function (done) {
             settings.getCatchAllAddress(function (error, address) {
                 expect(error).to.be(null);
