@@ -84,6 +84,37 @@ angular.module('Application').controller('EmailController', ['$scope', '$locatio
         }
     };
 
+    $scope.mailRelayPresets = [
+        { id: 'custom', name: 'Custom', smtpHost: '', smtpPort: 25, tls: false },
+        { id: 'google', name: 'Google', smtpHost: 'smtp.gmail.com', smtpPort: 587, tls: true },
+        { id: 'sendgrid', name: 'SendGrid', smtpHost: 'smtp.sendgrid.net', smtpPort: 587, tls: true },
+        { id: 'ses', name: 'Amazon SES', smtpHost: 'email-smtp.us-east-1.amazonaws.com', smtpPort: 25, tls: true }
+    ];
+
+    $scope.mailRelay = {
+        error: {},
+        busy: false,
+        preset: $scope.mailRelayPresets[0],
+
+        presetChanged: function () {
+            $scope.mailRelay.smtpHost = $scope.mailRelay.preset.smtpHost;
+            $scope.mailRelay.smtpPort = $scope.mailRelay.preset.smtpPort;
+            $scope.mailRelay.tls = $scope.mailRelay.preset.tls;
+        },
+
+        // form data to be set on load
+        used: false,
+        smtpHost: '',
+        smtpPort: 25,
+        username: '',
+        password: '',
+        tls: true,
+
+        submit: function () {
+            console.error('Not implemented');
+        }
+    };
+
     function getMailConfig() {
         Client.getMailConfig(function (error, mailConfig) {
             if (error) return console.error(error);
