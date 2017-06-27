@@ -242,10 +242,14 @@ function createMailConfig(callback) {
     debug('createMailConfig: generating mail config');
 
     user.getOwner(function (error, owner) {
+        if (error) return callback(error);
+
         var alertsTo = config.provider() === 'caas' ? [ 'support@cloudron.io' ] : [ ];
         alertsTo.concat(error ? [] : owner.email).join(',');
 
         settings.getCatchAllAddress(function (error, address) {
+            if (error) return callback(error);
+
             var catchAll = address.join(',');
 
             if (!safe.fs.writeFileSync(paths.ADDON_CONFIG_DIR + '/mail/mail.ini',
@@ -253,7 +257,23 @@ function createMailConfig(callback) {
                 return callback(new Error('Could not create mail var file:' + safe.error.message));
             }
 
-            callback();
+            settings.getMailRelay(function (error, relay) {
+                if (error) return callback(error);
+
+                const enabled = relay.enabled || false,
+                      host = relay.host || '',
+                      port = relay.port || 25,
+                      tls = !!relay.tls,
+                      username = relay.username || '',
+                      password = relay.password || '';
+
+                if (!safe.fs.writeFileSync(paths.ADDON_CONFIG_DIR + '/mail/smtp_forward.ini',
+                    `enable_outbound=${enabled}\nhost=${host}\nport=${port}\nenable_tls=${tls}\nauth_user=${username}\nauth_pass=${password}`, 'utf8')) {
+                    return callback(new Error('Could not create mail var file:' + safe.error.message));
+                }
+
+                callback();
+            });
         });
     });
 }

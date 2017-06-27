@@ -44,6 +44,9 @@ exports = module.exports = {
     getMailConfig: getMailConfig,
     setMailConfig: setMailConfig,
 
+    getMailRelay: getMailRelay,
+    setMailRelay: setMailRelay,
+
     setCatchAllAddress: setCatchAllAddress,
     getCatchAllAddress: getCatchAllAddress,
 
@@ -61,6 +64,7 @@ exports = module.exports = {
     UPDATE_CONFIG_KEY: 'update_config',
     APPSTORE_CONFIG_KEY: 'appstore_config',
     MAIL_CONFIG_KEY: 'mail_config',
+    MAIL_RELAY_KEY: 'mail_relay',
     CATCH_ALL_ADDRESS: 'catch_all_address',
 
     events: null
@@ -109,6 +113,7 @@ var gDefaults = (function () {
     result[exports.UPDATE_CONFIG_KEY] = { prerelease: false };
     result[exports.APPSTORE_CONFIG_KEY] = {};
     result[exports.MAIL_CONFIG_KEY] = { enabled: false };
+    result[exports.MAIL_RELAY_KEY] = { enabled: false };
     result[exports.CATCH_ALL_ADDRESS] = [ ];
 
     return result;
@@ -655,6 +660,32 @@ function setMailConfig(mailConfig, callback) {
         if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
 
         exports.events.emit(exports.MAIL_CONFIG_KEY, mailConfig);
+
+        callback(null);
+    });
+}
+
+function getMailRelay(callback) {
+    assert.strictEqual(typeof callback, 'function');
+
+    settingsdb.get(exports.MAIL_RELAY_KEY, function (error, value) {
+        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(null, gDefaults[exports.MAIL_RELAY_KEY]);
+        if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
+
+        callback(null, JSON.parse(value));
+    });
+}
+
+function setMailRelay(relay, callback) {
+    assert.strictEqual(typeof relay, 'object');
+    assert.strictEqual(typeof callback, 'function');
+
+    settingsdb.set(exports.MAIL_RELAY_KEY, JSON.stringify(relay), function (error) {
+        if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
+
+        exports.events.emit(exports.MAIL_RELAY_KEY, relay);
+
+        platform.createMailConfig(NOOP_CALLBACK);
 
         callback(null);
     });

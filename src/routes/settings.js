@@ -24,6 +24,9 @@ exports = module.exports = {
     getMailConfig: getMailConfig,
     setMailConfig: setMailConfig,
 
+    getMailRelay: getMailRelay,
+    setMailRelay: setMailRelay,
+
     getCatchAllAddress: getCatchAllAddress,
     setCatchAllAddress: setCatchAllAddress,
 
@@ -121,6 +124,32 @@ function setMailConfig(req, res, next) {
     if (typeof req.body.enabled !== 'boolean') return next(new HttpError(400, 'enabled is required'));
 
     settings.setMailConfig({ enabled: req.body.enabled }, function (error) {
+        if (error && error.reason === SettingsError.BAD_FIELD) return next(new HttpError(400, error.message));
+        if (error) return next(new HttpError(500, error));
+
+        next(new HttpSuccess(200));
+    });
+}
+
+function getMailRelay(req, res, next) {
+    settings.getMailRelay(function (error, mail) {
+        if (error) return next(new HttpError(500, error));
+
+        next(new HttpSuccess(200, mail));
+    });
+}
+
+function setMailRelay(req, res, next) {
+    assert.strictEqual(typeof req.body, 'object');
+
+    if (typeof req.body.enabled !== 'boolean') return next(new HttpError(400, 'enabled is required'));
+    if ('host' in req.body && typeof req.body.host !== 'string') return next(new HttpError(400, 'host must be a string'));
+    if ('port' in req.body && typeof req.body.port !== 'number') return next(new HttpError(400, 'port must be a string'));
+    if ('tls' in req.body && typeof req.body.tls !== 'boolean') return next(new HttpError(400, 'tls must be a boolean'));
+    if ('username' in req.body && typeof req.body.username !== 'string') return next(new HttpError(400, 'username must be a string'));
+    if ('password' in req.body && typeof req.body.password !== 'string') return next(new HttpError(400, 'password must be a string'));
+
+    settings.setMailRelay(req.body, function (error) {
         if (error && error.reason === SettingsError.BAD_FIELD) return next(new HttpError(400, error.message));
         if (error) return next(new HttpError(500, error));
 
