@@ -85,10 +85,13 @@ angular.module('Application').controller('EmailController', ['$scope', '$locatio
     };
 
     $scope.mailRelayPresets = [
-        { id: 'custom', name: 'Custom', smtpHost: '', smtpPort: 25, tls: false },
-        { id: 'google', name: 'Google', smtpHost: 'smtp.gmail.com', smtpPort: 587, tls: true },
-        { id: 'sendgrid', name: 'SendGrid', smtpHost: 'smtp.sendgrid.net', smtpPort: 587, tls: true },
-        { id: 'ses', name: 'Amazon SES', smtpHost: 'email-smtp.us-east-1.amazonaws.com', smtpPort: 25, tls: true }
+        { id: 'builtin', name: 'Built-in SMTP server', enabled: false },
+        { id: 'ses', name: 'Amazon SES', enabled: true, host: 'email-smtp.us-east-1.amazonaws.com', port: 25, tls: true },
+        { id: 'custom', name: 'Custom SMTP server', enabled: true, host: '', port: 587, tls: true },
+        { id: 'google', name: 'Google', enabled: true, host: 'smtp.gmail.com', port: 587, tls: true },
+        { id: 'mailgun', name: 'Mailgun', enabled: true, host: 'smtp.mailgun.org', port: 587, tls: true },
+        { id: 'postmark', name: 'Postmark', enabled: true, host: 'smtp.postmarkapp.com', port: 587, tls: true },
+        { id: 'sendgrid', name: 'SendGrid', enabled: true, host: 'smtp.sendgrid.net', port: 587, tls: true },
     ];
 
     $scope.mailRelay = {
@@ -97,21 +100,32 @@ angular.module('Application').controller('EmailController', ['$scope', '$locatio
         preset: $scope.mailRelayPresets[0],
 
         presetChanged: function () {
-            $scope.mailRelay.smtpHost = $scope.mailRelay.preset.smtpHost;
-            $scope.mailRelay.smtpPort = $scope.mailRelay.preset.smtpPort;
-            $scope.mailRelay.tls = $scope.mailRelay.preset.tls;
+            $scope.mailRelay.relay.enabled = $scope.mailRelay.preset.enabled;
+            $scope.mailRelay.relay.presetId = $scope.mailRelay.preset.id;
+            $scope.mailRelay.relay.host = $scope.mailRelay.preset.host;
+            $scope.mailRelay.relay.port = $scope.mailRelay.preset.port;
+            $scope.mailRelay.relay.tls = $scope.mailRelay.preset.tls;
         },
 
         // form data to be set on load
-        used: false,
-        smtpHost: '',
-        smtpPort: 25,
-        username: '',
-        password: '',
-        tls: true,
+        relay: {
+            enabled: false,
+            presetId: 'builtin', // stash this so we can set the preset label correctly in the UI
+            host: '',
+            port: 25,
+            username: '',
+            password: '',
+            tls: true,
+        },
 
         submit: function () {
-            console.error('Not implemented');
+            $scope.mailRelay.busy = true;
+
+            Client.setMailRelay($scope.mailRelay.relay, function (error) {
+                if (error) console.error('Unable to set relay', error);
+
+                $scope.mailRelay.busy = false;
+            });
         }
     };
 
@@ -120,6 +134,21 @@ angular.module('Application').controller('EmailController', ['$scope', '$locatio
             if (error) return console.error(error);
 
             $scope.mailConfig = mailConfig;
+        });
+    }
+
+    function getMailRelay() {
+        Client.getMailRelay(function (error, relay) {
+            if (error) return console.error(error);
+
+            $scope.mailRelay.relay = relay;
+
+            for (var i = 0; i < $scope.mailRelayPresets.length; i++) {
+                if ($scope.mailRelayPresets[i].id === relay.presetId) {
+                    $scope.mailRelay.preset = $scope.mailRelayPresets[i];
+                    break;
+                }
+            }
         });
     }
 
@@ -196,6 +225,7 @@ angular.module('Application').controller('EmailController', ['$scope', '$locatio
 
     Client.onReady(function () {
         getMailConfig();
+        getMailRelay();
         getDnsConfig();
         getSubscription();
         getUsers();

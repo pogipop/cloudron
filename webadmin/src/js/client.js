@@ -406,7 +406,7 @@ angular.module('Application').service('Client', ['$http', 'md5', 'Notification',
 
     Client.prototype.setCatchallAddresses = function (addresses, callback) {
         put('/api/v1/settings/catch_all_address', { address: addresses }).success(function(data, status) {
-            if (status !== 200) return callback(new ClientError(status, data));
+            if (status !== 202) return callback(new ClientError(status, data));
             callback(null);
         }).error(defaultErrorHandler(callback));
     };
@@ -499,7 +499,21 @@ angular.module('Application').service('Client', ['$http', 'md5', 'Notification',
 
     Client.prototype.setMailConfig = function (config, callback) {
         post('/api/v1/settings/mail_config', config).success(function (data, status) {
-            if (status !== 200) return callback(new ClientError(status, data));
+            if (status !== 202) return callback(new ClientError(status, data));
+            callback(null);
+        }).error(defaultErrorHandler(callback));
+    };
+
+    Client.prototype.getMailRelay = function (callback) {
+        get('/api/v1/settings/mail_relay').success(function (data, status) {
+            if (status !== 200 || typeof data !== 'object') return callback(new ClientError(status, data));
+            callback(null, data);
+        }).error(defaultErrorHandler(callback));
+    };
+
+    Client.prototype.setMailRelay = function (config, callback) {
+        post('/api/v1/settings/mail_relay', config).success(function (data, status) {
+            if (status !== 202) return callback(new ClientError(status, data));
             callback(null);
         }).error(defaultErrorHandler(callback));
     };

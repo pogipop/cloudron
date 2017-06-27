@@ -299,7 +299,7 @@ describe('Settings API', function () {
                    .query({ access_token: token })
                    .send({ enabled: true })
                    .end(function (err, res) {
-                expect(res.statusCode).to.equal(200);
+                expect(res.statusCode).to.equal(202);
                 done();
             });
         });
@@ -351,7 +351,7 @@ describe('Settings API', function () {
                    .query({ access_token: token })
                    .send({ enabled: true, host: 'host', port: 25, username: 'u', password: 'p', tls: true })
                    .end(function (err, res) {
-                expect(res.statusCode).to.equal(200);
+                expect(res.statusCode).to.equal(202);
                 done();
             });
         });
@@ -402,7 +402,7 @@ describe('Settings API', function () {
                    .query({ access_token: token })
                    .send({ address: [ "user1" ] })
                    .end(function (err, res) {
-                expect(res.statusCode).to.equal(200);
+                expect(res.statusCode).to.equal(202);
                 done();
             });
         });
