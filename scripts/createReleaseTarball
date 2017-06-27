@@ -58,7 +58,7 @@ else
 fi
 
 echo "Building webadmin assets"
-(cd "${bundle_dir}" && gulp)
+(cd "${bundle_dir}" && ./node_modules/.bin/gulp)
 
 echo "Remove intermediate files required at build-time only"
 rm -rf "${bundle_dir}/node_modules/"
@@ -84,4 +84,3 @@ echo "Cleaning up ${bundle_dir}"
 rm -rf "${bundle_dir}"
 
 echo "Tarball saved at ${bundle_file}"
-
