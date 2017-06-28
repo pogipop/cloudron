@@ -81,7 +81,6 @@ var assert = require('assert'),
     debug = require('debug')('box:settings'),
     dig = require('./dig.js'),
     cloudron = require('./cloudron.js'),
-    CloudronError = cloudron.CloudronError,
     moment = require('moment-timezone'),
     net = require('net'),
     nodemailer = require('nodemailer'),
@@ -169,7 +168,7 @@ function getEmailStatus(callback) {
     var records = {}, outboundPort25 = {};
 
     var dkimKey = cloudron.readDkimPublicKeySync();
-    if (!dkimKey) return callback(new CloudronError(CloudronError.INTERNAL_ERROR, new Error('Failed to read dkim public key')));
+    if (!dkimKey) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, new Error('Failed to read dkim public key')));
 
     function checkDkim(callback) {
         records.dkim = {
