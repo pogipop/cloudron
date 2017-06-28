@@ -263,7 +263,7 @@ function createMailConfig(callback) {
                 const enabled = relay.provider === 'cloudron-smtp' ? true : false,
                       host = relay.host || '',
                       port = relay.port || 25,
-                      tls = !!relay.tls,
+                      tls = !!relay.tls, // Whether to connect with TLS (not STARTTLS)
                       username = relay.username || '',
                       password = relay.password || '';
 

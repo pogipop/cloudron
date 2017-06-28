@@ -86,12 +86,12 @@ angular.module('Application').controller('EmailController', ['$scope', '$locatio
 
     $scope.mailRelayPresets = [
         { provider: 'cloudron-smtp', name: 'Built-in SMTP server' },
-        { provider: 'external-smtp', name: 'External SMTP server', host: '', port: 587, tls: true },
-        { provider: 'ses-smtp', name: 'Amazon SES', host: 'email-smtp.us-east-1.amazonaws.com', port: 25, tls: true },
-        { provider: 'google-smtp', name: 'Google', host: 'smtp.gmail.com', port: 587, tls: true },
-        { provider: 'mailgun-smtp', name: 'Mailgun', host: 'smtp.mailgun.org', port: 587, tls: true },
-        { provider: 'postmark-smtp', name: 'Postmark', host: 'smtp.postmarkapp.com', port: 587, tls: true },
-        { provider: 'sendgrid-smtp', name: 'SendGrid', host: 'smtp.sendgrid.net', port: 587, tls: true },
+        { provider: 'external-smtp', name: 'External SMTP server', host: '', port: 587, tls: false },
+        { provider: 'ses-smtp', name: 'Amazon SES', host: 'email-smtp.us-east-1.amazonaws.com', port: 25, tls: false },
+        { provider: 'google-smtp', name: 'Google', host: 'smtp.gmail.com', port: 587, tls: false },
+        { provider: 'mailgun-smtp', name: 'Mailgun', host: 'smtp.mailgun.org', port: 587, tls: false },
+        { provider: 'postmark-smtp', name: 'Postmark', host: 'smtp.postmarkapp.com', port: 587, tls: false },
+        { provider: 'sendgrid-smtp', name: 'SendGrid', host: 'smtp.sendgrid.net', port: 587, tls: false },
     ];
 
     $scope.mailRelay = {
@@ -115,12 +115,17 @@ angular.module('Application').controller('EmailController', ['$scope', '$locatio
             port: 25,
             username: '',
             password: '',
-            tls: true,
+            tls: true // whether we should connect with TLS. STARTTLS is always supported
         },
 
         submit: function () {
             $scope.mailRelay.error = null;
             $scope.mailRelay.busy = true;
+
+            if ($scope.mailRelay.relay.provider === 'external-smtp') {
+                // this is generally the case
+                $scope.mailRelay.relay.tls = $scope.mailRelay.relay.port === 465;
+            }
 
             Client.setMailRelay($scope.mailRelay.relay, function (error) {
                 if (error) {
