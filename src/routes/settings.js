@@ -41,6 +41,7 @@ var assert = require('assert'),
     certificates = require('../certificates.js'),
     CertificatesError = require('../certificates.js').CertificatesError,
     config = require('../config.js'),
+    email = require('../email.js'),
     HttpError = require('connect-lastmile').HttpError,
     HttpSuccess = require('connect-lastmile').HttpSuccess,
     safe = require('safetydance'),
@@ -208,7 +209,7 @@ function getCloudronAvatar(req, res, next) {
 }
 
 function getEmailStatus(req, res, next) {
-    settings.getEmailStatus(function (error, records) {
+    email.getStatus(function (error, records) {
         if (error) return next(new HttpError(500, error));
 
         next(new HttpSuccess(200, records));
