@@ -115,7 +115,7 @@ var gDefaults = (function () {
     result[exports.UPDATE_CONFIG_KEY] = { prerelease: false };
     result[exports.APPSTORE_CONFIG_KEY] = {};
     result[exports.MAIL_CONFIG_KEY] = { enabled: false };
-    result[exports.MAIL_RELAY_KEY] = { enabled: false };
+    result[exports.MAIL_RELAY_KEY] = { provider: 'cloudron-smtp' };
     result[exports.CATCH_ALL_ADDRESS] = [ ];
 
     return result;
@@ -682,6 +682,20 @@ function setMailRelay(relay, callback) {
     assert.strictEqual(typeof relay, 'object');
     assert.strictEqual(typeof callback, 'function');
 
+    function save() {
+        settingsdb.set(exports.MAIL_RELAY_KEY, JSON.stringify(relay), function (error) {
+            if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
+
+            exports.events.emit(exports.MAIL_RELAY_KEY, relay);
+
+            platform.createMailConfig(NOOP_CALLBACK);
+
+            callback(null);
+        });
+    }
+
+    if (relay.provider === 'cloudron-smtp') return save();
+
     var transporter = nodemailer.createTransport(smtpTransport({
         host: relay.host,
         port: relay.port,
@@ -694,15 +708,7 @@ function setMailRelay(relay, callback) {
     transporter.verify(function(error) {
        if (error) return callback(new SettingsError(SettingsError.BAD_FIELD, error.message));
 
-        settingsdb.set(exports.MAIL_RELAY_KEY, JSON.stringify(relay), function (error) {
-            if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
-
-            exports.events.emit(exports.MAIL_RELAY_KEY, relay);
-
-            platform.createMailConfig(NOOP_CALLBACK);
-
-            callback(null);
-        });
+       save();
     });
 }
 

@@ -260,7 +260,7 @@ function createMailConfig(callback) {
             settings.getMailRelay(function (error, relay) {
                 if (error) return callback(error);
 
-                const enabled = relay.enabled || false,
+                const enabled = relay.provider === 'cloudron-smtp' ? true : false,
                       host = relay.host || '',
                       port = relay.port || 25,
                       tls = !!relay.tls,

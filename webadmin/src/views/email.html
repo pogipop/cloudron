@@ -75,11 +75,11 @@
     <div class="row">
         <div class="col-md-12">
             <div class="form-group">
-                <select class="form-control" style="width: 50%;" ng-model="mailRelay.preset" ng-options="a.name for a in mailRelayPresets track by a.id" ng-change="mailRelay.presetChanged()"></select>
+                <select class="form-control" style="width: 50%;" ng-model="mailRelay.preset" ng-options="a.name for a in mailRelayPresets track by a.provider" ng-change="mailRelay.presetChanged()"></select>
             </div>
         </div>
     </div>
-    <div class="row" ng-show="mailRelay.preset.id !== 'builtin'">
+    <div class="row" ng-show="mailRelay.preset.provider !== 'cloudron-smtp'">
         <div class="col-md-6">
             <div>
                 <form name="mailRelayForm" role="form" ng-submit="mailRelay.submit()" autocomplete="off" novalidate>

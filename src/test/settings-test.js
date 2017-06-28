@@ -9,7 +9,8 @@ var async = require('async'),
     config = require('../config.js'),
     database = require('../database.js'),
     expect = require('expect.js'),
-    settings = require('../settings.js');
+    settings = require('../settings.js'),
+    settingsdb = require('../settingsdb.js');
 
 function setup(done) {
     config.set('provider', 'caas');
@@ -184,18 +185,19 @@ describe('Settings', function () {
         it('can get mail relay', function (done) {
             settings.getMailRelay(function (error, address) {
                 expect(error).to.be(null);
-                expect(address).to.eql({ enabled: false });
+                expect(address).to.eql({ provider: 'cloudron-smtp' });
                 done();
             });
         });
 
         it('can set mail relay', function (done) {
-            settings.setMailRelay({ enabled: true, host: 'mx.foo.com', port: 25 }, function (error) {
+            var relay = { provider: 'external-smtp', host: 'mx.foo.com', port: 25 };
++            settingsdb.set(settings.MAIL_RELAY_KEY, JSON.stringify(relay), function (error) { // skip the mail server verify()
                 expect(error).to.be(null);
 
                 settings.getMailRelay(function (error, address) {
                     expect(error).to.be(null);
-                    expect(address).to.eql({ enabled: true, host: 'mx.foo.com', port: 25 });
+                    expect(address).to.eql(relay);
                     done();
                 });
             });

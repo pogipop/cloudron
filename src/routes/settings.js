@@ -142,7 +142,7 @@ function getMailRelay(req, res, next) {
 function setMailRelay(req, res, next) {
     assert.strictEqual(typeof req.body, 'object');
 
-    if (typeof req.body.enabled !== 'boolean') return next(new HttpError(400, 'enabled is required'));
+    if (typeof req.body.provider !== 'string') return next(new HttpError(400, 'provider is required'));
     if ('host' in req.body && typeof req.body.host !== 'string') return next(new HttpError(400, 'host must be a string'));
     if ('port' in req.body && typeof req.body.port !== 'number') return next(new HttpError(400, 'port must be a string'));
     if ('tls' in req.body && typeof req.body.tls !== 'boolean') return next(new HttpError(400, 'tls must be a boolean'));

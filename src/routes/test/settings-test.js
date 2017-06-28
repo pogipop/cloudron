@@ -15,9 +15,10 @@ var appdb = require('../../appdb.js'),
     expect = require('expect.js'),
     path = require('path'),
     paths = require('../../paths.js'),
-    superagent = require('superagent'),
     server = require('../../server.js'),
     settings = require('../../settings.js'),
+    settingsdb = require('../../settingsdb.js'),
+    superagent = require('superagent'),
     fs = require('fs'),
     nock = require('nock');
 
@@ -321,12 +322,12 @@ describe('Settings API', function () {
                    .query({ access_token: token })
                    .end(function (err, res) {
                 expect(res.statusCode).to.equal(200);
-                expect(res.body).to.eql({ enabled: false });
+                expect(res.body).to.eql({ provider: 'cloudron-smtp' });
                 done();
             });
         });
 
-        it('cannot set without enabled field', function (done) {
+        it('cannot set without provider field', function (done) {
             superagent.post(SERVER_URL + '/api/v1/settings/mail_relay')
                    .query({ access_token: token })
                    .send({ })
@@ -339,30 +340,36 @@ describe('Settings API', function () {
         it('cannot set with bad host', function (done) {
             superagent.post(SERVER_URL + '/api/v1/settings/mail_relay')
                    .query({ access_token: token })
-                   .send({ enabled: true, host: true })
+                   .send({ provider: 'external-smtp', host: true })
                    .end(function (err, res) {
                 expect(res.statusCode).to.equal(400);
                 done();
             });
         });
 
-        it('set succeeds', function (done) {
+        it('set fails because mail server is unreachable', function (done) {
             superagent.post(SERVER_URL + '/api/v1/settings/mail_relay')
                    .query({ access_token: token })
-                   .send({ enabled: true, host: 'host', port: 25, username: 'u', password: 'p', tls: true })
+                   .send({ provider: 'external-smtp', host: 'host', port: 25, username: 'u', password: 'p', tls: true })
                    .end(function (err, res) {
-                expect(res.statusCode).to.equal(202);
+                expect(res.statusCode).to.equal(400);
                 done();
             });
         });
 
         it('get succeeds', function (done) {
-            superagent.get(SERVER_URL + '/api/v1/settings/mail_relay')
-                   .query({ access_token: token })
-                   .end(function (err, res) {
-                expect(res.statusCode).to.equal(200);
-                expect(res.body).to.eql({ enabled: true, host: 'host', port: 25, username: 'u', password: 'p', tls: true });
-                done();
+            var relay = { provider: 'external-smtp', host: 'host', port: 25, username: 'u', password: 'p', tls: true };
+
+            settingsdb.set(settings.MAIL_RELAY_KEY, JSON.stringify(relay), function (error) { // skip the mail server verify()
+                expect(error).to.not.be.ok();
+
+                superagent.get(SERVER_URL + '/api/v1/settings/mail_relay')
+                       .query({ access_token: token })
+                       .end(function (err, res) {
+                    expect(res.statusCode).to.equal(200);
+                    expect(res.body).to.eql(relay);
+                    done();
+                });
             });
         });
     });
