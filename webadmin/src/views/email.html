@@ -170,7 +170,7 @@
             <br/><br/>
 
             <div ng-repeat="record in expectedDnsRecordsTypes">
-               <div class="row" ng-if="mailConfig.enabled || (record.name !== 'DMARC' && record.name !== 'MX')">
+               <div class="row" ng-if="expectedDnsRecords[record.value] && (mailConfig.enabled || (record.name !== 'DMARC' && record.name !== 'MX'))">
                     <div class="col-xs-12">
                         <p class="text-muted">
                             <i ng-class="expectedDnsRecords[record.value].status ? 'fa fa-check-circle text-success' : 'fa fa-exclamation-triangle text-danger'"></i> &nbsp;
