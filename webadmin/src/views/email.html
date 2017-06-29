@@ -192,15 +192,15 @@
             <div class="row">
                 <div class="col-xs-12">
                     <p class="text-muted">
-                        <i ng-class="outboundPort25.status ? 'fa fa-check-circle text-success' : 'fa fa-exclamation-triangle text-danger'"></i> &nbsp;
+                        <i ng-class="relay.status ? 'fa fa-check-circle text-success' : 'fa fa-exclamation-triangle text-danger'"></i> &nbsp;
                         <a href="" data-toggle="collapse" data-parent="#accordion" data-target="#collapse_dns_port">
                             Outbound SMTP (Port 25)
                         </a>
-                        <button class="btn btn-xs btn-default" ng-click="email.refresh()" ng-disabled="email.refreshBusy" ng-show="!outboundPort25.status"><i class="fa fa-refresh" ng-class="{ 'fa-pulse': email.refreshBusy }"></i></button>
+                        <button class="btn btn-xs btn-default" ng-click="email.refresh()" ng-disabled="email.refreshBusy" ng-show="!relay.status"><i class="fa fa-refresh" ng-class="{ 'fa-pulse': email.refreshBusy }"></i></button>
                     </p>
                     <div id="collapse_dns_port" class="panel-collapse collapse">
                         <div class="panel-body">
-                            <p><b> {{ outboundPort25.value }} </b> </p>
+                            <p><b> {{ relay.value }} </b> </p>
                         </div>
                     </div>
                 </div>

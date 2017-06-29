@@ -165,7 +165,7 @@ function getEmailStatus(callback) {
 
     var digOptions = { server: '127.0.0.1', port: 53, timeout: 5000 };
 
-    var records = {}, outboundPort25 = {};
+    var records = {}, relay = {};
 
     var dkimKey = cloudron.readDkimPublicKeySync();
     if (!dkimKey) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, new Error('Failed to read dkim public key')));
@@ -310,7 +310,7 @@ function getEmailStatus(callback) {
             'outgoing.verizon.net'
         ]);
 
-        outboundPort25 = {
+        relay = {
             value: 'OK',
             status: false
         };
@@ -319,20 +319,20 @@ function getEmailStatus(callback) {
         client.setTimeout(5000);
         client.connect(25, smtpServer);
         client.on('connect', function () {
-            outboundPort25.status = true;
-            outboundPort25.value = 'OK';
+            relay.status = true;
+            relay.value = 'OK';
             client.destroy(); // do not use end() because it still triggers timeout
             callback();
         });
         client.on('timeout', function () {
-            outboundPort25.status = false;
-            outboundPort25.value = 'Connect to ' + smtpServer + ' timed out';
+            relay.status = false;
+            relay.value = 'Connect to ' + smtpServer + ' timed out';
             client.destroy();
             callback(new Error('Timeout'));
         });
         client.on('error', function (error) {
-            outboundPort25.status = false;
-            outboundPort25.value = 'Connect to ' + smtpServer + ' failed: ' + error.message;
+            relay.status = false;
+            relay.value = 'Connect to ' + smtpServer + ' failed: ' + error.message;
             client.destroy();
             callback(error);
         });
@@ -356,7 +356,7 @@ function getEmailStatus(callback) {
         ignoreError('ptr', checkPtr),
         ignoreError('port25', checkOutbound25)
     ], function () {
-        callback(null, { dns: records, outboundPort25: outboundPort25 } );
+        callback(null, { dns: records, relay: relay } );
     });
 }
 

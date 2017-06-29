@@ -816,7 +816,7 @@ describe('Settings API', function () {
                 expect(res.body.dns.ptr.status).to.eql(false);
                 // expect(res.body.ptr.value).to.eql(null); this will be anything random
 
-                expect(res.body.outboundPort25).to.be.an('object');
+                expect(res.body.relay).to.be.an('object');
 
                 done();
             });

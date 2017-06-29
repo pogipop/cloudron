@@ -150,7 +150,7 @@ angular.module('Application').controller('MainController', ['$scope', '$route', 
                 Client.getEmailStatus(function (error, result) {
                     if (error) return console.error(error);
 
-                    if (!result.dns.spf.status || !result.dns.dkim.status || !result.dns.ptr.status || !result.outboundPort25.status) {
+                    if (!result.dns.spf.status || !result.dns.dkim.status || !result.dns.ptr.status || !result.relay.status) {
                         var actionScope = $scope.$new(true);
                         actionScope.action = '/#/email';
 

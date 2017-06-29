@@ -7,7 +7,7 @@ angular.module('Application').controller('EmailController', ['$scope', '$locatio
     $scope.user = Client.getUserInfo();
     $scope.config = Client.getConfig();
     $scope.dnsConfig = {};
-    $scope.outboundPort25 = {};
+    $scope.relay = {};
     $scope.expectedDnsRecords = {};
     $scope.expectedDnsRecordsTypes = [
         { name: 'MX', value: 'mx' },
@@ -175,7 +175,7 @@ angular.module('Application').controller('EmailController', ['$scope', '$locatio
             if (error) return callback(error);
 
             $scope.expectedDnsRecords = result.dns;
-            $scope.outboundPort25 = result.outboundPort25;
+            $scope.relay = result.relay;
 
             // open the record details if they are not correct
             for (var type in $scope.expectedDnsRecords) {
@@ -184,7 +184,7 @@ angular.module('Application').controller('EmailController', ['$scope', '$locatio
                 }
             }
 
-            if (!$scope.outboundPort25.status) {
+            if (!$scope.relay.status) {
                 $('#collapse_dns_port').collapse('show');
             }
 
