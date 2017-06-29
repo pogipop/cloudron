@@ -86,12 +86,12 @@ angular.module('Application').controller('EmailController', ['$scope', '$locatio
 
     $scope.mailRelayPresets = [
         { provider: 'cloudron-smtp', name: 'Built-in SMTP server' },
-        { provider: 'external-smtp', name: 'External SMTP server', host: '', port: 587, tls: false },
-        { provider: 'ses-smtp', name: 'Amazon SES', host: 'email-smtp.us-east-1.amazonaws.com', port: 25, tls: false },
-        { provider: 'google-smtp', name: 'Google', host: 'smtp.gmail.com', port: 587, tls: false },
-        { provider: 'mailgun-smtp', name: 'Mailgun', host: 'smtp.mailgun.org', port: 587, tls: false },
-        { provider: 'postmark-smtp', name: 'Postmark', host: 'smtp.postmarkapp.com', port: 587, tls: false },
-        { provider: 'sendgrid-smtp', name: 'SendGrid', host: 'smtp.sendgrid.net', port: 587, tls: false },
+        { provider: 'external-smtp', name: 'External SMTP server', host: '', port: 587 },
+        { provider: 'ses-smtp', name: 'Amazon SES', host: 'email-smtp.us-east-1.amazonaws.com', port: 587 },
+        { provider: 'google-smtp', name: 'Google', host: 'smtp.gmail.com', port: 587 },
+        { provider: 'mailgun-smtp', name: 'Mailgun', host: 'smtp.mailgun.org', port: 587 },
+        { provider: 'postmark-smtp', name: 'Postmark', host: 'smtp.postmarkapp.com', port: 587 },
+        { provider: 'sendgrid-smtp', name: 'SendGrid', host: 'smtp.sendgrid.net', port: 587 },
     ];
 
     $scope.mailRelay = {

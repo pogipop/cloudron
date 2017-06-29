@@ -103,7 +103,7 @@ function checkSmtpRelay(relay, callback) {
     }));
 
     transporter.verify(function(error) {
-        result.status = !!error;
+        result.status = !error;
         if (error) {
             result.value = error.message;
             return callback(error, result);
