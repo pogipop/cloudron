@@ -83,9 +83,6 @@
         <div class="col-md-6">
             <div>
                 <form name="mailRelayForm" role="form" ng-submit="mailRelay.submit()" autocomplete="off" novalidate>
-                    <!-- Prevent autofill -->
-                    <input type="password" style="display: none;">
-
                     <div class="form-group" ng-class="{ 'has-error': (mailRelayForm.host.$dirty && mailRelayForm.host.$invalid) }">
                         <label class="control-label">SMTP Host</label>
                         <div class="control-label" ng-show="(!mailRelayForm.host.$dirty && mailRelay.error.host) || (mailRelayForm.host.$dirty && mailRelayForm.host.$invalid)">
@@ -112,7 +109,7 @@
                         <div class="control-label" ng-show="(!mailRelayForm.password.$dirty && mailRelay.error.password) || (mailRelayForm.password.$dirty && mailRelayForm.password.$invalid)">
                             <small ng-show="!mailRelayForm.password.$dirty && mailRelay.error.password">{{ mailRelay.error.password }}</small>
                         </div>
-                        <input type="password" class="form-control" ng-model="mailRelay.relay.password" name="password" required>
+                        <input type="text" class="form-control" ng-model="mailRelay.relay.password" name="password" required>
                     </div>
                     <input class="ng-hide" type="submit" ng-disabled="mailRelayForm.$invalid"/>
                 </form>
@@ -121,7 +118,7 @@
     </div>
     <div class="row">
         <div class="col-md-2">
-            <button class="btn btn-primary" ng-click="mailRelay.submit()" ng-disabled="!mailRelayForm.$dirty || mailRelayForm.$invalid || mailRelay.busy"><i class="fa fa-circle-o-notch fa-spin" ng-show="mailRelay.busy"></i> Save</button>
+            <button class="btn btn-primary" ng-click="mailRelay.submit()" ng-disabled="(mailRelay.preset.provider !== 'cloudron-smtp && (!mailRelayForm.$dirty || mailRelayForm.$invalid)) || mailRelay.busy"><i class="fa fa-circle-o-notch fa-spin" ng-show="mailRelay.busy"></i> Save</button>
         </div>
         <div class="col-md-10">
             <span class="has-error text-center" ng-show="mailRelay.error">{{ mailRelay.error }}</span>
