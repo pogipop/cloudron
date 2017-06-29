@@ -485,8 +485,6 @@ function setMailRelay(relay, callback) {
 
             exports.events.emit(exports.MAIL_RELAY_KEY, relay);
 
-            platform.createMailConfig(NOOP_CALLBACK);
-
             callback(null);
         });
     });

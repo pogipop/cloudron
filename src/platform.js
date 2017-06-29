@@ -40,7 +40,9 @@ function start(callback) {
 
     debug('initializing addon infrastructure');
 
+    // restart mail container if any of these keys change
     settings.events.on(settings.MAIL_CONFIG_KEY, function () { startMail(NOOP_CALLBACK); });
+    settings.events.on(settings.MAIL_RELAY_KEY, function () { startMail(NOOP_CALLBACK); });
 
     certificates.events.on(certificates.EVENT_CERT_CHANGED, function (domain) {
         if (domain === '*.' + config.fqdn() || domain === config.adminFqdn()) startMail(NOOP_CALLBACK);
