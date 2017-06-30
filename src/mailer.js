@@ -45,7 +45,6 @@ var assert = require('assert'),
     settings = require('./settings.js'),
     showdown = require('showdown'),
     smtpTransport = require('nodemailer-smtp-transport'),
-    subdomains = require('./subdomains.js'),
     users = require('./user.js'),
     util = require('util'),
     _ = require('underscore');
@@ -55,7 +54,7 @@ var NOOP_CALLBACK = function (error) { if (error) debug(error); };
 var MAIL_TEMPLATES_DIR = path.join(__dirname, 'mail_templates');
 
 var gMailQueue = [ ],
-    gDnsReady = false;
+    gPaused = false;
 
 function splatchError(error) {
     var result = { };
@@ -71,7 +70,7 @@ function splatchError(error) {
 function start(callback) {
     assert.strictEqual(typeof callback, 'function');
 
-    checkDns();
+    if (process.env.BOX_ENV === 'test') gPaused = true;
 
     callback(null);
 }
@@ -93,22 +92,8 @@ function mailConfig() {
     };
 }
 
-// keep this in sync with the cloudron.js dns changes
-function checkDns() {
-    if (process.env.BOX_ENV === 'test') return;
-
-    subdomains.waitForDns(config.fqdn(), new RegExp('^"v=spf1 .*a:' + config.adminFqdn().replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&') + '.*'), 'TXT', { interval: 60000, times: Infinity }, function (error) {
-        if (error) return debug(error); // can never happen
-
-        debug('checkDns: SPF check passed. commencing mail processing');
-
-        gDnsReady = true;
-        processQueue();
-    });
-}
-
 function processQueue() {
-    assert(gDnsReady);
+    assert(!gPaused);
 
     sendMails(gMailQueue);
     gMailQueue = [ ];
@@ -156,7 +141,7 @@ function enqueue(mailOptions) {
     debug('Queued mail for ' + mailOptions.from + ' to ' + mailOptions.to);
     gMailQueue.push(mailOptions);
 
-    if (gDnsReady) processQueue();
+    if (!gPaused) processQueue();
 }
 
 function render(templateFile, params) {
