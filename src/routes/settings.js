@@ -146,7 +146,6 @@ function setMailRelay(req, res, next) {
     if (typeof req.body.provider !== 'string') return next(new HttpError(400, 'provider is required'));
     if ('host' in req.body && typeof req.body.host !== 'string') return next(new HttpError(400, 'host must be a string'));
     if ('port' in req.body && typeof req.body.port !== 'number') return next(new HttpError(400, 'port must be a string'));
-    if ('tls' in req.body && typeof req.body.tls !== 'boolean') return next(new HttpError(400, 'tls must be a boolean'));
     if ('username' in req.body && typeof req.body.username !== 'string') return next(new HttpError(400, 'username must be a string'));
     if ('password' in req.body && typeof req.body.password !== 'string') return next(new HttpError(400, 'password must be a string'));
 

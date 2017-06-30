@@ -105,7 +105,8 @@ angular.module('Application').controller('EmailController', ['$scope', '$locatio
             $scope.mailRelay.relay.provider = $scope.mailRelay.preset.provider;
             $scope.mailRelay.relay.host = $scope.mailRelay.preset.host;
             $scope.mailRelay.relay.port = $scope.mailRelay.preset.port;
-            $scope.mailRelay.relay.tls = $scope.mailRelay.preset.tls;
+            $scope.mailRelay.relay.username = '';
+            $scope.mailRelay.relay.password = '';
         },
 
         // form data to be set on load
@@ -114,18 +115,12 @@ angular.module('Application').controller('EmailController', ['$scope', '$locatio
             host: '',
             port: 25,
             username: '',
-            password: '',
-            tls: true // whether we should connect with TLS. STARTTLS is always supported
+            password: ''
         },
 
         submit: function () {
             $scope.mailRelay.error = null;
             $scope.mailRelay.busy = true;
-
-            if ($scope.mailRelay.relay.provider === 'external-smtp') {
-                // this is generally the case
-                $scope.mailRelay.relay.tls = $scope.mailRelay.relay.port === 465;
-            }
 
             Client.setMailRelay($scope.mailRelay.relay, function (error) {
                 if (error) {

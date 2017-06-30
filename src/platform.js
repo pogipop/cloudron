@@ -263,12 +263,11 @@ function createMailConfig(callback) {
                 const enabled = relay.provider !== 'cloudron-smtp' ? true : false,
                       host = relay.host || '',
                       port = relay.port || 25,
-                      tls = !!relay.tls, // Whether to connect with TLS (not STARTTLS)
                       username = relay.username || '',
                       password = relay.password || '';
 
                 if (!safe.fs.writeFileSync(paths.ADDON_CONFIG_DIR + '/mail/smtp_forward.ini',
-                    `enable_outbound=${enabled}\nhost=${host}\nport=${port}\nenable_tls=${tls}\nauth_user=${username}\nauth_pass=${password}`, 'utf8')) {
+                    `enable_outbound=${enabled}\nhost=${host}\nport=${port}\nenable_tls=true\nauth_type=plain\nauth_user=${username}\nauth_pass=${password}`, 'utf8')) {
                     return callback(new Error('Could not create mail var file:' + safe.error.message));
                 }
 

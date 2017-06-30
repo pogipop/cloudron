@@ -94,17 +94,11 @@
                         <input type="text" class="form-control" ng-model="mailRelay.relay.host" name="host" required>
                     </div>
                     <div class="form-group" ng-class="{ 'has-error': (mailRelayForm.port.$dirty && mailRelayForm.port.$invalid) }">
-                        <label class="control-label">SMTP Port</label>
+                        <label class="control-label">SMTP Port (STARTTLS)</label>
                         <div class="control-label" ng-show="(!mailRelayForm.port.$dirty && mailRelay.error.port) || (mailRelayForm.port.$dirty && mailRelayForm.port.$invalid)">
                             <small ng-show="!mailRelayForm.port.$dirty && mailRelay.error.port">{{ mailRelay.error.port }}</small>
                         </div>
                         <input type="number" class="form-control" ng-model="mailRelay.relay.port" name="port" required>
-                    </div>
-                    <!-- this is always hidden for now, since TLS is required -->
-                    <div class="checkbox" ng-hide=true>
-                        <label>
-                            <input type="checkbox" ng-model="mailRelay.relay.tls"> Use TLS
-                        </label>
                     </div>
                     <div class="form-group" ng-class="{ 'has-error': (mailRelayForm.username.$dirty && mailRelayForm.username.$invalid) }">
                         <label class="control-label">Username</label>
