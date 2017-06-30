@@ -892,3 +892,7 @@
 * Add support for email catch-all
 * Support Cloudrons on subdomains
 
+[1.2.0]
+* Relay emails optionally via external SMTP server email (mailgun, sendgrid etc)
+* (experimental) Preserver the docker storage driver across updates
+
