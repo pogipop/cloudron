@@ -1347,6 +1347,53 @@ Request:
 }
 ```
 
+### Get Relay
+
+GET `/api/v1/settings/mail_relay` <scope>admin</scope>
+
+Gets the SMTP server through which outbound mails are relayed.
+
+Response(200):
+```
+{
+    provider: <smtp provider>, // cloudron-smtp, external-smtp etc
+    host: <string>, // the host name of the SMTP relay
+    port: <number>, // the port number of the SMTP relay
+    username: <string>, // the username for authenticating with the SMTP relay
+    password: <string>  // the password for authenticating with the SMTP relay
+}
+```
+
+See the [set mail relay](/references/api.html#set-relay) API for more information on the fields.
+
+### Set Relay
+
+PUT `/api/v1/settings/mail_relay` <scope>admin</scope>
+
+Sets the SMTP server through which outbound mails are relayed.
+
+Request:
+```
+{
+    provider: <smtp provider>, // cloudron-smtp, external-smtp etc
+    host: <string>, // the host name of the SMTP relay
+    port: <number>, // the port number of the SMTP relay
+    username: <string>, // the username for authenticating with the SMTP relay
+    password: <string>  // the password for authenticating with the SMTP relay
+}
+```
+
+`provider` is one of the following values:
+* `cloudron-smtp`
+* `external-smtp`
+* `ses-smtp`
+* `google-smtp`
+* `mailgun-smtp`
+* `postmark-smtp`
+* `sendgrid-smtp`
+
+Cloudron requires the relay to support `STARTTLS`. Relaying using `SMTPS` (SMTP over TLS) is not supported.
+
 ### Get timezone
 
 GET `/api/v1/settings/time_zone` <scope>admin</scope>
