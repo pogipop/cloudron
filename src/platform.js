@@ -244,10 +244,8 @@ function createMailConfig(callback) {
     debug('createMailConfig: generating mail config');
 
     user.getOwner(function (error, owner) {
-        if (error) return callback(error);
-
         var alertsTo = config.provider() === 'caas' ? [ 'support@cloudron.io' ] : [ ];
-        alertsTo.concat(error ? [] : owner.email).join(',');
+        alertsTo.concat(error ? [] : owner.email).join(','); // owner may not exist yet
 
         settings.getCatchAllAddress(function (error, address) {
             if (error) return callback(error);
