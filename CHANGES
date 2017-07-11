@@ -897,3 +897,7 @@
 * (experimental) Preserver the docker storage driver across updates
 * Reduce mysql password length to 48
 
+[1.2.1]
+* Set max ttl of unbound to 5 minutes
+* Fix issue where mail container does not cleanup LDAP connections properly
+
