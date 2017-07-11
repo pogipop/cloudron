@@ -163,6 +163,12 @@ function sendAliveStatus(data, callback) {
             mailConfig: {
                 enabled: result[settings.MAIL_CONFIG_KEY].enabled
             },
+            mailRelay: {
+                provider: result[settings.MAIL_RELAY_KEY].provider
+            },
+            mailCatchAll: {
+                count: result[settings.CATCH_ALL_ADDRESS].length
+            },
             autoupdatePattern: result[settings.AUTOUPDATE_PATTERN_KEY],
             timeZone: result[settings.TIME_ZONE_KEY]
         };
