@@ -900,4 +900,5 @@
 [1.2.1]
 * Set max ttl of unbound to 5 minutes
 * Fix issue where mail container does not cleanup LDAP connections properly
+* Update node to 6.11.1
 
