@@ -243,6 +243,14 @@ function validateDebugMode(debugMode) {
     return null;
 }
 
+function validateRobotsTxt(robotsTxt) {
+    if (robotsTxt === null) return null;
+
+    // TODO: validate the robots file?
+
+    return null;
+}
+
 function getDuplicateErrorDetails(location, portBindings, error) {
     assert.strictEqual(typeof location, 'string');
     assert.strictEqual(typeof portBindings, 'object');
@@ -403,6 +411,7 @@ function install(data, auditSource, callback) {
         xFrameOptions = data.xFrameOptions || 'SAMEORIGIN',
         sso = 'sso' in data ? data.sso : null,
         debugMode = data.debugMode || null,
+        robotsTxt = data.robotsTxt || null,
         backupId = data.backupId || null;
 
     assert(data.appStoreId || data.manifest); // atleast one of them is required
@@ -432,6 +441,9 @@ function install(data, auditSource, callback) {
         if (error) return callback(error);
 
         error = validateDebugMode(debugMode);
+        if (error) return callback(error);
+
+        error = validateRobotsTxt(robotsTxt);
         if (error) return callback(error);
 
         if ('sso' in data && !('optionalSso' in manifest)) return callback(new AppsError(AppsError.BAD_FIELD, 'sso can only be specified for apps with optionalSso'));
@@ -545,6 +557,12 @@ function configure(appId, data, auditSource, callback) {
         if ('debugMode' in data) {
             values.debugMode = data.debugMode;
             error = validateDebugMode(values.debugMode);
+            if (error) return callback(error);
+        }
+
+        if ('robotsTxt' in data) {
+            values.robotsTxt = data.robotsTxt || null;
+            error = validateRobotsTxt(values.robotsTxt);
             if (error) return callback(error);
         }
 

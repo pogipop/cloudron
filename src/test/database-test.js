@@ -542,7 +542,8 @@ describe('database', function () {
             altDomain: null,
             xFrameOptions: 'DENY',
             sso: true,
-            debugMode: null
+            debugMode: null,
+            robotsTxt: null
         };
         var APP_1 = {
             id: 'appid-1',
@@ -564,7 +565,8 @@ describe('database', function () {
             altDomain: null,
             xFrameOptions: 'SAMEORIGIN',
             sso: true,
-            debugMode: null
+            debugMode: null,
+            robotsTxt: null
         };
 
         it('add fails due to missing arguments', function () {

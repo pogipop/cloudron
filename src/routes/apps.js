@@ -57,7 +57,8 @@ function removeInternalAppFields(app) {
         cnameTarget: app.cnameTarget,
         xFrameOptions: app.xFrameOptions,
         sso: app.sso,
-        debugMode: app.debugMode
+        debugMode: app.debugMode,
+        robotsTxt: app.robotsTxt
     };
 }
 
@@ -132,6 +133,8 @@ function installApp(req, res, next) {
 
     if (('debugMode' in data) && typeof data.debugMode !== 'object') return next(new HttpError(400, 'debugMode must be an object'));
 
+    if (data.robotsTxt && typeof data.robotsTxt !== 'string') return next(new HttpError(400, 'robotsTxt must be a string'));
+
     debug('Installing app :%j', data);
 
     apps.install(data, auditSource(req), function (error, app) {
@@ -169,6 +172,8 @@ function configureApp(req, res, next) {
     if (data.xFrameOptions && typeof data.xFrameOptions !== 'string') return next(new HttpError(400, 'xFrameOptions must be a string'));
 
     if (('debugMode' in data) && typeof data.debugMode !== 'object') return next(new HttpError(400, 'debugMode must be an object'));
+
+    if (data.robotsTxt && typeof data.robotsTxt !== 'string') return next(new HttpError(400, 'robotsTxt must be an object'));
 
     debug('Configuring app id:%s data:%j', req.params.id, data);
 

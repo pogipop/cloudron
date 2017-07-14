@@ -336,7 +336,8 @@ angular.module('Application').service('Client', ['$http', 'md5', 'Notification',
             key: config.key,
             memoryLimit: config.memoryLimit,
             altDomain: config.altDomain || null,
-            xFrameOptions: config.xFrameOptions
+            xFrameOptions: config.xFrameOptions,
+            robotsTxt: config.robotsTxt || null
         };
 
         post('/api/v1/apps/' + id + '/configure', data).success(function (data, status) {

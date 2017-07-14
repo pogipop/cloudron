@@ -144,6 +144,16 @@
                                 <input type="text" class="form-control" id="appConfigureXFrameOptionsInput" name="xFrameOptions" placeholder="https://example.com" ng-model="appConfigure.xFrameOptions" uib-tooltip="Leave blank to not allow embedding">
                             </div>
 
+                            <br/>
+
+                            <div class="form-group" ng-class="{ 'has-error': !appConfigureForm.robotsTxt.$dirty && appConfigure.error.robotsTxt }">
+                                <div class="checkbox">
+                                    <label>
+                                        <input type="checkbox" ng-model="appConfigure.robotsEnabled" id="appConfigureRobotsTxt"> Disallow bots from indexing this app
+                                    </label>
+                                </div>
+                            </div>
+
                             <div class="hide">
                                 <label class="control-label" for="appConfigureCertificateInput" ng-show="config.isCustomDomain">Certificate (optional)</label>
                                 <div class="has-error text-center" ng-show="appConfigure.error.cert && config.isCustomDomain">{{ appConfigure.error.cert }}</div>

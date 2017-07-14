@@ -119,7 +119,8 @@ Request:
     memoryLimit: <number>,           // memory constraint in bytes
     backupId: <string>,              // initialize the app from this backup
     altDomain: <string>,             // alternate domain from which this app can be reached
-    xFrameOptions: <string>          // set X-Frame-Options header, to control which websites can embed this app
+    xFrameOptions: <string>,         // set X-Frame-Options header, to control which websites can embed this app
+    robotsTxt: <string>              // robots.txt file content
 }
 ```
 
@@ -152,11 +153,14 @@ If `altDomain` is set, the app can be accessed from `https://<altDomain>`.
 * `SAMEORIGIN` - allows embedding from the same domain as the app. This is the default.
 * `ALLOW-FROM https://example.com/` - allows this app to be embedded from example.com
 
+Read more about the options at [MDN](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Frame-Options).
+
 `memoryLimit` is the maximum memory this app can use (in bytes) including swap. If set to 0, the app uses the `memoryLimit` value set in the manifest. If set to -1, the app gets unlimited memory.
 
-If `backupId` is provided the app will be initialized with the data from the backup.
+If `robotsTxt` if set, it will be returned as the response for `/robots.txt`. You can read about the
+[Robots Exclustion Protocol](http://www.robotstxt.org/robotstxt.html) site.
 
-Read more about the options at [MDN](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Frame-Options).
+If `backupId` is provided the app will be initialized with the data from the backup.
 
 Response (200):
 
@@ -214,7 +218,8 @@ Response (200):
     },
     iconUrl: <url>,                  // a relative url providing the icon
     memoryLimit: <number>,           // memory constraint in bytes
-    sso: <boolean>                   // Enable single sign-on
+    sso: <boolean>,                  // Enable single sign-on
+    robotsTxt: <string>              // robots.txt file content
 }
 ```
 
@@ -474,7 +479,8 @@ Request:
     key: <string>,                  // pem encoded TLS key
     memoryLimit: <number>,          // memory constraint in bytes
     altDomain: <string>,            // alternate domain from which this app can be reached
-    xFrameOptions: <string>         // set X-Frame-Options header, to control which websites can embed this app
+    xFrameOptions: <string>,        // set X-Frame-Options header, to control which websites can embed this app
+    robotsTxt: <string>             // robots.txt file content
 ```
 
 All values are optional. See [Install app](/references/api.html#install-app) API for field descriptions.
