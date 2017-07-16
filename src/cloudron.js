@@ -702,6 +702,7 @@ function doUpdate(boxUpdateInfo, callback) {
             tlsKey: config.tlsKey(),
             isCustomDomain: config.isCustomDomain(),
             isDemo: config.isDemo(),
+            zoneName: config.zoneName(),
 
             appstore: {
                 token: config.token(),
