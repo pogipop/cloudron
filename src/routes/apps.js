@@ -173,7 +173,7 @@ function configureApp(req, res, next) {
 
     if (('debugMode' in data) && typeof data.debugMode !== 'object') return next(new HttpError(400, 'debugMode must be an object'));
 
-    if (data.robotsTxt && typeof data.robotsTxt !== 'string') return next(new HttpError(400, 'robotsTxt must be an object'));
+    if (data.robotsTxt && typeof data.robotsTxt !== 'string') return next(new HttpError(400, 'robotsTxt must be a string'));
 
     debug('Configuring app id:%s data:%j', req.params.id, data);
 
