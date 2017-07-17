@@ -39,6 +39,7 @@ fi
 initBaseImage="true"
 # provisioning data
 domain=""
+zoneName=""
 provider=""
 encryptionKey=""
 restoreUrl=""
@@ -188,6 +189,7 @@ if [[ -z "${dataJson}" ]]; then
     {
         "boxVersionsUrl": "${versionsUrl}",
         "fqdn": "${domain}",
+        "zoneName": "${zoneName}",
         "provider": "${provider}",
         "apiServerOrigin": "${apiServerOrigin}",
         "webServerOrigin": "${webServerOrigin}",
@@ -215,6 +217,7 @@ EOF
     {
         "boxVersionsUrl": "${versionsUrl}",
         "fqdn": "${domain}",
+        "zoneName": "${zoneName}",
         "provider": "${provider}",
         "apiServerOrigin": "${apiServerOrigin}",
         "webServerOrigin": "${webServerOrigin}",

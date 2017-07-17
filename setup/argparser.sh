@@ -6,6 +6,7 @@ json="${source_dir}/../node_modules/.bin/json"
 # IMPORTANT: Fix cloudron.js:doUpdate if you add/remove any arg. keep these sorted for readability
 arg_api_server_origin=""
 arg_fqdn=""
+arg_zone_name=""
 arg_is_custom_domain="false"
 arg_restore_key=""
 arg_restore_url=""
@@ -40,6 +41,7 @@ while true; do
     --data)
         # these params must be valid in all cases
         arg_fqdn=$(echo "$2" | $json fqdn)
+        arg_zone_name=$(echo "$2" | $json zoneName)
 
         arg_is_custom_domain=$(echo "$2" | $json isCustomDomain)
         [[ "${arg_is_custom_domain}" == "" ]] && arg_is_custom_domain="true"
