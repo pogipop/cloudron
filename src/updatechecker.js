@@ -12,7 +12,6 @@ exports = module.exports = {
 var apps = require('./apps.js'),
     appstore = require('./appstore.js'),
     async = require('async'),
-    config = require('./config.js'),
     constants = require('./constants.js'),
     debug = require('debug')('box:updatechecker'),
     mailer = require('./mailer.js'),
@@ -28,7 +27,7 @@ var NOOP_CALLBACK = function (error) { if (error) debug(error); };
 
 function loadState() {
     var state = safe.JSON.parse(safe.fs.readFileSync(paths.UPDATE_CHECKER_FILE, 'utf8'));
-    return state || { };
+    return state || {};
 }
 
 function saveState(mailedUser) {
@@ -111,7 +110,10 @@ function checkAppUpdates(callback) {
                 iteratorDone();
             });
         }, function () {
-            newState.box = loadState().box; // preserve the latest box state information
+            // preserve the latest box state information
+            newState.box = loadState().box;
+            newState.boxTimestamp = loadState().boxTimestamp;
+
             saveState(newState);
             callback();
         });
@@ -143,22 +145,21 @@ function checkBoxUpdates(callback) {
             // decide whether to send email
             var state = loadState();
 
-            if (state.box === gBoxUpdateInfo.version) {
-                debug('Skipping notification of box update as user was already notified');
+            const NOTIFICATION_OFFSET = 1000 * 60 * 60 * 24 * 5;    // 5 days
+
+            if (state.box === gBoxUpdateInfo.version && state.boxTimestamp > Date.now() - NOTIFICATION_OFFSET) {
+                debug('Skipping notification of box update as user was already notified within the last 5 days');
                 return callback();
             }
 
+            state.boxTimestamp = Date.now();
             state.box = updateInfo.version;
+
+            mailer.boxUpdateAvailable(updateInfo.version, updateInfo.changelog);
 
             saveState(state);
 
-            // only send notifications if update pattern is 'never'
-            settings.getAutoupdatePattern(function (error, result) {
-                if (error) debug(error);
-                else if (result === constants.AUTOUPDATE_PATTERN_NEVER) mailer.boxUpdateAvailable(updateInfo.version, updateInfo.changelog);
-
-                callback();
-            });
+            callback();
         });
     });
 }

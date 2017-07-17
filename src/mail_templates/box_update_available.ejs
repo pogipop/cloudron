@@ -4,12 +4,7 @@ Dear <%= cloudronName %> Admin,
 
 Version <%= newBoxVersion %> for Cloudron <%= fqdn %> is now available!
 
-Your Cloudron will update automatically tonight. Alternately, update immediately at <%= webadminUrl %>.
-
-Changelog:
-<% for (var i = 0; i < changelog.length; i++) { %>
-  * <%- changelog[i] %>
-<% } %>
+Visit your Cloudron at <%= webadminUrl %> to perform the update.
 
 Thank you,
 your Cloudron
@@ -28,16 +23,8 @@ your Cloudron
     </p>
 
     <p>
-        Your Cloudron will update automatically tonight.<br/>
-        Alternately, update immediately <a href="<%= webadminUrl %>">here</a>.
+        Visit your Cloudron <a href="<%= webadminUrl %>">here</a> to perform the update.
     </p>
-
-    <h5>Changelog:</h5>
-    <ul>
-    <% for (var i = 0; i < changelogHTML.length; i++) { %>
-        <li><%- changelogHTML[i] %></li>
-    <% } %>
-    </ul>
 
     <br/>
     <br/>
@@ -52,4 +39,3 @@ your Cloudron
 <img src="https://analytics.cloudron.io/piwik.php?idsite=2&rec=1&e_c=CloudronEmail&e_a=update" style="border:0" alt="" />
 
 <% } %>
-
