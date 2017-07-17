@@ -438,9 +438,11 @@ function backup(app, callback) {
     assert.strictEqual(typeof app, 'object');
     assert.strictEqual(typeof callback, 'function');
 
+    var prefix = (new Date()).toISOString().replace(/[T.]/g, '-').replace(/[:Z]/g,'');
+
     async.series([
         updateApp.bind(null, app, { installationProgress: '10, Backing up' }),
-        backups.backupApp.bind(null, app, app.manifest, 'appbackups' /* tag */),
+        backups.backupApp.bind(null, app, app.manifest, prefix),
 
         // done!
         function (callback) {
@@ -557,9 +559,11 @@ function update(app, callback) {
         function (next) {
             if (app.installationState === appdb.ISTATE_PENDING_FORCE_UPDATE) return next(null);
 
+            var prefix = (new Date()).toISOString().replace(/[T.]/g, '-').replace(/[:Z]/g,'');
+
             async.series([
                 updateApp.bind(null, app, { installationProgress: '30, Backing up app' }),
-                backups.backupApp.bind(null, app, app.oldConfig.manifest, 'appbackups' /* tag */)
+                backups.backupApp.bind(null, app, app.oldConfig.manifest, prefix)
             ], next);
         },
 
