@@ -884,4 +884,36 @@ describe('Settings API', function () {
             });
         });
     });
+
+    describe('mail from validation', function () {
+        it('get mail from validation succeeds', function (done) {
+            superagent.get(SERVER_URL + '/api/v1/settings/mail_from_validation')
+                   .query({ access_token: token })
+                   .end(function (err, res) {
+                expect(res.statusCode).to.equal(200);
+                expect(res.body).to.eql({ enabled: true });
+                done();
+            });
+        });
+
+        it('cannot set without enabled field', function (done) {
+            superagent.post(SERVER_URL + '/api/v1/settings/mail_from_validation')
+                   .query({ access_token: token })
+                   .send({ })
+                   .end(function (err, res) {
+                expect(res.statusCode).to.equal(400);
+                done();
+            });
+        });
+
+        it('can set with enabled field', function (done) {
+            superagent.post(SERVER_URL + '/api/v1/settings/mail_from_validation')
+                   .query({ access_token: token })
+                   .send({ enabled: false })
+                   .end(function (err, res) {
+                expect(res.statusCode).to.equal(202);
+                done();
+            });
+        });
+    });
 });

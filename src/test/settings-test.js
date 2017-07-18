@@ -182,6 +182,21 @@ describe('Settings', function () {
             });
         });
 
+        it('can set mail from validation', function (done) {
+            settings.setMailFromValidation(true, function (error) {
+                expect(error).to.be(null);
+                done();
+            });
+        });
+
+        it('can get mail from validation', function (done) {
+            settings.getMailFromValidation(function (error, enabled) {
+                expect(error).to.be(null);
+                expect(enabled).to.be(true);
+                done();
+            });
+        });
+
         it('can get mail relay', function (done) {
             settings.getMailRelay(function (error, address) {
                 expect(error).to.be(null);

@@ -148,7 +148,7 @@ function setMailFromValidation(req, res, next) {
 
     if (typeof req.body.enabled !== 'boolean') return next(new HttpError(400, 'enabled is required'));
 
-    settings.setMailFromValidation({ enabled: req.body.enabled }, function (error) {
+    settings.setMailFromValidation(req.body.enabled, function (error) {
         if (error && error.reason === SettingsError.BAD_FIELD) return next(new HttpError(400, error.message));
         if (error) return next(new HttpError(500, error));
 

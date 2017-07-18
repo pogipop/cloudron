@@ -278,8 +278,7 @@ function getDeveloperMode(callback) {
         if (error && error.reason === DatabaseError.NOT_FOUND) return callback(null, gDefaults[exports.DEVELOPER_MODE_KEY]);
         if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
 
-        // settingsdb holds string values only
-        callback(null, !!enabled);
+        callback(null, !!enabled); // settingsdb holds string values only
     });
 }
 
@@ -345,8 +344,7 @@ function getDynamicDnsConfig(callback) {
         if (error && error.reason === DatabaseError.NOT_FOUND) return callback(null, gDefaults[exports.DYNAMIC_DNS_KEY]);
         if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
 
-        // settingsdb holds string values only
-        callback(null, !!enabled);
+        callback(null, !!enabled); // settingsdb holds string values only
     });
 }
 
@@ -473,11 +471,11 @@ function setMailConfig(mailConfig, callback) {
 function getMailFromValidation(callback) {
     assert.strictEqual(typeof callback, 'function');
 
-    settingsdb.get(exports.MAIL_FROM_VALIDATION_KEY, function (error, value) {
+    settingsdb.get(exports.MAIL_FROM_VALIDATION_KEY, function (error, enabled) {
         if (error && error.reason === DatabaseError.NOT_FOUND) return callback(null, gDefaults[exports.MAIL_FROM_VALIDATION_KEY]);
         if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
 
-        callback(null, !!value);
+        callback(null, !!enabled); // settingsdb holds string values only
     });
 }
 
@@ -485,7 +483,7 @@ function setMailFromValidation(enabled, callback) {
     assert.strictEqual(typeof enabled, 'boolean');
     assert.strictEqual(typeof callback, 'function');
 
-    settingsdb.set(exports.MAIL_FROM_VALIDATION_KEY, enabled, function (error) {
+    settingsdb.set(exports.MAIL_FROM_VALIDATION_KEY, enabled ? 'enabled' : '', function (error) {
         if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
 
         exports.events.emit(exports.MAIL_FROM_VALIDATION_KEY, enabled);
