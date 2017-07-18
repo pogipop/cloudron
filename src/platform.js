@@ -251,9 +251,10 @@ function createMailConfig(callback) {
             if (error) return callback(error);
 
             var catchAll = result[settings.CATCH_ALL_ADDRESS_KEY].join(',');
+            var mailFromValidation = result[settings.MAIL_FROM_VALIDATION_KEY];
 
             if (!safe.fs.writeFileSync(paths.ADDON_CONFIG_DIR + '/mail/mail.ini',
-                `mail_domain=${fqdn}\nmail_server_name=${mailFqdn}\nalerts_from=${alertsFrom}\nalerts_to=${alertsTo}\ncatch_all=${catchAll}\n`, 'utf8')) {
+                `mail_domain=${fqdn}\nmail_server_name=${mailFqdn}\nalerts_from=${alertsFrom}\nalerts_to=${alertsTo}\ncatch_all=${catchAll}\mail_from_validation=${mailFromValidation}\n`, 'utf8')) {
                 return callback(new Error('Could not create mail var file:' + safe.error.message));
             }
 

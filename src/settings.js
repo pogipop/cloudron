@@ -42,6 +42,9 @@ exports = module.exports = {
     getMailConfig: getMailConfig,
     setMailConfig: setMailConfig,
 
+    getMailFromValidation: getMailFromValidation,
+    setMailFromValidation: setMailFromValidation,
+
     getMailRelay: getMailRelay,
     setMailRelay: setMailRelay,
 
@@ -53,6 +56,7 @@ exports = module.exports = {
     // booleans. if you add an entry here, be sure to fix getAll
     DEVELOPER_MODE_KEY: 'developer_mode',
     DYNAMIC_DNS_KEY: 'dynamic_dns',
+    MAIL_FROM_VALIDATION_KEY: 'mail_from_validation',
 
     // json. if you add an entry here, be sure to fix getAll
     DNS_CONFIG_KEY: 'dns_config',
@@ -115,6 +119,7 @@ var gDefaults = (function () {
     result[exports.MAIL_CONFIG_KEY] = { enabled: false };
     result[exports.MAIL_RELAY_KEY] = { provider: 'cloudron-smtp' };
     result[exports.CATCH_ALL_ADDRESS_KEY] = [ ];
+    result[exports.MAIL_FROM_VALIDATION_KEY] = true;
 
     return result;
 })();
@@ -465,6 +470,32 @@ function setMailConfig(mailConfig, callback) {
     });
 }
 
+function getMailFromValidation(callback) {
+    assert.strictEqual(typeof callback, 'function');
+
+    settingsdb.get(exports.MAIL_FROM_VALIDATION_KEY, function (error, value) {
+        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(null, gDefaults[exports.MAIL_FROM_VALIDATION_KEY]);
+        if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
+
+        callback(null, !!value);
+    });
+}
+
+function setMailFromValidation(enabled, callback) {
+    assert.strictEqual(typeof enabled, 'boolean');
+    assert.strictEqual(typeof callback, 'function');
+
+    settingsdb.set(exports.MAIL_FROM_VALIDATION_KEY, enabled, function (error) {
+        if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
+
+        exports.events.emit(exports.MAIL_FROM_VALIDATION_KEY, enabled);
+
+        platform.createMailConfig(NOOP_CALLBACK);
+
+        callback(null);
+    });
+}
+
 function getMailRelay(callback) {
     assert.strictEqual(typeof callback, 'function');
 
@@ -602,6 +633,7 @@ function getAll(callback) {
         // convert booleans
         result[exports.DEVELOPER_MODE_KEY] = !!result[exports.DEVELOPER_MODE_KEY];
         result[exports.DYNAMIC_DNS_KEY] = !!result[exports.DYNAMIC_DNS_KEY];
+        result[exports.MAIL_FROM_VALIDATION_KEY] = !!result[exports.MAIL_FROM_VALIDATION_KEY];
 
         // convert JSON objects
         [exports.DNS_CONFIG_KEY, exports.TLS_CONFIG_KEY, exports.BACKUP_CONFIG_KEY, exports.MAIL_CONFIG_KEY,

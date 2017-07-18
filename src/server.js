@@ -217,6 +217,8 @@ function initializeExpressSync() {
     router.post('/api/v1/settings/mail_relay',         settingsScope, routes.user.requireAdmin, routes.settings.setMailRelay);
     router.get ('/api/v1/settings/catch_all_address',  settingsScope, routes.user.requireAdmin, routes.settings.getCatchAllAddress);
     router.put ('/api/v1/settings/catch_all_address',  settingsScope, routes.user.requireAdmin, routes.settings.setCatchAllAddress);
+    router.get ('/api/v1/settings/mail_from_validation', settingsScope, routes.user.requireAdmin, routes.settings.getMailFromValidation);
+    router.post('/api/v1/settings/mail_from_validation', settingsScope, routes.user.requireAdmin, routes.settings.setMailFromValidation);
 
     // feedback
     router.post('/api/v1/feedback', usersScope, routes.cloudron.feedback);

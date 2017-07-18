@@ -30,6 +30,9 @@ exports = module.exports = {
     getCatchAllAddress: getCatchAllAddress,
     setCatchAllAddress: setCatchAllAddress,
 
+    getMailFromValidation: getMailFromValidation,
+    setMailFromValidation: setMailFromValidation,
+
     getAppstoreConfig: getAppstoreConfig,
     setAppstoreConfig: setAppstoreConfig,
 
@@ -125,6 +128,27 @@ function setMailConfig(req, res, next) {
     if (typeof req.body.enabled !== 'boolean') return next(new HttpError(400, 'enabled is required'));
 
     settings.setMailConfig({ enabled: req.body.enabled }, function (error) {
+        if (error && error.reason === SettingsError.BAD_FIELD) return next(new HttpError(400, error.message));
+        if (error) return next(new HttpError(500, error));
+
+        next(new HttpSuccess(202));
+    });
+}
+
+function getMailFromValidation(req, res, next) {
+    settings.getMailFromValidation(function (error, enabled) {
+        if (error) return next(new HttpError(500, error));
+
+        next(new HttpSuccess(200, { enabled: enabled }));
+    });
+}
+
+function setMailFromValidation(req, res, next) {
+    assert.strictEqual(typeof req.body, 'object');
+
+    if (typeof req.body.enabled !== 'boolean') return next(new HttpError(400, 'enabled is required'));
+
+    settings.setMailFromValidation({ enabled: req.body.enabled }, function (error) {
         if (error && error.reason === SettingsError.BAD_FIELD) return next(new HttpError(400, error.message));
         if (error) return next(new HttpError(500, error));
 
