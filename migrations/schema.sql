@@ -68,6 +68,7 @@ CREATE TABLE IF NOT EXISTS apps(
     xFrameOptions VARCHAR(512),
     sso BOOLEAN DEFAULT 1, // whether user chose to enable SSO
     debugModeJson TEXT, // options for development mode
+    robotsTxt TEXT,
 
     // the following fields do not belong here, they can be removed when we use a queue for apptask
     lastBackupId VARCHAR(128), // used to pass backupId to restore from to apptask
