@@ -48,7 +48,6 @@ exports = module.exports = {
     setCatchAllAddress: setCatchAllAddress,
     getCatchAllAddress: getCatchAllAddress,
 
-    getDefaultSync: getDefaultSync,
     getAll: getAll,
 
     // booleans. if you add an entry here, be sure to fix getAll
@@ -589,12 +588,6 @@ function setAppstoreConfig(appstoreConfig, callback) {
         });
     });
 
-}
-
-function getDefaultSync(name) {
-    assert.strictEqual(typeof name, 'string');
-
-    return gDefaults[name];
 }
 
 function getAll(callback) {
