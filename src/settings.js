@@ -62,7 +62,7 @@ exports = module.exports = {
     APPSTORE_CONFIG_KEY: 'appstore_config',
     MAIL_CONFIG_KEY: 'mail_config',
     MAIL_RELAY_KEY: 'mail_relay',
-    CATCH_ALL_ADDRESS: 'catch_all_address',
+    CATCH_ALL_ADDRESS_KEY: 'catch_all_address',
 
     // strings
     AUTOUPDATE_PATTERN_KEY: 'autoupdate_pattern',
@@ -114,7 +114,7 @@ var gDefaults = (function () {
     result[exports.APPSTORE_CONFIG_KEY] = {};
     result[exports.MAIL_CONFIG_KEY] = { enabled: false };
     result[exports.MAIL_RELAY_KEY] = { provider: 'cloudron-smtp' };
-    result[exports.CATCH_ALL_ADDRESS] = [ ];
+    result[exports.CATCH_ALL_ADDRESS_KEY] = [ ];
 
     return result;
 })();
@@ -497,8 +497,8 @@ function setMailRelay(relay, callback) {
 function getCatchAllAddress(callback) {
     assert.strictEqual(typeof callback, 'function');
 
-    settingsdb.get(exports.CATCH_ALL_ADDRESS, function (error, value) {
-        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(null, gDefaults[exports.CATCH_ALL_ADDRESS]);
+    settingsdb.get(exports.CATCH_ALL_ADDRESS_KEY, function (error, value) {
+        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(null, gDefaults[exports.CATCH_ALL_ADDRESS_KEY]);
         if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
 
         callback(null, JSON.parse(value));
@@ -509,10 +509,10 @@ function setCatchAllAddress(address, callback) {
     assert(Array.isArray(address));
     assert.strictEqual(typeof callback, 'function');
 
-    settingsdb.set(exports.CATCH_ALL_ADDRESS, JSON.stringify(address), function (error) {
+    settingsdb.set(exports.CATCH_ALL_ADDRESS_KEY, JSON.stringify(address), function (error) {
         if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
 
-        exports.events.emit(exports.CATCH_ALL_ADDRESS, address);
+        exports.events.emit(exports.CATCH_ALL_ADDRESS_KEY, address);
 
         platform.createMailConfig(NOOP_CALLBACK);
 
@@ -605,7 +605,7 @@ function getAll(callback) {
 
         // convert JSON objects
         [exports.DNS_CONFIG_KEY, exports.TLS_CONFIG_KEY, exports.BACKUP_CONFIG_KEY, exports.MAIL_CONFIG_KEY,
-         exports.UPDATE_CONFIG_KEY, exports.APPSTORE_CONFIG_KEY, exports.MAIL_RELAY_KEY, exports.CATCH_ALL_ADDRESS].forEach(function (key) {
+         exports.UPDATE_CONFIG_KEY, exports.APPSTORE_CONFIG_KEY, exports.MAIL_RELAY_KEY, exports.CATCH_ALL_ADDRESS_KEY].forEach(function (key) {
             result[key] = typeof result[key] === 'object' ? result[key] : safe.JSON.parse(result[key]);
         });
 

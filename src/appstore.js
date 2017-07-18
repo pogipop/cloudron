@@ -167,7 +167,7 @@ function sendAliveStatus(data, callback) {
                 provider: result[settings.MAIL_RELAY_KEY].provider
             },
             mailCatchAll: {
-                count: result[settings.CATCH_ALL_ADDRESS].length
+                count: result[settings.CATCH_ALL_ADDRESS_KEY].length
             },
             autoupdatePattern: result[settings.AUTOUPDATE_PATTERN_KEY],
             timeZone: result[settings.TIME_ZONE_KEY]
