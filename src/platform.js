@@ -247,32 +247,30 @@ function createMailConfig(callback) {
         var alertsTo = config.provider() === 'caas' ? [ 'support@cloudron.io' ] : [ ];
         alertsTo.concat(error ? [] : owner.email).join(','); // owner may not exist yet
 
-        settings.getCatchAllAddress(function (error, address) {
+        settings.getAll(function (error, result) {
             if (error) return callback(error);
 
-            var catchAll = address.join(',');
+            var catchAll = result[settings.CATCH_ALL_ADDRESS_KEY].join(',');
 
             if (!safe.fs.writeFileSync(paths.ADDON_CONFIG_DIR + '/mail/mail.ini',
                 `mail_domain=${fqdn}\nmail_server_name=${mailFqdn}\nalerts_from=${alertsFrom}\nalerts_to=${alertsTo}\ncatch_all=${catchAll}\n`, 'utf8')) {
                 return callback(new Error('Could not create mail var file:' + safe.error.message));
             }
 
-            settings.getMailRelay(function (error, relay) {
-                if (error) return callback(error);
+            var relay = result[settings.MAIL_RELAY_KEY];
 
-                const enabled = relay.provider !== 'cloudron-smtp' ? true : false,
-                      host = relay.host || '',
-                      port = relay.port || 25,
-                      username = relay.username || '',
-                      password = relay.password || '';
+            const enabled = relay.provider !== 'cloudron-smtp' ? true : false,
+                  host = relay.host || '',
+                  port = relay.port || 25,
+                  username = relay.username || '',
+                  password = relay.password || '';
 
-                if (!safe.fs.writeFileSync(paths.ADDON_CONFIG_DIR + '/mail/smtp_forward.ini',
-                    `enable_outbound=${enabled}\nhost=${host}\nport=${port}\nenable_tls=true\nauth_type=plain\nauth_user=${username}\nauth_pass=${password}`, 'utf8')) {
-                    return callback(new Error('Could not create mail var file:' + safe.error.message));
-                }
+            if (!safe.fs.writeFileSync(paths.ADDON_CONFIG_DIR + '/mail/smtp_forward.ini',
+                `enable_outbound=${enabled}\nhost=${host}\nport=${port}\nenable_tls=true\nauth_type=plain\nauth_user=${username}\nauth_pass=${password}`, 'utf8')) {
+                return callback(new Error('Could not create mail var file:' + safe.error.message));
+            }
 
-                callback();
-            });
+            callback();
         });
     });
 }
