@@ -51,12 +51,12 @@ exports = module.exports = {
     getDefaultSync: getDefaultSync,
     getAll: getAll,
 
-    AUTOUPDATE_PATTERN_KEY: 'autoupdate_pattern',
-    TIME_ZONE_KEY: 'time_zone',
-    CLOUDRON_NAME_KEY: 'cloudron_name',
+    // booleans. if you add an entry here, be sure to fix getAll
     DEVELOPER_MODE_KEY: 'developer_mode',
-    DNS_CONFIG_KEY: 'dns_config',
     DYNAMIC_DNS_KEY: 'dynamic_dns',
+
+    // json. if you add an entry here, be sure to fix getAll
+    DNS_CONFIG_KEY: 'dns_config',
     BACKUP_CONFIG_KEY: 'backup_config',
     TLS_CONFIG_KEY: 'tls_config',
     UPDATE_CONFIG_KEY: 'update_config',
@@ -64,6 +64,11 @@ exports = module.exports = {
     MAIL_CONFIG_KEY: 'mail_config',
     MAIL_RELAY_KEY: 'mail_relay',
     CATCH_ALL_ADDRESS: 'catch_all_address',
+
+    // strings
+    AUTOUPDATE_PATTERN_KEY: 'autoupdate_pattern',
+    TIME_ZONE_KEY: 'time_zone',
+    CLOUDRON_NAME_KEY: 'cloudron_name',
 
     events: null
 };
@@ -606,7 +611,8 @@ function getAll(callback) {
         result[exports.DYNAMIC_DNS_KEY] = !!result[exports.DYNAMIC_DNS_KEY];
 
         // convert JSON objects
-        [exports.DNS_CONFIG_KEY, exports.TLS_CONFIG_KEY, exports.BACKUP_CONFIG_KEY, exports.MAIL_CONFIG_KEY].forEach(function (key) {
+        [exports.DNS_CONFIG_KEY, exports.TLS_CONFIG_KEY, exports.BACKUP_CONFIG_KEY, exports.MAIL_CONFIG_KEY,
+         exports.UPDATE_CONFIG_KEY, exports.APPSTORE_CONFIG_KEY, exports.MAIL_RELAY_KEY, exports.CATCH_ALL_ADDRESS].forEach(function (key) {
             result[key] = typeof result[key] === 'object' ? result[key] : safe.JSON.parse(result[key]);
         });
 
