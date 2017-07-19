@@ -17,6 +17,7 @@ exports = module.exports = {
 var assert = require('assert'),
     config = require('./config.js'),
     debug = require('debug')('box:appstore'),
+    eventlog = require('./eventlog.js'),
     os = require('os'),
     settings = require('./settings.js'),
     superagent = require('superagent'),
@@ -149,51 +150,58 @@ function sendAliveStatus(data, callback) {
     settings.getAll(function (error, result) {
         if (error) return callback(new AppstoreError(AppstoreError.INTERNAL_ERROR, error));
 
-        var backendSettings = {
-            dnsConfig: {
-                provider: result[settings.DNS_CONFIG_KEY].provider,
-                wildcard: result[settings.DNS_CONFIG_KEY].provider === 'manual' ? result[settings.DNS_CONFIG_KEY].wildcard : undefined
-            },
-            tlsConfig: {
-                provider: result[settings.TLS_CONFIG_KEY].provider
-            },
-            backupConfig: {
-                provider: result[settings.BACKUP_CONFIG_KEY].provider
-            },
-            mailConfig: {
-                enabled: result[settings.MAIL_CONFIG_KEY].enabled
+        eventlog.getAllPaged(eventlog.ACTION_USER_LOGIN, null, 1, 1, function (error, loginEvents) {
+            if (error) return callback(new AppstoreError(AppstoreError.INTERNAL_ERROR, error));
+
+            var backendSettings = {
+                dnsConfig: {
+                    provider: result[settings.DNS_CONFIG_KEY].provider,
+                    wildcard: result[settings.DNS_CONFIG_KEY].provider === 'manual' ? result[settings.DNS_CONFIG_KEY].wildcard : undefined
+                },
+                tlsConfig: {
+                    provider: result[settings.TLS_CONFIG_KEY].provider
+                },
+                backupConfig: {
+                    provider: result[settings.BACKUP_CONFIG_KEY].provider
+                },
+                mailConfig: {
+                    enabled: result[settings.MAIL_CONFIG_KEY].enabled
             },
             mailRelay: {
                 provider: result[settings.MAIL_RELAY_KEY].provider
             },
             mailCatchAll: {
                 count: result[settings.CATCH_ALL_ADDRESS_KEY].length
-            },
-            autoupdatePattern: result[settings.AUTOUPDATE_PATTERN_KEY],
-            timeZone: result[settings.TIME_ZONE_KEY]
-        };
+                },
+                autoupdatePattern: result[settings.AUTOUPDATE_PATTERN_KEY],
+                timeZone: result[settings.TIME_ZONE_KEY],
+            };
 
-        var data = {
-            domain: config.fqdn(),
-            version: config.version(),
-            provider: config.provider(),
-            backendSettings: backendSettings,
-            machine: {
-                cpus: os.cpus(),
-                totalmem: os.totalmem()
-            }
-        };
+            var data = {
+                domain: config.fqdn(),
+                version: config.version(),
+                provider: config.provider(),
+                backendSettings: backendSettings,
+                machine: {
+                    cpus: os.cpus(),
+                    totalmem: os.totalmem()
+                },
+                events: {
+                    lastLogin: loginEvents[0] ? (new Date(loginEvents[0].creationTime).getTime()) : 0
+                }
+            };
 
-        getAppstoreConfig(function (error, appstoreConfig) {
-            if (error) return callback(error);
+            getAppstoreConfig(function (error, appstoreConfig) {
+                if (error) return callback(error);
 
-            var url = config.apiServerOrigin() + '/api/v1/users/' + appstoreConfig.userId + '/cloudrons/' + appstoreConfig.cloudronId + '/alive';
-            superagent.post(url).send(data).query({ accessToken: appstoreConfig.token }).timeout(30 * 1000).end(function (error, result) {
-                if (error && !error.response) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, error));
-                if (result.statusCode === 404) return callback(new AppstoreError(AppstoreError.NOT_FOUND));
-                if (result.statusCode !== 201) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, util.format('Sending alive status failed. %s %j', result.status, result.body)));
+                var url = config.apiServerOrigin() + '/api/v1/users/' + appstoreConfig.userId + '/cloudrons/' + appstoreConfig.cloudronId + '/alive';
+                superagent.post(url).send(data).query({ accessToken: appstoreConfig.token }).timeout(30 * 1000).end(function (error, result) {
+                    if (error && !error.response) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, error));
+                    if (result.statusCode === 404) return callback(new AppstoreError(AppstoreError.NOT_FOUND));
+                    if (result.statusCode !== 201) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, util.format('Sending alive status failed. %s %j', result.status, result.body)));
 
-                callback(null);
+                    callback(null);
+                });
             });
         });
     });
