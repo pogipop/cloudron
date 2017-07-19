@@ -1323,6 +1323,46 @@ Request:
 ```
 -->
 
+### Get mail from validation
+
+GET `/api/v1/settings/mail_from_validation` <scope>admin</scope>
+
+Gets the configuration of mail from header check for outbound mails.
+
+Cloudron only allows authenticated users and apps to send outbound mail. After authentication, it ensures
+that the SMTP MAIL FROM header matches either the authenticated username or the aliases of the username. This
+prevents apps and users from impersonating using other email ids.
+
+You can disable this to skip the MAIL FROM header check. Do so only if you completely trust your apps and users.
+By default, this value is true.
+
+```
+Response (200):
+{
+    enabled: <boolean>
+}
+```
+
+### Set mail from validation
+
+POST  `/api/v1/settings/mail_from_validation` <scope>admin</scope>
+
+Enables or disables the mail from header check for outbound mails.
+
+Cloudron only allows authenticated users and apps to send outbound mail. After authentication, it ensures
+that the SMTP MAIL FROM header matches either the authenticated username or the aliases of the username. This
+prevents apps and users from impersonating using other email ids.
+
+You can disable this to skip the MAIL FROM header check. Note that the Cloudron will never send out emails
+if the FROM domain does not match the Cloudron's domain regardless of this setting.
+
+Request:
+```
+{
+    enabled: <boolean>
+}
+```
+
 ### Get name
 
 GET `/api/v1/settings/cloudron_name` <scope>admin</scope>
