@@ -214,7 +214,7 @@ function testConfig(apiConfig, callback) {
 
         var params = {
             Bucket: apiConfig.bucket,
-            Key: apiConfig.prefix + '/cloudron-testfile',
+            Key: path.join(apiConfig.prefix, 'cloudron-testfile'),
             Body: 'testcontent'
         };
 
@@ -224,7 +224,7 @@ function testConfig(apiConfig, callback) {
 
             var params = {
                 Bucket: apiConfig.bucket,
-                Key: apiConfig.prefix + '/cloudron-testfile'
+                Key: path.join(apiConfig.prefix, 'cloudron-testfile')
             };
 
             s3.deleteObject(params, function (error) {
