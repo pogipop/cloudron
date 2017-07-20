@@ -344,6 +344,17 @@ be sent to each user who is part of the group.
 The spam detection agent on the Cloudron requires training to identify spam. To do this, simply move your junk mails
 to a pre-created folder named `Spam`. Most mail clients have a Junk or Spam button which does this automatically.
 
+## Mail relay
+
+By default, Cloudron's built-in email server sends out email directly to recipients. You can instead configure
+the Cloudron to hand all outgoing emails to a 'mail relay' and have the relay deliver it to recipients. Such a
+setup is useful when the Cloudron server does not have a good IP reputation for mail delivery or if server service provider does not allow sending email via port 25 (which is the case with Google Cloud and Amazon EC2).
+
+Cloudron can be configured to send all outbound email via Amazon SES, Google, Mailgun, Postmark,
+Sendgrid or any other external SMTP server. To setup a relay, enter the relay credentials in the Email section. Cloudron only supports relaying via the STARTTLS mechanism (usually port 587).
+
+<img src="/docs/img/email-relay.png" width=500 class="shadow">
+
 # Graphs
 
 The Graphs view shows an overview of the disk and memory usage on your Cloudron.
