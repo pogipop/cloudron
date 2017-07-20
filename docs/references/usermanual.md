@@ -327,6 +327,13 @@ your mail client but login using the Cloudron credentials.
 Emails addressed to `<username>+tag@<domain>` will be delivered to the `username` mailbox. You can use this feature to give out emails of the form
 `username+kayak@<domain>`, `username+aws@<domain>` and so on and have them all delivered to your mailbox.
 
+## Catch All
+
+A Catch-all mailbox is one that will "catch all" of the emails addressed to non-existent addresses. You can forward
+such emails to one or more user mailboxes in the Email section. Note that if you do not select any mailbox (the default), Cloudron will send a bounce.
+
+<img src="/docs/img/catch-all-mailbox.png" width="500" class="shadow">
+
 ## Forwarding addresses
 
 Each group on the Cloudron is also a forwarding address. Mails can be addressed to `group@<domain>` and the mail will
