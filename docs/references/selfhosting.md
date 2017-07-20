@@ -108,9 +108,13 @@ IP address (`https://ip`) to complete the installation.
 The setup website will show a certificate warning. Accept the self-signed certificate
 and proceed to the domain setup.
 
-Currently, only subdomains of the [Public Suffix List](https://publicsuffix.org/) are supported.
-For example, `example.com`,  `example.co.uk` will work fine. Choosing other non-registrable
-domain names like `cloudron.example.com` will not work.
+Cloudron requires a subdomain of the [Public Suffix List](https://publicsuffix.org/).
+For example, `example.com`,  `example.co.uk` will work fine.
+
+If you want to install Cloudron on a non-registrable domain like `cloudron.example.com`,
+you must purchase an Enterprise subscription. This allows for setups where you can host
+multiple Cloudrons under the same top level domain like customer1.company.com,
+customer2.company.com and so on.
 
 ### Route 53
 
