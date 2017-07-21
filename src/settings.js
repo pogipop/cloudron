@@ -51,12 +51,16 @@ exports = module.exports = {
     setCatchAllAddress: setCatchAllAddress,
     getCatchAllAddress: getCatchAllAddress,
 
+    getEmailDigest: getEmailDigest,
+    setEmailDigest: setEmailDigest,
+
     getAll: getAll,
 
     // booleans. if you add an entry here, be sure to fix getAll
     DEVELOPER_MODE_KEY: 'developer_mode',
     DYNAMIC_DNS_KEY: 'dynamic_dns',
     MAIL_FROM_VALIDATION_KEY: 'mail_from_validation',
+    EMAIL_DIGEST: 'email_digest',
 
     // json. if you add an entry here, be sure to fix getAll
     DNS_CONFIG_KEY: 'dns_config',
@@ -120,6 +124,7 @@ var gDefaults = (function () {
     result[exports.MAIL_RELAY_KEY] = { provider: 'cloudron-smtp' };
     result[exports.CATCH_ALL_ADDRESS_KEY] = [ ];
     result[exports.MAIL_FROM_VALIDATION_KEY] = true;
+    result[exports.EMAIL_DIGEST] = true;
 
     return result;
 })();
@@ -489,6 +494,30 @@ function setMailFromValidation(enabled, callback) {
         exports.events.emit(exports.MAIL_FROM_VALIDATION_KEY, enabled);
 
         platform.createMailConfig(NOOP_CALLBACK);
+
+        callback(null);
+    });
+}
+
+function getEmailDigest(callback) {
+    assert.strictEqual(typeof callback, 'function');
+
+    settingsdb.get(exports.EMAIL_DIGEST, function (error, enabled) {
+        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(null, gDefaults[exports.EMAIL_DIGEST]);
+        if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
+
+        callback(null, !!enabled); // settingsdb holds string values only
+    });
+}
+
+function setEmailDigest(enabled, callback) {
+    assert.strictEqual(typeof enabled, 'boolean');
+    assert.strictEqual(typeof callback, 'function');
+
+    settingsdb.set(exports.EMAIL_DIGEST, enabled ? 'enabled' : '', function (error) {
+        if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
+
+        exports.events.emit(exports.EMAIL_DIGEST, enabled);
 
         callback(null);
     });

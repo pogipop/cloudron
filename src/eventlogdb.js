@@ -3,6 +3,7 @@
 exports = module.exports = {
     get: get,
     getAllPaged: getAllPaged,
+    getByActionLastWeek: getByActionLastWeek,
     add: add,
     count: count,
     delByCreationTime: delByCreationTime,
@@ -63,6 +64,20 @@ function getAllPaged(action, search, page, perPage, callback) {
     data.push(perPage);
 
     database.query(query, data, function (error, results) {
+        if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
+
+        results.forEach(postProcess);
+
+        callback(null, results);
+    });
+}
+
+function getByActionLastWeek(action, callback) {
+    assert(typeof action === 'string' || action === null);
+    assert.strictEqual(typeof callback, 'function');
+
+    var query = 'SELECT ' + EVENTLOGS_FIELDS + ' FROM eventlog WHERE action=? AND creationTime >= DATE_SUB(NOW(), INTERVAL 1 WEEK) ORDER BY creationTime DESC';
+    database.query(query, [ action ], function (error, results) {
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
 
         results.forEach(postProcess);
