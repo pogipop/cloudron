@@ -15,6 +15,7 @@ var apps = require('./apps.js'),
     constants = require('./constants.js'),
     CronJob = require('cron').CronJob,
     debug = require('debug')('box:cron'),
+    digest = require('./digest.js'),
     eventlog = require('./eventlog.js'),
     janitor = require('./janitor.js'),
     scheduler = require('./scheduler.js'),
@@ -22,20 +23,21 @@ var apps = require('./apps.js'),
     semver = require('semver'),
     updateChecker = require('./updatechecker.js');
 
-var gAutoupdaterJob = null,
-    gBoxUpdateCheckerJob = null,
+var gAliveJob = null, // send periodic stats
     gAppUpdateCheckerJob = null,
-    gHeartbeatJob = null, // for CaaS health check
-    gAliveJob = null, // send periodic stats
+    gAutoupdaterJob = null,
     gBackupJob = null,
-    gCleanupTokensJob = null,
-    gCleanupBackupsJob = null,
-    gDockerVolumeCleanerJob = null,
-    gSchedulerSyncJob = null,
+    gBoxUpdateCheckerJob = null,
     gCertificateRenewJob = null,
     gCheckDiskSpaceJob = null,
+    gCleanupBackupsJob = null,
     gCleanupEventlogJob = null,
-    gDynamicDNSJob = null;
+    gCleanupTokensJob = null,
+    gDockerVolumeCleanerJob = null,
+    gDynamicDNSJob = null,
+    gHeartbeatJob = null, // for CaaS health check
+    gSchedulerSyncJob = null,
+    gDigestEmailJob = null;
 
 var NOOP_CALLBACK = function (error) { if (error) console.error(error); };
 var AUDIT_SOURCE = { userId: null, username: 'cron' };
@@ -173,6 +175,14 @@ function recreateJobs(tz) {
         start: true,
         timeZone: tz
     });
+
+    if (gDigestEmailJob) gDigestEmailJob.stop();
+    gDigestEmailJob = new CronJob({
+        cronTime: '00 00 * * * 3', // every tuesday
+        onTick: digest.maybeSend,
+        start: true,
+        timeZone: tz
+    });
 }
 
 function autoupdatePatternChanged(pattern) {
@@ -271,6 +281,9 @@ function uninitialize(callback) {
 
     if (gDynamicDNSJob) gDynamicDNSJob.stop();
     gDynamicDNSJob = null;
+
+    if (gDigestEmailJob) gDigestEmailJob.stop();
+    gDigestEmailJob = null;
 
     callback();
 }

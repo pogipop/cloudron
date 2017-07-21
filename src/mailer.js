@@ -10,6 +10,7 @@ exports = module.exports = {
     passwordReset: passwordReset,
     boxUpdateAvailable: boxUpdateAvailable,
     appUpdateAvailable: appUpdateAvailable,
+    sendDigest: sendDigest,
 
     sendInvite: sendInvite,
     unexpectedExit: unexpectedExit,
@@ -415,6 +416,30 @@ function appUpdateAvailable(app, updateInfo) {
         };
 
         enqueue(mailOptions);
+    });
+}
+
+function sendDigest(info) {
+    assert.strictEqual(typeof info, 'object');
+
+    getAdminEmails(function (error, adminEmails) {
+        if (error) return console.log('Error getting admins', error);
+
+        settings.getCloudronName(function (error, cloudronName) {
+            if (error) {
+                debug(error);
+                cloudronName = 'Cloudron';
+            }
+
+             var mailOptions = {
+                from: mailConfig().from,
+                to: adminEmails.join(', '),
+                subject: util.format('[%s] Weekly event digest', config.fqdn()),
+                text: render('digest.ejs', { fqdn: config.fqdn(), webadminUrl: config.adminOrigin(), cloudronName: cloudronName, info: info, format: 'text' })
+            };
+
+            enqueue(mailOptions);
+        });
     });
 }
 

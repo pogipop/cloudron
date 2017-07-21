@@ -6,6 +6,7 @@ exports = module.exports = {
     add: add,
     get: get,
     getAllPaged: getAllPaged,
+    getByActionLastWeek: getByActionLastWeek,
     cleanup: cleanup,
 
     // keep in sync with webadmin index.js filter and CLI tool
@@ -97,6 +98,17 @@ function getAllPaged(action, search, page, perPage, callback) {
     assert.strictEqual(typeof callback, 'function');
 
     eventlogdb.getAllPaged(action, search, page, perPage, function (error, boxes) {
+        if (error) return callback(new EventLogError(EventLogError.INTERNAL_ERROR, error));
+
+        callback(null, boxes);
+    });
+}
+
+function getByActionLastWeek(action, callback) {
+    assert(typeof action === 'string' || action === null);
+    assert.strictEqual(typeof callback, 'function');
+
+    eventlogdb.getByActionLastWeek(action, function (error, boxes) {
         if (error) return callback(new EventLogError(EventLogError.INTERNAL_ERROR, error));
 
         callback(null, boxes);
