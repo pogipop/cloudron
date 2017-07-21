@@ -48,12 +48,16 @@ exports = module.exports = {
     getCatchAllAddress: getCatchAllAddress,
 
     getDefaultSync: getDefaultSync,
+    getEmailDigest: getEmailDigest,
+    setEmailDigest: setEmailDigest,
+
     getAll: getAll,
 
     AUTOUPDATE_PATTERN_KEY: 'autoupdate_pattern',
     TIME_ZONE_KEY: 'time_zone',
     CLOUDRON_NAME_KEY: 'cloudron_name',
     DEVELOPER_MODE_KEY: 'developer_mode',
+    EMAIL_DIGEST: 'email_digest',
     DNS_CONFIG_KEY: 'dns_config',
     DYNAMIC_DNS_KEY: 'dynamic_dns',
     BACKUP_CONFIG_KEY: 'backup_config',
@@ -110,6 +114,7 @@ var gDefaults = (function () {
     result[exports.APPSTORE_CONFIG_KEY] = {};
     result[exports.MAIL_CONFIG_KEY] = { enabled: false };
     result[exports.CATCH_ALL_ADDRESS] = [ ];
+    result[exports.EMAIL_DIGEST] = true;
 
     return result;
 })();
@@ -660,11 +665,35 @@ function setMailConfig(mailConfig, callback) {
     });
 }
 
+function getEmailDigest(callback) {
+    assert.strictEqual(typeof callback, 'function');
+
+    settingsdb.get(exports.EMAIL_DIGEST, function (error, enabled) {
+        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(null, gDefaults[exports.EMAIL_DIGEST]);
+        if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
+
+        callback(null, !!enabled); // settingsdb holds string values only
+    });
+}
+
+function setEmailDigest(enabled, callback) {
+    assert.strictEqual(typeof enabled, 'boolean');
+    assert.strictEqual(typeof callback, 'function');
+
+    settingsdb.set(exports.EMAIL_DIGEST, enabled ? 'enabled' : '', function (error) {
+        if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
+
+        exports.events.emit(exports.EMAIL_DIGEST, enabled);
+
+        callback(null);
+    });
+}
+
 function getCatchAllAddress(callback) {
     assert.strictEqual(typeof callback, 'function');
 
-    settingsdb.get(exports.CATCH_ALL_ADDRESS, function (error, value) {
-        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(null, gDefaults[exports.CATCH_ALL_ADDRESS]);
+    settingsdb.get(exports.CATCH_ALL_ADDRESS_KEY, function (error, value) {
+        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(null, gDefaults[exports.CATCH_ALL_ADDRESS_KEY]);
         if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
 
         callback(null, JSON.parse(value));
