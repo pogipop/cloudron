@@ -885,3 +885,5 @@
 * Prevent email view from flickering
 * Prepare for 1.0
 
+[0.160.1]
+* Improved update notification
