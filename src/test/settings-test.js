@@ -197,6 +197,21 @@ describe('Settings', function () {
             });
         });
 
+        it('can enable mail digest', function (done) {
+            settings.setEmailDigest(true, function (error) {
+                expect(error).to.be(null);
+                done();
+            });
+        });
+
+        it('can get mail digest', function (done) {
+            settings.getEmailDigest(function (error, enabled) {
+                expect(error).to.be(null);
+                expect(enabled).to.be(true);
+                done();
+            });
+        });
+
         it('can get mail relay', function (done) {
             settings.getMailRelay(function (error, address) {
                 expect(error).to.be(null);
