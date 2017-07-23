@@ -6,7 +6,9 @@ exports = module.exports = {
 
     getUpdateInfo: getUpdateInfo,
     resetUpdateInfo: resetUpdateInfo,
-    resetAppUpdateInfo: resetAppUpdateInfo
+    resetAppUpdateInfo: resetAppUpdateInfo,
+
+    _setUpdateInfo: setUpdateInfo
 };
 
 var apps = require('./apps.js'),
@@ -39,6 +41,11 @@ function getUpdateInfo() {
         apps: gAppUpdateInfo,
         box: gBoxUpdateInfo
     };
+}
+
+function setUpdateInfo(info) {
+    gBoxUpdateInfo = info.box;
+    gAppUpdateInfo = info.apps;
 }
 
 function resetUpdateInfo() {

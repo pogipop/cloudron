@@ -1,30 +1,37 @@
 'use strict';
 
-var assert = require('assert'),
-    debug = require('debug')('box:digest'),
+var debug = require('debug')('box:digest'),
     eventlog = require('./eventlog.js'),
     updatechecker = require('./updatechecker.js'),
     mailer = require('./mailer.js'),
     settings = require('./settings.js');
 
+var NOOP_CALLBACK = function (error) { if (error) debug(error); };
+
 exports = module.exports = {
     maybeSend: maybeSend
 };
 
-function maybeSend() {
+function maybeSend(callback) {
+    callback = callback || NOOP_CALLBACK;
+
     settings.getEmailDigest(function (error, enabled) {
-        if (error) return console.error(error);
-        if (!enabled) return debug('Email digest is disabled');
+        if (error) return callback(error);
+
+        if (!enabled) {
+            debug('Email digest is disabled');
+            return callback();
+        }
 
         var updateInfo = updatechecker.getUpdateInfo();
         var pendingAppUpdates = updateInfo.apps || {};
         pendingAppUpdates = Object.keys(pendingAppUpdates).map(function (key) { return pendingAppUpdates[key]; });
 
         eventlog.getByActionLastWeek(eventlog.ACTION_APP_UPDATE, function (error, appUpdates) {
-            if (error) return console.error(error);
+            if (error) return callback(error);
 
             eventlog.getByActionLastWeek(eventlog.ACTION_UPDATE, function (error, boxUpdates) {
-                if (error) return console.error(error);
+                if (error) return callback(error);
 
                 var info = {
                     pendingAppUpdates: pendingAppUpdates,
@@ -40,6 +47,8 @@ function maybeSend() {
                 } else {
                     debug('maybeSend: nothing happened, NOT sending digest email');
                 }
+
+                callback();
             });
         });
     });
