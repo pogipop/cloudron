@@ -24,7 +24,7 @@ angular.module('Application').controller('AppsController', ['$scope', '$location
         portBindings: {},
         portBindingsEnabled: {},
         portBindingsInfo: {},
-        robotsEnabled: false,
+        robotsTxt: '',
         certificateFile: null,
         certificateFileName: '',
         keyFile: null,
@@ -113,7 +113,7 @@ angular.module('Application').controller('AppsController', ['$scope', '$location
         $scope.appConfigure.accessRestriction = { users: [], groups: [] };
         $scope.appConfigure.xFrameOptions = '';
         $scope.appConfigure.customAuth = false;
-        $scope.appConfigure.robotsEnabled = false;
+        $scope.appConfigure.robotsTxt = '';
 
         $scope.appConfigureForm.$setPristine();
         $scope.appConfigureForm.$setUntouched();
@@ -206,7 +206,7 @@ angular.module('Application').controller('AppsController', ['$scope', '$location
         $scope.appConfigure.memoryLimit = app.memoryLimit || app.manifest.memoryLimit || (256 * 1024 * 1024);
         $scope.appConfigure.xFrameOptions = app.xFrameOptions.indexOf('ALLOW-FROM') === 0 ? app.xFrameOptions.split(' ')[1] : '';
         $scope.appConfigure.customAuth = !(app.manifest.addons['ldap'] || app.manifest.addons['oauth']);
-        $scope.appConfigure.robotsEnabled = !!app.robotsTxt;
+        $scope.appConfigure.robotsTxt = app.robotsTxt;
 
         // create ticks starting from manifest memory limit
         $scope.appConfigure.memoryTicks = [
@@ -260,8 +260,7 @@ angular.module('Application').controller('AppsController', ['$scope', '$location
             key: $scope.appConfigure.keyFile,
             xFrameOptions: $scope.appConfigure.xFrameOptions ? ('ALLOW-FROM ' + $scope.appConfigure.xFrameOptions) : 'SAMEORIGIN',
             memoryLimit: $scope.appConfigure.memoryLimit === $scope.appConfigure.memoryTicks[0] ? 0 : $scope.appConfigure.memoryLimit,
-            // preserve arbitrary robots.txt in database
-            robotsTxt: $scope.appConfigure.robotsEnabled ? ($scope.appConfigure.app.robotsTxt || 'User-agent: *\\nDisallow: /\\n') : null
+            robotsTxt: $scope.appConfigure.robotsTxt
         };
 
         Client.configureApp($scope.appConfigure.app.id, $scope.appConfigure.password, data, function (error) {
