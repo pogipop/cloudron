@@ -4,40 +4,33 @@ Dear <%= cloudronName %> Admin,
 
 This is your weekly summary of activities on your Cloudron.
 <% if (info.pendingBoxUpdate) { %>
-Pending box update to version <%- info.pendingBoxUpdate.version %>:
-    <% for (var i = 0; i < info.pendingBoxUpdate.changelog.length; i++) { %>
+A new Cloudron version <%- info.pendingBoxUpdate.version %> is available. Please update at the earliest.
+<% for (var i = 0; i < info.pendingBoxUpdate.changelog.length; i++) { %>
     * <%- info.pendingBoxUpdate.changelog[i] %>
-    <% } %>
+<% } %>
+<% if (!info.hasSubscription) { %>To receive automatic updates for this Cloudron, upgrade to one of our paid plans at https://cloudron.io/pricing.html<% } %>
 <% } %>
 <% if (info.pendingAppUpdates.length) { %>
 Pending app updates:
-    <% for (var i = 0; i < info.pendingAppUpdates.length; i++) { %>
+<% for (var i = 0; i < info.pendingAppUpdates.length; i++) { %>
     - <%= info.pendingAppUpdates[i].manifest.title %> (to version <%= info.pendingAppUpdates[i].manifest.version %>):
-        <% for (var j = 0; j < info.pendingAppUpdates[i].manifest.changelog.split('\n').length; j++) { %>
+<% for (var j = 0; j < info.pendingAppUpdates[i].manifest.changelog.split('\n').length; j++) { %>
         <%= info.pendingAppUpdates[i].manifest.changelog.split('\n')[j] %>
-        <% } %>
-    <% } %>
-<% } %>
+<% }}} %>
 <% if (info.finishedBoxUpdates.length) { %>
 Your Cloudron received <%= info.finishedBoxUpdates.length %> system updates.
-    <% for (var i = 0; i < info.finishedBoxUpdates.length; i++) { %>
+<% for (var i = 0; i < info.finishedBoxUpdates.length; i++) { %>
     - Version <%= info.finishedBoxUpdates[i].boxUpdateInfo.version %>
-        <% for (var j = 0; j < info.finishedBoxUpdates[i].boxUpdateInfo.changelog.length; j++) { %>
+<% for (var j = 0; j < info.finishedBoxUpdates[i].boxUpdateInfo.changelog.length; j++) { %>
         * <%= info.finishedBoxUpdates[i].boxUpdateInfo.changelog[j] %>
-        <% } %>
-    <% } %>
-<% } %>
-
+<% }}} %>
 <% if (info.finishedAppUpdates.length) { %>
 Your Cloudron updated the following apps:
-    <% for (var i = 0; i < info.finishedAppUpdates.length; i++) { %>
+<% for (var i = 0; i < info.finishedAppUpdates.length; i++) { %>
     - <%= info.finishedAppUpdates[i].toManifest.title %> (to version <%= info.finishedAppUpdates[i].toManifest.version %>)
-        <% for (var j = 0; j < info.finishedAppUpdates[i].toManifest.changelog.split('\n').length; j++) { %>
+<% for (var j = 0; j < info.finishedAppUpdates[i].toManifest.changelog.split('\n').length; j++) { %>
         <%= info.finishedAppUpdates[i].toManifest.changelog.split('\n')[j] %>
-        <% } %>
-    <% } %>
-<% } %>
-
+<% }}} %>
 Thank you,
 your Cloudron
 
