@@ -906,9 +906,7 @@
 * Add option to configure robots.txt for each app from the web interface
 * Make sure zoneName is not lost across updates
 * Save manually triggered app backups under a datetime prefix
-* Optionally disable FROM validation check in the mail container. This will
-  allow apps to send emails with arbitrary FROM addresses
-* Set X-Forwarded-Port in the reverse proxy. This fixes a problem with plugins
-  of certain apps (like Jetpack)
+* Optionally disable FROM validation check in the mail container. This will allow apps to send emails with arbitrary FROM addresses
+* Set X-Forwarded-Port in the reverse proxy. This fixes a problem with plugins of certain apps (like Jetpack)
 * Send a weekly activity digest about pending and applied Cloudron and app updates
 
