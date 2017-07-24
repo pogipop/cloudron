@@ -2,15 +2,20 @@
 
 Dear <%= cloudronName %> Admin,
 
-This is your weekly summary of activities on your Cloudron.
+This is the weekly summary of activities on your Cloudron.
+
 <% if (info.pendingBoxUpdate) { %>
-Pending box update to version <%- info.pendingBoxUpdate.version %>:
+New Cloudron version <%- info.pendingBoxUpdate.version %> is available. Please update
+at the earliest.
+
+Changelog for this version:
     <% for (var i = 0; i < info.pendingBoxUpdate.changelog.length; i++) { %>
     * <%- info.pendingBoxUpdate.changelog[i] %>
     <% } %>
 <% } %>
+
 <% if (info.pendingAppUpdates.length) { %>
-Pending app updates:
+One or more apps updates are available:
     <% for (var i = 0; i < info.pendingAppUpdates.length; i++) { %>
     - <%= info.pendingAppUpdates[i].manifest.title %> (to version <%= info.pendingAppUpdates[i].manifest.version %>):
         <% for (var j = 0; j < info.pendingAppUpdates[i].manifest.changelog.split('\n').length; j++) { %>
@@ -18,8 +23,9 @@ Pending app updates:
         <% } %>
     <% } %>
 <% } %>
+
 <% if (info.finishedBoxUpdates.length) { %>
-Your Cloudron received <%= info.finishedBoxUpdates.length %> system updates.
+Cloudron was updated with the following releases:
     <% for (var i = 0; i < info.finishedBoxUpdates.length; i++) { %>
     - Version <%= info.finishedBoxUpdates[i].boxUpdateInfo.version %>
         <% for (var j = 0; j < info.finishedBoxUpdates[i].boxUpdateInfo.changelog.length; j++) { %>
@@ -29,7 +35,7 @@ Your Cloudron received <%= info.finishedBoxUpdates.length %> system updates.
 <% } %>
 
 <% if (info.finishedAppUpdates.length) { %>
-Your Cloudron updated the following apps:
+The following apps were updated:
     <% for (var i = 0; i < info.finishedAppUpdates.length; i++) { %>
     - <%= info.finishedAppUpdates[i].toManifest.title %> (to version <%= info.finishedAppUpdates[i].toManifest.version %>)
         <% for (var j = 0; j < info.finishedAppUpdates[i].toManifest.changelog.split('\n').length; j++) { %>
@@ -38,8 +44,9 @@ Your Cloudron updated the following apps:
     <% } %>
 <% } %>
 
-Thank you,
-your Cloudron
+Powered by https://cloudron.io
+
+Sent at: <%= new Date().toUTCString() %>
 
 <% } else { %>
 
