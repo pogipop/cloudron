@@ -36,7 +36,7 @@ function configureAdmin(certFilePath, keyFilePath, configFileName, vhost, callba
         certFilePath: certFilePath,
         keyFilePath: keyFilePath,
         xFrameOptions: 'SAMEORIGIN',
-        robotsTxt: 'User-agent: *\\nDisallow: /\\n'
+        robotsTxtQuoted: JSON.stringify('User-agent: *\nDisallow: /\n')
     };
     var nginxConf = ejs.render(NGINX_APPCONFIG_EJS, data);
     var nginxConfigFilename = path.join(paths.NGINX_APPCONFIG_DIR, configFileName);
@@ -64,7 +64,7 @@ function configureApp(app, certFilePath, keyFilePath, callback) {
         endpoint: endpoint,
         certFilePath: certFilePath,
         keyFilePath: keyFilePath,
-        robotsTxt: app.robotsTxt,
+        robotsTxtQuoted: app.robotsTxt ? JSON.stringify(app.robotsTxt) : null,
         xFrameOptions: app.xFrameOptions || 'SAMEORIGIN'    // once all apps have been updated/
     };
     var nginxConf = ejs.render(NGINX_APPCONFIG_EJS, data);

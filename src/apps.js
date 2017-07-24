@@ -246,7 +246,10 @@ function validateDebugMode(debugMode) {
 function validateRobotsTxt(robotsTxt) {
     if (robotsTxt === null) return null;
 
-    // TODO: validate the robots file?
+    // this is the nginx limit on inline strings. if we really hit this, we have to generate a file
+    if (robotsTxt.length > 4096) return new AppsError(AppsError.BAD_FIELD, 'robotsTxt must be less than 4096');
+
+    // TODO: validate the robots file? we escape the string when templating the nginx config right now
 
     return null;
 }
