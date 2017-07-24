@@ -1,6 +1,6 @@
 'use strict';
 
-var assert = require('assert'),
+var appstore = require('./appstore.js'),
     debug = require('debug')('box:digest'),
     eventlog = require('./eventlog.js'),
     updatechecker = require('./updatechecker.js'),
@@ -28,27 +28,36 @@ function maybeSend(callback) {
         var pendingAppUpdates = updateInfo.apps || {};
         pendingAppUpdates = Object.keys(pendingAppUpdates).map(function (key) { return pendingAppUpdates[key]; });
 
-        eventlog.getByActionLastWeek(eventlog.ACTION_APP_UPDATE, function (error, appUpdates) {
-            if (error) return console.error(error);
+        appstore.getSubscription(function (error, result) {
+            if (error) debug('Error getting subscription:', error);
 
-            eventlog.getByActionLastWeek(eventlog.ACTION_UPDATE, function (error, boxUpdates) {
-                if (error) return console.error(error);
+            var hasSubscription = result && result.plan.id !== 'free' && result.plan.id !== 'undecided';
 
-                var info = {
-                    pendingAppUpdates: pendingAppUpdates,
-                    pendingBoxUpdate: updateInfo.box || null,
+            eventlog.getByActionLastWeek(eventlog.ACTION_APP_UPDATE, function (error, appUpdates) {
+                if (error) return callback(error);
 
-                    finishedAppUpdates: (appUpdates || []).map(function (e) { return e.data; }),
-                    finishedBoxUpdates: (boxUpdates || []).map(function (e) { return e.data; })
-                };
+                eventlog.getByActionLastWeek(eventlog.ACTION_UPDATE, function (error, boxUpdates) {
+                    if (error) return callback(error);
 
-                if (info.pendingAppUpdates.length || info.pendingBoxUpdate || info.finishedAppUpdates.length || info.finishedBoxUpdates.length) {
-                    debug('maybeSend: sending digest email', info);
-                    mailer.sendDigest(info);
-                } else {
-                    debug('maybeSend: nothing happened, NOT sending digest email');
-                }
+                    var info = {
+                        hasSubscription: hasSubscription,
 
+                        pendingAppUpdates: pendingAppUpdates,
+                        pendingBoxUpdate: updateInfo.box || null,
+
+                        finishedAppUpdates: (appUpdates || []).map(function (e) { return e.data; }),
+                        finishedBoxUpdates: (boxUpdates || []).map(function (e) { return e.data; })
+                    };
+
+                    if (info.pendingAppUpdates.length || info.pendingBoxUpdate || info.finishedAppUpdates.length || info.finishedBoxUpdates.length) {
+                        debug('maybeSend: sending digest email', info);
+                        mailer.sendDigest(info);
+                    } else {
+                        debug('maybeSend: nothing happened, NOT sending digest email');
+                    }
+
+                    callback();
+                });
             });
         });
     });
