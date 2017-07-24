@@ -419,7 +419,7 @@ function sendDigest(info) {
              var mailOptions = {
                 from: mailConfig().from,
                 to: adminEmails.join(', '),
-                subject: util.format('[%s] Weekly event digest', config.fqdn()),
+                subject: util.format('[%s] Cloudron - Weekly activity digest', config.fqdn()),
                 text: render('digest.ejs', { fqdn: config.fqdn(), webadminUrl: config.adminOrigin(), cloudronName: cloudronName, info: info, format: 'text' })
             };
 
