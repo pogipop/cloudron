@@ -42,6 +42,7 @@ angular.module('Application').controller('SettingsController', ['$scope', '$loca
 
     $scope.storageProvider = [
         { name: 'Amazon S3', value: 's3' },
+        { name: 'Exoscale SOS', value: 'exoscale-sos' },
         { name: 'Filesystem', value: 'filesystem' },
         { name: 'Minio', value: 'minio' },
         { name: 'No-op (Only for testing)', value: 'noop' }
@@ -294,7 +295,7 @@ angular.module('Application').controller('SettingsController', ['$scope', '$loca
     };
 
     $scope.s3like = function (provider) {
-        return provider === 's3' || provider === 'minio';
+        return provider === 's3' || provider === 'minio' || provider === 'exoscale-sos';
     };
 
     $scope.configureBackup = {
@@ -357,13 +358,18 @@ angular.module('Application').controller('SettingsController', ['$scope', '$loca
                 backupConfig.accessKeyId = $scope.configureBackup.accessKeyId;
                 backupConfig.secretAccessKey = $scope.configureBackup.secretAccessKey;
 
+                if ($scope.configureBackup.endpoint) backupConfig.endpoint = $scope.configureBackup.endpoint;
+
                 if (backupConfig.provider === 's3') {
                     if ($scope.configureBackup.region) backupConfig.region = $scope.configureBackup.region;
                 } else if (backupConfig.provider === 'minio') {
                     backupConfig.region = 'us-east-1';
+                } else if (backupConfig.provider === 'exoscale-sos') {
+                    backupConfig.endpoint = 'https://sos.exo.io';
+                    backupConfig.region = 'us-east-1';
+                    backupConfig.signatureVersion = 'v2';
                 }
 
-                if ($scope.configureBackup.endpoint) backupConfig.endpoint = $scope.configureBackup.endpoint;
             } else if (backupConfig.provider === 'filesystem') {
                 backupConfig.backupFolder = $scope.configureBackup.backupFolder;
             }

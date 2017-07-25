@@ -166,7 +166,7 @@
                             </p>
                         </div>
 
-                        <!-- S3/Minio -->
+                        <!-- S3/Minio/SOS -->
                         <div class="form-group" ng-class="{ 'has-error': configureBackup.error.endpoint }" ng-show="configureBackup.provider === 'minio'">
                             <label class="control-label" for="inputConfigureBackupEndpoint">Endpoint</label>
                             <input type="text" class="form-control" ng-model="configureBackup.endpoint" id="inputConfigureBackupEndpoint" name="endpoint" ng-disabled="configureBackup.busy" placeholder="URL of Minio" ng-required="configureBackup.provider === 'minio'">
