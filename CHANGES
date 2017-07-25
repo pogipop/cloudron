@@ -888,6 +888,9 @@
 [1.0.0]
 * Make selfhosting great again
 
+[1.0.1]
+* Notification improvements
+
 [1.1.0]
 * Add support for email catch-all
 * Support Cloudrons on subdomains
