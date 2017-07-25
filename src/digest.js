@@ -7,14 +7,22 @@ var assert = require('assert'),
     mailer = require('./mailer.js'),
     settings = require('./settings.js');
 
+var NOOP_CALLBACK = function (error) { if (error) debug(error); };
+
 exports = module.exports = {
     maybeSend: maybeSend
 };
 
-function maybeSend() {
+function maybeSend(callback) {
+    callback = callback || NOOP_CALLBACK;
+
     settings.getEmailDigest(function (error, enabled) {
-        if (error) return console.error(error);
-        if (!enabled) return debug('Email digest is disabled');
+        if (error) return callback(error);
+
+        if (!enabled) {
+            debug('Email digest is disabled');
+            return callback();
+        }
 
         var updateInfo = updatechecker.getUpdateInfo();
         var pendingAppUpdates = updateInfo.apps || {};
@@ -40,6 +48,7 @@ function maybeSend() {
                 } else {
                     debug('maybeSend: nothing happened, NOT sending digest email');
                 }
+
             });
         });
     });
