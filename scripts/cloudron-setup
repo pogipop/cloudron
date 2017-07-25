@@ -21,11 +21,17 @@ readonly MINIMUM_MEMORY="974"      # this is mostly reported for 1GB main memory
 readonly curl="curl --fail --connect-timeout 20 --retry 10 --retry-delay 2 --max-time 2400"
 
 # copied from cloudron-resize-fs.sh
+readonly rootfs_type=$(LC_ALL=C df --output=fstype / | tail -n1)
 readonly physical_memory=$(LC_ALL=C free -m | awk '/Mem:/ { print $2 }')
 readonly disk_size_bytes=$(LC_ALL=C df --output=size / | tail -n1)
 readonly disk_size_gb=$((${disk_size_bytes}/1024/1024))
 
 # verify the system has minimum requirements met
+if [[ "${rootfs_type}" != "ext4" ]]; then
+    echo "Error: Cloudron requires '/' to be ext4" # see #364
+    exit 1
+fi
+
 if [[ "${physical_memory}" -lt "${MINIMUM_MEMORY}" ]]; then
     echo "Error: Cloudron requires atleast 1GB physical memory"
     exit 1
