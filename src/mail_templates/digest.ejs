@@ -4,6 +4,7 @@ Dear <%= cloudronName %> Admin,
 
 This is the weekly summary of activities on your Cloudron <%= fqdn %>.
 <% if (info.pendingBoxUpdate) { -%>
+
 Cloudron v<%- info.pendingBoxUpdate.version %> is available:
 <% for (var i = 0; i < info.pendingBoxUpdate.changelog.length; i++) { -%>
     * <%- info.pendingBoxUpdate.changelog[i] %>
@@ -18,7 +19,7 @@ One or more app updates are available:
 <% }}} -%>
 <% if (info.finishedBoxUpdates.length) { -%>
 
-Your Cloudron received <%= info.finishedBoxUpdates.length %> system updates.
+Cloudron was updated with the following releases:
 <% for (var i = 0; i < info.finishedBoxUpdates.length; i++) { -%>
     - Version <%= info.finishedBoxUpdates[i].boxUpdateInfo.version %>
 <% for (var j = 0; j < info.finishedBoxUpdates[i].boxUpdateInfo.changelog.length; j++) { -%>
@@ -26,6 +27,7 @@ Your Cloudron received <%= info.finishedBoxUpdates.length %> system updates.
 <% }}} -%>
 <% if (info.finishedAppUpdates.length) { -%>
 
+The following apps were updated:
 <% for (var i = 0; i < info.finishedAppUpdates.length; i++) { -%>
     - <%= info.finishedAppUpdates[i].toManifest.title %> package v<%= info.finishedAppUpdates[i].toManifest.version %>
 <% for (var j = 0; j < info.finishedAppUpdates[i].toManifest.changelog.trim().split('\n').length; j++) { -%>
@@ -36,6 +38,9 @@ Your Cloudron received <%= info.finishedBoxUpdates.length %> system updates.
 *Keep your Cloudron automatically up-to-date and secure by upgrading to a paid plan at* <%= webadminUrl %>/#/settings
 <% } -%>
 
+Powered by https://cloudron.io
+
+Sent at: <%= new Date().toUTCString() %>
 
 <% } else { %>
 
