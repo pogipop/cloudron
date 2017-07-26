@@ -175,6 +175,22 @@ It is possible to embed Cloudron apps into other websites. By default, this is d
 You can set a website that is allowed to embed your Cloudron app using the app's [Configure dialog](#configuration).
 Click on 'Show Advanced Settings...' and enter the embedder website name.
 
+## Robots txt
+
+The `Robots.txt` file is a file served from the root of a website to indicate which parts must be indexed by a search
+engine. The file follows the [Robots Exclusion Standard](https://en.wikipedia.org/wiki/Robots_exclusion_standard).
+Google has an [excellent document](https://developers.google.com/search/reference/robots_txt) about the semantics.
+
+You can set the robots.txt contents of an app in the Advanced settings of the app's configure dialog.
+
+<br/>
+<img src="/docs/img/robots-txt.png" class="shadow" width="500px">
+
+<br/>
+
+If you leave the robots configuration empty, Cloudron will server the `/robots.txt` URI from the app.
+
+
 # Custom domain
 
 When you create a Cloudron from cloudron.io, we provide a subdomain under `cloudron.me` like `girish.cloudron.me`.
