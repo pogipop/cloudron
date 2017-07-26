@@ -188,7 +188,7 @@ You can set the robots.txt contents of an app in the Advanced settings of the ap
 
 <br/>
 
-If you leave the robots configuration empty, Cloudron will server the `/robots.txt` URI from the app.
+If you leave the robots configuration empty, Cloudron will serve the `/robots.txt` URI from the app.
 
 
 # Custom domain
