@@ -178,7 +178,7 @@ function recreateJobs(tz) {
 
     if (gDigestEmailJob) gDigestEmailJob.stop();
     gDigestEmailJob = new CronJob({
-        cronTime: '00 00 * * * 3', // every tuesday
+        cronTime: '00 00 00 * * 3', // every wednesday
         onTick: digest.maybeSend,
         start: true,
         timeZone: tz
