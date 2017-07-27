@@ -692,7 +692,9 @@ For example, let's assume the versions 1.1.3, 1.1.4, 1.1.5, 1.2.4, 1.2.6, 1.3.0,
 * Once in 1.2.6, the app will update to 1.3.0
 * Once in 1.3.0, the app will update to 2.0.0
 
-The Cloudron admins get notified by email for any major or minor app releases.
+Packages with a major version bump are not auto-updated. They require the Cloudron admin to click the
+update button. The intention is that the packager can pass on some instructions about possible breakages
+in the changelog.
 
 ## Failed updates
 
