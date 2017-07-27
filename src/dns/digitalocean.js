@@ -79,7 +79,8 @@ function upsert(dnsConfig, zoneName, subdomain, type, values, callback) {
                 type: type,
                 name: subdomain,
                 data: value,
-                priority: priority
+                priority: priority,
+                ttl: 1
             };
 
             if (i >= result.length) {
