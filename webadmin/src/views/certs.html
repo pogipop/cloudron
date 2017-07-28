@@ -35,6 +35,17 @@
                             <input type="text" class="form-control" ng-model="dnsCredentials.digitalOceanToken" id="dnsCredentialsDigitalOceanToken" name="digitalOceanToken" ng-disabled="dnsCredentials.busy" ng-required="dnsCredentials.provider === 'digitalocean'">
                         </div>
 
+                        <!-- Cloudflare -->
+                        <div class="form-group" ng-class="{ 'has-error': false }" ng-show="dnsCredentials.provider === 'cloudflare'">
+                            <label class="control-label" for="dnsCredentialsCloudflareToken">Cloudflare token</label>
+                            <input type="text" class="form-control" ng-model="dnsCredentials.cloudflareToken" id="dnsCredentialsCloudflareToken" name="cloudflareToken" placeholder="API Token" ng-required="dnsCredentials.provider === 'cloudflare'" ng-disabled="dnsCredentials.busy">
+                        </div>
+                        <div class="form-group" ng-class="{ 'has-error': false }" ng-show="dnsCredentials.provider === 'cloudflare'">
+                            <label class="control-label" for="dnsCredentialsCloudflareEmail">Cloudflare email</label>
+                            <input type="email" class="form-control" ng-model="dnsCredentials.cloudflareEmail" id="dnsCredentialsCloudflareEmail" name="cloudflareEmail" placeholder="Email" ng-required="dnsCredentials.provider === 'cloudflare'" ng-disabled="dnsCredentials.busy">
+                        </div>
+
+                        <!-- all provider -->
                         <div class="form-group" ng-class="{ 'has-error': false }">
                             <label class="control-label" for="dnsCredentialsPassword">Provide your password to confirm this action</label>
                             <input type="password" class="form-control" ng-model="dnsCredentials.password" id="dnsCredentialsPassword" name="password" ng-disabled="dnsCredentials.busy" required>
@@ -50,6 +61,10 @@
 
                 <p ng-show="dnsCredentials.provider === 'digitalocean'">
                     This domain must be hosted on <a href="https://www.digitalocean.com/community/tutorials/how-to-set-up-a-host-name-with-digitalocean#step-two%E2%80%94change-your-domain-server" target="_blank">DigitalOcean</a>.
+                </p>
+
+                <p ng-show="dnsCredentials.provider === 'cloudflare'">
+                    This domain must be hosted on <a href="https://www.cloudflare.com" target="_blank">Cloudflare</a>.
                 </p>
 
                 <p ng-show="dnsCredentials.provider === 'wildcard'">

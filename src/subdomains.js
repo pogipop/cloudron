@@ -43,7 +43,7 @@ SubdomainError.STILL_BUSY = 'Still busy';
 SubdomainError.MISSING_CREDENTIALS = 'Missing credentials';
 SubdomainError.INTERNAL_ERROR = 'Internal error';
 SubdomainError.ACCESS_DENIED = 'Access denied';
-SubdomainError.INVALID_PROVIDER = 'provider must be route53, digitalocean, noop, manual or caas';
+SubdomainError.INVALID_PROVIDER = 'provider must be route53, digitalocean, cloudflare, noop, manual or caas';
 
 // choose which subdomain backend we use for test purpose we use route53
 function api(provider) {
@@ -51,6 +51,7 @@ function api(provider) {
 
     switch (provider) {
         case 'caas': return require('./dns/caas.js');
+        case 'cloudflare': return require('./dns/cloudflare.js');
         case 'route53': return require('./dns/route53.js');
         case 'digitalocean': return require('./dns/digitalocean.js');
         case 'noop': return require('./dns/noop.js');
