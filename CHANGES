@@ -916,4 +916,5 @@
 * Fix cron pattern that made Cloudron erroneously send out weekly digest mails every hour on wednesday
 * Add Cloudflare DNS backend (thanks @abhishek)
 * Ensure Cloudron is only be installed on EXT4 root file system (required by Docker)
+* Mark app package major releases as blocking and require approval by Cloudron admin
 
