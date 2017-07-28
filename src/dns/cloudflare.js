@@ -211,9 +211,10 @@ function del(dnsConfig, zoneName, subdomain, type, values, callback) {
 }
 
 // verify Dns Configuration
-function verifyDnsConfig(dnsConfig, domain, ip, callback) {
+function verifyDnsConfig(dnsConfig, fqdn, zoneName, ip, callback) {
     assert.strictEqual(typeof dnsConfig, 'object');
-    assert.strictEqual(typeof domain, 'string');
+    assert.strictEqual(typeof fqdn, 'string');
+    assert.strictEqual(typeof zoneName, 'string');
     assert.strictEqual(typeof ip, 'string');
     assert.strictEqual(typeof callback, 'function');
 
@@ -229,18 +230,18 @@ function verifyDnsConfig(dnsConfig, domain, ip, callback) {
 
     if (process.env.BOX_ENV === 'test') return callback(null, credentials); // this shouldn't be here
 
-    dns.resolveNs(domain, function (error, nameservers) {
+    dns.resolveNs(zoneName, function (error, nameservers) {
         if (error && error.code === 'ENOTFOUND') return callback(new SubdomainError(SubdomainError.BAD_FIELD, 'Unable to resolve nameservers for this domain'));
         if (error || !nameservers) return callback(new SubdomainError(SubdomainError.BAD_FIELD, error ? error.message : 'Unable to get nameservers'));
 
-        getZoneByName(dnsConfig, domain, function(error, result) {
+        getZoneByName(dnsConfig, zoneName, function(error, result) {
             if (error) return callback(error);
             if (!_.isEqual(result.name_servers.sort(), nameservers.sort())) {
                 debug('verifyDnsConfig: %j and %j do not match', nameservers, result.name_servers);
                 return callback(new SubdomainError(SubdomainError.BAD_FIELD, 'Domain nameservers are not set to Route53'));
             }
 
-            upsert(credentials, domain, 'my', 'A', [ ip ], function (error, changeId) {
+            upsert(credentials, fqdn, 'my', 'A', [ ip ], function (error, changeId) {
                 if (error) return callback(error);
 
                 debug('verifyDnsConfig: A record added with change id %s', changeId);
