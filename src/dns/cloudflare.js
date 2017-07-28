@@ -19,7 +19,7 @@ var assert = require('assert'),
     util = require('util');
 
 // we are using latest v4 stable API https://api.cloudflare.com/#getting-started-endpoints
-var CLOUDFLARE_ENDPOINT = "https://api.cloudflare.com/client/v4";
+var CLOUDFLARE_ENDPOINT = 'https://api.cloudflare.com/client/v4';
 
 // Get the zone details by zoneName
 // this will return the 1st active zone record
