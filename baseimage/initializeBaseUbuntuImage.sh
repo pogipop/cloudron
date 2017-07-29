@@ -41,6 +41,10 @@ apt-get -y install \
     unattended-upgrades \
     unbound
 
+# this ensures that unattended upgades are enabled, if it was disabled during ubuntu install time (see #346)
+# debconf-set-selection of unattended-upgrades/enable_auto_updates + dpkg-reconfigure does not work
+cp /usr/share/unattended-upgrades/20auto-upgrades /etc/apt/apt.conf.d/20auto-upgrades
+
 echo "==> Installing node.js"
 mkdir -p /usr/local/node-6.11.1
 curl -sL https://nodejs.org/dist/v6.11.1/node-v6.11.1-linux-x64.tar.gz | tar zxvf - --strip-components=1 -C /usr/local/node-6.11.1
