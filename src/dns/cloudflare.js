@@ -20,6 +20,26 @@ var assert = require('assert'),
 // we are using latest v4 stable API https://api.cloudflare.com/#getting-started-endpoints
 var CLOUDFLARE_ENDPOINT = 'https://api.cloudflare.com/client/v4';
 
+function translateRequestError(result, callback) {
+    assert.strictEqual(typeof result, 'object');
+    assert.strictEqual(typeof callback, 'function');
+
+    if (result.statusCode === 404) return callback(new SubdomainError(SubdomainError.NOT_FOUND, util.format('%s %j', result.statusCode, 'API does not exist')));
+    if (result.statusCode === 422) return callback(new SubdomainError(SubdomainError.BAD_FIELD, result.body.message));
+    if ((result.statusCode === 400 || result.statusCode === 401 || result.statusCode === 403) && result.body.errors.length > 0) {
+        let error = result.body.errors[0];
+        let message = error.message;
+        if (error.code === 6003) {
+            if (error.error_chain[0] && error.error_chain[0].code === 6103) message = 'Invalid API Key';
+            else message = 'Invalid credentials';
+        }
+
+        return callback(new SubdomainError(SubdomainError.ACCESS_DENIED, message));
+    }
+
+    callback(new SubdomainError(SubdomainError.EXTERNAL_ERROR, util.format('%s %j', result.statusCode, result.body)));
+}
+
 function getZoneByName(dnsConfig, zoneName, callback) {
     assert.strictEqual(typeof dnsConfig, 'object');
     assert.strictEqual(typeof zoneName, 'string');
@@ -31,10 +51,7 @@ function getZoneByName(dnsConfig, zoneName, callback) {
       .timeout(30 * 1000)
       .end(function (error, result) {
         if (error && !error.response) return callback(error);
-        if (result.statusCode === 404) return callback(new SubdomainError(SubdomainError.NOT_FOUND, util.format('%s %j', result.statusCode, result.body)));
-        if (result.statusCode === 403 || result.statusCode === 401) return callback(new SubdomainError(SubdomainError.ACCESS_DENIED, util.format('%s %j', result.statusCode, result.body)));
-        if (result.statusCode !== 200) return callback(new SubdomainError(SubdomainError.EXTERNAL_ERROR, util.format('%s %j', result.statusCode, result.body)));
-        if (result.body.success !== true) return callback(new SubdomainError(SubdomainError.EXTERNAL_ERROR, util.format('%s %j', result.statusCode, result.body)));
+        if (result.statusCode !== 200 || result.body.success !== true) return translateRequestError(result, callback);
         if (!result.body.result.length) return callback(new SubdomainError(SubdomainError.NOT_FOUND, util.format('%s %j', result.statusCode, result.body)));
 
         callback(null, result.body.result[0]);
@@ -55,10 +72,7 @@ function getDNSRecordsByZoneId(dnsConfig, zoneId, zoneName, subdomain, type, cal
       .timeout(30 * 1000)
       .end(function (error, result) {
         if (error && !error.response) return callback(error);
-        if (result.statusCode === 404) return callback(new SubdomainError(SubdomainError.NOT_FOUND, util.format('%s %j', result.statusCode, result.body)));
-        if (result.statusCode === 403 || result.statusCode === 401) return callback(new SubdomainError(SubdomainError.ACCESS_DENIED, util.format('%s %j', result.statusCode, result.body)));
-        if (result.statusCode !== 200) return callback(new SubdomainError(SubdomainError.EXTERNAL_ERROR, util.format('%s %j', result.statusCode, result.body)));
-        if (result.body.success !== true) return callback(new SubdomainError(SubdomainError.EXTERNAL_ERROR, util.format('%s %j', result.statusCode, result.body)));
+        if (result.statusCode !== 200 || result.body.success !== true) return translateRequestError(result, callback);
 
         var fqdn = subdomain === '' ? zoneName : subdomain + '.' + zoneName;
         var tmp = result.body.result.filter(function (record) {
@@ -110,10 +124,7 @@ function upsert(dnsConfig, zoneName, subdomain, type, values, callback) {
                       .timeout(30 * 1000)
                       .end(function (error, result) {
                         if (error && !error.response) return callback(error);
-                        if (result.statusCode === 403 || result.statusCode === 401) return callback(new SubdomainError(SubdomainError.ACCESS_DENIED, util.format('%s %j', result.statusCode, result.body)));
-                        if (result.statusCode === 422) return callback(new SubdomainError(SubdomainError.BAD_FIELD, result.body.message));
-                        if (result.statusCode !== 200) return callback(new SubdomainError(SubdomainError.EXTERNAL_ERROR, util.format('%s %j', result.statusCode, result.body)));
-                        if (result.body.success !== true) return callback(new SubdomainError(SubdomainError.EXTERNAL_ERROR, util.format('%s %j', result.statusCode, result.body)));
+                        if (result.statusCode !== 200 || result.body.success !== true) return translateRequestError(result, callback);
 
                         callback(null);
                     });
@@ -128,10 +139,7 @@ function upsert(dnsConfig, zoneName, subdomain, type, values, callback) {
                         ++i;
 
                         if (error && !error.response) return callback(error);
-                        if (result.statusCode === 403 || result.statusCode === 401) return callback(new SubdomainError(SubdomainError.ACCESS_DENIED, util.format('%s %j', result.statusCode, result.body)));
-                        if (result.statusCode === 422) return callback(new SubdomainError(SubdomainError.BAD_FIELD, result.body.message));
-                        if (result.statusCode !== 200) return callback(new SubdomainError(SubdomainError.EXTERNAL_ERROR, util.format('%s %j', result.statusCode, result.body)));
-                        if (result.body.success !== true) return callback(new SubdomainError(SubdomainError.EXTERNAL_ERROR, util.format('%s %j', result.statusCode, result.body)));
+                        if (result.statusCode !== 200 || result.body.success !== true) return translateRequestError(result, callback);
 
                         callback(null);
                     });
@@ -195,9 +203,7 @@ function del(dnsConfig, zoneName, subdomain, type, values, callback) {
                   .timeout(30 * 1000)
                   .end(function (error, result) {
                     if (error && !error.response) return callback(error);
-                    if (result.statusCode === 404) return callback(null);
-                    if (result.statusCode === 403 || result.statusCode === 401) return callback(new SubdomainError(SubdomainError.ACCESS_DENIED, util.format('%s %j', result.statusCode, result.body)));
-                    if (result.statusCode !== 204) return callback(new SubdomainError(SubdomainError.EXTERNAL_ERROR, util.format('%s %j', result.statusCode, result.body)));
+                    if (result.statusCode !== 204 || result.body.success !== true) return translateRequestError(result, callback);
 
                     debug('del: done');
 
