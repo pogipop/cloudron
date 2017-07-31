@@ -36,6 +36,7 @@
                         </div>
 
                         <!-- Cloudflare -->
+                        <p>Cloudron only supports DNS management. Traffic will <b>not</b> go through the Cloudflare network.</p>
                         <div class="form-group" ng-class="{ 'has-error': false }" ng-show="dnsCredentials.provider === 'cloudflare'">
                             <label class="control-label" for="dnsCredentialsCloudflareToken">Cloudflare token</label>
                             <input type="text" class="form-control" ng-model="dnsCredentials.cloudflareToken" id="dnsCredentialsCloudflareToken" name="cloudflareToken" placeholder="API Token" ng-required="dnsCredentials.provider === 'cloudflare'" ng-disabled="dnsCredentials.busy">
