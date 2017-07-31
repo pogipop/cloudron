@@ -208,7 +208,7 @@ function autoupdatePatternChanged(pattern) {
                 }
             } else if (updateInfo.apps) {
                 debug('Starting app update to %j', updateInfo.apps);
-                apps.updateApps(updateInfo.apps, AUDIT_SOURCE, NOOP_CALLBACK);
+                apps.autoupdateApps(updateInfo.apps, AUDIT_SOURCE, NOOP_CALLBACK);
             } else {
                 debug('No auto updates available');
             }

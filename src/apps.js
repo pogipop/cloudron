@@ -30,7 +30,7 @@ exports = module.exports = {
 
     checkManifestConstraints: checkManifestConstraints,
 
-    updateApps: updateApps,
+    autoupdateApps: autoupdateApps,
 
     restoreInstalledApps: restoreInstalledApps,
     configureInstalledApps: configureInstalledApps,
@@ -995,13 +995,13 @@ function exec(appId, options, callback) {
     });
 }
 
-function updateApps(updateInfo, auditSource, callback) { // updateInfo is { appId -> { manifest } }
+function autoupdateApps(updateInfo, auditSource, callback) { // updateInfo is { appId -> { manifest } }
     assert.strictEqual(typeof updateInfo, 'object');
     assert.strictEqual(typeof auditSource, 'object');
     assert.strictEqual(typeof callback, 'function');
 
     function canAutoupdateApp(app, newManifest) {
-        if ((semver.major(app.manifest.version) !== 0) && (semver.major(app.manifest.version) !== semver.major(newManifest.version))) return false; // major changes are blocking
+        if ((semver.major(app.manifest.version) !== 0) && (semver.major(app.manifest.version) !== semver.major(newManifest.version))) return new Error('Major version change'); // major changes are blocking
 
         var newTcpPorts = newManifest.tcpPorts || { };
         var oldTcpPorts = app.manifest.tcpPorts || { };
