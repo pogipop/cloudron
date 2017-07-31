@@ -88,7 +88,7 @@
                                 </div>
 
                                 <!-- Cloudflare -->
-                                <p>Cloudron only supports DNS management. Traffic will <b>not</b> go through the Cloudflare network.</p>
+                                <p ng-show="dnsCredentials.provider === 'cloudflare'">Cloudron only supports DNS management. Traffic will <b>not</b> go through the Cloudflare network.</p>
                                 <div class="form-group" ng-class="{ 'has-error': dnsCredentialsForm.cloudflareToken.$dirty && dnsCredentialsForm.cloudflareToken.$invalid }" ng-show="dnsCredentials.provider === 'cloudflare'">
                                     <input type="text" class="form-control" ng-model="dnsCredentials.cloudflareToken" name="cloudflareToken" placeholder="API Key" ng-required="dnsCredentials.provider === 'cloudflare'" ng-disabled="dnsCredentials.busy">
                                 </div>
