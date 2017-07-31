@@ -3,10 +3,10 @@
 exports.up = function(db, callback) {
     var cmd = "CREATE TABLE eventlog(" +
             "id VARCHAR(128) NOT NULL," +
-            "source JSON," +
+            "source TEXT," +
             "creationTime TIMESTAMP," +
             "action VARCHAR(128) NOT NULL," +
-            "data JSON," +
+            "data TEXT," +
             "PRIMARY KEY (id))";
 
     db.runSql(cmd, function (error) {

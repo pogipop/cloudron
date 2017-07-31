@@ -116,8 +116,8 @@ CREATE TABLE IF NOT EXISTS backups(
 CREATE TABLE IF NOT EXISTS eventlog(
     id VARCHAR(128) NOT NULL,
     action VARCHAR(128) NOT NULL,
-    source JSON, /* { userId, username, ip }. userId can be null for cron,sysadmin */
-    data JSON, /* free flowing json based on action */
+    source TEXT, /* { userId, username, ip }. userId can be null for cron,sysadmin */
+    data TEXT, /* free flowing json based on action */
     creationTime TIMESTAMP, /* FIXME: precision must be TIMESTAMP(2) */
 
     PRIMARY KEY (id));

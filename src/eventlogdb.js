@@ -20,10 +20,11 @@ var assert = require('assert'),
 
 var EVENTLOGS_FIELDS = [ 'id', 'action', 'source', 'data', 'creationTime' ].join(',');
 
-// until mysql module supports automatic type coercion
 function postProcess(eventLog) {
+    // usually we have sourceJson and dataJson, however since this used to be the JSON data type, we don't
     eventLog.source = safe.JSON.parse(eventLog.source);
     eventLog.data = safe.JSON.parse(eventLog.data);
+
     return eventLog;
 }
 
