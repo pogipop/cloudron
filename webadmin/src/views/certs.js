@@ -10,7 +10,7 @@ angular.module('Application').controller('CertsController', ['$scope', '$locatio
     $scope.dnsProvider = [
         { name: 'AWS Route53', value: 'route53' },
         { name: 'Digital Ocean', value: 'digitalocean' },
-        { name: 'Cloudflare', value: 'cloudflare' },
+        { name: 'Cloudflare (DNS only)', value: 'cloudflare' },
         { name: 'Wildcard', value: 'wildcard' },
         { name: 'Manual (not recommended)', value: 'manual' },
         { name: 'No-op (only for development)', value: 'noop' }

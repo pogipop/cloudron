@@ -36,14 +36,13 @@
                         </div>
 
                         <!-- Cloudflare -->
-                        <p ng-show="dnsCredentials.provider === 'cloudflare'">Cloudron only supports DNS management. Traffic will <b>not</b> go through the Cloudflare network.</p>
                         <div class="form-group" ng-class="{ 'has-error': false }" ng-show="dnsCredentials.provider === 'cloudflare'">
                             <label class="control-label" for="dnsCredentialsCloudflareToken">Cloudflare token</label>
                             <input type="text" class="form-control" ng-model="dnsCredentials.cloudflareToken" id="dnsCredentialsCloudflareToken" name="cloudflareToken" placeholder="API Key" ng-required="dnsCredentials.provider === 'cloudflare'" ng-disabled="dnsCredentials.busy">
                         </div>
                         <div class="form-group" ng-class="{ 'has-error': false }" ng-show="dnsCredentials.provider === 'cloudflare'">
                             <label class="control-label" for="dnsCredentialsCloudflareEmail">Cloudflare email</label>
-                            <input type="email" class="form-control" ng-model="dnsCredentials.cloudflareEmail" id="dnsCredentialsCloudflareEmail" name="cloudflareEmail" placeholder="Email" ng-required="dnsCredentials.provider === 'cloudflare'" ng-disabled="dnsCredentials.busy">
+                            <input type="email" class="form-control" ng-model="dnsCredentials.cloudflareEmail" id="dnsCredentialsCloudflareEmail" name="cloudflareEmail" placeholder="Cloudflare Account Email" ng-required="dnsCredentials.provider === 'cloudflare'" ng-disabled="dnsCredentials.busy">
                         </div>
 
                         <!-- all provider -->
