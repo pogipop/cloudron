@@ -888,9 +888,21 @@
 [1.0.0]
 * Make selfhosting great again
 
+[1.0.1]
+* Notification improvements
+
+[1.0.2]
+* Notification improvements
+
 [1.1.0]
 * Add support for email catch-all
 * Support Cloudrons on subdomains
+
+[1.1.1]
+* Notification improvements
+
+[1.1.2]
+* Notification improvements
 
 [1.2.0]
 * Relay emails optionally via external SMTP server email (mailgun, sendgrid etc)
