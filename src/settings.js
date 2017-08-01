@@ -692,8 +692,8 @@ function setEmailDigest(enabled, callback) {
 function getCatchAllAddress(callback) {
     assert.strictEqual(typeof callback, 'function');
 
-    settingsdb.get(exports.CATCH_ALL_ADDRESS_KEY, function (error, value) {
-        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(null, gDefaults[exports.CATCH_ALL_ADDRESS_KEY]);
+    settingsdb.get(exports.CATCH_ALL_ADDRESS, function (error, value) {
+        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(null, gDefaults[exports.CATCH_ALL_ADDRESS]);
         if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
 
         callback(null, JSON.parse(value));
