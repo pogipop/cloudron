@@ -270,9 +270,10 @@
                 <h4 class="modal-title">Error for {{ appError.app.fqdn }}</h4>
             </div>
             <div class="modal-body">
-                <p>{{appError.app.message | prettyAppMessage }}</p>
+                <p>{{ appError.app.message | prettyAppMessage }}</p>
             </div>
             <div class="modal-footer">
+                <button type="button" class="btn btn-default pull-left" ng-click="showConfigure(appError.app)">Repair</button>
                 <button type="button" class="btn btn-default" data-dismiss="modal">OK</button>
             </div>
         </div>
@@ -385,7 +386,7 @@
 
     <div class="row animateMeOpacity ng-hide" ng-show="installedApps.length > 0">
         <div class="col-sm-1 grid-item" ng-repeat="app in installedApps | orderBy:'location'">
-            <div style="background-color: white;" class="highlight grid-item-content" uib-tooltip="{{ app.message | prettyAppMessage }}">
+            <div style="background-color: white;" class="highlight grid-item-content" uib-tooltip="{{ app.message | shortAppMessage }}">
                 <a ng-href="{{ app | applicationLink }}" ng-click="(app | installError) === true && showError(app)" target="_blank" ng-class="{ 'hand': !(app | installationActive) }">
                     <div class="grid-item-top">
                         <div class="row">

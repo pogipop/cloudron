@@ -110,7 +110,15 @@ app.filter('activeOAuthClients', function () {
 
 app.filter('prettyAppMessage', function () {
     return function (message) {
-        if (message === 'ETRYAGAIN') return 'The DNS record for this location is not setup correctly. Please verify your DNS settings and restore this app.';
+        if (message === 'ETRYAGAIN') return 'The DNS record for this location is not setup correctly. Please verify your DNS settings and repair this app.';
+        if (message === 'DNS Record already exists') return 'The DNS record for this location already exists. Manually remove the DNS record and then click on repair.';
+        return message;
+    };
+});
+
+app.filter('shortAppMessage', function () {
+    return function (message) {
+        if (message === 'ETRYAGAIN') return 'DNS record not setup correctly';
         return message;
     };
 });

@@ -94,6 +94,14 @@ angular.module('Application').controller('AppsController', ['$scope', '$location
     };
 
     $scope.reset = function () {
+        // close all dialogs
+        $('#appErrorModal').modal('hide');
+        $('#appConfigureModal').modal('hide');
+        $('#appRestoreModal').modal('hide');
+        $('#appUpdateModal').modal('hide');
+        $('#appPostInstallModal').modal('hide');
+        $('#appUninstallModal').modal('hide');
+
         // reset configure dialog
         $scope.appConfigure.error = {};
         $scope.appConfigure.app = {};
