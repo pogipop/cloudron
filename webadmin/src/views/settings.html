@@ -366,7 +366,8 @@
         </div>
         <div class="col-xs-6 text-right">
             <span ng-show="backupConfig.provider === 'filesystem'">{{ backupConfig.backupFolder || '/var/backups' }}</span>
-            <span ng-show="s3like(backupConfig.provider)">{{ backupConfig.region + '   ' + backupConfig.bucket + '/' + backupConfig.prefix }}</span>
+            <span ng-show="backupConfig.provider === 'minio' || backupConfig.provider === 'exoscale-sos'">{{ backupConfig.bucket + '/' + backupConfig.prefix }}</span>
+            <span ng-show="backupConfig.provider === 's3'">{{ backupConfig.region + '   ' + backupConfig.bucket + '/' + backupConfig.prefix }}</span>
         </div>
     </div>
 
