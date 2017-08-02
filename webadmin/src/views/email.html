@@ -118,7 +118,7 @@
     </div>
     <div class="row">
         <div class="col-md-2">
-            <button class="btn btn-primary" ng-click="mailRelay.submit()" ng-disabled="(mailRelay.preset.provider !== 'cloudron-smtp && (!mailRelayForm.$dirty || mailRelayForm.$invalid)) || mailRelay.busy"><i class="fa fa-circle-o-notch fa-spin" ng-show="mailRelay.busy"></i> Save</button>
+            <button class="btn btn-primary" ng-click="mailRelay.submit()" ng-disabled="(mailRelay.preset.provider !== 'cloudron-smtp' && (!mailRelayForm.$dirty || mailRelayForm.$invalid)) || mailRelay.busy"><i class="fa fa-circle-o-notch fa-spin" ng-show="mailRelay.busy"></i> Save</button>
         </div>
         <div class="col-md-10">
             <span class="has-error text-center" ng-show="mailRelay.error">{{ mailRelay.error }}</span>
