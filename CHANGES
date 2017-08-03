@@ -933,3 +933,9 @@
 * Ensure Cloudron is only be installed on EXT4 root file system (required by Docker)
 * Mark app package major releases as blocking and require approval by Cloudron admin
 
+[1.4.1]
+* Do not display backup region when using minio and exoscale SOS
+* Fix javascript error in email view
+* Add html version of the digest email
+* Fix issue where collectd was collecting information about devicemapper mounts
+
