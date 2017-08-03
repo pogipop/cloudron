@@ -1,0 +1,55 @@
+{
+    "format": "html",
+    "webadminUrl": "https://my.cloudron.io",
+    "fqdn": "my.cloudron.io",
+    "cloudronName": "Smartserver",
+    "cloudronAvatarUrl": "https://cloudron.io/img/logo.png",
+    "info": {
+        "pendingBoxUpdate": {
+            "version": "1.3.7",
+            "changelog": [
+                "Feature one",
+                "Feature two"
+            ]
+        },
+        "pendingAppUpdates": [{
+            "manifest": {
+                "title": "Wordpress",
+                "version": "1.2.3",
+                "changelog": "* This has changed\n * and that as well"
+            }
+        }],
+        "finishedBoxUpdates": [{
+            "boxUpdateInfo": {
+                "version": "1.0.1",
+                "changelog": [
+                    "Feature one",
+                    "Feature two"
+                ]
+            }
+        }, {
+            "boxUpdateInfo": {
+                "version": "1.0.2",
+                "changelog": [
+                    "Feature one",
+                    "Feature two",
+                    "Feature three"
+                ]
+            }
+        }],
+        "finishedAppUpdates": [{
+            "toManifest": {
+                "title": "Rocket.Chat",
+                "version": "0.2.1",
+                "changelog": "* This has changed\n * and that as well\n * some more"
+            }
+        }, {
+            "toManifest": {
+                "title": "Redmine",
+                "version": "1.2.1",
+                "changelog": "* This has changed\n * and that as well\n * some more"
+            }
+        }],
+        "hasSubscription": false
+    }
+}
