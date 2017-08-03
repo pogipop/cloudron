@@ -238,7 +238,7 @@ function createMailConfig(callback) {
     assert.strictEqual(typeof callback, 'function');
 
     const fqdn = config.fqdn();
-    const mailFqdn = config.adminFqdn();
+    const mailFqdn = config.mailFqdn();
     const alertsFrom = 'no-reply@' + config.fqdn();
 
     debug('createMailConfig: generating mail config');
