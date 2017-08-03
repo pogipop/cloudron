@@ -44,4 +44,93 @@ Sent at: <%= new Date().toUTCString() %>
 
 <% } else { %>
 
+<center>
+    <div style="max-width: 800px; text-align: left; border: 1px solid lightgray; padding: 20px;">
+        <center>
+            <img src="<%= cloudronAvatarUrl %>" width="128px" height="128px"/>
+        </center>
+
+        <br/>
+
+        <p>Weekly summary of activities on your Cloudron <a href="<%= webadminUrl %>"><%= cloudronName %></a>:</p>
+
+        <br/>
+
+    <% if (info.pendingBoxUpdate) { -%>
+        <p><b>Cloudron v<%- info.pendingBoxUpdate.version %> is available:</b></p>
+        <ul>
+        <% for (var i = 0; i < info.pendingBoxUpdate.changelog.length; i++) { %>
+            <li><%- info.pendingBoxUpdate.changelog[i] %></li>
+        <% } %>
+        </ul>
+    <% } %>
+
+    <% if (info.pendingAppUpdates.length) { %>
+        <p><b>Available app updates:</b></p>
+        <ul>
+        <% for (var i = 0; i < info.pendingAppUpdates.length; i++) { %>
+            <li>
+                <b><%= info.pendingAppUpdates[i].manifest.title %></b>
+                <ul>
+                <% for (var j = 0; j < info.pendingAppUpdates[i].manifest.changelog.trim().split('\n').length; j++) { %>
+                    <li><%= info.pendingAppUpdates[i].manifest.changelog.trim().split('\n')[j] %></li>
+                <% } %>
+                </ul>
+            </li>
+        <% } %>
+        </ul>
+    <% } %>
+
+    <% if (info.finishedBoxUpdates.length) { %>
+        <p><b>Your Cloudron was updated with the following releases:</b></p>
+        <ul>
+        <% for (var i = 0; i < info.finishedBoxUpdates.length; i++) { %>
+            <li>
+                <b><%= info.finishedBoxUpdates[i].boxUpdateInfo.version %></b>
+                <ul>
+                    <% for (var j = 0; j < info.finishedBoxUpdates[i].boxUpdateInfo.changelog.length; j++) { %>
+                    <li><%= info.finishedBoxUpdates[i].boxUpdateInfo.changelog[j] %></li>
+                    <% } %>
+                </ul>
+            </li>
+        <% } %>
+        </ul>
+    <% } %>
+
+    <% if (info.finishedAppUpdates.length) { %>
+        <p><b>The following apps were updated:</b></p>
+        <ul>
+        <% for (var i = 0; i < info.finishedAppUpdates.length; i++) { %>
+            <li>
+                <b><%= info.finishedAppUpdates[i].toManifest.title %></b> (package v<%= info.finishedAppUpdates[i].toManifest.version %>)
+                <ul>
+                <% for (var j = 0; j < info.finishedAppUpdates[i].toManifest.changelog.trim().split('\n').length; j++) { -%>
+                    <li><%= info.finishedAppUpdates[i].toManifest.changelog.trim().split('\n')[j] %></li>
+                <% } %>
+                </ul>
+            </li>
+        <% } %>
+        </ul>
+    <% } %>
+
+        <br/>
+
+    <% if (!info.hasSubscription) { %>
+        Keep your Cloudron automatically up-to-date and secure by upgrading to a <a href="<%= webadminUrl %>/#/settings">paid plan</a>.
+    <% } %>
+
+        <br/>
+        <br/>
+        <br/>
+
+        <p style="text-align: right;">
+            <small>
+                Powered by <a href="https://cloudron.io">Cloudron</a><br/>
+                Sent on <%= new Date().toUTCString() %>
+            </small>
+        </p>
+    </div>
+</center>
+
+<img src="https://analytics.cloudron.io/piwik.php?idsite=2&rec=1&e_c=CloudronEmail&e_a=digest" style="border:0" alt="" />
 <% } %>
