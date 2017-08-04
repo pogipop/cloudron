@@ -149,7 +149,15 @@ function render(templateFile, params) {
     assert.strictEqual(typeof templateFile, 'string');
     assert.strictEqual(typeof params, 'object');
 
-    return ejs.render(safe.fs.readFileSync(path.join(MAIL_TEMPLATES_DIR, templateFile), 'utf8'), params);
+    var content = null;
+
+    try {
+        content = ejs.render(safe.fs.readFileSync(path.join(MAIL_TEMPLATES_DIR, templateFile), 'utf8'), params);
+    } catch (e) {
+        console.error(e);
+    }
+
+    return content;
 }
 
 function getAdminEmails(callback) {
