@@ -154,7 +154,7 @@ function render(templateFile, params) {
     try {
         content = ejs.render(safe.fs.readFileSync(path.join(MAIL_TEMPLATES_DIR, templateFile), 'utf8'), params);
     } catch (e) {
-        console.error(e);
+        debug(`Error rendering ${templateFile}`, e);
     }
 
     return content;
