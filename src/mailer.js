@@ -416,11 +416,26 @@ function sendDigest(info) {
                 cloudronName = 'Cloudron';
             }
 
-             var mailOptions = {
+            var templateData = {
+                fqdn: config.fqdn(),
+                webadminUrl: config.adminOrigin(),
+                cloudronName: cloudronName,
+                cloudronAvatarUrl: config.adminOrigin() + '/api/v1/cloudron/avatar',
+                info: info
+            };
+
+            var templateDataText = JSON.parse(JSON.stringify(templateData));
+            templateDataText.format = 'text';
+
+            var templateDataHTML = JSON.parse(JSON.stringify(templateData));
+            templateDataHTML.format = 'html';
+
+            var mailOptions = {
                 from: mailConfig().from,
                 to: adminEmails.join(', '),
                 subject: util.format('[%s] Cloudron - Weekly activity digest', config.fqdn()),
-                text: render('digest.ejs', { fqdn: config.fqdn(), webadminUrl: config.adminOrigin(), cloudronName: cloudronName, info: info, format: 'text' })
+                text: render('digest.ejs', templateDataText),
+                html: render('digest.ejs', templateDataHTML)
             };
 
             enqueue(mailOptions);
