@@ -60,7 +60,7 @@ Sent at: <%= new Date().toUTCString() %>
         <p><b>Cloudron v<%- info.pendingBoxUpdate.version %> is available:</b></p>
         <ul>
         <% for (var i = 0; i < info.pendingBoxUpdate.changelog.length; i++) { %>
-            <li><%- info.pendingBoxUpdate.changelog[i] %></li>
+            <li><%- info.pendingBoxUpdate.changelog[i].replace(/^[\*,-] /, '') %></li>
         <% } %>
         </ul>
     <% } %>
@@ -73,7 +73,7 @@ Sent at: <%= new Date().toUTCString() %>
                 <b><%= info.pendingAppUpdates[i].manifest.title %></b>
                 <ul>
                 <% for (var j = 0; j < info.pendingAppUpdates[i].manifest.changelog.trim().split('\n').length; j++) { %>
-                    <li><%= info.pendingAppUpdates[i].manifest.changelog.trim().split('\n')[j] %></li>
+                    <li><%= info.pendingAppUpdates[i].manifest.changelog.trim().split('\n')[j].replace(/^[\*,-] /, '') %></li>
                 <% } %>
                 </ul>
             </li>
@@ -89,7 +89,7 @@ Sent at: <%= new Date().toUTCString() %>
                 <b><%= info.finishedBoxUpdates[i].boxUpdateInfo.version %></b>
                 <ul>
                     <% for (var j = 0; j < info.finishedBoxUpdates[i].boxUpdateInfo.changelog.length; j++) { %>
-                    <li><%= info.finishedBoxUpdates[i].boxUpdateInfo.changelog[j] %></li>
+                    <li><%= info.finishedBoxUpdates[i].boxUpdateInfo.changelog[j].replace(/^[\*,-] /, '') %></li>
                     <% } %>
                 </ul>
             </li>
@@ -105,7 +105,7 @@ Sent at: <%= new Date().toUTCString() %>
                 <b><%= info.finishedAppUpdates[i].toManifest.title %></b> (package v<%= info.finishedAppUpdates[i].toManifest.version %>)
                 <ul>
                 <% for (var j = 0; j < info.finishedAppUpdates[i].toManifest.changelog.trim().split('\n').length; j++) { -%>
-                    <li><%= info.finishedAppUpdates[i].toManifest.changelog.trim().split('\n')[j] %></li>
+                    <li><%= info.finishedAppUpdates[i].toManifest.changelog.trim().split('\n')[j].replace(/^[\*,-] /, '') %></li>
                 <% } %>
                 </ul>
             </li>
