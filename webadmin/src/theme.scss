@@ -393,10 +393,18 @@ h1, h2, h3 {
 
 .scale {
     transition: transform 100ms ease-out;
+
+    &:hover {
+        transform: scale(2)
+    }
 }
 
-.scale:hover {
-    transform: scale(2)
+.scale-small {
+    transition: transform 100ms ease-out;
+
+    &:hover {
+        transform: scale(1.5)
+    }
 }
 
 .page-wrapper {
