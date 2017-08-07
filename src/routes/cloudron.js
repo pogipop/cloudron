@@ -271,7 +271,7 @@ function getLogStream(req, res, next) {
 
     var options = {
         lines: lines,
-        follow: false,
+        follow: true,
         units: units.split(','),
         format: req.query.format
     };

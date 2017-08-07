@@ -51,7 +51,7 @@ angular.module('Application').controller('LogsController', ['$scope', '$location
                 }
 
                 var logLine = $('<div>');
-                logLine.html(window.ansiToHTML(ab2str(data.message)));
+                logLine.html(window.ansiToHTML(typeof data.message === 'string' ? data.message : ab2str(data.message)));
                 logViewer.append(logLine);
             };
         });
