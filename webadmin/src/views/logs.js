@@ -50,9 +50,15 @@ angular.module('Application').controller('LogsController', ['$scope', '$location
                     return console.error(e);
                 }
 
+                // check if we want to auto scroll (this is before the appending, as that skews the check)
+                var tmp = document.querySelector('.log-line-container');
+                var autoScroll = tmp.scrollTop > (tmp.scrollTopMax - 24);
+
                 var logLine = $('<div>');
                 logLine.html(window.ansiToHTML(typeof data.message === 'string' ? data.message : ab2str(data.message)));
                 logViewer.append(logLine);
+
+                if (autoScroll) tmp.lastChild.scrollIntoView({ behavior: 'instant', block: 'end' });
             };
         });
     });
