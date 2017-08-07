@@ -573,10 +573,10 @@ angular.module('Application').service('Client', ['$http', 'md5', 'Notification',
 
     Client.prototype.getPlatformLogs = function (units, follow, callback) {
         if (follow) {
-            var eventSource = new EventSource(client.apiOrigin + '/api/v1/cloudron/logstream?lines=100&access_token=' + token);
+            var eventSource = new EventSource(client.apiOrigin + '/api/v1/cloudron/logstream?lines=10&access_token=' + token + '&units=' + units);
             callback(null, eventSource);
         } else {
-            get('/api/v1/apps/' + appId + '/logs').success(function (data, status) {
+            get('/api/v1/cloudron/logs?lines=100&units=' + units).success(function (data, status) {
                 if (status !== 200 || typeof data !== 'object') return callback(new ClientError(status, data));
                 callback(null, data);
             }).error(defaultErrorHandler(callback));
@@ -592,7 +592,7 @@ angular.module('Application').service('Client', ['$http', 'md5', 'Notification',
 
     Client.prototype.getAppLogs = function (appId, follow, callback) {
         if (follow) {
-            var eventSource = new EventSource(client.apiOrigin + '/api/v1/apps/' + appId + '/logstream?lines=100&access_token=' + token);
+            var eventSource = new EventSource(client.apiOrigin + '/api/v1/apps/' + appId + '/logstream?lines=10&access_token=' + token);
             callback(null, eventSource);
         } else {
             get('/api/v1/apps/' + appId + '/logs').success(function (data, status) {

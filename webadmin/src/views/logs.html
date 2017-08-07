@@ -9,9 +9,7 @@
 <div class="row">
   <div class="col-md-10 col-md-offset-1">
     <div class="filter">
-      <select class="form-control" name="type" ng-model="logs.units" required>
-          <option ng-repeat="log in logs.types" ng-value="log.units">{{ log.name }}</option>
-      </select>
+      <select class="form-control" ng-options="log.name for log in logs track by log.value" ng-model="selected"></select>
     </div>
     <div class="pagination pull-right">
       <button class="btn btn-default btn-outline" ng-click=""><i class="fa fa-download"></i> Download </button>
