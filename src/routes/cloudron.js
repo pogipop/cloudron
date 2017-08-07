@@ -14,7 +14,8 @@ exports = module.exports = {
     update: update,
     feedback: feedback,
     checkForUpdates: checkForUpdates,
-    getLogs: getLogs
+    getLogs: getLogs,
+    getLogStream: getLogStream
 };
 
 var assert = require('assert'),
@@ -255,5 +256,44 @@ function getLogs(req, res, next) {
             'X-Accel-Buffering': 'no' // disable nginx buffering
         });
         logStream.pipe(res);
+    });
+}
+
+function getLogStream(req, res, next) {
+    var lines = req.query.lines ? parseInt(req.query.lines, 10) : -10; // we ignore last-event-id
+    if (isNaN(lines)) return next(new HttpError(400, 'lines must be a valid number'));
+
+    var units = req.query.units || 'all';
+
+    function sse(id, data) { return 'id: ' + id + '\ndata: ' + data + '\n\n'; }
+
+    if (req.headers.accept !== 'text/event-stream') return next(new HttpError(400, 'This API call requires EventStream'));
+
+    var options = {
+        lines: lines,
+        follow: false,
+        units: units.split(','),
+        format: req.query.format
+    };
+
+    cloudron.getLogs(options, function (error, logStream) {
+        if (error && error.reason === CloudronError.BAD_FIELD) return next(new HttpError(404, 'Invalid type'));
+        if (error) return next(new HttpError(500, error));
+
+        res.writeHead(200, {
+            'Content-Type': 'text/event-stream',
+            'Cache-Control': 'no-cache',
+            'Connection': 'keep-alive',
+            'X-Accel-Buffering': 'no', // disable nginx buffering
+            'Access-Control-Allow-Origin': '*'
+        });
+        res.write('retry: 3000\n');
+        res.on('close', logStream.close);
+        logStream.on('data', function (data) {
+            var obj = JSON.parse(data);
+            res.write(sse(obj.monotonicTimestamp, JSON.stringify(obj))); // send timestamp as id
+        });
+        logStream.on('end', res.end.bind(res));
+        logStream.on('error', res.end.bind(res, null));
     });
 }

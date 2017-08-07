@@ -116,6 +116,7 @@ function initializeExpressSync() {
     router.get ('/api/v1/cloudron/graphs', cloudronScope, routes.user.requireAdmin, routes.graphs.getGraphs);
     router.get ('/api/v1/cloudron/disks', cloudronScope, routes.user.requireAdmin, routes.cloudron.getDisks);
     router.get ('/api/v1/cloudron/logs', cloudronScope, routes.user.requireAdmin, routes.cloudron.getLogs);
+    router.get ('/api/v1/cloudron/logstream', cloudronScope, routes.user.requireAdmin, routes.cloudron.getLogStream);
     router.get ('/api/v1/cloudron/ssh/authorized_keys', cloudronScope, routes.user.requireAdmin, routes.ssh.getAuthorizedKeys);
     router.put ('/api/v1/cloudron/ssh/authorized_keys', cloudronScope, routes.user.requireAdmin, routes.ssh.addAuthorizedKey);
     router.get ('/api/v1/cloudron/ssh/authorized_keys/:identifier', cloudronScope, routes.user.requireAdmin, routes.ssh.getAuthorizedKey);
