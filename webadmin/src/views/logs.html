@@ -1,32 +1,29 @@
-<div class="content support">
-    <br/>
+<br/>
 
-    <div>
-        <div class="text-left">
-            <h1>Logs</h1>
-        </div>
-    </div>
+<div class="row">
+  <div class="col-md-10 col-md-offset-1">
+    <h1>Logs</h1>
+  </div>
+</div>
 
-    <div class="card card-large">
-        <div class="grid-item-top">
-            <div class="row animateMeOpacity">
-                <div class="col-lg-12">
-                    <h3>Logs</h3>
-                    Select the log to view
-                    <br/>
-                    <br/>
-                    <form name="logsForm">
-                        <div class="form-group">
-                            <select class="form-control" name="type" style="width: 50%;" ng-model="logs.selectedUrl" required>
-                                <option ng-repeat="log in logs.types" ng-value="log.url">{{ log.name }}</option>
-                            </select>
-                        </div>
-                        <a class="btn btn-primary" ng-disabled="!logs.selectedUrl" ng-href="{{logs.selectedUrl}}&format=short&lines=800" target="_self"> Download </a>
-                    </form>
-                </div>
-            </div>
-        </div>
+<div class="row">
+  <div class="col-md-10 col-md-offset-1">
+    <div class="filter">
+      <select class="form-control" name="type" ng-model="logs.units" required>
+          <option ng-repeat="log in logs.types" ng-value="log.units">{{ log.name }}</option>
+      </select>
     </div>
+    <div class="pagination pull-right">
+      <button class="btn btn-default btn-outline" ng-click=""><i class="fa fa-download"></i> Download </button>
+    </div>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-md-10 col-md-offset-1">
+    <div class="card card-block log-line-container">
+    </div>
+  </div>
 </div>
 
 <!-- Offset the footer -->

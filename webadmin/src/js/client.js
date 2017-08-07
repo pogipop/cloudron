@@ -571,6 +571,18 @@ angular.module('Application').service('Client', ['$http', 'md5', 'Notification',
         }).error(defaultErrorHandler(callback));
     };
 
+    Client.prototype.getPlatformLogs = function (units, follow, callback) {
+        if (follow) {
+            var eventSource = new EventSource(client.apiOrigin + '/api/v1/cloudron/logstream?lines=100&access_token=' + token);
+            callback(null, eventSource);
+        } else {
+            get('/api/v1/apps/' + appId + '/logs').success(function (data, status) {
+                if (status !== 200 || typeof data !== 'object') return callback(new ClientError(status, data));
+                callback(null, data);
+            }).error(defaultErrorHandler(callback));
+        }
+    };
+
     Client.prototype.getApps = function (callback) {
         get('/api/v1/apps').success(function (data, status) {
             if (status !== 200 || typeof data !== 'object') return callback(new ClientError(status, data));
@@ -578,11 +590,16 @@ angular.module('Application').service('Client', ['$http', 'md5', 'Notification',
         }).error(defaultErrorHandler(callback));
     };
 
-    Client.prototype.getAppLogs = function (appId, callback) {
-        get('/api/v1/apps/' + appId + '/logs').success(function (data, status) {
-            if (status !== 200 || typeof data !== 'object') return callback(new ClientError(status, data));
-            callback(null);
-        }).error(defaultErrorHandler(callback));
+    Client.prototype.getAppLogs = function (appId, follow, callback) {
+        if (follow) {
+            var eventSource = new EventSource(client.apiOrigin + '/api/v1/apps/' + appId + '/logstream?lines=100&access_token=' + token);
+            callback(null, eventSource);
+        } else {
+            get('/api/v1/apps/' + appId + '/logs').success(function (data, status) {
+                if (status !== 200 || typeof data !== 'object') return callback(new ClientError(status, data));
+                callback(null, data);
+            }).error(defaultErrorHandler(callback));
+        }
     };
 
     Client.prototype.getAppBackups = function (appId, callback) {

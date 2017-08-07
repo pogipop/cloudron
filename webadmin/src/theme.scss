@@ -1143,3 +1143,19 @@ $graphs-success-alt:    lighten(#27CE65, 20%);
         }
     }
 }
+
+
+// ----------------------------
+// Logs
+// ----------------------------
+
+.log-line-container {
+    width: 100%;
+    max-width: 100%;
+    height: 400px;
+    background-color: black;
+    color: white;
+    overflow: auto;
+    border: none;
+    padding: 5px;
+}
