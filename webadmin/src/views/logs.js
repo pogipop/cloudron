@@ -1,6 +1,8 @@
 'use strict';
 
 angular.module('Application').controller('LogsController', ['$scope', '$location', 'Client', function ($scope, $location, Client) {
+    Client.onReady(function () { if (!Client.getUserInfo().admin) $location.path('/'); });
+
     $scope.config = Client.getConfig();
     $scope.user = Client.getUserInfo();
 
