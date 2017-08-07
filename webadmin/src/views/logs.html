@@ -12,7 +12,7 @@
       <select class="form-control" ng-options="log.name for log in logs track by log.value" ng-model="selected"></select>
     </div>
     <div class="pagination pull-right">
-      <button class="btn btn-default btn-outline" ng-click=""><i class="fa fa-download"></i> Download </button>
+      <a class="btn btn-default btn-outline" ng-href="{{ selected.url }}&format=short&lines=800"><i class="fa fa-download"></i> Download </a>
     </div>
   </div>
 </div>

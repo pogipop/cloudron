@@ -13,12 +13,12 @@ angular.module('Application').controller('LogsController', ['$scope', '$location
     }
 
     $scope.populateLogTypes = function () {
-        $scope.logs.push({ name: 'System (All)', type: 'platform', value: 'all' });
-        $scope.logs.push({ name: 'Box', type: 'platform', value: 'box' });
-        $scope.logs.push({ name: 'Mail', type: 'platform', value: 'mail' });
+        $scope.logs.push({ name: 'System (All)', type: 'platform', value: 'all', url: Client.makeURL('/api/v1/cloudron/logs?units=all') });
+        $scope.logs.push({ name: 'Box', type: 'platform', value: 'box', url: Client.makeURL('/api/v1/cloudron/logs?units=box') });
+        $scope.logs.push({ name: 'Mail', type: 'platform', value: 'mail', url: Client.makeURL('/api/v1/cloudron/logs?units=mail') });
 
         Client.getInstalledApps().forEach(function (app) {
-            $scope.logs.push({ name: app.fqdn, type: 'app', value: app.id });
+            $scope.logs.push({ name: app.fqdn, type: 'app', value: app.id, url: Client.makeURL('/api/v1/apps/' + app.id + '/logs') });
         });
 
         $scope.selected = $scope.logs[0];
