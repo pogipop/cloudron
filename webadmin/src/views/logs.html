@@ -1,0 +1,33 @@
+<div class="content support">
+    <br/>
+
+    <div>
+        <div class="text-left">
+            <h1>Logs</h1>
+        </div>
+    </div>
+
+    <div class="card card-large">
+        <div class="grid-item-top">
+            <div class="row animateMeOpacity">
+                <div class="col-lg-12">
+                    <h3>Logs</h3>
+                    Select the log to view
+                    <br/>
+                    <br/>
+                    <form name="logsForm">
+                        <div class="form-group">
+                            <select class="form-control" name="type" style="width: 50%;" ng-model="logs.selectedUrl" required>
+                                <option ng-repeat="log in logs.types" ng-value="log.url">{{ log.name }}</option>
+                            </select>
+                        </div>
+                        <a class="btn btn-primary" ng-disabled="!logs.selectedUrl" ng-href="{{logs.selectedUrl}}&format=short&lines=800" target="_self"> Download </a>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Offset the footer -->
+<br/><br/>
