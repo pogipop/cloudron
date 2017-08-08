@@ -1,23 +1,24 @@
-<div class="row">
-  <div class="col-md-10 col-md-offset-1">
-    <h1>Logs</h1>
-  </div>
-</div>
+<div class="logs-main">
 
-<div class="row">
-  <div class="col-md-10 col-md-offset-1">
-    <div class="filter">
-      <select class="form-control" ng-options="log.name for log in logs track by log.value" ng-model="selected"></select>
-    </div>
-    <div class="pagination pull-right">
-      <a class="btn btn-default btn-outline" ng-href="{{ selected.url }}&format=short&lines=800"><i class="fa fa-download"></i> Download </a>
+  <div class="logs-header">
+    <div class="col-md-10 col-md-offset-1">
+      <div class="text-left">
+          <h1>Logs</h1>
+      </div>
     </div>
   </div>
-</div>
 
-<div class="row">
-  <div class="col-md-10 col-md-offset-1">
-    <div class="card card-block log-line-container">
+  <div class="logs-controls">
+    <div class="col-md-10 col-md-offset-1">
+      <div class="filter">
+        <select class="form-control" ng-options="log.name for log in logs track by log.value" ng-model="selected"></select>
+      </div>
+      <div class="pagination pull-right">
+        <a class="btn btn-default btn-outline" ng-href="{{ selected.url }}&format=short&lines=800"><i class="fa fa-download"></i> Download </a>
+      </div>
     </div>
   </div>
+
+  <div class="col-md-10 col-md-offset-1 log-line-container"></div>
+
 </div>

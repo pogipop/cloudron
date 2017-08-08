@@ -64,7 +64,7 @@ angular.module('Application').controller('LogsController', ['$scope', '$location
                 logLine.html('<span class="time">' + timeString + ' </span>' + window.ansiToHTML(typeof data.message === 'string' ? data.message : ab2str(data.message)));
                 logViewer.append(logLine);
 
-                if (autoScroll) tmp.lastChild.scrollIntoView({ behavior: 'instant', block: 'end' });
+                // if (autoScroll) tmp.lastChild.scrollIntoView({ behavior: 'instant', block: 'end' });
             };
         });
     });
