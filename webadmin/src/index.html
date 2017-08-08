@@ -172,7 +172,7 @@
         </div>
     </div>
 
-    <div class="animateMe ng-hide" ng-show="initialized">
+    <div class="animateMe ng-hide layout-root" ng-show="initialized">
 
         <!-- Navigation -->
         <nav class="navbar navbar-default navbar-static-top shadow" role="navigation" style="margin-bottom: 0">
@@ -233,17 +233,17 @@
             </div>
         </nav>
 
-        <div class="page-wrapper">
+        <div class="layout-content">
             <div ng-view id="ng-view"></div>
         </div>
-    </div>
 
-    <footer class="text-center ng-cloak">
-        <span class="text-muted">&copy; 2017 <a href="https://cloudron.io" target="_blank">Cloudron</a></span>
-        <span class="text-muted"> v{{config.version}}</span>
-        <span class="text-muted"><a href="https://twitter.com/cloudron_io" target="_blank">Twitter <i class="fa fa-twitter"></i></a></span>
-        <span class="text-muted"><a href="https://chat.cloudron.io" target="_blank">Chat <i class="fa fa-comments"></i></a></span>
-    </footer>
+        <footer class="text-center ng-cloak">
+            <span class="text-muted">&copy; 2017 <a href="https://cloudron.io" target="_blank">Cloudron</a></span>
+            <span class="text-muted"> v{{config.version}}</span>
+            <span class="text-muted"><a href="https://twitter.com/cloudron_io" target="_blank">Twitter <i class="fa fa-twitter"></i></a></span>
+            <span class="text-muted"><a href="https://chat.cloudron.io" target="_blank">Chat <i class="fa fa-comments"></i></a></span>
+        </footer>
+    </div>
 
 </body>
 </html>
