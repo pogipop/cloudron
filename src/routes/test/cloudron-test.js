@@ -9,6 +9,7 @@ var async = require('async'),
     config = require('../../config.js'),
     database = require('../../database.js'),
     expect = require('expect.js'),
+    http = require('http'),
     locker = require('../../locker.js'),
     nock = require('nock'),
     os = require('os'),
@@ -569,6 +570,80 @@ describe('Cloudron', function () {
                 expect(result.statusCode).to.equal(400);
                 done();
             });
+        });
+    });
+
+    describe('logs', function () {
+        before(function (done) {
+            async.series([
+                setup,
+
+                function (callback) {
+                    var scope1 = nock(config.apiServerOrigin()).get('/api/v1/boxes/' + config.fqdn() + '/setup/verify?setupToken=somesetuptoken').reply(200, {});
+                    var scope2 = nock(config.apiServerOrigin()).post('/api/v1/boxes/' + config.fqdn() + '/setup/done?setupToken=somesetuptoken').reply(201, {});
+
+                    config._reset();
+
+                    superagent.post(SERVER_URL + '/api/v1/cloudron/activate')
+                           .query({ setupToken: 'somesetuptoken' })
+                           .send({ username: USERNAME, password: PASSWORD, email: EMAIL })
+                           .end(function (error, result) {
+                        expect(result).to.be.ok();
+                        expect(scope1.isDone()).to.be.ok();
+                        expect(scope2.isDone()).to.be.ok();
+
+                        // stash token for further use
+                        token = result.body.token;
+
+                        callback();
+                    });
+                },
+            ], done);
+        });
+
+        after(cleanup);
+
+        it('logStream - requires event-stream accept header', function (done) {
+            superagent.get(SERVER_URL + '/api/v1/cloudron/logstream')
+                .query({ access_token: token, fromLine: 0 })
+                .end(function (err, res) {
+                expect(res.statusCode).to.be(400);
+                done();
+            });
+        });
+
+        it('logStream - stream logs', function (done) {
+            var options = {
+                port: config.get('port'), host: 'localhost', path: '/api/v1/cloudron/logstream?units=all&lines=10&access_token=' + token,
+                headers: { 'Accept': 'text/event-stream', 'Connection': 'keep-alive' }
+            };
+
+            // superagent doesn't work. maybe https://github.com/visionmedia/superagent/issues/420
+            var req = http.get(options, function (res) {
+                var data = '';
+                res.on('data', function (d) { data += d.toString('utf8'); });
+                setTimeout(function checkData() {
+                    var dataMessageFound = false;
+
+                    expect(data.length).to.not.be(0);
+                    data.split('\n').forEach(function (line) {
+                        if (line.indexOf('id: ') === 0) {
+                            expect(parseInt(line.substr('id: '.length), 10)).to.be.a('number');
+                        } else if (line.indexOf('data: ') === 0) {
+                            expect(JSON.parse(line.slice('data: '.length)).message).to.be.a('string');
+                            dataMessageFound = true;
+                        }
+                    });
+
+                    expect(dataMessageFound).to.be.ok();
+
+                    req.abort();
+                    done();
+                }, 1000);
+                res.on('error', done);
+            });
+
+            req.on('error', done);
         });
     });
 });
