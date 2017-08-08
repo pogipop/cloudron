@@ -1,6 +1,7 @@
 'use strict';
 
 /* global angular */
+/* global EventSource */
 
 angular.module('Application').service('Client', ['$http', 'md5', 'Notification', function ($http, md5, Notification) {
     var client = null;
@@ -571,9 +572,9 @@ angular.module('Application').service('Client', ['$http', 'md5', 'Notification',
         }).error(defaultErrorHandler(callback));
     };
 
-    Client.prototype.getPlatformLogs = function (units, follow, callback) {
+    Client.prototype.getPlatformLogs = function (units, follow, lines, callback) {
         if (follow) {
-            var eventSource = new EventSource(client.apiOrigin + '/api/v1/cloudron/logstream?lines=10&access_token=' + token + '&units=' + units);
+            var eventSource = new EventSource(client.apiOrigin + '/api/v1/cloudron/logstream?lines=' + lines + '&access_token=' + token + '&units=' + units);
             callback(null, eventSource);
         } else {
             get('/api/v1/cloudron/logs?lines=100&units=' + units).success(function (data, status) {
@@ -590,9 +591,9 @@ angular.module('Application').service('Client', ['$http', 'md5', 'Notification',
         }).error(defaultErrorHandler(callback));
     };
 
-    Client.prototype.getAppLogs = function (appId, follow, callback) {
+    Client.prototype.getAppLogs = function (appId, follow, lines, callback) {
         if (follow) {
-            var eventSource = new EventSource(client.apiOrigin + '/api/v1/apps/' + appId + '/logstream?lines=10&access_token=' + token);
+            var eventSource = new EventSource(client.apiOrigin + '/api/v1/apps/' + appId + '/logstream?lines=' + lines + '&access_token=' + token);
             callback(null, eventSource);
         } else {
             get('/api/v1/apps/' + appId + '/logs').success(function (data, status) {

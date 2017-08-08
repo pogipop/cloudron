@@ -9,6 +9,7 @@ angular.module('Application').controller('LogsController', ['$scope', '$location
     $scope.logs = [];
     $scope.selected = '';
     $scope.activeEventSource = null;
+    $scope.lines = 10;
 
     function ab2str(buf) {
         return String.fromCharCode.apply(null, new Uint16Array(buf));
@@ -36,7 +37,7 @@ angular.module('Application').controller('LogsController', ['$scope', '$location
         }
 
         var func = newVal.type === 'platform' ? Client.getPlatformLogs : Client.getAppLogs;
-        func(newVal.value, true, function handleLogs(error, result) {
+        func(newVal.value, true, $scope.lines, function handleLogs(error, result) {
             if (error) return console.error(error);
 
             var logViewer = $('.log-line-container');
