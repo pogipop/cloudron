@@ -1,5 +1,7 @@
 'use strict';
 
+/* global moment */
+
 angular.module('Application').controller('LogsController', ['$scope', '$location', 'Client', function ($scope, $location, Client) {
     Client.onReady(function () { if (!Client.getUserInfo().admin) $location.path('/'); });
 
@@ -68,4 +70,12 @@ angular.module('Application').controller('LogsController', ['$scope', '$location
     });
 
     Client.onReady($scope.populateLogTypes);
+
+    $scope.$on('$destroy', function () {
+        if ($scope.activeEventSource) {
+            $scope.activeEventSource.onmessage = function () {};
+            $scope.activeEventSource.close();
+            $scope.activeEventSource = null;
+        }
+    });
 }]);
