@@ -56,8 +56,9 @@ angular.module('Application').controller('LogsController', ['$scope', '$location
                 var tmp = document.querySelector('.log-line-container');
                 var autoScroll = tmp.scrollTop > (tmp.scrollTopMax - 24);
 
-                var logLine = $('<div>');
-                logLine.html(window.ansiToHTML(typeof data.message === 'string' ? data.message : ab2str(data.message)));
+                var logLine = $('<div class="log-line">');
+                var timeString = moment.utc(data.realtimeTimestamp/1000).format('MMM DD HH:mm:ss');
+                logLine.html('<span class="time">' + timeString + ' </span>' + window.ansiToHTML(typeof data.message === 'string' ? data.message : ab2str(data.message)));
                 logViewer.append(logLine);
 
                 if (autoScroll) tmp.lastChild.scrollIntoView({ behavior: 'instant', block: 'end' });

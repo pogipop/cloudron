@@ -1144,7 +1144,6 @@ $graphs-success-alt:    lighten(#27CE65, 20%);
     }
 }
 
-
 // ----------------------------
 // Logs
 // ----------------------------
@@ -1159,4 +1158,16 @@ $graphs-success-alt:    lighten(#27CE65, 20%);
     border: none;
     padding: 5px;
     font-family: monospace;
+}
+
+.log-line {
+    line-height: 1.2;
+
+    &:hover {
+        background-color: #333333;
+    }
+
+    .time {
+        color: #00FFFF;
+    }
 }
