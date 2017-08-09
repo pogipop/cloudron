@@ -29,6 +29,7 @@ var appdb = require('./appdb.js'),
     hat = require('hat'),
     infra = require('./infra_version.js'),
     mailboxdb = require('./mailboxdb.js'),
+    mkdirp = require('mkdirp'),
     once = require('once'),
     path = require('path'),
     paths = require('./paths.js'),
@@ -56,8 +57,8 @@ var KNOWN_ADDONS = {
     localstorage: {
         setup: NOOP, // docker creates the directory for us
         teardown: NOOP,
-        backup: NOOP, // no backup because it's already inside app data
-        restore: NOOP
+        backup: backupLocalStorage,
+        restore: restoreLocalStorage
     },
     mongodb: {
         setup: setupMongoDb,
@@ -110,6 +111,8 @@ var KNOWN_ADDONS = {
 };
 
 var RMAPPDIR_CMD = path.join(__dirname, 'scripts/rmappdir.sh');
+var SAVEEMPTYDIRS_CMD = path.join(__dirname, 'scripts/saveemptydirs.sh');
+var CREATEEMPTYDIRS_CMD = path.join(__dirname, 'scripts/createemptydirs.sh');
 
 function debugApp(app, args) {
     assert(!app || typeof app === 'object');
@@ -693,7 +696,7 @@ function teardownRedis(app, options, callback) {
 
        safe.fs.unlinkSync(paths.ADDON_CONFIG_DIR, 'redis-' + app.id + '_vars.sh');
 
-        shell.sudo('teardownRedis', [ RMAPPDIR_CMD, app.id + '/redis', true /* delete directory */ ], function (error, stdout, stderr) {
+        shell.sudo('teardownRedis', [ RMAPPDIR_CMD, app.id + '/redis', true /* delete directory */ ], function (error) {
             if (error) return callback(new Error('Error removing redis data:' + error));
 
             appdb.unsetAddonConfig(app.id, 'redis', callback);
@@ -707,4 +710,25 @@ function backupRedis(app, options, callback) {
     var cmd = [ '/addons/redis/service.sh', 'backup' ]; // the redis dir is volume mounted
 
     docker.execContainer('redis-' + app.id, cmd, { }, callback);
+}
+
+function backupLocalStorage(app, options, callback) {
+    debugApp(app, 'backupLocalStorage: creating emptydirs.txt');
+
+    shell.sudo('backupLocalStorage', [ SAVEEMPTYDIRS_CMD, app.id ], function (error) {
+        if (error) return callback(new Error('Error saving empty dirs:' + error));
+
+        callback();
+    });
+}
+
+function restoreLocalStorage(app, options, callback) {
+    debugApp(app, 'restoreLocalStorage: recreating empty directories');
+
+    var emptyDirs = safe.fs.readFileSync(path.join(paths.APPS_DATA_DIR, app.id, 'emptydirs.txt'), 'utf8');
+    if (!emptyDirs) return callback(new Error('emptydirs.txt was not found:' + safe.fs.error));
+
+    async.eachSeries(emptyDirs.trim().split('\n'), function createPath(emptyDir, iteratorDone) {
+        mkdirp(path.join(paths.APPS_DATA_DIR, app.id, 'data', emptyDir), iteratorDone);
+    }, callback);
 }

@@ -17,59 +17,62 @@ var assert = require('assert'),
     config = require('../config.js'),
     debug = require('debug')('box:storage/filesystem'),
     fs = require('fs'),
-    mkdirp = require('mkdirp'),
     once = require('once'),
     path = require('path'),
     safe = require('safetydance'),
-    targz = require('./targz.js');
+    shell = require('../shell.js');
 
 var FALLBACK_BACKUP_FOLDER = '/var/backups';
+var RCLONE_CMD = '/usr/bin/rclone';
+var RCLONE_ARGS = '--stats 10s --stats-log-level INFO'.split(' ');
 var BACKUP_USER = config.TEST ? process.env.USER : 'yellowtent';
+var CHOWNBACKUP_CMD = path.join(__dirname, '../scripts/chownbackup.sh');
 
 // internal only
 function getBackupFilePath(apiConfig, backupId) {
     assert.strictEqual(typeof apiConfig, 'object');
     assert.strictEqual(typeof backupId, 'string');
 
-    const FILE_TYPE = apiConfig.key ? '.tar.gz.enc' : '.tar.gz';
-
-    return path.join(apiConfig.backupFolder || FALLBACK_BACKUP_FOLDER, backupId.endsWith(FILE_TYPE) ? backupId : backupId+FILE_TYPE);
+    return path.join(apiConfig.backupFolder || FALLBACK_BACKUP_FOLDER, backupId);
 }
 
 // storage api
-function backup(apiConfig, backupId, sourceDirectories, callback) {
+function backup(apiConfig, backupId, sourceDir, callback) {
     assert.strictEqual(typeof apiConfig, 'object');
     assert.strictEqual(typeof backupId, 'string');
-    assert(Array.isArray(sourceDirectories));
+    assert.strictEqual(typeof sourceDir, 'string');
     assert.strictEqual(typeof callback, 'function');
 
     callback = once(callback);
 
     var backupFilePath = getBackupFilePath(apiConfig, backupId);
 
-    debug('[%s] backup: %j -> %s', backupId, sourceDirectories, backupFilePath);
+    debug('[%s] backup: %s -> %s', backupId, sourceDir, backupFilePath);
 
-    mkdirp(path.dirname(backupFilePath), function (error) {
+    var password = apiConfig.key ? safe.child_process.execSync('rclone obscure ' + apiConfig.key) : ''; // FIXME: quote the key
+    if (password === null) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, safe.error.message));
+
+    // TODO: Add --skip-links (rclone#1480)
+    var env = {
+        RCLONE_CONFIG_SRC_TYPE: 'local',
+        RCLONE_CONFIG_DEST_TYPE: 'local',
+        // only used when key is set
+        RCLONE_CONFIG_ENC_TYPE: 'crypt',
+        RCLONE_CONFIG_ENC_REMOTE: 'dest:' + backupFilePath,
+        RCLONE_CONFIG_ENC_FILENAME_ENCRYPTION: 'standard',
+        RCLONE_CONFIG_ENC_PASSWORD: password.toString('utf8').trim()
+    };
+    var args = [ ].concat(RCLONE_CMD, RCLONE_ARGS, 'copy', 'src:' + sourceDir);
+    args = args.concat(apiConfig.key ? 'enc:' : ('dest:' + backupFilePath));
+
+    shell.sudo('backup', args, { env: env }, function (error) {
         if (error) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
 
-        var fileStream = fs.createWriteStream(backupFilePath);
-
-        fileStream.on('error', function (error) {
-            debug('[%s] backup: out stream error.', backupId, error);
-            callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
-        });
-
-        fileStream.on('close', function () {
-            debug('[%s] backup: changing ownership.', backupId);
-
-            if (!safe.child_process.execSync('chown -R ' + BACKUP_USER + ':' + BACKUP_USER + ' ' + path.dirname(backupFilePath))) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, safe.error.message));
-
-            debug('[%s] backup: done.', backupId);
+        shell.sudo('chownBackup', [ CHOWNBACKUP_CMD, BACKUP_USER, path.dirname(backupFilePath) ], function (error) {
+            if (error) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
 
             callback(null);
         });
-
-        targz.create(sourceDirectories, apiConfig.key || null, fileStream, callback);
     });
 }
 
@@ -85,16 +88,27 @@ function restore(apiConfig, backupId, destination, callback) {
 
     debug('[%s] restore: %s -> %s', backupId, sourceFilePath, destination);
 
-    if (!fs.existsSync(sourceFilePath)) return callback(new BackupsError(BackupsError.NOT_FOUND, 'backup file does not exist'));
+    if (!fs.existsSync(sourceFilePath)) return callback(new BackupsError(BackupsError.NOT_FOUND, 'backup dir does not exist'));
 
-    var fileStream = fs.createReadStream(sourceFilePath);
+    var password = apiConfig.key ? safe.child_process.execSync('rclone obscure ' + apiConfig.key) : ''; // FIXME: quote the key
+    if (password === null) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, safe.error.message));
 
-    fileStream.on('error', function (error) {
-        debug('restore: file stream error.', error);
-        callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
+    var env = {
+        RCLONE_CONFIG_SRC_TYPE: 'local',
+        RCLONE_CONFIG_DEST_TYPE: 'local',
+        // only used when key is set
+        RCLONE_CONFIG_ENC_TYPE: 'crypt',
+        RCLONE_CONFIG_ENC_REMOTE: 'src:' + sourceFilePath,
+        RCLONE_CONFIG_ENC_FILENAME_ENCRYPTION: 'standard',
+        RCLONE_CONFIG_ENC_PASSWORD: password.toString('utf8').trim()
+    };
+    var args = RCLONE_ARGS.concat('copy', apiConfig.key ? 'enc:' : ('src:' + sourceFilePath), 'dest:' + destination);
+
+    shell.exec('restore', RCLONE_CMD, args, { env: env }, function (error) {
+        if (error) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
+
+        callback(null);
     });
-
-    targz.extract(fileStream, destination, apiConfig.key || null, callback);
 }
 
 function copyBackup(apiConfig, oldBackupId, newBackupId, callback) {
@@ -110,29 +124,11 @@ function copyBackup(apiConfig, oldBackupId, newBackupId, callback) {
 
     debug('copyBackup: %s -> %s', oldFilePath, newFilePath);
 
-    mkdirp(path.dirname(newFilePath), function (error) {
+    var args = RCLONE_ARGS.concat('copy', oldFilePath, newFilePath);
+    shell.exec('copyBackup', RCLONE_CMD, args, { }, function (error) {
         if (error) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
 
-        var readStream = fs.createReadStream(oldFilePath);
-        var writeStream = fs.createWriteStream(newFilePath);
-
-        readStream.on('error', function (error) {
-            debug('copyBackup: read stream error.', error);
-            callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
-        });
-
-        writeStream.on('error', function (error) {
-            debug('copyBackup: write stream error.', error);
-            callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
-        });
-
-        writeStream.on('close', function () {
-            if (!safe.child_process.execSync('chown -R ' + BACKUP_USER + ':' + BACKUP_USER + ' ' + path.dirname(newFilePath))) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, safe.error.message));
-
-            callback();
-        });
-
-        readStream.pipe(writeStream);
+        callback(null);
     });
 }
 
@@ -144,13 +140,12 @@ function removeBackups(apiConfig, backupIds, callback) {
     async.eachSeries(backupIds, function (id, iteratorCallback) {
         var filePath = getBackupFilePath(apiConfig, id);
 
-        if (!safe.fs.unlinkSync(filePath)) {
-            debug('removeBackups: Unable to remove %s : %s', filePath, safe.error.message);
-        }
+        var args = RCLONE_ARGS.concat([ 'purge', filePath ]);
+        shell.exec('backup', RCLONE_CMD, args, { }, function (error) {
+            if (error) debug('removeBackups: Unable to remove %s : %s', filePath, error.message);
 
-        safe.fs.rmdirSync(path.dirname(filePath)); // try to cleanup empty directories
-
-        iteratorCallback();
+            iteratorCallback();
+        });
     }, callback);
 }
 
@@ -160,12 +155,11 @@ function testConfig(apiConfig, callback) {
 
     if ('backupFolder' in apiConfig && typeof apiConfig.backupFolder !== 'string') return callback(new BackupsError(BackupsError.BAD_FIELD, 'backupFolder must be string'));
 
-    // default value will be used
-    if (!apiConfig.backupFolder) return callback();
+    var backupFolder = apiConfig.backupFolder || FALLBACK_BACKUP_FOLDER;
 
-    fs.stat(apiConfig.backupFolder, function (error, result) {
+    fs.stat(backupFolder, function (error, result) {
         if (error) {
-            debug('testConfig: %s', apiConfig.backupFolder, error);
+            debug('testConfig: %s', backupFolder, error);
             return callback(new BackupsError(BackupsError.BAD_FIELD, 'Directory does not exist or cannot be accessed'));
         }
 

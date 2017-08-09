@@ -17,7 +17,4 @@ if [[ "$1" == "--check" ]]; then
     exit 0
 fi
 
-echo "Running node with memory constraints"
-
-# note BOX_ENV and NODE_ENV are derived from parent process
-exec env "DEBUG=box*,connect-lastmile" /usr/bin/node --max_old_space_size=300 "$@"
+chown -R $1:$1 "$2"
