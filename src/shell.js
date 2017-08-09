@@ -29,17 +29,23 @@ function execSync(tag, cmd, callback) {
     if (callback) callback();
 }
 
-function exec(tag, file, args, callback) {
+function exec(tag, file, args, options, callback) {
     assert.strictEqual(typeof tag, 'string');
     assert.strictEqual(typeof file, 'string');
     assert(util.isArray(args));
-    assert.strictEqual(typeof callback, 'function');
+
+    if (typeof options === 'function') {
+        callback = options;
+        options = { };
+    }
+
+    assert.strictEqual(typeof options, 'object');
 
     callback = once(callback); // exit may or may not be called after an 'error'
 
     debug(tag + ' execFile: %s', file); // do not dump args as it might have sensitive info
 
-    var cp = child_process.spawn(file, args);
+    var cp = child_process.spawn(file, args, options);
     cp.stdout.on('data', function (data) {
         debug(tag + ' (stdout): %s', data.toString('utf8'));
     });
@@ -66,13 +72,19 @@ function exec(tag, file, args, callback) {
     return cp;
 }
 
-function sudo(tag, args, callback) {
+function sudo(tag, args, options, callback) {
     assert.strictEqual(typeof tag, 'string');
     assert(util.isArray(args));
-    assert.strictEqual(typeof callback, 'function');
 
-    // -S makes sudo read stdin for password
-    var cp = exec(tag, SUDO, [ '-S' ].concat(args), callback);
+    if (typeof options === 'function') {
+        callback = options;
+        options = { };
+    }
+
+    assert.strictEqual(typeof options, 'object');
+
+    // -S makes sudo read stdin for password. -E preserves arguments
+    var cp = exec(tag, SUDO, [ options.env ? '-SE' : '-S' ].concat(args), options, callback);
     cp.stdin.end();
     return cp;
 }
