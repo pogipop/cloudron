@@ -35,12 +35,12 @@ while true; do
 done
 
 echo "==> installer: updating node"
-if [[ "$(node --version)" != "v6.11.1" ]]; then
-    mkdir -p /usr/local/node-6.11.1
-    $curl -sL https://nodejs.org/dist/v6.11.1/node-v6.11.1-linux-x64.tar.gz | tar zxvf - --strip-components=1 -C /usr/local/node-6.11.1
-    ln -sf /usr/local/node-6.11.1/bin/node /usr/bin/node
-    ln -sf /usr/local/node-6.11.1/bin/npm /usr/bin/npm
-    rm -rf /usr/local/node-6.9.2
+if [[ "$(node --version)" != "v6.11.2" ]]; then
+    mkdir -p /usr/local/node-6.11.2
+    $curl -sL https://nodejs.org/dist/v6.11.2/node-v6.11.2-linux-x64.tar.gz | tar zxvf - --strip-components=1 -C /usr/local/node-6.11.2
+    ln -sf /usr/local/node-6.11.2/bin/node /usr/bin/node
+    ln -sf /usr/local/node-6.11.2/bin/npm /usr/bin/npm
+    rm -rf /usr/local/node-6.11.1
 fi
 
 for try in `seq 1 10`; do

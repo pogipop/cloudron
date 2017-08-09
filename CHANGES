@@ -939,3 +939,6 @@
 * Add html version of the digest email
 * Fix issue where collectd was collecting information about devicemapper mounts
 
+[1.5.0]
+* Update node to 6.11.2
+
