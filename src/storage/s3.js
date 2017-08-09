@@ -16,14 +16,17 @@ exports = module.exports = {
 };
 
 var assert = require('assert'),
+    async = require('async'),
     AWS = require('aws-sdk'),
     BackupsError = require('../backups.js').BackupsError,
     debug = require('debug')('box:storage/s3'),
     once = require('once'),
-    PassThrough = require('stream').PassThrough,
     path = require('path'),
-    S3BlockReadStream = require('s3-block-read-stream'),
-    targz = require('./targz.js');
+    safe = require('safetydance'),
+    shell = require('../shell.js');
+
+var RCLONE_CMD = '/usr/bin/rclone';
+var RCLONE_ARGS = '--stats 10s --stats-log-level INFO'.split(' ');
 
 // test only
 var originalAWS;
@@ -60,47 +63,53 @@ function getBackupFilePath(apiConfig, backupId) {
     assert.strictEqual(typeof apiConfig, 'object');
     assert.strictEqual(typeof backupId, 'string');
 
-    const FILE_TYPE = apiConfig.key ? '.tar.gz.enc' : '.tar.gz';
-
-    return path.join(apiConfig.prefix, backupId.endsWith(FILE_TYPE) ? backupId : backupId+FILE_TYPE);
+    return path.join(apiConfig.prefix, backupId);
 }
 
 // storage api
-function backup(apiConfig, backupId, sourceDirectories, callback) {
+function backup(apiConfig, backupId, sourceDir, callback) {
     assert.strictEqual(typeof apiConfig, 'object');
     assert.strictEqual(typeof backupId, 'string');
-    assert(Array.isArray(sourceDirectories));
+    assert.strictEqual(typeof sourceDir, 'string');
     assert.strictEqual(typeof callback, 'function');
 
     callback = once(callback);
 
     var backupFilePath = getBackupFilePath(apiConfig, backupId);
 
-    debug('[%s] backup: %j -> %s', backupId, sourceDirectories, backupFilePath);
+    debug('[%s] backup: %s -> %s', backupId, sourceDir, backupFilePath);
 
     getBackupCredentials(apiConfig, function (error, credentials) {
         if (error) return callback(error);
 
-        var passThrough = new PassThrough();
+        var password = apiConfig.key ? safe.child_process.execSync('rclone obscure ' + apiConfig.key) : ''; // FIXME: quote the key
+        if (password === null) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, safe.error.message));
 
-        var params = {
-            Bucket: apiConfig.bucket,
-            Key: backupFilePath,
-            Body: passThrough
+        // TODO: Add --skip-links (rclone#1480)
+        var env = {
+            RCLONE_CONFIG_SRC_TYPE: 'local',
+            RCLONE_CONFIG_DEST_TYPE: 's3',
+            RCLONE_CONFIG_ENV_AUTH: '',
+            RCLONE_CONFIG_DEST_ACCESS_KEY_ID: credentials.accessKeyId,
+            RCLONE_CONFIG_DEST_SECRET_ACCESS_KEY: credentials.secretAccessKey,
+            RCLONE_CONFIG_DEST_REGION: credentials.signatureVersion === 'v2' ? 'other-v2-signature': credentials.region,
+            RCLONE_CONFIG_DEST_ENDPOINT: credentials.endpoint || '',
+            RCLONE_CONFIG_DEST_LOCATION_CONSTRAINT: credentials.region,
+
+            // only used when key is set
+            RCLONE_CONFIG_ENC_TYPE: 'crypt',
+            RCLONE_CONFIG_ENC_REMOTE: 'dest:' + apiConfig.bucket + '/' + backupFilePath,
+            RCLONE_CONFIG_ENC_FILENAME_ENCRYPTION: 'standard',
+            RCLONE_CONFIG_ENC_PASSWORD: password.toString('utf8').trim()
         };
+        var args = [ ].concat(RCLONE_CMD, RCLONE_ARGS, 'copy', 'src:' + sourceDir);
+        args = args.concat(apiConfig.key ? 'enc:' : ('dest:' + apiConfig.bucket + '/' + backupFilePath));
 
-        var s3 = new AWS.S3(credentials);
-        // s3.upload automatically does a multi-part upload. we set queueSize to 1 to reduce memory usage
-        s3.upload(params, { partSize: 10 * 1024 * 1024, queueSize: 1 }, function (error) {
-            if (error) {
-                debug('[%s] backup: s3 upload error.', backupId, error);
-                return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
-            }
+        shell.sudo('backup', args, { env: env }, function (error) {
+            if (error) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
 
             callback(null);
         });
-
-        targz.create(sourceDirectories, apiConfig.key || null, passThrough, callback);
     });
 }
 
@@ -112,31 +121,39 @@ function restore(apiConfig, backupId, destination, callback) {
 
     callback = once(callback);
 
-    var backupFilePath = getBackupFilePath(apiConfig, backupId);
+    var sourceFilePath = getBackupFilePath(apiConfig, backupId);
 
-    debug('[%s] restore: %s -> %s', backupId, backupFilePath, destination);
+    debug('[%s] restore: %s -> %s', backupId, sourceFilePath, destination);
 
     getBackupCredentials(apiConfig, function (error, credentials) {
         if (error) return callback(error);
 
-        var params = {
-            Bucket: apiConfig.bucket,
-            Key: backupFilePath
+        var password = apiConfig.key ? safe.child_process.execSync('rclone obscure ' + apiConfig.key) : ''; // FIXME: quote the key
+        if (password === null) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, safe.error.message));
+
+        var env = {
+            RCLONE_CONFIG_SRC_TYPE: 's3',
+            RCLONE_CONFIG_DEST_TYPE: 'local',
+            RCLONE_CONFIG_ENV_AUTH: '',
+            RCLONE_CONFIG_SRC_ACCESS_KEY_ID: credentials.accessKeyId,
+            RCLONE_CONFIG_SRC_SECRET_ACCESS_KEY: credentials.secretAccessKey,
+            RCLONE_CONFIG_SRC_REGION: credentials.signatureVersion === 'v2' ? 'other-v2-signature': credentials.region,
+            RCLONE_CONFIG_SRC_ENDPOINT: credentials.endpoint || '',
+            RCLONE_CONFIG_SRC_LOCATION_CONSTRAINT: credentials.region,
+
+            // only used when key is set
+            RCLONE_CONFIG_ENC_TYPE: 'crypt',
+            RCLONE_CONFIG_ENC_REMOTE: 'src:' + apiConfig.bucket + '/' + sourceFilePath,
+            RCLONE_CONFIG_ENC_FILENAME_ENCRYPTION: 'standard',
+            RCLONE_CONFIG_ENC_PASSWORD: password.toString('utf8').trim()
         };
+        var args = RCLONE_ARGS.concat('copy', apiConfig.key ? 'enc:' : ('src:' + apiConfig.bucket + '/' + sourceFilePath), 'dest:' + destination);
 
-        var s3 = new AWS.S3(credentials);
+        shell.exec('restore', RCLONE_CMD, args, { env: env }, function (error) {
+            if (error) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
 
-        var multipartDownload = new S3BlockReadStream(s3, params, { blockSize: 64 * 1024 * 1024, logCallback: debug });
-
-        multipartDownload.on('error', function (error) {
-            // TODO ENOENT for the mock, fix upstream!
-            if (error.code === 'NoSuchKey' || error.code === 'ENOENT') return callback(new BackupsError(BackupsError.NOT_FOUND));
-
-            debug('[%s] restore: s3 stream error.', backupId, error);
-            callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
+            callback(null);
         });
-
-        targz.extract(multipartDownload, destination, apiConfig.key || null, callback);
     });
 }
 
@@ -146,22 +163,27 @@ function copyBackup(apiConfig, oldBackupId, newBackupId, callback) {
     assert.strictEqual(typeof newBackupId, 'string');
     assert.strictEqual(typeof callback, 'function');
 
+    debug('copyBackup: %s -> %s', oldBackupId, newBackupId);
+
     getBackupCredentials(apiConfig, function (error, credentials) {
         if (error) return callback(error);
 
-        var params = {
-            Bucket: apiConfig.bucket,
-            Key: getBackupFilePath(apiConfig, newBackupId),
-            CopySource: path.join(apiConfig.bucket, getBackupFilePath(apiConfig, oldBackupId))
+        var env = {
+            RCLONE_CONFIG_S3_TYPE: 's3',
+            RCLONE_CONFIG_ENV_AUTH: '',
+            RCLONE_CONFIG_S3_ACCESS_KEY_ID: credentials.accessKeyId,
+            RCLONE_CONFIG_S3_SECRET_ACCESS_KEY: credentials.secretAccessKey,
+            RCLONE_CONFIG_S3_REGION: credentials.signatureVersion === 'v2' ? 'other-v2-signature': credentials.region,
+            RCLONE_CONFIG_S3_ENDPOINT: credentials.endpoint || '',
+            RCLONE_CONFIG_S3_LOCATION_CONSTRAINT: credentials.region
         };
 
-        var s3 = new AWS.S3(credentials);
-        s3.copyObject(params, function (error) {
-            if (error && error.code === 'NoSuchKey') return callback(new BackupsError(BackupsError.NOT_FOUND, 'Old backup not found'));
-            if (error) {
-                debug('copyBackup: s3 copy error.', error);
-                return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
-            }
+        var source = path.join(apiConfig.bucket, getBackupFilePath(apiConfig, oldBackupId));
+        var destination = path.join(apiConfig.bucket, getBackupFilePath(apiConfig, newBackupId));
+        var args = RCLONE_ARGS.concat('copy', 's3:' + source, 's3:' + destination);
+
+        shell.exec('restore', RCLONE_CMD, args, { env: env }, function (error) {
+            if (error) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
 
             callback(null);
         });
@@ -176,24 +198,26 @@ function removeBackups(apiConfig, backupIds, callback) {
     getBackupCredentials(apiConfig, function (error, credentials) {
         if (error) return callback(error);
 
-        var params = {
-            Bucket: apiConfig.bucket,
-            Delete: {
-                Objects: [ ] // { Key }
-            }
+        var env = {
+            RCLONE_CONFIG_S3_TYPE: 's3',
+            RCLONE_CONFIG_ENV_AUTH: '',
+            RCLONE_CONFIG_S3_ACCESS_KEY_ID: credentials.accessKeyId,
+            RCLONE_CONFIG_S3_SECRET_ACCESS_KEY: credentials.secretAccessKey,
+            RCLONE_CONFIG_S3_REGION: credentials.signatureVersion === 'v2' ? 'other-v2-signature': credentials.region,
+            RCLONE_CONFIG_S3_ENDPOINT: credentials.endpoint || '',
+            RCLONE_CONFIG_S3_LOCATION_CONSTRAINT: credentials.region
         };
 
-        backupIds.forEach(function (backupId) {
-            params.Delete.Objects.push({ Key: getBackupFilePath(apiConfig, backupId) });
-        });
+        async.eachSeries(backupIds, function (id, iteratorCallback) {
+            var filePath = getBackupFilePath(apiConfig, id);
 
-        var s3 = new AWS.S3(credentials);
-        s3.deleteObjects(params, function (error, data) {
-            if (error) debug('removeBackups: Unable to remove %s. Not fatal.', params.Key, error);
-            else debug('removeBackups: Deleted: %j Errors: %j', data.Deleted, data.Errors);
+            var args = RCLONE_ARGS.concat('purge', 's3:' + filePath);
+            shell.exec('backup', RCLONE_CMD, args, { env: env }, function (error) {
+                if (error) debug('removeBackups: Unable to remove %s : %s', filePath, error.message);
 
-            callback(null);
-        });
+                iteratorCallback();
+            });
+        }, callback);
     });
 }
 
