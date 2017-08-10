@@ -1,0 +1,9 @@
+#!/bin/sh
+# motd hook to remind admins about updates
+printf "\t\t\tNOTE TO CLOUDRON ADMINS\n"
+printf "\t\t\t-----------------------\n"
+printf "Please do not run apt upgrade manually as it will update packages that\n"
+printf "Cloudron relies on and may break your installation. Ubuntu security updates\n"
+printf "are automatically installed on this server every night.\n"
+printf "\n"
+printf "Read more at https://cloudron.io/documentation/security/#os-updates\n"

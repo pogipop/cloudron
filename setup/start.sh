@@ -173,6 +173,9 @@ ln -sfF "${PLATFORM_DATA_DIR}/collectd" /etc/collectd
 cp "${script_dir}/start/collectd.conf" "${PLATFORM_DATA_DIR}/collectd/collectd.conf"
 systemctl restart collectd
 
+echo "==> Adding motd message for admins"
+cp "${script_dir}/start/cloudron-motd" /etc/update-motd.d/92-cloudron
+
 echo "==> Configuring nginx"
 # link nginx config to system config
 unlink /etc/nginx 2>/dev/null || rm -rf /etc/nginx
