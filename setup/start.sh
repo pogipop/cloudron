@@ -42,7 +42,7 @@ systemctl restart apparmor
 usermod ${USER} -a -G docker
 # preserve the existing storage driver (user might be using overlay2)
 storage_driver=$(docker info | grep "Storage Driver" | sed 's/.*: //')
-[[ -n "${storage_driver}" ]] || storage_driver="devicemapper" # if the above command fails
+[[ -n "${storage_driver}" ]] || storage_driver="overlay2" # if the above command fails
 
 temp_file=$(mktemp)
 # create systemd drop-in. some apps do not work with aufs

@@ -58,7 +58,7 @@ echo "==> Installing Docker"
 
 # create systemd drop-in file
 mkdir -p /etc/systemd/system/docker.service.d
-echo -e "[Service]\nExecStart=\nExecStart=/usr/bin/dockerd -H fd:// --log-driver=journald --exec-opt native.cgroupdriver=cgroupfs --storage-driver=devicemapper" > /etc/systemd/system/docker.service.d/cloudron.conf
+echo -e "[Service]\nExecStart=\nExecStart=/usr/bin/dockerd -H fd:// --log-driver=journald --exec-opt native.cgroupdriver=cgroupfs --storage-driver=overlay2" > /etc/systemd/system/docker.service.d/cloudron.conf
 
 curl -sL https://download.docker.com/linux/ubuntu/dists/xenial/pool/stable/amd64/docker-ce_17.03.1~ce-0~ubuntu-xenial_amd64.deb -o /tmp/docker.deb
 # apt install with install deps (as opposed to dpkg -i)
@@ -66,8 +66,8 @@ apt install -y /tmp/docker.deb
 rm /tmp/docker.deb
 
 storage_driver=$(docker info | grep "Storage Driver" | sed 's/.*: //')
-if [[ "${storage_driver}" != "devicemapper" ]]; then
-    echo "Docker is using "${storage_driver}" instead of devicemapper"
+if [[ "${storage_driver}" != "overlay2" ]]; then
+    echo "Docker is using "${storage_driver}" instead of overlay2"
     exit 1
 fi
 
