@@ -42,6 +42,7 @@ var addons = require('./addons.js'),
     manifestFormat = require('cloudron-manifestformat'),
     net = require('net'),
     nginx = require('./nginx.js'),
+    os = require('os'),
     path = require('path'),
     paths = require('./paths.js'),
     safe = require('safetydance'),
@@ -56,6 +57,9 @@ var addons = require('./addons.js'),
 
 var COLLECTD_CONFIG_EJS = fs.readFileSync(__dirname + '/collectd.config.ejs', { encoding: 'utf8' }),
     RELOAD_COLLECTD_CMD = path.join(__dirname, 'scripts/reloadcollectd.sh'),
+    LOGROTATE_CONFIG_EJS = fs.readFileSync(__dirname + '/logrotate.ejs', { encoding: 'utf8' }),
+    MV_LOGROTATE_CONFIG_CMD = path.join(__dirname, 'scripts/mvlogrotateconfig.sh'),
+    RM_LOGROTATE_CONFIG_CMD = path.join(__dirname, 'scripts/rmlogrotateconfig.sh'),
     RMAPPDIR_CMD = path.join(__dirname, 'scripts/rmappdir.sh'),
     CREATEAPPDIR_CMD = path.join(__dirname, 'scripts/createappdir.sh');
 
@@ -169,6 +173,32 @@ function removeCollectdProfile(app, callback) {
         if (error && error.code !== 'ENOENT') debugApp(app, 'Error removing collectd profile', error);
         shell.sudo('removeCollectdProfile', [ RELOAD_COLLECTD_CMD ], callback);
     });
+}
+
+function addLogrotateConfig(app, callback) {
+    assert.strictEqual(typeof app, 'object');
+    assert.strictEqual(typeof callback, 'function');
+
+    docker.inspect(app.containerId, function (error, result) {
+        if (error) return callback(error);
+
+        var runVolume = result.Mounts.find(function (mount) { return mount.Destination === '/run'; });
+        if (!runVolume) return callback(new Error('App does not have /run mounted'));
+
+        var logrotateConf = ejs.render(LOGROTATE_CONFIG_EJS, { volumePath: runVolume.Source });
+        var tmpFilePath = path.join(os.tmpdir(), app.id + '.logrotate');
+        fs.writeFile(tmpFilePath, logrotateConf, function (error) {
+            if (error) return callback(error);
+            shell.sudo('addLogrotateConfig', [ MV_LOGROTATE_CONFIG_CMD, tmpFilePath, app.id ], callback);
+        });
+    });
+}
+
+function removeLogrotateConfig(app, callback) {
+    assert.strictEqual(typeof app, 'object');
+    assert.strictEqual(typeof callback, 'function');
+
+    shell.sudo('removeLogrotateConfig', [ RM_LOGROTATE_CONFIG_CMD, app.id ], callback);
 }
 
 function verifyManifest(app, callback) {
@@ -362,6 +392,7 @@ function install(app, callback) {
         updateApp.bind(null, app, { installationProgress: '10, Cleaning up old install' }),
         unconfigureNginx.bind(null, app),
         removeCollectdProfile.bind(null, app),
+        removeLogrotateConfig.bind(null, app),
         stopApp.bind(null, app),
         deleteContainers.bind(null, app),
         // oldConfig can be null during upgrades
@@ -405,6 +436,9 @@ function install(app, callback) {
 
         updateApp.bind(null, app, { installationProgress: '70, Creating container' }),
         createContainer.bind(null, app),
+
+        updateApp.bind(null, app, { installationProgress: '75, Setting up logrotate config' }),
+        addLogrotateConfig.bind(null, app),
 
         updateApp.bind(null, app, { installationProgress: '80, Setting up collectd profile' }),
         addCollectdProfile.bind(null, app),
@@ -467,6 +501,7 @@ function configure(app, callback) {
         updateApp.bind(null, app, { installationProgress: '10, Cleaning up old install' }),
         unconfigureNginx.bind(null, app),
         removeCollectdProfile.bind(null, app),
+        removeLogrotateConfig.bind(null, app),
         stopApp.bind(null, app),
         deleteContainers.bind(null, app),
         function (next) {
@@ -495,6 +530,9 @@ function configure(app, callback) {
 
         updateApp.bind(null, app, { installationProgress: '60, Creating container' }),
         createContainer.bind(null, app),
+
+        updateApp.bind(null, app, { installationProgress: '65, Setting up logrotate config' }),
+        addLogrotateConfig.bind(null, app),
 
         updateApp.bind(null, app, { installationProgress: '70, Add collectd profile' }),
         addCollectdProfile.bind(null, app),
@@ -548,6 +586,7 @@ function update(app, callback) {
         // we cannot easily 'recover' from backup failures because we have to revert manfest and portBindings
         updateApp.bind(null, app, { installationProgress: '25, Cleaning up old install' }),
         removeCollectdProfile.bind(null, app),
+        removeLogrotateConfig.bind(null, app),
         stopApp.bind(null, app),
         deleteContainers.bind(null, app),
         function deleteImageIfChanged(done) {
@@ -579,6 +618,9 @@ function update(app, callback) {
         updateApp.bind(null, app, { installationProgress: '80, Creating container' }),
         createContainer.bind(null, app),
 
+        updateApp.bind(null, app, { installationProgress: '85, Setting up logrotate config' }),
+        addLogrotateConfig.bind(null, app),
+
         updateApp.bind(null, app, { installationProgress: '90, Add collectd profile' }),
         addCollectdProfile.bind(null, app),
 
@@ -607,6 +649,9 @@ function uninstall(app, callback) {
     async.series([
         updateApp.bind(null, app, { installationProgress: '0, Remove collectd profile' }),
         removeCollectdProfile.bind(null, app),
+
+        updateApp.bind(null, app, { installationProgress: '5, Remove logrotate config' }),
+        removeLogrotateConfig.bind(null, app),
 
         updateApp.bind(null, app, { installationProgress: '10, Stopping app' }),
         stopApp.bind(null, app),

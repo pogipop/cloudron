@@ -99,6 +99,7 @@ mkdir -p "${PLATFORM_DATA_DIR}/mongodb"
 mkdir -p "${PLATFORM_DATA_DIR}/snapshots"
 mkdir -p "${PLATFORM_DATA_DIR}/addons/mail"
 mkdir -p "${PLATFORM_DATA_DIR}/collectd/collectd.conf.d"
+mkdir -p "${PLATFORM_DATA_DIR}/logrotate.d"
 mkdir -p "${PLATFORM_DATA_DIR}/acme"
 
 mkdir -p "${BOX_DATA_DIR}/appicons"
@@ -172,6 +173,11 @@ rm -rf /etc/collectd
 ln -sfF "${PLATFORM_DATA_DIR}/collectd" /etc/collectd
 cp "${script_dir}/start/collectd/collectd.conf" "${PLATFORM_DATA_DIR}/collectd/collectd.conf"
 systemctl restart collectd
+
+echo "==> Configuring logrotate"
+if ! grep -q "^include ${PLATFORM_DATA_DIR}/logrotate.d" /etc/logrotate.conf; then
+    echo -e "\ninclude ${PLATFORM_DATA_DIR}/logrotate.d\n" >> /etc/logrotate.conf
+fi
 
 echo "==> Adding motd message for admins"
 cp "${script_dir}/start/cloudron-motd" /etc/update-motd.d/92-cloudron
@@ -281,7 +287,7 @@ CONF_END
 
 echo "==> Changing ownership"
 chown "${USER}:${USER}" -R "${CONFIG_DIR}"
-chown "${USER}:${USER}" -R "${PLATFORM_DATA_DIR}/nginx" "${PLATFORM_DATA_DIR}/collectd" "${PLATFORM_DATA_DIR}/addons" "${PLATFORM_DATA_DIR}/acme"
+chown "${USER}:${USER}" -R "${PLATFORM_DATA_DIR}/nginx" "${PLATFORM_DATA_DIR}/collectd" "${PLATFORM_DATA_DIR}/logrotate.d" "${PLATFORM_DATA_DIR}/addons" "${PLATFORM_DATA_DIR}/acme"
 chown "${USER}:${USER}" -R "${BOX_DATA_DIR}"
 chown "${USER}:${USER}" -R "${PLATFORM_DATA_DIR}/mail/dkim" # this is owned by box currently since it generates the keys
 chown "${USER}:${USER}" "${PLATFORM_DATA_DIR}/INFRA_VERSION" 2>/dev/null || true

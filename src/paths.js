@@ -17,6 +17,7 @@ exports = module.exports = {
     ACME_CHALLENGES_DIR: path.join(config.baseDir(), 'platformdata/acme'),
     ADDON_CONFIG_DIR: path.join(config.baseDir(), 'platformdata/addons'),
     COLLECTD_APPCONFIG_DIR: path.join(config.baseDir(), 'platformdata/collectd/collectd.conf.d'),
+    LOGROTATE_CONFIG_DIR: path.join(config.baseDir(), 'platformdata/logrotate.d'),
     MAIL_DATA_DIR: path.join(config.baseDir(), 'platformdata/mail'),
     NGINX_CONFIG_DIR: path.join(config.baseDir(), 'platformdata/nginx'),
     NGINX_APPCONFIG_DIR: path.join(config.baseDir(), 'platformdata/nginx/applications'),
