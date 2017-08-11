@@ -14,6 +14,7 @@ exports = module.exports = {
     deleteContainers: deleteContainers,
     createSubcontainer: createSubcontainer,
     getContainerIdByIp: getContainerIdByIp,
+    inspect: inspect,
     execContainer: execContainer
 };
 
@@ -384,6 +385,18 @@ function getContainerIdByIp(ip, callback) {
         debug('found container %s with ip %s', containerId, ip);
 
         callback(null, containerId);
+    });
+}
+
+function inspect(containerId, callback) {
+    assert.strictEqual(typeof containerId, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    var container = exports.connection.getContainer(containerId);
+
+    container.inspect(function (error, result) {
+        if (error) return callback(error);
+        callback(null, result);
     });
 }
 
