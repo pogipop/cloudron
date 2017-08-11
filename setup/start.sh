@@ -170,7 +170,7 @@ cp "${script_dir}/start/sudoers" /etc/sudoers.d/${USER}
 echo "==> Configuring collectd"
 rm -rf /etc/collectd
 ln -sfF "${PLATFORM_DATA_DIR}/collectd" /etc/collectd
-cp "${script_dir}/start/collectd.conf" "${PLATFORM_DATA_DIR}/collectd/collectd.conf"
+cp "${script_dir}/start/collectd/collectd.conf" "${PLATFORM_DATA_DIR}/collectd/collectd.conf"
 systemctl restart collectd
 
 echo "==> Adding motd message for admins"

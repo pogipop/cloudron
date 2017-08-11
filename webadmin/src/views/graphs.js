@@ -32,6 +32,7 @@ angular.module('Application').controller('GraphsController', ['$scope', '$locati
     }
 
     function renderDisk(type, free, reserved, used) {
+        // this will mismatch df output since df -H is SI units (1000)
         $scope.diskUsage[type] = {
             used: bytesToGigaBytes(used.datapoints[0][0] + reserved.datapoints[0][0]),
             free: bytesToGigaBytes(free.datapoints[0][0]),
