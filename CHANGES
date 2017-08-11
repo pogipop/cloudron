@@ -941,4 +941,10 @@
 
 [1.5.0]
 * Update node to 6.11.2
+* Add a new view to display platform and app logs
+* Rework web UI to use flexbox
+* Add motd message to warn admins that to not run 'apt upgrade'
+* Switch default storage backend for new Cloudrons to overlay2
+* Add a custom graphite plugin to collect disk usage statistics
+* Rotate logs of all apps automatically
 
