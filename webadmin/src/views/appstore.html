@@ -199,12 +199,12 @@
 </div>
 
 <!-- appstore login -->
-<div ng-show="ready && !validAppstoreAccount" class="card card-small appstore-login ng-cloak">
+<div ng-show="ready && !validAppstoreAccount" class="container card card-small appstore-login ng-cloak">
     <div class="col-md-12">
         <h1 ng-show="appstoreLogin.register">Sign up with Cloudron App Store</h1>
         <h1 ng-hide="appstoreLogin.register">Login to Cloudron App Store</h1>
     </div>
-    <div class="col-md-12">
+    <div class="col-md-12" style="margin-bottom: 10px;">
         <p>An App Store account gives you access to apps and updates.</p>
         <br/>
         <small class="text-danger" ng-show="appstoreLogin.error.generic">{{ appstoreLogin.error.generic }}</small>
