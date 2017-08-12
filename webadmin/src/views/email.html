@@ -41,8 +41,20 @@
 <div class="card" style="margin-bottom: 15px;">
     <div class="row">
         <div class="col-md-12">
-            Cloudron has a built-in email server that allows users to send and receive email for your domain.
-            The <a ng-href="{{ config.webServerOrigin +  '/documentation/email/#imap-settings-for-cloudron-email' }}" target="_blank">User manual</a> has information on how to setup email clients.
+            Cloudron has a built-in <a ng-href="{{ config.webServerOrigin + '/documentation/email/' }}" target="_blank">email server</a> that allows users to send and receive email for your domain.
+        </div>
+    </div>
+    <br/>
+    <div class="row" ng-show="mailConfig.enabled">
+        <div class="col-md-12">
+           <a href="" data-toggle="collapse" data-parent="#accordion" data-target="#mail_settings">Mail server settings for email clients</a>
+           <div id="mail_settings" class="panel-collapse collapse">
+               <br/>
+               <p><b>Incoming Mail (IMAP)</b><br/>Server: <span ng-click-select>my.{{config.fqdn}}</span><br/>Port: 993 (TLS)</p>
+               <p><b>Outgoing Mail (SMTP)</b><br/>Server: <span ng-click-select>my.{{config.fqdn}}</span><br/>Port: 587 (STARTTLS)</p>
+               <p><b>ManageSieve</b><br/>Server: <span ng-click-select>my.{{config.fqdn}}</span><br/>Port: 4190 (TLS)</p>
+               <p>All the servers require your Cloudron credentials for authentication.</p>
+            </div>
         </div>
     </div>
     <br/>
