@@ -88,10 +88,10 @@
     <div class="row">
         <div class="col-xs-12">
             <p>
-                The Cloudron <a href="https://cloudron.io/references/api/" target="_blank">REST API</a> can be used to manage all aspects of the Cloudron like adding users and installing apps.
+                The Cloudron <a ng-href="{{ config.webServerOrigin + '/documentation/developer/api/' }}" target="_blank">REST API</a> can be used to manage all aspects of the Cloudron like adding users and installing apps.
                 <br/>
                 <br/>
-                You can develop apps for the Cloudron using the <a href="https://cloudron.io/knowledge-base/CLI/" target="_blank">command-line tool</a>. See the <a href="{{ config.webServerOrigin }}/documentation.html" target="_blank">docs</a> for more information.
+                You can also develop custom apps for the Cloudron by following our <a ng-href="{{ config.webServerOrigin + '/documentation/developer/packaging/' }}" target="_blank">packaging guide</a>.
             </p>
         </div>
     </div>
@@ -110,7 +110,7 @@
     <div class="grid-item-top">
         <div class="row">
             <div class="col-xs-12">
-                <p>These tokens can be used to access the <a href="https://cloudron.io/references/api/" target="_blank">Cloudron API</a>. They have the <b>admin</b> <a href="https://cloudron.io/references/api/#scopes" target="_blank">scope</a> and do not expire.</p>
+                <p>These tokens can be used to access the <a ng-href="{{ config.webServerOrigin + '/documentation/developer/api/' }}" target="_blank">Cloudron API</a>.
                 <br/>
                 <h4 class="text-muted">Active Tokens</h4>
                 <hr/>

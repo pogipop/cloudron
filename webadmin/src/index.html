@@ -137,7 +137,7 @@
                             </fieldset>
                         </div>
                         <div ng-show="config.provider !== 'caas' && config.update.box.upgrade">
-                            <b>Please use the CLI tool to upgrade by following the instructions <a href="https://cloudron.io/references/selfhosting/#updates" target="_blank" >here</a>.</b>
+                            <b>Please use the CLI tool to upgrade by following the instructions <a ng-href="{{ config.webServerOrigin + '/documentation/updates/' }}" target="_blank" >here</a>.</b>
                         </div>
                     </div>
                 </div>

@@ -42,7 +42,7 @@
     <div class="row">
         <div class="col-md-12">
             Cloudron has a built-in email server that allows users to send and receive email for your domain.
-            The <a href="https://cloudron.io/references/usermanual/#email" target="_blank">User manual</a> has information on how to setup email clients.
+            The <a ng-href="{{ config.webServerOrigin +  '/documentation/email/#imap-settings-for-cloudron-email' }}" target="_blank">User manual</a> has information on how to setup email clients.
         </div>
     </div>
     <br/>
@@ -51,7 +51,7 @@
             <button ng-class="mailConfig.enabled ? 'btn btn-danger' : 'btn btn-primary'" ng-click="email.toggle()" ng-enabled="mailConfig">{{ mailConfig.enabled ? "Disable Email" : "Enable Email" }}</button>
         </div>
         <div class="col-md-12" ng-show="dnsConfig.provider === 'caas'">
-            <span class="text-danger text-bold">This feature requires the Cloudron to be on <a href="https://cloudron.io/references/usermanual/#entire-cloudron-on-a-custom-domain" target="_blank">custom domain</a>.</span>
+            <span class="text-danger text-bold">This feature requires the Cloudron to be on <a ng-href="{{ config.webServerOrigin + '/documentation/managed-hosting/#using-a-custom-domain' }}" target="_blank">custom domain</a>.</span>
         </div>
     </div>
 </div>

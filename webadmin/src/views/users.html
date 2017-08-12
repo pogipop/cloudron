@@ -248,7 +248,7 @@
                 <div class="col-lg-12">
                     <span ng-show="mailConfig.enabled">
                         Each user has a mailbox at <b><i>username</i>@{{ config.fqdn }}</b>.
-                        Please refer to the <a href="https://cloudron.io/references/usermanual/#email" target="_blank">user documentation</a> on how to use Cloudron email accounts.
+                        Please refer to the <a ng-href="{{ config.webServerOrigin + '/documentation/email/#imap-settings-for-cloudron-email' }}" target="_blank">user documentation</a> on how to use Cloudron email accounts.
                         <br/>
                         <br/>
                     </span>
