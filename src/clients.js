@@ -45,7 +45,7 @@ var appdb = require('./appdb.js'),
     hat = require('hat'),
     tokendb = require('./tokendb.js'),
     util = require('util'),
-    uuid = require('node-uuid');
+    uuid = require('uuid');
 
 function ClientsError(reason, errorOrMessage) {
     assert.strictEqual(typeof reason, 'string');

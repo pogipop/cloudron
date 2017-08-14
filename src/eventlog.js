@@ -35,7 +35,7 @@ var assert = require('assert'),
     debug = require('debug')('box:eventlog'),
     eventlogdb = require('./eventlogdb.js'),
     util = require('util'),
-    uuid = require('node-uuid');
+    uuid = require('uuid');
 
 var NOOP_CALLBACK = function (error) { if (error) debug(error); };
 

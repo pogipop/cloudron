@@ -34,7 +34,7 @@ var appdb = require('../../appdb.js'),
     taskmanager = require('../../taskmanager.js'),
     tokendb = require('../../tokendb.js'),
     url = require('url'),
-    uuid = require('node-uuid'),
+    uuid = require('uuid'),
     _ = require('underscore');
 
 var SERVER_URL = 'http://localhost:' + config.get('port');

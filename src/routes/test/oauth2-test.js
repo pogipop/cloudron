@@ -7,7 +7,7 @@
 'use strict';
 
 var expect = require('expect.js'),
-    uuid = require('node-uuid'),
+    uuid = require('uuid'),
     async = require('async'),
     hat = require('hat'),
     urlParse = require('url').parse,

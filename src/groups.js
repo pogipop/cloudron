@@ -25,7 +25,7 @@ var assert = require('assert'),
     DatabaseError = require('./databaseerror.js'),
     groupdb = require('./groupdb.js'),
     util = require('util'),
-    uuid = require('node-uuid');
+    uuid = require('uuid');
 
 // http://dustinsenos.com/articles/customErrorsInNode
 // http://code.google.com/p/v8/wiki/JavaScriptStackTraceApi

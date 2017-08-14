@@ -73,7 +73,7 @@ var addons = require('./addons.js'),
     updateChecker = require('./updatechecker.js'),
     url = require('url'),
     util = require('util'),
-    uuid = require('node-uuid'),
+    uuid = require('uuid'),
     validator = require('validator');
 
 // http://dustinsenos.com/articles/customErrorsInNode
