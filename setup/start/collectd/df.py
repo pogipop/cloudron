@@ -1,4 +1,4 @@
-import collectd,os
+import collectd,os,subprocess
 
 # https://blog.dbrgn.ch/2017/3/10/write-a-collectd-python-plugin/
 
@@ -6,7 +6,7 @@ disks = []
 
 def init():
     global disks
-    lines = [s.split() for s in os.popen("df --type=ext4 --output=source,target,size,used,avail").read().splitlines()]
+    lines = [s.split() for s in subprocess.check_output(["df", "--type=ext4", "--output=source,target,size,used,avail"]).splitlines()]
     disks = lines[1:] # strip header
     collectd.info('custom df plugin initialized with %s' % disks)
 
