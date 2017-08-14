@@ -62,7 +62,7 @@
     "semver": "^4.3.6",
     "showdown": "^1.6.0",
     "split": "^1.0.0",
-    "superagent": "^1.8.3",
+    "superagent": "^3.5.2",
     "supererror": "^0.7.1",
     "tar-fs": "https://registry.npmjs.org/tar-fs/-/tar-fs-1.15.2.tgz",
     "tldjs": "^1.6.2",
