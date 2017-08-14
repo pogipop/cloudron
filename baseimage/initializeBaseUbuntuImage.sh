@@ -39,7 +39,8 @@ apt-get -y install \
     rcconf \
     swaks \
     unattended-upgrades \
-    unbound
+    unbound \
+    xfsprogs
 
 # this ensures that unattended upgades are enabled, if it was disabled during ubuntu install time (see #346)
 # debconf-set-selection of unattended-upgrades/enable_auto_updates + dpkg-reconfigure does not work
