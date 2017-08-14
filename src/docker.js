@@ -209,6 +209,14 @@ function createSubcontainer(app, name, cmd, options, callback) {
                 SecurityOpt: enableSecurityOpt ? [ "apparmor=docker-cloudron-app" ] : null // profile available only on cloudron
             }
         };
+
+        var capabilities = manifest.capabilities || [];
+        if (capabilities.includes('net_admin')) {
+            containerOptions.HostConfig.CapAdd = [
+                'NET_ADMIN'
+            ];
+        }
+
         containerOptions = _.extend(containerOptions, options);
 
         debugApp(app, 'Creating container for %s with options %j', app.manifest.dockerImage, containerOptions);

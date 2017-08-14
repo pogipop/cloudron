@@ -53,9 +53,9 @@
       "resolved": "https://registry.npmjs.org/asynckit/-/asynckit-0.4.0.tgz"
     },
     "aws-sdk": {
-      "version": "2.97.0",
+      "version": "2.98.0",
       "from": "aws-sdk@>=2.97.0 <3.0.0",
-      "resolved": "https://registry.npmjs.org/aws-sdk/-/aws-sdk-2.97.0.tgz",
+      "resolved": "https://registry.npmjs.org/aws-sdk/-/aws-sdk-2.98.0.tgz",
       "dependencies": {
         "uuid": {
           "version": "3.0.1",
@@ -183,7 +183,7 @@
     },
     "cloudron-manifestformat": {
       "version": "2.9.0",
-      "from": "cloudron-manifestformat@>=2.8.0 <3.0.0",
+      "from": "cloudron-manifestformat@>=2.9.0 <3.0.0",
       "resolved": "https://registry.npmjs.org/cloudron-manifestformat/-/cloudron-manifestformat-2.9.0.tgz",
       "dependencies": {
         "safetydance": {
