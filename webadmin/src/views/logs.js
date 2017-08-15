@@ -93,8 +93,13 @@ angular.module('Application').controller('LogsController', ['$scope', '$location
             var url = Client.apiOrigin.replace('https', 'wss') + '/api/v1/apps/' + $scope.selected.value + '/exec?tty=true';
             var socket = new WebSocket(url);
             $scope.terminal.attach(socket);
+
+            socket.onclose = function () {
+                // retry in one second
+                setTimeout($scope.showTerminal, 1000);
+            };
         } catch (e) {
-            console.error('-----', e);
+            console.error(e);
         }
 
         $scope.terminal.open(document.querySelector('.logs-and-term-container'));
