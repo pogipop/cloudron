@@ -121,7 +121,7 @@ html, body {
 }
 
 .layout-content {
-    flex-grow: 2;
+    flex-grow: 1;
     overflow: auto;
 }
 
@@ -144,7 +144,7 @@ html, body {
 .navbar {
     display: block;
     width: 100%;
-    flex-grow: 1;
+    flex-grow: 0;
 
     .navbar-collapse {
         background-color: #F8F8F8;
@@ -680,7 +680,7 @@ h1, h2, h3 {
 }
 
 footer {
-    flex-grow: 1;
+    flex-grow: 0;
     background-color: #f8f8f8;
     width: 100%;
     color: #555;
@@ -822,29 +822,6 @@ footer {
         }
     }
 }
-
-// ----------------------------
-// Oauth classes
-// ----------------------------
-
-.oauth {
-    height: 100%;
-    width: 100%;
-    padding: 0;
-    background: #F7F7F7;
-
-    h1 {
-        font-size: 33px;
-    }
-
-    .card {
-        max-width: none;
-        padding: 20px;
-        text-align: left;
-        margin-top: 50px;
-    }
-}
-
 
 // ----------------------------
 // Graphs classes

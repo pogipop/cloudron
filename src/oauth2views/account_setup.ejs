@@ -15,64 +15,67 @@ app.controller('Controller', ['$scope', function ($scope) {
 
 </script>
 
-<center>
+<div class="layout-content">
+
+  <center>
     <br/>
     <h4>Hello <%= (user && user.email) ? user.email : '' %>, welcome to <%= cloudronName %>.</h4>
     <h2>Setup your account and password.</h2>
-</center>
+  </center>
 
-<div class="container" ng-app="Application" ng-controller="Controller">
+  <div class="container" ng-app="Application" ng-controller="Controller">
     <div class="row">
-        <div class="col-md-6 col-md-offset-3">
-            <form action="/api/v1/session/account/setup" method="post" name="setupForm" autocomplete="off" role="form" novalidate>
-                <input type="password" style="display: none;">
-                <input type="hidden" name="_csrf" value="<%= csrf %>"/>
-                <input type="hidden" name="resetToken" value="<%= resetToken %>"/>
+      <div class="col-md-6 col-md-offset-3">
+        <form action="/api/v1/session/account/setup" method="post" name="setupForm" autocomplete="off" role="form" novalidate>
+          <input type="password" style="display: none;">
+          <input type="hidden" name="_csrf" value="<%= csrf %>"/>
+          <input type="hidden" name="resetToken" value="<%= resetToken %>"/>
 
-                <center><p class="has-error"><%= error %></p></center>
+          <center><p class="has-error"><%= error %></p></center>
 
 <% if (user && user.username) { %>
-                <div class="form-group"">
-                    <label class="control-label">Username</label>
-                    <input type="text" class="form-control" ng-model="username" name="username" readonly required>
-                </div>
+          <div class="form-group"">
+            <label class="control-label">Username</label>
+            <input type="text" class="form-control" ng-model="username" name="username" readonly required>
+          </div>
 <% } else { %>
-                <div class="form-group" ng-class="{ 'has-error': (setupForm.username.$dirty && setupForm.username.$invalid) }">
-                    <label class="control-label">Username</label>
-                    <div class="control-label" ng-show="setupForm.username.$dirty && setupForm.username.$invalid">
-                        <small ng-show="setupForm.username.$error.minlength">The username is too short</small>
-                        <small ng-show="setupForm.username.$error.maxlength">The username is too long</small>
-                        <small ng-show="setupForm.username.$dirty && setupForm.username.$invalid">Not a valid username</small>
-                    </div>
-                    <input type="text" class="form-control" ng-model="username" name="username" required autofocus>
-                </div>
+          <div class="form-group" ng-class="{ 'has-error': (setupForm.username.$dirty && setupForm.username.$invalid) }">
+            <label class="control-label">Username</label>
+            <div class="control-label" ng-show="setupForm.username.$dirty && setupForm.username.$invalid">
+              <small ng-show="setupForm.username.$error.minlength">The username is too short</small>
+              <small ng-show="setupForm.username.$error.maxlength">The username is too long</small>
+              <small ng-show="setupForm.username.$dirty && setupForm.username.$invalid">Not a valid username</small>
+            </div>
+            <input type="text" class="form-control" ng-model="username" name="username" required autofocus>
+          </div>
 <% } %>
 
-                <div class="form-group">
-                    <label class="control-label">Display Name</label>
-                    <input type="displayName" class="form-control" ng-model="displayName" name="displayName" required>
-                </div>
+          <div class="form-group">
+            <label class="control-label">Display Name</label>
+            <input type="displayName" class="form-control" ng-model="displayName" name="displayName" required>
+          </div>
 
-                <div class="form-group" ng-class="{ 'has-error': (setupForm.password.$dirty && setupForm.password.$invalid) }">
-                    <label class="control-label">New Password</label>
-                    <div class="control-label" ng-show="setupForm.password.$dirty && setupForm.password.$invalid">
-                        <small ng-show="setupForm.password.$dirty && setupForm.password.$invalid">Password must be 8-30 character with at least one uppercase, one numeric and one special character</small>
-                    </div>
-                    <input type="password" class="form-control" ng-model="password" name="password" ng-pattern="/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[^a-zA-Z0-9])(?!.*\s).{8,30}$/" required>
-                </div>
+          <div class="form-group" ng-class="{ 'has-error': (setupForm.password.$dirty && setupForm.password.$invalid) }">
+            <label class="control-label">New Password</label>
+            <div class="control-label" ng-show="setupForm.password.$dirty && setupForm.password.$invalid">
+              <small ng-show="setupForm.password.$dirty && setupForm.password.$invalid">Password must be 8-30 character with at least one uppercase, one numeric and one special character</small>
+            </div>
+            <input type="password" class="form-control" ng-model="password" name="password" ng-pattern="/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[^a-zA-Z0-9])(?!.*\s).{8,30}$/" required>
+          </div>
 
-                <div class="form-group" ng-class="{ 'has-error': (setupForm.passwordRepeat.$dirty && (password !== passwordRepeat)) }">
-                    <label class="control-label">Repeat Password</label>
-                    <div class="control-label" ng-show="setupForm.passwordRepeat.$dirty && (password !== passwordRepeat)">
-                        <small ng-show="setupForm.passwordRepeat.$dirty && (password !== passwordRepeat)">Passwords don't match</small>
-                    </div>
-                    <input type="password" class="form-control" ng-model="passwordRepeat" name="passwordRepeat" required>
-                </div>
+          <div class="form-group" ng-class="{ 'has-error': (setupForm.passwordRepeat.$dirty && (password !== passwordRepeat)) }">
+            <label class="control-label">Repeat Password</label>
+            <div class="control-label" ng-show="setupForm.passwordRepeat.$dirty && (password !== passwordRepeat)">
+              <small ng-show="setupForm.passwordRepeat.$dirty && (password !== passwordRepeat)">Passwords don't match</small>
+            </div>
+            <input type="password" class="form-control" ng-model="passwordRepeat" name="passwordRepeat" required>
+          </div>
 
-                <input class="btn btn-primary btn-outline pull-right" type="submit" value="Create" ng-disabled="setupForm.$invalid || password !== passwordRepeat"/>
-            </form>
-        </div>
+          <input class="btn btn-primary btn-outline pull-right" type="submit" value="Create" ng-disabled="setupForm.$invalid || password !== passwordRepeat"/>
+        </form>
+      </div>
     </div>
+  </div>
 </div>
 
 <% include footer %>
