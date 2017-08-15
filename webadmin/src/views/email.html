@@ -1,211 +1,203 @@
 
 <!-- Modal enable email -->
 <div class="modal fade" id="enableEmailModal" tabindex="-1" role="dialog">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h4 class="modal-title">Cloudron Email Server</h4>
-            </div>
-            <div class="modal-body" ng-show="dnsConfig.provider === 'noop' || dnsConfig.provider === 'manual'">
-                No DNS provider is setup. Displayed DNS records will have to be setup manually.<br/>
-            </div>
-            <div class="modal-body" ng-show="dnsConfig.provider === 'route53' || dnsConfig.provider === 'digitalocean'">
-                The Cloudron will setup Email related DNS records automatically.
-                If this domain is already configured to handle email with some other provider, it will <b>overwrite</b> those records.
-                <br/><br/>
-                Disabling Cloudron Email later will <b>not</b> put the old records back.
-                <br/><br/>
-                Status of DNS Records will show an error when DNS is propagating (~5 minutes).
-                <br/>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-success" ng-click="email.enable()">I understand, enable</button>
-            </div>
-        </div>
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title">Cloudron Email Server</h4>
+      </div>
+      <div class="modal-body" ng-show="dnsConfig.provider === 'noop' || dnsConfig.provider === 'manual'">
+        No DNS provider is setup. Displayed DNS records will have to be setup manually.<br/>
+      </div>
+      <div class="modal-body" ng-show="dnsConfig.provider === 'route53' || dnsConfig.provider === 'digitalocean'">
+        The Cloudron will setup Email related DNS records automatically.
+        If this domain is already configured to handle email with some other provider, it will <b>overwrite</b> those records.
+        <br/><br/>
+        Disabling Cloudron Email later will <b>not</b> put the old records back.
+        <br/><br/>
+        Status of DNS Records will show an error when DNS is propagating (~5 minutes).
+        <br/>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-success" ng-click="email.enable()">I understand, enable</button>
+      </div>
     </div>
+  </div>
 </div>
 
-<div class="section-header">
-    <div class="text-left">
-        <h1>Email</h1>
-    </div>
-</div>
+<div class="content">
+  <div class="text-left">
+    <h1>Email</h1>
+  </div>
 
-<div class="section-header">
-    <div class="text-left">
-        <h3>IMAP and SMTP Server</h3>
-    </div>
-</div>
+  <div class="text-left">
+    <h3>IMAP and SMTP Server</h3>
+  </div>
 
-<div class="card" style="margin-bottom: 15px;">
+  <div class="card" style="margin-bottom: 15px;">
     <div class="row">
-        <div class="col-md-12">
-            Cloudron has a built-in <a ng-href="{{ config.webServerOrigin + '/documentation/email/' }}" target="_blank">email server</a> that allows users to send and receive email for your domain.
-        </div>
+      <div class="col-md-12">
+        Cloudron has a built-in <a ng-href="{{ config.webServerOrigin + '/documentation/email/' }}" target="_blank">email server</a> that allows users to send and receive email for your domain.
+      </div>
     </div>
     <div class="row" ng-show="mailConfig.enabled">
-        <br/>
-        <div class="col-md-12">
-           <a href="" data-toggle="collapse" data-parent="#accordion" data-target="#mail_settings">Mail server settings for email clients</a>
-           <div id="mail_settings" class="panel-collapse collapse">
-               <br/>
-               <p><b>Incoming Mail (IMAP)</b><br/>Server: <span ng-click-select>my.{{config.fqdn}}</span><br/>Port: 993 (TLS)</p>
-               <p><b>Outgoing Mail (SMTP)</b><br/>Server: <span ng-click-select>my.{{config.fqdn}}</span><br/>Port: 587 (STARTTLS)</p>
-               <p><b>ManageSieve</b><br/>Server: <span ng-click-select>my.{{config.fqdn}}</span><br/>Port: 4190 (TLS)</p>
-               <p>All the servers require your Cloudron credentials for authentication.</p>
-            </div>
+      <br/>
+      <div class="col-md-12">
+       <a href="" data-toggle="collapse" data-parent="#accordion" data-target="#mail_settings">Mail server settings for email clients</a>
+       <div id="mail_settings" class="panel-collapse collapse">
+         <br/>
+         <p><b>Incoming Mail (IMAP)</b><br/>Server: <span ng-click-select>my.{{config.fqdn}}</span><br/>Port: 993 (TLS)</p>
+         <p><b>Outgoing Mail (SMTP)</b><br/>Server: <span ng-click-select>my.{{config.fqdn}}</span><br/>Port: 587 (STARTTLS)</p>
+         <p><b>ManageSieve</b><br/>Server: <span ng-click-select>my.{{config.fqdn}}</span><br/>Port: 4190 (TLS)</p>
+         <p>All the servers require your Cloudron credentials for authentication.</p>
         </div>
+      </div>
     </div>
     <br/>
     <div class="row">
-        <div class="col-md-12" ng-show="dnsConfig.provider !== 'caas'">
-            <button ng-class="mailConfig.enabled ? 'btn btn-danger' : 'btn btn-primary'" ng-click="email.toggle()" ng-enabled="mailConfig">{{ mailConfig.enabled ? "Disable Email" : "Enable Email" }}</button>
-        </div>
-        <div class="col-md-12" ng-show="dnsConfig.provider === 'caas'">
-            <span class="text-danger text-bold">This feature requires the Cloudron to be on <a ng-href="{{ config.webServerOrigin + '/documentation/managed-hosting/#using-a-custom-domain' }}" target="_blank">custom domain</a>.</span>
-        </div>
+      <div class="col-md-12" ng-show="dnsConfig.provider !== 'caas'">
+        <button ng-class="mailConfig.enabled ? 'btn btn-danger' : 'btn btn-primary'" ng-click="email.toggle()" ng-enabled="mailConfig">{{ mailConfig.enabled ? "Disable Email" : "Enable Email" }}</button>
+      </div>
+      <div class="col-md-12" ng-show="dnsConfig.provider === 'caas'">
+        <span class="text-danger text-bold">This feature requires the Cloudron to be on <a ng-href="{{ config.webServerOrigin + '/documentation/managed-hosting/#using-a-custom-domain' }}" target="_blank">custom domain</a>.</span>
+      </div>
     </div>
-</div>
+  </div>
 
-<div class="section-header" ng-show="isPaying">
-    <div class="text-left">
-        <h3>Outbound Mail Relay</h3>
-    </div>
-</div>
+  <div class="text-left" ng-show="isPaying">
+    <h3>Outbound Mail Relay</h3>
+  </div>
 
-<div class="card" style="margin-bottom: 15px;" ng-show="isPaying">
-    <div class="row">
+  <div class="card" style="margin-bottom: 15px;" ng-show="isPaying">
+      <div class="row">
         <div class="col-md-12">
-            Select the mail server through which Cloudron will send outbound mails:
+          Select the mail server through which Cloudron will send outbound mails:
         </div>
-    </div>
-    <br/>
+      </div>
+      <br/>
 
-    <div class="row">
+      <div class="row">
         <div class="col-md-12">
-            <div class="form-group">
-                <select class="form-control" style="width: 50%;" ng-model="mailRelay.preset" ng-options="a.name for a in mailRelayPresets track by a.provider" ng-change="mailRelay.presetChanged()"></select>
-            </div>
+          <div class="form-group">
+            <select class="form-control" style="width: 50%;" ng-model="mailRelay.preset" ng-options="a.name for a in mailRelayPresets track by a.provider" ng-change="mailRelay.presetChanged()"></select>
+          </div>
         </div>
-    </div>
-    <div class="row" ng-show="mailRelay.preset.provider !== 'cloudron-smtp'">
+      </div>
+      <div class="row" ng-show="mailRelay.preset.provider !== 'cloudron-smtp'">
         <div class="col-md-6">
-            <div>
-                <form name="mailRelayForm" role="form" ng-submit="mailRelay.submit()" autocomplete="off" novalidate>
-                    <div class="form-group" ng-class="{ 'has-error': (mailRelayForm.host.$dirty && mailRelayForm.host.$invalid) }">
-                        <label class="control-label">SMTP Host</label>
-                        <div class="control-label" ng-show="(!mailRelayForm.host.$dirty && mailRelay.error.host) || (mailRelayForm.host.$dirty && mailRelayForm.host.$invalid)">
-                            <small ng-show="!mailRelayForm.host.$dirty && mailRelay.error.host">{{ mailRelay.error.host }}</small>
-                        </div>
-                        <input type="text" class="form-control" ng-model="mailRelay.relay.host" name="host" required>
-                    </div>
-                    <div class="form-group" ng-class="{ 'has-error': (mailRelayForm.port.$dirty && mailRelayForm.port.$invalid) }">
-                        <label class="control-label">SMTP Port (STARTTLS)</label>
-                        <div class="control-label" ng-show="(!mailRelayForm.port.$dirty && mailRelay.error.port) || (mailRelayForm.port.$dirty && mailRelayForm.port.$invalid)">
-                            <small ng-show="!mailRelayForm.port.$dirty && mailRelay.error.port">{{ mailRelay.error.port }}</small>
-                        </div>
-                        <input type="number" class="form-control" ng-model="mailRelay.relay.port" name="port" required>
-                    </div>
-                    <div class="form-group" ng-class="{ 'has-error': (mailRelayForm.username.$dirty && mailRelayForm.username.$invalid) }">
-                        <label class="control-label">Username</label>
-                        <div class="control-label" ng-show="(!mailRelayForm.username.$dirty && mailRelay.error.username) || (mailRelayForm.username.$dirty && mailRelayForm.username.$invalid)">
-                            <small ng-show="!mailRelayForm.username.$dirty && mailRelay.error.username">{{ mailRelay.error.username }}</small>
-                        </div>
-                        <input type="text" class="form-control" ng-model="mailRelay.relay.username" name="username" required>
-                    </div>
-                    <div class="form-group" ng-class="{ 'has-error': (mailRelayForm.password.$dirty && mailRelayForm.password.$invalid) }">
-                        <label class="control-label">Password</label>
-                        <div class="control-label" ng-show="(!mailRelayForm.password.$dirty && mailRelay.error.password) || (mailRelayForm.password.$dirty && mailRelayForm.password.$invalid)">
-                            <small ng-show="!mailRelayForm.password.$dirty && mailRelay.error.password">{{ mailRelay.error.password }}</small>
-                        </div>
-                        <input type="text" class="form-control" ng-model="mailRelay.relay.password" name="password" required>
-                    </div>
-                    <input class="ng-hide" type="submit" ng-disabled="mailRelayForm.$invalid"/>
-                </form>
-            </div>
+          <div>
+            <form name="mailRelayForm" role="form" ng-submit="mailRelay.submit()" autocomplete="off" novalidate>
+              <div class="form-group" ng-class="{ 'has-error': (mailRelayForm.host.$dirty && mailRelayForm.host.$invalid) }">
+                <label class="control-label">SMTP Host</label>
+                <div class="control-label" ng-show="(!mailRelayForm.host.$dirty && mailRelay.error.host) || (mailRelayForm.host.$dirty && mailRelayForm.host.$invalid)">
+                  <small ng-show="!mailRelayForm.host.$dirty && mailRelay.error.host">{{ mailRelay.error.host }}</small>
+                </div>
+                <input type="text" class="form-control" ng-model="mailRelay.relay.host" name="host" required>
+              </div>
+              <div class="form-group" ng-class="{ 'has-error': (mailRelayForm.port.$dirty && mailRelayForm.port.$invalid) }">
+                <label class="control-label">SMTP Port (STARTTLS)</label>
+                <div class="control-label" ng-show="(!mailRelayForm.port.$dirty && mailRelay.error.port) || (mailRelayForm.port.$dirty && mailRelayForm.port.$invalid)">
+                  <small ng-show="!mailRelayForm.port.$dirty && mailRelay.error.port">{{ mailRelay.error.port }}</small>
+                </div>
+                <input type="number" class="form-control" ng-model="mailRelay.relay.port" name="port" required>
+              </div>
+              <div class="form-group" ng-class="{ 'has-error': (mailRelayForm.username.$dirty && mailRelayForm.username.$invalid) }">
+                <label class="control-label">Username</label>
+                <div class="control-label" ng-show="(!mailRelayForm.username.$dirty && mailRelay.error.username) || (mailRelayForm.username.$dirty && mailRelayForm.username.$invalid)">
+                  <small ng-show="!mailRelayForm.username.$dirty && mailRelay.error.username">{{ mailRelay.error.username }}</small>
+                </div>
+                <input type="text" class="form-control" ng-model="mailRelay.relay.username" name="username" required>
+              </div>
+              <div class="form-group" ng-class="{ 'has-error': (mailRelayForm.password.$dirty && mailRelayForm.password.$invalid) }">
+                <label class="control-label">Password</label>
+                <div class="control-label" ng-show="(!mailRelayForm.password.$dirty && mailRelay.error.password) || (mailRelayForm.password.$dirty && mailRelayForm.password.$invalid)">
+                  <small ng-show="!mailRelayForm.password.$dirty && mailRelay.error.password">{{ mailRelay.error.password }}</small>
+                </div>
+                <input type="text" class="form-control" ng-model="mailRelay.relay.password" name="password" required>
+              </div>
+              <input class="ng-hide" type="submit" ng-disabled="mailRelayForm.$invalid"/>
+            </form>
+          </div>
         </div>
-    </div>
+      </div>
     <div class="row">
-        <div class="col-md-2">
-            <button class="btn btn-primary" ng-click="mailRelay.submit()" ng-disabled="(mailRelay.preset.provider !== 'cloudron-smtp' && (!mailRelayForm.$dirty || mailRelayForm.$invalid)) || mailRelay.busy"><i class="fa fa-circle-o-notch fa-spin" ng-show="mailRelay.busy"></i> Save</button>
-        </div>
-        <div class="col-md-10">
-            <span class="has-error text-center" ng-show="mailRelay.error">{{ mailRelay.error }}</span>
-        </div>
+      <div class="col-md-2">
+        <button class="btn btn-primary" ng-click="mailRelay.submit()" ng-disabled="(mailRelay.preset.provider !== 'cloudron-smtp' && (!mailRelayForm.$dirty || mailRelayForm.$invalid)) || mailRelay.busy"><i class="fa fa-circle-o-notch fa-spin" ng-show="mailRelay.busy"></i> Save</button>
+      </div>
+      <div class="col-md-10">
+        <span class="has-error text-center" ng-show="mailRelay.error">{{ mailRelay.error }}</span>
+      </div>
     </div>
-</div>
+  </div>
 
-<div class="section-header" ng-show="mailConfig.enabled && isPaying">
-    <div class="text-left">
-        <h3>Catch-all</h3>
-    </div>
-</div>
+  <div class="text-left" ng-show="mailConfig.enabled && isPaying">
+    <h3>Catch-all</h3>
+  </div>
 
-<div class="card" style="margin-bottom: 15px;" ng-show="mailConfig.enabled && isPaying">
+  <div class="card" style="margin-bottom: 15px;" ng-show="mailConfig.enabled && isPaying">
     <div class="row">
-        <div class="col-md-12">
-            Emails sent to non existing addresses will be forwarded to the following accounts:
-        </div>
+      <div class="col-md-12">
+        Emails sent to non existing addresses will be forwarded to the following accounts:
+      </div>
     </div>
     <br/>
     <div class="row">
-        <div class="col-md-6">
-            <multiselect ng-model="catchall.addresses" options="address for address in catchall.availableAddresses" data-multiple="true"></multiselect>
-            <button class="btn btn-outline btn-primary" ng-disabled="catchall.busy" ng-click="catchall.submit()"><i class="fa fa-circle-o-notch fa-spin" ng-show="catchall.busy"></i> Save</button>
-        </div>
+      <div class="col-md-6">
+        <multiselect ng-model="catchall.addresses" options="address for address in catchall.availableAddresses" data-multiple="true"></multiselect>
+        <button class="btn btn-outline btn-primary" ng-disabled="catchall.busy" ng-click="catchall.submit()"><i class="fa fa-circle-o-notch fa-spin" ng-show="catchall.busy"></i> Save</button>
+      </div>
     </div>
-</div>
+  </div>
 
-<div class="section-header" ng-show="dnsConfig.provider && dnsConfig.provider !== 'caas'">
-    <div class="text-left">
-        <h3>DNS Records</h3>
-    </div>
-</div>
+  <div class="text-left" ng-show="dnsConfig.provider && dnsConfig.provider !== 'caas'">
+    <h3>DNS Records</h3>
+  </div>
 
-<div class="card" style="margin-bottom: 15px;" ng-show="dnsConfig.provider && dnsConfig.provider !== 'caas'">
+  <div class="card" style="margin-bottom: 15px;" ng-show="dnsConfig.provider && dnsConfig.provider !== 'caas'">
     <div class="row">
-        <div class="col-md-12">
-            Set the following DNS records to guarantee email delivery:
+      <div class="col-md-12">
+        Set the following DNS records to guarantee email delivery:
 
-            <br/><br/>
+        <br/><br/>
 
-            <div ng-repeat="record in expectedDnsRecordsTypes">
-               <div class="row" ng-if="expectedDnsRecords[record.value] && (mailConfig.enabled || (record.name !== 'DMARC' && record.name !== 'MX'))">
-                    <div class="col-xs-12">
-                        <p class="text-muted">
-                            <i ng-class="expectedDnsRecords[record.value].status ? 'fa fa-check-circle text-success' : 'fa fa-exclamation-triangle text-danger'"></i> &nbsp;
-                            <a href="" data-toggle="collapse" data-parent="#accordion" data-target="#collapse_dns_{{ record.value }}">{{ record.name }} record</a>
-                            <button class="btn btn-xs btn-default" ng-click="email.refresh()" ng-disabled="email.refreshBusy" ng-show="!expectedDnsRecords[record.value].status"><i class="fa fa-refresh" ng-class="{ 'fa-pulse': email.refreshBusy }"></i></button>
-                        </p>
-                        <div id="collapse_dns_{{ record.value }}" class="panel-collapse collapse">
-                            <div class="panel-body">
-                                <p>Domain: <b ng-click-select><tt>{{ expectedDnsRecords[record.value].domain }}</tt></b></p>
-                                <p>Record type: <b ng-click-select><tt>{{ expectedDnsRecords[record.value].type }}</tt></b></p>
-                                <p style="overflow: auto; white-space: nowrap;">Expected value: <b ng-click-select><tt>{{ expectedDnsRecords[record.value].expected }}</tt></b></p>
-                                <p style="overflow: auto; white-space: nowrap;">Current value: <b ng-click-select><tt>{{ expectedDnsRecords[record.value].value ? expectedDnsRecords[record.value].value : '[not set]' }}</tt></b></p>
-                            </div>
-                        </div>
-                    </div>
+        <div ng-repeat="record in expectedDnsRecordsTypes">
+         <div class="row" ng-if="expectedDnsRecords[record.value] && (mailConfig.enabled || (record.name !== 'DMARC' && record.name !== 'MX'))">
+            <div class="col-xs-12">
+              <p class="text-muted">
+                <i ng-class="expectedDnsRecords[record.value].status ? 'fa fa-check-circle text-success' : 'fa fa-exclamation-triangle text-danger'"></i> &nbsp;
+                <a href="" data-toggle="collapse" data-parent="#accordion" data-target="#collapse_dns_{{ record.value }}">{{ record.name }} record</a>
+                <button class="btn btn-xs btn-default" ng-click="email.refresh()" ng-disabled="email.refreshBusy" ng-show="!expectedDnsRecords[record.value].status"><i class="fa fa-refresh" ng-class="{ 'fa-pulse': email.refreshBusy }"></i></button>
+              </p>
+              <div id="collapse_dns_{{ record.value }}" class="panel-collapse collapse">
+                <div class="panel-body">
+                  <p>Domain: <b ng-click-select><tt>{{ expectedDnsRecords[record.value].domain }}</tt></b></p>
+                  <p>Record type: <b ng-click-select><tt>{{ expectedDnsRecords[record.value].type }}</tt></b></p>
+                  <p style="overflow: auto; white-space: nowrap;">Expected value: <b ng-click-select><tt>{{ expectedDnsRecords[record.value].expected }}</tt></b></p>
+                  <p style="overflow: auto; white-space: nowrap;">Current value: <b ng-click-select><tt>{{ expectedDnsRecords[record.value].value ? expectedDnsRecords[record.value].value : '[not set]' }}</tt></b></p>
                 </div>
+              </div>
             </div>
-
-            <div class="row">
-                <div class="col-xs-12">
-                    <p class="text-muted">
-                        <i ng-class="relay.status ? 'fa fa-check-circle text-success' : 'fa fa-exclamation-triangle text-danger'"></i> &nbsp;
-                        <a href="" data-toggle="collapse" data-parent="#accordion" data-target="#collapse_dns_port">
-                            Outbound SMTP
-                        </a>
-                        <button class="btn btn-xs btn-default" ng-click="email.refresh()" ng-disabled="email.refreshBusy" ng-show="!relay.status"><i class="fa fa-refresh" ng-class="{ 'fa-pulse': email.refreshBusy }"></i></button>
-                    </p>
-                    <div id="collapse_dns_port" class="panel-collapse collapse">
-                        <div class="panel-body">
-                            <p><b> {{ relay.value }} </b> </p>
-                        </div>
-                    </div>
-                </div>
-            </div>
+          </div>
         </div>
+
+        <div class="row">
+          <div class="col-xs-12">
+            <p class="text-muted">
+              <i ng-class="relay.status ? 'fa fa-check-circle text-success' : 'fa fa-exclamation-triangle text-danger'"></i> &nbsp;
+              <a href="" data-toggle="collapse" data-parent="#accordion" data-target="#collapse_dns_port">
+                Outbound SMTP
+              </a>
+              <button class="btn btn-xs btn-default" ng-click="email.refresh()" ng-disabled="email.refreshBusy" ng-show="!relay.status"><i class="fa fa-refresh" ng-class="{ 'fa-pulse': email.refreshBusy }"></i></button>
+            </p>
+            <div id="collapse_dns_port" class="panel-collapse collapse">
+              <div class="panel-body">
+                <p><b> {{ relay.value }} </b> </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
+  </div>
 </div>

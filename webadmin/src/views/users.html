@@ -231,106 +231,106 @@
     </div>
 </div>
 
-<div class="content">
+<div class="content content-large">
 
-    <div class="text-left">
-        <h1>Users <button class="btn btn-primary btn-outline pull-right" ng-click="useradd.show()"><i class="fa fa-user-plus"></i> New User</button></h1>
-    </div>
+  <div class="text-left">
+    <h1>Users <button class="btn btn-primary btn-outline pull-right" ng-click="useradd.show()"><i class="fa fa-user-plus"></i> New User</button></h1>
+  </div>
 
-    <div class="card card-large">
-        <div class="grid-item-top">
-            <div class="row ng-hide" ng-show="!ready">
-                <div class="col-lg-12 text-center">
-                    <h2><i class="fa fa-circle-o-notch fa-spin"></i></h2>
-                </div>
-            </div>
-            <div class="row animateMeOpacity ng-hide" ng-show="ready">
-                <div class="col-lg-12">
-                    <span ng-show="mailConfig.enabled">
-                        Each user has a mailbox at <b><i>username</i>@{{ config.fqdn }}</b>.
-                        Please refer to the <a ng-href="{{ config.webServerOrigin + '/documentation/email/#imap-settings-for-cloudron-email' }}" target="_blank">user documentation</a> on how to use Cloudron email accounts.
-                        <br/>
-                        <br/>
-                    </span>
-                    <table class="table table-hover">
-                        <thead>
-                            <tr>
-                                <th style="width: 1px;"></th>
-                                <th style="">User</th>
-                                <th style="" class="text-left hidden-xs hidden-sm">Groups</th>
-                                <th style="width: 100px" class="text-right">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr ng-repeat="user in users">
-                                <td>
-                                    <i class="fa fa-briefcase arrow" ng-show="user.admin" uib-tooltip="This user is an admin and can manage apps, groups and other users"></i>
-                                </td>
-                                <td class="hand elide-table-cell" ng-click="useredit.show(user)" ng-show="user.username">
-                                    {{ user.username }} &nbsp; <span class="text-muted" ng-hide="mailConfig.enabled">{{ user.email }}</span>
-                                </td>
-                                <td class="hand elide-table-cell" ng-click="useredit.show(user)" ng-hide="user.username">
-                                    <span class="text-muted" uib-tooltip="User is not activated yet">{{ user.alternateEmail || user.email }}</span>
-                                </td>
-                                <td class="text-left hand elide-table-cell hidden-xs hidden-sm" ng-click="useredit.show(user)">
-                                    <span class="group-badge" ng-repeat="groupId in user.groupIds | ignoreAdminGroup">
-                                        {{ groupsById[groupId].name }}
-                                    </span>
-                                </td>
+  <div class="card card-large">
+      <div class="grid-item-top">
+          <div class="row ng-hide" ng-show="!ready">
+              <div class="col-lg-12 text-center">
+                  <h2><i class="fa fa-circle-o-notch fa-spin"></i></h2>
+              </div>
+          </div>
+          <div class="row animateMeOpacity ng-hide" ng-show="ready">
+              <div class="col-lg-12">
+                  <span ng-show="mailConfig.enabled">
+                      Each user has a mailbox at <b><i>username</i>@{{ config.fqdn }}</b>.
+                      Please refer to the <a ng-href="{{ config.webServerOrigin + '/documentation/email/#imap-settings-for-cloudron-email' }}" target="_blank">user documentation</a> on how to use Cloudron email accounts.
+                      <br/>
+                      <br/>
+                  </span>
+                  <table class="table table-hover">
+                      <thead>
+                          <tr>
+                              <th style="width: 1px;"></th>
+                              <th style="">User</th>
+                              <th style="" class="text-left hidden-xs hidden-sm">Groups</th>
+                              <th style="width: 100px" class="text-right">Actions</th>
+                          </tr>
+                      </thead>
+                      <tbody>
+                          <tr ng-repeat="user in users">
+                              <td>
+                                  <i class="fa fa-briefcase arrow" ng-show="user.admin" uib-tooltip="This user is an admin and can manage apps, groups and other users"></i>
+                              </td>
+                              <td class="hand elide-table-cell" ng-click="useredit.show(user)" ng-show="user.username">
+                                  {{ user.username }} &nbsp; <span class="text-muted" ng-hide="mailConfig.enabled">{{ user.email }}</span>
+                              </td>
+                              <td class="hand elide-table-cell" ng-click="useredit.show(user)" ng-hide="user.username">
+                                  <span class="text-muted" uib-tooltip="User is not activated yet">{{ user.alternateEmail || user.email }}</span>
+                              </td>
+                              <td class="text-left hand elide-table-cell hidden-xs hidden-sm" ng-click="useredit.show(user)">
+                                  <span class="group-badge" ng-repeat="groupId in user.groupIds | ignoreAdminGroup">
+                                      {{ groupsById[groupId].name }}
+                                  </span>
+                              </td>
 
-                                </td>
-                                <td class="text-right no-wrap" style="vertical-align: bottom">
-                                    <button ng-show="!isMe(user)" class="btn btn-xs btn-default" ng-click="sendInvite(user)" title="Send invitation email"><i class="fa fa-paper-plane-o"></i></button>
-                                    <button class="btn btn-xs btn-default" ng-click="useredit.show(user)" title="Edit User Profile"><i class="fa fa-pencil"></i></button>
-                                    <button ng-show="!isMe(user)" class="btn btn-xs btn-danger" ng-click="userremove.show(user)" title="Remove User"><i class="fa fa-trash-o"></i></button>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
+                              </td>
+                              <td class="text-right no-wrap" style="vertical-align: bottom">
+                                  <button ng-show="!isMe(user)" class="btn btn-xs btn-default" ng-click="sendInvite(user)" title="Send invitation email"><i class="fa fa-paper-plane-o"></i></button>
+                                  <button class="btn btn-xs btn-default" ng-click="useredit.show(user)" title="Edit User Profile"><i class="fa fa-pencil"></i></button>
+                                  <button ng-show="!isMe(user)" class="btn btn-xs btn-danger" ng-click="userremove.show(user)" title="Remove User"><i class="fa fa-trash-o"></i></button>
+                              </td>
+                          </tr>
+                      </tbody>
+                  </table>
+              </div>
+          </div>
+      </div>
+  </div>
 
-    <br/>
+  <br/>
 
-    <div class="text-left">
-        <h1>Groups <button class="btn btn-primary btn-outline pull-right" ng-click="groupAdd.show()"><i class="fa fa-plus"></i> New Group</button></h1>
-    </div>
+  <div class="text-left">
+    <h1>Groups <button class="btn btn-primary btn-outline pull-right" ng-click="groupAdd.show()"><i class="fa fa-plus"></i> New Group</button></h1>
+  </div>
 
-    <div class="card card-large">
-        <div class="grid-item-top">
-            <div class="row ng-hide" ng-show="!ready">
-                <div class="col-lg-12 text-center">
-                    <h2><i class="fa fa-circle-o-notch fa-spin"></i></h2>
-                </div>
-            </div>
-            <div class="row animateMeOpacity ng-hide" ng-show="ready">
-                <div class="col-lg-12">
-                    Groups can be used to control access to an app.
-                    <span ng-show="mailConfig.enabled">Each group serves as an email list at <b><i>groupname</i>@{{ config.fqdn }}</b>. Any email sent to this address will be forwarded to each group member.</span>
-                    <br/>
-                    <br/>
-                    <table class="table table-hover">
-                        <thead>
-                            <tr>
-                                <th style="">Name</th>
-                                <th style="width: 300px" class="text-right">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr ng-repeat="group in groups | ignoreAdminGroup">
-                                <td class="text-overflow: ellipsis; white-space: nowrap;">
-                                    {{ group.name }}
-                                </td>
-                                <td class="text-right" style="vertical-align: bottom">
-                                    <button class="btn btn-xs btn-danger" ng-click="groupRemove.show(group)" title="Remove Group"><i class="fa fa-trash-o"></i></button>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
+  <div class="card card-large">
+      <div class="grid-item-top">
+          <div class="row ng-hide" ng-show="!ready">
+              <div class="col-lg-12 text-center">
+                  <h2><i class="fa fa-circle-o-notch fa-spin"></i></h2>
+              </div>
+          </div>
+          <div class="row animateMeOpacity ng-hide" ng-show="ready">
+              <div class="col-lg-12">
+                  Groups can be used to control access to an app.
+                  <span ng-show="mailConfig.enabled">Each group serves as an email list at <b><i>groupname</i>@{{ config.fqdn }}</b>. Any email sent to this address will be forwarded to each group member.</span>
+                  <br/>
+                  <br/>
+                  <table class="table table-hover">
+                      <thead>
+                          <tr>
+                              <th style="">Name</th>
+                              <th style="width: 300px" class="text-right">Actions</th>
+                          </tr>
+                      </thead>
+                      <tbody>
+                          <tr ng-repeat="group in groups | ignoreAdminGroup">
+                              <td class="text-overflow: ellipsis; white-space: nowrap;">
+                                  {{ group.name }}
+                              </td>
+                              <td class="text-right" style="vertical-align: bottom">
+                                  <button class="btn btn-xs btn-danger" ng-click="groupRemove.show(group)" title="Remove Group"><i class="fa fa-trash-o"></i></button>
+                              </td>
+                          </tr>
+                      </tbody>
+                  </table>
+              </div>
+          </div>
+      </div>
+  </div>
 </div>

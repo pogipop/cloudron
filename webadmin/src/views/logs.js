@@ -1,6 +1,7 @@
 'use strict';
 
 /* global moment */
+/* global Terminal */
 
 angular.module('Application').controller('LogsController', ['$scope', '$location', 'Client', function ($scope, $location, Client) {
     Client.onReady(function () { if (!Client.getUserInfo().admin) $location.path('/'); });
@@ -11,7 +12,9 @@ angular.module('Application').controller('LogsController', ['$scope', '$location
     $scope.logs = [];
     $scope.selected = '';
     $scope.activeEventSource = null;
+    $scope.terminal = null;
     $scope.lines = 10;
+    $scope.terminalVisible = false;
 
     function ab2str(buf) {
         return String.fromCharCode.apply(null, new Uint16Array(buf));
@@ -29,21 +32,30 @@ angular.module('Application').controller('LogsController', ['$scope', '$location
         $scope.selected = $scope.logs[0];
     };
 
-    $scope.$watch('selected', function (newVal) {
-        if (!newVal) return;
-
+    function reset() {
         // close the old event source so we wont receive any new logs
         if ($scope.activeEventSource) {
             $scope.activeEventSource.close();
             $scope.activeEventSource = null;
         }
 
-        var func = newVal.type === 'platform' ? Client.getPlatformLogs : Client.getAppLogs;
-        func(newVal.value, true, $scope.lines, function handleLogs(error, result) {
-            if (error) return console.error(error);
+        var logViewer = $('.logs-and-term-container');
+        logViewer.empty();
 
-            var logViewer = $('.log-line-container');
-            logViewer.empty();
+        if ($scope.terminal) {
+            $scope.terminal.destroy();
+            $scope.terminal = null;
+        }
+    }
+
+    $scope.showLogs = function () {
+        $scope.terminalVisible = false;
+
+        reset();
+
+        var func = $scope.selected.type === 'platform' ? Client.getPlatformLogs : Client.getAppLogs;
+        func($scope.selected.value, true, $scope.lines, function handleLogs(error, result) {
+            if (error) return console.error(error);
 
             $scope.activeEventSource = result;
             result.onmessage = function handleMessage(message) {
@@ -56,17 +68,44 @@ angular.module('Application').controller('LogsController', ['$scope', '$location
                 }
 
                 // check if we want to auto scroll (this is before the appending, as that skews the check)
-                var tmp = document.querySelector('.log-line-container');
+                var tmp = $('.logs-and-term-container');
                 var autoScroll = tmp.scrollTop > (tmp.scrollTopMax - 24);
 
                 var logLine = $('<div class="log-line">');
                 var timeString = moment.utc(data.realtimeTimestamp/1000).format('MMM DD HH:mm:ss');
                 logLine.html('<span class="time">' + timeString + ' </span>' + window.ansiToHTML(typeof data.message === 'string' ? data.message : ab2str(data.message)));
-                logViewer.append(logLine);
+                tmp.append(logLine);
 
                 if (autoScroll) tmp.lastChild.scrollIntoView({ behavior: 'instant', block: 'end' });
             };
         });
+    };
+
+    $scope.showTerminal = function () {
+        $scope.terminalVisible = true;
+
+        reset();
+
+        $scope.terminal = new Terminal();
+
+        try {
+            // websocket cannot use relative urls
+            var url = Client.apiOrigin.replace('https', 'wss') + '/api/v1/apps/' + $scope.selected.value + '/exec?tty=true';
+            var socket = new WebSocket(url);
+            $scope.terminal.attach(socket);
+        } catch (e) {
+            console.error('-----', e);
+        }
+
+        $scope.terminal.open(document.querySelector('.logs-and-term-container'));
+        $scope.terminal.fit();
+    };
+
+    $scope.$watch('selected', function (newVal) {
+        if (!newVal) return;
+
+        if ($scope.terminalVisible) $scope.showTerminal();
+        else $scope.showLogs();
     });
 
     Client.onReady($scope.populateLogTypes);
@@ -76,6 +115,10 @@ angular.module('Application').controller('LogsController', ['$scope', '$location
             $scope.activeEventSource.onmessage = function () {};
             $scope.activeEventSource.close();
             $scope.activeEventSource = null;
+        }
+
+        if ($scope.terminal) {
+            $scope.terminal.destroy();
         }
     });
 }]);

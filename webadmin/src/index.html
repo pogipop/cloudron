@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, height=device-height" />
-    <meta http-equiv="Content-Security-Policy" content="default-src 'unsafe-inline' 'unsafe-eval' 'self' *.cloudron.io <%= apiOriginHostname %>; img-src * data:;" />
+    <!-- <meta http-equiv="Content-Security-Policy" content="default-src 'unsafe-inline' 'unsafe-eval' 'self' *.cloudron.io <%= apiOriginHostname %>; img-src * data:;" /> -->
 
     <!-- this gets changed once we get the config (because angular has not loaded yet, we see template string for a flash) -->
     <title> Cloudron </title>
@@ -71,6 +71,12 @@
 
     <!-- moment -->
     <script type="text/javascript" src="3rdparty/js/moment.min.js"></script>
+
+    <!-- xterm -->
+    <link href="3rdparty/xterm/xterm.css" rel="stylesheet">
+    <script src="3rdparty/xterm/xterm.js"></script>
+    <script src="3rdparty/xterm/addons/attach/attach.js"></script>
+    <script src="3rdparty/xterm/addons/fit/fit.js"></script>
 
     <!-- Main Application -->
     <script src="js/index.js"></script>

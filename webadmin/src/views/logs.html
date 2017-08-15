@@ -1,24 +1,16 @@
 <div class="logs-main">
 
-  <div class="logs-header">
-    <div class="col-md-10 col-md-offset-1">
-      <div class="text-left">
-          <h1>Logs</h1>
-      </div>
-    </div>
-  </div>
-
   <div class="logs-controls">
     <div class="col-md-10 col-md-offset-1">
-      <div class="filter">
-        <select class="form-control" ng-options="log.name for log in logs track by log.value" ng-model="selected"></select>
-      </div>
-      <div class="pagination pull-right">
-        <a class="btn btn-default btn-outline" ng-href="{{ selected.url }}&format=short&lines=800"><i class="fa fa-download"></i> Download </a>
-      </div>
+      <uib-tabset active="active">
+        <uib-tab index="0" heading="Logs" select="showLogs()"></uib-tab>
+        <uib-tab index="1" heading="Terminal" select="showTerminal()"></uib-tab>
+      </uib-tabset>
+      <select class="form-control pull-right" ng-options="log.name for log in logs track by log.value" ng-model="selected"></select>
+      <a class="btn btn-default pull-right" ng-href="{{ selected.url }}&format=short&lines=800" ng-hide="terminalVisible"><i class="fa fa-download"></i> Download </a>
     </div>
   </div>
 
-  <div class="col-md-10 col-md-offset-1 log-line-container"></div>
+  <div class="logs-and-term-container"></div>
 
 </div>

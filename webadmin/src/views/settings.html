@@ -228,234 +228,225 @@
     </div>
 </div>
 
-<div class="section-header">
-    <div class="text-left">
-        <h1>Settings</h1>
-    </div>
-</div>
+<div class="content">
 
-<div class="section-header">
-    <div class="text-left">
-        <h3>About</h3>
-    </div>
-</div>
+  <div class="text-left">
+    <h1>Settings</h1>
+  </div>
 
-<div class="card" style="margin-bottom: 15px;">
-    <div class="row">
-        <div class="col-xs-4" style="min-width: 150px;">
-            <div class="settings-avatar" ng-click="avatarChange.showChangeAvatar()" style="background-image: url('{{ client.avatar }}');">
-                <div class="overlay"></div>
-            </div>
-        </div>
-        <div class="col-xs-8">
-            <table width="100%">
-                <tr>
-                    <td class="text-muted" style="vertical-align: top;">Name</td>
-                    <td class="text-right" style="vertical-align: top; white-space: nowrap;">{{ config.cloudronName }} <a href="" ng-click="cloudronNameChange.show()"><i class="fa fa-pencil text-small"></i></a></td>
-                </tr>
-                <tr ng-show="config.provider === 'caas'">
-                    <td class="text-muted" style="vertical-align: top;">Model</td>
-                    <td class="text-right" style="vertical-align: top; white-space: nowrap;">{{ config.size }} - {{ config.region }}</td>
-                </tr>
-                <tr>
-                    <td class="text-muted" style="vertical-align: top;">Version</td>
-                    <td class="text-right" style="vertical-align: top; white-space: nowrap;">{{ config.version }}</td>
-                </tr>
-                <tr>
-                    <td class="text-muted" style="vertical-align: top;">Provider</td>
-                    <td class="text-right" style="vertical-align: top; white-space: nowrap;">{{ config.provider }}</td>
-                </tr>
-            </table>
-        </div>
-    </div>
-</div>
+  <div class="text-left">
+    <h3>About</h3>
+  </div>
 
-<div class="section-header" ng-show="config.provider === 'caas'">
-    <div class="text-left">
-        <h3>Plans</h3>
-    </div>
-</div>
+  <div class="card" style="margin-bottom: 15px;">
+      <div class="row">
+          <div class="col-xs-4" style="min-width: 150px;">
+              <div class="settings-avatar" ng-click="avatarChange.showChangeAvatar()" style="background-image: url('{{ client.avatar }}');">
+                  <div class="overlay"></div>
+              </div>
+          </div>
+          <div class="col-xs-8">
+              <table width="100%">
+                  <tr>
+                      <td class="text-muted" style="vertical-align: top;">Name</td>
+                      <td class="text-right" style="vertical-align: top; white-space: nowrap;">{{ config.cloudronName }} <a href="" ng-click="cloudronNameChange.show()"><i class="fa fa-pencil text-small"></i></a></td>
+                  </tr>
+                  <tr ng-show="config.provider === 'caas'">
+                      <td class="text-muted" style="vertical-align: top;">Model</td>
+                      <td class="text-right" style="vertical-align: top; white-space: nowrap;">{{ config.size }} - {{ config.region }}</td>
+                  </tr>
+                  <tr>
+                      <td class="text-muted" style="vertical-align: top;">Version</td>
+                      <td class="text-right" style="vertical-align: top; white-space: nowrap;">{{ config.version }}</td>
+                  </tr>
+                  <tr>
+                      <td class="text-muted" style="vertical-align: top;">Provider</td>
+                      <td class="text-right" style="vertical-align: top; white-space: nowrap;">{{ config.provider }}</td>
+                  </tr>
+              </table>
+          </div>
+      </div>
+  </div>
 
-<div class="card" style="margin-bottom: 15px;" ng-show="config.provider === 'caas'">
-    <div class="row">
-        <div class="col-xs-12 text-right">
-            <a href="{{ config.webServerOrigin }}/console.html#/userprofile?view=credit_card" target="_blank">Change payment method</a>
-            or
-            <a href="{{ config.webServerOrigin }}/console.html" target="_blank">Cancel this Cloudron</a>
-        </div>
-    </div>
-    <div class="row">
-        <div class="col-xs-10 plans" style="margin-left: 20px">
-            <div ng-repeat="plan in availablePlans">
-                  <label>
-                        <input type="radio" ng-model="planChange.requestedPlan" ng-value="plan">
-                            {{ plan.name }} ({{ plan.slug | uppercase }}) - {{ plan.price/100 }}{{ currency }}/month
-                            <span ng-show="currentPlan.name === plan.name" style="font-weight: bold"> (current plan)
-                        </span>
-                  </label>
-            </div>
-        </div>
-    </div>
+  <div class="text-left" ng-show="config.provider === 'caas'">
+    <h3>Plans</h3>
+  </div>
 
-    <div class="row">
-        <div class="col-xs-12">
-            <button class="btn btn-primary pull-right" ng-disabled="planChange.requestedPlan.name === currentPlan.name" ng-click="planChange.showChangePlan()">Change Plan</button>
-        </div>
-    </div>
-</div>
+  <div class="card" style="margin-bottom: 15px;" ng-show="config.provider === 'caas'">
+      <div class="row">
+          <div class="col-xs-12 text-right">
+              <a href="{{ config.webServerOrigin }}/console.html#/userprofile?view=credit_card" target="_blank">Change payment method</a>
+              or
+              <a href="{{ config.webServerOrigin }}/console.html" target="_blank">Cancel this Cloudron</a>
+          </div>
+      </div>
+      <div class="row">
+          <div class="col-xs-10 plans" style="margin-left: 20px">
+              <div ng-repeat="plan in availablePlans">
+                    <label>
+                          <input type="radio" ng-model="planChange.requestedPlan" ng-value="plan">
+                              {{ plan.name }} ({{ plan.slug | uppercase }}) - {{ plan.price/100 }}{{ currency }}/month
+                              <span ng-show="currentPlan.name === plan.name" style="font-weight: bold"> (current plan)
+                          </span>
+                    </label>
+              </div>
+          </div>
+      </div>
 
-<div class="section-header" ng-show="backupConfig.provider !== 'caas'">
-    <div class="text-left">
-        <h3>Cloudron.io Account</h3>
-    </div>
-</div>
+      <div class="row">
+          <div class="col-xs-12">
+              <button class="btn btn-primary pull-right" ng-disabled="planChange.requestedPlan.name === currentPlan.name" ng-click="planChange.showChangePlan()">Change Plan</button>
+          </div>
+      </div>
+  </div>
 
-<div class="card" style="margin-bottom: 15px;" ng-show="backupConfig.provider !== 'caas'">
-    <div class="row" ng-show="currentSubscription.plan.id === 'free' || currentSubscription.plan.id === 'undecided'">
-        <div class="col-xs-12">
-            With a paid plan, you get continuous updates for the Cloudron and apps. This ensures you are running the latest versions of apps and keeps your server secure. All paid plans come with support via <a href="mailto:support@cloudron.io">email</a> and <a target="_blank" href="https://chat.cloudron.io">live chat</a>.
-        </div>
-    </div>
-    <br/>
-    <div class="row">
-        <div class="col-xs-6">
-            <span class="text-muted">Account Email</span>
-        </div>
-        <div class="col-xs-6 text-right">
-            <a ng-href="{{ config.webServerOrigin + '/console.html#/userprofile?email=' + appstoreConfig.profile.email }}" target="_blank">{{ appstoreConfig.profile.email }}</a>
-        </div>
-    </div>
-    <div class="row">
-        <div class="col-xs-6">
-            <span class="text-muted">Cloudron ID</span>
-        </div>
-        <div class="col-xs-6 text-right">
-            <span>{{ appstoreConfig.cloudronId }}</span>
-        </div>
-    </div>
-    <div class="row">
-        <div class="col-xs-6">
-            <span class="text-muted">Subscription</span>
-        </div>
-        <div class="col-xs-6 text-right">
-            <span>{{ currentSubscription.plan.name }}</span>
-        </div>
-    </div>
-    <br/>
-    <div class="row">
-        <div class="col-xs-12">
-            <a class="btn btn-primary pull-right" ng-href="{{ config.webServerOrigin + '/console.html#/userprofile?view=subscriptions&email=' + appstoreConfig.profile.email }}" target="_blank" ng-show="currentSubscription.plan && currentSubscription.plan.id !== 'free' && currentSubscription.plan.id !== 'undecided'">Configure</a>
-            <a class="btn btn-success pull-right" ng-href="{{ config.webServerOrigin + '/console.html#/userprofile?view=subscriptions&email=' + appstoreConfig.profile.email + '&cloudronId=' + appstoreConfig.cloudronId }}" target="_blank" ng-show="currentSubscription.plan.id === 'free' || currentSubscription.plan.id === 'undecided'">Setup Subscription</a>
-        </div>
-    </div>
-</div>
+  <div class="text-left" ng-show="backupConfig.provider !== 'caas'">
+    <h3>Cloudron.io Account</h3>
+  </div>
 
-<div class="section-header">
-    <div class="text-left">
-        <h3>Backups</h3>
-    </div>
-</div>
+  <div class="card" style="margin-bottom: 15px;" ng-show="backupConfig.provider !== 'caas'">
+      <div class="row" ng-show="currentSubscription.plan.id === 'free' || currentSubscription.plan.id === 'undecided'">
+          <div class="col-xs-12">
+              With a paid plan, you get continuous updates for the Cloudron and apps. This ensures you are running the latest versions of apps and keeps your server secure. All paid plans come with support via <a href="mailto:support@cloudron.io">email</a> and <a target="_blank" href="https://chat.cloudron.io">live chat</a>.
+          </div>
+      </div>
+      <br/>
+      <div class="row">
+          <div class="col-xs-6">
+              <span class="text-muted">Account Email</span>
+          </div>
+          <div class="col-xs-6 text-right">
+              <a ng-href="{{ config.webServerOrigin + '/console.html#/userprofile?email=' + appstoreConfig.profile.email }}" target="_blank">{{ appstoreConfig.profile.email }}</a>
+          </div>
+      </div>
+      <div class="row">
+          <div class="col-xs-6">
+              <span class="text-muted">Cloudron ID</span>
+          </div>
+          <div class="col-xs-6 text-right">
+              <span>{{ appstoreConfig.cloudronId }}</span>
+          </div>
+      </div>
+      <div class="row">
+          <div class="col-xs-6">
+              <span class="text-muted">Subscription</span>
+          </div>
+          <div class="col-xs-6 text-right">
+              <span>{{ currentSubscription.plan.name }}</span>
+          </div>
+      </div>
+      <br/>
+      <div class="row">
+          <div class="col-xs-12">
+              <a class="btn btn-primary pull-right" ng-href="{{ config.webServerOrigin + '/console.html#/userprofile?view=subscriptions&email=' + appstoreConfig.profile.email }}" target="_blank" ng-show="currentSubscription.plan && currentSubscription.plan.id !== 'free' && currentSubscription.plan.id !== 'undecided'">Configure</a>
+              <a class="btn btn-success pull-right" ng-href="{{ config.webServerOrigin + '/console.html#/userprofile?view=subscriptions&email=' + appstoreConfig.profile.email + '&cloudronId=' + appstoreConfig.cloudronId }}" target="_blank" ng-show="currentSubscription.plan.id === 'free' || currentSubscription.plan.id === 'undecided'">Setup Subscription</a>
+          </div>
+      </div>
+  </div>
 
-<div class="card" style="margin-bottom: 15px;">
-    <div class="row" ng-show="backupConfig.provider !== 'caas'">
-        <div class="col-xs-6">
-            <span class="text-muted">Provider</span>
-        </div>
-        <div class="col-xs-6 text-right">
-            <span>{{ backupConfig.provider === 'caas' ? 'cloudron.io' : backupConfig.provider }}</span>
-        </div>
-    </div>
-    <div class="row" ng-show="backupConfig.provider !== 'caas'">
-        <div class="col-xs-6">
-            <span class="text-muted">Location</span>
-        </div>
-        <div class="col-xs-6 text-right">
-            <span ng-show="backupConfig.provider === 'filesystem'">{{ backupConfig.backupFolder || '/var/backups' }}</span>
-            <span ng-show="backupConfig.provider === 'minio' || backupConfig.provider === 'exoscale-sos'">{{ backupConfig.bucket + '/' + backupConfig.prefix }}</span>
-            <span ng-show="backupConfig.provider === 's3'">{{ backupConfig.region + '   ' + backupConfig.bucket + '/' + backupConfig.prefix }}</span>
-        </div>
-    </div>
+  <div class="text-left">
+    <h3>Backups</h3>
+  </div>
 
-    <br/>
+  <div class="card" style="margin-bottom: 15px;">
+      <div class="row" ng-show="backupConfig.provider !== 'caas'">
+          <div class="col-xs-6">
+              <span class="text-muted">Provider</span>
+          </div>
+          <div class="col-xs-6 text-right">
+              <span>{{ backupConfig.provider === 'caas' ? 'cloudron.io' : backupConfig.provider }}</span>
+          </div>
+      </div>
+      <div class="row" ng-show="backupConfig.provider !== 'caas'">
+          <div class="col-xs-6">
+              <span class="text-muted">Location</span>
+          </div>
+          <div class="col-xs-6 text-right">
+              <span ng-show="backupConfig.provider === 'filesystem'">{{ backupConfig.backupFolder || '/var/backups' }}</span>
+              <span ng-show="backupConfig.provider === 'minio' || backupConfig.provider === 'exoscale-sos'">{{ backupConfig.bucket + '/' + backupConfig.prefix }}</span>
+              <span ng-show="backupConfig.provider === 's3'">{{ backupConfig.region + '   ' + backupConfig.bucket + '/' + backupConfig.prefix }}</span>
+          </div>
+      </div>
 
-    <div class="row">
-        <div class="col-xs-6">
-            <span class="text-muted">Last backup</span>
-        </div>
-        <div class="col-xs-6 text-right">
-            <span ng-show="lastBackup">{{ lastBackup.creationTime | prettyDate }}</span>
-            <span ng-hide="lastBackup">No backups have been made yet</span>
-        </div>
-    </div>
+      <br/>
 
-    <div class="row" ng-show="backupConfig.provider !== 'caas'">
-        <br/>
-        <div class="col-md-12">
-            <div ng-show="createBackup.busy" class="progress progress-striped active animateMe">
-                <div class="progress-bar progress-bar-success" role="progressbar" style="width: {{ createBackup.percent }}%"></div>
-            </div>
-            <br/>
-        </div>
-    </div>
-    <div class="row" ng-show="backupConfig.provider !== 'caas'">
-        <div class="col-md-6">
-            <p ng-show="createBackup.busy">{{ createBackup.message }}</p>
-        </div>
-        <div class="col-md-6 text-right">
-            <button class="btn btn-outline btn-primary pull-right" ng-click="configureBackup.show()" ng-disabled="createBackup.busy">Configure</button>
+      <div class="row">
+          <div class="col-xs-6">
+              <span class="text-muted">Last backup</span>
+          </div>
+          <div class="col-xs-6 text-right">
+              <span ng-show="lastBackup">{{ lastBackup.creationTime | prettyDate }}</span>
+              <span ng-hide="lastBackup">No backups have been made yet</span>
+          </div>
+      </div>
 
-            <button class="btn btn-outline btn-primary" ng-click="createBackup.doCreateBackup()" ng-disabled="createBackup.busy" style="margin-right: 10px">Backup now</button>
-        </div>
-    </div>
-</div>
+      <div class="row" ng-show="backupConfig.provider !== 'caas'">
+          <br/>
+          <div class="col-md-12">
+              <div ng-show="createBackup.busy" class="progress progress-striped active animateMe">
+                  <div class="progress-bar progress-bar-success" role="progressbar" style="width: {{ createBackup.percent }}%"></div>
+              </div>
+              <br/>
+          </div>
+      </div>
+      <div class="row" ng-show="backupConfig.provider !== 'caas'">
+          <div class="col-md-6">
+              <p ng-show="createBackup.busy">{{ createBackup.message }}</p>
+          </div>
+          <div class="col-md-6 text-right">
+              <button class="btn btn-outline btn-primary pull-right" ng-click="configureBackup.show()" ng-disabled="createBackup.busy">Configure</button>
 
-<div class="section-header">
-    <div class="text-left">
-        <h3>Updates</h3>
-    </div>
-</div>
+              <button class="btn btn-outline btn-primary" ng-click="createBackup.doCreateBackup()" ng-disabled="createBackup.busy" style="margin-right: 10px">Backup now</button>
+          </div>
+      </div>
+  </div>
 
-<div class="card" style="margin-bottom: 15px;">
-    <div class="row">
-        <div class="col-md-12">
-            <p>Configure the update schedule for the platform and the apps</p>
-            <p class="text-danger" ng-show="autoUpdate.error"><br/>{{ autoUpdate.error }}</p>
-        </div>
-    </div>
+  <div class="text-left">
+    <h3>Updates</h3>
+  </div>
 
-    <div class="row">
-        <div class="col-md-12">
-            <div class="radio">
-              <label>
-                <input type="radio" name="scheduleRadio" ng-change="autoUpdate.success = false" ng-model="autoUpdate.pattern" value="00 00 1,3,5,23 * * *">
-                Every night
-              </label>
-            </div>
-            <div class="radio">
-              <label>
-                <input type="radio" name="scheduleRadio" ng-change="autoUpdate.success = false" ng-model="autoUpdate.pattern" value="00 00 1,3,5,23 * * 6">
-                Saturday night
-              </label>
-            </div>
-            <div class="radio">
-              <label>
-                <input type="radio" name="scheduleRadio" ng-change="autoUpdate.success = false" ng-model="autoUpdate.pattern" value="never">
-                Update manually (Not recommended)
-              </label>
-            </div>
-        </div>
-    </div>
+  <div class="card" style="margin-bottom: 15px;">
+      <div class="row">
+          <div class="col-md-12">
+              <p>Configure the update schedule for the platform and the apps</p>
+              <p class="text-danger" ng-show="autoUpdate.error"><br/>{{ autoUpdate.error }}</p>
+          </div>
+      </div>
 
-    <div class="row">
-        <div class="col-md-6">
-            <i class="fa fa-circle-o-notch fa-spin" ng-show="autoUpdate.busy"></i>
-            <span class="text-success text-bold" ng-show="autoUpdate.success && autoUpdate.pattern === autoUpdate.currentPattern">Saved</span>
-        </div>
+      <div class="row">
+          <div class="col-md-12">
+              <div class="radio">
+                <label>
+                  <input type="radio" name="scheduleRadio" ng-change="autoUpdate.success = false" ng-model="autoUpdate.pattern" value="00 00 1,3,5,23 * * *">
+                  Every night
+                </label>
+              </div>
+              <div class="radio">
+                <label>
+                  <input type="radio" name="scheduleRadio" ng-change="autoUpdate.success = false" ng-model="autoUpdate.pattern" value="00 00 1,3,5,23 * * 6">
+                  Saturday night
+                </label>
+              </div>
+              <div class="radio">
+                <label>
+                  <input type="radio" name="scheduleRadio" ng-change="autoUpdate.success = false" ng-model="autoUpdate.pattern" value="never">
+                  Update manually (Not recommended)
+                </label>
+              </div>
+          </div>
+      </div>
 
-        <div class="col-md-6 text-right">
-            <button class="btn btn-outline btn-primary pull-right" ng-click="autoUpdate.submit()" ng-disabled="autoUpdate.busy || autoUpdate.pattern === autoUpdate.currentPattern"> Save</button>
+      <div class="row">
+          <div class="col-md-6">
+              <i class="fa fa-circle-o-notch fa-spin" ng-show="autoUpdate.busy"></i>
+              <span class="text-success text-bold" ng-show="autoUpdate.success && autoUpdate.pattern === autoUpdate.currentPattern">Saved</span>
+          </div>
 
-            <button class="btn btn-outline btn-primary" ng-click="autoUpdate.checkNow()" ng-disabled="autoUpdate.busy" style="margin-right: 10px">Check now</button>
-        </div>
-    </div>
+          <div class="col-md-6 text-right">
+              <button class="btn btn-outline btn-primary pull-right" ng-click="autoUpdate.submit()" ng-disabled="autoUpdate.busy || autoUpdate.pattern === autoUpdate.currentPattern"> Save</button>
+
+              <button class="btn btn-outline btn-primary" ng-click="autoUpdate.checkNow()" ng-disabled="autoUpdate.busy" style="margin-right: 10px">Check now</button>
+          </div>
+      </div>
+  </div>
 </div>

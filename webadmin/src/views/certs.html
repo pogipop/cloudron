@@ -87,160 +87,156 @@
     </div>
 </div>
 
-<div class="section-header">
-    <div class="text-left">
-        <h1>Domain & Certificates</h1>
-    </div>
-</div>
+<div class="content">
+  <div class="text-left">
+    <h1>Domain & Certificates</h1>
+  </div>
 
-<div class="section-header">
-    <div class="text-left">
-        <h3>Domain</h3>
-    </div>
-</div>
+  <div class="text-left">
+    <h3>Domain</h3>
+  </div>
 
-<div class="card" style="margin-bottom: 15px;">
-    <div class="row">
-        <div class="col-md-12">
-            <p ng-show="!config.isCustomDomain">To use a custom domain, configure your domain to use <a target="_blank" href="https://aws.amazon.com/route53/">Route53.</a> Moving to a custom domain will retain all your apps and data and will take around 15 minutes.</p>
+  <div class="card" style="margin-bottom: 15px;">
+      <div class="row">
+          <div class="col-md-12">
+              <p ng-show="!config.isCustomDomain">To use a custom domain, configure your domain to use <a target="_blank" href="https://aws.amazon.com/route53/">Route53.</a> Moving to a custom domain will retain all your apps and data and will take around 15 minutes.</p>
 
-            <table width="100%">
-                <tr>
-                    <td class="text-muted" style="vertical-align: top;">Domain name</td>
-                    <td class="text-right" style="vertical-align: top; white-space: nowrap;">{{ config.fqdn }}</td>
-                </tr>
+              <table width="100%">
+                  <tr>
+                      <td class="text-muted" style="vertical-align: top;">Domain name</td>
+                      <td class="text-right" style="vertical-align: top; white-space: nowrap;">{{ config.fqdn }}</td>
+                  </tr>
 
-                <tr>
-                    <td class="text-muted" style="vertical-align: top;">DNS provider</td>
-                    <td class="text-right" style="vertical-align: top; white-space: nowrap;">{{ dnsConfig.provider }}</td>
-                </tr>
+                  <tr>
+                      <td class="text-muted" style="vertical-align: top;">DNS provider</td>
+                      <td class="text-right" style="vertical-align: top; white-space: nowrap;">{{ dnsConfig.provider }}</td>
+                  </tr>
 
-                <tr ng-show="dnsConfig.provider === 'manual' && !dnsConfig.wildcard">
-                    <td colspan="2">
-                        <br/>
-                        No DNS provider is configured. All DNS records need to be setup manually.
-                        To avoid manual setup for each installed app, set a DNS API provider.
-                    </td>
-                </tr>
+                  <tr ng-show="dnsConfig.provider === 'manual' && !dnsConfig.wildcard">
+                      <td colspan="2">
+                          <br/>
+                          No DNS provider is configured. All DNS records need to be setup manually.
+                          To avoid manual setup for each installed app, set a DNS API provider.
+                      </td>
+                  </tr>
 
-                <tr ng-show="dnsConfig.provider === 'manual' && dnsConfig.wildcard">
-                    <td colspan="2">
-                        <br/>
-                        Wildcard DNS provider is configured. Always ensure there is a wildcard DNS record for this server's IP.
-                    </td>
-                </tr>
+                  <tr ng-show="dnsConfig.provider === 'manual' && dnsConfig.wildcard">
+                      <td colspan="2">
+                          <br/>
+                          Wildcard DNS provider is configured. Always ensure there is a wildcard DNS record for this server's IP.
+                      </td>
+                  </tr>
 
-                <tr ng-show="dnsConfig.provider === 'noop'">
-                    <td colspan="2">
-                        <br/>
-                        No DNS provider configured. All DNS records need to be setup manually and all DNS checks are skipped.
-                    </td>
-                </tr>
+                  <tr ng-show="dnsConfig.provider === 'noop'">
+                      <td colspan="2">
+                          <br/>
+                          No DNS provider configured. All DNS records need to be setup manually and all DNS checks are skipped.
+                      </td>
+                  </tr>
 
-                <tr ng-show="config.isCustomDomain && dnsConfig.provider === 'route53'">
-                    <td class="text-muted" style="vertical-align: top;">Access key id</td>
-                    <td class="text-right" style="vertical-align: top; white-space: nowrap;">{{ dnsConfig.accessKeyId || 'unset' }}</td>
-                </tr>
-                <tr ng-show="config.isCustomDomain && dnsConfig.provider === 'route53'">
-                    <td class="text-muted" style="vertical-align: top;">Secret access key</td>
-                    <td class="text-right" style="vertical-align: top; white-space: nowrap;" ng-click-reveal="dnsConfig.secretAccessKey"><i>hidden</i></td>
-                </tr>
+                  <tr ng-show="config.isCustomDomain && dnsConfig.provider === 'route53'">
+                      <td class="text-muted" style="vertical-align: top;">Access key id</td>
+                      <td class="text-right" style="vertical-align: top; white-space: nowrap;">{{ dnsConfig.accessKeyId || 'unset' }}</td>
+                  </tr>
+                  <tr ng-show="config.isCustomDomain && dnsConfig.provider === 'route53'">
+                      <td class="text-muted" style="vertical-align: top;">Secret access key</td>
+                      <td class="text-right" style="vertical-align: top; white-space: nowrap;" ng-click-reveal="dnsConfig.secretAccessKey"><i>hidden</i></td>
+                  </tr>
 
-                <tr ng-show="config.isCustomDomain && dnsConfig.provider === 'digitalocean'">
-                    <td class="text-muted" style="vertical-align: top;">DigitalOcean token</td>
-                    <td class="text-right" style="vertical-align: top; white-space: nowrap;" ng-click-reveal="dnsConfig.token"><i>hidden</i></td>
-                </tr>
+                  <tr ng-show="config.isCustomDomain && dnsConfig.provider === 'digitalocean'">
+                      <td class="text-muted" style="vertical-align: top;">DigitalOcean token</td>
+                      <td class="text-right" style="vertical-align: top; white-space: nowrap;" ng-click-reveal="dnsConfig.token"><i>hidden</i></td>
+                  </tr>
 
-                <!-- add some space -->
-                <tr>
-                    <td><br/></td>
-                    <td></td>
-                </tr>
+                  <!-- add some space -->
+                  <tr>
+                      <td><br/></td>
+                      <td></td>
+                  </tr>
 
-                <tr>
-                    <td class="text-muted" style="vertical-align: top;"></td>
-                    <td class="text-right" style="vertical-align: top;"><button class="btn btn-outline btn-primary" ng-click="showChangeDnsCredentials()">Change</button></td>
-                </tr>
-            </table>
-        </div>
-    </div>
- </div>
+                  <tr>
+                      <td class="text-muted" style="vertical-align: top;"></td>
+                      <td class="text-right" style="vertical-align: top;"><button class="btn btn-outline btn-primary" ng-click="showChangeDnsCredentials()">Change</button></td>
+                  </tr>
+              </table>
+          </div>
+      </div>
+   </div>
 
-<div class="section-header">
-    <div class="text-left">
-        <h3>SSL Certificates</h3>
-    </div>
-</div>
+  <div class="text-left">
+    <h3>SSL Certificates</h3>
+  </div>
 
-<div class="card" style="margin-bottom: 15px;">
-    <div class="row" ng-show="!config.isCustomDomain">
-        <div class="col-md-12">
-            Certificates can only by set for custom domains.
-        </div>
-    </div>
+  <div class="card" style="margin-bottom: 15px;">
+      <div class="row" ng-show="!config.isCustomDomain">
+          <div class="col-md-12">
+              Certificates can only by set for custom domains.
+          </div>
+      </div>
 
-    <div class="row" ng-show="config.isCustomDomain">
-        <div class="col-md-12">
-            <form name="defaultCertForm" ng-submit="setDefaultCert()">
-                <fieldset>
-                    <p>Certificates are automatically obtained and renewed from <a href="https://letsencrypt.org/" target="_blank">Let’s Encrypt</a>. See the current rate limit <a href="https://letsencrypt.org/docs/rate-limits/" target="_blank">here</a>.</p>
-                    <br/>
-                    <label class="control-label" for="defaultCertInput">Fallback Certificate</label>
-                    <p>This wildcard certificate will be used for apps, should getting a Let’s Encrypt certificate fail.</p>
-                    <div class="has-error text-center" ng-show="defaultCert.error">{{ defaultCert.error }}</div>
-                    <div class="text-success text-center" ng-show="defaultCert.success"><b>Upload successful</b></div>
-                    <div class="form-group" ng-class="{ 'has-error': (!defaultCert.cert.$dirty && defaultCert.error) }">
-                        <div class="input-group">
-                            <input type="file" id="defaultCertFileInput" style="display:none"/>
-                            <input type="text" class="form-control" placeholder="Certificate" ng-model="defaultCert.certificateFileName" id="defaultCertInput" name="cert" onclick="getElementById('defaultCertFileInput').click();" style="cursor: pointer;" ng-disabled="defaultCert.busy" required>
-                            <span class="input-group-addon">
-                                <i class="fa fa-upload" onclick="getElementById('defaultCertFileInput').click();"></i>
-                            </span>
-                        </div>
-                    </div>
-                    <div class="form-group" ng-class="{ 'has-error': (!defaultCert.key.$dirty && defaultCert.error) }">
-                        <div class="input-group">
-                            <input type="file" id="defaultKeyFileInput" style="display:none"/>
-                            <input type="text" class="form-control" placeholder="Key" ng-model="defaultCert.keyFileName" id="defaultKeyInput" name="key" onclick="getElementById('defaultKeyFileInput').click();" style="cursor: pointer;" ng-disabled="defaultCert.busy" required>
-                            <span class="input-group-addon">
-                                <i class="fa fa-upload" onclick="getElementById('defaultKeyFileInput').click();"></i>
-                            </span>
-                        </div>
-                    </div>
-                    <button type="submit" class="btn btn-outline btn-success pull-right" ng-disabled="defaultCertForm.$invalid || busy"><i class="fa fa-circle-o-notch fa-spin" ng-show="defaultCert.busy"></i> Upload</button>
-                </fieldset>
-            </form>
-        </div>
-    </div>
-    <div class="row hide">
-        <div class="col-md-12">
-            <form name="adminCertForm" ng-submit="setAdminCert()">
-                <fieldset>
-                    <label class="control-label" for="adminCertInput">Settings Certificate</label>
-                    <p>This certificate will be used for this Settings application.</p>
-                    <div class="has-error text-center" ng-show="adminCert.error">{{ adminCert.error }}</div>
-                    <div class="text-success text-center" ng-show="adminCert.success"><b>Upload successful</b></div>
-                    <div class="form-group" ng-class="{ 'has-error': (!adminCert.cert.$dirty && adminCert.error) }">
-                        <div class="input-group">
-                            <input type="file" id="adminCertFileInput" style="display:none"/>
-                            <input type="text" class="form-control" placeholder="Certificate" ng-model="adminCert.certificateFileName" id="adminCertInput" name="cert" onclick="getElementById('adminCertFileInput').click();" style="cursor: pointer;" ng-disabled="adminCert.busy" required>
-                            <span class="input-group-addon">
-                                <i class="fa fa-upload" onclick="getElementById('adminCertFileInput').click();"></i>
-                            </span>
-                        </div>
-                    </div>
-                    <div class="form-group" ng-class="{ 'has-error': (!adminCert.key.$dirty && adminCert.error) }">
-                        <div class="input-group">
-                            <input type="file" id="adminKeyFileInput" style="display:none"/>
-                            <input type="text" class="form-control" placeholder="Key" ng-model="adminCert.keyFileName" id="adminKeyInput" name="key" onclick="getElementById('adminKeyFileInput').click();" style="cursor: pointer;" ng-disabled="adminCert.busy" required>
-                            <span class="input-group-addon">
-                                <i class="fa fa-upload" onclick="getElementById('adminKeyFileInput').click();"></i>
-                            </span>
-                        </div>
-                    </div>
-                    <button type="submit" class="btn btn-outline btn-success pull-right" ng-disabled="adminCertForm.$invalid || busy"><i class="fa fa-circle-o-notch fa-spin" ng-show="adminCert.busy"></i> Upload</button>
-                </fieldset>
-            </form>
-        </div>
-    </div>
+      <div class="row" ng-show="config.isCustomDomain">
+          <div class="col-md-12">
+              <form name="defaultCertForm" ng-submit="setDefaultCert()">
+                  <fieldset>
+                      <p>Certificates are automatically obtained and renewed from <a href="https://letsencrypt.org/" target="_blank">Let’s Encrypt</a>. See the current rate limit <a href="https://letsencrypt.org/docs/rate-limits/" target="_blank">here</a>.</p>
+                      <br/>
+                      <label class="control-label" for="defaultCertInput">Fallback Certificate</label>
+                      <p>This wildcard certificate will be used for apps, should getting a Let’s Encrypt certificate fail.</p>
+                      <div class="has-error text-center" ng-show="defaultCert.error">{{ defaultCert.error }}</div>
+                      <div class="text-success text-center" ng-show="defaultCert.success"><b>Upload successful</b></div>
+                      <div class="form-group" ng-class="{ 'has-error': (!defaultCert.cert.$dirty && defaultCert.error) }">
+                          <div class="input-group">
+                              <input type="file" id="defaultCertFileInput" style="display:none"/>
+                              <input type="text" class="form-control" placeholder="Certificate" ng-model="defaultCert.certificateFileName" id="defaultCertInput" name="cert" onclick="getElementById('defaultCertFileInput').click();" style="cursor: pointer;" ng-disabled="defaultCert.busy" required>
+                              <span class="input-group-addon">
+                                  <i class="fa fa-upload" onclick="getElementById('defaultCertFileInput').click();"></i>
+                              </span>
+                          </div>
+                      </div>
+                      <div class="form-group" ng-class="{ 'has-error': (!defaultCert.key.$dirty && defaultCert.error) }">
+                          <div class="input-group">
+                              <input type="file" id="defaultKeyFileInput" style="display:none"/>
+                              <input type="text" class="form-control" placeholder="Key" ng-model="defaultCert.keyFileName" id="defaultKeyInput" name="key" onclick="getElementById('defaultKeyFileInput').click();" style="cursor: pointer;" ng-disabled="defaultCert.busy" required>
+                              <span class="input-group-addon">
+                                  <i class="fa fa-upload" onclick="getElementById('defaultKeyFileInput').click();"></i>
+                              </span>
+                          </div>
+                      </div>
+                      <button type="submit" class="btn btn-outline btn-success pull-right" ng-disabled="defaultCertForm.$invalid || busy"><i class="fa fa-circle-o-notch fa-spin" ng-show="defaultCert.busy"></i> Upload</button>
+                  </fieldset>
+              </form>
+          </div>
+      </div>
+      <div class="row hide">
+          <div class="col-md-12">
+              <form name="adminCertForm" ng-submit="setAdminCert()">
+                  <fieldset>
+                      <label class="control-label" for="adminCertInput">Settings Certificate</label>
+                      <p>This certificate will be used for this Settings application.</p>
+                      <div class="has-error text-center" ng-show="adminCert.error">{{ adminCert.error }}</div>
+                      <div class="text-success text-center" ng-show="adminCert.success"><b>Upload successful</b></div>
+                      <div class="form-group" ng-class="{ 'has-error': (!adminCert.cert.$dirty && adminCert.error) }">
+                          <div class="input-group">
+                              <input type="file" id="adminCertFileInput" style="display:none"/>
+                              <input type="text" class="form-control" placeholder="Certificate" ng-model="adminCert.certificateFileName" id="adminCertInput" name="cert" onclick="getElementById('adminCertFileInput').click();" style="cursor: pointer;" ng-disabled="adminCert.busy" required>
+                              <span class="input-group-addon">
+                                  <i class="fa fa-upload" onclick="getElementById('adminCertFileInput').click();"></i>
+                              </span>
+                          </div>
+                      </div>
+                      <div class="form-group" ng-class="{ 'has-error': (!adminCert.key.$dirty && adminCert.error) }">
+                          <div class="input-group">
+                              <input type="file" id="adminKeyFileInput" style="display:none"/>
+                              <input type="text" class="form-control" placeholder="Key" ng-model="adminCert.keyFileName" id="adminKeyInput" name="key" onclick="getElementById('adminKeyFileInput').click();" style="cursor: pointer;" ng-disabled="adminCert.busy" required>
+                              <span class="input-group-addon">
+                                  <i class="fa fa-upload" onclick="getElementById('adminKeyFileInput').click();"></i>
+                              </span>
+                          </div>
+                      </div>
+                      <button type="submit" class="btn btn-outline btn-success pull-right" ng-disabled="adminCertForm.$invalid || busy"><i class="fa fa-circle-o-notch fa-spin" ng-show="adminCert.busy"></i> Upload</button>
+                  </fieldset>
+              </form>
+          </div>
+      </div>
+  </div>
 </div>

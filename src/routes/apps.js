@@ -17,6 +17,7 @@ exports = module.exports = {
     stopApp: stopApp,
     startApp: startApp,
     exec: exec,
+    execWebSocket: execWebSocket,
 
     cloneApp: cloneApp
 };
@@ -456,6 +457,49 @@ function exec(req, res, next) {
             res.socket.on('error', function () { duplexStream.end(); });
             res.socket.on('end', function () { duplexStream.end(); });
         }
+    });
+}
+
+function execWebSocket(ws, req) {
+    assert.strictEqual(typeof req.params.id, 'string');
+
+    debug('Execing into app id:%s and cmd:%s', req.params.id, req.query.cmd);
+
+    var cmd = null;
+    if (req.query.cmd) {
+        cmd = safe.JSON.parse(req.query.cmd);
+        if (!util.isArray(cmd) || cmd.length < 1) return console.error(new HttpError(400, 'cmd must be array with atleast size 1'));
+    }
+
+    var columns = req.query.columns ? parseInt(req.query.columns, 10) : null;
+    if (isNaN(columns)) return console.error(new HttpError(400, 'columns must be a number'));
+
+    var rows = req.query.rows ? parseInt(req.query.rows, 10) : null;
+    if (isNaN(rows)) return console.error(new HttpError(400, 'rows must be a number'));
+
+    var tty = req.query.tty === 'true' ? true : false;
+
+    // req.clearTimeout();
+
+    apps.exec(req.params.id, { cmd: cmd, rows: rows, columns: columns, tty: tty }, function (error, duplexStream) {
+        if (error && error.reason === AppsError.NOT_FOUND) return console.error(new HttpError(404, 'No such app'));
+        if (error && error.reason === AppsError.BAD_STATE) return console.error(new HttpError(409, error.message));
+        if (error) return console.error(new HttpError(500, error));
+
+        console.log('Connected to terminal');
+
+
+        duplexStream.on('data', function (data) {
+            ws.send(data.toString());
+        });
+
+        ws.on('message', function (msg) {
+            duplexStream.write(msg);
+        });
+
+        ws.on('close', function () {
+            // Clean things up, if any?
+        });
     });
 }
 

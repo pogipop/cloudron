@@ -101,69 +101,68 @@
     </div>
 </div>
 
-<div class="section-header">
-    <div class="text-left">
-        <h1>Account</h1>
-    </div>
-</div>
+<div class="content">
 
-<div class="card">
-    <div class="grid-item-top">
-        <div class="row">
-            <div class="col-xs-4" style="min-width: 150px;">
-                <img width="128" height="128" ng-src="{{ user.gravatarHuge }}"/>
-            </div>
-            <div class="col-xs-8 text-medium">
-                <table width="100%">
-                    <tr>
-                        <td class="text-muted" style="vertical-align: top;">Username</td>
-                        <td class="text-right" style="vertical-align: top;">{{ user.username }} &nbsp;&nbsp;&nbsp;</td>
-                    </tr>
-                    <tr>
-                        <td class="text-muted" style="vertical-align: top;">Display name</td>
-                        <td class="text-right" style="vertical-align: top; white-space: nowrap;">{{ user.displayName }} <a href="" ng-click="displayNameChange.show()"><i class="fa fa-pencil text-small"></i></a></td>
-                    </tr>
-                    <tr>
-                        <td class="text-muted" style="vertical-align: top;">Email</td>
-                        <td class="text-right" style="vertical-align: top; white-space: nowrap;">{{ user.email }} <a href="" ng-click="emailchange.show()" ng-show="!user.alternateEmail"><i class="fa fa-pencil text-small"></i></a></td>
-                    </tr>
-                    <tr ng-show="user.alternateEmail">
-                        <td class="text-muted" style="vertical-align: top;">Password recovery email</td>
-                        <td class="text-right" style="vertical-align: top; white-space: nowrap;">{{ user.alternateEmail }} <a href="" ng-click="emailchange.show()"><i class="fa fa-pencil text-small"></i></a></td>
-                    </tr>
-                    <tr>
-                        <td class="text-right" colspan="2" style="vertical-align: top;">
-                        <br/>
-                            <button class="btn btn-outline btn-xs btn-danger" ng-click="passwordchange.show()">Change Password</button>
-                        </td>
-                    </tr>
-                </table>
-            </div>
-        </div>
-    </div>
-</div>
+  <div class="text-left">
+    <h1>Account</h1>
+  </div>
 
-<br/>
+  <div class="card">
+      <div class="grid-item-top">
+          <div class="row">
+              <div class="col-xs-4" style="min-width: 150px;">
+                  <img width="128" height="128" ng-src="{{ user.gravatarHuge }}"/>
+              </div>
+              <div class="col-xs-8 text-medium">
+                  <table width="100%">
+                      <tr>
+                          <td class="text-muted" style="vertical-align: top;">Username</td>
+                          <td class="text-right" style="vertical-align: top;">{{ user.username }} &nbsp;&nbsp;&nbsp;</td>
+                      </tr>
+                      <tr>
+                          <td class="text-muted" style="vertical-align: top;">Display name</td>
+                          <td class="text-right" style="vertical-align: top; white-space: nowrap;">{{ user.displayName }} <a href="" ng-click="displayNameChange.show()"><i class="fa fa-pencil text-small"></i></a></td>
+                      </tr>
+                      <tr>
+                          <td class="text-muted" style="vertical-align: top;">Email</td>
+                          <td class="text-right" style="vertical-align: top; white-space: nowrap;">{{ user.email }} <a href="" ng-click="emailchange.show()" ng-show="!user.alternateEmail"><i class="fa fa-pencil text-small"></i></a></td>
+                      </tr>
+                      <tr ng-show="user.alternateEmail">
+                          <td class="text-muted" style="vertical-align: top;">Password recovery email</td>
+                          <td class="text-right" style="vertical-align: top; white-space: nowrap;">{{ user.alternateEmail }} <a href="" ng-click="emailchange.show()"><i class="fa fa-pencil text-small"></i></a></td>
+                      </tr>
+                      <tr>
+                          <td class="text-right" colspan="2" style="vertical-align: top;">
+                          <br/>
+                              <button class="btn btn-outline btn-xs btn-danger" ng-click="passwordchange.show()">Change Password</button>
+                          </td>
+                      </tr>
+                  </table>
+              </div>
+          </div>
+      </div>
+  </div>
 
-<div class="section-header">
-    <div class="text-left">
-        <h3>Sessions</h3>
-    </div>
-</div>
+  <br/>
 
-<div class="card">
-    <div class="grid-item-top">
-        <div class="row">
-            <div class="col-xs-12">
-                <p>You are logged into {{ activeClients.length + 1 }} app(s), including this session.</p>
-                <span ng-show="activeTokenCount > 1">
-                    <hr/>
-                    <h4>Active Apps:</h4>
-                    <p ng-repeat="client in activeClients"><b>{{ client.name }} - {{client.activeTokens.length}} time(s)</b></p>
-                    <hr/>
-                </span>
-                <button class="btn btn-outline btn-xs btn-danger pull-right" ng-click="revokeTokens()">Logout From All</button>
-            </div>
-        </div>
-    </div>
+  <div class="text-left">
+    <h3>Sessions</h3>
+  </div>
+
+  <div class="card">
+      <div class="grid-item-top">
+          <div class="row">
+              <div class="col-xs-12">
+                  <p>You are logged into {{ activeClients.length + 1 }} app(s), including this session.</p>
+                  <span ng-show="activeTokenCount > 1">
+                      <hr/>
+                      <h4>Active Apps:</h4>
+                      <p ng-repeat="client in activeClients"><b>{{ client.name }} - {{client.activeTokens.length}} time(s)</b></p>
+                      <hr/>
+                  </span>
+                  <button class="btn btn-outline btn-xs btn-danger pull-right" ng-click="revokeTokens()">Logout From All</button>
+              </div>
+          </div>
+      </div>
+  </div>
 </div>

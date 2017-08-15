@@ -1,84 +1,79 @@
-<div class="section-header">
-    <div class="text-left">
-        <h1>Support</h1>
-    </div>
-</div>
+<div class="content">
 
-<div class="section-header">
-    <div class="text-left">
-        <h3>Documentation and Chat</h3>
-    </div>
-</div>
+  <div class="text-left">
+    <h1>Support</h1>
+  </div>
 
-<div class="card">
-    <div class="grid-item-top">
-        <div class="row animateMeOpacity">
-            <div class="col-lg-12">
-                For user manuals and app development related questions, please refer to our <a href="{{ config.webServerOrigin }}/documentation.html" target="_blank"> documentation</a>.
-                Cloudron is <a href="https://git.cloudron.io" target="_blank">open source</a> - use the <a href="https://git.cloudron.io/cloudron/box/issues" target="_blank">issue tracker</a>
-                to report bugs and raise feature requests.
-                <br/><br/>
-                For any other questions, chat with us live at <a href="https://chat.cloudron.io/" target="_blank">chat.cloudron.io</a>.
-            </div>
-        </div>
-    </div>
-</div>
+  <div class="text-left">
+    <h3>Documentation and Chat</h3>
+  </div>
 
-<div class="section-header">
-    <div class="text-left">
-        <h3>Feedback</h3>
-    </div>
-</div>
+  <div class="card">
+      <div class="grid-item-top">
+          <div class="row animateMeOpacity">
+              <div class="col-lg-12">
+                  For user manuals and app development related questions, please refer to our <a href="{{ config.webServerOrigin }}/documentation.html" target="_blank"> documentation</a>.
+                  Cloudron is <a href="https://git.cloudron.io" target="_blank">open source</a> - use the <a href="https://git.cloudron.io/cloudron/box/issues" target="_blank">issue tracker</a>
+                  to report bugs and raise feature requests.
+                  <br/><br/>
+                  For any other questions, chat with us live at <a href="https://chat.cloudron.io/" target="_blank">chat.cloudron.io</a>.
+              </div>
+          </div>
+      </div>
+  </div>
 
-<div class="card">
-    <div class="grid-item-top">
-        <div class="row animateMeOpacity">
-            <div class="col-lg-12">
-                We would love to hear your feedback. Help us improve our product by reporting any bugs or feature requests.
-                <br/>
-                <br/>
-                <form name="feedbackForm" ng-submit="submitFeedback()">
-                    <div class="form-group">
-                        <select class="form-control" name="type" style="width: 50%;" ng-model="feedback.type" required>
-                            <option value="feedback">Enhancement / Idea</option>
-                            <option value="ticket">Bug Report</option>
-                            <option value="app_missing">Missing App</option>
-                            <option value="app_error">App Error/Failing</option>
-                        </select>
-                    </div>
-                    <div class="form-group" ng-class="{ 'has-error': (feedbackForm.subject.$dirty && feedbackForm.subject.$invalid) }">
-                        <input type="text" class="form-control" name="subject" placeholder="Enter your idea or issue" ng-model="feedback.subject" ng-maxlength="512" ng-minlength="1" required>
-                    </div>
-                    <div class="form-group" ng-class="{ 'has-error': (feedbackForm.description.$dirty && feedbackForm.description.$invalid) }">
-                        <textarea class="form-control" name="description" rows="3" placeholder="Describe your idea or issue" ng-model="feedback.description" ng-minlength="1" required></textarea>
-                    </div>
-                    <button type="submit" class="btn btn-primary" ng-disabled="feedbackForm.$invalid || feedback.busy"><i class="fa fa-circle-o-notch fa-spin" ng-show="feedback.busy"></i> Submit</button>
-                    <span ng-show="feedback.error" class="text-danger text-bold">{{feedback.error}}</span>
-                    <span ng-show="feedback.success" class="text-success text-bold">Thank You!</span>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
+  <div class="text-left">
+    <h3>Feedback</h3>
+  </div>
 
-<div class="section-header">
-    <div class="text-left">
-        <h3>Remote Support</h3>
-    </div>
-</div>
+  <div class="card">
+      <div class="grid-item-top">
+          <div class="row animateMeOpacity">
+              <div class="col-lg-12">
+                  We would love to hear your feedback. Help us improve our product by reporting any bugs or feature requests.
+                  <br/>
+                  <br/>
+                  <form name="feedbackForm" ng-submit="submitFeedback()">
+                      <div class="form-group">
+                          <select class="form-control" name="type" style="width: 50%;" ng-model="feedback.type" required>
+                              <option value="feedback">Enhancement / Idea</option>
+                              <option value="ticket">Bug Report</option>
+                              <option value="app_missing">Missing App</option>
+                              <option value="app_error">App Error/Failing</option>
+                          </select>
+                      </div>
+                      <div class="form-group" ng-class="{ 'has-error': (feedbackForm.subject.$dirty && feedbackForm.subject.$invalid) }">
+                          <input type="text" class="form-control" name="subject" placeholder="Enter your idea or issue" ng-model="feedback.subject" ng-maxlength="512" ng-minlength="1" required>
+                      </div>
+                      <div class="form-group" ng-class="{ 'has-error': (feedbackForm.description.$dirty && feedbackForm.description.$invalid) }">
+                          <textarea class="form-control" name="description" rows="3" placeholder="Describe your idea or issue" ng-model="feedback.description" ng-minlength="1" required></textarea>
+                      </div>
+                      <button type="submit" class="btn btn-primary" ng-disabled="feedbackForm.$invalid || feedback.busy"><i class="fa fa-circle-o-notch fa-spin" ng-show="feedback.busy"></i> Submit</button>
+                      <span ng-show="feedback.error" class="text-danger text-bold">{{feedback.error}}</span>
+                      <span ng-show="feedback.success" class="text-success text-bold">Thank You!</span>
+                  </form>
+              </div>
+          </div>
+      </div>
+  </div>
 
-<div class="card" ng-show="config.provider !== 'caas' && user.admin">
-    <div class="grid-item-top">
-        <div class="row animateMeOpacity">
-            <div class="col-lg-12">
-                Enable this option to allow Cloudron engineers to connect to this server via SSH.
-                <br/>
-                <br/>
-                Do not enable this option before contacting us first at <a href="https://chat.cloudron.io/" target="_blank">chat.cloudron.io</a>.
-                <br/>
-                <br/>
-                <button class="btn" ng-class="{ 'btn-danger': !sshSupportEnabled, 'btn-primary': sshSupportEnabled }" ng-click="toggleSshSupport()">{{ sshSupportEnabled ? 'Disable SSH support access' : 'Enable SSH support access' }}</button>
-            </div>
-        </div>
-    </div>
+  <div class="text-left">
+    <h3>Remote Support</h3>
+  </div>
+
+  <div class="card" ng-show="config.provider !== 'caas' && user.admin">
+      <div class="grid-item-top">
+          <div class="row animateMeOpacity">
+              <div class="col-lg-12">
+                  Enable this option to allow Cloudron engineers to connect to this server via SSH.
+                  <br/>
+                  <br/>
+                  Do not enable this option before contacting us first at <a href="https://chat.cloudron.io/" target="_blank">chat.cloudron.io</a>.
+                  <br/>
+                  <br/>
+                  <button class="btn" ng-class="{ 'btn-danger': !sshSupportEnabled, 'btn-primary': sshSupportEnabled }" ng-click="toggleSshSupport()">{{ sshSupportEnabled ? 'Disable SSH support access' : 'Enable SSH support access' }}</button>
+              </div>
+          </div>
+      </div>
+  </div>
 </div>

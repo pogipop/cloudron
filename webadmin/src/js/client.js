@@ -120,7 +120,8 @@ angular.module('Application').service('Client', ['$http', 'md5', 'Notification',
         this._installedApps = [];
         this._clientId = '<%= oauth.clientId %>';
         this._clientSecret = '<%= oauth.clientSecret %>';
-        this.apiOrigin = '<%= oauth.apiOrigin %>';
+        // window.location fallback for websocket connections which do not have relative uris
+        this.apiOrigin = '<%= oauth.apiOrigin %>' || window.location.origin;
         this.avatar = '';
 
         this.resetAvatar();
