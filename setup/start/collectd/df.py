@@ -14,7 +14,7 @@ def read():
     for d in disks:
         device = d[0]
         if 'devicemapper' in d[1] or not device.startswith('/dev/'): continue
-        instance = device[len('/dev/'):].replace('/', '-')
+        instance = device[len('/dev/'):].replace('/', '_') # see #348
 
         try:
             st = os.statvfs(d[1]) # handle disk removal
