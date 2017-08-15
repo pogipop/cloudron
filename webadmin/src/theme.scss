@@ -1089,40 +1089,8 @@ footer {
 // Logs
 // ----------------------------
 
-.logs-main {
-    text-align: left;
-    width: 100%;
-    flex-grow: 1;
-    display: flex;
-    flex-direction: column;
-
-    .logs-controls {
-        margin-top: 25px;
-    }
-
-    .log-line {
-        line-height: 1.2;
-
-        &:hover {
-            background-color: #333333;
-        }
-
-        .time {
-            color: #00FFFF;
-        }
-    }
-
-    .logs-and-term-container {
-        flex-grow: 1;
-        margin-left: calc(8.33% + 15px);
-        margin-right: calc(8.33% + 15px);
-        margin-bottom: 20px;
-        background-color: black;
-        color: white;
-        overflow: auto;
-        padding: 5px;
-        font-family: monospace;
-    }
+.logs-controls {
+    margin-top: 25px;
 
     .ng-isolate-scope {
         display: inline-block;
@@ -1142,6 +1110,30 @@ footer {
             &:hover, &:focus {
                 background-color: white;
             }
+        }
+    }
+}
+
+.logs-and-term-container {
+    flex-grow: 1;
+    margin-left: calc(8.33% + 15px);
+    margin-right: calc(8.33% + 15px);
+    margin-bottom: 20px;
+    background-color: black;
+    color: white;
+    overflow: auto;
+    padding: 5px;
+    font-family: monospace;
+
+    .log-line {
+        line-height: 1.2;
+
+        &:hover {
+            background-color: #333333;
+        }
+
+        .time {
+            color: #00FFFF;
         }
     }
 }

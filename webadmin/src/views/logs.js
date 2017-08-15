@@ -69,14 +69,14 @@ angular.module('Application').controller('LogsController', ['$scope', '$location
 
                 // check if we want to auto scroll (this is before the appending, as that skews the check)
                 var tmp = $('.logs-and-term-container');
-                var autoScroll = tmp.scrollTop > (tmp.scrollTopMax - 24);
+                var autoScroll = tmp[0].scrollTop > (tmp[0].scrollTopMax - 24);
 
                 var logLine = $('<div class="log-line">');
                 var timeString = moment.utc(data.realtimeTimestamp/1000).format('MMM DD HH:mm:ss');
                 logLine.html('<span class="time">' + timeString + ' </span>' + window.ansiToHTML(typeof data.message === 'string' ? data.message : ab2str(data.message)));
                 tmp.append(logLine);
 
-                if (autoScroll) tmp.lastChild.scrollIntoView({ behavior: 'instant', block: 'end' });
+                if (autoScroll) tmp[0].lastChild.scrollIntoView({ behavior: 'instant', block: 'end' });
             };
         });
     };
