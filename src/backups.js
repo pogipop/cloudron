@@ -370,6 +370,11 @@ function backupBoxAndApps(auditSource, callback) {
 
             ++processed;
 
+            if (!app.enableBackup) {
+                progress.set(progress.BACKUP, step * processed, 'Skipped backup ' + (app.altDomain || config.appFqdn(app.location)));
+                return iteratorCallback(null, app.lastBackupId); // just use the last backup
+            }
+
             backupApp(app, app.manifest, prefix, function (error, backupId) {
                 if (error && error.reason !== BackupsError.BAD_STATE) {
                     debugApp(app, 'Unable to backup', error);

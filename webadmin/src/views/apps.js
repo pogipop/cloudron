@@ -122,6 +122,7 @@ angular.module('Application').controller('AppsController', ['$scope', '$location
         $scope.appConfigure.xFrameOptions = '';
         $scope.appConfigure.customAuth = false;
         $scope.appConfigure.robotsTxt = '';
+        $scope.appConfigure.enableBackup = true;
 
         $scope.appConfigureForm.$setPristine();
         $scope.appConfigureForm.$setUntouched();
@@ -215,6 +216,7 @@ angular.module('Application').controller('AppsController', ['$scope', '$location
         $scope.appConfigure.xFrameOptions = app.xFrameOptions.indexOf('ALLOW-FROM') === 0 ? app.xFrameOptions.split(' ')[1] : '';
         $scope.appConfigure.customAuth = !(app.manifest.addons['ldap'] || app.manifest.addons['oauth']);
         $scope.appConfigure.robotsTxt = app.robotsTxt;
+        $scope.appConfigure.enableBackup = app.enableBackup;
 
         // create ticks starting from manifest memory limit
         $scope.appConfigure.memoryTicks = [
@@ -268,7 +270,8 @@ angular.module('Application').controller('AppsController', ['$scope', '$location
             key: $scope.appConfigure.keyFile,
             xFrameOptions: $scope.appConfigure.xFrameOptions ? ('ALLOW-FROM ' + $scope.appConfigure.xFrameOptions) : 'SAMEORIGIN',
             memoryLimit: $scope.appConfigure.memoryLimit === $scope.appConfigure.memoryTicks[0] ? 0 : $scope.appConfigure.memoryLimit,
-            robotsTxt: $scope.appConfigure.robotsTxt
+            robotsTxt: $scope.appConfigure.robotsTxt,
+            enableBackup: $scope.appConfigure.enableBackup
         };
 
         Client.configureApp($scope.appConfigure.app.id, $scope.appConfigure.password, data, function (error) {

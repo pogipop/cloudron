@@ -415,6 +415,7 @@ function install(data, auditSource, callback) {
         sso = 'sso' in data ? data.sso : null,
         debugMode = data.debugMode || null,
         robotsTxt = data.robotsTxt || null,
+        enableBackup = 'enableBackup' in data ? data.enableBackup : true,
         backupId = data.backupId || null;
 
     assert(data.appStoreId || data.manifest); // atleast one of them is required
@@ -484,7 +485,8 @@ function install(data, auditSource, callback) {
                 sso: sso,
                 debugMode: debugMode,
                 mailboxName: (location ? location : manifest.title.toLowerCase().replace(/[^a-zA-Z0-9]/g, '')) + '.app',
-                lastBackupId: backupId
+                lastBackupId: backupId,
+                enableBackup: enableBackup
             };
 
             appdb.add(appId, appStoreId, manifest, location, portBindings, data, function (error) {
@@ -582,6 +584,8 @@ function configure(appId, data, auditSource, callback) {
                 if (!safe.fs.unlinkSync(path.join(paths.APP_CERTS_DIR, config.appFqdn(location) + '.user.key'))) debug('Error removing key: ' + safe.error.message);
             }
         }
+
+        if ('enableBackup' in data) values.enableBackup = data.enableBackup;
 
         values.oldConfig = getAppConfig(app);
 

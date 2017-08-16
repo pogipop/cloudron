@@ -60,7 +60,7 @@ var assert = require('assert'),
 var APPS_FIELDS_PREFIXED = [ 'apps.id', 'apps.appStoreId', 'apps.installationState', 'apps.installationProgress', 'apps.runState',
     'apps.health', 'apps.containerId', 'apps.manifestJson', 'apps.httpPort', 'apps.location', 'apps.dnsRecordId',
     'apps.accessRestrictionJson', 'apps.lastBackupId', 'apps.oldConfigJson', 'apps.memoryLimit', 'apps.altDomain',
-    'apps.xFrameOptions', 'apps.sso', 'apps.debugModeJson', 'apps.robotsTxt' ].join(',');
+    'apps.xFrameOptions', 'apps.sso', 'apps.debugModeJson', 'apps.robotsTxt', 'apps.enableBackup' ].join(',');
 
 var PORT_BINDINGS_FIELDS = [ 'hostPort', 'environmentVariable', 'appId' ].join(',');
 
@@ -98,6 +98,7 @@ function postProcess(result) {
     result.xFrameOptions = result.xFrameOptions || 'SAMEORIGIN';
 
     result.sso = !!result.sso; // make it bool
+    result.enableBackup = !!result.enableBackup; // make it bool
 
     assert(result.debugModeJson === null || typeof result.debugModeJson === 'string');
     result.debugMode = safe.JSON.parse(result.debugModeJson);

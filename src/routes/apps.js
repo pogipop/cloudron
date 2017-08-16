@@ -58,7 +58,8 @@ function removeInternalAppFields(app) {
         xFrameOptions: app.xFrameOptions,
         sso: app.sso,
         debugMode: app.debugMode,
-        robotsTxt: app.robotsTxt
+        robotsTxt: app.robotsTxt,
+        enableBackup: app.enableBackup
     };
 }
 
@@ -130,6 +131,7 @@ function installApp(req, res, next) {
     if (data.xFrameOptions && typeof data.xFrameOptions !== 'string') return next(new HttpError(400, 'xFrameOptions must be a string'));
 
     if ('sso' in data && typeof data.sso !== 'boolean') return next(new HttpError(400, 'sso must be a boolean'));
+    if ('enableBackup' in data && typeof data.enableBackup !== 'boolean') return next(new HttpError(400, 'enableBackup must be a boolean'));
 
     if (('debugMode' in data) && typeof data.debugMode !== 'object') return next(new HttpError(400, 'debugMode must be an object'));
 
@@ -170,6 +172,8 @@ function configureApp(req, res, next) {
     if ('memoryLimit' in data && typeof data.memoryLimit !== 'number') return next(new HttpError(400, 'memoryLimit is not a number'));
     if (data.altDomain && typeof data.altDomain !== 'string') return next(new HttpError(400, 'altDomain must be a string'));
     if (data.xFrameOptions && typeof data.xFrameOptions !== 'string') return next(new HttpError(400, 'xFrameOptions must be a string'));
+
+    if ('enableBackup' in data && typeof data.enableBackup !== 'boolean') return next(new HttpError(400, 'enableBackup must be a boolean'));
 
     if (('debugMode' in data) && typeof data.debugMode !== 'object') return next(new HttpError(400, 'debugMode must be an object'));
 

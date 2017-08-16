@@ -338,7 +338,8 @@ angular.module('Application').service('Client', ['$http', 'md5', 'Notification',
             memoryLimit: config.memoryLimit,
             altDomain: config.altDomain || null,
             xFrameOptions: config.xFrameOptions,
-            robotsTxt: config.robotsTxt || null
+            robotsTxt: config.robotsTxt || null,
+            enableBackup: config.enableBackup
         };
 
         post('/api/v1/apps/' + id + '/configure', data).success(function (data, status) {

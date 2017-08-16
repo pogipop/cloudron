@@ -133,6 +133,11 @@
                                 <textarea ng-model="appConfigure.robotsTxt" placeholder="Leave empty to allow all bots to index this app." class="form-control" rows="3"></textarea>
                             </div>
 
+                            <div class="form-group">
+                                <input type="checkbox" id="appConfigureEnableBackup" ng-model="appConfigure.enableBackup">
+                                <label class="control-label" for="appConfigureEnableBackup">Enable backups</label>
+                            </div>
+
                             <div class="hide">
                                 <label class="control-label" for="appConfigureCertificateInput" ng-show="config.isCustomDomain">Certificate (optional)</label>
                                 <div class="has-error text-center" ng-show="appConfigure.error.cert && config.isCustomDomain">{{ appConfigure.error.cert }}</div>
