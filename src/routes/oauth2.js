@@ -3,6 +3,7 @@
 var appdb = require('../appdb'),
     apps = require('../apps'),
     assert = require('assert'),
+    auth = require('../auth.js'),
     authcodedb = require('../authcodedb'),
     clients = require('../clients'),
     ClientsError = clients.ClientsError,
@@ -533,6 +534,20 @@ function scope(requestedScope) {
     ];
 }
 
+function websocketAuth(ws, req, next) {
+    if (typeof req.query.access_token !== 'string') return next(new HttpError(401, 'Unauthorized'));
+
+    auth.accessTokenAuth(req.query.access_token, function (error, user, info) {
+        if (error) return next(new HttpError(500, error.message));
+        if (!user) return next(new HttpError(401, 'Unauthorized'));
+
+        req.user = user;
+        req.authInfo = info;
+
+        next();
+    });
+}
+
 // Cross-site request forgery protection middleware for login form
 var csrf = [
     middleware.csrf(),
@@ -559,5 +574,6 @@ exports = module.exports = {
     token: token,
     validateRequestedScopes: validateRequestedScopes,
     scope: scope,
+    websocketAuth: websocketAuth,
     csrf: csrf
 };

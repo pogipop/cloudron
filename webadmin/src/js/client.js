@@ -242,6 +242,10 @@ angular.module('Application').service('Client', ['$http', 'md5', 'Notification',
         token = accessToken;
     };
 
+    Client.prototype.getToken = function () {
+        return token;
+    };
+
     /*
      * Rest API wrappers
      */

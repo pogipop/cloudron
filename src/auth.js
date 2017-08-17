@@ -2,7 +2,9 @@
 
 exports = module.exports = {
     initialize: initialize,
-    uninitialize: uninitialize
+    uninitialize: uninitialize,
+
+    accessTokenAuth: accessTokenAuth
 };
 
 var assert = require('assert'),
@@ -23,22 +25,22 @@ var assert = require('assert'),
 
 function initialize(callback) {
     assert.strictEqual(typeof callback, 'function');
-
+    
     passport.serializeUser(function (user, callback) {
         callback(null, user.id);
     });
-
+    
     passport.deserializeUser(function(userId, callback) {
         user.get(userId, function (error, result) {
             if (error) return callback(error);
-
+            
             var md5 = crypto.createHash('md5').update(result.alternateEmail || result.email).digest('hex');
             result.gravatar = 'https://www.gravatar.com/avatar/' + md5 + '.jpg?s=24&d=mm';
-
+            
             callback(null, result);
         });
     });
-
+    
     passport.use(new LocalStrategy(function (username, password, callback) {
         if (username.indexOf('@') === -1) {
             user.verifyWithUsername(username, password, function (error, result) {
@@ -58,7 +60,7 @@ function initialize(callback) {
             });
         }
     }));
-
+    
     passport.use(new BasicStrategy(function (username, password, callback) {
         if (username.indexOf('cid-') === 0) {
             debug('BasicStrategy: detected client id %s instead of username:password', username);
@@ -80,7 +82,7 @@ function initialize(callback) {
             });
         }
     }));
-
+    
     passport.use(new ClientPasswordStrategy(function (clientId, clientSecret, callback) {
         clients.get(clientId, function(error, client) {
             if (error && error.reason === ClientsError.NOT_FOUND) return callback(null, false);
@@ -89,30 +91,35 @@ function initialize(callback) {
             return callback(null, client);
         });
     }));
-
-    passport.use(new BearerStrategy(function (accessToken, callback) {
-        tokendb.get(accessToken, function (error, token) {
-            if (error && error.reason === DatabaseError.NOT_FOUND) return callback(null, false);
-            if (error) return callback(error);
-
-            // scopes here can define what capabilities that token carries
-            // passport put the 'info' object into req.authInfo, where we can further validate the scopes
-            var info = { scope: token.scope };
-
-            user.get(token.identifier, function (error, user) {
-                if (error && error.reason === UserError.NOT_FOUND) return callback(null, false);
-                if (error) return callback(error);
-
-                callback(null, user, info);
-            });
-        });
-    }));
-
+    
+    passport.use(new BearerStrategy(accessTokenAuth));
+    
     callback(null);
 }
 
 function uninitialize(callback) {
     assert.strictEqual(typeof callback, 'function');
-
+    
     callback(null);
+}
+
+function accessTokenAuth(accessToken, callback) {
+    assert.strictEqual(typeof accessToken, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    tokendb.get(accessToken, function (error, token) {
+        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(null, false);
+        if (error) return callback(error);
+        
+        // scopes here can define what capabilities that token carries
+        // passport put the 'info' object into req.authInfo, where we can further validate the scopes
+        var info = { scope: token.scope };
+        
+        user.get(token.identifier, function (error, user) {
+            if (error && error.reason === UserError.NOT_FOUND) return callback(null, false);
+            if (error) return callback(error);
+            
+            callback(null, user, info);
+        });
+    });
 }
