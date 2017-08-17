@@ -14,7 +14,7 @@
       <!-- terminal actions -->
       <!-- <button class="btn btn-default pull-right" ng-click="" ng-show="terminalVisible">Upload</button> -->
       <!-- <button class="btn btn-default pull-right" ng-click="" ng-show="terminalVisible">Download</button> -->
-      <button class="btn btn-default pull-right" ng-click="terminalInjectMysql()" ng-show="terminalVisible">Mysql</button>
+      <button class="btn btn-default pull-right" ng-click="terminalInjectMysql()" ng-show="terminalVisible && usesAddon('mysql')">Mysql</button>
     </div>
   </div>
 

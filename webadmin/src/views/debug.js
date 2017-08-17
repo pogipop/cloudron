@@ -27,10 +27,15 @@ angular.module('Application').controller('DebugController', ['$scope', '$locatio
         $scope.logs.push({ name: 'Mail', type: 'platform', value: 'mail', url: Client.makeURL('/api/v1/cloudron/logs?units=mail') });
 
         Client.getInstalledApps().forEach(function (app) {
-            $scope.logs.push({ name: app.fqdn + ' (' + app.manifest.title + ')', type: 'app', value: app.id, url: Client.makeURL('/api/v1/apps/' + app.id + '/logs') });
+            $scope.logs.push({ name: app.fqdn + ' (' + app.manifest.title + ')', type: 'app', value: app.id, url: Client.makeURL('/api/v1/apps/' + app.id + '/logs'), addons: app.manifest.addons });
         });
 
         $scope.selected = $scope.logs[0];
+    };
+
+    $scope.usesAddon = function (addon) {
+        if (!$scope.selected || !$scope.selected.addons) return false;
+        return !!Object.keys($scope.selected.addons).find(function (a) { return a === addon; });
     };
 
     function reset() {
