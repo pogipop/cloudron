@@ -132,11 +132,21 @@ angular.module('Application').controller('DebugController', ['$scope', '$locatio
         else $scope.terminal.writeln('Connecting...');
     };
 
-    $scope.terminalInjectMysql = function () {
+    $scope.terminalInject = function (addon) {
         if (!$scope.terminalSocket) return;
 
-        $scope.terminalSocket.send('mysql --user=${MYSQL_USERNAME} --password=${MYSQL_PASSWORD} --host=${MYSQL_HOST} ${MYSQL_DATABASE}\n');
-    };
+        var cmd;
+        if (addon === 'mysql') cmd = 'mysql --user=${MYSQL_USERNAME} --password=${MYSQL_PASSWORD} --host=${MYSQL_HOST} ${MYSQL_DATABASE}';
+        else if (addon === 'postgresql') cmd = 'PGPASSWORD=${POSTGRESQL_PASSWORD} psql -h ${POSTGRESQL_HOST} -p ${POSTGRESQL_PORT} -U ${POSTGRESQL_USERNAME} -d ${POSTGRESQL_DATABASE}';
+        else if (addon === 'mongodb') cmd = 'mongo -u "${MONGODB_USERNAME}" -p "${MONGODB_PASSWORD}" ${MONGODB_HOST}:${MONGODB_PORT}/${MONGODB_DATABASE}';
+        else if (addon === 'redis') cmd = 'redis-cli -h "${REDIS_HOST}" -p "${REDIS_PORT}" -a "${REDIS_PASSWORD}"';
+
+        if (!cmd) return;
+
+        cmd += '\n';
+
+        $scope.terminalSocket.send(cmd);
+    }
 
     $scope.$watch('selected', function (newVal) {
         if (!newVal) return;
