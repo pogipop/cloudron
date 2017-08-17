@@ -59,7 +59,7 @@ function initializeExpressSync() {
     router.del = router.delete; // amend router.del for readability further on
 
     app
-       // .use(middleware.timeout(REQUEST_TIMEOUT))
+       .use(middleware.timeout(REQUEST_TIMEOUT))
        .use(json)
        .use(urlencoded)
        .use(middleware.cookieParser())
@@ -192,7 +192,7 @@ function initializeExpressSync() {
     router.get ('/api/v1/apps/:id/logstream', appsScope, routes.user.requireAdmin, routes.apps.getLogStream);
     router.get ('/api/v1/apps/:id/logs',      appsScope, routes.user.requireAdmin, routes.apps.getLogs);
     router.get ('/api/v1/apps/:id/exec',      routes.developer.enabled, appsScope, routes.user.requireAdmin, routes.apps.exec);
-    router.ws  ('/api/v1/apps/:id/exec',      routes.apps.execWebSocket);
+    router.ws  ('/api/v1/apps/:id/execws',    routes.apps.execWebSocket);
     router.post('/api/v1/apps/:id/clone',     appsScope, routes.user.requireAdmin, routes.apps.cloneApp);
 
     // settings routes (these are for the settings tab - avatar & name have public routes for normal users. see above)
@@ -236,23 +236,25 @@ function initializeExpressSync() {
     // we rely on nginx for timeouts on the TCP level (see client_header_timeout)
     httpServer.setTimeout(0);
 
-
     // upgrade handler
-    // httpServer.on('upgrade', function (req, socket, head) {
-    //     // create a node response object for express
-    //     var res = new http.ServerResponse({});
-    //     res.assignSocket(socket);
-    //     res.sendUpgradeHandshake = function () { // could extend express.response as well
-    //         socket.write('HTTP/1.1 101 TCP Handshake\r\n' +
-    //                      'Upgrade: tcp\r\n' +
-    //                      'Connection: Upgrade\r\n' +
-    //                      '\r\n');
-    //     };
+    httpServer.on('upgrade', function (req, socket, head) {
+        // upgraded connections should never time out
+        req.clearTimeout();
 
-    //     // route through express middleware. if we provide no callback, express will provide a 'finalhandler'
-    //     // TODO: it's not clear if socket needs to be destroyed
-    //     app(req, res);
-    // });
+        // create a node response object for express
+        // var res = new http.ServerResponse({});
+        // res.assignSocket(socket);
+        // res.sendUpgradeHandshake = function () { // could extend express.response as well
+        //     socket.write('HTTP/1.1 101 TCP Handshake\r\n' +
+        //                  'Upgrade: tcp\r\n' +
+        //                  'Connection: Upgrade\r\n' +
+        //                  '\r\n');
+        // };
+
+        // // route through express middleware. if we provide no callback, express will provide a 'finalhandler'
+        // // TODO: it's not clear if socket needs to be destroyed
+        // app(req, res);
+    });
 
     return httpServer;
 }
