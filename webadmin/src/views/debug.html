@@ -7,7 +7,14 @@
         <uib-tab index="1" heading="Terminal" select="showTerminal()"></uib-tab>
       </uib-tabset>
       <select class="form-control pull-right inline" ng-options="log.name for log in logs track by log.value" ng-model="selected"></select>
+
+      <!-- logs actions -->
       <a class="btn btn-default pull-right" ng-href="{{ selected.url }}&format=short&lines=800" ng-hide="terminalVisible"><i class="fa fa-download"></i> Download </a>
+
+      <!-- terminal actions -->
+      <!-- <button class="btn btn-default pull-right" ng-click="" ng-show="terminalVisible">Upload</button> -->
+      <!-- <button class="btn btn-default pull-right" ng-click="" ng-show="terminalVisible">Download</button> -->
+      <button class="btn btn-default pull-right" ng-click="terminalInjectMysql()" ng-show="terminalVisible">Mysql</button>
     </div>
   </div>
 

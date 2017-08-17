@@ -3,7 +3,7 @@
 /* global moment */
 /* global Terminal */
 
-angular.module('Application').controller('LogsController', ['$scope', '$location', 'Client', function ($scope, $location, Client) {
+angular.module('Application').controller('DebugController', ['$scope', '$location', 'Client', function ($scope, $location, Client) {
     Client.onReady(function () { if (!Client.getUserInfo().admin) $location.path('/'); });
 
     $scope.config = Client.getConfig();
@@ -13,6 +13,7 @@ angular.module('Application').controller('LogsController', ['$scope', '$location
     $scope.selected = '';
     $scope.activeEventSource = null;
     $scope.terminal = null;
+    $scope.terminalSocket = null;
     $scope.lines = 10;
     $scope.terminalVisible = false;
 
@@ -45,6 +46,10 @@ angular.module('Application').controller('LogsController', ['$scope', '$location
         if ($scope.terminal) {
             $scope.terminal.destroy();
             $scope.terminal = null;
+        }
+
+        if ($scope.terminalSocket) {
+            $scope.terminalSocket = null;
         }
     }
 
@@ -81,22 +86,31 @@ angular.module('Application').controller('LogsController', ['$scope', '$location
         });
     };
 
-    $scope.showTerminal = function () {
+    $scope.showTerminal = function (retry) {
         $scope.terminalVisible = true;
 
         reset();
+
+        // we can only connect to apps here
+        if ($scope.selected.type !== 'app') {
+            var tmp = $('.logs-and-term-container');
+            var logLine = $('<div class="log-line">');
+            logLine.html('Terminal is only supported for app, not for ' + $scope.selected.name);
+            tmp.append(logLine);
+            return;
+        }
 
         $scope.terminal = new Terminal();
 
         try {
             // websocket cannot use relative urls
-            var url = Client.apiOrigin.replace('https', 'wss') + '/api/v1/apps/' + $scope.selected.value + '/exec?tty=true';
-            var socket = new WebSocket(url);
-            $scope.terminal.attach(socket);
+            var url = Client.apiOrigin.replace('https', 'wss') + '/api/v1/apps/' + $scope.selected.value + '/execws?tty=true';
+            $scope.terminalSocket = new WebSocket(url);
+            $scope.terminal.attach($scope.terminalSocket);
 
-            socket.onclose = function () {
+            $scope.terminalSocket.onclose = function () {
                 // retry in one second
-                setTimeout($scope.showTerminal, 1000);
+                setTimeout($scope.showTerminal.bind(null, true), 1000);
             };
         } catch (e) {
             console.error(e);
@@ -104,6 +118,15 @@ angular.module('Application').controller('LogsController', ['$scope', '$location
 
         $scope.terminal.open(document.querySelector('.logs-and-term-container'));
         $scope.terminal.fit();
+
+        if (retry) $scope.terminal.writeln('Reconnecting...');
+        else $scope.terminal.writeln('Connecting...');
+    };
+
+    $scope.terminalInjectMysql = function () {
+        if (!$scope.terminalSocket) return;
+
+        $scope.terminalSocket.send('mysql --user=${MYSQL_USERNAME} --password=${MYSQL_PASSWORD} --host=${MYSQL_HOST} ${MYSQL_DATABASE}\n');
     };
 
     $scope.$watch('selected', function (newVal) {
