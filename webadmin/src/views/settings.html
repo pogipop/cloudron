@@ -156,6 +156,13 @@
                             <select class="form-control" id="storageProviderProvider" ng-model="configureBackup.provider" ng-options="a.value as a.name for a in storageProvider" ng-change=configureBackup.clearForm()></select>
                         </div>
 
+                        <!-- Noop -->
+                        <div class="form-group" ng-show="configureBackup.provider === 'noop'">
+                            <p class="has-error">
+                                This option breaks the backup and restore functionality of Cloudron and should only be used for testing. Please make sure the server is completely backed up using alternate means.
+                            </p>
+                        </div>
+
                         <!-- Filesystem -->
                         <div class="form-group" ng-class="{ 'has-error': configureBackup.error.backupFolder }" ng-show="configureBackup.provider === 'filesystem'">
                             <label class="control-label" for="inputConfigureBackupFolder">Local backup directory</label>
