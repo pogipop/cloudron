@@ -31,7 +31,8 @@ var apps = require('../apps.js'),
     HttpSuccess = require('connect-lastmile').HttpSuccess,
     paths = require('../paths.js'),
     safe = require('safetydance'),
-    util = require('util');
+    util = require('util'),
+    WebSocket = require('ws');
 
 function auditSource(req) {
     var ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress || null;
@@ -488,12 +489,13 @@ function execWebSocket(ws, req, next) {
 
         console.log('Connected to terminal');
 
-        duplexStream.on('end', function () { ws.end(); });
-        duplexStream.on('close', function () { ws.end(); });
+        duplexStream.on('end', function () { ws.close(); });
+        duplexStream.on('close', function () { ws.close(); });
         duplexStream.on('error', function (error) {
             console.error('duplexStream error:', error);
         });
         duplexStream.on('data', function (data) {
+            if (ws.readyState !== WebSocket.OPEN) return;
             ws.send(data.toString());
         });
 
