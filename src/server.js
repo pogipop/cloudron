@@ -238,22 +238,25 @@ function initializeExpressSync() {
 
     // upgrade handler
     httpServer.on('upgrade', function (req, socket, head) {
-        // upgraded connections should never time out
-        req.clearTimeout();
+        if (req.headers.upgrade === 'websocket') {
+            // websocket connections should never time out
+            req.clearTimeout();
+        } else {
+            // create a node response object for express
+            var res = new http.ServerResponse({});
+            res.assignSocket(socket);
+            res.sendUpgradeHandshake = function () { // could extend express.response as well
+                console.log('----- now send the upgrade handshake')
+                socket.write('HTTP/1.1 101 TCP Handshake\r\n' +
+                             'Upgrade: tcp\r\n' +
+                             'Connection: Upgrade\r\n' +
+                             '\r\n');
+            };
 
-        // create a node response object for express
-        // var res = new http.ServerResponse({});
-        // res.assignSocket(socket);
-        // res.sendUpgradeHandshake = function () { // could extend express.response as well
-        //     socket.write('HTTP/1.1 101 TCP Handshake\r\n' +
-        //                  'Upgrade: tcp\r\n' +
-        //                  'Connection: Upgrade\r\n' +
-        //                  '\r\n');
-        // };
-
-        // // route through express middleware. if we provide no callback, express will provide a 'finalhandler'
-        // // TODO: it's not clear if socket needs to be destroyed
-        // app(req, res);
+            // route through express middleware. if we provide no callback, express will provide a 'finalhandler'
+            // TODO: it's not clear if socket needs to be destroyed
+            app(req, res);
+        }
     });
 
     return httpServer;

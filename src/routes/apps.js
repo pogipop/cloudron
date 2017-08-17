@@ -464,7 +464,7 @@ function exec(req, res, next) {
 function execWebSocket(ws, req, next) {
     assert.strictEqual(typeof req.params.id, 'string');
 
-    debug('Execing into app id:%s and cmd:%s', req.params.id, req.query.cmd);
+    debug('Execing websocket into app id:%s and cmd:%s', req.params.id, req.query.cmd);
 
     var cmd = null;
     if (req.query.cmd) {
@@ -479,8 +479,6 @@ function execWebSocket(ws, req, next) {
     if (isNaN(rows)) return next(new HttpError(400, 'rows must be a number'));
 
     var tty = req.query.tty === 'true' ? true : false;
-
-    // req.clearTimeout();
 
     apps.exec(req.params.id, { cmd: cmd, rows: rows, columns: columns, tty: tty }, function (error, duplexStream) {
         if (error && error.reason === AppsError.NOT_FOUND) return next(new HttpError(404, 'No such app'));
