@@ -143,9 +143,10 @@ angular.module('Application').controller('DebugController', ['$scope', '$locatio
 
         if (!cmd) return;
 
-        cmd += '\n';
+        cmd += ' ';
 
         $scope.terminalSocket.send(cmd);
+        $scope.terminal.focus();
     }
 
     $scope.$watch('selected', function (newVal) {
