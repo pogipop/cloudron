@@ -415,7 +415,7 @@
                     <div class="grid-item-bottom-mobile" ng-show="user.admin">
                         <div class="row">
                             <div class="col-xs-4 text-left">
-                                <a href="" ng-click="showRestore(app)">
+                                <a href="" ng-click="showRestore(app)" ng-show="backupConfig.provider !== 'noop'">
                                     <i class="fa fa-undo scale"></i>
                                 </a>
 
@@ -438,7 +438,7 @@
                         </div>
 
                         <div>
-                            <a href="" ng-click="showRestore(app)" title="Restore App"><i class="fa fa-undo scale"></i></a>
+                            <a href="" ng-click="showRestore(app)" ng-show="backupConfig.provider !== 'noop'" title="Restore App"><i class="fa fa-undo scale"></i></a>
                         </div>
 
                         <div ng-show="(app.installationState === 'installed' || app.installationState === 'pending_configure') && !(app | installError)">
