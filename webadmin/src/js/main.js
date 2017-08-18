@@ -140,22 +140,33 @@ angular.module('Application').controller('MainController', ['$scope', '$route', 
 
             if (result.provider === 'caas') return;
 
-            Client.getMailRelay(function (error, result) {
+            Client.getBackupConfig(function (error, backupConfig) {
                 if (error) return console.error(error);
 
-                // the email status checks are currently only useful when using Cloudron itself for relaying
-                if (result.provider !== 'cloudron-smtp') return;
+                if (backupConfig.provider === 'noop') {
+                    var actionScope = $scope.$new(true);
+                    actionScope.action = '/#/settings';
 
-                // Check if all email DNS records are set up properly only for non external DNS API
-                Client.getEmailStatus(function (error, result) {
+                    Client.notify('Backup Configuration', 'Cloudron backups are disabled. Ensure the server is backed up using alternate means.', false, 'info', actionScope);
+                }
+
+                Client.getMailRelay(function (error, result) {
                     if (error) return console.error(error);
 
-                    if (!result.dns.spf.status || !result.dns.dkim.status || !result.dns.ptr.status || !result.relay.status) {
-                        var actionScope = $scope.$new(true);
-                        actionScope.action = '/#/email';
+                    // the email status checks are currently only useful when using Cloudron itself for relaying
+                    if (result.provider !== 'cloudron-smtp') return;
 
-                        Client.notify('DNS Configuration', 'Please setup all required DNS records to guarantee correct mail delivery', false, 'info', actionScope);
-                    }
+                    // Check if all email DNS records are set up properly only for non external DNS API
+                    Client.getEmailStatus(function (error, result) {
+                        if (error) return console.error(error);
+
+                        if (!result.dns.spf.status || !result.dns.dkim.status || !result.dns.ptr.status || !result.relay.status) {
+                            var actionScope = $scope.$new(true);
+                            actionScope.action = '/#/email';
+
+                            Client.notify('DNS Configuration', 'Please setup all required DNS records to guarantee correct mail delivery', false, 'info', actionScope);
+                        }
+                    });
                 });
             });
         });
