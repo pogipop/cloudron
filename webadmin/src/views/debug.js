@@ -132,10 +132,12 @@ angular.module('Application').controller('DebugController', ['$scope', '$locatio
         }
 
         $scope.terminal = new Terminal();
+        $scope.terminal.open(document.querySelector('.logs-and-term-container'));
+        $scope.terminal.fit();
 
         try {
             // websocket cannot use relative urls
-            var url = Client.apiOrigin.replace('https', 'wss') + '/api/v1/apps/' + $scope.selected.value + '/execws?tty=true&access_token=' + Client.getToken();
+            var url = Client.apiOrigin.replace('https', 'wss') + '/api/v1/apps/' + $scope.selected.value + '/execws?tty=true&rows=' + $scope.terminal.rows + '&columns=' + $scope.terminal.cols + '&access_token=' + Client.getToken();
             $scope.terminalSocket = new WebSocket(url);
             $scope.terminal.attach($scope.terminalSocket);
 
@@ -146,9 +148,6 @@ angular.module('Application').controller('DebugController', ['$scope', '$locatio
         } catch (e) {
             console.error(e);
         }
-
-        $scope.terminal.open(document.querySelector('.logs-and-term-container'));
-        $scope.terminal.fit();
 
         if (retry) $scope.terminal.writeln('Reconnecting...');
         else $scope.terminal.writeln('Connecting...');
