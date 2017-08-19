@@ -1136,10 +1136,28 @@ function downloadFile(appId, filePath, callback) {
     assert.strictEqual(typeof callback, 'function');
 
     var filename = path.basename(filePath);
-    exec(appId, { cmd: ['cat', filePath ], tty: false }, function (error, stream) {
+    exec(appId, { cmd: [ 'stat', '--printf=%F-%s', filePath ], tty: true }, function (error, stream) {
         if (error) return callback(error);
 
-        return callback(null, stream, filename);
+        var data = '';
+        stream.setEncoding('utf8');
+        stream.on('data', function (d) { data += d; });
+        stream.on('end', function () {
+            var parts = data.split('-');
+            if (parts.length !== 2) return callback(new AppsError(AppsError.NOT_FOUND, 'file does not exist'));
+
+            var type = parts[0];
+            if (type !== 'regular file') return callback(new AppsError(AppsError.NOT_FOUND, 'only files can be downloaded'));
+
+            var size = parseInt(parts[1], 10);
+            if (isNaN(size)) return callback(new AppsError(AppsError.NOT_FOUND, 'file does not exist'));
+
+            exec(appId, { cmd: [ 'cat', filePath ], tty: false }, function (error, stream) {
+                if (error) return callback(error);
+
+                return callback(null, stream, { filename: filename, size: size });
+            });
+        });
     });
 }
 

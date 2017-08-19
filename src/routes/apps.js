@@ -557,14 +557,15 @@ function downloadFile(req, res, next) {
 
     if (typeof req.query.file !== 'string' || !req.query.file) return next(new HttpError(400, 'file query argument must be provided'));
 
-    apps.downloadFile(req.params.id, req.query.file, function (error, result, filename) {
+    apps.downloadFile(req.params.id, req.query.file, function (error, result, info) {
+        if (error && error.reason === AppsError.NOT_FOUND) return next(new HttpError(404, error.message));
         if (error) return next(new HttpError(500, error));
 
         // TODO get real content type and size
         res.writeHead(200, {
             'Content-Type': 'application/octet-stream',
-            'Content-Disposition': 'attachment; filename="' + filename + '"'
-            // 'Content-Length': stat.size
+            'Content-Disposition': 'attachment; filename="' + info.filename + '"',
+            'Content-Length': info.size
         });
 
         result.pipe(res);
