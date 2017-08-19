@@ -17,6 +17,7 @@ angular.module('Application').controller('DebugController', ['$scope', '$locatio
     $scope.terminal = null;
     $scope.terminalSocket = null;
     $scope.lines = 10;
+    $scope.restartAppBusy = false;
 
     function ab2str(buf) {
         return String.fromCharCode.apply(null, new Uint16Array(buf));
@@ -79,6 +80,38 @@ angular.module('Application').controller('DebugController', ['$scope', '$locatio
             $scope.terminalSocket = null;
         }
     }
+
+    $scope.restartApp = function () {
+        $scope.restartAppBusy = true;
+        var appId = $scope.selected.value;
+
+        function waitUntilStopped(callback) {
+            Client.refreshInstalledApps(function (error) {
+                if (error) return callback(error);
+
+                Client.getApp(appId, function (error, result) {
+                    if (error) return callback(error);
+
+                    if (result.runState === 'stopped') return callback();
+                    setTimeout(waitUntilStopped.bind(null, callback), 2000);
+                });
+            });
+        }
+
+        Client.stopApp(appId, function (error) {
+            if (error) return console.error('Failed to stop app.', error);
+
+            waitUntilStopped(function (error) {
+                if (error) return console.error('Failed to get app status.', error);
+
+                Client.startApp(appId, function (error) {
+                    if (error) console.error('Failed to start app.', error);
+
+                    $scope.restartAppBusy = false;
+                });
+            });
+        });
+    };
 
     $scope.showLogs = function () {
         $scope.terminalVisible = false;
