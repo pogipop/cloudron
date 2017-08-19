@@ -49,6 +49,7 @@ angular.module('Application').controller('DebugController', ['$scope', '$locatio
                 type: 'app',
                 value: app.id,
                 name: app.fqdn + ' (' + app.manifest.title + ')',
+                url: Client.makeURL('/api/v1/apps/' + app.id + '/logs'),
                 addons: app.manifest.addons
             });
         });
