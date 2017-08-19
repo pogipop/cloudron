@@ -461,7 +461,7 @@ function exec(req, res, next) {
     });
 }
 
-function execWebSocket(ws, req, next) {
+function execWebSocket(req, res, next) {
     assert.strictEqual(typeof req.params.id, 'string');
 
     debug('Execing websocket into app id:%s and cmd:%s', req.params.id, req.query.cmd);
@@ -487,24 +487,28 @@ function execWebSocket(ws, req, next) {
 
         console.log('Connected to terminal');
 
-        duplexStream.on('end', function () { ws.close(); });
-        duplexStream.on('close', function () { ws.close(); });
-        duplexStream.on('error', function (error) {
-            console.error('duplexStream error:', error);
-        });
-        duplexStream.on('data', function (data) {
-            if (ws.readyState !== WebSocket.OPEN) return;
-            ws.send(data.toString());
-        });
+        req.clearTimeout();
 
-        ws.on('error', function (error) {
-            console.error('websocket error:', error);
-        });
-        ws.on('message', function (msg) {
-            duplexStream.write(msg);
-        });
-        ws.on('close', function () {
-            // Clean things up, if any?
+        res.handleUpgrade(function (ws) {
+            duplexStream.on('end', function () { ws.close(); });
+            duplexStream.on('close', function () { ws.close(); });
+            duplexStream.on('error', function (error) {
+                console.error('duplexStream error:', error);
+            });
+            duplexStream.on('data', function (data) {
+                if (ws.readyState !== WebSocket.OPEN) return;
+                ws.send(data.toString());
+            });
+
+            ws.on('error', function (error) {
+                console.error('websocket error:', error);
+            });
+            ws.on('message', function (msg) {
+                duplexStream.write(msg);
+            });
+            ws.on('close', function () {
+                // Clean things up, if any?
+            });
         });
     });
 }

@@ -757,7 +757,7 @@
         },
         "supports-color": {
           "version": "3.2.3",
-          "from": "supports-color@^3.2.3",
+          "from": "supports-color@>=3.2.3 <4.0.0",
           "resolved": "https://registry.npmjs.org/supports-color/-/supports-color-3.2.3.tgz",
           "dev": true
         }
@@ -867,7 +867,7 @@
       "dependencies": {
         "debug": {
           "version": "2.6.8",
-          "from": "debug@2.X",
+          "from": "debug@>=2.0.0 <3.0.0",
           "resolved": "https://registry.npmjs.org/debug/-/debug-2.6.8.tgz",
           "dev": true
         },
@@ -1258,11 +1258,6 @@
         }
       }
     },
-    "express-ws": {
-      "version": "3.0.0",
-      "from": "express-ws@latest",
-      "resolved": "https://registry.npmjs.org/express-ws/-/express-ws-3.0.0.tgz"
-    },
     "extend": {
       "version": "3.0.1",
       "from": "extend@>=3.0.0 <3.1.0",
@@ -1430,7 +1425,7 @@
         "mkdirp": {
           "version": "0.3.5",
           "from": "mkdirp@>=0.3.0 <0.4.0",
-          "resolved": "http://registry.npmjs.org/mkdirp/-/mkdirp-0.3.5.tgz",
+          "resolved": "https://registry.npmjs.org/mkdirp/-/mkdirp-0.3.5.tgz",
           "dev": true
         },
         "ncp": {
@@ -1556,7 +1551,7 @@
         },
         "through2": {
           "version": "0.6.5",
-          "from": "through2@^0.6.1",
+          "from": "through2@>=0.6.1 <0.7.0",
           "resolved": "https://registry.npmjs.org/through2/-/through2-0.6.5.tgz",
           "dev": true
         }
@@ -1606,7 +1601,7 @@
         },
         "object-assign": {
           "version": "3.0.0",
-          "from": "object-assign@^3.0.0",
+          "from": "object-assign@>=3.0.0 <4.0.0",
           "resolved": "https://registry.npmjs.org/object-assign/-/object-assign-3.0.0.tgz",
           "dev": true
         }
@@ -1686,7 +1681,7 @@
       "dependencies": {
         "minimist": {
           "version": "1.2.0",
-          "from": "minimist@^1.1.0",
+          "from": "minimist@>=1.1.0 <2.0.0",
           "resolved": "https://registry.npmjs.org/minimist/-/minimist-1.2.0.tgz",
           "dev": true
         }
@@ -1724,13 +1719,13 @@
         },
         "string_decoder": {
           "version": "0.10.31",
-          "from": "string_decoder@~0.10.x",
+          "from": "string_decoder@>=0.10.0 <0.11.0",
           "resolved": "https://registry.npmjs.org/string_decoder/-/string_decoder-0.10.31.tgz",
           "dev": true
         },
         "through2": {
           "version": "0.6.5",
-          "from": "through2@^0.6.2",
+          "from": "through2@>=0.6.2 <0.7.0",
           "resolved": "https://registry.npmjs.org/through2/-/through2-0.6.5.tgz",
           "dev": true
         },
@@ -1806,13 +1801,13 @@
         },
         "minimist": {
           "version": "1.2.0",
-          "from": "minimist@^1.1.0",
+          "from": "minimist@>=1.1.0 <2.0.0",
           "resolved": "https://registry.npmjs.org/minimist/-/minimist-1.2.0.tgz",
           "dev": true
         },
         "object-assign": {
           "version": "3.0.0",
-          "from": "object-assign@^3.0.0",
+          "from": "object-assign@>=3.0.0 <4.0.0",
           "resolved": "https://registry.npmjs.org/object-assign/-/object-assign-3.0.0.tgz",
           "dev": true
         },
@@ -1824,7 +1819,7 @@
         },
         "string_decoder": {
           "version": "0.10.31",
-          "from": "string_decoder@~0.10.x",
+          "from": "string_decoder@>=0.10.0 <0.11.0",
           "resolved": "https://registry.npmjs.org/string_decoder/-/string_decoder-0.10.31.tgz",
           "dev": true
         },
@@ -1920,7 +1915,7 @@
       "dependencies": {
         "async": {
           "version": "1.5.2",
-          "from": "async@^1.4.0",
+          "from": "async@>=1.4.0 <2.0.0",
           "resolved": "https://registry.npmjs.org/async/-/async-1.5.2.tgz",
           "dev": true
         }
@@ -2293,13 +2288,13 @@
       "dependencies": {
         "async": {
           "version": "1.5.2",
-          "from": "async@1.x",
+          "from": "async@>=1.0.0 <2.0.0",
           "resolved": "https://registry.npmjs.org/async/-/async-1.5.2.tgz",
           "dev": true
         },
         "glob": {
           "version": "5.0.15",
-          "from": "glob@^5.0.15",
+          "from": "glob@>=5.0.15 <6.0.0",
           "resolved": "https://registry.npmjs.org/glob/-/glob-5.0.15.tgz",
           "dev": true
         },
@@ -2311,7 +2306,7 @@
         },
         "supports-color": {
           "version": "3.2.3",
-          "from": "supports-color@^3.1.0",
+          "from": "supports-color@>=3.1.0 <4.0.0",
           "resolved": "https://registry.npmjs.org/supports-color/-/supports-color-3.2.3.tgz",
           "dev": true
         },
@@ -2712,7 +2707,7 @@
       "dependencies": {
         "minimist": {
           "version": "1.2.0",
-          "from": "minimist@^1.1.3",
+          "from": "minimist@>=1.1.3 <2.0.0",
           "resolved": "https://registry.npmjs.org/minimist/-/minimist-1.2.0.tgz"
         }
       }
@@ -2907,7 +2902,7 @@
       "dependencies": {
         "debug": {
           "version": "2.6.8",
-          "from": "debug@^2.2.0",
+          "from": "debug@>=2.2.0 <3.0.0",
           "resolved": "https://registry.npmjs.org/debug/-/debug-2.6.8.tgz",
           "dev": true
         },
@@ -2937,7 +2932,7 @@
       "dependencies": {
         "semver": {
           "version": "5.3.0",
-          "from": "semver@~5.3.0",
+          "from": "semver@>=5.3.0 <5.4.0",
           "resolved": "https://registry.npmjs.org/semver/-/semver-5.3.0.tgz"
         }
       }
@@ -3385,7 +3380,7 @@
         },
         "supports-color": {
           "version": "3.2.3",
-          "from": "supports-color@^3.2.3",
+          "from": "supports-color@>=3.2.3 <4.0.0",
           "resolved": "https://registry.npmjs.org/supports-color/-/supports-color-3.2.3.tgz",
           "dev": true
         }
@@ -3411,7 +3406,7 @@
         },
         "supports-color": {
           "version": "3.2.3",
-          "from": "supports-color@^3.2.3",
+          "from": "supports-color@>=3.2.3 <4.0.0",
           "resolved": "https://registry.npmjs.org/supports-color/-/supports-color-3.2.3.tgz",
           "dev": true
         }
@@ -3437,7 +3432,7 @@
         },
         "supports-color": {
           "version": "3.2.3",
-          "from": "supports-color@^3.2.3",
+          "from": "supports-color@>=3.2.3 <4.0.0",
           "resolved": "https://registry.npmjs.org/supports-color/-/supports-color-3.2.3.tgz",
           "dev": true
         }
@@ -3463,7 +3458,7 @@
         },
         "supports-color": {
           "version": "3.2.3",
-          "from": "supports-color@^3.2.3",
+          "from": "supports-color@>=3.2.3 <4.0.0",
           "resolved": "https://registry.npmjs.org/supports-color/-/supports-color-3.2.3.tgz",
           "dev": true
         }
@@ -3489,7 +3484,7 @@
         },
         "supports-color": {
           "version": "3.2.3",
-          "from": "supports-color@^3.2.3",
+          "from": "supports-color@>=3.2.3 <4.0.0",
           "resolved": "https://registry.npmjs.org/supports-color/-/supports-color-3.2.3.tgz",
           "dev": true
         }
@@ -3515,7 +3510,7 @@
         },
         "supports-color": {
           "version": "3.2.3",
-          "from": "supports-color@^3.2.3",
+          "from": "supports-color@>=3.2.3 <4.0.0",
           "resolved": "https://registry.npmjs.org/supports-color/-/supports-color-3.2.3.tgz",
           "dev": true
         }
@@ -3541,7 +3536,7 @@
         },
         "supports-color": {
           "version": "3.2.3",
-          "from": "supports-color@^3.2.3",
+          "from": "supports-color@>=3.2.3 <4.0.0",
           "resolved": "https://registry.npmjs.org/supports-color/-/supports-color-3.2.3.tgz",
           "dev": true
         }
@@ -3567,7 +3562,7 @@
         },
         "supports-color": {
           "version": "3.2.3",
-          "from": "supports-color@^3.2.3",
+          "from": "supports-color@>=3.2.3 <4.0.0",
           "resolved": "https://registry.npmjs.org/supports-color/-/supports-color-3.2.3.tgz",
           "dev": true
         }
@@ -3593,7 +3588,7 @@
         },
         "supports-color": {
           "version": "3.2.3",
-          "from": "supports-color@^3.2.3",
+          "from": "supports-color@>=3.2.3 <4.0.0",
           "resolved": "https://registry.npmjs.org/supports-color/-/supports-color-3.2.3.tgz",
           "dev": true
         }
@@ -3619,7 +3614,7 @@
         },
         "supports-color": {
           "version": "3.2.3",
-          "from": "supports-color@^3.2.3",
+          "from": "supports-color@>=3.2.3 <4.0.0",
           "resolved": "https://registry.npmjs.org/supports-color/-/supports-color-3.2.3.tgz",
           "dev": true
         }
@@ -3645,7 +3640,7 @@
         },
         "supports-color": {
           "version": "3.2.3",
-          "from": "supports-color@^3.2.3",
+          "from": "supports-color@>=3.2.3 <4.0.0",
           "resolved": "https://registry.npmjs.org/supports-color/-/supports-color-3.2.3.tgz",
           "dev": true
         }
@@ -3677,7 +3672,7 @@
         },
         "supports-color": {
           "version": "3.2.3",
-          "from": "supports-color@^3.2.3",
+          "from": "supports-color@>=3.2.3 <4.0.0",
           "resolved": "https://registry.npmjs.org/supports-color/-/supports-color-3.2.3.tgz",
           "dev": true
         }
@@ -3709,7 +3704,7 @@
         },
         "supports-color": {
           "version": "3.2.3",
-          "from": "supports-color@^3.2.3",
+          "from": "supports-color@>=3.2.3 <4.0.0",
           "resolved": "https://registry.npmjs.org/supports-color/-/supports-color-3.2.3.tgz",
           "dev": true
         }
@@ -3735,7 +3730,7 @@
         },
         "supports-color": {
           "version": "3.2.3",
-          "from": "supports-color@^3.2.3",
+          "from": "supports-color@>=3.2.3 <4.0.0",
           "resolved": "https://registry.npmjs.org/supports-color/-/supports-color-3.2.3.tgz",
           "dev": true
         }
@@ -3761,7 +3756,7 @@
         },
         "supports-color": {
           "version": "3.2.3",
-          "from": "supports-color@^3.2.3",
+          "from": "supports-color@>=3.2.3 <4.0.0",
           "resolved": "https://registry.npmjs.org/supports-color/-/supports-color-3.2.3.tgz",
           "dev": true
         }
@@ -3787,7 +3782,7 @@
         },
         "supports-color": {
           "version": "3.2.3",
-          "from": "supports-color@^3.2.3",
+          "from": "supports-color@>=3.2.3 <4.0.0",
           "resolved": "https://registry.npmjs.org/supports-color/-/supports-color-3.2.3.tgz",
           "dev": true
         }
@@ -3813,7 +3808,7 @@
         },
         "supports-color": {
           "version": "3.2.3",
-          "from": "supports-color@^3.2.3",
+          "from": "supports-color@>=3.2.3 <4.0.0",
           "resolved": "https://registry.npmjs.org/supports-color/-/supports-color-3.2.3.tgz",
           "dev": true
         }
@@ -3839,7 +3834,7 @@
         },
         "supports-color": {
           "version": "3.2.3",
-          "from": "supports-color@^3.2.3",
+          "from": "supports-color@>=3.2.3 <4.0.0",
           "resolved": "https://registry.npmjs.org/supports-color/-/supports-color-3.2.3.tgz",
           "dev": true
         }
@@ -3865,7 +3860,7 @@
         },
         "supports-color": {
           "version": "3.2.3",
-          "from": "supports-color@^3.2.3",
+          "from": "supports-color@>=3.2.3 <4.0.0",
           "resolved": "https://registry.npmjs.org/supports-color/-/supports-color-3.2.3.tgz",
           "dev": true
         }
@@ -3891,7 +3886,7 @@
         },
         "supports-color": {
           "version": "3.2.3",
-          "from": "supports-color@^3.2.3",
+          "from": "supports-color@>=3.2.3 <4.0.0",
           "resolved": "https://registry.npmjs.org/supports-color/-/supports-color-3.2.3.tgz",
           "dev": true
         }
@@ -3917,7 +3912,7 @@
         },
         "supports-color": {
           "version": "3.2.3",
-          "from": "supports-color@^3.2.3",
+          "from": "supports-color@>=3.2.3 <4.0.0",
           "resolved": "https://registry.npmjs.org/supports-color/-/supports-color-3.2.3.tgz",
           "dev": true
         }
@@ -3943,7 +3938,7 @@
         },
         "supports-color": {
           "version": "3.2.3",
-          "from": "supports-color@^3.2.3",
+          "from": "supports-color@>=3.2.3 <4.0.0",
           "resolved": "https://registry.npmjs.org/supports-color/-/supports-color-3.2.3.tgz",
           "dev": true
         }
@@ -3975,7 +3970,7 @@
         },
         "supports-color": {
           "version": "3.2.3",
-          "from": "supports-color@^3.2.3",
+          "from": "supports-color@>=3.2.3 <4.0.0",
           "resolved": "https://registry.npmjs.org/supports-color/-/supports-color-3.2.3.tgz",
           "dev": true
         }
@@ -4001,7 +3996,7 @@
         },
         "supports-color": {
           "version": "3.2.3",
-          "from": "supports-color@^3.2.3",
+          "from": "supports-color@>=3.2.3 <4.0.0",
           "resolved": "https://registry.npmjs.org/supports-color/-/supports-color-3.2.3.tgz",
           "dev": true
         }
@@ -4033,7 +4028,7 @@
         },
         "supports-color": {
           "version": "3.2.3",
-          "from": "supports-color@^3.2.3",
+          "from": "supports-color@>=3.2.3 <4.0.0",
           "resolved": "https://registry.npmjs.org/supports-color/-/supports-color-3.2.3.tgz",
           "dev": true
         }
@@ -5152,7 +5147,7 @@
         },
         "string_decoder": {
           "version": "0.10.31",
-          "from": "string_decoder@~0.10.x",
+          "from": "string_decoder@>=0.10.0 <0.11.0",
           "resolved": "https://registry.npmjs.org/string_decoder/-/string_decoder-0.10.31.tgz",
           "dev": true
         },
@@ -5253,7 +5248,7 @@
     },
     "ws": {
       "version": "2.3.1",
-      "from": "ws@>=2.0.0 <3.0.0",
+      "from": "https://registry.npmjs.org/ws/-/ws-2.3.1.tgz",
       "resolved": "https://registry.npmjs.org/ws/-/ws-2.3.1.tgz",
       "dependencies": {
         "safe-buffer": {

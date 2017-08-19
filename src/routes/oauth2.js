@@ -534,7 +534,9 @@ function scope(requestedScope) {
     ];
 }
 
-function websocketAuth(ws, req, next) {
+function websocketAuth(requestedScopes, req, res, next) {
+    assert(Array.isArray(requestedScopes));
+
     if (typeof req.query.access_token !== 'string') return next(new HttpError(401, 'Unauthorized'));
 
     auth.accessTokenAuth(req.query.access_token, function (error, user, info) {
@@ -543,6 +545,9 @@ function websocketAuth(ws, req, next) {
 
         req.user = user;
         req.authInfo = info;
+
+        var error = validateRequestedScopes(req, requestedScopes);
+        if (error) return next(new HttpError(401, error.message));
 
         next();
     });
