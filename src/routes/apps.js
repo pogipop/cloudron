@@ -19,7 +19,10 @@ exports = module.exports = {
     exec: exec,
     execWebSocket: execWebSocket,
 
-    cloneApp: cloneApp
+    cloneApp: cloneApp,
+
+    uploadFile: uploadFile,
+    downloadFile: downloadFile
 };
 
 var apps = require('../apps.js'),
@@ -527,5 +530,43 @@ function listBackups(req, res, next) {
         if (error) return next(new HttpError(500, error));
 
         next(new HttpSuccess(200, { backups: result }));
+    });
+}
+
+function uploadFile(req, res, next) {
+    assert.strictEqual(typeof req.params.id, 'string');
+
+    debug('uploadFile: %s %s -> %s', req.params.id, req.files, req.query.file);
+
+    if (typeof req.query.file !== 'string' || !req.query.file) return next(new HttpError(400, 'file query argument must be provided'));
+    if (!req.files.file) return next(new HttpError(400, 'file must be provided as multipart'));
+
+    apps.uploadFile(req.params.id, req.files.file.path, req.query.file, function (error) {
+        if (error) return next(new HttpError(500, error));
+
+        debug('uploadFile: done');
+
+        next(new HttpSuccess(202, {}));
+    });
+}
+
+function downloadFile(req, res, next) {
+    assert.strictEqual(typeof req.params.id, 'string');
+
+    debug('downloadFile: ', req.params.id, req.query.file);
+
+    if (typeof req.query.file !== 'string' || !req.query.file) return next(new HttpError(400, 'file query argument must be provided'));
+
+    apps.downloadFile(req.params.id, req.query.file, function (error, result, filename) {
+        if (error) return next(new HttpError(500, error));
+
+        // TODO get real content type and size
+        res.writeHead(200, {
+            'Content-Type': 'application/octet-stream',
+            'Content-Disposition': 'attachment; filename="' + filename + '"'
+            // 'Content-Length': stat.size
+        });
+
+        result.pipe(res);
     });
 }

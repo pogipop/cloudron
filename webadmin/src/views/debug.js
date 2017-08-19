@@ -3,23 +3,40 @@
 /* global moment */
 /* global Terminal */
 
+
 angular.module('Application').controller('DebugController', ['$scope', '$location', 'Client', function ($scope, $location, Client) {
     Client.onReady(function () { if (!Client.getUserInfo().admin) $location.path('/'); });
 
     $scope.config = Client.getConfig();
     $scope.user = Client.getUserInfo();
 
+    $scope.terminalVisible = true;
     $scope.logs = [];
     $scope.selected = '';
     $scope.activeEventSource = null;
     $scope.terminal = null;
     $scope.terminalSocket = null;
     $scope.lines = 10;
-    $scope.terminalVisible = false;
 
     function ab2str(buf) {
         return String.fromCharCode.apply(null, new Uint16Array(buf));
     }
+
+    $scope.downloadFile = {
+        filePath: '',
+
+        downloadUrl: function () {
+            var filePath = '/app/data/' + $scope.downloadFile.filePath;
+            filePath = filePath.replace(/\/*\//g, '/');
+
+            return Client.apiOrigin + '/api/v1/apps/' + $scope.selected.value + '/download?file=' + filePath + '&access_token=' + Client.getToken();
+        },
+
+        show: function () {
+            $scope.downloadFile.filePath = '';
+            $('#downloadFileModal').modal('show');
+        }
+    };
 
     $scope.populateLogTypes = function () {
         $scope.logs.push({ name: 'System (All)', type: 'platform', value: 'all', url: Client.makeURL('/api/v1/cloudron/logs?units=all') });
@@ -27,7 +44,12 @@ angular.module('Application').controller('DebugController', ['$scope', '$locatio
         $scope.logs.push({ name: 'Mail', type: 'platform', value: 'mail', url: Client.makeURL('/api/v1/cloudron/logs?units=mail') });
 
         Client.getInstalledApps().forEach(function (app) {
-            $scope.logs.push({ name: app.fqdn + ' (' + app.manifest.title + ')', type: 'app', value: app.id, url: Client.makeURL('/api/v1/apps/' + app.id + '/logs'), addons: app.manifest.addons });
+            $scope.logs.push({
+                type: 'app',
+                value: app.id,
+                name: app.fqdn + ' (' + app.manifest.title + ')',
+                addons: app.manifest.addons
+            });
         });
 
         $scope.selected = $scope.logs[0];
@@ -104,7 +126,7 @@ angular.module('Application').controller('DebugController', ['$scope', '$locatio
         if ($scope.selected.type !== 'app') {
             var tmp = $('.logs-and-term-container');
             var logLine = $('<div class="log-line">');
-            logLine.html('Terminal is only supported for app, not for ' + $scope.selected.name);
+            logLine.html('Terminal is only supported for apps, not for ' + $scope.selected.name);
             tmp.append(logLine);
             return;
         }
@@ -149,6 +171,18 @@ angular.module('Application').controller('DebugController', ['$scope', '$locatio
         $scope.terminal.focus();
     }
 
+    $scope.uploadFile = function () {
+        var fileUpload = document.querySelector('#fileUpload');
+
+        fileUpload.oninput = function (e) {
+            Client.uploadFile($scope.selected.value, e.target.files[0], function (error) {
+                if (error) console.error(error);
+            });
+        };
+
+        fileUpload.click();
+    };
+
     $scope.$watch('selected', function (newVal) {
         if (!newVal) return;
 
@@ -168,5 +202,12 @@ angular.module('Application').controller('DebugController', ['$scope', '$locatio
         if ($scope.terminal) {
             $scope.terminal.destroy();
         }
+    });
+
+    // setup all the dialog focus handling
+    ['downloadFileModal'].forEach(function (id) {
+        $('#' + id).on('shown.bs.modal', function () {
+            $(this).find("[autofocus]:first").focus();
+        });
     });
 }]);

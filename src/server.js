@@ -195,6 +195,8 @@ function initializeExpressSync() {
     // websocket cannot do bearer authentication
     router.get ('/api/v1/apps/:id/execws',    routes.oauth2.websocketAuth.bind(null, [ clients.SCOPE_APPS ]), routes.user.requireAdmin, routes.apps.execWebSocket);
     router.post('/api/v1/apps/:id/clone',     appsScope, routes.user.requireAdmin, routes.apps.cloneApp);
+    router.get ('/api/v1/apps/:id/download',  appsScope, routes.user.requireAdmin, routes.apps.downloadFile);
+    router.post('/api/v1/apps/:id/upload',    appsScope, routes.user.requireAdmin, multipart, routes.apps.uploadFile);
 
     // settings routes (these are for the settings tab - avatar & name have public routes for normal users. see above)
     router.get ('/api/v1/settings/autoupdate_pattern', settingsScope, routes.user.requireAdmin, routes.settings.getAutoupdatePattern);
@@ -249,7 +251,6 @@ function initializeExpressSync() {
             };
         } else {
             res.sendUpgradeHandshake = function () { // could extend express.response as well
-                console.log('----- now send the upgrade handshake')
                 socket.write('HTTP/1.1 101 TCP Handshake\r\n' +
                              'Upgrade: tcp\r\n' +
                              'Connection: Upgrade\r\n' +

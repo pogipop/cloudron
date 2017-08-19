@@ -37,6 +37,9 @@ exports = module.exports = {
 
     getAppConfig: getAppConfig,
 
+    downloadFile: downloadFile,
+    uploadFile: uploadFile,
+
     // exported for testing
     _validateHostname: validateHostname,
     _validatePortBindings: validatePortBindings,
@@ -1126,3 +1129,35 @@ function configureInstalledApps(callback) {
         }, callback);
     });
 }
+
+function downloadFile(appId, filePath, callback) {
+    assert.strictEqual(typeof appId, 'string');
+    assert.strictEqual(typeof filePath, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    var filename = path.basename(filePath);
+    exec(appId, { cmd: ['cat', filePath ], tty: false }, function (error, stream) {
+        if (error) return callback(error);
+
+        return callback(null, stream, filename);
+    });
+}
+
+function uploadFile(appId, sourceFilePath, destFilePath, callback) {
+    assert.strictEqual(typeof appId, 'string');
+    assert.strictEqual(typeof sourceFilePath, 'string');
+    assert.strictEqual(typeof destFilePath, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    exec(appId, { cmd: [ 'bash', '-c', 'cat - > ' + destFilePath ], tty: false }, function (error, stream) {
+        if (error) return callback(error);
+
+        var readFile = fs.createReadStream(sourceFilePath);
+        readFile.on('error', console.error);
+
+        readFile.pipe(stream);
+
+        callback(null);
+    });
+}
+

@@ -1,26 +1,51 @@
-<!-- <div class="logs-main"> -->
+<!-- Modal download file -->
+<div class="modal fade" id="downloadFileModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h4 class="modal-title">Download a file from {{ selected.name }}</h4>
+          </div>
+          <div class="modal-body">
+              <div class="input-group">
+                <span class="input-group-addon">/app/data/</span>
+                <input type="text" class="form-control" ng-model="downloadFile.filePath" required autofocus>
+              </div>
+              <input class="ng-hide" type="submit" ng-disabled="!downloadFile.filePath"/>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                <a class="btn btn-success" ng-href="{{ downloadFile.downloadUrl() }}" ng-disabled="!downloadFile.filePath" target="_blank">Download</a>
+            </div>
+        </div>
+    </div>
+</div>
 
-  <div class="logs-controls">
-    <div class="col-md-10 col-md-offset-1">
-      <uib-tabset active="active">
-        <uib-tab index="0" heading="Logs" select="showLogs()"></uib-tab>
-        <uib-tab index="1" heading="Terminal" select="showTerminal()"></uib-tab>
-      </uib-tabset>
-      <select class="form-control pull-right inline" ng-options="log.name for log in logs track by log.value" ng-model="selected"></select>
+<div class="logs-controls">
+  <div class="col-md-10 col-md-offset-1">
+    <uib-tabset active="active">
+      <uib-tab index="1" heading="Terminal" select="showTerminal()"></uib-tab>
+      <uib-tab index="0" heading="Logs" select="showLogs()"></uib-tab>
+    </uib-tabset>
+    <select class="form-control pull-right inline" ng-options="log.name for log in logs track by log.value" ng-model="selected"></select>
 
-      <!-- logs actions -->
-      <a class="btn btn-default pull-right" ng-href="{{ selected.url }}&format=short&lines=800" ng-hide="terminalVisible"><i class="fa fa-download"></i> Download </a>
+    <!-- logs actions -->
+    <a class="btn btn-default pull-right" ng-href="{{ selected.url }}&format=short&lines=800" ng-hide="terminalVisible"><i class="fa fa-download"></i> Download Full Logs</a>
 
-      <!-- terminal actions -->
-      <!-- <button class="btn btn-default pull-right" ng-click="" ng-show="terminalVisible">Upload</button> -->
-      <!-- <button class="btn btn-default pull-right" ng-click="" ng-show="terminalVisible">Download</button> -->
-      <button class="btn btn-default pull-right" ng-click="terminalInject('mysql')" ng-show="terminalVisible && usesAddon('mysql')">Mysql</button>
-      <button class="btn btn-default pull-right" ng-click="terminalInject('postgresql')" ng-show="terminalVisible && usesAddon('postgresql')">Postgres</button>
-      <button class="btn btn-default pull-right" ng-click="terminalInject('mongodb')" ng-show="terminalVisible && usesAddon('mongodb')">Mongo</button>
-      <button class="btn btn-default pull-right" ng-click="terminalInject('redis')" ng-show="terminalVisible && usesAddon('redis')">Redis</button>
+    <input type="file" id="fileUpload" class="hide"/>
+
+    <!-- terminal actions -->
+    <div class="btn-group pull-right" style="margin-left: 10px;">
+      <button class="btn btn-default" ng-click="downloadFile.show()" ng-show="terminalVisible && selected.type === 'app'"><i class="fa fa-download"></i> Download</button>
+      <button class="btn btn-default" ng-click="uploadFile()" ng-show="terminalVisible && selected.type === 'app'"><i class="fa fa-upload"></i> Upload to /tmp</button>
+    </div>
+
+    <div class="btn-group pull-right" style="margin-left: 10px;">
+      <button class="btn btn-default" ng-click="terminalInject('mysql')" ng-show="terminalVisible && usesAddon('mysql')">Mysql</button>
+      <button class="btn btn-default" ng-click="terminalInject('postgresql')" ng-show="terminalVisible && usesAddon('postgresql')">Postgres</button>
+      <button class="btn btn-default" ng-click="terminalInject('mongodb')" ng-show="terminalVisible && usesAddon('mongodb')">Mongo</button>
+      <button class="btn btn-default" ng-click="terminalInject('redis')" ng-show="terminalVisible && usesAddon('redis')">Redis</button>
     </div>
   </div>
+</div>
 
-  <div class="logs-and-term-container"></div>
-
-<!-- </div> -->
+<div class="logs-and-term-container"></div>
