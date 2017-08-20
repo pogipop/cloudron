@@ -176,8 +176,10 @@ angular.module('Application').controller('DebugController', ['$scope', '$locatio
             $scope.terminal.attach($scope.terminalSocket);
 
             $scope.terminalSocket.onclose = function () {
-                // retry in one second
-                setTimeout($scope.showTerminal.bind(null, true), 1000);
+                // retry in one second only if terminal view is still selected
+                setTimeout(function () {
+                    if ($scope.terminalVisible) $scope.showTerminal(true);
+                }, 1000);
             };
         } catch (e) {
             console.error(e);
