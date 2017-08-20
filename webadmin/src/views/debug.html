@@ -35,7 +35,7 @@
 
     <!-- terminal actions -->
     <div class="btn-group pull-right" style="margin-left: 10px;">
-      <button class="btn btn-default" ng-click="restartApp()" ng-show="terminalVisible && selected.type === 'app'" ng-disabled="restartAppBusy"><i class="fa fa-circle-o-notch fa-spin" ng-show="restartAppBusy"></i> Restart</button>
+      <button class="btn btn-default" ng-click="restartApp()" ng-show="selected.type === 'app'" ng-disabled="restartAppBusy"><i class="fa fa-circle-o-notch fa-spin" ng-show="restartAppBusy"></i> Restart</button>
       <button class="btn btn-default" ng-click="downloadFile.show()" ng-show="terminalVisible && selected.type === 'app'"><i class="fa fa-download"></i> Download</button>
       <button class="btn btn-default" ng-click="uploadFile()" ng-show="terminalVisible && selected.type === 'app'"><i class="fa fa-upload"></i> Upload to /tmp</button>
     </div>
