@@ -24,22 +24,40 @@ angular.module('Application').controller('DebugController', ['$scope', '$locatio
     }
 
     $scope.downloadFile = {
+        error: '',
         filePath: '',
+        busy: false,
 
         downloadUrl: function () {
+            if (!$scope.downloadFile.filePath) return '';
+
             var filePath = $scope.downloadFile.filePath.replace(/\/*\//g, '/');
 
             return Client.apiOrigin + '/api/v1/apps/' + $scope.selected.value + '/download?file=' + filePath + '&access_token=' + Client.getToken();
         },
 
         show: function () {
+            $scope.downloadFile.busy = false;
+            $scope.downloadFile.error = '';
             $scope.downloadFile.filePath = '';
             $('#downloadFileModal').modal('show');
         },
 
         submit: function () {
-            // we have to click the link to make the browser do the download
-            $('#fileDownloadLink')[0].click();
+            $scope.downloadFile.busy = true;
+
+            Client.checkDownloadableFile($scope.selected.value, $scope.downloadFile.filePath, function (error) {
+                $scope.downloadFile.busy = false;
+
+                if (error) {
+                    $scope.downloadFile.error = 'The requested file does not exist.';
+                    return;
+                }
+
+                // we have to click the link to make the browser do the download
+                // don't know how to prevent the browsers
+                $('#fileDownloadLink')[0].click();
+            });
         }
     };
 

@@ -68,6 +68,14 @@ angular.module('Application').service('Client', ['$http', 'md5', 'Notification',
         return $http.get(client.apiOrigin + url, config);
     }
 
+    function head(url, config) {
+        config = config || {};
+        config.headers = config.headers || {};
+        config.headers.Authorization = 'Bearer ' + token;
+
+        return $http.head(client.apiOrigin + url, config);
+    }
+
     function post(url, data, config) {
         data = data || {};
         config = config || {};
@@ -1110,6 +1118,15 @@ angular.module('Application').service('Client', ['$http', 'md5', 'Notification',
             transformRequest: angular.identity
         }).success(function(data, status) {
             if (status !== 202) return callback(new ClientError(status, data));
+            callback(null);
+        }).error(defaultErrorHandler(callback));
+    };
+
+    Client.prototype.checkDownloadableFile = function (appId, filePath, callback) {
+        head('/api/v1/apps/' + appId + '/download?file=' + filePath, {
+            headers: { 'Content-Type': undefined }
+        }).success(function(data, status) {
+            if (status !== 200) return callback(new ClientError(status, data));
             callback(null);
         }).error(defaultErrorHandler(callback));
     };

@@ -6,14 +6,21 @@
         <h4 class="modal-title">Download a file from {{ selected.name }}</h4>
       </div>
       <div class="modal-body">
-          <form ng-submit="downloadFile.submit()">
-            <input type="text" class="form-control" ng-model="downloadFile.filePath" required autofocus>
+          <form name="downloadFileForm" ng-submit="downloadFile.submit()">
+            <div class="form-group" ng-class="{ 'has-error': downloadFileForm.filePath.$dirty && downloadFile.error }">
+              <div class="control-label" ng-show="{ 'has-error': downloadFileForm.filePath.$dirty && downloadFile.error }">
+                  <small>{{ downloadFile.error }}</small>
+              </div>
+              <input type="text" class="form-control" name="filePath" ng-model="downloadFile.filePath" required autofocus>
+            </div>
             <input class="ng-hide" type="submit" ng-disabled="!downloadFile.filePath"/>
           </form>
       </div>
       <div class="modal-footer">
+        <a id="fileDownloadLink" class="" ng-href="{{ downloadFile.downloadUrl() }}" target="_blank"></a>
+
         <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-        <a id="fileDownloadLink" class="btn btn-success" ng-href="{{ downloadFile.downloadUrl() }}" ng-disabled="!downloadFile.filePath" target="_blank">Download</a>
+        <button type="button" class="btn btn-success" ng-click="downloadFile.submit()" ng-disabled="!downloadFile.filePath"><i class="fa fa-circle-o-notch fa-spin" ng-show="downloadFile.busy"></i> Download</button>
       </div>
     </div>
   </div>
