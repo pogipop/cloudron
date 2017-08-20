@@ -1109,13 +1109,16 @@ angular.module('Application').service('Client', ['$http', 'md5', 'Notification',
         return (available - needed) >= 0;
     };
 
-    Client.prototype.uploadFile = function (appId, file, callback) {
+    Client.prototype.uploadFile = function (appId, file, progressCallback, callback) {
         var fd = new FormData();
         fd.append('file', file);
 
         post('/api/v1/apps/' + appId + '/upload?file=/tmp/' + file.name, fd, {
             headers: { 'Content-Type': undefined },
-            transformRequest: angular.identity
+            transformRequest: angular.identity,
+            uploadEventHandlers: {
+                progress: progressCallback
+            }
         }).success(function(data, status) {
             if (status !== 202) return callback(new ClientError(status, data));
             callback(null);

@@ -61,6 +61,44 @@ angular.module('Application').controller('DebugController', ['$scope', '$locatio
         }
     };
 
+    $scope.uploadProgress = {
+        busy: false,
+        total: 0,
+        current: 0,
+
+        show: function () {
+            $scope.uploadProgress.total = 0;
+            $scope.uploadProgress.current = 0;
+
+            $('#uploadProgressModal').modal('show');
+        },
+
+        hide: function () {
+            $('#uploadProgressModal').modal('hide');
+        }
+    };
+
+    $scope.uploadFile = function () {
+        var fileUpload = document.querySelector('#fileUpload');
+
+        fileUpload.oninput = function (e) {
+            $scope.uploadProgress.busy = true;
+            $scope.uploadProgress.show();
+
+            Client.uploadFile($scope.selected.value, e.target.files[0], function progress(e) {
+                $scope.uploadProgress.total = e.total;
+                $scope.uploadProgress.current = e.loaded;
+            }, function (error) {
+                if (error) console.error(error);
+
+                $scope.uploadProgress.busy = false;
+                $scope.uploadProgress.hide();
+            });
+        };
+
+        fileUpload.click();
+    };
+
     $scope.populateLogTypes = function () {
         $scope.logs.push({ name: 'System (All)', type: 'platform', value: 'all', url: Client.makeURL('/api/v1/cloudron/logs?units=all') });
         $scope.logs.push({ name: 'Box', type: 'platform', value: 'box', url: Client.makeURL('/api/v1/cloudron/logs?units=box') });
@@ -227,18 +265,6 @@ angular.module('Application').controller('DebugController', ['$scope', '$locatio
         $scope.terminalSocket.send(cmd);
         $scope.terminal.focus();
     }
-
-    $scope.uploadFile = function () {
-        var fileUpload = document.querySelector('#fileUpload');
-
-        fileUpload.oninput = function (e) {
-            Client.uploadFile($scope.selected.value, e.target.files[0], function (error) {
-                if (error) console.error(error);
-            });
-        };
-
-        fileUpload.click();
-    };
 
     $scope.$watch('selected', function (newVal) {
         if (!newVal) return;
