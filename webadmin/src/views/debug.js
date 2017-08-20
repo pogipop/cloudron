@@ -27,8 +27,7 @@ angular.module('Application').controller('DebugController', ['$scope', '$locatio
         filePath: '',
 
         downloadUrl: function () {
-            var filePath = '/app/data/' + $scope.downloadFile.filePath;
-            filePath = filePath.replace(/\/*\//g, '/');
+            var filePath = $scope.downloadFile.filePath.replace(/\/*\//g, '/');
 
             return Client.apiOrigin + '/api/v1/apps/' + $scope.selected.value + '/download?file=' + filePath + '&access_token=' + Client.getToken();
         },
@@ -36,6 +35,11 @@ angular.module('Application').controller('DebugController', ['$scope', '$locatio
         show: function () {
             $scope.downloadFile.filePath = '';
             $('#downloadFileModal').modal('show');
+        },
+
+        submit: function () {
+            // we have to click the link to make the browser do the download
+            $('#fileDownloadLink')[0].click();
         }
     };
 

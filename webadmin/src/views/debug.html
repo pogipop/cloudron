@@ -1,23 +1,22 @@
 <!-- Modal download file -->
 <div class="modal fade" id="downloadFileModal" tabindex="-1" role="dialog">
-    <div class="modal-dialog">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h4 class="modal-title">Download a file from {{ selected.name }}</h4>
-          </div>
-          <div class="modal-body">
-              <div class="input-group">
-                <span class="input-group-addon">/app/data/</span>
-                <input type="text" class="form-control" ng-model="downloadFile.filePath" required autofocus>
-              </div>
-              <input class="ng-hide" type="submit" ng-disabled="!downloadFile.filePath"/>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-                <a class="btn btn-success" ng-href="{{ downloadFile.downloadUrl() }}" ng-disabled="!downloadFile.filePath" target="_blank">Download</a>
-            </div>
-        </div>
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title">Download a file from {{ selected.name }}</h4>
+      </div>
+      <div class="modal-body">
+          <form ng-submit="downloadFile.submit()">
+            <input type="text" class="form-control" ng-model="downloadFile.filePath" required autofocus>
+            <input class="ng-hide" type="submit" ng-disabled="!downloadFile.filePath"/>
+          </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+        <a id="fileDownloadLink" class="btn btn-success" ng-href="{{ downloadFile.downloadUrl() }}" ng-disabled="!downloadFile.filePath" target="_blank">Download</a>
+      </div>
     </div>
+  </div>
 </div>
 
 <div class="logs-controls">
