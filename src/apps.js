@@ -1135,7 +1135,6 @@ function downloadFile(appId, filePath, callback) {
     assert.strictEqual(typeof filePath, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    var filename = path.basename(filePath);
     exec(appId, { cmd: [ 'stat', '--printf=%F-%s', filePath ], tty: true }, function (error, stream) {
         if (error) return callback(error);
 
@@ -1146,13 +1145,22 @@ function downloadFile(appId, filePath, callback) {
             var parts = data.split('-');
             if (parts.length !== 2) return callback(new AppsError(AppsError.NOT_FOUND, 'file does not exist'));
 
-            var type = parts[0];
-            if (type !== 'regular file') return callback(new AppsError(AppsError.NOT_FOUND, 'only files can be downloaded'));
+            var type = parts[0], filename, cmd, size;
 
-            var size = parseInt(parts[1], 10);
-            if (isNaN(size)) return callback(new AppsError(AppsError.NOT_FOUND, 'file does not exist'));
+            if (type === 'regular file') {
+                cmd = [ 'cat', filePath ];
+                size = parseInt(parts[1], 10);
+                filename = path.basename(filePath);
+                if (isNaN(size)) return callback(new AppsError(AppsError.NOT_FOUND, 'file does not exist'));
+            } else if (type === 'directory') {
+                cmd = ['tar', 'zcf', '-', '-C', filePath, '.'];
+                filename = path.basename(filePath) + '.tar.gz';
+                size = 0; // unknown
+            } else {
+                return callback(new AppsError(AppsError.NOT_FOUND, 'only files or dirs can be downloaded'));
+            }
 
-            exec(appId, { cmd: [ 'cat', filePath ], tty: false }, function (error, stream) {
+            exec(appId, { cmd: cmd , tty: false }, function (error, stream) {
                 if (error) return callback(error);
 
                 return callback(null, stream, { filename: filename, size: size });
@@ -1178,4 +1186,3 @@ function uploadFile(appId, sourceFilePath, destFilePath, callback) {
         callback(null);
     });
 }
-
