@@ -81,7 +81,7 @@ function initializeExpressSync() {
        .use(middleware.lastMile());
 
     // NOTE: these limits have to be in sync with nginx limits
-    var FILE_SIZE_LIMIT = '1mb', // max file size that can be uploaded (see also client_max_body_size in nginx)
+    var FILE_SIZE_LIMIT = '256mb', // max file size that can be uploaded (see also client_max_body_size in nginx)
         FILE_TIMEOUT = 60 * 1000; // increased timeout for file uploads (1 min)
 
     var multipart = middleware.multipart({ maxFieldsSize: FIELD_LIMIT, limit: FILE_SIZE_LIMIT, timeout: FILE_TIMEOUT });
