@@ -948,3 +948,15 @@
 * Add a custom graphite plugin to collect disk usage statistics
 * Rotate logs of all apps automatically
 
+[1.6.0]
+* Allow apps to have 'network' capability (thanks @mehdi)
+* Fix crash in collectd disk usage collection script
+* Fix layout issues in update and oauth views
+* Use maxsize rule instead of size in lograte configs
+* Make it possible to skip backups per-app
+* Hide restore button for noop backend
+* Add popups and warnings for noop backend
+* Add webterminal to shell into apps from the admin UI
+* Update Haraka for a few crash fixes
+
+
