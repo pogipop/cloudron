@@ -57,6 +57,8 @@ angular.module('Application').controller('DebugController', ['$scope', '$locatio
                 // we have to click the link to make the browser do the download
                 // don't know how to prevent the browsers
                 $('#fileDownloadLink')[0].click();
+
+                $('#downloadFileModal').modal('hide');
             });
         }
     };
