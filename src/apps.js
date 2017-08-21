@@ -73,6 +73,7 @@ var addons = require('./addons.js'),
     split = require('split'),
     superagent = require('superagent'),
     taskmanager = require('./taskmanager.js'),
+    TransformStream = require('stream').Transform,
     updateChecker = require('./updatechecker.js'),
     url = require('url'),
     util = require('util'),
@@ -1163,7 +1164,32 @@ function downloadFile(appId, filePath, callback) {
             exec(appId, { cmd: cmd , tty: false }, function (error, stream) {
                 if (error) return callback(error);
 
-                return callback(null, stream, { filename: filename, size: size });
+                var stdoutStream = new TransformStream({
+                    transform: function (chunk, ignoredEncoding, callback) {
+                        this._buffer = this._buffer ? Buffer.concat([this._buffer, chunk]) : chunk;
+
+                        while (true) {
+                            if (this._buffer.length < 8) break; // header is 8 bytes
+
+                            var type = this._buffer.readUInt8(0);
+                            var len = this._buffer.readUInt32BE(4);
+
+                            if (this._buffer.length < (8 + len)) break; // not enough
+
+                            var payload = this._buffer.slice(8, 8 + len);
+
+                            this._buffer = this._buffer.slice(8+len); // consumed
+
+                            if (type === 1) this.push(payload);
+                        }
+
+                        callback();
+                    }
+                });
+
+                stream.pipe(stdoutStream);
+
+                return callback(null, stdoutStream, { filename: filename, size: size });
             });
         });
     });
