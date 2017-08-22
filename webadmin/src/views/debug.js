@@ -289,6 +289,43 @@ angular.module('Application').controller('DebugController', ['$scope', '$locatio
         }
     });
 
+    // terminal right click handling
+    $scope.terminalClear = function () {
+        if (!$scope.terminal) return;
+        $scope.terminal.clear();
+        $scope.terminal.focus();
+    };
+
+    $scope.terminalCopy = function () {
+        if (!$scope.terminal) return;
+
+        // execCommand('copy') would copy any selection from the page, so do this only if terminal has a selection
+        if (!$scope.terminal.getSelection()) return;
+
+        document.execCommand('copy');
+        $scope.terminal.focus();
+    };
+
+    $('.contextMenuBackdrop').on('click', function (e) {
+        $('#terminalContextMenu').hide();
+        $('.contextMenuBackdrop').hide();
+    });
+
+    $('.logs-and-term-container').on('contextmenu', function (e) {
+        if (!$scope.terminal) return true;
+
+        e.preventDefault();
+
+        $('.contextMenuBackdrop').show();
+        $('#terminalContextMenu').css({
+            display: 'block',
+            left: e.pageX,
+            top: e.pageY
+        });
+
+        return false;
+    });
+
     // setup all the dialog focus handling
     ['downloadFileModal'].forEach(function (id) {
         $('#' + id).on('shown.bs.modal', function () {
