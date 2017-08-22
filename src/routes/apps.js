@@ -536,7 +536,7 @@ function listBackups(req, res, next) {
 function uploadFile(req, res, next) {
     assert.strictEqual(typeof req.params.id, 'string');
 
-    debug('uploadFile: %s %s -> %s', req.params.id, req.files, req.query.file);
+    debug('uploadFile: %s %j -> %s', req.params.id, req.files, req.query.file);
 
     if (typeof req.query.file !== 'string' || !req.query.file) return next(new HttpError(400, 'file query argument must be provided'));
     if (!req.files.file) return next(new HttpError(400, 'file must be provided as multipart'));
