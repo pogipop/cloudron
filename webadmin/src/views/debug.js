@@ -309,6 +309,8 @@ angular.module('Application').controller('DebugController', ['$scope', '$locatio
     $('.contextMenuBackdrop').on('click', function (e) {
         $('#terminalContextMenu').hide();
         $('.contextMenuBackdrop').hide();
+
+        $scope.terminal.focus();
     });
 
     $('.logs-and-term-container').on('contextmenu', function (e) {
