@@ -70,14 +70,13 @@ function cleanupTmpVolume(containerInfo, callback) {
     docker.getContainer(containerInfo.Id).exec({ Cmd: cmd, AttachStdout: true, AttachStderr: true, Tty: false }, function (error, execContainer) {
         if (error) return callback(new Error('Failed to exec container : ' + error.message));
 
-        execContainer.start(function(err, stream) {
+        execContainer.start({ hijack: true }, function (error, stream) {
             if (error) return callback(new Error('Failed to start exec container : ' + error.message));
 
             stream.on('error', callback);
             stream.on('end', callback);
 
-            stream.setEncoding('utf8');
-            stream.pipe(process.stdout);
+            docker.modem.demuxStream(stream, process.stdout, process.stderr);
         });
     });
 }
