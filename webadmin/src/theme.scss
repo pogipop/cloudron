@@ -142,13 +142,17 @@ html, body {
 }
 
 .content {
-    width: 720px;
+    width: 100%;
     max-width: 720px;
     margin: 0 auto;
 
-    &.content-large {
-        width: 970px;
-        max-width: 970px;
+    @media(min-width:768px) {
+        width: 720px;
+
+        &.content-large {
+            width: 970px;
+            max-width: 970px;
+        }
     }
 }
 
