@@ -542,6 +542,7 @@ function uploadFile(req, res, next) {
     if (!req.files.file) return next(new HttpError(400, 'file must be provided as multipart'));
 
     apps.uploadFile(req.params.id, req.files.file.path, req.query.file, function (error) {
+        if (error && error.reason === AppsError.NOT_FOUND) return next(new HttpError(404, error.message));
         if (error) return next(new HttpError(500, error));
 
         debug('uploadFile: done');
