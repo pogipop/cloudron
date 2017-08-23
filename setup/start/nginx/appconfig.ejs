@@ -80,6 +80,9 @@ server {
         # No buffering to temp files, it fails for large downloads
         proxy_max_temp_file_size 0;
 
+        # Disable check to allow unlimited body sizes. this allows apps to accept whatever size they want
+        client_max_body_size 0;
+
 <% if (robotsTxtQuoted) { %>
         location = /robots.txt {
             return 200 <%- robotsTxtQuoted %>;
