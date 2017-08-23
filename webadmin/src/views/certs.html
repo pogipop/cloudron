@@ -45,6 +45,9 @@
                             <input type="email" class="form-control" ng-model="dnsCredentials.cloudflareEmail" id="dnsCredentialsCloudflareEmail" name="cloudflareEmail" placeholder="Cloudflare Account Email" ng-required="dnsCredentials.provider === 'cloudflare'" ng-disabled="dnsCredentials.busy">
                         </div>
 
+                        <!-- this will be autofilled by most browsers regardless of the attribute, since the next field is a password field.... -->
+                        <input type="text" class="form-control hide">
+
                         <!-- all provider -->
                         <div class="form-group" ng-class="{ 'has-error': false }">
                             <label class="control-label" for="dnsCredentialsPassword">Provide your password to confirm this action</label>
