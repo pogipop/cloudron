@@ -3,17 +3,18 @@
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
-        <h4 class="modal-title">Download a file from {{ selected.name }}</h4>
+        <h4 class="modal-title">Download from {{ selected.name }}</h4>
       </div>
       <div class="modal-body">
           <form name="downloadFileForm" ng-submit="downloadFile.submit()">
             <div class="form-group" ng-class="{ 'has-error': downloadFileForm.filePath.$dirty && downloadFile.error }">
+              <label class="control-label" for="inputDownloadFilePath">Path to file or directory</label>
               <div class="control-label" ng-show="{ 'has-error': downloadFileForm.filePath.$dirty && downloadFile.error }">
                   <small>{{ downloadFile.error }}</small>
               </div>
               <input type="text" class="form-control" name="filePath" ng-model="downloadFile.filePath" required autofocus>
             </div>
-            <input class="ng-hide" type="submit" ng-disabled="!downloadFile.filePath"/>
+            <input id="inputDownloadFilePath" class="ng-hide" type="submit" ng-disabled="!downloadFile.filePath"/>
           </form>
       </div>
       <div class="modal-footer">
