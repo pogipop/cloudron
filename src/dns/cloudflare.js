@@ -109,10 +109,18 @@ function upsert(dnsConfig, zoneName, subdomain, type, values, callback) {
             var i = 0;
 
             async.eachSeries(values, function (value, callback) {
+                var priority = null;
+
+                if (type === 'MX') {
+                    priority = value.split(' ')[0];
+                    value = value.split(' ')[1];
+                }
+
                 var data = {
                     type: type,
                     name: fqdn,
                     content: value,
+                    priority: priority,
                     ttl: 120  // 1 means "automatic" (meaning 300ms) and 120 is the lowest supported
                 };
 
