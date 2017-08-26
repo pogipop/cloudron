@@ -16,12 +16,14 @@ var async = require('async'),
     superagent = require('superagent'),
     server = require('../../server.js'),
     settings = require('../../settings.js'),
-    shell = require('../../shell.js');
+    shell = require('../../shell.js'),
+    tokendb = require('../../tokendb.js');
 
 var SERVER_URL = 'http://localhost:' + config.get('port');
 
 var USERNAME = 'superadmin', PASSWORD = 'Foobar?1337', EMAIL ='silly@me.com';
 var token = null; // authentication token
+var USERNAME_1 = 'userTheFirst', EMAIL_1 = 'taO@zen.mac', userId_1, token_1;
 
 var server;
 function setup(done) {
@@ -204,6 +206,22 @@ describe('Cloudron', function () {
                         callback();
                     });
                 },
+
+                function (callback) {
+                    superagent.post(SERVER_URL + '/api/v1/users')
+                           .query({ access_token: token })
+                           .send({ username: USERNAME_1, email: EMAIL_1, invite: false })
+                           .end(function (error, result) {
+                        expect(result).to.be.ok();
+                        expect(result.statusCode).to.eql(201);
+
+                        token_1 = tokendb.generateToken();
+                        userId_1 = result.body.id;
+
+                        // HACK to get a token for second user (passwords are generated and the user should have gotten a password setup link...)
+                        tokendb.add(token_1, userId_1, 'test-client-id',  Date.now() + 100000, '*', callback);
+                    });
+                }
             ], done);
         });
 
@@ -239,7 +257,7 @@ describe('Cloudron', function () {
             });
         });
 
-        it('succeeds', function (done) {
+        it('succeeds (admin)', function (done) {
             var scope = nock(config.apiServerOrigin())
                   .get('/api/v1/boxes/localhost?token=' + config.token())
                   .reply(200, { box: { region: 'sfo', size: '1gb' }, user: { }});
@@ -260,8 +278,34 @@ describe('Cloudron', function () {
                 expect(result.body.region).to.eql('sfo');
                 expect(result.body.memory).to.eql(os.totalmem());
                 expect(result.body.cloudronName).to.be.a('string');
+                expect(result.body.provider).to.be.a('string');
 
                 expect(scope.isDone()).to.be.ok();
+
+                done();
+            });
+        });
+
+        it('succeeds (non-admin)', function (done) {
+            superagent.get(SERVER_URL + '/api/v1/cloudron/config')
+                   .query({ access_token: token_1 })
+                   .end(function (error, result) {
+                expect(result.statusCode).to.equal(200);
+                console.dir(result.body);
+
+                expect(result.body.apiServerOrigin).to.eql('http://localhost:6060');
+                expect(result.body.webServerOrigin).to.eql(null);
+                expect(result.body.fqdn).to.eql(config.fqdn());
+                expect(result.body.isCustomDomain).to.eql(true);
+                expect(result.body.progress).to.be.an('object');
+                expect(result.body.version).to.eql(config.version());
+                expect(result.body.cloudronName).to.be.a('string');
+                expect(result.body.provider).to.be.a('string');
+
+                expect(result.body.update).to.be(undefined);
+                expect(result.body.size).to.be(undefined);
+                expect(result.body.region).to.be(undefined);
+                expect(result.body.memory).to.be(undefined);
 
                 done();
             });
