@@ -9,13 +9,13 @@
       <div class="modal-body" ng-show="dnsConfig.provider === 'noop' || dnsConfig.provider === 'manual'">
         No DNS provider is setup. Displayed DNS records will have to be setup manually.<br/>
       </div>
-      <div class="modal-body" ng-show="dnsConfig.provider === 'route53' || dnsConfig.provider === 'digitalocean'">
-        The Cloudron will setup Email related DNS records automatically.
+      <div class="modal-body" ng-show="dnsConfig.provider === 'route53' || dnsConfig.provider === 'digitalocean' || dnsConfig.provider === 'cloudflare'">
+        Cloudron will setup Email related DNS records automatically.
         If this domain is already configured to handle email with some other provider, it will <b>overwrite</b> those records.
         <br/><br/>
         Disabling Cloudron Email later will <b>not</b> put the old records back.
         <br/><br/>
-        Status of DNS Records will show an error when DNS is propagating (~5 minutes).
+        Status of DNS Records will show an error while DNS is propagating (~5 minutes).
         <br/>
       </div>
       <div class="modal-footer">
