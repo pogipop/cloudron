@@ -982,3 +982,11 @@
 * Add webterminal to shell into apps from the admin UI
 * Update Haraka for a few crash fixes
 
+[1.6.3]
+* Fixes selection issue while clicking on empty flexbox space
+* Indicate directories can be downloaded in the web terminal
+* Do not show app update indicator for normal users
+* Display email notice when using Cloudflare DNS
+* Set MX records correctly when using Cloudflare DNS
+* Fix bug where webterminal can incorrectly appear in main view
+
