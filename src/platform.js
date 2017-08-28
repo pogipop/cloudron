@@ -329,7 +329,9 @@ function startMail(callback) {
 
                 async.mapSeries(records, function (record, iteratorCallback) {
                     subdomains.upsert(record.subdomain, record.type, record.values, iteratorCallback);
-                }, callback);
+                }, NOOP_CALLBACK); // do not crash if DNS creds do not work in startup sequence
+
+                callback();
             });
         });
     });
