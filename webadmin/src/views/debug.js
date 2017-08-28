@@ -239,7 +239,9 @@ angular.module('Application').controller('DebugController', ['$scope', '$locatio
 
             $scope.terminalSocket.onclose = function () {
                 // retry in one second only if terminal view is still selected
-                setTimeout(function () {
+                $scope.terminalReconnectTimeout = setTimeout(function () {
+                    // if the scope was already destroyed, do not reconnect
+                    if ($scope.$$destroyed) return;
                     if ($scope.terminalVisible) $scope.showTerminal(true);
                 }, 1000);
             };
