@@ -82,7 +82,6 @@ BackupsError.INTERNAL_ERROR = 'internal error';
 BackupsError.BAD_STATE = 'bad state';
 BackupsError.BAD_FIELD = 'bad field';
 BackupsError.NOT_FOUND = 'not found';
-BackupsError.MISSING_CREDENTIALS = 'missing credentials';
 
 // choose which storage backend we use for test purpose we use s3
 function api(provider) {

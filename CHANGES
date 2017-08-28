@@ -989,4 +989,5 @@
 * Display email notice when using Cloudflare DNS
 * Set MX records correctly when using Cloudflare DNS
 * Fix bug where webterminal can incorrectly appear in main view
+* Do not crash if DNS credentials are invalid
 
