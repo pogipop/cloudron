@@ -7,7 +7,6 @@ echo "==> Cloudron Start"
 readonly USER="yellowtent"
 readonly HOME_DIR="/home/${USER}"
 readonly BOX_SRC_DIR="${HOME_DIR}/box"
-readonly OLD_DATA_DIR="${HOME_DIR}/data";
 readonly PLATFORM_DATA_DIR="${HOME_DIR}/platformdata" # platform data
 readonly APPS_DATA_DIR="${HOME_DIR}/appsdata" # app data
 readonly BOX_DATA_DIR="${HOME_DIR}/boxdata" # box data
@@ -73,23 +72,9 @@ fi
 
 mkdir -p "${BOX_DATA_DIR}"
 mkdir -p "${APPS_DATA_DIR}"
-mkdir -p "${PLATFORM_DATA_DIR}"
 
 # keep these in sync with paths.js
 echo "==> Ensuring directories"
-if [[ ! -d "${PLATFORM_DATA_DIR}/mail" ]]; then
-    if [[ -d "${OLD_DATA_DIR}/mail" ]]; then
-        echo "==> Migrate old mail data"
-        # Migrate mail data to new format
-        docker stop mail || true # otherwise the move below might fail if mail container writes in the middle
-        mkdir -p "${PLATFORM_DATA_DIR}/mail"
-        # we can't move the whole folder as it is a btrfs subvolume mount
-        mv -f "${OLD_DATA_DIR}/mail/"* "${PLATFORM_DATA_DIR}/mail/" # this used to be mail container's run directory
-    else
-        echo "==> Create new mail data dir"
-        mkdir -p "${PLATFORM_DATA_DIR}/mail"
-    fi
-fi
 
 mkdir -p "${PLATFORM_DATA_DIR}/graphite"
 mkdir -p "${PLATFORM_DATA_DIR}/mail/dkim"
@@ -101,6 +86,7 @@ mkdir -p "${PLATFORM_DATA_DIR}/addons/mail"
 mkdir -p "${PLATFORM_DATA_DIR}/collectd/collectd.conf.d"
 mkdir -p "${PLATFORM_DATA_DIR}/logrotate.d"
 mkdir -p "${PLATFORM_DATA_DIR}/acme"
+mkdir -p "${PLATFORM_DATA_DIR}/mail"
 
 mkdir -p "${BOX_DATA_DIR}/appicons"
 mkdir -p "${BOX_DATA_DIR}/certs"
@@ -109,17 +95,6 @@ mkdir -p "${BOX_DATA_DIR}/acme" # acme keys
 # ensure backups folder exists and is writeable
 mkdir -p /var/backups
 chmod 777 /var/backups
-
-echo "==> Check for old btrfs volumes"
-if mountpoint -q "${OLD_DATA_DIR}"; then
-    echo "==> Cleanup btrfs volumes"
-    # First stop all container to be able to unmount
-    docker ps -q | xargs docker stop
-    umount "${OLD_DATA_DIR}"
-    rm -rf "/root/user_data.img"
-else
-    echo "==> No btrfs volumes found";
-fi
 
 echo "==> Configuring journald"
 sed -e "s/^#SystemMaxUse=.*$/SystemMaxUse=100M/" \
