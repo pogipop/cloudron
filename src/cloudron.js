@@ -236,24 +236,32 @@ function configureWebadmin(callback) {
         callback(error);
     }
 
-    sysinfo.getPublicIp(function (error, ip) {
-        if (error) return done(error);
+    function configureNginx(error) {
+        debug('configureNginx: dns update:%j', error);
 
-        addDnsRecords(ip, function (error) {
+        certificates.ensureCertificate({ location: constants.ADMIN_LOCATION }, function (error, certFilePath, keyFilePath) {
             if (error) return done(error);
 
+            gWebadminStatus.tls = true;
+
+            nginx.configureAdmin(certFilePath, keyFilePath, constants.NGINX_ADMIN_CONFIG_FILE_NAME, config.adminFqdn(), done);
+        });
+    }
+
+    // update the DNS. configure nginx regardless of whether it succeeded so that
+    // box is accessible even if dns creds are invalid
+    sysinfo.getPublicIp(function (error, ip) {
+        if (error) return configureNginx(error);
+
+        addDnsRecords(ip, function (error) {
+            if (error) return configureNginx(error);
+
             subdomains.waitForDns(config.adminFqdn(), ip, 'A', { interval: 30000, times: 50000 }, function (error) {
-                if (error) return done(error);
+                if (error) return configureNginx(error);
 
                 gWebadminStatus.dns = true;
 
-                certificates.ensureCertificate({ location: constants.ADMIN_LOCATION }, function (error, certFilePath, keyFilePath) {
-                    if (error) return done(error);
-
-                    gWebadminStatus.tls = true;
-
-                    nginx.configureAdmin(certFilePath, keyFilePath, constants.NGINX_ADMIN_CONFIG_FILE_NAME, config.adminFqdn(), done);
-                });
+                configureNginx();
             });
         });
     });

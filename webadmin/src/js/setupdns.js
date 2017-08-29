@@ -103,7 +103,9 @@ app.controller('SetupDNSController', ['$scope', '$http', 'Client', function ($sc
         $scope.busy = true;
 
         Client.getStatus(function (error, status) {
-            if (!error && status.adminFqdn && status.webadminStatus.dns && status.webadminStatus.tls) {
+            // webadminStatus.dns is intentionally not tested. it can be false if dns creds are invalid
+            // runConfigurationChecks() in main.js will pick the .dns and show a notification
+            if (!error && status.adminFqdn && status.webadminStatus.tls) {
                 window.location.href = 'https://' + status.adminFqdn + '/setup.html';
             }
 
