@@ -30,6 +30,10 @@ angular.module('Application').controller('EmailController', ['$scope', '$locatio
         $('.modal').modal('hide');
     };
 
+    $scope.isProvider = function (provider) {
+        return $scope.mailRelay.relay.provider === provider;
+    };
+
     $scope.catchall = {
         addresses: [],
         busy: false,
@@ -107,6 +111,7 @@ angular.module('Application').controller('EmailController', ['$scope', '$locatio
             $scope.mailRelay.relay.port = $scope.mailRelay.preset.port;
             $scope.mailRelay.relay.username = '';
             $scope.mailRelay.relay.password = '';
+            $scope.mailRelay.relay.serverApiToken = '';
         },
 
         // form data to be set on load
@@ -115,14 +120,30 @@ angular.module('Application').controller('EmailController', ['$scope', '$locatio
             host: '',
             port: 25,
             username: '',
-            password: ''
+            password: '',
+            serverApiToken: ''
         },
 
         submit: function () {
             $scope.mailRelay.error = null;
             $scope.mailRelay.busy = true;
 
-            Client.setMailRelay($scope.mailRelay.relay, function (error) {
+            var data = {
+                provider: $scope.mailRelay.relay.provider,
+                host: $scope.mailRelay.relay.host,
+                port: $scope.mailRelay.relay.port
+            };
+
+            // fill in provider specific username/password usage
+            if (data.provider === 'postmark-smtp') {
+                data.username = $scope.mailRelay.relay.serverApiToken;
+                data.password = $scope.mailRelay.relay.serverApiToken;
+            } else {
+                data.username = $scope.mailRelay.relay.username;
+                data.password = $scope.mailRelay.relay.password;
+            }
+
+            Client.setMailRelay(data, function (error) {
                 if (error) {
                     $scope.mailRelay.error = error.message;
                 }
@@ -144,7 +165,19 @@ angular.module('Application').controller('EmailController', ['$scope', '$locatio
         Client.getMailRelay(function (error, relay) {
             if (error) return console.error(error);
 
-            $scope.mailRelay.relay = relay;
+            $scope.mailRelay.relay.provider = relay.provider;
+            $scope.mailRelay.relay.host = relay.host;
+            $scope.mailRelay.relay.port = relay.port;
+            $scope.mailRelay.relay.username = '';
+            $scope.mailRelay.relay.password = '';
+            $scope.mailRelay.relay.serverApiToken = '';
+
+            if (relay.provider === 'postmark-smtp') {
+                $scope.mailRelay.relay.serverApiToken = relay.username;
+            } else {
+                $scope.mailRelay.relay.username = relay.username;
+                $scope.mailRelay.relay.password = relay.password;
+            }
 
             for (var i = 0; i < $scope.mailRelayPresets.length; i++) {
                 if ($scope.mailRelayPresets[i].provider === relay.provider) {

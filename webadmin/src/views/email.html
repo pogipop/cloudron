@@ -102,20 +102,33 @@
                 </div>
                 <input type="number" class="form-control" ng-model="mailRelay.relay.port" name="port" required>
               </div>
-              <div class="form-group" ng-class="{ 'has-error': (mailRelayForm.username.$dirty && mailRelayForm.username.$invalid) }">
+
+              <!-- Postmark -->
+              <div ng-show="isProvider('postmark-smtp')" class="form-group" ng-class="{ 'has-error': (mailRelayForm.serverApiToken.$dirty && mailRelayForm.serverApiToken.$invalid) }">
+                <label class="control-label">Server API Token</label>
+                <div class="control-label" ng-show="(!mailRelayForm.serverApiToken.$dirty && mailRelay.error.serverApiToken) || (mailRelayForm.serverApiToken.$dirty && mailRelayForm.serverApiToken.$invalid)">
+                  <small ng-show="!mailRelayForm.serverApiToken.$dirty && mailRelay.error.serverApiToken">{{ mailRelay.error.serverApiToken }}</small>
+                </div>
+                <input type="text" class="form-control" ng-model="mailRelay.relay.serverApiToken" name="serverApiToken" ng-required="isProvider('postmark-smtp')">
+              </div>
+
+              <!-- Other -->
+              <div ng-show="!isProvider('postmark-smtp')" class="form-group" ng-class="{ 'has-error': (mailRelayForm.username.$dirty && mailRelayForm.username.$invalid) }">
                 <label class="control-label">Username</label>
                 <div class="control-label" ng-show="(!mailRelayForm.username.$dirty && mailRelay.error.username) || (mailRelayForm.username.$dirty && mailRelayForm.username.$invalid)">
                   <small ng-show="!mailRelayForm.username.$dirty && mailRelay.error.username">{{ mailRelay.error.username }}</small>
                 </div>
-                <input type="text" class="form-control" ng-model="mailRelay.relay.username" name="username" required>
+                <input type="text" class="form-control" ng-model="mailRelay.relay.username" name="username" ng-required="!isProvider('postmark-smtp')">
               </div>
-              <div class="form-group" ng-class="{ 'has-error': (mailRelayForm.password.$dirty && mailRelayForm.password.$invalid) }">
+
+              <div ng-show="!isProvider('postmark-smtp')" class="form-group" ng-class="{ 'has-error': (mailRelayForm.password.$dirty && mailRelayForm.password.$invalid) }">
                 <label class="control-label">Password</label>
                 <div class="control-label" ng-show="(!mailRelayForm.password.$dirty && mailRelay.error.password) || (mailRelayForm.password.$dirty && mailRelayForm.password.$invalid)">
                   <small ng-show="!mailRelayForm.password.$dirty && mailRelay.error.password">{{ mailRelay.error.password }}</small>
                 </div>
-                <input type="text" class="form-control" ng-model="mailRelay.relay.password" name="password" required>
+                <input type="password" class="form-control" ng-model="mailRelay.relay.password" name="password" ng-required="!isProvider('postmark-smtp')">
               </div>
+
               <input class="ng-hide" type="submit" ng-disabled="mailRelayForm.$invalid"/>
             </form>
           </div>
