@@ -100,6 +100,7 @@ angular.module('Application').controller('EmailController', ['$scope', '$locatio
 
     $scope.mailRelay = {
         error: null,
+        success: false,
         busy: false,
         preset: $scope.mailRelayPresets[0],
 
@@ -127,6 +128,7 @@ angular.module('Application').controller('EmailController', ['$scope', '$locatio
         submit: function () {
             $scope.mailRelay.error = null;
             $scope.mailRelay.busy = true;
+            $scope.mailRelay.success = false;
 
             var data = {
                 provider: $scope.mailRelay.relay.provider,
@@ -144,9 +146,8 @@ angular.module('Application').controller('EmailController', ['$scope', '$locatio
             }
 
             Client.setMailRelay(data, function (error) {
-                if (error) {
-                    $scope.mailRelay.error = error.message;
-                }
+                if (error) $scope.mailRelay.error = error.message;
+                else $scope.mailRelay.success = true;
 
                 $scope.mailRelay.busy = false;
             });
