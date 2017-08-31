@@ -247,6 +247,11 @@ angular.module('Application').controller('DebugController', ['$scope', '$locatio
                     if ($scope.terminalVisible) $scope.showTerminal(true);
                 }, 1000);
             };
+
+            // Let the browser handle paste
+            $scope.terminal.attachCustomKeyEventHandler(function (e) {
+                if (e.key === 'v' && (e.ctrlKey || e.metaKey)) return false;
+            });
         } catch (e) {
             console.error(e);
         }
