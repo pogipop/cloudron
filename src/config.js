@@ -97,7 +97,7 @@ function initConfig() {
         data.port = 5454;
         data.apiServerOrigin = 'http://localhost:6060'; // hock doesn't support https
         data.database = {
-            hostname: 'localhost',
+            hostname: '127.0.0.1',
             username: 'root',
             password: '',
             port: 3306,

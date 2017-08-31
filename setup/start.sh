@@ -222,7 +222,7 @@ set_progress "40" "Migrating data"
 sudo -u "${USER}" -H bash <<EOF
 set -eu
 cd "${BOX_SRC_DIR}"
-BOX_ENV=cloudron DATABASE_URL=mysql://root:${mysql_root_password}@localhost/box "${BOX_SRC_DIR}/node_modules/.bin/db-migrate" up
+BOX_ENV=cloudron DATABASE_URL=mysql://root:${mysql_root_password}@127.0.0.1/box "${BOX_SRC_DIR}/node_modules/.bin/db-migrate" up
 EOF
 
 echo "==> Creating cloudron.conf"
@@ -238,7 +238,7 @@ cat > "${CONFIG_DIR}/cloudron.conf" <<CONF_END
     "provider": "${arg_provider}",
     "isDemo": ${arg_is_demo},
     "database": {
-        "hostname": "localhost",
+        "hostname": "127.0.0.1",
         "username": "root",
         "password": "${mysql_root_password}",
         "port": 3306,
