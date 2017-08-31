@@ -102,6 +102,12 @@ $table-border-color:                        transparent !default;
     width: 300px;
 }
 
+.dropdown-menu>li>a:focus, .dropdown-menu>li>a:hover {
+    background-color: $brand-primary;
+    color: white;
+}
+
+
 // ----------------------------
 // Main classes
 // ----------------------------
