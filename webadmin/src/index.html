@@ -217,7 +217,7 @@
                             <a ng-class="{ active: isActive('/users')}" href="#/users"><i class="fa fa-users fa-fw"></i> Users</a>
                         </li>
                         <li class="dropdown">
-                            <a href="" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false"><img ng-src="{{user.gravatar}}"/> {{user.username}} <span class="caret"></span></a>
+                            <a href="" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false"><img ng-src="{{user.gravatar}}" style="margin-top: -4px;"/> {{user.username}} <span class="caret"></span></a>
                             <ul class="dropdown-menu" role="menu">
                                 <li><a href="#/account"><i class="fa fa-user fa-fw"></i> Account</a></li>
                                 <li ng-show="user.admin"><a href="#/activity"><i class="fa fa-list-alt fa-fw"></i> Activity</a></li>
