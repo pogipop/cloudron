@@ -83,7 +83,9 @@ angular.module('Application').controller('DebugController', ['$scope', '$locatio
     $scope.uploadFile = function () {
         var fileUpload = document.querySelector('#fileUpload');
 
-        fileUpload.oninput = function (e) {
+        fileUpload.onchange = function (e) {
+            if (e.target.files.length === 0) return;
+
             $scope.uploadProgress.busy = true;
             $scope.uploadProgress.show();
 
