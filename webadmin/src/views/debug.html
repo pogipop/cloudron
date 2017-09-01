@@ -29,22 +29,22 @@
 
 <!-- Modal upload progress -->
 <div class="modal fade" id="uploadProgressModal" tabindex="-1" role="dialog">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h4 class="modal-title">Uploading file to {{ selected.name }}</h4>
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title">Uploading file to {{ selected.name }}</h4>
+      </div>
+      <div class="modal-body">
+        <span><b>{{ (uploadProgress.current/1000/1000).toFixed(2) }}mb</b> (total {{ (uploadProgress.total/1000/1000).toFixed(2) }}mb)</span>
+        <div class="progress progress-striped active">
+          <div class="progress-bar progress-bar-success" role="progressbar" style="width: {{ 100*(uploadProgress.current/uploadProgress.total) }}%"></div>
         </div>
-        <div class="modal-body">
-          <span><b>{{ (uploadProgress.current/1000/1000).toFixed(2) }}mb</b> (total {{ (uploadProgress.total/1000/1000).toFixed(2) }}mb)</span>
-          <div class="progress progress-striped active">
-            <div class="progress-bar progress-bar-success" role="progressbar" style="width: {{ 100*(uploadProgress.current/uploadProgress.total) }}%"></div>
-          </div>
-        </div>
-        <div class="modal-footer">
-        </div>
+      </div>
+      <div class="modal-footer">
       </div>
     </div>
   </div>
+</div>
 
 <div class="logs-controls">
   <div class="col-md-10 col-md-offset-1">
