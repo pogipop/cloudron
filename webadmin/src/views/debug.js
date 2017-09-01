@@ -18,6 +18,7 @@ angular.module('Application').controller('DebugController', ['$scope', '$locatio
     $scope.terminalSocket = null;
     $scope.lines = 10;
     $scope.restartAppBusy = false;
+    $scope.selectedAppInfo = null;
 
     function ab2str(buf) {
         return String.fromCharCode.apply(null, new Uint16Array(buf));
@@ -144,6 +145,8 @@ angular.module('Application').controller('DebugController', ['$scope', '$locatio
         if ($scope.terminalSocket) {
             $scope.terminalSocket = null;
         }
+
+        $scope.selectedAppInfo = null;
     }
 
     $scope.restartApp = function () {
@@ -174,6 +177,33 @@ angular.module('Application').controller('DebugController', ['$scope', '$locatio
 
                     $scope.restartAppBusy = false;
                 });
+            });
+        });
+    };
+
+    $scope.repairApp = function () {
+        $('#repairAppModal').modal('show');
+    };
+
+    $scope.repairAppBegin = function () {
+        var appId = $scope.selected.value;
+
+        Client.debugApp(appId, true, function (error) {
+            if (error) return console.error(error);
+
+            $('#repairAppModal').modal('hide');
+        });
+    };
+
+    $scope.repairAppDone = function () {
+        var appId = $scope.selected.value;
+
+        Client.debugApp(appId, false, function (error) {
+            if (error) return console.error(error);
+
+            Client.getApp(appId, function (error, result) {
+                if (error) return console.error(error);
+                $scope.selectedAppInfo = result;
             });
         });
     };
@@ -228,6 +258,12 @@ angular.module('Application').controller('DebugController', ['$scope', '$locatio
             tmp.append(logLine);
             return;
         }
+
+        // fetch current app state
+        Client.getApp($scope.selected.value, function (error, result) {
+            if (error) return console.error(error);
+            $scope.selectedAppInfo = result;
+        });
 
         $scope.terminal = new Terminal();
         $scope.terminal.open(document.querySelector('.logs-and-term-container'));

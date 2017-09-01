@@ -388,6 +388,21 @@ angular.module('Application').service('Client', ['$http', 'md5', 'Notification',
         }).error(defaultErrorHandler(callback));
     };
 
+    Client.prototype.debugApp = function (id, state, callback) {
+        var data = {
+            appId: id,
+            debugMode: state ? {
+                readonlyRootfs: true,
+                cmd: [ '/bin/bash', '-c', 'echo "Repair mode. Use the webterminal or cloudron exec to repair. Sleeping" && sleep infinity' ]
+            } : null
+        };
+
+        post('/api/v1/apps/' + id + '/configure', data).success(function (data, status) {
+            if (status !== 202) return callback(new ClientError(status, data));
+            callback(null);
+        }).error(defaultErrorHandler(callback));
+    };
+
     Client.prototype.progress = function (callback, errorCallback) {
         // this is used in the defaultErrorHandler itself, and avoids a loop
         if (typeof errorCallback !== 'function') errorCallback = defaultErrorHandler(callback);
