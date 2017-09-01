@@ -269,7 +269,6 @@ describe('App API', function () {
     it('app install fails - missing manifest', function (done) {
         superagent.post(SERVER_URL + '/api/v1/apps/install')
                .query({ access_token: token })
-               .send({ password: PASSWORD })
                .end(function (err, res) {
             expect(res.statusCode).to.equal(400);
             expect(res.body.message).to.eql('appStoreId or manifest is required');
@@ -280,7 +279,7 @@ describe('App API', function () {
     it('app install fails - null manifest', function (done) {
         superagent.post(SERVER_URL + '/api/v1/apps/install')
                .query({ access_token: token })
-               .send({ manifest: null, password: PASSWORD })
+               .send({ manifest: null })
                .end(function (err, res) {
             expect(res.statusCode).to.equal(400);
             expect(res.body.message).to.eql('appStoreId or manifest is required');
@@ -291,7 +290,7 @@ describe('App API', function () {
     it('app install fails - bad manifest format', function (done) {
         superagent.post(SERVER_URL + '/api/v1/apps/install')
                .query({ access_token: token })
-               .send({ manifest: 'epic', password: PASSWORD })
+               .send({ manifest: 'epic' })
                .end(function (err, res) {
             expect(res.statusCode).to.equal(400);
             expect(res.body.message).to.eql('manifest must be an object');
@@ -302,7 +301,7 @@ describe('App API', function () {
     it('app install fails - empty appStoreId format', function (done) {
         superagent.post(SERVER_URL + '/api/v1/apps/install')
                .query({ access_token: token })
-               .send({ manifest: null, appStoreId: '', password: PASSWORD })
+               .send({ manifest: null, appStoreId: '' })
                .end(function (err, res) {
             expect(res.statusCode).to.equal(400);
             expect(res.body.message).to.eql('appStoreId or manifest is required');
@@ -323,7 +322,7 @@ describe('App API', function () {
     it('app install fails - invalid location', function (done) {
         superagent.post(SERVER_URL + '/api/v1/apps/install')
                .query({ access_token: token })
-               .send({ manifest: APP_MANIFEST, password: PASSWORD, location: '!awesome', accessRestriction: null })
+               .send({ manifest: APP_MANIFEST, location: '!awesome', accessRestriction: null })
                .end(function (err, res) {
             expect(res.statusCode).to.equal(400);
             expect(res.body.message).to.eql('Hostname can only contain alphanumerics and hyphen');
@@ -334,7 +333,7 @@ describe('App API', function () {
     it('app install fails - invalid location type', function (done) {
         superagent.post(SERVER_URL + '/api/v1/apps/install')
                .query({ access_token: token })
-               .send({ manifest: APP_MANIFEST, password: PASSWORD, location: 42, accessRestriction: null })
+               .send({ manifest: APP_MANIFEST, location: 42, accessRestriction: null })
                .end(function (err, res) {
             expect(res.statusCode).to.equal(400);
             expect(res.body.message).to.eql('location is required');
@@ -345,7 +344,7 @@ describe('App API', function () {
     it('app install fails - reserved admin location', function (done) {
         superagent.post(SERVER_URL + '/api/v1/apps/install')
                .query({ access_token: token })
-               .send({ manifest: APP_MANIFEST, password: PASSWORD, location: constants.ADMIN_LOCATION, accessRestriction: null })
+               .send({ manifest: APP_MANIFEST, location: constants.ADMIN_LOCATION, accessRestriction: null })
                .end(function (err, res) {
             expect(res.statusCode).to.equal(400);
             expect(res.body.message).to.eql(constants.ADMIN_LOCATION + ' is reserved');
@@ -356,7 +355,7 @@ describe('App API', function () {
     it('app install fails - reserved api location', function (done) {
         superagent.post(SERVER_URL + '/api/v1/apps/install')
                .query({ access_token: token })
-               .send({ manifest: APP_MANIFEST, password: PASSWORD, location: constants.API_LOCATION, accessRestriction: null })
+               .send({ manifest: APP_MANIFEST, location: constants.API_LOCATION, accessRestriction: null })
                .end(function (err, res) {
             expect(res.statusCode).to.equal(400);
             expect(res.body.message).to.eql(constants.API_LOCATION + ' is reserved');
@@ -367,7 +366,7 @@ describe('App API', function () {
     it('app install fails - portBindings must be object', function (done) {
         superagent.post(SERVER_URL + '/api/v1/apps/install')
                .query({ access_token: token })
-               .send({ manifest: APP_MANIFEST, password: PASSWORD, location: APP_LOCATION, portBindings: 23, accessRestriction: null })
+               .send({ manifest: APP_MANIFEST, location: APP_LOCATION, portBindings: 23, accessRestriction: null })
                .end(function (err, res) {
             expect(res.statusCode).to.equal(400);
             expect(res.body.message).to.eql('portBindings must be an object');
@@ -378,7 +377,7 @@ describe('App API', function () {
     it('app install fails - accessRestriction is required', function (done) {
         superagent.post(SERVER_URL + '/api/v1/apps/install')
                .query({ access_token: token })
-               .send({ manifest: APP_MANIFEST, password: PASSWORD, location: APP_LOCATION, portBindings: {} })
+               .send({ manifest: APP_MANIFEST, location: APP_LOCATION, portBindings: {} })
                .end(function (err, res) {
             expect(res.statusCode).to.equal(400);
             expect(res.body.message).to.eql('accessRestriction is required');
@@ -389,7 +388,7 @@ describe('App API', function () {
     it('app install fails - accessRestriction type is wrong', function (done) {
         superagent.post(SERVER_URL + '/api/v1/apps/install')
                .query({ access_token: token })
-               .send({ manifest: APP_MANIFEST, password: PASSWORD, location: APP_LOCATION, portBindings: {}, accessRestriction: '' })
+               .send({ manifest: APP_MANIFEST, location: APP_LOCATION, portBindings: {}, accessRestriction: '' })
                .end(function (err, res) {
             expect(res.statusCode).to.equal(400);
             expect(res.body.message).to.eql('accessRestriction is required');
@@ -400,7 +399,7 @@ describe('App API', function () {
     it('app install fails for non admin', function (done) {
         superagent.post(SERVER_URL + '/api/v1/apps/install')
                .query({ access_token: token_1 })
-               .send({ manifest: APP_MANIFEST, password: PASSWORD, location: APP_LOCATION, portBindings: null, accessRestriction: null })
+               .send({ manifest: APP_MANIFEST, location: APP_LOCATION, portBindings: null, accessRestriction: null })
                .end(function (err, res) {
             expect(res.statusCode).to.equal(403);
             done();
@@ -412,7 +411,7 @@ describe('App API', function () {
 
         superagent.post(SERVER_URL + '/api/v1/apps/install')
                .query({ access_token: token })
-               .send({ appStoreId: APP_STORE_ID, password: PASSWORD, location: APP_LOCATION, portBindings: null, accessRestriction: { users: [ 'someuser' ], groups: [] } })
+               .send({ appStoreId: APP_STORE_ID, location: APP_LOCATION, portBindings: null, accessRestriction: { users: [ 'someuser' ], groups: [] } })
                .end(function (err, res) {
             expect(res.statusCode).to.equal(400);
             expect(fake.isDone()).to.be.ok();
@@ -426,7 +425,7 @@ describe('App API', function () {
 
         superagent.post(SERVER_URL + '/api/v1/apps/install')
                .query({ access_token: token })
-               .send({ appStoreId: APP_STORE_ID, password: PASSWORD, location: APP_LOCATION, portBindings: null, accessRestriction: null })
+               .send({ appStoreId: APP_STORE_ID, location: APP_LOCATION, portBindings: null, accessRestriction: null })
                .end(function (err, res) {
             expect(res.statusCode).to.equal(503);
             expect(fake1.isDone()).to.be.ok();
@@ -442,7 +441,7 @@ describe('App API', function () {
 
         superagent.post(SERVER_URL + '/api/v1/apps/install')
                .query({ access_token: token })
-               .send({ appStoreId: APP_STORE_ID, password: PASSWORD, location: APP_LOCATION, portBindings: null, accessRestriction: { users: [ 'someuser' ], groups: [] } })
+               .send({ appStoreId: APP_STORE_ID, location: APP_LOCATION, portBindings: null, accessRestriction: { users: [ 'someuser' ], groups: [] } })
                .end(function (err, res) {
             expect(res.statusCode).to.equal(202);
             expect(res.body.id).to.be.a('string');
@@ -455,7 +454,7 @@ describe('App API', function () {
     it('app install fails because of conflicting location', function (done) {
         superagent.post(SERVER_URL + '/api/v1/apps/install')
                .query({ access_token: token })
-               .send({ manifest: APP_MANIFEST, password: PASSWORD, location: APP_LOCATION, portBindings: null, accessRestriction: null })
+               .send({ manifest: APP_MANIFEST, location: APP_LOCATION, portBindings: null, accessRestriction: null })
                .end(function (err, res) {
             expect(res.statusCode).to.equal(409);
             done();
@@ -565,7 +564,7 @@ describe('App API', function () {
 
         superagent.post(SERVER_URL + '/api/v1/apps/install')
                .query({ access_token: token })
-               .send({ appStoreId: APP_STORE_ID, password: PASSWORD, location: APP_LOCATION_2, portBindings: null, accessRestriction: null })
+               .send({ appStoreId: APP_STORE_ID, location: APP_LOCATION_2, portBindings: null, accessRestriction: null })
                .end(function (err, res) {
             expect(res.statusCode).to.equal(202);
             expect(res.body.id).to.be.a('string');
@@ -695,7 +694,7 @@ describe('App installation', function () {
 
         superagent.post(SERVER_URL + '/api/v1/apps/install')
               .query({ access_token: token })
-              .send({ appStoreId: APP_STORE_ID, password: PASSWORD, location: APP_LOCATION, portBindings: { ECHO_SERVER_PORT: 7171 }, accessRestriction: null })
+              .send({ appStoreId: APP_STORE_ID, location: APP_LOCATION, portBindings: { ECHO_SERVER_PORT: 7171 }, accessRestriction: null })
               .end(function (err, res) {
             expect(res.statusCode).to.equal(202);
             expect(fake1.isDone()).to.be.ok();
@@ -986,7 +985,7 @@ describe('App installation', function () {
     it('cannot reconfigure app with bad location', function (done) {
         superagent.post(SERVER_URL + '/api/v1/apps/' + APP_ID + '/configure')
               .query({ access_token: token })
-              .send({ password: PASSWORD, location: 1234, portBindings: { ECHO_SERVER_PORT: 7172 }, accessRestriction: null })
+              .send({ location: 1234, portBindings: { ECHO_SERVER_PORT: 7172 }, accessRestriction: null })
               .end(function (err, res) {
             expect(res.statusCode).to.equal(400);
             done();
@@ -996,7 +995,7 @@ describe('App installation', function () {
     it('cannot reconfigure app with bad accessRestriction', function (done) {
         superagent.post(SERVER_URL + '/api/v1/apps/' + APP_ID + '/configure')
               .query({ access_token: token })
-              .send({ password: PASSWORD, portBindings: { ECHO_SERVER_PORT: 7172 }, accessRestriction: false })
+              .send({ portBindings: { ECHO_SERVER_PORT: 7172 }, accessRestriction: false })
               .end(function (err, res) {
             expect(res.statusCode).to.equal(400);
             done();
@@ -1006,7 +1005,7 @@ describe('App installation', function () {
     it('cannot reconfigure app with only the cert, no key', function (done) {
         superagent.post(SERVER_URL + '/api/v1/apps/' + APP_ID + '/configure')
               .query({ access_token: token })
-              .send({ password: PASSWORD, location: APP_LOCATION_NEW, portBindings: { ECHO_SERVER_PORT: 7172 }, accessRestriction: null, cert: validCert1 })
+              .send({ location: APP_LOCATION_NEW, portBindings: { ECHO_SERVER_PORT: 7172 }, accessRestriction: null, cert: validCert1 })
               .end(function (err, res) {
             expect(res.statusCode).to.equal(400);
             done();
@@ -1016,7 +1015,7 @@ describe('App installation', function () {
     it('cannot reconfigure app with only the key, no cert', function (done) {
         superagent.post(SERVER_URL + '/api/v1/apps/' + APP_ID + '/configure')
               .query({ access_token: token })
-              .send({ password: PASSWORD, location: APP_LOCATION_NEW, portBindings: { ECHO_SERVER_PORT: 7172 }, key: validKey1 })
+              .send({ location: APP_LOCATION_NEW, portBindings: { ECHO_SERVER_PORT: 7172 }, key: validKey1 })
               .end(function (err, res) {
             expect(res.statusCode).to.equal(400);
             done();
@@ -1026,7 +1025,7 @@ describe('App installation', function () {
     it('cannot reconfigure app with cert not being a string', function (done) {
         superagent.post(SERVER_URL + '/api/v1/apps/' + APP_ID + '/configure')
               .query({ access_token: token })
-              .send({ password: PASSWORD, location: APP_LOCATION_NEW, portBindings: { ECHO_SERVER_PORT: 7172 }, accessRestriction: null, cert: 1234, key: validKey1 })
+              .send({ location: APP_LOCATION_NEW, portBindings: { ECHO_SERVER_PORT: 7172 }, accessRestriction: null, cert: 1234, key: validKey1 })
               .end(function (err, res) {
             expect(res.statusCode).to.equal(400);
             done();
@@ -1036,7 +1035,7 @@ describe('App installation', function () {
     it('cannot reconfigure app with key not being a string', function (done) {
         superagent.post(SERVER_URL + '/api/v1/apps/' + APP_ID + '/configure')
               .query({ access_token: token })
-              .send({ password: PASSWORD, location: APP_LOCATION_NEW, portBindings: { ECHO_SERVER_PORT: 7172 }, cert: validCert1, key: 1234 })
+              .send({ location: APP_LOCATION_NEW, portBindings: { ECHO_SERVER_PORT: 7172 }, cert: validCert1, key: 1234 })
               .end(function (err, res) {
             expect(res.statusCode).to.equal(400);
             done();
@@ -1046,7 +1045,7 @@ describe('App installation', function () {
     it('non admin cannot reconfigure app', function (done) {
         superagent.post(SERVER_URL + '/api/v1/apps/' + APP_ID + '/configure')
               .query({ access_token: token_1 })
-              .send({ password: PASSWORD, location: APP_LOCATION_NEW, portBindings: { ECHO_SERVER_PORT: 7172 }, accessRestriction: null })
+              .send({ location: APP_LOCATION_NEW, portBindings: { ECHO_SERVER_PORT: 7172 }, accessRestriction: null })
               .end(function (err, res) {
             expect(res.statusCode).to.equal(403);
             done();
@@ -1056,7 +1055,7 @@ describe('App installation', function () {
     it('can reconfigure app', function (done) {
         superagent.post(SERVER_URL + '/api/v1/apps/' + APP_ID + '/configure')
               .query({ access_token: token })
-              .send({ password: PASSWORD, location: APP_LOCATION_NEW, portBindings: { ECHO_SERVER_PORT: 7172 } })
+              .send({ location: APP_LOCATION_NEW, portBindings: { ECHO_SERVER_PORT: 7172 } })
               .end(function (err, res) {
             expect(res.statusCode).to.equal(202);
             checkConfigureStatus(0, done);
@@ -1098,7 +1097,7 @@ describe('App installation', function () {
     it('can reconfigure app with custom certificate', function (done) {
         superagent.post(SERVER_URL + '/api/v1/apps/' + APP_ID + '/configure')
               .query({ access_token: token })
-              .send({ password: PASSWORD, location: APP_LOCATION_NEW, portBindings: { ECHO_SERVER_PORT: 7172 }, accessRestriction: null, cert: validCert1, key: validKey1 })
+              .send({ location: APP_LOCATION_NEW, portBindings: { ECHO_SERVER_PORT: 7172 }, accessRestriction: null, cert: validCert1, key: validKey1 })
               .end(function (err, res) {
             expect(res.statusCode).to.equal(202);
             checkConfigureStatus(0, done);
