@@ -3,9 +3,18 @@
 /* global angular:false */
 /* global showdown:false */
 
-// deal with accessToken in the query, this is passed for example on password reset
+// deal with accessToken in the query, this is passed for example on password reset and account setup upon invite
 var search = decodeURIComponent(window.location.search).slice(1).split('&').map(function (item) { return item.split('='); }).reduce(function (o, k) { o[k[0]] = k[1]; return o; }, {});
-if (search.accessToken) localStorage.token = search.accessToken;
+if (search.accessToken) {
+    localStorage.token = search.accessToken;
+
+    // strip the accessToken and expiresAt, then preserve the rest
+    delete search.accessToken;
+    delete search.expiresAt;
+
+    // this will reload the page as this is not a hash change
+    window.location.search = encodeURIComponent(Object.keys(search).map(function (key) { return key + '=' + search[key]; }).join('&'));
+}
 
 
 // create main application module
