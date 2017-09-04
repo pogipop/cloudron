@@ -490,7 +490,8 @@ function install(data, auditSource, callback) {
                 debugMode: debugMode,
                 mailboxName: (location ? location : manifest.title.toLowerCase().replace(/[^a-zA-Z0-9]/g, '')) + '.app',
                 lastBackupId: backupId,
-                enableBackup: enableBackup
+                enableBackup: enableBackup,
+                robotsTxt: robotsTxt
             };
 
             appdb.add(appId, appStoreId, manifest, location, portBindings, data, function (error) {
