@@ -145,8 +145,8 @@ function doTask(appId, taskName, callback) {
     apps.get(appId, function (error, app) {
         if (error) return callback(error);
 
-        if (app.installationState !== appdb.ISTATE_INSTALLED || app.runState !== appdb.RSTATE_RUNNING) {
-            debug('task %s skipped. app %s is not installed/running', taskName, app.id);
+        if (app.installationState !== appdb.ISTATE_INSTALLED || app.runState !== appdb.RSTATE_RUNNING || app.health !== appdb.HEALTH_HEALTHY) {
+            debug('task %s skipped. app %s is not installed/running/healthy', taskName, app.id);
             return callback();
         }
 
