@@ -122,6 +122,8 @@ echo "==> Setting up unbound"
 # We do not use dnsmasq because it is not a recursive resolver and defaults to the value in the interfaces file (which is Google DNS!)
 # We listen on 0.0.0.0 because there is no way control ordering of docker (which creates the 172.18.0.0/16) and unbound
 echo -e "server:\n\tinterface: 0.0.0.0\n\tdo-ip6: no\n\taccess-control: 127.0.0.1 allow\n\taccess-control: 172.18.0.1/16 allow\n\tcache-max-negative-ttl: 30\n\tcache-max-ttl: 300" > /etc/unbound/unbound.conf.d/cloudron-network.conf
+# update the root anchor after a out-of-disk-space situation (see #269)
+unbound-anchor -a /var/lib/unbound/root.key
 
 echo "==> Adding systemd services"
 cp -r "${script_dir}/start/systemd/." /etc/systemd/system/
