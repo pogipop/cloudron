@@ -991,3 +991,9 @@
 * Fix bug where webterminal can incorrectly appear in main view
 * Do not crash if DNS credentials are invalid
 
+[1.6.4]
+* More descriptive Postmark email relay form
+* Fix file upload in chrome
+* Support Ctrl/Cmd+v webterminal pasting
+* Ensure unbound always starts up
+* Add option to run app in repair mode
