@@ -18,6 +18,7 @@ angular.module('Application').controller('DebugController', ['$scope', '$locatio
     $scope.terminalSocket = null;
     $scope.lines = 10;
     $scope.restartAppBusy = false;
+    $scope.appBusy = false;
     $scope.selectedAppInfo = null;
 
     function ab2str(buf) {
@@ -134,7 +135,7 @@ angular.module('Application').controller('DebugController', ['$scope', '$locatio
             $scope.activeEventSource = null;
         }
 
-        var logViewer = $('.logs-and-term-container');
+        var logViewer = $('#logsAndTerminalContainer');
         logViewer.empty();
 
         if ($scope.terminal) {
@@ -186,24 +187,27 @@ angular.module('Application').controller('DebugController', ['$scope', '$locatio
     };
 
     $scope.repairAppBegin = function () {
-        var appId = $scope.selected.value;
+        $scope.appBusy = true;
 
-        Client.debugApp(appId, true, function (error) {
+        Client.debugApp($scope.selected.value, true, function (error) {
             if (error) return console.error(error);
 
-            $('#repairAppModal').modal('hide');
+            Client.refreshInstalledApps(function (error) {
+                if (error) console.error(error);
+
+                $('#repairAppModal').modal('hide');
+            });
         });
     };
 
     $scope.repairAppDone = function () {
-        var appId = $scope.selected.value;
+        $scope.appBusy = true;
 
-        Client.debugApp(appId, false, function (error) {
+        Client.debugApp($scope.selected.value, false, function (error) {
             if (error) return console.error(error);
 
-            Client.getApp(appId, function (error, result) {
-                if (error) return console.error(error);
-                $scope.selectedAppInfo = result;
+            Client.refreshInstalledApps(function (error) {
+                if (error) console.error(error);
             });
         });
     };
@@ -230,7 +234,7 @@ angular.module('Application').controller('DebugController', ['$scope', '$locatio
                 }
 
                 // check if we want to auto scroll (this is before the appending, as that skews the check)
-                var tmp = $('.logs-and-term-container');
+                var tmp = $('#logsAndTerminalContainer');
                 var autoScroll = tmp[0].scrollTop > (tmp[0].scrollTopMax - 24);
 
                 var logLine = $('<div class="log-line">');
@@ -252,7 +256,7 @@ angular.module('Application').controller('DebugController', ['$scope', '$locatio
 
         // we can only connect to apps here
         if ($scope.selected.type !== 'app') {
-            var tmp = $('.logs-and-term-container');
+            var tmp = $('#logsAndTerminalContainer');
             var logLine = $('<div class="log-line">');
             logLine.html('Terminal is only supported for apps, not for ' + $scope.selected.name);
             tmp.append(logLine);
@@ -260,40 +264,39 @@ angular.module('Application').controller('DebugController', ['$scope', '$locatio
         }
 
         // fetch current app state
-        Client.getApp($scope.selected.value, function (error, result) {
-            if (error) return console.error(error);
-            $scope.selectedAppInfo = result;
+        Client.refreshInstalledApps(function (error) {
+            if (error) console.error(error);
+
+            $scope.terminal = new Terminal();
+            $scope.terminal.open(document.querySelector('#logsAndTerminalContainer'));
+            $scope.terminal.fit();
+
+            try {
+                // websocket cannot use relative urls
+                var url = Client.apiOrigin.replace('https', 'wss') + '/api/v1/apps/' + $scope.selected.value + '/execws?tty=true&rows=' + $scope.terminal.rows + '&columns=' + $scope.terminal.cols + '&access_token=' + Client.getToken();
+                $scope.terminalSocket = new WebSocket(url);
+                $scope.terminal.attach($scope.terminalSocket);
+
+                $scope.terminalSocket.onclose = function () {
+                    // retry in one second only if terminal view is still selected
+                    $scope.terminalReconnectTimeout = setTimeout(function () {
+                        // if the scope was already destroyed, do not reconnect
+                        if ($scope.$$destroyed) return;
+                        if ($scope.terminalVisible) $scope.showTerminal(true);
+                    }, 1000);
+                };
+
+                // Let the browser handle paste
+                $scope.terminal.attachCustomKeyEventHandler(function (e) {
+                    if (e.key === 'v' && (e.ctrlKey || e.metaKey)) return false;
+                });
+            } catch (e) {
+                console.error(e);
+            }
+
+            if (retry) $scope.terminal.writeln('Reconnecting...');
+            else $scope.terminal.writeln('Connecting...');
         });
-
-        $scope.terminal = new Terminal();
-        $scope.terminal.open(document.querySelector('.logs-and-term-container'));
-        $scope.terminal.fit();
-
-        try {
-            // websocket cannot use relative urls
-            var url = Client.apiOrigin.replace('https', 'wss') + '/api/v1/apps/' + $scope.selected.value + '/execws?tty=true&rows=' + $scope.terminal.rows + '&columns=' + $scope.terminal.cols + '&access_token=' + Client.getToken();
-            $scope.terminalSocket = new WebSocket(url);
-            $scope.terminal.attach($scope.terminalSocket);
-
-            $scope.terminalSocket.onclose = function () {
-                // retry in one second only if terminal view is still selected
-                $scope.terminalReconnectTimeout = setTimeout(function () {
-                    // if the scope was already destroyed, do not reconnect
-                    if ($scope.$$destroyed) return;
-                    if ($scope.terminalVisible) $scope.showTerminal(true);
-                }, 1000);
-            };
-
-            // Let the browser handle paste
-            $scope.terminal.attachCustomKeyEventHandler(function (e) {
-                if (e.key === 'v' && (e.ctrlKey || e.metaKey)) return false;
-            });
-        } catch (e) {
-            console.error(e);
-        }
-
-        if (retry) $scope.terminal.writeln('Reconnecting...');
-        else $scope.terminal.writeln('Connecting...');
     };
 
     $scope.terminalInject = function (addon) {
@@ -321,6 +324,26 @@ angular.module('Application').controller('DebugController', ['$scope', '$locatio
     });
 
     Client.onReady($scope.populateLogTypes);
+
+    Client.onApps(function () {
+        if ($scope.$$destroyed) return;
+        if ($scope.selected.type !== 'app') return $scope.appBusy = false;
+
+        var appId = $scope.selected.value;
+
+        Client.getApp(appId, function (error, result) {
+            if (error) return console.error(error);
+
+            // we expect this to be called _after_ a reconfigure was issued
+            if (result.installationState === 'pending_configure') {
+                $scope.appBusy = true;
+            } else if (result.installationState === 'installed') {
+                $scope.appBusy = false;
+            }
+
+            $scope.selectedAppInfo = result;
+        });
+    });
 
     $scope.$on('$destroy', function () {
         if ($scope.activeEventSource) {
@@ -358,7 +381,7 @@ angular.module('Application').controller('DebugController', ['$scope', '$locatio
         $scope.terminal.focus();
     });
 
-    $('.logs-and-term-container').on('contextmenu', function (e) {
+    $('#logsAndTerminalContainer').on('contextmenu', function (e) {
         if (!$scope.terminal) return true;
 
         e.preventDefault();
