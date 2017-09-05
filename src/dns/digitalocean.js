@@ -30,22 +30,34 @@ function getInternal(dnsConfig, zoneName, subdomain, type, callback) {
     assert.strictEqual(typeof type, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    superagent.get(DIGITALOCEAN_ENDPOINT + '/v2/domains/' + zoneName + '/records')
-      .set('Authorization', 'Bearer ' + dnsConfig.token)
-      .timeout(30 * 1000)
-      .end(function (error, result) {
-        if (error && !error.response) return callback(error);
-        if (result.statusCode === 404) return callback(new SubdomainError(SubdomainError.NOT_FOUND, formatError(result)));
-        if (result.statusCode === 403 || result.statusCode === 401) return callback(new SubdomainError(SubdomainError.ACCESS_DENIED, formatError(result)));
-        if (result.statusCode !== 200) return callback(new SubdomainError(SubdomainError.EXTERNAL_ERROR, formatError(result)));
+    var nextPage = null, matchingRecords = [];
 
-        var tmp = result.body.domain_records.filter(function (record) {
-            return (record.type === type && record.name === subdomain);
+    async.doWhilst(function (iteratorDone) {
+        var url = nextPage ? nextPage : DIGITALOCEAN_ENDPOINT + '/v2/domains/' + zoneName + '/records';
+
+        superagent.get(url)
+          .set('Authorization', 'Bearer ' + dnsConfig.token)
+          .timeout(30 * 1000)
+          .end(function (error, result) {
+            if (error && !error.response) return callback(error);
+            if (result.statusCode === 404) return callback(new SubdomainError(SubdomainError.NOT_FOUND, formatError(result)));
+            if (result.statusCode === 403 || result.statusCode === 401) return callback(new SubdomainError(SubdomainError.ACCESS_DENIED, formatError(result)));
+            if (result.statusCode !== 200) return callback(new SubdomainError(SubdomainError.EXTERNAL_ERROR, formatError(result)));
+
+            matchingRecords = matchingRecords.concat(result.body.domain_records.filter(function (record) {
+                return (record.type === type && record.name === subdomain);
+            }));
+
+            nextPage = (result.body.links && result.body.links.pages) ? result.body.links.pages.next : null;
+
+            iteratorDone();
         });
+    }, function () { return !!nextPage; }, function (error) {
+        if (error) return callback(error);
 
-        debug('getInternal: %j', tmp);
+        debug('getInternal: %j', matchingRecords);
 
-        return callback(null, tmp);
+        return callback(null, matchingRecords);
     });
 }
 
