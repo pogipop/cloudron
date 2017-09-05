@@ -105,6 +105,7 @@ angular.module('Application').service('Client', ['$http', 'md5', 'Notification',
     function Client() {
         this._ready = false;
         this._configListener = [];
+        this._appsListener = [];
         this._readyListener = [];
         this._userInfo = {
             id: null,
@@ -196,6 +197,11 @@ angular.module('Application').service('Client', ['$http', 'md5', 'Notification',
     Client.prototype.onConfig = function (callback) {
         this._configListener.push(callback);
         if (this._config && this._config.apiServerOrigin) callback(this._config);
+    };
+
+    Client.prototype.onApps = function (callback) {
+        this._appsListener.push(callback);
+        callback(this._installedApps);
     };
 
     Client.prototype.resetAvatar = function () {
@@ -1067,6 +1073,10 @@ angular.module('Application').service('Client', ['$http', 'md5', 'Notification',
                     that._installedApps.splice(i, 1);
                 }
             }
+
+            that._appsListener.forEach(function (callback) {
+                callback(that._installedApps);
+            });
 
             callback(null);
         });
