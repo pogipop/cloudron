@@ -66,18 +66,18 @@ function getDNSRecordsByZoneId(dnsConfig, zoneId, zoneName, subdomain, type, cal
     assert.strictEqual(typeof type, 'string');
     assert.strictEqual(typeof callback, 'function');
 
+    var fqdn = subdomain === '' ? zoneName : subdomain + '.' + zoneName;
+
     superagent.get(CLOUDFLARE_ENDPOINT + '/zones/' + zoneId + '/dns_records')
       .set('X-Auth-Key',dnsConfig.token)
       .set('X-Auth-Email',dnsConfig.email)
+      .query({ type: type, name: fqdn })
       .timeout(30 * 1000)
       .end(function (error, result) {
         if (error && !error.response) return callback(error);
         if (result.statusCode !== 200 || result.body.success !== true) return translateRequestError(result, callback);
 
-        var fqdn = subdomain === '' ? zoneName : subdomain + '.' + zoneName;
-        var tmp = result.body.result.filter(function (record) {
-            return (record.type === type && record.name === fqdn);
-        });
+        var tmp = result.body.result;
 
         return callback(null, tmp);
     });
