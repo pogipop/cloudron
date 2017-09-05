@@ -51,11 +51,11 @@
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
-        <h2>Restart app in repair mode?</h2>
+        <h4 class="modal-title">Repair app {{ selected.name }} ?</h4>
       </div>
       <div class="modal-body">
-        <p>This will restart the app in repair mode and will startup in a paused state, in order to allow fixing for example broken plugins or database content.</p>
-        <p class="text-danger text-bold">The app will not be reachable while in repair mode!</p>
+        <p>This will restart the app in repair mode. The app will start in a paused state and can be used to fix broken plugins or database content.</p>
+        <p class="text-danger text-bold">The app will not be reachable in repair mode!</p>
       </div>
       <div class="modal-footer">
           <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
