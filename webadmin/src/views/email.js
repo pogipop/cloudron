@@ -95,7 +95,7 @@ angular.module('Application').controller('EmailController', ['$scope', '$locatio
         { provider: 'google-smtp', name: 'Google', host: 'smtp.gmail.com', port: 587 },
         { provider: 'mailgun-smtp', name: 'Mailgun', host: 'smtp.mailgun.org', port: 587 },
         { provider: 'postmark-smtp', name: 'Postmark', host: 'smtp.postmarkapp.com', port: 587 },
-        { provider: 'sendgrid-smtp', name: 'SendGrid', host: 'smtp.sendgrid.net', port: 587 },
+        { provider: 'sendgrid-smtp', name: 'SendGrid', host: 'smtp.sendgrid.net', port: 587, username: 'apikey' },
     ];
 
     $scope.mailRelay = {
@@ -140,6 +140,9 @@ angular.module('Application').controller('EmailController', ['$scope', '$locatio
             if (data.provider === 'postmark-smtp') {
                 data.username = $scope.mailRelay.relay.serverApiToken;
                 data.password = $scope.mailRelay.relay.serverApiToken;
+            } else if (data.provider === 'sendgrid-smtp') {
+                data.username = 'apikey';
+                data.password = $scope.mailRelay.relay.serverApiToken;
             } else {
                 data.username = $scope.mailRelay.relay.username;
                 data.password = $scope.mailRelay.relay.password;
@@ -175,6 +178,8 @@ angular.module('Application').controller('EmailController', ['$scope', '$locatio
 
             if (relay.provider === 'postmark-smtp') {
                 $scope.mailRelay.relay.serverApiToken = relay.username;
+            } else if (relay.provider === 'sendgrid-smtp') {
+                $scope.mailRelay.relay.serverApiToken = relay.password;
             } else {
                 $scope.mailRelay.relay.username = relay.username;
                 $scope.mailRelay.relay.password = relay.password;
