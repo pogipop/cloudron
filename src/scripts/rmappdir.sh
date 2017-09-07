@@ -17,10 +17,17 @@ if [[ "$1" == "--check" ]]; then
     exit 0
 fi
 
+appid="$1"
+rmdir="$2"
+
 if [[ "${BOX_ENV}" == "cloudron" ]]; then
-    readonly app_data_dir="${HOME}/appsdata/$1"
+    readonly app_data_dir="${HOME}/appsdata/${appid}"
+else
+    readonly app_data_dir="${HOME}/.cloudron_test/appsdata/${appid}"
+fi
+
+if [[ "${rmdir}" == "true" ]]; then
     rm -rf "${app_data_dir}"
 else
-    readonly app_data_dir="${HOME}/.cloudron_test/appsdata/$1"
-    rm -rf "${app_data_dir}"
+    find "${app_data_dir}" -mindepth 1 -delete
 fi

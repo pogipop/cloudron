@@ -147,11 +147,12 @@ function createVolume(app, callback) {
     shell.sudo('createVolume', [ CREATEAPPDIR_CMD, app.id ], callback);
 }
 
-function deleteVolume(app, callback) {
+function deleteVolume(app, options, callback) {
     assert.strictEqual(typeof app, 'object');
+    assert.strictEqual(typeof options, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    shell.sudo('deleteVolume', [ RMAPPDIR_CMD, app.id ], callback);
+    shell.sudo('deleteVolume', [ RMAPPDIR_CMD, app.id, !!options.removeDirectory ], callback);
 }
 
 function addCollectdProfile(app, callback) {
@@ -397,7 +398,7 @@ function install(app, callback) {
         deleteContainers.bind(null, app),
         // oldConfig can be null during upgrades
         addons.teardownAddons.bind(null, app, app.oldConfig ? app.oldConfig.manifest.addons : app.manifest.addons),
-        deleteVolume.bind(null, app),
+        deleteVolume.bind(null, app, { removeDirectory: false }), // do not remove any symlinked volume
 
         // for restore case
         function deleteImageIfChanged(done) {
@@ -663,7 +664,7 @@ function uninstall(app, callback) {
         addons.teardownAddons.bind(null, app, app.manifest.addons),
 
         updateApp.bind(null, app, { installationProgress: '40, Deleting volume' }),
-        deleteVolume.bind(null, app),
+        deleteVolume.bind(null, app, { removeDirectory: true }),
 
         updateApp.bind(null, app, { installationProgress: '50, Deleting image' }),
         docker.deleteImage.bind(null, app.manifest),

@@ -138,9 +138,19 @@ describe('apptask', function () {
         });
     });
 
-    it('delete volume', function (done) {
-        apptask._deleteVolume(APP, function (error) {
+    it('delete volume - removeDirectory (false) ', function (done) {
+        apptask._deleteVolume(APP, { removeDirectory: false }, function (error) {
             expect(!fs.existsSync(paths.APPS_DATA_DIR + '/' + APP.id + '/data')).to.be(true);
+            expect(fs.existsSync(paths.APPS_DATA_DIR + '/' + APP.id)).to.be(true);
+            expect(fs.readdirSync(paths.APPS_DATA_DIR + '/' + APP.id).length).to.be(0); // empty
+            expect(error).to.be(null);
+            done();
+        });
+    });
+
+    it('delete volume - removeDirectory (true) ', function (done) {
+        apptask._deleteVolume(APP, { removeDirectory: true }, function (error) {
+            expect(!fs.existsSync(paths.APPS_DATA_DIR + '/' + APP.id)).to.be(true);
             expect(error).to.be(null);
             done();
         });
