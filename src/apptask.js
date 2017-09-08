@@ -131,7 +131,7 @@ function deleteContainers(app, callback) {
     assert.strictEqual(typeof app, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    debugApp(app, 'deleting containers');
+    debugApp(app, 'deleting app containers (app, scheduler)');
 
     docker.deleteContainers(app.id, function (error) {
         if (error) return callback(new Error('Error deleting container: ' + error));

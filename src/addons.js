@@ -644,8 +644,9 @@ function setupRedis(app, options, callback) {
     }
 
     const tag = infra.images.redis.tag, redisName = 'redis-' + app.id;
+    // note that we do not add appId label because this interferes with the stop/start app logic
     const cmd = `docker run --restart=always -d --name=${redisName} \
-                --label=appId=${app.id} --label=location=${app.location} \
+                --label=location=${app.location} \
                 --net cloudron \
                 --net-alias ${redisName} \
                 -m ${memoryLimit/2} \
