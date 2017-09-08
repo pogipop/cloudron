@@ -112,7 +112,7 @@ function initializeExpressSync() {
 
     // cloudron routes
     router.get ('/api/v1/cloudron/config', cloudronScope, routes.cloudron.getConfig);
-    router.post('/api/v1/cloudron/update', cloudronScope, routes.user.requireAdmin, routes.user.verifyPassword, routes.cloudron.update);
+    router.post('/api/v1/cloudron/update', cloudronScope, routes.user.requireAdmin, routes.cloudron.update);
     router.post('/api/v1/cloudron/check_for_updates', cloudronScope, routes.user.requireAdmin, routes.cloudron.checkForUpdates);
     router.post('/api/v1/cloudron/reboot', cloudronScope, routes.user.requireAdmin, routes.cloudron.reboot);
     router.post('/api/v1/cloudron/migrate', cloudronScope, routes.user.requireAdmin, routes.user.verifyPassword, routes.cloudron.migrate);
@@ -184,7 +184,7 @@ function initializeExpressSync() {
     router.post('/api/v1/apps/:id/uninstall', appsScope, routes.user.requireAdmin, routes.user.verifyPassword, routes.apps.uninstallApp);
     router.post('/api/v1/apps/:id/configure', appsScope, routes.user.requireAdmin, routes.apps.configureApp);
     router.post('/api/v1/apps/:id/update',    appsScope, routes.user.requireAdmin, routes.apps.updateApp);
-    router.post('/api/v1/apps/:id/restore',   appsScope, routes.user.requireAdmin, routes.apps.restoreApp);
+    router.post('/api/v1/apps/:id/restore',   appsScope, routes.user.requireAdmin, routes.user.verifyPassword, routes.apps.restoreApp);
     router.post('/api/v1/apps/:id/backup',    appsScope, routes.user.requireAdmin, routes.apps.backupApp);
     router.get ('/api/v1/apps/:id/backups',   appsScope, routes.user.requireAdmin, routes.apps.listBackups);
     router.post('/api/v1/apps/:id/stop',      appsScope, routes.user.requireAdmin, routes.apps.stopApp);

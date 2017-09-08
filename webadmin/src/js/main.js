@@ -12,8 +12,7 @@ angular.module('Application').controller('MainController', ['$scope', '$route', 
 
     $scope.update = {
         busy: false,
-        error: {},
-        password: ''
+        error: {}
     };
 
     $scope.isActive = function (url) {
@@ -77,8 +76,6 @@ angular.module('Application').controller('MainController', ['$scope', '$route', 
 
     $scope.showUpdateModal = function (form) {
         $scope.update.error.generic = null;
-        $scope.update.error.password = null;
-        $scope.update.password = '';
 
         form.$setPristine();
         form.$setUntouched();
@@ -98,21 +95,12 @@ angular.module('Application').controller('MainController', ['$scope', '$route', 
 
     $scope.doUpdate = function () {
         $scope.update.error.generic = null;
-        $scope.update.error.password = null;
 
         $scope.update.busy = true;
-        Client.update($scope.update.password, function (error) {
+        Client.update(function (error) {
             if (error) {
-                if (error.statusCode === 403) {
-                    $scope.update.error.password = true;
-                    $scope.update.password = '';
-                    $scope.update_form.password.$setPristine();
-                    $('#inputUpdatePassword').focus();
-                } else if (error.statusCode === 409) {
+                if (error.statusCode === 409) {
                     $scope.update.error.generic = 'Please try again later. The Cloudron is creating a backup at the moment.';
-                    $scope.update.password = '';
-                    $scope.update_form.password.$setPristine();
-                    $('#inputUpdatePassword').focus();
                 } else {
                     $scope.update.error.generic = error.message;
                     console.error('Unable to update.', error);

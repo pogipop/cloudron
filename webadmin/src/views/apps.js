@@ -20,7 +20,6 @@ angular.module('Application').controller('AppsController', ['$scope', '$location
         location: '',
         usingAltDomain: false,
         advancedVisible: false,
-        password: '',
         portBindings: {},
         portBindingsEnabled: {},
         portBindingsInfo: {},
@@ -88,7 +87,6 @@ angular.module('Application').controller('AppsController', ['$scope', '$location
         busy: false,
         error: {},
         app: {},
-        password: '',
         manifest: {},
         portBindings: {}
     };
@@ -108,7 +106,6 @@ angular.module('Application').controller('AppsController', ['$scope', '$location
         $scope.appConfigure.location = '';
         $scope.appConfigure.advancedVisible = false;
         $scope.appConfigure.usingAltDomain = false;
-        $scope.appConfigure.password = '';
         $scope.appConfigure.portBindings = {};          // This is the actual model holding the env:port pair
         $scope.appConfigure.portBindingsEnabled = {};   // This is the actual model holding the enabled/disabled flag
         $scope.appConfigure.certificateFile = null;
@@ -138,7 +135,6 @@ angular.module('Application').controller('AppsController', ['$scope', '$location
         // reset update dialog
         $scope.appUpdate.error = {};
         $scope.appUpdate.app = {};
-        $scope.appUpdate.password = '';
         $scope.appUpdate.manifest = {};
         $scope.appUpdate.portBindings = {};
 
@@ -250,7 +246,6 @@ angular.module('Application').controller('AppsController', ['$scope', '$location
         $scope.appConfigure.busy = true;
         $scope.appConfigure.error.other = null;
         $scope.appConfigure.error.location = null;
-        $scope.appConfigure.error.password = null;
         $scope.appConfigure.error.xFrameOptions = null;
 
         // only use enabled ports from portBindings
@@ -274,7 +269,7 @@ angular.module('Application').controller('AppsController', ['$scope', '$location
             enableBackup: $scope.appConfigure.enableBackup
         };
 
-        Client.configureApp($scope.appConfigure.app.id, $scope.appConfigure.password, data, function (error) {
+        Client.configureApp($scope.appConfigure.app.id, data, function (error) {
             if (error) {
                 if (error.statusCode === 409 && (error.message.indexOf('is reserved') !== -1 || error.message.indexOf('is already in use') !== -1)) {
                     $scope.appConfigure.error.port = error.message;
@@ -282,11 +277,6 @@ angular.module('Application').controller('AppsController', ['$scope', '$location
                     $scope.appConfigure.error.location = 'This name is already taken.';
                     $scope.appConfigureForm.location.$setPristine();
                     $('#appConfigureLocationInput').focus();
-                } else if (error.statusCode === 403) {
-                    $scope.appConfigure.error.password = true;
-                    $scope.appConfigure.password = '';
-                    $scope.appConfigureForm.password.$setPristine();
-                    $('#appConfigurePasswordInput').focus();
                 } else if (error.statusCode === 400 && error.message.indexOf('cert') !== -1 ) {
                     $scope.appConfigure.error.cert = error.message;
                     $scope.appConfigure.certificateFileName = '';
@@ -483,7 +473,6 @@ angular.module('Application').controller('AppsController', ['$scope', '$location
     };
 
     $scope.doUpdate = function (form) {
-        $scope.appUpdate.error.password = null;
         $scope.appUpdate.busy = true;
 
         // only use enabled ports from portBindings
@@ -494,15 +483,11 @@ angular.module('Application').controller('AppsController', ['$scope', '$location
             }
         }
 
-        Client.updateApp($scope.appUpdate.app.id, $scope.appUpdate.manifest, finalPortBindings, $scope.appUpdate.password, function (error) {
-            if (error && error.statusCode === 403) {
-                $scope.appUpdate.password = '';
-                $scope.appUpdate.error.password = true;
-            } else if (error) {
+        Client.updateApp($scope.appUpdate.app.id, $scope.appUpdate.manifest, finalPortBindings, function (error) {
+            if (error) {
                 Client.error(error);
             } else {
                 $scope.appUpdate.app = {};
-                $scope.appUpdate.password = '';
 
                 form.$setPristine();
                 form.$setUntouched();

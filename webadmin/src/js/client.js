@@ -345,10 +345,9 @@ angular.module('Application').service('Client', ['$http', 'md5', 'Notification',
         }).error(defaultErrorHandler(callback));
     };
 
-    Client.prototype.configureApp = function (id, password, config, callback) {
+    Client.prototype.configureApp = function (id, config, callback) {
         var data = {
             appId: id,
-            password: password,
             location: config.location,
             portBindings: config.portBindings,
             accessRestriction: config.accessRestriction,
@@ -367,10 +366,9 @@ angular.module('Application').service('Client', ['$http', 'md5', 'Notification',
         }).error(defaultErrorHandler(callback));
     };
 
-    Client.prototype.updateApp = function (id, manifest, portBindings, password, callback) {
+    Client.prototype.updateApp = function (id, manifest, portBindings, callback) {
         var data =  {
             appStoreId: manifest.id + '@' + manifest.version,
-            password: password,
             portBindings: portBindings
         };
 
@@ -821,8 +819,8 @@ angular.module('Application').service('Client', ['$http', 'md5', 'Notification',
         }).error(defaultErrorHandler(callback));
     };
 
-    Client.prototype.update = function (password, callback) {
-        var data = { password: password };
+    Client.prototype.update = function (callback) {
+        var data = { };
 
         post('/api/v1/cloudron/update', data).success(function(data, status) {
             if (status !== 202 || typeof data !== 'object') return callback(new ClientError(status, data));
