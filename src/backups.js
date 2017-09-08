@@ -184,7 +184,7 @@ function copyLastBackup(app, manifest, prefix, callback) {
 
 function runBackupTask(backupId, appId, callback) {
     assert.strictEqual(typeof backupId, 'string');
-    assert(appId === null || typeof backupId === 'string');
+    assert(appId === null || typeof appId === 'string');
     assert.strictEqual(typeof callback, 'function');
 
     var killTimerId = null;
