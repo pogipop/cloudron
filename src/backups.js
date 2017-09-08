@@ -456,8 +456,10 @@ function restoreApp(app, addonsToRestore, backupId, callback) {
     settings.getBackupConfig(function (error, backupConfig) {
         if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
 
+        var appDataDir = safe.fs.realpathSync(path.join(paths.APPS_DATA_DIR, app.id));
+
         async.series([
-            api(backupConfig.provider).restore.bind(null, backupConfig, backupId, path.join(paths.APPS_DATA_DIR, app.id)),
+            api(backupConfig.provider).restore.bind(null, backupConfig, backupId, appDataDir),
             addons.restoreAddons.bind(null, app, addonsToRestore)
         ], callback);
     });

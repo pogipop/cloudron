@@ -50,8 +50,10 @@ function backupApp(backupId, appId, callback) {
     settings.getBackupConfig(function (error, backupConfig) {
         if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
 
+        var appDataDir = safe.fs.realpathSync(path.join(paths.APPS_DATA_DIR, appId));
+
         var backupMapping = [{
-            source: path.join(paths.APPS_DATA_DIR, appId),
+            source: appDataDir,
             destination: '.'
         }];
 

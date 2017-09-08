@@ -693,7 +693,7 @@ function teardownRedis(app, options, callback) {
 
        safe.fs.unlinkSync(paths.ADDON_CONFIG_DIR, 'redis-' + app.id + '_vars.sh');
 
-        shell.sudo('teardownRedis', [ RMAPPDIR_CMD, app.id + '/redis' ], function (error, stdout, stderr) {
+        shell.sudo('teardownRedis', [ RMAPPDIR_CMD, app.id + '/redis', true /* delete directory */ ], function (error, stdout, stderr) {
             if (error) return callback(new Error('Error removing redis data:' + error));
 
             appdb.unsetAddonConfig(app.id, 'redis', callback);

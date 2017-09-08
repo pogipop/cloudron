@@ -17,6 +17,8 @@ if [[ "$1" == "--check" ]]; then
     exit 0
 fi
 
+# this script is called from redis addon as well!
+
 appid="$1"
 rmdir="$2"
 
@@ -26,8 +28,10 @@ else
     readonly app_data_dir="${HOME}/.cloudron_test/appsdata/${appid}"
 fi
 
+# the approach below ensures symlinked contents are also deleted
+
+find -H "${app_data_dir}" -mindepth 1 -delete || true  # -H means resolve symlink in args
+
 if [[ "${rmdir}" == "true" ]]; then
     rm -rf "${app_data_dir}"
-else
-    find "${app_data_dir}" -mindepth 1 -delete
 fi
