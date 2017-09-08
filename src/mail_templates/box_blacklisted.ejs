@@ -1,0 +1,18 @@
+<%if (format === 'text') { %>
+
+Dear Cloudron Admin,
+
+The Cloudron <%= fqdn %> with IP <%= ip %> is blacklisted in one
+or more servers:
+
+<%- JSON.stringify(info, null, 2);  %>
+
+Please find out why you are in the blacklist. Email delivery will
+fail if your IP continues to be listed in those blacklists.
+
+Thank you,
+Your Cloudron
+
+<% } else { %>
+
+<% } %>
