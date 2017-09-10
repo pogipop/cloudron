@@ -36,3 +36,7 @@ yellowtent ALL=(root) NOPASSWD: /home/yellowtent/box/src/scripts/mvlogrotateconf
 
 Defaults!/home/yellowtent/box/src/scripts/rmlogrotateconfig.sh env_keep="HOME BOX_ENV"
 yellowtent ALL=(root) NOPASSWD: /home/yellowtent/box/src/scripts/rmlogrotateconfig.sh
+
+Defaults!/usr/bin/rclone env_keep="HOME BOX_ENV"
+yellowtent ALL=(root) NOPASSWD:SETENV: /usr/bin/rclone
+

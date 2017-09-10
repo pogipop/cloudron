@@ -34,6 +34,18 @@ for script in "${scripts[@]}"; do
     fi
 done
 
+script=/usr/bin/rclone
+if ! sudo -n "${script}" --version 2>/dev/null; then
+    echo ""
+    echo "${script} does not have sudo access."
+    echo "You have to add the lines below to /etc/sudoers.d/yellowtent."
+    echo ""
+    echo "Defaults!${script} env_keep=\"HOME BOX_ENV\""
+    echo "${USER} ALL=(ALL) NOPASSWD:SETENV: ${script}"
+    echo ""
+    exit 1
+fi
+
 image_missing=""
 
 images=$(node -e "var i = require('${SOURCE_DIR}/src/infra_version.js'); console.log(Object.keys(i.images).map(function (x) { return i.images[x].tag; }).join('\n'));"; echo $TEST_IMAGE)
