@@ -33,13 +33,8 @@ function exec(tag, file, args, options, callback) {
     assert.strictEqual(typeof tag, 'string');
     assert.strictEqual(typeof file, 'string');
     assert(util.isArray(args));
-
-    if (typeof options === 'function') {
-        callback = options;
-        options = { };
-    }
-
     assert.strictEqual(typeof options, 'object');
+    assert.strictEqual(typeof callback, 'function');
 
     callback = once(callback); // exit may or may not be called after an 'error'
 

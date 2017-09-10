@@ -12,7 +12,7 @@ var expect = require('expect.js'),
 
 describe('shell', function () {
     it('can run valid program', function (done) {
-        var cp = shell.exec('test', 'ls', [ '-l' ], function (error) {
+        var cp = shell.exec('test', 'ls', [ '-l' ], { }, function (error) {
             expect(cp).to.be.ok();
             expect(error).to.be(null);
             done();
@@ -20,14 +20,14 @@ describe('shell', function () {
     });
 
     it('fails on invalid program', function (done) {
-        var cp = shell.exec('test', 'randomprogram', [ ], function (error) {
+        var cp = shell.exec('test', 'randomprogram', [ ], { }, function (error) {
             expect(error).to.be.ok();
             done();
         });
     });
 
     it('fails on failing program', function (done) {
-        var cp = shell.exec('test', '/usr/bin/false', [ ], function (error) {
+        var cp = shell.exec('test', '/usr/bin/false', [ ], { }, function (error) {
             expect(error).to.be.ok();
             done();
         });
@@ -63,4 +63,3 @@ describe('shell', function () {
         done();
     });
 });
-
