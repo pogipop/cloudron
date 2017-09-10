@@ -40,6 +40,7 @@ apt-get -y install \
     swaks \
     unattended-upgrades \
     unbound \
+    unzip \
     xfsprogs
 
 # this ensures that unattended upgades are enabled, if it was disabled during ubuntu install time (see #346)
@@ -53,6 +54,10 @@ ln -sf /usr/local/node-6.11.3/bin/node /usr/bin/node
 ln -sf /usr/local/node-6.11.3/bin/npm /usr/bin/npm
 apt-get install -y python   # Install python which is required for npm rebuild
 [[ "$(python --version 2>&1)" == "Python 2.7."* ]] || die "Expecting python version to be 2.7.x"
+
+# this is 1.37 from our custom branch
+echo "===> Installing rclone"
+curl -sL https://dev.cloudron.io/assets/rclone > /usr/bin/rclone
 
 # https://docs.docker.com/engine/installation/linux/ubuntulinux/
 echo "==> Installing Docker"

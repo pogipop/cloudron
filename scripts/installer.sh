@@ -43,6 +43,16 @@ if [[ "$(node --version)" != "v6.11.3" ]]; then
     rm -rf /usr/local/node-6.11.2
 fi
 
+while ! apt install -y unzip; do
+    echo "Failed to install unzip. Fix missing and retry"
+    apt-get install --fix-missing || true
+    sleep 1
+done
+
+# this is 1.37 from our custom branch
+echo "==> installer: updating rclone"
+$curl -sL https://dev.cloudron.io/assets/rclone > /usr/bin/rclone
+
 for try in `seq 1 10`; do
     # for reasons unknown, the dtrace package will fail. but rebuilding second time will work
 
