@@ -16,13 +16,11 @@ var async = require('async'),
     BackupsError = require('../backups.js').BackupsError,
     config = require('../config.js'),
     database = require('../database.js'),
-    caas = require('../storage/caas.js'),
     s3 = require('../storage/s3.js'),
     filesystem = require('../storage/filesystem.js'),
     expect = require('expect.js'),
     settings = require('../settings.js'),
-    SettingsError = settings.SettingsError,
-    stream = require('stream');
+    SettingsError = settings.SettingsError;
 
 function setup(done) {
     config.set('provider', 'caas');
