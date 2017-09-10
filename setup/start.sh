@@ -77,7 +77,6 @@ mkdir -p "${APPS_DATA_DIR}"
 echo "==> Ensuring directories"
 
 mkdir -p "${PLATFORM_DATA_DIR}/graphite"
-mkdir -p "${PLATFORM_DATA_DIR}/mail/dkim"
 mkdir -p "${PLATFORM_DATA_DIR}/mysql"
 mkdir -p "${PLATFORM_DATA_DIR}/postgresql"
 mkdir -p "${PLATFORM_DATA_DIR}/mongodb"
@@ -85,15 +84,20 @@ mkdir -p "${PLATFORM_DATA_DIR}/addons/mail"
 mkdir -p "${PLATFORM_DATA_DIR}/collectd/collectd.conf.d"
 mkdir -p "${PLATFORM_DATA_DIR}/logrotate.d"
 mkdir -p "${PLATFORM_DATA_DIR}/acme"
-mkdir -p "${PLATFORM_DATA_DIR}/mail"
 
 mkdir -p "${BOX_DATA_DIR}/appicons"
 mkdir -p "${BOX_DATA_DIR}/certs"
 mkdir -p "${BOX_DATA_DIR}/acme" # acme keys
+mkdir -p "${BOX_DATA_DIR}/mail/dkim"
 
 # ensure backups folder exists and is writeable
 mkdir -p /var/backups
 chmod 777 /var/backups
+
+echo "==> Migrating mail data"
+if [[ -d "${PLATFORM_DATA_DIR}/mail" ]]; then
+    find "${PLATFORM_DATA_DIR}/mail" -mindepth 1 -maxdepth 1 -exec mv --target-directory="${BOX_DATA_DIR}/mail" '{}' +
+fi
 
 echo "==> Configuring journald"
 sed -e "s/^#SystemMaxUse=.*$/SystemMaxUse=100M/" \
@@ -208,7 +212,7 @@ if [[ -n "${arg_restore_url}" ]]; then
 
     while true; do
         if $curl -L "${arg_restore_url}" | "${decrypt[@]}" \
-        | tar -zxf - --overwrite --transform="s,^box/\?,boxdata/," --transform="s,^mail/\?,platformdata/mail/," --show-transformed-names -C "${HOME_DIR}"; then break; fi
+        | tar -zxf - --overwrite -C "${BOX_DATA_DIR}"; then break; fi
         echo "Failed to download data, trying again"
     done
 
@@ -265,7 +269,7 @@ echo "==> Changing ownership"
 chown "${USER}:${USER}" -R "${CONFIG_DIR}"
 chown "${USER}:${USER}" -R "${PLATFORM_DATA_DIR}/nginx" "${PLATFORM_DATA_DIR}/collectd" "${PLATFORM_DATA_DIR}/logrotate.d" "${PLATFORM_DATA_DIR}/addons" "${PLATFORM_DATA_DIR}/acme"
 chown "${USER}:${USER}" -R "${BOX_DATA_DIR}"
-chown "${USER}:${USER}" -R "${PLATFORM_DATA_DIR}/mail/dkim" # this is owned by box currently since it generates the keys
+chown "${USER}:${USER}" -R "${BOX_DATA_DIR}/mail/dkim" # this is owned by box currently since it generates the keys
 chown "${USER}:${USER}" "${PLATFORM_DATA_DIR}/INFRA_VERSION" 2>/dev/null || true
 chown "${USER}:${USER}" "${PLATFORM_DATA_DIR}"
 

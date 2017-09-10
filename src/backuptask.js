@@ -73,9 +73,6 @@ function backupBox(backupId, callback) {
         var backupMapping = [{
             source: paths.BOX_DATA_DIR,
             destination: 'box'
-        }, {
-            source: path.join(paths.PLATFORM_DATA_DIR, 'mail'),
-            destination: 'mail'
         }];
 
         api(backupConfig.provider).backup(backupConfig, backupId, backupMapping, callback);
