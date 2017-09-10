@@ -283,7 +283,6 @@ function startMail(callback) {
     // mail container uses /app/data for backed up data and /run for restart-able data
 
     const tag = infra.images.mail.tag;
-    const dataDir = paths.PLATFORM_DATA_DIR;
     const memoryLimit = Math.max((1 + Math.round(os.totalmem()/(1024*1024*1024)/4)) * 128, 256);
 
     // admin and mail share the same certificate
@@ -311,8 +310,8 @@ function startMail(callback) {
                             --dns 172.18.0.1 \
                             --dns-search=. \
                             --env ENABLE_MDA=${mailConfig.enabled} \
-                            -v "${dataDir}/mail:/app/data" \
-                            -v "${dataDir}/addons/mail:/etc/mail" \
+                            -v "${paths.MAIL_DATA_DIR}:/app/data" \
+                            -v "${paths.PLATFORM_DATA_DIR}/addons/mail:/etc/mail" \
                             ${ports} \
                             --read-only -v /run -v /tmp ${tag}`;
 
