@@ -93,7 +93,7 @@ CREATE TABLE IF NOT EXISTS authcodes(
 
 CREATE TABLE IF NOT EXISTS settings(
     name VARCHAR(128) NOT NULL UNIQUE,
-    value VARCHAR(512),
+    value TEXT,
     PRIMARY KEY(name));
 
 CREATE TABLE IF NOT EXISTS appAddonConfigs(
