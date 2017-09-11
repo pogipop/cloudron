@@ -4334,11 +4334,6 @@
       "from": "rndm@1.2.0",
       "resolved": "https://registry.npmjs.org/rndm/-/rndm-1.2.0.tgz"
     },
-    "s3-block-read-stream": {
-      "version": "0.2.0",
-      "from": "s3-block-read-stream@>=0.2.0 <0.3.0",
-      "resolved": "https://registry.npmjs.org/s3-block-read-stream/-/s3-block-read-stream-0.2.0.tgz"
-    },
     "safe-buffer": {
       "version": "5.1.1",
       "from": "safe-buffer@5.1.1",
