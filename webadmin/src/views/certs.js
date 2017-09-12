@@ -135,18 +135,22 @@ angular.module('Application').controller('CertsController', ['$scope', '$locatio
             data.accessKeyId = $scope.dnsCredentials.accessKeyId;
             data.secretAccessKey = $scope.dnsCredentials.secretAccessKey;
         } else if (data.provider === 'gcdns'){
-            var serviceAccountKey = JSON.parse($scope.dnsCredentials.gcdnsKey.content);
+            try {
+                var serviceAccountKey = JSON.parse($scope.dnsCredentials.gcdnsKey.content);
+                data.projectId = serviceAccountKey.project_id;
+                data.credentials = {
+                    client_email: serviceAccountKey.client_email,
+                    private_key: serviceAccountKey.private_key
+                };
 
-            if(!serviceAccountKey) {
+                if (!data.projectId || !data.credentials || !data.credentials.client_email || !data.credentials.private_key) {
+                    throw "fields_missing";
+                }
+            } catch(e) {
                 $scope.dnsCredentials.error = "Cannot parse Google Service Account Key";
                 $scope.dnsCredentials.busy = false;
                 return;
             }
-            data.projectId = serviceAccountKey.project_id;
-            data.credentials = {
-                client_email: serviceAccountKey.client_email,
-                private_key: serviceAccountKey.private_key
-            };
         } else if (data.provider === 'digitalocean') {
             data.token = $scope.dnsCredentials.digitalOceanToken;
         } else if (data.provider === 'cloudflare') {
