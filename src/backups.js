@@ -220,6 +220,7 @@ function backupBoxWithAppBackupIds(appBackupIds, prefix, callback) {
     settings.getBackupConfig(function (error, backupConfig) {
         if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
 
+        var startTime = new Date();
         var password = config.database().password ? '-p' + config.database().password : '--skip-password';
         var mysqlDumpArgs = [
             '-c',
@@ -234,7 +235,7 @@ function backupBoxWithAppBackupIds(appBackupIds, prefix, callback) {
 
                 runBackupTask(backupId, null /* appId */, function (backupTaskError) {
                     const state = backupTaskError ? backupdb.BACKUP_STATE_ERROR : backupdb.BACKUP_STATE_NORMAL;
-                    debug('backupBoxWithAppBackupIds: %s', state);
+                    debug('backupBoxWithAppBackupIds: %s time: %s secs', state, (new Date() - startTime)/1000);
 
                     backupdb.update(backupId, { state: state }, function (error) {
                         if (backupTaskError) return callback(backupTaskError);
@@ -318,7 +319,7 @@ function backupApp(app, manifest, prefix, callback) {
     assert.strictEqual(typeof prefix, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    var backupFunction;
+    var backupFunction, startTime = new Date();
 
     if (!canBackupApp(app)) {
         if (!app.lastBackupId) {
@@ -336,7 +337,7 @@ function backupApp(app, manifest, prefix, callback) {
     backupFunction(function (error, backupId) {
         if (error) return callback(error);
 
-        debugApp(app, 'backupApp: successful id:%s', backupId);
+        debugApp(app, 'backupApp: successful id:%s time:%s secs', backupId, (new Date() - startTime)/1000);
 
         setRestorePoint(app.id, backupId, function (error) {
             if (error) return callback(error);
@@ -412,6 +413,7 @@ function backup(auditSource, callback) {
     var error = locker.lock(locker.OP_FULL_BACKUP);
     if (error) return callback(new BackupsError(BackupsError.BAD_STATE, error.message));
 
+    var startTime = new Date();
     progress.set(progress.BACKUP, 0, 'Starting'); // ensure tools can 'wait' on progress
 
     backupBoxAndApps(auditSource, function (error) { // start the backup operation in the background
@@ -421,6 +423,8 @@ function backup(auditSource, callback) {
         }
 
         locker.unlock(locker.OP_FULL_BACKUP);
+
+        debug('backup took %s seconds', (new Date() - startTime)/1000);
     });
 
     callback(null);
@@ -458,10 +462,16 @@ function restoreApp(app, addonsToRestore, backupId, callback) {
 
         var appDataDir = safe.fs.realpathSync(path.join(paths.APPS_DATA_DIR, app.id));
 
+        var startTime = new Date();
+
         async.series([
             api(backupConfig.provider).restore.bind(null, backupConfig, backupId, appDataDir),
             addons.restoreAddons.bind(null, app, addonsToRestore)
-        ], callback);
+        ], function (error) {
+            debug('restoreApp: time: %s', (new Date() - startTime)/1000);
+
+            callback(error);
+        });
     });
 }
 
