@@ -11,7 +11,7 @@ exports = module.exports = {
 var assert = require('assert'),
     GCDNS = require('@google-cloud/dns'),
     constants = require('../constants.js'),
-    debug = require('debug')('box:dns/route53'),
+    debug = require('debug')('box:dns/gcdns'),
     dns = require('dns'),
     SubdomainError = require('../subdomains.js').SubdomainError,
     util = require('util'),
@@ -47,8 +47,11 @@ function getZoneByName(dnsConfig, zoneName, callback) {
         if (err && err.message == 'invalid_grant') return callback(new SubdomainError(SubdomainError.ACCESS_DENIED, "The key was probably revoked"));
         if (err && err.reason == 'No such domain') return callback(new SubdomainError(SubdomainError.NOT_FOUND, err.message));
         if (err && err.code == 403) return callback(new SubdomainError(SubdomainError.ACCESS_DENIED, err.message));
-        if (err && err.code == 404) return callback(new SubdomainError(SubdomainError.MISSING_CREDENTIALS, err.message));
-        if (err) return callback(new SubdomainError(SubdomainError.EXTERNAL_ERROR, err));
+        if (err && err.code == 404) return callback(new SubdomainError(SubdomainError.NOT_FOUND, err.message));
+        if (err) {
+            debug('gcdns.getZones', err);
+            return callback(new SubdomainError(SubdomainError.EXTERNAL_ERROR, err));
+        }
 
         var zone = zones.filter(function (zone) {
             return zone.metadata.dnsName.slice(0, -1) === zoneName;     // the zone name contains a '.' at the end
@@ -81,7 +84,10 @@ function upsert(dnsConfig, zoneName, subdomain, type, values, callback) {
 
         zone.replaceRecords(type, [params], function(error, change, apiResponse) {
             if (error && error.code == 403) return callback(new SubdomainError(SubdomainError.ACCESS_DENIED, error.message));
-            if (error) return callback(new SubdomainError(SubdomainError.EXTERNAL_ERROR, error.message));
+            if (error) {
+                debug('zone.replaceRecords', error);
+                return callback(new SubdomainError(SubdomainError.EXTERNAL_ERROR, error.message));
+            }
 
             callback(null, change.id);
         });
@@ -141,7 +147,10 @@ function del(dnsConfig, zoneName, subdomain, type, values, callback) {
 
         zone.deleteRecords(rec, function(error, change, apiResponse) {
             if (error && error.code == 403) return callback(new SubdomainError(SubdomainError.ACCESS_DENIED, error.message));
-            if (error) return callback(new SubdomainError(SubdomainError.EXTERNAL_ERROR, error));
+            if (error) {
+                debug('zone.deleteRecords', error);
+                return callback(new SubdomainError(SubdomainError.EXTERNAL_ERROR, error));
+            }
 
             callback(null);
         });
@@ -158,15 +167,16 @@ function verifyDnsConfig(dnsConfig, fqdn, zoneName, ip, callback) {
     var credentials = getDnsCredentials(dnsConfig);
     if (process.env.BOX_ENV === 'test') return callback(null, credentials); // this shouldn't be here
 
-    dns.resolveNs(zoneName, function (error, nameservers) {
+    dns.resolveNs(zoneName, function (error, resolvedNS) {
         if (error && error.code === 'ENOTFOUND') return callback(new SubdomainError(SubdomainError.BAD_FIELD, 'Unable to resolve nameservers for this domain'));
-        if (error || !nameservers) return callback(new SubdomainError(SubdomainError.BAD_FIELD, error ? error.message : 'Unable to get nameservers'));
+        if (error || !resolvedNS) return callback(new SubdomainError(SubdomainError.BAD_FIELD, error ? error.message : 'Unable to get nameservers'));
 
-        getZoneByName(credentials, zoneName, function (error, records) {
+        getZoneByName(credentials, zoneName, function (error, zone) {
             if (error) return callback(error);
 
-            if (!_.isEqual(zone.metadata.nameServers.sort(), nameservers.sort())) {
-                debug('verifyDnsConfig: %j and %j do not match', nameservers, zone.DelegationSet.NameServers);
+            var definedNS = zone.metadata.nameServers.sort().map(function(r){ return r.replace(/\.$/, '')});
+            if (!_.isEqual(definedNS, resolvedNS.sort())) {
+                debug('verifyDnsConfig: %j and %j do not match', resolvedNS, definedNS);
                 return callback(new SubdomainError(SubdomainError.BAD_FIELD, 'Domain nameservers are not set to Google Cloud DNS'));
             }
 
