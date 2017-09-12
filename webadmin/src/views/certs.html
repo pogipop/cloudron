@@ -31,8 +31,13 @@
 
                         <!-- Google Cloud DNS -->
                         <div class="form-group" ng-class="{ 'has-error': false }" ng-show="dnsCredentials.provider === 'gcdns'">
-                            <label class="control-label" for="dnsCredentialsGcdnsKey">Service Account Key</label>
-                            <input type="text" class="form-control" ng-model="dnsCredentials.gcdnsKey" id="dnsCredentialsGcdnsKey" name="dnsCredentialsGcdnsKey" ng-disabled="dnsCredentials.busy" ng-minlength="16" ng-required="dnsCredentials.provider === 'gcdns'">
+                            <div class="input-group">
+                                <input type="file" id="gcdnsKeyFileInput" style="display:none"/>
+                                <input type="text" class="form-control" placeholder="Service Account Key" ng-model="dnsCredentials.gcdnsKey.keyFileName" id="gcdnsKeyInput" name="cert" onclick="getElementById('gcdnsKeyFileInput').click();" style="cursor: pointer;" ng-disabled="dnsCredentials.busy" required>
+                                <span class="input-group-addon">
+                                  <i class="fa fa-upload" onclick="getElementById('gcdnsKeyFileInput').click();"></i>
+                              </span>
+                            </div>
                         </div>
 
                         <!-- DigitalOcean -->

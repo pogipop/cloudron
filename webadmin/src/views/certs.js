@@ -44,7 +44,7 @@ angular.module('Application').controller('CertsController', ['$scope', '$locatio
         customDomain: '',
         accessKeyId: '',
         secretAccessKey: '',
-        gcdnsKey: '',
+        gcdnsKey: {keyFileName: "", content: ""},
         digitalOceanToken: '',
         cloudflareToken: '',
         cloudflareEmail: '',
@@ -72,6 +72,8 @@ angular.module('Application').controller('CertsController', ['$scope', '$locatio
     document.getElementById('defaultKeyFileInput').onchange = readFileLocally($scope.defaultCert, 'keyFile', 'keyFileName');
     document.getElementById('adminCertFileInput').onchange = readFileLocally($scope.adminCert, 'certificateFile', 'certificateFileName');
     document.getElementById('adminKeyFileInput').onchange = readFileLocally($scope.adminCert, 'keyFile', 'keyFileName');
+
+    document.getElementById('gcdnsKeyFileInput').onchange = readFileLocally($scope.dnsCredentials.gcdnsKey, 'content', 'keyFileName');
 
     $scope.setDefaultCert = function () {
         $scope.defaultCert.busy = true;
@@ -133,7 +135,8 @@ angular.module('Application').controller('CertsController', ['$scope', '$locatio
             data.accessKeyId = $scope.dnsCredentials.accessKeyId;
             data.secretAccessKey = $scope.dnsCredentials.secretAccessKey;
         } else if (data.provider === 'gcdns'){
-            var serviceAccountKey = JSON.parse($scope.dnsCredentials.gcdnsKey);
+            var serviceAccountKey = JSON.parse($scope.dnsCredentials.gcdnsKey.content);
+
             if(!serviceAccountKey) {
                 $scope.dnsCredentials.error = "Cannot parse Google Service Account Key";
                 $scope.dnsCredentials.busy = false;
@@ -192,7 +195,8 @@ angular.module('Application').controller('CertsController', ['$scope', '$locatio
         $scope.dnsCredentials.customDomain = '';
         $scope.dnsCredentials.accessKeyId = '';
         $scope.dnsCredentials.secretAccessKey = '';
-        $scope.dnsCredentials.gcdnsKey = '';
+        $scope.dnsCredentials.gcdnsKey.keyFileName = '';
+        $scope.dnsCredentials.gcdnsKey.content = '';
         $scope.dnsCredentials.digitalOceanToken = '';
         $scope.dnsCredentials.cloudflareToken = '';
         $scope.dnsCredentials.cloudflareEmail = '';
@@ -211,7 +215,16 @@ angular.module('Application').controller('CertsController', ['$scope', '$locatio
         $scope.dnsCredentials.customDomain = $scope.config.isCustomDomain ? $scope.config.fqdn : '';
         $scope.dnsCredentials.accessKeyId = $scope.dnsConfig.accessKeyId;
         $scope.dnsCredentials.secretAccessKey = $scope.dnsConfig.secretAccessKey;
-        $scope.dnsCredentials.gcdnsKey = $scope.dnsConfig.provider === 'gcdns' ? JSON.stringify({"project_id": $scope.dnsConfig.projectId, "credentials": $scope.dnsConfig.credentials}) : '';
+
+        $scope.dnsCredentials.gcdnsKey.keyFileName = '';
+        $scope.dnsCredentials.gcdnsKey.content = '';
+        if($scope.dnsConfig.provider === 'gcdns'){
+            $scope.dnsCredentials.gcdnsKey.keyFileName = "";
+            $scope.dnsCredentials.gcdnsKey.content = JSON.stringify({
+                "project_id": $scope.dnsConfig.projectId,
+                "credentials": $scope.dnsConfig.credentials
+            });
+        }
         $scope.dnsCredentials.digitalOceanToken = $scope.dnsConfig.provider === 'digitalocean' ? $scope.dnsConfig.token : '';
         $scope.dnsCredentials.cloudflareToken = $scope.dnsConfig.provider === 'cloudflare' ? $scope.dnsConfig.token : '';
         $scope.dnsCredentials.cloudflareEmail = $scope.dnsConfig.email;
