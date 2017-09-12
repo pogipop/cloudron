@@ -250,16 +250,22 @@ function createNewAppBackup(backupConfig, app, manifest, prefix, callback) {
         backupdb.add({ id: backupId, version: manifest.version, type: backupdb.BACKUP_TYPE_APP, dependsOn: [ ], restoreConfig: restoreConfig }, function (error) {
             if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
 
-            api(backupConfig.provider).backup(backupConfig, backupId, path.join(paths.APPS_DATA_DIR, app.id), function (backupTaskError) {
-                const state = backupTaskError ? backupdb.BACKUP_STATE_ERROR : backupdb.BACKUP_STATE_NORMAL;
+            var copyBackup = app.lastBackupId ? api(backupConfig.provider).copyBackup.bind(null, backupConfig, app.lastBackupId, backupId) : function noop(next) { return next(); };
 
-                debugApp(app, 'createNewAppBackup: %s done with state %s', backupId, state);
+            copyBackup(function (copyBackupError) {
+                if (copyBackupError) debug('Error copying old backup:', copyBackupError); // continue anyway
 
-                backupdb.update(backupId, { state: state }, function (error) {
-                    if (backupTaskError) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, backupTaskError.message));
-                    if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
+                api(backupConfig.provider).backup(backupConfig, backupId, path.join(paths.APPS_DATA_DIR, app.id), function (backupTaskError) {
+                    const state = backupTaskError ? backupdb.BACKUP_STATE_ERROR : backupdb.BACKUP_STATE_NORMAL;
 
-                    callback(null, backupId);
+                    debugApp(app, 'createNewAppBackup: %s done with state %s', backupId, state);
+
+                    backupdb.update(backupId, { state: state }, function (error) {
+                        if (backupTaskError) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, backupTaskError.message));
+                        if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
+
+                        callback(null, backupId);
+                    });
                 });
             });
         });

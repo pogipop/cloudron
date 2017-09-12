@@ -62,7 +62,7 @@ function backup(apiConfig, backupId, sourceDir, callback) {
         RCLONE_CONFIG_ENC_FILENAME_ENCRYPTION: 'standard',
         RCLONE_CONFIG_ENC_PASSWORD: password.toString('utf8').trim()
     };
-    var args = [ ].concat(RCLONE_CMD, RCLONE_ARGS, 'copy', 'src:' + sourceDir);
+    var args = [ ].concat(RCLONE_CMD, RCLONE_ARGS, 'sync', 'src:' + sourceDir);
     args = args.concat(apiConfig.key ? 'enc:' : ('dest:' + backupFilePath));
 
     shell.sudo('backup', args, { env: env }, function (error) {
