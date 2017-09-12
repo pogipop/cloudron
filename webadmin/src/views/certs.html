@@ -29,6 +29,12 @@
                             <input type="text" class="form-control" ng-model="dnsCredentials.secretAccessKey" id="dnsCredentialsSecretAccessKey" name="secretAccessKey" ng-disabled="dnsCredentials.busy" ng-required="dnsCredentials.provider === 'route53'">
                         </div>
 
+                        <!-- Google Cloud DNS -->
+                        <div class="form-group" ng-class="{ 'has-error': false }" ng-show="dnsCredentials.provider === 'gcdns'">
+                            <label class="control-label" for="dnsCredentialsGcdnsKey">Service Account Key</label>
+                            <input type="text" class="form-control" ng-model="dnsCredentials.gcdnsKey" id="dnsCredentialsGcdnsKey" name="dnsCredentialsGcdnsKey" ng-disabled="dnsCredentials.busy" ng-minlength="16" ng-required="dnsCredentials.provider === 'gcdns'">
+                        </div>
+
                         <!-- DigitalOcean -->
                         <div class="form-group" ng-class="{ 'has-error': false }" ng-show="dnsCredentials.provider === 'digitalocean'">
                             <label class="control-label" for="dnsCredentialsDigitalOceanToken">DigitalOcean token</label>
@@ -60,6 +66,10 @@
 
                 <p ng-show="dnsCredentials.provider === 'route53'">
                     This domain must be hosted on <a href="https://aws.amazon.com/route53/?nc2=h_m1" target="_blank">AWS Route53</a>.
+                </p>
+
+                <p ng-show="dnsCredentials.provider === 'gcdns'">
+                    This domain must be hosted on <a href="https://console.cloud.google.com/net-services/dns/zones" target="_blank">Google Cloud DNS</a>.
                 </p>
 
                 <p ng-show="dnsCredentials.provider === 'digitalocean'">
