@@ -61,17 +61,17 @@ function getBackupFilePath(apiConfig, backupId) {
 }
 
 // storage api
-function backup(apiConfig, backupId, sourceDirectories, callback) {
+function backup(apiConfig, backupId, sourceDir, callback) {
     assert.strictEqual(typeof apiConfig, 'object');
     assert.strictEqual(typeof backupId, 'string');
-    assert(Array.isArray(sourceDirectories));
+    assert.strictEqual(typeof sourceDir, 'string');
     assert.strictEqual(typeof callback, 'function');
 
     callback = once(callback);
 
     var backupFilePath = getBackupFilePath(apiConfig, backupId);
 
-    debug('[%s] backup: %j -> %s', backupId, sourceDirectories, backupFilePath);
+    debug('[%s] backup: %s -> %s', backupId, sourceDir, backupFilePath);
 
     getBackupCredentials(apiConfig, function (error, credentials) {
         if (error) return callback(error);
@@ -95,7 +95,7 @@ function backup(apiConfig, backupId, sourceDirectories, callback) {
             callback(null);
         });
 
-        targz.create(sourceDirectories, apiConfig.key || null, passThrough, callback);
+        targz.create([{ source: sourceDir, destination: '.' }], apiConfig.key || null, passThrough, callback);
     });
 }
 

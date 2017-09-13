@@ -52,12 +52,7 @@ function backupApp(backupId, appId, callback) {
 
         var appDataDir = safe.fs.realpathSync(path.join(paths.APPS_DATA_DIR, appId));
 
-        var backupMapping = [{
-            source: appDataDir,
-            destination: '.'
-        }];
-
-        api(backupConfig.provider).backup(backupConfig, backupId, backupMapping, callback);
+        api(backupConfig.provider).backup(backupConfig, backupId, appDataDir, callback);
     });
 }
 
@@ -70,12 +65,7 @@ function backupBox(backupId, callback) {
     settings.getBackupConfig(function (error, backupConfig) {
         if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
 
-        var backupMapping = [{
-            source: paths.BOX_DATA_DIR,
-            destination: 'box'
-        }];
-
-        api(backupConfig.provider).backup(backupConfig, backupId, backupMapping, callback);
+        api(backupConfig.provider).backup(backupConfig, backupId, paths.BOX_DATA_DIR, callback);
     });
 }
 

@@ -14,10 +14,10 @@ exports = module.exports = {
 var assert = require('assert'),
     debug = require('debug')('box:storage/noop');
 
-function backup(apiConfig, backupId, sourceDirectories, callback) {
+function backup(apiConfig, backupId, sourceDir, callback) {
     assert.strictEqual(typeof apiConfig, 'object');
     assert.strictEqual(typeof backupId, 'string');
-    assert(Array.isArray(sourceDirectories));
+    assert.strictEqual(typeof sourceDir, 'string');
     assert.strictEqual(typeof callback, 'function');
 
     debug('backup: %s %j', backupId, sourceDirectories);
