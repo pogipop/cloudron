@@ -31,8 +31,5 @@ yellowtent ALL=(root) NOPASSWD: /home/yellowtent/box/src/scripts/authorized_keys
 Defaults!/home/yellowtent/box/src/scripts/node.sh env_keep="HOME BOX_ENV NODE_ENV"
 yellowtent ALL=(root) NOPASSWD: /home/yellowtent/box/src/scripts/node.sh
 
-Defaults!/home/yellowtent/box/src/scripts/mvlogrotateconfig.sh env_keep="HOME BOX_ENV"
-yellowtent ALL=(root) NOPASSWD: /home/yellowtent/box/src/scripts/mvlogrotateconfig.sh
-
-Defaults!/home/yellowtent/box/src/scripts/rmlogrotateconfig.sh env_keep="HOME BOX_ENV"
-yellowtent ALL=(root) NOPASSWD: /home/yellowtent/box/src/scripts/rmlogrotateconfig.sh
+Defaults!/home/yellowtent/box/src/scripts/configurelogrotate.sh env_keep="HOME BOX_ENV"
+yellowtent ALL=(root) NOPASSWD: /home/yellowtent/box/src/scripts/configurelogrotate.sh

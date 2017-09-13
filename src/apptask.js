@@ -58,8 +58,7 @@ var addons = require('./addons.js'),
 var COLLECTD_CONFIG_EJS = fs.readFileSync(__dirname + '/collectd.config.ejs', { encoding: 'utf8' }),
     CONFIGURE_COLLECTD_CMD = path.join(__dirname, 'scripts/configurecollectd.sh'),
     LOGROTATE_CONFIG_EJS = fs.readFileSync(__dirname + '/logrotate.ejs', { encoding: 'utf8' }),
-    MV_LOGROTATE_CONFIG_CMD = path.join(__dirname, 'scripts/mvlogrotateconfig.sh'),
-    RM_LOGROTATE_CONFIG_CMD = path.join(__dirname, 'scripts/rmlogrotateconfig.sh'),
+    CONFIGURE_LOGROTATE_CMD = path.join(__dirname, 'scripts/configurelogrotate.sh'),
     RMAPPDIR_CMD = path.join(__dirname, 'scripts/rmappdir.sh'),
     CREATEAPPDIR_CMD = path.join(__dirname, 'scripts/createappdir.sh');
 
@@ -186,11 +185,12 @@ function addLogrotateConfig(app, callback) {
         var runVolume = result.Mounts.find(function (mount) { return mount.Destination === '/run'; });
         if (!runVolume) return callback(new Error('App does not have /run mounted'));
 
+        // logrotate configs can have arbitrary commands, so the config files must be owned by root
         var logrotateConf = ejs.render(LOGROTATE_CONFIG_EJS, { volumePath: runVolume.Source });
         var tmpFilePath = path.join(os.tmpdir(), app.id + '.logrotate');
         fs.writeFile(tmpFilePath, logrotateConf, function (error) {
             if (error) return callback(error);
-            shell.sudo('addLogrotateConfig', [ MV_LOGROTATE_CONFIG_CMD, tmpFilePath, app.id ], callback);
+            shell.sudo('addLogrotateConfig', [ CONFIGURE_LOGROTATE_CMD, 'add', app.id, tmpFilePath ], callback);
         });
     });
 }
@@ -199,7 +199,7 @@ function removeLogrotateConfig(app, callback) {
     assert.strictEqual(typeof app, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    shell.sudo('removeLogrotateConfig', [ RM_LOGROTATE_CONFIG_CMD, app.id ], callback);
+    shell.sudo('removeLogrotateConfig', [ CONFIGURE_LOGROTATE_CMD, 'remove', app.id ], callback);
 }
 
 function verifyManifest(app, callback) {
