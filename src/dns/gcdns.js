@@ -76,20 +76,35 @@ function upsert(dnsConfig, zoneName, subdomain, type, values, callback) {
     getZoneByName(getDnsCredentials(dnsConfig), zoneName, function (error, zone) {
         if (error) return callback(error);
 
-        var params = zone.record(type, {
-            name: (subdomain ? subdomain + '.' : '') + zoneName + '.',
-            data: values,
-            ttl: 1
-        });
+        var domain = (subdomain ? subdomain + '.' : '') + zoneName + '.';
 
-        zone.replaceRecords(type, [params], function(error, change, apiResponse) {
+        zone.getRecords({type: type, name: domain}, function(error, oldRecords, apiResponse) {
             if (error && error.code == 403) return callback(new SubdomainError(SubdomainError.ACCESS_DENIED, error.message));
             if (error) {
-                debug('zone.replaceRecords', error);
+                debug('upsert->zone.getRecords', error);
                 return callback(new SubdomainError(SubdomainError.EXTERNAL_ERROR, error.message));
             }
+            assert(oldRecords.length <= 1);
 
-            callback(null, change.id);
+            var oldData = oldRecords.length > 0 ? oldRecords[0].metadata.rrdatas : [];
+            var newData = oldData.concat(values).sort().filter(function(el,i,a){if(i==a.indexOf(el))return 1;return 0});
+
+            var newRecord = zone.record(type, {
+                name: domain,
+                data: newData,
+                ttl: 1
+            });
+
+            zone.createChange({delete: oldRecords, add: newRecord}, function(error, change, apiResponse) {
+                if (error && error.code == 403) return callback(new SubdomainError(SubdomainError.ACCESS_DENIED, error.message));
+                if (error && error.code == 412) return callback(new SubdomainError(SubdomainError.STILL_BUSY, error.message));
+                if (error) {
+                    debug('upsert->zone.createChange', error);
+                    return callback(new SubdomainError(SubdomainError.EXTERNAL_ERROR, error.message));
+                }
+
+                callback(null, change.id);
+            });
         });
     });
 }
@@ -139,20 +154,36 @@ function del(dnsConfig, zoneName, subdomain, type, values, callback) {
     getZoneByName(getDnsCredentials(dnsConfig), zoneName, function (error, zone) {
         if (error) return callback(error);
 
-        var rec = zone.record('a', {
-            name: (subdomain ? subdomain + '.' : '') + zoneName + '.',
-            data: values,
-            ttl: 1
-        });
+        var domain = (subdomain ? subdomain + '.' : '') + zoneName + '.';
 
-        zone.deleteRecords(rec, function(error, change, apiResponse) {
+        zone.getRecords({type: type, name: domain}, function(error, oldRecords, apiResponse) {
             if (error && error.code == 403) return callback(new SubdomainError(SubdomainError.ACCESS_DENIED, error.message));
             if (error) {
-                debug('zone.deleteRecords', error);
-                return callback(new SubdomainError(SubdomainError.EXTERNAL_ERROR, error));
+                debug('del->zone.getRecords', error);
+                return callback(new SubdomainError(SubdomainError.EXTERNAL_ERROR, error.message));
             }
+            assert(oldRecords.length <= 1);
 
-            callback(null);
+
+            var oldData = oldRecords.length > 0 ? oldRecords[0].metadata.rrdatas : [];
+            var newData = oldData.filter(function(e){ return values.indexOf(e) == -1;}); //element is not in the list of values to delete
+
+            var newRecord = newData.length == 0 ? null : zone.record(type, {
+                name: domain,
+                data: newData,
+                ttl: 1
+            });
+
+            zone.createChange({delete: oldRecords, add: newRecord}, function(error, change, apiResponse) {
+                if (error && error.code == 403) return callback(new SubdomainError(SubdomainError.ACCESS_DENIED, error.message));
+                if (error && error.code == 412) return callback(new SubdomainError(SubdomainError.STILL_BUSY, error.message));
+                if (error) {
+                    debug('del->zone.createChange', error);
+                    return callback(new SubdomainError(SubdomainError.EXTERNAL_ERROR, error.message));
+                }
+
+                callback(null, change.id);
+            });
         });
     });
 }
