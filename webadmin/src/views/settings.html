@@ -396,6 +396,12 @@
               </div>
               <div class="radio">
                 <label>
+                  <input type="radio" name="scheduleRadio" ng-change="autoUpdate.success = false" ng-model="autoUpdate.pattern" value="00 00 3,5 * * 3">
+                  Wednesday night
+                </label>
+              </div>
+              <div class="radio">
+                <label>
                   <input type="radio" name="scheduleRadio" ng-change="autoUpdate.success = false" ng-model="autoUpdate.pattern" value="00 00 1,3,5,23 * * 6">
                   Saturday night
                 </label>
