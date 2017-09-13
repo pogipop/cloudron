@@ -997,3 +997,14 @@
 * Support Ctrl/Cmd+v webterminal pasting
 * Ensure unbound always starts up
 * Add option to run app in repair mode
+
+[1.6.5]
+* DigitalOcean DNS: Add pagination
+* Cloudflare DNS: Optimize listing of DNS entries
+* Update node to 6.11.3
+* App volumes can now be symlinked individually to external storage
+* Periodically check if IP is blacklisted and notify admins
+* Do not ask password when re-configuring app (since it is non-destructive)
+* Move mail data inside boxdata directory. This makes the no-op backend more useful
+* Remove collectd stats when app is uninstalled
+
