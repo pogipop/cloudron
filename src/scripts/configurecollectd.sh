@@ -12,6 +12,9 @@ if [[ $# == 1 && "$1" == "--check" ]]; then
     exit 0
 fi
 
+cmd="$1"
+appid="$2"
+
 if [[ "${BOX_ENV}" == "cloudron" ]]; then
     # when restoring the cloudron with many apps, the apptasks rush in to restart
     # collectd which makes systemd/collectd very unhappy and puts the collectd in
@@ -19,10 +22,17 @@ if [[ "${BOX_ENV}" == "cloudron" ]]; then
     for i in {1..10}; do
         echo "Restarting collectd"
         if systemctl restart collectd; then
-            exit 0
+            break
         fi
         echo "Failed to reload collectd. Maybe some other apptask is restarting it"
         sleep $((RANDOM%30))
     done
+
+    # delete old stats when uninstalling an app
+    if [[ "${cmd}" == "remove" ]]; then
+        echo "Removing collectd stats of ${appid}"
+
+        rm -rf ${HOME}/platformdata/graphite/whisper/collectd/localhost/*${appid}*
+    fi
 fi
 

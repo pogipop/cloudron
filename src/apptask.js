@@ -56,7 +56,7 @@ var addons = require('./addons.js'),
     _ = require('underscore');
 
 var COLLECTD_CONFIG_EJS = fs.readFileSync(__dirname + '/collectd.config.ejs', { encoding: 'utf8' }),
-    RELOAD_COLLECTD_CMD = path.join(__dirname, 'scripts/reloadcollectd.sh'),
+    CONFIGURE_COLLECTD_CMD = path.join(__dirname, 'scripts/configurecollectd.sh'),
     LOGROTATE_CONFIG_EJS = fs.readFileSync(__dirname + '/logrotate.ejs', { encoding: 'utf8' }),
     MV_LOGROTATE_CONFIG_CMD = path.join(__dirname, 'scripts/mvlogrotateconfig.sh'),
     RM_LOGROTATE_CONFIG_CMD = path.join(__dirname, 'scripts/rmlogrotateconfig.sh'),
@@ -162,7 +162,7 @@ function addCollectdProfile(app, callback) {
     var collectdConf = ejs.render(COLLECTD_CONFIG_EJS, { appId: app.id, containerId: app.containerId });
     fs.writeFile(path.join(paths.COLLECTD_APPCONFIG_DIR, app.id + '.conf'), collectdConf, function (error) {
         if (error) return callback(error);
-        shell.sudo('addCollectdProfile', [ RELOAD_COLLECTD_CMD ], callback);
+        shell.sudo('addCollectdProfile', [ CONFIGURE_COLLECTD_CMD, 'add', app.id ], callback);
     });
 }
 
@@ -172,7 +172,7 @@ function removeCollectdProfile(app, callback) {
 
     fs.unlink(path.join(paths.COLLECTD_APPCONFIG_DIR, app.id + '.conf'), function (error) {
         if (error && error.code !== 'ENOENT') debugApp(app, 'Error removing collectd profile', error);
-        shell.sudo('removeCollectdProfile', [ RELOAD_COLLECTD_CMD ], callback);
+        shell.sudo('removeCollectdProfile', [ CONFIGURE_COLLECTD_CMD, 'remove', app.id ], callback);
     });
 }
 

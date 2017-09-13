@@ -15,7 +15,7 @@ scripts=("${SOURCE_DIR}/src/scripts/rmappdir.sh" \
          "${SOURCE_DIR}/src/scripts/reboot.sh" \
          "${SOURCE_DIR}/src/scripts/update.sh" \
          "${SOURCE_DIR}/src/scripts/collectlogs.sh" \
-         "${SOURCE_DIR}/src/scripts/reloadcollectd.sh" \
+         "${SOURCE_DIR}/src/scripts/configurecollectd.sh" \
          "${SOURCE_DIR}/src/scripts/authorized_keys.sh" \
          "${SOURCE_DIR}/src/scripts/node.sh" \
          "${SOURCE_DIR}/src/scripts/mvlogrotateconfig.sh" \
