@@ -145,15 +145,7 @@ describe('Storage', function () {
         });
 
         it('can backup', function (done) {
-            var backupMapping = [{
-                source: path.join(gSourceFolder, 'data'),
-                destination: '/datadir'
-            }, {
-                source: path.join(gSourceFolder, 'addon'),
-                destination: '/addondir/'
-            }];
-
-            filesystem.backup(gBackupConfig, gBackupId_1, backupMapping, function (error) {
+            filesystem.backup(gBackupConfig, gBackupId_1, gSourceFolder, function (error) {
                 expect(error).to.be(null);
 
                 done();
@@ -164,10 +156,10 @@ describe('Storage', function () {
             filesystem.restore(gBackupConfig, gBackupId_1, gDestinationFolder, function (error) {
                 expect(error).to.be(null);
 
-                compareDirectories(path.join(gSourceFolder, 'data'), path.join(gDestinationFolder, 'datadir'), function (error) {
+                compareDirectories(path.join(gSourceFolder, 'data'), path.join(gDestinationFolder, 'data'), function (error) {
                     expect(error).to.equal(null);
 
-                    compareDirectories(path.join(gSourceFolder, 'addon'), path.join(gDestinationFolder, 'addondir'), function (error) {
+                    compareDirectories(path.join(gSourceFolder, 'addon'), path.join(gDestinationFolder, 'addon'), function (error) {
                         expect(error).to.equal(null);
 
                         rimraf(gDestinationFolder, done);
@@ -199,10 +191,10 @@ describe('Storage', function () {
             filesystem.restore(gBackupConfig, gBackupId_2, gDestinationFolder, function (error) {
                 expect(error).to.be(null);
 
-                compareDirectories(path.join(gSourceFolder, 'data'), path.join(gDestinationFolder, 'datadir'), function (error) {
+                compareDirectories(path.join(gSourceFolder, 'data'), path.join(gDestinationFolder, 'data'), function (error) {
                     expect(error).to.equal(null);
 
-                    compareDirectories(path.join(gSourceFolder, 'addon'), path.join(gDestinationFolder, 'addondir'), function (error) {
+                    compareDirectories(path.join(gSourceFolder, 'addon'), path.join(gDestinationFolder, 'addon'), function (error) {
                         expect(error).to.equal(null);
 
                         rimraf(gDestinationFolder, done);
@@ -265,15 +257,7 @@ describe('Storage', function () {
         });
 
         it('can backup', function (done) {
-            var backupMapping = [{
-                source: path.join(gSourceFolder, 'data'),
-                destination: '/datadir'
-            }, {
-                source: path.join(gSourceFolder, 'addon'),
-                destination: '/addondir/'
-            }];
-
-            s3.backup(gBackupConfig, gBackupId_1, backupMapping, function (error) {
+            s3.backup(gBackupConfig, gBackupId_1, gSourceFolder, function (error) {
                 expect(error).to.be(null);
 
                 done();
@@ -284,10 +268,10 @@ describe('Storage', function () {
             s3.restore(gBackupConfig, gBackupId_1, gDestinationFolder, function (error) {
                 expect(error).to.be(null);
 
-                compareDirectories(path.join(gSourceFolder, 'data'), path.join(gDestinationFolder, 'datadir'), function (error) {
+                compareDirectories(path.join(gSourceFolder, 'data'), path.join(gDestinationFolder, 'data'), function (error) {
                     expect(error).to.equal(null);
 
-                    compareDirectories(path.join(gSourceFolder, 'addon'), path.join(gDestinationFolder, 'addondir'), function (error) {
+                    compareDirectories(path.join(gSourceFolder, 'addon'), path.join(gDestinationFolder, 'addon'), function (error) {
                         expect(error).to.equal(null);
 
                         rimraf(gDestinationFolder, done);
@@ -319,10 +303,10 @@ describe('Storage', function () {
             s3.restore(gBackupConfig, gBackupId_2, gDestinationFolder, function (error) {
                 expect(error).to.be(null);
 
-                compareDirectories(path.join(gSourceFolder, 'data'), path.join(gDestinationFolder, 'datadir'), function (error) {
+                compareDirectories(path.join(gSourceFolder, 'data'), path.join(gDestinationFolder, 'data'), function (error) {
                     expect(error).to.equal(null);
 
-                    compareDirectories(path.join(gSourceFolder, 'addon'), path.join(gDestinationFolder, 'addondir'), function (error) {
+                    compareDirectories(path.join(gSourceFolder, 'addon'), path.join(gDestinationFolder, 'addon'), function (error) {
                         expect(error).to.equal(null);
 
                         rimraf(gDestinationFolder, done);
