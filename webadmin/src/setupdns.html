@@ -80,6 +80,18 @@
                                     <span ng-show="isDomain || explicitZone"><b>{{ explicitZone ? explicitZone : (dnsCredentials.domain | zoneName) }}</b> must be hosted on <a href="https://aws.amazon.com/route53/?nc2=h_m1" target="_blank">AWS Route53</a>.</span>
                                 </div>
 
+                                <!-- Google Cloud DNS -->
+                                <div class="form-group" ng-class="{ 'has-error': false }" ng-show="dnsCredentials.provider === 'gcdns'">
+                                    <div class="input-group">
+                                        <input type="file" id="gcdnsKeyFileInput" style="display:none"/>
+                                        <input type="text" class="form-control" placeholder="Service Account Key" ng-model="dnsCredentials.gcdnsKey.keyFileName" id="gcdnsKeyInput" name="cert" onclick="getElementById('gcdnsKeyFileInput').click();" style="cursor: pointer;" ng-disabled="dnsCredentials.busy" required>
+                                        <span class="input-group-addon">
+                                          <i class="fa fa-upload" onclick="getElementById('gcdnsKeyFileInput').click();"></i>
+                                        </span>
+                                    </div>
+                                    <span ng-show="isDomain || explicitZone"><b>{{ explicitZone ? explicitZone : (dnsCredentials.domain | zoneName) }}</b> must be hosted on <a href="https://console.cloud.google.com/net-services/dns/zones" target="_blank">Google Cloud DNS</a>.</span>
+                                </div>
+
                                 <!-- DigitalOcean -->
                                 <div class="form-group" ng-class="{ 'has-error': dnsCredentialsForm.digitalOceanToken.$dirty && dnsCredentialsForm.digitalOceanToken.$invalid }" ng-show="dnsCredentials.provider === 'digitalocean'">
                                     <input type="text" class="form-control" ng-model="dnsCredentials.digitalOceanToken" name="digitalOceanToken" placeholder="API Token" ng-required="dnsCredentials.provider === 'digitalocean'" ng-disabled="dnsCredentials.busy">

@@ -40,6 +40,7 @@ app.controller('SetupDNSController', ['$scope', '$http', 'Client', function ($sc
     // keep in sync with certs.js
     $scope.dnsProvider = [
         { name: 'AWS Route53', value: 'route53' },
+        { name: 'Google Cloud DNS', value: 'gcdns' },
         { name: 'Digital Ocean', value: 'digitalocean' },
         { name: 'Cloudflare (DNS only)', value: 'cloudflare' },
         { name: 'Wildcard', value: 'wildcard' },
@@ -52,9 +53,28 @@ app.controller('SetupDNSController', ['$scope', '$http', 'Client', function ($sc
         domain: '',
         accessKeyId: '',
         secretAccessKey: '',
+        gcdnsKey: {keyFileName: "", content: ""},
         digitalOceanToken: '',
         provider: 'route53'
     };
+
+    function readFileLocally(obj, file, fileName) {
+        return function (event) {
+            $scope.$apply(function () {
+                obj[file] = null;
+                obj[fileName] = event.target.files[0].name;
+
+                var reader = new FileReader();
+                reader.onload = function (result) {
+                    if (!result.target || !result.target.result) return console.error('Unable to read local file');
+                    obj[file] = result.target.result;
+                };
+                reader.readAsText(event.target.files[0]);
+            });
+        };
+    }
+
+    document.getElementById('gcdnsKeyFileInput').onchange = readFileLocally($scope.dnsCredentials.gcdnsKey, 'content', 'keyFileName');
 
     $scope.setDnsCredentials = function () {
         $scope.dnsCredentials.busy = true;
@@ -77,6 +97,23 @@ app.controller('SetupDNSController', ['$scope', '$http', 'Client', function ($sc
         if (data.provider === 'route53') {
             data.accessKeyId = $scope.dnsCredentials.accessKeyId;
             data.secretAccessKey = $scope.dnsCredentials.secretAccessKey;
+        } else if (data.provider === 'gcdns'){
+            try {
+                var serviceAccountKey = JSON.parse($scope.dnsCredentials.gcdnsKey.content);
+                data.projectId = serviceAccountKey.project_id;
+                data.credentials = {
+                    client_email: serviceAccountKey.client_email,
+                    private_key: serviceAccountKey.private_key
+                };
+
+                if (!data.projectId || !data.credentials || !data.credentials.client_email || !data.credentials.private_key) {
+                    throw "fields_missing";
+                }
+            } catch(e) {
+                $scope.dnsCredentials.error = "Cannot parse Google Service Account Key";
+                $scope.dnsCredentials.busy = false;
+                return;
+            }
         } else if (data.provider === 'digitalocean') {
             data.token = $scope.dnsCredentials.digitalOceanToken;
         } else if (data.provider === 'cloudflare') {
@@ -123,6 +160,7 @@ app.controller('SetupDNSController', ['$scope', '$http', 'Client', function ($sc
         if (status.adminFqdn) return waitForDnsSetup();
 
         if (status.provider === 'digitalocean') $scope.dnsCredentials.provider = 'digitalocean';
+        if (status.provider === 'gcp') $scope.dnsCredentials.provider = 'gcdns';
         if (status.provider === 'ami') {
             // remove route53 on ami
             $scope.dnsProvider.shift();

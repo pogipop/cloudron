@@ -8,6 +8,7 @@
 
 var async = require('async'),
     AWS = require('aws-sdk'),
+    GCDNS = require('@google-cloud/dns'),
     config = require('../config.js'),
     database = require('../database.js'),
     expect = require('expect.js'),
@@ -512,6 +513,132 @@ describe('dns provider', function () {
             subdomains.remove('test', 'A', ['1.2.3.4'], function (error) {
                 expect(error).to.eql(null);
                 expect(awsAnswerQueue.length).to.eql(0);
+
+                done();
+            });
+        });
+    });
+
+    describe('gcdns', function () {
+        var HOSTED_ZONES = [];
+        var zoneQueue = [];
+        var _OriginalGCDNS;
+
+        before(function (done) {
+            var domain = 'example.com';
+            config.setFqdn(domain);
+            config.setZoneName(domain);
+            var dnsConfig = {
+                provider: 'gcdns',
+                projectId: 'my-dns-proj',
+                keyFilename: 'syn-im-1ec6f9f870bf.json'
+            };
+
+            function mockery (queue) {
+                return function() {
+                    var callback = arguments[--arguments.length];
+
+                    var elem = queue.shift();
+                    if (!util.isArray(elem)) throw(new Error('Mock answer required'));
+
+                    // if no callback passed, return a req object with send();
+                    if (typeof callback !== 'function') {
+                        return {
+                            httpRequest: { headers: {} },
+                            send: function (callback) {
+                                expect(callback).to.be.a(Function);
+                                callback.apply(callback, elem);
+                            }
+                        };
+                    } else {
+                        callback.apply(callback, elem);
+                    }
+                };
+            }
+
+            function fakeZone(name, ns, recordQueue) {
+                var zone = GCDNS().zone(name.replace('.', '-'));
+                zone.metadata.dnsName = name + '.';
+                zone.metadata.nameServers = ns || ['8.8.8.8', '8.8.4.4'];
+                zone.getRecords = mockery(recordQueue || zoneQueue);
+                zone.replaceRecords = mockery(recordQueue || zoneQueue);
+                zone.deleteRecords = mockery(recordQueue || zoneQueue);
+                return zone;
+            }
+            HOSTED_ZONES = [fakeZone(domain), fakeZone('cloudron.us')];
+
+            _OriginalGCDNS = GCDNS.prototype.getZones;
+            GCDNS.prototype.getZones = mockery(zoneQueue);
+
+            settings.setDnsConfig(dnsConfig, config.fqdn(), config.zoneName(), done);
+        });
+
+        after(function () {
+            GCDNS.prototype.getZones = _OriginalGCDNS;
+            _OriginalGCDNS = null;
+        });
+
+        it('upsert non-existing record succeeds', function (done) {
+            zoneQueue.push([null, HOSTED_ZONES]);
+            zoneQueue.push([null, {id: '1'}]);
+            subdomains.upsert('test', 'A', [ '1.2.3.4' ], function (error, result) {
+                expect(error).to.eql(null);
+                expect(result).to.eql('1');
+                expect(zoneQueue.length).to.eql(0);
+
+                done();
+            });
+        });
+
+        it('upsert existing record succeeds', function (done) {
+            zoneQueue.push([null, HOSTED_ZONES]);
+            zoneQueue.push([null, {id: '2'}]);
+
+            subdomains.upsert('test', 'A', [ '1.2.3.4' ], function (error, result) {
+                expect(error).to.eql(null);
+                expect(result).to.eql('2');
+                expect(zoneQueue.length).to.eql(0);
+
+                done();
+            });
+        });
+
+        it('upsert multiple record succeeds', function (done) {
+            zoneQueue.push([null, HOSTED_ZONES]);
+            zoneQueue.push([null, {id: '3'}]);
+
+            subdomains.upsert('', 'TXT', [ 'first', 'second', 'third' ], function (error, result) {
+                expect(error).to.eql(null);
+                expect(result).to.eql('3');
+                expect(zoneQueue.length).to.eql(0);
+
+                done();
+            });
+        });
+
+        it('get succeeds', function (done) {
+            zoneQueue.push([null, HOSTED_ZONES]);
+            zoneQueue.push([null, [], true]);
+            zoneQueue.push([null, [GCDNS().zone('test').record('A', {'name': 'test', data:['1.2.3.4'], ttl: 1})]]);
+
+            subdomains.get('test', 'A', function (error, result) {
+                expect(error).to.eql(null);
+                expect(result).to.be.an(Array);
+                expect(result.length).to.eql(1);
+                expect(result[0]).to.eql('1.2.3.4');
+                expect(zoneQueue.length).to.eql(0);
+
+                done();
+            });
+        });
+
+        it('del succeeds', function (done) {
+            zoneQueue.push([null, HOSTED_ZONES]);
+            zoneQueue.push([null, {id: '5'}]);
+
+            subdomains.remove('test', 'A', ['1.2.3.4'], function (error) {
+                expect(error).to.eql(null);
+                expect(zoneQueue.length).to.eql(0);
 
                 done();
             });

@@ -9,6 +9,7 @@ angular.module('Application').controller('CertsController', ['$scope', '$locatio
     // keep in sync with setupdns.js
     $scope.dnsProvider = [
         { name: 'AWS Route53', value: 'route53' },
+        { name: 'Google Cloud DNS', value: 'gcdns' },
         { name: 'Digital Ocean', value: 'digitalocean' },
         { name: 'Cloudflare (DNS only)', value: 'cloudflare' },
         { name: 'Wildcard', value: 'wildcard' },
@@ -43,6 +44,7 @@ angular.module('Application').controller('CertsController', ['$scope', '$locatio
         customDomain: '',
         accessKeyId: '',
         secretAccessKey: '',
+        gcdnsKey: {keyFileName: "", content: ""},
         digitalOceanToken: '',
         cloudflareToken: '',
         cloudflareEmail: '',
@@ -70,6 +72,8 @@ angular.module('Application').controller('CertsController', ['$scope', '$locatio
     document.getElementById('defaultKeyFileInput').onchange = readFileLocally($scope.defaultCert, 'keyFile', 'keyFileName');
     document.getElementById('adminCertFileInput').onchange = readFileLocally($scope.adminCert, 'certificateFile', 'certificateFileName');
     document.getElementById('adminKeyFileInput').onchange = readFileLocally($scope.adminCert, 'keyFile', 'keyFileName');
+
+    document.getElementById('gcdnsKeyFileInput').onchange = readFileLocally($scope.dnsCredentials.gcdnsKey, 'content', 'keyFileName');
 
     $scope.setDefaultCert = function () {
         $scope.defaultCert.busy = true;
@@ -130,6 +134,23 @@ angular.module('Application').controller('CertsController', ['$scope', '$locatio
         if (data.provider === 'route53') {
             data.accessKeyId = $scope.dnsCredentials.accessKeyId;
             data.secretAccessKey = $scope.dnsCredentials.secretAccessKey;
+        } else if (data.provider === 'gcdns'){
+            try {
+                var serviceAccountKey = JSON.parse($scope.dnsCredentials.gcdnsKey.content);
+                data.projectId = serviceAccountKey.project_id;
+                data.credentials = {
+                    client_email: serviceAccountKey.client_email,
+                    private_key: serviceAccountKey.private_key
+                };
+
+                if (!data.projectId || !data.credentials || !data.credentials.client_email || !data.credentials.private_key) {
+                    throw "fields_missing";
+                }
+            } catch(e) {
+                $scope.dnsCredentials.error = "Cannot parse Google Service Account Key";
+                $scope.dnsCredentials.busy = false;
+                return;
+            }
         } else if (data.provider === 'digitalocean') {
             data.token = $scope.dnsCredentials.digitalOceanToken;
         } else if (data.provider === 'cloudflare') {
@@ -178,6 +199,8 @@ angular.module('Application').controller('CertsController', ['$scope', '$locatio
         $scope.dnsCredentials.customDomain = '';
         $scope.dnsCredentials.accessKeyId = '';
         $scope.dnsCredentials.secretAccessKey = '';
+        $scope.dnsCredentials.gcdnsKey.keyFileName = '';
+        $scope.dnsCredentials.gcdnsKey.content = '';
         $scope.dnsCredentials.digitalOceanToken = '';
         $scope.dnsCredentials.cloudflareToken = '';
         $scope.dnsCredentials.cloudflareEmail = '';
@@ -196,6 +219,16 @@ angular.module('Application').controller('CertsController', ['$scope', '$locatio
         $scope.dnsCredentials.customDomain = $scope.config.isCustomDomain ? $scope.config.fqdn : '';
         $scope.dnsCredentials.accessKeyId = $scope.dnsConfig.accessKeyId;
         $scope.dnsCredentials.secretAccessKey = $scope.dnsConfig.secretAccessKey;
+
+        $scope.dnsCredentials.gcdnsKey.keyFileName = '';
+        $scope.dnsCredentials.gcdnsKey.content = '';
+        if($scope.dnsConfig.provider === 'gcdns'){
+            $scope.dnsCredentials.gcdnsKey.keyFileName = $scope.dnsConfig.credentials.client_email;
+            $scope.dnsCredentials.gcdnsKey.content = JSON.stringify({
+                "project_id": $scope.dnsConfig.projectId,
+                "credentials": $scope.dnsConfig.credentials
+            });
+        }
         $scope.dnsCredentials.digitalOceanToken = $scope.dnsConfig.provider === 'digitalocean' ? $scope.dnsConfig.token : '';
         $scope.dnsCredentials.cloudflareToken = $scope.dnsConfig.provider === 'cloudflare' ? $scope.dnsConfig.token : '';
         $scope.dnsCredentials.cloudflareEmail = $scope.dnsConfig.email;
