@@ -39,7 +39,7 @@ function getInternal(dnsConfig, zoneName, subdomain, type, callback) {
           .set('Authorization', 'Bearer ' + dnsConfig.token)
           .timeout(30 * 1000)
           .end(function (error, result) {
-            if (error && !error.response) return callback(error);
+            if (error && !error.response) return callback(new SubdomainError(SubdomainError.EXTERNAL_ERROR, util.format('Network error %s', error.message)));
             if (result.statusCode === 404) return callback(new SubdomainError(SubdomainError.NOT_FOUND, formatError(result)));
             if (result.statusCode === 403 || result.statusCode === 401) return callback(new SubdomainError(SubdomainError.ACCESS_DENIED, formatError(result)));
             if (result.statusCode !== 200) return callback(new SubdomainError(SubdomainError.EXTERNAL_ERROR, formatError(result)));
@@ -101,7 +101,7 @@ function upsert(dnsConfig, zoneName, subdomain, type, values, callback) {
                   .send(data)
                   .timeout(30 * 1000)
                   .end(function (error, result) {
-                    if (error && !error.response) return callback(error);
+                    if (error && !error.response) return callback(new SubdomainError(SubdomainError.EXTERNAL_ERROR, util.format('Network error %s', error.message)));
                     if (result.statusCode === 403 || result.statusCode === 401) return callback(new SubdomainError(SubdomainError.ACCESS_DENIED, formatError(result)));
                     if (result.statusCode === 422) return callback(new SubdomainError(SubdomainError.BAD_FIELD, result.body.message));
                     if (result.statusCode !== 201) return callback(new SubdomainError(SubdomainError.EXTERNAL_ERROR, formatError(result)));
@@ -117,7 +117,7 @@ function upsert(dnsConfig, zoneName, subdomain, type, values, callback) {
                     // increment, as we have consumed the record
                     ++i;
 
-                    if (error && !error.response) return callback(error);
+                    if (error && !error.response) return callback(new SubdomainError(SubdomainError.EXTERNAL_ERROR, util.format('Network error %s', error.message)));
                     if (result.statusCode === 403 || result.statusCode === 401) return callback(new SubdomainError(SubdomainError.ACCESS_DENIED, formatError(result)));
                     if (result.statusCode === 422) return callback(new SubdomainError(SubdomainError.BAD_FIELD, result.body.message));
                     if (result.statusCode !== 200) return callback(new SubdomainError(SubdomainError.EXTERNAL_ERROR, formatError(result)));
@@ -181,7 +181,7 @@ function del(dnsConfig, zoneName, subdomain, type, values, callback) {
           .set('Authorization', 'Bearer ' + dnsConfig.token)
           .timeout(30 * 1000)
           .end(function (error, result) {
-            if (error && !error.response) return callback(error);
+            if (error && !error.response) return callback(new SubdomainError(SubdomainError.EXTERNAL_ERROR, util.format('Network error %s', error.message)));
             if (result.statusCode === 404) return callback(null);
             if (result.statusCode === 403 || result.statusCode === 401) return callback(new SubdomainError(SubdomainError.ACCESS_DENIED, formatError(result)));
             if (result.statusCode !== 204) return callback(new SubdomainError(SubdomainError.EXTERNAL_ERROR, formatError(result)));
