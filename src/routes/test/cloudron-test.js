@@ -674,8 +674,8 @@ describe('Cloudron', function () {
                         if (line.indexOf('id: ') === 0) {
                             expect(parseInt(line.substr('id: '.length), 10)).to.be.a('number');
                         } else if (line.indexOf('data: ') === 0) {
-                            expect(JSON.parse(line.slice('data: '.length)).message).to.be.a('string');
-                            dataMessageFound = true;
+                            var message = JSON.parse(line.slice('data: '.length)).message;
+                            if (Array.isArray(message) || typeof message === 'string') dataMessageFound = true;
                         }
                     });
 
