@@ -175,7 +175,7 @@
         <br/><br/>
 
         <div ng-repeat="record in expectedDnsRecordsTypes">
-         <div class="row" ng-if="expectedDnsRecords[record.value] && (mailConfig.enabled || (record.name !== 'DMARC' && record.name !== 'MX'))">
+          <div class="row" ng-if="expectedDnsRecords[record.value] && (mailConfig.enabled || (record.name !== 'DMARC' && record.name !== 'MX'))">
             <div class="col-xs-12">
               <p class="text-muted">
                 <i ng-class="expectedDnsRecords[record.value].status ? 'fa fa-check-circle text-success' : 'fa fa-exclamation-triangle text-danger'"></i> &nbsp;
@@ -193,6 +193,17 @@
             </div>
           </div>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="text-left" ng-show="dnsConfig.provider && dnsConfig.provider !== 'caas'">
+      <h3>SMTP Status</h3>
+  </div>
+
+  <div class="card" style="margin-bottom: 15px;" ng-show="dnsConfig.provider && dnsConfig.provider !== 'caas'">
+    <div class="row">
+      <div class="col-md-12">
 
         <div class="row">
           <div class="col-xs-12">
@@ -210,7 +221,29 @@
             </div>
           </div>
         </div>
+
+        <div class="row" ng-show="rbl">
+          <div class="col-xs-12">
+            <p class="text-muted">
+              <i ng-class="rbl.status ? 'fa fa-check-circle text-success' : 'fa fa-exclamation-triangle text-danger'"></i> &nbsp;
+              <a href="" data-toggle="collapse" data-parent="#accordion" data-target="#collapse_rbl">
+                  IP Address Blacklist Check
+              </a>
+              <button class="btn btn-xs btn-default" ng-click="email.refresh()" ng-disabled="email.refreshBusy" ng-show="!relay.status"><i class="fa fa-refresh" ng-class="{ 'fa-pulse': email.refreshBusy }"></i></button>
+            </p>
+            <div id="collapse_rbl" class="panel-collapse collapse">
+              <div class="panel-body">
+                  <div>This server's IP {{ rbl.ip }} is <b ng-hide="rbl.servers.length">not</b> blacklisted.</div>
+                  <div ng-repeat="server in rbl.servers">
+                    <a ng-href="{{server.site}}" target="_blank">{{ server.name }}</a>
+                  </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
   </div>
+
 </div>

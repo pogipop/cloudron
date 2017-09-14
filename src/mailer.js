@@ -11,7 +11,6 @@ exports = module.exports = {
     boxUpdateAvailable: boxUpdateAvailable,
     appUpdateAvailable: appUpdateAvailable,
     sendDigest: sendDigest,
-    boxBlacklisted: boxBlacklisted,
 
     sendInvite: sendInvite,
     unexpectedExit: unexpectedExit,
@@ -463,24 +462,6 @@ function outOfDiskSpace(message) {
             to: config.provider() === 'caas' ? 'support@cloudron.io' : adminEmails.join(', '),
             subject: util.format('[%s] Out of disk space alert', config.fqdn()),
             text: render('out_of_disk_space.ejs', { fqdn: config.fqdn(), message: message, format: 'text' })
-        };
-
-        sendMails([ mailOptions ]);
-    });
-}
-
-function boxBlacklisted(ip, info) {
-    assert.strictEqual(typeof ip, 'string');
-    assert.strictEqual(typeof info, 'object');
-
-    getAdminEmails(function (error, adminEmails) {
-        if (error) return console.log('Error getting admins', error);
-
-        var mailOptions = {
-            from: mailConfig().from,
-            to: config.provider() === 'caas' ? 'support@cloudron.io' : adminEmails.join(', '),
-            subject: util.format('[%s] Server IP is listed in one or more blacklists', config.fqdn()),
-            text: render('box_blacklisted.ejs', { fqdn: config.fqdn(), ip: ip, info: info, format: 'text' })
         };
 
         sendMails([ mailOptions ]);

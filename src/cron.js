@@ -38,8 +38,7 @@ var gAliveJob = null, // send periodic stats
     gDynamicDNSJob = null,
     gHeartbeatJob = null, // for CaaS health check
     gSchedulerSyncJob = null,
-    gDigestEmailJob = null,
-    gRblCheckJob = null;
+    gDigestEmailJob = null;
 
 var NOOP_CALLBACK = function (error) { if (error) console.error(error); };
 var AUDIT_SOURCE = { userId: null, username: 'cron' };
@@ -185,14 +184,6 @@ function recreateJobs(tz) {
         start: true,
         timeZone: tz
     });
-
-    if (gRblCheckJob) gRblCheckJob.stop();
-    gRblCheckJob = new CronJob({
-        cronTime: '00 00 5 * * *', // every day
-        onTick: email.checkRblStatus,
-        start: true,
-        timeZone: tz
-    });
 }
 
 function autoupdatePatternChanged(pattern) {
@@ -294,9 +285,6 @@ function uninitialize(callback) {
 
     if (gDigestEmailJob) gDigestEmailJob.stop();
     gDigestEmailJob = null;
-
-    if (gRblCheckJob) gRblCheckJob.stop();
-    gRblCheckJob = null;
 
     callback();
 }

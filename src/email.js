@@ -263,49 +263,6 @@ function checkPtr(callback) {
     });
 }
 
-function getStatus(callback) {
-    assert.strictEqual(typeof callback, 'function');
-
-    var results = {};
-
-    function recordResult(what, func) {
-        return function (callback) {
-            func(function (error, result) {
-                if (error) debug('Ignored error - ' + what + ':', error);
-
-                safe.set(results, what, result);
-
-                callback();
-            });
-        };
-    }
-
-    settings.getMailRelay(function (error, relay) {
-        if (error) return callback(error);
-
-        var checks = [
-            recordResult('dns.mx', checkMx),
-            recordResult('dns.dmarc', checkDmarc)
-        ];
-
-        if (relay.provider === 'cloudron-smtp') {
-            // these tests currently only make sense when using Cloudron's SMTP server at this point
-            checks.push(
-                recordResult('dns.spf', checkSpf),
-                recordResult('dns.dkim', checkDkim),
-                recordResult('dns.ptr', checkPtr),
-                recordResult('relay', checkOutboundPort25)
-            );
-        } else {
-            checks.push(recordResult('relay', checkSmtpRelay.bind(null, relay)));
-        }
-
-        async.parallel(checks, function () {
-            callback(null, results);
-        });
-    });
-}
-
 // https://raw.githubusercontent.com/jawsome/node-dnsbl/master/list.json
 const RBL_LIST = [
     {
@@ -366,7 +323,7 @@ const RBL_LIST = [
 ];
 
 function checkRblStatus(callback) {
-    callback = callback || NOOP_CALLBACK;
+    assert.strictEqual(typeof callback, 'function');
 
     sysinfo.getPublicIp(function (error, ip) {
         if (error) return callback(error, ip);
@@ -393,14 +350,53 @@ function checkRblStatus(callback) {
         }, function (ignoredError, blacklistedServers) {
             blacklistedServers = blacklistedServers.filter(function(b) { return b !== null; });
 
-            if (blacklistedServers.length === 0) {
-                debug('checkRblStatus: %s (ip: %s) is not blacklisted', config.fqdn(), ip);
-                return callback(); // not blacklisted anywhere
-            }
+            debug('checkRblStatus: %s (ip: %s) servers: %j', config.fqdn(), ip, blacklistedServers);
 
-            mailer.boxBlacklisted(ip, blacklistedServers);
+            return callback(null, { status: blacklistedServers.length === 0, ip: ip, servers: blacklistedServers });
+        });
+    });
+}
 
-            callback();
+function getStatus(callback) {
+    assert.strictEqual(typeof callback, 'function');
+
+    var results = {};
+
+    function recordResult(what, func) {
+        return function (callback) {
+            func(function (error, result) {
+                if (error) debug('Ignored error - ' + what + ':', error);
+
+                safe.set(results, what, result);
+
+                callback();
+            });
+        };
+    }
+
+    settings.getMailRelay(function (error, relay) {
+        if (error) return callback(error);
+
+        var checks = [
+            recordResult('dns.mx', checkMx),
+            recordResult('dns.dmarc', checkDmarc)
+        ];
+
+        if (relay.provider === 'cloudron-smtp') {
+            // these tests currently only make sense when using Cloudron's SMTP server at this point
+            checks.push(
+                recordResult('dns.spf', checkSpf),
+                recordResult('dns.dkim', checkDkim),
+                recordResult('dns.ptr', checkPtr),
+                recordResult('relay', checkOutboundPort25),
+                recordResult('rbl', checkRblStatus)
+            );
+        } else {
+            checks.push(recordResult('relay', checkSmtpRelay.bind(null, relay)));
+        }
+
+        async.parallel(checks, function () {
+            callback(null, results);
         });
     });
 }

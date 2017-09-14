@@ -8,6 +8,7 @@ angular.module('Application').controller('EmailController', ['$scope', '$locatio
     $scope.config = Client.getConfig();
     $scope.dnsConfig = {};
     $scope.relay = {};
+    $scope.rbl = null;
     $scope.expectedDnsRecords = {};
     $scope.expectedDnsRecordsTypes = [
         { name: 'MX', value: 'mx' },
@@ -210,6 +211,7 @@ angular.module('Application').controller('EmailController', ['$scope', '$locatio
 
             $scope.expectedDnsRecords = result.dns;
             $scope.relay = result.relay;
+            $scope.rbl = result.rbl;
 
             // open the record details if they are not correct
             for (var type in $scope.expectedDnsRecords) {
