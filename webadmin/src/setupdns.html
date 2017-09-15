@@ -107,7 +107,7 @@
                                 <div class="form-group" ng-class="{ 'has-error': dnsCredentialsForm.cloudflareEmail.$dirty && dnsCredentialsForm.cloudflareEmail.$invalid }" ng-show="dnsCredentials.provider === 'cloudflare'">
                                     <input type="email" class="form-control" ng-model="dnsCredentials.cloudflareEmail" name="cloudflareEmail" placeholder="Cloudflare Account Email" ng-required="dnsCredentials.provider === 'cloudflare'" ng-disabled="dnsCredentials.busy">
                                     <br/>
-                                    <span>{{ dnsCredentials.domain || 'The domain' }} must be hosted on <a href="https://www.cloudflare.com" target="_blank">Cloudflare</a>.</span>
+                                    <span ng-show="isDomain || explicitZone"><b>{{ explicitZone ? explicitZone : (dnsCredentials.domain | zoneName) }}</b> must be hosted on <a href="https://www.cloudflare.com" target="_blank">Cloudflare</a>.</span>
                                 </div>
 
                                 <!-- Wildcard -->
