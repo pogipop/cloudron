@@ -9,7 +9,7 @@
       <div class="modal-body" ng-show="dnsConfig.provider === 'noop' || dnsConfig.provider === 'manual'">
         No DNS provider is setup. Displayed DNS records will have to be setup manually.<br/>
       </div>
-      <div class="modal-body" ng-show="dnsConfig.provider === 'route53' || dnsConfig.provider === 'digitalocean' || dnsConfig.provider === 'cloudflare'">
+      <div class="modal-body" ng-hide="dnsConfig.provider === 'noop' || dnsConfig.provider === 'manual'">
         Cloudron will setup Email related DNS records automatically.
         If this domain is already configured to handle email with some other provider, it will <b>overwrite</b> those records.
         <br/><br/>
