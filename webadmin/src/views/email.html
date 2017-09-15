@@ -56,7 +56,7 @@
     <div class="row">
       <div class="col-md-12">
         Cloudron has a built-in <a ng-href="{{ config.webServerOrigin + '/documentation/email/' }}" target="_blank">email server</a> that allows users to send and receive email for your domain.
-        Apps can send Emails regardless of this setting.
+        Apps can send emails regardless of this setting.
       </div>
     </div>
     <div class="row" ng-show="mailConfig.enabled">
@@ -75,7 +75,7 @@
     <br/>
     <div class="row">
       <div class="col-md-12" ng-show="dnsConfig.provider !== 'caas'">
-        <button class="pull-right" ng-class="mailConfig.enabled ? 'btn btn-danger' : 'btn btn-primary'" ng-click="email.toggle()" ng-enabled="mailConfig">{{ mailConfig.enabled ? "Disable Email" : "Enable Email" }}</button>
+        <button class="pull-left" ng-class="mailConfig.enabled ? 'btn btn-danger' : 'btn btn-primary'" ng-click="email.toggle()" ng-enabled="mailConfig">{{ mailConfig.enabled ? "Disable Email" : "Enable Email" }}</button>
       </div>
       <div class="col-md-12" ng-show="dnsConfig.provider === 'caas'">
         <span class="text-danger text-bold">This feature requires the Cloudron to be on <a ng-href="{{ config.webServerOrigin + '/documentation/managed-hosting/#using-a-custom-domain' }}" target="_blank">custom domain</a>.</span>
@@ -262,7 +262,7 @@
 
         <div class="row">
           <div class="col-xs-12">
-            <button class="btn btn-primary pull-right" ng-click="sendTestEmail()">Send Test Email</button>
+            <button class="btn btn-primary pull-left" ng-click="sendTestEmail()">Send Test Email</button>
           </div>
         </div>
       </div>
