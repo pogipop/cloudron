@@ -40,9 +40,9 @@ app.controller('SetupDNSController', ['$scope', '$http', 'Client', function ($sc
     // keep in sync with certs.js
     $scope.dnsProvider = [
         { name: 'AWS Route53', value: 'route53' },
-        { name: 'Google Cloud DNS', value: 'gcdns' },
-        { name: 'Digital Ocean', value: 'digitalocean' },
         { name: 'Cloudflare (DNS only)', value: 'cloudflare' },
+        { name: 'Digital Ocean', value: 'digitalocean' },
+        { name: 'Google Cloud DNS', value: 'gcdns' },
         { name: 'Wildcard', value: 'wildcard' },
         { name: 'Manual (not recommended)', value: 'manual' },
         { name: 'No-op (only for development)', value: 'noop' }
@@ -53,7 +53,7 @@ app.controller('SetupDNSController', ['$scope', '$http', 'Client', function ($sc
         domain: '',
         accessKeyId: '',
         secretAccessKey: '',
-        gcdnsKey: {keyFileName: "", content: ""},
+        gcdnsKey: { keyFileName: '', content: '' },
         digitalOceanToken: '',
         provider: 'route53'
     };

@@ -89,6 +89,7 @@
                                           <i class="fa fa-upload" onclick="getElementById('gcdnsKeyFileInput').click();"></i>
                                         </span>
                                     </div>
+                                    <br/>
                                     <span ng-show="isDomain || explicitZone"><b>{{ explicitZone ? explicitZone : (dnsCredentials.domain | zoneName) }}</b> must be hosted on <a href="https://console.cloud.google.com/net-services/dns/zones" target="_blank">Google Cloud DNS</a>.</span>
                                 </div>
 

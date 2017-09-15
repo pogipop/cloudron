@@ -9,9 +9,9 @@ angular.module('Application').controller('CertsController', ['$scope', '$locatio
     // keep in sync with setupdns.js
     $scope.dnsProvider = [
         { name: 'AWS Route53', value: 'route53' },
-        { name: 'Google Cloud DNS', value: 'gcdns' },
-        { name: 'Digital Ocean', value: 'digitalocean' },
         { name: 'Cloudflare (DNS only)', value: 'cloudflare' },
+        { name: 'Digital Ocean', value: 'digitalocean' },
+        { name: 'Google Cloud DNS', value: 'gcdns' },
         { name: 'Wildcard', value: 'wildcard' },
         { name: 'Manual (not recommended)', value: 'manual' },
         { name: 'No-op (only for development)', value: 'noop' }
@@ -44,7 +44,7 @@ angular.module('Application').controller('CertsController', ['$scope', '$locatio
         customDomain: '',
         accessKeyId: '',
         secretAccessKey: '',
-        gcdnsKey: {keyFileName: "", content: ""},
+        gcdnsKey: { keyFileName: '', content: '' },
         digitalOceanToken: '',
         cloudflareToken: '',
         cloudflareEmail: '',
@@ -144,10 +144,10 @@ angular.module('Application').controller('CertsController', ['$scope', '$locatio
                 };
 
                 if (!data.projectId || !data.credentials || !data.credentials.client_email || !data.credentials.private_key) {
-                    throw "fields_missing";
+                    throw 'fields_missing';
                 }
-            } catch(e) {
-                $scope.dnsCredentials.error = "Cannot parse Google Service Account Key";
+            } catch (e) {
+                $scope.dnsCredentials.error = 'Cannot parse Google Service Account Key: ' + e.message;
                 $scope.dnsCredentials.busy = false;
                 return;
             }

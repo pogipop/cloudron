@@ -27,7 +27,7 @@ function getDnsCredentials(dnsConfig) {
         email: dnsConfig.email
     };
 
-    if(dnsConfig.credentials){
+    if (dnsConfig.credentials) {
         config.credentials = {
             client_email: dnsConfig.credentials.client_email,
             private_key: dnsConfig.credentials.private_key
@@ -43,14 +43,14 @@ function getZoneByName(dnsConfig, zoneName, callback) {
 
     var gcdns = GCDNS(getDnsCredentials(dnsConfig));
 
-    gcdns.getZones(function(err, zones, apiResponse) {
-        if (err && err.message == 'invalid_grant') return callback(new SubdomainError(SubdomainError.ACCESS_DENIED, "The key was probably revoked"));
-        if (err && err.reason == 'No such domain') return callback(new SubdomainError(SubdomainError.NOT_FOUND, err.message));
-        if (err && err.code == 403) return callback(new SubdomainError(SubdomainError.ACCESS_DENIED, err.message));
-        if (err && err.code == 404) return callback(new SubdomainError(SubdomainError.NOT_FOUND, err.message));
-        if (err) {
-            debug('gcdns.getZones', err);
-            return callback(new SubdomainError(SubdomainError.EXTERNAL_ERROR, err));
+    gcdns.getZones(function (error, zones, apiResponse) {
+        if (error && error.message === 'invalid_grant') return callback(new SubdomainError(SubdomainError.ACCESS_DENIED, 'The key was probably revoked'));
+        if (error && error.reason === 'No such domain') return callback(new SubdomainError(SubdomainError.NOT_FOUND, error.message));
+        if (error && error.code === 403) return callback(new SubdomainError(SubdomainError.ACCESS_DENIED, error.message));
+        if (error && error.code === 404) return callback(new SubdomainError(SubdomainError.NOT_FOUND, error.message));
+        if (error) {
+            debug('gcdns.getZones', error);
+            return callback(new SubdomainError(SubdomainError.EXTERNAL_ERROR, error));
         }
 
         var zone = zones.filter(function (zone) {
@@ -78,8 +78,8 @@ function upsert(dnsConfig, zoneName, subdomain, type, values, callback) {
 
         var domain = (subdomain ? subdomain + '.' : '') + zoneName + '.';
 
-        zone.getRecords({type: type, name: domain}, function(error, oldRecords, apiResponse) {
-            if (error && error.code == 403) return callback(new SubdomainError(SubdomainError.ACCESS_DENIED, error.message));
+        zone.getRecords({type: type, name: domain}, function (error, oldRecords, apiResponse) {
+            if (error && error.code === 403) return callback(new SubdomainError(SubdomainError.ACCESS_DENIED, error.message));
             if (error) {
                 debug('upsert->zone.getRecords', error);
                 return callback(new SubdomainError(SubdomainError.EXTERNAL_ERROR, error.message));
@@ -87,7 +87,7 @@ function upsert(dnsConfig, zoneName, subdomain, type, values, callback) {
             assert(oldRecords.length <= 1);
 
             var oldData = oldRecords.length > 0 ? oldRecords[0].metadata.rrdatas : [];
-            var newData = oldData.concat(values).sort().filter(function(el,i,a){if(i==a.indexOf(el))return 1;return 0});
+            var newData = oldData.concat(values).sort().filter(function (el, i, a) { return (i === a.indexOf(el)) ? 1 : 0; });
 
             var newRecord = zone.record(type, {
                 name: domain,
@@ -96,8 +96,8 @@ function upsert(dnsConfig, zoneName, subdomain, type, values, callback) {
             });
 
             zone.createChange({delete: oldRecords, add: newRecord}, function(error, change, apiResponse) {
-                if (error && error.code == 403) return callback(new SubdomainError(SubdomainError.ACCESS_DENIED, error.message));
-                if (error && error.code == 412) return callback(new SubdomainError(SubdomainError.STILL_BUSY, error.message));
+                if (error && error.code === 403) return callback(new SubdomainError(SubdomainError.ACCESS_DENIED, error.message));
+                if (error && error.code === 412) return callback(new SubdomainError(SubdomainError.STILL_BUSY, error.message));
                 if (error) {
                     debug('upsert->zone.createChange', error);
                     return callback(new SubdomainError(SubdomainError.EXTERNAL_ERROR, error.message));
@@ -125,11 +125,9 @@ function get(dnsConfig, zoneName, subdomain, type, callback) {
         };
 
         var allValues = [];
-        var recursiveRetriever = function(err, records, nextQuery, apiResponse) {
-            if (err) {
-                if (error && error.code == 403) return callback(new SubdomainError(SubdomainError.ACCESS_DENIED, error.message));
-                if (error) return callback(new SubdomainError(SubdomainError.EXTERNAL_ERROR, error));
-            }
+        var recursiveRetriever = function (error, records, nextQuery, apiResponse) {
+            if (error && error.code === 403) return callback(new SubdomainError(SubdomainError.ACCESS_DENIED, error.message));
+            if (error) return callback(new SubdomainError(SubdomainError.EXTERNAL_ERROR, error));
             if (records.length > 0) {
                 allValues = allValues.concat(records[0].data);
             }
@@ -156,8 +154,8 @@ function del(dnsConfig, zoneName, subdomain, type, values, callback) {
 
         var domain = (subdomain ? subdomain + '.' : '') + zoneName + '.';
 
-        zone.getRecords({type: type, name: domain}, function(error, oldRecords, apiResponse) {
-            if (error && error.code == 403) return callback(new SubdomainError(SubdomainError.ACCESS_DENIED, error.message));
+        zone.getRecords({ type: type, name: domain }, function(error, oldRecords, apiResponse) {
+            if (error && error.code === 403) return callback(new SubdomainError(SubdomainError.ACCESS_DENIED, error.message));
             if (error) {
                 debug('del->zone.getRecords', error);
                 return callback(new SubdomainError(SubdomainError.EXTERNAL_ERROR, error.message));
@@ -166,17 +164,17 @@ function del(dnsConfig, zoneName, subdomain, type, values, callback) {
 
 
             var oldData = oldRecords.length > 0 ? oldRecords[0].metadata.rrdatas : [];
-            var newData = oldData.filter(function(e){ return values.indexOf(e) == -1;}); //element is not in the list of values to delete
+            var newData = oldData.filter(function(e) { return values.indexOf(e) == -1; }); //element is not in the list of values to delete
 
-            var newRecord = newData.length == 0 ? null : zone.record(type, {
+            var newRecord = newData.length === 0 ? null : zone.record(type, {
                 name: domain,
                 data: newData,
                 ttl: 1
             });
 
-            zone.createChange({delete: oldRecords, add: newRecord}, function(error, change, apiResponse) {
-                if (error && error.code == 403) return callback(new SubdomainError(SubdomainError.ACCESS_DENIED, error.message));
-                if (error && error.code == 412) return callback(new SubdomainError(SubdomainError.STILL_BUSY, error.message));
+            zone.createChange({delete: oldRecords, add: newRecord}, function (error, change, apiResponse) {
+                if (error && error.code === 403) return callback(new SubdomainError(SubdomainError.ACCESS_DENIED, error.message));
+                if (error && error.code === 412) return callback(new SubdomainError(SubdomainError.STILL_BUSY, error.message));
                 if (error) {
                     debug('del->zone.createChange', error);
                     return callback(new SubdomainError(SubdomainError.EXTERNAL_ERROR, error.message));
@@ -205,7 +203,7 @@ function verifyDnsConfig(dnsConfig, fqdn, zoneName, ip, callback) {
         getZoneByName(credentials, zoneName, function (error, zone) {
             if (error) return callback(error);
 
-            var definedNS = zone.metadata.nameServers.sort().map(function(r){ return r.replace(/\.$/, '')});
+            var definedNS = zone.metadata.nameServers.sort().map(function(r) { return r.replace(/\.$/, ''); });
             if (!_.isEqual(definedNS, resolvedNS.sort())) {
                 debug('verifyDnsConfig: %j and %j do not match', resolvedNS, definedNS);
                 return callback(new SubdomainError(SubdomainError.BAD_FIELD, 'Domain nameservers are not set to Google Cloud DNS'));
