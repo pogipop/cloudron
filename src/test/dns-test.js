@@ -531,7 +531,7 @@ describe('dns provider', function () {
             var dnsConfig = {
                 provider: 'gcdns',
                 projectId: 'my-dns-proj',
-                keyFilename: 'syn-im-1ec6f9f870bf.json'
+                keyFilename: __dirname + '/syn-im-1ec6f9f870bf.json'
             };
 
             function mockery (queue) {
@@ -561,6 +561,7 @@ describe('dns provider', function () {
                 zone.metadata.dnsName = name + '.';
                 zone.metadata.nameServers = ns || ['8.8.8.8', '8.8.4.4'];
                 zone.getRecords = mockery(recordQueue || zoneQueue);
+                zone.createChange = mockery(recordQueue || zoneQueue);
                 zone.replaceRecords = mockery(recordQueue || zoneQueue);
                 zone.deleteRecords = mockery(recordQueue || zoneQueue);
                 return zone;
@@ -579,7 +580,8 @@ describe('dns provider', function () {
         });
 
         it('upsert non-existing record succeeds', function (done) {
-            zoneQueue.push([null, HOSTED_ZONES]);
+            zoneQueue.push([null, HOSTED_ZONES]); // getZone
+            zoneQueue.push([null, [ ]]); // getRecords
             zoneQueue.push([null, {id: '1'}]);
             subdomains.upsert('test', 'A', [ '1.2.3.4' ], function (error, result) {
                 expect(error).to.eql(null);
@@ -592,6 +594,7 @@ describe('dns provider', function () {
 
         it('upsert existing record succeeds', function (done) {
             zoneQueue.push([null, HOSTED_ZONES]);
+            zoneQueue.push([null, [GCDNS().zone('test').record('A', {'name': 'test', data:['5.6.7.8'], ttl: 1})]]);
             zoneQueue.push([null, {id: '2'}]);
 
             subdomains.upsert('test', 'A', [ '1.2.3.4' ], function (error, result) {
@@ -605,6 +608,7 @@ describe('dns provider', function () {
 
         it('upsert multiple record succeeds', function (done) {
             zoneQueue.push([null, HOSTED_ZONES]);
+            zoneQueue.push([null, [ ]]); // getRecords
             zoneQueue.push([null, {id: '3'}]);
 
             subdomains.upsert('', 'TXT', [ 'first', 'second', 'third' ], function (error, result) {
@@ -618,14 +622,13 @@ describe('dns provider', function () {
 
         it('get succeeds', function (done) {
             zoneQueue.push([null, HOSTED_ZONES]);
-            zoneQueue.push([null, [], true]);
-            zoneQueue.push([null, [GCDNS().zone('test').record('A', {'name': 'test', data:['1.2.3.4'], ttl: 1})]]);
+            zoneQueue.push([null, [GCDNS().zone('test').record('A', {'name': 'test', data:['1.2.3.4', '5.6.7.8'], ttl: 1})]]);
 
             subdomains.get('test', 'A', function (error, result) {
                 expect(error).to.eql(null);
                 expect(result).to.be.an(Array);
-                expect(result.length).to.eql(1);
-                expect(result[0]).to.eql('1.2.3.4');
+                expect(result.length).to.eql(2);
+                expect(result).to.eql(['1.2.3.4', '5.6.7.8']);
                 expect(zoneQueue.length).to.eql(0);
 
                 done();
@@ -634,6 +637,7 @@ describe('dns provider', function () {
 
         it('del succeeds', function (done) {
             zoneQueue.push([null, HOSTED_ZONES]);
+            zoneQueue.push([null, [GCDNS().zone('test').record('A', {'name': 'test', data:['5.6.7.8'], ttl: 1})]]);
             zoneQueue.push([null, {id: '5'}]);
 
             subdomains.remove('test', 'A', ['1.2.3.4'], function (error) {

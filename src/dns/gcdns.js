@@ -43,7 +43,7 @@ function getZoneByName(dnsConfig, zoneName, callback) {
 
     var gcdns = GCDNS(getDnsCredentials(dnsConfig));
 
-    gcdns.getZones(function (error, zones, apiResponse) {
+    gcdns.getZones(function (error, zones) {
         if (error && error.message === 'invalid_grant') return callback(new SubdomainError(SubdomainError.ACCESS_DENIED, 'The key was probably revoked'));
         if (error && error.reason === 'No such domain') return callback(new SubdomainError(SubdomainError.NOT_FOUND, error.message));
         if (error && error.code === 403) return callback(new SubdomainError(SubdomainError.ACCESS_DENIED, error.message));
@@ -78,24 +78,20 @@ function upsert(dnsConfig, zoneName, subdomain, type, values, callback) {
 
         var domain = (subdomain ? subdomain + '.' : '') + zoneName + '.';
 
-        zone.getRecords({type: type, name: domain}, function (error, oldRecords, apiResponse) {
+        zone.getRecords({ type: type, name: domain }, function (error, oldRecords) {
             if (error && error.code === 403) return callback(new SubdomainError(SubdomainError.ACCESS_DENIED, error.message));
             if (error) {
                 debug('upsert->zone.getRecords', error);
                 return callback(new SubdomainError(SubdomainError.EXTERNAL_ERROR, error.message));
             }
-            assert(oldRecords.length <= 1);
-
-            var oldData = oldRecords.length > 0 ? oldRecords[0].metadata.rrdatas : [];
-            var newData = oldData.concat(values).sort().filter(function (el, i, a) { return (i === a.indexOf(el)) ? 1 : 0; });
 
             var newRecord = zone.record(type, {
                 name: domain,
-                data: newData,
+                data: values,
                 ttl: 1
             });
 
-            zone.createChange({delete: oldRecords, add: newRecord}, function(error, change, apiResponse) {
+            zone.createChange({ delete: oldRecords, add: newRecord }, function(error, change) {
                 if (error && error.code === 403) return callback(new SubdomainError(SubdomainError.ACCESS_DENIED, error.message));
                 if (error && error.code === 412) return callback(new SubdomainError(SubdomainError.STILL_BUSY, error.message));
                 if (error) {
@@ -124,20 +120,13 @@ function get(dnsConfig, zoneName, subdomain, type, callback) {
             type: type
         };
 
-        var allValues = [];
-        var recursiveRetriever = function (error, records, nextQuery, apiResponse) {
+        zone.getRecords(params, function (error, records) {
             if (error && error.code === 403) return callback(new SubdomainError(SubdomainError.ACCESS_DENIED, error.message));
             if (error) return callback(new SubdomainError(SubdomainError.EXTERNAL_ERROR, error));
-            if (records.length > 0) {
-                allValues = allValues.concat(records[0].data);
-            }
-            if (nextQuery) {
-                return zone.getRecords(nextQuery, recursiveRetriever);
-            }
-
-            callback(null, allValues);
-        };
-        zone.getRecords(params, recursiveRetriever);
+            if (records.length === 0) return callback(null, [ ]);
+ 
+            return callback(null, records[0].data);
+        });
     });
 }
 
@@ -154,25 +143,14 @@ function del(dnsConfig, zoneName, subdomain, type, values, callback) {
 
         var domain = (subdomain ? subdomain + '.' : '') + zoneName + '.';
 
-        zone.getRecords({ type: type, name: domain }, function(error, oldRecords, apiResponse) {
+        zone.getRecords({ type: type, name: domain }, function(error, oldRecords) {
             if (error && error.code === 403) return callback(new SubdomainError(SubdomainError.ACCESS_DENIED, error.message));
             if (error) {
                 debug('del->zone.getRecords', error);
                 return callback(new SubdomainError(SubdomainError.EXTERNAL_ERROR, error.message));
             }
-            assert(oldRecords.length <= 1);
 
-
-            var oldData = oldRecords.length > 0 ? oldRecords[0].metadata.rrdatas : [];
-            var newData = oldData.filter(function(e) { return values.indexOf(e) == -1; }); //element is not in the list of values to delete
-
-            var newRecord = newData.length === 0 ? null : zone.record(type, {
-                name: domain,
-                data: newData,
-                ttl: 1
-            });
-
-            zone.createChange({delete: oldRecords, add: newRecord}, function (error, change, apiResponse) {
+            zone.deleteRecords(oldRecords, function (error, change) {
                 if (error && error.code === 403) return callback(new SubdomainError(SubdomainError.ACCESS_DENIED, error.message));
                 if (error && error.code === 412) return callback(new SubdomainError(SubdomainError.STILL_BUSY, error.message));
                 if (error) {
