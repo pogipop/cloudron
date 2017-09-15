@@ -15,7 +15,8 @@ exports = module.exports = {
     feedback: feedback,
     checkForUpdates: checkForUpdates,
     getLogs: getLogs,
-    getLogStream: getLogStream
+    getLogStream: getLogStream,
+    sendTestMail: sendTestMail
 };
 
 var assert = require('assert'),
@@ -300,4 +301,14 @@ function getLogStream(req, res, next) {
         logStream.on('end', res.end.bind(res));
         logStream.on('error', res.end.bind(res, null));
     });
+}
+
+function sendTestMail(req, res, next) {
+    assert.strictEqual(typeof req.body, 'object');
+
+    if (!req.body.email || typeof req.body.email !== 'string') return next(new HttpError(400, 'email must be a non-empty string'));
+
+    mailer.sendTestMail(req.body.email);
+
+    next(new HttpSuccess(202));
 }

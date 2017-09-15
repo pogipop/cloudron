@@ -30,6 +30,8 @@ exports = module.exports = {
     FEEDBACK_TYPE_UPGRADE_REQUEST: 'upgrade_request',
     sendFeedback: sendFeedback,
 
+    sendTestMail: sendTestMail,
+
     _getMailQueue: _getMailQueue,
     _clearMailQueue: _clearMailQueue
 };
@@ -552,11 +554,24 @@ function sendFeedback(user, type, subject, description) {
         type === exports.FEEDBACK_TYPE_UPGRADE_REQUEST ||
         type === exports.FEEDBACK_TYPE_APP_ERROR);
 
-    var mailOptions = {
-        from: mailConfig().from,
+        var mailOptions = {
+            from: mailConfig().from,
         to: 'support@cloudron.io',
         subject: util.format('[%s] %s - %s', type, config.fqdn(), subject),
         text: render('feedback.ejs', { fqdn: config.fqdn(), type: type, user: user, subject: subject, description: description, format: 'text'})
+    };
+
+    enqueue(mailOptions);
+}
+
+function sendTestMail(email) {
+    assert.strictEqual(typeof email, 'string');
+
+    var mailOptions = {
+        from: mailConfig().from,
+        to: email,
+        subject: util.format('Test Email from %s', config.fqdn()),
+        text: render('test.ejs', { fqdn: config.fqdn(), format: 'text'})
     };
 
     enqueue(mailOptions);

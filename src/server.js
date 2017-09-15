@@ -124,7 +124,8 @@ function initializeExpressSync() {
     router.put ('/api/v1/cloudron/ssh/authorized_keys', cloudronScope, routes.user.requireAdmin, routes.ssh.addAuthorizedKey);
     router.get ('/api/v1/cloudron/ssh/authorized_keys/:identifier', cloudronScope, routes.user.requireAdmin, routes.ssh.getAuthorizedKey);
     router.del ('/api/v1/cloudron/ssh/authorized_keys/:identifier', cloudronScope, routes.user.requireAdmin, routes.ssh.delAuthorizedKey);
-    router.get ('/api/v1/cloudron/eventlog', settingsScope, routes.user.requireAdmin, routes.eventlog.get);
+    router.get ('/api/v1/cloudron/eventlog', cloudronScope, routes.user.requireAdmin, routes.eventlog.get);
+    router.post('/api/v1/cloudron/send_test_mail',  cloudronScope, routes.user.requireAdmin, routes.cloudron.sendTestMail);
 
     // profile api, working off the user behind the provided token
     router.get ('/api/v1/profile', profileScope, routes.profile.get);

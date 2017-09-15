@@ -158,6 +158,14 @@ angular.module('Application').controller('EmailController', ['$scope', '$locatio
         }
     };
 
+    $scope.sendTestEmail = function () {
+        Client.sentTestMail($scope.user.email, function (error) {
+            if (error) return console.error(error);
+
+            $('#testEmailSent').modal('show');
+        });
+    };
+
     function getMailConfig() {
         Client.getMailConfig(function (error, mailConfig) {
             if (error) return console.error(error);

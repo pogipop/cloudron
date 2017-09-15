@@ -1157,6 +1157,17 @@ angular.module('Application').service('Client', ['$http', 'md5', 'Notification',
         }).error(defaultErrorHandler(callback));
     };
 
+    Client.prototype.sentTestMail = function (email, callback) {
+        var data = {
+            email: email
+        };
+
+        post('/api/v1/cloudron/send_test_mail', data).success(function(data, status) {
+            if (status !== 202) return callback(new ClientError(status, data));
+            callback(null);
+        }).error(defaultErrorHandler(callback));
+    };
+
     client = new Client();
     return client;
 }]);
