@@ -109,7 +109,7 @@ describe('dns provider', function () {
 
             subdomains.upsert('test', 'A', [ '1.2.3.4' ], function (error, result) {
                 expect(error).to.eql(null);
-                expect(result).to.eql('unused');
+                expect(result).to.eql('3352892');
                 expect(req1.isDone()).to.be.ok();
                 expect(req2.isDone()).to.be.ok();
 
@@ -155,11 +155,11 @@ describe('dns provider', function () {
                 .reply(200, { domain_records: [ DOMAIN_RECORD_0, DOMAIN_RECORD_1 ] });
             var req2 = nock(DIGITALOCEAN_ENDPOINT).filteringRequestBody(function () { return false; })
                 .put('/v2/domains/' + config.zoneName() + '/records/' + DOMAIN_RECORD_1.id)
-                .reply(200, { domain_records: DOMAIN_RECORD_1_NEW });
+                .reply(200, { domain_record: DOMAIN_RECORD_1_NEW });
 
             subdomains.upsert('test', 'A', [ DOMAIN_RECORD_1_NEW.data ], function (error, result) {
                 expect(error).to.eql(null);
-                expect(result).to.eql('unused');
+                expect(result).to.eql('3352893');
                 expect(req1.isDone()).to.be.ok();
                 expect(req2.isDone()).to.be.ok();
 
@@ -235,17 +235,17 @@ describe('dns provider', function () {
                 .reply(200, { domain_records: [ DOMAIN_RECORD_0, DOMAIN_RECORD_1, DOMAIN_RECORD_2 ] });
             var req2 = nock(DIGITALOCEAN_ENDPOINT).filteringRequestBody(function () { return false; })
                 .put('/v2/domains/' + config.zoneName() + '/records/' + DOMAIN_RECORD_1.id)
-                .reply(200, { domain_records: DOMAIN_RECORD_1_NEW });
+                .reply(200, { domain_record: DOMAIN_RECORD_1_NEW });
             var req3 = nock(DIGITALOCEAN_ENDPOINT).filteringRequestBody(function () { return false; })
                 .put('/v2/domains/' + config.zoneName() + '/records/' + DOMAIN_RECORD_2.id)
-                .reply(200, { domain_records: DOMAIN_RECORD_2_NEW });
+                .reply(200, { domain_record: DOMAIN_RECORD_2_NEW });
             var req4 = nock(DIGITALOCEAN_ENDPOINT).filteringRequestBody(function () { return false; })
                 .post('/v2/domains/' + config.zoneName() + '/records')
-                .reply(201, { domain_records: DOMAIN_RECORD_2_NEW });
+                .reply(201, { domain_record: DOMAIN_RECORD_2_NEW });
 
             subdomains.upsert('', 'TXT', [ DOMAIN_RECORD_2_NEW.data, DOMAIN_RECORD_1_NEW.data, DOMAIN_RECORD_3_NEW.data ], function (error, result) {
                 expect(error).to.eql(null);
-                expect(result).to.eql('unused');
+                expect(result).to.eql('3352893');
                 expect(req1.isDone()).to.be.ok();
                 expect(req2.isDone()).to.be.ok();
                 expect(req3.isDone()).to.be.ok();

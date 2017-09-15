@@ -13,6 +13,7 @@ var assert = require('assert'),
     constants = require('../constants.js'),
     debug = require('debug')('box:dns/digitalocean'),
     dns = require('dns'),
+    safe = require('safetydance'),
     SubdomainError = require('../subdomains.js').SubdomainError,
     superagent = require('superagent'),
     util = require('util');
@@ -77,7 +78,7 @@ function upsert(dnsConfig, zoneName, subdomain, type, values, callback) {
         if (error) return callback(error);
 
         // used to track available records to update instead of create
-        var i = 0;
+        var i = 0, recordIds = [];
 
         async.eachSeries(values, function (value, callback) {
             var priority = null;
@@ -106,6 +107,8 @@ function upsert(dnsConfig, zoneName, subdomain, type, values, callback) {
                     if (result.statusCode === 422) return callback(new SubdomainError(SubdomainError.BAD_FIELD, result.body.message));
                     if (result.statusCode !== 201) return callback(new SubdomainError(SubdomainError.EXTERNAL_ERROR, formatError(result)));
 
+                    recordIds.push(safe.query(result.body, 'domain_record.id'));
+
                     return callback(null);
                 });
             } else {
@@ -122,13 +125,15 @@ function upsert(dnsConfig, zoneName, subdomain, type, values, callback) {
                     if (result.statusCode === 422) return callback(new SubdomainError(SubdomainError.BAD_FIELD, result.body.message));
                     if (result.statusCode !== 200) return callback(new SubdomainError(SubdomainError.EXTERNAL_ERROR, formatError(result)));
 
+                    recordIds.push(safe.query(result.body, 'domain_record.id'));
+
                     return callback(null);
                 });
             }
-        }, function (error) {
+        }, function (error, id) {
             if (error) return callback(error);
 
-            callback(null, 'unused');
+            callback(null, '' + recordIds[0]); // DO ids are integers
         });
     });
 }

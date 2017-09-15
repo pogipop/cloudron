@@ -273,6 +273,7 @@ function registerSubdomain(app, overwrite, callback) {
         }, function (error, result) {
             if (error || result instanceof Error) return callback(error || result);
 
+            // dnsRecordId tracks whether we created this DNS record so that we can unregister later
             updateApp(app, { dnsRecordId: result }, callback);
         });
     });
@@ -286,6 +287,11 @@ function unregisterSubdomain(app, location, callback) {
     // do not unregister bare domain because we show a error/cloudron info page there
     if (!config.isCustomDomain() && location === '') {
         debugApp(app, 'Skip unregister of empty subdomain');
+        return callback(null);
+    }
+
+    if (!app.dnsRecordId) {
+        debugApp(app, 'Skip unregister of record not created by cloudron');
         return callback(null);
     }
 
@@ -498,6 +504,9 @@ function configure(app, callback) {
     assert.strictEqual(typeof app, 'object');
     assert.strictEqual(typeof callback, 'function');
 
+    // oldConfig can be null during an infra update
+    var locationChanged = app.oldConfig && app.oldConfig.location !== app.location;
+
     async.series([
         updateApp.bind(null, app, { installationProgress: '10, Cleaning up old install' }),
         unconfigureNginx.bind(null, app),
@@ -506,8 +515,7 @@ function configure(app, callback) {
         stopApp.bind(null, app),
         deleteContainers.bind(null, app),
         function (next) {
-            // oldConfig can be null during an infra update
-            if (!app.oldConfig || app.oldConfig.location === app.location) return next();
+            if (!locationChanged) return next();
             unregisterSubdomain(app, app.oldConfig.location, next);
         },
 
@@ -517,7 +525,7 @@ function configure(app, callback) {
         downloadIcon.bind(null, app),
 
         updateApp.bind(null, app, { installationProgress: '35, Registering subdomain' }),
-        registerSubdomain.bind(null, app, true /* overwrite */),
+        registerSubdomain.bind(null, app, !locationChanged /* overwrite */), // if location changed, do not overwrite to detect conflicts
 
         updateApp.bind(null, app, { installationProgress: '40, Downloading image' }),
         docker.downloadImage.bind(null, app.manifest),
