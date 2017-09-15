@@ -222,7 +222,7 @@ angular.module('Application').controller('CertsController', ['$scope', '$locatio
 
         $scope.dnsCredentials.gcdnsKey.keyFileName = '';
         $scope.dnsCredentials.gcdnsKey.content = '';
-        if($scope.dnsConfig.provider === 'gcdns'){
+        if ($scope.dnsConfig.provider === 'gcdns') {
             $scope.dnsCredentials.gcdnsKey.keyFileName = $scope.dnsConfig.credentials.client_email;
             $scope.dnsCredentials.gcdnsKey.content = JSON.stringify({
                 "project_id": $scope.dnsConfig.projectId,
