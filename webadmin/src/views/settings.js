@@ -42,6 +42,7 @@ angular.module('Application').controller('SettingsController', ['$scope', '$loca
 
     $scope.storageProvider = [
         { name: 'Amazon S3', value: 's3' },
+        { name: 'Google Cloud Storage', value: 'gcs' },
         { name: 'DigitalOcean Spaces NYC3', value: 'digitalocean-spaces' },
         { name: 'Exoscale SOS', value: 'exoscale-sos' },
         { name: 'Filesystem', value: 'filesystem' },
@@ -313,6 +314,22 @@ angular.module('Application').controller('SettingsController', ['$scope', '$loca
         return provider === 's3' || provider === 'minio' || provider === 's3-v4-compat' || provider === 'exoscale-sos' || provider === 'digitalocean-spaces';
     };
 
+    function readFileLocally(obj, file, fileName) {
+        return function (event) {
+            $scope.$apply(function () {
+                obj[file] = null;
+                obj[fileName] = event.target.files[0].name;
+
+                var reader = new FileReader();
+                reader.onload = function (result) {
+                    if (!result.target || !result.target.result) return console.error('Unable to read local file');
+                    obj[file] = result.target.result;
+                };
+                reader.readAsText(event.target.files[0]);
+            });
+        };
+    }
+
     $scope.configureBackup = {
         busy: false,
         error: {},
@@ -322,6 +339,7 @@ angular.module('Application').controller('SettingsController', ['$scope', '$loca
         prefix: '',
         accessKeyId: '',
         secretAccessKey: '',
+        gcsKey: { keyFileName: '', content: '' },
         region: '',
         endpoint: '',
         backupFolder: '',
@@ -334,6 +352,8 @@ angular.module('Application').controller('SettingsController', ['$scope', '$loca
             $scope.configureBackup.prefix = '';
             $scope.configureBackup.accessKeyId = '';
             $scope.configureBackup.secretAccessKey = '';
+            $scope.configureBackup.gcsKey.keyFileName = '';
+            $scope.configureBackup.gcsKey.content = '';
             $scope.configureBackup.endpoint = '';
             $scope.configureBackup.region = '';
             $scope.configureBackup.backupFolder = '';
@@ -352,6 +372,13 @@ angular.module('Application').controller('SettingsController', ['$scope', '$loca
             $scope.configureBackup.region = $scope.backupConfig.region;
             $scope.configureBackup.accessKeyId = $scope.backupConfig.accessKeyId;
             $scope.configureBackup.secretAccessKey = $scope.backupConfig.secretAccessKey;
+            if ($scope.backupConfig.provider === 'gcs') {
+                $scope.configureBackup.gcsKey.keyFileName = $scope.backupConfig.credentials.client_email;
+                $scope.configureBackup.gcsKey.content = JSON.stringify({
+                    "project_id": $scope.backupConfig.projectId,
+                    "credentials": $scope.backupConfig.credentials
+                });
+            }
             $scope.configureBackup.endpoint = $scope.backupConfig.endpoint;
             $scope.configureBackup.key = $scope.backupConfig.key;
             $scope.configureBackup.backupFolder = $scope.backupConfig.backupFolder;
@@ -394,6 +421,25 @@ angular.module('Application').controller('SettingsController', ['$scope', '$loca
                 } else if (backupConfig.provider === 'digitalocean-spaces') {
                     backupConfig.endpoint = 'https://nyc3.digitaloceanspaces.com';
                     backupConfig.region = 'us-east-1';
+                }
+            } else if (backupConfig.provider === 'gcs'){
+                backupConfig.bucket = $scope.configureBackup.bucket;
+                backupConfig.prefix = $scope.configureBackup.prefix;
+                try {
+                    var serviceAccountKey = JSON.parse($scope.configureBackup.gcsKey.content);
+                    backupConfig.projectId = serviceAccountKey.project_id;
+                    backupConfig.credentials = {
+                        client_email: serviceAccountKey.client_email,
+                        private_key: serviceAccountKey.private_key
+                    };
+
+                    if (!backupConfig.projectId || !backupConfig.credentials || !backupConfig.credentials.client_email || !backupConfig.credentials.private_key) {
+                        throw 'fields_missing';
+                    }
+                } catch (e) {
+                    $scope.configureBackup.error.generic = 'Cannot parse Google Service Account Key: ' + e.message;
+                    $scope.configureBackup.busy = false;
+                    return;
                 }
             } else if (backupConfig.provider === 'filesystem') {
                 backupConfig.backupFolder = $scope.configureBackup.backupFolder;
@@ -456,6 +502,8 @@ angular.module('Application').controller('SettingsController', ['$scope', '$loca
             });
         }
     };
+
+    document.getElementById('gcsKeyFileInput').onchange = readFileLocally($scope.configureBackup.gcsKey, 'content', 'keyFileName');
 
     $scope.autoUpdate = {
         busy: false,

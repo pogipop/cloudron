@@ -14,7 +14,8 @@ var BackupsError = require('../backups.js').BackupsError,
     os = require('os'),
     path = require('path'),
     rimraf = require('rimraf'),
-    s3 = require('../storage/s3.js');
+    s3 = require('../storage/s3.js'),
+    gcs = require('../storage/gcs.js');
 
 describe('Storage', function () {
     describe('filesystem', function () {
@@ -286,6 +287,162 @@ describe('Storage', function () {
                 expect(error).to.be(null);
                 done();
             });
+        });
+    });
+
+    describe('gcs', function () {
+        this.timeout(10000);
+
+        var gBackupId_1 = 'someprefix/one';
+        var gBackupId_2 = 'someprefix/two';
+        var gTmpFolder;
+        var gSourceFolder;
+        var gDestinationFolder;
+        var gBackupConfig = {
+            provider: 'gcs',
+            key: '',
+            prefix: 'unit.test',
+            bucket: 'cloudron-storage-test',
+            projectId: '',
+            credentials: {
+                client_email: '',
+                private_key: ''
+            }
+        };
+        var GCSMockBasePath = path.join(os.tmpdir(), 'gcs-backup-test-buckets/');
+
+        before(function (done) {
+            var mockGCS = function(cfg){
+                return {bucket: function(b){
+                    return {file: function(filename){
+                        var ensurePathWritable = function (filename) {
+                            filename = GCSMockBasePath + filename;
+                            mkdirp.sync(path.dirname(filename));
+                            return filename;
+                        };
+
+                        return {
+                            createReadStream: function(cfg){
+                                return fs.createReadStream(ensurePathWritable(filename))
+                                    .on('error', function(e){
+                                        if (e.code != 404) {
+                                            e.code = 404;
+                                            this.emit('error', e);
+                                        }
+                                    })
+                                ;
+                            },
+                            createWriteStream: function(cfg){
+                                return fs.createWriteStream(ensurePathWritable(filename));
+                            },
+                            delete: function(cb){
+                                fs.unlink(ensurePathWritable(filename), cb);
+                            },
+                            copy: function(dst, cb){
+                                var notFoundHandler = function(e){
+                                    if (e && e.code == 'ENOENT') { e.code = 404; return cb(e);}
+                                    cb();
+                                };
+                                return fs.createReadStream(ensurePathWritable(filename))
+                                    .on('end', cb)
+                                    .on('error', notFoundHandler)
+                                    .pipe(fs.createWriteStream(ensurePathWritable(dst)))
+                                    .on('end', cb)
+                                    .on('error', notFoundHandler)
+                                ;
+                            }
+                        };
+                    }}
+                }};
+            };
+            gcs._mockInject(mockGCS);
+
+            setup(function (error) {
+                expect(error).to.be(null);
+
+                gTmpFolder = fs.mkdtempSync(path.join(os.tmpdir(), 'gcs-backup-test_'));
+                gSourceFolder = path.join(__dirname, 'storage');
+                gDestinationFolder = path.join(gTmpFolder, 'destination/');
+
+                settings.setBackupConfig(gBackupConfig, function (error) {
+                    expect(error).to.be(null);
+
+                    done();
+                });
+            });
+        });
+
+        after(function (done) {
+            gcs._mockRestore();
+            rimraf.sync(GCSMockBasePath);
+
+            cleanup(function (error) {
+                expect(error).to.be(null);
+                rimraf(gTmpFolder, done);
+            });
+        });
+
+        it('can backup', function (done) {
+            gcs.backup(gBackupConfig, gBackupId_1, gSourceFolder, function (error) {
+                expect(error).to.be(null);
+
+                done();
+            });
+        });
+
+        it('can restore', function (done) {
+            gcs.restore(gBackupConfig, gBackupId_1, gDestinationFolder, function (error) {
+                expect(error).to.be(null);
+
+                compareDirectories(path.join(gSourceFolder, 'data'), path.join(gDestinationFolder, 'data'), function (error) {
+                    expect(error).to.equal(null);
+
+                    compareDirectories(path.join(gSourceFolder, 'addon'), path.join(gDestinationFolder, 'addon'), function (error) {
+                        expect(error).to.equal(null);
+
+                        rimraf(gDestinationFolder, done);
+                    });
+                });
+            });
+        });
+
+        it('can copy backup', function (done) {
+            // will be verified after removing the first and restoring from the copy
+            gcs.copyBackup(gBackupConfig, gBackupId_1, gBackupId_2, done);
+        });
+
+        it('can remove backup', function (done) {
+            // will be verified with next test trying to restore the removed one
+            gcs.removeBackups(gBackupConfig, [ gBackupId_1 ], done);
+        });
+
+        it('cannot restore deleted backup', function (done) {
+            gcs.restore(gBackupConfig, gBackupId_1, gDestinationFolder, function (error) {
+                expect(error).to.be.an('object');
+                expect(error.reason).to.equal(BackupsError.NOT_FOUND);
+
+                done();
+            });
+        });
+
+        it('can restore backup copy', function (done) {
+            gcs.restore(gBackupConfig, gBackupId_2, gDestinationFolder, function (error) {
+                expect(error).to.be(null);
+
+                compareDirectories(path.join(gSourceFolder, 'data'), path.join(gDestinationFolder, 'data'), function (error) {
+                    expect(error).to.equal(null);
+
+                    compareDirectories(path.join(gSourceFolder, 'addon'), path.join(gDestinationFolder, 'addon'), function (error) {
+                        expect(error).to.equal(null);
+
+                        rimraf(gDestinationFolder, done);
+                    });
+                });
+            });
+        });
+
+        it('can remove backup copy', function (done) {
+            gcs.removeBackups(gBackupConfig, [ gBackupId_2 ], done);
         });
     });
 });

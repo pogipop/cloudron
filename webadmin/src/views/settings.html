@@ -146,7 +146,7 @@
                             </p>
                         </div>
 
-                        <!-- S3/Minio/SOS -->
+                        <!-- S3/Minio/SOS/GCS -->
                         <div class="form-group" ng-class="{ 'has-error': configureBackup.error.endpoint }" ng-show="configureBackup.provider === 'minio' || configureBackup.provider === 's3-v4-compat'">
                             <label class="control-label" for="inputConfigureBackupEndpoint">Endpoint</label>
                             <input type="text" class="form-control" ng-model="configureBackup.endpoint" id="inputConfigureBackupEndpoint" name="endpoint" ng-disabled="configureBackup.busy" placeholder="URL of Minio/S3 Compatible" ng-required="configureBackup.provider === 'minio' || configureBackup.provider === 's3-v4-compat'">
@@ -160,7 +160,7 @@
                             </label>
                         </div>
 
-                        <div class="form-group" ng-class="{ 'has-error': configureBackup.error.bucket }" ng-show="s3like(configureBackup.provider)">
+                        <div class="form-group" ng-class="{ 'has-error': configureBackup.error.bucket }" ng-show="s3like(configureBackup.provider) || configureBackup.provider === 'gcs'">
                             <label class="control-label" for="inputConfigureBackupBucket">Bucket name</label>
                             <input type="text" class="form-control" ng-model="configureBackup.bucket" id="inputConfigureBackupBucket" name="bucket" ng-disabled="configureBackup.busy" ng-required="s3like(configureBackup.provider)">
                         </div>
@@ -183,6 +183,16 @@
                         <div class="form-group" ng-class="{ 'has-error': configureBackup.error.secretAccessKey }" ng-show="s3like(configureBackup.provider)">
                             <label class="control-label" for="inputConfigureBackupSecretAccessKey">Secret access key</label>
                             <input type="text" class="form-control" ng-model="configureBackup.secretAccessKey" id="inputConfigureBackupSecretAccessKey" name="secretAccessKey" ng-disabled="configureBackup.busy" ng-required="s3like(configureBackup.provider)">
+                        </div>
+
+                        <div class="form-group" ng-class="{ 'has-error': configureBackup.error.gcsKeyInput }" ng-show="configureBackup.provider === 'gcs'">
+                            <div class="input-group">
+                                <input type="file" id="gcsKeyFileInput" style="display:none"/>
+                                <input type="text" class="form-control" placeholder="Service Account Key" ng-model="configureBackup.gcsKey.keyFileName" id="gcsKeyInput" name="cert" onclick="getElementById('gcsKeyFileInput').click();" style="cursor: pointer;" ng-disabled="configureBackup.busy" required>
+                                <span class="input-group-addon">
+                              <i class="fa fa-upload" onclick="getElementById('gcsKeyFileInput').click();"></i>
+                            </span>
+                            </div>
                         </div>
 
                         <div class="form-group" ng-show="configureBackup.provider !== 'noop'">
@@ -349,7 +359,7 @@
           </div>
           <div class="col-xs-6 text-right">
               <span ng-show="backupConfig.provider === 'filesystem'">{{ backupConfig.backupFolder }}</span>
-              <span ng-show="backupConfig.provider === 'minio' || backupConfig.provider === 'exoscale-sos' || backupConfig.provider === 's3-v4-compat' || backupConfig.provider === 'digitalocean-spaces'">{{ backupConfig.bucket + '/' + backupConfig.prefix }}</span>
+              <span ng-show="backupConfig.provider === 'minio' || backupConfig.provider === 'exoscale-sos' || backupConfig.provider === 's3-v4-compat' || backupConfig.provider === 'digitalocean-spaces' || backupConfig.provider === 'gcs'">{{ backupConfig.bucket + '/' + backupConfig.prefix }}</span>
               <span ng-show="backupConfig.provider === 's3'">{{ backupConfig.region + '   ' + backupConfig.bucket + '/' + backupConfig.prefix }}</span>
           </div>
       </div>

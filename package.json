@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "@google-cloud/dns": "^0.6.2",
+    "@google-cloud/storage": "^1.2.1",
     "@sindresorhus/df": "^2.1.0",
     "async": "^2.5.0",
     "aws-sdk": "^2.132.0",
