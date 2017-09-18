@@ -22,6 +22,7 @@ var assert = require('assert'),
     once = require('once'),
     path = require('path'),
     safe = require('safetydance'),
+    shell = require('../shell.js'),
     targz = require('./targz.js');
 
 var FALLBACK_BACKUP_FOLDER = '/var/backups';
@@ -114,26 +115,12 @@ function copy(apiConfig, oldBackupId, newBackupId, callback) {
     mkdirp(path.dirname(newFilePath), function (error) {
         if (error) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
 
-        var readStream = fs.createReadStream(oldFilePath);
-        var writeStream = fs.createWriteStream(newFilePath);
-
-        readStream.on('error', function (error) {
-            debug('copyBackup: read stream error.', error);
-            callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
-        });
-
-        writeStream.on('error', function (error) {
-            debug('copyBackup: write stream error.', error);
-            callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
-        });
-
-        writeStream.on('close', function () {
-            if (!safe.child_process.execSync('chown -R ' + BACKUP_USER + ':' + BACKUP_USER + ' ' + path.dirname(newFilePath))) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, safe.error.message));
+        // this will hardlink backups saving space
+        shell.exec('copy', '/bin/cp', [ '-al', oldFilePath, newFilePath ], { }, function (error) {
+            if (error) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
 
             callback();
         });
-
-        readStream.pipe(writeStream);
     });
 }
 
