@@ -31,6 +31,7 @@ var addons = require('./addons.js'),
     DatabaseError = require('./databaseerror.js'),
     debug = require('debug')('box:backups'),
     eventlog = require('./eventlog.js'),
+    fs = require('fs'),
     locker = require('./locker.js'),
     mailer = require('./mailer.js'),
     path = require('path'),
@@ -138,38 +139,26 @@ function getRestoreConfig(backupId, callback) {
     });
 }
 
-function copyLastBackup(app, manifest, prefix, backupConfig, callback) {
-    assert.strictEqual(typeof app, 'object');
-    assert.strictEqual(typeof app.lastBackupId, 'string');
-    assert(manifest && typeof manifest === 'object');
-    assert.strictEqual(typeof prefix, 'string');
-    assert.strictEqual(typeof backupConfig, 'object');
+function getSnapshotInfo(id) {
+    assert.strictEqual(typeof id, 'string');
+
+    var contents = safe.fs.readFileSync(paths.SNAPSHOT_INFO_FILE, 'utf8');
+    var info = safe.JSON.parse(contents);
+    if (!info) return { };
+    return info[id] || { };
+}
+
+function setSnapshotInfo(id, info, callback) {
+    assert.strictEqual(typeof id, 'string');
+    assert.strictEqual(typeof info, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    var timestamp = (new Date()).toISOString().replace(/[T.]/g, '-').replace(/[:Z]/g,'');
-    var newBackupId = util.format('%s/app_%s_%s_v%s', prefix, app.id, timestamp, manifest.version);
+    var contents = safe.fs.readFileSync(paths.SNAPSHOT_INFO_FILE, 'utf8');
+    var data = safe.JSON.parse(contents) || { };
+    if (info) data[id] = info; else delete data[id];
+    if (!safe.fs.writeFileSync(paths.SNAPSHOT_INFO_FILE, JSON.stringify(data, null, 4), 'utf8')) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, safe.error.message));
 
-    var restoreConfig = apps.getAppConfig(app);
-    restoreConfig.manifest = manifest;
-
-    debug('copyLastBackup: copying backup %s to %s', app.lastBackupId, newBackupId);
-
-    backupdb.add({ id: newBackupId, version: manifest.version, type: backupdb.BACKUP_TYPE_APP, dependsOn: [ ], restoreConfig: restoreConfig }, function (error) {
-        if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
-
-        api(backupConfig.provider).copy(backupConfig, app.lastBackupId, newBackupId, function (copyBackupError) {
-            const state = copyBackupError ? backupdb.BACKUP_STATE_ERROR : backupdb.BACKUP_STATE_NORMAL;
-
-            debugApp(app, 'copyLastBackup: %s done with state %s', newBackupId, state);
-
-            backupdb.update(newBackupId, { state: state }, function (error) {
-                if (copyBackupError) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, copyBackupError.message));
-                if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
-
-                callback(null, newBackupId);
-            });
-        });
-    });
+    callback();
 }
 
 function snapshotBox(callback) {
@@ -188,41 +177,70 @@ function snapshotBox(callback) {
     });
 }
 
-function backupBoxWithAppBackupIds(appBackupIds, prefix, callback) {
-    assert(Array.isArray(appBackupIds));
-    assert.strictEqual(typeof prefix, 'string');
+function uploadBoxSnapshot(backupConfig, callback) {
+    assert.strictEqual(typeof backupConfig, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    var timestamp = (new Date()).toISOString().replace(/[T.]/g, '-').replace(/[:Z]/g,'');
-    var backupId = util.format('%s/box_%s_v%s', prefix, timestamp, config.version());
+    var startTime = new Date();
+
+    snapshotBox(function (error) {
+        if (error) return callback(error);
+
+        api(backupConfig.provider).upload(backupConfig, 'snapshot/box', paths.BOX_DATA_DIR, function (backupTaskError) {
+            const state = backupTaskError ? backupdb.BACKUP_STATE_ERROR : backupdb.BACKUP_STATE_NORMAL;
+            debug('uploadBoxSnapshot: %s time: %s secs', state, (new Date() - startTime)/1000);
+
+            setSnapshotInfo('box', { timestamp: new Date().toISOString() }, callback);
+        });
+    });
+}
+
+function rotateBoxBackup(backupConfig, timestamp, appBackupIds, callback) {
+    assert.strictEqual(typeof backupConfig, 'object');
+    assert.strictEqual(typeof timestamp, 'string');
+    assert(Array.isArray(appBackupIds));
+    assert.strictEqual(typeof callback, 'function');
+
+    var snapshotInfo = getSnapshotInfo('box');
+    if (!snapshotInfo) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, 'Snapshot info missing or corrupt'));
+
+    var snapshotTime = snapshotInfo.timestamp.replace(/[T.]/g, '-').replace(/[:Z]/g,'');
+    var backupId = util.format('%s/box_%s_v%s', timestamp, snapshotTime, config.version());
+
+    backupdb.add({ id: backupId, version: config.version(), type: backupdb.BACKUP_TYPE_BOX, dependsOn: appBackupIds, restoreConfig: null }, function (error) {
+        if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
+
+        api(backupConfig.provider).copy(backupConfig, 'snapshot/box', backupId, function (copyBackupError) {
+            const state = copyBackupError ? backupdb.BACKUP_STATE_ERROR : backupdb.BACKUP_STATE_NORMAL;
+            debug('rotateBoxBackup: successful id:%s', backupId);
+
+            backupdb.update(backupId, { state: state }, function (error) {
+                if (copyBackupError) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, copyBackupError.message));
+                if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
+
+                // FIXME this is only needed for caas, hopefully we can remove that in the future
+                api(backupConfig.provider).backupDone(backupId, appBackupIds, function (error) {
+                    if (error) return callback(error);
+
+                    callback(null, backupId);
+                });
+            });
+        });
+    });
+}
+
+function backupBoxWithAppBackupIds(appBackupIds, timestamp, callback) {
+    assert(Array.isArray(appBackupIds));
+    assert.strictEqual(typeof timestamp, 'string');
+    assert.strictEqual(typeof callback, 'function');
 
     settings.getBackupConfig(function (error, backupConfig) {
         if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
 
-        var startTime = new Date();
-
-        snapshotBox(function (error) {
+        uploadBoxSnapshot(backupConfig, function (error) {
             if (error) return callback(error);
 
-            backupdb.add({ id: backupId, version: config.version(), type: backupdb.BACKUP_TYPE_BOX, dependsOn: appBackupIds, restoreConfig: null }, function (error) {
-                if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
-
-                api(backupConfig.provider).upload(backupConfig, backupId, paths.BOX_DATA_DIR, function (backupTaskError) {
-                    const state = backupTaskError ? backupdb.BACKUP_STATE_ERROR : backupdb.BACKUP_STATE_NORMAL;
-                    debug('backupBoxWithAppBackupIds: %s time: %s secs', state, (new Date() - startTime)/1000);
-
-                    backupdb.update(backupId, { state: state }, function (error) {
-                        if (backupTaskError) return callback(backupTaskError);
-                        if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
-
-                        // FIXME this is only needed for caas, hopefully we can remove that in the future
-                        api(backupConfig.provider).backupDone(backupId, appBackupIds, function (error) {
-                            if (error) return callback(error);
-                            callback(null, backupId);
-                        });
-                    });
-                });
-            });
+            rotateBoxBackup(backupConfig, timestamp, appBackupIds, callback);
         });
     });
 }
@@ -251,43 +269,7 @@ function snapshotApp(app, manifest, callback) {
     addons.backupAddons(app, manifest.addons, function (error) {
         if (error) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
 
-        return callback();
-    });
-}
-
-function createNewAppBackup(app, manifest, prefix, backupConfig, callback) {
-    assert.strictEqual(typeof app, 'object');
-    assert(manifest && typeof manifest === 'object');
-    assert.strictEqual(typeof prefix, 'string');
-    assert.strictEqual(typeof backupConfig, 'object');
-    assert.strictEqual(typeof callback, 'function');
-
-    var timestamp = (new Date()).toISOString().replace(/[T.]/g, '-').replace(/[:Z]/g,'');
-    var backupId = util.format('%s/app_%s_%s_v%s', prefix, app.id, timestamp, manifest.version);
-
-    snapshotApp(app, manifest, function (error) {
-        if (error) return callback(error);
-
-        var restoreConfig = apps.getAppConfig(app);
-        restoreConfig.manifest = manifest;
-
-        backupdb.add({ id: backupId, version: manifest.version, type: backupdb.BACKUP_TYPE_APP, dependsOn: [ ], restoreConfig: restoreConfig }, function (error) {
-            if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
-
-            var appDataDir = safe.fs.realpathSync(path.join(paths.APPS_DATA_DIR, app.id));
-            api(backupConfig.provider).upload(backupConfig, backupId, appDataDir, function (backupTaskError) {
-                const state = backupTaskError ? backupdb.BACKUP_STATE_ERROR : backupdb.BACKUP_STATE_NORMAL;
-
-                debugApp(app, 'createNewAppBackup: %s done with state %s', backupId, state);
-
-                backupdb.update(backupId, { state: state }, function (error) {
-                    if (backupTaskError) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, backupTaskError.message));
-                    if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
-
-                    callback(null, backupId);
-                });
-            });
-        });
+        return callback(null, restoreConfig);
     });
 }
 
@@ -304,40 +286,81 @@ function setRestorePoint(appId, lastBackupId, callback) {
     });
 }
 
-function backupApp(app, manifest, prefix, callback) {
+function rotateAppBackup(backupConfig, app, timestamp, callback) {
+    assert.strictEqual(typeof backupConfig, 'object');
     assert.strictEqual(typeof app, 'object');
-    assert(manifest && typeof manifest === 'object');
-    assert.strictEqual(typeof prefix, 'string');
+    assert.strictEqual(typeof timestamp, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    var backupFunction, startTime = new Date();
+    var snapshotInfo = getSnapshotInfo(app.id);
+    if (!snapshotInfo) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, 'Snapshot info missing or corrupt'));
+
+    var snapshotTime = snapshotInfo.timestamp.replace(/[T.]/g, '-').replace(/[:Z]/g,'');
+    var restoreConfig = snapshotInfo.restoreConfig;
+    var manifest = restoreConfig.manifest;
+    var backupId = util.format('%s/app_%s_%s_v%s', timestamp, app.id, snapshotTime, manifest.version);
+
+    backupdb.add({ id: backupId, version: manifest.version, type: backupdb.BACKUP_TYPE_APP, dependsOn: [ ], restoreConfig: restoreConfig }, function (error) {
+        if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
+
+        api(backupConfig.provider).copy(backupConfig, `snapshot/app_${app.id}`, backupId, function (copyBackupError) {
+            const state = copyBackupError ? backupdb.BACKUP_STATE_ERROR : backupdb.BACKUP_STATE_NORMAL;
+            debugApp(app, 'rotateAppBackup: successful id:%s', backupId);
+
+            backupdb.update(backupId, { state: state }, function (error) {
+                if (copyBackupError) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, copyBackupError.message));
+                if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
+
+                setRestorePoint(app.id, backupId, function (error) {
+                    if (error) return callback(error);
+
+                    return callback(null, backupId);
+                });
+            });
+        });
+    });
+}
+
+function uploadAppSnapshot(backupConfig, app, manifest, callback) {
+    assert.strictEqual(typeof backupConfig, 'object');
+    assert.strictEqual(typeof app, 'object');
+    assert(manifest && typeof manifest === 'object');
+    assert.strictEqual(typeof callback, 'function');
+
+    if (!canBackupApp(app)) return callback(); // nothing to do
+
+    var startTime = new Date();
+
+    snapshotApp(app, manifest, function (error, restoreConfig) {
+        if (error) return callback(error);
+
+        var backupId = util.format('snapshot/app_%s', app.id);
+        var appDataDir = safe.fs.realpathSync(path.join(paths.APPS_DATA_DIR, app.id));
+        api(backupConfig.provider).upload(backupConfig, backupId, appDataDir, function (error) {
+            if (error) return callback(error);
+
+            debugApp(app, 'uploadAppSnapshot: %s done time: %s secs', backupId, (new Date() - startTime)/1000);
+
+            setSnapshotInfo(app.id, { timestamp: new Date().toISOString(), restoreConfig: restoreConfig }, callback);
+        });
+    });
+}
+
+function backupApp(app, manifest, timestamp, callback) {
+    assert.strictEqual(typeof app, 'object');
+    assert(manifest && typeof manifest === 'object');
+    assert.strictEqual(typeof timestamp, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    if (!canBackupApp(app)) return callback(); // nothing to do
 
     settings.getBackupConfig(function (error, backupConfig) {
         if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
 
-        if (!canBackupApp(app)) {
-            if (!app.lastBackupId) {
-                debugApp(app, 'backupApp: cannot backup app');
-                return callback(new BackupsError(BackupsError.BAD_STATE, 'App not healthy and never backed up previously'));
-            }
-
-            // set the 'creation' date of lastBackup so that the backup persists across time based archival rules
-            // s3 does not allow changing creation time, so copying the last backup is easy way out for now
-            backupFunction = copyLastBackup.bind(null, app, manifest, prefix, backupConfig);
-        } else {
-            backupFunction = createNewAppBackup.bind(null, app, manifest, prefix, backupConfig);
-        }
-
-        backupFunction(function (error, backupId) {
+        uploadAppSnapshot(backupConfig, app, manifest, function (error) {
             if (error) return callback(error);
 
-            debugApp(app, 'backupApp: successful id:%s time:%s secs', backupId, (new Date() - startTime)/1000);
-
-            setRestorePoint(app.id, backupId, function (error) {
-                if (error) return callback(error);
-
-                return callback(null, backupId);
-            });
+            rotateAppBackup(backupConfig, app, timestamp, callback);
         });
     });
 }
@@ -348,7 +371,7 @@ function backupBoxAndApps(auditSource, callback) {
 
     callback = callback || NOOP_CALLBACK;
 
-    var prefix = (new Date()).toISOString().replace(/[T.]/g, '-').replace(/[:Z]/g,'');
+    var timestamp = (new Date()).toISOString().replace(/[T.]/g, '-').replace(/[:Z]/g,'');
 
     eventlog.add(eventlog.ACTION_BACKUP_START, auditSource, { });
 
@@ -370,7 +393,7 @@ function backupBoxAndApps(auditSource, callback) {
                 return iteratorCallback(null, app.lastBackupId); // just use the last backup
             }
 
-            backupApp(app, app.manifest, prefix, function (error, backupId) {
+            backupApp(app, app.manifest, timestamp, function (error, backupId) {
                 if (error && error.reason !== BackupsError.BAD_STATE) {
                     debugApp(app, 'Unable to backup', error);
                     return iteratorCallback(error);
@@ -390,7 +413,7 @@ function backupBoxAndApps(auditSource, callback) {
 
             progress.set(progress.BACKUP, step * processed, 'Backing up system data');
 
-            backupBoxWithAppBackupIds(backupIds, prefix, function (error, filename) {
+            backupBoxWithAppBackupIds(backupIds, timestamp, function (error, filename) {
                 progress.set(progress.BACKUP, 100, error ? error.message : '');
 
                 eventlog.add(eventlog.ACTION_BACKUP_FINISH, auditSource, { errorMessage: error ? error.message : null, filename: filename });
@@ -565,6 +588,29 @@ function cleanupBoxBackups(backupConfig, callback) {
     });
 }
 
+// removes the snapshots of apps that have been uninstalled
+function cleanupSnapshots(backupConfig, callback) {
+    assert.strictEqual(typeof backupConfig, 'object');
+    assert.strictEqual(typeof callback, 'function');
+
+    var contents = safe.fs.readFileSync(paths.SNAPSHOT_INFO_FILE, 'utf8');
+    var info = safe.JSON.parse(contents);
+    if (!info) return callback();
+
+    delete info.box;
+    async.eachSeries(Object.keys(info), function (appId, iteratorDone) {
+        apps.get(appId, function (error, app) {
+            if (!error || error.reason !== AppsError.NOT_FOUND) return iteratorDone();
+
+            api(backupConfig.provider).removeMany(backupConfig, [ `snapshot/app_${appId}` ], function (ignoredError) {
+                setSnapshotInfo(appId, null);
+
+                iteratorDone();
+            });
+        });
+    }, callback);
+}
+
 function cleanup(callback) {
     assert(!callback || typeof callback === 'function'); // callback is null when called from cronjob
 
@@ -583,7 +629,13 @@ function cleanup(callback) {
 
             debug('cleanup: done cleaning box backups');
 
-            cleanupAppBackups(backupConfig, referencedAppBackups, callback);
+            cleanupAppBackups(backupConfig, referencedAppBackups, function (error) {
+                if (error) return callback(error);
+
+                debug('cleanup: done cleaning app backups');
+
+                cleanupSnapshots(backupConfig, callback);
+            });
         });
     });
 }
