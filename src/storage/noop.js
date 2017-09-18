@@ -43,7 +43,7 @@ function copy(apiConfig, oldBackupId, newBackupId, callback) {
     assert.strictEqual(typeof newBackupId, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    debug('copyBackup: %s -> %s', oldBackupId, newBackupId);
+    debug('copy: %s -> %s', oldBackupId, newBackupId);
 
     callback();
 }

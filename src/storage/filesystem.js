@@ -109,7 +109,7 @@ function copy(apiConfig, oldBackupId, newBackupId, callback) {
     var oldFilePath = getBackupFilePath(apiConfig, oldBackupId);
     var newFilePath = getBackupFilePath(apiConfig, newBackupId);
 
-    debug('copyBackup: %s -> %s', oldFilePath, newFilePath);
+    debug('copy: %s -> %s', oldFilePath, newFilePath);
 
     mkdirp(path.dirname(newFilePath), function (error) {
         if (error) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));

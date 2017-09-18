@@ -153,7 +153,7 @@ function copy(apiConfig, oldBackupId, newBackupId, callback) {
         s3.copyObject(params, function (error) {
             if (error && error.code === 'NoSuchKey') return callback(new BackupsError(BackupsError.NOT_FOUND));
             if (error) {
-                debug('copyBackup: s3 copy error.', error);
+                debug('copy: s3 copy error.', error);
                 return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error));
             }
 
