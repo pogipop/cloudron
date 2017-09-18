@@ -10,32 +10,26 @@ var assert = require('assert'),
     crypto = require('crypto'),
     debug = require('debug')('box:storage/targz'),
     mkdirp = require('mkdirp'),
+    path = require('path'),
     progress = require('progress-stream'),
+    shell = require('../shell.js'),
     tar = require('tar-fs'),
     zlib = require('zlib');
 
+var TARJS_CMD = path.join(__dirname, '../scripts/tar.js');
+
+// curiously, this function never calls back on success :-)
 function create(sourceDir, key, outStream, callback) {
     assert.strictEqual(typeof sourceDir, 'string');
     assert(key === null || typeof key === 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    var pack = tar.pack('/', {
-        dereference: false, // pack the symlink and not what it points to
-        entries: [ sourceDir ],
-        map: function(header) {
-            header.name = header.name.replace(new RegExp('^' + sourceDir + '(/?)'), '.$1'); // make paths relative
-            return header;
-        },
-        strict: false // do not error for unknown types (skip fifo, char/block devices)
+    var pack = shell.sudo('tar', [ TARJS_CMD, sourceDir ], { noDebugStdout: true, timeout: 4 * 60 * 60 * 1000 }, function (error) {
+        if (error) callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
     });
 
     var gzip = zlib.createGzip({});
     var progressStream = progress({ time: 10000 }); // display a progress every 10 seconds
-
-    pack.on('error', function (error) {
-        debug('backup: tar stream error.', error);
-        callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
-    });
 
     gzip.on('error', function (error) {
         debug('backup: gzip stream error.', error);
@@ -52,9 +46,9 @@ function create(sourceDir, key, outStream, callback) {
             debug('backup: encrypt stream error.', error);
             callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
         });
-        pack.pipe(gzip).pipe(encrypt).pipe(progressStream).pipe(outStream);
+        pack.stdout.pipe(gzip).pipe(encrypt).pipe(progressStream).pipe(outStream);
     } else {
-        pack.pipe(gzip).pipe(progressStream).pipe(outStream);
+        pack.stdout.pipe(gzip).pipe(progressStream).pipe(outStream);
     }
 }
 

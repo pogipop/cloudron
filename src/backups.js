@@ -46,9 +46,6 @@ var addons = require('./addons.js'),
     SettingsError = require('./settings.js').SettingsError,
     util = require('util');
 
-var NODE_CMD = path.join(__dirname, './scripts/node.sh');
-var BACKUPTASK_CMD = path.join(__dirname, 'backuptask.js');
-
 var NOOP_CALLBACK = function (error) { if (error) debug(error); };
 
 function debugApp(app, args) {
@@ -145,11 +142,12 @@ function getRestoreConfig(backupId, callback) {
     });
 }
 
-function copyLastBackup(app, manifest, prefix, callback) {
+function copyLastBackup(app, manifest, prefix, backupConfig, callback) {
     assert.strictEqual(typeof app, 'object');
     assert.strictEqual(typeof app.lastBackupId, 'string');
     assert(manifest && typeof manifest === 'object');
     assert.strictEqual(typeof prefix, 'string');
+    assert.strictEqual(typeof backupConfig, 'object');
     assert.strictEqual(typeof callback, 'function');
 
     var timestamp = (new Date()).toISOString().replace(/[T.]/g, '-').replace(/[:Z]/g,'');
@@ -158,56 +156,24 @@ function copyLastBackup(app, manifest, prefix, callback) {
     var restoreConfig = apps.getAppConfig(app);
     restoreConfig.manifest = manifest;
 
-    settings.getBackupConfig(function (error, backupConfig) {
+    debug('copyLastBackup: copying backup %s to %s', app.lastBackupId, newBackupId);
+
+    backupdb.add({ id: newBackupId, version: manifest.version, type: backupdb.BACKUP_TYPE_APP, dependsOn: [ ], restoreConfig: restoreConfig }, function (error) {
         if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
 
-        debug('copyLastBackup: copying backup %s to %s', app.lastBackupId, newBackupId);
+        api(backupConfig.provider).copyBackup(backupConfig, app.lastBackupId, newBackupId, function (copyBackupError) {
+            const state = copyBackupError ? backupdb.BACKUP_STATE_ERROR : backupdb.BACKUP_STATE_NORMAL;
 
-        backupdb.add({ id: newBackupId, version: manifest.version, type: backupdb.BACKUP_TYPE_APP, dependsOn: [ ], restoreConfig: restoreConfig }, function (error) {
-            if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
+            debugApp(app, 'copyLastBackup: %s done with state %s', newBackupId, state);
 
-            api(backupConfig.provider).copyBackup(backupConfig, app.lastBackupId, newBackupId, function (copyBackupError) {
-                const state = copyBackupError ? backupdb.BACKUP_STATE_ERROR : backupdb.BACKUP_STATE_NORMAL;
+            backupdb.update(newBackupId, { state: state }, function (error) {
+                if (copyBackupError) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, copyBackupError.message));
+                if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
 
-                debugApp(app, 'copyLastBackup: %s done with state %s', newBackupId, state);
-
-                backupdb.update(newBackupId, { state: state }, function (error) {
-                    if (copyBackupError) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, copyBackupError.message));
-                    if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
-
-                    callback(null, newBackupId);
-                });
+                callback(null, newBackupId);
             });
         });
     });
-}
-
-function runBackupTask(backupId, appId, callback) {
-    assert.strictEqual(typeof backupId, 'string');
-    assert(appId === null || typeof appId === 'string');
-    assert.strictEqual(typeof callback, 'function');
-
-    var killTimerId = null;
-
-    var cp = shell.sudo('backup' + (appId ? 'App' : 'Box'), [ NODE_CMD, BACKUPTASK_CMD, backupId ].concat(appId ? [ appId ] : [ ]), function (error) {
-
-        clearTimeout(killTimerId);
-        cp = null;
-
-        if (error && (error.code === null /* signal */ || (error.code !== 0 && error.code !== 50))) { // backuptask crashed
-            return callback(new BackupsError(BackupsError.INTERNAL_ERROR, 'backuptask crashed'));
-        } else if (error && error.code === 50) { // exited with error
-            var result = safe.fs.readFileSync(paths.BACKUP_RESULT_FILE, 'utf8') || safe.error.message;
-            return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, result));
-        }
-
-        callback();
-    });
-
-    killTimerId = setTimeout(function () {
-        debug('runBackupTask: backup task taking too long. killing');
-        cp.kill();
-    }, 4 * 60 * 60 * 1000); // 4 hours
 }
 
 function backupBoxWithAppBackupIds(appBackupIds, prefix, callback) {
@@ -233,7 +199,7 @@ function backupBoxWithAppBackupIds(appBackupIds, prefix, callback) {
             backupdb.add({ id: backupId, version: config.version(), type: backupdb.BACKUP_TYPE_BOX, dependsOn: appBackupIds, restoreConfig: null }, function (error) {
                 if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
 
-                runBackupTask(backupId, null /* appId */, function (backupTaskError) {
+                api(backupConfig.provider).backup(backupConfig, backupId, paths.BOX_DATA_DIR, function (backupTaskError) {
                     const state = backupTaskError ? backupdb.BACKUP_STATE_ERROR : backupdb.BACKUP_STATE_NORMAL;
                     debug('backupBoxWithAppBackupIds: %s time: %s secs', state, (new Date() - startTime)/1000);
 
@@ -262,10 +228,11 @@ function canBackupApp(app) {
             app.installationState === appdb.ISTATE_PENDING_UPDATE; // called from apptask
 }
 
-function createNewAppBackup(app, manifest, prefix, callback) {
+function createNewAppBackup(app, manifest, prefix, backupConfig, callback) {
     assert.strictEqual(typeof app, 'object');
     assert(manifest && typeof manifest === 'object');
     assert.strictEqual(typeof prefix, 'string');
+    assert.strictEqual(typeof backupConfig, 'object');
     assert.strictEqual(typeof callback, 'function');
 
     var timestamp = (new Date()).toISOString().replace(/[T.]/g, '-').replace(/[:Z]/g,'');
@@ -284,7 +251,8 @@ function createNewAppBackup(app, manifest, prefix, callback) {
         backupdb.add({ id: backupId, version: manifest.version, type: backupdb.BACKUP_TYPE_APP, dependsOn: [ ], restoreConfig: restoreConfig }, function (error) {
             if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
 
-            runBackupTask(backupId, app.id, function (backupTaskError) {
+            var appDataDir = safe.fs.realpathSync(path.join(paths.APPS_DATA_DIR, app.id));
+            api(backupConfig.provider).backup(backupConfig, backupId, appDataDir, function (backupTaskError) {
                 const state = backupTaskError ? backupdb.BACKUP_STATE_ERROR : backupdb.BACKUP_STATE_NORMAL;
 
                 debugApp(app, 'createNewAppBackup: %s done with state %s', backupId, state);
@@ -321,28 +289,32 @@ function backupApp(app, manifest, prefix, callback) {
 
     var backupFunction, startTime = new Date();
 
-    if (!canBackupApp(app)) {
-        if (!app.lastBackupId) {
-            debugApp(app, 'backupApp: cannot backup app');
-            return callback(new BackupsError(BackupsError.BAD_STATE, 'App not healthy and never backed up previously'));
+    settings.getBackupConfig(function (error, backupConfig) {
+        if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
+
+        if (!canBackupApp(app)) {
+            if (!app.lastBackupId) {
+                debugApp(app, 'backupApp: cannot backup app');
+                return callback(new BackupsError(BackupsError.BAD_STATE, 'App not healthy and never backed up previously'));
+            }
+
+            // set the 'creation' date of lastBackup so that the backup persists across time based archival rules
+            // s3 does not allow changing creation time, so copying the last backup is easy way out for now
+            backupFunction = copyLastBackup.bind(null, app, manifest, prefix, backupConfig);
+        } else {
+            backupFunction = createNewAppBackup.bind(null, app, manifest, prefix, backupConfig);
         }
 
-        // set the 'creation' date of lastBackup so that the backup persists across time based archival rules
-        // s3 does not allow changing creation time, so copying the last backup is easy way out for now
-        backupFunction = copyLastBackup.bind(null, app, manifest, prefix);
-    } else {
-        backupFunction = createNewAppBackup.bind(null, app, manifest, prefix);
-    }
-
-    backupFunction(function (error, backupId) {
-        if (error) return callback(error);
-
-        debugApp(app, 'backupApp: successful id:%s time:%s secs', backupId, (new Date() - startTime)/1000);
-
-        setRestorePoint(app.id, backupId, function (error) {
+        backupFunction(function (error, backupId) {
             if (error) return callback(error);
 
-            return callback(null, backupId);
+            debugApp(app, 'backupApp: successful id:%s time:%s secs', backupId, (new Date() - startTime)/1000);
+
+            setRestorePoint(app.id, backupId, function (error) {
+                if (error) return callback(error);
+
+                return callback(null, backupId);
+            });
         });
     });
 }

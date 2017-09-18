@@ -41,9 +41,11 @@ function exec(tag, file, args, options, callback) {
     debug(tag + ' execFile: %s', file); // do not dump args as it might have sensitive info
 
     var cp = child_process.spawn(file, args, options);
-    cp.stdout.on('data', function (data) {
-        debug(tag + ' (stdout): %s', data.toString('utf8'));
-    });
+    if (!options.noDebugStdout) {
+        cp.stdout.on('data', function (data) {
+            debug(tag + ' (stdout): %s', data.toString('utf8'));
+        });
+    }
 
     cp.stderr.on('data', function (data) {
         debug(tag + ' (stderr): %s', data.toString('utf8'));

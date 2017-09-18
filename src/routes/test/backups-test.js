@@ -10,7 +10,6 @@ var appdb = require('../../appdb.js'),
     config = require('../../config.js'),
     database = require('../../database.js'),
     expect = require('expect.js'),
-    hock = require('hock'),
     http = require('http'),
     nock = require('nock'),
     superagent = require('superagent'),
@@ -23,7 +22,6 @@ var SERVER_URL = 'http://localhost:' + config.get('port');
 var USERNAME = 'superadmin', PASSWORD = 'Foobar?1337', EMAIL ='silly@me.com';
 var token = null;
 
-var server;
 function setup(done) {
     nock.cleanAll();
     config._reset();
@@ -40,19 +38,19 @@ function setup(done) {
             var scope2 = nock(config.apiServerOrigin()).post('/api/v1/boxes/' + config.fqdn() + '/setup/done?setupToken=somesetuptoken').reply(201, {});
 
             superagent.post(SERVER_URL + '/api/v1/cloudron/activate')
-                   .query({ setupToken: 'somesetuptoken' })
-                   .send({ username: USERNAME, password: PASSWORD, email: EMAIL })
-                   .end(function (error, result) {
-                expect(result).to.be.ok();
-                expect(result.statusCode).to.eql(201);
-                expect(scope1.isDone()).to.be.ok();
-                expect(scope2.isDone()).to.be.ok();
+                .query({ setupToken: 'somesetuptoken' })
+                .send({ username: USERNAME, password: PASSWORD, email: EMAIL })
+                .end(function (error, result) {
+                    expect(result).to.be.ok();
+                    expect(result.statusCode).to.eql(201);
+                    expect(scope1.isDone()).to.be.ok();
+                    expect(scope2.isDone()).to.be.ok();
 
-                // stash token for further use
-                token = result.body.token;
+                    // stash token for further use
+                    token = result.body.token;
 
-                callback();
-            });
+                    callback();
+                });
         },
 
         function addApp(callback) {
@@ -75,19 +73,12 @@ function cleanup(done) {
 }
 
 describe('Backups API', function () {
-    var apiHockInstance = hock.createHock({ throwOnUnmatched: false }), apiHockServer;
+    var scope1 = nock(config.apiServerOrigin()).post('/api/v1/boxes/' + config.fqdn() + '/awscredentials?token=BACKUP_TOKEN')
+        .reply(201, { credentials: { AccessKeyId: 'accessKeyId', SecretAccessKey: 'secretAccessKey' } }, { 'Content-Type': 'application/json' });
 
     before(setup);
-    before(function (done) {
-        apiHockInstance
-            .post('/api/v1/boxes/' + config.fqdn() + '/awscredentials?token=BACKUP_TOKEN')
-            .reply(201, { credentials: { AccessKeyId: 'accessKeyId', SecretAccessKey: 'secretAccessKey' } }, { 'Content-Type': 'application/json' });
-        var port = parseInt(url.parse(config.apiServerOrigin()).port, 10);
-        apiHockServer = http.createServer(apiHockInstance.handler).listen(port, done);
-    });
 
     after(function (done) {
-        apiHockServer.close();
         done();
     });
     after(cleanup);
@@ -95,37 +86,35 @@ describe('Backups API', function () {
     describe('create', function () {
         it('fails due to mising token', function (done) {
             superagent.post(SERVER_URL + '/api/v1/backups')
-                   .end(function (error, result) {
-                expect(result.statusCode).to.equal(401);
-                done();
-            });
+                .end(function (error, result) {
+                    expect(result.statusCode).to.equal(401);
+                    done();
+                });
         });
 
         it('fails due to wrong token', function (done) {
             superagent.post(SERVER_URL + '/api/v1/backups')
-                   .query({ access_token: token.toUpperCase() })
-                   .end(function (error, result) {
-                expect(result.statusCode).to.equal(401);
-                done();
-            });
+                .query({ access_token: token.toUpperCase() })
+                .end(function (error, result) {
+                    expect(result.statusCode).to.equal(401);
+                    done();
+                });
         });
 
         it('succeeds', function (done) {
             superagent.post(SERVER_URL + '/api/v1/backups')
-                   .query({ access_token: token })
-                   .end(function (error, result) {
-                expect(result.statusCode).to.equal(202);
+                .query({ access_token: token })
+                .end(function (error, result) {
+                    expect(result.statusCode).to.equal(202);
 
-                function checkAppstoreServerCalled() {
-                    apiHockInstance.done(function (error) {
-                        if (!error) return done();
+                    function checkAppstoreServerCalled() {
+                        if (scope1.isDone()) return done();
 
                         setTimeout(checkAppstoreServerCalled, 100);
-                    });
-                }
+                    }
 
-                checkAppstoreServerCalled();
-            });
+                    checkAppstoreServerCalled();
+                });
         });
     });
 });
