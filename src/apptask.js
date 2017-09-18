@@ -241,7 +241,7 @@ function downloadIcon(app, callback) {
                 if (!safe.fs.writeFileSync(path.join(paths.APP_ICONS_DIR, app.id + '.png'), res.body)) return retryCallback(new Error('Error saving icon:' + safe.error.message));
 
                 retryCallback(null);
-        });
+            });
     }, callback);
 }
 
@@ -408,9 +408,9 @@ function install(app, callback) {
 
         // for restore case
         function deleteImageIfChanged(done) {
-             if (!app.oldConfig || (app.oldConfig.manifest.dockerImage === app.manifest.dockerImage)) return done();
+            if (!app.oldConfig || (app.oldConfig.manifest.dockerImage === app.manifest.dockerImage)) return done();
 
-             docker.deleteImage(app.oldConfig.manifest, done);
+            docker.deleteImage(app.oldConfig.manifest, done);
         },
 
         reserveHttpPort.bind(null, app),
@@ -599,9 +599,9 @@ function update(app, callback) {
         stopApp.bind(null, app),
         deleteContainers.bind(null, app),
         function deleteImageIfChanged(done) {
-             if (app.oldConfig.manifest.dockerImage === app.manifest.dockerImage) return done();
+            if (app.oldConfig.manifest.dockerImage === app.manifest.dockerImage) return done();
 
-             docker.deleteImage(app.oldConfig.manifest, done);
+            docker.deleteImage(app.oldConfig.manifest, done);
         },
 
         function (next) {
