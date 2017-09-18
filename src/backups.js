@@ -86,13 +86,13 @@ BackupsError.NOT_FOUND = 'not found';
 // choose which storage backend we use for test purpose we use s3
 function api(provider) {
     switch (provider) {
-        case 'caas': return caas;
-        case 's3': return s3;
-        case 'filesystem': return filesystem;
-        case 'minio': return s3;
-        case 'exoscale-sos': return s3;
-        case 'noop': return noop;
-        default: return null;
+    case 'caas': return caas;
+    case 's3': return s3;
+    case 'filesystem': return filesystem;
+    case 'minio': return s3;
+    case 'exoscale-sos': return s3;
+    case 'noop': return noop;
+    default: return null;
     }
 }
 
