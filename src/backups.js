@@ -27,19 +27,15 @@ var addons = require('./addons.js'),
     async = require('async'),
     assert = require('assert'),
     backupdb = require('./backupdb.js'),
-    caas = require('./storage/caas.js'),
     config = require('./config.js'),
     DatabaseError = require('./databaseerror.js'),
     debug = require('debug')('box:backups'),
     eventlog = require('./eventlog.js'),
-    filesystem = require('./storage/filesystem.js'),
     locker = require('./locker.js'),
     mailer = require('./mailer.js'),
-    noop = require('./storage/noop.js'),
     path = require('path'),
     paths = require('./paths.js'),
     progress = require('./progress.js'),
-    s3 = require('./storage/s3.js'),
     safe = require('safetydance'),
     shell = require('./shell.js'),
     settings = require('./settings.js'),
@@ -83,12 +79,12 @@ BackupsError.NOT_FOUND = 'not found';
 // choose which storage backend we use for test purpose we use s3
 function api(provider) {
     switch (provider) {
-    case 'caas': return caas;
-    case 's3': return s3;
-    case 'filesystem': return filesystem;
-    case 'minio': return s3;
-    case 'exoscale-sos': return s3;
-    case 'noop': return noop;
+    case 'caas': return require('./storage/caas.js');
+    case 's3': return require('./storage/s3.js');
+    case 'filesystem': return require('./storage/filesystem.js');
+    case 'minio': return require('./storage/s3.js');
+    case 'exoscale-sos': return require('./storage/s3.js');
+    case 'noop': return require('./storage/noop.js');
     default: return null;
     }
 }
