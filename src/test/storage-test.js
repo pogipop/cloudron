@@ -145,15 +145,15 @@ describe('Storage', function () {
         });
 
         it('can backup', function (done) {
-            filesystem.backup(gBackupConfig, gBackupId_1, gSourceFolder, function (error) {
+            filesystem.upload(gBackupConfig, gBackupId_1, gSourceFolder, function (error) {
                 expect(error).to.be(null);
 
                 done();
             });
         });
 
-        it('can restore', function (done) {
-            filesystem.restore(gBackupConfig, gBackupId_1, gDestinationFolder, function (error) {
+        it('can download', function (done) {
+            filesystem.download(gBackupConfig, gBackupId_1, gDestinationFolder, function (error) {
                 expect(error).to.be(null);
 
                 compareDirectories(path.join(gSourceFolder, 'data'), path.join(gDestinationFolder, 'data'), function (error) {
@@ -170,16 +170,16 @@ describe('Storage', function () {
 
         it('can copy backup', function (done) {
             // will be verified after removing the first and restoring from the copy
-            filesystem.copyBackup(gBackupConfig, gBackupId_1, gBackupId_2, done);
+            filesystem.copy(gBackupConfig, gBackupId_1, gBackupId_2, done);
         });
 
         it('can remove backup', function (done) {
-            // will be verified with next test trying to restore the removed one
-            filesystem.removeBackups(gBackupConfig, [ gBackupId_1 ], done);
+            // will be verified with next test trying to download the removed one
+            filesystem.removeMany(gBackupConfig, [ gBackupId_1 ], done);
         });
 
-        it('cannot restore deleted backup', function (done) {
-            filesystem.restore(gBackupConfig, gBackupId_1, gDestinationFolder, function (error) {
+        it('cannot download deleted backup', function (done) {
+            filesystem.download(gBackupConfig, gBackupId_1, gDestinationFolder, function (error) {
                 expect(error).to.be.an('object');
                 expect(error.reason).to.equal(BackupsError.NOT_FOUND);
 
@@ -187,8 +187,8 @@ describe('Storage', function () {
             });
         });
 
-        it('can restore backup copy', function (done) {
-            filesystem.restore(gBackupConfig, gBackupId_2, gDestinationFolder, function (error) {
+        it('can download backup copy', function (done) {
+            filesystem.download(gBackupConfig, gBackupId_2, gDestinationFolder, function (error) {
                 expect(error).to.be(null);
 
                 compareDirectories(path.join(gSourceFolder, 'data'), path.join(gDestinationFolder, 'data'), function (error) {
@@ -204,7 +204,7 @@ describe('Storage', function () {
         });
 
         it('can remove backup copy', function (done) {
-            filesystem.removeBackups(gBackupConfig, [ gBackupId_2 ], done);
+            filesystem.removeMany(gBackupConfig, [ gBackupId_2 ], done);
         });
     });
 
@@ -257,15 +257,15 @@ describe('Storage', function () {
         });
 
         it('can backup', function (done) {
-            s3.backup(gBackupConfig, gBackupId_1, gSourceFolder, function (error) {
+            s3.upload(gBackupConfig, gBackupId_1, gSourceFolder, function (error) {
                 expect(error).to.be(null);
 
                 done();
             });
         });
 
-        it('can restore', function (done) {
-            s3.restore(gBackupConfig, gBackupId_1, gDestinationFolder, function (error) {
+        it('can download', function (done) {
+            s3.download(gBackupConfig, gBackupId_1, gDestinationFolder, function (error) {
                 expect(error).to.be(null);
 
                 compareDirectories(path.join(gSourceFolder, 'data'), path.join(gDestinationFolder, 'data'), function (error) {
@@ -282,16 +282,16 @@ describe('Storage', function () {
 
         it('can copy backup', function (done) {
             // will be verified after removing the first and restoring from the copy
-            s3.copyBackup(gBackupConfig, gBackupId_1, gBackupId_2, done);
+            s3.copy(gBackupConfig, gBackupId_1, gBackupId_2, done);
         });
 
         it('can remove backup', function (done) {
-            // will be verified with next test trying to restore the removed one
-            s3.removeBackups(gBackupConfig, [ gBackupId_1 ], done);
+            // will be verified with next test trying to download the removed one
+            s3.removeMany(gBackupConfig, [ gBackupId_1 ], done);
         });
 
-        it('cannot restore deleted backup', function (done) {
-            s3.restore(gBackupConfig, gBackupId_1, gDestinationFolder, function (error) {
+        it('cannot download deleted backup', function (done) {
+            s3.download(gBackupConfig, gBackupId_1, gDestinationFolder, function (error) {
                 expect(error).to.be.an('object');
                 expect(error.reason).to.equal(BackupsError.NOT_FOUND);
 
@@ -299,8 +299,8 @@ describe('Storage', function () {
             });
         });
 
-        it('can restore backup copy', function (done) {
-            s3.restore(gBackupConfig, gBackupId_2, gDestinationFolder, function (error) {
+        it('can download backup copy', function (done) {
+            s3.download(gBackupConfig, gBackupId_2, gDestinationFolder, function (error) {
                 expect(error).to.be(null);
 
                 compareDirectories(path.join(gSourceFolder, 'data'), path.join(gDestinationFolder, 'data'), function (error) {
@@ -316,7 +316,7 @@ describe('Storage', function () {
         });
 
         it('can remove backup copy', function (done) {
-            s3.removeBackups(gBackupConfig, [ gBackupId_2 ], done);
+            s3.removeMany(gBackupConfig, [ gBackupId_2 ], done);
         });
     });
 });

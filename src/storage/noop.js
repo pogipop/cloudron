@@ -1,10 +1,11 @@
 'use strict';
 
 exports = module.exports = {
-    backup: backup,
-    restore: restore,
-    copyBackup: copyBackup,
-    removeBackups: removeBackups,
+    upload: upload,
+    download: download,
+    copy: copy,
+
+    removeMany: removeMany,
 
     backupDone: backupDone,
 
@@ -14,7 +15,7 @@ exports = module.exports = {
 var assert = require('assert'),
     debug = require('debug')('box:storage/noop');
 
-function backup(apiConfig, backupId, sourceDir, callback) {
+function upload(apiConfig, backupId, sourceDir, callback) {
     assert.strictEqual(typeof apiConfig, 'object');
     assert.strictEqual(typeof backupId, 'string');
     assert.strictEqual(typeof sourceDir, 'string');
@@ -25,7 +26,7 @@ function backup(apiConfig, backupId, sourceDir, callback) {
     callback();
 }
 
-function restore(apiConfig, backupId, destination, callback) {
+function download(apiConfig, backupId, destination, callback) {
     assert.strictEqual(typeof apiConfig, 'object');
     assert.strictEqual(typeof backupId, 'string');
     assert.strictEqual(typeof destination, 'string');
@@ -36,7 +37,7 @@ function restore(apiConfig, backupId, destination, callback) {
     callback(new Error('Cannot restore from noop backend'));
 }
 
-function copyBackup(apiConfig, oldBackupId, newBackupId, callback) {
+function copy(apiConfig, oldBackupId, newBackupId, callback) {
     assert.strictEqual(typeof apiConfig, 'object');
     assert.strictEqual(typeof oldBackupId, 'string');
     assert.strictEqual(typeof newBackupId, 'string');
@@ -47,12 +48,12 @@ function copyBackup(apiConfig, oldBackupId, newBackupId, callback) {
     callback();
 }
 
-function removeBackups(apiConfig, backupIds, callback) {
+function removeMany(apiConfig, backupIds, callback) {
     assert.strictEqual(typeof apiConfig, 'object');
     assert(Array.isArray(backupIds));
     assert.strictEqual(typeof callback, 'function');
 
-    debug('removeBackups: %j', backupIds);
+    debug('removeMany: %j', backupIds);
 
     callback();
 }

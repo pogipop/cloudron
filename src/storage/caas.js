@@ -1,10 +1,10 @@
 'use strict';
 
 exports = module.exports = {
-    backup: backup,
-    restore: restore,
-    copyBackup: copyBackup,
-    removeBackups: removeBackups,
+    upload: upload,
+    download: download,
+    copy: copy,
+    removeMany: removeMany,
 
     backupDone: backupDone,
 
@@ -61,7 +61,7 @@ function getBackupFilePath(apiConfig, backupId) {
 }
 
 // storage api
-function backup(apiConfig, backupId, sourceDir, callback) {
+function upload(apiConfig, backupId, sourceDir, callback) {
     assert.strictEqual(typeof apiConfig, 'object');
     assert.strictEqual(typeof backupId, 'string');
     assert.strictEqual(typeof sourceDir, 'string');
@@ -99,7 +99,7 @@ function backup(apiConfig, backupId, sourceDir, callback) {
     });
 }
 
-function restore(apiConfig, backupId, destination, callback) {
+function download(apiConfig, backupId, destination, callback) {
     assert.strictEqual(typeof apiConfig, 'object');
     assert.strictEqual(typeof backupId, 'string');
     assert.strictEqual(typeof destination, 'string');
@@ -134,7 +134,7 @@ function restore(apiConfig, backupId, destination, callback) {
     });
 }
 
-function copyBackup(apiConfig, oldBackupId, newBackupId, callback) {
+function copy(apiConfig, oldBackupId, newBackupId, callback) {
     assert.strictEqual(typeof apiConfig, 'object');
     assert.strictEqual(typeof oldBackupId, 'string');
     assert.strictEqual(typeof newBackupId, 'string');
@@ -162,7 +162,7 @@ function copyBackup(apiConfig, oldBackupId, newBackupId, callback) {
     });
 }
 
-function removeBackups(apiConfig, backupIds, callback) {
+function removeMany(apiConfig, backupIds, callback) {
     assert.strictEqual(typeof apiConfig, 'object');
     assert(Array.isArray(backupIds));
     assert.strictEqual(typeof callback, 'function');
@@ -184,7 +184,7 @@ function removeBackups(apiConfig, backupIds, callback) {
         var s3 = new AWS.S3(credentials);
         s3.deleteObjects(params, function (error, data) {
             if (error) debug('Unable to remove %s. Not fatal.', params.Key, error);
-            else debug('removeBackups: Deleted: %j Errors: %j', data.Deleted, data.Errors);
+            else debug('removeMany: Deleted: %j Errors: %j', data.Deleted, data.Errors);
 
             callback(null);
         });

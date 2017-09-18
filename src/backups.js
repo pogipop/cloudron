@@ -199,7 +199,7 @@ function backupBoxWithAppBackupIds(appBackupIds, prefix, callback) {
             backupdb.add({ id: backupId, version: config.version(), type: backupdb.BACKUP_TYPE_BOX, dependsOn: appBackupIds, restoreConfig: null }, function (error) {
                 if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
 
-                api(backupConfig.provider).backup(backupConfig, backupId, paths.BOX_DATA_DIR, function (backupTaskError) {
+                api(backupConfig.provider).upload(backupConfig, backupId, paths.BOX_DATA_DIR, function (backupTaskError) {
                     const state = backupTaskError ? backupdb.BACKUP_STATE_ERROR : backupdb.BACKUP_STATE_NORMAL;
                     debug('backupBoxWithAppBackupIds: %s time: %s secs', state, (new Date() - startTime)/1000);
 
@@ -252,7 +252,7 @@ function createNewAppBackup(app, manifest, prefix, backupConfig, callback) {
             if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
 
             var appDataDir = safe.fs.realpathSync(path.join(paths.APPS_DATA_DIR, app.id));
-            api(backupConfig.provider).backup(backupConfig, backupId, appDataDir, function (backupTaskError) {
+            api(backupConfig.provider).upload(backupConfig, backupId, appDataDir, function (backupTaskError) {
                 const state = backupTaskError ? backupdb.BACKUP_STATE_ERROR : backupdb.BACKUP_STATE_NORMAL;
 
                 debugApp(app, 'createNewAppBackup: %s done with state %s', backupId, state);
@@ -437,7 +437,7 @@ function restoreApp(app, addonsToRestore, backupId, callback) {
         var startTime = new Date();
 
         async.series([
-            api(backupConfig.provider).restore.bind(null, backupConfig, backupId, appDataDir),
+            api(backupConfig.provider).download.bind(null, backupConfig, backupId, appDataDir),
             addons.restoreAddons.bind(null, app, addonsToRestore)
         ], function (error) {
             debug('restoreApp: time: %s', (new Date() - startTime)/1000);
@@ -464,7 +464,7 @@ function cleanupAppBackups(backupConfig, referencedAppBackups, callback) {
 
             debug('cleanup: removing %s', backup.id);
 
-            api(backupConfig.provider).removeBackups(backupConfig, [ backup.id ], function (error) {
+            api(backupConfig.provider).removeMany(backupConfig, [ backup.id ], function (error) {
                 if (error) {
                     debug('cleanup: error removing backup %j : %s', backup, error.message);
                     iteratorDone();
@@ -523,7 +523,7 @@ function cleanupBoxBackups(backupConfig, callback) {
 
             var backupIds = [].concat(backup.id, backup.dependsOn);
 
-            api(backupConfig.provider).removeBackups(backupConfig, backupIds, function (error) {
+            api(backupConfig.provider).removeMany(backupConfig, backupIds, function (error) {
                 if (error) {
                     debug('cleanup: error removing backup %j : %s', backup, error.message);
                     iteratorDone();
