@@ -172,9 +172,26 @@ function copyLastBackup(app, manifest, prefix, backupConfig, callback) {
     });
 }
 
+function snapshotBox(callback) {
+    assert.strictEqual(typeof callback, 'function');
+
+    var password = config.database().password ? '-p' + config.database().password : '--skip-password';
+    var mysqlDumpArgs = [
+        '-c',
+        `/usr/bin/mysqldump -u root ${password} --single-transaction --routines \
+            --triggers ${config.database().name} > "${paths.BOX_DATA_DIR}/box.mysqldump"`
+    ];
+    shell.exec('backupBox', '/bin/bash', mysqlDumpArgs, { }, function (error) {
+        if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
+
+        return callback();
+    });
+}
+
 function backupBoxWithAppBackupIds(appBackupIds, prefix, callback) {
     assert(Array.isArray(appBackupIds));
     assert.strictEqual(typeof prefix, 'string');
+    assert.strictEqual(typeof callback, 'function');
 
     var timestamp = (new Date()).toISOString().replace(/[T.]/g, '-').replace(/[:Z]/g,'');
     var backupId = util.format('%s/box_%s_v%s', prefix, timestamp, config.version());
@@ -183,14 +200,9 @@ function backupBoxWithAppBackupIds(appBackupIds, prefix, callback) {
         if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
 
         var startTime = new Date();
-        var password = config.database().password ? '-p' + config.database().password : '--skip-password';
-        var mysqlDumpArgs = [
-            '-c',
-            `/usr/bin/mysqldump -u root ${password} --single-transaction --routines \
-                --triggers ${config.database().name} > "${paths.BOX_DATA_DIR}/box.mysqldump"`
-        ];
-        shell.exec('backupBox', '/bin/bash', mysqlDumpArgs, { }, function (error) {
-            if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
+
+        snapshotBox(function (error) {
+            if (error) return callback(error);
 
             backupdb.add({ id: backupId, version: config.version(), type: backupdb.BACKUP_TYPE_BOX, dependsOn: appBackupIds, restoreConfig: null }, function (error) {
                 if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
@@ -224,15 +236,10 @@ function canBackupApp(app) {
             app.installationState === appdb.ISTATE_PENDING_UPDATE; // called from apptask
 }
 
-function createNewAppBackup(app, manifest, prefix, backupConfig, callback) {
+function snapshotApp(app, manifest, callback) {
     assert.strictEqual(typeof app, 'object');
     assert(manifest && typeof manifest === 'object');
-    assert.strictEqual(typeof prefix, 'string');
-    assert.strictEqual(typeof backupConfig, 'object');
     assert.strictEqual(typeof callback, 'function');
-
-    var timestamp = (new Date()).toISOString().replace(/[T.]/g, '-').replace(/[:Z]/g,'');
-    var backupId = util.format('%s/app_%s_%s_v%s', prefix, app.id, timestamp, manifest.version);
 
     var restoreConfig = apps.getAppConfig(app);
     restoreConfig.manifest = manifest;
@@ -243,6 +250,26 @@ function createNewAppBackup(app, manifest, prefix, backupConfig, callback) {
 
     addons.backupAddons(app, manifest.addons, function (error) {
         if (error) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
+
+        return callback();
+    });
+}
+
+function createNewAppBackup(app, manifest, prefix, backupConfig, callback) {
+    assert.strictEqual(typeof app, 'object');
+    assert(manifest && typeof manifest === 'object');
+    assert.strictEqual(typeof prefix, 'string');
+    assert.strictEqual(typeof backupConfig, 'object');
+    assert.strictEqual(typeof callback, 'function');
+
+    var timestamp = (new Date()).toISOString().replace(/[T.]/g, '-').replace(/[:Z]/g,'');
+    var backupId = util.format('%s/app_%s_%s_v%s', prefix, app.id, timestamp, manifest.version);
+
+    snapshotApp(app, manifest, function (error) {
+        if (error) return callback(error);
+
+        var restoreConfig = apps.getAppConfig(app);
+        restoreConfig.manifest = manifest;
 
         backupdb.add({ id: backupId, version: manifest.version, type: backupdb.BACKUP_TYPE_APP, dependsOn: [ ], restoreConfig: restoreConfig }, function (error) {
             if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
