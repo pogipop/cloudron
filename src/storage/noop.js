@@ -21,7 +21,7 @@ function upload(apiConfig, backupId, sourceDir, callback) {
     assert.strictEqual(typeof sourceDir, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    debug('backup: %s %j', backupId, sourceDirectories);
+    debug('backup: %s %s', backupId, sourceDir);
 
     callback();
 }
