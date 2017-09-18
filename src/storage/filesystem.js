@@ -69,7 +69,7 @@ function backup(apiConfig, backupId, sourceDir, callback) {
             callback(null);
         });
 
-        targz.create([{ source: sourceDir, destination: '.' }], apiConfig.key || null, fileStream, callback);
+        targz.create(sourceDir, apiConfig.key || null, fileStream, callback);
     });
 }
 

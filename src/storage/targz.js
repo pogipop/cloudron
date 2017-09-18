@@ -14,18 +14,16 @@ var assert = require('assert'),
     tar = require('tar-fs'),
     zlib = require('zlib');
 
-function create(sourceDirectories, key, outStream, callback) {
-    assert(Array.isArray(sourceDirectories));
+function create(sourceDir, key, outStream, callback) {
+    assert.strictEqual(typeof sourceDir, 'string');
     assert(key === null || typeof key === 'string');
     assert.strictEqual(typeof callback, 'function');
 
     var pack = tar.pack('/', {
         dereference: false, // pack the symlink and not what it points to
-        entries: sourceDirectories.map(function (m) { return m.source; }),
+        entries: [ sourceDir ],
         map: function(header) {
-            sourceDirectories.forEach(function (m) {
-                header.name = header.name.replace(new RegExp('^' + m.source + '(/?)'), m.destination + '$1');
-            });
+            header.name = header.name.replace(new RegExp('^' + sourceDir + '(/?)'), '.$1'); // make paths relative
             return header;
         },
         strict: false // do not error for unknown types (skip fifo, char/block devices)
