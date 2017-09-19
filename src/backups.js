@@ -45,6 +45,8 @@ var addons = require('./addons.js'),
 
 var NOOP_CALLBACK = function (error) { if (error) debug(error); };
 
+var BACKUPTASK_CMD = path.join(__dirname, 'backuptask.js');
+
 function debugApp(app, args) {
     assert(!app || typeof app === 'object');
 
@@ -139,6 +141,33 @@ function getRestoreConfig(backupId, callback) {
     });
 }
 
+function runBackupTask(backupId, dataDir, callback) {
+    assert.strictEqual(typeof backupId, 'string');
+    assert.strictEqual(typeof dataDir, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    var killTimerId = null;
+
+    var cp = shell.sudo(`backup-${backupId}`, [ BACKUPTASK_CMD, backupId, dataDir ], function (error) {
+        clearTimeout(killTimerId);
+        cp = null;
+
+        if (error && (error.code === null /* signal */ || (error.code !== 0 && error.code !== 50))) { // backuptask crashed
+            return callback(new BackupsError(BackupsError.INTERNAL_ERROR, 'backuptask crashed'));
+        } else if (error && error.code === 50) { // exited with error
+            var result = safe.fs.readFileSync(paths.BACKUP_RESULT_FILE, 'utf8') || safe.error.message;
+            return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, result));
+        }
+
+        callback();
+    });
+
+    killTimerId = setTimeout(function () {
+        debug('runBackupTask: backup task taking too long. killing');
+        cp.kill();
+    }, 4 * 60 * 60 * 1000); // 4 hours
+}
+
 function getSnapshotInfo(id) {
     assert.strictEqual(typeof id, 'string');
 
@@ -186,9 +215,10 @@ function uploadBoxSnapshot(backupConfig, callback) {
     snapshotBox(function (error) {
         if (error) return callback(error);
 
-        api(backupConfig.provider).upload(backupConfig, 'snapshot/box', paths.BOX_DATA_DIR, function (backupTaskError) {
-            const state = backupTaskError ? backupdb.BACKUP_STATE_ERROR : backupdb.BACKUP_STATE_NORMAL;
-            debug('uploadBoxSnapshot: %s time: %s secs', state, (new Date() - startTime)/1000);
+        runBackupTask('snapshot/box', paths.BOX_DATA_DIR, function (error) {
+            if (error) return callback(error);
+
+            debug('uploadBoxSnapshot: time: %s secs', (new Date() - startTime)/1000);
 
             setSnapshotInfo('box', { timestamp: new Date().toISOString() }, callback);
         });
@@ -336,7 +366,7 @@ function uploadAppSnapshot(backupConfig, app, manifest, callback) {
 
         var backupId = util.format('snapshot/app_%s', app.id);
         var appDataDir = safe.fs.realpathSync(path.join(paths.APPS_DATA_DIR, app.id));
-        api(backupConfig.provider).upload(backupConfig, backupId, appDataDir, function (error) {
+        runBackupTask(backupId, appDataDir, function (error) {
             if (error) return callback(error);
 
             debugApp(app, 'uploadAppSnapshot: %s done time: %s secs', backupId, (new Date() - startTime)/1000);

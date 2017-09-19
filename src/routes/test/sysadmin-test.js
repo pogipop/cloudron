@@ -10,10 +10,13 @@ var appdb = require('../../appdb.js'),
     config = require('../../config.js'),
     database = require('../../database.js'),
     expect = require('expect.js'),
+    hock = require('hock'),
+    http = require('http'),
     nock = require('nock'),
     superagent = require('superagent'),
     server = require('../../server.js'),
-    settings = require('../../settings.js');
+    settings = require('../../settings.js'),
+    url = require('url');
 
 var SERVER_URL = 'http://localhost:' + config.get('port');
 
@@ -67,19 +70,33 @@ describe('Internal API', function () {
     before(setup);
     after(cleanup);
 
+    var apiHockInstance = hock.createHock({ throwOnUnmatched: false }), apiHockServer;
+
+    before(function (done) {
+        apiHockInstance
+            .post('/api/v1/boxes/' + config.fqdn() + '/awscredentials?token=BACKUP_TOKEN')
+            .reply(201, { credentials: { AccessKeyId: 'accessKeyId', SecretAccessKey: 'secretAccessKey' } });
+        var port = parseInt(url.parse(config.apiServerOrigin()).port, 10);
+        apiHockServer = http.createServer(apiHockInstance.handler).listen(port, done);
+    });
+
+    after(function (done) {
+        apiHockServer.close();
+        done();
+    });
+
     describe('backup', function () {
         it('succeeds', function (done) {
-            var scope1 = nock(config.apiServerOrigin()).post('/api/v1/boxes/' + config.fqdn() + '/awscredentials?token=BACKUP_TOKEN')
-                .reply(201, { credentials: { AccessKeyId: 'accessKeyId', SecretAccessKey: 'secretAccessKey' } }, { 'Content-Type': 'application/json' });
-    
             superagent.post(config.sysadminOrigin() + '/api/v1/backup')
                 .end(function (error, result) {
                     expect(result.statusCode).to.equal(202);
 
                     function checkAppstoreServerCalled() {
-                        if (scope1.isDone()) return done();
+                        apiHockInstance.done(function (error) {
+                            if (!error) return done();
 
-                        setTimeout(checkAppstoreServerCalled, 100);
+                            setTimeout(checkAppstoreServerCalled, 100);
+                        });
                     }
 
                     checkAppstoreServerCalled();
