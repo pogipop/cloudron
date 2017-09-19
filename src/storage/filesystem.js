@@ -34,7 +34,7 @@ function getBackupFilePath(apiConfig, backupId) {
 
     const FILE_TYPE = apiConfig.key ? '.tar.gz.enc' : '.tar.gz';
 
-    return path.join(apiConfig.backupFolder, backupId.endsWith(FILE_TYPE) ? backupId : backupId+FILE_TYPE);
+    return path.join(apiConfig.backupFolder, backupId+FILE_TYPE);
 }
 
 // storage api
