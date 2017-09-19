@@ -17,7 +17,7 @@ describe('config', function () {
     });
 
     after(function () {
-        delete require.cache[require.resolve('../config.js')];
+        config._reset();
     });
 
     it('baseDir() is set', function (done) {
