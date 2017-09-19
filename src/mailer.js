@@ -36,7 +36,9 @@ exports = module.exports = {
     _clearMailQueue: _clearMailQueue
 };
 
-var assert = require('assert'),
+var appstore = require('./appstore.js'),
+    AppstoreError = appstore.AppstoreError,
+    assert = require('assert'),
     async = require('async'),
     config = require('./config.js'),
     debug = require('debug')('box:mailer'),
@@ -426,29 +428,34 @@ function sendDigest(info) {
                 cloudronName = 'Cloudron';
             }
 
-            var templateData = {
-                fqdn: config.fqdn(),
-                webadminUrl: config.adminOrigin(),
-                cloudronName: cloudronName,
-                cloudronAvatarUrl: config.adminOrigin() + '/api/v1/cloudron/avatar',
-                info: info
-            };
+            appstore.getAccount(function (error, appstoreProfile) {
+                if (error && error.reason !== AppstoreError.BILLING_REQUIRED) console.error(error);
+                if (appstoreProfile) adminEmails.push(appstoreProfile.email);
 
-            var templateDataText = JSON.parse(JSON.stringify(templateData));
-            templateDataText.format = 'text';
+                var templateData = {
+                    fqdn: config.fqdn(),
+                    webadminUrl: config.adminOrigin(),
+                    cloudronName: cloudronName,
+                    cloudronAvatarUrl: config.adminOrigin() + '/api/v1/cloudron/avatar',
+                    info: info
+                };
 
-            var templateDataHTML = JSON.parse(JSON.stringify(templateData));
-            templateDataHTML.format = 'html';
+                var templateDataText = JSON.parse(JSON.stringify(templateData));
+                templateDataText.format = 'text';
 
-            var mailOptions = {
-                from: mailConfig().from,
-                to: adminEmails.join(', '),
-                subject: util.format('[%s] Cloudron - Weekly activity digest', config.fqdn()),
-                text: render('digest.ejs', templateDataText),
-                html: render('digest.ejs', templateDataHTML)
-            };
+                var templateDataHTML = JSON.parse(JSON.stringify(templateData));
+                templateDataHTML.format = 'html';
 
-            enqueue(mailOptions);
+                var mailOptions = {
+                    from: mailConfig().from,
+                    to: adminEmails.join(', '),
+                    subject: util.format('[%s] Cloudron - Weekly activity digest', config.fqdn()),
+                    text: render('digest.ejs', templateDataText),
+                    html: render('digest.ejs', templateDataHTML)
+                };
+
+                enqueue(mailOptions);
+            });
         });
     });
 }

@@ -11,6 +11,8 @@ exports = module.exports = {
     getAppUpdate: getAppUpdate,
     getBoxUpdate: getBoxUpdate,
 
+    getAccount: getAccount,
+
     AppstoreError: AppstoreError
 };
 
@@ -242,6 +244,24 @@ function getAppUpdate(app, callback) {
 
             // { id, creationDate, manifest }
             callback(null, result.body);
+        });
+    });
+}
+
+function getAccount(callback) {
+    assert.strictEqual(typeof callback, 'function');
+
+    getAppstoreConfig(function (error, appstoreConfig) {
+        if (error) return callback(error);
+
+        var url = config.apiServerOrigin() + '/api/v1/users/' + appstoreConfig.userId;
+
+        superagent.get(url).query({ accessToken: appstoreConfig.token }).timeout(10 * 1000).end(function (error, result) {
+            if (error && !error.response) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, error));
+            if (result.statusCode !== 200) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, util.format('Bad response: %s %s', result.statusCode, result.text)));
+
+            // { profile: { id, email, groupId, billing, firstName, lastName, company, street, city, zip, state, country } }
+            callback(null, result.body.profile);
         });
     });
 }

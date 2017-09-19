@@ -12,6 +12,7 @@ var async = require('async'),
     eventlog = require('../eventlog.js'),
     expect = require('expect.js'),
     mailer = require('../mailer.js'),
+    nock = require('nock'),
     paths = require('../paths.js'),
     safe = require('safetydance'),
     settings = require('../settings.js'),
@@ -30,10 +31,15 @@ var AUDIT_SOURCE = {
     ip: '1.2.3.4'
 };
 
-function checkMails(number, done) {
+function checkMails(number, email, done) {
     // mails are enqueued async
     setTimeout(function () {
         expect(mailer._getMailQueue().length).to.equal(number);
+
+        if (number && email) {
+            expect(mailer._getMailQueue()[0].to.indexOf(email)).to.not.equal(-1);
+        }
+
         mailer._clearMailQueue();
         done();
     }, 500);
@@ -78,7 +84,7 @@ describe('digest', function () {
         it('does not send mail with digest disabled', function (done) {
             digest.maybeSend(function (error) {
                 if (error) return done(error);
-                checkMails(0, done);
+                checkMails(0, '', done);
             });
         });
 
@@ -93,7 +99,7 @@ describe('digest', function () {
             digest.maybeSend(function (error) {
                 if (error) return done(error);
 
-                checkMails(1, done);
+                checkMails(1, '', done);
             });
         });
 
@@ -103,7 +109,40 @@ describe('digest', function () {
             digest.maybeSend(function (error) {
                 if (error) return done(error);
 
-                checkMails(1, done);
+                checkMails(1, '', done);
+            });
+        });
+
+        it('sends mail for pending update to appstore account email (caas)', function (done) {
+            var subscription = {
+                id: 'caas',
+                created: 0,
+                canceled_at: 0,
+                status: 'active',
+                plan: { id: 'caas' }
+            };
+
+            updatechecker._setUpdateInfo({ box: null, apps: { 'appid': { manifest: { version: '1.2.5', changelog: 'noop\nreally' } } } });
+            var fake1 = nock(config.apiServerOrigin()).post(function (uri) { return uri.indexOf('/api/v1/users/test-user/cloudrons') >= 0; }).reply(201, { cloudron: { id: 'test-cloudron' }});
+            var fake2 = nock(config.apiServerOrigin()).get(function (uri) { return uri.indexOf('/api/v1/users/test-user/cloudrons/test-cloudron/subscription') >= 0; }).reply(200, { subscription: subscription });
+            var fake3 = nock(config.apiServerOrigin()).get('/api/v1/users/test-user?accessToken=test-token').reply(200, { profile: { id: 'test-user', email: 'test@email.com' } });
+
+            settings.setAppstoreConfig({ userId: 'test-user', token: 'test-token', cloudronId: 'test-cloudron' }, function (error) {
+                if (error) return done(error);
+
+                digest.maybeSend(function (error) {
+                    if (error) return done(error);
+
+                    checkMails(1, 'test@email.com', function (error) {
+                        if (error) return done(error);
+
+                        expect(fake1.isDone()).to.be.ok();
+                        expect(fake2.isDone()).to.be.ok();
+                        expect(fake3.isDone()).to.be.ok();
+
+                        done();
+                    });
+                });
             });
         });
     });
