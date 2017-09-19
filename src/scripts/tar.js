@@ -8,6 +8,8 @@ var tar = require('tar-fs');
 
 var sourceDir = process.argv[2];
 
+if (sourceDir === '--check') return console.log('OK');
+
 process.stderr.write('Packing ' + sourceDir + '\n');
 
 tar.pack('/', {

@@ -17,6 +17,7 @@ scripts=("${SOURCE_DIR}/src/scripts/rmappdir.sh" \
          "${SOURCE_DIR}/src/scripts/collectlogs.sh" \
          "${SOURCE_DIR}/src/scripts/configurecollectd.sh" \
          "${SOURCE_DIR}/src/scripts/authorized_keys.sh" \
+         "${SOURCE_DIR}/src/scripts/tar.js" \
          "${SOURCE_DIR}/src/scripts/configurelogrotate.sh")
 
 for script in "${scripts[@]}"; do
@@ -27,21 +28,6 @@ for script in "${scripts[@]}"; do
         echo ""
         echo "Defaults!${script} env_keep=\"HOME BOX_ENV\""
         echo "${USER} ALL=(ALL) NOPASSWD: ${script}"
-        echo ""
-        exit 1
-    fi
-done
-
-scripts=("${SOURCE_DIR}/src/scripts/tar.js")
-
-for script in "${scripts[@]}"; do
-    if [[ $(sudo -n "${script}" 2>/dev/null) ]]; then
-        echo ""
-        echo "${script} does not have sudo access."
-        echo "You have to add the lines below to /etc/sudoers.d/yellowtent."
-        echo ""
-        echo "Defaults!${script} env_keep=\"HOME BOX_ENV\""
-        echo "${USER} ALL=(ALL) NOPASSWD:SETENV: ${script}"
         echo ""
         exit 1
     fi
