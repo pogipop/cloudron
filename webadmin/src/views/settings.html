@@ -139,7 +139,7 @@
                         <!-- Filesystem -->
                         <div class="form-group" ng-class="{ 'has-error': configureBackup.error.backupFolder }" ng-show="configureBackup.provider === 'filesystem'">
                             <label class="control-label" for="inputConfigureBackupFolder">Local backup directory</label>
-                            <input type="text" class="form-control" ng-model="configureBackup.backupFolder" id="inputConfigureBackupFolder" name="backupFolder" ng-disabled="configureBackup.busy" placeholder="Leave empty for default /var/backups">
+                            <input type="text" class="form-control" ng-model="configureBackup.backupFolder" id="inputConfigureBackupFolder" name="backupFolder" ng-disabled="configureBackup.busy" placeholder="Directory for backups" ng-required="configureBackup.provider === 'filesystem'">
 
                             <p class="has-error" ng-show="configureBackup.provider === 'filesystem'">
                                 Please ensure that the backup directory is an external disk
@@ -335,7 +335,7 @@
               <span class="text-muted">Location</span>
           </div>
           <div class="col-xs-6 text-right">
-              <span ng-show="backupConfig.provider === 'filesystem'">{{ backupConfig.backupFolder || '/var/backups' }}</span>
+              <span ng-show="backupConfig.provider === 'filesystem'">{{ backupConfig.backupFolder }}</span>
               <span ng-show="backupConfig.provider === 'minio' || backupConfig.provider === 'exoscale-sos'">{{ backupConfig.bucket + '/' + backupConfig.prefix }}</span>
               <span ng-show="backupConfig.provider === 's3'">{{ backupConfig.region + '   ' + backupConfig.bucket + '/' + backupConfig.prefix }}</span>
           </div>
