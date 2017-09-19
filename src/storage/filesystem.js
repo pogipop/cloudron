@@ -145,10 +145,9 @@ function testConfig(apiConfig, callback) {
     assert.strictEqual(typeof apiConfig, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    if ('backupFolder' in apiConfig && typeof apiConfig.backupFolder !== 'string') return callback(new BackupsError(BackupsError.BAD_FIELD, 'backupFolder must be string'));
+    if (typeof apiConfig.backupFolder !== 'string') return callback(new BackupsError(BackupsError.BAD_FIELD, 'backupFolder must be string'));
 
-    // default value will be used
-    if (!apiConfig.backupFolder) return callback();
+    if (!apiConfig.backupFolder) return callback(new BackupsError(BackupsError.BAD_FIELD, 'backupFolder is required'));
 
     fs.stat(apiConfig.backupFolder, function (error, result) {
         if (error) {

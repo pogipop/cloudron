@@ -24,6 +24,7 @@ describe('backups', function () {
             settings.setBackupConfig.bind(null, {
                 provider: 'filesystem',
                 key: 'enckey',
+                backupFolder: '/var/backups',
                 retentionSecs: 1
             })
         ], done);
