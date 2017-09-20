@@ -18,6 +18,8 @@ exports = module.exports = {
 
     backupBoxAndApps: backupBoxAndApps,
 
+    upload: upload,
+
     cleanup: cleanup
 };
 
@@ -138,6 +140,20 @@ function getRestoreConfig(backupId, callback) {
         if (!result.restoreConfig)  return callback(new BackupsError(BackupsError.NOT_FOUND, error));
 
         callback(null, result.restoreConfig);
+    });
+}
+
+// this function is called via backuptask (since it needs root to traverse app's directory)
+function upload(backupId, dataDir, callback) {
+    assert.strictEqual(typeof backupId, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    debug('Start box backup with id %s', backupId);
+
+    settings.getBackupConfig(function (error, backupConfig) {
+        if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
+
+        api(backupConfig.provider).upload(backupConfig, backupId, dataDir, callback);
     });
 }
 

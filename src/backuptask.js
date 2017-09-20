@@ -15,42 +15,16 @@ require('debug').formatArgs = function formatArgs(args) {
 };
 
 var assert = require('assert'),
-    BackupsError = require('./backups.js').BackupsError,
+    backups = require('./backups.js'),
     database = require('./database.js'),
     debug = require('debug')('box:backuptask'),
     paths = require('./paths.js'),
-    safe = require('safetydance'),
-    settings = require('./settings.js');
-
-function api(provider) {
-    switch (provider) {
-    case 'caas': return require('./storage/caas.js');
-    case 's3': return require('./storage/s3.js');
-    case 'filesystem': return require('./storage/filesystem.js');
-    case 'minio': return require('./storage/s3.js');
-    case 'exoscale-sos': return require('./storage/s3.js');
-    case 'noop': return require('./storage/noop.js');
-    default: return null;
-    }
-}
+    safe = require('safetydance');
 
 function initialize(callback) {
     assert.strictEqual(typeof callback, 'function');
 
     database.initialize(callback);
-}
-
-function backup(backupId, dataDir, callback) {
-    assert.strictEqual(typeof backupId, 'string');
-    assert.strictEqual(typeof callback, 'function');
-
-    debug('Start box backup with id %s', backupId);
-
-    settings.getBackupConfig(function (error, backupConfig) {
-        if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
-
-        api(backupConfig.provider).upload(backupConfig, backupId, dataDir, callback);
-    });
 }
 
 // Main process starts here
@@ -66,7 +40,7 @@ process.on('SIGTERM', function () {
 initialize(function (error) {
     if (error) throw error;
 
-    backup(backupId, dataDir, function resultHandler(error) {
+    backups.upload(backupId, dataDir, function resultHandler(error) {
         if (error) debug('completed with error', error);
 
         debug('completed');
