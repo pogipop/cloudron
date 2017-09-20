@@ -358,7 +358,7 @@ function rotateAppBackup(backupConfig, app, timestamp, callback) {
     backupdb.add({ id: backupId, version: manifest.version, type: backupdb.BACKUP_TYPE_APP, dependsOn: [ ], restoreConfig: restoreConfig }, function (error) {
         if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
 
-        api(backupConfig.provider).copy(backupConfig, `snapshot/app_${app.id}`, backupId, function (copyBackupError) {
+        api(backupConfig.provider).copy(backupConfig, getBackupFilePath(backupConfig, `snapshot/app_${app.id}`), getBackupFilePath(backupConfig, backupId), function (copyBackupError) {
             const state = copyBackupError ? backupdb.BACKUP_STATE_ERROR : backupdb.BACKUP_STATE_NORMAL;
             debugApp(app, 'rotateAppBackup: successful id:%s', backupId);
 
