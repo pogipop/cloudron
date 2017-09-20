@@ -20,10 +20,10 @@ exports = module.exports = {
 
 var assert = require('assert');
 
-function upload(apiConfig, backupFilePath, sourceDir, callback) {
+function upload(apiConfig, backupFilePath, sourceStream, callback) {
     assert.strictEqual(typeof apiConfig, 'object');
     assert.strictEqual(typeof backupFilePath, 'string');
-    assert.strictEqual(typeof sourceDir, 'string');
+    assert.strictEqual(typeof sourceStream, 'object');
     assert.strictEqual(typeof callback, 'function');
 
     // Result: none
@@ -31,14 +31,12 @@ function upload(apiConfig, backupFilePath, sourceDir, callback) {
     callback(new Error('not implemented'));
 }
 
-function download(apiConfig, sourceFilePath, destination, callback) {
+function download(apiConfig, backupFilePath, callback) {
     assert.strictEqual(typeof apiConfig, 'object');
-    assert.strictEqual(typeof sourceFilePath, 'string');
-    assert.strictEqual(typeof destination, 'string');
+    assert.strictEqual(typeof backupFilePath, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    // Result: none
-
+    // Result: download stream
     callback(new Error('not implemented'));
 }
 

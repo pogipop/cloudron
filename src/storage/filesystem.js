@@ -19,24 +19,21 @@ var assert = require('assert'),
     debug = require('debug')('box:storage/filesystem'),
     fs = require('fs'),
     mkdirp = require('mkdirp'),
-    once = require('once'),
+    PassThrough = require('stream').PassThrough,
     path = require('path'),
     safe = require('safetydance'),
-    shell = require('../shell.js'),
-    targz = require('./targz.js');
+    shell = require('../shell.js');
 
 var BACKUP_USER = config.TEST ? process.env.USER : 'yellowtent';
 
 // storage api
-function upload(apiConfig, backupFilePath, sourceDir, callback) {
+function upload(apiConfig, backupFilePath, sourceStream, callback) {
     assert.strictEqual(typeof apiConfig, 'object');
     assert.strictEqual(typeof backupFilePath, 'string');
-    assert.strictEqual(typeof sourceDir, 'string');
+    assert.strictEqual(typeof sourceStream, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    callback = once(callback);
-
-    debug('backup: %s -> %s', sourceDir, backupFilePath);
+    debug('upload: %s', backupFilePath);
 
     mkdirp(path.dirname(backupFilePath), function (error) {
         if (error) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
@@ -44,44 +41,38 @@ function upload(apiConfig, backupFilePath, sourceDir, callback) {
         var fileStream = fs.createWriteStream(backupFilePath);
 
         fileStream.on('error', function (error) {
-            debug('[%s] backup: out stream error.', backupFilePath, error);
+            debug('[%s] upload: out stream error.', backupFilePath, error);
             callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
         });
 
         fileStream.on('close', function () {
-            debug('[%s] backup: changing ownership.', backupFilePath);
+            debug('[%s] upload: changing ownership.', backupFilePath);
 
             if (!safe.child_process.execSync('chown -R ' + BACKUP_USER + ':' + BACKUP_USER + ' ' + path.dirname(backupFilePath))) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, safe.error.message));
 
-            debug('[%s] backup: done.', backupFilePath);
+            debug('[%s] upload: done.', backupFilePath);
 
             callback(null);
         });
 
-        targz.create(sourceDir, apiConfig.key || null, fileStream, callback);
+        sourceStream.pipe(fileStream);
     });
 }
 
-function download(apiConfig, sourceFilePath, destination, callback) {
+function download(apiConfig, sourceFilePath, callback) {
     assert.strictEqual(typeof apiConfig, 'object');
     assert.strictEqual(typeof sourceFilePath, 'string');
-    assert.strictEqual(typeof destination, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    callback = once(callback);
+    debug('download: %s', sourceFilePath);
 
-    debug('restore: %s -> %s', sourceFilePath, destination);
-
-    if (!fs.existsSync(sourceFilePath)) return callback(new BackupsError(BackupsError.NOT_FOUND, 'backup file does not exist'));
-
+    var ps = new PassThrough();
     var fileStream = fs.createReadStream(sourceFilePath);
-
     fileStream.on('error', function (error) {
-        debug('restore: file stream error.', error);
-        callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
+        ps.emit('error', new BackupsError(BackupsError.NOT_FOUND, error.message));
     });
-
-    targz.extract(fileStream, destination, apiConfig.key || null, callback);
+    fileStream.pipe(ps);
+    callback(null, ps);
 }
 
 function copy(apiConfig, oldFilePath, newFilePath, callback) {
@@ -89,8 +80,6 @@ function copy(apiConfig, oldFilePath, newFilePath, callback) {
     assert.strictEqual(typeof oldFilePath, 'string');
     assert.strictEqual(typeof newFilePath, 'string');
     assert.strictEqual(typeof callback, 'function');
-
-    callback = once(callback);
 
     debug('copy: %s -> %s', oldFilePath, newFilePath);
 

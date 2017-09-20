@@ -19,8 +19,14 @@ exports = module.exports = {
     backupBoxAndApps: backupBoxAndApps,
 
     upload: upload,
+    download: download,
 
-    cleanup: cleanup
+    cleanup: cleanup,
+
+    // for testing
+    _getBackupFilePath: getBackupFilePath,
+    _createTarPackStream: createTarPackStream,
+    _tarExtract: tarExtract
 };
 
 var addons = require('./addons.js'),
@@ -31,19 +37,25 @@ var addons = require('./addons.js'),
     assert = require('assert'),
     backupdb = require('./backupdb.js'),
     config = require('./config.js'),
+    crypto = require('crypto'),
     DatabaseError = require('./databaseerror.js'),
     debug = require('debug')('box:backups'),
     eventlog = require('./eventlog.js'),
     locker = require('./locker.js'),
     mailer = require('./mailer.js'),
+    mkdirp = require('mkdirp'),
+    once = require('once'),
     path = require('path'),
     paths = require('./paths.js'),
     progress = require('./progress.js'),
+    progressStream = require('progress-stream'),
     safe = require('safetydance'),
     shell = require('./shell.js'),
     settings = require('./settings.js'),
     SettingsError = require('./settings.js').SettingsError,
-    util = require('util');
+    tar = require('tar-fs'),
+    util = require('util'),
+    zlib = require('zlib');
 
 var NOOP_CALLBACK = function (error) { if (error) debug(error); };
 
@@ -152,17 +164,129 @@ function getBackupFilePath(backupConfig, backupId) {
     return path.join(backupConfig.prefix || backupConfig.backupFolder, backupId+FILE_TYPE);
 }
 
+function createTarPackStream(sourceDir, key) {
+    assert.strictEqual(typeof sourceDir, 'string');
+    assert(key === null || typeof key === 'string');
+
+    var pack = tar.pack('/', {
+        dereference: false, // pack the symlink and not what it points to
+        entries: [ sourceDir ],
+        map: function(header) {
+            header.name = header.name.replace(new RegExp('^' + sourceDir + '(/?)'), '.$1'); // make paths relative
+            return header;
+        },
+        strict: false // do not error for unknown types (skip fifo, char/block devices)
+    });
+
+    var gzip = zlib.createGzip({});
+    var ps = progressStream({ time: 10000 }); // display a progress every 10 seconds
+
+    pack.on('error', function (error) {
+        debug('backup: tar stream error.', error);
+        ps.emit('error', new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
+    });
+
+    gzip.on('error', function (error) {
+        debug('backup: gzip stream error.', error);
+        ps.emit('error', new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
+    });
+
+    ps.on('progress', function(progress) {
+        debug('backup: %s@%s', Math.round(progress.transferred/1024/1024) + 'M', Math.round(progress.speed/1024/1024) + 'Mbps');
+    });
+
+    if (key !== null) {
+        var encrypt = crypto.createCipher('aes-256-cbc', key);
+        encrypt.on('error', function (error) {
+            debug('backup: encrypt stream error.', error);
+            ps.emit('error', new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
+        });
+        return pack.pipe(gzip).pipe(encrypt).pipe(ps);
+    } else {
+        return pack.pipe(gzip).pipe(ps);
+    }
+}
+
 // this function is called via backuptask (since it needs root to traverse app's directory)
 function upload(backupId, dataDir, callback) {
     assert.strictEqual(typeof backupId, 'string');
     assert.strictEqual(typeof callback, 'function');
+
+    callback = once(callback);
 
     debug('Start box backup with id %s', backupId);
 
     settings.getBackupConfig(function (error, backupConfig) {
         if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
 
-        api(backupConfig.provider).upload(backupConfig, getBackupFilePath(backupConfig, backupId), dataDir, callback);
+        var tarStream = createTarPackStream(dataDir, backupConfig.key || null);
+        tarStream.on('error', callback); // already returns BackupsError
+        api(backupConfig.provider).upload(backupConfig, getBackupFilePath(backupConfig, backupId), tarStream, callback);
+    });
+}
+
+function tarExtract(inStream, destination, key, callback) {
+    assert.strictEqual(typeof inStream, 'object');
+    assert.strictEqual(typeof destination, 'string');
+    assert(key === null || typeof key === 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    callback = once(callback);
+
+    var gunzip = zlib.createGunzip({});
+    var ps = progressStream({ time: 10000 }); // display a progress every 10 seconds
+    var extract = tar.extract(destination);
+
+    ps.on('progress', function(progress) {
+        debug('restore: %s@%s', Math.round(progress.transferred/1024/1024) + 'M', Math.round(progress.speed/1024/1024) + 'Mbps');
+    });
+
+    gunzip.on('error', function (error) {
+        debug('restore: gunzip stream error.', error);
+        callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
+    });
+
+    extract.on('error', function (error) {
+        debug('restore: extract stream error.', error);
+        callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
+    });
+
+    extract.on('finish', function () {
+        debug('restore: done.');
+        callback(null);
+    });
+
+    if (key !== null) {
+        var decrypt = crypto.createDecipher('aes-256-cbc', key);
+        decrypt.on('error', function (error) {
+            debug('restore: decrypt stream error.', error);
+            callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
+        });
+        inStream.pipe(ps).pipe(decrypt).pipe(gunzip).pipe(extract);
+    } else {
+        inStream.pipe(ps).pipe(gunzip).pipe(extract);
+    }
+}
+
+function download(backupId, dataDir, callback) {
+    assert.strictEqual(typeof backupId, 'string');
+    assert.strictEqual(typeof dataDir, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    debug('Start download of id %s', backupId);
+
+    settings.getBackupConfig(function (error, backupConfig) {
+        if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
+
+        mkdirp(getBackupFilePath(backupConfig, dataDir), function (error) {
+            if (error) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
+
+            api(backupConfig.provider).download(backupConfig, getBackupFilePath(backupConfig, backupId), function (error, sourceStream) {
+                if (error) return callback(error);
+
+                tarExtract(sourceStream, dataDir, backupConfig.key || null, callback);
+            });
+        });
     });
 }
 
@@ -530,21 +654,17 @@ function restoreApp(app, addonsToRestore, backupId, callback) {
     assert.strictEqual(typeof callback, 'function');
     assert(app.lastBackupId);
 
-    settings.getBackupConfig(function (error, backupConfig) {
-        if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
+    var appDataDir = safe.fs.realpathSync(path.join(paths.APPS_DATA_DIR, app.id));
 
-        var appDataDir = safe.fs.realpathSync(path.join(paths.APPS_DATA_DIR, app.id));
+    var startTime = new Date();
 
-        var startTime = new Date();
+    async.series([
+        download.bind(null, backupId, appDataDir),
+        addons.restoreAddons.bind(null, app, addonsToRestore)
+    ], function (error) {
+        debug('restoreApp: time: %s', (new Date() - startTime)/1000);
 
-        async.series([
-            api(backupConfig.provider).download.bind(null, backupConfig, getBackupFilePath(backupConfig, backupId), appDataDir),
-            addons.restoreAddons.bind(null, app, addonsToRestore)
-        ], function (error) {
-            debug('restoreApp: time: %s', (new Date() - startTime)/1000);
-
-            callback(error);
-        });
+        callback(error);
     });
 }
 

@@ -13,6 +13,7 @@ var async = require('async'),
     MockS3 = require('mock-aws-s3'),
     rimraf = require('rimraf'),
     mkdirp = require('mkdirp'),
+    backups = require('../backups.js'),
     BackupsError = require('../backups.js').BackupsError,
     config = require('../config.js'),
     database = require('../database.js'),
@@ -92,8 +93,8 @@ function compareDirectories(one, two, callback) {
 
 describe('Storage', function () {
     describe('filesystem', function () {
-        var gBackupId_1 = 'someprefix/one';
-        var gBackupId_2 = 'someprefix/two';
+        var gBackupId_1;
+        var gBackupId_2;
         var gTmpFolder;
         var gSourceFolder;
         var gDestinationFolder;
@@ -112,6 +113,9 @@ describe('Storage', function () {
                 gBackupConfig.backupFolder = path.join(gTmpFolder, 'backups/');
                 gSourceFolder = path.join(__dirname, 'storage');
                 gDestinationFolder = path.join(gTmpFolder, 'destination/');
+
+                gBackupId_1 = backups._getBackupFilePath(gBackupConfig, 'someprefix/one');
+                gBackupId_2 = backups._getBackupFilePath(gBackupConfig, 'someprefix/two');
 
                 done();
             });
@@ -145,7 +149,8 @@ describe('Storage', function () {
         });
 
         it('can backup', function (done) {
-            filesystem.upload(gBackupConfig, gBackupId_1, gSourceFolder, function (error) {
+            var tarStream = backups._createTarPackStream(gSourceFolder, gBackupConfig.key);
+            filesystem.upload(gBackupConfig, gBackupId_1, tarStream, function (error) {
                 expect(error).to.be(null);
 
                 done();
@@ -153,16 +158,20 @@ describe('Storage', function () {
         });
 
         it('can download', function (done) {
-            filesystem.download(gBackupConfig, gBackupId_1, gDestinationFolder, function (error) {
+            filesystem.download(gBackupConfig, gBackupId_1, function (error, stream) {
                 expect(error).to.be(null);
 
-                compareDirectories(path.join(gSourceFolder, 'data'), path.join(gDestinationFolder, 'data'), function (error) {
-                    expect(error).to.equal(null);
+                backups._tarExtract(stream, gDestinationFolder, gBackupConfig.key || null, function (error) {
+                    expect(error).to.be(null);
 
-                    compareDirectories(path.join(gSourceFolder, 'addon'), path.join(gDestinationFolder, 'addon'), function (error) {
+                    compareDirectories(path.join(gSourceFolder, 'data'), path.join(gDestinationFolder, 'data'), function (error) {
                         expect(error).to.equal(null);
 
-                        rimraf(gDestinationFolder, done);
+                        compareDirectories(path.join(gSourceFolder, 'addon'), path.join(gDestinationFolder, 'addon'), function (error) {
+                            expect(error).to.equal(null);
+
+                            rimraf(gDestinationFolder, done);
+                        });
                     });
                 });
             });
@@ -179,25 +188,33 @@ describe('Storage', function () {
         });
 
         it('cannot download deleted backup', function (done) {
-            filesystem.download(gBackupConfig, gBackupId_1, gDestinationFolder, function (error) {
-                expect(error).to.be.an('object');
-                expect(error.reason).to.equal(BackupsError.NOT_FOUND);
+            filesystem.download(gBackupConfig, gBackupId_1, function (error, stream) {
+                expect(error).to.be(null);
 
-                done();
+                stream.on('error', function (error) {
+                    expect(error).to.be.an('object');
+                    expect(error.reason).to.equal(BackupsError.NOT_FOUND);
+
+                    done();
+                });
             });
         });
 
         it('can download backup copy', function (done) {
-            filesystem.download(gBackupConfig, gBackupId_2, gDestinationFolder, function (error) {
+            filesystem.download(gBackupConfig, gBackupId_2, function (error, stream) {
                 expect(error).to.be(null);
 
-                compareDirectories(path.join(gSourceFolder, 'data'), path.join(gDestinationFolder, 'data'), function (error) {
-                    expect(error).to.equal(null);
+                backups._tarExtract(stream, gDestinationFolder, gBackupConfig.key || null, function (error) {
+                    expect(error).to.be(null);
 
-                    compareDirectories(path.join(gSourceFolder, 'addon'), path.join(gDestinationFolder, 'addon'), function (error) {
+                    compareDirectories(path.join(gSourceFolder, 'data'), path.join(gDestinationFolder, 'data'), function (error) {
                         expect(error).to.equal(null);
 
-                        rimraf(gDestinationFolder, done);
+                        compareDirectories(path.join(gSourceFolder, 'addon'), path.join(gDestinationFolder, 'addon'), function (error) {
+                            expect(error).to.equal(null);
+
+                            rimraf(gDestinationFolder, done);
+                        });
                     });
                 });
             });
@@ -257,7 +274,8 @@ describe('Storage', function () {
         });
 
         it('can backup', function (done) {
-            s3.upload(gBackupConfig, gBackupId_1, gSourceFolder, function (error) {
+            var tarStream = backups._createTarPackStream(gSourceFolder, gBackupConfig.key);
+            s3.upload(gBackupConfig, gBackupId_1, tarStream, function (error) {
                 expect(error).to.be(null);
 
                 done();
@@ -265,16 +283,20 @@ describe('Storage', function () {
         });
 
         it('can download', function (done) {
-            s3.download(gBackupConfig, gBackupId_1, gDestinationFolder, function (error) {
+            s3.download(gBackupConfig, gBackupId_1, function (error, stream) {
                 expect(error).to.be(null);
 
-                compareDirectories(path.join(gSourceFolder, 'data'), path.join(gDestinationFolder, 'data'), function (error) {
-                    expect(error).to.equal(null);
+                backups._tarExtract(stream, gDestinationFolder, gBackupConfig.key || null, function (error) {
+                    expect(error).to.be(null);
 
-                    compareDirectories(path.join(gSourceFolder, 'addon'), path.join(gDestinationFolder, 'addon'), function (error) {
+                    compareDirectories(path.join(gSourceFolder, 'data'), path.join(gDestinationFolder, 'data'), function (error) {
                         expect(error).to.equal(null);
 
-                        rimraf(gDestinationFolder, done);
+                        compareDirectories(path.join(gSourceFolder, 'addon'), path.join(gDestinationFolder, 'addon'), function (error) {
+                            expect(error).to.equal(null);
+
+                            rimraf(gDestinationFolder, done);
+                        });
                     });
                 });
             });
@@ -291,25 +313,33 @@ describe('Storage', function () {
         });
 
         it('cannot download deleted backup', function (done) {
-            s3.download(gBackupConfig, gBackupId_1, gDestinationFolder, function (error) {
-                expect(error).to.be.an('object');
-                expect(error.reason).to.equal(BackupsError.NOT_FOUND);
+            s3.download(gBackupConfig, gBackupId_1, function (error, stream) {
+                expect(error).to.be(null);
 
-                done();
+                stream.on('error', function (error) {
+                    expect(error).to.be.an('object');
+                    expect(error.reason).to.equal(BackupsError.NOT_FOUND);
+
+                    done();
+                });
             });
         });
 
         it('can download backup copy', function (done) {
-            s3.download(gBackupConfig, gBackupId_2, gDestinationFolder, function (error) {
+            s3.download(gBackupConfig, gBackupId_2, function (error, stream) {
                 expect(error).to.be(null);
 
-                compareDirectories(path.join(gSourceFolder, 'data'), path.join(gDestinationFolder, 'data'), function (error) {
-                    expect(error).to.equal(null);
+                backups._tarExtract(stream, gDestinationFolder, gBackupConfig.key || null, function (error) {
+                    expect(error).to.be(null);
 
-                    compareDirectories(path.join(gSourceFolder, 'addon'), path.join(gDestinationFolder, 'addon'), function (error) {
+                    compareDirectories(path.join(gSourceFolder, 'data'), path.join(gDestinationFolder, 'data'), function (error) {
                         expect(error).to.equal(null);
 
-                        rimraf(gDestinationFolder, done);
+                        compareDirectories(path.join(gSourceFolder, 'addon'), path.join(gDestinationFolder, 'addon'), function (error) {
+                            expect(error).to.equal(null);
+
+                            rimraf(gDestinationFolder, done);
+                        });
                     });
                 });
             });

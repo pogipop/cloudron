@@ -16,12 +16,10 @@ var assert = require('assert'),
     BackupsError = require('../backups.js').BackupsError,
     config = require('../config.js'),
     debug = require('debug')('box:storage/caas'),
-    once = require('once'),
     PassThrough = require('stream').PassThrough,
     path = require('path'),
     S3BlockReadStream = require('s3-block-read-stream'),
-    superagent = require('superagent'),
-    targz = require('./targz.js');
+    superagent = require('superagent');
 
 // internal only
 function getBackupCredentials(apiConfig, callback) {
@@ -50,51 +48,41 @@ function getBackupCredentials(apiConfig, callback) {
 }
 
 // storage api
-function upload(apiConfig, backupFilePath, sourceDir, callback) {
+function upload(apiConfig, backupFilePath, sourceStream, callback) {
     assert.strictEqual(typeof apiConfig, 'object');
     assert.strictEqual(typeof backupFilePath, 'string');
-    assert.strictEqual(typeof sourceDir, 'string');
+    assert.strictEqual(typeof sourceStream, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    callback = once(callback);
-
-    debug('backup: %s -> %s', sourceDir, backupFilePath);
+    debug('upload: %s', backupFilePath);
 
     getBackupCredentials(apiConfig, function (error, credentials) {
         if (error) return callback(error);
-
-        var passThrough = new PassThrough();
-
         var params = {
             Bucket: apiConfig.bucket,
             Key: backupFilePath,
-            Body: passThrough
+            Body: sourceStream
         };
 
         var s3 = new AWS.S3(credentials);
         // s3.upload automatically does a multi-part upload. we set queueSize to 1 to reduce memory usage
         s3.upload(params, { partSize: 10 * 1024 * 1024, queueSize: 1 }, function (error) {
             if (error) {
-                debug('[%s] backup: s3 upload error.', backupFilePath, error);
+                debug('[%s] upload: s3 upload error.', backupFilePath, error);
                 return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error));
             }
 
             callback(null);
         });
-
-        targz.create(sourceDir, apiConfig.key || null, passThrough, callback);
     });
 }
 
-function download(apiConfig, backupFilePath, destination, callback) {
+function download(apiConfig, backupFilePath, callback) {
     assert.strictEqual(typeof apiConfig, 'object');
     assert.strictEqual(typeof backupFilePath, 'string');
-    assert.strictEqual(typeof destination, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    callback = once(callback);
-
-    debug('restore: %s -> %s', backupFilePath, destination);
+    debug('download: %s', backupFilePath);
 
     getBackupCredentials(apiConfig, function (error, credentials) {
         if (error) return callback(error);
@@ -105,17 +93,23 @@ function download(apiConfig, backupFilePath, destination, callback) {
         };
 
         var s3 = new AWS.S3(credentials);
+
+        var ps = new PassThrough();
         var multipartDownload = new S3BlockReadStream(s3, params, { blockSize: 64 * 1024 * 1024, logCallback: debug });
 
         multipartDownload.on('error', function (error) {
             // TODO ENOENT for the mock, fix upstream!
-            if (error.code === 'NoSuchKey' || error.code === 'ENOENT') return callback(new BackupsError(BackupsError.NOT_FOUND));
-
-            debug('[%s] restore: s3 stream error.', backupFilePath, error);
-            callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
+            if (error.code === 'NoSuchKey' || error.code === 'ENOENT') {
+                ps.emit('error', new BackupsError(BackupsError.NOT_FOUND));
+            } else {
+                debug('[%s] download: s3 stream error.', backupFilePath, error);
+                ps.emit('error', new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
+            }
         });
 
-        targz.extract(multipartDownload, destination, apiConfig.key || null, callback);
+        multipartDownload.pipe(ps);
+
+        callback(null, ps);
     });
 }
 
@@ -191,7 +185,7 @@ function backupDone(backupId, appBackupIds, callback) {
     assert.strictEqual(typeof callback, 'function');
 
     // Caas expects filenames instead of backupIds, this means no prefix but a file type extension
-    var FILE_TYPE = '.tar.gz.enc';    
+    var FILE_TYPE = '.tar.gz.enc';
     var boxBackupFilename = backupId + FILE_TYPE;
     var appBackupFilenames = appBackupIds.map(function (id) { return id + FILE_TYPE; });
 
