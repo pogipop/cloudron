@@ -27,28 +27,16 @@ var assert = require('assert'),
 
 var BACKUP_USER = config.TEST ? process.env.USER : 'yellowtent';
 
-// internal only
-function getBackupFilePath(apiConfig, backupId) {
-    assert.strictEqual(typeof apiConfig, 'object');
-    assert.strictEqual(typeof backupId, 'string');
-
-    const FILE_TYPE = apiConfig.key ? '.tar.gz.enc' : '.tar.gz';
-
-    return path.join(apiConfig.backupFolder, backupId+FILE_TYPE);
-}
-
 // storage api
-function upload(apiConfig, backupId, sourceDir, callback) {
+function upload(apiConfig, backupFilePath, sourceDir, callback) {
     assert.strictEqual(typeof apiConfig, 'object');
-    assert.strictEqual(typeof backupId, 'string');
+    assert.strictEqual(typeof backupFilePath, 'string');
     assert.strictEqual(typeof sourceDir, 'string');
     assert.strictEqual(typeof callback, 'function');
 
     callback = once(callback);
 
-    var backupFilePath = getBackupFilePath(apiConfig, backupId);
-
-    debug('[%s] backup: %s -> %s', backupId, sourceDir, backupFilePath);
+    debug('backup: %s -> %s', sourceDir, backupFilePath);
 
     mkdirp(path.dirname(backupFilePath), function (error) {
         if (error) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
@@ -56,16 +44,16 @@ function upload(apiConfig, backupId, sourceDir, callback) {
         var fileStream = fs.createWriteStream(backupFilePath);
 
         fileStream.on('error', function (error) {
-            debug('[%s] backup: out stream error.', backupId, error);
+            debug('[%s] backup: out stream error.', backupFilePath, error);
             callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
         });
 
         fileStream.on('close', function () {
-            debug('[%s] backup: changing ownership.', backupId);
+            debug('[%s] backup: changing ownership.', backupFilePath);
 
             if (!safe.child_process.execSync('chown -R ' + BACKUP_USER + ':' + BACKUP_USER + ' ' + path.dirname(backupFilePath))) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, safe.error.message));
 
-            debug('[%s] backup: done.', backupId);
+            debug('[%s] backup: done.', backupFilePath);
 
             callback(null);
         });
@@ -74,17 +62,15 @@ function upload(apiConfig, backupId, sourceDir, callback) {
     });
 }
 
-function download(apiConfig, backupId, destination, callback) {
+function download(apiConfig, sourceFilePath, destination, callback) {
     assert.strictEqual(typeof apiConfig, 'object');
-    assert.strictEqual(typeof backupId, 'string');
+    assert.strictEqual(typeof sourceFilePath, 'string');
     assert.strictEqual(typeof destination, 'string');
     assert.strictEqual(typeof callback, 'function');
 
     callback = once(callback);
 
-    var sourceFilePath = getBackupFilePath(apiConfig, backupId);
-
-    debug('[%s] restore: %s -> %s', backupId, sourceFilePath, destination);
+    debug('restore: %s -> %s', sourceFilePath, destination);
 
     if (!fs.existsSync(sourceFilePath)) return callback(new BackupsError(BackupsError.NOT_FOUND, 'backup file does not exist'));
 
@@ -98,16 +84,13 @@ function download(apiConfig, backupId, destination, callback) {
     targz.extract(fileStream, destination, apiConfig.key || null, callback);
 }
 
-function copy(apiConfig, oldBackupId, newBackupId, callback) {
+function copy(apiConfig, oldFilePath, newFilePath, callback) {
     assert.strictEqual(typeof apiConfig, 'object');
-    assert.strictEqual(typeof oldBackupId, 'string');
-    assert.strictEqual(typeof newBackupId, 'string');
+    assert.strictEqual(typeof oldFilePath, 'string');
+    assert.strictEqual(typeof newFilePath, 'string');
     assert.strictEqual(typeof callback, 'function');
 
     callback = once(callback);
-
-    var oldFilePath = getBackupFilePath(apiConfig, oldBackupId);
-    var newFilePath = getBackupFilePath(apiConfig, newBackupId);
 
     debug('copy: %s -> %s', oldFilePath, newFilePath);
 
@@ -123,14 +106,12 @@ function copy(apiConfig, oldBackupId, newBackupId, callback) {
     });
 }
 
-function removeMany(apiConfig, backupIds, callback) {
+function removeMany(apiConfig, filePaths, callback) {
     assert.strictEqual(typeof apiConfig, 'object');
-    assert(Array.isArray(backupIds));
+    assert(Array.isArray(filePaths));
     assert.strictEqual(typeof callback, 'function');
 
-    async.eachSeries(backupIds, function (id, iteratorCallback) {
-        var filePath = getBackupFilePath(apiConfig, id);
-
+    async.eachSeries(filePaths, function (filePath, iteratorCallback) {
         if (!safe.fs.unlinkSync(filePath)) {
             debug('removeMany: Unable to remove %s : %s', filePath, safe.error.message);
         }

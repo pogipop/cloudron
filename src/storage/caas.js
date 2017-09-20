@@ -23,8 +23,6 @@ var assert = require('assert'),
     superagent = require('superagent'),
     targz = require('./targz.js');
 
-var FILE_TYPE = '.tar.gz.enc';
-
 // internal only
 function getBackupCredentials(apiConfig, callback) {
     assert.strictEqual(typeof apiConfig, 'object');
@@ -51,27 +49,16 @@ function getBackupCredentials(apiConfig, callback) {
     });
 }
 
-function getBackupFilePath(apiConfig, backupId) {
-    assert.strictEqual(typeof apiConfig, 'object');
-    assert.strictEqual(typeof backupId, 'string');
-
-    const FILE_TYPE = apiConfig.key ? '.tar.gz.enc' : '.tar.gz';
-
-    return path.join(apiConfig.prefix, backupId+FILE_TYPE);
-}
-
 // storage api
-function upload(apiConfig, backupId, sourceDir, callback) {
+function upload(apiConfig, backupFilePath, sourceDir, callback) {
     assert.strictEqual(typeof apiConfig, 'object');
-    assert.strictEqual(typeof backupId, 'string');
+    assert.strictEqual(typeof backupFilePath, 'string');
     assert.strictEqual(typeof sourceDir, 'string');
     assert.strictEqual(typeof callback, 'function');
 
     callback = once(callback);
 
-    var backupFilePath = getBackupFilePath(apiConfig, backupId);
-
-    debug('[%s] backup: %s -> %s', backupId, sourceDir, backupFilePath);
+    debug('backup: %s -> %s', sourceDir, backupFilePath);
 
     getBackupCredentials(apiConfig, function (error, credentials) {
         if (error) return callback(error);
@@ -88,7 +75,7 @@ function upload(apiConfig, backupId, sourceDir, callback) {
         // s3.upload automatically does a multi-part upload. we set queueSize to 1 to reduce memory usage
         s3.upload(params, { partSize: 10 * 1024 * 1024, queueSize: 1 }, function (error) {
             if (error) {
-                debug('[%s] backup: s3 upload error.', backupId, error);
+                debug('[%s] backup: s3 upload error.', backupFilePath, error);
                 return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error));
             }
 
@@ -99,17 +86,15 @@ function upload(apiConfig, backupId, sourceDir, callback) {
     });
 }
 
-function download(apiConfig, backupId, destination, callback) {
+function download(apiConfig, backupFilePath, destination, callback) {
     assert.strictEqual(typeof apiConfig, 'object');
-    assert.strictEqual(typeof backupId, 'string');
+    assert.strictEqual(typeof backupFilePath, 'string');
     assert.strictEqual(typeof destination, 'string');
     assert.strictEqual(typeof callback, 'function');
 
     callback = once(callback);
 
-    var backupFilePath = getBackupFilePath(apiConfig, backupId);
-
-    debug('[%s] restore: %s -> %s', backupId, backupFilePath, destination);
+    debug('restore: %s -> %s', backupFilePath, destination);
 
     getBackupCredentials(apiConfig, function (error, credentials) {
         if (error) return callback(error);
@@ -126,7 +111,7 @@ function download(apiConfig, backupId, destination, callback) {
             // TODO ENOENT for the mock, fix upstream!
             if (error.code === 'NoSuchKey' || error.code === 'ENOENT') return callback(new BackupsError(BackupsError.NOT_FOUND));
 
-            debug('[%s] restore: s3 stream error.', backupId, error);
+            debug('[%s] restore: s3 stream error.', backupFilePath, error);
             callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
         });
 
@@ -134,10 +119,10 @@ function download(apiConfig, backupId, destination, callback) {
     });
 }
 
-function copy(apiConfig, oldBackupId, newBackupId, callback) {
+function copy(apiConfig, oldFilePath, newFilePath, callback) {
     assert.strictEqual(typeof apiConfig, 'object');
-    assert.strictEqual(typeof oldBackupId, 'string');
-    assert.strictEqual(typeof newBackupId, 'string');
+    assert.strictEqual(typeof oldFilePath, 'string');
+    assert.strictEqual(typeof newFilePath, 'string');
     assert.strictEqual(typeof callback, 'function');
 
     getBackupCredentials(apiConfig, function (error, credentials) {
@@ -145,8 +130,8 @@ function copy(apiConfig, oldBackupId, newBackupId, callback) {
 
         var params = {
             Bucket: apiConfig.bucket,
-            Key: getBackupFilePath(apiConfig, newBackupId),
-            CopySource: path.join(apiConfig.bucket, getBackupFilePath(apiConfig, oldBackupId))
+            Key: newFilePath,
+            CopySource: path.join(apiConfig.bucket, oldFilePath)
         };
 
         var s3 = new AWS.S3(credentials);
@@ -162,9 +147,9 @@ function copy(apiConfig, oldBackupId, newBackupId, callback) {
     });
 }
 
-function removeMany(apiConfig, backupIds, callback) {
+function removeMany(apiConfig, filePaths, callback) {
     assert.strictEqual(typeof apiConfig, 'object');
-    assert(Array.isArray(backupIds));
+    assert(Array.isArray(filePaths));
     assert.strictEqual(typeof callback, 'function');
 
     getBackupCredentials(apiConfig, function (error, credentials) {
@@ -177,8 +162,8 @@ function removeMany(apiConfig, backupIds, callback) {
             }
         };
 
-        backupIds.forEach(function (backupId) {
-            params.Delete.Objects.push({ Key: getBackupFilePath(apiConfig, backupId) });
+        filePaths.forEach(function (filePath) {
+            params.Delete.Objects.push({ Key: filePath });
         });
 
         var s3 = new AWS.S3(credentials);
@@ -206,6 +191,7 @@ function backupDone(backupId, appBackupIds, callback) {
     assert.strictEqual(typeof callback, 'function');
 
     // Caas expects filenames instead of backupIds, this means no prefix but a file type extension
+    var FILE_TYPE = '.tar.gz.enc';    
     var boxBackupFilename = backupId + FILE_TYPE;
     var appBackupFilenames = appBackupIds.map(function (id) { return id + FILE_TYPE; });
 

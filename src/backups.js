@@ -26,6 +26,7 @@ exports = module.exports = {
 var addons = require('./addons.js'),
     appdb = require('./appdb.js'),
     apps = require('./apps.js'),
+    AppsError = require('./apps.js').AppsError,
     async = require('async'),
     assert = require('assert'),
     backupdb = require('./backupdb.js'),
@@ -33,7 +34,6 @@ var addons = require('./addons.js'),
     DatabaseError = require('./databaseerror.js'),
     debug = require('debug')('box:backups'),
     eventlog = require('./eventlog.js'),
-    fs = require('fs'),
     locker = require('./locker.js'),
     mailer = require('./mailer.js'),
     path = require('path'),
@@ -49,7 +49,7 @@ var NOOP_CALLBACK = function (error) { if (error) debug(error); };
 
 var BACKUPTASK_CMD = path.join(__dirname, 'backuptask.js');
 
-function debugApp(app, args) {
+function debugApp(app) {
     assert(!app || typeof app === 'object');
 
     var prefix = app ? app.location : '(no app)';
@@ -143,6 +143,15 @@ function getRestoreConfig(backupId, callback) {
     });
 }
 
+function getBackupFilePath(backupConfig, backupId) {
+    assert.strictEqual(typeof backupConfig, 'object');
+    assert.strictEqual(typeof backupId, 'string');
+
+    const FILE_TYPE = backupConfig.key ? '.tar.gz.enc' : '.tar.gz';
+
+    return path.join(backupConfig.prefix || backupConfig.backupFolder, backupId+FILE_TYPE);
+}
+
 // this function is called via backuptask (since it needs root to traverse app's directory)
 function upload(backupId, dataDir, callback) {
     assert.strictEqual(typeof backupId, 'string');
@@ -153,7 +162,7 @@ function upload(backupId, dataDir, callback) {
     settings.getBackupConfig(function (error, backupConfig) {
         if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
 
-        api(backupConfig.provider).upload(backupConfig, backupId, dataDir, callback);
+        api(backupConfig.provider).upload(backupConfig, getBackupFilePath(backupConfig, backupId), dataDir, callback);
     });
 }
 
@@ -256,7 +265,7 @@ function rotateBoxBackup(backupConfig, timestamp, appBackupIds, callback) {
     backupdb.add({ id: backupId, version: config.version(), type: backupdb.BACKUP_TYPE_BOX, dependsOn: appBackupIds, restoreConfig: null }, function (error) {
         if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
 
-        api(backupConfig.provider).copy(backupConfig, 'snapshot/box', backupId, function (copyBackupError) {
+        api(backupConfig.provider).copy(backupConfig, getBackupFilePath(backupConfig, 'snapshot/box'), getBackupFilePath(backupConfig, backupId), function (copyBackupError) {
             const state = copyBackupError ? backupdb.BACKUP_STATE_ERROR : backupdb.BACKUP_STATE_NORMAL;
             debug('rotateBoxBackup: successful id:%s', backupId);
 
@@ -529,7 +538,7 @@ function restoreApp(app, addonsToRestore, backupId, callback) {
         var startTime = new Date();
 
         async.series([
-            api(backupConfig.provider).download.bind(null, backupConfig, backupId, appDataDir),
+            api(backupConfig.provider).download.bind(null, backupConfig, getBackupFilePath(backupConfig, backupId), appDataDir),
             addons.restoreAddons.bind(null, app, addonsToRestore)
         ], function (error) {
             debug('restoreApp: time: %s', (new Date() - startTime)/1000);
@@ -556,7 +565,7 @@ function cleanupAppBackups(backupConfig, referencedAppBackups, callback) {
 
             debug('cleanup: removing %s', backup.id);
 
-            api(backupConfig.provider).removeMany(backupConfig, [ backup.id ], function (error) {
+            api(backupConfig.provider).removeMany(backupConfig, [ getBackupFilePath(backupConfig, backup.id) ], function (error) {
                 if (error) {
                     debug('cleanup: error removing backup %j : %s', backup, error.message);
                     iteratorDone();
@@ -645,10 +654,10 @@ function cleanupSnapshots(backupConfig, callback) {
 
     delete info.box;
     async.eachSeries(Object.keys(info), function (appId, iteratorDone) {
-        apps.get(appId, function (error, app) {
+        apps.get(appId, function (error /*, app */) {
             if (!error || error.reason !== AppsError.NOT_FOUND) return iteratorDone();
 
-            api(backupConfig.provider).removeMany(backupConfig, [ `snapshot/app_${appId}` ], function (ignoredError) {
+            api(backupConfig.provider).removeMany(backupConfig, [ `snapshot/app_${appId}` ], function (/* ignoredError */) {
                 setSnapshotInfo(appId, null);
 
                 iteratorDone();

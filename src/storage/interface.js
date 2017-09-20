@@ -20,9 +20,9 @@ exports = module.exports = {
 
 var assert = require('assert');
 
-function upload(apiConfig, backupId, sourceDir, callback) {
+function upload(apiConfig, backupFilePath, sourceDir, callback) {
     assert.strictEqual(typeof apiConfig, 'object');
-    assert.strictEqual(typeof backupId, 'string');
+    assert.strictEqual(typeof backupFilePath, 'string');
     assert.strictEqual(typeof sourceDir, 'string');
     assert.strictEqual(typeof callback, 'function');
 
@@ -31,9 +31,9 @@ function upload(apiConfig, backupId, sourceDir, callback) {
     callback(new Error('not implemented'));
 }
 
-function download(apiConfig, backupId, destination, callback) {
+function download(apiConfig, sourceFilePath, destination, callback) {
     assert.strictEqual(typeof apiConfig, 'object');
-    assert.strictEqual(typeof backupId, 'string');
+    assert.strictEqual(typeof sourceFilePath, 'string');
     assert.strictEqual(typeof destination, 'string');
     assert.strictEqual(typeof callback, 'function');
 
@@ -42,10 +42,10 @@ function download(apiConfig, backupId, destination, callback) {
     callback(new Error('not implemented'));
 }
 
-function copy(apiConfig, oldBackupId, newBackupId, callback) {
+function copy(apiConfig, oldFilePath, newFilePath, callback) {
     assert.strictEqual(typeof apiConfig, 'object');
-    assert.strictEqual(typeof oldBackupId, 'string');
-    assert.strictEqual(typeof newBackupId, 'string');
+    assert.strictEqual(typeof oldFilePath, 'string');
+    assert.strictEqual(typeof newFilePath, 'string');
     assert.strictEqual(typeof callback, 'function');
 
     // Result: none
@@ -53,9 +53,9 @@ function copy(apiConfig, oldBackupId, newBackupId, callback) {
     callback(new Error('not implemented'));
 }
 
-function removeMany(apiConfig, backupIds, callback) {
+function removeMany(apiConfig, filePaths, callback) {
     assert.strictEqual(typeof apiConfig, 'object');
-    assert(Array.isArray(backupIds));
+    assert(Array.isArray(filePaths));
     assert.strictEqual(typeof callback, 'function');
 
     // Result: none

@@ -120,7 +120,7 @@ describe('Storage', function () {
         after(function (done) {
             cleanup(function (error) {
                 expect(error).to.be(null);
-                done()
+                done();
                 // rimraf(gTmpFolder, done);
             });
         });

@@ -15,45 +15,45 @@ exports = module.exports = {
 var assert = require('assert'),
     debug = require('debug')('box:storage/noop');
 
-function upload(apiConfig, backupId, sourceDir, callback) {
+function upload(apiConfig, backupFilePath, sourceDir, callback) {
     assert.strictEqual(typeof apiConfig, 'object');
-    assert.strictEqual(typeof backupId, 'string');
+    assert.strictEqual(typeof backupFilePath, 'string');
     assert.strictEqual(typeof sourceDir, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    debug('backup: %s %s', backupId, sourceDir);
+    debug('backup: %s %s', backupFilePath, sourceDir);
 
     callback();
 }
 
-function download(apiConfig, backupId, destination, callback) {
+function download(apiConfig, sourceFilePath, destination, callback) {
     assert.strictEqual(typeof apiConfig, 'object');
-    assert.strictEqual(typeof backupId, 'string');
+    assert.strictEqual(typeof sourceFilePath, 'string');
     assert.strictEqual(typeof destination, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    debug('restore: %s %s', backupId, destination);
+    debug('restore: %s %s', sourceFilePath, destination);
 
     callback(new Error('Cannot restore from noop backend'));
 }
 
-function copy(apiConfig, oldBackupId, newBackupId, callback) {
+function copy(apiConfig, oldFilePath, newFilePath, callback) {
     assert.strictEqual(typeof apiConfig, 'object');
-    assert.strictEqual(typeof oldBackupId, 'string');
-    assert.strictEqual(typeof newBackupId, 'string');
+    assert.strictEqual(typeof oldFilePath, 'string');
+    assert.strictEqual(typeof newFilePath, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    debug('copy: %s -> %s', oldBackupId, newBackupId);
+    debug('copy: %s -> %s', oldFilePath, newFilePath);
 
     callback();
 }
 
-function removeMany(apiConfig, backupIds, callback) {
+function removeMany(apiConfig, filePaths, callback) {
     assert.strictEqual(typeof apiConfig, 'object');
-    assert(Array.isArray(backupIds));
+    assert(Array.isArray(filePaths));
     assert.strictEqual(typeof callback, 'function');
 
-    debug('removeMany: %j', backupIds);
+    debug('removeMany: %j', filePaths);
 
     callback();
 }
