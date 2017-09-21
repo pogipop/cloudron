@@ -576,7 +576,8 @@ function addDnsRecords(ip, callback) {
             });
         });
     }, function (error) {
-        debug('addDnsRecords: done updating records with error:', error);
+        if (error) debug('addDnsRecords: done updating records with error:', error);
+        else debug('addDnsRecords: done');
 
         callback(error);
     });
