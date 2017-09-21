@@ -299,7 +299,7 @@ function runBackupTask(backupId, dataDir, callback) {
 
     var killTimerId = null;
 
-    var cp = shell.sudo(`backup-${backupId}`, [ BACKUPTASK_CMD, backupId, dataDir ], function (error) {
+    var cp = shell.sudo(`backup-${backupId}`, [ BACKUPTASK_CMD, backupId, dataDir ], { env: process.env }, function (error) {
         clearTimeout(killTimerId);
         cp = null;
 
