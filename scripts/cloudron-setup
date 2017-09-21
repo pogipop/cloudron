@@ -209,6 +209,7 @@ if [[ -z "${dataJson}" ]]; then
             "provider": "filesystem",
             "backupFolder": "/var/backups",
             "key": "${encryptionKey}",
+            "format": "tgz",
             "retentionSecs": 172800
         },
         "updateConfig": {
