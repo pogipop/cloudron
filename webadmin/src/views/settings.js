@@ -42,6 +42,7 @@ angular.module('Application').controller('SettingsController', ['$scope', '$loca
 
     $scope.storageProvider = [
         { name: 'Amazon S3', value: 's3' },
+        { name: 'DigitalOcean Spaces', value: 'digitalocean-spaces' },
         { name: 'Exoscale SOS', value: 'exoscale-sos' },
         { name: 'Filesystem', value: 'filesystem' },
         { name: 'Minio', value: 'minio' },
@@ -296,7 +297,7 @@ angular.module('Application').controller('SettingsController', ['$scope', '$loca
     };
 
     $scope.s3like = function (provider) {
-        return provider === 's3' || provider === 'minio' || provider === 's3-v4-compat' || provider === 'exoscale-sos';
+        return provider === 's3' || provider === 'minio' || provider === 's3-v4-compat' || provider === 'exoscale-sos' || provider === 'digitalocean-spaces';
     };
 
     $scope.configureBackup = {
@@ -369,8 +370,10 @@ angular.module('Application').controller('SettingsController', ['$scope', '$loca
                     backupConfig.endpoint = 'https://sos.exo.io';
                     backupConfig.region = 'us-east-1';
                     backupConfig.signatureVersion = 'v2';
+                } else if (backupConfig.provider === 'digitalocean-spaces') {
+                    backupConfig.endpoint = 'https://nyc3.digitaloceanspaces.com';
+                    backupConfig.region = 'us-east-1';
                 }
-
             } else if (backupConfig.provider === 'filesystem') {
                 backupConfig.backupFolder = $scope.configureBackup.backupFolder;
             }
