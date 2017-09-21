@@ -45,7 +45,8 @@ angular.module('Application').controller('SettingsController', ['$scope', '$loca
         { name: 'Exoscale SOS', value: 'exoscale-sos' },
         { name: 'Filesystem', value: 'filesystem' },
         { name: 'Minio', value: 'minio' },
-        { name: 'No-op (Only for testing)', value: 'noop' }
+        { name: 'No-op (Only for testing)', value: 'noop' },
+        { name: 'S3 API Compatible (v4)', value: 's3-v4-compat' },
     ];
 
     $scope.retentionTimes = [
@@ -295,7 +296,7 @@ angular.module('Application').controller('SettingsController', ['$scope', '$loca
     };
 
     $scope.s3like = function (provider) {
-        return provider === 's3' || provider === 'minio' || provider === 'exoscale-sos';
+        return provider === 's3' || provider === 'minio' || provider === 's3-v4-compat' || provider === 'exoscale-sos';
     };
 
     $scope.configureBackup = {
@@ -362,7 +363,7 @@ angular.module('Application').controller('SettingsController', ['$scope', '$loca
 
                 if (backupConfig.provider === 's3') {
                     if ($scope.configureBackup.region) backupConfig.region = $scope.configureBackup.region;
-                } else if (backupConfig.provider === 'minio') {
+                } else if (backupConfig.provider === 'minio' || backupConfig.provider === 's3-v4-compat') {
                     backupConfig.region = 'us-east-1';
                 } else if (backupConfig.provider === 'exoscale-sos') {
                     backupConfig.endpoint = 'https://sos.exo.io';
