@@ -80,7 +80,7 @@ function sudo(tag, args, options, callback) {
 
     assert.strictEqual(typeof options, 'object');
 
-    // -S makes sudo read stdin for password. -E preserves arguments
+    // -S makes sudo read stdin for password. -E preserves environment
     var cp = exec(tag, SUDO, [ options.env ? '-SE' : '-S' ].concat(args), options, callback);
     cp.stdin.end();
     return cp;
