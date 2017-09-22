@@ -21,6 +21,7 @@ exports = module.exports = {
     NGINX_CONFIG_DIR: path.join(config.baseDir(), 'platformdata/nginx'),
     NGINX_APPCONFIG_DIR: path.join(config.baseDir(), 'platformdata/nginx/applications'),
     NGINX_CERT_DIR: path.join(config.baseDir(), 'platformdata/nginx/cert'),
+    SNAPSHOT_DIR: path.join(config.baseDir(), 'platformdata/snapshots'),
     SNAPSHOT_INFO_FILE: path.join(config.baseDir(), 'platformdata/snapshots/info.json'),
 
     // this is not part of appdata because an icon may be set before install

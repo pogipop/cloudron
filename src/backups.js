@@ -41,6 +41,7 @@ var addons = require('./addons.js'),
     DatabaseError = require('./databaseerror.js'),
     debug = require('debug')('box:backups'),
     eventlog = require('./eventlog.js'),
+    fs = require('fs'),
     locker = require('./locker.js'),
     mailer = require('./mailer.js'),
     mkdirp = require('mkdirp'),
@@ -52,6 +53,7 @@ var addons = require('./addons.js'),
     safe = require('safetydance'),
     shell = require('./shell.js'),
     settings = require('./settings.js'),
+    syncer = require('./syncer.js'),
     tar = require('tar-fs'),
     util = require('util'),
     zlib = require('zlib');
@@ -158,13 +160,16 @@ function getRestoreConfig(backupId, callback) {
     });
 }
 
-function getBackupFilePath(backupConfig, backupId) {
+function getBackupFilePath(backupConfig, backupId, subpath) {
     assert.strictEqual(typeof backupConfig, 'object');
     assert.strictEqual(typeof backupId, 'string');
 
-    const FILE_TYPE = backupConfig.key ? '.tar.gz.enc' : '.tar.gz';
-
-    return path.join(backupConfig.prefix || backupConfig.backupFolder, backupId+FILE_TYPE);
+    if (backupConfig.format === 'tgz') {
+        const fileType = backupConfig.key ? '.tar.gz.enc' : '.tar.gz';
+        return path.join(backupConfig.prefix || backupConfig.backupFolder, backupId+fileType);
+    } else {
+        return path.join(backupConfig.prefix || backupConfig.backupFolder, backupId, subpath || '');
+    }
 }
 
 function createTarPackStream(sourceDir, key) {
@@ -210,6 +215,31 @@ function createTarPackStream(sourceDir, key) {
     }
 }
 
+function sync(backupConfig, backupId, dataDir, callback) {
+    syncer.sync(dataDir, function processTask(task, iteratorCallback) {
+        debug('syncer task: %j', task);
+        if (task.operation === 'add') {
+            var stream = fs.createReadStream(path.join(dataDir, task.path));
+            stream.on('error', function () { return iteratorCallback(); }); // ignore error if file disappears
+            api(backupConfig.provider).upload(backupConfig, getBackupFilePath(backupConfig, backupId, task.path), stream, iteratorCallback);
+        } else if (task.operation === 'remove') {
+            api(backupConfig.provider).remove(backupConfig, getBackupFilePath(backupConfig, backupId, task.path), iteratorCallback);
+        }
+    }, callback);
+}
+
+function saveEmptyDirs(appDataDir, callback) {
+    assert.strictEqual(typeof appDataDir, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    var emptyDirs = safe.child_process.execSync('find . -type d -empty', { cwd: `${appDataDir}` });
+
+    if (emptyDirs === null) return callback(safe.error);
+
+    if (!safe.fs.writeFileSync(`${appDataDir}/emptydirs.txt`, emptyDirs)) return callback(safe.error);
+    callback();
+}
+
 // this function is called via backuptask (since it needs root to traverse app's directory)
 function upload(backupId, dataDir, callback) {
     assert.strictEqual(typeof backupId, 'string');
@@ -222,9 +252,16 @@ function upload(backupId, dataDir, callback) {
     settings.getBackupConfig(function (error, backupConfig) {
         if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
 
-        var tarStream = createTarPackStream(dataDir, backupConfig.key || null);
-        tarStream.on('error', callback); // already returns BackupsError
-        api(backupConfig.provider).upload(backupConfig, getBackupFilePath(backupConfig, backupId), tarStream, callback);
+        if (backupConfig.format === 'tgz') {
+            var tarStream = createTarPackStream(dataDir, backupConfig.key || null);
+            tarStream.on('error', callback); // already returns BackupsError
+            api(backupConfig.provider).upload(backupConfig, getBackupFilePath(backupConfig, backupId), tarStream, callback);
+        } else {
+            async.series([
+                saveEmptyDirs.bind(null, dataDir),
+                sync.bind(null, backupConfig, backupId, dataDir)
+            ], callback);
+        }
     });
 }
 
@@ -410,16 +447,19 @@ function rotateBoxBackup(backupConfig, timestamp, appBackupIds, callback) {
     var snapshotTime = snapshotInfo.timestamp.replace(/[T.]/g, '-').replace(/[:Z]/g,'');
     var backupId = util.format('%s/box_%s_v%s', timestamp, snapshotTime, config.version());
 
+    debug('rotateBoxBackup: rotating to id:%s', backupId);
+
     backupdb.add({ id: backupId, version: config.version(), type: backupdb.BACKUP_TYPE_BOX, dependsOn: appBackupIds, restoreConfig: null }, function (error) {
         if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
 
         api(backupConfig.provider).copy(backupConfig, getBackupFilePath(backupConfig, 'snapshot/box'), getBackupFilePath(backupConfig, backupId), function (copyBackupError) {
             const state = copyBackupError ? backupdb.BACKUP_STATE_ERROR : backupdb.BACKUP_STATE_NORMAL;
-            debug('rotateBoxBackup: successful id:%s', backupId);
 
             backupdb.update(backupId, { state: state }, function (error) {
                 if (copyBackupError) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, copyBackupError.message));
                 if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
+
+                debug('rotateBoxBackup: successful id:%s', backupId);
 
                 // FIXME this is only needed for caas, hopefully we can remove that in the future
                 api(backupConfig.provider).backupDone(backupId, appBackupIds, function (error) {
@@ -502,6 +542,8 @@ function rotateAppBackup(backupConfig, app, timestamp, callback) {
     var restoreConfig = snapshotInfo.restoreConfig;
     var manifest = restoreConfig.manifest;
     var backupId = util.format('%s/app_%s_%s_v%s', timestamp, app.id, snapshotTime, manifest.version);
+
+    debugApp(app, 'rotateAppBackup: rotating to id:%s', backupId);
 
     backupdb.add({ id: backupId, version: manifest.version, type: backupdb.BACKUP_TYPE_APP, dependsOn: [ ], restoreConfig: restoreConfig }, function (error) {
         if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));

@@ -34,10 +34,10 @@ function upload(apiConfig, backupFilePath, sourceStream, callback) {
     assert.strictEqual(typeof sourceStream, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    debug('upload: %s', backupFilePath);
-
     mkdirp(path.dirname(backupFilePath), function (error) {
         if (error) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
+
+        safe.fs.unlinkSync(backupFilePath); // remove any hardlink
 
         var fileStream = fs.createWriteStream(backupFilePath);
 
@@ -47,11 +47,9 @@ function upload(apiConfig, backupFilePath, sourceStream, callback) {
         });
 
         fileStream.on('close', function () {
-            debug('[%s] upload: changing ownership.', backupFilePath);
-
             if (!safe.child_process.execSync('chown -R ' + BACKUP_USER + ':' + BACKUP_USER + ' ' + path.dirname(backupFilePath))) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, safe.error.message));
 
-            debug('[%s] upload: done.', backupFilePath);
+            debug('upload %s: done.', backupFilePath);
 
             callback(null);
         });

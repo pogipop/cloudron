@@ -58,8 +58,6 @@ function upload(apiConfig, backupFilePath, sourceStream, callback) {
     assert.strictEqual(typeof sourceStream, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    debug('upload: %s', backupFilePath);
-
     getBackupCredentials(apiConfig, function (error, credentials) {
         if (error) return callback(error);
         var params = {
@@ -174,21 +172,48 @@ function copy(apiConfig, oldFilePath, newFilePath, callback) {
     getBackupCredentials(apiConfig, function (error, credentials) {
         if (error) return callback(error);
 
-        var params = {
+        var s3 = new AWS.S3(credentials);
+        var listParams = {
             Bucket: apiConfig.bucket,
-            Key: newFilePath,
-            CopySource: path.join(apiConfig.bucket, oldFilePath)
+            Prefix: oldFilePath
         };
 
-        var s3 = new AWS.S3(credentials);
-        s3.copyObject(params, function (error) {
-            if (error && error.code === 'NoSuchKey') return callback(new BackupsError(BackupsError.NOT_FOUND));
-            if (error) {
-                debug('copy: s3 copy error.', error);
-                return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error));
-            }
+        async.forever(function listAndDelete(foreverCallback) {
+            s3.listObjectsV2(listParams, function (error, listData) {
+                if (error) {
+                    debug('remove: Failed to list %s. Not fatal.', error);
+                    return foreverCallback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
+                }
 
-            callback(null);
+                async.eachLimit(listData.Contents, 10, function copyFile(content, iteratorCallback) {
+                    var relativePath = path.relative(oldFilePath, content.Key);
+
+                    var copyParams = {
+                        Bucket: apiConfig.bucket,
+                        Key: path.join(newFilePath, relativePath),
+                        CopySource: path.join(apiConfig.bucket, content.Key)
+                    };
+
+                    s3.copyObject(copyParams, function (error) {
+                        if (error && error.code === 'NoSuchKey') return iteratorCallback(new BackupsError(BackupsError.NOT_FOUND, 'Old backup not found'));
+                        if (error) {
+                            debug('copy: s3 copy error.', error);
+                            return iteratorCallback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
+                        }
+
+                        iteratorCallback();
+                    });
+                }, function doneCopying(error) {
+                    if (error) return foreverCallback(error);
+
+                    if (listData.IsTruncated) return foreverCallback();
+
+                    foreverCallback(new Error('Done'));
+                });
+            });
+        }, function (error) {
+            if (error.message === 'Done') return callback();
+            callback(error);
         });
     });
 }
