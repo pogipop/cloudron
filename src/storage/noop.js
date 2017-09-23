@@ -5,7 +5,7 @@ exports = module.exports = {
     download: download,
     copy: copy,
 
-    removeMany: removeMany,
+    remove: remove,
 
     backupDone: backupDone,
 
@@ -47,12 +47,12 @@ function copy(apiConfig, oldFilePath, newFilePath, callback) {
     callback();
 }
 
-function removeMany(apiConfig, filePaths, callback) {
+function remove(apiConfig, pathPrefix, callback) {
     assert.strictEqual(typeof apiConfig, 'object');
-    assert(Array.isArray(filePaths));
+    assert.strictEqual(typeof pathPrefix, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    debug('removeMany: %j', filePaths);
+    debug('remove: %s', pathPrefix);
 
     callback();
 }

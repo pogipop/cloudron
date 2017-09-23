@@ -5,7 +5,7 @@ exports = module.exports = {
     download: download,
     copy: copy,
 
-    removeMany: removeMany,
+    remove: remove,
 
     backupDone: backupDone,
 
@@ -13,7 +13,6 @@ exports = module.exports = {
 };
 
 var assert = require('assert'),
-    async = require('async'),
     BackupsError = require('../backups.js').BackupsError,
     config = require('../config.js'),
     debug = require('debug')('box:storage/filesystem'),
@@ -95,20 +94,18 @@ function copy(apiConfig, oldFilePath, newFilePath, callback) {
     });
 }
 
-function removeMany(apiConfig, filePaths, callback) {
+function remove(apiConfig, pathPrefix, callback) {
     assert.strictEqual(typeof apiConfig, 'object');
-    assert(Array.isArray(filePaths));
+    assert.strictEqual(typeof pathPrefix, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    async.eachSeries(filePaths, function (filePath, iteratorCallback) {
-        if (!safe.fs.unlinkSync(filePath)) {
-            debug('removeMany: Unable to remove %s : %s', filePath, safe.error.message);
-        }
+    shell.exec('remove', '/bin/rm', [ '-rf', pathPrefix ], { }, function (error) {
+        if (error) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
 
-        safe.fs.rmdirSync(path.dirname(filePath)); // try to cleanup empty directories
+        safe.fs.rmdirSync(path.dirname(pathPrefix)); // try to cleanup empty directories
 
-        iteratorCallback();
-    }, callback);
+        callback();
+    });
 }
 
 function testConfig(apiConfig, callback) {

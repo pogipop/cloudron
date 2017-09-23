@@ -184,7 +184,7 @@ describe('Storage', function () {
 
         it('can remove backup', function (done) {
             // will be verified with next test trying to download the removed one
-            filesystem.removeMany(gBackupConfig, [ gBackupId_1 ], done);
+            filesystem.remove(gBackupConfig, gBackupId_1, done);
         });
 
         it('cannot download deleted backup', function (done) {
@@ -221,7 +221,7 @@ describe('Storage', function () {
         });
 
         it('can remove backup copy', function (done) {
-            filesystem.removeMany(gBackupConfig, [ gBackupId_2 ], done);
+            filesystem.remove(gBackupConfig, gBackupId_2, done);
         });
     });
 
@@ -309,7 +309,7 @@ describe('Storage', function () {
 
         it('can remove backup', function (done) {
             // will be verified with next test trying to download the removed one
-            s3.removeMany(gBackupConfig, [ gBackupId_1 ], done);
+            s3.remove(gBackupConfig, gBackupId_1, done);
         });
 
         it('cannot download deleted backup', function (done) {
@@ -346,7 +346,7 @@ describe('Storage', function () {
         });
 
         it('can remove backup copy', function (done) {
-            s3.removeMany(gBackupConfig, [ gBackupId_2 ], done);
+            s3.remove(gBackupConfig, gBackupId_2, done);
         });
     });
 });

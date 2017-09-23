@@ -685,23 +685,23 @@ function cleanupAppBackups(backupConfig, referencedAppBackups, callback) {
             if (referencedAppBackups.indexOf(backup.id) !== -1) return iteratorDone();
             if ((now - backup.creationTime) < (backupConfig.retentionSecs * 1000)) return iteratorDone();
 
-            debug('cleanup: removing %s', backup.id);
+            debug('cleanupAppBackups: removing %s', backup.id);
 
-            api(backupConfig.provider).removeMany(backupConfig, [ getBackupFilePath(backupConfig, backup.id) ], function (error) {
+            api(backupConfig.provider).remove(backupConfig, getBackupFilePath(backupConfig, backup.id), function (error) {
                 if (error) {
-                    debug('cleanup: error removing backup %j : %s', backup, error.message);
+                    debug('cleanupAppBackups: error removing backup %j : %s', backup, error.message);
                     iteratorDone();
                 }
 
                 backupdb.del(backup.id, function (error) {
-                    if (error) debug('cleanup: error removing from database', error);
-                    else debug('cleanup: removed %s', backup.id);
+                    if (error) debug('cleanupAppBackups: error removing from database', error);
+                    else debug('cleanupAppBackups: removed %s', backup.id);
 
                     iteratorDone();
                 });
             });
         }, function () {
-            debug('cleanup: done cleaning app backups');
+            debug('cleanupAppBackups: done');
 
             callback();
         });
@@ -728,11 +728,11 @@ function cleanupBoxBackups(backupConfig, callback) {
 
         // keep the first valid backup
         if (i !== boxBackups.length) {
-            debug('cleanup: preserving box backup %j', boxBackups[i]);
+            debug('cleanupBoxBackups: preserving box backup %j', boxBackups[i]);
             referencedAppBackups = boxBackups[i].dependsOn;
             boxBackups.splice(i, 1);
         } else {
-            debug('cleanup: no box backup to preserve');
+            debug('cleanupBoxBackups: no box backup to preserve');
         }
 
         async.eachSeries(boxBackups, function iterator(backup, iteratorDone) {
@@ -742,24 +742,26 @@ function cleanupBoxBackups(backupConfig, callback) {
             // have to be careful not to remove any backup currently being created
             if ((now - backup.creationTime) < (backupConfig.retentionSecs * 1000)) return iteratorDone();
 
-            debug('cleanup: removing %s', backup.id);
+            debug('cleanupBoxBackups: removing %s', backup.id);
 
-            var backupIds = [].concat(backup.id, backup.dependsOn);
+            var filePaths = [].concat(backup.id, backup.dependsOn).map(getBackupFilePath.bind(null, backupConfig));
 
-            api(backupConfig.provider).removeMany(backupConfig, backupIds, function (error) {
+            async.eachSeries(filePaths, api(backupConfig.provider).remove.bind(null, backupConfig), function (error) {
                 if (error) {
-                    debug('cleanup: error removing backup %j : %s', backup, error.message);
+                    debug('cleanupBoxBackups: error removing backup %j : %s', backup, error.message);
                     iteratorDone();
                 }
 
                 backupdb.del(backup.id, function (error) {
-                    if (error) debug('cleanup: error removing from database', error);
-                    else debug('cleanup: removed %j', backupIds);
+                    if (error) debug('cleanupBoxBackups: error removing from database', error);
+                    else debug('cleanupBoxBackups: removed %j', filePaths);
 
                     iteratorDone();
                 });
             });
         }, function () {
+            debug('cleanupBoxBackups: done');
+
             return callback(null, referencedAppBackups);
         });
     });
@@ -779,7 +781,7 @@ function cleanupSnapshots(backupConfig, callback) {
         apps.get(appId, function (error /*, app */) {
             if (!error || error.reason !== AppsError.NOT_FOUND) return iteratorDone();
 
-            api(backupConfig.provider).removeMany(backupConfig, [ `snapshot/app_${appId}` ], function (/* ignoredError */) {
+            api(backupConfig.provider).remove(backupConfig, getBackupFilePath(backupConfig, `snapshot/app_${appId}`), function (/* ignoredError */) {
                 setSnapshotInfo(appId, null);
 
                 iteratorDone();
@@ -804,12 +806,8 @@ function cleanup(callback) {
         cleanupBoxBackups(backupConfig, function (error, referencedAppBackups) {
             if (error) return callback(error);
 
-            debug('cleanup: done cleaning box backups');
-
             cleanupAppBackups(backupConfig, referencedAppBackups, function (error) {
                 if (error) return callback(error);
-
-                debug('cleanup: done cleaning app backups');
 
                 cleanupSnapshots(backupConfig, callback);
             });

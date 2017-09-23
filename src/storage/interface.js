@@ -11,7 +11,7 @@ exports = module.exports = {
     download: download,
     copy: copy,
 
-    removeMany: removeMany,
+    remove: remove,
 
     backupDone: backupDone,
 
@@ -51,9 +51,9 @@ function copy(apiConfig, oldFilePath, newFilePath, callback) {
     callback(new Error('not implemented'));
 }
 
-function removeMany(apiConfig, filePaths, callback) {
+function remove(apiConfig, pathPrefix, callback) {
     assert.strictEqual(typeof apiConfig, 'object');
-    assert(Array.isArray(filePaths));
+    assert.strictEqual(typeof pathPrefix, 'string');
     assert.strictEqual(typeof callback, 'function');
 
     // Result: none

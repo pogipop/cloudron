@@ -4,7 +4,7 @@ exports = module.exports = {
     upload: upload,
     download: download,
     copy: copy,
-    removeMany: removeMany,
+    remove: remove,
 
     backupDone: backupDone,
 
@@ -12,6 +12,7 @@ exports = module.exports = {
 };
 
 var assert = require('assert'),
+    async = require('async'),
     AWS = require('aws-sdk'),
     BackupsError = require('../backups.js').BackupsError,
     config = require('../config.js'),
@@ -141,29 +142,51 @@ function copy(apiConfig, oldFilePath, newFilePath, callback) {
     });
 }
 
-function removeMany(apiConfig, filePaths, callback) {
+function remove(apiConfig, pathPrefix, callback) {
     assert.strictEqual(typeof apiConfig, 'object');
-    assert(Array.isArray(filePaths));
+    assert.strictEqual(typeof pathPrefix, 'string');
     assert.strictEqual(typeof callback, 'function');
 
     getBackupCredentials(apiConfig, function (error, credentials) {
         if (error) return callback(error);
 
-        var params = {
+        var s3 = new AWS.S3(credentials);
+        var listParams = {
             Bucket: apiConfig.bucket,
-            Delete: {
-                Objects: [ ] // { Key }
-            }
+            Prefix: pathPrefix
         };
 
-        filePaths.forEach(function (filePath) {
-            params.Delete.Objects.push({ Key: filePath });
-        });
+        async.forever(function listAndDelete(iteratorCallback) {
+            s3.listObjectsV2(listParams, function (error, listData) {
+                if (error) {
+                    debug('remove: Failed to list %s. Not fatal.', error);
+                    return iteratorCallback(error);
+                }
 
-        var s3 = new AWS.S3(credentials);
-        s3.deleteObjects(params, function (error, data) {
-            if (error) debug('Unable to remove %s. Not fatal.', params.Key, error);
-            else debug('removeMany: Deleted: %j Errors: %j', data.Deleted, data.Errors);
+                var deleteParams = {
+                    Bucket: apiConfig.bucket,
+                    Delete: {
+                        Objects: listData.Contents.map(function (c) { return { Key: c.Key }; })
+                    }
+                };
+
+                s3.deleteObjects(deleteParams, function (error, deleteData) {
+                    if (error) {
+                        debug('remove: Unable to remove %s. Not fatal.', deleteParams.Key, error);
+                        return iteratorCallback(error);
+                    }
+
+                    debug('remove: Deleted: %j Errors: %j', deleteData.Deleted, deleteData.Errors);
+
+                    listParams.Marker = listData[listData.length - 1].Key; // NextMarker is returned only with delimiter
+
+                    if (deleteData.IsTruncated) return iteratorCallback();
+
+                    iteratorCallback(new Error('Done'));
+                });
+            });
+        }, function (/*ignoredError*/) {
+            if (error.message === 'Done') return callback(null);
 
             callback(null);
         });
