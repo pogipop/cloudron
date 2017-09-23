@@ -101,7 +101,8 @@ describe('Storage', function () {
         var gBackupConfig = {
             provider: 'filesystem',
             key: 'key',
-            backupFolder: null
+            backupFolder: null,
+            format: 'tgz'
         };
 
         before(function (done) {
@@ -124,8 +125,8 @@ describe('Storage', function () {
         after(function (done) {
             cleanup(function (error) {
                 expect(error).to.be(null);
+                rimraf.sync(gTmpFolder);
                 done();
-                // rimraf(gTmpFolder, done);
             });
         });
 
@@ -240,7 +241,8 @@ describe('Storage', function () {
             bucket: 'cloudron-storage-test',
             accessKeyId: 'testkeyid',
             secretAccessKey: 'testsecret',
-            region: 'eu-central-1'
+            region: 'eu-central-1',
+            format: 'tgz'
         };
 
         before(function (done) {
@@ -269,7 +271,8 @@ describe('Storage', function () {
 
             cleanup(function (error) {
                 expect(error).to.be(null);
-                rimraf(gTmpFolder, done);
+                rimraf.sync(gTmpFolder);
+                done();
             });
         });
 

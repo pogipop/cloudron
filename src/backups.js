@@ -270,6 +270,20 @@ function tarExtract(inStream, destination, key, callback) {
     }
 }
 
+function createEmptyDirs(appDataDir, callback) {
+    assert.strictEqual(typeof appDataDir, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    debugApp('createEmptyDirs: recreating empty directories');
+
+    var emptyDirs = safe.fs.readFileSync(path.join(appDataDir, 'emptydirs.txt'), 'utf8');
+    if (!emptyDirs) return callback(new Error('emptydirs.txt was not found:' + safe.fs.error));
+
+    async.eachSeries(emptyDirs.trim().split('\n'), function createPath(emptyDir, iteratorDone) {
+        mkdirp(path.join(appDataDir, 'data', emptyDir), iteratorDone);
+    }, callback);
+}
+
 function download(backupId, dataDir, callback) {
     assert.strictEqual(typeof backupId, 'string');
     assert.strictEqual(typeof dataDir, 'string');
@@ -283,11 +297,18 @@ function download(backupId, dataDir, callback) {
         mkdirp(getBackupFilePath(backupConfig, dataDir), function (error) {
             if (error) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
 
-            api(backupConfig.provider).download(backupConfig, getBackupFilePath(backupConfig, backupId), function (error, sourceStream) {
-                if (error) return callback(error);
+            if (backupConfig.format === 'tgz') {
+                api(backupConfig.provider).download(backupConfig, getBackupFilePath(backupConfig, backupId), function (error, sourceStream) {
+                    if (error) return callback(error);
 
-                tarExtract(sourceStream, dataDir, backupConfig.key || null, callback);
-            });
+                    tarExtract(sourceStream, dataDir, backupConfig.key || null, callback);
+                });
+            } else {
+                async.series([
+                    api(backupConfig.provider).downloadDir.bind(null, backupConfig, getBackupFilePath(backupConfig, backupId), dataDir),
+                    createEmptyDirs.bind(null, dataDir)
+                ], callback);
+            }
         });
     });
 }

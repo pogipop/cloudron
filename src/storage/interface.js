@@ -9,6 +9,7 @@
 exports = module.exports = {
     upload: upload,
     download: download,
+    downloadDir: downloadDir,
     copy: copy,
 
     remove: remove,
@@ -37,6 +38,15 @@ function download(apiConfig, backupFilePath, callback) {
     assert.strictEqual(typeof callback, 'function');
 
     // Result: download stream
+    callback(new Error('not implemented'));
+}
+
+function downloadDir(apiConfig, backupFilePath, destDir, callback) {
+    assert.strictEqual(typeof apiConfig, 'object');
+    assert.strictEqual(typeof backupFilePath, 'string');
+    assert.strictEqual(typeof destDir, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
     callback(new Error('not implemented'));
 }
 

@@ -3,6 +3,7 @@
 exports = module.exports = {
     upload: upload,
     download: download,
+    downloadDir: downloadDir,
     copy: copy,
 
     remove: remove,
@@ -34,6 +35,17 @@ function download(apiConfig, backupFilePath, callback) {
     debug('download: %s', backupFilePath);
 
     callback(new Error('Cannot download from noop backend'));
+}
+
+function downloadDir(apiConfig, backupFilePath, destDir, callback) {
+    assert.strictEqual(typeof apiConfig, 'object');
+    assert.strictEqual(typeof backupFilePath, 'string');
+    assert.strictEqual(typeof destDir, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    debug('downloadDir: %s -> %s', backupFilePath, destDir);
+
+    callback();
 }
 
 function copy(apiConfig, oldFilePath, newFilePath, callback) {

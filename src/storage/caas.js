@@ -3,6 +3,7 @@
 exports = module.exports = {
     upload: upload,
     download: download,
+    downloadDir: downloadDir,
     copy: copy,
     remove: remove,
 
@@ -17,6 +18,8 @@ var assert = require('assert'),
     BackupsError = require('../backups.js').BackupsError,
     config = require('../config.js'),
     debug = require('debug')('box:storage/caas'),
+    fs = require('fs'),
+    mkdirp = require('mkdirp'),
     PassThrough = require('stream').PassThrough,
     path = require('path'),
     S3BlockReadStream = require('s3-block-read-stream'),
@@ -111,6 +114,54 @@ function download(apiConfig, backupFilePath, callback) {
         multipartDownload.pipe(ps);
 
         callback(null, ps);
+    });
+}
+
+function downloadDir(apiConfig, backupFilePath, destDir, callback) {
+    assert.strictEqual(typeof apiConfig, 'object');
+    assert.strictEqual(typeof backupFilePath, 'string');
+    assert.strictEqual(typeof destDir, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    getBackupCredentials(apiConfig, function (error, credentials) {
+        if (error) return callback(error);
+
+        var s3 = new AWS.S3(credentials);
+        var listParams = {
+            Bucket: apiConfig.bucket,
+            Prefix: backupFilePath
+        };
+
+        async.forever(function listAndDownload(foreverCallback) {
+            s3.listObjectsV2(listParams, function (error, listData) {
+                if (error) {
+                    debug('remove: Failed to list %s. Not fatal.', error);
+                    return foreverCallback(error);
+                }
+
+                async.eachLimit(listData.Contents, 10, function downloadFile(content, iteratorCallback) {
+                    var relativePath = path.relative(backupFilePath, content.Key);
+                    mkdirp(path.dirname(path.join(destDir, relativePath)), function (error) {
+                        if (error) return iteratorCallback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
+
+                        var destStream = fs.createWriteStream(path.join(destDir, relativePath));
+                        destStream.on('error', function (error) {
+                            return iteratorCallback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
+                        });
+                        download(apiConfig, content.Key, destStream, iteratorCallback);
+                    });
+                }, function doneCopying(error) {
+                    if (error) return foreverCallback(error);
+
+                    if (listData.IsTruncated) return foreverCallback();
+
+                    foreverCallback(new Error('Done'));
+                });
+            });
+        }, function (error) {
+            if (error.message === 'Done') return callback();
+            callback(error);
+        });
     });
 }
 

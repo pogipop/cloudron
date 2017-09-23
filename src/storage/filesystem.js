@@ -3,6 +3,8 @@
 exports = module.exports = {
     upload: upload,
     download: download,
+    downloadDir: downloadDir,
+
     copy: copy,
 
     remove: remove,
@@ -72,6 +74,21 @@ function download(apiConfig, sourceFilePath, callback) {
     });
     fileStream.pipe(ps);
     callback(null, ps);
+}
+
+function downloadDir(apiConfig, backupFilePath, destDir, callback) {
+    assert.strictEqual(typeof apiConfig, 'object');
+    assert.strictEqual(typeof backupFilePath, 'string');
+    assert.strictEqual(typeof destDir, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    debug('downloadDir: %s -> %s', backupFilePath, destDir);
+
+    shell.exec('copy', '/bin/cp', [ '-r', backupFilePath + '/.', destDir ], { }, function (error) {
+        if (error) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
+
+        callback();
+    });
 }
 
 function copy(apiConfig, oldFilePath, newFilePath, callback) {
