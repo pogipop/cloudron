@@ -46,7 +46,7 @@ function upload(apiConfig, backupFilePath, sourceStream, callback) {
             callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
         });
 
-        fileStream.on('close', function () {
+        fileStream.on('finish', function () {
             shell.exec('upload', '/bin/chown', [ '-R', `${BACKUP_USER}:${BACKUP_USER}`, path.dirname(backupFilePath) ], { }, function (error) {
                 if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
 
