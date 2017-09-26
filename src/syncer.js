@@ -31,14 +31,18 @@ function readTree(dir) {
 
 // TODO: concurrency
 // TODO: if dir became a file, remove the dir first
-// TODO: write to index can simply append to a new cache file
 function sync(dir, taskProcessor, callback) {
     assert.strictEqual(typeof dir, 'string');
     assert.strictEqual(typeof taskProcessor, 'function');
     assert.strictEqual(typeof callback, 'function');
 
-    var curCacheIndex = 0, newCache = [ ];
-    var cache = readCache(path.join(paths.SNAPSHOT_DIR, path.basename(dir) + '.cache'));
+    var curCacheIndex = 0;
+    var cacheFile = path.join(paths.SNAPSHOT_DIR, path.basename(dir) + '.cache'),
+        newCacheFile = path.join(paths.SNAPSHOT_DIR, path.basename(dir) + '.cache.new');
+
+    var cache = readCache(cacheFile);
+
+    var newCacheFd = fs.openSync(newCacheFile, 'w'); // truncates any existing file
 
     var dummyCallback = function() { };
 
@@ -61,7 +65,7 @@ function sync(dir, taskProcessor, callback) {
                 continue;
             }
 
-            newCache.push({ stat: entries[i].stat, path: entryPath });
+            fs.appendFileSync(newCacheFd, JSON.stringify({ path: entryPath, mtime: entries[i].stat.mtime.getTime()  }) + '\n');
 
             advanceCache(entryPath);
 
@@ -79,8 +83,10 @@ function sync(dir, taskProcessor, callback) {
     traverse('');
     advanceCache('');               // remove rest of the cache entries
 
-    var newCacheContents = newCache.map(function (ce) { return JSON.stringify({ path: ce.path, mtime: ce.stat.mtime.getTime() }); }).join('\n');
-    fs.writeFileSync(path.join(paths.SNAPSHOT_DIR, path.basename(dir) + '.cache'), newCacheContents, 'utf8');
+    // move the new cache file
+    fs.closeSync(newCacheFd);
+    fs.unlinkSync(cacheFile);
+    fs.renameSync(cacheFile, newCacheFd);
 
     callback();
 }
