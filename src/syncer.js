@@ -1,7 +1,7 @@
 'use strict';
 
 var assert = require('assert'),
-    fs = require('fs'),
+    debug = require('debug')('box:syncer'),
     path = require('path'),
     paths = require('./paths.js'),
     safe = require('safetydance');
@@ -15,7 +15,7 @@ function readCache(cacheFile) {
 
     var cache = safe.fs.readFileSync(cacheFile, 'utf8');
     if (!cache) return [ ];
-    var result = cache.split('\n').map(JSON.parse);
+    var result = cache.trim().split('\n').map(JSON.parse);
     return result;
 }
 
@@ -25,8 +25,7 @@ function readTree(dir) {
     var list = safe.fs.readdirSync(dir).sort();
     if (!list) return [ ];
 
-    // TODO: handle lstat errors
-    return list.map(function (e) { return { stat: fs.lstatSync(path.join(dir, e)), name: e }; });
+    return list.map(function (e) { return { stat: safe.fs.lstatSync(path.join(dir, e)), name: e }; });
 }
 
 // TODO: concurrency
@@ -42,7 +41,8 @@ function sync(dir, taskProcessor, callback) {
 
     var cache = readCache(cacheFile);
 
-    var newCacheFd = fs.openSync(newCacheFile, 'w'); // truncates any existing file
+    var newCacheFd = safe.fs.openSync(newCacheFile, 'w'); // truncates any existing file
+    if (newCacheFd === -1) return callback(new Error('Error opening new cache file: ' + safe.error.message));
 
     var dummyCallback = function() { };
 
@@ -59,6 +59,7 @@ function sync(dir, taskProcessor, callback) {
             var entryPath = path.join(relpath, entries[i].name);
             var stat = entries[i].stat;
 
+            if (!stat) continue; // some stat error
             if (!stat.isDirectory() && !stat.isFile()) continue;
             if (stat.isSymbolicLink()) continue;
 
@@ -67,7 +68,7 @@ function sync(dir, taskProcessor, callback) {
                 continue;
             }
 
-            fs.appendFileSync(newCacheFd, JSON.stringify({ path: entryPath, mtime: stat.mtime.getTime()  }) + '\n');
+            safe.fs.appendFileSync(newCacheFd, JSON.stringify({ path: entryPath, mtime: stat.mtime.getTime()  }) + '\n');
 
             advanceCache(entryPath);
 
@@ -83,12 +84,13 @@ function sync(dir, taskProcessor, callback) {
     }
 
     traverse('');
-    advanceCache('');               // remove rest of the cache entries
+    advanceCache(''); // remove rest of the cache entries
 
     // move the new cache file
-    fs.closeSync(newCacheFd);
-    fs.unlinkSync(cacheFile);
-    fs.renameSync(cacheFile, newCacheFd);
+    safe.fs.closeSync(newCacheFd);
+    safe.fs.unlinkSync(cacheFile);
+
+    if (!safe.fs.renameSync(newCacheFile, cacheFile)) debug('Unable to save new cache file');
 
     callback();
 }

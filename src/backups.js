@@ -225,7 +225,11 @@ function sync(backupConfig, backupId, dataDir, callback) {
         } else if (task.operation === 'remove') {
             api(backupConfig.provider).remove(backupConfig, getBackupFilePath(backupConfig, backupId, task.path), iteratorCallback);
         }
-    }, callback);
+    }, function (error) {
+        if (error) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
+
+        callback();
+    });
 }
 
 function saveEmptyDirs(appDataDir, callback) {
