@@ -178,11 +178,16 @@
                         </div>
 
                         <div class="form-group" ng-show="configureBackup.provider !== 'noop'">
+                            <label class="control-label" for="storageFormat">Storage Format</label>
+                            <select class="form-control" id="storageFormat" ng-model="configureBackup.format" ng-options="a.value as a.name for a in formats"></select>
+                        </div>
+
+                        <div class="form-group" ng-show="configureBackup.provider !== 'noop'">
                             <label class="control-label" for="storageRetention">Retention Time</label>
                             <select class="form-control" id="storageRetention" ng-model="configureBackup.retentionSecs" ng-options="a.value as a.name for a in retentionTimes"></select>
                         </div>
 
-                        <div class="form-group" ng-class="{ 'has-error': configureBackup.error.key }" ng-show="configureBackup.provider !== 'noop'">
+                        <div class="form-group" ng-class="{ 'has-error': configureBackup.error.key }" ng-show="configureBackup.provider !== 'noop' && configureBackup.format === 'tgz'">
                             <label class="control-label" for="inputConfigureBackupKey">Encryption key (optional)</label>
                             <input type="text" class="form-control" ng-model="configureBackup.key" id="inputConfigureBackupKey" name="prefix" ng-disabled="configureBackup.busy" placeholder="Passphrase used to encrypt the backups">
                         </div>

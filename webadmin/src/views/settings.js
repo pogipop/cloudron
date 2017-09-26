@@ -57,6 +57,11 @@ angular.module('Application').controller('SettingsController', ['$scope', '$loca
         { name: 'Forever', value: -1 }
     ];
 
+    $scope.formats = [
+        { name: 'Tarball (zipped)', value: 'tgz' },
+        { name: 'Flat file', value: 'flat-file' }
+    ];
+
     $scope.planChange = {
         busy: false,
         error: {},
@@ -313,6 +318,7 @@ angular.module('Application').controller('SettingsController', ['$scope', '$loca
         endpoint: '',
         backupFolder: '',
         retentionSecs: -1,
+        format: 'tgz',
 
         clearForm: function () {
             $scope.configureBackup.bucket = '';
@@ -323,6 +329,7 @@ angular.module('Application').controller('SettingsController', ['$scope', '$loca
             $scope.configureBackup.region = '';
             $scope.configureBackup.backupFolder = '';
             $scope.configureBackup.retentionSecs = -1;
+            $scope.configureBackup.format = 'tgz';
         },
 
         show: function () {
@@ -339,6 +346,7 @@ angular.module('Application').controller('SettingsController', ['$scope', '$loca
             $scope.configureBackup.key = $scope.backupConfig.key;
             $scope.configureBackup.backupFolder = $scope.backupConfig.backupFolder;
             $scope.configureBackup.retentionSecs = $scope.backupConfig.retentionSecs;
+            $scope.configureBackup.format = $scope.backupConfig.format;
 
             $('#configureBackupModal').modal('show');
         },
@@ -351,7 +359,7 @@ angular.module('Application').controller('SettingsController', ['$scope', '$loca
                 provider: $scope.configureBackup.provider,
                 key: $scope.configureBackup.key,
                 retentionSecs: $scope.configureBackup.retentionSecs,
-                format: 'tgz'
+                format: $scope.configureBackup.format
             };
 
             // only set provider specific fields, this will clear them in the db
