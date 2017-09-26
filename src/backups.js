@@ -219,10 +219,12 @@ function sync(backupConfig, backupId, dataDir, callback) {
     syncer.sync(dataDir, function processTask(task, iteratorCallback) {
         debug('processing task: %j', task);
         if (task.operation === 'add') {
+            safe.fs.writeFileSync(paths.BACKUP_RESULT_FILE, 'Adding ' + task.path);
             var stream = fs.createReadStream(path.join(dataDir, task.path));
             stream.on('error', function () { return iteratorCallback(); }); // ignore error if file disappears
             api(backupConfig.provider).upload(backupConfig, getBackupFilePath(backupConfig, backupId, task.path), stream, iteratorCallback);
         } else if (task.operation === 'remove') {
+            safe.fs.writeFileSync(paths.BACKUP_RESULT_FILE, 'Removing ' + task.path);
             api(backupConfig.provider).remove(backupConfig, getBackupFilePath(backupConfig, backupId, task.path), iteratorCallback);
         }
     }, 10 /* concurrency */, function (error) {
@@ -316,10 +318,10 @@ function createEmptyDirs(appDataDir, callback) {
     assert.strictEqual(typeof appDataDir, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    debugApp('createEmptyDirs: recreating empty directories');
+    debug('createEmptyDirs: recreating empty directories');
 
     var emptyDirs = safe.fs.readFileSync(path.join(appDataDir, 'emptydirs.txt'), 'utf8');
-    if (!emptyDirs) return callback(new Error('emptydirs.txt was not found:' + safe.fs.error));
+    if (emptyDirs === null) return callback(new Error('emptydirs.txt was not found:' + safe.error.message));
 
     async.eachSeries(emptyDirs.trim().split('\n'), function createPath(emptyDir, iteratorDone) {
         mkdirp(path.join(appDataDir, 'data', emptyDir), iteratorDone);
@@ -331,7 +333,7 @@ function download(backupId, dataDir, callback) {
     assert.strictEqual(typeof dataDir, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    debug('Start download of id %s', backupId);
+    debug('Start download of id %s to %s', backupId, dataDir);
 
     settings.getBackupConfig(function (error, backupConfig) {
         if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
@@ -356,10 +358,12 @@ function runBackupTask(backupId, dataDir, callback) {
     assert.strictEqual(typeof dataDir, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    var killTimerId = null;
+    var killTimerId = null, progressTimerId = null;
 
-    var cp = shell.sudo(`backup-${backupId}`, [ BACKUPTASK_CMD, backupId, dataDir ], { env: process.env }, function (error) {
+    var cp = shell.sudo(`backup-${backupId}`, [ BACKUPTASK_CMD, backupId, dataDir ], { env: process.env, logFile: paths.BACKUP_LOG_FILE }, function (error) {
         clearTimeout(killTimerId);
+        clearInterval(progressTimerId);
+
         cp = null;
 
         if (error && (error.code === null /* signal */ || (error.code !== 0 && error.code !== 50))) { // backuptask crashed
@@ -371,6 +375,11 @@ function runBackupTask(backupId, dataDir, callback) {
 
         callback();
     });
+
+    progressTimerId = setInterval(function () {
+        var result = safe.fs.readFileSync(paths.BACKUP_RESULT_FILE, 'utf8');
+        if (result) progress.setDetail(progress.BACKUP, result);
+    }, 1000); // every second
 
     killTimerId = setTimeout(function () {
         debug('runBackupTask: backup task taking too long. killing');
@@ -847,6 +856,9 @@ function cleanupSnapshots(backupConfig, callback) {
 
             api(backupConfig.provider).remove(backupConfig, getBackupFilePath(backupConfig, `snapshot/app_${appId}`), function (/* ignoredError */) {
                 setSnapshotInfo(appId, null);
+
+                safe.fs.unlinkSync(path.join(paths.BACKUP_INFO_DIR, `${appId}.sync.cache`));
+                safe.fs.unlinkSync(path.join(paths.BACKUP_INFO_DIR, `${appId}.sync.cache.new`));
 
                 iteratorDone();
             });

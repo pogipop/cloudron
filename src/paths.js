@@ -7,7 +7,8 @@ var config = require('./config.js'),
 exports = module.exports = {
     CLOUDRON_DEFAULT_AVATAR_FILE: path.join(__dirname + '/../assets/avatar.png'),
     INFRA_VERSION_FILE: path.join(config.baseDir(), 'platformdata/INFRA_VERSION'),
-    BACKUP_RESULT_FILE: path.join(config.baseDir(), 'platformdata/backupresult'),
+    BACKUP_RESULT_FILE: path.join(config.baseDir(), 'platformdata/backup/result.txt'),
+    BACKUP_LOG_FILE: path.join(config.baseDir(), 'platformdata/backup/logs.txt'),
 
     OLD_DATA_DIR: path.join(config.baseDir(), 'data'),
     PLATFORM_DATA_DIR: path.join(config.baseDir(), 'platformdata'),
@@ -21,8 +22,8 @@ exports = module.exports = {
     NGINX_CONFIG_DIR: path.join(config.baseDir(), 'platformdata/nginx'),
     NGINX_APPCONFIG_DIR: path.join(config.baseDir(), 'platformdata/nginx/applications'),
     NGINX_CERT_DIR: path.join(config.baseDir(), 'platformdata/nginx/cert'),
-    SNAPSHOT_DIR: path.join(config.baseDir(), 'platformdata/snapshots'),
-    SNAPSHOT_INFO_FILE: path.join(config.baseDir(), 'platformdata/snapshots/info.json'),
+    BACKUP_INFO_DIR: path.join(config.baseDir(), 'platformdata/backup'),
+    SNAPSHOT_INFO_FILE: path.join(config.baseDir(), 'platformdata/backup/snapshot-info.json'),
 
     // this is not part of appdata because an icon may be set before install
     APP_ICONS_DIR: path.join(config.baseDir(), 'boxdata/appicons'),

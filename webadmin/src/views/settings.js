@@ -117,14 +117,17 @@ angular.module('Application').controller('SettingsController', ['$scope', '$loca
 
     $scope.createBackup = {
         busy: false,
-        percent: 100,
+        percent: 0,
         message: '',
         errorMessage: '',
+        result: '',
 
         doCreateBackup: function () {
             $scope.createBackup.busy = true;
             $scope.createBackup.percent = 0;
             $scope.createBackup.message = '';
+            $scope.createBackup.detail = '';
+            $scope.createBackup.result = '';
             $scope.createBackup.errorMessage = '';
 
             Client.backup(function (error) {
@@ -154,12 +157,16 @@ angular.module('Application').controller('SettingsController', ['$scope', '$loca
 
                             $scope.createBackup.busy = false;
                             $scope.createBackup.message = '';
+                            $scope.createBackup.detail = '';
+                            $scope.createBackup.percent = 100; // indicates that 'result' is valid
+                            $scope.createBackup.result = data.backup ? data.backup.message : null;
 
                             return fetchBackups();
                         }
 
                         $scope.createBackup.percent = data.backup.percent;
                         $scope.createBackup.message = data.backup.message;
+                        $scope.createBackup.detail = data.backup.detail;
                         window.setTimeout(checkIfDone, 500);
                     });
                 }

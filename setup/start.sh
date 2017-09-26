@@ -84,7 +84,7 @@ mkdir -p "${PLATFORM_DATA_DIR}/addons/mail"
 mkdir -p "${PLATFORM_DATA_DIR}/collectd/collectd.conf.d"
 mkdir -p "${PLATFORM_DATA_DIR}/logrotate.d"
 mkdir -p "${PLATFORM_DATA_DIR}/acme"
-mkdir -p "${PLATFORM_DATA_DIR}/snapshots"
+mkdir -p "${PLATFORM_DATA_DIR}/backup"
 
 mkdir -p "${BOX_DATA_DIR}/appicons"
 mkdir -p "${BOX_DATA_DIR}/certs"
@@ -269,7 +269,7 @@ CONF_END
 
 echo "==> Changing ownership"
 chown "${USER}:${USER}" -R "${CONFIG_DIR}"
-chown "${USER}:${USER}" -R "${PLATFORM_DATA_DIR}/nginx" "${PLATFORM_DATA_DIR}/collectd" "${PLATFORM_DATA_DIR}/logrotate.d" "${PLATFORM_DATA_DIR}/addons" "${PLATFORM_DATA_DIR}/acme" "${PLATFORM_DATA_DIR}/snapshots"
+chown "${USER}:${USER}" -R "${PLATFORM_DATA_DIR}/nginx" "${PLATFORM_DATA_DIR}/collectd" "${PLATFORM_DATA_DIR}/logrotate.d" "${PLATFORM_DATA_DIR}/addons" "${PLATFORM_DATA_DIR}/acme" "${PLATFORM_DATA_DIR}/backup"
 chown "${USER}:${USER}" -R "${BOX_DATA_DIR}"
 chown "${USER}:${USER}" -R "${BOX_DATA_DIR}/mail/dkim" # this is owned by box currently since it generates the keys
 chown "${USER}:${USER}" "${PLATFORM_DATA_DIR}/INFRA_VERSION" 2>/dev/null || true

@@ -37,8 +37,8 @@ function sync(dir, taskProcessor, concurrency, callback) {
 
     var curCacheIndex = 0, addQueue = [ ], delQueue = [ ];
 
-    var cacheFile = path.join(paths.SNAPSHOT_DIR, path.basename(dir) + '.cache'),
-        newCacheFile = path.join(paths.SNAPSHOT_DIR, path.basename(dir) + '.cache.new');
+    var cacheFile = path.join(paths.BACKUP_INFO_DIR, path.basename(dir) + '.sync.cache'),
+        newCacheFile = path.join(paths.BACKUP_INFO_DIR, path.basename(dir) + '.sync.cache.new');
 
     var cache = readCache(cacheFile);
 

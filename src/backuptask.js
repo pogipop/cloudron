@@ -40,6 +40,8 @@ process.on('SIGTERM', function () {
 initialize(function (error) {
     if (error) throw error;
 
+    safe.fs.writeFileSync(paths.BACKUP_RESULT_FILE, '');
+
     backups.upload(backupId, dataDir, function resultHandler(error) {
         if (error) debug('completed with error', error);
 

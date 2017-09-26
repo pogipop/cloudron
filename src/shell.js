@@ -10,6 +10,7 @@ exports = module.exports = {
 var assert = require('assert'),
     child_process = require('child_process'),
     debug = require('debug')('box:shell'),
+    fs = require('fs'),
     once = require('once'),
     util = require('util');
 
@@ -41,15 +42,19 @@ function exec(tag, file, args, options, callback) {
     debug(tag + ' execFile: %s', file); // do not dump args as it might have sensitive info
 
     var cp = child_process.spawn(file, args, options);
-    if (!options.noDebugStdout) {
+    if (options.logFile) {
+        var logFile = fs.createWriteStream(options.logFile);
+        cp.stdout.pipe(logFile);
+        cp.stderr.pipe(logFile);
+    } else {
         cp.stdout.on('data', function (data) {
             debug(tag + ' (stdout): %s', data.toString('utf8'));
         });
-    }
 
-    cp.stderr.on('data', function (data) {
-        debug(tag + ' (stderr): %s', data.toString('utf8'));
-    });
+        cp.stderr.on('data', function (data) {
+            debug(tag + ' (stderr): %s', data.toString('utf8'));
+        });
+    }
 
     cp.on('exit', function (code, signal) {
         if (code || signal) debug(tag + ' code: %s, signal: %s', code, signal);

@@ -2,6 +2,7 @@
 
 exports = module.exports = {
     set: set,
+    setDetail: setDetail,
     clear: clear,
     get: get,
 
@@ -29,10 +30,18 @@ function set(tag, percent, message) {
 
     progress[tag] = {
         percent: percent,
-        message: message
+        message: message,
+        detail: ''
     };
 
     debug('%s: %s %s', tag, percent, message);
+}
+
+function setDetail(tag, detail) {
+    assert.strictEqual(typeof tag, 'string');
+    assert.strictEqual(typeof detail, 'string');
+
+    progress[tag].detail = detail;
 }
 
 function clear(tag) {

@@ -379,7 +379,11 @@
       </div>
       <div class="row" ng-show="backupConfig.provider !== 'caas'">
           <div class="col-md-6">
-              <p ng-show="createBackup.busy">{{ createBackup.message }}</p>
+              <p ng-show="createBackup.busy">{{ createBackup.message }} {{ createBackup.detail }}</p>
+              <p ng-hide="createBackup.busy">
+                <div class="has-error" ng-show="createBackup.percent === 100 && createBackup.result">{{ createBackup.result }}</div>
+                <div class="text-success" ng-show="createBackup.percent === 100 && !createBackup.result"><b>Backup Successful</b></div>
+              </p>
           </div>
           <div class="col-md-6 text-right">
               <button class="btn btn-outline btn-primary pull-right" ng-click="configureBackup.show()" ng-disabled="createBackup.busy">Configure</button>
