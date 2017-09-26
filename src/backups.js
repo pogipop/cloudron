@@ -52,7 +52,6 @@ var addons = require('./addons.js'),
     safe = require('safetydance'),
     shell = require('./shell.js'),
     settings = require('./settings.js'),
-    SettingsError = require('./settings.js').SettingsError,
     tar = require('tar-fs'),
     util = require('util'),
     zlib = require('zlib');
@@ -113,7 +112,9 @@ function testConfig(backupConfig, callback) {
     assert.strictEqual(typeof callback, 'function');
 
     var func = api(backupConfig.provider);
-    if (!func) return callback(new SettingsError(SettingsError.BAD_FIELD, 'unkown storage provider'));
+    if (!func) return callback(new BackupsError(BackupsError.BAD_FIELD, 'unknown storage provider'));
+
+    if (backupConfig.format !== 'tgz' && backupConfig.format !== 'flat-file') return callback(new BackupsError(BackupsError.BAD_FIELD, 'unknown format'));
 
     api(backupConfig.provider).testConfig(backupConfig, callback);
 }
