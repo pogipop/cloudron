@@ -217,7 +217,7 @@ function createTarPackStream(sourceDir, key) {
 
 function sync(backupConfig, backupId, dataDir, callback) {
     syncer.sync(dataDir, function processTask(task, iteratorCallback) {
-        debug('syncer task: %j', task);
+        debug('processing task: %j', task);
         if (task.operation === 'add') {
             var stream = fs.createReadStream(path.join(dataDir, task.path));
             stream.on('error', function () { return iteratorCallback(); }); // ignore error if file disappears
@@ -225,7 +225,7 @@ function sync(backupConfig, backupId, dataDir, callback) {
         } else if (task.operation === 'remove') {
             api(backupConfig.provider).remove(backupConfig, getBackupFilePath(backupConfig, backupId, task.path), iteratorCallback);
         }
-    }, function (error) {
+    }, 10 /* concurrency */, function (error) {
         if (error) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
 
         callback();
