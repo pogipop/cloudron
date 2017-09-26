@@ -47,11 +47,13 @@ function upload(apiConfig, backupFilePath, sourceStream, callback) {
         });
 
         fileStream.on('close', function () {
-            if (!safe.child_process.execSync('chown -R ' + BACKUP_USER + ':' + BACKUP_USER + ' ' + path.dirname(backupFilePath))) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, safe.error.message));
+            shell.exec('upload', '/bin/chown', [ '-R', `${BACKUP_USER}:${BACKUP_USER}`, path.dirname(backupFilePath) ], { }, function (error) {
+                if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
 
-            debug('upload %s: done.', backupFilePath);
+                debug('upload %s: done.', backupFilePath);
 
-            callback(null);
+                callback(null);
+            });
         });
 
         sourceStream.pipe(fileStream);
@@ -82,7 +84,7 @@ function downloadDir(apiConfig, backupFilePath, destDir, callback) {
 
     debug('downloadDir: %s -> %s', backupFilePath, destDir);
 
-    shell.exec('copy', '/bin/cp', [ '-r', backupFilePath + '/.', destDir ], { }, function (error) {
+    shell.exec('downloadDir', '/bin/cp', [ '-r', backupFilePath + '/.', destDir ], { }, function (error) {
         if (error) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
 
         callback();
