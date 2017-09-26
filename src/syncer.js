@@ -57,20 +57,22 @@ function sync(dir, taskProcessor, callback) {
 
         for (var i = 0; i < entries.length; i++) {
             var entryPath = path.join(relpath, entries[i].name);
+            var stat = entries[i].stat;
 
-            if (entries[i].stat.isSymbolicLink()) continue;
+            if (!stat.isDirectory() && !stat.isFile()) continue;
+            if (stat.isSymbolicLink()) continue;
 
-            if (entries[i].stat.isDirectory()) {
+            if (stat.isDirectory()) {
                 traverse(entryPath);
                 continue;
             }
 
-            fs.appendFileSync(newCacheFd, JSON.stringify({ path: entryPath, mtime: entries[i].stat.mtime.getTime()  }) + '\n');
+            fs.appendFileSync(newCacheFd, JSON.stringify({ path: entryPath, mtime: stat.mtime.getTime()  }) + '\n');
 
             advanceCache(entryPath);
 
             if (curCacheIndex !== cache.length && cache[curCacheIndex].path === entryPath) {
-                if (entries[i].stat.mtime.getTime() !== cache[curCacheIndex].mtime) {
+                if (stat.mtime.getTime() !== cache[curCacheIndex].mtime) {
                     taskProcessor({ operation: 'add', path: entryPath }, dummyCallback);
                 }
                 ++curCacheIndex;
