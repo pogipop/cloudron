@@ -21,12 +21,14 @@ var assert = require('assert'),
     async = require('async'),
     AWS = require('aws-sdk'),
     BackupsError = require('../backups.js').BackupsError,
+    config = require('../config.js'),
     debug = require('debug')('box:storage/s3'),
     fs = require('fs'),
     mkdirp = require('mkdirp'),
     PassThrough = require('stream').PassThrough,
     path = require('path'),
-    S3BlockReadStream = require('s3-block-read-stream');
+    S3BlockReadStream = require('s3-block-read-stream'),
+    superagent = require('superagent');
 
 // test only
 var originalAWS;
@@ -40,11 +42,38 @@ function mockRestore() {
 }
 
 // internal only
+function getCaasCredentials(apiConfig, callback) {
+    assert.strictEqual(typeof apiConfig, 'object');
+    assert.strictEqual(typeof callback, 'function');
+    assert(apiConfig.token);
+
+    var url = config.apiServerOrigin() + '/api/v1/boxes/' + config.fqdn() + '/awscredentials';
+    superagent.post(url).query({ token: apiConfig.token }).timeout(30 * 1000).end(function (error, result) {
+        if (error && !error.response) return callback(error);
+        if (result.statusCode !== 201) return callback(new Error(result.text));
+        if (!result.body || !result.body.credentials) return callback(new Error('Unexpected response: ' + JSON.stringify(result.headers)));
+
+        var credentials = {
+            signatureVersion: 'v4',
+            accessKeyId: result.body.credentials.AccessKeyId,
+            secretAccessKey: result.body.credentials.SecretAccessKey,
+            sessionToken: result.body.credentials.SessionToken,
+            region: apiConfig.region || 'us-east-1'
+        };
+
+        if (apiConfig.endpoint) credentials.endpoint = new AWS.Endpoint(apiConfig.endpoint);
+
+        callback(null, credentials);
+    });
+}
+
 function getBackupCredentials(apiConfig, callback) {
     assert.strictEqual(typeof apiConfig, 'object');
     assert.strictEqual(typeof callback, 'function');
 
     assert(apiConfig.accessKeyId && apiConfig.secretAccessKey);
+
+    if (apiConfig.provider === 'caas') return getCaasCredentials(apiConfig, callback);
 
     var credentials = {
         signatureVersion: apiConfig.signatureVersion || 'v4',
@@ -314,10 +343,34 @@ function testConfig(apiConfig, callback) {
     });
 }
 
-function backupDone(backupId, appBackupIds, callback) {
+function backupDone(apiConfig, backupId, appBackupIds, callback) {
+    assert.strictEqual(typeof apiConfig, 'object');
     assert.strictEqual(typeof backupId, 'string');
     assert(Array.isArray(appBackupIds));
     assert.strictEqual(typeof callback, 'function');
 
-    callback();
+    if (apiConfig.provider !== 'caas') return callback();
+
+    // CaaS expects filenames instead of backupIds, this means no prefix but a file type extension
+    var FILE_TYPE = '.tar.gz.enc';
+    var boxBackupFilename = backupId + FILE_TYPE;
+    var appBackupFilenames = appBackupIds.map(function (id) { return id + FILE_TYPE; });
+
+    debug('[%s] backupDone: %s apps %j', backupId, boxBackupFilename, appBackupFilenames);
+
+    var url = config.apiServerOrigin() + '/api/v1/boxes/' + config.fqdn() + '/backupDone';
+    var data = {
+        boxVersion: config.version(),
+        restoreKey: boxBackupFilename,
+        appId: null,        // now unused
+        appVersion: null,   // now unused
+        appBackupIds: appBackupFilenames
+    };
+
+    superagent.post(url).send(data).query({ token: config.token() }).timeout(30 * 1000).end(function (error, result) {
+        if (error && !error.response) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error));
+        if (result.statusCode !== 200) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, result.text));
+
+        return callback(null);
+    });
 }

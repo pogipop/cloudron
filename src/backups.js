@@ -97,7 +97,7 @@ BackupsError.NOT_FOUND = 'not found';
 // choose which storage backend we use for test purpose we use s3
 function api(provider) {
     switch (provider) {
-    case 'caas': return require('./storage/caas.js');
+    case 'caas': return require('./storage/s3.js');
     case 's3': return require('./storage/s3.js');
     case 'filesystem': return require('./storage/filesystem.js');
     case 'minio': return require('./storage/s3.js');
@@ -462,7 +462,7 @@ function rotateBoxBackup(backupConfig, timestamp, appBackupIds, callback) {
                 debug('rotateBoxBackup: successful id:%s', backupId);
 
                 // FIXME this is only needed for caas, hopefully we can remove that in the future
-                api(backupConfig.provider).backupDone(backupId, appBackupIds, function (error) {
+                api(backupConfig.provider).backupDone(backupConfig, backupId, appBackupIds, function (error) {
                     if (error) return callback(error);
 
                     callback(null, backupId);
