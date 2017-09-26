@@ -344,12 +344,22 @@
       <br/>
 
       <div class="row">
+        <div class="col-xs-4">
+            <span class="text-muted">Backup ID</span>
+        </div>
+        <div class="col-xs-8 text-right">
+            <span ng-click-select ng-show="lastBackup">{{ lastBackup.id }}</span>
+            <span ng-hide="lastBackup">No backups have been made yet</span>
+        </div>
+    </div>
+
+      <div class="row">
           <div class="col-xs-6">
               <span class="text-muted">Last backup</span>
           </div>
           <div class="col-xs-6 text-right">
               <span ng-show="lastBackup">{{ lastBackup.creationTime | prettyDate }}</span>
-              <span ng-hide="lastBackup">No backups have been made yet</span>
+              <span ng-hide="lastBackup">-</span>
           </div>
       </div>
 
