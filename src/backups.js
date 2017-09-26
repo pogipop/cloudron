@@ -332,22 +332,18 @@ function download(backupId, dataDir, callback) {
     settings.getBackupConfig(function (error, backupConfig) {
         if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
 
-        mkdirp(getBackupFilePath(backupConfig, dataDir), function (error) {
-            if (error) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
+        if (backupConfig.format === 'tgz') {
+            api(backupConfig.provider).download(backupConfig, getBackupFilePath(backupConfig, backupId), function (error, sourceStream) {
+                if (error) return callback(error);
 
-            if (backupConfig.format === 'tgz') {
-                api(backupConfig.provider).download(backupConfig, getBackupFilePath(backupConfig, backupId), function (error, sourceStream) {
-                    if (error) return callback(error);
-
-                    tarExtract(sourceStream, dataDir, backupConfig.key || null, callback);
-                });
-            } else {
-                async.series([
-                    api(backupConfig.provider).downloadDir.bind(null, backupConfig, getBackupFilePath(backupConfig, backupId), dataDir),
-                    createEmptyDirs.bind(null, dataDir)
-                ], callback);
-            }
-        });
+                tarExtract(sourceStream, dataDir, backupConfig.key || null, callback);
+            });
+        } else {
+            async.series([
+                api(backupConfig.provider).downloadDir.bind(null, backupConfig, getBackupFilePath(backupConfig, backupId), dataDir),
+                createEmptyDirs.bind(null, dataDir)
+            ], callback);
+        }
     });
 }
 
