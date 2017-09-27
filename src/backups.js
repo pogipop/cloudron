@@ -223,7 +223,7 @@ function sync(backupConfig, backupId, dataDir, callback) {
             var stream = fs.createReadStream(path.join(dataDir, task.path));
             stream.on('error', function () { return iteratorCallback(); }); // ignore error if file disappears
             api(backupConfig.provider).upload(backupConfig, getBackupFilePath(backupConfig, backupId, task.path), stream, iteratorCallback);
-        } else if (task.operation === 'remove') {
+        } else if (task.operation === 'remove' || task.operation === 'removedir') {
             safe.fs.writeFileSync(paths.BACKUP_RESULT_FILE, 'Removing ' + task.path);
             api(backupConfig.provider).remove(backupConfig, getBackupFilePath(backupConfig, backupId, task.path), iteratorCallback);
         }

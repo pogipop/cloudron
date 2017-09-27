@@ -40,6 +40,10 @@ function sync(dir, taskProcessor, concurrency, callback) {
     var cacheFile = path.join(paths.BACKUP_INFO_DIR, path.basename(dir) + '.sync.cache'),
         newCacheFile = path.join(paths.BACKUP_INFO_DIR, path.basename(dir) + '.sync.cache.new');
 
+    if (!safe.fs.existsSync(cacheFile)) { // if cache is missing, start out empty
+        delQueue.push({ operation: 'removedir', path: '' });
+    }
+
     var cache = readCache(cacheFile);
 
     var newCacheFd = safe.fs.openSync(newCacheFile, 'w'); // truncates any existing file
