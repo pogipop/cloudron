@@ -16,7 +16,6 @@ exports = module.exports = {
 
 var assert = require('assert'),
     BackupsError = require('../backups.js').BackupsError,
-    config = require('../config.js'),
     debug = require('debug')('box:storage/filesystem'),
     fs = require('fs'),
     mkdirp = require('mkdirp'),
@@ -32,9 +31,6 @@ function upload(apiConfig, backupFilePath, sourceStream, callback) {
     assert.strictEqual(typeof sourceStream, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    // in test, upload() may or may not be called via sudo script
-    const BACKUP_USER = config.TEST ? (process.env.SUDO_USER || process.env.USER) : 'yellowtent';
-
     mkdirp(path.dirname(backupFilePath), function (error) {
         if (error) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
 
@@ -48,13 +44,15 @@ function upload(apiConfig, backupFilePath, sourceStream, callback) {
         });
 
         fileStream.on('finish', function () {
-            shell.exec('upload', '/bin/chown', [ '-R', `${BACKUP_USER}:${BACKUP_USER}`, path.dirname(backupFilePath) ], { }, function (error) {
-                if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
+            // in test, upload() may or may not be called via sudo script
+            const BACKUP_UID = parseInt(process.env.SUDO_UID, 10) || process.getuid();
 
-                debug('upload %s: done.', backupFilePath);
+            if (!safe.fs.chownSync(backupFilePath, BACKUP_UID, BACKUP_UID)) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, 'Unable to chown:' + safe.error.message));
+            if (!safe.fs.chownSync(path.dirname(backupFilePath), BACKUP_UID, BACKUP_UID)) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, 'Unable to chown:' + safe.error.message));
 
-                callback(null);
-            });
+            debug('upload %s: done.', backupFilePath);
+
+            callback(null);
         });
 
         sourceStream.pipe(fileStream);

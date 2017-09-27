@@ -4495,9 +4495,9 @@
       "optional": true
     },
     "safetydance": {
-      "version": "0.6.0",
-      "from": "safetydance@0.6.0",
-      "resolved": "https://registry.npmjs.org/safetydance/-/safetydance-0.6.0.tgz"
+      "version": "0.7.1",
+      "from": "safetydance@0.7.1",
+      "resolved": "https://registry.npmjs.org/safetydance/-/safetydance-0.7.1.tgz"
     },
     "sass-graph": {
       "version": "2.2.4",
