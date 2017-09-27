@@ -41,7 +41,7 @@ function mockRestore() {
     AWS = originalAWS;
 }
 
-// internal only
+// TODO: If we decide to use flat-file backups for CaaS, we should cache the credentials below
 function getCaasCredentials(apiConfig, callback) {
     assert.strictEqual(typeof apiConfig, 'object');
     assert.strictEqual(typeof callback, 'function');
