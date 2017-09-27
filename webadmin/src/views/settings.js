@@ -122,6 +122,31 @@ angular.module('Application').controller('SettingsController', ['$scope', '$loca
         errorMessage: '',
         result: '',
 
+        updateStatus: function () {
+            Client.progress(function (error, data) {
+                if (error) return window.setTimeout($scope.createBackup.updateStatus, 250);
+
+                // check if we are done
+                if (!data.backup || data.backup.percent >= 100) {
+                    if (data.backup && data.backup.message) console.error('Backup message: ' + data.backup.message); // backup error message
+
+                    $scope.createBackup.busy = false;
+                    $scope.createBackup.message = '';
+                    $scope.createBackup.detail = '';
+                    $scope.createBackup.percent = 100; // indicates that 'result' is valid
+                    $scope.createBackup.result = data.backup ? data.backup.message : null;
+
+                    return fetchBackups();
+                }
+
+                $scope.createBackup.busy = true;
+                $scope.createBackup.percent = data.backup.percent;
+                $scope.createBackup.message = data.backup.message;
+                $scope.createBackup.detail = data.backup.detail;
+                window.setTimeout($scope.createBackup.updateStatus, 500);
+            });
+        },
+
         doCreateBackup: function () {
             $scope.createBackup.busy = true;
             $scope.createBackup.percent = 0;
@@ -147,31 +172,7 @@ angular.module('Application').controller('SettingsController', ['$scope', '$loca
                     return;
                 }
 
-                function checkIfDone() {
-                    Client.progress(function (error, data) {
-                        if (error) return window.setTimeout(checkIfDone, 250);
-
-                        // check if we are done
-                        if (!data.backup || data.backup.percent >= 100) {
-                            if (data.backup && data.backup.message) console.error('Backup message: ' + data.backup.message); // backup error message
-
-                            $scope.createBackup.busy = false;
-                            $scope.createBackup.message = '';
-                            $scope.createBackup.detail = '';
-                            $scope.createBackup.percent = 100; // indicates that 'result' is valid
-                            $scope.createBackup.result = data.backup ? data.backup.message : null;
-
-                            return fetchBackups();
-                        }
-
-                        $scope.createBackup.percent = data.backup.percent;
-                        $scope.createBackup.message = data.backup.message;
-                        $scope.createBackup.detail = data.backup.detail;
-                        window.setTimeout(checkIfDone, 500);
-                    });
-                }
-
-                checkIfDone();
+                $scope.createBackup.updateStatus();
             });
         }
     };
@@ -636,6 +637,9 @@ angular.module('Application').controller('SettingsController', ['$scope', '$loca
         fetchBackups();
         getBackupConfig();
         getAutoupdatePattern();
+
+        // show backup status
+        $scope.createBackup.updateStatus();
 
         if ($scope.config.provider === 'caas') {
             getPlans();

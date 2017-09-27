@@ -367,7 +367,7 @@ function runBackupTask(backupId, dataDir, callback) {
         cp = null;
 
         if (error && (error.code === null /* signal */ || (error.code !== 0 && error.code !== 50))) { // backuptask crashed
-            return callback(new BackupsError(BackupsError.INTERNAL_ERROR, 'backuptask crashed'));
+            return callback(new BackupsError(BackupsError.INTERNAL_ERROR, 'Backuptask crashed'));
         } else if (error && error.code === 50) { // exited with error
             var result = safe.fs.readFileSync(paths.BACKUP_RESULT_FILE, 'utf8') || safe.error.message;
             return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, result));
@@ -635,7 +635,7 @@ function backupBoxAndApps(auditSource, callback) {
         var processed = 0;
         var step = 100/(allApps.length+1);
 
-        progress.set(progress.BACKUP, step * processed, '');
+        progress.set(progress.BACKUP, Math.min(step * processed, 5), '');
 
         async.mapSeries(allApps, function iterator(app, iteratorCallback) {
             progress.set(progress.BACKUP, step * processed,  'Backing up ' + (app.altDomain || config.appFqdn(app.location)));
