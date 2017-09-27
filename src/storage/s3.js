@@ -71,8 +71,6 @@ function getBackupCredentials(apiConfig, callback) {
     assert.strictEqual(typeof apiConfig, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    assert(apiConfig.accessKeyId && apiConfig.secretAccessKey);
-
     if (apiConfig.provider === 'caas') return getCaasCredentials(apiConfig, callback);
 
     var credentials = {
@@ -138,7 +136,6 @@ function download(apiConfig, backupFilePath, callback) {
         var multipartDownload = new S3BlockReadStream(s3, params, { blockSize: 64 * 1024 * 1024, logCallback: debug });
 
         multipartDownload.on('error', function (error) {
-            // TODO ENOENT for the mock, fix upstream!
             if (error.code === 'NoSuchKey' || error.code === 'ENOENT') {
                 ps.emit('error', new BackupsError(BackupsError.NOT_FOUND));
             } else {
@@ -308,12 +305,17 @@ function testConfig(apiConfig, callback) {
     assert.strictEqual(typeof apiConfig, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    if (typeof apiConfig.accessKeyId !== 'string') return callback(new BackupsError(BackupsError.BAD_FIELD, 'accessKeyId must be a string'));
-    if (typeof apiConfig.secretAccessKey !== 'string') return callback(new BackupsError(BackupsError.BAD_FIELD, 'secretAccessKey must be a string'));
+    if (apiConfig.provider === 'caas') {
+         if (typeof apiConfig.token !== 'string') return callback(new BackupsError(BackupsError.BAD_FIELD, 'token must be a string'));
+    } else {
+        if (typeof apiConfig.accessKeyId !== 'string') return callback(new BackupsError(BackupsError.BAD_FIELD, 'accessKeyId must be a string'));
+        if (typeof apiConfig.secretAccessKey !== 'string') return callback(new BackupsError(BackupsError.BAD_FIELD, 'secretAccessKey must be a string'));
+    }
+
     if (typeof apiConfig.bucket !== 'string') return callback(new BackupsError(BackupsError.BAD_FIELD, 'bucket must be a string'));
     if (typeof apiConfig.prefix !== 'string') return callback(new BackupsError(BackupsError.BAD_FIELD, 'prefix must be a string'));
-    if ('signatureVersion' in apiConfig && typeof apiConfig.prefix !== 'string') return callback(new BackupsError(BackupsError.BAD_FIELD, 'signatureVersion must be a string'));
-    if ('endpoint' in apiConfig && typeof apiConfig.prefix !== 'string') return callback(new BackupsError(BackupsError.BAD_FIELD, 'endpoint must be a string'));
+    if ('signatureVersion' in apiConfig && typeof apiConfig.signatureVersion !== 'string') return callback(new BackupsError(BackupsError.BAD_FIELD, 'signatureVersion must be a string'));
+    if ('endpoint' in apiConfig && typeof apiConfig.endpoint !== 'string') return callback(new BackupsError(BackupsError.BAD_FIELD, 'endpoint must be a string'));
 
     // attempt to upload and delete a file with new credentials
     getBackupCredentials(apiConfig, function (error, credentials) {

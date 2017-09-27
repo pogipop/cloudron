@@ -25,14 +25,15 @@ var assert = require('assert'),
     safe = require('safetydance'),
     shell = require('../shell.js');
 
-var BACKUP_USER = config.TEST ? process.env.USER : 'yellowtent';
-
 // storage api
 function upload(apiConfig, backupFilePath, sourceStream, callback) {
     assert.strictEqual(typeof apiConfig, 'object');
     assert.strictEqual(typeof backupFilePath, 'string');
     assert.strictEqual(typeof sourceStream, 'object');
     assert.strictEqual(typeof callback, 'function');
+
+    // in test, upload() may or may not be called via sudo script
+    const BACKUP_USER = config.TEST ? (process.env.SUDO_USER || process.env.USER) : 'yellowtent';
 
     mkdirp(path.dirname(backupFilePath), function (error) {
         if (error) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));

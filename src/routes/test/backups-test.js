@@ -59,7 +59,7 @@ function setup(done) {
         },
 
         function createSettings(callback) {
-            settings.setBackupConfig({ provider: 'caas', token: 'BACKUP_TOKEN', bucket: 'Bucket', prefix: 'Prefix' }, callback);
+            settings.setBackupConfig({ provider: 'filesystem', backupFolder: '/tmp', format: 'tgz' }, callback);
         }
     ], done);
 }

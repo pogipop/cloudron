@@ -12,10 +12,17 @@ var appdb = require('../../appdb.js'),
     expect = require('expect.js'),
     hock = require('hock'),
     http = require('http'),
+    MockS3 = require('mock-aws-s3'),
     nock = require('nock'),
-    superagent = require('superagent'),
+    os = require('os'),
+    path = require('path'),
+    rimraf = require('rimraf'),
+    s3 = require('../../storage/s3.js'),
+    safe = require('safetydance'),
     server = require('../../server.js'),
     settings = require('../../settings.js'),
+    settingsdb = require('../../settingsdb.js'),
+    superagent = require('superagent'),
     url = require('url');
 
 var SERVER_URL = 'http://localhost:' + config.get('port');
@@ -53,12 +60,20 @@ function setup(done) {
         },
 
         function createSettings(callback) {
-            settings.setBackupConfig({ provider: 'caas', token: 'BACKUP_TOKEN', bucket: 'Bucket', prefix: 'Prefix', format: 'tgz' }, callback);
+            MockS3.config.basePath = path.join(os.tmpdir(), 's3-sysadmin-test-buckets/');
+
+            s3._mockInject(MockS3);
+
+            safe.fs.mkdirSync('/tmp/box-sysadmin-test');
+            settingsdb.set(settings.BACKUP_CONFIG_KEY, JSON.stringify({ provider: 'caas', token: 'BACKUP_TOKEN', key: 'key', prefix: 'boxid', format: 'tgz'}), callback);
         }
     ], done);
 }
 
 function cleanup(done) {
+    s3._mockRestore();
+    rimraf.sync(MockS3.config.basePath);
+
     database._clear(function (error) {
         expect(!error).to.be.ok();
 

@@ -9,18 +9,29 @@ var async = require('async'),
     config = require('../config.js'),
     database = require('../database.js'),
     expect = require('expect.js'),
+    MockS3 = require('mock-aws-s3'),
+    nock = require('nock'),
+    os = require('os'),
+    path = require('path'),
+    rimraf = require('rimraf'),
+    s3 = require('../storage/s3.js'),
     settings = require('../settings.js'),
     settingsdb = require('../settingsdb.js');
 
 function setup(done) {
     config.set('provider', 'caas');
+    nock.cleanAll();
 
     async.series([
         database.initialize,
         settings.initialize,
         function (callback) {
+            MockS3.config.basePath = path.join(os.tmpdir(), 's3-settings-test-buckets/');
+
+            s3._mockInject(MockS3);
+
             // a cloudron must have a backup config to startup
-            settings.setBackupConfig({ provider: 'caas', token: 'foo', key: 'key'}, function (error) {
+            settingsdb.set(settings.BACKUP_CONFIG_KEY, JSON.stringify({ provider: 'caas', token: 'foo', key: 'key', format: 'tgz'}), function (error) {
                 expect(error).to.be(null);
                 callback();
             });
@@ -29,6 +40,9 @@ function setup(done) {
 }
 
 function cleanup(done) {
+    s3._mockRestore();
+    rimraf.sync(MockS3.config.basePath);
+
     async.series([
         settings.uninitialize,
         database._clear
@@ -129,7 +143,11 @@ describe('Settings', function () {
         });
 
         it('can set backup config', function (done) {
-            settings.setBackupConfig({ provider: 'caas', token: 'TOKEN' }, function (error) {
+            var scope2 = nock(config.apiServerOrigin())
+                .post('/api/v1/boxes/' + config.fqdn() + '/awscredentials?token=TOKEN')
+                .reply(201, { credentials: { AccessKeyId: 'accessKeyId', SecretAccessKey: 'secretAccessKey', SessionToken: 'sessionToken' } });
+
+            settings.setBackupConfig({ provider: 'caas', token: 'TOKEN', format: 'tgz', prefix: 'boxid', bucket: 'bucket' }, function (error) {
                 expect(error).to.be(null);
                 done();
             });

@@ -25,7 +25,8 @@ describe('backups', function () {
                 provider: 'filesystem',
                 key: 'enckey',
                 backupFolder: '/var/backups',
-                retentionSecs: 1
+                retentionSecs: 1,
+                format: 'tgz'
             })
         ], done);
     });

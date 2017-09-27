@@ -6,20 +6,20 @@
 'use strict';
 
 var async = require('async'),
-    fs = require('fs'),
-    os = require('os'),
-    path = require('path'),
-    readdirp = require('readdirp'),
-    MockS3 = require('mock-aws-s3'),
-    rimraf = require('rimraf'),
-    mkdirp = require('mkdirp'),
     backups = require('../backups.js'),
     BackupsError = require('../backups.js').BackupsError,
     config = require('../config.js'),
     database = require('../database.js'),
-    s3 = require('../storage/s3.js'),
-    filesystem = require('../storage/filesystem.js'),
     expect = require('expect.js'),
+    filesystem = require('../storage/filesystem.js'),
+    fs = require('fs'),
+    mkdirp = require('mkdirp'),
+    MockS3 = require('mock-aws-s3'),
+    os = require('os'),
+    path = require('path'),
+    readdirp = require('readdirp'),
+    rimraf = require('rimraf'),
+    s3 = require('../storage/s3.js'),
     settings = require('../settings.js'),
     SettingsError = settings.SettingsError;
 
@@ -31,7 +31,7 @@ function setup(done) {
         settings.initialize,
         function (callback) {
             // a cloudron must have a backup config to startup
-            settings.setBackupConfig({ provider: 'caas', token: 'foo', key: 'key'}, function (error) {
+            settings.setBackupConfig({ provider: 'filesystem', format: 'tgz', backupFolder: '/tmp'}, function (error) {
                 expect(error).to.be(null);
                 callback();
             });

@@ -33,7 +33,7 @@ function setup(done) {
 
     server.start(function (error) {
         if (error) return done(error);
-        settings.setBackupConfig({ provider: 'caas', token: 'BACKUP_TOKEN', bucket: 'Bucket', prefix: 'Prefix' }, done);
+        settings.setBackupConfig({ provider: 'filesystem', backupFolder: '/tmp', format: 'tgz' }, done);
     });
 }
 
@@ -290,7 +290,6 @@ describe('Cloudron', function () {
                 .query({ access_token: token_1 })
                 .end(function (error, result) {
                     expect(result.statusCode).to.equal(200);
-                    console.dir(result.body);
 
                     expect(result.body.apiServerOrigin).to.eql('http://localhost:6060');
                     expect(result.body.webServerOrigin).to.eql(null);
