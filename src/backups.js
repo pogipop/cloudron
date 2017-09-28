@@ -477,6 +477,8 @@ function rotateBoxBackup(backupConfig, timestamp, appBackupIds, callback) {
     backupdb.add({ id: backupId, version: config.version(), type: backupdb.BACKUP_TYPE_BOX, dependsOn: appBackupIds, restoreConfig: null, format: backupConfig.format }, function (error) {
         if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
 
+        progress.setDetail(progress.BACKUP, 'Rotating box snapshot');
+
         api(backupConfig.provider).copy(backupConfig, getBackupFilePath(backupConfig, 'snapshot/box', backupConfig.format), getBackupFilePath(backupConfig, backupId, backupConfig.format), function (copyBackupError) {
             const state = copyBackupError ? backupdb.BACKUP_STATE_ERROR : backupdb.BACKUP_STATE_NORMAL;
 
@@ -572,6 +574,8 @@ function rotateAppBackup(backupConfig, app, timestamp, callback) {
 
     backupdb.add({ id: backupId, version: manifest.version, type: backupdb.BACKUP_TYPE_APP, dependsOn: [ ], restoreConfig: restoreConfig, format: backupConfig.format }, function (error) {
         if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
+
+        progress.setDetail(progress.BACKUP, 'Rotating app snapshot');
 
         api(backupConfig.provider).copy(backupConfig, getBackupFilePath(backupConfig, `snapshot/app_${app.id}`, backupConfig.format), getBackupFilePath(backupConfig, backupId, backupConfig.format), function (copyBackupError) {
             const state = copyBackupError ? backupdb.BACKUP_STATE_ERROR : backupdb.BACKUP_STATE_NORMAL;
