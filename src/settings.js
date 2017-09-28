@@ -415,6 +415,8 @@ function setBackupConfig(backupConfig, callback) {
         if (error && error.reason === BackupsError.EXTERNAL_ERROR) return callback(new SettingsError(SettingsError.EXTERNAL_ERROR, error.message));
         if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
 
+        backups.cleanupCacheFilesSync();
+
         settingsdb.set(exports.BACKUP_CONFIG_KEY, JSON.stringify(backupConfig), function (error) {
             if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
 

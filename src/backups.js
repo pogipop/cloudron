@@ -22,6 +22,7 @@ exports = module.exports = {
     download: download,
 
     cleanup: cleanup,
+    cleanupCacheFilesSync: cleanupCacheFilesSync,
 
     // for testing
     _getBackupFilePath: getBackupFilePath,
@@ -862,6 +863,15 @@ function cleanupBoxBackups(backupConfig, callback) {
 
             return callback(null, referencedAppBackups);
         });
+    });
+}
+
+function cleanupCacheFilesSync() {
+    var files = safe.fs.readdirSync(path.join(paths.BACKUP_INFO_DIR));
+    if (!files) return;
+
+    files.filter(function (f) { return f.endsWith('.sync.cache'); }).forEach(function (f) {
+        safe.fs.unlinkSync(path.join(paths.BACKUP_INFO_DIR, f));
     });
 }
 
