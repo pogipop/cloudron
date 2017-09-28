@@ -192,23 +192,23 @@ function createTarPackStream(sourceDir, key) {
     var ps = progressStream({ time: 10000 }); // display a progress every 10 seconds
 
     pack.on('error', function (error) {
-        debug('backup: tar stream error.', error);
+        debug('createTarPackStream: tar stream error.', error);
         ps.emit('error', new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
     });
 
     gzip.on('error', function (error) {
-        debug('backup: gzip stream error.', error);
+        debug('createTarPackStream: gzip stream error.', error);
         ps.emit('error', new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
     });
 
     ps.on('progress', function(progress) {
-        debug('backup: %s@%s', Math.round(progress.transferred/1024/1024) + 'M', Math.round(progress.speed/1024/1024) + 'Mbps');
+        debug('createTarPackStream: %s@%s', Math.round(progress.transferred/1024/1024) + 'M', Math.round(progress.speed/1024/1024) + 'Mbps');
     });
 
     if (key !== null) {
         var encrypt = crypto.createCipher('aes-256-cbc', key);
         encrypt.on('error', function (error) {
-            debug('backup: encrypt stream error.', error);
+            debug('createTarPackStream: encrypt stream error.', error);
             ps.emit('error', new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
         });
         return pack.pipe(gzip).pipe(encrypt).pipe(ps);
@@ -224,7 +224,7 @@ function sync(backupConfig, backupId, dataDir, callback) {
     assert.strictEqual(typeof callback, 'function');
 
     syncer.sync(dataDir, function processTask(task, iteratorCallback) {
-        debug('processing task: %j', task);
+        debug('sync: processing task: %j', task);
         var backupFilePath = path.join(getBackupFilePath(backupConfig, backupId, backupConfig.format), task.path);
 
         if (task.operation === 'add') {
@@ -267,7 +267,7 @@ function upload(backupId, format, dataDir, callback) {
 
     callback = once(callback);
 
-    debug('Start box backup with id %s', backupId);
+    debug('upload: id %s format %s dataDir %s', backupId, format, dataDir);
 
     settings.getBackupConfig(function (error, backupConfig) {
         if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
@@ -297,29 +297,34 @@ function tarExtract(inStream, destination, key, callback) {
     var ps = progressStream({ time: 10000 }); // display a progress every 10 seconds
     var extract = tar.extract(destination);
 
+    inStream.on('error', function (error) {
+        debug('tarExtract: input stream error.', error);
+        callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
+    });
+
     ps.on('progress', function(progress) {
-        debug('restore: %s@%s', Math.round(progress.transferred/1024/1024) + 'M', Math.round(progress.speed/1024/1024) + 'Mbps');
+        debug('tarExtract: %s@%s', Math.round(progress.transferred/1024/1024) + 'M', Math.round(progress.speed/1024/1024) + 'Mbps');
     });
 
     gunzip.on('error', function (error) {
-        debug('restore: gunzip stream error.', error);
+        debug('tarExtract: gunzip stream error.', error);
         callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
     });
 
     extract.on('error', function (error) {
-        debug('restore: extract stream error.', error);
+        debug('tarExtract: extract stream error.', error);
         callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
     });
 
     extract.on('finish', function () {
-        debug('restore: done.');
+        debug('tarExtract: done.');
         callback(null);
     });
 
     if (key !== null) {
         var decrypt = crypto.createDecipher('aes-256-cbc', key);
         decrypt.on('error', function (error) {
-            debug('restore: decrypt stream error.', error);
+            debug('tarExtract: decrypt stream error.', error);
             callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
         });
         inStream.pipe(ps).pipe(decrypt).pipe(gunzip).pipe(extract);
@@ -348,7 +353,7 @@ function download(backupId, format, dataDir, callback) {
     assert.strictEqual(typeof dataDir, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    debug('Start download of id %s to %s (%s)', backupId, dataDir, format);
+    debug('download: id %s dataDir %s format %s', backupId, dataDir, format);
 
     settings.getBackupConfig(function (error, backupConfig) {
         if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));

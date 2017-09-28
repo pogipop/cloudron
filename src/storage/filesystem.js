@@ -70,13 +70,10 @@ function download(apiConfig, sourceFilePath, callback) {
 
     debug('download: %s', sourceFilePath);
 
-    var ps = new PassThrough();
+    if (!safe.fs.existsSync(sourceFilePath)) return callback(new BackupsError(BackupsError.NOT_FOUND, 'File not found'));
+
     var fileStream = fs.createReadStream(sourceFilePath);
-    fileStream.on('error', function (error) {
-        ps.emit('error', new BackupsError(BackupsError.NOT_FOUND, error.message));
-    });
-    fileStream.pipe(ps);
-    callback(null, ps);
+    callback(null, fileStream);
 }
 
 function downloadDir(apiConfig, backupFilePath, destDir, callback) {

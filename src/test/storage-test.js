@@ -190,14 +190,10 @@ describe('Storage', function () {
 
         it('cannot download deleted backup', function (done) {
             filesystem.download(gBackupConfig, gBackupId_1, function (error, stream) {
-                expect(error).to.be(null);
+                expect(error).to.be.an('object');
+                expect(error.reason).to.equal(BackupsError.NOT_FOUND);
 
-                stream.on('error', function (error) {
-                    expect(error).to.be.an('object');
-                    expect(error.reason).to.equal(BackupsError.NOT_FOUND);
-
-                    done();
-                });
+                done();
             });
         });
 

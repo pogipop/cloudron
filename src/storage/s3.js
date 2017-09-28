@@ -206,11 +206,21 @@ function downloadDir(apiConfig, backupFilePath, destDir, callback) {
         mkdirp(path.dirname(path.join(destDir, relativePath)), function (error) {
             if (error) return iteratorCallback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
 
-            var destStream = fs.createWriteStream(path.join(destDir, relativePath));
-            destStream.on('error', function (error) {
-                return iteratorCallback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
+            download(apiConfig, content.Key, function (error, sourceStream) {
+                if (error) return iteratorCallback(error);
+
+                var destStream = fs.createWriteStream(path.join(destDir, relativePath));
+
+                destStream.on('open', function () {
+                    sourceStream.pipe(destStream);
+                });
+
+                destStream.on('error', function (error) {
+                    return iteratorCallback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
+                });
+
+                destStream.on('finish', iteratorCallback);
             });
-            download(apiConfig, content.Key, destStream, iteratorCallback);
         });
     }, callback);
 }
