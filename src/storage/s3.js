@@ -178,13 +178,13 @@ function listDir(apiConfig, backupFilePath, options, iteratorCallback, callback)
                 async.eachLimit(arr, options.concurrency, iteratorCallback.bind(null, s3), function iteratorDone(error) {
                     if (error) return foreverCallback(error);
 
-                    total += listData.Contents.length;
+                    total += listData.KeyCount;
+
+                    if (!listData.IsTruncated) return foreverCallback(new Error('Done'));
 
                     listParams.StartAfter = listData.Contents[listData.Contents.length - 1].Key; // NextMarker is returned only with delimiter
 
-                    if (listData.IsTruncated) return foreverCallback();
-
-                    foreverCallback(new Error('Done'));
+                    foreverCallback();
                 });
             });
         }, function (error) {
