@@ -175,7 +175,7 @@ function listDir(apiConfig, backupFilePath, options, iteratorCallback, callback)
 
                 var arr = options.batchSize === 1 ? listData.Contents : chunk(listData.Contents, options.batchSize);
 
-                async.eachLimit(arr, options.concurrency, iteratorCallback.bind(null, s3), function iteratorDone(error) {
+                async.eachLimit(arr, 10, iteratorCallback.bind(null, s3), function iteratorDone(error) {
                     if (error) return foreverCallback(error);
 
                     total += listData.KeyCount;
@@ -201,7 +201,7 @@ function downloadDir(apiConfig, backupFilePath, destDir, callback) {
     assert.strictEqual(typeof destDir, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    listDir(apiConfig, backupFilePath, { batchSize: 1, concurrency: 10 }, function downloadFile(s3, content, iteratorCallback) {
+    listDir(apiConfig, backupFilePath, { batchSize: 1 }, function downloadFile(s3, content, iteratorCallback) {
         var relativePath = path.relative(backupFilePath, content.Key);
         mkdirp(path.dirname(path.join(destDir, relativePath)), function (error) {
             if (error) return iteratorCallback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
@@ -221,7 +221,7 @@ function copy(apiConfig, oldFilePath, newFilePath, callback) {
     assert.strictEqual(typeof newFilePath, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    listDir(apiConfig, oldFilePath, { batchSize: 1, concurrency: 10 }, function copyFile(s3, content, iteratorCallback) {
+    listDir(apiConfig, oldFilePath, { batchSize: 1 }, function copyFile(s3, content, iteratorCallback) {
         var relativePath = path.relative(oldFilePath, content.Key);
 
         var copyParams = {
@@ -272,7 +272,7 @@ function removeDir(apiConfig, pathPrefix, callback) {
     assert.strictEqual(typeof pathPrefix, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    listDir(apiConfig, pathPrefix, { batchSize: 1000, concurrency: 10 }, function deleteFiles(s3, contents, iteratorCallback) {
+    listDir(apiConfig, pathPrefix, { batchSize: 1000 }, function deleteFiles(s3, contents, iteratorCallback) {
         var deleteParams = {
             Bucket: apiConfig.bucket,
             Delete: {
