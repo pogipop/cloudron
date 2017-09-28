@@ -420,7 +420,7 @@ function getConfig(callback) {
                     fqdn: config.fqdn(),
                     version: config.version(),
                     update: updateChecker.getUpdateInfo(),
-                    progress: progress.get(),
+                    progress: progress.getAll(),
                     isCustomDomain: config.isCustomDomain(),
                     isDemo: config.isDemo(),
                     developerMode: developerMode,

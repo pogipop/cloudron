@@ -626,7 +626,7 @@ function uploadAppSnapshot(backupConfig, app, manifest, callback) {
     });
 }
 
-function backupApp(app, manifest, timestamp, callback) {
+function backupAppWithTimestamp(app, manifest, timestamp, callback) {
     assert.strictEqual(typeof app, 'object');
     assert(manifest && typeof manifest === 'object');
     assert.strictEqual(typeof timestamp, 'string');
@@ -642,6 +642,22 @@ function backupApp(app, manifest, timestamp, callback) {
 
             rotateAppBackup(backupConfig, app, timestamp, callback);
         });
+    });
+}
+
+function backupApp(app, manifest, callback) {
+    assert.strictEqual(typeof app, 'object');
+    assert(manifest && typeof manifest === 'object');
+    assert.strictEqual(typeof callback, 'function');
+
+    const timestamp = (new Date()).toISOString().replace(/[T.]/g, '-').replace(/[:Z]/g,'');
+
+    progress.set(progress.BACKUP, 10,  'Backing up ' + (app.altDomain || config.appFqdn(app.location)));
+
+    backupAppWithTimestamp(app, manifest, timestamp, function (error) {
+        progress.set(progress.BACKUP, 100, error ? error.message : '');
+
+        callback(error);
     });
 }
 
@@ -673,7 +689,7 @@ function backupBoxAndApps(auditSource, callback) {
                 return iteratorCallback(null, app.lastBackupId); // just use the last backup
             }
 
-            backupApp(app, app.manifest, timestamp, function (error, backupId) {
+            backupAppWithTimestamp(app, app.manifest, timestamp, function (error, backupId) {
                 if (error && error.reason !== BackupsError.BAD_STATE) {
                     debugApp(app, 'Unable to backup', error);
                     return iteratorCallback(error);

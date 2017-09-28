@@ -142,7 +142,7 @@ function getStatus(req, res, next) {
 }
 
 function getProgress(req, res, next) {
-    return next(new HttpSuccess(200, progress.get()));
+    return next(new HttpSuccess(200, progress.getAll()));
 }
 
 function reboot(req, res, next) {

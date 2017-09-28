@@ -4,7 +4,7 @@ exports = module.exports = {
     set: set,
     setDetail: setDetail,
     clear: clear,
-    get: get,
+    getAll: getAll,
 
     UPDATE: 'update',
     BACKUP: 'backup',
@@ -52,6 +52,11 @@ function clear(tag) {
     debug('clearing %s', tag);
 }
 
-function get() {
+function get(tag) {
+    return progress[tag];
+}
+
+function getAll() {
     return progress;
 }
+
