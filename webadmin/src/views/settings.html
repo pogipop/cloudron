@@ -179,7 +179,7 @@
 
                         <div class="form-group" ng-show="configureBackup.provider !== 'noop'">
                             <label class="control-label" for="storageFormat">Storage Format</label>
-                            <select class="form-control" id="storageFormat" ng-model="configureBackup.format" ng-options="a.value as a.name for a in formats"></select>
+                            <select class="form-control" id="storageFormat" ng-change="configureBackup.key = ''" ng-model="configureBackup.format" ng-options="a.value as a.name for a in formats"></select>
                         </div>
 
                         <div class="form-group" ng-show="configureBackup.provider !== 'noop'">

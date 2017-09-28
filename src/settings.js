@@ -410,6 +410,8 @@ function setBackupConfig(backupConfig, callback) {
     assert.strictEqual(typeof backupConfig, 'object');
     assert.strictEqual(typeof callback, 'function');
 
+    if (backupConfig.key && backupConfig.format !== 'tgz') return callback(new SettingsError(SettingsError.BAD_FIELD, 'format does not support encryption'));
+
     backups.testConfig(backupConfig, function (error) {
         if (error && error.reason === BackupsError.BAD_FIELD) return callback(new SettingsError(SettingsError.BAD_FIELD, error.message));
         if (error && error.reason === BackupsError.EXTERNAL_ERROR) return callback(new SettingsError(SettingsError.EXTERNAL_ERROR, error.message));
