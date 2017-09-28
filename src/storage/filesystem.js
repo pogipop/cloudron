@@ -39,6 +39,11 @@ function upload(apiConfig, backupFilePath, sourceStream, callback) {
 
         var fileStream = fs.createWriteStream(backupFilePath);
 
+        // this pattern is required to ensure that the file got created before 'finish'
+        fileStream.on('open', function () {
+            sourceStream.pipe(fileStream);
+        });
+
         fileStream.on('error', function (error) {
             debug('[%s] upload: out stream error.', backupFilePath, error);
             callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
@@ -55,8 +60,6 @@ function upload(apiConfig, backupFilePath, sourceStream, callback) {
 
             callback(null);
         });
-
-        sourceStream.pipe(fileStream);
     });
 }
 
