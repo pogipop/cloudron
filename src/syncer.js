@@ -72,12 +72,12 @@ function sync(dir, taskProcessor, concurrency, callback) {
                 continue;
             }
 
-            safe.fs.appendFileSync(newCacheFd, JSON.stringify({ path: entryPath, mtime: stat.mtime.getTime()  }) + '\n');
+            safe.fs.appendFileSync(newCacheFd, JSON.stringify({ path: entryPath, mtime: stat.mtime.getTime(), size: stat.size, inode: stat.inode  }) + '\n');
 
             advanceCache(entryPath);
 
             if (curCacheIndex !== cache.length && cache[curCacheIndex].path === entryPath) {
-                if (stat.mtime.getTime() !== cache[curCacheIndex].mtime) {
+                if (stat.mtime.getTime() !== cache[curCacheIndex].mtime || stat.size != cache[curCacheIndex].size || stat.inode !== cache[curCacheIndex].inode) {
                     addQueue.push({ operation: 'add', path: entryPath });
                 }
                 ++curCacheIndex;
