@@ -450,12 +450,16 @@ function uploadBoxSnapshot(backupConfig, callback) {
     snapshotBox(function (error) {
         if (error) return callback(error);
 
-        runBackupTask('snapshot/box', backupConfig.format, paths.BOX_DATA_DIR, function (error) {
+        // for the moment, box backups are always tarball based. this is because it makes it easy to restore
+        // in the future, if required, we can move out the mailboxes to a separate virtual app backup
+        const format = 'tgz';
+
+        runBackupTask('snapshot/box', format, paths.BOX_DATA_DIR, function (error) {
             if (error) return callback(error);
 
             debug('uploadBoxSnapshot: time: %s secs', (new Date() - startTime)/1000);
 
-            setSnapshotInfo('box', { timestamp: new Date().toISOString(), format: backupConfig.format }, callback);
+            setSnapshotInfo('box', { timestamp: new Date().toISOString(), format: format }, callback);
         });
     });
 }
@@ -471,15 +475,16 @@ function rotateBoxBackup(backupConfig, timestamp, appBackupIds, callback) {
 
     var snapshotTime = snapshotInfo.timestamp.replace(/[T.]/g, '-').replace(/[:Z]/g,'');
     var backupId = util.format('%s/box_%s_v%s', timestamp, snapshotTime, config.version());
+    const format = 'tgz';
 
     debug('rotateBoxBackup: rotating to id:%s', backupId);
 
-    backupdb.add({ id: backupId, version: config.version(), type: backupdb.BACKUP_TYPE_BOX, dependsOn: appBackupIds, restoreConfig: null, format: backupConfig.format }, function (error) {
+    backupdb.add({ id: backupId, version: config.version(), type: backupdb.BACKUP_TYPE_BOX, dependsOn: appBackupIds, restoreConfig: null, format: format }, function (error) {
         if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
 
         progress.setDetail(progress.BACKUP, 'Rotating box snapshot');
 
-        api(backupConfig.provider).copy(backupConfig, getBackupFilePath(backupConfig, 'snapshot/box', backupConfig.format), getBackupFilePath(backupConfig, backupId, backupConfig.format), function (copyBackupError) {
+        api(backupConfig.provider).copy(backupConfig, getBackupFilePath(backupConfig, 'snapshot/box', format), getBackupFilePath(backupConfig, backupId, format), function (copyBackupError) {
             const state = copyBackupError ? backupdb.BACKUP_STATE_ERROR : backupdb.BACKUP_STATE_NORMAL;
 
             backupdb.update(backupId, { state: state }, function (error) {
@@ -569,15 +574,16 @@ function rotateAppBackup(backupConfig, app, timestamp, callback) {
     var restoreConfig = snapshotInfo.restoreConfig;
     var manifest = restoreConfig.manifest;
     var backupId = util.format('%s/app_%s_%s_v%s', timestamp, app.id, snapshotTime, manifest.version);
+    const format = backupConfig.format;
 
     debugApp(app, 'rotateAppBackup: rotating to id:%s', backupId);
 
-    backupdb.add({ id: backupId, version: manifest.version, type: backupdb.BACKUP_TYPE_APP, dependsOn: [ ], restoreConfig: restoreConfig, format: backupConfig.format }, function (error) {
+    backupdb.add({ id: backupId, version: manifest.version, type: backupdb.BACKUP_TYPE_APP, dependsOn: [ ], restoreConfig: restoreConfig, format: format }, function (error) {
         if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
 
         progress.setDetail(progress.BACKUP, 'Rotating app snapshot');
 
-        api(backupConfig.provider).copy(backupConfig, getBackupFilePath(backupConfig, `snapshot/app_${app.id}`, backupConfig.format), getBackupFilePath(backupConfig, backupId, backupConfig.format), function (copyBackupError) {
+        api(backupConfig.provider).copy(backupConfig, getBackupFilePath(backupConfig, `snapshot/app_${app.id}`, format), getBackupFilePath(backupConfig, backupId, format), function (copyBackupError) {
             const state = copyBackupError ? backupdb.BACKUP_STATE_ERROR : backupdb.BACKUP_STATE_NORMAL;
             debugApp(app, 'rotateAppBackup: successful id:%s', backupId);
 
