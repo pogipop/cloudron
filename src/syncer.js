@@ -40,7 +40,7 @@ function sync(dir, taskProcessor, concurrency, callback) {
     var cacheFile = path.join(paths.BACKUP_INFO_DIR, path.basename(dir) + '.sync.cache'),
         newCacheFile = path.join(paths.BACKUP_INFO_DIR, path.basename(dir) + '.sync.cache.new');
 
-    if (!safe.fs.existsSync(cacheFile)) { // if cache is missing, start out empty
+    if (!safe.fs.existsSync(cacheFile)) { // if cache is missing, start out empty. TODO: do a remote listDir and rebuild
         delQueue.push({ operation: 'removedir', path: '' });
     }
 
@@ -50,6 +50,7 @@ function sync(dir, taskProcessor, concurrency, callback) {
     if (newCacheFd === -1) return callback(new Error('Error opening new cache file: ' + safe.error.message));
 
     function advanceCache(entryPath) {
+        // TODO: detect and issue removedir
         for (; curCacheIndex !== cache.length && (entryPath === '' || cache[curCacheIndex].path < entryPath); ++curCacheIndex) {
             delQueue.push({ operation: 'remove', path: cache[curCacheIndex].path });
         }

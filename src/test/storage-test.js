@@ -115,8 +115,8 @@ describe('Storage', function () {
                 gSourceFolder = path.join(__dirname, 'storage');
                 gDestinationFolder = path.join(gTmpFolder, 'destination/');
 
-                gBackupId_1 = backups._getBackupFilePath(gBackupConfig, 'someprefix/one');
-                gBackupId_2 = backups._getBackupFilePath(gBackupConfig, 'someprefix/two');
+                gBackupId_1 = backups._getBackupFilePath(gBackupConfig, 'someprefix/one', gBackupConfig.format);
+                gBackupId_2 = backups._getBackupFilePath(gBackupConfig, 'someprefix/two', gBackupConfig.format);
 
                 done();
             });

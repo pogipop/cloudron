@@ -160,15 +160,16 @@ function getRestoreConfig(backupId, callback) {
     });
 }
 
-function getBackupFilePath(backupConfig, backupId, subpath) {
+function getBackupFilePath(backupConfig, backupId, format) {
     assert.strictEqual(typeof backupConfig, 'object');
     assert.strictEqual(typeof backupId, 'string');
+    assert.strictEqual(typeof format, 'string');
 
-    if (backupConfig.format === 'tgz') {
+    if (format === 'tgz') {
         const fileType = backupConfig.key ? '.tar.gz.enc' : '.tar.gz';
         return path.join(backupConfig.prefix || backupConfig.backupFolder, backupId+fileType);
     } else {
-        return path.join(backupConfig.prefix || backupConfig.backupFolder, backupId, subpath || '');
+        return path.join(backupConfig.prefix || backupConfig.backupFolder, backupId);
     }
 }
 
@@ -216,16 +217,26 @@ function createTarPackStream(sourceDir, key) {
 }
 
 function sync(backupConfig, backupId, dataDir, callback) {
+    assert.strictEqual(typeof backupConfig, 'object');
+    assert.strictEqual(typeof backupId, 'string');
+    assert.strictEqual(typeof dataDir, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
     syncer.sync(dataDir, function processTask(task, iteratorCallback) {
         debug('processing task: %j', task);
+        var backupFilePath = path.join(getBackupFilePath(backupConfig, backupId, backupConfig.format), task.path);
+
         if (task.operation === 'add') {
             safe.fs.writeFileSync(paths.BACKUP_RESULT_FILE, 'Adding ' + task.path);
             var stream = fs.createReadStream(path.join(dataDir, task.path));
             stream.on('error', function () { return iteratorCallback(); }); // ignore error if file disappears
-            api(backupConfig.provider).upload(backupConfig, getBackupFilePath(backupConfig, backupId, task.path), stream, iteratorCallback);
-        } else if (task.operation === 'remove' || task.operation === 'removedir') {
+            api(backupConfig.provider).upload(backupConfig, backupFilePath, stream, iteratorCallback);
+        } else if (task.operation === 'remove') {
             safe.fs.writeFileSync(paths.BACKUP_RESULT_FILE, 'Removing ' + task.path);
-            api(backupConfig.provider).remove(backupConfig, getBackupFilePath(backupConfig, backupId, task.path), iteratorCallback);
+            api(backupConfig.provider).remove(backupConfig, backupFilePath, iteratorCallback);
+        } else if (task.operation === 'removedir') {
+            safe.fs.writeFileSync(paths.BACKUP_RESULT_FILE, 'Removing directory ' + task.path);
+            api(backupConfig.provider).removeDir(backupConfig, backupFilePath, iteratorCallback);
         }
     }, 10 /* concurrency */, function (error) {
         if (error) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
@@ -247,8 +258,10 @@ function saveEmptyDirs(appDataDir, callback) {
 }
 
 // this function is called via backuptask (since it needs root to traverse app's directory)
-function upload(backupId, dataDir, callback) {
+function upload(backupId, format, dataDir, callback) {
     assert.strictEqual(typeof backupId, 'string');
+    assert.strictEqual(typeof format, 'string');
+    assert.strictEqual(typeof dataDir, 'string');
     assert.strictEqual(typeof callback, 'function');
 
     callback = once(callback);
@@ -258,10 +271,10 @@ function upload(backupId, dataDir, callback) {
     settings.getBackupConfig(function (error, backupConfig) {
         if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
 
-        if (backupConfig.format === 'tgz') {
+        if (format === 'tgz') {
             var tarStream = createTarPackStream(dataDir, backupConfig.key || null);
             tarStream.on('error', callback); // already returns BackupsError
-            api(backupConfig.provider).upload(backupConfig, getBackupFilePath(backupConfig, backupId), tarStream, callback);
+            api(backupConfig.provider).upload(backupConfig, getBackupFilePath(backupConfig, backupId, format), tarStream, callback);
         } else {
             async.series([
                 saveEmptyDirs.bind(null, dataDir),
@@ -328,39 +341,41 @@ function createEmptyDirs(appDataDir, callback) {
     }, callback);
 }
 
-function download(backupId, dataDir, callback) {
+function download(backupId, format, dataDir, callback) {
     assert.strictEqual(typeof backupId, 'string');
+    assert.strictEqual(typeof format, 'string');
     assert.strictEqual(typeof dataDir, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    debug('Start download of id %s to %s', backupId, dataDir);
+    debug('Start download of id %s to %s (%s)', backupId, dataDir, format);
 
     settings.getBackupConfig(function (error, backupConfig) {
         if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
 
-        if (backupConfig.format === 'tgz') {
-            api(backupConfig.provider).download(backupConfig, getBackupFilePath(backupConfig, backupId), function (error, sourceStream) {
+        if (format === 'tgz') {
+            api(backupConfig.provider).download(backupConfig, getBackupFilePath(backupConfig, backupId, format), function (error, sourceStream) {
                 if (error) return callback(error);
 
                 tarExtract(sourceStream, dataDir, backupConfig.key || null, callback);
             });
         } else {
             async.series([
-                api(backupConfig.provider).downloadDir.bind(null, backupConfig, getBackupFilePath(backupConfig, backupId), dataDir),
+                api(backupConfig.provider).downloadDir.bind(null, backupConfig, getBackupFilePath(backupConfig, backupId, format), dataDir),
                 createEmptyDirs.bind(null, dataDir)
             ], callback);
         }
     });
 }
 
-function runBackupTask(backupId, dataDir, callback) {
+function runBackupTask(backupId, format, dataDir, callback) {
     assert.strictEqual(typeof backupId, 'string');
+    assert.strictEqual(typeof format, 'string');
     assert.strictEqual(typeof dataDir, 'string');
     assert.strictEqual(typeof callback, 'function');
 
     var killTimerId = null, progressTimerId = null;
 
-    var cp = shell.sudo(`backup-${backupId}`, [ BACKUPTASK_CMD, backupId, dataDir ], { env: process.env, logFile: paths.BACKUP_LOG_FILE }, function (error) {
+    var cp = shell.sudo(`backup-${backupId}`, [ BACKUPTASK_CMD, backupId, format, dataDir ], { env: process.env, logFile: paths.BACKUP_LOG_FILE }, function (error) {
         clearTimeout(killTimerId);
         clearInterval(progressTimerId);
 
@@ -434,12 +449,12 @@ function uploadBoxSnapshot(backupConfig, callback) {
     snapshotBox(function (error) {
         if (error) return callback(error);
 
-        runBackupTask('snapshot/box', paths.BOX_DATA_DIR, function (error) {
+        runBackupTask('snapshot/box', backupConfig.format, paths.BOX_DATA_DIR, function (error) {
             if (error) return callback(error);
 
             debug('uploadBoxSnapshot: time: %s secs', (new Date() - startTime)/1000);
 
-            setSnapshotInfo('box', { timestamp: new Date().toISOString() }, callback);
+            setSnapshotInfo('box', { timestamp: new Date().toISOString(), format: backupConfig.format }, callback);
         });
     });
 }
@@ -458,10 +473,10 @@ function rotateBoxBackup(backupConfig, timestamp, appBackupIds, callback) {
 
     debug('rotateBoxBackup: rotating to id:%s', backupId);
 
-    backupdb.add({ id: backupId, version: config.version(), type: backupdb.BACKUP_TYPE_BOX, dependsOn: appBackupIds, restoreConfig: null }, function (error) {
+    backupdb.add({ id: backupId, version: config.version(), type: backupdb.BACKUP_TYPE_BOX, dependsOn: appBackupIds, restoreConfig: null, format: backupConfig.format }, function (error) {
         if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
 
-        api(backupConfig.provider).copy(backupConfig, getBackupFilePath(backupConfig, 'snapshot/box'), getBackupFilePath(backupConfig, backupId), function (copyBackupError) {
+        api(backupConfig.provider).copy(backupConfig, getBackupFilePath(backupConfig, 'snapshot/box', backupConfig.format), getBackupFilePath(backupConfig, backupId, backupConfig.format), function (copyBackupError) {
             const state = copyBackupError ? backupdb.BACKUP_STATE_ERROR : backupdb.BACKUP_STATE_NORMAL;
 
             backupdb.update(backupId, { state: state }, function (error) {
@@ -554,10 +569,10 @@ function rotateAppBackup(backupConfig, app, timestamp, callback) {
 
     debugApp(app, 'rotateAppBackup: rotating to id:%s', backupId);
 
-    backupdb.add({ id: backupId, version: manifest.version, type: backupdb.BACKUP_TYPE_APP, dependsOn: [ ], restoreConfig: restoreConfig }, function (error) {
+    backupdb.add({ id: backupId, version: manifest.version, type: backupdb.BACKUP_TYPE_APP, dependsOn: [ ], restoreConfig: restoreConfig, format: backupConfig.format }, function (error) {
         if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
 
-        api(backupConfig.provider).copy(backupConfig, getBackupFilePath(backupConfig, `snapshot/app_${app.id}`), getBackupFilePath(backupConfig, backupId), function (copyBackupError) {
+        api(backupConfig.provider).copy(backupConfig, getBackupFilePath(backupConfig, `snapshot/app_${app.id}`, backupConfig.format), getBackupFilePath(backupConfig, backupId, backupConfig.format), function (copyBackupError) {
             const state = copyBackupError ? backupdb.BACKUP_STATE_ERROR : backupdb.BACKUP_STATE_NORMAL;
             debugApp(app, 'rotateAppBackup: successful id:%s', backupId);
 
@@ -590,12 +605,12 @@ function uploadAppSnapshot(backupConfig, app, manifest, callback) {
 
         var backupId = util.format('snapshot/app_%s', app.id);
         var appDataDir = safe.fs.realpathSync(path.join(paths.APPS_DATA_DIR, app.id));
-        runBackupTask(backupId, appDataDir, function (error) {
+        runBackupTask(backupId, backupConfig.format, appDataDir, function (error) {
             if (error) return callback(error);
 
             debugApp(app, 'uploadAppSnapshot: %s done time: %s secs', backupId, (new Date() - startTime)/1000);
 
-            setSnapshotInfo(app.id, { timestamp: new Date().toISOString(), restoreConfig: restoreConfig }, callback);
+            setSnapshotInfo(app.id, { timestamp: new Date().toISOString(), restoreConfig: restoreConfig, format: backupConfig.format }, callback);
         });
     });
 }
@@ -733,13 +748,18 @@ function restoreApp(app, addonsToRestore, backupId, callback) {
 
     var startTime = new Date();
 
-    async.series([
-        download.bind(null, backupId, appDataDir),
-        addons.restoreAddons.bind(null, app, addonsToRestore)
-    ], function (error) {
-        debug('restoreApp: time: %s', (new Date() - startTime)/1000);
+    backupdb.get(backupId, function (error, result) {
+        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new BackupsError(BackupsError.NOT_FOUND, error));
+        if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
 
-        callback(error);
+        async.series([
+            download.bind(null, backupId, result.format, appDataDir),
+            addons.restoreAddons.bind(null, app, addonsToRestore)
+        ], function (error) {
+            debug('restoreApp: time: %s', (new Date() - startTime)/1000);
+
+            callback(error);
+        });
     });
 }
 
@@ -760,7 +780,9 @@ function cleanupAppBackups(backupConfig, referencedAppBackups, callback) {
 
             debug('cleanupAppBackups: removing %s', backup.id);
 
-            api(backupConfig.provider).remove(backupConfig, getBackupFilePath(backupConfig, backup.id), function (error) {
+            var removeFunc = backup.format ==='tgz' ? api(backupConfig.provider).remove : api(backupConfig.provider).removeDir;
+
+            removeFunc(backupConfig, getBackupFilePath(backupConfig, backup.id, backup.format), function (error) {
                 if (error) {
                     debug('cleanupAppBackups: error removing backup %j : %s', backup, error.message);
                     iteratorDone();
@@ -817,9 +839,12 @@ function cleanupBoxBackups(backupConfig, callback) {
 
             debug('cleanupBoxBackups: removing %s', backup.id);
 
-            var filePaths = [].concat(backup.id, backup.dependsOn).map(getBackupFilePath.bind(null, backupConfig));
+            // TODO: assumes all backups have the same format
+            var filePaths = [].concat(backup.id, backup.dependsOn).map(function (id) { return getBackupFilePath(backupConfig, id, backup.format); });
 
-            async.eachSeries(filePaths, api(backupConfig.provider).remove.bind(null, backupConfig), function (error) {
+            var removeFunc = backup.format ==='tgz' ? api(backupConfig.provider).remove : api(backupConfig.provider).removeDir;
+
+            async.eachSeries(filePaths, removeFunc.bind(null, backupConfig), function (error) {
                 if (error) {
                     debug('cleanupBoxBackups: error removing backup %j : %s', backup, error.message);
                     iteratorDone();
@@ -854,7 +879,8 @@ function cleanupSnapshots(backupConfig, callback) {
         apps.get(appId, function (error /*, app */) {
             if (!error || error.reason !== AppsError.NOT_FOUND) return iteratorDone();
 
-            api(backupConfig.provider).remove(backupConfig, getBackupFilePath(backupConfig, `snapshot/app_${appId}`), function (/* ignoredError */) {
+            var removeFunc = info[appId].format ==='tgz' ? api(backupConfig.provider).remove : api(backupConfig.provider).removeDir;
+            removeFunc(backupConfig, getBackupFilePath(backupConfig, `snapshot/app_${appId}`, info[appId].format), function (/* ignoredError */) {
                 setSnapshotInfo(appId, null);
 
                 safe.fs.unlinkSync(path.join(paths.BACKUP_INFO_DIR, `${appId}.sync.cache`));

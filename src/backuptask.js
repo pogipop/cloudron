@@ -29,7 +29,8 @@ function initialize(callback) {
 
 // Main process starts here
 var backupId = process.argv[2];
-var dataDir = process.argv[3];
+var format = process.argv[3];
+var dataDir = process.argv[4];
 
 debug(`Backing up ${dataDir} to ${backupId}`);
 
@@ -42,7 +43,7 @@ initialize(function (error) {
 
     safe.fs.writeFileSync(paths.BACKUP_RESULT_FILE, '');
 
-    backups.upload(backupId, dataDir, function resultHandler(error) {
+    backups.upload(backupId, format, dataDir, function resultHandler(error) {
         if (error) debug('completed with error', error);
 
         debug('completed');

@@ -7,6 +7,7 @@ exports = module.exports = {
     copy: copy,
 
     remove: remove,
+    removeDir: removeDir,
 
     backupDone: backupDone,
 
@@ -253,7 +254,32 @@ function copy(apiConfig, oldFilePath, newFilePath, callback) {
     });
 }
 
-function remove(apiConfig, pathPrefix, callback) {
+function remove(apiConfig, filename, callback) {
+    assert.strictEqual(typeof apiConfig, 'object');
+    assert.strictEqual(typeof filename, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    getBackupCredentials(apiConfig, function (error, credentials) {
+        if (error) return callback(error);
+
+        var s3 = new AWS.S3(credentials);
+
+        var deleteParams = {
+            Bucket: apiConfig.bucket,
+            Delete: {
+                Objects: [{ Key: filename }]
+            }
+        };
+
+        s3.deleteObjects(deleteParams, function (error) {
+            if (error) debug('remove: Unable to remove %s. Not fatal.', deleteParams.Key, error);
+
+            callback(null);
+        });
+    });
+}
+
+function removeDir(apiConfig, pathPrefix, callback) {
     assert.strictEqual(typeof apiConfig, 'object');
     assert.strictEqual(typeof pathPrefix, 'string');
     assert.strictEqual(typeof callback, 'function');
@@ -270,7 +296,7 @@ function remove(apiConfig, pathPrefix, callback) {
         async.forever(function listAndDelete(iteratorCallback) {
             s3.listObjectsV2(listParams, function (error, listData) {
                 if (error) {
-                    debug('remove: Failed to list %s. Not fatal.', error);
+                    debug('removeDir: Failed to list %s. Not fatal.', error);
                     return iteratorCallback(error);
                 }
 
@@ -283,10 +309,10 @@ function remove(apiConfig, pathPrefix, callback) {
 
                 s3.deleteObjects(deleteParams, function (error, deleteData) {
                     if (error) {
-                        debug('remove: Unable to remove %s. Not fatal.', deleteParams.Key, error);
+                        debug('removeDir: Unable to remove %s. Not fatal.', deleteParams.Key, error);
                         return iteratorCallback(error);
                     }
-                    debug(': Deleted: %j Errors: %j', deleteData.Deleted, deleteData.Errors);
+                    debug('removeDir: Deleted: %j Errors: %j', deleteData.Deleted, deleteData.Errors);
 
                     listParams.Marker = listData.Contents[listData.Contents.length - 1].Key; // NextMarker is returned only with delimiter
 
@@ -306,7 +332,7 @@ function testConfig(apiConfig, callback) {
     assert.strictEqual(typeof callback, 'function');
 
     if (apiConfig.provider === 'caas') {
-         if (typeof apiConfig.token !== 'string') return callback(new BackupsError(BackupsError.BAD_FIELD, 'token must be a string'));
+        if (typeof apiConfig.token !== 'string') return callback(new BackupsError(BackupsError.BAD_FIELD, 'token must be a string'));
     } else {
         if (typeof apiConfig.accessKeyId !== 'string') return callback(new BackupsError(BackupsError.BAD_FIELD, 'accessKeyId must be a string'));
         if (typeof apiConfig.secretAccessKey !== 'string') return callback(new BackupsError(BackupsError.BAD_FIELD, 'secretAccessKey must be a string'));

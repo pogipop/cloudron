@@ -13,6 +13,7 @@ exports = module.exports = {
     copy: copy,
 
     remove: remove,
+    removeDir: removeDir,
 
     backupDone: backupDone,
 
@@ -61,7 +62,17 @@ function copy(apiConfig, oldFilePath, newFilePath, callback) {
     callback(new Error('not implemented'));
 }
 
-function remove(apiConfig, pathPrefix, callback) {
+function remove(apiConfig, filename, callback) {
+    assert.strictEqual(typeof apiConfig, 'object');
+    assert.strictEqual(typeof filename, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    // Result: none
+
+    callback(new Error('not implemented'));
+}
+
+function removeDir(apiConfig, pathPrefix, callback) {
     assert.strictEqual(typeof apiConfig, 'object');
     assert.strictEqual(typeof pathPrefix, 'string');
     assert.strictEqual(typeof callback, 'function');

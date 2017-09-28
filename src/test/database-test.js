@@ -1025,7 +1025,8 @@ describe('database', function () {
                 version: '1.0.0',
                 type: backupdb.BACKUP_TYPE_BOX,
                 dependsOn: [ 'dep1' ],
-                restoreConfig: null
+                restoreConfig: null,
+                format: 'tgz'
             };
 
             backupdb.add(backup, function (error) {
@@ -1090,7 +1091,8 @@ describe('database', function () {
                 version: '1.0.0',
                 type: backupdb.BACKUP_TYPE_APP,
                 dependsOn: [ ],
-                restoreConfig: { manifest: { foo: 'bar' } }
+                restoreConfig: { manifest: { foo: 'bar' } },
+                format: 'tgz'
             };
 
             backupdb.add(backup, function (error) {

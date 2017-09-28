@@ -8,6 +8,7 @@ exports = module.exports = {
     copy: copy,
 
     remove: remove,
+    removeDir: removeDir,
 
     backupDone: backupDone,
 
@@ -110,12 +111,24 @@ function copy(apiConfig, oldFilePath, newFilePath, callback) {
     });
 }
 
-function remove(apiConfig, pathPrefix, callback) {
+function remove(apiConfig, filename, callback) {
+    assert.strictEqual(typeof apiConfig, 'object');
+    assert.strictEqual(typeof filename, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    safe.fs.unlinkSync(filename);
+
+    safe.fs.rmdirSync(path.dirname(filename)); // try to cleanup empty directories
+
+    callback();
+}
+
+function removeDir(apiConfig, pathPrefix, callback) {
     assert.strictEqual(typeof apiConfig, 'object');
     assert.strictEqual(typeof pathPrefix, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    shell.exec('remove', '/bin/rm', [ '-rf', pathPrefix ], { }, function (error) {
+    shell.exec('removeDir', '/bin/rm', [ '-rf', pathPrefix ], { }, function (error) {
         if (error) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
 
         safe.fs.rmdirSync(path.dirname(pathPrefix)); // try to cleanup empty directories

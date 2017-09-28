@@ -7,7 +7,6 @@
 'use strict';
 
 var async = require('async'),
-    appdb = require('../appdb.js'),
     backupdb = require('../backupdb.js'),
     backups = require('../backups.js'),
     database = require('../database'),
@@ -46,7 +45,8 @@ describe('backups', function () {
             version: '1.0.0',
             type: backupdb.BACKUP_TYPE_BOX,
             dependsOn: [ 'backup-app-00', 'backup-app-01' ],
-            restoreConfig: null
+            restoreConfig: null,
+            format: 'tgz'
         };
 
         var BACKUP_0_APP_0 = {
@@ -54,7 +54,8 @@ describe('backups', function () {
             version: '1.0.0',
             type: backupdb.BACKUP_TYPE_APP,
             dependsOn: [],
-            restoreConfig: null
+            restoreConfig: null,
+            format: 'tgz'
         };
 
         var BACKUP_0_APP_1 = {
@@ -62,7 +63,8 @@ describe('backups', function () {
             version: '1.0.0',
             type: backupdb.BACKUP_TYPE_APP,
             dependsOn: [],
-            restoreConfig: null
+            restoreConfig: null,
+            format: 'tgz'
         };
 
         var BACKUP_1 = {
@@ -70,7 +72,8 @@ describe('backups', function () {
             version: '1.0.0',
             type: backupdb.BACKUP_TYPE_BOX,
             dependsOn: [ 'backup-app-10', 'backup-app-11' ],
-            restoreConfig: null
+            restoreConfig: null,
+            format: 'tgz'
         };
 
         var BACKUP_1_APP_0 = {
@@ -78,7 +81,8 @@ describe('backups', function () {
             version: '1.0.0',
             type: backupdb.BACKUP_TYPE_APP,
             dependsOn: [],
-            restoreConfig: null
+            restoreConfig: null,
+            format: 'tgz'
         };
 
         var BACKUP_1_APP_1 = {
@@ -86,7 +90,8 @@ describe('backups', function () {
             version: '1.0.0',
             type: backupdb.BACKUP_TYPE_APP,
             dependsOn: [],
-            restoreConfig: null
+            restoreConfig: null,
+            format: 'tgz'
         };
 
         it('succeeds without backups', function (done) {
