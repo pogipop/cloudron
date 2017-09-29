@@ -94,4 +94,7 @@ describe('config', function () {
         done();
     });
 
+    it('test machine has IPv6 support', function () {
+        expect(config.hasIPv6()).to.equal(true);
+    });
 });

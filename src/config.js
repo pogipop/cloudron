@@ -33,6 +33,7 @@ exports = module.exports = {
     appFqdn: appFqdn,
     zoneName: zoneName,
     setZoneName: setZoneName,
+    hasIPv6: hasIPv6,
 
     isDemo: isDemo,
 
@@ -231,4 +232,9 @@ function tlsCert() {
 function tlsKey() {
     var keyFile = path.join(baseDir(), 'configs/host.key');
     return safe.fs.readFileSync(keyFile, 'utf8');
+}
+
+function hasIPv6() {
+    // require here to avoid cyclic dependencies, it is cached anyways
+    return fs.existsSync(require('./paths.js').IPV6_PROC_FILE);
 }

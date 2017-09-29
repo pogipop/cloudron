@@ -19,6 +19,7 @@ exports = module.exports = {
     ADDON_CONFIG_DIR: path.join(config.baseDir(), 'platformdata/addons'),
     COLLECTD_APPCONFIG_DIR: path.join(config.baseDir(), 'platformdata/collectd/collectd.conf.d'),
     LOGROTATE_CONFIG_DIR: path.join(config.baseDir(), 'platformdata/logrotate.d'),
+    IPV6_PROC_FILE: '/proc/net/if_inet6',
     NGINX_CONFIG_DIR: path.join(config.baseDir(), 'platformdata/nginx'),
     NGINX_APPCONFIG_DIR: path.join(config.baseDir(), 'platformdata/nginx/applications'),
     NGINX_CERT_DIR: path.join(config.baseDir(), 'platformdata/nginx/cert'),
