@@ -3,6 +3,7 @@
 var assert = require('assert'),
     async = require('async'),
     debug = require('debug')('box:syncer'),
+    fs = require('fs'),
     path = require('path'),
     paths = require('./paths.js'),
     safe = require('safetydance');
@@ -29,6 +30,14 @@ function readTree(dir) {
     return list.map(function (e) { return { stat: safe.fs.lstatSync(path.join(dir, e)), name: e }; });
 }
 
+function ISDIR(x) {
+    return (x & fs.constants.S_IFDIR) === fs.constants.S_IFDIR;
+}
+
+function ISFILE(x) {
+    return (x & fs.constants.S_IFREG) === fs.constants.S_IFREG;
+}
+
 function sync(dir, taskProcessor, concurrency, callback) {
     assert.strictEqual(typeof dir, 'string');
     assert.strictEqual(typeof taskProcessor, 'function');
@@ -41,7 +50,7 @@ function sync(dir, taskProcessor, concurrency, callback) {
         newCacheFile = path.join(paths.BACKUP_INFO_DIR, path.basename(dir) + '.sync.cache.new');
 
     if (!safe.fs.existsSync(cacheFile)) { // if cache is missing, start out empty. TODO: do a remote listDir and rebuild
-        delQueue.push({ operation: 'removedir', path: '' });
+        delQueue.push({ operation: 'removedir', path: '', reason: 'nocache' });
     }
 
     var cache = readCache(cacheFile);
@@ -50,39 +59,65 @@ function sync(dir, taskProcessor, concurrency, callback) {
     if (newCacheFd === -1) return callback(new Error('Error opening new cache file: ' + safe.error.message));
 
     function advanceCache(entryPath) {
-        // TODO: detect and issue removedir
+        var lastRemovedDir = null;
+
         for (; curCacheIndex !== cache.length && (entryPath === '' || cache[curCacheIndex].path < entryPath); ++curCacheIndex) {
-            delQueue.push({ operation: 'remove', path: cache[curCacheIndex].path });
+            // ignore subdirs of lastRemovedDir since it was removed already
+            if (lastRemovedDir && cache[curCacheIndex].path.startsWith(lastRemovedDir)) continue;
+
+            if (ISDIR(cache[curCacheIndex].stat.mode)) {
+                delQueue.push({ operation: 'removedir', path: cache[curCacheIndex].path, reason: 'missing' });
+                lastRemovedDir = cache[curCacheIndex].path;
+            } else {
+                delQueue.push({ operation: 'remove', path: cache[curCacheIndex].path, reason: 'missing' });
+                lastRemovedDir = null;
+            }
         }
     }
 
     function traverse(relpath) {
         var entries = readTree(path.join(dir, relpath));
 
+        // addQueue.push({ operation: 'mkdir', path: relpath });
         for (var i = 0; i < entries.length; i++) {
             var entryPath = path.join(relpath, entries[i].name);
-            var stat = entries[i].stat;
+            var entryStat = entries[i].stat;
 
-            if (!stat) continue; // some stat error
-            if (!stat.isDirectory() && !stat.isFile()) continue;
-            if (stat.isSymbolicLink()) continue;
+            if (!entryStat) continue; // some stat error. prented it doesn't exist
+            if (!entryStat.isDirectory() && !entryStat.isFile()) continue; // ignore non-files and dirs
+            if (entryStat.isSymbolicLink()) continue;
 
-            if (stat.isDirectory()) {
-                traverse(entryPath);
-                continue;
+            safe.fs.appendFileSync(newCacheFd, JSON.stringify({ path: entryPath, stat: { mtime: entryStat.mtime.getTime(), size: entryStat.size, inode: entryStat.inode, mode: entryStat.mode } }) + '\n');
+
+            if (curCacheIndex !== cache.length && cache[curCacheIndex].path < entryPath) { // files disappeared. first advance cache as needed
+                advanceCache(entryPath);
             }
 
-            safe.fs.appendFileSync(newCacheFd, JSON.stringify({ path: entryPath, mtime: stat.mtime.getTime(), size: stat.size, inode: stat.inode  }) + '\n');
+            const cachePath = curCacheIndex === cache.length ? null : cache[curCacheIndex].path;
+            const cacheStat = curCacheIndex === cache.length ? null : cache[curCacheIndex].stat;
 
-            advanceCache(entryPath);
-
-            if (curCacheIndex !== cache.length && cache[curCacheIndex].path === entryPath) {
-                if (stat.mtime.getTime() !== cache[curCacheIndex].mtime || stat.size != cache[curCacheIndex].size || stat.inode !== cache[curCacheIndex].inode) {
-                    addQueue.push({ operation: 'add', path: entryPath });
+            if (cachePath === null || cachePath > entryPath) { // new files appeared
+                if (entryStat.isDirectory()) {
+                    traverse(entryPath);
+                } else {
+                    addQueue.push({ operation: 'add', path: entryPath, reason: 'new' });
+                }
+            } else if (ISDIR(cacheStat.mode) && entryStat.isDirectory()) { // dir names match
+                ++curCacheIndex;
+                traverse(entryPath);
+            } else if (ISFILE(cacheStat.mode) && entryStat.isFile()) { // file names match
+                if (entryStat.mtime.getTime() !== cacheStat.mtime || entryStat.size != cacheStat.size || entryStat.inode !== cacheStat.inode) { // file changed
+                    addQueue.push({ operation: 'add', path: entryPath, reason: 'changed' });
                 }
                 ++curCacheIndex;
-            } else {
-                addQueue.push({ operation: 'add', path: entryPath });
+            } else if (entryStat.isDirectory()) { // was a file, now a directory
+                delQueue.push({ operation: 'remove', path: cachePath, reason: 'wasfile' });
+                ++curCacheIndex;
+                traverse(entryPath);
+            } else { // was a dir, now a file
+                delQueue.push({ operation: 'removedir', path: cachePath, reason: 'wasdir' });
+                while (curCacheIndex !== cache.length && cache[curCacheIndex].path.startsWith(cachePath)) ++curCacheIndex;
+                addQueue.push({ operation: 'add', path: entryPath, reason: 'wasdir' });
             }
         }
     }

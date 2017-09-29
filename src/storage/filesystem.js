@@ -20,7 +20,6 @@ var assert = require('assert'),
     debug = require('debug')('box:storage/filesystem'),
     fs = require('fs'),
     mkdirp = require('mkdirp'),
-    PassThrough = require('stream').PassThrough,
     path = require('path'),
     safe = require('safetydance'),
     shell = require('../shell.js');

@@ -238,6 +238,8 @@ function sync(backupConfig, backupId, dataDir, callback) {
         } else if (task.operation === 'removedir') {
             safe.fs.writeFileSync(paths.BACKUP_RESULT_FILE, 'Removing directory ' + task.path);
             api(backupConfig.provider).removeDir(backupConfig, backupFilePath, iteratorCallback);
+        } else if (task.operation === 'mkdir') { // unused
+            safe.fs.writeFileSync(paths.BACKUP_RESULT_FILE, 'Adding directory ' + task.path);
         }
     }, 10 /* concurrency */, function (error) {
         if (error) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
