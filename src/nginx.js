@@ -32,6 +32,7 @@ function configureAdmin(certFilePath, keyFilePath, configFileName, vhost, callba
         sourceDir: path.resolve(__dirname, '..'),
         adminOrigin: config.adminOrigin(),
         vhost: vhost, // if vhost is empty it will become the default_server
+        hasIPv6: config.hasIPv6(),
         endpoint: 'admin',
         certFilePath: certFilePath,
         keyFilePath: keyFilePath,
@@ -60,6 +61,7 @@ function configureApp(app, certFilePath, keyFilePath, callback) {
         sourceDir: sourceDir,
         adminOrigin: config.adminOrigin(),
         vhost: vhost,
+        hasIPv6: config.hasIPv6(),
         port: app.httpPort,
         endpoint: endpoint,
         certFilePath: certFilePath,
