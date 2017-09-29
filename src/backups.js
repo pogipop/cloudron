@@ -813,18 +813,24 @@ function cleanupAppBackups(backupConfig, referencedAppBackups, callback) {
             debug('cleanupAppBackups: removing %s', backup.id);
 
             var removeFunc = backup.format ==='tgz' ? api(backupConfig.provider).remove : api(backupConfig.provider).removeDir;
+            var backupFilePath = getBackupFilePath(backupConfig, backup.id, backup.format);
 
-            removeFunc(backupConfig, getBackupFilePath(backupConfig, backup.id, backup.format), function (error) {
+            removeFunc(backupConfig, backupFilePath, function (error) {
                 if (error) {
                     debug('cleanupAppBackups: error removing backup %j : %s', backup, error.message);
                     iteratorDone();
                 }
 
-                backupdb.del(backup.id, function (error) {
-                    if (error) debug('cleanupAppBackups: error removing from database', error);
-                    else debug('cleanupAppBackups: removed %s', backup.id);
+                // prune empty directory
+                api(backupConfig.provider).remove(backupConfig, path.dirname(backupFilePath), function (error) {
+                    if (error) debug('cleanupAppBackups: unable to remove backup directory %j : %s', backup, error.message);
 
-                    iteratorDone();
+                    backupdb.del(backup.id, function (error) {
+                        if (error) debug('cleanupAppBackups: error removing from database', error);
+                        else debug('cleanupAppBackups: removed %s', backup.id);
+
+                        iteratorDone();
+                    });
                 });
             });
         }, function () {
@@ -874,9 +880,14 @@ function cleanupBoxBackups(backupConfig, callback) {
             // TODO: assumes all backups have the same format
             var filePaths = [].concat(backup.id, backup.dependsOn).map(function (id) { return getBackupFilePath(backupConfig, id, backup.format); });
 
-            var removeFunc = backup.format ==='tgz' ? api(backupConfig.provider).remove : api(backupConfig.provider).removeDir;
+            async.eachSeries(filePaths, function (filePath, next) {
+                var removeFunc = backup.format ==='tgz' ? api(backupConfig.provider).remove : api(backupConfig.provider).removeDir;
 
-            async.eachSeries(filePaths, removeFunc.bind(null, backupConfig), function (error) {
+                async.series([
+                    removeFunc.bind(null, backupConfig, filePath),
+                    api(backupConfig.provider).remove.bind(null, backupConfig, path.dirname(filePath))
+                ], next);
+            }, function (error) {
                 if (error) {
                     debug('cleanupBoxBackups: error removing backup %j : %s', backup, error.message);
                     iteratorDone();

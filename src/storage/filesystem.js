@@ -116,9 +116,14 @@ function remove(apiConfig, filename, callback) {
     assert.strictEqual(typeof filename, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    safe.fs.unlinkSync(filename);
+    var stat = safe.fs.statSync(filename);
+    if (!stat) return callback();
 
-    safe.fs.rmdirSync(path.dirname(filename)); // try to cleanup empty directories
+    if (stat.isFile()) {
+        safe.fs.unlinkSync(filename);
+    } else if (stat.isDirectory()) {
+        safe.fs.rmdirSync(path.dirname(filename));
+    }
 
     callback();
 }
@@ -130,8 +135,6 @@ function removeDir(apiConfig, pathPrefix, callback) {
 
     shell.exec('removeDir', '/bin/rm', [ '-rf', pathPrefix ], { }, function (error) {
         if (error) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
-
-        safe.fs.rmdirSync(path.dirname(pathPrefix)); // try to cleanup empty directories
 
         callback();
     });
