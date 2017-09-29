@@ -27,7 +27,9 @@ exports = module.exports = {
     // for testing
     _getBackupFilePath: getBackupFilePath,
     _createTarPackStream: createTarPackStream,
-    _tarExtract: tarExtract
+    _tarExtract: tarExtract,
+    _createEmptyDirs: createEmptyDirs,
+    _saveEmptyDirs: saveEmptyDirs
 };
 
 var addons = require('./addons.js'),
@@ -345,7 +347,7 @@ function createEmptyDirs(appDataDir, callback) {
     if (emptyDirs === null) return callback(new Error('emptydirs.txt was not found:' + safe.error.message));
 
     async.eachSeries(emptyDirs.trim().split('\n'), function createPath(emptyDir, iteratorDone) {
-        mkdirp(path.join(appDataDir, 'data', emptyDir), iteratorDone);
+        mkdirp(path.join(appDataDir, emptyDir), iteratorDone);
     }, callback);
 }
 

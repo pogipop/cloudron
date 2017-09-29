@@ -9,9 +9,14 @@
 var async = require('async'),
     backupdb = require('../backupdb.js'),
     backups = require('../backups.js'),
+    createTree = require('./common.js').createTree,
     database = require('../database'),
     DatabaseError = require('../databaseerror.js'),
     expect = require('expect.js'),
+    fs = require('fs'),
+    os = require('os'),
+    path = require('path'),
+    rimraf = require('rimraf'),
     settings = require('../settings.js');
 
 describe('backups', function () {
@@ -164,6 +169,43 @@ describe('backups', function () {
                         });
                     });
                 }, 2000);
+            });
+        });
+    });
+
+    describe('empty dirs', function () {
+        var tmpdir;
+        before(function () {
+            tmpdir = fs.mkdtempSync(path.join(os.tmpdir(), 'backups-test'));
+        });
+        after(function () {
+            rimraf.sync(tmpdir);
+        });
+
+        it('saves empty dirs file', function (done) {
+            createTree(tmpdir, { 'data': { 'subdir': { 'emptydir': { } } }, 'dir2': { 'file': 'stuff' } });
+
+            backups._saveEmptyDirs(tmpdir, function (error) {
+                expect(error).to.not.be.ok();
+
+                var emptyDirs = fs.readFileSync(path.join(tmpdir, 'emptydirs.txt'), 'utf8').trim().split('\n');
+                expect(emptyDirs).to.eql(['./data/subdir/emptydir']);
+
+                done();
+            });
+        });
+
+        it('creates empty dirs file', function (done) {
+            rimraf.sync(path.join(tmpdir, 'data'));
+
+            expect(fs.existsSync(path.join(tmpdir, 'data/subdir/emptydir'))).to.be(false); // just make sure rimraf worked
+
+            backups._createEmptyDirs(tmpdir, function (error) {
+                expect(error).to.not.be.ok();
+
+                expect(fs.existsSync(path.join(tmpdir, 'data/subdir/emptydir'))).to.be(true);
+
+                done();
             });
         });
     });
