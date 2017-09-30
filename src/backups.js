@@ -119,7 +119,7 @@ function testConfig(backupConfig, callback) {
     var func = api(backupConfig.provider);
     if (!func) return callback(new BackupsError(BackupsError.BAD_FIELD, 'unknown storage provider'));
 
-    if (backupConfig.format !== 'tgz' && backupConfig.format !== 'flat-file') return callback(new BackupsError(BackupsError.BAD_FIELD, 'unknown format'));
+    if (backupConfig.format !== 'tgz' && backupConfig.format !== 'rsync') return callback(new BackupsError(BackupsError.BAD_FIELD, 'unknown format'));
 
     api(backupConfig.provider).testConfig(backupConfig, callback);
 }

@@ -59,7 +59,7 @@ angular.module('Application').controller('SettingsController', ['$scope', '$loca
 
     $scope.formats = [
         { name: 'Tarball (zipped)', value: 'tgz' },
-        { name: 'Flat file', value: 'flat-file' }
+        { name: 'rsync', value: 'rsync' }
     ];
 
     $scope.planChange = {
