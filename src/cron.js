@@ -139,7 +139,7 @@ function recreateJobs(tz) {
     if (gCleanupBackupsJob) gCleanupBackupsJob.stop();
     gCleanupBackupsJob = new CronJob({
         cronTime: '00 45 */6 * * *', // every 6 hours. try not to overlap with ensureBackup job
-        onTick: backups.cleanup,
+        onTick: backups.cleanup.bind(null, AUDIT_SOURCE, NOOP_CALLBACK),
         start: true,
         timeZone: tz
     });

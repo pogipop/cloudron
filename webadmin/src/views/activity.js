@@ -15,6 +15,7 @@ angular.module('Application').controller('ActivityController', ['$scope', '$loca
         { name: 'app.uninstall', value: 'app.uninstall' },
         { name: 'app.update', value: 'app.update' },
         { name: 'app.login', value: 'app.login' },
+        { name: 'backup.cleanup', value: 'backup.cleanup' },
         { name: 'backup.finish', value: 'backup.finish' },
         { name: 'backup.start', value: 'backup.start' },
         { name: 'certificate.renew', value: 'certificate.renew' },

@@ -10,7 +10,7 @@
     <div class="filter">
       <input type="text" class="form-control" ng-model="search" ng-model-options="{ debounce: 1000 }" ng-change="updateFilter()" placeholder="Search"/>
       <select class="form-control" ng-model="action" ng-options="a.name for a in actions" ng-change="updateFilter()">
-        <option value="">-- all actions --</option>
+        <option value="">-- All actions --</option>
       </select>
       <select class="form-control" ng-model="pageItems" ng-options="a.name for a in pageItemCount" ng-change="updateFilter(true)">
       </select>

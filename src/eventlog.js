@@ -20,6 +20,7 @@ exports = module.exports = {
     ACTION_APP_LOGIN: 'app.login',
     ACTION_BACKUP_FINISH: 'backup.finish',
     ACTION_BACKUP_START: 'backup.start',
+    ACTION_BACKUP_CLEANUP: 'backup.cleanup',
     ACTION_CERTIFICATE_RENEWAL: 'certificate.renew',
     ACTION_CLI_MODE: 'settings.climode',
     ACTION_START: 'cloudron.start',

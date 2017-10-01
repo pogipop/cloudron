@@ -845,8 +845,9 @@ function cleanupAppBackups(backupConfig, referencedAppBackups, callback) {
     });
 }
 
-function cleanupBoxBackups(backupConfig, callback) {
+function cleanupBoxBackups(backupConfig, auditSource, callback) {
     assert.strictEqual(typeof backupConfig, 'object');
+    assert.strictEqual(typeof auditSource, 'object');
     assert.strictEqual(typeof callback, 'function');
 
     const now = new Date();
@@ -892,6 +893,8 @@ function cleanupBoxBackups(backupConfig, callback) {
                 // prune empty directories
                 api(backupConfig.provider).remove(backupConfig, path.dirname(filePaths[0]), function (error) {
                     if (error) debug('cleanupBoxBackups: unable to prune directory %s : %s', path.dirname(filePaths[0]), error.message);
+
+                    eventlog.add(eventlog.ACTION_BACKUP_CLEANUP, auditSource, { backup: backup });
 
                     backupdb.del(backup.id, function (error) {
                         if (error) debug('cleanupBoxBackups: error removing from database', error);
@@ -951,7 +954,8 @@ function cleanupSnapshots(backupConfig, callback) {
     });
 }
 
-function cleanup(callback) {
+function cleanup(auditSource, callback) {
+    assert.strictEqual(typeof auditSource, 'object');
     assert(!callback || typeof callback === 'function'); // callback is null when called from cronjob
 
     callback = callback || NOOP_CALLBACK;
@@ -964,7 +968,7 @@ function cleanup(callback) {
             return callback();
         }
 
-        cleanupBoxBackups(backupConfig, function (error, referencedAppBackups) {
+        cleanupBoxBackups(backupConfig, auditSource, function (error, referencedAppBackups) {
             if (error) return callback(error);
 
             cleanupAppBackups(backupConfig, referencedAppBackups, function (error) {
