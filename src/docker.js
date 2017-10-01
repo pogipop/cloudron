@@ -186,9 +186,9 @@ function createSubcontainer(app, name, cmd, options, callback) {
                 '/run': {}
             },
             Labels: {
-                "location": app.location,
-                "appId": app.id,
-                "isSubcontainer": String(!isAppContainer)
+                'location': app.location,
+                'appId': app.id,
+                'isSubcontainer': String(!isAppContainer)
             },
             HostConfig: {
                 Binds: addons.getBindsSync(app, app.manifest.addons),
@@ -198,15 +198,15 @@ function createSubcontainer(app, name, cmd, options, callback) {
                 PublishAllPorts: false,
                 ReadonlyRootfs: app.debugMode ? !!app.debugMode.readonlyRootfs : true,
                 RestartPolicy: {
-                    "Name": isAppContainer ? "always" : "no",
-                    "MaximumRetryCount": 0
+                    'Name': isAppContainer ? 'always' : 'no',
+                    'MaximumRetryCount': 0
                 },
                 CpuShares: 512, // relative to 1024 for system processes
-                VolumesFrom: isAppContainer ? null : [ app.containerId + ":rw" ],
+                VolumesFrom: isAppContainer ? null : [ app.containerId + ':rw' ],
                 NetworkMode: 'cloudron',
                 Dns: ['172.18.0.1'], // use internal dns
                 DnsSearch: ['.'], // use internal dns
-                SecurityOpt: enableSecurityOpt ? [ "apparmor=docker-cloudron-app" ] : null // profile available only on cloudron
+                SecurityOpt: enableSecurityOpt ? [ 'apparmor=docker-cloudron-app' ] : null // profile available only on cloudron
             }
         };
 
@@ -219,7 +219,7 @@ function createSubcontainer(app, name, cmd, options, callback) {
 
         containerOptions = _.extend(containerOptions, options);
 
-        debugApp(app, 'Creating container for %s with options %j', app.manifest.dockerImage, containerOptions);
+        debugApp(app, 'Creating container for %s', app.manifest.dockerImage);
 
         docker.createContainer(containerOptions, callback);
     });
