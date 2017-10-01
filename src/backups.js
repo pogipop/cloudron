@@ -934,12 +934,12 @@ function cleanupSnapshots(backupConfig, callback) {
 
             var removeFunc = info[appId].format ==='tgz' ? api(backupConfig.provider).remove : api(backupConfig.provider).removeDir;
             removeFunc(backupConfig, getBackupFilePath(backupConfig, `snapshot/app_${appId}`, info[appId].format), function (/* ignoredError */) {
-                setSnapshotInfo(appId, null);
-
                 safe.fs.unlinkSync(path.join(paths.BACKUP_INFO_DIR, `${appId}.sync.cache`));
                 safe.fs.unlinkSync(path.join(paths.BACKUP_INFO_DIR, `${appId}.sync.cache.new`));
 
-                iteratorDone();
+                setSnapshotInfo(appId, null, function (/* ignoredError */) {
+                    iteratorDone();
+                });
             });
         });
     }, callback);
