@@ -938,11 +938,17 @@ function cleanupSnapshots(backupConfig, callback) {
                 safe.fs.unlinkSync(path.join(paths.BACKUP_INFO_DIR, `${appId}.sync.cache.new`));
 
                 setSnapshotInfo(appId, null, function (/* ignoredError */) {
+                    debug('cleanupSnapshots: cleaned up snapshot of app id %s', appId);
+
                     iteratorDone();
                 });
             });
         });
-    }, callback);
+    }, function () {
+        debug('cleanupSnapshots: done');
+
+        callback();
+    });
 }
 
 function cleanup(callback) {
