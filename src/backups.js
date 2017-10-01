@@ -827,7 +827,7 @@ function cleanupAppBackups(backupConfig, referencedAppBackups, callback) {
 
                 // prune empty directory
                 api(backupConfig.provider).remove(backupConfig, path.dirname(backupFilePath), function (error) {
-                    if (error) debug('cleanupAppBackups: unable to remove backup directory %j : %s', backup, error.message);
+                    if (error) debug('cleanupAppBackups: unable to prune backup directory %j : %s', backup, error.message);
 
                     backupdb.del(backup.id, function (error) {
                         if (error) debug('cleanupAppBackups: error removing from database', error);
@@ -865,43 +865,40 @@ function cleanupBoxBackups(backupConfig, callback) {
 
         // keep the first valid backup
         if (i !== boxBackups.length) {
-            debug('cleanupBoxBackups: preserving box backup %j', boxBackups[i]);
+            debug('cleanupBoxBackups: preserving box backup %s (%j)', boxBackups[i].id, boxBackups[i].dependsOn);
             referencedAppBackups = boxBackups[i].dependsOn;
             boxBackups.splice(i, 1);
         } else {
             debug('cleanupBoxBackups: no box backup to preserve');
         }
 
-        async.eachSeries(boxBackups, function iterator(backup, iteratorDone) {
+        async.eachSeries(boxBackups, function iterator(backup, nextBackup) {
             referencedAppBackups = referencedAppBackups.concat(backup.dependsOn);
 
             // TODO: errored backups should probably be cleaned up before retention time, but we will
             // have to be careful not to remove any backup currently being created
-            if ((now - backup.creationTime) < (backupConfig.retentionSecs * 1000)) return iteratorDone();
+            if ((now - backup.creationTime) < (backupConfig.retentionSecs * 1000)) return nextBackup();
 
             debug('cleanupBoxBackups: removing %s', backup.id);
 
             // TODO: assumes all backups have the same format
             var filePaths = [].concat(backup.id, backup.dependsOn).map(function (id) { return getBackupFilePath(backupConfig, id, backup.format); });
 
-            async.eachSeries(filePaths, function (filePath, next) {
-                var removeFunc = backup.format ==='tgz' ? api(backupConfig.provider).remove : api(backupConfig.provider).removeDir;
+            const removeFunc = backup.format ==='tgz' ? api(backupConfig.provider).remove : api(backupConfig.provider).removeDir;
 
-                async.series([
-                    removeFunc.bind(null, backupConfig, filePath),
-                    api(backupConfig.provider).remove.bind(null, backupConfig, path.dirname(filePath))
-                ], next);
-            }, function (error) {
-                if (error) {
-                    debug('cleanupBoxBackups: error removing backup %j : %s', backup, error.message);
-                    iteratorDone();
-                }
+            async.eachSeries(filePaths, removeFunc.bind(null, backupConfig), function (error) {
+                if (error) return nextBackup(); // try the next box backup
 
-                backupdb.del(backup.id, function (error) {
-                    if (error) debug('cleanupBoxBackups: error removing from database', error);
-                    else debug('cleanupBoxBackups: removed %j', filePaths);
+                // prune empty directories
+                api(backupConfig.provider).remove(backupConfig, path.dirname(filePaths[0]), function (error) {
+                    if (error) debug('cleanupBoxBackups: unable to prune directory %s : %s', path.dirname(filePaths[0]), error.message);
 
-                    iteratorDone();
+                    backupdb.del(backup.id, function (error) {
+                        if (error) debug('cleanupBoxBackups: error removing from database', error);
+                        else debug('cleanupBoxBackups: removed %j', filePaths);
+
+                        nextBackup();
+                    });
                 });
             });
         }, function () {

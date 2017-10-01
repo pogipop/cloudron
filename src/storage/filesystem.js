@@ -119,9 +119,9 @@ function remove(apiConfig, filename, callback) {
     if (!stat) return callback();
 
     if (stat.isFile()) {
-        safe.fs.unlinkSync(filename);
+        if (!safe.fs.unlinkSync(filename)) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, safe.error.message));
     } else if (stat.isDirectory()) {
-        safe.fs.rmdirSync(path.dirname(filename));
+        if (!safe.fs.rmdirSync(filename)) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, safe.error.message));
     }
 
     callback();
