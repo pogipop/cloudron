@@ -162,7 +162,7 @@ function startMysql(callback) {
     const memoryLimit = (1 + Math.round(os.totalmem()/(1024*1024*1024)/4)) * 256;
 
     if (!safe.fs.writeFileSync(paths.ADDON_CONFIG_DIR + '/mysql_vars.sh',
-            'MYSQL_ROOT_PASSWORD=' + rootPassword +'\nMYSQL_ROOT_HOST=172.18.0.1', 'utf8')) {
+        'MYSQL_ROOT_PASSWORD=' + rootPassword +'\nMYSQL_ROOT_HOST=172.18.0.1', 'utf8')) {
         return callback(new Error('Could not create mysql var file:' + safe.error.message));
     }
 
@@ -261,10 +261,10 @@ function createMailConfig(callback) {
             var relay = result[settings.MAIL_RELAY_KEY];
 
             const enabled = relay.provider !== 'cloudron-smtp' ? true : false,
-                  host = relay.host || '',
-                  port = relay.port || 25,
-                  username = relay.username || '',
-                  password = relay.password || '';
+                host = relay.host || '',
+                port = relay.port || 25,
+                username = relay.username || '',
+                password = relay.password || '';
 
             if (!safe.fs.writeFileSync(paths.ADDON_CONFIG_DIR + '/mail/smtp_forward.ini',
                 `enable_outbound=${enabled}\nhost=${host}\nport=${port}\nenable_tls=true\nauth_type=plain\nauth_user=${username}\nauth_pass=${password}`, 'utf8')) {
@@ -289,6 +289,7 @@ function startMail(callback) {
     certificates.getAdminCertificate(function (error, cert, key) {
         if (error) return callback(error);
 
+        // the setup script copies dhparams.pem to /addons/mail
         if (!safe.fs.writeFileSync(paths.ADDON_CONFIG_DIR + '/mail/tls_cert.pem', cert)) return callback(new Error('Could not create cert file:' + safe.error.message));
         if (!safe.fs.writeFileSync(paths.ADDON_CONFIG_DIR + '/mail/tls_key.pem', key))  return callback(new Error('Could not create key file:' + safe.error.message));
 

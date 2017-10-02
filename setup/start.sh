@@ -267,6 +267,14 @@ cat > "${BOX_SRC_DIR}/webadmin/dist/config.json" <<CONF_END
 }
 CONF_END
 
+if [[ ! -f "${BOX_DATA_DIR}/dhparams.pem" ]]; then
+    echo "==> Generating dhparams (takes forever)"
+    openssl dhparam -out "${BOX_DATA_DIR}/dhparams.pem" 2048
+    cp "${BOX_DATA_DIR}/dhparams.pem" "${PLATFORM_DATA_DIR}/addons/mail/dhparams.pem"
+else
+    cp "${BOX_DATA_DIR}/dhparams.pem" "${PLATFORM_DATA_DIR}/addons/mail/dhparams.pem"
+fi
+
 echo "==> Changing ownership"
 chown "${USER}:${USER}" -R "${CONFIG_DIR}"
 chown "${USER}:${USER}" -R "${PLATFORM_DATA_DIR}/nginx" "${PLATFORM_DATA_DIR}/collectd" "${PLATFORM_DATA_DIR}/logrotate.d" "${PLATFORM_DATA_DIR}/addons" "${PLATFORM_DATA_DIR}/acme" "${PLATFORM_DATA_DIR}/backup"
@@ -294,11 +302,6 @@ fi
 if [[ ! -z "${arg_tls_config}" ]]; then
     mysql -u root -p${mysql_root_password} \
         -e "REPLACE INTO settings (name, value) VALUES (\"tls_config\", '$arg_tls_config')" box
-fi
-
-echo "==> Generating dhparams (takes forever)"
-if [[ ! -f "${BOX_DATA_DIR}/dhparams.pem" ]]; then
-    openssl dhparam -out "${BOX_DATA_DIR}/dhparams.pem" 2048
 fi
 
 set_progress "60" "Starting Cloudron"
