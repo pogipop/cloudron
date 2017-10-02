@@ -683,10 +683,8 @@ function backupBoxAndApps(auditSource, callback) {
     apps.getAll(function (error, allApps) {
         if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
 
-        var processed = 0;
-        var step = 100/(allApps.length+1);
-
-        progress.set(progress.BACKUP, Math.min(step * processed, 5), '');
+        var processed = 1;
+        var step = 100/(allApps.length+2);
 
         async.mapSeries(allApps, function iterator(app, iteratorCallback) {
             progress.set(progress.BACKUP, step * processed,  'Backing up ' + (app.altDomain || config.appFqdn(app.location)));

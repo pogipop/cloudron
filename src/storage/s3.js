@@ -29,6 +29,7 @@ var assert = require('assert'),
     mkdirp = require('mkdirp'),
     PassThrough = require('stream').PassThrough,
     path = require('path'),
+    progress = require('../progress.js'),
     S3BlockReadStream = require('s3-block-read-stream'),
     superagent = require('superagent');
 
@@ -203,6 +204,7 @@ function downloadDir(apiConfig, backupFilePath, destDir, callback) {
 
     listDir(apiConfig, backupFilePath, { batchSize: 1 }, function downloadFile(s3, content, iteratorCallback) {
         var relativePath = path.relative(backupFilePath, content.Key);
+
         mkdirp(path.dirname(path.join(destDir, relativePath)), function (error) {
             if (error) return iteratorCallback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
 
@@ -239,6 +241,8 @@ function copy(apiConfig, oldFilePath, newFilePath, callback) {
             Key: path.join(newFilePath, relativePath),
             CopySource: path.join(apiConfig.bucket, content.Key)
         };
+
+        progress.setDetail(progress.BACKUP, 'Copying ' + content.Key.slice(oldFilePath.length+1));
 
         s3.copyObject(copyParams, function (error) {
             if (error && error.code === 'NoSuchKey') return iteratorCallback(new BackupsError(BackupsError.NOT_FOUND, 'Old backup not found'));

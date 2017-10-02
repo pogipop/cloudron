@@ -52,10 +52,6 @@ function clear(tag) {
     debug('clearing %s', tag);
 }
 
-function get(tag) {
-    return progress[tag];
-}
-
 function getAll() {
     return progress;
 }
