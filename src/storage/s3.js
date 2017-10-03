@@ -110,7 +110,7 @@ function upload(apiConfig, backupFilePath, sourceStream, callback) {
         s3.upload(params, { partSize: 10 * 1024 * 1024, queueSize: 1 }, function (error) {
             if (error) {
                 debug('[%s] upload: s3 upload error.', backupFilePath, error);
-                return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
+                return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, `Error uploading ${backupFilePath}: ${error.message}`));
             }
 
             callback(null);
@@ -245,10 +245,10 @@ function copy(apiConfig, oldFilePath, newFilePath, callback) {
         progress.setDetail(progress.BACKUP, 'Copying ' + content.Key.slice(oldFilePath.length+1));
 
         s3.copyObject(copyParams, function (error) {
-            if (error && error.code === 'NoSuchKey') return iteratorCallback(new BackupsError(BackupsError.NOT_FOUND, 'Old backup not found'));
+            if (error && error.code === 'NoSuchKey') return iteratorCallback(new BackupsError(BackupsError.NOT_FOUND, `Old backup ${content.Key} not found`));
             if (error) {
                 debug('copy: s3 copy error.', error);
-                return iteratorCallback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
+                return iteratorCallback(new BackupsError(BackupsError.EXTERNAL_ERROR, `Error copying ${content.Key} : ${error.message}`));
             }
 
             iteratorCallback();
