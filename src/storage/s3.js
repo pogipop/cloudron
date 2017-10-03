@@ -239,13 +239,13 @@ function copy(apiConfig, oldFilePath, newFilePath, callback) {
         var copyParams = {
             Bucket: apiConfig.bucket,
             Key: path.join(newFilePath, relativePath),
-            CopySource: path.join(apiConfig.bucket, content.Key)
+            CopySource: encodeURIComponent(path.join(apiConfig.bucket, content.Key)) // See aws-sdk-js/issues/1302
         };
 
         progress.setDetail(progress.BACKUP, 'Copying ' + content.Key.slice(oldFilePath.length+1));
 
         s3.copyObject(copyParams, function (error) {
-            if (error && error.code === 'NoSuchKey') return iteratorCallback(new BackupsError(BackupsError.NOT_FOUND, `Old backup ${content.Key} not found`));
+            if (error && error.code === 'NoSuchKey') return iteratorCallback(new BackupsError(BackupsError.NOT_FOUND, `Old backup not found: ${content.Key}`));
             if (error) {
                 debug('copy: s3 copy error.', error);
                 return iteratorCallback(new BackupsError(BackupsError.EXTERNAL_ERROR, `Error copying ${content.Key} : ${error.message}`));

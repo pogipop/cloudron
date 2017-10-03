@@ -252,12 +252,17 @@ describe('Storage', function () {
         });
 
         it('can copy', function (done) {
+            fs.writeFileSync(path.join(gS3Folder, 'uploadtest/C++.gitignore'), 'special', 'utf8');
+
             var sourceKey = 'uploadtest';
 
             s3.copy(gBackupConfig, sourceKey, 'uploadtest-copy', function (error) {
                 var sourceFile = path.join(__dirname, 'storage/data/test.txt');
                 expect(error).to.be(null);
                 expect(fs.statSync(path.join(gS3Folder, 'uploadtest-copy/test.txt')).size).to.be(fs.statSync(sourceFile).size);
+
+                expect(fs.statSync(path.join(gS3Folder, 'uploadtest-copy/C++.gitignore')).size).to.be(7);
+
                 done();
             });
         });
