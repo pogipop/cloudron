@@ -294,12 +294,12 @@ function removeDir(apiConfig, pathPrefix, callback) {
             }
         };
 
-        s3.deleteObjects(deleteParams, function (error, deleteData) {
+        s3.deleteObjects(deleteParams, function (error /*, deleteData */) {
             if (error) {
                 debug('removeDir: Unable to remove %s. Not fatal.', deleteParams.Key, error);
                 return iteratorCallback(error);
             }
-            debug('removeDir: Deleted: %j Errors: %j', deleteData.Deleted, deleteData.Errors);
+            // debug('removeDir: Deleted: %j Errors: %j', deleteData.Deleted, deleteData.Errors);
 
             iteratorCallback();
         });
