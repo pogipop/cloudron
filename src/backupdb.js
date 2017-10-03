@@ -159,19 +159,8 @@ function del(id, callback) {
     assert.strictEqual(typeof id, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    get(id, function (error, result) {
-        if (error && error.reason === DatabaseError.NOT_FOUND) return callback();
-        if (error) return callback(error);
-
-        var whereClause = [ 'id=?' ], whereArgs = [ result.id ];
-        result.dependsOn.forEach(function (id) {
-            whereClause.push('id=?');
-            whereArgs.push(id);
-        });
-
-        database.query('DELETE FROM backups WHERE ' + whereClause.join(' OR '), whereArgs, function (error) {
-            if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
-            callback(null);
-        });
+    database.query('DELETE FROM backups WHERE id=?', [ id ], function (error) {
+        if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
+        callback(null);
     });
 }
