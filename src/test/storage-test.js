@@ -5,100 +5,22 @@
 
 'use strict';
 
-var async = require('async'),
-    backups = require('../backups.js'),
-    BackupsError = require('../backups.js').BackupsError,
-    config = require('../config.js'),
-    database = require('../database.js'),
+var BackupsError = require('../backups.js').BackupsError,
     expect = require('expect.js'),
     filesystem = require('../storage/filesystem.js'),
     fs = require('fs'),
-    mkdirp = require('mkdirp'),
     MockS3 = require('mock-aws-s3'),
+    noop = require('../storage/noop.js'),
     os = require('os'),
     path = require('path'),
-    progress = require('../progress.js'),
-    readdirp = require('readdirp'),
     rimraf = require('rimraf'),
-    s3 = require('../storage/s3.js'),
-    settings = require('../settings.js'),
-    SettingsError = settings.SettingsError;
-
-function setup(done) {
-    config.set('provider', 'caas');
-
-    async.series([
-        database.initialize,
-        settings.initialize,
-        function (callback) {
-            // a cloudron must have a backup config to startup
-            settings.setBackupConfig({ provider: 'filesystem', format: 'tgz', backupFolder: '/tmp'}, function (error) {
-                expect(error).to.be(null);
-                callback();
-            });
-        }
-    ], done);
-}
-
-function cleanup(done) {
-    async.series([
-        settings.uninitialize,
-        database._clear
-    ], done);
-}
-
-function compareDirectories(one, two, callback) {
-    readdirp({ root: one }, function (error, treeOne) {
-        if (error) return callback(error);
-
-        readdirp({ root: two }, function (error, treeTwo) {
-            if (error) return callback(error);
-
-            var mismatch = [];
-
-            function compareDirs(a, b) {
-                a.forEach(function (tmpA) {
-                    var found = b.find(function (tmpB) {
-                        return tmpA.path === tmpB.path;
-                    });
-
-                    if (!found) mismatch.push(tmpA);
-                });
-            }
-
-            function compareFiles(a, b) {
-                a.forEach(function (tmpA) {
-                    var found = b.find(function (tmpB) {
-                        // TODO check file or symbolic link
-                        return tmpA.path === tmpB.path && tmpA.mode === tmpB.mode;
-                    });
-
-                    if (!found) mismatch.push(tmpA);
-                });
-            }
-
-            compareDirs(treeOne.directories, treeTwo.directories);
-            compareDirs(treeTwo.directories, treeOne.directories);
-            compareFiles(treeOne.files, treeTwo.files);
-            compareFiles(treeTwo.files, treeOne.files);
-
-            if (mismatch.length) {
-                console.error('Files not found in both: %j', mismatch);
-                return callback(new Error('file mismatch'));
-            }
-
-            callback(null);
-        });
-    });
-}
+    s3 = require('../storage/s3.js');
 
 describe('Storage', function () {
     describe('filesystem', function () {
-        var gBackupId_1;
-        var gBackupId_2;
+
         var gTmpFolder;
-        var gSourceFolder;
-        var gDestinationFolder;
+
         var gBackupConfig = {
             provider: 'filesystem',
             key: 'key',
@@ -107,130 +29,171 @@ describe('Storage', function () {
         };
 
         before(function (done) {
-            setup(function (error) {
-                expect(error).to.be(null);
+            gTmpFolder = fs.mkdtempSync(path.join(os.tmpdir(), 'filesystem-storage-test_'));
 
-                gTmpFolder = fs.mkdtempSync(path.join(os.tmpdir(), 'filesystem-backup-test_'));
+            gBackupConfig.backupFolder = path.join(gTmpFolder, 'backups/');
 
-                gBackupConfig.backupFolder = path.join(gTmpFolder, 'backups/');
-                gSourceFolder = path.join(__dirname, 'storage');
-                gDestinationFolder = path.join(gTmpFolder, 'destination/');
-
-                gBackupId_1 = backups._getBackupFilePath(gBackupConfig, 'someprefix/one', gBackupConfig.format);
-                gBackupId_2 = backups._getBackupFilePath(gBackupConfig, 'someprefix/two', gBackupConfig.format);
-
-                done();
-            });
+            done();
         });
 
         after(function (done) {
-            cleanup(function (error) {
+            rimraf.sync(gTmpFolder);
+            done();
+        });
+
+        it('can upload', function (done) {
+            var sourceFile = path.join(__dirname, 'storage/data/test.txt');
+            var sourceStream = fs.createReadStream(sourceFile);
+            var destFile = gTmpFolder + '/uploadtest/test.txt';
+            filesystem.upload(gBackupConfig, destFile, sourceStream, function (error) {
                 expect(error).to.be(null);
-                rimraf.sync(gTmpFolder);
+                expect(fs.existsSync(destFile));
+                expect(fs.statSync(sourceFile).size).to.be(fs.statSync(destFile).size);
                 done();
             });
         });
 
-        it('fails to set backup config for non-existing folder', function (done) {
-            settings.setBackupConfig(gBackupConfig, function (error) {
-                expect(error).to.be.a(SettingsError);
-                expect(error.reason).to.equal(SettingsError.BAD_FIELD);
-
+        it('upload waits for empty file to be created', function (done) {
+            var sourceFile = path.join(__dirname, 'storage/data/empty');
+            var sourceStream = fs.createReadStream(sourceFile);
+            var destFile = gTmpFolder + '/uploadtest/empty';
+            filesystem.upload(gBackupConfig, destFile, sourceStream, function (error) {
+                expect(error).to.be(null);
+                expect(fs.existsSync(destFile));
+                expect(fs.statSync(sourceFile).size).to.be(fs.statSync(destFile).size);
                 done();
             });
         });
 
-        it('succeeds to set backup config', function (done) {
-            mkdirp.sync(gBackupConfig.backupFolder);
-
-            settings.setBackupConfig(gBackupConfig, function (error) {
+        it('upload unlinks old file', function (done) {
+            var sourceFile = path.join(__dirname, 'storage/data/test.txt');
+            var sourceStream = fs.createReadStream(sourceFile);
+            var destFile = gTmpFolder + '/uploadtest/test.txt';
+            var oldStat = fs.statSync(destFile);
+            filesystem.upload(gBackupConfig, destFile, sourceStream, function (error) {
                 expect(error).to.be(null);
-
+                expect(fs.existsSync(destFile)).to.be(true);
+                expect(fs.statSync(sourceFile).size).to.be(fs.statSync(destFile).size);
+                expect(oldStat.inode).to.not.be(fs.statSync(destFile).size);
                 done();
             });
         });
 
-        it('can backup', function (done) {
-            var tarStream = backups._createTarPackStream(gSourceFolder, gBackupConfig.key);
-            filesystem.upload(gBackupConfig, gBackupId_1, tarStream, function (error) {
-                expect(error).to.be(null);
+        it('can download file', function (done) {
+            var sourceFile = gTmpFolder + '/uploadtest/test.txt';
 
+            filesystem.download(gBackupConfig, sourceFile, function (error, stream) {
+                expect(error).to.be(null);
+                expect(stream).to.be.an('object');
                 done();
             });
         });
 
-        it('can download', function (done) {
-            filesystem.download(gBackupConfig, gBackupId_1, function (error, stream) {
-                expect(error).to.be(null);
+        it('download errors for missing file', function (done) {
+            var sourceFile = gTmpFolder + '/uploadtest/missing';
 
-                backups._tarExtract(stream, gDestinationFolder, gBackupConfig.key || null, function (error) {
-                    expect(error).to.be(null);
-
-                    compareDirectories(path.join(gSourceFolder, 'data'), path.join(gDestinationFolder, 'data'), function (error) {
-                        expect(error).to.equal(null);
-
-                        compareDirectories(path.join(gSourceFolder, 'addon'), path.join(gDestinationFolder, 'addon'), function (error) {
-                            expect(error).to.equal(null);
-
-                            rimraf(gDestinationFolder, done);
-                        });
-                    });
-                });
-            });
-        });
-
-        it('can copy backup', function (done) {
-            // will be verified after removing the first and restoring from the copy
-            filesystem.copy(gBackupConfig, gBackupId_1, gBackupId_2, done);
-        });
-
-        it('can remove backup', function (done) {
-            // will be verified with next test trying to download the removed one
-            filesystem.remove(gBackupConfig, gBackupId_1, done);
-        });
-
-        it('cannot download deleted backup', function (done) {
-            filesystem.download(gBackupConfig, gBackupId_1, function (error, stream) {
-                expect(error).to.be.an('object');
-                expect(error.reason).to.equal(BackupsError.NOT_FOUND);
-
+            filesystem.download(gBackupConfig, sourceFile, function (error) {
+                expect(error.reason).to.be(BackupsError.NOT_FOUND);
                 done();
             });
         });
 
-        it('can download backup copy', function (done) {
-            filesystem.download(gBackupConfig, gBackupId_2, function (error, stream) {
+        it('download dir copies contents of source dir', function (done) {
+            var sourceDir = path.join(__dirname, 'storage');
+
+            filesystem.downloadDir(gBackupConfig, sourceDir, gTmpFolder, function (error) {
                 expect(error).to.be(null);
-
-                backups._tarExtract(stream, gDestinationFolder, gBackupConfig.key || null, function (error) {
-                    expect(error).to.be(null);
-
-                    compareDirectories(path.join(gSourceFolder, 'data'), path.join(gDestinationFolder, 'data'), function (error) {
-                        expect(error).to.equal(null);
-
-                        compareDirectories(path.join(gSourceFolder, 'addon'), path.join(gDestinationFolder, 'addon'), function (error) {
-                            expect(error).to.equal(null);
-
-                            rimraf(gDestinationFolder, done);
-                        });
-                    });
-                });
+                expect(fs.statSync(path.join(gTmpFolder, 'data/empty')).size).to.be(0);
+                done();
             });
         });
 
-        it('can remove backup copy', function (done) {
-            filesystem.remove(gBackupConfig, gBackupId_2, done);
+        it('can copy', function (done) {
+            var sourceFile = gTmpFolder + '/uploadtest/test.txt'; // keep the test within save device
+            var destFile = gTmpFolder + '/uploadtest/test-hardlink.txt';
+
+            filesystem.copy(gBackupConfig, sourceFile, destFile, function (error) {
+                expect(error).to.be(null);
+                expect(fs.statSync(destFile).nlink).to.be(2); // created a hardlink
+                done();
+            });
+        });
+
+        it('can remove file', function (done) {
+            var sourceFile = gTmpFolder + '/uploadtest/test-hardlink.txt';
+
+            filesystem.remove(gBackupConfig, sourceFile, function (error) {
+                expect(error).to.be(null);
+                expect(fs.existsSync(sourceFile)).to.be(false);
+                done();
+            });
+        });
+
+        it('can remove empty dir', function (done) {
+            var sourceDir = gTmpFolder + '/emptydir';
+            fs.mkdirSync(sourceDir);
+
+            filesystem.remove(gBackupConfig, sourceDir, function (error) {
+                expect(error).to.be(null);
+                expect(fs.existsSync(sourceDir)).to.be(false);
+                done();
+            });
+        });
+    });
+
+    describe('noop', function () {
+        var gBackupConfig = {
+            provider: 'noop',
+            format: 'tgz'
+        };
+
+        it('upload works', function (done) {
+            noop.upload(gBackupConfig, 'file', { }, function (error) {
+                expect(error).to.be(null);
+                done();
+            });
+        });
+
+        it('can download file', function (done) {
+            noop.download(gBackupConfig, 'file', function (error) {
+                expect(error).to.be.an(Error);
+                done();
+            });
+        });
+
+        it('download dir copies contents of source dir', function (done) {
+            noop.downloadDir(gBackupConfig, 'sourceDir', 'destDir', function (error) {
+                expect(error).to.be.an(Error);
+                done();
+            });
+        });
+
+        it('can copy', function (done) {
+            noop.copy(gBackupConfig, 'sourceFile', 'destFile', function (error) {
+                expect(error).to.be(null);
+                done();
+            });
+        });
+
+        it('can remove file', function (done) {
+            noop.remove(gBackupConfig, 'sourceFile', function (error) {
+                expect(error).to.be(null);
+                done();
+            });
+        });
+
+        it('can remove empty dir', function (done) {
+            noop.remove(gBackupConfig, 'sourceDir', function (error) {
+                expect(error).to.be(null);
+                done();
+            });
         });
     });
 
     describe('s3', function () {
         this.timeout(10000);
 
-        var gBackupId_1 = 'someprefix/one';
-        var gBackupId_2 = 'someprefix/two';
-        var gTmpFolder;
-        var gSourceFolder;
-        var gDestinationFolder;
+        var gS3Folder;
         var gBackupConfig = {
             provider: 's3',
             key: 'key',
@@ -242,113 +205,76 @@ describe('Storage', function () {
             format: 'tgz'
         };
 
-        before(function (done) {
+        before(function () {
             MockS3.config.basePath = path.join(os.tmpdir(), 's3-backup-test-buckets/');
+            rimraf.sync(MockS3.config.basePath);
+            gS3Folder = path.join(MockS3.config.basePath, gBackupConfig.bucket);
 
             s3._mockInject(MockS3);
-
-            setup(function (error) {
-                expect(error).to.be(null);
-
-                gTmpFolder = fs.mkdtempSync(path.join(os.tmpdir(), 's3-backup-test_'));
-                gSourceFolder = path.join(__dirname, 'storage');
-                gDestinationFolder = path.join(gTmpFolder, 'destination/');
-
-                settings.setBackupConfig(gBackupConfig, function (error) {
-                    expect(error).to.be(null);
-
-                    done();
-                });
-            });
         });
 
-        after(function (done) {
+        after(function () {
             s3._mockRestore();
             rimraf.sync(MockS3.config.basePath);
+        });
 
-            cleanup(function (error) {
+        it('can upload', function (done) {
+            var sourceFile = path.join(__dirname, 'storage/data/test.txt');
+            var sourceStream = fs.createReadStream(sourceFile);
+            var destKey = 'uploadtest/test.txt';
+            s3.upload(gBackupConfig, destKey, sourceStream, function (error) {
                 expect(error).to.be(null);
-                rimraf.sync(gTmpFolder);
+                expect(fs.existsSync(path.join(gS3Folder, destKey))).to.be(true);
+                expect(fs.statSync(path.join(gS3Folder, destKey)).size).to.be(fs.statSync(sourceFile).size);
                 done();
             });
         });
 
-        it('can backup', function (done) {
-            var tarStream = backups._createTarPackStream(gSourceFolder, gBackupConfig.key);
-            s3.upload(gBackupConfig, gBackupId_1, tarStream, function (error) {
+        it('can download file', function (done) {
+            var sourceKey = 'uploadtest/test.txt';
+            s3.download(gBackupConfig, sourceKey, function (error, stream) {
                 expect(error).to.be(null);
-
+                expect(stream).to.be.an('object');
                 done();
             });
         });
 
-        it('can download', function (done) {
-            s3.download(gBackupConfig, gBackupId_1, function (error, stream) {
+        it('download dir copies contents of source dir', function (done) {
+            var sourceFile = path.join(__dirname, 'storage/data/test.txt');
+            var sourceKey = '';
+            var destDir = path.join(os.tmpdir(), 's3-destdir');
+
+            s3.downloadDir(gBackupConfig, sourceKey, destDir, function (error) {
                 expect(error).to.be(null);
-
-                backups._tarExtract(stream, gDestinationFolder, gBackupConfig.key || null, function (error) {
-                    expect(error).to.be(null);
-
-                    compareDirectories(path.join(gSourceFolder, 'data'), path.join(gDestinationFolder, 'data'), function (error) {
-                        expect(error).to.equal(null);
-
-                        compareDirectories(path.join(gSourceFolder, 'addon'), path.join(gDestinationFolder, 'addon'), function (error) {
-                            expect(error).to.equal(null);
-
-                            rimraf(gDestinationFolder, done);
-                        });
-                    });
-                });
+                expect(fs.statSync(path.join(destDir, 'uploadtest/test.txt')).size).to.be(fs.statSync(sourceFile).size);
+                done();
             });
         });
 
-        it('can copy backup', function (done) {
-            // will be verified after removing the first and restoring from the copy
-            progress.set(progress.BACKUP, 10,  'Testing');
+        it('can copy', function (done) {
+            var sourceKey = 'uploadtest';
 
-            s3.copy(gBackupConfig, gBackupId_1, gBackupId_2, done);
-        });
-
-        it('can remove backup', function (done) {
-            // will be verified with next test trying to download the removed one
-            s3.remove(gBackupConfig, gBackupId_1, done);
-        });
-
-        it('cannot download deleted backup', function (done) {
-            s3.download(gBackupConfig, gBackupId_1, function (error, stream) {
+            s3.copy(gBackupConfig, sourceKey, 'uploadtest-copy', function (error) {
+                var sourceFile = path.join(__dirname, 'storage/data/test.txt');
                 expect(error).to.be(null);
-
-                stream.on('error', function (error) {
-                    expect(error).to.be.an('object');
-                    expect(error.reason).to.equal(BackupsError.NOT_FOUND);
-
-                    done();
-                });
+                expect(fs.statSync(path.join(gS3Folder, 'uploadtest-copy/test.txt')).size).to.be(fs.statSync(sourceFile).size);
+                done();
             });
         });
 
-        it('can download backup copy', function (done) {
-            s3.download(gBackupConfig, gBackupId_2, function (error, stream) {
+        it('can remove file', function (done) {
+            s3.remove(gBackupConfig, 'uploadtest-copy/test.txt', function (error) {
                 expect(error).to.be(null);
-
-                backups._tarExtract(stream, gDestinationFolder, gBackupConfig.key || null, function (error) {
-                    expect(error).to.be(null);
-
-                    compareDirectories(path.join(gSourceFolder, 'data'), path.join(gDestinationFolder, 'data'), function (error) {
-                        expect(error).to.equal(null);
-
-                        compareDirectories(path.join(gSourceFolder, 'addon'), path.join(gDestinationFolder, 'addon'), function (error) {
-                            expect(error).to.equal(null);
-
-                            rimraf(gDestinationFolder, done);
-                        });
-                    });
-                });
+                expect(fs.existsSync(path.join(gS3Folder, 'uploadtest-copy/test.txt'))).to.be(false);
+                done();
             });
         });
 
-        it('can remove backup copy', function (done) {
-            s3.remove(gBackupConfig, gBackupId_2, done);
+        it('can remove non-existent dir', function (done) {
+            noop.remove(gBackupConfig, 'blah', function (error) {
+                expect(error).to.be(null);
+                done();
+            });
         });
     });
 });

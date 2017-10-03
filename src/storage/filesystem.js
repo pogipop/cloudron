@@ -86,7 +86,7 @@ function downloadDir(apiConfig, backupFilePath, destDir, callback) {
     shell.exec('downloadDir', '/bin/cp', [ '-r', backupFilePath + '/.', destDir ], { }, function (error) {
         if (error) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
 
-        callback();
+        callback(null);
     });
 }
 
@@ -105,7 +105,7 @@ function copy(apiConfig, oldFilePath, newFilePath, callback) {
         shell.exec('copy', '/bin/cp', [ '-al', oldFilePath, newFilePath ], { }, function (error) {
             if (error) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
 
-            callback();
+            callback(null);
         });
     });
 }
@@ -124,7 +124,7 @@ function remove(apiConfig, filename, callback) {
         if (!safe.fs.rmdirSync(filename)) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, safe.error.message));
     }
 
-    callback();
+    callback(null);
 }
 
 function removeDir(apiConfig, pathPrefix, callback) {
@@ -135,7 +135,7 @@ function removeDir(apiConfig, pathPrefix, callback) {
     shell.exec('removeDir', '/bin/rm', [ '-rf', pathPrefix ], { }, function (error) {
         if (error) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
 
-        callback();
+        callback(null);
     });
 }
 

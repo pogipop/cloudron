@@ -25,7 +25,7 @@ function upload(apiConfig, backupFilePath, sourceStream, callback) {
 
     debug('upload: %s', backupFilePath);
 
-    callback();
+    callback(null);
 }
 
 function download(apiConfig, backupFilePath, callback) {
@@ -46,7 +46,7 @@ function downloadDir(apiConfig, backupFilePath, destDir, callback) {
 
     debug('downloadDir: %s -> %s', backupFilePath, destDir);
 
-    callback();
+    callback(new Error('Cannot download from noop backend'));
 }
 
 function copy(apiConfig, oldFilePath, newFilePath, callback) {
@@ -57,7 +57,7 @@ function copy(apiConfig, oldFilePath, newFilePath, callback) {
 
     debug('copy: %s -> %s', oldFilePath, newFilePath);
 
-    callback();
+    callback(null);
 }
 
 function remove(apiConfig, filename, callback) {
@@ -67,7 +67,7 @@ function remove(apiConfig, filename, callback) {
 
     debug('remove: %s', filename);
 
-    callback();
+    callback(null);
 }
 
 function removeDir(apiConfig, pathPrefix, callback) {
@@ -77,14 +77,14 @@ function removeDir(apiConfig, pathPrefix, callback) {
 
     debug('removeDir: %s', pathPrefix);
 
-    callback();
+    callback(null);
 }
 
 function testConfig(apiConfig, callback) {
     assert.strictEqual(typeof apiConfig, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    callback();
+    callback(null);
 }
 
 function backupDone(apiConfig, backupId, appBackupIds, callback) {
@@ -93,5 +93,5 @@ function backupDone(apiConfig, backupId, appBackupIds, callback) {
     assert(Array.isArray(appBackupIds));
     assert.strictEqual(typeof callback, 'function');
 
-    callback();
+    callback(null);
 }

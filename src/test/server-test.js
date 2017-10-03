@@ -6,12 +6,11 @@
 
 'use strict';
 
-var async = require('async'),
-    progress = require('../progress.js'),
-    config = require('../config.js'),
+var config = require('../config.js'),
     database = require('../database.js'),
     expect = require('expect.js'),
     nock = require('nock'),
+    progress = require('../progress.js'),
     superagent = require('superagent'),
     server = require('../server.js');
 

@@ -189,7 +189,7 @@ function listDir(apiConfig, backupFilePath, options, iteratorCallback, callback)
                 });
             });
         }, function (error) {
-            if (error.message === 'Done') return callback();
+            if (error.message === 'Done') return callback(null);
 
             callback(error);
         });

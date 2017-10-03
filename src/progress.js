@@ -12,6 +12,7 @@ exports = module.exports = {
 };
 
 var assert = require('assert'),
+    config = require('./config.js'),
     debug = require('debug')('box:progress');
 
 // if progress.update or progress.backup are object, they will contain 'percent' and 'message' properties
@@ -41,6 +42,8 @@ function setDetail(tag, detail) {
     assert.strictEqual(typeof tag, 'string');
     assert.strictEqual(typeof detail, 'string');
 
+    if (config.TEST && !progress[tag]) progress[tag] = { };
+
     progress[tag].detail = detail;
 }
 
@@ -55,4 +58,3 @@ function clear(tag) {
 function getAll() {
     return progress;
 }
-
