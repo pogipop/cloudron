@@ -78,7 +78,6 @@ function sync(dir, taskProcessor, concurrency, callback) {
     function traverse(relpath) {
         var entries = readTree(path.join(dir, relpath));
 
-        // addQueue.push({ operation: 'mkdir', path: relpath });
         for (var i = 0; i < entries.length; i++) {
             var entryPath = path.join(relpath, entries[i].name);
             var entryStat = entries[i].stat;

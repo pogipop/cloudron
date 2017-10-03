@@ -17,6 +17,7 @@ var async = require('async'),
     MockS3 = require('mock-aws-s3'),
     os = require('os'),
     path = require('path'),
+    progress = require('../progress.js'),
     readdirp = require('readdirp'),
     rimraf = require('rimraf'),
     s3 = require('../storage/s3.js'),
@@ -303,6 +304,8 @@ describe('Storage', function () {
 
         it('can copy backup', function (done) {
             // will be verified after removing the first and restoring from the copy
+            progress.set(progress.BACKUP, 10,  'Testing');
+
             s3.copy(gBackupConfig, gBackupId_1, gBackupId_2, done);
         });
 

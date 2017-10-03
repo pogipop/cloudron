@@ -100,7 +100,7 @@ describe('backups', function () {
         };
 
         it('succeeds without backups', function (done) {
-            backups.cleanup(done);
+            backups.cleanup({ username: 'test' }, done);
         });
 
         it('succeeds with box backups, keeps latest', function (done) {
@@ -112,7 +112,7 @@ describe('backups', function () {
             }, function (error) {
                 expect(error).to.not.be.ok();
 
-                backups.cleanup(function (error) {
+                backups.cleanup({ username: 'test' }, function (error) {
                     expect(error).to.not.be.ok();
 
                     backupdb.getByTypePaged(backupdb.BACKUP_TYPE_BOX, 1, 1000, function (error, result) {
@@ -133,7 +133,7 @@ describe('backups', function () {
         });
 
         it('does not remove expired backups if only one left', function (done) {
-            backups.cleanup(function (error) {
+            backups.cleanup({ username: 'test' }, function (error) {
                 expect(error).to.not.be.ok();
 
                 backupdb.getByTypePaged(backupdb.BACKUP_TYPE_BOX, 1, 1000, function (error, result) {
@@ -158,7 +158,7 @@ describe('backups', function () {
 
                 // wait for expiration
                 setTimeout(function () {
-                    backups.cleanup(function (error) {
+                    backups.cleanup({ username: 'test' }, function (error) {
                         expect(error).to.not.be.ok();
 
                         backupdb.getByTypePaged(backupdb.BACKUP_TYPE_APP, 1, 1000, function (error, result) {
