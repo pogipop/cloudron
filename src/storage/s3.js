@@ -144,7 +144,7 @@ function download(apiConfig, backupFilePath, callback) {
         var s3 = new AWS.S3(credentials);
 
         var ps = new PassThrough();
-        var multipartDownload = new S3BlockReadStream(s3, params, { blockSize: 64 * 1024 * 1024, logCallback: debug });
+        var multipartDownload = new S3BlockReadStream(s3, params, { blockSize: 64 * 1024 * 1024 /*, logCallback: debug */ });
 
         multipartDownload.on('error', function (error) {
             if (error.code === 'NoSuchKey' || error.code === 'ENOENT') {
