@@ -222,10 +222,15 @@
             <div class="modal-body">
                 <p>An email has been sent to <b>{{ inviteSent.email }}</b>.</p>
                 <p>You can also share this invite link directly:</p>
-                <p style="overflow: auto; white-space: nowrap;" eng-click-select>{{ inviteSent.setupLink }}</p>
+                <div class="input-group">
+                    <input type="text" id="setupLinkInput" class="form-control" ng-value="inviteSent.setupLink" readonly/>
+                    <span class="input-group-btn">
+                        <button class="btn btn-default" id="setupLinkButton" type="button" data-clipboard-target="#setupLinkInput"><i class="fa fa-clipboard"></i></button>
+                    </span>
+                  </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-default" data-dismiss="modal">OK</button>
+                <button type="button" class="btn btn-primary" data-dismiss="modal">OK</button>
             </div>
         </div>
     </div>

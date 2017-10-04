@@ -1,6 +1,8 @@
 'use strict';
 
-angular.module('Application').controller('UsersController', ['$scope', '$location', 'Client', function ($scope, $location, Client) {
+/* global Clipboard */
+
+angular.module('Application').controller('UsersController', ['$scope', '$location', '$timeout', 'Client', function ($scope, $location, $timeout, Client) {
     Client.onReady(function () { if (!Client.getUserInfo().admin) $location.path('/'); });
 
     $scope.ready = false;
@@ -380,6 +382,11 @@ angular.module('Application').controller('UsersController', ['$scope', '$locatio
         });
     };
 
+    $scope.copyToClipboard = function (value) {
+
+        document.execCommand('copy');
+    };
+
     function refresh() {
         Client.getGroups(function (error, result) {
             if (error) return console.error('Unable to get group listing.', error);
@@ -418,6 +425,28 @@ angular.module('Application').controller('UsersController', ['$scope', '$locatio
         $('#' + id).on('shown.bs.modal', function () {
             $(this).find("[autofocus]:first").focus();
         });
+    });
+
+    var clipboard = new Clipboard('#setupLinkButton');
+
+    clipboard.on('success', function(e) {
+        $('#setupLinkButton').tooltip({
+            title: 'Copied!',
+            trigger: 'manual'
+        }).tooltip('show');
+
+        $timeout(function () {  $('#setupLinkButton').tooltip('hide'); }, 2000);
+
+        e.clearSelection();
+    });
+
+    clipboard.on('error', function(e) {
+        $('#setupLinkButton').tooltip({
+            title: 'Press Ctrl+C to copy',
+            trigger: 'manual'
+        }).tooltip('show');
+
+        $timeout(function () {  $('#setupLinkButton').tooltip('hide'); }, 2000);
     });
 
     $('.modal-backdrop').remove();
