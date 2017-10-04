@@ -21,6 +21,7 @@ app.controller('SetupDNSController', ['$scope', '$http', 'Client', function ($sc
     $scope.showDNSSetup = false;
     $scope.instanceId = '';
     $scope.explicitZone = search.zone || '';
+    $scope.isEnterprise = !!search.enterprise;
     $scope.isDomain = false;
     $scope.isSubdomain = false;
 
