@@ -236,15 +236,9 @@ function copy(apiConfig, oldFilePath, newFilePath, callback) {
     listDir(apiConfig, oldFilePath, { batchSize: 1 }, function copyFile(s3, content, iteratorCallback) {
         var relativePath = path.relative(oldFilePath, content.Key);
 
-        var copyParams = {
-            Bucket: apiConfig.bucket,
-            Key: path.join(newFilePath, relativePath),
-            CopySource: encodeURIComponent(path.join(apiConfig.bucket, content.Key)) // See aws-sdk-js/issues/1302
-        };
-
         progress.setDetail(progress.BACKUP, 'Copying ' + content.Key.slice(oldFilePath.length+1));
 
-        s3.copyObject(copyParams, function (error) {
+        function done(error) {
             if (error && error.code === 'NoSuchKey') return iteratorCallback(new BackupsError(BackupsError.NOT_FOUND, `Old backup not found: ${content.Key}`));
             if (error) {
                 debug('copy: s3 copy error.', error);
@@ -252,6 +246,66 @@ function copy(apiConfig, oldFilePath, newFilePath, callback) {
             }
 
             iteratorCallback();
+        }
+
+        var copyParams = {
+            Bucket: apiConfig.bucket,
+            Key: path.join(newFilePath, relativePath)
+        };
+
+        // S3 copyObject has a file size limit of 5GB so if we have larger files, we do a multipart copy
+        if (content.Size < 5 * 1024 * 1024 * 1024) {
+            copyParams.CopySource = encodeURIComponent(path.join(apiConfig.bucket, content.Key)); // See aws-sdk-js/issues/1302
+            return s3.copyObject(copyParams, done);
+        }
+
+        s3.createMultipartUpload(copyParams, function (error, result) {
+            if (error) return done(error);
+
+            const CHUNK_SIZE = 1024 * 1024 * 1024;  // 1GB - rather random size
+            var uploadId = result.UploadId;
+            var uploadedParts = [];
+            var partNumber = 1;
+            var startBytes = 0;
+            var endBytes = 0;
+            var size = content.Size-1;
+
+            function copyNextChunk() {
+                endBytes = startBytes + CHUNK_SIZE;
+                if (endBytes > size) endBytes = size;
+
+                var params = {
+                    Bucket: apiConfig.bucket,
+                    Key: path.join(newFilePath, relativePath),
+                    CopySource: path.join(apiConfig.bucket, content.Key),
+                    CopySourceRange: 'bytes=' + startBytes + '-' + endBytes,
+                    PartNumber: partNumber,
+                    UploadId: uploadId
+                };
+
+                s3.uploadPartCopy(params, function (error, result) {
+                    if (error) return done(error);
+
+                    uploadedParts.push({ ETag: result.CopyPartResult.ETag, PartNumber: partNumber });
+
+                    if (endBytes < size) {
+                        startBytes = endBytes + 1;
+                        partNumber++;
+                        return copyNextChunk();
+                    }
+
+                    var params = {
+                        Bucket: apiConfig.bucket,
+                        Key: path.join(newFilePath, relativePath),
+                        MultipartUpload: { Parts: uploadedParts },
+                        UploadId: uploadId
+                    };
+
+                    s3.completeMultipartUpload(params, done);
+                });
+            }
+
+            copyNextChunk();
         });
     }, callback);
 }
