@@ -94,6 +94,7 @@ function checkAppHealth(app, callback) {
         superagent
             .get(healthCheckUrl)
             .set('Host', app.fqdn) // required for some apache configs with rewrite rules
+            .set('User-Agent', 'Mozilla') // required for some apps (e.g. minio)
             .redirects(0)
             .timeout(HEALTHCHECK_INTERVAL)
             .end(function (error, res) {
