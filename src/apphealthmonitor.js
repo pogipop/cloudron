@@ -98,16 +98,16 @@ function checkAppHealth(app, callback) {
             .redirects(0)
             .timeout(HEALTHCHECK_INTERVAL)
             .end(function (error, res) {
-            if (error && !error.response) {
-                debugApp(app, 'not alive (network error): %s', error.message);
-                setHealth(app, appdb.HEALTH_UNHEALTHY, callback);
-            } else if (res.statusCode >= 400) { // 2xx and 3xx are ok
-                debugApp(app, 'not alive : %s', error || res.status);
-                setHealth(app, appdb.HEALTH_UNHEALTHY, callback);
-            } else {
-                setHealth(app, appdb.HEALTH_HEALTHY, callback);
-            }
-        });
+                if (error && !error.response) {
+                    debugApp(app, 'not alive (network error): %s', error.message);
+                    setHealth(app, appdb.HEALTH_UNHEALTHY, callback);
+                } else if (res.statusCode >= 400) { // 2xx and 3xx are ok
+                    debugApp(app, 'not alive : %s', error || res.status);
+                    setHealth(app, appdb.HEALTH_UNHEALTHY, callback);
+                } else {
+                    setHealth(app, appdb.HEALTH_HEALTHY, callback);
+                }
+            });
     });
 }
 
@@ -157,7 +157,6 @@ function processDockerEvents() {
         stream.setEncoding('utf8');
         stream.on('data', function (data) {
             var ev = JSON.parse(data);
-            debug('Container ' + ev.id + ' went OOM');
             appdb.getByContainerId(ev.id, function (error, app) { // this can error for addons
                 var program = error || !app.appStoreId ? ev.id : app.appStoreId;
                 var context = JSON.stringify(ev);
