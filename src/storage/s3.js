@@ -277,7 +277,7 @@ function copy(apiConfig, oldFilePath, newFilePath, callback) {
                 var params = {
                     Bucket: apiConfig.bucket,
                     Key: path.join(newFilePath, relativePath),
-                    CopySource: path.join(apiConfig.bucket, content.Key),
+                    CopySource: encodeURIComponent(path.join(apiConfig.bucket, content.Key)),
                     CopySourceRange: 'bytes=' + startBytes + '-' + endBytes,
                     PartNumber: partNumber,
                     UploadId: uploadId
