@@ -44,11 +44,16 @@ function mockRestore() {
     AWS = originalAWS;
 }
 
-// TODO: If we decide to use rsync backups for CaaS, we should cache the credentials below
+var gCachedCaasCredentials = { issueDate: null, credentials: null };
+
 function getCaasCredentials(apiConfig, callback) {
     assert.strictEqual(typeof apiConfig, 'object');
     assert.strictEqual(typeof callback, 'function');
     assert(apiConfig.token);
+
+    if ((new Date() - gCachedCaasCredentials.issueDate) <= (1.75 * 60 * 60 * 1000)) { // caas gives tokens with 2 hour limit
+        return gCachedCaasCredentials.credentials;
+    }
 
     var url = config.apiServerOrigin() + '/api/v1/boxes/' + config.fqdn() + '/awscredentials';
     superagent.post(url).query({ token: apiConfig.token }).timeout(30 * 1000).end(function (error, result) {
@@ -65,6 +70,11 @@ function getCaasCredentials(apiConfig, callback) {
         };
 
         if (apiConfig.endpoint) credentials.endpoint = new AWS.Endpoint(apiConfig.endpoint);
+
+        gCachedCaasCredentials = {
+            issueDate: new Date(),
+            credentials: credentials
+        };
 
         callback(null, credentials);
     });
