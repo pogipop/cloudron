@@ -20,7 +20,8 @@ exports = module.exports = {
     testConfig: testConfig
 };
 
-var assert = require('assert');
+var assert = require('assert'),
+    EventEmitter = require('events');
 
 function upload(apiConfig, backupFilePath, sourceStream, callback) {
     assert.strictEqual(typeof apiConfig, 'object');
@@ -51,15 +52,14 @@ function downloadDir(apiConfig, backupFilePath, destDir, callback) {
     callback(new Error('not implemented'));
 }
 
-function copy(apiConfig, oldFilePath, newFilePath, callback) {
+function copy(apiConfig, oldFilePath, newFilePath) {
     assert.strictEqual(typeof apiConfig, 'object');
     assert.strictEqual(typeof oldFilePath, 'string');
     assert.strictEqual(typeof newFilePath, 'string');
-    assert.strictEqual(typeof callback, 'function');
 
-    // Result: none
-
-    callback(new Error('not implemented'));
+    var events = new EventEmitter();
+    process.nextTick(function () { events.emit('done', null); });
+    return events;
 }
 
 function remove(apiConfig, filename, callback) {

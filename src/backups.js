@@ -491,7 +491,10 @@ function rotateBoxBackup(backupConfig, timestamp, appBackupIds, callback) {
 
         progress.setDetail(progress.BACKUP, 'Rotating box snapshot');
 
-        api(backupConfig.provider).copy(backupConfig, getBackupFilePath(backupConfig, 'snapshot/box', format), getBackupFilePath(backupConfig, backupId, format), function (copyBackupError) {
+        var copy = api(backupConfig.provider).copy(backupConfig, getBackupFilePath(backupConfig, 'snapshot/box', format), getBackupFilePath(backupConfig, backupId, format));
+        copy.on('progress', function (detail) { progress.setDetail(progress.BACKUP, detail); });
+
+        copy.on('done', function (copyBackupError) {
             const state = copyBackupError ? backupdb.BACKUP_STATE_ERROR : backupdb.BACKUP_STATE_NORMAL;
 
             backupdb.update(backupId, { state: state }, function (error) {
@@ -590,7 +593,10 @@ function rotateAppBackup(backupConfig, app, timestamp, callback) {
 
         progress.setDetail(progress.BACKUP, 'Rotating app snapshot');
 
-        api(backupConfig.provider).copy(backupConfig, getBackupFilePath(backupConfig, `snapshot/app_${app.id}`, format), getBackupFilePath(backupConfig, backupId, format), function (copyBackupError) {
+        var copy = api(backupConfig.provider).copy(backupConfig, getBackupFilePath(backupConfig, `snapshot/app_${app.id}`, format), getBackupFilePath(backupConfig, backupId, format));
+        copy.on('progress', function (detail) { progress.setDetail(progress.BACKUP, detail); });
+
+        copy.on('done', function (copyBackupError) {
             const state = copyBackupError ? backupdb.BACKUP_STATE_ERROR : backupdb.BACKUP_STATE_NORMAL;
             debugApp(app, 'rotateAppBackup: successful id:%s', backupId);
 

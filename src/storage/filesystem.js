@@ -18,6 +18,7 @@ exports = module.exports = {
 var assert = require('assert'),
     BackupsError = require('../backups.js').BackupsError,
     debug = require('debug')('box:storage/filesystem'),
+    EventEmitter = require('events'),
     fs = require('fs'),
     mkdirp = require('mkdirp'),
     path = require('path'),
@@ -90,24 +91,27 @@ function downloadDir(apiConfig, backupFilePath, destDir, callback) {
     });
 }
 
-function copy(apiConfig, oldFilePath, newFilePath, callback) {
+function copy(apiConfig, oldFilePath, newFilePath) {
     assert.strictEqual(typeof apiConfig, 'object');
     assert.strictEqual(typeof oldFilePath, 'string');
     assert.strictEqual(typeof newFilePath, 'string');
-    assert.strictEqual(typeof callback, 'function');
 
     debug('copy: %s -> %s', oldFilePath, newFilePath);
 
+    var events = new EventEmitter();
+
     mkdirp(path.dirname(newFilePath), function (error) {
-        if (error) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
+        if (error) return events.emit('done', new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
 
         // this will hardlink backups saving space
         shell.exec('copy', '/bin/cp', [ '-al', oldFilePath, newFilePath ], { }, function (error) {
-            if (error) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
+            if (error) return events.emit('done', new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
 
-            callback(null);
+            events.emit('done', null);
         });
     });
+
+    return events;
 }
 
 function remove(apiConfig, filename, callback) {

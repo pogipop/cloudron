@@ -15,7 +15,8 @@ exports = module.exports = {
 };
 
 var assert = require('assert'),
-    debug = require('debug')('box:storage/noop');
+    debug = require('debug')('box:storage/noop'),
+    EventEmitter = require('events');
 
 function upload(apiConfig, backupFilePath, sourceStream, callback) {
     assert.strictEqual(typeof apiConfig, 'object');
@@ -49,15 +50,16 @@ function downloadDir(apiConfig, backupFilePath, destDir, callback) {
     callback(new Error('Cannot download from noop backend'));
 }
 
-function copy(apiConfig, oldFilePath, newFilePath, callback) {
+function copy(apiConfig, oldFilePath, newFilePath) {
     assert.strictEqual(typeof apiConfig, 'object');
     assert.strictEqual(typeof oldFilePath, 'string');
     assert.strictEqual(typeof newFilePath, 'string');
-    assert.strictEqual(typeof callback, 'function');
 
     debug('copy: %s -> %s', oldFilePath, newFilePath);
 
-    callback(null);
+    var events = new EventEmitter();
+    process.nextTick(function () { events.emit('done', null); });
+    return events;
 }
 
 function remove(apiConfig, filename, callback) {

@@ -24,12 +24,12 @@ var assert = require('assert'),
     BackupsError = require('../backups.js').BackupsError,
     config = require('../config.js'),
     debug = require('debug')('box:storage/s3'),
+    EventEmitter = require('events'),
     fs = require('fs'),
     chunk = require('lodash.chunk'),
     mkdirp = require('mkdirp'),
     PassThrough = require('stream').PassThrough,
     path = require('path'),
-    progress = require('../progress.js'),
     S3BlockReadStream = require('s3-block-read-stream'),
     superagent = require('superagent');
 
@@ -227,16 +227,15 @@ function downloadDir(apiConfig, backupFilePath, destDir, callback) {
     }, callback);
 }
 
-function copy(apiConfig, oldFilePath, newFilePath, callback) {
+function copy(apiConfig, oldFilePath, newFilePath) {
     assert.strictEqual(typeof apiConfig, 'object');
     assert.strictEqual(typeof oldFilePath, 'string');
     assert.strictEqual(typeof newFilePath, 'string');
-    assert.strictEqual(typeof callback, 'function');
+
+    var events = new EventEmitter();
 
     listDir(apiConfig, oldFilePath, { batchSize: 1 }, function copyFile(s3, content, iteratorCallback) {
         var relativePath = path.relative(oldFilePath, content.Key);
-
-        progress.setDetail(progress.BACKUP, 'Copying ' + content.Key.slice(oldFilePath.length+1));
 
         function done(error) {
             if (error && error.code === 'NoSuchKey') return iteratorCallback(new BackupsError(BackupsError.NOT_FOUND, `Old backup not found: ${content.Key}`));
@@ -245,7 +244,7 @@ function copy(apiConfig, oldFilePath, newFilePath, callback) {
                 return iteratorCallback(new BackupsError(BackupsError.EXTERNAL_ERROR, `Error copying ${content.Key} : ${error.message}`));
             }
 
-            iteratorCallback();
+            iteratorCallback(null);
         }
 
         var copyParams = {
@@ -255,9 +254,13 @@ function copy(apiConfig, oldFilePath, newFilePath, callback) {
 
         // S3 copyObject has a file size limit of 5GB so if we have larger files, we do a multipart copy
         if (content.Size < 5 * 1024 * 1024 * 1024) {
+            events.emit('progress', 'Copying ' + content.Key.slice(oldFilePath.length+1));
+
             copyParams.CopySource = encodeURIComponent(path.join(apiConfig.bucket, content.Key)); // See aws-sdk-js/issues/1302
             return s3.copyObject(copyParams, done);
         }
+
+        events.emit('progress', 'Copying (multipart) ' + content.Key.slice(oldFilePath.length+1));
 
         s3.createMultipartUpload(copyParams, function (error, result) {
             if (error) return done(error);
@@ -307,7 +310,11 @@ function copy(apiConfig, oldFilePath, newFilePath, callback) {
 
             copyNextChunk();
         });
-    }, callback);
+    }, function (error) {
+        events.emit('done', error);
+    });
+
+    return events;
 }
 
 function remove(apiConfig, filename, callback) {

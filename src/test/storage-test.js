@@ -112,7 +112,8 @@ describe('Storage', function () {
             var sourceFile = gTmpFolder + '/uploadtest/test.txt'; // keep the test within save device
             var destFile = gTmpFolder + '/uploadtest/test-hardlink.txt';
 
-            filesystem.copy(gBackupConfig, sourceFile, destFile, function (error) {
+            var events = filesystem.copy(gBackupConfig, sourceFile, destFile);
+            events.on('done', function (error) {
                 expect(error).to.be(null);
                 expect(fs.statSync(destFile).nlink).to.be(2); // created a hardlink
                 done();
@@ -169,7 +170,8 @@ describe('Storage', function () {
         });
 
         it('can copy', function (done) {
-            noop.copy(gBackupConfig, 'sourceFile', 'destFile', function (error) {
+            var events = noop.copy(gBackupConfig, 'sourceFile', 'destFile');
+            events.on('done', function (error) {
                 expect(error).to.be(null);
                 done();
             });
@@ -256,7 +258,8 @@ describe('Storage', function () {
 
             var sourceKey = 'uploadtest';
 
-            s3.copy(gBackupConfig, sourceKey, 'uploadtest-copy', function (error) {
+            var events = s3.copy(gBackupConfig, sourceKey, 'uploadtest-copy');
+            events.on('done', function (error) {
                 var sourceFile = path.join(__dirname, 'storage/data/test.txt');
                 expect(error).to.be(null);
                 expect(fs.statSync(path.join(gS3Folder, 'uploadtest-copy/test.txt')).size).to.be(fs.statSync(sourceFile).size);
