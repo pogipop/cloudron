@@ -1017,8 +1017,21 @@
 * Preliminary IPv6 support
 * Add IP RBL status to web interface
 * Add auto-update pattern `Every wednesday night`
-* Update Haraka to 2.8.15. This fixes the issue where emails were bounced with the message
-  'Send MAIL FROM first'
+* Update Haraka to 2.8.15. This fixes the issue where emails were bounced with the message 'Send MAIL FROM first'
+* Do not overwrite existing subdomain when app's location is changed
+* Add button to send test email
+* Fix crash in carbon which made graphs disappear on some Cloudrons
+
+[1.7.1]
+* Add rsync format for backups. This feature allows incremental backups
+* Add Google DNS backend (thanks @syn)
+* Add DigitalOcean spaces backup storage backend
+* Add Cloudscale and Exoscale as supported VPS providers
+* Display backup progress and status in the web interface
+* Preliminary IPv6 support
+* Add IP RBL status to web interface
+* Add auto-update pattern `Every wednesday night`
+* Update Haraka to 2.8.15. This fixes the issue where emails were bounced with the message 'Send MAIL FROM first'
 * Do not overwrite existing subdomain when app's location is changed
 * Add button to send test email
 * Fix crash in carbon which made graphs disappear on some Cloudrons
