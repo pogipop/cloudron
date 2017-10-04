@@ -133,8 +133,6 @@ function download(apiConfig, backupFilePath, callback) {
     assert.strictEqual(typeof backupFilePath, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    debug('download: %s', backupFilePath);
-
     getBackupCredentials(apiConfig, function (error, credentials) {
         if (error) return callback(error);
 
