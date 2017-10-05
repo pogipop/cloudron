@@ -182,13 +182,13 @@ function listDir(apiConfig, backupFilePath, options, iteratorCallback, callback)
         var total = 0;
 
         async.forever(function listAndDownload(foreverCallback) {
-            s3.listObjectsV2(listParams, function (error, listData) {
+            s3.listObjects(listParams, function (error, listData) {
                 if (error) {
                     debug('remove: Failed to list %s. Not fatal.', error);
                     return foreverCallback(error);
                 }
 
-                debug('listDir: processing %s files (processed %s so far)', listData.Contents.length, total);
+                debug('listDir: processing %s files (processed %s so far). From "%s"', listData.Contents.length, total, listParams.Marker || '');
 
                 var arr = options.batchSize === 1 ? listData.Contents : chunk(listData.Contents, options.batchSize);
 
@@ -199,7 +199,7 @@ function listDir(apiConfig, backupFilePath, options, iteratorCallback, callback)
 
                     if (!listData.IsTruncated) return foreverCallback(new Error('Done'));
 
-                    listParams.StartAfter = listData.Contents[listData.Contents.length - 1].Key; // NextMarker is returned only with delimiter
+                    listParams.Marker = listData.Contents[listData.Contents.length - 1].Key; // NextMarker is returned only with delimiter
 
                     foreverCallback();
                 });
