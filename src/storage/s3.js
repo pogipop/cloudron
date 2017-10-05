@@ -195,7 +195,7 @@ function listDir(apiConfig, backupFilePath, options, iteratorCallback, callback)
                 async.eachLimit(arr, 10, iteratorCallback.bind(null, s3), function iteratorDone(error) {
                     if (error) return foreverCallback(error);
 
-                    total += listData.KeyCount;
+                    total += listData.Contents.length;
 
                     if (!listData.IsTruncated) return foreverCallback(new Error('Done'));
 
