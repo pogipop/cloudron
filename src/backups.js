@@ -170,9 +170,9 @@ function getBackupFilePath(backupConfig, backupId, format) {
 
     if (format === 'tgz') {
         const fileType = backupConfig.key ? '.tar.gz.enc' : '.tar.gz';
-        return path.join(backupConfig.prefix || backupConfig.backupFolder, backupId+fileType);
+        return path.join(backupConfig.prefix || backupConfig.backupFolder || '', backupId+fileType);
     } else {
-        return path.join(backupConfig.prefix || backupConfig.backupFolder, backupId);
+        return path.join(backupConfig.prefix || backupConfig.backupFolder || '', backupId);
     }
 }
 
