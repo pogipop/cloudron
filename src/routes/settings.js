@@ -275,6 +275,7 @@ function setBackupConfig(req, res, next) {
     if (typeof req.body.retentionSecs !== 'number') return next(new HttpError(400, 'retentionSecs is required'));
     if ('key' in req.body && typeof req.body.key !== 'string') return next(new HttpError(400, 'key must be a string'));
     if (typeof req.body.format !== 'string') return next(new HttpError(400, 'format must be a string'));
+    if ('acceptSelfSignedCerts' in req.body && typeof req.body.acceptSelfSignedCerts !== 'boolean') return next(new HttpError(400, 'format must be a boolean'));
 
     settings.setBackupConfig(req.body, function (error) {
         if (error && error.reason === SettingsError.BAD_FIELD) return next(new HttpError(400, error.message));

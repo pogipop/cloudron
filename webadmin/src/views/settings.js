@@ -327,6 +327,7 @@ angular.module('Application').controller('SettingsController', ['$scope', '$loca
         endpoint: '',
         backupFolder: '',
         retentionSecs: -1,
+        acceptSelfSignedCerts: false,
         format: 'tgz',
 
         clearForm: function () {
@@ -339,6 +340,7 @@ angular.module('Application').controller('SettingsController', ['$scope', '$loca
             $scope.configureBackup.backupFolder = '';
             $scope.configureBackup.retentionSecs = -1;
             $scope.configureBackup.format = 'tgz';
+            $scope.configureBackup.acceptSelfSignedCerts = false;
         },
 
         show: function () {
@@ -356,6 +358,7 @@ angular.module('Application').controller('SettingsController', ['$scope', '$loca
             $scope.configureBackup.backupFolder = $scope.backupConfig.backupFolder;
             $scope.configureBackup.retentionSecs = $scope.backupConfig.retentionSecs;
             $scope.configureBackup.format = $scope.backupConfig.format;
+            $scope.configureBackup.acceptSelfSignedCerts = !!$scope.backupConfig.acceptSelfSignedCerts;
 
             $('#configureBackupModal').modal('show');
         },
@@ -384,6 +387,7 @@ angular.module('Application').controller('SettingsController', ['$scope', '$loca
                     if ($scope.configureBackup.region) backupConfig.region = $scope.configureBackup.region;
                 } else if (backupConfig.provider === 'minio' || backupConfig.provider === 's3-v4-compat') {
                     backupConfig.region = 'us-east-1';
+                    backupConfig.acceptSelfSignedCerts = $scope.configureBackup.acceptSelfSignedCerts;
                 } else if (backupConfig.provider === 'exoscale-sos') {
                     backupConfig.endpoint = 'https://sos.exo.io';
                     backupConfig.region = 'us-east-1';

@@ -22,11 +22,12 @@ var assert = require('assert'),
     async = require('async'),
     AWS = require('aws-sdk'),
     BackupsError = require('../backups.js').BackupsError,
+    chunk = require('lodash.chunk'),
     config = require('../config.js'),
     debug = require('debug')('box:storage/s3'),
     EventEmitter = require('events'),
     fs = require('fs'),
-    chunk = require('lodash.chunk'),
+    https = require('https'),
     mkdirp = require('mkdirp'),
     PassThrough = require('stream').PassThrough,
     path = require('path'),
@@ -98,6 +99,11 @@ function getBackupCredentials(apiConfig, callback) {
 
     if (apiConfig.endpoint) credentials.endpoint = apiConfig.endpoint;
 
+    if (apiConfig.acceptSelfSignedCerts === true) {
+        credentials.httpOptions =  {
+            agent: new https.Agent({ rejectUnauthorized: false })
+        };
+    }
     callback(null, credentials);
 }
 
