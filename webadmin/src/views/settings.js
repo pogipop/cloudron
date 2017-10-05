@@ -42,7 +42,7 @@ angular.module('Application').controller('SettingsController', ['$scope', '$loca
 
     $scope.storageProvider = [
         { name: 'Amazon S3', value: 's3' },
-        { name: 'DigitalOcean Spaces', value: 'digitalocean-spaces' },
+        { name: 'DigitalOcean Spaces (NYC3)', value: 'digitalocean-spaces' },
         { name: 'Exoscale SOS', value: 'exoscale-sos' },
         { name: 'Filesystem', value: 'filesystem' },
         { name: 'Minio', value: 'minio' },
