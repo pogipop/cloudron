@@ -52,8 +52,10 @@ function getCaasCredentials(apiConfig, callback) {
     assert(apiConfig.token);
 
     if ((new Date() - gCachedCaasCredentials.issueDate) <= (1.75 * 60 * 60 * 1000)) { // caas gives tokens with 2 hour limit
-        return gCachedCaasCredentials.credentials;
+        return callback(null, gCachedCaasCredentials.credentials);
     }
+
+    debug('getCaasCredentials: getting new credentials');
 
     var url = config.apiServerOrigin() + '/api/v1/boxes/' + config.fqdn() + '/awscredentials';
     superagent.post(url).query({ token: apiConfig.token }).timeout(30 * 1000).end(function (error, result) {
