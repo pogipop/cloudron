@@ -5,7 +5,7 @@
 // Do not require anything here!
 
 exports = module.exports = {
-    // a major version makes all apps restore from backup
+    // a major version makes all apps restore from backup. #451 must be fixed before we do this.
     // a minor version makes all apps re-configure themselves
     'version': '48.6.0',
 
