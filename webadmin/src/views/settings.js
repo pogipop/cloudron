@@ -42,8 +42,7 @@ angular.module('Application').controller('SettingsController', ['$scope', '$loca
 
     $scope.storageProvider = [
         { name: 'Amazon S3', value: 's3' },
-        // disabled because DO spaces is not yet production ready
-        // { name: 'DigitalOcean Spaces (NYC3)', value: 'digitalocean-spaces' },
+        { name: 'DigitalOcean Spaces NYC3 (Experimental)', value: 'digitalocean-spaces' },
         { name: 'Exoscale SOS', value: 'exoscale-sos' },
         { name: 'Filesystem', value: 'filesystem' },
         { name: 'Minio', value: 'minio' },
