@@ -93,10 +93,19 @@ angular.module('Application').controller('GraphsController', ['$scope', '$locati
             var ctx = $('#memoryAppChart').get(0).getContext('2d');
             var chart = new Chart(ctx);
 
+            var scaleStepWidth;
+            if ($scope.activeApp === 'system') {
+                console.log(Client.getConfig().memory);
+                scaleStepWidth = Math.round(Client.getConfig().memory / (1024 * 1024) / 10); // scaleSteps is 10
+            } else {
+                var memoryLimit = $scope.activeApp.memoryLimit || $scope.activeApp.manifest.memoryLimit || (256 * 1024 * 1024);
+                scaleStepWidth = Math.round(memoryLimit / (1024 * 1024) / 10); // scaleSteps is 10
+            }
+
             var options = {
                 scaleOverride: true,
                 scaleSteps: 10,
-                scaleStepWidth: $scope.activeApp === 'system' ? 200 : ($scope.activeApp.manifest.memoryLimit ? parseInt($scope.activeApp.manifest.memoryLimit/10000000,10) : 20),
+                scaleStepWidth: scaleStepWidth,
                 scaleStartValue: 0
             };
 
