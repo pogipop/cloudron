@@ -256,7 +256,7 @@ function copy(apiConfig, oldFilePath, newFilePath) {
         function done(error) {
             if (error && error.code === 'NoSuchKey') return iteratorCallback(new BackupsError(BackupsError.NOT_FOUND, `Old backup not found: ${content.Key}`));
             if (error) {
-                debug('copy: s3 copy error.', error);
+                debug('copy: s3 copy error when copying %s', content.Key, error);
                 return iteratorCallback(new BackupsError(BackupsError.EXTERNAL_ERROR, `Error copying ${content.Key} : ${error.message}`));
             }
 
@@ -272,7 +272,8 @@ function copy(apiConfig, oldFilePath, newFilePath) {
         if (content.Size < 5 * 1024 * 1024 * 1024) {
             events.emit('progress', 'Copying ' + content.Key.slice(oldFilePath.length+1));
 
-            copyParams.CopySource = encodeURIComponent(path.join(apiConfig.bucket, content.Key)); // See aws-sdk-js/issues/1302
+            // for exoscale, '/' should not be encoded
+            copyParams.CopySource = path.join(apiConfig.bucket, encodeURIComponent(content.Key)); // See aws-sdk-js/issues/1302
             return s3.copyObject(copyParams, done);
         }
 
@@ -296,7 +297,7 @@ function copy(apiConfig, oldFilePath, newFilePath) {
                 var params = {
                     Bucket: apiConfig.bucket,
                     Key: path.join(newFilePath, relativePath),
-                    CopySource: encodeURIComponent(path.join(apiConfig.bucket, content.Key)),
+                    CopySource: path.join(apiConfig.bucket, encodeURIComponent(content.Key)), // See aws-sdk-js/issues/1302
                     CopySourceRange: 'bytes=' + startBytes + '-' + endBytes,
                     PartNumber: partNumber,
                     UploadId: uploadId
