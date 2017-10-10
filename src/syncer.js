@@ -49,11 +49,16 @@ function sync(dir, taskProcessor, concurrency, callback) {
     var cacheFile = path.join(paths.BACKUP_INFO_DIR, path.basename(dir) + '.sync.cache'),
         newCacheFile = path.join(paths.BACKUP_INFO_DIR, path.basename(dir) + '.sync.cache.new');
 
-    if (!safe.fs.existsSync(cacheFile)) { // if cache is missing, start out empty. TODO: do a remote listDir and rebuild
-        delQueue.push({ operation: 'removedir', path: '', reason: 'nocache' });
-    }
+    var cache = [ ];
 
-    var cache = readCache(cacheFile);
+    // if cache is missing or if we crashed/errored in previous run, start out empty. TODO: do a remote listDir and rebuild
+    if (!safe.fs.existsSync(cacheFile)) {
+        delQueue.push({ operation: 'removedir', path: '', reason: 'nocache' });
+    } else if (safe.fs.existsSync(newCacheFile)) {
+        delQueue.push({ operation: 'removedir', path: '', reason: 'crash' });
+    } else {
+        cache = readCache(cacheFile);
+    }
 
     var newCacheFd = safe.fs.openSync(newCacheFile, 'w'); // truncates any existing file
     if (newCacheFd === -1) return callback(new Error('Error opening new cache file: ' + safe.error.message));
