@@ -91,7 +91,7 @@ function getBackupCredentials(apiConfig, callback) {
 
     var credentials = {
         signatureVersion: apiConfig.signatureVersion || 'v4',
-        s3ForcePathStyle: true,
+        s3ForcePathStyle: true, // Force use path-style url (http://endpoint/bucket/path) instead of host-style (http://bucket.endpoint/path)
         accessKeyId: apiConfig.accessKeyId,
         secretAccessKey: apiConfig.secretAccessKey,
         region: apiConfig.region || 'us-east-1'
