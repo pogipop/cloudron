@@ -32,6 +32,7 @@ var assert = require('assert'),
     PassThrough = require('stream').PassThrough,
     path = require('path'),
     S3BlockReadStream = require('s3-block-read-stream'),
+    safe = require('safetydance'),
     superagent = require('superagent');
 
 // test only
@@ -114,6 +115,15 @@ function upload(apiConfig, backupFilePath, sourceStream, callback) {
     assert.strictEqual(typeof sourceStream, 'object');
     assert.strictEqual(typeof callback, 'function');
 
+    function done(error) {
+        if (error) {
+            debug('[%s] upload: s3 upload error.', backupFilePath, error);
+            return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, `Error uploading ${backupFilePath}. Message: ${error.message} HTTP Code: ${error.code}`));
+        }
+
+        callback(null);
+    }
+
     getBackupCredentials(apiConfig, function (error, credentials) {
         if (error) return callback(error);
 
@@ -124,15 +134,18 @@ function upload(apiConfig, backupFilePath, sourceStream, callback) {
         };
 
         var s3 = new AWS.S3(credentials);
-        // s3.upload automatically does a multi-part upload. we set queueSize to 1 to reduce memory usage
-        s3.upload(params, { partSize: 10 * 1024 * 1024, queueSize: 1 }, function (error) {
-            if (error) {
-                debug('[%s] upload: s3 upload error.', backupFilePath, error);
-                return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, `Error uploading ${backupFilePath}. Message: ${error.message} HTTP Code: ${error.code}`));
-            }
 
-            callback(null);
-        });
+        // exoscale does not like multi-part uploads. so avoid them for filesystem streams < 5GB
+        if (apiConfig.provider === 'exoscale-sos' && typeof sourceStream.path === 'string') {
+            var stat = safe.fs.statSync(sourceStream.path);
+            if (!stat) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, `Error detecting size ${sourceStream.path}. Message: ${safe.error.message}`));
+
+            if (stat.size <= 5 * 1024 * 1024 * 1024) return s3.putObject(params, done);
+        }
+
+        // s3.upload automatically does a multi-part upload. we set queueSize to 1 to reduce memory usage
+        // uploader will buffer at most queueSize * partSize bytes into memory at any given time.
+        return s3.upload(params, { partSize: 10 * 1024 * 1024, queueSize: 1 }, done);
     });
 }
 
