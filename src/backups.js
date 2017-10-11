@@ -520,16 +520,12 @@ function uploadBoxSnapshot(backupConfig, callback) {
     snapshotBox(function (error) {
         if (error) return callback(error);
 
-        // for the moment, box backups are always tarball based. this is because it makes it easy to restore
-        // in the future, if required, we can move out the mailboxes to a separate virtual app backup
-        const format = backupConfig.provider === 'exoscale-sos' ? 'rsync' : 'tgz'; // see also rotateBoxBackup
-
-        runBackupTask('snapshot/box', format, paths.BOX_DATA_DIR, function (error) {
+        runBackupTask('snapshot/box', backupConfig.format, paths.BOX_DATA_DIR, function (error) {
             if (error) return callback(error);
 
             debug('uploadBoxSnapshot: time: %s secs', (new Date() - startTime)/1000);
 
-            setSnapshotInfo('box', { timestamp: new Date().toISOString(), format: format }, callback);
+            setSnapshotInfo('box', { timestamp: new Date().toISOString(), format: backupConfig.format }, callback);
         });
     });
 }
@@ -545,7 +541,7 @@ function rotateBoxBackup(backupConfig, timestamp, appBackupIds, callback) {
 
     var snapshotTime = snapshotInfo.timestamp.replace(/[T.]/g, '-').replace(/[:Z]/g,'');
     var backupId = util.format('%s/box_%s_v%s', timestamp, snapshotTime, config.version());
-    const format = backupConfig.provider === 'exoscale-sos' ? 'rsync' : 'tgz'; //  // see also uploadBoxSnapshot
+    const format = backupConfig.format;
 
     log(`Rotating box backup to id ${backupId}`);
 

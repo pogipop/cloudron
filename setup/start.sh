@@ -203,20 +203,31 @@ mysql -u root -p${mysql_root_password} -e 'CREATE DATABASE IF NOT EXISTS box'
 if [[ -n "${arg_restore_url}" ]]; then
     set_progress "30" "Downloading restore data"
 
-    decrypt=""
-    if [[ "${arg_restore_url}" == *.tar.gz.enc || -n "${arg_restore_key}" ]]; then
-        echo "==> Downloading encrypted backup: ${arg_restore_url} and key: ${arg_restore_key}"
-        decrypt=(openssl aes-256-cbc -d -nosalt -pass "pass:${arg_restore_key}")
-    else
-        echo "==> Downloading backup: ${arg_restore_url}"
-        decrypt=(cat -)
-    fi
+    readonly restore_dir="${arg_restore_url#file://}"
 
-    while true; do
-        if $curl -L "${arg_restore_url}" | "${decrypt[@]}" \
-        | tar -zxf - --overwrite -C "${BOX_DATA_DIR}"; then break; fi
-        echo "Failed to download data, trying again"
-    done
+    if [[ -d "${restore_dir}" ]]; then # rsync backup
+        echo "==> Copying backup: ${restore_dir}"
+        if [[ $(stat -c "%d" "${BOX_DATA_DIR}") == $(stat -c "%d" "${restore_dir}") ]]; then
+            cp -rl "${restore_dir}/." "${BOX_DATA_DIR}"
+        else
+            cp -r "${restore_dir}/." "${BOX_DATA_DIR}"
+        fi
+    else # tgz backup
+        decrypt=""
+        if [[ "${arg_restore_url}" == *.tar.gz.enc || -n "${arg_restore_key}" ]]; then
+            echo "==> Downloading encrypted backup: ${arg_restore_url} and key: ${arg_restore_key}"
+            decrypt=(openssl aes-256-cbc -d -nosalt -pass "pass:${arg_restore_key}")
+        elif [[ "${arg_restore_url}" == *.tar.gz ]]; then
+            echo "==> Downloading backup: ${arg_restore_url}"
+            decrypt=(cat -)
+        fi
+
+        while true; do
+            if $curl -L "${arg_restore_url}" | "${decrypt[@]}" \
+            | tar -zxf - --overwrite -C "${BOX_DATA_DIR}"; then break; fi
+            echo "Failed to download data, trying again"
+        done
+    fi
 
     set_progress "35" "Setting up MySQL"
     if [[ -f "${BOX_DATA_DIR}/box.mysqldump" ]]; then
