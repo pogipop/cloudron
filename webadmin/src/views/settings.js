@@ -52,7 +52,7 @@ angular.module('Application').controller('SettingsController', ['$scope', '$loca
 
     $scope.retentionTimes = [
         { name: '2 days', value: 2 * 24 * 60 * 60 },
-        { name: '1 week', value:  7 * 24 * 60 * 60},
+        { name: '1 week', value:  7 * 24 * 60 * 60}, // the default
         { name: '1 month', value: 30 * 24 * 60 * 60},
         { name: 'Forever', value: -1 }
     ];
@@ -325,7 +325,7 @@ angular.module('Application').controller('SettingsController', ['$scope', '$loca
         region: '',
         endpoint: '',
         backupFolder: '',
-        retentionSecs: -1,
+        retentionSecs:  7 * 24 * 60 * 60,
         acceptSelfSignedCerts: false,
         format: 'tgz',
 
@@ -337,7 +337,7 @@ angular.module('Application').controller('SettingsController', ['$scope', '$loca
             $scope.configureBackup.endpoint = '';
             $scope.configureBackup.region = '';
             $scope.configureBackup.backupFolder = '';
-            $scope.configureBackup.retentionSecs = -1;
+            $scope.configureBackup.retentionSecs = 7 * 24 * 60 * 60;
             $scope.configureBackup.format = 'tgz';
             $scope.configureBackup.acceptSelfSignedCerts = false;
         },
