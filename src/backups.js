@@ -558,7 +558,7 @@ function rotateBoxBackup(backupConfig, timestamp, appBackupIds, callback) {
             const state = copyBackupError ? backupdb.BACKUP_STATE_ERROR : backupdb.BACKUP_STATE_NORMAL;
 
             backupdb.update(backupId, { state: state }, function (error) {
-                if (copyBackupError) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, copyBackupError.message));
+                if (copyBackupError) return callback(copyBackupError);
                 if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
 
                 log(`Rotated box backup successfully as id ${backupId}`);
@@ -657,11 +657,12 @@ function rotateAppBackup(backupConfig, app, timestamp, callback) {
         copy.on('progress', log);
         copy.on('done', function (copyBackupError) {
             const state = copyBackupError ? backupdb.BACKUP_STATE_ERROR : backupdb.BACKUP_STATE_NORMAL;
-            log(`Rotated app backup of ${app.id} successfully to id ${backupId}`);
 
             backupdb.update(backupId, { state: state }, function (error) {
-                if (copyBackupError) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, copyBackupError.message));
+                if (copyBackupError) return callback(copyBackupError);
                 if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
+
+                log(`Rotated app backup of ${app.id} successfully to id ${backupId}`);
 
                 setRestorePoint(app.id, backupId, function (error) {
                     if (error) return callback(error);
