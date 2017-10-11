@@ -393,7 +393,7 @@ function download(backupId, format, dataDir, callback) {
         } else {
             var events = api(backupConfig.provider).downloadDir(backupConfig, getBackupFilePath(backupConfig, backupId, format), dataDir);
             events.on('progress', log);
-            events.on('error', function (error) {
+            events.on('done', function (error) {
                 if (error) return callback(error);
 
                 createEmptyDirs(dataDir, callback);
