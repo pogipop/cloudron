@@ -42,10 +42,9 @@ function exec(tag, file, args, options, callback) {
     debug(tag + ' execFile: %s', file); // do not dump args as it might have sensitive info
 
     var cp = child_process.spawn(file, args, options);
-    if (options.logFile) {
-        var logFile = fs.createWriteStream(options.logFile, { flags: 'a' });
-        cp.stdout.pipe(logFile);
-        cp.stderr.pipe(logFile);
+    if (options.logStream) {
+        cp.stdout.pipe(options.logStream);
+        cp.stderr.pipe(options.logStream);
     } else {
         cp.stdout.on('data', function (data) {
             debug(tag + ' (stdout): %s', data.toString('utf8'));

@@ -379,6 +379,8 @@ function download(backupId, format, dataDir, callback) {
     assert.strictEqual(typeof dataDir, 'string');
     assert.strictEqual(typeof callback, 'function');
 
+    safe.fs.unlinkSync(paths.BACKUP_LOG_FILE); // start fresh log file
+
     log(`Downloading ${backupId} of format ${format} to ${dataDir}`);
 
     settings.getBackupConfig(function (error, backupConfig) {
@@ -436,7 +438,8 @@ function runBackupTask(backupId, format, dataDir, callback) {
 
     var killTimerId = null, progressTimerId = null;
 
-    var cp = shell.sudo(`backup-${backupId}`, [ BACKUPTASK_CMD, backupId, format, dataDir ], { env: process.env, logFile: paths.BACKUP_LOG_FILE }, function (error) {
+    var logStream = fs.createWriteStream(paths.BACKUP_LOG_FILE, { flags: 'a' });
+    var cp = shell.sudo(`backup-${backupId}`, [ BACKUPTASK_CMD, backupId, format, dataDir ], { env: process.env, logStream: logStream }, function (error) {
         clearTimeout(killTimerId);
         clearInterval(progressTimerId);
 
@@ -461,6 +464,11 @@ function runBackupTask(backupId, format, dataDir, callback) {
         debug('runBackupTask: backup task taking too long. killing');
         cp.kill();
     }, 4 * 60 * 60 * 1000); // 4 hours
+
+    logStream.on('error', function (error) {
+        debug('runBackupTask: error in logging stream', error);
+        cp.kill();
+    });
 }
 
 function getSnapshotInfo(id) {

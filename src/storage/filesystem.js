@@ -76,7 +76,7 @@ function download(apiConfig, sourceFilePath, callback) {
     callback(null, fileStream);
 }
 
-function downloadDir(apiConfig, backupFilePath, destDir, callback) {
+function downloadDir(apiConfig, backupFilePath, destDir) {
     assert.strictEqual(typeof apiConfig, 'object');
     assert.strictEqual(typeof backupFilePath, 'string');
     assert.strictEqual(typeof destDir, 'string');
