@@ -235,6 +235,6 @@ function tlsKey() {
 }
 
 function hasIPv6() {
-    // require here to avoid cyclic dependencies, it is cached anyways
-    return fs.existsSync(require('./paths.js').IPV6_PROC_FILE);
+    const IPV6_PROC_FILE = '/proc/net/if_inet6';
+    return fs.existsSync(IPV6_PROC_FILE);
 }
