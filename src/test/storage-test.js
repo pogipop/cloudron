@@ -101,7 +101,8 @@ describe('Storage', function () {
         it('download dir copies contents of source dir', function (done) {
             var sourceDir = path.join(__dirname, 'storage');
 
-            filesystem.downloadDir(gBackupConfig, sourceDir, gTmpFolder, function (error) {
+            var events = filesystem.downloadDir(gBackupConfig, sourceDir, gTmpFolder);
+            events.on('done', function (error) {
                 expect(error).to.be(null);
                 expect(fs.statSync(path.join(gTmpFolder, 'data/empty')).size).to.be(0);
                 done();
@@ -163,7 +164,8 @@ describe('Storage', function () {
         });
 
         it('download dir copies contents of source dir', function (done) {
-            noop.downloadDir(gBackupConfig, 'sourceDir', 'destDir', function (error) {
+            var events = noop.downloadDir(gBackupConfig, 'sourceDir', 'destDir');
+            events.on('done', function (error) {
                 expect(error).to.be.an(Error);
                 done();
             });
@@ -246,7 +248,8 @@ describe('Storage', function () {
             var sourceKey = '';
             var destDir = path.join(os.tmpdir(), 's3-destdir');
 
-            s3.downloadDir(gBackupConfig, sourceKey, destDir, function (error) {
+            var events = s3.downloadDir(gBackupConfig, sourceKey, destDir);
+            events.on('done', function (error) {
                 expect(error).to.be(null);
                 expect(fs.statSync(path.join(destDir, 'uploadtest/test.txt')).size).to.be(fs.statSync(sourceFile).size);
                 done();

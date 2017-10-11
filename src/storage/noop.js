@@ -39,15 +39,18 @@ function download(apiConfig, backupFilePath, callback) {
     callback(new Error('Cannot download from noop backend'));
 }
 
-function downloadDir(apiConfig, backupFilePath, destDir, callback) {
+function downloadDir(apiConfig, backupFilePath, destDir) {
     assert.strictEqual(typeof apiConfig, 'object');
     assert.strictEqual(typeof backupFilePath, 'string');
     assert.strictEqual(typeof destDir, 'string');
-    assert.strictEqual(typeof callback, 'function');
 
-    debug('downloadDir: %s -> %s', backupFilePath, destDir);
+    var events = new EventEmitter();
+    process.nextTick(function () {
+        debug('downloadDir: %s -> %s', backupFilePath, destDir);
 
-    callback(new Error('Cannot download from noop backend'));
+        events.emit('done', new Error('Cannot download from noop backend'));
+    });
+    return events;
 }
 
 function copy(apiConfig, oldFilePath, newFilePath) {
@@ -72,14 +75,15 @@ function remove(apiConfig, filename, callback) {
     callback(null);
 }
 
-function removeDir(apiConfig, pathPrefix, callback) {
+function removeDir(apiConfig, pathPrefix) {
     assert.strictEqual(typeof apiConfig, 'object');
     assert.strictEqual(typeof pathPrefix, 'string');
-    assert.strictEqual(typeof callback, 'function');
 
     debug('removeDir: %s', pathPrefix);
 
-    callback(null);
+    var events = new EventEmitter();
+    process.nextTick(function () { events.emit('done', null); });
+    return events;
 }
 
 function testConfig(apiConfig, callback) {

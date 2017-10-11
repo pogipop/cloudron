@@ -43,7 +43,7 @@ function exec(tag, file, args, options, callback) {
 
     var cp = child_process.spawn(file, args, options);
     if (options.logFile) {
-        var logFile = fs.createWriteStream(options.logFile);
+        var logFile = fs.createWriteStream(options.logFile, { flags: 'a' });
         cp.stdout.pipe(logFile);
         cp.stderr.pipe(logFile);
     } else {

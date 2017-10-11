@@ -80,15 +80,18 @@ function downloadDir(apiConfig, backupFilePath, destDir, callback) {
     assert.strictEqual(typeof apiConfig, 'object');
     assert.strictEqual(typeof backupFilePath, 'string');
     assert.strictEqual(typeof destDir, 'string');
-    assert.strictEqual(typeof callback, 'function');
 
-    debug('downloadDir: %s -> %s', backupFilePath, destDir);
+    var events = new EventEmitter();
+
+    events.emit('progress', `downloadDir: ${backupFilePath} to ${destDir}`);
 
     shell.exec('downloadDir', '/bin/cp', [ '-r', backupFilePath + '/.', destDir ], { }, function (error) {
-        if (error) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
+        if (error) return events.emit('done', new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
 
-        callback(null);
+        events.emit('done', null);
     });
+
+    return events;
 }
 
 function copy(apiConfig, oldFilePath, newFilePath) {
@@ -131,16 +134,21 @@ function remove(apiConfig, filename, callback) {
     callback(null);
 }
 
-function removeDir(apiConfig, pathPrefix, callback) {
+function removeDir(apiConfig, pathPrefix) {
     assert.strictEqual(typeof apiConfig, 'object');
     assert.strictEqual(typeof pathPrefix, 'string');
-    assert.strictEqual(typeof callback, 'function');
+
+    var events = new EventEmitter();
+
+    events.emit('progress', `downloadDir: ${pathPrefix}`);
 
     shell.exec('removeDir', '/bin/rm', [ '-rf', pathPrefix ], { }, function (error) {
-        if (error) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
+        if (error) return events.emit('done', new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
 
-        callback(null);
+        events.emit('done', null);
     });
+
+    return events;
 }
 
 function testConfig(apiConfig, callback) {

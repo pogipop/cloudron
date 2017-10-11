@@ -205,7 +205,7 @@ function listDir(apiConfig, backupFilePath, options, iteratorCallback, callback)
 
                 var arr = options.batchSize === 1 ? listData.Contents : chunk(listData.Contents, options.batchSize);
 
-                async.eachLimit(arr, 10, iteratorCallback.bind(null, s3), function iteratorDone(error) {
+                async.eachLimit(arr, options.concurrency, iteratorCallback.bind(null, s3), function iteratorDone(error) {
                     if (error) return foreverCallback(error);
 
                     total += listData.Contents.length;
@@ -225,14 +225,19 @@ function listDir(apiConfig, backupFilePath, options, iteratorCallback, callback)
     });
 }
 
-function downloadDir(apiConfig, backupFilePath, destDir, callback) {
+function downloadDir(apiConfig, backupFilePath, destDir) {
     assert.strictEqual(typeof apiConfig, 'object');
     assert.strictEqual(typeof backupFilePath, 'string');
     assert.strictEqual(typeof destDir, 'string');
-    assert.strictEqual(typeof callback, 'function');
 
-    listDir(apiConfig, backupFilePath, { batchSize: 1 }, function downloadFile(s3, content, iteratorCallback) {
+    var events = new EventEmitter();
+    var total = 0;
+
+    listDir(apiConfig, backupFilePath, { batchSize: 1, concurrency: 10 }, function downloadFile(s3, content, iteratorCallback) {
         var relativePath = path.relative(backupFilePath, content.Key);
+
+        ++total;
+        events.emit('progress', `Downloading ${relativePath}`);
 
         mkdirp(path.dirname(path.join(destDir, relativePath)), function (error) {
             if (error) return iteratorCallback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
@@ -253,7 +258,13 @@ function downloadDir(apiConfig, backupFilePath, destDir, callback) {
                 destStream.on('finish', iteratorCallback);
             });
         });
-    }, callback);
+    }, function (error) {
+        events.emit('progress', `Downloaded ${total} files`);
+
+        events.emit('done', error);
+    });
+
+    return events;
 }
 
 function copy(apiConfig, oldFilePath, newFilePath) {
@@ -262,9 +273,12 @@ function copy(apiConfig, oldFilePath, newFilePath) {
     assert.strictEqual(typeof newFilePath, 'string');
 
     var events = new EventEmitter();
+    var total = 0;
 
-    listDir(apiConfig, oldFilePath, { batchSize: 1 }, function copyFile(s3, content, iteratorCallback) {
+    listDir(apiConfig, oldFilePath, { batchSize: 1, concurrency: 10 }, function copyFile(s3, content, iteratorCallback) {
         var relativePath = path.relative(oldFilePath, content.Key);
+
+        ++total;
 
         function done(error) {
             if (error && error.code === 'NoSuchKey') return iteratorCallback(new BackupsError(BackupsError.NOT_FOUND, `Old backup not found: ${content.Key}`));
@@ -283,14 +297,14 @@ function copy(apiConfig, oldFilePath, newFilePath) {
 
         // S3 copyObject has a file size limit of 5GB so if we have larger files, we do a multipart copy
         if (content.Size < 5 * 1024 * 1024 * 1024) {
-            events.emit('progress', 'Copying ' + content.Key.slice(oldFilePath.length+1));
+            events.emit('progress', `Copying ${relativePath}`);
 
             // for exoscale, '/' should not be encoded
             copyParams.CopySource = path.join(apiConfig.bucket, encodeURIComponent(content.Key)); // See aws-sdk-js/issues/1302
             return s3.copyObject(copyParams, done);
         }
 
-        events.emit('progress', 'Copying (multipart) ' + content.Key.slice(oldFilePath.length+1));
+        events.emit('progress', `Copying (multipart) ${relativePath}`);
 
         s3.createMultipartUpload(copyParams, function (error, result) {
             if (error) return done(error);
@@ -341,6 +355,8 @@ function copy(apiConfig, oldFilePath, newFilePath) {
             copyNextChunk();
         });
     }, function (error) {
+        events.emit('progress', `Copied ${total} files`);
+
         events.emit('done', error);
     });
 
@@ -372,18 +388,23 @@ function remove(apiConfig, filename, callback) {
     });
 }
 
-function removeDir(apiConfig, pathPrefix, callback) {
+function removeDir(apiConfig, pathPrefix) {
     assert.strictEqual(typeof apiConfig, 'object');
     assert.strictEqual(typeof pathPrefix, 'string');
-    assert.strictEqual(typeof callback, 'function');
 
-    listDir(apiConfig, pathPrefix, { batchSize: 1000 }, function deleteFiles(s3, contents, iteratorCallback) {
+    var events = new EventEmitter();
+    var total = 0;
+
+    listDir(apiConfig, pathPrefix, { batchSize: 1000, concurrency: 1 }, function deleteFiles(s3, contents, iteratorCallback) {
         var deleteParams = {
             Bucket: apiConfig.bucket,
             Delete: {
                 Objects: contents.map(function (c) { return { Key: c.Key }; })
             }
         };
+        total += contents.length;
+
+        events.emit('progress', `Removing ${contents.length} files from ${contents[0].Key} to ${contents[contents.length-1].Key}`);
 
         s3.deleteObjects(deleteParams, function (error /*, deleteData */) {
             if (error) {
@@ -394,7 +415,13 @@ function removeDir(apiConfig, pathPrefix, callback) {
 
             iteratorCallback();
         });
-    }, callback);
+    }, function (error) {
+        events.emit('progress', `Removed ${total} files`);
+
+        events.emit('done', error);
+    });
+
+    return events;
 }
 
 function testConfig(apiConfig, callback) {
