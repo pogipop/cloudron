@@ -48,7 +48,7 @@ function mockRestore() {
 
 var gCachedCaasCredentials = { issueDate: null, credentials: null };
 
-function getCaasCredentials(apiConfig, callback) {
+function getCaasConfig(apiConfig, callback) {
     assert.strictEqual(typeof apiConfig, 'object');
     assert.strictEqual(typeof callback, 'function');
     assert(apiConfig.token);
@@ -70,7 +70,11 @@ function getCaasCredentials(apiConfig, callback) {
             accessKeyId: result.body.credentials.AccessKeyId,
             secretAccessKey: result.body.credentials.SecretAccessKey,
             sessionToken: result.body.credentials.SessionToken,
-            region: apiConfig.region || 'us-east-1'
+            region: apiConfig.region || 'us-east-1',
+            httpOptions: {
+                timeout: 60000
+            },
+            maxRetries: 5
         };
 
         if (apiConfig.endpoint) credentials.endpoint = new AWS.Endpoint(apiConfig.endpoint);
@@ -84,18 +88,22 @@ function getCaasCredentials(apiConfig, callback) {
     });
 }
 
-function getBackupCredentials(apiConfig, callback) {
+function getS3Config(apiConfig, callback) {
     assert.strictEqual(typeof apiConfig, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    if (apiConfig.provider === 'caas') return getCaasCredentials(apiConfig, callback);
+    if (apiConfig.provider === 'caas') return getCaasConfig(apiConfig, callback);
 
     var credentials = {
         signatureVersion: apiConfig.signatureVersion || 'v4',
         s3ForcePathStyle: true, // Force use path-style url (http://endpoint/bucket/path) instead of host-style (http://bucket.endpoint/path)
         accessKeyId: apiConfig.accessKeyId,
         secretAccessKey: apiConfig.secretAccessKey,
-        region: apiConfig.region || 'us-east-1'
+        region: apiConfig.region || 'us-east-1',
+        httpOptions: {
+            timeout: 60000
+        },
+        maxRetries: 5
     };
 
     if (apiConfig.endpoint) credentials.endpoint = apiConfig.endpoint;
@@ -124,7 +132,7 @@ function upload(apiConfig, backupFilePath, sourceStream, callback) {
         callback(null);
     }
 
-    getBackupCredentials(apiConfig, function (error, credentials) {
+    getS3Config(apiConfig, function (error, credentials) {
         if (error) return callback(error);
 
         var params = {
@@ -154,7 +162,7 @@ function download(apiConfig, backupFilePath, callback) {
     assert.strictEqual(typeof backupFilePath, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    getBackupCredentials(apiConfig, function (error, credentials) {
+    getS3Config(apiConfig, function (error, credentials) {
         if (error) return callback(error);
 
         var params = {
@@ -183,7 +191,7 @@ function download(apiConfig, backupFilePath, callback) {
 }
 
 function listDir(apiConfig, backupFilePath, options, iteratorCallback, callback) {
-    getBackupCredentials(apiConfig, function (error, credentials) {
+    getS3Config(apiConfig, function (error, credentials) {
         if (error) return callback(error);
 
         var s3 = new AWS.S3(credentials);
@@ -368,7 +376,7 @@ function remove(apiConfig, filename, callback) {
     assert.strictEqual(typeof filename, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    getBackupCredentials(apiConfig, function (error, credentials) {
+    getS3Config(apiConfig, function (error, credentials) {
         if (error) return callback(error);
 
         var s3 = new AWS.S3(credentials);
@@ -441,7 +449,7 @@ function testConfig(apiConfig, callback) {
     if ('endpoint' in apiConfig && typeof apiConfig.endpoint !== 'string') return callback(new BackupsError(BackupsError.BAD_FIELD, 'endpoint must be a string'));
 
     // attempt to upload and delete a file with new credentials
-    getBackupCredentials(apiConfig, function (error, credentials) {
+    getS3Config(apiConfig, function (error, credentials) {
         if (error) return callback(error);
 
         var params = {

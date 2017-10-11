@@ -234,6 +234,19 @@ function sync(backupConfig, backupId, dataDir, callback) {
         debug('sync: processing task: %j', task);
         var backupFilePath = path.join(getBackupFilePath(backupConfig, backupId, backupConfig.format), task.path);
 
+        if (task.operation === 'removedir') {
+            safe.fs.writeFileSync(paths.BACKUP_RESULT_FILE, `Removing directory ${task.path}`);
+            return api(backupConfig.provider).removeDir(backupConfig, backupFilePath)
+                .on('progress', function (detail) {
+                    debug(`sync: ${detail}`);
+                    safe.fs.writeFileSync(paths.BACKUP_RESULT_FILE, detail);
+                })
+                .on('done', iteratorCallback);
+        } else if (task.operation === 'remove') {
+            safe.fs.writeFileSync(paths.BACKUP_RESULT_FILE, `Removing ${task.path}`);
+            return api(backupConfig.provider).remove(backupConfig, backupFilePath, iteratorCallback);
+        }
+
         var retryCount = 0;
         async.retry({ times: 5, interval: 20000 }, function (retryCallback) {
             ++retryCount;
@@ -243,16 +256,6 @@ function sync(backupConfig, backupId, dataDir, callback) {
                 var stream = fs.createReadStream(path.join(dataDir, task.path));
                 stream.on('error', function () { return retryCallback(); }); // ignore error if file disappears
                 api(backupConfig.provider).upload(backupConfig, backupFilePath, stream, retryCallback);
-            } else if (task.operation === 'remove') {
-                safe.fs.writeFileSync(paths.BACKUP_RESULT_FILE, `Removing ${task.path}`);
-                api(backupConfig.provider).remove(backupConfig, backupFilePath, retryCallback);
-            } else if (task.operation === 'removedir') {
-                var events = api(backupConfig.provider).removeDir(backupConfig, backupFilePath);
-                events.on('progress', function (detail) {
-                    debug(`sync: ${detail}`);
-                    safe.fs.writeFileSync(paths.BACKUP_RESULT_FILE, detail);
-                });
-                events.on('done', retryCallback);
             }
         }, iteratorCallback);
     }, 10 /* concurrency */, function (error) {
@@ -289,7 +292,7 @@ function upload(backupId, format, dataDir, callback) {
         if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
 
         if (format === 'tgz') {
-            async.retry({ times: 3, interval: 10000 }, function (retryCallback) {
+            async.retry({ times: 5, interval: 20000 }, function (retryCallback) {
                 var tarStream = createTarPackStream(dataDir, backupConfig.key || null);
                 tarStream.on('error', retryCallback); // already returns BackupsError
 
@@ -541,11 +544,9 @@ function rotateBoxBackup(backupConfig, timestamp, appBackupIds, callback) {
     backupdb.add({ id: backupId, version: config.version(), type: backupdb.BACKUP_TYPE_BOX, dependsOn: appBackupIds, restoreConfig: null, format: format }, function (error) {
         if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
 
-        async.retry({ times: 3, interval: 10000 }, function (retryCallback) {
-            var copy = api(backupConfig.provider).copy(backupConfig, getBackupFilePath(backupConfig, 'snapshot/box', format), getBackupFilePath(backupConfig, backupId, format));
-            copy.on('progress', log);
-            copy.on('done', retryCallback);
-        }, function (copyBackupError) {
+        var copy = api(backupConfig.provider).copy(backupConfig, getBackupFilePath(backupConfig, 'snapshot/box', format), getBackupFilePath(backupConfig, backupId, format));
+        copy.on('progress', log);
+        copy.on('done', function (copyBackupError) {
             const state = copyBackupError ? backupdb.BACKUP_STATE_ERROR : backupdb.BACKUP_STATE_NORMAL;
 
             backupdb.update(backupId, { state: state }, function (error) {
@@ -644,11 +645,9 @@ function rotateAppBackup(backupConfig, app, timestamp, callback) {
     backupdb.add({ id: backupId, version: manifest.version, type: backupdb.BACKUP_TYPE_APP, dependsOn: [ ], restoreConfig: restoreConfig, format: format }, function (error) {
         if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
 
-        async.retry({ times: 3, interval: 10000 }, function (retryCallback) {
-            var copy = api(backupConfig.provider).copy(backupConfig, getBackupFilePath(backupConfig, `snapshot/app_${app.id}`, format), getBackupFilePath(backupConfig, backupId, format));
-            copy.on('progress', log);
-            copy.on('done', retryCallback);
-        }, function (copyBackupError) {
+        var copy = api(backupConfig.provider).copy(backupConfig, getBackupFilePath(backupConfig, `snapshot/app_${app.id}`, format), getBackupFilePath(backupConfig, backupId, format));
+        copy.on('progress', log);
+        copy.on('done', function (copyBackupError) {
             const state = copyBackupError ? backupdb.BACKUP_STATE_ERROR : backupdb.BACKUP_STATE_NORMAL;
             log(`Rotated app backup of ${app.id} successfully to id ${backupId}`);
 
@@ -716,6 +715,7 @@ function backupApp(app, manifest, callback) {
     assert.strictEqual(typeof callback, 'function');
 
     const timestamp = (new Date()).toISOString().replace(/[T.]/g, '-').replace(/[:Z]/g,'');
+    safe.fs.unlinkSync(paths.BACKUP_LOG_FILE); // start fresh log file
 
     progress.set(progress.BACKUP, 10,  'Backing up ' + (app.altDomain || config.appFqdn(app.location)));
 
@@ -733,6 +733,7 @@ function backupBoxAndApps(auditSource, callback) {
     callback = callback || NOOP_CALLBACK;
 
     var timestamp = (new Date()).toISOString().replace(/[T.]/g, '-').replace(/[:Z]/g,'');
+    safe.fs.unlinkSync(paths.BACKUP_LOG_FILE); // start fresh log file
 
     eventlog.add(eventlog.ACTION_BACKUP_START, auditSource, { });
 
