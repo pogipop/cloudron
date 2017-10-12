@@ -28,8 +28,8 @@ exports = module.exports = {
     _getBackupFilePath: getBackupFilePath,
     _createTarPackStream: createTarPackStream,
     _tarExtract: tarExtract,
-    _createEmptyDirs: createEmptyDirs,
-    _saveEmptyDirs: saveEmptyDirs
+    _restoreFsMetadata: restoreFsMetadata,
+    _saveFsMetadata: saveFsMetadata
 };
 
 var addons = require('./addons.js'),
@@ -265,15 +265,23 @@ function sync(backupConfig, backupId, dataDir, callback) {
     });
 }
 
-function saveEmptyDirs(appDataDir, callback) {
+function saveFsMetadata(appDataDir, callback) {
     assert.strictEqual(typeof appDataDir, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    var emptyDirs = safe.child_process.execSync('find . -type d -empty', { cwd: `${appDataDir}` });
-
+    var emptyDirs = safe.child_process.execSync('find . -type d -empty', { cwd: `${appDataDir}`, encoding: 'utf8' });
     if (emptyDirs === null) return callback(safe.error);
 
-    if (!safe.fs.writeFileSync(`${appDataDir}/emptydirs.txt`, emptyDirs)) return callback(safe.error);
+    var execFiles = safe.child_process.execSync('find . -type f -executable', { cwd: `${appDataDir}`, encoding: 'utf8' });
+    if (execFiles === null) return callback(safe.error);
+
+    var metadata = {
+        emptyDirs: emptyDirs.trim().split('\n'),
+        execFiles: execFiles.trim().split('\n')
+    };
+
+    if (!safe.fs.writeFileSync(`${appDataDir}/fsmetadata.json`, JSON.stringify(metadata, null, 4))) return callback(safe.error);
+
     callback();
 }
 
@@ -300,7 +308,7 @@ function upload(backupId, format, dataDir, callback) {
             }, callback);
         } else {
             async.series([
-                saveEmptyDirs.bind(null, dataDir),
+                saveFsMetadata.bind(null, dataDir),
                 sync.bind(null, backupConfig, backupId, dataDir)
             ], callback);
         }
@@ -355,21 +363,27 @@ function tarExtract(inStream, destination, key, callback) {
     }
 }
 
-function createEmptyDirs(appDataDir, callback) {
+function restoreFsMetadata(appDataDir, callback) {
     assert.strictEqual(typeof appDataDir, 'string');
     assert.strictEqual(typeof callback, 'function');
 
     log('Recreating empty directories');
 
-    var emptyDirs = safe.fs.readFileSync(path.join(appDataDir, 'emptydirs.txt'), 'utf8');
-    if (emptyDirs === null) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, 'emptydirs.txt was not found:' + safe.error.message));
+    var metadata = safe.JSON.parse(safe.fs.readFileSync(path.join(appDataDir, 'fsmetadata.json'), 'utf8'));
+    if (metadata === null) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, 'Error loading fsmetadata.txt:' + safe.error.message));
 
-    async.eachSeries(emptyDirs.trim().split('\n'), function createPath(emptyDir, iteratorDone) {
+    async.eachSeries(metadata.emptyDirs, function createPath(emptyDir, iteratorDone) {
         mkdirp(path.join(appDataDir, emptyDir), iteratorDone);
     }, function (error) {
-        if (error) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, `unable to crate path: ${error.message}`));
+        if (error) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, `unable to create path: ${error.message}`));
 
-        callback();
+        async.eachSeries(metadata.execFiles, function createPath(execFile, iteratorDone) {
+            fs.chmod(path.join(appDataDir, execFile), parseInt('0755', 8), iteratorDone);
+        }, function (error) {
+            if (error) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, `unable to chmod: ${error.message}`));
+
+            callback();
+        });
     });
 }
 
@@ -398,7 +412,7 @@ function download(backupId, format, dataDir, callback) {
             events.on('done', function (error) {
                 if (error) return callback(error);
 
-                createEmptyDirs(dataDir, callback);
+                restoreFsMetadata(dataDir, callback);
             });
         }
     });

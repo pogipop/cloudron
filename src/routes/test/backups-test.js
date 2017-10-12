@@ -10,12 +10,10 @@ var appdb = require('../../appdb.js'),
     config = require('../../config.js'),
     database = require('../../database.js'),
     expect = require('expect.js'),
-    http = require('http'),
     nock = require('nock'),
     superagent = require('superagent'),
     server = require('../../server.js'),
-    settings = require('../../settings.js'),
-    url = require('url');
+    settings = require('../../settings.js');
 
 var SERVER_URL = 'http://localhost:' + config.get('port');
 

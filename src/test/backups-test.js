@@ -244,7 +244,7 @@ describe('backups', function () {
         });
     });
 
-    describe('empty dirs', function () {
+    describe('fs meta data', function () {
         var tmpdir;
         before(function () {
             tmpdir = fs.mkdtempSync(path.join(os.tmpdir(), 'backups-test'));
@@ -253,28 +253,34 @@ describe('backups', function () {
             rimraf.sync(tmpdir);
         });
 
-        it('saves empty dirs file', function (done) {
+        it('saves special files', function (done) {
             createTree(tmpdir, { 'data': { 'subdir': { 'emptydir': { } } }, 'dir2': { 'file': 'stuff' } });
+            fs.chmodSync(path.join(tmpdir, 'dir2/file'), parseInt('0755', 8));
 
-            backups._saveEmptyDirs(tmpdir, function (error) {
+            backups._saveFsMetadata(tmpdir, function (error) {
                 expect(error).to.not.be.ok();
 
-                var emptyDirs = fs.readFileSync(path.join(tmpdir, 'emptydirs.txt'), 'utf8').trim().split('\n');
+                var emptyDirs = JSON.parse(fs.readFileSync(path.join(tmpdir, 'fsmetadata.json'), 'utf8')).emptyDirs;
                 expect(emptyDirs).to.eql(['./data/subdir/emptydir']);
+
+                var execFiles = JSON.parse(fs.readFileSync(path.join(tmpdir, 'fsmetadata.json'), 'utf8')).execFiles;
+                expect(execFiles).to.eql(['./dir2/file']);
 
                 done();
             });
         });
 
-        it('creates empty dirs file', function (done) {
+        it('restores special files', function (done) {
             rimraf.sync(path.join(tmpdir, 'data'));
 
             expect(fs.existsSync(path.join(tmpdir, 'data/subdir/emptydir'))).to.be(false); // just make sure rimraf worked
 
-            backups._createEmptyDirs(tmpdir, function (error) {
+            backups._restoreFsMetadata(tmpdir, function (error) {
                 expect(error).to.not.be.ok();
 
                 expect(fs.existsSync(path.join(tmpdir, 'data/subdir/emptydir'))).to.be(true);
+                var mode = fs.statSync(path.join(tmpdir, 'dir2/file')).mode;
+                expect(mode & ~fs.constants.S_IFREG).to.be(parseInt('0755', 8));
 
                 done();
             });
