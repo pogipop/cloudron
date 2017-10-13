@@ -639,6 +639,8 @@ function update(appId, data, auditSource, callback) {
 
         newConfig.manifest = manifest;
 
+        // TODO: disallow portBindings when an app updates and let ports simply be disabled. the new ports
+        // might conflict when the update is actually carried out as we do not 'reserve' them in the db
         if ('portBindings' in data) {
             newConfig.portBindings = data.portBindings;
             error = validatePortBindings(data.portBindings, newConfig.manifest.tcpPorts);
@@ -680,7 +682,6 @@ function update(appId, data, auditSource, callback) {
 
             appdb.setInstallationCommand(appId, data.force ? appdb.ISTATE_PENDING_FORCE_UPDATE : appdb.ISTATE_PENDING_UPDATE, { newConfig: newConfig }, function (error) {
                 if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new AppsError(AppsError.BAD_STATE)); // might be a bad guess
-                if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(getDuplicateErrorDetails('' /* location cannot conflict */, values.portBindings, error));
                 if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
 
                 taskmanager.restartAppTask(appId);
