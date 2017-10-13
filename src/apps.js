@@ -629,7 +629,7 @@ function update(appId, data, auditSource, callback) {
     downloadManifest(data.appStoreId, data.manifest, function (error, appStoreId, manifest) {
         if (error) return callback(error);
 
-        var values = { };
+        var newConfig = { };
 
         error = manifestFormat.parse(manifest);
         if (error) return callback(new AppsError(AppsError.BAD_FIELD, 'Manifest error:' + error.message));
@@ -637,11 +637,11 @@ function update(appId, data, auditSource, callback) {
         error = checkManifestConstraints(manifest);
         if (error) return callback(error);
 
-        values.manifest = manifest;
+        newConfig.manifest = manifest;
 
         if ('portBindings' in data) {
-            values.portBindings = data.portBindings;
-            error = validatePortBindings(data.portBindings, values.manifest.tcpPorts);
+            newConfig.portBindings = data.portBindings;
+            error = validatePortBindings(data.portBindings, newConfig.manifest.tcpPorts);
             if (error) return callback(error);
         }
 
@@ -663,24 +663,22 @@ function update(appId, data, auditSource, callback) {
 
             // prevent user from installing a app with different manifest id over an existing app
             // this allows cloudron install -f --app <appid> for an app installed from the appStore
-            if (app.manifest.id !== values.manifest.id) {
+            if (app.manifest.id !== newConfig.manifest.id) {
                 if (!data.force) return callback(new AppsError(AppsError.BAD_FIELD, 'manifest id does not match. force to override'));
                 // clear appStoreId so that this app does not get updates anymore
-                values.appStoreId = '';
+                newConfig.appStoreId = '';
             }
 
             // do not update apps in debug mode
             if (app.debugMode && !data.force) return callback(new AppsError(AppsError.BAD_STATE, 'debug mode enabled. force to override'));
 
             // Ensure we update the memory limit in case the new app requires more memory as a minimum
-            // 0 and -1 are special values for memory limit indicating unset and unlimited
-            if (app.memoryLimit > 0 && values.manifest.memoryLimit && app.memoryLimit < values.manifest.memoryLimit) {
-                values.memoryLimit = values.manifest.memoryLimit;
+            // 0 and -1 are special newConfig for memory limit indicating unset and unlimited
+            if (app.memoryLimit > 0 && newConfig.manifest.memoryLimit && app.memoryLimit < newConfig.manifest.memoryLimit) {
+                newConfig.memoryLimit = newConfig.manifest.memoryLimit;
             }
 
-            values.oldConfig = getAppConfig(app);
-
-            appdb.setInstallationCommand(appId, data.force ? appdb.ISTATE_PENDING_FORCE_UPDATE : appdb.ISTATE_PENDING_UPDATE, values, function (error) {
+            appdb.setInstallationCommand(appId, data.force ? appdb.ISTATE_PENDING_FORCE_UPDATE : appdb.ISTATE_PENDING_UPDATE, { newConfig: newConfig }, function (error) {
                 if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new AppsError(AppsError.BAD_STATE)); // might be a bad guess
                 if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(getDuplicateErrorDetails('' /* location cannot conflict */, values.portBindings, error));
                 if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));

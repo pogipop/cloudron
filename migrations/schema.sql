@@ -73,7 +73,8 @@ CREATE TABLE IF NOT EXISTS apps(
 
     // the following fields do not belong here, they can be removed when we use a queue for apptask
     lastBackupId VARCHAR(128), // used to pass backupId to restore from to apptask
-    oldConfigJson TEXT, // used to pass old config for apptask
+    oldConfigJson TEXT, // used to pass old config for apptask (configure, restore)
+    newConfigJson TEXT, // used to pass new config for apptask (update)
 
     PRIMARY KEY(id));
 
@@ -111,6 +112,7 @@ CREATE TABLE IF NOT EXISTS backups(
     dependsOn TEXT, /* comma separate list of objects this backup depends on */
     state VARCHAR(16) NOT NULL,
     restoreConfigJson TEXT, /* JSON including the manifest of the backed up app */
+    format VARCHAR(16) DEFAULT "tgz",
 
     PRIMARY KEY (id));
 

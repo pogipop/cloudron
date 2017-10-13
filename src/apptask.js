@@ -202,13 +202,10 @@ function removeLogrotateConfig(app, callback) {
     shell.sudo('removeLogrotateConfig', [ CONFIGURE_LOGROTATE_CMD, 'remove', app.id ], callback);
 }
 
-function verifyManifest(app, callback) {
-    assert.strictEqual(typeof app, 'object');
+function verifyManifest(manifest, callback) {
+    assert.strictEqual(typeof manifest, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    debugApp(app, 'Verifying manifest');
-
-    var manifest = app.manifest;
     var error = manifestFormat.parse(manifest);
     if (error) return callback(new Error(util.format('Manifest error: %s', error.message)));
 
@@ -386,6 +383,7 @@ function updateApp(app, values, callback) {
 //   - setup addons (requires the above volume)
 //   - setup the container (requires image, volumes, addons)
 //   - setup collectd (requires container id)
+// restore is also handled here since restore is just an install with some oldConfig to clean up
 function install(app, callback) {
     assert.strictEqual(typeof app, 'object');
     assert.strictEqual(typeof callback, 'function');
@@ -393,7 +391,9 @@ function install(app, callback) {
     const backupId = app.lastBackupId, isRestoring = app.installationState === appdb.ISTATE_PENDING_RESTORE;
 
     async.series([
-        verifyManifest.bind(null, app),
+        // this protects against the theoretical possibility of an app being marked for install/restore from
+        // a previous version of box code
+        verifyManifest.bind(null, app.manifest),
 
         // teardown for re-installs
         updateApp.bind(null, app, { installationProgress: '10, Cleaning up old install' }),
@@ -478,7 +478,6 @@ function install(app, callback) {
 function backup(app, callback) {
     assert.strictEqual(typeof app, 'object');
     assert.strictEqual(typeof callback, 'function');
-
 
     async.series([
         updateApp.bind(null, app, { installationProgress: '10, Backing up' }),
@@ -575,45 +574,50 @@ function update(app, callback) {
     assert.strictEqual(typeof app, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    debugApp(app, 'Updating to %s', safe.query(app, 'manifest.version'));
+    debugApp(app, `Updating to ${app.newConfig.manifest.version}`);
 
     // app does not want these addons anymore
     // FIXME: this does not handle option changes (like multipleDatabases)
-    var unusedAddons = _.omit(app.oldConfig.manifest.addons, Object.keys(app.manifest.addons));
+    var unusedAddons = _.omit(app.manifest.addons, Object.keys(app.newConfig.manifest.addons));
 
     async.series([
+        // this protects against the theoretical possibility of an app being marked for update from
+        // a previous version of box code
         updateApp.bind(null, app, { installationProgress: '0, Verify manifest' }),
-        verifyManifest.bind(null, app),
-
-        // download new image before app is stopped. this is so we can reduce downtime
-        // and also not remove the 'common' layers when the old image is deleted
-        updateApp.bind(null, app, { installationProgress: '15, Downloading image' }),
-        docker.downloadImage.bind(null, app.manifest),
-
-        // note: we cleanup first and then backup. this is done so that the app is not running should backup fail
-        // we cannot easily 'recover' from backup failures because we have to revert manfest and portBindings
-        updateApp.bind(null, app, { installationProgress: '25, Cleaning up old install' }),
-        removeCollectdProfile.bind(null, app),
-        removeLogrotateConfig.bind(null, app),
-        stopApp.bind(null, app),
-        deleteContainers.bind(null, app),
-        function deleteImageIfChanged(done) {
-            if (app.oldConfig.manifest.dockerImage === app.manifest.dockerImage) return done();
-
-            docker.deleteImage(app.oldConfig.manifest, done);
-        },
+        verifyManifest.bind(null, app.newConfig.manifest),
 
         function (next) {
             if (app.installationState === appdb.ISTATE_PENDING_FORCE_UPDATE) return next(null);
 
             async.series([
-                updateApp.bind(null, app, { installationProgress: '30, Backing up app' }),
-                backups.backupApp.bind(null, app, app.oldConfig.manifest)
+                updateApp.bind(null, app, { installationProgress: '15, Backing up app' }),
+                backups.backupApp.bind(null, app, app.manifest)
             ], next);
+        },
+
+        // download new image before app is stopped. this is so we can reduce downtime
+        // and also not remove the 'common' layers when the old image is deleted
+        updateApp.bind(null, app, { installationProgress: '25, Downloading image' }),
+        docker.downloadImage.bind(null, app.newConfig.manifest),
+
+        // note: we cleanup first and then backup. this is done so that the app is not running should backup fail
+        // we cannot easily 'recover' from backup failures because we have to revert manfest and portBindings
+        updateApp.bind(null, app, { installationProgress: '35, Cleaning up old install' }),
+        removeCollectdProfile.bind(null, app),
+        removeLogrotateConfig.bind(null, app),
+        stopApp.bind(null, app),
+        deleteContainers.bind(null, app),
+        function deleteImageIfChanged(done) {
+            if (app.manifest.dockerImage === app.newConfig.manifest.dockerImage) return done();
+
+            docker.deleteImage(app.manifest, done);
         },
 
         // only delete unused addons after backup
         addons.teardownAddons.bind(null, app, unusedAddons),
+
+        // switch over to the new config. manifest, memoryLimit, portBindings, appstoreId are updated here
+        updateApp.bind(null, app, app.newConfig),
 
         updateApp.bind(null, app, { installationProgress: '45, Downloading icon' }),
         downloadIcon.bind(null, app),
@@ -635,7 +639,7 @@ function update(app, callback) {
         // done!
         function (callback) {
             debugApp(app, 'updated');
-            updateApp(app, { installationState: appdb.ISTATE_INSTALLED, installationProgress: '', health: null }, callback);
+            updateApp(app, { installationState: appdb.ISTATE_INSTALLED, installationProgress: '', health: null, newConfig: null }, callback);
         }
     ], function seriesDone(error) {
         if (error) {

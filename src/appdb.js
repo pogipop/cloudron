@@ -59,7 +59,7 @@ var assert = require('assert'),
 
 var APPS_FIELDS_PREFIXED = [ 'apps.id', 'apps.appStoreId', 'apps.installationState', 'apps.installationProgress', 'apps.runState',
     'apps.health', 'apps.containerId', 'apps.manifestJson', 'apps.httpPort', 'apps.location', 'apps.dnsRecordId',
-    'apps.accessRestrictionJson', 'apps.lastBackupId', 'apps.oldConfigJson', 'apps.memoryLimit', 'apps.altDomain',
+    'apps.accessRestrictionJson', 'apps.lastBackupId', 'apps.oldConfigJson', 'apps.newConfigJson', 'apps.memoryLimit', 'apps.altDomain',
     'apps.xFrameOptions', 'apps.sso', 'apps.debugModeJson', 'apps.robotsTxt', 'apps.enableBackup' ].join(',');
 
 var PORT_BINDINGS_FIELDS = [ 'hostPort', 'environmentVariable', 'appId' ].join(',');
@@ -74,6 +74,10 @@ function postProcess(result) {
     assert(result.oldConfigJson === null || typeof result.oldConfigJson === 'string');
     result.oldConfig = safe.JSON.parse(result.oldConfigJson);
     delete result.oldConfigJson;
+
+    assert(result.newConfigJson === null || typeof result.newConfigJson === 'string');
+    result.newConfig = safe.JSON.parse(result.newConfigJson);
+    delete result.newConfigJson;
 
     assert(result.hostPorts === null || typeof result.hostPorts === 'string');
     assert(result.environmentVariables === null || typeof result.environmentVariables === 'string');
@@ -305,17 +309,8 @@ function updateWithConstraints(id, app, constraints, callback) {
 
     var fields = [ ], values = [ ];
     for (var p in app) {
-        if (p === 'manifest') {
-            fields.push('manifestJson = ?');
-            values.push(JSON.stringify(app[p]));
-        } else if (p === 'oldConfig') {
-            fields.push('oldConfigJson = ?');
-            values.push(JSON.stringify(app[p]));
-        } else if (p === 'accessRestriction') {
-            fields.push('accessRestrictionJson = ?');
-            values.push(JSON.stringify(app[p]));
-        } else if (p === 'debugMode') {
-            fields.push('debugModeJson = ?');
+        if (p === 'manifest' || p === 'oldConfig' || p === 'newConfig' || p === 'accessRestriction' || p === 'debugMode') {
+            fields.push(`${p}Json = ?`);
             values.push(JSON.stringify(app[p]));
         } else if (p !== 'portBindings') {
             fields.push(p + ' = ?');

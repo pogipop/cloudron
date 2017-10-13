@@ -181,7 +181,7 @@ describe('apptask', function () {
         var badApp = _.extend({ }, APP);
         badApp.manifest = { };
 
-        apptask._verifyManifest(badApp, function (error) {
+        apptask._verifyManifest(badApp.manifest, function (error) {
             expect(error).to.be.ok();
             done();
         });
@@ -192,7 +192,7 @@ describe('apptask', function () {
         badApp.manifest = _.extend({ }, APP.manifest);
         delete badApp.manifest.id;
 
-        apptask._verifyManifest(badApp, function (error) {
+        apptask._verifyManifest(badApp.manifest, function (error) {
             expect(error).to.be.ok();
             done();
         });
@@ -203,7 +203,7 @@ describe('apptask', function () {
         badApp.manifest = _.extend({ }, APP.manifest);
         badApp.manifest.maxBoxVersion = '0.0.0'; // max box version is too small
 
-        apptask._verifyManifest(badApp, function (error) {
+        apptask._verifyManifest(badApp.manifest, function (error) {
             expect(error).to.be.ok();
             done();
         });
@@ -212,7 +212,7 @@ describe('apptask', function () {
     it('verifies manifest', function (done) {
         var goodApp = _.extend({ }, APP);
 
-        apptask._verifyManifest(goodApp, function (error) {
+        apptask._verifyManifest(goodApp.manifest, function (error) {
             expect(error).to.be(null);
             done();
         });
