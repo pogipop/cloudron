@@ -208,9 +208,9 @@ if [[ -n "${arg_restore_url}" ]]; then
     if [[ -d "${restore_dir}" ]]; then # rsync backup
         echo "==> Copying backup: ${restore_dir}"
         if [[ $(stat -c "%d" "${BOX_DATA_DIR}") == $(stat -c "%d" "${restore_dir}") ]]; then
-            cp -rl "${restore_dir}/." "${BOX_DATA_DIR}"
+            cp -rfl "${restore_dir}/." "${BOX_DATA_DIR}"
         else
-            cp -r "${restore_dir}/." "${BOX_DATA_DIR}"
+            cp -rf "${restore_dir}/." "${BOX_DATA_DIR}"
         fi
     else # tgz backup
         decrypt=""
