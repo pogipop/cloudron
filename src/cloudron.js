@@ -63,7 +63,6 @@ var appdb = require('./appdb.js'),
     updateChecker = require('./updatechecker.js'),
     user = require('./user.js'),
     UserError = user.UserError,
-    user = require('./user.js'),
     util = require('util'),
     _ = require('underscore');
 
