@@ -367,8 +367,6 @@ function getContainerIdByIp(ip, callback) {
     assert.strictEqual(typeof ip, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    debug('get container by ip %s', ip);
-
     var docker = exports.connection;
 
     docker.listNetworks({}, function (error, result) {
@@ -389,8 +387,6 @@ function getContainerIdByIp(ip, callback) {
             }
         }
         if (!containerId) return callback(new Error('No container with that ip'));
-
-        debug('found container %s with ip %s', containerId, ip);
 
         callback(null, containerId);
     });
