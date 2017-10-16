@@ -179,10 +179,13 @@
             <div class="modal-header">
                 <h4 class="modal-title">Restore {{ appRestore.app.fqdn }}</h4>
             </div>
-            <div class="modal-body" ng-show="appRestore.backups.length === 0">
-                <p class="text-danger">This app has no backups.</p>
+            <div class="modal-body" ng-show="appRestore.backups.length === 0 && appRestore.busy">
+                <h4 class="text-center"><i class="fa fa-circle-o-notch fa-spin"></i> Fetching backups</h4>
             </div>
-            <div class="modal-body" ng-show="appRestore.backups.length !== 0">
+            <div class="modal-body" ng-show="appRestore.backups.length === 0 && !appRestore.busy">
+                <h4 class="text-danger">This app has no backups.</h4>
+            </div>
+            <div class="modal-body" ng-show="appRestore.backups.length !== 0 && !appRestore.busy">
                 <p>Restoring the app will lose all content generated since the backup.</p>
                 <label class="control-label">Select backup</label>
                 <div class="dropdown">
@@ -211,7 +214,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-success" ng-click="doRestore()" ng-disabled="appRestoreForm.$invalid || appRestore.busy || !appRestore.selectedBackup"><i class="fa fa-circle-o-notch fa-spin" ng-show="appRestore.busy"></i> Restore</button>
+                <button type="button" class="btn btn-success" ng-click="doRestore()" ng-show="appRestore.backups.length !== 0" ng-disabled="appRestoreForm.$invalid || appRestore.busy || !appRestore.selectedBackup"><i class="fa fa-circle-o-notch fa-spin" ng-show="appRestore.busy"></i> Restore</button>
             </div>
         </div>
     </div>
