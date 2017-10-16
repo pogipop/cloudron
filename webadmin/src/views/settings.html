@@ -146,6 +146,14 @@
                             </p>
                         </div>
 
+                        <div class="checkbox" ng-show="configureBackup.provider === 'filesystem'">
+                            <label>
+                                <input type="checkbox" ng-model="configureBackup.useHardlinks" id="inputConfigureUseHardlinks">
+                                    Use hardlinks
+                                </input>
+                            </label>
+                        </div>
+
                         <!-- S3/Minio/SOS -->
                         <div class="form-group" ng-class="{ 'has-error': configureBackup.error.endpoint }" ng-show="configureBackup.provider === 'minio' || configureBackup.provider === 's3-v4-compat'">
                             <label class="control-label" for="inputConfigureBackupEndpoint">Endpoint</label>

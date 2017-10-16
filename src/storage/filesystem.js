@@ -107,7 +107,8 @@ function copy(apiConfig, oldFilePath, newFilePath) {
         if (error) return events.emit('done', new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
 
         // this will hardlink backups saving space
-        shell.exec('copy', '/bin/cp', [ '-al', oldFilePath, newFilePath ], { }, function (error) {
+        var cpOptions = apiConfig.noHardlinks ? '-a' : '-al';
+        shell.exec('copy', '/bin/cp', [ cpOptions, oldFilePath, newFilePath ], { }, function (error) {
             if (error) return events.emit('done', new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
 
             events.emit('done', null);
@@ -158,6 +159,8 @@ function testConfig(apiConfig, callback) {
     if (typeof apiConfig.backupFolder !== 'string') return callback(new BackupsError(BackupsError.BAD_FIELD, 'backupFolder must be string'));
 
     if (!apiConfig.backupFolder) return callback(new BackupsError(BackupsError.BAD_FIELD, 'backupFolder is required'));
+
+    if ('noHardlinks' in apiConfig && typeof apiConfig.noHardlinks !== 'boolean') return callback(new BackupsError(BackupsError.BAD_FIELD, 'noHardlinks must be boolean'));
 
     fs.stat(apiConfig.backupFolder, function (error, result) {
         if (error) {

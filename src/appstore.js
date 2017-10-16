@@ -164,7 +164,8 @@ function sendAliveStatus(data, callback) {
                     provider: result[settings.TLS_CONFIG_KEY].provider
                 },
                 backupConfig: {
-                    provider: result[settings.BACKUP_CONFIG_KEY].provider
+                    provider: result[settings.BACKUP_CONFIG_KEY].provider,
+                    hardlinks: !result[settings.BACKUP_CONFIG_KEY].noHardlinks
                 },
                 mailConfig: {
                     enabled: result[settings.MAIL_CONFIG_KEY].enabled
