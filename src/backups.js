@@ -276,8 +276,8 @@ function saveFsMetadata(appDataDir, callback) {
     if (execFiles === null) return callback(safe.error);
 
     var metadata = {
-        emptyDirs: emptyDirs.trim().split('\n'),
-        execFiles: execFiles.trim().split('\n')
+        emptyDirs: emptyDirs.length === 0 ? [ ] : emptyDirs.trim().split('\n'),
+        execFiles: execFiles.length === 0 ? [ ] : execFiles.trim().split('\n')
     };
 
     if (!safe.fs.writeFileSync(`${appDataDir}/fsmetadata.json`, JSON.stringify(metadata, null, 4))) return callback(safe.error);
