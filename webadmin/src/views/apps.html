@@ -298,7 +298,7 @@
             </div>
             <div class="modal-body">
                 <p>Recent Changes for new version <b>{{ appUpdate.manifest.version}}</b>:</p>
-                <pre>{{ appUpdate.manifest.changelog }}</pre>
+                <div ng-bind-html="appUpdate.manifest.changelog | markdown2html"></div>
                 <br/>
                 <fieldset>
                     <form role="form" name="appUpdateForm" ng-submit="doUpdate(appUpdateForm)" autocomplete="off">
