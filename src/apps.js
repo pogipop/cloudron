@@ -1012,14 +1012,9 @@ function autoupdateApps(updateInfo, auditSource, callback) { // updateInfo is { 
         if ((semver.major(app.manifest.version) !== 0) && (semver.major(app.manifest.version) !== semver.major(newManifest.version))) return new Error('Major version change'); // major changes are blocking
 
         var newTcpPorts = newManifest.tcpPorts || { };
-        var oldTcpPorts = app.manifest.tcpPorts || { };
         var portBindings = app.portBindings; // this is never null
 
-        for (var env in newTcpPorts) {
-            if (!(env in oldTcpPorts)) return new Error(env + ' is required from user');
-        }
-
-        for (env in portBindings) {
+        for (var env in portBindings) {
             if (!(env in newTcpPorts)) return new Error(env + ' was in use but new update removes it');
         }
 
