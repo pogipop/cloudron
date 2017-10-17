@@ -63,6 +63,7 @@ angular.module('Application').controller('AppsController', ['$scope', '$location
 
     $scope.appRestore = {
         busy: false,
+        busyFetching: false,
         error: {},
         app: {},
         password: '',
@@ -328,7 +329,7 @@ angular.module('Application').controller('AppsController', ['$scope', '$location
         $scope.reset();
 
         $scope.appRestore.app = app;
-        $scope.appRestore.busy = true;
+        $scope.appRestore.busyFetching = true;
 
         $('#appRestoreModal').modal('show');
 
@@ -338,7 +339,7 @@ angular.module('Application').controller('AppsController', ['$scope', '$location
             } else {
                 $scope.appRestore.backups = backups;
                 if (backups.length) $scope.appRestore.selectedBackup = backups[0]; // pre-select first backup
-                $scope.appRestore.busy = false;
+                $scope.appRestore.busyFetching = false;
             }
         });
 
@@ -359,7 +360,6 @@ angular.module('Application').controller('AppsController', ['$scope', '$location
                 Client.error(error);
             } else {
                 $('#appRestoreModal').modal('hide');
-                $scope.reset();
             }
 
             $scope.appRestore.busy = false;

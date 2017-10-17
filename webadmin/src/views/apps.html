@@ -179,13 +179,13 @@
             <div class="modal-header">
                 <h4 class="modal-title">Restore {{ appRestore.app.fqdn }}</h4>
             </div>
-            <div class="modal-body" ng-show="appRestore.backups.length === 0 && appRestore.busy">
+            <div class="modal-body" ng-show="appRestore.busyFetching">
                 <h4 class="text-center"><i class="fa fa-circle-o-notch fa-spin"></i> Fetching backups</h4>
             </div>
-            <div class="modal-body" ng-show="appRestore.backups.length === 0 && !appRestore.busy">
+            <div class="modal-body" ng-show="appRestore.backups.length === 0 && !appRestore.busyFetching">
                 <h4 class="text-danger">This app has no backups.</h4>
             </div>
-            <div class="modal-body" ng-show="appRestore.backups.length !== 0 && !appRestore.busy">
+            <div class="modal-body" ng-show="appRestore.backups.length !== 0">
                 <p>Restoring the app will lose all content generated since the backup.</p>
                 <label class="control-label">Select backup</label>
                 <div class="dropdown">
