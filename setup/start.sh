@@ -284,10 +284,13 @@ fi
 echo "==> Changing ownership"
 chown "${USER}:${USER}" -R "${CONFIG_DIR}"
 chown "${USER}:${USER}" -R "${PLATFORM_DATA_DIR}/nginx" "${PLATFORM_DATA_DIR}/collectd" "${PLATFORM_DATA_DIR}/logrotate.d" "${PLATFORM_DATA_DIR}/addons" "${PLATFORM_DATA_DIR}/acme" "${PLATFORM_DATA_DIR}/backup"
-chown "${USER}:${USER}" -R "${BOX_DATA_DIR}"
-chown "${USER}:${USER}" -R "${BOX_DATA_DIR}/mail/dkim" # this is owned by box currently since it generates the keys
 chown "${USER}:${USER}" "${PLATFORM_DATA_DIR}/INFRA_VERSION" 2>/dev/null || true
 chown "${USER}:${USER}" "${PLATFORM_DATA_DIR}"
+
+# do not chown the boxdata/mail directory; dovecot gets upset
+chown "${USER}:${USER}" "${BOX_DATA_DIR}"
+find "${BOX_DATA_DIR}" -mindepth 1 -maxdepth 1 -not -path "${BOX_DATA_DIR}/mail" -exec chown -R "${USER}:${USER}" {} \;
+chown "${USER}:${USER}" -R "${BOX_DATA_DIR}/mail/dkim" # this is owned by box currently since it generates the keys
 
 echo "==> Adding automated configs"
 if [[ ! -z "${arg_backup_config}" ]]; then
