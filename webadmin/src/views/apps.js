@@ -72,6 +72,47 @@ angular.module('Application').controller('AppsController', ['$scope', '$location
 
         selectBackup: function (backup) {
             $scope.appRestore.selectedBackup = backup;
+        },
+
+        show: function (app) {
+            $scope.reset();
+
+            $scope.appRestore.app = app;
+            $scope.appRestore.busyFetching = true;
+
+            $('#appRestoreModal').modal('show');
+
+            Client.getAppBackups(app.id, function (error, backups) {
+                if (error) {
+                    Client.error(error);
+                } else {
+                    $scope.appRestore.backups = backups;
+                    if (backups.length) $scope.appRestore.selectedBackup = backups[0]; // pre-select first backup
+                    $scope.appRestore.busyFetching = false;
+                }
+            });
+
+            return false; // prevent propagation and default
+        },
+
+        submit: function () {
+            $scope.appRestore.busy = true;
+            $scope.appRestore.error.password = null;
+
+            Client.restoreApp($scope.appRestore.app.id, $scope.appRestore.selectedBackup.id, $scope.appRestore.password, function (error) {
+                if (error && error.statusCode === 403) {
+                    $scope.appRestore.password = '';
+                    $scope.appRestore.error.password = true;
+                    $scope.appRestoreForm.password.$setPristine();
+                    $('#appRestorePasswordInput').focus();
+                } else if (error) {
+                    Client.error(error);
+                } else {
+                    $('#appRestoreModal').modal('hide');
+                }
+
+                $scope.appRestore.busy = false;
+            });
         }
     };
 
@@ -323,47 +364,6 @@ angular.module('Application').controller('AppsController', ['$scope', '$location
         $('#appErrorModal').modal('show');
 
         return false; // prevent propagation and default
-    };
-
-    $scope.showRestore = function (app) {
-        $scope.reset();
-
-        $scope.appRestore.app = app;
-        $scope.appRestore.busyFetching = true;
-
-        $('#appRestoreModal').modal('show');
-
-        Client.getAppBackups(app.id, function (error, backups) {
-            if (error) {
-                Client.error(error);
-            } else {
-                $scope.appRestore.backups = backups;
-                if (backups.length) $scope.appRestore.selectedBackup = backups[0]; // pre-select first backup
-                $scope.appRestore.busyFetching = false;
-            }
-        });
-
-        return false; // prevent propagation and default
-    };
-
-    $scope.doRestore = function () {
-        $scope.appRestore.busy = true;
-        $scope.appRestore.error.password = null;
-
-        Client.restoreApp($scope.appRestore.app.id, $scope.appRestore.selectedBackup.id, $scope.appRestore.password, function (error) {
-            if (error && error.statusCode === 403) {
-                $scope.appRestore.password = '';
-                $scope.appRestore.error.password = true;
-                $scope.appRestoreForm.password.$setPristine();
-                $('#appRestorePasswordInput').focus();
-            } else if (error) {
-                Client.error(error);
-            } else {
-                $('#appRestoreModal').modal('hide');
-            }
-
-            $scope.appRestore.busy = false;
-        });
     };
 
     $scope.showUninstall = function (app) {
