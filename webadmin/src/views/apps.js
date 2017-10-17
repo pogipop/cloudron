@@ -178,10 +178,6 @@ angular.module('Application').controller('AppsController', ['$scope', '$location
         $scope.appUpdate.error = {};
         $scope.appUpdate.app = {};
         $scope.appUpdate.manifest = {};
-        $scope.appUpdate.portBindings = {};
-
-        $scope.appUpdateForm.$setPristine();
-        $scope.appUpdateForm.$setUntouched();
 
         // reset restore dialog
         $scope.appRestore.error = {};
@@ -408,82 +404,13 @@ angular.module('Application').controller('AppsController', ['$scope', '$location
         $scope.appUpdate.app = app;
         $scope.appUpdate.manifest = angular.copy(updateManifest);
 
-        // ensure we always operate on objects here
-        app.portBindings = app.portBindings || {};
-        app.manifest.tcpPorts = app.manifest.tcpPorts || {};
-        updateManifest.tcpPorts = updateManifest.tcpPorts || {};
-
-        // Activate below two lines for testing the UI
-        // updateManifest.tcpPorts['TEST_HTTP'] = { defaultValue: 1337, description: 'HTTP server'};
-        // app.manifest.tcpPorts['TEST_FOOBAR'] = { defaultValue: 1338, description: 'FOOBAR server'};
-        // app.portBindings['TEST_SSH'] = 1339;
-
-        var portBindingsInfo = {};                  // Portbinding map only for information
-        var portBindings = {};                      // This is the actual model holding the env:port pair
-        var portBindingsEnabled = {};               // This is the actual model holding the enabled/disabled flag
-        var obsoletePortBindings = {};              // Info map for obsolete port bindings, this is for display use only and thus not in the model
-        var portsChanged = false;
-        var env;
-
-        // detect new portbindings and copy all from manifest.tcpPorts
-        for (env in updateManifest.tcpPorts) {
-            portBindingsInfo[env] = updateManifest.tcpPorts[env];
-            if (!app.manifest.tcpPorts[env]) {
-                portBindingsInfo[env].isNew = true;
-                portBindingsEnabled[env] = true;
-
-                // use default integer port value in model
-                portBindings[env] = updateManifest.tcpPorts[env].defaultValue || 0;
-
-                portsChanged = true;
-            } else {
-                // detect if the port binding was enabled
-                if (app.portBindings[env]) {
-                    portBindings[env] = app.portBindings[env];
-                    portBindingsEnabled[env] = true;
-                } else {
-                    portBindings[env] = updateManifest.tcpPorts[env].defaultValue || 0;
-                    portBindingsEnabled[env] = false;
-                }
-            }
-        }
-
-        // detect obsolete portbindings (mappings in app.portBindings, but not anymore in updateManifest.tcpPorts)
-        for (env in app.manifest.tcpPorts) {
-            // only list the port if it is not in the new manifest and was enabled previously
-            if (!updateManifest.tcpPorts[env] && app.portBindings[env]) {
-                obsoletePortBindings[env] = app.portBindings[env];
-                portsChanged = true;
-            }
-        }
-
-        // now inject the maps into the $scope, we only show those if ports have changed
-        $scope.appUpdate.portBindings = portBindings;                 // always inject the model, so it gets used in the actual update call
-        $scope.appUpdate.portBindingsEnabled = portBindingsEnabled;   // always inject the model, so it gets used in the actual update call
-
-        if (portsChanged) {
-            $scope.appUpdate.portBindingsInfo = portBindingsInfo;
-            $scope.appUpdate.obsoletePortBindings = obsoletePortBindings;
-        } else {
-            $scope.appUpdate.portBindingsInfo = {};
-            $scope.appUpdate.obsoletePortBindings = {};
-        }
-
         $('#appUpdateModal').modal('show');
     };
 
     $scope.doUpdate = function (form) {
         $scope.appUpdate.busy = true;
 
-        // only use enabled ports from portBindings
-        var finalPortBindings = {};
-        for (var env in $scope.appUpdate.portBindings) {
-            if ($scope.appUpdate.portBindingsEnabled[env]) {
-                finalPortBindings[env] = $scope.appUpdate.portBindings[env];
-            }
-        }
-
-        Client.updateApp($scope.appUpdate.app.id, $scope.appUpdate.manifest, finalPortBindings, function (error) {
+        Client.updateApp($scope.appUpdate.app.id, $scope.appUpdate.manifest, function (error) {
             if (error) {
                 Client.error(error);
             } else {

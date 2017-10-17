@@ -299,29 +299,6 @@
             <div class="modal-body">
                 <p>Recent Changes for new version <b>{{ appUpdate.manifest.version}}</b>:</p>
                 <div ng-bind-html="appUpdate.manifest.changelog | markdown2html"></div>
-                <br/>
-                <fieldset>
-                    <form role="form" name="appUpdateForm" ng-submit="doUpdate(appUpdateForm)" autocomplete="off">
-                        <div ng-repeat="(env, info) in appUpdate.portBindingsInfo" ng-class="{ 'newPort': info.isNew }">
-                            <ng-form name="portInfo_form">
-                                <div class="form-group" ng-class="{ 'has-error': portInfo_form.itemName{{$index}}.$dirty && portInfo_form.itemName{{$index}}.$invalid }">
-                                    <label class="control-label" for="inputPortInfo{{env}}"><input type="checkbox" ng-model="appUpdate.portBindingsEnabled[env]"> <span ng-show="info.isNew">New - </span> {{ info.description }} ({{ HOST_PORT_MIN }} - {{ HOST_PORT_MAX }})</label>
-                                    <input type="number" class="form-control" ng-model="appUpdate.portBindings[env]" ng-disabled="!appUpdate.portBindingsEnabled[env]" id="inputPortInfo{{env}}" later-name="itemName{{$index}}" min="{{HOST_PORT_MIN}}" max="{{HOST_PORT_MAX}}" required>
-                                </div>
-                            </ng-form>
-                        </div>
-                        <div ng-repeat="(env, port) in appUpdate.obsoletePortBindings" class="obsoletePort">
-                            <ng-form name="obsoletePortInfo_form">
-                                <div class="form-group">
-                                    Obsolete -
-                                    <label class="control-label">{{ env }}</label>
-                                    <input type="number" class="form-control" ng-model="port" disabled>
-                                </div>
-                            </ng-form>
-                        </div>
-                        <input class="ng-hide" type="submit" ng-disabled="appUpdateForm.$invalid || busy"/>
-                    </form>
-                </fieldset>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
