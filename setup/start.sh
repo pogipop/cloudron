@@ -95,11 +95,6 @@ mkdir -p "${BOX_DATA_DIR}/mail/dkim"
 mkdir -p /var/backups
 chmod 777 /var/backups
 
-echo "==> Migrating mail data"
-if [[ -d "${PLATFORM_DATA_DIR}/mail" ]]; then
-    find "${PLATFORM_DATA_DIR}/mail" -mindepth 1 -maxdepth 1 -exec mv --target-directory="${BOX_DATA_DIR}/mail" '{}' +
-fi
-
 echo "==> Configuring journald"
 sed -e "s/^#SystemMaxUse=.*$/SystemMaxUse=100M/" \
     -e "s/^#ForwardToSyslog=.*$/ForwardToSyslog=no/" \
