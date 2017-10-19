@@ -363,6 +363,7 @@ function setupSendMail(app, options, callback) {
         var env = [
             { name: 'MAIL_SMTP_SERVER', value: 'mail' },
             { name: 'MAIL_SMTP_PORT', value: '2525' },
+            { name: 'MAIL_SMTPS_PORT', value: '4650' },
             { name: 'MAIL_SMTP_USERNAME', value: mailbox.name },
             { name: 'MAIL_SMTP_PASSWORD', value: password },
             { name: 'MAIL_FROM', value: mailbox.name + '@' + config.fqdn() },
