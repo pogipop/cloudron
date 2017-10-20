@@ -69,7 +69,7 @@ eval set -- "${args}"
 while true; do
     case "$1" in
     --domain) domain="$2"; shift 2;;
-    --help) echo "See https://cloudron.io/references/selfhosting.html on how to install Cloudron"; exit 0;;
+    --help) echo "See https://cloudron.io/documentation/installation/ on how to install Cloudron"; exit 0;;
     --provider) provider="$2"; shift 2;;
     --encryption-key) encryptionKey="$2"; shift 2;;
     --restore-url) restoreUrl="$2"; shift 2;;
