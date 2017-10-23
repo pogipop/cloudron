@@ -157,6 +157,38 @@ function groupSearch(req, res, next) {
     });
 }
 
+function groupUsersCompare(req, res, next) {
+    debug('group users compare: dn %s, attribute %s, value %s (from %s)', req.dn.toString(), req.attribute, req.value, req.connection.ldap.id);
+
+    getUsersWithAccessToApp(req, function (error, result) {
+        if (error) return next(error);
+
+        // we only support memberuid here, if we add new group attributes later add them here
+        if (req.attribute === 'memberuid') {
+            var found = result.find(function (u) { return u.id === req.value; });
+            if (found) return res.end(true);
+        }
+
+        res.end(false);
+    });
+}
+
+function groupAdminsCompare(req, res, next) {
+    debug('group admins compare: dn %s, attribute %s, value %s (from %s)', req.dn.toString(), req.attribute, req.value, req.connection.ldap.id);
+
+    getUsersWithAccessToApp(req, function (error, result) {
+        if (error) return next(error);
+
+        // we only support memberuid here, if we add new group attributes later add them here
+        if (req.attribute === 'memberuid') {
+            var found = result.find(function (u) { return u.id === req.value; });
+            if (found && found.admin) return res.end(true);
+        }
+
+        res.end(false);
+    });
+}
+
 function mailboxSearch(req, res, next) {
     debug('mailbox search: dn %s, scope %s, filter %s (from %s)', req.dn.toString(), req.scope, req.filter.toString(), req.connection.ldap.id);
 
@@ -369,6 +401,9 @@ function start(callback) {
 
     gServer.bind('ou=recvmail,dc=cloudron', authenticateMailbox);
     gServer.bind('ou=sendmail,dc=cloudron', authenticateMailbox);
+
+    gServer.compare('cn=users,ou=groups,dc=cloudron', groupUsersCompare);
+    gServer.compare('cn=admins,ou=groups,dc=cloudron', groupAdminsCompare);
 
     // this is the bind for addons (after bind, they might search and authenticate)
     gServer.bind('ou=addons,dc=cloudron', function(req, res, next) {
