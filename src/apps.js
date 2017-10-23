@@ -639,14 +639,6 @@ function update(appId, data, auditSource, callback) {
 
         newConfig.manifest = manifest;
 
-        // TODO: disallow portBindings when an app updates and let ports simply be disabled. the new ports
-        // might conflict when the update is actually carried out as we do not 'reserve' them in the db
-        if ('portBindings' in data) {
-            newConfig.portBindings = data.portBindings;
-            error = validatePortBindings(data.portBindings, newConfig.manifest.tcpPorts);
-            if (error) return callback(error);
-        }
-
         if ('icon' in data) {
             if (data.icon) {
                 if (!validator.isBase64(data.icon)) return callback(new AppsError(AppsError.BAD_FIELD, 'icon is not base64'));
