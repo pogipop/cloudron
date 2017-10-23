@@ -10,6 +10,7 @@ exports = module.exports = {
     update: update,
     getAll: getAll,
     getPortBindings: getPortBindings,
+    delPortBinding: delPortBinding,
 
     setAddonConfig: setAddonConfig,
     getAddonConfig: getAddonConfig,
@@ -249,6 +250,18 @@ function getPortBindings(id, callback) {
         }
 
         callback(null, portBindings);
+    });
+}
+
+function delPortBinding(hostPort, callback) {
+    assert.strictEqual(typeof hostPort, 'number');
+    assert.strictEqual(typeof callback, 'function');
+
+    database.query('DELETE FROM appPortBindings WHERE hostPort=?', [ hostPort ], function (error, result) {
+        if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
+        if (result.affectedRows !== 1) return callback(new DatabaseError(DatabaseError.NOT_FOUND));
+
+        callback(null);
     });
 }
 
