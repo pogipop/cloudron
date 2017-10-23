@@ -35,6 +35,7 @@ var addons = require('./addons.js'),
     certificates = require('./certificates.js'),
     config = require('./config.js'),
     database = require('./database.js'),
+    DatabaseError = require('./databaseerror.js'),
     debug = require('debug')('box:apptask'),
     docker = require('./docker.js'),
     ejs = require('ejs'),
@@ -615,6 +616,27 @@ function update(app, callback) {
 
         // only delete unused addons after backup
         addons.teardownAddons.bind(null, app, unusedAddons),
+
+        // free unused ports
+        function (next) {
+            // make sure we always have objects
+            var currentPorts = app.portBindings || {};
+            var newPorts = app.newConfig.manifest.tcpPorts || {};
+
+            async.each(Object.keys(currentPorts), function (portName, callback) {
+                if (newPorts[portName]) return callback(); // port still in use
+
+                appdb.delPortBinding(currentPorts[portName], function (error) {
+                    if (error && error.reason === DatabaseError.NOT_FOUND) console.error('Portbinding does not exist in database.');
+                    else if (error) return next(error);
+
+                    // also delete from app object for further processing (the db is updated in the next step)
+                    delete app.portBindings[portName];
+
+                    callback();
+                });
+            }, next);
+        },
 
         // switch over to the new config. manifest, memoryLimit, portBindings, appstoreId are updated here
         updateApp.bind(null, app, app.newConfig),
