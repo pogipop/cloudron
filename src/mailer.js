@@ -385,7 +385,7 @@ function boxUpdateAvailable(newBoxVersion, changelog) {
             var templateDataHTML = JSON.parse(JSON.stringify(templateData));
             templateDataHTML.format = 'html';
 
-             var mailOptions = {
+            var mailOptions = {
                 from: mailConfig().from,
                 to: adminEmails.join(', '),
                 subject: util.format('%s has a new update available', config.fqdn()),
@@ -405,7 +405,7 @@ function appUpdateAvailable(app, updateInfo) {
     getAdminEmails(function (error, adminEmails) {
         if (error) return console.log('Error getting admins', error);
 
-         var mailOptions = {
+        var mailOptions = {
             from: mailConfig().from,
             to: adminEmails.join(', '),
             subject: util.format('[%s] Update available for %s', config.fqdn(), app.fqdn),
@@ -561,8 +561,8 @@ function sendFeedback(user, type, subject, description) {
         type === exports.FEEDBACK_TYPE_UPGRADE_REQUEST ||
         type === exports.FEEDBACK_TYPE_APP_ERROR);
 
-        var mailOptions = {
-            from: mailConfig().from,
+    var mailOptions = {
+        from: mailConfig().from,
         to: 'support@cloudron.io',
         subject: util.format('[%s] %s - %s', type, config.fqdn(), subject),
         text: render('feedback.ejs', { fqdn: config.fqdn(), type: type, user: user, subject: subject, description: description, format: 'text'})

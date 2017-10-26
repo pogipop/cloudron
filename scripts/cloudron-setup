@@ -214,9 +214,6 @@ if [[ -z "${dataJson}" ]]; then
             "format": "tgz",
             "retentionSecs": 172800
         },
-        "updateConfig": {
-            "prerelease": ${prerelease}
-        },
         "version": "${version}"
     }
 EOF

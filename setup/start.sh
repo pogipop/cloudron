@@ -303,11 +303,6 @@ if [[ ! -z "${arg_dns_config}" ]]; then
         -e "REPLACE INTO settings (name, value) VALUES (\"dns_config\", '$arg_dns_config')" box
 fi
 
-if [[ ! -z "${arg_update_config}" ]]; then
-    mysql -u root -p${mysql_root_password} \
-        -e "REPLACE INTO settings (name, value) VALUES (\"update_config\", '$arg_update_config')" box
-fi
-
 if [[ ! -z "${arg_tls_config}" ]]; then
     mysql -u root -p${mysql_root_password} \
         -e "REPLACE INTO settings (name, value) VALUES (\"tls_config\", '$arg_tls_config')" box

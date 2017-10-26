@@ -20,7 +20,6 @@ arg_version=""
 arg_web_server_origin=""
 arg_backup_config=""
 arg_dns_config=""
-arg_update_config=""
 arg_provider=""
 arg_app_bundle=""
 arg_is_demo="false"
@@ -85,9 +84,6 @@ while true; do
 
         arg_dns_config=$(echo "$2" | $json dnsConfig)
         [[ "${arg_dns_config}" == "null" ]] && arg_dns_config=""
-
-        arg_update_config=$(echo "$2" | $json updateConfig)
-        [[ "${arg_update_config}" == "null" ]] && arg_update_config=""
 
         shift 2
         ;;
