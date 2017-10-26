@@ -344,10 +344,10 @@ describe('App API', function () {
     it('app install fails - reserved admin location', function (done) {
         superagent.post(SERVER_URL + '/api/v1/apps/install')
                .query({ access_token: token })
-               .send({ manifest: APP_MANIFEST, location: constants.ADMIN_LOCATION, accessRestriction: null })
+               .send({ manifest: APP_MANIFEST, location: 'my', accessRestriction: null })
                .end(function (err, res) {
             expect(res.statusCode).to.equal(400);
-            expect(res.body.message).to.eql(constants.ADMIN_LOCATION + ' is reserved');
+            expect(res.body.message).to.eql('my is reserved');
             done();
         });
     });
