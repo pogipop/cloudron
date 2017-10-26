@@ -163,14 +163,15 @@ function testConfig(apiConfig, callback) {
     if ('noHardlinks' in apiConfig && typeof apiConfig.noHardlinks !== 'boolean') return callback(new BackupsError(BackupsError.BAD_FIELD, 'noHardlinks must be boolean'));
 
     fs.stat(apiConfig.backupFolder, function (error, result) {
-        if (error) {
-            debug('testConfig: %s', apiConfig.backupFolder, error);
-            return callback(new BackupsError(BackupsError.BAD_FIELD, 'Directory does not exist or cannot be accessed'));
-        }
-
+        if (error) return callback(new BackupsError(BackupsError.BAD_FIELD, 'Directory does not exist or cannot be accessed: ' + error.message));
         if (!result.isDirectory()) return callback(new BackupsError(BackupsError.BAD_FIELD, 'Backup location is not a directory'));
 
-        callback(null);
+        mkdirp(path.join(apiConfig.backupFolder, 'snapshot'), function (error) {
+            if (error && error.code === 'EACCES') return callback(new BackupsError(BackupsError.BAD_FIELD, `Access denied. Run "chown yellowtent:yellowtent ${apiConfig.backupFolder}" on the server`));
+            if (error) return callback(new BackupsError(BackupsError.BAD_FIELD, error.message));
+
+            callback(null);
+        });
     });
 }
 
