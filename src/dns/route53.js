@@ -13,7 +13,7 @@ exports = module.exports = {
 
 var assert = require('assert'),
     AWS = require('aws-sdk'),
-    constants = require('../constants.js'),
+    config = require('../config.js'),
     debug = require('debug')('box:dns/route53'),
     dns = require('dns'),
     SubdomainError = require('../subdomains.js').SubdomainError,
@@ -247,7 +247,7 @@ function verifyDnsConfig(dnsConfig, fqdn, zoneName, ip, callback) {
                 return callback(new SubdomainError(SubdomainError.BAD_FIELD, 'Domain nameservers are not set to Route53'));
             }
 
-            const name = constants.ADMIN_LOCATION + (fqdn === zoneName ? '' :  '.' + fqdn.slice(0, - zoneName.length - 1));
+            const name = config.adminLocation() + (fqdn === zoneName ? '' :  '.' + fqdn.slice(0, - zoneName.length - 1));
 
             upsert(credentials, zoneName, name, 'A', [ ip ], function (error, changeId) {
                 if (error) return callback(error);

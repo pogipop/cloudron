@@ -28,7 +28,9 @@ exports = module.exports = {
     adminOrigin: adminOrigin,
     internalAdminOrigin: internalAdminOrigin,
     sysadminOrigin: sysadminOrigin, // caas routes
+    adminLocation: adminLocation,
     adminFqdn: adminFqdn,
+    mailLocation: mailLocation,
     mailFqdn: mailFqdn,
     appFqdn: appFqdn,
     zoneName: zoneName,
@@ -45,7 +47,6 @@ exports = module.exports = {
 };
 
 var assert = require('assert'),
-    constants = require('./constants.js'),
     fs = require('fs'),
     path = require('path'),
     safe = require('safetydance'),
@@ -79,6 +80,7 @@ function initConfig() {
     // setup defaults
     data.fqdn = 'localhost';
     data.zoneName = '';
+    data.adminLocation = 'my';
 
     data.token = null;
     data.version = null;
@@ -176,16 +178,24 @@ function appFqdn(location) {
     return isCustomDomain() ? location + '.' + fqdn() : location + '-' + fqdn();
 }
 
-function adminFqdn() {
-    return appFqdn(constants.ADMIN_LOCATION);
+function mailLocation() {
+    return get('adminLocation'); // not a typo! should be same as admin location until we figure out certificates
 }
 
 function mailFqdn() {
-    return appFqdn(constants.MAIL_LOCATION);
+    return appFqdn(mailLocation());
+}
+
+function adminLocation() {
+    return get('adminLocation');
+}
+
+function adminFqdn() {
+    return appFqdn(adminLocation());
 }
 
 function adminOrigin() {
-    return 'https://' + appFqdn(constants.ADMIN_LOCATION);
+    return 'https://' + appFqdn(adminLocation());
 }
 
 function internalAdminOrigin() {

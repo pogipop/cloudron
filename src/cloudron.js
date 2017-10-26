@@ -238,7 +238,7 @@ function configureWebadmin(callback) {
     function configureNginx(error) {
         debug('configureNginx: dns update:%j', error);
 
-        certificates.ensureCertificate({ location: constants.ADMIN_LOCATION }, function (error, certFilePath, keyFilePath) {
+        certificates.ensureCertificate({ location: config.adminLocation() }, function (error, certFilePath, keyFilePath) {
             if (error) return done(error);
 
             gWebadminStatus.tls = true;
@@ -417,6 +417,9 @@ function getConfig(callback) {
                     apiServerOrigin: config.apiServerOrigin(),
                     webServerOrigin: config.webServerOrigin(),
                     fqdn: config.fqdn(),
+                    adminLocation: config.adminLocation(),
+                    adminFqdn: config.adminFqdn(),
+                    mailFqdn: config.mailFqdn(),
                     version: config.version(),
                     update: updateChecker.getUpdateInfo(),
                     progress: progress.getAll(),
@@ -538,7 +541,7 @@ function addDnsRecords(ip, callback) {
     var dkimKey = readDkimPublicKeySync();
     if (!dkimKey) return callback(new CloudronError(CloudronError.INTERNAL_ERROR, new Error('Failed to read dkim public key')));
 
-    var webadminRecord = { subdomain: constants.ADMIN_LOCATION, type: 'A', values: [ ip ] };
+    var webadminRecord = { subdomain: config.adminLocation(), type: 'A', values: [ ip ] };
     // t=s limits the domainkey to this domain and not it's subdomains
     var dkimRecord = { subdomain: constants.DKIM_SELECTOR + '._domainkey', type: 'TXT', values: [ '"v=DKIM1; t=s; p=' + dkimKey + '"' ] };
 
@@ -670,19 +673,19 @@ function doUpgrade(boxUpdateInfo, callback) {
         if (error) return upgradeError(error);
 
         superagent.post(config.apiServerOrigin() + '/api/v1/boxes/' + config.fqdn() + '/upgrade')
-          .query({ token: config.token() })
-          .send({ version: boxUpdateInfo.version })
-          .timeout(30 * 1000)
-          .end(function (error, result) {
-            if (error && !error.response) return upgradeError(new Error('Network error making upgrade request: ' + error));
-            if (result.statusCode !== 202) return upgradeError(new Error(util.format('Server not ready to upgrade. statusCode: %s body: %j', result.status, result.body)));
+            .query({ token: config.token() })
+            .send({ version: boxUpdateInfo.version })
+            .timeout(30 * 1000)
+            .end(function (error, result) {
+                if (error && !error.response) return upgradeError(new Error('Network error making upgrade request: ' + error));
+                if (result.statusCode !== 202) return upgradeError(new Error(util.format('Server not ready to upgrade. statusCode: %s body: %j', result.status, result.body)));
 
-            progress.set(progress.UPDATE, 10, 'Updating base system');
+                progress.set(progress.UPDATE, 10, 'Updating base system');
 
-            // no need to unlock since this is the last thing we ever do on this box
-            callback();
-            retire('upgrade');
-        });
+                // no need to unlock since this is the last thing we ever do on this box
+                callback();
+                retire('upgrade');
+            });
     });
 }
 
@@ -706,6 +709,7 @@ function doUpdate(boxUpdateInfo, callback) {
             apiServerOrigin: config.apiServerOrigin(),
             webServerOrigin: config.webServerOrigin(),
             fqdn: config.fqdn(),
+            adminLocation: config.adminLocation(),
             tlsCert: config.tlsCert(),
             tlsKey: config.tlsKey(),
             isCustomDomain: config.isCustomDomain(),
@@ -844,20 +848,20 @@ function doMigrate(options, callback) {
         debug('migrate: domain: %s size %s region %s', options.domain, options.size, options.region);
 
         superagent
-          .post(config.apiServerOrigin() + '/api/v1/boxes/' + config.fqdn() + '/migrate')
-          .query({ token: config.token() })
-          .send(options)
-          .timeout(30 * 1000)
-          .end(function (error, result) {
-            if (error && !error.response) return unlock(error); // network error
-            if (result.statusCode === 409) return unlock(new CloudronError(CloudronError.BAD_STATE));
-            if (result.statusCode === 404) return unlock(new CloudronError(CloudronError.NOT_FOUND));
-            if (result.statusCode !== 202) return unlock(new CloudronError(CloudronError.EXTERNAL_ERROR, util.format('%s %j', result.status, result.body)));
+            .post(config.apiServerOrigin() + '/api/v1/boxes/' + config.fqdn() + '/migrate')
+            .query({ token: config.token() })
+            .send(options)
+            .timeout(30 * 1000)
+            .end(function (error, result) {
+                if (error && !error.response) return unlock(error); // network error
+                if (result.statusCode === 409) return unlock(new CloudronError(CloudronError.BAD_STATE));
+                if (result.statusCode === 404) return unlock(new CloudronError(CloudronError.NOT_FOUND));
+                if (result.statusCode !== 202) return unlock(new CloudronError(CloudronError.EXTERNAL_ERROR, util.format('%s %j', result.status, result.body)));
 
-            progress.set(progress.MIGRATE, 10, 'Migrating');
+                progress.set(progress.MIGRATE, 10, 'Migrating');
 
-            retire('migrate', _.pick(options, 'domain', 'size', 'region'));
-        });
+                retire('migrate', _.pick(options, 'domain', 'size', 'region'));
+            });
     });
 
     callback(null);

@@ -9,10 +9,10 @@ exports = module.exports = {
 };
 
 var assert = require('assert'),
-    GCDNS = require('@google-cloud/dns'),
-    constants = require('../constants.js'),
+    config = require('../config.js'),
     debug = require('debug')('box:dns/gcdns'),
     dns = require('dns'),
+    GCDNS = require('@google-cloud/dns'),
     SubdomainError = require('../subdomains.js').SubdomainError,
     util = require('util'),
     _ = require('underscore');
@@ -187,7 +187,7 @@ function verifyDnsConfig(dnsConfig, fqdn, zoneName, ip, callback) {
                 return callback(new SubdomainError(SubdomainError.BAD_FIELD, 'Domain nameservers are not set to Google Cloud DNS'));
             }
 
-            const name = constants.ADMIN_LOCATION + (fqdn === zoneName ? '' :  '.' + fqdn.slice(0, - zoneName.length - 1));
+            const name = config.adminLocation() + (fqdn === zoneName ? '' :  '.' + fqdn.slice(0, - zoneName.length - 1));
 
             upsert(credentials, zoneName, name, 'A', [ ip ], function (error, changeId) {
                 if (error) return callback(error);

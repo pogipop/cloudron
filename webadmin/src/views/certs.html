@@ -90,7 +90,7 @@
                 </p>
 
                 <p ng-show="dnsCredentials.provider === 'manual'">
-                    Setup an <i>A</i> record for <b>my.{{ dnsCredentials.customDomain || 'example.com' }}</b> to this server's IP. All DNS records have to be setup manually <i>before</i> each app installation.
+                    Setup an <i>A</i> record for <b>{{ config.adminLocation }}.{{ dnsCredentials.customDomain || 'example.com' }}</b> to this server's IP. All DNS records have to be setup manually <i>before</i> each app installation.
                 </p>
             </div>
             <div class="modal-footer ">
