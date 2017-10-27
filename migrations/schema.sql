@@ -142,3 +142,10 @@ CREATE TABLE IF NOT EXISTS mailboxes(
     creationTime TIMESTAMP,
 
     PRIMARY KEY (name));
+
+CREATE TABLE IF NOT EXISTS domains(
+    domain VARCHAR(128) NOT NULL, /* if this needs to be larger, InnoDB has a limit of 767 bytes for PRIMARY KEY values! */
+    zoneName VARCHAR(128) NOT NULL, /* this mostly contains the domain itself again */
+    configJson TEXT, /* JSON containing the dns backend provider config */
+
+    PRIMARY KEY (domain));
