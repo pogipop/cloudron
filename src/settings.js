@@ -108,7 +108,6 @@ var gDefaults = (function () {
     result[exports.CLOUDRON_NAME_KEY] = 'Cloudron';
     result[exports.DEVELOPER_MODE_KEY] = true;
     result[exports.DYNAMIC_DNS_KEY] = false;
-    result[exports.DNS_CONFIG_KEY] = { provider: 'manual' };
     result[exports.BACKUP_CONFIG_KEY] = {
         provider: 'filesystem',
         key: '',
@@ -303,7 +302,7 @@ function getDnsConfig(callback) {
     assert.strictEqual(typeof callback, 'function');
 
     domains.get(config.fqdn(), function (error, result) {
-        if (error && error.reason === DomainError.NOT_FOUND) return callback(null, gDefaults[exports.DNS_CONFIG_KEY]);
+        if (error && error.reason === DomainError.NOT_FOUND) return callback(null, { provider: 'manual' });
         if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
 
         callback(null, result);
@@ -640,7 +639,7 @@ function getAll(callback) {
         result[exports.MAIL_FROM_VALIDATION_KEY] = !!result[exports.MAIL_FROM_VALIDATION_KEY];
 
         // convert JSON objects
-        [exports.DNS_CONFIG_KEY, exports.TLS_CONFIG_KEY, exports.BACKUP_CONFIG_KEY, exports.MAIL_CONFIG_KEY,
+        [exports.TLS_CONFIG_KEY, exports.BACKUP_CONFIG_KEY, exports.MAIL_CONFIG_KEY,
             exports.UPDATE_CONFIG_KEY, exports.APPSTORE_CONFIG_KEY, exports.MAIL_RELAY_KEY, exports.CATCH_ALL_ADDRESS_KEY].forEach(function (key) {
             result[key] = typeof result[key] === 'object' ? result[key] : safe.JSON.parse(result[key]);
         });
