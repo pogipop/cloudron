@@ -39,6 +39,7 @@ var appdb = require('./appdb.js'),
     cron = require('./cron.js'),
     debug = require('debug')('box:cloudron'),
     df = require('@sindresorhus/df'),
+    domains = require('./domains.js'),
     eventlog = require('./eventlog.js'),
     fs = require('fs'),
     locker = require('./locker.js'),
@@ -55,7 +56,6 @@ var appdb = require('./appdb.js'),
     shell = require('./shell.js'),
     spawn = require('child_process').spawn,
     split = require('split'),
-    subdomains = require('./subdomains.js'),
     superagent = require('superagent'),
     sysinfo = require('./sysinfo.js'),
     tld = require('tldjs'),
@@ -254,7 +254,7 @@ function configureWebadmin(callback) {
         addDnsRecords(ip, function (error) {
             if (error) return configureNginx(error);
 
-            subdomains.waitForDns(config.adminFqdn(), ip, 'A', { interval: 30000, times: 50000 }, function (error) {
+            domains.waitForDNSRecord(config.adminFqdn(), ip, 'A', { interval: 30000, times: 50000 }, function (error) {
                 if (error) return configureNginx(error);
 
                 gWebadminStatus.dns = true;
@@ -501,7 +501,7 @@ function readDkimPublicKeySync() {
 function txtRecordsWithSpf(callback) {
     assert.strictEqual(typeof callback, 'function');
 
-    subdomains.get('', 'TXT', function (error, txtRecords) {
+    domains.getDNSRecords(config.fqdn(), 'TXT', function (error, txtRecords) {
         if (error) return callback(error);
 
         debug('txtRecordsWithSpf: current txt records - %j', txtRecords);
@@ -563,12 +563,12 @@ function addDnsRecords(ip, callback) {
         txtRecordsWithSpf(function (error, txtRecords) {
             if (error) return retryCallback(error);
 
-            if (txtRecords) records.push({ subdomain: '', type: 'TXT', values: txtRecords });
+            if (txtRecords) records.push({ subdomain: config.fqdn(), type: 'TXT', values: txtRecords });
 
             debug('addDnsRecords: will update %j', records);
 
             async.mapSeries(records, function (record, iteratorCallback) {
-                subdomains.upsert(record.subdomain, record.type, record.values, iteratorCallback);
+                domains.upsertDNSRecords(record.subdomain, record.type, record.values, iteratorCallback);
             }, function (error, changeIds) {
                 if (error) debug('addDnsRecords: failed to update : %s. will retry', error);
                 else debug('addDnsRecords: records %j added with changeIds %j', records, changeIds);
@@ -876,7 +876,7 @@ function refreshDNS(callback) {
                     // do not change state of installing apps since apptask will error if dns record already exists
                     if (app.installationState !== appdb.ISTATE_INSTALLED) return callback();
 
-                    subdomains.upsert(app.location, 'A', [ ip ], callback);
+                    domains.upsertDNSRecords(app.location, 'A', [ ip ], callback);
                 }, function (error) {
                     if (error) return callback(error);
 
