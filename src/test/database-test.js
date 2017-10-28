@@ -12,6 +12,7 @@ var appdb = require('../appdb.js'),
     clientdb = require('../clientdb.js'),
     database = require('../database'),
     DatabaseError = require('../databaseerror.js'),
+    domaindb = require('../domaindb'),
     eventlogdb = require('../eventlogdb.js'),
     expect = require('expect.js'),
     groupdb = require('../groupdb.js'),
@@ -68,6 +69,122 @@ describe('database', function () {
 
     after(function (done) {
         database._clear(done);
+    });
+
+    describe('domains', function () {
+        const DOMAIN_0 = {
+            domain: 'foobar.com',
+            zoneName: 'foobar.com',
+            config: { provider: 'digitalocean', token: 'abcd' }
+        };
+
+        const DOMAIN_1 = {
+            domain: 'foo.example.com',
+            zoneName: 'example.com',
+            config: null
+        };
+
+        it('can add domain', function (done) {
+            domaindb.add(DOMAIN_0.domain, DOMAIN_0.zoneName, DOMAIN_0.config, done);
+        });
+
+        it('can add another domain', function (done) {
+            domaindb.add(DOMAIN_1.domain, DOMAIN_1.zoneName, DOMAIN_1.config, done);
+        });
+
+        it('cannot add same domain twice', function (done) {
+            domaindb.add(DOMAIN_0.domain, DOMAIN_0.zoneName, DOMAIN_0.config, function (error) {
+                expect(error).to.be.ok();
+                expect(error.reason).to.be(DatabaseError.ALREADY_EXISTS);
+                done();
+            });
+        });
+
+        it('can get domain', function (done) {
+            domaindb.get(DOMAIN_0.domain, function (error, result) {
+                expect(error).to.equal(null);
+                expect(result).to.be.an('object');
+                expect(result.domain).to.equal(DOMAIN_0.domain);
+                expect(result.zoneName).to.equal(DOMAIN_0.zoneName);
+                expect(result.config).to.eql(DOMAIN_0.config);
+
+                done();
+            });
+        });
+
+        it('can get domain without provider set', function (done) {
+            domaindb.get(DOMAIN_1.domain, function (error, result) {
+                expect(error).to.equal(null);
+                expect(result).to.be.an('object');
+                expect(result.domain).to.equal(DOMAIN_1.domain);
+                expect(result.zoneName).to.equal(DOMAIN_1.zoneName);
+                expect(result.config).to.eql(DOMAIN_1.config);
+
+                done();
+            });
+        });
+
+        it('can update domain', function (done) {
+            const newConfig = { provider: 'manual' };
+
+            domaindb.update(DOMAIN_1.domain, newConfig, function (error) {
+                console.log(error)
+                expect(error).to.equal(null);
+
+                domaindb.get(DOMAIN_1.domain, function (error, result) {
+                    expect(error).to.equal(null);
+                    expect(result).to.be.an('object');
+                    expect(result.domain).to.equal(DOMAIN_1.domain);
+                    expect(result.zoneName).to.equal(DOMAIN_1.zoneName);
+                    expect(result.config).to.eql(newConfig);
+
+                    DOMAIN_1.config = newConfig;
+
+                    done();
+                });
+            });
+        });
+
+        it('can get all domains', function (done) {
+            domaindb.getAll(function (error, result) {
+                expect(error).to.equal(null);
+                expect(result).to.be.an('array');
+                expect(result.length).to.equal(2);
+
+                // sorted by domain
+                expect(result[0].domain).to.equal(DOMAIN_1.domain);
+                expect(result[0].zoneName).to.equal(DOMAIN_1.zoneName);
+                expect(result[0].config).to.eql(DOMAIN_1.config);
+
+                expect(result[1].domain).to.equal(DOMAIN_0.domain);
+                expect(result[1].zoneName).to.equal(DOMAIN_0.zoneName);
+                expect(result[1].config).to.eql(DOMAIN_0.config);
+
+                done();
+            });
+        });
+
+        it('cannot delete non-existing domain', function (done) {
+            domaindb.del('not.exists', function (error) {
+                expect(error).to.be.a(DatabaseError);
+                expect(error.reason).to.equal(DatabaseError.NOT_FOUND);
+
+                done();
+            });
+        });
+
+        it('can delete existing domain', function (done) {
+            domaindb.del(DOMAIN_0.domain, function (error) {
+                expect(error).to.be(null);
+
+                domaindb.get(DOMAIN_0.domain, function (error) {
+                    expect(error).to.be.a(DatabaseError);
+                    expect(error.reason).to.equal(DatabaseError.NOT_FOUND);
+
+                    done();
+                });
+            });
+        });
     });
 
     describe('user', function () {
