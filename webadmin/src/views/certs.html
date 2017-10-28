@@ -33,7 +33,7 @@
                         <div class="form-group" ng-class="{ 'has-error': false }" ng-show="dnsCredentials.provider === 'gcdns'">
                             <div class="input-group">
                                 <input type="file" id="gcdnsKeyFileInput" style="display:none"/>
-                                <input type="text" class="form-control" placeholder="Service Account Key" ng-model="dnsCredentials.gcdnsKey.keyFileName" id="gcdnsKeyInput" name="cert" onclick="getElementById('gcdnsKeyFileInput').click();" style="cursor: pointer;" ng-disabled="dnsCredentials.busy" required>
+                                <input type="text" class="form-control" placeholder="Service Account Key" ng-model="dnsCredentials.gcdnsKey.keyFileName" id="gcdnsKeyInput" name="cert" onclick="getElementById('gcdnsKeyFileInput').click();" style="cursor: pointer;" ng-disabled="dnsCredentials.busy" ng-required="dnsCredentials.provider === 'gcdns'">
                                 <span class="input-group-addon">
                                   <i class="fa fa-upload" onclick="getElementById('gcdnsKeyFileInput').click();"></i>
                               </span>
