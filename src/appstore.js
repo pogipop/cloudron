@@ -158,10 +158,6 @@ function sendAliveStatus(data, callback) {
             if (error) return callback(new AppstoreError(AppstoreError.INTERNAL_ERROR, error));
 
             var backendSettings = {
-                dnsConfig: {
-                    provider: result[settings.DNS_CONFIG_KEY].provider,
-                    wildcard: result[settings.DNS_CONFIG_KEY].provider === 'manual' ? result[settings.DNS_CONFIG_KEY].wildcard : undefined
-                },
                 tlsConfig: {
                     provider: result[settings.TLS_CONFIG_KEY].provider
                 },
