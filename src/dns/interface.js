@@ -15,7 +15,7 @@ exports = module.exports = {
 };
 
 var assert = require('assert'),
-    SubdomainError = require('../subdomains.js').SubdomainError,
+    DomainError = require('../domains.js').DomainError,
     util = require('util');
 
 function upsert(dnsConfig, zoneName, subdomain, type, values, callback) {

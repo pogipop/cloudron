@@ -14,7 +14,7 @@ var assert = require('assert'),
     debug = require('debug')('box:dns/manual'),
     dig = require('../dig.js'),
     dns = require('dns'),
-    SubdomainError = require('../subdomains.js').SubdomainError,
+    DomainError = require('../domains.js').DomainError,
     util = require('util');
 
 function upsert(dnsConfig, zoneName, subdomain, type, values, callback) {
@@ -61,13 +61,13 @@ function verifyDnsConfig(dnsConfig, domain, zoneName, ip, callback) {
     var adminDomain = config.adminLocation() + '.' + domain;
 
     dns.resolveNs(zoneName, function (error, nameservers) {
-        if (error || !nameservers) return callback(new SubdomainError(SubdomainError.BAD_FIELD, 'Unable to get nameservers'));
+        if (error || !nameservers) return callback(new DomainError(DomainError.BAD_FIELD, 'Unable to get nameservers'));
 
         async.every(nameservers, function (nameserver, everyNsCallback) {
             // ns records cannot have cname
             dns.resolve4(nameserver, function (error, nsIps) {
                 if (error || !nsIps || nsIps.length === 0) {
-                    return everyNsCallback(new SubdomainError(SubdomainError.BAD_FIELD, 'Unable to resolve nameservers for this domain'));
+                    return everyNsCallback(new DomainError(DomainError.BAD_FIELD, 'Unable to resolve nameservers for this domain'));
                 }
 
                 async.every(nsIps, function (nsIp, everyIpCallback) {
@@ -99,7 +99,7 @@ function verifyDnsConfig(dnsConfig, domain, zoneName, ip, callback) {
             });
         }, function (error, success) {
             if (error) return callback(error);
-            if (!success) return callback(new SubdomainError(SubdomainError.BAD_FIELD, 'The domain ' + adminDomain + ' does not resolve to the server\'s IP ' + ip));
+            if (!success) return callback(new DomainError(DomainError.BAD_FIELD, 'The domain ' + adminDomain + ' does not resolve to the server\'s IP ' + ip));
 
             callback(null, { provider: dnsConfig.provider, wildcard: !!dnsConfig.wildcard });
         });

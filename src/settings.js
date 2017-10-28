@@ -95,7 +95,6 @@ var assert = require('assert'),
     EmailError = email.EmailError,
     safe = require('safetydance'),
     settingsdb = require('./settingsdb.js'),
-    SubdomainError = require('./subdomains.js').SubdomainError,
     superagent = require('superagent'),
     util = require('util'),
     _ = require('underscore');
@@ -315,11 +314,11 @@ function setDnsConfig(dnsConfig, domain, zoneName, callback) {
     assert.strictEqual(typeof callback, 'function');
 
     function done(error) {
-        if (error && error.reason === SubdomainError.ACCESS_DENIED) return callback(new SettingsError(SettingsError.BAD_FIELD, 'Error adding A record. Access denied'));
-        if (error && error.reason === SubdomainError.NOT_FOUND) return callback(new SettingsError(SettingsError.BAD_FIELD, 'Zone not found'));
-        if (error && error.reason === SubdomainError.EXTERNAL_ERROR) return callback(new SettingsError(SettingsError.BAD_FIELD, 'Error adding A record:' + error.message));
-        if (error && error.reason === SubdomainError.BAD_FIELD) return callback(new SettingsError(SettingsError.BAD_FIELD, error.message));
-        if (error && error.reason === SubdomainError.INVALID_PROVIDER) return callback(new SettingsError(SettingsError.BAD_FIELD, error.message));
+        if (error && error.reason === DomainError.ACCESS_DENIED) return callback(new SettingsError(SettingsError.BAD_FIELD, 'Error adding A record. Access denied'));
+        if (error && error.reason === DomainError.NOT_FOUND) return callback(new SettingsError(SettingsError.BAD_FIELD, 'Zone not found'));
+        if (error && error.reason === DomainError.EXTERNAL_ERROR) return callback(new SettingsError(SettingsError.BAD_FIELD, 'Error adding A record:' + error.message));
+        if (error && error.reason === DomainError.BAD_FIELD) return callback(new SettingsError(SettingsError.BAD_FIELD, error.message));
+        if (error && error.reason === DomainError.INVALID_PROVIDER) return callback(new SettingsError(SettingsError.BAD_FIELD, error.message));
         if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
 
         cloudron.configureWebadmin(NOOP_CALLBACK); // do not block

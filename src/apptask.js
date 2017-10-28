@@ -39,6 +39,7 @@ var addons = require('./addons.js'),
     debug = require('debug')('box:apptask'),
     docker = require('./docker.js'),
     domains = require('./domains.js'),
+    DomainError = domains.DomainError,
     ejs = require('ejs'),
     fs = require('fs'),
     manifestFormat = require('cloudron-manifestformat'),
@@ -49,7 +50,6 @@ var addons = require('./addons.js'),
     paths = require('./paths.js'),
     safe = require('safetydance'),
     shell = require('./shell.js'),
-    SubdomainError = require('./subdomains.js').SubdomainError,
     superagent = require('superagent'),
     sysinfo = require('./sysinfo.js'),
     tld = require('tldjs'),
@@ -263,7 +263,7 @@ function registerSubdomain(app, overwrite, callback) {
                 if (config.isCustomDomain() && values.length !== 0 && !overwrite) return retryCallback(null, new Error('DNS Record already exists'));
 
                 domains.upsertDNSRecords(app.location, 'A', [ ip ], function (error, changeId) {
-                    if (error && (error.reason === SubdomainError.STILL_BUSY || error.reason === SubdomainError.EXTERNAL_ERROR)) return retryCallback(error); // try again
+                    if (error && (error.reason === DomainError.STILL_BUSY || error.reason === DomainError.EXTERNAL_ERROR)) return retryCallback(error); // try again
 
                     retryCallback(null, error || changeId);
                 });
@@ -300,7 +300,7 @@ function unregisterSubdomain(app, location, callback) {
             debugApp(app, 'Unregistering subdomain: %s', location);
 
             domains.removeDNSRecords(location, 'A', [ ip ], function (error) {
-                if (error && (error.reason === SubdomainError.STILL_BUSY || error.reason === SubdomainError.EXTERNAL_ERROR)) return retryCallback(error); // try again
+                if (error && (error.reason === DomainError.STILL_BUSY || error.reason === DomainError.EXTERNAL_ERROR)) return retryCallback(error); // try again
 
                 retryCallback(null, error);
             });
