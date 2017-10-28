@@ -61,7 +61,6 @@ exports = module.exports = {
     EMAIL_DIGEST: 'email_digest',
 
     // json. if you add an entry here, be sure to fix getAll
-    DNS_CONFIG_KEY: 'dns_config',
     BACKUP_CONFIG_KEY: 'backup_config',
     TLS_CONFIG_KEY: 'tls_config',
     UPDATE_CONFIG_KEY: 'update_config',
@@ -322,8 +321,6 @@ function setDnsConfig(dnsConfig, domain, zoneName, callback) {
         if (error && error.reason === SubdomainError.BAD_FIELD) return callback(new SettingsError(SettingsError.BAD_FIELD, error.message));
         if (error && error.reason === SubdomainError.INVALID_PROVIDER) return callback(new SettingsError(SettingsError.BAD_FIELD, error.message));
         if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
-
-        exports.events.emit(exports.DNS_CONFIG_KEY, dnsConfig);
 
         cloudron.configureWebadmin(NOOP_CALLBACK); // do not block
 
