@@ -141,6 +141,7 @@ function waitForDns(domain, value, type, options, callback) {
     });
 }
 
+// TODO move to domains.js
 function verifyDnsConfig(dnsConfig, domain, zoneName, ip, callback) {
     assert(dnsConfig && typeof dnsConfig === 'object'); // the dns config to test with
     assert(typeof dnsConfig.provider === 'string');

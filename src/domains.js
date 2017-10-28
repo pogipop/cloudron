@@ -13,6 +13,10 @@ module.exports = exports = {
 var assert = require('assert'),
     DatabaseError = require('./databaseerror.js'),
     domaindb = require('./domaindb.js'),
+    subdomains = require('./subdomains.js'),
+    SubdomainError = subdomains.SubdomainError,
+    sysinfo = require('./sysinfo.js'),
+    tld = require('tldjs'),
     util = require('util');
 
 function DomainError(reason, errorOrMessage) {
@@ -44,18 +48,33 @@ DomainError.INTERNAL_ERROR = 'Internal error';
 DomainError.ACCESS_DENIED = 'Access denied';
 DomainError.INVALID_PROVIDER = 'provider must be route53, gcdns, digitalocean, cloudflare, noop, manual or caas';
 
-function add(domain, config, callback) {
+function add(domain, zoneName, config, callback) {
     assert.strictEqual(typeof domain, 'string');
+    assert.strictEqual(typeof zoneName, 'string');
     assert.strictEqual(typeof config, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    // TODO validate domain and config
+    if (!tld.isValid(domain)) return callback(new DomainError(DomainError.BAD_FIELD, 'Invalid domain'));
+    if (!tld.isValid(zoneName)) return callback(new DomainError(DomainError.BAD_FIELD, 'Invalid zoneName'));
 
-    domaindb.add(domain, config, function (error) {
-        if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(new DomainError(DomainError.ALREADY_EXISTS));
-        if (error) return callback(new DomainError(DomainError.INTERNAL_ERROR, error));
+    sysinfo.getPublicIp(function (error, ip) {
+        if (error) return callback(new DomainError(DomainError.INTERNAL_ERROR, 'Error getting IP:' + error.message));
 
-        return callback(null);
+        subdomains.verifyDnsConfig(config, domain, zoneName, ip, function (error, result) {
+            if (error && error.reason === SubdomainError.ACCESS_DENIED) return callback(new DomainError(DomainError.BAD_FIELD, 'Error adding A record. Access denied'));
+            if (error && error.reason === SubdomainError.NOT_FOUND) return callback(new DomainError(DomainError.BAD_FIELD, 'Zone not found'));
+            if (error && error.reason === SubdomainError.EXTERNAL_ERROR) return callback(new DomainError(DomainError.BAD_FIELD, 'Error adding A record:' + error.message));
+            if (error && error.reason === SubdomainError.BAD_FIELD) return callback(new DomainError(DomainError.BAD_FIELD, error.message));
+            if (error && error.reason === SubdomainError.INVALID_PROVIDER) return callback(new DomainError(DomainError.BAD_FIELD, error.message));
+            if (error) return callback(new DomainError(DomainError.INTERNAL_ERROR, error));
+
+            domaindb.add(domain, zoneName, result, function (error) {
+                if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(new DomainError(DomainError.ALREADY_EXISTS));
+                if (error) return callback(new DomainError(DomainError.INTERNAL_ERROR, error));
+
+                return callback(null);
+            });
+        });
     });
 }
 
@@ -86,13 +105,29 @@ function update(domain, config, callback) {
     assert.strictEqual(typeof config, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    // TODO validate config
-
-    domaindb.update(domain, config, function (error) {
+    domaindb.get(domain, function (error, result) {
         if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new DomainError(DomainError.NOT_FOUND));
         if (error) return callback(new DomainError(DomainError.INTERNAL_ERROR, error));
 
-        return callback(null);
+        sysinfo.getPublicIp(function (error, ip) {
+            if (error) return callback(new DomainError(DomainError.INTERNAL_ERROR, 'Error getting IP:' + error.message));
+
+            subdomains.verifyDnsConfig(config, domain, result.zoneName, ip, function (error, result) {
+                if (error && error.reason === SubdomainError.ACCESS_DENIED) return callback(new DomainError(DomainError.BAD_FIELD, 'Error adding A record. Access denied'));
+                if (error && error.reason === SubdomainError.NOT_FOUND) return callback(new DomainError(DomainError.BAD_FIELD, 'Zone not found'));
+                if (error && error.reason === SubdomainError.EXTERNAL_ERROR) return callback(new DomainError(DomainError.BAD_FIELD, 'Error adding A record:' + error.message));
+                if (error && error.reason === SubdomainError.BAD_FIELD) return callback(new DomainError(DomainError.BAD_FIELD, error.message));
+                if (error && error.reason === SubdomainError.INVALID_PROVIDER) return callback(new DomainError(DomainError.BAD_FIELD, error.message));
+                if (error) return callback(new DomainError(DomainError.INTERNAL_ERROR, error));
+
+                domaindb.update(domain, result, function (error) {
+                    if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new DomainError(DomainError.NOT_FOUND));
+                    if (error) return callback(new DomainError(DomainError.INTERNAL_ERROR, error));
+
+                    return callback(null);
+                });
+            });
+        });
     });
 }
 
