@@ -27,7 +27,6 @@ var apps = require('./apps.js'),
     settings = require('./settings.js'),
     settingsdb = require('./settingsdb.js'),
     shell = require('./shell.js'),
-    subdomains = require('./subdomains.js'),
     taskmanager = require('./taskmanager.js'),
     user = require('./user.js'),
     util = require('util'),
@@ -333,7 +332,7 @@ function startMail(callback) {
                 ];
 
                 async.mapSeries(records, function (record, iteratorCallback) {
-                    subdomains.upsert(record.subdomain, record.type, record.values, iteratorCallback);
+                    domains.upsertDNSRecords(record.subdomain, record.type, record.values, iteratorCallback);
                 }, NOOP_CALLBACK); // do not crash if DNS creds do not work in startup sequence
 
                 callback();
