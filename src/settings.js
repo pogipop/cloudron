@@ -21,6 +21,7 @@ exports = module.exports = {
     getDeveloperMode: getDeveloperMode,
     setDeveloperMode: setDeveloperMode,
 
+    // DEPRECATED in favor of domains table via domains.js
     getDnsConfig: getDnsConfig,
     setDnsConfig: setDnsConfig,
 
@@ -85,6 +86,8 @@ var assert = require('assert'),
     CronJob = require('cron').CronJob,
     DatabaseError = require('./databaseerror.js'),
     debug = require('debug')('box:settings'),
+    domains = require('./domains.js'),
+    DomainError = domains.DomainError,
     cloudron = require('./cloudron.js'),
     moment = require('moment-timezone'),
     paths = require('./paths.js'),
@@ -93,10 +96,8 @@ var assert = require('assert'),
     EmailError = email.EmailError,
     safe = require('safetydance'),
     settingsdb = require('./settingsdb.js'),
-    subdomains = require('./subdomains.js'),
-    SubdomainError = subdomains.SubdomainError,
+    SubdomainError = require('./subdomains.js').SubdomainError,
     superagent = require('superagent'),
-    sysinfo = require('./sysinfo.js'),
     util = require('util'),
     _ = require('underscore');
 
@@ -301,11 +302,11 @@ function setDeveloperMode(enabled, callback) {
 function getDnsConfig(callback) {
     assert.strictEqual(typeof callback, 'function');
 
-    settingsdb.get(exports.DNS_CONFIG_KEY, function (error, value) {
-        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(null, gDefaults[exports.DNS_CONFIG_KEY]);
+    domains.get(config.fqdn(), function (error, result) {
+        if (error && error.reason === DomainError.NOT_FOUND) return callback(null, gDefaults[exports.DNS_CONFIG_KEY]);
         if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
 
-        callback(null, JSON.parse(value));
+        callback(null, result);
     });
 }
 
@@ -315,27 +316,26 @@ function setDnsConfig(dnsConfig, domain, zoneName, callback) {
     assert.strictEqual(typeof zoneName, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    sysinfo.getPublicIp(function (error, ip) {
-        if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, 'Error getting IP:' + error.message));
+    function done(error) {
+        if (error && error.reason === SubdomainError.ACCESS_DENIED) return callback(new SettingsError(SettingsError.BAD_FIELD, 'Error adding A record. Access denied'));
+        if (error && error.reason === SubdomainError.NOT_FOUND) return callback(new SettingsError(SettingsError.BAD_FIELD, 'Zone not found'));
+        if (error && error.reason === SubdomainError.EXTERNAL_ERROR) return callback(new SettingsError(SettingsError.BAD_FIELD, 'Error adding A record:' + error.message));
+        if (error && error.reason === SubdomainError.BAD_FIELD) return callback(new SettingsError(SettingsError.BAD_FIELD, error.message));
+        if (error && error.reason === SubdomainError.INVALID_PROVIDER) return callback(new SettingsError(SettingsError.BAD_FIELD, error.message));
+        if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
 
-        subdomains.verifyDnsConfig(dnsConfig, domain, zoneName, ip, function (error, result) {
-            if (error && error.reason === SubdomainError.ACCESS_DENIED) return callback(new SettingsError(SettingsError.BAD_FIELD, 'Error adding A record. Access denied'));
-            if (error && error.reason === SubdomainError.NOT_FOUND) return callback(new SettingsError(SettingsError.BAD_FIELD, 'Zone not found'));
-            if (error && error.reason === SubdomainError.EXTERNAL_ERROR) return callback(new SettingsError(SettingsError.BAD_FIELD, 'Error adding A record:' + error.message));
-            if (error && error.reason === SubdomainError.BAD_FIELD) return callback(new SettingsError(SettingsError.BAD_FIELD, error.message));
-            if (error && error.reason === SubdomainError.INVALID_PROVIDER) return callback(new SettingsError(SettingsError.BAD_FIELD, error.message));
-            if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
+        exports.events.emit(exports.DNS_CONFIG_KEY, dnsConfig);
 
-            settingsdb.set(exports.DNS_CONFIG_KEY, JSON.stringify(result), function (error) {
-                if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
+        cloudron.configureWebadmin(NOOP_CALLBACK); // do not block
 
-                exports.events.emit(exports.DNS_CONFIG_KEY, dnsConfig);
+        callback(null, dnsConfig);
+    }
 
-                cloudron.configureWebadmin(NOOP_CALLBACK); // do not block
+    domains.get(domain, function (error, result) {
+        if (error && error.reason !== DomainError.NOT_FOUND) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
 
-                callback(null);
-            });
-        });
+        if (!result) domains.add(domain, zoneName, dnsConfig, done);
+        else domains.update(domain, dnsConfig, done);
     });
 }
 
