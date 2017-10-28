@@ -37,6 +37,7 @@ function SubdomainError(reason, errorOrMessage) {
 util.inherits(SubdomainError, Error);
 
 SubdomainError.NOT_FOUND = 'No such domain';
+SubdomainError.ALREADY_EXISTS = 'Domain already exists';
 SubdomainError.EXTERNAL_ERROR = 'External error';
 SubdomainError.BAD_FIELD = 'Bad Field';
 SubdomainError.STILL_BUSY = 'Still busy';

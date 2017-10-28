@@ -235,6 +235,13 @@ function initializeExpressSync() {
     router.get ('/api/v1/backups', settingsScope, routes.user.requireAdmin, routes.backups.get);
     router.post('/api/v1/backups', settingsScope, routes.user.requireAdmin, routes.backups.create);
 
+    // domain routes
+    router.post('/api/v1/domains', settingsScope, routes.user.requireAdmin, routes.domains.add);
+    router.get ('/api/v1/domains', settingsScope, routes.user.requireAdmin, routes.domains.getAll);
+    router.get ('/api/v1/domains/:domain', settingsScope, routes.user.requireAdmin, routes.domains.get);
+    router.put ('/api/v1/domains/:domain', settingsScope, routes.user.requireAdmin, routes.domains.update);
+    router.del ('/api/v1/domains/:domain', settingsScope, routes.user.requireAdmin, routes.domains.del);
+
     // disable server socket "idle" timeout. we use the timeout middleware to handle timeouts on a route level
     // we rely on nginx for timeouts on the TCP level (see client_header_timeout)
     httpServer.setTimeout(0);
