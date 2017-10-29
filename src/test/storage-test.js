@@ -14,8 +14,12 @@ var BackupsError = require('../backups.js').BackupsError,
     os = require('os'),
     path = require('path'),
     rimraf = require('rimraf'),
+    mkdirp = require('mkdirp'),
+    recursive_readdir = require("recursive-readdir"),
     s3 = require('../storage/s3.js'),
-    gcs = require('../storage/gcs.js');
+    debug = require('debug')('box:storage-test'),
+    gcs = require('../storage/gcs.js'),
+    chunk = require('lodash.chunk');
 
 describe('Storage', function () {
     describe('filesystem', function () {
@@ -293,11 +297,7 @@ describe('Storage', function () {
     describe('gcs', function () {
         this.timeout(10000);
 
-        var gBackupId_1 = 'someprefix/one';
-        var gBackupId_2 = 'someprefix/two';
         var gTmpFolder;
-        var gSourceFolder;
-        var gDestinationFolder;
         var gBackupConfig = {
             provider: 'gcs',
             key: '',
@@ -311,10 +311,11 @@ describe('Storage', function () {
         };
         var GCSMockBasePath = path.join(os.tmpdir(), 'gcs-backup-test-buckets/');
 
-        before(function (done) {
+        before(function () {
             var mockGCS = function(cfg){
                 return {bucket: function(b){
-                    return {file: function(filename){
+                    var file = function(filename){
+
                         var ensurePathWritable = function (filename) {
                             filename = GCSMockBasePath + filename;
                             mkdirp.sync(path.dirname(filename));
@@ -322,15 +323,17 @@ describe('Storage', function () {
                         };
 
                         return {
+                            name: filename,
                             createReadStream: function(cfg){
                                 return fs.createReadStream(ensurePathWritable(filename))
                                     .on('error', function(e){
+                                        console.log('error createReadStream: '+filename);
                                         if (e.code != 404) {
                                             e.code = 404;
                                             this.emit('error', e);
                                         }
                                     })
-                                ;
+                                    ;
                             },
                             createWriteStream: function(cfg){
                                 return fs.createWriteStream(ensurePathWritable(filename));
@@ -349,100 +352,107 @@ describe('Storage', function () {
                                     .pipe(fs.createWriteStream(ensurePathWritable(dst)))
                                     .on('end', cb)
                                     .on('error', notFoundHandler)
-                                ;
+                                    ;
                             }
                         };
-                    }}
+                    };
+
+                    return {
+                        file: file,
+                        getFiles: function(q, cb){
+                            var target = GCSMockBasePath + q.prefix;
+                            recursive_readdir(target, function(e, files){
+
+                                var pageToken = q.pageToken || 0;
+
+                                var chunkedFiles = chunk(files, q.maxResults);
+                                if (q.pageToken >= chunkedFiles.length) return cb(null, []);
+
+                                var gFiles = chunkedFiles[pageToken].map(function(f){
+                                    return file(path.relative(GCSMockBasePath, f)); //convert to google
+                                });
+
+                                q.pageToken = pageToken + 1;
+                                cb(null, gFiles, q);
+                            });
+                        }
+                    }
                 }};
             };
             gcs._mockInject(mockGCS);
-
-            setup(function (error) {
-                expect(error).to.be(null);
-
-                gTmpFolder = fs.mkdtempSync(path.join(os.tmpdir(), 'gcs-backup-test_'));
-                gSourceFolder = path.join(__dirname, 'storage');
-                gDestinationFolder = path.join(gTmpFolder, 'destination/');
-
-                settings.setBackupConfig(gBackupConfig, function (error) {
-                    expect(error).to.be(null);
-
-                    done();
-                });
-            });
         });
 
         after(function (done) {
             gcs._mockRestore();
             rimraf.sync(GCSMockBasePath);
-
-            cleanup(function (error) {
-                expect(error).to.be(null);
-                rimraf(gTmpFolder, done);
-            });
+            done();
         });
 
         it('can backup', function (done) {
-            gcs.backup(gBackupConfig, gBackupId_1, gSourceFolder, function (error) {
+            var sourceFile = path.join(__dirname, 'storage/data/test.txt');
+            var sourceStream = fs.createReadStream(sourceFile);
+            var destKey = 'uploadtest/test.txt';
+            gcs.upload(gBackupConfig, destKey, sourceStream, function (error) {
                 expect(error).to.be(null);
 
                 done();
             });
         });
 
-        it('can restore', function (done) {
-            gcs.restore(gBackupConfig, gBackupId_1, gDestinationFolder, function (error) {
+        it('can download file', function (done) {
+            var sourceKey = 'uploadtest/test.txt';
+            gcs.download(gBackupConfig, sourceKey, function (error, stream) {
                 expect(error).to.be(null);
-
-                compareDirectories(path.join(gSourceFolder, 'data'), path.join(gDestinationFolder, 'data'), function (error) {
-                    expect(error).to.equal(null);
-
-                    compareDirectories(path.join(gSourceFolder, 'addon'), path.join(gDestinationFolder, 'addon'), function (error) {
-                        expect(error).to.equal(null);
-
-                        rimraf(gDestinationFolder, done);
-                    });
-                });
+                expect(stream).to.be.an('object');
+                done();
             });
         });
 
-        it('can copy backup', function (done) {
-            // will be verified after removing the first and restoring from the copy
-            gcs.copyBackup(gBackupConfig, gBackupId_1, gBackupId_2, done);
+        it('download dir copies contents of source dir', function (done) {
+            var sourceFile = path.join(__dirname, 'storage/data/test.txt');
+            var sourceKey = '';
+            var destDir = path.join(os.tmpdir(), 'gcs-destdir');
+            rimraf.sync(destDir+'/*');
+
+            var events = gcs.downloadDir(gBackupConfig, sourceKey, destDir);
+            events.on('done', function (error) {
+                expect(error).to.be(null);
+                expect(fs.statSync(path.join(destDir, 'uploadtest/test.txt')).size).to.be(fs.statSync(sourceFile).size);
+                done();
+            });
         });
 
-        it('can remove backup', function (done) {
-            // will be verified with next test trying to restore the removed one
-            gcs.removeBackups(gBackupConfig, [ gBackupId_1 ], done);
-        });
+        it('can copy', function (done) {
+            fs.writeFileSync(path.join(GCSMockBasePath, 'uploadtest/C++.gitignore'), 'special', 'utf8');
 
-        it('cannot restore deleted backup', function (done) {
-            gcs.restore(gBackupConfig, gBackupId_1, gDestinationFolder, function (error) {
-                expect(error).to.be.an('object');
-                expect(error.reason).to.equal(BackupsError.NOT_FOUND);
+            var sourceKey = 'uploadtest';
+
+            var events = gcs.copy(gBackupConfig, sourceKey, 'uploadtest-copy');
+            events.on('done', function (error) {
+                var sourceFile = path.join(__dirname, 'storage/data/test.txt');
+                expect(error).to.be(null);
+                expect(fs.statSync(path.join(GCSMockBasePath, 'uploadtest-copy/test.txt')).size).to.be(fs.statSync(sourceFile).size);
+
+                expect(fs.statSync(path.join(GCSMockBasePath, 'uploadtest-copy/C++.gitignore')).size).to.be(7);
 
                 done();
             });
         });
 
-        it('can restore backup copy', function (done) {
-            gcs.restore(gBackupConfig, gBackupId_2, gDestinationFolder, function (error) {
+        it('can remove file', function (done) {
+            gcs.remove(gBackupConfig, 'uploadtest-copy/test.txt', function (error) {
                 expect(error).to.be(null);
-
-                compareDirectories(path.join(gSourceFolder, 'data'), path.join(gDestinationFolder, 'data'), function (error) {
-                    expect(error).to.equal(null);
-
-                    compareDirectories(path.join(gSourceFolder, 'addon'), path.join(gDestinationFolder, 'addon'), function (error) {
-                        expect(error).to.equal(null);
-
-                        rimraf(gDestinationFolder, done);
-                    });
-                });
+                expect(fs.existsSync(path.join(GCSMockBasePath, 'uploadtest-copy/test.txt'))).to.be(false);
+                done();
             });
         });
 
-        it('can remove backup copy', function (done) {
-            gcs.removeBackups(gBackupConfig, [ gBackupId_2 ], done);
+        it('can remove non-existent dir', function (done) {
+            gcs.remove(gBackupConfig, 'blah', function (error) {
+                expect(error).to.be(null);
+                done();
+            });
         });
+
     });
 });

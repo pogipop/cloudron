@@ -60,6 +60,7 @@
     "password-generator": "^2.0.2",
     "progress-stream": "^2.0.0",
     "proxy-middleware": "^0.13.0",
+    "recursive-readdir": "^2.2.1",
     "s3-block-read-stream": "^0.2.0",
     "safetydance": "^0.7.1",
     "semver": "^4.3.6",
