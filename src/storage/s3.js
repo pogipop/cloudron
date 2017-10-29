@@ -190,7 +190,7 @@ function download(apiConfig, backupFilePath, callback) {
     });
 }
 
-function listDir(apiConfig, backupFilePath, batchSize, iteratorCallback, callback) {
+function listDir(apiConfig, backupFilePath, iteratorCallback, callback) {
     getS3Config(apiConfig, function (error, credentials) {
         if (error) return callback(error);
 
@@ -207,10 +207,9 @@ function listDir(apiConfig, backupFilePath, batchSize, iteratorCallback, callbac
                     return foreverCallback(error);
                 }
 
-                var arr = batchSize === 1 ? listData.Contents : chunk(listData.Contents, batchSize);
-                if (arr.length === 0) return foreverCallback(new Error('Done'));
+                if (listData.Contents.length === 0) return foreverCallback(new Error('Done'));
 
-                iteratorCallback(s3, arr, function (error) {
+                iteratorCallback(s3, listData.Contents, function (error) {
                     if (error) return foreverCallback(error);
 
                     if (!listData.IsTruncated) return foreverCallback(new Error('Done'));
@@ -262,9 +261,9 @@ function downloadDir(apiConfig, backupFilePath, destDir) {
         });
     }
 
-    const concurrency = 10, batchSize = 1;
+    const concurrency = 10;
 
-    listDir(apiConfig, backupFilePath, batchSize, function (s3, objects, done) {
+    listDir(apiConfig, backupFilePath, function (s3, objects, done) {
         total += objects.length;
         async.eachLimit(objects, concurrency, downloadFile.bind(null, s3), done);
     }, function (error) {
@@ -370,10 +369,9 @@ function copy(apiConfig, oldFilePath, newFilePath) {
         });
     }
 
-    const batchSize = 1;
     var total = 0, concurrency = 4;
 
-    listDir(apiConfig, oldFilePath, batchSize, function (s3, objects, done) {
+    listDir(apiConfig, oldFilePath, function (s3, objects, done) {
         total += objects.length;
 
         if (retryCount === 0) concurrency = Math.min(concurrency + 1, 10); else concurrency = Math.max(concurrency - 1, 5);
@@ -429,7 +427,6 @@ function removeDir(apiConfig, pathPrefix) {
                 Objects: contents.map(function (c) { return { Key: c.Key }; })
             }
         };
-        total += contents.length;
 
         events.emit('progress', `Removing ${contents.length} files from ${contents[0].Key} to ${contents[contents.length-1].Key}`);
 
@@ -443,9 +440,14 @@ function removeDir(apiConfig, pathPrefix) {
         });
     }
 
-    const batchSize = apiConfig.provider !== 'digitalocean-spaces' ? 1000 : 100; // throttle requests per second
+    listDir(apiConfig, pathPrefix, function (s3, objects, done) {
+        total += objects.length;
 
-    listDir(apiConfig, pathPrefix, batchSize, deleteFiles, function (error) {
+        const batchSize = apiConfig.provider !== 'digitalocean-spaces' ? 1000 : 100; // throttle objects in each request
+        var chunks = batchSize === 1 ? objects : chunk(objects, batchSize);
+
+        async.eachSeries(chunks, deleteFiles.bind(null, s3), done);
+    }, function (error) {
         events.emit('progress', `Removed ${total} files`);
 
         events.emit('done', error);
