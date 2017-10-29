@@ -1083,3 +1083,13 @@
 [1.7.5]
 * Expose a TLS relay port from mail container for Go applications
 
+[1.7.6]
+* Port bindings cannot be configured in update route anymore
+* Implement LDAP group compare
+* Pre-releases are now offered by appstore and not handled in box code anymore
+* LDAP pagination support. This will fix the warnings in NextCloud and Rocket.Chat
+* Check if directories can be created in the backup directory
+* Do not set the HTTPS agent when using HTTP with minio backup backend
+* Fix regression where a new domain config could not be set in the UI
+* New mail container release that fixes email sending with SOGo
+
