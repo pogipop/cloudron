@@ -63,7 +63,8 @@ CREATE TABLE IF NOT EXISTS apps(
     containerId VARCHAR(128),
     manifestJson TEXT,
     httpPort INTEGER,                        // this is the nginx proxy port and not manifest.httpPort
-    location VARCHAR(128) NOT NULL UNIQUE,
+    location VARCHAR(128) NOT NULL,
+    domain VARCHAR(128) NOT NULL,
     dnsRecordId VARCHAR(512), // tracks any id that we got back to track dns updates
     accessRestrictionJson TEXT, // { users: [ ], groups: [ ] }
     createdAt TIMESTAMP(2) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -81,6 +82,7 @@ CREATE TABLE IF NOT EXISTS apps(
     oldConfigJson TEXT, // used to pass old config for apptask (configure, restore)
     updateConfigJson TEXT, // used to pass new config for apptask (update)
 
+    FOREIGN KEY(domain) REFERENCES domains(domain),
     PRIMARY KEY(id));
 
 CREATE TABLE IF NOT EXISTS appPortBindings(
@@ -140,12 +142,17 @@ CREATE TABLE IF NOT EXISTS mailboxes(
     ownerType VARCHAR(16) NOT NULL, /* 'app' or 'user' or 'group' */
     aliasTarget VARCHAR(128), /* the target name type is an alias */
     creationTime TIMESTAMP,
+    domain VARCHAR(128),
 
+    FOREIGN KEY(domain) REFERENCES domains(domain),
     PRIMARY KEY (name));
 
 CREATE TABLE IF NOT EXISTS domains(
-    domain VARCHAR(128) NOT NULL, /* if this needs to be larger, InnoDB has a limit of 767 bytes for PRIMARY KEY values! */
+    domain VARCHAR(128) NOT NULL UNIQUE, /* if this needs to be larger, InnoDB has a limit of 767 bytes for PRIMARY KEY values! */
     zoneName VARCHAR(128) NOT NULL, /* this mostly contains the domain itself again */
     configJson TEXT, /* JSON containing the dns backend provider config */
 
-    PRIMARY KEY (domain));
+    PRIMARY KEY (domain))
+
+    /* the default db collation is utf8mb4_unicode_ci but for the app table domain constraint we have to use the old one */
+    CHARACTER SET utf8 COLLATE utf8_bin;

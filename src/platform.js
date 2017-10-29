@@ -12,10 +12,8 @@ var apps = require('./apps.js'),
     async = require('async'),
     config = require('./config.js'),
     certificates = require('./certificates.js'),
-    DatabaseError = require('./databaseerror.js'),
     debug = require('debug')('box:platform'),
     domains = require('./domains.js'),
-    DomainError = domains.DomainError,
     fs = require('fs'),
     hat = require('hat'),
     infra = require('./infra_version.js'),
@@ -25,7 +23,6 @@ var apps = require('./apps.js'),
     safe = require('safetydance'),
     semver = require('semver'),
     settings = require('./settings.js'),
-    settingsdb = require('./settingsdb.js'),
     shell = require('./shell.js'),
     taskmanager = require('./taskmanager.js'),
     user = require('./user.js'),
@@ -67,7 +64,6 @@ function start(callback) {
     debug('Updating infrastructure from %s to %s', existingInfra.version, infra.version);
 
     async.series([
-        migrateDNSSettings,
         stopContainers.bind(null, existingInfra),
         startAddons.bind(null, existingInfra),
         removeOldImages,
@@ -380,25 +376,4 @@ function startApps(existingInfra, callback) {
         nginx.removeAppConfigs(); // should we change the cert location, nginx will not start
         apps.configureInstalledApps(callback);
     }
-}
-
-// This is only used when updating from single to multi domain support
-// REMOVE later!
-function migrateDNSSettings(callback) {
-    assert.strictEqual(typeof callback, 'function');
-
-    settingsdb.get('dns_config', function (error, result) {
-        if (error && error.reason !== DatabaseError.NOT_FOUND) return callback(error);
-
-        const dnsConfig = result ? safe.JSON.parse(result) : { provider: 'manual' };
-
-        domains.get(config.fqdn(), function (error, result) {
-            if (error && error.reason !== DomainError.NOT_FOUND) return callback(error);
-
-            // if domain is already in the table, nothing to do
-            if (result) return callback(null);
-
-            domains.add(config.fqdn(), config.zoneName(), dnsConfig, callback);
-        });
-    });
 }
