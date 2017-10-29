@@ -1092,4 +1092,5 @@
 * Do not set the HTTPS agent when using HTTP with minio backup backend
 * Fix regression where a new domain config could not be set in the UI
 * New mail container release that fixes email sending with SOGo
+* Show 404 page for unknown domains
 

@@ -14,7 +14,7 @@ server {
 <% if (vhost) { -%>
     server_name  <%= vhost %>;
 <% } else { -%>
-    # IP based access. TODO: match the IPv6 address
+    # IP based access from collectd or initial cloudron setup. TODO: match the IPv6 address
     server_name  "~^\d+\.\d+\.\d+\.\d+$";
 
     # collectd
@@ -23,12 +23,6 @@ server {
         access_log off;
         allow 127.0.0.1;
         deny all;
-    }
-
-    # acme challenges
-    location /.well-known/acme-challenge/ {
-        default_type text/plain;
-        alias /home/yellowtent/platformdata/acme/;
     }
 <% } -%>
 
