@@ -295,6 +295,7 @@ chown "${USER}:${USER}" -R "${BOX_DATA_DIR}/mail/dkim" # this is owned by box cu
 
 echo "==> Adding automated configs"
 mysql -u root -p${mysql_root_password} -e "REPLACE INTO settings (name, value) VALUES (\"fqdn\", '$arg_fqdn')" box
+mysql -u root -p${mysql_root_password} -e "REPLACE INTO settings (name, value) VALUES (\"zoneName\", '$arg_zone_name')" box
 
 if [[ ! -z "${arg_backup_config}" ]]; then
     mysql -u root -p${mysql_root_password} \
