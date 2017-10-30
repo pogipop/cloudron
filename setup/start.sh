@@ -238,6 +238,24 @@ cd "${BOX_SRC_DIR}"
 BOX_ENV=cloudron DATABASE_URL=mysql://root:${mysql_root_password}@127.0.0.1/box "${BOX_SRC_DIR}/node_modules/.bin/db-migrate" up
 EOF
 
+echo "==> Adding automated configs"
+mysql -u root -p${mysql_root_password} -e "REPLACE INTO settings (name, value) VALUES (\"domain\", '{ \"fqdn\": \"$arg_fqdn\", \"zoneName\": \"$arg_zone_name\", \"adminLocation\": \"$arg_admin_location\" }')" box
+
+if [[ ! -z "${arg_backup_config}" ]]; then
+    mysql -u root -p${mysql_root_password} \
+        -e "REPLACE INTO settings (name, value) VALUES (\"backup_config\", '$arg_backup_config')" box
+fi
+
+if [[ ! -z "${arg_dns_config}" ]]; then
+    mysql -u root -p${mysql_root_password} \
+        -e "REPLACE INTO settings (name, value) VALUES (\"dns_config\", '$arg_dns_config')" box
+fi
+
+if [[ ! -z "${arg_tls_config}" ]]; then
+    mysql -u root -p${mysql_root_password} \
+        -e "REPLACE INTO settings (name, value) VALUES (\"tls_config\", '$arg_tls_config')" box
+fi
+
 echo "==> Creating cloudron.conf"
 cat > "${CONFIG_DIR}/cloudron.conf" <<CONF_END
 {
@@ -292,24 +310,6 @@ chown "${USER}:${USER}" "${PLATFORM_DATA_DIR}"
 chown "${USER}:${USER}" "${BOX_DATA_DIR}"
 find "${BOX_DATA_DIR}" -mindepth 1 -maxdepth 1 -not -path "${BOX_DATA_DIR}/mail" -exec chown -R "${USER}:${USER}" {} \;
 chown "${USER}:${USER}" -R "${BOX_DATA_DIR}/mail/dkim" # this is owned by box currently since it generates the keys
-
-echo "==> Adding automated configs"
-mysql -u root -p${mysql_root_password} -e "REPLACE INTO settings (name, value) VALUES (\"domain\", '{ \"fqdn\": \"$arg_fqdn\", \"zoneName\": \"$arg_zone_name\", \"adminLocation\": \"$arg_admin_location\" }')" box
-
-if [[ ! -z "${arg_backup_config}" ]]; then
-    mysql -u root -p${mysql_root_password} \
-        -e "REPLACE INTO settings (name, value) VALUES (\"backup_config\", '$arg_backup_config')" box
-fi
-
-if [[ ! -z "${arg_dns_config}" ]]; then
-    mysql -u root -p${mysql_root_password} \
-        -e "REPLACE INTO settings (name, value) VALUES (\"dns_config\", '$arg_dns_config')" box
-fi
-
-if [[ ! -z "${arg_tls_config}" ]]; then
-    mysql -u root -p${mysql_root_password} \
-        -e "REPLACE INTO settings (name, value) VALUES (\"tls_config\", '$arg_tls_config')" box
-fi
 
 set_progress "60" "Starting Cloudron"
 systemctl start cloudron.target
