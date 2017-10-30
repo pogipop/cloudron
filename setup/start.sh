@@ -186,7 +186,11 @@ if [[ ! -f /etc/mysql/mysql.cnf ]] || ! diff -q "${script_dir}/start/mysql.cnf" 
         echo "Waiting for mysql jobs..."
         sleep 1
     done
-    systemctl restart mysql
+    while true; do
+        if systemctl restart mysql; then break; fi
+        echo "Restarting MySql again after sometime since this fails randomly"
+        sleep 1
+    done
 else
     systemctl start mysql
 fi
