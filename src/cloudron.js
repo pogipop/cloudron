@@ -543,7 +543,7 @@ function addDnsRecords(ip, callback) {
 
     var webadminRecord = { subdomain: config.adminLocation(), type: 'A', values: [ ip ] };
     // t=s limits the domainkey to this domain and not it's subdomains
-    var dkimRecord = { subdomain: constants.DKIM_SELECTOR + '._domainkey', type: 'TXT', values: [ '"v=DKIM1; t=s; p=' + dkimKey + '"' ] };
+    var dkimRecord = { subdomain: config.dkimSelector() + '._domainkey', type: 'TXT', values: [ '"v=DKIM1; t=s; p=' + dkimKey + '"' ] };
 
     var records = [ ];
     if (config.isCustomDomain()) {

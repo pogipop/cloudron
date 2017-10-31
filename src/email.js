@@ -132,7 +132,7 @@ function verifyRelay(relay, callback) {
 
 function checkDkim(callback) {
     var dkim = {
-        domain: constants.DKIM_SELECTOR + '._domainkey.' + config.fqdn(),
+        domain: config.dkimSelector() + '._domainkey.' + config.fqdn(),
         type: 'TXT',
         expected: null,
         value: null,

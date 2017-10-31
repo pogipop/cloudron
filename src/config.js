@@ -17,6 +17,7 @@ exports = module.exports = {
     apiServerOrigin: apiServerOrigin,
     webServerOrigin: webServerOrigin,
     fqdn: fqdn,
+    zoneName: zoneName,
     setFqdn: setFqdn,
     token: token,
     version: version,
@@ -33,9 +34,9 @@ exports = module.exports = {
     mailLocation: mailLocation,
     mailFqdn: mailFqdn,
     appFqdn: appFqdn,
-    zoneName: zoneName,
     setZoneName: setZoneName,
     hasIPv6: hasIPv6,
+    dkimSelector: dkimSelector,
 
     isDemo: isDemo,
 
@@ -248,3 +249,9 @@ function hasIPv6() {
     const IPV6_PROC_FILE = '/proc/net/if_inet6';
     return fs.existsSync(IPV6_PROC_FILE);
 }
+
+function dkimSelector() {
+    var loc = adminLocation();
+    return loc === 'my' ? 'cloudron' : `cloudron-${loc.replace(/\./g, '')}`;
+}
+
