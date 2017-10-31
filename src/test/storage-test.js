@@ -297,7 +297,6 @@ describe('Storage', function () {
     describe('gcs', function () {
         this.timeout(10000);
 
-        var gTmpFolder;
         var gBackupConfig = {
             provider: 'gcs',
             key: '',
@@ -328,12 +327,10 @@ describe('Storage', function () {
                                 return fs.createReadStream(ensurePathWritable(filename))
                                     .on('error', function(e){
                                         console.log('error createReadStream: '+filename);
-                                        if (e.code != 404) {
-                                            e.code = 404;
-                                            this.emit('error', e);
-                                        }
+                                        if (e.code == 'ENOENT') { e.code = 404; }
+                                        this.emit('error', e);
                                     })
-                                    ;
+                                ;
                             },
                             createWriteStream: function(cfg){
                                 return fs.createWriteStream(ensurePathWritable(filename));
@@ -373,7 +370,7 @@ describe('Storage', function () {
                                 });
 
                                 q.pageToken = pageToken + 1;
-                                cb(null, gFiles, q);
+                                cb(null, gFiles, q.pageToken < chunkedFiles.length ? q : null);
                             });
                         }
                     }
