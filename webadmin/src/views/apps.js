@@ -252,14 +252,12 @@ angular.module('Application').controller('AppsController', ['$scope', '$location
         $scope.appConfigure.robotsTxt = app.robotsTxt;
         $scope.appConfigure.enableBackup = app.enableBackup;
 
-        // create ticks starting from manifest memory limit
-        $scope.appConfigure.memoryTicks = [
-             256 * 1024 * 1024,
-             512 * 1024 * 1024,
-             1024 * 1024 * 1024,
-             2048 * 1024 * 1024,
-             4096 * 1024 * 1024
-        ].filter(function (t) { return t >= (app.manifest.memoryLimit || 0); });
+        // create ticks starting from manifest memory limit. the memory limit here is currently split into ram+swap (and thus *2 below)
+        // TODO: the *2 will overallocate since 4GB is max swap that cloudron itself allocates
+        $scope.appConfigure.memoryTicks = [ ];
+        for (var i = 256; i <= ($scope.config.memory*2/1024/1024); i *= 2) {
+            if (i >= (app.manifest.memoryLimit/1024/1024 || 0)) $scope.appConfigure.memoryTicks.push(i * 1024 * 1024);
+        }
         if (app.manifest.memoryLimit && $scope.appConfigure.memoryTicks[0] !== app.manifest.memoryLimit) {
             $scope.appConfigure.memoryTicks.unshift(app.manifest.memoryLimit);
         }
