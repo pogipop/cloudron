@@ -224,7 +224,7 @@ function copy(apiConfig, oldFilePath, newFilePath) {
             iteratorCallback(null);
         });
 
-        events.emit('progress', `Copying (multipart) ${relativePath}`);
+        events.emit('progress', `Copying ${relativePath}...`);
     }
 
     const batchSize = -1;
