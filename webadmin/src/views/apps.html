@@ -109,7 +109,7 @@
                         <a href="" ng-click="appConfigure.advancedVisible = true" ng-hide="appConfigure.advancedVisible">Advanced settings...</a>
                         <div  uib-collapse="!appConfigure.advancedVisible">
                             <div class="form-group">
-                                <label class="control-label" for="memoryLimit">Maximum Memory Limit: <b>{{ appConfigure.memoryLimit ? appConfigure.memoryLimit / 1024 / 1024 + 'MB' : 'Default (256 MB)' }}</b></label>
+                                <label class="control-label" for="memoryLimit">Maximum Memory Limit <sup><a ng-href="{{ config.webServerOrigin }}/documentation/apps/#increasing-the-memory-limit-of-an-app" class="help" target="_blank"><i class="fa fa-question-circle"></i></a></sup> : <b>{{ appConfigure.memoryLimit ? appConfigure.memoryLimit / 1024 / 1024 + 'MB' : 'Default (256 MB)' }}</b></label>
                                 <br/>
                                 <div style="padding: 0 10px;">
                                     <slider id="memoryLimit" ng-model="appConfigure.memoryLimit" step="134217728" tooltip="hide" ticks="appConfigure.memoryTicks" ticks-snap-bounds="67108864"></slider>
