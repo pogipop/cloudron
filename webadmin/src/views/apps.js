@@ -405,7 +405,7 @@ angular.module('Application').controller('AppsController', ['$scope', '$location
         $('#appUpdateModal').modal('show');
     };
 
-    $scope.doUpdate = function (form) {
+    $scope.doUpdate = function () {
         $scope.appUpdate.busy = true;
 
         Client.updateApp($scope.appUpdate.app.id, $scope.appUpdate.manifest, function (error) {
@@ -413,10 +413,6 @@ angular.module('Application').controller('AppsController', ['$scope', '$location
                 Client.error(error);
             } else {
                 $scope.appUpdate.app = {};
-
-                form.$setPristine();
-                form.$setUntouched();
-
                 $('#appUpdateModal').modal('hide');
             }
 
