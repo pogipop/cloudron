@@ -74,6 +74,7 @@ var addons = require('./addons.js'),
     split = require('split'),
     superagent = require('superagent'),
     taskmanager = require('./taskmanager.js'),
+    tld = require('tldjs'),
     TransformStream = require('stream').Transform,
     updateChecker = require('./updatechecker.js'),
     url = require('url'),
@@ -118,17 +119,28 @@ AppsError.BAD_CERTIFICATE = 'Invalid certificate';
 // Domain name validation comes from RFC 2181 (Name syntax)
 // https://en.wikipedia.org/wiki/Hostname#Restrictions_on_valid_host_names
 // We are validating the validity of the location-fqdn as host name
-function validateHostname(location, fqdn) {
-    var RESERVED_LOCATIONS = [ config.adminLocation(), constants.API_LOCATION, constants.SMTP_LOCATION, constants.IMAP_LOCATION, config.mailLocation(), constants.POSTMAN_LOCATION ];
+function validateHostname(hostname) {
+    assert.strictEqual(typeof hostname, 'string');
 
+    if (!hostname) return new AppsError(AppsError.BAD_FIELD, 'location cannot be empty');
+
+    const RESERVED_LOCATIONS = [
+        config.adminFqdn(),
+        config.appFqdn(constants.API_LOCATION),
+        config.appFqdn(constants.SMTP_LOCATION),
+        config.appFqdn(constants.IMAP_LOCATION),
+        config.mailFqdn(),
+        config.appFqdn(constants.POSTMAN_LOCATION)
+    ];
     if (RESERVED_LOCATIONS.indexOf(location) !== -1) return new AppsError(AppsError.BAD_FIELD, location + ' is reserved');
 
-    if (location === '') return null; // bare location
+    // workaround https://github.com/oncletom/tld.js/issues/73
+    var tmp = hostname.replace('_', '-');
+    if (!tld.isValid(tmp)) return new AppsError(AppsError.BAD_FIELD, 'location is not a valid domain name');
 
-    if ((location.length + 1 /*+ hyphen */ + fqdn.indexOf('.')) > 63) return new AppsError(AppsError.BAD_FIELD, 'Hostname length cannot be greater than 63');
-    if (location.match(/^[A-Za-z0-9-]+$/) === null) return new AppsError(AppsError.BAD_FIELD, 'Hostname can only contain alphanumerics and hyphen');
-    if (location[0] === '-' || location[location.length-1] === '-') return new AppsError(AppsError.BAD_FIELD, 'Hostname cannot start or end with hyphen');
-    if (location.length + 1 /* hyphen */ + fqdn.length > 253) return new AppsError(AppsError.BAD_FIELD, 'FQDN length exceeds 253 characters');
+    // TODO the real limitation is 253 but our db only has VARCHAR(128) here
+    if (hostname.length > 128) return new AppsError(AppsError.BAD_FIELD, 'location length exceeds 128 characters');
+    // if (hostname.length > 253) return new AppsError(AppsError.BAD_FIELD, 'FQDN length exceeds 253 characters');
 
     return null;
 }
@@ -447,7 +459,7 @@ function install(data, auditSource, callback) {
         error = checkManifestConstraints(manifest);
         if (error) return callback(error);
 
-        error = validateHostname(location, config.fqdn());
+        error = validateHostname(location);
         if (error) return callback(error);
 
         error = validatePortBindings(portBindings, manifest.tcpPorts);
@@ -544,7 +556,7 @@ function configure(appId, data, auditSource, callback) {
         var location, portBindings, values = { };
         if ('location' in data) {
             location = values.location = data.location.toLowerCase();
-            error = validateHostname(values.location, config.fqdn());
+            error = validateHostname(values.location);
             if (error) return callback(error);
         } else {
             location = app.location;
@@ -836,7 +848,7 @@ function clone(appId, data, auditSource, callback) {
             error = checkManifestConstraints(backupInfo.manifest);
             if (error) return callback(error);
 
-            error = validateHostname(location, config.fqdn());
+            error = validateHostname(location);
             if (error) return callback(error);
 
             error = validatePortBindings(portBindings, backupInfo.manifest.tcpPorts);
