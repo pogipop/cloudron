@@ -3,7 +3,7 @@
 exports = module.exports = {
     get: get,
     getAllPaged: getAllPaged,
-    getByActionLastWeek: getByActionLastWeek,
+    getByCreationTime: getByCreationTime,
     add: add,
     count: count,
     delByCreationTime: delByCreationTime,
@@ -73,12 +73,12 @@ function getAllPaged(action, search, page, perPage, callback) {
     });
 }
 
-function getByActionLastWeek(action, callback) {
-    assert(typeof action === 'string' || action === null);
+function getByCreationTime(creationTime, callback) {
+    assert(util.isDate(creationTime));
     assert.strictEqual(typeof callback, 'function');
 
-    var query = 'SELECT ' + EVENTLOGS_FIELDS + ' FROM eventlog WHERE action=? AND creationTime >= DATE_SUB(NOW(), INTERVAL 1 WEEK) ORDER BY creationTime DESC';
-    database.query(query, [ action ], function (error, results) {
+    var query = 'SELECT ' + EVENTLOGS_FIELDS + ' FROM eventlog WHERE creationTime >= ?';
+    database.query(query, [ creationTime ], function (error, results) {
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
 
         results.forEach(postProcess);

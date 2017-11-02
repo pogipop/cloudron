@@ -6,7 +6,7 @@ exports = module.exports = {
     add: add,
     get: get,
     getAllPaged: getAllPaged,
-    getByActionLastWeek: getByActionLastWeek,
+    getByCreationTime: getByCreationTime,
     cleanup: cleanup,
 
     // keep in sync with webadmin index.js filter and CLI tool
@@ -98,21 +98,21 @@ function getAllPaged(action, search, page, perPage, callback) {
     assert.strictEqual(typeof perPage, 'number');
     assert.strictEqual(typeof callback, 'function');
 
-    eventlogdb.getAllPaged(action, search, page, perPage, function (error, boxes) {
+    eventlogdb.getAllPaged(action, search, page, perPage, function (error, events) {
         if (error) return callback(new EventLogError(EventLogError.INTERNAL_ERROR, error));
 
-        callback(null, boxes);
+        callback(null, events);
     });
 }
 
-function getByActionLastWeek(action, callback) {
-    assert(typeof action === 'string' || action === null);
+function getByCreationTime(creationTime, callback) {
+    assert(util.isDate(creationTime));
     assert.strictEqual(typeof callback, 'function');
 
-    eventlogdb.getByActionLastWeek(action, function (error, boxes) {
+    eventlogdb.getByCreationTime(creationTime, function (error, events) {
         if (error) return callback(new EventLogError(EventLogError.INTERNAL_ERROR, error));
 
-        callback(null, boxes);
+        callback(null, events);
     });
 }
 
@@ -120,7 +120,7 @@ function cleanup(callback) {
     callback = callback || NOOP_CALLBACK;
 
     var d = new Date();
-    d.setDate(d.getDate() - 7); // 7 days ago
+    d.setDate(d.getDate() - 10); // 10 days ago
 
     // only cleanup high frequency events
     var actions = [
