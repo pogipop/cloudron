@@ -59,7 +59,7 @@ var assert = require('assert'),
     util = require('util');
 
 var APPS_FIELDS_PREFIXED = [ 'apps.id', 'apps.appStoreId', 'apps.installationState', 'apps.installationProgress', 'apps.runState',
-    'apps.health', 'apps.containerId', 'apps.manifestJson', 'apps.httpPort', 'apps.location', 'apps.dnsRecordId',
+    'apps.health', 'apps.containerId', 'apps.manifestJson', 'apps.httpPort', 'apps.location', 'apps.domain', 'apps.dnsRecordId',
     'apps.accessRestrictionJson', 'apps.restoreConfigJson', 'apps.oldConfigJson', 'apps.updateConfigJson', 'apps.memoryLimit', 
     'apps.altDomain', 'apps.xFrameOptions', 'apps.sso', 'apps.debugModeJson', 'apps.robotsTxt', 'apps.enableBackup',
     'apps.creationTime', 'apps.updateTime' ].join(',');
@@ -178,12 +178,13 @@ function getAll(callback) {
     });
 }
 
-function add(id, appStoreId, manifest, location, portBindings, data, callback) {
+function add(id, appStoreId, manifest, location, domain, portBindings, data, callback) {
     assert.strictEqual(typeof id, 'string');
     assert.strictEqual(typeof appStoreId, 'string');
     assert(manifest && typeof manifest === 'object');
     assert.strictEqual(typeof manifest.version, 'string');
     assert.strictEqual(typeof location, 'string');
+    assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof portBindings, 'object');
     assert(data && typeof data === 'object');
     assert.strictEqual(typeof callback, 'function');
@@ -204,8 +205,8 @@ function add(id, appStoreId, manifest, location, portBindings, data, callback) {
 
     var queries = [];
     queries.push({
-        query: 'INSERT INTO apps (id, appStoreId, manifestJson, installationState, location, accessRestrictionJson, memoryLimit, altDomain, xFrameOptions, restoreConfigJson, sso, debugModeJson) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-        args: [ id, appStoreId, manifestJson, installationState, location, accessRestrictionJson, memoryLimit, altDomain, xFrameOptions, restoreConfigJson, sso, debugModeJson ]
+        query: 'INSERT INTO apps (id, appStoreId, manifestJson, installationState, location, domain, accessRestrictionJson, memoryLimit, altDomain, xFrameOptions, restoreConfigJson, sso, debugModeJson) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        args: [ id, appStoreId, manifestJson, installationState, location, domain, accessRestrictionJson, memoryLimit, altDomain, xFrameOptions, restoreConfigJson, sso, debugModeJson ]
     });
 
     Object.keys(portBindings).forEach(function (env) {
