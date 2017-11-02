@@ -108,7 +108,6 @@ function initializeExpressSync() {
     router.post('/api/v1/developer', developerScope, routes.user.requireAdmin, routes.user.verifyPassword, routes.developer.setEnabled);
     router.get ('/api/v1/developer', developerScope, routes.developer.enabled, routes.developer.status);
     router.post('/api/v1/developer/login', routes.developer.enabled, routes.developer.login);
-    router.get ('/api/v1/developer/apps', developerScope, routes.developer.enabled, routes.developer.apps);
 
     // cloudron routes
     router.get ('/api/v1/cloudron/config', cloudronScope, routes.cloudron.getConfig);

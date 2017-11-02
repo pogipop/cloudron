@@ -4,8 +4,7 @@ exports = module.exports = {
     enabled: enabled,
     setEnabled: setEnabled,
     status: status,
-    login: login,
-    apps: apps
+    login: login
 };
 
 var developer = require('../developer.js'),
@@ -52,9 +51,3 @@ function login(req, res, next) {
   })(req, res, next);
 }
 
-function apps(req, res, next) {
-    developer.getNonApprovedApps(function (error, result) {
-        if (error) return next(new HttpError(500, error));
-        next(new HttpSuccess(200, { apps: result }));
-    });
-}

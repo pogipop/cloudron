@@ -353,18 +353,6 @@ angular.module('Application').controller('AppStoreController', ['$scope', '$loca
             });
 
             return callback(null, apps);
-
-            // Client.getNonApprovedApps(function (error, result) {
-            //     if (error) return callback(error);
-
-            //     // add testing tag to the manifest for UI and search reasons
-            //     result.forEach(function (app) {
-            //         if (!app.manifest.tags) app.manifest.tags = [];
-            //         app.manifest.tags.push('testing');
-            //     });
-
-            //     callback(null, apps.concat(result));
-            // });
         });
     }
 

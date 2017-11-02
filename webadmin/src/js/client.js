@@ -697,13 +697,6 @@ angular.module('Application').service('Client', ['$http', 'md5', 'Notification',
         }).error(defaultErrorHandler(callback));
     };
 
-    Client.prototype.getNonApprovedApps = function (callback) {
-        get('/api/v1/developer/apps').success(function (data, status) {
-            if (status !== 200 || typeof data !== 'object') return callback(new ClientError(status, data));
-            callback(null, data.apps || []);
-        }).error(defaultErrorHandler(callback));
-    };
-
     Client.prototype.getApp = function (appId, callback) {
         var appFound = null;
         this._installedApps.some(function (app) {
