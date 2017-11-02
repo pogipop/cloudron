@@ -1099,4 +1099,6 @@
 * Make the dkim selector dynamic
 * Fix issue where app update dialog did not close
 * Fix LE cert renewal failures
+* Send user and cert info in digest emails
+* Send oom, app failures and other important mails to cloudron owner's alt mail
 
