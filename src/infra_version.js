@@ -7,7 +7,7 @@
 exports = module.exports = {
     // a major version makes all apps restore from backup. #451 must be fixed before we do this.
     // a minor version makes all apps re-configure themselves
-    'version': '48.7.0',
+    'version': '48.8.0',
 
     'baseImages': [ 'cloudron/base:0.10.0' ],
 

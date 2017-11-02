@@ -26,6 +26,12 @@ server {
     }
 <% } -%>
 
+    # acme challenges (for cert renewal where the vhost config exists)
+    location /.well-known/acme-challenge/ {
+        default_type text/plain;
+        alias /home/yellowtent/platformdata/acme/;
+    }
+
     location / {
         # redirect everything to HTTPS
         return 301 https://$host$request_uri;
