@@ -1094,3 +1094,9 @@
 * New mail container release that fixes email sending with SOGo
 * Show 404 page for unknown domains
 
+[1.7.7]
+* Allow setting app memory till memory limit
+* Make the dkim selector dynamic
+* Fix issue where app update dialog did not close
+* Fix LE cert renewal failures
+
