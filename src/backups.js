@@ -68,7 +68,7 @@ var BACKUPTASK_CMD = path.join(__dirname, 'backuptask.js');
 function debugApp(app) {
     assert(!app || typeof app === 'object');
 
-    var prefix = app ? app.location : '(no app)';
+    var prefix = app ? config.appFqdn(app) : '(no app)';
     debug(prefix + ' ' + util.format.apply(util, Array.prototype.slice.call(arguments, 1)));
 }
 
@@ -704,7 +704,7 @@ function backupApp(app, callback) {
     const timestamp = (new Date()).toISOString().replace(/[T.]/g, '-').replace(/[:Z]/g,'');
     safe.fs.unlinkSync(paths.BACKUP_LOG_FILE); // start fresh log file
 
-    progress.set(progress.BACKUP, 10,  'Backing up ' + (app.altDomain || config.appFqdn(app.location)));
+    progress.set(progress.BACKUP, 10,  'Backing up ' + (app.altDomain || app.location));
 
     backupAppWithTimestamp(app, timestamp, function (error) {
         progress.set(progress.BACKUP, 100, error ? error.message : '');
@@ -731,12 +731,12 @@ function backupBoxAndApps(auditSource, callback) {
         var step = 100/(allApps.length+2);
 
         async.mapSeries(allApps, function iterator(app, iteratorCallback) {
-            progress.set(progress.BACKUP, step * processed,  'Backing up ' + (app.altDomain || config.appFqdn(app.location)));
+            progress.set(progress.BACKUP, step * processed,  'Backing up ' + (app.altDomain || config.appFqdn(app)));
 
             ++processed;
 
             if (!app.enableBackup) {
-                progress.set(progress.BACKUP, step * processed, 'Skipped backup ' + (app.altDomain || config.appFqdn(app.location)));
+                progress.set(progress.BACKUP, step * processed, 'Skipped backup ' + (app.altDomain || config.appFqdn(app)));
                 return iteratorCallback(null, null); // nothing to backup
             }
 
@@ -746,7 +746,7 @@ function backupBoxAndApps(auditSource, callback) {
                     return iteratorCallback(error);
                 }
 
-                progress.set(progress.BACKUP, step * processed, 'Backed up ' + (app.altDomain || config.appFqdn(app.location)));
+                progress.set(progress.BACKUP, step * processed, 'Backed up ' + (app.altDomain || config.appFqdn(app)));
 
                 iteratorCallback(null, backupId || null); // clear backupId if is in BAD_STATE and never backed up
             });

@@ -189,11 +189,15 @@ function zoneName() {
 }
 
 // keep this in sync with start.sh admin.conf generation code
-function appFqdn(location) {
-    assert.strictEqual(typeof location, 'string');
+function appFqdn(app) {
+    assert.strictEqual(typeof app, 'object');
+    assert.strictEqual(typeof app.location, 'string');
+    assert.strictEqual(typeof app.domain, 'string');
 
-    if (location === '') return fqdn();
-    return isCustomDomain() ? location + '.' + fqdn() : location + '-' + fqdn();
+    if (app.location === '') return app.domain;
+
+    // caas still has subdomains with a dash
+    return app.location + (isCustomDomain() ? '.' : '-') + app.domain;
 }
 
 function mailLocation() {
@@ -201,7 +205,7 @@ function mailLocation() {
 }
 
 function mailFqdn() {
-    return appFqdn(mailLocation());
+    return appFqdn({ domain: fqdn(), location: mailLocation() });
 }
 
 function adminLocation() {
@@ -209,11 +213,11 @@ function adminLocation() {
 }
 
 function adminFqdn() {
-    return appFqdn(adminLocation());
+    return appFqdn({ domain: fqdn(), location: adminLocation() });
 }
 
 function adminOrigin() {
-    return 'https://' + appFqdn(adminLocation());
+    return 'https://' + adminFqdn();
 }
 
 function internalAdminOrigin() {

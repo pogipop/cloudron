@@ -116,6 +116,7 @@ function installApp(req, res, next) {
 
     // required
     if (typeof data.location !== 'string') return next(new HttpError(400, 'location is required'));
+    if (typeof data.domain !== 'string') return next(new HttpError(400, 'domain is required'));
     if (typeof data.accessRestriction !== 'object') return next(new HttpError(400, 'accessRestriction is required'));
 
     // optional
@@ -168,6 +169,7 @@ function configureApp(req, res, next) {
     var data = req.body;
 
     if ('location' in data && typeof data.location !== 'string') return next(new HttpError(400, 'location must be string'));
+    if ('domain' in data && typeof data.domain !== 'string') return next(new HttpError(400, 'domain must be string'));
     if ('portBindings' in data && typeof data.portBindings !== 'object') return next(new HttpError(400, 'portBindings must be an object'));
     if ('accessRestriction' in data && typeof data.accessRestriction !== 'object') return next(new HttpError(400, 'accessRestriction must be an object'));
 
@@ -235,6 +237,7 @@ function cloneApp(req, res, next) {
 
     if (typeof data.backupId !== 'string') return next(new HttpError(400, 'backupId must be a string'));
     if (typeof data.location !== 'string') return next(new HttpError(400, 'location is required'));
+    if (typeof data.domain !== 'string') return next(new HttpError(400, 'domain is required'));
     if (('portBindings' in data) && typeof data.portBindings !== 'object') return next(new HttpError(400, 'portBindings must be an object'));
 
     apps.clone(req.params.id, data, auditSource(req), function (error, result) {

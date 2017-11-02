@@ -119,10 +119,10 @@ AppsError.BAD_CERTIFICATE = 'Invalid certificate';
 // Domain name validation comes from RFC 2181 (Name syntax)
 // https://en.wikipedia.org/wiki/Hostname#Restrictions_on_valid_host_names
 // We are validating the validity of the location-fqdn as host name
-function validateHostname(hostname) {
-    assert.strictEqual(typeof hostname, 'string');
+function validateHostname(location) {
+    assert.strictEqual(typeof location, 'string');
 
-    if (!hostname) return new AppsError(AppsError.BAD_FIELD, 'location cannot be empty');
+    if (!location) return new AppsError(AppsError.BAD_FIELD, 'location cannot be empty');
 
     const RESERVED_LOCATIONS = [
         config.adminFqdn(),
@@ -135,12 +135,12 @@ function validateHostname(hostname) {
     if (RESERVED_LOCATIONS.indexOf(location) !== -1) return new AppsError(AppsError.BAD_FIELD, location + ' is reserved');
 
     // workaround https://github.com/oncletom/tld.js/issues/73
-    var tmp = hostname.replace('_', '-');
+    var tmp = location.replace('_', '-');
     if (!tld.isValid(tmp)) return new AppsError(AppsError.BAD_FIELD, 'location is not a valid domain name');
 
     // TODO the real limitation is 253 but our db only has VARCHAR(128) here
-    if (hostname.length > 128) return new AppsError(AppsError.BAD_FIELD, 'location length exceeds 128 characters');
-    // if (hostname.length > 253) return new AppsError(AppsError.BAD_FIELD, 'FQDN length exceeds 253 characters');
+    if (location.length > 128) return new AppsError(AppsError.BAD_FIELD, 'location length exceeds 128 characters');
+    // if (location.length > 253) return new AppsError(AppsError.BAD_FIELD, 'FQDN length exceeds 253 characters');
 
     return null;
 }
@@ -351,8 +351,8 @@ function get(appId, callback) {
         if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
 
         app.iconUrl = getIconUrlSync(app);
-        app.fqdn = app.altDomain || config.appFqdn(app.location);
-        app.cnameTarget = app.altDomain ? config.appFqdn(app.location) : null;
+        app.fqdn = app.altDomain || config.appFqdn(app);
+        app.cnameTarget = app.altDomain ? config.appFqdn(app) : null;
 
         callback(null, app);
     });
@@ -370,8 +370,8 @@ function getByIpAddress(ip, callback) {
             if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
 
             app.iconUrl = getIconUrlSync(app);
-            app.fqdn = app.altDomain || config.appFqdn(app.location);
-            app.cnameTarget = app.altDomain ? config.appFqdn(app.location) : null;
+            app.fqdn = app.altDomain || config.appFqdn(app);
+            app.cnameTarget = app.altDomain ? config.appFqdn(app) : null;
 
             callback(null, app);
         });
@@ -386,8 +386,8 @@ function getAll(callback) {
 
         apps.forEach(function (app) {
             app.iconUrl = getIconUrlSync(app);
-            app.fqdn = app.altDomain || config.appFqdn(app.location);
-            app.cnameTarget = app.altDomain ? config.appFqdn(app.location) : null;
+            app.fqdn = app.altDomain || config.appFqdn(app);
+            app.cnameTarget = app.altDomain ? config.appFqdn(app) : null;
         });
 
         callback(null, apps);
@@ -433,6 +433,7 @@ function install(data, auditSource, callback) {
     assert.strictEqual(typeof callback, 'function');
 
     var location = data.location.toLowerCase(),
+        domain = data.domain.toLowerCase(),
         portBindings = data.portBindings || null,
         accessRestriction = data.accessRestriction || null,
         icon = data.icon || null,
@@ -459,7 +460,7 @@ function install(data, auditSource, callback) {
         error = checkManifestConstraints(manifest);
         if (error) return callback(error);
 
-        error = validateHostname(location);
+        error = validateHostname(config.appFqdn({ domain: domain, location: location }));
         if (error) return callback(error);
 
         error = validatePortBindings(portBindings, manifest.tcpPorts);
@@ -499,7 +500,7 @@ function install(data, auditSource, callback) {
             }
         }
 
-        error = certificates.validateCertificate(cert, key, config.appFqdn(location));
+        error = certificates.validateCertificate(cert, key, config.appFqdn({ domain: domain, location: location }));
         if (error) return callback(new AppsError(AppsError.BAD_CERTIFICATE, error.message));
 
         debug('Will install app with id : ' + appId);
@@ -523,19 +524,19 @@ function install(data, auditSource, callback) {
                 robotsTxt: robotsTxt
             };
 
-            appdb.add(appId, appStoreId, manifest, location, portBindings, data, function (error) {
+            appdb.add(appId, appStoreId, manifest, location, domain, portBindings, data, function (error) {
                 if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(getDuplicateErrorDetails(location, portBindings, error));
                 if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
 
                 // save cert to boxdata/certs
                 if (cert && key) {
-                    if (!safe.fs.writeFileSync(path.join(paths.APP_CERTS_DIR, config.appFqdn(location) + '.user.cert'), cert)) return callback(new AppsError(AppsError.INTERNAL_ERROR, 'Error saving cert: ' + safe.error.message));
-                    if (!safe.fs.writeFileSync(path.join(paths.APP_CERTS_DIR, config.appFqdn(location) + '.user.key'), key)) return callback(new AppsError(AppsError.INTERNAL_ERROR, 'Error saving key: ' + safe.error.message));
+                    if (!safe.fs.writeFileSync(path.join(paths.APP_CERTS_DIR, config.appFqdn({ domain: domain, location: location }) + '.user.cert'), cert)) return callback(new AppsError(AppsError.INTERNAL_ERROR, 'Error saving cert: ' + safe.error.message));
+                    if (!safe.fs.writeFileSync(path.join(paths.APP_CERTS_DIR, config.appFqdn({ domain: domain, location: location }) + '.user.key'), key)) return callback(new AppsError(AppsError.INTERNAL_ERROR, 'Error saving key: ' + safe.error.message));
                 }
 
                 taskmanager.restartAppTask(appId);
 
-                eventlog.add(eventlog.ACTION_APP_INSTALL, auditSource, { appId: appId, location: location, manifest: manifest, backupId: backupId });
+                eventlog.add(eventlog.ACTION_APP_INSTALL, auditSource, { appId: appId, location: location, domain: domain, manifest: manifest, backupId: backupId });
 
                 callback(null, { id : appId });
             });
@@ -553,14 +554,15 @@ function configure(appId, data, auditSource, callback) {
         if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new AppsError(AppsError.NOT_FOUND, 'No such app'));
         if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
 
-        var location, portBindings, values = { };
-        if ('location' in data) {
-            location = values.location = data.location.toLowerCase();
-            error = validateHostname(values.location);
-            if (error) return callback(error);
-        } else {
-            location = app.location;
-        }
+        var domain, location, portBindings, values = { };
+        if ('location' in data) location = values.location = data.location.toLowerCase();
+        else location = app.location;
+
+        if ('domain' in data) domain = values.domain = data.domain.toLowerCase();
+        else domain = app.domain;
+
+        error = validateHostname(config.appFqdn({ domain: domain, location: location }));
+        if (error) return callback(error);
 
         if ('accessRestriction' in data) {
             values.accessRestriction = data.accessRestriction;
@@ -608,14 +610,14 @@ function configure(appId, data, auditSource, callback) {
         // save cert to boxdata/certs. TODO: move this to apptask when we have a real task queue
         if ('cert' in data && 'key' in data) {
             if (data.cert && data.key) {
-                error = certificates.validateCertificate(data.cert, data.key, config.appFqdn(location));
+                error = certificates.validateCertificate(data.cert, data.key, config.appFqdn({ domain: domain, location: location }));
                 if (error) return callback(new AppsError(AppsError.BAD_CERTIFICATE, error.message));
 
-                if (!safe.fs.writeFileSync(path.join(paths.APP_CERTS_DIR, config.appFqdn(location) + '.user.cert'), data.cert)) return callback(new AppsError(AppsError.INTERNAL_ERROR, 'Error saving cert: ' + safe.error.message));
-                if (!safe.fs.writeFileSync(path.join(paths.APP_CERTS_DIR, config.appFqdn(location) + '.user.key'), data.key)) return callback(new AppsError(AppsError.INTERNAL_ERROR, 'Error saving key: ' + safe.error.message));
+                if (!safe.fs.writeFileSync(path.join(paths.APP_CERTS_DIR, config.appFqdn({ domain: domain, location: location }) + '.user.cert'), data.cert)) return callback(new AppsError(AppsError.INTERNAL_ERROR, 'Error saving cert: ' + safe.error.message));
+                if (!safe.fs.writeFileSync(path.join(paths.APP_CERTS_DIR, config.appFqdn({ domain: domain, location: location }) + '.user.key'), data.key)) return callback(new AppsError(AppsError.INTERNAL_ERROR, 'Error saving key: ' + safe.error.message));
             } else { // remove existing cert/key
-                if (!safe.fs.unlinkSync(path.join(paths.APP_CERTS_DIR, config.appFqdn(location) + '.user.cert'))) debug('Error removing cert: ' + safe.error.message);
-                if (!safe.fs.unlinkSync(path.join(paths.APP_CERTS_DIR, config.appFqdn(location) + '.user.key'))) debug('Error removing key: ' + safe.error.message);
+                if (!safe.fs.unlinkSync(path.join(paths.APP_CERTS_DIR, config.appFqdn({ domain: domain, location: location }) + '.user.cert'))) debug('Error removing cert: ' + safe.error.message);
+                if (!safe.fs.unlinkSync(path.join(paths.APP_CERTS_DIR, config.appFqdn({ domain: domain, location: location }) + '.user.key'))) debug('Error removing key: ' + safe.error.message);
             }
         }
 
@@ -826,11 +828,13 @@ function clone(appId, data, auditSource, callback) {
     debug('Will clone app with id:%s', appId);
 
     var location = data.location.toLowerCase(),
+        domain = data.domain.toLowerCase(),
         portBindings = data.portBindings || null,
         backupId = data.backupId;
 
     assert.strictEqual(typeof backupId, 'string');
     assert.strictEqual(typeof location, 'string');
+    assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof portBindings, 'object');
 
     appdb.get(appId, function (error, app) {
@@ -848,7 +852,7 @@ function clone(appId, data, auditSource, callback) {
             error = checkManifestConstraints(backupInfo.manifest);
             if (error) return callback(error);
 
-            error = validateHostname(location);
+            error = validateHostname(config.appFqdn({ domain: domain, location: location }));
             if (error) return callback(error);
 
             error = validatePortBindings(portBindings, backupInfo.manifest.tcpPorts);
@@ -856,7 +860,7 @@ function clone(appId, data, auditSource, callback) {
 
             var newAppId = uuid.v4(), appStoreId = app.appStoreId, manifest = backupInfo.manifest;
 
-            appstore.purchase(newAppId, appStoreId, function (error) {
+            appstore.purchase(newAppId, app.appStoreId, function (error) {
                 if (error && error.reason === AppstoreError.NOT_FOUND) return callback(new AppsError(AppsError.NOT_FOUND));
                 if (error && error.reason === AppstoreError.BILLING_REQUIRED) return callback(new AppsError(AppsError.BILLING_REQUIRED, error.message));
                 if (error && error.reason === AppstoreError.EXTERNAL_ERROR) return callback(new AppsError(AppsError.EXTERNAL_ERROR, error.message));
@@ -872,7 +876,7 @@ function clone(appId, data, auditSource, callback) {
                     mailboxName: (location ? location : manifest.title.toLowerCase().replace(/[^a-zA-Z0-9]/g, '')) + '.app'
                 };
 
-                appdb.add(newAppId, appStoreId, manifest, location, portBindings, data, function (error) {
+                appdb.add(newAppId, app.appStoreId, manifest, location, domain, portBindings, data, function (error) {
                     if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(getDuplicateErrorDetails(location, portBindings, error));
                     if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
 

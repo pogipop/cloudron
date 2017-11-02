@@ -129,7 +129,7 @@ function createSubcontainer(app, name, cmd, options, callback) {
 
     var manifest = app.manifest;
     var exposedPorts = {}, dockerPortBindings = { };
-    var domain = app.altDomain || config.appFqdn(app.location);
+    var domain = app.altDomain || config.appFqdn(app);
     var stdEnv = [
         'CLOUDRON=1',
         'WEBADMIN_ORIGIN=' + config.adminOrigin(),

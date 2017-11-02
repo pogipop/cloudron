@@ -181,7 +181,7 @@ function renewAll(auditSource, callback) {
 
         var expiringApps = [ ];
         for (var i = 0; i < allApps.length; i++) {
-            var appDomain = allApps[i].altDomain || config.appFqdn(allApps[i].location);
+            var appDomain = allApps[i].altDomain || config.appFqdn(allApps[i]);
 
             var certFilePath = path.join(paths.APP_CERTS_DIR, appDomain + '.user.cert');
             var keyFilePath = path.join(paths.APP_CERTS_DIR, appDomain + '.user.key');
@@ -205,10 +205,10 @@ function renewAll(auditSource, callback) {
             }
         }
 
-        debug('renewAll: %j needs to be renewed', expiringApps.map(function (a) { return a.altDomain || config.appFqdn(a.location); }));
+        debug('renewAll: %j needs to be renewed', expiringApps.map(function (app) { return app.altDomain || config.appFqdn(app); }));
 
         async.eachSeries(expiringApps, function iterator(app, iteratorCallback) {
-            var domain = app.altDomain || config.appFqdn(app.location);
+            var domain = app.altDomain || config.appFqdn(app);
 
             getApi(app, function (error, api, apiOptions) {
                 if (error) return callback(error);
@@ -394,7 +394,7 @@ function ensureCertificate(app, callback) {
     assert.strictEqual(typeof app, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    var domain = app.altDomain || config.appFqdn(app.location);
+    var domain = app.altDomain || config.appFqdn(app);
 
     var certFilePath = path.join(paths.APP_CERTS_DIR, domain + '.user.cert');
     var keyFilePath = path.join(paths.APP_CERTS_DIR, domain + '.user.key');
