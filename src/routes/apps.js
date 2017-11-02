@@ -51,6 +51,7 @@ function removeInternalAppFields(app) {
         runState: app.runState,
         health: app.health,
         location: app.location,
+        domain: app.domain,
         accessRestriction: app.accessRestriction,
         manifest: app.manifest,
         portBindings: app.portBindings,
