@@ -171,6 +171,7 @@ function getAdminEmails(callback) {
         if (admins.length === 0) return callback(new Error('No admins on this cloudron')); // box not activated yet
 
         var adminEmails = [ ];
+        if (admins[0].alternateEmail) adminEmails.push(admins[0].alternateEmail);
         admins.forEach(function (admin) { adminEmails.push(admin.email); });
 
         callback(null, adminEmails);
@@ -428,34 +429,29 @@ function sendDigest(info) {
                 cloudronName = 'Cloudron';
             }
 
-            appstore.getAccount(function (error, appstoreProfile) {
-                if (error && error.reason !== AppstoreError.BILLING_REQUIRED) console.error(error);
-                if (appstoreProfile) adminEmails.push(appstoreProfile.email);
+            var templateData = {
+                fqdn: config.fqdn(),
+                webadminUrl: config.adminOrigin(),
+                cloudronName: cloudronName,
+                cloudronAvatarUrl: config.adminOrigin() + '/api/v1/cloudron/avatar',
+                info: info
+            };
 
-                var templateData = {
-                    fqdn: config.fqdn(),
-                    webadminUrl: config.adminOrigin(),
-                    cloudronName: cloudronName,
-                    cloudronAvatarUrl: config.adminOrigin() + '/api/v1/cloudron/avatar',
-                    info: info
-                };
+            var templateDataText = JSON.parse(JSON.stringify(templateData));
+            templateDataText.format = 'text';
 
-                var templateDataText = JSON.parse(JSON.stringify(templateData));
-                templateDataText.format = 'text';
+            var templateDataHTML = JSON.parse(JSON.stringify(templateData));
+            templateDataHTML.format = 'html';
 
-                var templateDataHTML = JSON.parse(JSON.stringify(templateData));
-                templateDataHTML.format = 'html';
+            var mailOptions = {
+                from: mailConfig().from,
+                to: adminEmails.join(', '),
+                subject: util.format('[%s] Cloudron - Weekly activity digest', config.fqdn()),
+                text: render('digest.ejs', templateDataText),
+                html: render('digest.ejs', templateDataHTML)
+            };
 
-                var mailOptions = {
-                    from: mailConfig().from,
-                    to: adminEmails.join(', '),
-                    subject: util.format('[%s] Cloudron - Weekly activity digest', config.fqdn()),
-                    text: render('digest.ejs', templateDataText),
-                    html: render('digest.ejs', templateDataHTML)
-                };
-
-                enqueue(mailOptions);
-            });
+            enqueue(mailOptions);
         });
     });
 }

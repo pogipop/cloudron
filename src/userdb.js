@@ -71,14 +71,14 @@ function getByEmail(email, callback) {
 function getOwner(callback) {
     assert.strictEqual(typeof callback, 'function');
 
-    // the first created user it the admin
+    // the first created user it the 'owner'
     database.query('SELECT ' + USERS_FIELDS + ' FROM users, groupMembers WHERE groupMembers.groupId = ? AND users.id = groupMembers.userId ORDER BY createdAt LIMIT 1',
-            [ constants.ADMIN_GROUP_ID ], function (error, result) {
-        if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
-        if (result.length === 0) return callback(new DatabaseError(DatabaseError.NOT_FOUND));
+        [ constants.ADMIN_GROUP_ID ], function (error, result) {
+            if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
+            if (result.length === 0) return callback(new DatabaseError(DatabaseError.NOT_FOUND));
 
-        callback(null, postProcess(result[0]));
-    });
+            callback(null, postProcess(result[0]));
+        });
 }
 
 function getByResetToken(resetToken, callback) {
@@ -116,7 +116,8 @@ function getAllWithGroupIds(callback) {
 function getAllAdmins(callback) {
     assert.strictEqual(typeof callback, 'function');
 
-    database.query('SELECT ' + USERS_FIELDS + ' FROM users, groupMembers WHERE groupMembers.groupId = ? AND users.id = groupMembers.userId ORDER BY username', [ constants.ADMIN_GROUP_ID ], function (error, results) {
+    // the mailer code relies on the first object being the 'owner' (thus the ORDER)
+    database.query('SELECT ' + USERS_FIELDS + ' FROM users, groupMembers WHERE groupMembers.groupId = ? AND users.id = groupMembers.userId ORDER BY createdAt', [ constants.ADMIN_GROUP_ID ], function (error, results) {
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
 
         results.forEach(postProcess);
