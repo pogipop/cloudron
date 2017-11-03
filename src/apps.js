@@ -126,11 +126,11 @@ function validateHostname(location) {
 
     const RESERVED_LOCATIONS = [
         config.adminFqdn(),
-        config.appFqdn(constants.API_LOCATION),
-        config.appFqdn(constants.SMTP_LOCATION),
-        config.appFqdn(constants.IMAP_LOCATION),
+        config.appFqdn({ location: constants.API_LOCATION, domain: config.fqdn() }),
+        config.appFqdn({ location: constants.SMTP_LOCATION, domain: config.fqdn() }),
+        config.appFqdn({ location: constants.IMAP_LOCATION, domain: config.fqdn() }),
         config.mailFqdn(),
-        config.appFqdn(constants.POSTMAN_LOCATION)
+        config.appFqdn({ location: constants.POSTMAN_LOCATION, domain: config.fqdn() })
     ];
     if (RESERVED_LOCATIONS.indexOf(location) !== -1) return new AppsError(AppsError.BAD_FIELD, location + ' is reserved');
 
@@ -138,9 +138,7 @@ function validateHostname(location) {
     var tmp = location.replace('_', '-');
     if (!tld.isValid(tmp)) return new AppsError(AppsError.BAD_FIELD, 'location is not a valid domain name');
 
-    // TODO the real limitation is 253 but our db only has VARCHAR(128) here
-    if (location.length > 128) return new AppsError(AppsError.BAD_FIELD, 'location length exceeds 128 characters');
-    // if (location.length > 253) return new AppsError(AppsError.BAD_FIELD, 'FQDN length exceeds 253 characters');
+    if (location.length > 253) return new AppsError(AppsError.BAD_FIELD, 'FQDN length exceeds 253 characters');
 
     return null;
 }
