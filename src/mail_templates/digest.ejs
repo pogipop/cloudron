@@ -47,7 +47,7 @@ The following apps were updated:
 <% }}} -%>
 <% if (info.finishedBackups.length) { -%>
 
-Last successful backup: <%- info.finishedBackups[0].filename %>
+Last successful backup: <%- info.finishedBackups[0].backupId || info.finishedBackups[0].filename %>
 <% } else { -%>
 
 This Cloudron did **not** backup successfully in the last week!
@@ -152,7 +152,7 @@ Sent at: <%= new Date().toUTCString() %>
     <% } %>
 
     <% if (info.finishedBackups.length) { %>
-        <p><b>Last successful backup : </b> <%= info.finishedBackups[0].filename %> </p>
+        <p><b>Last successful backup : </b> <%= info.finishedBackups[0].backupId || info.finishedBackups[0].filename %> </p>
     <% } else { %>
         <p><b>This Cloudron did not backup successfully in the last week!</b></p>
     <% } %>

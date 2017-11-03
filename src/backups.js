@@ -792,12 +792,12 @@ function backupBoxAndApps(auditSource, callback) {
 
             progress.set(progress.BACKUP, step * processed, 'Backing up system data');
 
-            backupBoxWithAppBackupIds(backupIds, timestamp, function (error, filename) {
+            backupBoxWithAppBackupIds(backupIds, timestamp, function (error, backupId) {
                 progress.set(progress.BACKUP, 100, error ? error.message : '');
 
-                eventlog.add(eventlog.ACTION_BACKUP_FINISH, auditSource, { errorMessage: error ? error.message : null, filename: filename });
+                eventlog.add(eventlog.ACTION_BACKUP_FINISH, auditSource, { errorMessage: error ? error.message : null, backupId: backupId, timestamp: timestamp });
 
-                callback(error, filename);
+                callback(error, backupId);
             });
         });
     });
