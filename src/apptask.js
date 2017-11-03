@@ -72,7 +72,7 @@ function initialize(callback) {
 function debugApp(app) {
     assert.strictEqual(typeof app, 'object');
 
-    var prefix = app ? (app.location || '(bare)') : '(no app)';
+    var prefix = app ? (config.appFqdn(app) || '(bare)') : '(no app)';
     debug(prefix + ' ' + util.format.apply(util, Array.prototype.slice.call(arguments, 1)));
 }
 
@@ -252,17 +252,17 @@ function registerSubdomain(app, overwrite, callback) {
         if (error) return callback(error);
 
         async.retry({ times: 200, interval: 5000 }, function (retryCallback) {
-            debugApp(app, 'Registering subdomain location [%s] overwrite: %s', app.location, overwrite);
+            debugApp(app, 'Registering subdomain location [%s] overwrite: %s', config.appFqdn(app), overwrite);
 
             // get the current record before updating it
-            domains.getDNSRecords(app.location, 'A', function (error, values) {
+            domains.getDNSRecords(config.appFqdn(app), 'A', function (error, values) {
                 if (error) return retryCallback(error);
 
                 // refuse to update any existing DNS record for custom domains that we did not create
                 // note that the appstore sets up the naked domain for non-custom domains
                 if (config.isCustomDomain() && values.length !== 0 && !overwrite) return retryCallback(null, new Error('DNS Record already exists'));
 
-                domains.upsertDNSRecords(app.location, 'A', [ ip ], function (error, changeId) {
+                domains.upsertDNSRecords(config.appFqdn(app), 'A', [ ip ], function (error, changeId) {
                     if (error && (error.reason === DomainError.STILL_BUSY || error.reason === DomainError.EXTERNAL_ERROR)) return retryCallback(error); // try again
 
                     retryCallback(null, error || changeId);
@@ -297,9 +297,9 @@ function unregisterSubdomain(app, location, callback) {
         if (error) return callback(error);
 
         async.retry({ times: 30, interval: 5000 }, function (retryCallback) {
-            debugApp(app, 'Unregistering subdomain: %s', location);
+            debugApp(app, 'Unregistering subdomain: %s', config.appFqdn(app));
 
-            domains.removeDNSRecords(location, 'A', [ ip ], function (error) {
+            domains.removeDNSRecords(config.appFqdn(app), 'A', [ ip ], function (error) {
                 if (error && (error.reason === DomainError.STILL_BUSY || error.reason === DomainError.EXTERNAL_ERROR)) return retryCallback(error); // try again
 
                 retryCallback(null, error);
@@ -334,7 +334,7 @@ function waitForDnsPropagation(app, callback) {
     sysinfo.getPublicIp(function (error, ip) {
         if (error) return callback(error);
 
-        domains.waitForDNSRecord(app.location, ip, 'A', { interval: 5000, times: 120 }, callback);
+        domains.waitForDNSRecord(config.appFqdn(app), ip, 'A', { interval: 5000, times: 120 }, callback);
     });
 }
 
@@ -351,7 +351,7 @@ function waitForAltDomainDnsPropagation(app, callback) {
             domains.waitForDNSRecord(app.altDomain, ip, 'A', { interval: 10000, times: 60 }, callback);
         });
     } else {
-        domains.waitForDNSRecord(app.altDomain, app.location + '.', 'CNAME', { interval: 10000, times: 60 }, callback);
+        domains.waitForDNSRecord(app.altDomain, config.appFqdn(app) + '.', 'CNAME', { interval: 10000, times: 60 }, callback);
     }
 }
 
