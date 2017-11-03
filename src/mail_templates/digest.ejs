@@ -2,7 +2,7 @@
 
 Dear <%= cloudronName %> Admin,
 
-This is the weekly summary of activities on your Cloudron <%= fqdn %>.
+This is a summary of the activities on your Cloudron <%= fqdn %>.
 <% if (info.usersAdded.length) { -%>
 
 The following users were added:
@@ -72,9 +72,7 @@ Sent at: <%= new Date().toUTCString() %>
 
         <br/>
 
-        <p>Weekly summary of activities on your Cloudron <a href="<%= webadminUrl %>"><%= cloudronName %></a>:</p>
-
-        <br/>
+        <p>This is a summary of the activities on your Cloudron <a href="<%= webadminUrl %>"><%= cloudronName %></a> last week.</p>
 
     <% if (info.usersAdded.length) { -%>
         <p><b>The following users were added:</b></p>

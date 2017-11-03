@@ -113,7 +113,7 @@ function checkAppUpdates(callback) {
                     // always send notifications if user is on the free plan
                     if (result.plan.id === 'free' || result.plan.id === 'undecided') {
                         debug('Notifying user of app update for %s from %s to %s', app.id, app.manifest.version, updateInfo.manifest.version);
-                        mailer.appUpdateAvailable(app, updateInfo);
+                        mailer.appUpdateAvailable(app, false /* subscription */, updateInfo);
                         return iteratorDone();
                     }
 
@@ -123,7 +123,7 @@ function checkAppUpdates(callback) {
                             debug(error);
                         } else if (result === constants.AUTOUPDATE_PATTERN_NEVER) {
                             debug('Notifying user of app update for %s from %s to %s', app.id, app.manifest.version, updateInfo.manifest.version);
-                            mailer.appUpdateAvailable(app, updateInfo);
+                            mailer.appUpdateAvailable(app, true /* hasSubscription */, updateInfo);
                         }
 
                         iteratorDone();
@@ -169,14 +169,14 @@ function checkBoxUpdates(callback) {
 
             // always send notifications if user is on the free plan
             if (result.plan.id === 'free' || result.plan.id === 'undecided') {
-                mailer.boxUpdateAvailable(updateInfo.version, updateInfo.changelog);
+                mailer.boxUpdateAvailable(false /* hasSubscription */, updateInfo.version, updateInfo.changelog);
                 return done();
             }
 
             // only send notifications if update pattern is 'never'
             settings.getAutoupdatePattern(function (error, result) {
                 if (error) debug(error);
-                else if (result === constants.AUTOUPDATE_PATTERN_NEVER) mailer.boxUpdateAvailable(updateInfo.version, updateInfo.changelog);
+                else if (result === constants.AUTOUPDATE_PATTERN_NEVER) mailer.boxUpdateAvailable(true /* hasSubscription */, updateInfo.version, updateInfo.changelog);
 
                 done();
             });
