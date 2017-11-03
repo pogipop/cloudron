@@ -41,7 +41,7 @@ function maybeSend(callback) {
                 var certRenewals = events.filter(function (e) { return e.action === eventlog.ACTION_CERTIFICATE_RENEWAL; }).map(function (e) { return e.data; });
                 var usersAdded = events.filter(function (e) { return e.action === eventlog.ACTION_USER_ADD; }).map(function (e) { return e.data; });
                 var usersRemoved = events.filter(function (e) { return e.action === eventlog.ACTION_USER_REMOVE; }).map(function (e) { return e.data; });
-                var finishedBackups = events.filter(function (e) { return e.action === eventlog.ACTION_BACKUP_FINISH; }).map(function (e) { return e.data; });
+                var finishedBackups = events.filter(function (e) { return e.action === eventlog.ACTION_BACKUP_FINISH && !e.errorMessage; }).map(function (e) { return e.data; });
 
                 if (error) return callback(error);
 
@@ -55,7 +55,7 @@ function maybeSend(callback) {
                     finishedBoxUpdates: boxUpdates,
 
                     certRenewals: certRenewals,
-                    finishedBackups: finishedBackups,
+                    finishedBackups: finishedBackups, // only the successful backups
                     usersAdded: usersAdded,
                     usersRemoved: usersRemoved // unused because we don't have username to work with
                 };
