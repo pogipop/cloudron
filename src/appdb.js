@@ -205,7 +205,7 @@ function add(id, appStoreId, manifest, location, domain, portBindings, data, cal
 
     var queries = [];
     queries.push({
-        query: 'INSERT INTO apps (id, appStoreId, manifestJson, installationState, location, domain, accessRestrictionJson, memoryLimit, altDomain, xFrameOptions, restoreConfigJson, sso, debugModeJson) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        query: 'INSERT INTO apps (id, appStoreId, manifestJson, installationState, location, domain, accessRestrictionJson, memoryLimit, altDomain, xFrameOptions, restoreConfigJson, sso, debugModeJson) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
         args: [ id, appStoreId, manifestJson, installationState, location, domain, accessRestrictionJson, memoryLimit, altDomain, xFrameOptions, restoreConfigJson, sso, debugModeJson ]
     });
 
@@ -219,8 +219,8 @@ function add(id, appStoreId, manifest, location, domain, portBindings, data, cal
     // only allocate a mailbox if mailboxName is set
     if (data.mailboxName) {
         queries.push({
-            query: 'INSERT INTO mailboxes (name, ownerId, ownerType) VALUES (?, ?, ?)',
-            args: [ data.mailboxName, id, mailboxdb.TYPE_APP ]
+            query: 'INSERT INTO mailboxes (name, domain, ownerId, ownerType) VALUES (?, ?, ?, ?)',
+            args: [ data.mailboxName, domain, id, mailboxdb.TYPE_APP ]
         });
     }
 

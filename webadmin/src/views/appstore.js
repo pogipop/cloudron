@@ -37,6 +37,7 @@ angular.module('Application').controller('AppStoreController', ['$scope', '$loca
         error: {},
         app: {},
         location: '',
+        domain: '',
         portBindings: {},
         mediaLinks: [],
         certificateFile: null,
@@ -57,6 +58,7 @@ angular.module('Application').controller('AppStoreController', ['$scope', '$loca
             $scope.appInstall.app = {};
             $scope.appInstall.error = {};
             $scope.appInstall.location = '';
+            $scope.appInstall.domain = '';
             $scope.appInstall.portBindings = {};
             $scope.appInstall.state = 'appInfo';
             $scope.appInstall.mediaLinks = [];
@@ -102,6 +104,7 @@ angular.module('Application').controller('AppStoreController', ['$scope', '$loca
 
             $scope.appInstall.mediaLinks = $scope.appInstall.app.manifest.mediaLinks || [];
             $scope.appInstall.location = app.location;
+            $scope.appInstall.domain = $scope.config.fqdn; // FIXME needs to come from domains dropdown
             $scope.appInstall.portBindingsInfo = $scope.appInstall.app.manifest.tcpPorts || {};   // Portbinding map only for information
             $scope.appInstall.portBindings = {};                            // This is the actual model holding the env:port pair
             $scope.appInstall.portBindingsEnabled = {};                     // This is the actual model holding the enabled/disabled flag
@@ -145,6 +148,7 @@ angular.module('Application').controller('AppStoreController', ['$scope', '$loca
 
             var data = {
                 location: $scope.appInstall.location || '',
+                domain: $scope.appInstall.domain,
                 portBindings: finalPortBindings,
                 accessRestriction: finalAccessRestriction,
                 cert: $scope.appInstall.certificateFile,
