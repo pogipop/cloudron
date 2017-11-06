@@ -1161,6 +1161,53 @@ angular.module('Application').service('Client', ['$http', 'md5', 'Notification',
         }).error(defaultErrorHandler(callback));
     };
 
+    // Domains
+    Client.prototype.getDomains = function (callback) {
+        get('/api/v1/domains').success(function (data, status) {
+            if (status !== 200 || typeof data !== 'object') return callback(new ClientError(status, data));
+            callback(null, data.domains);
+        }).error(defaultErrorHandler(callback));
+    };
+
+    Client.prototype.addDomain = function (domain, config, callback) {
+        var data = {
+            domain: domain,
+            config: config
+        };
+
+        post('/api/v1/domains', data).success(function (data, status) {
+            if (status !== 201 || typeof data !== 'object') return callback(new ClientError(status, data));
+            callback(null, data);
+        }).error(defaultErrorHandler(callback));
+    };
+
+    Client.prototype.updateDomain = function (domain, config, callback) {
+        var data = {
+            config: config
+        };
+
+        put('/api/v1/domains/' + domain, data).success(function (data, status) {
+            if (status !== 202) return callback(new ClientError(status, data));
+            callback(null);
+        }).error(defaultErrorHandler(callback));
+    };
+
+    Client.prototype.removeDomain = function (domain, password, callback) {
+        var config = {
+            data: {
+                password: password
+            },
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        };
+
+        del('/api/v1/domains/' + domain, config).success(function (data, status) {
+            if (status !== 204) return callback(new ClientError(status, data));
+            callback(null);
+        }).error(defaultErrorHandler(callback));
+    };
+
     client = new Client();
     return client;
 }]);
