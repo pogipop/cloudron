@@ -36,6 +36,19 @@ var USER_0 = {
     displayName: ''
 };
 
+var USER_1 = { // this user has not signed up yet
+    id: 'uuid222',
+    username: null,
+    password: '',
+    email: 'safe2@me.com',
+    admin: false,
+    salt: 'morton',
+    createdAt: 'sometime back',
+    modifiedAt: 'now',
+    resetToken: hat(256),
+    displayName: ''
+};
+
 function setup(done) {
     // ensure data/config/mount paths
     database.initialize(function (error) {
@@ -167,7 +180,8 @@ describe('Group membership', function () {
                     next();
                 });
             },
-            userdb.add.bind(null, USER_0.id, USER_0)
+            userdb.add.bind(null, USER_0.id, USER_0),
+            userdb.add.bind(null, USER_1.id, USER_1)
         ], done);
     });
     after(cleanup);
@@ -201,6 +215,13 @@ describe('Group membership', function () {
         });
     });
 
+    it('can add member without username', function (done) {
+        groups.addMember(group0Object.id, USER_1.id, function (error) {
+            expect(error).to.be(null);
+            done();
+        });
+    });
+
     it('isMember returns true', function (done) {
         groups.isMember(group0Object.id, USER_0.id, function (error, member) {
             expect(error).to.be(null);
@@ -212,8 +233,9 @@ describe('Group membership', function () {
     it('can get members', function (done) {
         groups.getMembers(group0Object.id, function (error, result) {
             expect(error).to.be(null);
-            expect(result.length).to.be(1);
+            expect(result.length).to.be(2);
             expect(result[0]).to.be(USER_0.id);
+            expect(result[1]).to.be(USER_1.id);
             done();
         });
     });
@@ -224,7 +246,7 @@ describe('Group membership', function () {
             expect(result.name).to.be(GROUP0_NAME.toLowerCase());
             expect(result.ownerType).to.be(mailboxdb.TYPE_GROUP);
             expect(result.ownerId).to.be(group0Object.id);
-            expect(result.members).to.eql([ USER_0.username ]);
+            expect(result.members).to.eql([ USER_0.username ]); // filters out users that have not signed up yet
             done();
         });
     });

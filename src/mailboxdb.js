@@ -134,7 +134,8 @@ function getGroup(name, callback) {
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
         if (results.length === 0) return callback(new DatabaseError(DatabaseError.NOT_FOUND));
 
-        database.query('SELECT users.username FROM groupMembers INNER JOIN users ON groupMembers.userId = users.id WHERE groupMembers.groupId = ?', [ results[0].ownerId ], function (error, memberList) {
+        // username can be null if the user has not signed up with the invite yet
+        database.query('SELECT users.username FROM groupMembers INNER JOIN users ON groupMembers.userId = users.id WHERE groupMembers.groupId = ? AND users.username IS NOT NULL', [ results[0].ownerId ], function (error, memberList) {
             if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
 
             results[0].members = memberList.map(function (m) { return m.username; });
