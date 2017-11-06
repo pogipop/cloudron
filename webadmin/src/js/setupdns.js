@@ -38,7 +38,7 @@ app.controller('SetupDNSController', ['$scope', '$http', 'Client', function ($sc
         }
     });
 
-    // keep in sync with certs.js
+    // keep in sync with domains.js
     $scope.dnsProvider = [
         { name: 'AWS Route53', value: 'route53' },
         { name: 'Cloudflare (DNS only)', value: 'cloudflare' },

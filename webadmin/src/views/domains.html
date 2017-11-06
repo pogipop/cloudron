@@ -1,0 +1,170 @@
+<div class="modal fade" id="domainConfigureModal" tabindex="-1" role="dialog">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title" ng-show="domainConfigure.adding">Add Domain</h4>
+        <h4 class="modal-title" ng-hide="domainConfigure.adding">Configure {{ domainConfigure.domain.domain }}</h4>
+      </div>
+      <div class="modal-body">
+        <form name="domainConfigureForm" role="form" novalidate ng-submit="domainConfigure.submit()" autocomplete="off">
+          <fieldset>
+            <p class="has-error text-center" ng-show="domainConfigure.error">{{ domainConfigure.error }}</p>
+
+            <div class="form-group" ng-class="{ 'has-error': domainConfigureForm.newDomain.$invalid }" ng-show="domainConfigure.adding">
+              <label class="control-label">Domain name</label>
+              <input type="text" class="form-control" ng-model="domainConfigure.newDomain" name="newDomain" ng-disabled="domainConfigure.busy" placeholder="example.com" ng-required="domainConfigure.adding" autofocus>
+            </div>
+
+            <div class="form-group">
+              <label class="control-label">DNS API provider</label>
+              <select class="form-control" ng-model="domainConfigure.provider" ng-options="a.value as a.name for a in dnsProvider"></select>
+            </div>
+
+            <!-- Route53 -->
+            <div class="form-group" ng-class="{ 'has-error': false }" ng-show="domainConfigure.provider === 'route53'">
+              <label class="control-label">Access key id</label>
+              <input type="text" class="form-control" ng-model="domainConfigure.accessKeyId" name="accessKeyId" ng-disabled="domainConfigure.busy" ng-minlength="16" ng-maxlength="32" ng-required="domainConfigure.provider === 'route53'">
+            </div>
+            <div class="form-group" ng-class="{ 'has-error': false }" ng-show="domainConfigure.provider === 'route53'">
+              <label class="control-label">Secret access key</label>
+              <input type="text" class="form-control" ng-model="domainConfigure.secretAccessKey" name="secretAccessKey" ng-disabled="domainConfigure.busy" ng-required="domainConfigure.provider === 'route53'">
+            </div>
+
+            <!-- Google Cloud DNS -->
+            <div class="form-group" ng-class="{ 'has-error': false }" ng-show="domainConfigure.provider === 'gcdns'">
+              <div class="input-group">
+                <input type="file" id="gcdnsKeyFileInput" style="display:none"/>
+                <input type="text" class="form-control" placeholder="Service Account Key" ng-model="domainConfigure.gcdnsKey.keyFileName" id="gcdnsKeyInput" name="cert" onclick="getElementById('gcdnsKeyFileInput').click();" style="cursor: pointer;" ng-disabled="domainConfigure.busy" ng-required="domainConfigure.provider === 'gcdns'">
+                <span class="input-group-addon">
+                  <i class="fa fa-upload" onclick="getElementById('gcdnsKeyFileInput').click();"></i>
+                </span>
+              </div>
+            </div>
+
+            <!-- DigitalOcean -->
+            <div class="form-group" ng-class="{ 'has-error': false }" ng-show="domainConfigure.provider === 'digitalocean'">
+              <label class="control-label">DigitalOcean token</label>
+              <input type="text" class="form-control" ng-model="domainConfigure.digitalOceanToken" name="digitalOceanToken" ng-disabled="domainConfigure.busy" ng-required="domainConfigure.provider === 'digitalocean'">
+            </div>
+
+            <!-- Cloudflare -->
+            <div class="form-group" ng-class="{ 'has-error': false }" ng-show="domainConfigure.provider === 'cloudflare'">
+              <label class="control-label">Cloudflare token</label>
+              <input type="text" class="form-control" ng-model="domainConfigure.cloudflareToken" name="cloudflareToken" placeholder="API Key" ng-required="domainConfigure.provider === 'cloudflare'" ng-disabled="domainConfigure.busy">
+            </div>
+            <div class="form-group" ng-class="{ 'has-error': false }" ng-show="domainConfigure.provider === 'cloudflare'">
+              <label class="control-label">Cloudflare email</label>
+              <input type="email" class="form-control" ng-model="domainConfigure.cloudflareEmail" name="cloudflareEmail" placeholder="Cloudflare Account Email" ng-required="domainConfigure.provider === 'cloudflare'" ng-disabled="domainConfigure.busy">
+            </div>
+
+            <input class="ng-hide" type="submit" ng-disabled="domainConfigureForm.$invalid || domainConfigure.busy"/>
+          </fieldset>
+        </form>
+
+        <p ng-show="domainConfigure.provider === 'route53'">
+          This domain must be hosted on <a href="https://aws.amazon.com/route53/?nc2=h_m1" target="_blank">AWS Route53</a>.
+        </p>
+
+        <p ng-show="domainConfigure.provider === 'gcdns'">
+          This domain must be hosted on <a href="https://console.cloud.google.com/net-services/dns/zones" target="_blank">Google Cloud DNS</a>.
+        </p>
+
+        <p ng-show="domainConfigure.provider === 'digitalocean'">
+          This domain must be hosted on <a href="https://www.digitalocean.com/community/tutorials/how-to-set-up-a-host-name-with-digitalocean#step-two%E2%80%94change-your-domain-server" target="_blank">DigitalOcean</a>.
+        </p>
+
+        <p ng-show="domainConfigure.provider === 'cloudflare'">
+          This domain must be hosted on <a href="https://www.cloudflare.com" target="_blank">Cloudflare</a>.
+        </p>
+
+        <p ng-show="domainConfigure.provider === 'wildcard'">
+          Setup <i>A</i> records for <b>*.{{ domainConfigure.newDomain || domainConfigure.domain.domain }}</b> and <b>{{ domainConfigure.newDomain || domainConfigure.domain.domain }}</b> to this server's IP.
+        </p>
+
+        <p ng-show="domainConfigure.provider === 'manual'">
+          All DNS records have to be setup manually <i>before</i> each app installation.
+        </p>
+      </div>
+      <div class="modal-footer ">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+        <button type="submit" class="btn btn-outline btn-success pull-right" ng-click="domainConfigure.submit()" ng-disabled="domainConfigureForm.$invalid || domainConfigure.busy">
+          <i class="fa fa-circle-o-notch fa-spin" ng-show="domainConfigure.busy"></i> Save
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal domain remove -->
+<div class="modal fade" id="domainRemoveModal" tabindex="-1" role="dialog">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title">Really remove {{ domainRemove.domain.domain }} ?</h4>
+      </div>
+      <div class="modal-body">
+        <fieldset>
+          <form role="form" name="domainRemoveForm" ng-submit="domainRemove.submit()" autocomplete="off">
+              <div class="form-group" ng-class="{ 'has-error': (domainRemoveForm.password.$dirty && domainRemoveForm.password.$invalid) || (!domainRemoveForm.password.$dirty && domainRemove.error) }">
+                  <label class="control-label">Provide your password to confirm this action</label>
+                  <div class="control-label" ng-show="(domainRemoveForm.password.$dirty && domainRemoveForm.password.$invalid) || (!domainRemoveForm.password.$dirty && domainRemove.error)">
+                      <small ng-show=" domainRemoveForm.password.$dirty && domainRemoveForm.password.$invalid">Password required</small>
+                      <small ng-show="!domainRemoveForm.password.$dirty && domainRemove.error">Wrong password</small>
+                  </div>
+                  <input type="password" class="form-control" ng-model="domainRemove.password" id="domainRemovePasswordInput" name="password" required autofocus>
+              </div>
+
+              <input class="ng-hide" type="submit" ng-disabled="domainRemoveForm.$invalid || busy"/>
+          </form>
+        </fieldset>
+      </div>
+      <div class="modal-footer">
+          <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-danger" ng-click="domainRemove.submit()" ng-disabled="domainRemoveForm.$invalid || domainRemove.busy"><i class="fa fa-circle-o-notch fa-spin" ng-show="domainRemove.busy"></i> Remove</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="content">
+  <div class="text-left">
+    <h1>Domains <button class="btn btn-primary btn-outline pull-right" ng-click="domainConfigure.show()"><i class="fa fa-plus"></i> Add Domain</button></h1>
+  </div>
+
+  <div class="card card-large">
+    <div class="grid-item-top">
+      <div class="row ng-hide" ng-show="!ready">
+        <div class="col-lg-12 text-center">
+          <h2><i class="fa fa-circle-o-notch fa-spin"></i></h2>
+        </div>
+      </div>
+      <div class="row animateMeOpacity ng-hide" ng-show="ready">
+        <div class="col-lg-12">
+          <table class="table table-hover">
+            <thead>
+              <tr>
+                <th>Domain</th>
+                <th class="text-left hidden-xs hidden-sm">Provider</th>
+                <th style="width: 100px" class="text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr ng-repeat="domain in domains">
+                <td class="elide-table-cell">
+                  {{ domain.domain }}
+                </td>
+                <td class="text-left elide-table-cell hidden-xs hidden-sm">
+                  {{ domain.config.provider }}
+                </td>
+                <td class="text-right no-wrap" style="vertical-align: bottom">
+                  <button class="btn btn-xs btn-default" ng-click="domainConfigure.show(domain)" title="Edit Domain"><i class="fa fa-pencil"></i></button>
+                  <button class="btn btn-xs btn-danger" ng-click="domainRemove.show(domain)" title="Remove Domain"><i class="fa fa-trash-o"></i></button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
