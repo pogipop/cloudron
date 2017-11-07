@@ -65,6 +65,7 @@ var addons = require('./addons.js'),
     groups = require('./groups.js'),
     mailboxdb = require('./mailboxdb.js'),
     manifestFormat = require('cloudron-manifestformat'),
+    os = require('os'),
     path = require('path'),
     paths = require('./paths.js'),
     safe = require('safetydance'),
@@ -208,7 +209,7 @@ function validateMemoryLimit(manifest, memoryLimit) {
     assert.strictEqual(typeof memoryLimit, 'number');
 
     var min = manifest.memoryLimit || constants.DEFAULT_MEMORY_LIMIT;
-    var max = (4096 * 1024 * 1024);
+    var max = os.totalmem() * 2; // this will overallocate since we don't allocate equal swap always (#466)
 
     // allow 0, which indicates that it is not set, the one from the manifest will be choosen but we don't commit any user value
     // this is needed so an app update can change the value in the manifest, and if not set by the user, the new value should be used
