@@ -19,8 +19,9 @@ function add(req, res, next) {
 
     if (typeof req.body.domain !== 'string') return next(new HttpError(400, 'domain must be a string'));
     if (typeof req.body.config !== 'object') return next(new HttpError(400, 'config must be an object'));
+    if ('zoneName' in req.body && typeof req.body.zoneName !== 'string') return next(new HttpError(400, 'zoneName must be a string'));
 
-    domains.add(req.body.domain, req.body.config, function (error) {
+    domains.add(req.body.domain, req.body.zoneName || req.body.domain, req.body.config, function (error) {
         if (error && error.reason === DomainError.ALREADY_EXISTS) return next(new HttpError(400, error.message));
         if (error && error.reason === DomainError.BAD_FIELD) return next(new HttpError(400, error.message));
         if (error && error.reason === DomainError.INVALID_PROVIDER) return next(new HttpError(400, error.message));
