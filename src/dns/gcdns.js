@@ -187,14 +187,20 @@ function verifyDnsConfig(dnsConfig, fqdn, zoneName, ip, callback) {
                 return callback(new DomainError(DomainError.BAD_FIELD, 'Domain nameservers are not set to Google Cloud DNS'));
             }
 
-            const name = config.adminLocation() + (fqdn === zoneName ? '' :  '.' + fqdn.slice(0, - zoneName.length - 1));
+            const testSubdomain = 'cloudrontestdns';
 
-            upsert(credentials, zoneName, name, 'A', [ ip ], function (error, changeId) {
+            upsert(credentials, zoneName, testSubdomain, 'A', [ ip ], function (error, changeId) {
                 if (error) return callback(error);
 
-                debug('verifyDnsConfig: A record added with change id %s', changeId);
+                debug('verifyDnsConfig: Test A record added with change id %s', changeId);
 
-                callback(null, credentials);
+                del(dnsConfig, zoneName, testSubdomain, 'A', [ ip ], function (error) {
+                    if (error) return callback(error);
+
+                    debug('verifyDnsConfig: Test A record removed again');
+
+                    callback(null, credentials);
+                });
             });
         });
     });

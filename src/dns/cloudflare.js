@@ -256,12 +256,20 @@ function verifyDnsConfig(dnsConfig, fqdn, zoneName, ip, callback) {
                 return callback(new DomainError(DomainError.BAD_FIELD, 'Domain nameservers are not set to Cloudflare'));
             }
 
-            upsert(credentials, zoneName, 'my', 'A', [ ip ], function (error, changeId) {
+            const testSubdomain = 'cloudrontestdns';
+
+            upsert(credentials, zoneName, testSubdomain, 'A', [ ip ], function (error, changeId) {
                 if (error) return callback(error);
 
-                debug('verifyDnsConfig: A record added with change id %s', changeId);
+                debug('verifyDnsConfig: Test A record added with change id %s', changeId);
 
-                callback(null, credentials);
+                del(dnsConfig, zoneName, testSubdomain, 'A', [ ip ], function (error) {
+                    if (error) return callback(error);
+
+                    debug('verifyDnsConfig: Test A record removed again');
+
+                    callback(null, credentials);
+                });
             });
         });
     });
