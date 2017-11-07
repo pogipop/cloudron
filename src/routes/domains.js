@@ -58,6 +58,8 @@ function update(req, res, next) {
 
     domains.update(req.params.domain, req.body.config, function (error) {
         if (error && error.reason === DomainError.NOT_FOUND) return next(new HttpError(404, error.message));
+        if (error && error.reason === DomainError.BAD_FIELD) return next(new HttpError(400, error.message));
+        if (error && error.reason === DomainError.INVALID_PROVIDER) return next(new HttpError(400, error.message));
         if (error) return next(new HttpError(500, error));
 
         next(new HttpSuccess(204, {}));
