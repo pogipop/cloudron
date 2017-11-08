@@ -7,7 +7,7 @@ angular.module('Application').controller('AppsController', ['$scope', '$location
     $scope.installedApps = Client.getInstalledApps();
     $scope.config = Client.getConfig();
     $scope.user = Client.getUserInfo();
-    $scope.dnsConfig = {};
+    $scope.domains = [];
     $scope.groups = [];
     $scope.users = [];
     $scope.mailConfig = {};
@@ -17,6 +17,7 @@ angular.module('Application').controller('AppsController', ['$scope', '$location
         busy: false,
         error: {},
         app: {},
+        domain: '',
         location: '',
         usingAltDomain: false,
         advancedVisible: false,
@@ -59,6 +60,7 @@ angular.module('Application').controller('AppsController', ['$scope', '$location
             // fill relevant info from the app
             $scope.appConfigure.app = app;
             $scope.appConfigure.location = app.altDomain || app.location;
+            $scope.appConfigure.domain = app.domain;
             $scope.appConfigure.usingAltDomain = !!app.altDomain;
             $scope.appConfigure.portBindingsInfo = app.manifest.tcpPorts || {}; // Portbinding map only for information
             $scope. Option = app.accessRestriction ? 'groups' : 'any';
@@ -130,6 +132,7 @@ angular.module('Application').controller('AppsController', ['$scope', '$location
             var data = {
                 location:  $scope.appConfigure.usingAltDomain ? $scope.appConfigure.app.location : $scope.appConfigure.location,
                 altDomain: $scope.appConfigure.usingAltDomain ? $scope.appConfigure.location : null,
+                domain: $scope.appConfigure.usingAltDomain ? undefined : $scope.appConfigure.domain,
                 portBindings: finalPortBindings,
                 accessRestriction: finalAccessRestriction,
                 cert: $scope.appConfigure.certificateFile,
@@ -266,6 +269,7 @@ angular.module('Application').controller('AppsController', ['$scope', '$location
         // reset configure dialog
         $scope.appConfigure.error = {};
         $scope.appConfigure.app = {};
+        $scope.appConfigure.domain = '';
         $scope.appConfigure.location = '';
         $scope.appConfigure.advancedVisible = false;
         $scope.appConfigure.usingAltDomain = false;
@@ -339,8 +343,9 @@ angular.module('Application').controller('AppsController', ['$scope', '$location
         });
     };
 
-    $scope.useAltDomain = function (use) {
+    $scope.useAltDomain = function (use, domain) {
         $scope.appConfigure.usingAltDomain = use;
+        $scope.appConfigure.domain = domain;
 
         if (use) {
             $scope.appConfigure.location = '';
@@ -465,14 +470,14 @@ angular.module('Application').controller('AppsController', ['$scope', '$location
         });
     }
 
-    function fetchDnsConfig() {
-        Client.getDnsConfig(function (error, result) {
+    function getDomains() {
+        Client.getDomains(function (error, result) {
             if (error) {
                 console.error(error);
-                return $timeout(fetchDnsConfig, 5000);
+                return $timeout(getDomains, 5000);
             }
 
-            $scope.dnsConfig = result;
+            $scope.domains = result.map(function (d) { return d.domain; });
         });
     }
 
@@ -499,7 +504,7 @@ angular.module('Application').controller('AppsController', ['$scope', '$location
             if ($scope.user.admin) {
                 fetchUsers();
                 fetchGroups();
-                fetchDnsConfig();
+                getDomains();
                 getMailConfig();
                 getBackupConfig();
             }

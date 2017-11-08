@@ -17,12 +17,12 @@
 
                                 <div class="input-group-btn">
                                     <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
-                                        {{ appConfigure.usingAltDomain ? 'External Domain' : ((!appConfigure.location ? '' : (config.isCustomDomain ? '.' : '-')) + config.fqdn) }}
+                                        {{ appConfigure.usingAltDomain ? 'External Domain' : ((!appConfigure.location ? '' : (config.isCustomDomain ? '.' : '-')) + appConfigure.domain) }}
                                         <span class="caret"></span>
                                     </button>
                                     <ul class="dropdown-menu dropdown-menu-right" role="menu">
-                                        <li>
-                                            <a href="" ng-click="useAltDomain(false)">{{ config.fqdn }}</a>
+                                        <li ng-repeat="domain in domains">
+                                            <a href="" ng-click="useAltDomain(false, domain)">{{ domain }}</a>
                                         </li>
                                         <li>
                                             <a href="" ng-click="useAltDomain(true)"><i class="fa fa-star"></i> External Domain</a>

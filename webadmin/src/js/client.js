@@ -350,6 +350,7 @@ angular.module('Application').service('Client', ['$http', 'md5', 'Notification',
         var data = {
             appId: id,
             location: config.location,
+            domain: config.domain,
             portBindings: config.portBindings,
             accessRestriction: config.accessRestriction,
             cert: config.cert,
