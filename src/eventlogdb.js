@@ -77,7 +77,7 @@ function getByCreationTime(creationTime, callback) {
     assert(util.isDate(creationTime));
     assert.strictEqual(typeof callback, 'function');
 
-    var query = 'SELECT ' + EVENTLOGS_FIELDS + ' FROM eventlog WHERE creationTime >= ?';
+    var query = 'SELECT ' + EVENTLOGS_FIELDS + ' FROM eventlog WHERE creationTime >= ? ORDER BY creationTime DESC';
     database.query(query, [ creationTime ], function (error, results) {
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
 
