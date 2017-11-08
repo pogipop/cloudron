@@ -1187,7 +1187,7 @@ angular.module('Application').service('Client', ['$http', 'md5', 'Notification',
         };
 
         put('/api/v1/domains/' + domain, data).success(function (data, status) {
-            if (status !== 202) return callback(new ClientError(status, data));
+            if (status !== 204) return callback(new ClientError(status, data));
             callback(null);
         }).error(defaultErrorHandler(callback));
     };
