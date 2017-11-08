@@ -142,7 +142,7 @@
                             <input type="text" class="form-control" ng-model="configureBackup.backupFolder" id="inputConfigureBackupFolder" name="backupFolder" ng-disabled="configureBackup.busy" placeholder="Directory for backups" ng-required="configureBackup.provider === 'filesystem'">
 
                             <p class="has-error" ng-show="configureBackup.provider === 'filesystem'">
-                                Please ensure that the backup directory is an external disk
+                                Please ensure that the backup directory is an external ext4 disk
                             </p>
                         </div>
 
