@@ -12,7 +12,7 @@ angular.module('Application').controller('AppStoreController', ['$scope', '$loca
     $scope.user = Client.getUserInfo();
     $scope.users = [];
     $scope.groups = [];
-    $scope.dnsConfig = {};
+    $scope.domains = [];
     $scope.category = '';
     $scope.cachedCategory = ''; // used to cache the selected category while searching
     $scope.searchString = '';
@@ -496,14 +496,14 @@ angular.module('Application').controller('AppStoreController', ['$scope', '$loca
         });
     }
 
-    function fetchDnsConfig() {
-        Client.getDnsConfig(function (error, result) {
+    function getDomains() {
+        Client.getDomains(function (error, result) {
             if (error) {
                 console.error(error);
-                return $timeout(fetchDnsConfig, 5000);
+                return $timeout(getDomains, 5000);
             }
 
-            $scope.dnsConfig = result;
+            $scope.domains = result.map(function (d) { return d.domain; });
         });
     }
 
@@ -561,7 +561,7 @@ angular.module('Application').controller('AppStoreController', ['$scope', '$loca
 
             fetchUsers();
             fetchGroups();
-            fetchDnsConfig();
+            getDomains();
             getMailConfig();
 
             fetchAppstoreConfig(function (error) {
