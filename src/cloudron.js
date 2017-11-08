@@ -40,6 +40,7 @@ var appdb = require('./appdb.js'),
     debug = require('debug')('box:cloudron'),
     df = require('@sindresorhus/df'),
     domains = require('./domains.js'),
+    DomainError = domains.DomainError,
     eventlog = require('./eventlog.js'),
     fs = require('fs'),
     locker = require('./locker.js'),
@@ -176,8 +177,8 @@ function dnsSetup(dnsConfig, domain, zoneName, callback) {
 
     debug('dnsSetup: Setting up Cloudron with domain %s and zone %s', domain, zoneName);
 
-    settings.setDnsConfig(dnsConfig, domain, zoneName, function (error) {
-        if (error && error.reason === SettingsError.BAD_FIELD) return callback(new CloudronError(CloudronError.BAD_FIELD, error.message));
+    function done(error) {
+        if (error && error.reason === DomainError.BAD_FIELD) return callback(new CloudronError(CloudronError.BAD_FIELD, error.message));
         if (error) return callback(new CloudronError(CloudronError.INTERNAL_ERROR, error));
 
         config.setFqdn(domain); // set fqdn only after dns config is valid, otherwise cannot re-setup if we failed
@@ -189,6 +190,13 @@ function dnsSetup(dnsConfig, domain, zoneName, callback) {
         ], NOOP_CALLBACK);
 
         callback();
+    }
+
+    domains.get(domain, function (error, result) {
+        if (error && error.reason !== DomainError.NOT_FOUND) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
+
+        if (!result) domains.add(domain, zoneName, dnsConfig, done);
+        else domains.update(domain, dnsConfig, done);
     });
 }
 
@@ -846,12 +854,20 @@ function migrate(options, callback) {
 
     var dnsConfig = _.pick(options, 'domain', 'provider', 'accessKeyId', 'secretAccessKey', 'region', 'endpoint', 'token', 'zoneName');
 
-    settings.setDnsConfig(dnsConfig, options.domain, options.zoneName || tld.getDomain(options.domain), function (error) {
-        if (error && error.reason === SettingsError.BAD_FIELD) return callback(new CloudronError(CloudronError.BAD_FIELD, error.message));
-        if (error) return callback(new CloudronError(CloudronError.INTERNAL_ERROR, error));
+    domains.get(options.domain, function (error, result) {
+        if (error && error.reason !== DomainError.NOT_FOUND) return callback(new CloudronError(CloudronError.INTERNAL_ERROR, error));
 
-        // TODO: should probably rollback dns config if migrate fails
-        doMigrate(options, callback);
+        var func;
+        if (!result) func = domains.add.bind(null, options.domain, options.zoneName, dnsConfig);
+        else func = domains.update.bind(null, options.domain, dnsConfig);
+
+        func(function (error) {
+            if (error && error.reason === DomainError.BAD_FIELD) return callback(new CloudronError(CloudronError.BAD_FIELD, error.message));
+            if (error) return callback(new SettingsError(CloudronError.INTERNAL_ERROR, error));
+
+            // TODO: should probably rollback dns config if migrate fails
+            doMigrate(options, callback);
+        });
     });
 }
 

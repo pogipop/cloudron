@@ -206,8 +206,6 @@ function initializeExpressSync() {
     router.get ('/api/v1/settings/cloudron_avatar',    settingsScope, routes.user.requireAdmin, routes.settings.getCloudronAvatar);
     router.post('/api/v1/settings/cloudron_avatar',    settingsScope, routes.user.requireAdmin, multipart, routes.settings.setCloudronAvatar);
     router.get ('/api/v1/settings/email_status',       settingsScope, routes.user.requireAdmin, routes.settings.getEmailStatus);
-    router.get ('/api/v1/settings/dns_config',         settingsScope, routes.user.requireAdmin, routes.settings.getDnsConfig);
-    router.post('/api/v1/settings/dns_config',         settingsScope, routes.user.requireAdmin, routes.settings.setDnsConfig);
     router.get ('/api/v1/settings/backup_config',      settingsScope, routes.user.requireAdmin, routes.settings.getBackupConfig);
     router.post('/api/v1/settings/backup_config',      settingsScope, routes.user.requireAdmin, routes.settings.setBackupConfig);
     router.post('/api/v1/settings/certificate',        settingsScope, routes.user.requireAdmin, routes.settings.setFallbackCertificate);

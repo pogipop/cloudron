@@ -21,10 +21,6 @@ exports = module.exports = {
     getDeveloperMode: getDeveloperMode,
     setDeveloperMode: setDeveloperMode,
 
-    // DEPRECATED in favor of domains table via domains.js
-    getDnsConfig: getDnsConfig,
-    setDnsConfig: setDnsConfig,
-
     getDynamicDnsConfig: getDynamicDnsConfig,
     setDynamicDnsConfig: setDynamicDnsConfig,
 
@@ -293,44 +289,6 @@ function setDeveloperMode(enabled, callback) {
         exports.events.emit(exports.DEVELOPER_MODE_KEY, enabled);
 
         return callback(null);
-    });
-}
-
-function getDnsConfig(callback) {
-    assert.strictEqual(typeof callback, 'function');
-
-    domains.get(config.fqdn(), function (error, result) {
-        if (error && error.reason === DomainError.NOT_FOUND) return callback(null, { provider: 'manual' });
-        if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
-
-        callback(null, result);
-    });
-}
-
-function setDnsConfig(dnsConfig, domain, zoneName, callback) {
-    assert.strictEqual(typeof dnsConfig, 'object');
-    assert.strictEqual(typeof domain, 'string');
-    assert.strictEqual(typeof zoneName, 'string');
-    assert.strictEqual(typeof callback, 'function');
-
-    function done(error) {
-        if (error && error.reason === DomainError.ACCESS_DENIED) return callback(new SettingsError(SettingsError.BAD_FIELD, 'Error adding A record. Access denied'));
-        if (error && error.reason === DomainError.NOT_FOUND) return callback(new SettingsError(SettingsError.BAD_FIELD, 'Zone not found'));
-        if (error && error.reason === DomainError.EXTERNAL_ERROR) return callback(new SettingsError(SettingsError.BAD_FIELD, 'Error adding A record:' + error.message));
-        if (error && error.reason === DomainError.BAD_FIELD) return callback(new SettingsError(SettingsError.BAD_FIELD, error.message));
-        if (error && error.reason === DomainError.INVALID_PROVIDER) return callback(new SettingsError(SettingsError.BAD_FIELD, error.message));
-        if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
-
-        cloudron.configureWebadmin(NOOP_CALLBACK); // do not block
-
-        callback(null, dnsConfig);
-    }
-
-    domains.get(domain, function (error, result) {
-        if (error && error.reason !== DomainError.NOT_FOUND) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
-
-        if (!result) domains.add(domain, zoneName, dnsConfig, done);
-        else domains.update(domain, dnsConfig, done);
     });
 }
 

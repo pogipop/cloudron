@@ -239,11 +239,12 @@ angular.module('Application').controller('EmailController', ['$scope', '$locatio
         });
     }
 
+    // TODO this currently assumes the config.fqdn is the mail domain
     function getDnsConfig() {
-        Client.getDnsConfig(function (error, dnsConfig) {
+        Client.getDomain($scope.config.fqdn, function (error, result) {
             if (error) return console.error(error);
 
-            $scope.dnsConfig = dnsConfig;
+            $scope.dnsConfig = result.config;
         });
     }
 

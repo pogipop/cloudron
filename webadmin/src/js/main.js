@@ -114,47 +114,41 @@ angular.module('Application').controller('MainController', ['$scope', '$route', 
     };
 
     function runConfigurationChecks() {
-        Client.getDnsConfig(function (error, result) {
+        var actionScope;
+
+        // warn user if dns config is not working (the 'configuring' flag detects if configureWebadmin is 'active')
+        if (!$scope.status.webadminStatus.configuring && !$scope.status.webadminStatus.dns) {
+            actionScope = $scope.$new(true);
+            actionScope.action = '/#/certs';
+            Client.notify('Invalid Domain Config', 'Unable to update DNS. Click here to update it.', true, 'error', actionScope);
+        }
+
+        Client.getBackupConfig(function (error, backupConfig) {
             if (error) return console.error(error);
 
-            var actionScope;
+            if (backupConfig.provider === 'noop') {
+                var actionScope = $scope.$new(true);
+                actionScope.action = '/#/settings';
 
-            // warn user if dns config is not working (the 'configuring' flag detects if configureWebadmin is 'active')
-            if (!$scope.status.webadminStatus.configuring && !$scope.status.webadminStatus.dns) {
-                actionScope = $scope.$new(true);
-                actionScope.action = '/#/certs';
-                Client.notify('Invalid Domain Config', 'Unable to update DNS. Click here to update it.', true, 'error', actionScope);
+                Client.notify('Backup Configuration', 'Cloudron backups are disabled. Ensure the server is backed up using alternate means.', false, 'info', actionScope);
             }
 
-            if (result.provider === 'caas') return;
-
-            Client.getBackupConfig(function (error, backupConfig) {
+            Client.getMailRelay(function (error, result) {
                 if (error) return console.error(error);
 
-                if (backupConfig.provider === 'noop') {
-                    var actionScope = $scope.$new(true);
-                    actionScope.action = '/#/settings';
+                // the email status checks are currently only useful when using Cloudron itself for relaying
+                if (result.provider !== 'cloudron-smtp') return;
 
-                    Client.notify('Backup Configuration', 'Cloudron backups are disabled. Ensure the server is backed up using alternate means.', false, 'info', actionScope);
-                }
-
-                Client.getMailRelay(function (error, result) {
+                // Check if all email DNS records are set up properly only for non external DNS API
+                Client.getEmailStatus(function (error, result) {
                     if (error) return console.error(error);
 
-                    // the email status checks are currently only useful when using Cloudron itself for relaying
-                    if (result.provider !== 'cloudron-smtp') return;
+                    if (!result.dns.spf.status || !result.dns.dkim.status || !result.dns.ptr.status || !result.relay.status) {
+                        var actionScope = $scope.$new(true);
+                        actionScope.action = '/#/email';
 
-                    // Check if all email DNS records are set up properly only for non external DNS API
-                    Client.getEmailStatus(function (error, result) {
-                        if (error) return console.error(error);
-
-                        if (!result.dns.spf.status || !result.dns.dkim.status || !result.dns.ptr.status || !result.relay.status) {
-                            var actionScope = $scope.$new(true);
-                            actionScope.action = '/#/email';
-
-                            Client.notify('DNS Configuration', 'Please setup all required DNS records to guarantee correct mail delivery', false, 'info', actionScope);
-                        }
-                    });
+                        Client.notify('DNS Configuration', 'Please setup all required DNS records to guarantee correct mail delivery', false, 'info', actionScope);
+                    }
                 });
             });
         });
