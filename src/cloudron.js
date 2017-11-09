@@ -238,12 +238,12 @@ function configureWebadmin(callback) {
 
     function done(error) {
         gWebadminStatus.configuring = false;
-        debug('configureWebadmin: done error:%j', error);
+        debug('configureWebadmin: done error: %j', error || {});
         callback(error);
     }
 
     function configureNginx(error) {
-        debug('configureNginx: dns update:%j', error);
+        debug('configureNginx: dns update: %j', error || {});
 
         certificates.ensureCertificate({ domain: config.fqdn(), location: config.adminLocation() }, function (error, certFilePath, keyFilePath) {
             if (error) return done(error);
