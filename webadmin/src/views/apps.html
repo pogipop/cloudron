@@ -95,12 +95,12 @@
                             <div>
                                 <div style="margin-left: 20px;">
                                     <div class="col-md-5">
-                                        <b>Users: &nbsp;</b>
+                                        Users: &nbsp;
                                         <multiselect ng-model="appConfigure.accessRestriction.users" ng-disabled="appConfigure.accessRestrictionOption !== 'groups'" options="user.username for user in users" data-multiple="true"></multiselect>
                                     </div>
 
                                     <div class="col-md-5">
-                                        <b>Groups: &nbsp;</b>
+                                        Groups: &nbsp;
                                         <multiselect ng-model="appConfigure.accessRestriction.groups" ng-disabled="appConfigure.accessRestrictionOption !== 'groups'" options="group.name for group in (groups | ignoreAdminGroup)" data-multiple="true"></multiselect>
                                     </div>
                                 </div>
