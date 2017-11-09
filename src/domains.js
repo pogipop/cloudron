@@ -17,6 +17,7 @@ module.exports = exports = {
 };
 
 var assert = require('assert'),
+    certificates = require('./certificates.js'),
     DatabaseError = require('./databaseerror.js'),
     domaindb = require('./domaindb.js'),
     sysinfo = require('./sysinfo.js'),
@@ -84,14 +85,20 @@ function verifyDnsConfig(config, domain, zoneName, ip, callback) {
 }
 
 
-function add(domain, zoneName, config, callback) {
+function add(domain, zoneName, config, fallbackCertificate, callback) {
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof zoneName, 'string');
     assert.strictEqual(typeof config, 'object');
+    assert.strictEqual(typeof fallbackCertificate, 'object');
     assert.strictEqual(typeof callback, 'function');
 
     if (!tld.isValid(domain)) return callback(new DomainError(DomainError.BAD_FIELD, 'Invalid domain'));
     if (!tld.isValid(zoneName)) return callback(new DomainError(DomainError.BAD_FIELD, 'Invalid zoneName'));
+
+    if (fallbackCertificate) {
+        let error = certificates.validateCertificate(fallbackCertificate.cert, fallbackCertificate.key, domain);
+        if (error) return callback(new DomainError(DomainError.BAD_FIELD, error.message));
+    }
 
     sysinfo.getPublicIp(function (error, ip) {
         if (error) return callback(new DomainError(DomainError.INTERNAL_ERROR, 'Error getting IP:' + error.message));
@@ -108,7 +115,13 @@ function add(domain, zoneName, config, callback) {
                 if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(new DomainError(DomainError.ALREADY_EXISTS));
                 if (error) return callback(new DomainError(DomainError.INTERNAL_ERROR, error));
 
-                return callback(null);
+                if (!fallbackCertificate) return callback();
+
+                // cert validation already happened above no need to check all errors again
+                certificates.setFallbackCertificate(fallbackCertificate.cert, fallbackCertificate.key, domain, function (error) {
+                    if (error) return callback(new DomainError(DomainError.INTERNAL_ERROR, error));
+                    callback();
+                });
             });
         });
     });
@@ -136,14 +149,20 @@ function getAll(callback) {
     });
 }
 
-function update(domain, config, callback) {
+function update(domain, config, fallbackCertificate, callback) {
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof config, 'object');
+    assert.strictEqual(typeof fallbackCertificate, 'object');
     assert.strictEqual(typeof callback, 'function');
 
     domaindb.get(domain, function (error, result) {
         if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new DomainError(DomainError.NOT_FOUND));
         if (error) return callback(new DomainError(DomainError.INTERNAL_ERROR, error));
+
+        if (fallbackCertificate) {
+            let error = certificates.validateCertificate(fallbackCertificate.cert, fallbackCertificate.key, domain);
+            if (error) return callback(new DomainError(DomainError.BAD_FIELD, error.message));
+        }
 
         sysinfo.getPublicIp(function (error, ip) {
             if (error) return callback(new DomainError(DomainError.INTERNAL_ERROR, 'Error getting IP:' + error.message));
@@ -160,7 +179,13 @@ function update(domain, config, callback) {
                     if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new DomainError(DomainError.NOT_FOUND));
                     if (error) return callback(new DomainError(DomainError.INTERNAL_ERROR, error));
 
-                    return callback(null);
+                    if (!fallbackCertificate) return callback();
+
+                    // cert validation already happened above no need to check all errors again
+                    certificates.setFallbackCertificate(fallbackCertificate.cert, fallbackCertificate.key, domain, function (error) {
+                        if (error) return callback(new DomainError(DomainError.INTERNAL_ERROR, error));
+                        callback();
+                    });
                 });
             });
         });

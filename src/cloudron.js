@@ -195,8 +195,8 @@ function dnsSetup(dnsConfig, domain, zoneName, callback) {
     domains.get(domain, function (error, result) {
         if (error && error.reason !== DomainError.NOT_FOUND) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
 
-        if (!result) domains.add(domain, zoneName, dnsConfig, done);
-        else domains.update(domain, dnsConfig, done);
+        if (!result) domains.add(domain, zoneName, dnsConfig, null, done);
+        else domains.update(domain, dnsConfig, null, done);
     });
 }
 
@@ -858,8 +858,8 @@ function migrate(options, callback) {
         if (error && error.reason !== DomainError.NOT_FOUND) return callback(new CloudronError(CloudronError.INTERNAL_ERROR, error));
 
         var func;
-        if (!result) func = domains.add.bind(null, options.domain, options.zoneName, dnsConfig);
-        else func = domains.update.bind(null, options.domain, dnsConfig);
+        if (!result) func = domains.add.bind(null, options.domain, options.zoneName, dnsConfig, null);
+        else func = domains.update.bind(null, options.domain, dnsConfig, null);
 
         func(function (error) {
             if (error && error.reason === DomainError.BAD_FIELD) return callback(new CloudronError(CloudronError.BAD_FIELD, error.message));

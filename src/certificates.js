@@ -304,12 +304,13 @@ function validateCertificate(cert, key, fqdn) {
     return null;
 }
 
-function setFallbackCertificate(cert, key, callback) {
+function setFallbackCertificate(cert, key, fqdn, callback) {
     assert.strictEqual(typeof cert, 'string');
     assert.strictEqual(typeof key, 'string');
+    assert.strictEqual(typeof fqdn, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    var error = validateCertificate(cert, key, '*.' + config.fqdn());
+    var error = validateCertificate(cert, key, '*.' + fqdn);
     if (error) return callback(new CertificatesError(CertificatesError.INVALID_CERT, error.message));
 
     // backup the cert
@@ -320,7 +321,7 @@ function setFallbackCertificate(cert, key, callback) {
     if (!safe.fs.writeFileSync(path.join(paths.NGINX_CERT_DIR, 'host.cert'), cert)) return callback(new CertificatesError(CertificatesError.INTERNAL_ERROR, safe.error.message));
     if (!safe.fs.writeFileSync(path.join(paths.NGINX_CERT_DIR, 'host.key'), key)) return callback(new CertificatesError(CertificatesError.INTERNAL_ERROR, safe.error.message));
 
-    exports.events.emit(exports.EVENT_CERT_CHANGED, '*.' + config.fqdn());
+    exports.events.emit(exports.EVENT_CERT_CHANGED, '*.' + fqdn);
 
     nginx.reload(function (error) {
         if (error) return callback(new CertificatesError(CertificatesError.INTERNAL_ERROR, error));

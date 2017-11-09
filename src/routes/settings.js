@@ -33,7 +33,6 @@ exports = module.exports = {
     getAppstoreConfig: getAppstoreConfig,
     setAppstoreConfig: setAppstoreConfig,
 
-    setFallbackCertificate: setFallbackCertificate,
     setAdminCertificate: setAdminCertificate
 };
 
@@ -291,21 +290,6 @@ function setAppstoreConfig(req, res, next) {
 
             next(new HttpSuccess(202, result));
         });
-    });
-}
-
-// default fallback cert
-function setFallbackCertificate(req, res, next) {
-    assert.strictEqual(typeof req.body, 'object');
-
-    if (!req.body.cert || typeof req.body.cert !== 'string') return next(new HttpError(400, 'cert must be a string'));
-    if (!req.body.key || typeof req.body.key !== 'string') return next(new HttpError(400, 'key must be a string'));
-
-    certificates.setFallbackCertificate(req.body.cert, req.body.key, function (error) {
-        if (error && error.reason === CertificatesError.INVALID_CERT) return next(new HttpError(400, error.message));
-        if (error) return next(new HttpError(500, error));
-
-        next(new HttpSuccess(202, {}));
     });
 }
 
