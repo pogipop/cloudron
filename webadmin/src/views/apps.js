@@ -218,14 +218,6 @@ angular.module('Application').controller('AppsController', ['$scope', '$location
         });
     };
 
-    $scope.appConfigureToggleGroup = function (group) {
-        var groups = $scope.appConfigure.accessRestriction.groups;
-        var pos = groups.indexOf(group.id);
-
-        if (pos === -1) groups.push(group.id);
-        else groups.splice(pos, 1);
-    };
-
     $scope.useAltDomain = function (use) {
         $scope.appConfigure.usingAltDomain = use;
 
@@ -244,8 +236,7 @@ angular.module('Application').controller('AppsController', ['$scope', '$location
         $scope.appConfigure.location = app.altDomain || app.location;
         $scope.appConfigure.usingAltDomain = !!app.altDomain;
         $scope.appConfigure.portBindingsInfo = app.manifest.tcpPorts || {}; // Portbinding map only for information
-        $scope.appConfigure.accessRestrictionOption = app.accessRestriction ? 'groups' : 'any';
-        $scope.appConfigure.accessRestriction = app.accessRestriction || { users: [], groups: [] };
+        $scope. Option = app.accessRestriction ? 'groups' : 'any';
         $scope.appConfigure.memoryLimit = app.memoryLimit || app.manifest.memoryLimit || (256 * 1024 * 1024);
         $scope.appConfigure.xFrameOptions = app.xFrameOptions.indexOf('ALLOW-FROM') === 0 ? app.xFrameOptions.split(' ')[1] : '';
         $scope.appConfigure.customAuth = !(app.manifest.addons['ldap'] || app.manifest.addons['oauth']);
@@ -264,6 +255,17 @@ angular.module('Application').controller('AppsController', ['$scope', '$location
         }
 
         $scope.appConfigure.accessRestrictionOption = app.accessRestriction ? 'groups' : 'any';
+        $scope.appConfigure.accessRestriction = { users: [], groups: [] };
+
+        if (app.accessRestriction) {
+            var userSet = { };
+            app.accessRestriction.users.forEach(function (uid) { userSet[uid] = true; });
+            $scope.users.forEach(function (u) { if (userSet[u.id] === true) $scope.appConfigure.accessRestriction.users.push(u); });
+
+            var groupSet = { };
+            app.accessRestriction.groups.forEach(function (gid) { groupSet[gid] = true; });
+            $scope.groups.forEach(function (g) { if (groupSet[g.id] === true) $scope.appConfigure.accessRestriction.groups.push(g); });
+        }
 
         // fill the portBinding structures. There might be holes in the app.portBindings, which signalizes a disabled port
         for (var env in $scope.appConfigure.portBindingsInfo) {
@@ -293,11 +295,18 @@ angular.module('Application').controller('AppsController', ['$scope', '$location
             }
         }
 
+        var finalAccessRestriction = null;
+        if ($scope.appConfigure.accessRestrictionOption === 'groups') {
+            finalAccessRestriction = { users: [], groups: [] };
+            finalAccessRestriction.users = $scope.appConfigure.accessRestriction.users.map(function (u) { return u.id; });
+            finalAccessRestriction.groups = $scope.appConfigure.accessRestriction.groups.map(function (g) { return g.id; });
+        }
+
         var data = {
             location:  $scope.appConfigure.usingAltDomain ? $scope.appConfigure.app.location : $scope.appConfigure.location,
             altDomain: $scope.appConfigure.usingAltDomain ? $scope.appConfigure.location : null,
             portBindings: finalPortBindings,
-            accessRestriction: $scope.appConfigure.accessRestrictionOption === 'groups' ? $scope.appConfigure.accessRestriction : null,
+            accessRestriction: finalAccessRestriction,
             cert: $scope.appConfigure.certificateFile,
             key: $scope.appConfigure.keyFile,
             xFrameOptions: $scope.appConfigure.xFrameOptions ? ('ALLOW-FROM ' + $scope.appConfigure.xFrameOptions) : 'SAMEORIGIN',

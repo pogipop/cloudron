@@ -73,17 +73,25 @@
                             <div class="radio">
                                 <label>
                                     <input type="radio" ng-model="appInstall.accessRestrictionOption" value="groups" ng-disabled="groups.length <= 1">
-                                    Only allow the following user groups <span class="label label-danger" ng-show="appInstall.accessRestrictionOption === 'groups' && !appInstall.isAccessRestrictionValid()">Select at least one group</span>
+                                    Only allow the following users and groups <span class="label label-danger" ng-show="appInstall.accessRestrictionOption === 'groups' && !appInstall.isAccessRestrictionValid()">Select at least one user or group</span>
                                 </label>
                             </div>
-                            <div ng-show="groups.length <= 1" style="margin-left: 20px;">No groups available. <a href="" ng-click="showView('/users')">Create groups</a></div>
                             <div>
                                 <div style="margin-left: 20px;">
-                                    <span ng-repeat="group in groups | ignoreAdminGroup">
-                                        <button class="btn btn-default" type="button" ng-disabled="appInstall.accessRestrictionOption !== 'groups'" ng-click="appInstall.toggleGroup(group);" ng-class="{ 'btn-primary': (appInstall.accessRestriction.groups && appInstall.accessRestriction.groups.indexOf(group.id) !== -1) }">{{ group.name }}</button>
-                                    </span>
+                                    <div class="col-md-5">
+                                        <b>Users: &nbsp;</b>
+                                        <multiselect ng-model="appInstall.accessRestriction.users" ng-disabled="appInstall.accessRestrictionOption !== 'groups'" options="user.username for user in users" data-multiple="true"></multiselect>
+                                    </div>
+
+                                    <div class="col-md-5">
+                                        <b>Groups: &nbsp;</b>
+                                        <multiselect ng-model="appInstall.accessRestriction.groups" ng-disabled="appInstall.accessRestrictionOption !== 'groups'" options="group.name for group in (groups | ignoreAdminGroup)" data-multiple="true"></multiselect>
+                                    </div>
                                 </div>
                             </div>
+
+                            <br/>
+                            <br/>
                         </div>
 
                         <p ng-show="!mailConfig.enabled && appInstall.app.manifest.addons.email" class="text-danger">
