@@ -265,7 +265,7 @@ function mailboxSearch(req, res, next) {
         name = parts[0];
     }
 
-    mailboxdb.getMailbox(name, function (error, mailbox) {
+    mailboxdb.getMailbox(name, config.fqdn(), function (error, mailbox) {
         if (error && error.reason === DatabaseError.NOT_FOUND) return next(new ldap.NoSuchObjectError(req.dn.toString()));
         if (error) return next(new ldap.OperationsError(error.toString()));
 
@@ -298,7 +298,7 @@ function mailAliasSearch(req, res, next) {
 
     if (!req.dn.rdns[0].attrs.cn) return next(new ldap.NoSuchObjectError(req.dn.toString()));
 
-    mailboxdb.getAlias(req.dn.rdns[0].attrs.cn.value.toLowerCase(), function (error, alias) {
+    mailboxdb.getAlias(req.dn.rdns[0].attrs.cn.value.toLowerCase(), config.fqdn(), function (error, alias) {
         if (error && error.reason === DatabaseError.NOT_FOUND) return next(new ldap.NoSuchObjectError(req.dn.toString()));
         if (error) return next(new ldap.OperationsError(error.toString()));
 
@@ -331,7 +331,7 @@ function mailingListSearch(req, res, next) {
 
     if (!req.dn.rdns[0].attrs.cn) return next(new ldap.NoSuchObjectError(req.dn.toString()));
 
-    mailboxdb.getGroup(req.dn.rdns[0].attrs.cn.value.toLowerCase(), function (error, group) {
+    mailboxdb.getGroup(req.dn.rdns[0].attrs.cn.value.toLowerCase(), config.fqdn(), function (error, group) {
         if (error && error.reason === DatabaseError.NOT_FOUND) return next(new ldap.NoSuchObjectError(req.dn.toString()));
         if (error) return next(new ldap.OperationsError(error.toString()));
 
@@ -419,7 +419,7 @@ function authenticateMailbox(req, res, next) {
         name = parts[0];
     }
 
-    mailboxdb.getMailbox(name, function (error, mailbox) {
+    mailboxdb.getMailbox(name, config.fqdn(), function (error, mailbox) {
         if (error && error.reason === DatabaseError.NOT_FOUND) return next(new ldap.NoSuchObjectError(req.dn.toString()));
         if (error) return next(new ldap.OperationsError(error.message));
 

@@ -628,7 +628,7 @@ function configure(appId, data, auditSource, callback) {
 
         var oldName = (app.location ? app.location : app.manifest.title.toLowerCase().replace(/[^a-zA-Z0-9]/g, '')) + '.app';
         var newName = (location ? location : app.manifest.title.toLowerCase().replace(/[^a-zA-Z0-9]/g, '')) + '.app';
-        mailboxdb.updateName(oldName, newName, function (error) {
+        mailboxdb.updateName(oldName, values.oldConfig.domain, newName, domain, function (error) {
             if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(new AppsError(AppsError.ALREADY_EXISTS, 'This mailbox is already taken'));
             if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new AppsError(AppsError.BAD_STATE));
             if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
