@@ -375,7 +375,8 @@
                     <div class="grid-item-top">
                         <div class="row">
                             <div class="col-xs-12 text-center" style="padding-left: 5px; padding-right: 5px;">
-                                <img ng-src="{{app.iconUrl || 'img/appicon_fallback.png'}}" fallback-icon="img/appicon_fallback.png" appstore-icon="{{ app.iconUrlStore }}" onerror="imageErrorHandler(this)" class="app-icon"/>
+                              <div class="text-small text-muted">{{ app.domain }}</div><br/>
+                              <img ng-src="{{app.iconUrl || 'img/appicon_fallback.png'}}" fallback-icon="img/appicon_fallback.png" appstore-icon="{{ app.iconUrlStore }}" onerror="imageErrorHandler(this)" class="app-icon"/>
                             </div>
                         </div>
                         <br/>
@@ -383,12 +384,12 @@
                             <div class="col-xs-12 text-center">
                                 <div class="grid-item-top-title" data-fittext>{{ app.altDomain || app.location || app.fqdn }}</div>
                                 <div class="text-muted status" style="text-overflow: ellipsis; white-space: nowrap; overflow: hidden">
-                                    {{ app | installationStateLabel }}
+                                  {{ app | installationStateLabel }}
                                 </div>
                                 <div class="status" ng-style="{ 'visibility': (app | installationActive) ? 'visible' : 'hidden' }">
-                                    <div class="progress progress-striped active">
-                                        <div class="progress-bar progress-bar-success" role="progressbar" style="width: {{ app.progress }}%"></div>
-                                    </div>
+                                  <div class="progress progress-striped active">
+                                    <div class="progress-bar progress-bar-success" role="progressbar" style="width: {{ app.progress }}%"></div>
+                                  </div>
                                 </div>
                             </div>
                         </div>
