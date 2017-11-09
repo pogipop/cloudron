@@ -301,6 +301,7 @@ function getAppConfig(app) {
     return {
         manifest: app.manifest,
         location: app.location,
+        domain: app.domain,
         accessRestriction: app.accessRestriction,
         portBindings: app.portBindings,
         memoryLimit: app.memoryLimit,
