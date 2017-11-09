@@ -277,8 +277,9 @@ function registerSubdomain(app, overwrite, callback) {
     });
 }
 
-function unregisterSubdomain(app, location, callback) {
+function unregisterSubdomain(app, domain, location, callback) {
     assert.strictEqual(typeof app, 'object');
+    assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof location, 'string');
     assert.strictEqual(typeof callback, 'function');
 
@@ -299,7 +300,7 @@ function unregisterSubdomain(app, location, callback) {
         async.retry({ times: 30, interval: 5000 }, function (retryCallback) {
             debugApp(app, 'Unregistering subdomain: %s', config.appFqdn(app));
 
-            domains.removeDNSRecords(config.appFqdn(app), 'A', [ ip ], function (error) {
+            domains.removeDNSRecords(config.appFqdn({ domain: domain, location: location }), 'A', [ ip ], function (error) {
                 if (error && (error.reason === DomainError.STILL_BUSY || error.reason === DomainError.EXTERNAL_ERROR)) return retryCallback(error); // try again
 
                 retryCallback(null, error);
@@ -504,7 +505,7 @@ function configure(app, callback) {
     assert.strictEqual(typeof callback, 'function');
 
     // oldConfig can be null during an infra update
-    var locationChanged = app.oldConfig && app.oldConfig.location !== app.location;
+    var locationChanged = app.oldConfig && (config.appFqdn(app.oldConfig) !== config.appFqdn(app));
 
     async.series([
         updateApp.bind(null, app, { installationProgress: '10, Cleaning up old install' }),
@@ -515,7 +516,7 @@ function configure(app, callback) {
         deleteContainers.bind(null, app),
         function (next) {
             if (!locationChanged) return next();
-            unregisterSubdomain(app, app.oldConfig.location, next);
+            unregisterSubdomain(app, app.oldConfig.location, app.oldConfig.domain, next);
         },
 
         reserveHttpPort.bind(null, app),
@@ -701,7 +702,7 @@ function uninstall(app, callback) {
         docker.deleteImage.bind(null, app.manifest),
 
         updateApp.bind(null, app, { installationProgress: '60, Unregistering subdomain' }),
-        unregisterSubdomain.bind(null, app, app.location),
+        unregisterSubdomain.bind(null, app, app.location, app.domain),
 
         updateApp.bind(null, app, { installationProgress: '80, Cleanup icon' }),
         removeIcon.bind(null, app),
