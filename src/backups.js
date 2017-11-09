@@ -704,7 +704,7 @@ function backupApp(app, callback) {
     const timestamp = (new Date()).toISOString().replace(/[T.]/g, '-').replace(/[:Z]/g,'');
     safe.fs.unlinkSync(paths.BACKUP_LOG_FILE); // start fresh log file
 
-    progress.set(progress.BACKUP, 10,  'Backing up ' + (app.altDomain || app.location));
+    progress.set(progress.BACKUP, 10,  'Backing up ' + (app.altDomain || config.appFqdn(app)));
 
     backupAppWithTimestamp(app, timestamp, function (error) {
         progress.set(progress.BACKUP, 100, error ? error.message : '');

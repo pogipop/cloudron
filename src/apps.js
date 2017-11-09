@@ -1121,13 +1121,13 @@ function restoreInstalledApps(callback) {
         if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
 
         async.map(apps, function (app, iteratorDone) {
-            debug('marking %s for restore', app.location || app.id);
+            debug('marking %s for restore', config.appFqdn(app));
 
             backups.getByAppIdPaged(1, 1, app.id, function (error, results) {
                 var restoreConfig = !error && results.length ? { backupId: results[0].id, backupFormat: results[0].format } : null;
 
                 appdb.setInstallationCommand(app.id, appdb.ISTATE_PENDING_RESTORE, { restoreConfig: restoreConfig, oldConfig: null }, function (error) {
-                    if (error) debug('did not mark %s for restore', app.location || app.id, error);
+                    if (error) debug('did not mark %s for restore', config.appFqdn(app), error);
 
                     iteratorDone(); // always succeed
                 });
@@ -1143,10 +1143,10 @@ function configureInstalledApps(callback) {
         if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
 
         async.map(apps, function (app, iteratorDone) {
-            debug('marking %s for reconfigure', app.location || app.id);
+            debug('marking %s for reconfigure', config.appFqdn(app));
 
             appdb.setInstallationCommand(app.id, appdb.ISTATE_PENDING_CONFIGURE, { oldConfig: null }, function (error) {
-                if (error) debug('did not mark %s for reconfigure', app.location || app.id, error);
+                if (error) debug('did not mark %s for reconfigure', config.appFqdn(app), error);
 
                 iteratorDone(); // always succeed
             });

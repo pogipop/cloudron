@@ -114,7 +114,7 @@ var RMAPPDIR_CMD = path.join(__dirname, 'scripts/rmappdir.sh');
 function debugApp(app, args) {
     assert(!app || typeof app === 'object');
 
-    var prefix = app ? (app.location || 'naked_domain') : '(no app)';
+    var prefix = app ? config.appFqdn(app) : '(no app)';
     debug(prefix + ' ' + util.format.apply(util, Array.prototype.slice.call(arguments, 1)));
 }
 
@@ -645,9 +645,10 @@ function setupRedis(app, options, callback) {
     }
 
     const tag = infra.images.redis.tag, redisName = 'redis-' + app.id;
+    const label = config.appFqdn(app);
     // note that we do not add appId label because this interferes with the stop/start app logic
     const cmd = `docker run --restart=always -d --name=${redisName} \
-                --label=location=${app.location} \
+                --label=location=${label} \
                 --net cloudron \
                 --net-alias ${redisName} \
                 -m ${memoryLimit/2} \

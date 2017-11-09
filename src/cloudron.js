@@ -892,7 +892,7 @@ function refreshDNS(callback) {
                     // do not change state of installing apps since apptask will error if dns record already exists
                     if (app.installationState !== appdb.ISTATE_INSTALLED) return callback();
 
-                    domains.upsertDNSRecords(app.location, 'A', [ ip ], callback);
+                    domains.upsertDNSRecords(config.appFqdn(app), 'A', [ ip ], callback);
                 }, function (error) {
                     if (error) return callback(error);
 
