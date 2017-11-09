@@ -1102,3 +1102,9 @@
 * Send user and cert info in digest emails
 * Send oom, app failures and other important mails to cloudron owner's alt mail
 
+[1.7.8]
+* Fix group email bounce when a group has users that have not signed up yet
+* Do not restrict app memory limit to 4GB
+* Fix display of the latest backup in the weekly digest
+* Add UI to select users for access restriction
+
