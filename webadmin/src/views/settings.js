@@ -515,8 +515,8 @@ angular.module('Application').controller('SettingsController', ['$scope', '$loca
 
             $scope.backupConfig = backupConfig;
 
-            // Check if a proper storage backend is configured
-            if (backupConfig.provider === 'filesystem') {
+            // Check if a proper storage backend is configured. TODO: this check fails if /var/backups is actually external
+            if (backupConfig.provider === 'filesystem' && backupConfig.backupFolder === '/var/backups') {
                 var actionScope = $scope.$new(true);
                 actionScope.action = '/#/settings';
 
