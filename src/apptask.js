@@ -277,11 +277,14 @@ function registerSubdomain(app, overwrite, callback) {
     });
 }
 
-function unregisterSubdomain(app, domain, location, callback) {
+function unregisterSubdomain(app, location, domain, callback) {
     assert.strictEqual(typeof app, 'object');
-    assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof location, 'string');
+    assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof callback, 'function');
+
+    // FIXME remove the oldConfig.domain fallback in following releases
+    domain = domain || config.fqdn();
 
     // do not unregister bare domain because we show a error/cloudron info page there
     if (!config.isCustomDomain() && location === '') {
@@ -298,7 +301,7 @@ function unregisterSubdomain(app, domain, location, callback) {
         if (error) return callback(error);
 
         async.retry({ times: 30, interval: 5000 }, function (retryCallback) {
-            debugApp(app, 'Unregistering subdomain: %s', config.appFqdn(app));
+            debugApp(app, 'Unregistering subdomain: %s', config.appFqdn({ domain: domain, location: location }));
 
             domains.removeDNSRecords(config.appFqdn({ domain: domain, location: location }), 'A', [ ip ], function (error) {
                 if (error && (error.reason === DomainError.STILL_BUSY || error.reason === DomainError.EXTERNAL_ERROR)) return retryCallback(error); // try again
