@@ -109,24 +109,6 @@ describe('Settings', function () {
             });
         });
 
-        it('can set dns config', function (done) {
-            settings.setDnsConfig({ provider: 'route53', accessKeyId: 'accessKeyId', secretAccessKey: 'secretAccessKey' }, config.fqdn(), config.zoneName(), function (error) {
-                expect(error).to.be(null);
-                done();
-            });
-        });
-
-        it('can get dns config', function (done) {
-            settings.getDnsConfig(function (error, dnsConfig) {
-                expect(error).to.be(null);
-                expect(dnsConfig.provider).to.be('route53');
-                expect(dnsConfig.accessKeyId).to.be('accessKeyId');
-                expect(dnsConfig.secretAccessKey).to.be('secretAccessKey');
-                expect(dnsConfig.region).to.be('us-east-1');
-                done();
-            });
-        });
-
         it('can set tls config', function (done) {
             settings.setTlsConfig({ provider: 'caas' }, function (error) {
                 expect(error).to.be(null);

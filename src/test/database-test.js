@@ -10,6 +10,7 @@ var appdb = require('../appdb.js'),
     authcodedb = require('../authcodedb.js'),
     backupdb = require('../backupdb.js'),
     clientdb = require('../clientdb.js'),
+    config = require('../config.js'),
     database = require('../database'),
     DatabaseError = require('../databaseerror.js'),
     domaindb = require('../domaindb'),
@@ -62,19 +63,16 @@ var USER_2 = {
 const TEST_DOMAIN = {
     domain: 'example.com',
     zoneName: 'example.com',
-    config: { provider: 'manual' }
+    config: {}
 };
 
 describe('database', function () {
-    function setupTestDomain(callback) {
-        domaindb.add(TEST_DOMAIN.domain, TEST_DOMAIN.zoneName, TEST_DOMAIN.config, callback);
-    }
-
     before(function (done) {
+        config.setFqdn(TEST_DOMAIN.domain);
+
         async.series([
             database.initialize,
-            database._clear,
-            setupTestDomain
+            database._clear
         ], done);
     });
 
@@ -1503,10 +1501,11 @@ describe('database', function () {
 
     describe('mailboxes', function () {
         before(function (done) {
+            config.setFqdn(TEST_DOMAIN.domain);
+
             async.series([
                 database.initialize,
-                database._clear,
-                setupTestDomain
+                database._clear
             ], done);
         });
 
