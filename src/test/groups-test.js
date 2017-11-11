@@ -7,6 +7,7 @@
 'use strict';
 
 var async = require('async'),
+    config = require('../config.js'),
     constants = require('../constants.js'),
     database = require('../database.js'),
     DatabaseError = require('../databaseerror.js'),
@@ -22,6 +23,12 @@ var GROUP0_NAME = 'administrators',
 
 var GROUP1_NAME = 'externs',
     group1Object;
+
+const DOMAIN_0 = {
+    domain: 'example.com',
+    zoneName: 'example.com',
+    config: { provider: 'manual' }
+};
 
 var USER_0 = {
     id: 'uuid213',
@@ -50,12 +57,13 @@ var USER_1 = { // this user has not signed up yet
 };
 
 function setup(done) {
-    // ensure data/config/mount paths
-    database.initialize(function (error) {
-        expect(error).to.be(null);
+    config.setFqdn(DOMAIN_0.domain);
 
-        database._clear(done);
-    });
+    // ensure data/config/mount paths
+    async.series([
+        database.initialize,
+        database._clear
+    ], done);
 }
 
 function cleanup(done) {
@@ -118,7 +126,7 @@ describe('Groups', function () {
     });
 
     it('did create mailbox', function (done) {
-        mailboxdb.getGroup(GROUP0_NAME.toLowerCase(), function (error, mailbox) {
+        mailboxdb.getGroup(GROUP0_NAME.toLowerCase(), DOMAIN_0.domain, function (error, mailbox) {
             expect(error).to.be(null);
             expect(mailbox.ownerType).to.be(mailboxdb.TYPE_GROUP);
             done();
@@ -162,7 +170,7 @@ describe('Groups', function () {
     });
 
     it('did delete mailbox', function (done) {
-        mailboxdb.getGroup(GROUP0_NAME.toLowerCase(), function (error) {
+        mailboxdb.getGroup(GROUP0_NAME.toLowerCase(), DOMAIN_0.domain, function (error) {
             expect(error.reason).to.be(DatabaseError.NOT_FOUND);
             done();
         });
@@ -241,7 +249,7 @@ describe('Group membership', function () {
     });
 
     it('can get list members', function (done) {
-        mailboxdb.getGroup(GROUP0_NAME.toLowerCase(), function (error, result) {
+        mailboxdb.getGroup(GROUP0_NAME.toLowerCase(), DOMAIN_0.domain, function (error, result) {
             expect(error).to.be(null);
             expect(result.name).to.be(GROUP0_NAME.toLowerCase());
             expect(result.ownerType).to.be(mailboxdb.TYPE_GROUP);

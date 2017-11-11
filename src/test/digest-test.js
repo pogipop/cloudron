@@ -9,6 +9,7 @@ var async = require('async'),
     config = require('../config.js'),
     database = require('../database.js'),
     digest = require('../digest.js'),
+    domaindb = require('../domaindb.js'),
     eventlog = require('../eventlog.js'),
     expect = require('expect.js'),
     mailer = require('../mailer.js'),
@@ -25,6 +26,12 @@ var USER_0 = {
     password: 'Username0pass?1234',
     email: 'user0@email.com',
     displayName: 'User 0'
+};
+
+const DOMAIN_0 = {
+    domain: 'example.com',
+    zoneName: 'example.com',
+    config: { provider: 'manual' }
 };
 
 var AUDIT_SOURCE = {
@@ -62,6 +69,7 @@ describe('digest', function () {
         config.set('version', '1.0.0');
         config.set('apiServerOrigin', 'http://localhost:4444');
         config.set('provider', 'notcaas');
+        config.setFqdn(DOMAIN_0.domain);
         safe.fs.unlinkSync(paths.UPDATE_CHECKER_FILE);
 
         async.series([
@@ -124,7 +132,7 @@ describe('digest', function () {
                 digest.maybeSend(function (error) {
                     if (error) return done(error);
 
-                    checkMails(1, `${USER_0.email}, ${USER_0.username}@${config.fqdn()}`, done);
+                    checkMails(1, `${USER_0.email}, ${USER_0.username}@${DOMAIN_0.domain}`, done);
                 });
             });
         });

@@ -11,6 +11,7 @@ var addons = require('../addons.js'),
     async = require('async'),
     config = require('../config.js'),
     database = require('../database.js'),
+    domains = require('../domains.js'),
     expect = require('expect.js'),
     fs = require('fs'),
     js2xml = require('js2xmlparser').parse,
@@ -48,12 +49,24 @@ var MANIFEST = {
   }
 };
 
+const DOMAIN_0 = {
+    domain: 'example.com',
+    zoneName: 'example.com',
+    config: {
+        provider: 'route53',
+        accessKeyId: 'accessKeyId',
+        secretAccessKey: 'secretAccessKey',
+        endpoint: 'http://localhost:5353'
+    }
+};
+
 var APP = {
     id: 'appid',
     appStoreId: 'appStoreId',
     installationState: appdb.ISTATE_PENDING_INSTALL,
     runState: null,
     location: 'applocation',
+    domain: DOMAIN_0.domain,
     manifest: MANIFEST,
     containerId: null,
     httpPort: 4567,
@@ -63,13 +76,12 @@ var APP = {
     memoryLimit: 0
 };
 
- var awsHostedZones;
+var awsHostedZones;
 
 describe('apptask', function () {
     before(function (done) {
         config.set('version', '0.5.0');
-        config.setFqdn('foobar.com');
-        config.setZoneName('foobar.com');
+        config.setFqdn(DOMAIN_0.domain);
         config.set('provider', 'caas');
 
         awsHostedZones = {
@@ -89,9 +101,9 @@ describe('apptask', function () {
 
         async.series([
             database.initialize,
-            appdb.add.bind(null, APP.id, APP.appStoreId, APP.manifest, APP.location, APP.portBindings, APP),
+            domains.update.bind(null, DOMAIN_0.domain, DOMAIN_0.config, null),
+            appdb.add.bind(null, APP.id, APP.appStoreId, APP.manifest, APP.location, APP.domain, APP.portBindings, APP),
             settings.initialize,
-            settings.setDnsConfig.bind(null, { provider: 'route53', accessKeyId: 'accessKeyId', secretAccessKey: 'secretAccessKey', endpoint: 'http://localhost:5353' }, config.fqdn(), config.zoneName()),
             settings.setTlsConfig.bind(null, { provider: 'caas' })
         ], done);
     });
@@ -246,7 +258,7 @@ describe('apptask', function () {
             .post('/2013-04-01/hostedzone/ZONEID/rrset/')
             .reply(200, js2xml('ChangeResourceRecordSetsResponse', { ChangeInfo: { Id: 'RRID', Status: 'INSYNC' } }));
 
-        apptask._unregisterSubdomain(APP, APP.location, function (error) {
+        apptask._unregisterSubdomain(APP, APP.location, APP.domain, function (error) {
             expect(error).to.be(null);
             expect(awsScope.isDone()).to.be.ok();
             done();

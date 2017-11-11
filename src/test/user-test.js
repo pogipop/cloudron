@@ -39,6 +39,12 @@ var EMAIL_1 = 'second@user.com';
 var PASSWORD_1 = 'Sup2345$@strong';
 var DISPLAY_NAME_1 = 'Second User';
 
+const DOMAIN_0 = {
+    domain: 'example.com',
+    zoneName: 'example.com',
+    config: { provider: 'manual' }
+};
+
 function cleanupUsers(done) {
     async.series([
         groupdb._clear,
@@ -62,9 +68,12 @@ function createOwner(done) {
 }
 
 function setup(done) {
+    config.setFqdn(DOMAIN_0.domain);
+
     async.series([
         database.initialize,
         database._clear,
+        mailer.start,
         mailer._clearMailQueue
     ], done);
 }
@@ -205,7 +214,7 @@ describe('User', function () {
         });
 
         it('did create mailbox', function (done) {
-            mailboxdb.getMailbox(USERNAME.toLowerCase(), function (error, mailbox) {
+            mailboxdb.getMailbox(USERNAME.toLowerCase(), DOMAIN_0.domain, function (error, mailbox) {
                 expect(error).to.be(null);
                 expect(mailbox.ownerType).to.be(mailboxdb.TYPE_USER);
                 done();
@@ -712,10 +721,10 @@ describe('User', function () {
         });
 
         it('updated the mailbox', function (done) {
-            mailboxdb.getMailbox(USERNAME, function (error) {
+            mailboxdb.getMailbox(USERNAME, DOMAIN_0.domain, function (error) {
                 expect(error.reason).to.be(DatabaseError.NOT_FOUND);
 
-                mailboxdb.getMailbox(USERNAME_NEW.toLowerCase(), function (error, mailbox) {
+                mailboxdb.getMailbox(USERNAME_NEW.toLowerCase(), DOMAIN_0.domain, function (error, mailbox) {
                     expect(error).to.be(null);
                     expect(mailbox.ownerId).to.be(userObject.id);
                     done();
@@ -998,7 +1007,7 @@ describe('User', function () {
             user.setAliases(userObject.id, [ 'everything', 'is', 'awesome' ], function (error) {
                 expect(error).to.be(null);
 
-                mailboxdb.getAliasesForName(USERNAME.toLowerCase(), function (error, results) {
+                mailboxdb.getAliasesForName(USERNAME.toLowerCase(), DOMAIN_0.domain, function (error, results) {
                     expect(error).to.be(null);
                     expect(results.length).to.be(3);
                     done();
@@ -1014,10 +1023,10 @@ describe('User', function () {
         });
 
         it('did delete mailbox and aliases', function (done) {
-            mailboxdb.getMailbox(userObject.username.toLowerCase(), function (error, mailbox) {
+            mailboxdb.getMailbox(userObject.username.toLowerCase(), DOMAIN_0.domain, function (error, mailbox) {
                 expect(error.reason).to.be(DatabaseError.NOT_FOUND);
 
-                mailboxdb.getAliasesForName(USERNAME.toLowerCase(), function (error, results) {
+                mailboxdb.getAliasesForName(USERNAME.toLowerCase(), DOMAIN_0.domain, function (error, results) {
                     expect(error).to.be(null);
                     expect(results.length).to.be(0);
                     done();

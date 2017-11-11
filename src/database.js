@@ -101,6 +101,7 @@ function clear(callback) {
     async.series([
         child_process.exec.bind(null, cmd),
         require('./clientdb.js')._addDefaultClients,
+        require('./domaindb.js')._addDefaultDomain,
         require('./groupdb.js')._addDefaultGroups
     ], callback);
 }

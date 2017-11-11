@@ -127,11 +127,12 @@ describe('Apps', function () {
     };
 
     before(function (done) {
+        config.setFqdn(DOMAIN_0.domain);
 
         async.series([
             database.initialize,
             database._clear,
-            domaindb.add.bind(null, DOMAIN_0.domain, DOMAIN_0.zoneName, DOMAIN_0.config),
+            // DOMAIN_0 already added for test through domaindb.addDefaultDomain()
             domaindb.add.bind(null, DOMAIN_1.domain, DOMAIN_1.zoneName, DOMAIN_1.config),
             userdb.add.bind(null, ADMIN_0.id, ADMIN_0),
             userdb.add.bind(null, USER_0.id, USER_0),

@@ -19,6 +19,7 @@ exports = module.exports = {
 
 var assert = require('assert'),
     constants = require('./constants.js'),
+    config = require('./config.js'),
     database = require('./database.js'),
     debug = require('debug')('box:userdb'),
     DatabaseError = require('./databaseerror'),
@@ -145,8 +146,8 @@ function add(userId, user, callback) {
     });
     if (user.username) {
         queries.push({
-            query: 'INSERT INTO mailboxes (name, ownerId, ownerType) VALUES (?, ?, ?)',
-            args: [ user.username, userId, mailboxdb.TYPE_USER ]
+            query: 'INSERT INTO mailboxes (name, domain, ownerId, ownerType) VALUES (?, ?, ?, ?)',
+            args: [ user.username, config.fqdn(), userId, mailboxdb.TYPE_USER ]
         });
     }
 
@@ -239,8 +240,8 @@ function update(userId, user, callback) {
         queries.push({ query: 'DELETE FROM mailboxes WHERE ownerId = ? AND aliasTarget IS NULL', args: [ userId ] });
         // add new mailbox
         queries.push({
-            query: 'INSERT INTO mailboxes (name, ownerId, ownerType) VALUES (?, ?, ?)',
-            args: [ user.username, userId, mailboxdb.TYPE_USER ]
+            query: 'INSERT INTO mailboxes (name, domain, ownerId, ownerType) VALUES (?, ?, ?, ?)',
+            args: [ user.username, config.fqdn(), userId, mailboxdb.TYPE_USER ]
         });
     }
 
