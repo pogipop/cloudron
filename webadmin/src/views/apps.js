@@ -51,6 +51,127 @@ angular.module('Application').controller('AppsController', ['$scope', '$location
 
         isAltDomainNaked: function () {
             return ngTld.isNakedDomain($scope.appConfigure.location);
+        },
+
+        show: function (app) {
+            $scope.reset();
+
+            // fill relevant info from the app
+            $scope.appConfigure.app = app;
+            $scope.appConfigure.location = app.altDomain || app.location;
+            $scope.appConfigure.usingAltDomain = !!app.altDomain;
+            $scope.appConfigure.portBindingsInfo = app.manifest.tcpPorts || {}; // Portbinding map only for information
+            $scope. Option = app.accessRestriction ? 'groups' : 'any';
+            $scope.appConfigure.memoryLimit = app.memoryLimit || app.manifest.memoryLimit || (256 * 1024 * 1024);
+            $scope.appConfigure.xFrameOptions = app.xFrameOptions.indexOf('ALLOW-FROM') === 0 ? app.xFrameOptions.split(' ')[1] : '';
+            $scope.appConfigure.customAuth = !(app.manifest.addons['ldap'] || app.manifest.addons['oauth']);
+            $scope.appConfigure.robotsTxt = app.robotsTxt;
+            $scope.appConfigure.enableBackup = app.enableBackup;
+
+            // create ticks starting from manifest memory limit. the memory limit here is currently split into ram+swap (and thus *2 below)
+            // TODO: the *2 will overallocate since 4GB is max swap that cloudron itself allocates
+            $scope.appConfigure.memoryTicks = [ ];
+            var npow2 = Math.pow(2, Math.ceil(Math.log($scope.config.memory)/Math.log(2)));
+            for (var i = 256; i <= (npow2*2/1024/1024); i *= 2) {
+                if (i >= (app.manifest.memoryLimit/1024/1024 || 0)) $scope.appConfigure.memoryTicks.push(i * 1024 * 1024);
+            }
+            if (app.manifest.memoryLimit && $scope.appConfigure.memoryTicks[0] !== app.manifest.memoryLimit) {
+                $scope.appConfigure.memoryTicks.unshift(app.manifest.memoryLimit);
+            }
+
+            $scope.appConfigure.accessRestrictionOption = app.accessRestriction ? 'groups' : 'any';
+            $scope.appConfigure.accessRestriction = { users: [], groups: [] };
+
+            if (app.accessRestriction) {
+                var userSet = { };
+                app.accessRestriction.users.forEach(function (uid) { userSet[uid] = true; });
+                $scope.users.forEach(function (u) { if (userSet[u.id] === true) $scope.appConfigure.accessRestriction.users.push(u); });
+
+                var groupSet = { };
+                app.accessRestriction.groups.forEach(function (gid) { groupSet[gid] = true; });
+                $scope.groups.forEach(function (g) { if (groupSet[g.id] === true) $scope.appConfigure.accessRestriction.groups.push(g); });
+            }
+
+            // fill the portBinding structures. There might be holes in the app.portBindings, which signalizes a disabled port
+            for (var env in $scope.appConfigure.portBindingsInfo) {
+                if (app.portBindings && app.portBindings[env]) {
+                    $scope.appConfigure.portBindings[env] = app.portBindings[env];
+                    $scope.appConfigure.portBindingsEnabled[env] = true;
+                } else {
+                    $scope.appConfigure.portBindings[env] = $scope.appConfigure.portBindingsInfo[env].defaultValue || 0;
+                    $scope.appConfigure.portBindingsEnabled[env] = false;
+                }
+            }
+
+            $('#appConfigureModal').modal('show');
+        },
+
+        submit: function () {
+            $scope.appConfigure.busy = true;
+            $scope.appConfigure.error.other = null;
+            $scope.appConfigure.error.location = null;
+            $scope.appConfigure.error.xFrameOptions = null;
+
+            // only use enabled ports from portBindings
+            var finalPortBindings = {};
+            for (var env in $scope.appConfigure.portBindings) {
+                if ($scope.appConfigure.portBindingsEnabled[env]) {
+                    finalPortBindings[env] = $scope.appConfigure.portBindings[env];
+                }
+            }
+
+            var finalAccessRestriction = null;
+            if ($scope.appConfigure.accessRestrictionOption === 'groups') {
+                finalAccessRestriction = { users: [], groups: [] };
+                finalAccessRestriction.users = $scope.appConfigure.accessRestriction.users.map(function (u) { return u.id; });
+                finalAccessRestriction.groups = $scope.appConfigure.accessRestriction.groups.map(function (g) { return g.id; });
+            }
+
+            var data = {
+                location:  $scope.appConfigure.usingAltDomain ? $scope.appConfigure.app.location : $scope.appConfigure.location,
+                altDomain: $scope.appConfigure.usingAltDomain ? $scope.appConfigure.location : null,
+                portBindings: finalPortBindings,
+                accessRestriction: finalAccessRestriction,
+                cert: $scope.appConfigure.certificateFile,
+                key: $scope.appConfigure.keyFile,
+                xFrameOptions: $scope.appConfigure.xFrameOptions ? ('ALLOW-FROM ' + $scope.appConfigure.xFrameOptions) : 'SAMEORIGIN',
+                memoryLimit: $scope.appConfigure.memoryLimit === $scope.appConfigure.memoryTicks[0] ? 0 : $scope.appConfigure.memoryLimit,
+                robotsTxt: $scope.appConfigure.robotsTxt,
+                enableBackup: $scope.appConfigure.enableBackup
+            };
+
+            Client.configureApp($scope.appConfigure.app.id, data, function (error) {
+                if (error) {
+                    if (error.statusCode === 409 && (error.message.indexOf('is reserved') !== -1 || error.message.indexOf('is already in use') !== -1)) {
+                        $scope.appConfigure.error.port = error.message;
+                    } else if (error.statusCode === 409) {
+                        $scope.appConfigure.error.location = 'This name is already taken.';
+                        $scope.appConfigureForm.location.$setPristine();
+                        $('#appConfigureLocationInput').focus();
+                    } else if (error.statusCode === 400 && error.message.indexOf('cert') !== -1 ) {
+                        $scope.appConfigure.error.cert = error.message;
+                        $scope.appConfigure.certificateFileName = '';
+                        $scope.appConfigure.certificateFile = null;
+                        $scope.appConfigure.keyFileName = '';
+                        $scope.appConfigure.keyFile = null;
+                    } else if (error.statusCode === 400 && error.message.indexOf('xFrameOptions') !== -1 ) {
+                        $scope.appConfigure.error.xFrameOptions = error.message;
+                        $scope.appConfigureForm.xFrameOptions.$setPristine();
+                        $('#appConfigureXFrameOptionsInput').focus();
+                    } else {
+                        $scope.appConfigure.error.other = error.message;
+                    }
+
+                    $scope.appConfigure.busy = false;
+                    return;
+                }
+
+                $scope.appConfigure.busy = false;
+
+                $('#appConfigureModal').modal('hide');
+
+                $scope.reset();
+            });
         }
     };
 
@@ -226,127 +347,6 @@ angular.module('Application').controller('AppsController', ['$scope', '$location
         } else {
             $scope.appConfigure.location = $scope.appConfigure.app.location;
         }
-    };
-
-    $scope.showConfigure = function (app) {
-        $scope.reset();
-
-        // fill relevant info from the app
-        $scope.appConfigure.app = app;
-        $scope.appConfigure.location = app.altDomain || app.location;
-        $scope.appConfigure.usingAltDomain = !!app.altDomain;
-        $scope.appConfigure.portBindingsInfo = app.manifest.tcpPorts || {}; // Portbinding map only for information
-        $scope. Option = app.accessRestriction ? 'groups' : 'any';
-        $scope.appConfigure.memoryLimit = app.memoryLimit || app.manifest.memoryLimit || (256 * 1024 * 1024);
-        $scope.appConfigure.xFrameOptions = app.xFrameOptions.indexOf('ALLOW-FROM') === 0 ? app.xFrameOptions.split(' ')[1] : '';
-        $scope.appConfigure.customAuth = !(app.manifest.addons['ldap'] || app.manifest.addons['oauth']);
-        $scope.appConfigure.robotsTxt = app.robotsTxt;
-        $scope.appConfigure.enableBackup = app.enableBackup;
-
-        // create ticks starting from manifest memory limit. the memory limit here is currently split into ram+swap (and thus *2 below)
-        // TODO: the *2 will overallocate since 4GB is max swap that cloudron itself allocates
-        $scope.appConfigure.memoryTicks = [ ];
-        var npow2 = Math.pow(2, Math.ceil(Math.log($scope.config.memory)/Math.log(2)));
-        for (var i = 256; i <= (npow2*2/1024/1024); i *= 2) {
-            if (i >= (app.manifest.memoryLimit/1024/1024 || 0)) $scope.appConfigure.memoryTicks.push(i * 1024 * 1024);
-        }
-        if (app.manifest.memoryLimit && $scope.appConfigure.memoryTicks[0] !== app.manifest.memoryLimit) {
-            $scope.appConfigure.memoryTicks.unshift(app.manifest.memoryLimit);
-        }
-
-        $scope.appConfigure.accessRestrictionOption = app.accessRestriction ? 'groups' : 'any';
-        $scope.appConfigure.accessRestriction = { users: [], groups: [] };
-
-        if (app.accessRestriction) {
-            var userSet = { };
-            app.accessRestriction.users.forEach(function (uid) { userSet[uid] = true; });
-            $scope.users.forEach(function (u) { if (userSet[u.id] === true) $scope.appConfigure.accessRestriction.users.push(u); });
-
-            var groupSet = { };
-            app.accessRestriction.groups.forEach(function (gid) { groupSet[gid] = true; });
-            $scope.groups.forEach(function (g) { if (groupSet[g.id] === true) $scope.appConfigure.accessRestriction.groups.push(g); });
-        }
-
-        // fill the portBinding structures. There might be holes in the app.portBindings, which signalizes a disabled port
-        for (var env in $scope.appConfigure.portBindingsInfo) {
-            if (app.portBindings && app.portBindings[env]) {
-                $scope.appConfigure.portBindings[env] = app.portBindings[env];
-                $scope.appConfigure.portBindingsEnabled[env] = true;
-            } else {
-                $scope.appConfigure.portBindings[env] = $scope.appConfigure.portBindingsInfo[env].defaultValue || 0;
-                $scope.appConfigure.portBindingsEnabled[env] = false;
-            }
-        }
-
-        $('#appConfigureModal').modal('show');
-    };
-
-    $scope.doConfigure = function () {
-        $scope.appConfigure.busy = true;
-        $scope.appConfigure.error.other = null;
-        $scope.appConfigure.error.location = null;
-        $scope.appConfigure.error.xFrameOptions = null;
-
-        // only use enabled ports from portBindings
-        var finalPortBindings = {};
-        for (var env in $scope.appConfigure.portBindings) {
-            if ($scope.appConfigure.portBindingsEnabled[env]) {
-                finalPortBindings[env] = $scope.appConfigure.portBindings[env];
-            }
-        }
-
-        var finalAccessRestriction = null;
-        if ($scope.appConfigure.accessRestrictionOption === 'groups') {
-            finalAccessRestriction = { users: [], groups: [] };
-            finalAccessRestriction.users = $scope.appConfigure.accessRestriction.users.map(function (u) { return u.id; });
-            finalAccessRestriction.groups = $scope.appConfigure.accessRestriction.groups.map(function (g) { return g.id; });
-        }
-
-        var data = {
-            location:  $scope.appConfigure.usingAltDomain ? $scope.appConfigure.app.location : $scope.appConfigure.location,
-            altDomain: $scope.appConfigure.usingAltDomain ? $scope.appConfigure.location : null,
-            portBindings: finalPortBindings,
-            accessRestriction: finalAccessRestriction,
-            cert: $scope.appConfigure.certificateFile,
-            key: $scope.appConfigure.keyFile,
-            xFrameOptions: $scope.appConfigure.xFrameOptions ? ('ALLOW-FROM ' + $scope.appConfigure.xFrameOptions) : 'SAMEORIGIN',
-            memoryLimit: $scope.appConfigure.memoryLimit === $scope.appConfigure.memoryTicks[0] ? 0 : $scope.appConfigure.memoryLimit,
-            robotsTxt: $scope.appConfigure.robotsTxt,
-            enableBackup: $scope.appConfigure.enableBackup
-        };
-
-        Client.configureApp($scope.appConfigure.app.id, data, function (error) {
-            if (error) {
-                if (error.statusCode === 409 && (error.message.indexOf('is reserved') !== -1 || error.message.indexOf('is already in use') !== -1)) {
-                    $scope.appConfigure.error.port = error.message;
-                } else if (error.statusCode === 409) {
-                    $scope.appConfigure.error.location = 'This name is already taken.';
-                    $scope.appConfigureForm.location.$setPristine();
-                    $('#appConfigureLocationInput').focus();
-                } else if (error.statusCode === 400 && error.message.indexOf('cert') !== -1 ) {
-                    $scope.appConfigure.error.cert = error.message;
-                    $scope.appConfigure.certificateFileName = '';
-                    $scope.appConfigure.certificateFile = null;
-                    $scope.appConfigure.keyFileName = '';
-                    $scope.appConfigure.keyFile = null;
-                } else if (error.statusCode === 400 && error.message.indexOf('xFrameOptions') !== -1 ) {
-                    $scope.appConfigure.error.xFrameOptions = error.message;
-                    $scope.appConfigureForm.xFrameOptions.$setPristine();
-                    $('#appConfigureXFrameOptionsInput').focus();
-                } else {
-                    $scope.appConfigure.error.other = error.message;
-                }
-
-                $scope.appConfigure.busy = false;
-                return;
-            }
-
-            $scope.appConfigure.busy = false;
-
-            $('#appConfigureModal').modal('hide');
-
-            $scope.reset();
-        });
     };
 
     $scope.showInformation = function (app) {
