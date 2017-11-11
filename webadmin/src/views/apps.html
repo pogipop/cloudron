@@ -375,7 +375,7 @@
                     <div class="grid-item-top">
                         <div class="row">
                             <div class="col-xs-12 text-center" style="padding-left: 5px; padding-right: 5px;">
-                              <div class="text-small text-muted">{{ app.domain }}</div><br/>
+                              <div class="text-small text-muted" ng-show="domains.length > 1">{{ app.domain }}</div><br/>
                               <img ng-src="{{app.iconUrl || 'img/appicon_fallback.png'}}" fallback-icon="img/appicon_fallback.png" appstore-icon="{{ app.iconUrlStore }}" onerror="imageErrorHandler(this)" class="app-icon"/>
                             </div>
                         </div>
