@@ -1102,9 +1102,12 @@
 * Send user and cert info in digest emails
 * Send oom, app failures and other important mails to cloudron owner's alt mail
 
-[1.7.8]
+[1.8.0]
 * Fix group email bounce when a group has users that have not signed up yet
 * Do not restrict app memory limit to 4GB
 * Fix display of the latest backup in the weekly digest
 * Add UI to select users for access restriction
+* Update docker to 17.09
+* Update node to 6.11.5
+* Display package version of installed apps in the info dialog
 
