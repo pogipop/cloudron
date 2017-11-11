@@ -81,6 +81,7 @@ function del(domain, callback) {
     assert.strictEqual(typeof callback, 'function');
 
     database.query('DELETE FROM domains WHERE domain=?', [ domain ], function (error, result) {
+        if (error && error.code === 'ER_ROW_IS_REFERENCED_2') return callback(new DatabaseError(DatabaseError.IN_USE));
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
         if (result.affectedRows !== 1) return callback(new DatabaseError(DatabaseError.NOT_FOUND));
 

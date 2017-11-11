@@ -187,7 +187,7 @@ angular.module('Application').controller('DomainsController', ['$scope', '$locat
             $scope.domainRemove.error = null;
 
             Client.removeDomain($scope.domainRemove.domain.domain, $scope.domainRemove.password, function (error) {
-                if (error && error.statusCode === 403) {
+                if (error && (error.statusCode === 403 || error.statusCode === 409)) {
                     $scope.domainRemove.password = '';
                     $scope.domainRemove.error = error.message;
                     $scope.domainRemoveForm.password.$setPristine();

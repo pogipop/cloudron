@@ -109,7 +109,7 @@
                   <label class="control-label">Provide your password to confirm this action</label>
                   <div class="control-label" ng-show="(domainRemoveForm.password.$dirty && domainRemoveForm.password.$invalid) || (!domainRemoveForm.password.$dirty && domainRemove.error)">
                       <small ng-show=" domainRemoveForm.password.$dirty && domainRemoveForm.password.$invalid">Password required</small>
-                      <small ng-show="!domainRemoveForm.password.$dirty && domainRemove.error">Wrong password</small>
+                      <small ng-show="!domainRemoveForm.password.$dirty && domainRemove.error">{{ domainRemove.error }}</small>
                   </div>
                   <input type="password" class="form-control" ng-model="domainRemove.password" id="domainRemovePasswordInput" name="password" required autofocus>
               </div>

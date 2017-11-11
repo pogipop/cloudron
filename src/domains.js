@@ -49,6 +49,7 @@ DomainError.ALREADY_EXISTS = 'Domain already exists';
 DomainError.EXTERNAL_ERROR = 'External error';
 DomainError.BAD_FIELD = 'Bad Field';
 DomainError.STILL_BUSY = 'Still busy';
+DomainError.IN_USE = 'In Use';
 DomainError.INTERNAL_ERROR = 'Internal error';
 DomainError.ACCESS_DENIED = 'Access denied';
 DomainError.INVALID_PROVIDER = 'provider must be route53, gcdns, digitalocean, cloudflare, noop, manual or caas';
@@ -196,10 +197,9 @@ function del(domain, callback) {
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    // TODO check if domain is still used by an app
-
     domaindb.del(domain, function (error) {
         if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new DomainError(DomainError.NOT_FOUND));
+        if (error && error.reason === DatabaseError.IN_USE) return callback(new DomainError(DomainError.IN_USE));
         if (error) return callback(new DomainError(DomainError.INTERNAL_ERROR, error));
 
         return callback(null);

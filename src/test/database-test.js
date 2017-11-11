@@ -185,6 +185,46 @@ describe('database', function () {
             });
         });
 
+        var APP_0 = {
+            id: 'appid-0',
+            appStoreId: 'appStoreId-0',
+            dnsRecordId: null,
+            installationState: appdb.ISTATE_PENDING_INSTALL,
+            installationProgress: null,
+            runState: null,
+            location: 'some-location-0',
+            domain: DOMAIN_0.domain,
+            manifest: { version: '0.1', dockerImage: 'docker/app0', healthCheckPath: '/', httpPort: 80, title: 'app0' },
+            httpPort: null,
+            containerId: null,
+            portBindings: { port: 5678 },
+            health: null,
+            accessRestriction: null,
+            lastBackupId: null,
+            oldConfig: null,
+            newConfig: null,
+            memoryLimit: 4294967296,
+            altDomain: null,
+            xFrameOptions: 'DENY',
+            sso: true,
+            debugMode: null,
+            robotsTxt: null,
+            enableBackup: true
+        };
+
+        it('cannot delete referenced domain', function (done) {
+            appdb.add(APP_0.id, APP_0.appStoreId, APP_0.manifest, APP_0.location, APP_0.domain, APP_0.portBindings, APP_0, function (error) {
+                expect(error).to.be(null);
+
+                domaindb.del(DOMAIN_0.domain, function (error) {
+                    expect(error).to.be.a(DatabaseError);
+                    expect(error.reason).to.equal(DatabaseError.IN_USE);
+
+                    appdb.del(APP_0.id, done);
+                });
+            });
+        });
+
         it('can delete existing domain', function (done) {
             domaindb.del(DOMAIN_0.domain, function (error) {
                 expect(error).to.be(null);
