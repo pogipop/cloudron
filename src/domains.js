@@ -18,6 +18,7 @@ module.exports = exports = {
 
 var assert = require('assert'),
     certificates = require('./certificates.js'),
+    CertificatesError = certificates.CertificatesError,
     DatabaseError = require('./databaseerror.js'),
     debug = require('debug')('box:domains.js'),
     domaindb = require('./domaindb.js'),
@@ -137,7 +138,13 @@ function get(domain, callback) {
         if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new DomainError(DomainError.NOT_FOUND));
         if (error) return callback(new DomainError(DomainError.INTERNAL_ERROR, error));
 
-        return callback(null, result);
+        certificates.getFallbackCertificate(domain, function (error, fallbackCertificate) {
+            if (error && error.reason !== CertificatesError.NOT_FOUND) return callback(new DomainError(DomainError.INTERNAL_ERROR, error));
+
+            if (fallbackCertificate) result.fallbackCertificate = fallbackCertificate;
+
+            return callback(null, result);
+        });
     });
 }
 

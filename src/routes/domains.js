@@ -59,8 +59,8 @@ function update(req, res, next) {
 
     if (typeof req.body.config !== 'object') return next(new HttpError(400, 'config must be an object'));
     if ('fallbackCertificate' in req.body && typeof req.body.fallbackCertificate !== 'object') return next(new HttpError(400, 'fallbackCertificate must be a object with cert and key strings'));
-    if (req.body.fallbackCertificate && (!req.body.cert || typeof req.body.cert !== 'string')) return next(new HttpError(400, 'fallbackCertificate.cert must be a string'));
-    if (req.body.fallbackCertificate && (!req.body.key || typeof req.body.key !== 'string')) return next(new HttpError(400, 'fallbackCertificate.key must be a string'));
+    if (req.body.fallbackCertificate && (!req.body.fallbackCertificate.cert || typeof req.body.fallbackCertificate.cert !== 'string')) return next(new HttpError(400, 'fallbackCertificate.cert must be a string'));
+    if (req.body.fallbackCertificate && (!req.body.fallbackCertificate.key || typeof req.body.fallbackCertificate.key !== 'string')) return next(new HttpError(400, 'fallbackCertificate.key must be a string'));
 
     domains.update(req.params.domain, req.body.config, req.body.fallbackCertificate || null, function (error) {
         if (error && error.reason === DomainError.NOT_FOUND) return next(new HttpError(404, error.message));

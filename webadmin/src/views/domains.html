@@ -57,33 +57,60 @@
               <input type="email" class="form-control" ng-model="domainConfigure.cloudflareEmail" name="cloudflareEmail" placeholder="Cloudflare Account Email" ng-required="domainConfigure.provider === 'cloudflare'" ng-disabled="domainConfigure.busy">
             </div>
 
+            <p ng-show="domainConfigure.provider === 'route53'">
+                This domain must be hosted on <a href="https://aws.amazon.com/route53/?nc2=h_m1" target="_blank">AWS Route53</a>.
+            </p>
+
+            <p ng-show="domainConfigure.provider === 'gcdns'">
+                This domain must be hosted on <a href="https://console.cloud.google.com/net-services/dns/zones" target="_blank">Google Cloud DNS</a>.
+            </p>
+
+            <p ng-show="domainConfigure.provider === 'digitalocean'">
+                This domain must be hosted on <a href="https://www.digitalocean.com/community/tutorials/how-to-set-up-a-host-name-with-digitalocean#step-two%E2%80%94change-your-domain-server" target="_blank">DigitalOcean</a>.
+            </p>
+
+            <p ng-show="domainConfigure.provider === 'cloudflare'">
+                This domain must be hosted on <a href="https://www.cloudflare.com" target="_blank">Cloudflare</a>.
+            </p>
+
+            <p ng-show="domainConfigure.provider === 'wildcard'">
+                Setup <i>A</i> records for <b>*.{{ domainConfigure.newDomain || domainConfigure.domain.domain }}</b> and <b>{{ domainConfigure.newDomain || domainConfigure.domain.domain }}</b> to this server's IP.
+            </p>
+
+            <p ng-show="domainConfigure.provider === 'manual'">
+                All DNS records have to be setup manually <i>before</i> each app installation.
+            </p>
+
+            <br/>
+
+            <!-- Wildcard certificates -->
+            <label class="control-label">Fallback Certificate (optional)</label>
+            <p>
+                Certificates are automatically obtained and renewed from <a href="https://letsencrypt.org/" target="_blank">Let’s Encrypt</a>. See the current rate limit <a href="https://letsencrypt.org/docs/rate-limits/" target="_blank">here</a>.
+                If provided, this wildcard certificate will be used for apps, should getting a Let’s Encrypt certificate fail.
+            </p>
+            <div class="form-group" ng-class="{ 'has-error': (!fallbackCert.cert.$dirty && fallbackCert.error) }">
+                <div class="input-group">
+                    <input type="file" id="fallbackCertFileInput" style="display:none"/>
+                    <input type="text" class="form-control" placeholder="Certificate" ng-model="domainConfigure.fallbackCert.certificateFileName" name="cert" onclick="getElementById('fallbackCertFileInput').click();" style="cursor: pointer;" ng-disabled="domainConfigure.busy">
+                    <span class="input-group-addon">
+                        <i class="fa fa-upload" onclick="getElementById('fallbackCertFileInput').click();"></i>
+                    </span>
+                </div>
+            </div>
+            <div class="form-group" ng-class="{ 'has-error': (!fallbackCert.key.$dirty && fallbackCert.error) }">
+                <div class="input-group">
+                    <input type="file" id="fallbackKeyFileInput" style="display:none"/>
+                    <input type="text" class="form-control" placeholder="Key" ng-model="domainConfigure.fallbackCert.keyFileName" id="fallbackKeyInput" name="key" onclick="getElementById('fallbackKeyFileInput').click();" style="cursor: pointer;" ng-disabled="domainConfigure.busy">
+                    <span class="input-group-addon">
+                        <i class="fa fa-upload" onclick="getElementById('fallbackKeyFileInput').click();"></i>
+                    </span>
+                </div>
+            </div>
+
             <input class="ng-hide" type="submit" ng-disabled="domainConfigureForm.$invalid || domainConfigure.busy"/>
           </fieldset>
         </form>
-
-        <p ng-show="domainConfigure.provider === 'route53'">
-          This domain must be hosted on <a href="https://aws.amazon.com/route53/?nc2=h_m1" target="_blank">AWS Route53</a>.
-        </p>
-
-        <p ng-show="domainConfigure.provider === 'gcdns'">
-          This domain must be hosted on <a href="https://console.cloud.google.com/net-services/dns/zones" target="_blank">Google Cloud DNS</a>.
-        </p>
-
-        <p ng-show="domainConfigure.provider === 'digitalocean'">
-          This domain must be hosted on <a href="https://www.digitalocean.com/community/tutorials/how-to-set-up-a-host-name-with-digitalocean#step-two%E2%80%94change-your-domain-server" target="_blank">DigitalOcean</a>.
-        </p>
-
-        <p ng-show="domainConfigure.provider === 'cloudflare'">
-          This domain must be hosted on <a href="https://www.cloudflare.com" target="_blank">Cloudflare</a>.
-        </p>
-
-        <p ng-show="domainConfigure.provider === 'wildcard'">
-          Setup <i>A</i> records for <b>*.{{ domainConfigure.newDomain || domainConfigure.domain.domain }}</b> and <b>{{ domainConfigure.newDomain || domainConfigure.domain.domain }}</b> to this server's IP.
-        </p>
-
-        <p ng-show="domainConfigure.provider === 'manual'">
-          All DNS records have to be setup manually <i>before</i> each app installation.
-        </p>
       </div>
       <div class="modal-footer ">
         <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>

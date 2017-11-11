@@ -52,6 +52,13 @@ angular.module('Application').controller('DomainsController', ['$scope', '$locat
         cloudflareEmail: '',
         provider: 'route53',
 
+        fallbackCert: {
+            certificateFile: null,
+            certificateFileName: '',
+            keyFile: null,
+            keyFileName: ''
+        },
+
         show: function (domain) {
             $scope.domainConfigure.reset();
 
@@ -123,10 +130,18 @@ angular.module('Application').controller('DomainsController', ['$scope', '$locat
                 data.email = $scope.domainConfigure.cloudflareEmail;
             }
 
+            var fallbackCertificate = null;
+            if ($scope.domainConfigure.fallbackCert.certificateFile && $scope.domainConfigure.fallbackCert.keyFile) {
+                fallbackCertificate = {
+                    cert: $scope.domainConfigure.fallbackCert.certificateFile,
+                    key: $scope.domainConfigure.fallbackCert.keyFile
+                };
+            }
+
             // choose the right api, since we reuse this for adding and configuring domains
             var func;
-            if ($scope.domainConfigure.adding) func = Client.addDomain.bind(Client, $scope.domainConfigure.newDomain, data);
-            else func = Client.updateDomain.bind(Client, $scope.domainConfigure.domain.domain, data) ;
+            if ($scope.domainConfigure.adding) func = Client.addDomain.bind(Client, $scope.domainConfigure.newDomain, data, fallbackCertificate);
+            else func = Client.updateDomain.bind(Client, $scope.domainConfigure.domain.domain, data, fallbackCertificate);
 
             func(function (error) {
                 $scope.domainConfigure.busy = false;
@@ -231,6 +246,9 @@ angular.module('Application').controller('DomainsController', ['$scope', '$locat
     });
 
     document.getElementById('gcdnsKeyFileInput').onchange = readFileLocally($scope.domainConfigure.gcdnsKey, 'content', 'keyFileName');
+    document.getElementById('fallbackCertFileInput').onchange = readFileLocally($scope.domainConfigure.fallbackCert, 'certificateFile', 'certificateFileName');
+    document.getElementById('fallbackKeyFileInput').onchange = readFileLocally($scope.domainConfigure.fallbackCert, 'keyFile', 'keyFileName');
+
 
     // setup all the dialog focus handling
     ['domainConfigureModal', 'domainRemoveModal'].forEach(function (id) {

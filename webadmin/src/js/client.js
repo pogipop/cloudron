@@ -1163,22 +1163,26 @@ angular.module('Application').service('Client', ['$http', 'md5', 'Notification',
         }).error(defaultErrorHandler(callback));
     };
 
-    Client.prototype.addDomain = function (domain, config, callback) {
+    Client.prototype.addDomain = function (domain, config, fallbackCertificate, callback) {
         var data = {
             domain: domain,
             config: config
         };
 
-        post('/api/v1/domains', data).success(function (data, status) {
-            if (status !== 201 || typeof data !== 'object') return callback(new ClientError(status, data));
-            callback(null, data);
-        }).error(defaultErrorHandler(callback));
-    };
+        if (fallbackCertificate) data.fallbackCertificate = fallbackCertificate;
 
-    Client.prototype.updateDomain = function (domain, config, callback) {
+        post('/api/v1/domains', data).success(function (data, status) {
+          if (status !== 201 || typeof data !== 'object') return callback(new ClientError(status, data));
+          callback(null, data);
+        }).error(defaultErrorHandler(callback));
+      };
+
+      Client.prototype.updateDomain = function (domain, config, fallbackCertificate, callback) {
         var data = {
-            config: config
+          config: config
         };
+
+        if (fallbackCertificate) data.fallbackCertificate = fallbackCertificate;
 
         put('/api/v1/domains/' + domain, data).success(function (data, status) {
             if (status !== 204) return callback(new ClientError(status, data));

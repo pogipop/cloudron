@@ -5,6 +5,7 @@ exports = module.exports = {
 
     ensureFallbackCertificate: ensureFallbackCertificate,
     setFallbackCertificate: setFallbackCertificate,
+    getFallbackCertificate: getFallbackCertificate,
 
     validateCertificate: validateCertificate,
     ensureCertificate: ensureCertificate,
@@ -276,7 +277,7 @@ function validateCertificate(cert, key, fqdn) {
     if (cert && !key) return new Error('missing key');
 
     var result = safe.child_process.execSync('openssl x509 -noout -checkhost "' + fqdn + '"', { encoding: 'utf8', input: cert });
-    if (!result) return new Error(util.format('could not get cert subject'));
+    if (!result) return new Error('Invalid certificate. Unable to get certificate subject.');
 
     // if no match, check alt names
     if (result.indexOf('does match certificate') === -1) {
@@ -289,17 +290,17 @@ function validateCertificate(cert, key, fqdn) {
         debug('validateCertificate: detected altNames as %j', altNames);
 
         // check altNames
-        if (!altNames.some(matchesDomain)) return new Error(util.format('cert is not valid for this domain. Expecting %s in %j', fqdn, altNames));
+        if (!altNames.some(matchesDomain)) return new Error(util.format('Certificate is not valid for this domain. Expecting %s in %j', fqdn, altNames));
     }
 
     // http://httpd.apache.org/docs/2.0/ssl/ssl_faq.html#verify
     var certModulus = safe.child_process.execSync('openssl x509 -noout -modulus', { encoding: 'utf8', input: cert });
     var keyModulus = safe.child_process.execSync('openssl rsa -noout -modulus', { encoding: 'utf8', input: key });
-    if (certModulus !== keyModulus) return new Error('key does not match the cert');
+    if (certModulus !== keyModulus) return new Error('Key does not match the certificate.');
 
    // check expiration
     result = safe.child_process.execSync('openssl x509 -checkend 0', { encoding: 'utf8', input: cert });
-    if (!result) return new Error('cert expired');
+    if (!result) return new Error('Certificate is expired.');
 
     return null;
 }
@@ -314,12 +315,12 @@ function setFallbackCertificate(cert, key, fqdn, callback) {
     if (error) return callback(new CertificatesError(CertificatesError.INVALID_CERT, error.message));
 
     // backup the cert
-    if (!safe.fs.writeFileSync(path.join(paths.APP_CERTS_DIR, 'host.cert'), cert)) return callback(new CertificatesError(CertificatesError.INTERNAL_ERROR, safe.error.message));
-    if (!safe.fs.writeFileSync(path.join(paths.APP_CERTS_DIR, 'host.key'), key)) return callback(new CertificatesError(CertificatesError.INTERNAL_ERROR, safe.error.message));
+    if (!safe.fs.writeFileSync(path.join(paths.APP_CERTS_DIR, fqdn + '.cert'), cert)) return callback(new CertificatesError(CertificatesError.INTERNAL_ERROR, safe.error.message));
+    if (!safe.fs.writeFileSync(path.join(paths.APP_CERTS_DIR, fqdn + '.key'), key)) return callback(new CertificatesError(CertificatesError.INTERNAL_ERROR, safe.error.message));
 
     // copy over fallback cert
-    if (!safe.fs.writeFileSync(path.join(paths.NGINX_CERT_DIR, 'host.cert'), cert)) return callback(new CertificatesError(CertificatesError.INTERNAL_ERROR, safe.error.message));
-    if (!safe.fs.writeFileSync(path.join(paths.NGINX_CERT_DIR, 'host.key'), key)) return callback(new CertificatesError(CertificatesError.INTERNAL_ERROR, safe.error.message));
+    if (!safe.fs.writeFileSync(path.join(paths.NGINX_CERT_DIR, fqdn + '.cert'), cert)) return callback(new CertificatesError(CertificatesError.INTERNAL_ERROR, safe.error.message));
+    if (!safe.fs.writeFileSync(path.join(paths.NGINX_CERT_DIR, fqdn + '.key'), key)) return callback(new CertificatesError(CertificatesError.INTERNAL_ERROR, safe.error.message));
 
     exports.events.emit(exports.EVENT_CERT_CHANGED, '*.' + fqdn);
 
@@ -330,11 +331,16 @@ function setFallbackCertificate(cert, key, fqdn, callback) {
     });
 }
 
-function getFallbackCertificatePath(callback) {
+function getFallbackCertificate(fqdn, callback) {
+    assert.strictEqual(typeof fqdn, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    // any user fallback cert is always copied over to nginx cert dir
-    callback(null, path.join(paths.NGINX_CERT_DIR, 'host.cert'), path.join(paths.NGINX_CERT_DIR, 'host.key'));
+    var cert = safe.fs.readFileSync(path.join(paths.NGINX_CERT_DIR, fqdn + '.cert'), 'utf-8');
+    var key = safe.fs.readFileSync(path.join(paths.NGINX_CERT_DIR, fqdn + '.key'), 'utf-8');
+
+    if (!cert || !key) return callback(new CertificatesError(CertificatesError.NOT_FOUND));
+
+    callback(null, { cert: cert, key: key });
 }
 
 function setAdminCertificate(cert, key, callback) {
@@ -372,7 +378,8 @@ function getAdminCertificatePath(callback) {
 
     if (fs.existsSync(certFilePath) && fs.existsSync(keyFilePath)) return callback(null, certFilePath, keyFilePath);
 
-    getFallbackCertificatePath(callback);
+    // any user fallback cert is always copied over to nginx cert dir
+    callback(null, path.join(paths.NGINX_CERT_DIR, 'host.cert'), path.join(paths.NGINX_CERT_DIR, 'host.key'));
 }
 
 function getAdminCertificate(callback) {
@@ -425,7 +432,15 @@ function ensureCertificate(app, callback) {
         api.getCertificate(domain, apiOptions, function (error, certFilePath, keyFilePath) {
             if (error) {
                 debug('ensureCertificate: could not get certificate. using fallback certs', error);
-                return callback(null, 'cert/host.cert', 'cert/host.key'); // use fallback certs
+
+                var fallbackCertFilePath = path.join(paths.NGINX_CERT_DIR, app.domain + '.cert');
+                var fallbackKeyFilePath = path.join(paths.NGINX_CERT_DIR, app.domain + '.key');
+
+                if (fs.existsSync(fallbackCertFilePath) && fs.existsSync(fallbackKeyFilePath)) {
+                    return callback(null, fallbackCertFilePath, fallbackKeyFilePath);
+                } else {
+                    return callback(null, 'cert/host.cert', 'cert/host.key');
+                }
             }
 
             callback(null, certFilePath, keyFilePath);
