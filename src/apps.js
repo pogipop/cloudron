@@ -119,10 +119,10 @@ AppsError.BAD_CERTIFICATE = 'Invalid certificate';
 // Domain name validation comes from RFC 2181 (Name syntax)
 // https://en.wikipedia.org/wiki/Hostname#Restrictions_on_valid_host_names
 // We are validating the validity of the location-fqdn as host name
-function validateHostname(location) {
-    assert.strictEqual(typeof location, 'string');
+function validateHostname(hostname) {
+    assert.strictEqual(typeof hostname, 'string');
 
-    if (!location) return new AppsError(AppsError.BAD_FIELD, 'location cannot be empty');
+    if (!hostname) return new AppsError(AppsError.BAD_FIELD, 'hostname cannot be empty');
 
     const RESERVED_LOCATIONS = [
         config.adminFqdn(),
@@ -132,13 +132,18 @@ function validateHostname(location) {
         config.mailFqdn(),
         config.appFqdn({ location: constants.POSTMAN_LOCATION, domain: config.fqdn() })
     ];
-    if (RESERVED_LOCATIONS.indexOf(location) !== -1) return new AppsError(AppsError.BAD_FIELD, location + ' is reserved');
+    if (RESERVED_LOCATIONS.indexOf(hostname) !== -1) return new AppsError(AppsError.BAD_FIELD, hostname + ' is reserved');
 
     // workaround https://github.com/oncletom/tld.js/issues/73
-    var tmp = location.replace('_', '-');
-    if (!tld.isValid(tmp)) return new AppsError(AppsError.BAD_FIELD, 'location is not a valid domain name');
+    var tmp = hostname.replace('_', '-');
+    if (!tld.isValid(tmp)) return new AppsError(AppsError.BAD_FIELD, 'Hostname is not a valid domain name');
 
-    if (location.length > 253) return new AppsError(AppsError.BAD_FIELD, 'FQDN length exceeds 253 characters');
+    if (hostname.length > 253) return new AppsError(AppsError.BAD_FIELD, 'Hostname length exceeds 253 characters');
+
+    if (tld.getSubdomain(tmp) === null) return new AppsError(AppsError.BAD_FIELD, 'Invalid subdomain');
+    if (tld.getSubdomain(tmp).match(/^[A-Za-z0-9-]+$/) === null) return new AppsError(AppsError.BAD_FIELD, 'Subdomain can only contain alphanumerics and hyphen');
+    if (tld.getSubdomain(tmp).length > 63) return new AppsError(AppsError.BAD_FIELD, 'Subdomain exceeds 63 characters');
+    if (tld.getSubdomain(tmp).startsWith('-') || tld.getSubdomain(tmp).endsWith('-')) return new AppsError(AppsError.BAD_FIELD, 'Subdomain cannot start or end with hyphen');
 
     return null;
 }
