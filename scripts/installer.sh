@@ -63,12 +63,12 @@ if [[ $(docker version --format {{.Client.Version}}) != "17.09.0-ce" ]]; then
 fi
 
 echo "==> installer: updating node"
-if [[ "$(node --version)" != "v6.11.3" ]]; then
-    mkdir -p /usr/local/node-6.11.3
-    $curl -sL https://nodejs.org/dist/v6.11.3/node-v6.11.3-linux-x64.tar.gz | tar zxvf - --strip-components=1 -C /usr/local/node-6.11.3
-    ln -sf /usr/local/node-6.11.3/bin/node /usr/bin/node
-    ln -sf /usr/local/node-6.11.3/bin/npm /usr/bin/npm
-    rm -rf /usr/local/node-6.11.2
+if [[ "$(node --version)" != "v6.11.5" ]]; then
+    mkdir -p /usr/local/node-6.11.5
+    $curl -sL https://nodejs.org/dist/v6.11.5/node-v6.11.5-linux-x64.tar.gz | tar zxvf - --strip-components=1 -C /usr/local/node-6.11.5
+    ln -sf /usr/local/node-6.11.5/bin/node /usr/bin/node
+    ln -sf /usr/local/node-6.11.5/bin/npm /usr/bin/npm
+    rm -rf /usr/local/node-6.11.3
 fi
 
 for try in `seq 1 10`; do
