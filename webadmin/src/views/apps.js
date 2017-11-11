@@ -116,7 +116,7 @@ angular.module('Application').controller('AppsController', ['$scope', '$location
         }
     };
 
-    $scope.appPostInstall = {
+    $scope.appInfo = {
         app: {},
         message: ''
     };
@@ -139,7 +139,7 @@ angular.module('Application').controller('AppsController', ['$scope', '$location
         $('#appConfigureModal').modal('hide');
         $('#appRestoreModal').modal('hide');
         $('#appUpdateModal').modal('hide');
-        $('#appPostInstallModal').modal('hide');
+        $('#appInfoModal').modal('hide');
         $('#appUninstallModal').modal('hide');
 
         // reset configure dialog
@@ -349,13 +349,13 @@ angular.module('Application').controller('AppsController', ['$scope', '$location
         });
     };
 
-    $scope.showPostInstall = function (app) {
+    $scope.showInformation = function (app) {
         $scope.reset();
 
-        $scope.appPostInstall.app = app;
-        $scope.appPostInstall.message = app.manifest.postInstallMessage;
+        $scope.appInfo.app = app;
+        $scope.appInfo.message = app.manifest.postInstallMessage;
 
-        $('#appPostInstallModal').modal('show');
+        $('#appInfoModal').modal('show');
 
         return false; // prevent propagation and default
     };
@@ -441,10 +441,6 @@ angular.module('Application').controller('AppsController', ['$scope', '$location
 
     $scope.cancel = function () {
         window.history.back();
-    };
-
-    $scope.hasPostInstallMessage = function (app) {
-        return app.manifest && app.manifest.postInstallMessage;
     };
 
     function fetchUsers() {

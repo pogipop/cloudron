@@ -3,8 +3,8 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h4 class="modal-title" ng-show="(appConfigure.app | installError)">Repair</h4>
-                <h4 class="modal-title" ng-hide="(appConfigure.app | installError)">Configure</h4>
+                <h4 class="modal-title" ng-show="(appConfigure.app | installError)">Repair {{ appConfigure.app.fqdn }}</h4>
+                <h4 class="modal-title" ng-hide="(appConfigure.app | installError)">Configure {{ appConfigure.app.fqdn }}</h4>
             </div>
             <div class="modal-body">
                 <fieldset>
@@ -224,16 +224,22 @@
     </div>
 </div>
 
-<!-- Modal post install message app -->
-<div class="modal fade" id="appPostInstallModal" tabindex="-1" role="dialog">
+<!-- Modal information of app -->
+<div class="modal fade" id="appInfoModal" tabindex="-1" role="dialog">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h4 class="modal-title">Installation notes for {{ appPostInstall.app.manifest.title }}</h4>
+                <img ng-src="{{appInfo.app.iconUrl}}" onerror="this.onerror=null;this.src='img/appicon_fallback.png'" class="app-info-icon"/>
+                <h5 class="app-info-title">{{ appInfo.app.manifest.title }}</h5>
+                <br/>
+                <span class="app-info-meta">Package version <a ng-href="/#/appstore/{{appInfo.app.manifest.id}}?version={{appInfo.app.manifest.version}}">{{ appInfo.app.manifest.version }}</a> </span>
             </div>
             <div class="modal-body">
-                <div class="app-postinstall-message">
-                    <div ng-bind-html="appPostInstall.message | postInstallMessage:appPostInstall.app | markdown2html"></div>
+                <div class="app-postinstall-message" ng-hide="appInfo.app.manifest && appInfo.app.manifest.postInstallMessage">
+                    This package has no special usage information.
+                </div>
+                <div class="app-postinstall-message" ng-show="appInfo.app.manifest && appInfo.app.manifest.postInstallMessage">
+                    <div ng-bind-html="appInfo.message | postInstallMessage:appInfo.app | markdown2html"></div>
                 </div>
             </div>
             <div class="modal-footer">
@@ -419,8 +425,8 @@
                             <a href="" ng-click="showConfigure(app)" title="Repair App"><i class="fa fa-wrench scale"></i></a>
                         </div>
 
-                        <div ng-show="hasPostInstallMessage(app)">
-                            <a href="" ng-click="showPostInstall(app)" title="Information"><i class="fa fa-info-circle scale"></i></a>
+                        <div>
+                            <a href="" ng-click="showInformation(app)" title="Information"><i class="fa fa-info-circle scale"></i></a>
                         </div>
                     </div>
 
