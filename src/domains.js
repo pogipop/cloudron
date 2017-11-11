@@ -19,6 +19,7 @@ module.exports = exports = {
 var assert = require('assert'),
     certificates = require('./certificates.js'),
     DatabaseError = require('./databaseerror.js'),
+    debug = require('debug')('box:domains.js'),
     domaindb = require('./domaindb.js'),
     sysinfo = require('./sysinfo.js'),
     tld = require('tldjs'),
@@ -231,25 +232,27 @@ function upsertDNSRecords(fqdn, type, values, callback) {
     assert(util.isArray(values));
     assert.strictEqual(typeof callback, 'function');
 
-    const domain = tld.getDomain(fqdn);
-    const subdomain = tld.getSubdomain(fqdn);
+    debug('upsertDNSRecord: %s type %s values', fqdn, type, values);
+
 
     get(domain, function (error, result) {
-        if (error) return callback(new DomainError(DomainError.INTERNAL_ERROR, error));
+      if (error) return callback(new DomainError(DomainError.INTERNAL_ERROR, error));
 
-        api(result.config.provider).upsert(result.config, result.zoneName, subdomain, type, values, function (error, changeId) {
-            if (error) return callback(error);
+      api(result.config.provider).upsert(result.config, result.zoneName, subdomain, type, values, function (error, changeId) {
+        if (error) return callback(error);
 
-            callback(null, changeId);
-        });
+        callback(null, changeId);
+      });
     });
-}
+  }
 
-function removeDNSRecords(fqdn, type, values, callback) {
+  function removeDNSRecords(fqdn, type, values, callback) {
     assert.strictEqual(typeof fqdn, 'string');
     assert.strictEqual(typeof type, 'string');
     assert(util.isArray(values));
     assert.strictEqual(typeof callback, 'function');
+
+    debug('removeDNSRecord: %s type %s values', fqdn, type, values);
 
     const domain = tld.getDomain(fqdn);
     const subdomain = tld.getSubdomain(fqdn);
