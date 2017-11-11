@@ -11,15 +11,23 @@ var async = require('async'),
     GCDNS = require('@google-cloud/dns'),
     config = require('../config.js'),
     database = require('../database.js'),
+    domains = require('../domains.js'),
     expect = require('expect.js'),
     nock = require('nock'),
     settings = require('../settings.js'),
     domains = require('../domains.js'),
     util = require('util');
 
+var DOMAIN_0 = {
+    domain: 'example.com',
+    zoneName: 'example.com',
+    config: {}
+};
+
 describe('dns provider', function () {
     before(function (done) {
         config._reset();
+        config.setFqdn(DOMAIN_0.domain);
 
         async.series([
             database.initialize,
@@ -33,14 +41,11 @@ describe('dns provider', function () {
 
     describe('noop', function () {
         before(function (done) {
-            var data = {
+            DOMAIN_0.config = {
                 provider: 'noop'
             };
 
-            config.setFqdn('example.com');
-            config.setZoneName('example.com');
-
-            settings.setDnsConfig(data, config.fqdn(), config.zoneName(), done);
+            domains.update(DOMAIN_0.domain, DOMAIN_0.config, null, done);
         });
 
         it('upsert succeeds', function (done) {
@@ -76,15 +81,12 @@ describe('dns provider', function () {
         var DIGITALOCEAN_ENDPOINT = 'https://api.digitalocean.com';
 
         before(function (done) {
-            var data = {
+            DOMAIN_0.config = {
                 provider: 'digitalocean',
                 token: TOKEN
             };
 
-            config.setFqdn('example.com');
-            config.setZoneName('example.com');
-
-            settings.setDnsConfig(data, config.fqdn(), config.zoneName(), done);
+            domains.update(DOMAIN_0.domain, DOMAIN_0.config, null, done);
         });
 
         it('upsert non-existing record succeeds', function (done) {
@@ -334,9 +336,6 @@ describe('dns provider', function () {
     });
 
     describe('route53', function () {
-        config.setFqdn('example.com');
-        config.setZoneName('example.com');
-
         // do not clear this with [] but .length = 0 so we don't loose the reference in mockery
         var awsAnswerQueue = [];
 
@@ -366,7 +365,7 @@ describe('dns provider', function () {
         };
 
         before(function (done) {
-            var data = {
+            DOMAIN_0.config = {
                 provider: 'route53',
                 accessKeyId: 'unused',
                 secretAccessKey: 'unused'
@@ -396,8 +395,8 @@ describe('dns provider', function () {
 
             function Route53Mock(cfg) {
                 expect(cfg).to.eql({
-                    accessKeyId: data.accessKeyId,
-                    secretAccessKey: data.secretAccessKey,
+                    accessKeyId: DOMAIN_0.config.accessKeyId,
+                    secretAccessKey: DOMAIN_0.config.secretAccessKey,
                     region: 'us-east-1'
                 });
             }
@@ -412,7 +411,7 @@ describe('dns provider', function () {
             AWS._originalRoute53 = AWS.Route53;
             AWS.Route53 = Route53Mock;
 
-            settings.setDnsConfig(data, config.fqdn(), config.zoneName(), done);
+            domains.update(DOMAIN_0.domain, DOMAIN_0.config, null, done);
         });
 
         after(function () {
@@ -525,10 +524,7 @@ describe('dns provider', function () {
         var _OriginalGCDNS;
 
         before(function (done) {
-            var domain = 'example.com';
-            config.setFqdn(domain);
-            config.setZoneName(domain);
-            var dnsConfig = {
+            DOMAIN_0.config = {
                 provider: 'gcdns',
                 projectId: 'my-dns-proj',
                 keyFilename: __dirname + '/syn-im-1ec6f9f870bf.json'
@@ -566,12 +562,12 @@ describe('dns provider', function () {
                 zone.deleteRecords = mockery(recordQueue || zoneQueue);
                 return zone;
             }
-            HOSTED_ZONES = [fakeZone(domain), fakeZone('cloudron.us')];
+            HOSTED_ZONES = [ fakeZone(DOMAIN_0.domain), fakeZone('cloudron.us') ];
 
             _OriginalGCDNS = GCDNS.prototype.getZones;
             GCDNS.prototype.getZones = mockery(zoneQueue);
 
-            settings.setDnsConfig(dnsConfig, config.fqdn(), config.zoneName(), done);
+            domains.update(DOMAIN_0.domain, DOMAIN_0.config, null, done);
         });
 
         after(function () {
