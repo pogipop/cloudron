@@ -233,8 +233,12 @@ function renewAll(auditSource, callback) {
 
                         debug('renewAll: using fallback certs for %s since it expires soon', domain, error);
 
-                        certFilePath = 'cert/host.cert';
-                        keyFilePath = 'cert/host.key';
+                        // if no cert was returned use fallback, the fallback provider will not provide any for example
+                        var fallbackCertFilePath = path.join(paths.NGINX_CERT_DIR, domain + '.cert');
+                        var fallbackKeyFilePath = path.join(paths.NGINX_CERT_DIR, domain + '.key');
+
+                        certFilePath = fs.existsSync(fallbackCertFilePath) ? fallbackCertFilePath : 'cert/host.cert';
+                        keyFilePath = fs.existsSync(fallbackKeyFilePath) ? fallbackKeyFilePath : 'cert/host.key';
                     } else {
                         debug('renewAll: certificate for %s renewed', domain);
                     }
@@ -430,17 +434,15 @@ function ensureCertificate(app, callback) {
         debug('ensureCertificate: getting certificate for %s with options %j', domain, apiOptions);
 
         api.getCertificate(domain, apiOptions, function (error, certFilePath, keyFilePath) {
-            if (error) {
-                debug('ensureCertificate: could not get certificate. using fallback certs', error);
+            if (error) debug('ensureCertificate: could not get certificate. using fallback certs', error);
 
+            // if no cert was returned use fallback, the fallback provider will not provide any for example
+            if (!certFilePath || !keyFilePath) {
                 var fallbackCertFilePath = path.join(paths.NGINX_CERT_DIR, app.domain + '.cert');
                 var fallbackKeyFilePath = path.join(paths.NGINX_CERT_DIR, app.domain + '.key');
 
-                if (fs.existsSync(fallbackCertFilePath) && fs.existsSync(fallbackKeyFilePath)) {
-                    return callback(null, fallbackCertFilePath, fallbackKeyFilePath);
-                } else {
-                    return callback(null, 'cert/host.cert', 'cert/host.key');
-                }
+                certFilePath = fs.existsSync(fallbackCertFilePath) ? fallbackCertFilePath : 'cert/host.cert';
+                keyFilePath = fs.existsSync(fallbackKeyFilePath) ? fallbackKeyFilePath : 'cert/host.key';
             }
 
             callback(null, certFilePath, keyFilePath);

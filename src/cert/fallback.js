@@ -17,5 +17,5 @@ function getCertificate(domain, options, callback) {
 
     debug('getCertificate: using fallback certificate', domain);
 
-    return callback(null, 'cert/host.cert', 'cert/host.key');
+    return callback(null, '', '');
 }
