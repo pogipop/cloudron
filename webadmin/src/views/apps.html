@@ -96,12 +96,12 @@
                                 <div style="margin-left: 20px;">
                                     <div class="col-md-5">
                                         Users:
-                                        <multiselect class="input-sm" ng-model="appConfigure.accessRestriction.users" ng-disabled="appConfigure.accessRestrictionOption !== 'groups'" options="user.username for user in users" data-multiple="true"></multiselect>
+                                        <multiselect class="input-sm stretch" ng-model="appConfigure.accessRestriction.users" ng-disabled="appConfigure.accessRestrictionOption !== 'groups'" options="user.username for user in users" data-multiple="true"></multiselect>
                                     </div>
 
                                     <div class="col-md-5">
                                         Groups:
-                                        <multiselect class="input-sm" ng-model="appConfigure.accessRestriction.groups" ng-disabled="appConfigure.accessRestrictionOption !== 'groups'" options="group.name for group in (groups | ignoreAdminGroup)" data-multiple="true"></multiselect>
+                                        <multiselect class="input-sm stretch" ng-model="appConfigure.accessRestriction.groups" ng-disabled="appConfigure.accessRestrictionOption !== 'groups'" options="group.name for group in (groups | ignoreAdminGroup)" data-multiple="true"></multiselect>
                                     </div>
                                 </div>
                             </div>

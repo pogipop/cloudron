@@ -306,6 +306,12 @@ h1, h2, h3 {
     max-width: 100%;
 }
 
+multiselect.stretch {
+    button {
+        min-width: 120px;
+    }
+}
+
 // ----------------------------
 // Appstore view
 // ----------------------------
