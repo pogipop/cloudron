@@ -21,6 +21,7 @@ var assert = require('assert'),
 
 function postProcess(data) {
     data.config = safe.JSON.parse(data.configJson);
+    delete data.configJson;
 
     return data;
 }
