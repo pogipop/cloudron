@@ -369,19 +369,13 @@ function getContainerIdByIp(ip, callback) {
 
     var docker = exports.connection;
 
-    docker.listNetworks({}, function (error, result) {
+    docker.getNetwork('cloudron').inspect(function (error, bridge) {
+        if (error && error.statusCode === 404) return callback(new Error('Unable to find the cloudron network'));
         if (error) return callback(error);
-
-        var bridge;
-        result.forEach(function (n) {
-            if (n.Name === 'cloudron') bridge = n;
-        });
-
-        if (!bridge) return callback(new Error('Unable to find the cloudron network'));
 
         var containerId;
         for (var id in bridge.Containers) {
-            if (bridge.Containers[id].IPv4Address.indexOf(ip) === 0) {
+            if (bridge.Containers[id].IPv4Address.indexOf(ip + '/16') === 0) {
                 containerId = id;
                 break;
             }
