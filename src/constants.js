@@ -19,8 +19,8 @@ exports = module.exports = {
     ADMIN_NAME: 'Settings',
 
     ADMIN_CLIENT_ID: 'webadmin', // oauth client id
-    ADMIN_APPID: 'admin', // admin appid (settingsdb)
 
+    ADMIN_GROUP_NAME: 'admin',
     ADMIN_GROUP_ID: 'admin',
 
     NGINX_ADMIN_CONFIG_FILE_NAME: 'admin.conf',
