@@ -10,15 +10,11 @@ exports.up = function(db, callback) {
         function gatherDomain(done) {
             db.all('SELECT * FROM settings WHERE name = ?', [ 'domain' ], function (error, result) {
                 if (error) return done(error);
-                if (result.length === 0 || !result[0].value) return done(new Error('no domain entry in settings table'));
 
-                var domain = safe.JSON.parse(result[0].value);
-                if (!domain) return done(new Error('Unable to parse domain entry from settings table. Invalid JSON.'));
+                var domain = {};
+                if (result[0]) domain = safe.JSON.parse(result[0].value) || {};
 
-                // if no domain has been set we can't continue
-                if (!domain.fqdn) return done(new Error('no fqdn value in domain settings entry'));
-
-                fqdn = domain.fqdn;
+                fqdn = domain.fqdn || '';
                 zoneName = domain.zoneName || fqdn;
 
                 done();
@@ -46,6 +42,8 @@ exports.up = function(db, callback) {
             db.runSql(cmd, [], done);
         },
         function addInitialDomain(done) {
+            if (!fqdn) return done();
+
             db.runSql('INSERT INTO domains (domain, zoneName, configJson) VALUES (?, ?, ?)', [ fqdn, zoneName, configJson ], done);
         },
         db.runSql.bind(db, 'COMMIT')

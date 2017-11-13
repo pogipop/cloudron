@@ -23,13 +23,9 @@ exports.up = function(db, callback) {
         // first check precondtion of domain entry in settings
         db.all('SELECT * FROM settings WHERE name = ?', [ 'domain' ], function (error, result) {
             if (error) return callback(error);
-            if (result.length === 0 || !result[0].value) return callback(new Error('no domain entry in settings table'));
 
-            var domain = safe.JSON.parse(result[0].value);
-            if (!domain) return callback(new Error('Unable to parse domain entry from settings table. Invalid JSON.'));
-
-            // if no domain has been set we can't continue
-            if (!domain.fqdn) return callback(new Error('no fqdn value in domain settings entry'));
+            var domain = {};
+            if (result[0]) domain = safe.JSON.parse(result[0].value) || {};
 
             async.series([
                 db.runSql.bind(db, 'START TRANSACTION;'),
@@ -37,6 +33,7 @@ exports.up = function(db, callback) {
                     db.runSql('ALTER TABLE apps ADD COLUMN domain VARCHAR(128)', [], done);
                 },
                 function setAppDomain(done) {
+                    if (!domain.fqdn) return done(); // skip for new cloudrons without a domain
                     db.runSql('UPDATE apps SET domain = ?', [ domain.fqdn ], done);
                 },
                 function addAppsLocationDomainUniqueConstraint(done) {
@@ -46,6 +43,7 @@ exports.up = function(db, callback) {
                     db.runSql('ALTER TABLE mailboxes ADD COLUMN domain VARCHAR(128)', [], done);
                 },
                 function setMailboxesDomain(done) {
+                    if (!domain.fqdn) return done(); // skip for new cloudrons without a domain
                     db.runSql('UPDATE mailboxes SET domain = ?', [ domain.fqdn ], done);
                 },
                 function dropAppsLocationUniqueConstraint(done) {
