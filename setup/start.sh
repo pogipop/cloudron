@@ -279,8 +279,7 @@ cat > "${CONFIG_DIR}/cloudron.conf" <<CONF_END
         "password": "${mysql_root_password}",
         "port": 3306,
         "name": "box"
-    },
-    "appBundle": ${arg_app_bundle}
+    }
 }
 CONF_END
 # pass these out-of-band because they have new lines which interfere with json

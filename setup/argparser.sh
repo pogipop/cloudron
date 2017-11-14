@@ -22,7 +22,6 @@ arg_web_server_origin=""
 arg_backup_config=""
 arg_dns_config=""
 arg_provider=""
-arg_app_bundle=""
 arg_is_demo="false"
 
 args=$(getopt -o "" -l "data:,retire-reason:,retire-info:" -n "$0" -- "$@")
@@ -59,9 +58,6 @@ while true; do
         arg_version=$(echo "$2" | $json version)
 
         # read possibly empty parameters here
-        arg_app_bundle=$(echo "$2" | $json appBundle)
-        [[ "${arg_app_bundle}" == "" ]] && arg_app_bundle="[]"
-
         arg_is_demo=$(echo "$2" | $json isDemo)
         [[ "${arg_is_demo}" == "" ]] && arg_is_demo="false"
 

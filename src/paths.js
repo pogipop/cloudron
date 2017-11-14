@@ -31,6 +31,5 @@ exports = module.exports = {
     ACME_ACCOUNT_KEY_FILE: path.join(config.baseDir(), 'boxdata/acme/acme.key'),
     APP_CERTS_DIR: path.join(config.baseDir(), 'boxdata/certs'),
     CLOUDRON_AVATAR_FILE: path.join(config.baseDir(), 'boxdata/avatar.png'),
-    FIRST_RUN_FILE: path.join(config.baseDir(), 'boxdata/first_run'),
     UPDATE_CHECKER_FILE: path.join(config.baseDir(), 'boxdata/updatechecker.json')
 };

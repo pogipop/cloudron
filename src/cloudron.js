@@ -126,7 +126,6 @@ function initialize(callback) {
     async.series([
         certificates.initialize,
         settings.initialize,
-        installAppBundle,
         configureDefaultServer,
         onDomainConfigured
     ], function (error) {
@@ -738,36 +737,6 @@ function doUpdate(boxUpdateInfo, callback) {
 
             // Do not add any code here. The installer script will stop the box code any instant
         });
-    });
-}
-
-function installAppBundle(callback) {
-    assert.strictEqual(typeof callback, 'function');
-
-    if (fs.existsSync(paths.FIRST_RUN_FILE)) return callback();
-
-    var bundle = config.get('appBundle');
-    debug('initialize: installing app bundle on first run: %j', bundle);
-
-    if (!bundle || bundle.length === 0) return callback();
-
-    async.eachSeries(bundle, function (appInfo, iteratorCallback) {
-        debug('autoInstall: installing %s at %s', appInfo.appstoreId, appInfo.location);
-
-        var data = {
-            appStoreId: appInfo.appstoreId,
-            location: appInfo.location,
-            portBindings: appInfo.portBindings || null,
-            accessRestriction: appInfo.accessRestriction || null,
-        };
-
-        apps.install(data, { userId: null, username: 'autoinstaller' }, iteratorCallback);
-    }, function (error) {
-        if (error) debug('autoInstallApps: ', error);
-
-        fs.writeFileSync(paths.FIRST_RUN_FILE, 'been there, done that', 'utf8');
-
-        callback();
     });
 }
 
