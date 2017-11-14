@@ -47,10 +47,10 @@ apt-get -y install \
 cp /usr/share/unattended-upgrades/20auto-upgrades /etc/apt/apt.conf.d/20auto-upgrades
 
 echo "==> Installing node.js"
-mkdir -p /usr/local/node-6.11.3
-curl -sL https://nodejs.org/dist/v6.11.3/node-v6.11.3-linux-x64.tar.gz | tar zxvf - --strip-components=1 -C /usr/local/node-6.11.3
-ln -sf /usr/local/node-6.11.3/bin/node /usr/bin/node
-ln -sf /usr/local/node-6.11.3/bin/npm /usr/bin/npm
+mkdir -p /usr/local/node-6.11.5
+curl -sL https://nodejs.org/dist/v6.11.5/node-v6.11.5-linux-x64.tar.gz | tar zxvf - --strip-components=1 -C /usr/local/node-6.11.5
+ln -sf /usr/local/node-6.11.5/bin/node /usr/bin/node
+ln -sf /usr/local/node-6.11.5/bin/npm /usr/bin/npm
 apt-get install -y python   # Install python which is required for npm rebuild
 [[ "$(python --version 2>&1)" == "Python 2.7."* ]] || die "Expecting python version to be 2.7.x"
 
@@ -61,7 +61,7 @@ echo "==> Installing Docker"
 mkdir -p /etc/systemd/system/docker.service.d
 echo -e "[Service]\nExecStart=\nExecStart=/usr/bin/dockerd -H fd:// --log-driver=journald --exec-opt native.cgroupdriver=cgroupfs --storage-driver=overlay2" > /etc/systemd/system/docker.service.d/cloudron.conf
 
-curl -sL https://download.docker.com/linux/ubuntu/dists/xenial/pool/stable/amd64/docker-ce_17.03.1~ce-0~ubuntu-xenial_amd64.deb -o /tmp/docker.deb
+curl -sL https://download.docker.com/linux/ubuntu/dists/xenial/pool/stable/amd64/docker-ce_17.09.0~ce-0~ubuntu_amd64.deb -o /tmp/docker.deb
 # apt install with install deps (as opposed to dpkg -i)
 apt install -y /tmp/docker.deb
 rm /tmp/docker.deb

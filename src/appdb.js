@@ -10,6 +10,7 @@ exports = module.exports = {
     update: update,
     getAll: getAll,
     getPortBindings: getPortBindings,
+    delPortBinding: delPortBinding,
 
     setAddonConfig: setAddonConfig,
     getAddonConfig: getAddonConfig,
@@ -252,6 +253,18 @@ function getPortBindings(id, callback) {
     });
 }
 
+function delPortBinding(hostPort, callback) {
+    assert.strictEqual(typeof hostPort, 'number');
+    assert.strictEqual(typeof callback, 'function');
+
+    database.query('DELETE FROM appPortBindings WHERE hostPort=?', [ hostPort ], function (error, result) {
+        if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
+        if (result.affectedRows !== 1) return callback(new DatabaseError(DatabaseError.NOT_FOUND));
+
+        callback(null);
+    });
+}
+
 function del(id, callback) {
     assert.strictEqual(typeof id, 'string');
     assert.strictEqual(typeof callback, 'function');
@@ -363,14 +376,14 @@ function setInstallationCommand(appId, installationState, values, callback) {
     // Rules are:
     // uninstall is allowed in any state
     // force update is allowed in any state including pending_uninstall! (for better or worse)
-    // restore is allowed from installed or error state
+    // restore is allowed from installed or error state or currently restoring
     // configure is allowed in installed state or currently configuring or in error state
     // update and backup are allowed only in installed state
 
     if (installationState === exports.ISTATE_PENDING_UNINSTALL || installationState === exports.ISTATE_PENDING_FORCE_UPDATE) {
         updateWithConstraints(appId, values, '', callback);
     } else if (installationState === exports.ISTATE_PENDING_RESTORE) {
-        updateWithConstraints(appId, values, 'AND (installationState = "installed" OR installationState = "error")', callback);
+        updateWithConstraints(appId, values, 'AND (installationState = "installed" OR installationState = "error" OR installationState = "pending_restore")', callback);
     } else if (installationState === exports.ISTATE_PENDING_UPDATE || installationState === exports.ISTATE_PENDING_BACKUP) {
         updateWithConstraints(appId, values, 'AND installationState = "installed"', callback);
     } else if (installationState === exports.ISTATE_PENDING_CONFIGURE) {

@@ -135,7 +135,7 @@ describe('Apps', function () {
 
     describe('validateHostname', function () {
         it('does not allow admin subdomain', function () {
-            expect(apps._validateHostname(constants.ADMIN_LOCATION, 'cloudron.us')).to.be.an(Error);
+            expect(apps._validateHostname('my', 'cloudron.us')).to.be.an(Error);
         });
 
         it('cannot have >63 length subdomains', function () {

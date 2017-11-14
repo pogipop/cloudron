@@ -13,7 +13,7 @@ var addons = require('../addons.js'),
     database = require('../database.js'),
     expect = require('expect.js'),
     fs = require('fs'),
-    js2xml = require('js2xmlparser'),
+    js2xml = require('js2xmlparser').parse,
     net = require('net'),
     nock = require('nock'),
     paths = require('../paths.js'),
@@ -224,7 +224,7 @@ describe('apptask', function () {
         var awsScope = nock('http://localhost:5353')
             .get('/2013-04-01/hostedzone')
             .times(2)
-            .reply(200, js2xml('ListHostedZonesResponse', awsHostedZones, { arrayMap: { HostedZones: 'HostedZone'} }))
+            .reply(200, js2xml('ListHostedZonesResponse', awsHostedZones, { wrapHandlers: { HostedZones: () => 'HostedZone'} }))
             .get('/2013-04-01/hostedzone/ZONEID/rrset?maxitems=1&name=applocation.' + config.fqdn() + '.&type=A')
             .reply(200, js2xml('ListResourceRecordSetsResponse', { ResourceRecordSets: [ ] }, { 'Content-Type': 'application/xml' }))
             .post('/2013-04-01/hostedzone/ZONEID/rrset/')
@@ -242,7 +242,7 @@ describe('apptask', function () {
 
         var awsScope = nock('http://localhost:5353')
             .get('/2013-04-01/hostedzone')
-            .reply(200, js2xml('ListHostedZonesResponse', awsHostedZones, { arrayMap: { HostedZones: 'HostedZone'} }))
+            .reply(200, js2xml('ListHostedZonesResponse', awsHostedZones, { wrapHandlers: { HostedZones: () => 'HostedZone'} }))
             .post('/2013-04-01/hostedzone/ZONEID/rrset/')
             .reply(200, js2xml('ChangeResourceRecordSetsResponse', { ChangeInfo: { Id: 'RRID', Status: 'INSYNC' } }));
 

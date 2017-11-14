@@ -66,7 +66,8 @@ describe('updatechecker - box - manual (email)', function () {
             user.createOwner.bind(null, USER_0.username, USER_0.password, USER_0.email, USER_0.displayName, AUDIT_SOURCE),
             settings.setAutoupdatePattern.bind(null, constants.AUTOUPDATE_PATTERN_NEVER),
             settingsdb.set.bind(null, settings.APPSTORE_CONFIG_KEY, JSON.stringify({ userId: 'uid', cloudronId: 'cid', token: 'token' })),
-            mailer._clearMailQueue
+            mailer._clearMailQueue,
+            mailer.start
         ], done);
     });
 
@@ -113,7 +114,7 @@ describe('updatechecker - box - manual (email)', function () {
         });
     });
 
-    it('does not offer prerelease', function (done) {
+    it('offers prerelease', function (done) {
         nock.cleanAll();
 
         var scope = nock('http://localhost:4444')
@@ -121,39 +122,18 @@ describe('updatechecker - box - manual (email)', function () {
             .query({ boxVersion: config.version(), accessToken: 'token' })
             .reply(200, { version: '2.0.0-pre.0', changelog: [''], sourceTarballUrl: '2.0.0-pre.0.tar.gz' } );
 
+        var scope2 = nock('http://localhost:4444')
+            .get('/api/v1/users/uid/cloudrons/cid/subscription')
+            .query({ accessToken: 'token' })
+            .reply(200, { subscription: { plan: { id: 'pro' } } } );
+
         updatechecker.checkBoxUpdates(function (error) {
             expect(!error).to.be.ok();
-            expect(updatechecker.getUpdateInfo().box).to.be(null);
+            expect(updatechecker.getUpdateInfo().box.version).to.be('2.0.0-pre.0');
             expect(scope.isDone()).to.be.ok();
+            expect(scope2.isDone()).to.be.ok();
 
-            checkMails(0, done);
-        });
-    });
-
-    it('offers prerelease', function (done) {
-        nock.cleanAll();
-
-        settings.setUpdateConfig({ prerelease: true }, function (error) {
-            if (error) return done(error);
-
-            var scope = nock('http://localhost:4444')
-                .get('/api/v1/users/uid/cloudrons/cid/boxupdate')
-                .query({ boxVersion: config.version(), accessToken: 'token' })
-                .reply(200, { version: '2.0.0-pre.0', changelog: [''], sourceTarballUrl: '2.0.0-pre.0.tar.gz' } );
-
-            var scope2 = nock('http://localhost:4444')
-                .get('/api/v1/users/uid/cloudrons/cid/subscription')
-                .query({ accessToken: 'token' })
-                .reply(200, { subscription: { plan: { id: 'pro' } } } );
-
-            updatechecker.checkBoxUpdates(function (error) {
-                expect(!error).to.be.ok();
-                expect(updatechecker.getUpdateInfo().box.version).to.be('2.0.0-pre.0');
-                expect(scope.isDone()).to.be.ok();
-                expect(scope2.isDone()).to.be.ok();
-
-                checkMails(1, done);
-            });
+            checkMails(1, done);
         });
     });
 
@@ -184,6 +164,7 @@ describe('updatechecker - box - automatic (no email)', function () {
             database.initialize,
             settings.initialize,
             mailer._clearMailQueue,
+            mailer.start,
             user.createOwner.bind(null, USER_0.username, USER_0.password, USER_0.email, USER_0.displayName, AUDIT_SOURCE),
             settingsdb.set.bind(null, settings.APPSTORE_CONFIG_KEY, JSON.stringify({ userId: 'uid', cloudronId: 'cid', token: 'token' }))
         ], done);

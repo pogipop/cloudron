@@ -345,6 +345,7 @@ angular.module('Application').controller('SettingsController', ['$scope', '$loca
         backupFolder: '',
         retentionSecs:  7 * 24 * 60 * 60,
         acceptSelfSignedCerts: false,
+        useHardlinks: true,
         format: 'tgz',
 
         clearForm: function () {
@@ -360,6 +361,7 @@ angular.module('Application').controller('SettingsController', ['$scope', '$loca
             $scope.configureBackup.retentionSecs = 7 * 24 * 60 * 60;
             $scope.configureBackup.format = 'tgz';
             $scope.configureBackup.acceptSelfSignedCerts = false;
+            $scope.configureBackup.useHardlinks = true;
         },
 
         show: function () {
@@ -385,6 +387,7 @@ angular.module('Application').controller('SettingsController', ['$scope', '$loca
             $scope.configureBackup.retentionSecs = $scope.backupConfig.retentionSecs;
             $scope.configureBackup.format = $scope.backupConfig.format;
             $scope.configureBackup.acceptSelfSignedCerts = !!$scope.backupConfig.acceptSelfSignedCerts;
+            $scope.configureBackup.useHardlinks = !$scope.backupConfig.noHardlinks;
 
             $('#configureBackupModal').modal('show');
         },
@@ -443,6 +446,7 @@ angular.module('Application').controller('SettingsController', ['$scope', '$loca
                 }
             } else if (backupConfig.provider === 'filesystem') {
                 backupConfig.backupFolder = $scope.configureBackup.backupFolder;
+                backupConfig.noHardlinks = !$scope.configureBackup.useHardlinks;
             }
 
             Client.setBackupConfig(backupConfig, function (error) {
@@ -559,8 +563,8 @@ angular.module('Application').controller('SettingsController', ['$scope', '$loca
 
             $scope.backupConfig = backupConfig;
 
-            // Check if a proper storage backend is configured
-            if (backupConfig.provider === 'filesystem') {
+            // Check if a proper storage backend is configured. TODO: this check fails if /var/backups is actually external
+            if (backupConfig.provider === 'filesystem' && backupConfig.backupFolder === '/var/backups') {
                 var actionScope = $scope.$new(true);
                 actionScope.action = '/#/settings';
 

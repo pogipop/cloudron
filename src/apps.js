@@ -65,6 +65,7 @@ var addons = require('./addons.js'),
     groups = require('./groups.js'),
     mailboxdb = require('./mailboxdb.js'),
     manifestFormat = require('cloudron-manifestformat'),
+    os = require('os'),
     path = require('path'),
     paths = require('./paths.js'),
     safe = require('safetydance'),
@@ -118,7 +119,7 @@ AppsError.BAD_CERTIFICATE = 'Invalid certificate';
 // https://en.wikipedia.org/wiki/Hostname#Restrictions_on_valid_host_names
 // We are validating the validity of the location-fqdn as host name
 function validateHostname(location, fqdn) {
-    var RESERVED_LOCATIONS = [ constants.ADMIN_LOCATION, constants.API_LOCATION, constants.SMTP_LOCATION, constants.IMAP_LOCATION, constants.MAIL_LOCATION, constants.POSTMAN_LOCATION ];
+    var RESERVED_LOCATIONS = [ config.adminLocation(), constants.API_LOCATION, constants.SMTP_LOCATION, constants.IMAP_LOCATION, config.mailLocation(), constants.POSTMAN_LOCATION ];
 
     if (RESERVED_LOCATIONS.indexOf(location) !== -1) return new AppsError(AppsError.BAD_FIELD, location + ' is reserved');
 
@@ -208,7 +209,7 @@ function validateMemoryLimit(manifest, memoryLimit) {
     assert.strictEqual(typeof memoryLimit, 'number');
 
     var min = manifest.memoryLimit || constants.DEFAULT_MEMORY_LIMIT;
-    var max = (4096 * 1024 * 1024);
+    var max = os.totalmem() * 2; // this will overallocate since we don't allocate equal swap always (#466)
 
     // allow 0, which indicates that it is not set, the one from the manifest will be choosen but we don't commit any user value
     // this is needed so an app update can change the value in the manifest, and if not set by the user, the new value should be used
@@ -639,14 +640,6 @@ function update(appId, data, auditSource, callback) {
 
         newConfig.manifest = manifest;
 
-        // TODO: disallow portBindings when an app updates and let ports simply be disabled. the new ports
-        // might conflict when the update is actually carried out as we do not 'reserve' them in the db
-        if ('portBindings' in data) {
-            newConfig.portBindings = data.portBindings;
-            error = validatePortBindings(data.portBindings, newConfig.manifest.tcpPorts);
-            if (error) return callback(error);
-        }
-
         if ('icon' in data) {
             if (data.icon) {
                 if (!validator.isBase64(data.icon)) return callback(new AppsError(AppsError.BAD_FIELD, 'icon is not base64'));
@@ -1012,14 +1005,9 @@ function autoupdateApps(updateInfo, auditSource, callback) { // updateInfo is { 
         if ((semver.major(app.manifest.version) !== 0) && (semver.major(app.manifest.version) !== semver.major(newManifest.version))) return new Error('Major version change'); // major changes are blocking
 
         var newTcpPorts = newManifest.tcpPorts || { };
-        var oldTcpPorts = app.manifest.tcpPorts || { };
         var portBindings = app.portBindings; // this is never null
 
-        for (var env in newTcpPorts) {
-            if (!(env in oldTcpPorts)) return new Error(env + ' is required from user');
-        }
-
-        for (env in portBindings) {
+        for (var env in portBindings) {
             if (!(env in newTcpPorts)) return new Error(env + ' was in use but new update removes it');
         }
 

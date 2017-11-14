@@ -164,16 +164,17 @@ function sendAliveStatus(data, callback) {
                     provider: result[settings.TLS_CONFIG_KEY].provider
                 },
                 backupConfig: {
-                    provider: result[settings.BACKUP_CONFIG_KEY].provider
+                    provider: result[settings.BACKUP_CONFIG_KEY].provider,
+                    hardlinks: !result[settings.BACKUP_CONFIG_KEY].noHardlinks
                 },
                 mailConfig: {
                     enabled: result[settings.MAIL_CONFIG_KEY].enabled
-            },
-            mailRelay: {
-                provider: result[settings.MAIL_RELAY_KEY].provider
-            },
-            mailCatchAll: {
-                count: result[settings.CATCH_ALL_ADDRESS_KEY].length
+                },
+                mailRelay: {
+                    provider: result[settings.MAIL_RELAY_KEY].provider
+                },
+                mailCatchAll: {
+                    count: result[settings.CATCH_ALL_ADDRESS_KEY].length
                 },
                 autoupdatePattern: result[settings.AUTOUPDATE_PATTERN_KEY],
                 timeZone: result[settings.TIME_ZONE_KEY],
@@ -182,6 +183,7 @@ function sendAliveStatus(data, callback) {
             var data = {
                 domain: config.fqdn(),
                 version: config.version(),
+                adminFqdn: config.adminFqdn(),
                 provider: config.provider(),
                 backendSettings: backendSettings,
                 machine: {

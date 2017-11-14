@@ -313,11 +313,10 @@ function updateApp(req, res, next) {
     if ('appStoreId' in data && typeof data.appStoreId !== 'string') return next(new HttpError(400, 'appStoreId must be a string'));
     if (!data.manifest && !data.appStoreId) return next(new HttpError(400, 'appStoreId or manifest is required'));
 
-    if ('portBindings' in data && typeof data.portBindings !== 'object') return next(new HttpError(400, 'portBindings must be an object'));
     if ('icon' in data && typeof data.icon !== 'string') return next(new HttpError(400, 'icon is not a string'));
     if ('force' in data && typeof data.force !== 'boolean') return next(new HttpError(400, 'force must be a boolean'));
 
-    debug('Update app id:%s to manifest:%j with portBindings:%j', req.params.id, data.manifest, data.portBindings);
+    debug('Update app id:%s to manifest:%j', req.params.id, data.manifest);
 
     apps.update(req.params.id, req.body, auditSource(req), function (error) {
         if (error && error.reason === AppsError.NOT_FOUND) return next(new HttpError(404, 'No such app'));

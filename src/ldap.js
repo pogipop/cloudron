@@ -61,11 +61,73 @@ function getUsersWithAccessToApp(req, callback) {
     });
 }
 
+// helper function to deal with pagination
+function finalSend(results, req, res, next) {
+    var min = 0;
+    var max = results.length;
+    var cookie = null;
+    var pageSize = 0;
+
+    // check if this is a paging request, if so get the cookie for session info
+    req.controls.forEach(function (control) {
+        if (control.type === ldap.PagedResultsControl.OID) {
+            pageSize = control.value.size;
+            cookie = control.value.cookie;
+        }
+    });
+
+    function sendPagedResults(start, end) {
+        start = (start < min) ? min : start;
+        end = (end > max || end < min) ? max : end;
+        var i;
+
+        for (i = start; i < end; i++) {
+            res.send(results[i]);
+        }
+
+        return i;
+    }
+
+    if (cookie && Buffer.isBuffer(cookie)) {
+        // we have pagination
+        var first = min;
+        if (cookie.length !== 0) {
+            first = parseInt(cookie.toString(), 10);
+        }
+        var last = sendPagedResults(first, first + pageSize);
+
+        var resultCookie;
+        if (last < max) {
+            resultCookie = new Buffer(last.toString());
+        } else {
+            resultCookie = new Buffer('');
+        }
+
+        res.controls.push(new ldap.PagedResultsControl({
+            value: {
+                size: pageSize, // correctness not required here
+                cookie: resultCookie
+            }
+        }));
+    } else {
+        // no pagination simply send all
+        results.forEach(function (result) {
+            res.send(result);
+        });
+    }
+
+    // all done
+    res.end();
+    next();
+}
+
 function userSearch(req, res, next) {
     debug('user search: dn %s, scope %s, filter %s (from %s)', req.dn.toString(), req.scope, req.filter.toString(), req.connection.ldap.id);
 
     getUsersWithAccessToApp(req, function (error, result) {
         if (error) return next(error);
+
+        var results = [];
 
         // send user objects
         result.forEach(function (entry) {
@@ -109,11 +171,11 @@ function userSearch(req, res, next) {
             if (!lowerCaseFilter) return next(new ldap.OperationsError(safe.error.toString()));
 
             if ((req.dn.equals(dn) || req.dn.parentOf(dn)) && lowerCaseFilter.matches(obj.attributes)) {
-                res.send(obj);
+                results.push(obj);
             }
         });
 
-        res.end();
+        finalSend(results, req, res, next);
     });
 }
 
@@ -122,6 +184,8 @@ function groupSearch(req, res, next) {
 
     getUsersWithAccessToApp(req, function (error, result) {
         if (error) return next(error);
+
+        var results = [];
 
         var groups = [{
             name: 'users',
@@ -149,11 +213,43 @@ function groupSearch(req, res, next) {
             if (!lowerCaseFilter) return next(new ldap.OperationsError(safe.error.toString()));
 
             if ((req.dn.equals(dn) || req.dn.parentOf(dn)) && lowerCaseFilter.matches(obj.attributes)) {
-                res.send(obj);
+                results.push(obj);
             }
         });
 
-        res.end();
+        finalSend(results, req, res, next);
+    });
+}
+
+function groupUsersCompare(req, res, next) {
+    debug('group users compare: dn %s, attribute %s, value %s (from %s)', req.dn.toString(), req.attribute, req.value, req.connection.ldap.id);
+
+    getUsersWithAccessToApp(req, function (error, result) {
+        if (error) return next(error);
+
+        // we only support memberuid here, if we add new group attributes later add them here
+        if (req.attribute === 'memberuid') {
+            var found = result.find(function (u) { return u.id === req.value; });
+            if (found) return res.end(true);
+        }
+
+        res.end(false);
+    });
+}
+
+function groupAdminsCompare(req, res, next) {
+    debug('group admins compare: dn %s, attribute %s, value %s (from %s)', req.dn.toString(), req.attribute, req.value, req.connection.ldap.id);
+
+    getUsersWithAccessToApp(req, function (error, result) {
+        if (error) return next(error);
+
+        // we only support memberuid here, if we add new group attributes later add them here
+        if (req.attribute === 'memberuid') {
+            var found = result.find(function (u) { return u.id === req.value; });
+            if (found && found.admin) return res.end(true);
+        }
+
+        res.end(false);
     });
 }
 
@@ -161,6 +257,7 @@ function mailboxSearch(req, res, next) {
     debug('mailbox search: dn %s, scope %s, filter %s (from %s)', req.dn.toString(), req.scope, req.filter.toString(), req.connection.ldap.id);
 
     if (!req.dn.rdns[0].attrs.cn) return next(new ldap.NoSuchObjectError(req.dn.toString()));
+
     var name = req.dn.rdns[0].attrs.cn.value.toLowerCase();
     // allow login via email
     var parts = name.split('@');
@@ -188,9 +285,11 @@ function mailboxSearch(req, res, next) {
         var lowerCaseFilter = safe(function () { return ldap.parseFilter(req.filter.toString().toLowerCase()); }, null);
         if (!lowerCaseFilter) return next(new ldap.OperationsError(safe.error.toString()));
 
-        if (lowerCaseFilter.matches(obj.attributes)) res.send(obj);
-
-        res.end();
+        if (lowerCaseFilter.matches(obj.attributes)) {
+            finalSend([ obj ], req, res, next);
+        } else {
+            res.end();
+        }
     });
 }
 
@@ -198,6 +297,7 @@ function mailAliasSearch(req, res, next) {
     debug('mail alias get: dn %s, scope %s, filter %s (from %s)', req.dn.toString(), req.scope, req.filter.toString(), req.connection.ldap.id);
 
     if (!req.dn.rdns[0].attrs.cn) return next(new ldap.NoSuchObjectError(req.dn.toString()));
+
     mailboxdb.getAlias(req.dn.rdns[0].attrs.cn.value.toLowerCase(), function (error, alias) {
         if (error && error.reason === DatabaseError.NOT_FOUND) return next(new ldap.NoSuchObjectError(req.dn.toString()));
         if (error) return next(new ldap.OperationsError(error.toString()));
@@ -218,9 +318,11 @@ function mailAliasSearch(req, res, next) {
         var lowerCaseFilter = safe(function () { return ldap.parseFilter(req.filter.toString().toLowerCase()); }, null);
         if (!lowerCaseFilter) return next(new ldap.OperationsError(safe.error.toString()));
 
-        if (lowerCaseFilter.matches(obj.attributes)) res.send(obj);
-
-        res.end();
+        if (lowerCaseFilter.matches(obj.attributes)) {
+            finalSend([ obj ], req, res, next);
+        } else {
+            res.end();
+        }
     });
 }
 
@@ -228,6 +330,7 @@ function mailingListSearch(req, res, next) {
     debug('mailing list get: dn %s, scope %s, filter %s (from %s)', req.dn.toString(), req.scope, req.filter.toString(), req.connection.ldap.id);
 
     if (!req.dn.rdns[0].attrs.cn) return next(new ldap.NoSuchObjectError(req.dn.toString()));
+
     mailboxdb.getGroup(req.dn.rdns[0].attrs.cn.value.toLowerCase(), function (error, group) {
         if (error && error.reason === DatabaseError.NOT_FOUND) return next(new ldap.NoSuchObjectError(req.dn.toString()));
         if (error) return next(new ldap.OperationsError(error.toString()));
@@ -248,9 +351,11 @@ function mailingListSearch(req, res, next) {
         var lowerCaseFilter = safe(function () { return ldap.parseFilter(req.filter.toString().toLowerCase()); }, null);
         if (!lowerCaseFilter) return next(new ldap.OperationsError(safe.error.toString()));
 
-        if (lowerCaseFilter.matches(obj.attributes)) res.send(obj);
-
-        res.end();
+        if (lowerCaseFilter.matches(obj.attributes)) {
+            finalSend([ obj ], req, res, next);
+        } else {
+            res.end();
+        }
     });
 }
 
@@ -369,6 +474,9 @@ function start(callback) {
 
     gServer.bind('ou=recvmail,dc=cloudron', authenticateMailbox);
     gServer.bind('ou=sendmail,dc=cloudron', authenticateMailbox);
+
+    gServer.compare('cn=users,ou=groups,dc=cloudron', groupUsersCompare);
+    gServer.compare('cn=admins,ou=groups,dc=cloudron', groupAdminsCompare);
 
     // this is the bind for addons (after bind, they might search and authenticate)
     gServer.bind('ou=addons,dc=cloudron', function(req, res, next) {

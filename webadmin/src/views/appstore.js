@@ -53,14 +53,6 @@ angular.module('Application').controller('AppStoreController', ['$scope', '$loca
             return !!(tmp.users.length || tmp.groups.length);
         },
 
-        toggleGroup: function (group) {
-            var groups = $scope.appInstall.accessRestriction.groups;
-            var pos = groups.indexOf(group.id);
-
-            if (pos === -1) groups.push(group.id);
-            else groups.splice(pos, 1);
-        },
-
         reset: function () {
             $scope.appInstall.app = {};
             $scope.appInstall.error = {};
@@ -144,13 +136,17 @@ angular.module('Application').controller('AppStoreController', ['$scope', '$loca
                 }
             }
 
-            // translate to accessRestriction object
-            var accessRestriction = $scope.appInstall.accessRestrictionOption === 'groups' ? $scope.appInstall.accessRestriction : null;
+            var finalAccessRestriction = null;
+            if ($scope.appInstall.accessRestrictionOption === 'groups') {
+                finalAccessRestriction = { users: [], groups: [] };
+                finalAccessRestriction.users = $scope.appInstall.accessRestriction.users.map(function (u) { return u.id; });
+                finalAccessRestriction.groups = $scope.appInstall.accessRestriction.groups.map(function (g) { return g.id; });
+            }
 
             var data = {
                 location: $scope.appInstall.location || '',
                 portBindings: finalPortBindings,
-                accessRestriction: accessRestriction,
+                accessRestriction: finalAccessRestriction,
                 cert: $scope.appInstall.certificateFile,
                 key: $scope.appInstall.keyFile,
                 sso: !$scope.appInstall.optionalSso ? undefined : ($scope.appInstall.accessRestrictionOption !== 'nosso')
@@ -353,18 +349,6 @@ angular.module('Application').controller('AppStoreController', ['$scope', '$loca
             });
 
             return callback(null, apps);
-
-            // Client.getNonApprovedApps(function (error, result) {
-            //     if (error) return callback(error);
-
-            //     // add testing tag to the manifest for UI and search reasons
-            //     result.forEach(function (app) {
-            //         if (!app.manifest.tags) app.manifest.tags = [];
-            //         app.manifest.tags.push('testing');
-            //     });
-
-            //     callback(null, apps.concat(result));
-            // });
         });
     }
 

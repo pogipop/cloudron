@@ -6,6 +6,7 @@ json="${source_dir}/../node_modules/.bin/json"
 # IMPORTANT: Fix cloudron.js:doUpdate if you add/remove any arg. keep these sorted for readability
 arg_api_server_origin=""
 arg_fqdn=""
+arg_admin_location=""
 arg_zone_name=""
 arg_is_custom_domain="false"
 arg_restore_key=""
@@ -20,7 +21,6 @@ arg_version=""
 arg_web_server_origin=""
 arg_backup_config=""
 arg_dns_config=""
-arg_update_config=""
 arg_provider=""
 arg_app_bundle=""
 arg_is_demo="false"
@@ -46,13 +46,16 @@ while true; do
         arg_is_custom_domain=$(echo "$2" | $json isCustomDomain)
         [[ "${arg_is_custom_domain}" == "" ]] && arg_is_custom_domain="true"
 
+        arg_admin_location=$(echo "$2" | $json adminLocation)
+        [[ "${arg_admin_location}" == "" ]] && arg_admin_location="my"
+
         # only update/restore have this valid (but not migrate)
         arg_api_server_origin=$(echo "$2" | $json apiServerOrigin)
         [[ "${arg_api_server_origin}" == "" ]] && arg_api_server_origin="https://api.cloudron.io"
         arg_web_server_origin=$(echo "$2" | $json webServerOrigin)
         [[ "${arg_web_server_origin}" == "" ]] && arg_web_server_origin="https://cloudron.io"
 
-        # TODO check if an where this is used
+        # TODO check if and where this is used
         arg_version=$(echo "$2" | $json version)
 
         # read possibly empty parameters here
@@ -85,9 +88,6 @@ while true; do
 
         arg_dns_config=$(echo "$2" | $json dnsConfig)
         [[ "${arg_dns_config}" == "null" ]] && arg_dns_config=""
-
-        arg_update_config=$(echo "$2" | $json updateConfig)
-        [[ "${arg_update_config}" == "null" ]] && arg_update_config=""
 
         shift 2
         ;;

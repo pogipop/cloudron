@@ -288,6 +288,30 @@ h1, h2, h3 {
     overflow-y: auto;
 }
 
+.app-info-title {
+    display: inline-block;
+    margin: 5px 10px;
+}
+
+.app-info-meta {
+    margin-left: 10px;
+    color: $text-muted;
+}
+
+.app-info-icon {
+    float: left;
+    min-height: 64px;
+    max-height: 64px;
+    min-width: 64px;
+    max-width: 100%;
+}
+
+multiselect.stretch {
+    button {
+        min-width: 120px;
+    }
+}
+
 // ----------------------------
 // Appstore view
 // ----------------------------

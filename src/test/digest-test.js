@@ -16,6 +16,7 @@ var async = require('async'),
     paths = require('../paths.js'),
     safe = require('safetydance'),
     settings = require('../settings.js'),
+    settingsdb = require('../settingsdb.js'),
     updatechecker = require('../updatechecker.js'),
     user = require('../user.js');
 
@@ -113,7 +114,7 @@ describe('digest', function () {
             });
         });
 
-        it('sends mail for pending update to appstore account email (caas)', function (done) {
+        it('sends mail for pending update to owner account email', function (done) {
             var subscription = {
                 id: 'caas',
                 created: 0,
@@ -123,22 +124,15 @@ describe('digest', function () {
             };
 
             updatechecker._setUpdateInfo({ box: null, apps: { 'appid': { manifest: { version: '1.2.5', changelog: 'noop\nreally' } } } });
-            var fake1 = nock(config.apiServerOrigin()).post(function (uri) { return uri.indexOf('/api/v1/users/test-user/cloudrons') >= 0; }).reply(201, { cloudron: { id: 'test-cloudron' }});
-            var fake2 = nock(config.apiServerOrigin()).get(function (uri) { return uri.indexOf('/api/v1/users/test-user/cloudrons/test-cloudron/subscription') >= 0; }).reply(200, { subscription: subscription });
-            var fake3 = nock(config.apiServerOrigin()).get('/api/v1/users/test-user?accessToken=test-token').reply(200, { profile: { id: 'test-user', email: 'test@email.com' } });
 
-            settings.setAppstoreConfig({ userId: 'test-user', token: 'test-token', cloudronId: 'test-cloudron' }, function (error) {
+            settingsdb.set(settings.MAIL_CONFIG_KEY, JSON.stringify({ enabled: true }), function (error) {
                 if (error) return done(error);
 
                 digest.maybeSend(function (error) {
                     if (error) return done(error);
 
-                    checkMails(1, 'test@email.com', function (error) {
+                    checkMails(1, [ 'user0@email.com, username0@localhost' ], function (error) {
                         if (error) return done(error);
-
-                        expect(fake1.isDone()).to.be.ok();
-                        expect(fake2.isDone()).to.be.ok();
-                        expect(fake3.isDone()).to.be.ok();
 
                         done();
                     });

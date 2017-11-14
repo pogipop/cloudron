@@ -34,13 +34,41 @@ while true; do
     esac
 done
 
+echo "==> installer: updating docker"
+if [[ $(docker version --format {{.Client.Version}}) != "17.09.0-ce" ]]; then
+    $curl -sL https://download.docker.com/linux/ubuntu/dists/xenial/pool/stable/amd64/docker-ce_17.09.0~ce-0~ubuntu_amd64.deb -o /tmp/docker.deb
+
+    # https://download.docker.com/linux/ubuntu/dists/xenial/stable/binary-amd64/Packages
+    if [[ $(sha256sum /tmp/docker.deb | cut -d' ' -f1) != "d33f6eb134f0ab0876148bd96de95ea47d583d7f2cddfdc6757979453f9bd9bf" ]]; then
+        echo "docker binary download is corrupt"
+        exit 5
+    fi
+
+    echo "Waiting for all dpkg tasks to finish..."
+    while fuser /var/lib/dpkg/lock; do
+        sleep 1
+    done
+
+    while ! dpkg --force-confold --configure -a; do
+        echo "Failed to fix packages. Retry"
+        sleep 1
+    done
+
+    while ! apt install -y /tmp/docker.deb; do
+        echo "Failed to install docker. Retry"
+        sleep 1
+    done
+
+    rm /tmp/docker.deb
+fi
+
 echo "==> installer: updating node"
-if [[ "$(node --version)" != "v6.11.3" ]]; then
-    mkdir -p /usr/local/node-6.11.3
-    $curl -sL https://nodejs.org/dist/v6.11.3/node-v6.11.3-linux-x64.tar.gz | tar zxvf - --strip-components=1 -C /usr/local/node-6.11.3
-    ln -sf /usr/local/node-6.11.3/bin/node /usr/bin/node
-    ln -sf /usr/local/node-6.11.3/bin/npm /usr/bin/npm
-    rm -rf /usr/local/node-6.11.2
+if [[ "$(node --version)" != "v6.11.5" ]]; then
+    mkdir -p /usr/local/node-6.11.5
+    $curl -sL https://nodejs.org/dist/v6.11.5/node-v6.11.5-linux-x64.tar.gz | tar zxvf - --strip-components=1 -C /usr/local/node-6.11.5
+    ln -sf /usr/local/node-6.11.5/bin/node /usr/bin/node
+    ln -sf /usr/local/node-6.11.5/bin/npm /usr/bin/npm
+    rm -rf /usr/local/node-6.11.3
 fi
 
 for try in `seq 1 10`; do

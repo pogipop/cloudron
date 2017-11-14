@@ -2,7 +2,19 @@
 
 Dear <%= cloudronName %> Admin,
 
-This is the weekly summary of activities on your Cloudron <%= fqdn %>.
+This is a summary of the activities on your Cloudron <%= fqdn %>.
+<% if (info.usersAdded.length) { -%>
+
+The following users were added:
+<% for (var i = 0; i < info.usersAdded.length; i++) { -%>
+    * <%- info.usersAdded[i].email %>
+<% }} -%>
+<% if (info.certRenewals.length) { -%>
+
+The certificates of the following apps was renewed:
+<% for (var i = 0; i < info.certRenewals.length; i++) { -%>
+    * <%- info.certRenewals[i].domain %> - <%- info.certRenewals[i].errorMessage || 'Success' %>
+<% }} -%>
 <% if (info.pendingBoxUpdate) { -%>
 
 Cloudron v<%- info.pendingBoxUpdate.version %> is available:
@@ -33,6 +45,14 @@ The following apps were updated:
 <% for (var j = 0; j < info.finishedAppUpdates[i].toManifest.changelog.trim().split('\n').length; j++) { -%>
         <%= info.finishedAppUpdates[i].toManifest.changelog.trim().split('\n')[j] %>
 <% }}} -%>
+<% if (info.finishedBackups.length) { -%>
+
+Last successful backup: <%- info.finishedBackups[0].backupId || info.finishedBackups[0].filename %>
+<% } else { -%>
+
+This Cloudron did **not** backup successfully in the last week!
+<% } -%>
+
 <% if (!info.hasSubscription) { -%>
 
 *Keep your Cloudron automatically up-to-date and secure by upgrading to a paid plan at* <%= webadminUrl %>/#/settings
@@ -52,9 +72,25 @@ Sent at: <%= new Date().toUTCString() %>
 
         <br/>
 
-        <p>Weekly summary of activities on your Cloudron <a href="<%= webadminUrl %>"><%= cloudronName %></a>:</p>
+        <p>This is a summary of the activities on your Cloudron <a href="<%= webadminUrl %>"><%= cloudronName %></a> last week.</p>
 
-        <br/>
+    <% if (info.usersAdded.length) { -%>
+        <p><b>The following users were added:</b></p>
+        <ul>
+        <% for (var i = 0; i < info.usersAdded.length; i++) { %>
+            <li><%- info.usersAdded[i].email %></li>
+        <% } %>
+        </ul>
+    <% } %>
+
+    <% if (info.certRenewals.length) { -%>
+        <p><b>The certificates of the following apps were renewed:</b></p>
+        <ul>
+            <% for (var i = 0; i < info.certRenewals.length; i++) { %>
+                <li><%- info.certRenewals[i].domain %> - <%- info.certRenewals[i].errorMessage || 'Success' %></li>
+            <% } %>
+        </ul>
+    <% } %>
 
     <% if (info.pendingBoxUpdate) { -%>
         <p><b>Cloudron v<%- info.pendingBoxUpdate.version %> is available:</b></p>
@@ -113,6 +149,12 @@ Sent at: <%= new Date().toUTCString() %>
         </ul>
     <% } %>
 
+    <% if (info.finishedBackups.length) { %>
+        <p><b>Last successful backup : </b> <%= info.finishedBackups[0].backupId || info.finishedBackups[0].filename %> </p>
+    <% } else { %>
+        <p><b>This Cloudron did not backup successfully in the last week!</b></p>
+    <% } %>
+
         <br/>
 
     <% if (!info.hasSubscription) { %>
@@ -123,12 +165,12 @@ Sent at: <%= new Date().toUTCString() %>
         <br/>
         <br/>
 
-        <p style="text-align: right;">
+        <center>
             <small>
                 Powered by <a href="https://cloudron.io">Cloudron</a><br/>
                 Sent on <%= new Date().toUTCString() %>
             </small>
-        </p>
+        </center>
     </div>
 </center>
 

@@ -366,10 +366,9 @@ angular.module('Application').service('Client', ['$http', 'md5', 'Notification',
         }).error(defaultErrorHandler(callback));
     };
 
-    Client.prototype.updateApp = function (id, manifest, portBindings, callback) {
+    Client.prototype.updateApp = function (id, manifest, callback) {
         var data =  {
-            appStoreId: manifest.id + '@' + manifest.version,
-            portBindings: portBindings
+            appStoreId: manifest.id + '@' + manifest.version
         };
 
         post('/api/v1/apps/' + id + '/update', data).success(function (data, status) {
@@ -695,13 +694,6 @@ angular.module('Application').service('Client', ['$http', 'md5', 'Notification',
         del('/api/v1/groups/' + groupId, config).success(function(data, status) {
             if (status !== 204) return callback(new ClientError(status, data));
             callback(null, data);
-        }).error(defaultErrorHandler(callback));
-    };
-
-    Client.prototype.getNonApprovedApps = function (callback) {
-        get('/api/v1/developer/apps').success(function (data, status) {
-            if (status !== 200 || typeof data !== 'object') return callback(new ClientError(status, data));
-            callback(null, data.apps || []);
         }).error(defaultErrorHandler(callback));
     };
 

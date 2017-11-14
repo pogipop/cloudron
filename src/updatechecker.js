@@ -19,7 +19,6 @@ var apps = require('./apps.js'),
     mailer = require('./mailer.js'),
     paths = require('./paths.js'),
     safe = require('safetydance'),
-    semver = require('semver'),
     settings = require('./settings.js');
 
 var gAppUpdateInfo = { }, // id -> update info { creationDate, manifest }
@@ -114,7 +113,7 @@ function checkAppUpdates(callback) {
                     // always send notifications if user is on the free plan
                     if (result.plan.id === 'free' || result.plan.id === 'undecided') {
                         debug('Notifying user of app update for %s from %s to %s', app.id, app.manifest.version, updateInfo.manifest.version);
-                        mailer.appUpdateAvailable(app, updateInfo);
+                        mailer.appUpdateAvailable(app, false /* subscription */, updateInfo);
                         return iteratorDone();
                     }
 
@@ -124,7 +123,7 @@ function checkAppUpdates(callback) {
                             debug(error);
                         } else if (result === constants.AUTOUPDATE_PATTERN_NEVER) {
                             debug('Notifying user of app update for %s from %s to %s', app.id, app.manifest.version, updateInfo.manifest.version);
-                            mailer.appUpdateAvailable(app, updateInfo);
+                            mailer.appUpdateAvailable(app, true /* hasSubscription */, updateInfo);
                         }
 
                         iteratorDone();
@@ -149,48 +148,37 @@ function checkBoxUpdates(callback) {
     appstore.getBoxUpdate(function (error, updateInfo) {
         if (error || !updateInfo) return callback(error);
 
-        settings.getUpdateConfig(function (error, updateConfig) {
+        gBoxUpdateInfo = updateInfo;
+
+        // decide whether to send email
+        var state = loadState();
+
+        if (state.box === gBoxUpdateInfo.version) {
+            debug('Skipping notification of box update as user was already notified');
+            return callback();
+        }
+
+        appstore.getSubscription(function (error, result) {
             if (error) return callback(error);
 
-            var isPrerelease = semver.parse(updateInfo.version).prerelease.length !== 0;
-
-            if (isPrerelease && !updateConfig.prerelease) {
-                debug('Skipping update %s since this box does not want prereleases', updateInfo.version);
-                return callback();
+            function done() {
+                state.box = updateInfo.version;
+                saveState(state);
+                callback();
             }
 
-            gBoxUpdateInfo = updateInfo;
-
-            // decide whether to send email
-            var state = loadState();
-
-            if (state.box === gBoxUpdateInfo.version) {
-                debug('Skipping notification of box update as user was already notified');
-                return callback();
+            // always send notifications if user is on the free plan
+            if (result.plan.id === 'free' || result.plan.id === 'undecided') {
+                mailer.boxUpdateAvailable(false /* hasSubscription */, updateInfo.version, updateInfo.changelog);
+                return done();
             }
 
-            appstore.getSubscription(function (error, result) {
-                if (error) return callback(error);
+            // only send notifications if update pattern is 'never'
+            settings.getAutoupdatePattern(function (error, result) {
+                if (error) debug(error);
+                else if (result === constants.AUTOUPDATE_PATTERN_NEVER) mailer.boxUpdateAvailable(true /* hasSubscription */, updateInfo.version, updateInfo.changelog);
 
-                function done() {
-                    state.box = updateInfo.version;
-                    saveState(state);
-                    callback();
-                }
-
-                // always send notifications if user is on the free plan
-                if (result.plan.id === 'free' || result.plan.id === 'undecided') {
-                    mailer.boxUpdateAvailable(updateInfo.version, updateInfo.changelog);
-                    return done();
-                }
-
-                // only send notifications if update pattern is 'never'
-                settings.getAutoupdatePattern(function (error, result) {
-                    if (error) debug(error);
-                    else if (result === constants.AUTOUPDATE_PATTERN_NEVER) mailer.boxUpdateAvailable(updateInfo.version, updateInfo.changelog);
-
-                    done();
-                });
+                done();
             });
         });
     });

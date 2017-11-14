@@ -177,7 +177,7 @@ function renewAll(auditSource, callback) {
     apps.getAll(function (error, allApps) {
         if (error) return callback(error);
 
-        allApps.push({ location: constants.ADMIN_LOCATION }); // inject fake webadmin app
+        allApps.push({ location: config.adminLocation() }); // inject fake webadmin app
 
         var expiringApps = [ ];
         for (var i = 0; i < allApps.length; i++) {
@@ -239,7 +239,7 @@ function renewAll(auditSource, callback) {
                     }
 
                     // reconfigure and reload nginx. this is required for the case where we got a renewed cert after fallback
-                    var configureFunc = app.location === constants.ADMIN_LOCATION ?
+                    var configureFunc = app.location === config.adminLocation() ?
                         nginx.configureAdmin.bind(null, certFilePath, keyFilePath, constants.NGINX_ADMIN_CONFIG_FILE_NAME, config.adminFqdn())
                         : nginx.configureApp.bind(null, app, certFilePath, keyFilePath);
 

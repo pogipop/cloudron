@@ -7,19 +7,15 @@ exports = module.exports = {
 
     isEnabled: isEnabled,
     setEnabled: setEnabled,
-    issueDeveloperToken: issueDeveloperToken,
-    getNonApprovedApps: getNonApprovedApps
+    issueDeveloperToken: issueDeveloperToken
 };
 
 var assert = require('assert'),
     clients = require('./clients.js'),
-    config = require('./config.js'),
     constants = require('./constants.js'),
-    debug = require('debug')('box:developer'),
     eventlog = require('./eventlog.js'),
     tokendb = require('./tokendb.js'),
     settings = require('./settings.js'),
-    superagent = require('superagent'),
     util = require('util');
 
 function DeveloperError(reason, errorOrMessage) {
@@ -82,21 +78,5 @@ function issueDeveloperToken(user, auditSource, callback) {
         eventlog.add(eventlog.ACTION_USER_LOGIN, auditSource, { authType: 'cli', userId: user.id, username: user.username });
 
         callback(null, { token: token, expiresAt: new Date(expiresAt).toISOString() });
-    });
-}
-
-function getNonApprovedApps(callback) {
-    assert.strictEqual(typeof callback, 'function');
-
-    var url = config.apiServerOrigin() + '/api/v1/boxes/' + config.fqdn() + '/apps';
-    superagent.get(url).query({ token: config.token(), boxVersion: config.version() }).timeout(30 * 1000).end(function (error, result) {
-        if (error && !error.response) return callback(new DeveloperError(DeveloperError.EXTERNAL_ERROR, error));
-        if (result.statusCode === 401 || result.statusCode === 403) {
-            debug('Failed to list apps in development. Appstore token invalid or missing. Returning empty list.', result.body);
-            return callback(null, []);
-        }
-        if (result.statusCode !== 200) return callback(new DeveloperError(DeveloperError.EXTERNAL_ERROR, util.format('App listing failed. %s %j', result.status, result.body)));
-
-        callback(null, result.body.apps || []);
     });
 }

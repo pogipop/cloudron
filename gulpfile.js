@@ -6,9 +6,9 @@ var argv = require('yargs').argv,
     autoprefixer = require('gulp-autoprefixer'),
     concat = require('gulp-concat'),
     cssnano = require('gulp-cssnano'),
-    del = require('del'),
     ejs = require('gulp-ejs'),
     gulp = require('gulp'),
+    rimraf = require('rimraf'),
     sass = require('gulp-sass'),
     serve = require('gulp-serve'),
     sourcemaps = require('gulp-sourcemaps'),
@@ -196,7 +196,8 @@ gulp.task('watch', ['default'], function () {
 });
 
 gulp.task('clean', function () {
-    del.sync(['webadmin/dist', 'setup/splash/website']);
+    rimraf.sync('webadmin/dist');
+    rimraf.sync('setup/splash/website');
 });
 
 gulp.task('default', ['clean', 'html', 'js', '3rdparty', 'images', 'css'], function () {});

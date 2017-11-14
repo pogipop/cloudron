@@ -39,7 +39,7 @@ describe('config', function () {
     it('did set default values', function () {
         expect(config.isCustomDomain()).to.equal(true);
         expect(config.fqdn()).to.equal('localhost');
-        expect(config.adminOrigin()).to.equal('https://' + constants.ADMIN_LOCATION + '.localhost');
+        expect(config.adminOrigin()).to.equal('https://my.localhost');
         expect(config.appFqdn('app')).to.equal('app.localhost');
         expect(config.zoneName()).to.equal('');
     });
@@ -68,7 +68,7 @@ describe('config', function () {
 
         expect(config.isCustomDomain()).to.equal(true);
         expect(config.fqdn()).to.equal('example.com');
-        expect(config.adminOrigin()).to.equal('https://' + constants.ADMIN_LOCATION + '.example.com');
+        expect(config.adminOrigin()).to.equal('https://my.example.com');
         expect(config.appFqdn('app')).to.equal('app.example.com');
         expect(config.zoneName()).to.equal('example.com');
     });
@@ -79,7 +79,7 @@ describe('config', function () {
 
         expect(config.isCustomDomain()).to.equal(false);
         expect(config.fqdn()).to.equal('test.example.com');
-        expect(config.adminOrigin()).to.equal('https://' + constants.ADMIN_LOCATION + '-test.example.com');
+        expect(config.adminOrigin()).to.equal('https://my-test.example.com');
         expect(config.appFqdn('app')).to.equal('app-test.example.com');
         expect(config.zoneName()).to.equal('example.com');
     });

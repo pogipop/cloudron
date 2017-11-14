@@ -3,8 +3,8 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h4 class="modal-title" ng-show="(appConfigure.app | installError)">Repair</h4>
-                <h4 class="modal-title" ng-hide="(appConfigure.app | installError)">Configure</h4>
+                <h4 class="modal-title" ng-show="(appConfigure.app | installError)">Repair {{ appConfigure.app.fqdn }}</h4>
+                <h4 class="modal-title" ng-hide="(appConfigure.app | installError)">Configure {{ appConfigure.app.fqdn }}</h4>
             </div>
             <div class="modal-body">
                 <fieldset>
@@ -88,18 +88,26 @@
                             </div>
                             <div class="radio">
                                 <label>
-                                    <input type="radio" ng-model="appConfigure.accessRestrictionOption" value="groups" ng-disabled="groups.length <= 1">
-                                    Only allow the following user groups <span class="label label-danger" ng-show="appConfigure.accessRestrictionOption === 'groups' && !appConfigure.isAccessRestrictionValid()">Select at least one group</span>
+                                    <input type="radio" ng-model="appConfigure.accessRestrictionOption" value="groups">
+                                    Only allow the following users and groups <span class="label label-danger" ng-show="appConfigure.accessRestrictionOption === 'groups' && !appConfigure.isAccessRestrictionValid()">Select at least one user or group</span>
                                 </label>
                             </div>
-                            <div ng-show="groups.length <= 1" style="margin-left: 20px;">No groups available. <a href="#/users">Create groups</a></div>
                             <div>
                                 <div style="margin-left: 20px;">
-                                    <span ng-repeat="group in groups | ignoreAdminGroup">
-                                        <button class="btn btn-default" type="button" ng-disabled="appConfigure.accessRestrictionOption !== 'groups'" ng-click="appConfigureToggleGroup(group);" ng-class="{ 'btn-primary': (appConfigure.accessRestriction.groups && appConfigure.accessRestriction.groups.indexOf(group.id) !== -1) }">{{ group.name }}</button>
-                                    </span>
+                                    <div class="col-md-5">
+                                        Users:
+                                        <multiselect class="input-sm stretch" ng-model="appConfigure.accessRestriction.users" ng-disabled="appConfigure.accessRestrictionOption !== 'groups'" options="user.username for user in users" data-multiple="true"></multiselect>
+                                    </div>
+
+                                    <div class="col-md-5">
+                                        Groups:
+                                        <multiselect class="input-sm stretch" ng-model="appConfigure.accessRestriction.groups" ng-disabled="appConfigure.accessRestrictionOption !== 'groups'" options="group.name for group in (groups | ignoreAdminGroup)" data-multiple="true"></multiselect>
+                                    </div>
                                 </div>
                             </div>
+
+                            <br/>
+                            <br/>
                         </div>
 
                         <p ng-show="!mailConfig.enabled && appConfigure.app.manifest.addons.email" class="text-danger">
@@ -109,22 +117,18 @@
                         <a href="" ng-click="appConfigure.advancedVisible = true" ng-hide="appConfigure.advancedVisible">Advanced settings...</a>
                         <div  uib-collapse="!appConfigure.advancedVisible">
                             <div class="form-group">
-                                <label class="control-label" for="memoryLimit">Maximum Memory Limit: <b>{{ appConfigure.memoryLimit ? appConfigure.memoryLimit / 1024 / 1024 + 'MB' : 'Default (256 MB)' }}</b></label>
+                                <label class="control-label" for="memoryLimit">Memory Limit <sup><a ng-href="{{ config.webServerOrigin }}/documentation/apps/#increasing-the-memory-limit-of-an-app" class="help" target="_blank"><i class="fa fa-question-circle"></i></a></sup> : <b>{{ appConfigure.memoryLimit ? appConfigure.memoryLimit / 1024 / 1024 + 'MB' : 'Default (256 MB)' }}</b></label>
                                 <br/>
                                 <div style="padding: 0 10px;">
                                     <slider id="memoryLimit" ng-model="appConfigure.memoryLimit" step="134217728" tooltip="hide" ticks="appConfigure.memoryTicks" ticks-snap-bounds="67108864"></slider>
                                 </div>
                             </div>
 
-                            <br/>
-
                             <div class="form-group" ng-class="{ 'has-error': !appConfigureForm.xFrameOptions.$dirty && appConfigure.error.xFrameOptions }">
                                 <label class="control-label">Allow embedding from the following site</label>
                                 <div class="control-label" ng-show="appConfigure.error.xFrameOptions"><small>Must be empty of a valid URL</small></div>
                                 <input type="text" class="form-control" id="appConfigureXFrameOptionsInput" name="xFrameOptions" placeholder="https://example.com" ng-model="appConfigure.xFrameOptions" uib-tooltip="Leave blank to not allow embedding">
                             </div>
-
-                            <br/>
 
                             <div class="form-group">
                                 <label class="control-label">Specify robots.txt file content</label>
@@ -179,8 +183,11 @@
             <div class="modal-header">
                 <h4 class="modal-title">Restore {{ appRestore.app.fqdn }}</h4>
             </div>
-            <div class="modal-body" ng-show="appRestore.backups.length === 0">
-                <p class="text-danger">This app has no backups.</p>
+            <div class="modal-body" ng-show="appRestore.busyFetching">
+                <h4 class="text-center"><i class="fa fa-circle-o-notch fa-spin"></i> Fetching backups</h4>
+            </div>
+            <div class="modal-body" ng-show="appRestore.backups.length === 0 && !appRestore.busyFetching">
+                <h4 class="text-danger">This app has no backups.</h4>
             </div>
             <div class="modal-body" ng-show="appRestore.backups.length !== 0">
                 <p>Restoring the app will lose all content generated since the backup.</p>
@@ -195,7 +202,7 @@
                 </div>
                 <br/>
                 <fieldset>
-                    <form role="form" name="appRestoreForm" ng-submit="doRestore()" autocomplete="off">
+                    <form role="form" name="appRestoreForm" ng-submit="appRestore.submit()" autocomplete="off">
                         <div class="form-group" ng-class="{ 'has-error': (appRestoreForm.password.$dirty && appRestoreForm.password.$invalid) || (!appRestoreForm.password.$dirty && appRestore.error.password) }">
                             <label class="control-label" for="appRestorePasswordInput">Provide your password to confirm this action</label>
                             <div class="control-label" ng-show="(appRestoreForm.password.$dirty && appRestoreForm.password.$invalid) || (!appRestoreForm.password.$dirty && appRestore.error.password)">
@@ -211,22 +218,28 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-success" ng-click="doRestore()" ng-disabled="appRestoreForm.$invalid || appRestore.busy || !appRestore.selectedBackup"><i class="fa fa-circle-o-notch fa-spin" ng-show="appRestore.busy"></i> Restore</button>
+                <button type="button" class="btn btn-success" ng-click="appRestore.submit()" ng-show="appRestore.backups.length !== 0" ng-disabled="appRestoreForm.$invalid || appRestore.busy || !appRestore.selectedBackup"><i class="fa fa-circle-o-notch fa-spin" ng-show="appRestore.busy"></i> Restore</button>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Modal post install message app -->
-<div class="modal fade" id="appPostInstallModal" tabindex="-1" role="dialog">
+<!-- Modal information of app -->
+<div class="modal fade" id="appInfoModal" tabindex="-1" role="dialog">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h4 class="modal-title">Installation notes for {{ appPostInstall.app.manifest.title }}</h4>
+                <img ng-src="{{appInfo.app.iconUrl}}" onerror="this.onerror=null;this.src='img/appicon_fallback.png'" class="app-info-icon"/>
+                <h5 class="app-info-title">{{ appInfo.app.manifest.title }}</h5>
+                <br/>
+                <span class="app-info-meta">Package version <a ng-href="/#/appstore/{{appInfo.app.manifest.id}}?version={{appInfo.app.manifest.version}}">{{ appInfo.app.manifest.version }}</a> </span>
             </div>
             <div class="modal-body">
-                <div class="app-postinstall-message">
-                    <div ng-bind-html="appPostInstall.message | postInstallMessage:appPostInstall.app | markdown2html"></div>
+                <div class="app-postinstall-message" ng-hide="appInfo.app.manifest && appInfo.app.manifest.postInstallMessage">
+                    This package has no special usage information.
+                </div>
+                <div class="app-postinstall-message" ng-show="appInfo.app.manifest && appInfo.app.manifest.postInstallMessage">
+                    <div ng-bind-html="appInfo.message | postInstallMessage:appInfo.app | markdown2html"></div>
                 </div>
             </div>
             <div class="modal-footer">
@@ -295,34 +308,11 @@
             </div>
             <div class="modal-body">
                 <p>Recent Changes for new version <b>{{ appUpdate.manifest.version}}</b>:</p>
-                <pre>{{ appUpdate.manifest.changelog }}</pre>
-                <br/>
-                <fieldset>
-                    <form role="form" name="appUpdateForm" ng-submit="doUpdate(appUpdateForm)" autocomplete="off">
-                        <div ng-repeat="(env, info) in appUpdate.portBindingsInfo" ng-class="{ 'newPort': info.isNew }">
-                            <ng-form name="portInfo_form">
-                                <div class="form-group" ng-class="{ 'has-error': portInfo_form.itemName{{$index}}.$dirty && portInfo_form.itemName{{$index}}.$invalid }">
-                                    <label class="control-label" for="inputPortInfo{{env}}"><input type="checkbox" ng-model="appUpdate.portBindingsEnabled[env]"> <span ng-show="info.isNew">New - </span> {{ info.description }} ({{ HOST_PORT_MIN }} - {{ HOST_PORT_MAX }})</label>
-                                    <input type="number" class="form-control" ng-model="appUpdate.portBindings[env]" ng-disabled="!appUpdate.portBindingsEnabled[env]" id="inputPortInfo{{env}}" later-name="itemName{{$index}}" min="{{HOST_PORT_MIN}}" max="{{HOST_PORT_MAX}}" required>
-                                </div>
-                            </ng-form>
-                        </div>
-                        <div ng-repeat="(env, port) in appUpdate.obsoletePortBindings" class="obsoletePort">
-                            <ng-form name="obsoletePortInfo_form">
-                                <div class="form-group">
-                                    Obsolete -
-                                    <label class="control-label">{{ env }}</label>
-                                    <input type="number" class="form-control" ng-model="port" disabled>
-                                </div>
-                            </ng-form>
-                        </div>
-                        <input class="ng-hide" type="submit" ng-disabled="appUpdateForm.$invalid || busy"/>
-                    </form>
-                </fieldset>
+                <div ng-bind-html="appUpdate.manifest.changelog | markdown2html"></div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-danger" ng-click="doUpdate(appUpdateForm)" ng-disabled="appUpdateForm.$invalid || appUpdate.busy"><i class="fa fa-circle-o-notch fa-spin" ng-show="appUpdate.busy"></i> Update</button>
+                <button type="button" class="btn btn-danger" ng-click="doUpdate()" ng-disabled="appUpdate.busy"><i class="fa fa-circle-o-notch fa-spin" ng-show="appUpdate.busy"></i> Update</button>
             </div>
         </div>
     </div>
@@ -401,7 +391,7 @@
                     <div class="grid-item-bottom-mobile" ng-show="user.admin">
                         <div class="row">
                             <div class="col-xs-4 text-left">
-                                <a href="" ng-click="showRestore(app)" ng-show="backupConfig.provider !== 'noop'">
+                                <a href="" ng-click="appRestore.show(app)" ng-show="backupConfig.provider !== 'noop'">
                                     <i class="fa fa-undo scale"></i>
                                 </a>
 
@@ -424,7 +414,7 @@
                         </div>
 
                         <div>
-                            <a href="" ng-click="showRestore(app)" ng-show="backupConfig.provider !== 'noop'" title="Restore App"><i class="fa fa-undo scale"></i></a>
+                            <a href="" ng-click="appRestore.show(app)" ng-show="backupConfig.provider !== 'noop'" title="Restore App"><i class="fa fa-undo scale"></i></a>
                         </div>
 
                         <div ng-show="(app.installationState === 'installed' || app.installationState === 'pending_configure') && !(app | installError)">
@@ -435,8 +425,8 @@
                             <a href="" ng-click="showConfigure(app)" title="Repair App"><i class="fa fa-wrench scale"></i></a>
                         </div>
 
-                        <div ng-show="hasPostInstallMessage(app)">
-                            <a href="" ng-click="showPostInstall(app)" title="Information"><i class="fa fa-info-circle scale"></i></a>
+                        <div>
+                            <a href="" ng-click="showInformation(app)" title="Information"><i class="fa fa-info-circle scale"></i></a>
                         </div>
                     </div>
 

@@ -171,6 +171,7 @@ function getAdminEmails(callback) {
         if (admins.length === 0) return callback(new Error('No admins on this cloudron')); // box not activated yet
 
         var adminEmails = [ ];
+        if (admins[0].alternateEmail) adminEmails.push(admins[0].alternateEmail);
         admins.forEach(function (admin) { adminEmails.push(admin.email); });
 
         callback(null, adminEmails);
@@ -244,7 +245,7 @@ function userAdded(user, inviteSent) {
     debug('Sending mail for userAdded %s including invite link', inviteSent ? 'not' : '');
 
     getAdminEmails(function (error, adminEmails) {
-        if (error) return console.log('Error getting admins', error);
+        if (error) return debug('Error getting admins', error);
 
         adminEmails = _.difference(adminEmails, [ user.email ]);
 
@@ -341,7 +342,7 @@ function appDied(app) {
     debug('Sending mail for app %s @ %s died', app.id, app.fqdn);
 
     getAdminEmails(function (error, adminEmails) {
-        if (error) return console.log('Error getting admins', error);
+        if (error) return debug('Error getting admins', error);
 
         var mailOptions = {
             from: mailConfig().from,
@@ -354,12 +355,13 @@ function appDied(app) {
     });
 }
 
-function boxUpdateAvailable(newBoxVersion, changelog) {
+function boxUpdateAvailable(hasSubscription, newBoxVersion, changelog) {
+    assert.strictEqual(typeof hasSubscription, 'boolean');
     assert.strictEqual(typeof newBoxVersion, 'string');
     assert(util.isArray(changelog));
 
     getAdminEmails(function (error, adminEmails) {
-        if (error) return console.log('Error getting admins', error);
+        if (error) return debug('Error getting admins', error);
 
         settings.getCloudronName(function (error, cloudronName) {
             if (error) {
@@ -373,6 +375,7 @@ function boxUpdateAvailable(newBoxVersion, changelog) {
                 fqdn: config.fqdn(),
                 webadminUrl: config.adminOrigin(),
                 newBoxVersion: newBoxVersion,
+                hasSubscription: hasSubscription,
                 changelog: changelog,
                 changelogHTML: changelog.map(function (e) { return converter.makeHtml(e); }),
                 cloudronName: cloudronName,
@@ -385,7 +388,7 @@ function boxUpdateAvailable(newBoxVersion, changelog) {
             var templateDataHTML = JSON.parse(JSON.stringify(templateData));
             templateDataHTML.format = 'html';
 
-             var mailOptions = {
+            var mailOptions = {
                 from: mailConfig().from,
                 to: adminEmails.join(', '),
                 subject: util.format('%s has a new update available', config.fqdn()),
@@ -398,29 +401,13 @@ function boxUpdateAvailable(newBoxVersion, changelog) {
     });
 }
 
-function appUpdateAvailable(app, updateInfo) {
+function appUpdateAvailable(app, hasSubscription, info) {
     assert.strictEqual(typeof app, 'object');
-    assert.strictEqual(typeof updateInfo, 'object');
-
-    getAdminEmails(function (error, adminEmails) {
-        if (error) return console.log('Error getting admins', error);
-
-         var mailOptions = {
-            from: mailConfig().from,
-            to: adminEmails.join(', '),
-            subject: util.format('[%s] Update available for %s', config.fqdn(), app.fqdn),
-            text: render('app_update_available.ejs', { fqdn: config.fqdn(), webadminUrl: config.adminOrigin(), app: app, updateInfo: updateInfo, format: 'text' })
-        };
-
-        enqueue(mailOptions);
-    });
-}
-
-function sendDigest(info) {
+    assert.strictEqual(typeof hasSubscription, 'boolean');
     assert.strictEqual(typeof info, 'object');
 
     getAdminEmails(function (error, adminEmails) {
-        if (error) return console.log('Error getting admins', error);
+        if (error) return debug('Error getting admins', error);
 
         settings.getCloudronName(function (error, cloudronName) {
             if (error) {
@@ -428,34 +415,73 @@ function sendDigest(info) {
                 cloudronName = 'Cloudron';
             }
 
-            appstore.getAccount(function (error, appstoreProfile) {
-                if (error && error.reason !== AppstoreError.BILLING_REQUIRED) console.error(error);
-                if (appstoreProfile) adminEmails.push(appstoreProfile.email);
+            var converter = new showdown.Converter();
 
-                var templateData = {
-                    fqdn: config.fqdn(),
-                    webadminUrl: config.adminOrigin(),
-                    cloudronName: cloudronName,
-                    cloudronAvatarUrl: config.adminOrigin() + '/api/v1/cloudron/avatar',
-                    info: info
-                };
+            var templateData = {
+                fqdn: config.fqdn(),
+                webadminUrl: config.adminOrigin(),
+                hasSubscription: hasSubscription,
+                app: app,
+                updateInfo: info,
+                changelogHTML: converter.makeHtml(info.manifest.changelog),
+                cloudronName: cloudronName,
+                cloudronAvatarUrl: config.adminOrigin() + '/api/v1/cloudron/avatar'
+            };
 
-                var templateDataText = JSON.parse(JSON.stringify(templateData));
-                templateDataText.format = 'text';
+            var templateDataText = JSON.parse(JSON.stringify(templateData));
+            templateDataText.format = 'text';
 
-                var templateDataHTML = JSON.parse(JSON.stringify(templateData));
-                templateDataHTML.format = 'html';
+            var templateDataHTML = JSON.parse(JSON.stringify(templateData));
+            templateDataHTML.format = 'html';
 
-                var mailOptions = {
-                    from: mailConfig().from,
-                    to: adminEmails.join(', '),
-                    subject: util.format('[%s] Cloudron - Weekly activity digest', config.fqdn()),
-                    text: render('digest.ejs', templateDataText),
-                    html: render('digest.ejs', templateDataHTML)
-                };
+            var mailOptions = {
+                from: mailConfig().from,
+                to: adminEmails.join(', '),
+                subject: util.format('App %s has a new update available', app.fqdn),
+                text: render('app_update_available.ejs', templateDataText),
+                html: render('app_update_available.ejs', templateDataHTML)
+            };
 
-                enqueue(mailOptions);
-            });
+            enqueue(mailOptions);
+        });
+    });
+}
+
+function sendDigest(info) {
+    assert.strictEqual(typeof info, 'object');
+
+    getAdminEmails(function (error, adminEmails) {
+        if (error) return debug('Error getting admins', error);
+
+        settings.getCloudronName(function (error, cloudronName) {
+            if (error) {
+                debug(error);
+                cloudronName = 'Cloudron';
+            }
+
+            var templateData = {
+                fqdn: config.fqdn(),
+                webadminUrl: config.adminOrigin(),
+                cloudronName: cloudronName,
+                cloudronAvatarUrl: config.adminOrigin() + '/api/v1/cloudron/avatar',
+                info: info
+            };
+
+            var templateDataText = JSON.parse(JSON.stringify(templateData));
+            templateDataText.format = 'text';
+
+            var templateDataHTML = JSON.parse(JSON.stringify(templateData));
+            templateDataHTML.format = 'html';
+
+            var mailOptions = {
+                from: mailConfig().from,
+                to: adminEmails.join(', '),
+                subject: util.format('[%s] Cloudron - Weekly activity digest', config.fqdn()),
+                text: render('digest.ejs', templateDataText),
+                html: render('digest.ejs', templateDataHTML)
+            };
+
+            enqueue(mailOptions);
         });
     });
 }
@@ -464,7 +490,7 @@ function outOfDiskSpace(message) {
     assert.strictEqual(typeof message, 'string');
 
     getAdminEmails(function (error, adminEmails) {
-        if (error) return console.log('Error getting admins', error);
+        if (error) return debug('Error getting admins', error);
 
         var mailOptions = {
             from: mailConfig().from,
@@ -481,7 +507,7 @@ function backupFailed(error) {
     var message = splatchError(error);
 
     getAdminEmails(function (error, adminEmails) {
-        if (error) return console.log('Error getting admins', error);
+        if (error) return debug('Error getting admins', error);
 
         var mailOptions = {
             from: mailConfig().from,
@@ -499,7 +525,7 @@ function certificateRenewalError(domain, message) {
     assert.strictEqual(typeof message, 'string');
 
     getAdminEmails(function (error, adminEmails) {
-        if (error) return console.log('Error getting admins', error);
+        if (error) return debug('Error getting admins', error);
 
         var mailOptions = {
             from: mailConfig().from,
@@ -517,7 +543,7 @@ function oomEvent(program, context) {
     assert.strictEqual(typeof context, 'string');
 
     getAdminEmails(function (error, adminEmails) {
-        if (error) return console.log('Error getting admins', error);
+        if (error) return debug('Error getting admins', error);
 
         var mailOptions = {
             from: mailConfig().from,
@@ -561,8 +587,8 @@ function sendFeedback(user, type, subject, description) {
         type === exports.FEEDBACK_TYPE_UPGRADE_REQUEST ||
         type === exports.FEEDBACK_TYPE_APP_ERROR);
 
-        var mailOptions = {
-            from: mailConfig().from,
+    var mailOptions = {
+        from: mailConfig().from,
         to: 'support@cloudron.io',
         subject: util.format('[%s] %s - %s', type, config.fqdn(), subject),
         text: render('feedback.ejs', { fqdn: config.fqdn(), type: type, user: user, subject: subject, description: description, format: 'text'})

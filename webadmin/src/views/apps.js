@@ -63,6 +63,7 @@ angular.module('Application').controller('AppsController', ['$scope', '$location
 
     $scope.appRestore = {
         busy: false,
+        busyFetching: false,
         error: {},
         app: {},
         password: '',
@@ -71,10 +72,51 @@ angular.module('Application').controller('AppsController', ['$scope', '$location
 
         selectBackup: function (backup) {
             $scope.appRestore.selectedBackup = backup;
+        },
+
+        show: function (app) {
+            $scope.reset();
+
+            $scope.appRestore.app = app;
+            $scope.appRestore.busyFetching = true;
+
+            $('#appRestoreModal').modal('show');
+
+            Client.getAppBackups(app.id, function (error, backups) {
+                if (error) {
+                    Client.error(error);
+                } else {
+                    $scope.appRestore.backups = backups;
+                    if (backups.length) $scope.appRestore.selectedBackup = backups[0]; // pre-select first backup
+                    $scope.appRestore.busyFetching = false;
+                }
+            });
+
+            return false; // prevent propagation and default
+        },
+
+        submit: function () {
+            $scope.appRestore.busy = true;
+            $scope.appRestore.error.password = null;
+
+            Client.restoreApp($scope.appRestore.app.id, $scope.appRestore.selectedBackup.id, $scope.appRestore.password, function (error) {
+                if (error && error.statusCode === 403) {
+                    $scope.appRestore.password = '';
+                    $scope.appRestore.error.password = true;
+                    $scope.appRestoreForm.password.$setPristine();
+                    $('#appRestorePasswordInput').focus();
+                } else if (error) {
+                    Client.error(error);
+                } else {
+                    $('#appRestoreModal').modal('hide');
+                }
+
+                $scope.appRestore.busy = false;
+            });
         }
     };
 
-    $scope.appPostInstall = {
+    $scope.appInfo = {
         app: {},
         message: ''
     };
@@ -97,7 +139,7 @@ angular.module('Application').controller('AppsController', ['$scope', '$location
         $('#appConfigureModal').modal('hide');
         $('#appRestoreModal').modal('hide');
         $('#appUpdateModal').modal('hide');
-        $('#appPostInstallModal').modal('hide');
+        $('#appInfoModal').modal('hide');
         $('#appUninstallModal').modal('hide');
 
         // reset configure dialog
@@ -136,10 +178,6 @@ angular.module('Application').controller('AppsController', ['$scope', '$location
         $scope.appUpdate.error = {};
         $scope.appUpdate.app = {};
         $scope.appUpdate.manifest = {};
-        $scope.appUpdate.portBindings = {};
-
-        $scope.appUpdateForm.$setPristine();
-        $scope.appUpdateForm.$setUntouched();
 
         // reset restore dialog
         $scope.appRestore.error = {};
@@ -180,14 +218,6 @@ angular.module('Application').controller('AppsController', ['$scope', '$location
         });
     };
 
-    $scope.appConfigureToggleGroup = function (group) {
-        var groups = $scope.appConfigure.accessRestriction.groups;
-        var pos = groups.indexOf(group.id);
-
-        if (pos === -1) groups.push(group.id);
-        else groups.splice(pos, 1);
-    };
-
     $scope.useAltDomain = function (use) {
         $scope.appConfigure.usingAltDomain = use;
 
@@ -206,27 +236,36 @@ angular.module('Application').controller('AppsController', ['$scope', '$location
         $scope.appConfigure.location = app.altDomain || app.location;
         $scope.appConfigure.usingAltDomain = !!app.altDomain;
         $scope.appConfigure.portBindingsInfo = app.manifest.tcpPorts || {}; // Portbinding map only for information
-        $scope.appConfigure.accessRestrictionOption = app.accessRestriction ? 'groups' : 'any';
-        $scope.appConfigure.accessRestriction = app.accessRestriction || { users: [], groups: [] };
+        $scope. Option = app.accessRestriction ? 'groups' : 'any';
         $scope.appConfigure.memoryLimit = app.memoryLimit || app.manifest.memoryLimit || (256 * 1024 * 1024);
         $scope.appConfigure.xFrameOptions = app.xFrameOptions.indexOf('ALLOW-FROM') === 0 ? app.xFrameOptions.split(' ')[1] : '';
         $scope.appConfigure.customAuth = !(app.manifest.addons['ldap'] || app.manifest.addons['oauth']);
         $scope.appConfigure.robotsTxt = app.robotsTxt;
         $scope.appConfigure.enableBackup = app.enableBackup;
 
-        // create ticks starting from manifest memory limit
-        $scope.appConfigure.memoryTicks = [
-             256 * 1024 * 1024,
-             512 * 1024 * 1024,
-             1024 * 1024 * 1024,
-             2048 * 1024 * 1024,
-             4096 * 1024 * 1024
-        ].filter(function (t) { return t >= (app.manifest.memoryLimit || 0); });
+        // create ticks starting from manifest memory limit. the memory limit here is currently split into ram+swap (and thus *2 below)
+        // TODO: the *2 will overallocate since 4GB is max swap that cloudron itself allocates
+        $scope.appConfigure.memoryTicks = [ ];
+        var npow2 = Math.pow(2, Math.ceil(Math.log($scope.config.memory)/Math.log(2)));
+        for (var i = 256; i <= (npow2*2/1024/1024); i *= 2) {
+            if (i >= (app.manifest.memoryLimit/1024/1024 || 0)) $scope.appConfigure.memoryTicks.push(i * 1024 * 1024);
+        }
         if (app.manifest.memoryLimit && $scope.appConfigure.memoryTicks[0] !== app.manifest.memoryLimit) {
             $scope.appConfigure.memoryTicks.unshift(app.manifest.memoryLimit);
         }
 
         $scope.appConfigure.accessRestrictionOption = app.accessRestriction ? 'groups' : 'any';
+        $scope.appConfigure.accessRestriction = { users: [], groups: [] };
+
+        if (app.accessRestriction) {
+            var userSet = { };
+            app.accessRestriction.users.forEach(function (uid) { userSet[uid] = true; });
+            $scope.users.forEach(function (u) { if (userSet[u.id] === true) $scope.appConfigure.accessRestriction.users.push(u); });
+
+            var groupSet = { };
+            app.accessRestriction.groups.forEach(function (gid) { groupSet[gid] = true; });
+            $scope.groups.forEach(function (g) { if (groupSet[g.id] === true) $scope.appConfigure.accessRestriction.groups.push(g); });
+        }
 
         // fill the portBinding structures. There might be holes in the app.portBindings, which signalizes a disabled port
         for (var env in $scope.appConfigure.portBindingsInfo) {
@@ -256,11 +295,18 @@ angular.module('Application').controller('AppsController', ['$scope', '$location
             }
         }
 
+        var finalAccessRestriction = null;
+        if ($scope.appConfigure.accessRestrictionOption === 'groups') {
+            finalAccessRestriction = { users: [], groups: [] };
+            finalAccessRestriction.users = $scope.appConfigure.accessRestriction.users.map(function (u) { return u.id; });
+            finalAccessRestriction.groups = $scope.appConfigure.accessRestriction.groups.map(function (g) { return g.id; });
+        }
+
         var data = {
             location:  $scope.appConfigure.usingAltDomain ? $scope.appConfigure.app.location : $scope.appConfigure.location,
             altDomain: $scope.appConfigure.usingAltDomain ? $scope.appConfigure.location : null,
             portBindings: finalPortBindings,
-            accessRestriction: $scope.appConfigure.accessRestrictionOption === 'groups' ? $scope.appConfigure.accessRestriction : null,
+            accessRestriction: finalAccessRestriction,
             cert: $scope.appConfigure.certificateFile,
             key: $scope.appConfigure.keyFile,
             xFrameOptions: $scope.appConfigure.xFrameOptions ? ('ALLOW-FROM ' + $scope.appConfigure.xFrameOptions) : 'SAMEORIGIN',
@@ -303,13 +349,13 @@ angular.module('Application').controller('AppsController', ['$scope', '$location
         });
     };
 
-    $scope.showPostInstall = function (app) {
+    $scope.showInformation = function (app) {
         $scope.reset();
 
-        $scope.appPostInstall.app = app;
-        $scope.appPostInstall.message = app.manifest.postInstallMessage;
+        $scope.appInfo.app = app;
+        $scope.appInfo.message = app.manifest.postInstallMessage;
 
-        $('#appPostInstallModal').modal('show');
+        $('#appInfoModal').modal('show');
 
         return false; // prevent propagation and default
     };
@@ -322,48 +368,6 @@ angular.module('Application').controller('AppsController', ['$scope', '$location
         $('#appErrorModal').modal('show');
 
         return false; // prevent propagation and default
-    };
-
-    $scope.showRestore = function (app) {
-        $scope.reset();
-
-        $scope.appRestore.app = app;
-        $scope.appRestore.busy = true;
-
-        $('#appRestoreModal').modal('show');
-
-        Client.getAppBackups(app.id, function (error, backups) {
-            if (error) {
-                Client.error(error);
-            } else {
-                $scope.appRestore.backups = backups;
-                if (backups.length) $scope.appRestore.selectedBackup = backups[0]; // pre-select first backup
-                $scope.appRestore.busy = false;
-            }
-        });
-
-        return false; // prevent propagation and default
-    };
-
-    $scope.doRestore = function () {
-        $scope.appRestore.busy = true;
-        $scope.appRestore.error.password = null;
-
-        Client.restoreApp($scope.appRestore.app.id, $scope.appRestore.selectedBackup.id, $scope.appRestore.password, function (error) {
-            if (error && error.statusCode === 403) {
-                $scope.appRestore.password = '';
-                $scope.appRestore.error.password = true;
-                $scope.appRestoreForm.password.$setPristine();
-                $('#appRestorePasswordInput').focus();
-            } else if (error) {
-                Client.error(error);
-            } else {
-                $('#appRestoreModal').modal('hide');
-                $scope.reset();
-            }
-
-            $scope.appRestore.busy = false;
-        });
     };
 
     $scope.showUninstall = function (app) {
@@ -408,90 +412,17 @@ angular.module('Application').controller('AppsController', ['$scope', '$location
         $scope.appUpdate.app = app;
         $scope.appUpdate.manifest = angular.copy(updateManifest);
 
-        // ensure we always operate on objects here
-        app.portBindings = app.portBindings || {};
-        app.manifest.tcpPorts = app.manifest.tcpPorts || {};
-        updateManifest.tcpPorts = updateManifest.tcpPorts || {};
-
-        // Activate below two lines for testing the UI
-        // updateManifest.tcpPorts['TEST_HTTP'] = { defaultValue: 1337, description: 'HTTP server'};
-        // app.manifest.tcpPorts['TEST_FOOBAR'] = { defaultValue: 1338, description: 'FOOBAR server'};
-        // app.portBindings['TEST_SSH'] = 1339;
-
-        var portBindingsInfo = {};                  // Portbinding map only for information
-        var portBindings = {};                      // This is the actual model holding the env:port pair
-        var portBindingsEnabled = {};               // This is the actual model holding the enabled/disabled flag
-        var obsoletePortBindings = {};              // Info map for obsolete port bindings, this is for display use only and thus not in the model
-        var portsChanged = false;
-        var env;
-
-        // detect new portbindings and copy all from manifest.tcpPorts
-        for (env in updateManifest.tcpPorts) {
-            portBindingsInfo[env] = updateManifest.tcpPorts[env];
-            if (!app.manifest.tcpPorts[env]) {
-                portBindingsInfo[env].isNew = true;
-                portBindingsEnabled[env] = true;
-
-                // use default integer port value in model
-                portBindings[env] = updateManifest.tcpPorts[env].defaultValue || 0;
-
-                portsChanged = true;
-            } else {
-                // detect if the port binding was enabled
-                if (app.portBindings[env]) {
-                    portBindings[env] = app.portBindings[env];
-                    portBindingsEnabled[env] = true;
-                } else {
-                    portBindings[env] = updateManifest.tcpPorts[env].defaultValue || 0;
-                    portBindingsEnabled[env] = false;
-                }
-            }
-        }
-
-        // detect obsolete portbindings (mappings in app.portBindings, but not anymore in updateManifest.tcpPorts)
-        for (env in app.manifest.tcpPorts) {
-            // only list the port if it is not in the new manifest and was enabled previously
-            if (!updateManifest.tcpPorts[env] && app.portBindings[env]) {
-                obsoletePortBindings[env] = app.portBindings[env];
-                portsChanged = true;
-            }
-        }
-
-        // now inject the maps into the $scope, we only show those if ports have changed
-        $scope.appUpdate.portBindings = portBindings;                 // always inject the model, so it gets used in the actual update call
-        $scope.appUpdate.portBindingsEnabled = portBindingsEnabled;   // always inject the model, so it gets used in the actual update call
-
-        if (portsChanged) {
-            $scope.appUpdate.portBindingsInfo = portBindingsInfo;
-            $scope.appUpdate.obsoletePortBindings = obsoletePortBindings;
-        } else {
-            $scope.appUpdate.portBindingsInfo = {};
-            $scope.appUpdate.obsoletePortBindings = {};
-        }
-
         $('#appUpdateModal').modal('show');
     };
 
-    $scope.doUpdate = function (form) {
+    $scope.doUpdate = function () {
         $scope.appUpdate.busy = true;
 
-        // only use enabled ports from portBindings
-        var finalPortBindings = {};
-        for (var env in $scope.appUpdate.portBindings) {
-            if ($scope.appUpdate.portBindingsEnabled[env]) {
-                finalPortBindings[env] = $scope.appUpdate.portBindings[env];
-            }
-        }
-
-        Client.updateApp($scope.appUpdate.app.id, $scope.appUpdate.manifest, finalPortBindings, function (error) {
+        Client.updateApp($scope.appUpdate.app.id, $scope.appUpdate.manifest, function (error) {
             if (error) {
                 Client.error(error);
             } else {
                 $scope.appUpdate.app = {};
-
-                form.$setPristine();
-                form.$setUntouched();
-
                 $('#appUpdateModal').modal('hide');
             }
 
@@ -510,10 +441,6 @@ angular.module('Application').controller('AppsController', ['$scope', '$location
 
     $scope.cancel = function () {
         window.history.back();
-    };
-
-    $scope.hasPostInstallMessage = function (app) {
-        return app.manifest && app.manifest.postInstallMessage;
     };
 
     function fetchUsers() {

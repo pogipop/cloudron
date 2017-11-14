@@ -22,7 +22,7 @@ var appdb = require('../../appdb.js'),
     hock = require('hock'),
     http = require('http'),
     https = require('https'),
-    js2xml = require('js2xmlparser'),
+    js2xml = require('js2xmlparser').parse,
     ldap = require('../../ldap.js'),
     net = require('net'),
     nock = require('nock'),
@@ -344,10 +344,10 @@ describe('App API', function () {
     it('app install fails - reserved admin location', function (done) {
         superagent.post(SERVER_URL + '/api/v1/apps/install')
                .query({ access_token: token })
-               .send({ manifest: APP_MANIFEST, location: constants.ADMIN_LOCATION, accessRestriction: null })
+               .send({ manifest: APP_MANIFEST, location: 'my', accessRestriction: null })
                .end(function (err, res) {
             expect(res.statusCode).to.equal(400);
-            expect(res.body.message).to.eql(constants.ADMIN_LOCATION + ' is reserved');
+            expect(res.body.message).to.eql('my is reserved');
             done();
         });
     });
@@ -648,7 +648,7 @@ describe('App installation', function () {
                 awsHockInstance
                     .get('/2013-04-01/hostedzone')
                     .max(Infinity)
-                    .reply(200, js2xml('ListHostedZonesResponse', awsHostedZones, { arrayMap: { HostedZones: 'HostedZone'} }), { 'Content-Type': 'application/xml' })
+                    .reply(200, js2xml('ListHostedZonesResponse', awsHostedZones, { wrapHandlers: { HostedZones: () => 'HostedZone'} }), { 'Content-Type': 'application/xml' })
                     .filteringPathRegEx(/name=[^&]*/, 'name=location')
                     .get('/2013-04-01/hostedzone/ZONEID/rrset?maxitems=1&name=location&type=A')
                     .max(Infinity)

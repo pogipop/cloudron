@@ -59,26 +59,26 @@ function initializeExpressSync() {
     router.del = router.delete; // amend router.del for readability further on
 
     app
-       .use(middleware.timeout(REQUEST_TIMEOUT))
-       .use(json)
-       .use(urlencoded)
-       .use(middleware.cookieParser())
-       .use(middleware.cors({ origins: [ '*' ], allowCredentials: false }))
-       .use(middleware.session({
-           secret: hat(128), // we only use the session during oauth, and already have an in-memory session store, so we can safely change that during restarts
-           resave: true,
-           saveUninitialized: true,
-           cookie: {
-               path: '/',
-               httpOnly: true,
-               secure: process.env.BOX_ENV !== 'test',
-               maxAge: 600000
-           }
-       }))
-       .use(passport.initialize())
-       .use(passport.session())
-       .use(router)
-       .use(middleware.lastMile());
+        .use(middleware.timeout(REQUEST_TIMEOUT))
+        .use(json)
+        .use(urlencoded)
+        .use(middleware.cookieParser())
+        .use(middleware.cors({ origins: [ '*' ], allowCredentials: false }))
+        .use(middleware.session({
+            secret: hat(128), // we only use the session during oauth, and already have an in-memory session store, so we can safely change that during restarts
+            resave: true,
+            saveUninitialized: true,
+            cookie: {
+                path: '/',
+                httpOnly: true,
+                secure: process.env.BOX_ENV !== 'test',
+                maxAge: 600000
+            }
+        }))
+        .use(passport.initialize())
+        .use(passport.session())
+        .use(router)
+        .use(middleware.lastMile());
 
     // NOTE: these limits have to be in sync with nginx limits
     var FILE_SIZE_LIMIT = '256mb', // max file size that can be uploaded (see also client_max_body_size in nginx)
@@ -108,7 +108,6 @@ function initializeExpressSync() {
     router.post('/api/v1/developer', developerScope, routes.user.requireAdmin, routes.user.verifyPassword, routes.developer.setEnabled);
     router.get ('/api/v1/developer', developerScope, routes.developer.enabled, routes.developer.status);
     router.post('/api/v1/developer/login', routes.developer.enabled, routes.developer.login);
-    router.get ('/api/v1/developer/apps', developerScope, routes.developer.enabled, routes.developer.apps);
 
     // cloudron routes
     router.get ('/api/v1/cloudron/config', cloudronScope, routes.cloudron.getConfig);
@@ -284,11 +283,11 @@ function initializeSysadminExpressSync() {
     router.del = router.delete; // amend router.del for readability further on
 
     app
-       .use(middleware.timeout(REQUEST_TIMEOUT))
-       .use(json)
-       .use(urlencoded)
-       .use(router)
-       .use(middleware.lastMile());
+        .use(middleware.timeout(REQUEST_TIMEOUT))
+        .use(json)
+        .use(urlencoded)
+        .use(router)
+        .use(middleware.lastMile());
 
     // Sysadmin routes
     router.post('/api/v1/backup', routes.sysadmin.backup);

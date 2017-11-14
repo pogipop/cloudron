@@ -33,31 +33,38 @@ function maybeSend(callback) {
 
             var hasSubscription = result && result.plan.id !== 'free' && result.plan.id !== 'undecided';
 
-            eventlog.getByActionLastWeek(eventlog.ACTION_APP_UPDATE, function (error, appUpdates) {
+            eventlog.getByCreationTime(new Date(new Date() - 7*86400000), function (error, events) {
                 if (error) return callback(error);
 
-                eventlog.getByActionLastWeek(eventlog.ACTION_UPDATE, function (error, boxUpdates) {
-                    if (error) return callback(error);
+                var appUpdates = events.filter(function (e) { return e.action === eventlog.ACTION_APP_UPDATE; }).map(function (e) { return e.data; });
+                var boxUpdates = events.filter(function (e) { return e.action === eventlog.ACTION_UPDATE; }).map(function (e) { return e.data; });
+                var certRenewals = events.filter(function (e) { return e.action === eventlog.ACTION_CERTIFICATE_RENEWAL; }).map(function (e) { return e.data; });
+                var usersAdded = events.filter(function (e) { return e.action === eventlog.ACTION_USER_ADD; }).map(function (e) { return e.data; });
+                var usersRemoved = events.filter(function (e) { return e.action === eventlog.ACTION_USER_REMOVE; }).map(function (e) { return e.data; });
+                var finishedBackups = events.filter(function (e) { return e.action === eventlog.ACTION_BACKUP_FINISH && !e.errorMessage; }).map(function (e) { return e.data; });
 
-                    var info = {
-                        hasSubscription: hasSubscription,
+                if (error) return callback(error);
 
-                        pendingAppUpdates: pendingAppUpdates,
-                        pendingBoxUpdate: updateInfo.box || null,
+                var info = {
+                    hasSubscription: hasSubscription,
 
-                        finishedAppUpdates: (appUpdates || []).map(function (e) { return e.data; }),
-                        finishedBoxUpdates: (boxUpdates || []).map(function (e) { return e.data; })
-                    };
+                    pendingAppUpdates: pendingAppUpdates,
+                    pendingBoxUpdate: updateInfo.box || null,
 
-                    if (info.pendingAppUpdates.length || info.pendingBoxUpdate || info.finishedAppUpdates.length || info.finishedBoxUpdates.length) {
-                        debug('maybeSend: sending digest email', info);
-                        mailer.sendDigest(info);
-                    } else {
-                        debug('maybeSend: nothing happened, NOT sending digest email');
-                    }
+                    finishedAppUpdates: appUpdates,
+                    finishedBoxUpdates: boxUpdates,
 
-                    callback();
-                });
+                    certRenewals: certRenewals,
+                    finishedBackups: finishedBackups, // only the successful backups
+                    usersAdded: usersAdded,
+                    usersRemoved: usersRemoved // unused because we don't have username to work with
+                };
+
+                // always send digest for backup failure notification
+                debug('maybeSend: sending digest email', info);
+                mailer.sendDigest(info);
+
+                callback();
             });
         });
     });

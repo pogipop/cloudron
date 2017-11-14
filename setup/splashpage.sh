@@ -7,7 +7,6 @@ readonly SETUP_WEBSITE_DIR="/home/yellowtent/setup/website"
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 readonly box_src_dir="$(realpath ${script_dir}/..)"
 readonly PLATFORM_DATA_DIR="/home/yellowtent/platformdata"
-readonly ADMIN_LOCATION="my" # keep this in sync with constants.js
 
 echo "Setting up nginx update page"
 
@@ -19,7 +18,7 @@ fi
 source "${script_dir}/argparser.sh" "$@" # this injects the arg_* variables used below
 
 # keep this is sync with config.js appFqdn()
-admin_fqdn=$([[ "${arg_is_custom_domain}" == "true" ]] && echo "${ADMIN_LOCATION}.${arg_fqdn}" ||  echo "${ADMIN_LOCATION}-${arg_fqdn}")
+admin_fqdn=$([[ "${arg_is_custom_domain}" == "true" ]] && echo "${arg_admin_location}.${arg_fqdn}" ||  echo "${arg_admin_location}-${arg_fqdn}")
 admin_origin="https://${admin_fqdn}"
 
 # copy the website

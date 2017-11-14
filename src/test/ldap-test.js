@@ -141,10 +141,8 @@ function setup(done) {
             var answer = {};
             var status = 500;
 
-            if (req.method === 'GET' && req.url === '/networks') {
-                answer = [{
-                    Name: "irrelevant"
-                }, {
+            if (req.method === 'GET' && req.url === '/networks/cloudron') {
+                answer = {
                     Name: "cloudron",
                     Id: "f2de39df4171b0dc801e8002d1d999b77256983dfc63041c0f34030aa3977566",
                     Scope: "local",
@@ -169,7 +167,7 @@ function setup(done) {
                             "IPv6Address": ""
                         }
                     }
-                }];
+                };
                 status = 200;
             }
 
@@ -319,6 +317,35 @@ describe('Ldap', function () {
 
             var opts = {
                 filter: 'objectcategory=person'
+            };
+
+            client.search('ou=users,dc=cloudron', opts, function (error, result) {
+                expect(error).to.be(null);
+                expect(result).to.be.an(EventEmitter);
+
+                var entries = [];
+
+                result.on('searchEntry', function (entry) { entries.push(entry.object); });
+                result.on('error', done);
+                result.on('end', function (result) {
+                    expect(result.status).to.equal(0);
+                    expect(entries.length).to.equal(2);
+                    entries.sort(function (a, b) { return a.username > b.username; });
+                    expect(entries[0].username).to.equal(USER_0.username.toLowerCase());
+                    expect(entries[0].mail).to.equal(USER_0.email.toLowerCase());
+                    expect(entries[1].username).to.equal(USER_1.username.toLowerCase());
+                    expect(entries[1].mail).to.equal(USER_1.email.toLowerCase());
+                    done();
+                });
+            });
+        });
+
+        it ('succeeds with pagination', function (done) {
+            var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + config.get('ldapPort') });
+
+            var opts = {
+                filter: 'objectcategory=person',
+                paged: true
             };
 
             client.search('ou=users,dc=cloudron', opts, function (error, result) {
@@ -617,13 +644,50 @@ describe('Ldap', function () {
                 });
             });
         });
+
+        it ('succeeds with pagination', function (done) {
+            var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + config.get('ldapPort') });
+
+            var opts = {
+                filter: 'objectclass=group',
+                paged: true
+            };
+
+            client.search('ou=groups,dc=cloudron', opts, function (error, result) {
+                expect(error).to.be(null);
+                expect(result).to.be.an(EventEmitter);
+
+                var entries = [];
+
+                result.on('searchEntry', function (entry) { entries.push(entry.object); });
+                result.on('error', done);
+                result.on('end', function (result) {
+                    expect(result.status).to.equal(0);
+                    expect(entries.length).to.equal(2);
+
+                    // ensure order for testability
+                    entries.sort(function (a, b) { return a.username < b.username; });
+
+                    expect(entries[0].cn).to.equal('users');
+                    expect(entries[0].memberuid.length).to.equal(3);
+                    expect(entries[0].memberuid[0]).to.equal(USER_0.id);
+                    expect(entries[0].memberuid[1]).to.equal(USER_1.id);
+                    expect(entries[0].memberuid[2]).to.equal(USER_2.id);
+                    expect(entries[1].cn).to.equal('admins');
+                    // if only one entry, the array becomes a string :-/
+                    expect(entries[1].memberuid).to.equal(USER_0.id);
+                    done();
+                });
+            });
+        });
     });
 
     function ldapSearch(dn, filter, callback) {
         var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + config.get('ldapPort') });
 
         var opts = {
-            filter: filter
+            filter: filter,
+            paged: true
         };
 
         client.search(dn, opts, function (error, result) {

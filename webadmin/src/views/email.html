@@ -65,9 +65,9 @@
        <a href="" data-toggle="collapse" data-parent="#accordion" data-target="#mail_settings">Mail server settings for email clients</a>
        <div id="mail_settings" class="panel-collapse collapse">
          <br/>
-         <p><b>Incoming Mail (IMAP)</b><br/>Server: <span ng-click-select>my.{{config.fqdn}}</span><br/>Port: 993 (TLS)</p>
-         <p><b>Outgoing Mail (SMTP)</b><br/>Server: <span ng-click-select>my.{{config.fqdn}}</span><br/>Port: 587 (STARTTLS)</p>
-         <p><b>ManageSieve</b><br/>Server: <span ng-click-select>my.{{config.fqdn}}</span><br/>Port: 4190 (TLS)</p>
+         <p><b>Incoming Mail (IMAP)</b><br/>Server: <span ng-click-select>{{config.mailFqdn}}</span><br/>Port: 993 (TLS)</p>
+         <p><b>Outgoing Mail (SMTP)</b><br/>Server: <span ng-click-select>{{config.mailFqdn}}</span><br/>Port: 587 (STARTTLS)</p>
+         <p><b>ManageSieve</b><br/>Server: <span ng-click-select>{{config.mailFqdn}}</span><br/>Port: 4190 (TLS)</p>
          <p>All the servers require your Cloudron credentials for authentication.</p>
         </div>
       </div>

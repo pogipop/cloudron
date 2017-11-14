@@ -162,29 +162,6 @@ describe('Settings', function () {
             });
         });
 
-        it('can get default update config config', function (done) {
-            settings.getUpdateConfig(function (error, updateConfig) {
-                expect(error).to.be(null);
-                expect(updateConfig.prerelease).to.be(false);
-                done();
-            });
-        });
-
-        it('can set update config', function (done) {
-            settings.setUpdateConfig({ prerelease: true }, function (error) {
-                expect(error).to.be(null);
-                done();
-            });
-        });
-
-        it('can get update config', function (done) {
-            settings.getUpdateConfig(function (error, updateConfig) {
-                expect(error).to.be(null);
-                expect(updateConfig.prerelease).to.be(true);
-                done();
-            });
-        });
-
         it('can set mail config', function (done) {
             settings.setMailConfig({ enabled: true }, function (error) {
                 expect(error).to.be(null);

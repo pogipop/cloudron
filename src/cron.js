@@ -35,7 +35,7 @@ var gAliveJob = null, // send periodic stats
     gCleanupTokensJob = null,
     gDockerVolumeCleanerJob = null,
     gDynamicDNSJob = null,
-    gHeartbeatJob = null, // for CaaS health check
+    gCaasHeartbeatJob = null, // for CaaS health check
     gSchedulerSyncJob = null,
     gDigestEmailJob = null;
 
@@ -53,18 +53,20 @@ var AUDIT_SOURCE = { userId: null, username: 'cron' };
 function initialize(callback) {
     assert.strictEqual(typeof callback, 'function');
 
-    gHeartbeatJob = new CronJob({
-        cronTime: '00 */1 * * * *', // every minute
-        onTick: cloudron.sendHeartbeat,
-        start: false
-    });
-    // hack: send the first heartbeat only after we are running for 60 seconds
-    // required as we end up sending a heartbeat and then cloudron-setup reboots the server
-    setTimeout(function () {
-        if (!gHeartbeatJob) return; // already uninitalized
-        gHeartbeatJob.start();
-        cloudron.sendHeartbeat();
-    }, 1000 * 60);
+    if (config.provider() === 'caas') {
+        gCaasHeartbeatJob = new CronJob({
+            cronTime: '00 */1 * * * *', // every minute
+            onTick: cloudron.sendCaasHeartbeat,
+            start: false
+        });
+        // hack: send the first heartbeat only after we are running for 60 seconds
+        // required as we end up sending a heartbeat and then cloudron-setup reboots the server
+        setTimeout(function () {
+            if (!gCaasHeartbeatJob) return; // already uninitalized
+            gCaasHeartbeatJob.start();
+            cloudron.sendCaasHeartbeat();
+        }, 1000 * 60);
+    }
 
     var randomHourMinute = Math.floor(60*Math.random());
     gAliveJob = new CronJob({
@@ -252,8 +254,8 @@ function uninitialize(callback) {
     if (gAppUpdateCheckerJob) gAppUpdateCheckerJob.stop();
     gAppUpdateCheckerJob = null;
 
-    if (gHeartbeatJob) gHeartbeatJob.stop();
-    gHeartbeatJob = null;
+    if (gCaasHeartbeatJob) gCaasHeartbeatJob.stop();
+    gCaasHeartbeatJob = null;
 
     if (gAliveJob) gAliveJob.stop();
     gAliveJob = null;
