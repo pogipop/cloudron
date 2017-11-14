@@ -9,7 +9,13 @@ angular.module('Application').controller('EmailController', ['$scope', '$locatio
     $scope.dnsConfig = {};
     $scope.relay = {};
     $scope.rbl = null;
-    $scope.expectedDnsRecords = {};
+    $scope.expectedDnsRecords = {
+        mx: { },
+        dkim: { },
+        spf: { },
+        dmarc: { },
+        ptr: { }
+    };
     $scope.expectedDnsRecordsTypes = [
         { name: 'MX', value: 'mx' },
         { name: 'DKIM', value: 'dkim' },
@@ -217,12 +223,13 @@ angular.module('Application').controller('EmailController', ['$scope', '$locatio
         Client.getEmailStatus(function (error, result) {
             if (error) return callback(error);
 
-            $scope.expectedDnsRecords = result.dns;
             $scope.relay = result.relay;
             $scope.rbl = result.rbl;
 
             // open the record details if they are not correct
             for (var type in $scope.expectedDnsRecords) {
+                $scope.expectedDnsRecords[type] = result.dns[type];
+
                 if (!$scope.expectedDnsRecords[type].status) {
                     $('#collapse_dns_' + type).collapse('show');
                 }

@@ -196,7 +196,7 @@
           <div class="row" ng-if="expectedDnsRecords[record.value] && (mailConfig.enabled || (record.name !== 'DMARC' && record.name !== 'MX'))">
             <div class="col-xs-12">
               <p class="text-muted">
-                <i ng-class="expectedDnsRecords[record.value].status ? 'fa fa-check-circle text-success' : 'fa fa-exclamation-triangle text-danger'"></i> &nbsp;
+                <i ng-hide="email.refreshBusy" ng-class="expectedDnsRecords[record.value].status ? 'fa fa-check-circle text-success' : 'fa fa-exclamation-triangle text-danger'"></i> &nbsp;
                 <a href="" data-toggle="collapse" data-parent="#accordion" data-target="#collapse_dns_{{ record.value }}">{{ record.name }} record</a>
                 <button class="btn btn-xs btn-default" ng-click="email.refresh()" ng-disabled="email.refreshBusy" ng-show="!expectedDnsRecords[record.value].status"><i class="fa fa-refresh" ng-class="{ 'fa-pulse': email.refreshBusy }"></i></button>
               </p>
@@ -226,7 +226,7 @@
         <div class="row">
           <div class="col-xs-12">
             <p class="text-muted">
-              <i ng-class="relay.status ? 'fa fa-check-circle text-success' : 'fa fa-exclamation-triangle text-danger'"></i> &nbsp;
+              <i ng-hide="email.refreshBusy" ng-class="relay.status ? 'fa fa-check-circle text-success' : 'fa fa-exclamation-triangle text-danger'"></i> &nbsp;
               <a href="" data-toggle="collapse" data-parent="#accordion" data-target="#collapse_dns_port">
                 Outbound SMTP
               </a>
@@ -240,10 +240,10 @@
           </div>
         </div>
 
-        <div class="row" ng-show="rbl">
+        <div class="row">
           <div class="col-xs-12">
             <p class="text-muted">
-              <i ng-class="rbl.status ? 'fa fa-check-circle text-success' : 'fa fa-exclamation-triangle text-danger'"></i> &nbsp;
+              <i ng-hide="email.refreshBusy" ng-class="rbl.status ? 'fa fa-check-circle text-success' : 'fa fa-exclamation-triangle text-danger'"></i> &nbsp;
               <a href="" data-toggle="collapse" data-parent="#accordion" data-target="#collapse_rbl">
                   IP Address Blacklist Check
               </a>
