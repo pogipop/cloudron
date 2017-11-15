@@ -92,14 +92,17 @@ function createBackup(callback) {
 
 describe('backups', function () {
     before(function (done) {
+        const BACKUP_DIR = path.join(os.tmpdir(), 'cloudron-backup-test');
+
         async.series([
+            mkdirp.bind(null, BACKUP_DIR),
             database.initialize,
             database._clear,
             settings.initialize,
             settings.setBackupConfig.bind(null, {
                 provider: 'filesystem',
                 key: 'enckey',
-                backupFolder: '/var/backups',
+                backupFolder: BACKUP_DIR,
                 retentionSecs: 1,
                 format: 'tgz'
             })
