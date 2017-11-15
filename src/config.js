@@ -48,11 +48,16 @@ exports = module.exports = {
 };
 
 var assert = require('assert'),
+    debug = require('debug')('box:config.js'),
     fs = require('fs'),
     path = require('path'),
     safe = require('safetydance'),
     tld = require('tldjs'),
     _ = require('underscore');
+
+
+// assert on unknown environment can't proceed
+assert(exports.CLOUDRON || exports.TEST, 'Unknown environment. This should not happen!');
 
 var homeDir = process.env.HOME || process.env.HOMEPATH || process.env.USERPROFILE;
 
@@ -64,9 +69,24 @@ function baseDir() {
 }
 
 var cloudronConfigFileName = path.join(baseDir(), 'configs/cloudron.conf');
+assert(fs.existsSync(cloudronConfigFileName), 'No cloudron.conf found, cannot proceed');
 
 function saveSync() {
-    fs.writeFileSync(cloudronConfigFileName, JSON.stringify(data, null, 4)); // functions are ignored by JSON.stringify
+    // only save values we want to have in the cloudron.conf, see start.sh
+    var conf = {
+        version: data.version,
+        token: data.token,
+        apiServerOrigin: data.apiServerOrigin,
+        webServerOrigin: data.webServerOrigin,
+        fqdn: data.fqdn,
+        zoneName: data.zoneName,
+        adminLocation: data.adminLocation,
+        isCustomDomain: data.isCustomDomain,
+        provider: data.provider,
+        isDemo: data.isDemo
+    };
+
+    fs.writeFileSync(cloudronConfigFileName, JSON.stringify(conf, null, 4)); // functions are ignored by JSON.stringify
 }
 
 function _reset(callback) {
@@ -79,45 +99,41 @@ function _reset(callback) {
 
 function initConfig() {
     // setup defaults
-    data.fqdn = 'localhost';
+    data.fqdn = '';
     data.zoneName = '';
     data.adminLocation = 'my';
-
+    data.port = 3000;
     data.token = null;
     data.version = null;
     data.isCustomDomain = true;
+    data.apiServerOrigin = null;
     data.webServerOrigin = null;
-    data.smtpPort = 2525; // // this value comes from mail container
+    data.provider = 'caas';
+    data.smtpPort = 2525; // this value comes from mail container
     data.sysadminPort = 3001;
     data.ldapPort = 3002;
-    data.provider = 'caas';
 
-    if (exports.CLOUDRON) {
-        data.port = 3000;
-        data.apiServerOrigin = null;
-        data.database = null;
-    } else if (exports.TEST) {
+    // keep in sync with start.sh
+    data.database = {
+        hostname: '127.0.0.1',
+        username: 'root',
+        password: 'password',
+        port: 3306,
+        name: 'box'
+    };
+
+    // overrides for local testings
+    if (exports.TEST) {
         data.port = 5454;
-        data.apiServerOrigin = 'http://localhost:6060'; // hock doesn't support https
-        data.database = {
-            hostname: '127.0.0.1',
-            username: 'root',
-            password: '',
-            port: 3306,
-            name: 'boxtest'
-        };
         data.token = 'APPSTORE_TOKEN';
-    } else {
-        assert(false, 'Unknown environment. This should not happen!');
+        data.apiServerOrigin = 'http://localhost:6060'; // hock doesn't support https
+        data.database.password = '';
+        data.database.name = 'boxtest';
     }
 
-    if (safe.fs.existsSync(cloudronConfigFileName)) {
-        var existingData = safe.JSON.parse(safe.fs.readFileSync(cloudronConfigFileName, 'utf8'));
-        _.extend(data, existingData); // overwrite defaults with saved config
-        return;
-    }
-
-    saveSync();
+    // overwrite defaults with saved config
+    var existingData = safe.JSON.parse(safe.fs.readFileSync(cloudronConfigFileName, 'utf8'));
+    _.extend(data, existingData);
 }
 
 initConfig();
