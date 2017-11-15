@@ -164,12 +164,44 @@ angular.module('Application').controller('EmailController', ['$scope', '$locatio
         }
     };
 
-    $scope.sendTestEmail = function () {
-        Client.sentTestMail($scope.user.email, function (error) {
-            if (error) return console.error(error);
+    $scope.testEmail = {
+        busy: false,
+        error: {},
 
-            $('#testEmailSent').modal('show');
-        });
+        mailTo: '',
+
+        clearForm: function () {
+            $scope.testEmail.mailTo = '';
+        },
+
+        show: function () {
+            $scope.testEmail.error = {};
+            $scope.testEmail.busy = false;
+
+            $scope.testEmail.mailTo = $scope.user.email;
+
+            $('#testEmailModal').modal('show');
+        },
+
+        submit: function () {
+            $scope.testEmail.error = {};
+            $scope.testEmail.busy = true;
+
+            Client.sentTestMail($scope.testEmail.mailTo, function (error) {
+                $scope.testEmail.busy = false;
+
+                if (error) {
+                    if (error.statusCode === 402) {
+                        $scope.testEmail.error.generic = error.message;
+                    } else {
+                        console.error(error);
+                    }
+                    return;
+                }
+
+                $('#testEmailModal').modal('hide');
+            });
+        }
     };
 
     function getMailConfig() {
