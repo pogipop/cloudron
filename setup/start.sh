@@ -272,14 +272,7 @@ cat > "${CONFIG_DIR}/cloudron.conf" <<CONF_END
     "zoneName": "${arg_zone_name}",
     "isCustomDomain": ${arg_is_custom_domain},
     "provider": "${arg_provider}",
-    "isDemo": ${arg_is_demo},
-    "database": {
-        "hostname": "127.0.0.1",
-        "username": "root",
-        "password": "${mysql_root_password}",
-        "port": 3306,
-        "name": "box"
-    }
+    "isDemo": ${arg_is_demo}
 }
 CONF_END
 # pass these out-of-band because they have new lines which interfere with json
