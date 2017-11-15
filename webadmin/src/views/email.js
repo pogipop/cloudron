@@ -191,11 +191,9 @@ angular.module('Application').controller('EmailController', ['$scope', '$locatio
                 $scope.testEmail.busy = false;
 
                 if (error) {
-                    if (error.statusCode === 402) {
-                        $scope.testEmail.error.generic = error.message;
-                    } else {
-                        console.error(error);
-                    }
+                    $scope.testEmail.error.generic = error.message;
+                    console.error(error);
+                    $('#inputTestMailTo').focus();
                     return;
                 }
 
@@ -322,6 +320,13 @@ angular.module('Application').controller('EmailController', ['$scope', '$locatio
         getUsers();
         getCatchallAddresses();
         $scope.email.refresh();
+    });
+
+    // setup all the dialog focus handling
+    ['testEmailModal'].forEach(function (id) {
+        $('#' + id).on('shown.bs.modal', function () {
+            $(this).find("[autofocus]:first").focus();
+        });
     });
 
     $('.modal-backdrop').remove();

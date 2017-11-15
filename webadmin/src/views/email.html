@@ -40,7 +40,7 @@
 
                   <div class="form-group" ng-class="{ 'has-error': testEmail.error.key }">
                       <label class="control-label" for="inputTestEmailKey">Email to</label>
-                      <input type="text" class="form-control" ng-model="testEmail.mailTo" id="inputTestMailTo" name="mailTo" ng-disabled="testEmail.busy" placeholder="Email address">
+                      <input type="text" class="form-control" ng-model="testEmail.mailTo" id="inputTestMailTo" name="mailTo" ng-disabled="testEmail.busy" placeholder="Email address" autofocus>
                   </div>
 
                   <input class="ng-hide" type="submit" ng-disabled="testEmailForm.$invalid"/>
