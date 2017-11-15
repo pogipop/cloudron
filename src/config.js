@@ -69,7 +69,9 @@ function baseDir() {
 }
 
 var cloudronConfigFileName = path.join(baseDir(), 'configs/cloudron.conf');
-assert(fs.existsSync(cloudronConfigFileName), 'No cloudron.conf found, cannot proceed');
+
+// only tests can run without a config file on disk, they use the defaults with runtime overrides
+if (exports.CLOUDRON) assert(fs.existsSync(cloudronConfigFileName), 'No cloudron.conf found, cannot proceed');
 
 function saveSync() {
     // only save values we want to have in the cloudron.conf, see start.sh
