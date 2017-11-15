@@ -41,6 +41,7 @@ while true; do
         # these params must be valid in all cases
         arg_fqdn=$(echo "$2" | $json fqdn)
         arg_zone_name=$(echo "$2" | $json zoneName)
+        [[ "${arg_zone_name}" == "" ]] && arg_zone_name="${arg_fqdn}"
 
         arg_is_custom_domain=$(echo "$2" | $json isCustomDomain)
         [[ "${arg_is_custom_domain}" == "" ]] && arg_is_custom_domain="true"
