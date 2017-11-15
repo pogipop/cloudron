@@ -13,6 +13,8 @@ exports = module.exports = {
 
     getAccount: getAccount,
 
+    sendFeedback: sendFeedback,
+
     AppstoreError: AppstoreError
 };
 
@@ -264,6 +266,29 @@ function getAccount(callback) {
 
             // { profile: { id, email, groupId, billing, firstName, lastName, company, street, city, zip, state, country } }
             callback(null, result.body.profile);
+        });
+    });
+}
+
+function sendFeedback(info, callback) {
+    assert.strictEqual(typeof info, 'object');
+    assert.strictEqual(typeof info.email, 'string');
+    assert.strictEqual(typeof info.displayName, 'string');
+    assert.strictEqual(typeof info.type, 'string');
+    assert.strictEqual(typeof info.subject, 'string');
+    assert.strictEqual(typeof info.description, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    getAppstoreConfig(function (error, appstoreConfig) {
+        if (error) return callback(error);
+
+        var url = config.apiServerOrigin() + '/api/v1/users/' + appstoreConfig.userId + '/cloudrons/' + appstoreConfig.cloudronId + '/feedback';
+
+        superagent.post(url).query({ accessToken: appstoreConfig.token }).send(info).timeout(10 * 1000).end(function (error, result) {
+            if (error && !error.response) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, error));
+            if (result.statusCode !== 201) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, util.format('Bad response: %s %s', result.statusCode, result.text)));
+
+            callback(null);
         });
     });
 }

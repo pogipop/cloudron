@@ -540,26 +540,6 @@ describe('Cloudron', function () {
                 });
         });
 
-        it('succeeds with ticket type', function (done) {
-            superagent.post(SERVER_URL + '/api/v1/feedback')
-                .send({ type: 'ticket', subject: 'some subject', description: 'some description' })
-                .query({ access_token: token })
-                .end(function (error, result) {
-                    expect(result.statusCode).to.equal(201);
-                    done();
-                });
-        });
-
-        it('succeeds with app type', function (done) {
-            superagent.post(SERVER_URL + '/api/v1/feedback')
-                .send({ type: 'app_missing', subject: 'some subject', description: 'some description' })
-                .query({ access_token: token })
-                .end(function (error, result) {
-                    expect(result.statusCode).to.equal(201);
-                    done();
-                });
-        });
-
         it('fails without description', function (done) {
             superagent.post(SERVER_URL + '/api/v1/feedback')
                 .send({ type: 'ticket', subject: 'some subject' })
@@ -590,22 +570,48 @@ describe('Cloudron', function () {
                 });
         });
 
-        it('succeeds with feedback type', function (done) {
-            superagent.post(SERVER_URL + '/api/v1/feedback')
-                .send({ type: 'feedback', subject: 'some subject', description: 'some description' })
-                .query({ access_token: token })
-                .end(function (error, result) {
-                    expect(result.statusCode).to.equal(201);
-                    done();
-                });
-        });
-
         it('fails without subject', function (done) {
             superagent.post(SERVER_URL + '/api/v1/feedback')
                 .send({ type: 'ticket', description: 'some description' })
                 .query({ access_token: token })
                 .end(function (error, result) {
                     expect(result.statusCode).to.equal(400);
+                    done();
+                });
+        });
+
+        it('succeeds with ticket type', function (done) {
+            var scope1 = nock(config.apiServerOrigin()).post('/api/v1/exchangeBoxTokenWithUserToken?token=APPSTORE_TOKEN').reply(201, { userId: 'USER_ID', cloudronId: 'CLOUDRON_ID', token: 'ACCESS_TOKEN' });
+            var scope2 = nock(config.apiServerOrigin())
+                .filteringRequestBody(function (/* unusedBody */) { return ''; }) // strip out body
+                .post('/api/v1/users/USER_ID/cloudrons/CLOUDRON_ID/feedback?accessToken=ACCESS_TOKEN')
+                .reply(201, { });
+
+            superagent.post(SERVER_URL + '/api/v1/feedback')
+                .send({ type: 'ticket', subject: 'some subject', description: 'some description' })
+                .query({ access_token: token })
+                .end(function (error, result) {
+                    expect(result.statusCode).to.equal(201);
+                    expect(scope1.isDone()).to.be.ok();
+                    expect(scope2.isDone()).to.be.ok();
+                    done();
+                });
+        });
+
+        it('succeeds with app type', function (done) {
+            var scope1 = nock(config.apiServerOrigin()).post('/api/v1/exchangeBoxTokenWithUserToken?token=APPSTORE_TOKEN').reply(201, { userId: 'USER_ID', cloudronId: 'CLOUDRON_ID', token: 'ACCESS_TOKEN' });
+            var scope2 = nock(config.apiServerOrigin())
+                .filteringRequestBody(function (/* unusedBody */) { return ''; }) // strip out body
+                .post('/api/v1/users/USER_ID/cloudrons/CLOUDRON_ID/feedback?accessToken=ACCESS_TOKEN')
+                .reply(201, { });
+
+            superagent.post(SERVER_URL + '/api/v1/feedback')
+                .send({ type: 'app_missing', subject: 'some subject', description: 'some description' })
+                .query({ access_token: token })
+                .end(function (error, result) {
+                    expect(result.statusCode).to.equal(201);
+                    expect(scope1.isDone()).to.be.ok();
+                    expect(scope2.isDone()).to.be.ok();
                     done();
                 });
         });

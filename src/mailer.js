@@ -23,22 +23,13 @@ exports = module.exports = {
 
     certificateRenewalError: certificateRenewalError,
 
-    FEEDBACK_TYPE_FEEDBACK: 'feedback',
-    FEEDBACK_TYPE_TICKET: 'ticket',
-    FEEDBACK_TYPE_APP_MISSING: 'app_missing',
-    FEEDBACK_TYPE_APP_ERROR: 'app_error',
-    FEEDBACK_TYPE_UPGRADE_REQUEST: 'upgrade_request',
-    sendFeedback: sendFeedback,
-
     sendTestMail: sendTestMail,
 
     _getMailQueue: _getMailQueue,
     _clearMailQueue: _clearMailQueue
 };
 
-var appstore = require('./appstore.js'),
-    AppstoreError = appstore.AppstoreError,
-    assert = require('assert'),
+var assert = require('assert'),
     async = require('async'),
     config = require('./config.js'),
     debug = require('debug')('box:mailer'),
@@ -573,28 +564,6 @@ function unexpectedExit(program, context, callback) {
     };
 
     sendMails([ mailOptions ], callback);
-}
-
-function sendFeedback(user, type, subject, description) {
-    assert.strictEqual(typeof user, 'object');
-    assert.strictEqual(typeof type, 'string');
-    assert.strictEqual(typeof subject, 'string');
-    assert.strictEqual(typeof description, 'string');
-
-    assert(type === exports.FEEDBACK_TYPE_TICKET ||
-        type === exports.FEEDBACK_TYPE_FEEDBACK ||
-        type === exports.FEEDBACK_TYPE_APP_MISSING ||
-        type === exports.FEEDBACK_TYPE_UPGRADE_REQUEST ||
-        type === exports.FEEDBACK_TYPE_APP_ERROR);
-
-    var mailOptions = {
-        from: mailConfig().from,
-        to: 'support@cloudron.io',
-        subject: util.format('[%s] %s - %s', type, config.fqdn(), subject),
-        text: render('feedback.ejs', { fqdn: config.fqdn(), type: type, user: user, subject: subject, description: description, format: 'text'})
-    };
-
-    enqueue(mailOptions);
 }
 
 function sendTestMail(email) {
