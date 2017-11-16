@@ -506,7 +506,7 @@ function install(data, auditSource, callback) {
                 sso: sso,
                 debugMode: debugMode,
                 mailboxName: (location ? location : manifest.title.toLowerCase().replace(/[^a-zA-Z0-9]/g, '')) + '.app',
-                restoreConfig: { backupId: backupId, backupFormat: backupFormat },
+                restoreConfig: backupId ? { backupId: backupId, backupFormat: backupFormat } : null,
                 enableBackup: enableBackup,
                 robotsTxt: robotsTxt
             };
