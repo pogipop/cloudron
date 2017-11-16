@@ -184,8 +184,8 @@
                   {{ domain.config.provider }}
                 </td>
                 <td class="text-right no-wrap" style="vertical-align: bottom">
-                  <button class="btn btn-xs btn-default" ng-click="domainConfigure.show(domain)" title="Edit Domain"><i class="fa fa-pencil"></i></button>
-                  <button class="btn btn-xs btn-danger" ng-click="domainRemove.show(domain)" title="Remove Domain"><i class="fa fa-trash-o"></i></button>
+                  <button class="btn btn-xs btn-default" ng-click="domainConfigure.show(domain)" ng-show="domain.config.provider !== 'caas'" title="Edit Domain"><i class="fa fa-pencil"></i></button>
+                  <button class="btn btn-xs btn-danger" ng-click="domainRemove.show(domain)" ng-show="domain.config.provider !== 'caas'" title="Remove Domain"><i class="fa fa-trash-o"></i></button>
                 </td>
               </tr>
             </tbody>

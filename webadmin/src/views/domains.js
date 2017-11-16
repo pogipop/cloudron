@@ -80,7 +80,7 @@ angular.module('Application').controller('DomainsController', ['$scope', '$locat
                 $scope.domainConfigure.cloudflareToken = domain.config.provider === 'cloudflare' ? domain.config.token : '';
                 $scope.domainConfigure.cloudflareEmail = domain.config.email;
 
-                $scope.domainConfigure.provider = domain.config.provider === 'caas' ? 'route53' : domain.config.provider;
+                $scope.domainConfigure.provider = domain.config.provider;
                 $scope.domainConfigure.provider = ($scope.domainConfigure.provider === 'manual' && domain.config.wildcard) ? 'wildcard' : domain.config.provider;
             } else {
                 $scope.domainConfigure.adding = true;
