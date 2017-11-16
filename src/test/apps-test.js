@@ -325,11 +325,13 @@ describe('Apps', function () {
             });
         });
 
-        it('succeeds with admin not being special', function (done) {
+        it('returns all apps for admin', function (done) {
             apps.getAllByUser(ADMIN_0, function (error, result) {
                 expect(error).to.equal(null);
-                expect(result.length).to.equal(1);
+                expect(result.length).to.equal(3);
                 expect(result[0].id).to.equal(APP_0.id);
+                expect(result[1].id).to.equal(APP_1.id);
+                expect(result[2].id).to.equal(APP_2.id);
                 done();
             });
         });

@@ -309,12 +309,18 @@ function hasAccessTo(app, user, callback) {
     if (app.accessRestriction.users.some(function (e) { return e === user.id; })) return callback(null, true);
 
     // check group access
-    if (!app.accessRestriction.groups) return callback(null, false);
+    groups.getGroups(user.id, function (error, groupIds) {
+        if (error) return callback(null, false);
 
-    async.some(app.accessRestriction.groups, function (groupId, iteratorDone) {
-        groups.isMember(groupId, user.id, iteratorDone);
-    }, function (error, result) {
-        callback(null, !error && result);
+        const isAdmin = groupIds.indexOf(constants.ADMIN_GROUP_ID) !== -1;
+
+        if (isAdmin) return callback(null, true); // admins can always access any app
+
+        if (!app.accessRestriction.groups) return callback(null, false);
+
+        if (app.accessRestriction.groups.some(function (gid) { return groupIds.indexOf(gid) !== -1; })) return callback(null, true);
+
+        callback(null, false);
     });
 }
 

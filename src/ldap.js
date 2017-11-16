@@ -479,13 +479,13 @@ function start(callback) {
     gServer.compare('cn=admins,ou=groups,dc=cloudron', groupAdminsCompare);
 
     // this is the bind for addons (after bind, they might search and authenticate)
-    gServer.bind('ou=addons,dc=cloudron', function(req, res, next) {
+    gServer.bind('ou=addons,dc=cloudron', function(req, res /*, next */) {
         debug('addons bind: %s', req.dn.toString()); // note: cn can be email or id
         res.end();
     });
 
     // this is the bind for apps (after bind, they might search and authenticate user)
-    gServer.bind('ou=apps,dc=cloudron', function(req, res, next) {
+    gServer.bind('ou=apps,dc=cloudron', function(req, res /*, next */) {
         // TODO: validate password
         debug('application bind: %s', req.dn.toString());
         res.end();

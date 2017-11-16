@@ -143,28 +143,28 @@ function setup(done) {
 
             if (req.method === 'GET' && req.url === '/networks/cloudron') {
                 answer = {
-                    Name: "cloudron",
-                    Id: "f2de39df4171b0dc801e8002d1d999b77256983dfc63041c0f34030aa3977566",
-                    Scope: "local",
-                    Driver: "bridge",
+                    Name: 'cloudron',
+                    Id: 'f2de39df4171b0dc801e8002d1d999b77256983dfc63041c0f34030aa3977566',
+                    Scope: 'local',
+                    Driver: 'bridge',
                     IPAM: {
-                        Driver: "default",
+                        Driver: 'default',
                         Config: [{
-                            Subnet: "172.18.0.0/16"
+                            Subnet: '172.18.0.0/16'
                         }]
                     },
-                    "Containers": {
+                    'Containers': {
                         someOtherContainerId: {
-                            "EndpointID": "ed2419a97c1d9954d05b46e462e7002ea552f216e9b136b80a7db8d98b442eda",
-                            "MacAddress": "02:42:ac:11:00:02",
-                            "IPv4Address": "127.0.0.2/16",
-                            "IPv6Address": ""
+                            'EndpointID': 'ed2419a97c1d9954d05b46e462e7002ea552f216e9b136b80a7db8d98b442eda',
+                            'MacAddress': '02:42:ac:11:00:02',
+                            'IPv4Address': '127.0.0.2/16',
+                            'IPv6Address': ''
                         },
                         someContainerId: {
-                            "EndpointID": "ed2419a97c1d9954d05b46e462e7002ea552f216e9b136b80a7db8d98b442eda",
-                            "MacAddress": "02:42:ac:11:00:02",
-                            "IPv4Address": "127.0.0.1/16",
-                            "IPv6Address": ""
+                            'EndpointID': 'ed2419a97c1d9954d05b46e462e7002ea552f216e9b136b80a7db8d98b442eda',
+                            'MacAddress': '02:42:ac:11:00:02',
+                            'IPv4Address': '127.0.0.1/16',
+                            'IPv6Address': ''
                         }
                     }
                 };
@@ -266,10 +266,10 @@ describe('Ldap', function () {
         it('fails with accessRestriction denied', function (done) {
             var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + config.get('ldapPort') });
 
-            appdb.update(APP_0.id, { accessRestriction: { users: [ USER_1.id ], groups: [] }}, function (error) {
+            appdb.update(APP_0.id, { accessRestriction: { users: [ USER_0.id ], groups: [] }}, function (error) {
                 expect(error).to.eql(null);
 
-                client.bind('cn=' + USER_0.id + ',ou=users,dc=cloudron', USER_0.password, function (error) {
+                client.bind('cn=' + USER_1.id + ',ou=users,dc=cloudron', USER_1.password, function (error) {
                     expect(error).to.be.a(ldap.NoSuchObjectError);
                     done();
                 });
@@ -457,7 +457,7 @@ describe('Ldap', function () {
             });
         });
 
-        it ('does not list users who have no access', function (done) {
+        it ('always lists admins', function (done) {
             appdb.update(APP_0.id, { accessRestriction: { users: [], groups: [] } }, function (error) {
                 expect(error).to.be(null);
 
@@ -477,7 +477,9 @@ describe('Ldap', function () {
                     result.on('error', done);
                     result.on('end', function (result) {
                         expect(result.status).to.equal(0);
-                        expect(entries.length).to.equal(0);
+                        expect(entries.length).to.equal(1);
+                        expect(entries[0].username).to.equal(USER_0.username.toLowerCase());
+                        expect(entries[0].memberof.length).to.equal(2);
 
                         appdb.update(APP_0.id, { accessRestriction: null }, done);
                     });
@@ -725,7 +727,7 @@ describe('Ldap', function () {
         });
 
         it('cannot get alias as a mailbox', function (done) {
-            ldapSearch('cn=' + USER_0_ALIAS + ',ou=mailboxes,dc=cloudron', 'objectclass=mailbox', function (error, entries) {
+            ldapSearch('cn=' + USER_0_ALIAS + ',ou=mailboxes,dc=cloudron', 'objectclass=mailbox', function (error) {
                 expect(error).to.be.a(ldap.NoSuchObjectError);
                 done();
             });
@@ -751,7 +753,7 @@ describe('Ldap', function () {
         });
 
         it('cannot get mailbox as alias', function (done) {
-            ldapSearch('cn=' + USER_0.username + ',ou=mailaliases,dc=cloudron', 'objectclass=nismailalias', function (error, entries) {
+            ldapSearch('cn=' + USER_0.username + ',ou=mailaliases,dc=cloudron', 'objectclass=nismailalias', function (error) {
                 expect(error).to.be.a(ldap.NoSuchObjectError);
                 done();
             });
