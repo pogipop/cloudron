@@ -1022,7 +1022,7 @@ function autoupdateApps(updateInfo, auditSource, callback) { // updateInfo is { 
             if (error) {
                 debug('Cannot autoupdate app %s : %s', appId, error.message);
                 return iteratorDone();
-           }
+            }
 
             error = canAutoupdateApp(app, updateInfo[appId].manifest);
             if (error) {
@@ -1193,7 +1193,7 @@ function uploadFile(appId, sourceFilePath, destFilePath, callback) {
         if (error) return callback(error);
 
         var readFile = fs.createReadStream(sourceFilePath);
-        readFile.on('error', console.error);
+        readFile.on('error', callback);
 
         readFile.pipe(stream);
 
