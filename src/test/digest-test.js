@@ -12,7 +12,6 @@ var async = require('async'),
     eventlog = require('../eventlog.js'),
     expect = require('expect.js'),
     mailer = require('../mailer.js'),
-    nock = require('nock'),
     paths = require('../paths.js'),
     safe = require('safetydance'),
     settings = require('../settings.js'),
@@ -37,8 +36,8 @@ function checkMails(number, email, done) {
     setTimeout(function () {
         expect(mailer._getMailQueue().length).to.equal(number);
 
-        if (number && email) {
-            expect(mailer._getMailQueue()[0].to.indexOf(email)).to.not.equal(-1);
+        if (number) {
+            expect(mailer._getMailQueue()[0].to).to.equal(email);
         }
 
         mailer._clearMailQueue();
@@ -59,6 +58,7 @@ describe('digest', function () {
 
     before(function (done) {
         config._reset();
+        config.set('fqdn', 'domain.com');
         config.set('version', '1.0.0');
         config.set('apiServerOrigin', 'http://localhost:4444');
         config.set('provider', 'notcaas');
@@ -70,6 +70,7 @@ describe('digest', function () {
             settings.initialize,
             user.createOwner.bind(null, USER_0.username, USER_0.password, USER_0.email, USER_0.displayName, AUDIT_SOURCE),
             eventlog.add.bind(null, eventlog.ACTION_UPDATE, AUDIT_SOURCE, { boxUpdateInfo: { sourceTarballUrl: 'xx', version: '1.2.3', changelog: [ 'good stuff' ] } }),
+            settingsdb.set.bind(null, settings.MAIL_CONFIG_KEY, JSON.stringify({ enabled: true })),
             mailer.start,
             mailer._clearMailQueue
         ], done);
@@ -85,7 +86,7 @@ describe('digest', function () {
         it('does not send mail with digest disabled', function (done) {
             digest.maybeSend(function (error) {
                 if (error) return done(error);
-                checkMails(0, '', done);
+                checkMails(0, null, done);
             });
         });
 
@@ -100,7 +101,7 @@ describe('digest', function () {
             digest.maybeSend(function (error) {
                 if (error) return done(error);
 
-                checkMails(1, '', done);
+                checkMails(1, `${USER_0.email}, ${USER_0.username}@${config.fqdn()}`, done);
             });
         });
 
@@ -110,19 +111,11 @@ describe('digest', function () {
             digest.maybeSend(function (error) {
                 if (error) return done(error);
 
-                checkMails(1, '', done);
+                checkMails(1, `${USER_0.email}, ${USER_0.username}@${config.fqdn()}`, done);
             });
         });
 
         it('sends mail for pending update to owner account email', function (done) {
-            var subscription = {
-                id: 'caas',
-                created: 0,
-                canceled_at: 0,
-                status: 'active',
-                plan: { id: 'caas' }
-            };
-
             updatechecker._setUpdateInfo({ box: null, apps: { 'appid': { manifest: { version: '1.2.5', changelog: 'noop\nreally' } } } });
 
             settingsdb.set(settings.MAIL_CONFIG_KEY, JSON.stringify({ enabled: true }), function (error) {
@@ -131,11 +124,7 @@ describe('digest', function () {
                 digest.maybeSend(function (error) {
                     if (error) return done(error);
 
-                    checkMails(1, [ 'user0@email.com, username0@localhost' ], function (error) {
-                        if (error) return done(error);
-
-                        done();
-                    });
+                    checkMails(1, `${USER_0.email}, ${USER_0.username}@${config.fqdn()}`, done);
                 });
             });
         });
