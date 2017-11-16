@@ -482,8 +482,6 @@ describe('Cloudron', function () {
                     var scope1 = nock(config.apiServerOrigin()).get('/api/v1/boxes/' + config.fqdn() + '/setup/verify?setupToken=somesetuptoken').reply(200, {});
                     var scope2 = nock(config.apiServerOrigin()).post('/api/v1/boxes/' + config.fqdn() + '/setup/done?setupToken=somesetuptoken').reply(201, {});
 
-                    config._reset();
-
                     superagent.post(SERVER_URL + '/api/v1/cloudron/activate')
                         .query({ setupToken: 'somesetuptoken' })
                         .send({ username: USERNAME, password: PASSWORD, email: EMAIL })
@@ -621,8 +619,6 @@ describe('Cloudron', function () {
                 function (callback) {
                     var scope1 = nock(config.apiServerOrigin()).get('/api/v1/boxes/' + config.fqdn() + '/setup/verify?setupToken=somesetuptoken').reply(200, {});
                     var scope2 = nock(config.apiServerOrigin()).post('/api/v1/boxes/' + config.fqdn() + '/setup/done?setupToken=somesetuptoken').reply(201, {});
-
-                    config._reset();
 
                     superagent.post(SERVER_URL + '/api/v1/cloudron/activate')
                         .query({ setupToken: 'somesetuptoken' })
