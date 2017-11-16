@@ -178,7 +178,7 @@ function renewAll(auditSource, callback) {
     apps.getAll(function (error, allApps) {
         if (error) return callback(error);
 
-        allApps.push({ location: config.adminLocation() }); // inject fake webadmin app
+        allApps.push({ location: config.adminLocation(), domain: config.fqdn() }); // inject fake webadmin app
 
         var expiringApps = [ ];
         for (var i = 0; i < allApps.length; i++) {
