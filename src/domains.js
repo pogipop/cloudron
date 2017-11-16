@@ -135,6 +135,7 @@ function get(domain, callback) {
     assert.strictEqual(typeof callback, 'function');
 
     domaindb.get(domain, function (error, result) {
+        // TODO try to find subdomain entries maybe based on zoneNames or so
         if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new DomainError(DomainError.NOT_FOUND));
         if (error) return callback(new DomainError(DomainError.INTERNAL_ERROR, error));
 
@@ -214,13 +215,11 @@ function del(domain, callback) {
     });
 }
 
-function getDNSRecords(fqdn, type, callback) {
-    assert.strictEqual(typeof fqdn, 'string');
+function getDNSRecords(subdomain, domain, type, callback) {
+    assert.strictEqual(typeof subdomain, 'string');
+    assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof type, 'string');
     assert.strictEqual(typeof callback, 'function');
-
-    const domain = tld.getDomain(fqdn);
-    const subdomain = tld.getSubdomain(fqdn);
 
     get(domain, function (error, result) {
         if (error) return callback(new DomainError(DomainError.INTERNAL_ERROR, error));
@@ -233,14 +232,14 @@ function getDNSRecords(fqdn, type, callback) {
     });
 }
 
-function upsertDNSRecords(fqdn, type, values, callback) {
-    assert.strictEqual(typeof fqdn, 'string');
+function upsertDNSRecords(subdomain, domain, type, values, callback) {
+  assert.strictEqual(typeof subdomain, 'string');
+  assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof type, 'string');
     assert(util.isArray(values));
     assert.strictEqual(typeof callback, 'function');
 
-    debug('upsertDNSRecord: %s type %s values', fqdn, type, values);
-
+    debug('upsertDNSRecord: %s on %s type %s values', subdomain, domain, type, values);
 
     get(domain, function (error, result) {
       if (error) return callback(new DomainError(DomainError.INTERNAL_ERROR, error));
@@ -253,16 +252,14 @@ function upsertDNSRecords(fqdn, type, values, callback) {
     });
   }
 
-  function removeDNSRecords(fqdn, type, values, callback) {
-    assert.strictEqual(typeof fqdn, 'string');
+  function removeDNSRecords(subdomain, domain, type, values, callback) {
+    assert.strictEqual(typeof subdomain, 'string');
+    assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof type, 'string');
     assert(util.isArray(values));
     assert.strictEqual(typeof callback, 'function');
 
-    debug('removeDNSRecord: %s type %s values', fqdn, type, values);
-
-    const domain = tld.getDomain(fqdn);
-    const subdomain = tld.getSubdomain(fqdn);
+    debug('removeDNSRecord: %s on %s type %s values', subdomain, domain, type, values);
 
     get(domain, function (error, result) {
         if (error) return callback(new DomainError(DomainError.INTERNAL_ERROR, error));

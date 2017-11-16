@@ -255,14 +255,14 @@ function registerSubdomain(app, overwrite, callback) {
             debugApp(app, 'Registering subdomain location [%s] overwrite: %s', config.appFqdn(app), overwrite);
 
             // get the current record before updating it
-            domains.getDNSRecords(config.appFqdn(app), 'A', function (error, values) {
+            domains.getDNSRecords(app.location, app.domain, 'A', function (error, values) {
                 if (error) return retryCallback(error);
 
                 // refuse to update any existing DNS record for custom domains that we did not create
                 // note that the appstore sets up the naked domain for non-custom domains
                 if (config.isCustomDomain() && values.length !== 0 && !overwrite) return retryCallback(null, new Error('DNS Record already exists'));
 
-                domains.upsertDNSRecords(config.appFqdn(app), 'A', [ ip ], function (error, changeId) {
+                domains.upsertDNSRecords(app.location, app.domain, 'A', [ ip ], function (error, changeId) {
                     if (error && (error.reason === DomainError.STILL_BUSY || error.reason === DomainError.EXTERNAL_ERROR)) return retryCallback(error); // try again
 
                     retryCallback(null, error || changeId);
@@ -303,7 +303,7 @@ function unregisterSubdomain(app, location, domain, callback) {
         async.retry({ times: 30, interval: 5000 }, function (retryCallback) {
             debugApp(app, 'Unregistering subdomain: %s', config.appFqdn({ domain: domain, location: location }));
 
-            domains.removeDNSRecords(config.appFqdn({ domain: domain, location: location }), 'A', [ ip ], function (error) {
+            domains.removeDNSRecords(location, domain, 'A', [ ip ], function (error) {
                 if (error && (error.reason === DomainError.STILL_BUSY || error.reason === DomainError.EXTERNAL_ERROR)) return retryCallback(error); // try again
 
                 retryCallback(null, error);

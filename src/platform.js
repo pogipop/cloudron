@@ -328,7 +328,7 @@ function startMail(callback) {
                 ];
 
                 async.mapSeries(records, function (record, iteratorCallback) {
-                    domains.upsertDNSRecords(config.appFqdn({ location: record.subdomain, domain: config.fqdn() }), record.type, record.values, iteratorCallback);
+                    domains.upsertDNSRecords(record.subdomain, config.fqdn(), record.type, record.values, iteratorCallback);
                 }, NOOP_CALLBACK); // do not crash if DNS creds do not work in startup sequence
 
                 callback();

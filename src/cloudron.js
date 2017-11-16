@@ -509,7 +509,7 @@ function readDkimPublicKeySync() {
 function txtRecordsWithSpf(callback) {
     assert.strictEqual(typeof callback, 'function');
 
-    domains.getDNSRecords(config.fqdn(), 'TXT', function (error, txtRecords) {
+    domains.getDNSRecords('', config.fqdn(), 'TXT', function (error, txtRecords) {
         if (error) return callback(error);
 
         debug('txtRecordsWithSpf: current txt records - %j', txtRecords);
@@ -892,7 +892,7 @@ function refreshDNS(callback) {
                     // do not change state of installing apps since apptask will error if dns record already exists
                     if (app.installationState !== appdb.ISTATE_INSTALLED) return callback();
 
-                    domains.upsertDNSRecords(config.appFqdn(app), 'A', [ ip ], callback);
+                    domains.upsertDNSRecords(app.location, app.domain, 'A', [ ip ], callback);
                 }, function (error) {
                     if (error) return callback(error);
 
