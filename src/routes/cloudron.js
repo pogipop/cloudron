@@ -20,6 +20,7 @@ exports = module.exports = {
 };
 
 var appstore = require('../appstore.js'),
+    AppstoreError = require('../appstore.js').AppstoreError,
     assert = require('assert'),
     async = require('async'),
     cloudron = require('../cloudron.js'),
@@ -233,7 +234,8 @@ function feedback(req, res, next) {
     if (typeof req.body.description !== 'string' || !req.body.description) return next(new HttpError(400, 'description must be string'));
 
     appstore.sendFeedback(_.extend(req.body, { email: req.user.alternateEmail || req.user.email, displayName: req.user.displayName }), function (error) {
-        if (error) return next(new HttpError(503, error.message));
+        if (error && error.reason === AppstoreError.BILLING_REQUIRED) return next(new HttpError(402, 'Login to App Store to create support tickets. You can also email support@cloudron.io'));
+        if (error) return next(new HttpError(503, 'Error contacting cloudron.io. Please email support@cloudron.io'));
 
         next(new HttpSuccess(201, {}));
     });
