@@ -646,9 +646,9 @@
       "resolved": "https://registry.npmjs.org/connect-ensure-login/-/connect-ensure-login-0.1.1.tgz"
     },
     "connect-lastmile": {
-      "version": "1.0.0",
-      "from": "connect-lastmile@1.0.0",
-      "resolved": "https://registry.npmjs.org/connect-lastmile/-/connect-lastmile-1.0.0.tgz",
+      "version": "1.0.2",
+      "from": "connect-lastmile@1.0.2",
+      "resolved": "https://registry.npmjs.org/connect-lastmile/-/connect-lastmile-1.0.2.tgz",
       "dependencies": {
         "debug": {
           "version": "2.1.3",
