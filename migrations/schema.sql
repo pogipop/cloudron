@@ -111,7 +111,7 @@ CREATE TABLE IF NOT EXISTS backups(
     type VARCHAR(16) NOT NULL, /* 'box' or 'app' */
     dependsOn TEXT, /* comma separate list of objects this backup depends on */
     state VARCHAR(16) NOT NULL,
-    restoreConfigJson TEXT, /* JSON including the manifest of the backed up app */
+    manifestJson TEXT, /* to validate if the app can be installed in this version of box */
     format VARCHAR(16) DEFAULT "tgz",
 
     PRIMARY KEY (id));

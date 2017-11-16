@@ -6,7 +6,7 @@ var assert = require('assert'),
     safe = require('safetydance'),
     util = require('util');
 
-var BACKUPS_FIELDS = [ 'id', 'creationTime', 'version', 'type', 'dependsOn', 'state', 'restoreConfigJson', 'format' ];
+var BACKUPS_FIELDS = [ 'id', 'creationTime', 'version', 'type', 'dependsOn', 'state', 'manifestJson', 'format' ];
 
 exports = module.exports = {
     add: add,
@@ -34,8 +34,8 @@ function postProcess(result) {
 
     result.dependsOn = result.dependsOn ? result.dependsOn.split(',') : [ ];
 
-    result.restoreConfig = result.restoreConfigJson ? safe.JSON.parse(result.restoreConfigJson) : null;
-    delete result.restoreConfigJson;
+    result.manifest = result.manifestJson ? safe.JSON.parse(result.manifestJson) : null;
+    delete result.manifestJson;
 }
 
 function getByTypeAndStatePaged(type, state, page, perPage, callback) {
@@ -109,15 +109,15 @@ function add(backup, callback) {
     assert.strictEqual(typeof backup.version, 'string');
     assert(backup.type === exports.BACKUP_TYPE_APP || backup.type === exports.BACKUP_TYPE_BOX);
     assert(util.isArray(backup.dependsOn));
-    assert.strictEqual(typeof backup.restoreConfig, 'object');
+    assert.strictEqual(typeof backup.manifest, 'object');
     assert.strictEqual(typeof backup.format, 'string');
     assert.strictEqual(typeof callback, 'function');
 
     var creationTime = backup.creationTime || new Date(); // allow tests to set the time
-    var restoreConfig = backup.restoreConfig ? JSON.stringify(backup.restoreConfig) : '';
+    var manifestJson = JSON.stringify(backup.manifest);
 
-    database.query('INSERT INTO backups (id, version, type, creationTime, state, dependsOn, restoreConfigJson, format) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-        [ backup.id, backup.version, backup.type, creationTime, exports.BACKUP_STATE_NORMAL, backup.dependsOn.join(','), restoreConfig, backup.format ],
+    database.query('INSERT INTO backups (id, version, type, creationTime, state, dependsOn, manifestJson, format) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+        [ backup.id, backup.version, backup.type, creationTime, exports.BACKUP_STATE_NORMAL, backup.dependsOn.join(','), manifestJson, backup.format ],
         function (error) {
             if (error && error.code === 'ER_DUP_ENTRY') return callback(new DatabaseError(DatabaseError.ALREADY_EXISTS));
             if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));

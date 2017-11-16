@@ -124,7 +124,7 @@ describe('backups', function () {
             version: '1.0.0',
             type: backupdb.BACKUP_TYPE_BOX,
             dependsOn: [ 'backup-app-00', 'backup-app-01' ],
-            restoreConfig: null,
+            manifest: null,
             format: 'tgz'
         };
 
@@ -133,7 +133,7 @@ describe('backups', function () {
             version: '1.0.0',
             type: backupdb.BACKUP_TYPE_APP,
             dependsOn: [],
-            restoreConfig: null,
+            manifest: null,
             format: 'tgz'
         };
 
@@ -142,7 +142,7 @@ describe('backups', function () {
             version: '1.0.0',
             type: backupdb.BACKUP_TYPE_APP,
             dependsOn: [],
-            restoreConfig: null,
+            manifest: null,
             format: 'tgz'
         };
 
@@ -151,7 +151,7 @@ describe('backups', function () {
             version: '1.0.0',
             type: backupdb.BACKUP_TYPE_BOX,
             dependsOn: [ 'backup-app-10', 'backup-app-11' ],
-            restoreConfig: null,
+            manifest: null,
             format: 'tgz'
         };
 
@@ -160,7 +160,7 @@ describe('backups', function () {
             version: '1.0.0',
             type: backupdb.BACKUP_TYPE_APP,
             dependsOn: [],
-            restoreConfig: null,
+            manifest: null,
             format: 'tgz'
         };
 
@@ -169,7 +169,7 @@ describe('backups', function () {
             version: '1.0.0',
             type: backupdb.BACKUP_TYPE_APP,
             dependsOn: [],
-            restoreConfig: null,
+            manifest: null,
             format: 'tgz'
         };
 

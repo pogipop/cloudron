@@ -8,7 +8,7 @@ exports = module.exports = {
     getByStatePaged: getByStatePaged,
     getByAppIdPaged: getByAppIdPaged,
 
-    getRestoreConfig: getRestoreConfig,
+    get: get,
 
     ensureBackup: ensureBackup,
 
@@ -150,16 +150,15 @@ function getByAppIdPaged(page, perPage, appId, callback) {
     });
 }
 
-function getRestoreConfig(backupId, callback) {
+function get(backupId, callback) {
     assert.strictEqual(typeof backupId, 'string');
     assert.strictEqual(typeof callback, 'function');
 
     backupdb.get(backupId, function (error, result) {
         if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new BackupsError(BackupsError.NOT_FOUND, error));
         if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
-        if (!result.restoreConfig)  return callback(new BackupsError(BackupsError.NOT_FOUND, error));
 
-        callback(null, result.restoreConfig);
+        callback(null, result);
     });
 }
 
@@ -559,7 +558,7 @@ function rotateBoxBackup(backupConfig, timestamp, appBackupIds, callback) {
 
     log(`Rotating box backup to id ${backupId}`);
 
-    backupdb.add({ id: backupId, version: config.version(), type: backupdb.BACKUP_TYPE_BOX, dependsOn: appBackupIds, restoreConfig: null, format: format }, function (error) {
+    backupdb.add({ id: backupId, version: config.version(), type: backupdb.BACKUP_TYPE_BOX, dependsOn: appBackupIds, manifest: null, format: format }, function (error) {
         if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
 
         var copy = api(backupConfig.provider).copy(backupConfig, getBackupFilePath(backupConfig, 'snapshot/box', format), getBackupFilePath(backupConfig, backupId, format));
@@ -616,17 +615,14 @@ function snapshotApp(app, manifest, callback) {
 
     log(`Snapshotting app ${app.id}`);
 
-    var restoreConfig = apps.getAppConfig(app);
-    restoreConfig.manifest = manifest;
-
-    if (!safe.fs.writeFileSync(path.join(paths.APPS_DATA_DIR, app.id + '/config.json'), JSON.stringify(restoreConfig))) {
+    if (!safe.fs.writeFileSync(path.join(paths.APPS_DATA_DIR, app.id + '/config.json'), JSON.stringify(apps.getAppConfig(app)))) {
         return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, 'Error creating config.json: ' + safe.error.message));
     }
 
     addons.backupAddons(app, manifest.addons, function (error) {
         if (error) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
 
-        return callback(null, restoreConfig);
+        return callback(null);
     });
 }
 
@@ -653,14 +649,13 @@ function rotateAppBackup(backupConfig, app, timestamp, callback) {
     if (!snapshotInfo) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, 'Snapshot info missing or corrupt'));
 
     var snapshotTime = snapshotInfo.timestamp.replace(/[T.]/g, '-').replace(/[:Z]/g,'');
-    var restoreConfig = snapshotInfo.restoreConfig;
-    var manifest = restoreConfig.manifest;
+    var manifest = snapshotInfo.restoreConfig ? snapshotInfo.restoreConfig.manifest : snapshotInfo.manifest; // compat
     var backupId = util.format('%s/app_%s_%s_v%s', timestamp, app.id, snapshotTime, manifest.version);
     const format = backupConfig.format;
 
     log(`Rotating app backup of ${app.id} to id ${backupId}`);
 
-    backupdb.add({ id: backupId, version: manifest.version, type: backupdb.BACKUP_TYPE_APP, dependsOn: [ ], restoreConfig: restoreConfig, format: format }, function (error) {
+    backupdb.add({ id: backupId, version: manifest.version, type: backupdb.BACKUP_TYPE_APP, dependsOn: [ ], manifest: manifest, format: format }, function (error) {
         if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
 
         var copy = api(backupConfig.provider).copy(backupConfig, getBackupFilePath(backupConfig, `snapshot/app_${app.id}`, format), getBackupFilePath(backupConfig, backupId, format));
@@ -694,7 +689,7 @@ function uploadAppSnapshot(backupConfig, app, manifest, callback) {
 
     var startTime = new Date();
 
-    snapshotApp(app, manifest, function (error, restoreConfig) {
+    snapshotApp(app, manifest, function (error) {
         if (error) return callback(error);
 
         var backupId = util.format('snapshot/app_%s', app.id);
@@ -704,7 +699,7 @@ function uploadAppSnapshot(backupConfig, app, manifest, callback) {
 
             debugApp(app, 'uploadAppSnapshot: %s done time: %s secs', backupId, (new Date() - startTime)/1000);
 
-            setSnapshotInfo(app.id, { timestamp: new Date().toISOString(), restoreConfig: restoreConfig, format: backupConfig.format }, callback);
+            setSnapshotInfo(app.id, { timestamp: new Date().toISOString(), manifest: manifest, format: backupConfig.format }, callback);
         });
     });
 }

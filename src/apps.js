@@ -761,22 +761,22 @@ function restore(appId, data, auditSource, callback) {
         if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
 
         // for empty or null backupId, use existing manifest to mimic a reinstall
-        var func = data.backupId ? backups.getRestoreConfig.bind(null, data.backupId) : function (next) { return next(null, { manifest: app.manifest }); };
+        var func = data.backupId ? backups.get.bind(null, data.backupId) : function (next) { return next(null, { manifest: app.manifest }); };
 
-        func(function (error, restoreConfig) {
+        func(function (error, backupInfo) {
             if (error && error.reason === BackupsError.NOT_FOUND) return callback(new AppsError(AppsError.EXTERNAL_ERROR, error.message));
             if (error && error.reason === BackupsError.EXTERNAL_ERROR) return callback(new AppsError(AppsError.EXTERNAL_ERROR, error.message));
             if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
 
-            if (!restoreConfig) callback(new AppsError(AppsError.EXTERNAL_ERROR, 'Could not get restore config'));
+            if (!backupInfo.manifest) callback(new AppsError(AppsError.EXTERNAL_ERROR, 'Could not get restore config'));
 
             // re-validate because this new box version may not accept old configs
-            error = checkManifestConstraints(restoreConfig.manifest);
+            error = checkManifestConstraints(backupInfo.manifest);
             if (error) return callback(error);
 
             var values = {
                 lastBackupId: data.backupId || null, // when null, apptask simply reinstalls
-                manifest: restoreConfig.manifest,
+                manifest: backupInfo.manifest,
 
                 oldConfig: getAppConfig(app)
             };
@@ -815,24 +815,24 @@ function clone(appId, data, auditSource, callback) {
         if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new AppsError(AppsError.NOT_FOUND));
         if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
 
-        backups.getRestoreConfig(backupId, function (error, restoreConfig) {
+        backups.get(backupId, function (error, backupInfo) {
             if (error && error.reason === BackupsError.EXTERNAL_ERROR) return callback(new AppsError(AppsError.EXTERNAL_ERROR, error.message));
             if (error && error.reason === BackupsError.NOT_FOUND) return callback(new AppsError(AppsError.EXTERNAL_ERROR, error.message));
             if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
 
-            if (!restoreConfig) callback(new AppsError(AppsError.EXTERNAL_ERROR, 'Could not get restore config'));
+            if (!backupInfo.manifest) callback(new AppsError(AppsError.EXTERNAL_ERROR, 'Could not get restore config'));
 
             // re-validate because this new box version may not accept old configs
-            error = checkManifestConstraints(restoreConfig.manifest);
+            error = checkManifestConstraints(backupInfo.manifest);
             if (error) return callback(error);
 
             error = validateHostname(location, config.fqdn());
             if (error) return callback(error);
 
-            error = validatePortBindings(portBindings, restoreConfig.manifest.tcpPorts);
+            error = validatePortBindings(portBindings, backupInfo.manifest.tcpPorts);
             if (error) return callback(error);
 
-            var newAppId = uuid.v4(), appStoreId = app.appStoreId, manifest = restoreConfig.manifest;
+            var newAppId = uuid.v4(), appStoreId = app.appStoreId, manifest = backupInfo.manifest;
 
             appstore.purchase(newAppId, appStoreId, function (error) {
                 if (error && error.reason === AppstoreError.NOT_FOUND) return callback(new AppsError(AppsError.NOT_FOUND));
