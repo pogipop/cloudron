@@ -233,6 +233,8 @@
                 <h5 class="app-info-title">{{ appInfo.app.manifest.title }}</h5>
                 <br/>
                 <span class="app-info-meta">Package version <a ng-href="/#/appstore/{{appInfo.app.manifest.id}}?version={{appInfo.app.manifest.version}}">{{ appInfo.app.manifest.version }}</a> </span>
+                <br/>
+                <span class="app-info-meta" ng-show="appInfo.app.manifest.documentationUrl"><a target="_blank" ng-href="{{appInfo.app.manifest.documentationUrl}}">Documentation</a> </span>
             </div>
             <div class="modal-body">
                 <div class="app-postinstall-message" ng-hide="appInfo.app.manifest && appInfo.app.manifest.postInstallMessage">
