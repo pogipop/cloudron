@@ -66,7 +66,7 @@ var APP_0 = {
     portBindings: { port: 5678 },
     health: null,
     accessRestriction: null,
-    lastBackupId: null,
+    restoreConfig: null,
     oldConfig: null,
     memoryLimit: 4294967296
 };

@@ -417,29 +417,23 @@ function download(backupId, format, dataDir, callback) {
     });
 }
 
-function restoreApp(app, addonsToRestore, backupId, callback) {
+function restoreApp(app, addonsToRestore, restoreConfig, callback) {
     assert.strictEqual(typeof app, 'object');
     assert.strictEqual(typeof addonsToRestore, 'object');
-    assert.strictEqual(typeof backupId, 'string');
+    assert.strictEqual(typeof restoreConfig, 'object');
     assert.strictEqual(typeof callback, 'function');
-    assert(app.lastBackupId);
 
     var appDataDir = safe.fs.realpathSync(path.join(paths.APPS_DATA_DIR, app.id));
 
     var startTime = new Date();
 
-    backupdb.get(backupId, function (error, result) {
-        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new BackupsError(BackupsError.NOT_FOUND, error));
-        if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
+    async.series([
+        download.bind(null, restoreConfig.backupId, restoreConfig.backupFormat, appDataDir),
+        addons.restoreAddons.bind(null, app, addonsToRestore)
+    ], function (error) {
+        debug('restoreApp: time: %s', (new Date() - startTime)/1000);
 
-        async.series([
-            download.bind(null, backupId, result.format, appDataDir),
-            addons.restoreAddons.bind(null, app, addonsToRestore)
-        ], function (error) {
-            debug('restoreApp: time: %s', (new Date() - startTime)/1000);
-
-            callback(error);
-        });
+        callback(error);
     });
 }
 
@@ -626,19 +620,6 @@ function snapshotApp(app, manifest, callback) {
     });
 }
 
-function setRestorePoint(appId, lastBackupId, callback) {
-    assert.strictEqual(typeof appId, 'string');
-    assert.strictEqual(typeof lastBackupId, 'string');
-    assert.strictEqual(typeof callback, 'function');
-
-    appdb.update(appId, { lastBackupId: lastBackupId }, function (error) {
-        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new BackupsError(BackupsError.NOT_FOUND, 'No such app'));
-        if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
-
-        return callback(null);
-    });
-}
-
 function rotateAppBackup(backupConfig, app, timestamp, callback) {
     assert.strictEqual(typeof backupConfig, 'object');
     assert.strictEqual(typeof app, 'object');
@@ -669,11 +650,7 @@ function rotateAppBackup(backupConfig, app, timestamp, callback) {
 
                 log(`Rotated app backup of ${app.id} successfully to id ${backupId}`);
 
-                setRestorePoint(app.id, backupId, function (error) {
-                    if (error) return callback(error);
-
-                    return callback(null, backupId);
-                });
+                callback(null, backupId);
             });
         });
     });
@@ -764,7 +741,7 @@ function backupBoxAndApps(auditSource, callback) {
 
             if (!app.enableBackup) {
                 progress.set(progress.BACKUP, step * processed, 'Skipped backup ' + (app.altDomain || config.appFqdn(app.location)));
-                return iteratorCallback(null, app.lastBackupId); // just use the last backup
+                return iteratorCallback(null, null); // nothing to backup
             }
 
             backupAppWithTimestamp(app, app.manifest, timestamp, function (error, backupId) {

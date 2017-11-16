@@ -52,7 +52,6 @@ function removeInternalAppFields(app) {
         health: app.health,
         location: app.location,
         accessRestriction: app.accessRestriction,
-        lastBackupId: app.lastBackupId,
         manifest: app.manifest,
         portBindings: app.portBindings,
         iconUrl: app.iconUrl,
@@ -121,6 +120,7 @@ function installApp(req, res, next) {
     if ('icon' in data && typeof data.icon !== 'string') return next(new HttpError(400, 'icon is not a string'));
 
     if (data.backupId && typeof data.backupId !== 'string') return next(new HttpError(400, 'backupId must be string or null'));
+    if (data.backupFormat && typeof data.backupFormat !== 'string') return next(new HttpError(400, 'backupFormat must be string or null'));
 
     // falsy values in cert and key unset the cert
     if (data.key && typeof data.cert !== 'string') return next(new HttpError(400, 'cert must be a string'));

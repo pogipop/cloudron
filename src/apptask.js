@@ -389,7 +389,7 @@ function install(app, callback) {
     assert.strictEqual(typeof app, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    const backupId = app.lastBackupId, isRestoring = app.installationState === appdb.ISTATE_PENDING_RESTORE;
+    const restoreConfig = app.restoreConfig, isRestoring = app.installationState === appdb.ISTATE_PENDING_RESTORE;
 
     async.series([
         // this protects against the theoretical possibility of an app being marked for install/restore from
@@ -429,7 +429,7 @@ function install(app, callback) {
         createVolume.bind(null, app),
 
         function restoreFromBackup(next) {
-            if (!backupId) {
+            if (!restoreConfig) {
                 async.series([
                     updateApp.bind(null, app, { installationProgress: '60, Setting up addons' }),
                     addons.setupAddons.bind(null, app, app.manifest.addons),
@@ -437,7 +437,7 @@ function install(app, callback) {
             } else {
                 async.series([
                     updateApp.bind(null, app, { installationProgress: '60, Download backup and restoring addons' }),
-                    backups.restoreApp.bind(null, app, app.manifest.addons, backupId),
+                    backups.restoreApp.bind(null, app, app.manifest.addons, restoreConfig),
                 ], next);
             }
         },
@@ -457,7 +457,7 @@ function install(app, callback) {
         exports._waitForDnsPropagation.bind(null, app),
 
         updateApp.bind(null, app, { installationProgress: '90, Waiting for External Domain setup' }),
-        exports._waitForAltDomainDnsPropagation.bind(null, app), // required when restoring and !lastBackupId
+        exports._waitForAltDomainDnsPropagation.bind(null, app), // required when restoring and !restoreConfig
 
         updateApp.bind(null, app, { installationProgress: '95, Configure nginx' }),
         configureNginx.bind(null, app),

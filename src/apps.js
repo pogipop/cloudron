@@ -259,6 +259,12 @@ function validateRobotsTxt(robotsTxt) {
     return null;
 }
 
+function validateBackupFormat(format) {
+    if (format === 'tgz' || format == 'rsync') return null;
+
+    return new AppsError(AppsError.BAD_FIELD, 'Invalid backup format');
+}
+
 function getDuplicateErrorDetails(location, portBindings, error) {
     assert.strictEqual(typeof location, 'string');
     assert.strictEqual(typeof portBindings, 'object');
@@ -427,7 +433,8 @@ function install(data, auditSource, callback) {
         debugMode = data.debugMode || null,
         robotsTxt = data.robotsTxt || null,
         enableBackup = 'enableBackup' in data ? data.enableBackup : true,
-        backupId = data.backupId || null;
+        backupId = data.backupId || null,
+        backupFormat = data.backupFormat || 'tgz';
 
     assert(data.appStoreId || data.manifest); // atleast one of them is required
 
@@ -459,6 +466,9 @@ function install(data, auditSource, callback) {
         if (error) return callback(error);
 
         error = validateRobotsTxt(robotsTxt);
+        if (error) return callback(error);
+
+        error = validateBackupFormat(backupFormat);
         if (error) return callback(error);
 
         if ('sso' in data && !('optionalSso' in manifest)) return callback(new AppsError(AppsError.BAD_FIELD, 'sso can only be specified for apps with optionalSso'));
@@ -496,7 +506,7 @@ function install(data, auditSource, callback) {
                 sso: sso,
                 debugMode: debugMode,
                 mailboxName: (location ? location : manifest.title.toLowerCase().replace(/[^a-zA-Z0-9]/g, '')) + '.app',
-                lastBackupId: backupId,
+                restoreConfig: { backupId: backupId, backupFormat: backupFormat },
                 enableBackup: enableBackup,
                 robotsTxt: robotsTxt
             };
@@ -768,14 +778,14 @@ function restore(appId, data, auditSource, callback) {
             if (error && error.reason === BackupsError.EXTERNAL_ERROR) return callback(new AppsError(AppsError.EXTERNAL_ERROR, error.message));
             if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
 
-            if (!backupInfo.manifest) callback(new AppsError(AppsError.EXTERNAL_ERROR, 'Could not get restore config'));
+            if (!backupInfo.manifest) callback(new AppsError(AppsError.EXTERNAL_ERROR, 'Could not get restore manifest'));
 
             // re-validate because this new box version may not accept old configs
             error = checkManifestConstraints(backupInfo.manifest);
             if (error) return callback(error);
 
             var values = {
-                lastBackupId: data.backupId || null, // when null, apptask simply reinstalls
+                restoreConfig: data.backupId ? { backupId: data.backupId, backupFormat: backupInfo.format } : null, // when null, apptask simply reinstalls
                 manifest: backupInfo.manifest,
 
                 oldConfig: getAppConfig(app)
@@ -845,7 +855,7 @@ function clone(appId, data, auditSource, callback) {
                     memoryLimit: app.memoryLimit,
                     accessRestriction: app.accessRestriction,
                     xFrameOptions: app.xFrameOptions,
-                    lastBackupId: backupId,
+                    restoreConfig: { backupId: backupId, backupFormat: backupInfo.format },
                     sso: !!app.sso,
                     mailboxName: (location ? location : manifest.title.toLowerCase().replace(/[^a-zA-Z0-9]/g, '')) + '.app'
                 };
