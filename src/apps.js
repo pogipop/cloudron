@@ -636,7 +636,7 @@ function update(appId, data, auditSource, callback) {
     downloadManifest(data.appStoreId, data.manifest, function (error, appStoreId, manifest) {
         if (error) return callback(error);
 
-        var newConfig = { };
+        var updateConfig = { };
 
         error = manifestFormat.parse(manifest);
         if (error) return callback(new AppsError(AppsError.BAD_FIELD, 'Manifest error:' + error.message));
@@ -644,7 +644,7 @@ function update(appId, data, auditSource, callback) {
         error = checkManifestConstraints(manifest);
         if (error) return callback(error);
 
-        newConfig.manifest = manifest;
+        updateConfig.manifest = manifest;
 
         if ('icon' in data) {
             if (data.icon) {
@@ -664,22 +664,22 @@ function update(appId, data, auditSource, callback) {
 
             // prevent user from installing a app with different manifest id over an existing app
             // this allows cloudron install -f --app <appid> for an app installed from the appStore
-            if (app.manifest.id !== newConfig.manifest.id) {
+            if (app.manifest.id !== updateConfig.manifest.id) {
                 if (!data.force) return callback(new AppsError(AppsError.BAD_FIELD, 'manifest id does not match. force to override'));
                 // clear appStoreId so that this app does not get updates anymore
-                newConfig.appStoreId = '';
+                updateConfig.appStoreId = '';
             }
 
             // do not update apps in debug mode
             if (app.debugMode && !data.force) return callback(new AppsError(AppsError.BAD_STATE, 'debug mode enabled. force to override'));
 
             // Ensure we update the memory limit in case the new app requires more memory as a minimum
-            // 0 and -1 are special newConfig for memory limit indicating unset and unlimited
-            if (app.memoryLimit > 0 && newConfig.manifest.memoryLimit && app.memoryLimit < newConfig.manifest.memoryLimit) {
-                newConfig.memoryLimit = newConfig.manifest.memoryLimit;
+            // 0 and -1 are special updateConfig for memory limit indicating unset and unlimited
+            if (app.memoryLimit > 0 && updateConfig.manifest.memoryLimit && app.memoryLimit < updateConfig.manifest.memoryLimit) {
+                updateConfig.memoryLimit = updateConfig.manifest.memoryLimit;
             }
 
-            appdb.setInstallationCommand(appId, data.force ? appdb.ISTATE_PENDING_FORCE_UPDATE : appdb.ISTATE_PENDING_UPDATE, { newConfig: newConfig }, function (error) {
+            appdb.setInstallationCommand(appId, data.force ? appdb.ISTATE_PENDING_FORCE_UPDATE : appdb.ISTATE_PENDING_UPDATE, { updateConfig: updateConfig }, function (error) {
                 if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new AppsError(AppsError.BAD_STATE)); // might be a bad guess
                 if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
 

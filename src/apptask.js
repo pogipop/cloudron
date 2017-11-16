@@ -575,17 +575,17 @@ function update(app, callback) {
     assert.strictEqual(typeof app, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    debugApp(app, `Updating to ${app.newConfig.manifest.version}`);
+    debugApp(app, `Updating to ${app.updateConfig.manifest.version}`);
 
     // app does not want these addons anymore
     // FIXME: this does not handle option changes (like multipleDatabases)
-    var unusedAddons = _.omit(app.manifest.addons, Object.keys(app.newConfig.manifest.addons));
+    var unusedAddons = _.omit(app.manifest.addons, Object.keys(app.updateConfig.manifest.addons));
 
     async.series([
         // this protects against the theoretical possibility of an app being marked for update from
         // a previous version of box code
         updateApp.bind(null, app, { installationProgress: '0, Verify manifest' }),
-        verifyManifest.bind(null, app.newConfig.manifest),
+        verifyManifest.bind(null, app.updateConfig.manifest),
 
         function (next) {
             if (app.installationState === appdb.ISTATE_PENDING_FORCE_UPDATE) return next(null);
@@ -599,7 +599,7 @@ function update(app, callback) {
         // download new image before app is stopped. this is so we can reduce downtime
         // and also not remove the 'common' layers when the old image is deleted
         updateApp.bind(null, app, { installationProgress: '25, Downloading image' }),
-        docker.downloadImage.bind(null, app.newConfig.manifest),
+        docker.downloadImage.bind(null, app.updateConfig.manifest),
 
         // note: we cleanup first and then backup. this is done so that the app is not running should backup fail
         // we cannot easily 'recover' from backup failures because we have to revert manfest and portBindings
@@ -609,7 +609,7 @@ function update(app, callback) {
         stopApp.bind(null, app),
         deleteContainers.bind(null, app),
         function deleteImageIfChanged(done) {
-            if (app.manifest.dockerImage === app.newConfig.manifest.dockerImage) return done();
+            if (app.manifest.dockerImage === app.updateConfig.manifest.dockerImage) return done();
 
             docker.deleteImage(app.manifest, done);
         },
@@ -621,7 +621,7 @@ function update(app, callback) {
         function (next) {
             // make sure we always have objects
             var currentPorts = app.portBindings || {};
-            var newPorts = app.newConfig.manifest.tcpPorts || {};
+            var newPorts = app.updateConfig.manifest.tcpPorts || {};
 
             async.each(Object.keys(currentPorts), function (portName, callback) {
                 if (newPorts[portName]) return callback(); // port still in use
@@ -639,7 +639,7 @@ function update(app, callback) {
         },
 
         // switch over to the new config. manifest, memoryLimit, portBindings, appstoreId are updated here
-        updateApp.bind(null, app, app.newConfig),
+        updateApp.bind(null, app, app.updateConfig),
 
         updateApp.bind(null, app, { installationProgress: '45, Downloading icon' }),
         downloadIcon.bind(null, app),
@@ -661,7 +661,7 @@ function update(app, callback) {
         // done!
         function (callback) {
             debugApp(app, 'updated');
-            updateApp(app, { installationState: appdb.ISTATE_INSTALLED, installationProgress: '', health: null, newConfig: null }, callback);
+            updateApp(app, { installationState: appdb.ISTATE_INSTALLED, installationProgress: '', health: null, updateConfig: null }, callback);
         }
     ], function seriesDone(error) {
         if (error) {

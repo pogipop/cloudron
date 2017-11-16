@@ -74,7 +74,7 @@ CREATE TABLE IF NOT EXISTS apps(
     // the following fields do not belong here, they can be removed when we use a queue for apptask
     lastBackupId VARCHAR(128), // used to pass backupId to restore from to apptask
     oldConfigJson TEXT, // used to pass old config for apptask (configure, restore)
-    newConfigJson TEXT, // used to pass new config for apptask (update)
+    updateConfigJson TEXT, // used to pass new config for apptask (update)
 
     PRIMARY KEY(id));
 
