@@ -548,9 +548,9 @@ function addDnsRecords(ip, callback) {
     var dkimKey = readDkimPublicKeySync();
     if (!dkimKey) return callback(new CloudronError(CloudronError.INTERNAL_ERROR, new Error('Failed to read dkim public key')));
 
-    var webadminRecord = { subdomain: config.adminLocation(), type: 'A', values: [ ip ] };
+    var webadminRecord = { subdomain: config.adminLocation(), domain: config.fqdn(), type: 'A', values: [ ip ] };
     // t=s limits the domainkey to this domain and not it's subdomains
-    var dkimRecord = { subdomain: config.dkimSelector() + '._domainkey', type: 'TXT', values: [ '"v=DKIM1; t=s; p=' + dkimKey + '"' ] };
+    var dkimRecord = { subdomain: config.dkimSelector() + '._domainkey', domain: config.fqdn(), type: 'TXT', values: [ '"v=DKIM1; t=s; p=' + dkimKey + '"' ] };
 
     var records = [ ];
     if (config.isCustomDomain()) {
@@ -558,7 +558,7 @@ function addDnsRecords(ip, callback) {
         records.push(dkimRecord);
     } else {
         // for non-custom domains, we show a noapp.html page
-        var nakedDomainRecord = { subdomain: '', type: 'A', values: [ ip ] };
+        var nakedDomainRecord = { subdomain: '', domain: config.fqdn(), type: 'A', values: [ ip ] };
 
         records.push(nakedDomainRecord);
         records.push(webadminRecord);
@@ -571,12 +571,12 @@ function addDnsRecords(ip, callback) {
         txtRecordsWithSpf(function (error, txtRecords) {
             if (error) return retryCallback(error);
 
-            if (txtRecords) records.push({ subdomain: config.fqdn(), type: 'TXT', values: txtRecords });
+            if (txtRecords) records.push({ subdomain: '', domain: config.fqdn(), type: 'TXT', values: txtRecords });
 
             debug('addDnsRecords: will update %j', records);
 
             async.mapSeries(records, function (record, iteratorCallback) {
-                domains.upsertDNSRecords(record.subdomain, record.type, record.values, iteratorCallback);
+                domains.upsertDNSRecords(record.subdomain, record.domain, record.type, record.values, iteratorCallback);
             }, function (error, changeIds) {
                 if (error) debug('addDnsRecords: failed to update : %s. will retry', error);
                 else debug('addDnsRecords: records %j added with changeIds %j', records, changeIds);
