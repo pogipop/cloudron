@@ -263,17 +263,9 @@ fi
 
 echo "=> Installing version ${version} (this takes some time) ..."
 echo "${data}" > "${DATA_FILE}"
-# poor mans semver
-if [[ ${version} == "0.10"* ]]; then
-    if ! /bin/bash "${box_src_tmp_dir}/scripts/installer.sh" --data-file "${DATA_FILE}" &>> "${LOG_FILE}"; then
-        echo "Failed to install cloudron. See ${LOG_FILE} for details"
-        exit 1
-    fi
-else
-    if ! /bin/bash "${box_src_tmp_dir}/scripts/installer.sh" --data-file "${DATA_FILE}" --data-dir "${baseDataDir}" &>> "${LOG_FILE}"; then
-        echo "Failed to install cloudron. See ${LOG_FILE} for details"
-        exit 1
-    fi
+if ! /bin/bash "${box_src_tmp_dir}/scripts/installer.sh" --data-file "${DATA_FILE}" --data-dir "${baseDataDir}" &>> "${LOG_FILE}"; then
+    echo "Failed to install cloudron. See ${LOG_FILE} for details"
+    exit 1
 fi
 rm "${DATA_FILE}"
 
