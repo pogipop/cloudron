@@ -23,7 +23,7 @@ function add(dnsConfig, zoneName, subdomain, type, values, callback) {
     assert(util.isArray(values));
     assert.strictEqual(typeof callback, 'function');
 
-    var fqdn = subdomain !== '' && type === 'TXT' ? subdomain + '.' + config.fqdn() : config.appFqdn(subdomain);
+    var fqdn = subdomain !== '' && type === 'TXT' ? subdomain + '.' + config.fqdn() : config.appFqdn({ location: subdomain, domain: zoneName });
 
     debug('add: %s for zone %s of type %s with values %j', subdomain, zoneName, type, values);
 
@@ -54,7 +54,7 @@ function get(dnsConfig, zoneName, subdomain, type, callback) {
     assert.strictEqual(typeof type, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    var fqdn = subdomain !== '' && type === 'TXT' ? subdomain + '.' + config.fqdn() : config.appFqdn(subdomain);
+    var fqdn = subdomain !== '' && type === 'TXT' ? subdomain + '.' + config.fqdn() : config.appFqdn({ location: subdomain, domain: zoneName });
 
     debug('get: zoneName: %s subdomain: %s type: %s fqdn: %s', zoneName, subdomain, type, fqdn);
 
@@ -97,7 +97,7 @@ function del(dnsConfig, zoneName, subdomain, type, values, callback) {
     };
 
     superagent
-        .del(config.apiServerOrigin() + '/api/v1/domains/' + config.appFqdn(subdomain))
+        .del(config.apiServerOrigin() + '/api/v1/domains/' + config.appFqdn({ location: subdomain, domain: zoneName }))
         .query({ token: dnsConfig.token })
         .send(data)
         .timeout(30 * 1000)
