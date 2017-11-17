@@ -60,6 +60,7 @@ var APP_0 = {
     installationProgress: null,
     runState: appdb.RSTATE_RUNNING,
     location: 'some-location-0',
+    domain: 'example.com',
     manifest: { version: '0.1', dockerImage: 'docker/app0', healthCheckPath: '/', httpPort: 80, title: 'app0' },
     httpPort: null,
     containerId: 'someContainerId',
@@ -85,11 +86,11 @@ function setup(done) {
         database.initialize.bind(null),
         database._clear.bind(null),
         ldapServer.start.bind(null),
-        appdb.add.bind(null, APP_0.id, APP_0.appStoreId, APP_0.manifest, APP_0.location, APP_0.portBindings, APP_0),
+        appdb.add.bind(null, APP_0.id, APP_0.appStoreId, APP_0.manifest, APP_0.location, APP_0.domain, APP_0.portBindings, APP_0),
         appdb.update.bind(null, APP_0.id, { containerId: APP_0.containerId }),
         appdb.setAddonConfig.bind(null, APP_0.id, 'sendmail', [{ name: 'MAIL_SMTP_PASSWORD', value : 'sendmailpassword' }]),
         appdb.setAddonConfig.bind(null, APP_0.id, 'recvmail', [{ name: 'MAIL_IMAP_PASSWORD', value : 'recvmailpassword' }]),
-        mailboxdb.add.bind(null, APP_0.location + '.app', APP_0.id, mailboxdb.TYPE_APP),
+        mailboxdb.add.bind(null, APP_0.location + '.app', APP_0.domain, APP_0.id, mailboxdb.TYPE_APP),
 
         function (callback) {
             user.createOwner(USER_0.username, USER_0.password, USER_0.email, USER_0.displayName, AUDIT_SOURCE, function (error, result) {

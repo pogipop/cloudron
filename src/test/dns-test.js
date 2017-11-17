@@ -49,7 +49,7 @@ describe('dns provider', function () {
         });
 
         it('upsert succeeds', function (done) {
-            domains.upsertDNSRecords('test.example.com', 'A', [ '1.2.3.4' ], function (error, result) {
+            domains.upsertDNSRecords('test', DOMAIN_0.domain, 'A', [ '1.2.3.4' ], function (error, result) {
                 expect(error).to.eql(null);
                 expect(result).to.eql('noop-record-id');
 
@@ -58,7 +58,7 @@ describe('dns provider', function () {
         });
 
         it('get succeeds', function (done) {
-            domains.getDNSRecords('test.example.com', 'A', function (error, result) {
+            domains.getDNSRecords('test', DOMAIN_0.domain, 'A', function (error, result) {
                 expect(error).to.eql(null);
                 expect(result).to.be.an(Array);
                 expect(result.length).to.eql(0);
@@ -68,7 +68,7 @@ describe('dns provider', function () {
         });
 
         it('del succeeds', function (done) {
-            domains.removeDNSRecords('test.example.com', 'A', [ '1.2.3.4' ], function (error) {
+            domains.removeDNSRecords('test', DOMAIN_0.domain, 'A', [ '1.2.3.4' ], function (error) {
                 expect(error).to.eql(null);
 
                 done();
@@ -109,7 +109,7 @@ describe('dns provider', function () {
                 .post('/v2/domains/' + config.zoneName() + '/records')
                 .reply(201, { domain_record: DOMAIN_RECORD_0 });
 
-            domains.upsertDNSRecords('test.example.com', 'A', [ '1.2.3.4' ], function (error, result) {
+            domains.upsertDNSRecords('test', DOMAIN_0.domain, 'A', [ '1.2.3.4' ], function (error, result) {
                 expect(error).to.eql(null);
                 expect(result).to.eql('3352892');
                 expect(req1.isDone()).to.be.ok();
@@ -159,7 +159,7 @@ describe('dns provider', function () {
                 .put('/v2/domains/' + config.zoneName() + '/records/' + DOMAIN_RECORD_1.id)
                 .reply(200, { domain_record: DOMAIN_RECORD_1_NEW });
 
-            domains.upsertDNSRecords('test.example.com', 'A', [ DOMAIN_RECORD_1_NEW.data ], function (error, result) {
+            domains.upsertDNSRecords('test', DOMAIN_0.domain, 'A', [ DOMAIN_RECORD_1_NEW.data ], function (error, result) {
                 expect(error).to.eql(null);
                 expect(result).to.eql('3352893');
                 expect(req1.isDone()).to.be.ok();
@@ -245,7 +245,7 @@ describe('dns provider', function () {
                 .post('/v2/domains/' + config.zoneName() + '/records')
                 .reply(201, { domain_record: DOMAIN_RECORD_2_NEW });
 
-            domains.upsertDNSRecords(config.fqdn(), 'TXT', [ DOMAIN_RECORD_2_NEW.data, DOMAIN_RECORD_1_NEW.data, DOMAIN_RECORD_3_NEW.data ], function (error, result) {
+            domains.upsertDNSRecords('', config.fqdn(), 'TXT', [ DOMAIN_RECORD_2_NEW.data, DOMAIN_RECORD_1_NEW.data, DOMAIN_RECORD_3_NEW.data ], function (error, result) {
                 expect(error).to.eql(null);
                 expect(result).to.eql('3352893');
                 expect(req1.isDone()).to.be.ok();
@@ -284,7 +284,7 @@ describe('dns provider', function () {
                 .get('/v2/domains/' + config.zoneName() + '/records')
                 .reply(200, { domain_records: [ DOMAIN_RECORD_0, DOMAIN_RECORD_1 ] });
 
-            domains.getDNSRecords('test.example.com', 'A', function (error, result) {
+            domains.getDNSRecords('test', DOMAIN_0.domain, 'A', function (error, result) {
                 expect(error).to.eql(null);
                 expect(result).to.be.an(Array);
                 expect(result.length).to.eql(1);
@@ -325,7 +325,7 @@ describe('dns provider', function () {
                 .delete('/v2/domains/' + config.zoneName() + '/records/' + DOMAIN_RECORD_1.id)
                 .reply(204, {});
 
-            domains.removeDNSRecords('test.example.com', 'A', ['1.2.3.4'], function (error) {
+            domains.removeDNSRecords('test', DOMAIN_0.domain, 'A', ['1.2.3.4'], function (error) {
                 expect(error).to.eql(null);
                 expect(req1.isDone()).to.be.ok();
                 expect(req2.isDone()).to.be.ok();
@@ -429,7 +429,7 @@ describe('dns provider', function () {
                 }
             }]);
 
-            domains.upsertDNSRecords('test.example.com', 'A', [ '1.2.3.4' ], function (error, result) {
+            domains.upsertDNSRecords('test', DOMAIN_0.domain, 'A', [ '1.2.3.4' ], function (error, result) {
                 expect(error).to.eql(null);
                 expect(result).to.eql('/change/C2QLKQIWEI0BZF');
                 expect(awsAnswerQueue.length).to.eql(0);
@@ -448,7 +448,7 @@ describe('dns provider', function () {
                 }
             }]);
 
-            domains.upsertDNSRecords('test.example.com', 'A', [ '1.2.3.4' ], function (error, result) {
+            domains.upsertDNSRecords('test', DOMAIN_0.domain, 'A', [ '1.2.3.4' ], function (error, result) {
                 expect(error).to.eql(null);
                 expect(result).to.eql('/change/C2QLKQIWEI0BZF');
                 expect(awsAnswerQueue.length).to.eql(0);
@@ -467,7 +467,7 @@ describe('dns provider', function () {
                 }
             }]);
 
-            domains.upsertDNSRecords(config.fqdn(), 'TXT', [ 'first', 'second', 'third' ], function (error, result) {
+            domains.upsertDNSRecords('', config.fqdn(), 'TXT', [ 'first', 'second', 'third' ], function (error, result) {
                 expect(error).to.eql(null);
                 expect(result).to.eql('/change/C2QLKQIWEI0BZF');
                 expect(awsAnswerQueue.length).to.eql(0);
@@ -488,7 +488,7 @@ describe('dns provider', function () {
                 }]
             }]);
 
-            domains.getDNSRecords('test.example.com', 'A', function (error, result) {
+            domains.getDNSRecords('test', DOMAIN_0.domain, 'A', function (error, result) {
                 expect(error).to.eql(null);
                 expect(result).to.be.an(Array);
                 expect(result.length).to.eql(1);
@@ -509,7 +509,7 @@ describe('dns provider', function () {
                 }
             }]);
 
-            domains.removeDNSRecords('test.example.com', 'A', ['1.2.3.4'], function (error) {
+            domains.removeDNSRecords('test', DOMAIN_0.domain, 'A', ['1.2.3.4'], function (error) {
                 expect(error).to.eql(null);
                 expect(awsAnswerQueue.length).to.eql(0);
 
@@ -580,7 +580,7 @@ describe('dns provider', function () {
             zoneQueue.push([null, [ ]]); // getRecords
             zoneQueue.push([null, {id: '1'}]);
 
-            domains.upsertDNSRecords('test.example.com', 'A', [ '1.2.3.4' ], function (error, result) {
+            domains.upsertDNSRecords('test', DOMAIN_0.domain, 'A', [ '1.2.3.4' ], function (error, result) {
                 expect(error).to.eql(null);
                 expect(result).to.eql('1');
                 expect(zoneQueue.length).to.eql(0);
@@ -594,7 +594,7 @@ describe('dns provider', function () {
             zoneQueue.push([null, [GCDNS().zone('test').record('A', {'name': 'test', data:['5.6.7.8'], ttl: 1})]]);
             zoneQueue.push([null, {id: '2'}]);
 
-            domains.upsertDNSRecords('test.example.com', 'A', [ '1.2.3.4' ], function (error, result) {
+            domains.upsertDNSRecords('test', DOMAIN_0.domain, 'A', [ '1.2.3.4' ], function (error, result) {
                 expect(error).to.eql(null);
                 expect(result).to.eql('2');
                 expect(zoneQueue.length).to.eql(0);
@@ -608,7 +608,7 @@ describe('dns provider', function () {
             zoneQueue.push([null, [ ]]); // getRecords
             zoneQueue.push([null, {id: '3'}]);
 
-            domains.upsertDNSRecords(config.fqdn(), 'TXT', [ 'first', 'second', 'third' ], function (error, result) {
+            domains.upsertDNSRecords('', config.fqdn(), 'TXT', [ 'first', 'second', 'third' ], function (error, result) {
                 expect(error).to.eql(null);
                 expect(result).to.eql('3');
                 expect(zoneQueue.length).to.eql(0);
@@ -621,7 +621,7 @@ describe('dns provider', function () {
             zoneQueue.push([null, HOSTED_ZONES]);
             zoneQueue.push([null, [GCDNS().zone('test').record('A', {'name': 'test', data:['1.2.3.4', '5.6.7.8'], ttl: 1})]]);
 
-            domains.getDNSRecords('test.example.com', 'A', function (error, result) {
+            domains.getDNSRecords('test', DOMAIN_0.domain, 'A', function (error, result) {
                 expect(error).to.eql(null);
                 expect(result).to.be.an(Array);
                 expect(result.length).to.eql(2);
@@ -637,7 +637,7 @@ describe('dns provider', function () {
             zoneQueue.push([null, [GCDNS().zone('test').record('A', {'name': 'test', data:['5.6.7.8'], ttl: 1})]]);
             zoneQueue.push([null, {id: '5'}]);
 
-            domains.removeDNSRecords('test.example.com', 'A', ['1.2.3.4'], function (error) {
+            domains.removeDNSRecords('test', DOMAIN_0.domain, 'A', ['1.2.3.4'], function (error) {
                 expect(error).to.eql(null);
                 expect(zoneQueue.length).to.eql(0);
 
