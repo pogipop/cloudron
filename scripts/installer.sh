@@ -109,9 +109,6 @@ fi
 # ensure we are not inside the source directory, which we will remove now
 cd /root
 
-echo "==> installer: updating packages"
-# add logic to update apt packages here
-
 echo "==> installer: switching the box code"
 rm -rf "${BOX_SRC_DIR}"
 mv "${box_src_tmp_dir}" "${BOX_SRC_DIR}"
