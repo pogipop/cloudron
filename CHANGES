@@ -1121,3 +1121,13 @@
 * Show documentation URL in the app info dialog
 * Update Lets Encrypt agrement URL (https://letsencrypt.org/documents/LE-SA-v1.2-November-15-2017.pdf)
 
+[1.8.2]
+* Update node modules
+* Allow a restore operation if app is already restoring
+* Remove pre-install bundle support since it was hardly used
+* Make the test email mail address configurable
+* Allow admins to access all apps
+* Send feedback via appstore API (instead of email)
+* Show documentation URL in the app info dialog
+* Update Lets Encrypt agrement URL (https://letsencrypt.org/documents/LE-SA-v1.2-November-15-2017.pdf)
+
