@@ -20,10 +20,8 @@ exports.up = function(db, callback) {
                     if (m) m = JSON.stringify(m.manifest);
 
                     db.runSql('UPDATE backups SET manifestJson=? WHERE id=?', [ m, backup.id ], next);
-                });
+                }, callback);
             });
-
-            callback();
         },
 
         db.runSql.bind(db, 'COMMIT'),
