@@ -1108,10 +1108,14 @@ function restoreInstalledApps(callback) {
         async.map(apps, function (app, iteratorDone) {
             debug('marking %s for restore', app.location || app.id);
 
-            appdb.setInstallationCommand(app.id, appdb.ISTATE_PENDING_RESTORE, { oldConfig: null }, function (error) {
-                if (error) debug('did not mark %s for restore', app.location || app.id, error);
+            backups.getByAppIdPaged(1, 1, app.id, function (error, results) {
+                var restoreConfig = !error && results.length ? { backupId: results[0].id, backupFormat: results[0].format } : null;
 
-                iteratorDone(); // always succeed
+                appdb.setInstallationCommand(app.id, appdb.ISTATE_PENDING_RESTORE, { restoreConfig: restoreConfig, oldConfig: null }, function (error) {
+                    if (error) debug('did not mark %s for restore', app.location || app.id, error);
+
+                    iteratorDone(); // always succeed
+                });
             });
         }, callback);
     });

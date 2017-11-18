@@ -16,7 +16,8 @@ exports.up = function(db, callback) {
                 if (error) return callback(error);
 
                 async.eachSeries(backups, function (backup, next) {
-                    var m = backup.restoreConfigJson ? JSON.stringify(JSON.parse(backup.restoreConfigJson).manifest) : null;
+                    var m = backup.restoreConfigJson ? JSON.parse(backup.restoreConfigJson) : null;
+                    if (m) m = JSON.stringify(m.manifest);
 
                     db.runSql('UPDATE backups SET manifestJson=? WHERE id=?', [ m, backup.id ], next);
                 });

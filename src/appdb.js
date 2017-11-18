@@ -197,7 +197,7 @@ function add(id, appStoreId, manifest, location, portBindings, data, callback) {
     var altDomain = data.altDomain || null;
     var xFrameOptions = data.xFrameOptions || '';
     var installationState = data.installationState || exports.ISTATE_PENDING_INSTALL;
-    var restoreConfigJson = JSON.stringify(data.restoreConfig || null); // used when cloning
+    var restoreConfigJson = data.restoreConfig ? JSON.stringify(data.restoreConfig) : null; // used when cloning
     var sso = 'sso' in data ? data.sso : null;
     var debugModeJson = data.debugMode ? JSON.stringify(data.debugMode) : null;
 
