@@ -63,7 +63,9 @@ function removeInternalAppFields(app) {
         sso: app.sso,
         debugMode: app.debugMode,
         robotsTxt: app.robotsTxt,
-        enableBackup: app.enableBackup
+        enableBackup: app.enableBackup,
+        creationTime: app.creationTime.toISOString(),
+        updateTime: app.updateTime.toISOString()
     };
 }
 

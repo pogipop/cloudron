@@ -9,6 +9,10 @@
 #### BLOB - stored offline from table row (use for binary data)
 #### https://dev.mysql.com/doc/refman/5.0/en/storage-requirements.html
 
+# The code uses zero dates. Make sure sql_mode does NOT have NO_ZERO_DATE
+# http://johnemb.blogspot.com/2014/09/adding-or-removing-individual-sql-modes.html
+# SET GLOBAL sql_mode=(SELECT REPLACE(@@sql_mode,'NO_ZERO_DATE',''));
+
 CREATE TABLE IF NOT EXISTS users(
     id VARCHAR(128) NOT NULL UNIQUE,
     username VARCHAR(254) UNIQUE,
@@ -63,6 +67,7 @@ CREATE TABLE IF NOT EXISTS apps(
     dnsRecordId VARCHAR(512), // tracks any id that we got back to track dns updates
     accessRestrictionJson TEXT, // { users: [ ], groups: [ ] }
     createdAt TIMESTAMP(2) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updatedAt TIMESTAMP(2) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     memoryLimit BIGINT DEFAULT 0,
     altDomain VARCHAR(256),
     xFrameOptions VARCHAR(512),

@@ -60,8 +60,9 @@ var assert = require('assert'),
 
 var APPS_FIELDS_PREFIXED = [ 'apps.id', 'apps.appStoreId', 'apps.installationState', 'apps.installationProgress', 'apps.runState',
     'apps.health', 'apps.containerId', 'apps.manifestJson', 'apps.httpPort', 'apps.location', 'apps.dnsRecordId',
-    'apps.accessRestrictionJson', 'apps.restoreConfigJson', 'apps.oldConfigJson', 'apps.updateConfigJson', 'apps.memoryLimit', 'apps.altDomain',
-    'apps.xFrameOptions', 'apps.sso', 'apps.debugModeJson', 'apps.robotsTxt', 'apps.enableBackup' ].join(',');
+    'apps.accessRestrictionJson', 'apps.restoreConfigJson', 'apps.oldConfigJson', 'apps.updateConfigJson', 'apps.memoryLimit', 
+    'apps.altDomain', 'apps.xFrameOptions', 'apps.sso', 'apps.debugModeJson', 'apps.robotsTxt', 'apps.enableBackup',
+    'apps.creationTime', 'apps.updateTime' ].join(',');
 
 var PORT_BINDINGS_FIELDS = [ 'hostPort', 'environmentVariable', 'appId' ].join(',');
 

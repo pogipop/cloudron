@@ -661,12 +661,12 @@ function update(app, callback) {
         // done!
         function (callback) {
             debugApp(app, 'updated');
-            updateApp(app, { installationState: appdb.ISTATE_INSTALLED, installationProgress: '', health: null, updateConfig: null }, callback);
+            updateApp(app, { installationState: appdb.ISTATE_INSTALLED, installationProgress: '', health: null, updateConfig: null, updateTime: (new Date()).toISOString() }, callback);
         }
     ], function seriesDone(error) {
         if (error) {
             debugApp(app, 'Error updating app: %s', error);
-            return updateApp(app, { installationState: appdb.ISTATE_ERROR, installationProgress: error.message }, callback.bind(null, error));
+            return updateApp(app, { installationState: appdb.ISTATE_ERROR, installationProgress: error.message, updateTime: (new Date()).toISOString() }, callback.bind(null, error));
         }
         callback(null);
     });

@@ -622,7 +622,7 @@ describe('database', function () {
             appdb.get(APP_0.id, function (error, result) {
                 expect(error).to.be(null);
                 expect(result).to.be.an('object');
-                expect(result).to.be.eql(APP_0);
+                expect(_.omit(result, ['creationTime', 'updateTime'])).to.be.eql(APP_0);
                 done();
             });
         });
@@ -659,7 +659,7 @@ describe('database', function () {
                 appdb.get(APP_0.id, function (error, result) {
                     expect(error).to.be(null);
                     expect(result).to.be.an('object');
-                    expect(result).to.be.eql(APP_0);
+                    expect(_.omit(result, ['creationTime', 'updateTime'])).to.be.eql(APP_0);
                     done();
                 });
             });
@@ -669,7 +669,7 @@ describe('database', function () {
             appdb.getByHttpPort(APP_0.httpPort, function (error, result) {
                 expect(error).to.be(null);
                 expect(result).to.be.an('object');
-                expect(result).to.be.eql(APP_0);
+                expect(_.omit(result, ['creationTime', 'updateTime'])).to.be.eql(APP_0);
                 done();
             });
         });
@@ -694,8 +694,8 @@ describe('database', function () {
                 expect(error).to.be(null);
                 expect(result).to.be.an(Array);
                 expect(result.length).to.be(2);
-                expect(result[0]).to.be.eql(APP_0);
-                expect(result[1]).to.be.eql(APP_1);
+                expect(_.omit(result[0], ['creationTime', 'updateTime'])).to.be.eql(APP_0);
+                expect(_.omit(result[1], ['creationTime', 'updateTime'])).to.be.eql(APP_1);
                 done();
             });
         });

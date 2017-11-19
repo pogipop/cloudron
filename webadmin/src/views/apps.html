@@ -234,6 +234,8 @@
                 <br/>
                 <span class="app-info-meta">Package version <a ng-href="/#/appstore/{{appInfo.app.manifest.id}}?version={{appInfo.app.manifest.version}}">{{ appInfo.app.manifest.version }}</a> </span>
                 <br/>
+                <span class="app-info-meta">Last updated {{ appInfo.app.updateTime | prettyDate }}</span>
+                <br/>
                 <span class="app-info-meta" ng-show="appInfo.app.manifest.documentationUrl"><a target="_blank" ng-href="{{appInfo.app.manifest.documentationUrl}}">Documentation</a> </span>
             </div>
             <div class="modal-body">
