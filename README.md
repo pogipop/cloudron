@@ -33,9 +33,9 @@ or [pay us a coffee](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_
 * Trivially migrate to another server keeping your apps and data (for example, switch your
   infrastructure provider or move to a bigger server).
 
-* Comprehensive [REST API](https://cloudron.io/references/api.html).
+* Comprehensive [REST API](https://cloudron.io/documentation/developer/api/).
 
-* [CLI](https://git.cloudron.io/cloudron/cloudron-cli) to configure apps.
+* [CLI](https://cloudron.io/documentation/cli/) to configure apps.
 
 * Alerts, audit logs, graphs, dns management ... and much more
 
@@ -49,17 +49,12 @@ You can install the Cloudron platform on your own server or get a managed server
 from cloudron.io. In either case, the Cloudron platform will keep your server and
 apps up-to-date and secure.
 
-* [Selfhosting](https://cloudron.io/references/selfhosting.html) - [Pricing](https://cloudron.io/pricing.html)
+* [Selfhosting](https://cloudron.io/documentation/installation/) - [Pricing](https://cloudron.io/pricing.html)
 * [Managed Hosting](https://cloudron.io/managed.html)
-
-The wiki has instructions on how you can install and update the Cloudron and the
-apps from source.
 
 ## Documentation
 
-* [User manual](https://cloudron.io/references/usermanual.html)
-* [Developer docs](https://cloudron.io/documentation.html)
-* [Architecture](https://cloudron.io/references/architecture.html)
+* [Documentation](https://cloudron.io/documentation/)
 
 ## Related repos
 
@@ -69,12 +64,12 @@ the containers in the Cloudron.
 The [graphite repo](https://git.cloudron.io/cloudron/docker-graphite) contains the graphite code
 that collects metrics for graphs.
 
-The addons are located in separate repositories
+The addons are located in separate repositories:
+
 * [Redis](https://git.cloudron.io/cloudron/redis-addon)
 * [Postgresql](https://git.cloudron.io/cloudron/postgresql-addon)
 * [MySQL](https://git.cloudron.io/cloudron/mysql-addon)
 * [Mongodb](https://git.cloudron.io/cloudron/mongodb-addon)
-* [Mail](https://git.cloudron.io/cloudron/mail-addon)
 
 ## Community
 
