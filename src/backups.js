@@ -602,9 +602,8 @@ function canBackupApp(app) {
             app.installationState === appdb.ISTATE_PENDING_UPDATE; // called from apptask
 }
 
-function snapshotApp(app, manifest, callback) {
+function snapshotApp(app, callback) {
     assert.strictEqual(typeof app, 'object');
-    assert(manifest && typeof manifest === 'object');
     assert.strictEqual(typeof callback, 'function');
 
     log(`Snapshotting app ${app.id}`);
@@ -613,7 +612,7 @@ function snapshotApp(app, manifest, callback) {
         return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, 'Error creating config.json: ' + safe.error.message));
     }
 
-    addons.backupAddons(app, manifest.addons, function (error) {
+    addons.backupAddons(app, app.manifest.addons, function (error) {
         if (error) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
 
         return callback(null);
@@ -656,17 +655,16 @@ function rotateAppBackup(backupConfig, app, timestamp, callback) {
     });
 }
 
-function uploadAppSnapshot(backupConfig, app, manifest, callback) {
+function uploadAppSnapshot(backupConfig, app, callback) {
     assert.strictEqual(typeof backupConfig, 'object');
     assert.strictEqual(typeof app, 'object');
-    assert(manifest && typeof manifest === 'object');
     assert.strictEqual(typeof callback, 'function');
 
     if (!canBackupApp(app)) return callback(); // nothing to do
 
     var startTime = new Date();
 
-    snapshotApp(app, manifest, function (error) {
+    snapshotApp(app, function (error) {
         if (error) return callback(error);
 
         var backupId = util.format('snapshot/app_%s', app.id);
@@ -676,14 +674,13 @@ function uploadAppSnapshot(backupConfig, app, manifest, callback) {
 
             debugApp(app, 'uploadAppSnapshot: %s done time: %s secs', backupId, (new Date() - startTime)/1000);
 
-            setSnapshotInfo(app.id, { timestamp: new Date().toISOString(), manifest: manifest, format: backupConfig.format }, callback);
+            setSnapshotInfo(app.id, { timestamp: new Date().toISOString(), manifest: app.manifest, format: backupConfig.format }, callback);
         });
     });
 }
 
-function backupAppWithTimestamp(app, manifest, timestamp, callback) {
+function backupAppWithTimestamp(app, timestamp, callback) {
     assert.strictEqual(typeof app, 'object');
-    assert(manifest && typeof manifest === 'object');
     assert.strictEqual(typeof timestamp, 'string');
     assert.strictEqual(typeof callback, 'function');
 
@@ -692,7 +689,7 @@ function backupAppWithTimestamp(app, manifest, timestamp, callback) {
     settings.getBackupConfig(function (error, backupConfig) {
         if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
 
-        uploadAppSnapshot(backupConfig, app, manifest, function (error) {
+        uploadAppSnapshot(backupConfig, app, function (error) {
             if (error) return callback(error);
 
             rotateAppBackup(backupConfig, app, timestamp, callback);
@@ -700,9 +697,8 @@ function backupAppWithTimestamp(app, manifest, timestamp, callback) {
     });
 }
 
-function backupApp(app, manifest, callback) {
+function backupApp(app, callback) {
     assert.strictEqual(typeof app, 'object');
-    assert(manifest && typeof manifest === 'object');
     assert.strictEqual(typeof callback, 'function');
 
     const timestamp = (new Date()).toISOString().replace(/[T.]/g, '-').replace(/[:Z]/g,'');
@@ -710,7 +706,7 @@ function backupApp(app, manifest, callback) {
 
     progress.set(progress.BACKUP, 10,  'Backing up ' + (app.altDomain || config.appFqdn(app.location)));
 
-    backupAppWithTimestamp(app, manifest, timestamp, function (error) {
+    backupAppWithTimestamp(app, timestamp, function (error) {
         progress.set(progress.BACKUP, 100, error ? error.message : '');
 
         callback(error);
@@ -744,7 +740,7 @@ function backupBoxAndApps(auditSource, callback) {
                 return iteratorCallback(null, null); // nothing to backup
             }
 
-            backupAppWithTimestamp(app, app.manifest, timestamp, function (error, backupId) {
+            backupAppWithTimestamp(app, timestamp, function (error, backupId) {
                 if (error && error.reason !== BackupsError.BAD_STATE) {
                     debugApp(app, 'Unable to backup', error);
                     return iteratorCallback(error);

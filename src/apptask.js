@@ -482,7 +482,7 @@ function backup(app, callback) {
 
     async.series([
         updateApp.bind(null, app, { installationProgress: '10, Backing up' }),
-        backups.backupApp.bind(null, app, app.manifest),
+        backups.backupApp.bind(null, app),
 
         // done!
         function (callback) {
@@ -592,7 +592,7 @@ function update(app, callback) {
 
             async.series([
                 updateApp.bind(null, app, { installationProgress: '15, Backing up app' }),
-                backups.backupApp.bind(null, app, app.manifest)
+                backups.backupApp.bind(null, app)
             ], next);
         },
 
