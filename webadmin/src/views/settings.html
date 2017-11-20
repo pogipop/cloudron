@@ -393,7 +393,7 @@
           </div>
       </div>
 
-      <div class="row" ng-show="backupConfig.provider !== 'caas'">
+      <div class="row">
           <br/>
           <div class="col-md-12">
               <div ng-show="createBackup.busy" class="progress progress-striped active animateMe">
@@ -402,7 +402,7 @@
           </div>
       </div>
 
-      <div class="row" ng-show="backupConfig.provider !== 'caas'">
+      <div class="row">
         <div class="col-md-11" ng-show="createBackup.busy">
             <p class="text-muted status" style="text-overflow: ellipsis; white-space: nowrap; overflow: hidden">
                 {{ createBackup.detail || 'Syncing ...' }}
@@ -410,14 +410,14 @@
         </div>
       </div>
 
-      <div class="row" ng-show="backupConfig.provider !== 'caas'">
+      <div class="row">
           <div class="col-md-6">
               <p ng-show="createBackup.busy">{{ createBackup.message }}</p>
               <p ng-hide="createBackup.busy">
                 <div class="has-error" ng-show="createBackup.percent === 100 && createBackup.result">{{ createBackup.result }}</div>
               </p>
           </div>
-          <div class="col-md-6 text-right">
+          <div class="col-md-6 text-right" ng-show="backupConfig.provider !== 'caas'">
               <button class="btn btn-outline btn-primary pull-right" ng-click="configureBackup.show()" ng-disabled="createBackup.busy">Configure</button>
 
               <button class="btn btn-outline btn-primary" ng-click="createBackup.doCreateBackup()" ng-disabled="createBackup.busy" style="margin-right: 10px">Backup now</button>
