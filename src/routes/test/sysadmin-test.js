@@ -30,6 +30,8 @@ var SERVER_URL = 'http://localhost:' + config.get('port');
 var USERNAME = 'superadmin', PASSWORD = 'Foobar?1337', EMAIL ='silly@me.com';
 
 function setup(done) {
+    // we test caas here
+    config.set('provider', 'caas');
     config.setVersion('1.2.3');
 
     async.series([

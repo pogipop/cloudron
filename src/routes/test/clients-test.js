@@ -1,6 +1,5 @@
 'use strict';
 
-/* jslint node:true */
 /* global it:false */
 /* global describe:false */
 /* global before:false */
@@ -22,7 +21,7 @@ var async = require('async'),
 var SERVER_URL = 'http://localhost:' + config.get('port');
 
 var USERNAME = 'superadmin', PASSWORD = 'Foobar?1337', EMAIL ='silly@me.com';
-var token = null; // authentication token
+var token = null;
 
 function cleanup(done) {
     database._clear(function (error) {
@@ -35,6 +34,9 @@ function cleanup(done) {
 describe('OAuth Clients API', function () {
     describe('add', function () {
         before(function (done) {
+            // we test caas here
+            config.set('provider', 'caas');
+
             async.series([
                 server.start.bind(null),
                 database._clear.bind(null),
