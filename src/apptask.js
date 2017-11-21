@@ -597,7 +597,10 @@ function update(app, callback) {
             async.series([
                 updateApp.bind(null, app, { installationProgress: '15, Backing up app' }),
                 backups.backupApp.bind(null, app)
-            ], next);
+            ], function (error) {
+                if (error) error.backupError = true;
+                next(error);
+            });
         },
 
         // download new image before app is stopped. this is so we can reduce downtime
@@ -668,11 +671,15 @@ function update(app, callback) {
             updateApp(app, { installationState: appdb.ISTATE_INSTALLED, installationProgress: '', health: null, updateConfig: null, updateTime: new Date() }, callback);
         }
     ], function seriesDone(error) {
-        if (error) {
+        if (error && error.backupError) {
+            debugApp(app, 'update aborted because backup failed', error);
+            updateApp(app, { installationState: appdb.ISTATE_INSTALLED, installationProgress: '', health: null, updateConfig: null }, callback.bind(null, error));
+        } else if (error) {
             debugApp(app, 'Error updating app: %s', error);
-            return updateApp(app, { installationState: appdb.ISTATE_ERROR, installationProgress: error.message, updateTime: new Date() }, callback.bind(null, error));
+            updateApp(app, { installationState: appdb.ISTATE_ERROR, installationProgress: error.message, updateTime: new Date() }, callback.bind(null, error));
+        } else {
+            callback(null);
         }
-        callback(null);
     });
 }
 
