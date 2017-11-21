@@ -28,6 +28,8 @@ var groupObject;
 
 var server;
 function setup(done) {
+    config.set('provider', 'caas');
+
     async.series([
         server.start.bind(server),
 
@@ -223,7 +225,7 @@ describe('Groups API', function () {
       var group0Object, group1Object;
         before(function (done) {
             groups.create('group0', function (e, r) {
-                group0Object = r; 
+                group0Object = r;
                 groups.create('group1', function (e, r) {
                   group1Object = r;
                   done();

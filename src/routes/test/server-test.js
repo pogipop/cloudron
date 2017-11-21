@@ -22,6 +22,7 @@ var token = null;
 
 var server;
 function setup(done) {
+    config.set('provider', 'caas');
     config.setVersion('1.2.3');
 
     async.series([
@@ -67,11 +68,12 @@ describe('REST API', function () {
         superagent.post(SERVER_URL + '/api/v1/users')
             .query({ access_token: token })
             .set('content-type', 'application/json')
-            .send("some invalid non-strict json")
-           .end(function (error, result) {
-            expect(result.statusCode).to.equal(400);
-            expect(result.body.message).to.be('Failed to parse body');
-            done();
+            .send('some invalid non-strict json')
+            .end(function (error, result) {
+              expect(result.statusCode).to.equal(400);
+              expect(result.body.message).to.be('Bad JSON');
+
+              done();
         });
     });
 
@@ -79,10 +81,11 @@ describe('REST API', function () {
         superagent.post(SERVER_URL + '/api/v1/users')
             .query({ access_token: token })
             .set('content-type', 'application/x-www-form-urlencoded')
-            .send("some string")
-           .end(function (error, result) {
-            expect(result.statusCode).to.equal(400);
-            done();
+            .send('some string')
+            .end(function (error, result) {
+              expect(result.statusCode).to.equal(400);
+
+              done();
         });
     });
 });

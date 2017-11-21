@@ -31,7 +31,8 @@ describe('dns provider', function () {
 
         async.series([
             database.initialize,
-            settings.initialize
+            settings.initialize,
+            database._clear
         ], done);
     });
 
