@@ -108,10 +108,10 @@ app.controller('SetupDNSController', ['$scope', '$http', 'Client', function ($sc
                 };
 
                 if (!data.projectId || !data.credentials || !data.credentials.client_email || !data.credentials.private_key) {
-                    throw "fields_missing";
+                    throw 'fields_missing';
                 }
             } catch(e) {
-                $scope.dnsCredentials.error = "Cannot parse Google Service Account Key";
+                $scope.dnsCredentials.error = 'Cannot parse Google Service Account Key';
                 $scope.dnsCredentials.busy = false;
                 return;
             }
@@ -134,7 +134,7 @@ app.controller('SetupDNSController', ['$scope', '$http', 'Client', function ($sc
             }
 
             waitForDnsSetup();
-       });
+        });
     };
 
     function waitForDnsSetup() {
