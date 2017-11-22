@@ -61,14 +61,14 @@ function api(provider) {
     assert.strictEqual(typeof provider, 'string');
 
     switch (provider) {
-        case 'caas': return require('./dns/caas.js');
-        case 'cloudflare': return require('./dns/cloudflare.js');
-        case 'route53': return require('./dns/route53.js');
-        case 'gcdns': return require('./dns/gcdns.js');
-        case 'digitalocean': return require('./dns/digitalocean.js');
-        case 'noop': return require('./dns/noop.js');
-        case 'manual': return require('./dns/manual.js');
-        default: return null;
+    case 'caas': return require('./dns/caas.js');
+    case 'cloudflare': return require('./dns/cloudflare.js');
+    case 'route53': return require('./dns/route53.js');
+    case 'gcdns': return require('./dns/gcdns.js');
+    case 'digitalocean': return require('./dns/digitalocean.js');
+    case 'noop': return require('./dns/noop.js');
+    case 'manual': return require('./dns/manual.js');
+    default: return null;
     }
 }
 
@@ -233,8 +233,8 @@ function getDNSRecords(subdomain, domain, type, callback) {
 }
 
 function upsertDNSRecords(subdomain, domain, type, values, callback) {
-  assert.strictEqual(typeof subdomain, 'string');
-  assert.strictEqual(typeof domain, 'string');
+    assert.strictEqual(typeof subdomain, 'string');
+    assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof type, 'string');
     assert(util.isArray(values));
     assert.strictEqual(typeof callback, 'function');
@@ -242,17 +242,17 @@ function upsertDNSRecords(subdomain, domain, type, values, callback) {
     debug('upsertDNSRecord: %s on %s type %s values', subdomain, domain, type, values);
 
     get(domain, function (error, result) {
-      if (error) return callback(new DomainError(DomainError.INTERNAL_ERROR, error));
+        if (error) return callback(new DomainError(DomainError.INTERNAL_ERROR, error));
 
-      api(result.config.provider).upsert(result.config, result.zoneName, subdomain, type, values, function (error, changeId) {
-        if (error) return callback(error);
+        api(result.config.provider).upsert(result.config, result.zoneName, subdomain, type, values, function (error, changeId) {
+            if (error) return callback(error);
 
-        callback(null, changeId);
-      });
+            callback(null, changeId);
+        });
     });
-  }
+}
 
-  function removeDNSRecords(subdomain, domain, type, values, callback) {
+function removeDNSRecords(subdomain, domain, type, values, callback) {
     assert.strictEqual(typeof subdomain, 'string');
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof type, 'string');
