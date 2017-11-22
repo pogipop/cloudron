@@ -244,6 +244,7 @@ function cloneApp(req, res, next) {
         if (error && error.reason === AppsError.NOT_FOUND) return next(new HttpError(404, 'No such app'));
         if (error && error.reason === AppsError.BAD_FIELD) return next(new HttpError(400, error.message));
         if (error && error.reason === AppsError.BAD_STATE) return next(new HttpError(409, error.message));
+        if (error && error.reason === AppsError.BILLING_REQUIRED) return next(new HttpError(402, 'Billing required'));
         if (error && error.reason === AppsError.EXTERNAL_ERROR) return next(new HttpError(424, error.message));
         if (error) return next(new HttpError(500, error));
 
