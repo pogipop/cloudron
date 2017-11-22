@@ -19,6 +19,7 @@ var appdb = require('../appdb.js'),
     groupdb = require('../groupdb.js'),
     hat = require('hat'),
     mailboxdb = require('../mailboxdb.js'),
+    path = require('path'),
     settingsdb = require('../settingsdb.js'),
     tokendb = require('../tokendb.js'),
     userdb = require('../userdb.js'),
@@ -1537,6 +1538,32 @@ describe('database', function () {
                 done();
             });
         });
+    });
+
+    describe('importFromFile', function () {
+        before(function (done) {
+            config.setFqdn(TEST_DOMAIN.domain);
+
+            async.series([
+                database.initialize,
+                database._clear
+            ], done);
+        });
+
+        it('cannot import from non-existent file', function (done) {
+            database.importFromFile('/does/not/exist', function (error) {
+                expect(error).to.be.ok();
+                done();
+            });
+        });
+
+        it('cannot import from file', function (done) {
+            database.importFromFile(path.join(__dirname, 'box.mysqldump'), function (error) {
+                expect(error).to.be(null);
+                done();
+            });
+        });
+
     });
 
     describe('mailboxes', function () {

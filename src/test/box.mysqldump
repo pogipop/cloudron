@@ -1,0 +1,434 @@
+-- MySQL dump 10.13  Distrib 5.7.20, for Linux (x86_64)
+--
+-- Host: localhost    Database: box
+-- ------------------------------------------------------
+-- Server version	5.7.20-0ubuntu0.16.04.1
+
+/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
+/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
+/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
+/*!40101 SET NAMES utf8mb4 */;
+/*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;
+/*!40103 SET TIME_ZONE='+00:00' */;
+/*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;
+/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
+/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
+/*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
+
+--
+-- Table structure for table `appAddonConfigs`
+--
+
+DROP TABLE IF EXISTS `appAddonConfigs`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `appAddonConfigs` (
+  `appId` varchar(128) COLLATE utf8_bin NOT NULL,
+  `addonId` varchar(32) COLLATE utf8_bin NOT NULL,
+  `value` varchar(512) COLLATE utf8_bin NOT NULL,
+  `name` varchar(128) COLLATE utf8_bin DEFAULT NULL,
+  KEY `appId` (`appId`),
+  CONSTRAINT `appAddonConfigs_ibfk_1` FOREIGN KEY (`appId`) REFERENCES `apps` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `appAddonConfigs`
+--
+
+LOCK TABLES `appAddonConfigs` WRITE;
+/*!40000 ALTER TABLE `appAddonConfigs` DISABLE KEYS */;
+/*!40000 ALTER TABLE `appAddonConfigs` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `appPortBindings`
+--
+
+DROP TABLE IF EXISTS `appPortBindings`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `appPortBindings` (
+  `hostPort` int(11) NOT NULL,
+  `appId` varchar(128) COLLATE utf8_bin NOT NULL,
+  `environmentVariable` varchar(128) COLLATE utf8_bin NOT NULL,
+  PRIMARY KEY (`hostPort`),
+  UNIQUE KEY `hostPort` (`hostPort`),
+  KEY `appId` (`appId`),
+  CONSTRAINT `appPortBindings_ibfk_1` FOREIGN KEY (`appId`) REFERENCES `apps` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `appPortBindings`
+--
+
+LOCK TABLES `appPortBindings` WRITE;
+/*!40000 ALTER TABLE `appPortBindings` DISABLE KEYS */;
+/*!40000 ALTER TABLE `appPortBindings` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `apps`
+--
+
+DROP TABLE IF EXISTS `apps`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `apps` (
+  `id` varchar(128) COLLATE utf8_bin NOT NULL,
+  `appStoreId` varchar(128) COLLATE utf8_bin NOT NULL,
+  `installationState` varchar(512) COLLATE utf8_bin NOT NULL,
+  `installationProgress` text COLLATE utf8_bin,
+  `runState` varchar(512) COLLATE utf8_bin DEFAULT NULL,
+  `containerId` varchar(128) COLLATE utf8_bin DEFAULT NULL,
+  `manifestJson` text COLLATE utf8_bin,
+  `httpPort` int(11) DEFAULT NULL,
+  `location` varchar(128) COLLATE utf8_bin NOT NULL,
+  `dnsRecordId` varchar(512) COLLATE utf8_bin DEFAULT NULL,
+  `accessRestrictionJson` text COLLATE utf8_bin,
+  `health` varchar(128) COLLATE utf8_bin DEFAULT NULL,
+  `restoreConfigJson` text COLLATE utf8_bin,
+  `createdAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `oldConfigJson` text COLLATE utf8_bin,
+  `memoryLimit` bigint(20) DEFAULT '0',
+  `altDomain` varchar(256) COLLATE utf8_bin DEFAULT NULL,
+  `xFrameOptions` varchar(512) COLLATE utf8_bin DEFAULT NULL,
+  `sso` tinyint(1) DEFAULT '1',
+  `debugModeJson` text COLLATE utf8_bin,
+  `robotsTxt` text COLLATE utf8_bin,
+  `enableBackup` tinyint(1) DEFAULT '1',
+  `updateConfigJson` text COLLATE utf8_bin,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `id` (`id`),
+  UNIQUE KEY `location` (`location`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `apps`
+--
+
+LOCK TABLES `apps` WRITE;
+/*!40000 ALTER TABLE `apps` DISABLE KEYS */;
+/*!40000 ALTER TABLE `apps` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `authcodes`
+--
+
+DROP TABLE IF EXISTS `authcodes`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `authcodes` (
+  `authCode` varchar(128) COLLATE utf8_bin NOT NULL,
+  `userId` varchar(128) COLLATE utf8_bin NOT NULL,
+  `clientId` varchar(128) COLLATE utf8_bin NOT NULL,
+  `expiresAt` bigint(20) NOT NULL,
+  PRIMARY KEY (`authCode`),
+  UNIQUE KEY `authCode` (`authCode`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `authcodes`
+--
+
+LOCK TABLES `authcodes` WRITE;
+/*!40000 ALTER TABLE `authcodes` DISABLE KEYS */;
+/*!40000 ALTER TABLE `authcodes` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `backups`
+--
+
+DROP TABLE IF EXISTS `backups`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `backups` (
+  `id` varchar(128) COLLATE utf8_bin NOT NULL,
+  `creationTime` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `version` varchar(128) COLLATE utf8_bin NOT NULL,
+  `type` varchar(16) COLLATE utf8_bin NOT NULL,
+  `dependsOn` text COLLATE utf8_bin,
+  `state` varchar(16) COLLATE utf8_bin NOT NULL,
+  `format` varchar(16) COLLATE utf8_bin DEFAULT 'tgz',
+  `manifestJson` text COLLATE utf8_bin,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `backups`
+--
+
+LOCK TABLES `backups` WRITE;
+/*!40000 ALTER TABLE `backups` DISABLE KEYS */;
+/*!40000 ALTER TABLE `backups` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `clients`
+--
+
+DROP TABLE IF EXISTS `clients`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `clients` (
+  `id` varchar(128) COLLATE utf8_bin NOT NULL,
+  `appId` varchar(128) COLLATE utf8_bin NOT NULL,
+  `clientSecret` varchar(512) COLLATE utf8_bin NOT NULL,
+  `redirectURI` varchar(512) COLLATE utf8_bin NOT NULL,
+  `scope` varchar(512) COLLATE utf8_bin NOT NULL,
+  `type` varchar(16) COLLATE utf8_bin NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `id` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `clients`
+--
+
+LOCK TABLES `clients` WRITE;
+/*!40000 ALTER TABLE `clients` DISABLE KEYS */;
+INSERT INTO `clients` VALUES ('cid-cli','Cloudron Tool','secret-cli','https://my.smartserver.space','*, roleSdk','built-in'),('cid-sdk','SDK','secret-sdk','https://my.smartserver.space','*,roleSdk','built-in'),('cid-webadmin','Settings','secret-webadmin','https://my.smartserver.space','cloudron,developer,profile,users,apps,settings','built-in');
+/*!40000 ALTER TABLE `clients` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `eventlog`
+--
+
+DROP TABLE IF EXISTS `eventlog`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `eventlog` (
+  `id` varchar(128) COLLATE utf8_bin NOT NULL,
+  `source` text COLLATE utf8_bin,
+  `creationTime` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `action` varchar(128) COLLATE utf8_bin NOT NULL,
+  `data` text COLLATE utf8_bin,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `eventlog`
+--
+
+LOCK TABLES `eventlog` WRITE;
+/*!40000 ALTER TABLE `eventlog` DISABLE KEYS */;
+INSERT INTO `eventlog` VALUES ('0b698e37-2abc-44c6-9b98-d3f3806f3730','{\"userId\":null,\"username\":\"boot\"}','2017-11-22 23:18:48','cloudron.start','{\"version\":\"1.8.2\"}'),('4537f126-4838-430f-a8b4-356fdbe0ce36','{\"ip\":\"24.4.6.167\",\"username\":null,\"userId\":null}','2017-11-22 23:22:24','cloudron.activate','{}'),('6d91cf1a-90d3-47d0-a716-74feae344848','{\"ip\":\"24.4.6.167\",\"username\":null,\"userId\":null}','2017-11-22 23:22:24','user.add','{\"userId\":\"uid-17eba40b-dd1d-45f1-9039-0d5143250ca1\",\"email\":\"mail@girish.in\"}'),('a3d53a98-8104-4182-9b82-a635e339f4d6','{\"ip\":\"24.4.6.167\",\"username\":\"girish\",\"userId\":\"uid-17eba40b-dd1d-45f1-9039-0d5143250ca1\"}','2017-11-22 23:22:47','backup.start','{}'),('b780b493-0638-483a-b77c-0749f7052e84','{\"userId\":null,\"username\":\"boot\"}','2017-11-22 23:19:53','cloudron.start','{\"version\":\"1.8.2\"}');
+/*!40000 ALTER TABLE `eventlog` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `groupMembers`
+--
+
+DROP TABLE IF EXISTS `groupMembers`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `groupMembers` (
+  `groupId` varchar(128) COLLATE utf8_bin NOT NULL,
+  `userId` varchar(128) COLLATE utf8_bin NOT NULL,
+  KEY `groupId` (`groupId`),
+  KEY `userId` (`userId`),
+  CONSTRAINT `groupMembers_ibfk_1` FOREIGN KEY (`groupId`) REFERENCES `groups` (`id`),
+  CONSTRAINT `groupMembers_ibfk_2` FOREIGN KEY (`userId`) REFERENCES `users` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `groupMembers`
+--
+
+LOCK TABLES `groupMembers` WRITE;
+/*!40000 ALTER TABLE `groupMembers` DISABLE KEYS */;
+INSERT INTO `groupMembers` VALUES ('admin','uid-17eba40b-dd1d-45f1-9039-0d5143250ca1');
+/*!40000 ALTER TABLE `groupMembers` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `groups`
+--
+
+DROP TABLE IF EXISTS `groups`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `groups` (
+  `id` varchar(128) COLLATE utf8_bin NOT NULL,
+  `name` varchar(128) COLLATE utf8_bin NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `id` (`id`),
+  UNIQUE KEY `name` (`name`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `groups`
+--
+
+LOCK TABLES `groups` WRITE;
+/*!40000 ALTER TABLE `groups` DISABLE KEYS */;
+INSERT INTO `groups` VALUES ('admin','admin');
+/*!40000 ALTER TABLE `groups` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `mailboxes`
+--
+
+DROP TABLE IF EXISTS `mailboxes`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `mailboxes` (
+  `name` varchar(128) COLLATE utf8_bin NOT NULL,
+  `aliasTarget` varchar(128) COLLATE utf8_bin DEFAULT NULL,
+  `creationTime` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `ownerId` varchar(128) COLLATE utf8_bin NOT NULL,
+  `ownerType` varchar(128) COLLATE utf8_bin NOT NULL,
+  PRIMARY KEY (`name`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `mailboxes`
+--
+
+LOCK TABLES `mailboxes` WRITE;
+/*!40000 ALTER TABLE `mailboxes` DISABLE KEYS */;
+INSERT INTO `mailboxes` VALUES ('admin',NULL,'2017-11-22 23:18:05','admin','group'),('girish',NULL,'2017-11-22 23:22:24','uid-17eba40b-dd1d-45f1-9039-0d5143250ca1','user');
+/*!40000 ALTER TABLE `mailboxes` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `migrations`
+--
+
+DROP TABLE IF EXISTS `migrations`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `migrations` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `run_on` datetime NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=66 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `migrations`
+--
+
+LOCK TABLES `migrations` WRITE;
+/*!40000 ALTER TABLE `migrations` DISABLE KEYS */;
+INSERT INTO `migrations` VALUES (1,'/20141021192552-db-create','2017-11-22 23:18:03'),(2,'/20141021192554-db-init','2017-11-22 23:18:03'),(3,'/20150303114527-users-add-resetToken','2017-11-22 23:18:03'),(4,'/20150303160528-tokens-expires-bigint','2017-11-22 23:18:03'),(5,'/20150303171203-authcodes-add-expiresAt','2017-11-22 23:18:04'),(6,'/20150308054950-appportbindings-add-environmentVariable','2017-11-22 23:18:04'),(7,'/20150309023251-appportbindings-drop-containerport','2017-11-22 23:18:04'),(8,'/20150311120713-tokens-rename-userid-to-identifier','2017-11-22 23:18:04'),(9,'/20150323044254-apps-drop-version','2017-11-22 23:18:04'),(10,'/20150323174906-apps-alter-health','2017-11-22 23:18:04'),(11,'/20150326072904-apps-add-lastBackupId','2017-11-22 23:18:04'),(12,'/20150404093025-apps-add-createdAt','2017-11-22 23:18:04'),(13,'/20150430165335-settings-default-autoupdatepattern','2017-11-22 23:18:04'),(14,'/20150430210225-settings-default-timezone','2017-11-22 23:18:04'),(15,'/20150615075901-users-add-unique-constraints','2017-11-22 23:18:04'),(16,'/20150615134751-users-adjust-username-and-email-constraints','2017-11-22 23:18:04'),(17,'/20150618192028-apps-add-lastManifestJson','2017-11-22 23:18:04'),(18,'/20150710044740-apps-rename-lastBackupConfigJson','2017-11-22 23:18:04'),(19,'/20150710170847-apps-add-oldConfigJson','2017-11-22 23:18:04'),(20,'/20150719014338-settings-remove-all','2017-11-22 23:18:04'),(21,'/20151013073519-apps-add-oauthProxy','2017-11-22 23:18:04'),(22,'/20151015232915-clients-add-type','2017-11-22 23:18:04'),(23,'/20151016131005-apps-rename-accessRestriction','2017-11-22 23:18:04'),(24,'/20151113091257-apps-alter-manifestJson','2017-11-22 23:18:04'),(25,'/20151126111337-apps-alter-jsons','2017-11-22 23:18:04'),(26,'/20160119113143-users-add-displayName','2017-11-22 23:18:04'),(27,'/20160205135326-apps-add-memoryLimit','2017-11-22 23:18:04'),(28,'/20160208031241-groups-add-table','2017-11-22 23:18:04'),(29,'/20160208100000-groupMembers-add-table','2017-11-22 23:18:04'),(30,'/20160208164735-groups-add-admin','2017-11-22 23:18:04'),(31,'/20160307172229-backups-add-table','2017-11-22 23:18:04'),(32,'/20160330215005-backups-add-configJson','2017-11-22 23:18:04'),(33,'/20160404052453-backups-drop-configJson','2017-11-22 23:18:04'),(34,'/20160404191651-backups-rename-filename-to-id','2017-11-22 23:18:04'),(35,'/20160405083451-users-drop-username-null','2017-11-22 23:18:04'),(36,'/20160419070047-apps-add-altDomain','2017-11-22 23:18:05'),(37,'/20160430062446-eventlog-add-table','2017-11-22 23:18:05'),(38,'/20160506111925-users-add-showTutorial','2017-11-22 23:18:05'),(39,'/20160527010012-mailboxes-add-table','2017-11-22 23:18:05'),(40,'/20160528090040-mailboxes-import-existing-users','2017-11-22 23:18:05'),(41,'/20160614021819-apps-drop-lastBackupConfigJson','2017-11-22 23:18:05'),(42,'/20160621032914-apps-alter-installationProgress','2017-11-22 23:18:05'),(43,'/20160714130142-apps-add-xFrameOptions','2017-11-22 23:18:05'),(44,'/20160831051352-settings-default-mailconfig','2017-11-22 23:18:05'),(45,'/20160921205726-mailboxes-add-ownerId','2017-11-22 23:18:05'),(46,'/20161111051640-appdb-add-sso','2017-11-22 23:18:05'),(47,'/20161113014146-appdb-drop-oauthProxy','2017-11-22 23:18:05'),(48,'/20170117170621-users-drop-showTutorial','2017-11-22 23:18:05'),(49,'/20170119234504-appdb-add-debugModeJson','2017-11-22 23:18:05'),(50,'/20170223165502-backups-alter-dependsOn','2017-11-22 23:18:05'),(51,'/20170325203037-appaddonconfigs-add-name','2017-11-22 23:18:05'),(52,'/20170414193114-database-utf8mb4','2017-11-22 23:18:05'),(53,'/20170418073650-backups-add-restoreConfigJson','2017-11-22 23:18:05'),(54,'/20170423032116-settings-set-default-retentionSecs','2017-11-22 23:18:05'),(55,'/20170628173051-settings-default-mailrelay','2017-11-22 23:18:05'),(56,'/20170714170908-appdb-add-robotsTxt','2017-11-22 23:18:05'),(57,'/20170731073447-eventlog-alter-data-and-source','2017-11-22 23:18:05'),(58,'/20170816211111-appdb-add-enableBackup','2017-11-22 23:18:05'),(59,'/20170911133441-settings-alter-value','2017-11-22 23:18:05'),(60,'/20170919185109-settings-set-backupConfig-defaults','2017-11-22 23:18:05'),(61,'/20170928003352-backups-add-format','2017-11-22 23:18:05'),(62,'/20171013003424-apps-add-newConfigJson','2017-11-22 23:18:05'),(63,'/20171116191443-backups-add-manifestJson','2017-11-22 23:18:05'),(64,'/20171116203507-apps-rename-newConfigJson-to-updateConfigJson','2017-11-22 23:18:05'),(65,'/20171116224051-apps-rename-lastBackupId-to-restoreConfigJson','2017-11-22 23:18:05');
+/*!40000 ALTER TABLE `migrations` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `settings`
+--
+
+DROP TABLE IF EXISTS `settings`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `settings` (
+  `name` varchar(128) COLLATE utf8_bin NOT NULL,
+  `value` text COLLATE utf8_bin,
+  PRIMARY KEY (`name`),
+  UNIQUE KEY `name` (`name`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `settings`
+--
+
+LOCK TABLES `settings` WRITE;
+/*!40000 ALTER TABLE `settings` DISABLE KEYS */;
+INSERT INTO `settings` VALUES ('backup_config','{\n  \"provider\": \"filesystem\",\n  \"backupFolder\": \"/var/backups\",\n  \"key\": \"\",\n  \"format\": \"tgz\",\n  \"retentionSecs\": 172800\n}'),('dns_config','{\"provider\":\"noop\"}'),('domain','{ \"fqdn\": \"\", \"zoneName\": \"\", \"adminLocation\": \"my\" }'),('mail_config','{\"enabled\":false}'),('mail_relay','{\"provider\":\"cloudron-smtp\"}'),('time_zone','America/Los_Angeles'),('tls_config','{\n  \"provider\": \"le-prod\"\n}');
+/*!40000 ALTER TABLE `settings` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `tokens`
+--
+
+DROP TABLE IF EXISTS `tokens`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `tokens` (
+  `accessToken` varchar(128) COLLATE utf8_bin NOT NULL,
+  `identifier` varchar(128) COLLATE utf8_bin NOT NULL,
+  `clientId` varchar(128) COLLATE utf8_bin DEFAULT NULL,
+  `scope` varchar(512) COLLATE utf8_bin NOT NULL,
+  `expires` bigint(20) DEFAULT NULL,
+  PRIMARY KEY (`accessToken`),
+  UNIQUE KEY `accessToken` (`accessToken`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `tokens`
+--
+
+LOCK TABLES `tokens` WRITE;
+/*!40000 ALTER TABLE `tokens` DISABLE KEYS */;
+INSERT INTO `tokens` VALUES ('4f4ad10f1af48019105f08a18f053bba4c374530c9b967a4b3beb5bc1f2b2066','uid-17eba40b-dd1d-45f1-9039-0d5143250ca1','cid-webadmin','*',1511997744791);
+/*!40000 ALTER TABLE `tokens` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `users`
+--
+
+DROP TABLE IF EXISTS `users`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `users` (
+  `id` varchar(128) COLLATE utf8_bin NOT NULL,
+  `username` varchar(254) COLLATE utf8_bin DEFAULT NULL,
+  `email` varchar(254) COLLATE utf8_bin NOT NULL,
+  `password` varchar(1024) COLLATE utf8_bin NOT NULL,
+  `salt` varchar(512) COLLATE utf8_bin NOT NULL,
+  `createdAt` varchar(512) COLLATE utf8_bin NOT NULL,
+  `modifiedAt` varchar(512) COLLATE utf8_bin NOT NULL,
+  `resetToken` varchar(128) COLLATE utf8_bin DEFAULT '',
+  `displayName` varchar(512) COLLATE utf8_bin DEFAULT '',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `id` (`id`),
+  UNIQUE KEY `users_email` (`email`),
+  UNIQUE KEY `users_username` (`username`),
+  UNIQUE KEY `username` (`username`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `users`
+--
+
+LOCK TABLES `users` WRITE;
+/*!40000 ALTER TABLE `users` DISABLE KEYS */;
+INSERT INTO `users` VALUES ('uid-17eba40b-dd1d-45f1-9039-0d5143250ca1','girish','mail@girish.in','6500c6490659945d19a957e541a6e0c237ba77a20c5278cb0fc6d150d044a4ed46ecee7f99c64239d6863de0f9dd0f01424d7598db2260665475726755755a690167c3d368c155406bcec42968ba535ef328d5523c9114cca250db9acb9df2ddfa91738beaee6440294d04d42a3462e37b102e22faf27b0dba52a38606caf382fa2141b5330b16d044037b63cf5df9a895e1e1786f2fdb06817aa022ae14205ac27e708d3db629a559f0011e5824a7ce0a0c75092c4863b7bbad963acb13d96e19afe8baff823904af18fdc1f6f5edccc77c17ddf755696d2024cad348a5a0474aa501042b918fcc37dfe55009ecfbca732212274a793c81ef2aa680fc4de4a14bab9711f198744d831a385b0cbd7e52a173d7a1dc64d616b8cfa58c3edad6fde5371b7d07016a72743ab61ed17fa60e68c29ccf508c388fdc39b9acad5520e9c89835d4b220f506a22260632115468e8517db7022dcdbe03ab068869ba8a1a728e1dd7bb5097cbc05b3778ee8b772060ab3003a305470223b6b81d23f3571721c93ce5bb2bf35369a1bf104c5d43b5a9568a67740c2e05ff5eae4774f15b07c986e4eae4482406ea0255eaccf843e16e134bac259435779c54e08bcf05ca7f54920ce75233a61feeb61266c8a77fed79837a4c19b35717d7dfbcb72c611a09e8895886cc42601c471765e2f6830d095a4b6692fc2385f52d6a10786968e89f5','88cd5483129f510d6ac601f389e8e089619139c3ab3bd3dbf891756506ae5773ab5bfe0b0e535b690b1c0df07805badb81f94386f725ab19ea5afcbe49e177a3','2017-11-22T23:22:24.759Z','2017-11-22T23:22:24.759Z','fd70b8f9de752b9df525c6ae18bae07bbc6f9a2cdc6a2f262f7c16ae014e8d36','Girish');
+/*!40000 ALTER TABLE `users` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Dumping routines for database 'box'
+--
+/*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
+
+/*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
+/*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;
+/*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;
+/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
+/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
+/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
+/*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
+
+-- Dump completed on 2017-11-22 23:22:47
