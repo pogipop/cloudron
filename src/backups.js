@@ -13,6 +13,8 @@ exports = module.exports = {
     ensureBackup: ensureBackup,
 
     backup: backup,
+    restore: restore,
+
     backupApp: backupApp,
     restoreApp: restoreApp,
 
@@ -40,6 +42,7 @@ var addons = require('./addons.js'),
     backupdb = require('./backupdb.js'),
     config = require('./config.js'),
     crypto = require('crypto'),
+    database = require('./database.js'),
     DatabaseError = require('./databaseerror.js'),
     debug = require('debug')('box:backups'),
     eventlog = require('./eventlog.js'),
@@ -413,6 +416,22 @@ function download(backupConfig, backupId, format, dataDir, callback) {
             restoreFsMetadata(dataDir, callback);
         });
     }
+}
+
+function restore(backupConfig, backupId, callback) {
+    assert.strictEqual(typeof backupConfig, 'object');
+    assert.strictEqual(typeof backupId, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    download(backupConfig, backupId, backupConfig.format, paths.BOX_DATA_DIR, function (error) {
+        if (error) return callback(error);
+
+        database.importFromFile(`${paths.BOX_DATA_DIR}/box.mysqldump`, function (error) {
+            if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
+
+            callback();
+        });
+    });
 }
 
 function restoreApp(app, addonsToRestore, restoreConfig, callback) {
@@ -999,3 +1018,4 @@ function cleanup(auditSource, callback) {
         });
     });
 }
+
