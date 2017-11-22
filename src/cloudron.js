@@ -15,6 +15,7 @@ exports = module.exports = {
     sendCaasHeartbeat: sendCaasHeartbeat,
 
     updateToLatest: updateToLatest,
+    restore: restore,
     reboot: reboot,
     retire: retire,
     migrate: migrate,
@@ -31,6 +32,7 @@ var appdb = require('./appdb.js'),
     assert = require('assert'),
     async = require('async'),
     backups = require('./backups.js'),
+    BackupsError = require('./backups.js').BackupsError,
     certificates = require('./certificates.js'),
     child_process = require('child_process'),
     clients = require('./clients.js'),
@@ -69,7 +71,8 @@ var appdb = require('./appdb.js'),
 
 var REBOOT_CMD = path.join(__dirname, 'scripts/reboot.sh'),
     UPDATE_CMD = path.join(__dirname, 'scripts/update.sh'),
-    RETIRE_CMD = path.join(__dirname, 'scripts/retire.sh');
+    RETIRE_CMD = path.join(__dirname, 'scripts/retire.sh'),
+    RESTART_CMD = path.join(__dirname, 'scripts/restart.sh');
 
 var NOOP_CALLBACK = function (error) { if (error) debug(error); };
 
@@ -87,7 +90,7 @@ const BOX_AND_USER_TEMPLATE = {
 };
 
 var gBoxAndUserDetails = null,         // cached cloudron details like region,size...
-    gWebadminStatus = { dns: false, tls: false, configuring: false };
+    gWebadminStatus = { dns: false, tls: false, configuring: false, restoring: false };
 
 function CloudronError(reason, errorOrMessage) {
     assert.strictEqual(typeof reason, 'string');
@@ -121,7 +124,7 @@ CloudronError.SELF_UPGRADE_NOT_SUPPORTED = 'Self upgrade not supported';
 function initialize(callback) {
     assert.strictEqual(typeof callback, 'function');
 
-    gWebadminStatus = { dns: false, tls: false, configuring: false };
+    gWebadminStatus = { dns: false, tls: false, configuring: false, restoring: false };
     gBoxAndUserDetails = null;
 
     async.series([
@@ -606,6 +609,38 @@ function addDnsRecords(ip, callback) {
         else debug('addDnsRecords: done');
 
         callback(error);
+    });
+}
+
+function restore(backupConfig, backupId, version, callback) {
+    assert.strictEqual(typeof backupConfig, 'object');
+    assert.strictEqual(typeof backupId, 'string');
+    assert.strictEqual(typeof version, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    if (config.version() !== version) return callback(new CloudronError(CloudronError.BAD_STATE, 'Bad version'));
+
+    user.count(function (error, count) {
+        if (error) return callback(new CloudronError(CloudronError.INTERNAL_ERROR, error));
+        if (count) return callback(new CloudronError(CloudronError.ALREADY_PROVISIONED, 'Already activated'));
+
+        backups.testConfig(backupConfig, function (error) {
+            if (error && error.reason === BackupsError.BAD_FIELD) return callback(new CloudronError(CloudronError.BAD_FIELD, error.message));
+            if (error && error.reason === BackupsError.EXTERNAL_ERROR) return callback(new CloudronError(CloudronError.EXTERNAL_ERROR, error.message));
+            if (error) return callback(new CloudronError(CloudronError.INTERNAL_ERROR, error));
+
+            gWebadminStatus.restoring = true;
+
+            backups.restore(backupConfig, backupId, function (error) {
+                gWebadminStatus.restoring = false;
+
+                if (error) return debug('Error restoring:', error);
+
+                shell.sudo('restart', [ RESTART_CMD ], NOOP_CALLBACK);
+            });
+
+            callback(null); // do no block
+        });
     });
 }
 

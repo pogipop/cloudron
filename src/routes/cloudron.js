@@ -6,6 +6,7 @@ exports = module.exports = {
     setupTokenAuth: setupTokenAuth,
     providerTokenAuth: providerTokenAuth,
     getStatus: getStatus,
+    restore: restore,
     reboot: reboot,
     migrate: migrate,
     getProgress: getProgress,
@@ -75,6 +76,31 @@ function activate(req, res, next) {
 
                 next(new HttpSuccess(201, info));
             });
+    });
+}
+
+function restore(req, res, next) {
+    assert.strictEqual(typeof req.body, 'object');
+
+    if (!req.body.backupConfig || typeof req.body.backupConfig !== 'object') return next(new HttpError(400, 'backupConfig is required'));
+
+    var backupConfig = req.body.backupConfig;
+    if (typeof backupConfig.provider !== 'string') return next(new HttpError(400, 'provider is required'));
+    if ('key' in backupConfig && typeof backupConfig.key !== 'string') return next(new HttpError(400, 'key must be a string'));
+    if (typeof backupConfig.format !== 'string') return next(new HttpError(400, 'format must be a string'));
+    if ('acceptSelfSignedCerts' in backupConfig && typeof backupConfig.acceptSelfSignedCerts !== 'boolean') return next(new HttpError(400, 'format must be a boolean'));
+
+    if (typeof req.body.backupId !== 'string') return next(new HttpError(400, 'backupId must be a string or null'));
+    if (typeof req.body.version !== 'string') return next(new HttpError(400, 'version must be a string'));
+
+    cloudron.restore(backupConfig, req.body.backupId, req.body.version, function (error) {
+        if (error && error.reason === CloudronError.ALREADY_SETUP) return next(new HttpError(409, error.message));
+        if (error && error.reason === CloudronError.BAD_FIELD) return next(new HttpError(400, error.message));
+        if (error && error.reason === CloudronError.BAD_STATE) return next(new HttpError(409, error.message));
+        if (error && error.reason === CloudronError.EXTERNAL_ERROR) return next(new HttpError(402, error.message));
+        if (error) return next(new HttpError(500, error));
+
+        next(new HttpSuccess(200));
     });
 }
 

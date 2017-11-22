@@ -34,3 +34,6 @@ yellowtent ALL=(root) NOPASSWD: /home/yellowtent/box/src/scripts/configurelogrot
 Defaults!/home/yellowtent/box/src/backuptask.js env_keep="HOME BOX_ENV"
 yellowtent ALL=(root) NOPASSWD:SETENV: /home/yellowtent/box/src/backuptask.js
 
+Defaults!/home/yellowtent/box/src/scripts/restart.sh env_keep="HOME BOX_ENV"
+yellowtent ALL=(root) NOPASSWD: /home/yellowtent/box/src/scripts/restart.sh
+
