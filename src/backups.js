@@ -19,7 +19,6 @@ exports = module.exports = {
     backupBoxAndApps: backupBoxAndApps,
 
     upload: upload,
-    download: download,
 
     cleanup: cleanup,
     cleanupCacheFilesSync: cleanupCacheFilesSync,
@@ -386,7 +385,8 @@ function restoreFsMetadata(appDataDir, callback) {
     });
 }
 
-function download(backupId, format, dataDir, callback) {
+function download(backupConfig, backupId, format, dataDir, callback) {
+    assert.strictEqual(typeof backupConfig, 'object');
     assert.strictEqual(typeof backupId, 'string');
     assert.strictEqual(typeof format, 'string');
     assert.strictEqual(typeof dataDir, 'string');
@@ -396,25 +396,21 @@ function download(backupId, format, dataDir, callback) {
 
     log(`Downloading ${backupId} of format ${format} to ${dataDir}`);
 
-    settings.getBackupConfig(function (error, backupConfig) {
-        if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
+    if (format === 'tgz') {
+        api(backupConfig.provider).download(backupConfig, getBackupFilePath(backupConfig, backupId, format), function (error, sourceStream) {
+            if (error) return callback(error);
 
-        if (format === 'tgz') {
-            api(backupConfig.provider).download(backupConfig, getBackupFilePath(backupConfig, backupId, format), function (error, sourceStream) {
-                if (error) return callback(error);
+            tarExtract(sourceStream, dataDir, backupConfig.key || null, callback);
+        });
+    } else {
+        var events = api(backupConfig.provider).downloadDir(backupConfig, getBackupFilePath(backupConfig, backupId, format), dataDir);
+        events.on('progress', log);
+        events.on('done', function (error) {
+            if (error) return callback(error);
 
-                tarExtract(sourceStream, dataDir, backupConfig.key || null, callback);
-            });
-        } else {
-            var events = api(backupConfig.provider).downloadDir(backupConfig, getBackupFilePath(backupConfig, backupId, format), dataDir);
-            events.on('progress', log);
-            events.on('done', function (error) {
-                if (error) return callback(error);
-
-                restoreFsMetadata(dataDir, callback);
-            });
-        }
-    });
+            restoreFsMetadata(dataDir, callback);
+        });
+    }
 }
 
 function restoreApp(app, addonsToRestore, restoreConfig, callback) {
@@ -427,13 +423,17 @@ function restoreApp(app, addonsToRestore, restoreConfig, callback) {
 
     var startTime = new Date();
 
-    async.series([
-        download.bind(null, restoreConfig.backupId, restoreConfig.backupFormat, appDataDir),
-        addons.restoreAddons.bind(null, app, addonsToRestore)
-    ], function (error) {
-        debug('restoreApp: time: %s', (new Date() - startTime)/1000);
+    settings.getBackupConfig(function (error, backupConfig) {
+        if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
 
-        callback(error);
+        async.series([
+            download.bind(null, backupConfig, restoreConfig.backupId, restoreConfig.backupFormat, appDataDir),
+            addons.restoreAddons.bind(null, app, addonsToRestore)
+        ], function (error) {
+            debug('restoreApp: time: %s', (new Date() - startTime)/1000);
+
+            callback(error);
+        });
     });
 }
 
