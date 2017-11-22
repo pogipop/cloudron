@@ -575,6 +575,19 @@ angular.module('Application').service('Client', ['$http', 'md5', 'Notification',
         }).error(defaultErrorHandler(callback));
     };
 
+    Client.prototype.restore = function (backupConfig, backupId, version, callback) {
+        var data = {
+            backupConfig: backupConfig,
+            backupId: backupId,
+            version: version
+        };
+
+        post('/api/v1/cloudron/restore', data).success(function(data, status) {
+            if (status !== 202 || typeof data !== 'object') return callback(new ClientError(status, data));
+            callback(null, data);
+        }).error(defaultErrorHandler(callback));
+    };
+
     Client.prototype.getEventLogs = function (action, search, page, perPage, callback) {
         var config = {
             params: {

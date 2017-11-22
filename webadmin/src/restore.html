@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, height=device-height" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'unsafe-inline' 'unsafe-eval' 'self' *.cloudron.io <%= apiOriginHostname %>; img-src 'self' <%= apiOriginHostname %>;" />
+
+    <title> Cloudron Restore </title>
+
+    <!-- Theme CSS -->
+    <link href="theme.css" rel="stylesheet">
+
+    <!-- Custom Fonts -->
+    <link href="3rdparty/css/font-awesome.min.css" rel="stylesheet" rel="stylesheet" type="text/css">
+
+    <!-- jQuery-->
+    <script src="3rdparty/js/jquery.min.js"></script>
+
+    <!-- Bootstrap Core JavaScript -->
+    <script src="3rdparty/js/bootstrap.min.js"></script>
+
+    <!-- Angularjs scripts -->
+    <script src="3rdparty/js/angular.min.js"></script>
+    <script src="3rdparty/js/angular-loader.min.js"></script>
+    <script src="3rdparty/js/angular-md5.min.js"></script>
+    <script src="3rdparty/js/angular-ui-notification.min.js"></script>
+    <script src="3rdparty/js/autofill-event.js"></script>
+
+    <!-- Angular directives for tldjs -->
+    <script src="3rdparty/js/tld.js"></script>
+
+    <!-- Setup Application -->
+    <script src="js/restore.js"></script>
+
+</head>
+
+<body class="setup" ng-app="Application" ng-controller="RestoreController">
+
+    <div class="main-container ng-cloak text-center" ng-show="busy">
+        <div class="row">
+            <div class="col-md-6 col-md-offset-3">
+                <i class="fa fa-circle-o-notch fa-spin fa-5x"></i><br/>
+                <h3>Downloading backup</h3>
+            </div>
+        </div>
+    </div>
+
+    <div class="main-container ng-cloak" ng-show="initialized && !busy">
+        <div class="row">
+            <div class="col-md-6 col-md-offset-3">
+                <div class="card" style="max-width: none; padding: 20px;">
+                    <form name="configureBackupForm" role="form" novalidate ng-submit="restore()" autocomplete="off">
+                        <div class="row">
+                            <div class="col-md-10 col-md-offset-1 text-center">
+                                <h2>Cloudron Restore</h2>
+                                <p>Provide the backup to restore from</p>
+                                <br/>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-10 col-md-offset-1 text-center">
+                                <p class="has-error text-center" ng-show="error">{{ error.generic }}</p>
+
+                                <div class="form-group">
+                                    <label class="control-label" for="storageProviderProvider">Storage provider <sup><a ng-href="{{ config.webServerOrigin }}/documentation/backups/" class="help" target="_blank"><i class="fa fa-question-circle"></i></a></sup></label>
+                                    <select class="form-control" id="storageProviderProvider" ng-model="provider" ng-options="a.value as a.name for a in storageProvider" ng-change=clearForm()></select>
+                                </div>
+
+                                <!-- Filesystem -->
+                                <div class="form-group" ng-class="{ 'has-error': error.backupFolder }" ng-show="provider === 'filesystem'">
+                                    <label class="control-label" for="inputConfigureBackupFolder">Local backup directory</label>
+                                    <input type="text" class="form-control" ng-model="backupFolder" id="inputConfigureBackupFolder" name="backupFolder" ng-disabled="busy" placeholder="Directory for backups" ng-required="provider === 'filesystem'">
+                                </div>
+
+                                <!-- S3/Minio/SOS -->
+                                <div class="form-group" ng-class="{ 'has-error': error.endpoint }" ng-show="provider === 'minio' || provider === 's3-v4-compat'">
+                                    <label class="control-label" for="inputConfigureBackupEndpoint">Endpoint</label>
+                                    <input type="text" class="form-control" ng-model="endpoint" id="inputConfigureBackupEndpoint" name="endpoint" ng-disabled="busy" placeholder="URL of Minio/S3 Compatible" ng-required="provider === 'minio' || provider === 's3-v4-compat'">
+                                </div>
+
+                                <div class="checkbox" ng-show="provider === 'minio' || provider === 's3-v4-compat'" >
+                                    <label>
+                                        <input type="checkbox" ng-model="acceptSelfSignedCerts" id="inputConfigureBackupSelfSigned">
+                                            Accept Self-signed certificate
+                                        </input>
+                                    </label>
+                                </div>
+
+                                <div class="form-group" ng-class="{ 'has-error': error.bucket }" ng-show="s3like(provider)">
+                                    <label class="control-label" for="inputConfigureBackupBucket">Bucket name</label>
+                                    <input type="text" class="form-control" ng-model="bucket" id="inputConfigureBackupBucket" name="bucket" ng-disabled="busy" ng-required="s3like(provider)">
+                                </div>
+
+                                <div class="form-group" ng-class="{ 'has-error': error.prefix }" ng-show="s3like(provider)">
+                                    <label class="control-label" for="inputConfigureBackupPrefix">Prefix</label>
+                                    <input type="text" class="form-control" ng-model="prefix" id="inputConfigureBackupPrefix" name="prefix" ng-disabled="busy" placeholder="Prefix for backup file names">
+                                </div>
+
+                                <div class="form-group" ng-class="{ 'has-error': error.region }" ng-show="provider === 's3'">
+                                    <label class="control-label" for="inputConfigureBackupRegion">Region</label>
+                                    <select class="form-control" name="region" id="inputConfigureBackupRegion" ng-model="region" ng-options="a.value as a.name for a in s3Regions" ng-disabled="busy" ng-required="provider === 's3'"></select>
+                                </div>
+
+                                <div class="form-group" ng-class="{ 'has-error': error.region }" ng-show="provider === 'digitalocean-spaces'">
+                                    <label class="control-label" for="inputConfigureBackupRegion">Region</label>
+                                    <select class="form-control" name="region" id="inputConfigureBackupRegion" ng-model="endpoint" ng-options="a.value as a.name for a in doSpacesRegions" ng-disabled="busy" ng-required="provider === 'digitalocean-spaces'"></select>
+                                </div>
+
+                                <div class="form-group" ng-class="{ 'has-error': error.accessKeyId }" ng-show="s3like(provider)">
+                                    <label class="control-label" for="inputConfigureBackupAccessKeyId">Access key id</label>
+                                    <input type="text" class="form-control" ng-model="accessKeyId" id="inputConfigureBackupAccessKeyId" name="accessKeyId" ng-disabled="busy" ng-required="s3like(provider)">
+                                </div>
+
+                                <div class="form-group" ng-class="{ 'has-error': error.secretAccessKey }" ng-show="s3like(provider)">
+                                    <label class="control-label" for="inputConfigureBackupSecretAccessKey">Secret access key</label>
+                                    <input type="text" class="form-control" ng-model="secretAccessKey" id="inputConfigureBackupSecretAccessKey" name="secretAccessKey" ng-disabled="busy" ng-required="s3like(provider)">
+                                </div>
+
+                                <div class="form-group" ng-show="provider !== 'noop'">
+                                    <label class="control-label" for="storageFormat">Storage Format</label>
+                                    <select class="form-control" id="storageFormat" ng-change="key = ''" ng-model="format" ng-options="a.value as a.name for a in formats"></select>
+                                </div>
+
+                                <div class="form-group" ng-class="{ 'has-error': error.key }" ng-show="provider !== 'noop' && format === 'tgz'">
+                                    <label class="control-label" for="inputConfigureBackupKey">Encryption key (optional)</label>
+                                    <input type="text" class="form-control" ng-model="key" id="inputConfigureBackupKey" name="prefix" ng-disabled="busy" placeholder="Passphrase used to encrypt the backups">
+                                </div>
+
+                                <div class="form-group" ng-class="{ 'has-error': error.backupId }">
+                                    <label class="control-label" for="inputConfigureBackupId">Backup ID</label>
+
+                                    <input type="text" class="form-control" ng-model="backupId" name="inputConfigureBackupId" placeholder="Backup Id" required ng-disabled="busy">
+                                </div>
+
+                                <input class="ng-hide" type="submit" ng-disabled="configureBackupForm.$invalid"/>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-12 text-center">
+                                <button type="submit" class="btn btn-primary" ng-disabled="configureBackupForm.$invalid"/><i class="fa fa-circle-o-notch fa-spin" ng-show="busy"></i> Restore</button>
+                            </div>
+                        </div>
+
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="text-center">
+        <span class="text-muted">&copy;2017 <a href="https://cloudron.io" target="_blank">Cloudron</a></span>
+        <span class="text-muted"><a href="https://twitter.com/cloudron_io" target="_blank">Twitter <i class="fa fa-twitter"></i></a></span>
+        <span class="text-muted"><a href="https://chat.cloudron.io" target="_blank">Chat <i class="fa fa-comments"></i></a></span>
+    </footer>
+
+</body>
+</html>

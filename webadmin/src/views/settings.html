@@ -125,7 +125,7 @@
                         <p class="has-error text-center" ng-show="configureBackup.error">{{ configureBackup.error.generic }}</p>
 
                         <div class="form-group">
-                            <label class="control-label" for="storageProviderProvider">Storage provider <sup><a ng-href="{{ config.webServerOrigin }}/references/selfhosting/#backups" class="help" target="_blank"><i class="fa fa-question-circle"></i></a></sup></label>
+                            <label class="control-label" for="storageProviderProvider">Storage provider <sup><a ng-href="{{ config.webServerOrigin }}/documentation/backups/" class="help" target="_blank"><i class="fa fa-question-circle"></i></a></sup></label>
                             <select class="form-control" id="storageProviderProvider" ng-model="configureBackup.provider" ng-options="a.value as a.name for a in storageProvider" ng-change=configureBackup.clearForm()></select>
                         </div>
 
