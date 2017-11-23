@@ -618,7 +618,8 @@ function restore(backupConfig, backupId, version, callback) {
     assert.strictEqual(typeof version, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    if (config.version() !== version) return callback(new CloudronError(CloudronError.BAD_STATE, 'Bad version'));
+    if (!semver.valid(version)) return callback(new CloudronError(CloudronError.BAD_STATE, 'version is not a valid semver'));
+    if (semver.major(config.version()) !== semver.major(version) || semver.minor(config.version()) !== semver.minor(version)) return callback(new CloudronError(CloudronError.BAD_STATE, `Run cloudron-setup with --version ${config.version()} to restore from this backup`));
 
     user.count(function (error, count) {
         if (error) return callback(new CloudronError(CloudronError.INTERNAL_ERROR, error));
