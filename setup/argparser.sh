@@ -9,8 +9,6 @@ arg_fqdn=""
 arg_admin_location=""
 arg_zone_name=""
 arg_is_custom_domain="false"
-arg_restore_key=""
-arg_restore_url=""
 arg_retire_reason=""
 arg_retire_info=""
 arg_tls_config=""
@@ -74,12 +72,6 @@ while true; do
         arg_tls_config=$(echo "$2" | $json tlsConfig)
         [[ "${arg_tls_config}" == "null" ]] && arg_tls_config=""
 
-        arg_restore_url=$(echo "$2" | $json restore.url)
-        [[ "${arg_restore_url}" == "null" ]] && arg_restore_url=""
-
-        arg_restore_key=$(echo "$2" | $json restore.key)
-        [[ "${arg_restore_key}" == "null" ]] && arg_restore_key=""
-
         arg_backup_config=$(echo "$2" | $json backupConfig)
         [[ "${arg_backup_config}" == "null" ]] && arg_backup_config=""
 
@@ -97,10 +89,8 @@ echo "Parsed arguments:"
 echo "api server: ${arg_api_server_origin}"
 echo "fqdn: ${arg_fqdn}"
 echo "custom domain: ${arg_is_custom_domain}"
-echo "restore url: ${arg_restore_url}"
 echo "tls cert: ${arg_tls_cert}"
 # do not dump these as they might become available via logs API
-#echo "restore key: ${arg_restore_key}"
 #echo "tls key: ${arg_tls_key}"
 #echo "token: ${arg_token}"
 echo "tlsConfig: ${arg_tls_config}"
