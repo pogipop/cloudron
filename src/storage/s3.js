@@ -180,7 +180,7 @@ function download(apiConfig, backupFilePath, callback) {
                 ps.emit('error', new BackupsError(BackupsError.NOT_FOUND));
             } else {
                 debug('[%s] download: s3 stream error.', backupFilePath, error);
-                ps.emit('error', new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
+                ps.emit('error', new BackupsError(BackupsError.EXTERNAL_ERROR, error.message || error.code)); // DO sets 'code'
             }
         });
 
@@ -484,7 +484,7 @@ function testConfig(apiConfig, callback) {
 
         var s3 = new AWS.S3(credentials);
         s3.putObject(params, function (error) {
-            if (error) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
+            if (error) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message || error.code)); // DO sets 'code'
 
             var params = {
                 Bucket: apiConfig.bucket,
@@ -492,7 +492,7 @@ function testConfig(apiConfig, callback) {
             };
 
             s3.deleteObject(params, function (error) {
-                if (error) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
+                if (error) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message || error.code)); // DO sets 'code'
 
                 callback();
             });
