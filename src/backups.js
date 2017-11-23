@@ -367,8 +367,10 @@ function restoreFsMetadata(appDataDir, callback) {
 
     log('Recreating empty directories');
 
-    var metadata = safe.JSON.parse(safe.fs.readFileSync(path.join(appDataDir, 'fsmetadata.json'), 'utf8'));
-    if (metadata === null) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, 'Error loading fsmetadata.txt:' + safe.error.message));
+    var metadataJson = safe.fs.readFileSync(path.join(appDataDir, 'fsmetadata.json'), 'utf8')
+    if (metadataJson === null) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, 'Error loading fsmetadata.txt:' + safe.error.message));
+    var metadata = safe.JSON.parse(metadataJson);
+    if (metadata === null) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, 'Error parsing fsmetadata.txt:' + safe.error.message));
 
     async.eachSeries(metadata.emptyDirs, function createPath(emptyDir, iteratorDone) {
         mkdirp(path.join(appDataDir, emptyDir), iteratorDone);
