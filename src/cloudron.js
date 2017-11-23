@@ -52,6 +52,7 @@ var appdb = require('./appdb.js'),
     safe = require('safetydance'),
     settings = require('./settings.js'),
     SettingsError = settings.SettingsError,
+    settingsdb = require('./settingsdb.js'),
     shell = require('./shell.js'),
     spawn = require('child_process').spawn,
     split = require('split'),
@@ -183,12 +184,18 @@ function dnsSetup(dnsConfig, domain, zoneName, callback) {
         config.setFqdn(domain); // set fqdn only after dns config is valid, otherwise cannot re-setup if we failed
         config.setZoneName(zoneName);
 
-        async.series([ // do not block
-            onDomainConfigured,
-            configureWebadmin
-        ], NOOP_CALLBACK);
+        // upsert the temporary domain record in settings db
+        // This can be removed after this release
+        settingsdb.set('domain', JSON.stringify({ fqdn: domain, zoneName: zoneName }), function (error) {
+            if (error) return callback(new CloudronError(CloudronError.INTERNAL_ERROR, error));
 
-        callback();
+            async.series([ // do not block
+                onDomainConfigured,
+                configureWebadmin
+            ], NOOP_CALLBACK);
+
+            callback();
+        });
     });
 }
 
