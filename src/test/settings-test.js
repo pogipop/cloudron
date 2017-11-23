@@ -86,29 +86,6 @@ describe('Settings', function () {
             });
         });
 
-        it('can get default developer mode', function (done) {
-            settings.getDeveloperMode(function (error, enabled) {
-                expect(error).to.be(null);
-                expect(enabled).to.equal(true);
-                done();
-            });
-        });
-
-        it('can set developer mode', function (done) {
-            settings.setDeveloperMode(true, function (error) {
-                expect(error).to.be(null);
-                done();
-            });
-        });
-
-        it('can get developer mode', function (done) {
-            settings.getDeveloperMode(function (error, enabled) {
-                expect(error).to.be(null);
-                expect(enabled).to.equal(true);
-                done();
-            });
-        });
-
         it('can set tls config', function (done) {
             settings.setTlsConfig({ provider: 'caas' }, function (error) {
                 expect(error).to.be(null);

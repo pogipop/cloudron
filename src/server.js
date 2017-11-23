@@ -107,9 +107,7 @@ function initializeExpressSync() {
     router.get ('/api/v1/cloudron/avatar', routes.settings.getCloudronAvatar); // this is a public alias for /api/v1/settings/cloudron_avatar
 
     // developer routes
-    router.post('/api/v1/developer', developerScope, routes.user.requireAdmin, routes.user.verifyPassword, routes.developer.setEnabled);
-    router.get ('/api/v1/developer', developerScope, routes.developer.enabled, routes.developer.status);
-    router.post('/api/v1/developer/login', routes.developer.enabled, routes.developer.login);
+    router.post('/api/v1/developer/login', routes.developer.login);
 
     // cloudron routes
     router.get ('/api/v1/cloudron/config', cloudronScope, routes.cloudron.getConfig);
@@ -168,12 +166,12 @@ function initializeExpressSync() {
     router.get ('/api/v1/oauth/dialog/authorize', routes.oauth2.authorization);
     router.post('/api/v1/oauth/token', routes.oauth2.token);
     router.get ('/api/v1/oauth/clients', settingsScope, routes.clients.getAll);
-    router.post('/api/v1/oauth/clients', routes.developer.enabled, settingsScope, routes.clients.add);
-    router.get ('/api/v1/oauth/clients/:clientId', routes.developer.enabled, settingsScope, routes.clients.get);
-    router.post('/api/v1/oauth/clients/:clientId', routes.developer.enabled, settingsScope, routes.clients.add);
-    router.del ('/api/v1/oauth/clients/:clientId', routes.developer.enabled, settingsScope, routes.clients.del);
+    router.post('/api/v1/oauth/clients', settingsScope, routes.clients.add);
+    router.get ('/api/v1/oauth/clients/:clientId', settingsScope, routes.clients.get);
+    router.post('/api/v1/oauth/clients/:clientId', settingsScope, routes.clients.add);
+    router.del ('/api/v1/oauth/clients/:clientId', settingsScope, routes.clients.del);
     router.get ('/api/v1/oauth/clients/:clientId/tokens', settingsScope, routes.clients.getClientTokens);
-    router.post('/api/v1/oauth/clients/:clientId/tokens', routes.developer.enabled, settingsScope, routes.clients.addClientToken);
+    router.post('/api/v1/oauth/clients/:clientId/tokens', settingsScope, routes.clients.addClientToken);
     router.del ('/api/v1/oauth/clients/:clientId/tokens', settingsScope, routes.clients.delClientTokens);
     router.del ('/api/v1/oauth/clients/:clientId/tokens/:tokenId', settingsScope, routes.clients.delToken);
 
@@ -193,7 +191,7 @@ function initializeExpressSync() {
     router.post('/api/v1/apps/:id/start',     appsScope, routes.user.requireAdmin, routes.apps.startApp);
     router.get ('/api/v1/apps/:id/logstream', appsScope, routes.user.requireAdmin, routes.apps.getLogStream);
     router.get ('/api/v1/apps/:id/logs',      appsScope, routes.user.requireAdmin, routes.apps.getLogs);
-    router.get ('/api/v1/apps/:id/exec',      routes.developer.enabled, appsScope, routes.user.requireAdmin, routes.apps.exec);
+    router.get ('/api/v1/apps/:id/exec',      appsScope, routes.user.requireAdmin, routes.apps.exec);
     // websocket cannot do bearer authentication
     router.get ('/api/v1/apps/:id/execws',    routes.oauth2.websocketAuth.bind(null, [ clients.SCOPE_APPS ]), routes.user.requireAdmin, routes.apps.execWebSocket);
     router.post('/api/v1/apps/:id/clone',     appsScope, routes.user.requireAdmin, routes.apps.cloneApp);

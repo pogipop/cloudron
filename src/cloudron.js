@@ -438,31 +438,26 @@ function getConfig(callback) {
         settings.getCloudronName(function (error, cloudronName) {
             if (error) return callback(new CloudronError(CloudronError.INTERNAL_ERROR, error));
 
-            settings.getDeveloperMode(function (error, developerMode) {
-                if (error) return callback(new CloudronError(CloudronError.INTERNAL_ERROR, error));
-
-                callback(null, {
-                    apiServerOrigin: config.apiServerOrigin(),
-                    webServerOrigin: config.webServerOrigin(),
-                    fqdn: config.fqdn(),
-                    adminLocation: config.adminLocation(),
-                    adminFqdn: config.adminFqdn(),
-                    mailFqdn: config.mailFqdn(),
-                    version: config.version(),
-                    update: updateChecker.getUpdateInfo(),
-                    progress: progress.getAll(),
-                    isCustomDomain: config.isCustomDomain(),
-                    isDemo: config.isDemo(),
-                    developerMode: developerMode,
-                    region: result.box.region,
-                    size: result.box.size,
-                    billing: !!result.user.billing,
-                    plan: result.box.plan,
-                    currency: result.user.currency,
-                    memory: os.totalmem(),
-                    provider: config.provider(),
-                    cloudronName: cloudronName
-                });
+            callback(null, {
+                apiServerOrigin: config.apiServerOrigin(),
+                webServerOrigin: config.webServerOrigin(),
+                fqdn: config.fqdn(),
+                adminLocation: config.adminLocation(),
+                adminFqdn: config.adminFqdn(),
+                mailFqdn: config.mailFqdn(),
+                version: config.version(),
+                update: updateChecker.getUpdateInfo(),
+                progress: progress.getAll(),
+                isCustomDomain: config.isCustomDomain(),
+                isDemo: config.isDemo(),
+                region: result.box.region,
+                size: result.box.size,
+                billing: !!result.user.billing,
+                plan: result.box.plan,
+                currency: result.user.currency,
+                memory: os.totalmem(),
+                provider: config.provider(),
+                cloudronName: cloudronName
             });
         });
     });

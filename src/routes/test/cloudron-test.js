@@ -244,7 +244,6 @@ describe('Cloudron', function () {
                     expect(result.body.progress).to.be.an('object');
                     expect(result.body.update).to.be.an('object');
                     expect(result.body.version).to.eql(config.version());
-                    expect(result.body.developerMode).to.be.a('boolean');
                     expect(result.body.size).to.eql(null);
                     expect(result.body.region).to.eql(null);
                     expect(result.body.memory).to.eql(os.totalmem());
@@ -270,7 +269,6 @@ describe('Cloudron', function () {
                     expect(result.body.progress).to.be.an('object');
                     expect(result.body.update).to.be.an('object');
                     expect(result.body.version).to.eql(config.version());
-                    expect(result.body.developerMode).to.be.a('boolean');
                     expect(result.body.size).to.eql('1gb');
                     expect(result.body.region).to.eql('sfo');
                     expect(result.body.memory).to.eql(os.totalmem());
