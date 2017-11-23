@@ -128,7 +128,8 @@ function initialize(callback) {
         certificates.initialize,
         settings.initialize,
         configureDefaultServer,
-        onDomainConfigured
+        onDomainConfigured,
+        onActivated
     ], function (error) {
         if (error) return callback(error);
 
@@ -158,11 +159,27 @@ function onDomainConfigured(callback) {
     async.series([
         clients.addDefaultClients,
         certificates.ensureFallbackCertificate,
-        ensureDkimKey,
-        platform.start, // requires fallback certs for mail container
-        mailer.start, // this requires the "mail" container to be running
-        cron.initialize
+        ensureDkimKey
     ], callback);
+}
+
+function onActivated(callback) {
+    callback = callback || NOOP_CALLBACK;
+
+    // Starting the platform after a user is available means:
+    // 1. mail bounces can now be sent to the cloudron owner
+    // 2. the restore code path can run without sudo (since mail/ is non-root)
+    // 3. timezone is now set for cronjobs
+    user.count(function (error, count) {
+        if (error) return callback(new CloudronError(CloudronError.INTERNAL_ERROR, error));
+        if (!count) return callback(); // not activated
+
+        async.series([
+            platform.start, // requires fallback certs for mail container
+            mailer.start, // this requires the "mail" container to be running
+            cron.initialize
+        ], callback);
+    });
 }
 
 function dnsSetup(dnsConfig, domain, zoneName, callback) {
@@ -328,7 +345,7 @@ function activate(username, password, email, displayName, ip, auditSource, callb
 
                 eventlog.add(eventlog.ACTION_ACTIVATE, auditSource, { });
 
-                platform.createMailConfig(NOOP_CALLBACK); // bounces can now be sent to the cloudron owner
+                onActivated();
 
                 callback(null, { token: token, expires: expires });
             });
