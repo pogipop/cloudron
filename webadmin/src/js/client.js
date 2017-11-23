@@ -583,8 +583,8 @@ angular.module('Application').service('Client', ['$http', 'md5', 'Notification',
         };
 
         post('/api/v1/cloudron/restore', data).success(function(data, status) {
-            if (status !== 202 || typeof data !== 'object') return callback(new ClientError(status, data));
-            callback(null, data);
+            if (status !== 200) return callback(new ClientError(status));
+            callback(null);
         }).error(defaultErrorHandler(callback));
     };
 

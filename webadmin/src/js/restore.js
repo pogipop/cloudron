@@ -106,6 +106,7 @@ app.controller('RestoreController', ['$scope', '$http', 'Client', function ($sco
         }
 
         var version = $scope.backupId.match(/_v(\d+.\d+.\d+)/);
+
         Client.restore(backupConfig, $scope.backupId.replace(/\.tar\.gz(\.enc)?$/, ''), version ? version[1] : '', function (error) {
             $scope.busy = false;
 
@@ -156,7 +157,7 @@ app.controller('RestoreController', ['$scope', '$http', 'Client', function ($sco
         $scope.busy = true;
 
         Client.getStatus(function (error, status) {
-            if (!error && !status.restoring) {
+            if (!error && !status.webadminStatus.restoring) {
                 window.location.href = '/';
             }
 
