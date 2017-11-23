@@ -40,9 +40,14 @@ angular.module('Application').controller('SettingsController', ['$scope', '$loca
         { name: 'US West (Oregon)', value: 'us-west-2' },
     ];
 
+    $scope.doSpacesRegions = [
+        { name: 'AMS3', value: 'https://ams3.digitaloceanspaces.com' },
+        { name: 'NYC3', value: 'https://nyc3.digitaloceanspaces.com' }
+    ];
+
     $scope.storageProvider = [
         { name: 'Amazon S3', value: 's3' },
-        { name: 'DigitalOcean Spaces NYC3', value: 'digitalocean-spaces' },
+        { name: 'DigitalOcean Spaces', value: 'digitalocean-spaces' },
         { name: 'Exoscale SOS', value: 'exoscale-sos' },
         { name: 'Filesystem', value: 'filesystem' },
         { name: 'Minio', value: 'minio' },
@@ -395,7 +400,6 @@ angular.module('Application').controller('SettingsController', ['$scope', '$loca
                     backupConfig.region = 'us-east-1';
                     backupConfig.signatureVersion = 'v2';
                 } else if (backupConfig.provider === 'digitalocean-spaces') {
-                    backupConfig.endpoint = 'https://nyc3.digitaloceanspaces.com';
                     backupConfig.region = 'us-east-1';
                 }
             } else if (backupConfig.provider === 'filesystem') {

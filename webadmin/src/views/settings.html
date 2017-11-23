@@ -183,6 +183,11 @@
                             <select class="form-control" name="region" id="inputConfigureBackupRegion" ng-model="configureBackup.region" ng-options="a.value as a.name for a in s3Regions" ng-disabled="configureBackup.busy" ng-required="configureBackup.provider === 's3'"></select>
                         </div>
 
+                        <div class="form-group" ng-class="{ 'has-error': configureBackup.error.region }" ng-show="configureBackup.provider === 'digitalocean-spaces'">
+                            <label class="control-label" for="inputConfigureBackupRegion">Region</label>
+                            <select class="form-control" name="region" id="inputConfigureBackupRegion" ng-model="configureBackup.endpoint" ng-options="a.value as a.name for a in doSpacesRegions" ng-disabled="configureBackup.busy" ng-required="configureBackup.provider === 'digitalocean-spaces'"></select>
+                        </div>
+
                         <div class="form-group" ng-class="{ 'has-error': configureBackup.error.accessKeyId }" ng-show="s3like(configureBackup.provider)">
                             <label class="control-label" for="inputConfigureBackupAccessKeyId">Access key id</label>
                             <input type="text" class="form-control" ng-model="configureBackup.accessKeyId" id="inputConfigureBackupAccessKeyId" name="accessKeyId" ng-disabled="configureBackup.busy" ng-required="s3like(configureBackup.provider)">
