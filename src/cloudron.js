@@ -54,6 +54,7 @@ var appdb = require('./appdb.js'),
     platform = require('./platform.js'),
     progress = require('./progress.js'),
     safe = require('safetydance'),
+    semver = require('semver'),
     settings = require('./settings.js'),
     SettingsError = settings.SettingsError,
     shell = require('./shell.js'),
@@ -619,7 +620,7 @@ function restore(backupConfig, backupId, version, callback) {
     assert.strictEqual(typeof callback, 'function');
 
     if (!semver.valid(version)) return callback(new CloudronError(CloudronError.BAD_STATE, 'version is not a valid semver'));
-    if (semver.major(config.version()) !== semver.major(version) || semver.minor(config.version()) !== semver.minor(version)) return callback(new CloudronError(CloudronError.BAD_STATE, `Run cloudron-setup with --version ${config.version()} to restore from this backup`));
+    if (semver.major(config.version()) !== semver.major(version) || semver.minor(config.version()) !== semver.minor(version)) return callback(new CloudronError(CloudronError.BAD_STATE, `Run cloudron-setup with --version ${version} to restore from this backup`));
 
     user.count(function (error, count) {
         if (error) return callback(new CloudronError(CloudronError.INTERNAL_ERROR, error));
