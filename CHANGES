@@ -1131,3 +1131,6 @@
 * Show documentation URL in the app info dialog
 * Update Lets Encrypt agrement URL (https://letsencrypt.org/documents/LE-SA-v1.2-November-15-2017.pdf)
 
+[1.8.3]
+* Ensure domain database record exists
+
