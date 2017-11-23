@@ -309,6 +309,7 @@ chown "${USER}:${USER}" "${PLATFORM_DATA_DIR}"
 # do not chown the boxdata/mail directory; dovecot gets upset
 chown "${USER}:${USER}" "${BOX_DATA_DIR}"
 find "${BOX_DATA_DIR}" -mindepth 1 -maxdepth 1 -not -path "${BOX_DATA_DIR}/mail" -exec chown -R "${USER}:${USER}" {} \;
+chown "${USER}:${USER}" "${BOX_DATA_DIR}/mail"
 chown "${USER}:${USER}" -R "${BOX_DATA_DIR}/mail/dkim" # this is owned by box currently since it generates the keys
 
 set_progress "60" "Starting Cloudron"
