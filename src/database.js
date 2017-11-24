@@ -11,6 +11,7 @@ exports = module.exports = {
     commit: commit,
 
     importFromFile: importFromFile,
+    exportToFile: exportToFile,
 
     _clear: clear
 };
@@ -198,4 +199,15 @@ function importFromFile(file, callback) {
         query.bind(null, 'CREATE DATABASE IF NOT EXISTS box'),
         child_process.exec.bind(null, cmd)
     ], callback);
+}
+
+function exportToFile(file, callback) {
+    assert.strictEqual(typeof file, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    var password = config.database().password ? '-p' + config.database().password : '--skip-password';
+    var cmd = `/usr/bin/mysqldump -u root ${password} --single-transaction --routines \
+            --triggers ${config.database().name} > "${file}"`;
+
+    child_process.exec(cmd, callback);
 }

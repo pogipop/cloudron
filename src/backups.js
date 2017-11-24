@@ -526,13 +526,7 @@ function snapshotBox(callback) {
 
     log('Snapshotting box');
 
-    var password = config.database().password ? '-p' + config.database().password : '--skip-password';
-    var mysqlDumpArgs = [
-        '-c',
-        `/usr/bin/mysqldump -u root ${password} --single-transaction --routines \
-            --triggers ${config.database().name} > "${paths.BOX_DATA_DIR}/box.mysqldump"`
-    ];
-    shell.exec('backupBox', '/bin/bash', mysqlDumpArgs, { }, function (error) {
+    database.exportToFile(`${paths.BOX_DATA_DIR}/box.mysqldump`, function (error) {
         if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
 
         return callback();
