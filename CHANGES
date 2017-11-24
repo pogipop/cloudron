@@ -1134,3 +1134,6 @@
 [1.8.3]
 * Ensure domain database record exists
 
+[1.9.0]
+* Prepare database for multidomain
+
