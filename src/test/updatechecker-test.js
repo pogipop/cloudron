@@ -73,8 +73,7 @@ describe('updatechecker - box - manual (email)', function () {
             user.createOwner.bind(null, USER_0.username, USER_0.password, USER_0.email, USER_0.displayName, AUDIT_SOURCE),
             settings.setAutoupdatePattern.bind(null, constants.AUTOUPDATE_PATTERN_NEVER),
             settingsdb.set.bind(null, settings.APPSTORE_CONFIG_KEY, JSON.stringify({ userId: 'uid', cloudronId: 'cid', token: 'token' })),
-            mailer._clearMailQueue,
-            mailer.start
+            mailer._clearMailQueue
         ], done);
     });
 

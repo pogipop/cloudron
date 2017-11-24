@@ -73,7 +73,6 @@ function setup(done) {
     async.series([
         database.initialize,
         database._clear,
-        mailer.start,
         mailer._clearMailQueue
     ], done);
 }

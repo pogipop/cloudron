@@ -1,9 +1,6 @@
 'use strict';
 
 exports = module.exports = {
-    start: start,
-    stop: stop,
-
     userAdded: userAdded,
     userRemoved: userRemoved,
     adminChanged: adminChanged,
@@ -49,8 +46,7 @@ var NOOP_CALLBACK = function (error) { if (error) debug(error); };
 
 var MAIL_TEMPLATES_DIR = path.join(__dirname, 'mail_templates');
 
-var gMailQueue = [ ],
-    gPaused = false;
+var gMailQueue = [ ];
 
 function splatchError(error) {
     var result = { };
@@ -63,25 +59,6 @@ function splatchError(error) {
     return util.inspect(result, { depth: null, showHidden: true });
 }
 
-function start(callback) {
-    assert.strictEqual(typeof callback, 'function');
-
-    if (process.env.BOX_ENV === 'test') gPaused = true;
-
-    callback(null);
-}
-
-function stop(callback) {
-    assert.strictEqual(typeof callback, 'function');
-
-    // TODO: interrupt processQueue as well
-
-    debug(gMailQueue.length + ' mail items dropped');
-    gMailQueue = [ ];
-
-    callback(null);
-}
-
 function mailConfig() {
     return {
         from: '"Cloudron" <no-reply@' + config.fqdn() + '>'
@@ -89,8 +66,6 @@ function mailConfig() {
 }
 
 function processQueue() {
-    assert(!gPaused);
-
     sendMails(gMailQueue);
     gMailQueue = [ ];
 }
@@ -137,7 +112,7 @@ function enqueue(mailOptions) {
     debug('Queued mail for ' + mailOptions.from + ' to ' + mailOptions.to);
     gMailQueue.push(mailOptions);
 
-    if (!gPaused) processQueue();
+    if (process.env.BOX_ENV !== 'test') processQueue();
 }
 
 function render(templateFile, params) {

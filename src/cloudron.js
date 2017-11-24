@@ -148,7 +148,6 @@ function uninitialize(callback) {
 
     async.series([
         cron.uninitialize,
-        mailer.stop,
         platform.stop,
         certificates.uninitialize,
         settings.uninitialize
@@ -178,10 +177,7 @@ function onActivated(callback) {
         if (error) return callback(new CloudronError(CloudronError.INTERNAL_ERROR, error));
         if (!count) return callback(); // not activated
 
-        async.series([
-            platform.start, // requires fallback certs for mail container
-            mailer.start, // this requires the "mail" container to be running
-        ], callback);
+        platform.start(callback);
     });
 }
 

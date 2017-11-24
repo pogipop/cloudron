@@ -79,7 +79,6 @@ describe('digest', function () {
             user.createOwner.bind(null, USER_0.username, USER_0.password, USER_0.email, USER_0.displayName, AUDIT_SOURCE),
             eventlog.add.bind(null, eventlog.ACTION_UPDATE, AUDIT_SOURCE, { boxUpdateInfo: { sourceTarballUrl: 'xx', version: '1.2.3', changelog: [ 'good stuff' ] } }),
             settingsdb.set.bind(null, settings.MAIL_CONFIG_KEY, JSON.stringify({ enabled: true })),
-            mailer.start,
             mailer._clearMailQueue
         ], done);
     });
