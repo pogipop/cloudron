@@ -172,7 +172,6 @@ describe('updatechecker - box - automatic (no email)', function () {
             database.initialize,
             settings.initialize,
             mailer._clearMailQueue,
-            mailer.start,
             user.createOwner.bind(null, USER_0.username, USER_0.password, USER_0.email, USER_0.displayName, AUDIT_SOURCE),
             settingsdb.set.bind(null, settings.APPSTORE_CONFIG_KEY, JSON.stringify({ userId: 'uid', cloudronId: 'cid', token: 'token' }))
         ], done);
