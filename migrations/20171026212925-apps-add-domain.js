@@ -36,12 +36,10 @@ exports.up = function(db, callback) {
                 });
             },
             function addMailboxesDomainColumn(done) {
-              console.log('add mailboxes domain')
                 db.runSql('ALTER TABLE mailboxes ADD COLUMN domain VARCHAR(128)', [], done);
             },
             function setMailboxesDomain(done) {
                 if (!domain.fqdn) return done(); // skip for new cloudrons without a domain
-                console.log('update mailboxes domain')
                 db.runSql('UPDATE mailboxes SET domain = ?', [ domain.fqdn ], done);
             },
             function dropAppsLocationUniqueConstraint(done) {
