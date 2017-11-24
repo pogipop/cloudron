@@ -1136,4 +1136,7 @@
 
 [1.9.0]
 * Prepare database for multidomain
+* Add Cloudron restore UI
+* Do not put app in errored state if backup fails
+* Display backup progress in CaaS
 
