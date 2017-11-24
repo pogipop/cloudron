@@ -51,8 +51,5 @@ exports.up = function(db, callback) {
 };
 
 exports.down = function(db, callback) {
-    db.runSql('DROP TABLE domains', function (error) {
-        if (error) console.error(error);
-        callback(error);
-    });
+    db.runSql('DROP TABLE domains', callback);
 };
