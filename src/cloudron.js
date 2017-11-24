@@ -163,7 +163,8 @@ function onDomainConfigured(callback) {
     async.series([
         clients.addDefaultClients,
         certificates.ensureFallbackCertificate,
-        ensureDkimKey
+        ensureDkimKey,
+        cron.initialize // required for caas heartbeat before activation
     ], callback);
 }
 
@@ -173,7 +174,6 @@ function onActivated(callback) {
     // Starting the platform after a user is available means:
     // 1. mail bounces can now be sent to the cloudron owner
     // 2. the restore code path can run without sudo (since mail/ is non-root)
-    // 3. timezone is now set for cronjobs
     user.count(function (error, count) {
         if (error) return callback(new CloudronError(CloudronError.INTERNAL_ERROR, error));
         if (!count) return callback(); // not activated
@@ -181,7 +181,6 @@ function onActivated(callback) {
         async.series([
             platform.start, // requires fallback certs for mail container
             mailer.start, // this requires the "mail" container to be running
-            cron.initialize
         ], callback);
     });
 }
