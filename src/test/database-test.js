@@ -1557,8 +1557,15 @@ describe('database', function () {
             });
         });
 
-        it('cannot import from file', function (done) {
-            database.importFromFile(path.join(__dirname, 'box.mysqldump'), function (error) {
+        it('can export to file', function (done) {
+            database.exportToFile('/tmp/box.mysqldump', function (error) {
+                expect(error).to.be(null);
+                done();
+            });
+        });
+
+        it('can import from file', function (done) {
+            database.importFromFile('/tmp/box.mysqldump', function (error) {
                 expect(error).to.be(null);
                 done();
             });
