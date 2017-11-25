@@ -207,8 +207,6 @@ BOX_ENV=cloudron DATABASE_URL=mysql://root:${mysql_root_password}@127.0.0.1/box 
 EOF
 
 echo "==> Adding automated configs"
-mysql -u root -p${mysql_root_password} -e "REPLACE INTO settings (name, value) VALUES (\"domain\", '{ \"fqdn\": \"$arg_fqdn\", \"zoneName\": \"$arg_zone_name\", \"adminLocation\": \"$arg_admin_location\" }')" box
-
 if [[ ! -z "${arg_fqdn}" ]]; then
     mysql -u root -p${mysql_root_password} -e "INSERT INTO domains (domain, zoneName, configJson) VALUES ('$arg_fqdn', '$arg_zone_name', '$arg_dns_config')" box || true
 fi
