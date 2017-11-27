@@ -56,18 +56,14 @@ function initialize(callback) {
     assert.strictEqual(typeof callback, 'function');
 
     if (config.provider() === 'caas') {
-        gJobs.caasHeartbeat = new CronJob({
-            cronTime: '00 */1 * * * *', // every minute
-            onTick: cloudron.sendCaasHeartbeat,
-            start: false
-        });
         // hack: send the first heartbeat only after we are running for 60 seconds
         // required as we end up sending a heartbeat and then cloudron-setup reboots the server
-        setTimeout(function () {
-            if (!gJobs.caasHeartbeat) return; // already uninitalized
-            gJobs.caasHeartbeat.start();
-            cloudron.sendCaasHeartbeat();
-        }, 1000 * 60);
+        var seconds = (new Date()).getSeconds() - 1;
+        gJobs.caasHeartbeat = new CronJob({
+            cronTime: `${seconds} */1 * * * *`, // every minute
+            onTick: cloudron.sendCaasHeartbeat,
+            start: true
+        });
     }
 
     var randomHourMinute = Math.floor(60*Math.random());
