@@ -24,7 +24,7 @@ describe('Server', function () {
     this.timeout(5000);
 
     before(function () {
-        config.set('version', '0.5.0');
+        config._reset();
         config.set('provider', 'notcaas'); // otherwise, cron sets a caas timer for heartbeat causing the test to not quit
     });
 

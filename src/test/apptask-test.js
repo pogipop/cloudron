@@ -81,7 +81,6 @@ var awsHostedZones;
 describe('apptask', function () {
     before(function (done) {
         config._reset();
-        config.set('version', '0.5.0');
         config.setFqdn(DOMAIN_0.domain);
         config.set('provider', 'caas');
 

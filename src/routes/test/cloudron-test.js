@@ -28,13 +28,13 @@ var USERNAME_1 = 'userTheFirst', EMAIL_1 = 'taO@zen.mac', userId_1, token_1;
 function setup(done) {
     nock.cleanAll();
     config._reset();
-    config.set('version', '0.5.0');
-    config.setFqdn('localhost');
+    config.setFqdn('example-cloudron-test.com');
 
-    server.start(function (error) {
-        if (error) return done(error);
-        settings.setBackupConfig({ provider: 'filesystem', backupFolder: '/tmp', format: 'tgz' }, done);
-    });
+    async.series([
+        server.start.bind(server),
+        database._clear,
+        settings.setBackupConfig.bind(null, { provider: 'filesystem', backupFolder: '/tmp', format: 'tgz' })
+    ], done);
 }
 
 function cleanup(done) {
@@ -255,7 +255,7 @@ describe('Cloudron', function () {
 
         it('succeeds (admin)', function (done) {
             var scope = nock(config.apiServerOrigin())
-                .get('/api/v1/boxes/localhost?token=' + config.token())
+                .get(`/api/v1/boxes/${config.fqdn()}?token=${config.token()}`)
                 .reply(200, { box: { region: 'sfo', size: '1gb' }, user: { }});
 
             superagent.get(SERVER_URL + '/api/v1/cloudron/config')

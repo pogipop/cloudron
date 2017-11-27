@@ -23,6 +23,37 @@ var SERVER_URL = 'http://localhost:' + config.get('port');
 var USERNAME = 'superadmin', PASSWORD = 'Foobar?1337', EMAIL ='silly@me.com';
 var token = null;
 
+function setup(done) {
+    config._reset();
+    config.setFqdn('example-clients-test.com');
+    config.set('provider', 'caas');
+
+    async.series([
+        server.start,
+        database._clear,
+
+        function (callback) {
+            var scope1 = nock(config.apiServerOrigin()).get('/api/v1/boxes/' + config.fqdn() + '/setup/verify?setupToken=somesetuptoken').reply(200, {});
+            var scope2 = nock(config.apiServerOrigin()).post('/api/v1/boxes/' + config.fqdn() + '/setup/done?setupToken=somesetuptoken').reply(201, {});
+
+            superagent.post(SERVER_URL + '/api/v1/cloudron/activate')
+                   .query({ setupToken: 'somesetuptoken' })
+                   .send({ username: USERNAME, password: PASSWORD, email: EMAIL })
+                   .end(function (error, result) {
+                expect(result).to.be.ok();
+                expect(result.statusCode).to.equal(201);
+                expect(scope1.isDone()).to.be.ok();
+                expect(scope2.isDone()).to.be.ok();
+
+                // stash token for further use
+                token = result.body.token;
+
+                callback();
+            });
+        }
+    ], done);
+}
+
 function cleanup(done) {
     database._clear(function (error) {
         expect(error).to.not.be.ok();
@@ -33,36 +64,7 @@ function cleanup(done) {
 
 describe('OAuth Clients API', function () {
     describe('add', function () {
-        before(function (done) {
-            // we test caas here
-            config.set('provider', 'caas');
-
-            async.series([
-                server.start.bind(null),
-                database._clear.bind(null),
-
-                function (callback) {
-                    var scope1 = nock(config.apiServerOrigin()).get('/api/v1/boxes/' + config.fqdn() + '/setup/verify?setupToken=somesetuptoken').reply(200, {});
-                    var scope2 = nock(config.apiServerOrigin()).post('/api/v1/boxes/' + config.fqdn() + '/setup/done?setupToken=somesetuptoken').reply(201, {});
-
-                    superagent.post(SERVER_URL + '/api/v1/cloudron/activate')
-                           .query({ setupToken: 'somesetuptoken' })
-                           .send({ username: USERNAME, password: PASSWORD, email: EMAIL })
-                           .end(function (error, result) {
-                        expect(result).to.be.ok();
-                        expect(result.statusCode).to.equal(201);
-                        expect(scope1.isDone()).to.be.ok();
-                        expect(scope2.isDone()).to.be.ok();
-
-                        // stash token for further use
-                        token = result.body.token;
-
-                        callback();
-                    });
-                },
-            ], done);
-        });
-
+        before(setup),
         after(cleanup);
 
         it('fails without token', function (done) {
@@ -192,27 +194,7 @@ describe('OAuth Clients API', function () {
 
         before(function (done) {
             async.series([
-                server.start.bind(null),
-                database._clear.bind(null),
-
-                function (callback) {
-                    var scope1 = nock(config.apiServerOrigin()).get('/api/v1/boxes/' + config.fqdn() + '/setup/verify?setupToken=somesetuptoken').reply(200, {});
-                    var scope2 = nock(config.apiServerOrigin()).post('/api/v1/boxes/' + config.fqdn() + '/setup/done?setupToken=somesetuptoken').reply(201, {});
-
-                    superagent.post(SERVER_URL + '/api/v1/cloudron/activate')
-                           .query({ setupToken: 'somesetuptoken' })
-                           .send({ username: USERNAME, password: PASSWORD, email: EMAIL })
-                           .end(function (error, result) {
-                        expect(result).to.be.ok();
-                        expect(scope1.isDone()).to.be.ok();
-                        expect(scope2.isDone()).to.be.ok();
-
-                        // stash token for further use
-                        token = result.body.token;
-
-                        callback();
-                    });
-                },
+                setup,
 
                 function (callback) {
                     superagent.post(SERVER_URL + '/api/v1/oauth/clients')
@@ -278,27 +260,7 @@ describe('OAuth Clients API', function () {
 
         before(function (done) {
             async.series([
-                server.start.bind(null),
-                database._clear.bind(null),
-
-                function (callback) {
-                    var scope1 = nock(config.apiServerOrigin()).get('/api/v1/boxes/' + config.fqdn() + '/setup/verify?setupToken=somesetuptoken').reply(200, {});
-                    var scope2 = nock(config.apiServerOrigin()).post('/api/v1/boxes/' + config.fqdn() + '/setup/done?setupToken=somesetuptoken').reply(201, {});
-
-                    superagent.post(SERVER_URL + '/api/v1/cloudron/activate')
-                           .query({ setupToken: 'somesetuptoken' })
-                           .send({ username: USERNAME, password: PASSWORD, email: EMAIL })
-                           .end(function (error, result) {
-                        expect(result).to.be.ok();
-                        expect(scope1.isDone()).to.be.ok();
-                        expect(scope2.isDone()).to.be.ok();
-
-                        // stash token for further use
-                        token = result.body.token;
-
-                        callback();
-                    });
-                },
+                setup,
 
                 function (callback) {
                     superagent.post(SERVER_URL + '/api/v1/oauth/clients')
@@ -410,51 +372,27 @@ describe('Clients', function () {
         next();
     };
 
-    function setup(done) {
+    function setup2(done) {
         async.series([
-            server.start.bind(server),
-            database._clear.bind(null),
+            setup,
+
             function (callback) {
-                var scope1 = nock(config.apiServerOrigin()).get('/api/v1/boxes/' + config.fqdn() + '/setup/verify?setupToken=somesetuptoken').reply(200, {});
-                var scope2 = nock(config.apiServerOrigin()).post('/api/v1/boxes/' + config.fqdn() + '/setup/done?setupToken=somesetuptoken').reply(201, {});
-
-                superagent.post(SERVER_URL + '/api/v1/cloudron/activate')
-                       .query({ setupToken: 'somesetuptoken' })
-                       .send({ username: USER_0.username, password: USER_0.password, email: USER_0.email })
-                       .end(function (error, result) {
+                superagent.get(SERVER_URL + '/api/v1/profile')
+                        .query({ access_token: token })
+                        .end(function (error, result) {
                     expect(result).to.be.ok();
-                    expect(result.statusCode).to.eql(201);
-                    expect(scope1.isDone()).to.be.ok();
-                    expect(scope2.isDone()).to.be.ok();
+                    expect(result.statusCode).to.eql(200);
 
-                    // stash for further use
-                    token = result.body.token;
+                    USER_0.id = result.body.id;
 
-                    superagent.get(SERVER_URL + '/api/v1/profile')
-                            .query({ access_token: token })
-                            .end(function (error, result) {
-                        expect(result).to.be.ok();
-                        expect(result.statusCode).to.eql(200);
-
-                        USER_0.id = result.body.id;
-
-                        callback();
-                    });
+                    callback();
                 });
             }
         ], done);
     }
 
-    function cleanup(done) {
-        database._clear(function (error) {
-            expect(error).to.not.be.ok();
-
-            server.stop(done);
-        });
-    }
-
     describe('get', function () {
-        before(setup);
+        before(setup2);
         after(cleanup);
 
         it('fails due to missing token', function (done) {
@@ -497,7 +435,7 @@ describe('Clients', function () {
     });
 
     describe('get tokens by client', function () {
-        before(setup);
+        before(setup2);
         after(cleanup);
 
         it('fails due to missing token', function (done) {
@@ -550,7 +488,7 @@ describe('Clients', function () {
     });
 
     describe('delete tokens by client', function () {
-        before(setup);
+        before(setup2);
         after(cleanup);
 
         it('fails due to missing token', function (done) {

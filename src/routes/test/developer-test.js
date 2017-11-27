@@ -22,7 +22,13 @@ var token = null; // authentication token
 
 var server;
 function setup(done) {
-    server.start(done);
+    config._reset();
+    config.setFqdn('example-developer-test.com');
+
+    async.series([
+        server.start.bind(server),
+        database._clear
+    ], done);
 }
 
 function cleanup(done) {

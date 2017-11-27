@@ -30,7 +30,8 @@ var SERVER_URL = 'http://localhost:' + config.get('port');
 var USERNAME = 'superadmin', PASSWORD = 'Foobar?1337', EMAIL ='silly@me.com';
 
 function setup(done) {
-    // we test caas here
+    config._reset();
+    config.setFqdn('example-sysadmin-test.com');
     config.set('provider', 'caas');
     config.setVersion('1.2.3');
 
@@ -58,7 +59,7 @@ function setup(done) {
 
         function addApp(callback) {
             var manifest = { version: '0.0.1', manifestVersion: 1, dockerImage: 'foo', healthCheckPath: '/', httpPort: 3, title: 'ok', addons: { } };
-            appdb.add('appid', 'appStoreId', manifest, 'location', 'example.com', [ ] /* portBindings */, { }, callback);
+            appdb.add('appid', 'appStoreId', manifest, 'location', config.fqdn(), [ ] /* portBindings */, { }, callback);
         },
 
         function createSettings(callback) {

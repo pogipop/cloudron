@@ -62,7 +62,6 @@ describe('updatechecker - box - manual (email)', function () {
     before(function (done) {
         config._reset();
         config.setFqdn(DOMAIN_0.domain);
-        config.set('version', '1.0.0');
         config.set('apiServerOrigin', 'http://localhost:4444');
         config.set('provider', 'notcaas');
         safe.fs.unlinkSync(paths.UPDATE_CHECKER_FILE);
@@ -165,7 +164,6 @@ describe('updatechecker - box - manual (email)', function () {
 describe('updatechecker - box - automatic (no email)', function () {
     before(function (done) {
         config.setFqdn(DOMAIN_0.domain);
-        config.set('version', '1.0.0');
         config.set('apiServerOrigin', 'http://localhost:4444');
         config.set('provider', 'notcaas');
 

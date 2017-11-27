@@ -149,7 +149,7 @@ function startBox(done) {
     safe.fs.unlinkSync(paths.INFRA_VERSION_FILE);
     child_process.execSync('docker ps -qa | xargs --no-run-if-empty docker rm -f');
 
-    config.setFqdn('foobar.com');
+    config.setFqdn('example-apps-test.com');
     config.setZoneName('foobar.com');
 
     awsHostedZones = {

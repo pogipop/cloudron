@@ -126,6 +126,7 @@ function initConfig() {
 
     // overrides for local testings
     if (exports.TEST) {
+        data.version = '1.1.1-test';
         data.port = 5454;
         data.token = 'APPSTORE_TOKEN';
         data.apiServerOrigin = 'http://localhost:6060'; // hock doesn't support https

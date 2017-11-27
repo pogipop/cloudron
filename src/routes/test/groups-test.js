@@ -28,7 +28,9 @@ var groupObject;
 
 var server;
 function setup(done) {
+    config._reset();
     config.set('provider', 'caas');
+    config.setFqdn('example-groups-test.com');
 
     async.series([
         server.start.bind(server),

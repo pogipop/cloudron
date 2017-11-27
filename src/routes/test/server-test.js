@@ -22,6 +22,8 @@ var token = null;
 
 var server;
 function setup(done) {
+    config._reset();
+    config.setFqdn('example-server-test.com');
     config.set('provider', 'caas');
     config.setVersion('1.2.3');
 

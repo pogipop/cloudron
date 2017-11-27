@@ -33,9 +33,9 @@ describe('Domains API', function () {
     this.timeout(10000);
 
     before(function (done) {
-        // we test digitalocean here
+        config._reset();
         config.set('provider', 'digitalocean');
-        config.set('fqdn', 'example.com');
+        config.setFqdn('example-domains-test.com');
 
         async.series([
             server.start.bind(null),

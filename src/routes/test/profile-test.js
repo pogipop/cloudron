@@ -26,6 +26,9 @@ describe('Profile API', function () {
     var token_0;
 
     function setup(done) {
+        config._reset();
+        config.setFqdn('example-profile-test.com');
+
         server.start(function (error) {
             expect(!error).to.be.ok();
 

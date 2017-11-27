@@ -56,7 +56,6 @@ describe('digest', function () {
     before(function (done) {
         config._reset();
         config.set('fqdn', 'domain.com');
-        config.set('version', '1.0.0');
         config.set('apiServerOrigin', 'http://localhost:4444');
         config.set('provider', 'notcaas');
         config.setFqdn(DOMAIN_0.domain);

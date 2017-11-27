@@ -26,6 +26,9 @@ var USERNAME_3 = 'ut', EMAIL_3 = 'user3@FOO.bar';
 var groupObject;
 
 function setup(done) {
+    config._reset();
+    config.setFqdn('example-user-test.com');
+
     server.start(function (error) {
         expect(!error).to.be.ok();
 

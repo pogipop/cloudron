@@ -22,6 +22,10 @@ var token = null;
 var USER_1_ID = null, token_1;
 
 function setup(done) {
+    config._reset();
+    config.set('provider', 'notcaas');
+    config.setFqdn('example-eventlog-test.com');
+
     async.series([
         server.start.bind(server),
 

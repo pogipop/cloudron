@@ -294,6 +294,9 @@ describe('OAuth2', function () {
         };
 
         function setup(done) {
+            config._reset();
+            config.setFqdn(APP_0.domain);
+
             async.series([
                 server.start,
                 database._clear,

@@ -27,7 +27,8 @@ var USERNAME = 'superadmin', PASSWORD = 'Foobar?1337', EMAIL ='silly@me.com';
 var token = null;
 
 function setup(done) {
-    // we test caas here
+    config._reset();
+    config.setFqdn('example-settings-test.com');
     config.set('provider', 'caas');
 
     async.series([

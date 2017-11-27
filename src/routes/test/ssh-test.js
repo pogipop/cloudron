@@ -28,7 +28,8 @@ var token = null;
 
 var server;
 function setup(done) {
-    config.setFqdn('foobar.com');
+    config._reset();
+    config.setFqdn('example-ssh-test.com');
 
     async.series([
         server.start.bind(server),
