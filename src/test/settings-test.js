@@ -45,7 +45,8 @@ function cleanup(done) {
 
     async.series([
         settings.uninitialize,
-        database._clear
+        database._clear,
+        database.uninitialize
     ], done);
 }
 

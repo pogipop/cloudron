@@ -13,13 +13,16 @@ var async = require('async'),
 
 function setup(done) {
     async.series([
-        database.initialize.bind(null),
-        database._clear.bind(null)
+        database.initialize,
+        database._clear
     ], done);
 }
 
 function cleanup(done) {
-    database._clear(done);
+    async.series([
+        database._clear,
+        database.uninitialize
+    ], done);
 }
 
 describe('Cloudron', function () {

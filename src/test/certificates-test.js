@@ -22,7 +22,10 @@ function setup(done) {
 }
 
 function cleanup(done) {
-    database._clear(done);
+    async.series([
+        database._clear,
+        database.uninitialize
+    ], done);
 }
 
 describe('Certificates', function () {

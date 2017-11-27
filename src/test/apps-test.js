@@ -149,7 +149,10 @@ describe('Apps', function () {
     });
 
     after(function (done) {
-        database._clear(done);
+        async.series([
+            database._clear,
+            database.uninitialize
+        ], done);
     });
 
     describe('validateHostname', function () {

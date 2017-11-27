@@ -53,16 +53,6 @@ function checkMails(number, email, done) {
 }
 
 describe('digest', function () {
-    function cleanup(done) {
-        mailer._clearMailQueue();
-        safe.fs.unlinkSync(paths.UPDATE_CHECKER_FILE);
-
-        async.series([
-            settings.uninitialize,
-            database._clear
-        ], done);
-    }
-
     before(function (done) {
         config._reset();
         config.set('fqdn', 'domain.com');
@@ -83,7 +73,16 @@ describe('digest', function () {
         ], done);
     });
 
-    after(cleanup);
+    after(function (done) {
+        mailer._clearMailQueue();
+        safe.fs.unlinkSync(paths.UPDATE_CHECKER_FILE);
+
+        async.series([
+            settings.uninitialize,
+            database._clear,
+            database.uninitialize
+        ], done);
+    });
 
     describe('disabled', function () {
         before(function (done) {

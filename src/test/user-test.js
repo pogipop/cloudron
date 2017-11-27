@@ -80,7 +80,10 @@ function setup(done) {
 function cleanup(done) {
     mailer._clearMailQueue();
 
-    database._clear(done);
+    async.series([
+        database._clear,
+        database.uninitialize
+    ], done);
 }
 
 function checkMails(number, options, callback) {

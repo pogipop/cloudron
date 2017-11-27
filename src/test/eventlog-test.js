@@ -6,10 +6,11 @@
 
 'use strict';
 
-var database = require('../database.js'),
-    expect = require('expect.js'),
+var async = require('async'),
+    database = require('../database.js'),
     eventlog = require('../eventlog.js'),
-    EventLogError = eventlog.EventLogError;
+    EventLogError = eventlog.EventLogError,
+    expect = require('expect.js');
 
 function setup(done) {
     // ensure data/config/mount paths
@@ -20,7 +21,10 @@ function setup(done) {
 }
 
 function cleanup(done) {
-    database._clear(done);
+    async.series([
+        database._clear,
+        database.uninitialize
+    ], done);
 }
 
 describe('Eventlog', function () {

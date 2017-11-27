@@ -37,7 +37,10 @@ describe('dns provider', function () {
     });
 
     after(function (done) {
-        database._clear(done);
+        async.series([
+            database._clear,
+            database.uninitialize
+        ], done);
     });
 
     describe('noop', function () {
