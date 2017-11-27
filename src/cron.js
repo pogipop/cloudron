@@ -59,6 +59,8 @@ function initialize(callback) {
         // hack: send the first heartbeat only after we are running for 60 seconds
         // required as we end up sending a heartbeat and then cloudron-setup reboots the server
         var seconds = (new Date()).getSeconds() - 1;
+        if (seconds === -1) seconds = 59;
+
         gJobs.caasHeartbeat = new CronJob({
             cronTime: `${seconds} */1 * * * *`, // every minute
             onTick: cloudron.sendCaasHeartbeat,
