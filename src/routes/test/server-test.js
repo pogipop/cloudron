@@ -71,7 +71,7 @@ describe('REST API', function () {
             .send('some invalid non-strict json')
             .end(function (error, result) {
               expect(result.statusCode).to.equal(400);
-              expect(result.body.message).to.be('Bad JSON');
+              expect(result.body.message).to.be('Failed to parse body');
 
               done();
         });
