@@ -19,6 +19,8 @@ var async = require('async'),
     settingsdb = require('../settingsdb.js');
 
 function setup(done) {
+    config._reset();
+    config.set('fqdn', 'example.com');
     config.set('provider', 'caas');
     nock.cleanAll();
 

@@ -69,6 +69,7 @@ const TEST_DOMAIN = {
 
 describe('database', function () {
     before(function (done) {
+        config._reset();
         config.setFqdn(TEST_DOMAIN.domain);
 
         async.series([
@@ -1425,6 +1426,9 @@ describe('database', function () {
 
     describe('groups', function () {
         before(function (done) {
+            config._reset();
+            config.setFqdn(TEST_DOMAIN.domain);
+
             async.series([
                 database.initialize,
                 database._clear,
@@ -1545,6 +1549,7 @@ describe('database', function () {
 
     describe('importFromFile', function () {
         before(function (done) {
+            config._reset();
             config.setFqdn(TEST_DOMAIN.domain);
 
             async.series([
@@ -1578,6 +1583,7 @@ describe('database', function () {
 
     describe('mailboxes', function () {
         before(function (done) {
+            config._reset();
             config.setFqdn(TEST_DOMAIN.domain);
 
             async.series([

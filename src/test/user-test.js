@@ -68,6 +68,7 @@ function createOwner(done) {
 }
 
 function setup(done) {
+    config._reset();
     config.setFqdn(DOMAIN_0.domain);
 
     async.series([

@@ -127,6 +127,8 @@ describe('Apps', function () {
     };
 
     before(function (done) {
+        config._reset();
+
         config.setFqdn(DOMAIN_0.domain);
 
         async.series([

@@ -82,6 +82,9 @@ function startDockerProxy(interceptor, callback) {
 }
 
 function setup(done) {
+    config._reset();
+    config.set('fqdn', 'example.com');
+
     async.series([
         database.initialize.bind(null),
         database._clear.bind(null),
