@@ -76,9 +76,6 @@ describe('Backups API', function () {
 
     before(setup);
 
-    after(function (done) {
-        done();
-    });
     after(cleanup);
 
     describe('create', function () {
