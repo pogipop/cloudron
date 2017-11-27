@@ -1,6 +1,6 @@
 /* jslint node:true */
 /* global it:false */
-/* global describe:false */
+/* global xdescribe:false */
 /* global before:false */
 /* global after:false */
 
@@ -201,7 +201,7 @@ describe('Ldap', function () {
 
             client.bind('cn=doesnotexist,ou=users,dc=cloudron', 'password', function (error) {
                 expect(error).to.be.a(ldap.NoSuchObjectError);
-                done();
+                client.unbind(done);
             });
         });
 
@@ -210,7 +210,7 @@ describe('Ldap', function () {
 
             client.bind('cn=' + USER_0.id + ',ou=users,dc=cloudron', 'wrongpassword', function (error) {
                 expect(error).to.be.a(ldap.InvalidCredentialsError);
-                done();
+                client.unbind(done);
             });
         });
 
@@ -219,7 +219,7 @@ describe('Ldap', function () {
 
             client.bind('cn=' + USER_0.id + ',ou=users,dc=cloudron', USER_0.password, function (error) {
                 expect(error).to.be(null);
-                done();
+                client.unbind(done);
             });
         });
 
@@ -228,7 +228,7 @@ describe('Ldap', function () {
 
             client.bind('cn=' + USER_0.username + ',ou=users,dc=cloudron', USER_0.password, function (error) {
                 expect(error).to.be(null);
-                done();
+                client.unbind(done);
             });
         });
 
@@ -237,7 +237,7 @@ describe('Ldap', function () {
 
             client.bind('cn=' + USER_0.email + ',ou=users,dc=cloudron', USER_0.password, function (error) {
                 expect(error).to.be(null);
-                done();
+                client.unbind(done);
             });
         });
 
@@ -251,6 +251,8 @@ describe('Ldap', function () {
                 client.bind('cn=' + USER_0.username.toLowerCase() + '@' + config.fqdn() + ',ou=users,dc=cloudron', USER_0.password, function (error) {
                     expect(error).to.be(null);
 
+                    client.unbind();
+
                     settingsdb.set(settings.MAIL_CONFIG_KEY, JSON.stringify({ enabled: false }), done);
                 });
             });
@@ -261,7 +263,7 @@ describe('Ldap', function () {
 
             client.bind('mail=' + USER_0.username + ',ou=users,dc=cloudron', USER_0.password, function (error) {
                 expect(error).to.be.a(ldap.NoSuchObjectError);
-                done();
+                client.unbind(done);
             });
         });
 
@@ -273,7 +275,7 @@ describe('Ldap', function () {
 
                 client.bind('cn=' + USER_1.id + ',ou=users,dc=cloudron', USER_1.password, function (error) {
                     expect(error).to.be.a(ldap.NoSuchObjectError);
-                    done();
+                    client.unbind(done);
                 });
             });
         });
@@ -286,7 +288,7 @@ describe('Ldap', function () {
 
                 client.bind('cn=' + USER_0.id + ',ou=users,dc=cloudron', USER_0.password, function (error) {
                     expect(error).to.be(null);
-                    done();
+                    client.unbind(done);
                 });
             });
         });
@@ -306,7 +308,7 @@ describe('Ldap', function () {
 
                 result.on('error', function (error) {
                     expect(error).to.be.a(ldap.NoSuchObjectError);
-                    done();
+                    client.unbind(done);
                 });
                 result.on('end', function (result) {
                     done(new Error('Should not succeed. Status ' + result.status));
@@ -337,7 +339,7 @@ describe('Ldap', function () {
                     expect(entries[0].mail).to.equal(USER_0.email.toLowerCase());
                     expect(entries[1].username).to.equal(USER_1.username.toLowerCase());
                     expect(entries[1].mail).to.equal(USER_1.email.toLowerCase());
-                    done();
+                    client.unbind(done);
                 });
             });
         });
@@ -366,7 +368,7 @@ describe('Ldap', function () {
                     expect(entries[0].mail).to.equal(USER_0.email.toLowerCase());
                     expect(entries[1].username).to.equal(USER_1.username.toLowerCase());
                     expect(entries[1].mail).to.equal(USER_1.email.toLowerCase());
-                    done();
+                    client.unbind(done);
                 });
             });
         });
@@ -402,6 +404,8 @@ describe('Ldap', function () {
                         expect(entries[1].mailAlternateAddress).to.equal(USER_1.email.toLowerCase());
                         expect(entries[1].mail).to.equal(USER_1.username.toLowerCase() + '@' + config.fqdn());
 
+                        client.unbind();
+
                         settingsdb.set(settings.MAIL_CONFIG_KEY, JSON.stringify({ enabled: false }), done);
                     });
                 });
@@ -429,7 +433,7 @@ describe('Ldap', function () {
                     entries.sort(function (a, b) { return a.username > b.username; });
                     expect(entries[0].username).to.equal(USER_0.username.toLowerCase());
                     expect(entries[1].username).to.equal(USER_1.username.toLowerCase());
-                    done();
+                    client.unbind(done);
                 });
             });
         });
@@ -454,7 +458,7 @@ describe('Ldap', function () {
                     expect(entries.length).to.equal(1);
                     expect(entries[0].username).to.equal(USER_0.username.toLowerCase());
                     expect(entries[0].memberof.length).to.equal(2);
-                    done();
+                    client.unbind(done);
                 });
             });
         });
@@ -482,6 +486,8 @@ describe('Ldap', function () {
                         expect(entries.length).to.equal(1);
                         expect(entries[0].username).to.equal(USER_0.username.toLowerCase());
                         expect(entries[0].memberof.length).to.equal(2);
+
+                        client.unbind();
 
                         appdb.update(APP_0.id, { accessRestriction: null }, done);
                     });
@@ -514,6 +520,8 @@ describe('Ldap', function () {
 
                         expect(entries[0].username).to.equal(USER_0.username.toLowerCase());
                         expect(entries[1].username).to.equal(USER_1.username.toLowerCase());
+
+                        client.unbind();
 
                         appdb.update(APP_0.id, { accessRestriction: null }, done);
                     });
@@ -553,7 +561,7 @@ describe('Ldap', function () {
                     expect(entries[1].cn).to.equal('admins');
                     // if only one entry, the array becomes a string :-/
                     expect(entries[1].memberuid).to.equal(USER_0.id);
-                    done();
+                    client.unbind(done);
                 });
             });
         });
@@ -584,7 +592,7 @@ describe('Ldap', function () {
                     expect(entries[1].cn).to.equal('admins');
                     // if only one entry, the array becomes a string :-/
                     expect(entries[1].memberuid).to.equal(USER_0.id);
-                    done();
+                    client.unbind(done);
                 });
             });
         });
@@ -609,7 +617,7 @@ describe('Ldap', function () {
                     expect(entries.length).to.equal(1);
                     expect(entries[0].cn).to.equal('users');
                     expect(entries[0].memberuid.length).to.equal(3);
-                    done();
+                    client.unbind(done);
                 });
             });
         });
@@ -642,6 +650,8 @@ describe('Ldap', function () {
                         expect(entries[1].cn).to.equal('admins');
                         // if only one entry, the array becomes a string :-/
                         expect(entries[1].memberuid).to.equal(USER_0.id);
+
+                        client.unbind();
 
                         appdb.update(APP_0.id, { accessRestriction: null }, done);
                     });
@@ -680,7 +690,7 @@ describe('Ldap', function () {
                     expect(entries[1].cn).to.equal('admins');
                     // if only one entry, the array becomes a string :-/
                     expect(entries[1].memberuid).to.equal(USER_0.id);
-                    done();
+                    client.unbind(done);
                 });
             });
         });
@@ -694,6 +704,12 @@ describe('Ldap', function () {
             paged: true
         };
 
+        function done(error, entries) {
+            client.unbind(function () {
+                callback(error, entries);
+            });
+        }
+
         client.search(dn, opts, function (error, result) {
             expect(error).to.be(null);
             expect(result).to.be.an(EventEmitter);
@@ -701,10 +717,10 @@ describe('Ldap', function () {
             var entries = [];
 
             result.on('searchEntry', function (entry) { entries.push(entry.object); });
-            result.on('error', callback);
+            result.on('error', done);
             result.on('end', function (result) {
                 expect(result.status).to.equal(0);
-                callback(null, entries);
+                done(null, entries);
             });
         });
     }
@@ -813,7 +829,7 @@ describe('Ldap', function () {
 
             client.bind('cn=' + USER_0.username + ',ou=sendmail,dc=cloudron', USER_0.password + 'nope', function (error) {
                 expect(error).to.be.a(ldap.InvalidCredentialsError);
-                done();
+                client.unbind(done);
             });
         });
 
@@ -821,6 +837,7 @@ describe('Ldap', function () {
             var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + config.get('ldapPort') });
 
             client.bind('cn=' + USER_0.username + ',ou=sendmail,dc=cloudron', USER_0.password, function (error) {
+                client.unbind();
                 done(error);
             });
         });
@@ -835,6 +852,8 @@ describe('Ldap', function () {
                 client.bind('cn=' + USER_0.username + '@' + config.fqdn() + ',ou=sendmail,dc=cloudron', USER_0.password, function (error) {
                     expect(error).not.to.be.ok();
 
+                    client.unbind();
+
                     settingsdb.set(settings.MAIL_CONFIG_KEY, JSON.stringify({ enabled: false }), done);
                 });
             });
@@ -847,7 +866,7 @@ describe('Ldap', function () {
 
             client.bind('cn=hacker.app,ou=sendmail,dc=cloudron', 'nope', function (error) {
                 expect(error).to.be.a(ldap.NoSuchObjectError);
-                done();
+                client.unbind(done);
             });
         });
 
@@ -856,7 +875,7 @@ describe('Ldap', function () {
 
             client.bind('cn=' + APP_0.location + '.app,ou=sendmail,dc=cloudron', 'nope', function (error) {
                 expect(error).to.be.a(ldap.InvalidCredentialsError);
-                done();
+                client.unbind(done);
             });
         });
 
@@ -864,6 +883,7 @@ describe('Ldap', function () {
             var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + config.get('ldapPort') });
 
             client.bind('cn=' + APP_0.location + '.app,ou=sendmail,dc=cloudron', 'sendmailpassword', function (error) {
+                client.unbind();
                 done(error);
             });
         });
@@ -875,7 +895,7 @@ describe('Ldap', function () {
 
             client.bind('cn=' + USER_0.username + ',ou=recvmail,dc=cloudron', USER_0.password + 'nope', function (error) {
                 expect(error).to.be.a(ldap.InvalidCredentialsError);
-                done();
+                client.unbind(done);
             });
         });
 
@@ -883,6 +903,8 @@ describe('Ldap', function () {
             var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + config.get('ldapPort') });
 
             client.bind('cn=' + USER_0.username + ',ou=recvmail,dc=cloudron', USER_0.password, function (error) {
+                client.unbind();
+
                 done(error);
             });
         });
@@ -897,6 +919,8 @@ describe('Ldap', function () {
                 client.bind('cn=' + USER_0.username + '@' + config.fqdn() + ',ou=recvmail,dc=cloudron', USER_0.password, function (error) {
                     expect(error).not.to.be.ok();
 
+                    client.unbind();
+
                     settingsdb.set(settings.MAIL_CONFIG_KEY, JSON.stringify({ enabled: false }), done);
                 });
             });
@@ -909,7 +933,7 @@ describe('Ldap', function () {
 
             client.bind('cn=hacker.app,ou=recvmail,dc=cloudron', 'nope', function (error) {
                 expect(error).to.be.a(ldap.NoSuchObjectError);
-                done();
+                client.unbind(done);
             });
         });
 
@@ -918,7 +942,7 @@ describe('Ldap', function () {
 
             client.bind('cn=' + APP_0.location + '.app,ou=recvmail,dc=cloudron', 'nope', function (error) {
                 expect(error).to.be.a(ldap.InvalidCredentialsError);
-                done();
+                client.unbind(done);
             });
         });
 
@@ -926,9 +950,10 @@ describe('Ldap', function () {
             var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + config.get('ldapPort') });
 
             client.bind('cn=' + APP_0.location + '.app,ou=recvmail,dc=cloudron', 'recvmailpassword', function (error) {
+                client.unbind();
+
                 done(error);
             });
         });
     });
-
 });
