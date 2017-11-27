@@ -286,9 +286,9 @@ function validateCertificate(cert, key, fqdn) {
     // if no match, check alt names
     if (result.indexOf('does match certificate') === -1) {
         // https://github.com/drwetter/testssl.sh/pull/383
-        var cmd = `openssl x509 -noout -text | grep -A3 "Subject Alternative Name" | \
+        var cmd = 'openssl x509 -noout -text | grep -A3 "Subject Alternative Name" | \
                    grep "DNS:" | \
-                   sed -e "s/DNS://g" -e "s/ //g" -e "s/,/ /g" -e "s/othername:<unsupported>//g"`;
+                   sed -e "s/DNS://g" -e "s/ //g" -e "s/,/ /g" -e "s/othername:<unsupported>//g"';
         result = safe.child_process.execSync(cmd, { encoding: 'utf8', input: cert });
         var altNames = result ? [ ] : result.trim().split(' '); // might fail if cert has no SAN
         debug('validateCertificate: detected altNames as %j', altNames);
@@ -302,7 +302,7 @@ function validateCertificate(cert, key, fqdn) {
     var keyModulus = safe.child_process.execSync('openssl rsa -noout -modulus', { encoding: 'utf8', input: key });
     if (certModulus !== keyModulus) return new Error('Key does not match the certificate.');
 
-   // check expiration
+    // check expiration
     result = safe.child_process.execSync('openssl x509 -checkend 0', { encoding: 'utf8', input: cert });
     if (!result) return new Error('Certificate is expired.');
 
