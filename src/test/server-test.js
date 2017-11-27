@@ -25,6 +25,7 @@ describe('Server', function () {
 
     before(function () {
         config.set('version', '0.5.0');
+        config.set('provider', 'notcaas'); // otherwise, cron sets a caas timer for heartbeat causing the test to not quit
     });
 
     after(cleanup);
