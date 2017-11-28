@@ -200,7 +200,6 @@ function autoprovision(callback) {
         case 'backupConfig': name = 'backup_config'; break;
         case 'tlsCert': return fs.writeFile(path.join(paths.NGINX_CERT_DIR, 'host.cert'), conf[key], iteratorDone);
         case 'tlsKey': return fs.writeFile(path.join(paths.NGINX_CERT_DIR, 'host.key'), conf[key], iteratorDone);
-        case 'adminDomain': return domaindb.upsert(conf[key].domain, conf[key].zoneName, conf[key].zoneName, iteratorDone);
         default: debug(`autoprovision: ${key} ignored`); return iteratorDone();
         }
 
@@ -225,16 +224,19 @@ function dnsSetup(dnsConfig, domain, zoneName, callback) {
         if (error && error.reason === DomainError.BAD_FIELD) return callback(new CloudronError(CloudronError.BAD_FIELD, error.message));
         if (error) return callback(new CloudronError(CloudronError.INTERNAL_ERROR, error));
 
-        config.setFqdn(domain); // set fqdn only after dns config is valid, otherwise cannot re-setup if we failed
-        config.setZoneName(zoneName);
+        autoprovision(function (error) {
+            if (error) return callback(new CloudronError(CloudronError.INTERNAL_ERROR, error));
 
-        async.series([ // do not block
-            autoprovision,
-            onDomainConfigured,
-            configureWebadmin
-        ], NOOP_CALLBACK);
+            config.setFqdn(domain); // set fqdn only after dns config is valid, otherwise cannot re-setup if we failed
+            config.setZoneName(zoneName);
 
-        callback();
+            callback();
+
+            async.series([ // do not block
+                onDomainConfigured,
+                configureWebadmin
+            ], NOOP_CALLBACK);
+        });
     }
 
     domains.get(domain, function (error, result) {
