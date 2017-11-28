@@ -198,9 +198,15 @@ function autoprovision(callback) {
         case 'dnsConfig': name = 'dns_config'; break;
         case 'tlsConfig': name = 'tls_config'; break;
         case 'backupConfig': name = 'backup_config'; break;
-        case 'tlsCert': return fs.writeFile(path.join(paths.NGINX_CERT_DIR, 'host.cert'), conf[key], iteratorDone);
-        case 'tlsKey': return fs.writeFile(path.join(paths.NGINX_CERT_DIR, 'host.key'), conf[key], iteratorDone);
-        default: debug(`autoprovision: ${key} ignored`); return iteratorDone();
+        case 'tlsCert':
+            debug(`autoprovision: ${key}`);
+            return fs.writeFile(path.join(paths.NGINX_CERT_DIR, 'host.cert'), conf[key], iteratorDone);
+        case 'tlsKey':
+            debug(`autoprovision: ${key}`);
+            return fs.writeFile(path.join(paths.NGINX_CERT_DIR, 'host.key'), conf[key], iteratorDone);
+        default:
+            debug(`autoprovision: ${key} ignored`);
+            return iteratorDone();
         }
 
         debug(`autoprovision: ${name}`);
@@ -242,8 +248,8 @@ function dnsSetup(dnsConfig, domain, zoneName, callback) {
     domains.get(domain, function (error, result) {
         if (error && error.reason !== DomainError.NOT_FOUND) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
 
-        if (!result) domains.add(domain, zoneName, dnsConfig, null, done);
-        else domains.update(domain, dnsConfig, null, done);
+        if (!result) domains.add(domain, zoneName, dnsConfig, null /* cert */, done);
+        else domains.update(domain, dnsConfig, null /* cert */, done);
     });
 }
 
@@ -651,6 +657,8 @@ function restore(backupConfig, backupId, version, callback) {
             if (error && error.reason === BackupsError.BAD_FIELD) return callback(new CloudronError(CloudronError.BAD_FIELD, error.message));
             if (error && error.reason === BackupsError.EXTERNAL_ERROR) return callback(new CloudronError(CloudronError.EXTERNAL_ERROR, error.message));
             if (error) return callback(new CloudronError(CloudronError.INTERNAL_ERROR, error));
+
+            debug(`restore: restoring from ${backupId}`);
 
             gWebadminStatus.restoring = true;
 

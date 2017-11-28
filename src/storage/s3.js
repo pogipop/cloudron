@@ -179,7 +179,7 @@ function download(apiConfig, backupFilePath, callback) {
             if (error.code === 'NoSuchKey' || error.code === 'ENOENT') {
                 ps.emit('error', new BackupsError(BackupsError.NOT_FOUND));
             } else {
-                debug('[%s] download: s3 stream error.', backupFilePath, error);
+                debug(`download: ${apiConfig.bucket}:${backupFilePath} s3 stream error.`, error);
                 ps.emit('error', new BackupsError(BackupsError.EXTERNAL_ERROR, error.message || error.code)); // DO sets 'code'
             }
         });
