@@ -15,12 +15,11 @@ var async = require('async'),
     expect = require('expect.js'),
     nock = require('nock'),
     settings = require('../settings.js'),
-    domains = require('../domains.js'),
     util = require('util');
 
 var DOMAIN_0 = {
-    domain: 'example.com',
-    zoneName: 'example.com',
+    domain: 'example-dns-test.com',
+    zoneName: 'example-dns-test.com',
     config: {}
 };
 
@@ -343,36 +342,38 @@ describe('dns provider', function () {
         // do not clear this with [] but .length = 0 so we don't loose the reference in mockery
         var awsAnswerQueue = [];
 
-        var AWS_HOSTED_ZONES = {
-            HostedZones: [{
-                Id: '/hostedzone/Z34G16B38TNZ9L',
-                Name: config.zoneName() + '.',
-                CallerReference: '305AFD59-9D73-4502-B020-F4E6F889CB30',
-                ResourceRecordSetCount: 2,
-                ChangeInfo: {
-                    Id: '/change/CKRTFJA0ANHXB',
-                    Status: 'INSYNC'
-                }
-            }, {
-                Id: '/hostedzone/Z3OFC3B6E8YTA7',
-                Name: 'cloudron.us.',
-                CallerReference: '0B37F2DE-21A4-E678-BA32-3FC8AF0CF635',
-                Config: {},
-                ResourceRecordSetCount: 2,
-                ChangeInfo: {
-                    Id: '/change/C2682N5HXP0BZ5',
-                    Status: 'INSYNC'
-                }
-            }],
-            IsTruncated: false,
-            MaxItems: '100'
-        };
+        var AWS_HOSTED_ZONES = null;
 
         before(function (done) {
             DOMAIN_0.config = {
                 provider: 'route53',
                 accessKeyId: 'unused',
                 secretAccessKey: 'unused'
+            };
+
+            AWS_HOSTED_ZONES = {
+                HostedZones: [{
+                    Id: '/hostedzone/Z34G16B38TNZ9L',
+                    Name: config.zoneName() + '.',
+                    CallerReference: '305AFD59-9D73-4502-B020-F4E6F889CB30',
+                    ResourceRecordSetCount: 2,
+                    ChangeInfo: {
+                        Id: '/change/CKRTFJA0ANHXB',
+                        Status: 'INSYNC'
+                    }
+                }, {
+                    Id: '/hostedzone/Z3OFC3B6E8YTA7',
+                    Name: 'cloudron.us.',
+                    CallerReference: '0B37F2DE-21A4-E678-BA32-3FC8AF0CF635',
+                    Config: {},
+                    ResourceRecordSetCount: 2,
+                    ChangeInfo: {
+                        Id: '/change/C2682N5HXP0BZ5',
+                        Status: 'INSYNC'
+                    }
+                }],
+                IsTruncated: false,
+                MaxItems: '100'
             };
 
             function mockery (queue) {
