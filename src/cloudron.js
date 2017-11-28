@@ -668,7 +668,10 @@ function restore(backupConfig, backupId, version, callback) {
                 backups.restore.bind(null, backupConfig, backupId),
                 autoprovision,
                 shell.sudo.bind(null, 'restart', [ RESTART_CMD ])
-            ], NOOP_CALLBACK);
+            ], function (error) {
+                debug('restore:', error);
+                gWebadminStatus.restoring = false;
+            });
         });
     });
 }
