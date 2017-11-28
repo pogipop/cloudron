@@ -45,7 +45,6 @@ exports = module.exports = {
 };
 
 var assert = require('assert'),
-    debug = require('debug')('box:config.js'),
     fs = require('fs'),
     path = require('path'),
     safe = require('safetydance'),

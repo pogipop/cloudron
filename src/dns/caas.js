@@ -15,6 +15,13 @@ var assert = require('assert'),
     superagent = require('superagent'),
     util = require('util');
 
+function getFqdn(subdomain, domain) {
+    assert.strictEqual(typeof subdomain, 'string');
+    assert.strictEqual(typeof domain, 'string');
+
+    return (subdomain === '') ? domain : subdomain + '-' + domain;
+}
+
 function add(dnsConfig, zoneName, subdomain, type, values, callback) {
     assert.strictEqual(typeof dnsConfig, 'object');
     assert.strictEqual(typeof zoneName, 'string');
@@ -23,7 +30,7 @@ function add(dnsConfig, zoneName, subdomain, type, values, callback) {
     assert(util.isArray(values));
     assert.strictEqual(typeof callback, 'function');
 
-    var fqdn = subdomain !== '' && type === 'TXT' ? subdomain + '.' + config.fqdn() : config.appFqdn({ location: subdomain, domain: zoneName });
+    var fqdn = subdomain !== '' && type === 'TXT' ? subdomain + '.' + zoneName : getFqdn(subdomain, zoneName);
 
     debug('add: %s for zone %s of type %s with values %j', subdomain, zoneName, type, values);
 
@@ -54,7 +61,7 @@ function get(dnsConfig, zoneName, subdomain, type, callback) {
     assert.strictEqual(typeof type, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    var fqdn = subdomain !== '' && type === 'TXT' ? subdomain + '.' + config.fqdn() : config.appFqdn({ location: subdomain, domain: zoneName });
+    var fqdn = subdomain !== '' && type === 'TXT' ? subdomain + '.' + zoneName : getFqdn(subdomain, zoneName);
 
     debug('get: zoneName: %s subdomain: %s type: %s fqdn: %s', zoneName, subdomain, type, fqdn);
 
@@ -97,7 +104,7 @@ function del(dnsConfig, zoneName, subdomain, type, values, callback) {
     };
 
     superagent
-        .del(config.apiServerOrigin() + '/api/v1/domains/' + config.appFqdn({ location: subdomain, domain: zoneName }))
+        .del(config.apiServerOrigin() + '/api/v1/domains/' + getFqdn(subdomain, zoneName))
         .query({ token: dnsConfig.token })
         .send(data)
         .timeout(30 * 1000)
