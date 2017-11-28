@@ -26,7 +26,6 @@ exports = module.exports = {
     NGINX_ADMIN_CONFIG_FILE_NAME: 'admin.conf',
 
     GHOST_USER_FILE: '/tmp/cloudron_ghost.json',
-    AUTO_PROVISION_FILE: '/root/autoprovision.json',
 
     DEFAULT_TOKEN_EXPIRATION: 7 * 24 * 60 * 60 * 1000, // 1 week
 

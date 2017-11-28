@@ -186,7 +186,7 @@ function onActivated(callback) {
 function autoprovision(callback) {
     assert.strictEqual(typeof callback, 'function');
 
-    const confJson = safe.fs.readFileSync(constants.AUTO_PROVISION_FILE, 'utf8');
+    const confJson = safe.fs.readFileSync(paths.AUTO_PROVISION_FILE, 'utf8');
     if (!confJson) return callback();
 
     const conf = safe.JSON.parse(confJson);
