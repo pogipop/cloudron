@@ -41,6 +41,7 @@ var appdb = require('./appdb.js'),
     cron = require('./cron.js'),
     debug = require('debug')('box:cloudron'),
     df = require('@sindresorhus/df'),
+    domaindb = require('./domaindb.js'),
     domains = require('./domains.js'),
     DomainError = domains.DomainError,
     eventlog = require('./eventlog.js'),
@@ -56,6 +57,7 @@ var appdb = require('./appdb.js'),
     safe = require('safetydance'),
     semver = require('semver'),
     settings = require('./settings.js'),
+    settingsdb = require('./settingsdb.js'),
     SettingsError = settings.SettingsError,
     shell = require('./shell.js'),
     spawn = require('child_process').spawn,
@@ -181,6 +183,32 @@ function onActivated(callback) {
     });
 }
 
+function autoprovision(callback) {
+    assert.strictEqual(typeof callback, 'function');
+
+    const confJson = safe.fs.readFileSync(constants.AUTO_PROVISION_FILE, 'utf8');
+    if (!confJson) return callback();
+
+    const conf = safe.JSON.parse(confJson);
+    if (!conf) return callback();
+
+    async.eachSeries(Object.keys(conf), function (key, iteratorDone) {
+        var name;
+        switch (key) {
+        case 'dnsConfig': name = 'dns_config'; break;
+        case 'tlsConfig': name = 'dns_config'; break;
+        case 'backupConfig': name = 'backup_config'; break;
+        case 'tlsCert': return fs.writeFile(path.join(paths.NGINX_CERT_DIR, 'host.cert'), conf[key], iteratorDone);
+        case 'tlsKey': return fs.writeFile(path.join(paths.NGINX_CERT_DIR, 'host.key'), conf[key], iteratorDone);
+        case 'adminDomain': return domaindb.upsert(conf[key].domain, conf[key].zoneName, conf[key].zoneName, iteratorDone);
+        default: debug(`autoprovision: ${key} ignored`); return iteratorDone();
+        }
+
+        debug(`autoprovision: ${name}`);
+        settingsdb.set(name, conf[key], iteratorDone);
+    }, callback);
+}
+
 function dnsSetup(dnsConfig, domain, zoneName, callback) {
     assert.strictEqual(typeof dnsConfig, 'object');
     assert.strictEqual(typeof domain, 'string');
@@ -201,6 +229,7 @@ function dnsSetup(dnsConfig, domain, zoneName, callback) {
         config.setZoneName(zoneName);
 
         async.series([ // do not block
+            autoprovision,
             onDomainConfigured,
             configureWebadmin
         ], NOOP_CALLBACK);
@@ -623,15 +652,13 @@ function restore(backupConfig, backupId, version, callback) {
 
             gWebadminStatus.restoring = true;
 
-            backups.restore(backupConfig, backupId, function (error) {
-                gWebadminStatus.restoring = false;
-
-                if (error) return debug('Error restoring:', error);
-
-                shell.sudo('restart', [ RESTART_CMD ], NOOP_CALLBACK);
-            });
-
             callback(null); // do no block
+
+            async.series([
+                backups.restore.bind(null, backupConfig, backupId),
+                autoprovision,
+                shell.sudo.bind(null, 'restart', [ RESTART_CMD ])
+            ], NOOP_CALLBACK);
         });
     });
 }
@@ -761,8 +788,6 @@ function doUpdate(boxUpdateInfo, callback) {
             webServerOrigin: config.webServerOrigin(),
             fqdn: config.fqdn(),
             adminLocation: config.adminLocation(),
-            tlsCert: config.tlsCert(),
-            tlsKey: config.tlsKey(),
             isCustomDomain: config.isCustomDomain(),
             isDemo: config.isDemo(),
             zoneName: config.zoneName(),

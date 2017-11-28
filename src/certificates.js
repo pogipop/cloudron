@@ -122,19 +122,15 @@ function ensureFallbackCertificate(callback) {
     var fallbackCertPath = path.join(paths.NGINX_CERT_DIR, 'host.cert');
     var fallbackKeyPath = path.join(paths.NGINX_CERT_DIR, 'host.key');
 
+    if (fs.existsSync(fallbackCertPath) && fs.existsSync(fallbackKeyPath)) {
+        debug('ensureFallbackCertificate: pre-existing fallback certs');
+        return callback();
+    }
+
     if (fs.existsSync(certFilePath) && fs.existsSync(keyFilePath)) { // existing custom fallback certs (when restarting, restoring, updating)
         debug('ensureFallbackCertificate: using fallback certs provided by user');
         if (!safe.child_process.execSync('cp ' + certFilePath + ' ' + fallbackCertPath)) return callback(new CertificatesError(CertificatesError.INTERNAL_ERROR, safe.error.message));
         if (!safe.child_process.execSync('cp ' + keyFilePath + ' ' + fallbackKeyPath)) return callback(new CertificatesError(CertificatesError.INTERNAL_ERROR, safe.error.message));
-
-        return callback();
-    }
-
-    if (config.tlsCert() && config.tlsKey()) {
-        // cert from CaaS or cloudron-setup. these files should _not_ be part of the backup
-        debug('ensureFallbackCertificate: using CaaS/cloudron-setup fallback certs');
-        if (!safe.fs.writeFileSync(fallbackCertPath, config.tlsCert())) return callback(new CertificatesError(CertificatesError.INTERNAL_ERROR, safe.error.message));
-        if (!safe.fs.writeFileSync(fallbackKeyPath, config.tlsKey())) return callback(new CertificatesError(CertificatesError.INTERNAL_ERROR, safe.error.message));
 
         return callback();
     }

@@ -11,14 +11,9 @@ arg_zone_name=""
 arg_is_custom_domain="false"
 arg_retire_reason=""
 arg_retire_info=""
-arg_tls_config=""
-arg_tls_cert=""
-arg_tls_key=""
 arg_token=""
 arg_version=""
 arg_web_server_origin=""
-arg_backup_config=""
-arg_dns_config=""
 arg_provider=""
 arg_is_demo="false"
 
@@ -60,23 +55,10 @@ while true; do
         arg_is_demo=$(echo "$2" | $json isDemo)
         [[ "${arg_is_demo}" == "" ]] && arg_is_demo="false"
 
-        arg_tls_cert=$(echo "$2" | $json tlsCert)
-        [[ "${arg_tls_cert}" == "null" ]] && arg_tls_cert=""
-        arg_tls_key=$(echo "$2" | $json tlsKey)
-        [[ "${arg_tls_key}" == "null" ]] && arg_tls_key=""
         arg_token=$(echo "$2" | $json token)
 
         arg_provider=$(echo "$2" | $json provider)
         [[ "${arg_provider}" == "" ]] && arg_provider="generic"
-
-        arg_tls_config=$(echo "$2" | $json tlsConfig)
-        [[ "${arg_tls_config}" == "null" ]] && arg_tls_config=""
-
-        arg_backup_config=$(echo "$2" | $json backupConfig)
-        [[ "${arg_backup_config}" == "null" ]] && arg_backup_config=""
-
-        arg_dns_config=$(echo "$2" | $json dnsConfig)
-        [[ "${arg_dns_config}" == "null" ]] && arg_dns_config=""
 
         shift 2
         ;;
@@ -89,11 +71,8 @@ echo "Parsed arguments:"
 echo "api server: ${arg_api_server_origin}"
 echo "fqdn: ${arg_fqdn}"
 echo "custom domain: ${arg_is_custom_domain}"
-echo "tls cert: ${arg_tls_cert}"
 # do not dump these as they might become available via logs API
-#echo "tls key: ${arg_tls_key}"
 #echo "token: ${arg_token}"
-echo "tlsConfig: ${arg_tls_config}"
 echo "version: ${arg_version}"
 echo "web server: ${arg_web_server_origin}"
 echo "provider: ${arg_provider}"

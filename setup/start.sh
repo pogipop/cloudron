@@ -206,26 +206,6 @@ cd "${BOX_SRC_DIR}"
 BOX_ENV=cloudron DATABASE_URL=mysql://root:${mysql_root_password}@127.0.0.1/box "${BOX_SRC_DIR}/node_modules/.bin/db-migrate" up
 EOF
 
-echo "==> Adding automated configs"
-if [[ ! -z "${arg_fqdn}" ]]; then
-    mysql -u root -p${mysql_root_password} -e "INSERT INTO domains (domain, zoneName, configJson) VALUES ('$arg_fqdn', '$arg_zone_name', '$arg_dns_config')" box || true
-fi
-
-if [[ ! -z "${arg_backup_config}" ]]; then
-    mysql -u root -p${mysql_root_password} \
-        -e "REPLACE INTO settings (name, value) VALUES (\"backup_config\", '$arg_backup_config')" box
-fi
-
-if [[ ! -z "${arg_dns_config}" ]]; then
-    mysql -u root -p${mysql_root_password} \
-        -e "REPLACE INTO settings (name, value) VALUES (\"dns_config\", '$arg_dns_config')" box
-fi
-
-if [[ ! -z "${arg_tls_config}" ]]; then
-    mysql -u root -p${mysql_root_password} \
-        -e "REPLACE INTO settings (name, value) VALUES (\"tls_config\", '$arg_tls_config')" box
-fi
-
 echo "==> Creating cloudron.conf"
 cat > "${CONFIG_DIR}/cloudron.conf" <<CONF_END
 {
@@ -241,11 +221,6 @@ cat > "${CONFIG_DIR}/cloudron.conf" <<CONF_END
     "isDemo": ${arg_is_demo}
 }
 CONF_END
-# pass these out-of-band because they have new lines which interfere with json
-if [[ -n "${arg_tls_cert}" && -n "${arg_tls_key}" ]]; then
-    echo "${arg_tls_cert}" > "${CONFIG_DIR}/host.cert"
-    echo "${arg_tls_key}" > "${CONFIG_DIR}/host.key"
-fi
 
 echo "==> Creating config.json for webadmin"
 cat > "${BOX_SRC_DIR}/webadmin/dist/config.json" <<CONF_END

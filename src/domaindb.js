@@ -7,6 +7,7 @@ exports = module.exports = {
     get: get,
     getAll: getAll,
     update: update,
+    upsert: upsert,
     del: del,
 
     _clear: clear,
@@ -58,6 +59,19 @@ function add(domain, zoneName, config, callback) {
 
     database.query('INSERT INTO domains (domain, zoneName, configJson) VALUES (?, ?, ?)', [ domain, zoneName, JSON.stringify(config) ], function (error) {
         if (error && error.code === 'ER_DUP_ENTRY') return callback(new DatabaseError(DatabaseError.ALREADY_EXISTS, error));
+        if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
+
+        callback(null);
+    });
+}
+
+function upsert(domain, zoneName, config, callback) {
+    assert.strictEqual(typeof domain, 'string');
+    assert.strictEqual(typeof zoneName, 'string');
+    assert.strictEqual(typeof config, 'object');
+    assert.strictEqual(typeof callback, 'function');
+
+    database.query('REPLACE INTO domains (domain, zoneName, configJson) VALUES (?, ?, ?)', [ domain, zoneName, JSON.stringify(config) ], function (error) {
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
 
         callback(null);
