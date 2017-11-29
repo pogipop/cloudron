@@ -15,6 +15,7 @@ util.inherits(Locker, EventEmitter);
 
 // these are mutually exclusive operations
 Locker.prototype.OP_BOX_UPDATE = 'box_update';
+Locker.prototype.OP_PLATFORM_START = 'platform_start';
 Locker.prototype.OP_FULL_BACKUP = 'full_backup';
 Locker.prototype.OP_APPTASK = 'apptask';
 Locker.prototype.OP_MIGRATE = 'migrate';

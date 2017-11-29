@@ -17,6 +17,7 @@ var apps = require('./apps.js'),
     fs = require('fs'),
     hat = require('hat'),
     infra = require('./infra_version.js'),
+    locker = require('./locker.js'),
     nginx = require('./nginx.js'),
     os = require('os'),
     paths = require('./paths.js'),
@@ -63,6 +64,9 @@ function start(callback) {
 
     debug('Updating infrastructure from %s to %s', existingInfra.version, infra.version);
 
+    var error = locker.lock(locker.OP_PLATFORM_START);
+    if (error) return callback(error);
+
     async.series([
         stopContainers.bind(null, existingInfra),
         startAddons.bind(null, existingInfra),
@@ -71,6 +75,8 @@ function start(callback) {
         fs.writeFile.bind(fs, paths.INFRA_VERSION_FILE, JSON.stringify(infra))
     ], function (error) {
         if (error) return callback(error);
+
+        locker.unlock(locker.OP_PLATFORM_START);
 
         emitPlatformReady();
 
