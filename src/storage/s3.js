@@ -508,20 +508,15 @@ function backupDone(apiConfig, backupId, appBackupIds, callback) {
 
     if (apiConfig.provider !== 'caas') return callback();
 
-    // CaaS expects filenames instead of backupIds, this means no prefix but a file type extension
-    var FILE_TYPE = '.tar.gz.enc';
-    var boxBackupFilename = backupId + FILE_TYPE;
-    var appBackupFilenames = appBackupIds.map(function (id) { return id + FILE_TYPE; });
-
-    debug('[%s] backupDone: %s apps %j', backupId, boxBackupFilename, appBackupFilenames);
+    debug('[%s] backupDone: %s apps %j', backupId, backupId, appBackupIds);
 
     var url = config.apiServerOrigin() + '/api/v1/boxes/' + apiConfig.fqdn + '/backupDone';
     var data = {
         boxVersion: config.version(),
-        restoreKey: boxBackupFilename,
+        backupId: backupId,
         appId: null,        // now unused
         appVersion: null,   // now unused
-        appBackupIds: appBackupFilenames
+        appBackupIds: appBackupIds
     };
 
     superagent.post(url).send(data).query({ token: apiConfig.token }).timeout(30 * 1000).end(function (error, result) {
