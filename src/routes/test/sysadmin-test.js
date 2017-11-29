@@ -68,7 +68,7 @@ function setup(done) {
             s3._mockInject(MockS3);
 
             safe.fs.mkdirSync('/tmp/box-sysadmin-test');
-            settingsdb.set(settings.BACKUP_CONFIG_KEY, JSON.stringify({ provider: 'caas', token: 'BACKUP_TOKEN', key: 'key', prefix: 'boxid', format: 'tgz'}), callback);
+            settingsdb.set(settings.BACKUP_CONFIG_KEY, JSON.stringify({ provider: 'caas', token: 'BACKUP_TOKEN', fqdn: config.fqdn(), key: 'key', prefix: 'boxid', format: 'tgz'}), callback);
         }
     ], done);
 }

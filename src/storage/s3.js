@@ -59,7 +59,7 @@ function getCaasConfig(apiConfig, callback) {
 
     debug('getCaasCredentials: getting new credentials');
 
-    var url = config.apiServerOrigin() + '/api/v1/boxes/' + config.fqdn() + '/awscredentials';
+    var url = config.apiServerOrigin() + '/api/v1/boxes/' + apiConfig.fqdn + '/awscredentials';
     superagent.post(url).query({ token: apiConfig.token }).timeout(30 * 1000).end(function (error, result) {
         if (error && !error.response) return callback(error);
         if (result.statusCode !== 201) return callback(new Error(result.text));
@@ -515,7 +515,7 @@ function backupDone(apiConfig, backupId, appBackupIds, callback) {
 
     debug('[%s] backupDone: %s apps %j', backupId, boxBackupFilename, appBackupFilenames);
 
-    var url = config.apiServerOrigin() + '/api/v1/boxes/' + config.fqdn() + '/backupDone';
+    var url = config.apiServerOrigin() + '/api/v1/boxes/' + apiConfig.fqdn + '/backupDone';
     var data = {
         boxVersion: config.version(),
         restoreKey: boxBackupFilename,
@@ -524,7 +524,7 @@ function backupDone(apiConfig, backupId, appBackupIds, callback) {
         appBackupIds: appBackupFilenames
     };
 
-    superagent.post(url).send(data).query({ token: config.token() }).timeout(30 * 1000).end(function (error, result) {
+    superagent.post(url).send(data).query({ token: apiConfig.token }).timeout(30 * 1000).end(function (error, result) {
         if (error && !error.response) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error));
         if (result.statusCode !== 200) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, result.text));
 

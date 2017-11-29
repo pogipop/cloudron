@@ -109,7 +109,7 @@ describe('Settings', function () {
                 .post('/api/v1/boxes/' + config.fqdn() + '/awscredentials?token=TOKEN')
                 .reply(201, { credentials: { AccessKeyId: 'accessKeyId', SecretAccessKey: 'secretAccessKey', SessionToken: 'sessionToken' } });
 
-            settings.setBackupConfig({ provider: 'caas', token: 'TOKEN', format: 'tgz', prefix: 'boxid', bucket: 'bucket' }, function (error) {
+            settings.setBackupConfig({ provider: 'caas', fqdn: config.fqdn(), token: 'TOKEN', format: 'tgz', prefix: 'boxid', bucket: 'bucket' }, function (error) {
                 expect(error).to.be(null);
                 done();
             });

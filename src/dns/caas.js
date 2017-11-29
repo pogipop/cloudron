@@ -30,9 +30,9 @@ function add(dnsConfig, zoneName, subdomain, type, values, callback) {
     assert(util.isArray(values));
     assert.strictEqual(typeof callback, 'function');
 
-    var fqdn = subdomain !== '' && type === 'TXT' ? subdomain + '.' + zoneName : getFqdn(subdomain, zoneName);
+    var fqdn = subdomain !== '' && type === 'TXT' ? subdomain + '.' + dnsConfig.fqdn : getFqdn(subdomain, dnsConfig.fqdn);
 
-    debug('add: %s for zone %s of type %s with values %j', subdomain, zoneName, type, values);
+    debug('add: %s for zone %s of type %s with values %j', subdomain, dnsConfig.fqdn, type, values);
 
     var data = {
         type: type,
@@ -61,9 +61,9 @@ function get(dnsConfig, zoneName, subdomain, type, callback) {
     assert.strictEqual(typeof type, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    var fqdn = subdomain !== '' && type === 'TXT' ? subdomain + '.' + zoneName : getFqdn(subdomain, zoneName);
+    var fqdn = subdomain !== '' && type === 'TXT' ? subdomain + '.' + dnsConfig.fqdn : getFqdn(subdomain, dnsConfig.fqdn);
 
-    debug('get: zoneName: %s subdomain: %s type: %s fqdn: %s', zoneName, subdomain, type, fqdn);
+    debug('get: zoneName: %s subdomain: %s type: %s fqdn: %s', dnsConfig.fqdn, subdomain, type, fqdn);
 
     superagent
         .get(config.apiServerOrigin() + '/api/v1/domains/' + fqdn)
@@ -96,7 +96,7 @@ function del(dnsConfig, zoneName, subdomain, type, values, callback) {
     assert(util.isArray(values));
     assert.strictEqual(typeof callback, 'function');
 
-    debug('del: %s for zone %s of type %s with values %j', subdomain, zoneName, type, values);
+    debug('del: %s for zone %s of type %s with values %j', subdomain, dnsConfig.fqdn, type, values);
 
     var data = {
         type: type,
@@ -104,7 +104,7 @@ function del(dnsConfig, zoneName, subdomain, type, values, callback) {
     };
 
     superagent
-        .del(config.apiServerOrigin() + '/api/v1/domains/' + getFqdn(subdomain, zoneName))
+        .del(config.apiServerOrigin() + '/api/v1/domains/' + getFqdn(subdomain, dnsConfig.fqdn))
         .query({ token: dnsConfig.token })
         .send(data)
         .timeout(30 * 1000)
@@ -128,7 +128,8 @@ function verifyDnsConfig(dnsConfig, domain, zoneName, ip, callback) {
 
     var credentials = {
         provider: dnsConfig.provider,
-        token: dnsConfig.token
+        token: dnsConfig.token,
+        fqdn: domain
     };
 
     return callback(null, credentials);
