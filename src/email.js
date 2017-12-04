@@ -12,10 +12,8 @@ var assert = require('assert'),
     async = require('async'),
     cloudron = require('./cloudron.js'),
     config = require('./config.js'),
-    constants = require('./constants.js'),
     debug = require('debug')('box:email'),
     dig = require('./dig.js'),
-    mailer = require('./mailer.js'),
     net = require('net'),
     nodemailer = require('nodemailer'),
     safe = require('safetydance'),
@@ -24,8 +22,6 @@ var assert = require('assert'),
     sysinfo = require('./sysinfo.js'),
     util = require('util'),
     _ = require('underscore');
-
-var NOOP_CALLBACK = function (error) { if (error) console.error(error); };
 
 const digOptions = { server: '127.0.0.1', port: 53, timeout: 5000 };
 
@@ -113,7 +109,7 @@ function checkSmtpRelay(relay, callback) {
             return callback(error, result);
         }
 
-       callback(null, result);
+        callback(null, result);
     });
 }
 
@@ -266,59 +262,59 @@ function checkPtr(callback) {
 // https://raw.githubusercontent.com/jawsome/node-dnsbl/master/list.json
 const RBL_LIST = [
     {
-        "name": "Barracuda",
-        "dns": "b.barracudacentral.org",
-        "site": "http://www.barracudacentral.org/rbl/removal-request"
+        'name': 'Barracuda',
+        'dns': 'b.barracudacentral.org',
+        'site': 'http://www.barracudacentral.org/rbl/removal-request'
     },
     {
-        "name": "SpamCop",
-        "dns": "bl.spamcop.net",
-        "site": "http://spamcop.net"
+        'name': 'SpamCop',
+        'dns': 'bl.spamcop.net',
+        'site': 'http://spamcop.net'
     },
     {
-        "name": "Sorbs Aggregate Zone",
-        "dns": "dnsbl.sorbs.net",
-        "site": "http://dnsbl.sorbs.net/"
+        'name': 'Sorbs Aggregate Zone',
+        'dns': 'dnsbl.sorbs.net',
+        'site': 'http://dnsbl.sorbs.net/'
     },
     {
-        "name": "Sorbs spam.dnsbl Zone",
-        "dns": "spam.dnsbl.sorbs.net",
-        "site": "http://sorbs.net"
+        'name': 'Sorbs spam.dnsbl Zone',
+        'dns': 'spam.dnsbl.sorbs.net',
+        'site': 'http://sorbs.net'
     },
     {
-        "name": "Composite Blocking List",
-        "dns": "cbl.abuseat.org",
-        "site": "http://www.abuseat.org"
+        'name': 'Composite Blocking List',
+        'dns': 'cbl.abuseat.org',
+        'site': 'http://www.abuseat.org'
     },
     {
-        "name": "SpamHaus Zen",
-        "dns": "zen.spamhaus.org",
-        "site": "http://spamhaus.org"
+        'name': 'SpamHaus Zen',
+        'dns': 'zen.spamhaus.org',
+        'site': 'http://spamhaus.org'
     },
     {
-        "name": "Multi SURBL",
-        "dns": "multi.surbl.org",
-        "site": "http://www.surbl.org"
+        'name': 'Multi SURBL',
+        'dns': 'multi.surbl.org',
+        'site': 'http://www.surbl.org'
     },
     {
-        "name": "Spam Cannibal",
-        "dns": "bl.spamcannibal.org",
-        "site": "http://www.spamcannibal.org/cannibal.cgi"
+        'name': 'Spam Cannibal',
+        'dns': 'bl.spamcannibal.org',
+        'site': 'http://www.spamcannibal.org/cannibal.cgi'
     },
     {
-        "name": "dnsbl.abuse.ch",
-        "dns": "spam.abuse.ch",
-        "site": "http://dnsbl.abuse.ch/"
+        'name': 'dnsbl.abuse.ch',
+        'dns': 'spam.abuse.ch',
+        'site': 'http://dnsbl.abuse.ch/'
     },
     {
-        "name": "The Unsubscribe Blacklist(UBL)",
-        "dns": "ubl.unsubscore.com ",
-        "site": "http://www.lashback.com/blacklist/"
+        'name': 'The Unsubscribe Blacklist(UBL)',
+        'dns': 'ubl.unsubscore.com ',
+        'site': 'http://www.lashback.com/blacklist/'
     },
     {
-        "name": "UCEPROTECT Network",
-        "dns": "dnsbl-1.uceprotect.net",
-        "site": "http://www.uceprotect.net/en"
+        'name': 'UCEPROTECT Network',
+        'dns': 'dnsbl-1.uceprotect.net',
+        'site': 'http://www.uceprotect.net/en'
     }
 ];
 
