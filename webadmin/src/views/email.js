@@ -7,6 +7,7 @@ angular.module('Application').controller('EmailController', ['$scope', '$locatio
     $scope.user = Client.getUserInfo();
     $scope.config = Client.getConfig();
     $scope.dnsConfig = {};
+    $scope.currentRelay = {};
     $scope.relay = {};
     $scope.rbl = null;
     $scope.expectedDnsRecords = {
@@ -87,6 +88,8 @@ angular.module('Application').controller('EmailController', ['$scope', '$locatio
         refresh: function () {
             $scope.email.refreshBusy = true;
 
+            collapseDnsRecords();
+
             showExpectedDnsRecords(function (error) {
                 if (error) console.error(error);
 
@@ -156,10 +159,16 @@ angular.module('Application').controller('EmailController', ['$scope', '$locatio
             }
 
             Client.setMailRelay(data, function (error) {
-                if (error) $scope.mailRelay.error = error.message;
-                else $scope.mailRelay.success = true;
-
                 $scope.mailRelay.busy = false;
+
+                if (error) {
+                    $scope.mailRelay.error = error.message;
+                    return;
+                }
+
+                $scope.currentRelay = data;
+                $scope.mailRelay.success = true;
+                $scope.email.refresh();
             });
         }
     };
@@ -221,6 +230,8 @@ angular.module('Application').controller('EmailController', ['$scope', '$locatio
             $scope.mailRelay.relay.password = '';
             $scope.mailRelay.relay.serverApiToken = '';
 
+            $scope.currentRelay = relay;
+
             if (relay.provider === 'postmark-smtp') {
                 $scope.mailRelay.relay.serverApiToken = relay.username;
             } else if (relay.provider === 'sendgrid-smtp') {
@@ -248,6 +259,16 @@ angular.module('Application').controller('EmailController', ['$scope', '$locatio
         });
     }
 
+    function collapseDnsRecords() {
+        $scope.expectedDnsRecordsTypes.forEach(function (record) {
+            var type = record.value;
+            $('#collapse_dns_' + type).collapse('hide');
+        });
+
+        $('#collapse_outbound_smtp').collapse('hide');
+        $('#collapse_rbl').collapse('hide');
+    }
+
     function showExpectedDnsRecords(callback) {
         callback = callback || function (error) { if (error) console.error(error); };
 
@@ -258,16 +279,21 @@ angular.module('Application').controller('EmailController', ['$scope', '$locatio
             $scope.rbl = result.rbl;
 
             // open the record details if they are not correct
-            for (var type in $scope.expectedDnsRecords) {
-                $scope.expectedDnsRecords[type] = result.dns[type];
+            $scope.expectedDnsRecordsTypes.forEach(function (record) {
+                var type = record.value;
+                $scope.expectedDnsRecords[type] = result.dns[type] || {};
 
                 if (!$scope.expectedDnsRecords[type].status) {
                     $('#collapse_dns_' + type).collapse('show');
                 }
-            }
+            });
 
             if (!$scope.relay.status) {
-                $('#collapse_dns_port').collapse('show');
+                $('#collapse_outbound_smtp').collapse('show');
+            }
+
+            if (!$scope.rbl.status) {
+                $('#collapse_rbl').collapse('show');
             }
 
             callback(null);
