@@ -48,8 +48,6 @@ domain=""
 adminLocation="my"
 zoneName=""
 provider=""
-encryptionKey=""
-restoreUrl=""
 tlsProvider="le-prod"
 requestedVersion=""
 apiServerOrigin="https://api.cloudron.io"
@@ -59,6 +57,10 @@ prerelease="false"
 sourceTarballUrl=""
 rebootServer="true"
 baseDataDir=""
+
+# these are here for pre-1.9 compat
+encryptionKey=""
+restoreUrl=""
 
 args=$(getopt -o "" -l "domain:,help,skip-baseimage-init,data:,data-dir:,provider:,encryption-key:,restore-url:,tls-provider:,version:,dns-provider:,env:,admin-location:,prerelease,skip-reboot,source-url:" -n "$0" -- "$@")
 eval set -- "${args}"
@@ -264,13 +266,6 @@ autoprovision_data=$(cat <<EOF
 {
     "tlsConfig": {
         "provider": "${tlsProvider}"
-    },
-    "backupConfig" : {
-        "provider": "filesystem",
-        "backupFolder": "/var/backups",
-        "key": "${encryptionKey}",
-        "format": "tgz",
-        "retentionSecs": 172800
     }
 }
 EOF
