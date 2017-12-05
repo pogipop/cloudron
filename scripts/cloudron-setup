@@ -61,9 +61,6 @@ sourceTarballUrl=""
 rebootServer="true"
 baseDataDir=""
 
-# TODO this is still there for the restore case, see other occasions below
-versionsUrl="https://s3.amazonaws.com/prod-cloudron-releases/versions.json"
-
 args=$(getopt -o "" -l "domain:,help,skip-baseimage-init,data:,data-dir:,provider:,encryption-key:,tls-provider:,version:,dns-provider:,env:,admin-location:,prerelease,skip-reboot,source-url:" -n "$0" -- "$@")
 eval set -- "${args}"
 
@@ -79,13 +76,11 @@ while true; do
     --version) requestedVersion="$2"; shift 2;;
     --env)
         if [[ "$2" == "dev" ]]; then
-            versionsUrl="https://s3.amazonaws.com/dev-cloudron-releases/versions.json"
             apiServerOrigin="https://api.dev.cloudron.io"
             webServerOrigin="https://dev.cloudron.io"
             tlsProvider="le-staging"
             prerelease="true"
         elif [[ "$2" == "staging" ]]; then
-            versionsUrl="https://s3.amazonaws.com/staging-cloudron-releases/versions.json"
             apiServerOrigin="https://api.staging.cloudron.io"
             webServerOrigin="https://staging.cloudron.io"
             tlsProvider="le-staging"
@@ -191,12 +186,10 @@ if [[ "${sourceTarballUrl}" == "" ]]; then
 fi
 
 # Build data
-# TODO versionsUrl is still there for the cloudron restore case
 if [[ -z "${dataJson}" ]]; then
     if [[ -z "${restoreUrl}" ]]; then
         data=$(cat <<EOF
     {
-        "boxVersionsUrl": "${versionsUrl}",
         "fqdn": "${domain}",
         "adminLocation": "${adminLocation}",
         "zoneName": "${zoneName}",
@@ -223,7 +216,6 @@ EOF
     else
         data=$(cat <<EOF
     {
-        "boxVersionsUrl": "${versionsUrl}",
         "fqdn": "${domain}",
         "adminLocation": "${adminLocation}",
         "zoneName": "${zoneName}",
