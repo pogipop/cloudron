@@ -22,9 +22,14 @@ exports.up = function(db, callback) {
         },
         function gatherDNSConfig(done) {
             db.all('SELECT * FROM settings WHERE name = ?', [ 'dns_config' ], function (error, result) {
-                if (error ) return done(error);
+                if (error) return done(error);
 
                 configJson = (result[0] && result[0].value) ? result[0].value : JSON.stringify({ provider: 'manual'});
+
+                // caas dns config needs an fqdn
+                var config = JSON.parse(configJson);
+                if (config.provider === 'caas') config.fqdn = fqdn;
+                configJson = JSON.stringify(config);
 
                 done();
             });
