@@ -61,7 +61,7 @@ sourceTarballUrl=""
 rebootServer="true"
 baseDataDir=""
 
-args=$(getopt -o "" -l "domain:,help,skip-baseimage-init,data:,data-dir:,provider:,encryption-key:,tls-provider:,version:,dns-provider:,env:,admin-location:,prerelease,skip-reboot,source-url:" -n "$0" -- "$@")
+args=$(getopt -o "" -l "domain:,help,skip-baseimage-init,data:,data-dir:,provider:,encryption-key:,restore-url:,tls-provider:,version:,dns-provider:,env:,admin-location:,prerelease,skip-reboot,source-url:" -n "$0" -- "$@")
 eval set -- "${args}"
 
 while true; do
@@ -71,6 +71,7 @@ while true; do
     --help) echo "See https://cloudron.io/documentation/installation/ on how to install Cloudron"; exit 0;;
     --provider) provider="$2"; shift 2;;
     --encryption-key) encryptionKey="$2"; shift 2;;
+    --restore-url) restoreUrl="$2"; shift 2;;
     --tls-provider) tlsProvider="$2"; shift 2;;
     --dns-provider) dnsProvider="$2"; shift 2;;
     --version) requestedVersion="$2"; shift 2;;
