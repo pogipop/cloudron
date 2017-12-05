@@ -186,6 +186,8 @@ if [[ "${sourceTarballUrl}" == "" ]]; then
 fi
 
 # Build data
+# tlsConfig, dnsConfig, backupConfig are here for backward compat with < 1.9
+# from 1.9, we use autoprovision.json
 if [[ -z "${dataJson}" ]]; then
     if [[ -z "${restoreUrl}" ]]; then
         data=$(cat <<EOF
@@ -196,7 +198,20 @@ if [[ -z "${dataJson}" ]]; then
         "provider": "${provider}",
         "apiServerOrigin": "${apiServerOrigin}",
         "webServerOrigin": "${webServerOrigin}",
-        "version": "${version}"
+        "version": "${version}",
+        "tlsConfig": {
+            "provider": "${tlsProvider}"
+        },
+        "dnsConfig": {
+            "provider": "${dnsProvider}"
+        },
+        "backupConfig" : {
+            "provider": "filesystem",
+            "backupFolder": "/var/backups",
+            "key": "${encryptionKey}",
+            "format": "tgz",
+            "retentionSecs": 172800
+        }
     }
 EOF
     )
