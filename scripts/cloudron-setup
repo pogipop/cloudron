@@ -196,19 +196,6 @@ if [[ -z "${dataJson}" ]]; then
         "provider": "${provider}",
         "apiServerOrigin": "${apiServerOrigin}",
         "webServerOrigin": "${webServerOrigin}",
-        "tlsConfig": {
-            "provider": "${tlsProvider}"
-        },
-        "dnsConfig": {
-            "provider": "${dnsProvider}"
-        },
-        "backupConfig" : {
-            "provider": "filesystem",
-            "backupFolder": "/var/backups",
-            "key": "${encryptionKey}",
-            "format": "tgz",
-            "retentionSecs": 172800
-        },
         "version": "${version}"
     }
 EOF
@@ -269,6 +256,27 @@ while true; do
     fi
     sleep 10
 done
+
+autoprovision_data=$(cat <<EOF
+{
+    "tlsConfig": {
+        "provider": "${tlsProvider}"
+    },
+    "dnsConfig": {
+        "provider": "${dnsProvider}"
+    },
+    "backupConfig" : {
+        "provider": "filesystem",
+        "backupFolder": "/var/backups",
+        "key": "${encryptionKey}",
+        "format": "tgz",
+        "retentionSecs": 172800
+    }
+}
+EOF
+)
+
+echo "${autoprovision_data}" > /home/yellowtent/configs/autoprovision.json
 
 if [[ -n "${domain}" ]]; then
     echo -e "\n\nVisit https://my.${domain} to finish setup once the server has rebooted.\n"
