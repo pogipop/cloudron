@@ -7,7 +7,7 @@ var assert = require('assert'),
     debug = require('debug')('box:dns/waitfordns'),
     dig = require('../dig.js'),
     dns = require('dns'),
-    SubdomainError = require('../subdomains.js').SubdomainError,
+    DomainError = require('../domains.js').DomainError,
     util = require('util');
 
 function isChangeSynced(domain, value, type, nameserver, callback) {
@@ -79,12 +79,12 @@ function waitForDns(domain, zoneName, value, type, options, callback) {
         debug('waitForDNS: %s attempt %s.', domain, attempt++);
 
         dns.resolveNs(zoneName, function (error, nameservers) {
-            if (error || !nameservers) return retryCallback(error || new SubdomainError(SubdomainError.EXTERNAL_ERROR, 'Unable to get nameservers'));
+            if (error || !nameservers) return retryCallback(error || new DomainError(DomainError.EXTERNAL_ERROR, 'Unable to get nameservers'));
 
             async.every(nameservers, isChangeSynced.bind(null, domain, value, type), function (error, synced) {
                 debug('waitForIp: %s %s ns: %j', domain, synced ? 'done' : 'not done', nameservers);
 
-                retryCallback(synced ? null : new SubdomainError(SubdomainError.EXTERNAL_ERROR, 'ETRYAGAIN'));
+                retryCallback(synced ? null : new DomainError(DomainError.EXTERNAL_ERROR, 'ETRYAGAIN'));
             });
         });
     }, function retryDone(error) {

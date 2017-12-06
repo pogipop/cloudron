@@ -6,7 +6,6 @@
 'use strict';
 
 var config = require('../config.js'),
-    constants = require('../constants.js'),
     expect = require('expect.js'),
     fs = require('fs'),
     path = require('path');
@@ -25,11 +24,6 @@ describe('config', function () {
         done();
     });
 
-    it('cloudron.conf generated automatically', function (done) {
-        expect(fs.existsSync(path.join(config.baseDir(), 'configs/cloudron.conf'))).to.be.ok();
-        done();
-    });
-
     it('can get and set version', function (done) {
         config.setVersion('1.2.3');
         expect(config.version()).to.be('1.2.3');
@@ -38,15 +32,20 @@ describe('config', function () {
 
     it('did set default values', function () {
         expect(config.isCustomDomain()).to.equal(true);
-        expect(config.fqdn()).to.equal('localhost');
-        expect(config.adminOrigin()).to.equal('https://my.localhost');
-        expect(config.appFqdn('app')).to.equal('app.localhost');
+        expect(config.fqdn()).to.equal('');
         expect(config.zoneName()).to.equal('');
+        expect(config.adminLocation()).to.equal('my');
     });
 
     it('set saves value in file', function (done) {
+        config.set('fqdn', 'example.com');
+        expect(JSON.parse(fs.readFileSync(path.join(config.baseDir(), 'configs/cloudron.conf'))).fqdn).to.eql('example.com');
+        done();
+    });
+
+    it('set does not save custom values in file', function (done) {
         config.set('foobar', 'somevalue');
-        expect(JSON.parse(fs.readFileSync(path.join(config.baseDir(), 'configs/cloudron.conf'))).foobar).to.eql('somevalue');
+        expect(JSON.parse(fs.readFileSync(path.join(config.baseDir(), 'configs/cloudron.conf'))).foobar).to.not.be.ok();
         done();
     });
 
@@ -69,7 +68,7 @@ describe('config', function () {
         expect(config.isCustomDomain()).to.equal(true);
         expect(config.fqdn()).to.equal('example.com');
         expect(config.adminOrigin()).to.equal('https://my.example.com');
-        expect(config.appFqdn('app')).to.equal('app.example.com');
+        expect(config.appFqdn({ location: 'app', domain: config.fqdn() })).to.equal('app.example.com');
         expect(config.zoneName()).to.equal('example.com');
     });
 
@@ -80,7 +79,7 @@ describe('config', function () {
         expect(config.isCustomDomain()).to.equal(false);
         expect(config.fqdn()).to.equal('test.example.com');
         expect(config.adminOrigin()).to.equal('https://my-test.example.com');
-        expect(config.appFqdn('app')).to.equal('app-test.example.com');
+        expect(config.appFqdn({ location: 'app', domain: config.fqdn() })).to.equal('app-test.example.com');
         expect(config.zoneName()).to.equal('example.com');
     });
 

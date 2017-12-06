@@ -199,66 +199,12 @@ readonly mysql_root_password="password"
 mysqladmin -u root -ppassword password password # reset default root password
 mysql -u root -p${mysql_root_password} -e 'CREATE DATABASE IF NOT EXISTS box'
 
-if [[ -n "${arg_restore_url}" ]]; then
-    set_progress "30" "Downloading restore data"
-
-    readonly restore_dir="${arg_restore_url#file://}"
-
-    if [[ -d "${restore_dir}" ]]; then # rsync backup
-        echo "==> Copying backup: ${restore_dir}"
-        if [[ $(stat -c "%d" "${BOX_DATA_DIR}") == $(stat -c "%d" "${restore_dir}") ]]; then
-            cp -rfl "${restore_dir}/." "${BOX_DATA_DIR}"
-        else
-            cp -rf "${restore_dir}/." "${BOX_DATA_DIR}"
-        fi
-    else # tgz backup
-        decrypt=""
-        if [[ "${arg_restore_url}" == *.tar.gz.enc || -n "${arg_restore_key}" ]]; then
-            echo "==> Downloading encrypted backup: ${arg_restore_url} and key: ${arg_restore_key}"
-            decrypt=(openssl aes-256-cbc -d -nosalt -pass "pass:${arg_restore_key}")
-        elif [[ "${arg_restore_url}" == *.tar.gz ]]; then
-            echo "==> Downloading backup: ${arg_restore_url}"
-            decrypt=(cat -)
-        fi
-
-        while true; do
-            if $curl -L "${arg_restore_url}" | "${decrypt[@]}" \
-            | tar -zxf - --overwrite -C "${BOX_DATA_DIR}"; then break; fi
-            echo "Failed to download data, trying again"
-        done
-    fi
-
-    set_progress "35" "Setting up MySQL"
-    if [[ -f "${BOX_DATA_DIR}/box.mysqldump" ]]; then
-        echo "==> Importing existing database into MySQL"
-        mysql -u root -p${mysql_root_password} box < "${BOX_DATA_DIR}/box.mysqldump"
-    fi
-fi
-
 set_progress "40" "Migrating data"
 sudo -u "${USER}" -H bash <<EOF
 set -eu
 cd "${BOX_SRC_DIR}"
 BOX_ENV=cloudron DATABASE_URL=mysql://root:${mysql_root_password}@127.0.0.1/box "${BOX_SRC_DIR}/node_modules/.bin/db-migrate" up
 EOF
-
-echo "==> Adding automated configs"
-mysql -u root -p${mysql_root_password} -e "REPLACE INTO settings (name, value) VALUES (\"domain\", '{ \"fqdn\": \"$arg_fqdn\", \"zoneName\": \"$arg_zone_name\", \"adminLocation\": \"$arg_admin_location\" }')" box
-
-if [[ ! -z "${arg_backup_config}" ]]; then
-    mysql -u root -p${mysql_root_password} \
-        -e "REPLACE INTO settings (name, value) VALUES (\"backup_config\", '$arg_backup_config')" box
-fi
-
-if [[ ! -z "${arg_dns_config}" ]]; then
-    mysql -u root -p${mysql_root_password} \
-        -e "REPLACE INTO settings (name, value) VALUES (\"dns_config\", '$arg_dns_config')" box
-fi
-
-if [[ ! -z "${arg_tls_config}" ]]; then
-    mysql -u root -p${mysql_root_password} \
-        -e "REPLACE INTO settings (name, value) VALUES (\"tls_config\", '$arg_tls_config')" box
-fi
 
 echo "==> Creating cloudron.conf"
 cat > "${CONFIG_DIR}/cloudron.conf" <<CONF_END
@@ -272,22 +218,9 @@ cat > "${CONFIG_DIR}/cloudron.conf" <<CONF_END
     "zoneName": "${arg_zone_name}",
     "isCustomDomain": ${arg_is_custom_domain},
     "provider": "${arg_provider}",
-    "isDemo": ${arg_is_demo},
-    "database": {
-        "hostname": "127.0.0.1",
-        "username": "root",
-        "password": "${mysql_root_password}",
-        "port": 3306,
-        "name": "box"
-    },
-    "appBundle": ${arg_app_bundle}
+    "isDemo": ${arg_is_demo}
 }
 CONF_END
-# pass these out-of-band because they have new lines which interfere with json
-if [[ -n "${arg_tls_cert}" && -n "${arg_tls_key}" ]]; then
-    echo "${arg_tls_cert}" > "${CONFIG_DIR}/host.cert"
-    echo "${arg_tls_key}" > "${CONFIG_DIR}/host.key"
-fi
 
 echo "==> Creating config.json for webadmin"
 cat > "${BOX_SRC_DIR}/webadmin/dist/config.json" <<CONF_END
@@ -313,6 +246,7 @@ chown "${USER}:${USER}" "${PLATFORM_DATA_DIR}"
 # do not chown the boxdata/mail directory; dovecot gets upset
 chown "${USER}:${USER}" "${BOX_DATA_DIR}"
 find "${BOX_DATA_DIR}" -mindepth 1 -maxdepth 1 -not -path "${BOX_DATA_DIR}/mail" -exec chown -R "${USER}:${USER}" {} \;
+chown "${USER}:${USER}" "${BOX_DATA_DIR}/mail"
 chown "${USER}:${USER}" -R "${BOX_DATA_DIR}/mail/dkim" # this is owned by box currently since it generates the keys
 
 set_progress "60" "Starting Cloudron"

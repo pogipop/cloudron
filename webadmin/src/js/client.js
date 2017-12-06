@@ -306,6 +306,7 @@ angular.module('Application').service('Client', ['$http', 'md5', 'Notification',
         var data = {
             appStoreId: id + '@' + manifest.version,
             location: config.location,
+            domain: config.domain,
             portBindings: config.portBindings,
             accessRestriction: config.accessRestriction,
             cert: config.cert,
@@ -349,6 +350,7 @@ angular.module('Application').service('Client', ['$http', 'md5', 'Notification',
         var data = {
             appId: id,
             location: config.location,
+            domain: config.domain,
             portBindings: config.portBindings,
             accessRestriction: config.accessRestriction,
             cert: config.cert,
@@ -466,20 +468,6 @@ angular.module('Application').service('Client', ['$http', 'md5', 'Notification',
         }).error(defaultErrorHandler(callback));
     };
 
-    Client.prototype.setDnsConfig = function (dnsConfig, callback) {
-        post('/api/v1/settings/dns_config', dnsConfig).success(function(data, status) {
-            if (status !== 200) return callback(new ClientError(status, data));
-            callback(null);
-        }).error(defaultErrorHandler(callback));
-    };
-
-    Client.prototype.getDnsConfig = function (callback) {
-        get('/api/v1/settings/dns_config').success(function(data, status) {
-            if (status !== 200) return callback(new ClientError(status, data));
-            callback(null, data);
-        }).error(defaultErrorHandler(callback));
-    };
-
     Client.prototype.setAutoupdatePattern = function (pattern, callback) {
         post('/api/v1/settings/autoupdate_pattern', { pattern: pattern }).success(function(data, status) {
             if (status !== 200) return callback(new ClientError(status, data));
@@ -584,6 +572,19 @@ angular.module('Application').service('Client', ['$http', 'md5', 'Notification',
         post('/api/v1/backups').success(function(data, status) {
             if (status !== 202 || typeof data !== 'object') return callback(new ClientError(status, data));
             callback(null, data);
+        }).error(defaultErrorHandler(callback));
+    };
+
+    Client.prototype.restore = function (backupConfig, backupId, version, callback) {
+        var data = {
+            backupConfig: backupConfig,
+            backupId: backupId,
+            version: version
+        };
+
+        post('/api/v1/cloudron/restore', data).success(function(data, status) {
+            if (status !== 200) return callback(new ClientError(status));
+            callback(null);
         }).error(defaultErrorHandler(callback));
     };
 
@@ -1156,6 +1157,64 @@ angular.module('Application').service('Client', ['$http', 'md5', 'Notification',
 
         post('/api/v1/cloudron/send_test_mail', data).success(function(data, status) {
             if (status !== 202) return callback(new ClientError(status, data));
+            callback(null);
+        }).error(defaultErrorHandler(callback));
+    };
+
+    // Domains
+    Client.prototype.getDomains = function (callback) {
+        get('/api/v1/domains').success(function (data, status) {
+            if (status !== 200 || typeof data !== 'object') return callback(new ClientError(status, data));
+            callback(null, data.domains);
+        }).error(defaultErrorHandler(callback));
+    };
+
+    Client.prototype.getDomain = function (domain, callback) {
+        get('/api/v1/domains/' + domain).success(function (data, status) {
+            if (status !== 200 || typeof data !== 'object') return callback(new ClientError(status, data));
+            callback(null, data);
+        }).error(defaultErrorHandler(callback));
+    };
+
+    Client.prototype.addDomain = function (domain, config, fallbackCertificate, callback) {
+        var data = {
+            domain: domain,
+            config: config
+        };
+
+        if (fallbackCertificate) data.fallbackCertificate = fallbackCertificate;
+
+        post('/api/v1/domains', data).success(function (data, status) {
+          if (status !== 201 || typeof data !== 'object') return callback(new ClientError(status, data));
+          callback(null, data);
+        }).error(defaultErrorHandler(callback));
+      };
+
+      Client.prototype.updateDomain = function (domain, config, fallbackCertificate, callback) {
+        var data = {
+          config: config
+        };
+
+        if (fallbackCertificate) data.fallbackCertificate = fallbackCertificate;
+
+        put('/api/v1/domains/' + domain, data).success(function (data, status) {
+            if (status !== 204) return callback(new ClientError(status, data));
+            callback(null);
+        }).error(defaultErrorHandler(callback));
+    };
+
+    Client.prototype.removeDomain = function (domain, password, callback) {
+        var config = {
+            data: {
+                password: password
+            },
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        };
+
+        del('/api/v1/domains/' + domain, config).success(function (data, status) {
+            if (status !== 204) return callback(new ClientError(status, data));
             callback(null);
         }).error(defaultErrorHandler(callback));
     };

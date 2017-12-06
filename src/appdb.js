@@ -59,9 +59,10 @@ var assert = require('assert'),
     util = require('util');
 
 var APPS_FIELDS_PREFIXED = [ 'apps.id', 'apps.appStoreId', 'apps.installationState', 'apps.installationProgress', 'apps.runState',
-    'apps.health', 'apps.containerId', 'apps.manifestJson', 'apps.httpPort', 'apps.location', 'apps.dnsRecordId',
-    'apps.accessRestrictionJson', 'apps.lastBackupId', 'apps.oldConfigJson', 'apps.newConfigJson', 'apps.memoryLimit', 'apps.altDomain',
-    'apps.xFrameOptions', 'apps.sso', 'apps.debugModeJson', 'apps.robotsTxt', 'apps.enableBackup' ].join(',');
+    'apps.health', 'apps.containerId', 'apps.manifestJson', 'apps.httpPort', 'apps.location', 'apps.domain', 'apps.dnsRecordId',
+    'apps.accessRestrictionJson', 'apps.restoreConfigJson', 'apps.oldConfigJson', 'apps.updateConfigJson', 'apps.memoryLimit', 
+    'apps.altDomain', 'apps.xFrameOptions', 'apps.sso', 'apps.debugModeJson', 'apps.robotsTxt', 'apps.enableBackup',
+    'apps.creationTime', 'apps.updateTime' ].join(',');
 
 var PORT_BINDINGS_FIELDS = [ 'hostPort', 'environmentVariable', 'appId' ].join(',');
 
@@ -76,9 +77,13 @@ function postProcess(result) {
     result.oldConfig = safe.JSON.parse(result.oldConfigJson);
     delete result.oldConfigJson;
 
-    assert(result.newConfigJson === null || typeof result.newConfigJson === 'string');
-    result.newConfig = safe.JSON.parse(result.newConfigJson);
-    delete result.newConfigJson;
+    assert(result.updateConfigJson === null || typeof result.updateConfigJson === 'string');
+    result.updateConfig = safe.JSON.parse(result.updateConfigJson);
+    delete result.updateConfigJson;
+
+    assert(result.restoreConfigJson === null || typeof result.restoreConfigJson === 'string');
+    result.restoreConfig = safe.JSON.parse(result.restoreConfigJson);
+    delete result.restoreConfigJson;
 
     assert(result.hostPorts === null || typeof result.hostPorts === 'string');
     assert(result.environmentVariables === null || typeof result.environmentVariables === 'string');
@@ -173,12 +178,13 @@ function getAll(callback) {
     });
 }
 
-function add(id, appStoreId, manifest, location, portBindings, data, callback) {
+function add(id, appStoreId, manifest, location, domain, portBindings, data, callback) {
     assert.strictEqual(typeof id, 'string');
     assert.strictEqual(typeof appStoreId, 'string');
     assert(manifest && typeof manifest === 'object');
     assert.strictEqual(typeof manifest.version, 'string');
     assert.strictEqual(typeof location, 'string');
+    assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof portBindings, 'object');
     assert(data && typeof data === 'object');
     assert.strictEqual(typeof callback, 'function');
@@ -193,14 +199,14 @@ function add(id, appStoreId, manifest, location, portBindings, data, callback) {
     var altDomain = data.altDomain || null;
     var xFrameOptions = data.xFrameOptions || '';
     var installationState = data.installationState || exports.ISTATE_PENDING_INSTALL;
-    var lastBackupId = data.lastBackupId || null; // used when cloning
+    var restoreConfigJson = data.restoreConfig ? JSON.stringify(data.restoreConfig) : null; // used when cloning
     var sso = 'sso' in data ? data.sso : null;
     var debugModeJson = data.debugMode ? JSON.stringify(data.debugMode) : null;
 
     var queries = [];
     queries.push({
-        query: 'INSERT INTO apps (id, appStoreId, manifestJson, installationState, location, accessRestrictionJson, memoryLimit, altDomain, xFrameOptions, lastBackupId, sso, debugModeJson) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-        args: [ id, appStoreId, manifestJson, installationState, location, accessRestrictionJson, memoryLimit, altDomain, xFrameOptions, lastBackupId, sso, debugModeJson ]
+        query: 'INSERT INTO apps (id, appStoreId, manifestJson, installationState, location, domain, accessRestrictionJson, memoryLimit, altDomain, xFrameOptions, restoreConfigJson, sso, debugModeJson) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        args: [ id, appStoreId, manifestJson, installationState, location, domain, accessRestrictionJson, memoryLimit, altDomain, xFrameOptions, restoreConfigJson, sso, debugModeJson ]
     });
 
     Object.keys(portBindings).forEach(function (env) {
@@ -213,8 +219,8 @@ function add(id, appStoreId, manifest, location, portBindings, data, callback) {
     // only allocate a mailbox if mailboxName is set
     if (data.mailboxName) {
         queries.push({
-            query: 'INSERT INTO mailboxes (name, ownerId, ownerType) VALUES (?, ?, ?)',
-            args: [ data.mailboxName, id, mailboxdb.TYPE_APP ]
+            query: 'INSERT INTO mailboxes (name, domain, ownerId, ownerType) VALUES (?, ?, ?, ?)',
+            args: [ data.mailboxName, domain, id, mailboxdb.TYPE_APP ]
         });
     }
 
@@ -322,7 +328,7 @@ function updateWithConstraints(id, app, constraints, callback) {
 
     var fields = [ ], values = [ ];
     for (var p in app) {
-        if (p === 'manifest' || p === 'oldConfig' || p === 'newConfig' || p === 'accessRestriction' || p === 'debugMode') {
+        if (p === 'manifest' || p === 'oldConfig' || p === 'updateConfig' || p === 'restoreConfig' || p === 'accessRestriction' || p === 'debugMode') {
             fields.push(`${p}Json = ?`);
             values.push(JSON.stringify(app[p]));
         } else if (p !== 'portBindings') {

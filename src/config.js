@@ -40,9 +40,6 @@ exports = module.exports = {
 
     isDemo: isDemo,
 
-    tlsCert: tlsCert,
-    tlsKey: tlsKey,
-
     // for testing resets to defaults
     _reset: _reset
 };
@@ -53,6 +50,10 @@ var assert = require('assert'),
     safe = require('safetydance'),
     tld = require('tldjs'),
     _ = require('underscore');
+
+
+// assert on unknown environment can't proceed
+assert(exports.CLOUDRON || exports.TEST, 'Unknown environment. This should not happen!');
 
 var homeDir = process.env.HOME || process.env.HOMEPATH || process.env.USERPROFILE;
 
@@ -65,8 +66,25 @@ function baseDir() {
 
 var cloudronConfigFileName = path.join(baseDir(), 'configs/cloudron.conf');
 
+// only tests can run without a config file on disk, they use the defaults with runtime overrides
+if (exports.CLOUDRON) assert(fs.existsSync(cloudronConfigFileName), 'No cloudron.conf found, cannot proceed');
+
 function saveSync() {
-    fs.writeFileSync(cloudronConfigFileName, JSON.stringify(data, null, 4)); // functions are ignored by JSON.stringify
+    // only save values we want to have in the cloudron.conf, see start.sh
+    var conf = {
+        version: data.version,
+        token: data.token,
+        apiServerOrigin: data.apiServerOrigin,
+        webServerOrigin: data.webServerOrigin,
+        fqdn: data.fqdn,
+        zoneName: data.zoneName,
+        adminLocation: data.adminLocation,
+        isCustomDomain: data.isCustomDomain,
+        provider: data.provider,
+        isDemo: data.isDemo
+    };
+
+    fs.writeFileSync(cloudronConfigFileName, JSON.stringify(conf, null, 4)); // functions are ignored by JSON.stringify
 }
 
 function _reset(callback) {
@@ -79,46 +97,42 @@ function _reset(callback) {
 
 function initConfig() {
     // setup defaults
-    data.fqdn = 'localhost';
+    data.fqdn = '';
     data.zoneName = '';
     data.adminLocation = 'my';
-
+    data.port = 3000;
     data.token = null;
     data.version = null;
     data.isCustomDomain = true;
+    data.apiServerOrigin = null;
     data.webServerOrigin = null;
-    data.smtpPort = 2525; // // this value comes from mail container
+    data.provider = 'caas';
+    data.smtpPort = 2525; // this value comes from mail container
     data.sysadminPort = 3001;
     data.ldapPort = 3002;
-    data.provider = 'caas';
-    data.appBundle = [ ];
 
-    if (exports.CLOUDRON) {
-        data.port = 3000;
-        data.apiServerOrigin = null;
-        data.database = null;
-    } else if (exports.TEST) {
+    // keep in sync with start.sh
+    data.database = {
+        hostname: '127.0.0.1',
+        username: 'root',
+        password: 'password',
+        port: 3306,
+        name: 'box'
+    };
+
+    // overrides for local testings
+    if (exports.TEST) {
+        data.version = '1.1.1-test';
         data.port = 5454;
-        data.apiServerOrigin = 'http://localhost:6060'; // hock doesn't support https
-        data.database = {
-            hostname: '127.0.0.1',
-            username: 'root',
-            password: '',
-            port: 3306,
-            name: 'boxtest'
-        };
         data.token = 'APPSTORE_TOKEN';
-    } else {
-        assert(false, 'Unknown environment. This should not happen!');
+        data.apiServerOrigin = 'http://localhost:6060'; // hock doesn't support https
+        data.database.password = '';
+        data.database.name = 'boxtest';
     }
 
-    if (safe.fs.existsSync(cloudronConfigFileName)) {
-        var existingData = safe.JSON.parse(safe.fs.readFileSync(cloudronConfigFileName, 'utf8'));
-        _.extend(data, existingData); // overwrite defaults with saved config
-        return;
-    }
-
-    saveSync();
+    // overwrite defaults with saved config
+    var existingData = safe.JSON.parse(safe.fs.readFileSync(cloudronConfigFileName, 'utf8'));
+    _.extend(data, existingData);
 }
 
 initConfig();
@@ -172,11 +186,15 @@ function zoneName() {
 }
 
 // keep this in sync with start.sh admin.conf generation code
-function appFqdn(location) {
-    assert.strictEqual(typeof location, 'string');
+function appFqdn(app) {
+    assert.strictEqual(typeof app, 'object');
+    assert.strictEqual(typeof app.location, 'string');
+    assert.strictEqual(typeof app.domain, 'string');
 
-    if (location === '') return fqdn();
-    return isCustomDomain() ? location + '.' + fqdn() : location + '-' + fqdn();
+    if (app.location === '') return app.domain;
+
+    // caas still has subdomains with a dash
+    return app.location + (isCustomDomain() ? '.' : '-') + app.domain;
 }
 
 function mailLocation() {
@@ -184,7 +202,7 @@ function mailLocation() {
 }
 
 function mailFqdn() {
-    return appFqdn(mailLocation());
+    return appFqdn({ domain: fqdn(), location: mailLocation() });
 }
 
 function adminLocation() {
@@ -192,11 +210,11 @@ function adminLocation() {
 }
 
 function adminFqdn() {
-    return appFqdn(adminLocation());
+    return appFqdn({ domain: fqdn(), location: adminLocation() });
 }
 
 function adminOrigin() {
-    return 'https://' + appFqdn(adminLocation());
+    return 'https://' + adminFqdn();
 }
 
 function internalAdminOrigin() {
@@ -233,16 +251,6 @@ function isDemo() {
 
 function provider() {
     return get('provider');
-}
-
-function tlsCert() {
-    var certFile = path.join(baseDir(), 'configs/host.cert');
-    return safe.fs.readFileSync(certFile, 'utf8');
-}
-
-function tlsKey() {
-    var keyFile = path.join(baseDir(), 'configs/host.key');
-    return safe.fs.readFileSync(keyFile, 'utf8');
 }
 
 function hasIPv6() {

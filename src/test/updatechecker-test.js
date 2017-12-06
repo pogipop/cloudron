@@ -28,6 +28,12 @@ var USER_0 = {
     displayName: 'User 0'
 };
 
+const DOMAIN_0 = {
+    domain: 'example.com',
+    zoneName: 'example.com',
+    config: { provider: 'manual' }
+};
+
 var AUDIT_SOURCE = {
     ip: '1.2.3.4'
 };
@@ -47,14 +53,15 @@ function cleanup(done) {
 
     async.series([
         settings.uninitialize,
-        database._clear
+        database._clear,
+        database.uninitialize
     ], done);
 }
 
 describe('updatechecker - box - manual (email)', function () {
     before(function (done) {
         config._reset();
-        config.set('version', '1.0.0');
+        config.setFqdn(DOMAIN_0.domain);
         config.set('apiServerOrigin', 'http://localhost:4444');
         config.set('provider', 'notcaas');
         safe.fs.unlinkSync(paths.UPDATE_CHECKER_FILE);
@@ -66,8 +73,7 @@ describe('updatechecker - box - manual (email)', function () {
             user.createOwner.bind(null, USER_0.username, USER_0.password, USER_0.email, USER_0.displayName, AUDIT_SOURCE),
             settings.setAutoupdatePattern.bind(null, constants.AUTOUPDATE_PATTERN_NEVER),
             settingsdb.set.bind(null, settings.APPSTORE_CONFIG_KEY, JSON.stringify({ userId: 'uid', cloudronId: 'cid', token: 'token' })),
-            mailer._clearMailQueue,
-            mailer.start
+            mailer._clearMailQueue
         ], done);
     });
 
@@ -157,14 +163,14 @@ describe('updatechecker - box - manual (email)', function () {
 
 describe('updatechecker - box - automatic (no email)', function () {
     before(function (done) {
-        config.set('version', '1.0.0');
+        config.setFqdn(DOMAIN_0.domain);
         config.set('apiServerOrigin', 'http://localhost:4444');
         config.set('provider', 'notcaas');
+
         async.series([
             database.initialize,
             settings.initialize,
             mailer._clearMailQueue,
-            mailer.start,
             user.createOwner.bind(null, USER_0.username, USER_0.password, USER_0.email, USER_0.displayName, AUDIT_SOURCE),
             settingsdb.set.bind(null, settings.APPSTORE_CONFIG_KEY, JSON.stringify({ userId: 'uid', cloudronId: 'cid', token: 'token' }))
         ], done);
@@ -198,9 +204,11 @@ describe('updatechecker - box - automatic (no email)', function () {
 
 describe('updatechecker - box - automatic free (email)', function () {
     before(function (done) {
+        config.setFqdn(DOMAIN_0.domain);
         config.set('version', '1.0.0');
         config.set('apiServerOrigin', 'http://localhost:4444');
         config.set('provider', 'notcaas');
+
         async.series([
             database.initialize,
             settings.initialize,
@@ -244,6 +252,7 @@ describe('updatechecker - app - manual (email)', function () {
         installationProgress: null,
         runState: null,
         location: 'some-location-0',
+        domain: DOMAIN_0.domain,
         manifest: {
             version: '1.0.0', dockerImage: 'docker/app0', healthCheckPath: '/', httpPort: 80, title: 'app0',
             tcpPorts: {
@@ -262,6 +271,7 @@ describe('updatechecker - app - manual (email)', function () {
     };
 
     before(function (done) {
+        config.setFqdn(DOMAIN_0.domain);
         config.set('version', '1.0.0');
         config.set('apiServerOrigin', 'http://localhost:4444');
         config.set('provider', 'notcaas');
@@ -271,7 +281,7 @@ describe('updatechecker - app - manual (email)', function () {
             database._clear,
             settings.initialize,
             mailer._clearMailQueue,
-            appdb.add.bind(null, APP_0.id, APP_0.appStoreId, APP_0.manifest, APP_0.location, APP_0.portBindings, APP_0),
+            appdb.add.bind(null, APP_0.id, APP_0.appStoreId, APP_0.manifest, APP_0.location, APP_0.domain, APP_0.portBindings, APP_0),
             user.createOwner.bind(null, USER_0.username, USER_0.password, USER_0.email, USER_0.displayName, AUDIT_SOURCE),
             settings.setAutoupdatePattern.bind(null, constants.AUTOUPDATE_PATTERN_NEVER),
             settingsdb.set.bind(null, settings.APPSTORE_CONFIG_KEY, JSON.stringify({ userId: 'uid', cloudronId: 'cid', token: 'token' }))
@@ -356,6 +366,7 @@ describe('updatechecker - app - automatic (no email)', function () {
         installationProgress: null,
         runState: null,
         location: 'some-location-0',
+        domain: DOMAIN_0.domain,
         manifest: {
             version: '1.0.0', dockerImage: 'docker/app0', healthCheckPath: '/', httpPort: 80, title: 'app0',
             tcpPorts: {
@@ -374,6 +385,7 @@ describe('updatechecker - app - automatic (no email)', function () {
     };
 
     before(function (done) {
+        config.setFqdn(DOMAIN_0.domain);
         config.set('version', '1.0.0');
         config.set('apiServerOrigin', 'http://localhost:4444');
         config.set('provider', 'notcaas');
@@ -383,7 +395,7 @@ describe('updatechecker - app - automatic (no email)', function () {
             database._clear,
             settings.initialize,
             mailer._clearMailQueue,
-            appdb.add.bind(null, APP_0.id, APP_0.appStoreId, APP_0.manifest, APP_0.location, APP_0.portBindings, APP_0),
+            appdb.add.bind(null, APP_0.id, APP_0.appStoreId, APP_0.manifest, APP_0.location, APP_0.domain, APP_0.portBindings, APP_0),
             user.createOwner.bind(null, USER_0.username, USER_0.password, USER_0.email, USER_0.displayName, AUDIT_SOURCE),
             settingsdb.set.bind(null, settings.APPSTORE_CONFIG_KEY, JSON.stringify({ userId: 'uid', cloudronId: 'cid', token: 'token' }))
         ], done);
@@ -417,6 +429,7 @@ describe('updatechecker - app - automatic free (email)', function () {
         installationProgress: null,
         runState: null,
         location: 'some-location-0',
+        domain: DOMAIN_0.domain,
         manifest: {
             version: '1.0.0', dockerImage: 'docker/app0', healthCheckPath: '/', httpPort: 80, title: 'app0',
             tcpPorts: {
@@ -435,6 +448,7 @@ describe('updatechecker - app - automatic free (email)', function () {
     };
 
     before(function (done) {
+        config.setFqdn(DOMAIN_0.domain);
         config.set('version', '1.0.0');
         config.set('apiServerOrigin', 'http://localhost:4444');
         config.set('provider', 'notcaas');
@@ -444,7 +458,7 @@ describe('updatechecker - app - automatic free (email)', function () {
             database._clear,
             settings.initialize,
             mailer._clearMailQueue,
-            appdb.add.bind(null, APP_0.id, APP_0.appStoreId, APP_0.manifest, APP_0.location, APP_0.portBindings, APP_0),
+            appdb.add.bind(null, APP_0.id, APP_0.appStoreId, APP_0.manifest, APP_0.location, APP_0.domain, APP_0.portBindings, APP_0),
             user.createOwner.bind(null, USER_0.username, USER_0.password, USER_0.email, USER_0.displayName, AUDIT_SOURCE),
             settingsdb.set.bind(null, settings.APPSTORE_CONFIG_KEY, JSON.stringify({ userId: 'uid', cloudronId: 'cid', token: 'token' }))
         ], done);

@@ -8,18 +8,19 @@ exports = module.exports = {
     getByStatePaged: getByStatePaged,
     getByAppIdPaged: getByAppIdPaged,
 
-    getRestoreConfig: getRestoreConfig,
+    get: get,
 
     ensureBackup: ensureBackup,
 
     backup: backup,
+    restore: restore,
+
     backupApp: backupApp,
     restoreApp: restoreApp,
 
     backupBoxAndApps: backupBoxAndApps,
 
     upload: upload,
-    download: download,
 
     cleanup: cleanup,
     cleanupCacheFilesSync: cleanupCacheFilesSync,
@@ -41,6 +42,7 @@ var addons = require('./addons.js'),
     backupdb = require('./backupdb.js'),
     config = require('./config.js'),
     crypto = require('crypto'),
+    database = require('./database.js'),
     DatabaseError = require('./databaseerror.js'),
     debug = require('debug')('box:backups'),
     eventlog = require('./eventlog.js'),
@@ -68,7 +70,7 @@ var BACKUPTASK_CMD = path.join(__dirname, 'backuptask.js');
 function debugApp(app) {
     assert(!app || typeof app === 'object');
 
-    var prefix = app ? app.location : '(no app)';
+    var prefix = app ? config.appFqdn(app) : '(no app)';
     debug(prefix + ' ' + util.format.apply(util, Array.prototype.slice.call(arguments, 1)));
 }
 
@@ -151,16 +153,15 @@ function getByAppIdPaged(page, perPage, appId, callback) {
     });
 }
 
-function getRestoreConfig(backupId, callback) {
+function get(backupId, callback) {
     assert.strictEqual(typeof backupId, 'string');
     assert.strictEqual(typeof callback, 'function');
 
     backupdb.get(backupId, function (error, result) {
         if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new BackupsError(BackupsError.NOT_FOUND, error));
         if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
-        if (!result.restoreConfig)  return callback(new BackupsError(BackupsError.NOT_FOUND, error));
 
-        callback(null, result.restoreConfig);
+        callback(null, result);
     });
 }
 
@@ -370,8 +371,10 @@ function restoreFsMetadata(appDataDir, callback) {
 
     log('Recreating empty directories');
 
-    var metadata = safe.JSON.parse(safe.fs.readFileSync(path.join(appDataDir, 'fsmetadata.json'), 'utf8'));
-    if (metadata === null) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, 'Error loading fsmetadata.txt:' + safe.error.message));
+    var metadataJson = safe.fs.readFileSync(path.join(appDataDir, 'fsmetadata.json'), 'utf8')
+    if (metadataJson === null) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, 'Error loading fsmetadata.txt:' + safe.error.message));
+    var metadata = safe.JSON.parse(metadataJson);
+    if (metadata === null) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, 'Error parsing fsmetadata.txt:' + safe.error.message));
 
     async.eachSeries(metadata.emptyDirs, function createPath(emptyDir, iteratorDone) {
         mkdirp(path.join(appDataDir, emptyDir), iteratorDone);
@@ -388,7 +391,8 @@ function restoreFsMetadata(appDataDir, callback) {
     });
 }
 
-function download(backupId, format, dataDir, callback) {
+function download(backupConfig, backupId, format, dataDir, callback) {
+    assert.strictEqual(typeof backupConfig, 'object');
     assert.strictEqual(typeof backupId, 'string');
     assert.strictEqual(typeof format, 'string');
     assert.strictEqual(typeof dataDir, 'string');
@@ -398,44 +402,54 @@ function download(backupId, format, dataDir, callback) {
 
     log(`Downloading ${backupId} of format ${format} to ${dataDir}`);
 
-    settings.getBackupConfig(function (error, backupConfig) {
-        if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
+    if (format === 'tgz') {
+        api(backupConfig.provider).download(backupConfig, getBackupFilePath(backupConfig, backupId, format), function (error, sourceStream) {
+            if (error) return callback(error);
 
-        if (format === 'tgz') {
-            api(backupConfig.provider).download(backupConfig, getBackupFilePath(backupConfig, backupId, format), function (error, sourceStream) {
-                if (error) return callback(error);
+            tarExtract(sourceStream, dataDir, backupConfig.key || null, callback);
+        });
+    } else {
+        var events = api(backupConfig.provider).downloadDir(backupConfig, getBackupFilePath(backupConfig, backupId, format), dataDir);
+        events.on('progress', log);
+        events.on('done', function (error) {
+            if (error) return callback(error);
 
-                tarExtract(sourceStream, dataDir, backupConfig.key || null, callback);
-            });
-        } else {
-            var events = api(backupConfig.provider).downloadDir(backupConfig, getBackupFilePath(backupConfig, backupId, format), dataDir);
-            events.on('progress', log);
-            events.on('done', function (error) {
-                if (error) return callback(error);
+            restoreFsMetadata(dataDir, callback);
+        });
+    }
+}
 
-                restoreFsMetadata(dataDir, callback);
-            });
-        }
+function restore(backupConfig, backupId, callback) {
+    assert.strictEqual(typeof backupConfig, 'object');
+    assert.strictEqual(typeof backupId, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    download(backupConfig, backupId, backupConfig.format, paths.BOX_DATA_DIR, function (error) {
+        if (error) return callback(error);
+
+        database.importFromFile(`${paths.BOX_DATA_DIR}/box.mysqldump`, function (error) {
+            if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
+
+            callback();
+        });
     });
 }
 
-function restoreApp(app, addonsToRestore, backupId, callback) {
+function restoreApp(app, addonsToRestore, restoreConfig, callback) {
     assert.strictEqual(typeof app, 'object');
     assert.strictEqual(typeof addonsToRestore, 'object');
-    assert.strictEqual(typeof backupId, 'string');
+    assert.strictEqual(typeof restoreConfig, 'object');
     assert.strictEqual(typeof callback, 'function');
-    assert(app.lastBackupId);
 
     var appDataDir = safe.fs.realpathSync(path.join(paths.APPS_DATA_DIR, app.id));
 
     var startTime = new Date();
 
-    backupdb.get(backupId, function (error, result) {
-        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new BackupsError(BackupsError.NOT_FOUND, error));
+    settings.getBackupConfig(function (error, backupConfig) {
         if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
 
         async.series([
-            download.bind(null, backupId, result.format, appDataDir),
+            download.bind(null, backupConfig, restoreConfig.backupId, restoreConfig.backupFormat, appDataDir),
             addons.restoreAddons.bind(null, app, addonsToRestore)
         ], function (error) {
             debug('restoreApp: time: %s', (new Date() - startTime)/1000);
@@ -513,13 +527,7 @@ function snapshotBox(callback) {
 
     log('Snapshotting box');
 
-    var password = config.database().password ? '-p' + config.database().password : '--skip-password';
-    var mysqlDumpArgs = [
-        '-c',
-        `/usr/bin/mysqldump -u root ${password} --single-transaction --routines \
-            --triggers ${config.database().name} > "${paths.BOX_DATA_DIR}/box.mysqldump"`
-    ];
-    shell.exec('backupBox', '/bin/bash', mysqlDumpArgs, { }, function (error) {
+    database.exportToFile(`${paths.BOX_DATA_DIR}/box.mysqldump`, function (error) {
         if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
 
         return callback();
@@ -560,7 +568,7 @@ function rotateBoxBackup(backupConfig, timestamp, appBackupIds, callback) {
 
     log(`Rotating box backup to id ${backupId}`);
 
-    backupdb.add({ id: backupId, version: config.version(), type: backupdb.BACKUP_TYPE_BOX, dependsOn: appBackupIds, restoreConfig: null, format: format }, function (error) {
+    backupdb.add({ id: backupId, version: config.version(), type: backupdb.BACKUP_TYPE_BOX, dependsOn: appBackupIds, manifest: null, format: format }, function (error) {
         if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
 
         var copy = api(backupConfig.provider).copy(backupConfig, getBackupFilePath(backupConfig, 'snapshot/box', format), getBackupFilePath(backupConfig, backupId, format));
@@ -610,35 +618,18 @@ function canBackupApp(app) {
             app.installationState === appdb.ISTATE_PENDING_UPDATE; // called from apptask
 }
 
-function snapshotApp(app, manifest, callback) {
+function snapshotApp(app, callback) {
     assert.strictEqual(typeof app, 'object');
-    assert(manifest && typeof manifest === 'object');
     assert.strictEqual(typeof callback, 'function');
 
     log(`Snapshotting app ${app.id}`);
 
-    var restoreConfig = apps.getAppConfig(app);
-    restoreConfig.manifest = manifest;
-
-    if (!safe.fs.writeFileSync(path.join(paths.APPS_DATA_DIR, app.id + '/config.json'), JSON.stringify(restoreConfig))) {
+    if (!safe.fs.writeFileSync(path.join(paths.APPS_DATA_DIR, app.id + '/config.json'), JSON.stringify(apps.getAppConfig(app)))) {
         return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, 'Error creating config.json: ' + safe.error.message));
     }
 
-    addons.backupAddons(app, manifest.addons, function (error) {
+    addons.backupAddons(app, app.manifest.addons, function (error) {
         if (error) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
-
-        return callback(null, restoreConfig);
-    });
-}
-
-function setRestorePoint(appId, lastBackupId, callback) {
-    assert.strictEqual(typeof appId, 'string');
-    assert.strictEqual(typeof lastBackupId, 'string');
-    assert.strictEqual(typeof callback, 'function');
-
-    appdb.update(appId, { lastBackupId: lastBackupId }, function (error) {
-        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new BackupsError(BackupsError.NOT_FOUND, 'No such app'));
-        if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
 
         return callback(null);
     });
@@ -654,14 +645,13 @@ function rotateAppBackup(backupConfig, app, timestamp, callback) {
     if (!snapshotInfo) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, 'Snapshot info missing or corrupt'));
 
     var snapshotTime = snapshotInfo.timestamp.replace(/[T.]/g, '-').replace(/[:Z]/g,'');
-    var restoreConfig = snapshotInfo.restoreConfig;
-    var manifest = restoreConfig.manifest;
+    var manifest = snapshotInfo.restoreConfig ? snapshotInfo.restoreConfig.manifest : snapshotInfo.manifest; // compat
     var backupId = util.format('%s/app_%s_%s_v%s', timestamp, app.id, snapshotTime, manifest.version);
     const format = backupConfig.format;
 
     log(`Rotating app backup of ${app.id} to id ${backupId}`);
 
-    backupdb.add({ id: backupId, version: manifest.version, type: backupdb.BACKUP_TYPE_APP, dependsOn: [ ], restoreConfig: restoreConfig, format: format }, function (error) {
+    backupdb.add({ id: backupId, version: manifest.version, type: backupdb.BACKUP_TYPE_APP, dependsOn: [ ], manifest: manifest, format: format }, function (error) {
         if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
 
         var copy = api(backupConfig.provider).copy(backupConfig, getBackupFilePath(backupConfig, `snapshot/app_${app.id}`, format), getBackupFilePath(backupConfig, backupId, format));
@@ -675,27 +665,22 @@ function rotateAppBackup(backupConfig, app, timestamp, callback) {
 
                 log(`Rotated app backup of ${app.id} successfully to id ${backupId}`);
 
-                setRestorePoint(app.id, backupId, function (error) {
-                    if (error) return callback(error);
-
-                    return callback(null, backupId);
-                });
+                callback(null, backupId);
             });
         });
     });
 }
 
-function uploadAppSnapshot(backupConfig, app, manifest, callback) {
+function uploadAppSnapshot(backupConfig, app, callback) {
     assert.strictEqual(typeof backupConfig, 'object');
     assert.strictEqual(typeof app, 'object');
-    assert(manifest && typeof manifest === 'object');
     assert.strictEqual(typeof callback, 'function');
 
     if (!canBackupApp(app)) return callback(); // nothing to do
 
     var startTime = new Date();
 
-    snapshotApp(app, manifest, function (error, restoreConfig) {
+    snapshotApp(app, function (error) {
         if (error) return callback(error);
 
         var backupId = util.format('snapshot/app_%s', app.id);
@@ -705,14 +690,13 @@ function uploadAppSnapshot(backupConfig, app, manifest, callback) {
 
             debugApp(app, 'uploadAppSnapshot: %s done time: %s secs', backupId, (new Date() - startTime)/1000);
 
-            setSnapshotInfo(app.id, { timestamp: new Date().toISOString(), restoreConfig: restoreConfig, format: backupConfig.format }, callback);
+            setSnapshotInfo(app.id, { timestamp: new Date().toISOString(), manifest: app.manifest, format: backupConfig.format }, callback);
         });
     });
 }
 
-function backupAppWithTimestamp(app, manifest, timestamp, callback) {
+function backupAppWithTimestamp(app, timestamp, callback) {
     assert.strictEqual(typeof app, 'object');
-    assert(manifest && typeof manifest === 'object');
     assert.strictEqual(typeof timestamp, 'string');
     assert.strictEqual(typeof callback, 'function');
 
@@ -721,7 +705,7 @@ function backupAppWithTimestamp(app, manifest, timestamp, callback) {
     settings.getBackupConfig(function (error, backupConfig) {
         if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
 
-        uploadAppSnapshot(backupConfig, app, manifest, function (error) {
+        uploadAppSnapshot(backupConfig, app, function (error) {
             if (error) return callback(error);
 
             rotateAppBackup(backupConfig, app, timestamp, callback);
@@ -729,17 +713,16 @@ function backupAppWithTimestamp(app, manifest, timestamp, callback) {
     });
 }
 
-function backupApp(app, manifest, callback) {
+function backupApp(app, callback) {
     assert.strictEqual(typeof app, 'object');
-    assert(manifest && typeof manifest === 'object');
     assert.strictEqual(typeof callback, 'function');
 
     const timestamp = (new Date()).toISOString().replace(/[T.]/g, '-').replace(/[:Z]/g,'');
     safe.fs.unlinkSync(paths.BACKUP_LOG_FILE); // start fresh log file
 
-    progress.set(progress.BACKUP, 10,  'Backing up ' + (app.altDomain || config.appFqdn(app.location)));
+    progress.set(progress.BACKUP, 10,  'Backing up ' + (app.altDomain || config.appFqdn(app)));
 
-    backupAppWithTimestamp(app, manifest, timestamp, function (error) {
+    backupAppWithTimestamp(app, timestamp, function (error) {
         progress.set(progress.BACKUP, 100, error ? error.message : '');
 
         callback(error);
@@ -764,22 +747,22 @@ function backupBoxAndApps(auditSource, callback) {
         var step = 100/(allApps.length+2);
 
         async.mapSeries(allApps, function iterator(app, iteratorCallback) {
-            progress.set(progress.BACKUP, step * processed,  'Backing up ' + (app.altDomain || config.appFqdn(app.location)));
+            progress.set(progress.BACKUP, step * processed,  'Backing up ' + (app.altDomain || config.appFqdn(app)));
 
             ++processed;
 
             if (!app.enableBackup) {
-                progress.set(progress.BACKUP, step * processed, 'Skipped backup ' + (app.altDomain || config.appFqdn(app.location)));
-                return iteratorCallback(null, app.lastBackupId); // just use the last backup
+                progress.set(progress.BACKUP, step * processed, 'Skipped backup ' + (app.altDomain || config.appFqdn(app)));
+                return iteratorCallback(null, null); // nothing to backup
             }
 
-            backupAppWithTimestamp(app, app.manifest, timestamp, function (error, backupId) {
+            backupAppWithTimestamp(app, timestamp, function (error, backupId) {
                 if (error && error.reason !== BackupsError.BAD_STATE) {
                     debugApp(app, 'Unable to backup', error);
                     return iteratorCallback(error);
                 }
 
-                progress.set(progress.BACKUP, step * processed, 'Backed up ' + (app.altDomain || config.appFqdn(app.location)));
+                progress.set(progress.BACKUP, step * processed, 'Backed up ' + (app.altDomain || config.appFqdn(app)));
 
                 iteratorCallback(null, backupId || null); // clear backupId if is in BAD_STATE and never backed up
             });
@@ -1030,3 +1013,4 @@ function cleanup(auditSource, callback) {
         });
     });
 }
+

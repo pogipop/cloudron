@@ -12,6 +12,7 @@ var appdb = require('../appdb.js'),
     config = require('../config.js'),
     constants = require('../constants.js'),
     database = require('../database.js'),
+    domaindb = require('../domaindb.js'),
     expect = require('expect.js'),
     groupdb = require('../groupdb.js'),
     groups = require('../groups.js'),
@@ -66,10 +67,23 @@ describe('Apps', function () {
         name: 'group1'
     };
 
+    const DOMAIN_0 = {
+        domain: 'example.com',
+        zoneName: 'example.com',
+        config: { provider: 'manual' }
+    };
+
+    const DOMAIN_1 = {
+        domain: 'example2.com',
+        zoneName: 'example2.com',
+        config: { provider: 'manual' }
+    };
+
     var APP_0 = {
         id: 'appid-0',
         appStoreId: 'appStoreId-0',
         location: 'some-location-0',
+        domain: DOMAIN_0.domain,
         manifest: {
             version: '0.1', dockerImage: 'docker/app0', healthCheckPath: '/', httpPort: 80, title: 'app0',
             tcpPorts: {
@@ -88,6 +102,7 @@ describe('Apps', function () {
         id: 'appid-1',
         appStoreId: 'appStoreId-1',
         location: 'some-location-1',
+        domain: DOMAIN_0.domain,
         manifest: {
             version: '0.1', dockerImage: 'docker/app1', healthCheckPath: '/', httpPort: 80, title: 'app1',
             tcpPorts: {}
@@ -101,6 +116,7 @@ describe('Apps', function () {
         id: 'appid-2',
         appStoreId: 'appStoreId-2',
         location: 'some-location-2',
+        domain: DOMAIN_1.domain,
         manifest: {
             version: '0.1', dockerImage: 'docker/app2', healthCheckPath: '/', httpPort: 80, title: 'app2',
             tcpPorts: {}
@@ -111,10 +127,15 @@ describe('Apps', function () {
     };
 
     before(function (done) {
+        config._reset();
+
+        config.setFqdn(DOMAIN_0.domain);
 
         async.series([
             database.initialize,
             database._clear,
+            // DOMAIN_0 already added for test through domaindb.addDefaultDomain()
+            domaindb.add.bind(null, DOMAIN_1.domain, DOMAIN_1.zoneName, DOMAIN_1.config),
             userdb.add.bind(null, ADMIN_0.id, ADMIN_0),
             userdb.add.bind(null, USER_0.id, USER_0),
             userdb.add.bind(null, USER_1.id, USER_1),
@@ -122,48 +143,51 @@ describe('Apps', function () {
             groupdb.add.bind(null, GROUP_1.id, GROUP_1.name),
             groups.addMember.bind(null, constants.ADMIN_GROUP_ID, ADMIN_0.id),
             groups.addMember.bind(null, GROUP_0.id, USER_1.id),
-            appdb.add.bind(null, APP_0.id, APP_0.appStoreId, APP_0.manifest, APP_0.location, APP_0.portBindings, APP_0),
-            appdb.add.bind(null, APP_1.id, APP_1.appStoreId, APP_1.manifest, APP_1.location, APP_1.portBindings, APP_1),
-            appdb.add.bind(null, APP_2.id, APP_2.appStoreId, APP_2.manifest, APP_2.location, APP_2.portBindings, APP_2),
+            appdb.add.bind(null, APP_0.id, APP_0.appStoreId, APP_0.manifest, APP_0.location, APP_0.domain, APP_0.portBindings, APP_0),
+            appdb.add.bind(null, APP_1.id, APP_1.appStoreId, APP_1.manifest, APP_1.location, APP_1.domain, APP_1.portBindings, APP_1),
+            appdb.add.bind(null, APP_2.id, APP_2.appStoreId, APP_2.manifest, APP_2.location, APP_2.domain, APP_2.portBindings, APP_2),
             settingsdb.set.bind(null, settings.BACKUP_CONFIG_KEY, JSON.stringify({ provider: 'caas', token: 'BACKUP_TOKEN', bucket: 'Bucket', prefix: 'Prefix' }))
         ], done);
     });
 
     after(function (done) {
-        database._clear(done);
+        async.series([
+            database._clear,
+            database.uninitialize
+        ], done);
     });
 
     describe('validateHostname', function () {
         it('does not allow admin subdomain', function () {
-            expect(apps._validateHostname('my', 'cloudron.us')).to.be.an(Error);
+            expect(apps._validateHostname('my', 'example.com')).to.be.an(Error);
         });
 
         it('cannot have >63 length subdomains', function () {
             var s = '';
             for (var i = 0; i < 64; i++) s += 's';
-            expect(apps._validateHostname(s, 'cloudron.us')).to.be.an(Error);
+            expect(apps._validateHostname(s, 'example.com')).to.be.an(Error);
         });
 
         it('allows only alphanumerics and hypen', function () {
-            expect(apps._validateHostname('#2r', 'cloudron.us')).to.be.an(Error);
-            expect(apps._validateHostname('a%b', 'cloudron.us')).to.be.an(Error);
-            expect(apps._validateHostname('ab_', 'cloudron.us')).to.be.an(Error);
-            expect(apps._validateHostname('a.b', 'cloudron.us')).to.be.an(Error);
-            expect(apps._validateHostname('-ab', 'cloudron.us')).to.be.an(Error);
-            expect(apps._validateHostname('ab-', 'cloudron.us')).to.be.an(Error);
+            expect(apps._validateHostname('#2r', 'example.com')).to.be.an(Error);
+            expect(apps._validateHostname('a%b', 'example.com')).to.be.an(Error);
+            expect(apps._validateHostname('ab_', 'example.com')).to.be.an(Error);
+            expect(apps._validateHostname('a.b', 'example.com')).to.be.an(Error);
+            expect(apps._validateHostname('-ab', 'example.com')).to.be.an(Error);
+            expect(apps._validateHostname('ab-', 'example.com')).to.be.an(Error);
         });
 
         it('total length cannot exceed 255', function () {
             var s = '';
-            for (var i = 0; i < (255 - 'cloudron.us'.length); i++) s += 's';
+            for (var i = 0; i < (255 - 'example.com'.length); i++) s += 's';
 
-            expect(apps._validateHostname(s, 'cloudron.us')).to.be.an(Error);
+            expect(apps._validateHostname(s, 'example.com')).to.be.an(Error);
         });
 
         it('allow valid domains', function () {
-            expect(apps._validateHostname('a', 'cloudron.us')).to.be(null);
-            expect(apps._validateHostname('a0-x', 'cloudron.us')).to.be(null);
-            expect(apps._validateHostname('01', 'cloudron.us')).to.be(null);
+            expect(apps._validateHostname('a', 'example.com')).to.be(null);
+            expect(apps._validateHostname('a0-x', 'example.com')).to.be(null);
+            expect(apps._validateHostname('01', 'example.com')).to.be(null);
         });
     });
 
@@ -325,11 +349,13 @@ describe('Apps', function () {
             });
         });
 
-        it('succeeds with admin not being special', function (done) {
+        it('returns all apps for admin', function (done) {
             apps.getAllByUser(ADMIN_0, function (error, result) {
                 expect(error).to.equal(null);
-                expect(result.length).to.equal(1);
+                expect(result.length).to.equal(3);
                 expect(result[0].id).to.equal(APP_0.id);
+                expect(result[1].id).to.equal(APP_1.id);
+                expect(result[2].id).to.equal(APP_2.id);
                 done();
             });
         });

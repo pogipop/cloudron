@@ -9,6 +9,10 @@
 #### BLOB - stored offline from table row (use for binary data)
 #### https://dev.mysql.com/doc/refman/5.0/en/storage-requirements.html
 
+# The code uses zero dates. Make sure sql_mode does NOT have NO_ZERO_DATE
+# http://johnemb.blogspot.com/2014/09/adding-or-removing-individual-sql-modes.html
+# SET GLOBAL sql_mode=(SELECT REPLACE(@@sql_mode,'NO_ZERO_DATE',''));
+
 CREATE TABLE IF NOT EXISTS users(
     id VARCHAR(128) NOT NULL UNIQUE,
     username VARCHAR(254) UNIQUE,
@@ -59,23 +63,26 @@ CREATE TABLE IF NOT EXISTS apps(
     containerId VARCHAR(128),
     manifestJson TEXT,
     httpPort INTEGER,                        // this is the nginx proxy port and not manifest.httpPort
-    location VARCHAR(128) NOT NULL UNIQUE,
+    location VARCHAR(128) NOT NULL,
+    domain VARCHAR(128) NOT NULL,
     dnsRecordId VARCHAR(512), // tracks any id that we got back to track dns updates
     accessRestrictionJson TEXT, // { users: [ ], groups: [ ] }
     createdAt TIMESTAMP(2) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updatedAt TIMESTAMP(2) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     memoryLimit BIGINT DEFAULT 0,
     altDomain VARCHAR(256),
     xFrameOptions VARCHAR(512),
     sso BOOLEAN DEFAULT 1, // whether user chose to enable SSO
     debugModeJson TEXT, // options for development mode
     robotsTxt TEXT,
-    enableBackup BOOLEAN DEFAULT 1,
+    enableBackup BOOLEAN DEFAULT 1, // misnomer: controls automatic daily backups
 
     // the following fields do not belong here, they can be removed when we use a queue for apptask
-    lastBackupId VARCHAR(128), // used to pass backupId to restore from to apptask
+    restoreConfigJson VARCHAR(256), // used to pass backupId to restore from to apptask
     oldConfigJson TEXT, // used to pass old config for apptask (configure, restore)
-    newConfigJson TEXT, // used to pass new config for apptask (update)
+    updateConfigJson TEXT, // used to pass new config for apptask (update)
 
+    FOREIGN KEY(domain) REFERENCES domains(domain),
     PRIMARY KEY(id));
 
 CREATE TABLE IF NOT EXISTS appPortBindings(
@@ -111,7 +118,7 @@ CREATE TABLE IF NOT EXISTS backups(
     type VARCHAR(16) NOT NULL, /* 'box' or 'app' */
     dependsOn TEXT, /* comma separate list of objects this backup depends on */
     state VARCHAR(16) NOT NULL,
-    restoreConfigJson TEXT, /* JSON including the manifest of the backed up app */
+    manifestJson TEXT, /* to validate if the app can be installed in this version of box */
     format VARCHAR(16) DEFAULT "tgz",
 
     PRIMARY KEY (id));
@@ -135,5 +142,17 @@ CREATE TABLE IF NOT EXISTS mailboxes(
     ownerType VARCHAR(16) NOT NULL, /* 'app' or 'user' or 'group' */
     aliasTarget VARCHAR(128), /* the target name type is an alias */
     creationTime TIMESTAMP,
+    domain VARCHAR(128),
 
+    FOREIGN KEY(domain) REFERENCES domains(domain),
     PRIMARY KEY (name));
+
+CREATE TABLE IF NOT EXISTS domains(
+    domain VARCHAR(128) NOT NULL UNIQUE, /* if this needs to be larger, InnoDB has a limit of 767 bytes for PRIMARY KEY values! */
+    zoneName VARCHAR(128) NOT NULL, /* this mostly contains the domain itself again */
+    configJson TEXT, /* JSON containing the dns backend provider config */
+
+    PRIMARY KEY (domain))
+
+    /* the default db collation is utf8mb4_unicode_ci but for the app table domain constraint we have to use the old one */
+    CHARACTER SET utf8 COLLATE utf8_bin;

@@ -24,7 +24,9 @@ describe('Server', function () {
     this.timeout(5000);
 
     before(function () {
-        config.set('version', '0.5.0');
+        config._reset();
+        config.setFqdn('example-server-test.com');
+        config.set('provider', 'notcaas'); // otherwise, cron sets a caas timer for heartbeat causing the test to not quit
     });
 
     after(cleanup);
@@ -91,22 +93,22 @@ describe('Server', function () {
             superagent.get(SERVER_URL + '/api/v1/cloudron/status', function (err, res) {
                 expect(err).to.not.be.ok();
                 expect(res.statusCode).to.equal(200);
-                expect(res.body.version).to.equal('0.5.0');
+                expect(res.body.version).to.equal('1.1.1-test');
                 done();
             });
         });
 
         it('status route is GET', function (done) {
             superagent.post(SERVER_URL + '/api/v1/cloudron/status')
-                   .end(function (err, res) {
-                expect(res.statusCode).to.equal(404);
+                .end(function (err, res) {
+                    expect(res.statusCode).to.equal(404);
 
-                superagent.get(SERVER_URL + '/api/v1/cloudron/status')
-                       .end(function (err, res) {
-                    expect(res.statusCode).to.equal(200);
-                    done();
+                    superagent.get(SERVER_URL + '/api/v1/cloudron/status')
+                        .end(function (err, res) {
+                            expect(res.statusCode).to.equal(200);
+                            done();
+                        });
                 });
-            });
         });
     });
 
@@ -227,21 +229,21 @@ describe('Server', function () {
                 .set('Access-Control-Request-Headers', 'accept, origin, x-superagented-with')
                 .set('Origin', 'http://localhost')
                 .end(function (error, res) {
-                expect(res.headers['access-control-allow-methods']).to.be('GET, PUT, DELETE, POST, OPTIONS');
-                expect(res.headers['access-control-allow-credentials']).to.be('false');
-                expect(res.headers['access-control-allow-headers']).to.be('accept, origin, x-superagented-with'); // mirrored from superagent
-                expect(res.headers['access-control-allow-origin']).to.be('http://localhost'); // mirrors from superagent
-                done();
-            });
+                    expect(res.headers['access-control-allow-methods']).to.be('GET, PUT, DELETE, POST, OPTIONS');
+                    expect(res.headers['access-control-allow-credentials']).to.be('false');
+                    expect(res.headers['access-control-allow-headers']).to.be('accept, origin, x-superagented-with'); // mirrored from superagent
+                    expect(res.headers['access-control-allow-origin']).to.be('http://localhost'); // mirrors from superagent
+                    done();
+                });
         });
 
         it('does not crash for malformed origin', function (done) {
             superagent('OPTIONS', SERVER_URL + '/api/v1/cloudron/status')
                 .set('Origin', 'foobar')
                 .end(function (error, res) {
-                expect(res.statusCode).to.be(405);
-                done();
-            });
+                    expect(res.statusCode).to.be(405);
+                    done();
+                });
         });
 
         after(function (done) {

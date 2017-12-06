@@ -51,8 +51,8 @@ function removeInternalAppFields(app) {
         runState: app.runState,
         health: app.health,
         location: app.location,
+        domain: app.domain,
         accessRestriction: app.accessRestriction,
-        lastBackupId: app.lastBackupId,
         manifest: app.manifest,
         portBindings: app.portBindings,
         iconUrl: app.iconUrl,
@@ -64,7 +64,9 @@ function removeInternalAppFields(app) {
         sso: app.sso,
         debugMode: app.debugMode,
         robotsTxt: app.robotsTxt,
-        enableBackup: app.enableBackup
+        enableBackup: app.enableBackup,
+        creationTime: app.creationTime.toISOString(),
+        updateTime: app.updateTime.toISOString()
     };
 }
 
@@ -114,6 +116,7 @@ function installApp(req, res, next) {
 
     // required
     if (typeof data.location !== 'string') return next(new HttpError(400, 'location is required'));
+    if (typeof data.domain !== 'string') return next(new HttpError(400, 'domain is required'));
     if (typeof data.accessRestriction !== 'object') return next(new HttpError(400, 'accessRestriction is required'));
 
     // optional
@@ -121,6 +124,7 @@ function installApp(req, res, next) {
     if ('icon' in data && typeof data.icon !== 'string') return next(new HttpError(400, 'icon is not a string'));
 
     if (data.backupId && typeof data.backupId !== 'string') return next(new HttpError(400, 'backupId must be string or null'));
+    if (data.backupFormat && typeof data.backupFormat !== 'string') return next(new HttpError(400, 'backupFormat must be string or null'));
 
     // falsy values in cert and key unset the cert
     if (data.key && typeof data.cert !== 'string') return next(new HttpError(400, 'cert must be a string'));
@@ -165,6 +169,7 @@ function configureApp(req, res, next) {
     var data = req.body;
 
     if ('location' in data && typeof data.location !== 'string') return next(new HttpError(400, 'location must be string'));
+    if ('domain' in data && typeof data.domain !== 'string') return next(new HttpError(400, 'domain must be string'));
     if ('portBindings' in data && typeof data.portBindings !== 'object') return next(new HttpError(400, 'portBindings must be an object'));
     if ('accessRestriction' in data && typeof data.accessRestriction !== 'object') return next(new HttpError(400, 'accessRestriction must be an object'));
 
@@ -232,12 +237,14 @@ function cloneApp(req, res, next) {
 
     if (typeof data.backupId !== 'string') return next(new HttpError(400, 'backupId must be a string'));
     if (typeof data.location !== 'string') return next(new HttpError(400, 'location is required'));
+    if (typeof data.domain !== 'string') return next(new HttpError(400, 'domain is required'));
     if (('portBindings' in data) && typeof data.portBindings !== 'object') return next(new HttpError(400, 'portBindings must be an object'));
 
     apps.clone(req.params.id, data, auditSource(req), function (error, result) {
         if (error && error.reason === AppsError.NOT_FOUND) return next(new HttpError(404, 'No such app'));
         if (error && error.reason === AppsError.BAD_FIELD) return next(new HttpError(400, error.message));
         if (error && error.reason === AppsError.BAD_STATE) return next(new HttpError(409, error.message));
+        if (error && error.reason === AppsError.BILLING_REQUIRED) return next(new HttpError(402, 'Billing required'));
         if (error && error.reason === AppsError.EXTERNAL_ERROR) return next(new HttpError(424, error.message));
         if (error) return next(new HttpError(500, error));
 

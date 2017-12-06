@@ -10,6 +10,9 @@ exports = module.exports = {
     rollback: rollback,
     commit: commit,
 
+    importFromFile: importFromFile,
+    exportToFile: exportToFile,
+
     _clear: clear
 };
 
@@ -101,6 +104,7 @@ function clear(callback) {
     async.series([
         child_process.exec.bind(null, cmd),
         require('./clientdb.js')._addDefaultClients,
+        require('./domaindb.js')._addDefaultDomain,
         require('./groupdb.js')._addDefaultGroups
     ], callback);
 }
@@ -183,3 +187,27 @@ function transaction(queries, callback) {
     });
 }
 
+function importFromFile(file, callback) {
+    assert.strictEqual(typeof file, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    var password = config.database().password ? '-p' + config.database().password : '--skip-password';
+
+    var cmd = `/usr/bin/mysql -u ${config.database().username} ${password} ${config.database().name} < ${file}`;
+
+    async.series([
+        query.bind(null, 'CREATE DATABASE IF NOT EXISTS box'),
+        child_process.exec.bind(null, cmd)
+    ], callback);
+}
+
+function exportToFile(file, callback) {
+    assert.strictEqual(typeof file, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    var password = config.database().password ? '-p' + config.database().password : '--skip-password';
+    var cmd = `/usr/bin/mysqldump -u root ${password} --single-transaction --routines \
+            --triggers ${config.database().name} > "${file}"`;
+
+    child_process.exec(cmd, callback);
+}

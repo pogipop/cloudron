@@ -243,9 +243,9 @@
       }
     },
     "aws-sdk": {
-      "version": "2.149.0",
-      "from": "aws-sdk@>=2.149.0 <3.0.0",
-      "resolved": "https://registry.npmjs.org/aws-sdk/-/aws-sdk-2.149.0.tgz"
+      "version": "2.151.0",
+      "from": "aws-sdk@2.151.0",
+      "resolved": "https://registry.npmjs.org/aws-sdk/-/aws-sdk-2.151.0.tgz"
     },
     "aws-sign2": {
       "version": "0.7.0",
@@ -502,9 +502,9 @@
       "dev": true
     },
     "cloudron-manifestformat": {
-      "version": "2.9.0",
-      "from": "cloudron-manifestformat@>=2.9.0 <3.0.0",
-      "resolved": "https://registry.npmjs.org/cloudron-manifestformat/-/cloudron-manifestformat-2.9.0.tgz",
+      "version": "2.10.0",
+      "from": "cloudron-manifestformat@2.10.0",
+      "resolved": "https://registry.npmjs.org/cloudron-manifestformat/-/cloudron-manifestformat-2.10.0.tgz",
       "dependencies": {
         "safetydance": {
           "version": "0.0.15",
@@ -646,9 +646,9 @@
       "resolved": "https://registry.npmjs.org/connect-ensure-login/-/connect-ensure-login-0.1.1.tgz"
     },
     "connect-lastmile": {
-      "version": "0.1.0",
-      "from": "connect-lastmile@>=0.1.0 <0.2.0",
-      "resolved": "https://registry.npmjs.org/connect-lastmile/-/connect-lastmile-0.1.0.tgz",
+      "version": "1.0.2",
+      "from": "connect-lastmile@1.0.2",
+      "resolved": "https://registry.npmjs.org/connect-lastmile/-/connect-lastmile-1.0.2.tgz",
       "dependencies": {
         "debug": {
           "version": "2.1.3",

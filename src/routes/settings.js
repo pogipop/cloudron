@@ -12,9 +12,6 @@ exports = module.exports = {
 
     getEmailStatus: getEmailStatus,
 
-    getDnsConfig: getDnsConfig,
-    setDnsConfig: setDnsConfig,
-
     getBackupConfig: getBackupConfig,
     setBackupConfig: setBackupConfig,
 
@@ -36,7 +33,6 @@ exports = module.exports = {
     getAppstoreConfig: getAppstoreConfig,
     setAppstoreConfig: setAppstoreConfig,
 
-    setFallbackCertificate: setFallbackCertificate,
     setAdminCertificate: setAdminCertificate
 };
 
@@ -239,27 +235,6 @@ function getEmailStatus(req, res, next) {
     });
 }
 
-function getDnsConfig(req, res, next) {
-    settings.getDnsConfig(function (error, config) {
-        if (error) return next(new HttpError(500, error));
-
-        next(new HttpSuccess(200, config));
-    });
-}
-
-function setDnsConfig(req, res, next) {
-    assert.strictEqual(typeof req.body, 'object');
-
-    if (typeof req.body.provider !== 'string') return next(new HttpError(400, 'provider is required'));
-
-    settings.setDnsConfig(req.body, config.fqdn(), config.zoneName(), function (error) {
-        if (error && error.reason === SettingsError.BAD_FIELD) return next(new HttpError(400, error.message));
-        if (error) return next(new HttpError(500, error));
-
-        next(new HttpSuccess(200));
-    });
-}
-
 function getBackupConfig(req, res, next) {
     settings.getBackupConfig(function (error, config) {
         if (error) return next(new HttpError(500, error));
@@ -315,21 +290,6 @@ function setAppstoreConfig(req, res, next) {
 
             next(new HttpSuccess(202, result));
         });
-    });
-}
-
-// default fallback cert
-function setFallbackCertificate(req, res, next) {
-    assert.strictEqual(typeof req.body, 'object');
-
-    if (!req.body.cert || typeof req.body.cert !== 'string') return next(new HttpError(400, 'cert must be a string'));
-    if (!req.body.key || typeof req.body.key !== 'string') return next(new HttpError(400, 'key must be a string'));
-
-    certificates.setFallbackCertificate(req.body.cert, req.body.key, function (error) {
-        if (error && error.reason === CertificatesError.INVALID_CERT) return next(new HttpError(400, error.message));
-        if (error) return next(new HttpError(500, error));
-
-        next(new HttpSuccess(202, {}));
     });
 }
 

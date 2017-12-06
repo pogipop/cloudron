@@ -51,7 +51,7 @@ var addons = require('./addons.js'),
 function debugApp(app, args) {
     assert(!app || typeof app === 'object');
 
-    var prefix = app ? (app.location || '(bare)') : '(no app)';
+    var prefix = app ? config.appFqdn(app) : '(no app)';
     debug(prefix + ' ' + util.format.apply(util, Array.prototype.slice.call(arguments, 1)));
 }
 
@@ -129,7 +129,7 @@ function createSubcontainer(app, name, cmd, options, callback) {
 
     var manifest = app.manifest;
     var exposedPorts = {}, dockerPortBindings = { };
-    var domain = app.altDomain || config.appFqdn(app.location);
+    var domain = app.altDomain || config.appFqdn(app);
     var stdEnv = [
         'CLOUDRON=1',
         'WEBADMIN_ORIGIN=' + config.adminOrigin(),
@@ -186,7 +186,7 @@ function createSubcontainer(app, name, cmd, options, callback) {
                 '/run': {}
             },
             Labels: {
-                'location': app.location,
+                'fqdn': config.appFqdn(app),
                 'appId': app.id,
                 'isSubcontainer': String(!isAppContainer)
             },

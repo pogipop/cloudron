@@ -154,6 +154,7 @@ describe('OAuth2', function () {
             appStoreId: '',
             manifest: { version: '0.1.0', addons: { } },
             location: 'test',
+            domain: 'example.com',
             portBindings: {},
             accessRestriction: null,
             memoryLimit: 0,
@@ -165,6 +166,7 @@ describe('OAuth2', function () {
             appStoreId: '',
             manifest: { version: '0.1.0', addons: { } },
             location: 'test1',
+            domain: 'example.com',
             portBindings: {},
             accessRestriction: { users: [ 'foobar' ] },
             memoryLimit: 0,
@@ -176,6 +178,7 @@ describe('OAuth2', function () {
             appStoreId: '',
             manifest: { version: '0.1.0', addons: { } },
             location: 'test2',
+            domain: 'example.com',
             portBindings: {},
             accessRestriction: { users: [ USER_0.id ] },
             memoryLimit: 0,
@@ -187,6 +190,7 @@ describe('OAuth2', function () {
             appStoreId: '',
             manifest: { version: '0.1.0', addons: { } },
             location: 'test3',
+            domain: 'example.com',
             portBindings: {},
             accessRestriction: { groups: [ 'someothergroup', 'admin', 'anothergroup' ] },
             memoryLimit: 0,
@@ -290,6 +294,9 @@ describe('OAuth2', function () {
         };
 
         function setup(done) {
+            config._reset();
+            config.setFqdn(APP_0.domain);
+
             async.series([
                 server.start,
                 database._clear,
@@ -302,10 +309,10 @@ describe('OAuth2', function () {
                 clientdb.add.bind(null, CLIENT_6.id, CLIENT_6.appId, CLIENT_6.type, CLIENT_6.clientSecret, CLIENT_6.redirectURI, CLIENT_6.scope),
                 clientdb.add.bind(null, CLIENT_7.id, CLIENT_7.appId, CLIENT_7.type, CLIENT_7.clientSecret, CLIENT_7.redirectURI, CLIENT_7.scope),
                 clientdb.add.bind(null, CLIENT_9.id, CLIENT_9.appId, CLIENT_9.type, CLIENT_9.clientSecret, CLIENT_9.redirectURI, CLIENT_9.scope),
-                appdb.add.bind(null, APP_0.id, APP_0.appStoreId, APP_0.manifest, APP_0.location, APP_0.portBindings, APP_0),
-                appdb.add.bind(null, APP_1.id, APP_1.appStoreId, APP_1.manifest, APP_1.location, APP_1.portBindings, APP_1),
-                appdb.add.bind(null, APP_2.id, APP_2.appStoreId, APP_2.manifest, APP_2.location, APP_2.portBindings, APP_2),
-                appdb.add.bind(null, APP_3.id, APP_3.appStoreId, APP_3.manifest, APP_3.location, APP_3.portBindings, APP_3),
+                appdb.add.bind(null, APP_0.id, APP_0.appStoreId, APP_0.manifest, APP_0.location, APP_0.domain, APP_0.portBindings, APP_0),
+                appdb.add.bind(null, APP_1.id, APP_1.appStoreId, APP_1.manifest, APP_1.location, APP_1.domain, APP_1.portBindings, APP_1),
+                appdb.add.bind(null, APP_2.id, APP_2.appStoreId, APP_2.manifest, APP_2.location, APP_2.domain, APP_2.portBindings, APP_2),
+                appdb.add.bind(null, APP_3.id, APP_3.appStoreId, APP_3.manifest, APP_3.location, APP_3.domain, APP_3.portBindings, APP_3),
                 function (callback) {
                     user.create(USER_0.username, USER_0.password, USER_0.email, USER_0.displayName, null /* source */, function (error, userObject) {
                         expect(error).to.not.be.ok();

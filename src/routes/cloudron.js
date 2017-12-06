@@ -6,6 +6,7 @@ exports = module.exports = {
     setupTokenAuth: setupTokenAuth,
     providerTokenAuth: providerTokenAuth,
     getStatus: getStatus,
+    restore: restore,
     reboot: reboot,
     migrate: migrate,
     getProgress: getProgress,
@@ -19,7 +20,9 @@ exports = module.exports = {
     sendTestMail: sendTestMail
 };
 
-var assert = require('assert'),
+var appstore = require('../appstore.js'),
+    AppstoreError = require('../appstore.js').AppstoreError,
+    assert = require('assert'),
     async = require('async'),
     cloudron = require('../cloudron.js'),
     CloudronError = cloudron.CloudronError,
@@ -66,13 +69,38 @@ function activate(req, res, next) {
         superagent.post(config.apiServerOrigin() + '/api/v1/boxes/' + config.fqdn() + '/setup/done').query({ setupToken: req.query.setupToken })
             .timeout(30 * 1000)
             .end(function (error, result) {
-            if (error && !error.response) return next(new HttpError(500, error));
-            if (result.statusCode === 403) return next(new HttpError(403, 'Invalid token'));
-            if (result.statusCode === 409) return next(new HttpError(409, 'Already setup'));
-            if (result.statusCode !== 201) return next(new HttpError(500, result.text || 'Internal error'));
+                if (error && !error.response) return next(new HttpError(500, error));
+                if (result.statusCode === 403) return next(new HttpError(403, 'Invalid token'));
+                if (result.statusCode === 409) return next(new HttpError(409, 'Already setup'));
+                if (result.statusCode !== 201) return next(new HttpError(500, result.text || 'Internal error'));
 
-            next(new HttpSuccess(201, info));
-        });
+                next(new HttpSuccess(201, info));
+            });
+    });
+}
+
+function restore(req, res, next) {
+    assert.strictEqual(typeof req.body, 'object');
+
+    if (!req.body.backupConfig || typeof req.body.backupConfig !== 'object') return next(new HttpError(400, 'backupConfig is required'));
+
+    var backupConfig = req.body.backupConfig;
+    if (typeof backupConfig.provider !== 'string') return next(new HttpError(400, 'provider is required'));
+    if ('key' in backupConfig && typeof backupConfig.key !== 'string') return next(new HttpError(400, 'key must be a string'));
+    if (typeof backupConfig.format !== 'string') return next(new HttpError(400, 'format must be a string'));
+    if ('acceptSelfSignedCerts' in backupConfig && typeof backupConfig.acceptSelfSignedCerts !== 'boolean') return next(new HttpError(400, 'format must be a boolean'));
+
+    if (typeof req.body.backupId !== 'string') return next(new HttpError(400, 'backupId must be a string or null'));
+    if (typeof req.body.version !== 'string') return next(new HttpError(400, 'version must be a string'));
+
+    cloudron.restore(backupConfig, req.body.backupId, req.body.version, function (error) {
+        if (error && error.reason === CloudronError.ALREADY_SETUP) return next(new HttpError(409, error.message));
+        if (error && error.reason === CloudronError.BAD_FIELD) return next(new HttpError(400, error.message));
+        if (error && error.reason === CloudronError.BAD_STATE) return next(new HttpError(409, error.message));
+        if (error && error.reason === CloudronError.EXTERNAL_ERROR) return next(new HttpError(402, error.message));
+        if (error) return next(new HttpError(500, error));
+
+        next(new HttpSuccess(200));
     });
 }
 
@@ -100,15 +128,15 @@ function setupTokenAuth(req, res, next) {
         if (typeof req.query.setupToken !== 'string' || !req.query.setupToken) return next(new HttpError(400, 'setupToken must be a non empty string'));
 
         superagent.get(config.apiServerOrigin() + '/api/v1/boxes/' + config.fqdn() + '/setup/verify').query({ setupToken:req.query.setupToken })
-        .timeout(30 * 1000)
-        .end(function (error, result) {
-            if (error && !error.response) return next(new HttpError(500, error));
-            if (result.statusCode === 403) return next(new HttpError(403, 'Invalid token'));
-            if (result.statusCode === 409) return next(new HttpError(409, 'Already setup'));
-            if (result.statusCode !== 200) return next(new HttpError(500, result.text || 'Internal error'));
+            .timeout(30 * 1000)
+            .end(function (error, result) {
+                if (error && !error.response) return next(new HttpError(500, error));
+                if (result.statusCode === 403) return next(new HttpError(403, 'Invalid token'));
+                if (result.statusCode === 409) return next(new HttpError(409, 'Already setup'));
+                if (result.statusCode !== 200) return next(new HttpError(500, result.text || 'Internal error'));
 
-            next();
-        });
+                next();
+            });
     } else {
         next();
     }
@@ -224,17 +252,20 @@ function checkForUpdates(req, res, next) {
 function feedback(req, res, next) {
     assert.strictEqual(typeof req.user, 'object');
 
-    if (req.body.type !== mailer.FEEDBACK_TYPE_FEEDBACK &&
-        req.body.type !== mailer.FEEDBACK_TYPE_TICKET &&
-        req.body.type !== mailer.FEEDBACK_TYPE_APP_MISSING &&
-        req.body.type !== mailer.FEEDBACK_TYPE_UPGRADE_REQUEST &&
-        req.body.type !== mailer.FEEDBACK_TYPE_APP_ERROR) return next(new HttpError(400, 'type must be either "ticket", "feedback", "app_missing", "app_error" or "upgrade_request"'));
+    const VALID_TYPES = [ 'feedback', 'ticket', 'app_missing', 'app_error', 'upgrade_request' ];
+
+    if (typeof req.body.type !== 'string' || !req.body.type) return next(new HttpError(400, 'type must be string'));
+    if (VALID_TYPES.indexOf(req.body.type) === -1) return next(new HttpError(400, 'unknown type'));
     if (typeof req.body.subject !== 'string' || !req.body.subject) return next(new HttpError(400, 'subject must be string'));
     if (typeof req.body.description !== 'string' || !req.body.description) return next(new HttpError(400, 'description must be string'));
 
-    mailer.sendFeedback(req.user, req.body.type, req.body.subject, req.body.description);
+    appstore.sendFeedback(_.extend(req.body, { email: req.user.alternateEmail || req.user.email, displayName: req.user.displayName }), function (error) {
+        if (error && error.reason === AppstoreError.BILLING_REQUIRED) return next(new HttpError(402, 'Login to App Store to create support tickets. You can also email support@cloudron.io'));
+        if (error) return next(new HttpError(503, 'Error contacting cloudron.io. Please email support@cloudron.io'));
 
-    next(new HttpSuccess(201, {}));
+        next(new HttpSuccess(201, {}));
+    });
+
 }
 
 function getLogs(req, res, next) {

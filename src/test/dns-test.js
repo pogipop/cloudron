@@ -11,40 +11,48 @@ var async = require('async'),
     GCDNS = require('@google-cloud/dns'),
     config = require('../config.js'),
     database = require('../database.js'),
+    domains = require('../domains.js'),
     expect = require('expect.js'),
     nock = require('nock'),
     settings = require('../settings.js'),
-    subdomains = require('../subdomains.js'),
     util = require('util');
+
+var DOMAIN_0 = {
+    domain: 'example-dns-test.com',
+    zoneName: 'example-dns-test.com',
+    config: {}
+};
 
 describe('dns provider', function () {
     before(function (done) {
         config._reset();
+        config.setFqdn(DOMAIN_0.domain);
 
         async.series([
             database.initialize,
-            settings.initialize
+            settings.initialize,
+            database._clear
         ], done);
     });
 
     after(function (done) {
-        database._clear(done);
+        async.series([
+            database._clear,
+            database.uninitialize
+        ], done);
     });
 
     describe('noop', function () {
         before(function (done) {
-            var data = {
+            DOMAIN_0.config = {
                 provider: 'noop'
             };
 
-            config.setFqdn('example.com');
-            config.setZoneName('example.com');
-
-            settings.setDnsConfig(data, config.fqdn(), config.zoneName(), done);
+            domains.update(DOMAIN_0.domain, DOMAIN_0.config, null, done);
         });
 
         it('upsert succeeds', function (done) {
-            subdomains.upsert('test', 'A', [ '1.2.3.4' ], function (error, result) {
+            domains.upsertDNSRecords('test', DOMAIN_0.domain, 'A', [ '1.2.3.4' ], function (error, result) {
                 expect(error).to.eql(null);
                 expect(result).to.eql('noop-record-id');
 
@@ -53,7 +61,7 @@ describe('dns provider', function () {
         });
 
         it('get succeeds', function (done) {
-            subdomains.get('test', 'A', function (error, result) {
+            domains.getDNSRecords('test', DOMAIN_0.domain, 'A', function (error, result) {
                 expect(error).to.eql(null);
                 expect(result).to.be.an(Array);
                 expect(result.length).to.eql(0);
@@ -63,7 +71,7 @@ describe('dns provider', function () {
         });
 
         it('del succeeds', function (done) {
-            subdomains.remove('test', 'A', [ '1.2.3.4' ], function (error) {
+            domains.removeDNSRecords('test', DOMAIN_0.domain, 'A', [ '1.2.3.4' ], function (error) {
                 expect(error).to.eql(null);
 
                 done();
@@ -76,15 +84,12 @@ describe('dns provider', function () {
         var DIGITALOCEAN_ENDPOINT = 'https://api.digitalocean.com';
 
         before(function (done) {
-            var data = {
+            DOMAIN_0.config = {
                 provider: 'digitalocean',
                 token: TOKEN
             };
 
-            config.setFqdn('example.com');
-            config.setZoneName('example.com');
-
-            settings.setDnsConfig(data, config.fqdn(), config.zoneName(), done);
+            domains.update(DOMAIN_0.domain, DOMAIN_0.config, null, done);
         });
 
         it('upsert non-existing record succeeds', function (done) {
@@ -107,7 +112,7 @@ describe('dns provider', function () {
                 .post('/v2/domains/' + config.zoneName() + '/records')
                 .reply(201, { domain_record: DOMAIN_RECORD_0 });
 
-            subdomains.upsert('test', 'A', [ '1.2.3.4' ], function (error, result) {
+            domains.upsertDNSRecords('test', DOMAIN_0.domain, 'A', [ '1.2.3.4' ], function (error, result) {
                 expect(error).to.eql(null);
                 expect(result).to.eql('3352892');
                 expect(req1.isDone()).to.be.ok();
@@ -157,7 +162,7 @@ describe('dns provider', function () {
                 .put('/v2/domains/' + config.zoneName() + '/records/' + DOMAIN_RECORD_1.id)
                 .reply(200, { domain_record: DOMAIN_RECORD_1_NEW });
 
-            subdomains.upsert('test', 'A', [ DOMAIN_RECORD_1_NEW.data ], function (error, result) {
+            domains.upsertDNSRecords('test', DOMAIN_0.domain, 'A', [ DOMAIN_RECORD_1_NEW.data ], function (error, result) {
                 expect(error).to.eql(null);
                 expect(result).to.eql('3352893');
                 expect(req1.isDone()).to.be.ok();
@@ -243,7 +248,7 @@ describe('dns provider', function () {
                 .post('/v2/domains/' + config.zoneName() + '/records')
                 .reply(201, { domain_record: DOMAIN_RECORD_2_NEW });
 
-            subdomains.upsert('', 'TXT', [ DOMAIN_RECORD_2_NEW.data, DOMAIN_RECORD_1_NEW.data, DOMAIN_RECORD_3_NEW.data ], function (error, result) {
+            domains.upsertDNSRecords('', config.fqdn(), 'TXT', [ DOMAIN_RECORD_2_NEW.data, DOMAIN_RECORD_1_NEW.data, DOMAIN_RECORD_3_NEW.data ], function (error, result) {
                 expect(error).to.eql(null);
                 expect(result).to.eql('3352893');
                 expect(req1.isDone()).to.be.ok();
@@ -282,7 +287,7 @@ describe('dns provider', function () {
                 .get('/v2/domains/' + config.zoneName() + '/records')
                 .reply(200, { domain_records: [ DOMAIN_RECORD_0, DOMAIN_RECORD_1 ] });
 
-            subdomains.get('test', 'A', function (error, result) {
+            domains.getDNSRecords('test', DOMAIN_0.domain, 'A', function (error, result) {
                 expect(error).to.eql(null);
                 expect(result).to.be.an(Array);
                 expect(result.length).to.eql(1);
@@ -323,7 +328,7 @@ describe('dns provider', function () {
                 .delete('/v2/domains/' + config.zoneName() + '/records/' + DOMAIN_RECORD_1.id)
                 .reply(204, {});
 
-            subdomains.remove('test', 'A', ['1.2.3.4'], function (error) {
+            domains.removeDNSRecords('test', DOMAIN_0.domain, 'A', ['1.2.3.4'], function (error) {
                 expect(error).to.eql(null);
                 expect(req1.isDone()).to.be.ok();
                 expect(req2.isDone()).to.be.ok();
@@ -334,42 +339,41 @@ describe('dns provider', function () {
     });
 
     describe('route53', function () {
-        config.setFqdn('example.com');
-        config.setZoneName('example.com');
-
         // do not clear this with [] but .length = 0 so we don't loose the reference in mockery
         var awsAnswerQueue = [];
 
-        var AWS_HOSTED_ZONES = {
-            HostedZones: [{
-                Id: '/hostedzone/Z34G16B38TNZ9L',
-                Name: config.zoneName() + '.',
-                CallerReference: '305AFD59-9D73-4502-B020-F4E6F889CB30',
-                ResourceRecordSetCount: 2,
-                ChangeInfo: {
-                    Id: '/change/CKRTFJA0ANHXB',
-                    Status: 'INSYNC'
-                }
-            }, {
-                Id: '/hostedzone/Z3OFC3B6E8YTA7',
-                Name: 'cloudron.us.',
-                CallerReference: '0B37F2DE-21A4-E678-BA32-3FC8AF0CF635',
-                Config: {},
-                ResourceRecordSetCount: 2,
-                ChangeInfo: {
-                    Id: '/change/C2682N5HXP0BZ5',
-                    Status: 'INSYNC'
-                }
-            }],
-            IsTruncated: false,
-            MaxItems: '100'
-        };
+        var AWS_HOSTED_ZONES = null;
 
         before(function (done) {
-            var data = {
+            DOMAIN_0.config = {
                 provider: 'route53',
                 accessKeyId: 'unused',
                 secretAccessKey: 'unused'
+            };
+
+            AWS_HOSTED_ZONES = {
+                HostedZones: [{
+                    Id: '/hostedzone/Z34G16B38TNZ9L',
+                    Name: config.zoneName() + '.',
+                    CallerReference: '305AFD59-9D73-4502-B020-F4E6F889CB30',
+                    ResourceRecordSetCount: 2,
+                    ChangeInfo: {
+                        Id: '/change/CKRTFJA0ANHXB',
+                        Status: 'INSYNC'
+                    }
+                }, {
+                    Id: '/hostedzone/Z3OFC3B6E8YTA7',
+                    Name: 'cloudron.us.',
+                    CallerReference: '0B37F2DE-21A4-E678-BA32-3FC8AF0CF635',
+                    Config: {},
+                    ResourceRecordSetCount: 2,
+                    ChangeInfo: {
+                        Id: '/change/C2682N5HXP0BZ5',
+                        Status: 'INSYNC'
+                    }
+                }],
+                IsTruncated: false,
+                MaxItems: '100'
             };
 
             function mockery (queue) {
@@ -396,8 +400,8 @@ describe('dns provider', function () {
 
             function Route53Mock(cfg) {
                 expect(cfg).to.eql({
-                    accessKeyId: data.accessKeyId,
-                    secretAccessKey: data.secretAccessKey,
+                    accessKeyId: DOMAIN_0.config.accessKeyId,
+                    secretAccessKey: DOMAIN_0.config.secretAccessKey,
                     region: 'us-east-1'
                 });
             }
@@ -412,7 +416,7 @@ describe('dns provider', function () {
             AWS._originalRoute53 = AWS.Route53;
             AWS.Route53 = Route53Mock;
 
-            settings.setDnsConfig(data, config.fqdn(), config.zoneName(), done);
+            domains.update(DOMAIN_0.domain, DOMAIN_0.config, null, done);
         });
 
         after(function () {
@@ -430,7 +434,7 @@ describe('dns provider', function () {
                 }
             }]);
 
-            subdomains.upsert('test', 'A', [ '1.2.3.4' ], function (error, result) {
+            domains.upsertDNSRecords('test', DOMAIN_0.domain, 'A', [ '1.2.3.4' ], function (error, result) {
                 expect(error).to.eql(null);
                 expect(result).to.eql('/change/C2QLKQIWEI0BZF');
                 expect(awsAnswerQueue.length).to.eql(0);
@@ -449,7 +453,7 @@ describe('dns provider', function () {
                 }
             }]);
 
-            subdomains.upsert('test', 'A', [ '1.2.3.4' ], function (error, result) {
+            domains.upsertDNSRecords('test', DOMAIN_0.domain, 'A', [ '1.2.3.4' ], function (error, result) {
                 expect(error).to.eql(null);
                 expect(result).to.eql('/change/C2QLKQIWEI0BZF');
                 expect(awsAnswerQueue.length).to.eql(0);
@@ -468,7 +472,7 @@ describe('dns provider', function () {
                 }
             }]);
 
-            subdomains.upsert('', 'TXT', [ 'first', 'second', 'third' ], function (error, result) {
+            domains.upsertDNSRecords('', config.fqdn(), 'TXT', [ 'first', 'second', 'third' ], function (error, result) {
                 expect(error).to.eql(null);
                 expect(result).to.eql('/change/C2QLKQIWEI0BZF');
                 expect(awsAnswerQueue.length).to.eql(0);
@@ -489,7 +493,7 @@ describe('dns provider', function () {
                 }]
             }]);
 
-            subdomains.get('test', 'A', function (error, result) {
+            domains.getDNSRecords('test', DOMAIN_0.domain, 'A', function (error, result) {
                 expect(error).to.eql(null);
                 expect(result).to.be.an(Array);
                 expect(result.length).to.eql(1);
@@ -510,7 +514,7 @@ describe('dns provider', function () {
                 }
             }]);
 
-            subdomains.remove('test', 'A', ['1.2.3.4'], function (error) {
+            domains.removeDNSRecords('test', DOMAIN_0.domain, 'A', ['1.2.3.4'], function (error) {
                 expect(error).to.eql(null);
                 expect(awsAnswerQueue.length).to.eql(0);
 
@@ -525,10 +529,7 @@ describe('dns provider', function () {
         var _OriginalGCDNS;
 
         before(function (done) {
-            var domain = 'example.com';
-            config.setFqdn(domain);
-            config.setZoneName(domain);
-            var dnsConfig = {
+            DOMAIN_0.config = {
                 provider: 'gcdns',
                 projectId: 'my-dns-proj',
                 keyFilename: __dirname + '/syn-im-1ec6f9f870bf.json'
@@ -566,12 +567,12 @@ describe('dns provider', function () {
                 zone.deleteRecords = mockery(recordQueue || zoneQueue);
                 return zone;
             }
-            HOSTED_ZONES = [fakeZone(domain), fakeZone('cloudron.us')];
+            HOSTED_ZONES = [ fakeZone(DOMAIN_0.domain), fakeZone('cloudron.us') ];
 
             _OriginalGCDNS = GCDNS.prototype.getZones;
             GCDNS.prototype.getZones = mockery(zoneQueue);
 
-            settings.setDnsConfig(dnsConfig, config.fqdn(), config.zoneName(), done);
+            domains.update(DOMAIN_0.domain, DOMAIN_0.config, null, done);
         });
 
         after(function () {
@@ -583,7 +584,8 @@ describe('dns provider', function () {
             zoneQueue.push([null, HOSTED_ZONES]); // getZone
             zoneQueue.push([null, [ ]]); // getRecords
             zoneQueue.push([null, {id: '1'}]);
-            subdomains.upsert('test', 'A', [ '1.2.3.4' ], function (error, result) {
+
+            domains.upsertDNSRecords('test', DOMAIN_0.domain, 'A', [ '1.2.3.4' ], function (error, result) {
                 expect(error).to.eql(null);
                 expect(result).to.eql('1');
                 expect(zoneQueue.length).to.eql(0);
@@ -597,7 +599,7 @@ describe('dns provider', function () {
             zoneQueue.push([null, [GCDNS().zone('test').record('A', {'name': 'test', data:['5.6.7.8'], ttl: 1})]]);
             zoneQueue.push([null, {id: '2'}]);
 
-            subdomains.upsert('test', 'A', [ '1.2.3.4' ], function (error, result) {
+            domains.upsertDNSRecords('test', DOMAIN_0.domain, 'A', [ '1.2.3.4' ], function (error, result) {
                 expect(error).to.eql(null);
                 expect(result).to.eql('2');
                 expect(zoneQueue.length).to.eql(0);
@@ -611,7 +613,7 @@ describe('dns provider', function () {
             zoneQueue.push([null, [ ]]); // getRecords
             zoneQueue.push([null, {id: '3'}]);
 
-            subdomains.upsert('', 'TXT', [ 'first', 'second', 'third' ], function (error, result) {
+            domains.upsertDNSRecords('', config.fqdn(), 'TXT', [ 'first', 'second', 'third' ], function (error, result) {
                 expect(error).to.eql(null);
                 expect(result).to.eql('3');
                 expect(zoneQueue.length).to.eql(0);
@@ -624,7 +626,7 @@ describe('dns provider', function () {
             zoneQueue.push([null, HOSTED_ZONES]);
             zoneQueue.push([null, [GCDNS().zone('test').record('A', {'name': 'test', data:['1.2.3.4', '5.6.7.8'], ttl: 1})]]);
 
-            subdomains.get('test', 'A', function (error, result) {
+            domains.getDNSRecords('test', DOMAIN_0.domain, 'A', function (error, result) {
                 expect(error).to.eql(null);
                 expect(result).to.be.an(Array);
                 expect(result.length).to.eql(2);
@@ -640,7 +642,7 @@ describe('dns provider', function () {
             zoneQueue.push([null, [GCDNS().zone('test').record('A', {'name': 'test', data:['5.6.7.8'], ttl: 1})]]);
             zoneQueue.push([null, {id: '5'}]);
 
-            subdomains.remove('test', 'A', ['1.2.3.4'], function (error) {
+            domains.removeDNSRecords('test', DOMAIN_0.domain, 'A', ['1.2.3.4'], function (error) {
                 expect(error).to.eql(null);
                 expect(zoneQueue.length).to.eql(0);
 

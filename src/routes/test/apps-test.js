@@ -149,7 +149,7 @@ function startBox(done) {
     safe.fs.unlinkSync(paths.INFRA_VERSION_FILE);
     child_process.execSync('docker ps -qa | xargs --no-run-if-empty docker rm -f');
 
-    config.setFqdn('foobar.com');
+    config.setFqdn('example-apps-test.com');
     config.setZoneName('foobar.com');
 
     awsHostedZones = {
@@ -575,29 +575,25 @@ describe('App API', function () {
     });
 
     it('app install succeeds without password but developer token', function (done) {
-        settings.setDeveloperMode(true, function (error) {
-            expect(error).to.be(null);
+        superagent.post(SERVER_URL + '/api/v1/developer/login')
+                .send({ username: USERNAME, password: PASSWORD })
+                .end(function (error, result) {
+            expect(error).to.not.be.ok();
+            expect(result.statusCode).to.equal(200);
+            expect(new Date(result.body.expiresAt).toString()).to.not.be('Invalid Date');
+            expect(result.body.token).to.be.a('string');
 
-            superagent.post(SERVER_URL + '/api/v1/developer/login')
-                   .send({ username: USERNAME, password: PASSWORD })
-                   .end(function (error, result) {
-                expect(error).to.not.be.ok();
-                expect(result.statusCode).to.equal(200);
-                expect(new Date(result.body.expiresAt).toString()).to.not.be('Invalid Date');
-                expect(result.body.token).to.be.a('string');
+            // overwrite non dev token
+            token = result.body.token;
 
-                // overwrite non dev token
-                token = result.body.token;
-
-                superagent.post(SERVER_URL + '/api/v1/apps/install')
-                       .query({ access_token: token })
-                       .send({ manifest: APP_MANIFEST, location: APP_LOCATION+APP_LOCATION, portBindings: null, accessRestriction: null })
-                       .end(function (err, res) {
-                    expect(res.statusCode).to.equal(202);
-                    expect(res.body.id).to.be.a('string');
-                    APP_ID = res.body.id;
-                    done();
-                });
+            superagent.post(SERVER_URL + '/api/v1/apps/install')
+                    .query({ access_token: token })
+                    .send({ manifest: APP_MANIFEST, location: APP_LOCATION+APP_LOCATION, portBindings: null, accessRestriction: null })
+                    .end(function (err, res) {
+                expect(res.statusCode).to.equal(202);
+                expect(res.body.id).to.be.a('string');
+                APP_ID = res.body.id;
+                done();
             });
         });
     });

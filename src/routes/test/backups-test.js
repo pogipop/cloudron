@@ -24,7 +24,7 @@ function setup(done) {
     nock.cleanAll();
     config._reset();
     config.setVersion('1.2.3');
-    config.setFqdn('localhost');
+    config.setFqdn('example-backups-test.com');
 
     async.series([
         server.start.bind(server),
@@ -53,7 +53,7 @@ function setup(done) {
 
         function addApp(callback) {
             var manifest = { version: '0.0.1', manifestVersion: 1, dockerImage: 'foo', healthCheckPath: '/', httpPort: 3, title: 'ok', addons: { } };
-            appdb.add('appid', 'appStoreId', manifest, 'location', [ ] /* portBindings */, { }, callback);
+            appdb.add('appid', 'appStoreId', manifest, 'location', config.fqdn(), [ ] /* portBindings */, { }, callback);
         },
 
         function createSettings(callback) {
@@ -76,9 +76,6 @@ describe('Backups API', function () {
 
     before(setup);
 
-    after(function (done) {
-        done();
-    });
     after(cleanup);
 
     describe('create', function () {

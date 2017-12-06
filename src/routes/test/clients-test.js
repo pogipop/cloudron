@@ -1,6 +1,5 @@
 'use strict';
 
-/* jslint node:true */
 /* global it:false */
 /* global describe:false */
 /* global before:false */
@@ -22,7 +21,38 @@ var async = require('async'),
 var SERVER_URL = 'http://localhost:' + config.get('port');
 
 var USERNAME = 'superadmin', PASSWORD = 'Foobar?1337', EMAIL ='silly@me.com';
-var token = null; // authentication token
+var token = null;
+
+function setup(done) {
+    config._reset();
+    config.setFqdn('example-clients-test.com');
+    config.set('provider', 'caas');
+
+    async.series([
+        server.start,
+        database._clear,
+
+        function (callback) {
+            var scope1 = nock(config.apiServerOrigin()).get('/api/v1/boxes/' + config.fqdn() + '/setup/verify?setupToken=somesetuptoken').reply(200, {});
+            var scope2 = nock(config.apiServerOrigin()).post('/api/v1/boxes/' + config.fqdn() + '/setup/done?setupToken=somesetuptoken').reply(201, {});
+
+            superagent.post(SERVER_URL + '/api/v1/cloudron/activate')
+                   .query({ setupToken: 'somesetuptoken' })
+                   .send({ username: USERNAME, password: PASSWORD, email: EMAIL })
+                   .end(function (error, result) {
+                expect(result).to.be.ok();
+                expect(result.statusCode).to.equal(201);
+                expect(scope1.isDone()).to.be.ok();
+                expect(scope2.isDone()).to.be.ok();
+
+                // stash token for further use
+                token = result.body.token;
+
+                callback();
+            });
+        }
+    ], done);
+}
 
 function cleanup(done) {
     database._clear(function (error) {
@@ -34,170 +64,122 @@ function cleanup(done) {
 
 describe('OAuth Clients API', function () {
     describe('add', function () {
-        before(function (done) {
-            async.series([
-                server.start.bind(null),
-                database._clear.bind(null),
-
-                function (callback) {
-                    var scope1 = nock(config.apiServerOrigin()).get('/api/v1/boxes/' + config.fqdn() + '/setup/verify?setupToken=somesetuptoken').reply(200, {});
-                    var scope2 = nock(config.apiServerOrigin()).post('/api/v1/boxes/' + config.fqdn() + '/setup/done?setupToken=somesetuptoken').reply(201, {});
-
-                    superagent.post(SERVER_URL + '/api/v1/cloudron/activate')
-                           .query({ setupToken: 'somesetuptoken' })
-                           .send({ username: USERNAME, password: PASSWORD, email: EMAIL })
-                           .end(function (error, result) {
-                        expect(result).to.be.ok();
-                        expect(result.statusCode).to.equal(201);
-                        expect(scope1.isDone()).to.be.ok();
-                        expect(scope2.isDone()).to.be.ok();
-
-                        // stash token for further use
-                        token = result.body.token;
-
-                        callback();
-                    });
-                },
-            ], done);
-        });
-
+        before(setup),
         after(cleanup);
 
-        describe('without developer mode', function () {
-            before(function (done) {
-                settings.setDeveloperMode(false, done);
-            });
-
-            it('fails', function (done) {
-                superagent.post(SERVER_URL + '/api/v1/oauth/clients')
-                       .query({ access_token: token })
-                       .send({ appId: 'someApp', redirectURI: 'http://foobar.com', scope: 'profile' })
-                       .end(function (error, result) {
-                    expect(result.statusCode).to.equal(412);
-                    done();
-                });
+        it('fails without token', function (done) {
+            superagent.post(SERVER_URL + '/api/v1/oauth/clients')
+                    .send({ appId: 'someApp', redirectURI: 'http://foobar.com', scope: 'profile' })
+                    .end(function (error, result) {
+                expect(result.statusCode).to.equal(401);
+                done();
             });
         });
 
-        describe('with developer mode', function () {
-            before(function (done) {
-                settings.setDeveloperMode(true, done);
+        it('fails without appId', function (done) {
+            superagent.post(SERVER_URL + '/api/v1/oauth/clients')
+                    .query({ access_token: token })
+                    .send({ redirectURI: 'http://foobar.com', scope: 'profile' })
+                    .end(function (error, result) {
+                expect(result.statusCode).to.equal(400);
+                done();
             });
+        });
 
-            it('fails without token', function (done) {
-                superagent.post(SERVER_URL + '/api/v1/oauth/clients')
-                       .send({ appId: 'someApp', redirectURI: 'http://foobar.com', scope: 'profile' })
-                       .end(function (error, result) {
-                    expect(result.statusCode).to.equal(401);
-                    done();
-                });
+        it('fails with empty appId', function (done) {
+            superagent.post(SERVER_URL + '/api/v1/oauth/clients')
+                    .query({ access_token: token })
+                    .send({ appId: '', redirectURI: 'http://foobar.com', scope: 'profile' })
+                    .end(function (error, result) {
+                expect(result.statusCode).to.equal(400);
+                done();
             });
+        });
 
-            it('fails without appId', function (done) {
-                superagent.post(SERVER_URL + '/api/v1/oauth/clients')
-                       .query({ access_token: token })
-                       .send({ redirectURI: 'http://foobar.com', scope: 'profile' })
-                       .end(function (error, result) {
-                    expect(result.statusCode).to.equal(400);
-                    done();
-                });
+        it('fails without scope', function (done) {
+            superagent.post(SERVER_URL + '/api/v1/oauth/clients')
+                    .query({ access_token: token })
+                    .send({ appId: 'someApp', redirectURI: 'http://foobar.com' })
+                    .end(function (error, result) {
+                expect(result.statusCode).to.equal(400);
+                done();
             });
+        });
 
-            it('fails with empty appId', function (done) {
-                superagent.post(SERVER_URL + '/api/v1/oauth/clients')
-                       .query({ access_token: token })
-                       .send({ appId: '', redirectURI: 'http://foobar.com', scope: 'profile' })
-                       .end(function (error, result) {
-                    expect(result.statusCode).to.equal(400);
-                    done();
-                });
+        it('fails with empty scope', function (done) {
+            superagent.post(SERVER_URL + '/api/v1/oauth/clients')
+                    .query({ access_token: token })
+                    .send({ appId: 'someApp', redirectURI: 'http://foobar.com', scope: '' })
+                    .end(function (error, result) {
+                expect(result.statusCode).to.equal(400);
+                done();
             });
+        });
 
-            it('fails without scope', function (done) {
-                superagent.post(SERVER_URL + '/api/v1/oauth/clients')
-                       .query({ access_token: token })
-                       .send({ appId: 'someApp', redirectURI: 'http://foobar.com' })
-                       .end(function (error, result) {
-                    expect(result.statusCode).to.equal(400);
-                    done();
-                });
+        it('fails without redirectURI', function (done) {
+            superagent.post(SERVER_URL + '/api/v1/oauth/clients')
+                    .query({ access_token: token })
+                    .send({ appId: 'someApp', scope: 'profile' })
+                    .end(function (error, result) {
+                expect(result.statusCode).to.equal(400);
+                done();
             });
+        });
 
-            it('fails with empty scope', function (done) {
-                superagent.post(SERVER_URL + '/api/v1/oauth/clients')
-                       .query({ access_token: token })
-                       .send({ appId: 'someApp', redirectURI: 'http://foobar.com', scope: '' })
-                       .end(function (error, result) {
-                    expect(result.statusCode).to.equal(400);
-                    done();
-                });
+        it('fails with empty redirectURI', function (done) {
+            superagent.post(SERVER_URL + '/api/v1/oauth/clients')
+                    .query({ access_token: token })
+                    .send({ appId: 'someApp', redirectURI: '', scope: 'profile' })
+                    .end(function (error, result) {
+                expect(result.statusCode).to.equal(400);
+                done();
             });
+        });
 
-            it('fails without redirectURI', function (done) {
-                superagent.post(SERVER_URL + '/api/v1/oauth/clients')
-                       .query({ access_token: token })
-                       .send({ appId: 'someApp', scope: 'profile' })
-                       .end(function (error, result) {
-                    expect(result.statusCode).to.equal(400);
-                    done();
-                });
+        it('fails with malformed redirectURI', function (done) {
+            superagent.post(SERVER_URL + '/api/v1/oauth/clients')
+                    .query({ access_token: token })
+                    .send({ appId: 'someApp', redirectURI: 'foobar', scope: 'profile' })
+                    .end(function (error, result) {
+                expect(result.statusCode).to.equal(400);
+                done();
             });
+        });
 
-            it('fails with empty redirectURI', function (done) {
-                superagent.post(SERVER_URL + '/api/v1/oauth/clients')
-                       .query({ access_token: token })
-                       .send({ appId: 'someApp', redirectURI: '', scope: 'profile' })
-                       .end(function (error, result) {
-                    expect(result.statusCode).to.equal(400);
-                    done();
-                });
+        it('fails with invalid name', function (done) {
+            superagent.post(SERVER_URL + '/api/v1/oauth/clients')
+                    .query({ access_token: token })
+                    .send({ appId: '$"$%^45asdfasdfadf.adf.', redirectURI: 'http://foobar.com', scope: 'profile' })
+                    .end(function (error, result) {
+                expect(result.statusCode).to.equal(400);
+                done();
             });
+        });
 
-            it('fails with malformed redirectURI', function (done) {
-                superagent.post(SERVER_URL + '/api/v1/oauth/clients')
-                       .query({ access_token: token })
-                       .send({ appId: 'someApp', redirectURI: 'foobar', scope: 'profile' })
-                       .end(function (error, result) {
-                    expect(result.statusCode).to.equal(400);
-                    done();
-                });
+        it('succeeds with dash', function (done) {
+            superagent.post(SERVER_URL + '/api/v1/oauth/clients')
+                    .query({ access_token: token })
+                    .send({ appId: 'fo-1234-bar', redirectURI: 'http://foobar.com', scope: 'profile' })
+                    .end(function (error, result) {
+                expect(result.statusCode).to.equal(201);
+                done();
             });
+        });
 
-            it('fails with invalid name', function (done) {
-                superagent.post(SERVER_URL + '/api/v1/oauth/clients')
-                       .query({ access_token: token })
-                       .send({ appId: '$"$%^45asdfasdfadf.adf.', redirectURI: 'http://foobar.com', scope: 'profile' })
-                       .end(function (error, result) {
-                    expect(result.statusCode).to.equal(400);
-                    done();
-                });
-            });
+        it('succeeds', function (done) {
+            superagent.post(SERVER_URL + '/api/v1/oauth/clients')
+                    .query({ access_token: token })
+                    .send({ appId: 'someApp', redirectURI: 'http://foobar.com', scope: 'profile' })
+                    .end(function (error, result) {
+                expect(result.statusCode).to.equal(201);
+                expect(result.body.id).to.be.a('string');
+                expect(result.body.appId).to.be.a('string');
+                expect(result.body.redirectURI).to.be.a('string');
+                expect(result.body.clientSecret).to.be.a('string');
+                expect(result.body.scope).to.be.a('string');
+                expect(result.body.type).to.equal(clients.TYPE_EXTERNAL);
 
-            it('succeeds with dash', function (done) {
-                superagent.post(SERVER_URL + '/api/v1/oauth/clients')
-                       .query({ access_token: token })
-                       .send({ appId: 'fo-1234-bar', redirectURI: 'http://foobar.com', scope: 'profile' })
-                       .end(function (error, result) {
-                    expect(result.statusCode).to.equal(201);
-                    done();
-                });
-            });
-
-            it('succeeds', function (done) {
-                superagent.post(SERVER_URL + '/api/v1/oauth/clients')
-                       .query({ access_token: token })
-                       .send({ appId: 'someApp', redirectURI: 'http://foobar.com', scope: 'profile' })
-                       .end(function (error, result) {
-                    expect(result.statusCode).to.equal(201);
-                    expect(result.body.id).to.be.a('string');
-                    expect(result.body.appId).to.be.a('string');
-                    expect(result.body.redirectURI).to.be.a('string');
-                    expect(result.body.clientSecret).to.be.a('string');
-                    expect(result.body.scope).to.be.a('string');
-                    expect(result.body.type).to.equal(clients.TYPE_EXTERNAL);
-
-                    done();
-                });
+                done();
             });
         });
     });
@@ -212,29 +194,7 @@ describe('OAuth Clients API', function () {
 
         before(function (done) {
             async.series([
-                server.start.bind(null),
-                database._clear.bind(null),
-
-                function (callback) {
-                    var scope1 = nock(config.apiServerOrigin()).get('/api/v1/boxes/' + config.fqdn() + '/setup/verify?setupToken=somesetuptoken').reply(200, {});
-                    var scope2 = nock(config.apiServerOrigin()).post('/api/v1/boxes/' + config.fqdn() + '/setup/done?setupToken=somesetuptoken').reply(201, {});
-
-                    superagent.post(SERVER_URL + '/api/v1/cloudron/activate')
-                           .query({ setupToken: 'somesetuptoken' })
-                           .send({ username: USERNAME, password: PASSWORD, email: EMAIL })
-                           .end(function (error, result) {
-                        expect(result).to.be.ok();
-                        expect(scope1.isDone()).to.be.ok();
-                        expect(scope2.isDone()).to.be.ok();
-
-                        // stash token for further use
-                        token = result.body.token;
-
-                        callback();
-                    });
-                },
-
-                settings.setDeveloperMode.bind(null, true),
+                setup,
 
                 function (callback) {
                     superagent.post(SERVER_URL + '/api/v1/oauth/clients')
@@ -253,52 +213,31 @@ describe('OAuth Clients API', function () {
 
         after(cleanup);
 
-        describe('without developer mode', function () {
-            before(function (done) {
-                settings.setDeveloperMode(false, done);
-            });
-
-            it('fails', function (done) {
-                superagent.get(SERVER_URL + '/api/v1/oauth/clients/' + CLIENT_0.id)
-                       .query({ access_token: token })
-                       .end(function (error, result) {
-                    expect(result.statusCode).to.equal(412);
-                    done();
-                });
+        it('fails without token', function (done) {
+            superagent.get(SERVER_URL + '/api/v1/oauth/clients/' + CLIENT_0.id)
+                    .end(function (error, result) {
+                expect(result.statusCode).to.equal(401);
+                done();
             });
         });
 
-        describe('with developer mode', function () {
-            before(function (done) {
-                settings.setDeveloperMode(true, done);
+
+        it('fails with unknown id', function (done) {
+            superagent.get(SERVER_URL + '/api/v1/oauth/clients/' + CLIENT_0.id.toUpperCase())
+                    .query({ access_token: token })
+                    .end(function (error, result) {
+                expect(result.statusCode).to.equal(404);
+                done();
             });
+        });
 
-            it('fails without token', function (done) {
-                superagent.get(SERVER_URL + '/api/v1/oauth/clients/' + CLIENT_0.id)
-                       .end(function (error, result) {
-                    expect(result.statusCode).to.equal(401);
-                    done();
-                });
-            });
-
-
-            it('fails with unknown id', function (done) {
-                superagent.get(SERVER_URL + '/api/v1/oauth/clients/' + CLIENT_0.id.toUpperCase())
-                       .query({ access_token: token })
-                       .end(function (error, result) {
-                    expect(result.statusCode).to.equal(404);
-                    done();
-                });
-            });
-
-            it('succeeds', function (done) {
-                superagent.get(SERVER_URL + '/api/v1/oauth/clients/' + CLIENT_0.id)
-                       .query({ access_token: token })
-                       .end(function (error, result) {
-                    expect(result.statusCode).to.equal(200);
-                    expect(result.body).to.eql(CLIENT_0);
-                    done();
-                });
+        it('succeeds', function (done) {
+            superagent.get(SERVER_URL + '/api/v1/oauth/clients/' + CLIENT_0.id)
+                    .query({ access_token: token })
+                    .end(function (error, result) {
+                expect(result.statusCode).to.equal(200);
+                expect(result.body).to.eql(CLIENT_0);
+                done();
             });
         });
     });
@@ -321,29 +260,7 @@ describe('OAuth Clients API', function () {
 
         before(function (done) {
             async.series([
-                server.start.bind(null),
-                database._clear.bind(null),
-
-                function (callback) {
-                    var scope1 = nock(config.apiServerOrigin()).get('/api/v1/boxes/' + config.fqdn() + '/setup/verify?setupToken=somesetuptoken').reply(200, {});
-                    var scope2 = nock(config.apiServerOrigin()).post('/api/v1/boxes/' + config.fqdn() + '/setup/done?setupToken=somesetuptoken').reply(201, {});
-
-                    superagent.post(SERVER_URL + '/api/v1/cloudron/activate')
-                           .query({ setupToken: 'somesetuptoken' })
-                           .send({ username: USERNAME, password: PASSWORD, email: EMAIL })
-                           .end(function (error, result) {
-                        expect(result).to.be.ok();
-                        expect(scope1.isDone()).to.be.ok();
-                        expect(scope2.isDone()).to.be.ok();
-
-                        // stash token for further use
-                        token = result.body.token;
-
-                        callback();
-                    });
-                },
-
-                settings.setDeveloperMode.bind(null, true),
+                setup,
 
                 function (callback) {
                     superagent.post(SERVER_URL + '/api/v1/oauth/clients')
@@ -362,94 +279,73 @@ describe('OAuth Clients API', function () {
 
         after(cleanup);
 
-        describe('without developer mode', function () {
-            before(function (done) {
-                settings.setDeveloperMode(false, done);
+        it('fails without token', function (done) {
+            superagent.del(SERVER_URL + '/api/v1/oauth/clients/' + CLIENT_0.id)
+                    .end(function (error, result) {
+                expect(result.statusCode).to.equal(401);
+                done();
             });
+        });
 
-            it('fails', function (done) {
-                superagent.del(SERVER_URL + '/api/v1/oauth/clients/' + CLIENT_0.id)
-                       .query({ access_token: token })
-                       .end(function (error, result) {
-                    expect(result.statusCode).to.equal(412);
+
+        it('fails with unknown id', function (done) {
+            superagent.del(SERVER_URL + '/api/v1/oauth/clients/' + CLIENT_0.id.toUpperCase())
+                    .query({ access_token: token })
+                    .end(function (error, result) {
+                expect(result.statusCode).to.equal(404);
+                done();
+            });
+        });
+
+        it('succeeds', function (done) {
+            superagent.del(SERVER_URL + '/api/v1/oauth/clients/' + CLIENT_0.id)
+                    .query({ access_token: token })
+                    .end(function (error, result) {
+                expect(result.statusCode).to.equal(204);
+
+                superagent.get(SERVER_URL + '/api/v1/oauth/clients/' + CLIENT_0.id)
+                        .query({ access_token: token })
+                        .end(function (error, result) {
+                    expect(result.statusCode).to.equal(404);
+
                     done();
                 });
             });
         });
 
-        describe('with developer mode', function () {
-            before(function (done) {
-                settings.setDeveloperMode(true, done);
-            });
+        it('fails for cid-webadmin', function (done) {
+            superagent.del(SERVER_URL + '/api/v1/oauth/clients/cid-webadmin')
+                    .query({ access_token: token })
+                    .end(function (error, result) {
+                expect(result.statusCode).to.equal(405);
 
-            it('fails without token', function (done) {
-                superagent.del(SERVER_URL + '/api/v1/oauth/clients/' + CLIENT_0.id)
-                       .end(function (error, result) {
-                    expect(result.statusCode).to.equal(401);
+                superagent.get(SERVER_URL + '/api/v1/oauth/clients/cid-webadmin')
+                        .query({ access_token: token })
+                        .end(function (error, result) {
+                    expect(result.statusCode).to.equal(200);
+
                     done();
                 });
             });
+        });
 
+        it('fails for addon auth client', function (done) {
+            clients.add(CLIENT_1.appId, CLIENT_1.type, CLIENT_1.redirectURI, CLIENT_1.scope, function (error, result) {
+                expect(error).to.equal(null);
 
-            it('fails with unknown id', function (done) {
-                superagent.del(SERVER_URL + '/api/v1/oauth/clients/' + CLIENT_0.id.toUpperCase())
-                       .query({ access_token: token })
-                       .end(function (error, result) {
-                    expect(result.statusCode).to.equal(404);
-                    done();
-                });
-            });
+                CLIENT_1.id = result.id;
 
-            it('succeeds', function (done) {
-                superagent.del(SERVER_URL + '/api/v1/oauth/clients/' + CLIENT_0.id)
-                       .query({ access_token: token })
-                       .end(function (error, result) {
-                    expect(result.statusCode).to.equal(204);
-
-                    superagent.get(SERVER_URL + '/api/v1/oauth/clients/' + CLIENT_0.id)
-                           .query({ access_token: token })
-                           .end(function (error, result) {
-                        expect(result.statusCode).to.equal(404);
-
-                        done();
-                   });
-                });
-            });
-
-            it('fails for cid-webadmin', function (done) {
-                superagent.del(SERVER_URL + '/api/v1/oauth/clients/cid-webadmin')
-                       .query({ access_token: token })
-                       .end(function (error, result) {
+                superagent.del(SERVER_URL + '/api/v1/oauth/clients/' + CLIENT_1.id)
+                        .query({ access_token: token })
+                        .end(function (error, result) {
                     expect(result.statusCode).to.equal(405);
 
-                    superagent.get(SERVER_URL + '/api/v1/oauth/clients/cid-webadmin')
-                           .query({ access_token: token })
-                           .end(function (error, result) {
+                    superagent.get(SERVER_URL + '/api/v1/oauth/clients/' + CLIENT_1.id)
+                            .query({ access_token: token })
+                            .end(function (error, result) {
                         expect(result.statusCode).to.equal(200);
 
                         done();
-                   });
-                });
-            });
-
-            it('fails for addon auth client', function (done) {
-                clients.add(CLIENT_1.appId, CLIENT_1.type, CLIENT_1.redirectURI, CLIENT_1.scope, function (error, result) {
-                    expect(error).to.equal(null);
-
-                    CLIENT_1.id = result.id;
-
-                    superagent.del(SERVER_URL + '/api/v1/oauth/clients/' + CLIENT_1.id)
-                           .query({ access_token: token })
-                           .end(function (error, result) {
-                        expect(result.statusCode).to.equal(405);
-
-                        superagent.get(SERVER_URL + '/api/v1/oauth/clients/' + CLIENT_1.id)
-                               .query({ access_token: token })
-                               .end(function (error, result) {
-                            expect(result.statusCode).to.equal(200);
-
-                            done();
-                       });
                     });
                 });
             });
@@ -476,51 +372,27 @@ describe('Clients', function () {
         next();
     };
 
-    function setup(done) {
+    function setup2(done) {
         async.series([
-            server.start.bind(server),
-            database._clear.bind(null),
+            setup,
+
             function (callback) {
-                var scope1 = nock(config.apiServerOrigin()).get('/api/v1/boxes/' + config.fqdn() + '/setup/verify?setupToken=somesetuptoken').reply(200, {});
-                var scope2 = nock(config.apiServerOrigin()).post('/api/v1/boxes/' + config.fqdn() + '/setup/done?setupToken=somesetuptoken').reply(201, {});
-
-                superagent.post(SERVER_URL + '/api/v1/cloudron/activate')
-                       .query({ setupToken: 'somesetuptoken' })
-                       .send({ username: USER_0.username, password: USER_0.password, email: USER_0.email })
-                       .end(function (error, result) {
+                superagent.get(SERVER_URL + '/api/v1/profile')
+                        .query({ access_token: token })
+                        .end(function (error, result) {
                     expect(result).to.be.ok();
-                    expect(result.statusCode).to.eql(201);
-                    expect(scope1.isDone()).to.be.ok();
-                    expect(scope2.isDone()).to.be.ok();
+                    expect(result.statusCode).to.eql(200);
 
-                    // stash for further use
-                    token = result.body.token;
+                    USER_0.id = result.body.id;
 
-                    superagent.get(SERVER_URL + '/api/v1/profile')
-                            .query({ access_token: token })
-                            .end(function (error, result) {
-                        expect(result).to.be.ok();
-                        expect(result.statusCode).to.eql(200);
-
-                        USER_0.id = result.body.id;
-
-                        callback();
-                    });
+                    callback();
                 });
             }
         ], done);
     }
 
-    function cleanup(done) {
-        database._clear(function (error) {
-            expect(error).to.not.be.ok();
-
-            server.stop(done);
-        });
-    }
-
     describe('get', function () {
-        before(setup);
+        before(setup2);
         after(cleanup);
 
         it('fails due to missing token', function (done) {
@@ -563,7 +435,7 @@ describe('Clients', function () {
     });
 
     describe('get tokens by client', function () {
-        before(setup);
+        before(setup2);
         after(cleanup);
 
         it('fails due to missing token', function (done) {
@@ -616,7 +488,7 @@ describe('Clients', function () {
     });
 
     describe('delete tokens by client', function () {
-        before(setup);
+        before(setup2);
         after(cleanup);
 
         it('fails due to missing token', function (done) {

@@ -55,9 +55,9 @@ app.config(['$routeProvider', function ($routeProvider) {
     }).when('/debug', {
         controller: 'DebugController',
         templateUrl: 'views/debug.html'
-    }).when('/certs', {
-        controller: 'CertsController',
-        templateUrl: 'views/certs.html'
+    }).when('/domains', {
+        controller: 'DomainsController',
+        templateUrl: 'views/domains.html'
     }).when('/email', {
         controller: 'EmailController',
         templateUrl: 'views/email.html'

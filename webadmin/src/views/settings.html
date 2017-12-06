@@ -91,7 +91,7 @@
                     <fieldset>
                         <input type="password" style="display: none;">
                         <div class="form-group" ng-class="{ 'has-error': (!planChangeForm.password.$dirty && planChange.error.password) || (planChangeForm.password.$dirty && planChangeForm.password.$invalid) }">
-                            <label class="control-label" for="inputDeveloperModeChangePassword">Give your password to verify that you are performing that action</label>
+                            <label class="control-label">Give your password to verify that you are performing that action</label>
                             <div class="control-label" ng-show="(!planChangeForm.password.$dirty && planChange.error.password) || (planChangeForm.password.$dirty && planChangeForm.password.$invalid)">
                                 <small ng-show=" planChangeForm.password.$dirty && planChangeForm.password.$invalid">A password is required</small>
                                 <small ng-show="!planChangeForm.password.$dirty && planChange.error.password">Wrong password</small>
@@ -125,7 +125,7 @@
                         <p class="has-error text-center" ng-show="configureBackup.error">{{ configureBackup.error.generic }}</p>
 
                         <div class="form-group">
-                            <label class="control-label" for="storageProviderProvider">Storage provider <sup><a ng-href="{{ config.webServerOrigin }}/references/selfhosting/#backups" class="help" target="_blank"><i class="fa fa-question-circle"></i></a></sup></label>
+                            <label class="control-label" for="storageProviderProvider">Storage provider <sup><a ng-href="{{ config.webServerOrigin }}/documentation/backups/" class="help" target="_blank"><i class="fa fa-question-circle"></i></a></sup></label>
                             <select class="form-control" id="storageProviderProvider" ng-model="configureBackup.provider" ng-options="a.value as a.name for a in storageProvider" ng-change=configureBackup.clearForm()></select>
                         </div>
 
@@ -181,6 +181,11 @@
                         <div class="form-group" ng-class="{ 'has-error': configureBackup.error.region }" ng-show="configureBackup.provider === 's3'">
                             <label class="control-label" for="inputConfigureBackupRegion">Region</label>
                             <select class="form-control" name="region" id="inputConfigureBackupRegion" ng-model="configureBackup.region" ng-options="a.value as a.name for a in s3Regions" ng-disabled="configureBackup.busy" ng-required="configureBackup.provider === 's3'"></select>
+                        </div>
+
+                        <div class="form-group" ng-class="{ 'has-error': configureBackup.error.region }" ng-show="configureBackup.provider === 'digitalocean-spaces'">
+                            <label class="control-label" for="inputConfigureBackupRegion">Region</label>
+                            <select class="form-control" name="region" id="inputConfigureBackupRegion" ng-model="configureBackup.endpoint" ng-options="a.value as a.name for a in doSpacesRegions" ng-disabled="configureBackup.busy" ng-required="configureBackup.provider === 'digitalocean-spaces'"></select>
                         </div>
 
                         <div class="form-group" ng-class="{ 'has-error': configureBackup.error.accessKeyId }" ng-show="s3like(configureBackup.provider)">
@@ -403,7 +408,7 @@
           </div>
       </div>
 
-      <div class="row" ng-show="backupConfig.provider !== 'caas'">
+      <div class="row">
           <br/>
           <div class="col-md-12">
               <div ng-show="createBackup.busy" class="progress progress-striped active animateMe">
@@ -412,7 +417,7 @@
           </div>
       </div>
 
-      <div class="row" ng-show="backupConfig.provider !== 'caas'">
+      <div class="row">
         <div class="col-md-11" ng-show="createBackup.busy">
             <p class="text-muted status" style="text-overflow: ellipsis; white-space: nowrap; overflow: hidden">
                 {{ createBackup.detail || 'Syncing ...' }}
@@ -420,14 +425,14 @@
         </div>
       </div>
 
-      <div class="row" ng-show="backupConfig.provider !== 'caas'">
+      <div class="row">
           <div class="col-md-6">
               <p ng-show="createBackup.busy">{{ createBackup.message }}</p>
               <p ng-hide="createBackup.busy">
                 <div class="has-error" ng-show="createBackup.percent === 100 && createBackup.result">{{ createBackup.result }}</div>
               </p>
           </div>
-          <div class="col-md-6 text-right">
+          <div class="col-md-6 text-right" ng-show="backupConfig.provider !== 'caas'">
               <button class="btn btn-outline btn-primary pull-right" ng-click="configureBackup.show()" ng-disabled="createBackup.busy">Configure</button>
 
               <button class="btn btn-outline btn-primary" ng-click="createBackup.doCreateBackup()" ng-disabled="createBackup.busy" style="margin-right: 10px">Backup now</button>

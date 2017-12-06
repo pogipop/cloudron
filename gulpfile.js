@@ -50,7 +50,7 @@ if (argv.help || argv.h) {
     process.exit(1);
 }
 
-gulp.task('js', ['js-index', 'js-setup', 'js-setupdns', 'js-update'], function () {});
+gulp.task('js', ['js-index', 'js-setup', 'js-setupdns', 'js-restore', 'js-update'], function () {});
 
 var oauth = {
     clientId: argv.clientId || 'cid-webadmin',
@@ -122,6 +122,23 @@ gulp.task('js-setupdns', function () {
         .pipe(gulp.dest('webadmin/dist/js'));
 });
 
+gulp.task('js-restore', function () {
+    // needs special treatment for error handling
+    var uglifyer = uglify();
+    uglifyer.on('error', function (error) {
+        console.error(error);
+    });
+
+    gulp.src(['webadmin/src/js/restore.js', 'webadmin/src/js/client.js'])
+        .pipe(ejs({ oauth: oauth }, { ext: '.js' }))
+        .pipe(sourcemaps.init())
+        .pipe(concat('restore.js', { newLine: ';' }))
+        .pipe(uglifyer)
+        .pipe(sourcemaps.write())
+        .pipe(gulp.dest('webadmin/dist/js'));
+});
+
+
 gulp.task('js-update', function () {
     // needs special treatment for error handling
     var uglifyer = uglify();
@@ -191,6 +208,7 @@ gulp.task('watch', ['default'], function () {
     gulp.watch(['webadmin/src/js/update.js'], ['js-update']);
     gulp.watch(['webadmin/src/js/setup.js', 'webadmin/src/js/client.js'], ['js-setup']);
     gulp.watch(['webadmin/src/js/setupdns.js', 'webadmin/src/js/client.js'], ['js-setupdns']);
+    gulp.watch(['webadmin/src/js/restore.js', 'webadmin/src/js/client.js'], ['js-restore']);
     gulp.watch(['webadmin/src/js/index.js', 'webadmin/src/js/client.js', 'webadmin/src/js/appstore.js', 'webadmin/src/js/main.js', 'webadmin/src/views/*.js'], ['js-index']);
     gulp.watch(['webadmin/src/3rdparty/**/*'], ['3rdparty']);
 });

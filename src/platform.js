@@ -13,9 +13,11 @@ var apps = require('./apps.js'),
     config = require('./config.js'),
     certificates = require('./certificates.js'),
     debug = require('debug')('box:platform'),
+    domains = require('./domains.js'),
     fs = require('fs'),
     hat = require('hat'),
     infra = require('./infra_version.js'),
+    locker = require('./locker.js'),
     nginx = require('./nginx.js'),
     os = require('os'),
     paths = require('./paths.js'),
@@ -23,7 +25,6 @@ var apps = require('./apps.js'),
     semver = require('semver'),
     settings = require('./settings.js'),
     shell = require('./shell.js'),
-    subdomains = require('./subdomains.js'),
     taskmanager = require('./taskmanager.js'),
     user = require('./user.js'),
     util = require('util'),
@@ -63,6 +64,9 @@ function start(callback) {
 
     debug('Updating infrastructure from %s to %s', existingInfra.version, infra.version);
 
+    var error = locker.lock(locker.OP_PLATFORM_START);
+    if (error) return callback(error);
+
     async.series([
         stopContainers.bind(null, existingInfra),
         startAddons.bind(null, existingInfra),
@@ -71,6 +75,8 @@ function start(callback) {
         fs.writeFile.bind(fs, paths.INFRA_VERSION_FILE, JSON.stringify(infra))
     ], function (error) {
         if (error) return callback(error);
+
+        locker.unlock(locker.OP_PLATFORM_START);
 
         emitPlatformReady();
 
@@ -328,7 +334,7 @@ function startMail(callback) {
                 ];
 
                 async.mapSeries(records, function (record, iteratorCallback) {
-                    subdomains.upsert(record.subdomain, record.type, record.values, iteratorCallback);
+                    domains.upsertDNSRecords(record.subdomain, config.fqdn(), record.type, record.values, iteratorCallback);
                 }, NOOP_CALLBACK); // do not crash if DNS creds do not work in startup sequence
 
                 callback();

@@ -24,6 +24,7 @@ exports = module.exports = {
 
 var assert = require('assert'),
     constants = require('./constants.js'),
+    config = require('./config.js'),
     database = require('./database.js'),
     DatabaseError = require('./databaseerror'),
     mailboxdb = require('./mailboxdb.js');
@@ -88,10 +89,8 @@ function add(id, name, callback) {
     assert.strictEqual(typeof name, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    var data = [ id, name ];
-
     var queries = [];
-    queries.push({ query: 'INSERT INTO mailboxes (name, ownerId, ownerType) VALUES (?, ?, ?)', args: [ name, id, mailboxdb.TYPE_GROUP ] });
+    queries.push({ query: 'INSERT INTO mailboxes (name, domain, ownerId, ownerType) VALUES (?, ?, ?, ?)', args: [ name, config.fqdn(), id, mailboxdb.TYPE_GROUP ] });
     queries.push({ query: 'INSERT INTO groups (id, name) VALUES (?, ?)', args: [ id, name ] });
 
     database.transaction(queries, function (error, result) {

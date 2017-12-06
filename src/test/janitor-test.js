@@ -55,7 +55,10 @@ describe('janitor', function () {
     });
 
     after(function (done) {
-        database._clear(done);
+        async.series([
+            database._clear,
+            database.uninitialize
+        ], done);
     });
 
     it('can cleanupTokens', function (done) {

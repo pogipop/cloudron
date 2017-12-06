@@ -92,14 +92,17 @@ function createBackup(callback) {
 
 describe('backups', function () {
     before(function (done) {
+        const BACKUP_DIR = path.join(os.tmpdir(), 'cloudron-backup-test');
+
         async.series([
+            mkdirp.bind(null, BACKUP_DIR),
             database.initialize,
             database._clear,
             settings.initialize,
             settings.setBackupConfig.bind(null, {
                 provider: 'filesystem',
                 key: 'enckey',
-                backupFolder: '/var/backups',
+                backupFolder: BACKUP_DIR,
                 retentionSecs: 1,
                 format: 'tgz'
             })
@@ -121,7 +124,7 @@ describe('backups', function () {
             version: '1.0.0',
             type: backupdb.BACKUP_TYPE_BOX,
             dependsOn: [ 'backup-app-00', 'backup-app-01' ],
-            restoreConfig: null,
+            manifest: null,
             format: 'tgz'
         };
 
@@ -130,7 +133,7 @@ describe('backups', function () {
             version: '1.0.0',
             type: backupdb.BACKUP_TYPE_APP,
             dependsOn: [],
-            restoreConfig: null,
+            manifest: null,
             format: 'tgz'
         };
 
@@ -139,7 +142,7 @@ describe('backups', function () {
             version: '1.0.0',
             type: backupdb.BACKUP_TYPE_APP,
             dependsOn: [],
-            restoreConfig: null,
+            manifest: null,
             format: 'tgz'
         };
 
@@ -148,7 +151,7 @@ describe('backups', function () {
             version: '1.0.0',
             type: backupdb.BACKUP_TYPE_BOX,
             dependsOn: [ 'backup-app-10', 'backup-app-11' ],
-            restoreConfig: null,
+            manifest: null,
             format: 'tgz'
         };
 
@@ -157,7 +160,7 @@ describe('backups', function () {
             version: '1.0.0',
             type: backupdb.BACKUP_TYPE_APP,
             dependsOn: [],
-            restoreConfig: null,
+            manifest: null,
             format: 'tgz'
         };
 
@@ -166,7 +169,7 @@ describe('backups', function () {
             version: '1.0.0',
             type: backupdb.BACKUP_TYPE_APP,
             dependsOn: [],
-            restoreConfig: null,
+            manifest: null,
             format: 'tgz'
         };
 

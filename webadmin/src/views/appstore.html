@@ -21,8 +21,16 @@
                             <label class="control-label" for="appInstallLocationInput">Location {{ appInstall.error.location }} </label>
                             <div class="input-group form-inline">
                                 <input type="text" class="form-control" ng-model="appInstall.location" id="appInstallLocationInput" name="location" placeholder="Leave empty to use bare domain" autofocus>
-                                <div class="input-group-addon">
-                                    {{ !appInstall.location ? '' : (config.isCustomDomain ? '.' : '-') }}{{ config.fqdn }}
+                                <div class="input-group-btn">
+                                    <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+                                        {{ (config.isCustomDomain ? '.' : '-') + appInstall.domain }}
+                                        <span class="caret"></span>
+                                    </button>
+                                    <ul class="dropdown-menu dropdown-menu-right" role="menu">
+                                        <li ng-repeat="domain in domains">
+                                            <a href="" ng-click="appInstall.domain = domain">{{ domain }}</a>
+                                        </li>
+                                    </ul>
                                 </div>
                             </div>
                         </div>
@@ -278,7 +286,6 @@
         <a href="" class="appstore-category-link" ng-click="showCategory($event);" ng-class="{'category-active': category === 'project' }" category="project"><i class="fa fa-line-chart"></i> Project Management</a>
         <a href="" class="appstore-category-link" ng-click="showCategory($event);" ng-class="{'category-active': category === 'wiki' }" category="wiki"><i class="fa fa-wikipedia-w"></i> Wiki</a>
         <br/>
-        <!-- <a href="" class="appstore-category-link" ng-click="showCategory($event);" ng-class="{'category-active': category === 'testing' }" category="testing" ng-show="config.developerMode">Testing</a> -->
         <br/>
         <br/>
         <br/>

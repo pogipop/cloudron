@@ -16,6 +16,7 @@ var appdb = require('./appdb.js'),
     assert = require('assert'),
     async = require('async'),
     child_process = require('child_process'),
+    config = require('./config.js'),
     debug = require('debug')('box:taskmanager'),
     locker = require('./locker.js'),
     sendFailureLogs = require('./logcollector.js').sendFailureLogs,
@@ -47,7 +48,7 @@ function resumeTasks(callback) {
 
             if (app.installationState === appdb.ISTATE_ERROR) return;
 
-            debug('Creating process for %s (%s) with state %s', app.location, app.id, app.installationState);
+            debug('Creating process for %s (%s) with state %s', config.appFqdn(app), app.id, app.installationState);
             restartAppTask(app.id, NOOP_CALLBACK); // restart because the auto-installer could have queued up tasks already
         });
 

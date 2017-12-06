@@ -22,6 +22,9 @@ var token = null;
 
 var server;
 function setup(done) {
+    config._reset();
+    config.setFqdn('example-server-test.com');
+    config.set('provider', 'caas');
     config.setVersion('1.2.3');
 
     async.series([
@@ -34,19 +37,19 @@ function setup(done) {
             var scope2 = nock(config.apiServerOrigin()).post('/api/v1/boxes/' + config.fqdn() + '/setup/done?setupToken=somesetuptoken').reply(201, {});
 
             superagent.post(SERVER_URL + '/api/v1/cloudron/activate')
-                   .query({ setupToken: 'somesetuptoken' })
-                   .send({ username: USERNAME, password: PASSWORD, email: EMAIL })
-                   .end(function (error, result) {
-                expect(result).to.be.ok();
-                expect(result.statusCode).to.eql(201);
-                expect(scope1.isDone()).to.be.ok();
-                expect(scope2.isDone()).to.be.ok();
+                .query({ setupToken: 'somesetuptoken' })
+                .send({ username: USERNAME, password: PASSWORD, email: EMAIL })
+                .end(function (error, result) {
+                    expect(result).to.be.ok();
+                    expect(result.statusCode).to.eql(201);
+                    expect(scope1.isDone()).to.be.ok();
+                    expect(scope2.isDone()).to.be.ok();
 
-                // stash token for further use
-                token = result.body.token;
+                    // stash token for further use
+                    token = result.body.token;
 
-                callback();
-            });
+                    callback();
+                });
         }
     ], done);
 }
@@ -67,22 +70,24 @@ describe('REST API', function () {
         superagent.post(SERVER_URL + '/api/v1/users')
             .query({ access_token: token })
             .set('content-type', 'application/json')
-            .send("some invalid non-strict json")
-           .end(function (error, result) {
-            expect(result.statusCode).to.equal(400);
-            expect(result.body.message).to.be('Bad JSON');
-            done();
-        });
+            .send('some invalid non-strict json')
+            .end(function (error, result) {
+                expect(result.statusCode).to.equal(400);
+                expect(result.body.message).to.be('Failed to parse body');
+
+                done();
+            });
     });
 
     it('does not crash with invalid string', function (done) {
         superagent.post(SERVER_URL + '/api/v1/users')
             .query({ access_token: token })
             .set('content-type', 'application/x-www-form-urlencoded')
-            .send("some string")
-           .end(function (error, result) {
-            expect(result.statusCode).to.equal(400);
-            done();
-        });
+            .send('some string')
+            .end(function (error, result) {
+                expect(result.statusCode).to.equal(400);
+
+                done();
+            });
     });
 });

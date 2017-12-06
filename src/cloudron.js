@@ -15,6 +15,7 @@ exports = module.exports = {
     sendCaasHeartbeat: sendCaasHeartbeat,
 
     updateToLatest: updateToLatest,
+    restore: restore,
     reboot: reboot,
     retire: retire,
     migrate: migrate,
@@ -31,6 +32,7 @@ var appdb = require('./appdb.js'),
     assert = require('assert'),
     async = require('async'),
     backups = require('./backups.js'),
+    BackupsError = require('./backups.js').BackupsError,
     certificates = require('./certificates.js'),
     child_process = require('child_process'),
     clients = require('./clients.js'),
@@ -39,6 +41,9 @@ var appdb = require('./appdb.js'),
     cron = require('./cron.js'),
     debug = require('debug')('box:cloudron'),
     df = require('@sindresorhus/df'),
+    domaindb = require('./domaindb.js'),
+    domains = require('./domains.js'),
+    DomainError = domains.DomainError,
     eventlog = require('./eventlog.js'),
     fs = require('fs'),
     locker = require('./locker.js'),
@@ -50,12 +55,13 @@ var appdb = require('./appdb.js'),
     platform = require('./platform.js'),
     progress = require('./progress.js'),
     safe = require('safetydance'),
+    semver = require('semver'),
     settings = require('./settings.js'),
+    settingsdb = require('./settingsdb.js'),
     SettingsError = settings.SettingsError,
     shell = require('./shell.js'),
     spawn = require('child_process').spawn,
     split = require('split'),
-    subdomains = require('./subdomains.js'),
     superagent = require('superagent'),
     sysinfo = require('./sysinfo.js'),
     tld = require('tldjs'),
@@ -68,7 +74,8 @@ var appdb = require('./appdb.js'),
 
 var REBOOT_CMD = path.join(__dirname, 'scripts/reboot.sh'),
     UPDATE_CMD = path.join(__dirname, 'scripts/update.sh'),
-    RETIRE_CMD = path.join(__dirname, 'scripts/retire.sh');
+    RETIRE_CMD = path.join(__dirname, 'scripts/retire.sh'),
+    RESTART_CMD = path.join(__dirname, 'scripts/restart.sh');
 
 var NOOP_CALLBACK = function (error) { if (error) debug(error); };
 
@@ -86,7 +93,7 @@ const BOX_AND_USER_TEMPLATE = {
 };
 
 var gBoxAndUserDetails = null,         // cached cloudron details like region,size...
-    gWebadminStatus = { dns: false, tls: false, configuring: false };
+    gWebadminStatus = { dns: false, tls: false, configuring: false, restoring: false };
 
 function CloudronError(reason, errorOrMessage) {
     assert.strictEqual(typeof reason, 'string');
@@ -120,15 +127,15 @@ CloudronError.SELF_UPGRADE_NOT_SUPPORTED = 'Self upgrade not supported';
 function initialize(callback) {
     assert.strictEqual(typeof callback, 'function');
 
-    gWebadminStatus = { dns: false, tls: false, configuring: false };
+    gWebadminStatus = { dns: false, tls: false, configuring: false, restoring: false };
     gBoxAndUserDetails = null;
 
     async.series([
         certificates.initialize,
         settings.initialize,
-        installAppBundle,
         configureDefaultServer,
-        onDomainConfigured
+        onDomainConfigured,
+        onActivated
     ], function (error) {
         if (error) return callback(error);
 
@@ -143,7 +150,6 @@ function uninitialize(callback) {
 
     async.series([
         cron.uninitialize,
-        mailer.stop,
         platform.stop,
         certificates.uninitialize,
         settings.uninitialize
@@ -159,10 +165,53 @@ function onDomainConfigured(callback) {
         clients.addDefaultClients,
         certificates.ensureFallbackCertificate,
         ensureDkimKey,
-        platform.start, // requires fallback certs for mail container
-        mailer.start, // this requires the "mail" container to be running
-        cron.initialize
+        cron.initialize // required for caas heartbeat before activation
     ], callback);
+}
+
+function onActivated(callback) {
+    callback = callback || NOOP_CALLBACK;
+
+    // Starting the platform after a user is available means:
+    // 1. mail bounces can now be sent to the cloudron owner
+    // 2. the restore code path can run without sudo (since mail/ is non-root)
+    user.count(function (error, count) {
+        if (error) return callback(new CloudronError(CloudronError.INTERNAL_ERROR, error));
+        if (!count) return callback(); // not activated
+
+        platform.start(callback);
+    });
+}
+
+function autoprovision(callback) {
+    assert.strictEqual(typeof callback, 'function');
+
+    const confJson = safe.fs.readFileSync(paths.AUTO_PROVISION_FILE, 'utf8');
+    if (!confJson) return callback();
+
+    const conf = safe.JSON.parse(confJson);
+    if (!conf) return callback();
+
+    async.eachSeries(Object.keys(conf), function (key, iteratorDone) {
+        var name;
+        switch (key) {
+        case 'dnsConfig': name = 'dns_config'; break;
+        case 'tlsConfig': name = 'tls_config'; break;
+        case 'backupConfig': name = 'backup_config'; break;
+        case 'tlsCert':
+            debug(`autoprovision: ${key}`);
+            return fs.writeFile(path.join(paths.NGINX_CERT_DIR, 'host.cert'), conf[key], iteratorDone);
+        case 'tlsKey':
+            debug(`autoprovision: ${key}`);
+            return fs.writeFile(path.join(paths.NGINX_CERT_DIR, 'host.key'), conf[key], iteratorDone);
+        default:
+            debug(`autoprovision: ${key} ignored`);
+            return iteratorDone();
+        }
+
+        debug(`autoprovision: ${name}`);
+        settingsdb.set(name, JSON.stringify(conf[key]), iteratorDone);
+    }, callback);
 }
 
 function dnsSetup(dnsConfig, domain, zoneName, callback) {
@@ -177,19 +226,30 @@ function dnsSetup(dnsConfig, domain, zoneName, callback) {
 
     debug('dnsSetup: Setting up Cloudron with domain %s and zone %s', domain, zoneName);
 
-    settings.setDnsConfig(dnsConfig, domain, zoneName, function (error) {
-        if (error && error.reason === SettingsError.BAD_FIELD) return callback(new CloudronError(CloudronError.BAD_FIELD, error.message));
+    function done(error) {
+        if (error && error.reason === DomainError.BAD_FIELD) return callback(new CloudronError(CloudronError.BAD_FIELD, error.message));
         if (error) return callback(new CloudronError(CloudronError.INTERNAL_ERROR, error));
 
-        config.setFqdn(domain); // set fqdn only after dns config is valid, otherwise cannot re-setup if we failed
-        config.setZoneName(zoneName);
+        autoprovision(function (error) {
+            if (error) return callback(new CloudronError(CloudronError.INTERNAL_ERROR, error));
 
-        async.series([ // do not block
-            onDomainConfigured,
-            configureWebadmin
-        ], NOOP_CALLBACK);
+            config.setFqdn(domain); // set fqdn only after dns config is valid, otherwise cannot re-setup if we failed
+            config.setZoneName(zoneName);
 
-        callback();
+            callback();
+
+            async.series([ // do not block
+                onDomainConfigured,
+                configureWebadmin
+            ], NOOP_CALLBACK);
+        });
+    }
+
+    domains.get(domain, function (error, result) {
+        if (error && error.reason !== DomainError.NOT_FOUND) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
+
+        if (!result) domains.add(domain, zoneName, dnsConfig, null /* cert */, done);
+        else domains.update(domain, dnsConfig, null /* cert */, done);
     });
 }
 
@@ -231,14 +291,14 @@ function configureWebadmin(callback) {
 
     function done(error) {
         gWebadminStatus.configuring = false;
-        debug('configureWebadmin: done error:%j', error);
+        debug('configureWebadmin: done error: %j', error || {});
         callback(error);
     }
 
     function configureNginx(error) {
-        debug('configureNginx: dns update:%j', error);
+        debug('configureNginx: dns update: %j', error || {});
 
-        certificates.ensureCertificate({ location: config.adminLocation() }, function (error, certFilePath, keyFilePath) {
+        certificates.ensureCertificate({ domain: config.fqdn(), location: config.adminLocation() }, function (error, certFilePath, keyFilePath) {
             if (error) return done(error);
 
             gWebadminStatus.tls = true;
@@ -255,7 +315,7 @@ function configureWebadmin(callback) {
         addDnsRecords(ip, function (error) {
             if (error) return configureNginx(error);
 
-            subdomains.waitForDns(config.adminFqdn(), ip, 'A', { interval: 30000, times: 50000 }, function (error) {
+            domains.waitForDNSRecord(config.adminFqdn(), config.fqdn(), ip, 'A', { interval: 30000, times: 50000 }, function (error) {
                 if (error) return configureNginx(error);
 
                 gWebadminStatus.dns = true;
@@ -321,7 +381,7 @@ function activate(username, password, email, displayName, ip, auditSource, callb
 
                 eventlog.add(eventlog.ACTION_ACTIVATE, auditSource, { });
 
-                platform.createMailConfig(NOOP_CALLBACK); // bounces can now be sent to the cloudron owner
+                onActivated();
 
                 callback(null, { token: token, expires: expires });
             });
@@ -410,31 +470,26 @@ function getConfig(callback) {
         settings.getCloudronName(function (error, cloudronName) {
             if (error) return callback(new CloudronError(CloudronError.INTERNAL_ERROR, error));
 
-            settings.getDeveloperMode(function (error, developerMode) {
-                if (error) return callback(new CloudronError(CloudronError.INTERNAL_ERROR, error));
-
-                callback(null, {
-                    apiServerOrigin: config.apiServerOrigin(),
-                    webServerOrigin: config.webServerOrigin(),
-                    fqdn: config.fqdn(),
-                    adminLocation: config.adminLocation(),
-                    adminFqdn: config.adminFqdn(),
-                    mailFqdn: config.mailFqdn(),
-                    version: config.version(),
-                    update: updateChecker.getUpdateInfo(),
-                    progress: progress.getAll(),
-                    isCustomDomain: config.isCustomDomain(),
-                    isDemo: config.isDemo(),
-                    developerMode: developerMode,
-                    region: result.box.region,
-                    size: result.box.size,
-                    billing: !!result.user.billing,
-                    plan: result.box.plan,
-                    currency: result.user.currency,
-                    memory: os.totalmem(),
-                    provider: config.provider(),
-                    cloudronName: cloudronName
-                });
+            callback(null, {
+                apiServerOrigin: config.apiServerOrigin(),
+                webServerOrigin: config.webServerOrigin(),
+                fqdn: config.fqdn(),
+                adminLocation: config.adminLocation(),
+                adminFqdn: config.adminFqdn(),
+                mailFqdn: config.mailFqdn(),
+                version: config.version(),
+                update: updateChecker.getUpdateInfo(),
+                progress: progress.getAll(),
+                isCustomDomain: config.isCustomDomain(),
+                isDemo: config.isDemo(),
+                region: result.box.region,
+                size: result.box.size,
+                billing: !!result.user.billing,
+                plan: result.box.plan,
+                currency: result.user.currency,
+                memory: os.totalmem(),
+                provider: config.provider(),
+                cloudronName: cloudronName
             });
         });
     });
@@ -502,7 +557,7 @@ function readDkimPublicKeySync() {
 function txtRecordsWithSpf(callback) {
     assert.strictEqual(typeof callback, 'function');
 
-    subdomains.get('', 'TXT', function (error, txtRecords) {
+    domains.getDNSRecords('', config.fqdn(), 'TXT', function (error, txtRecords) {
         if (error) return callback(error);
 
         debug('txtRecordsWithSpf: current txt records - %j', txtRecords);
@@ -541,9 +596,9 @@ function addDnsRecords(ip, callback) {
     var dkimKey = readDkimPublicKeySync();
     if (!dkimKey) return callback(new CloudronError(CloudronError.INTERNAL_ERROR, new Error('Failed to read dkim public key')));
 
-    var webadminRecord = { subdomain: config.adminLocation(), type: 'A', values: [ ip ] };
+    var webadminRecord = { subdomain: config.adminLocation(), domain: config.fqdn(), type: 'A', values: [ ip ] };
     // t=s limits the domainkey to this domain and not it's subdomains
-    var dkimRecord = { subdomain: config.dkimSelector() + '._domainkey', type: 'TXT', values: [ '"v=DKIM1; t=s; p=' + dkimKey + '"' ] };
+    var dkimRecord = { subdomain: config.dkimSelector() + '._domainkey', domain: config.fqdn(), type: 'TXT', values: [ '"v=DKIM1; t=s; p=' + dkimKey + '"' ] };
 
     var records = [ ];
     if (config.isCustomDomain()) {
@@ -551,7 +606,7 @@ function addDnsRecords(ip, callback) {
         records.push(dkimRecord);
     } else {
         // for non-custom domains, we show a noapp.html page
-        var nakedDomainRecord = { subdomain: '', type: 'A', values: [ ip ] };
+        var nakedDomainRecord = { subdomain: '', domain: config.fqdn(), type: 'A', values: [ ip ] };
 
         records.push(nakedDomainRecord);
         records.push(webadminRecord);
@@ -564,12 +619,12 @@ function addDnsRecords(ip, callback) {
         txtRecordsWithSpf(function (error, txtRecords) {
             if (error) return retryCallback(error);
 
-            if (txtRecords) records.push({ subdomain: '', type: 'TXT', values: txtRecords });
+            if (txtRecords) records.push({ subdomain: '', domain: config.fqdn(), type: 'TXT', values: txtRecords });
 
             debug('addDnsRecords: will update %j', records);
 
             async.mapSeries(records, function (record, iteratorCallback) {
-                subdomains.upsert(record.subdomain, record.type, record.values, iteratorCallback);
+                domains.upsertDNSRecords(record.subdomain, record.domain, record.type, record.values, iteratorCallback);
             }, function (error, changeIds) {
                 if (error) debug('addDnsRecords: failed to update : %s. will retry', error);
                 else debug('addDnsRecords: records %j added with changeIds %j', records, changeIds);
@@ -582,6 +637,42 @@ function addDnsRecords(ip, callback) {
         else debug('addDnsRecords: done');
 
         callback(error);
+    });
+}
+
+function restore(backupConfig, backupId, version, callback) {
+    assert.strictEqual(typeof backupConfig, 'object');
+    assert.strictEqual(typeof backupId, 'string');
+    assert.strictEqual(typeof version, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    if (!semver.valid(version)) return callback(new CloudronError(CloudronError.BAD_STATE, 'version is not a valid semver'));
+    if (semver.major(config.version()) !== semver.major(version) || semver.minor(config.version()) !== semver.minor(version)) return callback(new CloudronError(CloudronError.BAD_STATE, `Run cloudron-setup with --version ${version} to restore from this backup`));
+
+    user.count(function (error, count) {
+        if (error) return callback(new CloudronError(CloudronError.INTERNAL_ERROR, error));
+        if (count) return callback(new CloudronError(CloudronError.ALREADY_PROVISIONED, 'Already activated'));
+
+        backups.testConfig(backupConfig, function (error) {
+            if (error && error.reason === BackupsError.BAD_FIELD) return callback(new CloudronError(CloudronError.BAD_FIELD, error.message));
+            if (error && error.reason === BackupsError.EXTERNAL_ERROR) return callback(new CloudronError(CloudronError.EXTERNAL_ERROR, error.message));
+            if (error) return callback(new CloudronError(CloudronError.INTERNAL_ERROR, error));
+
+            debug(`restore: restoring from ${backupId} from provider ${backupConfig.provider}`);
+
+            gWebadminStatus.restoring = true;
+
+            callback(null); // do no block
+
+            async.series([
+                backups.restore.bind(null, backupConfig, backupId),
+                autoprovision,
+                shell.sudo.bind(null, 'restart', [ RESTART_CMD ])
+            ], function (error) {
+                debug('restore:', error);
+                gWebadminStatus.restoring = false;
+            });
+        });
     });
 }
 
@@ -710,8 +801,6 @@ function doUpdate(boxUpdateInfo, callback) {
             webServerOrigin: config.webServerOrigin(),
             fqdn: config.fqdn(),
             adminLocation: config.adminLocation(),
-            tlsCert: config.tlsCert(),
-            tlsKey: config.tlsKey(),
             isCustomDomain: config.isCustomDomain(),
             isDemo: config.isDemo(),
             zoneName: config.zoneName(),
@@ -738,36 +827,6 @@ function doUpdate(boxUpdateInfo, callback) {
 
             // Do not add any code here. The installer script will stop the box code any instant
         });
-    });
-}
-
-function installAppBundle(callback) {
-    assert.strictEqual(typeof callback, 'function');
-
-    if (fs.existsSync(paths.FIRST_RUN_FILE)) return callback();
-
-    var bundle = config.get('appBundle');
-    debug('initialize: installing app bundle on first run: %j', bundle);
-
-    if (!bundle || bundle.length === 0) return callback();
-
-    async.eachSeries(bundle, function (appInfo, iteratorCallback) {
-        debug('autoInstall: installing %s at %s', appInfo.appstoreId, appInfo.location);
-
-        var data = {
-            appStoreId: appInfo.appstoreId,
-            location: appInfo.location,
-            portBindings: appInfo.portBindings || null,
-            accessRestriction: appInfo.accessRestriction || null,
-        };
-
-        apps.install(data, { userId: null, username: 'autoinstaller' }, iteratorCallback);
-    }, function (error) {
-        if (error) debug('autoInstallApps: ', error);
-
-        fs.writeFileSync(paths.FIRST_RUN_FILE, 'been there, done that', 'utf8');
-
-        callback();
     });
 }
 
@@ -877,12 +936,20 @@ function migrate(options, callback) {
 
     var dnsConfig = _.pick(options, 'domain', 'provider', 'accessKeyId', 'secretAccessKey', 'region', 'endpoint', 'token', 'zoneName');
 
-    settings.setDnsConfig(dnsConfig, options.domain, options.zoneName || tld.getDomain(options.domain), function (error) {
-        if (error && error.reason === SettingsError.BAD_FIELD) return callback(new CloudronError(CloudronError.BAD_FIELD, error.message));
-        if (error) return callback(new CloudronError(CloudronError.INTERNAL_ERROR, error));
+    domains.get(options.domain, function (error, result) {
+        if (error && error.reason !== DomainError.NOT_FOUND) return callback(new CloudronError(CloudronError.INTERNAL_ERROR, error));
 
-        // TODO: should probably rollback dns config if migrate fails
-        doMigrate(options, callback);
+        var func;
+        if (!result) func = domains.add.bind(null, options.domain, options.zoneName, dnsConfig, null);
+        else func = domains.update.bind(null, options.domain, dnsConfig, null);
+
+        func(function (error) {
+            if (error && error.reason === DomainError.BAD_FIELD) return callback(new CloudronError(CloudronError.BAD_FIELD, error.message));
+            if (error) return callback(new SettingsError(CloudronError.INTERNAL_ERROR, error));
+
+            // TODO: should probably rollback dns config if migrate fails
+            doMigrate(options, callback);
+        });
     });
 }
 
@@ -907,7 +974,7 @@ function refreshDNS(callback) {
                     // do not change state of installing apps since apptask will error if dns record already exists
                     if (app.installationState !== appdb.ISTATE_INSTALLED) return callback();
 
-                    subdomains.upsert(app.location, 'A', [ ip ], callback);
+                    domains.upsertDNSRecords(app.location, app.domain, 'A', [ ip ], callback);
                 }, function (error) {
                     if (error) return callback(error);
 

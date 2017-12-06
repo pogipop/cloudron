@@ -5,6 +5,7 @@ var appdb = require('./appdb.js'),
     assert = require('assert'),
     async = require('async'),
     DatabaseError = require('./databaseerror.js'),
+    config = require('./config.js'),
     debug = require('debug')('box:apphealthmonitor'),
     docker = require('./docker.js').connection,
     mailer = require('./mailer.js'),
@@ -25,7 +26,7 @@ var gDockerEventStream = null;
 function debugApp(app) {
     assert(!app || typeof app === 'object');
 
-    var prefix = app ? (app.location || 'naked_domain') : '(no app)';
+    var prefix = app ? config.appFqdn(app) : '(no app)';
     var manifestAppId = app ? app.manifest.id : '';
     var id = app ? app.id : '';
 

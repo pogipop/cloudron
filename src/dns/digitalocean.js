@@ -10,11 +10,10 @@ exports = module.exports = {
 
 var assert = require('assert'),
     async = require('async'),
-    config = require('../config.js'),
     debug = require('debug')('box:dns/digitalocean'),
     dns = require('dns'),
+    DomainError = require('../domains.js').DomainError,
     safe = require('safetydance'),
-    SubdomainError = require('../subdomains.js').SubdomainError,
     superagent = require('superagent'),
     util = require('util');
 
@@ -40,10 +39,10 @@ function getInternal(dnsConfig, zoneName, subdomain, type, callback) {
             .set('Authorization', 'Bearer ' + dnsConfig.token)
             .timeout(30 * 1000)
             .end(function (error, result) {
-                if (error && !error.response) return callback(new SubdomainError(SubdomainError.EXTERNAL_ERROR, util.format('Network error %s', error.message)));
-                if (result.statusCode === 404) return callback(new SubdomainError(SubdomainError.NOT_FOUND, formatError(result)));
-                if (result.statusCode === 403 || result.statusCode === 401) return callback(new SubdomainError(SubdomainError.ACCESS_DENIED, formatError(result)));
-                if (result.statusCode !== 200) return callback(new SubdomainError(SubdomainError.EXTERNAL_ERROR, formatError(result)));
+                if (error && !error.response) return callback(new DomainError(DomainError.EXTERNAL_ERROR, util.format('Network error %s', error.message)));
+                if (result.statusCode === 404) return callback(new DomainError(DomainError.NOT_FOUND, formatError(result)));
+                if (result.statusCode === 403 || result.statusCode === 401) return callback(new DomainError(DomainError.ACCESS_DENIED, formatError(result)));
+                if (result.statusCode !== 200) return callback(new DomainError(DomainError.EXTERNAL_ERROR, formatError(result)));
 
                 matchingRecords = matchingRecords.concat(result.body.domain_records.filter(function (record) {
                     return (record.type === type && record.name === subdomain);
@@ -80,7 +79,7 @@ function upsert(dnsConfig, zoneName, subdomain, type, values, callback) {
         // used to track available records to update instead of create
         var i = 0, recordIds = [];
 
-        async.eachSeries(values, function (value, callback) {
+        async.eachSeries(values, function (value, iteratorCallback) {
             var priority = null;
 
             if (type === 'MX') {
@@ -102,14 +101,14 @@ function upsert(dnsConfig, zoneName, subdomain, type, values, callback) {
                     .send(data)
                     .timeout(30 * 1000)
                     .end(function (error, result) {
-                        if (error && !error.response) return callback(new SubdomainError(SubdomainError.EXTERNAL_ERROR, util.format('Network error %s', error.message)));
-                        if (result.statusCode === 403 || result.statusCode === 401) return callback(new SubdomainError(SubdomainError.ACCESS_DENIED, formatError(result)));
-                        if (result.statusCode === 422) return callback(new SubdomainError(SubdomainError.BAD_FIELD, result.body.message));
-                        if (result.statusCode !== 201) return callback(new SubdomainError(SubdomainError.EXTERNAL_ERROR, formatError(result)));
+                        if (error && !error.response) return iteratorCallback(new DomainError(DomainError.EXTERNAL_ERROR, util.format('Network error %s', error.message)));
+                        if (result.statusCode === 403 || result.statusCode === 401) return iteratorCallback(new DomainError(DomainError.ACCESS_DENIED, formatError(result)));
+                        if (result.statusCode === 422) return iteratorCallback(new DomainError(DomainError.BAD_FIELD, result.body.message));
+                        if (result.statusCode !== 201) return iteratorCallback(new DomainError(DomainError.EXTERNAL_ERROR, formatError(result)));
 
                         recordIds.push(safe.query(result.body, 'domain_record.id'));
 
-                        return callback(null);
+                        return iteratorCallback(null);
                     });
             } else {
                 superagent.put(DIGITALOCEAN_ENDPOINT + '/v2/domains/' + zoneName + '/records/' + result[i].id)
@@ -120,17 +119,17 @@ function upsert(dnsConfig, zoneName, subdomain, type, values, callback) {
                     // increment, as we have consumed the record
                         ++i;
 
-                        if (error && !error.response) return callback(new SubdomainError(SubdomainError.EXTERNAL_ERROR, util.format('Network error %s', error.message)));
-                        if (result.statusCode === 403 || result.statusCode === 401) return callback(new SubdomainError(SubdomainError.ACCESS_DENIED, formatError(result)));
-                        if (result.statusCode === 422) return callback(new SubdomainError(SubdomainError.BAD_FIELD, result.body.message));
-                        if (result.statusCode !== 200) return callback(new SubdomainError(SubdomainError.EXTERNAL_ERROR, formatError(result)));
+                        if (error && !error.response) return iteratorCallback(new DomainError(DomainError.EXTERNAL_ERROR, util.format('Network error %s', error.message)));
+                        if (result.statusCode === 403 || result.statusCode === 401) return iteratorCallback(new DomainError(DomainError.ACCESS_DENIED, formatError(result)));
+                        if (result.statusCode === 422) return iteratorCallback(new DomainError(DomainError.BAD_FIELD, result.body.message));
+                        if (result.statusCode !== 200) return iteratorCallback(new DomainError(DomainError.EXTERNAL_ERROR, formatError(result)));
 
                         recordIds.push(safe.query(result.body, 'domain_record.id'));
 
-                        return callback(null);
+                        return iteratorCallback(null);
                     });
             }
-        }, function (error, id) {
+        }, function (error) {
             if (error) return callback(error);
 
             callback(null, '' + recordIds[0]); // DO ids are integers
@@ -186,10 +185,10 @@ function del(dnsConfig, zoneName, subdomain, type, values, callback) {
             .set('Authorization', 'Bearer ' + dnsConfig.token)
             .timeout(30 * 1000)
             .end(function (error, result) {
-                if (error && !error.response) return callback(new SubdomainError(SubdomainError.EXTERNAL_ERROR, util.format('Network error %s', error.message)));
+                if (error && !error.response) return callback(new DomainError(DomainError.EXTERNAL_ERROR, util.format('Network error %s', error.message)));
                 if (result.statusCode === 404) return callback(null);
-                if (result.statusCode === 403 || result.statusCode === 401) return callback(new SubdomainError(SubdomainError.ACCESS_DENIED, formatError(result)));
-                if (result.statusCode !== 204) return callback(new SubdomainError(SubdomainError.EXTERNAL_ERROR, formatError(result)));
+                if (result.statusCode === 403 || result.statusCode === 401) return callback(new DomainError(DomainError.ACCESS_DENIED, formatError(result)));
+                if (result.statusCode !== 204) return callback(new DomainError(DomainError.EXTERNAL_ERROR, formatError(result)));
 
                 debug('del: done');
 
@@ -213,22 +212,28 @@ function verifyDnsConfig(dnsConfig, fqdn, zoneName, ip, callback) {
     if (process.env.BOX_ENV === 'test') return callback(null, credentials); // this shouldn't be here
 
     dns.resolveNs(zoneName, function (error, nameservers) {
-        if (error && error.code === 'ENOTFOUND') return callback(new SubdomainError(SubdomainError.BAD_FIELD, 'Unable to resolve nameservers for this domain'));
-        if (error || !nameservers) return callback(new SubdomainError(SubdomainError.BAD_FIELD, error ? error.message : 'Unable to get nameservers'));
+        if (error && error.code === 'ENOTFOUND') return callback(new DomainError(DomainError.BAD_FIELD, 'Unable to resolve nameservers for this domain'));
+        if (error || !nameservers) return callback(new DomainError(DomainError.BAD_FIELD, error ? error.message : 'Unable to get nameservers'));
 
         if (nameservers.map(function (n) { return n.toLowerCase(); }).indexOf('ns1.digitalocean.com') === -1) {
             debug('verifyDnsConfig: %j does not contains DO NS', nameservers);
-            return callback(new SubdomainError(SubdomainError.BAD_FIELD, 'Domain nameservers are not set to Digital Ocean'));
+            return callback(new DomainError(DomainError.BAD_FIELD, 'Domain nameservers are not set to Digital Ocean'));
         }
 
-        const name = config.adminLocation() + (fqdn === zoneName ? '' :  '.' + fqdn.slice(0, - zoneName.length - 1));
+        const testSubdomain = 'cloudrontestdns';
 
-        upsert(credentials, zoneName, name, 'A', [ ip ], function (error, changeId) {
+        upsert(credentials, zoneName, testSubdomain, 'A', [ ip ], function (error, changeId) {
             if (error) return callback(error);
 
-            debug('verifyDnsConfig: A record added with change id %s', changeId);
+            debug('verifyDnsConfig: Test A record added with change id %s', changeId);
 
-            callback(null, credentials);
+            del(dnsConfig, zoneName, testSubdomain, 'A', [ ip ], function (error) {
+                if (error) return callback(error);
+
+                debug('verifyDnsConfig: Test A record removed again');
+
+                callback(null, credentials);
+            });
         });
     });
 }

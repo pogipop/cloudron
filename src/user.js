@@ -32,6 +32,7 @@ var assert = require('assert'),
     debug = require('debug')('box:user'),
     DatabaseError = require('./databaseerror.js'),
     eventlog = require('./eventlog.js'),
+    groupdb = require('./groupdb.js'),
     groups = require('./groups.js'),
     GroupError = groups.GroupError,
     hat = require('hat'),
@@ -551,13 +552,19 @@ function createOwner(username, password, email, displayName, auditSource, callba
         if (error) return callback(new UserError(UserError.INTERNAL_ERROR, error));
         if (count !== 0) return callback(new UserError(UserError.ALREADY_EXISTS, 'Owner already exists'));
 
-        createUser(username, password, email, displayName, auditSource, { owner: true }, function (error, user) {
-            if (error) return callback(error);
+        // have to provide the group id explicitly so using db layer directly
+        groupdb.add(constants.ADMIN_GROUP_ID, constants.ADMIN_GROUP_NAME, function (error) {
+            // we proceed if it already exists so we can re-create the owner if need be
+            if (error && error.reason !== DatabaseError.ALREADY_EXISTS) return callback(new UserError(UserError.INTERNAL_ERROR, error));
 
-            groups.addMember(constants.ADMIN_GROUP_ID, user.id, function (error) {
-                if (error) return callback(new UserError(UserError.INTERNAL_ERROR, error));
+            createUser(username, password, email, displayName, auditSource, { owner: true }, function (error, user) {
+                if (error) return callback(error);
 
-                callback(null, user);
+                groups.addMember(constants.ADMIN_GROUP_ID, user.id, function (error) {
+                    if (error) return callback(new UserError(UserError.INTERNAL_ERROR, error));
+
+                    callback(null, user);
+                });
             });
         });
     });
@@ -623,7 +630,7 @@ function setAliases(userId, aliases, callback) {
 
         if (!user.username) return new UserError(UserError.BAD_FIELD, 'Username must be set before settings aliases');
 
-        mailboxdb.setAliasesForName(user.username, aliases, function (error) {
+        mailboxdb.setAliasesForName(user.username, config.fqdn(), aliases, function (error) {
             if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(new UserError(UserError.ALREADY_EXISTS, error.message));
             if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new UserError(UserError.NOT_FOUND));
             if (error) return callback(new UserError(UserError.INTERNAL_ERROR, error));
@@ -643,7 +650,7 @@ function getAliases(userId, callback) {
 
         if (!user.username) return callback(null, [ ]);
 
-        mailboxdb.getAliasesForName(user.username, function (error, aliases) {
+        mailboxdb.getAliasesForName(user.username, config.fqdn(), function (error, aliases) {
             if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new UserError(UserError.NOT_FOUND));
             if (error) return callback(new UserError(UserError.INTERNAL_ERROR, error));
 

@@ -19,6 +19,8 @@ var async = require('async'),
     settingsdb = require('../settingsdb.js');
 
 function setup(done) {
+    config._reset();
+    config.set('fqdn', 'example.com');
     config.set('provider', 'caas');
     nock.cleanAll();
 
@@ -45,7 +47,8 @@ function cleanup(done) {
 
     async.series([
         settings.uninitialize,
-        database._clear
+        database._clear,
+        database.uninitialize
     ], done);
 }
 
@@ -86,47 +89,6 @@ describe('Settings', function () {
             });
         });
 
-        it('can get default developer mode', function (done) {
-            settings.getDeveloperMode(function (error, enabled) {
-                expect(error).to.be(null);
-                expect(enabled).to.equal(true);
-                done();
-            });
-        });
-
-        it('can set developer mode', function (done) {
-            settings.setDeveloperMode(true, function (error) {
-                expect(error).to.be(null);
-                done();
-            });
-        });
-
-        it('can get developer mode', function (done) {
-            settings.getDeveloperMode(function (error, enabled) {
-                expect(error).to.be(null);
-                expect(enabled).to.equal(true);
-                done();
-            });
-        });
-
-        it('can set dns config', function (done) {
-            settings.setDnsConfig({ provider: 'route53', accessKeyId: 'accessKeyId', secretAccessKey: 'secretAccessKey' }, config.fqdn(), config.zoneName(), function (error) {
-                expect(error).to.be(null);
-                done();
-            });
-        });
-
-        it('can get dns config', function (done) {
-            settings.getDnsConfig(function (error, dnsConfig) {
-                expect(error).to.be(null);
-                expect(dnsConfig.provider).to.be('route53');
-                expect(dnsConfig.accessKeyId).to.be('accessKeyId');
-                expect(dnsConfig.secretAccessKey).to.be('secretAccessKey');
-                expect(dnsConfig.region).to.be('us-east-1');
-                done();
-            });
-        });
-
         it('can set tls config', function (done) {
             settings.setTlsConfig({ provider: 'caas' }, function (error) {
                 expect(error).to.be(null);
@@ -147,7 +109,7 @@ describe('Settings', function () {
                 .post('/api/v1/boxes/' + config.fqdn() + '/awscredentials?token=TOKEN')
                 .reply(201, { credentials: { AccessKeyId: 'accessKeyId', SecretAccessKey: 'secretAccessKey', SessionToken: 'sessionToken' } });
 
-            settings.setBackupConfig({ provider: 'caas', token: 'TOKEN', format: 'tgz', prefix: 'boxid', bucket: 'bucket' }, function (error) {
+            settings.setBackupConfig({ provider: 'caas', fqdn: config.fqdn(), token: 'TOKEN', format: 'tgz', prefix: 'boxid', bucket: 'bucket' }, function (error) {
                 expect(error).to.be(null);
                 done();
             });

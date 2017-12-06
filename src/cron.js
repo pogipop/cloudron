@@ -23,21 +23,23 @@ var apps = require('./apps.js'),
     semver = require('semver'),
     updateChecker = require('./updatechecker.js');
 
-var gAliveJob = null, // send periodic stats
-    gAppUpdateCheckerJob = null,
-    gAutoupdaterJob = null,
-    gBackupJob = null,
-    gBoxUpdateCheckerJob = null,
-    gCertificateRenewJob = null,
-    gCheckDiskSpaceJob = null,
-    gCleanupBackupsJob = null,
-    gCleanupEventlogJob = null,
-    gCleanupTokensJob = null,
-    gDockerVolumeCleanerJob = null,
-    gDynamicDNSJob = null,
-    gCaasHeartbeatJob = null, // for CaaS health check
-    gSchedulerSyncJob = null,
-    gDigestEmailJob = null;
+var gJobs = {
+    alive: null, // send periodic stats
+    autoUpdater: null,
+    appUpdateChecker: null,
+    backup: null,
+    boxUpdateChecker: null,
+    caasHeartbeat: null,
+    checkDiskSpace: null,
+    certificateRenew: null,
+    cleanupBackups: null,
+    cleanupEventlog: null,
+    cleanupTokens: null,
+    digestEmail: null,
+    dockerVolumeCleaner: null,
+    dynamicDNS: null,
+    schedulerSync: null
+};
 
 var NOOP_CALLBACK = function (error) { if (error) console.error(error); };
 var AUDIT_SOURCE = { userId: null, username: 'cron' };
@@ -54,22 +56,20 @@ function initialize(callback) {
     assert.strictEqual(typeof callback, 'function');
 
     if (config.provider() === 'caas') {
-        gCaasHeartbeatJob = new CronJob({
-            cronTime: '00 */1 * * * *', // every minute
-            onTick: cloudron.sendCaasHeartbeat,
-            start: false
-        });
         // hack: send the first heartbeat only after we are running for 60 seconds
         // required as we end up sending a heartbeat and then cloudron-setup reboots the server
-        setTimeout(function () {
-            if (!gCaasHeartbeatJob) return; // already uninitalized
-            gCaasHeartbeatJob.start();
-            cloudron.sendCaasHeartbeat();
-        }, 1000 * 60);
+        var seconds = (new Date()).getSeconds() - 1;
+        if (seconds === -1) seconds = 59;
+
+        gJobs.caasHeartbeat = new CronJob({
+            cronTime: `${seconds} */1 * * * *`, // every minute
+            onTick: cloudron.sendCaasHeartbeat,
+            start: true
+        });
     }
 
     var randomHourMinute = Math.floor(60*Math.random());
-    gAliveJob = new CronJob({
+    gJobs.alive = new CronJob({
         cronTime: '00 ' + randomHourMinute + ' * * * *', // every hour on a random minute
         onTick: appstore.sendAliveStatus,
         start: true
@@ -95,16 +95,16 @@ function recreateJobs(tz) {
 
     debug('Creating jobs with timezone %s', tz);
 
-    if (gBackupJob) gBackupJob.stop();
-    gBackupJob = new CronJob({
+    if (gJobs.backup) gJobs.backup.stop();
+    gJobs.backup = new CronJob({
         cronTime: '00 00 */6 * * *', // every 6 hours. backups.ensureBackup() will only trigger a backup once per day
         onTick: backups.ensureBackup.bind(null, AUDIT_SOURCE, NOOP_CALLBACK),
         start: true,
         timeZone: tz
     });
 
-    if (gCheckDiskSpaceJob) gCheckDiskSpaceJob.stop();
-    gCheckDiskSpaceJob = new CronJob({
+    if (gJobs.checkDiskSpace) gJobs.checkDiskSpace.stop();
+    gJobs.checkDiskSpace = new CronJob({
         cronTime: '00 30 */4 * * *', // every 4 hours
         onTick: cloudron.checkDiskSpace,
         start: true,
@@ -114,72 +114,72 @@ function recreateJobs(tz) {
     // randomized pattern per cloudron every hour
     var randomMinute = Math.floor(60*Math.random());
 
-    if (gBoxUpdateCheckerJob) gBoxUpdateCheckerJob.stop();
-    gBoxUpdateCheckerJob = new CronJob({
+    if (gJobs.boxUpdateCheckerJob) gJobs.boxUpdateCheckerJob.stop();
+    gJobs.boxUpdateCheckerJob = new CronJob({
         cronTime: '00 ' + randomMinute + ' * * * *', // once an hour
         onTick: updateChecker.checkBoxUpdates,
         start: true,
         timeZone: tz
     });
 
-    if (gAppUpdateCheckerJob) gAppUpdateCheckerJob.stop();
-    gAppUpdateCheckerJob = new CronJob({
+    if (gJobs.appUpdateChecker) gJobs.appUpdateChecker.stop();
+    gJobs.appUpdateChecker = new CronJob({
         cronTime: '00 ' + randomMinute + ' * * * *', // once an hour
         onTick: updateChecker.checkAppUpdates,
         start: true,
         timeZone: tz
     });
 
-    if (gCleanupTokensJob) gCleanupTokensJob.stop();
-    gCleanupTokensJob = new CronJob({
+    if (gJobs.cleanupTokens) gJobs.cleanupTokens.stop();
+    gJobs.cleanupTokens = new CronJob({
         cronTime: '00 */30 * * * *', // every 30 minutes
         onTick: janitor.cleanupTokens,
         start: true,
         timeZone: tz
     });
 
-    if (gCleanupBackupsJob) gCleanupBackupsJob.stop();
-    gCleanupBackupsJob = new CronJob({
+    if (gJobs.cleanupBackups) gJobs.cleanupBackups.stop();
+    gJobs.cleanupBackups = new CronJob({
         cronTime: '00 45 */6 * * *', // every 6 hours. try not to overlap with ensureBackup job
         onTick: backups.cleanup.bind(null, AUDIT_SOURCE, NOOP_CALLBACK),
         start: true,
         timeZone: tz
     });
 
-    if (gCleanupEventlogJob) gCleanupEventlogJob.stop();
-    gCleanupEventlogJob = new CronJob({
+    if (gJobs.cleanupEventlog) gJobs.cleanupEventlog.stop();
+    gJobs.cleanupEventlog = new CronJob({
         cronTime: '00 */30 * * * *', // every 30 minutes
         onTick: eventlog.cleanup,
         start: true,
         timeZone: tz
     });
 
-    if (gDockerVolumeCleanerJob) gDockerVolumeCleanerJob.stop();
-    gDockerVolumeCleanerJob = new CronJob({
+    if (gJobs.dockerVolumeCleaner) gJobs.dockerVolumeCleaner.stop();
+    gJobs.dockerVolumeCleaner = new CronJob({
         cronTime: '00 00 */12 * * *', // every 12 hours
         onTick: janitor.cleanupDockerVolumes,
         start: true,
         timeZone: tz
     });
 
-    if (gSchedulerSyncJob) gSchedulerSyncJob.stop();
-    gSchedulerSyncJob = new CronJob({
+    if (gJobs.schedulerSync) gJobs.schedulerSync.stop();
+    gJobs.schedulerSync = new CronJob({
         cronTime: config.TEST ? '*/10 * * * * *' : '00 */1 * * * *', // every minute
         onTick: scheduler.sync,
         start: true,
         timeZone: tz
     });
 
-    if (gCertificateRenewJob) gCertificateRenewJob.stop();
-    gCertificateRenewJob = new CronJob({
+    if (gJobs.certificateRenew) gJobs.certificateRenew.stop();
+    gJobs.certificateRenew = new CronJob({
         cronTime: '00 00 */12 * * *', // every 12 hours
         onTick: certificates.renewAll.bind(null, AUDIT_SOURCE, NOOP_CALLBACK),
         start: true,
         timeZone: tz
     });
 
-    if (gDigestEmailJob) gDigestEmailJob.stop();
-    gDigestEmailJob = new CronJob({
+    if (gJobs.digestEmail) gJobs.digestEmail.stop();
+    gJobs.digestEmail = new CronJob({
         cronTime: '00 00 00 * * 3', // every wednesday
         onTick: digest.maybeSend,
         start: true,
@@ -189,15 +189,15 @@ function recreateJobs(tz) {
 
 function autoupdatePatternChanged(pattern) {
     assert.strictEqual(typeof pattern, 'string');
-    assert(gBoxUpdateCheckerJob);
+    assert(gJobs.boxUpdateCheckerJob);
 
     debug('Auto update pattern changed to %s', pattern);
 
-    if (gAutoupdaterJob) gAutoupdaterJob.stop();
+    if (gJobs.autoUpdater) gJobs.autoUpdater.stop();
 
     if (pattern === constants.AUTOUPDATE_PATTERN_NEVER) return;
 
-    gAutoupdaterJob = new CronJob({
+    gJobs.autoUpdater = new CronJob({
         cronTime: pattern,
         onTick: function() {
             var updateInfo = updateChecker.getUpdateInfo();
@@ -216,26 +216,26 @@ function autoupdatePatternChanged(pattern) {
             }
         },
         start: true,
-        timeZone: gBoxUpdateCheckerJob.cronTime.zone // hack
+        timeZone: gJobs.boxUpdateCheckerJob.cronTime.zone // hack
     });
 }
 
 function dynamicDNSChanged(enabled) {
     assert.strictEqual(typeof enabled, 'boolean');
-    assert(gBoxUpdateCheckerJob);
+    assert(gJobs.boxUpdateCheckerJob);
 
     debug('Dynamic DNS setting changed to %s', enabled);
 
     if (enabled) {
-        gDynamicDNSJob = new CronJob({
+        gJobs.dynamicDNS = new CronJob({
             cronTime: '00 */10 * * * *',
             onTick: cloudron.refreshDNS,
             start: true,
-            timeZone: gBoxUpdateCheckerJob.cronTime.zone // hack
+            timeZone: gJobs.boxUpdateCheckerJob.cronTime.zone // hack
         });
     } else {
-        if (gDynamicDNSJob) gDynamicDNSJob.stop();
-        gDynamicDNSJob = null;
+        if (gJobs.dynamicDNS) gJobs.dynamicDNS.stop();
+        gJobs.dynamicDNS = null;
     }
 }
 
@@ -244,48 +244,13 @@ function uninitialize(callback) {
 
     settings.events.removeListener(settings.TIME_ZONE_KEY, recreateJobs);
     settings.events.removeListener(settings.AUTOUPDATE_PATTERN_KEY, autoupdatePatternChanged);
+    settings.events.removeListener(settings.DYNAMIC_DNS_KEY, dynamicDNSChanged);
 
-    if (gAutoupdaterJob) gAutoupdaterJob.stop();
-    gAutoupdaterJob = null;
-
-    if (gBoxUpdateCheckerJob) gBoxUpdateCheckerJob.stop();
-    gBoxUpdateCheckerJob = null;
-
-    if (gAppUpdateCheckerJob) gAppUpdateCheckerJob.stop();
-    gAppUpdateCheckerJob = null;
-
-    if (gCaasHeartbeatJob) gCaasHeartbeatJob.stop();
-    gCaasHeartbeatJob = null;
-
-    if (gAliveJob) gAliveJob.stop();
-    gAliveJob = null;
-
-    if (gBackupJob) gBackupJob.stop();
-    gBackupJob = null;
-
-    if (gCleanupTokensJob) gCleanupTokensJob.stop();
-    gCleanupTokensJob = null;
-
-    if (gCleanupBackupsJob) gCleanupBackupsJob.stop();
-    gCleanupBackupsJob = null;
-
-    if (gCleanupEventlogJob) gCleanupEventlogJob.stop();
-    gCleanupEventlogJob = null;
-
-    if (gDockerVolumeCleanerJob) gDockerVolumeCleanerJob.stop();
-    gDockerVolumeCleanerJob = null;
-
-    if (gSchedulerSyncJob) gSchedulerSyncJob.stop();
-    gSchedulerSyncJob = null;
-
-    if (gCertificateRenewJob) gCertificateRenewJob.stop();
-    gCertificateRenewJob = null;
-
-    if (gDynamicDNSJob) gDynamicDNSJob.stop();
-    gDynamicDNSJob = null;
-
-    if (gDigestEmailJob) gDigestEmailJob.stop();
-    gDigestEmailJob = null;
+    for (var job in gJobs) {
+        if (!gJobs[job]) continue;
+        gJobs[job].stop();
+        gJobs[job] = null;
+    }
 
     callback();
 }

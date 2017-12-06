@@ -5,8 +5,6 @@
 exports = module.exports = {
     DeveloperError: DeveloperError,
 
-    isEnabled: isEnabled,
-    setEnabled: setEnabled,
     issueDeveloperToken: issueDeveloperToken
 };
 
@@ -15,7 +13,6 @@ var assert = require('assert'),
     constants = require('./constants.js'),
     eventlog = require('./eventlog.js'),
     tokendb = require('./tokendb.js'),
-    settings = require('./settings.js'),
     util = require('util');
 
 function DeveloperError(reason, errorOrMessage) {
@@ -39,29 +36,6 @@ function DeveloperError(reason, errorOrMessage) {
 util.inherits(DeveloperError, Error);
 DeveloperError.INTERNAL_ERROR = 'Internal Error';
 DeveloperError.EXTERNAL_ERROR = 'External Error';
-
-function isEnabled(callback) {
-    assert.strictEqual(typeof callback, 'function');
-
-    settings.getDeveloperMode(function (error, enabled) {
-        if (error) return callback(new DeveloperError(DeveloperError.INTERNAL_ERROR, error));
-        callback(null, enabled);
-    });
-}
-
-function setEnabled(enabled, auditSource, callback) {
-    assert.strictEqual(typeof enabled, 'boolean');
-    assert.strictEqual(typeof auditSource, 'object');
-    assert.strictEqual(typeof callback, 'function');
-
-    settings.setDeveloperMode(enabled, function (error) {
-        if (error) return callback(new DeveloperError(DeveloperError.INTERNAL_ERROR, error));
-
-        eventlog.add(eventlog.ACTION_CLI_MODE, auditSource, { enabled: enabled });
-
-        callback(null);
-    });
-}
 
 function issueDeveloperToken(user, auditSource, callback) {
     assert.strictEqual(typeof user, 'object');

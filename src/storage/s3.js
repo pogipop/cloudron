@@ -59,7 +59,7 @@ function getCaasConfig(apiConfig, callback) {
 
     debug('getCaasCredentials: getting new credentials');
 
-    var url = config.apiServerOrigin() + '/api/v1/boxes/' + config.fqdn() + '/awscredentials';
+    var url = config.apiServerOrigin() + '/api/v1/boxes/' + apiConfig.fqdn + '/awscredentials';
     superagent.post(url).query({ token: apiConfig.token }).timeout(30 * 1000).end(function (error, result) {
         if (error && !error.response) return callback(error);
         if (result.statusCode !== 201) return callback(new Error(result.text));
@@ -179,8 +179,8 @@ function download(apiConfig, backupFilePath, callback) {
             if (error.code === 'NoSuchKey' || error.code === 'ENOENT') {
                 ps.emit('error', new BackupsError(BackupsError.NOT_FOUND));
             } else {
-                debug('[%s] download: s3 stream error.', backupFilePath, error);
-                ps.emit('error', new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
+                debug(`download: ${apiConfig.bucket}:${backupFilePath} s3 stream error.`, error);
+                ps.emit('error', new BackupsError(BackupsError.EXTERNAL_ERROR, error.message || error.code)); // DO sets 'code'
             }
         });
 
@@ -484,7 +484,7 @@ function testConfig(apiConfig, callback) {
 
         var s3 = new AWS.S3(credentials);
         s3.putObject(params, function (error) {
-            if (error) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
+            if (error) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message || error.code)); // DO sets 'code'
 
             var params = {
                 Bucket: apiConfig.bucket,
@@ -492,7 +492,7 @@ function testConfig(apiConfig, callback) {
             };
 
             s3.deleteObject(params, function (error) {
-                if (error) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
+                if (error) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message || error.code)); // DO sets 'code'
 
                 callback();
             });
@@ -508,23 +508,18 @@ function backupDone(apiConfig, backupId, appBackupIds, callback) {
 
     if (apiConfig.provider !== 'caas') return callback();
 
-    // CaaS expects filenames instead of backupIds, this means no prefix but a file type extension
-    var FILE_TYPE = '.tar.gz.enc';
-    var boxBackupFilename = backupId + FILE_TYPE;
-    var appBackupFilenames = appBackupIds.map(function (id) { return id + FILE_TYPE; });
+    debug('[%s] backupDone: %s apps %j', backupId, backupId, appBackupIds);
 
-    debug('[%s] backupDone: %s apps %j', backupId, boxBackupFilename, appBackupFilenames);
-
-    var url = config.apiServerOrigin() + '/api/v1/boxes/' + config.fqdn() + '/backupDone';
+    var url = config.apiServerOrigin() + '/api/v1/boxes/' + apiConfig.fqdn + '/backupDone';
     var data = {
         boxVersion: config.version(),
-        restoreKey: boxBackupFilename,
+        backupId: backupId,
         appId: null,        // now unused
         appVersion: null,   // now unused
-        appBackupIds: appBackupFilenames
+        appBackupIds: appBackupIds
     };
 
-    superagent.post(url).send(data).query({ token: config.token() }).timeout(30 * 1000).end(function (error, result) {
+    superagent.post(url).send(data).query({ token: apiConfig.token }).timeout(30 * 1000).end(function (error, result) {
         if (error && !error.response) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error));
         if (result.statusCode !== 200) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, result.text));
 

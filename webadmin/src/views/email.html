@@ -27,18 +27,32 @@
 </div>
 
 <!-- Test email sent -->
-<div class="modal fade" id="testEmailSent" tabindex="-1" role="dialog">
+<div class="modal fade" id="testEmailModal" tabindex="-1" role="dialog">
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
-        <h4 class="modal-title">Test Email Sent</h4>
+        <h4 class="modal-title">Send test email</h4>
       </div>
       <div class="modal-body">
-        A test email was sent to {{ user.email }}. Please check the inbox of this account and verify the email was delivered.
+          <form name="testEmailForm" role="form" novalidate ng-submit="testEmail.submit()" autocomplete="off">
+              <fieldset>
+                  <p class="has-error text-center" ng-show="testEmail.error">{{ testEmail.error.generic }}</p>
+
+                  <div class="form-group" ng-class="{ 'has-error': testEmail.error.key }">
+                      <label class="control-label" for="inputTestEmailKey">Email to</label>
+                      <input type="text" class="form-control" ng-model="testEmail.mailTo" id="inputTestMailTo" name="mailTo" ng-disabled="testEmail.busy" placeholder="Email address" autofocus>
+                  </div>
+
+                  <input class="ng-hide" type="submit" ng-disabled="testEmailForm.$invalid"/>
+              </fieldset>
+          </form>
       </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-default" data-dismiss="modal">Ok</button>
-      </div>
+      <div class="modal-footer ">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+        <button type="submit" class="btn btn-outline btn-success pull-right" ng-click="testEmail.submit()" ng-disabled="testEmail.$invalid || testEmail.busy">
+            <i class="fa fa-circle-o-notch fa-spin" ng-show="testEmail.busy"></i><span>Send</span>
+        </button>
+    </div>
     </div>
   </div>
 </div>
@@ -181,12 +195,13 @@
     </div>
   </div>
 
-  <div class="text-left" ng-show="dnsConfig.provider && dnsConfig.provider !== 'caas'">
+  <div class="text-left" ng-show="dnsConfig.provider && dnsConfig.provider !== 'caas' && currentRelay.provider === 'cloudron-smtp'">
     <h3>DNS Records</h3>
   </div>
 
-  <div class="card" style="margin-bottom: 15px;" ng-show="dnsConfig.provider && dnsConfig.provider !== 'caas'">
+  <div class="card" style="margin-bottom: 15px;" ng-show="dnsConfig.provider && dnsConfig.provider !== 'caas' && currentRelay.provider === 'cloudron-smtp'">
     <div class="row">
+
       <div class="col-md-12">
         Set the following DNS records to guarantee email delivery:
 
@@ -196,7 +211,7 @@
           <div class="row" ng-if="expectedDnsRecords[record.value] && (mailConfig.enabled || (record.name !== 'DMARC' && record.name !== 'MX'))">
             <div class="col-xs-12">
               <p class="text-muted">
-                <i ng-class="expectedDnsRecords[record.value].status ? 'fa fa-check-circle text-success' : 'fa fa-exclamation-triangle text-danger'"></i> &nbsp;
+                <i ng-hide="email.refreshBusy" ng-class="expectedDnsRecords[record.value].status ? 'fa fa-check-circle text-success' : 'fa fa-exclamation-triangle text-danger'"></i> &nbsp;
                 <a href="" data-toggle="collapse" data-parent="#accordion" data-target="#collapse_dns_{{ record.value }}">{{ record.name }} record</a>
                 <button class="btn btn-xs btn-default" ng-click="email.refresh()" ng-disabled="email.refreshBusy" ng-show="!expectedDnsRecords[record.value].status"><i class="fa fa-refresh" ng-class="{ 'fa-pulse': email.refreshBusy }"></i></button>
               </p>
@@ -211,8 +226,10 @@
             </div>
           </div>
         </div>
+
       </div>
     </div>
+
   </div>
 
   <div class="text-left" ng-show="dnsConfig.provider && dnsConfig.provider !== 'caas'">
@@ -226,13 +243,13 @@
         <div class="row">
           <div class="col-xs-12">
             <p class="text-muted">
-              <i ng-class="relay.status ? 'fa fa-check-circle text-success' : 'fa fa-exclamation-triangle text-danger'"></i> &nbsp;
-              <a href="" data-toggle="collapse" data-parent="#accordion" data-target="#collapse_dns_port">
+              <i ng-hide="email.refreshBusy" ng-class="relay.status ? 'fa fa-check-circle text-success' : 'fa fa-exclamation-triangle text-danger'"></i> &nbsp;
+              <a href="" data-toggle="collapse" data-parent="#accordion" data-target="#collapse_outbound_smtp">
                 Outbound SMTP
               </a>
               <button class="btn btn-xs btn-default" ng-click="email.refresh()" ng-disabled="email.refreshBusy" ng-show="!relay.status"><i class="fa fa-refresh" ng-class="{ 'fa-pulse': email.refreshBusy }"></i></button>
             </p>
-            <div id="collapse_dns_port" class="panel-collapse collapse">
+            <div id="collapse_outbound_smtp" class="panel-collapse collapse">
               <div class="panel-body">
                 <p><b> {{ relay.value }} </b> </p>
               </div>
@@ -240,10 +257,10 @@
           </div>
         </div>
 
-        <div class="row" ng-show="rbl">
+        <div class="row" ng-show="currentRelay.provider === 'cloudron-smtp'">
           <div class="col-xs-12">
             <p class="text-muted">
-              <i ng-class="rbl.status ? 'fa fa-check-circle text-success' : 'fa fa-exclamation-triangle text-danger'"></i> &nbsp;
+              <i ng-hide="email.refreshBusy" ng-class="rbl.status ? 'fa fa-check-circle text-success' : 'fa fa-exclamation-triangle text-danger'"></i> &nbsp;
               <a href="" data-toggle="collapse" data-parent="#accordion" data-target="#collapse_rbl">
                   IP Address Blacklist Check
               </a>
@@ -262,7 +279,7 @@
 
         <div class="row">
           <div class="col-xs-12">
-            <button class="btn btn-primary pull-left" ng-click="sendTestEmail()">Send Test Email</button>
+            <button class="btn btn-primary pull-left" ng-click="testEmail.show()">Send Test Email</button>
           </div>
         </div>
       </div>

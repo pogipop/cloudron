@@ -38,6 +38,8 @@ var addons = require('./addons.js'),
     DatabaseError = require('./databaseerror.js'),
     debug = require('debug')('box:apptask'),
     docker = require('./docker.js'),
+    domains = require('./domains.js'),
+    DomainError = domains.DomainError,
     ejs = require('ejs'),
     fs = require('fs'),
     manifestFormat = require('cloudron-manifestformat'),
@@ -48,8 +50,6 @@ var addons = require('./addons.js'),
     paths = require('./paths.js'),
     safe = require('safetydance'),
     shell = require('./shell.js'),
-    SubdomainError = require('./subdomains.js').SubdomainError,
-    subdomains = require('./subdomains.js'),
     superagent = require('superagent'),
     sysinfo = require('./sysinfo.js'),
     tld = require('tldjs'),
@@ -72,7 +72,7 @@ function initialize(callback) {
 function debugApp(app) {
     assert.strictEqual(typeof app, 'object');
 
-    var prefix = app ? (app.location || '(bare)') : '(no app)';
+    var prefix = app ? (config.appFqdn(app) || '(bare)') : '(no app)';
     debug(prefix + ' ' + util.format.apply(util, Array.prototype.slice.call(arguments, 1)));
 }
 
@@ -252,18 +252,18 @@ function registerSubdomain(app, overwrite, callback) {
         if (error) return callback(error);
 
         async.retry({ times: 200, interval: 5000 }, function (retryCallback) {
-            debugApp(app, 'Registering subdomain location [%s] overwrite: %s', app.location, overwrite);
+            debugApp(app, 'Registering subdomain location [%s] overwrite: %s', config.appFqdn(app), overwrite);
 
             // get the current record before updating it
-            subdomains.get(app.location, 'A', function (error, values) {
+            domains.getDNSRecords(app.location, app.domain, 'A', function (error, values) {
                 if (error) return retryCallback(error);
 
                 // refuse to update any existing DNS record for custom domains that we did not create
                 // note that the appstore sets up the naked domain for non-custom domains
                 if (config.isCustomDomain() && values.length !== 0 && !overwrite) return retryCallback(null, new Error('DNS Record already exists'));
 
-                subdomains.upsert(app.location, 'A', [ ip ], function (error, changeId) {
-                    if (error && (error.reason === SubdomainError.STILL_BUSY || error.reason === SubdomainError.EXTERNAL_ERROR)) return retryCallback(error); // try again
+                domains.upsertDNSRecords(app.location, app.domain, 'A', [ ip ], function (error, changeId) {
+                    if (error && (error.reason === DomainError.STILL_BUSY || error.reason === DomainError.EXTERNAL_ERROR)) return retryCallback(error); // try again
 
                     retryCallback(null, error || changeId);
                 });
@@ -277,10 +277,14 @@ function registerSubdomain(app, overwrite, callback) {
     });
 }
 
-function unregisterSubdomain(app, location, callback) {
+function unregisterSubdomain(app, location, domain, callback) {
     assert.strictEqual(typeof app, 'object');
     assert.strictEqual(typeof location, 'string');
+    assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof callback, 'function');
+
+    // FIXME remove the oldConfig.domain fallback in following releases
+    domain = domain || config.fqdn();
 
     // do not unregister bare domain because we show a error/cloudron info page there
     if (!config.isCustomDomain() && location === '') {
@@ -297,10 +301,10 @@ function unregisterSubdomain(app, location, callback) {
         if (error) return callback(error);
 
         async.retry({ times: 30, interval: 5000 }, function (retryCallback) {
-            debugApp(app, 'Unregistering subdomain: %s', location);
+            debugApp(app, 'Unregistering subdomain: %s', config.appFqdn({ domain: domain, location: location }));
 
-            subdomains.remove(location, 'A', [ ip ], function (error) {
-                if (error && (error.reason === SubdomainError.STILL_BUSY || error.reason === SubdomainError.EXTERNAL_ERROR)) return retryCallback(error); // try again
+            domains.removeDNSRecords(location, domain, 'A', [ ip ], function (error) {
+                if (error && (error.reason === DomainError.STILL_BUSY || error.reason === DomainError.EXTERNAL_ERROR)) return retryCallback(error); // try again
 
                 retryCallback(null, error);
             });
@@ -334,7 +338,7 @@ function waitForDnsPropagation(app, callback) {
     sysinfo.getPublicIp(function (error, ip) {
         if (error) return callback(error);
 
-        subdomains.waitForDns(config.appFqdn(app.location), ip, 'A', { interval: 5000, times: 120 }, callback);
+        domains.waitForDNSRecord(config.appFqdn(app), app.domain, ip, 'A', { interval: 5000, times: 120 }, callback);
     });
 }
 
@@ -348,10 +352,10 @@ function waitForAltDomainDnsPropagation(app, callback) {
         sysinfo.getPublicIp(function (error, ip) {
             if (error) return callback(error);
 
-            subdomains.waitForDns(app.altDomain, ip, 'A', { interval: 10000, times: 60 }, callback);
+            domains.waitForDNSRecord(app.altDomain, tld.getDomain(app.altDomain), ip, 'A', { interval: 10000, times: 60 }, callback);
         });
     } else {
-        subdomains.waitForDns(app.altDomain, config.appFqdn(app.location) + '.', 'CNAME', { interval: 10000, times: 60 }, callback);
+        domains.waitForDNSRecord(app.altDomain, tld.getDomain(app.altDomain), config.appFqdn(app) + '.', 'CNAME', { interval: 10000, times: 60 }, callback);
     }
 }
 
@@ -389,7 +393,7 @@ function install(app, callback) {
     assert.strictEqual(typeof app, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    const backupId = app.lastBackupId, isRestoring = app.installationState === appdb.ISTATE_PENDING_RESTORE;
+    const restoreConfig = app.restoreConfig, isRestoring = app.installationState === appdb.ISTATE_PENDING_RESTORE;
 
     async.series([
         // this protects against the theoretical possibility of an app being marked for install/restore from
@@ -429,7 +433,7 @@ function install(app, callback) {
         createVolume.bind(null, app),
 
         function restoreFromBackup(next) {
-            if (!backupId) {
+            if (!restoreConfig) {
                 async.series([
                     updateApp.bind(null, app, { installationProgress: '60, Setting up addons' }),
                     addons.setupAddons.bind(null, app, app.manifest.addons),
@@ -437,7 +441,7 @@ function install(app, callback) {
             } else {
                 async.series([
                     updateApp.bind(null, app, { installationProgress: '60, Download backup and restoring addons' }),
-                    backups.restoreApp.bind(null, app, app.manifest.addons, backupId),
+                    backups.restoreApp.bind(null, app, app.manifest.addons, restoreConfig),
                 ], next);
             }
         },
@@ -457,7 +461,7 @@ function install(app, callback) {
         exports._waitForDnsPropagation.bind(null, app),
 
         updateApp.bind(null, app, { installationProgress: '90, Waiting for External Domain setup' }),
-        exports._waitForAltDomainDnsPropagation.bind(null, app), // required when restoring and !lastBackupId
+        exports._waitForAltDomainDnsPropagation.bind(null, app), // required when restoring and !restoreConfig
 
         updateApp.bind(null, app, { installationProgress: '95, Configure nginx' }),
         configureNginx.bind(null, app),
@@ -482,7 +486,7 @@ function backup(app, callback) {
 
     async.series([
         updateApp.bind(null, app, { installationProgress: '10, Backing up' }),
-        backups.backupApp.bind(null, app, app.manifest),
+        backups.backupApp.bind(null, app),
 
         // done!
         function (callback) {
@@ -504,7 +508,7 @@ function configure(app, callback) {
     assert.strictEqual(typeof callback, 'function');
 
     // oldConfig can be null during an infra update
-    var locationChanged = app.oldConfig && app.oldConfig.location !== app.location;
+    var locationChanged = app.oldConfig && (config.appFqdn(app.oldConfig) !== config.appFqdn(app));
 
     async.series([
         updateApp.bind(null, app, { installationProgress: '10, Cleaning up old install' }),
@@ -515,7 +519,7 @@ function configure(app, callback) {
         deleteContainers.bind(null, app),
         function (next) {
             if (!locationChanged) return next();
-            unregisterSubdomain(app, app.oldConfig.location, next);
+            unregisterSubdomain(app, app.oldConfig.location, app.oldConfig.domain, next);
         },
 
         reserveHttpPort.bind(null, app),
@@ -575,31 +579,34 @@ function update(app, callback) {
     assert.strictEqual(typeof app, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    debugApp(app, `Updating to ${app.newConfig.manifest.version}`);
+    debugApp(app, `Updating to ${app.updateConfig.manifest.version}`);
 
     // app does not want these addons anymore
     // FIXME: this does not handle option changes (like multipleDatabases)
-    var unusedAddons = _.omit(app.manifest.addons, Object.keys(app.newConfig.manifest.addons));
+    var unusedAddons = _.omit(app.manifest.addons, Object.keys(app.updateConfig.manifest.addons));
 
     async.series([
         // this protects against the theoretical possibility of an app being marked for update from
         // a previous version of box code
         updateApp.bind(null, app, { installationProgress: '0, Verify manifest' }),
-        verifyManifest.bind(null, app.newConfig.manifest),
+        verifyManifest.bind(null, app.updateConfig.manifest),
 
         function (next) {
             if (app.installationState === appdb.ISTATE_PENDING_FORCE_UPDATE) return next(null);
 
             async.series([
                 updateApp.bind(null, app, { installationProgress: '15, Backing up app' }),
-                backups.backupApp.bind(null, app, app.manifest)
-            ], next);
+                backups.backupApp.bind(null, app)
+            ], function (error) {
+                if (error) error.backupError = true;
+                next(error);
+            });
         },
 
         // download new image before app is stopped. this is so we can reduce downtime
         // and also not remove the 'common' layers when the old image is deleted
         updateApp.bind(null, app, { installationProgress: '25, Downloading image' }),
-        docker.downloadImage.bind(null, app.newConfig.manifest),
+        docker.downloadImage.bind(null, app.updateConfig.manifest),
 
         // note: we cleanup first and then backup. this is done so that the app is not running should backup fail
         // we cannot easily 'recover' from backup failures because we have to revert manfest and portBindings
@@ -609,7 +616,7 @@ function update(app, callback) {
         stopApp.bind(null, app),
         deleteContainers.bind(null, app),
         function deleteImageIfChanged(done) {
-            if (app.manifest.dockerImage === app.newConfig.manifest.dockerImage) return done();
+            if (app.manifest.dockerImage === app.updateConfig.manifest.dockerImage) return done();
 
             docker.deleteImage(app.manifest, done);
         },
@@ -621,7 +628,7 @@ function update(app, callback) {
         function (next) {
             // make sure we always have objects
             var currentPorts = app.portBindings || {};
-            var newPorts = app.newConfig.manifest.tcpPorts || {};
+            var newPorts = app.updateConfig.manifest.tcpPorts || {};
 
             async.each(Object.keys(currentPorts), function (portName, callback) {
                 if (newPorts[portName]) return callback(); // port still in use
@@ -639,7 +646,7 @@ function update(app, callback) {
         },
 
         // switch over to the new config. manifest, memoryLimit, portBindings, appstoreId are updated here
-        updateApp.bind(null, app, app.newConfig),
+        updateApp.bind(null, app, app.updateConfig),
 
         updateApp.bind(null, app, { installationProgress: '45, Downloading icon' }),
         downloadIcon.bind(null, app),
@@ -661,14 +668,18 @@ function update(app, callback) {
         // done!
         function (callback) {
             debugApp(app, 'updated');
-            updateApp(app, { installationState: appdb.ISTATE_INSTALLED, installationProgress: '', health: null, newConfig: null }, callback);
+            updateApp(app, { installationState: appdb.ISTATE_INSTALLED, installationProgress: '', health: null, updateConfig: null, updateTime: new Date() }, callback);
         }
     ], function seriesDone(error) {
-        if (error) {
+        if (error && error.backupError) {
+            debugApp(app, 'update aborted because backup failed', error);
+            updateApp(app, { installationState: appdb.ISTATE_INSTALLED, installationProgress: '', health: null, updateConfig: null }, callback.bind(null, error));
+        } else if (error) {
             debugApp(app, 'Error updating app: %s', error);
-            return updateApp(app, { installationState: appdb.ISTATE_ERROR, installationProgress: error.message }, callback.bind(null, error));
+            updateApp(app, { installationState: appdb.ISTATE_ERROR, installationProgress: error.message, updateTime: new Date() }, callback.bind(null, error));
+        } else {
+            callback(null);
         }
-        callback(null);
     });
 }
 
@@ -701,7 +712,7 @@ function uninstall(app, callback) {
         docker.deleteImage.bind(null, app.manifest),
 
         updateApp.bind(null, app, { installationProgress: '60, Unregistering subdomain' }),
-        unregisterSubdomain.bind(null, app, app.location),
+        unregisterSubdomain.bind(null, app, app.location, app.domain),
 
         updateApp.bind(null, app, { installationProgress: '80, Cleanup icon' }),
         removeIcon.bind(null, app),

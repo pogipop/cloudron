@@ -98,16 +98,16 @@ function initializeExpressSync() {
     var csrf = routes.oauth2.csrf;
 
     // public routes
-    router.post('/api/v1/cloudron/activate', routes.cloudron.setupTokenAuth, routes.cloudron.activate);
     router.post('/api/v1/cloudron/dns_setup', routes.cloudron.providerTokenAuth, routes.cloudron.dnsSetup);    // only available until no-domain
+    router.post('/api/v1/cloudron/activate', routes.cloudron.setupTokenAuth, routes.cloudron.activate);
+    router.post('/api/v1/cloudron/restore', routes.cloudron.restore);    // only available until activated
+
     router.get ('/api/v1/cloudron/progress', routes.cloudron.getProgress);
     router.get ('/api/v1/cloudron/status', routes.cloudron.getStatus);
     router.get ('/api/v1/cloudron/avatar', routes.settings.getCloudronAvatar); // this is a public alias for /api/v1/settings/cloudron_avatar
 
     // developer routes
-    router.post('/api/v1/developer', developerScope, routes.user.requireAdmin, routes.user.verifyPassword, routes.developer.setEnabled);
-    router.get ('/api/v1/developer', developerScope, routes.developer.enabled, routes.developer.status);
-    router.post('/api/v1/developer/login', routes.developer.enabled, routes.developer.login);
+    router.post('/api/v1/developer/login', routes.developer.login);
 
     // cloudron routes
     router.get ('/api/v1/cloudron/config', cloudronScope, routes.cloudron.getConfig);
@@ -166,12 +166,12 @@ function initializeExpressSync() {
     router.get ('/api/v1/oauth/dialog/authorize', routes.oauth2.authorization);
     router.post('/api/v1/oauth/token', routes.oauth2.token);
     router.get ('/api/v1/oauth/clients', settingsScope, routes.clients.getAll);
-    router.post('/api/v1/oauth/clients', routes.developer.enabled, settingsScope, routes.clients.add);
-    router.get ('/api/v1/oauth/clients/:clientId', routes.developer.enabled, settingsScope, routes.clients.get);
-    router.post('/api/v1/oauth/clients/:clientId', routes.developer.enabled, settingsScope, routes.clients.add);
-    router.del ('/api/v1/oauth/clients/:clientId', routes.developer.enabled, settingsScope, routes.clients.del);
+    router.post('/api/v1/oauth/clients', settingsScope, routes.clients.add);
+    router.get ('/api/v1/oauth/clients/:clientId', settingsScope, routes.clients.get);
+    router.post('/api/v1/oauth/clients/:clientId', settingsScope, routes.clients.add);
+    router.del ('/api/v1/oauth/clients/:clientId', settingsScope, routes.clients.del);
     router.get ('/api/v1/oauth/clients/:clientId/tokens', settingsScope, routes.clients.getClientTokens);
-    router.post('/api/v1/oauth/clients/:clientId/tokens', routes.developer.enabled, settingsScope, routes.clients.addClientToken);
+    router.post('/api/v1/oauth/clients/:clientId/tokens', settingsScope, routes.clients.addClientToken);
     router.del ('/api/v1/oauth/clients/:clientId/tokens', settingsScope, routes.clients.delClientTokens);
     router.del ('/api/v1/oauth/clients/:clientId/tokens/:tokenId', settingsScope, routes.clients.delToken);
 
@@ -191,7 +191,7 @@ function initializeExpressSync() {
     router.post('/api/v1/apps/:id/start',     appsScope, routes.user.requireAdmin, routes.apps.startApp);
     router.get ('/api/v1/apps/:id/logstream', appsScope, routes.user.requireAdmin, routes.apps.getLogStream);
     router.get ('/api/v1/apps/:id/logs',      appsScope, routes.user.requireAdmin, routes.apps.getLogs);
-    router.get ('/api/v1/apps/:id/exec',      routes.developer.enabled, appsScope, routes.user.requireAdmin, routes.apps.exec);
+    router.get ('/api/v1/apps/:id/exec',      appsScope, routes.user.requireAdmin, routes.apps.exec);
     // websocket cannot do bearer authentication
     router.get ('/api/v1/apps/:id/execws',    routes.oauth2.websocketAuth.bind(null, [ clients.SCOPE_APPS ]), routes.user.requireAdmin, routes.apps.execWebSocket);
     router.post('/api/v1/apps/:id/clone',     appsScope, routes.user.requireAdmin, routes.apps.cloneApp);
@@ -206,11 +206,8 @@ function initializeExpressSync() {
     router.get ('/api/v1/settings/cloudron_avatar',    settingsScope, routes.user.requireAdmin, routes.settings.getCloudronAvatar);
     router.post('/api/v1/settings/cloudron_avatar',    settingsScope, routes.user.requireAdmin, multipart, routes.settings.setCloudronAvatar);
     router.get ('/api/v1/settings/email_status',       settingsScope, routes.user.requireAdmin, routes.settings.getEmailStatus);
-    router.get ('/api/v1/settings/dns_config',         settingsScope, routes.user.requireAdmin, routes.settings.getDnsConfig);
-    router.post('/api/v1/settings/dns_config',         settingsScope, routes.user.requireAdmin, routes.settings.setDnsConfig);
     router.get ('/api/v1/settings/backup_config',      settingsScope, routes.user.requireAdmin, routes.settings.getBackupConfig);
     router.post('/api/v1/settings/backup_config',      settingsScope, routes.user.requireAdmin, routes.settings.setBackupConfig);
-    router.post('/api/v1/settings/certificate',        settingsScope, routes.user.requireAdmin, routes.settings.setFallbackCertificate);
 
     router.post('/api/v1/settings/admin_certificate',  settingsScope, routes.user.requireAdmin, routes.settings.setAdminCertificate);
     router.get ('/api/v1/settings/time_zone',          settingsScope, routes.user.requireAdmin, routes.settings.getTimeZone);
@@ -234,6 +231,13 @@ function initializeExpressSync() {
     // backup routes
     router.get ('/api/v1/backups', settingsScope, routes.user.requireAdmin, routes.backups.get);
     router.post('/api/v1/backups', settingsScope, routes.user.requireAdmin, routes.backups.create);
+
+    // domain routes
+    router.post('/api/v1/domains', settingsScope, routes.user.requireAdmin, routes.domains.add);
+    router.get ('/api/v1/domains', settingsScope, routes.user.requireAdmin, routes.domains.getAll);
+    router.get ('/api/v1/domains/:domain', settingsScope, routes.user.requireAdmin, routes.domains.get);
+    router.put ('/api/v1/domains/:domain', settingsScope, routes.user.requireAdmin, routes.domains.update);
+    router.del ('/api/v1/domains/:domain', settingsScope, routes.user.requireAdmin, routes.user.verifyPassword, routes.domains.del);
 
     // disable server socket "idle" timeout. we use the timeout middleware to handle timeouts on a route level
     // we rely on nginx for timeouts on the TCP level (see client_header_timeout)

@@ -7,9 +7,16 @@ angular.module('Application').controller('EmailController', ['$scope', '$locatio
     $scope.user = Client.getUserInfo();
     $scope.config = Client.getConfig();
     $scope.dnsConfig = {};
+    $scope.currentRelay = {};
     $scope.relay = {};
     $scope.rbl = null;
-    $scope.expectedDnsRecords = {};
+    $scope.expectedDnsRecords = {
+        mx: { },
+        dkim: { },
+        spf: { },
+        dmarc: { },
+        ptr: { }
+    };
     $scope.expectedDnsRecordsTypes = [
         { name: 'MX', value: 'mx' },
         { name: 'DKIM', value: 'dkim' },
@@ -81,6 +88,8 @@ angular.module('Application').controller('EmailController', ['$scope', '$locatio
         refresh: function () {
             $scope.email.refreshBusy = true;
 
+            collapseDnsRecords();
+
             showExpectedDnsRecords(function (error) {
                 if (error) console.error(error);
 
@@ -150,20 +159,56 @@ angular.module('Application').controller('EmailController', ['$scope', '$locatio
             }
 
             Client.setMailRelay(data, function (error) {
-                if (error) $scope.mailRelay.error = error.message;
-                else $scope.mailRelay.success = true;
-
                 $scope.mailRelay.busy = false;
+
+                if (error) {
+                    $scope.mailRelay.error = error.message;
+                    return;
+                }
+
+                $scope.currentRelay = data;
+                $scope.mailRelay.success = true;
+                $scope.email.refresh();
             });
         }
     };
 
-    $scope.sendTestEmail = function () {
-        Client.sentTestMail($scope.user.email, function (error) {
-            if (error) return console.error(error);
+    $scope.testEmail = {
+        busy: false,
+        error: {},
 
-            $('#testEmailSent').modal('show');
-        });
+        mailTo: '',
+
+        clearForm: function () {
+            $scope.testEmail.mailTo = '';
+        },
+
+        show: function () {
+            $scope.testEmail.error = {};
+            $scope.testEmail.busy = false;
+
+            $scope.testEmail.mailTo = $scope.user.email;
+
+            $('#testEmailModal').modal('show');
+        },
+
+        submit: function () {
+            $scope.testEmail.error = {};
+            $scope.testEmail.busy = true;
+
+            Client.sentTestMail($scope.testEmail.mailTo, function (error) {
+                $scope.testEmail.busy = false;
+
+                if (error) {
+                    $scope.testEmail.error.generic = error.message;
+                    console.error(error);
+                    $('#inputTestMailTo').focus();
+                    return;
+                }
+
+                $('#testEmailModal').modal('hide');
+            });
+        }
     };
 
     function getMailConfig() {
@@ -185,6 +230,8 @@ angular.module('Application').controller('EmailController', ['$scope', '$locatio
             $scope.mailRelay.relay.password = '';
             $scope.mailRelay.relay.serverApiToken = '';
 
+            $scope.currentRelay = relay;
+
             if (relay.provider === 'postmark-smtp') {
                 $scope.mailRelay.relay.serverApiToken = relay.username;
             } else if (relay.provider === 'sendgrid-smtp') {
@@ -203,12 +250,23 @@ angular.module('Application').controller('EmailController', ['$scope', '$locatio
         });
     }
 
+    // TODO this currently assumes the config.fqdn is the mail domain
     function getDnsConfig() {
-        Client.getDnsConfig(function (error, dnsConfig) {
+        Client.getDomain($scope.config.fqdn, function (error, result) {
             if (error) return console.error(error);
 
-            $scope.dnsConfig = dnsConfig;
+            $scope.dnsConfig = result.config;
         });
+    }
+
+    function collapseDnsRecords() {
+        $scope.expectedDnsRecordsTypes.forEach(function (record) {
+            var type = record.value;
+            $('#collapse_dns_' + type).collapse('hide');
+        });
+
+        $('#collapse_outbound_smtp').collapse('hide');
+        $('#collapse_rbl').collapse('hide');
     }
 
     function showExpectedDnsRecords(callback) {
@@ -217,19 +275,25 @@ angular.module('Application').controller('EmailController', ['$scope', '$locatio
         Client.getEmailStatus(function (error, result) {
             if (error) return callback(error);
 
-            $scope.expectedDnsRecords = result.dns;
             $scope.relay = result.relay;
             $scope.rbl = result.rbl;
 
             // open the record details if they are not correct
-            for (var type in $scope.expectedDnsRecords) {
+            $scope.expectedDnsRecordsTypes.forEach(function (record) {
+                var type = record.value;
+                $scope.expectedDnsRecords[type] = result.dns[type] || {};
+
                 if (!$scope.expectedDnsRecords[type].status) {
                     $('#collapse_dns_' + type).collapse('show');
                 }
-            }
+            });
 
             if (!$scope.relay.status) {
-                $('#collapse_dns_port').collapse('show');
+                $('#collapse_outbound_smtp').collapse('show');
+            }
+
+            if (!$scope.rbl.status) {
+                $('#collapse_rbl').collapse('show');
             }
 
             callback(null);
@@ -283,6 +347,13 @@ angular.module('Application').controller('EmailController', ['$scope', '$locatio
         getUsers();
         getCatchallAddresses();
         $scope.email.refresh();
+    });
+
+    // setup all the dialog focus handling
+    ['testEmailModal'].forEach(function (id) {
+        $('#' + id).on('shown.bs.modal', function () {
+            $(this).find("[autofocus]:first").focus();
+        });
     });
 
     $('.modal-backdrop').remove();

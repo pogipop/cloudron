@@ -213,7 +213,7 @@ h1, h2, h3 {
 
 .grid-item {
     padding: 10px;
-    min-width: 205px;
+    min-width: 225px;
 
     .col-xs-12 {
         padding-left: 5px;
@@ -714,7 +714,6 @@ multiselect.stretch {
     color: $brand-danger;
 
     a {
-        text-decoration: underline;
         color: $brand-danger;
     }
 }

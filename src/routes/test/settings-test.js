@@ -1,40 +1,39 @@
+'use strict';
+
 /* global it:false */
 /* global describe:false */
 /* global before:false */
 /* global after:false */
 
-'use strict';
-
-var appdb = require('../../appdb.js'),
-    async = require('async'),
+var async = require('async'),
     child_process = require('child_process'),
     cloudron = require('../../cloudron.js'),
     config = require('../../config.js'),
     constants = require('../../constants.js'),
     database = require('../../database.js'),
     expect = require('expect.js'),
+    fs = require('fs'),
+    nock = require('nock'),
     path = require('path'),
     paths = require('../../paths.js'),
     server = require('../../server.js'),
     settings = require('../../settings.js'),
     settingsdb = require('../../settingsdb.js'),
-    superagent = require('superagent'),
-    fs = require('fs'),
-    nock = require('nock');
+    superagent = require('superagent');
 
 var SERVER_URL = 'http://localhost:' + config.get('port');
 
 var USERNAME = 'superadmin', PASSWORD = 'Foobar?1337', EMAIL ='silly@me.com';
 var token = null;
 
-var server;
 function setup(done) {
-    config.setFqdn('foobar.com');
+    config._reset();
+    config.setFqdn('example-settings-test.com');
+    config.set('provider', 'caas');
 
     async.series([
-        server.start.bind(server),
-
-        database._clear,
+        server.start.bind(null),
+        database._clear.bind(null),
 
         function createAdmin(callback) {
             var scope1 = nock(config.apiServerOrigin()).get('/api/v1/boxes/' + config.fqdn() + '/setup/verify?setupToken=somesetuptoken').reply(200, {});
@@ -54,11 +53,6 @@ function setup(done) {
 
                 callback();
             });
-        },
-
-        function addApp(callback) {
-            var manifest = { version: '0.0.1', manifestVersion: 1, dockerImage: 'foo', healthCheckPath: '/', httpPort: 3, title: 'ok' };
-            appdb.add('appid', 'appStoreId', manifest, 'location', [ ] /* portBindings */, { }, callback);
         }
     ], done);
 }
@@ -72,8 +66,6 @@ function cleanup(done) {
 }
 
 describe('Settings API', function () {
-    this.timeout(10000);
-
     before(setup);
     after(cleanup);
 
@@ -234,47 +226,6 @@ describe('Settings API', function () {
         });
     });
 
-    describe('dns_config', function () {
-        it('get dns_config fails', function (done) {
-            superagent.get(SERVER_URL + '/api/v1/settings/dns_config')
-                   .query({ access_token: token })
-                   .end(function (err, res) {
-                expect(res.statusCode).to.equal(200);
-                expect(res.body).to.eql({ provider: 'manual' });
-                done();
-            });
-        });
-
-        it('cannot set without data', function (done) {
-            superagent.post(SERVER_URL + '/api/v1/settings/dns_config')
-                   .query({ access_token: token })
-                   .end(function (err, res) {
-                expect(res.statusCode).to.equal(400);
-                done();
-            });
-        });
-
-        it('set succeeds', function (done) {
-            superagent.post(SERVER_URL + '/api/v1/settings/dns_config')
-                   .query({ access_token: token })
-                   .send({ provider: 'route53', accessKeyId: 'accessKey', secretAccessKey: 'secretAccessKey' })
-                   .end(function (err, res) {
-                expect(res.statusCode).to.equal(200);
-                done();
-            });
-        });
-
-        it('get succeeds', function (done) {
-            superagent.get(SERVER_URL + '/api/v1/settings/dns_config')
-                   .query({ access_token: token })
-                   .end(function (err, res) {
-                expect(res.statusCode).to.equal(200);
-                expect(res.body).to.eql({ provider: 'route53', accessKeyId: 'accessKey', secretAccessKey: 'secretAccessKey', region: 'us-east-1', endpoint: null });
-                done();
-            });
-        });
-    });
-
     describe('mail_config', function () {
         it('get mail_config succeeds', function (done) {
             superagent.get(SERVER_URL + '/api/v1/settings/mail_config')
@@ -367,16 +318,16 @@ describe('Settings API', function () {
         });
     });
 
-    describe('Certificates API', function () {
-        var validCert0, validKey0, // foobar.com
-            validCert1, validKey1; // *.foobar.com
+    xdescribe('Certificates API', function () {
+        var validCert0, validKey0, // example.com
+            validCert1, validKey1; // *.example.com
 
         before(function () {
-            child_process.execSync('openssl req -subj "/CN=foobar.com/O=My Company Name LTD./C=US" -new -newkey rsa:2048 -days 365 -nodes -x509 -keyout /tmp/server.key -out /tmp/server.crt');
+            child_process.execSync('openssl req -subj "/CN=example.com/O=My Company Name LTD./C=US" -new -newkey rsa:2048 -days 365 -nodes -x509 -keyout /tmp/server.key -out /tmp/server.crt');
             validKey0 = fs.readFileSync('/tmp/server.key', 'utf8');
             validCert0 = fs.readFileSync('/tmp/server.crt', 'utf8');
 
-            child_process.execSync('openssl req -subj "/CN=*.foobar.com/O=My Company Name LTD./C=US" -new -newkey rsa:2048 -days 365 -nodes -x509 -keyout /tmp/server.key -out /tmp/server.crt');
+            child_process.execSync('openssl req -subj "/CN=*.example.com/O=My Company Name LTD./C=US" -new -newkey rsa:2048 -days 365 -nodes -x509 -keyout /tmp/server.key -out /tmp/server.crt');
             validKey1 = fs.readFileSync('/tmp/server.key', 'utf8');
             validCert1 = fs.readFileSync('/tmp/server.crt', 'utf8');
         });

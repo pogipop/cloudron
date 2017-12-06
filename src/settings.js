@@ -18,12 +18,6 @@ exports = module.exports = {
     getCloudronAvatar: getCloudronAvatar,
     setCloudronAvatar: setCloudronAvatar,
 
-    getDeveloperMode: getDeveloperMode,
-    setDeveloperMode: setDeveloperMode,
-
-    getDnsConfig: getDnsConfig,
-    setDnsConfig: setDnsConfig,
-
     getDynamicDnsConfig: getDynamicDnsConfig,
     setDynamicDnsConfig: setDynamicDnsConfig,
 
@@ -54,13 +48,11 @@ exports = module.exports = {
     getAll: getAll,
 
     // booleans. if you add an entry here, be sure to fix getAll
-    DEVELOPER_MODE_KEY: 'developer_mode',
     DYNAMIC_DNS_KEY: 'dynamic_dns',
     MAIL_FROM_VALIDATION_KEY: 'mail_from_validation',
     EMAIL_DIGEST: 'email_digest',
 
     // json. if you add an entry here, be sure to fix getAll
-    DNS_CONFIG_KEY: 'dns_config',
     BACKUP_CONFIG_KEY: 'backup_config',
     TLS_CONFIG_KEY: 'tls_config',
     UPDATE_CONFIG_KEY: 'update_config',
@@ -85,7 +77,6 @@ var assert = require('assert'),
     CronJob = require('cron').CronJob,
     DatabaseError = require('./databaseerror.js'),
     debug = require('debug')('box:settings'),
-    cloudron = require('./cloudron.js'),
     moment = require('moment-timezone'),
     paths = require('./paths.js'),
     platform = require('./platform.js'),
@@ -93,10 +84,7 @@ var assert = require('assert'),
     EmailError = email.EmailError,
     safe = require('safetydance'),
     settingsdb = require('./settingsdb.js'),
-    subdomains = require('./subdomains.js'),
-    SubdomainError = subdomains.SubdomainError,
     superagent = require('superagent'),
-    sysinfo = require('./sysinfo.js'),
     util = require('util'),
     _ = require('underscore');
 
@@ -105,9 +93,7 @@ var gDefaults = (function () {
     result[exports.AUTOUPDATE_PATTERN_KEY] = '00 00 1,3,5,23 * * *';
     result[exports.TIME_ZONE_KEY] = 'America/Los_Angeles';
     result[exports.CLOUDRON_NAME_KEY] = 'Cloudron';
-    result[exports.DEVELOPER_MODE_KEY] = true;
     result[exports.DYNAMIC_DNS_KEY] = false;
-    result[exports.DNS_CONFIG_KEY] = { provider: 'manual' };
     result[exports.BACKUP_CONFIG_KEY] = {
         provider: 'filesystem',
         key: '',
@@ -271,72 +257,6 @@ function setCloudronAvatar(avatar, callback) {
     }
 
     return callback(null);
-}
-
-function getDeveloperMode(callback) {
-    assert.strictEqual(typeof callback, 'function');
-
-    settingsdb.get(exports.DEVELOPER_MODE_KEY, function (error, enabled) {
-        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(null, gDefaults[exports.DEVELOPER_MODE_KEY]);
-        if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
-
-        callback(null, !!enabled); // settingsdb holds string values only
-    });
-}
-
-function setDeveloperMode(enabled, callback) {
-    assert.strictEqual(typeof enabled, 'boolean');
-    assert.strictEqual(typeof callback, 'function');
-
-    // settingsdb takes string values only
-    settingsdb.set(exports.DEVELOPER_MODE_KEY, enabled ? 'enabled' : '', function (error) {
-        if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
-
-        exports.events.emit(exports.DEVELOPER_MODE_KEY, enabled);
-
-        return callback(null);
-    });
-}
-
-function getDnsConfig(callback) {
-    assert.strictEqual(typeof callback, 'function');
-
-    settingsdb.get(exports.DNS_CONFIG_KEY, function (error, value) {
-        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(null, gDefaults[exports.DNS_CONFIG_KEY]);
-        if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
-
-        callback(null, JSON.parse(value));
-    });
-}
-
-function setDnsConfig(dnsConfig, domain, zoneName, callback) {
-    assert.strictEqual(typeof dnsConfig, 'object');
-    assert.strictEqual(typeof domain, 'string');
-    assert.strictEqual(typeof zoneName, 'string');
-    assert.strictEqual(typeof callback, 'function');
-
-    sysinfo.getPublicIp(function (error, ip) {
-        if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, 'Error getting IP:' + error.message));
-
-        subdomains.verifyDnsConfig(dnsConfig, domain, zoneName, ip, function (error, result) {
-            if (error && error.reason === SubdomainError.ACCESS_DENIED) return callback(new SettingsError(SettingsError.BAD_FIELD, 'Error adding A record. Access denied'));
-            if (error && error.reason === SubdomainError.NOT_FOUND) return callback(new SettingsError(SettingsError.BAD_FIELD, 'Zone not found'));
-            if (error && error.reason === SubdomainError.EXTERNAL_ERROR) return callback(new SettingsError(SettingsError.BAD_FIELD, 'Error adding A record:' + error.message));
-            if (error && error.reason === SubdomainError.BAD_FIELD) return callback(new SettingsError(SettingsError.BAD_FIELD, error.message));
-            if (error && error.reason === SubdomainError.INVALID_PROVIDER) return callback(new SettingsError(SettingsError.BAD_FIELD, error.message));
-            if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
-
-            settingsdb.set(exports.DNS_CONFIG_KEY, JSON.stringify(result), function (error) {
-                if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
-
-                exports.events.emit(exports.DNS_CONFIG_KEY, dnsConfig);
-
-                cloudron.configureWebadmin(NOOP_CALLBACK); // do not block
-
-                callback(null);
-            });
-        });
-    });
 }
 
 function getDynamicDnsConfig(callback) {
@@ -635,12 +555,11 @@ function getAll(callback) {
         settings.forEach(function (setting) { result[setting.name] = setting.value; });
 
         // convert booleans
-        result[exports.DEVELOPER_MODE_KEY] = !!result[exports.DEVELOPER_MODE_KEY];
         result[exports.DYNAMIC_DNS_KEY] = !!result[exports.DYNAMIC_DNS_KEY];
         result[exports.MAIL_FROM_VALIDATION_KEY] = !!result[exports.MAIL_FROM_VALIDATION_KEY];
 
         // convert JSON objects
-        [exports.DNS_CONFIG_KEY, exports.TLS_CONFIG_KEY, exports.BACKUP_CONFIG_KEY, exports.MAIL_CONFIG_KEY,
+        [exports.TLS_CONFIG_KEY, exports.BACKUP_CONFIG_KEY, exports.MAIL_CONFIG_KEY,
             exports.UPDATE_CONFIG_KEY, exports.APPSTORE_CONFIG_KEY, exports.MAIL_RELAY_KEY, exports.CATCH_ALL_ADDRESS_KEY].forEach(function (key) {
             result[key] = typeof result[key] === 'object' ? result[key] : safe.JSON.parse(result[key]);
         });

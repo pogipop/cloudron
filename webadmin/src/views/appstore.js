@@ -12,7 +12,7 @@ angular.module('Application').controller('AppStoreController', ['$scope', '$loca
     $scope.user = Client.getUserInfo();
     $scope.users = [];
     $scope.groups = [];
-    $scope.dnsConfig = {};
+    $scope.domains = [];
     $scope.category = '';
     $scope.cachedCategory = ''; // used to cache the selected category while searching
     $scope.searchString = '';
@@ -37,6 +37,7 @@ angular.module('Application').controller('AppStoreController', ['$scope', '$loca
         error: {},
         app: {},
         location: '',
+        domain: '',
         portBindings: {},
         mediaLinks: [],
         certificateFile: null,
@@ -57,6 +58,7 @@ angular.module('Application').controller('AppStoreController', ['$scope', '$loca
             $scope.appInstall.app = {};
             $scope.appInstall.error = {};
             $scope.appInstall.location = '';
+            $scope.appInstall.domain = '';
             $scope.appInstall.portBindings = {};
             $scope.appInstall.state = 'appInfo';
             $scope.appInstall.mediaLinks = [];
@@ -102,6 +104,7 @@ angular.module('Application').controller('AppStoreController', ['$scope', '$loca
 
             $scope.appInstall.mediaLinks = $scope.appInstall.app.manifest.mediaLinks || [];
             $scope.appInstall.location = app.location;
+            $scope.appInstall.domain = $scope.config.fqdn; // FIXME needs to come from domains dropdown
             $scope.appInstall.portBindingsInfo = $scope.appInstall.app.manifest.tcpPorts || {};   // Portbinding map only for information
             $scope.appInstall.portBindings = {};                            // This is the actual model holding the env:port pair
             $scope.appInstall.portBindingsEnabled = {};                     // This is the actual model holding the enabled/disabled flag
@@ -145,6 +148,7 @@ angular.module('Application').controller('AppStoreController', ['$scope', '$loca
 
             var data = {
                 location: $scope.appInstall.location || '',
+                domain: $scope.appInstall.domain,
                 portBindings: finalPortBindings,
                 accessRestriction: finalAccessRestriction,
                 cert: $scope.appInstall.certificateFile,
@@ -492,14 +496,14 @@ angular.module('Application').controller('AppStoreController', ['$scope', '$loca
         });
     }
 
-    function fetchDnsConfig() {
-        Client.getDnsConfig(function (error, result) {
+    function getDomains() {
+        Client.getDomains(function (error, result) {
             if (error) {
                 console.error(error);
-                return $timeout(fetchDnsConfig, 5000);
+                return $timeout(getDomains, 5000);
             }
 
-            $scope.dnsConfig = result;
+            $scope.domains = result.map(function (d) { return d.domain; });
         });
     }
 
@@ -557,7 +561,7 @@ angular.module('Application').controller('AppStoreController', ['$scope', '$loca
 
             fetchUsers();
             fetchGroups();
-            fetchDnsConfig();
+            getDomains();
             getMailConfig();
 
             fetchAppstoreConfig(function (error) {

@@ -31,7 +31,7 @@ angular.module('Application').controller('SupportController', ['$scope', '$locat
 
         Client.feedback($scope.feedback.type, $scope.feedback.subject, $scope.feedback.description, function (error) {
             if (error) {
-                $scope.feedback.error = error;
+                $scope.feedback.error = error.message;
             } else {
                 $scope.feedback.success = true;
                 resetFeedback();
