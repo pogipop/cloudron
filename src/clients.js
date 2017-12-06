@@ -18,7 +18,7 @@ exports = module.exports = {
 
     // keep this in sync with start.sh ADMIN_SCOPES that generates the cid-webadmin
     SCOPE_APPS: 'apps',
-    SCOPE_DEVELOPER: 'developer',
+    SCOPE_DEVELOPER: 'developer', // obsolete
     SCOPE_PROFILE: 'profile',
     SCOPE_CLOUDRON: 'cloudron',
     SCOPE_SETTINGS: 'settings',

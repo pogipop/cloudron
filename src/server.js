@@ -91,7 +91,6 @@ function initializeExpressSync() {
     var profileScope = routes.oauth2.scope(clients.SCOPE_PROFILE);
     var usersScope = routes.oauth2.scope(clients.SCOPE_USERS);
     var appsScope = routes.oauth2.scope(clients.SCOPE_APPS);
-    var developerScope = routes.oauth2.scope(clients.SCOPE_DEVELOPER);
     var settingsScope = routes.oauth2.scope(clients.SCOPE_SETTINGS);
 
     // csrf protection
