@@ -10,7 +10,6 @@ exports = module.exports = {
 
 var assert = require('assert'),
     async = require('async'),
-    config = require('../config.js'),
     debug = require('debug')('box:dns/digitalocean'),
     dns = require('dns'),
     DomainError = require('../domains.js').DomainError,
@@ -80,7 +79,7 @@ function upsert(dnsConfig, zoneName, subdomain, type, values, callback) {
         // used to track available records to update instead of create
         var i = 0, recordIds = [];
 
-        async.eachSeries(values, function (value, callback) {
+        async.eachSeries(values, function (value, iteratorCallback) {
             var priority = null;
 
             if (type === 'MX') {
@@ -102,14 +101,14 @@ function upsert(dnsConfig, zoneName, subdomain, type, values, callback) {
                     .send(data)
                     .timeout(30 * 1000)
                     .end(function (error, result) {
-                        if (error && !error.response) return callback(new DomainError(DomainError.EXTERNAL_ERROR, util.format('Network error %s', error.message)));
-                        if (result.statusCode === 403 || result.statusCode === 401) return callback(new DomainError(DomainError.ACCESS_DENIED, formatError(result)));
-                        if (result.statusCode === 422) return callback(new DomainError(DomainError.BAD_FIELD, result.body.message));
-                        if (result.statusCode !== 201) return callback(new DomainError(DomainError.EXTERNAL_ERROR, formatError(result)));
+                        if (error && !error.response) return iteratorCallback(new DomainError(DomainError.EXTERNAL_ERROR, util.format('Network error %s', error.message)));
+                        if (result.statusCode === 403 || result.statusCode === 401) return iteratorCallback(new DomainError(DomainError.ACCESS_DENIED, formatError(result)));
+                        if (result.statusCode === 422) return iteratorCallback(new DomainError(DomainError.BAD_FIELD, result.body.message));
+                        if (result.statusCode !== 201) return iteratorCallback(new DomainError(DomainError.EXTERNAL_ERROR, formatError(result)));
 
                         recordIds.push(safe.query(result.body, 'domain_record.id'));
 
-                        return callback(null);
+                        return iteratorCallback(null);
                     });
             } else {
                 superagent.put(DIGITALOCEAN_ENDPOINT + '/v2/domains/' + zoneName + '/records/' + result[i].id)
@@ -120,17 +119,17 @@ function upsert(dnsConfig, zoneName, subdomain, type, values, callback) {
                     // increment, as we have consumed the record
                         ++i;
 
-                        if (error && !error.response) return callback(new DomainError(DomainError.EXTERNAL_ERROR, util.format('Network error %s', error.message)));
-                        if (result.statusCode === 403 || result.statusCode === 401) return callback(new DomainError(DomainError.ACCESS_DENIED, formatError(result)));
-                        if (result.statusCode === 422) return callback(new DomainError(DomainError.BAD_FIELD, result.body.message));
-                        if (result.statusCode !== 200) return callback(new DomainError(DomainError.EXTERNAL_ERROR, formatError(result)));
+                        if (error && !error.response) return iteratorCallback(new DomainError(DomainError.EXTERNAL_ERROR, util.format('Network error %s', error.message)));
+                        if (result.statusCode === 403 || result.statusCode === 401) return iteratorCallback(new DomainError(DomainError.ACCESS_DENIED, formatError(result)));
+                        if (result.statusCode === 422) return iteratorCallback(new DomainError(DomainError.BAD_FIELD, result.body.message));
+                        if (result.statusCode !== 200) return iteratorCallback(new DomainError(DomainError.EXTERNAL_ERROR, formatError(result)));
 
                         recordIds.push(safe.query(result.body, 'domain_record.id'));
 
-                        return callback(null);
+                        return iteratorCallback(null);
                     });
             }
-        }, function (error, id) {
+        }, function (error) {
             if (error) return callback(error);
 
             callback(null, '' + recordIds[0]); // DO ids are integers

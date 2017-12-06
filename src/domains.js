@@ -20,7 +20,7 @@ var assert = require('assert'),
     certificates = require('./certificates.js'),
     CertificatesError = certificates.CertificatesError,
     DatabaseError = require('./databaseerror.js'),
-    debug = require('debug')('box:domains.js'),
+    debug = require('debug')('box:domains'),
     domaindb = require('./domaindb.js'),
     sysinfo = require('./sysinfo.js'),
     tld = require('tldjs'),
@@ -272,14 +272,13 @@ function removeDNSRecords(subdomain, domain, type, values, callback) {
     });
 }
 
-function waitForDNSRecord(fqdn, value, type, options, callback) {
+function waitForDNSRecord(fqdn, domain, value, type, options, callback) {
     assert.strictEqual(typeof fqdn, 'string');
+    assert.strictEqual(typeof domain, 'string');
     assert(typeof value === 'string' || util.isRegExp(value));
     assert(type === 'A' || type === 'CNAME' || type === 'TXT');
     assert(options && typeof options === 'object'); // { interval: 5000, times: 50000 }
     assert.strictEqual(typeof callback, 'function');
-
-    const domain = tld.getDomain(fqdn);
 
     get(domain, function (error, result) {
         if (error && error.reason !== DomainError.NOT_FOUND) return callback(new DomainError(DomainError.INTERNAL_ERROR, error));

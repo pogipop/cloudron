@@ -315,7 +315,7 @@ function configureWebadmin(callback) {
         addDnsRecords(ip, function (error) {
             if (error) return configureNginx(error);
 
-            domains.waitForDNSRecord(config.adminFqdn(), ip, 'A', { interval: 30000, times: 50000 }, function (error) {
+            domains.waitForDNSRecord(config.adminFqdn(), config.fqdn(), ip, 'A', { interval: 30000, times: 50000 }, function (error) {
                 if (error) return configureNginx(error);
 
                 gWebadminStatus.dns = true;

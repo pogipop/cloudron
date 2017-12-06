@@ -338,7 +338,7 @@ function waitForDnsPropagation(app, callback) {
     sysinfo.getPublicIp(function (error, ip) {
         if (error) return callback(error);
 
-        domains.waitForDNSRecord(config.appFqdn(app), ip, 'A', { interval: 5000, times: 120 }, callback);
+        domains.waitForDNSRecord(config.appFqdn(app), app.domain, ip, 'A', { interval: 5000, times: 120 }, callback);
     });
 }
 
@@ -352,10 +352,10 @@ function waitForAltDomainDnsPropagation(app, callback) {
         sysinfo.getPublicIp(function (error, ip) {
             if (error) return callback(error);
 
-            domains.waitForDNSRecord(app.altDomain, ip, 'A', { interval: 10000, times: 60 }, callback);
+            domains.waitForDNSRecord(app.altDomain, tld.getDomain(app.altDomain), ip, 'A', { interval: 10000, times: 60 }, callback);
         });
     } else {
-        domains.waitForDNSRecord(app.altDomain, config.appFqdn(app) + '.', 'CNAME', { interval: 10000, times: 60 }, callback);
+        domains.waitForDNSRecord(app.altDomain, tld.getDomain(app.altDomain), config.appFqdn(app) + '.', 'CNAME', { interval: 10000, times: 60 }, callback);
     }
 }
 
