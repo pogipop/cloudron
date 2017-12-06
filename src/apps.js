@@ -119,9 +119,11 @@ AppsError.BAD_CERTIFICATE = 'Invalid certificate';
 // Domain name validation comes from RFC 2181 (Name syntax)
 // https://en.wikipedia.org/wiki/Hostname#Restrictions_on_valid_host_names
 // We are validating the validity of the location-fqdn as host name
-function validateHostname(hostname) {
-    assert.strictEqual(typeof hostname, 'string');
+function validateHostname(location, domain) {
+    assert.strictEqual(typeof location, 'string');
+    assert.strictEqual(typeof domain, 'string');
 
+    var hostname = config.appFqdn({ location: location, domain: domain });
     if (!hostname) return new AppsError(AppsError.BAD_FIELD, 'hostname cannot be empty');
 
     const RESERVED_LOCATIONS = [
@@ -140,10 +142,10 @@ function validateHostname(hostname) {
 
     if (hostname.length > 253) return new AppsError(AppsError.BAD_FIELD, 'Hostname length exceeds 253 characters');
 
-    if (tld.getSubdomain(tmp) === null) return new AppsError(AppsError.BAD_FIELD, 'Invalid subdomain');
-    if (tld.getSubdomain(tmp).match(/^[A-Za-z0-9-]+$/) === null) return new AppsError(AppsError.BAD_FIELD, 'Subdomain can only contain alphanumerics and hyphen');
-    if (tld.getSubdomain(tmp).length > 63) return new AppsError(AppsError.BAD_FIELD, 'Subdomain exceeds 63 characters');
-    if (tld.getSubdomain(tmp).startsWith('-') || tld.getSubdomain(tmp).endsWith('-')) return new AppsError(AppsError.BAD_FIELD, 'Subdomain cannot start or end with hyphen');
+    if (location === null) return new AppsError(AppsError.BAD_FIELD, 'Invalid subdomain');
+    if (location.match(/^[A-Za-z0-9-]+$/) === null) return new AppsError(AppsError.BAD_FIELD, 'Subdomain can only contain alphanumerics and hyphen');
+    if (location.length > 63) return new AppsError(AppsError.BAD_FIELD, 'Subdomain exceeds 63 characters');
+    if (location.startsWith('-') || location.endsWith('-')) return new AppsError(AppsError.BAD_FIELD, 'Subdomain cannot start or end with hyphen');
 
     return null;
 }
@@ -464,7 +466,7 @@ function install(data, auditSource, callback) {
         error = checkManifestConstraints(manifest);
         if (error) return callback(error);
 
-        error = validateHostname(config.appFqdn({ domain: domain, location: location }));
+        error = validateHostname(location, domain);
         if (error) return callback(error);
 
         error = validatePortBindings(portBindings, manifest.tcpPorts);
@@ -565,7 +567,7 @@ function configure(appId, data, auditSource, callback) {
         if ('domain' in data) domain = values.domain = data.domain.toLowerCase();
         else domain = app.domain;
 
-        error = validateHostname(config.appFqdn({ domain: domain, location: location }));
+        error = validateHostname(location, domain);
         if (error) return callback(error);
 
         if ('accessRestriction' in data) {
@@ -856,7 +858,7 @@ function clone(appId, data, auditSource, callback) {
             error = checkManifestConstraints(backupInfo.manifest);
             if (error) return callback(error);
 
-            error = validateHostname(config.appFqdn({ domain: domain, location: location }));
+            error = validateHostname(location, domain);
             if (error) return callback(error);
 
             error = validatePortBindings(portBindings, backupInfo.manifest.tcpPorts);
