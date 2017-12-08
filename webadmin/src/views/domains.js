@@ -70,7 +70,7 @@ angular.module('Application').controller('DomainsController', ['$scope', '$locat
                 $scope.domainConfigure.gcdnsKey.keyFileName = '';
                 $scope.domainConfigure.gcdnsKey.content = '';
                 if ($scope.domainConfigure.provider === 'gcdns') {
-                    $scope.domainConfigure.gcdnsKey.keyFileName = domain.config.credentials.client_email;
+                    $scope.domainConfigure.gcdnsKey.keyFileName = domain.config.credentials && domain.config.credentials.client_email;
                     $scope.domainConfigure.gcdnsKey.content = JSON.stringify({
                         "project_id": domain.config.projectId,
                         "credentials": domain.config.credentials

@@ -14,7 +14,12 @@ var BackupsError = require('../backups.js').BackupsError,
     os = require('os'),
     path = require('path'),
     rimraf = require('rimraf'),
-    s3 = require('../storage/s3.js');
+    mkdirp = require('mkdirp'),
+    recursive_readdir = require("recursive-readdir"),
+    s3 = require('../storage/s3.js'),
+    debug = require('debug')('box:storage-test'),
+    gcs = require('../storage/gcs.js'),
+    chunk = require('lodash.chunk');
 
 describe('Storage', function () {
     describe('filesystem', function () {
@@ -287,5 +292,164 @@ describe('Storage', function () {
                 done();
             });
         });
+    });
+
+    describe('gcs', function () {
+        this.timeout(10000);
+
+        var gBackupConfig = {
+            provider: 'gcs',
+            key: '',
+            prefix: 'unit.test',
+            bucket: 'cloudron-storage-test',
+            projectId: '',
+            credentials: {
+                client_email: '',
+                private_key: ''
+            }
+        };
+        var GCSMockBasePath = path.join(os.tmpdir(), 'gcs-backup-test-buckets/');
+
+        before(function () {
+            var mockGCS = function(cfg){
+                return {bucket: function(b){
+                    var file = function(filename){
+
+                        var ensurePathWritable = function (filename) {
+                            filename = GCSMockBasePath + filename;
+                            mkdirp.sync(path.dirname(filename));
+                            return filename;
+                        };
+
+                        return {
+                            name: filename,
+                            createReadStream: function(cfg){
+                                return fs.createReadStream(ensurePathWritable(filename))
+                                    .on('error', function(e){
+                                        console.log('error createReadStream: '+filename);
+                                        if (e.code == 'ENOENT') { e.code = 404; }
+                                        this.emit('error', e);
+                                    })
+                                ;
+                            },
+                            createWriteStream: function(cfg){
+                                return fs.createWriteStream(ensurePathWritable(filename));
+                            },
+                            delete: function(cb){
+                                fs.unlink(ensurePathWritable(filename), cb);
+                            },
+                            copy: function(dst, cb){
+                                var notFoundHandler = function(e){
+                                    if (e && e.code == 'ENOENT') { e.code = 404; return cb(e);}
+                                    cb();
+                                };
+                                return fs.createReadStream(ensurePathWritable(filename))
+                                    .on('end', cb)
+                                    .on('error', notFoundHandler)
+                                    .pipe(fs.createWriteStream(ensurePathWritable(dst)))
+                                    .on('end', cb)
+                                    .on('error', notFoundHandler)
+                                    ;
+                            }
+                        };
+                    };
+
+                    return {
+                        file: file,
+                        getFiles: function(q, cb){
+                            var target = GCSMockBasePath + q.prefix;
+                            recursive_readdir(target, function(e, files){
+
+                                var pageToken = q.pageToken || 0;
+
+                                var chunkedFiles = chunk(files, q.maxResults);
+                                if (q.pageToken >= chunkedFiles.length) return cb(null, []);
+
+                                var gFiles = chunkedFiles[pageToken].map(function(f){
+                                    return file(path.relative(GCSMockBasePath, f)); //convert to google
+                                });
+
+                                q.pageToken = pageToken + 1;
+                                cb(null, gFiles, q.pageToken < chunkedFiles.length ? q : null);
+                            });
+                        }
+                    }
+                }};
+            };
+            gcs._mockInject(mockGCS);
+        });
+
+        after(function (done) {
+            gcs._mockRestore();
+            rimraf.sync(GCSMockBasePath);
+            done();
+        });
+
+        it('can backup', function (done) {
+            var sourceFile = path.join(__dirname, 'storage/data/test.txt');
+            var sourceStream = fs.createReadStream(sourceFile);
+            var destKey = 'uploadtest/test.txt';
+            gcs.upload(gBackupConfig, destKey, sourceStream, function (error) {
+                expect(error).to.be(null);
+
+                done();
+            });
+        });
+
+        it('can download file', function (done) {
+            var sourceKey = 'uploadtest/test.txt';
+            gcs.download(gBackupConfig, sourceKey, function (error, stream) {
+                expect(error).to.be(null);
+                expect(stream).to.be.an('object');
+                done();
+            });
+        });
+
+        it('download dir copies contents of source dir', function (done) {
+            var sourceFile = path.join(__dirname, 'storage/data/test.txt');
+            var sourceKey = '';
+            var destDir = path.join(os.tmpdir(), 'gcs-destdir');
+            rimraf.sync(destDir+'/*');
+
+            var events = gcs.downloadDir(gBackupConfig, sourceKey, destDir);
+            events.on('done', function (error) {
+                expect(error).to.be(null);
+                expect(fs.statSync(path.join(destDir, 'uploadtest/test.txt')).size).to.be(fs.statSync(sourceFile).size);
+                done();
+            });
+        });
+
+        it('can copy', function (done) {
+            fs.writeFileSync(path.join(GCSMockBasePath, 'uploadtest/C++.gitignore'), 'special', 'utf8');
+
+            var sourceKey = 'uploadtest';
+
+            var events = gcs.copy(gBackupConfig, sourceKey, 'uploadtest-copy');
+            events.on('done', function (error) {
+                var sourceFile = path.join(__dirname, 'storage/data/test.txt');
+                expect(error).to.be(null);
+                expect(fs.statSync(path.join(GCSMockBasePath, 'uploadtest-copy/test.txt')).size).to.be(fs.statSync(sourceFile).size);
+
+                expect(fs.statSync(path.join(GCSMockBasePath, 'uploadtest-copy/C++.gitignore')).size).to.be(7);
+
+                done();
+            });
+        });
+
+        it('can remove file', function (done) {
+            gcs.remove(gBackupConfig, 'uploadtest-copy/test.txt', function (error) {
+                expect(error).to.be(null);
+                expect(fs.existsSync(path.join(GCSMockBasePath, 'uploadtest-copy/test.txt'))).to.be(false);
+                done();
+            });
+        });
+
+        it('can remove non-existent dir', function (done) {
+            gcs.remove(gBackupConfig, 'blah', function (error) {
+                expect(error).to.be(null);
+                done();
+            });
+        });
+
     });
 });
