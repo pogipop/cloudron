@@ -48,9 +48,9 @@ angular.module('Application').controller('SettingsController', ['$scope', '$loca
     $scope.storageProvider = [
         { name: 'Amazon S3', value: 's3' },
         { name: 'DigitalOcean Spaces', value: 'digitalocean-spaces' },
-        { name: 'Google Cloud Storage', value: 'gcs' },
         { name: 'Exoscale SOS', value: 'exoscale-sos' },
         { name: 'Filesystem', value: 'filesystem' },
+        { name: 'Google Cloud Storage', value: 'gcs' },
         { name: 'Minio', value: 'minio' },
         { name: 'No-op (Only for testing)', value: 'noop' },
         { name: 'S3 API Compatible (v4)', value: 's3-v4-compat' },

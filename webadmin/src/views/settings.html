@@ -199,6 +199,8 @@
                         </div>
 
                         <div class="form-group" ng-class="{ 'has-error': configureBackup.error.gcsKeyInput }" ng-show="configureBackup.provider === 'gcs'">
+                            <label class="control-label" for="gcsKeyInput">Service Account Key</label>
+
                             <div class="input-group">
                                 <input type="file" id="gcsKeyFileInput" style="display:none"/>
                                 <input type="text" class="form-control" placeholder="Service Account Key" ng-model="configureBackup.gcsKey.keyFileName" id="gcsKeyInput" name="cert" onclick="getElementById('gcsKeyFileInput').click();" style="cursor: pointer;" ng-disabled="configureBackup.busy" required>
