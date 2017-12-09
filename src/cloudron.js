@@ -17,8 +17,6 @@ exports = module.exports = {
     updateToLatest: updateToLatest,
     restore: restore,
     reboot: reboot,
-    retire: retire,
-    migrate: migrate,
 
     checkDiskSpace: checkDiskSpace,
 
@@ -33,6 +31,7 @@ var appdb = require('./appdb.js'),
     async = require('async'),
     backups = require('./backups.js'),
     BackupsError = require('./backups.js').BackupsError,
+    caas = require('./caas.js'),
     certificates = require('./certificates.js'),
     child_process = require('child_process'),
     clients = require('./clients.js'),
@@ -41,7 +40,6 @@ var appdb = require('./appdb.js'),
     cron = require('./cron.js'),
     debug = require('debug')('box:cloudron'),
     df = require('@sindresorhus/df'),
-    domaindb = require('./domaindb.js'),
     domains = require('./domains.js'),
     DomainError = domains.DomainError,
     eventlog = require('./eventlog.js'),
@@ -74,7 +72,6 @@ var appdb = require('./appdb.js'),
 
 var REBOOT_CMD = path.join(__dirname, 'scripts/reboot.sh'),
     UPDATE_CMD = path.join(__dirname, 'scripts/update.sh'),
-    RETIRE_CMD = path.join(__dirname, 'scripts/retire.sh'),
     RESTART_CMD = path.join(__dirname, 'scripts/restart.sh');
 
 var NOOP_CALLBACK = function (error) { if (error) debug(error); };
@@ -698,7 +695,7 @@ function update(boxUpdateInfo, auditSource, callback) {
     // initiate the update/upgrade but do not wait for it
     if (boxUpdateInfo.upgrade) {
         debug('Starting upgrade');
-        doUpgrade(boxUpdateInfo, function (error) {
+        caas.upgrade(boxUpdateInfo, function (error) {
             if (error) {
                 debug('Upgrade failed with error:', error);
                 locker.unlock(locker.OP_BOX_UPDATE);
@@ -716,7 +713,6 @@ function update(boxUpdateInfo, auditSource, callback) {
 
     callback(null);
 }
-
 
 function updateToLatest(auditSource, callback) {
     assert.strictEqual(typeof auditSource, 'object');
@@ -748,36 +744,6 @@ function doShortCircuitUpdate(boxUpdateInfo, callback) {
     progress.clear(progress.UPDATE);
     updateChecker.resetUpdateInfo();
     callback();
-}
-
-function doUpgrade(boxUpdateInfo, callback) {
-    assert(boxUpdateInfo !== null && typeof boxUpdateInfo === 'object');
-
-    function upgradeError(e) {
-        progress.set(progress.UPDATE, -1, e.message);
-        callback(e);
-    }
-
-    progress.set(progress.UPDATE, 5, 'Backing up for upgrade');
-
-    backups.backupBoxAndApps({ userId: null, username: 'upgrader' }, function (error) {
-        if (error) return upgradeError(error);
-
-        superagent.post(config.apiServerOrigin() + '/api/v1/boxes/' + config.fqdn() + '/upgrade')
-            .query({ token: config.token() })
-            .send({ version: boxUpdateInfo.version })
-            .timeout(30 * 1000)
-            .end(function (error, result) {
-                if (error && !error.response) return upgradeError(new Error('Network error making upgrade request: ' + error));
-                if (result.statusCode !== 202) return upgradeError(new Error(util.format('Server not ready to upgrade. statusCode: %s body: %j', result.status, result.body)));
-
-                progress.set(progress.UPDATE, 10, 'Updating base system');
-
-                // no need to unlock since this is the last thing we ever do on this box
-                callback();
-                retire('upgrade');
-            });
-    });
 }
 
 function doUpdate(boxUpdateInfo, callback) {
@@ -868,87 +834,6 @@ function checkDiskSpace(callback) {
             debug('df error %s', error.message);
             mailer.outOfDiskSpace(error.message);
             return callback();
-        });
-    });
-}
-
-function retire(reason, info, callback) {
-    assert(reason === 'migrate' || reason === 'upgrade');
-    info = info || { };
-    callback = callback || NOOP_CALLBACK;
-
-    var data = {
-        apiServerOrigin: config.apiServerOrigin(),
-        isCustomDomain: config.isCustomDomain(),
-        fqdn: config.fqdn()
-    };
-    shell.sudo('retire', [ RETIRE_CMD, reason, JSON.stringify(info), JSON.stringify(data) ], callback);
-}
-
-function doMigrate(options, callback) {
-    assert.strictEqual(typeof options, 'object');
-    assert.strictEqual(typeof callback, 'function');
-
-    var error = locker.lock(locker.OP_MIGRATE);
-    if (error) return callback(new CloudronError(CloudronError.BAD_STATE, error.message));
-
-    function unlock(error) {
-        debug('Failed to migrate', error);
-        locker.unlock(locker.OP_MIGRATE);
-        progress.set(progress.MIGRATE, -1, 'Backup failed: ' + error.message);
-    }
-
-    progress.set(progress.MIGRATE, 10, 'Backing up for migration');
-
-    // initiate the migration in the background
-    backups.backupBoxAndApps({ userId: null, username: 'migrator' }, function (error) {
-        if (error) return unlock(error);
-
-        debug('migrate: domain: %s size %s region %s', options.domain, options.size, options.region);
-
-        superagent
-            .post(config.apiServerOrigin() + '/api/v1/boxes/' + config.fqdn() + '/migrate')
-            .query({ token: config.token() })
-            .send(options)
-            .timeout(30 * 1000)
-            .end(function (error, result) {
-                if (error && !error.response) return unlock(error); // network error
-                if (result.statusCode === 409) return unlock(new CloudronError(CloudronError.BAD_STATE));
-                if (result.statusCode === 404) return unlock(new CloudronError(CloudronError.NOT_FOUND));
-                if (result.statusCode !== 202) return unlock(new CloudronError(CloudronError.EXTERNAL_ERROR, util.format('%s %j', result.status, result.body)));
-
-                progress.set(progress.MIGRATE, 10, 'Migrating');
-
-                retire('migrate', _.pick(options, 'domain', 'size', 'region'));
-            });
-    });
-
-    callback(null);
-}
-
-function migrate(options, callback) {
-    assert.strictEqual(typeof options, 'object');
-    assert.strictEqual(typeof callback, 'function');
-
-    if (config.isDemo()) return callback(new CloudronError(CloudronError.BAD_FIELD, 'Not allowed in demo mode'));
-
-    if (!options.domain) return doMigrate(options, callback);
-
-    var dnsConfig = _.pick(options, 'domain', 'provider', 'accessKeyId', 'secretAccessKey', 'region', 'endpoint', 'token', 'zoneName');
-
-    domains.get(options.domain, function (error, result) {
-        if (error && error.reason !== DomainError.NOT_FOUND) return callback(new CloudronError(CloudronError.INTERNAL_ERROR, error));
-
-        var func;
-        if (!result) func = domains.add.bind(null, options.domain, options.zoneName, dnsConfig, null);
-        else func = domains.update.bind(null, options.domain, dnsConfig, null);
-
-        func(function (error) {
-            if (error && error.reason === DomainError.BAD_FIELD) return callback(new CloudronError(CloudronError.BAD_FIELD, error.message));
-            if (error) return callback(new SettingsError(CloudronError.INTERNAL_ERROR, error));
-
-            // TODO: should probably rollback dns config if migrate fails
-            doMigrate(options, callback);
         });
     });
 }

@@ -113,7 +113,6 @@ function initializeExpressSync() {
     router.post('/api/v1/cloudron/update', cloudronScope, routes.user.requireAdmin, routes.cloudron.update);
     router.post('/api/v1/cloudron/check_for_updates', cloudronScope, routes.user.requireAdmin, routes.cloudron.checkForUpdates);
     router.post('/api/v1/cloudron/reboot', cloudronScope, routes.user.requireAdmin, routes.cloudron.reboot);
-    router.post('/api/v1/cloudron/migrate', cloudronScope, routes.user.requireAdmin, routes.user.verifyPassword, routes.cloudron.migrate);
     router.get ('/api/v1/cloudron/graphs', cloudronScope, routes.user.requireAdmin, routes.graphs.getGraphs);
     router.get ('/api/v1/cloudron/disks', cloudronScope, routes.user.requireAdmin, routes.cloudron.getDisks);
     router.get ('/api/v1/cloudron/logs', cloudronScope, routes.user.requireAdmin, routes.cloudron.getLogs);
@@ -237,6 +236,9 @@ function initializeExpressSync() {
     router.get ('/api/v1/domains/:domain', settingsScope, routes.user.requireAdmin, routes.domains.get);
     router.put ('/api/v1/domains/:domain', settingsScope, routes.user.requireAdmin, routes.domains.update);
     router.del ('/api/v1/domains/:domain', settingsScope, routes.user.requireAdmin, routes.user.verifyPassword, routes.domains.del);
+
+    // caas routes
+    router.post('/api/v1/caas/migrate', cloudronScope, routes.user.requireAdmin, routes.user.verifyPassword, routes.caas.migrate);
 
     // disable server socket "idle" timeout. we use the timeout middleware to handle timeouts on a route level
     // we rely on nginx for timeouts on the TCP level (see client_header_timeout)

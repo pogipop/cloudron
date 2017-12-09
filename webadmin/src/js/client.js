@@ -832,7 +832,7 @@ angular.module('Application').service('Client', ['$http', 'md5', 'Notification',
         var data = options;
         data.password = password;
 
-        post('/api/v1/cloudron/migrate', data).success(function(data, status) {
+        post('/api/v1/caas/migrate', data).success(function(data, status) {
             if (status !== 202 || typeof data !== 'object') return callback(new ClientError(status, data));
             callback(null, data);
         }).error(defaultErrorHandler(callback));

@@ -3,6 +3,7 @@
 exports = module.exports = {
     apps: require('./apps.js'),
     backups: require('./backups.js'),
+    caas: require('./caas.js'),
     clients: require('./clients.js'),
     cloudron: require('./cloudron.js'),
     developer: require('./developer.js'),
