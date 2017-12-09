@@ -96,7 +96,7 @@ angular.module('Application').controller('SettingsController', ['$scope', '$loca
                 region: $scope.currentRegionSlug
             };
 
-            Client.migrate(options, $scope.planChange.password, function (error) {
+            Client.changePlan(options, $scope.planChange.password, function (error) {
                 $scope.planChange.busy = false;
 
                 if (error) {

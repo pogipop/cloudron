@@ -238,7 +238,7 @@ function initializeExpressSync() {
     router.del ('/api/v1/domains/:domain', settingsScope, routes.user.requireAdmin, routes.user.verifyPassword, routes.domains.del);
 
     // caas routes
-    router.post('/api/v1/caas/migrate', cloudronScope, routes.user.requireAdmin, routes.user.verifyPassword, routes.caas.migrate);
+    router.post('/api/v1/caas/change_plan', cloudronScope, routes.user.requireAdmin, routes.user.verifyPassword, routes.caas.changePlan);
 
     // disable server socket "idle" timeout. we use the timeout middleware to handle timeouts on a route level
     // we rely on nginx for timeouts on the TCP level (see client_header_timeout)

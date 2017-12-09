@@ -2,6 +2,7 @@
 
 exports = module.exports = {
     migrate: migrate,
+    changePlan: changePlan,
     upgrade: upgrade
 };
 
@@ -101,6 +102,15 @@ function doMigrate(options, callback) {
     });
 
     callback(null);
+}
+
+function changePlan(options, callback) {
+    assert.strictEqual(typeof options, 'object');
+    assert.strictEqual(typeof callback, 'function');
+
+    if (config.isDemo()) return callback(new CaasError(CaasError.BAD_FIELD, 'Not allowed in demo mode'));
+
+    doMigrate(options, callback);
 }
 
 function migrate(options, callback) {

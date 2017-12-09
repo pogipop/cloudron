@@ -828,11 +828,11 @@ angular.module('Application').service('Client', ['$http', 'md5', 'Notification',
         }).error(defaultErrorHandler(callback));
     };
 
-    Client.prototype.migrate = function (options, password, callback) {
+    Client.prototype.changePlan = function (options, password, callback) {
         var data = options;
         data.password = password;
 
-        post('/api/v1/caas/migrate', data).success(function(data, status) {
+        post('/api/v1/caas/change_plan', data).success(function(data, status) {
             if (status !== 202 || typeof data !== 'object') return callback(new ClientError(status, data));
             callback(null, data);
         }).error(defaultErrorHandler(callback));

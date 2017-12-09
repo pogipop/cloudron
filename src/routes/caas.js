@@ -1,7 +1,7 @@
 'use strict';
 
 exports = module.exports = {
-    migrate: migrate
+    changePlan: changePlan
 };
 
 var caas = require('../caas.js'),
@@ -12,7 +12,7 @@ var caas = require('../caas.js'),
     HttpSuccess = require('connect-lastmile').HttpSuccess,
     _ = require('underscore');
 
-function migrate(req, res, next) {
+function changePlan(req, res, next) {
     if (config.provider() !== 'caas') return next(new HttpError(422, 'Cannot use migrate API with this provider'));
 
     if ('size' in req.body && typeof req.body.size !== 'string') return next(new HttpError(400, 'size must be string'));
@@ -32,7 +32,7 @@ function migrate(req, res, next) {
 
     if (options.domain) options.domain = options.domain.toLowerCase();
 
-    caas.migrate(req.body, function (error) { // pass req.body because 'domain' can have arbitrary options
+    caas.changePlan(req.body, function (error) { // pass req.body because 'domain' can have arbitrary options
         if (error && error.reason === CaasError.BAD_STATE) return next(new HttpError(409, error.message));
         if (error && error.reason === CaasError.BAD_FIELD) return next(new HttpError(400, error.message));
         if (error) return next(new HttpError(500, error));
