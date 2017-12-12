@@ -82,7 +82,7 @@ gulp.task('js-index', function () {
         'webadmin/src/js/main.js',
         'webadmin/src/views/*.js'
         ])
-        .pipe(ejs({ oauth: oauth }, { ext: '.js' }))
+        .pipe(ejs({ oauth: oauth }, {}, { ext: '.js' }))
         .pipe(sourcemaps.init())
         .pipe(concat('index.js', { newLine: ';' }))
         .pipe(uglifyer)
@@ -98,7 +98,7 @@ gulp.task('js-setup', function () {
     });
 
     gulp.src(['webadmin/src/js/setup.js', 'webadmin/src/js/client.js'])
-        .pipe(ejs({ oauth: oauth }, { ext: '.js' }))
+        .pipe(ejs({ oauth: oauth }, {}, { ext: '.js' }))
         .pipe(sourcemaps.init())
         .pipe(concat('setup.js', { newLine: ';' }))
         .pipe(uglifyer)
@@ -114,7 +114,7 @@ gulp.task('js-setupdns', function () {
     });
 
     gulp.src(['webadmin/src/js/setupdns.js', 'webadmin/src/js/client.js'])
-        .pipe(ejs({ oauth: oauth }, { ext: '.js' }))
+        .pipe(ejs({ oauth: oauth }, {}, { ext: '.js' }))
         .pipe(sourcemaps.init())
         .pipe(concat('setupdns.js', { newLine: ';' }))
         .pipe(uglifyer)
@@ -130,7 +130,7 @@ gulp.task('js-restore', function () {
     });
 
     gulp.src(['webadmin/src/js/restore.js', 'webadmin/src/js/client.js'])
-        .pipe(ejs({ oauth: oauth }, { ext: '.js' }))
+        .pipe(ejs({ oauth: oauth }, {}, { ext: '.js' }))
         .pipe(sourcemaps.init())
         .pipe(concat('restore.js', { newLine: ';' }))
         .pipe(uglifyer)
@@ -160,7 +160,7 @@ gulp.task('js-update', function () {
 // --------------
 
 gulp.task('html', ['html-views', 'html-update', 'html-templates'], function () {
-    return gulp.src('webadmin/src/*.html').pipe(ejs({ apiOriginHostname: oauth.apiOriginHostname }, { ext: '.html' })).pipe(gulp.dest('webadmin/dist'));
+    return gulp.src('webadmin/src/*.html').pipe(ejs({ apiOriginHostname: oauth.apiOriginHostname }, {}, { ext: '.html' })).pipe(gulp.dest('webadmin/dist'));
 });
 
 gulp.task('html-update', function () {
