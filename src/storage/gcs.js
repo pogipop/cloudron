@@ -85,10 +85,8 @@ function upload(apiConfig, backupFilePath, sourceStream, callback) {
         getBucket(apiConfig)
             .file(backupFilePath)
             .createWriteStream({resumable: false})
-                .on('finish', done)
-                .on('error', function(e){
-                    if (e) done(e);
-                })
+            .on('finish', done)
+            .on('error', done)
     );
 }
 
@@ -103,7 +101,7 @@ function download(apiConfig, backupFilePath, callback) {
 
     var ps = new PassThrough();
     var readStream = file.createReadStream()
-        .on('error', function(error){
+        .on('error', function(error) {
             if (error && error.code == 404){
                 ps.emit('error', new BackupsError(BackupsError.NOT_FOUND));
             } else {
@@ -117,7 +115,7 @@ function download(apiConfig, backupFilePath, callback) {
     callback(null, ps);
 }
 
-function listDir(apiConfig, backupFilePath, batchSize, iteratorCallback, callback){
+function listDir(apiConfig, backupFilePath, batchSize, iteratorCallback, callback) {
     var bucket = getBucket(apiConfig);
 
     var query = {prefix: backupFilePath, autoPaginate: batchSize === -1};
@@ -134,7 +132,7 @@ function listDir(apiConfig, backupFilePath, batchSize, iteratorCallback, callbac
 
             if (files.length === 0) return foreverCallback(new Error('Done'));
 
-            debug('emitting '+files.length+' files found: ' + files.map(function(f){return f.name}).join(','));
+            debug('emitting ' + files.length + ' files found: ' + files.map(function(f) { return f.name; }).join(','));
             iteratorCallback(files, function (error) {
                 if (error) {
                     debug(`listDir page handled unsuccessfully ${error}`);
@@ -209,11 +207,11 @@ function copy(apiConfig, oldFilePath, newFilePath) {
 
     var events = new EventEmitter(), retryCount = 0;
 
-    function copyFile(file, iteratorCallback){
+    function copyFile(file, iteratorCallback) {
 
         var relativePath = path.relative(oldFilePath, file.name);
 
-        file.copy(path.join(newFilePath, relativePath), function(error, newFile, apiResponse){
+        file.copy(path.join(newFilePath, relativePath), function(error) {
             if (error && error.code == 404) return iteratorCallback(new BackupsError(BackupsError.NOT_FOUND, 'Old backup not found'));
             if (error) {
                 debug('copyBackup: gcs copy error', error);
@@ -307,7 +305,7 @@ function testConfig(apiConfig, callback) {
     var uploadStream = testFile.createWriteStream({resumable: false})
         .on('error', function(error){
             debug('uploadStream failed uploading cloudron-testfile', error);
-            if (error && error.code && (error.code == 403 || error.code == 404)){
+            if (error && error.code && (error.code == 403 || error.code == 404)) {
                 callback(new BackupsError(BackupsError.BAD_FIELD, error.message));
             }
 
@@ -316,7 +314,7 @@ function testConfig(apiConfig, callback) {
     ;
 
     var testfileStream = new PassThrough();
-    testfileStream.write("testfilecontents");
+    testfileStream.write('testfilecontents');
     testfileStream.end();
 
     testfileStream
