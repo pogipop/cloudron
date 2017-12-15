@@ -19,17 +19,15 @@ exports = module.exports = {
 };
 
 var assert = require('assert'),
-    GCS = require('@google-cloud/storage'),
+    async = require('async'),
     BackupsError = require('../backups.js').BackupsError,
-    chunk = require('lodash.chunk'),
     debug = require('debug')('box:storage/gcs'),
-    once = require('once'),
-    PassThrough = require('stream').PassThrough,
     EventEmitter = require('events'),
-    mkdirp = require('mkdirp'),
     fs = require('fs'),
-    path = require('path'),
-    async = require('async');
+    GCS = require('@google-cloud/storage'),
+    mkdirp = require('mkdirp'),
+    PassThrough = require('stream').PassThrough,
+    path = require('path');
 
 // test only
 var originalGCS;
