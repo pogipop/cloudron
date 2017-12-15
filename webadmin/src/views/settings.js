@@ -380,10 +380,11 @@ angular.module('Application').controller('SettingsController', ['$scope', '$loca
             $scope.configureBackup.accessKeyId = $scope.backupConfig.accessKeyId;
             $scope.configureBackup.secretAccessKey = $scope.backupConfig.secretAccessKey;
             if ($scope.backupConfig.provider === 'gcs') {
-                $scope.configureBackup.gcsKey.keyFileName = $scope.backupConfig.credentials && $scope.backupConfig.credentials.client_email;
+                $scope.configureBackup.gcsKey.keyFileName = $scope.backupConfig.credentials.client_email;
                 $scope.configureBackup.gcsKey.content = JSON.stringify({
-                    "project_id": $scope.backupConfig.projectId,
-                    "credentials": $scope.backupConfig.credentials
+                    project_id: $scope.backupConfig.projectId,
+                    client_email: $scope.backupConfig.credentials.client_email,
+                    private_key: $scope.backupConfig.credentials.private_key,
                 });
             }
             $scope.configureBackup.endpoint = $scope.backupConfig.endpoint;
