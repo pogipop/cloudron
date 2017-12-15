@@ -268,7 +268,7 @@ function removeDir(apiConfig, pathPrefix) {
     const batchSize = 1;
     var total = 0, concurrency = 4;
 
-    listDir(apiConfig, oldFilePath, batchSize, function (files, done) {
+    listDir(apiConfig, pathPrefix, batchSize, function (files, done) {
         total += files.length;
 
         if (retryCount === 0) concurrency = Math.min(concurrency + 1, 10); else concurrency = Math.max(concurrency - 1, 5);
