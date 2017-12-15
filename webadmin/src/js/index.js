@@ -158,7 +158,7 @@ app.filter('installationStateLabel', function() {
     }
 
     return function(app) {
-        var waiting = app.progress === 0 ? ' (Waiting)' : '';
+        var waiting = app.progress === 0 ? ' (Pending)' : '';
 
         switch (app.installationState) {
         case ISTATES.PENDING_INSTALL:
