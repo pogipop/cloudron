@@ -44,7 +44,7 @@ chmod "o+rx,g+rx" "${bundle_dir}" # otherwise extracted tarball director won't b
 echo "Checking out code [${version}] into ${bundle_dir}"
 (cd "${SOURCE_DIR}" && git archive --format=tar ${version} | (cd "${bundle_dir}" && tar xf -))
 
-if diff "${TMPDIR}/boxtarball.cache/npm-shrinkwrap.json.all" "${bundle_dir}/npm-shrinkwrap.json" >/dev/null 2>&1; then
+if diff "${TMPDIR}/boxtarball.cache/package-lock.json.all" "${bundle_dir}/package-lock.json" >/dev/null 2>&1; then
     echo "Reusing dev modules from cache"
     cp -r "${TMPDIR}/boxtarball.cache/node_modules-all/." "${bundle_dir}/node_modules"
 else
@@ -54,7 +54,7 @@ else
     echo "Caching dev dependencies"
     mkdir -p "${TMPDIR}/boxtarball.cache/node_modules-all"
     rsync -a --delete "${bundle_dir}/node_modules/" "${TMPDIR}/boxtarball.cache/node_modules-all/"
-    cp "${bundle_dir}/npm-shrinkwrap.json" "${TMPDIR}/boxtarball.cache/npm-shrinkwrap.json.all"
+    cp "${bundle_dir}/package-lock.json" "${TMPDIR}/boxtarball.cache/package-lock.json.all"
 fi
 
 echo "Building webadmin assets"
@@ -65,7 +65,7 @@ rm -rf "${bundle_dir}/node_modules/"
 rm -rf "${bundle_dir}/webadmin/src"
 rm -rf "${bundle_dir}/gulpfile.js"
 
-if diff "${TMPDIR}/boxtarball.cache/npm-shrinkwrap.json.prod" "${bundle_dir}/npm-shrinkwrap.json" >/dev/null 2>&1; then
+if diff "${TMPDIR}/boxtarball.cache/package-lock.json.prod" "${bundle_dir}/package-lock.json" >/dev/null 2>&1; then
     echo "Reusing prod modules from cache"
     cp -r "${TMPDIR}/boxtarball.cache/node_modules-prod/." "${bundle_dir}/node_modules"
 else
@@ -75,7 +75,7 @@ else
     echo "Caching prod dependencies"
     mkdir -p "${TMPDIR}/boxtarball.cache/node_modules-prod"
     rsync -a --delete "${bundle_dir}/node_modules/" "${TMPDIR}/boxtarball.cache/node_modules-prod/"
-    cp "${bundle_dir}/npm-shrinkwrap.json" "${TMPDIR}/boxtarball.cache/npm-shrinkwrap.json.prod"
+    cp "${bundle_dir}/package-lock.json" "${TMPDIR}/boxtarball.cache/package-lock.json.prod"
 fi
 
 echo "Create final tarball"
