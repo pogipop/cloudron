@@ -41,26 +41,19 @@ function mockRestore() {
 }
 
 // internal only
-function getBackupCredentials(backupConfig) {
-    assert.strictEqual(typeof backupConfig, 'object');
+function getBucket(apiConfig) {
+    assert.strictEqual(typeof apiConfig, 'object');
 
-    var config = {
-        provider: backupConfig.provider,
-        projectId: backupConfig.projectId,
-        keyFilename: backupConfig.keyFilename,
+    var gcsConfig = {
+        projectId: apiConfig.projectId,
+
+        credentials: {
+            client_email: apiConfig.credentials.client_email,
+            private_key: apiConfig.credentials.private_key
+        }
     };
 
-    if (backupConfig.credentials) {
-        config.credentials = {
-            client_email: backupConfig.credentials.client_email,
-            private_key: backupConfig.credentials.private_key
-        };
-    }
-    return config;
-}
-function getBucket(apiConfig) {
-    var credentials = getBackupCredentials(apiConfig);
-    return GCS(credentials).bucket(apiConfig.bucket);
+    return GCS(gcsConfig).bucket(apiConfig.bucket);
 }
 
 // storage api
@@ -81,13 +74,12 @@ function upload(apiConfig, backupFilePath, sourceStream, callback) {
         callback(null);
     }
 
-    return sourceStream.pipe(
-        getBucket(apiConfig)
-            .file(backupFilePath)
-            .createWriteStream({resumable: false})
-            .on('finish', done)
-            .on('error', done)
-    );
+    var uploadStream = getBucket(apiConfig).file(backupFilePath)
+        .createWriteStream({resumable: false})
+        .on('finish', done)
+        .on('error', done);
+
+    sourceStream.pipe(uploadStream);
 }
 
 function download(apiConfig, backupFilePath, callback) {
@@ -118,7 +110,7 @@ function download(apiConfig, backupFilePath, callback) {
 function listDir(apiConfig, backupFilePath, batchSize, iteratorCallback, callback) {
     var bucket = getBucket(apiConfig);
 
-    var query = {prefix: backupFilePath, autoPaginate: batchSize === -1};
+    var query = { prefix: backupFilePath, autoPaginate: batchSize === -1 };
     if (batchSize > 0) {
         query.maxResults = batchSize;
     }
@@ -179,7 +171,7 @@ function downloadDir(apiConfig, backupFilePath, destDir) {
                 });
 
                 destStream.on('error', function (error) {
-                    return iteratorCallback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
+                    iteratorCallback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
                 });
 
                 destStream.on('finish', iteratorCallback);
@@ -250,7 +242,7 @@ function remove(apiConfig, filename, callback) {
 
     getBucket(apiConfig)
         .file(filename)
-        .delete(function(e){
+        .delete(function(e) {
             if (e) debug('removeBackups: Unable to remove %s (%s). Not fatal.', filename, e.message);
             else debug('removeBackups: Deleted: %s', filename);
             callback(null);
@@ -288,11 +280,9 @@ function testConfig(apiConfig, callback) {
     assert.strictEqual(typeof callback, 'function');
 
     if (typeof apiConfig.projectId !== 'string') return callback(new BackupsError(BackupsError.BAD_FIELD, 'projectId must be a string'));
-    if (typeof apiConfig.keyFilename !== 'string') {
-        if (typeof apiConfig.credentials !== 'object') return callback(new BackupsError(BackupsError.BAD_FIELD, 'credentials must be an object'));
-        if (typeof apiConfig.credentials.client_email !== 'string') return callback(new BackupsError(BackupsError.BAD_FIELD, 'credentials.client_email must be a string'));
-        if (typeof apiConfig.credentials.private_key !== 'string') return callback(new BackupsError(BackupsError.BAD_FIELD, 'credentials.private_key must be a string'));
-    }
+    if (!apiConfig.credentials || typeof apiConfig.credentials !== 'object') return callback(new BackupsError(BackupsError.BAD_FIELD, 'credentials must be an object'));
+    if (typeof apiConfig.credentials.client_email !== 'string') return callback(new BackupsError(BackupsError.BAD_FIELD, 'credentials.client_email must be a string'));
+    if (typeof apiConfig.credentials.private_key !== 'string') return callback(new BackupsError(BackupsError.BAD_FIELD, 'credentials.private_key must be a string'));
 
     if (typeof apiConfig.bucket !== 'string') return callback(new BackupsError(BackupsError.BAD_FIELD, 'bucket must be a string'));
     if (typeof apiConfig.prefix !== 'string') return callback(new BackupsError(BackupsError.BAD_FIELD, 'prefix must be a string'));
@@ -302,25 +292,24 @@ function testConfig(apiConfig, callback) {
 
     var testFile = bucket.file(path.join(apiConfig.prefix, 'cloudron-testfile'));
 
-    var uploadStream = testFile.createWriteStream({resumable: false})
-        .on('error', function(error){
+    var uploadStream = testFile.createWriteStream({ resumable: false })
+        .on('error', function(error) {
             debug('uploadStream failed uploading cloudron-testfile', error);
             if (error && error.code && (error.code == 403 || error.code == 404)) {
-                callback(new BackupsError(BackupsError.BAD_FIELD, error.message));
+                return callback(new BackupsError(BackupsError.BAD_FIELD, error.message));
             }
 
             return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
-        })
-    ;
+        });
 
     var testfileStream = new PassThrough();
     testfileStream.write('testfilecontents');
     testfileStream.end();
 
     testfileStream
-        .on('end', function(){
-            debug('uploadStream uploaded cloudron-testfile '+JSON.stringify(arguments));
-            testFile.delete(function(error){
+        .on('end', function() {
+            debug('uploadStream uploaded cloudron-testfile ' + JSON.stringify(arguments));
+            testFile.delete(function(error) {
                 if (error) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
                 debug('testFileStream deleted cloudron-testfile');
                 callback();
