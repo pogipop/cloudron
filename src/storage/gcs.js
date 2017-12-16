@@ -292,30 +292,27 @@ function testConfig(apiConfig, callback) {
 
     var testFile = bucket.file(path.join(apiConfig.prefix, 'cloudron-testfile'));
 
-    var uploadStream = testFile.createWriteStream({ resumable: false })
-        .on('error', function(error) {
-            debug('uploadStream failed uploading cloudron-testfile', error);
-            if (error && error.code && (error.code == 403 || error.code == 404)) {
-                return callback(new BackupsError(BackupsError.BAD_FIELD, error.message));
-            }
+    var uploadStream = testFile.createWriteStream({ resumable: false });
+    uploadStream.write('testfilecontents');
+    uploadStream.end();
 
-            return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
+    uploadStream.on('error', function(error) {
+        debug('testConfig: failed uploading cloudron-testfile', error);
+        if (error && error.code && (error.code == 403 || error.code == 404)) {
+            return callback(new BackupsError(BackupsError.BAD_FIELD, error.message));
+        }
+
+        return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
+    });
+
+    uploadStream.on('finish', function() {
+        debug('testConfig: uploaded cloudron-testfile ' + JSON.stringify(arguments));
+        bucket.file(path.join(apiConfig.prefix, 'cloudron-testfile')).delete(function(error) {
+            if (error) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
+            debug('testConfig: deleted cloudron-testfile');
+            callback();
         });
-
-    var testfileStream = new PassThrough();
-    testfileStream.write('testfilecontents');
-    testfileStream.end();
-
-    testfileStream
-        .on('end', function() {
-            debug('uploadStream uploaded cloudron-testfile ' + JSON.stringify(arguments));
-            testFile.delete(function(error) {
-                if (error) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
-                debug('testFileStream deleted cloudron-testfile');
-                callback();
-            });
-        })
-        .pipe(uploadStream);
+    });
 }
 
 function backupDone(apiConfig, backupId, appBackupIds, callback) {
