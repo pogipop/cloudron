@@ -92,7 +92,7 @@
                                     <input type="text" class="form-control" ng-model="bucket" id="inputConfigureBackupBucket" name="bucket" ng-disabled="busy" ng-required="s3like(provider)">
                                 </div>
 
-                                <div class="form-group" ng-class="{ 'has-error': error.prefix }" ng-show="s3like(provider)">
+                                <div class="form-group" ng-class="{ 'has-error': error.prefix }" ng-show="s3like(provider) || provider === 'gcs'">
                                     <label class="control-label" for="inputConfigureBackupPrefix">Prefix</label>
                                     <input type="text" class="form-control" ng-model="prefix" id="inputConfigureBackupPrefix" name="prefix" ng-disabled="busy" placeholder="Prefix for backup file names">
                                 </div>
