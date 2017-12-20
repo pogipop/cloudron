@@ -430,7 +430,7 @@ angular.module('Application').controller('SettingsController', ['$scope', '$loca
                 } else if (backupConfig.provider === 'digitalocean-spaces') {
                     backupConfig.region = 'us-east-1';
                 }
-            } else if (backupConfig.provider === 'gcs'){
+            } else if (backupConfig.provider === 'gcs') {
                 backupConfig.bucket = $scope.configureBackup.bucket;
                 backupConfig.prefix = $scope.configureBackup.prefix;
                 try {
@@ -446,6 +446,7 @@ angular.module('Application').controller('SettingsController', ['$scope', '$loca
                     }
                 } catch (e) {
                     $scope.configureBackup.error.generic = 'Cannot parse Google Service Account Key: ' + e.message;
+                    $scope.configureBackup.error.gcsKeyInput = true;
                     $scope.configureBackup.busy = false;
                     return;
                 }

@@ -21,6 +21,7 @@ app.controller('RestoreController', ['$scope', '$http', 'Client', function ($sco
     $scope.prefix = '';
     $scope.accessKeyId = '';
     $scope.secretAccessKey = '';
+    $scope.gcsKey = { keyFileName: '', content: '' };
     $scope.region = '';
     $scope.endpoint = '';
     $scope.backupFolder = '';
@@ -57,6 +58,7 @@ app.controller('RestoreController', ['$scope', '$http', 'Client', function ($sco
         { name: 'DigitalOcean Spaces', value: 'digitalocean-spaces' },
         { name: 'Exoscale SOS', value: 'exoscale-sos' },
         { name: 'Filesystem', value: 'filesystem' },
+        { name: 'Google Cloud Storage', value: 'gcs' },
         { name: 'Minio', value: 'minio' },
         { name: 'S3 API Compatible (v4)', value: 's3-v4-compat' },
     ];
@@ -100,6 +102,26 @@ app.controller('RestoreController', ['$scope', '$http', 'Client', function ($sco
                 backupConfig.signatureVersion = 'v2';
             } else if (backupConfig.provider === 'digitalocean-spaces') {
                 backupConfig.region = 'us-east-1';
+            }
+        } else if (backupConfig.provider === 'gcs') {
+            backupConfig.bucket = $scope.bucket;
+            backupConfig.prefix = $scope.prefix;
+            try {
+                var serviceAccountKey = JSON.parse($scope.gcsKey.content);
+                backupConfig.projectId = serviceAccountKey.project_id;
+                backupConfig.credentials = {
+                    client_email: serviceAccountKey.client_email,
+                    private_key: serviceAccountKey.private_key
+                };
+
+                if (!backupConfig.projectId || !backupConfig.credentials || !backupConfig.credentials.client_email || !backupConfig.credentials.private_key) {
+                    throw 'fields_missing';
+                }
+            } catch (e) {
+                $scope.error.generic = 'Cannot parse Google Service Account Key: ' + e.message;
+                $scope.error.gcsKeyInput = true;
+                $scope.busy = false;
+                return;
             }
         } else if (backupConfig.provider === 'filesystem') {
             backupConfig.backupFolder = $scope.backupFolder;
@@ -164,6 +186,24 @@ app.controller('RestoreController', ['$scope', '$http', 'Client', function ($sco
             setTimeout(waitForRestore, 5000);
         });
     }
+
+    function readFileLocally(obj, file, fileName) {
+        return function (event) {
+            $scope.$apply(function () {
+                obj[file] = null;
+                obj[fileName] = event.target.files[0].name;
+
+                var reader = new FileReader();
+                reader.onload = function (result) {
+                    if (!result.target || !result.target.result) return console.error('Unable to read local file');
+                    obj[file] = result.target.result;
+                };
+                reader.readAsText(event.target.files[0]);
+            });
+        };
+    }
+
+    document.getElementById('gcsKeyFileInput').onchange = readFileLocally($scope.gcsKey, 'content', 'keyFileName');
 
     Client.getStatus(function (error, status) {
         if (error) {

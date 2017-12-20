@@ -87,7 +87,7 @@
                                     </label>
                                 </div>
 
-                                <div class="form-group" ng-class="{ 'has-error': error.bucket }" ng-show="s3like(provider)">
+                                <div class="form-group" ng-class="{ 'has-error': error.bucket }" ng-show="s3like(provider) || provider === 'gcs'">
                                     <label class="control-label" for="inputConfigureBackupBucket">Bucket name</label>
                                     <input type="text" class="form-control" ng-model="bucket" id="inputConfigureBackupBucket" name="bucket" ng-disabled="busy" ng-required="s3like(provider)">
                                 </div>
@@ -115,6 +115,18 @@
                                 <div class="form-group" ng-class="{ 'has-error': error.secretAccessKey }" ng-show="s3like(provider)">
                                     <label class="control-label" for="inputConfigureBackupSecretAccessKey">Secret access key</label>
                                     <input type="text" class="form-control" ng-model="secretAccessKey" id="inputConfigureBackupSecretAccessKey" name="secretAccessKey" ng-disabled="busy" ng-required="s3like(provider)">
+                                </div>
+
+                                <div class="form-group" ng-class="{ 'has-error': error.gcsKeyInput }" ng-show="provider === 'gcs'">
+                                    <label class="control-label" for="gcsKeyInput">Service Account Key</label>
+
+                                    <div class="input-group">
+                                        <input type="file" id="gcsKeyFileInput" style="display:none"/>
+                                        <input type="text" class="form-control" placeholder="Service Account Key" ng-model="gcsKey.keyFileName" id="gcsKeyInput" name="cert" onclick="getElementById('gcsKeyFileInput').click();" style="cursor: pointer;" ng-disabled="busy" required>
+                                        <span class="input-group-addon">
+                                      <i class="fa fa-upload" onclick="getElementById('gcsKeyFileInput').click();"></i>
+                                    </span>
+                                    </div>
                                 </div>
 
                                 <div class="form-group" ng-show="provider !== 'noop'">
