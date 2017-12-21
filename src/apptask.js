@@ -645,7 +645,7 @@ function update(app, callback) {
         downloadIcon.bind(null, app),
 
         updateApp.bind(null, app, { installationProgress: '70, Updating addons' }),
-        addons.setupAddons.bind(null, app, app.manifest.addons),
+        addons.setupAddons.bind(null, app, app.updateConfig.manifest.addons),
 
         updateApp.bind(null, app, { installationProgress: '80, Creating container' }),
         createContainer.bind(null, app),
