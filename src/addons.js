@@ -245,6 +245,8 @@ function setupOauth(app, options, callback) {
     assert.strictEqual(typeof options, 'object');
     assert.strictEqual(typeof callback, 'function');
 
+    debugApp(app, 'setupOauth');
+
     if (!app.sso) return callback(null);
 
     var appId = app.id;
