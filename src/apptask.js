@@ -76,6 +76,25 @@ function debugApp(app) {
     debug(prefix + ' ' + util.format.apply(util, Array.prototype.slice.call(arguments, 1)));
 }
 
+// updates the app object and the database
+function updateApp(app, values, callback) {
+    assert.strictEqual(typeof app, 'object');
+    assert.strictEqual(typeof values, 'object');
+    assert.strictEqual(typeof callback, 'function');
+
+    debugApp(app, 'updating app with values: %j', values);
+
+    appdb.update(app.id, values, function (error) {
+        if (error) return callback(error);
+
+        for (var value in values) {
+            app[value] = values[value];
+        }
+
+        return callback(null);
+    });
+}
+
 function reserveHttpPort(app, callback) {
     assert.strictEqual(typeof app, 'object');
     assert.strictEqual(typeof callback, 'function');
@@ -357,25 +376,6 @@ function waitForAltDomainDnsPropagation(app, callback) {
     } else {
         domains.waitForDNSRecord(app.altDomain, tld.getDomain(app.altDomain), config.appFqdn(app) + '.', 'CNAME', { interval: 10000, times: 60 }, callback);
     }
-}
-
-// updates the app object and the database
-function updateApp(app, values, callback) {
-    assert.strictEqual(typeof app, 'object');
-    assert.strictEqual(typeof values, 'object');
-    assert.strictEqual(typeof callback, 'function');
-
-    debugApp(app, 'updating app with values: %j', values);
-
-    appdb.update(app.id, values, function (error) {
-        if (error) return callback(error);
-
-        for (var value in values) {
-            app[value] = values[value];
-        }
-
-        return callback(null);
-    });
 }
 
 // Ordering is based on the following rationale:
