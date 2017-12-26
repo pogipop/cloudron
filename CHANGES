@@ -1138,3 +1138,7 @@
 * Fix issue where internal email was not delivered when email relay is enabled
 * Fix display of DNS records when email relay is enabled
 
+[1.8.5]
+* Fix issues where unused addons were not cleaned on an app update causing uninstall to fail
+* Change UI text from 'Waiting' to 'Pending'
+
