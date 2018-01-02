@@ -9,6 +9,7 @@ var apps = require('./apps.js'),
     appstore = require('./appstore.js'),
     assert = require('assert'),
     backups = require('./backups.js'),
+    caas = require('./caas.js'),
     certificates = require('./certificates.js'),
     cloudron = require('./cloudron.js'),
     config = require('./config.js'),
@@ -63,7 +64,7 @@ function initialize(callback) {
 
         gJobs.caasHeartbeat = new CronJob({
             cronTime: `${seconds} */1 * * * *`, // every minute
-            onTick: cloudron.sendCaasHeartbeat,
+            onTick: caas.sendHeartbeat,
             start: true
         });
     }

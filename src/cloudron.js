@@ -12,8 +12,6 @@ exports = module.exports = {
     dnsSetup: dnsSetup,
     getLogs: getLogs,
 
-    sendCaasHeartbeat: sendCaasHeartbeat,
-
     updateToLatest: updateToLatest,
     restore: restore,
     reboot: reboot,
@@ -489,17 +487,6 @@ function getConfig(callback) {
                 cloudronName: cloudronName
             });
         });
-    });
-}
-
-function sendCaasHeartbeat() {
-    assert(config.provider() === 'caas', 'Heartbeat is only sent for managed cloudrons');
-
-    var url = config.apiServerOrigin() + '/api/v1/boxes/' + config.fqdn() + '/heartbeat';
-    superagent.post(url).query({ token: config.token(), version: config.version() }).timeout(30 * 1000).end(function (error, result) {
-        if (error && !error.response) debug('Network error sending heartbeat.', error);
-        else if (result.statusCode !== 200) debug('Server responded to heartbeat with %s %s', result.statusCode, result.text);
-        else debug('Heartbeat sent to %s', url);
     });
 }
 
