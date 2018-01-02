@@ -74,21 +74,7 @@ var REBOOT_CMD = path.join(__dirname, 'scripts/reboot.sh'),
 
 var NOOP_CALLBACK = function (error) { if (error) debug(error); };
 
-// result to not depend on the appstore
-const BOX_AND_USER_TEMPLATE = {
-    box: {
-        region: null,
-        size: null,
-        plan: 'Custom Plan'
-    },
-    user: {
-        billing: false,
-        currency: ''
-    }
-};
-
-var gBoxAndUserDetails = null,         // cached cloudron details like region,size...
-    gWebadminStatus = { dns: false, tls: false, configuring: false, restoring: false };
+var gWebadminStatus = { dns: false, tls: false, configuring: false, restoring: false };
 
 function CloudronError(reason, errorOrMessage) {
     assert.strictEqual(typeof reason, 'string');
@@ -123,7 +109,6 @@ function initialize(callback) {
     assert.strictEqual(typeof callback, 'function');
 
     gWebadminStatus = { dns: false, tls: false, configuring: false, restoring: false };
-    gBoxAndUserDetails = null;
 
     async.series([
         certificates.initialize,
@@ -432,32 +417,23 @@ function getDisks(callback) {
     });
 }
 
-function getBoxAndUserDetails(callback) {
-    assert.strictEqual(typeof callback, 'function');
-
-    if (gBoxAndUserDetails) return callback(null, gBoxAndUserDetails);
-
-    // only supported for caas
-    if (config.provider() !== 'caas') return callback(null, {});
-
-    superagent
-        .get(config.apiServerOrigin() + '/api/v1/boxes/' + config.fqdn())
-        .query({ token: config.token() })
-        .timeout(30 * 1000)
-        .end(function (error, result) {
-            if (error && !error.response) return callback(new CloudronError(CloudronError.EXTERNAL_ERROR, 'Cannot reach appstore'));
-            if (result.statusCode !== 200) return callback(new CloudronError(CloudronError.EXTERNAL_ERROR, util.format('%s %j', result.statusCode, result.body)));
-
-            gBoxAndUserDetails = result.body;
-
-            return callback(null, gBoxAndUserDetails);
-        });
-}
-
 function getConfig(callback) {
     assert.strictEqual(typeof callback, 'function');
 
-    getBoxAndUserDetails(function (error, result) {
+    // result to not depend on the appstore
+    const BOX_AND_USER_TEMPLATE = {
+        box: {
+            region: null,
+            size: null,
+            plan: 'Custom Plan'
+        },
+        user: {
+            billing: false,
+            currency: ''
+        }
+    };
+
+    caas.getBoxAndUserDetails(function (error, result) {
         if (error) debug('Failed to fetch cloudron details.', error.reason, error.message);
 
         result = _.extend(BOX_AND_USER_TEMPLATE, result || {});
