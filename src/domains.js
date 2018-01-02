@@ -7,6 +7,8 @@ module.exports = exports = {
     update: update,
     del: del,
 
+    setAdmin: setAdmin,
+
     getDNSRecords: getDNSRecords,
     upsertDNSRecords: upsertDNSRecords,
     removeDNSRecords: removeDNSRecords,
@@ -17,14 +19,21 @@ module.exports = exports = {
 };
 
 var assert = require('assert'),
+    caas = require('./caas.js'),
+    config = require('./config.js'),
     certificates = require('./certificates.js'),
     CertificatesError = certificates.CertificatesError,
     DatabaseError = require('./databaseerror.js'),
     debug = require('debug')('box:domains'),
     domaindb = require('./domaindb.js'),
+    path = require('path'),
+    shell = require('./shell.js'),
     sysinfo = require('./sysinfo.js'),
     tld = require('tldjs'),
     util = require('util');
+
+var RESTART_CMD = path.join(__dirname, 'scripts/restart.sh');
+var NOOP_CALLBACK = function (error) { if (error) debug(error); };
 
 function DomainError(reason, errorOrMessage) {
     assert.strictEqual(typeof reason, 'string');
@@ -288,5 +297,30 @@ function waitForDNSRecord(fqdn, domain, value, type, options, callback) {
         const provider = result ? result.config.provider : 'manual';
 
         api(provider).waitForDns(fqdn, zoneName, value, type, options, callback);
+    });
+}
+
+function setAdmin(domain, callback) {
+    assert.strictEqual(typeof domain, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    debug('setAdmin domain:%s', domain);
+
+    get(domain, function (error, result) {
+        if (error) return callback(error);
+
+        var setPtrRecord = config.provider() === 'caas' ? caas.setPtrRecord : function (d, next) { next(); };
+
+        setPtrRecord(domain, function (error) {
+            if (error) return callback(new DomainError(DomainError.EXTERNAL_ERROR, 'Error setting PTR record:' + error.message));
+
+            config.setFqdn(result.domain);
+            config.setZoneName(result.zoneName);
+            config.set('isCustomDomain', true);
+
+            callback();
+
+            shell.sudo('restart', [ RESTART_CMD ], NOOP_CALLBACK);
+        });
     });
 }

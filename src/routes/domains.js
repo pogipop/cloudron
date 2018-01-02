@@ -5,7 +5,9 @@ exports = module.exports = {
     get: get,
     getAll: getAll,
     update: update,
-    del: del
+    del: del,
+
+    setAdmin: setAdmin
 };
 
 var assert = require('assert'),
@@ -81,5 +83,16 @@ function del(req, res, next) {
         if (error) return next(new HttpError(500, error));
 
         next(new HttpSuccess(204, {}));
+    });
+}
+
+function setAdmin(req, res, next) {
+    assert.strictEqual(typeof req.params.domain, 'string');
+
+    domains.setAdmin(req.params.domain.toLowerCase(), function (error) {
+        if (error && error.reason === DomainError.NOT_FOUND) return next(new HttpError(404, error.message));
+        if (error) return next(new HttpError(500, error));
+
+        next(new HttpSuccess(202, {}));
     });
 }

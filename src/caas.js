@@ -1,24 +1,20 @@
 'use strict';
 
 exports = module.exports = {
-    migrate: migrate,
     changePlan: changePlan,
     upgrade: upgrade,
     sendHeartbeat: sendHeartbeat,
-    getBoxAndUserDetails: getBoxAndUserDetails
+    getBoxAndUserDetails: getBoxAndUserDetails,
+    setPtrRecord: setPtrRecord
 };
 
 var assert = require('assert'),
     backups = require('./backups.js'),
     config = require('./config.js'),
     debug = require('debug')('box:caas'),
-    domains = require('./domains.js'),
-    DomainError = domains.DomainError,
     locker = require('./locker.js'),
     path = require('path'),
     progress = require('./progress.js'),
-    settings = require('./settings.js'),
-    SettingsError = settings.SettingsError,
     shell = require('./shell.js'),
     superagent = require('superagent'),
     util = require('util'),
@@ -116,33 +112,6 @@ function changePlan(options, callback) {
     doMigrate(options, callback);
 }
 
-function migrate(options, callback) {
-    assert.strictEqual(typeof options, 'object');
-    assert.strictEqual(typeof callback, 'function');
-
-    if (config.isDemo()) return callback(new CaasError(CaasError.BAD_FIELD, 'Not allowed in demo mode'));
-
-    if (!options.domain) return doMigrate(options, callback);
-
-    var dnsConfig = _.pick(options, 'domain', 'provider', 'accessKeyId', 'secretAccessKey', 'region', 'endpoint', 'token', 'zoneName');
-
-    domains.get(options.domain, function (error, result) {
-        if (error && error.reason !== DomainError.NOT_FOUND) return callback(new CaasError(CaasError.INTERNAL_ERROR, error));
-
-        var func;
-        if (!result) func = domains.add.bind(null, options.domain, options.zoneName, dnsConfig, null);
-        else func = domains.update.bind(null, options.domain, dnsConfig, null);
-
-        func(function (error) {
-            if (error && error.reason === DomainError.BAD_FIELD) return callback(new CaasError(CaasError.BAD_FIELD, error.message));
-            if (error) return callback(new SettingsError(CaasError.INTERNAL_ERROR, error));
-
-            // TODO: should probably rollback dns config if migrate fails
-            doMigrate(options, callback);
-        });
-    });
-}
-
 // this function expects a lock
 function upgrade(boxUpdateInfo, callback) {
     assert(boxUpdateInfo !== null && typeof boxUpdateInfo === 'object');
@@ -204,5 +173,22 @@ function getBoxAndUserDetails(callback) {
             gBoxAndUserDetails = result.body;
 
             return callback(null, gBoxAndUserDetails);
+        });
+}
+
+function setPtrRecord(domain, callback) {
+    assert.strictEqual(typeof domain, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    superagent
+        .post(config.apiServerOrigin() + '/api/v1/boxes/' + config.fqdn() + '/ptr')
+        .query({ token: config.token() })
+        .send({ domain: domain })
+        .timeout(5 * 1000)
+        .end(function (error, result) {
+            if (error && !error.response) return callback(new CaasError(CaasError.EXTERNAL_ERROR, 'Cannot reach appstore'));
+            if (result.statusCode !== 202) return callback(new CaasError(CaasError.EXTERNAL_ERROR, util.format('%s %j', result.statusCode, result.body)));
+
+            return callback(null);
         });
 }

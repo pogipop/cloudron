@@ -838,6 +838,13 @@ angular.module('Application').service('Client', ['$http', 'md5', 'Notification',
         }).error(defaultErrorHandler(callback));
     };
 
+    Client.prototype.setAdmin = function (domain, password, callback) {
+        post('/api/v1/domains/' + domain + '/set_admin', { password: password }).success(function(data, status) {
+            if (status !== 202 || typeof data !== 'object') return callback(new ClientError(status, data));
+            callback(null, data);
+        }).error(defaultErrorHandler(callback));
+    };
+
     Client.prototype.setCertificate = function (certificateFile, keyFile, callback) {
         var data = {
             cert: certificateFile,

@@ -183,6 +183,54 @@ angular.module('Application').controller('DomainsController', ['$scope', '$locat
         }
     };
 
+    $scope.domainMigrate = {
+        busy: false,
+        error: null,
+        domain: null,
+        password: null,
+
+        show: function (domain) {
+            $scope.domainMigrate.reset();
+
+            $scope.domainMigrate.domain = domain;
+
+            $('#domainMigrateModal').modal('show');
+        },
+
+        submit: function () {
+            $scope.domainMigrate.busy = true;
+            $scope.domainMigrate.error = null;
+
+            Client.setAdmin($scope.domainMigrate.domain.domain, $scope.domainMigrate.password, function (error) {
+                if (error && (error.statusCode === 403 || error.statusCode === 409)) {
+                    $scope.domainMigrate.password = '';
+                    $scope.domainMigrate.error = error.message;
+                    $scope.domainMigrateForm.password.$setPristine();
+                    $('#domainMigratePasswordInput').focus();
+                } else if (error) {
+                    Client.error(error);
+                } else {
+                    $('#domainMigrateModal').modal('hide');
+                    $scope.domainMigrate.reset();
+
+                    window.location.href = '/update.html';
+                }
+
+                $scope.domainMigrate.busy = false;
+            });
+        },
+
+        reset: function () {
+            $scope.domainMigrate.busy = false;
+            $scope.domainMigrate.error = null;
+            $scope.domainMigrate.domain = null;
+            $scope.domainMigrate.password = '';
+
+            $scope.domainMigrateForm.$setPristine();
+            $scope.domainMigrateForm.$setUntouched();
+        }
+    };
+
     $scope.domainRemove = {
         busy: false,
         error: null,
@@ -251,7 +299,7 @@ angular.module('Application').controller('DomainsController', ['$scope', '$locat
 
 
     // setup all the dialog focus handling
-    ['domainConfigureModal', 'domainRemoveModal'].forEach(function (id) {
+    ['domainConfigureModal', 'domainMigrateModal', 'domainRemoveModal'].forEach(function (id) {
         $('#' + id).on('shown.bs.modal', function () {
             $(this).find("[autofocus]:first").focus();
         });
