@@ -1190,7 +1190,7 @@ angular.module('Application').service('Client', ['$http', 'md5', 'Notification',
         }).error(defaultErrorHandler(callback));
       };
 
-      Client.prototype.updateDomain = function (domain, config, fallbackCertificate, callback) {
+    Client.prototype.updateDomain = function (domain, config, fallbackCertificate, callback) {
         var data = {
           config: config
         };
