@@ -213,7 +213,7 @@ angular.module('Application').controller('DomainsController', ['$scope', '$locat
                     $('#domainMigrateModal').modal('hide');
                     $scope.domainMigrate.reset();
 
-                    window.location.href = '/update.html';
+                    window.location.href = '/setupdns.html';
                 }
 
                 $scope.domainMigrate.busy = false;
