@@ -458,15 +458,15 @@ angular.module('Application').controller('AppStoreController', ['$scope', '$loca
                         $scope.appInstall.show(result);
                     });
                 } else {
-                    var found = $scope.apps.filter(function (app) {
-                        return (app.id === appId) && (version ? version === app.manifest.version : true);
-                    });
+                    AppStore.getAppById(appId, function (error, result) {
+                        if (error) {
+                            $scope.showAppNotFound(appId, null);
+                            console.error(error);
+                            return;
+                        }
 
-                    if (found.length) {
-                        $scope.appInstall.show(found[0]);
-                    } else {
-                        $scope.showAppNotFound(appId, null);
-                    }
+                        $scope.appInstall.show(result);
+                    });
                 }
             } else {
                 $scope.appInstall.reset();
