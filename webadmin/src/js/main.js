@@ -10,6 +10,8 @@ angular.module('Application').controller('MainController', ['$scope', '$route', 
     $scope.currentSubscription = null;
     $scope.appstoreConfig = {};
 
+    $scope.hideNavBarActions = $location.path() === '/logs';
+
     $scope.update = {
         busy: false,
         error: {}
