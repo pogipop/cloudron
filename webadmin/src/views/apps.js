@@ -1,7 +1,7 @@
 'use strict';
 
 
-angular.module('Application').controller('AppsController', ['$scope', '$location', '$timeout', 'Client', 'ngTld', 'AppStore', function ($scope, $location, $timeout, Client, ngTld, AppStore) {
+angular.module('Application').controller('AppsController', ['$scope', '$location', '$timeout', '$interval', 'Client', 'ngTld', 'AppStore', function ($scope, $location, $timeout, $interval, Client, ngTld, AppStore) {
     $scope.HOST_PORT_MIN = 1024;
     $scope.HOST_PORT_MAX = 65535;
     $scope.installedApps = Client.getInstalledApps();
@@ -506,13 +506,23 @@ angular.module('Application').controller('AppsController', ['$scope', '$location
     }
 
     Client.onReady(function () {
-        if ($scope.user.admin) {
-            fetchUsers();
-            fetchGroups();
-            getDomains();
-            getMailConfig();
-            getBackupConfig();
-        }
+        Client.refreshInstalledApps(function (error) {
+            if (error) return console.error(error);
+
+            if ($scope.user.admin) {
+                fetchUsers();
+                fetchGroups();
+                getDomains();
+                getMailConfig();
+                getBackupConfig();
+            }
+
+            var refreshAppsTimer = $interval(Client.refreshInstalledApps.bind(Client), 5000);
+
+            $scope.$on('$destroy', function () {
+                $interval.cancel(refreshAppsTimer);
+            });
+        });
     });
 
     // setup all the dialog focus handling

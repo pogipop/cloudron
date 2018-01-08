@@ -3,7 +3,7 @@
 /* global angular */
 /* global EventSource */
 
-angular.module('Application').service('Client', ['$http', 'md5', 'Notification', function ($http, md5, Notification) {
+angular.module('Application').service('Client', ['$http', '$interval', 'md5', 'Notification', function ($http, $interval, md5, Notification) {
     var client = null;
 
     // variable available only here to avoid this._property pattern
@@ -132,6 +132,8 @@ angular.module('Application').service('Client', ['$http', 'md5', 'Notification',
         // window.location fallback for websocket connections which do not have relative uris
         this.apiOrigin = '<%= oauth.apiOrigin %>' || window.location.origin;
         this.avatar = '';
+
+        this._refreshConfigTimer = null;
 
         this.resetAvatar();
 
@@ -474,8 +476,16 @@ angular.module('Application').service('Client', ['$http', 'md5', 'Notification',
     };
 
     Client.prototype.checkForUpdates = function (callback) {
+        var that = this;
+
+        if (that._refreshConfigTimer) $interval.cancel(that._refreshConfigTimer);
+        that._refreshConfigTimer = null;
+
         post('/api/v1/cloudron/check_for_updates', { }).success(function(data, status) {
             if (status !== 200) return callback(new ClientError(status, data));
+
+            that._refreshConfigTimer = $interval(that.refreshConfig.bind(that), 5000, 20 /* 20 times */);
+
             callback(null);
         }).error(defaultErrorHandler(callback));
     };

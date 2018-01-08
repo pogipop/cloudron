@@ -1,6 +1,6 @@
 'use strict';
 
-angular.module('Application').controller('MainController', ['$scope', '$route', '$interval', '$timeout', 'Client', 'AppStore', function ($scope, $route, $interval, $timeout, Client, AppStore) {
+angular.module('Application').controller('MainController', ['$scope', '$route', '$timeout', '$location', 'Client', 'AppStore', function ($scope, $route, $timeout, $location, Client, AppStore) {
     $scope.initialized = false;
     $scope.user = Client.getUserInfo();
     $scope.installedApps = Client.getInstalledApps();
@@ -219,17 +219,6 @@ angular.module('Application').controller('MainController', ['$scope', '$route', 
                 Client.refreshInstalledApps(function (error) {
                     if (error) return $scope.error(error);
 
-                    // kick off installed apps and config polling
-                    var refreshAppsTimer = $interval(Client.refreshInstalledApps.bind(Client), 5000);
-                    var refreshConfigTimer = $interval(Client.refreshConfig.bind(Client), 5000);
-                    var refreshUserInfoTimer = $interval(Client.refreshUserInfo.bind(Client), 5000);
-
-                    $scope.$on('$destroy', function () {
-                        $interval.cancel(refreshAppsTimer);
-                        $interval.cancel(refreshConfigTimer);
-                        $interval.cancel(refreshUserInfoTimer);
-                    });
-
                     // now mark the Client to be ready
                     Client.setReady();
 
@@ -247,7 +236,6 @@ angular.module('Application').controller('MainController', ['$scope', '$route', 
         });
     });
 
-    // wait till the view has loaded until showing a modal dialog
     Client.onConfig(function (config) {
         // check if we are actually updating
         if (config.progress.update && config.progress.update.percent !== -1) {
