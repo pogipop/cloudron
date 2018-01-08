@@ -194,6 +194,7 @@ angular.module('Application').controller('MainController', ['$scope', '$route', 
 
         // support local development with localhost check
         if (window.location.hostname !== status.adminFqdn && window.location.hostname !== 'localhost') {
+            // user is accessing by IP or by the old admin location (pre-migration)
             window.location.href = '/setupdns.html';
             return;
         }
