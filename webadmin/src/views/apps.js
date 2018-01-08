@@ -171,6 +171,8 @@ angular.module('Application').controller('AppsController', ['$scope', '$location
 
                 $scope.appConfigure.busy = false;
 
+                Client.refreshInstalledApps(); // reflect the new app state immediately
+
                 $('#appConfigureModal').modal('hide');
 
                 $scope.reset();
@@ -236,6 +238,8 @@ angular.module('Application').controller('AppsController', ['$scope', '$location
                 }
 
                 $scope.appRestore.busy = false;
+
+                Client.refreshInstalledApps(); // reflect the new app state immediately
             });
         }
     };
@@ -403,6 +407,8 @@ angular.module('Application').controller('AppsController', ['$scope', '$location
             }
 
             $scope.appUninstall.busy = false;
+
+            Client.refreshInstalledApps(); // reflect the new app state immediately
         });
     };
 
@@ -432,6 +438,8 @@ angular.module('Application').controller('AppsController', ['$scope', '$location
             }
 
             $scope.appUpdate.busy = false;
+
+            Client.refreshInstalledApps(); // reflect the new app state immediately
         });
     };
 
