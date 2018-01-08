@@ -11,11 +11,10 @@ app.filter('zoneName', function () {
     };
 });
 
-app.controller('SetupDNSController', ['$scope', '$http', 'Client', function ($scope, $http, Client) {
+app.controller('SetupDNSController', ['$scope', '$http', '$timeout', 'Client', function ($scope, $http, $timeout, Client) {
     var search = decodeURIComponent(window.location.search).slice(1).split('&').map(function (item) { return item.split('='); }).reduce(function (o, k) { o[k[0]] = k[1]; return o; }, {});
 
-    $scope.initialized = false;
-    $scope.busy = false;
+    $scope.state = null; // 'initialized', 'waitingForDnsSetup', 'waitingForBox'
     $scope.error = null;
     $scope.provider = '';
     $scope.showDNSSetup = false;
@@ -138,7 +137,7 @@ app.controller('SetupDNSController', ['$scope', '$http', 'Client', function ($sc
     };
 
     function waitForDnsSetup() {
-        $scope.busy = true;
+        $scope.state = 'waitingForDnsSetup';
 
         Client.getStatus(function (error, status) {
             // webadminStatus.dns is intentionally not tested. it can be false if dns creds are invalid
@@ -151,25 +150,31 @@ app.controller('SetupDNSController', ['$scope', '$http', 'Client', function ($sc
         });
     }
 
-    Client.getStatus(function (error, status) {
-        if (error) {
-            window.location.href = '/error.html';
-            return;
-        }
+    function initialize() {
+        Client.getStatus(function (error, status) {
+            if (error) {
+                // During domain migration, the box code restarts and can result in getStatus() failing temporarily
+                console.error(error);
+                $scope.state = 'waitingForBox';
+                return $timeout(initialize, 3000);
+            }
 
-        // domain is currently like a lock flag
-        if (status.adminFqdn) return waitForDnsSetup();
+            // domain is currently like a lock flag
+            if (status.adminFqdn) return waitForDnsSetup();
 
-        if (status.provider === 'digitalocean') $scope.dnsCredentials.provider = 'digitalocean';
-        if (status.provider === 'gcp') $scope.dnsCredentials.provider = 'gcdns';
-        if (status.provider === 'ami') {
-            // remove route53 on ami
-            $scope.dnsProvider.shift();
-            $scope.dnsCredentials.provider = 'wildcard';
-        }
+            if (status.provider === 'digitalocean') $scope.dnsCredentials.provider = 'digitalocean';
+            if (status.provider === 'gcp') $scope.dnsCredentials.provider = 'gcdns';
+            if (status.provider === 'ami') {
+                // remove route53 on ami
+                $scope.dnsProvider.shift();
+                $scope.dnsCredentials.provider = 'wildcard';
+            }
 
-        $scope.instanceId = search.instanceId;
-        $scope.provider = status.provider;
-        $scope.initialized = true;
-    });
+            $scope.instanceId = search.instanceId;
+            $scope.provider = status.provider;
+            $scope.state = 'initialized';
+        });
+    }
+
+    initialize();
 }]);
