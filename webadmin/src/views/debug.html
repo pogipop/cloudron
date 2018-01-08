@@ -65,41 +65,37 @@
   </div>
 </div>
 
-<div class="logs-controls">
+<div class="terminal-controls">
   <div class="col-md-10 col-md-offset-1">
-    <uib-tabset active="active">
-      <uib-tab index="0" heading="Logs" select="showLogs()"></uib-tab>
-      <uib-tab index="1" heading="Terminal" select="showTerminal()"></uib-tab>
-    </uib-tabset>
-    <select class="form-control pull-right inline" ng-options="log.name for log in logs track by log.value" ng-model="selected"></select>
-
-    <!-- logs actions -->
-    <a class="btn btn-default pull-right" ng-href="{{ selected.url }}&format=short&lines=800" ng-hide="terminalVisible"><i class="fa fa-download"></i> Download Logs</a>
+    <h3>Terminal</h3>
+    <select class="form-control pull-right inline" ng-options="app.name for app in apps track by app.value" ng-model="selected">
+        <option value="" disabled selected>Select App</option>
+    </select>
 
     <input type="file" id="fileUpload" class="hide"/>
 
     <!-- terminal actions -->
     <div class="btn-group pull-right" style="margin-left: 10px;">
       <button class="btn btn-default" ng-click="restartApp()" ng-show="selected.type === 'app'" ng-disabled="restartAppBusy"><i class="fa fa-refresh" ng-class="{ 'fa-spin': restartAppBusy }"></i> Restart</button>
-      <button class="btn btn-default" ng-click="uploadFile()" ng-show="terminalVisible && selected.type === 'app' && !uploadProgress.busy"><i class="fa fa-upload"></i> Upload to /tmp</button>
+      <button class="btn btn-default" ng-click="uploadFile()" ng-show="selected.type === 'app' && !uploadProgress.busy"><i class="fa fa-upload"></i> Upload to /tmp</button>
       <button class="btn btn-default" ng-click="uploadProgress.show()" ng-show="uploadProgress.busy"><i class="fa fa-circle-o-notch fa-spin"></i> Uploading...</button>
-      <button class="btn btn-default" ng-click="downloadFile.show()" ng-show="terminalVisible && selected.type === 'app'"><i class="fa fa-download"></i> Download</button>
-      <button class="btn btn-default" ng-click="repairApp()" ng-show="terminalVisible && selected.type === 'app' && !selectedAppInfo.debugMode && !appBusy"><i class="fa fa-wrench"></i> Repair</button>
+      <button class="btn btn-default" ng-click="downloadFile.show()" ng-show="selected.type === 'app'"><i class="fa fa-download"></i> Download</button>
+      <button class="btn btn-default" ng-click="repairApp()" ng-show="selected.type === 'app' && !selectedAppInfo.debugMode && !appBusy"><i class="fa fa-wrench"></i> Repair</button>
       <button class="btn btn-danger" ng-click="repairAppDone()" ng-show="selectedAppInfo.debugMode && !appBusy"><i class="fa fa-wrench"></i> Repair Done</button>
     </div>
 
     <div class="btn-group pull-right" style="margin-left: 10px;">
-      <button class="btn btn-default" ng-click="terminalInject('mysql')" ng-show="terminalVisible && usesAddon('mysql')">MySQL</button>
-      <button class="btn btn-default" ng-click="terminalInject('postgresql')" ng-show="terminalVisible && usesAddon('postgresql')">Postgres</button>
-      <button class="btn btn-default" ng-click="terminalInject('mongodb')" ng-show="terminalVisible && usesAddon('mongodb')">MongoDB</button>
-      <button class="btn btn-default" ng-click="terminalInject('redis')" ng-show="terminalVisible && usesAddon('redis')">Redis</button>
+      <button class="btn btn-default" ng-click="terminalInject('mysql')" ng-show="usesAddon('mysql')">MySQL</button>
+      <button class="btn btn-default" ng-click="terminalInject('postgresql')" ng-show="usesAddon('postgresql')">Postgres</button>
+      <button class="btn btn-default" ng-click="terminalInject('mongodb')" ng-show="usesAddon('mongodb')">MongoDB</button>
+      <button class="btn btn-default" ng-click="terminalInject('redis')" ng-show="usesAddon('redis')">Redis</button>
     </div>
 
   </div>
 </div>
 
-<div class="logs-and-term-container" id="logsAndTerminalContainer" ng-class="{ 'dont-overflow': terminalVisible }" ng-hide="terminalVisible && appBusy"></div>
-<div class="logs-and-term-container placeholder" ng-show="terminalVisible && appBusy">
+<div class="terminal-container" id="terminalContainer" ng-hide="appBusy"></div>
+<div class="terminal-container placeholder" ng-show="appBusy">
   <h4>&nbsp;
     <span ng-show="selectedAppInfo.installationState === 'pending_configure' && selectedAppInfo.debugMode">Restarting app for repair...</span>
     <span ng-show="selectedAppInfo.installationState === 'pending_configure' && !selectedAppInfo.debugMode ">App is being reconfigured...</span>

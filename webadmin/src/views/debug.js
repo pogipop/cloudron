@@ -1,8 +1,6 @@
 'use strict';
 
-/* global moment */
 /* global Terminal */
-
 
 angular.module('Application').controller('DebugController', ['$scope', '$location', 'Client', function ($scope, $location, Client) {
     Client.onReady(function () { if (!Client.getUserInfo().admin) $location.path('/'); });
@@ -10,20 +8,13 @@ angular.module('Application').controller('DebugController', ['$scope', '$locatio
     $scope.config = Client.getConfig();
     $scope.user = Client.getUserInfo();
 
-    $scope.terminalVisible = true;
-    $scope.logs = [];
+    $scope.apps = [];
     $scope.selected = '';
-    $scope.activeEventSource = null;
     $scope.terminal = null;
     $scope.terminalSocket = null;
-    $scope.lines = 10;
     $scope.restartAppBusy = false;
     $scope.appBusy = false;
     $scope.selectedAppInfo = null;
-
-    function ab2str(buf) {
-        return String.fromCharCode.apply(null, new Uint16Array(buf));
-    }
 
     $scope.downloadFile = {
         error: '',
@@ -105,22 +96,17 @@ angular.module('Application').controller('DebugController', ['$scope', '$locatio
         fileUpload.click();
     };
 
-    $scope.populateLogTypes = function () {
-        $scope.logs.push({ name: 'System (All)', type: 'platform', value: 'all', url: Client.makeURL('/api/v1/cloudron/logs?units=all') });
-        $scope.logs.push({ name: 'Box', type: 'platform', value: 'box', url: Client.makeURL('/api/v1/cloudron/logs?units=box') });
-        $scope.logs.push({ name: 'Mail', type: 'platform', value: 'mail', url: Client.makeURL('/api/v1/cloudron/logs?units=mail') });
-
+    $scope.populateDropdown = function () {
         Client.getInstalledApps().sort(function (app1, app2) { return app1.fqdn.localeCompare(app2.fqdn); }).forEach(function (app) {
-            $scope.logs.push({
+            $scope.apps.push({
                 type: 'app',
                 value: app.id,
                 name: app.fqdn + ' (' + app.manifest.title + ')',
-                url: Client.makeURL('/api/v1/apps/' + app.id + '/logs'),
                 addons: app.manifest.addons
             });
         });
 
-        $scope.selected = $scope.logs[0];
+        // $scope.selected = $scope.apps[0];
     };
 
     $scope.usesAddon = function (addon) {
@@ -129,15 +115,6 @@ angular.module('Application').controller('DebugController', ['$scope', '$locatio
     };
 
     function reset() {
-        // close the old event source so we wont receive any new logs
-        if ($scope.activeEventSource) {
-            $scope.activeEventSource.close();
-            $scope.activeEventSource = null;
-        }
-
-        var logViewer = $('#logsAndTerminalContainer');
-        logViewer.empty();
-
         if ($scope.terminal) {
             $scope.terminal.destroy();
             $scope.terminal = null;
@@ -212,63 +189,17 @@ angular.module('Application').controller('DebugController', ['$scope', '$locatio
         });
     };
 
-    $scope.showLogs = function () {
-        $scope.terminalVisible = false;
-
-        reset();
-
-        if (!$scope.selected) return;
-
-        var func = $scope.selected.type === 'platform' ? Client.getPlatformLogs : Client.getAppLogs;
-        func($scope.selected.value, true, $scope.lines, function handleLogs(error, result) {
-            if (error) return console.error(error);
-
-            $scope.activeEventSource = result;
-            result.onmessage = function handleMessage(message) {
-                var data;
-
-                try {
-                    data = JSON.parse(message.data);
-                } catch (e) {
-                    return console.error(e);
-                }
-
-                // check if we want to auto scroll (this is before the appending, as that skews the check)
-                var tmp = $('#logsAndTerminalContainer');
-                var autoScroll = tmp[0].scrollTop > (tmp[0].scrollTopMax - 24);
-
-                var logLine = $('<div class="log-line">');
-                var timeString = moment.utc(data.realtimeTimestamp/1000).format('MMM DD HH:mm:ss');
-                logLine.html('<span class="time">' + timeString + ' </span>' + window.ansiToHTML(typeof data.message === 'string' ? data.message : ab2str(data.message)));
-                tmp.append(logLine);
-
-                if (autoScroll) tmp[0].lastChild.scrollIntoView({ behavior: 'instant', block: 'end' });
-            };
-        });
-    };
-
     $scope.showTerminal = function (retry) {
-        $scope.terminalVisible = true;
-
         reset();
 
         if (!$scope.selected) return;
-
-        // we can only connect to apps here
-        if ($scope.selected.type !== 'app') {
-            var tmp = $('#logsAndTerminalContainer');
-            var logLine = $('<div class="log-line">');
-            logLine.html('Terminal is only supported for apps, not for ' + $scope.selected.name);
-            tmp.append(logLine);
-            return;
-        }
 
         // fetch current app state
         Client.refreshInstalledApps(function (error) {
             if (error) console.error(error);
 
             $scope.terminal = new Terminal();
-            $scope.terminal.open(document.querySelector('#logsAndTerminalContainer'));
+            $scope.terminal.open(document.querySelector('#terminalContainer'));
             $scope.terminal.fit();
 
             try {
@@ -282,7 +213,7 @@ angular.module('Application').controller('DebugController', ['$scope', '$locatio
                     $scope.terminalReconnectTimeout = setTimeout(function () {
                         // if the scope was already destroyed, do not reconnect
                         if ($scope.$$destroyed) return;
-                        if ($scope.terminalVisible) $scope.showTerminal(true);
+                        $scope.showTerminal(true);
                     }, 1000);
                 };
 
@@ -319,11 +250,10 @@ angular.module('Application').controller('DebugController', ['$scope', '$locatio
     $scope.$watch('selected', function (newVal) {
         if (!newVal) return;
 
-        if ($scope.terminalVisible) $scope.showTerminal();
-        else $scope.showLogs();
+        $scope.showTerminal();
     });
 
-    Client.onReady($scope.populateLogTypes);
+    Client.onReady($scope.populateDropdown);
 
     Client.onApps(function () {
         if ($scope.$$destroyed) return;
@@ -346,12 +276,6 @@ angular.module('Application').controller('DebugController', ['$scope', '$locatio
     });
 
     $scope.$on('$destroy', function () {
-        if ($scope.activeEventSource) {
-            $scope.activeEventSource.onmessage = function () {};
-            $scope.activeEventSource.close();
-            $scope.activeEventSource = null;
-        }
-
         if ($scope.terminal) {
             $scope.terminal.destroy();
         }
@@ -381,7 +305,7 @@ angular.module('Application').controller('DebugController', ['$scope', '$locatio
         $scope.terminal.focus();
     });
 
-    $('#logsAndTerminalContainer').on('contextmenu', function (e) {
+    $('#terminalContainer').on('contextmenu', function (e) {
         if (!$scope.terminal) return true;
 
         e.preventDefault();

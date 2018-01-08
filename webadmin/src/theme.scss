@@ -1141,16 +1141,6 @@ footer {
         width: 250px;
         margin-left: 20px;
     }
-
-    .uib-tab.active {
-        a {
-            background-color: white;
-
-            &:hover, &:focus {
-                background-color: white;
-            }
-        }
-    }
 }
 
 .logs-container {
@@ -1177,7 +1167,33 @@ footer {
     }
 }
 
-.logs-and-term-container {
+
+// ----------------------------
+// Terminal
+// ----------------------------
+
+.terminal-controls {
+    margin-top: 25px;
+    margin-bottom: 10px;
+
+    .ng-isolate-scope {
+        float: left;
+    }
+
+    h3 {
+        display: inline-block;
+        margin-top: 6px;
+        margin-bottom: 0;
+    }
+
+    select {
+        display: inline-block;
+        width: 250px;
+        margin-left: 20px;
+    }
+}
+
+.terminal-container {
     flex-grow: 1;
     margin-left: calc(8.33% + 15px);
     margin-right: calc(8.33% + 15px);
@@ -1187,22 +1203,6 @@ footer {
     overflow: auto;
     padding: 5px;
     font-family: monospace;
-
-    .log-line {
-        line-height: 1.2;
-
-        &:hover {
-            background-color: #333333;
-        }
-
-        .time {
-            color: #00FFFF;
-        }
-    }
-
-    .dont-overflow {
-        overflow: hidden;
-    }
 
     &.placeholder {
         display: flex;

@@ -1,7 +1,6 @@
 'use strict';
 
 /* global moment */
-/* global Terminal */
 
 angular.module('Application').controller('LogsController', ['$scope', '$location', '$route', '$routeParams', 'Client', function ($scope, $location, $route, $routeParams, Client) {
     Client.onReady(function () { if (!Client.getUserInfo().admin) $location.path('/'); });
