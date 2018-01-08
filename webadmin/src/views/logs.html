@@ -1,0 +1,12 @@
+<div class="logs-controls">
+  <div class="col-md-10 col-md-offset-1">
+    <h3 style="display: inline-block;">Logs</h3>
+    <select class="form-control pull-right inline" ng-options="log.name for log in logs track by log.value" ng-model="selected"></select>
+
+    <!-- logs actions -->
+    <a class="btn btn-default pull-right" ng-href="{{ selected.url }}&format=short&lines=800" ng-hide="terminalVisible"><i class="fa fa-download"></i> Download Logs</a>
+  </div>
+</div>
+
+<div class="logs-container"</div>
+

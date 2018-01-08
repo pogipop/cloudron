@@ -1124,10 +1124,16 @@ footer {
 
 .logs-controls {
     margin-top: 25px;
+    margin-bottom: 10px;
 
     .ng-isolate-scope {
-        display: inline-block;
         float: left;
+    }
+
+    h3 {
+        display: inline-block;
+        margin-top: 6px;
+        margin-bottom: 0;
     }
 
     select {
@@ -1143,6 +1149,30 @@ footer {
             &:hover, &:focus {
                 background-color: white;
             }
+        }
+    }
+}
+
+.logs-container {
+    flex-grow: 1;
+    margin-left: calc(8.33% + 15px);
+    margin-right: calc(8.33% + 15px);
+    margin-bottom: 20px;
+    background-color: black;
+    color: white;
+    overflow: auto;
+    padding: 5px;
+    font-family: monospace;
+
+    .log-line {
+        line-height: 1.2;
+
+        &:hover {
+            background-color: #333333;
+        }
+
+        .time {
+            color: #00FFFF;
         }
     }
 }
