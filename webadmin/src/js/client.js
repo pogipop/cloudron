@@ -324,8 +324,6 @@ angular.module('Application').service('Client', ['$http', 'md5', 'Notification',
             data.iconUrlStore = icons.store;
             data.progress = 0;
 
-            that._installedApps.push(data);
-
             callback(null, data.id);
         }).error(defaultErrorHandler(callback));
     };
@@ -1071,6 +1069,8 @@ angular.module('Application').service('Client', ['$http', 'md5', 'Notification',
                     that._installedApps.splice(i, 1);
                 }
             }
+
+            that._installedApps = that._installedApps.sort(function (app1, app2) { return app1.fqdn.localeCompare(app2.fqdn); });
 
             that._appsListener.forEach(function (callback) {
                 callback(that._installedApps);

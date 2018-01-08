@@ -23,7 +23,7 @@ angular.module('Application').controller('LogsController', ['$scope', '$location
         $scope.logs.push({ name: 'Box', type: 'platform', value: 'box', url: Client.makeURL('/api/v1/cloudron/logs?units=box') });
         $scope.logs.push({ name: 'Mail', type: 'platform', value: 'mail', url: Client.makeURL('/api/v1/cloudron/logs?units=mail') });
 
-        Client.getInstalledApps().sort(function (app1, app2) { return app1.fqdn.localeCompare(app2.fqdn); }).forEach(function (app) {
+        Client.getInstalledApps().forEach(function (app) {
             $scope.logs.push({
                 type: 'app',
                 value: app.id,

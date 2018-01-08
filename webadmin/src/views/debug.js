@@ -97,7 +97,7 @@ angular.module('Application').controller('DebugController', ['$scope', '$locatio
     };
 
     $scope.populateDropdown = function () {
-        Client.getInstalledApps().sort(function (app1, app2) { return app1.fqdn.localeCompare(app2.fqdn); }).forEach(function (app) {
+        Client.getInstalledApps().forEach(function (app) {
             $scope.apps.push({
                 type: 'app',
                 value: app.id,
