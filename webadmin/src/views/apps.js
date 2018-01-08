@@ -498,17 +498,13 @@ angular.module('Application').controller('AppsController', ['$scope', '$location
     }
 
     Client.onReady(function () {
-        Client.refreshUserInfo(function (error) {
-            if (error) return console.error(error);
-
-            if ($scope.user.admin) {
-                fetchUsers();
-                fetchGroups();
-                getDomains();
-                getMailConfig();
-                getBackupConfig();
-            }
-        });
+        if ($scope.user.admin) {
+            fetchUsers();
+            fetchGroups();
+            getDomains();
+            getMailConfig();
+            getBackupConfig();
+        }
     });
 
     // setup all the dialog focus handling
