@@ -64,8 +64,8 @@ var USER_2 = {
 const TEST_DOMAIN = {
     domain: 'example.com',
     zoneName: 'example.com',
+    provider: 'manual',
     config: {
-        provider: 'manual'
     }
 };
 
@@ -91,25 +91,27 @@ describe('database', function () {
         const DOMAIN_0 = {
             domain: 'foobar.com',
             zoneName: 'foobar.com',
-            config: { provider: 'digitalocean', token: 'abcd' }
+            provider: 'digitalocean',
+            config: { token: 'abcd' }
         };
 
         const DOMAIN_1 = {
             domain: 'foo.cloudron.io',
             zoneName: 'cloudron.io',
+            provider: 'manual',
             config: null
         };
 
         it('can add domain', function (done) {
-            domaindb.add(DOMAIN_0.domain, DOMAIN_0.zoneName, DOMAIN_0.config, done);
+            domaindb.add(DOMAIN_0.domain, DOMAIN_0.zoneName, DOMAIN_0.provider, DOMAIN_0.config, done);
         });
 
         it('can add another domain', function (done) {
-            domaindb.add(DOMAIN_1.domain, DOMAIN_1.zoneName, DOMAIN_1.config, done);
+            domaindb.add(DOMAIN_1.domain, DOMAIN_1.zoneName, DOMAIN_1.provider, DOMAIN_1.config, done);
         });
 
         it('cannot add same domain twice', function (done) {
-            domaindb.add(DOMAIN_0.domain, DOMAIN_0.zoneName, DOMAIN_0.config, function (error) {
+            domaindb.add(DOMAIN_0.domain, DOMAIN_0.zoneName, DOMAIN_0.provider, DOMAIN_0.config, function (error) {
                 expect(error).to.be.ok();
                 expect(error.reason).to.be(DatabaseError.ALREADY_EXISTS);
                 done();
@@ -131,7 +133,7 @@ describe('database', function () {
         it('can update domain', function (done) {
             const newConfig = { provider: 'manual' };
 
-            domaindb.update(DOMAIN_1.domain, newConfig, function (error) {
+            domaindb.update(DOMAIN_1.domain, DOMAIN_1.provider, newConfig, function (error) {
                 expect(error).to.equal(null);
 
                 domaindb.get(DOMAIN_1.domain, function (error, result) {
@@ -139,6 +141,7 @@ describe('database', function () {
                     expect(result).to.be.an('object');
                     expect(result.domain).to.equal(DOMAIN_1.domain);
                     expect(result.zoneName).to.equal(DOMAIN_1.zoneName);
+                    expect(result.provider).to.equal(DOMAIN_1.provider);
                     expect(result.config).to.eql(newConfig);
 
                     DOMAIN_1.config = newConfig;
@@ -157,14 +160,17 @@ describe('database', function () {
                 // sorted by domain
                 expect(result[0].domain).to.equal(TEST_DOMAIN.domain);
                 expect(result[0].zoneName).to.equal(TEST_DOMAIN.zoneName);
+                expect(result[0].provider).to.equal(TEST_DOMAIN.provider);
                 expect(result[0].config).to.eql(TEST_DOMAIN.config);
 
                 expect(result[1].domain).to.equal(DOMAIN_1.domain);
                 expect(result[1].zoneName).to.equal(DOMAIN_1.zoneName);
+                expect(result[1].provider).to.equal(DOMAIN_1.provider);
                 expect(result[1].config).to.eql(DOMAIN_1.config);
 
                 expect(result[2].domain).to.equal(DOMAIN_0.domain);
                 expect(result[2].zoneName).to.equal(DOMAIN_0.zoneName);
+                expect(result[2].provider).to.equal(DOMAIN_0.provider);
                 expect(result[2].config).to.eql(DOMAIN_0.config);
 
                 done();

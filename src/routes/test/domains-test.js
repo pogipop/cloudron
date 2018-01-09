@@ -21,12 +21,14 @@ var token = null;
 var DOMAIN_0 = {
     domain: 'cloudron.com',
     zoneName: 'cloudron.com',
-    config: { provider: 'noop' }
+    provider: 'noop',
+    config: { }
 };
 
 var DOMAIN_1 = {
     domain: 'foobar.com',
-    config: { provider: 'noop' }
+    provider: 'noop',
+    config: { }
 };
 
 describe('Domains API', function () {
@@ -93,7 +95,7 @@ describe('Domains API', function () {
 
             superagent.post(SERVER_URL + '/api/v1/domains')
                     .query({ access_token: token })
-                    .send({ domain: 'cloudron.com', config: { provider: 'doesnotexist' }})
+                    .send({ domain: 'cloudron.com', provider: 'doesnotexist', config: { }})
                     .end(function (error, result) {
                 expect(result.statusCode).to.equal(400);
                 expect(scope.isDone()).to.be.ok();

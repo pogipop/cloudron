@@ -22,7 +22,6 @@ var assert = require('assert'),
 
 function postProcess(data) {
     data.config = safe.JSON.parse(data.configJson);
-    data.provider = data.config.provider; // FIXME, make provider a db column
     delete data.configJson;
 
     return data;
@@ -52,13 +51,14 @@ function getAll(callback) {
     });
 }
 
-function add(domain, zoneName, config, callback) {
+function add(domain, zoneName, provider, config, callback) {
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof zoneName, 'string');
+    assert.strictEqual(typeof provider, 'string');
     assert.strictEqual(typeof config, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    database.query('INSERT INTO domains (domain, zoneName, configJson) VALUES (?, ?, ?)', [ domain, zoneName, JSON.stringify(config) ], function (error) {
+    database.query('INSERT INTO domains (domain, zoneName, provider, configJson) VALUES (?, ?, ?, ?)', [ domain, zoneName, provider, JSON.stringify(config) ], function (error) {
         if (error && error.code === 'ER_DUP_ENTRY') return callback(new DatabaseError(DatabaseError.ALREADY_EXISTS, error));
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
 
@@ -66,25 +66,27 @@ function add(domain, zoneName, config, callback) {
     });
 }
 
-function upsert(domain, zoneName, config, callback) {
+function upsert(domain, zoneName, provider, config, callback) {
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof zoneName, 'string');
+    assert.strictEqual(typeof provider, 'string');
     assert.strictEqual(typeof config, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    database.query('REPLACE INTO domains (domain, zoneName, configJson) VALUES (?, ?, ?)', [ domain, zoneName, JSON.stringify(config) ], function (error) {
+    database.query('REPLACE INTO domains (domain, zoneName, provider, configJson) VALUES (?, ?, ?, ?)', [ domain, zoneName, provider, JSON.stringify(config) ], function (error) {
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
 
         callback(null);
     });
 }
 
-function update(domain, config, callback) {
+function update(domain, provider, config, callback) {
     assert.strictEqual(typeof domain, 'string');
+    assert.strictEqual(typeof provider, 'string');
     assert.strictEqual(typeof config, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    database.query('UPDATE domains SET configJson=? WHERE domain=?', [ JSON.stringify(config), domain ], function (error) {
+    database.query('UPDATE domains SET provider=?, configJson=? WHERE domain=?', [ provider, JSON.stringify(config), domain ], function (error) {
         if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new DatabaseError(DatabaseError.NOT_FOUND));
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
 
@@ -116,7 +118,7 @@ function clear(callback) {
 function addDefaultDomain(callback) {
     assert(config.fqdn(), 'no fqdn set in config, cannot continue');
 
-    add(config.fqdn(), config.zoneName(), { provider: 'manual' }, function (error) {
+    add(config.fqdn(), config.zoneName(), 'manual', { }, function (error) {
         if (error && error.reason !== DatabaseError.ALREADY_EXISTS) return callback(error);
         callback();
     });

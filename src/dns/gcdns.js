@@ -21,7 +21,6 @@ function getDnsCredentials(dnsConfig) {
     assert.strictEqual(typeof dnsConfig, 'object');
 
     var config = {
-        provider: dnsConfig.provider,
         projectId: dnsConfig.projectId,
         keyFilename: dnsConfig.keyFilename,
         email: dnsConfig.email

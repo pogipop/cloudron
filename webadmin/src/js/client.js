@@ -734,8 +734,15 @@ angular.module('Application').service('Client', ['$http', '$interval', 'md5', 'N
         }).error(defaultErrorHandler(callback));
     };
 
-    Client.prototype.setupDnsConfig = function (dnsConfig, callback) {
-        post('/api/v1/cloudron/dns_setup', dnsConfig).success(function(data, status) {
+    Client.prototype.setupDnsConfig = function (domain, zoneName, provider, dnsConfig, callback) {
+        var data = {
+            domain: domain,
+            zoneName: zoneName,
+            provider: provider,
+            config: dnsConfig
+        };
+
+        post('/api/v1/cloudron/dns_setup', data).success(function(data, status) {
             if (status !== 200) return callback(new ClientError(status, data));
             callback(null);
         }).error(defaultErrorHandler(callback));
@@ -1192,9 +1199,10 @@ angular.module('Application').service('Client', ['$http', '$interval', 'md5', 'N
         }).error(defaultErrorHandler(callback));
     };
 
-    Client.prototype.addDomain = function (domain, config, fallbackCertificate, callback) {
+    Client.prototype.addDomain = function (domain, provider, config, fallbackCertificate, callback) {
         var data = {
             domain: domain,
+            provider: provider,
             config: config
         };
 
@@ -1206,8 +1214,9 @@ angular.module('Application').service('Client', ['$http', '$interval', 'md5', 'N
         }).error(defaultErrorHandler(callback));
     };
 
-    Client.prototype.updateDomain = function (domain, config, fallbackCertificate, callback) {
+    Client.prototype.updateDomain = function (domain, provider, config, fallbackCertificate, callback) {
         var data = {
+            provider: provider,
             config: config
         };
 

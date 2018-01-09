@@ -20,13 +20,14 @@ function add(req, res, next) {
     assert.strictEqual(typeof req.body, 'object');
 
     if (typeof req.body.domain !== 'string') return next(new HttpError(400, 'domain must be a string'));
+    if (typeof req.body.provider !== 'string') return next(new HttpError(400, 'provider must be a string'));
     if (typeof req.body.config !== 'object') return next(new HttpError(400, 'config must be an object'));
     if ('zoneName' in req.body && typeof req.body.zoneName !== 'string') return next(new HttpError(400, 'zoneName must be a string'));
     if ('fallbackCertificate' in req.body && typeof req.body.fallbackCertificate !== 'object') return next(new HttpError(400, 'fallbackCertificate must be a object with cert and key strings'));
     if (req.body.fallbackCertificate && (!req.body.cert || typeof req.body.cert !== 'string')) return next(new HttpError(400, 'fallbackCertificate.cert must be a string'));
     if (req.body.fallbackCertificate && (!req.body.key || typeof req.body.key !== 'string')) return next(new HttpError(400, 'fallbackCertificate.key must be a string'));
 
-    domains.add(req.body.domain, req.body.zoneName || req.body.domain, req.body.config, req.body.fallbackCertificate || null, function (error) {
+    domains.add(req.body.domain, req.body.zoneName || req.body.domain, req.body.provider, req.body.config, req.body.fallbackCertificate || null, function (error) {
         if (error && error.reason === DomainError.ALREADY_EXISTS) return next(new HttpError(409, error.message));
         if (error && error.reason === DomainError.BAD_FIELD) return next(new HttpError(400, error.message));
         if (error && error.reason === DomainError.INVALID_PROVIDER) return next(new HttpError(400, error.message));
@@ -59,12 +60,13 @@ function update(req, res, next) {
     assert.strictEqual(typeof req.params.domain, 'string');
     assert.strictEqual(typeof req.body, 'object');
 
+    if (typeof req.body.provider !== 'string') return next(new HttpError(400, 'provider must be an object'));
     if (typeof req.body.config !== 'object') return next(new HttpError(400, 'config must be an object'));
     if ('fallbackCertificate' in req.body && typeof req.body.fallbackCertificate !== 'object') return next(new HttpError(400, 'fallbackCertificate must be a object with cert and key strings'));
     if (req.body.fallbackCertificate && (!req.body.fallbackCertificate.cert || typeof req.body.fallbackCertificate.cert !== 'string')) return next(new HttpError(400, 'fallbackCertificate.cert must be a string'));
     if (req.body.fallbackCertificate && (!req.body.fallbackCertificate.key || typeof req.body.fallbackCertificate.key !== 'string')) return next(new HttpError(400, 'fallbackCertificate.key must be a string'));
 
-    domains.update(req.params.domain, req.body.config, req.body.fallbackCertificate || null, function (error) {
+    domains.update(req.params.domain, req.body.provider, req.body.config, req.body.fallbackCertificate || null, function (error) {
         if (error && error.reason === DomainError.NOT_FOUND) return next(new HttpError(404, error.message));
         if (error && error.reason === DomainError.BAD_FIELD) return next(new HttpError(400, error.message));
         if (error && error.reason === DomainError.INVALID_PROVIDER) return next(new HttpError(400, error.message));

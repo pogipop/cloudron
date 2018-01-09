@@ -226,7 +226,6 @@ function verifyDnsConfig(dnsConfig, fqdn, zoneName, ip, callback) {
     assert.strictEqual(typeof callback, 'function');
 
     var credentials = {
-        provider: dnsConfig.provider,
         accessKeyId: dnsConfig.accessKeyId,
         secretAccessKey: dnsConfig.secretAccessKey,
         region: dnsConfig.region || 'us-east-1',

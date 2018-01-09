@@ -52,8 +52,8 @@ var MANIFEST = {
 const DOMAIN_0 = {
     domain: 'example.com',
     zoneName: 'example.com',
+    provider: 'route53',
     config: {
-        provider: 'route53',
         accessKeyId: 'accessKeyId',
         secretAccessKey: 'secretAccessKey',
         endpoint: 'http://localhost:5353'
@@ -101,7 +101,7 @@ describe('apptask', function () {
 
         async.series([
             database.initialize,
-            domains.update.bind(null, DOMAIN_0.domain, DOMAIN_0.config, null),
+            domains.update.bind(null, DOMAIN_0.domain, DOMAIN_0.provider, DOMAIN_0.config, null),
             appdb.add.bind(null, APP.id, APP.appStoreId, APP.manifest, APP.location, APP.domain, APP.portBindings, APP),
             settings.initialize,
             settings.setTlsConfig.bind(null, { provider: 'caas' })

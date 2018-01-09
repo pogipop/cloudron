@@ -194,10 +194,11 @@ function autoprovision(callback) {
     }, callback);
 }
 
-function dnsSetup(dnsConfig, domain, zoneName, callback) {
-    assert.strictEqual(typeof dnsConfig, 'object');
+function dnsSetup(domain, zoneName, provider, dnsConfig, callback) {
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof zoneName, 'string');
+    assert.strictEqual(typeof provider, 'string');
+    assert.strictEqual(typeof dnsConfig, 'object');
     assert.strictEqual(typeof callback, 'function');
 
     if (config.fqdn()) return callback(new CloudronError(CloudronError.ALREADY_SETUP));
@@ -228,8 +229,8 @@ function dnsSetup(dnsConfig, domain, zoneName, callback) {
     domains.get(domain, function (error, result) {
         if (error && error.reason !== DomainError.NOT_FOUND) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
 
-        if (!result) domains.add(domain, zoneName, dnsConfig, null /* cert */, done);
-        else domains.update(domain, dnsConfig, null /* cert */, done);
+        if (!result) domains.add(domain, zoneName, provider, dnsConfig, null /* cert */, done);
+        else domains.update(domain, provider, dnsConfig, null /* cert */, done);
     });
 }
 

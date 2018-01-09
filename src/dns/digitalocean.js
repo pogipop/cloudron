@@ -205,7 +205,6 @@ function verifyDnsConfig(dnsConfig, fqdn, zoneName, ip, callback) {
     assert.strictEqual(typeof callback, 'function');
 
     var credentials = {
-        provider: dnsConfig.provider,
         token: dnsConfig.token
     };
 

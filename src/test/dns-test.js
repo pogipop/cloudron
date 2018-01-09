@@ -20,6 +20,7 @@ var async = require('async'),
 var DOMAIN_0 = {
     domain: 'example-dns-test.com',
     zoneName: 'example-dns-test.com',
+    provider: 'manual',
     config: {}
 };
 
@@ -44,11 +45,11 @@ describe('dns provider', function () {
 
     describe('noop', function () {
         before(function (done) {
+            DOMAIN_0.provider = 'noop'
             DOMAIN_0.config = {
-                provider: 'noop'
             };
 
-            domains.update(DOMAIN_0.domain, DOMAIN_0.config, null, done);
+            domains.update(DOMAIN_0.domain, DOMAIN_0.provider, DOMAIN_0.config, null, done);
         });
 
         it('upsert succeeds', function (done) {
@@ -84,12 +85,12 @@ describe('dns provider', function () {
         var DIGITALOCEAN_ENDPOINT = 'https://api.digitalocean.com';
 
         before(function (done) {
+            DOMAIN_0.provider = 'digitalocean';
             DOMAIN_0.config = {
-                provider: 'digitalocean',
                 token: TOKEN
             };
 
-            domains.update(DOMAIN_0.domain, DOMAIN_0.config, null, done);
+            domains.update(DOMAIN_0.domain, DOMAIN_0.provider, DOMAIN_0.config, null, done);
         });
 
         it('upsert non-existing record succeeds', function (done) {
@@ -345,8 +346,8 @@ describe('dns provider', function () {
         var AWS_HOSTED_ZONES = null;
 
         before(function (done) {
+            DOMAIN_0.provider = 'route53';
             DOMAIN_0.config = {
-                provider: 'route53',
                 accessKeyId: 'unused',
                 secretAccessKey: 'unused'
             };
@@ -416,7 +417,7 @@ describe('dns provider', function () {
             AWS._originalRoute53 = AWS.Route53;
             AWS.Route53 = Route53Mock;
 
-            domains.update(DOMAIN_0.domain, DOMAIN_0.config, null, done);
+            domains.update(DOMAIN_0.domain, DOMAIN_0.provider, DOMAIN_0.config, null, done);
         });
 
         after(function () {
@@ -529,8 +530,8 @@ describe('dns provider', function () {
         var _OriginalGCDNS;
 
         before(function (done) {
+            DOMAIN_0.provider = 'gcdns';
             DOMAIN_0.config = {
-                provider: 'gcdns',
                 projectId: 'my-dns-proj',
                 keyFilename: __dirname + '/syn-im-1ec6f9f870bf.json'
             };
@@ -572,7 +573,7 @@ describe('dns provider', function () {
             _OriginalGCDNS = GCDNS.prototype.getZones;
             GCDNS.prototype.getZones = mockery(zoneQueue);
 
-            domains.update(DOMAIN_0.domain, DOMAIN_0.config, null, done);
+            domains.update(DOMAIN_0.domain, DOMAIN_0.provider, DOMAIN_0.config, null, done);
         });
 
         after(function () {

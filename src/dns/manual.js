@@ -59,6 +59,6 @@ function verifyDnsConfig(dnsConfig, domain, zoneName, ip, callback) {
     dns.resolveNs(zoneName, function (error, nameservers) {
         if (error || !nameservers) return callback(new DomainError(DomainError.BAD_FIELD, 'Unable to get nameservers'));
 
-        callback(null, { provider: dnsConfig.provider, wildcard: !!dnsConfig.wildcard });
+        callback(null, { wildcard: !!dnsConfig.wildcard });
     });
 }

@@ -70,13 +70,15 @@ describe('Apps', function () {
     const DOMAIN_0 = {
         domain: 'example.com',
         zoneName: 'example.com',
-        config: { provider: 'manual' }
+        provider: 'manual',
+        config: { }
     };
 
     const DOMAIN_1 = {
         domain: 'example2.com',
         zoneName: 'example2.com',
-        config: { provider: 'manual' }
+        provider: 'manual',
+        config: { }
     };
 
     var APP_0 = {
@@ -135,7 +137,7 @@ describe('Apps', function () {
             database.initialize,
             database._clear,
             // DOMAIN_0 already added for test through domaindb.addDefaultDomain()
-            domaindb.add.bind(null, DOMAIN_1.domain, DOMAIN_1.zoneName, DOMAIN_1.config),
+            domaindb.add.bind(null, DOMAIN_1.domain, DOMAIN_1.zoneName, DOMAIN_1.provider, DOMAIN_1.config),
             userdb.add.bind(null, ADMIN_0.id, ADMIN_0),
             userdb.add.bind(null, USER_0.id, USER_0),
             userdb.add.bind(null, USER_1.id, USER_1),

@@ -237,7 +237,6 @@ function verifyDnsConfig(dnsConfig, fqdn, zoneName, ip, callback) {
     if (!dnsConfig.email || typeof dnsConfig.email !== 'string') return callback(new DomainError(DomainError.BAD_FIELD, 'email must be a non-empty string'));
 
     var credentials = {
-        provider: dnsConfig.provider,
         token: dnsConfig.token,
         email: dnsConfig.email
     };

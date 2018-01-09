@@ -81,23 +81,22 @@ app.controller('SetupDNSController', ['$scope', '$http', '$timeout', 'Client', f
         $scope.dnsCredentials.error = null;
         $scope.error = null;
 
+        var provider = $scope.dnsCredentials.provider;
+
         var data = {
-            domain: $scope.dnsCredentials.domain,
-            zoneName: $scope.explicitZone,
-            provider: $scope.dnsCredentials.provider,
             providerToken: $scope.instanceId
         };
 
         // special case the wildcard provider
-        if (data.provider === 'wildcard') {
-            data.provider = 'manual';
+        if (provider === 'wildcard') {
+            provider = 'manual';
             data.wildcard = true;
         }
 
-        if (data.provider === 'route53') {
+        if (provider === 'route53') {
             data.accessKeyId = $scope.dnsCredentials.accessKeyId;
             data.secretAccessKey = $scope.dnsCredentials.secretAccessKey;
-        } else if (data.provider === 'gcdns'){
+        } else if (provider === 'gcdns'){
             try {
                 var serviceAccountKey = JSON.parse($scope.dnsCredentials.gcdnsKey.content);
                 data.projectId = serviceAccountKey.project_id;
@@ -114,14 +113,14 @@ app.controller('SetupDNSController', ['$scope', '$http', '$timeout', 'Client', f
                 $scope.dnsCredentials.busy = false;
                 return;
             }
-        } else if (data.provider === 'digitalocean') {
+        } else if (provider === 'digitalocean') {
             data.token = $scope.dnsCredentials.digitalOceanToken;
-        } else if (data.provider === 'cloudflare') {
+        } else if (provider === 'cloudflare') {
             data.email = $scope.dnsCredentials.cloudflareEmail;
             data.token = $scope.dnsCredentials.cloudflareToken;
         }
 
-        Client.setupDnsConfig(data, function (error) {
+        Client.setupDnsConfig($scope.dnsCredentials.domain, $scope.explicitZone, provider, data, function (error) {
             if (error && error.statusCode === 403) {
                 $scope.dnsCredentials.busy = false;
                 $scope.error = 'Wrong instance id provided.';

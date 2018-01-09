@@ -110,8 +110,9 @@ function dnsSetup(req, res, next) {
     if (typeof req.body.domain !== 'string' || !req.body.domain) return next(new HttpError(400, 'domain is required'));
 
     if ('zoneName' in req.body && typeof req.body.zoneName !== 'string') return next(new HttpError(400, 'zoneName must be a string'));
+    if (!config || typeof req.body.config !== 'object') return next(new HttpError(400, 'config must be an object'));
 
-    cloudron.dnsSetup(req.body, req.body.domain.toLowerCase(), req.body.zoneName || '', function (error) {
+    cloudron.dnsSetup(req.body.domain.toLowerCase(), req.body.zoneName || '', req.body.provider, req.body.config, function (error) {
         if (error && error.reason === CloudronError.ALREADY_SETUP) return next(new HttpError(409, error.message));
         if (error && error.reason === CloudronError.BAD_FIELD) return next(new HttpError(400, error.message));
         if (error) return next(new HttpError(500, error));

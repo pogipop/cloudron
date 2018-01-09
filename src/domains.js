@@ -82,24 +82,25 @@ function api(provider) {
 }
 
 // TODO make it return a DomainError instead of DomainError
-function verifyDnsConfig(config, domain, zoneName, ip, callback) {
+function verifyDnsConfig(config, domain, zoneName, provider, ip, callback) {
     assert(config && typeof config === 'object'); // the dns config to test with
-    assert(typeof config.provider === 'string');
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof zoneName, 'string');
+    assert.strictEqual(typeof provider, 'string');
     assert.strictEqual(typeof ip, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    var backend = api(config.provider);
+    var backend = api(provider);
     if (!backend) return callback(new DomainError(DomainError.INVALID_PROVIDER));
 
-    api(config.provider).verifyDnsConfig(config, domain, zoneName, ip, callback);
+    api(provider).verifyDnsConfig(config, domain, zoneName, ip, callback);
 }
 
 
-function add(domain, zoneName, config, fallbackCertificate, callback) {
+function add(domain, zoneName, provider, config, fallbackCertificate, callback) {
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof zoneName, 'string');
+    assert.strictEqual(typeof provider, 'string');
     assert.strictEqual(typeof config, 'object');
     assert.strictEqual(typeof fallbackCertificate, 'object');
     assert.strictEqual(typeof callback, 'function');
@@ -115,7 +116,7 @@ function add(domain, zoneName, config, fallbackCertificate, callback) {
     sysinfo.getPublicIp(function (error, ip) {
         if (error) return callback(new DomainError(DomainError.INTERNAL_ERROR, 'Error getting IP:' + error.message));
 
-        verifyDnsConfig(config, domain, zoneName, ip, function (error, result) {
+        verifyDnsConfig(config, domain, zoneName, provider, ip, function (error, result) {
             if (error && error.reason === DomainError.ACCESS_DENIED) return callback(new DomainError(DomainError.BAD_FIELD, 'Error adding A record. Access denied'));
             if (error && error.reason === DomainError.NOT_FOUND) return callback(new DomainError(DomainError.BAD_FIELD, 'Zone not found'));
             if (error && error.reason === DomainError.EXTERNAL_ERROR) return callback(new DomainError(DomainError.BAD_FIELD, 'Error adding A record:' + error.message));
@@ -123,7 +124,7 @@ function add(domain, zoneName, config, fallbackCertificate, callback) {
             if (error && error.reason === DomainError.INVALID_PROVIDER) return callback(new DomainError(DomainError.BAD_FIELD, error.message));
             if (error) return callback(new DomainError(DomainError.INTERNAL_ERROR, error));
 
-            domaindb.add(domain, zoneName, result, function (error) {
+            domaindb.add(domain, zoneName, provider, result, function (error) {
                 if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(new DomainError(DomainError.ALREADY_EXISTS));
                 if (error) return callback(new DomainError(DomainError.INTERNAL_ERROR, error));
 
@@ -168,8 +169,9 @@ function getAll(callback) {
     });
 }
 
-function update(domain, config, fallbackCertificate, callback) {
+function update(domain, provider, config, fallbackCertificate, callback) {
     assert.strictEqual(typeof domain, 'string');
+    assert.strictEqual(typeof provider, 'string');
     assert.strictEqual(typeof config, 'object');
     assert.strictEqual(typeof fallbackCertificate, 'object');
     assert.strictEqual(typeof callback, 'function');
@@ -186,7 +188,7 @@ function update(domain, config, fallbackCertificate, callback) {
         sysinfo.getPublicIp(function (error, ip) {
             if (error) return callback(new DomainError(DomainError.INTERNAL_ERROR, 'Error getting IP:' + error.message));
 
-            verifyDnsConfig(config, domain, result.zoneName, ip, function (error, result) {
+            verifyDnsConfig(config, domain, result.zoneName, provider, ip, function (error, result) {
                 if (error && error.reason === DomainError.ACCESS_DENIED) return callback(new DomainError(DomainError.BAD_FIELD, 'Error adding A record. Access denied'));
                 if (error && error.reason === DomainError.NOT_FOUND) return callback(new DomainError(DomainError.BAD_FIELD, 'Zone not found'));
                 if (error && error.reason === DomainError.EXTERNAL_ERROR) return callback(new DomainError(DomainError.BAD_FIELD, 'Error adding A record:' + error.message));
@@ -194,7 +196,7 @@ function update(domain, config, fallbackCertificate, callback) {
                 if (error && error.reason === DomainError.INVALID_PROVIDER) return callback(new DomainError(DomainError.BAD_FIELD, error.message));
                 if (error) return callback(new DomainError(DomainError.INTERNAL_ERROR, error));
 
-                domaindb.update(domain, result, function (error) {
+                domaindb.update(domain, provider, result, function (error) {
                     if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new DomainError(DomainError.NOT_FOUND));
                     if (error) return callback(new DomainError(DomainError.INTERNAL_ERROR, error));
 
@@ -233,7 +235,7 @@ function getDNSRecords(subdomain, domain, type, callback) {
     get(domain, function (error, result) {
         if (error) return callback(new DomainError(DomainError.INTERNAL_ERROR, error));
 
-        api(result.config.provider).get(result.config, result.zoneName, subdomain, type, function (error, values) {
+        api(result.provider).get(result.config, result.zoneName, subdomain, type, function (error, values) {
             if (error) return callback(error);
 
             callback(null, values);
@@ -253,7 +255,7 @@ function upsertDNSRecords(subdomain, domain, type, values, callback) {
     get(domain, function (error, result) {
         if (error) return callback(new DomainError(DomainError.INTERNAL_ERROR, error));
 
-        api(result.config.provider).upsert(result.config, result.zoneName, subdomain, type, values, function (error, changeId) {
+        api(result.provider).upsert(result.config, result.zoneName, subdomain, type, values, function (error, changeId) {
             if (error) return callback(error);
 
             callback(null, changeId);
@@ -273,7 +275,7 @@ function removeDNSRecords(subdomain, domain, type, values, callback) {
     get(domain, function (error, result) {
         if (error) return callback(new DomainError(DomainError.INTERNAL_ERROR, error));
 
-        api(result.config.provider).del(result.config, result.zoneName, subdomain, type, values, function (error) {
+        api(result.provider).del(result.config, result.zoneName, subdomain, type, values, function (error) {
             if (error && error.reason !== DomainError.NOT_FOUND) return callback(error);
 
             callback(null);
@@ -292,11 +294,7 @@ function waitForDNSRecord(fqdn, domain, value, type, options, callback) {
     get(domain, function (error, result) {
         if (error && error.reason !== DomainError.NOT_FOUND) return callback(new DomainError(DomainError.INTERNAL_ERROR, error));
 
-        // if the domain is on another zone in case of external domain, use the correct zone
-        const zoneName = result ? result.zoneName : tld.getDomain(domain);
-        const provider = result ? result.config.provider : 'manual';
-
-        api(provider).waitForDns(fqdn, zoneName, value, type, options, callback);
+        api(result.provider).waitForDns(fqdn, result.zoneName, value, type, options, callback);
     });
 }
 

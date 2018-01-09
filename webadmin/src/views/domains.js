@@ -93,20 +93,21 @@ angular.module('Application').controller('DomainsController', ['$scope', '$locat
             $scope.domainConfigure.busy = true;
             $scope.domainConfigure.error = null;
 
+            var provider = $scope.domainConfigure.provider;
+
             var data = {
-                provider: $scope.domainConfigure.provider
             };
 
             // special case the wildcard provider
-            if (data.provider === 'wildcard') {
-                data.provider = 'manual';
+            if (provider === 'wildcard') {
+                provider = 'manual';
                 data.wildcard = true;
             }
 
-            if (data.provider === 'route53') {
+            if (provider === 'route53') {
                 data.accessKeyId = $scope.domainConfigure.accessKeyId;
                 data.secretAccessKey = $scope.domainConfigure.secretAccessKey;
-            } else if (data.provider === 'gcdns'){
+            } else if (provider === 'gcdns'){
                 try {
                     var serviceAccountKey = JSON.parse($scope.domainConfigure.gcdnsKey.content);
                     data.projectId = serviceAccountKey.project_id;
@@ -123,9 +124,9 @@ angular.module('Application').controller('DomainsController', ['$scope', '$locat
                     $scope.domainConfigure.busy = false;
                     return;
                 }
-            } else if (data.provider === 'digitalocean') {
+            } else if (provider === 'digitalocean') {
                 data.token = $scope.domainConfigure.digitalOceanToken;
-            } else if (data.provider === 'cloudflare') {
+            } else if (provider === 'cloudflare') {
                 data.token = $scope.domainConfigure.cloudflareToken;
                 data.email = $scope.domainConfigure.cloudflareEmail;
             }
@@ -140,8 +141,8 @@ angular.module('Application').controller('DomainsController', ['$scope', '$locat
 
             // choose the right api, since we reuse this for adding and configuring domains
             var func;
-            if ($scope.domainConfigure.adding) func = Client.addDomain.bind(Client, $scope.domainConfigure.newDomain, data, fallbackCertificate);
-            else func = Client.updateDomain.bind(Client, $scope.domainConfigure.domain.domain, data, fallbackCertificate);
+            if ($scope.domainConfigure.adding) func = Client.addDomain.bind(Client, $scope.domainConfigure.newDomain, provider, data, fallbackCertificate);
+            else func = Client.updateDomain.bind(Client, $scope.domainConfigure.domain.domain, provider, data, fallbackCertificate);
 
             func(function (error) {
                 $scope.domainConfigure.busy = false;
