@@ -23,9 +23,11 @@ angular.module('Application').controller('AppStoreController', ['$scope', '$loca
     $scope.showView = function (view) {
         // wait for dialog to be fully closed to avoid modal behavior breakage when moving to a different view already
         $('.modal').on('hidden.bs.modal', function () {
-            $scope.appInstall.reset();
-            $('.modal').off('hidden.bs.modal');
-            $location.path(view);
+            $scope.$apply(function () {
+                $scope.appInstall.reset();
+                $('.modal').off('hidden.bs.modal');
+                $location.path(view);
+            });
         });
 
         $('.modal').modal('hide');
@@ -201,9 +203,9 @@ angular.module('Application').controller('AppStoreController', ['$scope', '$loca
         switchToAppsView: function () {
             // wait for dialog to be fully closed to avoid modal behavior breakage when moving to a different view already
             $('#appInstallModal').on('hidden.bs.modal', function () {
-                $scope.appInstall.reset();
-                $('#appInstallModal').off('hidden.bs.modal');
-                $location.path('/apps');
+                $scope.$apply(function () {
+                    $location.path('/apps').search({ });
+                });
             });
 
             $('#appInstallModal').modal('hide');
@@ -575,8 +577,12 @@ angular.module('Application').controller('AppStoreController', ['$scope', '$loca
 
     Client.onReady(init);
 
-    $('#appInstallModal').on('hide.bs.modal', function () {
-        $location.path('/appstore', false).search({ version: undefined });
+    // note: do not use hide.bs.model since it is called immediately from switchToAppsView which is already in angular scope
+    $('#appInstallModal').on('hidden.bs.modal', function () {
+        // clear the appid and version in the search bar when dialog is cancelled
+        $scope.$apply(function () {
+            $location.path('/appstore', false).search({ }); // 'false' means do not reload
+        });
     });
 
     window.addEventListener('hashchange', hashChangeListener);
