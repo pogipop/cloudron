@@ -116,7 +116,7 @@ function clear(callback) {
 function addDefaultDomain(callback) {
     assert(config.fqdn(), 'no fqdn set in config, cannot continue');
 
-    add(config.fqdn(), config.zoneName(), {}, function (error) {
+    add(config.fqdn(), config.zoneName(), { provider: 'manual' }, function (error) {
         if (error && error.reason !== DatabaseError.ALREADY_EXISTS) return callback(error);
         callback();
     });

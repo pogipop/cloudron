@@ -64,7 +64,9 @@ var USER_2 = {
 const TEST_DOMAIN = {
     domain: 'example.com',
     zoneName: 'example.com',
-    config: {}
+    config: {
+        provider: 'manual'
+    }
 };
 
 describe('database', function () {
@@ -121,18 +123,6 @@ describe('database', function () {
                 expect(result.domain).to.equal(DOMAIN_0.domain);
                 expect(result.zoneName).to.equal(DOMAIN_0.zoneName);
                 expect(result.config).to.eql(DOMAIN_0.config);
-
-                done();
-            });
-        });
-
-        it('can get domain without provider set', function (done) {
-            domaindb.get(DOMAIN_1.domain, function (error, result) {
-                expect(error).to.equal(null);
-                expect(result).to.be.an('object');
-                expect(result.domain).to.equal(DOMAIN_1.domain);
-                expect(result.zoneName).to.equal(DOMAIN_1.zoneName);
-                expect(result.config).to.eql(DOMAIN_1.config);
 
                 done();
             });
