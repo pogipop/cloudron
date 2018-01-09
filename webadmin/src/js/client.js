@@ -1112,7 +1112,7 @@ angular.module('Application').service('Client', ['$http', '$interval', 'md5', 'N
         this._userInfo = {};
 
         // logout from OAuth session
-        var origin = window.location.protocol + "//" + window.location.host;
+        var origin = window.location.protocol + '//' + window.location.host;
         window.location.href = this.apiOrigin + '/api/v1/session/logout?redirect=' + origin;
     };
 
@@ -1202,14 +1202,14 @@ angular.module('Application').service('Client', ['$http', '$interval', 'md5', 'N
         if (fallbackCertificate) data.fallbackCertificate = fallbackCertificate;
 
         post('/api/v1/domains', data).success(function (data, status) {
-          if (status !== 201 || typeof data !== 'object') return callback(new ClientError(status, data));
-          callback(null, data);
+            if (status !== 201 || typeof data !== 'object') return callback(new ClientError(status, data));
+            callback(null, data);
         }).error(defaultErrorHandler(callback));
-      };
+    };
 
     Client.prototype.updateDomain = function (domain, config, fallbackCertificate, callback) {
         var data = {
-          config: config
+            config: config
         };
 
         if (fallbackCertificate) data.fallbackCertificate = fallbackCertificate;
