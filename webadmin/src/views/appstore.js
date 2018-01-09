@@ -39,7 +39,7 @@ angular.module('Application').controller('AppStoreController', ['$scope', '$loca
         error: {},
         app: {},
         location: '',
-        domain: '',
+        domain: null,
         portBindings: {},
         mediaLinks: [],
         certificateFile: null,
@@ -60,7 +60,7 @@ angular.module('Application').controller('AppStoreController', ['$scope', '$loca
             $scope.appInstall.app = {};
             $scope.appInstall.error = {};
             $scope.appInstall.location = '';
-            $scope.appInstall.domain = '';
+            $scope.appInstall.domain = null;
             $scope.appInstall.portBindings = {};
             $scope.appInstall.state = 'appInfo';
             $scope.appInstall.mediaLinks = [];
@@ -106,7 +106,7 @@ angular.module('Application').controller('AppStoreController', ['$scope', '$loca
 
             $scope.appInstall.mediaLinks = $scope.appInstall.app.manifest.mediaLinks || [];
             $scope.appInstall.location = app.location;
-            $scope.appInstall.domain = $scope.config.fqdn; // FIXME needs to come from domains dropdown
+            $scope.appInstall.domain = $scope.domains[0];
             $scope.appInstall.portBindingsInfo = $scope.appInstall.app.manifest.tcpPorts || {};   // Portbinding map only for information
             $scope.appInstall.portBindings = {};                            // This is the actual model holding the env:port pair
             $scope.appInstall.portBindingsEnabled = {};                     // This is the actual model holding the enabled/disabled flag
@@ -150,7 +150,7 @@ angular.module('Application').controller('AppStoreController', ['$scope', '$loca
 
             var data = {
                 location: $scope.appInstall.location || '',
-                domain: $scope.appInstall.domain,
+                domain: $scope.appInstall.domain.domain,
                 portBindings: finalPortBindings,
                 accessRestriction: finalAccessRestriction,
                 cert: $scope.appInstall.certificateFile,
@@ -498,17 +498,6 @@ angular.module('Application').controller('AppStoreController', ['$scope', '$loca
         });
     }
 
-    function getDomains() {
-        Client.getDomains(function (error, result) {
-            if (error) {
-                console.error(error);
-                return $timeout(getDomains, 5000);
-            }
-
-            $scope.domains = result.map(function (d) { return d.domain; });
-        });
-    }
-
     function fetchAppstoreConfig(callback) {
         callback = callback || function (error) { if (error) console.error(error); };
 
@@ -557,20 +546,25 @@ angular.module('Application').controller('AppStoreController', ['$scope', '$loca
 
             $scope.apps = apps;
 
-            // show install app dialog immediately if an app id was passed in the query
-            // hashChangeListener calls $apply, so make sure we don't double digest here
-            setTimeout(hashChangeListener, 1);
-
             fetchUsers();
             fetchGroups();
-            getDomains();
             getMailConfig();
 
-            fetchAppstoreConfig(function (error) {
+            // domains is required since we populate the dropdown with domains[0]
+            Client.getDomains(function (error, result) {
                 if (error) console.error(error);
-                $scope.ready = true;
+                $scope.domains = result;
 
-                setTimeout(function () { $('#appstoreSearch').focus(); }, 1000);
+                // show install app dialog immediately if an app id was passed in the query
+                // hashChangeListener calls $apply, so make sure we don't double digest here
+                setTimeout(hashChangeListener, 1);
+
+                fetchAppstoreConfig(function (error) {
+                    if (error) console.error(error);
+                    $scope.ready = true;
+
+                    setTimeout(function () { $('#appstoreSearch').focus(); }, 1000);
+                });
             });
         });
     }

@@ -22,6 +22,7 @@ var assert = require('assert'),
 
 function postProcess(data) {
     data.config = safe.JSON.parse(data.configJson);
+    data.provider = data.config.provider; // FIXME, make provider a db column
     delete data.configJson;
 
     return data;

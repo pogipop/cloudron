@@ -17,12 +17,12 @@
 
                                 <div class="input-group-btn">
                                     <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
-                                        {{ appConfigure.usingAltDomain ? 'External Domain' : ((!appConfigure.location ? '' : (config.isCustomDomain ? '.' : '-')) + appConfigure.domain) }}
+                                        {{ appConfigure.usingAltDomain ? 'External Domain' : ((!appConfigure.location ? '' : (appConfigure.domain.provider !== 'caas' ? '.' : '-')) + appConfigure.domain.domain) }}
                                         <span class="caret"></span>
                                     </button>
                                     <ul class="dropdown-menu dropdown-menu-right" role="menu">
                                         <li ng-repeat="domain in domains">
-                                            <a href="" ng-click="useAltDomain(false, domain)">{{ domain }}</a>
+                                            <a href="" ng-click="useAltDomain(false, domain)">{{ domain.domain }}</a>
                                         </li>
                                         <li>
                                             <a href="" ng-click="useAltDomain(true)"><i class="fa fa-star"></i> External Domain</a>
@@ -141,9 +141,9 @@
                             </div>
 
                             <div class="hide">
-                                <label class="control-label" for="appConfigureCertificateInput" ng-show="config.isCustomDomain">Certificate (optional)</label>
-                                <div class="has-error text-center" ng-show="appConfigure.error.cert && config.isCustomDomain">{{ appConfigure.error.cert }}</div>
-                                <div class="form-group" ng-class="{ 'has-error': !appConfigureForm.certificate.$dirty && appConfigure.error.cert }" ng-show="config.isCustomDomain">
+                                <label class="control-label" for="appConfigureCertificateInput" ng-show="appConfigure.domain.provider !== 'caas'">Certificate (optional)</label>
+                                <div class="has-error text-center" ng-show="appConfigure.error.cert && appConfigure.domain.provider !== 'caas'">{{ appConfigure.error.cert }}</div>
+                                <div class="form-group" ng-class="{ 'has-error': !appConfigureForm.certificate.$dirty && appConfigure.error.cert }" ng-show="appConfigure.domain.provider !== 'caas'">
                                     <div class="input-group">
                                         <input type="file" id="appConfigureCertificateFileInput" style="display:none"/>
                                         <input type="text" class="form-control" placeholder="Certificate" ng-model="appConfigure.certificateFileName" id="appConfigureCertificateInput" name="certificate" onclick="getElementById('appConfigureCertificateFileInput').click();" style="cursor: pointer;" ng-required="appConfigure.keyFileName">
@@ -152,7 +152,7 @@
                                         </span>
                                     </div>
                                 </div>
-                                <div class="form-group" ng-class="{ 'has-error': !appConfigureForm.key.$dirty && appConfigure.error.cert }" ng-show="config.isCustomDomain">
+                                <div class="form-group" ng-class="{ 'has-error': !appConfigureForm.key.$dirty && appConfigure.error.cert }" ng-show="appConfigure.domain.provider !== 'caas'">
                                     <div class="input-group">
                                         <input type="file" id="appConfigureKeyFileInput" style="display:none"/>
                                         <input type="text" class="form-control" placeholder="Key" ng-model="appConfigure.keyFileName" id="appConfigureKeyInput" name="key" onclick="getElementById('appConfigureKeyFileInput').click();" style="cursor: pointer;" ng-required="appConfigure.certificateFileName">

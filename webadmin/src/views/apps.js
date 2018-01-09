@@ -60,7 +60,7 @@ angular.module('Application').controller('AppsController', ['$scope', '$location
             // fill relevant info from the app
             $scope.appConfigure.app = app;
             $scope.appConfigure.location = app.altDomain || app.location;
-            $scope.appConfigure.domain = app.domain;
+            $scope.appConfigure.domain = $scope.domains.filter(function (d) { return d.domain === app.domain; })[0];
             $scope.appConfigure.usingAltDomain = !!app.altDomain;
             $scope.appConfigure.portBindingsInfo = app.manifest.tcpPorts || {}; // Portbinding map only for information
             $scope. Option = app.accessRestriction ? 'groups' : 'any';
@@ -132,7 +132,7 @@ angular.module('Application').controller('AppsController', ['$scope', '$location
             var data = {
                 location:  $scope.appConfigure.usingAltDomain ? $scope.appConfigure.app.location : $scope.appConfigure.location,
                 altDomain: $scope.appConfigure.usingAltDomain ? $scope.appConfigure.location : null,
-                domain: $scope.appConfigure.usingAltDomain ? undefined : $scope.appConfigure.domain,
+                domain: $scope.appConfigure.usingAltDomain ? undefined : $scope.appConfigure.domain.domain,
                 portBindings: finalPortBindings,
                 accessRestriction: finalAccessRestriction,
                 cert: $scope.appConfigure.certificateFile,
@@ -273,7 +273,7 @@ angular.module('Application').controller('AppsController', ['$scope', '$location
         // reset configure dialog
         $scope.appConfigure.error = {};
         $scope.appConfigure.app = {};
-        $scope.appConfigure.domain = '';
+        $scope.appConfigure.domain = null;
         $scope.appConfigure.location = '';
         $scope.appConfigure.advancedVisible = false;
         $scope.appConfigure.usingAltDomain = false;
@@ -485,7 +485,7 @@ angular.module('Application').controller('AppsController', ['$scope', '$location
                 return $timeout(getDomains, 5000);
             }
 
-            $scope.domains = result.map(function (d) { return d.domain; });
+            $scope.domains = result;
         });
     }
 

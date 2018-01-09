@@ -121,7 +121,6 @@ angular.module('Application').service('Client', ['$http', '$interval', 'md5', 'N
             revision: null,
             update: { box: null, apps: null },
             progress: {},
-            isCustomDomain: false,
             region: null,
             size: null,
             memory: 0
