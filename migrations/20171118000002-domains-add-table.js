@@ -1,7 +1,8 @@
 'use strict';
 
 var async = require('async'),
-    safe = require('safetydance');
+    safe = require('safetydance'),
+    tld = require('tldjs');
 
 exports.up = function(db, callback) {
     var fqdn, zoneName, configJson;
@@ -14,8 +15,8 @@ exports.up = function(db, callback) {
                 var domain = {};
                 if (result[0]) domain = safe.JSON.parse(result[0].value) || {};
 
-                fqdn = domain.fqdn || '';
-                zoneName = domain.zoneName || fqdn;
+                fqdn = domain.fqdn || ''; // will be null pre-setup
+                zoneName = domain.zoneName || tld.getDomain(fqdn) || fqdn;
 
                 done();
             });

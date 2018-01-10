@@ -203,7 +203,7 @@ function dnsSetup(domain, zoneName, provider, dnsConfig, callback) {
 
     if (config.fqdn()) return callback(new CloudronError(CloudronError.ALREADY_SETUP));
 
-    if (!zoneName) zoneName = tld.getDomain(domain) || '';
+    if (!zoneName) zoneName = tld.getDomain(domain) || domain;
 
     debug('dnsSetup: Setting up Cloudron with domain %s and zone %s', domain, zoneName);
 
