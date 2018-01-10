@@ -1149,4 +1149,5 @@
 * Display backup progress in CaaS
 * Add Google Cloud Storage backend for backups
 * Update node to 8.9.3 LTS
+* Set max email recepient limit (in outgoing emails) to 500
 
