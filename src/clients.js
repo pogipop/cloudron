@@ -35,7 +35,7 @@ exports = module.exports = {
     TYPE_PROXY: 'addon-proxy'
 };
 
-var appdb = require('./appdb.js'),
+var apps = require('./apps.js'),
     assert = require('assert'),
     async = require('async'),
     clientdb = require('./clientdb.js'),
@@ -80,7 +80,7 @@ function validateName(name) {
     if (name.length < 1) return new ClientsError(ClientsError.BAD_FIELD, 'Name must be atleast 1 character');
     if (name.length > 128) return new ClientsError(ClientsError.BAD_FIELD, 'Name too long');
 
-    if (/[^a-zA-Z0-9\-]/.test(name)) return new ClientsError(ClientsError.BAD_FIELD, 'Username can only contain alphanumerals and dash');
+    if (/[^a-zA-Z0-9-]/.test(name)) return new ClientsError(ClientsError.BAD_FIELD, 'Username can only contain alphanumerals and dash');
 
     return null;
 }
@@ -183,7 +183,7 @@ function getAll(callback) {
                 return callback(null);
             }
 
-            appdb.get(record.appId, function (error, result) {
+            apps.get(record.appId, function (error, result) {
                 if (error) {
                     console.error('Failed to get app details for oauth client', record.appId, error);
                     return callback(null);  // ignore error so we continue listing clients
@@ -192,7 +192,7 @@ function getAll(callback) {
                 if (record.type === exports.TYPE_PROXY) record.name = result.manifest.title + ' Website Proxy';
                 if (record.type === exports.TYPE_OAUTH) record.name = result.manifest.title + ' OAuth';
 
-                record.location = result.location;
+                record.domain = result.altDomain || result.intrinsicFqdn;
 
                 tmp.push(record);
 
@@ -325,7 +325,7 @@ function addDefaultClients(callback) {
 
     // The domain might have changed, therefor we have to update the record
     // !!! This needs to be in sync with the webadmin, specifically login_callback.js
-    const ADMIN_SCOPES="cloudron,developer,profile,users,apps,settings";
+    const ADMIN_SCOPES = 'cloudron,developer,profile,users,apps,settings';
 
     // id, appId, type, clientSecret, redirectURI, scope
     async.series([
