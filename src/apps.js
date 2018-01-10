@@ -118,7 +118,7 @@ AppsError.BAD_CERTIFICATE = 'Invalid certificate';
 // Hostname validation comes from RFC 1123 (section 2.1)
 // Domain name validation comes from RFC 2181 (Name syntax)
 // https://en.wikipedia.org/wiki/Hostname#Restrictions_on_valid_host_names
-// We are validating the validity of the location-fqdn as host name
+// We are validating the validity of the location-fqdn as host name (and not dns name)
 function validateHostname(location, domain) {
     assert.strictEqual(typeof location, 'string');
     assert.strictEqual(typeof domain, 'string');
@@ -142,10 +142,12 @@ function validateHostname(location, domain) {
 
     if (hostname.length > 253) return new AppsError(AppsError.BAD_FIELD, 'Hostname length exceeds 253 characters');
 
-    if (location === null) return new AppsError(AppsError.BAD_FIELD, 'Invalid subdomain');
-    if (location.match(/^[A-Za-z0-9-]+$/) === null) return new AppsError(AppsError.BAD_FIELD, 'Subdomain can only contain alphanumerics and hyphen');
-    if (location.length > 63) return new AppsError(AppsError.BAD_FIELD, 'Subdomain exceeds 63 characters');
-    if (location.startsWith('-') || location.endsWith('-')) return new AppsError(AppsError.BAD_FIELD, 'Subdomain cannot start or end with hyphen');
+    if (location) {
+        // label validation
+        if (location.length > 63) return new AppsError(AppsError.BAD_FIELD, 'Subdomain exceeds 63 characters');
+        if (location.match(/^[A-Za-z0-9-]+$/) === null) return new AppsError(AppsError.BAD_FIELD, 'Subdomain can only contain alphanumerics and hyphen');
+        if (location.startsWith('-') || location.endsWith('-')) return new AppsError(AppsError.BAD_FIELD, 'Subdomain cannot start or end with hyphen');
+    }
 
     return null;
 }
