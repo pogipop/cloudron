@@ -1,7 +1,6 @@
 'use strict';
 
-var appdb = require('../appdb'),
-    apps = require('../apps'),
+var apps = require('../apps'),
     assert = require('assert'),
     auth = require('../auth.js'),
     authcodedb = require('../authcodedb'),
@@ -237,10 +236,10 @@ function loginForm(req, res) {
             default: break;
         }
 
-        appdb.get(result.appId, function (error, result) {
+        apps.get(result.appId, function (error, result) {
             if (error) return sendErrorPageOrRedirect(req, res, 'Unknown Application for those OAuth credentials');
 
-            var applicationName = result.location || config.fqdn();
+            var applicationName = result.altDomain || result.intrinsicFqdn;
             render(applicationName, '/api/v1/apps/' + result.id + '/icon');
         });
     });
@@ -452,7 +451,7 @@ var authorization = [
             return next();
         }
 
-        appdb.get(req.oauth2.client.appId, function (error, appObject) {
+        apps.get(req.oauth2.client.appId, function (error, appObject) {
             if (error) return sendErrorPageOrRedirect(req, res, 'Invalid request. Unknown app for this client_id.');
 
             apps.hasAccessTo(appObject, req.oauth2.user, function (error, access) {
