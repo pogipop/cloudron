@@ -56,7 +56,7 @@ function isChangeSynced(domain, value, type, nameserver, callback) {
         }, callback);
 
     });
- }
+}
 
 // check if IP change has propagated to every nameserver
 function waitForDns(domain, zoneName, value, type, options, callback) {
@@ -76,7 +76,7 @@ function waitForDns(domain, zoneName, value, type, options, callback) {
 
     var attempt = 1;
     async.retry(options, function (retryCallback) {
-        debug('waitForDNS: %s attempt %s.', domain, attempt++);
+        debug('waitForDNS: %s (zone: %s) attempt %s.', domain, zoneName, attempt++);
 
         dns.resolveNs(zoneName, function (error, nameservers) {
             if (error || !nameservers) return retryCallback(error || new DomainError(DomainError.EXTERNAL_ERROR, 'Unable to get nameservers'));
@@ -88,10 +88,10 @@ function waitForDns(domain, zoneName, value, type, options, callback) {
             });
         });
     }, function retryDone(error) {
-         if (error) return callback(error);
+        if (error) return callback(error);
 
         debug('waitForDNS: %s done.', domain);
 
         callback(null);
-     });
+    });
 }
