@@ -866,7 +866,7 @@ function clone(appId, data, auditSource, callback) {
             error = validatePortBindings(portBindings, backupInfo.manifest.tcpPorts);
             if (error) return callback(error);
 
-            var newAppId = uuid.v4(), appStoreId = app.appStoreId, manifest = backupInfo.manifest;
+            var newAppId = uuid.v4(), manifest = backupInfo.manifest;
 
             appstore.purchase(newAppId, app.appStoreId, function (error) {
                 if (error && error.reason === AppstoreError.NOT_FOUND) return callback(new AppsError(AppsError.NOT_FOUND));
