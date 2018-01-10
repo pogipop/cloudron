@@ -114,7 +114,7 @@ var RMAPPDIR_CMD = path.join(__dirname, 'scripts/rmappdir.sh');
 function debugApp(app, args) {
     assert(!app || typeof app === 'object');
 
-    var prefix = app ? config.appFqdn(app) : '(no app)';
+    var prefix = app ? app.intrinsicFqdn : '(no app)';
     debug(prefix + ' ' + util.format.apply(util, Array.prototype.slice.call(arguments, 1)));
 }
 
@@ -250,7 +250,7 @@ function setupOauth(app, options, callback) {
     if (!app.sso) return callback(null);
 
     var appId = app.id;
-    var redirectURI = 'https://' + (app.altDomain || config.appFqdn(app));
+    var redirectURI = 'https://' + (app.altDomain || app.intrinsicFqdn);
     var scope = 'profile';
 
     clients.delByAppIdAndType(appId, clients.TYPE_OAUTH, function (error) { // remove existing creds
@@ -647,7 +647,7 @@ function setupRedis(app, options, callback) {
     }
 
     const tag = infra.images.redis.tag, redisName = 'redis-' + app.id;
-    const label = config.appFqdn(app);
+    const label = app.intrinsicFqdn;
     // note that we do not add appId label because this interferes with the stop/start app logic
     const cmd = `docker run --restart=always -d --name=${redisName} \
                 --label=location=${label} \

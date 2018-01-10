@@ -26,7 +26,7 @@ var gDockerEventStream = null;
 function debugApp(app) {
     assert(!app || typeof app === 'object');
 
-    var prefix = app ? config.appFqdn(app) : '(no app)';
+    var prefix = app ? app.intrinsicFqdn : '(no app)';
     var manifestAppId = app ? app.manifest.id : '';
     var id = app ? app.id : '';
 

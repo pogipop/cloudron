@@ -33,7 +33,6 @@ exports = module.exports = {
     adminFqdn: adminFqdn,
     mailLocation: mailLocation,
     mailFqdn: mailFqdn,
-    appFqdn: appFqdn,
     setZoneName: setZoneName,
     hasIPv6: hasIPv6,
     dkimSelector: dkimSelector,

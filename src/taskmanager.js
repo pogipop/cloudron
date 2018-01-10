@@ -48,7 +48,7 @@ function resumeTasks(callback) {
 
             if (app.installationState === appdb.ISTATE_ERROR) return;
 
-            debug('Creating process for %s (%s) with state %s', config.appFqdn(app), app.id, app.installationState);
+            debug('Creating process for %s (%s) with state %s', app.intrinsicFqdn, app.id, app.installationState);
             restartAppTask(app.id, NOOP_CALLBACK); // restart because the auto-installer could have queued up tasks already
         });
 

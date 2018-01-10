@@ -60,6 +60,9 @@ var addons = require('./addons.js'),
     DatabaseError = require('./databaseerror.js'),
     debug = require('debug')('box:apps'),
     docker = require('./docker.js'),
+    domaindb = require('./domaindb.js'),
+    domains = require('./domains.js'),
+    DomainError = require('./domains.js').DomainError,
     eventlog = require('./eventlog.js'),
     fs = require('fs'),
     groups = require('./groups.js'),
@@ -119,22 +122,18 @@ AppsError.BAD_CERTIFICATE = 'Invalid certificate';
 // Domain name validation comes from RFC 2181 (Name syntax)
 // https://en.wikipedia.org/wiki/Hostname#Restrictions_on_valid_host_names
 // We are validating the validity of the location-fqdn as host name (and not dns name)
-function validateHostname(location, domain) {
+function validateHostname(location, domain, hostname) {
     assert.strictEqual(typeof location, 'string');
     assert.strictEqual(typeof domain, 'string');
 
-    var hostname = config.appFqdn({ location: location, domain: domain });
-    if (!hostname) return new AppsError(AppsError.BAD_FIELD, 'hostname cannot be empty');
-
     const RESERVED_LOCATIONS = [
-        config.adminFqdn(),
-        config.appFqdn({ location: constants.API_LOCATION, domain: config.fqdn() }),
-        config.appFqdn({ location: constants.SMTP_LOCATION, domain: config.fqdn() }),
-        config.appFqdn({ location: constants.IMAP_LOCATION, domain: config.fqdn() }),
-        config.mailFqdn(),
-        config.appFqdn({ location: constants.POSTMAN_LOCATION, domain: config.fqdn() })
+        config.adminLocation(), // FIXME: this shouldn't be here
+        constants.API_LOCATION,
+        constants.SMTP_LOCATION,
+        constants.IMAP_LOCATION,
+        constants.POSTMAN_LOCATION
     ];
-    if (RESERVED_LOCATIONS.indexOf(hostname) !== -1) return new AppsError(AppsError.BAD_FIELD, hostname + ' is reserved');
+    if (RESERVED_LOCATIONS.indexOf(location) !== -1) return new AppsError(AppsError.BAD_FIELD, location + ' is reserved');
 
     // workaround https://github.com/oncletom/tld.js/issues/73
     var tmp = hostname.replace('_', '-');
@@ -311,6 +310,7 @@ function getAppConfig(app) {
         manifest: app.manifest,
         location: app.location,
         domain: app.domain,
+        intrinsicFqdn: app.intrinsicFqdn,
         accessRestriction: app.accessRestriction,
         portBindings: app.portBindings,
         memoryLimit: app.memoryLimit,
@@ -358,11 +358,16 @@ function get(appId, callback) {
         if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new AppsError(AppsError.NOT_FOUND, 'No such app'));
         if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
 
-        app.iconUrl = getIconUrlSync(app);
-        app.fqdn = app.altDomain || config.appFqdn(app);
-        app.cnameTarget = app.altDomain ? config.appFqdn(app) : null;
+        domaindb.get(app.domain, function (error, result) {
+            if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
 
-        callback(null, app);
+            app.intrinsicFqdn = app.location + (result.provider === 'caas' ? '-' : '.') + app.domain;
+            app.iconUrl = getIconUrlSync(app);
+            app.fqdn = app.altDomain || app.intrinsicFqdn;
+            app.cnameTarget = app.altDomain ? app.intrinsicFqdn : null;
+
+            callback(null, app);
+        });
     });
 }
 
@@ -377,11 +382,16 @@ function getByIpAddress(ip, callback) {
             if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new AppsError(AppsError.NOT_FOUND, 'No such app'));
             if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
 
-            app.iconUrl = getIconUrlSync(app);
-            app.fqdn = app.altDomain || config.appFqdn(app);
-            app.cnameTarget = app.altDomain ? config.appFqdn(app) : null;
+            domaindb.get(app.domain, function (error, result) {
+                if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
 
-            callback(null, app);
+                app.intrinsicFqdn = app.location + (result.provider === 'caas' ? '-' : '.') + app.domain;
+                app.iconUrl = getIconUrlSync(app);
+                app.fqdn = app.altDomain || app.intrinsicFqdn;
+                app.cnameTarget = app.altDomain ? app.intrinsicFqdn : null;
+
+                callback(null, app);
+            });
         });
     });
 }
@@ -392,13 +402,22 @@ function getAll(callback) {
     appdb.getAll(function (error, apps) {
         if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
 
-        apps.forEach(function (app) {
-            app.iconUrl = getIconUrlSync(app);
-            app.fqdn = app.altDomain || config.appFqdn(app);
-            app.cnameTarget = app.altDomain ? config.appFqdn(app) : null;
-        });
+        async.eachSeries(apps, function (app, iteratorDone) {
+            domaindb.get(app.domain, function (error, result) {
+                if (error) return iteratorDone(new AppsError(AppsError.INTERNAL_ERROR, error));
 
-        callback(null, apps);
+                app.intrinsicFqdn = app.location + (result.provider === 'caas' ? '-' : '.') + app.domain;
+                app.iconUrl = getIconUrlSync(app);
+                app.fqdn = app.altDomain || app.intrinsicFqdn;
+                app.cnameTarget = app.altDomain ? app.intrinsicFqdn : null;
+
+                iteratorDone();
+            });
+        }, function (error) {
+            if (error) return callback(error);
+
+            callback(null, apps);
+        });
     });
 }
 
@@ -468,9 +487,6 @@ function install(data, auditSource, callback) {
         error = checkManifestConstraints(manifest);
         if (error) return callback(error);
 
-        error = validateHostname(location, domain);
-        if (error) return callback(error);
-
         error = validatePortBindings(portBindings, manifest.tcpPorts);
         if (error) return callback(error);
 
@@ -508,45 +524,56 @@ function install(data, auditSource, callback) {
             }
         }
 
-        error = certificates.validateCertificate(cert, key, config.appFqdn({ domain: domain, location: location }));
-        if (error) return callback(new AppsError(AppsError.BAD_CERTIFICATE, error.message));
+        domains.get(domain, function (error, domainObject) {
+            if (error && error.reason === DomainError.NOT_FOUND) return callback(new AppsError(AppsError.NOT_FOUND, 'No such domain'));
+            if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, 'Could not get domain info:' + error.message));
 
-        debug('Will install app with id : ' + appId);
+            var intrinsicFqdn = location + (domainObject.provider === 'caas' ? '-' : '.') + domain;
 
-        appstore.purchase(appId, appStoreId, function (error) {
-            if (error && error.reason === AppstoreError.NOT_FOUND) return callback(new AppsError(AppsError.NOT_FOUND));
-            if (error && error.reason === AppstoreError.BILLING_REQUIRED) return callback(new AppsError(AppsError.BILLING_REQUIRED, error.message));
-            if (error && error.reason === AppstoreError.EXTERNAL_ERROR) return callback(new AppsError(AppsError.EXTERNAL_ERROR, error.message));
-            if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
+            error = validateHostname(location, domain, intrinsicFqdn);
+            if (error) return callback(error);
 
-            var data = {
-                accessRestriction: accessRestriction,
-                memoryLimit: memoryLimit,
-                altDomain: altDomain,
-                xFrameOptions: xFrameOptions,
-                sso: sso,
-                debugMode: debugMode,
-                mailboxName: (location ? location : manifest.title.toLowerCase().replace(/[^a-zA-Z0-9]/g, '')) + '.app',
-                restoreConfig: backupId ? { backupId: backupId, backupFormat: backupFormat } : null,
-                enableBackup: enableBackup,
-                robotsTxt: robotsTxt
-            };
+            error = certificates.validateCertificate(cert, key, intrinsicFqdn);
+            if (error) return callback(new AppsError(AppsError.BAD_CERTIFICATE, error.message));
 
-            appdb.add(appId, appStoreId, manifest, location, domain, portBindings, data, function (error) {
-                if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(getDuplicateErrorDetails(location, portBindings, error));
+            debug('Will install app with id : ' + appId);
+
+            appstore.purchase(appId, appStoreId, function (error) {
+                if (error && error.reason === AppstoreError.NOT_FOUND) return callback(new AppsError(AppsError.NOT_FOUND));
+                if (error && error.reason === AppstoreError.BILLING_REQUIRED) return callback(new AppsError(AppsError.BILLING_REQUIRED, error.message));
+                if (error && error.reason === AppstoreError.EXTERNAL_ERROR) return callback(new AppsError(AppsError.EXTERNAL_ERROR, error.message));
                 if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
 
-                // save cert to boxdata/certs
-                if (cert && key) {
-                    if (!safe.fs.writeFileSync(path.join(paths.APP_CERTS_DIR, config.appFqdn({ domain: domain, location: location }) + '.user.cert'), cert)) return callback(new AppsError(AppsError.INTERNAL_ERROR, 'Error saving cert: ' + safe.error.message));
-                    if (!safe.fs.writeFileSync(path.join(paths.APP_CERTS_DIR, config.appFqdn({ domain: domain, location: location }) + '.user.key'), key)) return callback(new AppsError(AppsError.INTERNAL_ERROR, 'Error saving key: ' + safe.error.message));
-                }
+                var data = {
+                    accessRestriction: accessRestriction,
+                    memoryLimit: memoryLimit,
+                    altDomain: altDomain,
+                    xFrameOptions: xFrameOptions,
+                    sso: sso,
+                    debugMode: debugMode,
+                    mailboxName: (location ? location : manifest.title.toLowerCase().replace(/[^a-zA-Z0-9]/g, '')) + '.app',
+                    restoreConfig: backupId ? { backupId: backupId, backupFormat: backupFormat } : null,
+                    enableBackup: enableBackup,
+                    robotsTxt: robotsTxt,
+                    intrinsicFqdn: intrinsicFqdn
+                };
 
-                taskmanager.restartAppTask(appId);
+                appdb.add(appId, appStoreId, manifest, location, domain, portBindings, data, function (error) {
+                    if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(getDuplicateErrorDetails(location, portBindings, error));
+                    if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
 
-                eventlog.add(eventlog.ACTION_APP_INSTALL, auditSource, { appId: appId, location: location, domain: domain, manifest: manifest, backupId: backupId });
+                    // save cert to boxdata/certs
+                    if (cert && key) {
+                        if (!safe.fs.writeFileSync(path.join(paths.APP_CERTS_DIR, intrinsicFqdn + '.user.cert'), cert)) return callback(new AppsError(AppsError.INTERNAL_ERROR, 'Error saving cert: ' + safe.error.message));
+                        if (!safe.fs.writeFileSync(path.join(paths.APP_CERTS_DIR, intrinsicFqdn + '.user.key'), key)) return callback(new AppsError(AppsError.INTERNAL_ERROR, 'Error saving key: ' + safe.error.message));
+                    }
 
-                callback(null, { id : appId });
+                    taskmanager.restartAppTask(appId);
+
+                    eventlog.add(eventlog.ACTION_APP_INSTALL, auditSource, { appId: appId, location: location, domain: domain, manifest: manifest, backupId: backupId });
+
+                    callback(null, { id : appId });
+                });
             });
         });
     });
@@ -568,9 +595,6 @@ function configure(appId, data, auditSource, callback) {
 
         if ('domain' in data) domain = values.domain = data.domain.toLowerCase();
         else domain = app.domain;
-
-        error = validateHostname(location, domain);
-        if (error) return callback(error);
 
         if ('accessRestriction' in data) {
             values.accessRestriction = data.accessRestriction;
@@ -615,43 +639,55 @@ function configure(appId, data, auditSource, callback) {
             if (error) return callback(error);
         }
 
-        // save cert to boxdata/certs. TODO: move this to apptask when we have a real task queue
-        if ('cert' in data && 'key' in data) {
-            if (data.cert && data.key) {
-                error = certificates.validateCertificate(data.cert, data.key, config.appFqdn({ domain: domain, location: location }));
-                if (error) return callback(new AppsError(AppsError.BAD_CERTIFICATE, error.message));
+        domains.get(domain, function (error, domainObject) {
+            if (error && error.reason === DomainError.NOT_FOUND) return callback(new AppsError(AppsError.NOT_FOUND, 'No such domain'));
+            if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, 'Could not get domain info:' + error.message));
 
-                if (!safe.fs.writeFileSync(path.join(paths.APP_CERTS_DIR, config.appFqdn({ domain: domain, location: location }) + '.user.cert'), data.cert)) return callback(new AppsError(AppsError.INTERNAL_ERROR, 'Error saving cert: ' + safe.error.message));
-                if (!safe.fs.writeFileSync(path.join(paths.APP_CERTS_DIR, config.appFqdn({ domain: domain, location: location }) + '.user.key'), data.key)) return callback(new AppsError(AppsError.INTERNAL_ERROR, 'Error saving key: ' + safe.error.message));
-            } else { // remove existing cert/key
-                if (!safe.fs.unlinkSync(path.join(paths.APP_CERTS_DIR, config.appFqdn({ domain: domain, location: location }) + '.user.cert'))) debug('Error removing cert: ' + safe.error.message);
-                if (!safe.fs.unlinkSync(path.join(paths.APP_CERTS_DIR, config.appFqdn({ domain: domain, location: location }) + '.user.key'))) debug('Error removing key: ' + safe.error.message);
+            var intrinsicFqdn = location + (domainObject.provider === 'caas' ? '-' : '.') + domain;
+
+            values.intrinsicFqdn = intrinsicFqdn;
+
+            error = validateHostname(location, domain, intrinsicFqdn);
+            if (error) return callback(error);
+
+            // save cert to boxdata/certs. TODO: move this to apptask when we have a real task queue
+            if ('cert' in data && 'key' in data) {
+                if (data.cert && data.key) {
+                    error = certificates.validateCertificate(data.cert, data.key, intrinsicFqdn);
+                    if (error) return callback(new AppsError(AppsError.BAD_CERTIFICATE, error.message));
+
+                    if (!safe.fs.writeFileSync(path.join(paths.APP_CERTS_DIR, intrinsicFqdn + '.user.cert'), data.cert)) return callback(new AppsError(AppsError.INTERNAL_ERROR, 'Error saving cert: ' + safe.error.message));
+                    if (!safe.fs.writeFileSync(path.join(paths.APP_CERTS_DIR, intrinsicFqdn + '.user.key'), data.key)) return callback(new AppsError(AppsError.INTERNAL_ERROR, 'Error saving key: ' + safe.error.message));
+                } else { // remove existing cert/key
+                    if (!safe.fs.unlinkSync(path.join(paths.APP_CERTS_DIR, intrinsicFqdn + '.user.cert'))) debug('Error removing cert: ' + safe.error.message);
+                    if (!safe.fs.unlinkSync(path.join(paths.APP_CERTS_DIR, intrinsicFqdn + '.user.key'))) debug('Error removing key: ' + safe.error.message);
+                }
             }
-        }
 
-        if ('enableBackup' in data) values.enableBackup = data.enableBackup;
+            if ('enableBackup' in data) values.enableBackup = data.enableBackup;
 
-        values.oldConfig = getAppConfig(app);
+            values.oldConfig = getAppConfig(app);
 
-        debug('Will configure app with id:%s values:%j', appId, values);
+            debug('Will configure app with id:%s values:%j', appId, values);
 
-        var oldName = (app.location ? app.location : app.manifest.title.toLowerCase().replace(/[^a-zA-Z0-9]/g, '')) + '.app';
-        var newName = (location ? location : app.manifest.title.toLowerCase().replace(/[^a-zA-Z0-9]/g, '')) + '.app';
-        mailboxdb.updateName(oldName, values.oldConfig.domain, newName, domain, function (error) {
-            if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(new AppsError(AppsError.ALREADY_EXISTS, 'This mailbox is already taken'));
-            if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new AppsError(AppsError.BAD_STATE));
-            if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
-
-            appdb.setInstallationCommand(appId, appdb.ISTATE_PENDING_CONFIGURE, values, function (error) {
-                if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(getDuplicateErrorDetails(location, portBindings, error));
+            var oldName = (app.location ? app.location : app.manifest.title.toLowerCase().replace(/[^a-zA-Z0-9]/g, '')) + '.app';
+            var newName = (location ? location : app.manifest.title.toLowerCase().replace(/[^a-zA-Z0-9]/g, '')) + '.app';
+            mailboxdb.updateName(oldName, values.oldConfig.domain, newName, domain, function (error) {
+                if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(new AppsError(AppsError.ALREADY_EXISTS, 'This mailbox is already taken'));
                 if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new AppsError(AppsError.BAD_STATE));
                 if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
 
-                taskmanager.restartAppTask(appId);
+                appdb.setInstallationCommand(appId, appdb.ISTATE_PENDING_CONFIGURE, values, function (error) {
+                    if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(getDuplicateErrorDetails(location, portBindings, error));
+                    if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new AppsError(AppsError.BAD_STATE));
+                    if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
 
-                eventlog.add(eventlog.ACTION_APP_CONFIGURE, auditSource, { appId: appId });
+                    taskmanager.restartAppTask(appId);
 
-                callback(null);
+                    eventlog.add(eventlog.ACTION_APP_CONFIGURE, auditSource, { appId: appId });
+
+                    callback(null);
+                });
             });
         });
     });
@@ -1130,13 +1166,13 @@ function restoreInstalledApps(callback) {
         if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
 
         async.map(apps, function (app, iteratorDone) {
-            debug('marking %s for restore', config.appFqdn(app));
+            debug('marking %s for restore', app.intrinsicFqdn);
 
             backups.getByAppIdPaged(1, 1, app.id, function (error, results) {
                 var restoreConfig = !error && results.length ? { backupId: results[0].id, backupFormat: results[0].format } : null;
 
                 appdb.setInstallationCommand(app.id, appdb.ISTATE_PENDING_RESTORE, { restoreConfig: restoreConfig, oldConfig: null }, function (error) {
-                    if (error) debug('did not mark %s for restore', config.appFqdn(app), error);
+                    if (error) debug('did not mark %s for restore', app.intrinsicFqdn, error);
 
                     iteratorDone(); // always succeed
                 });
@@ -1152,10 +1188,10 @@ function configureInstalledApps(callback) {
         if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
 
         async.map(apps, function (app, iteratorDone) {
-            debug('marking %s for reconfigure', config.appFqdn(app));
+            debug('marking %s for reconfigure', app.intrinsicFqdn);
 
             appdb.setInstallationCommand(app.id, appdb.ISTATE_PENDING_CONFIGURE, { oldConfig: null }, function (error) {
-                if (error) debug('did not mark %s for reconfigure', config.appFqdn(app), error);
+                if (error) debug('did not mark %s for reconfigure', app.intrinsicFqdn, error);
 
                 iteratorDone(); // always succeed
             });

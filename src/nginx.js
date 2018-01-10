@@ -55,7 +55,7 @@ function configureApp(app, certFilePath, keyFilePath, callback) {
 
     var sourceDir = path.resolve(__dirname, '..');
     var endpoint = 'app';
-    var vhost = app.altDomain || config.appFqdn(app);
+    var vhost = app.altDomain || app.intrinsicFqdn;
 
     var data = {
         sourceDir: sourceDir,
@@ -86,7 +86,7 @@ function unconfigureApp(app, callback) {
     assert.strictEqual(typeof app, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    var vhost = app.altDomain || config.appFqdn(app);
+    var vhost = app.altDomain || app.intrinsicFqdn;
 
     var nginxConfigFilename = path.join(paths.NGINX_APPCONFIG_DIR, app.id + '.conf');
     if (!safe.fs.unlinkSync(nginxConfigFilename)) {

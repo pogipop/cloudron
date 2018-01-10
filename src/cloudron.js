@@ -279,7 +279,7 @@ function configureWebadmin(callback) {
     function configureNginx(error) {
         debug('configureNginx: dns update: %j', error || {});
 
-        certificates.ensureCertificate({ domain: config.fqdn(), location: config.adminLocation() }, function (error, certFilePath, keyFilePath) {
+        certificates.ensureCertificate({ domain: config.fqdn(), location: config.adminLocation(), intrinsicFqdn: config.adminFqdn() }, function (error, certFilePath, keyFilePath) {
             if (error) return done(error);
 
             gWebadminStatus.tls = true;

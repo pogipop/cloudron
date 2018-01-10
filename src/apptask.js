@@ -72,7 +72,7 @@ function initialize(callback) {
 function debugApp(app) {
     assert.strictEqual(typeof app, 'object');
 
-    var prefix = app ? (config.appFqdn(app) || '(bare)') : '(no app)';
+    var prefix = app ? (app.intrinsicFqdn || '(bare)') : '(no app)';
     debug(prefix + ' ' + util.format.apply(util, Array.prototype.slice.call(arguments, 1)));
 }
 
@@ -271,7 +271,7 @@ function registerSubdomain(app, overwrite, callback) {
         if (error) return callback(error);
 
         async.retry({ times: 200, interval: 5000 }, function (retryCallback) {
-            debugApp(app, 'Registering subdomain location [%s] overwrite: %s', config.appFqdn(app), overwrite);
+            debugApp(app, 'Registering subdomain location [%s] overwrite: %s', app.intrinsicFqdn, overwrite);
 
             // get the current record before updating it
             domains.getDNSRecords(app.location, app.domain, 'A', function (error, values) {
@@ -320,7 +320,7 @@ function unregisterSubdomain(app, location, domain, callback) {
         if (error) return callback(error);
 
         async.retry({ times: 30, interval: 5000 }, function (retryCallback) {
-            debugApp(app, 'Unregistering subdomain: %s', config.appFqdn({ domain: domain, location: location }));
+            debugApp(app, 'Unregistering subdomain: %s', app.intrinsicFqdn);
 
             domains.removeDNSRecords(location, domain, 'A', [ ip ], function (error) {
                 if (error && (error.reason === DomainError.STILL_BUSY || error.reason === DomainError.EXTERNAL_ERROR)) return retryCallback(error); // try again
@@ -357,7 +357,7 @@ function waitForDnsPropagation(app, callback) {
     sysinfo.getPublicIp(function (error, ip) {
         if (error) return callback(error);
 
-        domains.waitForDNSRecord(config.appFqdn(app), app.domain, ip, 'A', { interval: 5000, times: 120 }, callback);
+        domains.waitForDNSRecord(app.intrinsicFqdn, app.domain, ip, 'A', { interval: 5000, times: 120 }, callback);
     });
 }
 
@@ -374,7 +374,7 @@ function waitForAltDomainDnsPropagation(app, callback) {
             domains.waitForDNSRecord(app.altDomain, tld.getDomain(app.altDomain), ip, 'A', { interval: 10000, times: 60 }, callback);
         });
     } else {
-        domains.waitForDNSRecord(app.altDomain, tld.getDomain(app.altDomain), config.appFqdn(app) + '.', 'CNAME', { interval: 10000, times: 60 }, callback);
+        domains.waitForDNSRecord(app.altDomain, tld.getDomain(app.altDomain), app.intrinsicFqdn + '.', 'CNAME', { interval: 10000, times: 60 }, callback);
     }
 }
 
@@ -508,7 +508,7 @@ function configure(app, callback) {
     assert.strictEqual(typeof callback, 'function');
 
     // oldConfig can be null during an infra update
-    var locationChanged = app.oldConfig && (config.appFqdn(app.oldConfig) !== config.appFqdn(app));
+    var locationChanged = app.oldConfig && (app.oldConfig.intrinsicFqdn !== app.intrinsicFqdn);
 
     async.series([
         updateApp.bind(null, app, { installationProgress: '10, Cleaning up old install' }),
@@ -776,7 +776,7 @@ function startTask(appId, callback) {
     assert.strictEqual(typeof callback, 'function');
 
     // determine what to do
-    appdb.get(appId, function (error, app) {
+    apps.get(appId, function (error, app) {
         if (error) return callback(error);
 
         debugApp(app, 'startTask installationState: %s runState: %s', app.installationState, app.runState);

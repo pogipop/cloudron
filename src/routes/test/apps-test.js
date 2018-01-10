@@ -47,7 +47,9 @@ var TEST_IMAGE = TEST_IMAGE_REPO + ':' + TEST_IMAGE_TAG;
 
 var APP_STORE_ID = 'test', APP_ID;
 var APP_LOCATION = 'appslocation';
+var APP_DOMAIN = 'example-apps-test.com';
 var APP_LOCATION_2 = 'appslocationtwo';
+var APP_DOMAIN_2 = 'example-apps-test.com';
 var APP_LOCATION_NEW = 'appslocationnew';
 
 var APP_MANIFEST = JSON.parse(fs.readFileSync(__dirname + '/../../../../test-app/CloudronManifest.json', 'utf8'));
@@ -149,7 +151,7 @@ function startBox(done) {
     safe.fs.unlinkSync(paths.INFRA_VERSION_FILE);
     child_process.execSync('docker ps -qa | xargs --no-run-if-empty docker rm -f');
 
-    config.setFqdn('example-apps-test.com');
+    config.setFqdn(APP_DOMAIN);
     config.setZoneName('foobar.com');
 
     awsHostedZones = {
@@ -722,8 +724,8 @@ describe('App installation', function () {
             expect(data.Config.Env).to.contain('WEBADMIN_ORIGIN=' + config.adminOrigin());
             expect(data.Config.Env).to.contain('API_ORIGIN=' + config.adminOrigin());
             expect(data.Config.Env).to.contain('CLOUDRON=1');
-            expect(data.Config.Env).to.contain('APP_ORIGIN=https://' + config.appFqdn(APP_LOCATION));
-            expect(data.Config.Env).to.contain('APP_DOMAIN=' + config.appFqdn(APP_LOCATION));
+            expect(data.Config.Env).to.contain('APP_ORIGIN=https://' + APP_LOCATION + '.' + APP_DOMAIN);
+            expect(data.Config.Env).to.contain('APP_DOMAIN=' + APP_LOCATION + '.' + APP_DOMAIN);
             // Hostname must not be set of app fqdn or app location!
             expect(data.Config.Hostname).to.not.contain(APP_LOCATION);
             expect(data.Config.Env).to.contain('ECHO_SERVER_PORT=7171');

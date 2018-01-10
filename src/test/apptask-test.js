@@ -67,6 +67,8 @@ var APP = {
     runState: null,
     location: 'applocation',
     domain: DOMAIN_0.domain,
+    intrinsicFqdn: DOMAIN_0.domain + '.' + 'applocation',
+    fqdn: DOMAIN_0.domain + '.' + 'applocation',
     manifest: MANIFEST,
     containerId: null,
     httpPort: 4567,
@@ -101,6 +103,7 @@ describe('apptask', function () {
 
         async.series([
             database.initialize,
+            database._clear,
             domains.update.bind(null, DOMAIN_0.domain, DOMAIN_0.provider, DOMAIN_0.config, null),
             appdb.add.bind(null, APP.id, APP.appStoreId, APP.manifest, APP.location, APP.domain, APP.portBindings, APP),
             settings.initialize,

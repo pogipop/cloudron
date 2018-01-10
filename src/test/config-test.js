@@ -68,7 +68,6 @@ describe('config', function () {
         expect(config.isCustomDomain()).to.equal(true);
         expect(config.fqdn()).to.equal('example.com');
         expect(config.adminOrigin()).to.equal('https://my.example.com');
-        expect(config.appFqdn({ location: 'app', domain: config.fqdn() })).to.equal('app.example.com');
         expect(config.zoneName()).to.equal('example.com');
     });
 
@@ -79,7 +78,6 @@ describe('config', function () {
         expect(config.isCustomDomain()).to.equal(false);
         expect(config.fqdn()).to.equal('test.example.com');
         expect(config.adminOrigin()).to.equal('https://my-test.example.com');
-        expect(config.appFqdn({ location: 'app', domain: config.fqdn() })).to.equal('app-test.example.com');
         expect(config.zoneName()).to.equal('example.com');
     });
 

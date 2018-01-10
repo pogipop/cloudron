@@ -174,11 +174,11 @@ function renewAll(auditSource, callback) {
     apps.getAll(function (error, allApps) {
         if (error) return callback(error);
 
-        allApps.push({ location: config.adminLocation(), domain: config.fqdn() }); // inject fake webadmin app
+        allApps.push({ intrinsicFqdn: config.adminFqdn() }); // inject fake webadmin app
 
         var expiringApps = [ ];
         for (var i = 0; i < allApps.length; i++) {
-            var appDomain = allApps[i].altDomain || config.appFqdn(allApps[i]);
+            var appDomain = allApps[i].altDomain || allApps[i].instrincFqdn;
 
             var certFilePath = path.join(paths.APP_CERTS_DIR, appDomain + '.user.cert');
             var keyFilePath = path.join(paths.APP_CERTS_DIR, appDomain + '.user.key');
@@ -202,10 +202,10 @@ function renewAll(auditSource, callback) {
             }
         }
 
-        debug('renewAll: %j needs to be renewed', expiringApps.map(function (app) { return app.altDomain || config.appFqdn(app); }));
+        debug('renewAll: %j needs to be renewed', expiringApps.map(function (app) { return app.altDomain || app.intrinsicFqdn; }));
 
         async.eachSeries(expiringApps, function iterator(app, iteratorCallback) {
-            var domain = app.altDomain || config.appFqdn(app);
+            var domain = app.altDomain || app.intrinsicFqdn;
 
             getApi(app, function (error, api, apiOptions) {
                 if (error) return callback(error);
@@ -240,7 +240,7 @@ function renewAll(auditSource, callback) {
                     }
 
                     // reconfigure and reload nginx. this is required for the case where we got a renewed cert after fallback
-                    var configureFunc = config.appFqdn(app) === config.adminFqdn() ?
+                    var configureFunc = app.intrinsicFqdn === config.adminFqdn() ?
                         nginx.configureAdmin.bind(null, certFilePath, keyFilePath, constants.NGINX_ADMIN_CONFIG_FILE_NAME, config.adminFqdn())
                         : nginx.configureApp.bind(null, app, certFilePath, keyFilePath);
 
@@ -402,7 +402,7 @@ function ensureCertificate(app, callback) {
     assert.strictEqual(typeof app, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    var domain = app.altDomain || config.appFqdn(app);
+    var domain = app.altDomain || app.intrinsicFqdn;
 
     var certFilePath = path.join(paths.APP_CERTS_DIR, domain + '.user.cert');
     var keyFilePath = path.join(paths.APP_CERTS_DIR, domain + '.user.key');
