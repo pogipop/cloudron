@@ -24,6 +24,9 @@ app.controller('SetupDNSController', ['$scope', '$http', '$timeout', 'Client', f
     $scope.isDomain = false;
     $scope.isSubdomain = false;
 
+    // If we migrate the api origin we have to poll the new location
+    if (search.admin_fqdn) Client.apiOrigin = 'https://' + search.admin_fqdn;
+
     $scope.$watch('dnsCredentials.domain', function (newVal) {
         if (!newVal) {
             $scope.isDomain = false;

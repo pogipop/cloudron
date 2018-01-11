@@ -199,6 +199,8 @@ angular.module('Application').controller('DomainsController', ['$scope', '$locat
         },
 
         submit: function () {
+            var setupDNSUrl = '/setupdns.html?admin_fqdn=my' + ($scope.domainMigrate.domain.provider === 'caas' ? '-' : '.') + $scope.domainMigrate.domain.domain;
+
             $scope.domainMigrate.busy = true;
             $scope.domainMigrate.error = null;
 
@@ -214,7 +216,7 @@ angular.module('Application').controller('DomainsController', ['$scope', '$locat
                     $('#domainMigrateModal').modal('hide');
                     $scope.domainMigrate.reset();
 
-                    window.location.href = '/setupdns.html';
+                    window.location.href = setupDNSUrl;
                 }
 
                 $scope.domainMigrate.busy = false;
