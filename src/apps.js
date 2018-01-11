@@ -362,7 +362,7 @@ function get(appId, callback) {
         domaindb.get(app.domain, function (error, result) {
             if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
 
-            app.intrinsicFqdn = app.location + (result.provider === 'caas' ? '-' : '.') + app.domain;
+            app.intrinsicFqdn = domains.fqdn(app.location, app.domain, result.provider);
             app.iconUrl = getIconUrlSync(app);
             app.fqdn = app.altDomain || app.intrinsicFqdn;
             app.cnameTarget = app.altDomain ? app.intrinsicFqdn : null;
@@ -386,7 +386,7 @@ function getByIpAddress(ip, callback) {
             domaindb.get(app.domain, function (error, result) {
                 if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
 
-                app.intrinsicFqdn = app.location + (result.provider === 'caas' ? '-' : '.') + app.domain;
+                app.intrinsicFqdn = domains.fqdn(app.location, app.domain, result.provider);
                 app.iconUrl = getIconUrlSync(app);
                 app.fqdn = app.altDomain || app.intrinsicFqdn;
                 app.cnameTarget = app.altDomain ? app.intrinsicFqdn : null;
@@ -407,7 +407,7 @@ function getAll(callback) {
             domaindb.get(app.domain, function (error, result) {
                 if (error) return iteratorDone(new AppsError(AppsError.INTERNAL_ERROR, error));
 
-                app.intrinsicFqdn = app.location + (result.provider === 'caas' ? '-' : '.') + app.domain;
+                app.intrinsicFqdn = domains.fqdn(app.location, app.domain, result.provider);
                 app.iconUrl = getIconUrlSync(app);
                 app.fqdn = app.altDomain || app.intrinsicFqdn;
                 app.cnameTarget = app.altDomain ? app.intrinsicFqdn : null;
@@ -529,7 +529,7 @@ function install(data, auditSource, callback) {
             if (error && error.reason === DomainError.NOT_FOUND) return callback(new AppsError(AppsError.NOT_FOUND, 'No such domain'));
             if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, 'Could not get domain info:' + error.message));
 
-            var intrinsicFqdn = location + (domainObject.provider === 'caas' ? '-' : '.') + domain;
+            var intrinsicFqdn = domains.fqdn(location, domain, domainObject.provider);
 
             error = validateHostname(location, domain, intrinsicFqdn);
             if (error) return callback(error);
@@ -644,7 +644,7 @@ function configure(appId, data, auditSource, callback) {
             if (error && error.reason === DomainError.NOT_FOUND) return callback(new AppsError(AppsError.NOT_FOUND, 'No such domain'));
             if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, 'Could not get domain info:' + error.message));
 
-            var intrinsicFqdn = location + (domainObject.provider === 'caas' ? '-' : '.') + domain;
+            var intrinsicFqdn = domains.fqdn(location, domain, domainObject.provider);
 
             error = validateHostname(location, domain, intrinsicFqdn);
             if (error) return callback(error);

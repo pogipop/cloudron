@@ -7,6 +7,7 @@ module.exports = exports = {
     update: update,
     del: del,
 
+    fqdn: fqdn,
     setAdmin: setAdmin,
 
     getDNSRecords: getDNSRecords,
@@ -326,3 +327,8 @@ function setAdmin(domain, callback) {
         });
     });
 }
+
+function fqdn(location, domain, provider) {
+    return location + (location ? (provider !== 'caas' ? '.' : '-') : '') + domain;
+}
+
