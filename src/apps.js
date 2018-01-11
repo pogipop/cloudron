@@ -646,8 +646,6 @@ function configure(appId, data, auditSource, callback) {
 
             var intrinsicFqdn = location + (domainObject.provider === 'caas' ? '-' : '.') + domain;
 
-            values.intrinsicFqdn = intrinsicFqdn;
-
             error = validateHostname(location, domain, intrinsicFqdn);
             if (error) return callback(error);
 
