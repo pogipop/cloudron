@@ -187,6 +187,7 @@ if [[ -z "${dataJson}" ]]; then
     {
         "fqdn": "${domain}",
         "adminLocation": "${adminLocation}",
+        "adminFqdn": "${adminLocation}.${domain}",
         "zoneName": "${zoneName}",
         "provider": "${provider}",
         "apiServerOrigin": "${apiServerOrigin}",
@@ -210,6 +211,7 @@ EOF
     {
         "fqdn": "${domain}",
         "adminLocation": "${adminLocation}",
+        "adminFqdn": "${adminLocation}.${domain}",
         "zoneName": "${zoneName}",
         "provider": "${provider}",
         "apiServerOrigin": "${apiServerOrigin}",
