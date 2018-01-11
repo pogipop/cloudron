@@ -301,9 +301,6 @@ function unregisterSubdomain(app, location, domain, callback) {
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    // FIXME remove the oldConfig.domain fallback in following releases
-    domain = domain || config.fqdn();
-
     if (!app.dnsRecordId) {
         debugApp(app, 'Skip unregister of record not created by cloudron');
         return callback(null);
@@ -513,7 +510,9 @@ function configure(app, callback) {
         deleteContainers.bind(null, app),
         function (next) {
             if (!locationChanged) return next();
-            unregisterSubdomain(app, app.oldConfig.location, app.oldConfig.domain, next);
+
+            // the config.fqdn() fallback can be removed after 1.9
+            unregisterSubdomain(app, app.oldConfig.location, app.oldConfig.domain || config.fqdn(), next);
         },
 
         reserveHttpPort.bind(null, app),
