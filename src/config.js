@@ -19,10 +19,11 @@ exports = module.exports = {
     fqdn: fqdn,
     zoneName: zoneName,
     setFqdn: setFqdn,
+    setAdminFqdn: setAdminFqdn,
+    setAdminLocation: setAdminLocation,
     token: token,
     version: version,
     setVersion: setVersion,
-    isCustomDomain: isCustomDomain,
     database: database,
 
     // these values are derived
@@ -76,9 +77,9 @@ function saveSync() {
         apiServerOrigin: data.apiServerOrigin,
         webServerOrigin: data.webServerOrigin,
         fqdn: data.fqdn,
+        adminFqdn: data.adminFqdn,
         zoneName: data.zoneName,
         adminLocation: data.adminLocation,
-        isCustomDomain: data.isCustomDomain,
         provider: data.provider,
         isDemo: data.isDemo
     };
@@ -97,12 +98,12 @@ function _reset(callback) {
 function initConfig() {
     // setup defaults
     data.fqdn = '';
+    data.adminFqdn = '';
     data.zoneName = '';
     data.adminLocation = 'my';
     data.port = 3000;
     data.token = null;
     data.version = null;
-    data.isCustomDomain = true;
     data.apiServerOrigin = null;
     data.webServerOrigin = null;
     data.provider = 'caas';
@@ -184,32 +185,29 @@ function zoneName() {
     return tld.getDomain(fqdn()) || '';
 }
 
-// keep this in sync with start.sh admin.conf generation code
-function appFqdn(app) {
-    assert.strictEqual(typeof app, 'object');
-    assert.strictEqual(typeof app.location, 'string');
-    assert.strictEqual(typeof app.domain, 'string');
-
-    if (app.location === '') return app.domain;
-
-    // caas still has subdomains with a dash
-    return app.location + (isCustomDomain() ? '.' : '-') + app.domain;
-}
-
 function mailLocation() {
     return get('adminLocation'); // not a typo! should be same as admin location until we figure out certificates
 }
 
-function mailFqdn() {
-    return appFqdn({ domain: fqdn(), location: mailLocation() });
+function setAdminLocation(location) {
+    set('adminLocation', location);
 }
+
 
 function adminLocation() {
     return get('adminLocation');
 }
 
+function setAdminFqdn(adminFqdn) {
+    set('adminFqdn', adminFqdn);
+}
+
 function adminFqdn() {
-    return appFqdn({ domain: fqdn(), location: adminLocation() });
+    return get('adminFqdn');
+}
+
+function mailFqdn() {
+    return adminFqdn();
 }
 
 function adminOrigin() {
@@ -234,10 +232,6 @@ function version() {
 
 function setVersion(version) {
     set('version', version);
-}
-
-function isCustomDomain() {
-    return get('isCustomDomain');
 }
 
 function database() {

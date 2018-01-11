@@ -7,8 +7,9 @@ json="${source_dir}/../node_modules/.bin/json"
 arg_api_server_origin=""
 arg_fqdn=""
 arg_admin_location=""
+arg_admin_fqdn=""
 arg_zone_name=""
-arg_is_custom_domain="false"
+arg_is_custom_domain="false" # can be removed after 1.9
 arg_retire_reason=""
 arg_retire_info=""
 arg_token=""
@@ -33,9 +34,11 @@ while true; do
     --data)
         # these params must be valid in all cases
         arg_fqdn=$(echo "$2" | $json fqdn)
+        arg_admin_fqdn=$(echo "$2" | $json adminFqdn)
         arg_zone_name=$(echo "$2" | $json zoneName)
         [[ "${arg_zone_name}" == "" ]] && arg_zone_name="${arg_fqdn}"
 
+        # can be removed after 1.9
         arg_is_custom_domain=$(echo "$2" | $json isCustomDomain)
         [[ "${arg_is_custom_domain}" == "" ]] && arg_is_custom_domain="true"
 

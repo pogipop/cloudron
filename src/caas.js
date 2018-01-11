@@ -56,7 +56,7 @@ function retire(reason, info, callback) {
 
     var data = {
         apiServerOrigin: config.apiServerOrigin(),
-        isCustomDomain: config.isCustomDomain(),
+        adminFqdn: config.adminFqdn(),
         fqdn: config.fqdn()
     };
     shell.sudo('retire', [ RETIRE_CMD, reason, JSON.stringify(info), JSON.stringify(data) ], callback);

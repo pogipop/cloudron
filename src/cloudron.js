@@ -194,7 +194,8 @@ function autoprovision(callback) {
     }, callback);
 }
 
-function dnsSetup(domain, zoneName, provider, dnsConfig, callback) {
+function dnsSetup(adminFqdn, domain, zoneName, provider, dnsConfig, callback) {
+    assert.strictEqual(typeof adminFqdn, 'string');
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof zoneName, 'string');
     assert.strictEqual(typeof provider, 'string');
@@ -215,6 +216,8 @@ function dnsSetup(domain, zoneName, provider, dnsConfig, callback) {
             if (error) return callback(new CloudronError(CloudronError.INTERNAL_ERROR, error));
 
             config.setFqdn(domain); // set fqdn only after dns config is valid, otherwise cannot re-setup if we failed
+            config.setAdminFqdn(adminFqdn);
+            config.setAdminLocation('my');
             config.setZoneName(zoneName);
 
             callback();
@@ -452,7 +455,6 @@ function getConfig(callback) {
                 version: config.version(),
                 update: updateChecker.getUpdateInfo(),
                 progress: progress.getAll(),
-                isCustomDomain: config.isCustomDomain(),
                 isDemo: config.isDemo(),
                 region: result.box.region,
                 size: result.box.size,
@@ -722,7 +724,6 @@ function doUpdate(boxUpdateInfo, callback) {
             webServerOrigin: config.webServerOrigin(),
             fqdn: config.fqdn(),
             adminLocation: config.adminLocation(),
-            isCustomDomain: config.isCustomDomain(),
             isDemo: config.isDemo(),
             zoneName: config.zoneName(),
 

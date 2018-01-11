@@ -29,6 +29,7 @@ var token = null;
 function setup(done) {
     config._reset();
     config.setFqdn('example-settings-test.com');
+    config.setAdminFqdn('my.example-settings-test.com');
     config.set('provider', 'caas');
 
     async.series([

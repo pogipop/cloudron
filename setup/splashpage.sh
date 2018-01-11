@@ -18,8 +18,7 @@ fi
 source "${script_dir}/argparser.sh" "$@" # this injects the arg_* variables used below
 
 # keep this is sync with config.js appFqdn()
-admin_fqdn=$([[ "${arg_is_custom_domain}" == "true" ]] && echo "${arg_admin_location}.${arg_fqdn}" ||  echo "${arg_admin_location}-${arg_fqdn}")
-admin_origin="https://${admin_fqdn}"
+admin_origin="https://${arg_admin_fqdn}"
 
 # copy the website
 rm -rf "${SETUP_WEBSITE_DIR}" && mkdir -p "${SETUP_WEBSITE_DIR}"
@@ -37,7 +36,7 @@ if [[ "${arg_retire_reason}" != "" || "${existing_infra}" != "${current_infra}" 
 else
     echo "Show progress bar only on admin domain for normal update"
     ${box_src_dir}/node_modules/.bin/ejs-cli -f "${script_dir}/start/nginx/appconfig.ejs" \
-        -O "{ \"vhost\": \"${admin_fqdn}\", \"adminOrigin\": \"${admin_origin}\", \"endpoint\": \"splash\", \"sourceDir\": \"${SETUP_WEBSITE_DIR}\", \"certFilePath\": \"cert/host.cert\", \"keyFilePath\": \"cert/host.key\", \"xFrameOptions\": \"SAMEORIGIN\", \"robotsTxtQuoted\": null, \"hasIPv6\": false }" > "${PLATFORM_DATA_DIR}/nginx/applications/admin.conf"
+        -O "{ \"vhost\": \"${arg_admin_fqdn}\", \"adminOrigin\": \"${admin_origin}\", \"endpoint\": \"splash\", \"sourceDir\": \"${SETUP_WEBSITE_DIR}\", \"certFilePath\": \"cert/host.cert\", \"keyFilePath\": \"cert/host.key\", \"xFrameOptions\": \"SAMEORIGIN\", \"robotsTxtQuoted\": null, \"hasIPv6\": false }" > "${PLATFORM_DATA_DIR}/nginx/applications/admin.conf"
 fi
 
 if [[ "${arg_retire_reason}" == "migrate" ]]; then

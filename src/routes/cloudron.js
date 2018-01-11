@@ -108,11 +108,12 @@ function dnsSetup(req, res, next) {
 
     if (typeof req.body.provider !== 'string') return next(new HttpError(400, 'provider is required'));
     if (typeof req.body.domain !== 'string' || !req.body.domain) return next(new HttpError(400, 'domain is required'));
+    if (typeof req.body.adminFqdn !== 'string' || !req.body.domain) return next(new HttpError(400, 'adminFqdn is required'));
 
     if ('zoneName' in req.body && typeof req.body.zoneName !== 'string') return next(new HttpError(400, 'zoneName must be a string'));
     if (!config || typeof req.body.config !== 'object') return next(new HttpError(400, 'config must be an object'));
 
-    cloudron.dnsSetup(req.body.domain.toLowerCase(), req.body.zoneName || '', req.body.provider, req.body.config, function (error) {
+    cloudron.dnsSetup(req.body.adminFqdn.toLowerCase(), req.body.domain.toLowerCase(), req.body.zoneName || '', req.body.provider, req.body.config, function (error) {
         if (error && error.reason === CloudronError.ALREADY_SETUP) return next(new HttpError(409, error.message));
         if (error && error.reason === CloudronError.BAD_FIELD) return next(new HttpError(400, error.message));
         if (error) return next(new HttpError(500, error));
@@ -185,7 +186,7 @@ function getConfig(req, res, next) {
         if (error) return next(new HttpError(500, error));
 
         if (!req.user.admin) {
-            cloudronConfig = _.pick(cloudronConfig, 'apiServerOrigin', 'webServerOrigin', 'fqdn', 'version', 'progress', 'isCustomDomain', 'isDemo', 'cloudronName', 'provider');
+            cloudronConfig = _.pick(cloudronConfig, 'apiServerOrigin', 'webServerOrigin', 'fqdn', 'adminFqdn', 'version', 'progress', 'isDemo', 'cloudronName', 'provider');
         }
 
         next(new HttpSuccess(200, cloudronConfig));

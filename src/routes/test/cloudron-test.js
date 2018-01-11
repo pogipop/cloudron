@@ -29,6 +29,7 @@ function setup(done) {
     nock.cleanAll();
     config._reset();
     config.setFqdn('example-cloudron-test.com');
+    config.setAdminFqdn('my.example-cloudron-test.com');
 
     async.series([
         server.start.bind(server),
@@ -240,7 +241,7 @@ describe('Cloudron', function () {
                     expect(result.body.apiServerOrigin).to.eql('http://localhost:6060');
                     expect(result.body.webServerOrigin).to.eql(null);
                     expect(result.body.fqdn).to.eql(config.fqdn());
-                    expect(result.body.isCustomDomain).to.eql(true);
+                    expect(result.body.adminFqdn).to.eql(config.adminFqdn());
                     expect(result.body.progress).to.be.an('object');
                     expect(result.body.update).to.be.an('object');
                     expect(result.body.version).to.eql(config.version());
@@ -265,7 +266,7 @@ describe('Cloudron', function () {
                     expect(result.body.apiServerOrigin).to.eql('http://localhost:6060');
                     expect(result.body.webServerOrigin).to.eql(null);
                     expect(result.body.fqdn).to.eql(config.fqdn());
-                    expect(result.body.isCustomDomain).to.eql(true);
+                    expect(result.body.adminFqdn).to.eql(config.adminFqdn());
                     expect(result.body.progress).to.be.an('object');
                     expect(result.body.update).to.be.an('object');
                     expect(result.body.version).to.eql(config.version());
@@ -290,7 +291,7 @@ describe('Cloudron', function () {
                     expect(result.body.apiServerOrigin).to.eql('http://localhost:6060');
                     expect(result.body.webServerOrigin).to.eql(null);
                     expect(result.body.fqdn).to.eql(config.fqdn());
-                    expect(result.body.isCustomDomain).to.eql(true);
+                    expect(result.body.adminFqdn).to.eql(config.adminFqdn());
                     expect(result.body.progress).to.be.an('object');
                     expect(result.body.version).to.eql(config.version());
                     expect(result.body.cloudronName).to.be.a('string');

@@ -206,6 +206,13 @@ cd "${BOX_SRC_DIR}"
 BOX_ENV=cloudron DATABASE_URL=mysql://root:${mysql_root_password}@127.0.0.1/box "${BOX_SRC_DIR}/node_modules/.bin/db-migrate" up
 EOF
 
+if [[ -z "${arg_admin_fqdn:-}" ]]; then
+    # can be removed after 1.9
+    admin_fqdn=$([[ "${arg_is_custom_domain}" == "true" ]] && echo "${arg_admin_location}.${arg_fqdn}" ||  echo "${arg_admin_location}-${arg_fqdn}")
+else
+    admin_fqdn="${arg_admin_fqdn}"
+fi
+
 echo "==> Creating cloudron.conf"
 cat > "${CONFIG_DIR}/cloudron.conf" <<CONF_END
 {
@@ -214,9 +221,9 @@ cat > "${CONFIG_DIR}/cloudron.conf" <<CONF_END
     "apiServerOrigin": "${arg_api_server_origin}",
     "webServerOrigin": "${arg_web_server_origin}",
     "fqdn": "${arg_fqdn}",
+    "adminFqdn": "${admin_fqdn}",
     "adminLocation": "${arg_admin_location}",
     "zoneName": "${arg_zone_name}",
-    "isCustomDomain": ${arg_is_custom_domain},
     "provider": "${arg_provider}",
     "isDemo": ${arg_is_demo}
 }

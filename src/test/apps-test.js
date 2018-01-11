@@ -132,6 +132,7 @@ describe('Apps', function () {
         config._reset();
 
         config.setFqdn(DOMAIN_0.domain);
+        config.setAdminFqdn('my.' + DOMAIN_0.domain);
 
         async.series([
             database.initialize,
@@ -161,7 +162,7 @@ describe('Apps', function () {
 
     describe('validateHostname', function () {
         it('does not allow admin subdomain', function () {
-            expect(apps._validateHostname('my', 'example.com', 'my.example.com')).to.be.an(Error);
+            expect(apps._validateHostname('my', DOMAIN_0.domain, 'my.' + DOMAIN_0.domain)).to.be.an(Error);
         });
 
         it('cannot have >63 length subdomains', function () {

@@ -318,8 +318,9 @@ function setAdmin(domain, callback) {
             if (error) return callback(new DomainError(DomainError.EXTERNAL_ERROR, 'Error setting PTR record:' + error.message));
 
             config.setFqdn(result.domain);
+            config.setAdminLocation('my');
+            config.setAdminFqdn('my.' + result.domain);
             config.setZoneName(result.zoneName);
-            config.set('isCustomDomain', true);
 
             callback();
 

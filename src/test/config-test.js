@@ -31,8 +31,8 @@ describe('config', function () {
     });
 
     it('did set default values', function () {
-        expect(config.isCustomDomain()).to.equal(true);
         expect(config.fqdn()).to.equal('');
+        expect(config.adminFqdn()).to.equal('');
         expect(config.zoneName()).to.equal('');
         expect(config.adminLocation()).to.equal('my');
     });
@@ -63,20 +63,20 @@ describe('config', function () {
 
     it('uses dotted locations with custom domain', function () {
         config.setFqdn('example.com');
-        config.set('isCustomDomain', true);
+        config.setAdminFqdn('my.example.com');
 
-        expect(config.isCustomDomain()).to.equal(true);
         expect(config.fqdn()).to.equal('example.com');
+        expect(config.adminFqdn()).to.equal('my.example.com');
         expect(config.adminOrigin()).to.equal('https://my.example.com');
         expect(config.zoneName()).to.equal('example.com');
     });
 
     it('uses hyphen locations with non-custom domain', function () {
         config.setFqdn('test.example.com');
-        config.set('isCustomDomain', false);
+        config.setAdminFqdn('my-test.example.com');
 
-        expect(config.isCustomDomain()).to.equal(false);
         expect(config.fqdn()).to.equal('test.example.com');
+        expect(config.adminLocation()).to.equal('my');
         expect(config.adminOrigin()).to.equal('https://my-test.example.com');
         expect(config.zoneName()).to.equal('example.com');
     });

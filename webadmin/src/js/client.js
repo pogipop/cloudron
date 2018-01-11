@@ -737,6 +737,7 @@ angular.module('Application').service('Client', ['$http', '$interval', 'md5', 'N
     Client.prototype.setupDnsConfig = function (domain, zoneName, provider, dnsConfig, callback) {
         var data = {
             domain: domain,
+            adminFqdn: 'my.' + domain,
             zoneName: zoneName,
             provider: provider,
             config: dnsConfig
