@@ -127,13 +127,14 @@ function validateHostname(location, domain, hostname) {
     assert.strictEqual(typeof domain, 'string');
 
     const RESERVED_LOCATIONS = [
-        config.adminLocation(), // FIXME: this shouldn't be here
         constants.API_LOCATION,
         constants.SMTP_LOCATION,
         constants.IMAP_LOCATION,
         constants.POSTMAN_LOCATION
     ];
     if (RESERVED_LOCATIONS.indexOf(location) !== -1) return new AppsError(AppsError.BAD_FIELD, location + ' is reserved');
+
+    if (hostname === config.adminFqdn()) return new AppsError(AppsError.BAD_FIELD, location + ' is reserved');
 
     // workaround https://github.com/oncletom/tld.js/issues/73
     var tmp = hostname.replace('_', '-');
