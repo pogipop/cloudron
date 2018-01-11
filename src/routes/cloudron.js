@@ -106,7 +106,7 @@ function restore(req, res, next) {
 function dnsSetup(req, res, next) {
     assert.strictEqual(typeof req.body, 'object');
 
-    if (typeof req.body.provider !== 'string') return next(new HttpError(400, 'provider is required'));
+    if (typeof req.body.provider !== 'string' || !req.body.provider) return next(new HttpError(400, 'provider is required'));
     if (typeof req.body.domain !== 'string' || !req.body.domain) return next(new HttpError(400, 'domain is required'));
     if (typeof req.body.adminFqdn !== 'string' || !req.body.domain) return next(new HttpError(400, 'adminFqdn is required'));
 
