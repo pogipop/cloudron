@@ -52,8 +52,8 @@
                         <div class="row">
                             <div class="col-md-10 col-md-offset-1 text-center">
                                 <h1>Cloudron Setup</h1>
-                                <h3>Provide the first domain for your Cloudron</h3>
-                                <p>Apps will be installed on subdomains.</p>
+                                <h3>Provide a domain for your Cloudron</h3>
+                                <p>Apps will be installed on subdomains of this domain.</p>
                                 <div class="form-group" style="margin-bottom: 0;" ng-class="{ 'has-error': dnsCredentialsForm.domain.$dirty && dnsCredentialsForm.domain.$invalid }">
                                     <input type="text" class="form-control" ng-model="dnsCredentials.domain" name="domain" placeholder="example.com" required autofocus ng-disabled="dnsCredentials.busy">
                                 </div>
