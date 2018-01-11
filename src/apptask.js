@@ -278,8 +278,7 @@ function registerSubdomain(app, overwrite, callback) {
                 if (error) return retryCallback(error);
 
                 // refuse to update any existing DNS record for custom domains that we did not create
-                // note that the appstore sets up the naked domain for non-custom domains
-                if (config.isCustomDomain() && values.length !== 0 && !overwrite) return retryCallback(null, new Error('DNS Record already exists'));
+                if (values.length !== 0 && !overwrite) return retryCallback(null, new Error('DNS Record already exists'));
 
                 domains.upsertDNSRecords(app.location, app.domain, 'A', [ ip ], function (error, changeId) {
                     if (error && (error.reason === DomainError.STILL_BUSY || error.reason === DomainError.EXTERNAL_ERROR)) return retryCallback(error); // try again
@@ -304,12 +303,6 @@ function unregisterSubdomain(app, location, domain, callback) {
 
     // FIXME remove the oldConfig.domain fallback in following releases
     domain = domain || config.fqdn();
-
-    // do not unregister bare domain because we show a error/cloudron info page there
-    if (!config.isCustomDomain() && location === '') {
-        debugApp(app, 'Skip unregister of empty subdomain');
-        return callback(null);
-    }
 
     if (!app.dnsRecordId) {
         debugApp(app, 'Skip unregister of record not created by cloudron');

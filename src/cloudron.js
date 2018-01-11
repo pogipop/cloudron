@@ -562,17 +562,8 @@ function addDnsRecords(ip, callback) {
     var dkimRecord = { subdomain: config.dkimSelector() + '._domainkey', domain: config.fqdn(), type: 'TXT', values: [ '"v=DKIM1; t=s; p=' + dkimKey + '"' ] };
 
     var records = [ ];
-    if (config.isCustomDomain()) {
-        records.push(webadminRecord);
-        records.push(dkimRecord);
-    } else {
-        // for non-custom domains, we show a noapp.html page
-        var nakedDomainRecord = { subdomain: '', domain: config.fqdn(), type: 'A', values: [ ip ] };
-
-        records.push(nakedDomainRecord);
-        records.push(webadminRecord);
-        records.push(dkimRecord);
-    }
+    records.push(webadminRecord);
+    records.push(dkimRecord);
 
     debug('addDnsRecords: %j', records);
 
