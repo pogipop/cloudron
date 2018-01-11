@@ -111,7 +111,7 @@ function dnsSetup(req, res, next) {
     if (typeof req.body.adminFqdn !== 'string' || !req.body.domain) return next(new HttpError(400, 'adminFqdn is required'));
 
     if ('zoneName' in req.body && typeof req.body.zoneName !== 'string') return next(new HttpError(400, 'zoneName must be a string'));
-    if (!config || typeof req.body.config !== 'object') return next(new HttpError(400, 'config must be an object'));
+    if (!req.body.config || typeof req.body.config !== 'object') return next(new HttpError(400, 'config must be an object'));
 
     cloudron.dnsSetup(req.body.adminFqdn.toLowerCase(), req.body.domain.toLowerCase(), req.body.zoneName || '', req.body.provider, req.body.config, function (error) {
         if (error && error.reason === CloudronError.ALREADY_SETUP) return next(new HttpError(409, error.message));
