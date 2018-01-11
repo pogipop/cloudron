@@ -323,6 +323,7 @@ function unregisterSubdomain(app, location, domain, callback) {
             debugApp(app, 'Unregistering subdomain: %s', app.intrinsicFqdn);
 
             domains.removeDNSRecords(location, domain, 'A', [ ip ], function (error) {
+                if (error && error.reason === DomainError.NOT_FOUND) return retryCallback(null, null); // domain can be not found if oldConfig.domain or restoreConfig.domain was removed
                 if (error && (error.reason === DomainError.STILL_BUSY || error.reason === DomainError.EXTERNAL_ERROR)) return retryCallback(error); // try again
 
                 retryCallback(null, error);
