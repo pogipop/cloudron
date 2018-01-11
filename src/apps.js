@@ -125,6 +125,7 @@ AppsError.BAD_CERTIFICATE = 'Invalid certificate';
 function validateHostname(location, domain, hostname) {
     assert.strictEqual(typeof location, 'string');
     assert.strictEqual(typeof domain, 'string');
+    assert.strictEqual(typeof hostname, 'string');
 
     const RESERVED_LOCATIONS = [
         constants.API_LOCATION,
@@ -895,39 +896,46 @@ function clone(appId, data, auditSource, callback) {
             error = checkManifestConstraints(backupInfo.manifest);
             if (error) return callback(error);
 
-            error = validateHostname(location, domain);
-            if (error) return callback(error);
-
             error = validatePortBindings(portBindings, backupInfo.manifest.tcpPorts);
             if (error) return callback(error);
 
-            var newAppId = uuid.v4(), manifest = backupInfo.manifest;
+            domains.get(domain, function (error, domainObject) {
+                if (error && error.reason === DomainError.NOT_FOUND) return callback(new AppsError(AppsError.NOT_FOUND, 'No such domain'));
+                if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, 'Could not get domain info:' + error.message));
 
-            appstore.purchase(newAppId, app.appStoreId, function (error) {
-                if (error && error.reason === AppstoreError.NOT_FOUND) return callback(new AppsError(AppsError.NOT_FOUND));
-                if (error && error.reason === AppstoreError.BILLING_REQUIRED) return callback(new AppsError(AppsError.BILLING_REQUIRED, error.message));
-                if (error && error.reason === AppstoreError.EXTERNAL_ERROR) return callback(new AppsError(AppsError.EXTERNAL_ERROR, error.message));
-                if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
+                var intrinsicFqdn = domains.fqdn(location, domain, domainObject.provider);
 
-                var data = {
-                    installationState: appdb.ISTATE_PENDING_CLONE,
-                    memoryLimit: app.memoryLimit,
-                    accessRestriction: app.accessRestriction,
-                    xFrameOptions: app.xFrameOptions,
-                    restoreConfig: { backupId: backupId, backupFormat: backupInfo.format },
-                    sso: !!app.sso,
-                    mailboxName: (location ? location : manifest.title.toLowerCase().replace(/[^a-zA-Z0-9]/g, '')) + '.app'
-                };
+                error = validateHostname(location, domain, intrinsicFqdn);
+                if (error) return callback(error);
 
-                appdb.add(newAppId, app.appStoreId, manifest, location, domain, portBindings, data, function (error) {
-                    if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(getDuplicateErrorDetails(location, portBindings, error));
+                var newAppId = uuid.v4(), manifest = backupInfo.manifest;
+
+                appstore.purchase(newAppId, app.appStoreId, function (error) {
+                    if (error && error.reason === AppstoreError.NOT_FOUND) return callback(new AppsError(AppsError.NOT_FOUND));
+                    if (error && error.reason === AppstoreError.BILLING_REQUIRED) return callback(new AppsError(AppsError.BILLING_REQUIRED, error.message));
+                    if (error && error.reason === AppstoreError.EXTERNAL_ERROR) return callback(new AppsError(AppsError.EXTERNAL_ERROR, error.message));
                     if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
 
-                    taskmanager.restartAppTask(newAppId);
+                    var data = {
+                        installationState: appdb.ISTATE_PENDING_CLONE,
+                        memoryLimit: app.memoryLimit,
+                        accessRestriction: app.accessRestriction,
+                        xFrameOptions: app.xFrameOptions,
+                        restoreConfig: { backupId: backupId, backupFormat: backupInfo.format },
+                        sso: !!app.sso,
+                        mailboxName: (location ? location : manifest.title.toLowerCase().replace(/[^a-zA-Z0-9]/g, '')) + '.app'
+                    };
 
-                    eventlog.add(eventlog.ACTION_APP_CLONE, auditSource, { appId: newAppId, oldAppId: appId, backupId: backupId, location: location, manifest: manifest });
+                    appdb.add(newAppId, app.appStoreId, manifest, location, domain, portBindings, data, function (error) {
+                        if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(getDuplicateErrorDetails(location, portBindings, error));
+                        if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
 
-                    callback(null, { id : newAppId });
+                        taskmanager.restartAppTask(newAppId);
+
+                        eventlog.add(eventlog.ACTION_APP_CLONE, auditSource, { appId: newAppId, oldAppId: appId, backupId: backupId, location: location, manifest: manifest });
+
+                        callback(null, { id : newAppId });
+                    });
                 });
             });
         });
