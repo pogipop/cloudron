@@ -273,7 +273,7 @@ function removeDNSRecords(subdomain, domain, type, values, callback) {
     debug('removeDNSRecord: %s on %s type %s values', subdomain, domain, type, values);
 
     get(domain, function (error, result) {
-        if (error) return callback(new DomainError(DomainError.INTERNAL_ERROR, error));
+        if (error) return callback(error);
 
         api(result.provider).del(result.config, result.zoneName, subdomain, type, values, function (error) {
             if (error && error.reason !== DomainError.NOT_FOUND) return callback(error);
