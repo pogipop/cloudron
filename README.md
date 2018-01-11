@@ -9,10 +9,6 @@ a complex task.
 We are building the ultimate platform for self-hosting web apps. The Cloudron allows
 anyone to effortlessly host web applications on their server on their own terms.
 
-Support us on
-[![Flattr Cloudron](https://button.flattr.com/flattr-badge-large.png)](https://flattr.com/submit/auto?user_id=cloudron&url=https://cloudron.io&title=Cloudron&tags=opensource&category=software)
-or [pay us a coffee](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=8982CKNM46D8U)
-
 ## Features
 
 * Single click install for apps. Check out the [App Store](https://cloudron.io/appstore.html).
@@ -60,16 +56,6 @@ apps up-to-date and secure.
 
 The [base image repo](https://git.cloudron.io/cloudron/docker-base-image) is the parent image of all
 the containers in the Cloudron.
-
-The [graphite repo](https://git.cloudron.io/cloudron/docker-graphite) contains the graphite code
-that collects metrics for graphs.
-
-The addons are located in separate repositories:
-
-* [Redis](https://git.cloudron.io/cloudron/redis-addon)
-* [Postgresql](https://git.cloudron.io/cloudron/postgresql-addon)
-* [MySQL](https://git.cloudron.io/cloudron/mysql-addon)
-* [Mongodb](https://git.cloudron.io/cloudron/mongodb-addon)
 
 ## Community
 
