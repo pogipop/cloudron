@@ -76,12 +76,12 @@ angular.module('Application').controller('DomainsController', ['$scope', '$locat
                         "credentials": domain.config.credentials
                     });
                 }
-                $scope.domainConfigure.digitalOceanToken = domain.config.provider === 'digitalocean' ? domain.config.token : '';
-                $scope.domainConfigure.cloudflareToken = domain.config.provider === 'cloudflare' ? domain.config.token : '';
+                $scope.domainConfigure.digitalOceanToken = domain.provider === 'digitalocean' ? domain.config.token : '';
+                $scope.domainConfigure.cloudflareToken = domain.provider === 'cloudflare' ? domain.config.token : '';
                 $scope.domainConfigure.cloudflareEmail = domain.config.email;
 
-                $scope.domainConfigure.provider = domain.config.provider;
-                $scope.domainConfigure.provider = ($scope.domainConfigure.provider === 'manual' && domain.config.wildcard) ? 'wildcard' : domain.config.provider;
+                $scope.domainConfigure.provider = domain.provider;
+                $scope.domainConfigure.provider = ($scope.domainConfigure.provider === 'manual' && domain.config.wildcard) ? 'wildcard' : domain.provider;
             } else {
                 $scope.domainConfigure.adding = true;
             }
