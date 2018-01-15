@@ -1122,47 +1122,45 @@ footer {
 // Logs
 // ----------------------------
 
-.logs-controls {
-    margin-top: 25px;
-    margin-bottom: 10px;
+.logs {
+    background: black;
 
-    .ng-isolate-scope {
-        float: left;
-    }
+    .logs-controls {
+        margin: 5px;
 
-    h3 {
-        display: inline-block;
-        margin-top: 6px;
-        margin-bottom: 0;
-    }
-
-    select {
-        display: inline-block;
-        width: 250px;
-        margin-left: 20px;
-    }
-}
-
-.logs-container {
-    flex-grow: 1;
-    margin-left: calc(8.33% + 15px);
-    margin-right: calc(8.33% + 15px);
-    margin-bottom: 20px;
-    background-color: black;
-    color: white;
-    overflow: auto;
-    padding: 5px;
-    font-family: monospace;
-
-    .log-line {
-        line-height: 1.2;
-
-        &:hover {
-            background-color: #333333;
+        .ng-isolate-scope {
+            float: left;
         }
 
-        .time {
-            color: #00FFFF;
+        h3 {
+            margin: 5px 0;
+            color: white;
+        }
+
+        select {
+            display: inline-block;
+            width: 250px;
+        }
+    }
+
+    .logs-container {
+        flex-grow: 1;
+        margin-bottom: 5px;
+        color: white;
+        overflow: auto;
+        padding: 5px;
+        font-family: monospace;
+
+        .log-line {
+            line-height: 1.2;
+
+            &:hover {
+                background-color: #333333;
+            }
+
+            .time {
+                color: #00FFFF;
+            }
         }
     }
 }
