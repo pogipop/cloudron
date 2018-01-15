@@ -61,9 +61,6 @@ app.config(['$routeProvider', function ($routeProvider) {
     }).when('/email', {
         controller: 'EmailController',
         templateUrl: 'views/email.html'
-    }).when('/logs', {
-        controller: 'LogsController',
-        templateUrl: 'views/logs.html'
     }).when('/settings', {
         controller: 'SettingsController',
         templateUrl: 'views/settings.html'
