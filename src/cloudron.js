@@ -723,6 +723,7 @@ function doUpdate(boxUpdateInfo, callback) {
             apiServerOrigin: config.apiServerOrigin(),
             webServerOrigin: config.webServerOrigin(),
             fqdn: config.fqdn(),
+            adminFqdn: config.adminFqdn(),
             adminLocation: config.adminLocation(),
             isDemo: config.isDemo(),
             zoneName: config.zoneName(),
