@@ -50,7 +50,7 @@ if (argv.help || argv.h) {
     process.exit(1);
 }
 
-gulp.task('js', ['js-index', 'js-logs', 'js-setup', 'js-setupdns', 'js-restore', 'js-update'], function () {});
+gulp.task('js', ['js-index', 'js-logs', 'js-terminal', 'js-setup', 'js-setupdns', 'js-restore', 'js-update'], function () {});
 
 var oauth = {
     clientId: argv.clientId || 'cid-webadmin',
