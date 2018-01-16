@@ -52,9 +52,6 @@ app.config(['$routeProvider', function ($routeProvider) {
     }).when('/graphs', {
         controller: 'GraphsController',
         templateUrl: 'views/graphs.html'
-    }).when('/debug', {
-        controller: 'DebugController',
-        templateUrl: 'views/debug.html'
     }).when('/domains', {
         controller: 'DomainsController',
         templateUrl: 'views/domains.html'
