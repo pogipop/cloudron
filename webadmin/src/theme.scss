@@ -1136,11 +1136,6 @@ footer {
             margin: 5px 0;
             color: white;
         }
-
-        select {
-            display: inline-block;
-            width: 250px;
-        }
     }
 
     .logs-container {
@@ -1170,51 +1165,44 @@ footer {
 // Terminal
 // ----------------------------
 
-.terminal-controls {
-    margin-top: 25px;
-    margin-bottom: 10px;
+.terminal-view {
+    background: black;
 
-    .ng-isolate-scope {
-        float: left;
+    .terminal-controls {
+        margin: 5px;
+
+        .ng-isolate-scope {
+            float: left;
+        }
+
+        h3 {
+            margin: 5px 0;
+            color: white;
+        }
     }
 
-    h3 {
-        display: inline-block;
-        margin-top: 6px;
-        margin-bottom: 0;
+    .terminal-container {
+        flex-grow: 1;
+        margin-bottom: 5px;
+        color: white;
+        overflow: auto;
+        padding: 5px;
+        font-family: monospace;
+
+        &.placeholder {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
     }
 
-    select {
-        display: inline-block;
-        width: 250px;
-        margin-left: 20px;
+    .contextMenuBackdrop {
+        display: none;
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
     }
-}
-
-.terminal-container {
-    flex-grow: 1;
-    margin-left: calc(8.33% + 15px);
-    margin-right: calc(8.33% + 15px);
-    margin-bottom: 20px;
-    background-color: black;
-    color: white;
-    overflow: auto;
-    padding: 5px;
-    font-family: monospace;
-
-    &.placeholder {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        flex-direction: column;
-    }
-}
-
-.contextMenuBackdrop {
-    display: none;
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
 }

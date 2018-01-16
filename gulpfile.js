@@ -106,6 +106,22 @@ gulp.task('js-logs', function () {
         .pipe(gulp.dest('webadmin/dist/js'));
 });
 
+gulp.task('js-terminal', function () {
+    // needs special treatment for error handling
+    var uglifyer = uglify();
+    uglifyer.on('error', function (error) {
+        console.error(error);
+    });
+
+    gulp.src(['webadmin/src/js/terminal.js', 'webadmin/src/js/client.js'])
+        .pipe(ejs({ oauth: oauth }, {}, { ext: '.js' }))
+        .pipe(sourcemaps.init())
+        .pipe(concat('terminal.js', { newLine: ';' }))
+        .pipe(uglifyer)
+        .pipe(sourcemaps.write())
+        .pipe(gulp.dest('webadmin/dist/js'));
+});
+
 gulp.task('js-setup', function () {
     // needs special treatment for error handling
     var uglifyer = uglify();
@@ -226,6 +242,7 @@ gulp.task('watch', ['default'], function () {
     gulp.watch(['webadmin/src/js/setupdns.js', 'webadmin/src/js/client.js'], ['js-setupdns']);
     gulp.watch(['webadmin/src/js/restore.js', 'webadmin/src/js/client.js'], ['js-restore']);
     gulp.watch(['webadmin/src/js/logs.js', 'webadmin/src/js/client.js'], ['js-logs']);
+    gulp.watch(['webadmin/src/js/terminal.js', 'webadmin/src/js/client.js'], ['js-terminal']);
     gulp.watch(['webadmin/src/js/index.js', 'webadmin/src/js/client.js', 'webadmin/src/js/appstore.js', 'webadmin/src/js/main.js', 'webadmin/src/views/*.js'], ['js-index']);
     gulp.watch(['webadmin/src/3rdparty/**/*'], ['3rdparty']);
 });
