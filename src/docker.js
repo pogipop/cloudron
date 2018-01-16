@@ -179,6 +179,14 @@ function createSubcontainer(app, name, cmd, options, callback) {
             },
             HostConfig: {
                 Binds: addons.getBindsSync(app, app.manifest.addons),
+                LogConfig: {
+                    Type: 'syslog',
+                    Config: {
+                        'tag': app.id,
+                        'syslog-address': 'udp://127.0.0.1:555',
+                        'syslog-format': 'rfc5424'
+                    }
+                },
                 Memory: memoryLimit / 2,
                 MemorySwap: memoryLimit, // Memory + Swap
                 PortBindings: isAppContainer ? dockerPortBindings : { },
