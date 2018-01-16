@@ -5,7 +5,7 @@
     <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, height=device-height" />
 
     <!-- this gets changed once we get the config (because angular has not loaded yet, we see template string for a flash) -->
-    <title> Cloudron Logs </title>
+    <title> Logs </title>
 
     <link id="favicon" href="/api/v1/cloudron/avatar" rel="icon" type="image/png">
 
@@ -54,6 +54,7 @@
 
             <!-- logs actions -->
             <div class="pull-right">
+                <a class="btn btn-primary" ng-click="showTerminal()"><i class="fa fa-terminal"></i> Terminal</a>
                 <a class="btn btn-primary" ng-click="clear()"><i class="fa fa-trash"></i> Clear View</a>
                 <a class="btn btn-primary" ng-href="{{ selected.url }}&format=short&lines=800"><i class="fa fa-download"></i> Download Full Logs</a>
             </div>

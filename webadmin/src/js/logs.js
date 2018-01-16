@@ -36,6 +36,12 @@ app.controller('LogsController', ['$scope', '$timeout', '$location', 'Client', f
         logViewer.empty();
     };
 
+    $scope.showTerminal = function () {
+        if (!$scope.selected) return;
+
+        window.open('/terminal.html?id=' + $scope.selected.value, 'Cloudron Terminal', 'width=1024,height=800');
+    };
+
     function showLogs() {
         if (!$scope.selected) return;
 

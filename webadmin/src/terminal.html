@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html ng-app="Application" ng-controller="TerminalController">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, height=device-height" />
+
+    <!-- this gets changed once we get the config (because angular has not loaded yet, we see template string for a flash) -->
+    <title> Terminal </title>
+
+    <link id="favicon" href="/api/v1/cloudron/avatar" rel="icon" type="image/png">
+
+    <!-- CSS -->
+    <link rel="stylesheet" type="text/css" href="/3rdparty/angular-ui-notification.min.css"/>
+    <link href="theme.css" rel="stylesheet">
+
+    <!-- Custom Fonts -->
+    <link href="3rdparty/css/font-awesome.min.css" rel="stylesheet" rel="stylesheet" type="text/css">
+
+    <!-- jQuery-->
+    <script src="3rdparty/js/jquery.min.js"></script>
+
+    <!-- Bootstrap Core JavaScript -->
+    <script src="3rdparty/js/bootstrap.min.js"></script>
+
+    <!-- Angularjs scripts -->
+    <script src="3rdparty/js/angular.min.js"></script>
+    <script src="3rdparty/js/angular-loader.min.js"></script>
+    <script src="3rdparty/js/angular-animate.min.js"></script>
+    <script src="3rdparty/js/angular-base64.min.js"></script>
+    <script src="3rdparty/js/angular-md5.min.js"></script>
+    <script src="3rdparty/js/angular-sanitize.min.js"></script>
+    <script src="3rdparty/js/angular-ui-notification.min.js"></script>
+
+
+    <!-- Angular directives for bootstrap https://angular-ui.github.io/bootstrap/ -->
+    <script src="3rdparty/js/ui-bootstrap-tpls-1.3.3.min.js"></script>
+
+    <!-- Clipboard handling -->
+    <script src="3rdparty/js/clipboard.min.js"></script>
+
+    <!-- xterm -->
+    <link href="3rdparty/xterm/xterm.css" rel="stylesheet">
+    <script src="3rdparty/xterm/xterm.js"></script>
+    <script src="3rdparty/xterm/addons/attach/attach.js"></script>
+    <script src="3rdparty/xterm/addons/fit/fit.js"></script>
+
+    <!-- Main Application -->
+    <script src="js/terminal.js"></script>
+
+</head>
+
+<body>
+
+    <!-- Modal download file -->
+    <div class="modal fade" id="downloadFileModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title">Download from {{ selected.name }}</h4>
+                </div>
+                <div class="modal-body">
+                    <form name="downloadFileForm" ng-submit="downloadFile.submit()">
+                        <div class="form-group" ng-class="{ 'has-error': downloadFileForm.filePath.$dirty && downloadFile.error }">
+                            <label class="control-label" for="inputDownloadFilePath">Path to file or directory</label>
+                            <div class="control-label" ng-show="{ 'has-error': downloadFileForm.filePath.$dirty && downloadFile.error }">
+                                <small>{{ downloadFile.error }}</small>
+                            </div>
+                            <input type="text" class="form-control" name="filePath" ng-model="downloadFile.filePath" required autofocus>
+                        </div>
+                        <input id="inputDownloadFilePath" class="ng-hide" type="submit" ng-disabled="!downloadFile.filePath"/>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <a id="fileDownloadLink" class="" ng-href="{{ downloadFile.downloadUrl() }}" target="_blank"></a>
+
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-success" ng-click="downloadFile.submit()" ng-disabled="!downloadFile.filePath"><i class="fa fa-circle-o-notch fa-spin" ng-show="downloadFile.busy"></i> Download</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal upload progress -->
+    <div class="modal fade" id="uploadProgressModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title">Uploading file to {{ selected.name }}</h4>
+                </div>
+                <div class="modal-body">
+                    <span><b>{{ (uploadProgress.current/1000/1000).toFixed(2) }}MB</b> (total {{ (uploadProgress.total/1000/1000).toFixed(2) }}MB)</span>
+                    <div class="progress progress-striped active">
+                        <div class="progress-bar progress-bar-success" role="progressbar" style="width: {{ 100*(uploadProgress.current/uploadProgress.total) }}%"></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal repair info -->
+    <div class="modal fade" id="repairAppModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title">Repair app {{ selected.name }} ?</h4>
+                </div>
+                <div class="modal-body">
+                    <p>This will restart the app in repair mode. The app will start in a paused state and can be used to fix broken plugins or database content.</p>
+                    <p class="text-danger text-bold">The app will not be reachable in repair mode!</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger" ng-click="repairAppBegin()">Repair</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="animateMe ng-hide layout-root terminal-view" ng-show="initialized">
+
+        <div class="terminal-controls">
+            <h3 style="display: inline-block;">{{ selected.name }}</h3>
+
+            <input type="file" id="fileUpload" class="hide"/>
+
+            <div class="pull-right">
+                <!-- addon actions -->
+                <a class="btn btn-success" ng-click="terminalInject('mysql')" ng-show="usesAddon('mysql')">MySQL</a>
+                <a class="btn btn-success" ng-click="terminalInject('postgresql')" ng-show="usesAddon('postgresql')">Postgres</a>
+                <a class="btn btn-success" ng-click="terminalInject('mongodb')" ng-show="usesAddon('mongodb')">MongoDB</a>
+                <a class="btn btn-success" ng-click="terminalInject('redis')" ng-show="usesAddon('redis')">Redis</a>
+
+                <!-- terminal actions -->
+                <a class="btn btn-primary" ng-click="restartApp()" ng-show="selected.type === 'app'" ng-disabled="restartAppBusy"><i class="fa fa-refresh" ng-class="{ 'fa-spin': restartAppBusy }"></i> Restart</a>
+                <a class="btn btn-primary" ng-click="uploadFile()" ng-show="selected.type === 'app' && !uploadProgress.busy"><i class="fa fa-upload"></i> Upload to /tmp</a>
+                <a class="btn btn-primary" ng-click="uploadProgress.show()" ng-show="uploadProgress.busy"><i class="fa fa-circle-o-notch fa-spin"></i> Uploading...</a>
+                <a class="btn btn-primary" ng-click="downloadFile.show()" ng-show="selected.type === 'app'"><i class="fa fa-download"></i> Download</a>
+                <a class="btn btn-primary" ng-click="repairApp()" ng-show="selected.type === 'app' && !selectedAppInfo.debugMode && !appBusy"><i class="fa fa-wrench"></i> Repair</a>
+                <a class="btn btn-danger" ng-click="repairAppDone()" ng-show="selectedAppInfo.debugMode && !appBusy"><i class="fa fa-wrench"></i> Repair Done</a>
+            </div>
+        </div>
+
+        <div class="terminal-container" id="terminalContainer" ng-hide="appBusy"></div>
+        <div class="terminal-container placeholder" ng-show="appBusy">
+            <h4>&nbsp;
+                <span ng-show="selectedAppInfo.installationState === 'pending_configure' && selectedAppInfo.debugMode">Restarting app for repair...</span>
+                <span ng-show="selectedAppInfo.installationState === 'pending_configure' && !selectedAppInfo.debugMode ">App is being reconfigured...</span>
+                <span ng-show="selectedAppInfo.installationState === 'installed' && !selectedAppInfo.debugMode">Waiting for app to start...</span>
+                <span ng-show="selectedAppInfo.installationState === 'pending_installed'">App is being installed...</span>
+            </h4>
+
+            <div class="progress" ng-show="appBusy" style="width: 80%">
+                <div class="progress-bar progress-bar-striped active" role="progressbar" style="width: 100%"></div>
+            </div>
+        </div>
+
+        <div class="contextMenuBackdrop">
+            <ul class="dropdown-menu" id="terminalContextMenu" style="position: absolute; display:none;">
+                <li><a href="" ng-click="terminalCopy()">Copy</a></li>
+                <li class="disabled"><a>For Paste use Ctrl+v</a></li>
+                <li role="separator" class="divider"></li>
+                <li><a href="" ng-click="terminalClear()">Clear</a></li>
+            </ul>
+        </div>
+
+    </div>
+
+</body>
+</html>
