@@ -9,7 +9,6 @@ arg_fqdn=""
 arg_admin_location=""
 arg_admin_fqdn=""
 arg_zone_name=""
-arg_is_custom_domain="false" # can be removed after 1.9
 arg_retire_reason=""
 arg_retire_info=""
 arg_version=""
@@ -36,10 +35,6 @@ while true; do
         arg_admin_fqdn=$(echo "$2" | $json adminFqdn)
         arg_zone_name=$(echo "$2" | $json zoneName)
         [[ "${arg_zone_name}" == "" ]] && arg_zone_name="${arg_fqdn}"
-
-        # can be removed after 1.9
-        arg_is_custom_domain=$(echo "$2" | $json isCustomDomain)
-        [[ "${arg_is_custom_domain}" == "" ]] && arg_is_custom_domain="true"
 
         arg_admin_location=$(echo "$2" | $json adminLocation)
         [[ "${arg_admin_location}" == "" ]] && arg_admin_location="my"
@@ -69,8 +64,8 @@ done
 
 echo "Parsed arguments:"
 echo "api server: ${arg_api_server_origin}"
+echo "admin fqdn: ${arg_admin_fqdn}"
 echo "fqdn: ${arg_fqdn}"
-echo "custom domain: ${arg_is_custom_domain}"
 echo "version: ${arg_version}"
 echo "web server: ${arg_web_server_origin}"
 echo "provider: ${arg_provider}"
