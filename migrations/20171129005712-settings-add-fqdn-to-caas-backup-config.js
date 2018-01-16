@@ -2,6 +2,7 @@
 
 var async = require('async');
 
+// NOTE: This migration is incorrect because 'caas' domain is not guaranteed to be present in all Caas cloudrons
 exports.up = function(db, callback) {
     db.all('SELECT * FROM domains', function (error, domains) {
         if (error) return callback(error);
