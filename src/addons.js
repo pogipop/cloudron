@@ -366,7 +366,7 @@ function setupSendMail(app, options, callback) {
             { name: 'MAIL_SMTP_SERVER', value: 'mail' },
             { name: 'MAIL_SMTP_PORT', value: '2525' },
             { name: 'MAIL_SMTPS_PORT', value: '4650' },
-            { name: 'MAIL_SMTP_USERNAME', value: mailbox.name },
+            { name: 'MAIL_SMTP_USERNAME', value: mailbox.name + '@' + app.domain },
             { name: 'MAIL_SMTP_PASSWORD', value: password },
             { name: 'MAIL_FROM', value: mailbox.name + '@' + app.domain },
             { name: 'MAIL_DOMAIN', value: app.domain }
@@ -402,7 +402,7 @@ function setupRecvMail(app, options, callback) {
         var env = [
             { name: 'MAIL_IMAP_SERVER', value: 'mail' },
             { name: 'MAIL_IMAP_PORT', value: '9993' },
-            { name: 'MAIL_IMAP_USERNAME', value: mailbox.name },
+            { name: 'MAIL_IMAP_USERNAME', value: mailbox.name + '@' + app.domain },
             { name: 'MAIL_IMAP_PASSWORD', value: password },
             { name: 'MAIL_TO', value: mailbox.name + '@' + app.domain },
             { name: 'MAIL_DOMAIN', value: app.domain }
