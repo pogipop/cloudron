@@ -370,11 +370,11 @@ angular.module('Application').controller('AppsController', ['$scope', '$location
     };
 
     $scope.showLogs = function (app) {
-        window.open('/logs.html?id=' + app.id, 'Logs', 'width=1024,height=800');
+        window.open('/logs.html?id=' + app.id, 'Logs', 'width=1024,height=800').focus();
     };
 
     $scope.showTerminal = function (app) {
-        window.open('/terminal.html?id=' + app.id, 'Terminal', 'width=1024,height=800');
+        window.open('/terminal.html?id=' + app.id, 'Terminal', 'width=1024,height=800').focus();
     };
 
     $scope.showError = function (app) {
