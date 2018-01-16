@@ -841,7 +841,7 @@ function cleanupBackup(backupConfig, backup, callback) {
     function done(error) {
         if (error) {
             debug('cleanupBackup: error removing backup %j : %s', backup, error.message);
-            callback();
+            return callback();
         }
 
         // prune empty directory if possible
