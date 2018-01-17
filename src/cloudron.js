@@ -176,8 +176,8 @@ function autoprovision(callback) {
         var name;
         switch (key) {
         case 'dnsConfig': name = 'dns_config'; break;
-        case 'tlsConfig': name = 'tls_config'; break;
-        case 'backupConfig': name = 'backup_config'; break;
+        case 'tlsConfig': name = settings.TLS_CONFIG_KEY; break;
+        case 'backupConfig': name = settings.BACKUP_CONFIG_KEY; break;
         case 'tlsCert':
             debug(`autoprovision: ${key}`);
             return fs.writeFile(path.join(paths.NGINX_CERT_DIR, 'host.cert'), conf[key], iteratorDone);
