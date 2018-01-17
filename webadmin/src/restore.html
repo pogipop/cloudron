@@ -122,7 +122,7 @@
 
                                     <div class="input-group">
                                         <input type="file" id="gcsKeyFileInput" style="display:none"/>
-                                        <input type="text" class="form-control" placeholder="Service Account Key" ng-model="gcsKey.keyFileName" id="gcsKeyInput" name="cert" onclick="getElementById('gcsKeyFileInput').click();" style="cursor: pointer;" ng-disabled="busy" required>
+                                        <input type="text" class="form-control" placeholder="Service Account Key" ng-model="gcsKey.keyFileName" id="gcsKeyInput" name="cert" onclick="getElementById('gcsKeyFileInput').click();" style="cursor: pointer;" ng-disabled="busy" ng-required="provider === 'gcs'">
                                         <span class="input-group-addon">
                                       <i class="fa fa-upload" onclick="getElementById('gcsKeyFileInput').click();"></i>
                                     </span>
