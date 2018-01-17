@@ -16,6 +16,7 @@ var async = require('async'),
     superagent = require('superagent'),
     server = require('../../server.js'),
     settings = require('../../settings.js'),
+    settingsdb = require('../../settingsdb.js'),
     shell = require('../../shell.js'),
     tokendb = require('../../tokendb.js');
 
@@ -34,7 +35,8 @@ function setup(done) {
     async.series([
         server.start.bind(server),
         database._clear,
-        settings.setBackupConfig.bind(null, { provider: 'filesystem', backupFolder: '/tmp', format: 'tgz' })
+        settings.setBackupConfig.bind(null, { provider: 'filesystem', backupFolder: '/tmp', format: 'tgz' }),
+        settingsdb.set.bind(null, settings.APPSTORE_CONFIG_KEY, JSON.stringify({ userId: 'USER_ID', cloudronId: 'CLOUDRON_ID', token: 'ACCESS_TOKEN' }))
     ], done);
 }
 
@@ -580,7 +582,6 @@ describe('Cloudron', function () {
         });
 
         it('succeeds with ticket type', function (done) {
-            var scope1 = nock(config.apiServerOrigin()).post('/api/v1/exchangeBoxTokenWithUserToken?token=APPSTORE_TOKEN').reply(201, { userId: 'USER_ID', cloudronId: 'CLOUDRON_ID', token: 'ACCESS_TOKEN' });
             var scope2 = nock(config.apiServerOrigin())
                 .filteringRequestBody(function (/* unusedBody */) { return ''; }) // strip out body
                 .post('/api/v1/users/USER_ID/cloudrons/CLOUDRON_ID/feedback?accessToken=ACCESS_TOKEN')
@@ -591,14 +592,12 @@ describe('Cloudron', function () {
                 .query({ access_token: token })
                 .end(function (error, result) {
                     expect(result.statusCode).to.equal(201);
-                    expect(scope1.isDone()).to.be.ok();
                     expect(scope2.isDone()).to.be.ok();
                     done();
                 });
         });
 
         it('succeeds with app type', function (done) {
-            var scope1 = nock(config.apiServerOrigin()).post('/api/v1/exchangeBoxTokenWithUserToken?token=APPSTORE_TOKEN').reply(201, { userId: 'USER_ID', cloudronId: 'CLOUDRON_ID', token: 'ACCESS_TOKEN' });
             var scope2 = nock(config.apiServerOrigin())
                 .filteringRequestBody(function (/* unusedBody */) { return ''; }) // strip out body
                 .post('/api/v1/users/USER_ID/cloudrons/CLOUDRON_ID/feedback?accessToken=ACCESS_TOKEN')
@@ -609,7 +608,6 @@ describe('Cloudron', function () {
                 .query({ access_token: token })
                 .end(function (error, result) {
                     expect(result.statusCode).to.equal(201);
-                    expect(scope1.isDone()).to.be.ok();
                     expect(scope2.isDone()).to.be.ok();
                     done();
                 });
