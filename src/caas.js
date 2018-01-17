@@ -22,7 +22,6 @@ var assert = require('assert'),
     _ = require('underscore');
 
 const RETIRE_CMD = path.join(__dirname, 'scripts/retire.sh');
-var gBoxAndUserDetails = null;         // cached cloudron details like region,size...
 
 function CaasError(reason, errorOrMessage) {
     assert.strictEqual(typeof reason, 'string');
@@ -182,22 +181,22 @@ function sendHeartbeat() {
 function getBoxAndUserDetails(callback) {
     assert.strictEqual(typeof callback, 'function');
 
-    if (gBoxAndUserDetails) return callback(null, gBoxAndUserDetails);
-
     if (config.provider() !== 'caas') return callback(null, {});
 
-    superagent
-        .get(config.apiServerOrigin() + '/api/v1/boxes/' + config.fqdn())
-        .query({ token: config.token() })
-        .timeout(30 * 1000)
-        .end(function (error, result) {
-            if (error && !error.response) return callback(new CaasError(CaasError.EXTERNAL_ERROR, 'Cannot reach appstore'));
-            if (result.statusCode !== 200) return callback(new CaasError(CaasError.EXTERNAL_ERROR, util.format('%s %j', result.statusCode, result.body)));
+    getCaasConfig(function (error, caasConfig) {
+        if (error) return callback(error);
 
-            gBoxAndUserDetails = result.body;
+        superagent
+            .get(config.apiServerOrigin() + '/api/v1/boxes/' + caasConfig.boxId)
+            .query({ token: caasConfig.token })
+            .timeout(30 * 1000)
+            .end(function (error, result) {
+                if (error && !error.response) return callback(new CaasError(CaasError.EXTERNAL_ERROR, 'Cannot reach appstore'));
+                if (result.statusCode !== 200) return callback(new CaasError(CaasError.EXTERNAL_ERROR, util.format('%s %j', result.statusCode, result.body)));
 
-            return callback(null, gBoxAndUserDetails);
-        });
+                return callback(null, result.body);
+            });
+    });
 }
 
 function setPtrRecord(domain, callback) {
