@@ -423,7 +423,6 @@ describe('App API', function () {
 
     it('app install fails due to purchase failure', function (done) {
         var fake1 = nock(config.apiServerOrigin()).get('/api/v1/apps/test').reply(200, { manifest: APP_MANIFEST });
-        var fake2 = nock(config.apiServerOrigin()).post('/api/v1/exchangeBoxTokenWithUserToken?token=APPSTORE_TOKEN').reply(403);
 
         superagent.post(SERVER_URL + '/api/v1/apps/install')
                .query({ access_token: token })
@@ -431,14 +430,12 @@ describe('App API', function () {
                .end(function (err, res) {
             expect(res.statusCode).to.equal(503);
             expect(fake1.isDone()).to.be.ok();
-            expect(fake2.isDone()).to.be.ok();
             done();
         });
     });
 
     it('app install succeeds with purchase', function (done) {
         var fake1 = nock(config.apiServerOrigin()).get('/api/v1/apps/' + APP_STORE_ID).reply(200, { manifest: APP_MANIFEST });
-        var fake2 = nock(config.apiServerOrigin()).post('/api/v1/exchangeBoxTokenWithUserToken?token=APPSTORE_TOKEN').reply(201, { userId: 'USER_ID', cloudronId: 'CLOUDRON_ID', token: 'ACCESS_TOKEN' });
         var fake3 = nock(config.apiServerOrigin()).post(function (uri) { return uri.indexOf('/api/v1/users/USER_ID/cloudrons/CLOUDRON_ID/apps/') >= 0; }, { 'appstoreId': APP_STORE_ID }).reply(201, { });
 
         superagent.post(SERVER_URL + '/api/v1/apps/install')
@@ -546,7 +543,6 @@ describe('App API', function () {
     });
 
     it('can uninstall app', function (done) {
-        var fake1 = nock(config.apiServerOrigin()).post('/api/v1/exchangeBoxTokenWithUserToken?token=APPSTORE_TOKEN').reply(201, { userId: 'USER_ID', cloudronId: 'CLOUDRON_ID', token: 'ACCESS_TOKEN' });
         var fake2 = nock(config.apiServerOrigin()).get(function (uri) { return uri.indexOf('/api/v1/users/USER_ID/cloudrons/CLOUDRON_ID/apps/') >= 0; }).reply(200, { });
         var fake3 = nock(config.apiServerOrigin()).delete(function (uri) { return uri.indexOf('/api/v1/users/USER_ID/cloudrons/CLOUDRON_ID/apps/') >= 0; }).reply(204, { });
 
@@ -561,7 +557,6 @@ describe('App API', function () {
 
     it('app install succeeds again', function (done) {
         var fake1 = nock(config.apiServerOrigin()).get('/api/v1/apps/' + APP_STORE_ID).reply(200, { manifest: APP_MANIFEST });
-        var fake2 = nock(config.apiServerOrigin()).post('/api/v1/exchangeBoxTokenWithUserToken?token=APPSTORE_TOKEN').reply(201, { userId: 'USER_ID', cloudronId: 'CLOUDRON_ID', token: 'ACCESS_TOKEN' });
         var fake3 = nock(config.apiServerOrigin()).post(function (uri) { return uri.indexOf('/api/v1/users/USER_ID/cloudrons/CLOUDRON_ID/apps/') >= 0; }, { 'appstoreId': APP_STORE_ID }).reply(201, { });
 
         superagent.post(SERVER_URL + '/api/v1/apps/install')
@@ -674,7 +669,6 @@ describe('App installation', function () {
 
     it('can install test app', function (done) {
         var fake1 = nock(config.apiServerOrigin()).get('/api/v1/apps/' + APP_STORE_ID).reply(200, { manifest: APP_MANIFEST });
-        var fake2 = nock(config.apiServerOrigin()).post('/api/v1/exchangeBoxTokenWithUserToken?token=APPSTORE_TOKEN').reply(201, { userId: 'USER_ID', cloudronId: 'CLOUDRON_ID', token: 'ACCESS_TOKEN' });
         var fake3 = nock(config.apiServerOrigin()).post(function (uri) { return uri.indexOf('/api/v1/users/USER_ID/cloudrons/CLOUDRON_ID/apps/') >= 0; }, { 'appstoreId': APP_STORE_ID }).reply(201, { });
 
         var count = 0;
@@ -1103,7 +1097,6 @@ describe('App installation', function () {
     });
 
     it('can uninstall app', function (done) {
-        var fake1 = nock(config.apiServerOrigin()).post('/api/v1/exchangeBoxTokenWithUserToken?token=APPSTORE_TOKEN').reply(201, { userId: 'USER_ID', cloudronId: 'CLOUDRON_ID', token: 'ACCESS_TOKEN' });
         var fake2 = nock(config.apiServerOrigin()).get(function (uri) { return uri.indexOf('/api/v1/users/USER_ID/cloudrons/CLOUDRON_ID/apps/') >= 0; }).reply(200, { });
         var fake3 = nock(config.apiServerOrigin()).delete(function (uri) { return uri.indexOf('/api/v1/users/USER_ID/cloudrons/CLOUDRON_ID/apps/') >= 0; }).reply(204, { });
 
