@@ -720,7 +720,6 @@ function doUpdate(boxUpdateInfo, callback) {
         // NOTE: this data is opaque and will be passed through the installer.sh
         var data= {
             provider: config.provider(),
-            token: config.token(),
             apiServerOrigin: config.apiServerOrigin(),
             webServerOrigin: config.webServerOrigin(),
             fqdn: config.fqdn(),
@@ -730,11 +729,9 @@ function doUpdate(boxUpdateInfo, callback) {
             zoneName: config.zoneName(),
 
             appstore: {
-                token: config.token(),
                 apiServerOrigin: config.apiServerOrigin()
             },
             caas: {
-                token: config.token(),
                 apiServerOrigin: config.apiServerOrigin(),
                 webServerOrigin: config.webServerOrigin()
             },

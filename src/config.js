@@ -21,7 +21,6 @@ exports = module.exports = {
     setFqdn: setFqdn,
     setAdminFqdn: setAdminFqdn,
     setAdminLocation: setAdminLocation,
-    token: token,
     version: version,
     setVersion: setVersion,
     database: database,
@@ -73,7 +72,6 @@ function saveSync() {
     // only save values we want to have in the cloudron.conf, see start.sh
     var conf = {
         version: data.version,
-        token: data.token,
         apiServerOrigin: data.apiServerOrigin,
         webServerOrigin: data.webServerOrigin,
         fqdn: data.fqdn,
@@ -102,7 +100,6 @@ function initConfig() {
     data.zoneName = '';
     data.adminLocation = 'my';
     data.port = 3000;
-    data.token = null;
     data.version = null;
     data.apiServerOrigin = null;
     data.webServerOrigin = null;
@@ -124,7 +121,6 @@ function initConfig() {
     if (exports.TEST) {
         data.version = '1.1.1-test';
         data.port = 5454;
-        data.token = 'APPSTORE_TOKEN';
         data.apiServerOrigin = 'http://localhost:6060'; // hock doesn't support https
         data.database.password = '';
         data.database.name = 'boxtest';
@@ -220,10 +216,6 @@ function internalAdminOrigin() {
 
 function sysadminOrigin() {
     return 'http://127.0.0.1:' + get('sysadminPort');
-}
-
-function token() {
-    return get('token');
 }
 
 function version() {

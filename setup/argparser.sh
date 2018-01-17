@@ -12,7 +12,6 @@ arg_zone_name=""
 arg_is_custom_domain="false" # can be removed after 1.9
 arg_retire_reason=""
 arg_retire_info=""
-arg_token=""
 arg_version=""
 arg_web_server_origin=""
 arg_provider=""
@@ -58,8 +57,6 @@ while true; do
         arg_is_demo=$(echo "$2" | $json isDemo)
         [[ "${arg_is_demo}" == "" ]] && arg_is_demo="false"
 
-        arg_token=$(echo "$2" | $json token)
-
         arg_provider=$(echo "$2" | $json provider)
         [[ "${arg_provider}" == "" ]] && arg_provider="generic"
 
@@ -74,8 +71,6 @@ echo "Parsed arguments:"
 echo "api server: ${arg_api_server_origin}"
 echo "fqdn: ${arg_fqdn}"
 echo "custom domain: ${arg_is_custom_domain}"
-# do not dump these as they might become available via logs API
-#echo "token: ${arg_token}"
 echo "version: ${arg_version}"
 echo "web server: ${arg_web_server_origin}"
 echo "provider: ${arg_provider}"
