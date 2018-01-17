@@ -15,6 +15,7 @@ var assert = require('assert'),
     locker = require('./locker.js'),
     path = require('path'),
     progress = require('./progress.js'),
+    settings = require('./settings.js'),
     shell = require('./shell.js'),
     superagent = require('superagent'),
     util = require('util'),
@@ -62,8 +63,19 @@ function retire(reason, info, callback) {
     shell.sudo('retire', [ RETIRE_CMD, reason, JSON.stringify(info), JSON.stringify(data) ], callback);
 }
 
-function doMigrate(options, callback) {
+function getCaasConfig(callback) {
+    assert.strictEqual(typeof callback, 'function');
+
+    settings.getCaasConfig(function (error, result) {
+        if (error) return callback(new CaasError(CaasError.INTERNAL_ERROR, error));
+
+        callback(null, result);
+    });
+}
+
+function doMigrate(options, caasConfig, callback) {
     assert.strictEqual(typeof options, 'object');
+    assert.strictEqual(typeof caasConfig, 'object');
     assert.strictEqual(typeof callback, 'function');
 
     var error = locker.lock(locker.OP_MIGRATE);
@@ -84,8 +96,8 @@ function doMigrate(options, callback) {
         debug('migrate: domain: %s size %s region %s', options.domain, options.size, options.region);
 
         superagent
-            .post(config.apiServerOrigin() + '/api/v1/boxes/' + config.fqdn() + '/migrate')
-            .query({ token: config.token() })
+            .post(config.apiServerOrigin() + '/api/v1/boxes/' + caasConfig.boxId + '/migrate')
+            .query({ token: caasConfig.token })
             .send(options)
             .timeout(30 * 1000)
             .end(function (error, result) {
@@ -109,7 +121,11 @@ function changePlan(options, callback) {
 
     if (config.isDemo()) return callback(new CaasError(CaasError.BAD_FIELD, 'Not allowed in demo mode'));
 
-    doMigrate(options, callback);
+    getCaasConfig(function (error, result) {
+        if (error) return callback(error);
+
+        doMigrate(options, result, callback);
+    });
 }
 
 // this function expects a lock
@@ -126,32 +142,40 @@ function upgrade(boxUpdateInfo, callback) {
     backups.backupBoxAndApps({ userId: null, username: 'upgrader' }, function (error) {
         if (error) return upgradeError(error);
 
-        superagent.post(config.apiServerOrigin() + '/api/v1/boxes/' + config.fqdn() + '/upgrade')
-            .query({ token: config.token() })
-            .send({ version: boxUpdateInfo.version })
-            .timeout(30 * 1000)
-            .end(function (error, result) {
-                if (error && !error.response) return upgradeError(new Error('Network error making upgrade request: ' + error));
-                if (result.statusCode !== 202) return upgradeError(new Error(util.format('Server not ready to upgrade. statusCode: %s body: %j', result.status, result.body)));
+        getCaasConfig(function (error, result) {
+            if (error) return upgradeError(error);
 
-                progress.set(progress.UPDATE, 10, 'Updating base system');
+            superagent.post(config.apiServerOrigin() + '/api/v1/boxes/' + result.boxId + '/upgrade')
+                .query({ token: result.token })
+                .send({ version: boxUpdateInfo.version })
+                .timeout(30 * 1000)
+                .end(function (error, result) {
+                    if (error && !error.response) return upgradeError(new Error('Network error making upgrade request: ' + error));
+                    if (result.statusCode !== 202) return upgradeError(new Error(util.format('Server not ready to upgrade. statusCode: %s body: %j', result.status, result.body)));
 
-                // no need to unlock since this is the last thing we ever do on this box
-                callback();
+                    progress.set(progress.UPDATE, 10, 'Updating base system');
 
-                retire('upgrade');
-            });
+                    // no need to unlock since this is the last thing we ever do on this box
+                    callback();
+
+                    retire('upgrade');
+                });
+        });
     });
 }
 
 function sendHeartbeat() {
     assert(config.provider() === 'caas', 'Heartbeat is only sent for managed cloudrons');
 
-    var url = config.apiServerOrigin() + '/api/v1/boxes/' + config.fqdn() + '/heartbeat';
-    superagent.post(url).query({ token: config.token(), version: config.version() }).timeout(30 * 1000).end(function (error, result) {
-        if (error && !error.response) debug('Network error sending heartbeat.', error);
-        else if (result.statusCode !== 200) debug('Server responded to heartbeat with %s %s', result.statusCode, result.text);
-        else debug('Heartbeat sent to %s', url);
+    getCaasConfig(function (error, result) {
+        if (error) return debug('Caas config missing', error);
+
+        var url = config.apiServerOrigin() + '/api/v1/boxes/' + result.boxId + '/heartbeat';
+        superagent.post(url).query({ token: result.token, version: config.version() }).timeout(30 * 1000).end(function (error, result) {
+            if (error && !error.response) debug('Network error sending heartbeat.', error);
+            else if (result.statusCode !== 200) debug('Server responded to heartbeat with %s %s', result.statusCode, result.text);
+            else debug('Heartbeat sent to %s', url);
+        });
     });
 }
 
@@ -180,15 +204,19 @@ function setPtrRecord(domain, callback) {
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    superagent
-        .post(config.apiServerOrigin() + '/api/v1/boxes/' + config.fqdn() + '/ptr')
-        .query({ token: config.token() })
-        .send({ domain: domain })
-        .timeout(5 * 1000)
-        .end(function (error, result) {
-            if (error && !error.response) return callback(new CaasError(CaasError.EXTERNAL_ERROR, 'Cannot reach appstore'));
-            if (result.statusCode !== 202) return callback(new CaasError(CaasError.EXTERNAL_ERROR, util.format('%s %j', result.statusCode, result.body)));
+    getCaasConfig(function (error, result) {
+        if (error) return callback(error);
 
-            return callback(null);
-        });
+        superagent
+            .post(config.apiServerOrigin() + '/api/v1/boxes/' + result.boxId + '/ptr')
+            .query({ token: result.token })
+            .send({ domain: domain })
+            .timeout(5 * 1000)
+            .end(function (error, result) {
+                if (error && !error.response) return callback(new CaasError(CaasError.EXTERNAL_ERROR, 'Cannot reach appstore'));
+                if (result.statusCode !== 202) return callback(new CaasError(CaasError.EXTERNAL_ERROR, util.format('%s %j', result.statusCode, result.body)));
+
+                return callback(null);
+            });
+    });
 }

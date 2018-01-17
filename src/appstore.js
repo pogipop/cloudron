@@ -56,23 +56,12 @@ var NOOP_CALLBACK = function (error) { if (error) debug(error); };
 function getAppstoreConfig(callback) {
     assert.strictEqual(typeof callback, 'function');
 
-    // Caas Cloudrons do not store appstore credentials in their local database
-    if (config.provider() === 'caas') {
-        var url = config.apiServerOrigin() + '/api/v1/exchangeBoxTokenWithUserToken';
-        superagent.post(url).query({ token: config.token() }).timeout(30 * 1000).end(function (error, result) {
-            if (error && !error.response) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, error));
-            if (result.statusCode !== 201) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, util.format('App unpurchase failed. %s %j', result.status, result.body)));
+    settings.getAppstoreConfig(function (error, result) {
+        if (error) return callback(new AppstoreError(AppstoreError.INTERNAL_ERROR, error));
+        if (!result.token) return callback(new AppstoreError(AppstoreError.BILLING_REQUIRED));
 
-            callback(null, result.body);
-        });
-    } else {
-        settings.getAppstoreConfig(function (error, result) {
-            if (error) return callback(new AppstoreError(AppstoreError.INTERNAL_ERROR, error));
-            if (!result.token) return callback(new AppstoreError(AppstoreError.BILLING_REQUIRED));
-
-            callback(null, result);
-        });
-    }
+        callback(null, result);
+    });
 }
 
 function getSubscription(callback) {

@@ -27,6 +27,8 @@ exports = module.exports = {
     getTlsConfig: getTlsConfig,
     setTlsConfig: setTlsConfig,
 
+    getCaasConfig: getCaasConfig,
+
     getAppstoreConfig: getAppstoreConfig,
     setAppstoreConfig: setAppstoreConfig,
 
@@ -57,6 +59,7 @@ exports = module.exports = {
     TLS_CONFIG_KEY: 'tls_config',
     UPDATE_CONFIG_KEY: 'update_config',
     APPSTORE_CONFIG_KEY: 'appstore_config',
+    CAAS_CONFIG_KEY: 'caas_config',
     MAIL_CONFIG_KEY: 'mail_config',
     MAIL_RELAY_KEY: 'mail_relay',
     CATCH_ALL_ADDRESS_KEY: 'catch_all_address',
@@ -472,6 +475,17 @@ function setCatchAllAddress(address, callback) {
         platform.createMailConfig(NOOP_CALLBACK);
 
         callback(null);
+    });
+}
+
+function getCaasConfig(callback) {
+    assert.strictEqual(typeof callback, 'function');
+
+    settingsdb.get(exports.CAAS_CONFIG_KEY, function (error, value) {
+        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(null, gDefaults[exports.APPSTORE_CONFIG_KEY]);
+        if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
+
+        callback(null, JSON.parse(value));
     });
 }
 
