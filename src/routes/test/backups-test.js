@@ -24,7 +24,6 @@ var token = null;
 function setup(done) {
     nock.cleanAll();
     config._reset();
-    config.set('provider', 'caas');
     config.setVersion('1.2.3');
     config.setFqdn('example-backups-test.com');
 
@@ -33,20 +32,13 @@ function setup(done) {
 
         database._clear,
 
-        settingsdb.set.bind(null, settings.CAAS_CONFIG_KEY, JSON.stringify({ boxId: 'BOX_ID', token: 'ACCESS_TOKEN2' })),
-
         function createAdmin(callback) {
-            var scope1 = nock(config.apiServerOrigin()).get('/api/v1/boxes/BOX_ID/setup/verify?setupToken=somesetuptoken').reply(200, {});
-            var scope2 = nock(config.apiServerOrigin()).post('/api/v1/boxes/BOX_ID/setup/done?setupToken=somesetuptoken').reply(201, {});
-
             superagent.post(SERVER_URL + '/api/v1/cloudron/activate')
                 .query({ setupToken: 'somesetuptoken' })
                 .send({ username: USERNAME, password: PASSWORD, email: EMAIL })
                 .end(function (error, result) {
                     expect(result).to.be.ok();
                     expect(result.statusCode).to.eql(201);
-                    expect(scope1.isDone()).to.be.ok();
-                    expect(scope2.isDone()).to.be.ok();
 
                     // stash token for further use
                     token = result.body.token;
@@ -75,9 +67,6 @@ function cleanup(done) {
 }
 
 describe('Backups API', function () {
-    var scope1 = nock(config.apiServerOrigin()).post('/api/v1/boxes/BOX_ID/awscredentials?token=BACKUP_TOKEN')
-        .reply(201, { credentials: { AccessKeyId: 'accessKeyId', SecretAccessKey: 'secretAccessKey' } }, { 'Content-Type': 'application/json' });
-
     before(setup);
 
     after(cleanup);
@@ -106,13 +95,7 @@ describe('Backups API', function () {
                 .end(function (error, result) {
                     expect(result.statusCode).to.equal(202);
 
-                    function checkAppstoreServerCalled() {
-                        if (scope1.isDone()) return done();
-
-                        setTimeout(checkAppstoreServerCalled, 100);
-                    }
-
-                    checkAppstoreServerCalled();
+                    done();
                 });
         });
     });
