@@ -255,7 +255,7 @@ angular.module('Application').controller('EmailController', ['$scope', '$locatio
         Client.getDomain($scope.config.fqdn, function (error, result) {
             if (error) return console.error(error);
 
-            $scope.dnsConfig = result.config;
+            $scope.dnsConfig = result;
         });
     }
 
