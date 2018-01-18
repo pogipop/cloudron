@@ -127,7 +127,20 @@ app.controller('RestoreController', ['$scope', '$http', 'Client', function ($sco
             backupConfig.backupFolder = $scope.backupFolder;
         }
 
+        if ($scope.backupId.indexOf('/') === -1) {
+            $scope.error.generic = 'Backup id must include the directory path';
+            $scope.error.backupId = true;
+            $scope.busy = false;
+            return;
+        }
+
         var version = $scope.backupId.match(/_v(\d+.\d+.\d+)/);
+        if (!version) {
+            $scope.error.generic = 'Backup id is missing version information';
+            $scope.error.backupId = true;
+            $scope.busy = false;
+            return;
+        }
 
         Client.restore(backupConfig, $scope.backupId.replace(/\.tar\.gz(\.enc)?$/, ''), version ? version[1] : '', function (error) {
             $scope.busy = false;
