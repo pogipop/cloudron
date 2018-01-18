@@ -13,7 +13,8 @@ var appdb = require('../../appdb.js'),
     nock = require('nock'),
     superagent = require('superagent'),
     server = require('../../server.js'),
-    settings = require('../../settings.js');
+    settings = require('../../settings.js'),
+    settingsdb = require('../../settingsdb.js');
 
 var SERVER_URL = 'http://localhost:' + config.get('port');
 
@@ -23,6 +24,7 @@ var token = null;
 function setup(done) {
     nock.cleanAll();
     config._reset();
+    config.set('provider', 'caas');
     config.setVersion('1.2.3');
     config.setFqdn('example-backups-test.com');
 
@@ -31,9 +33,11 @@ function setup(done) {
 
         database._clear,
 
+        settingsdb.set.bind(null, settings.CAAS_CONFIG_KEY, JSON.stringify({ boxId: 'BOX_ID', token: 'ACCESS_TOKEN2' })),
+
         function createAdmin(callback) {
-            var scope1 = nock(config.apiServerOrigin()).get('/api/v1/boxes/' + config.fqdn() + '/setup/verify?setupToken=somesetuptoken').reply(200, {});
-            var scope2 = nock(config.apiServerOrigin()).post('/api/v1/boxes/' + config.fqdn() + '/setup/done?setupToken=somesetuptoken').reply(201, {});
+            var scope1 = nock(config.apiServerOrigin()).get('/api/v1/boxes/BOX_ID/setup/verify?setupToken=somesetuptoken').reply(200, {});
+            var scope2 = nock(config.apiServerOrigin()).post('/api/v1/boxes/BOX_ID/setup/done?setupToken=somesetuptoken').reply(201, {});
 
             superagent.post(SERVER_URL + '/api/v1/cloudron/activate')
                 .query({ setupToken: 'somesetuptoken' })
@@ -71,7 +75,7 @@ function cleanup(done) {
 }
 
 describe('Backups API', function () {
-    var scope1 = nock(config.apiServerOrigin()).post('/api/v1/boxes/' + config.fqdn() + '/awscredentials?token=BACKUP_TOKEN')
+    var scope1 = nock(config.apiServerOrigin()).post('/api/v1/boxes/BOX_ID/awscredentials?token=BACKUP_TOKEN')
         .reply(201, { credentials: { AccessKeyId: 'accessKeyId', SecretAccessKey: 'secretAccessKey' } }, { 'Content-Type': 'application/json' });
 
     before(setup);

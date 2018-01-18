@@ -23,6 +23,8 @@ var appstore = require('../appstore.js'),
     AppstoreError = require('../appstore.js').AppstoreError,
     assert = require('assert'),
     async = require('async'),
+    caas = require('../caas.js'),
+    CaasError = require('../caas.js').CaasError,
     cloudron = require('../cloudron.js'),
     CloudronError = cloudron.CloudronError,
     config = require('../config.js'),
@@ -64,17 +66,15 @@ function activate(req, res, next) {
         // only in caas case do we have to notify the api server about activation
         if (config.provider() !== 'caas') return next(new HttpSuccess(201, info));
 
-        // Now let the api server know we got activated
-        superagent.post(config.apiServerOrigin() + '/api/v1/boxes/' + config.fqdn() + '/setup/done').query({ setupToken: req.query.setupToken })
-            .timeout(30 * 1000)
-            .end(function (error, result) {
-                if (error && !error.response) return next(new HttpError(500, error));
-                if (result.statusCode === 403) return next(new HttpError(403, 'Invalid token'));
-                if (result.statusCode === 409) return next(new HttpError(409, 'Already setup'));
-                if (result.statusCode !== 201) return next(new HttpError(500, result.text || 'Internal error'));
+        caas.setupDone(req.query.setupToken, function (error) {
+            if (error && error.reason === CaasError.BAD_STATE) return next(new HttpError(409, 'Already setup'));
+            if (error && error.reason === CaasError.INVALID_TOKEN) return next(new HttpError(403, 'Invalid token'));
+            if (error && error.reason === CaasError.EXTERNAL_ERROR) return next(new HttpError(503, error.message));
 
-                next(new HttpSuccess(201, info));
-            });
+            if (error) return next(new HttpError(500, error));
+
+            next(new HttpSuccess(201, info));
+        });
     });
 }
 
@@ -125,22 +125,19 @@ function dnsSetup(req, res, next) {
 function setupTokenAuth(req, res, next) {
     assert.strictEqual(typeof req.query, 'object');
 
-    if (config.provider() === 'caas') {
-        if (typeof req.query.setupToken !== 'string' || !req.query.setupToken) return next(new HttpError(400, 'setupToken must be a non empty string'));
+    if (config.provider() !== 'caas') return next();
 
-        superagent.get(config.apiServerOrigin() + '/api/v1/boxes/' + config.fqdn() + '/setup/verify').query({ setupToken:req.query.setupToken })
-            .timeout(30 * 1000)
-            .end(function (error, result) {
-                if (error && !error.response) return next(new HttpError(500, error));
-                if (result.statusCode === 403) return next(new HttpError(403, 'Invalid token'));
-                if (result.statusCode === 409) return next(new HttpError(409, 'Already setup'));
-                if (result.statusCode !== 200) return next(new HttpError(500, result.text || 'Internal error'));
+    if (typeof req.query.setupToken !== 'string' || !req.query.setupToken) return next(new HttpError(400, 'setupToken must be a non empty string'));
 
-                next();
-            });
-    } else {
+    caas.verifySetupToken(req.query.setupToken, function (error) {
+        if (error && error.reason === CaasError.BAD_STATE) return next(new HttpError(409, 'Already setup'));
+        if (error && error.reason === CaasError.INVALID_TOKEN) return next(new HttpError(403, 'Invalid token'));
+        if (error && error.reason === CaasError.EXTERNAL_ERROR) return next(new HttpError(503, error.message));
+
+        if (error) return next(new HttpError(500, error));
+
         next();
-    }
+    });
 }
 
 function providerTokenAuth(req, res, next) {

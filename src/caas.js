@@ -1,11 +1,16 @@
 'use strict';
 
 exports = module.exports = {
+    verifySetupToken: verifySetupToken,
+    setupDone: setupDone,
+
     changePlan: changePlan,
     upgrade: upgrade,
     sendHeartbeat: sendHeartbeat,
     getBoxAndUserDetails: getBoxAndUserDetails,
-    setPtrRecord: setPtrRecord
+    setPtrRecord: setPtrRecord,
+
+    CaasError: CaasError
 };
 
 var assert = require('assert'),
@@ -43,9 +48,10 @@ function CaasError(reason, errorOrMessage) {
 }
 util.inherits(CaasError, Error);
 CaasError.BAD_FIELD = 'Field error';
+CaasError.BAD_STATE = 'Bad state';
+CaasError.INVALID_TOKEN = 'Invalid Token';
 CaasError.INTERNAL_ERROR = 'Internal Error';
 CaasError.EXTERNAL_ERROR = 'External Error';
-CaasError.BAD_STATE = 'Bad state';
 
 var NOOP_CALLBACK = function (error) { if (error) debug(error); };
 
@@ -72,6 +78,46 @@ function getCaasConfig(callback) {
     });
 }
 
+function verifySetupToken(setupToken, callback) {
+    assert.strictEqual(typeof setupToken, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    settings.getCaasConfig(function (error, caasConfig) {
+        if (error) return callback(new CaasError(CaasError.INTERNAL_ERROR, error));
+
+        superagent.get(config.apiServerOrigin() + '/api/v1/boxes/' + caasConfig.boxId + '/setup/verify').query({ setupToken: setupToken })
+            .timeout(30 * 1000)
+            .end(function (error, result) {
+                if (error && !error.response) return callback(new CaasError(CaasError.EXTERNAL_ERROR, error));
+                if (result.statusCode === 403) return callback(new CaasError(CaasError.INVALID_TOKEN));
+                if (result.statusCode === 409) return callback(new CaasError(CaasError.BAD_STATE, 'Already setup'));
+                if (result.statusCode !== 200) return callback(new CaasError(CaasError.EXTERNAL_ERROR, error));
+
+                callback(null);
+            });
+    });
+}
+
+function setupDone(setupToken, callback) {
+    assert.strictEqual(typeof setupToken, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    settings.getCaasConfig(function (error, caasConfig) {
+        if (error) return callback(new CaasError(CaasError.INTERNAL_ERROR, error));
+
+        // Now let the api server know we got activated
+        superagent.post(config.apiServerOrigin() + '/api/v1/boxes/' + caasConfig.boxId + '/setup/done').query({ setupToken: setupToken })
+            .timeout(30 * 1000)
+            .end(function (error, result) {
+                if (error && !error.response) return callback(new CaasError(CaasError.EXTERNAL_ERROR, error));
+                if (result.statusCode === 403) return callback(new CaasError(CaasError.INVALID_TOKEN));
+                if (result.statusCode === 409) return callback(new CaasError(CaasError.BAD_STATE, 'Already setup'));
+                if (result.statusCode !== 201) return callback(new CaasError(CaasError.EXTERNAL_ERROR, error));
+
+                callback(null);
+            });
+    });
+}
 function doMigrate(options, caasConfig, callback) {
     assert.strictEqual(typeof options, 'object');
     assert.strictEqual(typeof caasConfig, 'object');
