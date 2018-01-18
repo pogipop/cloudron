@@ -18,7 +18,7 @@ exports = module.exports = {
         'postgresql': { repo: 'cloudron/postgresql', tag: 'cloudron/postgresql:1.0.0' },
         'mongodb': { repo: 'cloudron/mongodb', tag: 'cloudron/mongodb:1.0.1' },
         'redis': { repo: 'cloudron/redis', tag: 'cloudron/redis:1.0.0' },
-        'mail': { repo: 'cloudron/mail', tag: 'cloudron/mail:0.40.0' },
+        'mail': { repo: 'cloudron/mail', tag: 'cloudron/mail:1.0.0' },
         'graphite': { repo: 'cloudron/graphite', tag: 'cloudron/graphite:1.0.0' }
     }
 };
