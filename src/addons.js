@@ -685,24 +685,24 @@ function teardownRedis(app, options, callback) {
     assert.strictEqual(typeof options, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-   var container = dockerConnection.getContainer('redis-' + app.id);
+    var container = dockerConnection.getContainer('redis-' + app.id);
 
-   var removeOptions = {
-       force: true, // kill container if it's running
-       v: true // removes volumes associated with the container
-   };
+    var removeOptions = {
+        force: true, // kill container if it's running
+        v: true // removes volumes associated with the container
+    };
 
-   container.remove(removeOptions, function (error) {
-       if (error && error.statusCode !== 404) return callback(new Error('Error removing container:' + error));
+    container.remove(removeOptions, function (error) {
+        if (error && error.statusCode !== 404) return callback(new Error('Error removing container:' + error));
 
-       safe.fs.unlinkSync(paths.ADDON_CONFIG_DIR, 'redis-' + app.id + '_vars.sh');
+        safe.fs.unlinkSync(paths.ADDON_CONFIG_DIR, 'redis-' + app.id + '_vars.sh');
 
         shell.sudo('teardownRedis', [ RMAPPDIR_CMD, app.id + '/redis', true /* delete directory */ ], function (error, stdout, stderr) {
             if (error) return callback(new Error('Error removing redis data:' + error));
 
             appdb.unsetAddonConfig(app.id, 'redis', callback);
         });
-   });
+    });
 }
 
 function backupRedis(app, options, callback) {
