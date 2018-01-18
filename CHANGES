@@ -1171,3 +1171,13 @@
 * Set max email recepient limit (in outgoing emails) to 500
 * Put terminal and app logs viewer to separate window
 
+[1.9.3]
+* Prepare Cloudron for supporting multiple domains
+* Add Cloudron restore UI
+* Do not put app in errored state if backup fails
+* Display backup progress in CaaS
+* Add Google Cloud Storage backend for backups
+* Update node to 8.9.3 LTS
+* Set max email recepient limit (in outgoing emails) to 500
+* Put terminal and app logs viewer to separate window
+
