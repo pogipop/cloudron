@@ -10,8 +10,6 @@ var async = require('async'),
     config = require('../../config.js'),
     database = require('../../database.js'),
     expect = require('expect.js'),
-    net = require('net'),
-    nock = require('nock'),
     superagent = require('superagent'),
     server = require('../../server.js');
 
@@ -20,11 +18,9 @@ var SERVER_URL = 'http://localhost:' + config.get('port');
 var USERNAME = 'superadmin', PASSWORD = 'Foobar?1337', EMAIL ='silly@me.com';
 var token = null;
 
-var server;
 function setup(done) {
     config._reset();
     config.setFqdn('example-server-test.com');
-    config.set('provider', 'caas');
     config.setVersion('1.2.3');
 
     async.series([
@@ -33,17 +29,12 @@ function setup(done) {
         database._clear,
 
         function createAdmin(callback) {
-            var scope1 = nock(config.apiServerOrigin()).get('/api/v1/boxes/' + config.fqdn() + '/setup/verify?setupToken=somesetuptoken').reply(200, {});
-            var scope2 = nock(config.apiServerOrigin()).post('/api/v1/boxes/' + config.fqdn() + '/setup/done?setupToken=somesetuptoken').reply(201, {});
-
             superagent.post(SERVER_URL + '/api/v1/cloudron/activate')
                 .query({ setupToken: 'somesetuptoken' })
                 .send({ username: USERNAME, password: PASSWORD, email: EMAIL })
                 .end(function (error, result) {
                     expect(result).to.be.ok();
                     expect(result.statusCode).to.eql(201);
-                    expect(scope1.isDone()).to.be.ok();
-                    expect(scope2.isDone()).to.be.ok();
 
                     // stash token for further use
                     token = result.body.token;

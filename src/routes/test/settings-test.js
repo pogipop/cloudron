@@ -2,6 +2,7 @@
 
 /* global it:false */
 /* global describe:false */
+/* global xdescribe:false */
 /* global before:false */
 /* global after:false */
 
@@ -30,30 +31,24 @@ function setup(done) {
     config._reset();
     config.setFqdn('example-settings-test.com');
     config.setAdminFqdn('my.example-settings-test.com');
-    config.set('provider', 'caas');
 
     async.series([
         server.start.bind(null),
         database._clear.bind(null),
 
         function createAdmin(callback) {
-            var scope1 = nock(config.apiServerOrigin()).get('/api/v1/boxes/' + config.fqdn() + '/setup/verify?setupToken=somesetuptoken').reply(200, {});
-            var scope2 = nock(config.apiServerOrigin()).post('/api/v1/boxes/' + config.fqdn() + '/setup/done?setupToken=somesetuptoken').reply(201, {});
-
             superagent.post(SERVER_URL + '/api/v1/cloudron/activate')
-                   .query({ setupToken: 'somesetuptoken' })
-                   .send({ username: USERNAME, password: PASSWORD, email: EMAIL })
-                   .end(function (error, result) {
-                expect(result).to.be.ok();
-                expect(result.statusCode).to.eql(201);
-                expect(scope1.isDone()).to.be.ok();
-                expect(scope2.isDone()).to.be.ok();
+                .query({ setupToken: 'somesetuptoken' })
+                .send({ username: USERNAME, password: PASSWORD, email: EMAIL })
+                .end(function (error, result) {
+                    expect(result).to.be.ok();
+                    expect(result.statusCode).to.eql(201);
 
-                // stash token for further use
-                token = result.body.token;
+                    // stash token for further use
+                    token = result.body.token;
 
-                callback();
-            });
+                    callback();
+                });
         }
     ], done);
 }
@@ -73,21 +68,21 @@ describe('Settings API', function () {
     describe('autoupdate_pattern', function () {
         it('can get auto update pattern (default)', function (done) {
             superagent.get(SERVER_URL + '/api/v1/settings/autoupdate_pattern')
-                   .query({ access_token: token })
-                   .end(function (err, res) {
-                expect(res.statusCode).to.equal(200);
-                expect(res.body.pattern).to.be.ok();
-                done();
-            });
+                .query({ access_token: token })
+                .end(function (err, res) {
+                    expect(res.statusCode).to.equal(200);
+                    expect(res.body.pattern).to.be.ok();
+                    done();
+                });
         });
 
         it('cannot set autoupdate_pattern without pattern', function (done) {
             superagent.post(SERVER_URL + '/api/v1/settings/autoupdate_pattern')
-                   .query({ access_token: token })
-                   .end(function (err, res) {
-                expect(res.statusCode).to.equal(400);
-                done();
-            });
+                .query({ access_token: token })
+                .end(function (err, res) {
+                    expect(res.statusCode).to.equal(400);
+                    done();
+                });
         });
 
         it('can set autoupdate_pattern', function (done) {
@@ -97,13 +92,13 @@ describe('Settings API', function () {
             });
 
             superagent.post(SERVER_URL + '/api/v1/settings/autoupdate_pattern')
-                   .query({ access_token: token })
-                   .send({ pattern: '00 30 11 * * 1-5' })
-                   .end(function (err, res) {
-                expect(res.statusCode).to.equal(200);
-                expect(eventPattern === '00 30 11 * * 1-5').to.be.ok();
-                done();
-            });
+                .query({ access_token: token })
+                .send({ pattern: '00 30 11 * * 1-5' })
+                .end(function (err, res) {
+                    expect(res.statusCode).to.equal(200);
+                    expect(eventPattern === '00 30 11 * * 1-5').to.be.ok();
+                    done();
+                });
         });
 
         it('can set autoupdate_pattern to never', function (done) {
@@ -113,23 +108,23 @@ describe('Settings API', function () {
             });
 
             superagent.post(SERVER_URL + '/api/v1/settings/autoupdate_pattern')
-                   .query({ access_token: token })
-                   .send({ pattern: constants.AUTOUPDATE_PATTERN_NEVER })
-                   .end(function (err, res) {
-                expect(res.statusCode).to.equal(200);
-                expect(eventPattern).to.eql(constants.AUTOUPDATE_PATTERN_NEVER);
-                done();
-            });
+                .query({ access_token: token })
+                .send({ pattern: constants.AUTOUPDATE_PATTERN_NEVER })
+                .end(function (err, res) {
+                    expect(res.statusCode).to.equal(200);
+                    expect(eventPattern).to.eql(constants.AUTOUPDATE_PATTERN_NEVER);
+                    done();
+                });
         });
 
         it('cannot set invalid autoupdate_pattern', function (done) {
             superagent.post(SERVER_URL + '/api/v1/settings/autoupdate_pattern')
-                   .query({ access_token: token })
-                   .send({ pattern: '1 3 x 5 6' })
-                   .end(function (err, res) {
-                expect(res.statusCode).to.equal(400);
-                done();
-            });
+                .query({ access_token: token })
+                .send({ pattern: '1 3 x 5 6' })
+                .end(function (err, res) {
+                    expect(res.statusCode).to.equal(400);
+                    done();
+                });
         });
     });
 
@@ -138,184 +133,184 @@ describe('Settings API', function () {
 
         it('get default succeeds', function (done) {
             superagent.get(SERVER_URL + '/api/v1/settings/cloudron_name')
-                   .query({ access_token: token })
-                   .end(function (err, res) {
-                expect(res.statusCode).to.equal(200);
-                expect(res.body.name).to.be.ok();
-                done();
-            });
+                .query({ access_token: token })
+                .end(function (err, res) {
+                    expect(res.statusCode).to.equal(200);
+                    expect(res.body.name).to.be.ok();
+                    done();
+                });
         });
 
         it('cannot set without name', function (done) {
             superagent.post(SERVER_URL + '/api/v1/settings/cloudron_name')
-                   .query({ access_token: token })
-                   .end(function (err, res) {
-                expect(res.statusCode).to.equal(400);
-                done();
-            });
+                .query({ access_token: token })
+                .end(function (err, res) {
+                    expect(res.statusCode).to.equal(400);
+                    done();
+                });
         });
 
         it('cannot set empty name', function (done) {
             superagent.post(SERVER_URL + '/api/v1/settings/cloudron_name')
-                   .query({ access_token: token })
-                   .send({ name: '' })
-                   .end(function (err, res) {
-                expect(res.statusCode).to.equal(400);
-                done();
-            });
+                .query({ access_token: token })
+                .send({ name: '' })
+                .end(function (err, res) {
+                    expect(res.statusCode).to.equal(400);
+                    done();
+                });
         });
 
         it('set succeeds', function (done) {
             superagent.post(SERVER_URL + '/api/v1/settings/cloudron_name')
-                   .query({ access_token: token })
-                   .send({ name: name })
-                   .end(function (err, res) {
-                expect(res.statusCode).to.equal(202);
-                done();
-            });
+                .query({ access_token: token })
+                .send({ name: name })
+                .end(function (err, res) {
+                    expect(res.statusCode).to.equal(202);
+                    done();
+                });
         });
 
         it('get succeeds', function (done) {
             superagent.get(SERVER_URL + '/api/v1/settings/cloudron_name')
-                   .query({ access_token: token })
-                   .end(function (err, res) {
-                expect(res.statusCode).to.equal(200);
-                expect(res.body.name).to.eql(name);
-                done();
-            });
+                .query({ access_token: token })
+                .end(function (err, res) {
+                    expect(res.statusCode).to.equal(200);
+                    expect(res.body.name).to.eql(name);
+                    done();
+                });
         });
     });
 
     describe('cloudron_avatar', function () {
         it('get default succeeds', function (done) {
             superagent.get(SERVER_URL + '/api/v1/settings/cloudron_avatar')
-                   .query({ access_token: token })
-                   .end(function (err, res) {
-                expect(res.statusCode).to.equal(200);
-                expect(res.body).to.be.a(Buffer);
-                done();
-            });
+                .query({ access_token: token })
+                .end(function (err, res) {
+                    expect(res.statusCode).to.equal(200);
+                    expect(res.body).to.be.a(Buffer);
+                    done();
+                });
         });
 
         it('cannot set without data', function (done) {
             superagent.post(SERVER_URL + '/api/v1/settings/cloudron_avatar')
-                   .query({ access_token: token })
-                   .end(function (err, res) {
-                expect(res.statusCode).to.equal(400);
-                done();
-            });
+                .query({ access_token: token })
+                .end(function (err, res) {
+                    expect(res.statusCode).to.equal(400);
+                    done();
+                });
         });
 
         it('set succeeds', function (done) {
             superagent.post(SERVER_URL + '/api/v1/settings/cloudron_avatar')
-                   .query({ access_token: token })
-                   .attach('avatar', paths.CLOUDRON_DEFAULT_AVATAR_FILE)
-                   .end(function (err, res) {
-                expect(res.statusCode).to.equal(202);
-                done();
-            });
+                .query({ access_token: token })
+                .attach('avatar', paths.CLOUDRON_DEFAULT_AVATAR_FILE)
+                .end(function (err, res) {
+                    expect(res.statusCode).to.equal(202);
+                    done();
+                });
         });
 
         it('get succeeds', function (done) {
             superagent.get(SERVER_URL + '/api/v1/settings/cloudron_avatar')
-                   .query({ access_token: token })
-                   .end(function (err, res) {
-                expect(res.statusCode).to.equal(200);
-                expect(res.body.toString()).to.eql(fs.readFileSync(paths.CLOUDRON_DEFAULT_AVATAR_FILE, 'utf-8'));
-                done(err);
-            });
+                .query({ access_token: token })
+                .end(function (err, res) {
+                    expect(res.statusCode).to.equal(200);
+                    expect(res.body.toString()).to.eql(fs.readFileSync(paths.CLOUDRON_DEFAULT_AVATAR_FILE, 'utf-8'));
+                    done(err);
+                });
         });
     });
 
     describe('mail_config', function () {
         it('get mail_config succeeds', function (done) {
             superagent.get(SERVER_URL + '/api/v1/settings/mail_config')
-                   .query({ access_token: token })
-                   .end(function (err, res) {
-                expect(res.statusCode).to.equal(200);
-                expect(res.body).to.eql({ enabled: false });
-                done();
-            });
+                .query({ access_token: token })
+                .end(function (err, res) {
+                    expect(res.statusCode).to.equal(200);
+                    expect(res.body).to.eql({ enabled: false });
+                    done();
+                });
         });
 
         it('cannot set without enabled field', function (done) {
             superagent.post(SERVER_URL + '/api/v1/settings/mail_config')
-                   .query({ access_token: token })
-                   .end(function (err, res) {
-                expect(res.statusCode).to.equal(400);
-                done();
-            });
+                .query({ access_token: token })
+                .end(function (err, res) {
+                    expect(res.statusCode).to.equal(400);
+                    done();
+                });
         });
 
         it('set succeeds', function (done) {
             superagent.post(SERVER_URL + '/api/v1/settings/mail_config')
-                   .query({ access_token: token })
-                   .send({ enabled: true })
-                   .end(function (err, res) {
-                expect(res.statusCode).to.equal(202);
-                done();
-            });
+                .query({ access_token: token })
+                .send({ enabled: true })
+                .end(function (err, res) {
+                    expect(res.statusCode).to.equal(202);
+                    done();
+                });
         });
 
         it('get succeeds', function (done) {
             superagent.get(SERVER_URL + '/api/v1/settings/mail_config')
-                   .query({ access_token: token })
-                   .end(function (err, res) {
-                expect(res.statusCode).to.equal(200);
-                expect(res.body).to.eql({ enabled: true });
-                done();
-            });
+                .query({ access_token: token })
+                .end(function (err, res) {
+                    expect(res.statusCode).to.equal(200);
+                    expect(res.body).to.eql({ enabled: true });
+                    done();
+                });
         });
     });
 
     describe('catch_all', function () {
         it('get catch_all succeeds', function (done) {
             superagent.get(SERVER_URL + '/api/v1/settings/catch_all_address')
-                   .query({ access_token: token })
-                   .end(function (err, res) {
-                expect(res.statusCode).to.equal(200);
-                expect(res.body).to.eql({ address: [ ] });
-                done();
-            });
+                .query({ access_token: token })
+                .end(function (err, res) {
+                    expect(res.statusCode).to.equal(200);
+                    expect(res.body).to.eql({ address: [ ] });
+                    done();
+                });
         });
 
         it('cannot set without address field', function (done) {
             superagent.put(SERVER_URL + '/api/v1/settings/catch_all_address')
-                   .query({ access_token: token })
-                   .end(function (err, res) {
-                expect(res.statusCode).to.equal(400);
-                done();
-            });
+                .query({ access_token: token })
+                .end(function (err, res) {
+                    expect(res.statusCode).to.equal(400);
+                    done();
+                });
         });
 
         it('cannot set with bad address field', function (done) {
             superagent.put(SERVER_URL + '/api/v1/settings/catch_all_address')
-                   .query({ access_token: token })
-                   .send({ address: [ "user1", 123 ] })
-                   .end(function (err, res) {
-                expect(res.statusCode).to.equal(400);
-                done();
-            });
+                .query({ access_token: token })
+                .send({ address: [ 'user1', 123 ] })
+                .end(function (err, res) {
+                    expect(res.statusCode).to.equal(400);
+                    done();
+                });
         });
 
         it('set succeeds', function (done) {
             superagent.put(SERVER_URL + '/api/v1/settings/catch_all_address')
-                   .query({ access_token: token })
-                   .send({ address: [ "user1" ] })
-                   .end(function (err, res) {
-                expect(res.statusCode).to.equal(202);
-                done();
-            });
+                .query({ access_token: token })
+                .send({ address: [ 'user1' ] })
+                .end(function (err, res) {
+                    expect(res.statusCode).to.equal(202);
+                    done();
+                });
         });
 
         it('get succeeds', function (done) {
             superagent.get(SERVER_URL + '/api/v1/settings/catch_all_address')
-                   .query({ access_token: token })
-                   .end(function (err, res) {
-                expect(res.statusCode).to.equal(200);
-                expect(res.body).to.eql({ address: [ "user1" ] });
-                done();
-            });
+                .query({ access_token: token })
+                .end(function (err, res) {
+                    expect(res.statusCode).to.equal(200);
+                    expect(res.body).to.eql({ address: [ 'user1' ] });
+                    done();
+                });
         });
     });
 
@@ -335,70 +330,70 @@ describe('Settings API', function () {
 
         it('cannot set certificate without token', function (done) {
             superagent.post(SERVER_URL + '/api/v1/settings/certificate')
-                   .end(function (error, result) {
-                expect(result.statusCode).to.equal(401);
-                done();
-            });
+                .end(function (error, result) {
+                    expect(result.statusCode).to.equal(401);
+                    done();
+                });
         });
 
         it('cannot set certificate without certificate', function (done) {
             superagent.post(SERVER_URL + '/api/v1/settings/certificate')
-                   .query({ access_token: token })
-                   .send({ key: validKey1 })
-                   .end(function (error, result) {
-                expect(result.statusCode).to.equal(400);
-                done();
-            });
+                .query({ access_token: token })
+                .send({ key: validKey1 })
+                .end(function (error, result) {
+                    expect(result.statusCode).to.equal(400);
+                    done();
+                });
         });
 
         it('cannot set certificate without key', function (done) {
             superagent.post(SERVER_URL + '/api/v1/settings/certificate')
-                   .query({ access_token: token })
-                   .send({ cert: validCert1 })
-                   .end(function (error, result) {
-                expect(result.statusCode).to.equal(400);
-                done();
-            });
+                .query({ access_token: token })
+                .send({ cert: validCert1 })
+                .end(function (error, result) {
+                    expect(result.statusCode).to.equal(400);
+                    done();
+                });
         });
 
         it('cannot set certificate with cert not being a string', function (done) {
             superagent.post(SERVER_URL + '/api/v1/settings/certificate')
-                   .query({ access_token: token })
-                   .send({ cert: 1234, key: validKey1 })
-                   .end(function (error, result) {
-                expect(result.statusCode).to.equal(400);
-                done();
-            });
+                .query({ access_token: token })
+                .send({ cert: 1234, key: validKey1 })
+                .end(function (error, result) {
+                    expect(result.statusCode).to.equal(400);
+                    done();
+                });
         });
 
         it('cannot set certificate with key not being a string', function (done) {
             superagent.post(SERVER_URL + '/api/v1/settings/certificate')
-                   .query({ access_token: token })
-                   .send({ cert: validCert1, key: true })
-                   .end(function (error, result) {
-                expect(result.statusCode).to.equal(400);
-                done();
-            });
+                .query({ access_token: token })
+                .send({ cert: validCert1, key: true })
+                .end(function (error, result) {
+                    expect(result.statusCode).to.equal(400);
+                    done();
+                });
         });
 
         it('cannot set non wildcard certificate', function (done) {
             superagent.post(SERVER_URL + '/api/v1/settings/certificate')
-                   .query({ access_token: token })
-                   .send({ cert: validCert0, key: validKey0 })
-                   .end(function (error, result) {
-                expect(result.statusCode).to.equal(400);
-                done();
-            });
+                .query({ access_token: token })
+                .send({ cert: validCert0, key: validKey0 })
+                .end(function (error, result) {
+                    expect(result.statusCode).to.equal(400);
+                    done();
+                });
         });
 
         it('can set certificate', function (done) {
             superagent.post(SERVER_URL + '/api/v1/settings/certificate')
-                   .query({ access_token: token })
-                   .send({ cert: validCert1, key: validKey1 })
-                   .end(function (error, result) {
-                expect(result.statusCode).to.equal(202);
-                done();
-            });
+                .query({ access_token: token })
+                .send({ cert: validCert1, key: validKey1 })
+                .end(function (error, result) {
+                    expect(result.statusCode).to.equal(202);
+                    done();
+                });
         });
 
         it('did set the certificate', function (done) {
@@ -415,103 +410,103 @@ describe('Settings API', function () {
     describe('time_zone', function () {
         it('succeeds', function (done) {
             superagent.get(SERVER_URL + '/api/v1/settings/time_zone')
-                   .query({ access_token: token })
-                   .end(function (err, res) {
-                expect(res.statusCode).to.equal(200);
-                expect(res.body.timeZone).to.be('America/Los_Angeles');
-                done();
-            });
+                .query({ access_token: token })
+                .end(function (err, res) {
+                    expect(res.statusCode).to.equal(200);
+                    expect(res.body.timeZone).to.be('America/Los_Angeles');
+                    done();
+                });
         });
     });
 
     describe('appstore_config', function () {
         it('get appstore_config fails', function (done) {
             superagent.get(SERVER_URL + '/api/v1/settings/appstore_config')
-                   .query({ access_token: token })
-                   .end(function (err, res) {
-                expect(res.statusCode).to.equal(200);
-                expect(res.body).to.eql({});
-                done();
-            });
+                .query({ access_token: token })
+                .end(function (err, res) {
+                    expect(res.statusCode).to.equal(200);
+                    expect(res.body).to.eql({});
+                    done();
+                });
         });
 
         it('cannot set without data', function (done) {
             superagent.post(SERVER_URL + '/api/v1/settings/appstore_config')
-                   .query({ access_token: token })
-                   .end(function (err, res) {
-                expect(res.statusCode).to.equal(400);
-                done();
-            });
+                .query({ access_token: token })
+                .end(function (err, res) {
+                    expect(res.statusCode).to.equal(400);
+                    done();
+                });
         });
 
         it('set fails with wrong appstore token', function (done) {
             var scope = nock(config.apiServerOrigin()).post('/api/v1/users/nebulon/cloudrons?accessToken=sometoken').reply(401);
 
             superagent.post(SERVER_URL + '/api/v1/settings/appstore_config')
-                   .query({ access_token: token })
-                   .send({ userId: 'nebulon', token: 'sometoken' })
-                   .end(function (err, res) {
-                expect(scope.isDone()).to.be.ok();
-                expect(res.statusCode).to.equal(406);
-                expect(res.body.message).to.equal('invalid appstore token');
+                .query({ access_token: token })
+                .send({ userId: 'nebulon', token: 'sometoken' })
+                .end(function (err, res) {
+                    expect(scope.isDone()).to.be.ok();
+                    expect(res.statusCode).to.equal(406);
+                    expect(res.body.message).to.equal('invalid appstore token');
 
-                done();
-            });
+                    done();
+                });
         });
 
         it('set succeeds for unknown cloudron', function (done) {
             var scope = nock(config.apiServerOrigin()).post('/api/v1/users/nebulon/cloudrons?accessToken=sometoken').reply(201, { cloudron: { id: 'cloudron0' }});
 
             superagent.post(SERVER_URL + '/api/v1/settings/appstore_config')
-                   .query({ access_token: token })
-                   .send({ userId: 'nebulon', token: 'sometoken' })
-                   .end(function (err, res) {
-                expect(scope.isDone()).to.be.ok();
-                expect(res.statusCode).to.equal(202);
-                expect(res.body).to.eql({ userId: 'nebulon', token: 'sometoken', cloudronId: 'cloudron0' });
+                .query({ access_token: token })
+                .send({ userId: 'nebulon', token: 'sometoken' })
+                .end(function (err, res) {
+                    expect(scope.isDone()).to.be.ok();
+                    expect(res.statusCode).to.equal(202);
+                    expect(res.body).to.eql({ userId: 'nebulon', token: 'sometoken', cloudronId: 'cloudron0' });
 
-                done();
-            });
+                    done();
+                });
         });
 
         it('set fails with wrong appstore user', function (done) {
             var scope = nock(config.apiServerOrigin()).get('/api/v1/users/nebulon/cloudrons/cloudron0?accessToken=sometoken').reply(403);
 
             superagent.post(SERVER_URL + '/api/v1/settings/appstore_config')
-                   .query({ access_token: token })
-                   .send({ userId: 'nebulon', token: 'sometoken' })
-                   .end(function (err, res) {
-                expect(scope.isDone()).to.be.ok();
-                expect(res.statusCode).to.equal(406);
-                expect(res.body.message).to.equal('wrong user');
+                .query({ access_token: token })
+                .send({ userId: 'nebulon', token: 'sometoken' })
+                .end(function (err, res) {
+                    expect(scope.isDone()).to.be.ok();
+                    expect(res.statusCode).to.equal(406);
+                    expect(res.body.message).to.equal('wrong user');
 
-                done();
-            });
+                    done();
+                });
         });
 
         it('get succeeds', function (done) {
             superagent.get(SERVER_URL + '/api/v1/settings/appstore_config')
-                   .query({ access_token: token })
-                   .end(function (err, res) {
-                expect(res.statusCode).to.equal(200);
-                expect(res.body).to.eql({ userId: 'nebulon', token: 'sometoken', cloudronId: 'cloudron0' });
-                done();
-            });
+                .query({ access_token: token })
+                .end(function (err, res) {
+                    expect(res.statusCode).to.equal(200);
+                    expect(res.body).to.eql({ userId: 'nebulon', token: 'sometoken', cloudronId: 'cloudron0' });
+                    done();
+                });
         });
 
         it('set succeeds with cloudronId', function (done) {
             var scope = nock(config.apiServerOrigin()).get('/api/v1/users/nebulon/cloudrons/cloudron0?accessToken=someothertoken').reply(200, { cloudron: { id: 'cloudron0' }});
 
             superagent.post(SERVER_URL + '/api/v1/settings/appstore_config')
-                   .query({ access_token: token })
-                   .send({ userId: 'nebulon', token: 'someothertoken' })
-                   .end(function (err, res) {
-                expect(scope.isDone()).to.be.ok();
-                expect(res.statusCode).to.equal(202);
-                expect(res.body).to.eql({ userId: 'nebulon', token: 'someothertoken', cloudronId: 'cloudron0' });
+                .query({ access_token: token })
+                .send({ userId: 'nebulon', token: 'someothertoken' })
+                .end(function (err, res) {
+                    expect(scope.isDone()).to.be.ok();
+                    expect(res.statusCode).to.equal(202);
+                    expect(res.body).to.eql({ userId: 'nebulon', token: 'someothertoken', cloudronId: 'cloudron0' });
 
-                done();
-            });
+                    done();
+                });
         });
 
         it('set succeeds with cloudronId but unkown one (reregister)', function (done) {
@@ -519,16 +514,16 @@ describe('Settings API', function () {
             var scope1 = nock(config.apiServerOrigin()).post('/api/v1/users/nebulon/cloudrons?accessToken=someothertoken').reply(201, { cloudron: { id: 'cloudron1' }});
 
             superagent.post(SERVER_URL + '/api/v1/settings/appstore_config')
-                   .query({ access_token: token })
-                   .send({ userId: 'nebulon', token: 'someothertoken' })
-                   .end(function (err, res) {
-                expect(scope0.isDone()).to.be.ok();
-                expect(scope1.isDone()).to.be.ok();
-                expect(res.statusCode).to.equal(202);
-                expect(res.body).to.eql({ userId: 'nebulon', token: 'someothertoken', cloudronId: 'cloudron1' });
+                .query({ access_token: token })
+                .send({ userId: 'nebulon', token: 'someothertoken' })
+                .end(function (err, res) {
+                    expect(scope0.isDone()).to.be.ok();
+                    expect(scope1.isDone()).to.be.ok();
+                    expect(res.statusCode).to.equal(202);
+                    expect(res.body).to.eql({ userId: 'nebulon', token: 'someothertoken', cloudronId: 'cloudron1' });
 
-                done();
-            });
+                    done();
+                });
         });
     });
 
@@ -571,11 +566,11 @@ describe('Settings API', function () {
 
         it('does not fail when dns errors', function (done) {
             superagent.get(SERVER_URL + '/api/v1/settings/email_status')
-                   .query({ access_token: token })
-                   .end(function (err, res) {
-                expect(res.statusCode).to.equal(200);
-                done();
-            });
+                .query({ access_token: token })
+                .end(function (err, res) {
+                    expect(res.statusCode).to.equal(200);
+                    done();
+                });
         });
 
         function clearDnsAnswerQueue() {
@@ -590,44 +585,44 @@ describe('Settings API', function () {
             clearDnsAnswerQueue();
 
             superagent.get(SERVER_URL + '/api/v1/settings/email_status')
-                   .query({ access_token: token })
-                   .end(function (err, res) {
-                expect(res.statusCode).to.equal(200);
+                .query({ access_token: token })
+                .end(function (err, res) {
+                    expect(res.statusCode).to.equal(200);
 
-                expect(res.body.dns.dkim).to.be.an('object');
-                expect(res.body.dns.dkim.domain).to.eql(dkimDomain);
-                expect(res.body.dns.dkim.type).to.eql('TXT');
-                expect(res.body.dns.dkim.value).to.eql(null);
-                expect(res.body.dns.dkim.expected).to.eql('"v=DKIM1; t=s; p=' + cloudron.readDkimPublicKeySync() + '"');
-                expect(res.body.dns.dkim.status).to.eql(false);
+                    expect(res.body.dns.dkim).to.be.an('object');
+                    expect(res.body.dns.dkim.domain).to.eql(dkimDomain);
+                    expect(res.body.dns.dkim.type).to.eql('TXT');
+                    expect(res.body.dns.dkim.value).to.eql(null);
+                    expect(res.body.dns.dkim.expected).to.eql('"v=DKIM1; t=s; p=' + cloudron.readDkimPublicKeySync() + '"');
+                    expect(res.body.dns.dkim.status).to.eql(false);
 
-                expect(res.body.dns.spf).to.be.an('object');
-                expect(res.body.dns.spf.domain).to.eql(spfDomain);
-                expect(res.body.dns.spf.type).to.eql('TXT');
-                expect(res.body.dns.spf.value).to.eql(null);
-                expect(res.body.dns.spf.expected).to.eql('"v=spf1 a:' + config.adminFqdn() + ' ~all"');
-                expect(res.body.dns.spf.status).to.eql(false);
+                    expect(res.body.dns.spf).to.be.an('object');
+                    expect(res.body.dns.spf.domain).to.eql(spfDomain);
+                    expect(res.body.dns.spf.type).to.eql('TXT');
+                    expect(res.body.dns.spf.value).to.eql(null);
+                    expect(res.body.dns.spf.expected).to.eql('"v=spf1 a:' + config.adminFqdn() + ' ~all"');
+                    expect(res.body.dns.spf.status).to.eql(false);
 
-                expect(res.body.dns.dmarc).to.be.an('object');
-                expect(res.body.dns.dmarc.type).to.eql('TXT');
-                expect(res.body.dns.dmarc.value).to.eql(null);
-                expect(res.body.dns.dmarc.expected).to.eql('"v=DMARC1; p=reject; pct=100"');
-                expect(res.body.dns.dmarc.status).to.eql(false);
+                    expect(res.body.dns.dmarc).to.be.an('object');
+                    expect(res.body.dns.dmarc.type).to.eql('TXT');
+                    expect(res.body.dns.dmarc.value).to.eql(null);
+                    expect(res.body.dns.dmarc.expected).to.eql('"v=DMARC1; p=reject; pct=100"');
+                    expect(res.body.dns.dmarc.status).to.eql(false);
 
-                expect(res.body.dns.mx).to.be.an('object');
-                expect(res.body.dns.mx.type).to.eql('MX');
-                expect(res.body.dns.mx.value).to.eql(null);
-                expect(res.body.dns.mx.expected).to.eql('10 ' + config.mailFqdn() + '.');
-                expect(res.body.dns.mx.status).to.eql(false);
+                    expect(res.body.dns.mx).to.be.an('object');
+                    expect(res.body.dns.mx.type).to.eql('MX');
+                    expect(res.body.dns.mx.value).to.eql(null);
+                    expect(res.body.dns.mx.expected).to.eql('10 ' + config.mailFqdn() + '.');
+                    expect(res.body.dns.mx.status).to.eql(false);
 
-                expect(res.body.dns.ptr).to.be.an('object');
-                expect(res.body.dns.ptr.type).to.eql('PTR');
-                // expect(res.body.ptr.value).to.eql(null); this will be anything random
-                expect(res.body.dns.ptr.expected).to.eql(config.mailFqdn() + '.');
-                expect(res.body.dns.ptr.status).to.eql(false);
+                    expect(res.body.dns.ptr).to.be.an('object');
+                    expect(res.body.dns.ptr.type).to.eql('PTR');
+                    // expect(res.body.ptr.value).to.eql(null); this will be anything random
+                    expect(res.body.dns.ptr.expected).to.eql(config.mailFqdn() + '.');
+                    expect(res.body.dns.ptr.status).to.eql(false);
 
-                done();
-            });
+                    done();
+                });
         });
 
         it('succeeds with "undefined" spf, dkim, dmarc, mx, ptr records', function (done) {
@@ -639,37 +634,37 @@ describe('Settings API', function () {
             dnsAnswerQueue[dmarcDomain].TXT = null;
 
             superagent.get(SERVER_URL + '/api/v1/settings/email_status')
-                   .query({ access_token: token })
-                   .end(function (err, res) {
-                expect(res.statusCode).to.equal(200);
+                .query({ access_token: token })
+                .end(function (err, res) {
+                    expect(res.statusCode).to.equal(200);
 
-                expect(res.body.dns.spf).to.be.an('object');
-                expect(res.body.dns.spf.expected).to.eql('"v=spf1 a:' + config.adminFqdn() + ' ~all"');
-                expect(res.body.dns.spf.status).to.eql(false);
-                expect(res.body.dns.spf.value).to.eql(null);
+                    expect(res.body.dns.spf).to.be.an('object');
+                    expect(res.body.dns.spf.expected).to.eql('"v=spf1 a:' + config.adminFqdn() + ' ~all"');
+                    expect(res.body.dns.spf.status).to.eql(false);
+                    expect(res.body.dns.spf.value).to.eql(null);
 
-                expect(res.body.dns.dkim).to.be.an('object');
-                expect(res.body.dns.dkim.expected).to.eql('"v=DKIM1; t=s; p=' + cloudron.readDkimPublicKeySync() + '"');
-                expect(res.body.dns.dkim.status).to.eql(false);
-                expect(res.body.dns.dkim.value).to.eql(null);
+                    expect(res.body.dns.dkim).to.be.an('object');
+                    expect(res.body.dns.dkim.expected).to.eql('"v=DKIM1; t=s; p=' + cloudron.readDkimPublicKeySync() + '"');
+                    expect(res.body.dns.dkim.status).to.eql(false);
+                    expect(res.body.dns.dkim.value).to.eql(null);
 
-                expect(res.body.dns.dmarc).to.be.an('object');
-                expect(res.body.dns.dmarc.expected).to.eql('"v=DMARC1; p=reject; pct=100"');
-                expect(res.body.dns.dmarc.status).to.eql(false);
-                expect(res.body.dns.dmarc.value).to.eql(null);
+                    expect(res.body.dns.dmarc).to.be.an('object');
+                    expect(res.body.dns.dmarc.expected).to.eql('"v=DMARC1; p=reject; pct=100"');
+                    expect(res.body.dns.dmarc.status).to.eql(false);
+                    expect(res.body.dns.dmarc.value).to.eql(null);
 
-                expect(res.body.dns.mx).to.be.an('object');
-                expect(res.body.dns.mx.status).to.eql(false);
-                expect(res.body.dns.mx.expected).to.eql('10 ' + config.mailFqdn() + '.');
-                expect(res.body.dns.mx.value).to.eql(null);
+                    expect(res.body.dns.mx).to.be.an('object');
+                    expect(res.body.dns.mx.status).to.eql(false);
+                    expect(res.body.dns.mx.expected).to.eql('10 ' + config.mailFqdn() + '.');
+                    expect(res.body.dns.mx.value).to.eql(null);
 
-                expect(res.body.dns.ptr).to.be.an('object');
-                expect(res.body.dns.ptr.expected).to.eql(config.mailFqdn() + '.');
-                expect(res.body.dns.ptr.status).to.eql(false);
-                // expect(res.body.ptr.value).to.eql(null); this will be anything random
+                    expect(res.body.dns.ptr).to.be.an('object');
+                    expect(res.body.dns.ptr.expected).to.eql(config.mailFqdn() + '.');
+                    expect(res.body.dns.ptr.status).to.eql(false);
+                    // expect(res.body.ptr.value).to.eql(null); this will be anything random
 
-                done();
-            });
+                    done();
+                });
         });
 
         it('succeeds with all different spf, dkim, dmarc, mx, ptr records', function (done) {
@@ -681,39 +676,39 @@ describe('Settings API', function () {
             dnsAnswerQueue[spfDomain].TXT = ['"v=spf1 a:random.com ~all"'];
 
             superagent.get(SERVER_URL + '/api/v1/settings/email_status')
-                   .query({ access_token: token })
-                   .end(function (err, res) {
-                expect(res.statusCode).to.equal(200);
+                .query({ access_token: token })
+                .end(function (err, res) {
+                    expect(res.statusCode).to.equal(200);
 
-                expect(res.body.dns.spf).to.be.an('object');
-                expect(res.body.dns.spf.expected).to.eql('"v=spf1 a:' + config.adminFqdn() + ' a:random.com ~all"');
-                expect(res.body.dns.spf.status).to.eql(false);
-                expect(res.body.dns.spf.value).to.eql('"v=spf1 a:random.com ~all"');
+                    expect(res.body.dns.spf).to.be.an('object');
+                    expect(res.body.dns.spf.expected).to.eql('"v=spf1 a:' + config.adminFqdn() + ' a:random.com ~all"');
+                    expect(res.body.dns.spf.status).to.eql(false);
+                    expect(res.body.dns.spf.value).to.eql('"v=spf1 a:random.com ~all"');
 
-                expect(res.body.dns.dkim).to.be.an('object');
-                expect(res.body.dns.dkim.expected).to.eql('"v=DKIM1; t=s; p=' + cloudron.readDkimPublicKeySync() + '"');
-                expect(res.body.dns.dkim.status).to.eql(false);
-                expect(res.body.dns.dkim.value).to.eql('"v=DKIM2; t=s; p=' + cloudron.readDkimPublicKeySync() + '"');
+                    expect(res.body.dns.dkim).to.be.an('object');
+                    expect(res.body.dns.dkim.expected).to.eql('"v=DKIM1; t=s; p=' + cloudron.readDkimPublicKeySync() + '"');
+                    expect(res.body.dns.dkim.status).to.eql(false);
+                    expect(res.body.dns.dkim.value).to.eql('"v=DKIM2; t=s; p=' + cloudron.readDkimPublicKeySync() + '"');
 
-                expect(res.body.dns.dmarc).to.be.an('object');
-                expect(res.body.dns.dmarc.expected).to.eql('"v=DMARC1; p=reject; pct=100"');
-                expect(res.body.dns.dmarc.status).to.eql(false);
-                expect(res.body.dns.dmarc.value).to.eql('"v=DMARC2; p=reject; pct=100"');
+                    expect(res.body.dns.dmarc).to.be.an('object');
+                    expect(res.body.dns.dmarc.expected).to.eql('"v=DMARC1; p=reject; pct=100"');
+                    expect(res.body.dns.dmarc.status).to.eql(false);
+                    expect(res.body.dns.dmarc.value).to.eql('"v=DMARC2; p=reject; pct=100"');
 
-                expect(res.body.dns.mx).to.be.an('object');
-                expect(res.body.dns.mx.status).to.eql(false);
-                expect(res.body.dns.mx.expected).to.eql('10 ' + config.mailFqdn() + '.');
-                expect(res.body.dns.mx.value).to.eql('20 ' + config.mailFqdn() + '. 30 ' + config.mailFqdn() + '.');
+                    expect(res.body.dns.mx).to.be.an('object');
+                    expect(res.body.dns.mx.status).to.eql(false);
+                    expect(res.body.dns.mx.expected).to.eql('10 ' + config.mailFqdn() + '.');
+                    expect(res.body.dns.mx.value).to.eql('20 ' + config.mailFqdn() + '. 30 ' + config.mailFqdn() + '.');
 
-                expect(res.body.dns.ptr).to.be.an('object');
-                expect(res.body.dns.ptr.expected).to.eql(config.mailFqdn() + '.');
-                expect(res.body.dns.ptr.status).to.eql(false);
-                // expect(res.body.ptr.value).to.eql(null); this will be anything random
+                    expect(res.body.dns.ptr).to.be.an('object');
+                    expect(res.body.dns.ptr.expected).to.eql(config.mailFqdn() + '.');
+                    expect(res.body.dns.ptr.status).to.eql(false);
+                    // expect(res.body.ptr.value).to.eql(null); this will be anything random
 
-                expect(res.body.relay).to.be.an('object');
+                    expect(res.body.relay).to.be.an('object');
 
-                done();
-            });
+                    done();
+                });
         });
 
         it('succeeds with existing embedded spf', function (done) {
@@ -722,19 +717,19 @@ describe('Settings API', function () {
             dnsAnswerQueue[spfDomain].TXT = ['"v=spf1 a:example.com a:' + config.mailFqdn() + ' ~all"'];
 
             superagent.get(SERVER_URL + '/api/v1/settings/email_status')
-                   .query({ access_token: token })
-                   .end(function (err, res) {
-                expect(res.statusCode).to.equal(200);
+                .query({ access_token: token })
+                .end(function (err, res) {
+                    expect(res.statusCode).to.equal(200);
 
-                expect(res.body.dns.spf).to.be.an('object');
-                expect(res.body.dns.spf.domain).to.eql(spfDomain);
-                expect(res.body.dns.spf.type).to.eql('TXT');
-                expect(res.body.dns.spf.value).to.eql('"v=spf1 a:example.com a:' + config.mailFqdn() + ' ~all"');
-                expect(res.body.dns.spf.expected).to.eql('"v=spf1 a:example.com a:' + config.mailFqdn() + ' ~all"');
-                expect(res.body.dns.spf.status).to.eql(true);
+                    expect(res.body.dns.spf).to.be.an('object');
+                    expect(res.body.dns.spf.domain).to.eql(spfDomain);
+                    expect(res.body.dns.spf.type).to.eql('TXT');
+                    expect(res.body.dns.spf.value).to.eql('"v=spf1 a:example.com a:' + config.mailFqdn() + ' ~all"');
+                    expect(res.body.dns.spf.expected).to.eql('"v=spf1 a:example.com a:' + config.mailFqdn() + ' ~all"');
+                    expect(res.body.dns.spf.status).to.eql(true);
 
-                done();
-            });
+                    done();
+                });
         });
 
         it('succeeds with all correct records', function (done) {
@@ -746,78 +741,78 @@ describe('Settings API', function () {
             dnsAnswerQueue[spfDomain].TXT = ['"v=spf1 a:' + config.adminFqdn() + ' ~all"'];
 
             superagent.get(SERVER_URL + '/api/v1/settings/email_status')
-                   .query({ access_token: token })
-                   .end(function (err, res) {
-                expect(res.statusCode).to.equal(200);
+                .query({ access_token: token })
+                .end(function (err, res) {
+                    expect(res.statusCode).to.equal(200);
 
-                expect(res.body.dns.dkim).to.be.an('object');
-                expect(res.body.dns.dkim.domain).to.eql(dkimDomain);
-                expect(res.body.dns.dkim.type).to.eql('TXT');
-                expect(res.body.dns.dkim.value).to.eql('"v=DKIM1; t=s; p=' + cloudron.readDkimPublicKeySync() + '"');
-                expect(res.body.dns.dkim.expected).to.eql('"v=DKIM1; t=s; p=' + cloudron.readDkimPublicKeySync() + '"');
-                expect(res.body.dns.dkim.status).to.eql(true);
+                    expect(res.body.dns.dkim).to.be.an('object');
+                    expect(res.body.dns.dkim.domain).to.eql(dkimDomain);
+                    expect(res.body.dns.dkim.type).to.eql('TXT');
+                    expect(res.body.dns.dkim.value).to.eql('"v=DKIM1; t=s; p=' + cloudron.readDkimPublicKeySync() + '"');
+                    expect(res.body.dns.dkim.expected).to.eql('"v=DKIM1; t=s; p=' + cloudron.readDkimPublicKeySync() + '"');
+                    expect(res.body.dns.dkim.status).to.eql(true);
 
-                expect(res.body.dns.spf).to.be.an('object');
-                expect(res.body.dns.spf.domain).to.eql(spfDomain);
-                expect(res.body.dns.spf.type).to.eql('TXT');
-                expect(res.body.dns.spf.value).to.eql('"v=spf1 a:' + config.adminFqdn() + ' ~all"');
-                expect(res.body.dns.spf.expected).to.eql('"v=spf1 a:' + config.adminFqdn() + ' ~all"');
-                expect(res.body.dns.spf.status).to.eql(true);
+                    expect(res.body.dns.spf).to.be.an('object');
+                    expect(res.body.dns.spf.domain).to.eql(spfDomain);
+                    expect(res.body.dns.spf.type).to.eql('TXT');
+                    expect(res.body.dns.spf.value).to.eql('"v=spf1 a:' + config.adminFqdn() + ' ~all"');
+                    expect(res.body.dns.spf.expected).to.eql('"v=spf1 a:' + config.adminFqdn() + ' ~all"');
+                    expect(res.body.dns.spf.status).to.eql(true);
 
-                expect(res.body.dns.dmarc).to.be.an('object');
-                expect(res.body.dns.dmarc.expected).to.eql('"v=DMARC1; p=reject; pct=100"');
-                expect(res.body.dns.dmarc.status).to.eql(true);
-                expect(res.body.dns.dmarc.value).to.eql('"v=DMARC1; p=reject; pct=100"');
+                    expect(res.body.dns.dmarc).to.be.an('object');
+                    expect(res.body.dns.dmarc.expected).to.eql('"v=DMARC1; p=reject; pct=100"');
+                    expect(res.body.dns.dmarc.status).to.eql(true);
+                    expect(res.body.dns.dmarc.value).to.eql('"v=DMARC1; p=reject; pct=100"');
 
-                expect(res.body.dns.mx).to.be.an('object');
-                expect(res.body.dns.mx.status).to.eql(true);
-                expect(res.body.dns.mx.expected).to.eql('10 ' + config.mailFqdn() + '.');
-                expect(res.body.dns.mx.value).to.eql('10 ' + config.mailFqdn() + '.');
+                    expect(res.body.dns.mx).to.be.an('object');
+                    expect(res.body.dns.mx.status).to.eql(true);
+                    expect(res.body.dns.mx.expected).to.eql('10 ' + config.mailFqdn() + '.');
+                    expect(res.body.dns.mx.value).to.eql('10 ' + config.mailFqdn() + '.');
 
-                done();
-            });
+                    done();
+                });
         });
     });
 
     describe('mail relay', function () {
         it('get mail relay succeeds', function (done) {
             superagent.get(SERVER_URL + '/api/v1/settings/mail_relay')
-                   .query({ access_token: token })
-                   .end(function (err, res) {
-                expect(res.statusCode).to.equal(200);
-                expect(res.body).to.eql({ provider: 'cloudron-smtp' });
-                done();
-            });
+                .query({ access_token: token })
+                .end(function (err, res) {
+                    expect(res.statusCode).to.equal(200);
+                    expect(res.body).to.eql({ provider: 'cloudron-smtp' });
+                    done();
+                });
         });
 
         it('cannot set without provider field', function (done) {
             superagent.post(SERVER_URL + '/api/v1/settings/mail_relay')
-                   .query({ access_token: token })
-                   .send({ })
-                   .end(function (err, res) {
-                expect(res.statusCode).to.equal(400);
-                done();
-            });
+                .query({ access_token: token })
+                .send({ })
+                .end(function (err, res) {
+                    expect(res.statusCode).to.equal(400);
+                    done();
+                });
         });
 
         it('cannot set with bad host', function (done) {
             superagent.post(SERVER_URL + '/api/v1/settings/mail_relay')
-                   .query({ access_token: token })
-                   .send({ provider: 'external-smtp', host: true })
-                   .end(function (err, res) {
-                expect(res.statusCode).to.equal(400);
-                done();
-            });
+                .query({ access_token: token })
+                .send({ provider: 'external-smtp', host: true })
+                .end(function (err, res) {
+                    expect(res.statusCode).to.equal(400);
+                    done();
+                });
         });
 
         it('set fails because mail server is unreachable', function (done) {
             superagent.post(SERVER_URL + '/api/v1/settings/mail_relay')
-                   .query({ access_token: token })
-                   .send({ provider: 'external-smtp', host: 'host', port: 25, username: 'u', password: 'p', tls: true })
-                   .end(function (err, res) {
-                expect(res.statusCode).to.equal(400);
-                done();
-            });
+                .query({ access_token: token })
+                .send({ provider: 'external-smtp', host: 'host', port: 25, username: 'u', password: 'p', tls: true })
+                .end(function (err, res) {
+                    expect(res.statusCode).to.equal(400);
+                    done();
+                });
         });
 
         it('get succeeds', function (done) {
@@ -827,12 +822,12 @@ describe('Settings API', function () {
                 expect(error).to.not.be.ok();
 
                 superagent.get(SERVER_URL + '/api/v1/settings/mail_relay')
-                       .query({ access_token: token })
-                       .end(function (err, res) {
-                    expect(res.statusCode).to.equal(200);
-                    expect(res.body).to.eql(relay);
-                    done();
-                });
+                    .query({ access_token: token })
+                    .end(function (err, res) {
+                        expect(res.statusCode).to.equal(200);
+                        expect(res.body).to.eql(relay);
+                        done();
+                    });
             });
         });
     });
@@ -840,32 +835,32 @@ describe('Settings API', function () {
     describe('mail from validation', function () {
         it('get mail from validation succeeds', function (done) {
             superagent.get(SERVER_URL + '/api/v1/settings/mail_from_validation')
-                   .query({ access_token: token })
-                   .end(function (err, res) {
-                expect(res.statusCode).to.equal(200);
-                expect(res.body).to.eql({ enabled: true });
-                done();
-            });
+                .query({ access_token: token })
+                .end(function (err, res) {
+                    expect(res.statusCode).to.equal(200);
+                    expect(res.body).to.eql({ enabled: true });
+                    done();
+                });
         });
 
         it('cannot set without enabled field', function (done) {
             superagent.post(SERVER_URL + '/api/v1/settings/mail_from_validation')
-                   .query({ access_token: token })
-                   .send({ })
-                   .end(function (err, res) {
-                expect(res.statusCode).to.equal(400);
-                done();
-            });
+                .query({ access_token: token })
+                .send({ })
+                .end(function (err, res) {
+                    expect(res.statusCode).to.equal(400);
+                    done();
+                });
         });
 
         it('can set with enabled field', function (done) {
             superagent.post(SERVER_URL + '/api/v1/settings/mail_from_validation')
-                   .query({ access_token: token })
-                   .send({ enabled: false })
-                   .end(function (err, res) {
-                expect(res.statusCode).to.equal(202);
-                done();
-            });
+                .query({ access_token: token })
+                .send({ enabled: false })
+                .end(function (err, res) {
+                    expect(res.statusCode).to.equal(202);
+                    done();
+                });
         });
     });
 });

@@ -12,7 +12,6 @@ var config = require('../../config.js'),
     expect = require('expect.js'),
     mailer = require('../../mailer.js'),
     superagent = require('superagent'),
-    nock = require('nock'),
     server = require('../../server.js');
 
 var SERVER_URL = 'http://localhost:' + config.get('port');
@@ -37,24 +36,18 @@ describe('Profile API', function () {
             database._clear(function (error) {
                 expect(error).to.eql(null);
 
-                var scope1 = nock(config.apiServerOrigin()).get('/api/v1/boxes/' + config.fqdn() + '/setup/verify?setupToken=somesetuptoken').reply(200, {});
-                var scope2 = nock(config.apiServerOrigin()).post('/api/v1/boxes/' + config.fqdn() + '/setup/done?setupToken=somesetuptoken').reply(201, {});
-
                 superagent.post(SERVER_URL + '/api/v1/cloudron/activate')
-                       .query({ setupToken: 'somesetuptoken' })
-                       .send({ username: USERNAME_0, password: PASSWORD, email: EMAIL_0 })
-                       .end(function (err, res) {
-                    expect(err).to.eql(null);
-                    expect(res.statusCode).to.equal(201);
+                    .query({ setupToken: 'somesetuptoken' })
+                    .send({ username: USERNAME_0, password: PASSWORD, email: EMAIL_0 })
+                    .end(function (err, res) {
+                        expect(err).to.eql(null);
+                        expect(res.statusCode).to.equal(201);
 
-                    // stash for later use
-                    token_0 = res.body.token;
+                        // stash for later use
+                        token_0 = res.body.token;
 
-                    expect(scope1.isDone()).to.be.ok();
-                    expect(scope2.isDone()).to.be.ok();
-
-                    done();
-                });
+                        done();
+                    });
             });
         });
     }
@@ -155,73 +148,73 @@ describe('Profile API', function () {
 
         it('change email fails due to missing token', function (done) {
             superagent.post(SERVER_URL + '/api/v1/profile')
-                   .send({ email: EMAIL_0_NEW })
-                   .end(function (error, result) {
-                expect(result.statusCode).to.equal(401);
-                done();
-            });
+                .send({ email: EMAIL_0_NEW })
+                .end(function (error, result) {
+                    expect(result.statusCode).to.equal(401);
+                    done();
+                });
         });
 
         it('change email fails due to invalid email', function (done) {
             superagent.post(SERVER_URL + '/api/v1/profile')
-                   .query({ access_token: token_0 })
-                   .send({ email: 'foo@bar' })
-                   .end(function (error, result) {
-                expect(result.statusCode).to.equal(400);
-                done();
-            });
+                .query({ access_token: token_0 })
+                .send({ email: 'foo@bar' })
+                .end(function (error, result) {
+                    expect(result.statusCode).to.equal(400);
+                    done();
+                });
         });
 
         it('change user succeeds without email nor displayName', function (done) {
             superagent.post(SERVER_URL + '/api/v1/profile')
-                   .query({ access_token: token_0 })
-                   .send({})
-                   .end(function (error, result) {
-                expect(result.statusCode).to.equal(204);
-                done();
-            });
+                .query({ access_token: token_0 })
+                .send({})
+                .end(function (error, result) {
+                    expect(result.statusCode).to.equal(204);
+                    done();
+                });
         });
 
         it('change email succeeds', function (done) {
             superagent.post(SERVER_URL + '/api/v1/profile')
-                   .query({ access_token: token_0 })
-                   .send({ email: EMAIL_0_NEW })
-                   .end(function (error, result) {
-                expect(result.statusCode).to.equal(204);
+                .query({ access_token: token_0 })
+                .send({ email: EMAIL_0_NEW })
+                .end(function (error, result) {
+                    expect(result.statusCode).to.equal(204);
 
-                superagent.get(SERVER_URL + '/api/v1/profile')
-                      .query({ access_token: token_0 })
-                      .end(function (err, res) {
-                    expect(res.statusCode).to.equal(200);
-                    expect(res.body.username).to.equal(USERNAME_0.toLowerCase());
-                    expect(res.body.email).to.equal(EMAIL_0_NEW.toLowerCase());
-                    expect(res.body.admin).to.equal(true);
-                    expect(res.body.displayName).to.equal('');
+                    superagent.get(SERVER_URL + '/api/v1/profile')
+                        .query({ access_token: token_0 })
+                        .end(function (err, res) {
+                            expect(res.statusCode).to.equal(200);
+                            expect(res.body.username).to.equal(USERNAME_0.toLowerCase());
+                            expect(res.body.email).to.equal(EMAIL_0_NEW.toLowerCase());
+                            expect(res.body.admin).to.equal(true);
+                            expect(res.body.displayName).to.equal('');
 
-                    done();
+                            done();
+                        });
                 });
-            });
         });
 
         it('change displayName succeeds', function (done) {
             superagent.post(SERVER_URL + '/api/v1/profile')
-                   .query({ access_token: token_0 })
-                   .send({ displayName: DISPLAY_NAME_0_NEW })
-                   .end(function (error, result) {
-                expect(result.statusCode).to.equal(204);
+                .query({ access_token: token_0 })
+                .send({ displayName: DISPLAY_NAME_0_NEW })
+                .end(function (error, result) {
+                    expect(result.statusCode).to.equal(204);
 
-                superagent.get(SERVER_URL + '/api/v1/profile')
-                      .query({ access_token: token_0 })
-                      .end(function (err, res) {
-                    expect(res.statusCode).to.equal(200);
-                    expect(res.body.username).to.equal(USERNAME_0.toLowerCase());
-                    expect(res.body.email).to.equal(EMAIL_0_NEW.toLowerCase());
-                    expect(res.body.admin).to.be.ok();
-                    expect(res.body.displayName).to.equal(DISPLAY_NAME_0_NEW);
+                    superagent.get(SERVER_URL + '/api/v1/profile')
+                        .query({ access_token: token_0 })
+                        .end(function (err, res) {
+                            expect(res.statusCode).to.equal(200);
+                            expect(res.body.username).to.equal(USERNAME_0.toLowerCase());
+                            expect(res.body.email).to.equal(EMAIL_0_NEW.toLowerCase());
+                            expect(res.body.admin).to.be.ok();
+                            expect(res.body.displayName).to.equal(DISPLAY_NAME_0_NEW);
 
-                    done();
+                            done();
+                        });
                 });
-            });
         });
     });
 
@@ -231,52 +224,52 @@ describe('Profile API', function () {
 
         it('fails due to missing current password', function (done) {
             superagent.post(SERVER_URL + '/api/v1/profile/password')
-                   .query({ access_token: token_0 })
-                   .send({ newPassword: 'some wrong password' })
-                   .end(function (err, res) {
-                expect(res.statusCode).to.equal(400);
-                done();
-            });
+                .query({ access_token: token_0 })
+                .send({ newPassword: 'some wrong password' })
+                .end(function (err, res) {
+                    expect(res.statusCode).to.equal(400);
+                    done();
+                });
         });
 
         it('fails due to missing new password', function (done) {
             superagent.post(SERVER_URL + '/api/v1/profile/password')
-                   .query({ access_token: token_0 })
-                   .send({ password: PASSWORD })
-                   .end(function (err, res) {
-                expect(res.statusCode).to.equal(400);
-                done();
-            });
+                .query({ access_token: token_0 })
+                .send({ password: PASSWORD })
+                .end(function (err, res) {
+                    expect(res.statusCode).to.equal(400);
+                    done();
+                });
         });
 
         it('fails due to wrong password', function (done) {
             superagent.post(SERVER_URL + '/api/v1/profile/password')
-                   .query({ access_token: token_0 })
-                   .send({ password: 'some wrong password', newPassword: 'MOre#$%34' })
-                   .end(function (err, res) {
-                expect(res.statusCode).to.equal(403);
-                done();
-            });
+                .query({ access_token: token_0 })
+                .send({ password: 'some wrong password', newPassword: 'MOre#$%34' })
+                .end(function (err, res) {
+                    expect(res.statusCode).to.equal(403);
+                    done();
+                });
         });
 
         it('fails due to invalid password', function (done) {
             superagent.post(SERVER_URL + '/api/v1/profile/password')
-                   .query({ access_token: token_0 })
-                   .send({ password: PASSWORD, newPassword: 'five' })
-                   .end(function (err, res) {
-                expect(res.statusCode).to.equal(400);
-                done();
-            });
+                .query({ access_token: token_0 })
+                .send({ password: PASSWORD, newPassword: 'five' })
+                .end(function (err, res) {
+                    expect(res.statusCode).to.equal(400);
+                    done();
+                });
         });
 
         it('succeeds', function (done) {
             superagent.post(SERVER_URL + '/api/v1/profile/password')
-                   .query({ access_token: token_0 })
-                   .send({ password: PASSWORD, newPassword: 'MOre#$%34' })
-                   .end(function (err, res) {
-                expect(res.statusCode).to.equal(204);
-                done();
-            });
+                .query({ access_token: token_0 })
+                .send({ password: PASSWORD, newPassword: 'MOre#$%34' })
+                .end(function (err, res) {
+                    expect(res.statusCode).to.equal(204);
+                    done();
+                });
         });
     });
 });

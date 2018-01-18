@@ -13,7 +13,6 @@ var appdb = require('../../appdb.js'),
     hock = require('hock'),
     http = require('http'),
     MockS3 = require('mock-aws-s3'),
-    nock = require('nock'),
     os = require('os'),
     path = require('path'),
     rimraf = require('rimraf'),
@@ -32,7 +31,6 @@ var USERNAME = 'superadmin', PASSWORD = 'Foobar?1337', EMAIL ='silly@me.com';
 function setup(done) {
     config._reset();
     config.setFqdn('example-sysadmin-test.com');
-    config.set('provider', 'caas');
     config.setVersion('1.2.3');
 
     async.series([
@@ -41,17 +39,12 @@ function setup(done) {
         database._clear,
 
         function createAdmin(callback) {
-            var scope1 = nock(config.apiServerOrigin()).get('/api/v1/boxes/' + config.fqdn() + '/setup/verify?setupToken=somesetuptoken').reply(200, {});
-            var scope2 = nock(config.apiServerOrigin()).post('/api/v1/boxes/' + config.fqdn() + '/setup/done?setupToken=somesetuptoken').reply(201, {});
-
             superagent.post(SERVER_URL + '/api/v1/cloudron/activate')
                 .query({ setupToken: 'somesetuptoken' })
                 .send({ username: USERNAME, password: PASSWORD, email: EMAIL })
                 .end(function (error, result) {
                     expect(result).to.be.ok();
                     expect(result.statusCode).to.eql(201);
-                    expect(scope1.isDone()).to.be.ok();
-                    expect(scope2.isDone()).to.be.ok();
 
                     callback();
                 });

@@ -11,8 +11,7 @@ var ssh = require('../../ssh.js'),
     database = require('../../database.js'),
     expect = require('expect.js'),
     superagent = require('superagent'),
-    server = require('../../server.js'),
-    nock = require('nock');
+    server = require('../../server.js');
 
 var SERVER_URL = 'http://localhost:' + config.get('port');
 
@@ -26,7 +25,6 @@ var VALID_KEY_1 = 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCibC8G04mZy3o3AVMxjUMQo
 
 var token = null;
 
-var server;
 function setup(done) {
     config._reset();
     config.setFqdn('example-ssh-test.com');
@@ -38,23 +36,18 @@ function setup(done) {
         database._clear,
 
         function createAdmin(callback) {
-            var scope1 = nock(config.apiServerOrigin()).get('/api/v1/boxes/' + config.fqdn() + '/setup/verify?setupToken=somesetuptoken').reply(200, {});
-            var scope2 = nock(config.apiServerOrigin()).post('/api/v1/boxes/' + config.fqdn() + '/setup/done?setupToken=somesetuptoken').reply(201, {});
-
             superagent.post(SERVER_URL + '/api/v1/cloudron/activate')
-                   .query({ setupToken: 'somesetuptoken' })
-                   .send({ username: USERNAME, password: PASSWORD, email: EMAIL })
-                   .end(function (error, result) {
-                expect(result).to.be.ok();
-                expect(result.statusCode).to.eql(201);
-                expect(scope1.isDone()).to.be.ok();
-                expect(scope2.isDone()).to.be.ok();
+                .query({ setupToken: 'somesetuptoken' })
+                .send({ username: USERNAME, password: PASSWORD, email: EMAIL })
+                .end(function (error, result) {
+                    expect(result).to.be.ok();
+                    expect(result.statusCode).to.eql(201);
 
-                // stash token for further use
-                token = result.body.token;
+                    // stash token for further use
+                    token = result.body.token;
 
-                callback();
-            });
+                    callback();
+                });
         }
     ], done);
 }
@@ -76,166 +69,166 @@ describe('SSH API', function () {
     describe('add authorized_keys', function () {
         it('fails due to missing key', function (done) {
             superagent.put(SERVER_URL + '/api/v1/cloudron/ssh/authorized_keys')
-                   .query({ access_token: token })
-                   .end(function (err, res) {
-                expect(res.statusCode).to.equal(400);
-                done();
-            });
+                .query({ access_token: token })
+                .end(function (err, res) {
+                    expect(res.statusCode).to.equal(400);
+                    done();
+                });
         });
 
         it('fails due to empty key', function (done) {
             superagent.put(SERVER_URL + '/api/v1/cloudron/ssh/authorized_keys')
-                   .query({ access_token: token })
-                   .send({ key: '' })
-                   .end(function (err, res) {
-                expect(res.statusCode).to.equal(400);
-                done();
-            });
+                .query({ access_token: token })
+                .send({ key: '' })
+                .end(function (err, res) {
+                    expect(res.statusCode).to.equal(400);
+                    done();
+                });
         });
 
         it('fails due to invalid key', function (done) {
             superagent.put(SERVER_URL + '/api/v1/cloudron/ssh/authorized_keys')
-                   .query({ access_token: token })
-                   .send({ key: 'foobar' })
-                   .end(function (err, res) {
-                expect(res.statusCode).to.equal(400);
-                done();
-            });
+                .query({ access_token: token })
+                .send({ key: 'foobar' })
+                .end(function (err, res) {
+                    expect(res.statusCode).to.equal(400);
+                    done();
+                });
         });
 
         it('fails due to invalid key type', function (done) {
             superagent.put(SERVER_URL + '/api/v1/cloudron/ssh/authorized_keys')
-                   .query({ access_token: token })
-                   .send({ key: INVALID_KEY_TYPE })
-                   .end(function (err, res) {
-                expect(res.statusCode).to.equal(400);
-                done();
-            });
+                .query({ access_token: token })
+                .send({ key: INVALID_KEY_TYPE })
+                .end(function (err, res) {
+                    expect(res.statusCode).to.equal(400);
+                    done();
+                });
         });
 
         it('fails due to invalid key value', function (done) {
             superagent.put(SERVER_URL + '/api/v1/cloudron/ssh/authorized_keys')
-                   .query({ access_token: token })
-                   .send({ key: INVALID_KEY_VALUE })
-                   .end(function (err, res) {
-                expect(res.statusCode).to.equal(400);
-                done();
-            });
+                .query({ access_token: token })
+                .send({ key: INVALID_KEY_VALUE })
+                .end(function (err, res) {
+                    expect(res.statusCode).to.equal(400);
+                    done();
+                });
         });
 
         it('fails due to invalid key identifier', function (done) {
             superagent.put(SERVER_URL + '/api/v1/cloudron/ssh/authorized_keys')
-                   .query({ access_token: token })
-                   .send({ key: INVALID_KEY_IDENTIFIER })
-                   .end(function (err, res) {
-                expect(res.statusCode).to.equal(400);
-                done();
-            });
+                .query({ access_token: token })
+                .send({ key: INVALID_KEY_IDENTIFIER })
+                .end(function (err, res) {
+                    expect(res.statusCode).to.equal(400);
+                    done();
+                });
         });
 
         it('succeeds', function (done) {
             superagent.put(SERVER_URL + '/api/v1/cloudron/ssh/authorized_keys')
-                   .query({ access_token: token })
-                   .send({ key: VALID_KEY })
-                   .end(function (err, res) {
-                expect(res.statusCode).to.equal(201);
-                done();
-            });
+                .query({ access_token: token })
+                .send({ key: VALID_KEY })
+                .end(function (err, res) {
+                    expect(res.statusCode).to.equal(201);
+                    done();
+                });
         });
     });
 
     describe('get authorized_keys', function () {
         it('fails for non existing key', function (done) {
             superagent.get(SERVER_URL + '/api/v1/cloudron/ssh/authorized_keys/foobar')
-                   .query({ access_token: token })
-                   .end(function (err, res) {
-                expect(res.statusCode).to.equal(404);
-                done();
-            });
+                .query({ access_token: token })
+                .end(function (err, res) {
+                    expect(res.statusCode).to.equal(404);
+                    done();
+                });
         });
 
         it('succeeds', function (done) {
             superagent.get(SERVER_URL + '/api/v1/cloudron/ssh/authorized_keys/' + VALID_KEY.split(' ')[2])
-                   .query({ access_token: token })
-                   .end(function (err, res) {
-                expect(res.statusCode).to.equal(200);
-                expect(res.body).to.be.an('object');
-                expect(res.body.identifier).to.be.a('string');
-                expect(res.body.identifier).to.equal(VALID_KEY.split(' ')[2]);
-                expect(res.body.key).to.equal(VALID_KEY);
-                done();
-            });
+                .query({ access_token: token })
+                .end(function (err, res) {
+                    expect(res.statusCode).to.equal(200);
+                    expect(res.body).to.be.an('object');
+                    expect(res.body.identifier).to.be.a('string');
+                    expect(res.body.identifier).to.equal(VALID_KEY.split(' ')[2]);
+                    expect(res.body.key).to.equal(VALID_KEY);
+                    done();
+                });
         });
     });
 
     describe('list authorized_keys', function () {
         it('succeeds', function (done) {
             superagent.get(SERVER_URL + '/api/v1/cloudron/ssh/authorized_keys')
-                   .query({ access_token: token })
-                   .end(function (err, res) {
-                expect(res.statusCode).to.equal(200);
-                expect(res.body).to.be.an('object');
-                expect(res.body.keys).to.be.an('array');
-                expect(res.body.keys.length).to.equal(1);
-                expect(res.body.keys[0]).to.be.an('object');
-                expect(res.body.keys[0].identifier).to.be.a('string');
-                expect(res.body.keys[0].identifier).to.equal(VALID_KEY.split(' ')[2]);
-                expect(res.body.keys[0].key).to.equal(VALID_KEY);
-                done();
-            });
+                .query({ access_token: token })
+                .end(function (err, res) {
+                    expect(res.statusCode).to.equal(200);
+                    expect(res.body).to.be.an('object');
+                    expect(res.body.keys).to.be.an('array');
+                    expect(res.body.keys.length).to.equal(1);
+                    expect(res.body.keys[0]).to.be.an('object');
+                    expect(res.body.keys[0].identifier).to.be.a('string');
+                    expect(res.body.keys[0].identifier).to.equal(VALID_KEY.split(' ')[2]);
+                    expect(res.body.keys[0].key).to.equal(VALID_KEY);
+                    done();
+                });
         });
 
         it('succeeds with two keys', function (done) {
             superagent.put(SERVER_URL + '/api/v1/cloudron/ssh/authorized_keys')
-                   .query({ access_token: token })
-                   .send({ key: VALID_KEY_1 })
-                   .end(function (err, res) {
-                expect(res.statusCode).to.equal(201);
+                .query({ access_token: token })
+                .send({ key: VALID_KEY_1 })
+                .end(function (err, res) {
+                    expect(res.statusCode).to.equal(201);
 
-                superagent.get(SERVER_URL + '/api/v1/cloudron/ssh/authorized_keys')
-                       .query({ access_token: token })
-                       .end(function (err, res) {
-                    expect(res.statusCode).to.equal(200);
-                    expect(res.body).to.be.an('object');
-                    expect(res.body.keys).to.be.an('array');
-                    expect(res.body.keys.length).to.equal(2);
-                    expect(res.body.keys[0]).to.be.an('object');
-                    expect(res.body.keys[0].identifier).to.be.a('string');
-                    expect(res.body.keys[0].identifier).to.equal(VALID_KEY_1.split(' ')[2]);
-                    expect(res.body.keys[0].key).to.equal(VALID_KEY_1);
-                    expect(res.body.keys[1]).to.be.an('object');
-                    expect(res.body.keys[1].identifier).to.be.a('string');
-                    expect(res.body.keys[1].identifier).to.equal(VALID_KEY.split(' ')[2]);
-                    expect(res.body.keys[1].key).to.equal(VALID_KEY);
-                    done();
+                    superagent.get(SERVER_URL + '/api/v1/cloudron/ssh/authorized_keys')
+                        .query({ access_token: token })
+                        .end(function (err, res) {
+                            expect(res.statusCode).to.equal(200);
+                            expect(res.body).to.be.an('object');
+                            expect(res.body.keys).to.be.an('array');
+                            expect(res.body.keys.length).to.equal(2);
+                            expect(res.body.keys[0]).to.be.an('object');
+                            expect(res.body.keys[0].identifier).to.be.a('string');
+                            expect(res.body.keys[0].identifier).to.equal(VALID_KEY_1.split(' ')[2]);
+                            expect(res.body.keys[0].key).to.equal(VALID_KEY_1);
+                            expect(res.body.keys[1]).to.be.an('object');
+                            expect(res.body.keys[1].identifier).to.be.a('string');
+                            expect(res.body.keys[1].identifier).to.equal(VALID_KEY.split(' ')[2]);
+                            expect(res.body.keys[1].key).to.equal(VALID_KEY);
+                            done();
+                        });
                 });
-            });
         });
     });
 
     describe('delete authorized_keys', function () {
         it('fails for non existing key', function (done) {
             superagent.del(SERVER_URL + '/api/v1/cloudron/ssh/authorized_keys/foobar')
-                   .query({ access_token: token })
-                   .end(function (err, res) {
-                expect(res.statusCode).to.equal(404);
-                done();
-            });
+                .query({ access_token: token })
+                .end(function (err, res) {
+                    expect(res.statusCode).to.equal(404);
+                    done();
+                });
         });
 
         it('succeeds', function (done) {
             superagent.del(SERVER_URL + '/api/v1/cloudron/ssh/authorized_keys/' + VALID_KEY.split(' ')[2])
-                   .query({ access_token: token })
-                   .end(function (err, res) {
-                expect(res.statusCode).to.equal(202);
+                .query({ access_token: token })
+                .end(function (err, res) {
+                    expect(res.statusCode).to.equal(202);
 
-                superagent.get(SERVER_URL + '/api/v1/cloudron/ssh/authorized_keys/' + VALID_KEY.split(' ')[2])
-                       .query({ access_token: token })
-                       .end(function (err, res) {
-                    expect(res.statusCode).to.equal(404);
-                    done();
+                    superagent.get(SERVER_URL + '/api/v1/cloudron/ssh/authorized_keys/' + VALID_KEY.split(' ')[2])
+                        .query({ access_token: token })
+                        .end(function (err, res) {
+                            expect(res.statusCode).to.equal(404);
+                            done();
+                        });
                 });
-            });
         });
     });
 });

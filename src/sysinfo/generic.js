@@ -13,6 +13,8 @@ var assert = require('assert'),
 function getPublicIp(callback) {
     assert.strictEqual(typeof callback, 'function');
 
+    if (process.env.BOX_ENV === 'test') return callback(null, '127.0.0.1');
+
     async.retry({ times: 10, interval: 5000 }, function (callback) {
         superagent.get(config.apiServerOrigin() + '/api/v1/helper/public_ip').timeout(30 * 1000).end(function (error, result) {
             if (error || result.statusCode !== 200) {
