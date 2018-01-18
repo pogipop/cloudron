@@ -12,11 +12,9 @@ var async = require('async'),
     oauth2 = require('../oauth2.js'),
     expect = require('expect.js'),
     uuid = require('uuid'),
-    nock = require('nock'),
     hat = require('hat'),
     superagent = require('superagent'),
-    server = require('../../server.js'),
-    settings = require('../../settings.js');
+    server = require('../../server.js');
 
 var SERVER_URL = 'http://localhost:' + config.get('port');
 
@@ -26,30 +24,24 @@ var token = null;
 function setup(done) {
     config._reset();
     config.setFqdn('example-clients-test.com');
-    config.set('provider', 'caas');
 
     async.series([
         server.start,
         database._clear,
 
         function (callback) {
-            var scope1 = nock(config.apiServerOrigin()).get('/api/v1/boxes/' + config.fqdn() + '/setup/verify?setupToken=somesetuptoken').reply(200, {});
-            var scope2 = nock(config.apiServerOrigin()).post('/api/v1/boxes/' + config.fqdn() + '/setup/done?setupToken=somesetuptoken').reply(201, {});
-
             superagent.post(SERVER_URL + '/api/v1/cloudron/activate')
-                   .query({ setupToken: 'somesetuptoken' })
-                   .send({ username: USERNAME, password: PASSWORD, email: EMAIL })
-                   .end(function (error, result) {
-                expect(result).to.be.ok();
-                expect(result.statusCode).to.equal(201);
-                expect(scope1.isDone()).to.be.ok();
-                expect(scope2.isDone()).to.be.ok();
+                .query({ setupToken: 'somesetuptoken' })
+                .send({ username: USERNAME, password: PASSWORD, email: EMAIL })
+                .end(function (error, result) {
+                    expect(result).to.be.ok();
+                    expect(result.statusCode).to.equal(201);
 
-                // stash token for further use
-                token = result.body.token;
+                    // stash token for further use
+                    token = result.body.token;
 
-                callback();
-            });
+                    callback();
+                });
         }
     ], done);
 }
@@ -69,118 +61,118 @@ describe('OAuth Clients API', function () {
 
         it('fails without token', function (done) {
             superagent.post(SERVER_URL + '/api/v1/oauth/clients')
-                    .send({ appId: 'someApp', redirectURI: 'http://foobar.com', scope: 'profile' })
-                    .end(function (error, result) {
-                expect(result.statusCode).to.equal(401);
-                done();
-            });
+                .send({ appId: 'someApp', redirectURI: 'http://foobar.com', scope: 'profile' })
+                .end(function (error, result) {
+                    expect(result.statusCode).to.equal(401);
+                    done();
+                });
         });
 
         it('fails without appId', function (done) {
             superagent.post(SERVER_URL + '/api/v1/oauth/clients')
-                    .query({ access_token: token })
-                    .send({ redirectURI: 'http://foobar.com', scope: 'profile' })
-                    .end(function (error, result) {
-                expect(result.statusCode).to.equal(400);
-                done();
-            });
+                .query({ access_token: token })
+                .send({ redirectURI: 'http://foobar.com', scope: 'profile' })
+                .end(function (error, result) {
+                    expect(result.statusCode).to.equal(400);
+                    done();
+                });
         });
 
         it('fails with empty appId', function (done) {
             superagent.post(SERVER_URL + '/api/v1/oauth/clients')
-                    .query({ access_token: token })
-                    .send({ appId: '', redirectURI: 'http://foobar.com', scope: 'profile' })
-                    .end(function (error, result) {
-                expect(result.statusCode).to.equal(400);
-                done();
-            });
+                .query({ access_token: token })
+                .send({ appId: '', redirectURI: 'http://foobar.com', scope: 'profile' })
+                .end(function (error, result) {
+                    expect(result.statusCode).to.equal(400);
+                    done();
+                });
         });
 
         it('fails without scope', function (done) {
             superagent.post(SERVER_URL + '/api/v1/oauth/clients')
-                    .query({ access_token: token })
-                    .send({ appId: 'someApp', redirectURI: 'http://foobar.com' })
-                    .end(function (error, result) {
-                expect(result.statusCode).to.equal(400);
-                done();
-            });
+                .query({ access_token: token })
+                .send({ appId: 'someApp', redirectURI: 'http://foobar.com' })
+                .end(function (error, result) {
+                    expect(result.statusCode).to.equal(400);
+                    done();
+                });
         });
 
         it('fails with empty scope', function (done) {
             superagent.post(SERVER_URL + '/api/v1/oauth/clients')
-                    .query({ access_token: token })
-                    .send({ appId: 'someApp', redirectURI: 'http://foobar.com', scope: '' })
-                    .end(function (error, result) {
-                expect(result.statusCode).to.equal(400);
-                done();
-            });
+                .query({ access_token: token })
+                .send({ appId: 'someApp', redirectURI: 'http://foobar.com', scope: '' })
+                .end(function (error, result) {
+                    expect(result.statusCode).to.equal(400);
+                    done();
+                });
         });
 
         it('fails without redirectURI', function (done) {
             superagent.post(SERVER_URL + '/api/v1/oauth/clients')
-                    .query({ access_token: token })
-                    .send({ appId: 'someApp', scope: 'profile' })
-                    .end(function (error, result) {
-                expect(result.statusCode).to.equal(400);
-                done();
-            });
+                .query({ access_token: token })
+                .send({ appId: 'someApp', scope: 'profile' })
+                .end(function (error, result) {
+                    expect(result.statusCode).to.equal(400);
+                    done();
+                });
         });
 
         it('fails with empty redirectURI', function (done) {
             superagent.post(SERVER_URL + '/api/v1/oauth/clients')
-                    .query({ access_token: token })
-                    .send({ appId: 'someApp', redirectURI: '', scope: 'profile' })
-                    .end(function (error, result) {
-                expect(result.statusCode).to.equal(400);
-                done();
-            });
+                .query({ access_token: token })
+                .send({ appId: 'someApp', redirectURI: '', scope: 'profile' })
+                .end(function (error, result) {
+                    expect(result.statusCode).to.equal(400);
+                    done();
+                });
         });
 
         it('fails with malformed redirectURI', function (done) {
             superagent.post(SERVER_URL + '/api/v1/oauth/clients')
-                    .query({ access_token: token })
-                    .send({ appId: 'someApp', redirectURI: 'foobar', scope: 'profile' })
-                    .end(function (error, result) {
-                expect(result.statusCode).to.equal(400);
-                done();
-            });
+                .query({ access_token: token })
+                .send({ appId: 'someApp', redirectURI: 'foobar', scope: 'profile' })
+                .end(function (error, result) {
+                    expect(result.statusCode).to.equal(400);
+                    done();
+                });
         });
 
         it('fails with invalid name', function (done) {
             superagent.post(SERVER_URL + '/api/v1/oauth/clients')
-                    .query({ access_token: token })
-                    .send({ appId: '$"$%^45asdfasdfadf.adf.', redirectURI: 'http://foobar.com', scope: 'profile' })
-                    .end(function (error, result) {
-                expect(result.statusCode).to.equal(400);
-                done();
-            });
+                .query({ access_token: token })
+                .send({ appId: '$"$%^45asdfasdfadf.adf.', redirectURI: 'http://foobar.com', scope: 'profile' })
+                .end(function (error, result) {
+                    expect(result.statusCode).to.equal(400);
+                    done();
+                });
         });
 
         it('succeeds with dash', function (done) {
             superagent.post(SERVER_URL + '/api/v1/oauth/clients')
-                    .query({ access_token: token })
-                    .send({ appId: 'fo-1234-bar', redirectURI: 'http://foobar.com', scope: 'profile' })
-                    .end(function (error, result) {
-                expect(result.statusCode).to.equal(201);
-                done();
-            });
+                .query({ access_token: token })
+                .send({ appId: 'fo-1234-bar', redirectURI: 'http://foobar.com', scope: 'profile' })
+                .end(function (error, result) {
+                    expect(result.statusCode).to.equal(201);
+                    done();
+                });
         });
 
         it('succeeds', function (done) {
             superagent.post(SERVER_URL + '/api/v1/oauth/clients')
-                    .query({ access_token: token })
-                    .send({ appId: 'someApp', redirectURI: 'http://foobar.com', scope: 'profile' })
-                    .end(function (error, result) {
-                expect(result.statusCode).to.equal(201);
-                expect(result.body.id).to.be.a('string');
-                expect(result.body.appId).to.be.a('string');
-                expect(result.body.redirectURI).to.be.a('string');
-                expect(result.body.clientSecret).to.be.a('string');
-                expect(result.body.scope).to.be.a('string');
-                expect(result.body.type).to.equal(clients.TYPE_EXTERNAL);
+                .query({ access_token: token })
+                .send({ appId: 'someApp', redirectURI: 'http://foobar.com', scope: 'profile' })
+                .end(function (error, result) {
+                    expect(result.statusCode).to.equal(201);
+                    expect(result.body.id).to.be.a('string');
+                    expect(result.body.appId).to.be.a('string');
+                    expect(result.body.redirectURI).to.be.a('string');
+                    expect(result.body.clientSecret).to.be.a('string');
+                    expect(result.body.scope).to.be.a('string');
+                    expect(result.body.type).to.equal(clients.TYPE_EXTERNAL);
 
-                done();
-            });
+                    done();
+                });
         });
     });
 
@@ -198,15 +190,15 @@ describe('OAuth Clients API', function () {
 
                 function (callback) {
                     superagent.post(SERVER_URL + '/api/v1/oauth/clients')
-                           .query({ access_token: token })
-                           .send({ appId: CLIENT_0.appId, redirectURI: CLIENT_0.redirectURI, scope: CLIENT_0.scope })
-                           .end(function (error, result) {
-                        expect(result.statusCode).to.equal(201);
+                        .query({ access_token: token })
+                        .send({ appId: CLIENT_0.appId, redirectURI: CLIENT_0.redirectURI, scope: CLIENT_0.scope })
+                        .end(function (error, result) {
+                            expect(result.statusCode).to.equal(201);
 
-                        CLIENT_0 = result.body;
+                            CLIENT_0 = result.body;
 
-                        callback();
-                    });
+                            callback();
+                        });
                 }
             ], done);
         });
@@ -215,30 +207,30 @@ describe('OAuth Clients API', function () {
 
         it('fails without token', function (done) {
             superagent.get(SERVER_URL + '/api/v1/oauth/clients/' + CLIENT_0.id)
-                    .end(function (error, result) {
-                expect(result.statusCode).to.equal(401);
-                done();
-            });
+                .end(function (error, result) {
+                    expect(result.statusCode).to.equal(401);
+                    done();
+                });
         });
 
 
         it('fails with unknown id', function (done) {
             superagent.get(SERVER_URL + '/api/v1/oauth/clients/' + CLIENT_0.id.toUpperCase())
-                    .query({ access_token: token })
-                    .end(function (error, result) {
-                expect(result.statusCode).to.equal(404);
-                done();
-            });
+                .query({ access_token: token })
+                .end(function (error, result) {
+                    expect(result.statusCode).to.equal(404);
+                    done();
+                });
         });
 
         it('succeeds', function (done) {
             superagent.get(SERVER_URL + '/api/v1/oauth/clients/' + CLIENT_0.id)
-                    .query({ access_token: token })
-                    .end(function (error, result) {
-                expect(result.statusCode).to.equal(200);
-                expect(result.body).to.eql(CLIENT_0);
-                done();
-            });
+                .query({ access_token: token })
+                .end(function (error, result) {
+                    expect(result.statusCode).to.equal(200);
+                    expect(result.body).to.eql(CLIENT_0);
+                    done();
+                });
         });
     });
 
@@ -264,15 +256,15 @@ describe('OAuth Clients API', function () {
 
                 function (callback) {
                     superagent.post(SERVER_URL + '/api/v1/oauth/clients')
-                           .query({ access_token: token })
-                           .send({ appId: CLIENT_0.appId, redirectURI: CLIENT_0.redirectURI, scope: CLIENT_0.scope })
-                           .end(function (error, result) {
-                        expect(result.statusCode).to.equal(201);
+                        .query({ access_token: token })
+                        .send({ appId: CLIENT_0.appId, redirectURI: CLIENT_0.redirectURI, scope: CLIENT_0.scope })
+                        .end(function (error, result) {
+                            expect(result.statusCode).to.equal(201);
 
-                        CLIENT_0 = result.body;
+                            CLIENT_0 = result.body;
 
-                        callback();
-                    });
+                            callback();
+                        });
                 }
             ], done);
         });
@@ -281,52 +273,52 @@ describe('OAuth Clients API', function () {
 
         it('fails without token', function (done) {
             superagent.del(SERVER_URL + '/api/v1/oauth/clients/' + CLIENT_0.id)
-                    .end(function (error, result) {
-                expect(result.statusCode).to.equal(401);
-                done();
-            });
+                .end(function (error, result) {
+                    expect(result.statusCode).to.equal(401);
+                    done();
+                });
         });
 
 
         it('fails with unknown id', function (done) {
             superagent.del(SERVER_URL + '/api/v1/oauth/clients/' + CLIENT_0.id.toUpperCase())
-                    .query({ access_token: token })
-                    .end(function (error, result) {
-                expect(result.statusCode).to.equal(404);
-                done();
-            });
+                .query({ access_token: token })
+                .end(function (error, result) {
+                    expect(result.statusCode).to.equal(404);
+                    done();
+                });
         });
 
         it('succeeds', function (done) {
             superagent.del(SERVER_URL + '/api/v1/oauth/clients/' + CLIENT_0.id)
-                    .query({ access_token: token })
-                    .end(function (error, result) {
-                expect(result.statusCode).to.equal(204);
+                .query({ access_token: token })
+                .end(function (error, result) {
+                    expect(result.statusCode).to.equal(204);
 
-                superagent.get(SERVER_URL + '/api/v1/oauth/clients/' + CLIENT_0.id)
+                    superagent.get(SERVER_URL + '/api/v1/oauth/clients/' + CLIENT_0.id)
                         .query({ access_token: token })
                         .end(function (error, result) {
-                    expect(result.statusCode).to.equal(404);
+                            expect(result.statusCode).to.equal(404);
 
-                    done();
+                            done();
+                        });
                 });
-            });
         });
 
         it('fails for cid-webadmin', function (done) {
             superagent.del(SERVER_URL + '/api/v1/oauth/clients/cid-webadmin')
-                    .query({ access_token: token })
-                    .end(function (error, result) {
-                expect(result.statusCode).to.equal(405);
+                .query({ access_token: token })
+                .end(function (error, result) {
+                    expect(result.statusCode).to.equal(405);
 
-                superagent.get(SERVER_URL + '/api/v1/oauth/clients/cid-webadmin')
+                    superagent.get(SERVER_URL + '/api/v1/oauth/clients/cid-webadmin')
                         .query({ access_token: token })
                         .end(function (error, result) {
-                    expect(result.statusCode).to.equal(200);
+                            expect(result.statusCode).to.equal(200);
 
-                    done();
+                            done();
+                        });
                 });
-            });
         });
 
         it('fails for addon auth client', function (done) {
@@ -336,18 +328,18 @@ describe('OAuth Clients API', function () {
                 CLIENT_1.id = result.id;
 
                 superagent.del(SERVER_URL + '/api/v1/oauth/clients/' + CLIENT_1.id)
-                        .query({ access_token: token })
-                        .end(function (error, result) {
-                    expect(result.statusCode).to.equal(405);
+                    .query({ access_token: token })
+                    .end(function (error, result) {
+                        expect(result.statusCode).to.equal(405);
 
-                    superagent.get(SERVER_URL + '/api/v1/oauth/clients/' + CLIENT_1.id)
+                        superagent.get(SERVER_URL + '/api/v1/oauth/clients/' + CLIENT_1.id)
                             .query({ access_token: token })
                             .end(function (error, result) {
-                        expect(result.statusCode).to.equal(200);
+                                expect(result.statusCode).to.equal(200);
 
-                        done();
+                                done();
+                            });
                     });
-                });
             });
         });
     });
@@ -378,15 +370,15 @@ describe('Clients', function () {
 
             function (callback) {
                 superagent.get(SERVER_URL + '/api/v1/profile')
-                        .query({ access_token: token })
-                        .end(function (error, result) {
-                    expect(result).to.be.ok();
-                    expect(result.statusCode).to.eql(200);
+                    .query({ access_token: token })
+                    .end(function (error, result) {
+                        expect(result).to.be.ok();
+                        expect(result.statusCode).to.eql(200);
 
-                    USER_0.id = result.body.id;
+                        USER_0.id = result.body.id;
 
-                    callback();
-                });
+                        callback();
+                    });
             }
         ], done);
     }
@@ -397,40 +389,40 @@ describe('Clients', function () {
 
         it('fails due to missing token', function (done) {
             superagent.get(SERVER_URL + '/api/v1/oauth/clients')
-            .end(function (error, result) {
-                expect(result.statusCode).to.equal(401);
-                done();
-            });
+                .end(function (error, result) {
+                    expect(result.statusCode).to.equal(401);
+                    done();
+                });
         });
 
         it('fails due to empty token', function (done) {
             superagent.get(SERVER_URL + '/api/v1/oauth/clients')
-            .query({ access_token: '' })
-            .end(function (error, result) {
-                expect(result.statusCode).to.equal(401);
-                done();
-            });
+                .query({ access_token: '' })
+                .end(function (error, result) {
+                    expect(result.statusCode).to.equal(401);
+                    done();
+                });
         });
 
         it('fails due to wrong token', function (done) {
             superagent.get(SERVER_URL + '/api/v1/oauth/clients')
-            .query({ access_token: token.toUpperCase() })
-            .end(function (error, result) {
-                expect(result.statusCode).to.equal(401);
-                done();
-            });
+                .query({ access_token: token.toUpperCase() })
+                .end(function (error, result) {
+                    expect(result.statusCode).to.equal(401);
+                    done();
+                });
         });
 
         it('succeeds', function (done) {
             superagent.get(SERVER_URL + '/api/v1/oauth/clients')
-            .query({ access_token: token })
-            .end(function (error, result) {
-                expect(result.statusCode).to.equal(200);
+                .query({ access_token: token })
+                .end(function (error, result) {
+                    expect(result.statusCode).to.equal(200);
 
-                expect(result.body.clients.length).to.eql(3);
+                    expect(result.body.clients.length).to.eql(3);
 
-                done();
-            });
+                    done();
+                });
         });
     });
 
@@ -440,50 +432,50 @@ describe('Clients', function () {
 
         it('fails due to missing token', function (done) {
             superagent.get(SERVER_URL + '/api/v1/oauth/clients/cid-webadmin/tokens')
-            .end(function (error, result) {
-                expect(result.statusCode).to.equal(401);
-                done();
-            });
+                .end(function (error, result) {
+                    expect(result.statusCode).to.equal(401);
+                    done();
+                });
         });
 
         it('fails due to empty token', function (done) {
             superagent.get(SERVER_URL + '/api/v1/oauth/clients/cid-webadmin/tokens')
-            .query({ access_token: '' })
-            .end(function (error, result) {
-                expect(result.statusCode).to.equal(401);
-                done();
-            });
+                .query({ access_token: '' })
+                .end(function (error, result) {
+                    expect(result.statusCode).to.equal(401);
+                    done();
+                });
         });
 
         it('fails due to wrong token', function (done) {
             superagent.get(SERVER_URL + '/api/v1/oauth/clients/cid-webadmin/tokens')
-            .query({ access_token: token.toUpperCase() })
-            .end(function (error, result) {
-                expect(result.statusCode).to.equal(401);
-                done();
-            });
+                .query({ access_token: token.toUpperCase() })
+                .end(function (error, result) {
+                    expect(result.statusCode).to.equal(401);
+                    done();
+                });
         });
 
         it('fails due to unkown client', function (done) {
             superagent.get(SERVER_URL + '/api/v1/oauth/clients/CID-WEBADMIN/tokens')
-            .query({ access_token: token })
-            .end(function (error, result) {
-                expect(result.statusCode).to.equal(404);
-                done();
-            });
+                .query({ access_token: token })
+                .end(function (error, result) {
+                    expect(result.statusCode).to.equal(404);
+                    done();
+                });
         });
 
         it('succeeds', function (done) {
             superagent.get(SERVER_URL + '/api/v1/oauth/clients/cid-webadmin/tokens')
-            .query({ access_token: token })
-            .end(function (error, result) {
-                expect(result.statusCode).to.equal(200);
+                .query({ access_token: token })
+                .end(function (error, result) {
+                    expect(result.statusCode).to.equal(200);
 
-                expect(result.body.tokens.length).to.eql(1);
-                expect(result.body.tokens[0].identifier).to.eql(USER_0.id);
+                    expect(result.body.tokens.length).to.eql(1);
+                    expect(result.body.tokens[0].identifier).to.eql(USER_0.id);
 
-                done();
-            });
+                    done();
+                });
         });
     });
 
@@ -493,62 +485,62 @@ describe('Clients', function () {
 
         it('fails due to missing token', function (done) {
             superagent.del(SERVER_URL + '/api/v1/oauth/clients/cid-webadmin/tokens')
-            .end(function (error, result) {
-                expect(result.statusCode).to.equal(401);
-                done();
-            });
+                .end(function (error, result) {
+                    expect(result.statusCode).to.equal(401);
+                    done();
+                });
         });
 
         it('fails due to empty token', function (done) {
             superagent.del(SERVER_URL + '/api/v1/oauth/clients/cid-webadmin/tokens')
-            .query({ access_token: '' })
-            .end(function (error, result) {
-                expect(result.statusCode).to.equal(401);
-                done();
-            });
+                .query({ access_token: '' })
+                .end(function (error, result) {
+                    expect(result.statusCode).to.equal(401);
+                    done();
+                });
         });
 
         it('fails due to wrong token', function (done) {
             superagent.del(SERVER_URL + '/api/v1/oauth/clients/cid-webadmin/tokens')
-            .query({ access_token: token.toUpperCase() })
-            .end(function (error, result) {
-                expect(result.statusCode).to.equal(401);
-                done();
-            });
+                .query({ access_token: token.toUpperCase() })
+                .end(function (error, result) {
+                    expect(result.statusCode).to.equal(401);
+                    done();
+                });
         });
 
         it('fails due to unkown client', function (done) {
             superagent.del(SERVER_URL + '/api/v1/oauth/clients/CID-WEBADMIN/tokens')
-            .query({ access_token: token })
-            .end(function (error, result) {
-                expect(result.statusCode).to.equal(404);
-                done();
-            });
+                .query({ access_token: token })
+                .end(function (error, result) {
+                    expect(result.statusCode).to.equal(404);
+                    done();
+                });
         });
 
         it('succeeds', function (done) {
             superagent.get(SERVER_URL + '/api/v1/oauth/clients/cid-webadmin/tokens')
-            .query({ access_token: token })
-            .end(function (error, result) {
-                expect(result.statusCode).to.equal(200);
-
-                expect(result.body.tokens.length).to.eql(1);
-                expect(result.body.tokens[0].identifier).to.eql(USER_0.id);
-
-                superagent.del(SERVER_URL + '/api/v1/oauth/clients/cid-webadmin/tokens')
                 .query({ access_token: token })
                 .end(function (error, result) {
-                    expect(result.statusCode).to.equal(204);
+                    expect(result.statusCode).to.equal(200);
 
-                    // further calls with this token should not work
-                    superagent.get(SERVER_URL + '/api/v1/profile')
-                    .query({ access_token: token })
-                    .end(function (error, result) {
-                        expect(result.statusCode).to.equal(401);
-                        done();
-                    });
+                    expect(result.body.tokens.length).to.eql(1);
+                    expect(result.body.tokens[0].identifier).to.eql(USER_0.id);
+
+                    superagent.del(SERVER_URL + '/api/v1/oauth/clients/cid-webadmin/tokens')
+                        .query({ access_token: token })
+                        .end(function (error, result) {
+                            expect(result.statusCode).to.equal(204);
+
+                            // further calls with this token should not work
+                            superagent.get(SERVER_URL + '/api/v1/profile')
+                                .query({ access_token: token })
+                                .end(function (error, result) {
+                                    expect(result.statusCode).to.equal(401);
+                                    done();
+                                });
+                        });
                 });
-            });
         });
     });
 });
