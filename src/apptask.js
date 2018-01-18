@@ -511,8 +511,7 @@ function configure(app, callback) {
         function (next) {
             if (!locationChanged) return next();
 
-            // the config.fqdn() fallback can be removed after 1.9
-            unregisterSubdomain(app, app.oldConfig.location, app.oldConfig.domain || config.fqdn(), next);
+            unregisterSubdomain(app, app.oldConfig.location, app.oldConfig.domain, next);
         },
 
         reserveHttpPort.bind(null, app),
