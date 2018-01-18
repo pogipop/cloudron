@@ -1171,3 +1171,7 @@
 * Set max email recepient limit (in outgoing emails) to 500
 * Put terminal and app logs viewer to separate window
 
+[1.10.0]
+* Migrate mailboxes to support multiple domains
+* Update addon containers to latest versions
+
