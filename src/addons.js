@@ -299,7 +299,7 @@ function setupEmail(app, options, callback) {
         { name: 'MAIL_IMAP_PORT', value: '9993' },
         { name: 'MAIL_SIEVE_SERVER', value: 'mail' },
         { name: 'MAIL_SIEVE_PORT', value: '4190' },
-        { name: 'MAIL_DOMAIN', value: config.fqdn() }
+        { name: 'MAIL_DOMAIN', value: app.domain }
     ];
 
     debugApp(app, 'Setting up Email');
@@ -368,8 +368,8 @@ function setupSendMail(app, options, callback) {
             { name: 'MAIL_SMTPS_PORT', value: '4650' },
             { name: 'MAIL_SMTP_USERNAME', value: mailbox.name },
             { name: 'MAIL_SMTP_PASSWORD', value: password },
-            { name: 'MAIL_FROM', value: mailbox.name + '@' + config.fqdn() },
-            { name: 'MAIL_DOMAIN', value: config.fqdn() }
+            { name: 'MAIL_FROM', value: mailbox.name + '@' + app.domain },
+            { name: 'MAIL_DOMAIN', value: app.domain }
         ];
         debugApp(app, 'Setting sendmail addon config to %j', env);
         appdb.setAddonConfig(app.id, 'sendmail', env, callback);
@@ -404,8 +404,8 @@ function setupRecvMail(app, options, callback) {
             { name: 'MAIL_IMAP_PORT', value: '9993' },
             { name: 'MAIL_IMAP_USERNAME', value: mailbox.name },
             { name: 'MAIL_IMAP_PASSWORD', value: password },
-            { name: 'MAIL_TO', value: mailbox.name + '@' + config.fqdn() },
-            { name: 'MAIL_DOMAIN', value: config.fqdn() }
+            { name: 'MAIL_TO', value: mailbox.name + '@' + app.domain },
+            { name: 'MAIL_DOMAIN', value: app.domain }
         ];
 
         debugApp(app, 'Setting sendmail addon config to %j', env);
