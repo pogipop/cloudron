@@ -476,8 +476,9 @@ function ensureDkimKey(callback) {
     var dkimPath = path.join(paths.MAIL_DATA_DIR, 'dkim/' + config.fqdn());
     var dkimPrivateKeyFile = path.join(dkimPath, 'private');
     var dkimPublicKeyFile = path.join(dkimPath, 'public');
+    var dkimSelectorFile = path.join(dkimPath, 'selector');
 
-    if (!fs.existsSync(dkimPrivateKeyFile) || !fs.existsSync(dkimPublicKeyFile)) {
+    if (!fs.existsSync(dkimPrivateKeyFile) || !fs.existsSync(dkimPublicKeyFile) || !fs.existsSync(dkimSelectorFile)) {
         debug('Generating new DKIM keys');
 
         if (!safe.fs.mkdirSync(dkimPath) && safe.error.code !== 'EEXIST') {
@@ -487,6 +488,8 @@ function ensureDkimKey(callback) {
 
         child_process.execSync('openssl genrsa -out ' + dkimPrivateKeyFile + ' 1024');
         child_process.execSync('openssl rsa -in ' + dkimPrivateKeyFile + ' -out ' + dkimPublicKeyFile + ' -pubout -outform PEM');
+
+        safe.fs.writeFileSync(dkimSelectorFile, config.dkimSelector(), 'utf8');
     } else {
         debug('DKIM keys already present');
     }
