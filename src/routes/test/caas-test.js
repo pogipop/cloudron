@@ -283,17 +283,17 @@ describe('Caas', function () {
 
         it('fails when in wrong state', function (done) {
             var scope2 = nock(config.apiServerOrigin())
-                .post('/api/v1/boxes/' + config.fqdn() + '/awscredentials?token=BACKUP_TOKEN')
+                .post('/api/v1/boxes/BOX_ID/awscredentials?token=BACKUP_TOKEN')
                 .reply(201, { credentials: { AccessKeyId: 'accessKeyId', SecretAccessKey: 'secretAccessKey', SessionToken: 'sessionToken' } });
 
             var scope3 = nock(config.apiServerOrigin())
-                .post('/api/v1/boxes/' + config.fqdn() + '/backupDone?token=APPSTORE_TOKEN', function (body) {
+                .post('/api/v1/boxes/BOX_ID/backupDone?token=APPSTORE_TOKEN', function (body) {
                     return body.boxVersion && body.restoreKey && !body.appId && !body.appVersion && body.appBackupIds.length === 0;
                 })
                 .reply(200, { id: 'someid' });
 
             var scope1 = nock(config.apiServerOrigin())
-                .post('/api/v1/boxes/' + config.fqdn() + '/migrate?token=APPSTORE_TOKEN', function (body) {
+                .post('/api/v1/boxes/BOX_ID/migrate?token=APPSTORE_TOKEN', function (body) {
                     return body.size && body.region && body.restoreKey;
                 }).reply(409, {});
 
@@ -324,13 +324,13 @@ describe('Caas', function () {
             }).reply(202, {});
 
             var scope2 = nock(config.apiServerOrigin())
-                .post('/api/v1/boxes/' + config.fqdn() + '/backupDone?token=APPSTORE_TOKEN', function (body) {
+                .post('/api/v1/boxes/BOX_ID/backupDone?token=APPSTORE_TOKEN', function (body) {
                     return body.boxVersion && body.restoreKey && !body.appId && !body.appVersion && body.appBackupIds.length === 0;
                 })
                 .reply(200, { id: 'someid' });
 
             var scope3 = nock(config.apiServerOrigin())
-                .post('/api/v1/boxes/' + config.fqdn() + '/awscredentials?token=BACKUP_TOKEN')
+                .post('/api/v1/boxes/BOX_ID/awscredentials?token=BACKUP_TOKEN')
                 .reply(201, { credentials: { AccessKeyId: 'accessKeyId', SecretAccessKey: 'secretAccessKey', SessionToken: 'sessionToken' } });
 
             injectShellMock();
