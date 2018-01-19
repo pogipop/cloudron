@@ -733,7 +733,7 @@ describe('Ldap', function () {
             ldapSearch('cn=' + USER_0.username + '@example.com,ou=mailboxes,dc=cloudron', 'objectclass=mailbox', function (error, entries) {
                 if (error) return done(error);
                 expect(entries.length).to.equal(1);
-                expect(entries[0].cn).to.equal(USER_0.username.toLowerCase());
+                expect(entries[0].cn).to.equal(USER_0.username.toLowerCase() + '@example.com');
                 done();
             });
         });

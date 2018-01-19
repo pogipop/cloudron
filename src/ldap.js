@@ -271,9 +271,9 @@ function mailboxSearch(req, res, next) {
             attributes: {
                 objectclass: ['mailbox'],
                 objectcategory: 'mailbox',
-                cn: mailbox.name,
-                uid: mailbox.name,
-                mail: mailbox.name + '@' + mailbox.domain,
+                cn: `${mailbox.name}@${mailbox.domain}`,
+                uid: `${mailbox.name}@${mailbox.domain}`,
+                mail: `${mailbox.name}@${mailbox.domain}`,
                 ownerType: mailbox.ownerType
             }
         };
