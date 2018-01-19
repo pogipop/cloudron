@@ -251,7 +251,7 @@ describe('Ldap', function () {
 
                 var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + config.get('ldapPort') });
 
-                client.bind('cn=' + USER_0.username.toLowerCase() + '@' + config.fqdn() + ',ou=users,dc=cloudron', USER_0.password, function (error) {
+                client.bind('cn=' + USER_0.username.toLowerCase() + '@example.com,ou=users,dc=cloudron', USER_0.password, function (error) {
                     expect(error).to.be(null);
 
                     client.unbind();
@@ -402,10 +402,10 @@ describe('Ldap', function () {
 
                         expect(entries[0].username).to.equal(USER_0.username.toLowerCase());
                         expect(entries[0].mailAlternateAddress).to.equal(USER_0.email.toLowerCase());
-                        expect(entries[0].mail).to.equal(USER_0.username.toLowerCase() + '@' + config.fqdn());
+                        expect(entries[0].mail).to.equal(USER_0.username.toLowerCase() + '@example.com');
                         expect(entries[1].username).to.equal(USER_1.username.toLowerCase());
                         expect(entries[1].mailAlternateAddress).to.equal(USER_1.email.toLowerCase());
-                        expect(entries[1].mail).to.equal(USER_1.username.toLowerCase() + '@' + config.fqdn());
+                        expect(entries[1].mail).to.equal(USER_1.username.toLowerCase() + '@example.com');
 
                         client.unbind();
 
