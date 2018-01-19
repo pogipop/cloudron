@@ -148,19 +148,26 @@ function mailUserEventToAdmins(user, event) {
     assert.strictEqual(typeof user, 'object');
     assert.strictEqual(typeof event, 'string');
 
-    getAdminEmails(function (error, adminEmails) {
-        if (error) return debug('Error getting admins', error);
+    settings.getCloudronName(function (error, cloudronName) {
+        if (error) {
+            debug(error);
+            cloudronName = 'Cloudron';
+        }
 
-        adminEmails = _.difference(adminEmails, [ user.email ]);
+        getAdminEmails(function (error, adminEmails) {
+            if (error) return debug('Error getting admins', error);
 
-        var mailOptions = {
-            from: mailConfig().from,
-            to: adminEmails.join(', '),
-            subject: util.format('[%s] %s %s', config.fqdn(), user.username || user.alternateEmail || user.email, event),
-            text: render('user_event.ejs', { fqdn: config.fqdn(), user: user, event: event, format: 'text' }),
-        };
+            adminEmails = _.difference(adminEmails, [ user.email ]);
 
-        enqueue(mailOptions);
+            var mailOptions = {
+                from: mailConfig().from,
+                to: adminEmails.join(', '),
+                subject: util.format('[%s] %s %s', cloudronName, user.username || user.alternateEmail || user.email, event),
+                text: render('user_event.ejs', { user: user, event: event, format: 'text' }),
+            };
+
+            enqueue(mailOptions);
+        });
     });
 }
 
@@ -180,7 +187,6 @@ function sendInvite(user, invitor) {
             user: user,
             webadminUrl: config.adminOrigin(),
             setupLink: config.adminOrigin() + '/api/v1/session/account/setup.html?reset_token=' + user.resetToken,
-            fqdn: config.fqdn(),
             invitor: invitor,
             cloudronName: cloudronName,
             cloudronAvatarUrl: config.adminOrigin() + '/api/v1/cloudron/avatar'
@@ -222,7 +228,6 @@ function userAdded(user, inviteSent) {
             }
 
             var templateData = {
-                fqdn: config.fqdn(),
                 user: user,
                 inviteLink: inviteSent ? null : config.adminOrigin() + '/api/v1/session/account/setup.html?reset_token=' + user.resetToken,
                 cloudronName: cloudronName,
@@ -238,7 +243,7 @@ function userAdded(user, inviteSent) {
             var mailOptions = {
                 from: mailConfig().from,
                 to: adminEmails.join(', '),
-                subject: util.format('[%s] User %s added', config.fqdn(), user.alternateEmail || user.email),
+                subject: util.format('[%s] User %s added', cloudronName, user.alternateEmail || user.email),
                 text: render('user_added.ejs', templateDataText),
                 html: render('user_added.ejs', templateDataHTML)
             };
@@ -277,7 +282,6 @@ function passwordReset(user) {
         }
 
         var templateData = {
-            fqdn: config.fqdn(),
             user: user,
             resetLink: config.adminOrigin() + '/api/v1/session/password/reset.html?reset_token=' + user.resetToken,
             cloudronName: cloudronName,
@@ -293,7 +297,7 @@ function passwordReset(user) {
         var mailOptions = {
             from: mailConfig().from,
             to: user.alternateEmail || user.email,
-            subject: util.format('[%s] Password Reset', config.fqdn()),
+            subject: util.format('[%s] Password Reset', cloudronName),
             text: render('password_reset.ejs', templateDataText),
             html: render('password_reset.ejs', templateDataHTML)
         };
@@ -310,14 +314,21 @@ function appDied(app) {
     getAdminEmails(function (error, adminEmails) {
         if (error) return debug('Error getting admins', error);
 
-        var mailOptions = {
-            from: mailConfig().from,
-            to: config.provider() === 'caas' ? 'support@cloudron.io' : adminEmails.join(', '),
-            subject: util.format('[%s] App %s is down', config.fqdn(), app.fqdn),
-            text: render('app_down.ejs', { fqdn: config.fqdn(), title: app.manifest.title, appFqdn: app.fqdn, format: 'text' })
-        };
+        settings.getCloudronName(function (error, cloudronName) {
+            if (error) {
+                debug(error);
+                cloudronName = 'Cloudron';
+            }
 
-        enqueue(mailOptions);
+            var mailOptions = {
+                from: mailConfig().from,
+                to: config.provider() === 'caas' ? 'support@cloudron.io' : adminEmails.join(', '),
+                subject: util.format('[%s] App %s is down', cloudronName, app.fqdn),
+                text: render('app_down.ejs', { title: app.manifest.title, appFqdn: app.fqdn, format: 'text' })
+            };
+
+            enqueue(mailOptions);
+        });
     });
 }
 
@@ -338,7 +349,6 @@ function boxUpdateAvailable(hasSubscription, newBoxVersion, changelog) {
             var converter = new showdown.Converter();
 
             var templateData = {
-                fqdn: config.fqdn(),
                 webadminUrl: config.adminOrigin(),
                 newBoxVersion: newBoxVersion,
                 hasSubscription: hasSubscription,
@@ -357,7 +367,7 @@ function boxUpdateAvailable(hasSubscription, newBoxVersion, changelog) {
             var mailOptions = {
                 from: mailConfig().from,
                 to: adminEmails.join(', '),
-                subject: util.format('%s has a new update available', config.fqdn()),
+                subject: util.format('%s has a new update available', cloudronName),
                 text: render('box_update_available.ejs', templateDataText),
                 html: render('box_update_available.ejs', templateDataHTML)
             };
@@ -384,7 +394,6 @@ function appUpdateAvailable(app, hasSubscription, info) {
             var converter = new showdown.Converter();
 
             var templateData = {
-                fqdn: config.fqdn(),
                 webadminUrl: config.adminOrigin(),
                 hasSubscription: hasSubscription,
                 app: app,
@@ -426,7 +435,6 @@ function sendDigest(info) {
             }
 
             var templateData = {
-                fqdn: config.fqdn(),
                 webadminUrl: config.adminOrigin(),
                 cloudronName: cloudronName,
                 cloudronAvatarUrl: config.adminOrigin() + '/api/v1/cloudron/avatar',
@@ -442,7 +450,7 @@ function sendDigest(info) {
             var mailOptions = {
                 from: mailConfig().from,
                 to: adminEmails.join(', '),
-                subject: util.format('[%s] Cloudron - Weekly activity digest', config.fqdn()),
+                subject: util.format('[%s] Cloudron - Weekly activity digest', cloudronName),
                 text: render('digest.ejs', templateDataText),
                 html: render('digest.ejs', templateDataHTML)
             };
@@ -458,14 +466,21 @@ function outOfDiskSpace(message) {
     getAdminEmails(function (error, adminEmails) {
         if (error) return debug('Error getting admins', error);
 
-        var mailOptions = {
-            from: mailConfig().from,
-            to: config.provider() === 'caas' ? 'support@cloudron.io' : adminEmails.join(', '),
-            subject: util.format('[%s] Out of disk space alert', config.fqdn()),
-            text: render('out_of_disk_space.ejs', { fqdn: config.fqdn(), message: message, format: 'text' })
-        };
+        settings.getCloudronName(function (error, cloudronName) {
+            if (error) {
+                debug(error);
+                cloudronName = 'Cloudron';
+            }
 
-        sendMails([ mailOptions ]);
+            var mailOptions = {
+                from: mailConfig().from,
+                to: config.provider() === 'caas' ? 'support@cloudron.io' : adminEmails.join(', '),
+                subject: util.format('[%s] Out of disk space alert', cloudronName),
+                text: render('out_of_disk_space.ejs', { cloudronName: cloudronName, message: message, format: 'text' })
+            };
+
+            sendMails([ mailOptions ]);
+        });
     });
 }
 
@@ -475,14 +490,21 @@ function backupFailed(error) {
     getAdminEmails(function (error, adminEmails) {
         if (error) return debug('Error getting admins', error);
 
-        var mailOptions = {
-            from: mailConfig().from,
-            to: config.provider() === 'caas' ? 'support@cloudron.io' : adminEmails.join(', '),
-            subject: util.format('[%s] Failed to backup', config.fqdn()),
-            text: render('backup_failed.ejs', { fqdn: config.fqdn(), message: message, format: 'text' })
-        };
+        settings.getCloudronName(function (error, cloudronName) {
+            if (error) {
+                debug(error);
+                cloudronName = 'Cloudron';
+            }
 
-        enqueue(mailOptions);
+            var mailOptions = {
+                from: mailConfig().from,
+                to: config.provider() === 'caas' ? 'support@cloudron.io' : adminEmails.join(', '),
+                subject: util.format('[%s] Failed to backup', cloudronName),
+                text: render('backup_failed.ejs', { cloudronName: cloudronName, message: message, format: 'text' })
+            };
+
+            enqueue(mailOptions);
+        });
     });
 }
 
@@ -511,14 +533,21 @@ function oomEvent(program, context) {
     getAdminEmails(function (error, adminEmails) {
         if (error) return debug('Error getting admins', error);
 
-        var mailOptions = {
-            from: mailConfig().from,
-            to: config.provider() === 'caas' ? 'support@cloudron.io' : adminEmails.join(', '),
-            subject: util.format('[%s] %s exited unexpectedly', config.fqdn(), program),
-            text: render('oom_event.ejs', { fqdn: config.fqdn(), program: program, context: context, format: 'text' })
-        };
+        settings.getCloudronName(function (error, cloudronName) {
+            if (error) {
+                debug(error);
+                cloudronName = 'Cloudron';
+            }
 
-        sendMails([ mailOptions ]);
+            var mailOptions = {
+                from: mailConfig().from,
+                to: config.provider() === 'caas' ? 'support@cloudron.io' : adminEmails.join(', '),
+                subject: util.format('[%s] %s exited unexpectedly', cloudronName, program),
+                text: render('oom_event.ejs', { cloudronName: cloudronName, program: program, context: context, format: 'text' })
+            };
+
+            sendMails([ mailOptions ]);
+        });
     });
 }
 
@@ -531,27 +560,41 @@ function unexpectedExit(program, context, callback) {
 
     if (config.provider() !== 'caas') return callback(); // no way to get admins without db access
 
-    var mailOptions = {
-        from: mailConfig().from,
-        to: 'support@cloudron.io',
-        subject: util.format('[%s] %s exited unexpectedly', config.fqdn(), program),
-        text: render('unexpected_exit.ejs', { fqdn: config.fqdn(), program: program, context: context, format: 'text' })
-    };
+    settings.getCloudronName(function (error, cloudronName) {
+        if (error) {
+            debug(error);
+            cloudronName = 'Cloudron';
+        }
 
-    sendMails([ mailOptions ], callback);
+        var mailOptions = {
+            from: mailConfig().from,
+            to: 'support@cloudron.io',
+            subject: util.format('[%s] %s exited unexpectedly', cloudronName, program),
+            text: render('unexpected_exit.ejs', { cloudronName: cloudronName, program: program, context: context, format: 'text' })
+        };
+
+        sendMails([ mailOptions ], callback);
+    });
 }
 
 function sendTestMail(email) {
     assert.strictEqual(typeof email, 'string');
 
-    var mailOptions = {
-        from: mailConfig().from,
-        to: email,
-        subject: util.format('Test Email from %s', config.fqdn()),
-        text: render('test.ejs', { fqdn: config.fqdn(), format: 'text'})
-    };
+    settings.getCloudronName(function (error, cloudronName) {
+        if (error) {
+            debug(error);
+            cloudronName = 'Cloudron';
+        }
 
-    enqueue(mailOptions);
+        var mailOptions = {
+            from: mailConfig().from,
+            to: email,
+            subject: util.format('Test Email from %s', cloudronName),
+            text: render('test.ejs', { cloudronName: cloudronName, format: 'text'})
+        };
+
+        enqueue(mailOptions);
+    });
 }
 
 function _getMailQueue() {

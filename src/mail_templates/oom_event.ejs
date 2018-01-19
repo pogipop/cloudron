@@ -1,8 +1,8 @@
 <%if (format === 'text') { %>
 
-Dear Cloudron Admin,
+Dear <%= cloudronName %> Admin,
 
-<%= program %> on <%= fqdn %> exited unexpectedly using too much memory!
+<%= program %>  exited unexpectedly using too much memory!
 
 The app has been restarted now. Should this message appear repeatedly or
 undefined behavior is observed, give the app more memory.

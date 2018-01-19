@@ -1,7 +1,6 @@
 {
     "format": "html",
     "webadminUrl": "https://my.cloudron.io",
-    "fqdn": "my.cloudron.io",
     "cloudronName": "Smartserver",
     "cloudronAvatarUrl": "https://cloudron.io/img/logo.png",
     "info": {
