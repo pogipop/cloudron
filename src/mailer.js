@@ -508,7 +508,7 @@ function oomEvent(program, context) {
 }
 
 // this function bypasses the queue intentionally. it is also expected to work without the mailer module initialized
-// NOTE: crashnotifier should be able to send mail when there is no db
+// NOTE: crashnotifier should ideally be able to send mail when there is no db, however we need the 'from' address domain from the db
 function unexpectedExit(program, context, callback) {
     assert.strictEqual(typeof program, 'string');
     assert.strictEqual(typeof context, 'string');
@@ -516,18 +516,14 @@ function unexpectedExit(program, context, callback) {
 
     if (config.provider() !== 'caas') return callback(); // no way to get admins without db access
 
-    settings.getCloudronName(function (error, cloudronName) {
-        if (error) {
-            debug(error);
-            cloudronName = 'Cloudron';
-        }
+    getMailConfig(function (error, mailConfig) {
+        if (error) return debug('Error getting mail details:', error);
 
-        // FIXME which domain should we use here if we can't contact the db??
         var mailOptions = {
-            from: '"Cloudron" <no-reply@' + config.fqdn() + '>',
+            from: mailConfig.notificationFrom,
             to: 'support@cloudron.io',
-            subject: util.format('[%s] %s exited unexpectedly', cloudronName, program),
-            text: render('unexpected_exit.ejs', { cloudronName: cloudronName, program: program, context: context, format: 'text' })
+            subject: util.format('[%s] %s exited unexpectedly', mailConfig.cloudronName, program),
+            text: render('unexpected_exit.ejs', { cloudronName: mailConfig.cloudronName, program: program, context: context, format: 'text' })
         };
 
         sendMails([ mailOptions ], callback);
