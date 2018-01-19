@@ -9,7 +9,6 @@ exports = module.exports = {
 };
 
 var assert = require('assert'),
-    config = require('../config.js'),
     debug = require('debug')('box:dns/gcdns'),
     dns = require('dns'),
     DomainError = require('../domains.js').DomainError,

@@ -46,16 +46,16 @@ function getZoneByName(dnsConfig, zoneName, callback) {
     assert.strictEqual(typeof callback, 'function');
 
     superagent.get(CLOUDFLARE_ENDPOINT + '/zones?name=' + zoneName + '&status=active')
-      .set('X-Auth-Key', dnsConfig.token)
-      .set('X-Auth-Email', dnsConfig.email)
-      .timeout(30 * 1000)
-      .end(function (error, result) {
-        if (error && !error.response) return callback(error);
-        if (result.statusCode !== 200 || result.body.success !== true) return translateRequestError(result, callback);
-        if (!result.body.result.length) return callback(new DomainError(DomainError.NOT_FOUND, util.format('%s %j', result.statusCode, result.body)));
+        .set('X-Auth-Key', dnsConfig.token)
+        .set('X-Auth-Email', dnsConfig.email)
+        .timeout(30 * 1000)
+        .end(function (error, result) {
+            if (error && !error.response) return callback(error);
+            if (result.statusCode !== 200 || result.body.success !== true) return translateRequestError(result, callback);
+            if (!result.body.result.length) return callback(new DomainError(DomainError.NOT_FOUND, util.format('%s %j', result.statusCode, result.body)));
 
-        callback(null, result.body.result[0]);
-    });
+            callback(null, result.body.result[0]);
+        });
 }
 
 function getDNSRecordsByZoneId(dnsConfig, zoneId, zoneName, subdomain, type, callback) {
@@ -69,18 +69,18 @@ function getDNSRecordsByZoneId(dnsConfig, zoneId, zoneName, subdomain, type, cal
     var fqdn = subdomain === '' ? zoneName : subdomain + '.' + zoneName;
 
     superagent.get(CLOUDFLARE_ENDPOINT + '/zones/' + zoneId + '/dns_records')
-      .set('X-Auth-Key',dnsConfig.token)
-      .set('X-Auth-Email',dnsConfig.email)
-      .query({ type: type, name: fqdn })
-      .timeout(30 * 1000)
-      .end(function (error, result) {
-        if (error && !error.response) return callback(error);
-        if (result.statusCode !== 200 || result.body.success !== true) return translateRequestError(result, callback);
+        .set('X-Auth-Key',dnsConfig.token)
+        .set('X-Auth-Email',dnsConfig.email)
+        .query({ type: type, name: fqdn })
+        .timeout(30 * 1000)
+        .end(function (error, result) {
+            if (error && !error.response) return callback(error);
+            if (result.statusCode !== 200 || result.body.success !== true) return translateRequestError(result, callback);
 
-        var tmp = result.body.result;
+            var tmp = result.body.result;
 
-        return callback(null, tmp);
-    });
+            return callback(null, tmp);
+        });
 }
 
 function upsert(dnsConfig, zoneName, subdomain, type, values, callback) {
@@ -126,31 +126,31 @@ function upsert(dnsConfig, zoneName, subdomain, type, values, callback) {
 
                 if (i >= dnsRecords.length) {
                     superagent.post(CLOUDFLARE_ENDPOINT + '/zones/'+ zoneId + '/dns_records')
-                      .set('X-Auth-Key',dnsConfig.token)
-                      .set('X-Auth-Email',dnsConfig.email)
-                      .send(data)
-                      .timeout(30 * 1000)
-                      .end(function (error, result) {
-                        if (error && !error.response) return callback(error);
-                        if (result.statusCode !== 200 || result.body.success !== true) return translateRequestError(result, callback);
+                        .set('X-Auth-Key',dnsConfig.token)
+                        .set('X-Auth-Email',dnsConfig.email)
+                        .send(data)
+                        .timeout(30 * 1000)
+                        .end(function (error, result) {
+                            if (error && !error.response) return callback(error);
+                            if (result.statusCode !== 200 || result.body.success !== true) return translateRequestError(result, callback);
 
-                        callback(null);
-                    });
+                            callback(null);
+                        });
                 } else {
                     superagent.put(CLOUDFLARE_ENDPOINT + '/zones/'+ zoneId + '/dns_records/' + dnsRecords[i].id)
-                      .set('X-Auth-Key',dnsConfig.token)
-                      .set('X-Auth-Email',dnsConfig.email)
-                      .send(data)
-                      .timeout(30 * 1000)
-                      .end(function (error, result) {
+                        .set('X-Auth-Key',dnsConfig.token)
+                        .set('X-Auth-Email',dnsConfig.email)
+                        .send(data)
+                        .timeout(30 * 1000)
+                        .end(function (error, result) {
                         // increment, as we have consumed the record
-                        ++i;
+                            ++i;
 
-                        if (error && !error.response) return callback(error);
-                        if (result.statusCode !== 200 || result.body.success !== true) return translateRequestError(result, callback);
+                            if (error && !error.response) return callback(error);
+                            if (result.statusCode !== 200 || result.body.success !== true) return translateRequestError(result, callback);
 
-                        callback(null);
-                    });
+                            callback(null);
+                        });
                 }
             }, function (error) {
                 if (error) return callback(error);
@@ -206,17 +206,17 @@ function del(dnsConfig, zoneName, subdomain, type, values, callback) {
 
             async.eachSeries(tmp, function (record, callback) {
                 superagent.del(CLOUDFLARE_ENDPOINT + '/zones/'+ zoneId + '/dns_records/' + record.id)
-                  .set('X-Auth-Key',dnsConfig.token)
-                  .set('X-Auth-Email',dnsConfig.email)
-                  .timeout(30 * 1000)
-                  .end(function (error, result) {
-                    if (error && !error.response) return callback(error);
-                    if (result.statusCode !== 204 || result.body.success !== true) return translateRequestError(result, callback);
+                    .set('X-Auth-Key',dnsConfig.token)
+                    .set('X-Auth-Email',dnsConfig.email)
+                    .timeout(30 * 1000)
+                    .end(function (error, result) {
+                        if (error && !error.response) return callback(error);
+                        if (result.statusCode !== 204 || result.body.success !== true) return translateRequestError(result, callback);
 
-                    debug('del: done');
+                        debug('del: done');
 
-                    callback(null);
-                });
+                        callback(null);
+                    });
             }, function (error) {
                 if (error) return callback(error);
 
