@@ -168,7 +168,6 @@ function sendAliveStatus(data, callback) {
             };
 
             var data = {
-                domain: config.fqdn(),
                 version: config.version(),
                 adminFqdn: config.adminFqdn(),
                 provider: config.provider(),
