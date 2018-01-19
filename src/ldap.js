@@ -305,13 +305,14 @@ function mailAliasSearch(req, res, next) {
 
         // https://wiki.debian.org/LDAP/MigrationTools/Examples
         // https://docs.oracle.com/cd/E19455-01/806-5580/6jej518pp/index.html
+        // member is fully qualified - https://docs.oracle.com/cd/E19957-01/816-6082-10/chap4.doc.html#43314
         var obj = {
             dn: req.dn.toString(),
             attributes: {
                 objectclass: ['nisMailAlias'],
                 objectcategory: 'nisMailAlias',
-                cn: alias.name,
-                rfc822MailMember: alias.aliasTarget
+                cn: `${alias.name}@${alias.domain}`,
+                rfc822MailMember: `${alias.aliasTarget}@${alias.domain}`
             }
         };
 

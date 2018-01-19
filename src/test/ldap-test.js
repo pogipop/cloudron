@@ -765,8 +765,8 @@ describe('Ldap', function () {
             ldapSearch('cn=' + USER_0_ALIAS + '@example.com,ou=mailaliases,dc=cloudron', 'objectclass=nismailalias', function (error, entries) {
                 if (error) return done(error);
                 expect(entries.length).to.equal(1);
-                expect(entries[0].cn).to.equal('asterix');
-                expect(entries[0].rfc822MailMember).to.equal(USER_0.username.toLowerCase());
+                expect(entries[0].cn).to.equal('asterix@example.com');
+                expect(entries[0].rfc822MailMember).to.equal(USER_0.username.toLowerCase() + '@example.com');
                 done();
             });
         });
@@ -791,8 +791,8 @@ describe('Ldap', function () {
             ldapSearch('cn=' + USER_0_ALIAS + '@example.com,ou=mailaliases,dc=cloudron', 'objectclass=nismailalias', function (error, entries) {
                 if (error) return done(error);
                 expect(entries.length).to.equal(1);
-                expect(entries[0].cn).to.equal('asterix');
-                expect(entries[0].rfc822MailMember).to.equal(USER_0.username.toLowerCase());
+                expect(entries[0].cn).to.equal('asterix@example.com');
+                expect(entries[0].rfc822MailMember).to.equal(USER_0.username.toLowerCase() + '@example.com');
                 done();
             });
         });
