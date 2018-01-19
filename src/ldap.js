@@ -341,14 +341,15 @@ function mailingListSearch(req, res, next) {
         if (error) return next(new ldap.OperationsError(error.toString()));
 
         // http://ldapwiki.willeke.com/wiki/Original%20Mailgroup%20Schema%20From%20Netscape
+        // members are fully qualified (https://docs.oracle.com/cd/E19444-01/816-6018-10/groups.htm#13356)
         var obj = {
             dn: req.dn.toString(),
             attributes: {
                 objectclass: ['mailGroup'],
                 objectcategory: 'mailGroup',
-                cn: group.name,
-                mail: group.name + '@' + group.domain,
-                mgrpRFC822MailMember: group.members
+                cn: `${group.name}@${group.domain}`, // fully qualified
+                mail: `${group.name}@${group.domain}`,
+                mgrpRFC822MailMember: group.members.map(function (m) { return `${m}@${group.domain}`; })
             }
         };
 
