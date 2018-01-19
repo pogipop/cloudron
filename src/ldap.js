@@ -258,14 +258,11 @@ function mailboxSearch(req, res, next) {
 
     if (!req.dn.rdns[0].attrs.cn) return next(new ldap.NoSuchObjectError(req.dn.toString()));
 
-    var name = req.dn.rdns[0].attrs.cn.value.toLowerCase();
-    // allow login via email
-    var parts = name.split('@');
-    if (parts[1] === config.fqdn()) {
-        name = parts[0];
-    }
+    var email = req.dn.rdns[0].attrs.cn.value.toLowerCase();
+    var parts = email.split('@');
+    if (parts.length !== 2) return next(new ldap.NoSuchObjectError(req.dn.toString()));
 
-    mailboxdb.getMailbox(name, config.fqdn(), function (error, mailbox) {
+    mailboxdb.getMailbox(parts[0], parts[1], function (error, mailbox) {
         if (error && error.reason === DatabaseError.NOT_FOUND) return next(new ldap.NoSuchObjectError(req.dn.toString()));
         if (error) return next(new ldap.OperationsError(error.toString()));
 
@@ -276,7 +273,7 @@ function mailboxSearch(req, res, next) {
                 objectcategory: 'mailbox',
                 cn: mailbox.name,
                 uid: mailbox.name,
-                mail: mailbox.name + '@' + config.fqdn(),
+                mail: mailbox.name + '@' + mailbox.domain,
                 ownerType: mailbox.ownerType
             }
         };
@@ -298,7 +295,11 @@ function mailAliasSearch(req, res, next) {
 
     if (!req.dn.rdns[0].attrs.cn) return next(new ldap.NoSuchObjectError(req.dn.toString()));
 
-    mailboxdb.getAlias(req.dn.rdns[0].attrs.cn.value.toLowerCase(), config.fqdn(), function (error, alias) {
+    var email = req.dn.rdns[0].attrs.cn.value.toLowerCase();
+    var parts = email.split('@');
+    if (parts.length !== 2) return next(new ldap.NoSuchObjectError(req.dn.toString()));
+
+    mailboxdb.getAlias(parts[0], parts[1], function (error, alias) {
         if (error && error.reason === DatabaseError.NOT_FOUND) return next(new ldap.NoSuchObjectError(req.dn.toString()));
         if (error) return next(new ldap.OperationsError(error.toString()));
 
@@ -331,7 +332,11 @@ function mailingListSearch(req, res, next) {
 
     if (!req.dn.rdns[0].attrs.cn) return next(new ldap.NoSuchObjectError(req.dn.toString()));
 
-    mailboxdb.getGroup(req.dn.rdns[0].attrs.cn.value.toLowerCase(), config.fqdn(), function (error, group) {
+    var email = req.dn.rdns[0].attrs.cn.value.toLowerCase();
+    var parts = email.split('@');
+    if (parts.length !== 2) return next(new ldap.NoSuchObjectError(req.dn.toString()));
+
+    mailboxdb.getGroup(parts[0], parts[1], function (error, group) {
         if (error && error.reason === DatabaseError.NOT_FOUND) return next(new ldap.NoSuchObjectError(req.dn.toString()));
         if (error) return next(new ldap.OperationsError(error.toString()));
 
@@ -342,7 +347,7 @@ function mailingListSearch(req, res, next) {
                 objectclass: ['mailGroup'],
                 objectcategory: 'mailGroup',
                 cn: group.name,
-                mail: group.name + '@' + config.fqdn(),
+                mail: group.name + '@' + group.domain,
                 mgrpRFC822MailMember: group.members
             }
         };
@@ -411,15 +416,11 @@ function authorizeUserForApp(req, res, next) {
 function authenticateMailbox(req, res, next) {
     if (!req.dn.rdns[0].attrs.cn) return next(new ldap.NoSuchObjectError(req.dn.toString()));
 
-    var name = req.dn.rdns[0].attrs.cn.value.toLowerCase();
+    var email = req.dn.rdns[0].attrs.cn.value.toLowerCase();
+    var parts = email.split('@');
+    if (parts.length !== 2) return next(new ldap.NoSuchObjectError(req.dn.toString()));
 
-    // allow login via email
-    var parts = name.split('@');
-    if (parts[1] === config.fqdn()) {
-        name = parts[0];
-    }
-
-    mailboxdb.getMailbox(name, config.fqdn(), function (error, mailbox) {
+    mailboxdb.getMailbox(parts[0], parts[1], function (error, mailbox) {
         if (error && error.reason === DatabaseError.NOT_FOUND) return next(new ldap.NoSuchObjectError(req.dn.toString()));
         if (error) return next(new ldap.OperationsError(error.message));
 
@@ -438,9 +439,12 @@ function authenticateMailbox(req, res, next) {
                 return res.end();
             });
         } else if (mailbox.ownerType === mailboxdb.TYPE_USER) {
-            authenticateUser(req, res, function (error) {
-                if (error) return next(error);
-                eventlog.add(eventlog.ACTION_USER_LOGIN, { authType: 'ldap', mailboxId: name }, { userId: req.user.username });
+            user.verifyWithEmail(email, req.credentials || '', function (error, user) {
+                if (error && error.reason === UserError.NOT_FOUND) return next(new ldap.NoSuchObjectError(req.dn.toString()));
+                if (error && error.reason === UserError.WRONG_PASSWORD) return next(new ldap.InvalidCredentialsError(req.dn.toString()));
+                if (error) return next(new ldap.OperationsError(error.message));
+
+                eventlog.add(eventlog.ACTION_USER_LOGIN, { authType: 'ldap', mailboxId: email }, { userId: user.username });
                 res.end();
             });
         } else {

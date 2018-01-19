@@ -729,8 +729,8 @@ describe('Ldap', function () {
     }
 
     describe('search mailbox', function () {
-        it('get specific mailbox', function (done) {
-            ldapSearch('cn=' + USER_0.username + ',ou=mailboxes,dc=cloudron', 'objectclass=mailbox', function (error, entries) {
+        it('get specific mailbox by email', function (done) {
+            ldapSearch('cn=' + USER_0.username + '@example.com,ou=mailboxes,dc=cloudron', 'objectclass=mailbox', function (error, entries) {
                 if (error) return done(error);
                 expect(entries.length).to.equal(1);
                 expect(entries[0].cn).to.equal(USER_0.username.toLowerCase());
@@ -738,24 +738,22 @@ describe('Ldap', function () {
             });
         });
 
-        it('get specific mailbox by email', function (done) {
-            ldapSearch('cn=' + USER_0.username + '@' + config.fqdn() + ',ou=mailboxes,dc=cloudron', 'objectclass=mailbox', function (error, entries) {
-                if (error) return done(error);
-                expect(entries.length).to.equal(1);
-                expect(entries[0].cn).to.equal(USER_0.username.toLowerCase());
+        it('cannot get mailbox with just name', function (done) {
+            ldapSearch('cn=' + USER_0.username + ',ou=mailboxes,dc=cloudron', 'objectclass=mailbox', function (error, entries) {
+                expect(error).to.be.a(ldap.NoSuchObjectError);
                 done();
             });
         });
 
         it('cannot get alias as a mailbox', function (done) {
-            ldapSearch('cn=' + USER_0_ALIAS + ',ou=mailboxes,dc=cloudron', 'objectclass=mailbox', function (error) {
+            ldapSearch('cn=' + USER_0_ALIAS + '@example.com,ou=mailboxes,dc=cloudron', 'objectclass=mailbox', function (error) {
                 expect(error).to.be.a(ldap.NoSuchObjectError);
                 done();
             });
         });
 
         it('non-existent mailbox', function (done) {
-            ldapSearch('cn=random,ou=mailboxes,dc=cloudron', 'objectclass=mailbox', function (error) {
+            ldapSearch('cn=random@example.com,ou=mailboxes,dc=cloudron', 'objectclass=mailbox', function (error) {
                 expect(error).to.be.a(ldap.NoSuchObjectError);
                 done();
             });
@@ -764,7 +762,7 @@ describe('Ldap', function () {
 
     describe('search aliases', function () {
         it('get specific alias', function (done) {
-            ldapSearch('cn=' + USER_0_ALIAS + ',ou=mailaliases,dc=cloudron', 'objectclass=nismailalias', function (error, entries) {
+            ldapSearch('cn=' + USER_0_ALIAS + '@example.com,ou=mailaliases,dc=cloudron', 'objectclass=nismailalias', function (error, entries) {
                 if (error) return done(error);
                 expect(entries.length).to.equal(1);
                 expect(entries[0].cn).to.equal('asterix');
@@ -774,14 +772,14 @@ describe('Ldap', function () {
         });
 
         it('cannot get mailbox as alias', function (done) {
-            ldapSearch('cn=' + USER_0.username + ',ou=mailaliases,dc=cloudron', 'objectclass=nismailalias', function (error) {
+            ldapSearch('cn=' + USER_0.username + '@example.com,ou=mailaliases,dc=cloudron', 'objectclass=nismailalias', function (error) {
                 expect(error).to.be.a(ldap.NoSuchObjectError);
                 done();
             });
         });
 
         it('non-existent alias', function (done) {
-            ldapSearch('cn=random,ou=mailaliases,dc=cloudron', 'objectclass=mailbox', function (error) {
+            ldapSearch('cn=random@example.com,ou=mailaliases,dc=cloudron', 'objectclass=mailbox', function (error) {
                 expect(error).to.be.a(ldap.NoSuchObjectError);
                 done();
             });
@@ -790,7 +788,7 @@ describe('Ldap', function () {
 
     describe('search groups', function () {
         it('get specific alias', function (done) {
-            ldapSearch('cn=' + USER_0_ALIAS + ',ou=mailaliases,dc=cloudron', 'objectclass=nismailalias', function (error, entries) {
+            ldapSearch('cn=' + USER_0_ALIAS + '@example.com,ou=mailaliases,dc=cloudron', 'objectclass=nismailalias', function (error, entries) {
                 if (error) return done(error);
                 expect(entries.length).to.equal(1);
                 expect(entries[0].cn).to.equal('asterix');
@@ -800,7 +798,7 @@ describe('Ldap', function () {
         });
 
         it('non-existent alias', function (done) {
-            ldapSearch('cn=random,ou=mailaliases,dc=cloudron', 'objectclass=mailbox', function (error) {
+            ldapSearch('cn=random@example.com,ou=mailaliases,dc=cloudron', 'objectclass=mailbox', function (error) {
                 expect(error).to.be.a(ldap.NoSuchObjectError);
                 done();
             });
@@ -809,7 +807,7 @@ describe('Ldap', function () {
 
     describe('search mailing list', function () {
         it('get specific list', function (done) {
-            ldapSearch('cn=developers,ou=mailinglists,dc=cloudron', 'objectclass=mailGroup', function (error, entries) {
+            ldapSearch('cn=developers@example.com,ou=mailinglists,dc=cloudron', 'objectclass=mailGroup', function (error, entries) {
                 if (error) return done(error);
                 expect(entries.length).to.equal(1);
                 expect(entries[0].cn).to.equal('developers');
@@ -819,7 +817,7 @@ describe('Ldap', function () {
         });
 
         it('non-existent list', function (done) {
-            ldapSearch('cn=random,ou=mailinglists,dc=cloudron', 'objectclass=mailGroup', function (error) {
+            ldapSearch('cn=random@example.com,ou=mailinglists,dc=cloudron', 'objectclass=mailGroup', function (error) {
                 expect(error).to.be.a(ldap.NoSuchObjectError);
                 done();
             });
@@ -827,33 +825,50 @@ describe('Ldap', function () {
     });
 
     describe('user sendmail bind', function () {
-        it('does not allow with invalid password', function (done) {
+        it('email disabled - cannot find domain email', function (done) {
             var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + config.get('ldapPort') });
 
-            client.bind('cn=' + USER_0.username + ',ou=sendmail,dc=cloudron', USER_0.password + 'nope', function (error) {
-                expect(error).to.be.a(ldap.InvalidCredentialsError);
+            client.bind('cn=' + USER_0.username + '@example.com,ou=sendmail,dc=cloudron', USER_0.password + 'nope', function (error) {
+                expect(error).to.be.a(ldap.NoSuchObjectError);
                 client.unbind(done);
             });
         });
 
-        it('allows with valid password', function (done) {
+        it('email disabled - cannot find reset email', function (done) {
             var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + config.get('ldapPort') });
 
-            client.bind('cn=' + USER_0.username + ',ou=sendmail,dc=cloudron', USER_0.password, function (error) {
-                client.unbind();
-                done(error);
+            client.bind('cn=' + USER_0.email + ',ou=sendmail,dc=cloudron', USER_0.password + 'nope', function (error) {
+                expect(error).to.be.a(ldap.NoSuchObjectError);
+                client.unbind(done);
             });
         });
 
-        it('allows with valid email', function (done) {
+        it('email enabled - allows with valid email', function (done) {
             // user settingsdb instead of settings, to not trigger further events
             settingsdb.set(settings.MAIL_CONFIG_KEY, JSON.stringify({ enabled: true }), function (error) {
                 expect(error).not.to.be.ok();
 
                 var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + config.get('ldapPort') });
 
-                client.bind('cn=' + USER_0.username + '@' + config.fqdn() + ',ou=sendmail,dc=cloudron', USER_0.password, function (error) {
+                client.bind('cn=' + USER_0.username + '@example.com,ou=sendmail,dc=cloudron', USER_0.password, function (error) {
                     expect(error).not.to.be.ok();
+
+                    client.unbind();
+
+                    settingsdb.set(settings.MAIL_CONFIG_KEY, JSON.stringify({ enabled: false }), done);
+                });
+            });
+        });
+
+        it('email enabled - does not allow with invalid password', function (done) {
+            // user settingsdb instead of settings, to not trigger further events
+            settingsdb.set(settings.MAIL_CONFIG_KEY, JSON.stringify({ enabled: true }), function (error) {
+                expect(error).not.to.be.ok();
+
+                var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + config.get('ldapPort') });
+
+                client.bind('cn=' + USER_0.username + '@example.com,ou=sendmail,dc=cloudron', USER_0.password + 'nope', function (error) {
+                    expect(error).to.be.a(ldap.InvalidCredentialsError);
 
                     client.unbind();
 
@@ -864,10 +879,15 @@ describe('Ldap', function () {
     });
 
     describe('app sendmail bind', function () {
+        // these tests should work even when email is disabled
+        before(function (done) {
+            settingsdb.set(settings.MAIL_CONFIG_KEY, JSON.stringify({ enabled: false }), done);
+        });
+
         it('does not allow with invalid app', function (done) {
             var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + config.get('ldapPort') });
 
-            client.bind('cn=hacker.app,ou=sendmail,dc=cloudron', 'nope', function (error) {
+            client.bind('cn=hacker.app@example.com,ou=sendmail,dc=cloudron', 'nope', function (error) {
                 expect(error).to.be.a(ldap.NoSuchObjectError);
                 client.unbind(done);
             });
@@ -876,7 +896,7 @@ describe('Ldap', function () {
         it('does not allow with invalid password', function (done) {
             var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + config.get('ldapPort') });
 
-            client.bind('cn=' + APP_0.location + '.app,ou=sendmail,dc=cloudron', 'nope', function (error) {
+            client.bind('cn=' + APP_0.location + '.app@example.com,ou=sendmail,dc=cloudron', 'nope', function (error) {
                 expect(error).to.be.a(ldap.InvalidCredentialsError);
                 client.unbind(done);
             });
@@ -885,7 +905,7 @@ describe('Ldap', function () {
         it('allows with valid password', function (done) {
             var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + config.get('ldapPort') });
 
-            client.bind('cn=' + APP_0.location + '.app,ou=sendmail,dc=cloudron', 'sendmailpassword', function (error) {
+            client.bind('cn=' + APP_0.location + '.app@example.com,ou=sendmail,dc=cloudron', 'sendmailpassword', function (error) {
                 client.unbind();
                 done(error);
             });
@@ -893,34 +913,50 @@ describe('Ldap', function () {
     });
 
     describe('user recvmail bind', function () {
-        it('does not allow with invalid password', function (done) {
+        it('email disabled - cannot find domain email', function (done) {
             var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + config.get('ldapPort') });
 
-            client.bind('cn=' + USER_0.username + ',ou=recvmail,dc=cloudron', USER_0.password + 'nope', function (error) {
-                expect(error).to.be.a(ldap.InvalidCredentialsError);
+            client.bind('cn=' + USER_0.username + '@example.com,ou=recvmail,dc=cloudron', USER_0.password + 'nope', function (error) {
+                expect(error).to.be.a(ldap.NoSuchObjectError);
                 client.unbind(done);
             });
         });
 
-        it('allows with valid password', function (done) {
+        it('email disabled - cannot find reset email', function (done) {
             var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + config.get('ldapPort') });
 
-            client.bind('cn=' + USER_0.username + ',ou=recvmail,dc=cloudron', USER_0.password, function (error) {
-                client.unbind();
-
-                done(error);
+            client.bind('cn=' + USER_0.email + ',ou=recvmail,dc=cloudron', USER_0.password + 'nope', function (error) {
+                expect(error).to.be.a(ldap.NoSuchObjectError);
+                client.unbind(done);
             });
         });
 
-        it('allows with valid email', function (done) {
+        it('email enabled - allows with valid email', function (done) {
             // user settingsdb instead of settings, to not trigger further events
             settingsdb.set(settings.MAIL_CONFIG_KEY, JSON.stringify({ enabled: true }), function (error) {
                 expect(error).not.to.be.ok();
 
                 var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + config.get('ldapPort') });
 
-                client.bind('cn=' + USER_0.username + '@' + config.fqdn() + ',ou=recvmail,dc=cloudron', USER_0.password, function (error) {
+                client.bind('cn=' + USER_0.username + '@example.com,ou=recvmail,dc=cloudron', USER_0.password, function (error) {
                     expect(error).not.to.be.ok();
+
+                    client.unbind();
+
+                    settingsdb.set(settings.MAIL_CONFIG_KEY, JSON.stringify({ enabled: false }), done);
+                });
+            });
+        });
+
+        it('email enabled - does not allow with invalid password', function (done) {
+            // user settingsdb instead of settings, to not trigger further events
+            settingsdb.set(settings.MAIL_CONFIG_KEY, JSON.stringify({ enabled: true }), function (error) {
+                expect(error).not.to.be.ok();
+
+                var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + config.get('ldapPort') });
+
+                client.bind('cn=' + USER_0.username + '@example.com,ou=recvmail,dc=cloudron', USER_0.password + 'nope', function (error) {
+                    expect(error).to.be.a(ldap.InvalidCredentialsError);
 
                     client.unbind();
 
@@ -934,7 +970,7 @@ describe('Ldap', function () {
         it('does not allow with invalid app', function (done) {
             var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + config.get('ldapPort') });
 
-            client.bind('cn=hacker.app,ou=recvmail,dc=cloudron', 'nope', function (error) {
+            client.bind('cn=hacker.app@example.com,ou=recvmail,dc=cloudron', 'nope', function (error) {
                 expect(error).to.be.a(ldap.NoSuchObjectError);
                 client.unbind(done);
             });
@@ -943,7 +979,7 @@ describe('Ldap', function () {
         it('does not allow with invalid password', function (done) {
             var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + config.get('ldapPort') });
 
-            client.bind('cn=' + APP_0.location + '.app,ou=recvmail,dc=cloudron', 'nope', function (error) {
+            client.bind('cn=' + APP_0.location + '.app@example.com,ou=recvmail,dc=cloudron', 'nope', function (error) {
                 expect(error).to.be.a(ldap.InvalidCredentialsError);
                 client.unbind(done);
             });
@@ -952,7 +988,7 @@ describe('Ldap', function () {
         it('allows with valid password', function (done) {
             var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + config.get('ldapPort') });
 
-            client.bind('cn=' + APP_0.location + '.app,ou=recvmail,dc=cloudron', 'recvmailpassword', function (error) {
+            client.bind('cn=' + APP_0.location + '.app@example.com,ou=recvmail,dc=cloudron', 'recvmailpassword', function (error) {
                 client.unbind();
 
                 done(error);
