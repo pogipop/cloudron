@@ -256,7 +256,7 @@ function createMailConfig(callback) {
         settings.getAll(function (error, result) {
             if (error) return callback(error);
 
-            var catchAll = result[settings.CATCH_ALL_ADDRESS_KEY].join(',');
+            var catchAll = result[settings.CATCH_ALL_ADDRESS_KEY].map(function (c) { return `${c}@${fqdn}`; }).join(',');
             var mailFromValidation = result[settings.MAIL_FROM_VALIDATION_KEY];
 
             if (!safe.fs.writeFileSync(paths.ADDON_CONFIG_DIR + '/mail/mail.ini',
