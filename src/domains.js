@@ -125,7 +125,7 @@ function add(domain, zoneName, provider, config, fallbackCertificate, callback) 
             if (error && error.reason === DomainError.INVALID_PROVIDER) return callback(new DomainError(DomainError.BAD_FIELD, error.message));
             if (error) return callback(new DomainError(DomainError.INTERNAL_ERROR, error));
 
-            domaindb.add(domain, zoneName, provider, result, function (error) {
+            domaindb.add(domain, { zoneName: zoneName, provider: provider, config: result }, function (error) {
                 if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(new DomainError(DomainError.ALREADY_EXISTS));
                 if (error) return callback(new DomainError(DomainError.INTERNAL_ERROR, error));
 

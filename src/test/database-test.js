@@ -103,15 +103,15 @@ describe('database', function () {
         };
 
         it('can add domain', function (done) {
-            domaindb.add(DOMAIN_0.domain, DOMAIN_0.zoneName, DOMAIN_0.provider, DOMAIN_0.config, done);
+            domaindb.add(DOMAIN_0.domain, { zoneName: DOMAIN_0.zoneName, provider: DOMAIN_0.provider, config: DOMAIN_0.config }, done);
         });
 
         it('can add another domain', function (done) {
-            domaindb.add(DOMAIN_1.domain, DOMAIN_1.zoneName, DOMAIN_1.provider, DOMAIN_1.config, done);
+            domaindb.add(DOMAIN_1.domain, { zoneName: DOMAIN_1.zoneName, provider: DOMAIN_1.provider, config: DOMAIN_1.config }, done);
         });
 
         it('cannot add same domain twice', function (done) {
-            domaindb.add(DOMAIN_0.domain, DOMAIN_0.zoneName, DOMAIN_0.provider, DOMAIN_0.config, function (error) {
+            domaindb.add(DOMAIN_0.domain, { zoneName: DOMAIN_0.zoneName, provider: DOMAIN_0.provider, config: DOMAIN_0.config }, function (error) {
                 expect(error).to.be.ok();
                 expect(error.reason).to.be(DatabaseError.ALREADY_EXISTS);
                 done();

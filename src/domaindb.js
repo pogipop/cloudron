@@ -53,14 +53,14 @@ function getAll(callback) {
     });
 }
 
-function add(domain, zoneName, provider, config, callback) {
-    assert.strictEqual(typeof domain, 'string');
-    assert.strictEqual(typeof zoneName, 'string');
-    assert.strictEqual(typeof provider, 'string');
-    assert.strictEqual(typeof config, 'object');
+function add(name, domain, callback) {
+    assert.strictEqual(typeof name, 'string');
+    assert.strictEqual(typeof domain.zoneName, 'string');
+    assert.strictEqual(typeof domain.provider, 'string');
+    assert.strictEqual(typeof domain.config, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    database.query('INSERT INTO domains (domain, zoneName, provider, configJson) VALUES (?, ?, ?, ?)', [ domain, zoneName, provider, JSON.stringify(config) ], function (error) {
+    database.query('INSERT INTO domains (domain, zoneName, provider, configJson) VALUES (?, ?, ?, ?)', [ name, domain.zoneName, domain.provider, JSON.stringify(domain.config) ], function (error) {
         if (error && error.code === 'ER_DUP_ENTRY') return callback(new DatabaseError(DatabaseError.ALREADY_EXISTS, error));
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
 
@@ -120,7 +120,7 @@ function clear(callback) {
 function addDefaultDomain(callback) {
     assert(config.fqdn(), 'no fqdn set in config, cannot continue');
 
-    add(config.fqdn(), config.zoneName(), 'manual', { }, function (error) {
+    add(config.fqdn(), { zoneName: config.zoneName(), provider: 'manual', config: { } }, function (error) {
         if (error && error.reason !== DatabaseError.ALREADY_EXISTS) return callback(error);
         callback();
     });

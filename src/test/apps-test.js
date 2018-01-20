@@ -138,7 +138,7 @@ describe('Apps', function () {
             database.initialize,
             database._clear,
             // DOMAIN_0 already added for test through domaindb.addDefaultDomain()
-            domaindb.add.bind(null, DOMAIN_1.domain, DOMAIN_1.zoneName, DOMAIN_1.provider, DOMAIN_1.config),
+            domaindb.add.bind(null, DOMAIN_1.domain, { zoneName: DOMAIN_1.zoneName, provider: DOMAIN_1.provider, config: DOMAIN_1.config }),
             userdb.add.bind(null, ADMIN_0.id, ADMIN_0),
             userdb.add.bind(null, USER_0.id, USER_0),
             userdb.add.bind(null, USER_1.id, USER_1),
