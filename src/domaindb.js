@@ -54,6 +54,7 @@ function getAll(callback) {
 
 function add(name, domain, callback) {
     assert.strictEqual(typeof name, 'string');
+    assert.strictEqual(typeof domain, 'object');
     assert.strictEqual(typeof domain.zoneName, 'string');
     assert.strictEqual(typeof domain.provider, 'string');
     assert.strictEqual(typeof domain.config, 'object');
@@ -67,13 +68,24 @@ function add(name, domain, callback) {
     });
 }
 
-function update(domain, provider, config, callback) {
-    assert.strictEqual(typeof domain, 'string');
-    assert.strictEqual(typeof provider, 'string');
-    assert.strictEqual(typeof config, 'object');
+function update(name, domain, callback) {
+    assert.strictEqual(typeof name, 'string');
+    assert.strictEqual(typeof domain, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    database.query('UPDATE domains SET provider=?, configJson=? WHERE domain=?', [ provider, JSON.stringify(config), domain ], function (error) {
+    var args = [ ], fields = [ ];
+    for (var k in domain) {
+        if (k === 'config') {
+            fields.push('configJson = ?');
+            args.push(JSON.stringify(domain[k]));
+        } else {
+            fields.push(k + ' = ?');
+            args.push(domain[k]);
+        }
+    }
+    args.push(name);
+
+    database.query('UPDATE domains SET ' + fields.join(', ') + ' WHERE domain=?', args, function (error) {
         if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new DatabaseError(DatabaseError.NOT_FOUND));
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
 

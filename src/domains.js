@@ -197,7 +197,7 @@ function update(domain, provider, config, fallbackCertificate, callback) {
                 if (error && error.reason === DomainError.INVALID_PROVIDER) return callback(new DomainError(DomainError.BAD_FIELD, error.message));
                 if (error) return callback(new DomainError(DomainError.INTERNAL_ERROR, error));
 
-                domaindb.update(domain, provider, result, function (error) {
+                domaindb.update(domain, { provider: provider, config: result }, function (error) {
                     if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new DomainError(DomainError.NOT_FOUND));
                     if (error) return callback(new DomainError(DomainError.INTERNAL_ERROR, error));
 

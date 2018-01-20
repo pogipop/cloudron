@@ -19,7 +19,6 @@ var appdb = require('../appdb.js'),
     groupdb = require('../groupdb.js'),
     hat = require('hat'),
     mailboxdb = require('../mailboxdb.js'),
-    path = require('path'),
     settingsdb = require('../settingsdb.js'),
     tokendb = require('../tokendb.js'),
     userdb = require('../userdb.js'),
@@ -133,7 +132,7 @@ describe('database', function () {
         it('can update domain', function (done) {
             const newConfig = { provider: 'manual' };
 
-            domaindb.update(DOMAIN_1.domain, DOMAIN_1.provider, newConfig, function (error) {
+            domaindb.update(DOMAIN_1.domain, { provider: DOMAIN_1.provider, config: newConfig }, function (error) {
                 expect(error).to.equal(null);
 
                 domaindb.get(DOMAIN_1.domain, function (error, result) {
@@ -359,7 +358,7 @@ describe('database', function () {
             });
         });
 
-       it('can update the user', function (done) {
+        it('can update the user', function (done) {
             userdb.update(USER_0.id, { email: 'some@thing.com', displayName: 'Heiter' }, function (error) {
                 expect(error).to.not.be.ok();
                 userdb.get(USER_0.id, function (error, user) {
@@ -1409,7 +1408,7 @@ describe('database', function () {
                     eventlogdb.getAllPaged(null, null, 1, 100, function (error, results) {
                         expect(error).to.be(null);
                         expect(results.length).to.be(2);
-                        results = results.sort(function (x, y) { return x.action > y.action }); // because equal timestamp gives random ordering
+                        results = results.sort(function (x, y) { return x.action > y.action; }); // because equal timestamp gives random ordering
                         expect(results[1].action).to.be.eql('persistent.event');
                         expect(results[0].action).to.be.eql('anotherpersistent.event');
 
