@@ -4,13 +4,14 @@ exports = module.exports = {
     API_LOCATION: 'api', // this is unused but reserved for future use (#403)
     SMTP_LOCATION: 'smtp',
     IMAP_LOCATION: 'imap',
-    POSTMAN_LOCATION: 'postman', // used in dovecot bounces
 
     // These are combined into one array because users and groups become mailboxes
     RESERVED_NAMES: [
         // Reserved usernames
         // https://github.com/gogits/gogs/blob/52c8f691630548fe091d30bcfe8164545a05d3d5/models/repo.go#L393
-        'admin', 'no-reply', 'postmaster', 'mailer-daemon', // apps like wordpress, gogs don't like these
+        // apps like wordpress, gogs don't like these
+        // postmaster is used in dovecot and haraka
+        'admin', 'no-reply', 'postmaster', 'mailer-daemon',
 
         // Reserved groups
         'admins', 'users'         // ldap code uses 'users' pseudo group

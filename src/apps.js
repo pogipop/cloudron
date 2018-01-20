@@ -130,8 +130,7 @@ function validateHostname(location, domain, hostname) {
     const RESERVED_LOCATIONS = [
         constants.API_LOCATION,
         constants.SMTP_LOCATION,
-        constants.IMAP_LOCATION,
-        constants.POSTMAN_LOCATION
+        constants.IMAP_LOCATION
     ];
     if (RESERVED_LOCATIONS.indexOf(location) !== -1) return new AppsError(AppsError.BAD_FIELD, location + ' is reserved');
 
