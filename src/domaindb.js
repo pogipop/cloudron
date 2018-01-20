@@ -20,6 +20,8 @@ var assert = require('assert'),
     config = require('./config.js'),
     safe = require('safetydance');
 
+var DOMAINS_FIELDS = [ 'domain', 'zoneName', 'provider', 'configJson' ].join(',');
+
 function postProcess(data) {
     data.config = safe.JSON.parse(data.configJson);
     delete data.configJson;
@@ -31,7 +33,7 @@ function get(domain, callback) {
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    database.query('SELECT * FROM domains WHERE domain=?', [ domain ], function (error, result) {
+    database.query(`SELECT ${DOMAINS_FIELDS} FROM domains WHERE domain=?`, [ domain ], function (error, result) {
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
         if (result.length === 0) return callback(new DatabaseError(DatabaseError.NOT_FOUND));
 
@@ -42,7 +44,7 @@ function get(domain, callback) {
 }
 
 function getAll(callback) {
-    database.query('SELECT * FROM domains ORDER BY domain', function (error, results) {
+    database.query(`SELECT ${DOMAINS_FIELDS} FROM domains ORDER BY domain`, function (error, results) {
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
 
         results.forEach(postProcess);
