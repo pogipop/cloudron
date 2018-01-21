@@ -178,7 +178,7 @@ function setAliasesForName(name, domain, aliases, callback) {
         queries.push({ query: 'DELETE FROM mailboxes WHERE aliasTarget = ? AND domain = ?', args: [ name, domain ] });
         aliases.forEach(function (alias) {
             queries.push({ query: 'INSERT INTO mailboxes (name, domain, aliasTarget, ownerId, ownerType) VALUES (?, ?, ?, ?, ?)',
-                         args: [ alias, domain, name, results[0].ownerId, results[0].ownerType ] });
+                args: [ alias, domain, name, results[0].ownerId, results[0].ownerType ] });
         });
 
         database.transaction(queries, function (error) {
