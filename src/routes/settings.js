@@ -16,18 +16,6 @@ exports = module.exports = {
     getTimeZone: getTimeZone,
     setTimeZone: setTimeZone,
 
-    getMailConfig: getMailConfig,
-    setMailConfig: setMailConfig,
-
-    getMailRelay: getMailRelay,
-    setMailRelay: setMailRelay,
-
-    getCatchAllAddress: getCatchAllAddress,
-    setCatchAllAddress: setCatchAllAddress,
-
-    getMailFromValidation: getMailFromValidation,
-    setMailFromValidation: setMailFromValidation,
-
     getAppstoreConfig: getAppstoreConfig,
     setAppstoreConfig: setAppstoreConfig,
 
@@ -103,98 +91,6 @@ function setTimeZone(req, res, next) {
         if (error) return next(new HttpError(500, error));
 
         next(new HttpSuccess(200));
-    });
-}
-
-function getMailConfig(req, res, next) {
-    settings.getMailConfig(function (error, mail) {
-        if (error) return next(new HttpError(500, error));
-
-        next(new HttpSuccess(200, mail));
-    });
-}
-
-function setMailConfig(req, res, next) {
-    assert.strictEqual(typeof req.body, 'object');
-
-    if (typeof req.body.enabled !== 'boolean') return next(new HttpError(400, 'enabled is required'));
-
-    settings.setMailConfig({ enabled: req.body.enabled }, function (error) {
-        if (error && error.reason === SettingsError.BAD_FIELD) return next(new HttpError(400, error.message));
-        if (error) return next(new HttpError(500, error));
-
-        next(new HttpSuccess(202));
-    });
-}
-
-function getMailFromValidation(req, res, next) {
-    settings.getMailFromValidation(function (error, enabled) {
-        if (error) return next(new HttpError(500, error));
-
-        next(new HttpSuccess(200, { enabled: enabled }));
-    });
-}
-
-function setMailFromValidation(req, res, next) {
-    assert.strictEqual(typeof req.body, 'object');
-
-    if (typeof req.body.enabled !== 'boolean') return next(new HttpError(400, 'enabled is required'));
-
-    settings.setMailFromValidation(req.body.enabled, function (error) {
-        if (error && error.reason === SettingsError.BAD_FIELD) return next(new HttpError(400, error.message));
-        if (error) return next(new HttpError(500, error));
-
-        next(new HttpSuccess(202));
-    });
-}
-
-function getMailRelay(req, res, next) {
-    settings.getMailRelay(function (error, mail) {
-        if (error) return next(new HttpError(500, error));
-
-        next(new HttpSuccess(200, mail));
-    });
-}
-
-function setMailRelay(req, res, next) {
-    assert.strictEqual(typeof req.body, 'object');
-
-    if (typeof req.body.provider !== 'string') return next(new HttpError(400, 'provider is required'));
-    if ('host' in req.body && typeof req.body.host !== 'string') return next(new HttpError(400, 'host must be a string'));
-    if ('port' in req.body && typeof req.body.port !== 'number') return next(new HttpError(400, 'port must be a string'));
-    if ('username' in req.body && typeof req.body.username !== 'string') return next(new HttpError(400, 'username must be a string'));
-    if ('password' in req.body && typeof req.body.password !== 'string') return next(new HttpError(400, 'password must be a string'));
-
-    settings.setMailRelay(req.body, function (error) {
-        if (error && error.reason === SettingsError.BAD_FIELD) return next(new HttpError(400, error.message));
-        if (error) return next(new HttpError(500, error));
-
-        next(new HttpSuccess(202));
-    });
-}
-
-function getCatchAllAddress(req, res, next) {
-    settings.getCatchAllAddress(function (error, address) {
-        if (error) return next(new HttpError(500, error));
-
-        next(new HttpSuccess(200, { address: address }));
-    });
-}
-
-function setCatchAllAddress(req, res, next) {
-    assert.strictEqual(typeof req.body, 'object');
-
-    if (!req.body.address || !Array.isArray(req.body.address)) return next(new HttpError(400, 'address array is required'));
-
-    for (var i = 0; i < req.body.address.length; i++) {
-        if (typeof req.body.address[i] !== 'string') return next(new HttpError(400, 'address must be an array of string'));
-    }
-
-    settings.setCatchAllAddress(req.body.address, function (error) {
-        if (error && error.reason === SettingsError.BAD_FIELD) return next(new HttpError(400, error.message));
-        if (error) return next(new HttpError(500, error));
-
-        next(new HttpSuccess(202));
     });
 }
 

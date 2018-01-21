@@ -1,6 +1,6 @@
 /* jslint node:true */
 /* global it:false */
-/* global xdescribe:false */
+/* global describe:false */
 /* global before:false */
 /* global after:false */
 
@@ -16,8 +16,8 @@ var appdb = require('../appdb.js'),
     groups = require('../groups.js'),
     http = require('http'),
     ldapServer = require('../ldap.js'),
+    mail = require('../mail.js'),
     mailboxdb = require('../mailboxdb.js'),
-    settings = require('../settings.js'),
     settingsdb = require('../settingsdb.js'),
     ldap = require('ldapjs'),
     user = require('../user.js');
@@ -246,7 +246,7 @@ describe('Ldap', function () {
 
         it('succeeds without accessRestriction when email is enabled', function (done) {
             // user settingsdb instead of settings, to not trigger further events
-            settingsdb.set(settings.MAIL_CONFIG_KEY, JSON.stringify({ enabled: true }), function (error) {
+            settingsdb.set(mail.MAIL_CONFIG_KEY, JSON.stringify({ enabled: true }), function (error) {
                 expect(error).not.to.be.ok();
 
                 var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + config.get('ldapPort') });
@@ -256,7 +256,7 @@ describe('Ldap', function () {
 
                     client.unbind();
 
-                    settingsdb.set(settings.MAIL_CONFIG_KEY, JSON.stringify({ enabled: false }), done);
+                    settingsdb.set(mail.MAIL_CONFIG_KEY, JSON.stringify({ enabled: false }), done);
                 });
             });
         });
@@ -378,7 +378,7 @@ describe('Ldap', function () {
 
         it ('succeeds with basic filter and email enabled', function (done) {
             // user settingsdb instead of settings, to not trigger further events
-            settingsdb.set(settings.MAIL_CONFIG_KEY, JSON.stringify({ enabled: true }), function (error) {
+            settingsdb.set(mail.MAIL_CONFIG_KEY, JSON.stringify({ enabled: true }), function (error) {
                 expect(error).not.to.be.ok();
 
                 var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + config.get('ldapPort') });
@@ -409,7 +409,7 @@ describe('Ldap', function () {
 
                         client.unbind();
 
-                        settingsdb.set(settings.MAIL_CONFIG_KEY, JSON.stringify({ enabled: false }), done);
+                        settingsdb.set(mail.MAIL_CONFIG_KEY, JSON.stringify({ enabled: false }), done);
                     });
                 });
             });
@@ -739,7 +739,7 @@ describe('Ldap', function () {
         });
 
         it('cannot get mailbox with just name', function (done) {
-            ldapSearch('cn=' + USER_0.username + ',ou=mailboxes,dc=cloudron', 'objectclass=mailbox', function (error, entries) {
+            ldapSearch('cn=' + USER_0.username + ',ou=mailboxes,dc=cloudron', 'objectclass=mailbox', function (error) {
                 expect(error).to.be.a(ldap.NoSuchObjectError);
                 done();
             });
@@ -845,7 +845,7 @@ describe('Ldap', function () {
 
         it('email enabled - allows with valid email', function (done) {
             // user settingsdb instead of settings, to not trigger further events
-            settingsdb.set(settings.MAIL_CONFIG_KEY, JSON.stringify({ enabled: true }), function (error) {
+            settingsdb.set(mail.MAIL_CONFIG_KEY, JSON.stringify({ enabled: true }), function (error) {
                 expect(error).not.to.be.ok();
 
                 var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + config.get('ldapPort') });
@@ -855,14 +855,14 @@ describe('Ldap', function () {
 
                     client.unbind();
 
-                    settingsdb.set(settings.MAIL_CONFIG_KEY, JSON.stringify({ enabled: false }), done);
+                    settingsdb.set(mail.MAIL_CONFIG_KEY, JSON.stringify({ enabled: false }), done);
                 });
             });
         });
 
         it('email enabled - does not allow with invalid password', function (done) {
             // user settingsdb instead of settings, to not trigger further events
-            settingsdb.set(settings.MAIL_CONFIG_KEY, JSON.stringify({ enabled: true }), function (error) {
+            settingsdb.set(mail.MAIL_CONFIG_KEY, JSON.stringify({ enabled: true }), function (error) {
                 expect(error).not.to.be.ok();
 
                 var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + config.get('ldapPort') });
@@ -872,7 +872,7 @@ describe('Ldap', function () {
 
                     client.unbind();
 
-                    settingsdb.set(settings.MAIL_CONFIG_KEY, JSON.stringify({ enabled: false }), done);
+                    settingsdb.set(mail.MAIL_CONFIG_KEY, JSON.stringify({ enabled: false }), done);
                 });
             });
         });
@@ -881,7 +881,7 @@ describe('Ldap', function () {
     describe('app sendmail bind', function () {
         // these tests should work even when email is disabled
         before(function (done) {
-            settingsdb.set(settings.MAIL_CONFIG_KEY, JSON.stringify({ enabled: false }), done);
+            settingsdb.set(mail.MAIL_CONFIG_KEY, JSON.stringify({ enabled: false }), done);
         });
 
         it('does not allow with invalid app', function (done) {
@@ -933,7 +933,7 @@ describe('Ldap', function () {
 
         it('email enabled - allows with valid email', function (done) {
             // user settingsdb instead of settings, to not trigger further events
-            settingsdb.set(settings.MAIL_CONFIG_KEY, JSON.stringify({ enabled: true }), function (error) {
+            settingsdb.set(mail.MAIL_CONFIG_KEY, JSON.stringify({ enabled: true }), function (error) {
                 expect(error).not.to.be.ok();
 
                 var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + config.get('ldapPort') });
@@ -943,14 +943,14 @@ describe('Ldap', function () {
 
                     client.unbind();
 
-                    settingsdb.set(settings.MAIL_CONFIG_KEY, JSON.stringify({ enabled: false }), done);
+                    settingsdb.set(mail.MAIL_CONFIG_KEY, JSON.stringify({ enabled: false }), done);
                 });
             });
         });
 
         it('email enabled - does not allow with invalid password', function (done) {
             // user settingsdb instead of settings, to not trigger further events
-            settingsdb.set(settings.MAIL_CONFIG_KEY, JSON.stringify({ enabled: true }), function (error) {
+            settingsdb.set(mail.MAIL_CONFIG_KEY, JSON.stringify({ enabled: true }), function (error) {
                 expect(error).not.to.be.ok();
 
                 var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + config.get('ldapPort') });
@@ -960,7 +960,7 @@ describe('Ldap', function () {
 
                     client.unbind();
 
-                    settingsdb.set(settings.MAIL_CONFIG_KEY, JSON.stringify({ enabled: false }), done);
+                    settingsdb.set(mail.MAIL_CONFIG_KEY, JSON.stringify({ enabled: false }), done);
                 });
             });
         });

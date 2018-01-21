@@ -214,15 +214,14 @@ function initializeExpressSync() {
 
     // email routes
     router.get ('/api/v1/mail/status',       settingsScope, routes.user.requireAdmin, routes.mail.getStatus);
-
-    router.get ('/api/v1/settings/mail_config',        settingsScope, routes.user.requireAdmin, routes.settings.getMailConfig);
-    router.post('/api/v1/settings/mail_config',        settingsScope, routes.user.requireAdmin, routes.settings.setMailConfig);
-    router.get ('/api/v1/settings/mail_relay',         settingsScope, routes.user.requireAdmin, routes.settings.getMailRelay);
-    router.post('/api/v1/settings/mail_relay',         settingsScope, routes.user.requireAdmin, routes.settings.setMailRelay);
-    router.get ('/api/v1/settings/catch_all_address',  settingsScope, routes.user.requireAdmin, routes.settings.getCatchAllAddress);
-    router.put ('/api/v1/settings/catch_all_address',  settingsScope, routes.user.requireAdmin, routes.settings.setCatchAllAddress);
-    router.get ('/api/v1/settings/mail_from_validation', settingsScope, routes.user.requireAdmin, routes.settings.getMailFromValidation);
-    router.post('/api/v1/settings/mail_from_validation', settingsScope, routes.user.requireAdmin, routes.settings.setMailFromValidation);
+    router.get ('/api/v1/mail/mail_from_validation', settingsScope, routes.user.requireAdmin, routes.mail.getMailFromValidation);
+    router.post('/api/v1/mail/mail_from_validation', settingsScope, routes.user.requireAdmin, routes.mail.setMailFromValidation);
+    router.get ('/api/v1/mail/catch_all_address',  settingsScope, routes.user.requireAdmin, routes.mail.getCatchAllAddress);
+    router.put ('/api/v1/mail/catch_all_address',  settingsScope, routes.user.requireAdmin, routes.mail.setCatchAllAddress);
+    router.get ('/api/v1/mail/mail_relay',         settingsScope, routes.user.requireAdmin, routes.mail.getMailRelay);
+    router.post('/api/v1/mail/mail_relay',         settingsScope, routes.user.requireAdmin, routes.mail.setMailRelay);
+    router.get ('/api/v1/mail/mail_config',        settingsScope, routes.user.requireAdmin, routes.mail.getMailConfig);
+    router.post('/api/v1/mail/mail_config',        settingsScope, routes.user.requireAdmin, routes.mail.setMailConfig);
 
     // feedback
     router.post('/api/v1/feedback', usersScope, routes.cloudron.feedback);

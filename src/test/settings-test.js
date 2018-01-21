@@ -105,7 +105,7 @@ describe('Settings', function () {
         });
 
         it('can set backup config', function (done) {
-            var scope2 = nock(config.apiServerOrigin())
+            nock(config.apiServerOrigin())
                 .post('/api/v1/boxes/' + config.fqdn() + '/awscredentials?token=TOKEN')
                 .reply(201, { credentials: { AccessKeyId: 'accessKeyId', SecretAccessKey: 'secretAccessKey', SessionToken: 'sessionToken' } });
 
@@ -124,36 +124,6 @@ describe('Settings', function () {
             });
         });
 
-        it('can set mail config', function (done) {
-            settings.setMailConfig({ enabled: true }, function (error) {
-                expect(error).to.be(null);
-                done();
-            });
-        });
-
-        it('can get mail config', function (done) {
-            settings.getMailConfig(function (error, mailConfig) {
-                expect(error).to.be(null);
-                expect(mailConfig.enabled).to.be(true);
-                done();
-            });
-        });
-
-        it('can set mail from validation', function (done) {
-            settings.setMailFromValidation(true, function (error) {
-                expect(error).to.be(null);
-                done();
-            });
-        });
-
-        it('can get mail from validation', function (done) {
-            settings.getMailFromValidation(function (error, enabled) {
-                expect(error).to.be(null);
-                expect(enabled).to.be(true);
-                done();
-            });
-        });
-
         it('can enable mail digest', function (done) {
             settings.setEmailDigest(true, function (error) {
                 expect(error).to.be(null);
@@ -166,47 +136,6 @@ describe('Settings', function () {
                 expect(error).to.be(null);
                 expect(enabled).to.be(true);
                 done();
-            });
-        });
-
-        it('can get mail relay', function (done) {
-            settings.getMailRelay(function (error, address) {
-                expect(error).to.be(null);
-                expect(address).to.eql({ provider: 'cloudron-smtp' });
-                done();
-            });
-        });
-
-        it('can set mail relay', function (done) {
-            var relay = { provider: 'external-smtp', host: 'mx.foo.com', port: 25 };
-+            settingsdb.set(settings.MAIL_RELAY_KEY, JSON.stringify(relay), function (error) { // skip the mail server verify()
-                expect(error).to.be(null);
-
-                settings.getMailRelay(function (error, address) {
-                    expect(error).to.be(null);
-                    expect(address).to.eql(relay);
-                    done();
-                });
-            });
-        });
-
-        it('can get catch all address', function (done) {
-            settings.getCatchAllAddress(function (error, address) {
-                expect(error).to.be(null);
-                expect(address).to.eql([ ]);
-                done();
-            });
-        });
-
-        it('can set catch all address', function (done) {
-            settings.setCatchAllAddress([ "user1", "user2" ], function (error) {
-                expect(error).to.be(null);
-
-                settings.getCatchAllAddress(function (error, address) {
-                    expect(error).to.be(null);
-                    expect(address).to.eql([ "user1", "user2" ]);
-                    done();
-                });
             });
         });
 

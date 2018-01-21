@@ -4,7 +4,7 @@ exports = module.exports = {
     start: start,
     stop: stop,
 
-    createMailConfig: createMailConfig
+    restartMail: startMail
 };
 
 var apps = require('./apps.js'),
@@ -18,15 +18,14 @@ var apps = require('./apps.js'),
     hat = require('hat'),
     infra = require('./infra_version.js'),
     locker = require('./locker.js'),
+    mail = require('./mail.js'),
     nginx = require('./nginx.js'),
     os = require('os'),
     paths = require('./paths.js'),
     safe = require('safetydance'),
     semver = require('semver'),
-    settings = require('./settings.js'),
     shell = require('./shell.js'),
     taskmanager = require('./taskmanager.js'),
-    user = require('./user.js'),
     util = require('util'),
     _ = require('underscore');
 
@@ -40,10 +39,6 @@ function start(callback) {
     if (process.env.BOX_ENV === 'test' && !process.env.TEST_CREATE_INFRA) return callback();
 
     debug('initializing addon infrastructure');
-
-    // restart mail container if any of these keys change
-    settings.events.on(settings.MAIL_CONFIG_KEY, function () { startMail(NOOP_CALLBACK); });
-    settings.events.on(settings.MAIL_RELAY_KEY, function () { startMail(NOOP_CALLBACK); });
 
     certificates.events.on(certificates.EVENT_CERT_CHANGED, function (domain) {
         if (domain === '*.' + config.fqdn() || domain === config.adminFqdn()) startMail(NOOP_CALLBACK);
@@ -240,48 +235,6 @@ function startMongodb(callback) {
     setTimeout(callback, 5000);
 }
 
-function createMailConfig(callback) {
-    assert.strictEqual(typeof callback, 'function');
-
-    const fqdn = config.fqdn();
-    const mailFqdn = config.mailFqdn();
-    const alertsFrom = 'no-reply@' + config.fqdn();
-
-    debug('createMailConfig: generating mail config');
-
-    user.getOwner(function (error, owner) {
-        var alertsTo = config.provider() === 'caas' ? [ 'support@cloudron.io' ] : [ ];
-        alertsTo.concat(error ? [] : owner.email).join(','); // owner may not exist yet
-
-        settings.getAll(function (error, result) {
-            if (error) return callback(error);
-
-            var catchAll = result[settings.CATCH_ALL_ADDRESS_KEY].map(function (c) { return `${c}@${fqdn}`; }).join(',');
-            var mailFromValidation = result[settings.MAIL_FROM_VALIDATION_KEY];
-
-            if (!safe.fs.writeFileSync(paths.ADDON_CONFIG_DIR + '/mail/mail.ini',
-                `mail_domains=${fqdn}\nmail_default_domain=${fqdn}\nmail_server_name=${mailFqdn}\nalerts_from=${alertsFrom}\nalerts_to=${alertsTo}\ncatch_all=${catchAll}\nmail_from_validation=${mailFromValidation}\n`, 'utf8')) {
-                return callback(new Error('Could not create mail var file:' + safe.error.message));
-            }
-
-            var relay = result[settings.MAIL_RELAY_KEY];
-
-            const enabled = relay.provider !== 'cloudron-smtp' ? true : false,
-                host = relay.host || '',
-                port = relay.port || 25,
-                username = relay.username || '',
-                password = relay.password || '';
-
-            if (!safe.fs.writeFileSync(paths.ADDON_CONFIG_DIR + '/mail/smtp_forward.ini',
-                `enable_outbound=${enabled}\nhost=${host}\nport=${port}\nenable_tls=true\nauth_type=plain\nauth_user=${username}\nauth_pass=${password}`, 'utf8')) {
-                return callback(new Error('Could not create mail var file:' + safe.error.message));
-            }
-
-            callback();
-        });
-    });
-}
-
 function startMail(callback) {
     // mail (note: 2525 is hardcoded in mail container and app use this port)
     // MAIL_SERVER_NAME is the hostname of the mailserver i.e server uses these certs
@@ -299,12 +252,12 @@ function startMail(callback) {
         if (!safe.fs.writeFileSync(paths.ADDON_CONFIG_DIR + '/mail/tls_cert.pem', cert)) return callback(new Error('Could not create cert file:' + safe.error.message));
         if (!safe.fs.writeFileSync(paths.ADDON_CONFIG_DIR + '/mail/tls_key.pem', key))  return callback(new Error('Could not create key file:' + safe.error.message));
 
-        settings.getMailConfig(function (error, mailConfig) {
+        mail.getMailConfig(function (error, mailConfig) {
             if (error) return callback(error);
 
             shell.execSync('startMail', 'docker rm -f mail || true');
 
-            createMailConfig(function (error) {
+            mail.createMailConfig(function (error) {
                 if (error) return callback(error);
 
                 var ports = mailConfig.enabled ? '-p 587:2525 -p 993:9993 -p 4190:4190 -p 25:2525' : '';

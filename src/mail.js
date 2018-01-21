@@ -5,6 +5,25 @@ exports = module.exports = {
     getStatus: getStatus,
     checkRblStatus: checkRblStatus,
 
+    getMailFromValidation: getMailFromValidation,
+    setMailFromValidation: setMailFromValidation,
+
+    setCatchAllAddress: setCatchAllAddress,
+    getCatchAllAddress: getCatchAllAddress,
+
+    getMailRelay: getMailRelay,
+    setMailRelay: setMailRelay,
+
+    getMailConfig: getMailConfig,
+    setMailConfig: setMailConfig,
+
+    createMailConfig: createMailConfig,
+
+    MAIL_FROM_VALIDATION_KEY: 'mail_from_validation',
+    CATCH_ALL_ADDRESS_KEY: 'catch_all_address',
+    MAIL_RELAY_KEY: 'mail_relay',
+    MAIL_CONFIG_KEY: 'mail_config',
+
     MailError: MailError
 };
 
@@ -12,18 +31,33 @@ var assert = require('assert'),
     async = require('async'),
     cloudron = require('./cloudron.js'),
     config = require('./config.js'),
-    debug = require('debug')('box:email'),
+    DatabaseError = require('./databaseerror.js'),
+    debug = require('debug')('box:mail'),
     dig = require('./dig.js'),
     net = require('net'),
     nodemailer = require('nodemailer'),
+    paths = require('./paths.js'),
+    platform = require('./platform.js'),
     safe = require('safetydance'),
-    settings = require('./settings.js'),
+    settingsdb = require('./settingsdb.js'),
     smtpTransport = require('nodemailer-smtp-transport'),
     sysinfo = require('./sysinfo.js'),
+    user = require('./user.js'),
     util = require('util'),
     _ = require('underscore');
 
 const digOptions = { server: '127.0.0.1', port: 53, timeout: 5000 };
+var NOOP_CALLBACK = function (error) { if (error) debug(error); };
+
+var gDefaults = (function () {
+    var result = { };
+    result[exports.MAIL_FROM_VALIDATION_KEY] = true;
+    result[exports.CATCH_ALL_ADDRESS_KEY] = [ ];
+    result[exports.MAIL_RELAY_KEY] = { provider: 'cloudron-smtp' };
+    result[exports.MAIL_CONFIG_KEY] = { enabled: false };
+
+    return result;
+})();
 
 function MailError(reason, errorOrMessage) {
     assert.strictEqual(typeof reason, 'string');
@@ -370,7 +404,7 @@ function getStatus(callback) {
         };
     }
 
-    settings.getMailRelay(function (error, relay) {
+    getMailRelay(function (error, relay) {
         if (error) return callback(error);
 
         var checks = [
@@ -394,5 +428,167 @@ function getStatus(callback) {
         async.parallel(checks, function () {
             callback(null, results);
         });
+    });
+}
+
+// FIXME: temporary function till we move to domain API
+function getAll(callback) {
+    assert.strictEqual(typeof callback, 'function');
+
+    settingsdb.getAll(function (error, settings) {
+        if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
+
+        var result = _.extend({ }, gDefaults);
+        settings.forEach(function (setting) { result[setting.name] = setting.value; });
+
+        // convert JSON objects
+        [ exports.CATCH_ALL_ADDRESS_KEY, exports.MAIL_RELAY_KEY, exports.MAIL_CONFIG_KEY ].forEach(function (key) {
+            result[key] = typeof result[key] === 'object' ? result[key] : safe.JSON.parse(result[key]);
+        });
+
+        callback(null, result);
+    });
+}
+
+function createMailConfig(callback) {
+    assert.strictEqual(typeof callback, 'function');
+
+    const fqdn = config.fqdn();
+    const mailFqdn = config.mailFqdn();
+    const alertsFrom = 'no-reply@' + config.fqdn();
+
+    debug('createMailConfig: generating mail config');
+
+    user.getOwner(function (error, owner) {
+        var alertsTo = config.provider() === 'caas' ? [ 'support@cloudron.io' ] : [ ];
+        alertsTo.concat(error ? [] : owner.email).join(','); // owner may not exist yet
+
+        getAll(function (error, result) {
+            if (error) return callback(error);
+
+            var catchAll = result[exports.CATCH_ALL_ADDRESS_KEY].map(function (c) { return `${c}@${fqdn}`; }).join(',');
+            var mailFromValidation = result[exports.MAIL_FROM_VALIDATION_KEY];
+
+            if (!safe.fs.writeFileSync(paths.ADDON_CONFIG_DIR + '/mail/mail.ini',
+                `mail_domains=${fqdn}\nmail_default_domain=${fqdn}\nmail_server_name=${mailFqdn}\nalerts_from=${alertsFrom}\nalerts_to=${alertsTo}\ncatch_all=${catchAll}\nmail_from_validation=${mailFromValidation}\n`, 'utf8')) {
+                return callback(new Error('Could not create mail var file:' + safe.error.message));
+            }
+
+            var relay = result[exports.MAIL_RELAY_KEY];
+
+            const enabled = relay.provider !== 'cloudron-smtp' ? true : false,
+                host = relay.host || '',
+                port = relay.port || 25,
+                username = relay.username || '',
+                password = relay.password || '';
+
+            if (!safe.fs.writeFileSync(paths.ADDON_CONFIG_DIR + '/mail/smtp_forward.ini',
+                `enable_outbound=${enabled}\nhost=${host}\nport=${port}\nenable_tls=true\nauth_type=plain\nauth_user=${username}\nauth_pass=${password}`, 'utf8')) {
+                return callback(new Error('Could not create mail var file:' + safe.error.message));
+            }
+
+            callback();
+        });
+    });
+}
+
+function getMailFromValidation(callback) {
+    assert.strictEqual(typeof callback, 'function');
+
+    settingsdb.get(exports.MAIL_FROM_VALIDATION_KEY, function (error, enabled) {
+        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(null, gDefaults[exports.MAIL_FROM_VALIDATION_KEY]);
+        if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
+
+        callback(null, !!enabled); // settingsdb holds string values only
+    });
+}
+
+function setMailFromValidation(enabled, callback) {
+    assert.strictEqual(typeof enabled, 'boolean');
+    assert.strictEqual(typeof callback, 'function');
+
+    settingsdb.set(exports.MAIL_FROM_VALIDATION_KEY, enabled ? 'enabled' : '', function (error) {
+        if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
+
+        createMailConfig(NOOP_CALLBACK);
+
+        callback(null);
+    });
+}
+
+function getCatchAllAddress(callback) {
+    assert.strictEqual(typeof callback, 'function');
+
+    settingsdb.get(exports.CATCH_ALL_ADDRESS_KEY, function (error, value) {
+        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(null, gDefaults[exports.CATCH_ALL_ADDRESS_KEY]);
+        if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
+
+        callback(null, JSON.parse(value));
+    });
+}
+
+function setCatchAllAddress(address, callback) {
+    assert(Array.isArray(address));
+    assert.strictEqual(typeof callback, 'function');
+
+    settingsdb.set(exports.CATCH_ALL_ADDRESS_KEY, JSON.stringify(address), function (error) {
+        if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
+
+        createMailConfig(NOOP_CALLBACK);
+
+        callback(null);
+    });
+}
+
+function getMailRelay(callback) {
+    assert.strictEqual(typeof callback, 'function');
+
+    settingsdb.get(exports.MAIL_RELAY_KEY, function (error, value) {
+        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(null, gDefaults[exports.MAIL_RELAY_KEY]);
+        if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
+
+        callback(null, JSON.parse(value));
+    });
+}
+
+function setMailRelay(relay, callback) {
+    assert.strictEqual(typeof relay, 'object');
+    assert.strictEqual(typeof callback, 'function');
+
+    verifyRelay(relay, function (error) {
+        if (error) return callback(error);
+
+        settingsdb.set(exports.MAIL_RELAY_KEY, JSON.stringify(relay), function (error) {
+            if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
+
+            platform.restartMail(NOOP_CALLBACK);
+
+            callback(null);
+        });
+    });
+}
+
+
+function getMailConfig(callback) {
+    assert.strictEqual(typeof callback, 'function');
+
+    settingsdb.get(exports.MAIL_CONFIG_KEY, function (error, value) {
+        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(null, gDefaults[exports.MAIL_CONFIG_KEY]);
+        if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
+
+        callback(null, JSON.parse(value));
+    });
+}
+
+function setMailConfig(mailConfig, callback) {
+    assert.strictEqual(typeof mailConfig, 'object');
+    assert.strictEqual(typeof callback, 'function');
+
+    settingsdb.set(exports.MAIL_CONFIG_KEY, JSON.stringify(mailConfig), function (error) {
+        if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
+
+        platform.restartMail(NOOP_CALLBACK);
+
+        callback(null);
     });
 }

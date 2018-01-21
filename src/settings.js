@@ -32,18 +32,6 @@ exports = module.exports = {
     getAppstoreConfig: getAppstoreConfig,
     setAppstoreConfig: setAppstoreConfig,
 
-    getMailConfig: getMailConfig,
-    setMailConfig: setMailConfig,
-
-    getMailFromValidation: getMailFromValidation,
-    setMailFromValidation: setMailFromValidation,
-
-    getMailRelay: getMailRelay,
-    setMailRelay: setMailRelay,
-
-    setCatchAllAddress: setCatchAllAddress,
-    getCatchAllAddress: getCatchAllAddress,
-
     getEmailDigest: getEmailDigest,
     setEmailDigest: setEmailDigest,
 
@@ -51,7 +39,6 @@ exports = module.exports = {
 
     // booleans. if you add an entry here, be sure to fix getAll
     DYNAMIC_DNS_KEY: 'dynamic_dns',
-    MAIL_FROM_VALIDATION_KEY: 'mail_from_validation',
     EMAIL_DIGEST: 'email_digest',
 
     // json. if you add an entry here, be sure to fix getAll
@@ -60,9 +47,6 @@ exports = module.exports = {
     UPDATE_CONFIG_KEY: 'update_config',
     APPSTORE_CONFIG_KEY: 'appstore_config',
     CAAS_CONFIG_KEY: 'caas_config',
-    MAIL_CONFIG_KEY: 'mail_config',
-    MAIL_RELAY_KEY: 'mail_relay',
-    CATCH_ALL_ADDRESS_KEY: 'catch_all_address',
 
     // strings
     AUTOUPDATE_PATTERN_KEY: 'autoupdate_pattern',
@@ -79,12 +63,8 @@ var assert = require('assert'),
     constants = require('./constants.js'),
     CronJob = require('cron').CronJob,
     DatabaseError = require('./databaseerror.js'),
-    debug = require('debug')('box:settings'),
-    mail = require('./mail.js'),
-    MailError = mail.MailError,
     moment = require('moment-timezone'),
     paths = require('./paths.js'),
-    platform = require('./platform.js'),
     safe = require('safetydance'),
     settingsdb = require('./settingsdb.js'),
     superagent = require('superagent'),
@@ -106,16 +86,10 @@ var gDefaults = (function () {
     result[exports.TLS_CONFIG_KEY] = { provider: 'letsencrypt-prod' };
     result[exports.UPDATE_CONFIG_KEY] = { prerelease: false };
     result[exports.APPSTORE_CONFIG_KEY] = {};
-    result[exports.MAIL_CONFIG_KEY] = { enabled: false };
-    result[exports.MAIL_RELAY_KEY] = { provider: 'cloudron-smtp' };
-    result[exports.CATCH_ALL_ADDRESS_KEY] = [ ];
-    result[exports.MAIL_FROM_VALIDATION_KEY] = true;
     result[exports.EMAIL_DIGEST] = true;
 
     return result;
 })();
-
-var NOOP_CALLBACK = function (error) { if (error) debug(error); };
 
 function SettingsError(reason, errorOrMessage) {
     assert.strictEqual(typeof reason, 'string');
@@ -349,56 +323,6 @@ function setBackupConfig(backupConfig, callback) {
     });
 }
 
-function getMailConfig(callback) {
-    assert.strictEqual(typeof callback, 'function');
-
-    settingsdb.get(exports.MAIL_CONFIG_KEY, function (error, value) {
-        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(null, gDefaults[exports.MAIL_CONFIG_KEY]);
-        if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
-
-        callback(null, JSON.parse(value));
-    });
-}
-
-function setMailConfig(mailConfig, callback) {
-    assert.strictEqual(typeof mailConfig, 'object');
-    assert.strictEqual(typeof callback, 'function');
-
-    settingsdb.set(exports.MAIL_CONFIG_KEY, JSON.stringify(mailConfig), function (error) {
-        if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
-
-        exports.events.emit(exports.MAIL_CONFIG_KEY, mailConfig);
-
-        callback(null);
-    });
-}
-
-function getMailFromValidation(callback) {
-    assert.strictEqual(typeof callback, 'function');
-
-    settingsdb.get(exports.MAIL_FROM_VALIDATION_KEY, function (error, enabled) {
-        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(null, gDefaults[exports.MAIL_FROM_VALIDATION_KEY]);
-        if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
-
-        callback(null, !!enabled); // settingsdb holds string values only
-    });
-}
-
-function setMailFromValidation(enabled, callback) {
-    assert.strictEqual(typeof enabled, 'boolean');
-    assert.strictEqual(typeof callback, 'function');
-
-    settingsdb.set(exports.MAIL_FROM_VALIDATION_KEY, enabled ? 'enabled' : '', function (error) {
-        if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
-
-        exports.events.emit(exports.MAIL_FROM_VALIDATION_KEY, enabled);
-
-        platform.createMailConfig(NOOP_CALLBACK);
-
-        callback(null);
-    });
-}
-
 function getEmailDigest(callback) {
     assert.strictEqual(typeof callback, 'function');
 
@@ -418,61 +342,6 @@ function setEmailDigest(enabled, callback) {
         if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
 
         exports.events.emit(exports.EMAIL_DIGEST, enabled);
-
-        callback(null);
-    });
-}
-
-function getMailRelay(callback) {
-    assert.strictEqual(typeof callback, 'function');
-
-    settingsdb.get(exports.MAIL_RELAY_KEY, function (error, value) {
-        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(null, gDefaults[exports.MAIL_RELAY_KEY]);
-        if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
-
-        callback(null, JSON.parse(value));
-    });
-}
-
-function setMailRelay(relay, callback) {
-    assert.strictEqual(typeof relay, 'object');
-    assert.strictEqual(typeof callback, 'function');
-
-    mail.verifyRelay(relay, function (error) {
-        if (error && error.reason === MailError.BAD_FIELD) return callback(new SettingsError(SettingsError.BAD_FIELD, error.message));
-        if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
-
-        settingsdb.set(exports.MAIL_RELAY_KEY, JSON.stringify(relay), function (error) {
-            if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
-
-            exports.events.emit(exports.MAIL_RELAY_KEY, relay);
-
-            callback(null);
-        });
-    });
-}
-
-function getCatchAllAddress(callback) {
-    assert.strictEqual(typeof callback, 'function');
-
-    settingsdb.get(exports.CATCH_ALL_ADDRESS_KEY, function (error, value) {
-        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(null, gDefaults[exports.CATCH_ALL_ADDRESS_KEY]);
-        if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
-
-        callback(null, JSON.parse(value));
-    });
-}
-
-function setCatchAllAddress(address, callback) {
-    assert(Array.isArray(address));
-    assert.strictEqual(typeof callback, 'function');
-
-    settingsdb.set(exports.CATCH_ALL_ADDRESS_KEY, JSON.stringify(address), function (error) {
-        if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
-
-        exports.events.emit(exports.CATCH_ALL_ADDRESS_KEY, address);
-
-        platform.createMailConfig(NOOP_CALLBACK);
 
         callback(null);
     });
@@ -570,11 +439,9 @@ function getAll(callback) {
 
         // convert booleans
         result[exports.DYNAMIC_DNS_KEY] = !!result[exports.DYNAMIC_DNS_KEY];
-        result[exports.MAIL_FROM_VALIDATION_KEY] = !!result[exports.MAIL_FROM_VALIDATION_KEY];
 
         // convert JSON objects
-        [exports.TLS_CONFIG_KEY, exports.BACKUP_CONFIG_KEY, exports.MAIL_CONFIG_KEY,
-            exports.UPDATE_CONFIG_KEY, exports.APPSTORE_CONFIG_KEY, exports.MAIL_RELAY_KEY, exports.CATCH_ALL_ADDRESS_KEY].forEach(function (key) {
+        [exports.TLS_CONFIG_KEY, exports.BACKUP_CONFIG_KEY, exports.UPDATE_CONFIG_KEY, exports.APPSTORE_CONFIG_KEY ].forEach(function (key) {
             result[key] = typeof result[key] === 'object' ? result[key] : safe.JSON.parse(result[key]);
         });
 

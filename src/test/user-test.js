@@ -14,11 +14,11 @@ var async = require('async'),
     fs = require('fs'),
     groupdb = require('../groupdb.js'),
     groups = require('../groups.js'),
+    mail = require('../mail.js'),
     mailboxdb = require('../mailboxdb.js'),
     mailer = require('../mailer.js'),
     user = require('../user.js'),
     userdb = require('../userdb.js'),
-    settings = require('../settings.js'),
     settingsdb = require('../settingsdb.js'),
     UserError = user.UserError;
 
@@ -269,7 +269,7 @@ describe('User', function () {
 
         it('succeeds and attempts to send invite to alternateEmail', function (done) {
             // user settingsdb instead of settings, to not trigger further events
-            settingsdb.set(settings.MAIL_CONFIG_KEY, JSON.stringify({ enabled: true }), function (error) {
+            settingsdb.set(mail.MAIL_CONFIG_KEY, JSON.stringify({ enabled: true }), function (error) {
                 expect(error).not.to.be.ok();
 
                 user.create(USERNAME_1, PASSWORD_1, EMAIL_1, DISPLAY_NAME_1, AUDIT_SOURCE, { sendInvite: true }, function (error, result) {
@@ -283,7 +283,7 @@ describe('User', function () {
                     checkMails(2, { sentTo: EMAIL_1.toLowerCase() }, function (error) {
                         expect(error).not.to.be.ok();
 
-                        settingsdb.set(settings.MAIL_CONFIG_KEY, JSON.stringify({ enabled: false }), done);
+                        settingsdb.set(mail.MAIL_CONFIG_KEY, JSON.stringify({ enabled: false }), done);
                     });
                 });
             });
@@ -589,28 +589,28 @@ describe('User', function () {
 
         it('succeeds with cloudron mail enabled', function (done) {
             // user settingsdb instead of settings, to not trigger further events
-            settingsdb.set(settings.MAIL_CONFIG_KEY, JSON.stringify({ enabled: true }), function (error) {
+            settingsdb.set(mail.MAIL_CONFIG_KEY, JSON.stringify({ enabled: true }), function (error) {
                 expect(error).not.to.be.ok();
 
                 user.verifyWithEmail(USERNAME + '@' + config.fqdn(), PASSWORD, function (error, result) {
                     expect(error).to.not.be.ok();
                     expect(result).to.be.ok();
 
-                    settingsdb.set(settings.MAIL_CONFIG_KEY, JSON.stringify({ enabled: false }), done);
+                    settingsdb.set(mail.MAIL_CONFIG_KEY, JSON.stringify({ enabled: false }), done);
                 });
             });
         });
 
         it('fails with cloudron mail enabled and invite email', function (done) {
             // user settingsdb instead of settings, to not trigger further events
-            settingsdb.set(settings.MAIL_CONFIG_KEY, JSON.stringify({ enabled: true }), function (error) {
+            settingsdb.set(mail.MAIL_CONFIG_KEY, JSON.stringify({ enabled: true }), function (error) {
                 expect(error).not.to.be.ok();
 
                 user.verifyWithEmail(EMAIL, PASSWORD, function (error) {
                     expect(error).to.be.a(UserError);
                     expect(error.reason).to.equal(UserError.NOT_FOUND);
 
-                    settingsdb.set(settings.MAIL_CONFIG_KEY, JSON.stringify({ enabled: false }), done);
+                    settingsdb.set(mail.MAIL_CONFIG_KEY, JSON.stringify({ enabled: false }), done);
                 });
             });
         });
@@ -645,7 +645,7 @@ describe('User', function () {
 
         it('succeeds with email enabled', function (done) {
             // user settingsdb instead of settings, to not trigger further events
-            settingsdb.set(settings.MAIL_CONFIG_KEY, JSON.stringify({ enabled: true }), function (error) {
+            settingsdb.set(mail.MAIL_CONFIG_KEY, JSON.stringify({ enabled: true }), function (error) {
                 expect(error).not.to.be.ok();
 
                 user.get(userObject.id, function (error, result) {
@@ -657,7 +657,7 @@ describe('User', function () {
                     expect(result.username).to.equal(USERNAME.toLowerCase());
                     expect(result.displayName).to.equal(DISPLAY_NAME);
 
-                    settingsdb.set(settings.MAIL_CONFIG_KEY, JSON.stringify({ enabled: false }), done);
+                    settingsdb.set(mail.MAIL_CONFIG_KEY, JSON.stringify({ enabled: false }), done);
                 });
             });
         });
@@ -1026,7 +1026,7 @@ describe('User', function () {
         });
 
         it('did delete mailbox and aliases', function (done) {
-            mailboxdb.getMailbox(userObject.username.toLowerCase(), DOMAIN_0.domain, function (error, mailbox) {
+            mailboxdb.getMailbox(userObject.username.toLowerCase(), DOMAIN_0.domain, function (error) {
                 expect(error.reason).to.be(DatabaseError.NOT_FOUND);
 
                 mailboxdb.getAliasesForName(USERNAME.toLowerCase(), DOMAIN_0.domain, function (error, results) {

@@ -9,9 +9,9 @@ var async = require('async'),
     config = require('../config.js'),
     database = require('../database.js'),
     digest = require('../digest.js'),
-    domaindb = require('../domaindb.js'),
     eventlog = require('../eventlog.js'),
     expect = require('expect.js'),
+    mail = require('../mail.js'),
     mailer = require('../mailer.js'),
     paths = require('../paths.js'),
     safe = require('safetydance'),
@@ -67,7 +67,7 @@ describe('digest', function () {
             settings.initialize,
             user.createOwner.bind(null, USER_0.username, USER_0.password, USER_0.email, USER_0.displayName, AUDIT_SOURCE),
             eventlog.add.bind(null, eventlog.ACTION_UPDATE, AUDIT_SOURCE, { boxUpdateInfo: { sourceTarballUrl: 'xx', version: '1.2.3', changelog: [ 'good stuff' ] } }),
-            settingsdb.set.bind(null, settings.MAIL_CONFIG_KEY, JSON.stringify({ enabled: true })),
+            settingsdb.set.bind(null, mail.MAIL_CONFIG_KEY, JSON.stringify({ enabled: true })),
             mailer._clearMailQueue
         ], done);
     });
@@ -123,7 +123,7 @@ describe('digest', function () {
         it('sends mail for pending update to owner account email', function (done) {
             updatechecker._setUpdateInfo({ box: null, apps: { 'appid': { manifest: { version: '1.2.5', changelog: 'noop\nreally' } } } });
 
-            settingsdb.set(settings.MAIL_CONFIG_KEY, JSON.stringify({ enabled: true }), function (error) {
+            settingsdb.set(mail.MAIL_CONFIG_KEY, JSON.stringify({ enabled: true }), function (error) {
                 if (error) return done(error);
 
                 digest.maybeSend(function (error) {

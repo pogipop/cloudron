@@ -440,14 +440,14 @@ angular.module('Application').service('Client', ['$http', '$interval', 'md5', 'N
     };
 
     Client.prototype.setCatchallAddresses = function (addresses, callback) {
-        put('/api/v1/settings/catch_all_address', { address: addresses }).success(function(data, status) {
+        put('/api/v1/mail/catch_all_address', { address: addresses }).success(function(data, status) {
             if (status !== 202) return callback(new ClientError(status, data));
             callback(null);
         }).error(defaultErrorHandler(callback));
     };
 
     Client.prototype.getCatchallAddresses = function (callback) {
-        get('/api/v1/settings/catch_all_address').success(function(data, status) {
+        get('/api/v1/mail/catch_all_address').success(function(data, status) {
             if (status !== 200) return callback(new ClientError(status, data));
             callback(null, data.address);
         }).error(defaultErrorHandler(callback));
@@ -520,28 +520,28 @@ angular.module('Application').service('Client', ['$http', '$interval', 'md5', 'N
     };
 
     Client.prototype.getMailConfig = function (callback) {
-        get('/api/v1/settings/mail_config').success(function (data, status) {
+        get('/api/v1/mail/mail_config').success(function (data, status) {
             if (status !== 200 || typeof data !== 'object') return callback(new ClientError(status, data));
             callback(null, data);
         }).error(defaultErrorHandler(callback));
     };
 
     Client.prototype.setMailConfig = function (config, callback) {
-        post('/api/v1/settings/mail_config', config).success(function (data, status) {
+        post('/api/v1/mail/mail_config', config).success(function (data, status) {
             if (status !== 202) return callback(new ClientError(status, data));
             callback(null);
         }).error(defaultErrorHandler(callback));
     };
 
     Client.prototype.getMailRelay = function (callback) {
-        get('/api/v1/settings/mail_relay').success(function (data, status) {
+        get('/api/v1/mail/mail_relay').success(function (data, status) {
             if (status !== 200 || typeof data !== 'object') return callback(new ClientError(status, data));
             callback(null, data);
         }).error(defaultErrorHandler(callback));
     };
 
     Client.prototype.setMailRelay = function (config, callback) {
-        post('/api/v1/settings/mail_relay', config).success(function (data, status) {
+        post('/api/v1/mail/mail_relay', config).success(function (data, status) {
             if (status !== 202) return callback(new ClientError(status, data));
             callback(null);
         }).error(defaultErrorHandler(callback));
