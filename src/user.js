@@ -178,7 +178,7 @@ function createUser(username, password, email, displayName, auditSource, options
                 if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(new UserError(UserError.ALREADY_EXISTS, error.message));
                 if (error) return callback(new UserError(UserError.INTERNAL_ERROR, error));
 
-                mail.getMailConfig(function (error, mailConfig) {
+                mail.get(config.fqdn(), function (error, mailConfig) {
                     if (error) return callback(new UserError(UserError.INTERNAL_ERROR, error));
 
                     if (mailConfig.enabled) {
@@ -259,7 +259,7 @@ function verifyWithEmail(email, password, callback) {
 
     email = email.toLowerCase();
 
-    mail.getMailConfig(function (error, mailConfig) {
+    mail.get(config.fqdn(), function (error, mailConfig) {
         if (error) return callback(new UserError(UserError.INTERNAL_ERROR, error));
 
         if (mailConfig.enabled) return verifyWithUsername(email.split('@')[0], password, callback);
@@ -302,7 +302,7 @@ function listUsers(callback) {
     userdb.getAllWithGroupIds(function (error, results) {
         if (error) return callback(new UserError(UserError.INTERNAL_ERROR, error));
 
-        mail.getMailConfig(function (error, mailConfig) {
+        mail.get(config.fqdn(), function (error, mailConfig) {
             if (error) return callback(new UserError(UserError.INTERNAL_ERROR, error));
 
             results.forEach(function (result) {
@@ -345,7 +345,7 @@ function getUser(userId, callback) {
             result.groupIds = groupIds;
             result.admin = groupIds.indexOf(constants.ADMIN_GROUP_ID) !== -1;
 
-            mail.getMailConfig(function (error, mailConfig) {
+            mail.get(config.fqdn(), function (error, mailConfig) {
                 if (error) return callback(new UserError(UserError.INTERNAL_ERROR, error));
 
                 if (mailConfig.enabled) {
@@ -451,7 +451,7 @@ function getAllAdmins(callback) {
     userdb.getAllAdmins(function (error, admins) {
         if (error) return callback(new UserError(UserError.INTERNAL_ERROR, error));
 
-        mail.getMailConfig(function (error, mailConfig) {
+        mail.get(config.fqdn(), function (error, mailConfig) {
             if (error) return callback(new UserError(UserError.INTERNAL_ERROR, error));
 
             admins.forEach(function (admin) {
@@ -575,7 +575,7 @@ function getOwner(callback) {
         if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new UserError(UserError.NOT_FOUND));
         if (error) return callback(new UserError(UserError.INTERNAL_ERROR, error));
 
-        mail.getMailConfig(function (error, mailConfig) {
+        mail.get(config.fqdn(), function (error, mailConfig) {
             if (error) return callback(new UserError(UserError.INTERNAL_ERROR, error));
 
             if (mailConfig.enabled) {

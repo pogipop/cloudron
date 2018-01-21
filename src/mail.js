@@ -62,6 +62,7 @@ function MailError(reason, errorOrMessage) {
 util.inherits(MailError, Error);
 MailError.INTERNAL_ERROR = 'Internal Error';
 MailError.BAD_FIELD = 'Bad Field';
+MailError.NOT_FOUND = 'Not Found';
 
 function checkOutboundPort25(callback) {
     assert.strictEqual(typeof callback, 'function');
@@ -463,7 +464,7 @@ function restartMail(callback) {
     // MAIL_DOMAIN is the domain for which this server is relaying mails
     // mail container uses /app/data for backed up data and /run for restart-able data
 
-    if (process.env.BOX_ENV === 'test') return callback();
+    if (process.env.BOX_ENV === 'test' && !process.env.TEST_CREATE_INFRA) return callback();
 
     function onCertificateChanged(domain) {
         if (domain === '*.' + config.fqdn() || domain === config.adminFqdn()) restartMail(NOOP_CALLBACK);
