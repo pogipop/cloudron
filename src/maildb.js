@@ -38,6 +38,7 @@ function add(domain, callback) {
 
     database.query('INSERT INTO maildb (domain) VALUES (?)', [ domain ], function (error) {
         if (error && error.code === 'ER_DUP_ENTRY') return callback(new DatabaseError(DatabaseError.ALREADY_EXISTS, 'mail domain already exists'));
+        if (error && error.code === 'ER_NO_REFERENCED_ROW_2') return callback(new DatabaseError(DatabaseError.NOT_FOUND), 'no such domain');
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
 
         callback(null);

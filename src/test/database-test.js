@@ -19,6 +19,7 @@ var appdb = require('../appdb.js'),
     groupdb = require('../groupdb.js'),
     hat = require('hat'),
     mailboxdb = require('../mailboxdb.js'),
+    maildb = require('../maildb.js'),
     settingsdb = require('../settingsdb.js'),
     tokendb = require('../tokendb.js'),
     userdb = require('../userdb.js'),
@@ -1732,6 +1733,57 @@ describe('database', function () {
                     expect(error.reason).to.be(DatabaseError.NOT_FOUND);
                     done();
                 });
+            });
+        });
+    });
+
+    describe('mail', function () {
+        const DOMAIN_0 = {
+            domain: 'foobar.com',
+            zoneName: 'foobar.com',
+            provider: 'digitalocean',
+            config: { token: 'abcd' }
+        };
+
+        const MAIL_DOMAIN_0 = {
+            domain: DOMAIN_0.domain,
+            enabled: false,
+            relay: { provider: 'cloudron-smtp' },
+            catchAll: [ ],
+            mailFromValidation: true
+        };
+
+        before(function (done) {
+            domaindb.add(DOMAIN_0.domain, { zoneName: DOMAIN_0.zoneName, provider: DOMAIN_0.provider, config: DOMAIN_0.config }, done);
+        });
+
+        it('can add mail domain', function (done) {
+            maildb.add(MAIL_DOMAIN_0.domain, done);
+        });
+
+        it('cannot add same domain twice', function (done) {
+            maildb.add(MAIL_DOMAIN_0.domain, function (error) {
+                expect(error).to.be.ok();
+                expect(error.reason).to.be(DatabaseError.ALREADY_EXISTS);
+                done();
+            });
+        });
+
+        it('cannot add non-existing domain', function (done) {
+            maildb.add(MAIL_DOMAIN_0.domain + 'nope', function (error) {
+                expect(error).to.be.ok();
+                expect(error.reason).to.be(DatabaseError.NOT_FOUND);
+                done();
+            });
+        });
+
+        it('can get domain', function (done) {
+            maildb.get(MAIL_DOMAIN_0.domain, function (error, result) {
+                expect(error).to.equal(null);
+                expect(result).to.be.an('object');
+                expect(result).to.eql(MAIL_DOMAIN_0);
+
+                done();
             });
         });
     });
