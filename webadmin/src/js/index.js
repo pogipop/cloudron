@@ -239,7 +239,7 @@ app.filter('prettyDate', function () {
             return 'just now';
 
         return day_diff === 0 && (
-                diff < 60 && 'just now' ||
+            diff < 60 && 'just now' ||
                 diff < 120 && '1 minute ago' ||
                 diff < 3600 && Math.floor( diff / 60 ) + ' minutes ago' ||
                 diff < 7200 && '1 hour ago' ||
@@ -490,10 +490,10 @@ app.directive('tagInput', function () {
 });
 
 app.config(['fitTextConfigProvider', function (fitTextConfigProvider) {
-  fitTextConfigProvider.config = {
-    loadDelay: 250,
-    compressor: 0.9,
-    min: 8,
-    max: 24
-  };
+    fitTextConfigProvider.config = {
+        loadDelay: 250,
+        compressor: 0.9,
+        min: 8,
+        max: 24
+    };
 }]);
