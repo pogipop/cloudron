@@ -17,8 +17,8 @@ var appdb = require('../appdb.js'),
     http = require('http'),
     ldapServer = require('../ldap.js'),
     mail = require('../mail.js'),
+    maildb = require('../maildb.js'),
     mailboxdb = require('../mailboxdb.js'),
-    settingsdb = require('../settingsdb.js'),
     ldap = require('ldapjs'),
     user = require('../user.js');
 
@@ -245,8 +245,8 @@ describe('Ldap', function () {
         });
 
         it('succeeds without accessRestriction when email is enabled', function (done) {
-            // user settingsdb instead of settings, to not trigger further events
-            settingsdb.set(mail.MAIL_CONFIG_KEY, JSON.stringify({ enabled: true }), function (error) {
+            // use maildb to not trigger further events
+            maildb.update(config.fqdn(), { enabled: true }, function (error) {
                 expect(error).not.to.be.ok();
 
                 var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + config.get('ldapPort') });
@@ -256,7 +256,7 @@ describe('Ldap', function () {
 
                     client.unbind();
 
-                    settingsdb.set(mail.MAIL_CONFIG_KEY, JSON.stringify({ enabled: false }), done);
+                    maildb.update(config.fqdn(), { enabled: false }, done);
                 });
             });
         });
@@ -378,7 +378,7 @@ describe('Ldap', function () {
 
         it ('succeeds with basic filter and email enabled', function (done) {
             // user settingsdb instead of settings, to not trigger further events
-            settingsdb.set(mail.MAIL_CONFIG_KEY, JSON.stringify({ enabled: true }), function (error) {
+            maildb.update(config.fqdn(), { enabled: true }, function (error) {
                 expect(error).not.to.be.ok();
 
                 var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + config.get('ldapPort') });
@@ -409,7 +409,7 @@ describe('Ldap', function () {
 
                         client.unbind();
 
-                        settingsdb.set(mail.MAIL_CONFIG_KEY, JSON.stringify({ enabled: false }), done);
+                        maildb.update(config.fqdn(), { enabled: false }, done);
                     });
                 });
             });
@@ -844,8 +844,8 @@ describe('Ldap', function () {
         });
 
         it('email enabled - allows with valid email', function (done) {
-            // user settingsdb instead of settings, to not trigger further events
-            settingsdb.set(mail.MAIL_CONFIG_KEY, JSON.stringify({ enabled: true }), function (error) {
+            // use maildb to not trigger further events
+            maildb.update(config.fqdn(), { enabled: true }, function (error) {
                 expect(error).not.to.be.ok();
 
                 var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + config.get('ldapPort') });
@@ -855,14 +855,14 @@ describe('Ldap', function () {
 
                     client.unbind();
 
-                    settingsdb.set(mail.MAIL_CONFIG_KEY, JSON.stringify({ enabled: false }), done);
+                    maildb.update(config.fqdn(), { enabled: false }, done);
                 });
             });
         });
 
         it('email enabled - does not allow with invalid password', function (done) {
-            // user settingsdb instead of settings, to not trigger further events
-            settingsdb.set(mail.MAIL_CONFIG_KEY, JSON.stringify({ enabled: true }), function (error) {
+            // use maildb to not trigger further events
+            maildb.update(config.fqdn(), { enabled: true }, function (error) {
                 expect(error).not.to.be.ok();
 
                 var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + config.get('ldapPort') });
@@ -872,7 +872,7 @@ describe('Ldap', function () {
 
                     client.unbind();
 
-                    settingsdb.set(mail.MAIL_CONFIG_KEY, JSON.stringify({ enabled: false }), done);
+                    maildb.update(config.fqdn(), { enabled: false }, done);
                 });
             });
         });
@@ -881,7 +881,7 @@ describe('Ldap', function () {
     describe('app sendmail bind', function () {
         // these tests should work even when email is disabled
         before(function (done) {
-            settingsdb.set(mail.MAIL_CONFIG_KEY, JSON.stringify({ enabled: false }), done);
+            maildb.update(config.fqdn(), { enabled: false }, done);
         });
 
         it('does not allow with invalid app', function (done) {
@@ -932,8 +932,8 @@ describe('Ldap', function () {
         });
 
         it('email enabled - allows with valid email', function (done) {
-            // user settingsdb instead of settings, to not trigger further events
-            settingsdb.set(mail.MAIL_CONFIG_KEY, JSON.stringify({ enabled: true }), function (error) {
+            // use maildb to not trigger further events
+            maildb.update(config.fqdn(), { enabled: true }, function (error) {
                 expect(error).not.to.be.ok();
 
                 var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + config.get('ldapPort') });
@@ -943,14 +943,14 @@ describe('Ldap', function () {
 
                     client.unbind();
 
-                    settingsdb.set(mail.MAIL_CONFIG_KEY, JSON.stringify({ enabled: false }), done);
+                    maildb.update(config.fqdn(), { enabled: false }, done);
                 });
             });
         });
 
         it('email enabled - does not allow with invalid password', function (done) {
-            // user settingsdb instead of settings, to not trigger further events
-            settingsdb.set(mail.MAIL_CONFIG_KEY, JSON.stringify({ enabled: true }), function (error) {
+            // use maildb to not trigger further events
+            maildb.update(config.fqdn(), { enabled: true }, function (error) {
                 expect(error).not.to.be.ok();
 
                 var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + config.get('ldapPort') });
@@ -960,7 +960,7 @@ describe('Ldap', function () {
 
                     client.unbind();
 
-                    settingsdb.set(mail.MAIL_CONFIG_KEY, JSON.stringify({ enabled: false }), done);
+                    maildb.update(config.fqdn(), { enabled: false }, done);
                 });
             });
         });
