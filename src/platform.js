@@ -2,18 +2,13 @@
 
 exports = module.exports = {
     start: start,
-    stop: stop,
-
-    restartMail: startMail
+    stop: stop
 };
 
 var apps = require('./apps.js'),
     assert = require('assert'),
     async = require('async'),
-    config = require('./config.js'),
-    certificates = require('./certificates.js'),
     debug = require('debug')('box:platform'),
-    domains = require('./domains.js'),
     fs = require('fs'),
     hat = require('hat'),
     infra = require('./infra_version.js'),
@@ -31,18 +26,12 @@ var apps = require('./apps.js'),
 
 var gPlatformReadyTimer = null;
 
-var NOOP_CALLBACK = function (error) { if (error) debug(error); };
-
 function start(callback) {
     assert.strictEqual(typeof callback, 'function');
 
     if (process.env.BOX_ENV === 'test' && !process.env.TEST_CREATE_INFRA) return callback();
 
     debug('initializing addon infrastructure');
-
-    certificates.events.on(certificates.EVENT_CERT_CHANGED, function (domain) {
-        if (domain === '*.' + config.fqdn() || domain === config.adminFqdn()) startMail(NOOP_CALLBACK);
-    });
 
     var existingInfra = { version: 'none' };
     if (fs.existsSync(paths.INFRA_VERSION_FILE)) {
@@ -235,74 +224,13 @@ function startMongodb(callback) {
     setTimeout(callback, 5000);
 }
 
-function startMail(callback) {
-    // mail (note: 2525 is hardcoded in mail container and app use this port)
-    // MAIL_SERVER_NAME is the hostname of the mailserver i.e server uses these certs
-    // MAIL_DOMAIN is the domain for which this server is relaying mails
-    // mail container uses /app/data for backed up data and /run for restart-able data
-
-    const tag = infra.images.mail.tag;
-    const memoryLimit = Math.max((1 + Math.round(os.totalmem()/(1024*1024*1024)/4)) * 128, 256);
-
-    // admin and mail share the same certificate
-    certificates.getAdminCertificate(function (error, cert, key) {
-        if (error) return callback(error);
-
-        // the setup script copies dhparams.pem to /addons/mail
-        if (!safe.fs.writeFileSync(paths.ADDON_CONFIG_DIR + '/mail/tls_cert.pem', cert)) return callback(new Error('Could not create cert file:' + safe.error.message));
-        if (!safe.fs.writeFileSync(paths.ADDON_CONFIG_DIR + '/mail/tls_key.pem', key))  return callback(new Error('Could not create key file:' + safe.error.message));
-
-        mail.getMailConfig(function (error, mailConfig) {
-            if (error) return callback(error);
-
-            shell.execSync('startMail', 'docker rm -f mail || true');
-
-            mail.createMailConfig(function (error) {
-                if (error) return callback(error);
-
-                var ports = mailConfig.enabled ? '-p 587:2525 -p 993:9993 -p 4190:4190 -p 25:2525' : '';
-
-                const cmd = `docker run --restart=always -d --name="mail" \
-                            --net cloudron \
-                            --net-alias mail \
-                            -m ${memoryLimit}m \
-                            --memory-swap ${memoryLimit * 2}m \
-                            --dns 172.18.0.1 \
-                            --dns-search=. \
-                            --env ENABLE_MDA=${mailConfig.enabled} \
-                            -v "${paths.MAIL_DATA_DIR}:/app/data" \
-                            -v "${paths.PLATFORM_DATA_DIR}/addons/mail:/etc/mail" \
-                            ${ports} \
-                            --read-only -v /run -v /tmp ${tag}`;
-
-                shell.execSync('startMail', cmd);
-
-                if (!mailConfig.enabled || process.env.BOX_ENV === 'test') return callback();
-
-                // Add MX and DMARC record. Note that DMARC policy depends on DKIM signing and thus works
-                // only if we use our internal mail server.
-                var records = [
-                    { subdomain: '_dmarc', type: 'TXT', values: [ '"v=DMARC1; p=reject; pct=100"' ] },
-                    { subdomain: '', type: 'MX', values: [ '10 ' + config.mailFqdn() + '.' ] }
-                ];
-
-                async.mapSeries(records, function (record, iteratorCallback) {
-                    domains.upsertDNSRecords(record.subdomain, config.fqdn(), record.type, record.values, iteratorCallback);
-                }, NOOP_CALLBACK); // do not crash if DNS creds do not work in startup sequence
-
-                callback();
-            });
-        });
-    });
-}
-
 function startAddons(existingInfra, callback) {
     var startFuncs = [ ];
 
     // always start addons on any infra change, regardless of minor or major update
     if (existingInfra.version !== infra.version) {
         debug('startAddons: no existing infra or infra upgrade. starting all addons');
-        startFuncs.push(startGraphite, startMysql, startPostgresql, startMongodb, startMail);
+        startFuncs.push(startGraphite, startMysql, startPostgresql, startMongodb, mail.startMail);
     } else {
         assert.strictEqual(typeof existingInfra.images, 'object');
 
@@ -310,7 +238,7 @@ function startAddons(existingInfra, callback) {
         if (infra.images.mysql.tag !== existingInfra.images.mysql.tag) startFuncs.push(startMysql);
         if (infra.images.postgresql.tag !== existingInfra.images.postgresql.tag) startFuncs.push(startPostgresql);
         if (infra.images.mongodb.tag !== existingInfra.images.mongodb.tag) startFuncs.push(startMongodb);
-        if (infra.images.mail.tag !== existingInfra.images.mail.tag) startFuncs.push(startMail);
+        if (infra.images.mail.tag !== existingInfra.images.mail.tag) startFuncs.push(mail.startMail);
 
         debug('startAddons: existing infra. incremental addon create %j', startFuncs.map(function (f) { return f.name; }));
     }

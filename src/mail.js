@@ -17,7 +17,7 @@ exports = module.exports = {
     getMailConfig: getMailConfig,
     setMailConfig: setMailConfig,
 
-    createMailConfig: createMailConfig,
+    startMail: restartMail,
 
     MAIL_FROM_VALIDATION_KEY: 'mail_from_validation',
     CATCH_ALL_ADDRESS_KEY: 'catch_all_address',
@@ -29,17 +29,21 @@ exports = module.exports = {
 
 var assert = require('assert'),
     async = require('async'),
+    certificates = require('./certificates.js'),
     cloudron = require('./cloudron.js'),
     config = require('./config.js'),
     DatabaseError = require('./databaseerror.js'),
     debug = require('debug')('box:mail'),
     dig = require('./dig.js'),
+    domains = require('./domains.js'),
+    infra = require('./infra_version.js'),
     net = require('net'),
     nodemailer = require('nodemailer'),
+    os = require('os'),
     paths = require('./paths.js'),
-    platform = require('./platform.js'),
     safe = require('safetydance'),
     settingsdb = require('./settingsdb.js'),
+    shell = require('./shell.js'),
     smtpTransport = require('nodemailer-smtp-transport'),
     sysinfo = require('./sysinfo.js'),
     user = require('./user.js'),
@@ -492,6 +496,74 @@ function createMailConfig(callback) {
     });
 }
 
+function restartMail(callback) {
+    // mail (note: 2525 is hardcoded in mail container and app use this port)
+    // MAIL_SERVER_NAME is the hostname of the mailserver i.e server uses these certs
+    // MAIL_DOMAIN is the domain for which this server is relaying mails
+    // mail container uses /app/data for backed up data and /run for restart-able data
+
+    function onCertificateChanged(domain) {
+        if (domain === '*.' + config.fqdn() || domain === config.adminFqdn()) restartMail(NOOP_CALLBACK);
+    }
+
+    certificates.events.removeListener(certificates.EVENT_CERT_CHANGED, onCertificateChanged);
+    certificates.events.on(certificates.EVENT_CERT_CHANGED, onCertificateChanged);
+
+    const tag = infra.images.mail.tag;
+    const memoryLimit = Math.max((1 + Math.round(os.totalmem()/(1024*1024*1024)/4)) * 128, 256);
+
+    // admin and mail share the same certificate
+    certificates.getAdminCertificate(function (error, cert, key) {
+        if (error) return callback(error);
+
+        // the setup script copies dhparams.pem to /addons/mail
+        if (!safe.fs.writeFileSync(paths.ADDON_CONFIG_DIR + '/mail/tls_cert.pem', cert)) return callback(new Error('Could not create cert file:' + safe.error.message));
+        if (!safe.fs.writeFileSync(paths.ADDON_CONFIG_DIR + '/mail/tls_key.pem', key))  return callback(new Error('Could not create key file:' + safe.error.message));
+
+        getMailConfig(function (error, mailConfig) {
+            if (error) return callback(error);
+
+            shell.execSync('startMail', 'docker rm -f mail || true');
+
+            createMailConfig(function (error) {
+                if (error) return callback(error);
+
+                var ports = mailConfig.enabled ? '-p 587:2525 -p 993:9993 -p 4190:4190 -p 25:2525' : '';
+
+                const cmd = `docker run --restart=always -d --name="mail" \
+                            --net cloudron \
+                            --net-alias mail \
+                            -m ${memoryLimit}m \
+                            --memory-swap ${memoryLimit * 2}m \
+                            --dns 172.18.0.1 \
+                            --dns-search=. \
+                            --env ENABLE_MDA=${mailConfig.enabled} \
+                            -v "${paths.MAIL_DATA_DIR}:/app/data" \
+                            -v "${paths.PLATFORM_DATA_DIR}/addons/mail:/etc/mail" \
+                            ${ports} \
+                            --read-only -v /run -v /tmp ${tag}`;
+
+                shell.execSync('startMail', cmd);
+
+                if (!mailConfig.enabled || process.env.BOX_ENV === 'test') return callback();
+
+                // Add MX and DMARC record. Note that DMARC policy depends on DKIM signing and thus works
+                // only if we use our internal mail server.
+                var records = [
+                    { subdomain: '_dmarc', type: 'TXT', values: [ '"v=DMARC1; p=reject; pct=100"' ] },
+                    { subdomain: '', type: 'MX', values: [ '10 ' + config.mailFqdn() + '.' ] }
+                ];
+
+                async.mapSeries(records, function (record, iteratorCallback) {
+                    domains.upsertDNSRecords(record.subdomain, config.fqdn(), record.type, record.values, iteratorCallback);
+                }, NOOP_CALLBACK); // do not crash if DNS creds do not work in startup sequence
+
+                callback();
+            });
+        });
+    });
+}
+
 function getMailFromValidation(callback) {
     assert.strictEqual(typeof callback, 'function');
 
@@ -561,7 +633,7 @@ function setMailRelay(relay, callback) {
         settingsdb.set(exports.MAIL_RELAY_KEY, JSON.stringify(relay), function (error) {
             if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
 
-            platform.restartMail(NOOP_CALLBACK);
+            restartMail(NOOP_CALLBACK);
 
             callback(null);
         });
@@ -587,7 +659,7 @@ function setMailConfig(mailConfig, callback) {
     settingsdb.set(exports.MAIL_CONFIG_KEY, JSON.stringify(mailConfig), function (error) {
         if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
 
-        platform.restartMail(NOOP_CALLBACK);
+        restartMail(NOOP_CALLBACK);
 
         callback(null);
     });
