@@ -10,10 +10,13 @@ exports = module.exports = {
 
     TYPE_USER: 'user',
     TYPE_APP: 'app',
-    TYPE_GROUP: 'group'
+    TYPE_GROUP: 'group',
+
+    _addDefaultDomain: addDefaultDomain
 };
 
 var assert = require('assert'),
+    config = require('./config.js'),
     database = require('./database.js'),
     DatabaseError = require('./databaseerror.js'),
     safe = require('safetydance');
@@ -105,5 +108,14 @@ function update(domain, data, callback) {
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
 
         callback(null);
+    });
+}
+
+function addDefaultDomain(callback) {
+    assert(config.fqdn(), 'no fqdn set in config, cannot continue');
+
+    add(config.fqdn(), function (error) {
+        if (error && error.reason !== DatabaseError.ALREADY_EXISTS) return callback(error);
+        callback();
     });
 }

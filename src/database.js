@@ -105,6 +105,7 @@ function clear(callback) {
         child_process.exec.bind(null, cmd),
         require('./clientdb.js')._addDefaultClients,
         require('./domaindb.js')._addDefaultDomain,
+        require('./maildb.js')._addDefaultDomain,
         require('./groupdb.js')._addDefaultGroups
     ], callback);
 }
