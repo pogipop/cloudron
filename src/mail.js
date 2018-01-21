@@ -5,16 +5,11 @@ exports = module.exports = {
     getStatus: getStatus,
     checkRblStatus: checkRblStatus,
 
-    getMailFromValidation: getMailFromValidation,
+    get: get,
+
     setMailFromValidation: setMailFromValidation,
-
     setCatchAllAddress: setCatchAllAddress,
-    getCatchAllAddress: getCatchAllAddress,
-
-    getMailRelay: getMailRelay,
     setMailRelay: setMailRelay,
-
-    getMailConfig: getMailConfig,
     setMailConfig: setMailConfig,
 
     startMail: restartMail,
@@ -37,6 +32,7 @@ var assert = require('assert'),
     dig = require('./dig.js'),
     domains = require('./domains.js'),
     infra = require('./infra_version.js'),
+    maildb = require('./maildb.js'),
     net = require('net'),
     nodemailer = require('nodemailer'),
     os = require('os'),
@@ -408,7 +404,7 @@ function getStatus(callback) {
         };
     }
 
-    getMailRelay(function (error, relay) {
+    get(config.fqdn(), function (error, mailConfig) {
         if (error) return callback(error);
 
         var checks = [
@@ -416,7 +412,7 @@ function getStatus(callback) {
             recordResult('dns.dmarc', checkDmarc)
         ];
 
-        if (relay.provider === 'cloudron-smtp') {
+        if (mailConfig.relay.provider === 'cloudron-smtp') {
             // these tests currently only make sense when using Cloudron's SMTP server at this point
             checks.push(
                 recordResult('dns.spf', checkSpf),
@@ -426,7 +422,7 @@ function getStatus(callback) {
                 recordResult('rbl', checkRblStatus)
             );
         } else {
-            checks.push(recordResult('relay', checkSmtpRelay.bind(null, relay)));
+            checks.push(recordResult('relay', checkSmtpRelay.bind(null, mailConfig.relay)));
         }
 
         async.parallel(checks, function () {
@@ -520,7 +516,7 @@ function restartMail(callback) {
         if (!safe.fs.writeFileSync(paths.ADDON_CONFIG_DIR + '/mail/tls_cert.pem', cert)) return callback(new Error('Could not create cert file:' + safe.error.message));
         if (!safe.fs.writeFileSync(paths.ADDON_CONFIG_DIR + '/mail/tls_key.pem', key))  return callback(new Error('Could not create key file:' + safe.error.message));
 
-        getMailConfig(function (error, mailConfig) {
+        get(config.fqdn(), function (error, mailConfig) {
             if (error) return callback(error);
 
             shell.execSync('startMail', 'docker rm -f mail || true');
@@ -564,14 +560,16 @@ function restartMail(callback) {
     });
 }
 
-function getMailFromValidation(callback) {
+function get(domain, callback) {
+    assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    settingsdb.get(exports.MAIL_FROM_VALIDATION_KEY, function (error, enabled) {
-        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(null, gDefaults[exports.MAIL_FROM_VALIDATION_KEY]);
+    maildb.get(domain, function (error, result) {
+        // TODO try to find subdomain entries maybe based on zoneNames or so
+        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new MailError(MailError.NOT_FOUND));
         if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
 
-        callback(null, !!enabled); // settingsdb holds string values only
+        return callback(null, result);
     });
 }
 
@@ -588,17 +586,6 @@ function setMailFromValidation(enabled, callback) {
     });
 }
 
-function getCatchAllAddress(callback) {
-    assert.strictEqual(typeof callback, 'function');
-
-    settingsdb.get(exports.CATCH_ALL_ADDRESS_KEY, function (error, value) {
-        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(null, gDefaults[exports.CATCH_ALL_ADDRESS_KEY]);
-        if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
-
-        callback(null, JSON.parse(value));
-    });
-}
-
 function setCatchAllAddress(address, callback) {
     assert(Array.isArray(address));
     assert.strictEqual(typeof callback, 'function');
@@ -609,17 +596,6 @@ function setCatchAllAddress(address, callback) {
         createMailConfig(NOOP_CALLBACK);
 
         callback(null);
-    });
-}
-
-function getMailRelay(callback) {
-    assert.strictEqual(typeof callback, 'function');
-
-    settingsdb.get(exports.MAIL_RELAY_KEY, function (error, value) {
-        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(null, gDefaults[exports.MAIL_RELAY_KEY]);
-        if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
-
-        callback(null, JSON.parse(value));
     });
 }
 
@@ -637,18 +613,6 @@ function setMailRelay(relay, callback) {
 
             callback(null);
         });
-    });
-}
-
-
-function getMailConfig(callback) {
-    assert.strictEqual(typeof callback, 'function');
-
-    settingsdb.get(exports.MAIL_CONFIG_KEY, function (error, value) {
-        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(null, gDefaults[exports.MAIL_CONFIG_KEY]);
-        if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
-
-        callback(null, JSON.parse(value));
     });
 }
 

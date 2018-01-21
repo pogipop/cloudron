@@ -213,14 +213,11 @@ function initializeExpressSync() {
     router.post('/api/v1/settings/appstore_config',    settingsScope, routes.user.requireAdmin, routes.settings.setAppstoreConfig);
 
     // email routes
+    router.get ('/api/v1/mail/:domain',       settingsScope, routes.user.requireAdmin, routes.mail.get);
     router.get ('/api/v1/mail/status',       settingsScope, routes.user.requireAdmin, routes.mail.getStatus);
-    router.get ('/api/v1/mail/mail_from_validation', settingsScope, routes.user.requireAdmin, routes.mail.getMailFromValidation);
     router.post('/api/v1/mail/mail_from_validation', settingsScope, routes.user.requireAdmin, routes.mail.setMailFromValidation);
-    router.get ('/api/v1/mail/catch_all_address',  settingsScope, routes.user.requireAdmin, routes.mail.getCatchAllAddress);
     router.put ('/api/v1/mail/catch_all_address',  settingsScope, routes.user.requireAdmin, routes.mail.setCatchAllAddress);
-    router.get ('/api/v1/mail/mail_relay',         settingsScope, routes.user.requireAdmin, routes.mail.getMailRelay);
     router.post('/api/v1/mail/mail_relay',         settingsScope, routes.user.requireAdmin, routes.mail.setMailRelay);
-    router.get ('/api/v1/mail/mail_config',        settingsScope, routes.user.requireAdmin, routes.mail.getMailConfig);
     router.post('/api/v1/mail/mail_config',        settingsScope, routes.user.requireAdmin, routes.mail.setMailConfig);
 
     // feedback

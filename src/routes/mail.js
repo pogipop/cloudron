@@ -1,18 +1,13 @@
 'use strict';
 
 exports = module.exports = {
+    get: get,
+
     getStatus: getStatus,
 
-    getMailFromValidation: getMailFromValidation,
     setMailFromValidation: setMailFromValidation,
-
-    getCatchAllAddress: getCatchAllAddress,
     setCatchAllAddress: setCatchAllAddress,
-
-    getMailRelay: getMailRelay,
     setMailRelay: setMailRelay,
-
-    getMailConfig: getMailConfig,
     setMailConfig: setMailConfig,
 };
 
@@ -22,19 +17,22 @@ var assert = require('assert'),
     HttpError = require('connect-lastmile').HttpError,
     HttpSuccess = require('connect-lastmile').HttpSuccess;
 
+function get(req, res, next) {
+    assert.strictEqual(typeof req.params.domain, 'string');
+
+    mail.get(req.params.domain, function (error, result) {
+        if (error && error.reason === MailError.NOT_FOUND) return next(new HttpError(404, error.message));
+        if (error) return next(new HttpError(500, error));
+
+        next(new HttpSuccess(200, result));
+    });
+}
+
 function getStatus(req, res, next) {
     mail.getStatus(function (error, records) {
         if (error) return next(new HttpError(500, error));
 
         next(new HttpSuccess(200, records));
-    });
-}
-
-function getMailFromValidation(req, res, next) {
-    mail.getMailFromValidation(function (error, enabled) {
-        if (error) return next(new HttpError(500, error));
-
-        next(new HttpSuccess(200, { enabled: enabled }));
     });
 }
 
@@ -48,14 +46,6 @@ function setMailFromValidation(req, res, next) {
         if (error) return next(new HttpError(500, error));
 
         next(new HttpSuccess(202));
-    });
-}
-
-function getCatchAllAddress(req, res, next) {
-    mail.getCatchAllAddress(function (error, address) {
-        if (error) return next(new HttpError(500, error));
-
-        next(new HttpSuccess(200, { address: address }));
     });
 }
 
@@ -76,14 +66,6 @@ function setCatchAllAddress(req, res, next) {
     });
 }
 
-function getMailRelay(req, res, next) {
-    mail.getMailRelay(function (error, mail) {
-        if (error) return next(new HttpError(500, error));
-
-        next(new HttpSuccess(200, mail));
-    });
-}
-
 function setMailRelay(req, res, next) {
     assert.strictEqual(typeof req.body, 'object');
 
@@ -98,14 +80,6 @@ function setMailRelay(req, res, next) {
         if (error) return next(new HttpError(500, error));
 
         next(new HttpSuccess(202));
-    });
-}
-
-function getMailConfig(req, res, next) {
-    mail.getMailConfig(function (error, mail) {
-        if (error) return next(new HttpError(500, error));
-
-        next(new HttpSuccess(200, mail));
     });
 }
 
