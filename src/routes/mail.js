@@ -8,7 +8,7 @@ exports = module.exports = {
     setMailFromValidation: setMailFromValidation,
     setCatchAllAddress: setCatchAllAddress,
     setMailRelay: setMailRelay,
-    setMailConfig: setMailConfig,
+    setMailEnabled: setMailEnabled
 };
 
 var assert = require('assert'),
@@ -29,7 +29,10 @@ function get(req, res, next) {
 }
 
 function getStatus(req, res, next) {
-    mail.getStatus(function (error, records) {
+    assert.strictEqual(typeof req.params.domain, 'string');
+
+    mail.getStatus(req.params.domain, function (error, records) {
+        if (error && error.reason === MailError.NOT_FOUND) return next(new HttpError(404, error.message));
         if (error) return next(new HttpError(500, error));
 
         next(new HttpSuccess(200, records));
@@ -37,11 +40,13 @@ function getStatus(req, res, next) {
 }
 
 function setMailFromValidation(req, res, next) {
+    assert.strictEqual(typeof req.params.domain, 'string');
     assert.strictEqual(typeof req.body, 'object');
 
     if (typeof req.body.enabled !== 'boolean') return next(new HttpError(400, 'enabled is required'));
 
-    mail.setMailFromValidation(req.body.enabled, function (error) {
+    mail.setMailFromValidation(req.params.domain, req.body.enabled, function (error) {
+        if (error && error.reason === MailError.NOT_FOUND) return next(new HttpError(404, error.message));
         if (error && error.reason === MailError.BAD_FIELD) return next(new HttpError(400, error.message));
         if (error) return next(new HttpError(500, error));
 
@@ -50,6 +55,7 @@ function setMailFromValidation(req, res, next) {
 }
 
 function setCatchAllAddress(req, res, next) {
+    assert.strictEqual(typeof req.params.domain, 'string');
     assert.strictEqual(typeof req.body, 'object');
 
     if (!req.body.address || !Array.isArray(req.body.address)) return next(new HttpError(400, 'address array is required'));
@@ -58,7 +64,8 @@ function setCatchAllAddress(req, res, next) {
         if (typeof req.body.address[i] !== 'string') return next(new HttpError(400, 'address must be an array of string'));
     }
 
-    mail.setCatchAllAddress(req.body.address, function (error) {
+    mail.setCatchAllAddress(req.params.domain, req.body.address, function (error) {
+        if (error && error.reason === MailError.NOT_FOUND) return next(new HttpError(404, error.message));
         if (error && error.reason === MailError.BAD_FIELD) return next(new HttpError(400, error.message));
         if (error) return next(new HttpError(500, error));
 
@@ -67,6 +74,7 @@ function setCatchAllAddress(req, res, next) {
 }
 
 function setMailRelay(req, res, next) {
+    assert.strictEqual(typeof req.params.domain, 'string');
     assert.strictEqual(typeof req.body, 'object');
 
     if (typeof req.body.provider !== 'string') return next(new HttpError(400, 'provider is required'));
@@ -75,7 +83,8 @@ function setMailRelay(req, res, next) {
     if ('username' in req.body && typeof req.body.username !== 'string') return next(new HttpError(400, 'username must be a string'));
     if ('password' in req.body && typeof req.body.password !== 'string') return next(new HttpError(400, 'password must be a string'));
 
-    mail.setMailRelay(req.body, function (error) {
+    mail.setMailRelay(req.params.domain, req.body, function (error) {
+        if (error && error.reason === MailError.NOT_FOUND) return next(new HttpError(404, error.message));
         if (error && error.reason === MailError.BAD_FIELD) return next(new HttpError(400, error.message));
         if (error) return next(new HttpError(500, error));
 
@@ -83,12 +92,14 @@ function setMailRelay(req, res, next) {
     });
 }
 
-function setMailConfig(req, res, next) {
+function setMailEnabled(req, res, next) {
+    assert.strictEqual(typeof req.params.domain, 'string');
     assert.strictEqual(typeof req.body, 'object');
 
     if (typeof req.body.enabled !== 'boolean') return next(new HttpError(400, 'enabled is required'));
 
-    mail.setMailConfig({ enabled: req.body.enabled }, function (error) {
+    mail.setMailEnabled(req.params.domain, { enabled: req.body.enabled }, function (error) {
+        if (error && error.reason === MailError.NOT_FOUND) return next(new HttpError(404, error.message));
         if (error && error.reason === MailError.BAD_FIELD) return next(new HttpError(400, error.message));
         if (error) return next(new HttpError(500, error));
 
