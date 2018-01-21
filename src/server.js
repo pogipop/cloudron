@@ -216,7 +216,7 @@ function initializeExpressSync() {
     router.get ('/api/v1/mail/:domain',       settingsScope, routes.user.requireAdmin, routes.mail.get);
     router.get ('/api/v1/mail/:domain/status',       settingsScope, routes.user.requireAdmin, routes.mail.getStatus);
     router.post('/api/v1/mail/:domain/mail_from_validation', settingsScope, routes.user.requireAdmin, routes.mail.setMailFromValidation);
-    router.post('/api/v1/mail/:domain/catch_all_address',  settingsScope, routes.user.requireAdmin, routes.mail.setCatchAllAddress);
+    router.post('/api/v1/mail/:domain/catch_all',  settingsScope, routes.user.requireAdmin, routes.mail.setCatchAllAddress);
     router.post('/api/v1/mail/:domain/relay',         settingsScope, routes.user.requireAdmin, routes.mail.setMailRelay);
     router.post('/api/v1/mail/:domain/enable',        settingsScope, routes.user.requireAdmin, routes.mail.setMailEnabled);
 

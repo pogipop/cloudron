@@ -134,8 +134,6 @@ function verifyRelay(relay, callback) {
     assert.strictEqual(typeof relay, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    if (process.env.BOX_ENV === 'test') return callback();
-
     var verifier = relay.provider === 'cloudron-smtp' ? checkOutboundPort25 : checkSmtpRelay.bind(null, relay);
 
     verifier(function (error) {
@@ -372,7 +370,8 @@ function checkRblStatus(callback) {
     });
 }
 
-function getStatus(callback) {
+function getStatus(domain, callback) {
+    assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof callback, 'function');
 
     var results = {};
@@ -389,7 +388,7 @@ function getStatus(callback) {
         };
     }
 
-    get(config.fqdn(), function (error, mailConfig) {
+    get(domain, function (error, mailConfig) {
         if (error) return callback(error);
 
         var checks = [

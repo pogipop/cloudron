@@ -15,6 +15,7 @@ var async = require('async'),
     groupdb = require('../groupdb.js'),
     groups = require('../groups.js'),
     mail = require('../mail.js'),
+    maildb = require('../maildb.js'),
     mailboxdb = require('../mailboxdb.js'),
     mailer = require('../mailer.js'),
     user = require('../user.js'),
@@ -268,8 +269,8 @@ describe('User', function () {
         });
 
         it('succeeds and attempts to send invite to alternateEmail', function (done) {
-            // user settingsdb instead of settings, to not trigger further events
-            settingsdb.set(mail.MAIL_CONFIG_KEY, JSON.stringify({ enabled: true }), function (error) {
+            // use maildb to not trigger further events
+            maildb.update(DOMAIN_0.domain, { enabled: true }, function (error) {
                 expect(error).not.to.be.ok();
 
                 user.create(USERNAME_1, PASSWORD_1, EMAIL_1, DISPLAY_NAME_1, AUDIT_SOURCE, { sendInvite: true }, function (error, result) {
@@ -283,7 +284,7 @@ describe('User', function () {
                     checkMails(2, { sentTo: EMAIL_1.toLowerCase() }, function (error) {
                         expect(error).not.to.be.ok();
 
-                        settingsdb.set(mail.MAIL_CONFIG_KEY, JSON.stringify({ enabled: false }), done);
+                        maildb.update(DOMAIN_0.domain, { enabled: false }, done);
                     });
                 });
             });
@@ -588,29 +589,29 @@ describe('User', function () {
         });
 
         it('succeeds with cloudron mail enabled', function (done) {
-            // user settingsdb instead of settings, to not trigger further events
-            settingsdb.set(mail.MAIL_CONFIG_KEY, JSON.stringify({ enabled: true }), function (error) {
+            // use maildb to not trigger further events
+            maildb.update(DOMAIN_0.domain, { enabled: true }, function (error) {
                 expect(error).not.to.be.ok();
 
                 user.verifyWithEmail(USERNAME + '@' + config.fqdn(), PASSWORD, function (error, result) {
                     expect(error).to.not.be.ok();
                     expect(result).to.be.ok();
 
-                    settingsdb.set(mail.MAIL_CONFIG_KEY, JSON.stringify({ enabled: false }), done);
+                    maildb.update(DOMAIN_0.domain, { enabled: false }, done);
                 });
             });
         });
 
         it('fails with cloudron mail enabled and invite email', function (done) {
-            // user settingsdb instead of settings, to not trigger further events
-            settingsdb.set(mail.MAIL_CONFIG_KEY, JSON.stringify({ enabled: true }), function (error) {
+            // use maildb to not trigger further events
+            maildb.update(DOMAIN_0.domain, { enabled: true }, function (error) {
                 expect(error).not.to.be.ok();
 
                 user.verifyWithEmail(EMAIL, PASSWORD, function (error) {
                     expect(error).to.be.a(UserError);
                     expect(error.reason).to.equal(UserError.NOT_FOUND);
 
-                    settingsdb.set(mail.MAIL_CONFIG_KEY, JSON.stringify({ enabled: false }), done);
+                    maildb.update(DOMAIN_0.domain, { enabled: false }, done);
                 });
             });
         });
@@ -644,8 +645,8 @@ describe('User', function () {
         });
 
         it('succeeds with email enabled', function (done) {
-            // user settingsdb instead of settings, to not trigger further events
-            settingsdb.set(mail.MAIL_CONFIG_KEY, JSON.stringify({ enabled: true }), function (error) {
+            // use maildb to not trigger further events
+            maildb.update(DOMAIN_0.domain, { enabled: true }, function (error) {
                 expect(error).not.to.be.ok();
 
                 user.get(userObject.id, function (error, result) {
@@ -657,7 +658,7 @@ describe('User', function () {
                     expect(result.username).to.equal(USERNAME.toLowerCase());
                     expect(result.displayName).to.equal(DISPLAY_NAME);
 
-                    settingsdb.set(mail.MAIL_CONFIG_KEY, JSON.stringify({ enabled: false }), done);
+                    maildb.update(DOMAIN_0.domain, { enabled: false }, done);
                 });
             });
         });

@@ -27,8 +27,7 @@ function setup(done) {
     async.series([
         database.initialize,
         database._clear,
-        // DOMAIN_0 already added for test through domaindb.addDefaultDomain(),
-        maildb.add.bind(null, DOMAIN_0.domain)
+        // DOMAIN_0 already added for test through domaindb.addDefaultDomain()
     ], done);
 }
 
@@ -83,7 +82,7 @@ describe('Mail', function () {
         it('can set mail relay', function (done) {
             var relay = { provider: 'external-smtp', host: 'mx.foo.com', port: 25 };
 
-            mail.setMailRelay(DOMAIN_0.domain, relay, function (error) { // skip the mail server verify()
+            maildb.update(DOMAIN_0.domain, { relay: relay }, function (error) { // skip the mail server verify()
                 expect(error).to.be(null);
 
                 mail.get(DOMAIN_0.domain, function (error, mailConfig) {

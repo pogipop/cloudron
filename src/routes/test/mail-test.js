@@ -10,9 +10,8 @@ var async = require('async'),
     config = require('../../config.js'),
     database = require('../../database.js'),
     expect = require('expect.js'),
-    mail = require('../../mail.js'),
+    maildb = require('../../maildb.js'),
     server = require('../../server.js'),
-    settingsdb = require('../../settingsdb.js'),
     superagent = require('superagent');
 
 var SERVER_URL = 'http://localhost:' + config.get('port');
@@ -22,8 +21,8 @@ var token = null;
 
 function setup(done) {
     config._reset();
-    config.setFqdn('example-settings-test.com');
-    config.setAdminFqdn('my.example-settings-test.com');
+    config.setFqdn('example-mail-test.com');
+    config.setAdminFqdn('my.example-mail-test.com');
 
     async.series([
         server.start.bind(null),
@@ -96,7 +95,7 @@ describe('Mail API', function () {
         });
 
         it('does not fail when dns errors', function (done) {
-            superagent.get(SERVER_URL + '/api/v1/mail/status')
+            superagent.get(SERVER_URL + '/api/v1/mail/' + config.fqdn() + '/status')
                 .query({ access_token: token })
                 .end(function (err, res) {
                     expect(res.statusCode).to.equal(200);
@@ -115,7 +114,7 @@ describe('Mail API', function () {
         it('succeeds with dns errors', function (done) {
             clearDnsAnswerQueue();
 
-            superagent.get(SERVER_URL + '/api/v1/mail/status')
+            superagent.get(SERVER_URL + '/api/v1/mail/' + config.fqdn() + '/status')
                 .query({ access_token: token })
                 .end(function (err, res) {
                     expect(res.statusCode).to.equal(200);
@@ -164,7 +163,7 @@ describe('Mail API', function () {
             dnsAnswerQueue[mxDomain].MX = null;
             dnsAnswerQueue[dmarcDomain].TXT = null;
 
-            superagent.get(SERVER_URL + '/api/v1/mail/status')
+            superagent.get(SERVER_URL + '/api/v1/mail/' + config.fqdn() + '/status')
                 .query({ access_token: token })
                 .end(function (err, res) {
                     expect(res.statusCode).to.equal(200);
@@ -206,7 +205,7 @@ describe('Mail API', function () {
             dnsAnswerQueue[dkimDomain].TXT = ['"v=DKIM2; t=s; p=' + cloudron.readDkimPublicKeySync() + '"'];
             dnsAnswerQueue[spfDomain].TXT = ['"v=spf1 a:random.com ~all"'];
 
-            superagent.get(SERVER_URL + '/api/v1/mail/status')
+            superagent.get(SERVER_URL + '/api/v1/mail/' + config.fqdn() + '/status')
                 .query({ access_token: token })
                 .end(function (err, res) {
                     expect(res.statusCode).to.equal(200);
@@ -247,7 +246,7 @@ describe('Mail API', function () {
 
             dnsAnswerQueue[spfDomain].TXT = ['"v=spf1 a:example.com a:' + config.mailFqdn() + ' ~all"'];
 
-            superagent.get(SERVER_URL + '/api/v1/mail/status')
+            superagent.get(SERVER_URL + '/api/v1/mail/' + config.fqdn() + '/status')
                 .query({ access_token: token })
                 .end(function (err, res) {
                     expect(res.statusCode).to.equal(200);
@@ -271,7 +270,7 @@ describe('Mail API', function () {
             dnsAnswerQueue[dkimDomain].TXT = ['"v=DKIM1; t=s; p=' + cloudron.readDkimPublicKeySync() + '"'];
             dnsAnswerQueue[spfDomain].TXT = ['"v=spf1 a:' + config.adminFqdn() + ' ~all"'];
 
-            superagent.get(SERVER_URL + '/api/v1/mail/status')
+            superagent.get(SERVER_URL + '/api/v1/mail/' + config.fqdn() + '/status')
                 .query({ access_token: token })
                 .end(function (err, res) {
                     expect(res.statusCode).to.equal(200);
@@ -307,17 +306,17 @@ describe('Mail API', function () {
 
     describe('mail from validation', function () {
         it('get mail from validation succeeds', function (done) {
-            superagent.get(SERVER_URL + '/api/v1/mail/mail_from_validation')
+            superagent.get(SERVER_URL + '/api/v1/mail/' + config.fqdn())
                 .query({ access_token: token })
                 .end(function (err, res) {
                     expect(res.statusCode).to.equal(200);
-                    expect(res.body).to.eql({ enabled: true });
+                    expect(res.body.mailFromValidation).to.eql(true);
                     done();
                 });
         });
 
         it('cannot set without enabled field', function (done) {
-            superagent.post(SERVER_URL + '/api/v1/mail/mail_from_validation')
+            superagent.post(SERVER_URL + '/api/v1/mail/' + config.fqdn() + '/mail_from_validation')
                 .query({ access_token: token })
                 .send({ })
                 .end(function (err, res) {
@@ -327,7 +326,7 @@ describe('Mail API', function () {
         });
 
         it('can set with enabled field', function (done) {
-            superagent.post(SERVER_URL + '/api/v1/mail/mail_from_validation')
+            superagent.post(SERVER_URL + '/api/v1/mail/' + config.fqdn() + '/mail_from_validation')
                 .query({ access_token: token })
                 .send({ enabled: false })
                 .end(function (err, res) {
@@ -339,17 +338,17 @@ describe('Mail API', function () {
 
     describe('catch_all', function () {
         it('get catch_all succeeds', function (done) {
-            superagent.get(SERVER_URL + '/api/v1/mail/catch_all_address')
+            superagent.get(SERVER_URL + '/api/v1/mail/' + config.fqdn())
                 .query({ access_token: token })
                 .end(function (err, res) {
                     expect(res.statusCode).to.equal(200);
-                    expect(res.body).to.eql({ address: [ ] });
+                    expect(res.body.catchAll).to.eql([ ]);
                     done();
                 });
         });
 
         it('cannot set without address field', function (done) {
-            superagent.put(SERVER_URL + '/api/v1/mail/catch_all_address')
+            superagent.post(SERVER_URL + '/api/v1/mail/' + config.fqdn() + '/catch_all')
                 .query({ access_token: token })
                 .end(function (err, res) {
                     expect(res.statusCode).to.equal(400);
@@ -358,7 +357,7 @@ describe('Mail API', function () {
         });
 
         it('cannot set with bad address field', function (done) {
-            superagent.put(SERVER_URL + '/api/v1/mail/catch_all_address')
+            superagent.post(SERVER_URL + '/api/v1/mail/' + config.fqdn() + '/catch_all')
                 .query({ access_token: token })
                 .send({ address: [ 'user1', 123 ] })
                 .end(function (err, res) {
@@ -368,7 +367,7 @@ describe('Mail API', function () {
         });
 
         it('set succeeds', function (done) {
-            superagent.put(SERVER_URL + '/api/v1/mail/catch_all_address')
+            superagent.post(SERVER_URL + '/api/v1/mail/' + config.fqdn() + '/catch_all')
                 .query({ access_token: token })
                 .send({ address: [ 'user1' ] })
                 .end(function (err, res) {
@@ -378,11 +377,11 @@ describe('Mail API', function () {
         });
 
         it('get succeeds', function (done) {
-            superagent.get(SERVER_URL + '/api/v1/mail/catch_all_address')
+            superagent.get(SERVER_URL + '/api/v1/mail/' + config.fqdn())
                 .query({ access_token: token })
                 .end(function (err, res) {
                     expect(res.statusCode).to.equal(200);
-                    expect(res.body).to.eql({ address: [ 'user1' ] });
+                    expect(res.body.catchAll).to.eql([ 'user1' ]);
                     done();
                 });
         });
@@ -390,17 +389,17 @@ describe('Mail API', function () {
 
     describe('mail relay', function () {
         it('get mail relay succeeds', function (done) {
-            superagent.get(SERVER_URL + '/api/v1/mail/mail_relay')
+            superagent.get(SERVER_URL + '/api/v1/mail/' + config.fqdn())
                 .query({ access_token: token })
                 .end(function (err, res) {
                     expect(res.statusCode).to.equal(200);
-                    expect(res.body).to.eql({ provider: 'cloudron-smtp' });
+                    expect(res.body.relay).to.eql({ provider: 'cloudron-smtp' });
                     done();
                 });
         });
 
         it('cannot set without provider field', function (done) {
-            superagent.post(SERVER_URL + '/api/v1/mail/mail_relay')
+            superagent.post(SERVER_URL + '/api/v1/mail/' + config.fqdn() + '/relay')
                 .query({ access_token: token })
                 .send({ })
                 .end(function (err, res) {
@@ -410,7 +409,7 @@ describe('Mail API', function () {
         });
 
         it('cannot set with bad host', function (done) {
-            superagent.post(SERVER_URL + '/api/v1/mail/mail_relay')
+            superagent.post(SERVER_URL + '/api/v1/mail/' + config.fqdn() + '/relay')
                 .query({ access_token: token })
                 .send({ provider: 'external-smtp', host: true })
                 .end(function (err, res) {
@@ -420,7 +419,7 @@ describe('Mail API', function () {
         });
 
         it('set fails because mail server is unreachable', function (done) {
-            superagent.post(SERVER_URL + '/api/v1/mail/mail_relay')
+            superagent.post(SERVER_URL + '/api/v1/mail/' + config.fqdn() + '/relay')
                 .query({ access_token: token })
                 .send({ provider: 'external-smtp', host: 'host', port: 25, username: 'u', password: 'p', tls: true })
                 .end(function (err, res) {
@@ -432,14 +431,14 @@ describe('Mail API', function () {
         it('get succeeds', function (done) {
             var relay = { provider: 'external-smtp', host: 'host', port: 25, username: 'u', password: 'p', tls: true };
 
-            settingsdb.set(mail.MAIL_RELAY_KEY, JSON.stringify(relay), function (error) { // skip the mail server verify()
+            maildb.update(config.fqdn(), { relay: relay }, function (error) { // skip the mail server verify()
                 expect(error).to.not.be.ok();
 
-                superagent.get(SERVER_URL + '/api/v1/mail/mail_relay')
+                superagent.get(SERVER_URL + '/api/v1/mail/' + config.fqdn())
                     .query({ access_token: token })
                     .end(function (err, res) {
                         expect(res.statusCode).to.equal(200);
-                        expect(res.body).to.eql(relay);
+                        expect(res.body.relay).to.eql(relay);
                         done();
                     });
             });
@@ -448,17 +447,17 @@ describe('Mail API', function () {
 
     describe('mail_config', function () {
         it('get mail_config succeeds', function (done) {
-            superagent.get(SERVER_URL + '/api/v1/mail/mail_config')
+            superagent.get(SERVER_URL + '/api/v1/mail/' + config.fqdn())
                 .query({ access_token: token })
                 .end(function (err, res) {
                     expect(res.statusCode).to.equal(200);
-                    expect(res.body).to.eql({ enabled: false });
+                    expect(res.body.enabled).to.be(false);
                     done();
                 });
         });
 
         it('cannot set without enabled field', function (done) {
-            superagent.post(SERVER_URL + '/api/v1/mail/mail_config')
+            superagent.post(SERVER_URL + '/api/v1/mail/' + config.fqdn() + '/enable')
                 .query({ access_token: token })
                 .end(function (err, res) {
                     expect(res.statusCode).to.equal(400);
@@ -467,7 +466,7 @@ describe('Mail API', function () {
         });
 
         it('set succeeds', function (done) {
-            superagent.post(SERVER_URL + '/api/v1/mail/mail_config')
+            superagent.post(SERVER_URL + '/api/v1/mail/' + config.fqdn() + '/enable')
                 .query({ access_token: token })
                 .send({ enabled: true })
                 .end(function (err, res) {
@@ -477,11 +476,11 @@ describe('Mail API', function () {
         });
 
         it('get succeeds', function (done) {
-            superagent.get(SERVER_URL + '/api/v1/mail/mail_config')
+            superagent.get(SERVER_URL + '/api/v1/mail/' + config.fqdn())
                 .query({ access_token: token })
                 .end(function (err, res) {
                     expect(res.statusCode).to.equal(200);
-                    expect(res.body).to.eql({ enabled: true });
+                    expect(res.body.enabled).to.be(true);
                     done();
                 });
         });
