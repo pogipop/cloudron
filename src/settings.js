@@ -80,11 +80,11 @@ var assert = require('assert'),
     CronJob = require('cron').CronJob,
     DatabaseError = require('./databaseerror.js'),
     debug = require('debug')('box:settings'),
+    mail = require('./mail.js'),
+    MailError = mail.MailError,
     moment = require('moment-timezone'),
     paths = require('./paths.js'),
     platform = require('./platform.js'),
-    email = require('./email.js'),
-    EmailError = email.EmailError,
     safe = require('safetydance'),
     settingsdb = require('./settingsdb.js'),
     superagent = require('superagent'),
@@ -438,8 +438,8 @@ function setMailRelay(relay, callback) {
     assert.strictEqual(typeof relay, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    email.verifyRelay(relay, function (error) {
-        if (error && error.reason === EmailError.BAD_FIELD) return callback(new SettingsError(SettingsError.BAD_FIELD, error.message));
+    mail.verifyRelay(relay, function (error) {
+        if (error && error.reason === MailError.BAD_FIELD) return callback(new SettingsError(SettingsError.BAD_FIELD, error.message));
         if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
 
         settingsdb.set(exports.MAIL_RELAY_KEY, JSON.stringify(relay), function (error) {

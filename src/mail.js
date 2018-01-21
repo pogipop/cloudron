@@ -5,7 +5,7 @@ exports = module.exports = {
     getStatus: getStatus,
     checkRblStatus: checkRblStatus,
 
-    EmailError: EmailError
+    MailError: MailError
 };
 
 var assert = require('assert'),
@@ -25,7 +25,7 @@ var assert = require('assert'),
 
 const digOptions = { server: '127.0.0.1', port: 53, timeout: 5000 };
 
-function EmailError(reason, errorOrMessage) {
+function MailError(reason, errorOrMessage) {
     assert.strictEqual(typeof reason, 'string');
     assert(errorOrMessage instanceof Error || typeof errorOrMessage === 'string' || typeof errorOrMessage === 'undefined');
 
@@ -43,9 +43,9 @@ function EmailError(reason, errorOrMessage) {
         this.nestedError = errorOrMessage;
     }
 }
-util.inherits(EmailError, Error);
-EmailError.INTERNAL_ERROR = 'Internal Error';
-EmailError.BAD_FIELD = 'Bad Field';
+util.inherits(MailError, Error);
+MailError.INTERNAL_ERROR = 'Internal Error';
+MailError.BAD_FIELD = 'Bad Field';
 
 function checkOutboundPort25(callback) {
     assert.strictEqual(typeof callback, 'function');
@@ -120,7 +120,7 @@ function verifyRelay(relay, callback) {
     var verifier = relay.provider === 'cloudron-smtp' ? checkOutboundPort25 : checkSmtpRelay.bind(null, relay);
 
     verifier(function (error) {
-        if (error) return callback(new EmailError(EmailError.BAD_FIELD, error.message));
+        if (error) return callback(new MailError(MailError.BAD_FIELD, error.message));
 
         callback();
     });
