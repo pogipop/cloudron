@@ -10,7 +10,14 @@ var async = require('async'),
     database = require('../database.js'),
     expect = require('expect.js'),
     mail = require('../mail.js'),
-    settingsdb = require('../settingsdb.js');
+    maildb = require('../maildb.js');
+
+const DOMAIN_0 = {
+    domain: 'example.com',
+    zoneName: 'example.com',
+    provider: 'manual',
+    config: { }
+};
 
 function setup(done) {
     config._reset();
@@ -19,6 +26,9 @@ function setup(done) {
 
     async.series([
         database.initialize,
+        database._clear,
+        // DOMAIN_0 already added for test through domaindb.addDefaultDomain(),
+        maildb.add.bind(null, DOMAIN_0.domain)
     ], done);
 }
 
@@ -29,79 +39,70 @@ function cleanup(done) {
     ], done);
 }
 
-describe('Settings', function () {
+describe('Mail', function () {
+    before(setup);
+    after(cleanup);
+
     describe('values', function () {
-        before(setup);
-        after(cleanup);
+        it('can get default', function (done) {
+            mail.get(DOMAIN_0.domain, function (error, mailConfig) {
+                expect(error).to.be(null);
+                expect(mailConfig.enabled).to.be(false);
+                expect(mailConfig.mailFromValidation).to.be(true);
+                expect(mailConfig.catchAll).to.eql([]);
+                expect(mailConfig.relay).to.eql({ provider: 'cloudron-smtp' });
+                done();
+            });
+        });
 
         it('can set mail from validation', function (done) {
-            mail.setMailFromValidation(true, function (error) {
-                expect(error).to.be(null);
-                done();
-            });
-        });
-
-        it('can get mail from validation', function (done) {
-            mail.getMailFromValidation(function (error, enabled) {
-                expect(error).to.be(null);
-                expect(enabled).to.be(true);
-                done();
-            });
-        });
-
-        it('can get catch all address', function (done) {
-            mail.getCatchAllAddress(function (error, address) {
-                expect(error).to.be(null);
-                expect(address).to.eql([ ]);
-                done();
-            });
-        });
-
-        it('can set catch all address', function (done) {
-            mail.setCatchAllAddress([ 'user1', 'user2' ], function (error) {
+            mail.setMailFromValidation(DOMAIN_0.domain, false, function (error) {
                 expect(error).to.be(null);
 
-                mail.getCatchAllAddress(function (error, address) {
+                mail.get(DOMAIN_0.domain, function (error, mailConfig) {
                     expect(error).to.be(null);
-                    expect(address).to.eql([ 'user1', 'user2' ]);
+                    expect(mailConfig.mailFromValidation).to.be(false);
+
                     done();
                 });
             });
         });
 
-        it('can get mail relay', function (done) {
-            mail.getMailRelay(function (error, address) {
+        it('can set catch all address', function (done) {
+            mail.setCatchAllAddress(DOMAIN_0.domain, [ 'user1', 'user2' ], function (error) {
                 expect(error).to.be(null);
-                expect(address).to.eql({ provider: 'cloudron-smtp' });
-                done();
+
+                mail.get(DOMAIN_0.domain, function (error, mailConfig) {
+                    expect(error).to.be(null);
+                    expect(mailConfig.catchAll).to.eql([ 'user1', 'user2' ]);
+                    done();
+                });
             });
         });
 
         it('can set mail relay', function (done) {
             var relay = { provider: 'external-smtp', host: 'mx.foo.com', port: 25 };
-            settingsdb.set(mail.MAIL_RELAY_KEY, JSON.stringify(relay), function (error) { // skip the mail server verify()
+
+            mail.setMailRelay(DOMAIN_0.domain, relay, function (error) { // skip the mail server verify()
                 expect(error).to.be(null);
 
-                mail.getMailRelay(function (error, address) {
+                mail.get(DOMAIN_0.domain, function (error, mailConfig) {
                     expect(error).to.be(null);
-                    expect(address).to.eql(relay);
+                    expect(mailConfig.relay).to.eql(relay);
                     done();
                 });
             });
         });
 
-        it('can set mail config', function (done) {
-            mail.setMailConfig({ enabled: true }, function (error) {
+        it('can enable mail', function (done) {
+            mail.setMailEnabled(DOMAIN_0.domain, true, function (error) {
                 expect(error).to.be(null);
-                done();
-            });
-        });
 
-        it('can get mail config', function (done) {
-            mail.getMailConfig(function (error, mailConfig) {
-                expect(error).to.be(null);
-                expect(mailConfig.enabled).to.be(true);
-                done();
+                mail.get(DOMAIN_0.domain, function (error, mailConfig) {
+                    expect(error).to.be(null);
+                    expect(mailConfig.enabled).to.be(true);
+                    done();
+                });
             });
         });
     });

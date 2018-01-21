@@ -221,7 +221,7 @@ describe('Apps', function () {
 
     describe('getters', function () {
         it('cannot get invalid app', function (done) {
-            apps.get('nope', function (error, app) {
+            apps.get('nope', function (error) {
                 expect(error).to.be.ok();
                 expect(error.reason).to.be(AppsError.NOT_FOUND);
                 done();

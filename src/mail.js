@@ -1,9 +1,7 @@
 'use strict';
 
 exports = module.exports = {
-    verifyRelay: verifyRelay,
     getStatus: getStatus,
-    checkRblStatus: checkRblStatus,
 
     get: get,
 
@@ -134,6 +132,8 @@ function checkSmtpRelay(relay, callback) {
 function verifyRelay(relay, callback) {
     assert.strictEqual(typeof relay, 'object');
     assert.strictEqual(typeof callback, 'function');
+
+    if (process.env.BOX_ENV === 'test') return callback();
 
     var verifier = relay.provider === 'cloudron-smtp' ? checkOutboundPort25 : checkSmtpRelay.bind(null, relay);
 
@@ -463,6 +463,8 @@ function restartMail(callback) {
     // MAIL_DOMAIN is the domain for which this server is relaying mails
     // mail container uses /app/data for backed up data and /run for restart-able data
 
+    if (process.env.BOX_ENV === 'test') return callback();
+
     function onCertificateChanged(domain) {
         if (domain === '*.' + config.fqdn() || domain === config.adminFqdn()) restartMail(NOOP_CALLBACK);
     }
@@ -542,7 +544,7 @@ function setMailFromValidation(domain, enabled, callback) {
     assert.strictEqual(typeof enabled, 'boolean');
     assert.strictEqual(typeof callback, 'function');
 
-    maildb.update(domain, { enabled: enabled }, function (error) {
+    maildb.update(domain, { mailFromValidation: enabled }, function (error) {
         if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new MailError(MailError.NOT_FOUND));
         if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
 
