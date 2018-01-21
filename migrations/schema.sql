@@ -23,6 +23,8 @@ CREATE TABLE IF NOT EXISTS users(
     modifiedAt VARCHAR(512) NOT NULL,
     admin INTEGER NOT NULL,
     displayName VARCHAR(512) DEFAULT '',
+    fallbackEmail VARCHAR(512) DEFAULT ""
+
     PRIMARY KEY(id));
 
 CREATE TABLE IF NOT EXISTS groups(

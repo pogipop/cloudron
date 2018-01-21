@@ -166,6 +166,7 @@ function createUser(username, password, email, displayName, auditSource, options
                 id: 'uid-' + uuid.v4(),
                 username: username,
                 email: email,
+                fallbackEmail: email,   // for new users the fallbackEmail is also the default email
                 password: new Buffer(derivedKey, 'binary').toString('hex'),
                 salt: salt.toString('hex'),
                 createdAt: now,
@@ -396,6 +397,12 @@ function updateUser(userId, data, auditSource, callback) {
     if (data.email) {
         data.email = data.email.toLowerCase();
         error = validateEmail(data.email);
+        if (error) return callback(error);
+    }
+
+    if (data.fallbackEmail) {
+        data.fallbackEmail = data.fallbackEmail.toLowerCase();
+        error = validateEmail(data.fallbackEmail);
         if (error) return callback(error);
     }
 

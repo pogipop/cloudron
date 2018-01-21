@@ -25,7 +25,7 @@ var assert = require('assert'),
     DatabaseError = require('./databaseerror'),
     mailboxdb = require('./mailboxdb.js');
 
-var USERS_FIELDS = [ 'id', 'username', 'email', 'password', 'salt', 'createdAt', 'modifiedAt', 'resetToken', 'displayName' ].join(',');
+var USERS_FIELDS = [ 'id', 'username', 'email', 'fallbackEmail', 'password', 'salt', 'createdAt', 'modifiedAt', 'resetToken', 'displayName' ].join(',');
 
 function postProcess(result) {
     assert.strictEqual(typeof result, 'object');
@@ -132,6 +132,7 @@ function add(userId, user, callback) {
     assert(user.username === null || typeof user.username === 'string');
     assert.strictEqual(typeof user.password, 'string');
     assert.strictEqual(typeof user.email, 'string');
+    assert.strictEqual(typeof user.fallbackEmail, 'string');
     assert.strictEqual(typeof user.salt, 'string');
     assert.strictEqual(typeof user.createdAt, 'string');
     assert.strictEqual(typeof user.modifiedAt, 'string');
@@ -141,8 +142,8 @@ function add(userId, user, callback) {
 
     var queries = [];
     queries.push({
-        query: 'INSERT INTO users (id, username, password, email, salt, createdAt, modifiedAt, resetToken, displayName) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-        args: [ userId, user.username, user.password, user.email, user.salt, user.createdAt, user.modifiedAt, user.resetToken, user.displayName ]
+        query: 'INSERT INTO users (id, username, password, email, fallbackEmail, salt, createdAt, modifiedAt, resetToken, displayName) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        args: [ userId, user.username, user.password, user.email, user.fallbackEmail, user.salt, user.createdAt, user.modifiedAt, user.resetToken, user.displayName ]
     });
     if (user.username) {
         queries.push({
@@ -227,6 +228,9 @@ function update(userId, user, callback) {
         } else if (k === 'email') {
             assert.strictEqual(typeof user.email, 'string');
             args.push(user.email);
+        } else if (k === 'fallbackEmail') {
+            assert.strictEqual(typeof user.fallbackEmail, 'string');
+            args.push(user.fallbackEmail);
         } else {
             args.push(user[k]);
         }

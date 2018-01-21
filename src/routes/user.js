@@ -55,6 +55,7 @@ function create(req, res, next) {
             username: user.username,
             displayName: user.displayName,
             email: user.email,
+            fallbackEmail: user.fallbackEmail,
             alternateEmail: user.alternateEmail,
             admin: user.admin,
             groupIds: [ ],
@@ -71,6 +72,7 @@ function update(req, res, next) {
     assert.strictEqual(typeof req.body, 'object');
 
     if ('email' in req.body && typeof req.body.email !== 'string') return next(new HttpError(400, 'email must be string'));
+    if ('fallbackEmail' in req.body && typeof req.body.fallbackEmail !== 'string') return next(new HttpError(400, 'fallbackEmail must be string'));
     if ('displayName' in req.body && typeof req.body.displayName !== 'string') return next(new HttpError(400, 'displayName must be string'));
     if ('username' in req.body && typeof req.body.username !== 'string') return next(new HttpError(400, 'username must be a string'));
 
@@ -91,7 +93,7 @@ function list(req, res, next) {
         if (error) return next(new HttpError(500, error));
 
         var users = results.map(function (result) {
-            return _.pick(result, 'id', 'username', 'email', 'alternateEmail', 'displayName', 'groupIds', 'admin');
+            return _.pick(result, 'id', 'username', 'email', 'fallbackEmail', 'alternateEmail', 'displayName', 'groupIds', 'admin');
         });
 
         next(new HttpSuccess(200, { users: users }));
@@ -113,6 +115,7 @@ function get(req, res, next) {
             username: result.username,
             displayName: result.displayName,
             email: result.email,
+            fallbackEmail: result.fallbackEmail,
             alternateEmail: result.alternateEmail,
             admin: result.admin,
             groupIds: result.groupIds
