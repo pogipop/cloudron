@@ -12,6 +12,7 @@ exports = module.exports = {
     graphs: require('./graphs.js'),
     groups: require('./groups.js'),
     oauth2: require('./oauth2.js'),
+    mail: require('./mail.js'),
     profile: require('./profile.js'),
     sysadmin: require('./sysadmin.js'),
     settings: require('./settings.js'),

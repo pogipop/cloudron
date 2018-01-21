@@ -497,7 +497,7 @@ angular.module('Application').service('Client', ['$http', '$interval', 'md5', 'N
     };
 
     Client.prototype.getEmailStatus = function (callback) {
-        get('/api/v1/settings/email_status').success(function(data, status) {
+        get('/api/v1/mail/status').success(function(data, status) {
             if (status !== 200) return callback(new ClientError(status, data));
             callback(null, data);
         }).error(defaultErrorHandler(callback));

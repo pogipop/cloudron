@@ -203,7 +203,6 @@ function initializeExpressSync() {
     router.post('/api/v1/settings/cloudron_name',      settingsScope, routes.user.requireAdmin, routes.settings.setCloudronName);
     router.get ('/api/v1/settings/cloudron_avatar',    settingsScope, routes.user.requireAdmin, routes.settings.getCloudronAvatar);
     router.post('/api/v1/settings/cloudron_avatar',    settingsScope, routes.user.requireAdmin, multipart, routes.settings.setCloudronAvatar);
-    router.get ('/api/v1/settings/email_status',       settingsScope, routes.user.requireAdmin, routes.settings.getEmailStatus);
     router.get ('/api/v1/settings/backup_config',      settingsScope, routes.user.requireAdmin, routes.settings.getBackupConfig);
     router.post('/api/v1/settings/backup_config',      settingsScope, routes.user.requireAdmin, routes.settings.setBackupConfig);
 
@@ -214,6 +213,8 @@ function initializeExpressSync() {
     router.post('/api/v1/settings/appstore_config',    settingsScope, routes.user.requireAdmin, routes.settings.setAppstoreConfig);
 
     // email routes
+    router.get ('/api/v1/mail/status',       settingsScope, routes.user.requireAdmin, routes.mail.getStatus);
+
     router.get ('/api/v1/settings/mail_config',        settingsScope, routes.user.requireAdmin, routes.settings.getMailConfig);
     router.post('/api/v1/settings/mail_config',        settingsScope, routes.user.requireAdmin, routes.settings.setMailConfig);
     router.get ('/api/v1/settings/mail_relay',         settingsScope, routes.user.requireAdmin, routes.settings.getMailRelay);

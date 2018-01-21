@@ -10,8 +10,6 @@ exports = module.exports = {
     getCloudronAvatar: getCloudronAvatar,
     setCloudronAvatar: setCloudronAvatar,
 
-    getEmailStatus: getEmailStatus,
-
     getBackupConfig: getBackupConfig,
     setBackupConfig: setBackupConfig,
 
@@ -39,7 +37,6 @@ exports = module.exports = {
 var assert = require('assert'),
     certificates = require('../certificates.js'),
     CertificatesError = require('../certificates.js').CertificatesError,
-    mail = require('../mail.js'),
     HttpError = require('connect-lastmile').HttpError,
     HttpSuccess = require('connect-lastmile').HttpSuccess,
     safe = require('safetydance'),
@@ -223,14 +220,6 @@ function getCloudronAvatar(req, res, next) {
 
         res.set('Content-Type', 'image/png');
         res.status(200).send(avatar);
-    });
-}
-
-function getEmailStatus(req, res, next) {
-    mail.getStatus(function (error, records) {
-        if (error) return next(new HttpError(500, error));
-
-        next(new HttpSuccess(200, records));
     });
 }
 
