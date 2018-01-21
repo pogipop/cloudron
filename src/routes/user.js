@@ -56,7 +56,6 @@ function create(req, res, next) {
             displayName: user.displayName,
             email: user.email,
             fallbackEmail: user.fallbackEmail,
-            alternateEmail: user.alternateEmail,
             admin: user.admin,
             groupIds: [ ],
             resetToken: user.resetToken
@@ -93,7 +92,7 @@ function list(req, res, next) {
         if (error) return next(new HttpError(500, error));
 
         var users = results.map(function (result) {
-            return _.pick(result, 'id', 'username', 'email', 'fallbackEmail', 'alternateEmail', 'displayName', 'groupIds', 'admin');
+            return _.pick(result, 'id', 'username', 'email', 'fallbackEmail', 'displayName', 'groupIds', 'admin');
         });
 
         next(new HttpSuccess(200, { users: users }));
@@ -116,7 +115,6 @@ function get(req, res, next) {
             displayName: result.displayName,
             email: result.email,
             fallbackEmail: result.fallbackEmail,
-            alternateEmail: result.alternateEmail,
             admin: result.admin,
             groupIds: result.groupIds
         }));

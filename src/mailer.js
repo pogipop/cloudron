@@ -162,7 +162,7 @@ function getAdminEmails(callback) {
         if (admins.length === 0) return callback(new Error('No admins on this cloudron')); // box not activated yet
 
         var adminEmails = [ ];
-        if (admins[0].alternateEmail) adminEmails.push(admins[0].alternateEmail);
+        adminEmails.push(admins[0].fallbackEmail);
         admins.forEach(function (admin) { adminEmails.push(admin.email); });
 
         callback(null, adminEmails);
@@ -181,7 +181,7 @@ function mailUserEventToAdmins(user, event) {
         var mailOptions = {
             from: mailConfig.notificationFrom,
             to: adminEmails.join(', '),
-            subject: util.format('[%s] %s %s', mailConfig.cloudronName, user.username || user.alternateEmail || user.email, event),
+            subject: util.format('[%s] %s %s', mailConfig.cloudronName, user.username || user.fallbackEmail || user.email, event),
             text: render('user_event.ejs', { user: user, event: event, format: 'text' }),
         };
 
@@ -215,7 +215,7 @@ function sendInvite(user, invitor) {
 
         var mailOptions = {
             from: mailConfig.notificationFrom,
-            to: user.alternateEmail || user.email,
+            to: user.fallbackEmail,
             subject: util.format('Welcome to %s', mailConfig.cloudronName),
             text: render('welcome_user.ejs', templateDataText),
             html: render('welcome_user.ejs', templateDataHTML)
@@ -252,7 +252,7 @@ function userAdded(user, inviteSent) {
         var mailOptions = {
             from: mailConfig.notificationFrom,
             to: adminEmails.join(', '),
-            subject: util.format('[%s] User %s added', mailConfig.cloudronName, user.alternateEmail || user.email),
+            subject: util.format('[%s] User %s added', mailConfig.cloudronName, user.fallbackEmail),
             text: render('user_added.ejs', templateDataText),
             html: render('user_added.ejs', templateDataHTML)
         };
@@ -301,7 +301,7 @@ function passwordReset(user) {
 
         var mailOptions = {
             from: mailConfig.notificationFrom,
-            to: user.alternateEmail || user.email,
+            to: user.fallbackEmail,
             subject: util.format('[%s] Password Reset', mailConfig.cloudronName),
             text: render('password_reset.ejs', templateDataText),
             html: render('password_reset.ejs', templateDataHTML)

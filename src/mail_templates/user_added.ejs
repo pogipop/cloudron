@@ -2,7 +2,7 @@
 
 Dear <%= cloudronName %> Admin,
 
-A new user with email <%= user.alternateEmail || user.email %> was added to <%= cloudronName %>.
+A new user with email <%= user.email %> was added to <%= cloudronName %>.
 
 <% if (inviteLink) { %>
 As requested, this user has not been sent an invitation email.
@@ -24,7 +24,7 @@ Powered by https://cloudron.io
 <h3>Dear <%= cloudronName %> Admin,</h3>
 
 <p>
-    A new user with email <%= user.alternateEmail || user.email %> was added to <%= cloudronName %>.
+    A new user with email <%= user.email %> was added to <%= cloudronName %>.
 </p>
 
 <% if (inviteLink) { %>

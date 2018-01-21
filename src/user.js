@@ -179,23 +179,12 @@ function createUser(username, password, email, displayName, auditSource, options
                 if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(new UserError(UserError.ALREADY_EXISTS, error.message));
                 if (error) return callback(new UserError(UserError.INTERNAL_ERROR, error));
 
-                mail.get(config.fqdn(), function (error, mailConfig) {
-                    if (error) return callback(new UserError(UserError.INTERNAL_ERROR, error));
+                callback(null, user);
 
-                    if (mailConfig.enabled) {
-                        user.alternateEmail = user.email;
-                        user.email = user.username ? user.username + '@' + config.fqdn() : null;
-                    } else {
-                        user.alternateEmail = null;
-                    }
+                eventlog.add(eventlog.ACTION_USER_ADD, auditSource, { userId: user.id, email: user.email });
 
-                    callback(null, user);
-
-                    eventlog.add(eventlog.ACTION_USER_ADD, auditSource, { userId: user.id, email: user.email });
-
-                    if (!owner) mailer.userAdded(user, sendInvite);
-                    if (sendInvite) mailer.sendInvite(user, invitor);
-                });
+                if (!owner) mailer.userAdded(user, sendInvite);
+                if (sendInvite) mailer.sendInvite(user, invitor);
             });
         });
     });
@@ -303,22 +292,11 @@ function listUsers(callback) {
     userdb.getAllWithGroupIds(function (error, results) {
         if (error) return callback(new UserError(UserError.INTERNAL_ERROR, error));
 
-        mail.get(config.fqdn(), function (error, mailConfig) {
-            if (error) return callback(new UserError(UserError.INTERNAL_ERROR, error));
-
-            results.forEach(function (result) {
-                result.admin = result.groupIds.indexOf(constants.ADMIN_GROUP_ID) !== -1;
-
-                if (mailConfig.enabled) {
-                    result.alternateEmail = result.email;
-                    result.email = result.username ? result.username + '@' + config.fqdn() : null;
-                } else {
-                    result.alternateEmail = null;
-                }
-            });
-
-            return callback(null, results);
+        results.forEach(function (result) {
+            result.admin = result.groupIds.indexOf(constants.ADMIN_GROUP_ID) !== -1;
         });
+
+        return callback(null, results);
     });
 }
 
@@ -346,18 +324,7 @@ function getUser(userId, callback) {
             result.groupIds = groupIds;
             result.admin = groupIds.indexOf(constants.ADMIN_GROUP_ID) !== -1;
 
-            mail.get(config.fqdn(), function (error, mailConfig) {
-                if (error) return callback(new UserError(UserError.INTERNAL_ERROR, error));
-
-                if (mailConfig.enabled) {
-                    result.alternateEmail = result.email;
-                    result.email = result.username ? result.username + '@' + config.fqdn() : null;
-                } else {
-                    result.alternateEmail = null;
-                }
-
-                return callback(null, result);
-            });
+            return callback(null, result);
         });
     });
 }
@@ -458,20 +425,7 @@ function getAllAdmins(callback) {
     userdb.getAllAdmins(function (error, admins) {
         if (error) return callback(new UserError(UserError.INTERNAL_ERROR, error));
 
-        mail.get(config.fqdn(), function (error, mailConfig) {
-            if (error) return callback(new UserError(UserError.INTERNAL_ERROR, error));
-
-            admins.forEach(function (admin) {
-                if (mailConfig.enabled) {
-                    admin.alternateEmail = admin.email;
-                    admin.email = admin.username ? admin.username + '@' + config.fqdn() : null;
-                } else {
-                    admin.alternateEmail = null;
-                }
-            });
-
-            callback(null, admins);
-        });
+        callback(null, admins);
     });
 }
 
@@ -582,18 +536,7 @@ function getOwner(callback) {
         if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new UserError(UserError.NOT_FOUND));
         if (error) return callback(new UserError(UserError.INTERNAL_ERROR, error));
 
-        mail.get(config.fqdn(), function (error, mailConfig) {
-            if (error) return callback(new UserError(UserError.INTERNAL_ERROR, error));
-
-            if (mailConfig.enabled) {
-                owner.alternateEmail = owner.email;
-                owner.email = owner.username ? owner.username + '@' + config.fqdn() : null;
-            } else {
-                owner.alternateEmail = null;
-            }
-
-            return callback(null, owner);
-        });
+        return callback(null, owner);
     });
 }
 

@@ -217,11 +217,11 @@ angular.module('Application').service('Client', ['$http', '$interval', 'md5', 'N
         this._userInfo.id = userInfo.id;
         this._userInfo.username = userInfo.username;
         this._userInfo.email = userInfo.email;
-        this._userInfo.alternateEmail = userInfo.alternateEmail;
+        this._userInfo.fallbackEmail = userInfo.fallbackEmail;
         this._userInfo.displayName = userInfo.displayName;
         this._userInfo.admin = !!userInfo.admin;
-        this._userInfo.gravatar = 'https://www.gravatar.com/avatar/' + md5.createHash(userInfo.alternateEmail || userInfo.email) + '.jpg?s=24&d=mm';
-        this._userInfo.gravatarHuge = 'https://www.gravatar.com/avatar/' + md5.createHash(userInfo.alternateEmail || userInfo.email) + '.jpg?s=128&d=mm';
+        this._userInfo.gravatar = 'https://www.gravatar.com/avatar/' + md5.createHash(userInfo.fallbackEmail || userInfo.email) + '.jpg?s=24&d=mm';
+        this._userInfo.gravatarHuge = 'https://www.gravatar.com/avatar/' + md5.createHash(userInfo.fallbackEmail || userInfo.email) + '.jpg?s=128&d=mm';
     };
 
     Client.prototype.setConfig = function (config) {

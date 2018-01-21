@@ -30,6 +30,7 @@ var USER_0 = {
     username: 'uuid0',
     password: 'secret',
     email: 'safe@me.com',
+    fallbackEmail: 'safer@me.com',
     salt: 'morton',
     createdAt: 'sometime back',
     modifiedAt: 'now',
@@ -42,6 +43,7 @@ var USER_1 = {
     username: 'uuid1',
     password: 'secret',
     email: 'safe2@me.com',
+    fallbackEmail: 'safer2@me.com',
     salt: 'tata',
     createdAt: 'sometime back',
     modifiedAt: 'now',
@@ -54,6 +56,7 @@ var USER_2 = {
     username: 'uuid2',
     password: 'secret',
     email: 'safe3@me.com',
+    fallbackEmail: 'safer3@me.com',
     salt: 'tata',
     createdAt: 'sometime back',
     modifiedAt: 'now',
@@ -65,8 +68,7 @@ const TEST_DOMAIN = {
     domain: 'example.com',
     zoneName: 'example.com',
     provider: 'manual',
-    config: {
-    }
+    config: {}
 };
 
 describe('database', function () {

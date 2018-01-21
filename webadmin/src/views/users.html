@@ -275,7 +275,7 @@
                                   {{ user.username }} &nbsp; <span class="text-muted" ng-hide="mailConfig.enabled">{{ user.email }}</span>
                               </td>
                               <td class="hand elide-table-cell" ng-click="useredit.show(user)" ng-hide="user.username">
-                                  <span class="text-muted" uib-tooltip="User is not activated yet">{{ user.alternateEmail || user.email }}</span>
+                                  <span class="text-muted" uib-tooltip="User is not activated yet">{{ user.fallbackEmail }}</span>
                               </td>
                               <td class="text-left hand elide-table-cell hidden-xs hidden-sm" ng-click="useredit.show(user)">
                                   <span class="group-badge" ng-repeat="groupId in user.groupIds | ignoreAdminGroup">

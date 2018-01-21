@@ -144,12 +144,14 @@ angular.module('Application').controller('UsersController', ['$scope', '$locatio
         error: {},
         userInfo: {},
         email: '',
+        fallbackEmail: '',
         aliases: '',
         superuser: false,
 
         show: function (userInfo) {
             $scope.useredit.error = {};
-            $scope.useredit.email = userInfo.alternateEmail || userInfo.email;
+            $scope.useredit.email = userInfo.email;
+            $scope.useredit.fallbackEmail = userInfo.fallbackEmail;
             $scope.useredit.userInfo = userInfo;
             $scope.useredit.groupIds = angular.copy(userInfo.groupIds);
             $scope.useredit.superuser = userInfo.groupIds.indexOf('admin') !== -1;
@@ -369,7 +371,7 @@ angular.module('Application').controller('UsersController', ['$scope', '$locatio
     };
 
     $scope.sendInvite = function (user) {
-        $scope.inviteSent.email = user.alternateEmail || user.email;
+        $scope.inviteSent.email = user.fallbackEmail;
         $scope.inviteSent.setupLink = '';
 
         Client.sendInvite(user, function (error, resetToken) {

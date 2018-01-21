@@ -210,7 +210,7 @@ describe('User', function () {
                 expect(result).to.be.ok();
                 expect(result.username).to.equal(USERNAME.toLowerCase());
                 expect(result.email).to.equal(EMAIL.toLowerCase());
-                expect(result.alternateEmail).not.to.be.ok();
+                expect(result.fallbackEmail).to.equal(EMAIL.toLowerCase());
 
                 // first user is owner, do not send mail to admins
                 checkMails(0, done);
@@ -268,7 +268,7 @@ describe('User', function () {
             });
         });
 
-        it('succeeds and attempts to send invite to alternateEmail', function (done) {
+        it('succeeds and attempts to send invite to fallbackEmail', function (done) {
             // use maildb to not trigger further events
             maildb.update(DOMAIN_0.domain, { enabled: true }, function (error) {
                 expect(error).not.to.be.ok();
@@ -277,8 +277,8 @@ describe('User', function () {
                     expect(error).not.to.be.ok();
                     expect(result).to.be.ok();
                     expect(result.username).to.equal(USERNAME_1.toLowerCase());
-                    expect(result.email).to.equal(USERNAME_1.toLowerCase() + '@' + config.fqdn());
-                    expect(result.alternateEmail).to.equal(EMAIL_1.toLowerCase());
+                    expect(result.email).to.equal(EMAIL_1.toLowerCase());
+                    expect(result.fallbackEmail).to.equal(EMAIL_1.toLowerCase());
 
                     // first user is owner, do not send mail to admins
                     checkMails(2, { sentTo: EMAIL_1.toLowerCase() }, function (error) {
@@ -636,7 +636,7 @@ describe('User', function () {
                 expect(result).to.be.ok();
                 expect(result.id).to.equal(userObject.id);
                 expect(result.email).to.equal(EMAIL.toLowerCase());
-                expect(result.alternateEmail).not.to.be.ok();
+                expect(result.fallbackEmail).to.equal(EMAIL.toLowerCase());
                 expect(result.username).to.equal(USERNAME.toLowerCase());
                 expect(result.displayName).to.equal(DISPLAY_NAME);
 
@@ -653,8 +653,8 @@ describe('User', function () {
                     expect(error).to.not.be.ok();
                     expect(result).to.be.ok();
                     expect(result.id).to.equal(userObject.id);
-                    expect(result.email).to.equal(USERNAME.toLowerCase() + '@' + config.fqdn());
-                    expect(result.alternateEmail).to.equal(EMAIL.toLowerCase());
+                    expect(result.email).to.equal(EMAIL.toLowerCase());
+                    expect(result.fallbackEmail).to.equal(EMAIL.toLowerCase());
                     expect(result.username).to.equal(USERNAME.toLowerCase());
                     expect(result.displayName).to.equal(DISPLAY_NAME);
 

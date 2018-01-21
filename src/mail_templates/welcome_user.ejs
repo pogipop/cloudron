@@ -1,6 +1,6 @@
 <%if (format === 'text') { %>
 
-Dear <%= user.displayName || user.username || user.alternateEmail || user.email %>,
+Dear <%= user.displayName || user.username || user.email %>,
 
 Welcome to <%= cloudronName %>!
 
@@ -20,7 +20,7 @@ Powered by https://cloudron.io
 
 <img src="<%= cloudronAvatarUrl %>" width="128px" height="128px"/>
 
-<h3>Hi <%= user.displayName || user.username || user.alternateEmail || user.email %>,</h3>
+<h3>Hi <%= user.displayName || user.username || user.email %>,</h3>
 
 <h2>Welcome to <%= cloudronName %>!</h2>
 

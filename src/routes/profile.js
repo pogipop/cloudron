@@ -25,7 +25,7 @@ function get(req, res, next) {
         id: req.user.id,
         username: req.user.username,
         email: req.user.email,
-        alternateEmail: req.user.alternateEmail,
+        fallbackEmail: req.user.fallbackEmail,
         admin: req.user.admin,
         displayName: req.user.displayName
     }));

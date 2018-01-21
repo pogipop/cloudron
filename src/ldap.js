@@ -152,7 +152,7 @@ function userSearch(req, res, next) {
                     cn: entry.id,
                     uid: entry.id,
                     mail: entry.email,
-                    mailAlternateAddress: entry.alternateEmail,
+                    mailAlternateAddress: entry.fallbackEmail,
                     displayname: displayName,
                     givenName: firstName,
                     username: entry.username,

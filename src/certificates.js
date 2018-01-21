@@ -107,7 +107,7 @@ function getApi(app, callback) {
         // we simply update the account with the latest email we have each time when getting letsencrypt certs
         // https://github.com/ietf-wg-acme/acme/issues/30
         user.getOwner(function (error, owner) {
-            options.email = error ? 'support@cloudron.io' : (owner.alternateEmail || owner.email); // can error if not activated yet
+            options.email = error ? 'support@cloudron.io' : (owner.fallbackEmail || owner.email); // can error if not activated yet
 
             callback(null, api, options);
         });

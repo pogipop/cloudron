@@ -228,7 +228,7 @@ function feedback(req, res, next) {
     if (typeof req.body.subject !== 'string' || !req.body.subject) return next(new HttpError(400, 'subject must be string'));
     if (typeof req.body.description !== 'string' || !req.body.description) return next(new HttpError(400, 'description must be string'));
 
-    appstore.sendFeedback(_.extend(req.body, { email: req.user.alternateEmail || req.user.email, displayName: req.user.displayName }), function (error) {
+    appstore.sendFeedback(_.extend(req.body, { email: req.user.email, displayName: req.user.displayName }), function (error) {
         if (error && error.reason === AppstoreError.BILLING_REQUIRED) return next(new HttpError(402, 'Login to App Store to create support tickets. You can also email support@cloudron.io'));
         if (error) return next(new HttpError(503, 'Error contacting cloudron.io. Please email support@cloudron.io'));
 

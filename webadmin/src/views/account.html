@@ -124,12 +124,12 @@
                           <td class="text-right" style="vertical-align: top; white-space: nowrap;">{{ user.displayName }} <a href="" ng-click="displayNameChange.show()"><i class="fa fa-pencil text-small"></i></a></td>
                       </tr>
                       <tr>
-                          <td class="text-muted" style="vertical-align: top;">Email</td>
-                          <td class="text-right" style="vertical-align: top; white-space: nowrap;">{{ user.email }} <a href="" ng-click="emailchange.show()" ng-show="!user.alternateEmail"><i class="fa fa-pencil text-small"></i></a></td>
+                          <td class="text-muted" style="vertical-align: top;">Default email</td>
+                          <td class="text-right" style="vertical-align: top; white-space: nowrap;">{{ user.email }} <a href="" ng-click="emailchange.show()"><i class="fa fa-pencil text-small"></i></a></td>
                       </tr>
-                      <tr ng-show="user.alternateEmail">
+                      <tr>
                           <td class="text-muted" style="vertical-align: top;">Password recovery email</td>
-                          <td class="text-right" style="vertical-align: top; white-space: nowrap;">{{ user.alternateEmail }} <a href="" ng-click="emailchange.show()"><i class="fa fa-pencil text-small"></i></a></td>
+                          <td class="text-right" style="vertical-align: top; white-space: nowrap;">{{ user.fallbackEmail }} <a href="" ng-click="emailchange.show()"><i class="fa fa-pencil text-small"></i></a></td>
                       </tr>
                       <tr>
                           <td class="text-right" colspan="2" style="vertical-align: top;">
