@@ -1246,6 +1246,7 @@ describe('Password', function () {
         username: 'someusername',
         password: 'passWord%1234',
         email: 'some@email.com',
+        fallbackEmail: 'somefallback@email.com',
         admin: true,
         salt: 'somesalt',
         createdAt: (new Date()).toUTCString(),

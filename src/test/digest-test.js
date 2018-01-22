@@ -11,21 +11,21 @@ var async = require('async'),
     digest = require('../digest.js'),
     eventlog = require('../eventlog.js'),
     expect = require('expect.js'),
-    mail = require('../mail.js'),
     maildb = require('../maildb.js'),
     mailer = require('../mailer.js'),
     paths = require('../paths.js'),
     safe = require('safetydance'),
     settings = require('../settings.js'),
-    settingsdb = require('../settingsdb.js'),
     updatechecker = require('../updatechecker.js'),
-    user = require('../user.js');
+    user = require('../user.js'),
+    userdb = require('../userdb.js');
 
 // owner
 var USER_0 = {
     username: 'username0',
     password: 'Username0pass?1234',
     email: 'user0@email.com',
+    fallbackEmail: 'user0fallback@email.com',
     displayName: 'User 0'
 };
 
@@ -67,6 +67,15 @@ describe('digest', function () {
             database._clear,
             settings.initialize,
             user.createOwner.bind(null, USER_0.username, USER_0.password, USER_0.email, USER_0.displayName, AUDIT_SOURCE),
+            function (callback) {
+                userdb.getByUsername(USER_0.username, function (error, result) {
+                    if (error) return callback(error);
+
+                    USER_0.id = result.id;
+
+                    user.update(USER_0.id, { fallbackEmail: USER_0.fallbackEmail }, AUDIT_SOURCE, callback);
+                });
+            },
             eventlog.add.bind(null, eventlog.ACTION_UPDATE, AUDIT_SOURCE, { boxUpdateInfo: { sourceTarballUrl: 'xx', version: '1.2.3', changelog: [ 'good stuff' ] } }),
             maildb.update.bind(null, DOMAIN_0.domain, { enabled: true }),
             mailer._clearMailQueue
@@ -107,7 +116,7 @@ describe('digest', function () {
             digest.maybeSend(function (error) {
                 if (error) return done(error);
 
-                checkMails(1, `${USER_0.email}, ${USER_0.username}@${config.fqdn()}`, done);
+                checkMails(1, `${USER_0.fallbackEmail}, ${USER_0.email}`, done);
             });
         });
 
@@ -117,7 +126,7 @@ describe('digest', function () {
             digest.maybeSend(function (error) {
                 if (error) return done(error);
 
-                checkMails(1, `${USER_0.email}, ${USER_0.username}@${config.fqdn()}`, done);
+                checkMails(1, `${USER_0.fallbackEmail}, ${USER_0.email}`, done);
             });
         });
 
@@ -130,7 +139,7 @@ describe('digest', function () {
                 digest.maybeSend(function (error) {
                     if (error) return done(error);
 
-                    checkMails(1, `${USER_0.email}, ${USER_0.username}@${DOMAIN_0.domain}`, done);
+                    checkMails(1, `${USER_0.fallbackEmail}, ${USER_0.email}`, done);
                 });
             });
         });

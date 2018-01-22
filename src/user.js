@@ -351,7 +351,7 @@ function updateUser(userId, data, auditSource, callback) {
     assert.strictEqual(typeof callback, 'function');
 
     var error;
-    data = _.pick(data, 'email', 'displayName', 'username');
+    data = _.pick(data, 'email', 'fallbackEmail', 'displayName', 'username');
 
     if (_.isEmpty(data)) return callback();
 

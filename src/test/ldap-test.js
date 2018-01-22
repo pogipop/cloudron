@@ -402,10 +402,10 @@ describe('Ldap', function () {
 
                         expect(entries[0].username).to.equal(USER_0.username.toLowerCase());
                         expect(entries[0].mailAlternateAddress).to.equal(USER_0.email.toLowerCase());
-                        expect(entries[0].mail).to.equal(USER_0.username.toLowerCase() + '@example.com');
+                        expect(entries[0].mail).to.equal(USER_0.email.toLowerCase());
                         expect(entries[1].username).to.equal(USER_1.username.toLowerCase());
                         expect(entries[1].mailAlternateAddress).to.equal(USER_1.email.toLowerCase());
-                        expect(entries[1].mail).to.equal(USER_1.username.toLowerCase() + '@example.com');
+                        expect(entries[1].mail).to.equal(USER_1.email.toLowerCase());
 
                         client.unbind();
 
