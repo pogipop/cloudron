@@ -441,7 +441,7 @@ function authenticateMailbox(req, res, next) {
                 return res.end();
             });
         } else if (mailbox.ownerType === mailboxdb.TYPE_USER) {
-            user.verifyWithEmail(email, req.credentials || '', function (error, user) {
+            user.verifyWithUsername(parts[0], req.credentials || '', function (error, user) {
                 if (error && error.reason === UserError.NOT_FOUND) return next(new ldap.NoSuchObjectError(req.dn.toString()));
                 if (error && error.reason === UserError.WRONG_PASSWORD) return next(new ldap.InvalidCredentialsError(req.dn.toString()));
                 if (error) return next(new ldap.OperationsError(error.message));
