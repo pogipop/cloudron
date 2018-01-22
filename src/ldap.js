@@ -16,6 +16,7 @@ var assert = require('assert'),
     user = require('./user.js'),
     UserError = user.UserError,
     ldap = require('ldapjs'),
+    mail = require('./mail.js'),
     mailboxdb = require('./mailboxdb.js'),
     safe = require('safetydance');
 
@@ -426,32 +427,39 @@ function authenticateMailbox(req, res, next) {
         if (error && error.reason === DatabaseError.NOT_FOUND) return next(new ldap.NoSuchObjectError(req.dn.toString()));
         if (error) return next(new ldap.OperationsError(error.message));
 
-        if (mailbox.ownerType === mailboxdb.TYPE_APP) {
-            var addonId = req.dn.rdns[1].attrs.ou.value.toLowerCase(); // 'sendmail' or 'recvmail'
-            var name;
-            if (addonId === 'sendmail') name = 'MAIL_SMTP_PASSWORD';
-            else if (addonId === 'recvmail') name = 'MAIL_IMAP_PASSWORD';
-            else return next(new ldap.OperationsError('Invalid DN'));
+        mail.get(parts[1], function (error, domain) {
+            if (error && error.reason === DatabaseError.NOT_FOUND) return next(new ldap.NoSuchObjectError(req.dn.toString()));
+            if (error) return next(new ldap.OperationsError(error.message));
 
-            appdb.getAddonConfigByName(mailbox.ownerId, addonId, name, function (error, value) {
-                if (error) return next(new ldap.OperationsError(error.message));
-                if (req.credentials !== value) return next(new ldap.InvalidCredentialsError(req.dn.toString()));
+            if (!domain.enabled) return next(new ldap.NoSuchObjectError(req.dn.toString()));
 
-                eventlog.add(eventlog.ACTION_APP_LOGIN, { authType: 'ldap', mailboxId: name }, { appId: mailbox.ownerId, addonId: addonId });
-                return res.end();
-            });
-        } else if (mailbox.ownerType === mailboxdb.TYPE_USER) {
-            user.verifyWithUsername(parts[0], req.credentials || '', function (error, user) {
-                if (error && error.reason === UserError.NOT_FOUND) return next(new ldap.NoSuchObjectError(req.dn.toString()));
-                if (error && error.reason === UserError.WRONG_PASSWORD) return next(new ldap.InvalidCredentialsError(req.dn.toString()));
-                if (error) return next(new ldap.OperationsError(error.message));
+            if (mailbox.ownerType === mailboxdb.TYPE_APP) {
+                var addonId = req.dn.rdns[1].attrs.ou.value.toLowerCase(); // 'sendmail' or 'recvmail'
+                var name;
+                if (addonId === 'sendmail') name = 'MAIL_SMTP_PASSWORD';
+                else if (addonId === 'recvmail') name = 'MAIL_IMAP_PASSWORD';
+                else return next(new ldap.OperationsError('Invalid DN'));
 
-                eventlog.add(eventlog.ACTION_USER_LOGIN, { authType: 'ldap', mailboxId: email }, { userId: user.username });
-                res.end();
-            });
-        } else {
-            return next(new ldap.OperationsError('Unknown ownerType for mailbox'));
-        }
+                appdb.getAddonConfigByName(mailbox.ownerId, addonId, name, function (error, value) {
+                    if (error) return next(new ldap.OperationsError(error.message));
+                    if (req.credentials !== value) return next(new ldap.InvalidCredentialsError(req.dn.toString()));
+
+                    eventlog.add(eventlog.ACTION_APP_LOGIN, { authType: 'ldap', mailboxId: name }, { appId: mailbox.ownerId, addonId: addonId });
+                    return res.end();
+                });
+            } else if (mailbox.ownerType === mailboxdb.TYPE_USER) {
+                user.verifyWithUsername(parts[0], req.credentials || '', function (error, user) {
+                    if (error && error.reason === UserError.NOT_FOUND) return next(new ldap.NoSuchObjectError(req.dn.toString()));
+                    if (error && error.reason === UserError.WRONG_PASSWORD) return next(new ldap.InvalidCredentialsError(req.dn.toString()));
+                    if (error) return next(new ldap.OperationsError(error.message));
+
+                    eventlog.add(eventlog.ACTION_USER_LOGIN, { authType: 'ldap', mailboxId: email }, { userId: user.username });
+                    res.end();
+                });
+            } else {
+                return next(new ldap.OperationsError('Unknown ownerType for mailbox'));
+            }
+        });
     });
 }
 
