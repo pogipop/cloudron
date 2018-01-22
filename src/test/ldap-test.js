@@ -251,7 +251,7 @@ describe('Ldap', function () {
 
                 var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + config.get('ldapPort') });
 
-                client.bind('cn=' + USER_0.username.toLowerCase() + '@example.com,ou=users,dc=cloudron', USER_0.password, function (error) {
+                client.bind('cn=' + USER_0.email.toLowerCase() + ',ou=users,dc=cloudron', USER_0.password, function (error) {
                     expect(error).to.be(null);
 
                     client.unbind();
@@ -850,7 +850,7 @@ describe('Ldap', function () {
 
                 var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + config.get('ldapPort') });
 
-                client.bind('cn=' + USER_0.username + '@example.com,ou=sendmail,dc=cloudron', USER_0.password, function (error) {
+                client.bind('cn=' + USER_0.email.toLocaleLowerCase() + ',ou=sendmail,dc=cloudron', USER_0.password, function (error) {
                     expect(error).not.to.be.ok();
 
                     client.unbind();
