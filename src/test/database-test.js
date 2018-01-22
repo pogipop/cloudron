@@ -1755,12 +1755,9 @@ describe('database', function () {
             mailFromValidation: true
         };
 
-        before(function (done) {
-            domaindb.add(DOMAIN_0.domain, { zoneName: DOMAIN_0.zoneName, provider: DOMAIN_0.provider, config: DOMAIN_0.config }, done);
-        });
-
         it('can add mail domain', function (done) {
-            maildb.add(MAIL_DOMAIN_0.domain, done);
+            // this also adds the mail domain
+            domaindb.add(DOMAIN_0.domain, { zoneName: DOMAIN_0.zoneName, provider: DOMAIN_0.provider, config: DOMAIN_0.config }, done);
         });
 
         it('cannot add same domain twice', function (done) {
