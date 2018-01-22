@@ -116,6 +116,47 @@ angular.module('Application').controller('AccountController', ['$scope', 'Client
         }
     };
 
+    $scope.fallbackEmailChange = {
+        busy: false,
+        error: {},
+        email: '',
+
+        reset: function () {
+            $scope.fallbackEmailChange.busy = false;
+            $scope.fallbackEmailChange.error.email = null;
+            $scope.fallbackEmailChange.email = '';
+
+            $scope.fallbackEmailChangeForm.$setUntouched();
+            $scope.fallbackEmailChangeForm.$setPristine();
+        },
+
+        show: function () {
+            $scope.fallbackEmailChange.reset();
+            $('#fallbackEmailChangeModal').modal('show');
+        },
+
+        submit: function () {
+            $scope.fallbackEmailChange.error.email = null;
+            $scope.fallbackEmailChange.busy = true;
+
+            var data = {
+                fallbackEmail: $scope.fallbackEmailChange.email
+            };
+
+            Client.updateProfile(data, function (error) {
+                $scope.fallbackEmailChange.busy = false;
+
+                if (error) return console.error('Unable to change fallback email.', error);
+
+                // update user info in the background
+                Client.refreshUserInfo();
+
+                $scope.fallbackEmailChange.reset();
+                $('#fallbackEmailChangeModal').modal('hide');
+            });
+        }
+    };
+
     $scope.displayNameChange = {
         busy: false,
         error: {},
@@ -229,7 +270,7 @@ angular.module('Application').controller('AccountController', ['$scope', 'Client
     });
 
     // setup all the dialog focus handling
-    ['passwordChangeModal', 'emailChangeModal', 'displayNameChangeModal'].forEach(function (id) {
+    ['passwordChangeModal', 'emailChangeModal', 'fallbackEmailChangeModal', 'displayNameChangeModal'].forEach(function (id) {
         $('#' + id).on('shown.bs.modal', function () {
             $(this).find("[autofocus]:first").focus();
         });
