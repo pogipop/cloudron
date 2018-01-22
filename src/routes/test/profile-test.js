@@ -14,9 +14,14 @@ var config = require('../../config.js'),
     superagent = require('superagent'),
     server = require('../../server.js');
 
-var SERVER_URL = 'http://localhost:' + config.get('port');
+const SERVER_URL = 'http://localhost:' + config.get('port');
 
-var USERNAME_0 = 'superaDmIn', PASSWORD = 'Foobar?1337', EMAIL_0 = 'silLY@me.com', EMAIL_0_NEW = 'stupID@me.com', DISPLAY_NAME_0_NEW = 'New Name';
+const USERNAME_0 = 'superaDmIn';
+const PASSWORD = 'Foobar?1337';
+const EMAIL_0 = 'silLY@me.com';
+const EMAIL_0_NEW = 'stupID@me.com';
+const EMAIL_0_NEW_FALLBACK = 'stupIDfallback@me.com';
+const DISPLAY_NAME_0_NEW = 'New Name';
 
 describe('Profile API', function () {
     this.timeout(5000);
@@ -95,6 +100,7 @@ describe('Profile API', function () {
                 expect(result.statusCode).to.equal(200);
                 expect(result.body.username).to.equal(USERNAME_0.toLowerCase());
                 expect(result.body.email).to.equal(EMAIL_0.toLowerCase());
+                expect(result.body.fallbackEmail).to.equal(EMAIL_0.toLowerCase());
                 expect(result.body.admin).to.be.ok();
                 expect(result.body.displayName).to.be.a('string');
                 expect(result.body.password).to.not.be.ok();
@@ -178,7 +184,7 @@ describe('Profile API', function () {
         it('change email succeeds', function (done) {
             superagent.post(SERVER_URL + '/api/v1/profile')
                 .query({ access_token: token_0 })
-                .send({ email: EMAIL_0_NEW })
+                .send({ email: EMAIL_0_NEW, fallbackEmail: EMAIL_0_NEW_FALLBACK })
                 .end(function (error, result) {
                     expect(result.statusCode).to.equal(204);
 
@@ -188,6 +194,7 @@ describe('Profile API', function () {
                             expect(res.statusCode).to.equal(200);
                             expect(res.body.username).to.equal(USERNAME_0.toLowerCase());
                             expect(res.body.email).to.equal(EMAIL_0_NEW.toLowerCase());
+                            expect(res.body.fallbackEmail).to.equal(EMAIL_0_NEW_FALLBACK.toLowerCase());
                             expect(res.body.admin).to.equal(true);
                             expect(res.body.displayName).to.equal('');
 

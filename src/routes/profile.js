@@ -36,9 +36,10 @@ function update(req, res, next) {
     assert.strictEqual(typeof req.body, 'object');
 
     if ('email' in req.body && typeof req.body.email !== 'string') return next(new HttpError(400, 'email must be string'));
+    if ('fallbackEmail' in req.body && typeof req.body.fallbackEmail !== 'string') return next(new HttpError(400, 'fallbackEmail must be string'));
     if ('displayName' in req.body && typeof req.body.displayName !== 'string') return next(new HttpError(400, 'displayName must be string'));
 
-    var data = _.pick(req.body, 'email', 'displayName');
+    var data = _.pick(req.body, 'email', 'fallbackEmail', 'displayName');
 
     user.update(req.user.id, data, auditSource(req), function (error) {
         if (error && error.reason === UserError.BAD_FIELD) return next(new HttpError(400, error.message));
