@@ -7,17 +7,15 @@ set -eu
 [[ $(uname -s) == "Darwin" ]] && GNU_GETOPT="/usr/local/opt/gnu-getopt/bin/getopt" || GNU_GETOPT="getopt"
 readonly GNU_GETOPT
 
-args=$(${GNU_GETOPT} -o "" -l "revision:,output:" -n "$0" -- "$@")
+args=$(${GNU_GETOPT} -o "" -l "output:" -n "$0" -- "$@")
 eval set -- "${args}"
 
 readonly SOURCE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
-commitish="HEAD"
 bundle_file=""
 
 while true; do
     case "$1" in
-    --revision) commitish="$2"; shift 2;;
     --output) bundle_file="$2"; shift 2;;
     --) break;;
     *) echo "Unknown option $1"; exit 1;;
@@ -36,7 +34,7 @@ if [[ "$(node --version)" != "v8.9.3" ]]; then
     exit 1
 fi
 
-version=$(cd "${SOURCE_DIR}" && git rev-parse "${commitish}")
+version=$(cd "${SOURCE_DIR}" && git rev-parse "HEAD")
 bundle_dir=$(mktemp -d -t box 2>/dev/null || mktemp -d box-XXXXXXXXXX --tmpdir=$TMPDIR)
 [[ -z "$bundle_file" ]] && bundle_file="${TMPDIR}/box-${version}.tar.gz"
 
