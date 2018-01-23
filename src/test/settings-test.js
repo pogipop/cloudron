@@ -18,9 +18,11 @@ var async = require('async'),
     settings = require('../settings.js'),
     settingsdb = require('../settingsdb.js');
 
+var DOMAIN_0 = 'example.com';
+
 function setup(done) {
     config._reset();
-    config.set('fqdn', 'example.com');
+    config.set('fqdn', DOMAIN_0);
     config.set('provider', 'caas');
     nock.cleanAll();
 
@@ -106,10 +108,10 @@ describe('Settings', function () {
 
         it('can set backup config', function (done) {
             nock(config.apiServerOrigin())
-                .post('/api/v1/boxes/' + config.fqdn() + '/awscredentials?token=TOKEN')
+                .post(`/api/v1/boxes/${DOMAIN_0}/awscredentials?token=TOKEN`)
                 .reply(201, { credentials: { AccessKeyId: 'accessKeyId', SecretAccessKey: 'secretAccessKey', SessionToken: 'sessionToken' } });
 
-            settings.setBackupConfig({ provider: 'caas', fqdn: config.fqdn(), token: 'TOKEN', format: 'tgz', prefix: 'boxid', bucket: 'bucket' }, function (error) {
+            settings.setBackupConfig({ provider: 'caas', fqdn: DOMAIN_0, token: 'TOKEN', format: 'tgz', prefix: 'boxid', bucket: 'bucket' }, function (error) {
                 expect(error).to.be(null);
                 done();
             });
