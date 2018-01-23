@@ -440,7 +440,7 @@ function createMailConfig(callback) {
             var mailFromValidation = result.mailFromValidation;
 
             if (!safe.fs.writeFileSync(paths.ADDON_CONFIG_DIR + '/mail/mail.ini',
-                `mail_domains=${fqdn}\nmail_default_domain=${fqdn}\nmail_server_name=${mailFqdn}\nalerts_from=${alertsFrom}\nalerts_to=${alertsTo}\ncatch_all=${catchAll}\nmail_from_validation=${mailFromValidation}\n`, 'utf8')) {
+                `mail_in_domains=${fqdn}\nmail_out_domains=${fqdn}\nmail_default_domain=${fqdn}\nmail_server_name=${mailFqdn}\nalerts_from=${alertsFrom}\nalerts_to=${alertsTo}\ncatch_all=${catchAll}\nmail_from_validation=${mailFromValidation}\n`, 'utf8')) {
                 return callback(new Error('Could not create mail var file:' + safe.error.message));
             }
 
@@ -505,7 +505,6 @@ function restartMail(callback) {
                             --memory-swap ${memoryLimit * 2}m \
                             --dns 172.18.0.1 \
                             --dns-search=. \
-                            --env ENABLE_MDA=${mailConfig.enabled} \
                             -v "${paths.MAIL_DATA_DIR}:/app/data" \
                             -v "${paths.PLATFORM_DATA_DIR}/addons/mail:/etc/mail" \
                             ${ports} \
