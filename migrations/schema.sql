@@ -160,7 +160,7 @@ CREATE TABLE IF NOT EXISTS domains(
     /* the default db collation is utf8mb4_unicode_ci but for the app table domain constraint we have to use the old one */
     CHARACTER SET utf8 COLLATE utf8_bin;
 
-CREATE TABLE IF NOT EXISTS maildb(
+CREATE TABLE IF NOT EXISTS mail(
     domain VARCHAR(128) NOT NULL UNIQUE,
 
     enabled BOOLEAN DEFAULT 0, /* MDA enabled */

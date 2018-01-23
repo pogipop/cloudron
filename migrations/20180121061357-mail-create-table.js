@@ -1,7 +1,7 @@
 'use strict';
 
 exports.up = function(db, callback) {
-    var cmd = 'CREATE TABLE IF NOT EXISTS maildb(' +
+    var cmd = 'CREATE TABLE IF NOT EXISTS mail(' +
                 'domain VARCHAR(128) NOT NULL UNIQUE,' +
                 'enabled BOOLEAN DEFAULT 0,' +
                 'mailFromValidation BOOLEAN DEFAULT 1,' +
@@ -17,7 +17,7 @@ exports.up = function(db, callback) {
 };
 
 exports.down = function(db, callback) {
-    db.runSql('DROP TABLE mailboxes', function (error) {
+    db.runSql('DROP TABLE mail', function (error) {
         if (error) console.error(error);
         callback(error);
     });

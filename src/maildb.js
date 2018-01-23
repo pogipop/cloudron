@@ -39,7 +39,7 @@ function postProcess(data) {
 function add(domain, callback) {
     assert.strictEqual(typeof domain, 'string');
 
-    database.query('INSERT INTO maildb (domain) VALUES (?)', [ domain ], function (error) {
+    database.query('INSERT INTO mail (domain) VALUES (?)', [ domain ], function (error) {
         if (error && error.code === 'ER_DUP_ENTRY') return callback(new DatabaseError(DatabaseError.ALREADY_EXISTS, 'mail domain already exists'));
         if (error && error.code === 'ER_NO_REFERENCED_ROW_2') return callback(new DatabaseError(DatabaseError.NOT_FOUND), 'no such domain');
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
@@ -51,7 +51,7 @@ function add(domain, callback) {
 function clear(callback) {
     assert.strictEqual(typeof callback, 'function');
 
-    database.query('TRUNCATE TABLE maildb', [], function (error) {
+    database.query('TRUNCATE TABLE mail', [], function (error) {
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
         callback(null);
     });
@@ -62,7 +62,7 @@ function del(domain, callback) {
     assert.strictEqual(typeof callback, 'function');
 
     // deletes aliases as well
-    database.query('DELETE FROM maildb WHERE domain=?', [ domain ], function (error, result) {
+    database.query('DELETE FROM mail WHERE domain=?', [ domain ], function (error, result) {
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
         if (result.affectedRows === 0) return callback(new DatabaseError(DatabaseError.NOT_FOUND));
 
@@ -74,7 +74,7 @@ function get(domain, callback) {
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    database.query('SELECT ' + MAILDB_FIELDS + ' FROM maildb WHERE domain = ?', [ domain ], function (error, results) {
+    database.query('SELECT ' + MAILDB_FIELDS + ' FROM mail WHERE domain = ?', [ domain ], function (error, results) {
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
         if (results.length === 0) return callback(new DatabaseError(DatabaseError.NOT_FOUND));
 
@@ -103,7 +103,7 @@ function update(domain, data, callback) {
     }
     args.push(domain);
 
-    database.query('UPDATE maildb SET ' + fields.join(', ') + ' WHERE domain=?', args, function (error) {
+    database.query('UPDATE mail SET ' + fields.join(', ') + ' WHERE domain=?', args, function (error) {
         if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new DatabaseError(DatabaseError.NOT_FOUND));
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
 

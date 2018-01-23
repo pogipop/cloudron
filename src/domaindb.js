@@ -62,7 +62,7 @@ function add(name, domain, callback) {
 
     var queries = [];
     queries.push({ query: 'INSERT INTO domains (domain, zoneName, provider, configJson) VALUES (?, ?, ?, ?)', args: [ name, domain.zoneName, domain.provider, JSON.stringify(domain.config) ] });
-    queries.push({ query: 'INSERT INTO maildb (domain) VALUES (?)', args: [ name ] });
+    queries.push({ query: 'INSERT INTO mail (domain) VALUES (?)', args: [ name ] });
 
     database.transaction(queries, function (error, result) {
         if (error && error.code === 'ER_DUP_ENTRY') return callback(new DatabaseError(DatabaseError.ALREADY_EXISTS, error));
@@ -102,7 +102,7 @@ function del(domain, callback) {
     assert.strictEqual(typeof callback, 'function');
 
     var queries = [];
-    queries.push({ query: 'DELETE FROM maildb WHERE domain=?', args: [ domain ] });
+    queries.push({ query: 'DELETE FROM mail WHERE domain=?', args: [ domain ] });
     queries.push({ query: 'DELETE FROM domains WHERE domain=?', args: [ domain ] });
 
     database.transaction(queries, function (error, result) {

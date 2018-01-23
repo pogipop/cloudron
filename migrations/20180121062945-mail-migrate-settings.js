@@ -23,7 +23,7 @@ exports.up = function(db, callback) {
                 }
             });
 
-            db.runSql('INSERT INTO maildb (domain, enabled, mailFromValidation, catchAllJson, relayJson) VALUES (?, ?, ?, ?, ?)',
+            db.runSql('INSERT INTO mail (domain, enabled, mailFromValidation, catchAllJson, relayJson) VALUES (?, ?, ?, ?, ?)',
                 [ domains[0].domain, mailEnabled, mailFromValidation, JSON.stringify(catchAll), JSON.stringify(relay) ], callback);
         });
     });

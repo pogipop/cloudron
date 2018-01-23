@@ -6,7 +6,7 @@ exports.up = function(db, callback) {
     db.all('SELECT * FROM users', [ ], function (error, users) {
         if (error) return callback(error);
 
-        db.all('SELECT * FROM maildb WHERE enabled=1', [ ], function (error, mailDomains) {
+        db.all('SELECT * FROM mail WHERE enabled=1', [ ], function (error, mailDomains) {
             if (error) return callback(error);
 
             async.series([
