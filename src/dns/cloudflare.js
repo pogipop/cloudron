@@ -211,7 +211,7 @@ function del(dnsConfig, zoneName, subdomain, type, values, callback) {
                     .timeout(30 * 1000)
                     .end(function (error, result) {
                         if (error && !error.response) return callback(error);
-                        if (result.statusCode !== 204 || result.body.success !== true) return translateRequestError(result, callback);
+                        if (result.statusCode !== 200 || result.body.success !== true) return translateRequestError(result, callback);
 
                         debug('del: done');
 
