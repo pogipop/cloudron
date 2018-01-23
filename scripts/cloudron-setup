@@ -102,16 +102,17 @@ done
 # validate arguments in the absence of data
 if [[ -z "${dataJson}" ]]; then
     if [[ -z "${provider}" ]]; then
-        echo "--provider is required (azure, cloudscale.ch, digitalocean, ec2, exoscale, lightsail, linode, ovh, rosehosting, scaleway, vultr or generic)"
+        echo "--provider is required (azure, cloudscale, digitalocean, ec2, exoscale, hetzner, lightsail, linode, ovh, rosehosting, scaleway, vultr or generic)"
         exit 1
     elif [[  \
                 "${provider}" != "ami" && \
                 "${provider}" != "azure" && \
-                "${provider}" != "cloudscale.ch" && \
+                "${provider}" != "cloudscale" && \
                 "${provider}" != "digitalocean" && \
                 "${provider}" != "ec2" && \
                 "${provider}" != "exoscale" && \
                 "${provider}" != "gce" && \
+                "${provider}" != "hetzner" && \
                 "${provider}" != "lightsail" && \
                 "${provider}" != "linode" && \
                 "${provider}" != "ovh" && \
