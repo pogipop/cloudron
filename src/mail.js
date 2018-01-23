@@ -374,7 +374,12 @@ function getStatus(domain, callback) {
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    var results = {};
+    // ensure we always have a valid toplevel properties for the api
+    var results = {
+        dns: {},
+        rbl: {},
+        relay: {}
+    };
 
     function recordResult(what, func) {
         return function (callback) {
