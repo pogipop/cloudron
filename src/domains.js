@@ -232,6 +232,17 @@ function del(domain, callback) {
     });
 }
 
+function getName(domain, subdomain) {
+    // support special caas domains
+    if (domain.provider === 'caas') return subdomain;
+
+    if (domain.domain === domain.zoneName) return subdomain;
+
+    var part = domain.domain.slice(0, -domain.zoneName.length - 1);
+
+    return subdomain === '' ? part : subdomain + '.' + part;
+}
+
 function getDNSRecords(subdomain, domain, type, callback) {
     assert.strictEqual(typeof subdomain, 'string');
     assert.strictEqual(typeof domain, 'string');
@@ -241,7 +252,7 @@ function getDNSRecords(subdomain, domain, type, callback) {
     get(domain, function (error, result) {
         if (error) return callback(new DomainError(DomainError.INTERNAL_ERROR, error));
 
-        api(result.provider).get(result.config, result.zoneName, subdomain, type, function (error, values) {
+        api(result.provider).get(result.config, result.zoneName, getName(result, subdomain), type, function (error, values) {
             if (error) return callback(error);
 
             callback(null, values);
@@ -261,7 +272,7 @@ function upsertDNSRecords(subdomain, domain, type, values, callback) {
     get(domain, function (error, result) {
         if (error) return callback(new DomainError(DomainError.INTERNAL_ERROR, error));
 
-        api(result.provider).upsert(result.config, result.zoneName, subdomain, type, values, function (error, changeId) {
+        api(result.provider).upsert(result.config, result.zoneName, getName(result, subdomain), type, values, function (error, changeId) {
             if (error) return callback(error);
 
             callback(null, changeId);
@@ -281,7 +292,7 @@ function removeDNSRecords(subdomain, domain, type, values, callback) {
     get(domain, function (error, result) {
         if (error) return callback(error);
 
-        api(result.provider).del(result.config, result.zoneName, subdomain, type, values, function (error) {
+        api(result.provider).del(result.config, result.zoneName, getName(result, subdomain), type, values, function (error) {
             if (error && error.reason !== DomainError.NOT_FOUND) return callback(error);
 
             callback(null);
