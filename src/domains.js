@@ -111,7 +111,7 @@ function add(domain, zoneName, provider, config, fallbackCertificate, callback) 
     if (zoneName) {
         if (!tld.isValid(zoneName)) return callback(new DomainError(DomainError.BAD_FIELD, 'Invalid zoneName'));
     } else {
-        zoneName = tld.getDomain(domain);
+        zoneName = tld.getDomain(domain) || domain;
     }
 
     if (fallbackCertificate) {
