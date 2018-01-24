@@ -14,6 +14,11 @@ exports = module.exports = {
 
     sendTestMail: sendTestMail,
 
+    getMailboxes: getMailboxes,
+    getUserMailbox: getUserMailbox,
+    enableUserMailbox: enableUserMailbox,
+    disableUserMailbox: disableUserMailbox,
+
     MailError: MailError
 };
 
@@ -27,6 +32,7 @@ var assert = require('assert'),
     dig = require('./dig.js'),
     domains = require('./domains.js'),
     infra = require('./infra_version.js'),
+    mailboxdb = require('./mailboxdb.js'),
     maildb = require('./maildb.js'),
     mailer = require('./mailer.js'),
     net = require('net'),
@@ -38,6 +44,7 @@ var assert = require('assert'),
     smtpTransport = require('nodemailer-smtp-transport'),
     sysinfo = require('./sysinfo.js'),
     user = require('./user.js'),
+    UserError = user.UserError,
     util = require('util'),
     _ = require('underscore');
 
@@ -611,6 +618,7 @@ function setMailEnabled(domain, enabled, callback) {
 function sendTestMail(domain, to, callback) {
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof to, 'object');
+    assert.strictEqual(typeof callback, 'function');
 
     get(domain, function (error, result) {
         if (error) return callback(error);
@@ -618,5 +626,70 @@ function sendTestMail(domain, to, callback) {
         mailer.sendTestMail(result.domain, to);
 
         callback();
+    });
+}
+
+function getMailboxes(domain, callback) {
+    assert.strictEqual(typeof domain, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    mailboxdb.listMailboxes(domain, function (error, result) {
+        if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
+
+        callback(null, result);
+    });
+}
+
+function getUserMailbox(domain, userId, callback) {
+    assert.strictEqual(typeof domain, 'string');
+    assert.strictEqual(typeof userId, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    user.get(userId, function (error, result) {
+        if (error && error.reason === UserError.NOT_FOUND) return callback(new MailError(MailError.NOT_FOUND, 'no such user'));
+        if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
+
+        mailboxdb.getMailbox(result.username, domain, function (error, result) {
+            if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new MailError(MailError.NOT_FOUND, 'no such mailbox'));
+            if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
+
+            callback(null, result);
+        });
+    });
+}
+
+function enableUserMailbox(domain, userId, callback) {
+    assert.strictEqual(typeof domain, 'string');
+    assert.strictEqual(typeof userId, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    user.get(userId, function (error, result) {
+        if (error && error.reason === UserError.NOT_FOUND) return callback(new MailError(MailError.NOT_FOUND, 'no such user'));
+        if (error) return callback(new MailError(MailError.INTERNAL_ERROR));
+
+        mailboxdb.add(result.username, domain, userId, mailboxdb.TYPE_USER, function (error) {
+            if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(new MailError(MailError.ALREADY_EXISTS, 'mailbox already exists'));
+            if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
+
+            callback(null);
+        });
+    });
+}
+
+function disableUserMailbox(domain, userId, callback) {
+    assert.strictEqual(typeof domain, 'string');
+    assert.strictEqual(typeof userId, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    user.get(userId, function (error, result) {
+        if (error && error.reason === UserError.NOT_FOUND) return callback(new MailError(MailError.NOT_FOUND, 'no such user'));
+        if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
+
+        mailboxdb.del(result.username, domain, function (error) {
+            if (error && error.reason === UserError.NOT_FOUND) return callback(new MailError(MailError.NOT_FOUND, 'no such mailbox'));
+            if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
+
+            callback(null);
+        });
     });
 }

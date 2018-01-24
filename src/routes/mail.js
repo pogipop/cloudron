@@ -10,7 +10,12 @@ exports = module.exports = {
     setMailRelay: setMailRelay,
     setMailEnabled: setMailEnabled,
 
-    sendTestMail: sendTestMail
+    sendTestMail: sendTestMail,
+
+    getMailboxes: getMailboxes,
+    getUserMailbox: getUserMailbox,
+    enableUserMailbox: enableUserMailbox,
+    disableUserMailbox: disableUserMailbox
 };
 
 var assert = require('assert'),
@@ -120,5 +125,52 @@ function sendTestMail(req, res, next) {
         if (error) return next(new HttpError(500, error));
 
         next(new HttpSuccess(202));
+    });
+}
+
+function getMailboxes(req, res, next) {
+    assert.strictEqual(typeof req.params.domain, 'string');
+
+    mail.getMailboxes(req.params.domain, function (error, result) {
+        if (error && error.reason === MailError.NOT_FOUND) return next(new HttpError(404, error.message));
+        if (error) return next(new HttpError(500, error));
+
+        next(new HttpSuccess(200, { mailboxes: result }));
+    });
+}
+
+function getUserMailbox(req, res, next) {
+    assert.strictEqual(typeof req.params.domain, 'string');
+    assert.strictEqual(typeof req.params.userId, 'string');
+
+    mail.getUserMailbox(req.params.domain, req.params.userId, function (error, result) {
+        if (error && error.reason === MailError.NOT_FOUND) return next(new HttpError(404, error.message));
+        if (error) return next(new HttpError(500, error));
+
+        next(new HttpSuccess(200, { mailbox: result }));
+    });
+}
+
+function enableUserMailbox(req, res, next) {
+    assert.strictEqual(typeof req.params.domain, 'string');
+    assert.strictEqual(typeof req.params.userId, 'string');
+
+    mail.enableUserMailbox(req.params.domain, req.params.userId, function (error) {
+        if (error && error.reason === MailError.NOT_FOUND) return next(new HttpError(404, error.message));
+        if (error) return next(new HttpError(500, error));
+
+        next(new HttpSuccess(201, {}));
+    });
+}
+
+function disableUserMailbox(req, res, next) {
+    assert.strictEqual(typeof req.params.domain, 'string');
+    assert.strictEqual(typeof req.params.userId, 'string');
+
+    mail.disableUserMailbox(req.params.domain, req.params.userId, function (error) {
+        if (error && error.reason === MailError.NOT_FOUND) return next(new HttpError(404, error.message));
+        if (error) return next(new HttpError(500, error));
+
+        next(new HttpSuccess(201, {}));
     });
 }

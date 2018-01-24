@@ -219,6 +219,10 @@ function initializeExpressSync() {
     router.post('/api/v1/mail/:domain/relay',         settingsScope, routes.user.requireAdmin, routes.mail.setMailRelay);
     router.post('/api/v1/mail/:domain/enable',        settingsScope, routes.user.requireAdmin, routes.mail.setMailEnabled);
     router.post('/api/v1/mail/:domain/send_test_mail',  cloudronScope, routes.user.requireAdmin, routes.mail.sendTestMail);
+    router.get ('/api/v1/mail/:domain/mailbox',  cloudronScope, routes.user.requireAdmin, routes.mail.getMailboxes);
+    router.get ('/api/v1/mail/:domain/mailbox/:userId',  cloudronScope, routes.user.requireAdmin, routes.mail.getUserMailbox);
+    router.post('/api/v1/mail/:domain/mailbox/:userId',  cloudronScope, routes.user.requireAdmin, routes.mail.enableUserMailbox);
+    router.del ('/api/v1/mail/:domain/mailbox/:userId',  cloudronScope, routes.user.requireAdmin, routes.mail.disableUserMailbox);
 
     // feedback
     router.post('/api/v1/feedback', usersScope, routes.cloudron.feedback);
