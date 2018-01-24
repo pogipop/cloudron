@@ -149,6 +149,7 @@ function installApp(req, res, next) {
     debug('Installing app :%j', data);
 
     apps.install(data, auditSource(req), function (error, app) {
+        if (error && error.reason === AppsError.NOT_FOUND) return next(new HttpError(404, error.message));
         if (error && error.reason === AppsError.ALREADY_EXISTS) return next(new HttpError(409, error.message));
         if (error && error.reason === AppsError.PORT_RESERVED) return next(new HttpError(409, 'Port ' + error.message + ' is reserved.'));
         if (error && error.reason === AppsError.PORT_CONFLICT) return next(new HttpError(409, 'Port ' + error.message + ' is already in use.'));
