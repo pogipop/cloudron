@@ -259,15 +259,15 @@ function renewAll(auditSource, callback) {
 
 // note: https://tools.ietf.org/html/rfc4346#section-7.4.2 (certificate_list) requires that the
 // servers certificate appears first (and not the intermediate cert)
-function validateCertificate(cert, key, fqdn) {
+function validateCertificate(cert, key, domain) {
     assert(cert === null || typeof cert === 'string');
     assert(key === null || typeof key === 'string');
-    assert.strictEqual(typeof fqdn, 'string');
+    assert.strictEqual(typeof domain, 'string');
 
-    function matchesDomain(domain) {
-        if (typeof domain !== 'string') return false;
-        if (domain === fqdn) return true;
-        if (domain.indexOf('*') === 0 && domain.slice(2) === fqdn.slice(fqdn.indexOf('.') + 1)) return true;
+    function matchesDomain(candidate) {
+        if (typeof candidate !== 'string') return false;
+        if (candidate === domain) return true;
+        if (candidate.indexOf('*') === 0 && candidate.slice(2) === domain.slice(domain.indexOf('.') + 1)) return true;
 
         return false;
     }
@@ -276,7 +276,7 @@ function validateCertificate(cert, key, fqdn) {
     if (!cert && key) return new Error('missing cert');
     if (cert && !key) return new Error('missing key');
 
-    var result = safe.child_process.execSync('openssl x509 -noout -checkhost "' + fqdn + '"', { encoding: 'utf8', input: cert });
+    var result = safe.child_process.execSync('openssl x509 -noout -checkhost "' + domain + '"', { encoding: 'utf8', input: cert });
     if (!result) return new Error('Invalid certificate. Unable to get certificate subject.');
 
     // if no match, check alt names
@@ -290,7 +290,7 @@ function validateCertificate(cert, key, fqdn) {
         debug('validateCertificate: detected altNames as %j', altNames);
 
         // check altNames
-        if (!altNames.some(matchesDomain)) return new Error(util.format('Certificate is not valid for this domain. Expecting %s in %j', fqdn, altNames));
+        if (!altNames.some(matchesDomain)) return new Error(util.format('Certificate is not valid for this domain. Expecting %s in %j', domain, altNames));
     }
 
     // http://httpd.apache.org/docs/2.0/ssl/ssl_faq.html#verify
@@ -305,24 +305,24 @@ function validateCertificate(cert, key, fqdn) {
     return null;
 }
 
-function setFallbackCertificate(cert, key, fqdn, callback) {
+function setFallbackCertificate(cert, key, domain, callback) {
     assert.strictEqual(typeof cert, 'string');
     assert.strictEqual(typeof key, 'string');
-    assert.strictEqual(typeof fqdn, 'string');
+    assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    var error = validateCertificate(cert, key, '*.' + fqdn);
+    var error = validateCertificate(cert, key, '*.' + domain);
     if (error) return callback(new CertificatesError(CertificatesError.INVALID_CERT, error.message));
 
     // backup the cert
-    if (!safe.fs.writeFileSync(path.join(paths.APP_CERTS_DIR, fqdn + '.cert'), cert)) return callback(new CertificatesError(CertificatesError.INTERNAL_ERROR, safe.error.message));
-    if (!safe.fs.writeFileSync(path.join(paths.APP_CERTS_DIR, fqdn + '.key'), key)) return callback(new CertificatesError(CertificatesError.INTERNAL_ERROR, safe.error.message));
+    if (!safe.fs.writeFileSync(path.join(paths.APP_CERTS_DIR, domain + '.cert'), cert)) return callback(new CertificatesError(CertificatesError.INTERNAL_ERROR, safe.error.message));
+    if (!safe.fs.writeFileSync(path.join(paths.APP_CERTS_DIR, domain + '.key'), key)) return callback(new CertificatesError(CertificatesError.INTERNAL_ERROR, safe.error.message));
 
     // copy over fallback cert
-    if (!safe.fs.writeFileSync(path.join(paths.NGINX_CERT_DIR, fqdn + '.cert'), cert)) return callback(new CertificatesError(CertificatesError.INTERNAL_ERROR, safe.error.message));
-    if (!safe.fs.writeFileSync(path.join(paths.NGINX_CERT_DIR, fqdn + '.key'), key)) return callback(new CertificatesError(CertificatesError.INTERNAL_ERROR, safe.error.message));
+    if (!safe.fs.writeFileSync(path.join(paths.NGINX_CERT_DIR, domain + '.cert'), cert)) return callback(new CertificatesError(CertificatesError.INTERNAL_ERROR, safe.error.message));
+    if (!safe.fs.writeFileSync(path.join(paths.NGINX_CERT_DIR, domain + '.key'), key)) return callback(new CertificatesError(CertificatesError.INTERNAL_ERROR, safe.error.message));
 
-    exports.events.emit(exports.EVENT_CERT_CHANGED, '*.' + fqdn);
+    exports.events.emit(exports.EVENT_CERT_CHANGED, '*.' + domain);
 
     nginx.reload(function (error) {
         if (error) return callback(new CertificatesError(CertificatesError.INTERNAL_ERROR, error));
@@ -331,12 +331,12 @@ function setFallbackCertificate(cert, key, fqdn, callback) {
     });
 }
 
-function getFallbackCertificate(fqdn, callback) {
-    assert.strictEqual(typeof fqdn, 'string');
+function getFallbackCertificate(domain, callback) {
+    assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    var cert = safe.fs.readFileSync(path.join(paths.NGINX_CERT_DIR, fqdn + '.cert'), 'utf-8');
-    var key = safe.fs.readFileSync(path.join(paths.NGINX_CERT_DIR, fqdn + '.key'), 'utf-8');
+    var cert = safe.fs.readFileSync(path.join(paths.NGINX_CERT_DIR, domain + '.cert'), 'utf-8');
+    var key = safe.fs.readFileSync(path.join(paths.NGINX_CERT_DIR, domain + '.key'), 'utf-8');
 
     if (!cert || !key) return callback(new CertificatesError(CertificatesError.NOT_FOUND));
 
