@@ -297,7 +297,7 @@ function configureWebadmin(callback) {
     sysinfo.getPublicIp(function (error, ip) {
         if (error) return configureNginx(error);
 
-        addDnsRecords(ip, function (error) {
+        addDnsRecords(ip, config.fqdn(), function (error) {
             if (error) return configureNginx(error);
 
             domains.waitForDNSRecord(config.adminFqdn(), config.fqdn(), ip, 'A', { interval: 30000, times: 50000 }, function (error) {
@@ -554,8 +554,9 @@ function txtRecordsWithSpf(callback) {
     });
 }
 
-function addDnsRecords(ip, callback) {
+function addDnsRecords(ip, domain, callback) {
     assert.strictEqual(typeof ip, 'string');
+    assert.strictEqual(typeof domain, 'string');
     callback = callback || NOOP_CALLBACK;
 
     if (process.env.BOX_ENV === 'test') return callback();
@@ -563,9 +564,9 @@ function addDnsRecords(ip, callback) {
     var dkimKey = readDkimPublicKeySync();
     if (!dkimKey) return callback(new CloudronError(CloudronError.INTERNAL_ERROR, new Error('Failed to read dkim public key')));
 
-    var webadminRecord = { subdomain: config.adminLocation(), domain: config.fqdn(), type: 'A', values: [ ip ] };
+    var webadminRecord = { subdomain: config.adminLocation(), domain: domain, type: 'A', values: [ ip ] };
     // t=s limits the domainkey to this domain and not it's subdomains
-    var dkimRecord = { subdomain: config.dkimSelector() + '._domainkey', domain: config.fqdn(), type: 'TXT', values: [ '"v=DKIM1; t=s; p=' + dkimKey + '"' ] };
+    var dkimRecord = { subdomain: config.dkimSelector() + '._domainkey', domain: domain, type: 'TXT', values: [ '"v=DKIM1; t=s; p=' + dkimKey + '"' ] };
 
     var records = [ ];
     records.push(webadminRecord);
@@ -577,7 +578,7 @@ function addDnsRecords(ip, callback) {
         txtRecordsWithSpf(function (error, txtRecords) {
             if (error) return retryCallback(error);
 
-            if (txtRecords) records.push({ subdomain: '', domain: config.fqdn(), type: 'TXT', values: txtRecords });
+            if (txtRecords) records.push({ subdomain: '', domain: domain, type: 'TXT', values: txtRecords });
 
             debug('addDnsRecords: will update %j', records);
 
@@ -805,7 +806,7 @@ function refreshDNS(callback) {
 
         debug('refreshDNS: current ip %s', ip);
 
-        addDnsRecords(ip, function (error) {
+        addDnsRecords(ip, config.fqdn(), function (error) {
             if (error) return callback(error);
 
             debug('refreshDNS: done for system records');
