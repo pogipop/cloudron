@@ -19,11 +19,9 @@ exports = module.exports = {
 
 var assert = require('assert'),
     constants = require('./constants.js'),
-    config = require('./config.js'),
     database = require('./database.js'),
     debug = require('debug')('box:userdb'),
-    DatabaseError = require('./databaseerror'),
-    mailboxdb = require('./mailboxdb.js');
+    DatabaseError = require('./databaseerror');
 
 var USERS_FIELDS = [ 'id', 'username', 'email', 'fallbackEmail', 'password', 'salt', 'createdAt', 'modifiedAt', 'resetToken', 'displayName' ].join(',');
 
@@ -140,32 +138,12 @@ function add(userId, user, callback) {
     assert.strictEqual(typeof user.displayName, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    var queries = [];
-    queries.push({
-        query: 'INSERT INTO users (id, username, password, email, fallbackEmail, salt, createdAt, modifiedAt, resetToken, displayName) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-        args: [ userId, user.username, user.password, user.email, user.fallbackEmail, user.salt, user.createdAt, user.modifiedAt, user.resetToken, user.displayName ]
-    });
-    if (user.username) {
-        queries.push({
-            query: 'INSERT INTO mailboxes (name, domain, ownerId, ownerType) VALUES (?, ?, ?, ?)',
-            args: [ user.username, config.fqdn(), userId, mailboxdb.TYPE_USER ]
-        });
-    }
+    const query = 'INSERT INTO users (id, username, password, email, fallbackEmail, salt, createdAt, modifiedAt, resetToken, displayName) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+    const args = [ userId, user.username, user.password, user.email, user.fallbackEmail, user.salt, user.createdAt, user.modifiedAt, user.resetToken, user.displayName ];
 
-    database.transaction(queries, function (error, result) {
-        if (error && error.code === 'ER_DUP_ENTRY') {
-            var msg = error.message;
-            if (error.message.indexOf('users_email') !== -1) {
-                msg = 'email already exists';
-            } else if (error.message.indexOf('users_username') !== -1) {
-                msg = 'username already exists';
-            } else {
-                msg = 'mailbox already exists';
-            }
-
-            return callback(new DatabaseError(DatabaseError.ALREADY_EXISTS, msg));
-        }
-        if (error || result[0].affectedRows !== 1) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
+    database.query(query, args, function (error, result) {
+        if (error && error.code === 'ER_DUP_ENTRY') return callback(new DatabaseError(DatabaseError.ALREADY_EXISTS, 'username already exists'));
+        if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
 
         callback(null);
     });
@@ -237,33 +215,9 @@ function update(userId, user, callback) {
     }
     args.push(userId);
 
-    var queries = [];
-    queries.push({ query: 'UPDATE users SET ' + fields.join(', ') + ' WHERE id = ?', args: args });
-    if (user.username) {
-        // delete old mailbox
-        queries.push({ query: 'DELETE FROM mailboxes WHERE ownerId = ? AND aliasTarget IS NULL', args: [ userId ] });
-        // add new mailbox
-        queries.push({
-            query: 'INSERT INTO mailboxes (name, domain, ownerId, ownerType) VALUES (?, ?, ?, ?)',
-            args: [ user.username, config.fqdn(), userId, mailboxdb.TYPE_USER ]
-        });
-    }
-
-    database.transaction(queries, function (error, result) {
-        if (error && error.code === 'ER_DUP_ENTRY') {
-            var msg = error.message;
-            if (error.message.indexOf('users_email') !== -1) {
-                msg = 'email already exists';
-            } else if (error.message.indexOf('users_username') !== -1) {
-                msg = 'username already exists';
-            } else {
-                msg = 'mailbox already exists';
-            }
-
-            return callback(new DatabaseError(DatabaseError.ALREADY_EXISTS, msg));
-        }
+    database.query('UPDATE users SET ' + fields.join(', ') + ' WHERE id = ?', args, function (error) {
+        if (error && error.code === 'ER_DUP_ENTRY') return callback(new DatabaseError(DatabaseError.ALREADY_EXISTS, 'username already exists'));
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
-        if (result[0].affectedRows !== 1) return callback(new DatabaseError(DatabaseError.NOT_FOUND)); // mailbox?
 
         return callback(null);
     });
