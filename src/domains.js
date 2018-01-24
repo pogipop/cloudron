@@ -107,7 +107,12 @@ function add(domain, zoneName, provider, config, fallbackCertificate, callback) 
     assert.strictEqual(typeof callback, 'function');
 
     if (!tld.isValid(domain)) return callback(new DomainError(DomainError.BAD_FIELD, 'Invalid domain'));
-    if (!tld.isValid(zoneName)) return callback(new DomainError(DomainError.BAD_FIELD, 'Invalid zoneName'));
+
+    if (zoneName) {
+        if (!tld.isValid(zoneName)) return callback(new DomainError(DomainError.BAD_FIELD, 'Invalid zoneName'));
+    } else {
+        zoneName = tld.getDomain(domain);
+    }
 
     if (fallbackCertificate) {
         let error = certificates.validateCertificate(fallbackCertificate.cert, fallbackCertificate.key, domain);

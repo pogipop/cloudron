@@ -27,7 +27,7 @@ function add(req, res, next) {
     if (req.body.fallbackCertificate && (!req.body.cert || typeof req.body.cert !== 'string')) return next(new HttpError(400, 'fallbackCertificate.cert must be a string'));
     if (req.body.fallbackCertificate && (!req.body.key || typeof req.body.key !== 'string')) return next(new HttpError(400, 'fallbackCertificate.key must be a string'));
 
-    domains.add(req.body.domain, req.body.zoneName || req.body.domain, req.body.provider, req.body.config, req.body.fallbackCertificate || null, function (error) {
+    domains.add(req.body.domain, req.body.zoneName || '', req.body.provider, req.body.config, req.body.fallbackCertificate || null, function (error) {
         if (error && error.reason === DomainError.ALREADY_EXISTS) return next(new HttpError(409, error.message));
         if (error && error.reason === DomainError.BAD_FIELD) return next(new HttpError(400, error.message));
         if (error && error.reason === DomainError.INVALID_PROVIDER) return next(new HttpError(400, error.message));
