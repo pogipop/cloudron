@@ -16,6 +16,7 @@ var SERVER_URL = 'http://localhost:' + config.get('port');
 
 var USERNAME = 'superadmin', PASSWORD = 'Foobar?1337', EMAIL ='silly@me.com';
 var token = null;
+var DOMAIN = 'example-domains-test.com';
 
 var DOMAIN_0 = {
     domain: 'cloudron.com',
@@ -35,7 +36,7 @@ describe('Domains API', function () {
 
     before(function (done) {
         config._reset();
-        config.setFqdn('example-domains-test.com');
+        config.setFqdn(DOMAIN);
 
         async.series([
             server.start.bind(null),
@@ -140,11 +141,10 @@ describe('Domains API', function () {
                 .end(function (error, result) {
                     expect(result.statusCode).to.equal(200);
                     expect(result.body.domains).to.be.an(Array);
-                    // includes currently the implicitly added config.fqdn()
                     expect(result.body.domains.length).to.equal(3);
 
                     expect(result.body.domains[0].domain).to.equal(DOMAIN_0.domain);
-                    expect(result.body.domains[1].domain).to.equal(config.fqdn());
+                    expect(result.body.domains[1].domain).to.equal(DOMAIN);
                     expect(result.body.domains[2].domain).to.equal(DOMAIN_1.domain);
 
                     done();

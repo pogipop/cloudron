@@ -27,10 +27,11 @@ var appdb = require('../../appdb.js'),
 var SERVER_URL = 'http://localhost:' + config.get('port');
 
 var USERNAME = 'superadmin', PASSWORD = 'Foobar?1337', EMAIL ='silly@me.com';
+var DOMAIN = 'example-sysadmin-test.com';
 
 function setup(done) {
     config._reset();
-    config.setFqdn('example-sysadmin-test.com');
+    config.setFqdn(DOMAIN);
     config.setVersion('1.2.3');
 
     async.series([
@@ -52,7 +53,7 @@ function setup(done) {
 
         function addApp(callback) {
             var manifest = { version: '0.0.1', manifestVersion: 1, dockerImage: 'foo', healthCheckPath: '/', httpPort: 3, title: 'ok', addons: { } };
-            appdb.add('appid', 'appStoreId', manifest, 'location', config.fqdn(), [ ] /* portBindings */, { }, callback);
+            appdb.add('appid', 'appStoreId', manifest, 'location', DOMAIN, [ ] /* portBindings */, { }, callback);
         },
 
         function createSettings(callback) {
@@ -61,7 +62,7 @@ function setup(done) {
             s3._mockInject(MockS3);
 
             safe.fs.mkdirSync('/tmp/box-sysadmin-test');
-            settingsdb.set(settings.BACKUP_CONFIG_KEY, JSON.stringify({ provider: 'caas', token: 'BACKUP_TOKEN', fqdn: config.fqdn(), key: 'key', prefix: 'boxid', format: 'tgz'}), callback);
+            settingsdb.set(settings.BACKUP_CONFIG_KEY, JSON.stringify({ provider: 'caas', token: 'BACKUP_TOKEN', fqdn: DOMAIN, key: 'key', prefix: 'boxid', format: 'tgz'}), callback);
         }
     ], done);
 }

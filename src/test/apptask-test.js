@@ -22,31 +22,31 @@ var addons = require('../addons.js'),
     _ = require('underscore');
 
 var MANIFEST = {
-  "id": "io.cloudron.test",
-  "author": "The Presidents Of the United States Of America",
-  "title": "test title",
-  "description": "test description",
-  "tagline": "test rocks",
-  "website": "http://test.cloudron.io",
-  "contactEmail": "support@cloudron.io",
-  "version": "0.1.0",
-  "manifestVersion": 1,
-  "dockerImage": "cloudron/test:25.2.0",
-  "healthCheckPath": "/",
-  "httpPort": 7777,
-  "tcpPorts": {
-    "ECHO_SERVER_PORT": {
-      "title": "Echo Server Port",
-      "description": "Echo server",
-      "containerPort": 7778
+    'id': 'io.cloudron.test',
+    'author': 'The Presidents Of the United States Of America',
+    'title': 'test title',
+    'description': 'test description',
+    'tagline': 'test rocks',
+    'website': 'http://test.cloudron.io',
+    'contactEmail': 'support@cloudron.io',
+    'version': '0.1.0',
+    'manifestVersion': 1,
+    'dockerImage': 'cloudron/test:25.2.0',
+    'healthCheckPath': '/',
+    'httpPort': 7777,
+    'tcpPorts': {
+        'ECHO_SERVER_PORT': {
+            'title': 'Echo Server Port',
+            'description': 'Echo server',
+            'containerPort': 7778
+        }
+    },
+    'addons': {
+        'oauth': { },
+        'redis': { },
+        'mysql': { },
+        'postgresql': { }
     }
-  },
-  "addons": {
-    "oauth": { },
-    "redis": { },
-    "mysql": { },
-    "postgresql": { }
-  }
 };
 
 const DOMAIN_0 = {
@@ -89,7 +89,7 @@ describe('apptask', function () {
         awsHostedZones = {
             HostedZones: [{
                 Id: '/hostedzone/ZONEID',
-                Name: config.fqdn() + '.',
+                Name: `${DOMAIN_0.domain}.`,
                 CallerReference: '305AFD59-9D73-4502-B020-F4E6F889CB30',
                 ResourceRecordSetCount: 2,
                 ChangeInfo: {
@@ -243,7 +243,7 @@ describe('apptask', function () {
             .get('/2013-04-01/hostedzone')
             .times(2)
             .reply(200, js2xml('ListHostedZonesResponse', awsHostedZones, { wrapHandlers: { HostedZones: () => 'HostedZone'} }))
-            .get('/2013-04-01/hostedzone/ZONEID/rrset?maxitems=1&name=applocation.' + config.fqdn() + '.&type=A')
+            .get('/2013-04-01/hostedzone/ZONEID/rrset?maxitems=1&name=applocation.' + DOMAIN_0.domain + '.&type=A')
             .reply(200, js2xml('ListResourceRecordSetsResponse', { ResourceRecordSets: [ ] }, { 'Content-Type': 'application/xml' }))
             .post('/2013-04-01/hostedzone/ZONEID/rrset/')
             .reply(200, js2xml('ChangeResourceRecordSetsResponse', { ChangeInfo: { Id: 'RRID', Status: 'INSYNC' } }));

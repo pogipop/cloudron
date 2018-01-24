@@ -24,7 +24,7 @@ var SERVER_URL = 'http://localhost:' + config.get('port');
 
 var USERNAME = 'superadmin', PASSWORD = 'Foobar?1337', EMAIL ='silly@me.com';
 var token = null;
-
+var DOMAIN = 'example-backups-test.com';
 
 var gSudoOriginal = null;
 function injectShellMock() {
@@ -41,7 +41,7 @@ function setup(done) {
     config._reset();
     config.set('provider', 'caas');
     config.setVersion('1.2.3');
-    config.setFqdn('example-backups-test.com');
+    config.setFqdn(DOMAIN);
 
     async.series([
         server.start.bind(server),
@@ -72,7 +72,7 @@ function setup(done) {
 
         function addApp(callback) {
             var manifest = { version: '0.0.1', manifestVersion: 1, dockerImage: 'foo', healthCheckPath: '/', httpPort: 3, title: 'ok', addons: { } };
-            appdb.add('appid', 'appStoreId', manifest, 'location', config.fqdn(), [ ] /* portBindings */, { }, callback);
+            appdb.add('appid', 'appStoreId', manifest, 'location', DOMAIN, [ ] /* portBindings */, { }, callback);
         },
 
         function createSettings(callback) {
@@ -149,7 +149,6 @@ describe('Caas', function () {
                     expect(result.statusCode).to.equal(200);
                     expect(result.body.apiServerOrigin).to.eql('http://localhost:6060');
                     expect(result.body.webServerOrigin).to.eql(null);
-                    expect(result.body.fqdn).to.eql(config.fqdn());
                     expect(result.body.adminFqdn).to.eql(config.adminFqdn());
                     expect(result.body.progress).to.be.an('object');
                     expect(result.body.update).to.be.an('object');

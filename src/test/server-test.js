@@ -15,6 +15,7 @@ var config = require('../config.js'),
     server = require('../server.js');
 
 var SERVER_URL = 'http://localhost:' + config.get('port');
+var DOMAIN = 'example-server-test.com';
 
 function cleanup(done) {
     done();
@@ -25,7 +26,7 @@ describe('Server', function () {
 
     before(function () {
         config._reset();
-        config.setFqdn('example-server-test.com');
+        config.setFqdn(DOMAIN);
         config.set('provider', 'notcaas'); // otherwise, cron sets a caas timer for heartbeat causing the test to not quit
     });
 
@@ -250,30 +251,6 @@ describe('Server', function () {
             server.stop(function () {
                 done();
             });
-        });
-    });
-
-    describe('heartbeat', function () {
-        var successfulHeartbeatGet;
-
-        before(function (done) {
-            server.start(done);
-
-            var scope = nock(config.apiServerOrigin());
-            successfulHeartbeatGet = scope.get('/api/v1/boxes/' + config.fqdn() + '/heartbeat');
-            successfulHeartbeatGet.reply(200);
-        });
-
-        after(function (done) {
-            server.stop(done);
-            nock.cleanAll();
-        });
-
-        it('sends heartbeat', function (done) {
-            setTimeout(function () {
-                expect(successfulHeartbeatGet.counter).to.equal(1);
-                done();
-            }, 100);
         });
     });
 });

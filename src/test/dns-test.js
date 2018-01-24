@@ -249,7 +249,7 @@ describe('dns provider', function () {
                 .post('/v2/domains/' + config.zoneName() + '/records')
                 .reply(201, { domain_record: DOMAIN_RECORD_2_NEW });
 
-            domains.upsertDNSRecords('', config.fqdn(), 'TXT', [ DOMAIN_RECORD_2_NEW.data, DOMAIN_RECORD_1_NEW.data, DOMAIN_RECORD_3_NEW.data ], function (error, result) {
+            domains.upsertDNSRecords('', DOMAIN_0.domain, 'TXT', [ DOMAIN_RECORD_2_NEW.data, DOMAIN_RECORD_1_NEW.data, DOMAIN_RECORD_3_NEW.data ], function (error, result) {
                 expect(error).to.eql(null);
                 expect(result).to.eql('3352893');
                 expect(req1.isDone()).to.be.ok();
@@ -473,7 +473,7 @@ describe('dns provider', function () {
                 }
             }]);
 
-            domains.upsertDNSRecords('', config.fqdn(), 'TXT', [ 'first', 'second', 'third' ], function (error, result) {
+            domains.upsertDNSRecords('', DOMAIN_0.domain, 'TXT', [ 'first', 'second', 'third' ], function (error, result) {
                 expect(error).to.eql(null);
                 expect(result).to.eql('/change/C2QLKQIWEI0BZF');
                 expect(awsAnswerQueue.length).to.eql(0);
@@ -614,7 +614,7 @@ describe('dns provider', function () {
             zoneQueue.push([null, [ ]]); // getRecords
             zoneQueue.push([null, {id: '3'}]);
 
-            domains.upsertDNSRecords('', config.fqdn(), 'TXT', [ 'first', 'second', 'third' ], function (error, result) {
+            domains.upsertDNSRecords('', DOMAIN_0.domain, 'TXT', [ 'first', 'second', 'third' ], function (error, result) {
                 expect(error).to.eql(null);
                 expect(result).to.eql('3');
                 expect(zoneQueue.length).to.eql(0);

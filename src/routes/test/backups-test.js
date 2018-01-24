@@ -13,19 +13,19 @@ var appdb = require('../../appdb.js'),
     nock = require('nock'),
     superagent = require('superagent'),
     server = require('../../server.js'),
-    settings = require('../../settings.js'),
-    settingsdb = require('../../settingsdb.js');
+    settings = require('../../settings.js');
 
 var SERVER_URL = 'http://localhost:' + config.get('port');
 
 var USERNAME = 'superadmin', PASSWORD = 'Foobar?1337', EMAIL ='silly@me.com';
+var DOMAIN = 'example-backups-test.com';
 var token = null;
 
 function setup(done) {
     nock.cleanAll();
     config._reset();
     config.setVersion('1.2.3');
-    config.setFqdn('example-backups-test.com');
+    config.setFqdn(DOMAIN);
 
     async.series([
         server.start.bind(server),
@@ -49,7 +49,7 @@ function setup(done) {
 
         function addApp(callback) {
             var manifest = { version: '0.0.1', manifestVersion: 1, dockerImage: 'foo', healthCheckPath: '/', httpPort: 3, title: 'ok', addons: { } };
-            appdb.add('appid', 'appStoreId', manifest, 'location', config.fqdn(), [ ] /* portBindings */, { }, callback);
+            appdb.add('appid', 'appStoreId', manifest, 'location', DOMAIN, [ ] /* portBindings */, { }, callback);
         },
 
         function createSettings(callback) {
