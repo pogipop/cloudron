@@ -22,6 +22,7 @@ var assert = require('assert'),
     config = require('./config.js'),
     debug = require('debug')('box:appstore'),
     eventlog = require('./eventlog.js'),
+    mail = require('./mail.js'),
     os = require('os'),
     settings = require('./settings.js'),
     superagent = require('superagent'),
@@ -143,54 +144,58 @@ function sendAliveStatus(data, callback) {
     settings.getAll(function (error, result) {
         if (error) return callback(new AppstoreError(AppstoreError.INTERNAL_ERROR, error));
 
-        eventlog.getAllPaged(eventlog.ACTION_USER_LOGIN, null, 1, 1, function (error, loginEvents) {
+        mail.getAll(function (error, mailDomains) {
             if (error) return callback(new AppstoreError(AppstoreError.INTERNAL_ERROR, error));
 
-            var backendSettings = {
-                tlsConfig: {
-                    provider: result[settings.TLS_CONFIG_KEY].provider
-                },
-                backupConfig: {
-                    provider: result[settings.BACKUP_CONFIG_KEY].provider,
-                    hardlinks: !result[settings.BACKUP_CONFIG_KEY].noHardlinks
-                },
-                mailConfig: {
-                    enabled: result[settings.MAIL_CONFIG_KEY].enabled
-                },
-                mailRelay: {
-                    provider: result[settings.MAIL_RELAY_KEY].provider
-                },
-                mailCatchAll: {
-                    count: result[settings.CATCH_ALL_ADDRESS_KEY].length
-                },
-                autoupdatePattern: result[settings.AUTOUPDATE_PATTERN_KEY],
-                timeZone: result[settings.TIME_ZONE_KEY],
-            };
+            eventlog.getAllPaged(eventlog.ACTION_USER_LOGIN, null, 1, 1, function (error, loginEvents) {
+                if (error) return callback(new AppstoreError(AppstoreError.INTERNAL_ERROR, error));
 
-            var data = {
-                version: config.version(),
-                adminFqdn: config.adminFqdn(),
-                provider: config.provider(),
-                backendSettings: backendSettings,
-                machine: {
-                    cpus: os.cpus(),
-                    totalmem: os.totalmem()
-                },
-                events: {
-                    lastLogin: loginEvents[0] ? (new Date(loginEvents[0].creationTime).getTime()) : 0
-                }
-            };
+                var backendSettings = {
+                    tlsConfig: {
+                        provider: result[settings.TLS_CONFIG_KEY].provider
+                    },
+                    backupConfig: {
+                        provider: result[settings.BACKUP_CONFIG_KEY].provider,
+                        hardlinks: !result[settings.BACKUP_CONFIG_KEY].noHardlinks
+                    },
+                    domainConfig: {
+                        count: mailDomains.length
+                    },
+                    mailConfig: {
+                        outboundCount: mailDomains.length,
+                        inboundCount: mailDomains.filter(function (d) { return d.enabled; }).length,
+                        catchAllCount: mailDomains.filter(function (d) { return d.catchAll.length !== 0; }).length,
+                        relayProviders: Array.from(new Set(mailDomains.map(function (d) { return d.relay.provider; })))
+                    },
+                    autoupdatePattern: result[settings.AUTOUPDATE_PATTERN_KEY],
+                    timeZone: result[settings.TIME_ZONE_KEY],
+                };
 
-            getAppstoreConfig(function (error, appstoreConfig) {
-                if (error) return callback(error);
+                var data = {
+                    version: config.version(),
+                    adminFqdn: config.adminFqdn(),
+                    provider: config.provider(),
+                    backendSettings: backendSettings,
+                    machine: {
+                        cpus: os.cpus(),
+                        totalmem: os.totalmem()
+                    },
+                    events: {
+                        lastLogin: loginEvents[0] ? (new Date(loginEvents[0].creationTime).getTime()) : 0
+                    }
+                };
 
-                var url = config.apiServerOrigin() + '/api/v1/users/' + appstoreConfig.userId + '/cloudrons/' + appstoreConfig.cloudronId + '/alive';
-                superagent.post(url).send(data).query({ accessToken: appstoreConfig.token }).timeout(30 * 1000).end(function (error, result) {
-                    if (error && !error.response) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, error));
-                    if (result.statusCode === 404) return callback(new AppstoreError(AppstoreError.NOT_FOUND));
-                    if (result.statusCode !== 201) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, util.format('Sending alive status failed. %s %j', result.status, result.body)));
+                getAppstoreConfig(function (error, appstoreConfig) {
+                    if (error) return callback(error);
 
-                    callback(null);
+                    var url = config.apiServerOrigin() + '/api/v1/users/' + appstoreConfig.userId + '/cloudrons/' + appstoreConfig.cloudronId + '/alive';
+                    superagent.post(url).send(data).query({ accessToken: appstoreConfig.token }).timeout(30 * 1000).end(function (error, result) {
+                        if (error && !error.response) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, error));
+                        if (result.statusCode === 404) return callback(new AppstoreError(AppstoreError.NOT_FOUND));
+                        if (result.statusCode !== 201) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, util.format('Sending alive status failed. %s %j', result.status, result.body)));
+
+                        callback(null);
+                    });
                 });
             });
         });
