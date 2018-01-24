@@ -4,6 +4,7 @@ exports = module.exports = {
     add: add,
     del: del,
     get: get,
+    getAll: getAll,
     update: update,
 
     _clear: clear,
@@ -79,6 +80,18 @@ function get(domain, callback) {
         if (results.length === 0) return callback(new DatabaseError(DatabaseError.NOT_FOUND));
 
         callback(null, postProcess(results[0]));
+    });
+}
+
+function getAll(callback) {
+    assert.strictEqual(typeof callback, 'function');
+
+    database.query('SELECT ' + MAILDB_FIELDS + ' FROM mail ORDER BY domain', function (error, results) {
+        if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
+
+        results.forEach(function (result) { postProcess(result); });
+
+        callback(null, results);
     });
 }
 

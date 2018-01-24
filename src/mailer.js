@@ -31,8 +31,8 @@ var assert = require('assert'),
     config = require('./config.js'),
     debug = require('debug')('box:mailer'),
     docker = require('./docker.js').connection,
-    domains = require('./domains.js'),
     ejs = require('ejs'),
+    mail = require('./mail.js'),
     nodemailer = require('nodemailer'),
     path = require('path'),
     safe = require('safetydance'),
@@ -74,15 +74,17 @@ function getMailConfig(callback) {
                 cloudronName = 'Cloudron';
             }
 
-            domains.getAll(function (error, domains) {
+            mail.getAll(function (error, domains) {
                 if (error) return callback(error);
                 if (domains.length === 0) return callback('No domains configured');
+
+                const defaultDomain = domains[0];
 
                 callback(null, {
                     adminEmails: adminEmails,
                     cloudronName: cloudronName,
-                    notificationDomain: domains[0].domain,
-                    notificationFrom: '"' + cloudronName + '" <no-reply@' + domains[0].domain + '>'
+                    notificationDomain: defaultDomain.domain,
+                    notificationFrom: '"' + cloudronName + '" <no-reply@' + defaultDomain.domain + '>'
                 });
             });
         });

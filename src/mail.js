@@ -4,6 +4,7 @@ exports = module.exports = {
     getStatus: getStatus,
 
     get: get,
+    getAll: getAll,
 
     setMailFromValidation: setMailFromValidation,
     setCatchAllAddress: setCatchAllAddress,
@@ -154,9 +155,9 @@ function verifyRelay(relay, callback) {
     });
 }
 
-function checkDkim(callback) {
+function checkDkim(domain, callback) {
     var dkim = {
-        domain: config.dkimSelector() + '._domainkey.' + config.fqdn(),
+        domain: config.dkimSelector() + '._domainkey.' + domain,
         type: 'TXT',
         expected: null,
         value: null,
@@ -181,12 +182,12 @@ function checkDkim(callback) {
     });
 }
 
-function checkSpf(callback) {
+function checkSpf(domain, callback) {
     var spf = {
-        domain: config.fqdn(),
+        domain: domain,
         type: 'TXT',
         value: null,
-        expected: '"v=spf1 a:' + config.adminFqdn() + ' ~all"',
+        expected: '"v=spf1 a:' + config.mailFqdn() + ' ~all"',
         status: false
     };
 
@@ -215,9 +216,9 @@ function checkSpf(callback) {
     });
 }
 
-function checkMx(callback) {
+function checkMx(domain, callback) {
     var mx = {
-        domain: config.fqdn(),
+        domain: domain,
         type: 'MX',
         value: null,
         expected: '10 ' + config.mailFqdn() + '.',
@@ -237,9 +238,9 @@ function checkMx(callback) {
     });
 }
 
-function checkDmarc(callback) {
+function checkDmarc(domain, callback) {
     var dmarc = {
-        domain: '_dmarc.' + config.fqdn(),
+        domain: '_dmarc.' + domain,
         type: 'TXT',
         value: null,
         expected: '"v=DMARC1; p=reject; pct=100"',
@@ -346,7 +347,8 @@ const RBL_LIST = [
     }
 ];
 
-function checkRblStatus(callback) {
+// this function currently only looks for black lists based on IP. TODO: also look up by domain
+function checkRblStatus(domain, callback) {
     assert.strictEqual(typeof callback, 'function');
 
     sysinfo.getPublicIp(function (error, ip) {
@@ -359,14 +361,14 @@ function checkRblStatus(callback) {
             dig.resolve(flippedIp + '.' + rblServer.dns, 'A', digOptions, function (error, records) {
                 if (error || !records) return iteratorDone(null, null);    // not listed
 
-                debug('checkRblStatus: %s (ip: %s) is in the blacklist of %j', config.fqdn(), flippedIp, rblServer);
+                debug('checkRblStatus: %s (ip: %s) is in the blacklist of %j', domain, flippedIp, rblServer);
 
                 var result = _.extend({ }, rblServer);
 
                 dig.resolve(flippedIp + '.' + rblServer.dns, 'TXT', digOptions, function (error, txtRecords) {
                     result.txtRecords = error || !txtRecords ? 'No txt record' : txtRecords;
 
-                    debug('checkRblStatus: %s (error: %s) (txtRecords: %j)', config.fqdn(), error, txtRecords);
+                    debug('checkRblStatus: %s (error: %s) (txtRecords: %j)', domain, error, txtRecords);
 
                     return iteratorDone(null, result);
                 });
@@ -374,7 +376,7 @@ function checkRblStatus(callback) {
         }, function (ignoredError, blacklistedServers) {
             blacklistedServers = blacklistedServers.filter(function(b) { return b !== null; });
 
-            debug('checkRblStatus: %s (ip: %s) servers: %j', config.fqdn(), ip, blacklistedServers);
+            debug('checkRblStatus: %s (ip: %s) servers: %j', domain, ip, blacklistedServers);
 
             return callback(null, { status: blacklistedServers.length === 0, ip: ip, servers: blacklistedServers });
         });
@@ -404,25 +406,25 @@ function getStatus(domain, callback) {
         };
     }
 
-    get(domain, function (error, mailConfig) {
+    get(domain, function (error, result) {
         if (error) return callback(error);
 
         var checks = [
-            recordResult('dns.mx', checkMx),
-            recordResult('dns.dmarc', checkDmarc)
+            recordResult('dns.mx', checkMx.bind(null, domain)),
+            recordResult('dns.dmarc', checkDmarc.bind(null, domain))
         ];
 
-        if (mailConfig.relay.provider === 'cloudron-smtp') {
+        if (result.relay.provider === 'cloudron-smtp') {
             // these tests currently only make sense when using Cloudron's SMTP server at this point
             checks.push(
-                recordResult('dns.spf', checkSpf),
-                recordResult('dns.dkim', checkDkim),
+                recordResult('dns.spf', checkSpf.bind(null, domain)),
+                recordResult('dns.dkim', checkDkim.bind(null, domain)),
                 recordResult('dns.ptr', checkPtr),
                 recordResult('relay', checkOutboundPort25),
-                recordResult('rbl', checkRblStatus)
+                recordResult('rbl', checkRblStatus.bind(null, domain))
             );
         } else {
-            checks.push(recordResult('relay', checkSmtpRelay.bind(null, mailConfig.relay)));
+            checks.push(recordResult('relay', checkSmtpRelay.bind(null, result.relay)));
         }
 
         async.parallel(checks, function () {
@@ -434,28 +436,32 @@ function getStatus(domain, callback) {
 function createMailConfig(callback) {
     assert.strictEqual(typeof callback, 'function');
 
-    const fqdn = config.fqdn();
     const mailFqdn = config.mailFqdn();
-    const alertsFrom = 'no-reply@' + config.fqdn();
 
     debug('createMailConfig: generating mail config');
 
-    user.getOwner(function (error, owner) {
-        var alertsTo = config.provider() === 'caas' ? [ 'support@cloudron.io' ] : [ ];
-        alertsTo.concat(error ? [] : owner.email).join(','); // owner may not exist yet
+    maildb.getAll(function (error, mailOutDomains) {
+        if (error) return callback(error);
 
-        get(fqdn, function (error, result) {
-            if (error) return callback(error);
+        var mailDomain = mailOutDomains[0]; // mail container can only handle one domain at this point
 
-            var catchAll = result.catchAll.map(function (c) { return `${c}@${fqdn}`; }).join(',');
-            var mailFromValidation = result.mailFromValidation;
+        const alertsFrom = `no-reply@${mailDomain.domain}`;
+
+        user.getOwner(function (error, owner) {
+            const alertsTo = config.provider() === 'caas' ? [ 'support@cloudron.io' ] : [ ];
+            alertsTo.concat(error ? [] : owner.email).join(','); // owner may not exist yet
+
+            const mailOutDomain = mailDomain.domain;
+            const mailInDomain = mailDomain.enabled ? mailDomain.domain : '';
+            const catchAll = mailDomain.catchAll.map(function (c) { return `${c}@${mailDomain.domain}`; }).join(',');
+            const mailFromValidation = mailDomain.mailFromValidation;
 
             if (!safe.fs.writeFileSync(paths.ADDON_CONFIG_DIR + '/mail/mail.ini',
-                `mail_in_domains=${fqdn}\nmail_out_domains=${fqdn}\nmail_default_domain=${fqdn}\nmail_server_name=${mailFqdn}\nalerts_from=${alertsFrom}\nalerts_to=${alertsTo}\ncatch_all=${catchAll}\nmail_from_validation=${mailFromValidation}\n`, 'utf8')) {
+                `mail_in_domains=${mailInDomain}\nmail_out_domains=${mailOutDomain}\nmail_default_domain=${mailDomain.domain}\nmail_server_name=${mailFqdn}\nalerts_from=${alertsFrom}\nalerts_to=${alertsTo}\ncatch_all=${catchAll}\nmail_from_validation=${mailFromValidation}\n`, 'utf8')) {
                 return callback(new Error('Could not create mail var file:' + safe.error.message));
             }
 
-            var relay = result.relay;
+            var relay = mailDomain.relay;
 
             const enabled = relay.provider !== 'cloudron-smtp' ? true : false,
                 host = relay.host || '',
@@ -468,7 +474,7 @@ function createMailConfig(callback) {
                 return callback(new Error('Could not create mail var file:' + safe.error.message));
             }
 
-            callback();
+            callback(null, mailInDomain.length !== 0);
         });
     });
 }
@@ -499,45 +505,28 @@ function restartMail(callback) {
         if (!safe.fs.writeFileSync(paths.ADDON_CONFIG_DIR + '/mail/tls_cert.pem', cert)) return callback(new Error('Could not create cert file:' + safe.error.message));
         if (!safe.fs.writeFileSync(paths.ADDON_CONFIG_DIR + '/mail/tls_key.pem', key))  return callback(new Error('Could not create key file:' + safe.error.message));
 
-        get(config.fqdn(), function (error, mailConfig) {
+        shell.execSync('startMail', 'docker rm -f mail || true');
+
+        createMailConfig(function (error, allowInbound) {
             if (error) return callback(error);
 
-            shell.execSync('startMail', 'docker rm -f mail || true');
+            var ports = allowInbound ? '-p 587:2525 -p 993:9993 -p 4190:4190 -p 25:2525' : '';
 
-            createMailConfig(function (error) {
-                if (error) return callback(error);
+            const cmd = `docker run --restart=always -d --name="mail" \
+                        --net cloudron \
+                        --net-alias mail \
+                        -m ${memoryLimit}m \
+                        --memory-swap ${memoryLimit * 2}m \
+                        --dns 172.18.0.1 \
+                        --dns-search=. \
+                        -v "${paths.MAIL_DATA_DIR}:/app/data" \
+                        -v "${paths.PLATFORM_DATA_DIR}/addons/mail:/etc/mail" \
+                        ${ports} \
+                        --read-only -v /run -v /tmp ${tag}`;
 
-                var ports = mailConfig.enabled ? '-p 587:2525 -p 993:9993 -p 4190:4190 -p 25:2525' : '';
+            shell.execSync('startMail', cmd);
 
-                const cmd = `docker run --restart=always -d --name="mail" \
-                            --net cloudron \
-                            --net-alias mail \
-                            -m ${memoryLimit}m \
-                            --memory-swap ${memoryLimit * 2}m \
-                            --dns 172.18.0.1 \
-                            --dns-search=. \
-                            -v "${paths.MAIL_DATA_DIR}:/app/data" \
-                            -v "${paths.PLATFORM_DATA_DIR}/addons/mail:/etc/mail" \
-                            ${ports} \
-                            --read-only -v /run -v /tmp ${tag}`;
-
-                shell.execSync('startMail', cmd);
-
-                if (!mailConfig.enabled || process.env.BOX_ENV === 'test') return callback();
-
-                // Add MX and DMARC record. Note that DMARC policy depends on DKIM signing and thus works
-                // only if we use our internal mail server.
-                var records = [
-                    { subdomain: '_dmarc', type: 'TXT', values: [ '"v=DMARC1; p=reject; pct=100"' ] },
-                    { subdomain: '', type: 'MX', values: [ '10 ' + config.mailFqdn() + '.' ] }
-                ];
-
-                async.mapSeries(records, function (record, iteratorCallback) {
-                    domains.upsertDNSRecords(record.subdomain, config.fqdn(), record.type, record.values, iteratorCallback);
-                }, NOOP_CALLBACK); // do not crash if DNS creds do not work in startup sequence
-
-                callback();
-            });
+            callback();
         });
     });
 }
@@ -551,6 +540,16 @@ function get(domain, callback) {
         if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
 
         return callback(null, result);
+    });
+}
+
+function getAll(callback) {
+    assert.strictEqual(typeof callback, 'function');
+
+    maildb.getAll(function (error, results) {
+        if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
+
+        return callback(null, results);
     });
 }
 
@@ -611,6 +610,19 @@ function setMailEnabled(domain, enabled, callback) {
         if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
 
         restartMail(NOOP_CALLBACK);
+
+        if (!enabled || process.env.BOX_ENV === 'test') return callback();
+
+        // Add MX and DMARC record. Note that DMARC policy depends on DKIM signing and thus works
+        // only if we use our internal mail server.
+        var records = [
+            { subdomain: '_dmarc', type: 'TXT', values: [ '"v=DMARC1; p=reject; pct=100"' ] },
+            { subdomain: '', type: 'MX', values: [ '10 ' + config.mailFqdn() + '.' ] }
+        ];
+
+        async.mapSeries(records, function (record, iteratorCallback) {
+            domains.upsertDNSRecords(record.subdomain, domain, record.type, record.values, iteratorCallback);
+        }, NOOP_CALLBACK);
 
         callback(null);
     });
