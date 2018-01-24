@@ -147,7 +147,7 @@ CREATE TABLE IF NOT EXISTS mailboxes(
     domain VARCHAR(128),
 
     FOREIGN KEY(domain) REFERENCES domains(domain),
-    PRIMARY KEY (name));
+    UNIQUE (name, domain));
 
 CREATE TABLE IF NOT EXISTS domains(
     domain VARCHAR(128) NOT NULL UNIQUE, /* if this needs to be larger, InnoDB has a limit of 767 bytes for PRIMARY KEY values! */
