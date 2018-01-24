@@ -45,7 +45,7 @@ describe('dns provider', function () {
 
     describe('noop', function () {
         before(function (done) {
-            DOMAIN_0.provider = 'noop'
+            DOMAIN_0.provider = 'noop';
             DOMAIN_0.config = {
             };
 
@@ -107,10 +107,10 @@ describe('dns provider', function () {
             };
 
             var req1 = nock(DIGITALOCEAN_ENDPOINT).filteringRequestBody(function () { return false; })
-                .get('/v2/domains/' + config.zoneName() + '/records')
+                .get('/v2/domains/' + DOMAIN_0.zoneName + '/records')
                 .reply(200, { domain_records: [] });
             var req2 = nock(DIGITALOCEAN_ENDPOINT).filteringRequestBody(function () { return false; })
-                .post('/v2/domains/' + config.zoneName() + '/records')
+                .post('/v2/domains/' + DOMAIN_0.zoneName + '/records')
                 .reply(201, { domain_record: DOMAIN_RECORD_0 });
 
             domains.upsertDNSRecords('test', DOMAIN_0.domain, 'A', [ '1.2.3.4' ], function (error, result) {
@@ -157,10 +157,10 @@ describe('dns provider', function () {
             };
 
             var req1 = nock(DIGITALOCEAN_ENDPOINT).filteringRequestBody(function () { return false; })
-                .get('/v2/domains/' + config.zoneName() + '/records')
+                .get('/v2/domains/' + DOMAIN_0.zoneName + '/records')
                 .reply(200, { domain_records: [ DOMAIN_RECORD_0, DOMAIN_RECORD_1 ] });
             var req2 = nock(DIGITALOCEAN_ENDPOINT).filteringRequestBody(function () { return false; })
-                .put('/v2/domains/' + config.zoneName() + '/records/' + DOMAIN_RECORD_1.id)
+                .put('/v2/domains/' + DOMAIN_0.zoneName + '/records/' + DOMAIN_RECORD_1.id)
                 .reply(200, { domain_record: DOMAIN_RECORD_1_NEW });
 
             domains.upsertDNSRecords('test', DOMAIN_0.domain, 'A', [ DOMAIN_RECORD_1_NEW.data ], function (error, result) {
@@ -237,16 +237,16 @@ describe('dns provider', function () {
             };
 
             var req1 = nock(DIGITALOCEAN_ENDPOINT).filteringRequestBody(function () { return false; })
-                .get('/v2/domains/' + config.zoneName() + '/records')
+                .get('/v2/domains/' + DOMAIN_0.zoneName + '/records')
                 .reply(200, { domain_records: [ DOMAIN_RECORD_0, DOMAIN_RECORD_1, DOMAIN_RECORD_2 ] });
             var req2 = nock(DIGITALOCEAN_ENDPOINT).filteringRequestBody(function () { return false; })
-                .put('/v2/domains/' + config.zoneName() + '/records/' + DOMAIN_RECORD_1.id)
+                .put('/v2/domains/' + DOMAIN_0.zoneName + '/records/' + DOMAIN_RECORD_1.id)
                 .reply(200, { domain_record: DOMAIN_RECORD_1_NEW });
             var req3 = nock(DIGITALOCEAN_ENDPOINT).filteringRequestBody(function () { return false; })
-                .put('/v2/domains/' + config.zoneName() + '/records/' + DOMAIN_RECORD_2.id)
+                .put('/v2/domains/' + DOMAIN_0.zoneName + '/records/' + DOMAIN_RECORD_2.id)
                 .reply(200, { domain_record: DOMAIN_RECORD_2_NEW });
             var req4 = nock(DIGITALOCEAN_ENDPOINT).filteringRequestBody(function () { return false; })
-                .post('/v2/domains/' + config.zoneName() + '/records')
+                .post('/v2/domains/' + DOMAIN_0.zoneName + '/records')
                 .reply(201, { domain_record: DOMAIN_RECORD_2_NEW });
 
             domains.upsertDNSRecords('', DOMAIN_0.domain, 'TXT', [ DOMAIN_RECORD_2_NEW.data, DOMAIN_RECORD_1_NEW.data, DOMAIN_RECORD_3_NEW.data ], function (error, result) {
@@ -285,7 +285,7 @@ describe('dns provider', function () {
             };
 
             var req1 = nock(DIGITALOCEAN_ENDPOINT).filteringRequestBody(function () { return false; })
-                .get('/v2/domains/' + config.zoneName() + '/records')
+                .get('/v2/domains/' + DOMAIN_0.zoneName + '/records')
                 .reply(200, { domain_records: [ DOMAIN_RECORD_0, DOMAIN_RECORD_1 ] });
 
             domains.getDNSRecords('test', DOMAIN_0.domain, 'A', function (error, result) {
@@ -323,10 +323,10 @@ describe('dns provider', function () {
             };
 
             var req1 = nock(DIGITALOCEAN_ENDPOINT).filteringRequestBody(function () { return false; })
-                .get('/v2/domains/' + config.zoneName() + '/records')
+                .get('/v2/domains/' + DOMAIN_0.zoneName + '/records')
                 .reply(200, { domain_records: [ DOMAIN_RECORD_0, DOMAIN_RECORD_1 ] });
             var req2 = nock(DIGITALOCEAN_ENDPOINT).filteringRequestBody(function () { return false; })
-                .delete('/v2/domains/' + config.zoneName() + '/records/' + DOMAIN_RECORD_1.id)
+                .delete('/v2/domains/' + DOMAIN_0.zoneName + '/records/' + DOMAIN_RECORD_1.id)
                 .reply(204, {});
 
             domains.removeDNSRecords('test', DOMAIN_0.domain, 'A', ['1.2.3.4'], function (error) {
@@ -355,7 +355,7 @@ describe('dns provider', function () {
             AWS_HOSTED_ZONES = {
                 HostedZones: [{
                     Id: '/hostedzone/Z34G16B38TNZ9L',
-                    Name: config.zoneName() + '.',
+                    Name: DOMAIN_0.zoneName + '.',
                     CallerReference: '305AFD59-9D73-4502-B020-F4E6F889CB30',
                     ResourceRecordSetCount: 2,
                     ChangeInfo: {
@@ -486,7 +486,7 @@ describe('dns provider', function () {
             awsAnswerQueue.push([null, AWS_HOSTED_ZONES]);
             awsAnswerQueue.push([null, {
                 ResourceRecordSets: [{
-                    Name: 'test.' + config.zoneName() + '.',
+                    Name: 'test.' + DOMAIN_0.zoneName + '.',
                     Type: 'A',
                     ResourceRecords: [{
                         Value: '1.2.3.4'
