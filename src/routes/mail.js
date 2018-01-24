@@ -8,7 +8,9 @@ exports = module.exports = {
     setMailFromValidation: setMailFromValidation,
     setCatchAllAddress: setCatchAllAddress,
     setMailRelay: setMailRelay,
-    setMailEnabled: setMailEnabled
+    setMailEnabled: setMailEnabled,
+
+    sendTestMail: sendTestMail
 };
 
 var assert = require('assert'),
@@ -101,6 +103,20 @@ function setMailEnabled(req, res, next) {
     mail.setMailEnabled(req.params.domain, !!req.body.enabled, function (error) {
         if (error && error.reason === MailError.NOT_FOUND) return next(new HttpError(404, error.message));
         if (error && error.reason === MailError.BAD_FIELD) return next(new HttpError(400, error.message));
+        if (error) return next(new HttpError(500, error));
+
+        next(new HttpSuccess(202));
+    });
+}
+
+function sendTestMail(req, res, next) {
+    assert.strictEqual(typeof req.params.domain, 'string');
+    assert.strictEqual(typeof req.body, 'object');
+
+    if (!req.body.to || typeof req.body.to !== 'string') return next(new HttpError(400, 'to must be a non-empty string'));
+
+    mail.sendTestMail(req.params.domain, req.body.to, function (error) {
+        if (error && error.reason === MailError.NOT_FOUND) return next(new HttpError(404, error.message));
         if (error) return next(new HttpError(500, error));
 
         next(new HttpSuccess(202));

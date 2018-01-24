@@ -15,8 +15,7 @@ exports = module.exports = {
     feedback: feedback,
     checkForUpdates: checkForUpdates,
     getLogs: getLogs,
-    getLogStream: getLogStream,
-    sendTestMail: sendTestMail
+    getLogStream: getLogStream
 };
 
 var appstore = require('../appstore.js'),
@@ -32,7 +31,6 @@ var appstore = require('../appstore.js'),
     HttpError = require('connect-lastmile').HttpError,
     HttpSuccess = require('connect-lastmile').HttpSuccess,
     progress = require('../progress.js'),
-    mailer = require('../mailer.js'),
     superagent = require('superagent'),
     updateChecker = require('../updatechecker.js'),
     _ = require('underscore');
@@ -301,14 +299,4 @@ function getLogStream(req, res, next) {
         logStream.on('end', res.end.bind(res));
         logStream.on('error', res.end.bind(res, null));
     });
-}
-
-function sendTestMail(req, res, next) {
-    assert.strictEqual(typeof req.body, 'object');
-
-    if (!req.body.email || typeof req.body.email !== 'string') return next(new HttpError(400, 'email must be a non-empty string'));
-
-    mailer.sendTestMail(req.body.email);
-
-    next(new HttpSuccess(202));
 }

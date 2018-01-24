@@ -122,7 +122,6 @@ function initializeExpressSync() {
     router.get ('/api/v1/cloudron/ssh/authorized_keys/:identifier', cloudronScope, routes.user.requireAdmin, routes.ssh.getAuthorizedKey);
     router.del ('/api/v1/cloudron/ssh/authorized_keys/:identifier', cloudronScope, routes.user.requireAdmin, routes.ssh.delAuthorizedKey);
     router.get ('/api/v1/cloudron/eventlog', cloudronScope, routes.user.requireAdmin, routes.eventlog.get);
-    router.post('/api/v1/cloudron/send_test_mail',  cloudronScope, routes.user.requireAdmin, routes.cloudron.sendTestMail);
 
     // profile api, working off the user behind the provided token
     router.get ('/api/v1/profile', profileScope, routes.profile.get);
@@ -219,6 +218,7 @@ function initializeExpressSync() {
     router.post('/api/v1/mail/:domain/catch_all',  settingsScope, routes.user.requireAdmin, routes.mail.setCatchAllAddress);
     router.post('/api/v1/mail/:domain/relay',         settingsScope, routes.user.requireAdmin, routes.mail.setMailRelay);
     router.post('/api/v1/mail/:domain/enable',        settingsScope, routes.user.requireAdmin, routes.mail.setMailEnabled);
+    router.post('/api/v1/mail/:domain/send_test_mail',  cloudronScope, routes.user.requireAdmin, routes.mail.sendTestMail);
 
     // feedback
     router.post('/api/v1/feedback', usersScope, routes.cloudron.feedback);

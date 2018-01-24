@@ -12,6 +12,8 @@ exports = module.exports = {
 
     startMail: restartMail,
 
+    sendTestMail: sendTestMail,
+
     MailError: MailError
 };
 
@@ -26,6 +28,7 @@ var assert = require('assert'),
     domains = require('./domains.js'),
     infra = require('./infra_version.js'),
     maildb = require('./maildb.js'),
+    mailer = require('./mailer.js'),
     net = require('net'),
     nodemailer = require('nodemailer'),
     os = require('os'),
@@ -602,5 +605,18 @@ function setMailEnabled(domain, enabled, callback) {
         restartMail(NOOP_CALLBACK);
 
         callback(null);
+    });
+}
+
+function sendTestMail(domain, to, callback) {
+    assert.strictEqual(typeof domain, 'string');
+    assert.strictEqual(typeof to, 'object');
+
+    get(domain, function (error, result) {
+        if (error) return callback(error);
+
+        mailer.sendTestMail(result.domain, to);
+
+        callback();
     });
 }

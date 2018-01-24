@@ -530,14 +530,15 @@ function unexpectedExit(program, context, callback) {
     });
 }
 
-function sendTestMail(email) {
+function sendTestMail(domain, email) {
+    assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof email, 'string');
 
     getMailConfig(function (error, mailConfig) {
         if (error) return debug('Error getting mail details:', error);
 
         var mailOptions = {
-            from: mailConfig.notificationFrom,
+            from: `no-reply@${domain}`,
             to: email,
             subject: util.format('Test Email from %s', mailConfig.cloudronName),
             text: render('test.ejs', { cloudronName: mailConfig.cloudronName, format: 'text'})
