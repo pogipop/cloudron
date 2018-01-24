@@ -157,6 +157,7 @@ function enableUserMailbox(req, res, next) {
 
     mail.enableUserMailbox(req.params.domain, req.params.userId, function (error) {
         if (error && error.reason === MailError.NOT_FOUND) return next(new HttpError(404, error.message));
+        if (error && error.reason === MailError.ALREADY_EXISTS) return next(new HttpSuccess(201, {}));
         if (error) return next(new HttpError(500, error));
 
         next(new HttpSuccess(201, {}));
@@ -168,7 +169,7 @@ function disableUserMailbox(req, res, next) {
     assert.strictEqual(typeof req.params.userId, 'string');
 
     mail.disableUserMailbox(req.params.domain, req.params.userId, function (error) {
-        if (error && error.reason === MailError.NOT_FOUND) return next(new HttpError(404, error.message));
+        if (error && error.reason === MailError.NOT_FOUND) return next(new HttpSuccess(201, {}));
         if (error) return next(new HttpError(500, error));
 
         next(new HttpSuccess(201, {}));

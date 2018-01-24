@@ -687,7 +687,7 @@ function disableUserMailbox(domain, userId, callback) {
         if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
 
         mailboxdb.del(result.username, domain, function (error) {
-            if (error && error.reason === UserError.NOT_FOUND) return callback(new MailError(MailError.NOT_FOUND, 'no such mailbox'));
+            if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new MailError(MailError.NOT_FOUND, 'no such mailbox'));
             if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
 
             callback(null);
