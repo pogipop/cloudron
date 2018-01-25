@@ -21,7 +21,6 @@ var assert = require('assert'),
     oauth2 = require('./oauth2.js'),
     user = require('../user.js'),
     UserError = user.UserError,
-    util = require('util'),
     _ = require('underscore');
 
 function auditSource(req) {

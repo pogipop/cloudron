@@ -42,14 +42,16 @@ function get(req, res, next) {
 }
 
 function add(req, res, next) {
-    assert.strictEqual(typeof req.params.domain, 'string');
+    assert.strictEqual(typeof req.body, 'object');
 
-    mail.add(req.params.domain, function (error, result) {
+    if (typeof req.body.domain !== 'string') return next(new HttpError(400, 'domain must be a string'));
+
+    mail.add(req.body.domain, function (error) {
         if (error && error.reason === MailError.NOT_FOUND) return next(new HttpError(404, error.message));
         if (error && error.reason === MailError.ALREADY_EXISTS) return next(new HttpError(400, error.message));
         if (error) return next(new HttpError(500, error));
 
-        next(new HttpSuccess(200, result));
+        next(new HttpSuccess(201, { domain: req.body.domain }));
     });
 }
 
@@ -60,7 +62,7 @@ function del(req, res, next) {
         if (error && error.reason === MailError.NOT_FOUND) return next(new HttpError(404, error.message));
         if (error) return next(new HttpError(500, error));
 
-        next(new HttpSuccess(202, { }));
+        next(new HttpSuccess(204));
     });
 }
 
