@@ -19,9 +19,7 @@ exports = module.exports = {
     createOwner: createOwner,
     getOwner: getOwner,
     sendInvite: sendInvite,
-    setGroups: setGroups,
-    setAliases: setAliases,
-    getAliases: getAliases
+    setGroups: setGroups
 };
 
 var assert = require('assert'),
@@ -37,7 +35,6 @@ var assert = require('assert'),
     GroupError = groups.GroupError,
     hat = require('hat'),
     mailer = require('./mailer.js'),
-    mailboxdb = require('./mailboxdb.js'),
     safe = require('safetydance'),
     tokendb = require('./tokendb.js'),
     userdb = require('./userdb.js'),
@@ -80,7 +77,7 @@ UserError.WRONG_PASSWORD = 'Wrong User or Password';
 UserError.BAD_FIELD = 'Bad field';
 UserError.BAD_TOKEN = 'Bad token';
 
-// keep this in sync with validateGroupname
+// keep this in sync with validateGroupname and validateAlias
 function validateUsername(username) {
     assert.strictEqual(typeof username, 'string');
 
@@ -553,49 +550,3 @@ function sendInvite(userId, options, callback) {
     });
 }
 
-function setAliases(userId, aliases, callback) {
-    assert.strictEqual(typeof userId, 'string');
-    assert(util.isArray(aliases));
-    assert.strictEqual(typeof callback, 'function');
-
-    for (var i = 0; i < aliases.length; i++) {
-        aliases[i] = aliases[i].toLowerCase();
-
-        var error = validateUsername(aliases[i]);
-        if (error) return callback(error);
-    }
-
-    userdb.get(userId, function (error, user) {
-        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new UserError(UserError.NOT_FOUND));
-        if (error) return callback(new UserError(UserError.INTERNAL_ERROR, error));
-
-        if (!user.username) return new UserError(UserError.BAD_FIELD, 'Username must be set before settings aliases');
-
-        mailboxdb.setAliasesForName(user.username, config.fqdn(), aliases, function (error) {
-            if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(new UserError(UserError.ALREADY_EXISTS, error.message));
-            if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new UserError(UserError.NOT_FOUND));
-            if (error) return callback(new UserError(UserError.INTERNAL_ERROR, error));
-
-            callback(null);
-        });
-    });
-}
-
-function getAliases(userId, callback) {
-    assert.strictEqual(typeof userId, 'string');
-    assert.strictEqual(typeof callback, 'function');
-
-    userdb.get(userId, function (error, user) {
-        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new UserError(UserError.NOT_FOUND));
-        if (error) return callback(new UserError(UserError.INTERNAL_ERROR, error));
-
-        if (!user.username) return callback(null, [ ]);
-
-        mailboxdb.getAliasesForName(user.username, config.fqdn(), function (error, aliases) {
-            if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new UserError(UserError.NOT_FOUND));
-            if (error) return callback(new UserError(UserError.INTERNAL_ERROR, error));
-
-            callback(null, aliases);
-        });
-    });
-}

@@ -135,8 +135,6 @@ function initializeExpressSync() {
     router.del ('/api/v1/users/:userId', usersScope, routes.user.requireAdmin, routes.user.verifyPassword, routes.user.remove);
     router.post('/api/v1/users/:userId', usersScope, routes.user.requireAdmin, routes.user.update);
     router.put ('/api/v1/users/:userId/groups', usersScope, routes.user.requireAdmin, routes.user.setGroups);
-    router.get ('/api/v1/users/:userId/aliases', usersScope, routes.user.requireAdmin, routes.user.getAliases);
-    router.put ('/api/v1/users/:userId/aliases', usersScope, routes.user.requireAdmin, routes.user.setAliases);
     router.post('/api/v1/users/:userId/invite', usersScope, routes.user.requireAdmin, routes.user.sendInvite);
 
     // Group management
@@ -220,11 +218,13 @@ function initializeExpressSync() {
     router.post('/api/v1/mail/:domain/catch_all',  settingsScope, routes.user.requireAdmin, routes.mail.setCatchAllAddress);
     router.post('/api/v1/mail/:domain/relay',         settingsScope, routes.user.requireAdmin, routes.mail.setMailRelay);
     router.post('/api/v1/mail/:domain/enable',        settingsScope, routes.user.requireAdmin, routes.mail.setMailEnabled);
-    router.post('/api/v1/mail/:domain/send_test_mail',  cloudronScope, routes.user.requireAdmin, routes.mail.sendTestMail);
-    router.get ('/api/v1/mail/:domain/mailboxes',  cloudronScope, routes.user.requireAdmin, routes.mail.getMailboxes);
-    router.get ('/api/v1/mail/:domain/mailboxes/:userId',  cloudronScope, routes.user.requireAdmin, routes.mail.getUserMailbox);
-    router.post('/api/v1/mail/:domain/mailboxes/:userId',  cloudronScope, routes.user.requireAdmin, routes.mail.enableUserMailbox);
-    router.del ('/api/v1/mail/:domain/mailboxes/:userId',  cloudronScope, routes.user.requireAdmin, routes.mail.disableUserMailbox);
+    router.post('/api/v1/mail/:domain/send_test_mail',  settingsScope, routes.user.requireAdmin, routes.mail.sendTestMail);
+    router.get ('/api/v1/mail/:domain/mailboxes',  settingsScope, routes.user.requireAdmin, routes.mail.getMailboxes);
+    router.get ('/api/v1/mail/:domain/mailboxes/:userId',  settingsScope, routes.user.requireAdmin, routes.mail.getUserMailbox);
+    router.post('/api/v1/mail/:domain/mailboxes/:userId',  settingsScope, routes.user.requireAdmin, routes.mail.enableUserMailbox);
+    router.del ('/api/v1/mail/:domain/mailboxes/:userId',  settingsScope, routes.user.requireAdmin, routes.mail.disableUserMailbox);
+    router.get ('/api/v1/mail/:domain/aliases/:userId', settingsScope, routes.user.requireAdmin, routes.mail.getAliases);
+    router.put ('/api/v1/mail/:domain/aliases/:userId', settingsScope, routes.user.requireAdmin, routes.mail.setAliases);
 
     // feedback
     router.post('/api/v1/feedback', usersScope, routes.cloudron.feedback);
