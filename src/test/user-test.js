@@ -593,7 +593,7 @@ describe('User', function () {
             maildb.update(DOMAIN_0.domain, { enabled: true }, function (error) {
                 expect(error).not.to.be.ok();
 
-                user.verifyWithEmail(USERNAME + '@' + config.fqdn(), PASSWORD, function (error, result) {
+                user.verifyWithEmail(USERNAME + '@' + DOMAIN_0.domain, PASSWORD, function (error, result) {
                     expect(error).to.not.be.ok();
                     expect(result).to.be.ok();
 
