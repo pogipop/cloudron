@@ -19,8 +19,7 @@ exports = module.exports = {
     checkDiskSpace: checkDiskSpace,
 
     readDkimPublicKeySync: readDkimPublicKeySync,
-    refreshDNS: refreshDNS,
-    configureWebadmin: configureWebadmin
+    refreshDNS: refreshDNS
 };
 
 var appdb = require('./appdb.js'),
