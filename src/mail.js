@@ -26,13 +26,14 @@ exports = module.exports = {
     getAliases: getAliases,
     setAliases: setAliases,
 
+    _readDkimPublicKeySync: readDkimPublicKeySync,
+
     MailError: MailError
 };
 
 var assert = require('assert'),
     async = require('async'),
     certificates = require('./certificates.js'),
-    cloudron = require('./cloudron.js'),
     config = require('./config.js'),
     constants = require('./constants.js'),
     DatabaseError = require('./databaseerror.js'),

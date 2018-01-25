@@ -6,10 +6,10 @@
 /* global after:false */
 
 var async = require('async'),
-    cloudron = require('../../cloudron.js'),
     config = require('../../config.js'),
     database = require('../../database.js'),
     expect = require('expect.js'),
+    mail = require('../../mail.js'),
     maildb = require('../../maildb.js'),
     server = require('../../server.js'),
     superagent = require('superagent');
@@ -124,7 +124,7 @@ describe('Mail API', function () {
                     expect(res.body.dns.dkim.domain).to.eql(dkimDomain);
                     expect(res.body.dns.dkim.type).to.eql('TXT');
                     expect(res.body.dns.dkim.value).to.eql(null);
-                    expect(res.body.dns.dkim.expected).to.eql('"v=DKIM1; t=s; p=' + cloudron.readDkimPublicKeySync() + '"');
+                    expect(res.body.dns.dkim.expected).to.eql('"v=DKIM1; t=s; p=' + mail._readDkimPublicKeySync(DOMAIN) + '"');
                     expect(res.body.dns.dkim.status).to.eql(false);
 
                     expect(res.body.dns.spf).to.be.an('object');
@@ -175,7 +175,7 @@ describe('Mail API', function () {
                     expect(res.body.dns.spf.value).to.eql(null);
 
                     expect(res.body.dns.dkim).to.be.an('object');
-                    expect(res.body.dns.dkim.expected).to.eql('"v=DKIM1; t=s; p=' + cloudron.readDkimPublicKeySync() + '"');
+                    expect(res.body.dns.dkim.expected).to.eql('"v=DKIM1; t=s; p=' + mail._readDkimPublicKeySync(DOMAIN) + '"');
                     expect(res.body.dns.dkim.status).to.eql(false);
                     expect(res.body.dns.dkim.value).to.eql(null);
 
@@ -203,7 +203,7 @@ describe('Mail API', function () {
 
             dnsAnswerQueue[mxDomain].MX = [ { priority: '20', exchange: config.mailFqdn() + '.' }, { priority: '30', exchange: config.mailFqdn() + '.'} ];
             dnsAnswerQueue[dmarcDomain].TXT = ['"v=DMARC2; p=reject; pct=100"'];
-            dnsAnswerQueue[dkimDomain].TXT = ['"v=DKIM2; t=s; p=' + cloudron.readDkimPublicKeySync() + '"'];
+            dnsAnswerQueue[dkimDomain].TXT = ['"v=DKIM2; t=s; p=' + mail._readDkimPublicKeySync(DOMAIN) + '"'];
             dnsAnswerQueue[spfDomain].TXT = ['"v=spf1 a:random.com ~all"'];
 
             superagent.get(SERVER_URL + '/api/v1/mail/' + DOMAIN + '/status')
@@ -217,9 +217,9 @@ describe('Mail API', function () {
                     expect(res.body.dns.spf.value).to.eql('"v=spf1 a:random.com ~all"');
 
                     expect(res.body.dns.dkim).to.be.an('object');
-                    expect(res.body.dns.dkim.expected).to.eql('"v=DKIM1; t=s; p=' + cloudron.readDkimPublicKeySync() + '"');
+                    expect(res.body.dns.dkim.expected).to.eql('"v=DKIM1; t=s; p=' + mail._readDkimPublicKeySync(DOMAIN) + '"');
                     expect(res.body.dns.dkim.status).to.eql(false);
-                    expect(res.body.dns.dkim.value).to.eql('"v=DKIM2; t=s; p=' + cloudron.readDkimPublicKeySync() + '"');
+                    expect(res.body.dns.dkim.value).to.eql('"v=DKIM2; t=s; p=' + mail._readDkimPublicKeySync(DOMAIN) + '"');
 
                     expect(res.body.dns.dmarc).to.be.an('object');
                     expect(res.body.dns.dmarc.expected).to.eql('"v=DMARC1; p=reject; pct=100"');
@@ -268,7 +268,7 @@ describe('Mail API', function () {
 
             dnsAnswerQueue[mxDomain].MX = [ { priority: '10', exchange: config.mailFqdn() + '.' } ];
             dnsAnswerQueue[dmarcDomain].TXT = ['"v=DMARC1; p=reject; pct=100"'];
-            dnsAnswerQueue[dkimDomain].TXT = ['"v=DKIM1; t=s; p=' + cloudron.readDkimPublicKeySync() + '"'];
+            dnsAnswerQueue[dkimDomain].TXT = ['"v=DKIM1; t=s; p=' + mail._readDkimPublicKeySync(DOMAIN) + '"'];
             dnsAnswerQueue[spfDomain].TXT = ['"v=spf1 a:' + config.adminFqdn() + ' ~all"'];
 
             superagent.get(SERVER_URL + '/api/v1/mail/' + DOMAIN + '/status')
@@ -279,8 +279,8 @@ describe('Mail API', function () {
                     expect(res.body.dns.dkim).to.be.an('object');
                     expect(res.body.dns.dkim.domain).to.eql(dkimDomain);
                     expect(res.body.dns.dkim.type).to.eql('TXT');
-                    expect(res.body.dns.dkim.value).to.eql('"v=DKIM1; t=s; p=' + cloudron.readDkimPublicKeySync() + '"');
-                    expect(res.body.dns.dkim.expected).to.eql('"v=DKIM1; t=s; p=' + cloudron.readDkimPublicKeySync() + '"');
+                    expect(res.body.dns.dkim.value).to.eql('"v=DKIM1; t=s; p=' + mail._readDkimPublicKeySync(DOMAIN) + '"');
+                    expect(res.body.dns.dkim.expected).to.eql('"v=DKIM1; t=s; p=' + mail._readDkimPublicKeySync(DOMAIN) + '"');
                     expect(res.body.dns.dkim.status).to.eql(true);
 
                     expect(res.body.dns.spf).to.be.an('object');
