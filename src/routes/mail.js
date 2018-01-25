@@ -3,6 +3,9 @@
 exports = module.exports = {
     get: get,
 
+    add: add,
+    del: del,
+
     getStatus: getStatus,
 
     setMailFromValidation: setMailFromValidation,
@@ -32,6 +35,29 @@ function get(req, res, next) {
         if (error) return next(new HttpError(500, error));
 
         next(new HttpSuccess(200, result));
+    });
+}
+
+function add(req, res, next) {
+    assert.strictEqual(typeof req.params.domain, 'string');
+
+    mail.add(req.params.domain, function (error, result) {
+        if (error && error.reason === MailError.NOT_FOUND) return next(new HttpError(404, error.message));
+        if (error && error.reason === MailError.ALREADY_EXISTS) return next(new HttpError(400, error.message));
+        if (error) return next(new HttpError(500, error));
+
+        next(new HttpSuccess(200, result));
+    });
+}
+
+function del(req, res, next) {
+    assert.strictEqual(typeof req.params.domain, 'string');
+
+    mail.del(req.params.domain, function (error) {
+        if (error && error.reason === MailError.NOT_FOUND) return next(new HttpError(404, error.message));
+        if (error) return next(new HttpError(500, error));
+
+        next(new HttpSuccess(202, { }));
     });
 }
 

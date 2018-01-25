@@ -6,6 +6,9 @@ exports = module.exports = {
     get: get,
     getAll: getAll,
 
+    add: add,
+    del: del,
+
     setMailFromValidation: setMailFromValidation,
     setCatchAllAddress: setCatchAllAddress,
     setMailRelay: setMailRelay,
@@ -550,6 +553,31 @@ function getAll(callback) {
         if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
 
         return callback(null, results);
+    });
+}
+
+function add(domain, callback) {
+    assert.strictEqual(typeof domain, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    maildb.add(domain, function (error) {
+        if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(new MailError(MailError.ALREADY_EXISTS, error.message));
+        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new MailError(MailError.NOT_FOUND, error.message));
+        if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
+
+        callback();
+    });
+}
+
+function del(domain, callback) {
+    assert.strictEqual(typeof domain, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    maildb.del(domain, function (error) {
+        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new MailError(MailError.NOT_FOUND, error.message));
+        if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
+
+        callback();
     });
 }
 
