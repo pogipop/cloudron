@@ -31,7 +31,6 @@ var appdb = require('./appdb.js'),
     BackupsError = require('./backups.js').BackupsError,
     caas = require('./caas.js'),
     certificates = require('./certificates.js'),
-    child_process = require('child_process'),
     clients = require('./clients.js'),
     config = require('./config.js'),
     constants = require('./constants.js'),
@@ -43,6 +42,7 @@ var appdb = require('./appdb.js'),
     eventlog = require('./eventlog.js'),
     fs = require('fs'),
     locker = require('./locker.js'),
+    mail = require('./mail.js'),
     mailer = require('./mailer.js'),
     nginx = require('./nginx.js'),
     os = require('os'),
@@ -144,7 +144,6 @@ function onDomainConfigured(callback) {
     async.series([
         clients.addDefaultClients,
         certificates.ensureFallbackCertificate,
-        ensureDkimKey,
         cron.initialize // required for caas heartbeat before activation
     ], callback);
 }
@@ -233,8 +232,14 @@ function dnsSetup(adminFqdn, domain, zoneName, provider, dnsConfig, callback) {
     domains.get(domain, function (error, result) {
         if (error && error.reason !== DomainError.NOT_FOUND) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
 
-        if (!result) domains.add(domain, zoneName, provider, dnsConfig, null /* cert */, done);
-        else domains.update(domain, provider, dnsConfig, null /* cert */, done);
+        if (!result) {
+            async.series([
+                domains.add.bind(null, domain, zoneName, provider, dnsConfig, null /* cert */),
+                mail.add(null, domain)
+            ], done);
+        } else {
+            domains.update(domain, provider, dnsConfig, null /* cert */, done);
+        }
     });
 }
 
@@ -468,33 +473,6 @@ function getConfig(callback) {
             });
         });
     });
-}
-
-function ensureDkimKey(callback) {
-    assert(config.fqdn(), 'fqdn is not set');
-
-    var dkimPath = path.join(paths.MAIL_DATA_DIR, 'dkim/' + config.fqdn());
-    var dkimPrivateKeyFile = path.join(dkimPath, 'private');
-    var dkimPublicKeyFile = path.join(dkimPath, 'public');
-    var dkimSelectorFile = path.join(dkimPath, 'selector');
-
-    if (!fs.existsSync(dkimPrivateKeyFile) || !fs.existsSync(dkimPublicKeyFile) || !fs.existsSync(dkimSelectorFile)) {
-        debug('Generating new DKIM keys');
-
-        if (!safe.fs.mkdirSync(dkimPath) && safe.error.code !== 'EEXIST') {
-            debug('Error creating dkim.', safe.error);
-            return null;
-        }
-
-        child_process.execSync('openssl genrsa -out ' + dkimPrivateKeyFile + ' 1024');
-        child_process.execSync('openssl rsa -in ' + dkimPrivateKeyFile + ' -out ' + dkimPublicKeyFile + ' -pubout -outform PEM');
-
-        safe.fs.writeFileSync(dkimSelectorFile, config.dkimSelector(), 'utf8');
-    } else {
-        debug('DKIM keys already present');
-    }
-
-    callback();
 }
 
 function readDkimPublicKeySync() {

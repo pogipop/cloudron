@@ -243,6 +243,8 @@ function hasIPv6() {
     return fs.existsSync(IPV6_PROC_FILE);
 }
 
+// it has to change with the adminLocation so that multiple cloudrons
+// can send out emails at the same time.
 function dkimSelector() {
     var loc = adminLocation();
     return loc === 'my' ? 'cloudron' : `cloudron-${loc.replace(/\./g, '')}`;

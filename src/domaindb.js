@@ -60,13 +60,9 @@ function add(name, domain, callback) {
     assert.strictEqual(typeof domain.config, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    var queries = [];
-    queries.push({ query: 'INSERT INTO domains (domain, zoneName, provider, configJson) VALUES (?, ?, ?, ?)', args: [ name, domain.zoneName, domain.provider, JSON.stringify(domain.config) ] });
-    queries.push({ query: 'INSERT INTO mail (domain) VALUES (?)', args: [ name ] });
-
-    database.transaction(queries, function (error, result) {
+    database.query('INSERT INTO domains (domain, zoneName, provider, configJson) VALUES (?, ?, ?, ?)', [ name, domain.zoneName, domain.provider, JSON.stringify(domain.config) ], function (error) {
         if (error && error.code === 'ER_DUP_ENTRY') return callback(new DatabaseError(DatabaseError.ALREADY_EXISTS, error));
-        if (error || result[1].affectedRows !== 1) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
+        if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
 
         callback(null);
     });
@@ -101,14 +97,10 @@ function del(domain, callback) {
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    var queries = [];
-    queries.push({ query: 'DELETE FROM mail WHERE domain=?', args: [ domain ] });
-    queries.push({ query: 'DELETE FROM domains WHERE domain=?', args: [ domain ] });
-
-    database.transaction(queries, function (error, result) {
+    database.query('DELETE FROM domains WHERE domain=?', [ domain ], function (error, result) {
         if (error && error.code === 'ER_ROW_IS_REFERENCED_2') return callback(new DatabaseError(DatabaseError.IN_USE));
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
-        if (result[1].affectedRows !== 1) return callback(new DatabaseError(DatabaseError.NOT_FOUND));
+        if (result.affectedRows === 0) return callback(new DatabaseError(DatabaseError.NOT_FOUND));
 
         callback(null);
     });

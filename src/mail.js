@@ -46,6 +46,7 @@ var assert = require('assert'),
     net = require('net'),
     nodemailer = require('nodemailer'),
     os = require('os'),
+    path = require('path'),
     paths = require('./paths.js'),
     safe = require('safetydance'),
     shell = require('./shell.js'),
@@ -577,16 +578,44 @@ function getAll(callback) {
     });
 }
 
+function ensureDkimKey(domain, callback) {
+    assert.strictEqual(typeof domain, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    var dkimPath = path.join(paths.MAIL_DATA_DIR, `dkim/${domain}`);
+    var dkimPrivateKeyFile = path.join(dkimPath, 'private');
+    var dkimPublicKeyFile = path.join(dkimPath, 'public');
+    var dkimSelectorFile = path.join(dkimPath, 'selector');
+
+    debug('Generating new DKIM keys');
+
+    if (!safe.fs.mkdirSync(dkimPath) && safe.error.code !== 'EEXIST') {
+        debug('Error creating dkim.', safe.error);
+        return new MailError(MailError.INTERNAL_ERROR, safe.error);
+    }
+
+    if (!safe.child_process.execSync('openssl genrsa -out ' + dkimPrivateKeyFile + ' 1024')) return new MailError(MailError.INTERNAL_ERROR, safe.error);
+    if (!safe.child_process.execSync('openssl rsa -in ' + dkimPrivateKeyFile + ' -out ' + dkimPublicKeyFile + ' -pubout -outform PEM')) return new MailError(MailError.INTERNAL_ERROR, safe.error);
+
+    if (!safe.fs.writeFileSync(dkimSelectorFile, config.dkimSelector(), 'utf8')) return new MailError(MailError.INTERNAL_ERROR, safe.error);
+
+    callback();
+}
+
 function add(domain, callback) {
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    maildb.add(domain, function (error) {
-        if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(new MailError(MailError.ALREADY_EXISTS, error.message));
-        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new MailError(MailError.NOT_FOUND, error.message));
+    ensureDkimKey(domain, function (error) {
         if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
 
-        callback();
+        maildb.add(domain, function (error) {
+            if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(new MailError(MailError.ALREADY_EXISTS, error.message));
+            if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new MailError(MailError.NOT_FOUND, error.message));
+            if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
+
+            callback();
+        });
     });
 }
 
