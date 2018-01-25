@@ -189,7 +189,7 @@ function checkDkim(domain, callback) {
         status: false
     };
 
-    var dkimKey = cloudron.readDkimPublicKeySync();
+    var dkimKey = readDkimPublicKeySync(domain);
     if (!dkimKey) return callback(new Error('Failed to read dkim public key'), dkim);
 
     dkim.expected = '"v=DKIM1; t=s; p=' + dkimKey + '"';
@@ -602,25 +602,6 @@ function ensureDkimKey(domain, callback) {
     callback();
 }
 
-function readDkimPublicKeySync(domain) {
-    assert.strictEqual(typeof domain, 'string');
-
-    var dkimPath = path.join(paths.MAIL_DATA_DIR, `dkim/${domain}`);
-    var dkimPublicKeyFile = path.join(dkimPath, 'public');
-
-    var publicKey = safe.fs.readFileSync(dkimPublicKeyFile, 'utf8');
-
-    if (publicKey === null) {
-        debug('Error reading dkim public key.', safe.error);
-        return null;
-    }
-
-    // remove header, footer and new lines
-    publicKey = publicKey.split('\n').slice(1, -2).join('');
-
-    return publicKey;
-}
-
 // https://agari.zendesk.com/hc/en-us/articles/202952749-How-long-can-my-SPF-record-be-
 function txtRecordsWithSpf(callback) {
     assert.strictEqual(typeof callback, 'function');
@@ -655,13 +636,32 @@ function txtRecordsWithSpf(callback) {
     });
 }
 
+function readDkimPublicKeySync(domain) {
+    assert.strictEqual(typeof domain, 'string');
+
+    var dkimPath = path.join(paths.MAIL_DATA_DIR, `dkim/${domain}`);
+    var dkimPublicKeyFile = path.join(dkimPath, 'public');
+
+    var publicKey = safe.fs.readFileSync(dkimPublicKeyFile, 'utf8');
+
+    if (publicKey === null) {
+        debug('Error reading dkim public key.', safe.error);
+        return null;
+    }
+
+    // remove header, footer and new lines
+    publicKey = publicKey.split('\n').slice(1, -2).join('');
+
+    return publicKey;
+}
+
 function addDnsRecords(domain, callback) {
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof callback, 'function');
 
     if (process.env.BOX_ENV === 'test') return callback();
 
-    var dkimKey = readDkimPublicKeySync();
+    var dkimKey = readDkimPublicKeySync(domain);
     if (!dkimKey) return callback(new MailError(MailError.INTERNAL_ERROR, new Error('Failed to read dkim public key')));
 
     // t=s limits the domainkey to this domain and not it's subdomains
