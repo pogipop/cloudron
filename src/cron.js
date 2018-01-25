@@ -17,6 +17,7 @@ var apps = require('./apps.js'),
     CronJob = require('cron').CronJob,
     debug = require('debug')('box:cron'),
     digest = require('./digest.js'),
+    dyndns = require('./dyndns.js'),
     eventlog = require('./eventlog.js'),
     janitor = require('./janitor.js'),
     scheduler = require('./scheduler.js'),
@@ -78,14 +79,14 @@ function initialize(callback) {
 
     settings.events.on(settings.TIME_ZONE_KEY, recreateJobs);
     settings.events.on(settings.AUTOUPDATE_PATTERN_KEY, autoupdatePatternChanged);
-    settings.events.on(settings.DYNAMIC_DNS_KEY, dynamicDNSChanged);
+    settings.events.on(settings.DYNAMIC_DNS_KEY, dynamicDnsChanged);
 
     settings.getAll(function (error, allSettings) {
         if (error) return callback(error);
 
         recreateJobs(allSettings[settings.TIME_ZONE_KEY]);
         autoupdatePatternChanged(allSettings[settings.AUTOUPDATE_PATTERN_KEY]);
-        dynamicDNSChanged(allSettings[settings.DYNAMIC_DNS_KEY]);
+        dynamicDnsChanged(allSettings[settings.DYNAMIC_DNS_KEY]);
 
         callback();
     });
@@ -221,7 +222,7 @@ function autoupdatePatternChanged(pattern) {
     });
 }
 
-function dynamicDNSChanged(enabled) {
+function dynamicDnsChanged(enabled) {
     assert.strictEqual(typeof enabled, 'boolean');
     assert(gJobs.boxUpdateCheckerJob);
 
@@ -230,7 +231,7 @@ function dynamicDNSChanged(enabled) {
     if (enabled) {
         gJobs.dynamicDNS = new CronJob({
             cronTime: '00 */10 * * * *',
-            onTick: cloudron.refreshDNS,
+            onTick: dyndns.sync,
             start: true,
             timeZone: gJobs.boxUpdateCheckerJob.cronTime.zone // hack
         });
@@ -245,7 +246,7 @@ function uninitialize(callback) {
 
     settings.events.removeListener(settings.TIME_ZONE_KEY, recreateJobs);
     settings.events.removeListener(settings.AUTOUPDATE_PATTERN_KEY, autoupdatePatternChanged);
-    settings.events.removeListener(settings.DYNAMIC_DNS_KEY, dynamicDNSChanged);
+    settings.events.removeListener(settings.DYNAMIC_DNS_KEY, dynamicDnsChanged);
 
     for (var job in gJobs) {
         if (!gJobs[job]) continue;

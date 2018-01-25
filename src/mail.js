@@ -656,7 +656,6 @@ function txtRecordsWithSpf(callback) {
 }
 
 function addDnsRecords(domain, callback) {
-    assert.strictEqual(typeof ip, 'string');
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof callback, 'function');
 

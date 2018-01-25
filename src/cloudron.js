@@ -16,15 +16,10 @@ exports = module.exports = {
     restore: restore,
     reboot: reboot,
 
-    checkDiskSpace: checkDiskSpace,
-
-    readDkimPublicKeySync: readDkimPublicKeySync,
-    refreshDNS: refreshDNS
+    checkDiskSpace: checkDiskSpace
 };
 
-var appdb = require('./appdb.js'),
-    apps = require('./apps.js'),
-    assert = require('assert'),
+var assert = require('assert'),
     async = require('async'),
     backups = require('./backups.js'),
     BackupsError = require('./backups.js').BackupsError,
@@ -296,12 +291,29 @@ function configureWebadmin(callback) {
         });
     }
 
+    function addWebadminDnsRecord(ip, domain, callback) {
+        assert.strictEqual(typeof ip, 'string');
+        assert.strictEqual(typeof domain, 'string');
+        assert.strictEqual(typeof callback, 'function');
+
+        if (process.env.BOX_ENV === 'test') return callback();
+
+        async.retry({ times: 10, interval: 20000 }, function (retryCallback) {
+            domains.upsertDNSRecords(config.adminLocation(), domain, 'A', [ ip ], retryCallback);
+        }, function (error) {
+            if (error) debug('addWebadminDnsRecord: done updating records with error:', error);
+            else debug('addWebadminDnsRecord: done');
+
+            callback(error);
+        });
+    }
+
     // update the DNS. configure nginx regardless of whether it succeeded so that
     // box is accessible even if dns creds are invalid
     sysinfo.getPublicIp(function (error, ip) {
         if (error) return configureNginx(error);
 
-        addDnsRecords(ip, config.fqdn(), function (error) {
+        addWebadminDnsRecord(ip, config.fqdn(), function (error) {
             if (error) return configureNginx(error);
 
             domains.waitForDNSRecord(config.adminFqdn(), config.fqdn(), ip, 'A', { interval: 30000, times: 50000 }, function (error) {
@@ -471,108 +483,6 @@ function getConfig(callback) {
                 cloudronName: cloudronName
             });
         });
-    });
-}
-
-function readDkimPublicKeySync() {
-    if (!config.fqdn()) {
-        debug('Cannot read dkim public key without a domain.', safe.error);
-        return null;
-    }
-
-    var dkimPath = path.join(paths.MAIL_DATA_DIR, 'dkim/' + config.fqdn());
-    var dkimPublicKeyFile = path.join(dkimPath, 'public');
-
-    var publicKey = safe.fs.readFileSync(dkimPublicKeyFile, 'utf8');
-
-    if (publicKey === null) {
-        debug('Error reading dkim public key.', safe.error);
-        return null;
-    }
-
-    // remove header, footer and new lines
-    publicKey = publicKey.split('\n').slice(1, -2).join('');
-
-    return publicKey;
-}
-
-// NOTE: if you change the SPF record here, be sure the wait check in mailer.js
-// https://agari.zendesk.com/hc/en-us/articles/202952749-How-long-can-my-SPF-record-be-
-function txtRecordsWithSpf(callback) {
-    assert.strictEqual(typeof callback, 'function');
-
-    domains.getDNSRecords('', config.fqdn(), 'TXT', function (error, txtRecords) {
-        if (error) return callback(error);
-
-        debug('txtRecordsWithSpf: current txt records - %j', txtRecords);
-
-        var i, matches, validSpf;
-
-        for (i = 0; i < txtRecords.length; i++) {
-            matches = txtRecords[i].match(/^("?v=spf1) /); // DO backend may return without quotes
-            if (matches === null) continue;
-
-            // this won't work if the entry is arbitrarily "split" across quoted strings
-            validSpf = txtRecords[i].indexOf('a:' + config.adminFqdn()) !== -1;
-            break; // there can only be one SPF record
-        }
-
-        if (validSpf) return callback(null, null);
-
-        if (!matches) { // no spf record was found, create one
-            txtRecords.push('"v=spf1 a:' + config.adminFqdn() + ' ~all"');
-            debug('txtRecordsWithSpf: adding txt record');
-        } else { // just add ourself
-            txtRecords[i] = matches[1] + ' a:' + config.adminFqdn() + txtRecords[i].slice(matches[1].length);
-            debug('txtRecordsWithSpf: inserting txt record');
-        }
-
-        return callback(null, txtRecords);
-    });
-}
-
-function addDnsRecords(ip, domain, callback) {
-    assert.strictEqual(typeof ip, 'string');
-    assert.strictEqual(typeof domain, 'string');
-    callback = callback || NOOP_CALLBACK;
-
-    if (process.env.BOX_ENV === 'test') return callback();
-
-    var dkimKey = readDkimPublicKeySync();
-    if (!dkimKey) return callback(new CloudronError(CloudronError.INTERNAL_ERROR, new Error('Failed to read dkim public key')));
-
-    var webadminRecord = { subdomain: config.adminLocation(), domain: domain, type: 'A', values: [ ip ] };
-    // t=s limits the domainkey to this domain and not it's subdomains
-    var dkimRecord = { subdomain: config.dkimSelector() + '._domainkey', domain: domain, type: 'TXT', values: [ '"v=DKIM1; t=s; p=' + dkimKey + '"' ] };
-
-    var records = [ ];
-    records.push(webadminRecord);
-    records.push(dkimRecord);
-
-    debug('addDnsRecords: %j', records);
-
-    async.retry({ times: 10, interval: 20000 }, function (retryCallback) {
-        txtRecordsWithSpf(function (error, txtRecords) {
-            if (error) return retryCallback(error);
-
-            if (txtRecords) records.push({ subdomain: '', domain: domain, type: 'TXT', values: txtRecords });
-
-            debug('addDnsRecords: will update %j', records);
-
-            async.mapSeries(records, function (record, iteratorCallback) {
-                domains.upsertDNSRecords(record.subdomain, record.domain, record.type, record.values, iteratorCallback);
-            }, function (error, changeIds) {
-                if (error) debug('addDnsRecords: failed to update : %s. will retry', error);
-                else debug('addDnsRecords: records %j added with changeIds %j', records, changeIds);
-
-                retryCallback(error);
-            });
-        });
-    }, function (error) {
-        if (error) debug('addDnsRecords: done updating records with error:', error);
-        else debug('addDnsRecords: done');
-
-        callback(error);
     });
 }
 
@@ -770,40 +680,6 @@ function checkDiskSpace(callback) {
             debug('df error %s', error.message);
             mailer.outOfDiskSpace(error.message);
             return callback();
-        });
-    });
-}
-
-// called for dynamic dns setups where we have to update the IP
-function refreshDNS(callback) {
-    callback = callback || NOOP_CALLBACK;
-
-    sysinfo.getPublicIp(function (error, ip) {
-        if (error) return callback(new CloudronError(CloudronError.INTERNAL_ERROR, error));
-
-        debug('refreshDNS: current ip %s', ip);
-
-        addDnsRecords(ip, config.fqdn(), function (error) {
-            if (error) return callback(error);
-
-            debug('refreshDNS: done for system records');
-
-            apps.getAll(function (error, result) {
-                if (error) return callback(error);
-
-                async.each(result, function (app, callback) {
-                    // do not change state of installing apps since apptask will error if dns record already exists
-                    if (app.installationState !== appdb.ISTATE_INSTALLED) return callback();
-
-                    domains.upsertDNSRecords(app.location, app.domain, 'A', [ ip ], callback);
-                }, function (error) {
-                    if (error) return callback(error);
-
-                    debug('refreshDNS: done for apps');
-
-                    callback();
-                });
-            });
         });
     });
 }
