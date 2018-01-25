@@ -786,7 +786,7 @@ function setMailEnabled(domain, enabled, callback) {
 
         restartMail(NOOP_CALLBACK);
 
-        if (!enabled || process.env.BOX_ENV === 'test') return callback();
+        if (!enabled || process.env.BOX_ENV === 'test') return callback(null);
 
         // Add MX and DMARC record. Note that DMARC policy depends on DKIM signing and thus works
         // only if we use our internal mail server.
