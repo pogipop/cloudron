@@ -24,6 +24,8 @@ var assert = require('assert'),
     eventlog = require('./eventlog.js'),
     mail = require('./mail.js'),
     os = require('os'),
+    safe = require('safetydance'),
+    semver = require('semver'),
     settings = require('./settings.js'),
     superagent = require('superagent'),
     util = require('util');
@@ -213,10 +215,16 @@ function getBoxUpdate(callback) {
         superagent.get(url).query({ accessToken: appstoreConfig.token, boxVersion: config.version() }).timeout(10 * 1000).end(function (error, result) {
             if (error && !error.response) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, error));
             if (result.statusCode === 204) return callback(null); // no update
-            if (result.statusCode !== 200) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, util.format('Bad response: %s %s', result.statusCode, result.text)));
+            if (result.statusCode !== 200 || !result.body) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, util.format('Bad response: %s %s', result.statusCode, result.text)));
+
+            var updateInfo = result.body;
+
+            if (!semver.valid(updateInfo.version) || semver.gt(config.version(), updateInfo.version)) {
+                return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, util.format('Bad response: %s %s', result.statusCode, result.text)));
+            }
 
             // { version, changelog, upgrade, sourceTarballUrl}
-            callback(null, result.body);
+            callback(null, updateInfo);
         });
     });
 }
@@ -233,10 +241,18 @@ function getAppUpdate(app, callback) {
         superagent.get(url).query({ accessToken: appstoreConfig.token, boxVersion: config.version(), appId: app.appStoreId, appVersion: app.manifest.version }).timeout(10 * 1000).end(function (error, result) {
             if (error && !error.response) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, error));
             if (result.statusCode === 204) return callback(null); // no update
-            if (result.statusCode !== 200) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, util.format('Bad response: %s %s', result.statusCode, result.text)));
+            if (result.statusCode !== 200 || !result.body) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, util.format('Bad response: %s %s', result.statusCode, result.text)));
+
+            const updateInfo = result.body;
+
+            // do some sanity checks
+            if (!safe.query(updateInfo, 'manifest.version') || semver.gt(app.manifest.version, safe.query(updateInfo, 'manifest.version'))) {
+                debug('Skipping malformed update of app %s version: %s. got %j', app.id, app.manifest.version, updateInfo);
+                return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, util.format('Malformed update: %s %s', result.statusCode, result.text)));
+            }
 
             // { id, creationDate, manifest }
-            callback(null, result.body);
+            callback(null, updateInfo);
         });
     });
 }

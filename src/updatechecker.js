@@ -88,12 +88,6 @@ function checkAppUpdates(callback) {
                     return iteratorDone();
                 }
 
-                if (!safe.query(updateInfo, 'manifest.version')) {
-                    debug('Skipping malformed update of app %s. got %j', app.id, updateInfo);
-                    delete gAppUpdateInfo[app.id];
-                    return iteratorDone();
-                }
-
                 gAppUpdateInfo[app.id] = updateInfo;
 
                 // decide whether to send email
