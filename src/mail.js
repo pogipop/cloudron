@@ -602,6 +602,102 @@ function ensureDkimKey(domain, callback) {
     callback();
 }
 
+function readDkimPublicKeySync(domain) {
+    assert.strictEqual(typeof domain, 'string');
+
+    var dkimPath = path.join(paths.MAIL_DATA_DIR, `dkim/${domain}`);
+    var dkimPublicKeyFile = path.join(dkimPath, 'public');
+
+    var publicKey = safe.fs.readFileSync(dkimPublicKeyFile, 'utf8');
+
+    if (publicKey === null) {
+        debug('Error reading dkim public key.', safe.error);
+        return null;
+    }
+
+    // remove header, footer and new lines
+    publicKey = publicKey.split('\n').slice(1, -2).join('');
+
+    return publicKey;
+}
+
+// https://agari.zendesk.com/hc/en-us/articles/202952749-How-long-can-my-SPF-record-be-
+function txtRecordsWithSpf(callback) {
+    assert.strictEqual(typeof callback, 'function');
+
+    domains.getDNSRecords('', config.fqdn(), 'TXT', function (error, txtRecords) {
+        if (error) return callback(error);
+
+        debug('txtRecordsWithSpf: current txt records - %j', txtRecords);
+
+        var i, matches, validSpf;
+
+        for (i = 0; i < txtRecords.length; i++) {
+            matches = txtRecords[i].match(/^("?v=spf1) /); // DO backend may return without quotes
+            if (matches === null) continue;
+
+            // this won't work if the entry is arbitrarily "split" across quoted strings
+            validSpf = txtRecords[i].indexOf('a:' + config.adminFqdn()) !== -1;
+            break; // there can only be one SPF record
+        }
+
+        if (validSpf) return callback(null, null);
+
+        if (!matches) { // no spf record was found, create one
+            txtRecords.push('"v=spf1 a:' + config.adminFqdn() + ' ~all"');
+            debug('txtRecordsWithSpf: adding txt record');
+        } else { // just add ourself
+            txtRecords[i] = matches[1] + ' a:' + config.adminFqdn() + txtRecords[i].slice(matches[1].length);
+            debug('txtRecordsWithSpf: inserting txt record');
+        }
+
+        return callback(null, txtRecords);
+    });
+}
+
+function addDnsRecords(domain, callback) {
+    assert.strictEqual(typeof ip, 'string');
+    assert.strictEqual(typeof domain, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    if (process.env.BOX_ENV === 'test') return callback();
+
+    var dkimKey = readDkimPublicKeySync();
+    if (!dkimKey) return callback(new MailError(MailError.INTERNAL_ERROR, new Error('Failed to read dkim public key')));
+
+    // t=s limits the domainkey to this domain and not it's subdomains
+    var dkimRecord = { subdomain: config.dkimSelector() + '._domainkey', domain: domain, type: 'TXT', values: [ '"v=DKIM1; t=s; p=' + dkimKey + '"' ] };
+
+    var records = [ ];
+    records.push(dkimRecord);
+
+    debug('addDnsRecords: %j', records);
+
+    async.retry({ times: 10, interval: 20000 }, function (retryCallback) {
+        txtRecordsWithSpf(function (error, txtRecords) {
+            if (error) return retryCallback(error);
+
+            if (txtRecords) records.push({ subdomain: '', domain: domain, type: 'TXT', values: txtRecords });
+
+            debug('addDnsRecords: will update %j', records);
+
+            async.mapSeries(records, function (record, iteratorCallback) {
+                domains.upsertDNSRecords(record.subdomain, record.domain, record.type, record.values, iteratorCallback);
+            }, function (error, changeIds) {
+                if (error) debug('addDnsRecords: failed to update : %s. will retry', error);
+                else debug('addDnsRecords: records %j added with changeIds %j', records, changeIds);
+
+                retryCallback(error);
+            });
+        });
+    }, function (error) {
+        if (error) debug('addDnsRecords: done updating records with error:', error);
+        else debug('addDnsRecords: done');
+
+        callback(error);
+    });
+}
+
 function add(domain, callback) {
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof callback, 'function');
@@ -613,6 +709,8 @@ function add(domain, callback) {
             if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(new MailError(MailError.ALREADY_EXISTS, 'Domain already exists'));
             if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new MailError(MailError.NOT_FOUND, 'No such domain'));
             if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
+
+            addDnsRecords(domain, NOOP_CALLBACK); // add the required dns records asynchronously
 
             callback();
         });
