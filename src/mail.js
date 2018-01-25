@@ -23,6 +23,9 @@ exports = module.exports = {
     enableUserMailbox: enableUserMailbox,
     disableUserMailbox: disableUserMailbox,
 
+    getAliases: getAliases,
+    setAliases: setAliases,
+
     MailError: MailError
 };
 
@@ -31,6 +34,7 @@ var assert = require('assert'),
     certificates = require('./certificates.js'),
     cloudron = require('./cloudron.js'),
     config = require('./config.js'),
+    constants = require('./constants.js'),
     DatabaseError = require('./databaseerror.js'),
     debug = require('debug')('box:mail'),
     dig = require('./dig.js'),
@@ -78,6 +82,23 @@ MailError.INTERNAL_ERROR = 'Internal Error';
 MailError.BAD_FIELD = 'Bad Field';
 MailError.ALREADY_EXISTS = 'Already Exists';
 MailError.NOT_FOUND = 'Not Found';
+
+function validateAlias(alias) {
+    assert.strictEqual(typeof alias, 'string');
+
+    if (alias.length < 1) return new MailError(MailError.BAD_FIELD, 'alias must be atleast 1 char');
+    if (alias.length >= 200) return new MailError(MailError.BAD_FIELD, 'alias too long');
+
+    if (constants.RESERVED_NAMES.indexOf(alias) !== -1) return new MailError(MailError.BAD_FIELD, 'alias is reserved');
+
+    // +/- can be tricky in emails. also need to consider valid LDAP characters here (e.g '+' is reserved)
+    if (/[^a-zA-Z0-9.]/.test(alias)) return new MailError(MailError.BAD_FIELD, 'alias can only contain alphanumerals and dot');
+
+    // app emails are sent using the .app suffix
+    if (alias.indexOf('.app') !== -1) return new MailError(MailError.BAD_FIELD, 'alias pattern is reserved for apps');
+
+    return null;
+}
 
 function checkOutboundPort25(callback) {
     assert.strictEqual(typeof callback, 'function');
@@ -727,6 +748,53 @@ function disableUserMailbox(domain, userId, callback) {
         if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
 
         mailboxdb.del(result.username, domain, function (error) {
+            if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new MailError(MailError.NOT_FOUND, 'no such mailbox'));
+            if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
+
+            callback(null);
+        });
+    });
+}
+
+function getAliases(domain, userId, callback) {
+    assert.strictEqual(typeof domain, 'string');
+    assert.strictEqual(typeof userId, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    user.get(userId, function (error, result) {
+        if (error && error.reason === UserError.NOT_FOUND) return callback(new MailError(MailError.NOT_FOUND, 'no such user'));
+        if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
+
+        if (!result.username) return callback(null, []);
+
+        mailboxdb.getAliasesForName(result.username, domain, function (error, aliases) {
+            if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new MailError(MailError.NOT_FOUND, 'no such mailbox'));
+            if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
+
+            callback(null, aliases);
+        });
+    });
+}
+
+function setAliases(domain, userId, aliases, callback) {
+    assert.strictEqual(typeof domain, 'string');
+    assert.strictEqual(typeof userId, 'string');
+    assert(Array.isArray(aliases));
+    assert.strictEqual(typeof callback, 'function');
+
+    for (var i = 0; i < aliases.length; i++) {
+        aliases[i] = aliases[i].toLowerCase();
+
+        var error = validateAlias(aliases[i]);
+        if (error) return callback(error);
+    }
+
+    user.get(userId, function (error, result) {
+        if (error && error.reason === UserError.NOT_FOUND) return callback(new MailError(MailError.NOT_FOUND, 'no such user'));
+        if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
+
+        mailboxdb.setAliasesForName(result.username, domain, aliases, function (error) {
+            if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(new MailError(MailError.ALREADY_EXISTS, error.message));
             if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new MailError(MailError.NOT_FOUND, 'no such mailbox'));
             if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
 
