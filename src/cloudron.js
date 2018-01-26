@@ -133,7 +133,7 @@ function uninitialize(callback) {
 function onDomainConfigured(callback) {
     callback = callback || NOOP_CALLBACK;
 
-    if (!config.fqdn()) return callback();
+    if (!config.adminFqdn()) return callback();
 
     async.series([
         clients.addDefaultClients,
@@ -196,7 +196,7 @@ function dnsSetup(adminFqdn, domain, zoneName, provider, dnsConfig, callback) {
     assert.strictEqual(typeof dnsConfig, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    if (config.fqdn()) return callback(new CloudronError(CloudronError.ALREADY_SETUP));
+    if (config.adminFqdn()) return callback(new CloudronError(CloudronError.ALREADY_SETUP));
 
     if (!zoneName) zoneName = tld.getDomain(domain) || domain;
 
@@ -240,8 +240,6 @@ function dnsSetup(adminFqdn, domain, zoneName, provider, dnsConfig, callback) {
 function configureDefaultServer(callback) {
     callback = callback || NOOP_CALLBACK;
 
-    debug('configureDefaultServer: domain %s', config.fqdn());
-
     if (process.env.BOX_ENV === 'test') return callback();
 
     var certFilePath = path.join(paths.NGINX_CERT_DIR,  'default.cert');
@@ -267,9 +265,9 @@ function configureDefaultServer(callback) {
 function configureWebadmin(callback) {
     callback = callback || NOOP_CALLBACK;
 
-    debug('configureWebadmin: fqdn:%s status:%j', config.fqdn(), gWebadminStatus);
+    debug('configureWebadmin: adminFqdn:%s status:%j', config.adminFqdn(), gWebadminStatus);
 
-    if (process.env.BOX_ENV === 'test' || !config.fqdn() || gWebadminStatus.configuring) return callback();
+    if (process.env.BOX_ENV === 'test' || !config.adminFqdn() || gWebadminStatus.configuring) return callback();
 
     gWebadminStatus.configuring = true; // re-entracy guard
 
@@ -405,7 +403,7 @@ function getStatus(callback) {
                 apiServerOrigin: config.apiServerOrigin(), // used by CaaS tool
                 provider: config.provider(),
                 cloudronName: cloudronName,
-                adminFqdn: config.fqdn() ? config.adminFqdn() : null,
+                adminFqdn: config.adminFqdn(),
                 webadminStatus: gWebadminStatus
             });
         });
