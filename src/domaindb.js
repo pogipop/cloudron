@@ -9,14 +9,12 @@ exports = module.exports = {
     update: update,
     del: del,
 
-    _clear: clear,
-    _addDefaultDomain: addDefaultDomain
+    _clear: clear
 };
 
 var assert = require('assert'),
     database = require('./database.js'),
     DatabaseError = require('./databaseerror'),
-    config = require('./config.js'),
     safe = require('safetydance');
 
 var DOMAINS_FIELDS = [ 'domain', 'zoneName', 'provider', 'configJson' ].join(',');
@@ -111,14 +109,5 @@ function clear(callback) {
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
 
         callback(error);
-    });
-}
-
-function addDefaultDomain(callback) {
-    assert(config.fqdn(), 'no fqdn set in config, cannot continue');
-
-    add(config.fqdn(), { zoneName: config.zoneName(), provider: 'manual', config: { } }, function (error) {
-        if (error && error.reason !== DatabaseError.ALREADY_EXISTS) return callback(error);
-        callback();
     });
 }
