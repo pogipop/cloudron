@@ -24,10 +24,8 @@ exports = module.exports = {
 
 var assert = require('assert'),
     constants = require('./constants.js'),
-    config = require('./config.js'),
     database = require('./database.js'),
-    DatabaseError = require('./databaseerror'),
-    mailboxdb = require('./mailboxdb.js');
+    DatabaseError = require('./databaseerror');
 
 var GROUPS_FIELDS = [ 'id', 'name' ].join(',');
 
@@ -89,13 +87,9 @@ function add(id, name, callback) {
     assert.strictEqual(typeof name, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    var queries = [];
-    queries.push({ query: 'INSERT INTO mailboxes (name, domain, ownerId, ownerType) VALUES (?, ?, ?, ?)', args: [ name, config.fqdn(), id, mailboxdb.TYPE_GROUP ] });
-    queries.push({ query: 'INSERT INTO groups (id, name) VALUES (?, ?)', args: [ id, name ] });
-
-    database.transaction(queries, function (error, result) {
+    database.query('INSERT INTO groups (id, name) VALUES (?, ?)', [ id, name ], function (error, result) {
         if (error && error.code === 'ER_DUP_ENTRY') return callback(new DatabaseError(DatabaseError.ALREADY_EXISTS, error));
-        if (error || result[1].affectedRows !== 1) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
+        if (error || result.affectedRows !== 1) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
 
         callback(null);
     });
@@ -109,7 +103,6 @@ function del(id, callback) {
     var queries = [];
     queries.push({ query: 'DELETE FROM groupMembers WHERE groupId = ?', args: [ id ] });
     queries.push({ query: 'DELETE FROM groups WHERE id = ?', args: [ id ] });
-    queries.push({ query: 'DELETE FROM mailboxes WHERE ownerId=?', args: [ id ] });
 
     database.transaction(queries, function (error, result) {
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
