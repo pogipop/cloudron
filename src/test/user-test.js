@@ -8,7 +8,6 @@
 var async = require('async'),
     config = require('../config.js'),
     database = require('../database.js'),
-    DatabaseError = require('../databaseerror.js'),
     constants = require('../constants.js'),
     expect = require('expect.js'),
     fs = require('fs'),

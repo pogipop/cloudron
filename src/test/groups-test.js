@@ -130,14 +130,6 @@ describe('Groups', function () {
         });
     });
 
-    it('did create mailbox', function (done) {
-        mailboxdb.getGroup(GROUP0_NAME.toLowerCase(), DOMAIN_0.domain, function (error, mailbox) {
-            expect(error).to.be(null);
-            expect(mailbox.ownerType).to.be(mailboxdb.TYPE_GROUP);
-            done();
-        });
-    });
-
     it('cannot add existing group', function (done) {
         groups.create(GROUP0_NAME, function (error) {
             expect(error.reason).to.be(GroupError.ALREADY_EXISTS);
@@ -249,17 +241,6 @@ describe('Group membership', function () {
             expect(result.length).to.be(2);
             expect(result[0]).to.be(USER_0.id);
             expect(result[1]).to.be(USER_1.id);
-            done();
-        });
-    });
-
-    it('can get list members', function (done) {
-        mailboxdb.getGroup(GROUP0_NAME.toLowerCase(), DOMAIN_0.domain, function (error, result) {
-            expect(error).to.be(null);
-            expect(result.name).to.be(GROUP0_NAME.toLowerCase());
-            expect(result.ownerType).to.be(mailboxdb.TYPE_GROUP);
-            expect(result.ownerId).to.be(group0Object.id);
-            expect(result.members).to.eql([ USER_0.username ]); // filters out users that have not signed up yet
             done();
         });
     });
