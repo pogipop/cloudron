@@ -10,6 +10,7 @@ var appdb = require('../appdb.js'),
     assert = require('assert'),
     async = require('async'),
     database = require('../database.js'),
+    domains = require('../domains.js'),
     config = require('../config.js'),
     EventEmitter = require('events').EventEmitter,
     expect = require('expect.js'),
@@ -21,13 +22,19 @@ var appdb = require('../appdb.js'),
     ldap = require('ldapjs'),
     user = require('../user.js');
 
-const DOMAIN = 'example.com';
+const DOMAIN_0 = {
+    domain: 'example.com',
+    zoneName: 'example.com',
+    config: {},
+    provider: 'manual',
+    fallbackCertificate: null
+};
 
 // owner
 var USER_0 = {
     username: 'userName0',
     password: 'Username0pass?1234',
-    email: 'user0@' + DOMAIN.toUpperCase(),
+    email: 'user0@' + DOMAIN_0.domain.toUpperCase(),
     displayName: 'User 0'
 };
 
@@ -37,13 +44,13 @@ var USER_0_ALIAS = 'Asterix';
 var USER_1 = {
     username: 'Username1',
     password: 'Username1pass?12345',
-    email: 'USER1@' + DOMAIN,
+    email: 'USER1@' + DOMAIN_0.domain,
     displayName: 'User 1'
 };
 var USER_2 = {
     username: 'Username2',
     password: 'Username2pass?12345',
-    email: 'USER2@' + DOMAIN,
+    email: 'USER2@' + DOMAIN_0.domain,
     displayName: 'User 2'
 };
 
@@ -61,7 +68,7 @@ var APP_0 = {
     installationProgress: null,
     runState: appdb.RSTATE_RUNNING,
     location: 'some-location-0',
-    domain: DOMAIN,
+    domain: DOMAIN_0.domain,
     manifest: { version: '0.1', dockerImage: 'docker/app0', healthCheckPath: '/', httpPort: 80, title: 'app0' },
     httpPort: null,
     containerId: 'someContainerId',
@@ -84,12 +91,12 @@ function startDockerProxy(interceptor, callback) {
 
 function setup(done) {
     config._reset();
-    config.set('fqdn', DOMAIN);
 
     async.series([
         database.initialize.bind(null),
         database._clear.bind(null),
         ldapServer.start.bind(null),
+        domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0.zoneName, DOMAIN_0.provider, DOMAIN_0.config, DOMAIN_0.fallbackCertificate),
         appdb.add.bind(null, APP_0.id, APP_0.appStoreId, APP_0.manifest, APP_0.location, APP_0.domain, APP_0.portBindings, APP_0),
         appdb.update.bind(null, APP_0.id, { containerId: APP_0.containerId }),
         appdb.setAddonConfig.bind(null, APP_0.id, 'sendmail', [{ name: 'MAIL_SMTP_PASSWORD', value : 'sendmailpassword' }]),
@@ -134,7 +141,6 @@ function setup(done) {
         },
         function (callback) {
             async.series([
-                user.setAliases.bind(null, USER_0.id, [ USER_0_ALIAS, 'obelix' ]),
                 groups.addMember.bind(null, GROUP_ID, USER_0.id),
                 groups.addMember.bind(null, GROUP_ID, USER_1.id)
             ], callback);

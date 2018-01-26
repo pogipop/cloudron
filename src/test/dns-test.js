@@ -20,8 +20,9 @@ var async = require('async'),
 var DOMAIN_0 = {
     domain: 'example-dns-test.com',
     zoneName: 'example-dns-test.com',
-    provider: 'manual',
-    config: {}
+    provider: 'noop',
+    config: {},
+    fallbackCertificate: null
 };
 
 describe('dns provider', function () {
@@ -32,7 +33,8 @@ describe('dns provider', function () {
         async.series([
             database.initialize,
             settings.initialize,
-            database._clear
+            database._clear,
+            domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0.zoneName, DOMAIN_0.provider, DOMAIN_0.config, DOMAIN_0.fallbackCertificate)
         ], done);
     });
 

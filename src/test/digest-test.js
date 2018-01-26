@@ -13,6 +13,8 @@ var async = require('async'),
     expect = require('expect.js'),
     maildb = require('../maildb.js'),
     mailer = require('../mailer.js'),
+    mail = require('../mail.js'),
+    domains = require('../domains.js'),
     paths = require('../paths.js'),
     safe = require('safetydance'),
     settings = require('../settings.js'),
@@ -32,7 +34,9 @@ var USER_0 = {
 const DOMAIN_0 = {
     domain: 'example.com',
     zoneName: 'example.com',
-    config: { provider: 'manual' }
+    config: {},
+    provider: 'manual',
+    fallbackCertificate: null
 };
 
 var AUDIT_SOURCE = {
@@ -66,6 +70,8 @@ describe('digest', function () {
             database.initialize,
             database._clear,
             settings.initialize,
+            domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0.zoneName, DOMAIN_0.provider, DOMAIN_0.config, DOMAIN_0.fallbackCertificate),
+            mail.add.bind(null, DOMAIN_0.domain),
             user.createOwner.bind(null, USER_0.username, USER_0.password, USER_0.email, USER_0.displayName, AUDIT_SOURCE),
             function (callback) {
                 userdb.getByUsername(USER_0.username, function (error, result) {

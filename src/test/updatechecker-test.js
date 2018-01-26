@@ -10,7 +10,9 @@ var appdb = require('../appdb.js'),
     config = require('../config.js'),
     constants = require('../constants.js'),
     database = require('../database.js'),
+    domains = require('../domains.js'),
     expect = require('expect.js'),
+    mail = require('../mail.js'),
     mailer = require('../mailer.js'),
     nock = require('nock'),
     paths = require('../paths.js'),
@@ -31,7 +33,9 @@ var USER_0 = {
 const DOMAIN_0 = {
     domain: 'example.com',
     zoneName: 'example.com',
-    config: { provider: 'manual' }
+    config: {},
+    provider: 'manual',
+    fallbackCertificate: null
 };
 
 var AUDIT_SOURCE = {
@@ -70,6 +74,8 @@ describe('updatechecker - box - manual (email)', function () {
             database.initialize,
             database._clear,
             settings.initialize,
+            domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0.zoneName, DOMAIN_0.provider, DOMAIN_0.config, DOMAIN_0.fallbackCertificate),
+            mail.add.bind(null, DOMAIN_0.domain),
             user.createOwner.bind(null, USER_0.username, USER_0.password, USER_0.email, USER_0.displayName, AUDIT_SOURCE),
             settings.setAutoupdatePattern.bind(null, constants.AUTOUPDATE_PATTERN_NEVER),
             settingsdb.set.bind(null, settings.APPSTORE_CONFIG_KEY, JSON.stringify({ userId: 'uid', cloudronId: 'cid', token: 'token' })),
@@ -170,6 +176,8 @@ describe('updatechecker - box - automatic (no email)', function () {
         async.series([
             database.initialize,
             settings.initialize,
+            domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0.zoneName, DOMAIN_0.provider, DOMAIN_0.config, DOMAIN_0.fallbackCertificate),
+            mail.add.bind(null, DOMAIN_0.domain),
             mailer._clearMailQueue,
             user.createOwner.bind(null, USER_0.username, USER_0.password, USER_0.email, USER_0.displayName, AUDIT_SOURCE),
             settingsdb.set.bind(null, settings.APPSTORE_CONFIG_KEY, JSON.stringify({ userId: 'uid', cloudronId: 'cid', token: 'token' }))
@@ -212,6 +220,8 @@ describe('updatechecker - box - automatic free (email)', function () {
         async.series([
             database.initialize,
             settings.initialize,
+            domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0.zoneName, DOMAIN_0.provider, DOMAIN_0.config, DOMAIN_0.fallbackCertificate),
+            mail.add.bind(null, DOMAIN_0.domain),
             mailer._clearMailQueue,
             user.createOwner.bind(null, USER_0.username, USER_0.password, USER_0.email, USER_0.displayName, AUDIT_SOURCE),
             settingsdb.set.bind(null, settings.APPSTORE_CONFIG_KEY, JSON.stringify({ userId: 'uid', cloudronId: 'cid', token: 'token' }))
@@ -280,6 +290,8 @@ describe('updatechecker - app - manual (email)', function () {
             database.initialize,
             database._clear,
             settings.initialize,
+            domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0.zoneName, DOMAIN_0.provider, DOMAIN_0.config, DOMAIN_0.fallbackCertificate),
+            mail.add.bind(null, DOMAIN_0.domain),
             mailer._clearMailQueue,
             appdb.add.bind(null, APP_0.id, APP_0.appStoreId, APP_0.manifest, APP_0.location, APP_0.domain, APP_0.portBindings, APP_0),
             user.createOwner.bind(null, USER_0.username, USER_0.password, USER_0.email, USER_0.displayName, AUDIT_SOURCE),
@@ -394,6 +406,8 @@ describe('updatechecker - app - automatic (no email)', function () {
             database.initialize,
             database._clear,
             settings.initialize,
+            domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0.zoneName, DOMAIN_0.provider, DOMAIN_0.config, DOMAIN_0.fallbackCertificate),
+            mail.add.bind(null, DOMAIN_0.domain),
             mailer._clearMailQueue,
             appdb.add.bind(null, APP_0.id, APP_0.appStoreId, APP_0.manifest, APP_0.location, APP_0.domain, APP_0.portBindings, APP_0),
             user.createOwner.bind(null, USER_0.username, USER_0.password, USER_0.email, USER_0.displayName, AUDIT_SOURCE),
@@ -457,6 +471,8 @@ describe('updatechecker - app - automatic free (email)', function () {
             database.initialize,
             database._clear,
             settings.initialize,
+            domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0.zoneName, DOMAIN_0.provider, DOMAIN_0.config, DOMAIN_0.fallbackCertificate),
+            mail.add.bind(null, DOMAIN_0.domain),
             mailer._clearMailQueue,
             appdb.add.bind(null, APP_0.id, APP_0.appStoreId, APP_0.manifest, APP_0.location, APP_0.domain, APP_0.portBindings, APP_0),
             user.createOwner.bind(null, USER_0.username, USER_0.password, USER_0.email, USER_0.displayName, AUDIT_SOURCE),
