@@ -157,7 +157,6 @@ function del(userId, callback) {
     var queries = [];
     queries.push({ query: 'DELETE FROM groupMembers WHERE userId = ?', args: [ userId ] });
     queries.push({ query: 'DELETE FROM users WHERE id = ?', args: [ userId ] });
-    queries.push({ query: 'DELETE FROM mailboxes WHERE ownerId=?', args: [ userId ] });
 
     database.transaction(queries, function (error, result) {
         if (error && error.code === 'ER_NO_REFERENCED_ROW_2') return callback(new DatabaseError(DatabaseError.NOT_FOUND, error));
