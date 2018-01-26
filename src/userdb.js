@@ -141,8 +141,9 @@ function add(userId, user, callback) {
     const query = 'INSERT INTO users (id, username, password, email, fallbackEmail, salt, createdAt, modifiedAt, resetToken, displayName) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
     const args = [ userId, user.username, user.password, user.email, user.fallbackEmail, user.salt, user.createdAt, user.modifiedAt, user.resetToken, user.displayName ];
 
-    database.query(query, args, function (error, result) {
-        if (error && error.code === 'ER_DUP_ENTRY') return callback(new DatabaseError(DatabaseError.ALREADY_EXISTS, 'username already exists'));
+    database.query(query, args, function (error) {
+        if (error && error.code === 'ER_DUP_ENTRY' && error.sqlMessage.indexOf('users_email') !== -1) return callback(new DatabaseError(DatabaseError.ALREADY_EXISTS, 'email already exists'));
+        if (error && error.code === 'ER_DUP_ENTRY' && error.sqlMessage.indexOf('users_username') !== -1) return callback(new DatabaseError(DatabaseError.ALREADY_EXISTS, 'username already exists'));
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
 
         callback(null);
@@ -215,7 +216,8 @@ function update(userId, user, callback) {
     args.push(userId);
 
     database.query('UPDATE users SET ' + fields.join(', ') + ' WHERE id = ?', args, function (error) {
-        if (error && error.code === 'ER_DUP_ENTRY') return callback(new DatabaseError(DatabaseError.ALREADY_EXISTS, 'username already exists'));
+        if (error && error.code === 'ER_DUP_ENTRY' && error.sqlMessage.indexOf('users_email') !== -1) return callback(new DatabaseError(DatabaseError.ALREADY_EXISTS, 'email already exists'));
+        if (error && error.code === 'ER_DUP_ENTRY' && error.sqlMessage.indexOf('users_username') !== -1) return callback(new DatabaseError(DatabaseError.ALREADY_EXISTS, 'username already exists'));
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
 
         return callback(null);
