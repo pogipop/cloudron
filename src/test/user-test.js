@@ -14,13 +14,13 @@ var async = require('async'),
     fs = require('fs'),
     groupdb = require('../groupdb.js'),
     groups = require('../groups.js'),
+    domains = require('../domains.js'),
     mail = require('../mail.js'),
-    maildb = require('../maildb.js'),
     mailboxdb = require('../mailboxdb.js'),
+    maildb = require('../maildb.js'),
     mailer = require('../mailer.js'),
     user = require('../user.js'),
     userdb = require('../userdb.js'),
-    settingsdb = require('../settingsdb.js'),
     UserError = user.UserError;
 
 var USERNAME = 'noBody';
@@ -43,7 +43,9 @@ var DISPLAY_NAME_1 = 'Second User';
 const DOMAIN_0 = {
     domain: 'example.com',
     zoneName: 'example.com',
-    config: { provider: 'manual' }
+    provider: 'manual',
+    config: {},
+    fallbackCertificate: null
 };
 
 function cleanupUsers(done) {
@@ -75,6 +77,8 @@ function setup(done) {
     async.series([
         database.initialize,
         database._clear,
+        domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0.zoneName, DOMAIN_0.provider, DOMAIN_0.config, DOMAIN_0.fallbackCertificate),
+        mail.add.bind(null, DOMAIN_0.domain),
         mailer._clearMailQueue
     ], done);
 }
@@ -214,14 +218,6 @@ describe('User', function () {
 
                 // first user is owner, do not send mail to admins
                 checkMails(0, done);
-            });
-        });
-
-        it('did create mailbox', function (done) {
-            mailboxdb.getMailbox(USERNAME.toLowerCase(), DOMAIN_0.domain, function (error, mailbox) {
-                expect(error).to.be(null);
-                expect(mailbox.ownerType).to.be(mailboxdb.TYPE_USER);
-                done();
             });
         });
 
