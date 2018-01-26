@@ -5,41 +5,54 @@
 
 'use strict';
 
-var config = require('../../config.js'),
+var async = require('async'),
+    config = require('../../config.js'),
     constants = require('../../constants.js'),
     database = require('../../database.js'),
+    domains = require('../../domains.js'),
     tokendb = require('../../tokendb.js'),
     expect = require('expect.js'),
     groups = require('../../groups.js'),
+    mail = require('../../mail.js'),
     mailer = require('../../mailer.js'),
     superagent = require('superagent'),
     server = require('../../server.js');
 
-var SERVER_URL = 'http://localhost:' + config.get('port');
+const SERVER_URL = 'http://localhost:' + config.get('port');
 
-var USERNAME_0 = 'superaDmIn', PASSWORD = 'Foobar?1337', EMAIL_0 = 'silLY@me.com', EMAIL_0_NEW = 'stupID@me.com', DISPLAY_NAME_0_NEW = 'New Name';
-var USERNAME_1 = 'userTheFirst', EMAIL_1 = 'taO@zen.mac';
-var USERNAME_2 = 'userTheSecond', EMAIL_2 = 'USER@foo.bar', EMAIL_2_NEW = 'happy@ME.com';
-var USERNAME_3 = 'ut', EMAIL_3 = 'user3@FOO.bar';
+const DOMAIN_0 = {
+    domain: 'example-user-test.com',
+    zoneName: 'example-user-test.com',
+    config: {},
+    provider: 'noop',
+    fallbackCertificate: null
+};
+
+const USERNAME_0 = 'superaDmIn', PASSWORD = 'Foobar?1337', EMAIL_0 = 'silLY@me.com', EMAIL_0_NEW = 'stupID@me.com', DISPLAY_NAME_0_NEW = 'New Name';
+const USERNAME_1 = 'userTheFirst', EMAIL_1 = 'taO@zen.mac';
+const USERNAME_2 = 'userTheSecond', EMAIL_2 = 'USER@foo.bar', EMAIL_2_NEW = 'happy@ME.com';
+const USERNAME_3 = 'ut', EMAIL_3 = 'user3@FOO.bar';
 
 var groupObject;
 
 function setup(done) {
     config._reset();
-    config.setFqdn('example-user-test.com');
 
-    server.start(function (error) {
-        expect(!error).to.be.ok();
+    async.series([
+        server.start,
+        database._clear,
+        mailer._clearMailQueue,
+        domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0.zoneName, DOMAIN_0.provider, DOMAIN_0.config, DOMAIN_0.fallbackCertificate),
+        mail.add.bind(null, DOMAIN_0.domain)
+    ], function (error) {
+        expect(error).to.not.be.ok();
 
-        mailer._clearMailQueue();
+        groups.create('somegroupname', function (error, result) {
+            expect(error).to.not.be.ok();
 
-        database._clear(function (error) {
-            expect(error).to.eql(null);
+            groupObject = result;
 
-            groups.create('somegroupname', function (e, r) {
-                groupObject = r;
-                done();
-            });
+            done();
         });
     });
 }
@@ -640,49 +653,6 @@ describe('User API', function () {
 
                         done();
                     });
-            });
-    });
-
-    it('can set aliases', function (done) {
-        superagent.put(SERVER_URL + '/api/v1/users/' + user_0.id + '/aliases')
-            .query({ access_token: token })
-            .send({ aliases: [ 'give', 'me', 'more' ] })
-            .end(function (error, result) {
-                expect(result.statusCode).to.equal(200);
-                done();
-            });
-    });
-
-    it('cannot set alias as another user', function (done) {
-        superagent.put(SERVER_URL + '/api/v1/users/' + user_0.id + '/aliases')
-            .query({ access_token: token })
-            .send({ aliases: [ 'give', 'me', 'more', USERNAME_2 ] })
-            .end(function (error, result) {
-                expect(result.statusCode).to.equal(409);
-                done();
-            });
-    });
-
-    it('cannot set invalid alias', function (done) {
-        superagent.put(SERVER_URL + '/api/v1/users/' + user_0.id + '/aliases')
-            .query({ access_token: token })
-            .send({ aliases: [ 'apple-talk' ] })
-            .end(function (error, result) {
-                expect(result.statusCode).to.equal(400);
-                done();
-            });
-    });
-
-    it('can get aliases', function (done) {
-        superagent.get(SERVER_URL + '/api/v1/users/' + user_0.id + '/aliases')
-            .query({ access_token: token })
-            .end(function (error, result) {
-                expect(result.statusCode).to.equal(200);
-                expect(result.body.aliases.length).to.be(3);
-                expect(result.body.aliases[0]).to.be('give');
-                expect(result.body.aliases[1]).to.be('me');
-                expect(result.body.aliases[2]).to.be('more');
-                done();
             });
     });
 });

@@ -10,6 +10,7 @@ var appdb = require('../../appdb.js'),
     async = require('async'),
     config = require('../../config.js'),
     database = require('../../database.js'),
+    domains = require('../../domains.js'),
     expect = require('expect.js'),
     locker = require('../../locker.js'),
     nock = require('nock'),
@@ -20,12 +21,20 @@ var appdb = require('../../appdb.js'),
     settingsdb = require('../../settingsdb.js'),
     shell = require('../../shell.js');
 
-var SERVER_URL = 'http://localhost:' + config.get('port');
+const SERVER_URL = 'http://localhost:' + config.get('port');
+const USERNAME = 'superadmin';
+const PASSWORD = 'Foobar?1337';
+const EMAIL ='silly@me.com';
 
-var USERNAME = 'superadmin', PASSWORD = 'Foobar?1337', EMAIL ='silly@me.com';
+const DOMAIN_0 = {
+    domain: 'example-backups-test.com',
+    zoneName: 'example-backups-test.com',
+    config: {},
+    provider: 'noop',
+    fallbackCertificate: null
+};
+
 var token = null;
-var DOMAIN = 'example-backups-test.com';
-
 var gSudoOriginal = null;
 function injectShellMock() {
     gSudoOriginal = shell.sudo;
@@ -41,7 +50,6 @@ function setup(done) {
     config._reset();
     config.set('provider', 'caas');
     config.setVersion('1.2.3');
-    config.setFqdn(DOMAIN);
 
     async.series([
         server.start.bind(server),
@@ -49,6 +57,7 @@ function setup(done) {
         database._clear,
 
         settingsdb.set.bind(null, settings.CAAS_CONFIG_KEY, JSON.stringify({ boxId: 'BOX_ID', token: 'ACCESS_TOKEN2' })),
+        domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0.zoneName, DOMAIN_0.provider, DOMAIN_0.config, DOMAIN_0.fallbackCertificate),
 
         function createAdmin(callback) {
             var scope1 = nock(config.apiServerOrigin()).get('/api/v1/boxes/BOX_ID/setup/verify?setupToken=somesetuptoken').reply(200, {});
@@ -72,7 +81,7 @@ function setup(done) {
 
         function addApp(callback) {
             var manifest = { version: '0.0.1', manifestVersion: 1, dockerImage: 'foo', healthCheckPath: '/', httpPort: 3, title: 'ok', addons: { } };
-            appdb.add('appid', 'appStoreId', manifest, 'location', DOMAIN, [ ] /* portBindings */, { }, callback);
+            appdb.add('appid', 'appStoreId', manifest, 'location', DOMAIN_0.domain, [ ] /* portBindings */, { }, callback);
         },
 
         function createSettings(callback) {

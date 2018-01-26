@@ -9,6 +9,7 @@ var appdb = require('../../appdb.js'),
     async = require('async'),
     config = require('../../config.js'),
     database = require('../../database.js'),
+    domains = require('../../domains.js'),
     expect = require('expect.js'),
     hock = require('hock'),
     http = require('http'),
@@ -24,20 +25,27 @@ var appdb = require('../../appdb.js'),
     superagent = require('superagent'),
     url = require('url');
 
-var SERVER_URL = 'http://localhost:' + config.get('port');
+const SERVER_URL = 'http://localhost:' + config.get('port');
 
-var USERNAME = 'superadmin', PASSWORD = 'Foobar?1337', EMAIL ='silly@me.com';
-var DOMAIN = 'example-sysadmin-test.com';
+const USERNAME = 'superadmin', PASSWORD = 'Foobar?1337', EMAIL ='silly@me.com';
+
+const DOMAIN_0 = {
+    domain: 'example-sysadmin-test.com',
+    zoneName: 'example-sysadmin-test.com',
+    config: {},
+    provider: 'noop',
+    fallbackCertificate: null
+};
 
 function setup(done) {
     config._reset();
-    config.setFqdn(DOMAIN);
+    config.setFqdn(DOMAIN_0.domain);
     config.setVersion('1.2.3');
 
     async.series([
-        server.start.bind(server),
-
+        server.start,
         database._clear,
+        domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0.zoneName, DOMAIN_0.provider, DOMAIN_0.config, DOMAIN_0.fallbackCertificate),
 
         function createAdmin(callback) {
             superagent.post(SERVER_URL + '/api/v1/cloudron/activate')
@@ -53,7 +61,7 @@ function setup(done) {
 
         function addApp(callback) {
             var manifest = { version: '0.0.1', manifestVersion: 1, dockerImage: 'foo', healthCheckPath: '/', httpPort: 3, title: 'ok', addons: { } };
-            appdb.add('appid', 'appStoreId', manifest, 'location', DOMAIN, [ ] /* portBindings */, { }, callback);
+            appdb.add('appid', 'appStoreId', manifest, 'location', DOMAIN_0.domain, [ ] /* portBindings */, { }, callback);
         },
 
         function createSettings(callback) {
@@ -62,7 +70,7 @@ function setup(done) {
             s3._mockInject(MockS3);
 
             safe.fs.mkdirSync('/tmp/box-sysadmin-test');
-            settingsdb.set(settings.BACKUP_CONFIG_KEY, JSON.stringify({ provider: 'caas', token: 'BACKUP_TOKEN', fqdn: DOMAIN, key: 'key', prefix: 'boxid', format: 'tgz'}), callback);
+            settingsdb.set(settings.BACKUP_CONFIG_KEY, JSON.stringify({ provider: 'caas', token: 'BACKUP_TOKEN', fqdn: DOMAIN_0.domain, key: 'key', prefix: 'boxid', format: 'tgz'}), callback);
         }
     ], done);
 }

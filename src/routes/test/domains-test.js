@@ -141,11 +141,10 @@ describe('Domains API', function () {
                 .end(function (error, result) {
                     expect(result.statusCode).to.equal(200);
                     expect(result.body.domains).to.be.an(Array);
-                    expect(result.body.domains.length).to.equal(3);
+                    expect(result.body.domains.length).to.equal(2);
 
                     expect(result.body.domains[0].domain).to.equal(DOMAIN_0.domain);
-                    expect(result.body.domains[1].domain).to.equal(DOMAIN);
-                    expect(result.body.domains[2].domain).to.equal(DOMAIN_1.domain);
+                    expect(result.body.domains[1].domain).to.equal(DOMAIN_1.domain);
 
                     done();
                 });

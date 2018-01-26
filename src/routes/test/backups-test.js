@@ -9,28 +9,35 @@ var appdb = require('../../appdb.js'),
     async = require('async'),
     config = require('../../config.js'),
     database = require('../../database.js'),
+    domains = require('../../domains.js'),
     expect = require('expect.js'),
     nock = require('nock'),
     superagent = require('superagent'),
     server = require('../../server.js'),
     settings = require('../../settings.js');
 
-var SERVER_URL = 'http://localhost:' + config.get('port');
+const SERVER_URL = 'http://localhost:' + config.get('port');
 
-var USERNAME = 'superadmin', PASSWORD = 'Foobar?1337', EMAIL ='silly@me.com';
-var DOMAIN = 'example-backups-test.com';
+const USERNAME = 'superadmin', PASSWORD = 'Foobar?1337', EMAIL ='silly@me.com';
+
+const DOMAIN_0 = {
+    domain: 'example-backups-test.com',
+    zoneName: 'example-backups-test.com',
+    config: {},
+    provider: 'noop',
+    fallbackCertificate: null
+};
+
 var token = null;
 
 function setup(done) {
     nock.cleanAll();
     config._reset();
-    config.setVersion('1.2.3');
-    config.setFqdn(DOMAIN);
 
     async.series([
-        server.start.bind(server),
-
+        server.start,
         database._clear,
+        domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0.zoneName, DOMAIN_0.provider, DOMAIN_0.config, DOMAIN_0.fallbackCertificate),
 
         function createAdmin(callback) {
             superagent.post(SERVER_URL + '/api/v1/cloudron/activate')
@@ -49,7 +56,7 @@ function setup(done) {
 
         function addApp(callback) {
             var manifest = { version: '0.0.1', manifestVersion: 1, dockerImage: 'foo', healthCheckPath: '/', httpPort: 3, title: 'ok', addons: { } };
-            appdb.add('appid', 'appStoreId', manifest, 'location', DOMAIN, [ ] /* portBindings */, { }, callback);
+            appdb.add('appid', 'appStoreId', manifest, 'location', DOMAIN_0.domain, [ ] /* portBindings */, { }, callback);
         },
 
         function createSettings(callback) {
