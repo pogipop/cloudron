@@ -6,6 +6,7 @@ exports = module.exports = {
 
     listAliases: listAliases,
     listMailboxes: listMailboxes,
+    listGroups: listGroups,
 
     getMailbox: getMailbox,
     getGroup: getGroup,
@@ -121,6 +122,18 @@ function listMailboxes(domain, callback) {
 
     database.query('SELECT ' + MAILBOX_FIELDS + ' FROM mailboxes WHERE domain = ? AND (ownerType = ? OR ownerType = ?) AND aliasTarget IS NULL ORDER BY name', [ domain, exports.TYPE_APP, exports.TYPE_USER ], function (error, results) {
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
+
+        callback(null, results);
+    });
+}
+
+function listGroups(domain, callback) {
+    assert.strictEqual(typeof domain, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    database.query('SELECT ' + MAILBOX_FIELDS + ' FROM mailboxes WHERE domain = ? AND ownerType = ? AND aliasTarget IS NULL', [ domain, exports.TYPE_GROUP ], function (error, results) {
+        if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
+        if (results.length === 0) return callback(new DatabaseError(DatabaseError.NOT_FOUND));
 
         callback(null, results);
     });

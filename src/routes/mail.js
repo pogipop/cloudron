@@ -21,7 +21,12 @@ exports = module.exports = {
     disableUserMailbox: disableUserMailbox,
 
     getAliases: getAliases,
-    setAliases: setAliases
+    setAliases: setAliases,
+
+    getLists: getLists,
+    getList: getList,
+    addList: addList,
+    removeList: removeList
 };
 
 var assert = require('assert'),
@@ -235,5 +240,55 @@ function setAliases(req, res, next) {
         if (error) return next(new HttpError(500, error));
 
         next(new HttpSuccess(202));
+    });
+}
+
+function getLists(req, res, next) {
+    assert.strictEqual(typeof req.params.domain, 'string');
+
+    mail.getLists(req.params.domain, function (error, result) {
+        if (error && error.reason === MailError.NOT_FOUND) return next(new HttpError(404, error.message));
+        if (error) return next(new HttpError(500, error));
+
+        next(new HttpSuccess(200, { lists: result }));
+    });
+}
+
+function getList(req, res, next) {
+    assert.strictEqual(typeof req.params.domain, 'string');
+    assert.strictEqual(typeof req.params.groupId, 'string');
+
+    mail.getList(req.params.domain, req.params.groupId, function (error, result) {
+        if (error && error.reason === MailError.NOT_FOUND) return next(new HttpError(404, error.message));
+        if (error) return next(new HttpError(500, error));
+
+        next(new HttpSuccess(200, { list: result }));
+    });
+}
+
+function addList(req, res, next) {
+    assert.strictEqual(typeof req.params.domain, 'string');
+    assert.strictEqual(typeof req.body, 'object');
+
+    if (typeof req.body.groupId !== 'string') return next(new HttpError(400, 'groupId must be a string'));
+
+    mail.addList(req.params.domain, req.body.groupId, function (error) {
+        if (error && error.reason === MailError.NOT_FOUND) return next(new HttpError(404, error.message));
+        if (error && error.reason === MailError.ALREADY_EXISTS) return next(new HttpSuccess(409, 'list already exists'));
+        if (error) return next(new HttpError(500, error));
+
+        next(new HttpSuccess(201, {}));
+    });
+}
+
+function removeList(req, res, next) {
+    assert.strictEqual(typeof req.params.domain, 'string');
+    assert.strictEqual(typeof req.params.groupId, 'string');
+
+    mail.removeList(req.params.domain, req.params.groupId, function (error, result) {
+        if (error && error.reason === MailError.NOT_FOUND) return next(new HttpError(404, error.message));
+        if (error) return next(new HttpError(500, error));
+
+        next(new HttpSuccess(202, {}));
     });
 }

@@ -26,6 +26,11 @@ exports = module.exports = {
     getAliases: getAliases,
     setAliases: setAliases,
 
+    getLists: getLists,
+    getList: getList,
+    addList: addList,
+    removeList: removeList,
+
     _readDkimPublicKeySync: readDkimPublicKeySync,
 
     MailError: MailError
@@ -40,6 +45,8 @@ var assert = require('assert'),
     debug = require('debug')('box:mail'),
     dig = require('./dig.js'),
     domains = require('./domains.js'),
+    groups = require('./groups.js'),
+    GroupError = groups.GroupError,
     infra = require('./infra_version.js'),
     mailboxdb = require('./mailboxdb.js'),
     maildb = require('./maildb.js'),
@@ -926,6 +933,71 @@ function setAliases(domain, userId, aliases, callback) {
             if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
 
             callback(null);
+        });
+    });
+}
+
+function getLists(domain, callback) {
+    assert.strictEqual(typeof domain, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    mailboxdb.listGroups(domain, function (error, result) {
+        if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
+
+        callback(null, result);
+    });
+}
+
+function getList(domain, groupId, callback) {
+    assert.strictEqual(typeof domain, 'string');
+    assert.strictEqual(typeof groupId, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    groups.get(groupId, function (error, result) {
+        if (error && error.reason === GroupError.NOT_FOUND) return callback(new MailError(MailError.NOT_FOUND, 'no such group'));
+        if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
+
+        mailboxdb.getGroup(result.name, domain, function (error, result) {
+            if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new MailError(MailError.NOT_FOUND, 'no such list'));
+            if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
+
+            callback(null, result);
+        });
+    });
+}
+
+function addList(domain, groupId, callback) {
+    assert.strictEqual(typeof domain, 'string');
+    assert.strictEqual(typeof groupId, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    groups.get(groupId, function (error, result) {
+        if (error && error.reason === GroupError.NOT_FOUND) return callback(new MailError(MailError.NOT_FOUND, 'no such group'));
+        if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
+
+        mailboxdb.add(result.name, domain, groupId, mailboxdb.TYPE_GROUP, function (error) {
+            if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(new MailError(MailError.ALREADY_EXISTS, 'list already exits'));
+            if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
+
+            callback();
+        });
+    });
+}
+
+function removeList(domain, groupId, callback) {
+    assert.strictEqual(typeof domain, 'string');
+    assert.strictEqual(typeof groupId, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    groups.get(groupId, function (error, result) {
+        if (error && error.reason === GroupError.NOT_FOUND) return callback(new MailError(MailError.NOT_FOUND, 'no such group'));
+        if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
+
+        mailboxdb.del(result.name, domain, function (error) {
+            if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new MailError(MailError.NOT_FOUND, 'no such list'));
+            if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
+
+            callback();
         });
     });
 }
