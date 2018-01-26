@@ -17,6 +17,7 @@ var expect = require('expect.js'),
     server = require('../../server.js'),
     querystring = require('querystring'),
     database = require('../../database.js'),
+    domains = require('../../domains.js'),
     clientdb = require('../../clientdb.js'),
     clients = require('../../clients.js'),
     userdb = require('../../userdb.js'),
@@ -137,6 +138,14 @@ describe('OAuth2', function () {
     });
 
     describe('flow', function () {
+        const DOMAIN_0 = {
+            domain: 'example.com',
+            zoneName: 'example.com',
+            config: {},
+            provider: 'manual',
+            fallbackCertificate: null
+        };
+
         var USER_0 = {
             id: uuid.v4(),
             username: 'someUSERname',
@@ -154,7 +163,7 @@ describe('OAuth2', function () {
             appStoreId: '',
             manifest: { version: '0.1.0', addons: { } },
             location: 'test',
-            domain: 'example.com',
+            domain: DOMAIN_0.domain,
             portBindings: {},
             accessRestriction: null,
             memoryLimit: 0,
@@ -166,7 +175,7 @@ describe('OAuth2', function () {
             appStoreId: '',
             manifest: { version: '0.1.0', addons: { } },
             location: 'test1',
-            domain: 'example.com',
+            domain: DOMAIN_0.domain,
             portBindings: {},
             accessRestriction: { users: [ 'foobar' ] },
             memoryLimit: 0,
@@ -178,7 +187,7 @@ describe('OAuth2', function () {
             appStoreId: '',
             manifest: { version: '0.1.0', addons: { } },
             location: 'test2',
-            domain: 'example.com',
+            domain: DOMAIN_0.domain,
             portBindings: {},
             accessRestriction: { users: [ USER_0.id ] },
             memoryLimit: 0,
@@ -190,7 +199,7 @@ describe('OAuth2', function () {
             appStoreId: '',
             manifest: { version: '0.1.0', addons: { } },
             location: 'test3',
-            domain: 'example.com',
+            domain: DOMAIN_0.domain,
             portBindings: {},
             accessRestriction: { groups: [ 'someothergroup', 'admin', 'anothergroup' ] },
             memoryLimit: 0,
@@ -301,6 +310,7 @@ describe('OAuth2', function () {
             async.series([
                 server.start,
                 database._clear,
+                domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0.zoneName, DOMAIN_0.provider, DOMAIN_0.config, DOMAIN_0.fallbackCertificate),
                 clientdb.add.bind(null, CLIENT_0.id, CLIENT_0.appId, CLIENT_0.type, CLIENT_0.clientSecret, CLIENT_0.redirectURI, CLIENT_0.scope),
                 clientdb.add.bind(null, CLIENT_1.id, CLIENT_1.appId, CLIENT_1.type, CLIENT_1.clientSecret, CLIENT_1.redirectURI, CLIENT_1.scope),
                 clientdb.add.bind(null, CLIENT_2.id, CLIENT_2.appId, CLIENT_2.type, CLIENT_2.clientSecret, CLIENT_2.redirectURI, CLIENT_2.scope),

@@ -8,6 +8,7 @@
 var async = require('async'),
     config = require('../config.js'),
     database = require('../database.js'),
+    domains = require('../domains.js'),
     expect = require('expect.js'),
     mail = require('../mail.js'),
     maildb = require('../maildb.js');
@@ -16,7 +17,8 @@ const DOMAIN_0 = {
     domain: 'example.com',
     zoneName: 'example.com',
     provider: 'manual',
-    config: { }
+    config: {},
+    fallbackCertificate: null
 };
 
 function setup(done) {
@@ -27,7 +29,8 @@ function setup(done) {
     async.series([
         database.initialize,
         database._clear,
-        // DOMAIN_0 already added for test through domaindb.addDefaultDomain()
+        domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0.zoneName, DOMAIN_0.provider, DOMAIN_0.config, DOMAIN_0.fallbackCertificate),
+        mail.add.bind(null, DOMAIN_0.domain)
     ], done);
 }
 

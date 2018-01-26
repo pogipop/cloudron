@@ -253,7 +253,7 @@ describe('Ldap', function () {
 
         it('succeeds without accessRestriction when email is enabled', function (done) {
             // use maildb to not trigger further events
-            maildb.update(DOMAIN, { enabled: true }, function (error) {
+            maildb.update(DOMAIN_0.domain, { enabled: true }, function (error) {
                 expect(error).not.to.be.ok();
 
                 var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + config.get('ldapPort') });
@@ -263,7 +263,7 @@ describe('Ldap', function () {
 
                     client.unbind();
 
-                    maildb.update(DOMAIN, { enabled: false }, done);
+                    maildb.update(DOMAIN_0.domain, { enabled: false }, done);
                 });
             });
         });
@@ -309,7 +309,7 @@ describe('Ldap', function () {
             var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + config.get('ldapPort') });
 
             var opts = {
-                filter: '(&(l=Seattle)(email=*@' + DOMAIN + '))'
+                filter: '(&(l=Seattle)(email=*@' + DOMAIN_0.domain + '))'
             };
 
             client.search('o=example', opts, function (error, result) {
@@ -385,7 +385,7 @@ describe('Ldap', function () {
 
         it ('succeeds with basic filter and email enabled', function (done) {
             // user settingsdb instead of settings, to not trigger further events
-            maildb.update(DOMAIN, { enabled: true }, function (error) {
+            maildb.update(DOMAIN_0.domain, { enabled: true }, function (error) {
                 expect(error).not.to.be.ok();
 
                 var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + config.get('ldapPort') });
@@ -416,7 +416,7 @@ describe('Ldap', function () {
 
                         client.unbind();
 
-                        maildb.update(DOMAIN, { enabled: false }, done);
+                        maildb.update(DOMAIN_0.domain, { enabled: false }, done);
                     });
                 });
             });
@@ -852,7 +852,7 @@ describe('Ldap', function () {
 
         it('email enabled - allows with valid email', function (done) {
             // use maildb to not trigger further events
-            maildb.update(DOMAIN, { enabled: true }, function (error) {
+            maildb.update(DOMAIN_0.domain, { enabled: true }, function (error) {
                 expect(error).not.to.be.ok();
 
                 var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + config.get('ldapPort') });
@@ -862,14 +862,14 @@ describe('Ldap', function () {
 
                     client.unbind();
 
-                    maildb.update(DOMAIN, { enabled: false }, done);
+                    maildb.update(DOMAIN_0.domain, { enabled: false }, done);
                 });
             });
         });
 
         it('email enabled - does not allow with invalid password', function (done) {
             // use maildb to not trigger further events
-            maildb.update(DOMAIN, { enabled: true }, function (error) {
+            maildb.update(DOMAIN_0.domain, { enabled: true }, function (error) {
                 expect(error).not.to.be.ok();
 
                 var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + config.get('ldapPort') });
@@ -879,7 +879,7 @@ describe('Ldap', function () {
 
                     client.unbind();
 
-                    maildb.update(DOMAIN, { enabled: false }, done);
+                    maildb.update(DOMAIN_0.domain, { enabled: false }, done);
                 });
             });
         });
@@ -888,7 +888,7 @@ describe('Ldap', function () {
     describe('app sendmail bind', function () {
         // these tests should work even when email is disabled
         before(function (done) {
-            maildb.update(DOMAIN, { enabled: false }, done);
+            maildb.update(DOMAIN_0.domain, { enabled: false }, done);
         });
 
         it('does not allow with invalid app', function (done) {
@@ -940,7 +940,7 @@ describe('Ldap', function () {
 
         it('email enabled - allows with valid email', function (done) {
             // use maildb to not trigger further events
-            maildb.update(DOMAIN, { enabled: true }, function (error) {
+            maildb.update(DOMAIN_0.domain, { enabled: true }, function (error) {
                 expect(error).not.to.be.ok();
 
                 var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + config.get('ldapPort') });
@@ -950,14 +950,14 @@ describe('Ldap', function () {
 
                     client.unbind();
 
-                    maildb.update(DOMAIN, { enabled: false }, done);
+                    maildb.update(DOMAIN_0.domain, { enabled: false }, done);
                 });
             });
         });
 
         it('email enabled - does not allow with invalid password', function (done) {
             // use maildb to not trigger further events
-            maildb.update(DOMAIN, { enabled: true }, function (error) {
+            maildb.update(DOMAIN_0.domain, { enabled: true }, function (error) {
                 expect(error).not.to.be.ok();
 
                 var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + config.get('ldapPort') });
@@ -967,7 +967,7 @@ describe('Ldap', function () {
 
                     client.unbind();
 
-                    maildb.update(DOMAIN, { enabled: false }, done);
+                    maildb.update(DOMAIN_0.domain, { enabled: false }, done);
                 });
             });
         });
