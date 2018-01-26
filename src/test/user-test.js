@@ -583,34 +583,6 @@ describe('User', function () {
                 done();
             });
         });
-
-        it('succeeds with cloudron mail enabled', function (done) {
-            // use maildb to not trigger further events
-            maildb.update(DOMAIN_0.domain, { enabled: true }, function (error) {
-                expect(error).not.to.be.ok();
-
-                user.verifyWithEmail(USERNAME + '@' + DOMAIN_0.domain, PASSWORD, function (error, result) {
-                    expect(error).to.not.be.ok();
-                    expect(result).to.be.ok();
-
-                    maildb.update(DOMAIN_0.domain, { enabled: false }, done);
-                });
-            });
-        });
-
-        it('fails with cloudron mail enabled and invite email', function (done) {
-            // use maildb to not trigger further events
-            maildb.update(DOMAIN_0.domain, { enabled: true }, function (error) {
-                expect(error).not.to.be.ok();
-
-                user.verifyWithEmail(EMAIL, PASSWORD, function (error) {
-                    expect(error).to.be.a(UserError);
-                    expect(error.reason).to.equal(UserError.NOT_FOUND);
-
-                    maildb.update(DOMAIN_0.domain, { enabled: false }, done);
-                });
-            });
-        });
     });
 
     describe('retrieving', function () {
@@ -715,18 +687,6 @@ describe('User', function () {
                     expect(result.username).to.equal(USERNAME_NEW.toLowerCase());
                     expect(result.displayName).to.equal(DISPLAY_NAME_NEW);
 
-                    done();
-                });
-            });
-        });
-
-        it('updated the mailbox', function (done) {
-            mailboxdb.getMailbox(USERNAME, DOMAIN_0.domain, function (error) {
-                expect(error.reason).to.be(DatabaseError.NOT_FOUND);
-
-                mailboxdb.getMailbox(USERNAME_NEW.toLowerCase(), DOMAIN_0.domain, function (error, mailbox) {
-                    expect(error).to.be(null);
-                    expect(mailbox.ownerId).to.be(userObject.id);
                     done();
                 });
             });
@@ -849,43 +809,6 @@ describe('User', function () {
         });
     });
 
-    describe('aliases', function () {
-        before(createOwner);
-        after(cleanupUsers);
-
-        it('cannot set invalid alias', function (done) {
-            user.setAliases(userObject.id, [ 'a$scii' ], function (error) {
-                expect(error.reason).to.be(UserError.BAD_FIELD);
-                done();
-            });
-        });
-
-        it('can set aliases', function (done) {
-            user.setAliases(userObject.id, [ 'everything', 'is', 'awesome' ], function (error) {
-                expect(error).to.be(null);
-                done();
-            });
-        });
-
-        it('get get aliases', function (done) {
-            user.getAliases(userObject.id, function (error, aliases) {
-                expect(error).to.be(null);
-                expect(aliases.length).to.be(3);
-                expect(aliases[0]).to.be('awesome');
-                expect(aliases[1]).to.be('everything');
-                expect(aliases[2]).to.be('is');
-                done();
-            });
-        });
-
-        it('cannot create user with username conflicting with existing alias', function (done) {
-            user.create('awesome', PASSWORD, 'test@test.com', DISPLAY_NAME, AUDIT_SOURCE, function (error) {
-                expect(error.reason).to.be(UserError.ALREADY_EXISTS);
-                done();
-            });
-        });
-    });
-
     describe('set password', function () {
         before(createOwner);
         after(cleanupUsers);
@@ -1003,34 +926,10 @@ describe('User', function () {
             });
         });
 
-        it('can set aliases', function (done) {
-            user.setAliases(userObject.id, [ 'everything', 'is', 'awesome' ], function (error) {
-                expect(error).to.be(null);
-
-                mailboxdb.getAliasesForName(USERNAME.toLowerCase(), DOMAIN_0.domain, function (error, results) {
-                    expect(error).to.be(null);
-                    expect(results.length).to.be(3);
-                    done();
-                });
-            });
-        });
-
         it('can remove valid user', function (done) {
             user.remove(userObject.id, { }, function (error) {
                 expect(!error).to.be.ok();
                 done();
-            });
-        });
-
-        it('did delete mailbox and aliases', function (done) {
-            mailboxdb.getMailbox(userObject.username.toLowerCase(), DOMAIN_0.domain, function (error) {
-                expect(error.reason).to.be(DatabaseError.NOT_FOUND);
-
-                mailboxdb.getAliasesForName(USERNAME.toLowerCase(), DOMAIN_0.domain, function (error, results) {
-                    expect(error).to.be(null);
-                    expect(results.length).to.be(0);
-                    done();
-                });
             });
         });
 
