@@ -64,6 +64,20 @@ var USER_2 = {
     displayName: 'Herbert 2'
 };
 
+const DOMAIN_0 = {
+    domain: 'foobar.com',
+    zoneName: 'foobar.com',
+    provider: 'digitalocean',
+    config: { token: 'abcd' }
+};
+
+const DOMAIN_1 = {
+    domain: 'foo.cloudron.io',
+    zoneName: 'cloudron.io',
+    provider: 'manual',
+    config: null
+};
+
 const TEST_DOMAIN = {
     domain: 'example.com',
     zoneName: 'example.com',
@@ -90,20 +104,6 @@ describe('database', function () {
     });
 
     describe('domains', function () {
-        const DOMAIN_0 = {
-            domain: 'foobar.com',
-            zoneName: 'foobar.com',
-            provider: 'digitalocean',
-            config: { token: 'abcd' }
-        };
-
-        const DOMAIN_1 = {
-            domain: 'foo.cloudron.io',
-            zoneName: 'cloudron.io',
-            provider: 'manual',
-            config: null
-        };
-
         it('can add domain', function (done) {
             domaindb.add(DOMAIN_0.domain, { zoneName: DOMAIN_0.zoneName, provider: DOMAIN_0.provider, config: DOMAIN_0.config }, done);
         });
@@ -157,23 +157,18 @@ describe('database', function () {
             domaindb.getAll(function (error, result) {
                 expect(error).to.equal(null);
                 expect(result).to.be.an('array');
-                expect(result.length).to.equal(3);  // includes the TEST_DOMAIN
+                expect(result.length).to.equal(2);
 
                 // sorted by domain
-                expect(result[0].domain).to.equal(TEST_DOMAIN.domain);
-                expect(result[0].zoneName).to.equal(TEST_DOMAIN.zoneName);
-                expect(result[0].provider).to.equal(TEST_DOMAIN.provider);
-                expect(result[0].config).to.eql(TEST_DOMAIN.config);
+                expect(result[0].domain).to.equal(DOMAIN_1.domain);
+                expect(result[0].zoneName).to.equal(DOMAIN_1.zoneName);
+                expect(result[0].provider).to.equal(DOMAIN_1.provider);
+                expect(result[0].config).to.eql(DOMAIN_1.config);
 
-                expect(result[1].domain).to.equal(DOMAIN_1.domain);
-                expect(result[1].zoneName).to.equal(DOMAIN_1.zoneName);
-                expect(result[1].provider).to.equal(DOMAIN_1.provider);
-                expect(result[1].config).to.eql(DOMAIN_1.config);
-
-                expect(result[2].domain).to.equal(DOMAIN_0.domain);
-                expect(result[2].zoneName).to.equal(DOMAIN_0.zoneName);
-                expect(result[2].provider).to.equal(DOMAIN_0.provider);
-                expect(result[2].config).to.eql(DOMAIN_0.config);
+                expect(result[1].domain).to.equal(DOMAIN_0.domain);
+                expect(result[1].zoneName).to.equal(DOMAIN_0.zoneName);
+                expect(result[1].provider).to.equal(DOMAIN_0.provider);
+                expect(result[1].config).to.eql(DOMAIN_0.config);
 
                 done();
             });
@@ -702,7 +697,7 @@ describe('database', function () {
             installationProgress: null,
             runState: null,
             location: 'some-location-0',
-            domain: 'example.com',
+            domain: DOMAIN_0.domain,
             manifest: { version: '0.1', dockerImage: 'docker/app0', healthCheckPath: '/', httpPort: 80, title: 'app0' },
             httpPort: null,
             containerId: null,
@@ -720,6 +715,7 @@ describe('database', function () {
             robotsTxt: null,
             enableBackup: true
         };
+
         var APP_1 = {
             id: 'appid-1',
             appStoreId: 'appStoreId-1',
@@ -728,7 +724,7 @@ describe('database', function () {
             installationProgress: null,
             runState: null,
             location: 'some-location-1',
-            domain: 'example.com',
+            domain: DOMAIN_0.domain,
             manifest: { version: '0.2', dockerImage: 'docker/app1', healthCheckPath: '/', httpPort: 80, title: 'app1' },
             httpPort: null,
             containerId: null,
@@ -746,6 +742,14 @@ describe('database', function () {
             robotsTxt: null,
             enableBackup: true
         };
+
+        before(function (done) {
+            domaindb.add(DOMAIN_0.domain, { zoneName: DOMAIN_0.zoneName, provider: DOMAIN_0.provider, config: DOMAIN_0.config }, done);
+        });
+
+        after(function (done) {
+            database._clear(done);
+        });
 
         it('add fails due to missing arguments', function () {
             expect(function () { appdb.add(APP_0.id, APP_0.manifest, APP_0.installationState, function () {}); }).to.throwError();
@@ -1581,42 +1585,40 @@ describe('database', function () {
 
     describe('mailboxes', function () {
         before(function (done) {
-            config._reset();
-            config.setFqdn(TEST_DOMAIN.domain);
+            domaindb.add(DOMAIN_0.domain, { zoneName: DOMAIN_0.zoneName, provider: DOMAIN_0.provider, config: DOMAIN_0.config }, done);
+        });
 
-            async.series([
-                database.initialize,
-                database._clear
-            ], done);
+        after(function (done) {
+            database._clear(done);
         });
 
         it('add user mailbox succeeds', function (done) {
-            mailboxdb.add('girish', TEST_DOMAIN.domain, 'uid-0', mailboxdb.TYPE_USER, function (error, mailbox) {
+            mailboxdb.add('girish', DOMAIN_0.domain, 'uid-0', mailboxdb.TYPE_USER, function (error, mailbox) {
                 expect(error).to.be(null);
                 done();
             });
         });
 
         it('cannot add dup entry', function (done) {
-            mailboxdb.add('girish', TEST_DOMAIN.domain, 'uid-1', mailboxdb.TYPE_APP, function (error, mailbox) {
+            mailboxdb.add('girish', DOMAIN_0.domain, 'uid-1', mailboxdb.TYPE_APP, function (error, mailbox) {
                 expect(error.reason).to.be(DatabaseError.ALREADY_EXISTS);
                 done();
             });
         });
 
         it('add app mailbox succeeds', function (done) {
-            mailboxdb.add('support', TEST_DOMAIN.domain, 'osticket', mailboxdb.TYPE_APP, function (error, mailbox) {
+            mailboxdb.add('support', DOMAIN_0.domain, 'osticket', mailboxdb.TYPE_APP, function (error, mailbox) {
                 expect(error).to.be(null);
                 done();
             });
         });
 
         it('get succeeds', function (done) {
-            mailboxdb.getMailbox('support', TEST_DOMAIN.domain, function (error, mailbox) {
+            mailboxdb.getMailbox('support', DOMAIN_0.domain, function (error, mailbox) {
                 expect(error).to.be(null);
                 expect(mailbox.name).to.equal('support');
                 expect(mailbox.ownerId).to.equal('osticket');
-                expect(mailbox.domain).to.equal(TEST_DOMAIN.domain);
+                expect(mailbox.domain).to.equal(DOMAIN_0.domain);
                 expect(mailbox.creationTime).to.be.a(Date);
 
                 done();
@@ -1624,7 +1626,7 @@ describe('database', function () {
         });
 
         it('list mailboxes succeeds', function (done) {
-            mailboxdb.listMailboxes(TEST_DOMAIN.domain, function (error, mailboxes) {
+            mailboxdb.listMailboxes(DOMAIN_0.domain, function (error, mailboxes) {
                 expect(error).to.be(null);
                 expect(mailboxes.length).to.be(2);
                 expect(mailboxes[0].name).to.be('girish');
@@ -1636,14 +1638,14 @@ describe('database', function () {
         });
 
         it('can set alias', function (done) {
-            mailboxdb.setAliasesForName('support', TEST_DOMAIN.domain, [ 'support2', 'help' ], function (error) {
+            mailboxdb.setAliasesForName('support', DOMAIN_0.domain, [ 'support2', 'help' ], function (error) {
                 expect(error).to.be(null);
                 done();
             });
         });
 
         it('can get aliases of name', function (done) {
-            mailboxdb.getAliasesForName('support', TEST_DOMAIN.domain, function (error, results) {
+            mailboxdb.getAliasesForName('support', DOMAIN_0.domain, function (error, results) {
                 expect(error).to.be(null);
                 expect(results.length).to.be(2);
                 expect(results[0]).to.be('help');
@@ -1653,7 +1655,7 @@ describe('database', function () {
         });
 
         it('can get alias', function (done) {
-            mailboxdb.getAlias('support2', TEST_DOMAIN.domain, function (error, result) {
+            mailboxdb.getAlias('support2', DOMAIN_0.domain, function (error, result) {
                 expect(error).to.be(null);
                 expect(result.name).to.be('support2');
                 expect(result.aliasTarget).to.be('support');
@@ -1662,7 +1664,7 @@ describe('database', function () {
         });
 
         it('can list aliases', function (done) {
-            mailboxdb.listAliases(TEST_DOMAIN.domain, function (error, results) {
+            mailboxdb.listAliases(DOMAIN_0.domain, function (error, results) {
                 expect(error).to.be(null);
                 expect(results.length).to.be(2);
                 expect(results[0].name).to.be('help');
@@ -1684,22 +1686,22 @@ describe('database', function () {
         });
 
         it('cannot get non-existing group', function (done) {
-            mailboxdb.getGroup('random', TEST_DOMAIN.domain, function (error) {
+            mailboxdb.getGroup('random', DOMAIN_0.domain, function (error) {
                 expect(error.reason).to.be(DatabaseError.NOT_FOUND);
                 done();
             });
         });
 
         it('can change name', function (done) {
-            mailboxdb.updateName('support', TEST_DOMAIN.domain, 'support3', TEST_DOMAIN.domain, function (error) {
+            mailboxdb.updateName('support', DOMAIN_0.domain, 'support3', DOMAIN_0.domain, function (error) {
                 expect(error).to.be(null);
 
-                mailboxdb.updateName('support3', TEST_DOMAIN.domain, 'support', TEST_DOMAIN.domain, done);
+                mailboxdb.updateName('support3', DOMAIN_0.domain, 'support', DOMAIN_0.domain, done);
             });
         });
 
         it('cannot change name to existing one', function (done) {
-            mailboxdb.updateName('support', TEST_DOMAIN.domain, 'support2', TEST_DOMAIN.domain, function (error) {
+            mailboxdb.updateName('support', DOMAIN_0.domain, 'support2', DOMAIN_0.domain, function (error) {
                 expect(error).to.be.ok();
                 expect(error.reason).to.eql(DatabaseError.ALREADY_EXISTS);
 
@@ -1708,10 +1710,10 @@ describe('database', function () {
         });
 
         it('unset aliases', function (done) {
-            mailboxdb.setAliasesForName('support', TEST_DOMAIN.domain, [], function (error) {
+            mailboxdb.setAliasesForName('support', DOMAIN_0.domain, [], function (error) {
                 expect(error).to.be(null);
 
-                mailboxdb.getAliasesForName('support', TEST_DOMAIN.domain, function (error, results) {
+                mailboxdb.getAliasesForName('support', DOMAIN_0.domain, function (error, results) {
                     expect(error).to.be(null);
                     expect(results.length).to.be(0);
                     done();
@@ -1720,7 +1722,7 @@ describe('database', function () {
         });
 
         it('del succeeds', function (done) {
-            mailboxdb.del('girish', TEST_DOMAIN.domain, function (error) {
+            mailboxdb.del('girish', DOMAIN_0.domain, function (error) {
                 expect(error).to.be(null);
                 done();
             });
@@ -1740,13 +1742,6 @@ describe('database', function () {
     });
 
     describe('mail', function () {
-        const DOMAIN_0 = {
-            domain: 'foobar.com',
-            zoneName: 'foobar.com',
-            provider: 'digitalocean',
-            config: { token: 'abcd' }
-        };
-
         const MAIL_DOMAIN_0 = {
             domain: DOMAIN_0.domain,
             enabled: false,
@@ -1755,23 +1750,38 @@ describe('database', function () {
             mailFromValidation: true
         };
 
-        it('can add mail domain', function (done) {
-            // this also adds the mail domain
+        before(function (done) {
             domaindb.add(DOMAIN_0.domain, { zoneName: DOMAIN_0.zoneName, provider: DOMAIN_0.provider, config: DOMAIN_0.config }, done);
         });
 
-        it('cannot add same domain twice', function (done) {
-            maildb.add(MAIL_DOMAIN_0.domain, function (error) {
-                expect(error).to.be.ok();
-                expect(error.reason).to.be(DatabaseError.ALREADY_EXISTS);
-                done();
-            });
+        after(function (done) {
+            database._clear(done);
         });
 
         it('cannot add non-existing domain', function (done) {
             maildb.add(MAIL_DOMAIN_0.domain + 'nope', function (error) {
                 expect(error).to.be.ok();
                 expect(error.reason).to.be(DatabaseError.NOT_FOUND);
+
+                done();
+            });
+        });
+
+        it('can add domain', function (done) {
+            maildb.add(MAIL_DOMAIN_0.domain, function (error) {
+                expect(error).to.equal(null);
+
+                done();
+            });
+        });
+
+        it('can get all domains', function (done) {
+            maildb.getAll(function (error, result) {
+                expect(error).to.equal(null);
+                expect(result).to.be.an(Array);
+                expect(result[0]).to.be.an('object');
+                expect(result[0].domain).to.eql(MAIL_DOMAIN_0.domain);
+
                 done();
             });
         });
