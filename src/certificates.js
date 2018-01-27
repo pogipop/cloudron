@@ -220,7 +220,7 @@ function renewAll(auditSource, callback) {
 
 // note: https://tools.ietf.org/html/rfc4346#section-7.4.2 (certificate_list) requires that the
 // servers certificate appears first (and not the intermediate cert)
-function validateCertificate(cert, key, domain) {
+function validateCertificate(domain, cert, key) {
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof cert, 'string');
     assert.strictEqual(typeof key, 'string');
@@ -322,7 +322,7 @@ function setAdminCertificate(cert, key, callback) {
     var certFilePath = path.join(paths.APP_CERTS_DIR, vhost + '.user.cert');
     var keyFilePath = path.join(paths.APP_CERTS_DIR, vhost + '.user.key');
 
-    var error = validateCertificate(cert, key, vhost);
+    var error = validateCertificate(vhost, cert, key);
     if (error) return callback(new CertificatesError(CertificatesError.INVALID_CERT, error.message));
 
     // backup the cert

@@ -535,7 +535,7 @@ function install(data, auditSource, callback) {
             if (error) return callback(error);
 
             if (cert && key) {
-                error = certificates.validateCertificate(cert, key, intrinsicFqdn);
+                error = certificates.validateCertificate(intrinsicFqdn, cert, key);
                 if (error) return callback(new AppsError(AppsError.BAD_CERTIFICATE, error.message));
             }
 
@@ -654,7 +654,7 @@ function configure(appId, data, auditSource, callback) {
             // save cert to boxdata/certs. TODO: move this to apptask when we have a real task queue
             if ('cert' in data && 'key' in data) {
                 if (data.cert && data.key) {
-                    error = certificates.validateCertificate(data.cert, data.key, intrinsicFqdn);
+                    error = certificates.validateCertificate(intrinsicFqdn, data.cert, data.key);
                     if (error) return callback(new AppsError(AppsError.BAD_CERTIFICATE, error.message));
 
                     if (!safe.fs.writeFileSync(path.join(paths.APP_CERTS_DIR, intrinsicFqdn + '.user.cert'), data.cert)) return callback(new AppsError(AppsError.INTERNAL_ERROR, 'Error saving cert: ' + safe.error.message));
