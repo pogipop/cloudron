@@ -12,7 +12,6 @@ exports = module.exports = {
     validateCertificate: validateCertificate,
     ensureCertificate: ensureCertificate,
 
-    setAdminCertificate: setAdminCertificate,
     getAdminCertificate: getAdminCertificate,
 
     renewAll: renewAll,
@@ -251,17 +250,17 @@ function validateCertificate(domain, cert, key) {
         debug('validateCertificate: detected altNames as %j', altNames);
 
         // check altNames
-        if (!altNames.some(matchesDomain)) return CertificatesError(CertificatesError.INVALID_CERT, util.format('Certificate is not valid for this domain. Expecting %s in %j', domain, altNames));
+        if (!altNames.some(matchesDomain)) return new CertificatesError(CertificatesError.INVALID_CERT, util.format('Certificate is not valid for this domain. Expecting %s in %j', domain, altNames));
     }
 
     // http://httpd.apache.org/docs/2.0/ssl/ssl_faq.html#verify
     var certModulus = safe.child_process.execSync('openssl x509 -noout -modulus', { encoding: 'utf8', input: cert });
     var keyModulus = safe.child_process.execSync('openssl rsa -noout -modulus', { encoding: 'utf8', input: key });
-    if (certModulus !== keyModulus) return CertificatesError(CertificatesError.INVALID_CERT, 'Key does not match the certificate.');
+    if (certModulus !== keyModulus) return new CertificatesError(CertificatesError.INVALID_CERT, 'Key does not match the certificate.');
 
     // check expiration
     result = safe.child_process.execSync('openssl x509 -checkend 0', { encoding: 'utf8', input: cert });
-    if (!result) return CertificatesError(CertificatesError.INVALID_CERT, 'Certificate has expired.');
+    if (!result) return new CertificatesError(CertificatesError.INVALID_CERT, 'Certificate has expired.');
 
     return null;
 }
@@ -311,27 +310,6 @@ function getFallbackCertificate(domain, callback) {
     if (!cert || !key) return callback(new CertificatesError(CertificatesError.NOT_FOUND));
 
     callback(null, { cert: cert, key: key });
-}
-
-function setAdminCertificate(cert, key, callback) {
-    assert.strictEqual(typeof cert, 'string');
-    assert.strictEqual(typeof key, 'string');
-    assert.strictEqual(typeof callback, 'function');
-
-    var vhost = config.adminFqdn();
-    var certFilePath = path.join(paths.APP_CERTS_DIR, vhost + '.user.cert');
-    var keyFilePath = path.join(paths.APP_CERTS_DIR, vhost + '.user.key');
-
-    var error = validateCertificate(vhost, cert, key);
-    if (error) return callback(error);
-
-    // backup the cert
-    if (!safe.fs.writeFileSync(certFilePath, cert)) return callback(new CertificatesError(CertificatesError.INTERNAL_ERROR, safe.error.message));
-    if (!safe.fs.writeFileSync(keyFilePath, key)) return callback(new CertificatesError(CertificatesError.INTERNAL_ERROR, safe.error.message));
-
-    exports.events.emit(exports.EVENT_CERT_CHANGED, vhost);
-
-    nginx.configureAdmin(certFilePath, keyFilePath, constants.NGINX_ADMIN_CONFIG_FILE_NAME, config.adminFqdn(), callback);
 }
 
 function getAdminCertificatePath(callback) {
