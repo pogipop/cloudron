@@ -17,7 +17,6 @@ exports = module.exports = {
     apiServerOrigin: apiServerOrigin,
     webServerOrigin: webServerOrigin,
     fqdn: fqdn,
-    zoneName: zoneName,
     setFqdn: setFqdn,
     setAdminFqdn: setAdminFqdn,
     setAdminLocation: setAdminLocation,
@@ -33,7 +32,6 @@ exports = module.exports = {
     adminFqdn: adminFqdn,
     mailLocation: mailLocation,
     mailFqdn: mailFqdn,
-    setZoneName: setZoneName,
     hasIPv6: hasIPv6,
     dkimSelector: dkimSelector,
 
@@ -76,7 +74,6 @@ function saveSync() {
         webServerOrigin: data.webServerOrigin,
         fqdn: data.fqdn,
         adminFqdn: data.adminFqdn,
-        zoneName: data.zoneName,
         adminLocation: data.adminLocation,
         provider: data.provider,
         isDemo: data.isDemo
@@ -97,7 +94,6 @@ function initConfig() {
     // setup defaults
     data.fqdn = '';
     data.adminFqdn = '';
-    data.zoneName = '';
     data.adminLocation = 'my';
     data.port = 3000;
     data.version = null;
@@ -167,18 +163,6 @@ function setFqdn(fqdn) {
 
 function fqdn() {
     return get('fqdn');
-}
-
-function setZoneName(zone) {
-    set('zoneName', zone);
-}
-
-function zoneName() {
-    var zone = get('zoneName');
-    if (zone) return zone;
-
-    // TODO: move this to migration code path instead
-    return tld.getDomain(fqdn()) || '';
 }
 
 function mailLocation() {

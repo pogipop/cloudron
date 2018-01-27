@@ -8,7 +8,6 @@ arg_api_server_origin=""
 arg_fqdn=""
 arg_admin_location=""
 arg_admin_fqdn=""
-arg_zone_name=""
 arg_retire_reason=""
 arg_retire_info=""
 arg_version=""
@@ -33,8 +32,6 @@ while true; do
         # these params must be valid in all cases
         arg_fqdn=$(echo "$2" | $json fqdn)
         arg_admin_fqdn=$(echo "$2" | $json adminFqdn)
-        arg_zone_name=$(echo "$2" | $json zoneName)
-        [[ "${arg_zone_name}" == "" ]] && arg_zone_name="${arg_fqdn}"
 
         arg_admin_location=$(echo "$2" | $json adminLocation)
         [[ "${arg_admin_location}" == "" ]] && arg_admin_location="my"

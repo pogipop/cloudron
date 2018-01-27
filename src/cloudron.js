@@ -602,7 +602,6 @@ function doUpdate(boxUpdateInfo, callback) {
             adminFqdn: config.adminFqdn(),
             adminLocation: config.adminLocation(),
             isDemo: config.isDemo(),
-            zoneName: config.zoneName(),
 
             appstore: {
                 apiServerOrigin: config.apiServerOrigin()

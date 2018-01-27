@@ -215,7 +215,6 @@ cat > "${CONFIG_DIR}/cloudron.conf" <<CONF_END
     "fqdn": "${arg_fqdn}",
     "adminFqdn": "${arg_admin_fqdn}",
     "adminLocation": "${arg_admin_location}",
-    "zoneName": "${arg_zone_name}",
     "provider": "${arg_provider}",
     "isDemo": ${arg_is_demo}
 }
