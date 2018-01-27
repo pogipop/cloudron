@@ -121,7 +121,7 @@ if [[ -z "${dataJson}" ]]; then
                 "${provider}" != "vultr" && \
                 "${provider}" != "generic" \
             ]]; then
-        echo "--provider must be one of: azure, cloudscale.ch, digitalocean, ec2, exoscale, gce, lightsail, linode, ovh, rosehosting, scaleway, vultr or generic"
+        echo "--provider must be one of: azure, cloudscale.ch, digitalocean, ec2, exoscale, gce, hetzner, lightsail, linode, ovh, rosehosting, scaleway, vultr or generic"
         exit 1
     fi
 
