@@ -234,11 +234,11 @@ function validateCertificate(domain, cert, key) {
     }
 
     // check for empty cert and key strings
-    if (!cert && key) return new Error('missing cert');
-    if (cert && !key) return new Error('missing key');
+    if (!cert && key) return new CertificatesError(CertificatesError.INVALID_CERT, 'missing cert');
+    if (cert && !key) return new CertificatesError(CertificatesError.INVALID_CERT, 'missing key');
 
     var result = safe.child_process.execSync('openssl x509 -noout -checkhost "' + domain + '"', { encoding: 'utf8', input: cert });
-    if (!result) return new Error('Invalid certificate. Unable to get certificate subject.');
+    if (!result) return new CertificatesError(CertificatesError.INVALID_CERT, 'Unable to get certificate subject.');
 
     // if no match, check alt names
     if (result.indexOf('does match certificate') === -1) {
@@ -251,17 +251,17 @@ function validateCertificate(domain, cert, key) {
         debug('validateCertificate: detected altNames as %j', altNames);
 
         // check altNames
-        if (!altNames.some(matchesDomain)) return new Error(util.format('Certificate is not valid for this domain. Expecting %s in %j', domain, altNames));
+        if (!altNames.some(matchesDomain)) return CertificatesError(CertificatesError.INVALID_CERT, util.format('Certificate is not valid for this domain. Expecting %s in %j', domain, altNames));
     }
 
     // http://httpd.apache.org/docs/2.0/ssl/ssl_faq.html#verify
     var certModulus = safe.child_process.execSync('openssl x509 -noout -modulus', { encoding: 'utf8', input: cert });
     var keyModulus = safe.child_process.execSync('openssl rsa -noout -modulus', { encoding: 'utf8', input: key });
-    if (certModulus !== keyModulus) return new Error('Key does not match the certificate.');
+    if (certModulus !== keyModulus) return CertificatesError(CertificatesError.INVALID_CERT, 'Key does not match the certificate.');
 
     // check expiration
     result = safe.child_process.execSync('openssl x509 -checkend 0', { encoding: 'utf8', input: cert });
-    if (!result) return new Error('Certificate is expired.');
+    if (!result) return CertificatesError(CertificatesError.INVALID_CERT, 'Certificate has expired.');
 
     return null;
 }
@@ -323,7 +323,7 @@ function setAdminCertificate(cert, key, callback) {
     var keyFilePath = path.join(paths.APP_CERTS_DIR, vhost + '.user.key');
 
     var error = validateCertificate(vhost, cert, key);
-    if (error) return callback(new CertificatesError(CertificatesError.INVALID_CERT, error.message));
+    if (error) return callback(error);
 
     // backup the cert
     if (!safe.fs.writeFileSync(certFilePath, cert)) return callback(new CertificatesError(CertificatesError.INTERNAL_ERROR, safe.error.message));
