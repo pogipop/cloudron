@@ -307,19 +307,29 @@ function validateCertificate(cert, key, domain) {
     return null;
 }
 
-function setFallbackCertificate(cert, key, domain, callback) {
-    assert.strictEqual(typeof cert, 'string');
-    assert.strictEqual(typeof key, 'string');
+function setFallbackCertificate(domain, fallback, callback) {
     assert.strictEqual(typeof domain, 'string');
+    assert.strictEqual(typeof fallback, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    // backup the cert
-    if (!safe.fs.writeFileSync(path.join(paths.APP_CERTS_DIR, domain + '.cert'), cert)) return callback(new CertificatesError(CertificatesError.INTERNAL_ERROR, safe.error.message));
-    if (!safe.fs.writeFileSync(path.join(paths.APP_CERTS_DIR, domain + '.key'), key)) return callback(new CertificatesError(CertificatesError.INTERNAL_ERROR, safe.error.message));
+    const certFilePath = path.join(paths.APP_CERTS_DIR, `${domain}.host.cert`);
+    const keyFilePath = path.join(paths.APP_CERTS_DIR, `${domain}.host.key`);
+
+    if (!fallback) { // generate it
+        var certCommand = util.format('openssl req -x509 -newkey rsa:2048 -keyout %s -out %s -days 3650 -subj /CN=*.%s -nodes', keyFilePath, certFilePath, domain);
+        if (!safe.child_process.execSync(certCommand)) return callback(new CertificatesError(CertificatesError.INTERNAL_ERROR, safe.error.message));
+    } else {
+        // backup the cert
+        if (!safe.fs.writeFileSync(path.join(paths.APP_CERTS_DIR, domain + '.cert'), fallback.cert)) return callback(new CertificatesError(CertificatesError.INTERNAL_ERROR, safe.error.message));
+        if (!safe.fs.writeFileSync(path.join(paths.APP_CERTS_DIR, domain + '.key'), fallback.key)) return callback(new CertificatesError(CertificatesError.INTERNAL_ERROR, safe.error.message));
+    }
 
     // copy over fallback cert
-    if (!safe.fs.writeFileSync(path.join(paths.NGINX_CERT_DIR, domain + '.cert'), cert)) return callback(new CertificatesError(CertificatesError.INTERNAL_ERROR, safe.error.message));
-    if (!safe.fs.writeFileSync(path.join(paths.NGINX_CERT_DIR, domain + '.key'), key)) return callback(new CertificatesError(CertificatesError.INTERNAL_ERROR, safe.error.message));
+    var fallbackCertFilePath = path.join(paths.NGINX_CERT_DIR, `${domain}.host.cert`);
+    var fallbackKeyFilePath = path.join(paths.NGINX_CERT_DIR, `${domain}.host.key`);
+
+    if (!safe.child_process.execSync(`cp ${certFilePath} ${fallbackCertFilePath}`)) return callback(new CertificatesError(CertificatesError.INTERNAL_ERROR, safe.error.message));
+    if (!safe.child_process.execSync(`cp ${keyFilePath} ${fallbackKeyFilePath}`)) return callback(new CertificatesError(CertificatesError.INTERNAL_ERROR, safe.error.message));
 
     exports.events.emit(exports.EVENT_CERT_CHANGED, '*.' + domain);
 

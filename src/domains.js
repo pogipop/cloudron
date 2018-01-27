@@ -133,9 +133,7 @@ function add(domain, zoneName, provider, config, fallbackCertificate, callback) 
                 if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(new DomainError(DomainError.ALREADY_EXISTS));
                 if (error) return callback(new DomainError(DomainError.INTERNAL_ERROR, error));
 
-                if (!fallbackCertificate) return callback();
-
-                certificates.setFallbackCertificate(fallbackCertificate.cert, fallbackCertificate.key, domain, function (error) {
+                certificates.setFallbackCertificate(domain, fallbackCertificate, function (error) {
                     if (error) return callback(new DomainError(DomainError.INTERNAL_ERROR, error));
 
                     callback();
@@ -205,9 +203,7 @@ function update(domain, provider, config, fallbackCertificate, callback) {
                     if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new DomainError(DomainError.NOT_FOUND));
                     if (error) return callback(new DomainError(DomainError.INTERNAL_ERROR, error));
 
-                    if (!fallbackCertificate) return callback();
-
-                    certificates.setFallbackCertificate(fallbackCertificate.cert, fallbackCertificate.key, domain, function (error) {
+                    certificates.setFallbackCertificate(domain, fallbackCertificate, function (error) {
                         if (error) return callback(new DomainError(DomainError.INTERNAL_ERROR, error));
                         callback();
                     });
