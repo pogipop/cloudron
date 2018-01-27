@@ -520,13 +520,6 @@ function restartMail(callback) {
 
     if (process.env.BOX_ENV === 'test' && !process.env.TEST_CREATE_INFRA) return callback();
 
-    function onCertificateChanged(domain) {
-        if (domain === '*.' + config.fqdn() || domain === config.adminFqdn()) restartMail(NOOP_CALLBACK);
-    }
-
-    certificates.events.removeListener(certificates.EVENT_CERT_CHANGED, onCertificateChanged);
-    certificates.events.on(certificates.EVENT_CERT_CHANGED, onCertificateChanged);
-
     const tag = infra.images.mail.tag;
     const memoryLimit = Math.max((1 + Math.round(os.totalmem()/(1024*1024*1024)/4)) * 128, 256);
 

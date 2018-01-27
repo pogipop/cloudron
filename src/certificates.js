@@ -3,9 +3,6 @@
 exports = module.exports = {
     CertificatesError: CertificatesError,
 
-    initialize: initialize,
-    uninitialize: uninitialize,
-
     setFallbackCertificate: setFallbackCertificate,
     getFallbackCertificate: getFallbackCertificate,
 
@@ -15,10 +12,6 @@ exports = module.exports = {
     getAdminCertificate: getAdminCertificate,
 
     renewAll: renewAll,
-
-    events: null,
-
-    EVENT_CERT_CHANGED: 'cert_changed',
 
     // exported for testing
     _getApi: getApi
@@ -39,6 +32,7 @@ var acme = require('./cert/acme.js'),
     nginx = require('./nginx.js'),
     path = require('path'),
     paths = require('./paths.js'),
+    platform = require('./platform.js'),
     safe = require('safetydance'),
     settings = require('./settings.js'),
     user = require('./user.js'),
@@ -66,20 +60,6 @@ util.inherits(CertificatesError, Error);
 CertificatesError.INTERNAL_ERROR = 'Internal Error';
 CertificatesError.INVALID_CERT = 'Invalid certificate';
 CertificatesError.NOT_FOUND = 'Not Found';
-
-function initialize(callback) {
-    assert.strictEqual(typeof callback, 'function');
-
-    exports.events = new (require('events').EventEmitter)();
-    callback();
-}
-
-function uninitialize(callback) {
-    assert.strictEqual(typeof callback, 'function');
-
-    exports.events = null;
-    callback();
-}
 
 function getApi(app, callback) {
     assert.strictEqual(typeof app, 'object');
@@ -207,7 +187,7 @@ function renewAll(auditSource, callback) {
                     configureFunc(function (ignoredError) {
                         if (ignoredError) debug('fallbackExpiredCertificates: error reconfiguring app', ignoredError);
 
-                        exports.events.emit(exports.EVENT_CERT_CHANGED, domain);
+                        platform.handleCertChanged(domain);
 
                         iteratorCallback(); // move to next app
                     });
@@ -291,7 +271,7 @@ function setFallbackCertificate(domain, fallback, callback) {
     if (!safe.child_process.execSync(`cp ${certFilePath} ${fallbackCertFilePath}`)) return callback(new CertificatesError(CertificatesError.INTERNAL_ERROR, safe.error.message));
     if (!safe.child_process.execSync(`cp ${keyFilePath} ${fallbackKeyFilePath}`)) return callback(new CertificatesError(CertificatesError.INTERNAL_ERROR, safe.error.message));
 
-    exports.events.emit(exports.EVENT_CERT_CHANGED, '*.' + domain);
+    platform.handleCertChanged('*.' + domain);
 
     nginx.reload(function (error) {
         if (error) return callback(new CertificatesError(CertificatesError.INTERNAL_ERROR, error));

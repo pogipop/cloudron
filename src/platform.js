@@ -2,12 +2,15 @@
 
 exports = module.exports = {
     start: start,
-    stop: stop
+    stop: stop,
+
+    handleCertChanged: handleCertChanged
 };
 
 var apps = require('./apps.js'),
     assert = require('assert'),
     async = require('async'),
+    config = require('./config.js'),
     debug = require('debug')('box:platform'),
     fs = require('fs'),
     hat = require('hat'),
@@ -25,6 +28,8 @@ var apps = require('./apps.js'),
     _ = require('underscore');
 
 var gPlatformReadyTimer = null;
+
+var NOOP_CALLBACK = function (error) { if (error) debug(error); };
 
 function start(callback) {
     assert.strictEqual(typeof callback, 'function');
@@ -262,5 +267,13 @@ function startApps(existingInfra, callback) {
         debug('startApps: reconfiguring installed apps');
         nginx.removeAppConfigs(); // should we change the cert location, nginx will not start
         apps.configureInstalledApps(callback);
+    }
+}
+
+function handleCertChanged(cn) {
+    assert.strictEqual(typeof cn, 'string');
+
+    if (cn === '*.' + config.fqdn() || cn === config.adminFqdn()) {
+        mail.startMail(NOOP_CALLBACK);
     }
 }
