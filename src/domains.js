@@ -203,6 +203,8 @@ function update(domain, provider, config, fallbackCertificate, callback) {
                     if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new DomainError(DomainError.NOT_FOUND));
                     if (error) return callback(new DomainError(DomainError.INTERNAL_ERROR, error));
 
+                    if (!fallbackCertificate) return callback();
+
                     certificates.setFallbackCertificate(domain, fallbackCertificate, function (error) {
                         if (error) return callback(new DomainError(DomainError.INTERNAL_ERROR, error));
                         callback();

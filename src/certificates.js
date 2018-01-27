@@ -275,13 +275,13 @@ function setFallbackCertificate(domain, fallback, callback) {
     const certFilePath = path.join(paths.APP_CERTS_DIR, `${domain}.host.cert`);
     const keyFilePath = path.join(paths.APP_CERTS_DIR, `${domain}.host.key`);
 
-    if (!fallback) { // generate it
-        var certCommand = util.format('openssl req -x509 -newkey rsa:2048 -keyout %s -out %s -days 3650 -subj /CN=*.%s -nodes', keyFilePath, certFilePath, domain);
-        if (!safe.child_process.execSync(certCommand)) return callback(new CertificatesError(CertificatesError.INTERNAL_ERROR, safe.error.message));
-    } else {
+    if (fallback) {
         // backup the cert
         if (!safe.fs.writeFileSync(path.join(paths.APP_CERTS_DIR, domain + '.cert'), fallback.cert)) return callback(new CertificatesError(CertificatesError.INTERNAL_ERROR, safe.error.message));
         if (!safe.fs.writeFileSync(path.join(paths.APP_CERTS_DIR, domain + '.key'), fallback.key)) return callback(new CertificatesError(CertificatesError.INTERNAL_ERROR, safe.error.message));
+    } else if (!fs.existsSync(certFilePath) || !fs.existsSync(keyFilePath)) { // generate it
+        var certCommand = util.format('openssl req -x509 -newkey rsa:2048 -keyout %s -out %s -days 3650 -subj /CN=*.%s -nodes', keyFilePath, certFilePath, domain);
+        if (!safe.child_process.execSync(certCommand)) return callback(new CertificatesError(CertificatesError.INTERNAL_ERROR, safe.error.message));
     }
 
     // copy over fallback cert
