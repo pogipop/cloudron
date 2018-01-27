@@ -39,7 +39,6 @@ var apps = require('./apps.js'),
     assert = require('assert'),
     async = require('async'),
     clientdb = require('./clientdb.js'),
-    config = require('./config.js'),
     DatabaseError = require('./databaseerror.js'),
     debug = require('debug')('box:clients'),
     hat = require('hat'),
@@ -318,7 +317,8 @@ function delToken(clientId, tokenId, callback) {
     });
 }
 
-function addDefaultClients(callback) {
+function addDefaultClients(origin, callback) {
+    assert.strictEqual(typeof origin, 'string');
     assert.strictEqual(typeof callback, 'function');
 
     debug('Adding default clients');
@@ -329,8 +329,8 @@ function addDefaultClients(callback) {
 
     // id, appId, type, clientSecret, redirectURI, scope
     async.series([
-        clientdb.upsert.bind(null, 'cid-webadmin', 'Settings', 'built-in', 'secret-webadmin', config.adminOrigin(), ADMIN_SCOPES),
-        clientdb.upsert.bind(null, 'cid-sdk', 'SDK', 'built-in', 'secret-sdk', config.adminOrigin(), '*,roleSdk'),
-        clientdb.upsert.bind(null, 'cid-cli', 'Cloudron Tool', 'built-in', 'secret-cli', config.adminOrigin(), '*, roleSdk')
+        clientdb.upsert.bind(null, 'cid-webadmin', 'Settings', 'built-in', 'secret-webadmin', origin, ADMIN_SCOPES),
+        clientdb.upsert.bind(null, 'cid-sdk', 'SDK', 'built-in', 'secret-sdk', origin, '*,roleSdk'),
+        clientdb.upsert.bind(null, 'cid-cli', 'Cloudron Tool', 'built-in', 'secret-cli', origin, '*, roleSdk')
     ], callback);
 }

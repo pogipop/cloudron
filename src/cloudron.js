@@ -108,7 +108,7 @@ function initialize(callback) {
         certificates.initialize,
         settings.initialize,
         configureDefaultServer,
-        onDomainConfigured,
+        cron.initialize, // required for caas heartbeat before activation
         onActivated
     ], function (error) {
         if (error) return callback(error);
@@ -127,17 +127,6 @@ function uninitialize(callback) {
         platform.stop,
         certificates.uninitialize,
         settings.uninitialize
-    ], callback);
-}
-
-function onDomainConfigured(callback) {
-    callback = callback || NOOP_CALLBACK;
-
-    if (!config.adminFqdn()) return callback();
-
-    async.series([
-        clients.addDefaultClients,
-        cron.initialize // required for caas heartbeat before activation
     ], callback);
 }
 
@@ -213,10 +202,9 @@ function dnsSetup(adminFqdn, domain, zoneName, provider, dnsConfig, callback) {
             config.setAdminLocation('my');
             config.setZoneName(zoneName);
 
-            callback();
+            clients.addDefaultClients(config.adminOrigin(), callback);
 
             async.series([ // do not block
-                onDomainConfigured,
                 configureWebadmin
             ], NOOP_CALLBACK);
         });
