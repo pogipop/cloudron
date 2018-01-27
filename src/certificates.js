@@ -6,7 +6,6 @@ exports = module.exports = {
     initialize: initialize,
     uninitialize: uninitialize,
 
-    ensureFallbackCertificate: ensureFallbackCertificate,
     setFallbackCertificate: setFallbackCertificate,
     getFallbackCertificate: getFallbackCertificate,
 
@@ -112,46 +111,6 @@ function getApi(app, callback) {
             callback(null, api, options);
         });
     });
-}
-
-// We configure nginx to always use the fallback cert from the runtime directory (NGINX_CERT_DIR)
-// This is done because Caas wildcard certs should not be part of the backup
-function ensureFallbackCertificate(callback) {
-    // ensure a fallback certificate that much of our code requires
-    var certFilePath = path.join(paths.APP_CERTS_DIR, 'host.cert');
-    var keyFilePath = path.join(paths.APP_CERTS_DIR, 'host.key');
-
-    var fallbackCertPath = path.join(paths.NGINX_CERT_DIR, 'host.cert');
-    var fallbackKeyPath = path.join(paths.NGINX_CERT_DIR, 'host.key');
-
-    if (fs.existsSync(fallbackCertPath) && fs.existsSync(fallbackKeyPath)) {
-        debug('ensureFallbackCertificate: pre-existing fallback certs');
-        return callback();
-    }
-
-    if (fs.existsSync(certFilePath) && fs.existsSync(keyFilePath)) { // existing custom fallback certs (when restarting, restoring, updating)
-        debug('ensureFallbackCertificate: using fallback certs provided by user');
-        if (!safe.child_process.execSync('cp ' + certFilePath + ' ' + fallbackCertPath)) return callback(new CertificatesError(CertificatesError.INTERNAL_ERROR, safe.error.message));
-        if (!safe.child_process.execSync('cp ' + keyFilePath + ' ' + fallbackKeyPath)) return callback(new CertificatesError(CertificatesError.INTERNAL_ERROR, safe.error.message));
-
-        return callback();
-    }
-
-    // generate a self-signed cert. it's in backup dir so that we don't create a new cert across restarts
-    // FIXME: this cert does not cover the naked domain. needs SAN
-    if (config.fqdn()) {
-        debug('ensureFallbackCertificate: generating self-signed certificate');
-        var certCommand = util.format('openssl req -x509 -newkey rsa:2048 -keyout %s -out %s -days 3650 -subj /CN=*.%s -nodes', keyFilePath, certFilePath, config.fqdn());
-        safe.child_process.execSync(certCommand);
-
-        if (!safe.child_process.execSync('cp ' + certFilePath + ' ' + fallbackCertPath)) return callback(new CertificatesError(CertificatesError.INTERNAL_ERROR, safe.error.message));
-        if (!safe.child_process.execSync('cp ' + keyFilePath + ' ' + fallbackKeyPath)) return callback(new CertificatesError(CertificatesError.INTERNAL_ERROR, safe.error.message));
-
-        return callback();
-    } else {
-        debug('ensureFallbackCertificate: cannot generate fallback certificate without domain');
-        return callback(new CertificatesError(CertificatesError.INTERNAL_ERROR, 'No domain set'));
-    }
 }
 
 function isExpiringSync(certFilePath, hours) {
@@ -307,6 +266,8 @@ function validateCertificate(cert, key, domain) {
     return null;
 }
 
+// We configure nginx to always use the fallback cert from the runtime directory (NGINX_CERT_DIR)
+// This is done because Caas wildcard certs should not be part of the backup
 function setFallbackCertificate(domain, fallback, callback) {
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof fallback, 'object');

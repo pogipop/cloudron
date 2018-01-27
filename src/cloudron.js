@@ -137,7 +137,6 @@ function onDomainConfigured(callback) {
 
     async.series([
         clients.addDefaultClients,
-        certificates.ensureFallbackCertificate,
         cron.initialize // required for caas heartbeat before activation
     ], callback);
 }
