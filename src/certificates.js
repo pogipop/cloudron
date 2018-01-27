@@ -311,9 +311,6 @@ function setFallbackCertificate(cert, key, domain, callback) {
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    var error = validateCertificate(cert, key, '*.' + domain);
-    if (error) return callback(new CertificatesError(CertificatesError.INVALID_CERT, error.message));
-
     // backup the cert
     if (!safe.fs.writeFileSync(path.join(paths.APP_CERTS_DIR, domain + '.cert'), cert)) return callback(new CertificatesError(CertificatesError.INTERNAL_ERROR, safe.error.message));
     if (!safe.fs.writeFileSync(path.join(paths.APP_CERTS_DIR, domain + '.key'), key)) return callback(new CertificatesError(CertificatesError.INTERNAL_ERROR, safe.error.message));

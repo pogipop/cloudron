@@ -135,9 +135,9 @@ function add(domain, zoneName, provider, config, fallbackCertificate, callback) 
 
                 if (!fallbackCertificate) return callback();
 
-                // cert validation already happened above no need to check all errors again
                 certificates.setFallbackCertificate(fallbackCertificate.cert, fallbackCertificate.key, domain, function (error) {
                     if (error) return callback(new DomainError(DomainError.INTERNAL_ERROR, error));
+
                     callback();
                 });
             });
@@ -207,7 +207,6 @@ function update(domain, provider, config, fallbackCertificate, callback) {
 
                     if (!fallbackCertificate) return callback();
 
-                    // cert validation already happened above no need to check all errors again
                     certificates.setFallbackCertificate(fallbackCertificate.cert, fallbackCertificate.key, domain, function (error) {
                         if (error) return callback(new DomainError(DomainError.INTERNAL_ERROR, error));
                         callback();
