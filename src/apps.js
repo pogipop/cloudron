@@ -534,8 +534,10 @@ function install(data, auditSource, callback) {
             error = validateHostname(location, domain, intrinsicFqdn);
             if (error) return callback(error);
 
-            error = certificates.validateCertificate(cert, key, intrinsicFqdn);
-            if (error) return callback(new AppsError(AppsError.BAD_CERTIFICATE, error.message));
+            if (cert && key) {
+                error = certificates.validateCertificate(cert, key, intrinsicFqdn);
+                if (error) return callback(new AppsError(AppsError.BAD_CERTIFICATE, error.message));
+            }
 
             debug('Will install app with id : ' + appId);
 

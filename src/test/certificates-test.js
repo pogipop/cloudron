@@ -49,18 +49,6 @@ describe('Certificates', function () {
         var validCert2 = '-----BEGIN CERTIFICATE-----\nMIIBwjCCAWwCCQCZjm6jL50XfTANBgkqhkiG9w0BAQsFADBoMQswCQYDVQQGEwJE\nRTEPMA0GA1UECAwGQmVybGluMQ8wDQYDVQQHDAZCZXJsaW4xEDAOBgNVBAoMB05l\nYnVsb24xDDAKBgNVBAsMA0NUTzEXMBUGA1UEAwwOYmF6LmZvb2Jhci5jb20wHhcN\nMTYxMTA4MDgyMDE1WhcNMjAxMTA3MDgyMDE1WjBoMQswCQYDVQQGEwJERTEPMA0G\nA1UECAwGQmVybGluMQ8wDQYDVQQHDAZCZXJsaW4xEDAOBgNVBAoMB05lYnVsb24x\nDDAKBgNVBAsMA0NUTzEXMBUGA1UEAwwOYmF6LmZvb2Jhci5jb20wXDANBgkqhkiG\n9w0BAQEFAANLADBIAkEAtKoyTPrf2DjKbnW7Xr1HbRvV+quHTcGmUq5anDI7G4w/\nabqDXGYyakHHlPyZxYp7FWQxCm83rHUuDT1LiLIBZQIDAQABMA0GCSqGSIb3DQEB\nCwUAA0EAVaD2Q6bF9hcUUBev5NyjaMdDYURuWfjuwWUkb8W50O2ed3O+MATKrDdS\nyVaBy8W02KJ4Y1ym4je/MF8nilPurA==\n-----END CERTIFICATE-----';
         var validKey2 = '-----BEGIN RSA PRIVATE KEY-----\nMIIBPQIBAAJBALSqMkz639g4ym51u169R20b1fqrh03BplKuWpwyOxuMP2m6g1xm\nMmpBx5T8mcWKexVkMQpvN6x1Lg09S4iyAWUCAwEAAQJBAJXu7YHPbjfuoalcUZzF\nbuKRCFtZQRf5z0Os6QvZ8A3iR0SzYJzx+c2ibp7WdifMXp3XaKm4tHSOfumrjUIq\nt10CIQDrs9Xo7bq0zuNjUV5IshNfaiYKZRfQciRVW2O8xBP9VwIhAMQ5CCEDZy+u\nsaF9RtmB0bjbe6XonBlAzoflfH/MAwWjAiEA50hL+ohr0MfCMM7DKaozgEj0kvan\n645VQLywnaX5x3kCIQDCwjinS9FnKmV0e/uOd6PJb0/S5IXLKt/TUpu33K5DMQIh\nAM9peu3B5t9pO59MmeUGZwI+bEJfEb+h03WTptBxS3pO\n-----END RSA PRIVATE KEY-----';
 
-        it('allows both null', function () {
-            expect(certificates.validateCertificate(null, null, 'foobar.com')).to.be(null);
-        });
-
-        it('does not allow only cert', function () {
-            expect(certificates.validateCertificate('cert', null, 'foobar.com')).to.be.an(Error);
-        });
-
-        it('does not allow only key', function () {
-            expect(certificates.validateCertificate(null, 'key', 'foobar.com')).to.be.an(Error);
-        });
-
         it('does not allow empty string for cert', function () {
             expect(certificates.validateCertificate('', 'key', 'foobar.com')).to.be.an(Error);
         });

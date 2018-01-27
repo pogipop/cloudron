@@ -3,6 +3,9 @@
 exports = module.exports = {
     CertificatesError: CertificatesError,
 
+    initialize: initialize,
+    uninitialize: uninitialize,
+
     ensureFallbackCertificate: ensureFallbackCertificate,
     setFallbackCertificate: setFallbackCertificate,
     getFallbackCertificate: getFallbackCertificate,
@@ -14,9 +17,6 @@ exports = module.exports = {
     getAdminCertificate: getAdminCertificate,
 
     renewAll: renewAll,
-
-    initialize: initialize,
-    uninitialize: uninitialize,
 
     events: null,
 
@@ -114,6 +114,8 @@ function getApi(app, callback) {
     });
 }
 
+// We configure nginx to always use the fallback cert from the runtime directory (NGINX_CERT_DIR)
+// This is done because Caas wildcard certs should not be part of the backup
 function ensureFallbackCertificate(callback) {
     // ensure a fallback certificate that much of our code requires
     var certFilePath = path.join(paths.APP_CERTS_DIR, 'host.cert');
@@ -260,9 +262,9 @@ function renewAll(auditSource, callback) {
 // note: https://tools.ietf.org/html/rfc4346#section-7.4.2 (certificate_list) requires that the
 // servers certificate appears first (and not the intermediate cert)
 function validateCertificate(cert, key, domain) {
-    assert(cert === null || typeof cert === 'string');
-    assert(key === null || typeof key === 'string');
     assert.strictEqual(typeof domain, 'string');
+    assert.strictEqual(typeof cert, 'string');
+    assert.strictEqual(typeof key, 'string');
 
     function matchesDomain(candidate) {
         if (typeof candidate !== 'string') return false;
@@ -272,7 +274,7 @@ function validateCertificate(cert, key, domain) {
         return false;
     }
 
-    if (cert === null && key === null) return null;
+    // check for empty cert and key strings
     if (!cert && key) return new Error('missing cert');
     if (cert && !key) return new Error('missing key');
 
