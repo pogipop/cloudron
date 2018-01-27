@@ -82,7 +82,6 @@ function api(provider) {
     }
 }
 
-// TODO make it return a DomainError instead of DomainError
 function verifyDnsConfig(config, domain, zoneName, provider, ip, callback) {
     assert(config && typeof config === 'object'); // the dns config to test with
     assert.strictEqual(typeof domain, 'string');
