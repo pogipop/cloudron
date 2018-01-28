@@ -105,7 +105,6 @@ function initialize(callback) {
     gWebadminStatus = { dns: false, tls: false, configuring: false, restoring: false };
 
     async.series([
-        certificates.initialize,
         settings.initialize,
         configureDefaultServer,
         cron.initialize, // required for caas heartbeat before activation
@@ -125,7 +124,6 @@ function uninitialize(callback) {
     async.series([
         cron.uninitialize,
         platform.stop,
-        certificates.uninitialize,
         settings.uninitialize
     ], callback);
 }
