@@ -265,7 +265,7 @@ function configureWebadmin(callback) {
     function configureNginx(error) {
         debug('configureNginx: dns update: %j', error || {});
 
-        certificates.ensureCertificate({ domain: config.fqdn(), location: config.adminLocation(), intrinsicFqdn: config.adminFqdn() }, function (error, certFilePath, keyFilePath) {
+        certificates.ensureCertificate({ domain: config.adminDomain(), location: config.adminLocation(), intrinsicFqdn: config.adminFqdn() }, function (error, certFilePath, keyFilePath) {
             if (error) return done(error);
 
             gWebadminStatus.tls = true;
@@ -296,10 +296,10 @@ function configureWebadmin(callback) {
     sysinfo.getPublicIp(function (error, ip) {
         if (error) return configureNginx(error);
 
-        addWebadminDnsRecord(ip, config.fqdn(), function (error) {
+        addWebadminDnsRecord(ip, config.adminDomain(), function (error) {
             if (error) return configureNginx(error);
 
-            domains.waitForDNSRecord(config.adminFqdn(), config.fqdn(), ip, 'A', { interval: 30000, times: 50000 }, function (error) {
+            domains.waitForDNSRecord(config.adminFqdn(), config.adminDomain(), ip, 'A', { interval: 30000, times: 50000 }, function (error) {
                 if (error) return configureNginx(error);
 
                 gWebadminStatus.dns = true;
@@ -448,7 +448,7 @@ function getConfig(callback) {
             callback(null, {
                 apiServerOrigin: config.apiServerOrigin(),
                 webServerOrigin: config.webServerOrigin(),
-                fqdn: config.fqdn(),
+                adminDomain: config.adminDomain(),
                 adminLocation: config.adminLocation(),
                 adminFqdn: config.adminFqdn(),
                 mailFqdn: config.mailFqdn(),
@@ -596,7 +596,7 @@ function doUpdate(boxUpdateInfo, callback) {
             provider: config.provider(),
             apiServerOrigin: config.apiServerOrigin(),
             webServerOrigin: config.webServerOrigin(),
-            fqdn: config.fqdn(),
+            adminDomain: config.adminDomain(),
             adminFqdn: config.adminFqdn(),
             adminLocation: config.adminLocation(),
             isDemo: config.isDemo(),

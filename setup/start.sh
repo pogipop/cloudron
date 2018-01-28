@@ -213,6 +213,7 @@ cat > "${CONFIG_DIR}/cloudron.conf" <<CONF_END
     "apiServerOrigin": "${arg_api_server_origin}",
     "webServerOrigin": "${arg_web_server_origin}",
     "fqdn": "${arg_fqdn}",
+    "adminDomain": "${arg_admin_domain}",
     "adminFqdn": "${arg_admin_fqdn}",
     "adminLocation": "${arg_admin_location}",
     "provider": "${arg_provider}",

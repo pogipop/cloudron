@@ -607,7 +607,7 @@ function ensureDkimKey(domain, callback) {
 function txtRecordsWithSpf(callback) {
     assert.strictEqual(typeof callback, 'function');
 
-    domains.getDNSRecords('', config.fqdn(), 'TXT', function (error, txtRecords) {
+    domains.getDNSRecords('', config.adminDomain(), 'TXT', function (error, txtRecords) {
         if (error) return callback(error);
 
         debug('txtRecordsWithSpf: current txt records - %j', txtRecords);

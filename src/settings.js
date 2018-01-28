@@ -397,7 +397,7 @@ function setAppstoreConfig(appstoreConfig, callback) {
         function registerCloudron() {
             const url = config.apiServerOrigin() + '/api/v1/users/' + appstoreConfig.userId + '/cloudrons';
             const data = {
-                domain: config.fqdn()
+                domain: config.adminDomain()
             };
 
             superagent.post(url).send(data).query({ accessToken: appstoreConfig.token }).timeout(30 * 1000).end(function (error, result) {

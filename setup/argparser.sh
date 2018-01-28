@@ -6,6 +6,7 @@ json="${source_dir}/../node_modules/.bin/json"
 # IMPORTANT: Fix cloudron.js:doUpdate if you add/remove any arg. keep these sorted for readability
 arg_api_server_origin=""
 arg_fqdn=""
+arg_admin_domain=""
 arg_admin_location=""
 arg_admin_fqdn=""
 arg_retire_reason=""
@@ -35,6 +36,9 @@ while true; do
 
         arg_admin_location=$(echo "$2" | $json adminLocation)
         [[ "${arg_admin_location}" == "" ]] && arg_admin_location="my"
+
+        arg_admin_domain=$(echo "$2" | $json adminDomain)
+        [[ "${arg_admin_domain}" == "" ]] && arg_admin_domain="${arg_fqdn}"
 
         # only update/restore have this valid (but not migrate)
         arg_api_server_origin=$(echo "$2" | $json apiServerOrigin)

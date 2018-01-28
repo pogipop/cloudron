@@ -23,7 +23,7 @@ function sync(callback) {
 
         debug('refreshDNS: current ip %s', ip);
 
-        domains.upsertDNSRecords(config.adminLocation(), config.fqdn(), 'A', [ ip ], function (error) {
+        domains.upsertDNSRecords(config.adminLocation(), config.adminDomain(), 'A', [ ip ], function (error) {
             if (error) return callback(error);
 
             debug('refreshDNS: done for admin location');

@@ -17,6 +17,7 @@ exports = module.exports = {
     apiServerOrigin: apiServerOrigin,
     webServerOrigin: webServerOrigin,
     fqdn: fqdn,
+    adminDomain: adminDomain,
     setFqdn: setFqdn,
     setAdminFqdn: setAdminFqdn,
     setAdminLocation: setAdminLocation,
@@ -73,6 +74,7 @@ function saveSync() {
         apiServerOrigin: data.apiServerOrigin,
         webServerOrigin: data.webServerOrigin,
         fqdn: data.fqdn,
+        adminDomain: data.adminDomain,
         adminFqdn: data.adminFqdn,
         adminLocation: data.adminLocation,
         provider: data.provider,
@@ -94,6 +96,7 @@ function initConfig() {
     // setup defaults
     data.fqdn = '';
     data.adminFqdn = '';
+    data.adminDomain = '';
     data.adminLocation = 'my';
     data.port = 3000;
     data.version = null;
@@ -162,7 +165,11 @@ function setFqdn(fqdn) {
 }
 
 function fqdn() {
-    return get('fqdn');
+    return get('adminDomain');
+}
+
+function adminDomain() {
+    return get('adminDomain');
 }
 
 function mailLocation() {
