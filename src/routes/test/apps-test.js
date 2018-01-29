@@ -177,8 +177,8 @@ function startBox(done) {
         ldap.start,
 
         function (callback) {
-            var scope1 = nock(config.apiServerOrigin()).get('/api/v1/boxes/' + config.fqdn() + '/setup/verify?setupToken=somesetuptoken').reply(200, {});
-            var scope2 = nock(config.apiServerOrigin()).post('/api/v1/boxes/' + config.fqdn() + '/setup/done?setupToken=somesetuptoken').reply(201, {});
+            var scope1 = nock(config.apiServerOrigin()).get('/api/v1/boxes/' + config.adminDomain() + '/setup/verify?setupToken=somesetuptoken').reply(200, {});
+            var scope2 = nock(config.apiServerOrigin()).post('/api/v1/boxes/' + config.adminDomain() + '/setup/done?setupToken=somesetuptoken').reply(201, {});
 
             superagent.post(SERVER_URL + '/api/v1/cloudron/activate')
                    .query({ setupToken: 'somesetuptoken' })
@@ -233,7 +233,7 @@ function startBox(done) {
             }, callback);
         },
 
-        settings.setDnsConfig.bind(null, { provider: 'route53', accessKeyId: 'accessKeyId', secretAccessKey: 'secretAccessKey', endpoint: 'http://localhost:5353' }, config.fqdn(), config.zoneName()),
+        settings.setDnsConfig.bind(null, { provider: 'route53', accessKeyId: 'accessKeyId', secretAccessKey: 'secretAccessKey', endpoint: 'http://localhost:5353' }, config.adminDomain(), config.zoneName()),
         settings.setTlsConfig.bind(null, { provider: 'caas' }),
         settings.setBackupConfig.bind(null, { provider: 'caas', token: 'BACKUP_TOKEN', bucket: 'Bucket', prefix: 'Prefix' })
     ], function (error) {
@@ -632,7 +632,7 @@ describe('App installation', function () {
                 apiHockServer = http.createServer(apiHockInstance.handler).listen(port, callback);
             },
 
-            settings.setDnsConfig.bind(null, { provider: 'route53', accessKeyId: 'accessKeyId', secretAccessKey: 'secretAccessKey', endpoint: 'http://localhost:5353' }, config.fqdn(), config.zoneName()),
+            settings.setDnsConfig.bind(null, { provider: 'route53', accessKeyId: 'accessKeyId', secretAccessKey: 'secretAccessKey', endpoint: 'http://localhost:5353' }, config.adminDomain(), config.zoneName()),
 
             settings.setTlsConfig.bind(null, { provider: 'caas' }),
 

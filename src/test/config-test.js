@@ -31,7 +31,7 @@ describe('config', function () {
     });
 
     it('did set default values', function () {
-        expect(config.fqdn()).to.equal('');
+        expect(config.adminDomain()).to.equal('');
         expect(config.adminFqdn()).to.equal('');
         expect(config.adminLocation()).to.equal('my');
     });
@@ -56,7 +56,7 @@ describe('config', function () {
 
     it('set - object', function (done) {
         config.set( { adminDomain: 'something.com' } );
-        expect(config.fqdn()).to.eql('something.com');
+        expect(config.adminDomain()).to.eql('something.com');
         done();
     });
 
@@ -64,7 +64,7 @@ describe('config', function () {
         config.setFqdn('example.com');
         config.setAdminFqdn('my.example.com');
 
-        expect(config.fqdn()).to.equal('example.com');
+        expect(config.adminDomain()).to.equal('example.com');
         expect(config.adminFqdn()).to.equal('my.example.com');
         expect(config.adminOrigin()).to.equal('https://my.example.com');
     });
@@ -73,7 +73,7 @@ describe('config', function () {
         config.setFqdn('test.example.com');
         config.setAdminFqdn('my-test.example.com');
 
-        expect(config.fqdn()).to.equal('test.example.com');
+        expect(config.adminDomain()).to.equal('test.example.com');
         expect(config.adminLocation()).to.equal('my');
         expect(config.adminOrigin()).to.equal('https://my-test.example.com');
     });
