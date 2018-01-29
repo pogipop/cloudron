@@ -13,7 +13,8 @@ var async = require('async'),
     domains = require('../../domains.js'),
     maildb = require('../../maildb.js'),
     server = require('../../server.js'),
-    superagent = require('superagent');
+    superagent = require('superagent'),
+    userdb = require('../../userdb.js');
 
 var SERVER_URL = 'http://localhost:' + config.get('port');
 
@@ -26,6 +27,7 @@ const DOMAIN_0 = {
 };
 var USERNAME = 'superadmin', PASSWORD = 'Foobar?1337', EMAIL ='silly@me.com';
 var token = null;
+var userId = '';
 
 function setup(done) {
     config._reset();
@@ -42,6 +44,7 @@ function setup(done) {
                 .query({ setupToken: 'somesetuptoken' })
                 .send({ username: USERNAME, password: PASSWORD, email: EMAIL })
                 .end(function (error, result) {
+                    expect(error).to.not.be.ok();
                     expect(result).to.be.ok();
                     expect(result.statusCode).to.eql(201);
 
@@ -50,6 +53,16 @@ function setup(done) {
 
                     callback();
                 });
+        },
+
+        function getUserId(callback) {
+            userdb.getByUsername(USERNAME, function (error, result) {
+                expect(error).to.not.be.ok();
+
+                userId = result.id;
+
+                callback();
+            });
         }
     ], done);
 }
@@ -63,6 +76,8 @@ function cleanup(done) {
 }
 
 describe('Mail API', function () {
+    this.timeout(5000);
+
     before(setup);
     after(cleanup);
 
@@ -629,6 +644,118 @@ describe('Mail API', function () {
                         done();
                     });
             });
+        });
+    });
+
+    describe('mailboxes', function () {
+        before(function (done) {
+            superagent.post(SERVER_URL + '/api/v1/mail')
+                .query({ access_token: token })
+                .send({ domain: DOMAIN_0.domain })
+                .end(function (err, res) {
+                    expect(res.statusCode).to.equal(201);
+                    done();
+            });
+        });
+
+        after(function (done) {
+            superagent.del(SERVER_URL + '/api/v1/mail/' + DOMAIN_0.domain)
+                .send({ password: PASSWORD })
+                .query({ access_token: token })
+                .end(function (err, res) {
+                    expect(res.statusCode).to.equal(204);
+                    done();
+                });
+        });
+
+        it('add fails if user does not exist', function (done) {
+            superagent.post(SERVER_URL + '/api/v1/mail/' + DOMAIN_0.domain + '/mailboxes/' + 'someuserdoesnotexist')
+                .query({ access_token: token })
+                .end(function (err, res) {
+                    expect(res.statusCode).to.equal(404);
+                    done();
+                });
+        });
+
+        it('add/enable succeeds', function (done) {
+            superagent.post(SERVER_URL + '/api/v1/mail/' + DOMAIN_0.domain + '/mailboxes/' + userId)
+                .query({ access_token: token })
+                .end(function (err, res) {
+                    expect(res.statusCode).to.equal(201);
+                    done();
+                });
+        });
+
+        it('enable again succeeds if already enabled', function (done) {
+            superagent.post(SERVER_URL + '/api/v1/mail/' + DOMAIN_0.domain + '/mailboxes/' + userId)
+                .query({ access_token: token })
+                .end(function (err, res) {
+                    expect(res.statusCode).to.equal(201);
+                    done();
+                });
+        });
+
+        it('get fails if not exist', function (done) {
+            superagent.get(SERVER_URL + '/api/v1/mail/' + DOMAIN_0.domain + '/mailboxes/' + 'someuserdoesnotexist')
+                .query({ access_token: token })
+                .end(function (err, res) {
+                    expect(res.statusCode).to.equal(404);
+                    done();
+                });
+        });
+
+        it('get succeeds', function (done) {
+            superagent.get(SERVER_URL + '/api/v1/mail/' + DOMAIN_0.domain + '/mailboxes/' + userId)
+                .query({ access_token: token })
+                .end(function (err, res) {
+                    expect(res.statusCode).to.equal(200);
+                    expect(res.body.mailbox).to.be.an('object');
+                    expect(res.body.mailbox.name).to.equal(USERNAME);
+                    expect(res.body.mailbox.ownerId).to.equal(userId);
+                    expect(res.body.mailbox.ownerType).to.equal('user');
+                    expect(res.body.mailbox.aliasTarget).to.equal(null);
+                    expect(res.body.mailbox.domain).to.equal(DOMAIN_0.domain);
+                    done();
+                });
+        });
+
+        it('listing succeeds', function (done) {
+            superagent.get(SERVER_URL + '/api/v1/mail/' + DOMAIN_0.domain + '/mailboxes')
+                .query({ access_token: token })
+                .end(function (err, res) {
+                    expect(res.statusCode).to.equal(200);
+                    expect(res.body.mailboxes.length).to.eql(1);
+                    expect(res.body.mailboxes[0]).to.be.an('object');
+                    expect(res.body.mailboxes[0].name).to.equal(USERNAME);
+                    expect(res.body.mailboxes[0].ownerId).to.equal(userId);
+                    expect(res.body.mailboxes[0].ownerType).to.equal('user');
+                    expect(res.body.mailboxes[0].aliasTarget).to.equal(null);
+                    expect(res.body.mailboxes[0].domain).to.equal(DOMAIN_0.domain);
+                    done();
+                });
+        });
+
+        it('disable succeeds even if not exist', function (done) {
+            superagent.del(SERVER_URL + '/api/v1/mail/' + DOMAIN_0.domain + '/mailboxes/' + 'someuserdoesnotexist')
+                .query({ access_token: token })
+                .end(function (err, res) {
+                    expect(res.statusCode).to.equal(201);
+                    done();
+                });
+        });
+
+        it('disable succeeds', function (done) {
+            superagent.del(SERVER_URL + '/api/v1/mail/' + DOMAIN_0.domain + '/mailboxes/' + userId)
+                .query({ access_token: token })
+                .end(function (err, res) {
+                    expect(res.statusCode).to.equal(201);
+                    superagent.get(SERVER_URL + '/api/v1/mail/' + DOMAIN_0.domain + '/mailboxes/' + userId)
+                        .query({ access_token: token })
+                        .end(function (err, res) {
+                            expect(res.statusCode).to.equal(404);
+                            done();
+                        });
+                });
         });
     });
 });
