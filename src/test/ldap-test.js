@@ -97,6 +97,7 @@ function setup(done) {
         database._clear.bind(null),
         ldapServer.start.bind(null),
         domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0.zoneName, DOMAIN_0.provider, DOMAIN_0.config, DOMAIN_0.fallbackCertificate),
+        maildb.add.bind(null, DOMAIN_0.domain),
         appdb.add.bind(null, APP_0.id, APP_0.appStoreId, APP_0.manifest, APP_0.location, APP_0.domain, APP_0.portBindings, APP_0),
         appdb.update.bind(null, APP_0.id, { containerId: APP_0.containerId }),
         appdb.setAddonConfig.bind(null, APP_0.id, 'sendmail', [{ name: 'MAIL_SMTP_PASSWORD', value : 'sendmailpassword' }]),
@@ -736,6 +737,10 @@ describe('Ldap', function () {
     }
 
     describe('search mailbox', function () {
+        before(function (done) {
+            mailboxdb.add(USER_0.username.toLowerCase(), DOMAIN_0.domain, USER_0.id, mailboxdb.TYPE_USER, done);
+        });
+
         it('get specific mailbox by email', function (done) {
             ldapSearch('cn=' + USER_0.username + '@example.com,ou=mailboxes,dc=cloudron', 'objectclass=mailbox', function (error, entries) {
                 if (error) return done(error);
@@ -768,6 +773,10 @@ describe('Ldap', function () {
     });
 
     describe('search aliases', function () {
+        before(function (done) {
+            mailboxdb.setAliasesForName(USER_0.username.toLowerCase(), DOMAIN_0.domain, [ USER_0_ALIAS.toLocaleLowerCase() ], done);
+        });
+
         it('get specific alias', function (done) {
             ldapSearch('cn=' + USER_0_ALIAS + '@example.com,ou=mailaliases,dc=cloudron', 'objectclass=nismailalias', function (error, entries) {
                 if (error) return done(error);
@@ -813,6 +822,10 @@ describe('Ldap', function () {
     });
 
     describe('search mailing list', function () {
+        before(function (done) {
+            mailboxdb.add(GROUP_NAME, DOMAIN_0.domain, GROUP_ID, mailboxdb.TYPE_GROUP, done);
+        });
+
         it('get specific list', function (done) {
             ldapSearch('cn=developers@example.com,ou=mailinglists,dc=cloudron', 'objectclass=mailGroup', function (error, entries) {
                 if (error) return done(error);
@@ -857,7 +870,7 @@ describe('Ldap', function () {
 
                 var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + config.get('ldapPort') });
 
-                client.bind('cn=' + USER_0.email.toLocaleLowerCase() + ',ou=sendmail,dc=cloudron', USER_0.password, function (error) {
+                client.bind('cn=' + USER_0.username.toLocaleLowerCase() + '@' + DOMAIN_0.domain + ',ou=sendmail,dc=cloudron', USER_0.password, function (error) {
                     expect(error).not.to.be.ok();
 
                     client.unbind();
@@ -888,7 +901,7 @@ describe('Ldap', function () {
     describe('app sendmail bind', function () {
         // these tests should work even when email is disabled
         before(function (done) {
-            maildb.update(DOMAIN_0.domain, { enabled: false }, done);
+            maildb.update(DOMAIN_0.domain, { enabled: true }, done);
         });
 
         it('does not allow with invalid app', function (done) {
@@ -920,6 +933,10 @@ describe('Ldap', function () {
     });
 
     describe('user recvmail bind', function () {
+        before(function (done) {
+            maildb.update(DOMAIN_0.domain, { enabled: false }, done);
+        });
+
         it('email disabled - cannot find domain email', function (done) {
             var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + config.get('ldapPort') });
 
@@ -974,6 +991,10 @@ describe('Ldap', function () {
     });
 
     describe('app recvmail bind', function () {
+        before(function (done) {
+            maildb.update(DOMAIN_0.domain, { enabled: true }, done);
+        });
+
         it('does not allow with invalid app', function (done) {
             var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + config.get('ldapPort') });
 
