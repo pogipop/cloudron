@@ -46,7 +46,6 @@ initBaseImage="true"
 # provisioning data
 domain=""
 adminLocation="my"
-zoneName=""
 provider=""
 tlsProvider="le-prod"
 requestedVersion=""
@@ -213,7 +212,6 @@ EOF
         "fqdn": "${domain}",
         "adminLocation": "${adminLocation}",
         "adminFqdn": "${adminLocation}.${domain}",
-        "zoneName": "${zoneName}",
         "provider": "${provider}",
         "apiServerOrigin": "${apiServerOrigin}",
         "webServerOrigin": "${webServerOrigin}",
