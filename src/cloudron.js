@@ -213,7 +213,7 @@ function dnsSetup(adminFqdn, domain, zoneName, provider, dnsConfig, callback) {
         if (!result) {
             async.series([
                 domains.add.bind(null, domain, zoneName, provider, dnsConfig, null /* cert */),
-                mail.add(null, domain)
+                mail.add.bind(null, domain)
             ], done);
         } else {
             domains.update(domain, provider, dnsConfig, null /* cert */, done);
