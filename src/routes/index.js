@@ -14,6 +14,7 @@ exports = module.exports = {
     oauth2: require('./oauth2.js'),
     mail: require('./mail.js'),
     profile: require('./profile.js'),
+    setup: require('./setup.js'),
     sysadmin: require('./sysadmin.js'),
     settings: require('./settings.js'),
     ssh: require('./ssh.js'),
