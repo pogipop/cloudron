@@ -17,6 +17,7 @@ var assert = require('assert'),
     UserError = user.UserError,
     ldap = require('ldapjs'),
     mail = require('./mail.js'),
+    MailError = mail.MailError,
     mailboxdb = require('./mailboxdb.js'),
     safe = require('safetydance');
 
@@ -428,7 +429,7 @@ function authenticateMailbox(req, res, next) {
         if (error) return next(new ldap.OperationsError(error.message));
 
         mail.get(parts[1], function (error, domain) {
-            if (error && error.reason === DatabaseError.NOT_FOUND) return next(new ldap.NoSuchObjectError(req.dn.toString()));
+            if (error && error.reason === MailError.NOT_FOUND) return next(new ldap.NoSuchObjectError(req.dn.toString()));
             if (error) return next(new ldap.OperationsError(error.message));
 
             if (!domain.enabled) return next(new ldap.NoSuchObjectError(req.dn.toString()));
