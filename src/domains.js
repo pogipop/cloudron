@@ -329,7 +329,7 @@ function setAdmin(domain, callback) {
         setPtrRecord(domain, function (error) {
             if (error) return callback(new DomainError(DomainError.EXTERNAL_ERROR, 'Error setting PTR record:' + error.message));
 
-            config.setFqdn(result.domain);
+            config.setAdminDomain(result.domain);
             config.setAdminLocation('my');
             config.setAdminFqdn('my' + (result.provider === 'caas' ? '-' : '.') + result.domain);
 

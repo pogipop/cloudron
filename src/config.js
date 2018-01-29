@@ -16,9 +16,8 @@ exports = module.exports = {
     provider: provider,
     apiServerOrigin: apiServerOrigin,
     webServerOrigin: webServerOrigin,
-    fqdn: fqdn,
     adminDomain: adminDomain,
-    setFqdn: setFqdn,
+    setFqdn: setAdminDomain,
     setAdminDomain: setAdminDomain,
     setAdminFqdn: setAdminFqdn,
     setAdminLocation: setAdminLocation,
@@ -74,7 +73,6 @@ function saveSync() {
         version: data.version,
         apiServerOrigin: data.apiServerOrigin,
         webServerOrigin: data.webServerOrigin,
-        fqdn: data.fqdn,
         adminDomain: data.adminDomain,
         adminFqdn: data.adminFqdn,
         adminLocation: data.adminLocation,
@@ -95,7 +93,6 @@ function _reset(callback) {
 
 function initConfig() {
     // setup defaults
-    data.fqdn = '';
     data.adminFqdn = '';
     data.adminDomain = '';
     data.adminLocation = 'my';
@@ -162,16 +159,8 @@ function webServerOrigin() {
     return get('webServerOrigin');
 }
 
-function setFqdn(fqdn) {
-    set('adminDomain', fqdn);
-}
-
 function setAdminDomain(domain) {
     set('adminDomain', domain);
-}
-
-function fqdn() {
-    return get('adminDomain');
 }
 
 function adminDomain() {

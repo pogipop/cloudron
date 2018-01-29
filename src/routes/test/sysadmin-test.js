@@ -94,7 +94,7 @@ describe('Internal API', function () {
 
     before(function (done) {
         apiHockInstance
-            .post('/api/v1/boxes/' + config.fqdn() + '/awscredentials?token=BACKUP_TOKEN')
+            .post('/api/v1/boxes/' + config.adminDomain() + '/awscredentials?token=BACKUP_TOKEN')
             .reply(201, { credentials: { AccessKeyId: 'accessKeyId', SecretAccessKey: 'secretAccessKey' } });
         var port = parseInt(url.parse(config.apiServerOrigin()).port, 10);
         apiHockServer = http.createServer(apiHockInstance.handler).listen(port, done);
