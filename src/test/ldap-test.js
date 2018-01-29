@@ -901,7 +901,7 @@ describe('Ldap', function () {
     describe('app sendmail bind', function () {
         // these tests should work even when email is disabled
         before(function (done) {
-            maildb.update(DOMAIN_0.domain, { enabled: true }, done);
+            maildb.update(DOMAIN_0.domain, { enabled: false }, done);
         });
 
         it('does not allow with invalid app', function (done) {
