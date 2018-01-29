@@ -758,4 +758,103 @@ describe('Mail API', function () {
                 });
         });
     });
+
+    describe('aliases', function () {
+        before(function (done) {
+            superagent.post(SERVER_URL + '/api/v1/mail')
+                .query({ access_token: token })
+                .send({ domain: DOMAIN_0.domain })
+                .end(function (err, res) {
+                    expect(res.statusCode).to.equal(201);
+                    done();
+            });
+        });
+
+        after(function (done) {
+            superagent.del(SERVER_URL + '/api/v1/mail/' + DOMAIN_0.domain)
+                .send({ password: PASSWORD })
+                .query({ access_token: token })
+                .end(function (err, res) {
+                    expect(res.statusCode).to.equal(204);
+                    done();
+                });
+        });
+
+        it('set fails if aliases is missing', function (done) {
+            superagent.put(SERVER_URL + '/api/v1/mail/' + DOMAIN_0.domain + '/aliases/' + userId)
+                .query({ access_token: token })
+                .end(function (err, res) {
+                    expect(res.statusCode).to.equal(400);
+                    done();
+                });
+        });
+
+        it('set fails if user does not exist', function (done) {
+            superagent.put(SERVER_URL + '/api/v1/mail/' + DOMAIN_0.domain + '/aliases/' + 'someuserdoesnotexist')
+                .send({ aliases: ['hello', 'there'] })
+                .query({ access_token: token })
+                .end(function (err, res) {
+                    expect(res.statusCode).to.equal(404);
+                    done();
+                });
+        });
+
+        it('set fails if aliases is the wrong type', function (done) {
+            superagent.put(SERVER_URL + '/api/v1/mail/' + DOMAIN_0.domain + '/aliases/' + userId)
+                .send({ aliases: 'hello, there' })
+                .query({ access_token: token })
+                .end(function (err, res) {
+                    expect(res.statusCode).to.equal(400);
+                    done();
+                });
+        });
+
+        it('set fails if user is not enabled', function (done) {
+            superagent.put(SERVER_URL + '/api/v1/mail/' + DOMAIN_0.domain + '/aliases/' + userId)
+                .send({ aliases: ['hello', 'there'] })
+                .query({ access_token: token })
+                .end(function (err, res) {
+                    expect(res.statusCode).to.equal(404);
+                    done();
+                });
+        });
+
+        it('now enable the user', function (done) {
+            superagent.post(SERVER_URL + '/api/v1/mail/' + DOMAIN_0.domain + '/mailboxes/' + userId)
+                .query({ access_token: token })
+                .end(function (err, res) {
+                    expect(res.statusCode).to.equal(201);
+                    done();
+                });
+        });
+
+        it('set succeeds', function (done) {
+            superagent.put(SERVER_URL + '/api/v1/mail/' + DOMAIN_0.domain + '/aliases/' + userId)
+                .send({ aliases: ['hello', 'there'] })
+                .query({ access_token: token })
+                .end(function (err, res) {
+                    expect(res.statusCode).to.equal(202);
+                    done();
+                });
+        });
+
+        it('get succeeds', function (done) {
+            superagent.get(SERVER_URL + '/api/v1/mail/' + DOMAIN_0.domain + '/aliases/' + userId)
+                .query({ access_token: token })
+                .end(function (err, res) {
+                    expect(res.statusCode).to.equal(200);
+                    expect(res.body.aliases).to.eql(['hello', 'there']);
+                    done();
+                });
+        });
+
+        it('get succeeds if mailbox does not exist', function (done) {
+            superagent.get(SERVER_URL + '/api/v1/mail/' + DOMAIN_0.domain + '/aliases/' + 'someuserdoesnotexist')
+                .query({ access_token: token })
+                .end(function (err, res) {
+                    expect(res.statusCode).to.equal(404);
+                    done();
+                });
+        });
+    });
 });
