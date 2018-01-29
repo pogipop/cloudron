@@ -143,6 +143,7 @@ function set(key, value) {
     } else {
         data = safe.set(data, key, value);
     }
+
     saveSync();
 }
 
@@ -161,7 +162,7 @@ function webServerOrigin() {
 }
 
 function setFqdn(fqdn) {
-    set('fqdn', fqdn);
+    set('adminDomain', fqdn);
 }
 
 function fqdn() {
