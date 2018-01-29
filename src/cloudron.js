@@ -198,7 +198,6 @@ function dnsSetup(adminFqdn, domain, zoneName, provider, dnsConfig, callback) {
             config.setFqdn(domain); // set fqdn only after dns config is valid, otherwise cannot re-setup if we failed
             config.setAdminFqdn(adminFqdn);
             config.setAdminLocation('my');
-            config.setZoneName(zoneName);
 
             clients.addDefaultClients(config.adminOrigin(), callback);
 

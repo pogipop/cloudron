@@ -332,7 +332,6 @@ function setAdmin(domain, callback) {
             config.setFqdn(result.domain);
             config.setAdminLocation('my');
             config.setAdminFqdn('my' + (result.provider === 'caas' ? '-' : '.') + result.domain);
-            config.setZoneName(result.zoneName);
 
             callback();
 

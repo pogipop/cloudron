@@ -152,7 +152,6 @@ function startBox(done) {
     child_process.execSync('docker ps -qa | xargs --no-run-if-empty docker rm -f');
 
     config.setFqdn(APP_DOMAIN);
-    config.setZoneName('foobar.com');
 
     awsHostedZones = {
          HostedZones: [{
