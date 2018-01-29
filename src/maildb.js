@@ -113,9 +113,9 @@ function update(domain, data, callback) {
     }
     args.push(domain);
 
-    database.query('UPDATE mail SET ' + fields.join(', ') + ' WHERE domain=?', args, function (error) {
-        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new DatabaseError(DatabaseError.NOT_FOUND));
+    database.query('UPDATE mail SET ' + fields.join(', ') + ' WHERE domain=?', args, function (error, result) {
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
+        if (result.affectedRows !== 1) return callback(new DatabaseError(DatabaseError.NOT_FOUND));
 
         callback(null);
     });
