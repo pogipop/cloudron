@@ -19,6 +19,7 @@ exports = module.exports = {
     fqdn: fqdn,
     adminDomain: adminDomain,
     setFqdn: setFqdn,
+    setAdminDomain: setAdminDomain,
     setAdminFqdn: setAdminFqdn,
     setAdminLocation: setAdminLocation,
     version: version,
@@ -163,6 +164,10 @@ function webServerOrigin() {
 
 function setFqdn(fqdn) {
     set('adminDomain', fqdn);
+}
+
+function setAdminDomain(domain) {
+    set('adminDomain', domain);
 }
 
 function fqdn() {

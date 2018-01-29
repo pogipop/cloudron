@@ -182,7 +182,7 @@ function dnsSetup(adminFqdn, domain, zoneName, provider, dnsConfig, callback) {
     assert.strictEqual(typeof dnsConfig, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    if (config.adminFqdn()) return callback(new CloudronError(CloudronError.ALREADY_SETUP));
+    if (config.adminDomain()) return callback(new CloudronError(CloudronError.ALREADY_SETUP));
 
     if (!zoneName) zoneName = tld.getDomain(domain) || domain;
 
@@ -195,7 +195,7 @@ function dnsSetup(adminFqdn, domain, zoneName, provider, dnsConfig, callback) {
         autoprovision(function (error) {
             if (error) return callback(new CloudronError(CloudronError.INTERNAL_ERROR, error));
 
-            config.setFqdn(domain); // set fqdn only after dns config is valid, otherwise cannot re-setup if we failed
+            config.setAdminDomain(domain); // set fqdn only after dns config is valid, otherwise cannot re-setup if we failed
             config.setAdminFqdn(adminFqdn);
             config.setAdminLocation('my');
 
@@ -387,7 +387,7 @@ function getStatus(callback) {
                 apiServerOrigin: config.apiServerOrigin(), // used by CaaS tool
                 provider: config.provider(),
                 cloudronName: cloudronName,
-                adminFqdn: config.adminFqdn(),
+                adminFqdn: config.adminDomain() ? config.adminFqdn() : null,
                 webadminStatus: gWebadminStatus
             });
         });
