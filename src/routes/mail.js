@@ -53,7 +53,7 @@ function add(req, res, next) {
 
     mail.add(req.body.domain, function (error) {
         if (error && error.reason === MailError.NOT_FOUND) return next(new HttpError(404, error.message));
-        if (error && error.reason === MailError.ALREADY_EXISTS) return next(new HttpError(400, error.message));
+        if (error && error.reason === MailError.ALREADY_EXISTS) return next(new HttpError(409, 'domain already exists'));
         if (error) return next(new HttpError(500, error));
 
         next(new HttpSuccess(201, { domain: req.body.domain }));
