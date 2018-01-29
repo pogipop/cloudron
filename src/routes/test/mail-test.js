@@ -172,7 +172,7 @@ describe('Mail API', function () {
         });
     });
 
-    xdescribe('email DNS records', function () {
+    describe('status', function () {
         var resolve = null;
         var dnsAnswerQueue = [];
         var dkimDomain, spfDomain, mxDomain, dmarcDomain;
@@ -198,7 +198,13 @@ describe('Mail API', function () {
             mxDomain = DOMAIN_0.domain;
             dmarcDomain = '_dmarc.' + DOMAIN_0.domain;
 
-            done();
+            superagent.post(SERVER_URL + '/api/v1/mail')
+                .query({ access_token: token })
+                .send({ domain: DOMAIN_0.domain })
+                .end(function (err, res) {
+                    expect(res.statusCode).to.equal(201);
+                    done();
+            });
         });
 
         after(function (done) {
@@ -206,7 +212,13 @@ describe('Mail API', function () {
 
             dig.resolve = resolve;
 
-            done();
+            superagent.del(SERVER_URL + '/api/v1/mail/' + DOMAIN_0.domain)
+                .send({ password: PASSWORD })
+                .query({ access_token: token })
+                .end(function (err, res) {
+                    expect(res.statusCode).to.equal(204);
+                    done();
+                });
         });
 
         it('does not fail when dns errors', function (done) {
@@ -419,7 +431,27 @@ describe('Mail API', function () {
         });
     });
 
-    xdescribe('mail from validation', function () {
+    describe('mail from validation', function () {
+        before(function (done) {
+            superagent.post(SERVER_URL + '/api/v1/mail')
+                .query({ access_token: token })
+                .send({ domain: DOMAIN_0.domain })
+                .end(function (err, res) {
+                    expect(res.statusCode).to.equal(201);
+                    done();
+            });
+        });
+
+        after(function (done) {
+            superagent.del(SERVER_URL + '/api/v1/mail/' + DOMAIN_0.domain)
+                .send({ password: PASSWORD })
+                .query({ access_token: token })
+                .end(function (err, res) {
+                    expect(res.statusCode).to.equal(204);
+                    done();
+                });
+        });
+
         it('get mail from validation succeeds', function (done) {
             superagent.get(SERVER_URL + '/api/v1/mail/' + DOMAIN_0.domain)
                 .query({ access_token: token })
@@ -431,7 +463,7 @@ describe('Mail API', function () {
         });
 
         it('cannot set without enabled field', function (done) {
-            superagent.post(SERVER_URL + '/api/v1/mail/' + DOMAIN + '/mail_from_validation')
+            superagent.post(SERVER_URL + '/api/v1/mail/' + DOMAIN_0.domain + '/mail_from_validation')
                 .query({ access_token: token })
                 .send({ })
                 .end(function (err, res) {
@@ -441,7 +473,7 @@ describe('Mail API', function () {
         });
 
         it('can set with enabled field', function (done) {
-            superagent.post(SERVER_URL + '/api/v1/mail/' + DOMAIN + '/mail_from_validation')
+            superagent.post(SERVER_URL + '/api/v1/mail/' + DOMAIN_0.domain + '/mail_from_validation')
                 .query({ access_token: token })
                 .send({ enabled: false })
                 .end(function (err, res) {
@@ -451,9 +483,29 @@ describe('Mail API', function () {
         });
     });
 
-    xdescribe('catch_all', function () {
+    describe('catch_all', function () {
+        before(function (done) {
+            superagent.post(SERVER_URL + '/api/v1/mail')
+                .query({ access_token: token })
+                .send({ domain: DOMAIN_0.domain })
+                .end(function (err, res) {
+                    expect(res.statusCode).to.equal(201);
+                    done();
+            });
+        });
+
+        after(function (done) {
+            superagent.del(SERVER_URL + '/api/v1/mail/' + DOMAIN_0.domain)
+                .send({ password: PASSWORD })
+                .query({ access_token: token })
+                .end(function (err, res) {
+                    expect(res.statusCode).to.equal(204);
+                    done();
+                });
+        });
+
         it('get catch_all succeeds', function (done) {
-            superagent.get(SERVER_URL + '/api/v1/mail/' + DOMAIN)
+            superagent.get(SERVER_URL + '/api/v1/mail/' + DOMAIN_0.domain)
                 .query({ access_token: token })
                 .end(function (err, res) {
                     expect(res.statusCode).to.equal(200);
@@ -463,7 +515,7 @@ describe('Mail API', function () {
         });
 
         it('cannot set without address field', function (done) {
-            superagent.post(SERVER_URL + '/api/v1/mail/' + DOMAIN + '/catch_all')
+            superagent.post(SERVER_URL + '/api/v1/mail/' + DOMAIN_0.domain + '/catch_all')
                 .query({ access_token: token })
                 .end(function (err, res) {
                     expect(res.statusCode).to.equal(400);
@@ -472,7 +524,7 @@ describe('Mail API', function () {
         });
 
         it('cannot set with bad address field', function (done) {
-            superagent.post(SERVER_URL + '/api/v1/mail/' + DOMAIN + '/catch_all')
+            superagent.post(SERVER_URL + '/api/v1/mail/' + DOMAIN_0.domain + '/catch_all')
                 .query({ access_token: token })
                 .send({ address: [ 'user1', 123 ] })
                 .end(function (err, res) {
@@ -482,7 +534,7 @@ describe('Mail API', function () {
         });
 
         it('set succeeds', function (done) {
-            superagent.post(SERVER_URL + '/api/v1/mail/' + DOMAIN + '/catch_all')
+            superagent.post(SERVER_URL + '/api/v1/mail/' + DOMAIN_0.domain + '/catch_all')
                 .query({ access_token: token })
                 .send({ address: [ 'user1' ] })
                 .end(function (err, res) {
@@ -492,7 +544,7 @@ describe('Mail API', function () {
         });
 
         it('get succeeds', function (done) {
-            superagent.get(SERVER_URL + '/api/v1/mail/' + DOMAIN)
+            superagent.get(SERVER_URL + '/api/v1/mail/' + DOMAIN_0.domain)
                 .query({ access_token: token })
                 .end(function (err, res) {
                     expect(res.statusCode).to.equal(200);
@@ -502,9 +554,29 @@ describe('Mail API', function () {
         });
     });
 
-    xdescribe('mail relay', function () {
+    describe('mail relay', function () {
+        before(function (done) {
+            superagent.post(SERVER_URL + '/api/v1/mail')
+                .query({ access_token: token })
+                .send({ domain: DOMAIN_0.domain })
+                .end(function (err, res) {
+                    expect(res.statusCode).to.equal(201);
+                    done();
+            });
+        });
+
+        after(function (done) {
+            superagent.del(SERVER_URL + '/api/v1/mail/' + DOMAIN_0.domain)
+                .send({ password: PASSWORD })
+                .query({ access_token: token })
+                .end(function (err, res) {
+                    expect(res.statusCode).to.equal(204);
+                    done();
+                });
+        });
+
         it('get mail relay succeeds', function (done) {
-            superagent.get(SERVER_URL + '/api/v1/mail/' + DOMAIN)
+            superagent.get(SERVER_URL + '/api/v1/mail/' + DOMAIN_0.domain)
                 .query({ access_token: token })
                 .end(function (err, res) {
                     expect(res.statusCode).to.equal(200);
@@ -514,7 +586,7 @@ describe('Mail API', function () {
         });
 
         it('cannot set without provider field', function (done) {
-            superagent.post(SERVER_URL + '/api/v1/mail/' + DOMAIN + '/relay')
+            superagent.post(SERVER_URL + '/api/v1/mail/' + DOMAIN_0.domain + '/relay')
                 .query({ access_token: token })
                 .send({ })
                 .end(function (err, res) {
@@ -524,7 +596,7 @@ describe('Mail API', function () {
         });
 
         it('cannot set with bad host', function (done) {
-            superagent.post(SERVER_URL + '/api/v1/mail/' + DOMAIN + '/relay')
+            superagent.post(SERVER_URL + '/api/v1/mail/' + DOMAIN_0.domain + '/relay')
                 .query({ access_token: token })
                 .send({ provider: 'external-smtp', host: true })
                 .end(function (err, res) {
@@ -534,7 +606,7 @@ describe('Mail API', function () {
         });
 
         it('set fails because mail server is unreachable', function (done) {
-            superagent.post(SERVER_URL + '/api/v1/mail/' + DOMAIN + '/relay')
+            superagent.post(SERVER_URL + '/api/v1/mail/' + DOMAIN_0.domain + '/relay')
                 .query({ access_token: token })
                 .send({ provider: 'external-smtp', host: 'host', port: 25, username: 'u', password: 'p', tls: true })
                 .end(function (err, res) {
@@ -546,10 +618,10 @@ describe('Mail API', function () {
         it('get succeeds', function (done) {
             var relay = { provider: 'external-smtp', host: 'host', port: 25, username: 'u', password: 'p', tls: true };
 
-            maildb.update(DOMAIN, { relay: relay }, function (error) { // skip the mail server verify()
+            maildb.update(DOMAIN_0.domain, { relay: relay }, function (error) { // skip the mail server verify()
                 expect(error).to.not.be.ok();
 
-                superagent.get(SERVER_URL + '/api/v1/mail/' + DOMAIN)
+                superagent.get(SERVER_URL + '/api/v1/mail/' + DOMAIN_0.domain)
                     .query({ access_token: token })
                     .end(function (err, res) {
                         expect(res.statusCode).to.equal(200);
@@ -557,47 +629,6 @@ describe('Mail API', function () {
                         done();
                     });
             });
-        });
-    });
-
-    xdescribe('mail_config', function () {
-        it('get mail_config succeeds', function (done) {
-            superagent.get(SERVER_URL + '/api/v1/mail/' + DOMAIN)
-                .query({ access_token: token })
-                .end(function (err, res) {
-                    expect(res.statusCode).to.equal(200);
-                    expect(res.body.enabled).to.be(false);
-                    done();
-                });
-        });
-
-        it('cannot set without enabled field', function (done) {
-            superagent.post(SERVER_URL + '/api/v1/mail/' + DOMAIN + '/enable')
-                .query({ access_token: token })
-                .end(function (err, res) {
-                    expect(res.statusCode).to.equal(400);
-                    done();
-                });
-        });
-
-        it('set succeeds', function (done) {
-            superagent.post(SERVER_URL + '/api/v1/mail/' + DOMAIN + '/enable')
-                .query({ access_token: token })
-                .send({ enabled: true })
-                .end(function (err, res) {
-                    expect(res.statusCode).to.equal(202);
-                    done();
-                });
-        });
-
-        it('get succeeds', function (done) {
-            superagent.get(SERVER_URL + '/api/v1/mail/' + DOMAIN)
-                .query({ access_token: token })
-                .end(function (err, res) {
-                    expect(res.statusCode).to.equal(200);
-                    expect(res.body.enabled).to.be(true);
-                    done();
-                });
         });
     });
 });
