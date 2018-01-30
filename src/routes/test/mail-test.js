@@ -26,8 +26,10 @@ const DOMAIN_0 = {
     fallbackCertificate: null
 };
 var USERNAME = 'superadmin', PASSWORD = 'Foobar?1337', EMAIL ='silly@me.com';
+const GROUP_NAME = 'maillistgroup';
 var token = null;
 var userId = '';
+var groupObject = null;
 
 function setup(done) {
     config._reset();
@@ -854,6 +856,165 @@ describe('Mail API', function () {
                 .end(function (err, res) {
                     expect(res.statusCode).to.equal(404);
                     done();
+                });
+        });
+    });
+
+    describe('mailinglists', function () {
+        before(function (done) {
+            async.series([
+                function (done) {
+                    superagent.post(SERVER_URL + '/api/v1/mail')
+                        .query({ access_token: token })
+                        .send({ domain: DOMAIN_0.domain })
+                        .end(function (err, res) {
+                            expect(res.statusCode).to.equal(201);
+                            done();
+                        });
+                },
+                function (done) {
+                    superagent.post(SERVER_URL + '/api/v1/groups')
+                        .query({ access_token: token })
+                        .send({ name: GROUP_NAME})
+                        .end(function (error, result) {
+                            expect(result.statusCode).to.equal(201);
+                            groupObject = result.body;
+                            done();
+                        });
+                },
+                function (done) {
+                    superagent.put(SERVER_URL + '/api/v1/users/' + userId + '/groups')
+                        .query({ access_token: token })
+                        .send({ groupIds: [ 'admin', groupObject.id ]})
+                        .end(function (error, result) {
+                            expect(result.statusCode).to.equal(204);
+                            done();
+                        });
+                }
+            ], done);
+        });
+
+        after(function (done) {
+            superagent.del(SERVER_URL + '/api/v1/mail/' + DOMAIN_0.domain)
+                .send({ password: PASSWORD })
+                .query({ access_token: token })
+                .end(function (err, res) {
+                    expect(res.statusCode).to.equal(204);
+                    done();
+                });
+        });
+
+        it('add fails without groupId', function (done) {
+            superagent.post(SERVER_URL + '/api/v1/mail/' + DOMAIN_0.domain + '/lists')
+                .query({ access_token: token })
+                .end(function (err, res) {
+                    expect(res.statusCode).to.equal(400);
+                    done();
+                });
+        });
+
+        it('add fails with invalid groupId', function (done) {
+            superagent.post(SERVER_URL + '/api/v1/mail/' + DOMAIN_0.domain + '/lists')
+                .send({ groupId: {} })
+                .query({ access_token: token })
+                .end(function (err, res) {
+                    expect(res.statusCode).to.equal(400);
+                    done();
+                });
+        });
+
+        it('add fails with non-existing groupId', function (done) {
+            superagent.post(SERVER_URL + '/api/v1/mail/' + DOMAIN_0.domain + '/lists')
+                .send({ groupId: 'doesnotexist' })
+                .query({ access_token: token })
+                .end(function (err, res) {
+                    expect(res.statusCode).to.equal(404);
+                    done();
+                });
+        });
+
+        it('add succeeds', function (done) {
+            superagent.post(SERVER_URL + '/api/v1/mail/' + DOMAIN_0.domain + '/lists')
+                .send({ groupId: groupObject.id })
+                .query({ access_token: token })
+                .end(function (err, res) {
+                    expect(res.statusCode).to.equal(201);
+                    done();
+                });
+        });
+
+        it('add twice fails', function (done) {
+            superagent.post(SERVER_URL + '/api/v1/mail/' + DOMAIN_0.domain + '/lists')
+                .send({ groupId: groupObject.id })
+                .query({ access_token: token })
+                .end(function (err, res) {
+                    expect(res.statusCode).to.equal(409);
+                    done();
+                });
+        });
+
+        it('get fails if not exist', function (done) {
+            superagent.get(SERVER_URL + '/api/v1/mail/' + DOMAIN_0.domain + '/lists/' + 'doesnotexist')
+                .query({ access_token: token })
+                .end(function (err, res) {
+                    expect(res.statusCode).to.equal(404);
+                    done();
+                });
+        });
+
+        it('get succeeds', function (done) {
+            superagent.get(SERVER_URL + '/api/v1/mail/' + DOMAIN_0.domain + '/lists/' + groupObject.id)
+                .query({ access_token: token })
+                .end(function (err, res) {
+                    expect(res.statusCode).to.equal(200);
+                    expect(res.body.list).to.be.an('object');
+                    expect(res.body.list.name).to.equal(GROUP_NAME);
+                    expect(res.body.list.ownerId).to.equal(groupObject.id);
+                    expect(res.body.list.ownerType).to.equal('group');
+                    expect(res.body.list.aliasTarget).to.equal(null);
+                    expect(res.body.list.domain).to.equal(DOMAIN_0.domain);
+                    expect(res.body.list.members).to.eql([ 'superadmin' ]);
+                    done();
+                });
+        });
+
+        it('get all succeeds', function (done) {
+            superagent.get(SERVER_URL + '/api/v1/mail/' + DOMAIN_0.domain + '/lists')
+                .query({ access_token: token })
+                .end(function (err, res) {
+                    expect(res.statusCode).to.equal(200);
+                    expect(res.body.lists).to.be.an(Array);
+                    expect(res.body.lists.length).to.equal(1);
+                    expect(res.body.lists[0].name).to.equal(GROUP_NAME);
+                    expect(res.body.lists[0].ownerId).to.equal(groupObject.id);
+                    expect(res.body.lists[0].ownerType).to.equal('group');
+                    expect(res.body.lists[0].aliasTarget).to.equal(null);
+                    expect(res.body.lists[0].domain).to.equal(DOMAIN_0.domain);
+                    done();
+                });
+        });
+
+        it('del fails if list does not exist', function (done) {
+            superagent.del(SERVER_URL + '/api/v1/mail/' + DOMAIN_0.domain + '/lists/' + 'doesnotexist')
+                .query({ access_token: token })
+                .end(function (err, res) {
+                    expect(res.statusCode).to.equal(404);
+                    done();
+                });
+        });
+
+        it('del succeeds', function (done) {
+            superagent.del(SERVER_URL + '/api/v1/mail/' + DOMAIN_0.domain + '/lists/' + groupObject.id)
+                .query({ access_token: token })
+                .end(function (err, res) {
+                    expect(res.statusCode).to.equal(204);
+
+                    superagent.get(SERVER_URL + '/api/v1/mail/' + DOMAIN_0.domain + '/lists/' + groupObject.id)
+                        .query({ access_token: token })
+                        .end(function (err, res) {
+                            expect(res.statusCode).to.equal(404);
+                            done();
+                        });
                 });
         });
     });
