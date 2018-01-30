@@ -126,15 +126,15 @@ function configureWebadmin(callback) {
         callback(error);
     }
 
-    function configureNginx(error) {
-        debug('configureNginx: dns update: %j', error || {});
+    function configureReverseProxy(error) {
+        debug('configureReverseProxy: dns update: %j', error || {});
 
-        reverseProxy.ensureCertificate({ domain: config.adminDomain(), location: config.adminLocation(), intrinsicFqdn: config.adminFqdn() }, function (error, certFilePath, keyFilePath) {
+        reverseProxy.configureAdmin(function (error) {
             if (error) return done(error);
 
             gWebadminStatus.tls = true;
 
-            reverseProxy.configureAdmin(certFilePath, keyFilePath, constants.NGINX_ADMIN_CONFIG_FILE_NAME, config.adminFqdn(), done);
+            done();
         });
     }
 
@@ -158,17 +158,17 @@ function configureWebadmin(callback) {
     // update the DNS. configure nginx regardless of whether it succeeded so that
     // box is accessible even if dns creds are invalid
     sysinfo.getPublicIp(function (error, ip) {
-        if (error) return configureNginx(error);
+        if (error) return configureReverseProxy(error);
 
         addWebadminDnsRecord(ip, config.adminDomain(), function (error) {
-            if (error) return configureNginx(error);
+            if (error) return configureReverseProxy(error);
 
             domains.waitForDNSRecord(config.adminFqdn(), config.adminDomain(), ip, 'A', { interval: 30000, times: 50000 }, function (error) {
-                if (error) return configureNginx(error);
+                if (error) return configureReverseProxy(error);
 
                 gWebadminStatus.dns = true;
 
-                configureNginx();
+                configureReverseProxy();
             });
         });
     });

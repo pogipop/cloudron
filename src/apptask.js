@@ -116,11 +116,7 @@ function configureReverseProxy(app, callback) {
     assert.strictEqual(typeof app, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    reverseProxy.ensureCertificate(app, function (error, certFilePath, keyFilePath) {
-        if (error) return callback(error);
-
-        reverseProxy.configureApp(app, certFilePath, keyFilePath, callback);
-    });
+    reverseProxy.configureApp(app, callback);
 }
 
 function unconfigureReverseProxy(app, callback) {

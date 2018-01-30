@@ -7,16 +7,17 @@ exports = module.exports = {
     getFallbackCertificate: getFallbackCertificate,
 
     validateCertificate: validateCertificate,
-    ensureCertificate: ensureCertificate,
 
     getCertificate: getCertificate,
 
     renewAll: renewAll,
 
     configureDefaultServer: configureDefaultServer,
+
     configureAdmin: configureAdmin,
     configureApp: configureApp,
     unconfigureApp: unconfigureApp,
+
     reload: reload,
     removeAppConfigs: removeAppConfigs,
 
@@ -190,7 +191,7 @@ function renewAll(auditSource, callback) {
 
                     // reconfigure and reload nginx. this is required for the case where we got a renewed cert after fallback
                     var configureFunc = app.intrinsicFqdn === config.adminFqdn() ?
-                        configureAdmin.bind(null, certFilePath, keyFilePath, constants.NGINX_ADMIN_CONFIG_FILE_NAME, config.adminFqdn())
+                        configureAdminInternal.bind(null, certFilePath, keyFilePath, constants.NGINX_ADMIN_CONFIG_FILE_NAME, config.adminFqdn())
                         : configureApp.bind(null, app, certFilePath, keyFilePath);
 
                     configureFunc(function (ignoredError) {
@@ -361,7 +362,7 @@ function ensureCertificate(app, callback) {
     });
 }
 
-function configureAdmin(certFilePath, keyFilePath, configFileName, vhost, callback) {
+function configureAdminInternal(certFilePath, keyFilePath, configFileName, vhost, callback) {
     assert.strictEqual(typeof certFilePath, 'string');
     assert.strictEqual(typeof keyFilePath, 'string');
     assert.strictEqual(typeof configFileName, 'string');
@@ -387,39 +388,51 @@ function configureAdmin(certFilePath, keyFilePath, configFileName, vhost, callba
     reload(callback);
 }
 
-function configureApp(app, certFilePath, keyFilePath, callback) {
-    assert.strictEqual(typeof app, 'object');
-    assert.strictEqual(typeof certFilePath, 'string');
-    assert.strictEqual(typeof keyFilePath, 'string');
+function configureAdmin(callback) {
     assert.strictEqual(typeof callback, 'function');
 
-    var sourceDir = path.resolve(__dirname, '..');
-    var endpoint = 'app';
-    var vhost = app.altDomain || app.intrinsicFqdn;
+    ensureCertificate({ domain: config.adminDomain(), location: config.adminLocation(), intrinsicFqdn: config.adminFqdn() }, function (error, certFilePath, keyFilePath) {
+        if (error) return callback(error);
 
-    var data = {
-        sourceDir: sourceDir,
-        adminOrigin: config.adminOrigin(),
-        vhost: vhost,
-        hasIPv6: config.hasIPv6(),
-        port: app.httpPort,
-        endpoint: endpoint,
-        certFilePath: certFilePath,
-        keyFilePath: keyFilePath,
-        robotsTxtQuoted: app.robotsTxt ? JSON.stringify(app.robotsTxt) : null,
-        xFrameOptions: app.xFrameOptions || 'SAMEORIGIN'    // once all apps have been updated/
-    };
-    var nginxConf = ejs.render(NGINX_APPCONFIG_EJS, data);
+        configureAdminInternal(certFilePath, keyFilePath, constants.NGINX_ADMIN_CONFIG_FILE_NAME, config.adminFqdn(), callback);
+    });
+}
 
-    var nginxConfigFilename = path.join(paths.NGINX_APPCONFIG_DIR, app.id + '.conf');
-    debug('writing config for "%s" to %s with options %j', vhost, nginxConfigFilename, data);
+function configureApp(app, callback) {
+    assert.strictEqual(typeof app, 'object');
+    assert.strictEqual(typeof callback, 'function');
 
-    if (!safe.fs.writeFileSync(nginxConfigFilename, nginxConf)) {
-        debug('Error creating nginx config for "%s" : %s', vhost, safe.error.message);
-        return callback(safe.error);
-    }
+    ensureCertificate(app, function (error, certFilePath, keyFilePath) {
+        if (error) return callback(error);
 
-    reload(callback);
+        var sourceDir = path.resolve(__dirname, '..');
+        var endpoint = 'app';
+        var vhost = app.altDomain || app.intrinsicFqdn;
+
+        var data = {
+            sourceDir: sourceDir,
+            adminOrigin: config.adminOrigin(),
+            vhost: vhost,
+            hasIPv6: config.hasIPv6(),
+            port: app.httpPort,
+            endpoint: endpoint,
+            certFilePath: certFilePath,
+            keyFilePath: keyFilePath,
+            robotsTxtQuoted: app.robotsTxt ? JSON.stringify(app.robotsTxt) : null,
+            xFrameOptions: app.xFrameOptions || 'SAMEORIGIN'    // once all apps have been updated/
+        };
+        var nginxConf = ejs.render(NGINX_APPCONFIG_EJS, data);
+
+        var nginxConfigFilename = path.join(paths.NGINX_APPCONFIG_DIR, app.id + '.conf');
+        debug('writing config for "%s" to %s with options %j', vhost, nginxConfigFilename, data);
+
+        if (!safe.fs.writeFileSync(nginxConfigFilename, nginxConf)) {
+            debug('Error creating nginx config for "%s" : %s', vhost, safe.error.message);
+            return callback(safe.error);
+        }
+
+        reload(callback);
+    });
 }
 
 function unconfigureApp(app, callback) {
@@ -463,7 +476,7 @@ function configureDefaultServer(callback) {
         safe.child_process.execSync(certCommand);
     }
 
-    configureAdmin(certFilePath, keyFilePath, 'default.conf', '', function (error) {
+    configureAdminInternal(certFilePath, keyFilePath, 'default.conf', '', function (error) {
         if (error) return callback(error);
 
         debug('configureDefaultServer: done');
