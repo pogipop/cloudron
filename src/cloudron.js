@@ -26,7 +26,6 @@ var assert = require('assert'),
     debug = require('debug')('box:cloudron'),
     df = require('@sindresorhus/df'),
     eventlog = require('./eventlog.js'),
-    fs = require('fs'),
     locker = require('./locker.js'),
     mailer = require('./mailer.js'),
     nginx = require('./nginx.js'),
@@ -82,7 +81,7 @@ function initialize(callback) {
 
     async.series([
         settings.initialize,
-        configureDefaultServer,
+        nginx.configureDefaultServer,
         cron.initialize, // required for caas heartbeat before activation
         onActivated
     ], callback);
@@ -109,31 +108,6 @@ function onActivated(callback) {
         if (!count) return callback(); // not activated
 
         platform.start(callback);
-    });
-}
-
-function configureDefaultServer(callback) {
-    callback = callback || NOOP_CALLBACK;
-
-    if (process.env.BOX_ENV === 'test') return callback();
-
-    var certFilePath = path.join(paths.NGINX_CERT_DIR,  'default.cert');
-    var keyFilePath = path.join(paths.NGINX_CERT_DIR, 'default.key');
-
-    if (!fs.existsSync(certFilePath) || !fs.existsSync(keyFilePath)) {
-        debug('configureDefaultServer: create new cert');
-
-        var cn = 'cloudron-' + (new Date()).toISOString(); // randomize date a bit to keep firefox happy
-        var certCommand = util.format('openssl req -x509 -newkey rsa:2048 -keyout %s -out %s -days 3650 -subj /CN=%s -nodes', keyFilePath, certFilePath, cn);
-        safe.child_process.execSync(certCommand);
-    }
-
-    nginx.configureAdmin(certFilePath, keyFilePath, 'default.conf', '', function (error) {
-        if (error) return callback(error);
-
-        debug('configureDefaultServer: done');
-
-        callback(null);
     });
 }
 

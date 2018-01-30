@@ -8,18 +8,22 @@ var assert = require('assert'),
     path = require('path'),
     paths = require('./paths.js'),
     safe = require('safetydance'),
-    shell = require('./shell.js');
+    shell = require('./shell.js'),
+    util = require('util');
 
 exports = module.exports = {
     configureAdmin: configureAdmin,
     configureApp: configureApp,
     unconfigureApp: unconfigureApp,
     reload: reload,
-    removeAppConfigs: removeAppConfigs
+    removeAppConfigs: removeAppConfigs,
+    configureDefaultServer: configureDefaultServer
 };
 
 var NGINX_APPCONFIG_EJS = fs.readFileSync(__dirname + '/../setup/start/nginx/appconfig.ejs', { encoding: 'utf8' }),
     RELOAD_NGINX_CMD = path.join(__dirname, 'scripts/reloadnginx.sh');
+
+var NOOP_CALLBACK = function (error) { if (error) debug(error); };
 
 function configureAdmin(certFilePath, keyFilePath, configFileName, vhost, callback) {
     assert.strictEqual(typeof certFilePath, 'string');
@@ -105,4 +109,29 @@ function removeAppConfigs() {
     for (var appConfigFile of fs.readdirSync(paths.NGINX_APPCONFIG_DIR)) {
         fs.unlinkSync(path.join(paths.NGINX_APPCONFIG_DIR, appConfigFile));
     }
+}
+
+function configureDefaultServer(callback) {
+    callback = callback || NOOP_CALLBACK;
+
+    if (process.env.BOX_ENV === 'test') return callback();
+
+    var certFilePath = path.join(paths.NGINX_CERT_DIR,  'default.cert');
+    var keyFilePath = path.join(paths.NGINX_CERT_DIR, 'default.key');
+
+    if (!fs.existsSync(certFilePath) || !fs.existsSync(keyFilePath)) {
+        debug('configureDefaultServer: create new cert');
+
+        var cn = 'cloudron-' + (new Date()).toISOString(); // randomize date a bit to keep firefox happy
+        var certCommand = util.format('openssl req -x509 -newkey rsa:2048 -keyout %s -out %s -days 3650 -subj /CN=%s -nodes', keyFilePath, certFilePath, cn);
+        safe.child_process.execSync(certCommand);
+    }
+
+    configureAdmin(certFilePath, keyFilePath, 'default.conf', '', function (error) {
+        if (error) return callback(error);
+
+        debug('configureDefaultServer: done');
+
+        callback(null);
+    });
 }
