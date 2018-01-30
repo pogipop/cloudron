@@ -170,11 +170,8 @@ function renewAll(auditSource, callback) {
                         debug('renewAll: using fallback certs for %s since it expires soon', domain, error);
 
                         // if no cert was returned use fallback, the fallback provider will not provide any for example
-                        var fallbackCertFilePath = path.join(paths.NGINX_CERT_DIR, domain + '.host.cert');
-                        var fallbackKeyFilePath = path.join(paths.NGINX_CERT_DIR, domain + '.host.key');
-
-                        certFilePath = fs.existsSync(fallbackCertFilePath) ? fallbackCertFilePath : 'cert/host.cert';
-                        keyFilePath = fs.existsSync(fallbackKeyFilePath) ? fallbackKeyFilePath : 'cert/host.key';
+                        certFilePath = path.join(paths.NGINX_CERT_DIR, domain + '.host.cert');
+                        keyFilePath = path.join(paths.NGINX_CERT_DIR, domain + '.host.key');
                     } else {
                         debug('renewAll: certificate for %s renewed', domain);
                     }
@@ -343,11 +340,8 @@ function ensureCertificate(app, callback) {
 
             // if no cert was returned use fallback, the fallback provider will not provide any for example
             if (!certFilePath || !keyFilePath) {
-                var fallbackCertFilePath = path.join(paths.NGINX_CERT_DIR, `${app.domain}.host.cert`);
-                var fallbackKeyFilePath = path.join(paths.NGINX_CERT_DIR, `${app.domain}.host.key`);
-
-                certFilePath = fs.existsSync(fallbackCertFilePath) ? fallbackCertFilePath : 'cert/host.cert';
-                keyFilePath = fs.existsSync(fallbackKeyFilePath) ? fallbackKeyFilePath : 'cert/host.key';
+                certFilePath = path.join(paths.NGINX_CERT_DIR, `${app.domain}.host.cert`);
+                keyFilePath = path.join(paths.NGINX_CERT_DIR, `${app.domain}.host.key`);
             }
 
             callback(null, certFilePath, keyFilePath);
