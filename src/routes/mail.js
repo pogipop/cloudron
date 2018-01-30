@@ -289,6 +289,6 @@ function removeList(req, res, next) {
         if (error && error.reason === MailError.NOT_FOUND) return next(new HttpError(404, error.message));
         if (error) return next(new HttpError(500, error));
 
-        next(new HttpSuccess(202, {}));
+        next(new HttpSuccess(204));
     });
 }
