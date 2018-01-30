@@ -28,6 +28,7 @@ var assert = require('assert'),
     debug = require('debug')('box:domains'),
     domaindb = require('./domaindb.js'),
     path = require('path'),
+    safe = require('safetydance'),
     shell = require('./shell.js'),
     sysinfo = require('./sysinfo.js'),
     tld = require('tldjs'),
@@ -152,10 +153,15 @@ function get(domain, callback) {
         if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new DomainError(DomainError.NOT_FOUND));
         if (error) return callback(new DomainError(DomainError.INTERNAL_ERROR, error));
 
-        certificates.getFallbackCertificate(domain, function (error, fallbackCertificate) {
+        certificates.getFallbackCertificate(domain, function (error, certFilePath, keyFilePath) {
             if (error && error.reason !== CertificatesError.NOT_FOUND) return callback(new DomainError(DomainError.INTERNAL_ERROR, error));
 
-            if (fallbackCertificate) result.fallbackCertificate = fallbackCertificate;
+            var cert = safe.fs.readFileSync(certFilePath, 'utf-8');
+            var key = safe.fs.readFileSync(keyFilePath, 'utf-8');
+
+            if (!cert || !key) return callback(new DomainError(DomainError.INTERNAL_ERROR, error));
+
+            result.fallbackCertificate = { cert: cert, key: key };
 
             return callback(null, result);
         });

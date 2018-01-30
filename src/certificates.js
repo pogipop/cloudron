@@ -284,12 +284,7 @@ function getFallbackCertificate(domain, callback) {
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    var cert = safe.fs.readFileSync(path.join(paths.NGINX_CERT_DIR, domain + '.cert'), 'utf-8');
-    var key = safe.fs.readFileSync(path.join(paths.NGINX_CERT_DIR, domain + '.key'), 'utf-8');
-
-    if (!cert || !key) return callback(new CertificatesError(CertificatesError.NOT_FOUND));
-
-    callback(null, { cert: cert, key: key });
+    callback(null, path.join(paths.NGINX_CERT_DIR, domain + '.cert'), path.join(paths.NGINX_CERT_DIR, domain + '.key'));
 }
 
 function getCertificate(app, callback) {
