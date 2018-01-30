@@ -170,8 +170,8 @@ function renewAll(auditSource, callback) {
                         debug('renewAll: using fallback certs for %s since it expires soon', domain, error);
 
                         // if no cert was returned use fallback, the fallback provider will not provide any for example
-                        var fallbackCertFilePath = path.join(paths.NGINX_CERT_DIR, domain + '.cert');
-                        var fallbackKeyFilePath = path.join(paths.NGINX_CERT_DIR, domain + '.key');
+                        var fallbackCertFilePath = path.join(paths.NGINX_CERT_DIR, domain + '.host.cert');
+                        var fallbackKeyFilePath = path.join(paths.NGINX_CERT_DIR, domain + '.host.key');
 
                         certFilePath = fs.existsSync(fallbackCertFilePath) ? fallbackCertFilePath : 'cert/host.cert';
                         keyFilePath = fs.existsSync(fallbackKeyFilePath) ? fallbackKeyFilePath : 'cert/host.key';
@@ -257,8 +257,8 @@ function setFallbackCertificate(domain, fallback, callback) {
 
     if (fallback) {
         // backup the cert
-        if (!safe.fs.writeFileSync(path.join(paths.APP_CERTS_DIR, domain + '.cert'), fallback.cert)) return callback(new CertificatesError(CertificatesError.INTERNAL_ERROR, safe.error.message));
-        if (!safe.fs.writeFileSync(path.join(paths.APP_CERTS_DIR, domain + '.key'), fallback.key)) return callback(new CertificatesError(CertificatesError.INTERNAL_ERROR, safe.error.message));
+        if (!safe.fs.writeFileSync(path.join(paths.APP_CERTS_DIR, `${domain}.host.cert`), fallback.cert)) return callback(new CertificatesError(CertificatesError.INTERNAL_ERROR, safe.error.message));
+        if (!safe.fs.writeFileSync(path.join(paths.APP_CERTS_DIR, `${domain}.host.key`), fallback.key)) return callback(new CertificatesError(CertificatesError.INTERNAL_ERROR, safe.error.message));
     } else if (!fs.existsSync(certFilePath) || !fs.existsSync(keyFilePath)) { // generate it
         var certCommand = util.format('openssl req -x509 -newkey rsa:2048 -keyout %s -out %s -days 3650 -subj /CN=*.%s -nodes', keyFilePath, certFilePath, domain);
         if (!safe.child_process.execSync(certCommand)) return callback(new CertificatesError(CertificatesError.INTERNAL_ERROR, safe.error.message));
@@ -348,8 +348,8 @@ function ensureCertificate(app, callback) {
 
             // if no cert was returned use fallback, the fallback provider will not provide any for example
             if (!certFilePath || !keyFilePath) {
-                var fallbackCertFilePath = path.join(paths.NGINX_CERT_DIR, app.domain + '.cert');
-                var fallbackKeyFilePath = path.join(paths.NGINX_CERT_DIR, app.domain + '.key');
+                var fallbackCertFilePath = path.join(paths.NGINX_CERT_DIR, `${app.domain}.host.cert`);
+                var fallbackKeyFilePath = path.join(paths.NGINX_CERT_DIR, `${app.domain}.host.key`);
 
                 certFilePath = fs.existsSync(fallbackCertFilePath) ? fallbackCertFilePath : 'cert/host.cert';
                 keyFilePath = fs.existsSync(fallbackKeyFilePath) ? fallbackKeyFilePath : 'cert/host.key';
