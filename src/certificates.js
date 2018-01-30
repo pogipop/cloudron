@@ -9,7 +9,7 @@ exports = module.exports = {
     validateCertificate: validateCertificate,
     ensureCertificate: ensureCertificate,
 
-    getAdminCertificate: getAdminCertificate,
+    getCertificate: getCertificate,
 
     renewAll: renewAll,
 
@@ -292,38 +292,24 @@ function getFallbackCertificate(domain, callback) {
     callback(null, { cert: cert, key: key });
 }
 
-function getAdminCertificatePath(callback) {
+function getCertificate(app, callback) {
+    assert.strictEqual(typeof app, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    var vhost = config.adminFqdn();
-    var certFilePath = path.join(paths.APP_CERTS_DIR, vhost + '.user.cert');
-    var keyFilePath = path.join(paths.APP_CERTS_DIR, vhost + '.user.key');
+    var vhost = app.altDomain || app.intrinsicFqdn;
+
+    var certFilePath = path.join(paths.APP_CERTS_DIR, `${vhost}.user.cert`);
+    var keyFilePath = path.join(paths.APP_CERTS_DIR, `${vhost}.user.key`);
 
     if (fs.existsSync(certFilePath) && fs.existsSync(keyFilePath)) return callback(null, certFilePath, keyFilePath);
 
-    certFilePath = path.join(paths.APP_CERTS_DIR, vhost + '.cert');
-    keyFilePath = path.join(paths.APP_CERTS_DIR, vhost + '.key');
+    certFilePath = path.join(paths.APP_CERTS_DIR, `${vhost}.cert`);
+    keyFilePath = path.join(paths.APP_CERTS_DIR, `${vhost}.key`);
 
     if (fs.existsSync(certFilePath) && fs.existsSync(keyFilePath)) return callback(null, certFilePath, keyFilePath);
 
     // any user fallback cert is always copied over to nginx cert dir
-    callback(null, path.join(paths.NGINX_CERT_DIR, 'host.cert'), path.join(paths.NGINX_CERT_DIR, 'host.key'));
-}
-
-function getAdminCertificate(callback) {
-    assert.strictEqual(typeof callback, 'function');
-
-    getAdminCertificatePath(function (error, certFilePath, keyFilePath) {
-        if (error) return callback(error);
-
-        var cert = safe.fs.readFileSync(certFilePath);
-        if (!cert) return callback(new CertificatesError(CertificatesError.INTERNAL_ERROR, safe.error));
-
-        var key = safe.fs.readFileSync(keyFilePath);
-        if (!cert) return callback(new CertificatesError(CertificatesError.INTERNAL_ERROR, safe.error));
-
-        return callback(null, cert, key);
-    });
+    callback(null, path.join(paths.NGINX_CERT_DIR, `${app.domain}.host.cert`), path.join(paths.NGINX_CERT_DIR, `${app.domain}.host.key`));
 }
 
 function ensureCertificate(app, callback) {

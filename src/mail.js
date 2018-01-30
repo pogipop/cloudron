@@ -524,7 +524,7 @@ function restartMail(callback) {
     const memoryLimit = Math.max((1 + Math.round(os.totalmem()/(1024*1024*1024)/4)) * 128, 256);
 
     // admin and mail share the same certificate
-    certificates.getAdminCertificate(function (error, cert, key) {
+    certificates.getCertificate({ intrinsicFqdn: config.adminFqdn(), domain: config.adminDomain() }, function (error, cert, key) {
         if (error) return callback(error);
 
         // the setup script copies dhparams.pem to /addons/mail
