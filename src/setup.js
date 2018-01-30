@@ -6,6 +6,8 @@ exports = module.exports = {
     getStatus: getStatus,
     activate: activate,
 
+    configureWebadmin: configureWebadmin,
+
     SetupError: SetupError
 };
 

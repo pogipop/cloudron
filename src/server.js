@@ -20,6 +20,7 @@ var assert = require('assert'),
     passport = require('passport'),
     path = require('path'),
     routes = require('./routes/index.js'),
+    setup = require('./setup.js'),
     ws = require('ws');
 
 var gHttpServer = null;
@@ -320,6 +321,7 @@ function start(callback) {
         auth.initialize,
         database.initialize,
         cloudron.initialize,
+        setup.configureWebadmin,
         gHttpServer.listen.bind(gHttpServer, config.get('port'), '127.0.0.1'),
         gSysadminHttpServer.listen.bind(gSysadminHttpServer, config.get('sysadminPort'), '127.0.0.1'),
         eventlog.add.bind(null, eventlog.ACTION_START, { userId: null, username: 'boot' }, { version: config.version() })
