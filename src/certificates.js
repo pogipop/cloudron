@@ -178,7 +178,7 @@ function renewAll(auditSource, callback) {
 
         var expiringApps = [ ];
         for (var i = 0; i < allApps.length; i++) {
-            var appDomain = allApps[i].altDomain || allApps[i].instrincFqdn;
+            var appDomain = allApps[i].altDomain || allApps[i].intrinsicFqdn;
 
             var certFilePath = path.join(paths.APP_CERTS_DIR, appDomain + '.user.cert');
             var keyFilePath = path.join(paths.APP_CERTS_DIR, appDomain + '.user.key');
