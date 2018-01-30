@@ -321,37 +321,37 @@ function ensureCertificate(app, callback) {
     assert.strictEqual(typeof app, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    var domain = app.altDomain || app.intrinsicFqdn;
+    var vhost = app.altDomain || app.intrinsicFqdn;
 
-    var certFilePath = path.join(paths.APP_CERTS_DIR, domain + '.user.cert');
-    var keyFilePath = path.join(paths.APP_CERTS_DIR, domain + '.user.key');
+    var certFilePath = path.join(paths.APP_CERTS_DIR, `${vhost}.user.cert`);
+    var keyFilePath = path.join(paths.APP_CERTS_DIR, `${vhost}.user.key`);
 
     if (fs.existsSync(certFilePath) && fs.existsSync(keyFilePath)) {
-        debug('ensureCertificate: %s. user certificate already exists at %s', domain, keyFilePath);
+        debug('ensureCertificate: %s. user certificate already exists at %s', vhost, keyFilePath);
         return callback(null, certFilePath, keyFilePath);
     }
 
-    certFilePath = path.join(paths.APP_CERTS_DIR, domain + '.cert');
-    keyFilePath = path.join(paths.APP_CERTS_DIR, domain + '.key');
+    certFilePath = path.join(paths.APP_CERTS_DIR, `${vhost}.cert`);
+    keyFilePath = path.join(paths.APP_CERTS_DIR, `${vhost}.key`);
 
     if (fs.existsSync(certFilePath) && fs.existsSync(keyFilePath)) {
-        debug('ensureCertificate: %s. certificate already exists at %s', domain, keyFilePath);
+        debug('ensureCertificate: %s. certificate already exists at %s', vhost, keyFilePath);
 
         if (!isExpiringSync(certFilePath, 24 * 1)) return callback(null, certFilePath, keyFilePath);
-        debug('ensureCertificate: %s cert require renewal', domain);
+        debug('ensureCertificate: %s cert require renewal', vhost);
     } else {
-        debug('ensureCertificate: %s cert does not exist', domain);
+        debug('ensureCertificate: %s cert does not exist', vhost);
     }
 
     getApi(app, function (error, api, apiOptions) {
         if (error) return callback(error);
 
-        debug('ensureCertificate: getting certificate for %s with options %j', domain, apiOptions);
+        debug('ensureCertificate: getting certificate for %s with options %j', vhost, apiOptions);
 
-        api.getCertificate(domain, apiOptions, function (error, certFilePath, keyFilePath) {
+        api.getCertificate(vhost, apiOptions, function (error, certFilePath, keyFilePath) {
             if (error) debug('ensureCertificate: could not get certificate. using fallback certs', error);
 
-            // if no cert was returned use fallback, the fallback provider will not provide any for example
+            // if no cert was returned use fallback. the fallback/caas provider will not provide any for example
             if (!certFilePath || !keyFilePath) {
                 certFilePath = path.join(paths.NGINX_CERT_DIR, `${app.domain}.host.cert`);
                 keyFilePath = path.join(paths.NGINX_CERT_DIR, `${app.domain}.host.key`);
