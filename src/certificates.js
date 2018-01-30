@@ -284,7 +284,7 @@ function getFallbackCertificate(domain, callback) {
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    callback(null, path.join(paths.NGINX_CERT_DIR, domain + '.cert'), path.join(paths.NGINX_CERT_DIR, domain + '.key'));
+    callback(null, path.join(paths.NGINX_CERT_DIR, `${domain}.host.cert`), path.join(paths.NGINX_CERT_DIR, `${domain}.host.key`));
 }
 
 function getCertificate(app, callback) {
