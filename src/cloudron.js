@@ -28,12 +28,12 @@ var assert = require('assert'),
     eventlog = require('./eventlog.js'),
     locker = require('./locker.js'),
     mailer = require('./mailer.js'),
-    nginx = require('./nginx.js'),
     os = require('os'),
     path = require('path'),
     paths = require('./paths.js'),
     platform = require('./platform.js'),
     progress = require('./progress.js'),
+    reverseProxy = require('./reverseproxy.js'),
     safe = require('safetydance'),
     settings = require('./settings.js'),
     shell = require('./shell.js'),
@@ -81,7 +81,7 @@ function initialize(callback) {
 
     async.series([
         settings.initialize,
-        nginx.configureDefaultServer,
+        reverseProxy.configureDefaultServer,
         cron.initialize, // required for caas heartbeat before activation
         onActivated
     ], callback);

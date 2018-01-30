@@ -15,7 +15,6 @@ var assert = require('assert'),
     async = require('async'),
     backups = require('./backups.js'),
     BackupsError = require('./backups.js').BackupsError,
-    certificates = require('./certificates.js'),
     config = require('./config.js'),
     constants = require('./constants.js'),
     clients = require('./clients.js'),
@@ -26,9 +25,9 @@ var assert = require('assert'),
     eventlog = require('./eventlog.js'),
     fs = require('fs'),
     mail = require('./mail.js'),
-    nginx = require('./nginx.js'),
     path = require('path'),
     paths = require('./paths.js'),
+    reverseProxy = require('./reverseproxy.js'),
     safe = require('safetydance'),
     semver = require('semver'),
     settingsdb = require('./settingsdb.js'),
@@ -130,12 +129,12 @@ function configureWebadmin(callback) {
     function configureNginx(error) {
         debug('configureNginx: dns update: %j', error || {});
 
-        certificates.ensureCertificate({ domain: config.adminDomain(), location: config.adminLocation(), intrinsicFqdn: config.adminFqdn() }, function (error, certFilePath, keyFilePath) {
+        reverseProxy.ensureCertificate({ domain: config.adminDomain(), location: config.adminLocation(), intrinsicFqdn: config.adminFqdn() }, function (error, certFilePath, keyFilePath) {
             if (error) return done(error);
 
             gWebadminStatus.tls = true;
 
-            nginx.configureAdmin(certFilePath, keyFilePath, constants.NGINX_ADMIN_CONFIG_FILE_NAME, config.adminFqdn(), done);
+            reverseProxy.configureAdmin(certFilePath, keyFilePath, constants.NGINX_ADMIN_CONFIG_FILE_NAME, config.adminFqdn(), done);
         });
     }
 

@@ -17,9 +17,9 @@ var apps = require('./apps.js'),
     infra = require('./infra_version.js'),
     locker = require('./locker.js'),
     mail = require('./mail.js'),
-    nginx = require('./nginx.js'),
     os = require('os'),
     paths = require('./paths.js'),
+    reverseProxy = require('./reverseproxy.js'),
     safe = require('safetydance'),
     semver = require('semver'),
     shell = require('./shell.js'),
@@ -265,7 +265,7 @@ function startApps(existingInfra, callback) {
         apps.restoreInstalledApps(callback);
     } else {
         debug('startApps: reconfiguring installed apps');
-        nginx.removeAppConfigs(); // should we change the cert location, nginx will not start
+        reverseProxy.removeAppConfigs(); // should we change the cert location, nginx will not start
         apps.configureInstalledApps(callback);
     }
 }

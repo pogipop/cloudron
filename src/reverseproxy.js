@@ -1,7 +1,7 @@
 'use strict';
 
 exports = module.exports = {
-    CertificatesError: CertificatesError,
+    ReverseProxyError: ReverseProxyError,
 
     setFallbackCertificate: setFallbackCertificate,
     getFallbackCertificate: getFallbackCertificate,
@@ -12,6 +12,13 @@ exports = module.exports = {
     getCertificate: getCertificate,
 
     renewAll: renewAll,
+
+    configureDefaultServer: configureDefaultServer,
+    configureAdmin: configureAdmin,
+    configureApp: configureApp,
+    unconfigureApp: unconfigureApp,
+    reload: reload,
+    removeAppConfigs: removeAppConfigs,
 
     // exported for testing
     _getApi: getApi
@@ -25,20 +32,25 @@ var acme = require('./cert/acme.js'),
     config = require('./config.js'),
     constants = require('./constants.js'),
     debug = require('debug')('box:certificates'),
+    ejs = require('ejs'),
     eventlog = require('./eventlog.js'),
     fallback = require('./cert/fallback.js'),
     fs = require('fs'),
     mailer = require('./mailer.js'),
-    nginx = require('./nginx.js'),
     path = require('path'),
     paths = require('./paths.js'),
     platform = require('./platform.js'),
     safe = require('safetydance'),
     settings = require('./settings.js'),
+    shell = require('./shell.js'),
     user = require('./user.js'),
     util = require('util');
 
-function CertificatesError(reason, errorOrMessage) {
+var NGINX_APPCONFIG_EJS = fs.readFileSync(__dirname + '/../setup/start/nginx/appconfig.ejs', { encoding: 'utf8' }),
+    RELOAD_NGINX_CMD = path.join(__dirname, 'scripts/reloadnginx.sh'),
+    NOOP_CALLBACK = function (error) { if (error) debug(error); };
+
+function ReverseProxyError(reason, errorOrMessage) {
     assert.strictEqual(typeof reason, 'string');
     assert(errorOrMessage instanceof Error || typeof errorOrMessage === 'string' || typeof errorOrMessage === 'undefined');
 
@@ -56,10 +68,10 @@ function CertificatesError(reason, errorOrMessage) {
         this.nestedError = errorOrMessage;
     }
 }
-util.inherits(CertificatesError, Error);
-CertificatesError.INTERNAL_ERROR = 'Internal Error';
-CertificatesError.INVALID_CERT = 'Invalid certificate';
-CertificatesError.NOT_FOUND = 'Not Found';
+util.inherits(ReverseProxyError, Error);
+ReverseProxyError.INTERNAL_ERROR = 'Internal Error';
+ReverseProxyError.INVALID_CERT = 'Invalid certificate';
+ReverseProxyError.NOT_FOUND = 'Not Found';
 
 function getApi(app, callback) {
     assert.strictEqual(typeof app, 'object');
@@ -178,8 +190,8 @@ function renewAll(auditSource, callback) {
 
                     // reconfigure and reload nginx. this is required for the case where we got a renewed cert after fallback
                     var configureFunc = app.intrinsicFqdn === config.adminFqdn() ?
-                        nginx.configureAdmin.bind(null, certFilePath, keyFilePath, constants.NGINX_ADMIN_CONFIG_FILE_NAME, config.adminFqdn())
-                        : nginx.configureApp.bind(null, app, certFilePath, keyFilePath);
+                        configureAdmin.bind(null, certFilePath, keyFilePath, constants.NGINX_ADMIN_CONFIG_FILE_NAME, config.adminFqdn())
+                        : configureApp.bind(null, app, certFilePath, keyFilePath);
 
                     configureFunc(function (ignoredError) {
                         if (ignoredError) debug('fallbackExpiredCertificates: error reconfiguring app', ignoredError);
@@ -210,11 +222,11 @@ function validateCertificate(domain, cert, key) {
     }
 
     // check for empty cert and key strings
-    if (!cert && key) return new CertificatesError(CertificatesError.INVALID_CERT, 'missing cert');
-    if (cert && !key) return new CertificatesError(CertificatesError.INVALID_CERT, 'missing key');
+    if (!cert && key) return new ReverseProxyError(ReverseProxyError.INVALID_CERT, 'missing cert');
+    if (cert && !key) return new ReverseProxyError(ReverseProxyError.INVALID_CERT, 'missing key');
 
     var result = safe.child_process.execSync('openssl x509 -noout -checkhost "' + domain + '"', { encoding: 'utf8', input: cert });
-    if (!result) return new CertificatesError(CertificatesError.INVALID_CERT, 'Unable to get certificate subject.');
+    if (!result) return new ReverseProxyError(ReverseProxyError.INVALID_CERT, 'Unable to get certificate subject.');
 
     // if no match, check alt names
     if (result.indexOf('does match certificate') === -1) {
@@ -227,17 +239,17 @@ function validateCertificate(domain, cert, key) {
         debug('validateCertificate: detected altNames as %j', altNames);
 
         // check altNames
-        if (!altNames.some(matchesDomain)) return new CertificatesError(CertificatesError.INVALID_CERT, util.format('Certificate is not valid for this domain. Expecting %s in %j', domain, altNames));
+        if (!altNames.some(matchesDomain)) return new ReverseProxyError(ReverseProxyError.INVALID_CERT, util.format('Certificate is not valid for this domain. Expecting %s in %j', domain, altNames));
     }
 
     // http://httpd.apache.org/docs/2.0/ssl/ssl_faq.html#verify
     var certModulus = safe.child_process.execSync('openssl x509 -noout -modulus', { encoding: 'utf8', input: cert });
     var keyModulus = safe.child_process.execSync('openssl rsa -noout -modulus', { encoding: 'utf8', input: key });
-    if (certModulus !== keyModulus) return new CertificatesError(CertificatesError.INVALID_CERT, 'Key does not match the certificate.');
+    if (certModulus !== keyModulus) return new ReverseProxyError(ReverseProxyError.INVALID_CERT, 'Key does not match the certificate.');
 
     // check expiration
     result = safe.child_process.execSync('openssl x509 -checkend 0', { encoding: 'utf8', input: cert });
-    if (!result) return new CertificatesError(CertificatesError.INVALID_CERT, 'Certificate has expired.');
+    if (!result) return new ReverseProxyError(ReverseProxyError.INVALID_CERT, 'Certificate has expired.');
 
     return null;
 }
@@ -254,24 +266,24 @@ function setFallbackCertificate(domain, fallback, callback) {
 
     if (fallback) {
         // backup the cert
-        if (!safe.fs.writeFileSync(path.join(paths.APP_CERTS_DIR, `${domain}.host.cert`), fallback.cert)) return callback(new CertificatesError(CertificatesError.INTERNAL_ERROR, safe.error.message));
-        if (!safe.fs.writeFileSync(path.join(paths.APP_CERTS_DIR, `${domain}.host.key`), fallback.key)) return callback(new CertificatesError(CertificatesError.INTERNAL_ERROR, safe.error.message));
+        if (!safe.fs.writeFileSync(path.join(paths.APP_CERTS_DIR, `${domain}.host.cert`), fallback.cert)) return callback(new ReverseProxyError(ReverseProxyError.INTERNAL_ERROR, safe.error.message));
+        if (!safe.fs.writeFileSync(path.join(paths.APP_CERTS_DIR, `${domain}.host.key`), fallback.key)) return callback(new ReverseProxyError(ReverseProxyError.INTERNAL_ERROR, safe.error.message));
     } else if (!fs.existsSync(certFilePath) || !fs.existsSync(keyFilePath)) { // generate it
         var certCommand = util.format('openssl req -x509 -newkey rsa:2048 -keyout %s -out %s -days 3650 -subj /CN=*.%s -nodes', keyFilePath, certFilePath, domain);
-        if (!safe.child_process.execSync(certCommand)) return callback(new CertificatesError(CertificatesError.INTERNAL_ERROR, safe.error.message));
+        if (!safe.child_process.execSync(certCommand)) return callback(new ReverseProxyError(ReverseProxyError.INTERNAL_ERROR, safe.error.message));
     }
 
     // copy over fallback cert
     var fallbackCertFilePath = path.join(paths.NGINX_CERT_DIR, `${domain}.host.cert`);
     var fallbackKeyFilePath = path.join(paths.NGINX_CERT_DIR, `${domain}.host.key`);
 
-    if (!safe.child_process.execSync(`cp ${certFilePath} ${fallbackCertFilePath}`)) return callback(new CertificatesError(CertificatesError.INTERNAL_ERROR, safe.error.message));
-    if (!safe.child_process.execSync(`cp ${keyFilePath} ${fallbackKeyFilePath}`)) return callback(new CertificatesError(CertificatesError.INTERNAL_ERROR, safe.error.message));
+    if (!safe.child_process.execSync(`cp ${certFilePath} ${fallbackCertFilePath}`)) return callback(new ReverseProxyError(ReverseProxyError.INTERNAL_ERROR, safe.error.message));
+    if (!safe.child_process.execSync(`cp ${keyFilePath} ${fallbackKeyFilePath}`)) return callback(new ReverseProxyError(ReverseProxyError.INTERNAL_ERROR, safe.error.message));
 
     platform.handleCertChanged('*.' + domain);
 
-    nginx.reload(function (error) {
-        if (error) return callback(new CertificatesError(CertificatesError.INTERNAL_ERROR, error));
+    reload(function (error) {
+        if (error) return callback(new ReverseProxyError(ReverseProxyError.INTERNAL_ERROR, error));
 
         return callback(null);
     });
@@ -346,5 +358,116 @@ function ensureCertificate(app, callback) {
 
             callback(null, certFilePath, keyFilePath);
         });
+    });
+}
+
+function configureAdmin(certFilePath, keyFilePath, configFileName, vhost, callback) {
+    assert.strictEqual(typeof certFilePath, 'string');
+    assert.strictEqual(typeof keyFilePath, 'string');
+    assert.strictEqual(typeof configFileName, 'string');
+    assert.strictEqual(typeof vhost, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    var data = {
+        sourceDir: path.resolve(__dirname, '..'),
+        adminOrigin: config.adminOrigin(),
+        vhost: vhost, // if vhost is empty it will become the default_server
+        hasIPv6: config.hasIPv6(),
+        endpoint: 'admin',
+        certFilePath: certFilePath,
+        keyFilePath: keyFilePath,
+        xFrameOptions: 'SAMEORIGIN',
+        robotsTxtQuoted: JSON.stringify('User-agent: *\nDisallow: /\n')
+    };
+    var nginxConf = ejs.render(NGINX_APPCONFIG_EJS, data);
+    var nginxConfigFilename = path.join(paths.NGINX_APPCONFIG_DIR, configFileName);
+
+    if (!safe.fs.writeFileSync(nginxConfigFilename, nginxConf)) return callback(safe.error);
+
+    reload(callback);
+}
+
+function configureApp(app, certFilePath, keyFilePath, callback) {
+    assert.strictEqual(typeof app, 'object');
+    assert.strictEqual(typeof certFilePath, 'string');
+    assert.strictEqual(typeof keyFilePath, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    var sourceDir = path.resolve(__dirname, '..');
+    var endpoint = 'app';
+    var vhost = app.altDomain || app.intrinsicFqdn;
+
+    var data = {
+        sourceDir: sourceDir,
+        adminOrigin: config.adminOrigin(),
+        vhost: vhost,
+        hasIPv6: config.hasIPv6(),
+        port: app.httpPort,
+        endpoint: endpoint,
+        certFilePath: certFilePath,
+        keyFilePath: keyFilePath,
+        robotsTxtQuoted: app.robotsTxt ? JSON.stringify(app.robotsTxt) : null,
+        xFrameOptions: app.xFrameOptions || 'SAMEORIGIN'    // once all apps have been updated/
+    };
+    var nginxConf = ejs.render(NGINX_APPCONFIG_EJS, data);
+
+    var nginxConfigFilename = path.join(paths.NGINX_APPCONFIG_DIR, app.id + '.conf');
+    debug('writing config for "%s" to %s with options %j', vhost, nginxConfigFilename, data);
+
+    if (!safe.fs.writeFileSync(nginxConfigFilename, nginxConf)) {
+        debug('Error creating nginx config for "%s" : %s', vhost, safe.error.message);
+        return callback(safe.error);
+    }
+
+    reload(callback);
+}
+
+function unconfigureApp(app, callback) {
+    assert.strictEqual(typeof app, 'object');
+    assert.strictEqual(typeof callback, 'function');
+
+    var vhost = app.altDomain || app.intrinsicFqdn;
+
+    var nginxConfigFilename = path.join(paths.NGINX_APPCONFIG_DIR, app.id + '.conf');
+    if (!safe.fs.unlinkSync(nginxConfigFilename)) {
+        if (safe.error.code !== 'ENOENT') debug('Error removing nginx configuration of "%s": %s', vhost, safe.error.message);
+        return callback(null);
+    }
+
+    reload(callback);
+}
+
+function reload(callback) {
+    shell.sudo('reload', [ RELOAD_NGINX_CMD ], callback);
+}
+
+function removeAppConfigs() {
+    for (var appConfigFile of fs.readdirSync(paths.NGINX_APPCONFIG_DIR)) {
+        fs.unlinkSync(path.join(paths.NGINX_APPCONFIG_DIR, appConfigFile));
+    }
+}
+
+function configureDefaultServer(callback) {
+    callback = callback || NOOP_CALLBACK;
+
+    if (process.env.BOX_ENV === 'test') return callback();
+
+    var certFilePath = path.join(paths.NGINX_CERT_DIR,  'default.cert');
+    var keyFilePath = path.join(paths.NGINX_CERT_DIR, 'default.key');
+
+    if (!fs.existsSync(certFilePath) || !fs.existsSync(keyFilePath)) {
+        debug('configureDefaultServer: create new cert');
+
+        var cn = 'cloudron-' + (new Date()).toISOString(); // randomize date a bit to keep firefox happy
+        var certCommand = util.format('openssl req -x509 -newkey rsa:2048 -keyout %s -out %s -days 3650 -subj /CN=%s -nodes', keyFilePath, certFilePath, cn);
+        safe.child_process.execSync(certCommand);
+    }
+
+    configureAdmin(certFilePath, keyFilePath, 'default.conf', '', function (error) {
+        if (error) return callback(error);
+
+        debug('configureDefaultServer: done');
+
+        callback(null);
     });
 }

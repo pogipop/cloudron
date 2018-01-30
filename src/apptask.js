@@ -8,8 +8,8 @@ exports = module.exports = {
 
     // exported for testing
     _reserveHttpPort: reserveHttpPort,
-    _configureNginx: configureNginx,
-    _unconfigureNginx: unconfigureNginx,
+    _configureReverseProxy: configureReverseProxy,
+    _unconfigureReverseProxy: unconfigureReverseProxy,
     _createVolume: createVolume,
     _deleteVolume: deleteVolume,
     _verifyManifest: verifyManifest,
@@ -32,7 +32,6 @@ var addons = require('./addons.js'),
     assert = require('assert'),
     async = require('async'),
     backups = require('./backups.js'),
-    certificates = require('./certificates.js'),
     config = require('./config.js'),
     database = require('./database.js'),
     DatabaseError = require('./databaseerror.js'),
@@ -44,10 +43,10 @@ var addons = require('./addons.js'),
     fs = require('fs'),
     manifestFormat = require('cloudron-manifestformat'),
     net = require('net'),
-    nginx = require('./nginx.js'),
     os = require('os'),
     path = require('path'),
     paths = require('./paths.js'),
+    reverseProxy = require('./reverseproxy.js'),
     safe = require('safetydance'),
     shell = require('./shell.js'),
     superagent = require('superagent'),
@@ -113,23 +112,23 @@ function reserveHttpPort(app, callback) {
     });
 }
 
-function configureNginx(app, callback) {
+function configureReverseProxy(app, callback) {
     assert.strictEqual(typeof app, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    certificates.ensureCertificate(app, function (error, certFilePath, keyFilePath) {
+    reverseProxy.ensureCertificate(app, function (error, certFilePath, keyFilePath) {
         if (error) return callback(error);
 
-        nginx.configureApp(app, certFilePath, keyFilePath, callback);
+        reverseProxy.configureApp(app, certFilePath, keyFilePath, callback);
     });
 }
 
-function unconfigureNginx(app, callback) {
+function unconfigureReverseProxy(app, callback) {
     assert.strictEqual(typeof app, 'object');
     assert.strictEqual(typeof callback, 'function');
 
     // TODO: maybe revoke the cert
-    nginx.unconfigureApp(app, callback);
+    reverseProxy.unconfigureApp(app, callback);
 }
 
 function createContainer(app, callback) {
@@ -393,7 +392,7 @@ function install(app, callback) {
 
         // teardown for re-installs
         updateApp.bind(null, app, { installationProgress: '10, Cleaning up old install' }),
-        unconfigureNginx.bind(null, app),
+        unconfigureReverseProxy.bind(null, app),
         removeCollectdProfile.bind(null, app),
         removeLogrotateConfig.bind(null, app),
         stopApp.bind(null, app),
@@ -454,8 +453,8 @@ function install(app, callback) {
         updateApp.bind(null, app, { installationProgress: '90, Waiting for External Domain setup' }),
         exports._waitForAltDomainDnsPropagation.bind(null, app), // required when restoring and !restoreConfig
 
-        updateApp.bind(null, app, { installationProgress: '95, Configure nginx' }),
-        configureNginx.bind(null, app),
+        updateApp.bind(null, app, { installationProgress: '95, Configuring reverse proxy' }),
+        configureReverseProxy.bind(null, app),
 
         // done!
         function (callback) {
@@ -503,7 +502,7 @@ function configure(app, callback) {
 
     async.series([
         updateApp.bind(null, app, { installationProgress: '10, Cleaning up old install' }),
-        unconfigureNginx.bind(null, app),
+        unconfigureReverseProxy.bind(null, app),
         removeCollectdProfile.bind(null, app),
         removeLogrotateConfig.bind(null, app),
         stopApp.bind(null, app),
@@ -549,8 +548,8 @@ function configure(app, callback) {
         updateApp.bind(null, app, { installationProgress: '85, Waiting for External Domain setup' }),
         exports._waitForAltDomainDnsPropagation.bind(null, app),
 
-        updateApp.bind(null, app, { installationProgress: '90, Configuring Nginx' }),
-        configureNginx.bind(null, app),
+        updateApp.bind(null, app, { installationProgress: '90, Configuring reverse proxy' }),
+        configureReverseProxy.bind(null, app),
 
         // done!
         function (callback) {
@@ -709,8 +708,8 @@ function uninstall(app, callback) {
         updateApp.bind(null, app, { installationProgress: '80, Cleanup icon' }),
         removeIcon.bind(null, app),
 
-        updateApp.bind(null, app, { installationProgress: '90, Unconfiguring Nginx' }),
-        unconfigureNginx.bind(null, app),
+        updateApp.bind(null, app, { installationProgress: '90, Unconfiguring reverse proxy' }),
+        unconfigureReverseProxy.bind(null, app),
 
         updateApp.bind(null, app, { installationProgress: '95, Remove app from database' }),
         appdb.del.bind(null, app.id)

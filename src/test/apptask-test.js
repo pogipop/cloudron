@@ -133,7 +133,7 @@ describe('apptask', function () {
     });
 
     it('configure nginx correctly', function (done) {
-        apptask._configureNginx(APP, function (error) {
+        apptask._configureReverseProxy(APP, function (error) {
             expect(fs.existsSync(paths.NGINX_APPCONFIG_DIR + '/' + APP.id + '.conf'));
             // expect(error).to.be(null); // this fails because nginx cannot be restarted
             done();
@@ -141,7 +141,7 @@ describe('apptask', function () {
     });
 
     it('unconfigure nginx', function (done) {
-        apptask._unconfigureNginx(APP, function (error) {
+        apptask._unconfigureReverseProxy(APP, function (error) {
             expect(!fs.existsSync(paths.NGINX_APPCONFIG_DIR + '/' + APP.id + '.conf'));
             // expect(error).to.be(null); // this fails because nginx cannot be restarted
             done();

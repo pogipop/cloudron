@@ -10,7 +10,6 @@ var apps = require('./apps.js'),
     assert = require('assert'),
     backups = require('./backups.js'),
     caas = require('./caas.js'),
-    certificates = require('./certificates.js'),
     cloudron = require('./cloudron.js'),
     config = require('./config.js'),
     constants = require('./constants.js'),
@@ -20,6 +19,7 @@ var apps = require('./apps.js'),
     dyndns = require('./dyndns.js'),
     eventlog = require('./eventlog.js'),
     janitor = require('./janitor.js'),
+    reverseProxy = require('./reverseproxy.js'),
     scheduler = require('./scheduler.js'),
     settings = require('./settings.js'),
     semver = require('semver'),
@@ -175,7 +175,7 @@ function recreateJobs(tz) {
     if (gJobs.certificateRenew) gJobs.certificateRenew.stop();
     gJobs.certificateRenew = new CronJob({
         cronTime: '00 00 */12 * * *', // every 12 hours
-        onTick: certificates.renewAll.bind(null, AUDIT_SOURCE, NOOP_CALLBACK),
+        onTick: reverseProxy.renewAll.bind(null, AUDIT_SOURCE, NOOP_CALLBACK),
         start: true,
         timeZone: tz
     });

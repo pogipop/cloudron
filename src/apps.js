@@ -54,7 +54,6 @@ var addons = require('./addons.js'),
     async = require('async'),
     backups = require('./backups.js'),
     BackupsError = backups.BackupsError,
-    certificates = require('./certificates.js'),
     config = require('./config.js'),
     constants = require('./constants.js'),
     DatabaseError = require('./databaseerror.js'),
@@ -71,6 +70,7 @@ var addons = require('./addons.js'),
     os = require('os'),
     path = require('path'),
     paths = require('./paths.js'),
+    reverseProxy = require('./reverseproxy.js'),
     safe = require('safetydance'),
     semver = require('semver'),
     spawn = require('child_process').spawn,
@@ -535,7 +535,7 @@ function install(data, auditSource, callback) {
             if (error) return callback(error);
 
             if (cert && key) {
-                error = certificates.validateCertificate(intrinsicFqdn, cert, key);
+                error = reverseProxy.validateCertificate(intrinsicFqdn, cert, key);
                 if (error) return callback(new AppsError(AppsError.BAD_CERTIFICATE, error.message));
             }
 
@@ -654,7 +654,7 @@ function configure(appId, data, auditSource, callback) {
             // save cert to boxdata/certs. TODO: move this to apptask when we have a real task queue
             if ('cert' in data && 'key' in data) {
                 if (data.cert && data.key) {
-                    error = certificates.validateCertificate(intrinsicFqdn, data.cert, data.key);
+                    error = reverseProxy.validateCertificate(intrinsicFqdn, data.cert, data.key);
                     if (error) return callback(new AppsError(AppsError.BAD_CERTIFICATE, error.message));
 
                     if (!safe.fs.writeFileSync(path.join(paths.APP_CERTS_DIR, intrinsicFqdn + '.user.cert'), data.cert)) return callback(new AppsError(AppsError.INTERNAL_ERROR, 'Error saving cert: ' + safe.error.message));

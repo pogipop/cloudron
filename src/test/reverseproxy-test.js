@@ -6,9 +6,9 @@
 'use strict';
 
 var async = require('async'),
-    certificates = require('../certificates.js'),
     database = require('../database.js'),
     expect = require('expect.js'),
+    reverseProxy = require('../reverseproxy.js'),
     settings = require('../settings.js');
 
 function setup(done) {
@@ -48,48 +48,48 @@ describe('Certificates', function () {
         var validKey2 = '-----BEGIN RSA PRIVATE KEY-----\nMIIBPQIBAAJBALSqMkz639g4ym51u169R20b1fqrh03BplKuWpwyOxuMP2m6g1xm\nMmpBx5T8mcWKexVkMQpvN6x1Lg09S4iyAWUCAwEAAQJBAJXu7YHPbjfuoalcUZzF\nbuKRCFtZQRf5z0Os6QvZ8A3iR0SzYJzx+c2ibp7WdifMXp3XaKm4tHSOfumrjUIq\nt10CIQDrs9Xo7bq0zuNjUV5IshNfaiYKZRfQciRVW2O8xBP9VwIhAMQ5CCEDZy+u\nsaF9RtmB0bjbe6XonBlAzoflfH/MAwWjAiEA50hL+ohr0MfCMM7DKaozgEj0kvan\n645VQLywnaX5x3kCIQDCwjinS9FnKmV0e/uOd6PJb0/S5IXLKt/TUpu33K5DMQIh\nAM9peu3B5t9pO59MmeUGZwI+bEJfEb+h03WTptBxS3pO\n-----END RSA PRIVATE KEY-----';
 
         it('does not allow empty string for cert', function () {
-            expect(certificates.validateCertificate('foobar.com', '', 'key')).to.be.an(Error);
+            expect(reverseProxy.validateCertificate('foobar.com', '', 'key')).to.be.an(Error);
         });
 
         it('does not allow empty string for key', function () {
-            expect(certificates.validateCertificate('foobar.com', 'cert', '')).to.be.an(Error);
+            expect(reverseProxy.validateCertificate('foobar.com', 'cert', '')).to.be.an(Error);
         });
 
         it('does not allow invalid cert', function () {
-            expect(certificates.validateCertificate('foobar.com', 'someinvalidcert', validKey0)).to.be.an(Error);
+            expect(reverseProxy.validateCertificate('foobar.com', 'someinvalidcert', validKey0)).to.be.an(Error);
         });
 
         it('does not allow invalid key', function () {
-            expect(certificates.validateCertificate('foobar.com', validCert0, 'invalidkey')).to.be.an(Error);
+            expect(reverseProxy.validateCertificate('foobar.com', validCert0, 'invalidkey')).to.be.an(Error);
         });
 
         it('does not allow cert without matching domain', function () {
-            expect(certificates.validateCertificate('cloudron.io', validCert0, validKey0)).to.be.an(Error);
+            expect(reverseProxy.validateCertificate('cloudron.io', validCert0, validKey0)).to.be.an(Error);
         });
 
         it('allows valid cert with matching domain', function () {
-            expect(certificates.validateCertificate('foobar.com', validCert0, validKey0)).to.be(null);
+            expect(reverseProxy.validateCertificate('foobar.com', validCert0, validKey0)).to.be(null);
         });
 
         it('allows valid cert with matching domain (wildcard)', function () {
-            expect(certificates.validateCertificate('abc.foobar.com', validCert1, validKey1)).to.be(null);
+            expect(reverseProxy.validateCertificate('abc.foobar.com', validCert1, validKey1)).to.be(null);
         });
 
         it('does now allow cert without matching domain (wildcard)', function () {
-            expect(certificates.validateCertificate('foobar.com', validCert1, validKey1)).to.be.an(Error);
-            expect(certificates.validateCertificate('bar.abc.foobar.com', validCert1, validKey1)).to.be.an(Error);
+            expect(reverseProxy.validateCertificate('foobar.com', validCert1, validKey1)).to.be.an(Error);
+            expect(reverseProxy.validateCertificate('bar.abc.foobar.com', validCert1, validKey1)).to.be.an(Error);
         });
 
         it('allows valid cert with matching domain (subdomain)', function () {
-            expect(certificates.validateCertificate('baz.foobar.com', validCert2, validKey2)).to.be(null);
+            expect(reverseProxy.validateCertificate('baz.foobar.com', validCert2, validKey2)).to.be(null);
         });
 
         it('does not allow cert without matching domain (subdomain)', function () {
-            expect(certificates.validateCertificate('baz.foobar.com', validCert0, validKey0)).to.be.an(Error);
+            expect(reverseProxy.validateCertificate('baz.foobar.com', validCert0, validKey0)).to.be.an(Error);
         });
 
         it('does not allow invalid cert/key tuple', function () {
-            expect(certificates.validateCertificate('foobar.com', validCert0, validKey1)).to.be.an(Error);
+            expect(reverseProxy.validateCertificate('foobar.com', validCert0, validKey1)).to.be.an(Error);
         });
     });
 
@@ -104,7 +104,7 @@ describe('Certificates', function () {
         after(cleanup);
 
         it('returns prod caas for prod cloudron', function (done) {
-            certificates._getApi({ }, function (error, api, options) {
+            reverseProxy._getApi({ }, function (error, api, options) {
                 expect(error).to.be(null);
                 expect(api._name).to.be('caas');
                 expect(options.prod).to.be(true);
@@ -113,7 +113,7 @@ describe('Certificates', function () {
         });
 
         it('returns prod caas for dev cloudron', function (done) {
-            certificates._getApi({ }, function (error, api, options) {
+            reverseProxy._getApi({ }, function (error, api, options) {
                 expect(error).to.be(null);
                 expect(api._name).to.be('caas');
                 expect(options.prod).to.be(true);
@@ -122,7 +122,7 @@ describe('Certificates', function () {
         });
 
         it('returns prod-acme with altDomain in prod cloudron', function (done) {
-            certificates._getApi({ altDomain: 'foo.something.com' }, function (error, api, options) {
+            reverseProxy._getApi({ altDomain: 'foo.something.com' }, function (error, api, options) {
                 expect(error).to.be(null);
                 expect(api._name).to.be('acme');
                 expect(options.prod).to.be(true);
@@ -131,7 +131,7 @@ describe('Certificates', function () {
         });
 
         it('returns prod acme with altDomain in dev cloudron', function (done) {
-            certificates._getApi({ altDomain: 'foo.something.com' }, function (error, api, options) {
+            reverseProxy._getApi({ altDomain: 'foo.something.com' }, function (error, api, options) {
                 expect(error).to.be(null);
                 expect(api._name).to.be('acme');
                 expect(options.prod).to.be(true);
@@ -151,7 +151,7 @@ describe('Certificates', function () {
         after(cleanup);
 
         it('returns prod acme in prod cloudron', function (done) {
-            certificates._getApi({ }, function (error, api, options) {
+            reverseProxy._getApi({ }, function (error, api, options) {
                 expect(error).to.be(null);
                 expect(api._name).to.be('acme');
                 expect(options.prod).to.be(true);
@@ -160,7 +160,7 @@ describe('Certificates', function () {
         });
 
         it('returns prod acme with altDomain in prod cloudron', function (done) {
-            certificates._getApi({ altDomain: 'foo.bar.com' }, function (error, api, options) {
+            reverseProxy._getApi({ altDomain: 'foo.bar.com' }, function (error, api, options) {
                 expect(error).to.be(null);
                 expect(api._name).to.be('acme');
                 expect(options.prod).to.be(true);
@@ -169,7 +169,7 @@ describe('Certificates', function () {
         });
 
         it('returns prod acme in dev cloudron', function (done) {
-            certificates._getApi({ }, function (error, api, options) {
+            reverseProxy._getApi({ }, function (error, api, options) {
                 expect(error).to.be(null);
                 expect(api._name).to.be('acme');
                 expect(options.prod).to.be(true);
@@ -189,7 +189,7 @@ describe('Certificates', function () {
         after(cleanup);
 
         it('returns staging acme in prod cloudron', function (done) {
-            certificates._getApi({ }, function (error, api, options) {
+            reverseProxy._getApi({ }, function (error, api, options) {
                 expect(error).to.be(null);
                 expect(api._name).to.be('acme');
                 expect(options.prod).to.be(false);
@@ -198,7 +198,7 @@ describe('Certificates', function () {
         });
 
         it('returns staging acme in dev cloudron', function (done) {
-            certificates._getApi({ }, function (error, api, options) {
+            reverseProxy._getApi({ }, function (error, api, options) {
                 expect(error).to.be(null);
                 expect(api._name).to.be('acme');
                 expect(options.prod).to.be(false);
@@ -207,7 +207,7 @@ describe('Certificates', function () {
         });
 
         it('returns staging acme with altDomain in prod cloudron', function (done) {
-            certificates._getApi({ altDomain: 'foo.bar.com' }, function (error, api, options) {
+            reverseProxy._getApi({ altDomain: 'foo.bar.com' }, function (error, api, options) {
                 expect(error).to.be(null);
                 expect(api._name).to.be('acme');
                 expect(options.prod).to.be(false);

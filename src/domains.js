@@ -22,12 +22,12 @@ module.exports = exports = {
 var assert = require('assert'),
     caas = require('./caas.js'),
     config = require('./config.js'),
-    certificates = require('./certificates.js'),
-    CertificatesError = certificates.CertificatesError,
     DatabaseError = require('./databaseerror.js'),
     debug = require('debug')('box:domains'),
     domaindb = require('./domaindb.js'),
     path = require('path'),
+    reverseProxy = require('./reverseproxy.js'),
+    ReverseProxyError = reverseProxy.ReverseProxyError,
     safe = require('safetydance'),
     shell = require('./shell.js'),
     sysinfo = require('./sysinfo.js'),
@@ -115,7 +115,7 @@ function add(domain, zoneName, provider, config, fallbackCertificate, callback) 
     }
 
     if (fallbackCertificate) {
-        let error = certificates.validateCertificate(fallbackCertificate.cert, fallbackCertificate.key, domain);
+        let error = reverseProxy.validateCertificate(fallbackCertificate.cert, fallbackCertificate.key, domain);
         if (error) return callback(new DomainError(DomainError.BAD_FIELD, error.message));
     }
 
@@ -134,7 +134,7 @@ function add(domain, zoneName, provider, config, fallbackCertificate, callback) 
                 if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(new DomainError(DomainError.ALREADY_EXISTS));
                 if (error) return callback(new DomainError(DomainError.INTERNAL_ERROR, error));
 
-                certificates.setFallbackCertificate(domain, fallbackCertificate, function (error) {
+                reverseProxy.setFallbackCertificate(domain, fallbackCertificate, function (error) {
                     if (error) return callback(new DomainError(DomainError.INTERNAL_ERROR, error));
 
                     callback();
@@ -153,8 +153,8 @@ function get(domain, callback) {
         if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new DomainError(DomainError.NOT_FOUND));
         if (error) return callback(new DomainError(DomainError.INTERNAL_ERROR, error));
 
-        certificates.getFallbackCertificate(domain, function (error, certFilePath, keyFilePath) {
-            if (error && error.reason !== CertificatesError.NOT_FOUND) return callback(new DomainError(DomainError.INTERNAL_ERROR, error));
+        reverseProxy.getFallbackCertificate(domain, function (error, certFilePath, keyFilePath) {
+            if (error && error.reason !== ReverseProxyError.NOT_FOUND) return callback(new DomainError(DomainError.INTERNAL_ERROR, error));
 
             var cert = safe.fs.readFileSync(certFilePath, 'utf-8');
             var key = safe.fs.readFileSync(keyFilePath, 'utf-8');
@@ -190,7 +190,7 @@ function update(domain, provider, config, fallbackCertificate, callback) {
         if (error) return callback(new DomainError(DomainError.INTERNAL_ERROR, error));
 
         if (fallbackCertificate) {
-            let error = certificates.validateCertificate(fallbackCertificate.cert, fallbackCertificate.key, domain);
+            let error = reverseProxy.validateCertificate(fallbackCertificate.cert, fallbackCertificate.key, domain);
             if (error) return callback(new DomainError(DomainError.BAD_FIELD, error.message));
         }
 
@@ -211,8 +211,9 @@ function update(domain, provider, config, fallbackCertificate, callback) {
 
                     if (!fallbackCertificate) return callback();
 
-                    certificates.setFallbackCertificate(domain, fallbackCertificate, function (error) {
+                    reverseProxy.setFallbackCertificate(domain, fallbackCertificate, function (error) {
                         if (error) return callback(new DomainError(DomainError.INTERNAL_ERROR, error));
+
                         callback();
                     });
                 });
