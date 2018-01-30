@@ -37,8 +37,8 @@ describe('config', function () {
     });
 
     it('set saves value in file', function (done) {
-        config.set('fqdn', 'example.com');
-        expect(JSON.parse(fs.readFileSync(path.join(config.baseDir(), 'configs/cloudron.conf'))).fqdn).to.eql('example.com');
+        config.set('version', '1.3.0');
+        expect(JSON.parse(fs.readFileSync(path.join(config.baseDir(), 'configs/cloudron.conf'))).version).to.eql('1.3.0');
         done();
     });
 
