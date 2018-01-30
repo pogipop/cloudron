@@ -116,7 +116,7 @@ function configureReverseProxy(app, callback) {
     assert.strictEqual(typeof app, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    reverseProxy.configureApp(app, callback);
+    reverseProxy.configureApp(app, { userId: null, username: 'apptask' }, callback);
 }
 
 function unconfigureReverseProxy(app, callback) {

@@ -129,7 +129,7 @@ function configureWebadmin(callback) {
     function configureReverseProxy(error) {
         debug('configureReverseProxy: dns update: %j', error || {});
 
-        reverseProxy.configureAdmin(function (error) {
+        reverseProxy.configureAdmin({ userId: null, username: 'setup' }, function (error) {
             if (error) return done(error);
 
             gWebadminStatus.tls = true;

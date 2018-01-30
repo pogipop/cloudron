@@ -317,8 +317,9 @@ function getCertificate(app, callback) {
     callback(null, path.join(paths.NGINX_CERT_DIR, `${app.domain}.host.cert`), path.join(paths.NGINX_CERT_DIR, `${app.domain}.host.key`));
 }
 
-function ensureCertificate(app, callback) {
+function ensureCertificate(app, auditSource, callback) {
     assert.strictEqual(typeof app, 'object');
+    assert.strictEqual(typeof auditSource, 'object');
     assert.strictEqual(typeof callback, 'function');
 
     var vhost = app.altDomain || app.intrinsicFqdn;
@@ -349,7 +350,13 @@ function ensureCertificate(app, callback) {
         debug('ensureCertificate: getting certificate for %s with options %j', vhost, apiOptions);
 
         api.getCertificate(vhost, apiOptions, function (error, certFilePath, keyFilePath) {
-            if (error) debug('ensureCertificate: could not get certificate. using fallback certs', error);
+            if (error) {
+                debug('ensureCertificate: could not get certificate. using fallback certs', error);
+                mailer.certificateRenewalError(vhost, errorMessage);
+            }
+
+            var errorMessage = error ? error.message : '';
+            eventlog.add(eventlog.ACTION_CERTIFICATE_RENEWAL, auditSource, { domain: vhost, errorMessage: errorMessage });
 
             // if no cert was returned use fallback. the fallback/caas provider will not provide any for example
             if (!certFilePath || !keyFilePath) {
@@ -388,21 +395,24 @@ function configureAdminInternal(certFilePath, keyFilePath, configFileName, vhost
     reload(callback);
 }
 
-function configureAdmin(callback) {
+function configureAdmin(auditSource, callback) {
+    assert.strictEqual(typeof auditSource, 'function');
     assert.strictEqual(typeof callback, 'function');
 
-    ensureCertificate({ domain: config.adminDomain(), location: config.adminLocation(), intrinsicFqdn: config.adminFqdn() }, function (error, certFilePath, keyFilePath) {
+    var adminApp = { domain: config.adminDomain(), intrinsicFqdn: config.adminFqdn() };
+    ensureCertificate(auditSource, adminApp, function (error, certFilePath, keyFilePath) {
         if (error) return callback(error);
 
         configureAdminInternal(certFilePath, keyFilePath, constants.NGINX_ADMIN_CONFIG_FILE_NAME, config.adminFqdn(), callback);
     });
 }
 
-function configureApp(app, callback) {
+function configureApp(app, auditSource, callback) {
     assert.strictEqual(typeof app, 'object');
+    assert.strictEqual(typeof auditSource, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    ensureCertificate(app, function (error, certFilePath, keyFilePath) {
+    ensureCertificate(app, auditSource, function (error, certFilePath, keyFilePath) {
         if (error) return callback(error);
 
         var sourceDir = path.resolve(__dirname, '..');
