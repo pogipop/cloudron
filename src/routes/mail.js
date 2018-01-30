@@ -274,7 +274,7 @@ function addList(req, res, next) {
 
     mail.addList(req.params.domain, req.body.groupId, function (error) {
         if (error && error.reason === MailError.NOT_FOUND) return next(new HttpError(404, error.message));
-        if (error && error.reason === MailError.ALREADY_EXISTS) return next(new HttpSuccess(409, 'list already exists'));
+        if (error && error.reason === MailError.ALREADY_EXISTS) return next(new HttpError(409, 'list already exists'));
         if (error) return next(new HttpError(500, error));
 
         next(new HttpSuccess(201, {}));
