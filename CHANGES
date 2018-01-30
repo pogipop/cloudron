@@ -1181,6 +1181,9 @@
 * Set max email recepient limit (in outgoing emails) to 500
 * Put terminal and app logs viewer to separate window
 
+[1.9.4]
+* Fix typo causing LE cert renewals to fail
+
 [1.10.0]
 * Migrate mailboxes to support multiple domains
 * Update addon containers to latest versions
