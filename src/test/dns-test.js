@@ -22,7 +22,8 @@ var DOMAIN_0 = {
     zoneName: 'example-dns-test.com',
     provider: 'noop',
     config: {},
-    fallbackCertificate: null
+    fallbackCertificate: null,
+    tlsConfig: { provider: 'fallback' }
 };
 
 describe('dns provider', function () {
@@ -34,7 +35,7 @@ describe('dns provider', function () {
             database.initialize,
             settings.initialize,
             database._clear,
-            domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0.zoneName, DOMAIN_0.provider, DOMAIN_0.config, DOMAIN_0.fallbackCertificate)
+            domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0.zoneName, DOMAIN_0.provider, DOMAIN_0.config, DOMAIN_0.fallbackCertificate, DOMAIN_0.tlsConfig)
         ], done);
     });
 
@@ -48,10 +49,9 @@ describe('dns provider', function () {
     describe('noop', function () {
         before(function (done) {
             DOMAIN_0.provider = 'noop';
-            DOMAIN_0.config = {
-            };
+            DOMAIN_0.config = {};
 
-            domains.update(DOMAIN_0.domain, DOMAIN_0.provider, DOMAIN_0.config, null, done);
+            domains.update(DOMAIN_0.domain, DOMAIN_0.provider, DOMAIN_0.config, null, DOMAIN_0.tlsConfig, done);
         });
 
         it('upsert succeeds', function (done) {
@@ -92,7 +92,7 @@ describe('dns provider', function () {
                 token: TOKEN
             };
 
-            domains.update(DOMAIN_0.domain, DOMAIN_0.provider, DOMAIN_0.config, null, done);
+            domains.update(DOMAIN_0.domain, DOMAIN_0.provider, DOMAIN_0.config, null, DOMAIN_0.tlsConfig, done);
         });
 
         it('upsert non-existing record succeeds', function (done) {
@@ -419,7 +419,7 @@ describe('dns provider', function () {
             AWS._originalRoute53 = AWS.Route53;
             AWS.Route53 = Route53Mock;
 
-            domains.update(DOMAIN_0.domain, DOMAIN_0.provider, DOMAIN_0.config, null, done);
+            domains.update(DOMAIN_0.domain, DOMAIN_0.provider, DOMAIN_0.config, null, DOMAIN_0.tlsConfig, done);
         });
 
         after(function () {
@@ -575,7 +575,7 @@ describe('dns provider', function () {
             _OriginalGCDNS = GCDNS.prototype.getZones;
             GCDNS.prototype.getZones = mockery(zoneQueue);
 
-            domains.update(DOMAIN_0.domain, DOMAIN_0.provider, DOMAIN_0.config, null, done);
+            domains.update(DOMAIN_0.domain, DOMAIN_0.provider, DOMAIN_0.config, null, DOMAIN_0.tlsConfig, done);
         });
 
         after(function () {

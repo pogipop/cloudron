@@ -57,7 +57,8 @@ const DOMAIN_0 = {
         accessKeyId: 'accessKeyId',
         secretAccessKey: 'secretAccessKey',
         endpoint: 'http://localhost:5353'
-    }
+    },
+    tlsConfig: { provider: 'fallback' }
 };
 
 var APP = {
@@ -104,7 +105,7 @@ describe('apptask', function () {
         async.series([
             database.initialize,
             database._clear,
-            domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0.zoneName, DOMAIN_0.provider, DOMAIN_0.config, null),
+            domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0.zoneName, DOMAIN_0.provider, DOMAIN_0.config, null, DOMAIN_0.tlsConfig),
             appdb.add.bind(null, APP.id, APP.appStoreId, APP.manifest, APP.location, APP.domain, APP.portBindings, APP),
             settings.initialize,
             settings.setTlsConfig.bind(null, { provider: 'caas' })

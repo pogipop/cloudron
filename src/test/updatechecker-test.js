@@ -35,7 +35,8 @@ const DOMAIN_0 = {
     zoneName: 'example.com',
     config: {},
     provider: 'manual',
-    fallbackCertificate: null
+    fallbackCertificate: null,
+    tlsConfig: { provider: 'fallback' }
 };
 
 var AUDIT_SOURCE = {
@@ -74,7 +75,7 @@ describe('updatechecker - box - manual (email)', function () {
             database.initialize,
             database._clear,
             settings.initialize,
-            domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0.zoneName, DOMAIN_0.provider, DOMAIN_0.config, DOMAIN_0.fallbackCertificate),
+            domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0.zoneName, DOMAIN_0.provider, DOMAIN_0.config, DOMAIN_0.fallbackCertificate, DOMAIN_0.tlsConfig),
             mail.add.bind(null, DOMAIN_0.domain),
             user.createOwner.bind(null, USER_0.username, USER_0.password, USER_0.email, USER_0.displayName, AUDIT_SOURCE),
             settings.setAutoupdatePattern.bind(null, constants.AUTOUPDATE_PATTERN_NEVER),
@@ -176,7 +177,7 @@ describe('updatechecker - box - automatic (no email)', function () {
         async.series([
             database.initialize,
             settings.initialize,
-            domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0.zoneName, DOMAIN_0.provider, DOMAIN_0.config, DOMAIN_0.fallbackCertificate),
+            domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0.zoneName, DOMAIN_0.provider, DOMAIN_0.config, DOMAIN_0.fallbackCertificate, DOMAIN_0.tlsConfig),
             mail.add.bind(null, DOMAIN_0.domain),
             mailer._clearMailQueue,
             user.createOwner.bind(null, USER_0.username, USER_0.password, USER_0.email, USER_0.displayName, AUDIT_SOURCE),
@@ -220,7 +221,7 @@ describe('updatechecker - box - automatic free (email)', function () {
         async.series([
             database.initialize,
             settings.initialize,
-            domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0.zoneName, DOMAIN_0.provider, DOMAIN_0.config, DOMAIN_0.fallbackCertificate),
+            domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0.zoneName, DOMAIN_0.provider, DOMAIN_0.config, DOMAIN_0.fallbackCertificate, DOMAIN_0.tlsConfig),
             mail.add.bind(null, DOMAIN_0.domain),
             mailer._clearMailQueue,
             user.createOwner.bind(null, USER_0.username, USER_0.password, USER_0.email, USER_0.displayName, AUDIT_SOURCE),
@@ -290,7 +291,7 @@ describe('updatechecker - app - manual (email)', function () {
             database.initialize,
             database._clear,
             settings.initialize,
-            domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0.zoneName, DOMAIN_0.provider, DOMAIN_0.config, DOMAIN_0.fallbackCertificate),
+            domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0.zoneName, DOMAIN_0.provider, DOMAIN_0.config, DOMAIN_0.fallbackCertificate, DOMAIN_0.tlsConfig),
             mail.add.bind(null, DOMAIN_0.domain),
             mailer._clearMailQueue,
             appdb.add.bind(null, APP_0.id, APP_0.appStoreId, APP_0.manifest, APP_0.location, APP_0.domain, APP_0.portBindings, APP_0),
@@ -406,7 +407,7 @@ describe('updatechecker - app - automatic (no email)', function () {
             database.initialize,
             database._clear,
             settings.initialize,
-            domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0.zoneName, DOMAIN_0.provider, DOMAIN_0.config, DOMAIN_0.fallbackCertificate),
+            domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0.zoneName, DOMAIN_0.provider, DOMAIN_0.config, DOMAIN_0.fallbackCertificate, DOMAIN_0.tlsConfig),
             mail.add.bind(null, DOMAIN_0.domain),
             mailer._clearMailQueue,
             appdb.add.bind(null, APP_0.id, APP_0.appStoreId, APP_0.manifest, APP_0.location, APP_0.domain, APP_0.portBindings, APP_0),
@@ -471,7 +472,7 @@ describe('updatechecker - app - automatic free (email)', function () {
             database.initialize,
             database._clear,
             settings.initialize,
-            domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0.zoneName, DOMAIN_0.provider, DOMAIN_0.config, DOMAIN_0.fallbackCertificate),
+            domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0.zoneName, DOMAIN_0.provider, DOMAIN_0.config, DOMAIN_0.fallbackCertificate, DOMAIN_0.tlsConfig),
             mail.add.bind(null, DOMAIN_0.domain),
             mailer._clearMailQueue,
             appdb.add.bind(null, APP_0.id, APP_0.appStoreId, APP_0.manifest, APP_0.location, APP_0.domain, APP_0.portBindings, APP_0),

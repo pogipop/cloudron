@@ -68,21 +68,24 @@ const DOMAIN_0 = {
     domain: 'foobar.com',
     zoneName: 'foobar.com',
     provider: 'digitalocean',
-    config: { token: 'abcd' }
+    config: { token: 'abcd' },
+    tlsConfig: { provider: 'fallback' }
 };
 
 const DOMAIN_1 = {
     domain: 'foo.cloudron.io',
     zoneName: 'cloudron.io',
     provider: 'manual',
-    config: null
+    config: null,
+    tlsConfig: { provider: 'fallback' }
 };
 
 const TEST_DOMAIN = {
     domain: 'example.com',
     zoneName: 'example.com',
     provider: 'manual',
-    config: {}
+    config: {},
+    tlsConfig: { provider: 'fallback' }
 };
 
 describe('database', function () {
@@ -105,15 +108,15 @@ describe('database', function () {
 
     describe('domains', function () {
         it('can add domain', function (done) {
-            domaindb.add(DOMAIN_0.domain, { zoneName: DOMAIN_0.zoneName, provider: DOMAIN_0.provider, config: DOMAIN_0.config }, done);
+            domaindb.add(DOMAIN_0.domain, { zoneName: DOMAIN_0.zoneName, provider: DOMAIN_0.provider, config: DOMAIN_0.config, tlsConfig: DOMAIN_0.tlsConfig }, done);
         });
 
         it('can add another domain', function (done) {
-            domaindb.add(DOMAIN_1.domain, { zoneName: DOMAIN_1.zoneName, provider: DOMAIN_1.provider, config: DOMAIN_1.config }, done);
+            domaindb.add(DOMAIN_1.domain, { zoneName: DOMAIN_1.zoneName, provider: DOMAIN_1.provider, config: DOMAIN_1.config, tlsConfig: DOMAIN_1.tlsConfig }, done);
         });
 
         it('cannot add same domain twice', function (done) {
-            domaindb.add(DOMAIN_0.domain, { zoneName: DOMAIN_0.zoneName, provider: DOMAIN_0.provider, config: DOMAIN_0.config }, function (error) {
+            domaindb.add(DOMAIN_0.domain, { zoneName: DOMAIN_0.zoneName, provider: DOMAIN_0.provider, config: DOMAIN_0.config, tlsConfig: DOMAIN_0.tlsConfig }, function (error) {
                 expect(error).to.be.ok();
                 expect(error.reason).to.be(DatabaseError.ALREADY_EXISTS);
                 done();
@@ -134,8 +137,9 @@ describe('database', function () {
 
         it('can update domain', function (done) {
             const newConfig = { provider: 'manual' };
+            const newTlsConfig = { provider: 'foobar' };
 
-            domaindb.update(DOMAIN_1.domain, { provider: DOMAIN_1.provider, config: newConfig }, function (error) {
+            domaindb.update(DOMAIN_1.domain, { provider: DOMAIN_1.provider, config: newConfig, tlsConfig: newTlsConfig }, function (error) {
                 expect(error).to.equal(null);
 
                 domaindb.get(DOMAIN_1.domain, function (error, result) {
@@ -145,8 +149,10 @@ describe('database', function () {
                     expect(result.zoneName).to.equal(DOMAIN_1.zoneName);
                     expect(result.provider).to.equal(DOMAIN_1.provider);
                     expect(result.config).to.eql(newConfig);
+                    expect(result.tlsConfig).to.eql(newTlsConfig);
 
                     DOMAIN_1.config = newConfig;
+                    DOMAIN_1.tlsConfig = newTlsConfig;
 
                     done();
                 });
@@ -164,11 +170,13 @@ describe('database', function () {
                 expect(result[0].zoneName).to.equal(DOMAIN_1.zoneName);
                 expect(result[0].provider).to.equal(DOMAIN_1.provider);
                 expect(result[0].config).to.eql(DOMAIN_1.config);
+                expect(result[0].tlsConfig).to.eql(DOMAIN_1.tlsConfig);
 
                 expect(result[1].domain).to.equal(DOMAIN_0.domain);
                 expect(result[1].zoneName).to.equal(DOMAIN_0.zoneName);
                 expect(result[1].provider).to.equal(DOMAIN_0.provider);
                 expect(result[1].config).to.eql(DOMAIN_0.config);
+                expect(result[1].tlsConfig).to.eql(DOMAIN_0.tlsConfig);
 
                 done();
             });
@@ -744,7 +752,7 @@ describe('database', function () {
         };
 
         before(function (done) {
-            domaindb.add(DOMAIN_0.domain, { zoneName: DOMAIN_0.zoneName, provider: DOMAIN_0.provider, config: DOMAIN_0.config }, done);
+            domaindb.add(DOMAIN_0.domain, { zoneName: DOMAIN_0.zoneName, provider: DOMAIN_0.provider, config: DOMAIN_0.config, tlsConfig: DOMAIN_0.tlsConfig }, done);
         });
 
         after(function (done) {
@@ -1585,7 +1593,7 @@ describe('database', function () {
 
     describe('mailboxes', function () {
         before(function (done) {
-            domaindb.add(DOMAIN_0.domain, { zoneName: DOMAIN_0.zoneName, provider: DOMAIN_0.provider, config: DOMAIN_0.config }, done);
+            domaindb.add(DOMAIN_0.domain, { zoneName: DOMAIN_0.zoneName, provider: DOMAIN_0.provider, config: DOMAIN_0.config, tlsConfig: DOMAIN_0.tlsConfig }, done);
         });
 
         after(function (done) {
@@ -1751,7 +1759,7 @@ describe('database', function () {
         };
 
         before(function (done) {
-            domaindb.add(DOMAIN_0.domain, { zoneName: DOMAIN_0.zoneName, provider: DOMAIN_0.provider, config: DOMAIN_0.config }, done);
+            domaindb.add(DOMAIN_0.domain, { zoneName: DOMAIN_0.zoneName, provider: DOMAIN_0.provider, config: DOMAIN_0.config, tlsConfig: DOMAIN_0.tlsConfig }, done);
         });
 
         after(function (done) {

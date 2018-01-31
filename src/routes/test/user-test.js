@@ -25,7 +25,8 @@ const DOMAIN_0 = {
     zoneName: 'example-user-test.com',
     config: {},
     provider: 'noop',
-    fallbackCertificate: null
+    fallbackCertificate: null,
+    tlsConfig: { provider: 'fallback' }
 };
 
 const USERNAME_0 = 'superaDmIn', PASSWORD = 'Foobar?1337', EMAIL_0 = 'silLY@me.com', EMAIL_0_NEW = 'stupID@me.com', DISPLAY_NAME_0_NEW = 'New Name';
@@ -42,7 +43,7 @@ function setup(done) {
         server.start,
         database._clear,
         mailer._clearMailQueue,
-        domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0.zoneName, DOMAIN_0.provider, DOMAIN_0.config, DOMAIN_0.fallbackCertificate),
+        domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0.zoneName, DOMAIN_0.provider, DOMAIN_0.config, DOMAIN_0.fallbackCertificate, DOMAIN_0.tlsConfig),
         mail.add.bind(null, DOMAIN_0.domain)
     ], function (error) {
         expect(error).to.not.be.ok();

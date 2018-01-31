@@ -27,7 +27,8 @@ const DOMAIN_0 = {
     zoneName: 'example.com',
     config: {},
     provider: 'manual',
-    fallbackCertificate: null
+    fallbackCertificate: null,
+    tlsConfig: { provider: 'fallback' }
 };
 
 // owner
@@ -96,7 +97,7 @@ function setup(done) {
         database.initialize.bind(null),
         database._clear.bind(null),
         ldapServer.start.bind(null),
-        domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0.zoneName, DOMAIN_0.provider, DOMAIN_0.config, DOMAIN_0.fallbackCertificate),
+        domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0.zoneName, DOMAIN_0.provider, DOMAIN_0.config, DOMAIN_0.fallbackCertificate, DOMAIN_0.tlsConfig),
         maildb.add.bind(null, DOMAIN_0.domain),
         appdb.add.bind(null, APP_0.id, APP_0.appStoreId, APP_0.manifest, APP_0.location, APP_0.domain, APP_0.portBindings, APP_0),
         appdb.update.bind(null, APP_0.id, { containerId: APP_0.containerId }),

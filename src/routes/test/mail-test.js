@@ -23,7 +23,8 @@ const DOMAIN_0 = {
     zoneName: 'example-mail-test.com',
     config: {},
     provider: 'noop',
-    fallbackCertificate: null
+    fallbackCertificate: null,
+    tlsConfig: { provider: 'fallback' }
 };
 var USERNAME = 'superadmin', PASSWORD = 'Foobar?1337', EMAIL ='silly@me.com';
 const GROUP_NAME = 'maillistgroup';
@@ -39,7 +40,7 @@ function setup(done) {
     async.series([
         server.start.bind(null),
         database._clear.bind(null),
-        domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0.zoneName, DOMAIN_0.provider, DOMAIN_0.config, DOMAIN_0.fallbackCertificate),
+        domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0.zoneName, DOMAIN_0.provider, DOMAIN_0.config, DOMAIN_0.fallbackCertificate, DOMAIN_0.tlsConfig),
 
         function createAdmin(callback) {
             superagent.post(SERVER_URL + '/api/v1/cloudron/activate')

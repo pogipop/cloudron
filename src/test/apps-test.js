@@ -74,14 +74,16 @@ describe('Apps', function () {
         domain: 'example.com',
         zoneName: 'example.com',
         provider: 'manual',
-        config: { }
+        config: { },
+        tlsConfig: { provider: 'fallback' }
     };
 
     const DOMAIN_1 = {
         domain: 'example2.com',
         zoneName: 'example2.com',
         provider: 'manual',
-        config: { }
+        config: { },
+        tlsConfig: { provider: 'fallback' }
     };
 
     var APP_0 = {
@@ -140,8 +142,8 @@ describe('Apps', function () {
         async.series([
             database.initialize,
             database._clear,
-            domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0.zoneName, DOMAIN_0.provider, DOMAIN_0.config, null),
-            domains.add.bind(null, DOMAIN_1.domain, DOMAIN_1.zoneName, DOMAIN_1.provider, DOMAIN_1.config, null),
+            domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0.zoneName, DOMAIN_0.provider, DOMAIN_0.config, null, DOMAIN_0.tlsConfig),
+            domains.add.bind(null, DOMAIN_1.domain, DOMAIN_1.zoneName, DOMAIN_1.provider, DOMAIN_1.config, null, DOMAIN_1.tlsConfig),
             userdb.add.bind(null, ADMIN_0.id, ADMIN_0),
             userdb.add.bind(null, USER_0.id, USER_0),
             userdb.add.bind(null, USER_1.id, USER_1),
