@@ -97,10 +97,10 @@ function autoprovision(callback) {
         case 'backupConfig': name = settings.BACKUP_CONFIG_KEY; break;
         case 'tlsCert':
             debug(`autoprovision: ${key}`);
-            return fs.writeFile(path.join(paths.NGINX_CERT_DIR, 'host.cert'), conf[key], iteratorDone);
+            return fs.writeFile(path.join(paths.NGINX_CERT_DIR, config.adminDomain() + '.host.cert'), conf[key], iteratorDone);
         case 'tlsKey':
             debug(`autoprovision: ${key}`);
-            return fs.writeFile(path.join(paths.NGINX_CERT_DIR, 'host.key'), conf[key], iteratorDone);
+            return fs.writeFile(path.join(paths.NGINX_CERT_DIR, config.adminDomain() + '.host.key'), conf[key], iteratorDone);
         default:
             debug(`autoprovision: ${key} ignored`);
             return iteratorDone();
@@ -192,18 +192,16 @@ function dnsSetup(adminFqdn, domain, zoneName, provider, dnsConfig, callback) {
         if (error && error.reason === DomainError.BAD_FIELD) return callback(new SetupError(SetupError.BAD_FIELD, error.message));
         if (error) return callback(new SetupError(SetupError.INTERNAL_ERROR, error));
 
+        config.setAdminDomain(domain); // set fqdn only after dns config is valid, otherwise cannot re-setup if we failed
+        config.setAdminFqdn(adminFqdn);
+        config.setAdminLocation('my');
+
         autoprovision(function (error) {
             if (error) return callback(new SetupError(SetupError.INTERNAL_ERROR, error));
 
-            config.setAdminDomain(domain); // set fqdn only after dns config is valid, otherwise cannot re-setup if we failed
-            config.setAdminFqdn(adminFqdn);
-            config.setAdminLocation('my');
+           clients.addDefaultClients(config.adminOrigin(), callback);
 
-            clients.addDefaultClients(config.adminOrigin(), callback);
-
-            async.series([ // do not block
-                configureWebadmin
-            ], NOOP_CALLBACK);
+           configureWebadmin(NOOP_CALLBACK);
         });
     }
 
