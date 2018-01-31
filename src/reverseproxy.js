@@ -255,6 +255,12 @@ function validateCertificate(domain, cert, key) {
     return null;
 }
 
+function reload(callback) {
+    if (process.env.BOX_ENV === 'test') return callback();
+
+    shell.sudo('reload', [ RELOAD_NGINX_CMD ], callback);
+}
+
 // We configure nginx to always use the fallback cert from the runtime directory (NGINX_CERT_DIR)
 // This is done because Caas wildcard certs should not be part of the backup
 function setFallbackCertificate(domain, fallback, callback) {
@@ -460,10 +466,6 @@ function unconfigureApp(app, callback) {
     reload(callback);
 }
 
-function reload(callback) {
-    shell.sudo('reload', [ RELOAD_NGINX_CMD ], callback);
-}
-
 function removeAppConfigs() {
     for (var appConfigFile of fs.readdirSync(paths.NGINX_APPCONFIG_DIR)) {
         fs.unlinkSync(path.join(paths.NGINX_APPCONFIG_DIR, appConfigFile));
@@ -472,8 +474,6 @@ function removeAppConfigs() {
 
 function configureDefaultServer(callback) {
     callback = callback || NOOP_CALLBACK;
-
-    if (process.env.BOX_ENV === 'test') return callback();
 
     var certFilePath = path.join(paths.NGINX_CERT_DIR,  'default.cert');
     var keyFilePath = path.join(paths.NGINX_CERT_DIR, 'default.key');
