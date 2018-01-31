@@ -40,22 +40,22 @@ if [[ $(docker version --format {{.Client.Version}}) != "17.09.0-ce" ]]; then
 
     # https://download.docker.com/linux/ubuntu/dists/xenial/stable/binary-amd64/Packages
     if [[ $(sha256sum /tmp/docker.deb | cut -d' ' -f1) != "d33f6eb134f0ab0876148bd96de95ea47d583d7f2cddfdc6757979453f9bd9bf" ]]; then
-        echo "docker binary download is corrupt"
+        echo "==> installer: docker binary download is corrupt"
         exit 5
     fi
 
-    echo "Waiting for all dpkg tasks to finish..."
+    echo "==> installer: Waiting for all dpkg tasks to finish..."
     while fuser /var/lib/dpkg/lock; do
         sleep 1
     done
 
     while ! dpkg --force-confold --configure -a; do
-        echo "Failed to fix packages. Retry"
+        echo "==> installer: Failed to fix packages. Retry"
         sleep 1
     done
 
     while ! apt install -y /tmp/docker.deb; do
-        echo "Failed to install docker. Retry"
+        echo "==> installer: Failed to install docker. Retry"
         sleep 1
     done
 
@@ -78,12 +78,12 @@ for try in `seq 1 10`; do
     # however by default npm drops privileges for npm rebuild
     # https://docs.npmjs.com/misc/config#unsafe-perm
     if cd "${box_src_tmp_dir}" && npm rebuild --unsafe-perm; then break; fi
-    echo "Failed to rebuild, trying again"
+    echo "==> installer: Failed to rebuild, trying again"
     sleep 5
 done
 
 if [[ ${try} -eq 10 ]]; then
-    echo "npm rebuild failed"
+    echo "==> installer: npm rebuild failed, giving up"
     exit 4
 fi
 
@@ -92,9 +92,9 @@ if ! id "${USER}" 2>/dev/null; then
 fi
 
 if [[ "${is_update}" == "yes" ]]; then
-    echo "Setting up update splash screen"
+    echo "==> installer: stop cloudron.target service for update"
     "${box_src_tmp_dir}/setup/splashpage.sh" --data "${arg_data}" || true # show splash from new code
-    ${BOX_SRC_DIR}/setup/stop.sh # stop the old code
+    ${BOX_SRC_DIR}/setup/stop.sh
 fi
 
 # setup links to data directory
