@@ -154,6 +154,7 @@ CREATE TABLE IF NOT EXISTS domains(
     zoneName VARCHAR(128) NOT NULL, /* this mostly contains the domain itself again */
     provider VARCHAR(16) NOT NULL,
     configJson TEXT, /* JSON containing the dns backend provider config */
+    tlsConfigJson TEXT, /* JSON containing the tls provider config */
 
     PRIMARY KEY (domain))
 
