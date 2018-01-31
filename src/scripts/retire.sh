@@ -20,8 +20,6 @@ if [[ "${BOX_ENV}" != "cloudron" ]]; then
 	exit 0
 fi
 
-"${BOX_SRC_DIR}/setup/splashpage.sh" --retire-reason "$1" --retire-info "$2" --data "$3" # show splash
-
 echo "Stopping apps"
 systemctl stop docker # stop the apps
 
