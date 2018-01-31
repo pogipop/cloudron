@@ -118,95 +118,6 @@ function isExpiringSync(certFilePath, hours) {
     return result.status === 1; // 1 - expired 0 - not expired
 }
 
-function renewAll(auditSource, callback) {
-    assert.strictEqual(typeof auditSource, 'object');
-    assert.strictEqual(typeof callback, 'function');
-
-    debug('renewAll: Checking certificates for renewal');
-
-    apps.getAll(function (error, allApps) {
-        if (error) return callback(error);
-
-        allApps.push({ intrinsicFqdn: config.adminFqdn() }); // inject fake webadmin app
-
-        var expiringApps = [ ];
-        for (var i = 0; i < allApps.length; i++) {
-            var appDomain = allApps[i].altDomain || allApps[i].intrinsicFqdn;
-
-            var certFilePath = path.join(paths.APP_CERTS_DIR, appDomain + '.user.cert');
-            var keyFilePath = path.join(paths.APP_CERTS_DIR, appDomain + '.user.key');
-
-            if (safe.fs.existsSync(certFilePath) && safe.fs.existsSync(keyFilePath)) {
-                debug('renewAll: existing user key file for %s. skipping', appDomain);
-                continue;
-            }
-
-            // check if we have an auto cert to be renewed
-            certFilePath = path.join(paths.APP_CERTS_DIR, appDomain + '.cert');
-            keyFilePath = path.join(paths.APP_CERTS_DIR, appDomain + '.key');
-
-            if (!safe.fs.existsSync(keyFilePath)) {
-                debug('renewAll: no existing key file for %s. skipping', appDomain);
-                continue;
-            }
-
-            if (isExpiringSync(certFilePath, 24 * 30)) { // expired or not found
-                expiringApps.push(allApps[i]);
-            }
-        }
-
-        debug('renewAll: %j needs to be renewed', expiringApps.map(function (app) { return app.altDomain || app.intrinsicFqdn; }));
-
-        async.eachSeries(expiringApps, function iterator(app, iteratorCallback) {
-            var domain = app.altDomain || app.intrinsicFqdn;
-
-            getApi(app, function (error, api, apiOptions) {
-                if (error) return callback(error);
-
-                debug('renewAll: renewing cert for %s with options %j', domain, apiOptions);
-
-                api.getCertificate(domain, apiOptions, function (error) {
-                    var certFilePath = path.join(paths.APP_CERTS_DIR, domain + '.cert');
-                    var keyFilePath = path.join(paths.APP_CERTS_DIR, domain + '.key');
-
-                    var errorMessage = error ? error.message : '';
-                    eventlog.add(eventlog.ACTION_CERTIFICATE_RENEWAL, auditSource, { domain: domain, errorMessage: errorMessage });
-
-                    if (error) {
-                        debug('renewAll: could not renew cert for %s because %s', domain, error);
-
-                        mailer.certificateRenewalError(domain, errorMessage);
-
-                        // check if we should fallback if we expire in the coming day
-                        if (!isExpiringSync(certFilePath, 24 * 1)) return iteratorCallback();
-
-                        debug('renewAll: using fallback certs for %s since it expires soon', domain, error);
-
-                        // if no cert was returned use fallback, the fallback provider will not provide any for example
-                        certFilePath = path.join(paths.NGINX_CERT_DIR, domain + '.host.cert');
-                        keyFilePath = path.join(paths.NGINX_CERT_DIR, domain + '.host.key');
-                    } else {
-                        debug('renewAll: certificate for %s renewed', domain);
-                    }
-
-                    // reconfigure and reload nginx. this is required for the case where we got a renewed cert after fallback
-                    var configureFunc = app.intrinsicFqdn === config.adminFqdn() ?
-                        configureAdminInternal.bind(null, certFilePath, keyFilePath, constants.NGINX_ADMIN_CONFIG_FILE_NAME, config.adminFqdn())
-                        : configureApp.bind(null, app, certFilePath, keyFilePath);
-
-                    configureFunc(function (ignoredError) {
-                        if (ignoredError) debug('fallbackExpiredCertificates: error reconfiguring app', ignoredError);
-
-                        platform.handleCertChanged(domain);
-
-                        iteratorCallback(); // move to next app
-                    });
-                });
-            });
-        });
-    });
-}
-
 // note: https://tools.ietf.org/html/rfc4346#section-7.4.2 (certificate_list) requires that the
 // servers certificate appears first (and not the intermediate cert)
 function validateCertificate(domain, cert, key) {
@@ -335,7 +246,7 @@ function ensureCertificate(app, auditSource, callback) {
 
     if (fs.existsSync(certFilePath) && fs.existsSync(keyFilePath)) {
         debug('ensureCertificate: %s. user certificate already exists at %s', vhost, keyFilePath);
-        return callback(null, certFilePath, keyFilePath);
+        return callback(null, { certFilePath, keyFilePath, reason: 'user' });
     }
 
     certFilePath = path.join(paths.APP_CERTS_DIR, `${vhost}.cert`);
@@ -344,7 +255,7 @@ function ensureCertificate(app, auditSource, callback) {
     if (fs.existsSync(certFilePath) && fs.existsSync(keyFilePath)) {
         debug('ensureCertificate: %s. certificate already exists at %s', vhost, keyFilePath);
 
-        if (!isExpiringSync(certFilePath, 24 * 1)) return callback(null, certFilePath, keyFilePath);
+        if (!isExpiringSync(certFilePath, 24 * 30)) return callback(null, { certFilePath, keyFilePath, reason: 'existing-le' });
         debug('ensureCertificate: %s cert require renewal', vhost);
     } else {
         debug('ensureCertificate: %s cert does not exist', vhost);
@@ -368,16 +279,17 @@ function ensureCertificate(app, auditSource, callback) {
             if (!certFilePath || !keyFilePath) {
                 certFilePath = path.join(paths.NGINX_CERT_DIR, `${app.domain}.host.cert`);
                 keyFilePath = path.join(paths.NGINX_CERT_DIR, `${app.domain}.host.key`);
+
+                return callback(null, { certFilePath, keyFilePath, reason: 'fallback' });
             }
 
-            callback(null, certFilePath, keyFilePath);
+            callback(null, { certFilePath, keyFilePath, reason: 'new-le' });
         });
     });
 }
 
-function configureAdminInternal(certFilePath, keyFilePath, configFileName, vhost, callback) {
-    assert.strictEqual(typeof certFilePath, 'string');
-    assert.strictEqual(typeof keyFilePath, 'string');
+function configureAdminInternal(bundle, configFileName, vhost, callback) {
+    assert.strictEqual(typeof bundle, 'object');
     assert.strictEqual(typeof configFileName, 'string');
     assert.strictEqual(typeof vhost, 'string');
     assert.strictEqual(typeof callback, 'function');
@@ -388,8 +300,8 @@ function configureAdminInternal(certFilePath, keyFilePath, configFileName, vhost
         vhost: vhost, // if vhost is empty it will become the default_server
         hasIPv6: config.hasIPv6(),
         endpoint: 'admin',
-        certFilePath: certFilePath,
-        keyFilePath: keyFilePath,
+        certFilePath: bundle.certFilePath,
+        keyFilePath: bundle.keyFilePath,
         xFrameOptions: 'SAMEORIGIN',
         robotsTxtQuoted: JSON.stringify('User-agent: *\nDisallow: /\n')
     };
@@ -406,11 +318,45 @@ function configureAdmin(auditSource, callback) {
     assert.strictEqual(typeof callback, 'function');
 
     var adminApp = { domain: config.adminDomain(), intrinsicFqdn: config.adminFqdn() };
-    ensureCertificate(auditSource, adminApp, function (error, certFilePath, keyFilePath) {
+    ensureCertificate(auditSource, adminApp, function (error, bundle) {
         if (error) return callback(error);
 
-        configureAdminInternal(certFilePath, keyFilePath, constants.NGINX_ADMIN_CONFIG_FILE_NAME, config.adminFqdn(), callback);
+        configureAdminInternal(bundle, constants.NGINX_ADMIN_CONFIG_FILE_NAME, config.adminFqdn(), callback);
     });
+}
+
+function configureAppInternal(app, bundle, callback) {
+    assert.strictEqual(typeof app, 'object');
+    assert.strictEqual(typeof bundle, 'object');
+    assert.strictEqual(typeof callback, 'function');
+
+    var sourceDir = path.resolve(__dirname, '..');
+    var endpoint = 'app';
+    var vhost = app.altDomain || app.intrinsicFqdn;
+
+    var data = {
+        sourceDir: sourceDir,
+        adminOrigin: config.adminOrigin(),
+        vhost: vhost,
+        hasIPv6: config.hasIPv6(),
+        port: app.httpPort,
+        endpoint: endpoint,
+        certFilePath: bundle.certFilePath,
+        keyFilePath: bundle.keyFilePath,
+        robotsTxtQuoted: app.robotsTxt ? JSON.stringify(app.robotsTxt) : null,
+        xFrameOptions: app.xFrameOptions || 'SAMEORIGIN'    // once all apps have been updated/
+    };
+    var nginxConf = ejs.render(NGINX_APPCONFIG_EJS, data);
+
+    var nginxConfigFilename = path.join(paths.NGINX_APPCONFIG_DIR, app.id + '.conf');
+    debug('writing config for "%s" to %s with options %j', vhost, nginxConfigFilename, data);
+
+    if (!safe.fs.writeFileSync(nginxConfigFilename, nginxConf)) {
+        debug('Error creating nginx config for "%s" : %s', vhost, safe.error.message);
+        return callback(safe.error);
+    }
+
+    reload(callback);
 }
 
 function configureApp(app, auditSource, callback) {
@@ -418,36 +364,10 @@ function configureApp(app, auditSource, callback) {
     assert.strictEqual(typeof auditSource, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    ensureCertificate(app, auditSource, function (error, certFilePath, keyFilePath) {
+    ensureCertificate(app, auditSource, function (error, bundle) {
         if (error) return callback(error);
 
-        var sourceDir = path.resolve(__dirname, '..');
-        var endpoint = 'app';
-        var vhost = app.altDomain || app.intrinsicFqdn;
-
-        var data = {
-            sourceDir: sourceDir,
-            adminOrigin: config.adminOrigin(),
-            vhost: vhost,
-            hasIPv6: config.hasIPv6(),
-            port: app.httpPort,
-            endpoint: endpoint,
-            certFilePath: certFilePath,
-            keyFilePath: keyFilePath,
-            robotsTxtQuoted: app.robotsTxt ? JSON.stringify(app.robotsTxt) : null,
-            xFrameOptions: app.xFrameOptions || 'SAMEORIGIN'    // once all apps have been updated/
-        };
-        var nginxConf = ejs.render(NGINX_APPCONFIG_EJS, data);
-
-        var nginxConfigFilename = path.join(paths.NGINX_APPCONFIG_DIR, app.id + '.conf');
-        debug('writing config for "%s" to %s with options %j', vhost, nginxConfigFilename, data);
-
-        if (!safe.fs.writeFileSync(nginxConfigFilename, nginxConf)) {
-            debug('Error creating nginx config for "%s" : %s', vhost, safe.error.message);
-            return callback(safe.error);
-        }
-
-        reload(callback);
+        configureAppInternal(app, bundle, callback);
     });
 }
 
@@ -464,6 +384,38 @@ function unconfigureApp(app, callback) {
     }
 
     reload(callback);
+}
+
+function renewAll(auditSource, callback) {
+    assert.strictEqual(typeof auditSource, 'object');
+    assert.strictEqual(typeof callback, 'function');
+
+    debug('renewAll: Checking certificates for renewal');
+
+    apps.getAll(function (error, allApps) {
+        if (error) return callback(error);
+
+        allApps.push({ domain: config.adminDomain(), intrinsicFqdn: config.adminFqdn() }); // inject fake webadmin app
+
+        async.eachSeries(allApps, function (app, iteratorCallback) {
+            ensureCertificate(app, auditSource, function (error, bundle) {
+                if (bundle.reason !== 'new-le' && bundle.reason !== 'fallback') return iteratorCallback();
+
+                // reconfigure for the case where we got a renewed cert after fallback
+                var configureFunc = app.intrinsicFqdn === config.adminFqdn() ?
+                    configureAdminInternal.bind(null, bundle, constants.NGINX_ADMIN_CONFIG_FILE_NAME, config.adminFqdn())
+                    : configureAppInternal.bind(null, app, bundle);
+
+                configureFunc(function (ignoredError) {
+                    if (ignoredError) debug('fallbackExpiredCertificates: error reconfiguring app', ignoredError);
+
+                    platform.handleCertChanged(app.intrinsicFqdn);
+
+                    iteratorCallback(); // move to next app
+                });
+            });
+        });
+    });
 }
 
 function removeAppConfigs() {
@@ -486,7 +438,7 @@ function configureDefaultServer(callback) {
         safe.child_process.execSync(certCommand);
     }
 
-    configureAdminInternal(certFilePath, keyFilePath, 'default.conf', '', function (error) {
+    configureAdminInternal({ certFilePath, keyFilePath }, 'default.conf', '', function (error) {
         if (error) return callback(error);
 
         debug('configureDefaultServer: done');
