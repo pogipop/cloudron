@@ -11,7 +11,6 @@ readonly PLATFORM_DATA_DIR="${HOME_DIR}/platformdata" # platform data
 readonly APPS_DATA_DIR="${HOME_DIR}/appsdata" # app data
 readonly BOX_DATA_DIR="${HOME_DIR}/boxdata" # box data
 readonly CONFIG_DIR="${HOME_DIR}/configs"
-readonly SETUP_PROGRESS_JSON="${HOME_DIR}/setup/website/progress.json"
 
 readonly curl="curl --fail --connect-timeout 20 --retry 10 --retry-delay 2 --max-time 2400"
 
@@ -19,15 +18,7 @@ readonly script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 source "${script_dir}/argparser.sh" "$@" # this injects the arg_* variables used below
 
-set_progress() {
-    local percent="$1"
-    local message="$2"
-
-    echo "==> ${percent} - ${message}"
-    (echo "{ \"update\": { \"percent\": \"${percent}\", \"message\": \"${message}\" }, \"backup\": {} }" > "${SETUP_PROGRESS_JSON}") 2> /dev/null || true # as this will fail in non-update mode
-}
-
-set_progress "20" "Configuring host"
+echo "==> Configuring host"
 sed -e 's/^#NTP=/NTP=0.ubuntu.pool.ntp.org 1.ubuntu.pool.ntp.org 2.ubuntu.pool.ntp.org 3.ubuntu.pool.ntp.org/' -i /etc/systemd/timesyncd.conf
 timedatectl set-ntp 1
 timedatectl set-timezone UTC
@@ -202,7 +193,7 @@ readonly mysql_root_password="password"
 mysqladmin -u root -ppassword password password # reset default root password
 mysql -u root -p${mysql_root_password} -e 'CREATE DATABASE IF NOT EXISTS box'
 
-set_progress "40" "Migrating data"
+echo "==> Migrating data"
 sudo -u "${USER}" -H bash <<EOF
 set -eu
 cd "${BOX_SRC_DIR}"
@@ -250,9 +241,9 @@ find "${BOX_DATA_DIR}" -mindepth 1 -maxdepth 1 -not -path "${BOX_DATA_DIR}/mail"
 chown "${USER}:${USER}" "${BOX_DATA_DIR}/mail"
 chown "${USER}:${USER}" -R "${BOX_DATA_DIR}/mail/dkim" # this is owned by box currently since it generates the keys
 
-set_progress "60" "Starting Cloudron"
+echo "==> Starting Cloudron"
 systemctl start cloudron.target
 
 sleep 2 # give systemd sometime to start the processes
 
-set_progress "90" "Almost done"
+echo "==> Almost done"
