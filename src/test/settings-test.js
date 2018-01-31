@@ -91,21 +91,6 @@ describe('Settings', function () {
             });
         });
 
-        it('can set tls config', function (done) {
-            settings.setTlsConfig({ provider: 'caas' }, function (error) {
-                expect(error).to.be(null);
-                done();
-            });
-        });
-
-        it('can get tls config', function (done) {
-            settings.getTlsConfig(function (error, dnsConfig) {
-                expect(error).to.be(null);
-                expect(dnsConfig.provider).to.be('caas');
-                done();
-            });
-        });
-
         it('can set backup config', function (done) {
             nock(config.apiServerOrigin())
                 .post(`/api/v1/boxes/${DOMAIN_0}/awscredentials?token=TOKEN`)

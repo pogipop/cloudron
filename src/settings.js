@@ -24,9 +24,6 @@ exports = module.exports = {
     getBackupConfig: getBackupConfig,
     setBackupConfig: setBackupConfig,
 
-    getTlsConfig: getTlsConfig,
-    setTlsConfig: setTlsConfig,
-
     getCaasConfig: getCaasConfig,
 
     getAppstoreConfig: getAppstoreConfig,
@@ -43,7 +40,6 @@ exports = module.exports = {
 
     // json. if you add an entry here, be sure to fix getAll
     BACKUP_CONFIG_KEY: 'backup_config',
-    TLS_CONFIG_KEY: 'tls_config',
     UPDATE_CONFIG_KEY: 'update_config',
     APPSTORE_CONFIG_KEY: 'appstore_config',
     CAAS_CONFIG_KEY: 'caas_config',
@@ -83,7 +79,6 @@ var gDefaults = (function () {
         backupFolder: '/var/backups',
         retentionSecs: 172800
     };
-    result[exports.TLS_CONFIG_KEY] = { provider: 'letsencrypt-prod' };
     result[exports.UPDATE_CONFIG_KEY] = { prerelease: false };
     result[exports.APPSTORE_CONFIG_KEY] = {};
     result[exports.EMAIL_DIGEST] = true;
@@ -261,34 +256,6 @@ function setDynamicDnsConfig(enabled, callback) {
     });
 }
 
-function getTlsConfig(callback) {
-    assert.strictEqual(typeof callback, 'function');
-
-    settingsdb.get(exports.TLS_CONFIG_KEY, function (error, value) {
-        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(null, gDefaults[exports.TLS_CONFIG_KEY]);
-        if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
-
-        callback(null, JSON.parse(value)); // provider
-    });
-}
-
-function setTlsConfig(tlsConfig, callback) {
-    assert.strictEqual(typeof tlsConfig, 'object');
-    assert.strictEqual(typeof callback, 'function');
-
-    if (tlsConfig.provider !== 'fallback' && tlsConfig.provider !== 'caas' && tlsConfig.provider.indexOf('le-') !== 0) {
-        return callback(new SettingsError(SettingsError.BAD_FIELD, 'provider must be caas, fallback or le-*'));
-    }
-
-    settingsdb.set(exports.TLS_CONFIG_KEY, JSON.stringify(tlsConfig), function (error) {
-        if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
-
-        exports.events.emit(exports.TLS_CONFIG_KEY, tlsConfig);
-
-        callback(null);
-    });
-}
-
 function getBackupConfig(callback) {
     assert.strictEqual(typeof callback, 'function');
 
@@ -441,7 +408,7 @@ function getAll(callback) {
         result[exports.DYNAMIC_DNS_KEY] = !!result[exports.DYNAMIC_DNS_KEY];
 
         // convert JSON objects
-        [exports.TLS_CONFIG_KEY, exports.BACKUP_CONFIG_KEY, exports.UPDATE_CONFIG_KEY, exports.APPSTORE_CONFIG_KEY ].forEach(function (key) {
+        [exports.BACKUP_CONFIG_KEY, exports.UPDATE_CONFIG_KEY, exports.APPSTORE_CONFIG_KEY ].forEach(function (key) {
             result[key] = typeof result[key] === 'object' ? result[key] : safe.JSON.parse(result[key]);
         });
 

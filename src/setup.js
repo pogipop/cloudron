@@ -93,7 +93,6 @@ function autoprovision(callback) {
         switch (key) {
         case 'appstoreConfig': name = settings.APPSTORE_CONFIG_KEY; break;
         case 'caasConfig': name = settings.CAAS_CONFIG_KEY; break;
-        case 'tlsConfig': name = settings.TLS_CONFIG_KEY; break;
         case 'backupConfig': name = settings.BACKUP_CONFIG_KEY; break;
         case 'tlsCert':
             debug(`autoprovision: ${key}`);
