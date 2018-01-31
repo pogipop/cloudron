@@ -43,6 +43,7 @@ chmod "o+rx,g+rx" "${bundle_dir}" # otherwise extracted tarball director won't b
 echo "Checking out code box version [${version}] and webadmin version [${webadmin_version}] into ${bundle_dir}"
 (cd "${SOURCE_DIR}" && git archive --format=tar ${version} | (cd "${bundle_dir}" && tar xf -))
 (cd "${SOURCE_DIR}/../webadmin" && git archive --format=tar ${webadmin_version} | (cd "${bundle_dir}" && tar xf -))
+(cp "${SOURCE_DIR}/../webadmin/LICENSE" "${bundle_dir}")
 
 if diff "${TMPDIR}/boxtarball.cache/package-lock.json.all" "${bundle_dir}/package-lock.json" >/dev/null 2>&1; then
     echo "Reusing dev modules from cache"
