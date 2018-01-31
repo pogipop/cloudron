@@ -153,9 +153,6 @@ function sendAliveStatus(data, callback) {
                 if (error) return callback(new AppstoreError(AppstoreError.INTERNAL_ERROR, error));
 
                 var backendSettings = {
-                    tlsConfig: {
-                        provider: result[settings.TLS_CONFIG_KEY].provider
-                    },
                     backupConfig: {
                         provider: result[settings.BACKUP_CONFIG_KEY].provider,
                         hardlinks: !result[settings.BACKUP_CONFIG_KEY].noHardlinks
