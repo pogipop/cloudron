@@ -33,6 +33,7 @@ var acme = require('./cert/acme.js'),
     config = require('./config.js'),
     constants = require('./constants.js'),
     debug = require('debug')('box:certificates'),
+    domains = require('./domains.js'),
     ejs = require('ejs'),
     eventlog = require('./eventlog.js'),
     fallback = require('./cert/fallback.js'),
@@ -42,7 +43,6 @@ var acme = require('./cert/acme.js'),
     paths = require('./paths.js'),
     platform = require('./platform.js'),
     safe = require('safetydance'),
-    settings = require('./settings.js'),
     shell = require('./shell.js'),
     user = require('./user.js'),
     util = require('util');
@@ -78,16 +78,16 @@ function getApi(app, callback) {
     assert.strictEqual(typeof app, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    settings.getTlsConfig(function (error, tlsConfig) {
+    domains.get(app.domain, function (error, domain) {
         if (error) return callback(error);
 
-        if (tlsConfig.provider === 'fallback') return callback(null, fallback, {});
+        if (domain.tlsConfig.provider === 'fallback') return callback(null, fallback, {});
 
         // use acme if we have altDomain or the tlsConfig is not caas
         var api = (app.altDomain || tlsConfig.provider !== 'caas') ? acme : caas;
 
         var options = { };
-        if (tlsConfig.provider === 'caas') {
+        if (domain.tlsConfig.provider === 'caas') {
             options.prod = true; // with altDomain, we will choose acme setting based on this
         } else { // acme
             options.prod = tlsConfig.provider.match(/.*-prod/) !== null;
