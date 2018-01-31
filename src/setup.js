@@ -127,7 +127,7 @@ function configureWebadmin(callback) {
     }
 
     function configureReverseProxy(error) {
-        debug('configureReverseProxy: dns update: %j', error || {});
+        debug('configureReverseProxy: error %j', error || null);
 
         reverseProxy.configureAdmin({ userId: null, username: 'setup' }, function (error) {
             if (error) return done(error);

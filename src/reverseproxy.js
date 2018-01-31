@@ -314,11 +314,11 @@ function configureAdminInternal(bundle, configFileName, vhost, callback) {
 }
 
 function configureAdmin(auditSource, callback) {
-    assert.strictEqual(typeof auditSource, 'function');
+    assert.strictEqual(typeof auditSource, 'object');
     assert.strictEqual(typeof callback, 'function');
 
     var adminApp = { domain: config.adminDomain(), intrinsicFqdn: config.adminFqdn() };
-    ensureCertificate(auditSource, adminApp, function (error, bundle) {
+    ensureCertificate(adminApp, auditSource, function (error, bundle) {
         if (error) return callback(error);
 
         configureAdminInternal(bundle, constants.NGINX_ADMIN_CONFIG_FILE_NAME, config.adminFqdn(), callback);
