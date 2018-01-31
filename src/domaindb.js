@@ -17,11 +17,13 @@ var assert = require('assert'),
     DatabaseError = require('./databaseerror'),
     safe = require('safetydance');
 
-var DOMAINS_FIELDS = [ 'domain', 'zoneName', 'provider', 'configJson' ].join(',');
+var DOMAINS_FIELDS = [ 'domain', 'zoneName', 'provider', 'configJson', 'tlsConfigJson' ].join(',');
 
 function postProcess(data) {
     data.config = safe.JSON.parse(data.configJson);
+    data.tlsConfig = safe.JSON.parse(data.tlsConfigJson);
     delete data.configJson;
+    delete data.tlsConfigJson;
 
     return data;
 }
@@ -56,9 +58,10 @@ function add(name, domain, callback) {
     assert.strictEqual(typeof domain.zoneName, 'string');
     assert.strictEqual(typeof domain.provider, 'string');
     assert.strictEqual(typeof domain.config, 'object');
+    assert.strictEqual(typeof domain.tlsConfig, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    database.query('INSERT INTO domains (domain, zoneName, provider, configJson) VALUES (?, ?, ?, ?)', [ name, domain.zoneName, domain.provider, JSON.stringify(domain.config) ], function (error) {
+    database.query('INSERT INTO domains (domain, zoneName, provider, configJson, tlsConfigJson) VALUES (?, ?, ?, ?, ?)', [ name, domain.zoneName, domain.provider, JSON.stringify(domain.config), JSON.stringify(domain.tlsConfig) ], function (error) {
         if (error && error.code === 'ER_DUP_ENTRY') return callback(new DatabaseError(DatabaseError.ALREADY_EXISTS, error));
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
 
@@ -75,6 +78,9 @@ function update(name, domain, callback) {
     for (var k in domain) {
         if (k === 'config') {
             fields.push('configJson = ?');
+            args.push(JSON.stringify(domain[k]));
+        } else if (k === 'tlsConfig') {
+            fields.push('tlsConfigJson = ?');
             args.push(JSON.stringify(domain[k]));
         } else {
             fields.push(k + ' = ?');
