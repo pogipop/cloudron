@@ -120,6 +120,10 @@ function add(domain, zoneName, provider, config, fallbackCertificate, tlsConfig,
         if (error) return callback(new DomainError(DomainError.BAD_FIELD, error.message));
     }
 
+    if (tlsConfig.provider !== 'fallback' && tlsConfig.provider !== 'caas' && tlsConfig.provider.indexOf('le-') !== 0) {
+        return callback(new DomainError(DomainError.BAD_FIELD, 'tlsConfig.provider must be caas, fallback or le-*'));
+    }
+
     sysinfo.getPublicIp(function (error, ip) {
         if (error) return callback(new DomainError(DomainError.INTERNAL_ERROR, 'Error getting IP:' + error.message));
 
@@ -194,6 +198,10 @@ function update(domain, provider, config, fallbackCertificate, tlsConfig, callba
         if (fallbackCertificate) {
             let error = reverseProxy.validateCertificate(fallbackCertificate.cert, fallbackCertificate.key, domain);
             if (error) return callback(new DomainError(DomainError.BAD_FIELD, error.message));
+        }
+
+        if (tlsConfig.provider !== 'fallback' && tlsConfig.provider !== 'caas' && tlsConfig.provider.indexOf('le-') !== 0) {
+            return callback(new DomainError(DomainError.BAD_FIELD, 'tlsConfig.provider must be caas, fallback or le-*'));
         }
 
         sysinfo.getPublicIp(function (error, ip) {
