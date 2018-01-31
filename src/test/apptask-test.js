@@ -58,7 +58,7 @@ const DOMAIN_0 = {
         secretAccessKey: 'secretAccessKey',
         endpoint: 'http://localhost:5353'
     },
-    tlsConfig: { provider: 'fallback' }
+    tlsConfig: { provider: 'caas' }
 };
 
 var APP = {
