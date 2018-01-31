@@ -93,7 +93,6 @@ fi
 
 if [[ "${is_update}" == "yes" ]]; then
     echo "==> installer: stop cloudron.target service for update"
-    "${box_src_tmp_dir}/setup/splashpage.sh" --data "${arg_data}" || true # show splash from new code
     ${BOX_SRC_DIR}/setup/stop.sh
 fi
 
