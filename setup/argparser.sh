@@ -3,9 +3,8 @@
 source_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 json="${source_dir}/../node_modules/.bin/json"
 
-# IMPORTANT: Fix cloudron.js:doUpdate if you add/remove any arg. keep these sorted for readability
 arg_api_server_origin=""
-arg_fqdn=""
+arg_fqdn=""         # remove after 1.10
 arg_admin_domain=""
 arg_admin_location=""
 arg_admin_fqdn=""

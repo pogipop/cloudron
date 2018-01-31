@@ -31,7 +31,7 @@ set_progress "20" "Configuring host"
 sed -e 's/^#NTP=/NTP=0.ubuntu.pool.ntp.org 1.ubuntu.pool.ntp.org 2.ubuntu.pool.ntp.org 3.ubuntu.pool.ntp.org/' -i /etc/systemd/timesyncd.conf
 timedatectl set-ntp 1
 timedatectl set-timezone UTC
-hostnamectl set-hostname "${arg_fqdn}"
+hostnamectl set-hostname "${arg_admin_fqdn}"
 
 echo "==> Configuring docker"
 cp "${script_dir}/start/docker-cloudron-app.apparmor" /etc/apparmor.d/docker-cloudron-app
@@ -212,7 +212,6 @@ cat > "${CONFIG_DIR}/cloudron.conf" <<CONF_END
     "version": "${arg_version}",
     "apiServerOrigin": "${arg_api_server_origin}",
     "webServerOrigin": "${arg_web_server_origin}",
-    "fqdn": "${arg_fqdn}",
     "adminDomain": "${arg_admin_domain}",
     "adminFqdn": "${arg_admin_fqdn}",
     "adminLocation": "${arg_admin_location}",
