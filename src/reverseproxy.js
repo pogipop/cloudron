@@ -84,13 +84,13 @@ function getApi(app, callback) {
         if (domain.tlsConfig.provider === 'fallback') return callback(null, fallback, {});
 
         // use acme if we have altDomain or the tlsConfig is not caas
-        var api = (app.altDomain || tlsConfig.provider !== 'caas') ? acme : caas;
+        var api = (app.altDomain || domain.tlsConfig.provider !== 'caas') ? acme : caas;
 
         var options = { };
         if (domain.tlsConfig.provider === 'caas') {
             options.prod = true; // with altDomain, we will choose acme setting based on this
         } else { // acme
-            options.prod = tlsConfig.provider.match(/.*-prod/) !== null;
+            options.prod = domain.tlsConfig.provider.match(/.*-prod/) !== null;
         }
 
         // registering user with an email requires A or MX record (https://github.com/letsencrypt/boulder/issues/1197)

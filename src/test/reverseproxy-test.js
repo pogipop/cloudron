@@ -7,15 +7,26 @@
 
 var async = require('async'),
     database = require('../database.js'),
+    domains = require('../domains.js'),
     expect = require('expect.js'),
     reverseProxy = require('../reverseproxy.js'),
     settings = require('../settings.js');
+
+const DOMAIN_0 = {
+    domain: 'example-reverseproxy-test.com',
+    zoneName: 'example-reverseproxy-test.com',
+    provider: 'noop',
+    config: {},
+    fallbackCertificate: null,
+    tlsConfig: { provider: 'fallback' }
+};
 
 function setup(done) {
     async.series([
         database.initialize,
         settings.initialize,
-        database._clear
+        database._clear,
+        domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0.zoneName, DOMAIN_0.provider, DOMAIN_0.config, DOMAIN_0.fallbackCertificate, DOMAIN_0.tlsConfig)
     ], done);
 }
 
@@ -95,16 +106,18 @@ describe('Certificates', function () {
 
     describe('getApi - caas', function () {
         before(function (done) {
+            DOMAIN_0.tlsConfig = { provider: 'caas' };
+
             async.series([
                 setup,
-                settings.setTlsConfig.bind(null, { provider: 'caas' })
+                domains.update.bind(null, DOMAIN_0.domain, DOMAIN_0.provider, DOMAIN_0.config, DOMAIN_0.fallbackCertificate, DOMAIN_0.tlsConfig)
             ], done);
         });
 
         after(cleanup);
 
         it('returns prod caas for prod cloudron', function (done) {
-            reverseProxy._getApi({ }, function (error, api, options) {
+            reverseProxy._getApi({ domain: DOMAIN_0.domain }, function (error, api, options) {
                 expect(error).to.be(null);
                 expect(api._name).to.be('caas');
                 expect(options.prod).to.be(true);
@@ -113,7 +126,7 @@ describe('Certificates', function () {
         });
 
         it('returns prod caas for dev cloudron', function (done) {
-            reverseProxy._getApi({ }, function (error, api, options) {
+            reverseProxy._getApi({ domain: DOMAIN_0.domain }, function (error, api, options) {
                 expect(error).to.be(null);
                 expect(api._name).to.be('caas');
                 expect(options.prod).to.be(true);
@@ -122,7 +135,7 @@ describe('Certificates', function () {
         });
 
         it('returns prod-acme with altDomain in prod cloudron', function (done) {
-            reverseProxy._getApi({ altDomain: 'foo.something.com' }, function (error, api, options) {
+            reverseProxy._getApi({ domain: DOMAIN_0.domain, altDomain: 'foo.something.com' }, function (error, api, options) {
                 expect(error).to.be(null);
                 expect(api._name).to.be('acme');
                 expect(options.prod).to.be(true);
@@ -131,7 +144,7 @@ describe('Certificates', function () {
         });
 
         it('returns prod acme with altDomain in dev cloudron', function (done) {
-            reverseProxy._getApi({ altDomain: 'foo.something.com' }, function (error, api, options) {
+            reverseProxy._getApi({ domain: DOMAIN_0.domain, altDomain: 'foo.something.com' }, function (error, api, options) {
                 expect(error).to.be(null);
                 expect(api._name).to.be('acme');
                 expect(options.prod).to.be(true);
@@ -142,16 +155,18 @@ describe('Certificates', function () {
 
     describe('getApi - le-prod', function () {
         before(function (done) {
+            DOMAIN_0.tlsConfig = { provider: 'le-prod' };
+
             async.series([
                 setup,
-                settings.setTlsConfig.bind(null, { provider: 'le-prod' })
+                domains.update.bind(null, DOMAIN_0.domain, DOMAIN_0.provider, DOMAIN_0.config, DOMAIN_0.fallbackCertificate, DOMAIN_0.tlsConfig)
             ], done);
         });
 
         after(cleanup);
 
         it('returns prod acme in prod cloudron', function (done) {
-            reverseProxy._getApi({ }, function (error, api, options) {
+            reverseProxy._getApi({ domain: DOMAIN_0.domain }, function (error, api, options) {
                 expect(error).to.be(null);
                 expect(api._name).to.be('acme');
                 expect(options.prod).to.be(true);
@@ -160,7 +175,7 @@ describe('Certificates', function () {
         });
 
         it('returns prod acme with altDomain in prod cloudron', function (done) {
-            reverseProxy._getApi({ altDomain: 'foo.bar.com' }, function (error, api, options) {
+            reverseProxy._getApi({ domain: DOMAIN_0.domain, altDomain: 'foo.bar.com' }, function (error, api, options) {
                 expect(error).to.be(null);
                 expect(api._name).to.be('acme');
                 expect(options.prod).to.be(true);
@@ -169,7 +184,7 @@ describe('Certificates', function () {
         });
 
         it('returns prod acme in dev cloudron', function (done) {
-            reverseProxy._getApi({ }, function (error, api, options) {
+            reverseProxy._getApi({ domain: DOMAIN_0.domain }, function (error, api, options) {
                 expect(error).to.be(null);
                 expect(api._name).to.be('acme');
                 expect(options.prod).to.be(true);
@@ -180,16 +195,18 @@ describe('Certificates', function () {
 
     describe('getApi - le-staging', function () {
         before(function (done) {
+            DOMAIN_0.tlsConfig = { provider: 'le-staging' };
+
             async.series([
                 setup,
-                settings.setTlsConfig.bind(null, { provider: 'le-staging' })
+                domains.update.bind(null, DOMAIN_0.domain, DOMAIN_0.provider, DOMAIN_0.config, DOMAIN_0.fallbackCertificate, DOMAIN_0.tlsConfig)
             ], done);
         });
 
         after(cleanup);
 
         it('returns staging acme in prod cloudron', function (done) {
-            reverseProxy._getApi({ }, function (error, api, options) {
+            reverseProxy._getApi({ domain: DOMAIN_0.domain }, function (error, api, options) {
                 expect(error).to.be(null);
                 expect(api._name).to.be('acme');
                 expect(options.prod).to.be(false);
@@ -198,7 +215,7 @@ describe('Certificates', function () {
         });
 
         it('returns staging acme in dev cloudron', function (done) {
-            reverseProxy._getApi({ }, function (error, api, options) {
+            reverseProxy._getApi({ domain: DOMAIN_0.domain }, function (error, api, options) {
                 expect(error).to.be(null);
                 expect(api._name).to.be('acme');
                 expect(options.prod).to.be(false);
@@ -207,7 +224,7 @@ describe('Certificates', function () {
         });
 
         it('returns staging acme with altDomain in prod cloudron', function (done) {
-            reverseProxy._getApi({ altDomain: 'foo.bar.com' }, function (error, api, options) {
+            reverseProxy._getApi({ domain: DOMAIN_0.domain, altDomain: 'foo.bar.com' }, function (error, api, options) {
                 expect(error).to.be(null);
                 expect(api._name).to.be('acme');
                 expect(options.prod).to.be(false);
