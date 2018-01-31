@@ -44,34 +44,23 @@ fi
 
 initBaseImage="true"
 # provisioning data
-domain=""
-adminLocation="my"
 provider=""
 tlsProvider="le-prod"
 requestedVersion=""
 apiServerOrigin="https://api.cloudron.io"
 webServerOrigin="https://cloudron.io"
-dataJson=""
 prerelease="false"
 sourceTarballUrl=""
 rebootServer="true"
 baseDataDir=""
 
-# these are here for pre-1.9 compat
-encryptionKey=""
-restoreUrl=""
-
-args=$(getopt -o "" -l "domain:,help,skip-baseimage-init,data:,data-dir:,provider:,encryption-key:,restore-url:,tls-provider:,version:,dns-provider:,env:,admin-location:,prerelease,skip-reboot,source-url:" -n "$0" -- "$@")
+args=$(getopt -o "" -l "help,skip-baseimage-init,data-dir:,provider:,tls-provider:,version:,dns-provider:,env:,prerelease,skip-reboot,source-url:" -n "$0" -- "$@")
 eval set -- "${args}"
 
 while true; do
     case "$1" in
-    --domain) domain="$2"; shift 2;;
-    --admin-location) adminLocation="$2"; shift 2;;
     --help) echo "See https://cloudron.io/documentation/installation/ on how to install Cloudron"; exit 0;;
     --provider) provider="$2"; shift 2;;
-    --encryption-key) encryptionKey="$2"; shift 2;;
-    --restore-url) restoreUrl="$2"; shift 2;;
     --tls-provider) tlsProvider="$2"; shift 2;;
     --version) requestedVersion="$2"; shift 2;;
     --env)
@@ -89,7 +78,6 @@ while true; do
         shift 2;;
     --skip-baseimage-init) initBaseImage="false"; shift;;
     --skip-reboot) rebootServer="false"; shift;;
-    --data) dataJson="$2"; shift 2;;
     --prerelease) prerelease="true"; shift;;
     --source-url) sourceTarballUrl="$2"; version="0.0.1+custom"; shift 2;;
     --data-dir) baseDataDir=$(realpath "$2"); shift 2;;
@@ -99,40 +87,38 @@ while true; do
 done
 
 # validate arguments in the absence of data
-if [[ -z "${dataJson}" ]]; then
-    if [[ -z "${provider}" ]]; then
-        echo "--provider is required (azure, cloudscale, digitalocean, ec2, exoscale, hetzner, lightsail, linode, ovh, rosehosting, scaleway, vultr or generic)"
-        exit 1
-    elif [[  \
-                "${provider}" != "ami" && \
-                "${provider}" != "azure" && \
-                "${provider}" != "cloudscale" && \
-                "${provider}" != "digitalocean" && \
-                "${provider}" != "ec2" && \
-                "${provider}" != "exoscale" && \
-                "${provider}" != "gce" && \
-                "${provider}" != "hetzner" && \
-                "${provider}" != "lightsail" && \
-                "${provider}" != "linode" && \
-                "${provider}" != "ovh" && \
-                "${provider}" != "rosehosting" && \
-                "${provider}" != "scaleway" && \
-                "${provider}" != "vultr" && \
-                "${provider}" != "generic" \
-            ]]; then
-        echo "--provider must be one of: azure, cloudscale.ch, digitalocean, ec2, exoscale, gce, hetzner, lightsail, linode, ovh, rosehosting, scaleway, vultr or generic"
-        exit 1
-    fi
+if [[ -z "${provider}" ]]; then
+    echo "--provider is required (azure, cloudscale, digitalocean, ec2, exoscale, hetzner, lightsail, linode, ovh, rosehosting, scaleway, vultr or generic)"
+    exit 1
+elif [[  \
+            "${provider}" != "ami" && \
+            "${provider}" != "azure" && \
+            "${provider}" != "cloudscale" && \
+            "${provider}" != "digitalocean" && \
+            "${provider}" != "ec2" && \
+            "${provider}" != "exoscale" && \
+            "${provider}" != "gce" && \
+            "${provider}" != "hetzner" && \
+            "${provider}" != "lightsail" && \
+            "${provider}" != "linode" && \
+            "${provider}" != "ovh" && \
+            "${provider}" != "rosehosting" && \
+            "${provider}" != "scaleway" && \
+            "${provider}" != "vultr" && \
+            "${provider}" != "generic" \
+        ]]; then
+    echo "--provider must be one of: azure, cloudscale.ch, digitalocean, ec2, exoscale, gce, hetzner, lightsail, linode, ovh, rosehosting, scaleway, vultr or generic"
+    exit 1
+fi
 
-    if [[ "${tlsProvider}" != "fallback" && "${tlsProvider}" != "le-prod" && "${tlsProvider}" != "le-staging" ]]; then
-        echo "--tls-provider must be one of: le-prod, le-staging, fallback"
-        exit 1
-    fi
+if [[ "${tlsProvider}" != "fallback" && "${tlsProvider}" != "le-prod" && "${tlsProvider}" != "le-staging" ]]; then
+    echo "--tls-provider must be one of: le-prod, le-staging, fallback"
+    exit 1
+fi
 
-    if [[ -n "${baseDataDir}" && ! -d "${baseDataDir}" ]]; then
-        echo "${baseDataDir} does not exist"
-        exit 1
-    fi
+if [[ -n "${baseDataDir}" && ! -d "${baseDataDir}" ]]; then
+    echo "${baseDataDir} does not exist"
+    exit 1
 fi
 
 echo ""
@@ -181,52 +167,18 @@ fi
 # Build data
 # tlsConfig, dnsConfig, backupConfig are here for backward compat with < 1.9
 # from 1.9, we use autoprovision.json
-if [[ -z "${dataJson}" ]]; then
-    if [[ -z "${restoreUrl}" ]]; then
-        data=$(cat <<EOF
-    {
-        "fqdn": "${domain}",
-        "adminLocation": "${adminLocation}",
-        "adminFqdn": "${adminLocation}.${domain}",
-        "zoneName": "${zoneName}",
-        "provider": "${provider}",
-        "apiServerOrigin": "${apiServerOrigin}",
-        "webServerOrigin": "${webServerOrigin}",
-        "version": "${version}",
-        "tlsConfig": {
-            "provider": "${tlsProvider}"
-        },
-        "backupConfig" : {
-            "provider": "filesystem",
-            "backupFolder": "/var/backups",
-            "key": "${encryptionKey}",
-            "format": "tgz",
-            "retentionSecs": 172800
-        }
+data=$(cat <<EOF
+{
+    "provider": "${provider}",
+    "apiServerOrigin": "${apiServerOrigin}",
+    "webServerOrigin": "${webServerOrigin}",
+    "version": "${version}",
+    "tlsConfig": {
+        "provider": "${tlsProvider}"
     }
+}
 EOF
-    )
-    else
-        data=$(cat <<EOF
-    {
-        "fqdn": "${domain}",
-        "adminLocation": "${adminLocation}",
-        "adminFqdn": "${adminLocation}.${domain}",
-        "provider": "${provider}",
-        "apiServerOrigin": "${apiServerOrigin}",
-        "webServerOrigin": "${webServerOrigin}",
-        "restore": {
-            "url": "${restoreUrl}",
-            "key": "${encryptionKey}"
-        },
-        "version": "${version}"
-    }
-EOF
-    )
-    fi
-else
-    data="${dataJson}"
-fi
+)
 
 echo "=> Downloading version ${version} ..."
 box_src_tmp_dir=$(mktemp -dt box-src-XXXXXX)
@@ -257,8 +209,7 @@ echo -n "=> Waiting for cloudron to be ready (this takes some time) ..."
 while true; do
     echo -n "."
     if status=$($curl -q -f "http://localhost:3000/api/v1/cloudron/status" 2>/dev/null); then
-        [[ -z "$domain" ]] && break # with no domain, we are up and running
-        [[ "$status" == *"\"tls\": true"* ]] && break # with a domain, wait for the cert
+        break # we are up and running
     fi
     sleep 10
 done
@@ -274,11 +225,7 @@ EOF
 
 echo "${autoprovision_data}" > /home/yellowtent/configs/autoprovision.json
 
-if [[ -n "${domain}" ]]; then
-    echo -e "\n\nVisit https://my.${domain} to finish setup once the server has rebooted.\n"
-else
-    echo -e "\n\nVisit https://<IP> to finish setup once the server has rebooted.\n"
-fi
+echo -e "\n\nVisit https://<IP> to finish setup once the server has rebooted.\n"
 
 if [[ "${rebootServer}" == "true" ]]; then
     echo -e "\n\nRebooting this server now to let bootloader changes take effect.\n"
