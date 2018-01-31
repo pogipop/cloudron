@@ -174,12 +174,13 @@ function configureWebadmin(callback) {
     });
 }
 
-function dnsSetup(adminFqdn, domain, zoneName, provider, dnsConfig, callback) {
+function dnsSetup(adminFqdn, domain, zoneName, provider, dnsConfig, tlsConfig, callback) {
     assert.strictEqual(typeof adminFqdn, 'string');
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof zoneName, 'string');
     assert.strictEqual(typeof provider, 'string');
     assert.strictEqual(typeof dnsConfig, 'object');
+    assert.strictEqual(typeof tlsConfig, 'object');
     assert.strictEqual(typeof callback, 'function');
 
     if (config.adminDomain()) return callback(new SetupError(SetupError.ALREADY_SETUP));
@@ -210,11 +211,11 @@ function dnsSetup(adminFqdn, domain, zoneName, provider, dnsConfig, callback) {
 
         if (!result) {
             async.series([
-                domains.add.bind(null, domain, zoneName, provider, dnsConfig, null /* cert */),
+                domains.add.bind(null, domain, zoneName, provider, dnsConfig, null /* cert */, tlsConfig),
                 mail.add.bind(null, domain)
             ], done);
         } else {
-            domains.update(domain, provider, dnsConfig, null /* cert */, done);
+            domains.update(domain, provider, dnsConfig, null /* cert */, tlsConfig, done);
         }
     });
 }

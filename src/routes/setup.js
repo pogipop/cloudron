@@ -72,7 +72,10 @@ function dnsSetup(req, res, next) {
     if ('zoneName' in req.body && typeof req.body.zoneName !== 'string') return next(new HttpError(400, 'zoneName must be a string'));
     if (!req.body.config || typeof req.body.config !== 'object') return next(new HttpError(400, 'config must be an object'));
 
-    setup.dnsSetup(req.body.adminFqdn.toLowerCase(), req.body.domain.toLowerCase(), req.body.zoneName || '', req.body.provider, req.body.config, function (error) {
+    if ('tlsConfig' in req.body && typeof req.body.tlsConfig !== 'object') return next(new HttpError(400, 'tlsConfig must be an object'));
+    if (req.body.tlsConfig && (!req.body.tlsConfig.provider || typeof req.body.tlsConfig.provider !== 'string')) return next(new HttpError(400, 'tlsConfig.provider must be a string'));
+
+    setup.dnsSetup(req.body.adminFqdn.toLowerCase(), req.body.domain.toLowerCase(), req.body.zoneName || '', req.body.provider, req.body.config, req.body.tlsConfig || { provider: 'letsencrypt-prod' }, function (error) {
         if (error && error.reason === SetupError.ALREADY_SETUP) return next(new HttpError(409, error.message));
         if (error && error.reason === SetupError.BAD_FIELD) return next(new HttpError(400, error.message));
         if (error) return next(new HttpError(500, error));
