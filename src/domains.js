@@ -98,12 +98,13 @@ function verifyDnsConfig(config, domain, zoneName, provider, ip, callback) {
 }
 
 
-function add(domain, zoneName, provider, config, fallbackCertificate, callback) {
+function add(domain, zoneName, provider, config, fallbackCertificate, tlsConfig, callback) {
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof zoneName, 'string');
     assert.strictEqual(typeof provider, 'string');
     assert.strictEqual(typeof config, 'object');
     assert.strictEqual(typeof fallbackCertificate, 'object');
+    assert.strictEqual(typeof tlsConfig, 'object');
     assert.strictEqual(typeof callback, 'function');
 
     if (!tld.isValid(domain)) return callback(new DomainError(DomainError.BAD_FIELD, 'Invalid domain'));
@@ -130,7 +131,7 @@ function add(domain, zoneName, provider, config, fallbackCertificate, callback) 
             if (error && error.reason === DomainError.INVALID_PROVIDER) return callback(new DomainError(DomainError.BAD_FIELD, error.message));
             if (error) return callback(new DomainError(DomainError.INTERNAL_ERROR, error));
 
-            domaindb.add(domain, { zoneName: zoneName, provider: provider, config: result }, function (error) {
+            domaindb.add(domain, { zoneName: zoneName, provider: provider, config: result, tlsConfig: tlsConfig }, function (error) {
                 if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(new DomainError(DomainError.ALREADY_EXISTS));
                 if (error) return callback(new DomainError(DomainError.INTERNAL_ERROR, error));
 
@@ -178,11 +179,12 @@ function getAll(callback) {
     });
 }
 
-function update(domain, provider, config, fallbackCertificate, callback) {
+function update(domain, provider, config, fallbackCertificate, tlsConfig, callback) {
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof provider, 'string');
     assert.strictEqual(typeof config, 'object');
     assert.strictEqual(typeof fallbackCertificate, 'object');
+    assert.strictEqual(typeof tlsConfig, 'object');
     assert.strictEqual(typeof callback, 'function');
 
     domaindb.get(domain, function (error, result) {
@@ -205,7 +207,7 @@ function update(domain, provider, config, fallbackCertificate, callback) {
                 if (error && error.reason === DomainError.INVALID_PROVIDER) return callback(new DomainError(DomainError.BAD_FIELD, error.message));
                 if (error) return callback(new DomainError(DomainError.INTERNAL_ERROR, error));
 
-                domaindb.update(domain, { provider: provider, config: result }, function (error) {
+                domaindb.update(domain, { provider: provider, config: result, tlsConfig: tlsConfig }, function (error) {
                     if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new DomainError(DomainError.NOT_FOUND));
                     if (error) return callback(new DomainError(DomainError.INTERNAL_ERROR, error));
 
