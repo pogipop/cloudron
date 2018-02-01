@@ -529,7 +529,7 @@ function restartMail(callback) {
 
         // the setup script copies dhparams.pem to /addons/mail
         const mailCertFilePath = path.join(paths.ADDON_CONFIG_DIR, 'mail/tls_cert.pem');
-        const mailKeyFilePath = path.join(paths.ADDON_CONFIG_DIR, 'mail/tls_cert.pem');
+        const mailKeyFilePath = path.join(paths.ADDON_CONFIG_DIR, 'mail/tls_key.pem');
 
         if (!safe.child_process.execSync(`cp ${bundle.certFilePath} ${mailCertFilePath}`)) return callback(new Error('Could not create cert file:' + safe.error.message));
         if (!safe.child_process.execSync(`cp ${bundle.keyFilePath} ${mailKeyFilePath}`)) return callback(new Error('Could not create key file:' + safe.error.message));
