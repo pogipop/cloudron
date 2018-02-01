@@ -25,7 +25,12 @@ done
 readonly TMPDIR=${TMPDIR:-/tmp} # why is this not set on mint?
 
 if ! $(cd "${SOURCE_DIR}" && git diff --exit-code >/dev/null); then
-    echo "You have local changes, stash or commit them to proceed"
+    echo "You have local changes in box, stash or commit them to proceed"
+    exit 1
+fi
+
+if ! $(cd "${SOURCE_DIR}/../webadmin" && git diff --exit-code >/dev/null); then
+    echo "You have local changes in webadmin, stash or commit them to proceed"
     exit 1
 fi
 
