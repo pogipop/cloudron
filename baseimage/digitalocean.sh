@@ -29,7 +29,7 @@ function create_droplet() {
     local ssh_key_id="$1"
     local box_name="$2"
 
-    local image_region="sfo1"
+    local image_region="sfo2"
     local ubuntu_image_slug="ubuntu-16-04-x64"
     local box_size="1gb"
 
