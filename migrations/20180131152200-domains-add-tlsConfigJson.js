@@ -6,7 +6,7 @@ exports.up = function(db, callback) {
     db.all('SELECT * FROM settings WHERE name = ?', [ 'tls_config' ], function (error, result) {
         if (error) return callback(error);
 
-        var tlsConfigJson = (result[0] && result[0].value) ? result[0].value : JSON.stringify({ provider: 'letsencrypt-prod'});
+        var tlsConfigJson = (result[0] && result[0].value) ? result[0].value : JSON.stringify({ provider: 'le-prod'});
 
         async.series([
             db.runSql.bind(db, 'START TRANSACTION;'),

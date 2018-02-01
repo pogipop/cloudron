@@ -107,8 +107,7 @@ describe('apptask', function () {
             database._clear,
             domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0.zoneName, DOMAIN_0.provider, DOMAIN_0.config, null, DOMAIN_0.tlsConfig),
             appdb.add.bind(null, APP.id, APP.appStoreId, APP.manifest, APP.location, APP.domain, APP.portBindings, APP),
-            settings.initialize,
-            settings.setTlsConfig.bind(null, { provider: 'caas' })
+            settings.initialize
         ], done);
     });
 

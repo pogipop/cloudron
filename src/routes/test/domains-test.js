@@ -22,13 +22,19 @@ var DOMAIN_0 = {
     domain: 'cloudron.com',
     zoneName: 'cloudron.com',
     provider: 'noop',
-    config: { }
+    config: { },
+    tlsConfig: {
+        provider: 'fallback'
+    }
 };
 
 var DOMAIN_1 = {
     domain: 'foobar.com',
     provider: 'noop',
-    config: { }
+    config: { },
+    tlsConfig: {
+        provider: 'fallback'
+    }
 };
 
 describe('Domains API', function () {
