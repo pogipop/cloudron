@@ -106,6 +106,28 @@ describe('Domains API', function () {
                 });
         });
 
+        it('fails with invalid tlsConfig', function (done) {
+            superagent.post(SERVER_URL + '/api/v1/domains')
+                .query({ access_token: token })
+                .send({ domain: 'cloudron.com', provider: 'noop', config: { }, tlsConfig: 'foobar' })
+                .end(function (error, result) {
+                    expect(result.statusCode).to.equal(400);
+
+                    done();
+                });
+        });
+
+        it('fails with unknown tls provider', function (done) {
+            superagent.post(SERVER_URL + '/api/v1/domains')
+                .query({ access_token: token })
+                .send({ domain: 'cloudron.com', provider: 'noop', config: { }, tlsConfig: { provider: 'hello' }})
+                .end(function (error, result) {
+                    expect(result.statusCode).to.equal(400);
+
+                    done();
+                });
+        });
+
         it('succeeds', function (done) {
             superagent.post(SERVER_URL + '/api/v1/domains')
                 .query({ access_token: token })
