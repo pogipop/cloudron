@@ -17,6 +17,7 @@ var appdb = require('../../appdb.js'),
     constants = require('../../constants.js'),
     database = require('../../database.js'),
     docker = require('../../docker.js').connection,
+    domains = require('../../domains.js'),
     expect = require('expect.js'),
     fs = require('fs'),
     hock = require('hock'),
@@ -24,6 +25,7 @@ var appdb = require('../../appdb.js'),
     https = require('https'),
     js2xml = require('js2xmlparser').parse,
     ldap = require('../../ldap.js'),
+    mail = require('../../mail.js'),
     net = require('net'),
     nock = require('nock'),
     paths = require('../../paths.js'),
@@ -44,12 +46,20 @@ var TEST_IMAGE_REPO = 'cloudron/test';
 var TEST_IMAGE_TAG = '25.2.0';
 var TEST_IMAGE = TEST_IMAGE_REPO + ':' + TEST_IMAGE_TAG;
 // var TEST_IMAGE_ID = child_process.execSync('docker inspect --format={{.Id}} ' + TEST_IMAGE).toString('utf8').trim();
+1
+const DOMAIN_0 = {
+    domain: 'example-apps-test.com',
+    zoneName: 'example-apps-test.com',
+    config: {},
+    provider: 'noop',
+    fallbackCertificate: null,
+    tlsConfig: { provider: 'fallback' }
+};
 
 var APP_STORE_ID = 'test', APP_ID;
 var APP_LOCATION = 'appslocation';
 var APP_DOMAIN = 'example-apps-test.com';
 var APP_LOCATION_2 = 'appslocationtwo';
-var APP_DOMAIN_2 = 'example-apps-test.com';
 var APP_LOCATION_NEW = 'appslocationnew';
 
 var APP_MANIFEST = JSON.parse(fs.readFileSync(__dirname + '/../../../../test-app/CloudronManifest.json', 'utf8'));
@@ -151,43 +161,46 @@ function startBox(done) {
     safe.fs.unlinkSync(paths.INFRA_VERSION_FILE);
     child_process.execSync('docker ps -qa | xargs --no-run-if-empty docker rm -f');
 
-    config.setFqdn(APP_DOMAIN);
-
-    awsHostedZones = {
-         HostedZones: [{
-             Id: '/hostedzone/ZONEID',
-             Name: config.zoneName() + '.',
-             CallerReference: '305AFD59-9D73-4502-B020-F4E6F889CB30',
-             ResourceRecordSetCount: 2,
-             ChangeInfo: {
-                 Id: '/change/CKRTFJA0ANHXB',
-                 Status: 'INSYNC'
-             }
-         }],
-        IsTruncated: false,
-        MaxItems: '100'
-     };
+    // awsHostedZones = {
+    //      HostedZones: [{
+    //          Id: '/hostedzone/ZONEID',
+    //          Name: config.zoneName() + '.',
+    //          CallerReference: '305AFD59-9D73-4502-B020-F4E6F889CB30',
+    //          ResourceRecordSetCount: 2,
+    //          ChangeInfo: {
+    //              Id: '/change/CKRTFJA0ANHXB',
+    //              Status: 'INSYNC'
+    //          }
+    //      }],
+    //     IsTruncated: false,
+    //     MaxItems: '100'
+    //  };
 
     async.series([
         // first clear, then start server. otherwise, taskmanager spins up tasks for obsolete appIds
         database.initialize,
         database._clear,
-
-        server.start.bind(server),
+        server.start,
         ldap.start,
 
         function (callback) {
-            var scope1 = nock(config.apiServerOrigin()).get('/api/v1/boxes/' + config.adminDomain() + '/setup/verify?setupToken=somesetuptoken').reply(200, {});
-            var scope2 = nock(config.apiServerOrigin()).post('/api/v1/boxes/' + config.adminDomain() + '/setup/done?setupToken=somesetuptoken').reply(201, {});
+            superagent.post(SERVER_URL + '/api/v1/cloudron/dns_setup')
+                   .send({ provider: 'noop', domain: DOMAIN_0.domain, adminFqdn: 'my.' + DOMAIN_0.domain, config: DOMAIN_0.config, tlsConfig: DOMAIN_0.tlsConfig })
+                   .end(function (error, result) {
+                       console.log(result.body)
+                expect(result).to.be.ok();
+                expect(result.statusCode).to.eql(200);
 
+                callback();
+            });
+        },
+
+        function (callback) {
             superagent.post(SERVER_URL + '/api/v1/cloudron/activate')
-                   .query({ setupToken: 'somesetuptoken' })
                    .send({ username: USERNAME, password: PASSWORD, email: EMAIL })
                    .end(function (error, result) {
                 expect(result).to.be.ok();
                 expect(result.statusCode).to.eql(201);
-                expect(scope1.isDone()).to.be.ok();
-                expect(scope2.isDone()).to.be.ok();
 
                 // stash for further use
                 token = result.body.token;
@@ -231,11 +244,7 @@ function startBox(done) {
                 }
                 return false;
             }, callback);
-        },
-
-        settings.setDnsConfig.bind(null, { provider: 'route53', accessKeyId: 'accessKeyId', secretAccessKey: 'secretAccessKey', endpoint: 'http://localhost:5353' }, config.adminDomain(), config.zoneName()),
-        settings.setTlsConfig.bind(null, { provider: 'caas' }),
-        settings.setBackupConfig.bind(null, { provider: 'caas', token: 'BACKUP_TOKEN', bucket: 'Bucket', prefix: 'Prefix' })
+        }
     ], function (error) {
         if (error) return done(error);
 
@@ -320,13 +329,24 @@ describe('App API', function () {
         });
     });
 
-    it('app install fails - invalid location', function (done) {
+    it('app install fails - missing domain', function (done) {
         superagent.post(SERVER_URL + '/api/v1/apps/install')
                .query({ access_token: token })
-               .send({ manifest: APP_MANIFEST, location: '!awesome', accessRestriction: null })
+               .send({ manifest: APP_MANIFEST, location: 'some', accessRestriction: null })
                .end(function (err, res) {
             expect(res.statusCode).to.equal(400);
-            expect(res.body.message).to.eql('Hostname can only contain alphanumerics and hyphen');
+            expect(res.body.message).to.eql('domain is required');
+            done();
+        });
+    });
+
+    it('app install fails - non-existing domain', function (done) {
+        superagent.post(SERVER_URL + '/api/v1/apps/install')
+               .query({ access_token: token })
+               .send({ manifest: APP_MANIFEST, location: 'some', accessRestriction: null, domain: 'doesnotexist.com' })
+               .end(function (err, res) {
+            expect(res.statusCode).to.equal(404);
+            expect(res.body.message).to.eql('No such domain');
             done();
         });
     });
@@ -334,7 +354,7 @@ describe('App API', function () {
     it('app install fails - invalid location type', function (done) {
         superagent.post(SERVER_URL + '/api/v1/apps/install')
                .query({ access_token: token })
-               .send({ manifest: APP_MANIFEST, location: 42, accessRestriction: null })
+               .send({ manifest: APP_MANIFEST, location: 42, accessRestriction: null, domain: DOMAIN_0.domain })
                .end(function (err, res) {
             expect(res.statusCode).to.equal(400);
             expect(res.body.message).to.eql('location is required');
@@ -345,7 +365,7 @@ describe('App API', function () {
     it('app install fails - reserved admin location', function (done) {
         superagent.post(SERVER_URL + '/api/v1/apps/install')
                .query({ access_token: token })
-               .send({ manifest: APP_MANIFEST, location: 'my', accessRestriction: null })
+               .send({ manifest: APP_MANIFEST, location: 'my', accessRestriction: null, domain: DOMAIN_0.domain })
                .end(function (err, res) {
             expect(res.statusCode).to.equal(400);
             expect(res.body.message).to.eql('my is reserved');
@@ -356,7 +376,7 @@ describe('App API', function () {
     it('app install fails - reserved api location', function (done) {
         superagent.post(SERVER_URL + '/api/v1/apps/install')
                .query({ access_token: token })
-               .send({ manifest: APP_MANIFEST, location: constants.API_LOCATION, accessRestriction: null })
+               .send({ manifest: APP_MANIFEST, location: constants.API_LOCATION, accessRestriction: null, domain: DOMAIN_0.domain })
                .end(function (err, res) {
             expect(res.statusCode).to.equal(400);
             expect(res.body.message).to.eql(constants.API_LOCATION + ' is reserved');
@@ -367,7 +387,7 @@ describe('App API', function () {
     it('app install fails - portBindings must be object', function (done) {
         superagent.post(SERVER_URL + '/api/v1/apps/install')
                .query({ access_token: token })
-               .send({ manifest: APP_MANIFEST, location: APP_LOCATION, portBindings: 23, accessRestriction: null })
+               .send({ manifest: APP_MANIFEST, location: APP_LOCATION, portBindings: 23, accessRestriction: null, domain: DOMAIN_0.domain })
                .end(function (err, res) {
             expect(res.statusCode).to.equal(400);
             expect(res.body.message).to.eql('portBindings must be an object');
@@ -378,7 +398,7 @@ describe('App API', function () {
     it('app install fails - accessRestriction is required', function (done) {
         superagent.post(SERVER_URL + '/api/v1/apps/install')
                .query({ access_token: token })
-               .send({ manifest: APP_MANIFEST, location: APP_LOCATION, portBindings: {} })
+               .send({ manifest: APP_MANIFEST, location: APP_LOCATION, portBindings: {}, domain: DOMAIN_0.domain })
                .end(function (err, res) {
             expect(res.statusCode).to.equal(400);
             expect(res.body.message).to.eql('accessRestriction is required');
@@ -389,7 +409,7 @@ describe('App API', function () {
     it('app install fails - accessRestriction type is wrong', function (done) {
         superagent.post(SERVER_URL + '/api/v1/apps/install')
                .query({ access_token: token })
-               .send({ manifest: APP_MANIFEST, location: APP_LOCATION, portBindings: {}, accessRestriction: '' })
+               .send({ manifest: APP_MANIFEST, location: APP_LOCATION, portBindings: {}, accessRestriction: '', domain: DOMAIN_0.domain })
                .end(function (err, res) {
             expect(res.statusCode).to.equal(400);
             expect(res.body.message).to.eql('accessRestriction is required');
@@ -400,7 +420,7 @@ describe('App API', function () {
     it('app install fails for non admin', function (done) {
         superagent.post(SERVER_URL + '/api/v1/apps/install')
                .query({ access_token: token_1 })
-               .send({ manifest: APP_MANIFEST, location: APP_LOCATION, portBindings: null, accessRestriction: null })
+               .send({ manifest: APP_MANIFEST, location: APP_LOCATION, portBindings: null, accessRestriction: null, domain: DOMAIN_0.domain })
                .end(function (err, res) {
             expect(res.statusCode).to.equal(403);
             done();
@@ -412,7 +432,7 @@ describe('App API', function () {
 
         superagent.post(SERVER_URL + '/api/v1/apps/install')
                .query({ access_token: token })
-               .send({ appStoreId: APP_STORE_ID, location: APP_LOCATION, portBindings: null, accessRestriction: { users: [ 'someuser' ], groups: [] } })
+               .send({ appStoreId: APP_STORE_ID, location: APP_LOCATION, portBindings: null, domain: DOMAIN_0.domain, accessRestriction: { users: [ 'someuser' ], groups: [] } })
                .end(function (err, res) {
             expect(res.statusCode).to.equal(400);
             expect(fake.isDone()).to.be.ok();
@@ -425,7 +445,7 @@ describe('App API', function () {
 
         superagent.post(SERVER_URL + '/api/v1/apps/install')
                .query({ access_token: token })
-               .send({ appStoreId: APP_STORE_ID, location: APP_LOCATION, portBindings: null, accessRestriction: null })
+               .send({ appStoreId: APP_STORE_ID, location: APP_LOCATION, domain: DOMAIN_0.domain, portBindings: null, accessRestriction: null })
                .end(function (err, res) {
             expect(res.statusCode).to.equal(503);
             expect(fake1.isDone()).to.be.ok();
@@ -439,7 +459,7 @@ describe('App API', function () {
 
         superagent.post(SERVER_URL + '/api/v1/apps/install')
                .query({ access_token: token })
-               .send({ appStoreId: APP_STORE_ID, location: APP_LOCATION, portBindings: null, accessRestriction: { users: [ 'someuser' ], groups: [] } })
+               .send({ appStoreId: APP_STORE_ID, location: APP_LOCATION, domain: DOMAIN_0.domain, portBindings: null, accessRestriction: { users: [ 'someuser' ], groups: [] } })
                .end(function (err, res) {
             expect(res.statusCode).to.equal(202);
             expect(res.body.id).to.be.a('string');
@@ -452,7 +472,7 @@ describe('App API', function () {
     it('app install fails because of conflicting location', function (done) {
         superagent.post(SERVER_URL + '/api/v1/apps/install')
                .query({ access_token: token })
-               .send({ manifest: APP_MANIFEST, location: APP_LOCATION, portBindings: null, accessRestriction: null })
+               .send({ manifest: APP_MANIFEST, location: APP_LOCATION, domain: DOMAIN_0.domain, portBindings: null, accessRestriction: null })
                .end(function (err, res) {
             expect(res.statusCode).to.equal(409);
             done();
