@@ -46,6 +46,8 @@ function get(req, res, next) {
         if (error && error.reason === DomainError.NOT_FOUND) return next(new HttpError(404, error.message));
         if (error) return next(new HttpError(500, error));
 
+        delete result.fallbackCertificate.key; // do not return the 'key'. in caas, this is private
+
         next(new HttpSuccess(200, result));
     });
 }
