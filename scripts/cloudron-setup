@@ -53,7 +53,7 @@ sourceTarballUrl=""
 rebootServer="true"
 baseDataDir=""
 
-args=$(getopt -o "" -l "help,skip-baseimage-init,data-dir:,provider:,version:,env:,prerelease,skip-reboot,source-url:" -n "$0" -- "$@")
+args=$(getopt -o "" -l "help,skip-baseimage-init,data-dir:,provider:,version:,env:,prerelease,skip-reboot" -n "$0" -- "$@")
 eval set -- "${args}"
 
 while true; do
@@ -75,7 +75,6 @@ while true; do
     --skip-baseimage-init) initBaseImage="false"; shift;;
     --skip-reboot) rebootServer="false"; shift;;
     --prerelease) prerelease="true"; shift;;
-    --source-url) sourceTarballUrl="$2"; version="0.0.1+custom"; shift 2;;
     --data-dir) baseDataDir=$(realpath "$2"); shift 2;;
     --) break;;
     *) echo "Unknown option $1"; exit 1;;
@@ -137,22 +136,20 @@ if [[ "${initBaseImage}" == "true" ]]; then
 fi
 
 echo "=> Checking version"
-if [[ "${sourceTarballUrl}" == "" ]]; then
-    if ! releaseJson=$($curl -s "${apiServerOrigin}/api/v1/releases?prerelease=${prerelease}&boxVersion=${requestedVersion}"); then
-        echo "Failed to get release information"
-        exit 1
-    fi
+if ! releaseJson=$($curl -s "${apiServerOrigin}/api/v1/releases?prerelease=${prerelease}&boxVersion=${requestedVersion}"); then
+    echo "Failed to get release information"
+    exit 1
+fi
 
-    if [[ "$requestedVersion" == "" ]]; then
-        version=$(echo "${releaseJson}" | python3 -c 'import json,sys;obj=json.load(sys.stdin);print(obj["version"])')
-    else
-        version="${requestedVersion}"
-    fi
+if [[ "$requestedVersion" == "" ]]; then
+    version=$(echo "${releaseJson}" | python3 -c 'import json,sys;obj=json.load(sys.stdin);print(obj["version"])')
+else
+    version="${requestedVersion}"
+fi
 
-    if ! sourceTarballUrl=$(echo "${releaseJson}" | python3 -c 'import json,sys;obj=json.load(sys.stdin);print(obj["info"]["sourceTarballUrl"])'); then
-        echo "No source code for version '${requestedVersion:-latest}'"
-        exit 1
-    fi
+if ! sourceTarballUrl=$(echo "${releaseJson}" | python3 -c 'import json,sys;obj=json.load(sys.stdin);print(obj["info"]["sourceTarballUrl"])'); then
+    echo "No source code for version '${requestedVersion:-latest}'"
+    exit 1
 fi
 
 # Build data
