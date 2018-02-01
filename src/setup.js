@@ -199,9 +199,9 @@ function dnsSetup(adminFqdn, domain, zoneName, provider, dnsConfig, tlsConfig, c
         autoprovision(function (error) {
             if (error) return callback(new SetupError(SetupError.INTERNAL_ERROR, error));
 
-           clients.addDefaultClients(config.adminOrigin(), callback);
+            clients.addDefaultClients(config.adminOrigin(), callback);
 
-           configureWebadmin(NOOP_CALLBACK);
+            configureWebadmin(NOOP_CALLBACK);
         });
     }
 
