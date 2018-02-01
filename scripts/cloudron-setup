@@ -53,7 +53,7 @@ sourceTarballUrl=""
 rebootServer="true"
 baseDataDir=""
 
-args=$(getopt -o "" -l "help,skip-baseimage-init,data-dir:,provider:,version:,dns-provider:,env:,prerelease,skip-reboot,source-url:" -n "$0" -- "$@")
+args=$(getopt -o "" -l "help,skip-baseimage-init,data-dir:,provider:,version:,env:,prerelease,skip-reboot,source-url:" -n "$0" -- "$@")
 eval set -- "${args}"
 
 while true; do
