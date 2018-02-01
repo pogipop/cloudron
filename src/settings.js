@@ -81,6 +81,7 @@ var gDefaults = (function () {
     };
     result[exports.UPDATE_CONFIG_KEY] = { prerelease: false };
     result[exports.APPSTORE_CONFIG_KEY] = {};
+    result[exports.CAAS_CONFIG_KEY] = {};
     result[exports.EMAIL_DIGEST] = true;
 
     return result;
@@ -318,7 +319,7 @@ function getCaasConfig(callback) {
     assert.strictEqual(typeof callback, 'function');
 
     settingsdb.get(exports.CAAS_CONFIG_KEY, function (error, value) {
-        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(null, gDefaults[exports.APPSTORE_CONFIG_KEY]);
+        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(null, gDefaults[exports.CAAS_CONFIG_KEY]);
         if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
 
         callback(null, JSON.parse(value));
