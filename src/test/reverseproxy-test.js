@@ -153,9 +153,9 @@ describe('Certificates', function () {
         });
     });
 
-    describe('getApi - le-prod', function () {
+    describe('getApi - letsencrypt-prod', function () {
         before(function (done) {
-            DOMAIN_0.tlsConfig = { provider: 'le-prod' };
+            DOMAIN_0.tlsConfig = { provider: 'letsencrypt-prod' };
 
             async.series([
                 setup,
@@ -193,9 +193,9 @@ describe('Certificates', function () {
         });
     });
 
-    describe('getApi - le-staging', function () {
+    describe('getApi - letsencrypt-staging', function () {
         before(function (done) {
-            DOMAIN_0.tlsConfig = { provider: 'le-staging' };
+            DOMAIN_0.tlsConfig = { provider: 'letsencrypt-staging' };
 
             async.series([
                 setup,

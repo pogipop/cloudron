@@ -90,7 +90,7 @@ function getApi(app, callback) {
         if (domain.tlsConfig.provider === 'caas') {
             options.prod = true; // with altDomain, we will choose acme setting based on this
         } else { // acme
-            options.prod = domain.tlsConfig.provider.match(/.*-prod/) !== null;
+            options.prod = domain.tlsConfig.provider.match(/.*-prod/) !== null; // matches 'le-prod' or 'letsencrypt-prod'
         }
 
         // registering user with an email requires A or MX record (https://github.com/letsencrypt/boulder/issues/1197)

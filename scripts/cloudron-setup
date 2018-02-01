@@ -45,7 +45,7 @@ fi
 initBaseImage="true"
 # provisioning data
 provider=""
-tlsProvider="le-prod"
+tlsProvider="letsencrypt-prod"
 requestedVersion=""
 apiServerOrigin="https://api.cloudron.io"
 webServerOrigin="https://cloudron.io"
@@ -67,12 +67,12 @@ while true; do
         if [[ "$2" == "dev" ]]; then
             apiServerOrigin="https://api.dev.cloudron.io"
             webServerOrigin="https://dev.cloudron.io"
-            tlsProvider="le-staging"
+            tlsProvider="letsencrypt-staging"
             prerelease="true"
         elif [[ "$2" == "staging" ]]; then
             apiServerOrigin="https://api.staging.cloudron.io"
             webServerOrigin="https://staging.cloudron.io"
-            tlsProvider="le-staging"
+            tlsProvider="letsencrypt-staging"
             prerelease="true"
         fi
         shift 2;;
@@ -111,8 +111,8 @@ elif [[  \
     exit 1
 fi
 
-if [[ "${tlsProvider}" != "fallback" && "${tlsProvider}" != "le-prod" && "${tlsProvider}" != "le-staging" ]]; then
-    echo "--tls-provider must be one of: le-prod, le-staging, fallback"
+if [[ "${tlsProvider}" != "fallback" && "${tlsProvider}" != "letsencrypt-prod" && "${tlsProvider}" != "letsencrypt-staging" ]]; then
+    echo "--tls-provider must be one of: letsencrypt-prod, letsencrypt-staging, fallback"
     exit 1
 fi
 
