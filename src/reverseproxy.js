@@ -172,8 +172,6 @@ function reload(callback) {
     shell.sudo('reload', [ RELOAD_NGINX_CMD ], callback);
 }
 
-// We configure nginx to always use the fallback cert from the runtime directory (NGINX_CERT_DIR)
-// This is done because Caas wildcard certs should not be part of the backup
 function setFallbackCertificate(domain, fallback, callback) {
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof fallback, 'object');
@@ -191,13 +189,6 @@ function setFallbackCertificate(domain, fallback, callback) {
         if (!safe.child_process.execSync(certCommand)) return callback(new ReverseProxyError(ReverseProxyError.INTERNAL_ERROR, safe.error.message));
     }
 
-    // copy over fallback cert
-    var fallbackCertFilePath = path.join(paths.NGINX_CERT_DIR, `${domain}.host.cert`);
-    var fallbackKeyFilePath = path.join(paths.NGINX_CERT_DIR, `${domain}.host.key`);
-
-    if (!safe.child_process.execSync(`cp ${certFilePath} ${fallbackCertFilePath}`)) return callback(new ReverseProxyError(ReverseProxyError.INTERNAL_ERROR, safe.error.message));
-    if (!safe.child_process.execSync(`cp ${keyFilePath} ${fallbackKeyFilePath}`)) return callback(new ReverseProxyError(ReverseProxyError.INTERNAL_ERROR, safe.error.message));
-
     platform.handleCertChanged('*.' + domain);
 
     reload(function (error) {
@@ -211,7 +202,17 @@ function getFallbackCertificate(domain, callback) {
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    callback(null, path.join(paths.NGINX_CERT_DIR, `${domain}.host.cert`), path.join(paths.NGINX_CERT_DIR, `${domain}.host.key`));
+    // check for any pre-provisioned (caas) certs. they get first priority
+    var certFilePath = path.join(paths.NGINX_CERT_DIR, `${domain}.host.cert`);
+    var keyFilePath = path.join(paths.NGINX_CERT_DIR, `${domain}.host.key`);
+
+    if (fs.existsSync(certFilePath) && fs.existsSync(keyFilePath)) return callback(null, { certFilePath, keyFilePath });
+
+    // check for auto-generated or user set fallback certs
+    certFilePath = path.join(paths.APP_CERTS_DIR, `${domain}.host.cert`);
+    keyFilePath = path.join(paths.APP_CERTS_DIR, `${domain}.host.key`);
+
+    callback(null, { certFilePath, keyFilePath });
 }
 
 function getCertificate(app, callback) {
@@ -223,15 +224,14 @@ function getCertificate(app, callback) {
     var certFilePath = path.join(paths.APP_CERTS_DIR, `${vhost}.user.cert`);
     var keyFilePath = path.join(paths.APP_CERTS_DIR, `${vhost}.user.key`);
 
-    if (fs.existsSync(certFilePath) && fs.existsSync(keyFilePath)) return callback(null, certFilePath, keyFilePath);
+    if (fs.existsSync(certFilePath) && fs.existsSync(keyFilePath)) return callback(null, { certFilePath, keyFilePath });
 
     certFilePath = path.join(paths.APP_CERTS_DIR, `${vhost}.cert`);
     keyFilePath = path.join(paths.APP_CERTS_DIR, `${vhost}.key`);
 
-    if (fs.existsSync(certFilePath) && fs.existsSync(keyFilePath)) return callback(null, certFilePath, keyFilePath);
+    if (fs.existsSync(certFilePath) && fs.existsSync(keyFilePath)) return callback(null, { certFilePath, keyFilePath });
 
-    // any user fallback cert is always copied over to nginx cert dir
-    callback(null, path.join(paths.NGINX_CERT_DIR, `${app.domain}.host.cert`), path.join(paths.NGINX_CERT_DIR, `${app.domain}.host.key`));
+    return getFallbackCertificate(app.domain, callback);
 }
 
 function ensureCertificate(app, auditSource, callback) {
@@ -276,12 +276,7 @@ function ensureCertificate(app, auditSource, callback) {
             eventlog.add(eventlog.ACTION_CERTIFICATE_RENEWAL, auditSource, { domain: vhost, errorMessage: errorMessage });
 
             // if no cert was returned use fallback. the fallback/caas provider will not provide any for example
-            if (!certFilePath || !keyFilePath) {
-                certFilePath = path.join(paths.NGINX_CERT_DIR, `${app.domain}.host.cert`);
-                keyFilePath = path.join(paths.NGINX_CERT_DIR, `${app.domain}.host.key`);
-
-                return callback(null, { certFilePath, keyFilePath, reason: 'fallback' });
-            }
+            if (!certFilePath || !keyFilePath) return getFallbackCertificate(app.domain, callback);
 
             callback(null, { certFilePath, keyFilePath, reason: 'new-le' });
         });

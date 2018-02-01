@@ -158,11 +158,11 @@ function get(domain, callback) {
         if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new DomainError(DomainError.NOT_FOUND));
         if (error) return callback(new DomainError(DomainError.INTERNAL_ERROR, error));
 
-        reverseProxy.getFallbackCertificate(domain, function (error, certFilePath, keyFilePath) {
+        reverseProxy.getFallbackCertificate(domain, function (error, bundle) {
             if (error && error.reason !== ReverseProxyError.NOT_FOUND) return callback(new DomainError(DomainError.INTERNAL_ERROR, error));
 
-            var cert = safe.fs.readFileSync(certFilePath, 'utf-8');
-            var key = safe.fs.readFileSync(keyFilePath, 'utf-8');
+            var cert = safe.fs.readFileSync(bundle.certFilePath, 'utf-8');
+            var key = safe.fs.readFileSync(bundle.keyFilePath, 'utf-8');
 
             if (!cert || !key) return callback(new DomainError(DomainError.INTERNAL_ERROR, error));
 

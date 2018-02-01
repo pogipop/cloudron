@@ -524,12 +524,15 @@ function restartMail(callback) {
     const memoryLimit = Math.max((1 + Math.round(os.totalmem()/(1024*1024*1024)/4)) * 128, 256);
 
     // admin and mail share the same certificate
-    reverseProxy.getCertificate({ intrinsicFqdn: config.adminFqdn(), domain: config.adminDomain() }, function (error, cert, key) {
+    reverseProxy.getCertificate({ intrinsicFqdn: config.adminFqdn(), domain: config.adminDomain() }, function (error, bundle) {
         if (error) return callback(error);
 
         // the setup script copies dhparams.pem to /addons/mail
-        if (!safe.fs.writeFileSync(paths.ADDON_CONFIG_DIR + '/mail/tls_cert.pem', cert)) return callback(new Error('Could not create cert file:' + safe.error.message));
-        if (!safe.fs.writeFileSync(paths.ADDON_CONFIG_DIR + '/mail/tls_key.pem', key))  return callback(new Error('Could not create key file:' + safe.error.message));
+        const mailCertFilePath = path.join(paths.ADDON_CONFIG_DIR, 'mail/tls_cert.pem');
+        const mailKeyFilePath = path.join(paths.ADDON_CONFIG_DIR, 'mail/tls_cert.pem');
+
+        if (!safe.child_process.execSync(`cp ${bundle.certFilePath} ${mailCertFilePath}`)) return callback(new Error('Could not create cert file:' + safe.error.message));
+        if (!safe.child_process.execSync(`cp ${bundle.keyFilePath} ${mailKeyFilePath}`)) return callback(new Error('Could not create key file:' + safe.error.message));
 
         shell.execSync('startMail', 'docker rm -f mail || true');
 
