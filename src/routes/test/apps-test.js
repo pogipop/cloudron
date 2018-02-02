@@ -46,7 +46,7 @@ var TEST_IMAGE_REPO = 'cloudron/test';
 var TEST_IMAGE_TAG = '25.2.0';
 var TEST_IMAGE = TEST_IMAGE_REPO + ':' + TEST_IMAGE_TAG;
 // var TEST_IMAGE_ID = child_process.execSync('docker inspect --format={{.Id}} ' + TEST_IMAGE).toString('utf8').trim();
-1
+
 const DOMAIN_0 = {
     domain: 'example-apps-test.com',
     zoneName: 'example-apps-test.com',
@@ -55,6 +55,8 @@ const DOMAIN_0 = {
     fallbackCertificate: null,
     tlsConfig: { provider: 'fallback' }
 };
+
+const CLOUDRON_ID = 'somecloudronid';
 
 var APP_STORE_ID = 'test', APP_ID;
 var APP_LOCATION = 'appslocation';
@@ -70,6 +72,7 @@ APP_MANIFEST_1.dockerImage = TEST_IMAGE;
 
 var USERNAME = 'superadmin', PASSWORD = 'Foobar?1337', EMAIL ='admin@me.com';
 var USER_1_ID = null, USERNAME_1 = 'user', EMAIL_1 ='user@me.com';
+const USER_1_APPSTORE_TOKEN = 'appstoretoken';
 var token = null; // authentication token
 var token_1 = null;
 
@@ -187,7 +190,6 @@ function startBox(done) {
             superagent.post(SERVER_URL + '/api/v1/cloudron/dns_setup')
                    .send({ provider: 'noop', domain: DOMAIN_0.domain, adminFqdn: 'my.' + DOMAIN_0.domain, config: DOMAIN_0.config, tlsConfig: DOMAIN_0.tlsConfig })
                    .end(function (error, result) {
-                       console.log(result.body)
                 expect(result).to.be.ok();
                 expect(result.statusCode).to.eql(200);
 
@@ -434,7 +436,7 @@ describe('App API', function () {
                .query({ access_token: token })
                .send({ appStoreId: APP_STORE_ID, location: APP_LOCATION, portBindings: null, domain: DOMAIN_0.domain, accessRestriction: { users: [ 'someuser' ], groups: [] } })
                .end(function (err, res) {
-            expect(res.statusCode).to.equal(400);
+            expect(res.statusCode).to.equal(404);
             expect(fake.isDone()).to.be.ok();
             done();
         });
@@ -447,25 +449,33 @@ describe('App API', function () {
                .query({ access_token: token })
                .send({ appStoreId: APP_STORE_ID, location: APP_LOCATION, domain: DOMAIN_0.domain, portBindings: null, accessRestriction: null })
                .end(function (err, res) {
-            expect(res.statusCode).to.equal(503);
+            expect(res.statusCode).to.equal(402);
             expect(fake1.isDone()).to.be.ok();
             done();
         });
     });
 
     it('app install succeeds with purchase', function (done) {
-        var fake1 = nock(config.apiServerOrigin()).get('/api/v1/apps/' + APP_STORE_ID).reply(200, { manifest: APP_MANIFEST });
-        var fake3 = nock(config.apiServerOrigin()).post(function (uri) { return uri.indexOf('/api/v1/users/USER_ID/cloudrons/CLOUDRON_ID/apps/') >= 0; }, { 'appstoreId': APP_STORE_ID }).reply(201, { });
+        var fake1 = nock(config.apiServerOrigin()).post(function (uri) { return uri.indexOf('/api/v1/users/' + USER_1_ID + '/cloudrons') >= 0; }, { 'domain': DOMAIN_0.domain }).reply(201, { cloudron: { id: CLOUDRON_ID } });
+        var fake2 = nock(config.apiServerOrigin()).get('/api/v1/apps/' + APP_STORE_ID).reply(200, { manifest: APP_MANIFEST });
+        var fake3 = nock(config.apiServerOrigin()).post(function (uri) { return uri.indexOf('/api/v1/users/' + USER_1_ID + '/cloudrons/' + CLOUDRON_ID + '/apps/') >= 0; }, { 'appstoreId': APP_STORE_ID }).reply(201, { });
 
-        superagent.post(SERVER_URL + '/api/v1/apps/install')
-               .query({ access_token: token })
-               .send({ appStoreId: APP_STORE_ID, location: APP_LOCATION, domain: DOMAIN_0.domain, portBindings: null, accessRestriction: { users: [ 'someuser' ], groups: [] } })
-               .end(function (err, res) {
-            expect(res.statusCode).to.equal(202);
-            expect(res.body.id).to.be.a('string');
-            APP_ID = res.body.id;
+        settings.setAppstoreConfig({ userId: USER_1_ID, token: USER_1_APPSTORE_TOKEN }, function (error) {
+            if (error) return done(error);
+
             expect(fake1.isDone()).to.be.ok();
-            done();
+
+            superagent.post(SERVER_URL + '/api/v1/apps/install')
+                   .query({ access_token: token })
+                   .send({ appStoreId: APP_STORE_ID, location: APP_LOCATION, domain: DOMAIN_0.domain, portBindings: null, accessRestriction: { users: [ 'someuser' ], groups: [] } })
+                   .end(function (err, res) {
+                expect(res.statusCode).to.equal(202);
+                expect(res.body.id).to.be.a('string');
+                APP_ID = res.body.id;
+                expect(fake2.isDone()).to.be.ok();
+                expect(fake3.isDone()).to.be.ok();
+                done();
+            });
         });
     });
 
@@ -562,30 +572,33 @@ describe('App API', function () {
     });
 
     it('can uninstall app', function (done) {
-        var fake2 = nock(config.apiServerOrigin()).get(function (uri) { return uri.indexOf('/api/v1/users/USER_ID/cloudrons/CLOUDRON_ID/apps/') >= 0; }).reply(200, { });
-        var fake3 = nock(config.apiServerOrigin()).delete(function (uri) { return uri.indexOf('/api/v1/users/USER_ID/cloudrons/CLOUDRON_ID/apps/') >= 0; }).reply(204, { });
+        var fake1 = nock(config.apiServerOrigin()).get(function (uri) { return uri.indexOf('/api/v1/users/' + USER_1_ID + '/cloudrons/' + CLOUDRON_ID + '/apps/') >= 0; }).reply(200, { });
+        var fake2 = nock(config.apiServerOrigin()).delete(function (uri) { return uri.indexOf('/api/v1/users/' + USER_1_ID + '/cloudrons/' + CLOUDRON_ID + '/apps/') >= 0; }).reply(204, { });
 
         superagent.post(SERVER_URL + '/api/v1/apps/' + APP_ID + '/uninstall')
             .send({ password: PASSWORD })
             .query({ access_token: token })
             .end(function (err, res) {
             expect(res.statusCode).to.equal(202);
+            expect(fake1.isDone()).to.be.ok();
+            expect(fake2.isDone()).to.be.ok();
             done();
         });
     });
 
     it('app install succeeds again', function (done) {
         var fake1 = nock(config.apiServerOrigin()).get('/api/v1/apps/' + APP_STORE_ID).reply(200, { manifest: APP_MANIFEST });
-        var fake3 = nock(config.apiServerOrigin()).post(function (uri) { return uri.indexOf('/api/v1/users/USER_ID/cloudrons/CLOUDRON_ID/apps/') >= 0; }, { 'appstoreId': APP_STORE_ID }).reply(201, { });
+        var fake2 = nock(config.apiServerOrigin()).post(function (uri) { return uri.indexOf('/api/v1/users/' + USER_1_ID + '/cloudrons/' + CLOUDRON_ID + '/apps/') >= 0; }, { 'appstoreId': APP_STORE_ID }).reply(201, { });
 
         superagent.post(SERVER_URL + '/api/v1/apps/install')
                .query({ access_token: token })
-               .send({ appStoreId: APP_STORE_ID, location: APP_LOCATION_2, portBindings: null, accessRestriction: null })
+               .send({ appStoreId: APP_STORE_ID, location: APP_LOCATION_2, domain: DOMAIN_0.domain, portBindings: null, accessRestriction: null })
                .end(function (err, res) {
             expect(res.statusCode).to.equal(202);
             expect(res.body.id).to.be.a('string');
             APP_ID = res.body.id;
             expect(fake1.isDone()).to.be.ok();
+            expect(fake2.isDone()).to.be.ok();
             done();
         });
     });
@@ -604,7 +617,7 @@ describe('App API', function () {
 
             superagent.post(SERVER_URL + '/api/v1/apps/install')
                     .query({ access_token: token })
-                    .send({ manifest: APP_MANIFEST, location: APP_LOCATION+APP_LOCATION, portBindings: null, accessRestriction: null })
+                    .send({ manifest: APP_MANIFEST, location: APP_LOCATION+APP_LOCATION, domain: DOMAIN_0.domain, portBindings: null, accessRestriction: null })
                     .end(function (err, res) {
                 expect(res.statusCode).to.equal(202);
                 expect(res.body.id).to.be.a('string');
@@ -624,7 +637,7 @@ describe('App API', function () {
     });
 });
 
-describe('App installation', function () {
+xdescribe('App installation', function () {
     this.timeout(100000);
 
     var apiHockInstance = hock.createHock({ throwOnUnmatched: false }), apiHockServer;
