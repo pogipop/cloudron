@@ -105,7 +105,7 @@ systemctl restart systemd-journald
 setfacl -n -m u:${USER}:r /var/log/journal/*/system.journal
 
 echo "==> Creating config directory"
-rm -rf "${CONFIG_DIR}" && mkdir "${CONFIG_DIR}"
+mkdir -p "${CONFIG_DIR}"
 
 echo "==> Setting up unbound"
 # DO uses Google nameservers by default. This causes RBL queries to fail (host 2.0.0.127.zen.spamhaus.org)
