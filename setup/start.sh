@@ -164,8 +164,8 @@ if ! grep -q "^Restart=" /etc/systemd/system/multi-user.target.wants/nginx.servi
     systemctl daemon-reload
 fi
 # remove this migration after 1.10
-[[ -f /etc/nginx/host.cert ]] && cp /etc/nginx/host.cert "/etc/nginx/${arg_admin_domain}.host.cert"
-[[ -f /etc/nginx/host.key ]] && cp /etc/nginx/host.cert "/etc/nginx/${arg_admin_domain}.host.key"
+[[ -f /etc/nginx/cert/host.cert ]] && cp /etc/nginx/cert/host.cert "/etc/nginx/cert/${arg_admin_domain}.host.cert"
+[[ -f /etc/nginx/cert/host.key ]] && cp /etc/nginx/cert/host.cert "/etc/nginx/cert/${arg_admin_domain}.host.key"
 systemctl start nginx
 
 # bookkeep the version as part of data

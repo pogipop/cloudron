@@ -285,7 +285,7 @@ function removeList(req, res, next) {
     assert.strictEqual(typeof req.params.domain, 'string');
     assert.strictEqual(typeof req.params.groupId, 'string');
 
-    mail.removeList(req.params.domain, req.params.groupId, function (error, result) {
+    mail.removeList(req.params.domain, req.params.groupId, function (error) {
         if (error && error.reason === MailError.NOT_FOUND) return next(new HttpError(404, error.message));
         if (error) return next(new HttpError(500, error));
 
