@@ -268,12 +268,13 @@ function ensureCertificate(app, auditSource, callback) {
         debug('ensureCertificate: getting certificate for %s with options %j', vhost, apiOptions);
 
         api.getCertificate(vhost, apiOptions, function (error, certFilePath, keyFilePath) {
+            var errorMessage = error ? error.message : '';
+
             if (error) {
                 debug('ensureCertificate: could not get certificate. using fallback certs', error);
                 mailer.certificateRenewalError(vhost, errorMessage);
             }
 
-            var errorMessage = error ? error.message : '';
             eventlog.add(eventlog.ACTION_CERTIFICATE_RENEWAL, auditSource, { domain: vhost, errorMessage: errorMessage });
 
             // if no cert was returned use fallback. the fallback/caas provider will not provide any for example
