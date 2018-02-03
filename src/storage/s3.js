@@ -32,7 +32,6 @@ var assert = require('assert'),
     PassThrough = require('stream').PassThrough,
     path = require('path'),
     S3BlockReadStream = require('s3-block-read-stream'),
-    safe = require('safetydance'),
     superagent = require('superagent');
 
 // test only
@@ -142,14 +141,6 @@ function upload(apiConfig, backupFilePath, sourceStream, callback) {
         };
 
         var s3 = new AWS.S3(credentials);
-
-        // exoscale does not like multi-part uploads. so avoid them for filesystem streams < 5GB
-        if (apiConfig.provider === 'exoscale-sos' && typeof sourceStream.path === 'string') {
-            var stat = safe.fs.statSync(sourceStream.path);
-            if (!stat) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, `Error detecting size ${sourceStream.path}. Message: ${safe.error.message}`));
-
-            if (stat.size <= 5 * 1024 * 1024 * 1024) return s3.putObject(params, done);
-        }
 
         // s3.upload automatically does a multi-part upload. we set queueSize to 1 to reduce memory usage
         // uploader will buffer at most queueSize * partSize bytes into memory at any given time.
@@ -304,8 +295,7 @@ function copy(apiConfig, oldFilePath, newFilePath) {
         if (content.Size < 5 * 1024 * 1024 * 1024 || apiConfig.provider === 'digitalocean-spaces') { // DO has not implemented this yet
             events.emit('progress', `Copying ${relativePath}`);
 
-            // for exoscale, '/' should not be encoded
-            copyParams.CopySource = path.join(apiConfig.bucket, encodeURIComponent(content.Key)); // See aws-sdk-js/issues/1302
+            copyParams.CopySource = encodeURIComponent(path.join(apiConfig.bucket, content.Key)); // See aws-sdk-js/issues/1302
             s3.copyObject(copyParams, done).on('retry', function (response) {
                 ++retryCount;
                 events.emit('progress', `Retrying (${response.retryCount+1}) copy of ${relativePath}. Status code: ${response.httpResponse.statusCode}`);
