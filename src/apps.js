@@ -654,14 +654,16 @@ function configure(appId, data, auditSource, callback) {
             // save cert to boxdata/certs. TODO: move this to apptask when we have a real task queue
             if ('cert' in data && 'key' in data) {
                 if (data.cert && data.key) {
-                    error = reverseProxy.validateCertificate(intrinsicFqdn, data.cert, data.key);
+                    var vhost = values.altDomain || intrinsicFqdn;
+
+                    error = reverseProxy.validateCertificate(vhost, data.cert, data.key);
                     if (error) return callback(new AppsError(AppsError.BAD_CERTIFICATE, error.message));
 
-                    if (!safe.fs.writeFileSync(path.join(paths.APP_CERTS_DIR, intrinsicFqdn + '.user.cert'), data.cert)) return callback(new AppsError(AppsError.INTERNAL_ERROR, 'Error saving cert: ' + safe.error.message));
-                    if (!safe.fs.writeFileSync(path.join(paths.APP_CERTS_DIR, intrinsicFqdn + '.user.key'), data.key)) return callback(new AppsError(AppsError.INTERNAL_ERROR, 'Error saving key: ' + safe.error.message));
+                    if (!safe.fs.writeFileSync(path.join(paths.APP_CERTS_DIR, `${vhost}.user.cert`), data.cert)) return callback(new AppsError(AppsError.INTERNAL_ERROR, 'Error saving cert: ' + safe.error.message));
+                    if (!safe.fs.writeFileSync(path.join(paths.APP_CERTS_DIR, `${vhost}.user.key`), data.key)) return callback(new AppsError(AppsError.INTERNAL_ERROR, 'Error saving key: ' + safe.error.message));
                 } else { // remove existing cert/key
-                    if (!safe.fs.unlinkSync(path.join(paths.APP_CERTS_DIR, intrinsicFqdn + '.user.cert'))) debug('Error removing cert: ' + safe.error.message);
-                    if (!safe.fs.unlinkSync(path.join(paths.APP_CERTS_DIR, intrinsicFqdn + '.user.key'))) debug('Error removing key: ' + safe.error.message);
+                    if (!safe.fs.unlinkSync(path.join(paths.APP_CERTS_DIR, `${vhost}.user.cert`))) debug('Error removing cert: ' + safe.error.message);
+                    if (!safe.fs.unlinkSync(path.join(paths.APP_CERTS_DIR, `${vhost}..user.key`))) debug('Error removing key: ' + safe.error.message);
                 }
             }
 
