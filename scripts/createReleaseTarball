@@ -39,14 +39,14 @@ if [[ "$(node --version)" != "v8.9.3" ]]; then
     exit 1
 fi
 
-version=$(cd "${SOURCE_DIR}" && git rev-parse "HEAD")
+box_version=$(cd "${SOURCE_DIR}" && git rev-parse "HEAD")
 webadmin_version=$(cd "${SOURCE_DIR}/../webadmin" && git rev-parse "HEAD")
 bundle_dir=$(mktemp -d -t box 2>/dev/null || mktemp -d box-XXXXXXXXXX --tmpdir=$TMPDIR)
-[[ -z "$bundle_file" ]] && bundle_file="${TMPDIR}/box-${version}.tar.gz"
+[[ -z "$bundle_file" ]] && bundle_file="${TMPDIR}/box-${box_version:0:10}-${webadmin_version:0:10}.tar.gz"
 
 chmod "o+rx,g+rx" "${bundle_dir}" # otherwise extracted tarball director won't be readable by others/group
-echo "Checking out code box version [${version}] and webadmin version [${webadmin_version}] into ${bundle_dir}"
-(cd "${SOURCE_DIR}" && git archive --format=tar ${version} | (cd "${bundle_dir}" && tar xf -))
+echo "Checking out code box version [${box_version}] and webadmin version [${webadmin_version}] into ${bundle_dir}"
+(cd "${SOURCE_DIR}" && git archive --format=tar ${box_version} | (cd "${bundle_dir}" && tar xf -))
 (cd "${SOURCE_DIR}/../webadmin" && git archive --format=tar ${webadmin_version} | (cd "${bundle_dir}" && tar xf -))
 (cp "${SOURCE_DIR}/../webadmin/LICENSE" "${bundle_dir}")
 
