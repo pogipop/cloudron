@@ -46,7 +46,6 @@ var assert = require('assert'),
     fs = require('fs'),
     path = require('path'),
     safe = require('safetydance'),
-    tld = require('tldjs'),
     _ = require('underscore');
 
 
