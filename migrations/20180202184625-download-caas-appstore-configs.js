@@ -34,7 +34,7 @@ exports.up = function(db, callback) {
 
                 console.log('Adding %j config', result.body);
 
-                async.eachSeries([
+                async.series([
                     db.runSql.bind(db, 'INSERT settings (name, value) VALUES(?, ?)', [ 'appstore_config', JSON.stringify(result.body.appstoreConfig) ]),
                     db.runSql.bind(db, 'INSERT settings (name, value) VALUES(?, ?)', [ 'caas_config', JSON.stringify(result.body.caasConfig) ])
                 ], callback);
