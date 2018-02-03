@@ -44,6 +44,7 @@ var acme = require('./cert/acme.js'),
     platform = require('./platform.js'),
     safe = require('safetydance'),
     shell = require('./shell.js'),
+    tld = require('tldjs'),
     user = require('./user.js'),
     util = require('util');
 
@@ -276,7 +277,7 @@ function ensureCertificate(app, auditSource, callback) {
             eventlog.add(eventlog.ACTION_CERTIFICATE_RENEWAL, auditSource, { domain: vhost, errorMessage: errorMessage });
 
             // if no cert was returned use fallback. the fallback/caas provider will not provide any for example
-            if (!certFilePath || !keyFilePath) return getFallbackCertificate(app.domain, callback);
+            if (!certFilePath || !keyFilePath) return getFallbackCertificate(app.altDomain ? tld.getDomain(app.altDomain) : app.domain, callback);
 
             callback(null, { certFilePath, keyFilePath, reason: 'new-le' });
         });
