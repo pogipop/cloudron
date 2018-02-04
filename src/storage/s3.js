@@ -266,6 +266,21 @@ function downloadDir(apiConfig, backupFilePath, destDir) {
     return events;
 }
 
+// https://github.com/aws/aws-sdk-js/blob/2b6bcbdec1f274fe931640c1b61ece999aae7a19/lib/util.js#L41
+// https://github.com/GeorgePhillips/node-s3-url-encode/blob/master/index.js
+// See aws-sdk-js/issues/1302
+function encodeCopySource(bucket, path) {
+    var output = encodeURI(path)
+
+    // AWS percent-encodes some extra non-standard characters in a URI
+    output = output.replace(/[+!"#$@&'()*+,:;=?@]/g, function(ch) {
+        return '%' + ch.charCodeAt(0).toString(16).toUpperCase();
+    });
+
+    // the slash at the beginning is optional
+    return `/${bucket}/${output}`;
+}
+
 function copy(apiConfig, oldFilePath, newFilePath) {
     assert.strictEqual(typeof apiConfig, 'object');
     assert.strictEqual(typeof oldFilePath, 'string');
@@ -295,7 +310,7 @@ function copy(apiConfig, oldFilePath, newFilePath) {
         if (content.Size < 5 * 1024 * 1024 * 1024 || apiConfig.provider === 'digitalocean-spaces') { // DO has not implemented this yet
             events.emit('progress', `Copying ${relativePath}`);
 
-            copyParams.CopySource = encodeURIComponent(path.join(apiConfig.bucket, content.Key)); // See aws-sdk-js/issues/1302
+            copyParams.CopySource = encodeCopySource(apiConfig.bucket, content.Key);
             s3.copyObject(copyParams, done).on('retry', function (response) {
                 ++retryCount;
                 events.emit('progress', `Retrying (${response.retryCount+1}) copy of ${relativePath}. Status code: ${response.httpResponse.statusCode}`);
@@ -324,7 +339,7 @@ function copy(apiConfig, oldFilePath, newFilePath) {
                 var params = {
                     Bucket: apiConfig.bucket,
                     Key: path.join(newFilePath, relativePath),
-                    CopySource: path.join(apiConfig.bucket, encodeURIComponent(content.Key)), // See aws-sdk-js/issues/1302
+                    CopySource: encodeCopySource(apiConfig.bucket, content.Key), // See aws-sdk-js/issues/1302
                     CopySourceRange: 'bytes=' + startBytes + '-' + endBytes,
                     PartNumber: partNumber,
                     UploadId: uploadId
