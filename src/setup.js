@@ -73,7 +73,7 @@ function SetupError(reason, errorOrMessage) {
 }
 util.inherits(SetupError, Error);
 SetupError.BAD_FIELD = 'Field error';
-SetupError.BAD_STATE = 'Field error';
+SetupError.BAD_STATE = 'Bad State';
 SetupError.ALREADY_SETUP = 'Already Setup';
 SetupError.INTERNAL_ERROR = 'Internal Error';
 SetupError.EXTERNAL_ERROR = 'External Error';
@@ -184,6 +184,8 @@ function dnsSetup(adminFqdn, domain, zoneName, provider, dnsConfig, tlsConfig, c
 
     if (config.adminDomain()) return callback(new SetupError(SetupError.ALREADY_SETUP));
 
+    if (gWebadminStatus.configuring || gWebadminStatus.restoring) return callback(new SetupError(SetupError.BAD_STATE, 'Already restoring or configuring'));
+
     if (!zoneName) zoneName = tld.getDomain(domain) || domain;
 
     debug('dnsSetup: Setting up Cloudron with domain %s and zone %s', domain, zoneName);
@@ -290,6 +292,8 @@ function restore(backupConfig, backupId, version, callback) {
 
     if (!semver.valid(version)) return callback(new SetupError(SetupError.BAD_STATE, 'version is not a valid semver'));
     if (semver.major(config.version()) !== semver.major(version) || semver.minor(config.version()) !== semver.minor(version)) return callback(new SetupError(SetupError.BAD_STATE, `Run cloudron-setup with --version ${version} to restore from this backup`));
+
+    if (gWebadminStatus.configuring || gWebadminStatus.restoring) return callback(new SetupError(SetupError.BAD_STATE, 'Already restoring or configuring'));
 
     user.count(function (error, count) {
         if (error) return callback(new SetupError(SetupError.INTERNAL_ERROR, error));
