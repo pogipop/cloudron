@@ -270,7 +270,7 @@ function downloadDir(apiConfig, backupFilePath, destDir) {
 // https://github.com/GeorgePhillips/node-s3-url-encode/blob/master/index.js
 // See aws-sdk-js/issues/1302
 function encodeCopySource(bucket, path) {
-    var output = encodeURI(path)
+    var output = encodeURI(path);
 
     // AWS percent-encodes some extra non-standard characters in a URI
     output = output.replace(/[+!"#$@&'()*+,:;=?@]/g, function(ch) {
