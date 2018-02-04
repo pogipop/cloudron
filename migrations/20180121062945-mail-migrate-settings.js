@@ -17,7 +17,7 @@ exports.up = function(db, callback) {
             allSettings.forEach(function (setting) {
                 switch (setting.name) {
                 case 'mail_from_validation': mailFromValidation = !!setting.value; break;
-                case 'catch_all_address': catchAll = setting.value; break;
+                case 'catch_all_address': catchAll = JSON.parse(setting.value); break;
                 case 'mail_relay': relay = JSON.parse(setting.value); break;
                 case 'mail_config': mailEnabled = JSON.parse(setting.value).enabled; break;
                 }
