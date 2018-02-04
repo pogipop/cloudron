@@ -84,7 +84,7 @@ function getMailConfig(callback) {
                     adminEmails: adminEmails,
                     cloudronName: cloudronName,
                     notificationDomain: defaultDomain.domain,
-                    notificationFrom: '"' + cloudronName + '" <no-reply@' + defaultDomain.domain + '>'
+                    notificationFrom: `"${cloudronName}" <no-reply@${defaultDomain.domain}>`
                 });
             });
         });
@@ -540,7 +540,7 @@ function sendTestMail(domain, email) {
         if (error) return debug('Error getting mail details:', error);
 
         var mailOptions = {
-            from: `no-reply@${domain}`,
+            from: `"${mailConfig.cloudronName}" <no-reply@${domain}>`,
             to: email,
             subject: util.format('Test Email from %s', mailConfig.cloudronName),
             text: render('test.ejs', { cloudronName: mailConfig.cloudronName, format: 'text'})

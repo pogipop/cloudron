@@ -809,7 +809,7 @@ function setMailEnabled(domain, enabled, callback) {
 
 function sendTestMail(domain, to, callback) {
     assert.strictEqual(typeof domain, 'string');
-    assert.strictEqual(typeof to, 'object');
+    assert.strictEqual(typeof to, 'string');
     assert.strictEqual(typeof callback, 'function');
 
     get(domain, function (error, result) {
