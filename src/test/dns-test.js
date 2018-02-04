@@ -535,7 +535,7 @@ describe('dns provider', function () {
             DOMAIN_0.provider = 'gcdns';
             DOMAIN_0.config = {
                 projectId: 'my-dns-proj',
-                keyFilename: __dirname + '/syn-im-1ec6f9f870bf.json'
+                keyFilename: __dirname + '/gcdns.json'
             };
 
             function mockery (queue) {
