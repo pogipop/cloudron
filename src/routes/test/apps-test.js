@@ -9,7 +9,6 @@
 var appdb = require('../../appdb.js'),
     apps = require('../../apps.js'),
     assert = require('assert'),
-    path = require('path'),
     async = require('async'),
     child_process = require('child_process'),
     clients = require('../../clients.js'),
@@ -17,17 +16,15 @@ var appdb = require('../../appdb.js'),
     constants = require('../../constants.js'),
     database = require('../../database.js'),
     docker = require('../../docker.js').connection,
-    domains = require('../../domains.js'),
     expect = require('expect.js'),
     fs = require('fs'),
     hock = require('hock'),
     http = require('http'),
     https = require('https'),
-    js2xml = require('js2xmlparser').parse,
     ldap = require('../../ldap.js'),
-    mail = require('../../mail.js'),
     net = require('net'),
     nock = require('nock'),
+    path = require('path'),
     paths = require('../../paths.js'),
     safe = require('safetydance'),
     server = require('../../server.js'),
@@ -43,9 +40,8 @@ var SERVER_URL = 'http://localhost:' + config.get('port');
 
 // Test image information
 var TEST_IMAGE_REPO = 'cloudron/test';
-var TEST_IMAGE_TAG = '25.2.0';
+var TEST_IMAGE_TAG = '25.4.0';
 var TEST_IMAGE = TEST_IMAGE_REPO + ':' + TEST_IMAGE_TAG;
-// var TEST_IMAGE_ID = child_process.execSync('docker inspect --format={{.Id}} ' + TEST_IMAGE).toString('utf8').trim();
 
 const DOMAIN_0 = {
     domain: 'example-apps-test.com',
@@ -75,8 +71,6 @@ var USER_1_ID = null, USERNAME_1 = 'user', EMAIL_1 ='user@me.com';
 const USER_1_APPSTORE_TOKEN = 'appstoretoken';
 var token = null; // authentication token
 var token_1 = null;
-
-var awsHostedZones;
 
 function startDockerProxy(interceptor, callback) {
     assert.strictEqual(typeof interceptor, 'function');
@@ -163,21 +157,6 @@ function startBox(done) {
 
     safe.fs.unlinkSync(paths.INFRA_VERSION_FILE);
     child_process.execSync('docker ps -qa | xargs --no-run-if-empty docker rm -f');
-
-    // awsHostedZones = {
-    //      HostedZones: [{
-    //          Id: '/hostedzone/ZONEID',
-    //          Name: config.zoneName() + '.',
-    //          CallerReference: '305AFD59-9D73-4502-B020-F4E6F889CB30',
-    //          ResourceRecordSetCount: 2,
-    //          ChangeInfo: {
-    //              Id: '/change/CKRTFJA0ANHXB',
-    //              Status: 'INSYNC'
-    //          }
-    //      }],
-    //     IsTruncated: false,
-    //     MaxItems: '100'
-    //  };
 
     async.series([
         // first clear, then start server. otherwise, taskmanager spins up tasks for obsolete appIds
@@ -637,7 +616,7 @@ describe('App API', function () {
     });
 });
 
-xdescribe('App installation', function () {
+describe('App installation', function () {
     this.timeout(100000);
 
     var apiHockInstance = hock.createHock({ throwOnUnmatched: false }), apiHockServer;
@@ -659,49 +638,32 @@ xdescribe('App installation', function () {
             function (callback) {
                 apiHockInstance
                     .get('/api/v1/apps/' + APP_STORE_ID + '/versions/' + APP_MANIFEST.version + '/icon')
-                    .replyWithFile(200, path.resolve(__dirname, '../../../webadmin/src/img/appicon_fallback.png'));
+                    .replyWithFile(200, path.resolve(__dirname, '../../../assets/avatar.png'));
 
                 var port = parseInt(url.parse(config.apiServerOrigin()).port, 10);
                 apiHockServer = http.createServer(apiHockInstance.handler).listen(port, callback);
             },
 
-            settings.setDnsConfig.bind(null, { provider: 'route53', accessKeyId: 'accessKeyId', secretAccessKey: 'secretAccessKey', endpoint: 'http://localhost:5353' }, config.adminDomain(), config.zoneName()),
-
-            settings.setTlsConfig.bind(null, { provider: 'caas' }),
-
             function (callback) {
-                awsHockInstance
-                    .get('/2013-04-01/hostedzone')
-                    .max(Infinity)
-                    .reply(200, js2xml('ListHostedZonesResponse', awsHostedZones, { wrapHandlers: { HostedZones: () => 'HostedZone'} }), { 'Content-Type': 'application/xml' })
-                    .filteringPathRegEx(/name=[^&]*/, 'name=location')
-                    .get('/2013-04-01/hostedzone/ZONEID/rrset?maxitems=1&name=location&type=A')
-                    .max(Infinity)
-                    .reply(200, js2xml('ListResourceRecordSetsResponse', { ResourceRecordSets: [ ] }, { 'Content-Type': 'application/xml' }))
-                    .filteringRequestBody(function (unusedBody) { return ''; }) // strip out body
-                    .post('/2013-04-01/hostedzone/ZONEID/rrset/')
-                    .max(Infinity)
-                    .reply(200, js2xml('ChangeResourceRecordSetsResponse', { ChangeInfo: { Id: 'dnsrecordid', Status: 'INSYNC' } }), { 'Content-Type': 'application/xml' });
+                var fake1 = nock(config.apiServerOrigin()).post(function (uri) { return uri.indexOf('/api/v1/users/' + USER_1_ID + '/cloudrons') >= 0; }, { 'domain': DOMAIN_0.domain }).reply(201, { cloudron: { id: CLOUDRON_ID } });
+                settings.setAppstoreConfig({ userId: USER_1_ID, token: USER_1_APPSTORE_TOKEN }, function (error) {
+                    if (error) return callback(error);
 
-                awsHockServer = http.createServer(awsHockInstance.handler).listen(5353, callback);
+                    expect(fake1.isDone()).to.be.ok();
+
+                    callback();
+                });
             }
         ], done);
     });
 
-    after(function (done) {
-        APP_ID = null;
-        async.series([
-            apiHockServer.close.bind(apiHockServer),
-            awsHockServer.close.bind(awsHockServer),
-            stopBox
-        ], done);
-    });
+    after(stopBox);
 
     var appResult = null, appEntry = null;
 
     it('can install test app', function (done) {
         var fake1 = nock(config.apiServerOrigin()).get('/api/v1/apps/' + APP_STORE_ID).reply(200, { manifest: APP_MANIFEST });
-        var fake3 = nock(config.apiServerOrigin()).post(function (uri) { return uri.indexOf('/api/v1/users/USER_ID/cloudrons/CLOUDRON_ID/apps/') >= 0; }, { 'appstoreId': APP_STORE_ID }).reply(201, { });
+        var fake2 = nock(config.apiServerOrigin()).post(function (uri) { return uri.indexOf('/api/v1/users/' + USER_1_ID + '/cloudrons/' + CLOUDRON_ID + '/apps/') >= 0; }, { 'appstoreId': APP_STORE_ID }).reply(201, { });
 
         var count = 0;
         function checkInstallStatus() {
@@ -718,10 +680,11 @@ xdescribe('App installation', function () {
 
         superagent.post(SERVER_URL + '/api/v1/apps/install')
               .query({ access_token: token })
-              .send({ appStoreId: APP_STORE_ID, location: APP_LOCATION, portBindings: { ECHO_SERVER_PORT: 7171 }, accessRestriction: null })
+              .send({ appStoreId: APP_STORE_ID, location: APP_LOCATION, domain: DOMAIN_0.domain, portBindings: { ECHO_SERVER_PORT: 7171 }, accessRestriction: null })
               .end(function (err, res) {
             expect(res.statusCode).to.equal(202);
             expect(fake1.isDone()).to.be.ok();
+            expect(fake2.isDone()).to.be.ok();
             APP_ID = res.body.id;
             checkInstallStatus();
         });
