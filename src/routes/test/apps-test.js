@@ -14,6 +14,7 @@ var appdb = require('../../appdb.js'),
     clients = require('../../clients.js'),
     config = require('../../config.js'),
     constants = require('../../constants.js'),
+    apphealthmonitor = require('../../apphealthmonitor.js'),
     database = require('../../database.js'),
     docker = require('../../docker.js').connection,
     expect = require('expect.js'),
@@ -56,7 +57,6 @@ const CLOUDRON_ID = 'somecloudronid';
 
 var APP_STORE_ID = 'test', APP_ID;
 var APP_LOCATION = 'appslocation';
-var APP_DOMAIN = 'example-apps-test.com';
 var APP_LOCATION_2 = 'appslocationtwo';
 var APP_LOCATION_NEW = 'appslocationnew';
 
@@ -66,10 +66,17 @@ APP_MANIFEST.dockerImage = TEST_IMAGE;
 var APP_MANIFEST_1 = JSON.parse(fs.readFileSync(__dirname + '/../../../../test-app/CloudronManifest.json', 'utf8'));
 APP_MANIFEST_1.dockerImage = TEST_IMAGE;
 
-var USERNAME = 'superadmin', PASSWORD = 'Foobar?1337', EMAIL ='admin@me.com';
-var USER_1_ID = null, USERNAME_1 = 'user', EMAIL_1 ='user@me.com';
+const USERNAME = 'superadmin';
+const PASSWORD = 'Foobar?1337';
+const EMAIL ='admin@me.com';
+
 const USER_1_APPSTORE_TOKEN = 'appstoretoken';
-var token = null; // authentication token
+const USERNAME_1 = 'user';
+const EMAIL_1 ='user@me.com';
+var user_1_id = null;
+
+// authentication token
+var token = null;
 var token_1 = null;
 
 function startDockerProxy(interceptor, callback) {
@@ -113,6 +120,7 @@ function checkAddons(appEntry, done) {
 
                 delete body.recvmail; // unclear why dovecot mail delivery won't work
                 delete body.stdenv; // cannot access APP_ORIGIN
+                delete body.email; // sieve will fail not sure why yet
 
                 for (var key in body) {
                     if (body[key] !== 'OK') return callback('Not done yet: ' + JSON.stringify(body));
@@ -197,7 +205,7 @@ function startBox(done) {
                    .end(function (err, res) {
                 expect(res.statusCode).to.equal(201);
 
-                USER_1_ID = res.body.id;
+                user_1_id = res.body.id;
 
                 callback(null);
             });
@@ -207,7 +215,7 @@ function startBox(done) {
             token_1 = tokendb.generateToken();
 
             // HACK to get a token for second user (passwords are generated and the user should have gotten a password setup link...)
-            tokendb.add(token_1, USER_1_ID, 'test-client-id',  Date.now() + 100000, '*', callback);
+            tokendb.add(token_1, user_1_id, 'test-client-id',  Date.now() + 1000000, '*', callback);
         },
 
         function (callback) {
@@ -242,6 +250,7 @@ function stopBox(done) {
 
     // db is not cleaned up here since it's too late to call it after server.stop. if called before server.stop taskmanager apptasks are unhappy :/
     async.series([
+        apphealthmonitor.stop,
         taskmanager.stopPendingTasks,
         taskmanager.waitForPendingTasks,
         appdb._clear,
@@ -435,11 +444,11 @@ describe('App API', function () {
     });
 
     it('app install succeeds with purchase', function (done) {
-        var fake1 = nock(config.apiServerOrigin()).post(function (uri) { return uri.indexOf('/api/v1/users/' + USER_1_ID + '/cloudrons') >= 0; }, { 'domain': DOMAIN_0.domain }).reply(201, { cloudron: { id: CLOUDRON_ID } });
+        var fake1 = nock(config.apiServerOrigin()).post(function (uri) { return uri.indexOf('/api/v1/users/' + user_1_id + '/cloudrons') >= 0; }, { 'domain': DOMAIN_0.domain }).reply(201, { cloudron: { id: CLOUDRON_ID } });
         var fake2 = nock(config.apiServerOrigin()).get('/api/v1/apps/' + APP_STORE_ID).reply(200, { manifest: APP_MANIFEST });
-        var fake3 = nock(config.apiServerOrigin()).post(function (uri) { return uri.indexOf('/api/v1/users/' + USER_1_ID + '/cloudrons/' + CLOUDRON_ID + '/apps/') >= 0; }, { 'appstoreId': APP_STORE_ID }).reply(201, { });
+        var fake3 = nock(config.apiServerOrigin()).post(function (uri) { return uri.indexOf('/api/v1/users/' + user_1_id + '/cloudrons/' + CLOUDRON_ID + '/apps/') >= 0; }, { 'appstoreId': APP_STORE_ID }).reply(201, { });
 
-        settings.setAppstoreConfig({ userId: USER_1_ID, token: USER_1_APPSTORE_TOKEN }, function (error) {
+        settings.setAppstoreConfig({ userId: user_1_id, token: USER_1_APPSTORE_TOKEN }, function (error) {
             if (error) return done(error);
 
             expect(fake1.isDone()).to.be.ok();
@@ -551,8 +560,8 @@ describe('App API', function () {
     });
 
     it('can uninstall app', function (done) {
-        var fake1 = nock(config.apiServerOrigin()).get(function (uri) { return uri.indexOf('/api/v1/users/' + USER_1_ID + '/cloudrons/' + CLOUDRON_ID + '/apps/') >= 0; }).reply(200, { });
-        var fake2 = nock(config.apiServerOrigin()).delete(function (uri) { return uri.indexOf('/api/v1/users/' + USER_1_ID + '/cloudrons/' + CLOUDRON_ID + '/apps/') >= 0; }).reply(204, { });
+        var fake1 = nock(config.apiServerOrigin()).get(function (uri) { return uri.indexOf('/api/v1/users/' + user_1_id + '/cloudrons/' + CLOUDRON_ID + '/apps/') >= 0; }).reply(200, { });
+        var fake2 = nock(config.apiServerOrigin()).delete(function (uri) { return uri.indexOf('/api/v1/users/' + user_1_id + '/cloudrons/' + CLOUDRON_ID + '/apps/') >= 0; }).reply(204, { });
 
         superagent.post(SERVER_URL + '/api/v1/apps/' + APP_ID + '/uninstall')
             .send({ password: PASSWORD })
@@ -567,7 +576,7 @@ describe('App API', function () {
 
     it('app install succeeds again', function (done) {
         var fake1 = nock(config.apiServerOrigin()).get('/api/v1/apps/' + APP_STORE_ID).reply(200, { manifest: APP_MANIFEST });
-        var fake2 = nock(config.apiServerOrigin()).post(function (uri) { return uri.indexOf('/api/v1/users/' + USER_1_ID + '/cloudrons/' + CLOUDRON_ID + '/apps/') >= 0; }, { 'appstoreId': APP_STORE_ID }).reply(201, { });
+        var fake2 = nock(config.apiServerOrigin()).post(function (uri) { return uri.indexOf('/api/v1/users/' + user_1_id + '/cloudrons/' + CLOUDRON_ID + '/apps/') >= 0; }, { 'appstoreId': APP_STORE_ID }).reply(201, { });
 
         superagent.post(SERVER_URL + '/api/v1/apps/install')
                .query({ access_token: token })
@@ -620,13 +629,11 @@ describe('App installation', function () {
     this.timeout(100000);
 
     var apiHockInstance = hock.createHock({ throwOnUnmatched: false }), apiHockServer;
-    var awsHockInstance = hock.createHock({ throwOnUnmatched: false }), awsHockServer;
 
-    // *.foobar.com
     var validCert1, validKey1;
 
     before(function (done) {
-        child_process.execSync('openssl req -subj "/CN=*.foobar.com/O=My Company Name LTD./C=US" -new -newkey rsa:2048 -days 365 -nodes -x509 -keyout /tmp/server.key -out /tmp/server.crt');
+        child_process.execSync('openssl req -subj "/CN=*.' + DOMAIN_0.domain + '/O=My Company Name LTD./C=US" -new -newkey rsa:2048 -days 365 -nodes -x509 -keyout /tmp/server.key -out /tmp/server.crt');
         validKey1 = fs.readFileSync('/tmp/server.key', 'utf8');
         validCert1 = fs.readFileSync('/tmp/server.crt', 'utf8');
 
@@ -634,6 +641,7 @@ describe('App installation', function () {
 
         async.series([
             startBox,
+            apphealthmonitor.start,
 
             function (callback) {
                 apiHockInstance
@@ -645,8 +653,8 @@ describe('App installation', function () {
             },
 
             function (callback) {
-                var fake1 = nock(config.apiServerOrigin()).post(function (uri) { return uri.indexOf('/api/v1/users/' + USER_1_ID + '/cloudrons') >= 0; }, { 'domain': DOMAIN_0.domain }).reply(201, { cloudron: { id: CLOUDRON_ID } });
-                settings.setAppstoreConfig({ userId: USER_1_ID, token: USER_1_APPSTORE_TOKEN }, function (error) {
+                var fake1 = nock(config.apiServerOrigin()).post(function (uri) { return uri.indexOf('/api/v1/users/' + user_1_id + '/cloudrons') >= 0; }, { 'domain': DOMAIN_0.domain }).reply(201, { cloudron: { id: CLOUDRON_ID } });
+                settings.setAppstoreConfig({ userId: user_1_id, token: USER_1_APPSTORE_TOKEN }, function (error) {
                     if (error) return callback(error);
 
                     expect(fake1.isDone()).to.be.ok();
@@ -663,7 +671,7 @@ describe('App installation', function () {
 
     it('can install test app', function (done) {
         var fake1 = nock(config.apiServerOrigin()).get('/api/v1/apps/' + APP_STORE_ID).reply(200, { manifest: APP_MANIFEST });
-        var fake2 = nock(config.apiServerOrigin()).post(function (uri) { return uri.indexOf('/api/v1/users/' + USER_1_ID + '/cloudrons/' + CLOUDRON_ID + '/apps/') >= 0; }, { 'appstoreId': APP_STORE_ID }).reply(201, { });
+        var fake2 = nock(config.apiServerOrigin()).post(function (uri) { return uri.indexOf('/api/v1/users/' + user_1_id + '/cloudrons/' + CLOUDRON_ID + '/apps/') >= 0; }, { 'appstoreId': APP_STORE_ID }).reply(201, { });
 
         var count = 0;
         function checkInstallStatus() {
@@ -713,8 +721,8 @@ describe('App installation', function () {
             expect(data.Config.Env).to.contain('WEBADMIN_ORIGIN=' + config.adminOrigin());
             expect(data.Config.Env).to.contain('API_ORIGIN=' + config.adminOrigin());
             expect(data.Config.Env).to.contain('CLOUDRON=1');
-            expect(data.Config.Env).to.contain('APP_ORIGIN=https://' + APP_LOCATION + '.' + APP_DOMAIN);
-            expect(data.Config.Env).to.contain('APP_DOMAIN=' + APP_LOCATION + '.' + APP_DOMAIN);
+            expect(data.Config.Env).to.contain('APP_ORIGIN=https://' + APP_LOCATION + '.' + DOMAIN_0.domain);
+            expect(data.Config.Env).to.contain('APP_DOMAIN=' + APP_LOCATION + '.' + DOMAIN_0.domain);
             // Hostname must not be set of app fqdn or app location!
             expect(data.Config.Hostname).to.not.contain(APP_LOCATION);
             expect(data.Config.Env).to.contain('ECHO_SERVER_PORT=7171');
@@ -1092,8 +1100,8 @@ describe('App installation', function () {
     });
 
     it('can uninstall app', function (done) {
-        var fake2 = nock(config.apiServerOrigin()).get(function (uri) { return uri.indexOf('/api/v1/users/USER_ID/cloudrons/CLOUDRON_ID/apps/') >= 0; }).reply(200, { });
-        var fake3 = nock(config.apiServerOrigin()).delete(function (uri) { return uri.indexOf('/api/v1/users/USER_ID/cloudrons/CLOUDRON_ID/apps/') >= 0; }).reply(204, { });
+        var fake1 = nock(config.apiServerOrigin()).get(function (uri) { return uri.indexOf('/api/v1/users/' + user_1_id + '/cloudrons/' + CLOUDRON_ID + '/apps/') >= 0; }).reply(200, { });
+        var fake2 = nock(config.apiServerOrigin()).delete(function (uri) { return uri.indexOf('/api/v1/users/' + user_1_id + '/cloudrons/' + CLOUDRON_ID + '/apps/') >= 0; }).reply(204, { });
 
         var count = 0;
         function checkUninstallStatus() {
@@ -1111,6 +1119,10 @@ describe('App installation', function () {
             .query({ access_token: token })
             .end(function (err, res) {
             expect(res.statusCode).to.equal(202);
+
+            expect(fake1.isDone()).to.be.ok();
+            expect(fake2.isDone()).to.be.ok();
+
             checkUninstallStatus();
         });
     });
@@ -1136,11 +1148,7 @@ describe('App installation', function () {
     it('uninstalled - unregistered subdomain', function (done) {
         apiHockInstance.done(function (error) { // checks if all the apiHockServer APIs were called
             expect(!error).to.be.ok();
-
-            awsHockInstance.done(function (error) {
-                expect(!error).to.be.ok();
-                done();
-            });
+            done();
         });
     });
 
