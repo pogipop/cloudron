@@ -469,45 +469,56 @@ function getStatus(domain, callback) {
 function createMailConfig(callback) {
     assert.strictEqual(typeof callback, 'function');
 
-    const mailFqdn = config.mailFqdn();
-
     debug('createMailConfig: generating mail config');
 
-    maildb.getAll(function (error, mailOutDomains) {
+    maildb.getAll(function (error, mailDomains) {
         if (error) return callback(error);
 
-        var mailDomain = mailOutDomains[0]; // mail container can only handle one domain at this point
-
-        const alertsFrom = `no-reply@${mailDomain.domain}`;
-
         user.getOwner(function (error, owner) {
+            const mailFqdn = config.mailFqdn();
+            const defaultDomain = config.adminDomain();
+            const alertsFrom = `no-reply@${defaultDomain}`;
+
             const alertsTo = config.provider() === 'caas' ? [ 'support@cloudron.io' ] : [ ];
             alertsTo.concat(error ? [] : owner.email).join(','); // owner may not exist yet
 
-            const mailOutDomain = mailDomain.domain;
-            const mailInDomain = mailDomain.enabled ? mailDomain.domain : '';
-            const catchAll = mailDomain.catchAll.map(function (c) { return `${c}@${mailDomain.domain}`; }).join(',');
-            const mailFromValidation = mailDomain.mailFromValidation;
+            const mailOutDomains = mailDomains.map(function (d) { return d.domain; }).join(',');
+            const mailInDomains = mailDomains.filter(function (d) { return d.enabled; }).map(function (d) { return d.domain; }).join(',');
 
-            if (!safe.fs.writeFileSync(paths.ADDON_CONFIG_DIR + '/mail/mail.ini',
-                `mail_in_domains=${mailInDomain}\nmail_out_domains=${mailOutDomain}\nmail_default_domain=${mailDomain.domain}\nmail_server_name=${mailFqdn}\nalerts_from=${alertsFrom}\nalerts_to=${alertsTo}\ncatch_all=${catchAll}\nmail_from_validation=${mailFromValidation}\n`, 'utf8')) {
+            if (!safe.fs.writeFileSync(path.join(paths.ADDON_CONFIG_DIR, 'mail/mail.ini'),
+                `mail_in_domains=${mailInDomains}\nmail_out_domains=${mailOutDomains}\nmail_default_domain=${defaultDomain}\nmail_server_name=${mailFqdn}\nalerts_from=${alertsFrom}\nalerts_to=${alertsTo}\n`, 'utf8')) {
                 return callback(new Error('Could not create mail var file:' + safe.error.message));
             }
 
-            var relay = mailDomain.relay;
-
-            const enabled = relay.provider !== 'cloudron-smtp' ? true : false,
-                host = relay.host || '',
-                port = relay.port || 25,
-                username = relay.username || '',
-                password = relay.password || '';
-
-            if (!safe.fs.writeFileSync(paths.ADDON_CONFIG_DIR + '/mail/smtp_forward.ini',
-                `enable_outbound=${enabled}\nhost=${host}\nport=${port}\nenable_tls=true\nauth_type=plain\nauth_user=${username}\nauth_pass=${password}`, 'utf8')) {
-                return callback(new Error('Could not create mail var file:' + safe.error.message));
+            if (!safe.fs.writeFileSync(path.join(paths.ADDON_CONFIG_DIR, 'mail/smtp_forward.ini'), '', 'utf8')) { // empty the file
+                return callback(new Error('Could not create smtp forward file:' + safe.error.message));
             }
 
-            callback(null, mailInDomain.length !== 0);
+            // create sections for per-domain configuration
+            mailDomains.forEach(function (domain) {
+                const catchAll = domain.catchAll.map(function (c) { return `${c}@${domain.domain}`; }).join(',');
+                const mailFromValidation = domain.mailFromValidation;
+
+                if (!safe.fs.appendFileSync(path.join(paths.ADDON_CONFIG_DIR, 'mail/mail.ini'),
+                    `[${domain.domain}]\ncatch_all=${catchAll}\nmail_from_validation=${mailFromValidation}\n\n`, 'utf8')) {
+                    return callback(new Error('Could not create mail var file:' + safe.error.message));
+                }
+
+                var relay = domain.relay;
+
+                const enabled = relay.provider !== 'cloudron-smtp' ? true : false,
+                    host = relay.host || '',
+                    port = relay.port || 25,
+                    username = relay.username || '',
+                    password = relay.password || '';
+
+                if (!safe.fs.appendFileSync(paths.ADDON_CONFIG_DIR + '/mail/smtp_forward.ini',
+                    `[${domain.domain}]\nenable_outbound=${enabled}\nhost=${host}\nport=${port}\nenable_tls=true\nauth_type=plain\nauth_user=${username}\nauth_pass=${password}\n\n`, 'utf8')) {
+                    return callback(new Error('Could not create mail var file:' + safe.error.message));
+                }
+            });
+
+            callback(null, mailInDomains.length !== 0 /* allowInbound */);
         });
     });
 }
