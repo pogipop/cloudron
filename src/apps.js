@@ -1017,7 +1017,7 @@ function checkManifestConstraints(manifest) {
     }
 
     if (semver.valid(manifest.minBoxVersion) && semver.gt(manifest.minBoxVersion, config.version())) {
-        return new AppsError(AppsError.BAD_FIELD, 'minBoxVersion exceeds Box version');
+        return new AppsError(AppsError.BAD_FIELD, 'App version requires a new platform version');
     }
 
     return null;
