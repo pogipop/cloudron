@@ -294,7 +294,7 @@ function doUpdate(boxUpdateInfo, callback) {
 
         debug('updating box %s %j', boxUpdateInfo.sourceTarballUrl, _.omit(data, 'tlsCert', 'tlsKey', 'token', 'appstore', 'caas'));
 
-        progress.set(progress.UPDATE, 5, 'Downloading and extracting new version');
+        progress.set(progress.UPDATE, 5, 'Downloading and installing new version');
 
         shell.sudo('update', [ UPDATE_CMD, boxUpdateInfo.sourceTarballUrl, JSON.stringify(data) ], function (error) {
             if (error) return updateError(error);
