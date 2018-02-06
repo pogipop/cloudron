@@ -7,6 +7,7 @@
 
 var async = require('async'),
     config = require('../config.js'),
+    constants = require('../constants.js'),
     database = require('../database.js'),
     expect = require('expect.js'),
     MockS3 = require('mock-aws-s3'),
@@ -70,7 +71,7 @@ describe('Settings', function () {
         it('can get default autoupdate_pattern', function (done) {
             settings.getAutoupdatePattern(function (error, pattern) {
                 expect(error).to.be(null);
-                expect(pattern).to.be('00 00 1,3,5,23 * * *');
+                expect(pattern).to.be(constants.AUTOUPDATE_PATTERN_NEVER);
                 done();
             });
         });
