@@ -68,10 +68,18 @@ describe('Settings', function () {
             });
         });
 
-        it('can get default autoupdate_pattern', function (done) {
-            settings.getAutoupdatePattern(function (error, pattern) {
+        it('can get default app_autoupdate_pattern', function (done) {
+            settings.getAppAutoupdatePattern(function (error, pattern) {
                 expect(error).to.be(null);
                 expect(pattern).to.be(constants.AUTOUPDATE_PATTERN_NEVER);
+                done();
+            });
+        });
+
+        it('can get default box_autoupdate_pattern', function (done) {
+            settings.getBoxAutoupdatePattern(function (error, pattern) {
+                expect(error).to.be(null);
+                expect(pattern).to.be('00 00 1,3,5,23 * * *');
                 done();
             });
         });
@@ -131,7 +139,8 @@ describe('Settings', function () {
             settings.getAll(function (error, allSettings) {
                 expect(error).to.be(null);
                 expect(allSettings[settings.TIME_ZONE_KEY]).to.be.a('string');
-                expect(allSettings[settings.AUTOUPDATE_PATTERN_KEY]).to.be.a('string');
+                expect(allSettings[settings.APP_AUTOUPDATE_PATTERN_KEY]).to.be.a('string');
+                expect(allSettings[settings.BOX_AUTOUPDATE_PATTERN_KEY]).to.be.a('string');
                 expect(allSettings[settings.CLOUDRON_NAME_KEY]).to.be.a('string');
                 done();
             });

@@ -112,7 +112,7 @@ function checkAppUpdates(callback) {
                     }
 
                     // only send notifications if update pattern is 'never'
-                    settings.getAutoupdatePattern(function (error, result) {
+                    settings.getAppAutoupdatePattern(function (error, result) {
                         if (error) {
                             debug(error);
                         } else if (result === constants.AUTOUPDATE_PATTERN_NEVER) {
@@ -168,7 +168,7 @@ function checkBoxUpdates(callback) {
             }
 
             // only send notifications if update pattern is 'never'
-            settings.getAutoupdatePattern(function (error, result) {
+            settings.getAppAutoupdatePattern(function (error, result) {
                 if (error) debug(error);
                 else if (result === constants.AUTOUPDATE_PATTERN_NEVER) mailer.boxUpdateAvailable(true /* hasSubscription */, updateInfo.version, updateInfo.changelog);
 

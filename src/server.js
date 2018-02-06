@@ -195,8 +195,10 @@ function initializeExpressSync() {
     router.post('/api/v1/apps/:id/upload',    appsScope, routes.user.requireAdmin, multipart, routes.apps.uploadFile);
 
     // settings routes (these are for the settings tab - avatar & name have public routes for normal users. see above)
-    router.get ('/api/v1/settings/autoupdate_pattern', settingsScope, routes.user.requireAdmin, routes.settings.getAutoupdatePattern);
-    router.post('/api/v1/settings/autoupdate_pattern', settingsScope, routes.user.requireAdmin, routes.settings.setAutoupdatePattern);
+    router.get ('/api/v1/settings/app_autoupdate_pattern', settingsScope, routes.user.requireAdmin, routes.settings.getAppAutoupdatePattern);
+    router.post('/api/v1/settings/app_autoupdate_pattern', settingsScope, routes.user.requireAdmin, routes.settings.setAppAutoupdatePattern);
+    router.get ('/api/v1/settings/box_autoupdate_pattern', settingsScope, routes.user.requireAdmin, routes.settings.getBoxAutoupdatePattern);
+    router.post('/api/v1/settings/box_autoupdate_pattern', settingsScope, routes.user.requireAdmin, routes.settings.setBoxAutoupdatePattern);
     router.get ('/api/v1/settings/cloudron_name',      settingsScope, routes.user.requireAdmin, routes.settings.getCloudronName);
     router.post('/api/v1/settings/cloudron_name',      settingsScope, routes.user.requireAdmin, routes.settings.setCloudronName);
     router.get ('/api/v1/settings/cloudron_avatar',    settingsScope, routes.user.requireAdmin, routes.settings.getCloudronAvatar);

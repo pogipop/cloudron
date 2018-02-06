@@ -63,9 +63,9 @@ describe('Settings API', function () {
     before(setup);
     after(cleanup);
 
-    describe('autoupdate_pattern', function () {
-        it('can get auto update pattern (default)', function (done) {
-            superagent.get(SERVER_URL + '/api/v1/settings/autoupdate_pattern')
+    describe('app_autoupdate_pattern', function () {
+        it('can get app auto update pattern (default)', function (done) {
+            superagent.get(SERVER_URL + '/api/v1/settings/app_autoupdate_pattern')
                 .query({ access_token: token })
                 .end(function (err, res) {
                     expect(res.statusCode).to.equal(200);
@@ -74,8 +74,8 @@ describe('Settings API', function () {
                 });
         });
 
-        it('cannot set autoupdate_pattern without pattern', function (done) {
-            superagent.post(SERVER_URL + '/api/v1/settings/autoupdate_pattern')
+        it('cannot set app_autoupdate_pattern without pattern', function (done) {
+            superagent.post(SERVER_URL + '/api/v1/settings/app_autoupdate_pattern')
                 .query({ access_token: token })
                 .end(function (err, res) {
                     expect(res.statusCode).to.equal(400);
@@ -83,13 +83,13 @@ describe('Settings API', function () {
                 });
         });
 
-        it('can set autoupdate_pattern', function (done) {
+        it('can set app_autoupdate_pattern', function (done) {
             var eventPattern = null;
-            settings.events.on(settings.AUTOUPDATE_PATTERN_KEY, function (pattern) {
+            settings.events.on(settings.APP_AUTOUPDATE_PATTERN_KEY, function (pattern) {
                 eventPattern = pattern;
             });
 
-            superagent.post(SERVER_URL + '/api/v1/settings/autoupdate_pattern')
+            superagent.post(SERVER_URL + '/api/v1/settings/app_autoupdate_pattern')
                 .query({ access_token: token })
                 .send({ pattern: '00 30 11 * * 1-5' })
                 .end(function (err, res) {
@@ -99,13 +99,13 @@ describe('Settings API', function () {
                 });
         });
 
-        it('can set autoupdate_pattern to never', function (done) {
+        it('can set app_autoupdate_pattern to never', function (done) {
             var eventPattern = null;
-            settings.events.on(settings.AUTOUPDATE_PATTERN_KEY, function (pattern) {
+            settings.events.on(settings.APP_AUTOUPDATE_PATTERN_KEY, function (pattern) {
                 eventPattern = pattern;
             });
 
-            superagent.post(SERVER_URL + '/api/v1/settings/autoupdate_pattern')
+            superagent.post(SERVER_URL + '/api/v1/settings/app_autoupdate_pattern')
                 .query({ access_token: token })
                 .send({ pattern: constants.AUTOUPDATE_PATTERN_NEVER })
                 .end(function (err, res) {
@@ -115,8 +115,71 @@ describe('Settings API', function () {
                 });
         });
 
-        it('cannot set invalid autoupdate_pattern', function (done) {
-            superagent.post(SERVER_URL + '/api/v1/settings/autoupdate_pattern')
+        it('cannot set invalid app_autoupdate_pattern', function (done) {
+            superagent.post(SERVER_URL + '/api/v1/settings/app_autoupdate_pattern')
+                .query({ access_token: token })
+                .send({ pattern: '1 3 x 5 6' })
+                .end(function (err, res) {
+                    expect(res.statusCode).to.equal(400);
+                    done();
+                });
+        });
+    });
+
+    describe('box_autoupdate_pattern', function () {
+        it('can get app auto update pattern (default)', function (done) {
+            superagent.get(SERVER_URL + '/api/v1/settings/box_autoupdate_pattern')
+                .query({ access_token: token })
+                .end(function (err, res) {
+                    expect(res.statusCode).to.equal(200);
+                    expect(res.body.pattern).to.be.ok();
+                    done();
+                });
+        });
+
+        it('cannot set box_autoupdate_pattern without pattern', function (done) {
+            superagent.post(SERVER_URL + '/api/v1/settings/box_autoupdate_pattern')
+                .query({ access_token: token })
+                .end(function (err, res) {
+                    expect(res.statusCode).to.equal(400);
+                    done();
+                });
+        });
+
+        it('can set box_autoupdate_pattern', function (done) {
+            var eventPattern = null;
+            settings.events.on(settings.BOX_AUTOUPDATE_PATTERN_KEY, function (pattern) {
+                eventPattern = pattern;
+            });
+
+            superagent.post(SERVER_URL + '/api/v1/settings/box_autoupdate_pattern')
+                .query({ access_token: token })
+                .send({ pattern: '00 30 11 * * 1-5' })
+                .end(function (err, res) {
+                    expect(res.statusCode).to.equal(200);
+                    expect(eventPattern === '00 30 11 * * 1-5').to.be.ok();
+                    done();
+                });
+        });
+
+        it('can set box_autoupdate_pattern to never', function (done) {
+            var eventPattern = null;
+            settings.events.on(settings.BOX_AUTOUPDATE_PATTERN_KEY, function (pattern) {
+                eventPattern = pattern;
+            });
+
+            superagent.post(SERVER_URL + '/api/v1/settings/box_autoupdate_pattern')
+                .query({ access_token: token })
+                .send({ pattern: constants.AUTOUPDATE_PATTERN_NEVER })
+                .end(function (err, res) {
+                    expect(res.statusCode).to.equal(200);
+                    expect(eventPattern).to.eql(constants.AUTOUPDATE_PATTERN_NEVER);
+                    done();
+                });
+        });
+
+        it('cannot set invalid box_autoupdate_pattern', function (done) {
+            superagent.post(SERVER_URL + '/api/v1/settings/box_autoupdate_pattern')
                 .query({ access_token: token })
                 .send({ pattern: '1 3 x 5 6' })
                 .end(function (err, res) {

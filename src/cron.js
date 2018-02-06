@@ -27,7 +27,8 @@ var apps = require('./apps.js'),
 
 var gJobs = {
     alive: null, // send periodic stats
-    autoUpdater: null,
+    appAutoUpdater: null,
+    boxAutoUpdater: null,
     appUpdateChecker: null,
     backup: null,
     boxUpdateChecker: null,
@@ -78,14 +79,16 @@ function initialize(callback) {
     });
 
     settings.events.on(settings.TIME_ZONE_KEY, recreateJobs);
-    settings.events.on(settings.AUTOUPDATE_PATTERN_KEY, autoupdatePatternChanged);
+    settings.events.on(settings.APP_AUTOUPDATE_PATTERN_KEY, appAutoupdatePatternChanged);
+    settings.events.on(settings.BOX_AUTOUPDATE_PATTERN_KEY, boxAutoupdatePatternChanged);
     settings.events.on(settings.DYNAMIC_DNS_KEY, dynamicDnsChanged);
 
     settings.getAll(function (error, allSettings) {
         if (error) return callback(error);
 
         recreateJobs(allSettings[settings.TIME_ZONE_KEY]);
-        autoupdatePatternChanged(allSettings[settings.AUTOUPDATE_PATTERN_KEY]);
+        appAutoupdatePatternChanged(allSettings[settings.APP_AUTOUPDATE_PATTERN_KEY]);
+        boxAutoupdatePatternChanged(allSettings[settings.BOX_AUTOUPDATE_PATTERN_KEY]);
         dynamicDnsChanged(allSettings[settings.DYNAMIC_DNS_KEY]);
 
         callback();
@@ -189,17 +192,17 @@ function recreateJobs(tz) {
     });
 }
 
-function autoupdatePatternChanged(pattern) {
+function boxAutoupdatePatternChanged(pattern) {
     assert.strictEqual(typeof pattern, 'string');
     assert(gJobs.boxUpdateCheckerJob);
 
-    debug('Auto update pattern changed to %s', pattern);
+    debug('Box auto update pattern changed to %s', pattern);
 
-    if (gJobs.autoUpdater) gJobs.autoUpdater.stop();
+    if (gJobs.boxAutoUpdater) gJobs.boxAutoUpdater.stop();
 
     if (pattern === constants.AUTOUPDATE_PATTERN_NEVER) return;
 
-    gJobs.autoUpdater = new CronJob({
+    gJobs.boxAutoUpdater = new CronJob({
         cronTime: pattern,
         onTick: function() {
             var updateInfo = updateChecker.getUpdateInfo();
@@ -210,11 +213,34 @@ function autoupdatePatternChanged(pattern) {
                 } else {
                     debug('Block automatic update for major version');
                 }
-            } else if (updateInfo.apps) {
+            } else {
+                debug('No box auto updates available');
+            }
+        },
+        start: true,
+        timeZone: gJobs.boxUpdateCheckerJob.cronTime.zone // hack
+    });
+}
+
+function appAutoupdatePatternChanged(pattern) {
+    assert.strictEqual(typeof pattern, 'string');
+    assert(gJobs.boxUpdateCheckerJob);
+
+    debug('Apps auto update pattern changed to %s', pattern);
+
+    if (gJobs.appAutoUpdater) gJobs.appAutoUpdater.stop();
+
+    if (pattern === constants.AUTOUPDATE_PATTERN_NEVER) return;
+
+    gJobs.appAutoUpdater = new CronJob({
+        cronTime: pattern,
+        onTick: function() {
+            var updateInfo = updateChecker.getUpdateInfo();
+            if (updateInfo.apps) {
                 debug('Starting app update to %j', updateInfo.apps);
                 apps.autoupdateApps(updateInfo.apps, AUDIT_SOURCE, NOOP_CALLBACK);
             } else {
-                debug('No auto updates available');
+                debug('No app auto updates available');
             }
         },
         start: true,
@@ -245,7 +271,8 @@ function uninitialize(callback) {
     assert.strictEqual(typeof callback, 'function');
 
     settings.events.removeListener(settings.TIME_ZONE_KEY, recreateJobs);
-    settings.events.removeListener(settings.AUTOUPDATE_PATTERN_KEY, autoupdatePatternChanged);
+    settings.events.removeListener(settings.APP_AUTOUPDATE_PATTERN_KEY, appAutoupdatePatternChanged);
+    settings.events.removeListener(settings.BOX_AUTOUPDATE_PATTERN_KEY, boxAutoupdatePatternChanged);
     settings.events.removeListener(settings.DYNAMIC_DNS_KEY, dynamicDnsChanged);
 
     for (var job in gJobs) {

@@ -6,8 +6,11 @@ exports = module.exports = {
     initialize: initialize,
     uninitialize: uninitialize,
 
-    getAutoupdatePattern: getAutoupdatePattern,
-    setAutoupdatePattern: setAutoupdatePattern,
+    getAppAutoupdatePattern: getAppAutoupdatePattern,
+    setAppAutoupdatePattern: setAppAutoupdatePattern,
+
+    getBoxAutoupdatePattern: getBoxAutoupdatePattern,
+    setBoxAutoupdatePattern: setBoxAutoupdatePattern,
 
     getTimeZone: getTimeZone,
     setTimeZone: setTimeZone,
@@ -45,7 +48,8 @@ exports = module.exports = {
     CAAS_CONFIG_KEY: 'caas_config',
 
     // strings
-    AUTOUPDATE_PATTERN_KEY: 'autoupdate_pattern',
+    APP_AUTOUPDATE_PATTERN_KEY: 'autoupdate_pattern',
+    BOX_AUTOUPDATE_PATTERN_KEY: 'box_autoupdate_pattern',
     TIME_ZONE_KEY: 'time_zone',
     CLOUDRON_NAME_KEY: 'cloudron_name',
 
@@ -69,7 +73,8 @@ var assert = require('assert'),
 
 var gDefaults = (function () {
     var result = { };
-    result[exports.AUTOUPDATE_PATTERN_KEY] = constants.AUTOUPDATE_PATTERN_NEVER;
+    result[exports.APP_AUTOUPDATE_PATTERN_KEY] = constants.AUTOUPDATE_PATTERN_NEVER;
+    result[exports.BOX_AUTOUPDATE_PATTERN_KEY] = '00 00 1,3,5,23 * * *';
     result[exports.TIME_ZONE_KEY] = 'America/Los_Angeles';
     result[exports.CLOUDRON_NAME_KEY] = 'Cloudron';
     result[exports.DYNAMIC_DNS_KEY] = false;
@@ -125,7 +130,7 @@ function uninitialize(callback) {
     callback();
 }
 
-function setAutoupdatePattern(pattern, callback) {
+function setAppAutoupdatePattern(pattern, callback) {
     assert.strictEqual(typeof pattern, 'string');
     assert.strictEqual(typeof callback, 'function');
 
@@ -134,20 +139,49 @@ function setAutoupdatePattern(pattern, callback) {
         if (!job) return callback(new SettingsError(SettingsError.BAD_FIELD, 'Invalid pattern'));
     }
 
-    settingsdb.set(exports.AUTOUPDATE_PATTERN_KEY, pattern, function (error) {
+    settingsdb.set(exports.APP_AUTOUPDATE_PATTERN_KEY, pattern, function (error) {
         if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
 
-        exports.events.emit(exports.AUTOUPDATE_PATTERN_KEY, pattern);
+        exports.events.emit(exports.APP_AUTOUPDATE_PATTERN_KEY, pattern);
 
         return callback(null);
     });
 }
 
-function getAutoupdatePattern(callback) {
+function getAppAutoupdatePattern(callback) {
     assert.strictEqual(typeof callback, 'function');
 
-    settingsdb.get(exports.AUTOUPDATE_PATTERN_KEY, function (error, pattern) {
-        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(null, gDefaults[exports.AUTOUPDATE_PATTERN_KEY]);
+    settingsdb.get(exports.APP_AUTOUPDATE_PATTERN_KEY, function (error, pattern) {
+        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(null, gDefaults[exports.APP_AUTOUPDATE_PATTERN_KEY]);
+        if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
+
+        callback(null, pattern);
+    });
+}
+
+function setBoxAutoupdatePattern(pattern, callback) {
+    assert.strictEqual(typeof pattern, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    if (pattern !== constants.AUTOUPDATE_PATTERN_NEVER) { // check if pattern is valid
+        var job = safe.safeCall(function () { return new CronJob(pattern); });
+        if (!job) return callback(new SettingsError(SettingsError.BAD_FIELD, 'Invalid pattern'));
+    }
+
+    settingsdb.set(exports.BOX_AUTOUPDATE_PATTERN_KEY, pattern, function (error) {
+        if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
+
+        exports.events.emit(exports.BOX_AUTOUPDATE_PATTERN_KEY, pattern);
+
+        return callback(null);
+    });
+}
+
+function getBoxAutoupdatePattern(callback) {
+    assert.strictEqual(typeof callback, 'function');
+
+    settingsdb.get(exports.BOX_AUTOUPDATE_PATTERN_KEY, function (error, pattern) {
+        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(null, gDefaults[exports.BOX_AUTOUPDATE_PATTERN_KEY]);
         if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
 
         callback(null, pattern);

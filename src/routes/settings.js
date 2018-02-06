@@ -1,8 +1,11 @@
 'use strict';
 
 exports = module.exports = {
-    getAutoupdatePattern: getAutoupdatePattern,
-    setAutoupdatePattern: setAutoupdatePattern,
+    getAppAutoupdatePattern: getAppAutoupdatePattern,
+    setAppAutoupdatePattern: setAppAutoupdatePattern,
+
+    getBoxAutoupdatePattern: getBoxAutoupdatePattern,
+    setBoxAutoupdatePattern: setBoxAutoupdatePattern,
 
     getCloudronName: getCloudronName,
     setCloudronName: setCloudronName,
@@ -27,20 +30,41 @@ var assert = require('assert'),
     settings = require('../settings.js'),
     SettingsError = settings.SettingsError;
 
-function getAutoupdatePattern(req, res, next) {
-    settings.getAutoupdatePattern(function (error, pattern) {
+function getAppAutoupdatePattern(req, res, next) {
+    settings.getAppAutoupdatePattern(function (error, pattern) {
         if (error) return next(new HttpError(500, error));
 
         next(new HttpSuccess(200, { pattern: pattern }));
     });
 }
 
-function setAutoupdatePattern(req, res, next) {
+function setAppAutoupdatePattern(req, res, next) {
     assert.strictEqual(typeof req.body, 'object');
 
     if (typeof req.body.pattern !== 'string') return next(new HttpError(400, 'pattern is required'));
 
-    settings.setAutoupdatePattern(req.body.pattern, function (error) {
+    settings.setAppAutoupdatePattern(req.body.pattern, function (error) {
+        if (error && error.reason === SettingsError.BAD_FIELD) return next(new HttpError(400, error.message));
+        if (error) return next(new HttpError(500, error));
+
+        next(new HttpSuccess(200));
+    });
+}
+
+function getBoxAutoupdatePattern(req, res, next) {
+    settings.getBoxAutoupdatePattern(function (error, pattern) {
+        if (error) return next(new HttpError(500, error));
+
+        next(new HttpSuccess(200, { pattern: pattern }));
+    });
+}
+
+function setBoxAutoupdatePattern(req, res, next) {
+    assert.strictEqual(typeof req.body, 'object');
+
+    if (typeof req.body.pattern !== 'string') return next(new HttpError(400, 'pattern is required'));
+
+    settings.setBoxAutoupdatePattern(req.body.pattern, function (error) {
         if (error && error.reason === SettingsError.BAD_FIELD) return next(new HttpError(400, error.message));
         if (error) return next(new HttpError(500, error));
 
