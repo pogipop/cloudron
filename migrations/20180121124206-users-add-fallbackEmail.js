@@ -11,6 +11,7 @@ exports.up = function(db, callback) {
 
             async.series([
                 db.runSql.bind(db, 'START TRANSACTION;'),
+                db.runSql.bind(db, 'ALTER TABLE users DROP INDEX users_email'),
                 db.runSql.bind(db, 'ALTER TABLE users ADD COLUMN fallbackEmail VARCHAR(512) DEFAULT ""'),
                 function setDefaults(done) {
                     async.eachSeries(users, function (user, iteratorCallback) {
@@ -28,6 +29,7 @@ exports.up = function(db, callback) {
                         db.runSql('UPDATE users SET email = ?, fallbackEmail = ? WHERE id = ?', [ defaultEmail, fallbackEmail, user.id ], iteratorCallback);
                     }, done);
                 },
+                db.runSql.bind(db, 'ALTER TABLE users ADD UNIQUE users_email (email)'),
                 db.runSql.bind(db, 'COMMIT')
             ], callback);
         });
