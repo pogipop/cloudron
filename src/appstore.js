@@ -166,7 +166,8 @@ function sendAliveStatus(data, callback) {
                         catchAllCount: mailDomains.filter(function (d) { return d.catchAll.length !== 0; }).length,
                         relayProviders: Array.from(new Set(mailDomains.map(function (d) { return d.relay.provider; })))
                     },
-                    autoupdatePattern: result[settings.AUTOUPDATE_PATTERN_KEY],
+                    appAutoupdatePattern: result[settings.APP_AUTOUPDATE_PATTERN_KEY],
+                    boxAutoupdatePattern: result[settings.BOX_AUTOUPDATE_PATTERN_KEY],
                     timeZone: result[settings.TIME_ZONE_KEY],
                 };
 

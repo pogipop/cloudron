@@ -168,7 +168,7 @@ function checkBoxUpdates(callback) {
             }
 
             // only send notifications if update pattern is 'never'
-            settings.getAppAutoupdatePattern(function (error, result) {
+            settings.getBoxAutoupdatePattern(function (error, result) {
                 if (error) debug(error);
                 else if (result === constants.AUTOUPDATE_PATTERN_NEVER) mailer.boxUpdateAvailable(true /* hasSubscription */, updateInfo.version, updateInfo.changelog);
 
