@@ -490,7 +490,8 @@ function createMailConfig(callback) {
                 return callback(new Error('Could not create mail var file:' + safe.error.message));
             }
 
-            if (!safe.fs.writeFileSync(path.join(paths.ADDON_CONFIG_DIR, 'mail/smtp_forward.ini'), '', 'utf8')) { // empty the file
+            // enable_outbound makes plugin forward email for relayed mail. non-relayed mail always hits LMTP plugin first
+            if (!safe.fs.writeFileSync(path.join(paths.ADDON_CONFIG_DIR, 'mail/smtp_forward.ini'), 'enable_outbound=false\n', 'utf8')) {
                 return callback(new Error('Could not create smtp forward file:' + safe.error.message));
             }
 
@@ -504,16 +505,18 @@ function createMailConfig(callback) {
                     return callback(new Error('Could not create mail var file:' + safe.error.message));
                 }
 
-                var relay = domain.relay;
+                const relay = domain.relay;
 
-                const enabled = relay.provider !== 'cloudron-smtp' ? true : false,
+                const enableRelay = relay.provider !== 'cloudron-smtp',
                     host = relay.host || '',
                     port = relay.port || 25,
                     username = relay.username || '',
                     password = relay.password || '';
 
+                if (!enableRelay) return;
+
                 if (!safe.fs.appendFileSync(paths.ADDON_CONFIG_DIR + '/mail/smtp_forward.ini',
-                    `[${domain.domain}]\nenable_outbound=${enabled}\nhost=${host}\nport=${port}\nenable_tls=true\nauth_type=plain\nauth_user=${username}\nauth_pass=${password}\n\n`, 'utf8')) {
+                    `[${domain.domain}]\nenable_outbound=true\nhost=${host}\nport=${port}\nenable_tls=true\nauth_type=plain\nauth_user=${username}\nauth_pass=${password}\n\n`, 'utf8')) {
                     return callback(new Error('Could not create mail var file:' + safe.error.message));
                 }
             });
