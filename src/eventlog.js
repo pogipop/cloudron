@@ -22,7 +22,6 @@ exports = module.exports = {
     ACTION_BACKUP_START: 'backup.start',
     ACTION_BACKUP_CLEANUP: 'backup.cleanup',
     ACTION_CERTIFICATE_RENEWAL: 'certificate.renew',
-    ACTION_CLI_MODE: 'settings.climode',
     ACTION_START: 'cloudron.start',
     ACTION_UPDATE: 'cloudron.update',
     ACTION_USER_ADD: 'user.add',
