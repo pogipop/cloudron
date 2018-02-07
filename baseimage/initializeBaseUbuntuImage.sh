@@ -105,3 +105,7 @@ systemctl disable bind9 || true
 systemctl stop dnsmasq || true
 systemctl disable dnsmasq || true
 
+# on ssdnodes postfix seems to run by default
+systemctl stop postfix || true
+systemctl disable postfix || true
+
