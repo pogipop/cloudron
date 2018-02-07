@@ -22,7 +22,7 @@ exports.up = function(db, callback) {
                             defaultEmail = user.email;
                             fallbackEmail = user.email;
                         } else {
-                            defaultEmail = user.username + '@' + mailDomains[0].domain;
+                            defaultEmail = user.username ? (user.username + '@' + mailDomains[0].domain) : user.email;
                             fallbackEmail = user.email;
                         }
 
