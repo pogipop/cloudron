@@ -48,7 +48,7 @@ exports = module.exports = {
     CAAS_CONFIG_KEY: 'caas_config',
 
     // strings
-    APP_AUTOUPDATE_PATTERN_KEY: 'autoupdate_pattern',
+    APP_AUTOUPDATE_PATTERN_KEY: 'app_autoupdate_pattern',
     BOX_AUTOUPDATE_PATTERN_KEY: 'box_autoupdate_pattern',
     TIME_ZONE_KEY: 'time_zone',
     CLOUDRON_NAME_KEY: 'cloudron_name',
