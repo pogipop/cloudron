@@ -621,10 +621,11 @@ function ensureDkimKey(domain, callback) {
 }
 
 // https://agari.zendesk.com/hc/en-us/articles/202952749-How-long-can-my-SPF-record-be-
-function txtRecordsWithSpf(callback) {
+function txtRecordsWithSpf(domain, callback) {
+    assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    domains.getDNSRecords('', config.adminDomain(), 'TXT', function (error, txtRecords) {
+    domains.getDNSRecords('', domain, 'TXT', function (error, txtRecords) {
         if (error) return callback(error);
 
         debug('txtRecordsWithSpf: current txt records - %j', txtRecords);
@@ -636,17 +637,17 @@ function txtRecordsWithSpf(callback) {
             if (matches === null) continue;
 
             // this won't work if the entry is arbitrarily "split" across quoted strings
-            validSpf = txtRecords[i].indexOf('a:' + config.adminFqdn()) !== -1;
+            validSpf = txtRecords[i].indexOf('a:' + config.mailFqdn()) !== -1;
             break; // there can only be one SPF record
         }
 
         if (validSpf) return callback(null, null);
 
         if (!matches) { // no spf record was found, create one
-            txtRecords.push('"v=spf1 a:' + config.adminFqdn() + ' ~all"');
+            txtRecords.push('"v=spf1 a:' + config.mailFqdn() + ' ~all"');
             debug('txtRecordsWithSpf: adding txt record');
         } else { // just add ourself
-            txtRecords[i] = matches[1] + ' a:' + config.adminFqdn() + txtRecords[i].slice(matches[1].length);
+            txtRecords[i] = matches[1] + ' a:' + config.mailFqdn() + txtRecords[i].slice(matches[1].length);
             debug('txtRecordsWithSpf: inserting txt record');
         }
 
@@ -691,7 +692,7 @@ function addDnsRecords(domain, callback) {
     debug('addDnsRecords: %j', records);
 
     async.retry({ times: 10, interval: 20000 }, function (retryCallback) {
-        txtRecordsWithSpf(function (error, txtRecords) {
+        txtRecordsWithSpf(domain, function (error, txtRecords) {
             if (error) return retryCallback(error);
 
             if (txtRecords) records.push({ subdomain: '', domain: domain, type: 'TXT', values: txtRecords });
