@@ -133,24 +133,6 @@ describe('Certificates', function () {
                 done();
             });
         });
-
-        it('returns prod-acme with altDomain in prod cloudron', function (done) {
-            reverseProxy._getApi({ domain: DOMAIN_0.domain, altDomain: 'foo.something.com' }, function (error, api, options) {
-                expect(error).to.be(null);
-                expect(api._name).to.be('acme');
-                expect(options.prod).to.be(true);
-                done();
-            });
-        });
-
-        it('returns prod acme with altDomain in dev cloudron', function (done) {
-            reverseProxy._getApi({ domain: DOMAIN_0.domain, altDomain: 'foo.something.com' }, function (error, api, options) {
-                expect(error).to.be(null);
-                expect(api._name).to.be('acme');
-                expect(options.prod).to.be(true);
-                done();
-            });
-        });
     });
 
     describe('getApi - letsencrypt-prod', function () {
@@ -167,15 +149,6 @@ describe('Certificates', function () {
 
         it('returns prod acme in prod cloudron', function (done) {
             reverseProxy._getApi({ domain: DOMAIN_0.domain }, function (error, api, options) {
-                expect(error).to.be(null);
-                expect(api._name).to.be('acme');
-                expect(options.prod).to.be(true);
-                done();
-            });
-        });
-
-        it('returns prod acme with altDomain in prod cloudron', function (done) {
-            reverseProxy._getApi({ domain: DOMAIN_0.domain, altDomain: 'foo.bar.com' }, function (error, api, options) {
                 expect(error).to.be(null);
                 expect(api._name).to.be('acme');
                 expect(options.prod).to.be(true);
@@ -216,15 +189,6 @@ describe('Certificates', function () {
 
         it('returns staging acme in dev cloudron', function (done) {
             reverseProxy._getApi({ domain: DOMAIN_0.domain }, function (error, api, options) {
-                expect(error).to.be(null);
-                expect(api._name).to.be('acme');
-                expect(options.prod).to.be(false);
-                done();
-            });
-        });
-
-        it('returns staging acme with altDomain in prod cloudron', function (done) {
-            reverseProxy._getApi({ domain: DOMAIN_0.domain, altDomain: 'foo.bar.com' }, function (error, api, options) {
                 expect(error).to.be(null);
                 expect(api._name).to.be('acme');
                 expect(options.prod).to.be(false);

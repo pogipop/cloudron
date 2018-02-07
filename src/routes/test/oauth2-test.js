@@ -167,8 +167,7 @@ describe('OAuth2', function () {
             domain: DOMAIN_0.domain,
             portBindings: {},
             accessRestriction: null,
-            memoryLimit: 0,
-            altDomain: null
+            memoryLimit: 0
         };
 
         var APP_1 = {
@@ -179,8 +178,7 @@ describe('OAuth2', function () {
             domain: DOMAIN_0.domain,
             portBindings: {},
             accessRestriction: { users: [ 'foobar' ] },
-            memoryLimit: 0,
-            altDomain: null
+            memoryLimit: 0
         };
 
         var APP_2 = {
@@ -191,8 +189,7 @@ describe('OAuth2', function () {
             domain: DOMAIN_0.domain,
             portBindings: {},
             accessRestriction: { users: [ USER_0.id ] },
-            memoryLimit: 0,
-            altDomain: null
+            memoryLimit: 0
         };
 
         var APP_3 = {
@@ -203,8 +200,7 @@ describe('OAuth2', function () {
             domain: DOMAIN_0.domain,
             portBindings: {},
             accessRestriction: { groups: [ 'someothergroup', 'admin', 'anothergroup' ] },
-            memoryLimit: 0,
-            altDomain: null
+            memoryLimit: 0
         };
 
         // unknown app
