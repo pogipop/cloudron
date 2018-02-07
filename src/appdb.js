@@ -204,7 +204,7 @@ function add(id, appStoreId, manifest, location, domain, portBindings, data, cal
 
     var queries = [];
     queries.push({
-        query: 'INSERT INTO apps (id, appStoreId, manifestJson, installationState, location, domain, accessRestrictionJson, memoryLimit, xFrameOptions, restoreConfigJson, sso, debugModeJson) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        query: 'INSERT INTO apps (id, appStoreId, manifestJson, installationState, location, domain, accessRestrictionJson, memoryLimit, xFrameOptions, restoreConfigJson, sso, debugModeJson) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
         args: [ id, appStoreId, manifestJson, installationState, location, domain, accessRestrictionJson, memoryLimit, xFrameOptions, restoreConfigJson, sso, debugModeJson ]
     });
 
