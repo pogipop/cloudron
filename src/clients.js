@@ -191,7 +191,7 @@ function getAll(callback) {
                 if (record.type === exports.TYPE_PROXY) record.name = result.manifest.title + ' Website Proxy';
                 if (record.type === exports.TYPE_OAUTH) record.name = result.manifest.title + ' OAuth';
 
-                record.domain = result.altDomain || result.intrinsicFqdn;
+                record.domain = result.intrinsicFqdn;
 
                 tmp.push(record);
 

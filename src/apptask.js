@@ -15,8 +15,7 @@ exports = module.exports = {
     _verifyManifest: verifyManifest,
     _registerSubdomain: registerSubdomain,
     _unregisterSubdomain: unregisterSubdomain,
-    _waitForDnsPropagation: waitForDnsPropagation,
-    _waitForAltDomainDnsPropagation: waitForAltDomainDnsPropagation
+    _waitForDnsPropagation: waitForDnsPropagation
 };
 
 require('supererror')({ splatchError: true });
@@ -347,23 +346,6 @@ function waitForDnsPropagation(app, callback) {
     });
 }
 
-function waitForAltDomainDnsPropagation(app, callback) {
-    if (!app.altDomain) return callback(null);
-
-    // try for 10 minutes before giving up. this allows the user to "reconfigure" the app in the case where
-    // an app has an external domain and cloudron is migrated to custom domain.
-    var isNakedDomain = tld.getDomain(app.altDomain) === app.altDomain;
-    if (isNakedDomain) { // check naked domains with A record since CNAME records don't work there
-        sysinfo.getPublicIp(function (error, ip) {
-            if (error) return callback(error);
-
-            domains.waitForDNSRecord(app.altDomain, tld.getDomain(app.altDomain), ip, 'A', { interval: 10000, times: 60 }, callback);
-        });
-    } else {
-        domains.waitForDNSRecord(app.altDomain, tld.getDomain(app.altDomain), app.intrinsicFqdn + '.', 'CNAME', { interval: 10000, times: 60 }, callback);
-    }
-}
-
 // Ordering is based on the following rationale:
 //   - configure nginx, icon, oauth
 //   - register subdomain.
@@ -445,9 +427,6 @@ function install(app, callback) {
 
         updateApp.bind(null, app, { installationProgress: '85, Waiting for DNS propagation' }),
         exports._waitForDnsPropagation.bind(null, app),
-
-        updateApp.bind(null, app, { installationProgress: '90, Waiting for External Domain setup' }),
-        exports._waitForAltDomainDnsPropagation.bind(null, app), // required when restoring and !restoreConfig
 
         updateApp.bind(null, app, { installationProgress: '95, Configuring reverse proxy' }),
         configureReverseProxy.bind(null, app),
@@ -540,9 +519,6 @@ function configure(app, callback) {
 
         updateApp.bind(null, app, { installationProgress: '80, Waiting for DNS propagation' }),
         exports._waitForDnsPropagation.bind(null, app),
-
-        updateApp.bind(null, app, { installationProgress: '85, Waiting for External Domain setup' }),
-        exports._waitForAltDomainDnsPropagation.bind(null, app),
 
         updateApp.bind(null, app, { installationProgress: '90, Configuring reverse proxy' }),
         configureReverseProxy.bind(null, app),

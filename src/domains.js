@@ -322,13 +322,9 @@ function waitForDNSRecord(fqdn, domain, value, type, options, callback) {
     assert.strictEqual(typeof callback, 'function');
 
     get(domain, function (error, result) {
-        // domain can be not found when waiting for altDomain. When we migrate altDomain, this can never happen
-        if (error && error.reason !== DomainError.NOT_FOUND) return callback(new DomainError(DomainError.INTERNAL_ERROR, error));
+        if (error) return callback(error);
 
-        // hack for lack of provider with altDomain. When we migrate altDomain, this will be automatically "manual"
-        const provider = result ? result.provider : 'manual';
-
-        api(provider).waitForDns(fqdn, result ? result.zoneName : domain, value, type, options, callback);
+        api(result.provider).waitForDns(fqdn, result ? result.zoneName : domain, value, type, options, callback);
     });
 }
 

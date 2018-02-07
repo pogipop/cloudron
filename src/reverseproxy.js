@@ -84,12 +84,11 @@ function getApi(app, callback) {
 
         if (domain.tlsConfig.provider === 'fallback') return callback(null, fallback, {});
 
-        // use acme if we have altDomain or the tlsConfig is not caas
-        var api = (app.altDomain || domain.tlsConfig.provider !== 'caas') ? acme : caas;
+        var api = domain.tlsConfig.provider === 'caas' ? caas : acme;
 
         var options = { };
         if (domain.tlsConfig.provider === 'caas') {
-            options.prod = true; // with altDomain, we will choose acme setting based on this
+            options.prod = true;
         } else { // acme
             options.prod = domain.tlsConfig.provider.match(/.*-prod/) !== null; // matches 'le-prod' or 'letsencrypt-prod'
         }
@@ -220,7 +219,7 @@ function getCertificate(app, callback) {
     assert.strictEqual(typeof app, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    var vhost = app.altDomain || app.intrinsicFqdn;
+    var vhost = app.intrinsicFqdn;
 
     var certFilePath = path.join(paths.APP_CERTS_DIR, `${vhost}.user.cert`);
     var keyFilePath = path.join(paths.APP_CERTS_DIR, `${vhost}.user.key`);
@@ -240,7 +239,7 @@ function ensureCertificate(app, auditSource, callback) {
     assert.strictEqual(typeof auditSource, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    var vhost = app.altDomain || app.intrinsicFqdn;
+    var vhost = app.intrinsicFqdn;
 
     var certFilePath = path.join(paths.APP_CERTS_DIR, `${vhost}.user.cert`);
     var keyFilePath = path.join(paths.APP_CERTS_DIR, `${vhost}.user.key`);
@@ -278,7 +277,7 @@ function ensureCertificate(app, auditSource, callback) {
             eventlog.add(eventlog.ACTION_CERTIFICATE_RENEWAL, auditSource, { domain: vhost, errorMessage: errorMessage });
 
             // if no cert was returned use fallback. the fallback/caas provider will not provide any for example
-            if (!certFilePath || !keyFilePath) return getFallbackCertificate(app.altDomain ? tld.getDomain(app.altDomain) : app.domain, callback);
+            if (!certFilePath || !keyFilePath) return getFallbackCertificate(app.domain, callback);
 
             callback(null, { certFilePath, keyFilePath, reason: 'new-le' });
         });
@@ -329,7 +328,7 @@ function configureAppInternal(app, bundle, callback) {
 
     var sourceDir = path.resolve(__dirname, '..');
     var endpoint = 'app';
-    var vhost = app.altDomain || app.intrinsicFqdn;
+    var vhost = app.intrinsicFqdn;
 
     var data = {
         sourceDir: sourceDir,
@@ -372,7 +371,7 @@ function unconfigureApp(app, callback) {
     assert.strictEqual(typeof app, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    var vhost = app.altDomain || app.intrinsicFqdn;
+    var vhost = app.intrinsicFqdn;
 
     var nginxConfigFilename = path.join(paths.NGINX_APPCONFIG_DIR, app.id + '.conf');
     if (!safe.fs.unlinkSync(nginxConfigFilename)) {

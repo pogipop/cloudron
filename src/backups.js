@@ -720,7 +720,7 @@ function backupApp(app, callback) {
     const timestamp = (new Date()).toISOString().replace(/[T.]/g, '-').replace(/[:Z]/g,'');
     safe.fs.unlinkSync(paths.BACKUP_LOG_FILE); // start fresh log file
 
-    progress.set(progress.BACKUP, 10,  'Backing up ' + (app.altDomain || app.intrinsicFqdn));
+    progress.set(progress.BACKUP, 10,  'Backing up ' + app.intrinsicFqdn);
 
     backupAppWithTimestamp(app, timestamp, function (error) {
         progress.set(progress.BACKUP, 100, error ? error.message : '');
@@ -747,12 +747,12 @@ function backupBoxAndApps(auditSource, callback) {
         var step = 100/(allApps.length+2);
 
         async.mapSeries(allApps, function iterator(app, iteratorCallback) {
-            progress.set(progress.BACKUP, step * processed,  'Backing up ' + (app.altDomain || app.intrinsicFqdn));
+            progress.set(progress.BACKUP, step * processed,  'Backing up ' + app.intrinsicFqdn);
 
             ++processed;
 
             if (!app.enableBackup) {
-                progress.set(progress.BACKUP, step * processed, 'Skipped backup ' + (app.altDomain || app.intrinsicFqdn));
+                progress.set(progress.BACKUP, step * processed, 'Skipped backup ' + app.intrinsicFqdn);
                 return iteratorCallback(null, null); // nothing to backup
             }
 
@@ -762,7 +762,7 @@ function backupBoxAndApps(auditSource, callback) {
                     return iteratorCallback(error);
                 }
 
-                progress.set(progress.BACKUP, step * processed, 'Backed up ' + (app.altDomain || app.intrinsicFqdn));
+                progress.set(progress.BACKUP, step * processed, 'Backed up ' + app.intrinsicFqdn);
 
                 iteratorCallback(null, backupId || null); // clear backupId if is in BAD_STATE and never backed up
             });

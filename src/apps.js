@@ -315,8 +315,7 @@ function getAppConfig(app) {
         accessRestriction: app.accessRestriction,
         portBindings: app.portBindings,
         memoryLimit: app.memoryLimit,
-        xFrameOptions: app.xFrameOptions || 'SAMEORIGIN',
-        altDomain: app.altDomain
+        xFrameOptions: app.xFrameOptions || 'SAMEORIGIN'
     };
 }
 
@@ -364,8 +363,7 @@ function get(appId, callback) {
 
             app.intrinsicFqdn = domains.fqdn(app.location, app.domain, result.provider);
             app.iconUrl = getIconUrlSync(app);
-            app.fqdn = app.altDomain || app.intrinsicFqdn;
-            app.cnameTarget = app.altDomain ? app.intrinsicFqdn : null;
+            app.fqdn = app.intrinsicFqdn;
 
             callback(null, app);
         });
@@ -388,8 +386,7 @@ function getByIpAddress(ip, callback) {
 
                 app.intrinsicFqdn = domains.fqdn(app.location, app.domain, result.provider);
                 app.iconUrl = getIconUrlSync(app);
-                app.fqdn = app.altDomain || app.intrinsicFqdn;
-                app.cnameTarget = app.altDomain ? app.intrinsicFqdn : null;
+                app.fqdn = app.intrinsicFqdn;
 
                 callback(null, app);
             });
@@ -409,8 +406,7 @@ function getAll(callback) {
 
                 app.intrinsicFqdn = domains.fqdn(app.location, app.domain, result.provider);
                 app.iconUrl = getIconUrlSync(app);
-                app.fqdn = app.altDomain || app.intrinsicFqdn;
-                app.cnameTarget = app.altDomain ? app.intrinsicFqdn : null;
+                app.fqdn = app.intrinsicFqdn;
 
                 iteratorDone();
             });
@@ -468,7 +464,6 @@ function install(data, auditSource, callback) {
         cert = data.cert || null,
         key = data.key || null,
         memoryLimit = data.memoryLimit || 0,
-        altDomain = data.altDomain || null,
         xFrameOptions = data.xFrameOptions || 'SAMEORIGIN',
         sso = 'sso' in data ? data.sso : null,
         debugMode = data.debugMode || null,
@@ -513,8 +508,6 @@ function install(data, auditSource, callback) {
         // if sso was unspecified, enable it by default if possible
         if (sso === null) sso = !!manifest.addons['ldap'] || !!manifest.addons['oauth'];
 
-        if (altDomain !== null && !validator.isFQDN(altDomain)) return callback(new AppsError(AppsError.BAD_FIELD, 'Invalid external domain'));
-
         var appId = uuid.v4();
 
         if (icon) {
@@ -550,7 +543,6 @@ function install(data, auditSource, callback) {
                 var data = {
                     accessRestriction: accessRestriction,
                     memoryLimit: memoryLimit,
-                    altDomain: altDomain,
                     xFrameOptions: xFrameOptions,
                     sso: sso,
                     debugMode: debugMode,
@@ -605,11 +597,6 @@ function configure(appId, data, auditSource, callback) {
             if (error) return callback(error);
         }
 
-        if ('altDomain' in data) {
-            values.altDomain = data.altDomain;
-            if (values.altDomain !== null && !validator.isFQDN(values.altDomain)) return callback(new AppsError(AppsError.BAD_FIELD, 'Invalid external domain'));
-        }
-
         if ('portBindings' in data) {
             portBindings = values.portBindings = data.portBindings;
             error = validatePortBindings(values.portBindings, app.manifest.tcpPorts);
@@ -653,9 +640,9 @@ function configure(appId, data, auditSource, callback) {
 
             // save cert to boxdata/certs. TODO: move this to apptask when we have a real task queue
             if ('cert' in data && 'key' in data) {
-                if (data.cert && data.key) {
-                    var vhost = values.altDomain || intrinsicFqdn;
+                var vhost = intrinsicFqdn;
 
+                if (data.cert && data.key) {
                     error = reverseProxy.validateCertificate(vhost, data.cert, data.key);
                     if (error) return callback(new AppsError(AppsError.BAD_CERTIFICATE, error.message));
 

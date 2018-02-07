@@ -72,7 +72,6 @@ CREATE TABLE IF NOT EXISTS apps(
     createdAt TIMESTAMP(2) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updatedAt TIMESTAMP(2) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     memoryLimit BIGINT DEFAULT 0,
-    altDomain VARCHAR(256),
     xFrameOptions VARCHAR(512),
     sso BOOLEAN DEFAULT 1, // whether user chose to enable SSO
     debugModeJson TEXT, // options for development mode

@@ -239,7 +239,7 @@ function loginForm(req, res) {
         apps.get(result.appId, function (error, result) {
             if (error) return sendErrorPageOrRedirect(req, res, 'Unknown Application for those OAuth credentials');
 
-            var applicationName = result.altDomain || result.intrinsicFqdn;
+            var applicationName = result.intrinsicFqdn;
             render(applicationName, '/api/v1/apps/' + result.id + '/icon');
         });
     });

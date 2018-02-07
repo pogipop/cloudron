@@ -58,8 +58,6 @@ function removeInternalAppFields(app) {
         iconUrl: app.iconUrl,
         fqdn: app.fqdn,
         memoryLimit: app.memoryLimit,
-        altDomain: app.altDomain,
-        cnameTarget: app.cnameTarget,
         xFrameOptions: app.xFrameOptions,
         sso: app.sso,
         debugMode: app.debugMode,
@@ -134,9 +132,6 @@ function installApp(req, res, next) {
 
     if ('memoryLimit' in data && typeof data.memoryLimit !== 'number') return next(new HttpError(400, 'memoryLimit is not a number'));
 
-    // falsy value in altDomain unsets it
-    if (data.altDomain && typeof data.altDomain !== 'string') return next(new HttpError(400, 'altDomain must be a string'));
-
     if (data.xFrameOptions && typeof data.xFrameOptions !== 'string') return next(new HttpError(400, 'xFrameOptions must be a string'));
 
     if ('sso' in data && typeof data.sso !== 'boolean') return next(new HttpError(400, 'sso must be a boolean'));
@@ -181,7 +176,6 @@ function configureApp(req, res, next) {
     if (!data.cert && data.key) return next(new HttpError(400, 'cert must be provided'));
 
     if ('memoryLimit' in data && typeof data.memoryLimit !== 'number') return next(new HttpError(400, 'memoryLimit is not a number'));
-    if (data.altDomain && typeof data.altDomain !== 'string') return next(new HttpError(400, 'altDomain must be a string'));
     if (data.xFrameOptions && typeof data.xFrameOptions !== 'string') return next(new HttpError(400, 'xFrameOptions must be a string'));
 
     if ('enableBackup' in data && typeof data.enableBackup !== 'boolean') return next(new HttpError(400, 'enableBackup must be a boolean'));
