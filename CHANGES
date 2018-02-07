@@ -1190,3 +1190,11 @@
 * Add DigitalOcean Spaces region Singapore 1 (SGP1)
 * Configure Exoscale SOS to use new SOS NG endpoint
 * Fix S3 storage backend CopySource encoding rules
+
+[1.10.1]
+* Migrate mailboxes to support multiple domains
+* Update addon containers to latest versions
+* Add DigitalOcean Spaces region Singapore 1 (SGP1)
+* Configure Exoscale SOS to use new SOS NG endpoint
+* Fix S3 storage backend CopySource encoding rules
+
