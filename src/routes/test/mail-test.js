@@ -295,7 +295,7 @@ describe('Mail API', function () {
                     expect(res.body.dns.ptr).to.be.an('object');
                     expect(res.body.dns.ptr.type).to.eql('PTR');
                     // expect(res.body.ptr.value).to.eql(null); this will be anything random
-                    expect(res.body.dns.ptr.expected).to.eql(config.mailFqdn() + '.');
+                    expect(res.body.dns.ptr.expected).to.eql(config.mailFqdn());
                     expect(res.body.dns.ptr.status).to.eql(false);
 
                     done();
@@ -336,7 +336,7 @@ describe('Mail API', function () {
                     expect(res.body.dns.mx.value).to.eql(null);
 
                     expect(res.body.dns.ptr).to.be.an('object');
-                    expect(res.body.dns.ptr.expected).to.eql(config.mailFqdn() + '.');
+                    expect(res.body.dns.ptr.expected).to.eql(config.mailFqdn());
                     expect(res.body.dns.ptr.status).to.eql(false);
                     // expect(res.body.ptr.value).to.eql(null); this will be anything random
 
@@ -378,7 +378,7 @@ describe('Mail API', function () {
                     expect(res.body.dns.mx.value).to.eql('20 ' + config.mailFqdn() + '. 30 ' + config.mailFqdn() + '.');
 
                     expect(res.body.dns.ptr).to.be.an('object');
-                    expect(res.body.dns.ptr.expected).to.eql(config.mailFqdn() + '.');
+                    expect(res.body.dns.ptr.expected).to.eql(config.mailFqdn());
                     expect(res.body.dns.ptr.status).to.eql(false);
                     // expect(res.body.ptr.value).to.eql(null); this will be anything random
 
