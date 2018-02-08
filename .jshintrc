@@ -2,6 +2,7 @@
     "node": true,
     "browser": true,
     "unused": true,
+    "multistr": true,
     "globalstrict": true,
     "predef": [ "angular", "$" ],
     "esnext": true
