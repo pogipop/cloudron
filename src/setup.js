@@ -145,7 +145,7 @@ function configureWebadmin(callback) {
         if (process.env.BOX_ENV === 'test') return callback();
 
         async.retry({ times: 10, interval: 20000 }, function (retryCallback) {
-            domains.upsertDNSRecords(config.adminLocation(), domain, 'A', [ ip ], retryCallback);
+            domains.upsertDnsRecords(config.adminLocation(), domain, 'A', [ ip ], retryCallback);
         }, function (error) {
             if (error) debug('addWebadminDnsRecord: done updating records with error:', error);
             else debug('addWebadminDnsRecord: done');
@@ -162,7 +162,7 @@ function configureWebadmin(callback) {
         addWebadminDnsRecord(ip, config.adminDomain(), function (error) {
             if (error) return configureReverseProxy(error);
 
-            domains.waitForDNSRecord(config.adminFqdn(), config.adminDomain(), ip, 'A', { interval: 30000, times: 50000 }, function (error) {
+            domains.waitForDnsRecord(config.adminFqdn(), config.adminDomain(), ip, 'A', { interval: 30000, times: 50000 }, function (error) {
                 if (error) return configureReverseProxy(error);
 
                 gWebadminStatus.dns = true;

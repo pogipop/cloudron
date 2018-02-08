@@ -10,11 +10,11 @@ module.exports = exports = {
     fqdn: fqdn,
     setAdmin: setAdmin,
 
-    getDNSRecords: getDNSRecords,
-    upsertDNSRecords: upsertDNSRecords,
-    removeDNSRecords: removeDNSRecords,
+    getDnsRecords: getDnsRecords,
+    upsertDnsRecords: upsertDnsRecords,
+    removeDnsRecords: removeDnsRecords,
 
-    waitForDNSRecord: waitForDNSRecord,
+    waitForDnsRecord: waitForDnsRecord,
 
     DomainError: DomainError
 };
@@ -256,7 +256,7 @@ function getName(domain, subdomain) {
     return subdomain === '' ? part : subdomain + '.' + part;
 }
 
-function getDNSRecords(subdomain, domain, type, callback) {
+function getDnsRecords(subdomain, domain, type, callback) {
     assert.strictEqual(typeof subdomain, 'string');
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof type, 'string');
@@ -273,7 +273,7 @@ function getDNSRecords(subdomain, domain, type, callback) {
     });
 }
 
-function upsertDNSRecords(subdomain, domain, type, values, callback) {
+function upsertDnsRecords(subdomain, domain, type, values, callback) {
     assert.strictEqual(typeof subdomain, 'string');
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof type, 'string');
@@ -293,7 +293,7 @@ function upsertDNSRecords(subdomain, domain, type, values, callback) {
     });
 }
 
-function removeDNSRecords(subdomain, domain, type, values, callback) {
+function removeDnsRecords(subdomain, domain, type, values, callback) {
     assert.strictEqual(typeof subdomain, 'string');
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof type, 'string');
@@ -313,7 +313,7 @@ function removeDNSRecords(subdomain, domain, type, values, callback) {
     });
 }
 
-function waitForDNSRecord(fqdn, domain, value, type, options, callback) {
+function waitForDnsRecord(fqdn, domain, value, type, options, callback) {
     assert.strictEqual(typeof fqdn, 'string');
     assert.strictEqual(typeof domain, 'string');
     assert(typeof value === 'string' || util.isRegExp(value));

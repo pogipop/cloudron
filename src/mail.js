@@ -618,7 +618,7 @@ function txtRecordsWithSpf(domain, callback) {
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    domains.getDNSRecords('', domain, 'TXT', function (error, txtRecords) {
+    domains.getDnsRecords('', domain, 'TXT', function (error, txtRecords) {
         if (error) return callback(error);
 
         debug('txtRecordsWithSpf: current txt records - %j', txtRecords);
@@ -693,7 +693,7 @@ function addDnsRecords(domain, callback) {
             debug('addDnsRecords: will update %j', records);
 
             async.mapSeries(records, function (record, iteratorCallback) {
-                domains.upsertDNSRecords(record.subdomain, record.domain, record.type, record.values, iteratorCallback);
+                domains.upsertDnsRecords(record.subdomain, record.domain, record.type, record.values, iteratorCallback);
             }, function (error, changeIds) {
                 if (error) debug('addDnsRecords: failed to update : %s. will retry', error);
                 else debug('addDnsRecords: records %j added with changeIds %j', records, changeIds);
@@ -808,7 +808,7 @@ function setMailEnabled(domain, enabled, callback) {
         ];
 
         async.mapSeries(records, function (record, iteratorCallback) {
-            domains.upsertDNSRecords(record.subdomain, domain, record.type, record.values, iteratorCallback);
+            domains.upsertDnsRecords(record.subdomain, domain, record.type, record.values, iteratorCallback);
         }, NOOP_CALLBACK);
 
         callback(null);

@@ -58,7 +58,7 @@ function getZoneByName(dnsConfig, zoneName, callback) {
         });
 }
 
-function getDNSRecordsByZoneId(dnsConfig, zoneId, zoneName, subdomain, type, callback) {
+function getDnsRecordsByZoneId(dnsConfig, zoneId, zoneName, subdomain, type, callback) {
     assert.strictEqual(typeof dnsConfig, 'object');
     assert.strictEqual(typeof zoneId, 'string');
     assert.strictEqual(typeof zoneName, 'string');
@@ -100,7 +100,7 @@ function upsert(dnsConfig, zoneName, subdomain, type, values, callback) {
 
         var zoneId = result.id;
 
-        getDNSRecordsByZoneId(dnsConfig, zoneId, zoneName, subdomain, type, function (error, result) {
+        getDnsRecordsByZoneId(dnsConfig, zoneId, zoneName, subdomain, type, function (error, result) {
             if (error) return callback(error);
 
             var dnsRecords = result;
@@ -171,7 +171,7 @@ function get(dnsConfig, zoneName, subdomain, type, callback) {
     getZoneByName(dnsConfig, zoneName, function(error, result){
         if (error) return callback(error);
 
-        getDNSRecordsByZoneId(dnsConfig, result.id, zoneName, subdomain, type, function(error, result) {
+        getDnsRecordsByZoneId(dnsConfig, result.id, zoneName, subdomain, type, function(error, result) {
             if (error) return callback(error);
 
             var tmp = result.map(function (record) { return record.content; });
@@ -193,7 +193,7 @@ function del(dnsConfig, zoneName, subdomain, type, values, callback) {
     getZoneByName(dnsConfig, zoneName, function(error, result){
         if (error) return callback(error);
 
-        getDNSRecordsByZoneId(dnsConfig, result.id, zoneName, subdomain, type, function(error, result) {
+        getDnsRecordsByZoneId(dnsConfig, result.id, zoneName, subdomain, type, function(error, result) {
             if (error) return callback(error);
             if (result.length === 0) return callback(null);
 

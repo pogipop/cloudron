@@ -267,13 +267,13 @@ function registerSubdomain(app, overwrite, callback) {
             debugApp(app, 'Registering subdomain location [%s] overwrite: %s', app.fqdn, overwrite);
 
             // get the current record before updating it
-            domains.getDNSRecords(app.location, app.domain, 'A', function (error, values) {
+            domains.getDnsRecords(app.location, app.domain, 'A', function (error, values) {
                 if (error) return retryCallback(error);
 
                 // refuse to update any existing DNS record for custom domains that we did not create
                 if (values.length !== 0 && !overwrite) return retryCallback(null, new Error('DNS Record already exists'));
 
-                domains.upsertDNSRecords(app.location, app.domain, 'A', [ ip ], function (error, changeId) {
+                domains.upsertDnsRecords(app.location, app.domain, 'A', [ ip ], function (error, changeId) {
                     if (error && (error.reason === DomainError.STILL_BUSY || error.reason === DomainError.EXTERNAL_ERROR)) return retryCallback(error); // try again
 
                     retryCallback(null, error || changeId);
@@ -305,7 +305,7 @@ function unregisterSubdomain(app, location, domain, callback) {
         async.retry({ times: 30, interval: 5000 }, function (retryCallback) {
             debugApp(app, 'Unregistering subdomain: %s', app.fqdn);
 
-            domains.removeDNSRecords(location, domain, 'A', [ ip ], function (error) {
+            domains.removeDnsRecords(location, domain, 'A', [ ip ], function (error) {
                 if (error && error.reason === DomainError.NOT_FOUND) return retryCallback(null, null); // domain can be not found if oldConfig.domain or restoreConfig.domain was removed
                 if (error && (error.reason === DomainError.STILL_BUSY || error.reason === DomainError.EXTERNAL_ERROR)) return retryCallback(error); // try again
 
@@ -341,7 +341,7 @@ function waitForDnsPropagation(app, callback) {
     sysinfo.getPublicIp(function (error, ip) {
         if (error) return callback(error);
 
-        domains.waitForDNSRecord(app.fqdn, app.domain, ip, 'A', { interval: 5000, times: 120 }, callback);
+        domains.waitForDnsRecord(app.fqdn, app.domain, ip, 'A', { interval: 5000, times: 120 }, callback);
     });
 }
 

@@ -23,7 +23,7 @@ function sync(callback) {
 
         debug('refreshDNS: current ip %s', ip);
 
-        domains.upsertDNSRecords(config.adminLocation(), config.adminDomain(), 'A', [ ip ], function (error) {
+        domains.upsertDnsRecords(config.adminLocation(), config.adminDomain(), 'A', [ ip ], function (error) {
             if (error) return callback(error);
 
             debug('refreshDNS: done for admin location');
@@ -35,7 +35,7 @@ function sync(callback) {
                     // do not change state of installing apps since apptask will error if dns record already exists
                     if (app.installationState !== appdb.ISTATE_INSTALLED) return callback();
 
-                    domains.upsertDNSRecords(app.location, app.domain, 'A', [ ip ], callback);
+                    domains.upsertDnsRecords(app.location, app.domain, 'A', [ ip ], callback);
                 }, function (error) {
                     if (error) return callback(error);
 
