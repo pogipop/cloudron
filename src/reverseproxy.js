@@ -237,24 +237,26 @@ function ensureCertificate(app, auditSource, callback) {
     assert.strictEqual(typeof auditSource, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    var certFilePath = path.join(paths.APP_CERTS_DIR, `${app.fqdn}.user.cert`);
-    var keyFilePath = path.join(paths.APP_CERTS_DIR, `${app.fqdn}.user.key`);
+    const vhost = app.fqdn;
+
+    var certFilePath = path.join(paths.APP_CERTS_DIR, `${vhost}.user.cert`);
+    var keyFilePath = path.join(paths.APP_CERTS_DIR, `${vhost}.user.key`);
 
     if (fs.existsSync(certFilePath) && fs.existsSync(keyFilePath)) {
-        debug('ensureCertificate: %s. user certificate already exists at %s', app.fqdn, keyFilePath);
+        debug('ensureCertificate: %s. user certificate already exists at %s', vhost, keyFilePath);
         return callback(null, { certFilePath, keyFilePath, reason: 'user' });
     }
 
-    certFilePath = path.join(paths.APP_CERTS_DIR, `${app.fqdn}.cert`);
-    keyFilePath = path.join(paths.APP_CERTS_DIR, `${app.fqdn}.key`);
+    certFilePath = path.join(paths.APP_CERTS_DIR, `${vhost}.cert`);
+    keyFilePath = path.join(paths.APP_CERTS_DIR, `${vhost}.key`);
 
     if (fs.existsSync(certFilePath) && fs.existsSync(keyFilePath)) {
-        debug('ensureCertificate: %s. certificate already exists at %s', app.fqdn, keyFilePath);
+        debug('ensureCertificate: %s. certificate already exists at %s', vhost, keyFilePath);
 
         if (!isExpiringSync(certFilePath, 24 * 30)) return callback(null, { certFilePath, keyFilePath, reason: 'existing-le' });
-        debug('ensureCertificate: %s cert require renewal', app.fqdn);
+        debug('ensureCertificate: %s cert require renewal', vhost);
     } else {
-        debug('ensureCertificate: %s cert does not exist', app.fqdn);
+        debug('ensureCertificate: %s cert does not exist', vhost);
     }
 
     getApi(app, function (error, api, apiOptions) {
