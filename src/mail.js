@@ -292,7 +292,7 @@ function checkPtr(callback) {
         domain: null,
         type: 'PTR',
         value: null,
-        expected: config.mailFqdn() + '.',
+        expected: config.mailFqdn(), // any trailing '.' is added by client software (https://lists.gt.net/spf/devel/7918)
         status: false
     };
 
@@ -301,7 +301,7 @@ function checkPtr(callback) {
 
         ptr.domain = ip.split('.').reverse().join('.') + '.in-addr.arpa';
 
-        dns.resolve(ip, 'PTR', DNS_OPTIONS, function (error, ptrRecords) {
+        dns.resolve(ptr.domain, 'PTR', DNS_OPTIONS, function (error, ptrRecords) {
             if (error) return callback(error, ptr);
 
             if (ptrRecords.length !== 0) {
