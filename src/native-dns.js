@@ -2,7 +2,8 @@
 
 exports = module.exports = {
     resolveNs: resolveNs,
-    resolve4: resolve4
+    resolve4: resolve4,
+    resolve: resolve
 };
 
 var assert = require('assert'),
