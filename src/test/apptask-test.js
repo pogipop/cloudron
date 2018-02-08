@@ -68,7 +68,6 @@ var APP = {
     runState: null,
     location: 'applocation',
     domain: DOMAIN_0.domain,
-    intrinsicFqdn: DOMAIN_0.domain + '.' + 'applocation',
     fqdn: DOMAIN_0.domain + '.' + 'applocation',
     manifest: MANIFEST,
     containerId: null,

@@ -311,7 +311,7 @@ function getAppConfig(app) {
         manifest: app.manifest,
         location: app.location,
         domain: app.domain,
-        intrinsicFqdn: app.intrinsicFqdn,
+        fqdn: app.fqdn,
         accessRestriction: app.accessRestriction,
         portBindings: app.portBindings,
         memoryLimit: app.memoryLimit,
@@ -361,9 +361,8 @@ function get(appId, callback) {
         domaindb.get(app.domain, function (error, result) {
             if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
 
-            app.intrinsicFqdn = domains.fqdn(app.location, app.domain, result.provider);
             app.iconUrl = getIconUrlSync(app);
-            app.fqdn = app.intrinsicFqdn;
+            app.fqdn = domains.fqdn(app.location, app.domain, result.provider);
 
             callback(null, app);
         });
@@ -384,9 +383,8 @@ function getByIpAddress(ip, callback) {
             domaindb.get(app.domain, function (error, result) {
                 if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
 
-                app.intrinsicFqdn = domains.fqdn(app.location, app.domain, result.provider);
                 app.iconUrl = getIconUrlSync(app);
-                app.fqdn = app.intrinsicFqdn;
+                app.fqdn = domains.fqdn(app.location, app.domain, result.provider);
 
                 callback(null, app);
             });
@@ -404,9 +402,8 @@ function getAll(callback) {
             domaindb.get(app.domain, function (error, result) {
                 if (error) return iteratorDone(new AppsError(AppsError.INTERNAL_ERROR, error));
 
-                app.intrinsicFqdn = domains.fqdn(app.location, app.domain, result.provider);
                 app.iconUrl = getIconUrlSync(app);
-                app.fqdn = app.intrinsicFqdn;
+                app.fqdn = domains.fqdn(app.location, app.domain, result.provider);
 
                 iteratorDone();
             });
@@ -522,13 +519,13 @@ function install(data, auditSource, callback) {
             if (error && error.reason === DomainError.NOT_FOUND) return callback(new AppsError(AppsError.NOT_FOUND, 'No such domain'));
             if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, 'Could not get domain info:' + error.message));
 
-            var intrinsicFqdn = domains.fqdn(location, domain, domainObject.provider);
+            var fqdn = domains.fqdn(location, domain, domainObject.provider);
 
-            error = validateHostname(location, domain, intrinsicFqdn);
+            error = validateHostname(location, domain, fqdn);
             if (error) return callback(error);
 
             if (cert && key) {
-                error = reverseProxy.validateCertificate(intrinsicFqdn, cert, key);
+                error = reverseProxy.validateCertificate(fqdn, cert, key);
                 if (error) return callback(new AppsError(AppsError.BAD_CERTIFICATE, error.message));
             }
 
@@ -549,8 +546,7 @@ function install(data, auditSource, callback) {
                     mailboxName: (location ? location : manifest.title.toLowerCase().replace(/[^a-zA-Z0-9]/g, '')) + '.app',
                     restoreConfig: backupId ? { backupId: backupId, backupFormat: backupFormat } : null,
                     enableBackup: enableBackup,
-                    robotsTxt: robotsTxt,
-                    intrinsicFqdn: intrinsicFqdn
+                    robotsTxt: robotsTxt
                 };
 
                 appdb.add(appId, appStoreId, manifest, location, domain, portBindings, data, function (error) {
@@ -559,8 +555,8 @@ function install(data, auditSource, callback) {
 
                     // save cert to boxdata/certs
                     if (cert && key) {
-                        if (!safe.fs.writeFileSync(path.join(paths.APP_CERTS_DIR, intrinsicFqdn + '.user.cert'), cert)) return callback(new AppsError(AppsError.INTERNAL_ERROR, 'Error saving cert: ' + safe.error.message));
-                        if (!safe.fs.writeFileSync(path.join(paths.APP_CERTS_DIR, intrinsicFqdn + '.user.key'), key)) return callback(new AppsError(AppsError.INTERNAL_ERROR, 'Error saving key: ' + safe.error.message));
+                        if (!safe.fs.writeFileSync(path.join(paths.APP_CERTS_DIR, fqdn + '.user.cert'), cert)) return callback(new AppsError(AppsError.INTERNAL_ERROR, 'Error saving cert: ' + safe.error.message));
+                        if (!safe.fs.writeFileSync(path.join(paths.APP_CERTS_DIR, fqdn + '.user.key'), key)) return callback(new AppsError(AppsError.INTERNAL_ERROR, 'Error saving key: ' + safe.error.message));
                     }
 
                     taskmanager.restartAppTask(appId);
@@ -633,24 +629,22 @@ function configure(appId, data, auditSource, callback) {
             if (error && error.reason === DomainError.NOT_FOUND) return callback(new AppsError(AppsError.NOT_FOUND, 'No such domain'));
             if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, 'Could not get domain info:' + error.message));
 
-            var intrinsicFqdn = domains.fqdn(location, domain, domainObject.provider);
+            var fqdn = domains.fqdn(location, domain, domainObject.provider);
 
-            error = validateHostname(location, domain, intrinsicFqdn);
+            error = validateHostname(location, domain, fqdn);
             if (error) return callback(error);
 
             // save cert to boxdata/certs. TODO: move this to apptask when we have a real task queue
             if ('cert' in data && 'key' in data) {
-                var vhost = intrinsicFqdn;
-
                 if (data.cert && data.key) {
-                    error = reverseProxy.validateCertificate(vhost, data.cert, data.key);
+                    error = reverseProxy.validateCertificate(fqdn, data.cert, data.key);
                     if (error) return callback(new AppsError(AppsError.BAD_CERTIFICATE, error.message));
 
-                    if (!safe.fs.writeFileSync(path.join(paths.APP_CERTS_DIR, `${vhost}.user.cert`), data.cert)) return callback(new AppsError(AppsError.INTERNAL_ERROR, 'Error saving cert: ' + safe.error.message));
-                    if (!safe.fs.writeFileSync(path.join(paths.APP_CERTS_DIR, `${vhost}.user.key`), data.key)) return callback(new AppsError(AppsError.INTERNAL_ERROR, 'Error saving key: ' + safe.error.message));
+                    if (!safe.fs.writeFileSync(path.join(paths.APP_CERTS_DIR, `${fqdn}.user.cert`), data.cert)) return callback(new AppsError(AppsError.INTERNAL_ERROR, 'Error saving cert: ' + safe.error.message));
+                    if (!safe.fs.writeFileSync(path.join(paths.APP_CERTS_DIR, `${fqdn}.user.key`), data.key)) return callback(new AppsError(AppsError.INTERNAL_ERROR, 'Error saving key: ' + safe.error.message));
                 } else { // remove existing cert/key
-                    if (!safe.fs.unlinkSync(path.join(paths.APP_CERTS_DIR, `${vhost}.user.cert`))) debug('Error removing cert: ' + safe.error.message);
-                    if (!safe.fs.unlinkSync(path.join(paths.APP_CERTS_DIR, `${vhost}..user.key`))) debug('Error removing key: ' + safe.error.message);
+                    if (!safe.fs.unlinkSync(path.join(paths.APP_CERTS_DIR, `${fqdn}.user.cert`))) debug('Error removing cert: ' + safe.error.message);
+                    if (!safe.fs.unlinkSync(path.join(paths.APP_CERTS_DIR, `${fqdn}..user.key`))) debug('Error removing key: ' + safe.error.message);
                 }
             }
 
@@ -893,9 +887,7 @@ function clone(appId, data, auditSource, callback) {
                 if (error && error.reason === DomainError.NOT_FOUND) return callback(new AppsError(AppsError.NOT_FOUND, 'No such domain'));
                 if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, 'Could not get domain info:' + error.message));
 
-                var intrinsicFqdn = domains.fqdn(location, domain, domainObject.provider);
-
-                error = validateHostname(location, domain, intrinsicFqdn);
+                error = validateHostname(location, domain, domains.fqdn(location, domain, domainObject.provider));
                 if (error) return callback(error);
 
                 var newAppId = uuid.v4(), manifest = backupInfo.manifest;
@@ -1163,13 +1155,13 @@ function restoreInstalledApps(callback) {
         if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
 
         async.map(apps, function (app, iteratorDone) {
-            debug('marking %s for restore', app.intrinsicFqdn);
+            debug('marking %s for restore', app.fqdn);
 
             backups.getByAppIdPaged(1, 1, app.id, function (error, results) {
                 var restoreConfig = !error && results.length ? { backupId: results[0].id, backupFormat: results[0].format } : null;
 
                 appdb.setInstallationCommand(app.id, appdb.ISTATE_PENDING_RESTORE, { restoreConfig: restoreConfig, oldConfig: null }, function (error) {
-                    if (error) debug('did not mark %s for restore', app.intrinsicFqdn, error);
+                    if (error) debug('did not mark %s for restore', app.fqdn, error);
 
                     iteratorDone(); // always succeed
                 });
@@ -1185,10 +1177,10 @@ function configureInstalledApps(callback) {
         if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
 
         async.map(apps, function (app, iteratorDone) {
-            debug('marking %s for reconfigure', app.intrinsicFqdn);
+            debug('marking %s for reconfigure', app.fqdn);
 
             appdb.setInstallationCommand(app.id, appdb.ISTATE_PENDING_CONFIGURE, { oldConfig: null }, function (error) {
-                if (error) debug('did not mark %s for reconfigure', app.intrinsicFqdn, error);
+                if (error) debug('did not mark %s for reconfigure', app.fqdn, error);
 
                 iteratorDone(); // always succeed
             });

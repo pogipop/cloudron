@@ -49,10 +49,9 @@ var addons = require('./addons.js'),
     _ = require('underscore');
 
 function debugApp(app, args) {
-    assert(!app || typeof app === 'object');
+    assert(typeof app === 'object');
 
-    var prefix = app ? app.intrinsicFqdn : '(no app)';
-    debug(prefix + ' ' + util.format.apply(util, Array.prototype.slice.call(arguments, 1)));
+    debug(app.fqdn + ' ' + util.format.apply(util, Array.prototype.slice.call(arguments, 1)));
 }
 
 function pullImage(manifest, callback) {
@@ -129,7 +128,7 @@ function createSubcontainer(app, name, cmd, options, callback) {
 
     var manifest = app.manifest;
     var exposedPorts = {}, dockerPortBindings = { };
-    var domain = app.intrinsicFqdn;
+    var domain = app.fqdn;
     var stdEnv = [
         'CLOUDRON=1',
         'WEBADMIN_ORIGIN=' + config.adminOrigin(),
@@ -186,7 +185,7 @@ function createSubcontainer(app, name, cmd, options, callback) {
                 '/run': {}
             },
             Labels: {
-                'fqdn': app.intrinsicFqdn,
+                'fqdn': app.fqdn,
                 'appId': app.id,
                 'isSubcontainer': String(!isAppContainer)
             },

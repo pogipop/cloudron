@@ -112,10 +112,9 @@ var KNOWN_ADDONS = {
 var RMAPPDIR_CMD = path.join(__dirname, 'scripts/rmappdir.sh');
 
 function debugApp(app, args) {
-    assert(!app || typeof app === 'object');
+    assert(typeof app === 'object');
 
-    var prefix = app ? app.intrinsicFqdn : '(no app)';
-    debug(prefix + ' ' + util.format.apply(util, Array.prototype.slice.call(arguments, 1)));
+    debug(app.fqdn + ' ' + util.format.apply(util, Array.prototype.slice.call(arguments, 1)));
 }
 
 function setupAddons(app, addons, callback) {
@@ -250,7 +249,7 @@ function setupOauth(app, options, callback) {
     if (!app.sso) return callback(null);
 
     var appId = app.id;
-    var redirectURI = 'https://' + app.intrinsicFqdn;
+    var redirectURI = 'https://' + app.fqdn;
     var scope = 'profile';
 
     clients.delByAppIdAndType(appId, clients.TYPE_OAUTH, function (error) { // remove existing creds
@@ -460,6 +459,10 @@ function teardownMySql(app, options, callback) {
 }
 
 function backupMySql(app, options, callback) {
+    assert.strictEqual(typeof app, 'object');
+    assert.strictEqual(typeof options, 'object');
+    assert.strictEqual(typeof callback, 'function');
+
     debugApp(app, 'Backing up mysql');
 
     callback = once(callback); // ChildProcess exit may or may not be called after error
@@ -473,6 +476,10 @@ function backupMySql(app, options, callback) {
 }
 
 function restoreMySql(app, options, callback) {
+    assert.strictEqual(typeof app, 'object');
+    assert.strictEqual(typeof options, 'object');
+    assert.strictEqual(typeof callback, 'function');
+
     callback = once(callback); // ChildProcess exit may or may not be called after error
 
     setupMySql(app, options, function (error) {
@@ -525,6 +532,10 @@ function teardownPostgreSql(app, options, callback) {
 }
 
 function backupPostgreSql(app, options, callback) {
+    assert.strictEqual(typeof app, 'object');
+    assert.strictEqual(typeof options, 'object');
+    assert.strictEqual(typeof callback, 'function');
+
     debugApp(app, 'Backing up postgresql');
 
     callback = once(callback); // ChildProcess exit may or may not be called after error
@@ -538,6 +549,10 @@ function backupPostgreSql(app, options, callback) {
 }
 
 function restorePostgreSql(app, options, callback) {
+    assert.strictEqual(typeof app, 'object');
+    assert.strictEqual(typeof options, 'object');
+    assert.strictEqual(typeof callback, 'function');
+
     callback = once(callback);
 
     setupPostgreSql(app, options, function (error) {
@@ -591,6 +606,10 @@ function teardownMongoDb(app, options, callback) {
 }
 
 function backupMongoDb(app, options, callback) {
+    assert.strictEqual(typeof app, 'object');
+    assert.strictEqual(typeof options, 'object');
+    assert.strictEqual(typeof callback, 'function');
+
     debugApp(app, 'Backing up mongodb');
 
     callback = once(callback); // ChildProcess exit may or may not be called after error
@@ -604,6 +623,10 @@ function backupMongoDb(app, options, callback) {
 }
 
 function restoreMongoDb(app, options, callback) {
+    assert.strictEqual(typeof app, 'object');
+    assert.strictEqual(typeof options, 'object');
+    assert.strictEqual(typeof callback, 'function');
+
     callback = once(callback); // ChildProcess exit may or may not be called after error
 
     setupMongoDb(app, options, function (error) {
@@ -647,7 +670,7 @@ function setupRedis(app, options, callback) {
     }
 
     const tag = infra.images.redis.tag, redisName = 'redis-' + app.id;
-    const label = app.intrinsicFqdn;
+    const label = app.fqdn;
     // note that we do not add appId label because this interferes with the stop/start app logic
     const cmd = `docker run --restart=always -d --name=${redisName} \
                 --label=location=${label} \
@@ -706,6 +729,10 @@ function teardownRedis(app, options, callback) {
 }
 
 function backupRedis(app, options, callback) {
+    assert.strictEqual(typeof app, 'object');
+    assert.strictEqual(typeof options, 'object');
+    assert.strictEqual(typeof callback, 'function');
+
     debugApp(app, 'Backing up redis');
 
     var cmd = [ '/addons/redis/service.sh', 'backup' ]; // the redis dir is volume mounted

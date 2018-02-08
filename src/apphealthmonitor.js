@@ -23,13 +23,9 @@ var gRunTimeout = null;
 var gDockerEventStream = null;
 
 function debugApp(app) {
-    assert(!app || typeof app === 'object');
+    assert(typeof app === 'object');
 
-    var prefix = app ? app.intrinsicFqdn : '(no app)';
-    var manifestAppId = app ? app.manifest.id : '';
-    var id = app ? app.id : '';
-
-    debug(prefix + ' ' + manifestAppId + ' ' + util.format.apply(util, Array.prototype.slice.call(arguments, 1)) + ' - ' + id);
+    debug(app.fqdn + ' ' + app.manifest.id + ' ' + util.format.apply(util, Array.prototype.slice.call(arguments, 1)) + ' - ' + app.id);
 }
 
 function setHealth(app, health, callback) {
@@ -70,6 +66,9 @@ function setHealth(app, health, callback) {
 
 // callback is called with error for fatal errors and not if health check failed
 function checkAppHealth(app, callback) {
+    assert.strictEqual(typeof app, 'object');
+    assert.strictEqual(typeof callback, 'function');
+
     if (app.installationState !== appdb.ISTATE_INSTALLED || app.runState !== appdb.RSTATE_RUNNING) {
         debugApp(app, 'skipped. istate:%s rstate:%s', app.installationState, app.runState);
         return callback(null);

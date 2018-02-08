@@ -70,8 +70,7 @@ function initialize(callback) {
 function debugApp(app) {
     assert.strictEqual(typeof app, 'object');
 
-    var prefix = app ? (app.intrinsicFqdn || '(bare)') : '(no app)';
-    debug(prefix + ' ' + util.format.apply(util, Array.prototype.slice.call(arguments, 1)));
+    debug(app.fqdn + ' ' + util.format.apply(util, Array.prototype.slice.call(arguments, 1)));
 }
 
 // updates the app object and the database
@@ -265,7 +264,7 @@ function registerSubdomain(app, overwrite, callback) {
         if (error) return callback(error);
 
         async.retry({ times: 200, interval: 5000 }, function (retryCallback) {
-            debugApp(app, 'Registering subdomain location [%s] overwrite: %s', app.intrinsicFqdn, overwrite);
+            debugApp(app, 'Registering subdomain location [%s] overwrite: %s', app.fqdn, overwrite);
 
             // get the current record before updating it
             domains.getDNSRecords(app.location, app.domain, 'A', function (error, values) {
@@ -304,7 +303,7 @@ function unregisterSubdomain(app, location, domain, callback) {
         if (error) return callback(error);
 
         async.retry({ times: 30, interval: 5000 }, function (retryCallback) {
-            debugApp(app, 'Unregistering subdomain: %s', app.intrinsicFqdn);
+            debugApp(app, 'Unregistering subdomain: %s', app.fqdn);
 
             domains.removeDNSRecords(location, domain, 'A', [ ip ], function (error) {
                 if (error && error.reason === DomainError.NOT_FOUND) return retryCallback(null, null); // domain can be not found if oldConfig.domain or restoreConfig.domain was removed
@@ -342,7 +341,7 @@ function waitForDnsPropagation(app, callback) {
     sysinfo.getPublicIp(function (error, ip) {
         if (error) return callback(error);
 
-        domains.waitForDNSRecord(app.intrinsicFqdn, app.domain, ip, 'A', { interval: 5000, times: 120 }, callback);
+        domains.waitForDNSRecord(app.fqdn, app.domain, ip, 'A', { interval: 5000, times: 120 }, callback);
     });
 }
 
@@ -473,7 +472,7 @@ function configure(app, callback) {
     assert.strictEqual(typeof callback, 'function');
 
     // oldConfig can be null during an infra update
-    var locationChanged = app.oldConfig && (app.oldConfig.intrinsicFqdn !== app.intrinsicFqdn);
+    var locationChanged = app.oldConfig && (app.oldConfig.fqdn !== app.fqdn);
 
     async.series([
         updateApp.bind(null, app, { installationProgress: '10, Cleaning up old install' }),

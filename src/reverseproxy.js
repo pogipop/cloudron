@@ -219,15 +219,13 @@ function getCertificate(app, callback) {
     assert.strictEqual(typeof app, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    var vhost = app.intrinsicFqdn;
-
-    var certFilePath = path.join(paths.APP_CERTS_DIR, `${vhost}.user.cert`);
-    var keyFilePath = path.join(paths.APP_CERTS_DIR, `${vhost}.user.key`);
+    var certFilePath = path.join(paths.APP_CERTS_DIR, `${app.fqdn}.user.cert`);
+    var keyFilePath = path.join(paths.APP_CERTS_DIR, `${app.fqdn}.user.key`);
 
     if (fs.existsSync(certFilePath) && fs.existsSync(keyFilePath)) return callback(null, { certFilePath, keyFilePath });
 
-    certFilePath = path.join(paths.APP_CERTS_DIR, `${vhost}.cert`);
-    keyFilePath = path.join(paths.APP_CERTS_DIR, `${vhost}.key`);
+    certFilePath = path.join(paths.APP_CERTS_DIR, `${app.fqdn}.cert`);
+    keyFilePath = path.join(paths.APP_CERTS_DIR, `${app.fqdn}.key`);
 
     if (fs.existsSync(certFilePath) && fs.existsSync(keyFilePath)) return callback(null, { certFilePath, keyFilePath });
 
@@ -239,26 +237,24 @@ function ensureCertificate(app, auditSource, callback) {
     assert.strictEqual(typeof auditSource, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    var vhost = app.intrinsicFqdn;
-
-    var certFilePath = path.join(paths.APP_CERTS_DIR, `${vhost}.user.cert`);
-    var keyFilePath = path.join(paths.APP_CERTS_DIR, `${vhost}.user.key`);
+    var certFilePath = path.join(paths.APP_CERTS_DIR, `${app.fqdn}.user.cert`);
+    var keyFilePath = path.join(paths.APP_CERTS_DIR, `${app.fqdn}.user.key`);
 
     if (fs.existsSync(certFilePath) && fs.existsSync(keyFilePath)) {
-        debug('ensureCertificate: %s. user certificate already exists at %s', vhost, keyFilePath);
+        debug('ensureCertificate: %s. user certificate already exists at %s', app.fqdn, keyFilePath);
         return callback(null, { certFilePath, keyFilePath, reason: 'user' });
     }
 
-    certFilePath = path.join(paths.APP_CERTS_DIR, `${vhost}.cert`);
-    keyFilePath = path.join(paths.APP_CERTS_DIR, `${vhost}.key`);
+    certFilePath = path.join(paths.APP_CERTS_DIR, `${app.fqdn}.cert`);
+    keyFilePath = path.join(paths.APP_CERTS_DIR, `${app.fqdn}.key`);
 
     if (fs.existsSync(certFilePath) && fs.existsSync(keyFilePath)) {
-        debug('ensureCertificate: %s. certificate already exists at %s', vhost, keyFilePath);
+        debug('ensureCertificate: %s. certificate already exists at %s', app.fqdn, keyFilePath);
 
         if (!isExpiringSync(certFilePath, 24 * 30)) return callback(null, { certFilePath, keyFilePath, reason: 'existing-le' });
-        debug('ensureCertificate: %s cert require renewal', vhost);
+        debug('ensureCertificate: %s cert require renewal', app.fqdn);
     } else {
-        debug('ensureCertificate: %s cert does not exist', vhost);
+        debug('ensureCertificate: %s cert does not exist', app.fqdn);
     }
 
     getApi(app, function (error, api, apiOptions) {
@@ -313,7 +309,7 @@ function configureAdmin(auditSource, callback) {
     assert.strictEqual(typeof auditSource, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    var adminApp = { domain: config.adminDomain(), intrinsicFqdn: config.adminFqdn() };
+    var adminApp = { domain: config.adminDomain(), fqdn: config.adminFqdn() };
     ensureCertificate(adminApp, auditSource, function (error, bundle) {
         if (error) return callback(error);
 
@@ -328,12 +324,11 @@ function configureAppInternal(app, bundle, callback) {
 
     var sourceDir = path.resolve(__dirname, '..');
     var endpoint = 'app';
-    var vhost = app.intrinsicFqdn;
 
     var data = {
         sourceDir: sourceDir,
         adminOrigin: config.adminOrigin(),
-        vhost: vhost,
+        vhost: app.fqdn,
         hasIPv6: config.hasIPv6(),
         port: app.httpPort,
         endpoint: endpoint,
@@ -345,10 +340,10 @@ function configureAppInternal(app, bundle, callback) {
     var nginxConf = ejs.render(NGINX_APPCONFIG_EJS, data);
 
     var nginxConfigFilename = path.join(paths.NGINX_APPCONFIG_DIR, app.id + '.conf');
-    debug('writing config for "%s" to %s with options %j', vhost, nginxConfigFilename, data);
+    debug('writing config for "%s" to %s with options %j', app.fqdn, nginxConfigFilename, data);
 
     if (!safe.fs.writeFileSync(nginxConfigFilename, nginxConf)) {
-        debug('Error creating nginx config for "%s" : %s', vhost, safe.error.message);
+        debug('Error creating nginx config for "%s" : %s', app.fqdn, safe.error.message);
         return callback(safe.error);
     }
 
@@ -371,11 +366,9 @@ function unconfigureApp(app, callback) {
     assert.strictEqual(typeof app, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    var vhost = app.intrinsicFqdn;
-
     var nginxConfigFilename = path.join(paths.NGINX_APPCONFIG_DIR, app.id + '.conf');
     if (!safe.fs.unlinkSync(nginxConfigFilename)) {
-        if (safe.error.code !== 'ENOENT') debug('Error removing nginx configuration of "%s": %s', vhost, safe.error.message);
+        if (safe.error.code !== 'ENOENT') debug('Error removing nginx configuration of "%s": %s', app.fqdn, safe.error.message);
         return callback(null);
     }
 
@@ -391,21 +384,21 @@ function renewAll(auditSource, callback) {
     apps.getAll(function (error, allApps) {
         if (error) return callback(error);
 
-        allApps.push({ domain: config.adminDomain(), intrinsicFqdn: config.adminFqdn() }); // inject fake webadmin app
+        allApps.push({ domain: config.adminDomain(), fqdn: config.adminFqdn() }); // inject fake webadmin app
 
         async.eachSeries(allApps, function (app, iteratorCallback) {
             ensureCertificate(app, auditSource, function (error, bundle) {
                 if (bundle.reason !== 'new-le' && bundle.reason !== 'fallback') return iteratorCallback();
 
                 // reconfigure for the case where we got a renewed cert after fallback
-                var configureFunc = app.intrinsicFqdn === config.adminFqdn() ?
+                var configureFunc = app.fqdn === config.adminFqdn() ?
                     configureAdminInternal.bind(null, bundle, constants.NGINX_ADMIN_CONFIG_FILE_NAME, config.adminFqdn())
                     : configureAppInternal.bind(null, app, bundle);
 
                 configureFunc(function (ignoredError) {
                     if (ignoredError) debug('fallbackExpiredCertificates: error reconfiguring app', ignoredError);
 
-                    platform.handleCertChanged(app.intrinsicFqdn);
+                    platform.handleCertChanged(app.fqdn);
 
                     iteratorCallback(); // move to next app
                 });
