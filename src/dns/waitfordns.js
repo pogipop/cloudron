@@ -5,8 +5,7 @@ exports = module.exports = waitForDns;
 var assert = require('assert'),
     async = require('async'),
     debug = require('debug')('box:dns/waitfordns'),
-    dig = require('../dig.js'),
-    dns = require('dns'),
+    dns = require('../native-dns.js'),
     DomainError = require('../domains.js').DomainError,
     util = require('util');
 
@@ -25,7 +24,7 @@ function isChangeSynced(domain, value, type, nameserver, callback) {
         }
 
         async.every(nsIps, function (nsIp, iteratorCallback) {
-            dig.resolve(domain, type, { server: nsIp, timeout: 5000 }, function (error, answer) {
+            dns.resolve(domain, type, { server: nsIp, timeout: 5000 }, function (error, answer) {
                 if (error && error.code === 'ETIMEDOUT') {
                     debug('nameserver %s (%s) timed out when trying to resolve %s', nameserver, nsIp, domain);
                     return iteratorCallback(null, true); // should be ok if dns server is down

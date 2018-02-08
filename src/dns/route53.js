@@ -13,9 +13,8 @@ exports = module.exports = {
 
 var assert = require('assert'),
     AWS = require('aws-sdk'),
-    config = require('../config.js'),
     debug = require('debug')('box:dns/route53'),
-    dns = require('dns'),
+    dns = require('../native-dns.js'),
     DomainError = require('../domains.js').DomainError,
     util = require('util'),
     _ = require('underscore');
@@ -193,7 +192,7 @@ function del(dnsConfig, zoneName, subdomain, type, values, callback) {
         };
 
         var route53 = new AWS.Route53(getDnsCredentials(dnsConfig));
-        route53.changeResourceRecordSets(params, function(error, result) {
+        route53.changeResourceRecordSets(params, function(error) {
             if (error && error.code === 'AccessDenied') return callback(new DomainError(DomainError.ACCESS_DENIED, error.message));
             if (error && error.code === 'InvalidClientTokenId') return callback(new DomainError(DomainError.ACCESS_DENIED, error.message));
             if (error && error.message && error.message.indexOf('it was not found') !== -1) {

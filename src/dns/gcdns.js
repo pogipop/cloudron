@@ -10,7 +10,7 @@ exports = module.exports = {
 
 var assert = require('assert'),
     debug = require('debug')('box:dns/gcdns'),
-    dns = require('dns'),
+    dns = require('../native-dns.js'),
     DomainError = require('../domains.js').DomainError,
     GCDNS = require('@google-cloud/dns'),
     util = require('util'),

@@ -11,7 +11,7 @@ exports = module.exports = {
 var assert = require('assert'),
     async = require('async'),
     debug = require('debug')('box:dns/cloudflare'),
-    dns = require('dns'),
+    dns = require('../native-dns.js'),
     DomainError = require('../domains.js').DomainError,
     superagent = require('superagent'),
     util = require('util'),

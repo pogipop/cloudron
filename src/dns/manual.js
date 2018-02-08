@@ -10,7 +10,7 @@ exports = module.exports = {
 
 var assert = require('assert'),
     debug = require('debug')('box:dns/manual'),
-    dns = require('dns'),
+    dns = require('../native-dns.js'),
     DomainError = require('../domains.js').DomainError,
     util = require('util');
 

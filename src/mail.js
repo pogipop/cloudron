@@ -42,7 +42,7 @@ var assert = require('assert'),
     constants = require('./constants.js'),
     DatabaseError = require('./databaseerror.js'),
     debug = require('debug')('box:mail'),
-    dig = require('./dig.js'),
+    dns = require('./native-dns.js'),
     domains = require('./domains.js'),
     groups = require('./groups.js'),
     GroupError = groups.GroupError,
@@ -65,7 +65,7 @@ var assert = require('assert'),
     util = require('util'),
     _ = require('underscore');
 
-const digOptions = { server: '127.0.0.1', port: 53, timeout: 5000 };
+const DNS_OPTIONS = { server: '127.0.0.1', timeout: 5000 };
 var NOOP_CALLBACK = function (error) { if (error) debug(error); };
 
 function MailError(reason, errorOrMessage) {
@@ -200,14 +200,13 @@ function checkDkim(domain, callback) {
     var dkimKey = readDkimPublicKeySync(domain);
     if (!dkimKey) return callback(new Error('Failed to read dkim public key'), dkim);
 
-    dkim.expected = '"v=DKIM1; t=s; p=' + dkimKey + '"';
+    dkim.expected = 'v=DKIM1; t=s; p=' + dkimKey;
 
-    dig.resolve(dkim.domain, dkim.type, digOptions, function (error, txtRecords) {
-        if (error && error.code === 'ENOTFOUND') return callback(null, dkim);    // not setup
+    dns.resolve(dkim.domain, dkim.type, DNS_OPTIONS, function (error, txtRecords) {
         if (error) return callback(error, dkim);
 
-        if (Array.isArray(txtRecords) && txtRecords.length !== 0) {
-            dkim.value = txtRecords[0];
+        if (txtRecords.length !== 0) {
+            dkim.value = txtRecords[0].join('');
             dkim.status = (dkim.value === dkim.expected);
         }
 
@@ -220,21 +219,18 @@ function checkSpf(domain, callback) {
         domain: domain,
         type: 'TXT',
         value: null,
-        expected: '"v=spf1 a:' + config.mailFqdn() + ' ~all"',
+        expected: 'v=spf1 a:' + config.mailFqdn() + ' ~all',
         status: false
     };
 
-    // https://agari.zendesk.com/hc/en-us/articles/202952749-How-long-can-my-SPF-record-be-
-    dig.resolve(spf.domain, spf.type, digOptions, function (error, txtRecords) {
-        if (error && error.code === 'ENOTFOUND') return callback(null, spf);    // not setup
+    dns.resolve(spf.domain, spf.type, DNS_OPTIONS, function (error, txtRecords) {
         if (error) return callback(error, spf);
-
-        if (!Array.isArray(txtRecords)) return callback(null, spf);
 
         var i;
         for (i = 0; i < txtRecords.length; i++) {
-            if (txtRecords[i].indexOf('"v=spf1 ') !== 0) continue; // not SPF
-            spf.value = txtRecords[i];
+            let txtRecord = txtRecords[i].join(''); // https://agari.zendesk.com/hc/en-us/articles/202952749-How-long-can-my-SPF-record-be-
+            if (txtRecord.indexOf('v=spf1 ') !== 0) continue; // not SPF
+            spf.value = txtRecord;
             spf.status = spf.value.indexOf(' a:' + config.adminFqdn()) !== -1;
             break;
         }
@@ -242,7 +238,7 @@ function checkSpf(domain, callback) {
         if (spf.status) {
             spf.expected = spf.value;
         } else if (i !== txtRecords.length) {
-            spf.expected = '"v=spf1 a:' + config.adminFqdn() + ' ' + spf.value.slice('"v=spf1 '.length);
+            spf.expected = 'v=spf1 a:' + config.adminFqdn() + ' ' + spf.value.slice('v=spf1 '.length);
         }
 
         callback(null, spf);
@@ -258,11 +254,10 @@ function checkMx(domain, callback) {
         status: false
     };
 
-    dig.resolve(mx.domain, mx.type, digOptions, function (error, mxRecords) {
-        if (error && error.code === 'ENOTFOUND') return callback(null, mx);    // not setup
+    dns.resolve(mx.domain, mx.type, DNS_OPTIONS, function (error, mxRecords) {
         if (error) return callback(error, mx);
 
-        if (Array.isArray(mxRecords) && mxRecords.length !== 0) {
+        if (mxRecords.length !== 0) {
             mx.status = mxRecords.length == 1 && mxRecords[0].exchange === (config.mailFqdn() + '.');
             mx.value = mxRecords.map(function (r) { return r.priority + ' ' + r.exchange; }).join(' ');
         }
@@ -276,16 +271,15 @@ function checkDmarc(domain, callback) {
         domain: '_dmarc.' + domain,
         type: 'TXT',
         value: null,
-        expected: '"v=DMARC1; p=reject; pct=100"',
+        expected: 'v=DMARC1; p=reject; pct=100',
         status: false
     };
 
-    dig.resolve(dmarc.domain, dmarc.type, digOptions, function (error, txtRecords) {
-        if (error && error.code === 'ENOTFOUND') return callback(null, dmarc);    // not setup
+    dns.resolve(dmarc.domain, dmarc.type, DNS_OPTIONS, function (error, txtRecords) {
         if (error) return callback(error, dmarc);
 
-        if (Array.isArray(txtRecords) && txtRecords.length !== 0) {
-            dmarc.value = txtRecords[0];
+        if (txtRecords.length !== 0) {
+            dmarc.value = txtRecords[0].join('');
             dmarc.status = (dmarc.value === dmarc.expected);
         }
 
@@ -307,11 +301,10 @@ function checkPtr(callback) {
 
         ptr.domain = ip.split('.').reverse().join('.') + '.in-addr.arpa';
 
-        dig.resolve(ip, 'PTR', digOptions, function (error, ptrRecords) {
-            if (error && error.code === 'ENOTFOUND') return callback(null, ptr);    // not setup
+        dns.resolve(ip, 'PTR', DNS_OPTIONS, function (error, ptrRecords) {
             if (error) return callback(error, ptr);
 
-            if (Array.isArray(ptrRecords) && ptrRecords.length !== 0) {
+            if (ptrRecords.length !== 0) {
                 ptr.value = ptrRecords.join(' ');
                 ptr.status = ptrRecords.some(function (v) { return v === ptr.expected; });
             }
@@ -391,15 +384,15 @@ function checkRblStatus(domain, callback) {
 
         // https://tools.ietf.org/html/rfc5782
         async.map(RBL_LIST, function (rblServer, iteratorDone) {
-            dig.resolve(flippedIp + '.' + rblServer.dns, 'A', digOptions, function (error, records) {
+            dns.resolve(flippedIp + '.' + rblServer.dns, 'A', DNS_OPTIONS, function (error, records) {
                 if (error || !records) return iteratorDone(null, null);    // not listed
 
                 debug('checkRblStatus: %s (ip: %s) is in the blacklist of %j', domain, flippedIp, rblServer);
 
                 var result = _.extend({ }, rblServer);
 
-                dig.resolve(flippedIp + '.' + rblServer.dns, 'TXT', digOptions, function (error, txtRecords) {
-                    result.txtRecords = error || !txtRecords ? 'No txt record' : txtRecords;
+                dns.resolve(flippedIp + '.' + rblServer.dns, 'TXT', DNS_OPTIONS, function (error, txtRecords) {
+                    result.txtRecords = error || !txtRecords ? 'No txt record' : txtRecords.map(x => x.join(''));
 
                     debug('checkRblStatus: %s (error: %s) (txtRecords: %j)', domain, error, txtRecords);
 

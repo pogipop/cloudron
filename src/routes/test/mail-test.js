@@ -198,15 +198,17 @@ describe('Mail API', function () {
         this.timeout(10000);
 
         before(function (done) {
-            var dig = require('../../dig.js');
+            var dns = require('../../native-dns.js');
 
             // replace dns resolveTxt()
-            resolve = dig.resolve;
-            dig.resolve = function (hostname, type, options, callback) {
+            resolve = dns.resolve;
+            dns.resolve = function (hostname, type, options, callback) {
                 expect(hostname).to.be.a('string');
                 expect(callback).to.be.a('function');
 
                 if (!dnsAnswerQueue[hostname] || !(type in dnsAnswerQueue[hostname])) return callback(new Error('no mock answer'));
+
+                if (dnsAnswerQueue[hostname][type] === null) return callback(new Error({ code: 'ENODATA'} ));
 
                 callback(null, dnsAnswerQueue[hostname][type]);
             };
@@ -222,13 +224,13 @@ describe('Mail API', function () {
                 .end(function (err, res) {
                     expect(res.statusCode).to.equal(201);
                     done();
-            });
+                });
         });
 
         after(function (done) {
-            var dig = require('../../dig.js');
+            var dns = require('../../native-dns.js');
 
-            dig.resolve = resolve;
+            dns.resolve = resolve;
 
             superagent.del(SERVER_URL + '/api/v1/mail/' + DOMAIN_0.domain)
                 .send({ password: PASSWORD })
@@ -268,20 +270,20 @@ describe('Mail API', function () {
                     expect(res.body.dns.dkim.domain).to.eql(dkimDomain);
                     expect(res.body.dns.dkim.type).to.eql('TXT');
                     expect(res.body.dns.dkim.value).to.eql(null);
-                    expect(res.body.dns.dkim.expected).to.eql('"v=DKIM1; t=s; p=' + mail._readDkimPublicKeySync(DOMAIN_0.domain) + '"');
+                    expect(res.body.dns.dkim.expected).to.eql('v=DKIM1; t=s; p=' + mail._readDkimPublicKeySync(DOMAIN_0.domain));
                     expect(res.body.dns.dkim.status).to.eql(false);
 
                     expect(res.body.dns.spf).to.be.an('object');
                     expect(res.body.dns.spf.domain).to.eql(spfDomain);
                     expect(res.body.dns.spf.type).to.eql('TXT');
                     expect(res.body.dns.spf.value).to.eql(null);
-                    expect(res.body.dns.spf.expected).to.eql('"v=spf1 a:' + config.adminFqdn() + ' ~all"');
+                    expect(res.body.dns.spf.expected).to.eql('v=spf1 a:' + config.adminFqdn() + ' ~all');
                     expect(res.body.dns.spf.status).to.eql(false);
 
                     expect(res.body.dns.dmarc).to.be.an('object');
                     expect(res.body.dns.dmarc.type).to.eql('TXT');
                     expect(res.body.dns.dmarc.value).to.eql(null);
-                    expect(res.body.dns.dmarc.expected).to.eql('"v=DMARC1; p=reject; pct=100"');
+                    expect(res.body.dns.dmarc.expected).to.eql('v=DMARC1; p=reject; pct=100');
                     expect(res.body.dns.dmarc.status).to.eql(false);
 
                     expect(res.body.dns.mx).to.be.an('object');
@@ -314,17 +316,17 @@ describe('Mail API', function () {
                     expect(res.statusCode).to.equal(200);
 
                     expect(res.body.dns.spf).to.be.an('object');
-                    expect(res.body.dns.spf.expected).to.eql('"v=spf1 a:' + config.adminFqdn() + ' ~all"');
+                    expect(res.body.dns.spf.expected).to.eql('v=spf1 a:' + config.adminFqdn() + ' ~all');
                     expect(res.body.dns.spf.status).to.eql(false);
                     expect(res.body.dns.spf.value).to.eql(null);
 
                     expect(res.body.dns.dkim).to.be.an('object');
-                    expect(res.body.dns.dkim.expected).to.eql('"v=DKIM1; t=s; p=' + mail._readDkimPublicKeySync(DOMAIN_0.domain) + '"');
+                    expect(res.body.dns.dkim.expected).to.eql('v=DKIM1; t=s; p=' + mail._readDkimPublicKeySync(DOMAIN_0.domain));
                     expect(res.body.dns.dkim.status).to.eql(false);
                     expect(res.body.dns.dkim.value).to.eql(null);
 
                     expect(res.body.dns.dmarc).to.be.an('object');
-                    expect(res.body.dns.dmarc.expected).to.eql('"v=DMARC1; p=reject; pct=100"');
+                    expect(res.body.dns.dmarc.expected).to.eql('v=DMARC1; p=reject; pct=100');
                     expect(res.body.dns.dmarc.status).to.eql(false);
                     expect(res.body.dns.dmarc.value).to.eql(null);
 
@@ -346,9 +348,9 @@ describe('Mail API', function () {
             clearDnsAnswerQueue();
 
             dnsAnswerQueue[mxDomain].MX = [ { priority: '20', exchange: config.mailFqdn() + '.' }, { priority: '30', exchange: config.mailFqdn() + '.'} ];
-            dnsAnswerQueue[dmarcDomain].TXT = ['"v=DMARC2; p=reject; pct=100"'];
-            dnsAnswerQueue[dkimDomain].TXT = ['"v=DKIM2; t=s; p=' + mail._readDkimPublicKeySync(DOMAIN_0.domain) + '"'];
-            dnsAnswerQueue[spfDomain].TXT = ['"v=spf1 a:random.com ~all"'];
+            dnsAnswerQueue[dmarcDomain].TXT = [['v=DMARC2; p=reject; pct=100']];
+            dnsAnswerQueue[dkimDomain].TXT = [['v=DKIM2; t=s; p=' + mail._readDkimPublicKeySync(DOMAIN_0.domain)]];
+            dnsAnswerQueue[spfDomain].TXT = [['v=spf1 a:random.com ~all']];
 
             superagent.get(SERVER_URL + '/api/v1/mail/' + DOMAIN_0.domain + '/status')
                 .query({ access_token: token })
@@ -356,19 +358,19 @@ describe('Mail API', function () {
                     expect(res.statusCode).to.equal(200);
 
                     expect(res.body.dns.spf).to.be.an('object');
-                    expect(res.body.dns.spf.expected).to.eql('"v=spf1 a:' + config.adminFqdn() + ' a:random.com ~all"');
+                    expect(res.body.dns.spf.expected).to.eql('v=spf1 a:' + config.adminFqdn() + ' a:random.com ~all');
                     expect(res.body.dns.spf.status).to.eql(false);
-                    expect(res.body.dns.spf.value).to.eql('"v=spf1 a:random.com ~all"');
+                    expect(res.body.dns.spf.value).to.eql('v=spf1 a:random.com ~all');
 
                     expect(res.body.dns.dkim).to.be.an('object');
-                    expect(res.body.dns.dkim.expected).to.eql('"v=DKIM1; t=s; p=' + mail._readDkimPublicKeySync(DOMAIN_0.domain) + '"');
+                    expect(res.body.dns.dkim.expected).to.eql('v=DKIM1; t=s; p=' + mail._readDkimPublicKeySync(DOMAIN_0.domain));
                     expect(res.body.dns.dkim.status).to.eql(false);
-                    expect(res.body.dns.dkim.value).to.eql('"v=DKIM2; t=s; p=' + mail._readDkimPublicKeySync(DOMAIN_0.domain) + '"');
+                    expect(res.body.dns.dkim.value).to.eql('v=DKIM2; t=s; p=' + mail._readDkimPublicKeySync(DOMAIN_0.domain));
 
                     expect(res.body.dns.dmarc).to.be.an('object');
-                    expect(res.body.dns.dmarc.expected).to.eql('"v=DMARC1; p=reject; pct=100"');
+                    expect(res.body.dns.dmarc.expected).to.eql('v=DMARC1; p=reject; pct=100');
                     expect(res.body.dns.dmarc.status).to.eql(false);
-                    expect(res.body.dns.dmarc.value).to.eql('"v=DMARC2; p=reject; pct=100"');
+                    expect(res.body.dns.dmarc.value).to.eql('v=DMARC2; p=reject; pct=100');
 
                     expect(res.body.dns.mx).to.be.an('object');
                     expect(res.body.dns.mx.status).to.eql(false);
@@ -389,7 +391,7 @@ describe('Mail API', function () {
         it('succeeds with existing embedded spf', function (done) {
             clearDnsAnswerQueue();
 
-            dnsAnswerQueue[spfDomain].TXT = ['"v=spf1 a:example.com a:' + config.mailFqdn() + ' ~all"'];
+            dnsAnswerQueue[spfDomain].TXT = [['v=spf1 a:example.com a:' + config.mailFqdn() + ' ~all']];
 
             superagent.get(SERVER_URL + '/api/v1/mail/' + DOMAIN_0.domain + '/status')
                 .query({ access_token: token })
@@ -399,8 +401,8 @@ describe('Mail API', function () {
                     expect(res.body.dns.spf).to.be.an('object');
                     expect(res.body.dns.spf.domain).to.eql(spfDomain);
                     expect(res.body.dns.spf.type).to.eql('TXT');
-                    expect(res.body.dns.spf.value).to.eql('"v=spf1 a:example.com a:' + config.mailFqdn() + ' ~all"');
-                    expect(res.body.dns.spf.expected).to.eql('"v=spf1 a:example.com a:' + config.mailFqdn() + ' ~all"');
+                    expect(res.body.dns.spf.value).to.eql('v=spf1 a:example.com a:' + config.mailFqdn() + ' ~all');
+                    expect(res.body.dns.spf.expected).to.eql('v=spf1 a:example.com a:' + config.mailFqdn() + ' ~all');
                     expect(res.body.dns.spf.status).to.eql(true);
 
                     done();
@@ -411,9 +413,9 @@ describe('Mail API', function () {
             clearDnsAnswerQueue();
 
             dnsAnswerQueue[mxDomain].MX = [ { priority: '10', exchange: config.mailFqdn() + '.' } ];
-            dnsAnswerQueue[dmarcDomain].TXT = ['"v=DMARC1; p=reject; pct=100"'];
-            dnsAnswerQueue[dkimDomain].TXT = ['"v=DKIM1; t=s; p=' + mail._readDkimPublicKeySync(DOMAIN_0.domain) + '"'];
-            dnsAnswerQueue[spfDomain].TXT = ['"v=spf1 a:' + config.adminFqdn() + ' ~all"'];
+            dnsAnswerQueue[dmarcDomain].TXT = [['v=DMARC1; p=reject; pct=100']];
+            dnsAnswerQueue[dkimDomain].TXT = [['v=DKIM1; t=s; p=', mail._readDkimPublicKeySync(DOMAIN_0.domain) ]];
+            dnsAnswerQueue[spfDomain].TXT = [['v=spf1 a:' + config.adminFqdn() + ' ~all']];
 
             superagent.get(SERVER_URL + '/api/v1/mail/' + DOMAIN_0.domain + '/status')
                 .query({ access_token: token })
@@ -423,21 +425,21 @@ describe('Mail API', function () {
                     expect(res.body.dns.dkim).to.be.an('object');
                     expect(res.body.dns.dkim.domain).to.eql(dkimDomain);
                     expect(res.body.dns.dkim.type).to.eql('TXT');
-                    expect(res.body.dns.dkim.value).to.eql('"v=DKIM1; t=s; p=' + mail._readDkimPublicKeySync(DOMAIN_0.domain) + '"');
-                    expect(res.body.dns.dkim.expected).to.eql('"v=DKIM1; t=s; p=' + mail._readDkimPublicKeySync(DOMAIN_0.domain) + '"');
+                    expect(res.body.dns.dkim.value).to.eql('v=DKIM1; t=s; p=' + mail._readDkimPublicKeySync(DOMAIN_0.domain));
+                    expect(res.body.dns.dkim.expected).to.eql('v=DKIM1; t=s; p=' + mail._readDkimPublicKeySync(DOMAIN_0.domain));
                     expect(res.body.dns.dkim.status).to.eql(true);
 
                     expect(res.body.dns.spf).to.be.an('object');
                     expect(res.body.dns.spf.domain).to.eql(spfDomain);
                     expect(res.body.dns.spf.type).to.eql('TXT');
-                    expect(res.body.dns.spf.value).to.eql('"v=spf1 a:' + config.adminFqdn() + ' ~all"');
-                    expect(res.body.dns.spf.expected).to.eql('"v=spf1 a:' + config.adminFqdn() + ' ~all"');
+                    expect(res.body.dns.spf.value).to.eql('v=spf1 a:' + config.adminFqdn() + ' ~all');
+                    expect(res.body.dns.spf.expected).to.eql('v=spf1 a:' + config.adminFqdn() + ' ~all');
                     expect(res.body.dns.spf.status).to.eql(true);
 
                     expect(res.body.dns.dmarc).to.be.an('object');
-                    expect(res.body.dns.dmarc.expected).to.eql('"v=DMARC1; p=reject; pct=100"');
+                    expect(res.body.dns.dmarc.expected).to.eql('v=DMARC1; p=reject; pct=100');
                     expect(res.body.dns.dmarc.status).to.eql(true);
-                    expect(res.body.dns.dmarc.value).to.eql('"v=DMARC1; p=reject; pct=100"');
+                    expect(res.body.dns.dmarc.value).to.eql('v=DMARC1; p=reject; pct=100');
 
                     expect(res.body.dns.mx).to.be.an('object');
                     expect(res.body.dns.mx.status).to.eql(true);
@@ -457,7 +459,7 @@ describe('Mail API', function () {
                 .end(function (err, res) {
                     expect(res.statusCode).to.equal(201);
                     done();
-            });
+                });
         });
 
         after(function (done) {
@@ -509,7 +511,7 @@ describe('Mail API', function () {
                 .end(function (err, res) {
                     expect(res.statusCode).to.equal(201);
                     done();
-            });
+                });
         });
 
         after(function (done) {
@@ -580,7 +582,7 @@ describe('Mail API', function () {
                 .end(function (err, res) {
                     expect(res.statusCode).to.equal(201);
                     done();
-            });
+                });
         });
 
         after(function (done) {
@@ -658,7 +660,7 @@ describe('Mail API', function () {
                 .end(function (err, res) {
                     expect(res.statusCode).to.equal(201);
                     done();
-            });
+                });
         });
 
         after(function (done) {
@@ -770,7 +772,7 @@ describe('Mail API', function () {
                 .end(function (err, res) {
                     expect(res.statusCode).to.equal(201);
                     done();
-            });
+                });
         });
 
         after(function (done) {
