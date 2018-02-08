@@ -118,7 +118,7 @@ function checkOutboundPort25(callback) {
         'smtp.mail.yahoo.com',
         'smtp.o2.ie',
         'smtp.comcast.net',
-        'outgoing.verizon.net'
+        'smtp.1und1.de',
     ]);
 
     var relay = {
