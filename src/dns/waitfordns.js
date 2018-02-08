@@ -23,7 +23,7 @@ function isChangeSynced(domain, value, nameserver, callback) {
 
         async.every(nsIps, function (nsIp, iteratorCallback) {
             dns.resolve(domain, 'A', { server: nsIp, timeout: 5000 }, function (error, answer) {
-                if (error && error.code === 'ETIMEDOUT') {
+                if (error && error.code === 'TIMEOUT') {
                     debug('nameserver %s (%s) timed out when trying to resolve %s', nameserver, nsIp, domain);
                     return iteratorCallback(null, true); // should be ok if dns server is down
                 }
