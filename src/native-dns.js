@@ -1,7 +1,6 @@
 'use strict';
 
 exports = module.exports = {
-    resolveNs: resolveNs,
     resolve4: resolve4,
     resolve: resolve
 };
@@ -34,10 +33,6 @@ function resolve(hostname, rrtype, options, callback) {
         // type (CNAME) it is not an error and empty array
         callback(error, result);
     });
-}
-
-function resolveNs(hostname, callback) {
-    resolve(hostname, 'NS', { timeout: 5000 }, callback);
 }
 
 function resolve4(hostname, callback) {

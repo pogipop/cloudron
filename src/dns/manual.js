@@ -56,7 +56,7 @@ function verifyDnsConfig(dnsConfig, domain, zoneName, ip, callback) {
     assert.strictEqual(typeof callback, 'function');
 
     // Very basic check if the nameservers can be fetched
-    dns.resolveNs(zoneName, function (error, nameservers) {
+    dns.resolve(zoneName, 'NS', { timeout: 5000 }, function (error, nameservers) {
         if (error || !nameservers) return callback(new DomainError(DomainError.BAD_FIELD, 'Unable to get nameservers'));
 
         callback(null, { wildcard: !!dnsConfig.wildcard });

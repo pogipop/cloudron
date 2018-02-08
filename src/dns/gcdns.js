@@ -172,7 +172,7 @@ function verifyDnsConfig(dnsConfig, fqdn, zoneName, ip, callback) {
     var credentials = getDnsCredentials(dnsConfig);
     if (process.env.BOX_ENV === 'test') return callback(null, credentials); // this shouldn't be here
 
-    dns.resolveNs(zoneName, function (error, resolvedNS) {
+    dns.resolve(zoneName, 'NS', { timeout: 5000 }, function (error, nameservers) {
         if (error && error.code === 'ENOTFOUND') return callback(new DomainError(DomainError.BAD_FIELD, 'Unable to resolve nameservers for this domain'));
         if (error || !resolvedNS) return callback(new DomainError(DomainError.BAD_FIELD, error ? error.message : 'Unable to get nameservers'));
 

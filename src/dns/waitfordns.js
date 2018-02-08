@@ -65,7 +65,7 @@ function waitForDns(domain, zoneName, value, options, callback) {
     async.retry(options, function (retryCallback) {
         debug('waitForDNS: %s (zone: %s) attempt %s.', domain, zoneName, attempt++);
 
-        dns.resolveNs(zoneName, function (error, nameservers) {
+        dns.resolve(zoneName, 'NS', { timeout: 5000 }, function (error, nameservers) {
             if (error || !nameservers) return retryCallback(error || new DomainError(DomainError.EXTERNAL_ERROR, 'Unable to get nameservers'));
 
             async.every(nameservers, isChangeSynced.bind(null, domain, value), function (error, synced) {
