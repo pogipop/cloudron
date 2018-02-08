@@ -341,7 +341,7 @@ function waitForDnsPropagation(app, callback) {
     sysinfo.getPublicIp(function (error, ip) {
         if (error) return callback(error);
 
-        domains.waitForDnsRecord(app.fqdn, app.domain, ip, 'A', { interval: 5000, times: 120 }, callback);
+        domains.waitForDnsRecord(app.fqdn, app.domain, ip, { interval: 5000, times: 120 }, callback);
     });
 }
 

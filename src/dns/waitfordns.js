@@ -6,13 +6,11 @@ var assert = require('assert'),
     async = require('async'),
     debug = require('debug')('box:dns/waitfordns'),
     dns = require('../native-dns.js'),
-    DomainError = require('../domains.js').DomainError,
-    util = require('util');
+    DomainError = require('../domains.js').DomainError;
 
-function isChangeSynced(domain, value, type, nameserver, callback) {
+function isChangeSynced(domain, value, nameserver, callback) {
     assert.strictEqual(typeof domain, 'string');
-    assert(util.isRegExp(value));
-    assert.strictEqual(typeof type, 'string');
+    assert.strictEqual(typeof value, 'string');
     assert.strictEqual(typeof nameserver, 'string');
     assert.strictEqual(typeof callback, 'function');
 
@@ -24,7 +22,7 @@ function isChangeSynced(domain, value, type, nameserver, callback) {
         }
 
         async.every(nsIps, function (nsIp, iteratorCallback) {
-            dns.resolve(domain, type, { server: nsIp, timeout: 5000 }, function (error, answer) {
+            dns.resolve(domain, 'A', { server: nsIp, timeout: 5000 }, function (error, answer) {
                 if (error && error.code === 'ETIMEDOUT') {
                     debug('nameserver %s (%s) timed out when trying to resolve %s', nameserver, nsIp, domain);
                     return iteratorCallback(null, true); // should be ok if dns server is down
@@ -36,17 +34,13 @@ function isChangeSynced(domain, value, type, nameserver, callback) {
                 }
 
                 if (!answer || answer.length === 0) {
-                    debug('bad answer from nameserver %s (%s) resolving %s (%s)', nameserver, nsIp, domain, type);
+                    debug('bad answer from nameserver %s (%s) resolving %s', nameserver, nsIp, domain);
                     return iteratorCallback(null, false);
                 }
 
                 debug('isChangeSynced: ns: %s (%s), name:%s Actual:%j Expecting:%s', nameserver, nsIp, domain, answer, value);
 
-                var match = answer.some(function (a) {
-                    return ((type === 'A' && value.test(a)) ||
-                            (type === 'CNAME' && value.test(a)) ||
-                            (type === 'TXT' && value.test(a)));
-                });
+                var match = answer.some(a => a === value);
 
                 if (match) return iteratorCallback(null, true); // done!
 
@@ -58,18 +52,12 @@ function isChangeSynced(domain, value, type, nameserver, callback) {
 }
 
 // check if IP change has propagated to every nameserver
-function waitForDns(domain, zoneName, value, type, options, callback) {
+function waitForDns(domain, zoneName, value, options, callback) {
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof zoneName, 'string');
-    assert(typeof value === 'string' || util.isRegExp(value));
-    assert(type === 'A' || type === 'CNAME' || type === 'TXT');
+    assert.strictEqual(typeof value, 'string');
     assert(options && typeof options === 'object'); // { interval: 5000, times: 50000 }
     assert.strictEqual(typeof callback, 'function');
-
-    if (typeof value === 'string') {
-        // http://stackoverflow.com/questions/3561493/is-there-a-regexp-escape-function-in-javascript
-        value = new RegExp('^' + value.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&') + '$');
-    }
 
     debug('waitForIp: domain %s to be %s in zone %s.', domain, value, zoneName);
 
@@ -80,7 +68,7 @@ function waitForDns(domain, zoneName, value, type, options, callback) {
         dns.resolveNs(zoneName, function (error, nameservers) {
             if (error || !nameservers) return retryCallback(error || new DomainError(DomainError.EXTERNAL_ERROR, 'Unable to get nameservers'));
 
-            async.every(nameservers, isChangeSynced.bind(null, domain, value, type), function (error, synced) {
+            async.every(nameservers, isChangeSynced.bind(null, domain, value), function (error, synced) {
                 debug('waitForIp: %s %s ns: %j', domain, synced ? 'done' : 'not done', nameservers);
 
                 retryCallback(synced ? null : new DomainError(DomainError.EXTERNAL_ERROR, 'ETRYAGAIN'));

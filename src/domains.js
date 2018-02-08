@@ -313,18 +313,18 @@ function removeDnsRecords(subdomain, domain, type, values, callback) {
     });
 }
 
-function waitForDnsRecord(fqdn, domain, value, type, options, callback) {
+// only wait for A record
+function waitForDnsRecord(fqdn, domain, value, options, callback) {
     assert.strictEqual(typeof fqdn, 'string');
     assert.strictEqual(typeof domain, 'string');
-    assert(typeof value === 'string' || util.isRegExp(value));
-    assert(type === 'A' || type === 'CNAME' || type === 'TXT');
+    assert.strictEqual(typeof value, 'string');
     assert(options && typeof options === 'object'); // { interval: 5000, times: 50000 }
     assert.strictEqual(typeof callback, 'function');
 
     get(domain, function (error, result) {
         if (error) return callback(error);
 
-        api(result.provider).waitForDns(fqdn, result ? result.zoneName : domain, value, type, options, callback);
+        api(result.provider).waitForDns(fqdn, result ? result.zoneName : domain, value, options, callback);
     });
 }
 
