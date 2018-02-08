@@ -164,7 +164,7 @@ function get(domain, callback) {
             var cert = safe.fs.readFileSync(bundle.certFilePath, 'utf-8');
             var key = safe.fs.readFileSync(bundle.keyFilePath, 'utf-8');
 
-            if (!cert || !key) return callback(new DomainError(DomainError.INTERNAL_ERROR, error));
+            if (!cert || !key) return callback(new DomainError(DomainError.INTERNAL_ERROR, 'unable to read certificates from disk'));
 
             result.fallbackCertificate = { cert: cert, key: key };
 
