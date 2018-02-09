@@ -1,6 +1,8 @@
 'use strict';
 
 var async = require('async'),
+    fs = require('fs'),
+    safe = require('safetydance'),
     tldjs = require('tldjs');
 
 exports.up = function(db, callback) {
@@ -29,6 +31,16 @@ exports.up = function(db, callback) {
                         if (error && error.code !== 'ER_DUP_ENTRY') return callback(error);
 
                         console.log('Added domain %s', domain);
+
+                        // ensure we have a fallback cert for the newly added domain. This is the same as in reverseproxy.js
+                        // WARNING this will only work on the cloudron itself not during local testing!
+                        const certFilePath = `/home/yellowtent/boxdata/certs/${domain}.host.cert`;
+                        const keyFilePath = `/home/yellowtent/boxdata/certs/${domain}.host.key`;
+
+                        if (!fs.existsSync(certFilePath) || !fs.existsSync(keyFilePath)) { // generate it
+                            var certCommand = `openssl req -x509 -newkey rsa:2048 -keyout ${keyFilePath} -out ${certFilePath} -days 3650 -subj /CN=*.${domain} -nodes`;
+                            if (!safe.child_process.execSync(certCommand)) return callback(safe.error.message);
+                        }
 
                         callback();
                     });
