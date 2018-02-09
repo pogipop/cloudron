@@ -138,23 +138,11 @@ function validateCertificate(domain, cert, key) {
     if (!cert && key) return new ReverseProxyError(ReverseProxyError.INVALID_CERT, 'missing cert');
     if (cert && !key) return new ReverseProxyError(ReverseProxyError.INVALID_CERT, 'missing key');
 
-    console.log(`openssl x509 -noout -checkhost "${domain}"`);
+    // -checkhost checks for SAN or CN exclusively. SAN takes precedence and if present, ignores the CN.
     var result = safe.child_process.execSync(`openssl x509 -noout -checkhost "${domain}"`, { encoding: 'utf8', input: cert });
     if (!result) return new ReverseProxyError(ReverseProxyError.INVALID_CERT, 'Unable to get certificate subject.');
 
-    // if no match, check alt names
-    if (result.indexOf('does match certificate') === -1) {
-        // https://github.com/drwetter/testssl.sh/pull/383
-        var cmd = 'openssl x509 -noout -text | grep -A3 "Subject Alternative Name" | \
-                   grep "DNS:" | \
-                   sed -e "s/DNS://g" -e "s/ //g" -e "s/,/ /g" -e "s/othername:<unsupported>//g"';
-        result = safe.child_process.execSync(cmd, { encoding: 'utf8', input: cert });
-        var altNames = result ? [ ] : result.trim().split(' '); // might fail if cert has no SAN
-        debug('validateCertificate: detected altNames as %j', altNames);
-
-        // check altNames
-        if (!altNames.some(matchesDomain)) return new ReverseProxyError(ReverseProxyError.INVALID_CERT, util.format('Certificate is not valid for this domain. Expecting %s in %j', domain, altNames));
-    }
+    if (result.indexOf('does match certificate') === -1) return new ReverseProxyError(ReverseProxyError.INVALID_CERT, `Certificate is not valid for this domain. Expecting ${domain}`);
 
     // http://httpd.apache.org/docs/2.0/ssl/ssl_faq.html#verify
     var certModulus = safe.child_process.execSync('openssl x509 -noout -modulus', { encoding: 'utf8', input: cert });
@@ -188,7 +176,8 @@ function setFallbackCertificate(domain, fallback, callback) {
         if (!safe.fs.writeFileSync(path.join(paths.APP_CERTS_DIR, `${domain}.host.key`), fallback.key)) return callback(new ReverseProxyError(ReverseProxyError.INTERNAL_ERROR, safe.error.message));
     } else if (!fs.existsSync(certFilePath) || !fs.existsSync(keyFilePath)) { // generate it
         let opensslConf = safe.fs.readFileSync('/etc/ssl/openssl.cnf', 'utf8');
-        let opensslConfWithSan = `${opensslConf}\n[SAN]\nsubjectAltName=DNS:${domain}\n`;
+        // SAN must contain all the domains since CN check is based on implementation if SAN is found. -checkhost also checks only SAN if present!
+        let opensslConfWithSan = `${opensslConf}\n[SAN]\nsubjectAltName=DNS:${domain},DNS:*.${domain}\n`;
         let configFile = path.join(os.tmpdir(), 'openssl-' + crypto.randomBytes(4).readUInt32LE(0) + '.conf');
         safe.fs.writeFileSync(configFile, opensslConfWithSan, 'utf8');
         let certCommand = util.format(`openssl req -x509 -newkey rsa:2048 -keyout ${keyFilePath} -out ${certFilePath} -days 3650 -subj /CN=*.${domain} -extensions SAN -config ${configFile} -nodes`);
