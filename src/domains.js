@@ -116,7 +116,7 @@ function add(domain, zoneName, provider, config, fallbackCertificate, tlsConfig,
     }
 
     if (fallbackCertificate) {
-        let error = reverseProxy.validateCertificate(fallbackCertificate.cert, fallbackCertificate.key, domain);
+        let error = reverseProxy.validateCertificate(`test.${domain}`, fallbackCertificate.cert, fallbackCertificate.key);
         if (error) return callback(new DomainError(DomainError.BAD_FIELD, error.message));
     }
 
@@ -196,7 +196,7 @@ function update(domain, provider, config, fallbackCertificate, tlsConfig, callba
         if (error) return callback(new DomainError(DomainError.INTERNAL_ERROR, error));
 
         if (fallbackCertificate) {
-            let error = reverseProxy.validateCertificate(fallbackCertificate.cert, fallbackCertificate.key, domain);
+            let error = reverseProxy.validateCertificate(`test.${domain}`, fallbackCertificate.cert, fallbackCertificate.key);
             if (error) return callback(new DomainError(DomainError.BAD_FIELD, error.message));
         }
 

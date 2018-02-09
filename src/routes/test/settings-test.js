@@ -2,19 +2,16 @@
 
 /* global it:false */
 /* global describe:false */
-/* global xdescribe:false */
 /* global before:false */
 /* global after:false */
 
 var async = require('async'),
-    child_process = require('child_process'),
     config = require('../../config.js'),
     constants = require('../../constants.js'),
     database = require('../../database.js'),
     expect = require('expect.js'),
     fs = require('fs'),
     nock = require('nock'),
-    path = require('path'),
     paths = require('../../paths.js'),
     server = require('../../server.js'),
     settings = require('../../settings.js'),
@@ -280,99 +277,6 @@ describe('Settings API', function () {
                     expect(res.body.toString()).to.eql(fs.readFileSync(paths.CLOUDRON_DEFAULT_AVATAR_FILE, 'utf-8'));
                     done(err);
                 });
-        });
-    });
-
-    xdescribe('Certificates API', function () {
-        var validCert0, validKey0, // example.com
-            validCert1, validKey1; // *.example.com
-
-        before(function () {
-            child_process.execSync('openssl req -subj "/CN=example.com/O=My Company Name LTD./C=US" -new -newkey rsa:2048 -days 365 -nodes -x509 -keyout /tmp/server.key -out /tmp/server.crt');
-            validKey0 = fs.readFileSync('/tmp/server.key', 'utf8');
-            validCert0 = fs.readFileSync('/tmp/server.crt', 'utf8');
-
-            child_process.execSync('openssl req -subj "/CN=*.example.com/O=My Company Name LTD./C=US" -new -newkey rsa:2048 -days 365 -nodes -x509 -keyout /tmp/server.key -out /tmp/server.crt');
-            validKey1 = fs.readFileSync('/tmp/server.key', 'utf8');
-            validCert1 = fs.readFileSync('/tmp/server.crt', 'utf8');
-        });
-
-        it('cannot set certificate without token', function (done) {
-            superagent.post(SERVER_URL + '/api/v1/settings/certificate')
-                .end(function (error, result) {
-                    expect(result.statusCode).to.equal(401);
-                    done();
-                });
-        });
-
-        it('cannot set certificate without certificate', function (done) {
-            superagent.post(SERVER_URL + '/api/v1/settings/certificate')
-                .query({ access_token: token })
-                .send({ key: validKey1 })
-                .end(function (error, result) {
-                    expect(result.statusCode).to.equal(400);
-                    done();
-                });
-        });
-
-        it('cannot set certificate without key', function (done) {
-            superagent.post(SERVER_URL + '/api/v1/settings/certificate')
-                .query({ access_token: token })
-                .send({ cert: validCert1 })
-                .end(function (error, result) {
-                    expect(result.statusCode).to.equal(400);
-                    done();
-                });
-        });
-
-        it('cannot set certificate with cert not being a string', function (done) {
-            superagent.post(SERVER_URL + '/api/v1/settings/certificate')
-                .query({ access_token: token })
-                .send({ cert: 1234, key: validKey1 })
-                .end(function (error, result) {
-                    expect(result.statusCode).to.equal(400);
-                    done();
-                });
-        });
-
-        it('cannot set certificate with key not being a string', function (done) {
-            superagent.post(SERVER_URL + '/api/v1/settings/certificate')
-                .query({ access_token: token })
-                .send({ cert: validCert1, key: true })
-                .end(function (error, result) {
-                    expect(result.statusCode).to.equal(400);
-                    done();
-                });
-        });
-
-        it('cannot set non wildcard certificate', function (done) {
-            superagent.post(SERVER_URL + '/api/v1/settings/certificate')
-                .query({ access_token: token })
-                .send({ cert: validCert0, key: validKey0 })
-                .end(function (error, result) {
-                    expect(result.statusCode).to.equal(400);
-                    done();
-                });
-        });
-
-        it('can set certificate', function (done) {
-            superagent.post(SERVER_URL + '/api/v1/settings/certificate')
-                .query({ access_token: token })
-                .send({ cert: validCert1, key: validKey1 })
-                .end(function (error, result) {
-                    expect(result.statusCode).to.equal(202);
-                    done();
-                });
-        });
-
-        it('did set the certificate', function (done) {
-            var cert = fs.readFileSync(path.join(paths.NGINX_CERT_DIR, 'host.cert'), 'utf-8');
-            expect(cert).to.eql(validCert1);
-
-            var key = fs.readFileSync(path.join(paths.NGINX_CERT_DIR, 'host.key'), 'utf-8');
-            expect(key).to.eql(validKey1);
-
-            done();
         });
     });
 

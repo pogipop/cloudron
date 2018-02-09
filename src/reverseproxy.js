@@ -137,7 +137,8 @@ function validateCertificate(domain, cert, key) {
     if (!cert && key) return new ReverseProxyError(ReverseProxyError.INVALID_CERT, 'missing cert');
     if (cert && !key) return new ReverseProxyError(ReverseProxyError.INVALID_CERT, 'missing key');
 
-    var result = safe.child_process.execSync('openssl x509 -noout -checkhost "' + domain + '"', { encoding: 'utf8', input: cert });
+    console.log(`openssl x509 -noout -checkhost "${domain}"`);
+    var result = safe.child_process.execSync(`openssl x509 -noout -checkhost "${domain}"`, { encoding: 'utf8', input: cert });
     if (!result) return new ReverseProxyError(ReverseProxyError.INVALID_CERT, 'Unable to get certificate subject.');
 
     // if no match, check alt names

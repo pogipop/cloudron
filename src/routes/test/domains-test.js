@@ -6,11 +6,16 @@
 /* global after:false */
 
 var async = require('async'),
+    child_process = require('child_process'),
     config = require('../../config.js'),
     database = require('../../database.js'),
     expect = require('expect.js'),
+    fs = require('fs'),
+    path = require('path'),
+    paths = require('../../paths.js'),
     superagent = require('superagent'),
-    server = require('../../server.js');
+    server = require('../../server.js'),
+    _ = require('underscore');
 
 var SERVER_URL = 'http://localhost:' + config.get('port');
 
@@ -123,6 +128,17 @@ describe('Domains API', function () {
                 .send({ domain: 'cloudron.com', provider: 'noop', config: { }, tlsConfig: { provider: 'hello' }})
                 .end(function (error, result) {
                     expect(result.statusCode).to.equal(400);
+
+                    done();
+                });
+        });
+
+        it('fails without token', function (done) {
+            superagent.post(SERVER_URL + '/api/v1/domains')
+                .query({ })
+                .send(DOMAIN_0)
+                .end(function (error, result) {
+                    expect(result.statusCode).to.equal(401);
 
                     done();
                 });
@@ -250,6 +266,118 @@ describe('Domains API', function () {
                             done();
                         });
                 });
+        });
+    });
+
+    describe('Certificates API', function () {
+        var validCert0, validKey0, // example.com
+            validCert1, validKey1; // *.example.com
+
+        before(function (done) {
+            child_process.execSync(`openssl req -subj "/CN=${DOMAIN_0.domain}/O=My Company Name LTD./C=US" -new -newkey rsa:2048 -days 365 -nodes -x509 -keyout /tmp/server.key -out /tmp/server.crt`);
+            validKey0 = fs.readFileSync('/tmp/server.key', 'utf8');
+            validCert0 = fs.readFileSync('/tmp/server.crt', 'utf8');
+
+            child_process.execSync(`openssl req -subj "/CN=*.${DOMAIN_0.domain}/O=My Company Name LTD./C=US" -new -newkey rsa:2048 -days 365 -nodes -x509 -keyout /tmp/server.key -out /tmp/server.crt`);
+            validKey1 = fs.readFileSync('/tmp/server.key', 'utf8');
+            validCert1 = fs.readFileSync('/tmp/server.crt', 'utf8');
+
+            superagent.post(SERVER_URL + '/api/v1/domains')
+                .query({ access_token: token })
+                .send(DOMAIN_0)
+                .end(function (error, result) {
+                    expect(result.statusCode).to.equal(201);
+
+                    done();
+                });
+        });
+
+        it('cannot set certificate without certificate', function (done) {
+            var d = _.extend({}, DOMAIN_0);
+            d.fallbackCertificate = { key: validKey1 };
+
+            superagent.put(`${SERVER_URL}/api/v1/domains/${DOMAIN_0.domain}`)
+                .query({ access_token: token })
+                .send(d)
+                .end(function (error, result) {
+                    expect(result.statusCode).to.equal(400);
+                    done();
+                });
+        });
+
+        it('cannot set certificate without key', function (done) {
+            var d = _.extend({}, DOMAIN_0);
+            d.fallbackCertificate = { cert: validCert1 };
+
+            superagent.put(`${SERVER_URL}/api/v1/domains/${DOMAIN_0.domain}`)
+                .query({ access_token: token })
+                .send(d)
+                .end(function (error, result) {
+                    expect(result.statusCode).to.equal(400);
+                    done();
+                });
+        });
+
+        xit('cannot set certificate with cert not being a string', function (done) {
+            var d = _.extend({}, DOMAIN_0);
+            d.fallbackCertificate = { cert: 1234, key: validKey1 };
+
+            superagent.put(`${SERVER_URL}/api/v1/domains/${DOMAIN_0.domain}`)
+                .query({ access_token: token })
+                .send(d)
+                .end(function (error, result) {
+                    expect(result.statusCode).to.equal(400);
+                    done();
+                });
+        });
+
+        it('cannot set certificate with key not being a string', function (done) {
+            var d = _.extend({}, DOMAIN_0);
+            d.fallbackCertificate = { cert: validCert1, key: true };
+
+            superagent.put(`${SERVER_URL}/api/v1/domains/${DOMAIN_0.domain}`)
+                .query({ access_token: token })
+                .send(d)
+                .end(function (error, result) {
+                    expect(result.statusCode).to.equal(400);
+                    done();
+                });
+        });
+
+        it('cannot set non-fallback certificate', function (done) {
+            var d = _.extend({}, DOMAIN_0);
+            d.fallbackCertificate = { cert: validCert0, key: validKey0 };
+
+            superagent.put(`${SERVER_URL}/api/v1/domains/${DOMAIN_0.domain}`)
+                .query({ access_token: token })
+                .send(d)
+                .end(function (error, result) {
+                    expect(result.statusCode).to.equal(400);
+                    done();
+                });
+        });
+
+        it('can set fallback certificate', function (done) {
+            var d = _.extend({}, DOMAIN_0);
+            d.fallbackCertificate = { cert: validCert1, key: validKey1 };
+
+            superagent.put(`${SERVER_URL}/api/v1/domains/${DOMAIN_0.domain}`)
+                .query({ access_token: token })
+                .send(d)
+                .end(function (error, result) {
+                    expect(result.statusCode).to.equal(204);
+                    done();
+                });
+        });
+
+        it('did set the certificate', function (done) {
+            var cert = fs.readFileSync(path.join(paths.APP_CERTS_DIR, `${DOMAIN_0.domain}.host.cert`), 'utf-8');
+            expect(cert).to.eql(validCert1);
+
+            var key = fs.readFileSync(path.join(paths.APP_CERTS_DIR, `${DOMAIN_0.domain}.host.key`), 'utf-8');
+            expect(key).to.eql(validKey1);
+
+            done();
         });
     });
 });
