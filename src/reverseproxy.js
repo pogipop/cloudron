@@ -32,6 +32,7 @@ var acme = require('./cert/acme.js'),
     caas = require('./cert/caas.js'),
     config = require('./config.js'),
     constants = require('./constants.js'),
+    crypto = require('crypto'),
     debug = require('debug')('box:certificates'),
     domains = require('./domains.js'),
     ejs = require('ejs'),
@@ -39,12 +40,12 @@ var acme = require('./cert/acme.js'),
     fallback = require('./cert/fallback.js'),
     fs = require('fs'),
     mailer = require('./mailer.js'),
+    os = require('os'),
     path = require('path'),
     paths = require('./paths.js'),
     platform = require('./platform.js'),
     safe = require('safetydance'),
     shell = require('./shell.js'),
-    tld = require('tldjs'),
     user = require('./user.js'),
     util = require('util');
 
@@ -186,8 +187,13 @@ function setFallbackCertificate(domain, fallback, callback) {
         if (!safe.fs.writeFileSync(path.join(paths.APP_CERTS_DIR, `${domain}.host.cert`), fallback.cert)) return callback(new ReverseProxyError(ReverseProxyError.INTERNAL_ERROR, safe.error.message));
         if (!safe.fs.writeFileSync(path.join(paths.APP_CERTS_DIR, `${domain}.host.key`), fallback.key)) return callback(new ReverseProxyError(ReverseProxyError.INTERNAL_ERROR, safe.error.message));
     } else if (!fs.existsSync(certFilePath) || !fs.existsSync(keyFilePath)) { // generate it
-        var certCommand = util.format('openssl req -x509 -newkey rsa:2048 -keyout %s -out %s -days 3650 -subj /CN=*.%s -nodes', keyFilePath, certFilePath, domain);
+        let opensslConf = safe.fs.readFileSync('/etc/ssl/openssl.cnf', 'utf8');
+        let opensslConfWithSan = `${opensslConf}\n[SAN]\nsubjectAltName=DNS:${domain}\n`;
+        let configFile = path.join(os.tmpdir(), 'openssl-' + crypto.randomBytes(4).readUInt32LE(0) + '.conf');
+        safe.fs.writeFileSync(configFile, opensslConfWithSan, 'utf8');
+        let certCommand = util.format(`openssl req -x509 -newkey rsa:2048 -keyout ${keyFilePath} -out ${certFilePath} -days 3650 -subj /CN=*.${domain} -extensions SAN -config ${configFile} -nodes`);
         if (!safe.child_process.execSync(certCommand)) return callback(new ReverseProxyError(ReverseProxyError.INTERNAL_ERROR, safe.error.message));
+        safe.fs.unlinkSync(configFile);
     }
 
     platform.handleCertChanged('*.' + domain);

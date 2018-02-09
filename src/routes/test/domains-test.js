@@ -318,7 +318,7 @@ describe('Domains API', function () {
                 });
         });
 
-        xit('cannot set certificate with cert not being a string', function (done) {
+        it('cannot set certificate with cert not being a string', function (done) {
             var d = _.extend({}, DOMAIN_0);
             d.fallbackCertificate = { cert: 1234, key: validKey1 };
 

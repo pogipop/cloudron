@@ -16,7 +16,7 @@ mkdir -p boxdata/appicons boxdata/mail boxdata/certs boxdata/mail/dkim/localhost
 mkdir -p platformdata/addons/mail platformdata/nginx/cert platformdata/nginx/applications platformdata/collectd/collectd.conf.d platformdata/addons platformdata/logrotate.d platformdata/backup
 
 # put cert
-openssl req -x509 -newkey rsa:2048 -keyout platformdata/nginx/cert/host.key -out platformdata/nginx/cert/host.cert -days 3650 -subj '/CN=localhost' -nodes
+openssl req -x509 -newkey rsa:2048 -keyout platformdata/nginx/cert/host.key -out platformdata/nginx/cert/host.cert -days 3650 -subj '/CN=localhost' -nodes -config <(cat /etc/ssl/openssl.cnf <(printf "\n[SAN]\nsubjectAltName=DNS:*.localhost"))
 
 # create docker network (while the infra code does this, most tests skip infra setup)
 docker network create --subnet=172.18.0.0/16 cloudron || true
