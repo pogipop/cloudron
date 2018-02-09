@@ -418,6 +418,8 @@ function authorizeUserForApp(req, res, next) {
 }
 
 function authenticateMailbox(req, res, next) {
+    debug('mailbox auth: %s (from %s)', req.dn.toString(), req.connection.ldap.id);
+
     if (!req.dn.rdns[0].attrs.cn) return next(new ldap.NoSuchObjectError(req.dn.toString()));
 
     var email = req.dn.rdns[0].attrs.cn.value.toLowerCase();
