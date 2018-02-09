@@ -186,9 +186,11 @@ function dnsSetup(adminFqdn, domain, zoneName, provider, dnsConfig, tlsConfig, c
 
     if (gWebadminStatus.configuring || gWebadminStatus.restoring) return callback(new SetupError(SetupError.BAD_STATE, 'Already restoring or configuring'));
 
+    if (!tld.isValid(adminFqdn) || !adminFqdn.endsWith(domain)) return callback(new SetupError(SetupError.BAD_FIELD, 'adminFqdn must be a subdomain of domain'));
+
     if (!zoneName) zoneName = tld.getDomain(domain) || domain;
 
-    debug('dnsSetup: Setting up Cloudron with domain %s and zone %s', domain, zoneName);
+    debug(`dnsSetup: Setting up Cloudron with domain ${domain} and zone ${zoneName} using admin fqdn ${adminFqdn}`);
 
     function done(error) {
         if (error && error.reason === DomainError.BAD_FIELD) return callback(new SetupError(SetupError.BAD_FIELD, error.message));
