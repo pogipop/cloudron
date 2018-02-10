@@ -732,11 +732,17 @@ function del(domain, callback) {
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    maildb.del(domain, function (error) {
-        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new MailError(MailError.NOT_FOUND, error.message));
-        if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
+    get(domain, function (error, result) {
+        if (error) return callback(error);
 
-        callback();
+        maildb.del(domain, function (error) {
+            if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new MailError(MailError.NOT_FOUND, error.message));
+            if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
+
+            if (result && result.enabled) restartMail(NOOP_CALLBACK);
+
+            callback();
+        });
     });
 }
 
