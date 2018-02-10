@@ -1,7 +1,10 @@
 'use strict';
 
 var async = require('async'),
+    crypto = require('crypto'),
     fs = require('fs'),
+    os = require('os'),
+    path = require('path'),
     safe = require('safetydance'),
     tldjs = require('tldjs');
 
@@ -38,8 +41,14 @@ exports.up = function(db, callback) {
                         const keyFilePath = `/home/yellowtent/boxdata/certs/${domain}.host.key`;
 
                         if (!fs.existsSync(certFilePath) || !fs.existsSync(keyFilePath)) { // generate it
-                            var certCommand = `openssl req -x509 -newkey rsa:2048 -keyout ${keyFilePath} -out ${certFilePath} -days 3650 -subj /CN=*.${domain} -nodes`;
+                            let opensslConf = safe.fs.readFileSync('/etc/ssl/openssl.cnf', 'utf8');
+                            let opensslConfWithSan = `${opensslConf}\n[SAN]\nsubjectAltName=DNS:${domain}\n`;
+                            let configFile = path.join(os.tmpdir(), 'openssl-' + crypto.randomBytes(4).readUInt32LE(0) + '.conf');
+                            let certCommand = `openssl req -x509 -newkey rsa:2048 -keyout ${keyFilePath} -out ${certFilePath} -days 3650 -subj /CN=*.${domain} -extensions SAN -config ${configFile} -nodes`;
+
+                            safe.fs.writeFileSync(configFile, opensslConfWithSan, 'utf8');
                             if (!safe.child_process.execSync(certCommand)) return callback(safe.error.message);
+                            safe.fs.unlinkSync(configFile);
                         }
 
                         callback();
