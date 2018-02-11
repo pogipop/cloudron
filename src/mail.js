@@ -479,7 +479,7 @@ function createMailConfig(callback) {
             const mailInDomains = mailDomains.filter(function (d) { return d.enabled; }).map(function (d) { return d.domain; }).join(',');
 
             if (!safe.fs.writeFileSync(path.join(paths.ADDON_CONFIG_DIR, 'mail/mail.ini'),
-                `mail_in_domains=${mailInDomains}\nmail_out_domains=${mailOutDomains}\nmail_default_domain=${defaultDomain}\nmail_server_name=${mailFqdn}\nalerts_from=${alertsFrom}\nalerts_to=${alertsTo}\n`, 'utf8')) {
+                `mail_in_domains=${mailInDomains}\nmail_out_domains=${mailOutDomains}\nmail_default_domain=${defaultDomain}\nmail_server_name=${mailFqdn}\nalerts_from=${alertsFrom}\nalerts_to=${alertsTo}\n\n`, 'utf8')) {
                 return callback(new Error('Could not create mail var file:' + safe.error.message));
             }
 
