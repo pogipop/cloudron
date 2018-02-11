@@ -19,6 +19,7 @@ exports = module.exports = {
     sendTestMail: sendTestMail,
 
     getMailboxes: getMailboxes,
+    removeMailboxes: removeMailboxes,
     getUserMailbox: getUserMailbox,
     enableUserMailbox: enableUserMailbox,
     disableUserMailbox: disableUserMailbox,
@@ -845,6 +846,17 @@ function getMailboxes(domain, callback) {
         if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
 
         callback(null, result);
+    });
+}
+
+function removeMailboxes(domain, callback) {
+    assert.strictEqual(typeof domain, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    mailboxdb.delByDomain(domain, function (error) {
+        if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
+
+        callback();
     });
 }
 

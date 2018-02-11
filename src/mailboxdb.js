@@ -17,6 +17,7 @@ exports = module.exports = {
 
     getByOwnerId: getByOwnerId,
     delByOwnerId: delByOwnerId,
+    delByDomain: delByDomain,
 
     updateName: updateName,
 
@@ -67,6 +68,18 @@ function del(name, domain, callback) {
     database.query('DELETE FROM mailboxes WHERE (name=? OR aliasTarget = ?) AND domain = ?', [ name, name, domain ], function (error, result) {
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
         if (result.affectedRows === 0) return callback(new DatabaseError(DatabaseError.NOT_FOUND));
+
+        callback(null);
+    });
+}
+
+function delByDomain(domain, callback) {
+    assert.strictEqual(typeof domain, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    // deletes aliases as well
+    database.query('DELETE FROM mailboxes WHERE domain = ?', [ domain ], function (error) {
+        if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
 
         callback(null);
     });

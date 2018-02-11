@@ -776,13 +776,17 @@ describe('Mail API', function () {
         });
 
         after(function (done) {
-            superagent.del(SERVER_URL + '/api/v1/mail/' + DOMAIN_0.domain)
-                .send({ password: PASSWORD })
-                .query({ access_token: token })
-                .end(function (err, res) {
-                    expect(res.statusCode).to.equal(204);
-                    done();
-                });
+            mail.removeMailboxes(DOMAIN_0.domain, function (error) {
+                if (error) return done(error);
+
+                superagent.del(SERVER_URL + '/api/v1/mail/' + DOMAIN_0.domain)
+                    .send({ password: PASSWORD })
+                    .query({ access_token: token })
+                    .end(function (err, res) {
+                        expect(res.statusCode).to.equal(204);
+                        done();
+                    });
+            });
         });
 
         it('set fails if aliases is missing', function (done) {
@@ -898,13 +902,17 @@ describe('Mail API', function () {
         });
 
         after(function (done) {
-            superagent.del(SERVER_URL + '/api/v1/mail/' + DOMAIN_0.domain)
-                .send({ password: PASSWORD })
-                .query({ access_token: token })
-                .end(function (err, res) {
-                    expect(res.statusCode).to.equal(204);
-                    done();
-                });
+            mail.removeMailboxes(DOMAIN_0.domain, function (error) {
+                if (error) return done(error);
+
+                superagent.del(SERVER_URL + '/api/v1/mail/' + DOMAIN_0.domain)
+                    .send({ password: PASSWORD })
+                    .query({ access_token: token })
+                    .end(function (err, res) {
+                        expect(res.statusCode).to.equal(204);
+                        done();
+                    });
+            });
         });
 
         it('add fails without groupId', function (done) {
