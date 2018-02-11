@@ -65,6 +65,7 @@ function del(req, res, next) {
 
     mail.del(req.params.domain, function (error) {
         if (error && error.reason === MailError.NOT_FOUND) return next(new HttpError(404, error.message));
+        if (error && error.reason === MailError.IN_USE) return next(new HttpError(409, 'Mail domain is still in use. Remove existing mailboxes'));
         if (error) return next(new HttpError(500, error));
 
         next(new HttpSuccess(204));

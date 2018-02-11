@@ -61,6 +61,7 @@ function del(domain, callback) {
 
     // deletes aliases as well
     database.query('DELETE FROM mail WHERE domain=?', [ domain ], function (error, result) {
+        if (error && error.code === 'ER_ROW_IS_REFERENCED_2') return callback(new DatabaseError(DatabaseError.IN_USE));
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
         if (result.affectedRows === 0) return callback(new DatabaseError(DatabaseError.NOT_FOUND));
 

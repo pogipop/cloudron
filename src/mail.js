@@ -91,6 +91,7 @@ MailError.INTERNAL_ERROR = 'Internal Error';
 MailError.BAD_FIELD = 'Bad Field';
 MailError.ALREADY_EXISTS = 'Already Exists';
 MailError.NOT_FOUND = 'Not Found';
+MailError.NOT_FOUND = 'In Use';
 
 function validateAlias(alias) {
     assert.strictEqual(typeof alias, 'string');
@@ -736,6 +737,7 @@ function del(domain, callback) {
         if (error) return callback(error);
 
         maildb.del(domain, function (error) {
+            if (error && error.reason === DatabaseError.IN_USE) return callback(new MailError(MailError.IN_USE));
             if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new MailError(MailError.NOT_FOUND, error.message));
             if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
 
