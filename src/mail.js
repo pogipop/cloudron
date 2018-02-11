@@ -91,7 +91,7 @@ MailError.INTERNAL_ERROR = 'Internal Error';
 MailError.BAD_FIELD = 'Bad Field';
 MailError.ALREADY_EXISTS = 'Already Exists';
 MailError.NOT_FOUND = 'Not Found';
-MailError.NOT_FOUND = 'In Use';
+MailError.IN_USE = 'In Use';
 
 function validateAlias(alias) {
     assert.strictEqual(typeof alias, 'string');
