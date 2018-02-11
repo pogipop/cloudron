@@ -1590,7 +1590,10 @@ describe('database', function () {
 
     describe('mailboxes', function () {
         before(function (done) {
-            domaindb.add(DOMAIN_0.domain, { zoneName: DOMAIN_0.zoneName, provider: DOMAIN_0.provider, config: DOMAIN_0.config, tlsConfig: DOMAIN_0.tlsConfig }, done);
+            async.series([
+                domaindb.add.bind(null, DOMAIN_0.domain, { zoneName: DOMAIN_0.zoneName, provider: DOMAIN_0.provider, config: DOMAIN_0.config, tlsConfig: DOMAIN_0.tlsConfig }),
+                maildb.add.bind(null, DOMAIN_0.domain)
+            ], done);
         });
 
         after(function (done) {
