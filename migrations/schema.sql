@@ -133,21 +133,6 @@ CREATE TABLE IF NOT EXISTS eventlog(
 
     PRIMARY KEY (id));
 
-/* Future fields:
-   * accessRestriction - to determine who can access it. So this has foreign keys
-   * quota - per mailbox quota
-*/
-CREATE TABLE IF NOT EXISTS mailboxes(
-    name VARCHAR(128) NOT NULL,
-    ownerId VARCHAR(128) NOT NULL, /* app id or user id or group id */
-    ownerType VARCHAR(16) NOT NULL, /* 'app' or 'user' or 'group' */
-    aliasTarget VARCHAR(128), /* the target name type is an alias */
-    creationTime TIMESTAMP,
-    domain VARCHAR(128),
-
-    FOREIGN KEY(domain) REFERENCES domains(domain),
-    UNIQUE (name, domain));
-
 CREATE TABLE IF NOT EXISTS domains(
     domain VARCHAR(128) NOT NULL UNIQUE, /* if this needs to be larger, InnoDB has a limit of 767 bytes for PRIMARY KEY values! */
     zoneName VARCHAR(128) NOT NULL, /* this mostly contains the domain itself again */
@@ -173,4 +158,18 @@ CREATE TABLE IF NOT EXISTS mail(
 
     CHARACTER SET utf8 COLLATE utf8_bin;
 
+/* Future fields:
+   * accessRestriction - to determine who can access it. So this has foreign keys
+   * quota - per mailbox quota
+*/
+CREATE TABLE IF NOT EXISTS mailboxes(
+    name VARCHAR(128) NOT NULL,
+    ownerId VARCHAR(128) NOT NULL, /* app id or user id or group id */
+    ownerType VARCHAR(16) NOT NULL, /* 'app' or 'user' or 'group' */
+    aliasTarget VARCHAR(128), /* the target name type is an alias */
+    creationTime TIMESTAMP,
+    domain VARCHAR(128),
+
+    FOREIGN KEY(domain) REFERENCES mail(domain),
+    UNIQUE (name, domain));
 
