@@ -204,12 +204,8 @@ function autoupdatePatternChanged(pattern) {
         onTick: function() {
             var updateInfo = updateChecker.getUpdateInfo();
             if (updateInfo.box) {
-                if (semver.major(updateInfo.box.version) === semver.major(config.version())) {
-                    debug('Starting autoupdate to %j', updateInfo.box);
-                    cloudron.updateToLatest(AUDIT_SOURCE, NOOP_CALLBACK);
-                } else {
-                    debug('Block automatic update for major version');
-                }
+                debug('Starting autoupdate to %j', updateInfo.box);
+                cloudron.updateToLatest(AUDIT_SOURCE, NOOP_CALLBACK);
             } else if (updateInfo.apps) {
                 debug('Starting app update to %j', updateInfo.apps);
                 apps.autoupdateApps(updateInfo.apps, AUDIT_SOURCE, NOOP_CALLBACK);
