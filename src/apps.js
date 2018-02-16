@@ -890,7 +890,7 @@ function clone(appId, data, auditSource, callback) {
 
         backups.get(backupId, function (error, backupInfo) {
             if (error && error.reason === BackupsError.EXTERNAL_ERROR) return callback(new AppsError(AppsError.EXTERNAL_ERROR, error.message));
-            if (error && error.reason === BackupsError.NOT_FOUND) return callback(new AppsError(AppsError.EXTERNAL_ERROR, error.message));
+            if (error && error.reason === BackupsError.NOT_FOUND) return callback(new AppsError(AppsError.EXTERNAL_ERROR, 'Backup not found'));
             if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
 
             if (!backupInfo.manifest) callback(new AppsError(AppsError.EXTERNAL_ERROR, 'Could not get restore config'));
@@ -903,7 +903,7 @@ function clone(appId, data, auditSource, callback) {
             if (error) return callback(error);
 
             domains.get(domain, function (error, domainObject) {
-                if (error && error.reason === DomainError.NOT_FOUND) return callback(new AppsError(AppsError.NOT_FOUND, 'No such domain'));
+                if (error && error.reason === DomainError.NOT_FOUND) return callback(new AppsError(AppsError.EXTERNAL_ERROR, 'No such domain'));
                 if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, 'Could not get domain info:' + error.message));
 
                 var intrinsicFqdn = domains.fqdn(location, domain, domainObject.provider);
