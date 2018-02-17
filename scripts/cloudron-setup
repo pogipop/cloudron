@@ -88,6 +88,7 @@ if [[ -z "${provider}" ]]; then
 elif [[  \
             "${provider}" != "ami" && \
             "${provider}" != "azure" && \
+            "${provider}" != "caas" && \
             "${provider}" != "cloudscale" && \
             "${provider}" != "digitalocean" && \
             "${provider}" != "ec2" && \
