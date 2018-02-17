@@ -1206,6 +1206,12 @@
 * Fix S3 storage backend CopySource encoding rules
 
 [1.11.0]
+* Update Haraka to 2.8.17 to fix various crashes
+* Report dependency error for clone if backup or domain was not found
+* Enable auto-updates for major versions
+
+[2.0.0]
+* Multi-domain support
 * Split box and app autoupdate pattern settings
 * Stop and disable any pre-installed postfix server
 * Migration altDOmain as a manual DNS provider
