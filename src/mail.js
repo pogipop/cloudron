@@ -741,7 +741,7 @@ function setMailFromValidation(domain, enabled, callback) {
         if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new MailError(MailError.NOT_FOUND));
         if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
 
-        createMailConfig(NOOP_CALLBACK);
+        restartMail(NOOP_CALLBACK); // have to restart mail container since haraka cannot watch symlinked config files (mail.ini)
 
         callback(null);
     });
@@ -756,7 +756,7 @@ function setCatchAllAddress(domain, address, callback) {
         if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new MailError(MailError.NOT_FOUND));
         if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
 
-        createMailConfig(NOOP_CALLBACK);
+        restartMail(NOOP_CALLBACK); // have to restart mail container since haraka cannot watch symlinked config files (mail.ini)
 
         callback(null);
     });
