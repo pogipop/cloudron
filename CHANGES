@@ -1214,8 +1214,9 @@
 * Multi-domain support
 * Split box and app autoupdate pattern settings
 * Stop and disable any pre-installed postfix server
-* Migration altDOmain as a manual DNS provider
+* Migrate altDomain as a manual DNS provider
 * Use node's native dns resolve instead of dig
 * DNS records can now be a A record or a CNAME record
 * Fix generation of fallback certificates to include naked domain
+* Merge multi-string DKIM records
 
