@@ -3,6 +3,7 @@
 /* global describe:false */
 /* global before:false */
 /* global after:false */
+/* global beforeEach:false */
 
 'use strict';
 
@@ -19,6 +20,8 @@ const DOMAIN = 'example-appstore-test.com';
 const APPSTORE_USER_ID = 'appstoreuserid';
 const APPSTORE_TOKEN = 'appstoretoken';
 const CLOUDRON_ID = 'cloudronid';
+const APP_ID = 'appid';
+const APPSTORE_APP_ID = 'appstoreappid';
 
 function setup(done) {
     nock.cleanAll();
@@ -46,6 +49,8 @@ describe('Appstore', function () {
     before(setup);
     after(cleanup);
 
+    beforeEach(nock.cleanAll);
+
     it('cannot send alive status without appstore config', function (done) {
         appstore.sendAliveStatus(function (error) {
             expect(error).to.be.ok();
@@ -54,11 +59,21 @@ describe('Appstore', function () {
         });
     });
 
-    it('can send alive status', function (done) {
-        var scope0 = nock('http://localhost:6060')
+    it('can set appstore config', function (done) {
+        var scope = nock('http://localhost:6060')
             .post(`/api/v1/users/${APPSTORE_USER_ID}/cloudrons?accessToken=${APPSTORE_TOKEN}`, function () { return true; })
             .reply(201, { cloudron: { id: CLOUDRON_ID }});
-        var scope1 = nock('http://localhost:6060')
+
+        settings.setAppstoreConfig({ userId: APPSTORE_USER_ID, token: APPSTORE_TOKEN }, function (error) {
+            expect(error).to.not.be.ok();
+            expect(scope.isDone()).to.be.ok();
+
+            done();
+        });
+    });
+
+    it('can send alive status', function (done) {
+        var scope = nock('http://localhost:6060')
             .post(`/api/v1/users/${APPSTORE_USER_ID}/cloudrons/${CLOUDRON_ID}/alive?accessToken=${APPSTORE_TOKEN}`, function (body) {
                 expect(body.version).to.be.a('string');
                 expect(body.adminFqdn).to.be.a('string');
@@ -88,16 +103,73 @@ describe('Appstore', function () {
             })
             .reply(201, { cloudron: { id: CLOUDRON_ID }});
 
-        settings.setAppstoreConfig({ userId: APPSTORE_USER_ID, token: APPSTORE_TOKEN }, function (error) {
+        appstore.sendAliveStatus(function (error) {
             expect(error).to.not.be.ok();
-            expect(scope0.isDone()).to.be.ok();
+            expect(scope.isDone()).to.be.ok();
 
-            appstore.sendAliveStatus(function (error) {
-                expect(error).to.not.be.ok();
-                expect(scope1.isDone()).to.be.ok();
+            done();
+        });
+    });
 
-                done();
-            });
+    it('can get account', function (done) {
+        var scope = nock('http://localhost:6060')
+            .get(`/api/v1/users/${APPSTORE_USER_ID}?accessToken=${APPSTORE_TOKEN}`)
+            .reply(200, { profile: { id: APPSTORE_USER_ID }});
+
+        appstore.getAccount(function (error, result) {
+            expect(error).to.not.be.ok();
+            expect(scope.isDone()).to.be.ok();
+            expect(result.id).to.equal(APPSTORE_USER_ID);
+            done();
+        });
+    });
+
+    it('can purchase an app', function (done) {
+        var scope = nock('http://localhost:6060')
+            .post(`/api/v1/users/${APPSTORE_USER_ID}/cloudrons/${CLOUDRON_ID}/apps/${APP_ID}?accessToken=${APPSTORE_TOKEN}`, function () { return true; })
+            .reply(201, {});
+
+        appstore.purchase(APP_ID, APPSTORE_APP_ID, function (error) {
+            expect(error).to.not.be.ok();
+            expect(scope.isDone()).to.be.ok();
+
+            done();
+        });
+    });
+
+    it('unpurchase succeeds if app was never purchased', function (done) {
+        var scope1 = nock('http://localhost:6060')
+            .get(`/api/v1/users/${APPSTORE_USER_ID}/cloudrons/${CLOUDRON_ID}/apps/${APP_ID}?accessToken=${APPSTORE_TOKEN}`)
+            .reply(404, {});
+
+        var scope2 = nock('http://localhost:6060')
+            .delete(`/api/v1/users/${APPSTORE_USER_ID}/cloudrons/${CLOUDRON_ID}/apps/${APP_ID}?accessToken=${APPSTORE_TOKEN}`, function () { return true; })
+            .reply(204, {});
+
+        appstore.unpurchase(APP_ID, APPSTORE_APP_ID, function (error) {
+            expect(error).to.not.be.ok();
+            expect(scope1.isDone()).to.be.ok();
+            expect(scope2.isDone()).to.not.be.ok();
+
+            done();
+        });
+    });
+
+    it('can unpurchase an app', function (done) {
+        var scope1 = nock('http://localhost:6060')
+            .get(`/api/v1/users/${APPSTORE_USER_ID}/cloudrons/${CLOUDRON_ID}/apps/${APP_ID}?accessToken=${APPSTORE_TOKEN}`)
+            .reply(200, {});
+
+        var scope2 = nock('http://localhost:6060')
+            .delete(`/api/v1/users/${APPSTORE_USER_ID}/cloudrons/${CLOUDRON_ID}/apps/${APP_ID}?accessToken=${APPSTORE_TOKEN}`, function () { return true; })
+            .reply(204, {});
+
+        appstore.unpurchase(APP_ID, APPSTORE_APP_ID, function (error) {
+            expect(error).to.not.be.ok();
+            expect(scope1.isDone()).to.be.ok();
+            expect(scope2.isDone()).to.be.ok();
+
+            done();
         });
     });
 });
