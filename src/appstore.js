@@ -19,8 +19,10 @@ exports = module.exports = {
 };
 
 var assert = require('assert'),
+    async = require('async'),
     config = require('./config.js'),
     debug = require('debug')('box:appstore'),
+    domains = require('./domains.js'),
     eventlog = require('./eventlog.js'),
     mail = require('./mail.js'),
     os = require('os'),
@@ -140,63 +142,87 @@ function unpurchase(appId, appstoreId, callback) {
     });
 }
 
-function sendAliveStatus(data, callback) {
+function sendAliveStatus(callback) {
     callback = callback || NOOP_CALLBACK;
 
-    settings.getAll(function (error, result) {
-        if (error) return callback(new AppstoreError(AppstoreError.INTERNAL_ERROR, error));
+    var allSettings, allDomains, mailDomains, loginEvents;
 
-        mail.getAll(function (error, mailDomains) {
-            if (error) return callback(new AppstoreError(AppstoreError.INTERNAL_ERROR, error));
-
-            eventlog.getAllPaged(eventlog.ACTION_USER_LOGIN, null, 1, 1, function (error, loginEvents) {
+    async.series([
+        function (callback) {
+            settings.getAll(function (error, result) {
                 if (error) return callback(new AppstoreError(AppstoreError.INTERNAL_ERROR, error));
+                allSettings = result;
+                callback();
+            });
+        },
+        function (callback) {
+            domains.getAll(function (error, result) {
+                if (error) return callback(new AppstoreError(AppstoreError.INTERNAL_ERROR, error));
+                allDomains = result;
+                callback();
+            });
+        },
+        function (callback) {
+            mail.getAll(function (error, result) {
+                if (error) return callback(new AppstoreError(AppstoreError.INTERNAL_ERROR, error));
+                mailDomains = result;
+                callback();
+            });
+        },
+        function (callback) {
+            eventlog.getAllPaged(eventlog.ACTION_USER_LOGIN, null, 1, 1, function (error, result) {
+                if (error) return callback(new AppstoreError(AppstoreError.INTERNAL_ERROR, error));
+                loginEvents = result;
+                callback();
+            });
+        }
+    ], function (error) {
+        if (error) return callback(error);
 
-                var backendSettings = {
-                    backupConfig: {
-                        provider: result[settings.BACKUP_CONFIG_KEY].provider,
-                        hardlinks: !result[settings.BACKUP_CONFIG_KEY].noHardlinks
-                    },
-                    domainConfig: {
-                        count: mailDomains.length
-                    },
-                    mailConfig: {
-                        outboundCount: mailDomains.length,
-                        inboundCount: mailDomains.filter(function (d) { return d.enabled; }).length,
-                        catchAllCount: mailDomains.filter(function (d) { return d.catchAll.length !== 0; }).length,
-                        relayProviders: Array.from(new Set(mailDomains.map(function (d) { return d.relay.provider; })))
-                    },
-                    appAutoupdatePattern: result[settings.APP_AUTOUPDATE_PATTERN_KEY],
-                    boxAutoupdatePattern: result[settings.BOX_AUTOUPDATE_PATTERN_KEY],
-                    timeZone: result[settings.TIME_ZONE_KEY],
-                };
+        var backendSettings = {
+            backupConfig: {
+                provider: allSettings[settings.BACKUP_CONFIG_KEY].provider,
+                hardlinks: !allSettings[settings.BACKUP_CONFIG_KEY].noHardlinks
+            },
+            domainConfig: {
+                count: allDomains.length,
+                domains: Array.from(new Set(allDomains.map(function (d) { return { domain: d.domain, provider: d.provider }; })))
+            },
+            mailConfig: {
+                outboundCount: mailDomains.length,
+                inboundCount: mailDomains.filter(function (d) { return d.enabled; }).length,
+                catchAllCount: mailDomains.filter(function (d) { return d.catchAll.length !== 0; }).length,
+                relayProviders: Array.from(new Set(mailDomains.map(function (d) { return d.relay.provider; })))
+            },
+            appAutoupdatePattern: allSettings[settings.APP_AUTOUPDATE_PATTERN_KEY],
+            boxAutoupdatePattern: allSettings[settings.BOX_AUTOUPDATE_PATTERN_KEY],
+            timeZone: allSettings[settings.TIME_ZONE_KEY],
+        };
 
-                var data = {
-                    version: config.version(),
-                    adminFqdn: config.adminFqdn(),
-                    provider: config.provider(),
-                    backendSettings: backendSettings,
-                    machine: {
-                        cpus: os.cpus(),
-                        totalmem: os.totalmem()
-                    },
-                    events: {
-                        lastLogin: loginEvents[0] ? (new Date(loginEvents[0].creationTime).getTime()) : 0
-                    }
-                };
+        var data = {
+            version: config.version(),
+            adminFqdn: config.adminFqdn(),
+            provider: config.provider(),
+            backendSettings: backendSettings,
+            machine: {
+                cpus: os.cpus(),
+                totalmem: os.totalmem()
+            },
+            events: {
+                lastLogin: loginEvents[0] ? (new Date(loginEvents[0].creationTime).getTime()) : 0
+            }
+        };
 
-                getAppstoreConfig(function (error, appstoreConfig) {
-                    if (error) return callback(error);
+        getAppstoreConfig(function (error, appstoreConfig) {
+            if (error) return callback(error);
 
-                    var url = config.apiServerOrigin() + '/api/v1/users/' + appstoreConfig.userId + '/cloudrons/' + appstoreConfig.cloudronId + '/alive';
-                    superagent.post(url).send(data).query({ accessToken: appstoreConfig.token }).timeout(30 * 1000).end(function (error, result) {
-                        if (error && !error.response) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, error));
-                        if (result.statusCode === 404) return callback(new AppstoreError(AppstoreError.NOT_FOUND));
-                        if (result.statusCode !== 201) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, util.format('Sending alive status failed. %s %j', result.status, result.body)));
+            var url = config.apiServerOrigin() + '/api/v1/users/' + appstoreConfig.userId + '/cloudrons/' + appstoreConfig.cloudronId + '/alive';
+            superagent.post(url).send(data).query({ accessToken: appstoreConfig.token }).timeout(30 * 1000).end(function (error, result) {
+                if (error && !error.response) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, error));
+                if (result.statusCode === 404) return callback(new AppstoreError(AppstoreError.NOT_FOUND));
+                if (result.statusCode !== 201) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, util.format('Sending alive status failed. %s %j', result.status, result.body)));
 
-                        callback(null);
-                    });
-                });
+                callback(null);
             });
         });
     });
