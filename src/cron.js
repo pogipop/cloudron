@@ -22,7 +22,6 @@ var apps = require('./apps.js'),
     reverseProxy = require('./reverseproxy.js'),
     scheduler = require('./scheduler.js'),
     settings = require('./settings.js'),
-    semver = require('semver'),
     updateChecker = require('./updatechecker.js');
 
 var gJobs = {
