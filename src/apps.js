@@ -561,9 +561,14 @@ function install(data, auditSource, callback) {
 
                     taskmanager.restartAppTask(appId);
 
-                    eventlog.add(eventlog.ACTION_APP_INSTALL, auditSource, { appId: appId, location: location, domain: domain, manifest: manifest, backupId: backupId });
+                    // fetch fresh app object for eventlog
+                    appdb.get(appId, function (error, result) {
+                        if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
 
-                    callback(null, { id : appId });
+                        eventlog.add(eventlog.ACTION_APP_INSTALL, auditSource, { appId: appId, app: result });
+
+                        callback(null, { id : appId });
+                    });
                 });
             });
         });
@@ -668,9 +673,14 @@ function configure(appId, data, auditSource, callback) {
 
                     taskmanager.restartAppTask(appId);
 
-                    eventlog.add(eventlog.ACTION_APP_CONFIGURE, auditSource, { appId: appId });
+                    // fetch fresh app object for eventlog
+                    appdb.get(appId, function (error, result) {
+                        if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
 
-                    callback(null);
+                        eventlog.add(eventlog.ACTION_APP_CONFIGURE, auditSource, { appId: appId, app: result });
+
+                        callback(null);
+                    });
                 });
             });
         });
@@ -737,7 +747,7 @@ function update(appId, data, auditSource, callback) {
 
                 taskmanager.restartAppTask(appId);
 
-                eventlog.add(eventlog.ACTION_APP_UPDATE, auditSource, { appId: appId, toManifest: manifest, fromManifest: app.manifest, force: data.force });
+                eventlog.add(eventlog.ACTION_APP_UPDATE, auditSource, { appId: appId, toManifest: manifest, fromManifest: app.manifest, force: data.force, app: app });
 
                 // clear update indicator, if update fails, it will come back through the update checker
                 updateChecker.resetAppUpdateInfo(appId);
@@ -839,7 +849,7 @@ function restore(appId, data, auditSource, callback) {
 
                 taskmanager.restartAppTask(appId);
 
-                eventlog.add(eventlog.ACTION_APP_RESTORE, auditSource, { appId: appId });
+                eventlog.add(eventlog.ACTION_APP_RESTORE, auditSource, { appId: appId, app: app });
 
                 callback(null);
             });
@@ -914,9 +924,14 @@ function clone(appId, data, auditSource, callback) {
 
                         taskmanager.restartAppTask(newAppId);
 
-                        eventlog.add(eventlog.ACTION_APP_CLONE, auditSource, { appId: newAppId, oldAppId: appId, backupId: backupId, location: location, manifest: manifest });
+                        // fetch fresh app object for eventlog
+                        appdb.get(appId, function (error, result) {
+                            if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
 
-                        callback(null, { id : newAppId });
+                            eventlog.add(eventlog.ACTION_APP_CLONE, auditSource, { appId: newAppId, oldAppId: appId, backupId: backupId, oldApp: app, newApp: result });
+
+                            callback(null, { id : newAppId });
+                        });
                     });
                 });
             });
@@ -931,10 +946,10 @@ function uninstall(appId, auditSource, callback) {
 
     debug('Will uninstall app with id:%s', appId);
 
-    get(appId, function (error, result) {
+    get(appId, function (error, app) {
         if (error) return callback(error);
 
-        appstore.unpurchase(appId, result.appStoreId, function (error) {
+        appstore.unpurchase(appId, app.appStoreId, function (error) {
             if (error && error.reason === AppstoreError.NOT_FOUND) return callback(new AppsError(AppsError.NOT_FOUND));
             if (error && error.reason === AppstoreError.BILLING_REQUIRED) return callback(new AppsError(AppsError.BILLING_REQUIRED, error.message));
             if (error && error.reason === AppstoreError.EXTERNAL_ERROR) return callback(new AppsError(AppsError.EXTERNAL_ERROR, error.message));
@@ -945,7 +960,7 @@ function uninstall(appId, auditSource, callback) {
                     if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new AppsError(AppsError.NOT_FOUND, 'No such app'));
                     if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
 
-                    eventlog.add(eventlog.ACTION_APP_UNINSTALL, auditSource, { appId: appId });
+                    eventlog.add(eventlog.ACTION_APP_UNINSTALL, auditSource, { appId: appId, app: app });
 
                     taskmanager.startAppTask(appId, callback);
                 });
