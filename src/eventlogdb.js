@@ -53,11 +53,7 @@ function getAllPaged(action, search, page, perPage, callback) {
     if (action || search) query += ' WHERE';
     if (search) query += ' (source LIKE ' + mysql.escape('%' + search + '%') + ' OR data LIKE ' + mysql.escape('%' + search + '%') + ')';
     if (action && search) query += ' AND ';
-
-    if (action) {
-        query += ' action=?';
-        data.push(action);
-    }
+    if (action) query += ' (action LIKE ' + mysql.escape(`%${action}%`) + ') ';
 
     query += ' ORDER BY creationTime DESC LIMIT ?,?';
 
