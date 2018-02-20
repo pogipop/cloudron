@@ -307,7 +307,7 @@ function copy(apiConfig, oldFilePath, newFilePath) {
         };
 
         // S3 copyObject has a file size limit of 5GB so if we have larger files, we do a multipart copy
-        if (content.Size < 5 * 1024 * 1024 * 1024 || apiConfig.provider === 'digitalocean-spaces') { // DO has not implemented this yet
+        if (content.Size < 5 * 1024 * 1024 * 1024) {
             events.emit('progress', `Copying ${relativePath}`);
 
             copyParams.CopySource = encodeCopySource(apiConfig.bucket, content.Key);
