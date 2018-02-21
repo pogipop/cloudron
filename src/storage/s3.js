@@ -122,15 +122,6 @@ function upload(apiConfig, backupFilePath, sourceStream, callback) {
     assert.strictEqual(typeof sourceStream, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    function done(error) {
-        if (error) {
-            debug('[%s] upload: s3 upload error.', backupFilePath, error);
-            return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, `Error uploading ${backupFilePath}. Message: ${error.message} HTTP Code: ${error.code}`));
-        }
-
-        callback(null);
-    }
-
     getS3Config(apiConfig, function (error, credentials) {
         if (error) return callback(error);
 
@@ -144,7 +135,14 @@ function upload(apiConfig, backupFilePath, sourceStream, callback) {
 
         // s3.upload automatically does a multi-part upload. we set queueSize to 1 to reduce memory usage
         // uploader will buffer at most queueSize * partSize bytes into memory at any given time.
-        return s3.upload(params, { partSize: 10 * 1024 * 1024, queueSize: 1 }, done);
+        s3.upload(params, { partSize: 10 * 1024 * 1024, queueSize: 1 }, function (error) {
+            if (error) {
+                debug('[%s] upload: s3 upload error.', backupFilePath, error);
+                return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, `Error uploading ${backupFilePath}. Message: ${error.message} HTTP Code: ${error.code}`));
+            }
+
+            callback(null);
+        });
     });
 }
 
@@ -410,10 +408,11 @@ function remove(apiConfig, filename, callback) {
             }
         };
 
+        // deleteObjects does not return error if key is not found
         s3.deleteObjects(deleteParams, function (error) {
-            if (error) debug('remove: Unable to remove %s. Not fatal.', deleteParams.Key, error);
+            if (error) debug(`remove: Unable to remove ${filename}. ${error.message}`);
 
-            callback(null);
+            callback(error);
         });
     });
 }
@@ -435,9 +434,10 @@ function removeDir(apiConfig, pathPrefix) {
 
         events.emit('progress', `Removing ${contents.length} files from ${contents[0].Key} to ${contents[contents.length-1].Key}`);
 
+        // deleteObjects does not return error if key is not found
         s3.deleteObjects(deleteParams, function (error /*, deleteData */) {
             if (error) {
-                events.emit('progress', `Unable to remove ${deleteParams.Key} ${error.message}`);
+                events.emit('progress', `Unable to remove ${contents.length} files from ${contents[0].Key} to ${contents[contents.length-1].Key}: ${error.message}`);
                 return iteratorCallback(error);
             }
 
@@ -448,8 +448,9 @@ function removeDir(apiConfig, pathPrefix) {
     listDir(apiConfig, pathPrefix, function (s3, objects, done) {
         total += objects.length;
 
-        const batchSize = apiConfig.provider !== 'digitalocean-spaces' ? 1000 : 100; // throttle objects in each request
-        var chunks = batchSize === 1 ? objects : chunk(objects, batchSize);
+        // digitalocean spaces takes too long to delete 1000 objects at a time
+        const chunkSize = apiConfig.provider !== 'digitalocean-spaces' ? 1000 : 100;
+        var chunks = chunk(objects, chunkSize);
 
         async.eachSeries(chunks, deleteFiles.bind(null, s3), done);
     }, function (error) {
