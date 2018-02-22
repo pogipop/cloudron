@@ -72,7 +72,7 @@ function getCaasConfig(apiConfig, callback) {
             region: apiConfig.region || 'us-east-1',
             maxRetries: 5,
             retryDelayOptions: {
-                base: 20000         // 2^5 * 20 seconds
+                customBackoff: () => 20000 // constant backoff - https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/Config.html#retryDelayOptions-property
             },
             httpOptions: {
                 connectTimeout: 10000 // https://github.com/aws/aws-sdk-js/pull/1446
@@ -104,7 +104,7 @@ function getS3Config(apiConfig, callback) {
         region: apiConfig.region || 'us-east-1',
         maxRetries: 5,
         retryDelayOptions: {
-            base: 20000         // 2^5 * 20 seconds
+            customBackoff: () => 20000 // constant backoff - https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/Config.html#retryDelayOptions-property
         },
         httpOptions: {
             connectTimeout: 10000 // https://github.com/aws/aws-sdk-js/pull/1446
