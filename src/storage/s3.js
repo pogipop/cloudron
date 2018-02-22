@@ -313,18 +313,18 @@ function copy(apiConfig, oldFilePath, newFilePath) {
         const largeFileLimit = apiConfig.provider === 'exoscale-sos' ? 1024 * 1024 * 1024 : 5 * 1024 * 1024 * 1024;
 
         if (content.Size < largeFileLimit) {
-            events.emit('progress', `Copying ${relativePath}`);
+            events.emit('progress', `Copying ${relativePath || oldFilePath}`);
 
             copyParams.CopySource = encodeCopySource(apiConfig.bucket, content.Key);
             s3.copyObject(copyParams, done).on('retry', function (response) {
                 ++retryCount;
-                events.emit('progress', `Retrying (${response.retryCount+1}) copy of ${relativePath}. Status code: ${response.httpResponse.statusCode}`);
+                events.emit('progress', `Retrying (${response.retryCount+1}) copy of ${relativePath || oldFilePath}. Status code: ${response.httpResponse.statusCode}`);
             });
 
             return;
         }
 
-        events.emit('progress', `Copying (multipart) ${relativePath}`);
+        events.emit('progress', `Copying (multipart) ${relativePath || oldFilePath}`);
 
         s3.createMultipartUpload(copyParams, function (error, result) {
             if (error) return done(error);
@@ -372,7 +372,7 @@ function copy(apiConfig, oldFilePath, newFilePath) {
                     s3.completeMultipartUpload(params, done);
                 }).on('retry', function (response) {
                     ++retryCount;
-                    events.emit('progress', `Retrying (${response.retryCount+1}) multipart copy of ${relativePath}. Status code: ${response.httpResponse.statusCode}`);
+                    events.emit('progress', `Retrying (${response.retryCount+1}) multipart copy of ${relativePath || oldFilePath}. Status code: ${response.httpResponse.statusCode}`);
                 });
             }
 
@@ -382,11 +382,11 @@ function copy(apiConfig, oldFilePath, newFilePath) {
 
     var total = 0, concurrency = 4;
 
-    listDir(apiConfig, oldFilePath, function (s3, objects, done) {
+    listDir(apiConfig, oldFilePath, function listDirIterator(s3, objects, done) {
         total += objects.length;
 
         if (retryCount === 0) concurrency = Math.min(concurrency + 1, 10); else concurrency = Math.max(concurrency - 1, 5);
-        events.emit('progress', `${retryCount} errors. concurrency set to ${concurrency}`);
+        events.emit('progress', `${retryCount} errors so far. concurrency set to ${concurrency}`);
         retryCount = 0;
 
         async.eachLimit(objects, concurrency, copyFile.bind(null, s3), done);
