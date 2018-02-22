@@ -68,7 +68,7 @@ function remove(apiConfig, filename, callback) {
     assert.strictEqual(typeof filename, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    // Result: none. Should not error if file is not found
+    // Result: none
 
     callback(new Error('not implemented'));
 }
@@ -77,7 +77,7 @@ function removeDir(apiConfig, pathPrefix) {
     assert.strictEqual(typeof apiConfig, 'object');
     assert.strictEqual(typeof pathPrefix, 'string');
 
-    // Result: none. Should not error if dir is not found
+    // Result: none
     var events = new EventEmitter();
     process.nextTick(function () { events.emit('done', new Error('not implemented')); });
     return events;

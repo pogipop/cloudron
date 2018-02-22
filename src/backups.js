@@ -231,32 +231,32 @@ function sync(backupConfig, backupId, dataDir, callback) {
     assert.strictEqual(typeof dataDir, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    function setBackupProgress(message) {
-        debug(message);
-        safe.fs.writeFileSync(paths.BACKUP_RESULT_FILE, message);
-    }
-
     syncer.sync(dataDir, function processTask(task, iteratorCallback) {
         debug('sync: processing task: %j', task);
         var backupFilePath = path.join(getBackupFilePath(backupConfig, backupId, backupConfig.format), task.path);
+
+        if (task.operation === 'removedir') {
+            safe.fs.writeFileSync(paths.BACKUP_RESULT_FILE, `Removing directory ${task.path}`);
+            return api(backupConfig.provider).removeDir(backupConfig, backupFilePath)
+                .on('progress', function (detail) {
+                    debug(`sync: ${detail}`);
+                    safe.fs.writeFileSync(paths.BACKUP_RESULT_FILE, detail);
+                })
+                .on('done', iteratorCallback);
+        } else if (task.operation === 'remove') {
+            safe.fs.writeFileSync(paths.BACKUP_RESULT_FILE, `Removing ${task.path}`);
+            return api(backupConfig.provider).remove(backupConfig, backupFilePath, iteratorCallback);
+        }
 
         var retryCount = 0;
         async.retry({ times: 5, interval: 20000 }, function (retryCallback) {
             ++retryCount;
             debug(`${task.operation} ${task.path} try ${retryCount}`);
             if (task.operation === 'add') {
-                setBackupProgress(`Adding ${task.path}`);
+                safe.fs.writeFileSync(paths.BACKUP_RESULT_FILE, `Adding ${task.path}`);
                 var stream = fs.createReadStream(path.join(dataDir, task.path));
                 stream.on('error', function () { return retryCallback(); }); // ignore error if file disappears
                 api(backupConfig.provider).upload(backupConfig, backupFilePath, stream, retryCallback);
-            } else if (task.operation === 'removedir') {
-                setBackupProgress(`Removing directory ${task.path}`);
-                return api(backupConfig.provider).removeDir(backupConfig, backupFilePath)
-                    .on('progress', setBackupProgress)
-                    .on('done', retryCallback);
-            } else if (task.operation === 'remove') {
-                setBackupProgress(`Removing ${task.path}`);
-                return api(backupConfig.provider).remove(backupConfig, backupFilePath, retryCallback);
             }
         }, iteratorCallback);
     }, 10 /* concurrency */, function (error) {
