@@ -231,6 +231,11 @@ function sync(backupConfig, backupId, dataDir, callback) {
     assert.strictEqual(typeof dataDir, 'string');
     assert.strictEqual(typeof callback, 'function');
 
+    function setBackupProgress(message) {
+        debug(message);
+        safe.fs.writeFileSync(paths.BACKUP_RESULT_FILE, message);
+    }
+
     syncer.sync(dataDir, function processTask(task, iteratorCallback) {
         debug('sync: processing task: %j', task);
         var backupFilePath = path.join(getBackupFilePath(backupConfig, backupId, backupConfig.format), task.path);
@@ -238,13 +243,10 @@ function sync(backupConfig, backupId, dataDir, callback) {
         if (task.operation === 'removedir') {
             safe.fs.writeFileSync(paths.BACKUP_RESULT_FILE, `Removing directory ${task.path}`);
             return api(backupConfig.provider).removeDir(backupConfig, backupFilePath)
-                .on('progress', function (detail) {
-                    debug(`sync: ${detail}`);
-                    safe.fs.writeFileSync(paths.BACKUP_RESULT_FILE, detail);
-                })
+                .on('progress', setBackupProgress)
                 .on('done', iteratorCallback);
         } else if (task.operation === 'remove') {
-            safe.fs.writeFileSync(paths.BACKUP_RESULT_FILE, `Removing ${task.path}`);
+            setBackupProgress(`Removing ${task.path}`);
             return api(backupConfig.provider).remove(backupConfig, backupFilePath, iteratorCallback);
         }
 
@@ -253,7 +255,7 @@ function sync(backupConfig, backupId, dataDir, callback) {
             ++retryCount;
             debug(`${task.operation} ${task.path} try ${retryCount}`);
             if (task.operation === 'add') {
-                safe.fs.writeFileSync(paths.BACKUP_RESULT_FILE, `Adding ${task.path}`);
+                setBackupProgress(`Adding ${task.path}`);
                 var stream = fs.createReadStream(path.join(dataDir, task.path));
                 stream.on('error', function () { return retryCallback(); }); // ignore error if file disappears
                 api(backupConfig.provider).upload(backupConfig, backupFilePath, stream, retryCallback);
