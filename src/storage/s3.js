@@ -73,6 +73,9 @@ function getCaasConfig(apiConfig, callback) {
             maxRetries: 5,
             retryDelayOptions: {
                 base: 20000         // 2^5 * 20 seconds
+            },
+            httpOptions: {
+                connectTimeout: 10000 // https://github.com/aws/aws-sdk-js/pull/1446
             }
         };
 
@@ -102,15 +105,16 @@ function getS3Config(apiConfig, callback) {
         maxRetries: 5,
         retryDelayOptions: {
             base: 20000         // 2^5 * 20 seconds
+        },
+        httpOptions: {
+            connectTimeout: 10000 // https://github.com/aws/aws-sdk-js/pull/1446
         }
     };
 
     if (apiConfig.endpoint) credentials.endpoint = apiConfig.endpoint;
 
     if (apiConfig.acceptSelfSignedCerts === true && credentials.endpoint && credentials.endpoint.startsWith('https://')) {
-        credentials.httpOptions = {
-            agent: new https.Agent({ rejectUnauthorized: false })
-        };
+        credentials.httpOptions.agent = new https.Agent({ rejectUnauthorized: false });
     }
     callback(null, credentials);
 }
