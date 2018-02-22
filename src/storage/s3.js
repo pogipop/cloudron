@@ -305,7 +305,10 @@ function copy(apiConfig, oldFilePath, newFilePath) {
         };
 
         // S3 copyObject has a file size limit of 5GB so if we have larger files, we do a multipart copy
-        if (content.Size < 5 * 1024 * 1024 * 1024) {
+        // Exoscale takes too long to copy 5GB
+        const largeFileLimit = apiConfig.provider === 'exoscale-sos' ? 1024 * 1024 * 1024 : 5 * 1024 * 1024 * 1024;
+
+        if (content.Size < largeFileLimit) {
             events.emit('progress', `Copying ${relativePath}`);
 
             copyParams.CopySource = encodeCopySource(apiConfig.bucket, content.Key);
@@ -322,7 +325,8 @@ function copy(apiConfig, oldFilePath, newFilePath) {
         s3.createMultipartUpload(copyParams, function (error, result) {
             if (error) return done(error);
 
-            const CHUNK_SIZE = 1024 * 1024 * 1024;  // 1GB - rather random size
+            // Exoscale (96M) was suggested by exoscale. 1GB - rather random size for others
+            const chunkSize = apiConfig.provider === 'exoscale-sos' ? 96 * 1024 * 1024 : 1024 * 1024 * 1024;
             var uploadId = result.UploadId;
             var uploadedParts = [];
             var partNumber = 1;
@@ -331,7 +335,7 @@ function copy(apiConfig, oldFilePath, newFilePath) {
             var size = content.Size-1;
 
             function copyNextChunk() {
-                endBytes = startBytes + CHUNK_SIZE;
+                endBytes = startBytes + chunkSize;
                 if (endBytes > size) endBytes = size;
 
                 var params = {
