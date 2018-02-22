@@ -6,8 +6,13 @@
 //  New backends can start from here
 // -------------------------------------------
 
+// Implementation note:
+//     retry logic for upload() comes from the syncer since it is stream based
+//     for the other API calls we leave it to the backend to retry. this allows
+//     them to tune the concurrency based on failures/rate limits accordingly
 exports = module.exports = {
     upload: upload,
+
     download: download,
     downloadDir: downloadDir,
     copy: copy,
