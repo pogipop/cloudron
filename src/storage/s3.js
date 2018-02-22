@@ -108,7 +108,7 @@ function getS3Config(apiConfig, callback) {
     if (apiConfig.endpoint) credentials.endpoint = apiConfig.endpoint;
 
     if (apiConfig.acceptSelfSignedCerts === true && credentials.endpoint && credentials.endpoint.startsWith('https://')) {
-        credentials.httpOptions.agent = {
+        credentials.httpOptions = {
             agent: new https.Agent({ rejectUnauthorized: false })
         };
     }
