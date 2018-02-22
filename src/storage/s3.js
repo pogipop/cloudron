@@ -414,10 +414,11 @@ function remove(apiConfig, filename, callback) {
             }
         };
 
+        // deleteObjects does not return error if key is not found
         s3.deleteObjects(deleteParams, function (error) {
             if (error) debug('remove: Unable to remove %s. Not fatal.', deleteParams.Key, error);
 
-            callback(null);
+            callback(error);
         });
     });
 }
@@ -439,13 +440,11 @@ function removeDir(apiConfig, pathPrefix) {
 
         events.emit('progress', `Removing ${contents.length} files from ${contents[0].Key} to ${contents[contents.length-1].Key}`);
 
+        // deleteObjects does not return error if key is not found
         s3.deleteObjects(deleteParams, function (error /*, deleteData */) {
-            if (error) {
-                events.emit('progress', `Unable to remove ${deleteParams.Key} ${error.message}`);
-                return iteratorCallback(error);
-            }
+            if (error) events.emit('progress', `Unable to remove ${deleteParams.Key} ${error.message}`);
 
-            iteratorCallback();
+            iteratorCallback(error);
         });
     }
 
