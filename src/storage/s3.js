@@ -452,8 +452,8 @@ function removeDir(apiConfig, pathPrefix) {
     listDir(apiConfig, pathPrefix, function (s3, objects, done) {
         total += objects.length;
 
-        const batchSize = apiConfig.provider !== 'digitalocean-spaces' ? 1000 : 100; // throttle objects in each request
-        var chunks = batchSize === 1 ? objects : chunk(objects, batchSize);
+        const chunkSize = apiConfig.provider !== 'digitalocean-spaces' ? 1000 : 100; // throttle objects in each request
+        var chunks = chunk(objects, chunkSize);
 
         async.eachSeries(chunks, deleteFiles.bind(null, s3), done);
     }, function (error) {
