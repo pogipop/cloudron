@@ -179,14 +179,14 @@ function download(apiConfig, backupFilePath, callback) {
     });
 }
 
-function listDir(apiConfig, backupFilePath, iteratorCallback, callback) {
+function listDir(apiConfig, dir, iteratorCallback, callback) {
     getS3Config(apiConfig, function (error, credentials) {
         if (error) return callback(error);
 
         var s3 = new AWS.S3(credentials);
         var listParams = {
             Bucket: apiConfig.bucket,
-            Prefix: backupFilePath
+            Prefix: dir
         };
 
         async.forever(function listAndDownload(foreverCallback) {
@@ -414,7 +414,7 @@ function remove(apiConfig, filename, callback) {
 
         // deleteObjects does not return error if key is not found
         s3.deleteObjects(deleteParams, function (error) {
-            if (error) debug('remove: Unable to remove %s. Not fatal.', deleteParams.Key, error);
+            if (error) debug(`remove: Unable to remove ${deleteParams.Key}. error: ${error.message}`);
 
             callback(error);
         });
@@ -428,31 +428,29 @@ function removeDir(apiConfig, pathPrefix) {
     var events = new EventEmitter();
     var total = 0;
 
-    function deleteFiles(s3, contents, iteratorCallback) {
-        var deleteParams = {
-            Bucket: apiConfig.bucket,
-            Delete: {
-                Objects: contents.map(function (c) { return { Key: c.Key }; })
-            }
-        };
-
-        events.emit('progress', `Removing ${contents.length} files from ${contents[0].Key} to ${contents[contents.length-1].Key}`);
-
-        // deleteObjects does not return error if key is not found
-        s3.deleteObjects(deleteParams, function (error /*, deleteData */) {
-            if (error) events.emit('progress', `Unable to remove ${deleteParams.Key} ${error.message}`);
-
-            iteratorCallback(error);
-        });
-    }
-
-    listDir(apiConfig, pathPrefix, function (s3, objects, done) {
+    listDir(apiConfig, pathPrefix, function listDirIterator(s3, objects, done) {
         total += objects.length;
 
         const chunkSize = apiConfig.provider !== 'digitalocean-spaces' ? 1000 : 100; // throttle objects in each request
         var chunks = chunk(objects, chunkSize);
 
-        async.eachSeries(chunks, deleteFiles.bind(null, s3), done);
+        async.eachSeries(chunks, function deleteFiles(contents, iteratorCallback) {
+            var deleteParams = {
+                Bucket: apiConfig.bucket,
+                Delete: {
+                    Objects: contents.map(function (c) { return { Key: c.Key }; })
+                }
+            };
+
+            events.emit('progress', `Removing ${contents.length} files from ${contents[0].Key} to ${contents[contents.length-1].Key}`);
+
+            // deleteObjects does not return error if key is not found
+            s3.deleteObjects(deleteParams, function (error /*, deleteData */) {
+                if (error) events.emit('progress', `Unable to remove ${deleteParams.Key} ${error.message}`);
+
+                iteratorCallback(error);
+            });
+        }, done);
     }, function (error) {
         events.emit('progress', `Removed ${total} files`);
 
