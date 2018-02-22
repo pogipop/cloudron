@@ -204,7 +204,7 @@ function copy(apiConfig, oldFilePath, newFilePath) {
         var relativePath = path.relative(oldFilePath, file.name);
 
         file.copy(path.join(newFilePath, relativePath), function(error) {
-            if (error && error.code == 404) return iteratorCallback(new BackupsError(BackupsError.NOT_FOUND, 'Old backup not found'));
+            if (error && error.code === 404) return iteratorCallback(new BackupsError(BackupsError.NOT_FOUND, 'Old backup not found'));
             if (error) {
                 debug('copyBackup: gcs copy error', error);
                 return iteratorCallback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
