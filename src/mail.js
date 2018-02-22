@@ -486,7 +486,7 @@ function createMailConfig(callback) {
             }
 
             // enable_outbound makes plugin forward email for relayed mail. non-relayed mail always hits LMTP plugin first
-            if (!safe.fs.writeFileSync(path.join(paths.ADDON_CONFIG_DIR, 'mail/smtp_forward.ini'), 'enable_outbound=false\n', 'utf8')) {
+            if (!safe.fs.writeFileSync(path.join(paths.ADDON_CONFIG_DIR, 'mail/smtp_forward.ini'), 'enable_outbound=false\ndomain_selector=mail_from\n', 'utf8')) {
                 return callback(new Error('Could not create smtp forward file:' + safe.error.message));
             }
 
