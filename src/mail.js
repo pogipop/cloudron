@@ -260,8 +260,8 @@ function checkMx(domain, callback) {
         if (error) return callback(error, mx);
 
         if (mxRecords.length !== 0) {
-            mx.status = mxRecords.length == 1 && mxRecords[0].exchange === (config.mailFqdn() + '.');
-            mx.value = mxRecords.map(function (r) { return r.priority + ' ' + r.exchange; }).join(' ');
+            mx.status = mxRecords.length == 1 && mxRecords[0].exchange === config.mailFqdn();
+            mx.value = mxRecords.map(function (r) { return r.priority + ' ' + r.exchange + '.'; }).join(' ');
         }
 
         callback(null, mx);
