@@ -347,7 +347,7 @@ describe('Mail API', function () {
         it('succeeds with all different spf, dkim, dmarc, mx, ptr records', function (done) {
             clearDnsAnswerQueue();
 
-            dnsAnswerQueue[mxDomain].MX = [ { priority: '20', exchange: config.mailFqdn() + '.' }, { priority: '30', exchange: config.mailFqdn() + '.'} ];
+            dnsAnswerQueue[mxDomain].MX = [ { priority: '20', exchange: config.mailFqdn() }, { priority: '30', exchange: config.mailFqdn() } ];
             dnsAnswerQueue[dmarcDomain].TXT = [['v=DMARC2; p=reject; pct=100']];
             dnsAnswerQueue[dkimDomain].TXT = [['v=DKIM2; t=s; p=' + mail._readDkimPublicKeySync(DOMAIN_0.domain)]];
             dnsAnswerQueue[spfDomain].TXT = [['v=spf1 a:random.com ~all']];
@@ -412,7 +412,7 @@ describe('Mail API', function () {
         it('succeeds with all correct records', function (done) {
             clearDnsAnswerQueue();
 
-            dnsAnswerQueue[mxDomain].MX = [ { priority: '10', exchange: config.mailFqdn() + '.' } ];
+            dnsAnswerQueue[mxDomain].MX = [ { priority: '10', exchange: config.mailFqdn() } ];
             dnsAnswerQueue[dmarcDomain].TXT = [['v=DMARC1; p=reject; pct=100']];
             dnsAnswerQueue[dkimDomain].TXT = [['v=DKIM1; t=s; p=', mail._readDkimPublicKeySync(DOMAIN_0.domain) ]];
             dnsAnswerQueue[spfDomain].TXT = [['v=spf1 a:' + config.adminFqdn() + ' ~all']];
