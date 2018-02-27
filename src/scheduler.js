@@ -24,7 +24,7 @@ function sync(callback) {
 
     callback = callback || NOOP_CALLBACK;
 
-    debug('Syncing');
+    debug('sync: synchronizing global state with installed app state');
 
     apps.getAll(function (error, allApps) {
         if (error) return callback(error);
@@ -36,11 +36,10 @@ function sync(callback) {
         async.eachSeries(removedAppIds, function (appId, iteratorDone) {
             stopJobs(appId, gState[appId], iteratorDone);
         }, function (error) {
-            if (error) debug('Error stopping jobs of removed apps', error);
+            if (error) debug('sync: error stopping jobs of removed apps', error);
 
             gState = _.omit(gState, removedAppIds);
 
-            debug('sync: checking apps %j', allAppIds);
             async.eachSeries(allApps, function (app, iteratorDone) {
                 var appState = gState[app.id] || null;
                 var schedulerConfig = app.manifest.addons ? app.manifest.addons.scheduler : null;
@@ -51,9 +50,10 @@ function sync(callback) {
                     return iteratorDone(); // nothing changed
                 }
 
-                debug('sync: app %s changed', app.id);
+                debug(`sync: app ${app.fqdn} changed`);
+
                 stopJobs(app.id, appState, function (error) {
-                    if (error) debug('Error stopping jobs for %s : %s', app.id, error.message);
+                    if (error) debug(`sync: error stopping jobs of ${app.fqdn} : ${error.message}`);
 
                     if (!schedulerConfig) {
                         delete gState[app.id];
@@ -62,19 +62,22 @@ function sync(callback) {
 
                     gState[app.id] = {
                         schedulerConfig: schedulerConfig,
-                        cronJobs: createCronJobs(app.id, schedulerConfig)
+                        cronJobs: createCronJobs(app, schedulerConfig)
                     };
 
                     iteratorDone();
                 });
             });
 
-            debug('Done syncing');
+            debug('sync: done');
         });
     });
 }
 
 function killContainer(containerName, callback) {
+    assert.strictEqual(typeof containerName, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
     async.series([
         docker.stopContainerByName.bind(null, containerName),
         docker.deleteContainerByName.bind(null, containerName)
@@ -90,7 +93,7 @@ function stopJobs(appId, appState, callback) {
     assert.strictEqual(typeof appState, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    debug('stopJobs for %s', appId);
+    debug(`stopJobs: stopping jobs of ${appId}`);
 
     if (!appState) return callback();
 
@@ -99,16 +102,15 @@ function stopJobs(appId, appState, callback) {
             appState.cronJobs[taskName].stop();
         }
 
-        var containerName = appId + '-' + taskName;
-        killContainer(containerName, iteratorDone);
+        killContainer(`${appId}-${taskName}`, iteratorDone);
     }, callback);
 }
 
-function createCronJobs(appId, schedulerConfig) {
-    assert.strictEqual(typeof appId, 'string');
+function createCronJobs(app, schedulerConfig) {
+    assert.strictEqual(typeof app, 'object');
     assert(schedulerConfig && typeof schedulerConfig === 'object');
 
-    debug('creating cron jobs for app %s', appId);
+    debug(`createCronJobs: creating cron jobs for app ${app.fqdn}`);
 
     var jobs = { };
 
@@ -119,11 +121,11 @@ function createCronJobs(appId, schedulerConfig) {
 
         var cronTime = (config.TEST ? '*/5 ' : `${randomSecond} `) + task.schedule; // time ticks faster in tests
 
-        debug('scheduling task for %s/%s @ %s : %s', appId, taskName, cronTime, task.command);
+        debug(`createCronJobs: ${app.fqdn} task ${taskName} scheduled at ${cronTime} with cmd ${task.command}`);
 
         var cronJob = new CronJob({
             cronTime: cronTime, // at this point, the pattern has been validated
-            onTick: doTask.bind(null, appId, taskName),
+            onTick: runTask.bind(null, app.id, taskName), //  put the app id in closure, so we don't use the outdated app object by mistake
             start: true
         });
 
@@ -133,7 +135,7 @@ function createCronJobs(appId, schedulerConfig) {
     return jobs;
 }
 
-function doTask(appId, taskName, callback) {
+function runTask(appId, taskName, callback) {
     assert.strictEqual(typeof appId, 'string');
     assert.strictEqual(typeof taskName, 'string');
     assert(!callback || typeof callback === 'function');
@@ -142,34 +144,37 @@ function doTask(appId, taskName, callback) {
 
     callback = callback || NOOP_CALLBACK;
 
-    debug('Executing task %s/%s', appId, taskName);
+    debug(`runTask: running task ${taskName} of ${appId}`);
 
     apps.get(appId, function (error, app) {
         if (error) return callback(error);
 
         if (app.installationState !== appdb.ISTATE_INSTALLED || app.runState !== appdb.RSTATE_RUNNING || app.health !== appdb.HEALTH_HEALTHY) {
-            debug('task %s skipped. app %s is not installed/running/healthy', taskName, app.id);
+            debug(`runTask: skipped task ${taskName} because app ${app.fqdn} has run state ${app.installationState}`);
             return callback();
         }
 
-        var containerName = app.id + '-' + taskName;
+        const containerName = `${app.id}-${taskName}`;
 
         docker.inspectByName(containerName, function (err, data) {
             if (!err && data && data.State.Running === true) {
                 const jobStartTime = gState[appId].cronJobs[taskName].lastDate();
                 if (new Date() - jobStartTime < JOB_MAX_TIME) {
-                    debug('task %s of app %s skipped since it is within the job max time %s', taskName. app.id, jobStartTime);
+                    debug(`runTask: skipped task ${taskName} of app ${app.fqdn} since it was started at ${jobStartTime}`);
                     return callback();
                 }
             }
 
+            debug(`runTask: removing any old task ${taskName} of app ${app.fqdn}`);
+
             killContainer(containerName, function (error) {
                 if (error) return callback(error);
+                const cmd = gState[appId].schedulerConfig[taskName].command;
 
-                debug('Creating subcontainer for %s/%s : %s', app.id, taskName, gState[appId].schedulerConfig[taskName].command);
+                debug(`runTask: starting task ${taskName} of app ${app.fqdn} with cmd ${cmd}`);
 
                 // NOTE: if you change container name here, fix addons.js to return correct container names
-                docker.createSubcontainer(app, containerName, [ '/bin/sh', '-c', gState[appId].schedulerConfig[taskName].command ], { } /* options */, function (error, container) {
+                docker.createSubcontainer(app, containerName, [ '/bin/sh', '-c', cmd ], { } /* options */, function (error, container) {
                     if (error) return callback(error);
 
                     docker.startContainer(container.id, callback);
