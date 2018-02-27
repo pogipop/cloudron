@@ -117,7 +117,9 @@ function createCronJobs(appId, schedulerConfig) {
     Object.keys(schedulerConfig).forEach(function (taskName) {
         var task = schedulerConfig[taskName];
 
-        var cronTime = (config.TEST ? '*/5 ' : '00 ') + task.schedule; // time ticks faster in tests
+        const randomSecond = Math.floor(60*Math.random()); // don't start all crons to decrease memory pressure
+
+        var cronTime = (config.TEST ? '*/5 ' : `${randomSecond} `) + task.schedule; // time ticks faster in tests
 
         debug('scheduling task for %s/%s @ %s : %s', appId, taskName, cronTime, task.command);
 
