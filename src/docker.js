@@ -163,6 +163,10 @@ function createSubcontainer(app, name, cmd, options, callback) {
         memoryLimit = constants.DEFAULT_MEMORY_LIMIT;
     }
 
+    // give scheduler tasks twice the memory limit since background jobs take more memory
+    // if required, we can make this a manifest and runtime argument later
+    if (!isAppContainer) memoryLimit *= 2;
+
     // apparmor is disabled on few servers
     var enableSecurityOpt = config.CLOUDRON && safe(function () { return child_process.spawnSync('aa-enabled').status === 0; }, false);
 

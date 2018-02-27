@@ -1221,4 +1221,5 @@
 * Merge multi-string DKIM records
 * scheduler: do not start cron jobs all at once
 * scheduler: give cron jobs a grace period of 30 minutes to complete
+* scheduler: tasks are now allocated twice the app memory limit
 
