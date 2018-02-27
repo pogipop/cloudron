@@ -1219,4 +1219,6 @@
 * DNS records can now be a A record or a CNAME record
 * Fix generation of fallback certificates to include naked domain
 * Merge multi-string DKIM records
+* scheduler: do not start cron jobs all at once
+* scheduler: give cron jobs a grace period of 30 minutes to complete
 

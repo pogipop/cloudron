@@ -75,8 +75,6 @@ function sync(callback) {
 }
 
 function killContainer(containerName, callback) {
-    if (!containerName) return callback();
-
     async.series([
         docker.stopContainerByName.bind(null, containerName),
         docker.deleteContainerByName.bind(null, containerName)
@@ -140,6 +138,8 @@ function doTask(appId, taskName, callback) {
     assert.strictEqual(typeof taskName, 'string');
     assert(!callback || typeof callback === 'function');
 
+    const JOB_MAX_TIME = 30 * 60 * 1000; // 30 minutes
+
     callback = callback || NOOP_CALLBACK;
 
     debug('Executing task %s/%s', appId, taskName);
@@ -154,16 +154,26 @@ function doTask(appId, taskName, callback) {
 
         var containerName = app.id + '-' + taskName;
 
-        killContainer(containerName, function (error) {
-            if (error) return callback(error);
+        docker.inspectByName(containerName, function (err, data) {
+            if (!err && data && data.State.Running === true) {
+                const jobStartTime = gState[appId].cronJobs[taskName].lastDate();
+                if (new Date() - jobStartTime < JOB_MAX_TIME) {
+                    debug('task %s of app %s skipped since it is within the job max time %s', taskName. app.id, jobStartTime);
+                    return callback();
+                }
+            }
 
-            debug('Creating subcontainer for %s/%s : %s', app.id, taskName, gState[appId].schedulerConfig[taskName].command);
-
-            // NOTE: if you change container name here, fix addons.js to return correct container names
-            docker.createSubcontainer(app, containerName, [ '/bin/sh', '-c', gState[appId].schedulerConfig[taskName].command ], { } /* options */, function (error, container) {
+            killContainer(containerName, function (error) {
                 if (error) return callback(error);
 
-                docker.startContainer(container.id, callback);
+                debug('Creating subcontainer for %s/%s : %s', app.id, taskName, gState[appId].schedulerConfig[taskName].command);
+
+                // NOTE: if you change container name here, fix addons.js to return correct container names
+                docker.createSubcontainer(app, containerName, [ '/bin/sh', '-c', gState[appId].schedulerConfig[taskName].command ], { } /* options */, function (error, container) {
+                    if (error) return callback(error);
+
+                    docker.startContainer(container.id, callback);
+                });
             });
         });
     });

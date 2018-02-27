@@ -15,6 +15,7 @@ exports = module.exports = {
     createSubcontainer: createSubcontainer,
     getContainerIdByIp: getContainerIdByIp,
     inspect: inspect,
+    inspectByName: inspect,
     execContainer: execContainer
 };
 
