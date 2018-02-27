@@ -158,7 +158,7 @@ function runTask(appId, taskName, callback) {
 
         docker.inspectByName(containerName, function (err, data) {
             if (!err && data && data.State.Running === true) {
-                const jobStartTime = gState[appId].cronJobs[taskName].lastDate();
+                const jobStartTime = new Date(data.State.StartedAt); // iso 8601
                 if (new Date() - jobStartTime < JOB_MAX_TIME) {
                     debug(`runTask: skipped task ${taskName} of app ${app.fqdn} since it was started at ${jobStartTime}`);
                     return callback();
