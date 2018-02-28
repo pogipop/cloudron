@@ -887,6 +887,7 @@ function enableUserMailbox(domain, userId, callback) {
     user.get(userId, function (error, result) {
         if (error && error.reason === UserError.NOT_FOUND) return callback(new MailError(MailError.NOT_FOUND, 'no such user'));
         if (error) return callback(new MailError(MailError.INTERNAL_ERROR));
+        if (!result.username) return callback(new MailError(MailError.NOT_FOUND, 'user has no username'));
 
         mailboxdb.add(result.username, domain, userId, mailboxdb.TYPE_USER, function (error) {
             if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(new MailError(MailError.ALREADY_EXISTS, 'mailbox already exists'));
@@ -905,6 +906,7 @@ function disableUserMailbox(domain, userId, callback) {
     user.get(userId, function (error, result) {
         if (error && error.reason === UserError.NOT_FOUND) return callback(new MailError(MailError.NOT_FOUND, 'no such user'));
         if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
+        if (!result.username) return callback(new MailError(MailError.NOT_FOUND, 'user has no username'));
 
         mailboxdb.del(result.username, domain, function (error) {
             if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new MailError(MailError.NOT_FOUND, 'no such mailbox'));
@@ -923,8 +925,7 @@ function getAliases(domain, userId, callback) {
     user.get(userId, function (error, result) {
         if (error && error.reason === UserError.NOT_FOUND) return callback(new MailError(MailError.NOT_FOUND, 'no such user'));
         if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
-
-        if (!result.username) return callback(null, []);
+        if (!result.username) return callback(new MailError(MailError.NOT_FOUND, 'user has no username'));
 
         mailboxdb.getAliasesForName(result.username, domain, function (error, aliases) {
             if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new MailError(MailError.NOT_FOUND, 'no such mailbox'));
@@ -951,6 +952,7 @@ function setAliases(domain, userId, aliases, callback) {
     user.get(userId, function (error, result) {
         if (error && error.reason === UserError.NOT_FOUND) return callback(new MailError(MailError.NOT_FOUND, 'no such user'));
         if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
+        if (!result.username) return callback(new MailError(MailError.NOT_FOUND, 'user has no username'));
 
         mailboxdb.setAliasesForName(result.username, domain, aliases, function (error) {
             if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(new MailError(MailError.ALREADY_EXISTS, error.message));
