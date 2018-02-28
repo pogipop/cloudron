@@ -868,6 +868,7 @@ function getUserMailbox(domain, userId, callback) {
     user.get(userId, function (error, result) {
         if (error && error.reason === UserError.NOT_FOUND) return callback(new MailError(MailError.NOT_FOUND, 'no such user'));
         if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
+        if (!result.username) return callback(new MailError(MailError.NOT_FOUND, 'no such mailbox'));
 
         mailboxdb.getMailbox(result.username, domain, function (error, result) {
             if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new MailError(MailError.NOT_FOUND, 'no such mailbox'));
