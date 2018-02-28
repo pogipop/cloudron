@@ -252,12 +252,14 @@ function sync(backupConfig, backupId, dataDir, callback) {
 
         var retryCount = 0;
         async.retry({ times: 5, interval: 20000 }, function (retryCallback) {
+            retryCallback = once(retryCallback); // protect again upload() erroring much later after read stream error
+
             ++retryCount;
             debug(`${task.operation} ${task.path} try ${retryCount}`);
             if (task.operation === 'add') {
                 setBackupProgress(`Adding ${task.path}`);
                 var stream = fs.createReadStream(path.join(dataDir, task.path));
-                stream.on('error', function () { return retryCallback(); }); // ignore error if file disappears
+                stream.on('error', function (error) { setBackupProgress(`read stream error for ${task.path}: ${error.message}`); retryCallback(); }); // ignore error if file disappears
                 api(backupConfig.provider).upload(backupConfig, backupFilePath, stream, retryCallback);
             }
         }, iteratorCallback);
@@ -295,8 +297,6 @@ function upload(backupId, format, dataDir, callback) {
     assert.strictEqual(typeof dataDir, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    callback = once(callback);
-
     debug('upload: id %s format %s dataDir %s', backupId, format, dataDir);
 
     settings.getBackupConfig(function (error, backupConfig) {
@@ -304,6 +304,8 @@ function upload(backupId, format, dataDir, callback) {
 
         if (format === 'tgz') {
             async.retry({ times: 5, interval: 20000 }, function (retryCallback) {
+                retryCallback = once(retryCallback); // protect again upload() erroring much later after tar stream error
+
                 var tarStream = createTarPackStream(dataDir, backupConfig.key || null);
                 tarStream.on('error', retryCallback); // already returns BackupsError
 

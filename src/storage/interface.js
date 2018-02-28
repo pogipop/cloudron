@@ -35,6 +35,7 @@ function upload(apiConfig, backupFilePath, sourceStream, callback) {
     assert.strictEqual(typeof callback, 'function');
 
     // Result: none
+    // sourceStream errors are handled upstream
 
     callback(new Error('not implemented'));
 }
