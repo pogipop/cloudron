@@ -269,9 +269,12 @@ function getAppUpdate(app, callback) {
 
             const updateInfo = result.body;
 
+            // for the appstore, x.y.z is the same as x.y.z-0 but in semver, x.y.z > x.y.z-0
+            const curAppVersion = semver.prerelease(app.manifest.version) ? app.manifest.version : `${app.manifest.version}-0`;
+
             // do some sanity checks
-            if (!safe.query(updateInfo, 'manifest.version') || semver.gt(app.manifest.version, safe.query(updateInfo, 'manifest.version'))) {
-                debug('Skipping malformed update of app %s version: %s. got %j', app.id, app.manifest.version, updateInfo);
+            if (!safe.query(updateInfo, 'manifest.version') || semver.gt(curAppVersion, safe.query(updateInfo, 'manifest.version'))) {
+                debug('Skipping malformed update of app %s version: %s. got %j', app.id, curAppVersion, updateInfo);
                 return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, util.format('Malformed update: %s %s', result.statusCode, result.text)));
             }
 
