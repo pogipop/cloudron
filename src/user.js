@@ -178,7 +178,7 @@ function createUser(username, password, email, displayName, auditSource, options
 
                 callback(null, user);
 
-                eventlog.add(eventlog.ACTION_USER_ADD, auditSource, { userId: user.id, email: user.email });
+                eventlog.add(eventlog.ACTION_USER_ADD, auditSource, { userId: user.id, email: user.email, user: user });
 
                 if (!owner) mailer.userAdded(user, sendInvite);
                 if (sendInvite) mailer.sendInvite(user, invitor);
@@ -269,7 +269,7 @@ function removeUser(userId, auditSource, callback) {
                 if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new UserError(UserError.NOT_FOUND));
                 if (error) return callback(new UserError(UserError.INTERNAL_ERROR, error));
 
-                eventlog.add(eventlog.ACTION_USER_REMOVE, auditSource, { userId: userId });
+                eventlog.add(eventlog.ACTION_USER_REMOVE, auditSource, { userId: userId, user: user });
 
                 callback();
 
@@ -366,7 +366,7 @@ function updateUser(userId, data, auditSource, callback) {
         if (error) return callback(error);
     }
 
-    userdb.get(userId, function (error) {
+    userdb.get(userId, function (error, user) {
         if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new UserError(UserError.NOT_FOUND));
         if (error) return callback(new UserError(UserError.INTERNAL_ERROR, error));
 
@@ -375,9 +375,13 @@ function updateUser(userId, data, auditSource, callback) {
             if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new UserError(UserError.NOT_FOUND, error));
             if (error) return callback(new UserError(UserError.INTERNAL_ERROR, error));
 
-            eventlog.add(eventlog.ACTION_USER_UPDATE, auditSource, { userId: userId });
-
             callback();
+
+            getUser(userId, function (error, result) {
+                if (error) return console.error(error);
+
+                eventlog.add(eventlog.ACTION_USER_UPDATE, auditSource, { userId: userId, user: result });
+            });
         });
     });
 }
