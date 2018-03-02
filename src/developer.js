@@ -38,9 +38,9 @@ util.inherits(DeveloperError, Error);
 DeveloperError.INTERNAL_ERROR = 'Internal Error';
 DeveloperError.EXTERNAL_ERROR = 'External Error';
 
-function issueDeveloperToken(userObject, auditSource, callback) {
+function issueDeveloperToken(userObject, ip, callback) {
     assert.strictEqual(typeof userObject, 'object');
-    assert.strictEqual(typeof auditSource, 'object');
+    assert.strictEqual(typeof ip, 'string');
     assert.strictEqual(typeof callback, 'function');
 
     var token = tokendb.generateToken();
@@ -50,7 +50,7 @@ function issueDeveloperToken(userObject, auditSource, callback) {
     tokendb.add(token, userObject.id, 'cid-cli', expiresAt, scopes, function (error) {
         if (error) return callback(new DeveloperError(DeveloperError.INTERNAL_ERROR, error));
 
-        eventlog.add(eventlog.ACTION_USER_LOGIN, auditSource, { authType: 'cli', userId: userObject.id, user: user.removePrivateFields(userObject) });
+        eventlog.add(eventlog.ACTION_USER_LOGIN, { authType: 'cli', ip: ip }, { userId: userObject.id, user: user.removePrivateFields(userObject) });
 
         callback(null, { token: token, expiresAt: new Date(expiresAt).toISOString() });
     });
