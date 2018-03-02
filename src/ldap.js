@@ -410,7 +410,7 @@ function authorizeUserForApp(req, res, next) {
             // we return no such object, to avoid leakage of a users existence
             if (!result) return next(new ldap.NoSuchObjectError(req.dn.toString()));
 
-            eventlog.add(eventlog.ACTION_USER_LOGIN, { authType: 'ldap', appId: app.id }, { userId: req.user.id });
+            eventlog.add(eventlog.ACTION_USER_LOGIN, { authType: 'ldap', appId: app.id }, { userId: req.user.id, user: user.removePrivateFields(req.user) });
 
             res.end();
         });
@@ -451,12 +451,12 @@ function authenticateMailbox(req, res, next) {
             } else if (mailbox.ownerType === mailboxdb.TYPE_USER) {
                 if (!domain.enabled) return next(new ldap.NoSuchObjectError(req.dn.toString()));
 
-                user.verifyWithUsername(parts[0], req.credentials || '', function (error, user) {
+                user.verifyWithUsername(parts[0], req.credentials || '', function (error, result) {
                     if (error && error.reason === UserError.NOT_FOUND) return next(new ldap.NoSuchObjectError(req.dn.toString()));
                     if (error && error.reason === UserError.WRONG_PASSWORD) return next(new ldap.InvalidCredentialsError(req.dn.toString()));
                     if (error) return next(new ldap.OperationsError(error.message));
 
-                    eventlog.add(eventlog.ACTION_USER_LOGIN, { authType: 'ldap', mailboxId: email }, { userId: user.username });
+                    eventlog.add(eventlog.ACTION_USER_LOGIN, { authType: 'ldap', mailboxId: email }, { userId: result.id, user: user.removePrivateFields(result) });
                     res.end();
                 });
             } else {

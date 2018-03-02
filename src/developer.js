@@ -13,6 +13,7 @@ var assert = require('assert'),
     constants = require('./constants.js'),
     eventlog = require('./eventlog.js'),
     tokendb = require('./tokendb.js'),
+    user = require('./user.js'),
     util = require('util');
 
 function DeveloperError(reason, errorOrMessage) {
@@ -37,8 +38,8 @@ util.inherits(DeveloperError, Error);
 DeveloperError.INTERNAL_ERROR = 'Internal Error';
 DeveloperError.EXTERNAL_ERROR = 'External Error';
 
-function issueDeveloperToken(user, auditSource, callback) {
-    assert.strictEqual(typeof user, 'object');
+function issueDeveloperToken(userObject, auditSource, callback) {
+    assert.strictEqual(typeof userObject, 'object');
     assert.strictEqual(typeof auditSource, 'object');
     assert.strictEqual(typeof callback, 'function');
 
@@ -46,10 +47,10 @@ function issueDeveloperToken(user, auditSource, callback) {
     var expiresAt = Date.now() + constants.DEFAULT_TOKEN_EXPIRATION;
     var scopes = '*,' + clients.SCOPE_ROLE_SDK;
 
-    tokendb.add(token, user.id, 'cid-cli', expiresAt, scopes, function (error) {
+    tokendb.add(token, userObject.id, 'cid-cli', expiresAt, scopes, function (error) {
         if (error) return callback(new DeveloperError(DeveloperError.INTERNAL_ERROR, error));
 
-        eventlog.add(eventlog.ACTION_USER_LOGIN, auditSource, { authType: 'cli', userId: user.id, username: user.username });
+        eventlog.add(eventlog.ACTION_USER_LOGIN, auditSource, { authType: 'cli', userId: userObject.id, user: user.removePrivateFields(userObject) });
 
         callback(null, { token: token, expiresAt: new Date(expiresAt).toISOString() });
     });

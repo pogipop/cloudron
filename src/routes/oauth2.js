@@ -447,7 +447,7 @@ var authorization = [
         var type = req.oauth2.client.type;
 
         if (type === clients.TYPE_EXTERNAL || type === clients.TYPE_BUILT_IN) {
-            eventlog.add(eventlog.ACTION_USER_LOGIN, auditSource(req, req.oauth2.client.appId), { userId: req.oauth2.user.id });
+            eventlog.add(eventlog.ACTION_USER_LOGIN, auditSource(req, req.oauth2.client.appId), { userId: req.oauth2.user.id, user: user.removePrivateFields(req.oauth2.user) });
             return next();
         }
 
@@ -458,7 +458,7 @@ var authorization = [
                 if (error) return sendError(req, res, 'Internal error');
                 if (!access) return sendErrorPageOrRedirect(req, res, 'No access to this app.');
 
-                eventlog.add(eventlog.ACTION_USER_LOGIN, auditSource(req, appObject.id), { userId: req.oauth2.user.id });
+                eventlog.add(eventlog.ACTION_USER_LOGIN, auditSource(req, appObject.id), { userId: req.oauth2.user.id, user: user.removePrivateFields(req.oauth2.user) });
 
                 next();
             });
