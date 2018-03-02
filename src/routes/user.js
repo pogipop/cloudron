@@ -20,8 +20,7 @@ var assert = require('assert'),
     HttpSuccess = require('connect-lastmile').HttpSuccess,
     oauth2 = require('./oauth2.js'),
     user = require('../user.js'),
-    UserError = user.UserError,
-    _ = require('underscore');
+    UserError = user.UserError;
 
 function auditSource(req) {
     var ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress || null;
@@ -88,9 +87,7 @@ function list(req, res, next) {
     user.list(function (error, results) {
         if (error) return next(new HttpError(500, error));
 
-        var users = results.map(function (result) {
-            return _.pick(result, 'id', 'username', 'email', 'fallbackEmail', 'displayName', 'groupIds', 'admin');
-        });
+        var users = results.map(user.removePrivateFields);
 
         next(new HttpSuccess(200, { users: users }));
     });
@@ -106,15 +103,7 @@ function get(req, res, next) {
         if (error && error.reason === UserError.NOT_FOUND) return next(new HttpError(404, 'No such user'));
         if (error) return next(new HttpError(500, error));
 
-        next(new HttpSuccess(200, {
-            id: result.id,
-            username: result.username,
-            displayName: result.displayName,
-            email: result.email,
-            fallbackEmail: result.fallbackEmail,
-            admin: result.admin,
-            groupIds: result.groupIds
-        }));
+        next(new HttpSuccess(200, user.removePrivateFields(result)));
     });
 }
 
