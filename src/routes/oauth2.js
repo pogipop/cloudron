@@ -26,9 +26,10 @@ var apps = require('../apps'),
     util = require('util'),
     _ = require('underscore');
 
-function auditSource(req, appId) {
+// appObject is optional here
+function auditSource(req, appId, appObject) {
     var ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress || null;
-    return { authType: 'oauth', ip: ip, appId: appId };
+    return { authType: 'oauth', ip: ip, appId: appId, app: appObject };
 }
 
 // create OAuth 2.0 server
@@ -458,7 +459,7 @@ var authorization = [
                 if (error) return sendError(req, res, 'Internal error');
                 if (!access) return sendErrorPageOrRedirect(req, res, 'No access to this app.');
 
-                eventlog.add(eventlog.ACTION_USER_LOGIN, auditSource(req, appObject.id), { userId: req.oauth2.user.id, user: user.removePrivateFields(req.oauth2.user) });
+                eventlog.add(eventlog.ACTION_USER_LOGIN, auditSource(req, appObject.id, appObject), { userId: req.oauth2.user.id, user: user.removePrivateFields(req.oauth2.user) });
 
                 next();
             });
