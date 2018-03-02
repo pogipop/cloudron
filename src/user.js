@@ -3,6 +3,8 @@
 exports = module.exports = {
     UserError: UserError,
 
+    removePrivateFields: removePrivateFields,
+
     list: listUsers,
     create: createUser,
     count: count,
@@ -118,6 +120,10 @@ function validateDisplayName(name) {
     return null;
 }
 
+function removePrivateFields(user) {
+    return _.pick(user, 'id', 'username', 'email', 'fallbackEmail', 'displayName', 'groupIds', 'admin');
+}
+
 function createUser(username, password, email, displayName, auditSource, options, callback) {
     assert(username === null || typeof username === 'string');
     assert.strictEqual(typeof password, 'string');
@@ -178,7 +184,7 @@ function createUser(username, password, email, displayName, auditSource, options
 
                 callback(null, user);
 
-                eventlog.add(eventlog.ACTION_USER_ADD, auditSource, { userId: user.id, email: user.email, user: user });
+                eventlog.add(eventlog.ACTION_USER_ADD, auditSource, { userId: user.id, email: user.email, user: removePrivateFields(user) });
 
                 if (!owner) mailer.userAdded(user, sendInvite);
                 if (sendInvite) mailer.sendInvite(user, invitor);
@@ -269,7 +275,7 @@ function removeUser(userId, auditSource, callback) {
                 if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new UserError(UserError.NOT_FOUND));
                 if (error) return callback(new UserError(UserError.INTERNAL_ERROR, error));
 
-                eventlog.add(eventlog.ACTION_USER_REMOVE, auditSource, { userId: userId, user: user });
+                eventlog.add(eventlog.ACTION_USER_REMOVE, auditSource, { userId: userId, user: removePrivateFields(user) });
 
                 callback();
 
@@ -380,7 +386,7 @@ function updateUser(userId, data, auditSource, callback) {
             getUser(userId, function (error, result) {
                 if (error) return console.error(error);
 
-                eventlog.add(eventlog.ACTION_USER_UPDATE, auditSource, { userId: userId, user: result });
+                eventlog.add(eventlog.ACTION_USER_UPDATE, auditSource, { userId: userId, user: removePrivateFields(result) });
             });
         });
     });
