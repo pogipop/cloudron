@@ -562,8 +562,8 @@ function install(data, auditSource, callback) {
                     taskmanager.restartAppTask(appId);
 
                     // fetch fresh app object for eventlog
-                    appdb.get(appId, function (error, result) {
-                        if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
+                    get(appId, function (error, result) {
+                        if (error) return callback(error);
 
                         eventlog.add(eventlog.ACTION_APP_INSTALL, auditSource, { appId: appId, app: result });
 
@@ -581,9 +581,8 @@ function configure(appId, data, auditSource, callback) {
     assert.strictEqual(typeof auditSource, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    appdb.get(appId, function (error, app) {
-        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new AppsError(AppsError.NOT_FOUND, 'No such app'));
-        if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
+    get(appId, function (error, app) {
+        if (error) return callback(error);
 
         var domain, location, portBindings, values = { };
         if ('location' in data) location = values.location = data.location.toLowerCase();
@@ -674,7 +673,7 @@ function configure(appId, data, auditSource, callback) {
                     taskmanager.restartAppTask(appId);
 
                     // fetch fresh app object for eventlog
-                    appdb.get(appId, function (error, result) {
+                    get(appId, function (error, result) {
                         if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
 
                         eventlog.add(eventlog.ACTION_APP_CONFIGURE, auditSource, { appId: appId, app: result });
@@ -720,9 +719,8 @@ function update(appId, data, auditSource, callback) {
             }
         }
 
-        appdb.get(appId, function (error, app) {
-            if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new AppsError(AppsError.NOT_FOUND, 'No such app'));
-            if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
+        get(appId, function (error, app) {
+            if (error) return callback(error);
 
             // prevent user from installing a app with different manifest id over an existing app
             // this allows cloudron install -f --app <appid> for an app installed from the appStore
@@ -771,10 +769,8 @@ function getLogs(appId, options, callback) {
 
     debug('Getting logs for %s', appId);
 
-    appdb.get(appId, function (error, app) {
-        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new AppsError(AppsError.NOT_FOUND));
-        if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
-
+    get(appId, function (error, app) {
+        if (error) return callback(error);
 
         var lines = options.lines || 100,
             follow = !!options.follow,
@@ -818,9 +814,8 @@ function restore(appId, data, auditSource, callback) {
 
     debug('Will restore app with id:%s', appId);
 
-    appdb.get(appId, function (error, app) {
-        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new AppsError(AppsError.NOT_FOUND));
-        if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
+    get(appId, function (error, app) {
+        if (error) return callback(error);
 
         // for empty or null backupId, use existing manifest to mimic a reinstall
         var func = data.backupId ? backups.get.bind(null, data.backupId) : function (next) { return next(null, { manifest: app.manifest }); };
@@ -875,9 +870,8 @@ function clone(appId, data, auditSource, callback) {
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof portBindings, 'object');
 
-    appdb.get(appId, function (error, app) {
-        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new AppsError(AppsError.NOT_FOUND));
-        if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
+    get(appId, function (error, app) {
+        if (error) return callback(error);
 
         backups.get(backupId, function (error, backupInfo) {
             if (error && error.reason === BackupsError.EXTERNAL_ERROR) return callback(new AppsError(AppsError.EXTERNAL_ERROR, error.message));
@@ -925,7 +919,7 @@ function clone(appId, data, auditSource, callback) {
                         taskmanager.restartAppTask(newAppId);
 
                         // fetch fresh app object for eventlog
-                        appdb.get(appId, function (error, result) {
+                        get(appId, function (error, result) {
                             if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
 
                             eventlog.add(eventlog.ACTION_APP_CLONE, auditSource, { appId: newAppId, oldAppId: appId, backupId: backupId, oldApp: app, newApp: result });
@@ -1025,9 +1019,8 @@ function exec(appId, options, callback) {
     var cmd = options.cmd || [ '/bin/bash' ];
     assert(util.isArray(cmd) && cmd.length > 0);
 
-    appdb.get(appId, function (error, app) {
-        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new AppsError(AppsError.NOT_FOUND, 'No such app'));
-        if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
+    get(appId, function (error, app) {
+        if (error) return callback(error);
 
         if (app.installationState !== appdb.ISTATE_INSTALLED || app.runState !== appdb.RSTATE_RUNNING) {
             return callback(new AppsError(AppsError.BAD_STATE, 'App not installed or running'));
