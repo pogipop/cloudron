@@ -319,14 +319,30 @@ function checkPtr(callback) {
 // https://raw.githubusercontent.com/jawsome/node-dnsbl/master/list.json
 const RBL_LIST = [
     {
+        'name': 'Abuse.ch',
+        'dns': 'spam.abuse.ch',
+        'site': 'http://abuse.ch/'
+    },
+
+    {
         'name': 'Barracuda',
         'dns': 'b.barracudacentral.org',
         'site': 'http://www.barracudacentral.org/rbl/removal-request'
     },
     {
-        'name': 'SpamCop',
-        'dns': 'bl.spamcop.net',
-        'site': 'http://spamcop.net'
+        'name': 'Composite Blocking List',
+        'dns': 'cbl.abuseat.org',
+        'site': 'http://www.abuseat.org'
+    },
+    {
+        'name': 'Multi SURBL',
+        'dns': 'multi.surbl.org',
+        'site': 'http://www.surbl.org'
+    },
+    {
+        'name': 'Passive Spam Block List',
+        'dns': 'psbl.surriel.com',
+        'site': 'https://psbl.org'
     },
     {
         'name': 'Sorbs Aggregate Zone',
@@ -339,29 +355,19 @@ const RBL_LIST = [
         'site': 'http://sorbs.net'
     },
     {
-        'name': 'Composite Blocking List',
-        'dns': 'cbl.abuseat.org',
-        'site': 'http://www.abuseat.org'
-    },
-    {
-        'name': 'SpamHaus Zen',
-        'dns': 'zen.spamhaus.org',
-        'site': 'http://spamhaus.org'
-    },
-    {
-        'name': 'Multi SURBL',
-        'dns': 'multi.surbl.org',
-        'site': 'http://www.surbl.org'
-    },
-    {
         'name': 'Spam Cannibal',
         'dns': 'bl.spamcannibal.org',
         'site': 'http://www.spamcannibal.org/cannibal.cgi'
     },
     {
-        'name': 'dnsbl.abuse.ch',
-        'dns': 'spam.abuse.ch',
-        'site': 'http://dnsbl.abuse.ch/'
+        'name': 'SpamCop',
+        'dns': 'bl.spamcop.net',
+        'site': 'http://spamcop.net'
+    },
+    {
+        'name': 'SpamHaus Zen',
+        'dns': 'zen.spamhaus.org',
+        'site': 'http://spamhaus.org'
     },
     {
         'name': 'The Unsubscribe Blacklist(UBL)',
