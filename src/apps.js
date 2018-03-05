@@ -306,6 +306,7 @@ function getDuplicateErrorDetails(location, portBindings, error) {
     return new AppsError(AppsError.ALREADY_EXISTS);
 }
 
+// app configs that is useful for 'archival' into the app backup config.json
 function getAppConfig(app) {
     return {
         manifest: app.manifest,
@@ -315,7 +316,9 @@ function getAppConfig(app) {
         accessRestriction: app.accessRestriction,
         portBindings: app.portBindings,
         memoryLimit: app.memoryLimit,
-        xFrameOptions: app.xFrameOptions || 'SAMEORIGIN'
+        xFrameOptions: app.xFrameOptions || 'SAMEORIGIN',
+        robotsTxt: app.robotsTxt,
+        sso: app.sso
     };
 }
 
