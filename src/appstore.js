@@ -18,7 +18,8 @@ exports = module.exports = {
     AppstoreError: AppstoreError
 };
 
-var assert = require('assert'),
+var apps = require('./apps.js'),
+    assert = require('assert'),
     async = require('async'),
     config = require('./config.js'),
     debug = require('debug')('box:appstore'),
@@ -311,16 +312,26 @@ function sendFeedback(info, callback) {
     assert.strictEqual(typeof info.description, 'string');
     assert.strictEqual(typeof callback, 'function');
 
+    function collectAppInfoIfNeeded(callback) {
+        if (!info.appId) return callback();
+        apps.get(info.appId, callback);
+    }
+
     getAppstoreConfig(function (error, appstoreConfig) {
         if (error) return callback(error);
 
-        var url = config.apiServerOrigin() + '/api/v1/users/' + appstoreConfig.userId + '/cloudrons/' + appstoreConfig.cloudronId + '/feedback';
+        collectAppInfoIfNeeded(function (error, result) {
+            if (error) console.error('Unable to get app info', error);
+            if (result) info.app = result;
 
-        superagent.post(url).query({ accessToken: appstoreConfig.token }).send(info).timeout(10 * 1000).end(function (error, result) {
-            if (error && !error.response) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, error));
-            if (result.statusCode !== 201) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, util.format('Bad response: %s %s', result.statusCode, result.text)));
+            var url = config.apiServerOrigin() + '/api/v1/users/' + appstoreConfig.userId + '/cloudrons/' + appstoreConfig.cloudronId + '/feedback';
 
-            callback(null);
+            superagent.post(url).query({ accessToken: appstoreConfig.token }).send(info).timeout(10 * 1000).end(function (error, result) {
+                if (error && !error.response) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, error));
+                if (result.statusCode !== 201) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, util.format('Bad response: %s %s', result.statusCode, result.text)));
+
+                callback(null);
+            });
         });
     });
 }
