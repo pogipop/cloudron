@@ -909,7 +909,9 @@ function clone(appId, data, auditSource, callback) {
                         xFrameOptions: app.xFrameOptions,
                         restoreConfig: { backupId: backupId, backupFormat: backupInfo.format },
                         sso: !!app.sso,
-                        mailboxName: (location ? location : manifest.title.toLowerCase().replace(/[^a-zA-Z0-9]/g, '')) + '.app'
+                        mailboxName: (location ? location : manifest.title.toLowerCase().replace(/[^a-zA-Z0-9]/g, '')) + '.app',
+                        enableBackup: app.enableBackup,
+                        robotsTxt: app.robotsTxt
                     };
 
                     appdb.add(newAppId, app.appStoreId, manifest, location, domain, portBindings, data, function (error) {
