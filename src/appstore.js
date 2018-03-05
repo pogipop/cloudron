@@ -171,7 +171,7 @@ function sendAliveStatus(callback) {
             });
         },
         function (callback) {
-            eventlog.getAllPaged(eventlog.ACTION_USER_LOGIN, null, 1, 1, function (error, result) {
+            eventlog.getAllPaged([ eventlog.ACTION_USER_LOGIN ], null, 1, 1, function (error, result) {
                 if (error) return callback(new AppstoreError(AppstoreError.INTERNAL_ERROR, error));
                 loginEvents = result;
                 callback();
