@@ -1362,7 +1362,7 @@ describe('database', function () {
         });
 
         it('getAllPaged succeeds', function (done) {
-            eventlogdb.getAllPaged(null, null, 1, 1, function (error, results) {
+            eventlogdb.getAllPaged([], null, 1, 1, function (error, results) {
                 expect(error).to.be(null);
                 expect(results).to.be.an(Array);
                 expect(results.length).to.be(1);
@@ -1377,7 +1377,7 @@ describe('database', function () {
         });
 
         it('getAllPaged succeeds with source search', function (done) {
-            eventlogdb.getAllPaged(null, '1.2.3.4', 1, 1, function (error, results) {
+            eventlogdb.getAllPaged([], '1.2.3.4', 1, 1, function (error, results) {
                 expect(error).to.be(null);
                 expect(results).to.be.an(Array);
                 expect(results.length).to.be(1);
@@ -1392,7 +1392,7 @@ describe('database', function () {
         });
 
         it('getAllPaged succeeds with data search', function (done) {
-            eventlogdb.getAllPaged(null, 'thatapp', 1, 1, function (error, results) {
+            eventlogdb.getAllPaged([], 'thatapp', 1, 1, function (error, results) {
                 expect(error).to.be(null);
                 expect(results).to.be.an(Array);
                 expect(results.length).to.be(1);
@@ -1417,7 +1417,7 @@ describe('database', function () {
                 eventlogdb.delByCreationTime(new Date(), actions, function (error) {
                     expect(error).to.be(null);
 
-                    eventlogdb.getAllPaged(null, null, 1, 100, function (error, results) {
+                    eventlogdb.getAllPaged([], null, 1, 100, function (error, results) {
                         expect(error).to.be(null);
                         expect(results.length).to.be(2);
                         results = results.sort(function (x, y) { return x.action > y.action; }); // because equal timestamp gives random ordering
