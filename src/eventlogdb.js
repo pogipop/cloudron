@@ -40,8 +40,8 @@ function get(eventId, callback) {
     });
 }
 
-function getAllPaged(action, search, page, perPage, callback) {
-    assert(typeof action === 'string' || action === null);
+function getAllPaged(actions, search, page, perPage, callback) {
+    assert(Array.isArray(actions));
     assert(typeof search === 'string' || search === null);
     assert.strictEqual(typeof page, 'number');
     assert.strictEqual(typeof perPage, 'number');
@@ -50,10 +50,15 @@ function getAllPaged(action, search, page, perPage, callback) {
     var data = [];
     var query = 'SELECT ' + EVENTLOGS_FIELDS + ' FROM eventlog';
 
-    if (action || search) query += ' WHERE';
+    if (actions.length || search) query += ' WHERE';
     if (search) query += ' (source LIKE ' + mysql.escape('%' + search + '%') + ' OR data LIKE ' + mysql.escape('%' + search + '%') + ')';
-    if (action && search) query += ' AND ';
-    if (action) query += ' (action LIKE ' + mysql.escape(`%${action}%`) + ') ';
+
+    if (actions.length && search) query += ' AND ( ';
+    actions.forEach(function (action, i) {
+        query += ' (action LIKE ' + mysql.escape(`%${action}%`) + ') ';
+        if (i < actions.length-1) query += ' OR ';
+    });
+    if (actions.length && search) query += ' ) ';
 
     query += ' ORDER BY creationTime DESC LIMIT ?,?';
 

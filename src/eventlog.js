@@ -90,14 +90,14 @@ function get(id, callback) {
     });
 }
 
-function getAllPaged(action, search, page, perPage, callback) {
-    assert(typeof action === 'string' || action === null);
+function getAllPaged(actions, search, page, perPage, callback) {
+    assert(Array.isArray(actions));
     assert(typeof search === 'string' || search === null);
     assert.strictEqual(typeof page, 'number');
     assert.strictEqual(typeof perPage, 'number');
     assert.strictEqual(typeof callback, 'function');
 
-    eventlogdb.getAllPaged(action, search, page, perPage, function (error, events) {
+    eventlogdb.getAllPaged(actions, search, page, perPage, function (error, events) {
         if (error) return callback(new EventLogError(EventLogError.INTERNAL_ERROR, error));
 
         callback(null, events);

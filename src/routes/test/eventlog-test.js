@@ -77,6 +77,8 @@ function cleanup(done) {
 }
 
 describe('Eventlog API', function () {
+    this.timeout(10000);
+
     before(setup);
     after(cleanup);
 
@@ -111,12 +113,23 @@ describe('Eventlog API', function () {
                 });
         });
 
-        it('succeeds with action', function (done) {
+        it('succeeds with deprecated action', function (done) {
             superagent.get(SERVER_URL + '/api/v1/cloudron/eventlog')
                 .query({ access_token: token, page: 1, per_page: 10, action: 'cloudron.activate' })
                 .end(function (error, result) {
                     expect(result.statusCode).to.equal(200);
                     expect(result.body.eventlogs.length).to.equal(1);
+
+                    done();
+                });
+        });
+
+        it('succeeds with actions', function (done) {
+            superagent.get(SERVER_URL + '/api/v1/cloudron/eventlog')
+                .query({ access_token: token, page: 1, per_page: 10, actions: 'cloudron.activate, user.add' })
+                .end(function (error, result) {
+                    expect(result.statusCode).to.equal(200);
+                    expect(result.body.eventlogs.length).to.equal(3);
 
                     done();
                 });
@@ -135,7 +148,7 @@ describe('Eventlog API', function () {
 
         it('succeeds with search', function (done) {
             superagent.get(SERVER_URL + '/api/v1/cloudron/eventlog')
-                .query({ access_token: token, page: 1, per_page: 10, search: EMAIL, action: 'cloudron.activate' })
+                .query({ access_token: token, page: 1, per_page: 10, search: EMAIL, actions: 'cloudron.activate' })
                 .end(function (error, result) {
                     expect(result.statusCode).to.equal(200);
                     expect(result.body.eventlogs.length).to.equal(0);
