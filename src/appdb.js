@@ -200,12 +200,14 @@ function add(id, appStoreId, manifest, location, domain, portBindings, data, cal
     var installationState = data.installationState || exports.ISTATE_PENDING_INSTALL;
     var restoreConfigJson = data.restoreConfig ? JSON.stringify(data.restoreConfig) : null; // used when cloning
     var sso = 'sso' in data ? data.sso : null;
+    var robotsTxt = 'robotsTxt' in data ? data.robotsTxt : null;
     var debugModeJson = data.debugMode ? JSON.stringify(data.debugMode) : null;
 
     var queries = [];
     queries.push({
-        query: 'INSERT INTO apps (id, appStoreId, manifestJson, installationState, location, domain, accessRestrictionJson, memoryLimit, xFrameOptions, restoreConfigJson, sso, debugModeJson) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-        args: [ id, appStoreId, manifestJson, installationState, location, domain, accessRestrictionJson, memoryLimit, xFrameOptions, restoreConfigJson, sso, debugModeJson ]
+        query: 'INSERT INTO apps (id, appStoreId, manifestJson, installationState, location, domain, accessRestrictionJson, memoryLimit, xFrameOptions, restoreConfigJson, sso, debugModeJson, robotsTxt) ' +
+            ' VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        args: [ id, appStoreId, manifestJson, installationState, location, domain, accessRestrictionJson, memoryLimit, xFrameOptions, restoreConfigJson, sso, debugModeJson, robotsTxt ]
     });
 
     Object.keys(portBindings).forEach(function (env) {
