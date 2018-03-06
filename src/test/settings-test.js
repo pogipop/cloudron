@@ -71,7 +71,7 @@ describe('Settings', function () {
         it('can get default app_autoupdate_pattern', function (done) {
             settings.getAppAutoupdatePattern(function (error, pattern) {
                 expect(error).to.be(null);
-                expect(pattern).to.be(constants.AUTOUPDATE_PATTERN_NEVER);
+                expect(pattern).to.be('00 30 1,3,5,23 * * *');
                 done();
             });
         });
