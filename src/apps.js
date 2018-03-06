@@ -554,6 +554,7 @@ function install(data, auditSource, callback) {
 
                 appdb.add(appId, appStoreId, manifest, location, domain, portBindings, data, function (error) {
                     if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(getDuplicateErrorDetails(location, portBindings, error));
+                    if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new AppsError(AppsError.NOT_FOUND, error.message));
                     if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
 
                     // save cert to boxdata/certs
