@@ -73,7 +73,7 @@ var assert = require('assert'),
 
 var gDefaults = (function () {
     var result = { };
-    result[exports.APP_AUTOUPDATE_PATTERN_KEY] = constants.AUTOUPDATE_PATTERN_NEVER;
+    result[exports.APP_AUTOUPDATE_PATTERN_KEY] = '00 30 1,3,5,23 * * *';
     result[exports.BOX_AUTOUPDATE_PATTERN_KEY] = '00 00 1,3,5,23 * * *';
     result[exports.TIME_ZONE_KEY] = 'America/Los_Angeles';
     result[exports.CLOUDRON_NAME_KEY] = 'Cloudron';
