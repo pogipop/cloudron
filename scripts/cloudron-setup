@@ -26,6 +26,10 @@ readonly physical_memory=$(LC_ALL=C free -m | awk '/Mem:/ { print $2 }')
 readonly disk_size_bytes=$(LC_ALL=C df --output=size / | tail -n1)
 readonly disk_size_gb=$((${disk_size_bytes}/1024/1024))
 
+readonly RED='\033[31m'
+readonly GREEN='\033[32m'
+readonly DONE='\033[m'
+
 # verify the system has minimum requirements met
 if [[ "${rootfs_type}" != "ext4" ]]; then
     echo "Error: Cloudron requires '/' to be ext4" # see #364
@@ -199,10 +203,10 @@ while true; do
     sleep 10
 done
 
-echo -e "\n\nVisit https://<IP> to finish setup once the server has rebooted.\n"
+echo -e "\n\n${GREEN}Visit https://<IP> to finish setup once the server has rebooted.${DONE}"
 
 if [[ "${rebootServer}" == "true" ]]; then
-    echo -e "\n\nRebooting this server now to let bootloader changes take effect.\n"
+    echo -e "\nRebooting this server now to let changes take effect.\n"
     systemctl stop mysql # sometimes mysql ends up having corrupt privilege tables
     systemctl reboot
 fi
