@@ -1165,17 +1165,17 @@ function listBackups(page, perPage, appId, callback) {
 function restoreInstalledApps(callback) {
     assert.strictEqual(typeof callback, 'function');
 
-    appdb.getAll(function (error, apps) {
+    getAll(function (error, apps) {
         if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
 
         async.map(apps, function (app, iteratorDone) {
-            debug('marking %s for restore', app.fqdn);
-
             backups.getByAppIdPaged(1, 1, app.id, function (error, results) {
                 var restoreConfig = !error && results.length ? { backupId: results[0].id, backupFormat: results[0].format } : null;
 
+                debug(`marking ${app.fqdn} for restore using restore config ${JSON.stringify(restoreConfig)}`);
+
                 appdb.setInstallationCommand(app.id, appdb.ISTATE_PENDING_RESTORE, { restoreConfig: restoreConfig, oldConfig: null }, function (error) {
-                    if (error) debug('did not mark %s for restore', app.fqdn, error);
+                    if (error) debug(`Error marking ${app.fqdn} for restore: ${JSON.stringify(error)}`);
 
                     iteratorDone(); // always succeed
                 });
@@ -1187,14 +1187,14 @@ function restoreInstalledApps(callback) {
 function configureInstalledApps(callback) {
     assert.strictEqual(typeof callback, 'function');
 
-    appdb.getAll(function (error, apps) {
+    getAll(function (error, apps) {
         if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
 
         async.map(apps, function (app, iteratorDone) {
-            debug('marking %s for reconfigure', app.fqdn);
+            debug(`marking ${app.fqdn} for reconfigure`);
 
             appdb.setInstallationCommand(app.id, appdb.ISTATE_PENDING_CONFIGURE, { oldConfig: null }, function (error) {
-                if (error) debug('did not mark %s for reconfigure', app.fqdn, error);
+                if (error) debug(`Error marking ${app.fqdn} for reconfigure: ${JSON.stringify(error)}`);
 
                 iteratorDone(); // always succeed
             });
