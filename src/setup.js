@@ -306,7 +306,7 @@ function restore(backupConfig, backupId, version, callback) {
             if (error && error.reason === BackupsError.EXTERNAL_ERROR) return callback(new SetupError(SetupError.EXTERNAL_ERROR, error.message));
             if (error) return callback(new SetupError(SetupError.INTERNAL_ERROR, error));
 
-            debug(`restore: restoring from ${backupId} from provider ${backupConfig.provider}`);
+            debug(`restore: restoring from ${backupId} from provider ${backupConfig.provider} with format ${backupConfig.format}`);
 
             gWebadminStatus.restoring = true;
 
