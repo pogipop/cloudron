@@ -29,6 +29,9 @@ function add(req, res, next) {
     if ('tlsConfig' in req.body && typeof req.body.tlsConfig !== 'object') return next(new HttpError(400, 'tlsConfig must be a object with a provider string property'));
     if (req.body.tlsConfig && (!req.body.tlsConfig.provider || typeof req.body.tlsConfig.provider !== 'string')) return next(new HttpError(400, 'tlsConfig.provider must be a string'));
 
+    // some DNS providers like DigitalOcean take a really long time to verify credentials (https://github.com/expressjs/timeout/issues/26)
+    req.clearTimeout();
+
     domains.add(req.body.domain, req.body.zoneName || '', req.body.provider, req.body.config, req.body.fallbackCertificate || null, req.body.tlsConfig || { provider: 'letsencrypt-prod' }, function (error) {
         if (error && error.reason === DomainError.ALREADY_EXISTS) return next(new HttpError(409, error.message));
         if (error && error.reason === DomainError.BAD_FIELD) return next(new HttpError(400, error.message));
@@ -71,6 +74,9 @@ function update(req, res, next) {
     if (req.body.fallbackCertificate && (!req.body.fallbackCertificate.key || typeof req.body.fallbackCertificate.key !== 'string')) return next(new HttpError(400, 'fallbackCertificate.key must be a string'));
     if ('tlsConfig' in req.body && typeof req.body.tlsConfig !== 'object') return next(new HttpError(400, 'tlsConfig must be a object with a provider string property'));
     if (req.body.tlsConfig && (!req.body.tlsConfig.provider || typeof req.body.tlsConfig.provider !== 'string')) return next(new HttpError(400, 'tlsConfig.provider must be a string'));
+
+    // some DNS providers like DigitalOcean take a really long time to verify credentials (https://github.com/expressjs/timeout/issues/26)
+    req.clearTimeout();
 
     domains.update(req.params.domain, req.body.provider, req.body.config, req.body.fallbackCertificate || null, req.body.tlsConfig || { provider: 'letsencrypt-prod' }, function (error) {
         if (error && error.reason === DomainError.NOT_FOUND) return next(new HttpError(404, error.message));

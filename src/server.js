@@ -60,7 +60,9 @@ function initializeExpressSync() {
     router.del = router.delete; // amend router.del for readability further on
 
     app
-        .use(middleware.timeout(REQUEST_TIMEOUT))
+        // the timeout middleware will respond with a 503. the request itself cannot be 'aborted' and will continue
+        // search for req.clearTimeout in route handlers to see places where this timeout is reset
+        .use(middleware.timeout(REQUEST_TIMEOUT, { respond: true }))
         .use(json)
         .use(urlencoded)
         .use(middleware.cookieParser())
