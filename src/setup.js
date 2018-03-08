@@ -212,14 +212,12 @@ function dnsSetup(adminFqdn, domain, zoneName, provider, dnsConfig, tlsConfig, c
     domains.get(domain, function (error, result) {
         if (error && error.reason !== DomainError.NOT_FOUND) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
 
-        if (!result) {
-            async.series([
-                domains.add.bind(null, domain, zoneName, provider, dnsConfig, null /* cert */, tlsConfig),
-                mail.add.bind(null, domain)
-            ], done);
-        } else {
-            domains.update(domain, provider, dnsConfig, null /* cert */, tlsConfig, done);
-        }
+        if (result) return callback(new SettingsError(SettingsError.ALREADY_EXISTS, 'domain already exists'));
+
+        async.series([
+            domains.add.bind(null, domain, zoneName, provider, dnsConfig, null /* cert */, tlsConfig),
+            mail.add.bind(null, domain)
+        ], done);
     });
 }
 
