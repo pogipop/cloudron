@@ -597,30 +597,6 @@ function getAll(callback) {
     });
 }
 
-function ensureDkimKey(domain, callback) {
-    assert.strictEqual(typeof domain, 'string');
-    assert.strictEqual(typeof callback, 'function');
-
-    var dkimPath = path.join(paths.MAIL_DATA_DIR, `dkim/${domain}`);
-    var dkimPrivateKeyFile = path.join(dkimPath, 'private');
-    var dkimPublicKeyFile = path.join(dkimPath, 'public');
-    var dkimSelectorFile = path.join(dkimPath, 'selector');
-
-    debug('Generating new DKIM keys');
-
-    if (!safe.fs.mkdirSync(dkimPath) && safe.error.code !== 'EEXIST') {
-        debug('Error creating dkim.', safe.error);
-        return new MailError(MailError.INTERNAL_ERROR, safe.error);
-    }
-
-    if (!safe.child_process.execSync('openssl genrsa -out ' + dkimPrivateKeyFile + ' 1024')) return new MailError(MailError.INTERNAL_ERROR, safe.error);
-    if (!safe.child_process.execSync('openssl rsa -in ' + dkimPrivateKeyFile + ' -out ' + dkimPublicKeyFile + ' -pubout -outform PEM')) return new MailError(MailError.INTERNAL_ERROR, safe.error);
-
-    if (!safe.fs.writeFileSync(dkimSelectorFile, config.dkimSelector(), 'utf8')) return new MailError(MailError.INTERNAL_ERROR, safe.error);
-
-    callback();
-}
-
 // https://agari.zendesk.com/hc/en-us/articles/202952749-How-long-can-my-SPF-record-be-
 function txtRecordsWithSpf(domain, callback) {
     assert.strictEqual(typeof domain, 'string');
@@ -656,6 +632,29 @@ function txtRecordsWithSpf(domain, callback) {
     });
 }
 
+function ensureDkimKeySync(domain) {
+    assert.strictEqual(typeof domain, 'string');
+
+    var dkimPath = path.join(paths.MAIL_DATA_DIR, `dkim/${domain}`);
+    var dkimPrivateKeyFile = path.join(dkimPath, 'private');
+    var dkimPublicKeyFile = path.join(dkimPath, 'public');
+    var dkimSelectorFile = path.join(dkimPath, 'selector');
+
+    debug('Generating new DKIM keys');
+
+    if (!safe.fs.mkdirSync(dkimPath) && safe.error.code !== 'EEXIST') {
+        debug('Error creating dkim.', safe.error);
+        return new MailError(MailError.INTERNAL_ERROR, safe.error);
+    }
+
+    if (!safe.child_process.execSync('openssl genrsa -out ' + dkimPrivateKeyFile + ' 1024')) return new MailError(MailError.INTERNAL_ERROR, safe.error);
+    if (!safe.child_process.execSync('openssl rsa -in ' + dkimPrivateKeyFile + ' -out ' + dkimPublicKeyFile + ' -pubout -outform PEM')) return new MailError(MailError.INTERNAL_ERROR, safe.error);
+
+    if (!safe.fs.writeFileSync(dkimSelectorFile, config.dkimSelector(), 'utf8')) return new MailError(MailError.INTERNAL_ERROR, safe.error);
+
+    return null;
+}
+
 function readDkimPublicKeySync(domain) {
     assert.strictEqual(typeof domain, 'string');
 
@@ -680,6 +679,9 @@ function addDnsRecords(domain, callback) {
     assert.strictEqual(typeof callback, 'function');
 
     if (process.env.BOX_ENV === 'test') return callback();
+
+    var error = ensureDkimKeySync(domain);
+    if (error) return callback(error);
 
     var dkimKey = readDkimPublicKeySync(domain);
     if (!dkimKey) return callback(new MailError(MailError.INTERNAL_ERROR, new Error('Failed to read dkim public key')));
@@ -721,18 +723,14 @@ function add(domain, callback) {
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    ensureDkimKey(domain, function (error) {
+    maildb.add(domain, function (error) {
+        if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(new MailError(MailError.ALREADY_EXISTS, 'Domain already exists'));
+        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new MailError(MailError.NOT_FOUND, 'No such domain'));
         if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
 
-        maildb.add(domain, function (error) {
-            if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(new MailError(MailError.ALREADY_EXISTS, 'Domain already exists'));
-            if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new MailError(MailError.NOT_FOUND, 'No such domain'));
-            if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
+        addDnsRecords(domain, NOOP_CALLBACK); // add the required dns records asynchronously
 
-            addDnsRecords(domain, NOOP_CALLBACK); // add the required dns records asynchronously
-
-            callback();
-        });
+        callback();
     });
 }
 
