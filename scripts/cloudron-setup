@@ -124,7 +124,7 @@ echo ""
 echo " Follow setup logs in a second terminal with:"
 echo " $ tail -f ${LOG_FILE}"
 echo ""
-echo " Join us at https://chat.cloudron.io for any questions."
+echo " Join us at https://forum.cloudron.io for any questions."
 echo ""
 
 if [[ "${initBaseImage}" == "true" ]]; then
