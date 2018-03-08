@@ -75,6 +75,9 @@ function del(req, res, next) {
 function getStatus(req, res, next) {
     assert.strictEqual(typeof req.params.domain, 'string');
 
+    // can take a while to query all the DNS entries
+    req.clearTimeout();
+
     mail.getStatus(req.params.domain, function (error, records) {
         if (error && error.reason === MailError.NOT_FOUND) return next(new HttpError(404, error.message));
         if (error) return next(new HttpError(500, error));
