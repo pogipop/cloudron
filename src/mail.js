@@ -635,12 +635,12 @@ function txtRecordsWithSpf(domain, callback) {
 function ensureDkimKeySync(domain) {
     assert.strictEqual(typeof domain, 'string');
 
+    debug(`Generating new DKIM keys for ${domain}`);
+
     var dkimPath = path.join(paths.MAIL_DATA_DIR, `dkim/${domain}`);
     var dkimPrivateKeyFile = path.join(dkimPath, 'private');
     var dkimPublicKeyFile = path.join(dkimPath, 'public');
     var dkimSelectorFile = path.join(dkimPath, 'selector');
-
-    debug('Generating new DKIM keys');
 
     if (!safe.fs.mkdirSync(dkimPath) && safe.error.code !== 'EEXIST') {
         debug('Error creating dkim.', safe.error);
