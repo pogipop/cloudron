@@ -28,6 +28,7 @@ var appdb = require('./appdb.js'),
     generatePassword = require('password-generator'),
     hat = require('hat'),
     infra = require('./infra_version.js'),
+    mail = require('./mail.js'),
     mailboxdb = require('./mailboxdb.js'),
     once = require('once'),
     path = require('path'),
@@ -290,20 +291,27 @@ function setupEmail(app, options, callback) {
     assert.strictEqual(typeof options, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    // note that "external" access info can be derived from MAIL_DOMAIN (since it's part of user documentation)
-    var env = [
-        { name: 'MAIL_SMTP_SERVER', value: 'mail' },
-        { name: 'MAIL_SMTP_PORT', value: '2525' },
-        { name: 'MAIL_IMAP_SERVER', value: 'mail' },
-        { name: 'MAIL_IMAP_PORT', value: '9993' },
-        { name: 'MAIL_SIEVE_SERVER', value: 'mail' },
-        { name: 'MAIL_SIEVE_PORT', value: '4190' },
-        { name: 'MAIL_DOMAIN', value: app.domain }
-    ];
+    mail.getAll(function (error, mailDomains) {
+        if (error) return callback(error);
 
-    debugApp(app, 'Setting up Email');
+        const mailInDomains = mailDomains.filter(function (d) { return d.enabled; }).map(function (d) { return d.domain; }).join(',');
 
-    appdb.setAddonConfig(app.id, 'email', env, callback);
+        // note that "external" access info can be derived from MAIL_DOMAIN (since it's part of user documentation)
+        var env = [
+            { name: 'MAIL_SMTP_SERVER', value: 'mail' },
+            { name: 'MAIL_SMTP_PORT', value: '2525' },
+            { name: 'MAIL_IMAP_SERVER', value: 'mail' },
+            { name: 'MAIL_IMAP_PORT', value: '9993' },
+            { name: 'MAIL_SIEVE_SERVER', value: 'mail' },
+            { name: 'MAIL_SIEVE_PORT', value: '4190' },
+            { name: 'MAIL_DOMAIN', value: app.domain },
+            { name: 'MAIL_DOMAINS', value: mailInDomains }
+        ];
+
+        debugApp(app, 'Setting up Email');
+
+        appdb.setAddonConfig(app.id, 'email', env, callback);
+    });
 }
 
 function teardownEmail(app, options, callback) {
@@ -720,7 +728,7 @@ function teardownRedis(app, options, callback) {
 
         safe.fs.unlinkSync(paths.ADDON_CONFIG_DIR, 'redis-' + app.id + '_vars.sh');
 
-        shell.sudo('teardownRedis', [ RMAPPDIR_CMD, app.id + '/redis', true /* delete directory */ ], function (error, stdout, stderr) {
+        shell.sudo('teardownRedis', [ RMAPPDIR_CMD, app.id + '/redis', true /* delete directory */ ], function (error /* ,stdout , stderr*/) {
             if (error) return callback(new Error('Error removing redis data:' + error));
 
             appdb.unsetAddonConfig(app.id, 'redis', callback);
