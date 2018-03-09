@@ -678,10 +678,10 @@ function addDnsRecords(domain, callback) {
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    if (process.env.BOX_ENV === 'test') return callback();
-
     var error = ensureDkimKeySync(domain);
     if (error) return callback(error);
+
+    if (process.env.BOX_ENV === 'test') return callback();
 
     var dkimKey = readDkimPublicKeySync(domain);
     if (!dkimKey) return callback(new MailError(MailError.INTERNAL_ERROR, new Error('Failed to read dkim public key')));
