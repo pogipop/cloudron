@@ -119,36 +119,18 @@ function configureWebadmin(callback) {
 
     gWebadminStatus.configuring = true; // re-entracy guard
 
-    function done(error) {
-        gWebadminStatus.configuring = false;
-        debug('configureWebadmin: done error: %j', error || {});
-        callback(error);
-    }
-
     function configureReverseProxy(error) {
         debug('configureReverseProxy: error %j', error || null);
 
         reverseProxy.configureAdmin({ userId: null, username: 'setup' }, function (error) {
-            if (error) return done(error);
+            debug('configureWebadmin: done error: %j', error || {});
+            gWebadminStatus.configuring = false;
+
+            if (error) return callback(error);
 
             gWebadminStatus.tls = true;
 
-            done();
-        });
-    }
-
-    function addWebadminDnsRecord(ip, domain, callback) {
-        assert.strictEqual(typeof ip, 'string');
-        assert.strictEqual(typeof domain, 'string');
-        assert.strictEqual(typeof callback, 'function');
-
-        async.retry({ times: 10, interval: 20000 }, function (retryCallback) {
-            domains.upsertDnsRecords(config.adminLocation(), domain, 'A', [ ip ], retryCallback);
-        }, function (error) {
-            if (error) debug('addWebadminDnsRecord: done updating records with error:', error);
-            else debug('addWebadminDnsRecord: done');
-
-            callback(error);
+            callback();
         });
     }
 
@@ -157,7 +139,8 @@ function configureWebadmin(callback) {
     sysinfo.getPublicIp(function (error, ip) {
         if (error) return configureReverseProxy(error);
 
-        addWebadminDnsRecord(ip, config.adminDomain(), function (error) {
+        domains.upsertDnsRecords(config.adminLocation(), config.adminDomain(), 'A', [ ip ], function (error) {
+            debug('addWebadminDnsRecord: updated records with error:', error);
             if (error) return configureReverseProxy(error);
 
             domains.waitForDnsRecord(config.adminFqdn(), config.adminDomain(), ip, { interval: 30000, times: 50000 }, function (error) {
