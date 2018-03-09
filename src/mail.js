@@ -702,28 +702,21 @@ function addDnsRecords(domain, callback) {
 
     debug('addDnsRecords: %j', records);
 
-    async.retry({ times: 10, interval: 20000 }, function (retryCallback) {
-        txtRecordsWithSpf(domain, function (error, txtRecords) {
-            if (error) return retryCallback(error);
+    txtRecordsWithSpf(domain, function (error, txtRecords) {
+        if (error) return callback(error);
 
-            if (txtRecords) records.push({ subdomain: '', domain: domain, type: 'TXT', values: txtRecords });
+        if (txtRecords) records.push({ subdomain: '', domain: domain, type: 'TXT', values: txtRecords });
 
-            debug('addDnsRecords: will update %j', records);
+        debug('addDnsRecords: will update %j', records);
 
-            async.mapSeries(records, function (record, iteratorCallback) {
-                domains.upsertDnsRecords(record.subdomain, record.domain, record.type, record.values, iteratorCallback);
-            }, function (error, changeIds) {
-                if (error) debug('addDnsRecords: failed to update : %s. will retry', error);
-                else debug('addDnsRecords: records %j added with changeIds %j', records, changeIds);
+        async.mapSeries(records, function (record, iteratorCallback) {
+            domains.upsertDnsRecords(record.subdomain, record.domain, record.type, record.values, iteratorCallback);
+        }, function (error, changeIds) {
+            if (error) debug('addDnsRecords: failed to update : %s. will retry', error);
+            else debug('addDnsRecords: records %j added with changeIds %j', records, changeIds);
 
-                retryCallback(error);
-            });
+            callback(error);
         });
-    }, function (error) {
-        if (error) debug('addDnsRecords: done updating records with error:', error);
-        else debug('addDnsRecords: done');
-
-        callback(error);
     });
 }
 
