@@ -20,7 +20,7 @@ exports.up = function(db, callback) {
 
             const domain = tldjs.getDomain(app.altDomain);
             const subdomain = tldjs.getSubdomain(app.altDomain);
-            const mailboxName = (subdomain ? subdomain : app.manifest.title.toLowerCase().replace(/[^a-zA-Z0-9]/g, '')) + '.app';
+            const mailboxName = (subdomain ? subdomain : JSON.parse(app.manifestJson).title.toLowerCase().replace(/[^a-zA-Z0-9]/g, '')) + '.app';
 
             console.log('App %s is on domain %s and subdomain %s with mailbox', app.id, domain, subdomain, mailboxName);
 
