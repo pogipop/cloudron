@@ -142,8 +142,6 @@ function configureWebadmin(callback) {
         assert.strictEqual(typeof domain, 'string');
         assert.strictEqual(typeof callback, 'function');
 
-        if (process.env.BOX_ENV === 'test') return callback();
-
         async.retry({ times: 10, interval: 20000 }, function (retryCallback) {
             domains.upsertDnsRecords(config.adminLocation(), domain, 'A', [ ip ], retryCallback);
         }, function (error) {
