@@ -27,7 +27,7 @@ exports.up = function(db, callback) {
             async.series([
                 // Add domain if not exists
                 function (callback) {
-                    const query = 'INSERT domains (domain, zoneName, provider, configJson, tlsConfigJson) VALUES (?, ?, ?, ?, ?)';
+                    const query = 'INSERT INTO domains (domain, zoneName, provider, configJson, tlsConfigJson) VALUES (?, ?, ?, ?, ?)';
                     const args = [ domain, domain, 'manual', JSON.stringify({}), JSON.stringify({ provider: 'letsencrypt-prod' }) ];
 
                     db.runSql(query, args, function (error) {
@@ -50,6 +50,19 @@ exports.up = function(db, callback) {
                             if (!safe.child_process.execSync(certCommand)) return callback(safe.error.message);
                             safe.fs.unlinkSync(configFile);
                         }
+
+                        callback();
+                    });
+                },
+                // Add domain to mail table if not exists
+                function (callback) {
+                    const query = 'INSERT INTO mail (domain, enabled, mailFromValidation, catchAllJson, relayJson) VALUES (?, ?, ?, ?, ?)';
+                    const args = [ domain, 0, 1, '[]', JSON.stringify({ provider: 'cloudron-smtp' }) ];
+
+                    db.runSql(query, args, function (error) {
+                        if (error && error.code !== 'ER_DUP_ENTRY') return callback(error);
+
+                        console.log('Added domain %s to mail table', domain);
 
                         callback();
                     });
