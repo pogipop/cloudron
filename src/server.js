@@ -215,6 +215,7 @@ function initializeExpressSync() {
 
     // email routes
     router.get ('/api/v1/mail/:domain',       settingsScope, routes.user.requireAdmin, routes.mail.get);
+    router.post('/api/v1/mail/:domain',       settingsScope, routes.user.requireAdmin, routes.mail.update);
     router.post('/api/v1/mail',               settingsScope, routes.user.requireAdmin, routes.mail.add);
     router.del ('/api/v1/mail/:domain',       settingsScope, routes.user.requireAdmin, routes.user.verifyPassword, routes.mail.del);
     router.get ('/api/v1/mail/:domain/status',       settingsScope, routes.user.requireAdmin, routes.mail.getStatus);

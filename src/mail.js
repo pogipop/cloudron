@@ -8,6 +8,7 @@ exports = module.exports = {
 
     add: add,
     del: del,
+    update: update,
 
     setMailFromValidation: setMailFromValidation,
     setCatchAllAddress: setCatchAllAddress,
@@ -635,12 +636,19 @@ function txtRecordsWithSpf(domain, callback) {
 function ensureDkimKeySync(domain) {
     assert.strictEqual(typeof domain, 'string');
 
-    debug(`Generating new DKIM keys for ${domain}`);
+    const dkimPath = path.join(paths.MAIL_DATA_DIR, `dkim/${domain}`);
+    const dkimPrivateKeyFile = path.join(dkimPath, 'private');
+    const dkimPublicKeyFile = path.join(dkimPath, 'public');
+    const dkimSelectorFile = path.join(dkimPath, 'selector');
 
-    var dkimPath = path.join(paths.MAIL_DATA_DIR, `dkim/${domain}`);
-    var dkimPrivateKeyFile = path.join(dkimPath, 'private');
-    var dkimPublicKeyFile = path.join(dkimPath, 'public');
-    var dkimSelectorFile = path.join(dkimPath, 'selector');
+    if (safe.fs.existsSync(dkimPublicKeyFile) &&
+        safe.fs.existsSync(dkimPublicKeyFile) &&
+        safe.fs.existsSync(dkimPublicKeyFile)) {
+        debug(`Reusing existing DKIM keys for ${domain}`);
+        return null;
+    }
+
+    debug(`Generating new DKIM keys for ${domain}`);
 
     if (!safe.fs.mkdirSync(dkimPath) && safe.error.code !== 'EEXIST') {
         debug('Error creating dkim.', safe.error);
@@ -729,6 +737,20 @@ function add(domain, callback) {
         if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
 
         addDnsRecords(domain, NOOP_CALLBACK); // add the required dns records asynchronously
+
+        callback();
+    });
+}
+
+// this is just a way to resync the mail "dns" records via the UI
+function update(domain, callback) {
+    assert.strictEqual(typeof domain, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    get(domain, function (error) {
+        if (error) return callback(error);
+
+        addDnsRecords(domain, NOOP_CALLBACK);
 
         callback();
     });

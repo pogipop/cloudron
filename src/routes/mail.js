@@ -4,6 +4,7 @@ exports = module.exports = {
     get: get,
 
     add: add,
+    update: update,
     del: del,
 
     getStatus: getStatus,
@@ -57,6 +58,18 @@ function add(req, res, next) {
         if (error) return next(new HttpError(500, error));
 
         next(new HttpSuccess(201, { domain: req.body.domain }));
+    });
+}
+
+function update(req, res, next) {
+    assert.strictEqual(typeof req.body, 'object');
+    assert.strictEqual(typeof req.params.domain, 'string');
+
+    mail.update(req.params.domain, function (error) {
+        if (error && error.reason === MailError.NOT_FOUND) return next(new HttpError(404, error.message));
+        if (error) return next(new HttpError(500, error));
+
+        next(new HttpSuccess(202));
     });
 }
 
