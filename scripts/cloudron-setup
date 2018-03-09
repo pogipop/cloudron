@@ -2,16 +2,6 @@
 
 set -eu -o pipefail
 
-if [[ ${EUID} -ne 0 ]]; then
-    echo "This script should be run as root." > /dev/stderr
-    exit 1
-fi
-
-if [[ $(lsb_release -rs) != "16.04" ]]; then
-    echo "Cloudron requires Ubuntu 16.04" > /dev/stderr
-    exit 1
-fi
-
 # change this to a hash when we make a upgrade release
 readonly LOG_FILE="/var/log/cloudron-setup.log"
 readonly DATA_FILE="/root/cloudron-install-data.json"
@@ -84,6 +74,18 @@ while true; do
     *) echo "Unknown option $1"; exit 1;;
     esac
 done
+
+# Only --help works as non-root
+if [[ ${EUID} -ne 0 ]]; then
+    echo "This script should be run as root." > /dev/stderr
+    exit 1
+fi
+
+# Only --help works with mismatched ubuntu
+if [[ $(lsb_release -rs) != "16.04" ]]; then
+    echo "Cloudron requires Ubuntu 16.04" > /dev/stderr
+    exit 1
+fi
 
 # validate arguments in the absence of data
 if [[ -z "${provider}" ]]; then
