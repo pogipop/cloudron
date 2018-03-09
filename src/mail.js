@@ -184,9 +184,11 @@ function verifyRelay(relay, callback) {
     assert.strictEqual(typeof relay, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    var verifier = relay.provider === 'cloudron-smtp' ? checkOutboundPort25 : checkSmtpRelay.bind(null, relay);
+    // we used to verify cloudron-smtp with checkOutboundPort25 but that is unreliable given that we just
+    // randomly select some smtp server
+    if (relay.provider === 'cloudron-smtp') return callback();
 
-    verifier(function (error) {
+    checkSmtpRelay(relay, function (error) {
         if (error) return callback(new MailError(MailError.BAD_FIELD, error.message));
 
         callback();
