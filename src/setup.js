@@ -296,7 +296,7 @@ function restore(backupConfig, backupId, version, callback) {
                 autoprovision,
                 // currently, our suggested restore flow is after a dnsSetup. This re-creates DKIM keys and updates the DNS
                 // for this reason, we have to re-setup DNS after a restore. Once we have a 100% IP based restore, we can skip this
-                mail.update.bind(null, config.adminDomain()),
+                mail.addDnsRecords.bind(null, config.adminDomain()),
                 shell.sudo.bind(null, 'restart', [ RESTART_CMD ])
             ], function (error) {
                 debug('restore:', error);

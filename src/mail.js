@@ -10,6 +10,8 @@ exports = module.exports = {
     del: del,
     update: update,
 
+    addDnsRecords: addDnsRecords,
+
     setMailFromValidation: setMailFromValidation,
     setCatchAllAddress: setCatchAllAddress,
     setMailRelay: setMailRelay,
