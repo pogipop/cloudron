@@ -1212,6 +1212,7 @@
 
 [2.0.0]
 * Multi-domain support
+* Update Haraka to 2.8.18
 * Split box and app autoupdate pattern settings
 * Stop and disable any pre-installed postfix server
 * Migrate altDomain as a manual DNS provider
