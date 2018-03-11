@@ -901,7 +901,7 @@ function clone(appId, data, auditSource, callback) {
                 var newAppId = uuid.v4(), manifest = backupInfo.manifest;
 
                 appstore.purchase(newAppId, app.appStoreId, function (error) {
-                    if (error && error.reason === AppstoreError.NOT_FOUND) return callback(new AppsError(AppsError.NOT_FOUND));
+                    if (error && error.reason === AppstoreError.NOT_FOUND) return callback(new AppsError(AppsError.NOT_FOUND, error.message));
                     if (error && error.reason === AppstoreError.BILLING_REQUIRED) return callback(new AppsError(AppsError.BILLING_REQUIRED, error.message));
                     if (error && error.reason === AppstoreError.EXTERNAL_ERROR) return callback(new AppsError(AppsError.EXTERNAL_ERROR, error.message));
                     if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
