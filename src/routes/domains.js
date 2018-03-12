@@ -93,7 +93,7 @@ function del(req, res, next) {
 
     domains.del(req.params.domain, function (error) {
         if (error && error.reason === DomainError.NOT_FOUND) return next(new HttpError(404, error.message));
-        if (error && error.reason === DomainError.IN_USE) return next(new HttpError(409, 'Domain is still in use. Remove all apps using this domain'));
+        if (error && error.reason === DomainError.IN_USE) return next(new HttpError(409, 'Domain is still in use. Remove all apps and mailboxes using this domain'));
         if (error) return next(new HttpError(500, error));
 
         next(new HttpSuccess(204));
