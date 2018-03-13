@@ -234,28 +234,9 @@ function updateToLatest(auditSource, callback) {
     if (!boxUpdateInfo) return callback(new CloudronError(CloudronError.ALREADY_UPTODATE, 'No update available'));
     if (!boxUpdateInfo.sourceTarballUrl) return callback(new CloudronError(CloudronError.BAD_STATE, 'No automatic update available'));
 
-    // check if this is just a version number change
-    if (config.version().match(/[-+]/) !== null && config.version().replace(/[-+].*/, '') === boxUpdateInfo.version) {
-        doShortCircuitUpdate(boxUpdateInfo, function (error) {
-            if (error) debug('Short-circuit update failed', error);
-        });
-
-        return callback(null);
-    }
-
     if (boxUpdateInfo.upgrade && config.provider() !== 'caas') return callback(new CloudronError(CloudronError.SELF_UPGRADE_NOT_SUPPORTED));
 
     update(boxUpdateInfo, auditSource, callback);
-}
-
-function doShortCircuitUpdate(boxUpdateInfo, callback) {
-    assert(boxUpdateInfo !== null && typeof boxUpdateInfo === 'object');
-
-    debug('Starting short-circuit from prerelease version %s to release version %s', config.version(), boxUpdateInfo.version);
-    config.setVersion(boxUpdateInfo.version);
-    progress.clear(progress.UPDATE);
-    updateChecker.resetUpdateInfo();
-    callback();
 }
 
 function doUpdate(boxUpdateInfo, callback) {
