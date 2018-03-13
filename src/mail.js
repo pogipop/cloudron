@@ -734,8 +734,8 @@ function add(domain, callback) {
         if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
 
         async.series([
-            restartMail,
-            addDnsRecords.bind(null, domain)
+            addDnsRecords.bind(null, domain), // do this first to ensure DKIM keys
+            restartMail
         ], NOOP_CALLBACK); // do these asynchronously
 
         callback();
