@@ -733,7 +733,10 @@ function add(domain, callback) {
         if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new MailError(MailError.NOT_FOUND, 'No such domain'));
         if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
 
-        addDnsRecords(domain, NOOP_CALLBACK); // add the required dns records asynchronously
+        async.series([
+            restartMail,
+            addDnsRecords.bind(null, domain)
+        ], NOOP_CALLBACK); // do these asynchronously
 
         callback();
     });
@@ -757,18 +760,14 @@ function del(domain, callback) {
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    get(domain, function (error, result) {
-        if (error) return callback(error);
+    maildb.del(domain, function (error) {
+        if (error && error.reason === DatabaseError.IN_USE) return callback(new MailError(MailError.IN_USE));
+        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new MailError(MailError.NOT_FOUND, error.message));
+        if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
 
-        maildb.del(domain, function (error) {
-            if (error && error.reason === DatabaseError.IN_USE) return callback(new MailError(MailError.IN_USE));
-            if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new MailError(MailError.NOT_FOUND, error.message));
-            if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
+        restartMail(NOOP_CALLBACK);
 
-            if (result && result.enabled) restartMail(NOOP_CALLBACK);
-
-            callback();
-        });
+        callback();
     });
 }
 
