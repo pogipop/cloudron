@@ -1236,4 +1236,5 @@
 * scheduler: do not start cron jobs all at once
 * scheduler: give cron jobs a grace period of 30 minutes to complete
 * Rework the eventlog view
+* App clone now clones the robotsTxt and backup settings
 
