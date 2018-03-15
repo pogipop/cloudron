@@ -52,7 +52,7 @@ bundle_dir=$(mktemp -d -t box 2>/dev/null || mktemp -d box-XXXXXXXXXX --tmpdir=$
 chmod "o+rx,g+rx" "${bundle_dir}" # otherwise extracted tarball director won't be readable by others/group
 echo "Checking out code box version [${box_version}] and dashboard version [${dashboard_version}] into ${bundle_dir}"
 (cd "${SOURCE_DIR}" && git archive --format=tar ${box_version} | (cd "${bundle_dir}" && tar xf -))
-(cd "${SOURCE_DIR}/../dashboard" && git archive --format=tar --prefix=dashboard/ ${dashboard_version} | (cd "${bundle_dir}" && tar xf -))
+(cd "${SOURCE_DIR}/../dashboard" && git archive --format=tar ${dashboard_version} | (cd "${bundle_dir}" && tar xf -))
 (cp "${SOURCE_DIR}/../dashboard/LICENSE" "${bundle_dir}")
 
 if diff "${TMPDIR}/boxtarball.cache/package-lock.json.all" "${bundle_dir}/package-lock.json" >/dev/null 2>&1; then
