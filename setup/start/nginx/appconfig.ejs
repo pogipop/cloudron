@@ -106,7 +106,7 @@ server {
     proxy_set_header Connection $connection_upgrade;
 
     # only serve up the status page if we get proxy gateway errors
-    root <%= sourceDir %>/webadmin/dist;
+    root <%= sourceDir %>/dashboard/dist;
     error_page 502 503 504 /appstatus.html;
     location /appstatus.html {
         internal;
@@ -160,7 +160,7 @@ server {
         # }
 
         location / {
-            root   <%= sourceDir %>/webadmin/dist;
+            root   <%= sourceDir %>/dashboard/dist;
             index  index.html index.htm;
         }
 <% } else if ( endpoint === 'app' ) { %>

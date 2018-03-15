@@ -214,8 +214,8 @@ cat > "${CONFIG_DIR}/cloudron.conf" <<CONF_END
 }
 CONF_END
 
-echo "==> Creating config.json for webadmin"
-cat > "${BOX_SRC_DIR}/webadmin/dist/config.json" <<CONF_END
+echo "==> Creating config.json for dashboard"
+cat > "${BOX_SRC_DIR}/dashboard/dist/config.json" <<CONF_END
 {
     "webServerOrigin": "${arg_web_server_origin}"
 }

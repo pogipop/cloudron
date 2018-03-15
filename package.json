@@ -106,6 +106,6 @@
     "postmerge": "/bin/true",
     "precommit": "/bin/true",
     "prepush": "npm test",
-    "webadmin": "node_modules/.bin/gulp"
+    "dashboard": "node_modules/.bin/gulp"
   }
 }

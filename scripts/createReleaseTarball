@@ -29,8 +29,8 @@ if ! $(cd "${SOURCE_DIR}" && git diff --exit-code >/dev/null); then
     exit 1
 fi
 
-if ! $(cd "${SOURCE_DIR}/../webadmin" && git diff --exit-code >/dev/null); then
-    echo "You have local changes in webadmin, stash or commit them to proceed"
+if ! $(cd "${SOURCE_DIR}/../dashboard" && git diff --exit-code >/dev/null); then
+    echo "You have local changes in dashboard, stash or commit them to proceed"
     exit 1
 fi
 
@@ -42,18 +42,18 @@ fi
 box_version=$(cd "${SOURCE_DIR}" && git rev-parse "HEAD")
 branch=$(git rev-parse --abbrev-ref HEAD)
 if [[ "${branch}" == "master" ]]; then
-    webadmin_version=$(cd "${SOURCE_DIR}/../webadmin" && git rev-parse "${branch}")
+    dashboard_version=$(cd "${SOURCE_DIR}/../dashboard" && git rev-parse "${branch}")
 else
-    webadmin_version=$(cd "${SOURCE_DIR}/../webadmin" && git fetch && git rev-parse "origin/${branch}")
+    dashboard_version=$(cd "${SOURCE_DIR}/../dashboard" && git fetch && git rev-parse "origin/${branch}")
 fi
 bundle_dir=$(mktemp -d -t box 2>/dev/null || mktemp -d box-XXXXXXXXXX --tmpdir=$TMPDIR)
-[[ -z "$bundle_file" ]] && bundle_file="${TMPDIR}/box-${box_version:0:10}-${webadmin_version:0:10}.tar.gz"
+[[ -z "$bundle_file" ]] && bundle_file="${TMPDIR}/box-${box_version:0:10}-${dashboard_version:0:10}.tar.gz"
 
 chmod "o+rx,g+rx" "${bundle_dir}" # otherwise extracted tarball director won't be readable by others/group
-echo "Checking out code box version [${box_version}] and webadmin version [${webadmin_version}] into ${bundle_dir}"
+echo "Checking out code box version [${box_version}] and dashboard version [${dashboard_version}] into ${bundle_dir}"
 (cd "${SOURCE_DIR}" && git archive --format=tar ${box_version} | (cd "${bundle_dir}" && tar xf -))
-(cd "${SOURCE_DIR}/../webadmin" && git archive --format=tar ${webadmin_version} | (cd "${bundle_dir}" && tar xf -))
-(cp "${SOURCE_DIR}/../webadmin/LICENSE" "${bundle_dir}")
+(cd "${SOURCE_DIR}/../dashboard" && git archive --format=tar --prefix=dashboard/ ${dashboard_version} | (cd "${bundle_dir}" && tar xf -))
+(cp "${SOURCE_DIR}/../dashboard/LICENSE" "${bundle_dir}")
 
 if diff "${TMPDIR}/boxtarball.cache/package-lock.json.all" "${bundle_dir}/package-lock.json" >/dev/null 2>&1; then
     echo "Reusing dev modules from cache"
@@ -68,12 +68,12 @@ else
     cp "${bundle_dir}/package-lock.json" "${TMPDIR}/boxtarball.cache/package-lock.json.all"
 fi
 
-echo "Building webadmin assets"
-(cd "${bundle_dir}" && ./node_modules/.bin/gulp)
+echo "Building dashboard assets"
+(cd "${bundle_dir}/dashboard" && ../node_modules/.bin/gulp)
 
 echo "Remove intermediate files required at build-time only"
 rm -rf "${bundle_dir}/node_modules/"
-rm -rf "${bundle_dir}/webadmin/src"
+rm -rf "${bundle_dir}/dashboard/src"
 rm -rf "${bundle_dir}/gulpfile.js"
 
 if diff "${TMPDIR}/boxtarball.cache/package-lock.json.prod" "${bundle_dir}/package-lock.json" >/dev/null 2>&1; then
