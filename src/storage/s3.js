@@ -141,7 +141,7 @@ function upload(apiConfig, backupFilePath, sourceStream, callback) {
         // uploader will buffer at most queueSize * partSize bytes into memory at any given time.
         s3.upload(params, { partSize: 10 * 1024 * 1024, queueSize: 1 }, function (error) {
             if (error) {
-                debug('[%s] upload: s3 upload error.', backupFilePath, error);
+                debug('Error uploading [%s]: s3 upload error.', backupFilePath, error);
                 return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, `Error uploading ${backupFilePath}. Message: ${error.message} HTTP Code: ${error.code}`));
             }
 

@@ -232,7 +232,7 @@ function sync(backupConfig, backupId, dataDir, callback) {
     assert.strictEqual(typeof callback, 'function');
 
     function setBackupProgress(message) {
-        debug(message);
+        debug('%s: %s', (new Date()).toISOString(), message);
         safe.fs.writeFileSync(paths.BACKUP_RESULT_FILE, message);
     }
 
@@ -257,10 +257,16 @@ function sync(backupConfig, backupId, dataDir, callback) {
             ++retryCount;
             debug(`${task.operation} ${task.path} try ${retryCount}`);
             if (task.operation === 'add') {
-                setBackupProgress(`Adding ${task.path}`);
+                setBackupProgress(`Adding ${task.path} try ${retryCount}`);
                 var stream = fs.createReadStream(path.join(dataDir, task.path));
-                stream.on('error', function (error) { setBackupProgress(`read stream error for ${task.path}: ${error.message}`); retryCallback(); }); // ignore error if file disappears
-                api(backupConfig.provider).upload(backupConfig, backupFilePath, stream, retryCallback);
+                stream.on('error', function (error) {
+                    setBackupProgress(`read stream error for ${task.path}: ${error.message}`);
+                    retryCallback();
+                }); // ignore error if file disappears
+                api(backupConfig.provider).upload(backupConfig, backupFilePath, stream, function (error) {
+                    setBackupProgress(error ? `Error uploading ${task.path} try ${retryCount}: ${error.message}` : `Uploaded ${task.path}`);
+                    retryCallback(error);
+                });
             }
         }, iteratorCallback);
     }, 10 /* concurrency */, function (error) {
