@@ -298,11 +298,10 @@ function copy(apiConfig, oldFilePath, newFilePath) {
         var relativePath = path.relative(oldFilePath, content.Key);
 
         function done(error) {
+            if (error) debug(`copy: s3 copy error when copying ${content.Key}: ${error}`);
+
             if (error && error.code === 'NoSuchKey') return iteratorCallback(new BackupsError(BackupsError.NOT_FOUND, `Old backup not found: ${content.Key}`));
-            if (error) {
-                debug('copy: s3 copy error when copying %s %s', content.Key, error);
-                return iteratorCallback(new BackupsError(BackupsError.EXTERNAL_ERROR, `Error copying ${content.Key} : ${error.message} ${error.code}`));
-            }
+            if (error) return iteratorCallback(new BackupsError(BackupsError.EXTERNAL_ERROR, `Error copying ${content.Key} : ${error.code} ${error}`));
 
             iteratorCallback(null);
         }
@@ -322,7 +321,9 @@ function copy(apiConfig, oldFilePath, newFilePath) {
             copyParams.CopySource = encodeCopySource(apiConfig.bucket, content.Key);
             s3.copyObject(copyParams, done).on('retry', function (response) {
                 ++retryCount;
-                events.emit('progress', `Retrying (${response.retryCount+1}) copy of ${relativePath || oldFilePath}. Status code: ${response.httpResponse.statusCode}`);
+                events.emit('progress', `Retrying (${response.retryCount+1}) copy of ${relativePath || oldFilePath}. Error: ${response.error} ${response.httpResponse.statusCode}`);
+                // on DO, we get a random 408. these are not retried by the SDK
+                if (response.error) response.error.retryable = true; // https://github.com/aws/aws-sdk-js/issues/412
             });
 
             return;
@@ -376,7 +377,7 @@ function copy(apiConfig, oldFilePath, newFilePath) {
                     s3.completeMultipartUpload(params, done);
                 }).on('retry', function (response) {
                     ++retryCount;
-                    events.emit('progress', `Retrying (${response.retryCount+1}) multipart copy of ${relativePath || oldFilePath}. Status code: ${response.httpResponse.statusCode}`);
+                    events.emit('progress', `Retrying (${response.retryCount+1}) multipart copy of ${relativePath || oldFilePath}. Error: ${response.error} ${response.httpResponse.statusCode}`);
                 });
             }
 
