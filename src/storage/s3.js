@@ -139,11 +139,13 @@ function upload(apiConfig, backupFilePath, sourceStream, callback) {
 
         // s3.upload automatically does a multi-part upload. we set queueSize to 1 to reduce memory usage
         // uploader will buffer at most queueSize * partSize bytes into memory at any given time.
-        s3.upload(params, { partSize: 10 * 1024 * 1024, queueSize: 1 }, function (error) {
+        s3.upload(params, { partSize: 10 * 1024 * 1024, queueSize: 1 }, function (error, data) {
             if (error) {
                 debug('Error uploading [%s]: s3 upload error.', backupFilePath, error);
                 return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, `Error uploading ${backupFilePath}. Message: ${error.message} HTTP Code: ${error.code}`));
             }
+
+            debug(`Uploaded ${backupFilePath}: ${JSON.stringify(data)}`);
 
             callback(null);
         });
