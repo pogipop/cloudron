@@ -1238,3 +1238,6 @@
 * Rework the eventlog view
 * App clone now clones the robotsTxt and backup settings
 
+[2.0.2]
+* Make S3 backend work reliably with slow internet connections
+
