@@ -75,7 +75,8 @@ function getCaasConfig(apiConfig, callback) {
                 customBackoff: () => 20000 // constant backoff - https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/Config.html#retryDelayOptions-property
             },
             httpOptions: {
-                connectTimeout: 10000 // https://github.com/aws/aws-sdk-js/pull/1446
+                connectTimeout: 10000, // https://github.com/aws/aws-sdk-js/pull/1446
+                timeout: 300 * 1000 // https://github.com/aws/aws-sdk-js/issues/1704 (allow 5MB chunk upload to take upto 5 minutes)
             }
         };
 
@@ -107,7 +108,8 @@ function getS3Config(apiConfig, callback) {
             customBackoff: () => 20000 // constant backoff - https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/Config.html#retryDelayOptions-property
         },
         httpOptions: {
-            connectTimeout: 10000 // https://github.com/aws/aws-sdk-js/pull/1446
+            connectTimeout: 10000, // https://github.com/aws/aws-sdk-js/pull/1446
+            timeout: 300 * 1000 // https://github.com/aws/aws-sdk-js/issues/1704 (allow 5MB chunk upload to take upto 5 minutes)
         }
     };
 

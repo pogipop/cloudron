@@ -153,6 +153,10 @@ function setBackupConfig(req, res, next) {
     if (typeof req.body.provider !== 'string') return next(new HttpError(400, 'provider is required'));
     if (typeof req.body.retentionSecs !== 'number') return next(new HttpError(400, 'retentionSecs is required'));
     if ('key' in req.body && typeof req.body.key !== 'string') return next(new HttpError(400, 'key must be a string'));
+    if ('syncConcurrency' in req.body) {
+        if (typeof req.body.syncConcurrency !== 'number') return next(new HttpError(400, 'syncConcurrency must be a positive integer'));
+        if (req.body.syncConcurrency < 1) return next(new HttpError(400, 'syncConcurrency must be a positive integer'));
+    }
     if (typeof req.body.format !== 'string') return next(new HttpError(400, 'format must be a string'));
     if ('acceptSelfSignedCerts' in req.body && typeof req.body.acceptSelfSignedCerts !== 'boolean') return next(new HttpError(400, 'format must be a boolean'));
 

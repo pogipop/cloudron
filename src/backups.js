@@ -269,7 +269,7 @@ function sync(backupConfig, backupId, dataDir, callback) {
                 });
             }
         }, iteratorCallback);
-    }, 10 /* concurrency */, function (error) {
+    }, backupConfig.syncConcurrency || 10 /* concurrency */, function (error) {
         if (error) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
 
         callback();
