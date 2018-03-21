@@ -44,9 +44,9 @@ initialize(function (error) {
     safe.fs.writeFileSync(paths.BACKUP_RESULT_FILE, '');
 
     backups.upload(backupId, format, dataDir, function resultHandler(error) {
-        if (error) debug('completed with error', error);
+        if (error) debug('upload completed with error', error);
 
-        debug('completed');
+        debug('upload completed');
 
         safe.fs.writeFileSync(paths.BACKUP_RESULT_FILE, error ? error.message : '');
 
