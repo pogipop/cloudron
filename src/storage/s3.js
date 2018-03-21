@@ -390,12 +390,12 @@ function copy(apiConfig, oldFilePath, newFilePath) {
         total += objects.length;
 
         if (retryCount === 0) concurrency = Math.min(concurrency + 1, 10); else concurrency = Math.max(concurrency - 1, 5);
-        events.emit('progress', `${retryCount} errors so far. concurrency set to ${concurrency}`);
+        events.emit('progress', `Copying ${total-objects.length}-${total}. ${retryCount} errors so far. concurrency set to ${concurrency}`);
         retryCount = 0;
 
         async.eachLimit(objects, concurrency, copyFile.bind(null, s3), done);
     }, function (error) {
-        events.emit('progress', `Copied ${total} files`);
+        events.emit('progress', `Copied ${total} files with error: ${error}`);
 
         events.emit('done', error);
     });
