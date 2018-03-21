@@ -104,14 +104,14 @@ function sync(dir, taskProcessor, concurrency, callback) {
                 if (entryStat.isDirectory()) {
                     traverse(entryPath);
                 } else {
-                    addQueue.push({ operation: 'add', path: entryPath, reason: 'new' });
+                    addQueue.push({ operation: 'add', path: entryPath, reason: 'new', position: addQueue.length });
                 }
             } else if (ISDIR(cacheStat.mode) && entryStat.isDirectory()) { // dir names match
                 ++curCacheIndex;
                 traverse(entryPath);
             } else if (ISFILE(cacheStat.mode) && entryStat.isFile()) { // file names match
                 if (entryStat.mtime.getTime() !== cacheStat.mtime || entryStat.size != cacheStat.size || entryStat.inode !== cacheStat.inode) { // file changed
-                    addQueue.push({ operation: 'add', path: entryPath, reason: 'changed' });
+                    addQueue.push({ operation: 'add', path: entryPath, reason: 'changed', position: addQueue.length });
                 }
                 ++curCacheIndex;
             } else if (entryStat.isDirectory()) { // was a file, now a directory
@@ -121,7 +121,7 @@ function sync(dir, taskProcessor, concurrency, callback) {
             } else { // was a dir, now a file
                 delQueue.push({ operation: 'removedir', path: cachePath, reason: 'wasdir' });
                 while (curCacheIndex !== cache.length && cache[curCacheIndex].path.startsWith(cachePath)) ++curCacheIndex;
-                addQueue.push({ operation: 'add', path: entryPath, reason: 'wasdir' });
+                addQueue.push({ operation: 'add', path: entryPath, reason: 'wasdir', position: addQueue.length });
             }
         }
     }

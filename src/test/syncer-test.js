@@ -53,9 +53,9 @@ describe('Syncer', function () {
             expect(error).to.not.be.ok();
 
             expect(gTasks).to.eql([
-                { operation: 'add', path: 'src/index.js', reason: 'new' },
-                { operation: 'add', path: 'test/test.js', reason: 'new' },
-                { operation: 'add', path: 'walrus', reason: 'new' }
+                { operation: 'add', path: 'src/index.js', reason: 'new', position: 0 },
+                { operation: 'add', path: 'test/test.js', reason: 'new', position: 1 },
+                { operation: 'add', path: 'walrus', reason: 'new', position: 2 }
             ]);
             done();
         });
@@ -70,7 +70,7 @@ describe('Syncer', function () {
             expect(error).to.not.be.ok();
 
             expect(gTasks).to.eql([
-                { operation: 'add', path: 'a/b/c/d/e', reason: 'new' }
+                { operation: 'add', path: 'a/b/c/d/e', reason: 'new', position: 0 }
             ]);
             done();
         });
@@ -85,7 +85,7 @@ describe('Syncer', function () {
             expect(error).to.not.be.ok();
 
             expect(gTasks).to.eql([
-                { operation: 'add', path: 'readme', reason: 'new' }
+                { operation: 'add', path: 'readme', reason: 'new', position: 0 }
             ]);
             done();
         });
@@ -107,8 +107,8 @@ describe('Syncer', function () {
                 expect(error).to.not.be.ok();
 
                 expect(gTasks).to.eql([
-                    { operation: 'add', path: 'src/index.js', reason: 'changed' },
-                    { operation: 'add', path: 'test/test.js', reason: 'changed' }
+                    { operation: 'add', path: 'src/index.js', reason: 'changed', position: 0 },
+                    { operation: 'add', path: 'test/test.js', reason: 'changed', position: 1 }
                 ]);
 
                 done();
@@ -209,7 +209,7 @@ describe('Syncer', function () {
 
                 expect(gTasks).to.eql([
                     { operation: 'removedir', path: 'a/b', reason: 'missing' },
-                    { operation: 'add', path: 'a/f', reason: 'new' }
+                    { operation: 'add', path: 'a/f', reason: 'new', position: 0 }
                 ]);
 
                 done();
@@ -234,7 +234,7 @@ describe('Syncer', function () {
 
                 expect(gTasks).to.eql([
                     { operation: 'remove', path: 'data/test/test.js', reason: 'wasfile' },
-                    { operation: 'add', path: 'data/test/test.js/trick', reason: 'new' }
+                    { operation: 'add', path: 'data/test/test.js/trick', reason: 'new', position: 0 }
                 ]);
 
                 done();
@@ -259,7 +259,7 @@ describe('Syncer', function () {
 
                 expect(gTasks).to.eql([
                     { operation: 'removedir', path: 'test', reason: 'wasdir' },
-                    { operation: 'add', path: 'test', reason: 'wasdir' }
+                    { operation: 'add', path: 'test', reason: 'wasdir', position: 0 }
                 ]);
 
                 done();
@@ -312,9 +312,9 @@ describe('Syncer', function () {
                     { operation: 'removedir', path: 'j/l', reason: 'missing' },
                     { operation: 'removedir', path: 'j/m', reason: 'missing' },
 
-                    { operation: 'add', path: 'a/file', reason: 'new' },
-                    { operation: 'add', path: 'b', reason: 'changed' },
-                    { operation: 'add', path: 'j/k/file', reason: 'new' },
+                    { operation: 'add', path: 'a/file', reason: 'new', position: 0 },
+                    { operation: 'add', path: 'b', reason: 'changed', position: 1 },
+                    { operation: 'add', path: 'j/k/file', reason: 'new', position: 2 },
                 ]);
 
                 gTasks = [ ];

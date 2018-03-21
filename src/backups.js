@@ -257,7 +257,7 @@ function sync(backupConfig, backupId, dataDir, callback) {
             ++retryCount;
             debug(`${task.operation} ${task.path} try ${retryCount}`);
             if (task.operation === 'add') {
-                setBackupProgress(`Adding ${task.path} try ${retryCount}`);
+                setBackupProgress(`Adding ${task.path} position ${task.position} try ${retryCount}`);
                 var stream = fs.createReadStream(path.join(dataDir, task.path));
                 stream.on('error', function (error) {
                     setBackupProgress(`read stream error for ${task.path}: ${error.message}`);
