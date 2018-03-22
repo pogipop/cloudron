@@ -4,6 +4,7 @@ exports = module.exports = {
     get: get,
 
     add: add,
+    getStats: getStats,
     update: update,
     del: del,
 
@@ -34,7 +35,11 @@ var assert = require('assert'),
     mail = require('../mail.js'),
     MailError = mail.MailError,
     HttpError = require('connect-lastmile').HttpError,
-    HttpSuccess = require('connect-lastmile').HttpSuccess;
+    HttpSuccess = require('connect-lastmile').HttpSuccess,
+    middleware = require('../middleware/index.js'),
+    url = require('url');
+
+var mailProxy = middleware.proxy(url.parse('http://127.0.0.1:2020'));
 
 function get(req, res, next) {
     assert.strictEqual(typeof req.params.domain, 'string');
@@ -59,6 +64,19 @@ function add(req, res, next) {
 
         next(new HttpSuccess(201, { domain: req.body.domain }));
     });
+}
+
+function getStats(req, res, next) {
+    assert.strictEqual(typeof req.params.domain, 'string');
+
+    var parsedUrl = url.parse(req.url, true /* parseQueryString */);
+    delete parsedUrl.query['access_token'];
+    delete req.headers['authorization'];
+    delete req.headers['cookies'];
+
+    req.url = url.format({ pathname: req.params.domain, query: parsedUrl.query });
+
+    mailProxy(req, res, next);
 }
 
 function update(req, res, next) {
