@@ -172,14 +172,14 @@ function validatePortBindings(portBindings, tcpPorts) {
         993, /* imaps */
         2003, /* graphite (lo) */
         2004, /* graphite (lo) */
-        2020, /* install server */
+        2020, /* mail server */
         config.get('port'), /* app server (lo) */
         config.get('sysadminPort'), /* sysadmin app server (lo) */
         config.get('smtpPort'), /* internal smtp port (lo) */
         config.get('ldapPort'), /* ldap server (lo) */
         3306, /* mysql (lo) */
         4190, /* managesieve */
-        8000 /* graphite (lo) */
+        8000, /* graphite (lo) */
     ];
 
     if (!portBindings) return null;
