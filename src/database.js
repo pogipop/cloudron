@@ -6,9 +6,6 @@ exports = module.exports = {
     query: query,
     transaction: transaction,
 
-    rollback: rollback,
-    commit: commit,
-
     importFromFile: importFromFile,
     exportToFile: exportToFile,
 
