@@ -681,7 +681,7 @@ describe('database', function () {
             tokendb.add(TOKEN_0.accessToken, TOKEN_0.identifier, TOKEN_0.clientId, TOKEN_0.expires, TOKEN_0.scope, function (error) {
                 expect(error).to.be(null);
 
-                tokendb.delByClientId(TOKEN_0.clientId, function (error, result) {
+                tokendb.delByClientId(TOKEN_0.clientId, function (error) {
                     expect(error).to.not.be.ok();
 
                     tokendb.get(TOKEN_0.accessToken, function (error, result) {
@@ -1016,7 +1016,7 @@ describe('database', function () {
         });
 
         it('getAddonConfigByName of unknown value succeeds', function (done) {
-            appdb.getAddonConfigByName(APP_1.id, 'addonid1', 'NOPE', function (error, value) {
+            appdb.getAddonConfigByName(APP_1.id, 'addonid1', 'NOPE', function (error) {
                 expect(error.reason).to.be(DatabaseError.NOT_FOUND);
                 done();
             });
@@ -1443,7 +1443,7 @@ describe('database', function () {
         var GROUP_ID_1 = 'foundersid';
 
         it('can create a group', function (done) {
-            groupdb.add(GROUP_ID_1, 'founders', function (error, result) {
+            groupdb.add(GROUP_ID_1, 'founders', function (error) {
                 expect(error).to.be(null);
                 done();
             });
@@ -1596,21 +1596,21 @@ describe('database', function () {
         });
 
         it('add user mailbox succeeds', function (done) {
-            mailboxdb.add('girish', DOMAIN_0.domain, 'uid-0', mailboxdb.TYPE_USER, function (error, mailbox) {
+            mailboxdb.add('girish', DOMAIN_0.domain, 'uid-0', mailboxdb.TYPE_USER, function (error) {
                 expect(error).to.be(null);
                 done();
             });
         });
 
         it('cannot add dup entry', function (done) {
-            mailboxdb.add('girish', DOMAIN_0.domain, 'uid-1', mailboxdb.TYPE_APP, function (error, mailbox) {
+            mailboxdb.add('girish', DOMAIN_0.domain, 'uid-1', mailboxdb.TYPE_APP, function (error) {
                 expect(error.reason).to.be(DatabaseError.ALREADY_EXISTS);
                 done();
             });
         });
 
         it('add app mailbox succeeds', function (done) {
-            mailboxdb.add('support', DOMAIN_0.domain, 'osticket', mailboxdb.TYPE_APP, function (error, mailbox) {
+            mailboxdb.add('support', DOMAIN_0.domain, 'osticket', mailboxdb.TYPE_APP, function (error) {
                 expect(error).to.be(null);
                 done();
             });
@@ -1735,7 +1735,7 @@ describe('database', function () {
             mailboxdb.delByOwnerId('osticket', function (error) {
                 expect(error).to.be(null);
 
-                mailboxdb.getByOwnerId('osticket', function (error, results) {
+                mailboxdb.getByOwnerId('osticket', function (error) {
                     expect(error).to.be.ok();
                     expect(error.reason).to.be(DatabaseError.NOT_FOUND);
                     done();

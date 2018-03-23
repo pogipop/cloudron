@@ -23,21 +23,13 @@ var assert = require('assert'),
 var gConnectionPool = null,
     gDefaultConnection = null;
 
-function initialize(options, callback) {
-    if (typeof options === 'function') {
-        callback = options;
-        options = {
-            connectionLimit: 5
-        };
-    }
-
-    assert.strictEqual(typeof options.connectionLimit, 'number');
+function initialize(callback) {
     assert.strictEqual(typeof callback, 'function');
 
     if (gConnectionPool !== null) return callback(null);
 
     gConnectionPool  = mysql.createPool({
-        connectionLimit: options.connectionLimit,
+        connectionLimit: 5,
         host: config.database().hostname,
         user: config.database().username,
         password: config.database().password,
