@@ -129,7 +129,7 @@ CREATE TABLE IF NOT EXISTS eventlog(
     action VARCHAR(128) NOT NULL,
     source TEXT, /* { userId, username, ip }. userId can be null for cron,sysadmin */
     data TEXT, /* free flowing json based on action */
-    creationTime TIMESTAMP, /* FIXME: precision must be TIMESTAMP(2) */
+    createdAt TIMESTAMP(2) NOT NULL,
 
     PRIMARY KEY (id));
 
