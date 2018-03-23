@@ -29,7 +29,7 @@ function initialize(callback) {
     if (gConnectionPool !== null) return callback(null);
 
     gConnectionPool  = mysql.createPool({
-        connectionLimit: 5,
+        connectionLimit: 5, // this has to be > 1 since we store one connection as 'default'. the rest for transactions
         host: config.database().hostname,
         user: config.database().username,
         password: config.database().password,
