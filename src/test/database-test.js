@@ -1412,17 +1412,12 @@ describe('database', function () {
             }, function (error) {
                 expect(error).to.be(null);
 
-                var actions = [ 'anotherpersistent.event', 'persistent.event' ];
-
-                eventlogdb.delByCreationTime(new Date(), actions, function (error) {
+                eventlogdb.delByCreationTime(new Date(), function (error) {
                     expect(error).to.be(null);
 
                     eventlogdb.getAllPaged([], null, 1, 100, function (error, results) {
                         expect(error).to.be(null);
-                        expect(results.length).to.be(2);
-                        results = results.sort(function (x, y) { return x.action > y.action; }); // because equal timestamp gives random ordering
-                        expect(results[1].action).to.be.eql('persistent.event');
-                        expect(results[0].action).to.be.eql('anotherpersistent.event');
+                        expect(results.length).to.be(0);
 
                         done();
                     });

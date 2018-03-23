@@ -121,15 +121,13 @@ function clear(callback) {
     });
 }
 
-function delByCreationTime(creationTime, actions, callback) {
+function delByCreationTime(creationTime, callback) {
     assert(util.isDate(creationTime));
-    assert(Array.isArray(actions));
     assert.strictEqual(typeof callback, 'function');
 
-    var query = 'DELETE FROM eventlog WHERE creationTime < ? ';
-    if (actions.length) query += ' AND ( ' + actions.map(function () { return 'action != ?'; }).join(' AND ') + ' ) ';
+    var query = 'DELETE FROM eventlog WHERE creationTime < ?';
 
-    database.query(query, [ creationTime ].concat(actions), function (error) {
+    database.query(query, [ creationTime ], function (error) {
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
 
         callback(error);
