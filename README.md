@@ -48,6 +48,11 @@ apps up-to-date and secure.
 * [Selfhosting](https://cloudron.io/documentation/installation/) - [Pricing](https://cloudron.io/pricing.html)
 * [Managed Hosting](https://cloudron.io/managed.html)
 
+**Note:** This repo is a small part of what gets installed on your server - there is
+the dashboard, database addons, graph container, base image etc. Cloudron also relies
+on external services such as the App Store for apps to be installed. As such, don't
+clone this repo and npm install and expect something to work.
+
 ## Documentation
 
 * [Documentation](https://cloudron.io/documentation/)
