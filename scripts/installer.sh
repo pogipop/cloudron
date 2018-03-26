@@ -35,11 +35,11 @@ while true; do
 done
 
 echo "==> installer: updating docker"
-if [[ $(docker version --format {{.Client.Version}}) != "17.09.0-ce" ]]; then
-    $curl -sL https://download.docker.com/linux/ubuntu/dists/xenial/pool/stable/amd64/docker-ce_17.09.0~ce-0~ubuntu_amd64.deb -o /tmp/docker.deb
+if [[ $(docker version --format {{.Client.Version}}) != "17.12.1-ce" ]]; then
+    $curl -sL https://download.docker.com/linux/ubuntu/dists/xenial/pool/stable/amd64/docker-ce_17.12.1~ce-0~ubuntu_amd64.deb -o /tmp/docker.deb
 
     # https://download.docker.com/linux/ubuntu/dists/xenial/stable/binary-amd64/Packages
-    if [[ $(sha256sum /tmp/docker.deb | cut -d' ' -f1) != "d33f6eb134f0ab0876148bd96de95ea47d583d7f2cddfdc6757979453f9bd9bf" ]]; then
+    if [[ $(sha256sum /tmp/docker.deb | cut -d' ' -f1) != "db9a541ec923c0956dc8d3ecbf14aef76618ca6016fb57e27c55d029ed5f076c" ]]; then
         echo "==> installer: docker binary download is corrupt"
         exit 5
     fi
