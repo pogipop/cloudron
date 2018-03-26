@@ -272,6 +272,7 @@ function setAliases(req, res, next) {
 
     mail.setAliases(req.params.domain, req.params.userId, req.body.aliases, function (error) {
         if (error && error.reason === MailError.NOT_FOUND) return next(new HttpError(404, error.message));
+        if (error && error.reason === MailError.BAD_FIELD) return next(new HttpError(400, error.message));
         if (error) return next(new HttpError(500, error));
 
         next(new HttpSuccess(202));
