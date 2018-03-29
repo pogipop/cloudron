@@ -41,7 +41,7 @@ function setDetail(tag, detail) {
     assert.strictEqual(typeof tag, 'string');
     assert.strictEqual(typeof detail, 'string');
 
-    if (!progress[tag]) return debug('unable to set detail %s', detail);
+    if (!progress[tag]) return debug('[%s] %s', tag, detail);
 
     progress[tag].detail = detail;
 }
