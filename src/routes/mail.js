@@ -23,7 +23,8 @@ exports = module.exports = {
     disableUserMailbox: disableUserMailbox,
 
     getAliases: getAliases,
-    setAliases: setAliases,
+    getUserAliases: getUserAliases,
+    setUserAliases: setUserAliases,
 
     getLists: getLists,
     getList: getList,
@@ -249,9 +250,19 @@ function disableUserMailbox(req, res, next) {
 
 function getAliases(req, res, next) {
     assert.strictEqual(typeof req.params.domain, 'string');
+
+    mail.getAliases(req.params.domain, function (error, result) {
+        if (error) return next(new HttpError(500, error));
+
+        next(new HttpSuccess(200, { aliases: result }));
+    });
+}
+
+function getUserAliases(req, res, next) {
+    assert.strictEqual(typeof req.params.domain, 'string');
     assert.strictEqual(typeof req.params.userId, 'string');
 
-    mail.getAliases(req.params.domain, req.params.userId, function (error, result) {
+    mail.getUserAliases(req.params.domain, req.params.userId, function (error, result) {
         if (error && error.reason === MailError.NOT_FOUND) return next(new HttpError(404, error.message));
         if (error) return next(new HttpError(500, error));
 
@@ -259,7 +270,7 @@ function getAliases(req, res, next) {
     });
 }
 
-function setAliases(req, res, next) {
+function setUserAliases(req, res, next) {
     assert.strictEqual(typeof req.params.domain, 'string');
     assert.strictEqual(typeof req.params.userId, 'string');
     assert.strictEqual(typeof req.body, 'object');
@@ -270,7 +281,7 @@ function setAliases(req, res, next) {
         if (typeof req.body.aliases[i] !== 'string') return next(new HttpError(400, 'alias must be a string'));
     }
 
-    mail.setAliases(req.params.domain, req.params.userId, req.body.aliases, function (error) {
+    mail.setUserAliases(req.params.domain, req.params.userId, req.body.aliases, function (error) {
         if (error && error.reason === MailError.NOT_FOUND) return next(new HttpError(404, error.message));
         if (error && error.reason === MailError.BAD_FIELD) return next(new HttpError(400, error.message));
         if (error) return next(new HttpError(500, error));

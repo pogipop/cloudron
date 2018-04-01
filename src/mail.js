@@ -28,7 +28,8 @@ exports = module.exports = {
     disableUserMailbox: disableUserMailbox,
 
     getAliases: getAliases,
-    setAliases: setAliases,
+    getUserAliases: getUserAliases,
+    setUserAliases: setUserAliases,
 
     getLists: getLists,
     getList: getList,
@@ -940,7 +941,18 @@ function disableUserMailbox(domain, userId, callback) {
     });
 }
 
-function getAliases(domain, userId, callback) {
+function getAliases(domain, callback) {
+    assert.strictEqual(typeof domain, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    mailboxdb.listAliases(domain, function (error, result) {
+        if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
+
+        callback(null, result);
+    });
+}
+
+function getUserAliases(domain, userId, callback) {
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof userId, 'string');
     assert.strictEqual(typeof callback, 'function');
@@ -959,7 +971,7 @@ function getAliases(domain, userId, callback) {
     });
 }
 
-function setAliases(domain, userId, aliases, callback) {
+function setUserAliases(domain, userId, aliases, callback) {
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof userId, 'string');
     assert(Array.isArray(aliases));

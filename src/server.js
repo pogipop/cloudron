@@ -229,8 +229,9 @@ function initializeExpressSync() {
     router.get ('/api/v1/mail/:domain/mailboxes/:userId',  settingsScope, routes.user.requireAdmin, routes.mail.getUserMailbox);
     router.post('/api/v1/mail/:domain/mailboxes/:userId',  settingsScope, routes.user.requireAdmin, routes.mail.enableUserMailbox);
     router.del ('/api/v1/mail/:domain/mailboxes/:userId',  settingsScope, routes.user.requireAdmin, routes.mail.disableUserMailbox);
-    router.get ('/api/v1/mail/:domain/aliases/:userId', settingsScope, routes.user.requireAdmin, routes.mail.getAliases);
-    router.put ('/api/v1/mail/:domain/aliases/:userId', settingsScope, routes.user.requireAdmin, routes.mail.setAliases);
+    router.get ('/api/v1/mail/:domain/aliases', settingsScope, routes.user.requireAdmin, routes.mail.getAliases);
+    router.get ('/api/v1/mail/:domain/aliases/:userId', settingsScope, routes.user.requireAdmin, routes.mail.getUserAliases);
+    router.put ('/api/v1/mail/:domain/aliases/:userId', settingsScope, routes.user.requireAdmin, routes.mail.setUserAliases);
     router.get ('/api/v1/mail/:domain/lists', settingsScope, routes.user.requireAdmin, routes.mail.getLists);
     router.post('/api/v1/mail/:domain/lists', settingsScope, routes.user.requireAdmin, routes.mail.addList);
     router.get ('/api/v1/mail/:domain/lists/:groupId', settingsScope, routes.user.requireAdmin, routes.mail.getList);
