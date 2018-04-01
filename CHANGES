@@ -1240,4 +1240,5 @@
 
 [2.0.2]
 * Make S3 backend work reliably with slow internet connections
-
+* Update docker to 17.12.0-ce
+* Move mailbox settings from users to email view
