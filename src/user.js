@@ -36,7 +36,6 @@ var assert = require('assert'),
     groups = require('./groups.js'),
     GroupError = groups.GroupError,
     hat = require('hat'),
-    mailboxdb = require('./mailboxdb.js'),
     mailer = require('./mailer.js'),
     safe = require('safetydance'),
     tokendb = require('./tokendb.js'),
@@ -268,19 +267,15 @@ function removeUser(userId, auditSource, callback) {
 
         if (config.isDemo() && user.username === constants.DEMO_USERNAME) return callback(new UserError(UserError.BAD_FIELD, 'Not allowed in demo mode'));
 
-        mailboxdb.delByOwnerId(userId, function (error) {
+        userdb.del(userId, function (error) {
+            if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new UserError(UserError.NOT_FOUND));
             if (error) return callback(new UserError(UserError.INTERNAL_ERROR, error));
 
-            userdb.del(userId, function (error) {
-                if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new UserError(UserError.NOT_FOUND));
-                if (error) return callback(new UserError(UserError.INTERNAL_ERROR, error));
+            eventlog.add(eventlog.ACTION_USER_REMOVE, auditSource, { userId: userId, user: removePrivateFields(user) });
 
-                eventlog.add(eventlog.ACTION_USER_REMOVE, auditSource, { userId: userId, user: removePrivateFields(user) });
+            callback();
 
-                callback();
-
-                mailer.userRemoved(user);
-            });
+            mailer.userRemoved(user);
         });
     });
 }
