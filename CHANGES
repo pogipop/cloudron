@@ -1238,7 +1238,8 @@
 * Rework the eventlog view
 * App clone now clones the robotsTxt and backup settings
 
-[2.0.2]
+[2.1.0]
 * Make S3 backend work reliably with slow internet connections
 * Update docker to 17.12.0-ce
 * Move mailbox settings from users to email view
+
