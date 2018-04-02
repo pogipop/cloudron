@@ -367,7 +367,7 @@ function updateUser(userId, data, auditSource, callback) {
         if (error) return callback(error);
     }
 
-    userdb.get(userId, function (error, user) {
+    userdb.get(userId, function (error) {
         if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new UserError(UserError.NOT_FOUND));
         if (error) return callback(new UserError(UserError.INTERNAL_ERROR, error));
 
