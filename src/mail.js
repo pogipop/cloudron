@@ -104,7 +104,7 @@ function validateAlias(alias) {
     if (alias.length < 1) return new MailError(MailError.BAD_FIELD, 'alias must be atleast 1 char');
     if (alias.length >= 200) return new MailError(MailError.BAD_FIELD, 'alias too long');
 
-    if (constants.RESERVED_NAMES.indexOf(alias) !== -1) return new MailError(MailError.BAD_FIELD, 'alias is reserved');
+    if (constants.RESERVED_NAMES.indexOf(alias) !== -1) return new MailError(MailError.BAD_FIELD, `Alias ${alias} is reserved`);
 
     // +/- can be tricky in emails. also need to consider valid LDAP characters here (e.g '+' is reserved)
     if (/[^a-zA-Z0-9.]/.test(alias)) return new MailError(MailError.BAD_FIELD, 'alias can only contain alphanumerals and dot');
