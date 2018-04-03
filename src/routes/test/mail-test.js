@@ -27,7 +27,7 @@ const DOMAIN_0 = {
     tlsConfig: { provider: 'fallback' }
 };
 var USERNAME = 'superadmin', PASSWORD = 'Foobar?1337', EMAIL ='silly@me.com';
-const GROUP_NAME = 'maillistgroup';
+const GROUP_NAME = 'maillistgroup', LIST_NAME = 'devs';
 var token = null;
 var userId = '';
 var groupObject = null;
@@ -936,7 +936,7 @@ describe('Mail API', function () {
 
         it('add fails with non-existing groupId', function (done) {
             superagent.post(SERVER_URL + '/api/v1/mail/' + DOMAIN_0.domain + '/lists')
-                .send({ groupId: 'doesnotexist' })
+                .send({ name: LIST_NAME, groupId: 'doesnotexist' })
                 .query({ access_token: token })
                 .end(function (err, res) {
                     expect(res.statusCode).to.equal(404);
@@ -946,7 +946,7 @@ describe('Mail API', function () {
 
         it('add succeeds', function (done) {
             superagent.post(SERVER_URL + '/api/v1/mail/' + DOMAIN_0.domain + '/lists')
-                .send({ groupId: groupObject.id })
+                .send({ name: LIST_NAME, groupId: groupObject.id })
                 .query({ access_token: token })
                 .end(function (err, res) {
                     expect(res.statusCode).to.equal(201);
@@ -956,7 +956,7 @@ describe('Mail API', function () {
 
         it('add twice fails', function (done) {
             superagent.post(SERVER_URL + '/api/v1/mail/' + DOMAIN_0.domain + '/lists')
-                .send({ groupId: groupObject.id })
+                .send({ name: LIST_NAME, groupId: groupObject.id })
                 .query({ access_token: token })
                 .end(function (err, res) {
                     expect(res.statusCode).to.equal(409);
@@ -974,12 +974,12 @@ describe('Mail API', function () {
         });
 
         it('get succeeds', function (done) {
-            superagent.get(SERVER_URL + '/api/v1/mail/' + DOMAIN_0.domain + '/lists/' + groupObject.id)
+            superagent.get(SERVER_URL + `/api/v1/mail/${DOMAIN_0.domain}/lists/${LIST_NAME}`)
                 .query({ access_token: token })
                 .end(function (err, res) {
                     expect(res.statusCode).to.equal(200);
                     expect(res.body.list).to.be.an('object');
-                    expect(res.body.list.name).to.equal(GROUP_NAME);
+                    expect(res.body.list.name).to.equal(LIST_NAME);
                     expect(res.body.list.ownerId).to.equal(groupObject.id);
                     expect(res.body.list.ownerType).to.equal('group');
                     expect(res.body.list.aliasTarget).to.equal(null);
@@ -996,7 +996,7 @@ describe('Mail API', function () {
                     expect(res.statusCode).to.equal(200);
                     expect(res.body.lists).to.be.an(Array);
                     expect(res.body.lists.length).to.equal(1);
-                    expect(res.body.lists[0].name).to.equal(GROUP_NAME);
+                    expect(res.body.lists[0].name).to.equal(LIST_NAME);
                     expect(res.body.lists[0].ownerId).to.equal(groupObject.id);
                     expect(res.body.lists[0].ownerType).to.equal('group');
                     expect(res.body.lists[0].aliasTarget).to.equal(null);
@@ -1015,12 +1015,12 @@ describe('Mail API', function () {
         });
 
         it('del succeeds', function (done) {
-            superagent.del(SERVER_URL + '/api/v1/mail/' + DOMAIN_0.domain + '/lists/' + groupObject.id)
+            superagent.del(SERVER_URL + '/api/v1/mail/' + DOMAIN_0.domain + '/lists/' + LIST_NAME)
                 .query({ access_token: token })
                 .end(function (err, res) {
                     expect(res.statusCode).to.equal(204);
 
-                    superagent.get(SERVER_URL + '/api/v1/mail/' + DOMAIN_0.domain + '/lists/' + groupObject.id)
+                    superagent.get(SERVER_URL + '/api/v1/mail/' + DOMAIN_0.domain + '/lists/' + LIST_NAME)
                         .query({ access_token: token })
                         .end(function (err, res) {
                             expect(res.statusCode).to.equal(404);

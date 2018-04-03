@@ -304,9 +304,9 @@ function getLists(req, res, next) {
 
 function getList(req, res, next) {
     assert.strictEqual(typeof req.params.domain, 'string');
-    assert.strictEqual(typeof req.params.groupId, 'string');
+    assert.strictEqual(typeof req.params.name, 'string');
 
-    mail.getList(req.params.domain, req.params.groupId, function (error, result) {
+    mail.getList(req.params.domain, req.params.name, function (error, result) {
         if (error && error.reason === MailError.NOT_FOUND) return next(new HttpError(404, error.message));
         if (error) return next(new HttpError(500, error));
 
@@ -318,9 +318,10 @@ function addList(req, res, next) {
     assert.strictEqual(typeof req.params.domain, 'string');
     assert.strictEqual(typeof req.body, 'object');
 
+    if (typeof req.body.name !== 'string') return next(new HttpError(400, 'name must be a string'));
     if (typeof req.body.groupId !== 'string') return next(new HttpError(400, 'groupId must be a string'));
 
-    mail.addList(req.params.domain, req.body.groupId, function (error) {
+    mail.addList(req.params.domain, req.body.name, req.body.groupId, function (error) {
         if (error && error.reason === MailError.NOT_FOUND) return next(new HttpError(404, error.message));
         if (error && error.reason === MailError.ALREADY_EXISTS) return next(new HttpError(409, 'list already exists'));
         if (error) return next(new HttpError(500, error));
@@ -331,9 +332,9 @@ function addList(req, res, next) {
 
 function removeList(req, res, next) {
     assert.strictEqual(typeof req.params.domain, 'string');
-    assert.strictEqual(typeof req.params.groupId, 'string');
+    assert.strictEqual(typeof req.params.name, 'string');
 
-    mail.removeList(req.params.domain, req.params.groupId, function (error) {
+    mail.removeList(req.params.domain, req.params.name, function (error) {
         if (error && error.reason === MailError.NOT_FOUND) return next(new HttpError(404, error.message));
         if (error) return next(new HttpError(500, error));
 

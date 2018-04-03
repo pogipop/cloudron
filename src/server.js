@@ -234,8 +234,8 @@ function initializeExpressSync() {
     router.put ('/api/v1/mail/:domain/aliases/:userId', settingsScope, routes.user.requireAdmin, routes.mail.setUserAliases);
     router.get ('/api/v1/mail/:domain/lists', settingsScope, routes.user.requireAdmin, routes.mail.getLists);
     router.post('/api/v1/mail/:domain/lists', settingsScope, routes.user.requireAdmin, routes.mail.addList);
-    router.get ('/api/v1/mail/:domain/lists/:groupId', settingsScope, routes.user.requireAdmin, routes.mail.getList);
-    router.del ('/api/v1/mail/:domain/lists/:groupId', settingsScope, routes.user.requireAdmin, routes.mail.removeList);
+    router.get ('/api/v1/mail/:domain/lists/:name', settingsScope, routes.user.requireAdmin, routes.mail.getList);
+    router.del ('/api/v1/mail/:domain/lists/:name', settingsScope, routes.user.requireAdmin, routes.mail.removeList);
 
     // feedback
     router.post('/api/v1/feedback', usersScope, routes.cloudron.feedback);
