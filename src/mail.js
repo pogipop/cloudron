@@ -25,6 +25,7 @@ exports = module.exports = {
     removeMailboxes: removeMailboxes,
     getMailbox: getMailbox,
     addMailbox: addMailbox,
+    updateMailbox: updateMailbox,
     removeMailbox: removeMailbox,
 
     listAliases: listAliases,
@@ -34,6 +35,7 @@ exports = module.exports = {
     getLists: getLists,
     getList: getList,
     addList: addList,
+    updateList: updateList,
     removeList: removeList,
 
     _readDkimPublicKeySync: readDkimPublicKeySync,
@@ -910,6 +912,20 @@ function addMailbox(name, domain, userId, callback) {
     });
 }
 
+function updateMailbox(name, domain, userId, callback) {
+    assert.strictEqual(typeof name, 'string');
+    assert.strictEqual(typeof domain, 'string');
+    assert.strictEqual(typeof userId, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    mailboxdb.update(name, domain, userId, mailboxdb.TYPE_USER, function (error) {
+        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new MailError(MailError.NOT_FOUND, 'no such mailbox'));
+        if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
+
+        callback(null);
+    });
+}
+
 function removeMailbox(name, domain, callback) {
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof name, 'string');
@@ -1015,6 +1031,20 @@ function addList(domain, listName, groupId, callback) {
 
             callback();
         });
+    });
+}
+
+function updateList(name, domain, groupId, callback) {
+    assert.strictEqual(typeof name, 'string');
+    assert.strictEqual(typeof domain, 'string');
+    assert.strictEqual(typeof groupId, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    mailboxdb.update(name, domain, groupId, mailboxdb.TYPE_GROUP, function (error) {
+        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new MailError(MailError.NOT_FOUND, 'no such mailbox'));
+        if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
+
+        callback(null);
     });
 }
 

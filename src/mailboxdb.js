@@ -2,6 +2,7 @@
 
 exports = module.exports = {
     add: add,
+    update: update,
     del: del,
 
     listAliases: listAliases,
@@ -45,6 +46,21 @@ function add(name, domain, ownerId, ownerType, callback) {
     database.query('INSERT INTO mailboxes (name, domain, ownerId, ownerType) VALUES (?, ?, ?, ?)', [ name, domain, ownerId, ownerType ], function (error) {
         if (error && error.code === 'ER_DUP_ENTRY') return callback(new DatabaseError(DatabaseError.ALREADY_EXISTS, 'mailbox already exists'));
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
+
+        callback(null);
+    });
+}
+
+function update(name, domain, ownerId, ownerType, callback) {
+    assert.strictEqual(typeof name, 'string');
+    assert.strictEqual(typeof domain, 'string');
+    assert.strictEqual(typeof ownerId, 'string');
+    assert.strictEqual(typeof ownerType, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    database.query('UPDATE mailboxes SET ownerId = ? WHERE name = ? AND domain = ? AND ownerType = ?', [ ownerId, name, domain, ownerType ], function (error, result) {
+        if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
+        if (result.affectedRows === 0) return callback(new DatabaseError(DatabaseError.NOT_FOUND));
 
         callback(null);
     });

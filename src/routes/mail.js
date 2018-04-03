@@ -20,6 +20,7 @@ exports = module.exports = {
     getMailboxes: getMailboxes,
     getMailbox: getMailbox,
     addMailbox: addMailbox,
+    updateMailbox: updateMailbox,
     removeMailbox: removeMailbox,
 
     listAliases: listAliases,
@@ -29,6 +30,7 @@ exports = module.exports = {
     getLists: getLists,
     getList: getList,
     addList: addList,
+    updateList: updateList,
     removeList: removeList
 };
 
@@ -238,6 +240,20 @@ function addMailbox(req, res, next) {
     });
 }
 
+function updateMailbox(req, res, next) {
+    assert.strictEqual(typeof req.params.domain, 'string');
+    assert.strictEqual(typeof req.params.name, 'string');
+
+    if (typeof req.body.userId !== 'string') return next(new HttpError(400, 'userId must be a string'));
+
+    mail.updateMailbox(req.params.name, req.params.domain, req.body.userId, function (error) {
+        if (error && error.reason === MailError.NOT_FOUND) return next(new HttpError(404, error.message));
+        if (error) return next(new HttpError(500, error));
+
+        next(new HttpSuccess(204));
+    });
+}
+
 function removeMailbox(req, res, next) {
     assert.strictEqual(typeof req.params.domain, 'string');
     assert.strictEqual(typeof req.params.name, 'string');
@@ -330,6 +346,20 @@ function addList(req, res, next) {
         if (error) return next(new HttpError(500, error));
 
         next(new HttpSuccess(201, {}));
+    });
+}
+
+function updateList(req, res, next) {
+    assert.strictEqual(typeof req.params.domain, 'string');
+    assert.strictEqual(typeof req.params.name, 'string');
+
+    if (typeof req.body.groupId !== 'string') return next(new HttpError(400, 'groupId must be a string'));
+
+    mail.updateList(req.params.name, req.params.domain, req.body.groupId, function (error) {
+        if (error && error.reason === MailError.NOT_FOUND) return next(new HttpError(404, error.message));
+        if (error) return next(new HttpError(500, error));
+
+        next(new HttpSuccess(204));
     });
 }
 

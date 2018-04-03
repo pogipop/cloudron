@@ -228,6 +228,7 @@ function initializeExpressSync() {
     router.get ('/api/v1/mail/:domain/mailboxes',  settingsScope, routes.user.requireAdmin, routes.mail.getMailboxes);
     router.get ('/api/v1/mail/:domain/mailboxes/:name',  settingsScope, routes.user.requireAdmin, routes.mail.getMailbox);
     router.post('/api/v1/mail/:domain/mailboxes',  settingsScope, routes.user.requireAdmin, routes.mail.addMailbox);
+    router.post('/api/v1/mail/:domain/mailboxes/:name',  settingsScope, routes.user.requireAdmin, routes.mail.updateMailbox);
     router.del ('/api/v1/mail/:domain/mailboxes/:name',  settingsScope, routes.user.requireAdmin, routes.mail.removeMailbox);
     router.get ('/api/v1/mail/:domain/aliases', settingsScope, routes.user.requireAdmin, routes.mail.listAliases);
     router.get ('/api/v1/mail/:domain/aliases/:name', settingsScope, routes.user.requireAdmin, routes.mail.getAliases);
@@ -235,6 +236,7 @@ function initializeExpressSync() {
     router.get ('/api/v1/mail/:domain/lists', settingsScope, routes.user.requireAdmin, routes.mail.getLists);
     router.post('/api/v1/mail/:domain/lists', settingsScope, routes.user.requireAdmin, routes.mail.addList);
     router.get ('/api/v1/mail/:domain/lists/:name', settingsScope, routes.user.requireAdmin, routes.mail.getList);
+    router.post('/api/v1/mail/:domain/lists/:name', settingsScope, routes.user.requireAdmin, routes.mail.updateList);
     router.del ('/api/v1/mail/:domain/lists/:name', settingsScope, routes.user.requireAdmin, routes.mail.removeList);
 
     // feedback
