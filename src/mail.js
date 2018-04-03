@@ -23,13 +23,13 @@ exports = module.exports = {
 
     getMailboxes: getMailboxes,
     removeMailboxes: removeMailboxes,
-    getUserMailbox: getUserMailbox,
-    enableUserMailbox: enableUserMailbox,
-    disableUserMailbox: disableUserMailbox,
+    getMailbox: getMailbox,
+    addMailbox: addMailbox,
+    removeMailbox: removeMailbox,
 
+    listAliases: listAliases,
     getAliases: getAliases,
-    getUserAliases: getUserAliases,
-    setUserAliases: setUserAliases,
+    setAliases: setAliases,
 
     getLists: getLists,
     getList: getList,
@@ -66,7 +66,6 @@ var assert = require('assert'),
     smtpTransport = require('nodemailer-smtp-transport'),
     sysinfo = require('./sysinfo.js'),
     user = require('./user.js'),
-    UserError = user.UserError,
     util = require('util'),
     _ = require('underscore');
 
@@ -884,85 +883,67 @@ function removeMailboxes(domain, callback) {
     });
 }
 
-function getUserMailbox(domain, userId, callback) {
-    assert.strictEqual(typeof domain, 'string');
-    assert.strictEqual(typeof userId, 'string');
-    assert.strictEqual(typeof callback, 'function');
-
-    user.get(userId, function (error, result) {
-        if (error && error.reason === UserError.NOT_FOUND) return callback(new MailError(MailError.NOT_FOUND, 'no such user'));
-        if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
-        if (!result.username) return callback(new MailError(MailError.NOT_FOUND, 'no such mailbox'));
-
-        mailboxdb.getMailbox(result.username, domain, function (error, result) {
-            if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new MailError(MailError.NOT_FOUND, 'no such mailbox'));
-            if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
-
-            callback(null, result);
-        });
-    });
-}
-
-function enableUserMailbox(domain, userId, callback) {
-    assert.strictEqual(typeof domain, 'string');
-    assert.strictEqual(typeof userId, 'string');
-    assert.strictEqual(typeof callback, 'function');
-
-    user.get(userId, function (error, result) {
-        if (error && error.reason === UserError.NOT_FOUND) return callback(new MailError(MailError.NOT_FOUND, 'no such user'));
-        if (error) return callback(new MailError(MailError.INTERNAL_ERROR));
-        if (!result.username) return callback(new MailError(MailError.NOT_FOUND, 'user has no username'));
-
-        mailboxdb.add(result.username, domain, userId, mailboxdb.TYPE_USER, function (error) {
-            if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(new MailError(MailError.ALREADY_EXISTS, 'mailbox already exists'));
-            if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
-
-            callback(null);
-        });
-    });
-}
-
-function disableUserMailbox(domain, userId, callback) {
-    assert.strictEqual(typeof domain, 'string');
-    assert.strictEqual(typeof userId, 'string');
-    assert.strictEqual(typeof callback, 'function');
-
-    user.get(userId, function (error, result) {
-        if (error && error.reason === UserError.NOT_FOUND) return callback(new MailError(MailError.NOT_FOUND, 'no such user'));
-        if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
-        if (!result.username) return callback(new MailError(MailError.NOT_FOUND, 'user has no username'));
-
-        mailboxdb.del(result.username, domain, function (error) {
-            if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new MailError(MailError.NOT_FOUND, 'no such mailbox'));
-            if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
-
-            callback(null);
-        });
-    });
-}
-
-function getAliases(domain, callback) {
+function getMailbox(name, domain, callback) {
+    assert.strictEqual(typeof name, 'string');
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    mailboxdb.listAliases(domain, function (error, result) {
+    mailboxdb.getMailbox(name, domain, function (error, result) {
+        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new MailError(MailError.NOT_FOUND, 'no such mailbox'));
         if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
 
         callback(null, result);
     });
 }
 
-function getUserAliases(domain, userId, callback) {
+function addMailbox(name, domain, userId, callback) {
+    assert.strictEqual(typeof name, 'string');
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof userId, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    user.get(userId, function (error, result) {
-        if (error && error.reason === UserError.NOT_FOUND) return callback(new MailError(MailError.NOT_FOUND, 'no such user'));
+    mailboxdb.add(name, domain, userId, mailboxdb.TYPE_USER, function (error) {
+        if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(new MailError(MailError.ALREADY_EXISTS, 'mailbox already exists'));
         if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
-        if (!result.username) return callback(new MailError(MailError.NOT_FOUND, 'user has no username'));
 
-        mailboxdb.getAliasesForName(result.username, domain, function (error, aliases) {
+        callback(null);
+    });
+}
+
+function removeMailbox(name, domain, callback) {
+    assert.strictEqual(typeof domain, 'string');
+    assert.strictEqual(typeof name, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    mailboxdb.del(name, domain, function (error) {
+        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new MailError(MailError.NOT_FOUND, 'no such mailbox'));
+        if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
+
+        callback(null);
+    });
+}
+
+function listAliases(domain, callback) {
+    assert.strictEqual(typeof domain, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    mailboxdb.listAliases(domain, function (error, result) {
+        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new MailError(MailError.NOT_FOUND, error.message));
+        if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
+
+        callback(null, result);
+    });
+}
+
+function getAliases(name, domain, callback) {
+    assert.strictEqual(typeof name, 'string');
+    assert.strictEqual(typeof domain, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    getMailbox(name, domain, function (error) {
+        if (error) return callback(error);
+
+        mailboxdb.getAliasesForName(name, domain, function (error, aliases) {
             if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new MailError(MailError.NOT_FOUND, 'no such mailbox'));
             if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
 
@@ -971,9 +952,9 @@ function getUserAliases(domain, userId, callback) {
     });
 }
 
-function setUserAliases(domain, userId, aliases, callback) {
+function setAliases(name, domain, aliases, callback) {
+    assert.strictEqual(typeof name, 'string');
     assert.strictEqual(typeof domain, 'string');
-    assert.strictEqual(typeof userId, 'string');
     assert(Array.isArray(aliases));
     assert.strictEqual(typeof callback, 'function');
 
@@ -984,18 +965,12 @@ function setUserAliases(domain, userId, aliases, callback) {
         if (error) return callback(error);
     }
 
-    user.get(userId, function (error, result) {
-        if (error && error.reason === UserError.NOT_FOUND) return callback(new MailError(MailError.NOT_FOUND, 'no such user'));
+    mailboxdb.setAliasesForName(name, domain, aliases, function (error) {
+        if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(new MailError(MailError.ALREADY_EXISTS, error.message));
+        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new MailError(MailError.NOT_FOUND, 'no such mailbox'));
         if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
-        if (!result.username) return callback(new MailError(MailError.NOT_FOUND, 'user has no username'));
 
-        mailboxdb.setAliasesForName(result.username, domain, aliases, function (error) {
-            if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(new MailError(MailError.ALREADY_EXISTS, error.message));
-            if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new MailError(MailError.NOT_FOUND, 'no such mailbox'));
-            if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
-
-            callback(null);
-        });
+        callback(null);
     });
 }
 

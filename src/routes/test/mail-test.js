@@ -26,7 +26,7 @@ const DOMAIN_0 = {
     fallbackCertificate: null,
     tlsConfig: { provider: 'fallback' }
 };
-var USERNAME = 'superadmin', PASSWORD = 'Foobar?1337', EMAIL ='silly@me.com';
+var USERNAME = 'superadmin', PASSWORD = 'Foobar?1337', EMAIL ='silly@me.com', MAILBOX_NAME = 'superman';
 const GROUP_NAME = 'maillistgroup', LIST_NAME = 'devs';
 var token = null;
 var userId = '';
@@ -683,7 +683,8 @@ describe('Mail API', function () {
         });
 
         it('add/enable succeeds', function (done) {
-            superagent.post(SERVER_URL + '/api/v1/mail/' + DOMAIN_0.domain + '/mailboxes/' + userId)
+            superagent.post(SERVER_URL + '/api/v1/mail/' + DOMAIN_0.domain + '/mailboxes')
+                .send({ name: MAILBOX_NAME, userId: userId })
                 .query({ access_token: token })
                 .end(function (err, res) {
                     expect(res.statusCode).to.equal(201);
@@ -692,7 +693,8 @@ describe('Mail API', function () {
         });
 
         it('enable again succeeds if already enabled', function (done) {
-            superagent.post(SERVER_URL + '/api/v1/mail/' + DOMAIN_0.domain + '/mailboxes/' + userId)
+            superagent.post(SERVER_URL + '/api/v1/mail/' + DOMAIN_0.domain + '/mailboxes')
+                .send({ name: MAILBOX_NAME, userId: userId })
                 .query({ access_token: token })
                 .end(function (err, res) {
                     expect(res.statusCode).to.equal(201);
@@ -710,12 +712,12 @@ describe('Mail API', function () {
         });
 
         it('get succeeds', function (done) {
-            superagent.get(SERVER_URL + '/api/v1/mail/' + DOMAIN_0.domain + '/mailboxes/' + userId)
+            superagent.get(SERVER_URL + '/api/v1/mail/' + DOMAIN_0.domain + '/mailboxes/' + MAILBOX_NAME)
                 .query({ access_token: token })
                 .end(function (err, res) {
                     expect(res.statusCode).to.equal(200);
                     expect(res.body.mailbox).to.be.an('object');
-                    expect(res.body.mailbox.name).to.equal(USERNAME);
+                    expect(res.body.mailbox.name).to.equal(MAILBOX_NAME);
                     expect(res.body.mailbox.ownerId).to.equal(userId);
                     expect(res.body.mailbox.ownerType).to.equal('user');
                     expect(res.body.mailbox.aliasTarget).to.equal(null);
@@ -731,7 +733,7 @@ describe('Mail API', function () {
                     expect(res.statusCode).to.equal(200);
                     expect(res.body.mailboxes.length).to.eql(1);
                     expect(res.body.mailboxes[0]).to.be.an('object');
-                    expect(res.body.mailboxes[0].name).to.equal(USERNAME);
+                    expect(res.body.mailboxes[0].name).to.equal(MAILBOX_NAME);
                     expect(res.body.mailboxes[0].ownerId).to.equal(userId);
                     expect(res.body.mailboxes[0].ownerType).to.equal('user');
                     expect(res.body.mailboxes[0].aliasTarget).to.equal(null);
@@ -740,21 +742,21 @@ describe('Mail API', function () {
                 });
         });
 
-        it('disable succeeds even if not exist', function (done) {
+        it('disable fails even if not exist', function (done) {
             superagent.del(SERVER_URL + '/api/v1/mail/' + DOMAIN_0.domain + '/mailboxes/' + 'someuserdoesnotexist')
                 .query({ access_token: token })
                 .end(function (err, res) {
-                    expect(res.statusCode).to.equal(201);
+                    expect(res.statusCode).to.equal(404);
                     done();
                 });
         });
 
         it('disable succeeds', function (done) {
-            superagent.del(SERVER_URL + '/api/v1/mail/' + DOMAIN_0.domain + '/mailboxes/' + userId)
+            superagent.del(SERVER_URL + '/api/v1/mail/' + DOMAIN_0.domain + '/mailboxes/' + MAILBOX_NAME)
                 .query({ access_token: token })
                 .end(function (err, res) {
                     expect(res.statusCode).to.equal(201);
-                    superagent.get(SERVER_URL + '/api/v1/mail/' + DOMAIN_0.domain + '/mailboxes/' + userId)
+                    superagent.get(SERVER_URL + '/api/v1/mail/' + DOMAIN_0.domain + '/mailboxes/' + MAILBOX_NAME)
                         .query({ access_token: token })
                         .end(function (err, res) {
                             expect(res.statusCode).to.equal(404);
@@ -790,7 +792,7 @@ describe('Mail API', function () {
         });
 
         it('set fails if aliases is missing', function (done) {
-            superagent.put(SERVER_URL + '/api/v1/mail/' + DOMAIN_0.domain + '/aliases/' + userId)
+            superagent.put(SERVER_URL + '/api/v1/mail/' + DOMAIN_0.domain + '/aliases/' + MAILBOX_NAME)
                 .query({ access_token: token })
                 .end(function (err, res) {
                     expect(res.statusCode).to.equal(400);
@@ -809,7 +811,7 @@ describe('Mail API', function () {
         });
 
         it('set fails if aliases is the wrong type', function (done) {
-            superagent.put(SERVER_URL + '/api/v1/mail/' + DOMAIN_0.domain + '/aliases/' + userId)
+            superagent.put(SERVER_URL + '/api/v1/mail/' + DOMAIN_0.domain + '/aliases/' + MAILBOX_NAME)
                 .send({ aliases: 'hello, there' })
                 .query({ access_token: token })
                 .end(function (err, res) {
@@ -819,7 +821,7 @@ describe('Mail API', function () {
         });
 
         it('set fails if user is not enabled', function (done) {
-            superagent.put(SERVER_URL + '/api/v1/mail/' + DOMAIN_0.domain + '/aliases/' + userId)
+            superagent.put(SERVER_URL + '/api/v1/mail/' + DOMAIN_0.domain + '/aliases/' + MAILBOX_NAME)
                 .send({ aliases: ['hello', 'there'] })
                 .query({ access_token: token })
                 .end(function (err, res) {
@@ -828,8 +830,9 @@ describe('Mail API', function () {
                 });
         });
 
-        it('now enable the user', function (done) {
-            superagent.post(SERVER_URL + '/api/v1/mail/' + DOMAIN_0.domain + '/mailboxes/' + userId)
+        it('now add the mailbox', function (done) {
+            superagent.post(SERVER_URL + '/api/v1/mail/' + DOMAIN_0.domain + '/mailboxes')
+                .send({ name: MAILBOX_NAME, userId: userId })
                 .query({ access_token: token })
                 .end(function (err, res) {
                     expect(res.statusCode).to.equal(201);
@@ -838,7 +841,7 @@ describe('Mail API', function () {
         });
 
         it('set succeeds', function (done) {
-            superagent.put(SERVER_URL + '/api/v1/mail/' + DOMAIN_0.domain + '/aliases/' + userId)
+            superagent.put(SERVER_URL + '/api/v1/mail/' + DOMAIN_0.domain + '/aliases/' + MAILBOX_NAME)
                 .send({ aliases: ['hello', 'there'] })
                 .query({ access_token: token })
                 .end(function (err, res) {
@@ -848,7 +851,7 @@ describe('Mail API', function () {
         });
 
         it('get succeeds', function (done) {
-            superagent.get(SERVER_URL + '/api/v1/mail/' + DOMAIN_0.domain + '/aliases/' + userId)
+            superagent.get(SERVER_URL + '/api/v1/mail/' + DOMAIN_0.domain + '/aliases/' + MAILBOX_NAME)
                 .query({ access_token: token })
                 .end(function (err, res) {
                     expect(res.statusCode).to.equal(200);
@@ -857,7 +860,27 @@ describe('Mail API', function () {
                 });
         });
 
-        it('get succeeds if mailbox does not exist', function (done) {
+        it('listing succeeds', function (done) {
+            superagent.get(SERVER_URL + '/api/v1/mail/' + DOMAIN_0.domain + '/aliases')
+                .query({ access_token: token })
+                .end(function (err, res) {
+                    expect(res.statusCode).to.equal(200);
+                    expect(res.body.aliases.length).to.eql(2);
+                    expect(res.body.aliases[0].name).to.equal('hello');
+                    expect(res.body.aliases[0].ownerId).to.equal(userId);
+                    expect(res.body.aliases[0].ownerType).to.equal('user');
+                    expect(res.body.aliases[0].aliasTarget).to.equal(MAILBOX_NAME);
+                    expect(res.body.aliases[0].domain).to.equal(DOMAIN_0.domain);
+                    expect(res.body.aliases[1].name).to.equal('there');
+                    expect(res.body.aliases[1].ownerId).to.equal(userId);
+                    expect(res.body.aliases[1].ownerType).to.equal('user');
+                    expect(res.body.aliases[1].aliasTarget).to.equal(MAILBOX_NAME);
+                    expect(res.body.aliases[1].domain).to.equal(DOMAIN_0.domain);
+                    done();
+                });
+        });
+
+        it('get fails if mailbox does not exist', function (done) {
             superagent.get(SERVER_URL + '/api/v1/mail/' + DOMAIN_0.domain + '/aliases/' + 'someuserdoesnotexist')
                 .query({ access_token: token })
                 .end(function (err, res) {

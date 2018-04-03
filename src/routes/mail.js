@@ -18,13 +18,13 @@ exports = module.exports = {
     sendTestMail: sendTestMail,
 
     getMailboxes: getMailboxes,
-    getUserMailbox: getUserMailbox,
-    enableUserMailbox: enableUserMailbox,
-    disableUserMailbox: disableUserMailbox,
+    getMailbox: getMailbox,
+    addMailbox: addMailbox,
+    removeMailbox: removeMailbox,
 
+    listAliases: listAliases,
     getAliases: getAliases,
-    getUserAliases: getUserAliases,
-    setUserAliases: setUserAliases,
+    setAliases: setAliases,
 
     getLists: getLists,
     getList: getList,
@@ -211,11 +211,11 @@ function getMailboxes(req, res, next) {
     });
 }
 
-function getUserMailbox(req, res, next) {
+function getMailbox(req, res, next) {
     assert.strictEqual(typeof req.params.domain, 'string');
-    assert.strictEqual(typeof req.params.userId, 'string');
+    assert.strictEqual(typeof req.params.name, 'string');
 
-    mail.getUserMailbox(req.params.domain, req.params.userId, function (error, result) {
+    mail.getMailbox(req.params.name, req.params.domain, function (error, result) {
         if (error && error.reason === MailError.NOT_FOUND) return next(new HttpError(404, error.message));
         if (error) return next(new HttpError(500, error));
 
@@ -223,11 +223,13 @@ function getUserMailbox(req, res, next) {
     });
 }
 
-function enableUserMailbox(req, res, next) {
+function addMailbox(req, res, next) {
     assert.strictEqual(typeof req.params.domain, 'string');
-    assert.strictEqual(typeof req.params.userId, 'string');
 
-    mail.enableUserMailbox(req.params.domain, req.params.userId, function (error) {
+    if (typeof req.body.name !== 'string') return next(new HttpError(400, 'name must be a string'));
+    if (typeof req.body.userId !== 'string') return next(new HttpError(400, 'userId must be a string'));
+
+    mail.addMailbox(req.body.name, req.params.domain, req.body.userId, function (error) {
         if (error && error.reason === MailError.NOT_FOUND) return next(new HttpError(404, error.message));
         if (error && error.reason === MailError.ALREADY_EXISTS) return next(new HttpSuccess(201, {}));
         if (error) return next(new HttpError(500, error));
@@ -236,33 +238,22 @@ function enableUserMailbox(req, res, next) {
     });
 }
 
-function disableUserMailbox(req, res, next) {
+function removeMailbox(req, res, next) {
     assert.strictEqual(typeof req.params.domain, 'string');
-    assert.strictEqual(typeof req.params.userId, 'string');
+    assert.strictEqual(typeof req.params.name, 'string');
 
-    mail.disableUserMailbox(req.params.domain, req.params.userId, function (error) {
-        if (error && error.reason === MailError.NOT_FOUND) return next(new HttpSuccess(201, {}));
+    mail.removeMailbox(req.params.name, req.params.domain, function (error) {
+        if (error && error.reason === MailError.NOT_FOUND) return next(new HttpError(404, error.message));
         if (error) return next(new HttpError(500, error));
 
         next(new HttpSuccess(201, {}));
     });
 }
 
-function getAliases(req, res, next) {
+function listAliases(req, res, next) {
     assert.strictEqual(typeof req.params.domain, 'string');
 
-    mail.getAliases(req.params.domain, function (error, result) {
-        if (error) return next(new HttpError(500, error));
-
-        next(new HttpSuccess(200, { aliases: result }));
-    });
-}
-
-function getUserAliases(req, res, next) {
-    assert.strictEqual(typeof req.params.domain, 'string');
-    assert.strictEqual(typeof req.params.userId, 'string');
-
-    mail.getUserAliases(req.params.domain, req.params.userId, function (error, result) {
+    mail.listAliases(req.params.domain, function (error, result) {
         if (error && error.reason === MailError.NOT_FOUND) return next(new HttpError(404, error.message));
         if (error) return next(new HttpError(500, error));
 
@@ -270,9 +261,21 @@ function getUserAliases(req, res, next) {
     });
 }
 
-function setUserAliases(req, res, next) {
+function getAliases(req, res, next) {
     assert.strictEqual(typeof req.params.domain, 'string');
-    assert.strictEqual(typeof req.params.userId, 'string');
+    assert.strictEqual(typeof req.params.name, 'string');
+
+    mail.getAliases(req.params.name, req.params.domain, function (error, result) {
+        if (error && error.reason === MailError.NOT_FOUND) return next(new HttpError(404, error.message));
+        if (error) return next(new HttpError(500, error));
+
+        next(new HttpSuccess(200, { aliases: result }));
+    });
+}
+
+function setAliases(req, res, next) {
+    assert.strictEqual(typeof req.params.domain, 'string');
+    assert.strictEqual(typeof req.params.name, 'string');
     assert.strictEqual(typeof req.body, 'object');
 
     if (!Array.isArray(req.body.aliases)) return next(new HttpError(400, 'aliases must be an array'));
@@ -281,7 +284,7 @@ function setUserAliases(req, res, next) {
         if (typeof req.body.aliases[i] !== 'string') return next(new HttpError(400, 'alias must be a string'));
     }
 
-    mail.setUserAliases(req.params.domain, req.params.userId, req.body.aliases, function (error) {
+    mail.setAliases(req.params.name, req.params.domain, req.body.aliases, function (error) {
         if (error && error.reason === MailError.NOT_FOUND) return next(new HttpError(404, error.message));
         if (error && error.reason === MailError.ALREADY_EXISTS) return next(new HttpError(409, error.message));
         if (error && error.reason === MailError.BAD_FIELD) return next(new HttpError(400, error.message));
