@@ -98,19 +98,19 @@ MailError.ALREADY_EXISTS = 'Already Exists';
 MailError.NOT_FOUND = 'Not Found';
 MailError.IN_USE = 'In Use';
 
-function validateAlias(alias) {
-    assert.strictEqual(typeof alias, 'string');
+function validateName(name) {
+    assert.strictEqual(typeof name, 'string');
 
-    if (alias.length < 1) return new MailError(MailError.BAD_FIELD, 'alias must be atleast 1 char');
-    if (alias.length >= 200) return new MailError(MailError.BAD_FIELD, 'alias too long');
+    if (name.length < 1) return new MailError(MailError.BAD_FIELD, 'mailbox name must be atleast 1 char');
+    if (name.length >= 200) return new MailError(MailError.BAD_FIELD, 'mailbox name too long');
 
-    if (constants.RESERVED_NAMES.indexOf(alias) !== -1) return new MailError(MailError.BAD_FIELD, `Alias ${alias} is reserved`);
+    if (constants.RESERVED_NAMES.indexOf(name) !== -1) return new MailError(MailError.BAD_FIELD, `mailbox name ${name} is reserved`);
 
     // +/- can be tricky in emails. also need to consider valid LDAP characters here (e.g '+' is reserved)
-    if (/[^a-zA-Z0-9.]/.test(alias)) return new MailError(MailError.BAD_FIELD, 'alias can only contain alphanumerals and dot');
+    if (/[^a-zA-Z0-9.]/.test(name)) return new MailError(MailError.BAD_FIELD, 'mailbox name can only contain alphanumerals and dot');
 
     // app emails are sent using the .app suffix
-    if (alias.indexOf('.app') !== -1) return new MailError(MailError.BAD_FIELD, 'alias pattern is reserved for apps');
+    if (name.indexOf('.app') !== -1) return new MailError(MailError.BAD_FIELD, 'mailbox name pattern is reserved for apps');
 
     return null;
 }
@@ -980,7 +980,7 @@ function setUserAliases(domain, userId, aliases, callback) {
     for (var i = 0; i < aliases.length; i++) {
         aliases[i] = aliases[i].toLowerCase();
 
-        var error = validateAlias(aliases[i]);
+        var error = validateName(aliases[i]);
         if (error) return callback(error);
     }
 
