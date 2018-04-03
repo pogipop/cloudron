@@ -31,7 +31,7 @@ function setup(done) {
         database.initialize,
         database._clear,
         domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0.zoneName, DOMAIN_0.provider, DOMAIN_0.config, DOMAIN_0.fallbackCertificate, DOMAIN_0.tlsConfig),
-        mail.add.bind(null, DOMAIN_0.domain)
+        mail.addDomain.bind(null, DOMAIN_0.domain)
     ], done);
 }
 
@@ -48,7 +48,7 @@ describe('Mail', function () {
 
     describe('values', function () {
         it('can get default', function (done) {
-            mail.get(DOMAIN_0.domain, function (error, mailConfig) {
+            mail.getDomain(DOMAIN_0.domain, function (error, mailConfig) {
                 expect(error).to.be(null);
                 expect(mailConfig.enabled).to.be(false);
                 expect(mailConfig.mailFromValidation).to.be(true);
@@ -62,7 +62,7 @@ describe('Mail', function () {
             mail.setMailFromValidation(DOMAIN_0.domain, false, function (error) {
                 expect(error).to.be(null);
 
-                mail.get(DOMAIN_0.domain, function (error, mailConfig) {
+                mail.getDomain(DOMAIN_0.domain, function (error, mailConfig) {
                     expect(error).to.be(null);
                     expect(mailConfig.mailFromValidation).to.be(false);
 
@@ -75,7 +75,7 @@ describe('Mail', function () {
             mail.setCatchAllAddress(DOMAIN_0.domain, [ 'user1', 'user2' ], function (error) {
                 expect(error).to.be(null);
 
-                mail.get(DOMAIN_0.domain, function (error, mailConfig) {
+                mail.getDomain(DOMAIN_0.domain, function (error, mailConfig) {
                     expect(error).to.be(null);
                     expect(mailConfig.catchAll).to.eql([ 'user1', 'user2' ]);
                     done();
@@ -89,7 +89,7 @@ describe('Mail', function () {
             maildb.update(DOMAIN_0.domain, { relay: relay }, function (error) { // skip the mail server verify()
                 expect(error).to.be(null);
 
-                mail.get(DOMAIN_0.domain, function (error, mailConfig) {
+                mail.getDomain(DOMAIN_0.domain, function (error, mailConfig) {
                     expect(error).to.be(null);
                     expect(mailConfig.relay).to.eql(relay);
                     done();
@@ -101,7 +101,7 @@ describe('Mail', function () {
             mail.setMailEnabled(DOMAIN_0.domain, true, function (error) {
                 expect(error).to.be(null);
 
-                mail.get(DOMAIN_0.domain, function (error, mailConfig) {
+                mail.getDomain(DOMAIN_0.domain, function (error, mailConfig) {
                     expect(error).to.be(null);
                     expect(mailConfig.enabled).to.be(true);
                     done();

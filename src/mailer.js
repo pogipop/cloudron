@@ -74,7 +74,7 @@ function getMailConfig(callback) {
                 cloudronName = 'Cloudron';
             }
 
-            mail.getAll(function (error, domains) {
+            mail.getDomains(function (error, domains) {
                 if (error) return callback(error);
                 if (domains.length === 0) return callback('No domains configured');
 

@@ -44,7 +44,7 @@ function setup(done) {
         database._clear,
         mailer._clearMailQueue,
         domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0.zoneName, DOMAIN_0.provider, DOMAIN_0.config, DOMAIN_0.fallbackCertificate, DOMAIN_0.tlsConfig),
-        mail.add.bind(null, DOMAIN_0.domain)
+        mail.addDomain.bind(null, DOMAIN_0.domain)
     ], function (error) {
         expect(error).to.not.be.ok();
 

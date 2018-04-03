@@ -3,12 +3,12 @@
 exports = module.exports = {
     getStatus: getStatus,
 
-    get: get,
-    getAll: getAll,
+    getDomains: getDomains,
 
-    add: add,
-    del: del,
-    update: update,
+    getDomain: getDomain,
+    addDomain: addDomain,
+    removeDomain: removeDomain,
+    updateDomain: updateDomain,
 
     addDnsRecords: addDnsRecords,
 
@@ -448,7 +448,7 @@ function getStatus(domain, callback) {
         };
     }
 
-    get(domain, function (error, result) {
+    getDomain(domain, function (error, result) {
         if (error) return callback(error);
 
         var checks = [
@@ -480,7 +480,7 @@ function createMailConfig(callback) {
 
     debug('createMailConfig: generating mail config');
 
-    maildb.getAll(function (error, mailDomains) {
+    getDomains(function (error, mailDomains) {
         if (error) return callback(error);
 
         user.getOwner(function (error, owner) {
@@ -584,7 +584,7 @@ function restartMail(callback) {
     });
 }
 
-function get(domain, callback) {
+function getDomain(domain, callback) {
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof callback, 'function');
 
@@ -596,7 +596,7 @@ function get(domain, callback) {
     });
 }
 
-function getAll(callback) {
+function getDomains(callback) {
     assert.strictEqual(typeof callback, 'function');
 
     maildb.getAll(function (error, results) {
@@ -728,7 +728,7 @@ function addDnsRecords(domain, callback) {
     });
 }
 
-function add(domain, callback) {
+function addDomain(domain, callback) {
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof callback, 'function');
 
@@ -747,11 +747,11 @@ function add(domain, callback) {
 }
 
 // this is just a way to resync the mail "dns" records via the UI
-function update(domain, callback) {
+function updateDomain(domain, callback) {
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    get(domain, function (error) {
+    getDomain(domain, function (error) {
         if (error) return callback(error);
 
         addDnsRecords(domain, NOOP_CALLBACK);
@@ -760,7 +760,7 @@ function update(domain, callback) {
     });
 }
 
-function del(domain, callback) {
+function removeDomain(domain, callback) {
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof callback, 'function');
 
@@ -855,7 +855,7 @@ function sendTestMail(domain, to, callback) {
     assert.strictEqual(typeof to, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    get(domain, function (error, result) {
+    getDomain(domain, function (error, result) {
         if (error) return callback(error);
 
         mailer.sendTestMail(result.domain, to);

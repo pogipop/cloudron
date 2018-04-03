@@ -430,7 +430,7 @@ function authenticateMailbox(req, res, next) {
         if (error && error.reason === DatabaseError.NOT_FOUND) return next(new ldap.NoSuchObjectError(req.dn.toString()));
         if (error) return next(new ldap.OperationsError(error.message));
 
-        mail.get(parts[1], function (error, domain) {
+        mail.getDomain(parts[1], function (error, domain) {
             if (error && error.reason === MailError.NOT_FOUND) return next(new ldap.NoSuchObjectError(req.dn.toString()));
             if (error) return next(new ldap.OperationsError(error.message));
 

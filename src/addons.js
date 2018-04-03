@@ -291,7 +291,7 @@ function setupEmail(app, options, callback) {
     assert.strictEqual(typeof options, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    mail.getAll(function (error, mailDomains) {
+    mail.getDomains(function (error, mailDomains) {
         if (error) return callback(error);
 
         const mailInDomains = mailDomains.filter(function (d) { return d.enabled; }).map(function (d) { return d.domain; }).join(',');

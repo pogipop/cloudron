@@ -72,7 +72,7 @@ describe('digest', function () {
             database._clear,
             settings.initialize,
             domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0.zoneName, DOMAIN_0.provider, DOMAIN_0.config, DOMAIN_0.fallbackCertificate, DOMAIN_0.tlsConfig),
-            mail.add.bind(null, DOMAIN_0.domain),
+            mail.addDomain.bind(null, DOMAIN_0.domain),
             user.createOwner.bind(null, USER_0.username, USER_0.password, USER_0.email, USER_0.displayName, AUDIT_SOURCE),
             function (callback) {
                 userdb.getByUsername(USER_0.username, function (error, result) {

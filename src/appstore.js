@@ -164,7 +164,7 @@ function sendAliveStatus(callback) {
             });
         },
         function (callback) {
-            mail.getAll(function (error, result) {
+            mail.getDomains(function (error, result) {
                 if (error) return callback(new AppstoreError(AppstoreError.INTERNAL_ERROR, error));
                 mailDomains = result;
                 callback();

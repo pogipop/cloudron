@@ -214,11 +214,11 @@ function initializeExpressSync() {
     router.post('/api/v1/settings/appstore_config',    settingsScope, routes.user.requireAdmin, routes.settings.setAppstoreConfig);
 
     // email routes
-    router.get ('/api/v1/mail/:domain',       settingsScope, routes.user.requireAdmin, routes.mail.get);
-    router.post('/api/v1/mail/:domain',       settingsScope, routes.user.requireAdmin, routes.mail.update);
-    router.post('/api/v1/mail',               settingsScope, routes.user.requireAdmin, routes.mail.add);
-    router.get ('/api/v1/mail/:domain/stats', settingsScope, routes.user.requireAdmin, routes.user.verifyPassword, routes.mail.getStats);
-    router.del ('/api/v1/mail/:domain',       settingsScope, routes.user.requireAdmin, routes.user.verifyPassword, routes.mail.del);
+    router.get ('/api/v1/mail/:domain',       settingsScope, routes.user.requireAdmin, routes.mail.getDomain);
+    router.post('/api/v1/mail/:domain',       settingsScope, routes.user.requireAdmin, routes.mail.updateDomain);
+    router.post('/api/v1/mail',               settingsScope, routes.user.requireAdmin, routes.mail.addDomain);
+    router.get ('/api/v1/mail/:domain/stats', settingsScope, routes.user.requireAdmin, routes.user.verifyPassword, routes.mail.getDomainStats);
+    router.del ('/api/v1/mail/:domain',       settingsScope, routes.user.requireAdmin, routes.user.verifyPassword, routes.mail.removeDomain);
     router.get ('/api/v1/mail/:domain/status',       settingsScope, routes.user.requireAdmin, routes.mail.getStatus);
     router.post('/api/v1/mail/:domain/mail_from_validation', settingsScope, routes.user.requireAdmin, routes.mail.setMailFromValidation);
     router.post('/api/v1/mail/:domain/catch_all',  settingsScope, routes.user.requireAdmin, routes.mail.setCatchAllAddress);

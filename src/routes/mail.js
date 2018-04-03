@@ -1,12 +1,11 @@
 'use strict';
 
 exports = module.exports = {
-    get: get,
-
-    add: add,
-    getStats: getStats,
-    update: update,
-    del: del,
+    getDomain: getDomain,
+    addDomain: addDomain,
+    getDomainStats: getDomainStats,
+    updateDomain: updateDomain,
+    removeDomain: removeDomain,
 
     getStatus: getStatus,
 
@@ -44,10 +43,10 @@ var assert = require('assert'),
 
 var mailProxy = middleware.proxy(url.parse('http://127.0.0.1:2020'));
 
-function get(req, res, next) {
+function getDomain(req, res, next) {
     assert.strictEqual(typeof req.params.domain, 'string');
 
-    mail.get(req.params.domain, function (error, result) {
+    mail.getDomain(req.params.domain, function (error, result) {
         if (error && error.reason === MailError.NOT_FOUND) return next(new HttpError(404, error.message));
         if (error) return next(new HttpError(500, error));
 
@@ -55,12 +54,12 @@ function get(req, res, next) {
     });
 }
 
-function add(req, res, next) {
+function addDomain(req, res, next) {
     assert.strictEqual(typeof req.body, 'object');
 
     if (typeof req.body.domain !== 'string') return next(new HttpError(400, 'domain must be a string'));
 
-    mail.add(req.body.domain, function (error) {
+    mail.addDomain(req.body.domain, function (error) {
         if (error && error.reason === MailError.NOT_FOUND) return next(new HttpError(404, error.message));
         if (error && error.reason === MailError.ALREADY_EXISTS) return next(new HttpError(409, 'domain already exists'));
         if (error) return next(new HttpError(500, error));
@@ -69,7 +68,7 @@ function add(req, res, next) {
     });
 }
 
-function getStats(req, res, next) {
+function getDomainStats(req, res, next) {
     assert.strictEqual(typeof req.params.domain, 'string');
 
     var parsedUrl = url.parse(req.url, true /* parseQueryString */);
@@ -82,11 +81,11 @@ function getStats(req, res, next) {
     mailProxy(req, res, next);
 }
 
-function update(req, res, next) {
+function updateDomain(req, res, next) {
     assert.strictEqual(typeof req.body, 'object');
     assert.strictEqual(typeof req.params.domain, 'string');
 
-    mail.update(req.params.domain, function (error) {
+    mail.updateDomain(req.params.domain, function (error) {
         if (error && error.reason === MailError.NOT_FOUND) return next(new HttpError(404, error.message));
         if (error) return next(new HttpError(500, error));
 
@@ -94,10 +93,10 @@ function update(req, res, next) {
     });
 }
 
-function del(req, res, next) {
+function removeDomain(req, res, next) {
     assert.strictEqual(typeof req.params.domain, 'string');
 
-    mail.del(req.params.domain, function (error) {
+    mail.removeDomain(req.params.domain, function (error) {
         if (error && error.reason === MailError.NOT_FOUND) return next(new HttpError(404, error.message));
         if (error && error.reason === MailError.IN_USE) return next(new HttpError(409, 'Mail domain is still in use. Remove existing mailboxes'));
         if (error) return next(new HttpError(500, error));
