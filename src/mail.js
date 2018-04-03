@@ -68,6 +68,7 @@ var assert = require('assert'),
     smtpTransport = require('nodemailer-smtp-transport'),
     sysinfo = require('./sysinfo.js'),
     user = require('./user.js'),
+    UserError = user.UserError,
     util = require('util'),
     _ = require('underscore');
 
@@ -904,11 +905,17 @@ function addMailbox(name, domain, userId, callback) {
     assert.strictEqual(typeof userId, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    mailboxdb.add(name, domain, userId, mailboxdb.TYPE_USER, function (error) {
-        if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(new MailError(MailError.ALREADY_EXISTS, 'mailbox already exists'));
+    // sanity check if the group exists
+    user.get(userId, function (error) {
+        if (error && error.reason === UserError.NOT_FOUND) return callback(new MailError(MailError.NOT_FOUND, 'no such user'));
         if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
 
-        callback(null);
+        mailboxdb.add(name, domain, userId, mailboxdb.TYPE_USER, function (error) {
+            if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(new MailError(MailError.ALREADY_EXISTS, 'mailbox already exists'));
+            if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
+
+            callback(null);
+        });
     });
 }
 

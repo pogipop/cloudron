@@ -674,7 +674,8 @@ describe('Mail API', function () {
         });
 
         it('add fails if user does not exist', function (done) {
-            superagent.post(SERVER_URL + '/api/v1/mail/' + DOMAIN_0.domain + '/mailboxes/' + 'someuserdoesnotexist')
+            superagent.post(SERVER_URL + '/api/v1/mail/' + DOMAIN_0.domain + '/mailboxes')
+                .send({ name: MAILBOX_NAME, userId: userId + 'oops' })
                 .query({ access_token: token })
                 .end(function (err, res) {
                     expect(res.statusCode).to.equal(404);
