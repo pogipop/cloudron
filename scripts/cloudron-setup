@@ -205,7 +205,7 @@ while true; do
     sleep 10
 done
 
-echo -e "\n\n${GREEN}Visit https://<IP> to finish setup once the server has rebooted.${DONE}"
+echo -e "\n\n${GREEN}Visit https://<IP> and accept the self-signed certificate to finish setup once the server has rebooted.${DONE}"
 
 if [[ "${rebootServer}" == "true" ]]; then
     echo -e "\nRebooting this server now to let changes take effect.\n"
