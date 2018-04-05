@@ -24,7 +24,6 @@ var assert = require('assert'),
     constants = require('./constants.js'),
     DatabaseError = require('./databaseerror.js'),
     groupdb = require('./groupdb.js'),
-    mailboxdb = require('./mailboxdb.js'),
     util = require('util'),
     uuid = require('uuid');
 
@@ -100,15 +99,11 @@ function remove(id, callback) {
     // never allow admin group to be deleted
     if (id === constants.ADMIN_GROUP_ID) return callback(new GroupError(GroupError.NOT_ALLOWED));
 
-    mailboxdb.delByOwnerId(id, function (error) {
+    groupdb.del(id, function (error) {
+        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new GroupError(GroupError.NOT_FOUND));
         if (error) return callback(new GroupError(GroupError.INTERNAL_ERROR, error));
 
-        groupdb.del(id, function (error) {
-            if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new GroupError(GroupError.NOT_FOUND));
-            if (error) return callback(new GroupError(GroupError.INTERNAL_ERROR, error));
-
-            callback(null);
-        });
+        callback(null);
     });
 }
 
