@@ -69,7 +69,7 @@ else
 fi
 
 echo "Building dashboard assets"
-(cd "${bundle_dir}/dashboard" && ../node_modules/.bin/gulp)
+(cd "${bundle_dir}/dashboard" && ../node_modules/.bin/gulp --revision ${dashboard_version})
 
 echo "Remove intermediate files required at build-time only"
 rm -rf "${bundle_dir}/node_modules/"
