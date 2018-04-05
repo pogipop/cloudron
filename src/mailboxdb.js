@@ -2,7 +2,7 @@
 
 exports = module.exports = {
     addMailbox: addMailbox,
-    addList: addList,
+    addGroup: addGroup,
 
     updateMailbox: updateMailbox,
     updateList: updateList,
@@ -35,9 +35,17 @@ exports = module.exports = {
 var assert = require('assert'),
     database = require('./database.js'),
     DatabaseError = require('./databaseerror.js'),
+    safe = require('safetydance'),
     util = require('util');
 
-var MAILBOX_FIELDS = [ 'name', 'ownerId', 'ownerType', 'aliasTarget', 'creationTime', 'domain' ].join(',');
+var MAILBOX_FIELDS = [ 'name', 'ownerId', 'ownerType', 'aliasTarget', 'creationTime', 'membersJson', 'domain' ].join(',');
+
+function postProcess(data) {
+    data.members = safe.JSON.parse(data.membersJson) || [ ];
+    delete data.membersJson;
+
+    return data;
+}
 
 function addMailbox(name, domain, ownerId, ownerType, callback) {
     assert.strictEqual(typeof name, 'string');
@@ -69,34 +77,34 @@ function updateMailbox(name, domain, ownerId, ownerType, callback) {
     });
 }
 
-function addList(name, domain, ownerId, ownerType, callback) {
+function addGroup(name, domain, members, callback) {
     assert.strictEqual(typeof name, 'string');
     assert.strictEqual(typeof domain, 'string');
-    assert.strictEqual(typeof ownerId, 'string');
-    assert.strictEqual(typeof ownerType, 'string');
+    assert(Array.isArray(members));
     assert.strictEqual(typeof callback, 'function');
 
-    database.query('INSERT INTO mailboxes (name, domain, ownerId, ownerType) VALUES (?, ?, ?, ?)', [ name, domain, ownerId, ownerType ], function (error) {
-        if (error && error.code === 'ER_DUP_ENTRY') return callback(new DatabaseError(DatabaseError.ALREADY_EXISTS, 'mailbox already exists'));
-        if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
+    database.query('INSERT INTO mailboxes (name, domain, ownerId, ownerType, membersJson) VALUES (?, ?, ?, ?, ?)',
+        [ name, domain, 'admin', exports.TYPE_GROUP, JSON.stringify(members) ], function (error) {
+            if (error && error.code === 'ER_DUP_ENTRY') return callback(new DatabaseError(DatabaseError.ALREADY_EXISTS, 'mailbox already exists'));
+            if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
 
-        callback(null);
-    });
+            callback(null);
+        });
 }
 
-function updateList(name, domain, ownerId, ownerType, callback) {
+function updateList(name, domain, members, callback) {
     assert.strictEqual(typeof name, 'string');
     assert.strictEqual(typeof domain, 'string');
-    assert.strictEqual(typeof ownerId, 'string');
-    assert.strictEqual(typeof ownerType, 'string');
+    assert(Array.isArray(members));
     assert.strictEqual(typeof callback, 'function');
 
-    database.query('UPDATE mailboxes SET ownerId = ? WHERE name = ? AND domain = ? AND ownerType = ?', [ ownerId, name, domain, ownerType ], function (error, result) {
-        if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
-        if (result.affectedRows === 0) return callback(new DatabaseError(DatabaseError.NOT_FOUND));
+    database.query('UPDATE mailboxes SET membersJson = ? WHERE name = ? AND domain = ?',
+        [ JSON.stringify(members), name, domain ], function (error, result) {
+            if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
+            if (result.affectedRows === 0) return callback(new DatabaseError(DatabaseError.NOT_FOUND));
 
-        callback(null);
-    });
+            callback(null);
+        });
 }
 
 function clear(callback) {
@@ -174,7 +182,7 @@ function getMailbox(name, domain, callback) {
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
         if (results.length === 0) return callback(new DatabaseError(DatabaseError.NOT_FOUND));
 
-        callback(null, results[0]);
+        callback(null, postProcess(results[0]));
     });
 }
 
@@ -185,6 +193,8 @@ function listMailboxes(domain, callback) {
     database.query('SELECT ' + MAILBOX_FIELDS + ' FROM mailboxes WHERE domain = ? AND (ownerType = ? OR ownerType = ?) AND aliasTarget IS NULL ORDER BY name', [ domain, exports.TYPE_APP, exports.TYPE_USER ], function (error, results) {
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
 
+        results.forEach(function (result) { postProcess(result); });
+
         callback(null, results);
     });
 }
@@ -193,8 +203,10 @@ function listGroups(domain, callback) {
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    database.query('SELECT ' + MAILBOX_FIELDS + ' FROM mailboxes WHERE domain = ? AND ownerType = ? AND aliasTarget IS NULL', [ domain, exports.TYPE_GROUP ], function (error, results) {
+    database.query('SELECT ' + MAILBOX_FIELDS + ' FROM mailboxes WHERE domain = ? AND ownerType = ? AND aliasTarget IS NULL',[ domain, exports.TYPE_GROUP ], function (error, results) {
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
+
+        results.forEach(function (result) { postProcess(result); });
 
         callback(null, results);
     });
@@ -205,24 +217,11 @@ function getGroup(name, domain, callback) {
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    // This can be merged into a single query but cannot get 'not found' information
-    // SELECT users.username FROM mailboxes
-    //    INNER JOIN groupMembers ON mailboxes.ownerId = groupMembers.groupId
-    //    INNER JOIN users ON groupMembers.userId = users.id
-    //    WHERE mailboxes.name = <name>
-
     database.query('SELECT ' + MAILBOX_FIELDS + ' FROM mailboxes WHERE name = ? AND domain = ? AND ownerType = ? AND aliasTarget IS NULL', [ name, domain, exports.TYPE_GROUP ], function (error, results) {
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
         if (results.length === 0) return callback(new DatabaseError(DatabaseError.NOT_FOUND));
 
-        // username can be null if the user has not signed up with the invite yet
-        database.query('SELECT users.username FROM groupMembers INNER JOIN users ON groupMembers.userId = users.id WHERE groupMembers.groupId = ? AND users.username IS NOT NULL', [ results[0].ownerId ], function (error, memberList) {
-            if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
-
-            results[0].members = memberList.map(function (m) { return m.username; });
-
-            callback(null, results[0]);
-        });
+        callback(null, postProcess(results[0]));
     });
 }
 
@@ -233,6 +232,8 @@ function getByOwnerId(ownerId, callback) {
     database.query('SELECT ' + MAILBOX_FIELDS + ' FROM mailboxes WHERE ownerId = ? ORDER BY name', [ ownerId ], function (error, results) {
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
         if (results.length === 0) return callback(new DatabaseError(DatabaseError.NOT_FOUND));
+
+        results.forEach(function (result) { postProcess(result); });
 
         callback(null, results);
     });
@@ -284,6 +285,8 @@ function listAliases(domain, callback) {
     database.query('SELECT ' + MAILBOX_FIELDS + ' FROM mailboxes WHERE domain = ? AND aliasTarget IS NOT NULL ORDER BY name', [ domain ], function (error, results) {
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
 
+        results.forEach(function (result) { postProcess(result); });
+
         callback(null, results);
     });
 }
@@ -296,6 +299,8 @@ function getAlias(name, domain, callback) {
     database.query('SELECT ' + MAILBOX_FIELDS + ' FROM mailboxes WHERE name = ? AND domain = ? AND aliasTarget IS NOT NULL', [ name, domain ], function (error, results) {
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
         if (results.length === 0) return callback(new DatabaseError(DatabaseError.NOT_FOUND));
+
+        results.forEach(function (result) { postProcess(result); });
 
         callback(null, results[0]);
     });

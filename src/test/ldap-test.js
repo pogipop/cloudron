@@ -824,14 +824,14 @@ describe('Ldap', function () {
 
     describe('search mailing list', function () {
         before(function (done) {
-            mailboxdb.addList(GROUP_NAME, DOMAIN_0.domain, GROUP_ID, mailboxdb.TYPE_GROUP, done);
+            mailboxdb.addGroup('devs', DOMAIN_0.domain, [ USER_0.username.toLowerCase(), USER_1.username.toLowerCase() ], done);
         });
 
         it('get specific list', function (done) {
-            ldapSearch('cn=developers@example.com,ou=mailinglists,dc=cloudron', 'objectclass=mailGroup', function (error, entries) {
+            ldapSearch('cn=devs@example.com,ou=mailinglists,dc=cloudron', 'objectclass=mailGroup', function (error, entries) {
                 if (error) return done(error);
                 expect(entries.length).to.equal(1);
-                expect(entries[0].cn).to.equal('developers@example.com');
+                expect(entries[0].cn).to.equal('devs@example.com');
                 expect(entries[0].mgrpRFC822MailMember).to.eql([ USER_0.username.toLowerCase() + '@example.com', USER_1.username.toLowerCase() + '@example.com' ]);
                 done();
             });

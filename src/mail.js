@@ -51,8 +51,6 @@ var assert = require('assert'),
     debug = require('debug')('box:mail'),
     dns = require('./native-dns.js'),
     domains = require('./domains.js'),
-    groups = require('./groups.js'),
-    GroupError = groups.GroupError,
     infra = require('./infra_version.js'),
     mailboxdb = require('./mailboxdb.js'),
     maildb = require('./maildb.js'),
@@ -1021,33 +1019,27 @@ function getList(domain, listName, callback) {
     });
 }
 
-function addList(domain, listName, groupId, callback) {
+function addList(domain, listName, members, callback) {
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof listName, 'string');
-    assert.strictEqual(typeof groupId, 'string');
+    assert(Array.isArray(members));
     assert.strictEqual(typeof callback, 'function');
 
-    // sanity check if the group exists
-    groups.get(groupId, function (error) {
-        if (error && error.reason === GroupError.NOT_FOUND) return callback(new MailError(MailError.NOT_FOUND, 'no such group'));
+    mailboxdb.addGroup(listName, domain, members, function (error) {
+        if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(new MailError(MailError.ALREADY_EXISTS, 'list already exits'));
         if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
 
-        mailboxdb.addList(listName, domain, groupId, mailboxdb.TYPE_GROUP, function (error) {
-            if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(new MailError(MailError.ALREADY_EXISTS, 'list already exits'));
-            if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
-
-            callback();
-        });
+        callback();
     });
 }
 
-function updateList(name, domain, groupId, callback) {
+function updateList(name, domain, members, callback) {
     assert.strictEqual(typeof name, 'string');
     assert.strictEqual(typeof domain, 'string');
-    assert.strictEqual(typeof groupId, 'string');
+    assert(Array.isArray(members));
     assert.strictEqual(typeof callback, 'function');
 
-    mailboxdb.updateList(name, domain, groupId, mailboxdb.TYPE_GROUP, function (error) {
+    mailboxdb.updateList(name, domain, members, function (error) {
         if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new MailError(MailError.NOT_FOUND, 'no such mailbox'));
         if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
 

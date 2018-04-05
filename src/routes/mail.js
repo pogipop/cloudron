@@ -337,9 +337,13 @@ function addList(req, res, next) {
     assert.strictEqual(typeof req.body, 'object');
 
     if (typeof req.body.name !== 'string') return next(new HttpError(400, 'name must be a string'));
-    if (typeof req.body.groupId !== 'string') return next(new HttpError(400, 'groupId must be a string'));
+    if (!Array.isArray(req.body.members)) return next(new HttpError(400, 'members must be a string'));
 
-    mail.addList(req.params.domain, req.body.name, req.body.groupId, function (error) {
+    for (var i = 0; i < req.body.members.length; i++) {
+        if (typeof req.body.members[i] !== 'string') return next(new HttpError(400, 'member must be a string'));
+    }
+
+    mail.addList(req.params.domain, req.body.name, req.body.members, function (error) {
         if (error && error.reason === MailError.NOT_FOUND) return next(new HttpError(404, error.message));
         if (error && error.reason === MailError.ALREADY_EXISTS) return next(new HttpError(409, 'list already exists'));
         if (error) return next(new HttpError(500, error));
@@ -352,9 +356,13 @@ function updateList(req, res, next) {
     assert.strictEqual(typeof req.params.domain, 'string');
     assert.strictEqual(typeof req.params.name, 'string');
 
-    if (typeof req.body.groupId !== 'string') return next(new HttpError(400, 'groupId must be a string'));
+    if (!Array.isArray(req.body.members)) return next(new HttpError(400, 'members must be a string'));
 
-    mail.updateList(req.params.name, req.params.domain, req.body.groupId, function (error) {
+    for (var i = 0; i < req.body.members.length; i++) {
+        if (typeof req.body.members[i] !== 'string') return next(new HttpError(400, 'member must be a string'));
+    }
+
+    mail.updateList(req.params.name, req.params.domain, req.body.members, function (error) {
         if (error && error.reason === MailError.NOT_FOUND) return next(new HttpError(404, error.message));
         if (error) return next(new HttpError(500, error));
 
