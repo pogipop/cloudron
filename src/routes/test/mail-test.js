@@ -30,7 +30,6 @@ var USERNAME = 'superadmin', PASSWORD = 'Foobar?1337', EMAIL ='silly@me.com', MA
 const GROUP_NAME = 'maillistgroup', LIST_NAME = 'devs';
 var token = null;
 var userId = '';
-var groupObject = null;
 
 function setup(done) {
     config._reset();
@@ -673,16 +672,6 @@ describe('Mail API', function () {
                 });
         });
 
-        it('add fails if user does not exist', function (done) {
-            superagent.post(SERVER_URL + '/api/v1/mail/' + DOMAIN_0.domain + '/mailboxes')
-                .send({ name: MAILBOX_NAME, userId: userId + 'oops' })
-                .query({ access_token: token })
-                .end(function (err, res) {
-                    expect(res.statusCode).to.equal(404);
-                    done();
-                });
-        });
-
         it('add/enable succeeds', function (done) {
             superagent.post(SERVER_URL + '/api/v1/mail/' + DOMAIN_0.domain + '/mailboxes')
                 .send({ name: MAILBOX_NAME, userId: userId })
@@ -902,25 +891,6 @@ describe('Mail API', function () {
                             expect(res.statusCode).to.equal(201);
                             done();
                         });
-                },
-                function (done) {
-                    superagent.post(SERVER_URL + '/api/v1/groups')
-                        .query({ access_token: token })
-                        .send({ name: GROUP_NAME})
-                        .end(function (error, result) {
-                            expect(result.statusCode).to.equal(201);
-                            groupObject = result.body;
-                            done();
-                        });
-                },
-                function (done) {
-                    superagent.put(SERVER_URL + '/api/v1/users/' + userId + '/groups')
-                        .query({ access_token: token })
-                        .send({ groupIds: [ 'admin', groupObject.id ]})
-                        .end(function (error, result) {
-                            expect(result.statusCode).to.equal(204);
-                            done();
-                        });
                 }
             ], done);
         });
@@ -958,19 +928,29 @@ describe('Mail API', function () {
                 });
         });
 
-        it('add fails with non-existing groupId', function (done) {
+        it('add fails without members array', function (done) {
             superagent.post(SERVER_URL + '/api/v1/mail/' + DOMAIN_0.domain + '/lists')
-                .send({ name: LIST_NAME, groupId: 'doesnotexist' })
+                .send({ name: LIST_NAME })
                 .query({ access_token: token })
                 .end(function (err, res) {
-                    expect(res.statusCode).to.equal(404);
+                    expect(res.statusCode).to.equal(400);
+                    done();
+                });
+        });
+
+        it('cannot add reserved group', function (done) {
+            superagent.post(SERVER_URL + '/api/v1/mail/' + DOMAIN_0.domain + '/lists')
+                .send({ name: LIST_NAME, members: [ 'Admin', USERNAME ]})
+                .query({ access_token: token })
+                .end(function (err, res) {
+                    expect(res.statusCode).to.equal(400);
                     done();
                 });
         });
 
         it('add succeeds', function (done) {
             superagent.post(SERVER_URL + '/api/v1/mail/' + DOMAIN_0.domain + '/lists')
-                .send({ name: LIST_NAME, groupId: groupObject.id })
+                .send({ name: LIST_NAME, members: [ 'admin2', USERNAME ]})
                 .query({ access_token: token })
                 .end(function (err, res) {
                     expect(res.statusCode).to.equal(201);
@@ -980,7 +960,7 @@ describe('Mail API', function () {
 
         it('add twice fails', function (done) {
             superagent.post(SERVER_URL + '/api/v1/mail/' + DOMAIN_0.domain + '/lists')
-                .send({ name: LIST_NAME, groupId: groupObject.id })
+                .send({ name: LIST_NAME, members: [ 'admin2', USERNAME ] })
                 .query({ access_token: token })
                 .end(function (err, res) {
                     expect(res.statusCode).to.equal(409);
@@ -1004,11 +984,11 @@ describe('Mail API', function () {
                     expect(res.statusCode).to.equal(200);
                     expect(res.body.list).to.be.an('object');
                     expect(res.body.list.name).to.equal(LIST_NAME);
-                    expect(res.body.list.ownerId).to.equal(groupObject.id);
+                    expect(res.body.list.ownerId).to.equal('admin');
                     expect(res.body.list.ownerType).to.equal('group');
                     expect(res.body.list.aliasTarget).to.equal(null);
                     expect(res.body.list.domain).to.equal(DOMAIN_0.domain);
-                    expect(res.body.list.members).to.eql([ 'superadmin' ]);
+                    expect(res.body.list.members).to.eql([ 'admin2', 'superadmin' ]);
                     done();
                 });
         });
@@ -1021,10 +1001,11 @@ describe('Mail API', function () {
                     expect(res.body.lists).to.be.an(Array);
                     expect(res.body.lists.length).to.equal(1);
                     expect(res.body.lists[0].name).to.equal(LIST_NAME);
-                    expect(res.body.lists[0].ownerId).to.equal(groupObject.id);
+                    expect(res.body.lists[0].ownerId).to.equal('admin');
                     expect(res.body.lists[0].ownerType).to.equal('group');
                     expect(res.body.lists[0].aliasTarget).to.equal(null);
                     expect(res.body.lists[0].domain).to.equal(DOMAIN_0.domain);
+                    expect(res.body.lists[0].members).to.eql([ 'admin2', 'superadmin' ]);
                     done();
                 });
         });

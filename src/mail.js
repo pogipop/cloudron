@@ -66,7 +66,6 @@ var assert = require('assert'),
     smtpTransport = require('nodemailer-smtp-transport'),
     sysinfo = require('./sysinfo.js'),
     user = require('./user.js'),
-    UserError = user.UserError,
     util = require('util'),
     _ = require('underscore');
 
@@ -903,17 +902,16 @@ function addMailbox(name, domain, userId, callback) {
     assert.strictEqual(typeof userId, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    // sanity check if the group exists
-    user.get(userId, function (error) {
-        if (error && error.reason === UserError.NOT_FOUND) return callback(new MailError(MailError.NOT_FOUND, 'no such user'));
+    name = name.toLowerCase();
+
+    var error = validateName(name);
+    if (error) return callback(error);
+
+    mailboxdb.addMailbox(name, domain, userId, mailboxdb.TYPE_USER, function (error) {
+        if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(new MailError(MailError.ALREADY_EXISTS, 'mailbox already exists'));
         if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
 
-        mailboxdb.addMailbox(name, domain, userId, mailboxdb.TYPE_USER, function (error) {
-            if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(new MailError(MailError.ALREADY_EXISTS, 'mailbox already exists'));
-            if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
-
-            callback(null);
-        });
+        callback(null);
     });
 }
 
@@ -922,6 +920,11 @@ function updateMailbox(name, domain, userId, callback) {
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof userId, 'string');
     assert.strictEqual(typeof callback, 'function');
+
+    name = name.toLowerCase();
+
+    var error = validateName(name);
+    if (error) return callback(error);
 
     mailboxdb.updateMailbox(name, domain, userId, mailboxdb.TYPE_USER, function (error) {
         if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new MailError(MailError.NOT_FOUND, 'no such mailbox'));
@@ -1019,13 +1022,25 @@ function getList(domain, listName, callback) {
     });
 }
 
-function addList(domain, listName, members, callback) {
+function addList(name, domain, members, callback) {
     assert.strictEqual(typeof domain, 'string');
-    assert.strictEqual(typeof listName, 'string');
+    assert.strictEqual(typeof name, 'string');
     assert(Array.isArray(members));
     assert.strictEqual(typeof callback, 'function');
 
-    mailboxdb.addGroup(listName, domain, members, function (error) {
+    name = name.toLowerCase();
+
+    var error = validateName(name);
+    if (error) return callback(error);
+
+    for (var i = 0; i < members.length; i++) {
+        members[i] = members[i].toLowerCase();
+
+        error = validateName(members[i]);
+        if (error) return callback(error);
+    }
+
+    mailboxdb.addGroup(name, domain, members, function (error) {
         if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(new MailError(MailError.ALREADY_EXISTS, 'list already exits'));
         if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
 
@@ -1038,6 +1053,18 @@ function updateList(name, domain, members, callback) {
     assert.strictEqual(typeof domain, 'string');
     assert(Array.isArray(members));
     assert.strictEqual(typeof callback, 'function');
+
+    name = name.toLowerCase();
+
+    var error = validateName(name);
+    if (error) return callback(error);
+
+    for (var i = 0; i < members.length; i++) {
+        members[i] = members[i].toLowerCase();
+
+        error = validateName(members[i]);
+        if (error) return callback(error);
+    }
 
     mailboxdb.updateList(name, domain, members, function (error) {
         if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new MailError(MailError.NOT_FOUND, 'no such mailbox'));
