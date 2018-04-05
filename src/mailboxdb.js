@@ -1,8 +1,11 @@
 'use strict';
 
 exports = module.exports = {
-    add: add,
-    update: update,
+    addMailbox: addMailbox,
+    addList: addList,
+
+    updateMailbox: updateMailbox,
+    updateList: updateList,
     del: del,
 
     listAliases: listAliases,
@@ -36,7 +39,7 @@ var assert = require('assert'),
 
 var MAILBOX_FIELDS = [ 'name', 'ownerId', 'ownerType', 'aliasTarget', 'creationTime', 'domain' ].join(',');
 
-function add(name, domain, ownerId, ownerType, callback) {
+function addMailbox(name, domain, ownerId, ownerType, callback) {
     assert.strictEqual(typeof name, 'string');
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof ownerId, 'string');
@@ -51,7 +54,37 @@ function add(name, domain, ownerId, ownerType, callback) {
     });
 }
 
-function update(name, domain, ownerId, ownerType, callback) {
+function updateMailbox(name, domain, ownerId, ownerType, callback) {
+    assert.strictEqual(typeof name, 'string');
+    assert.strictEqual(typeof domain, 'string');
+    assert.strictEqual(typeof ownerId, 'string');
+    assert.strictEqual(typeof ownerType, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    database.query('UPDATE mailboxes SET ownerId = ? WHERE name = ? AND domain = ? AND ownerType = ?', [ ownerId, name, domain, ownerType ], function (error, result) {
+        if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
+        if (result.affectedRows === 0) return callback(new DatabaseError(DatabaseError.NOT_FOUND));
+
+        callback(null);
+    });
+}
+
+function addList(name, domain, ownerId, ownerType, callback) {
+    assert.strictEqual(typeof name, 'string');
+    assert.strictEqual(typeof domain, 'string');
+    assert.strictEqual(typeof ownerId, 'string');
+    assert.strictEqual(typeof ownerType, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    database.query('INSERT INTO mailboxes (name, domain, ownerId, ownerType) VALUES (?, ?, ?, ?)', [ name, domain, ownerId, ownerType ], function (error) {
+        if (error && error.code === 'ER_DUP_ENTRY') return callback(new DatabaseError(DatabaseError.ALREADY_EXISTS, 'mailbox already exists'));
+        if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
+
+        callback(null);
+    });
+}
+
+function updateList(name, domain, ownerId, ownerType, callback) {
     assert.strictEqual(typeof name, 'string');
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof ownerId, 'string');

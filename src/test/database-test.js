@@ -1596,21 +1596,21 @@ describe('database', function () {
         });
 
         it('add user mailbox succeeds', function (done) {
-            mailboxdb.add('girish', DOMAIN_0.domain, 'uid-0', mailboxdb.TYPE_USER, function (error) {
+            mailboxdb.addMailbox('girish', DOMAIN_0.domain, 'uid-0', mailboxdb.TYPE_USER, function (error) {
                 expect(error).to.be(null);
                 done();
             });
         });
 
         it('cannot add dup entry', function (done) {
-            mailboxdb.add('girish', DOMAIN_0.domain, 'uid-1', mailboxdb.TYPE_APP, function (error) {
+            mailboxdb.addMailbox('girish', DOMAIN_0.domain, 'uid-1', mailboxdb.TYPE_APP, function (error) {
                 expect(error.reason).to.be(DatabaseError.ALREADY_EXISTS);
                 done();
             });
         });
 
         it('add app mailbox succeeds', function (done) {
-            mailboxdb.add('support', DOMAIN_0.domain, 'osticket', mailboxdb.TYPE_APP, function (error) {
+            mailboxdb.addMailbox('support', DOMAIN_0.domain, 'osticket', mailboxdb.TYPE_APP, function (error) {
                 expect(error).to.be(null);
                 done();
             });

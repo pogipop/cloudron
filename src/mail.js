@@ -910,7 +910,7 @@ function addMailbox(name, domain, userId, callback) {
         if (error && error.reason === UserError.NOT_FOUND) return callback(new MailError(MailError.NOT_FOUND, 'no such user'));
         if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
 
-        mailboxdb.add(name, domain, userId, mailboxdb.TYPE_USER, function (error) {
+        mailboxdb.addMailbox(name, domain, userId, mailboxdb.TYPE_USER, function (error) {
             if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(new MailError(MailError.ALREADY_EXISTS, 'mailbox already exists'));
             if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
 
@@ -925,7 +925,7 @@ function updateMailbox(name, domain, userId, callback) {
     assert.strictEqual(typeof userId, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    mailboxdb.update(name, domain, userId, mailboxdb.TYPE_USER, function (error) {
+    mailboxdb.updateMailbox(name, domain, userId, mailboxdb.TYPE_USER, function (error) {
         if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new MailError(MailError.NOT_FOUND, 'no such mailbox'));
         if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
 
@@ -1032,7 +1032,7 @@ function addList(domain, listName, groupId, callback) {
         if (error && error.reason === GroupError.NOT_FOUND) return callback(new MailError(MailError.NOT_FOUND, 'no such group'));
         if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
 
-        mailboxdb.add(listName, domain, groupId, mailboxdb.TYPE_GROUP, function (error) {
+        mailboxdb.addList(listName, domain, groupId, mailboxdb.TYPE_GROUP, function (error) {
             if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(new MailError(MailError.ALREADY_EXISTS, 'list already exits'));
             if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
 
@@ -1047,7 +1047,7 @@ function updateList(name, domain, groupId, callback) {
     assert.strictEqual(typeof groupId, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    mailboxdb.update(name, domain, groupId, mailboxdb.TYPE_GROUP, function (error) {
+    mailboxdb.updateList(name, domain, groupId, mailboxdb.TYPE_GROUP, function (error) {
         if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new MailError(MailError.NOT_FOUND, 'no such mailbox'));
         if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
 
