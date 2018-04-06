@@ -36,7 +36,7 @@ exports.up = function(db, callback) {
             async.eachSeries(Object.keys(groupMembers), function (gid, iteratorDone) {
                 console.log(`Migrating group id ${gid} to ${JSON.stringify(groupMembers[gid])}`);
 
-                db.runSql('UPDATE mailboxes SET membersJson = ? AND ownerId = ? WHERE ownerId = ?', [ JSON.stringify(groupMembers[gid]), 'admin', gid ], iteratorDone);
+                db.runSql('UPDATE mailboxes SET membersJson = ?, ownerId = ? WHERE ownerId = ?', [ JSON.stringify(groupMembers[gid]), 'admin', gid ], iteratorDone);
             }, done);
         },
         db.runSql.bind(db, 'COMMIT')
