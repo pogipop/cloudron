@@ -908,7 +908,7 @@ function addMailbox(name, domain, userId, callback) {
     if (error) return callback(error);
 
     mailboxdb.addMailbox(name, domain, userId, mailboxdb.TYPE_USER, function (error) {
-        if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(new MailError(MailError.ALREADY_EXISTS, 'mailbox already exists'));
+        if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(new MailError(MailError.ALREADY_EXISTS, `mailbox ${name} already exists`));
         if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
 
         callback(null);

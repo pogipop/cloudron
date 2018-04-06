@@ -232,7 +232,7 @@ function addMailbox(req, res, next) {
 
     mail.addMailbox(req.body.name, req.params.domain, req.body.userId, function (error) {
         if (error && error.reason === MailError.NOT_FOUND) return next(new HttpError(404, error.message));
-        if (error && error.reason === MailError.ALREADY_EXISTS) return next(new HttpSuccess(201, {}));
+        if (error && error.reason === MailError.ALREADY_EXISTS) return next(new HttpError(409, error.message));
         if (error && error.reason === MailError.BAD_FIELD) return next(new HttpError(400, error.message));
         if (error) return next(new HttpError(500, error));
 
