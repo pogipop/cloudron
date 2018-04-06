@@ -24,8 +24,8 @@ exports.up = function(db, callback) {
                 if (error) return done(error);
 
                 results.forEach(function (result) {
-                    var userIds = result.userIds ? result.userIds.split(',') : [ ];
-                    var members = userIds.map(function (id) { return users[id].name; });
+                    var userIds = result.userIds ? result.userIds.split(',') : [];
+                    var members = userIds.map(function (id) { return users[id].username; });
                     groupMembers[result.id] = members;
                 });
 
