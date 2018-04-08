@@ -103,7 +103,7 @@ function setup(done) {
         appdb.update.bind(null, APP_0.id, { containerId: APP_0.containerId }),
         appdb.setAddonConfig.bind(null, APP_0.id, 'sendmail', [{ name: 'MAIL_SMTP_PASSWORD', value : 'sendmailpassword' }]),
         appdb.setAddonConfig.bind(null, APP_0.id, 'recvmail', [{ name: 'MAIL_IMAP_PASSWORD', value : 'recvmailpassword' }]),
-        mailboxdb.addMailbox.bind(null, APP_0.location + '.app', APP_0.domain, APP_0.id, mailboxdb.TYPE_APP),
+        mailboxdb.addMailbox.bind(null, APP_0.location + '.app', APP_0.domain, APP_0.id, mailboxdb.OWNER_TYPE_APP),
 
         function (callback) {
             user.createOwner(USER_0.username, USER_0.password, USER_0.email, USER_0.displayName, AUDIT_SOURCE, function (error, result) {
@@ -739,7 +739,7 @@ describe('Ldap', function () {
 
     describe('search mailbox', function () {
         before(function (done) {
-            mailboxdb.addMailbox(USER_0.username.toLowerCase(), DOMAIN_0.domain, USER_0.id, mailboxdb.TYPE_USER, done);
+            mailboxdb.addMailbox(USER_0.username.toLowerCase(), DOMAIN_0.domain, USER_0.id, mailboxdb.OWNER_TYPE_USER, done);
         });
 
         it('get specific mailbox by email', function (done) {

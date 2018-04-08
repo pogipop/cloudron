@@ -221,7 +221,7 @@ function add(id, appStoreId, manifest, location, domain, portBindings, data, cal
     if (data.mailboxName) {
         queries.push({
             query: 'INSERT INTO mailboxes (name, domain, ownerId, ownerType) VALUES (?, ?, ?, ?)',
-            args: [ data.mailboxName, domain, id, mailboxdb.TYPE_APP ]
+            args: [ data.mailboxName, domain, id, mailboxdb.OWNER_TYPE_APP ]
         });
     }
 

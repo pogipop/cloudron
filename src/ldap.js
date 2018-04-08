@@ -434,7 +434,7 @@ function authenticateMailbox(req, res, next) {
             if (error && error.reason === MailError.NOT_FOUND) return next(new ldap.NoSuchObjectError(req.dn.toString()));
             if (error) return next(new ldap.OperationsError(error.message));
 
-            if (mailbox.ownerType === mailboxdb.TYPE_APP) {
+            if (mailbox.ownerType === mailboxdb.OWNER_TYPE_APP) {
                 var addonId = req.dn.rdns[1].attrs.ou.value.toLowerCase(); // 'sendmail' or 'recvmail'
                 var name;
                 if (addonId === 'sendmail') name = 'MAIL_SMTP_PASSWORD';
@@ -448,7 +448,7 @@ function authenticateMailbox(req, res, next) {
                     eventlog.add(eventlog.ACTION_APP_LOGIN, { authType: 'ldap', mailboxId: name }, { appId: mailbox.ownerId, addonId: addonId });
                     return res.end();
                 });
-            } else if (mailbox.ownerType === mailboxdb.TYPE_USER) {
+            } else if (mailbox.ownerType === mailboxdb.OWNER_TYPE_USER) {
                 if (!domain.enabled) return next(new ldap.NoSuchObjectError(req.dn.toString()));
 
                 user.verifyWithUsername(parts[0], req.credentials || '', function (error, result) {

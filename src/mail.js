@@ -907,7 +907,7 @@ function addMailbox(name, domain, userId, callback) {
     var error = validateName(name);
     if (error) return callback(error);
 
-    mailboxdb.addMailbox(name, domain, userId, mailboxdb.TYPE_USER, function (error) {
+    mailboxdb.addMailbox(name, domain, userId, mailboxdb.OWNER_TYPE_USER, function (error) {
         if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(new MailError(MailError.ALREADY_EXISTS, `mailbox ${name} already exists`));
         if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
 
@@ -926,7 +926,7 @@ function updateMailbox(name, domain, userId, callback) {
     var error = validateName(name);
     if (error) return callback(error);
 
-    mailboxdb.updateMailbox(name, domain, userId, mailboxdb.TYPE_USER, function (error) {
+    mailboxdb.updateMailbox(name, domain, userId, mailboxdb.OWNER_TYPE_USER, function (error) {
         if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new MailError(MailError.NOT_FOUND, 'no such mailbox'));
         if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
 

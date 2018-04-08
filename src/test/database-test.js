@@ -1596,21 +1596,21 @@ describe('database', function () {
         });
 
         it('add user mailbox succeeds', function (done) {
-            mailboxdb.addMailbox('girish', DOMAIN_0.domain, 'uid-0', mailboxdb.TYPE_USER, function (error) {
+            mailboxdb.addMailbox('girish', DOMAIN_0.domain, 'uid-0', mailboxdb.OWNER_TYPE_USER, function (error) {
                 expect(error).to.be(null);
                 done();
             });
         });
 
         it('cannot add dup entry', function (done) {
-            mailboxdb.addMailbox('girish', DOMAIN_0.domain, 'uid-1', mailboxdb.TYPE_APP, function (error) {
+            mailboxdb.addMailbox('girish', DOMAIN_0.domain, 'uid-1', mailboxdb.OWNER_TYPE_APP, function (error) {
                 expect(error.reason).to.be(DatabaseError.ALREADY_EXISTS);
                 done();
             });
         });
 
         it('add app mailbox succeeds', function (done) {
-            mailboxdb.addMailbox('support', DOMAIN_0.domain, 'osticket', mailboxdb.TYPE_APP, function (error) {
+            mailboxdb.addMailbox('support', DOMAIN_0.domain, 'osticket', mailboxdb.OWNER_TYPE_APP, function (error) {
                 expect(error).to.be(null);
                 done();
             });
@@ -1633,7 +1633,7 @@ describe('database', function () {
                 expect(error).to.be(null);
                 expect(mailboxes.length).to.be(2);
                 expect(mailboxes[0].name).to.be('girish');
-                expect(mailboxes[0].ownerType).to.be(mailboxdb.TYPE_USER);
+                expect(mailboxes[0].ownerType).to.be(mailboxdb.OWNER_TYPE_USER);
                 expect(mailboxes[1].name).to.be('support');
 
                 done();

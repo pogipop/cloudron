@@ -27,9 +27,9 @@ exports = module.exports = {
 
     _clear: clear,
 
-    TYPE_USER: 'user',
-    TYPE_APP: 'app',
-    TYPE_GROUP: 'group'
+    OWNER_TYPE_USER: 'user',
+    OWNER_TYPE_APP: 'app',
+    OWNER_TYPE_GROUP: 'group'
 };
 
 var assert = require('assert'),
@@ -84,7 +84,7 @@ function addGroup(name, domain, members, callback) {
     assert.strictEqual(typeof callback, 'function');
 
     database.query('INSERT INTO mailboxes (name, domain, ownerId, ownerType, membersJson) VALUES (?, ?, ?, ?, ?)',
-        [ name, domain, 'admin', exports.TYPE_GROUP, JSON.stringify(members) ], function (error) {
+        [ name, domain, 'admin', exports.OWNER_TYPE_GROUP, JSON.stringify(members) ], function (error) {
             if (error && error.code === 'ER_DUP_ENTRY') return callback(new DatabaseError(DatabaseError.ALREADY_EXISTS, 'mailbox already exists'));
             if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
 
@@ -178,7 +178,7 @@ function getMailbox(name, domain, callback) {
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    database.query('SELECT ' + MAILBOX_FIELDS + ' FROM mailboxes WHERE name = ? AND domain = ? AND (ownerType = ? OR ownerType = ?) AND aliasTarget IS NULL', [ name, domain, exports.TYPE_APP, exports.TYPE_USER ], function (error, results) {
+    database.query('SELECT ' + MAILBOX_FIELDS + ' FROM mailboxes WHERE name = ? AND domain = ? AND (ownerType = ? OR ownerType = ?) AND aliasTarget IS NULL', [ name, domain, exports.OWNER_TYPE_APP, exports.OWNER_TYPE_USER ], function (error, results) {
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
         if (results.length === 0) return callback(new DatabaseError(DatabaseError.NOT_FOUND));
 
@@ -190,7 +190,7 @@ function listMailboxes(domain, callback) {
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    database.query('SELECT ' + MAILBOX_FIELDS + ' FROM mailboxes WHERE domain = ? AND (ownerType = ? OR ownerType = ?) AND aliasTarget IS NULL ORDER BY name', [ domain, exports.TYPE_APP, exports.TYPE_USER ], function (error, results) {
+    database.query('SELECT ' + MAILBOX_FIELDS + ' FROM mailboxes WHERE domain = ? AND (ownerType = ? OR ownerType = ?) AND aliasTarget IS NULL ORDER BY name', [ domain, exports.OWNER_TYPE_APP, exports.OWNER_TYPE_USER ], function (error, results) {
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
 
         results.forEach(function (result) { postProcess(result); });
@@ -203,7 +203,7 @@ function listGroups(domain, callback) {
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    database.query('SELECT ' + MAILBOX_FIELDS + ' FROM mailboxes WHERE domain = ? AND ownerType = ? AND aliasTarget IS NULL',[ domain, exports.TYPE_GROUP ], function (error, results) {
+    database.query('SELECT ' + MAILBOX_FIELDS + ' FROM mailboxes WHERE domain = ? AND ownerType = ? AND aliasTarget IS NULL',[ domain, exports.OWNER_TYPE_GROUP ], function (error, results) {
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
 
         results.forEach(function (result) { postProcess(result); });
@@ -217,7 +217,7 @@ function getGroup(name, domain, callback) {
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    database.query('SELECT ' + MAILBOX_FIELDS + ' FROM mailboxes WHERE name = ? AND domain = ? AND ownerType = ? AND aliasTarget IS NULL', [ name, domain, exports.TYPE_GROUP ], function (error, results) {
+    database.query('SELECT ' + MAILBOX_FIELDS + ' FROM mailboxes WHERE name = ? AND domain = ? AND ownerType = ? AND aliasTarget IS NULL', [ name, domain, exports.OWNER_TYPE_GROUP ], function (error, results) {
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
         if (results.length === 0) return callback(new DatabaseError(DatabaseError.NOT_FOUND));
 
