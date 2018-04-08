@@ -672,7 +672,7 @@ describe('Mail API', function () {
                 });
         });
 
-        it('add/enable succeeds', function (done) {
+        it('add succeeds', function (done) {
             superagent.post(SERVER_URL + '/api/v1/mail/' + DOMAIN_0.domain + '/mailboxes')
                 .send({ name: MAILBOX_NAME, userId: userId })
                 .query({ access_token: token })
@@ -682,12 +682,12 @@ describe('Mail API', function () {
                 });
         });
 
-        it('enable again succeeds if already enabled', function (done) {
+        it('cannot add again', function (done) {
             superagent.post(SERVER_URL + '/api/v1/mail/' + DOMAIN_0.domain + '/mailboxes')
                 .send({ name: MAILBOX_NAME, userId: userId })
                 .query({ access_token: token })
                 .end(function (err, res) {
-                    expect(res.statusCode).to.equal(201);
+                    expect(res.statusCode).to.equal(409);
                     done();
                 });
         });
