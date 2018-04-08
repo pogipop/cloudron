@@ -27,9 +27,13 @@ exports = module.exports = {
 
     _clear: clear,
 
+    TYPE_MAILBOX: 'mailbox',
+    TYPE_LIST: 'list',
+    TYPE_ALIAS: 'alias',
+
     OWNER_TYPE_USER: 'user',
     OWNER_TYPE_APP: 'app',
-    OWNER_TYPE_GROUP: 'group'
+    OWNER_TYPE_GROUP: 'group' // obsolete
 };
 
 var assert = require('assert'),
@@ -38,7 +42,7 @@ var assert = require('assert'),
     safe = require('safetydance'),
     util = require('util');
 
-var MAILBOX_FIELDS = [ 'name', 'ownerId', 'ownerType', 'aliasTarget', 'creationTime', 'membersJson', 'domain' ].join(',');
+var MAILBOX_FIELDS = [ 'name', 'type', 'ownerId', 'ownerType', 'aliasTarget', 'creationTime', 'membersJson', 'domain' ].join(',');
 
 function postProcess(data) {
     data.members = safe.JSON.parse(data.membersJson) || [ ];
@@ -54,7 +58,7 @@ function addMailbox(name, domain, ownerId, ownerType, callback) {
     assert.strictEqual(typeof ownerType, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    database.query('INSERT INTO mailboxes (name, domain, ownerId, ownerType) VALUES (?, ?, ?, ?)', [ name, domain, ownerId, ownerType ], function (error) {
+    database.query('INSERT INTO mailboxes (name, type, domain, ownerId, ownerType) VALUES (?, ?, ?, ?, ?)', [ name, exports.TYPE_MAILBOX, domain, ownerId, ownerType ], function (error) {
         if (error && error.code === 'ER_DUP_ENTRY') return callback(new DatabaseError(DatabaseError.ALREADY_EXISTS, 'mailbox already exists'));
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
 
@@ -83,8 +87,8 @@ function addGroup(name, domain, members, callback) {
     assert(Array.isArray(members));
     assert.strictEqual(typeof callback, 'function');
 
-    database.query('INSERT INTO mailboxes (name, domain, ownerId, ownerType, membersJson) VALUES (?, ?, ?, ?, ?)',
-        [ name, domain, 'admin', exports.OWNER_TYPE_GROUP, JSON.stringify(members) ], function (error) {
+    database.query('INSERT INTO mailboxes (name, type, domain, ownerId, ownerType, membersJson) VALUES (?, ?, ?, ?, ?, ?)',
+        [ name, exports.TYPE_LIST, domain, 'admin', exports.OWNER_TYPE_GROUP, JSON.stringify(members) ], function (error) {
             if (error && error.code === 'ER_DUP_ENTRY') return callback(new DatabaseError(DatabaseError.ALREADY_EXISTS, 'mailbox already exists'));
             if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
 
@@ -134,7 +138,6 @@ function delByDomain(domain, callback) {
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    // deletes aliases as well
     database.query('DELETE FROM mailboxes WHERE domain = ?', [ domain ], function (error) {
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
 
@@ -146,7 +149,6 @@ function delByOwnerId(id, callback) {
     assert.strictEqual(typeof id, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    // deletes aliases as well
     database.query('DELETE FROM mailboxes WHERE ownerId=?', [ id ], function (error) {
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
 
@@ -178,38 +180,41 @@ function getMailbox(name, domain, callback) {
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    database.query('SELECT ' + MAILBOX_FIELDS + ' FROM mailboxes WHERE name = ? AND domain = ? AND (ownerType = ? OR ownerType = ?) AND aliasTarget IS NULL', [ name, domain, exports.OWNER_TYPE_APP, exports.OWNER_TYPE_USER ], function (error, results) {
-        if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
-        if (results.length === 0) return callback(new DatabaseError(DatabaseError.NOT_FOUND));
+    database.query('SELECT ' + MAILBOX_FIELDS + ' FROM mailboxes WHERE name = ? AND type = ? AND domain = ?',
+        [ name, exports.TYPE_MAILBOX, domain ], function (error, results) {
+            if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
+            if (results.length === 0) return callback(new DatabaseError(DatabaseError.NOT_FOUND));
 
-        callback(null, postProcess(results[0]));
-    });
+            callback(null, postProcess(results[0]));
+        });
 }
 
 function listMailboxes(domain, callback) {
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    database.query('SELECT ' + MAILBOX_FIELDS + ' FROM mailboxes WHERE domain = ? AND (ownerType = ? OR ownerType = ?) AND aliasTarget IS NULL ORDER BY name', [ domain, exports.OWNER_TYPE_APP, exports.OWNER_TYPE_USER ], function (error, results) {
-        if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
+    database.query('SELECT ' + MAILBOX_FIELDS + ' FROM mailboxes WHERE type = ? AND domain = ? ORDER BY name',
+        [ exports.TYPE_MAILBOX, domain ], function (error, results) {
+            if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
 
-        results.forEach(function (result) { postProcess(result); });
+            results.forEach(function (result) { postProcess(result); });
 
-        callback(null, results);
-    });
+            callback(null, results);
+        });
 }
 
 function listGroups(domain, callback) {
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    database.query('SELECT ' + MAILBOX_FIELDS + ' FROM mailboxes WHERE domain = ? AND ownerType = ? AND aliasTarget IS NULL',[ domain, exports.OWNER_TYPE_GROUP ], function (error, results) {
-        if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
+    database.query('SELECT ' + MAILBOX_FIELDS + ' FROM mailboxes WHERE type = ? AND domain = ?',
+        [ exports.TYPE_LIST, domain ], function (error, results) {
+            if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
 
-        results.forEach(function (result) { postProcess(result); });
+            results.forEach(function (result) { postProcess(result); });
 
-        callback(null, results);
-    });
+            callback(null, results);
+        });
 }
 
 function getGroup(name, domain, callback) {
@@ -217,12 +222,13 @@ function getGroup(name, domain, callback) {
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    database.query('SELECT ' + MAILBOX_FIELDS + ' FROM mailboxes WHERE name = ? AND domain = ? AND ownerType = ? AND aliasTarget IS NULL', [ name, domain, exports.OWNER_TYPE_GROUP ], function (error, results) {
-        if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
-        if (results.length === 0) return callback(new DatabaseError(DatabaseError.NOT_FOUND));
+    database.query('SELECT ' + MAILBOX_FIELDS + ' FROM mailboxes WHERE type = ? AND name = ? AND domain = ?',
+        [ exports.TYPE_LIST, name, domain ], function (error, results) {
+            if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
+            if (results.length === 0) return callback(new DatabaseError(DatabaseError.NOT_FOUND));
 
-        callback(null, postProcess(results[0]));
-    });
+            callback(null, postProcess(results[0]));
+        });
 }
 
 function getByOwnerId(ownerId, callback) {
@@ -250,10 +256,11 @@ function setAliasesForName(name, domain, aliases, callback) {
         if (results.length === 0) return callback(new DatabaseError(DatabaseError.NOT_FOUND));
 
         var queries = [];
-        queries.push({ query: 'DELETE FROM mailboxes WHERE aliasTarget = ? AND domain = ?', args: [ name, domain ] });
+        // clear existing aliases
+        queries.push({ query: 'DELETE FROM mailboxes WHERE aliasTarget = ? AND domain = ? AND type = ?', args: [ name, domain, exports.TYPE_ALIAS ] });
         aliases.forEach(function (alias) {
-            queries.push({ query: 'INSERT INTO mailboxes (name, domain, aliasTarget, ownerId, ownerType) VALUES (?, ?, ?, ?, ?)',
-                args: [ alias, domain, name, results[0].ownerId, results[0].ownerType ] });
+            queries.push({ query: 'INSERT INTO mailboxes (name, type, domain, aliasTarget, ownerId, ownerType) VALUES (?, ?, ?, ?, ?, ?)',
+                args: [ alias, exports.TYPE_ALIAS, domain, name, results[0].ownerId, results[0].ownerType ] });
         });
 
         database.transaction(queries, function (error) {
@@ -270,25 +277,27 @@ function getAliasesForName(name, domain, callback) {
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    database.query('SELECT name FROM mailboxes WHERE aliasTarget = ? AND domain = ? ORDER BY name', [ name, domain ], function (error, results) {
-        if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
+    database.query('SELECT name FROM mailboxes WHERE type = ? AND aliasTarget = ? AND domain = ? ORDER BY name',
+        [ exports.TYPE_ALIAS, name, domain ], function (error, results) {
+            if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
 
-        results = results.map(function (r) { return r.name; });
-        callback(null, results);
-    });
+            results = results.map(function (r) { return r.name; });
+            callback(null, results);
+        });
 }
 
 function listAliases(domain, callback) {
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    database.query('SELECT ' + MAILBOX_FIELDS + ' FROM mailboxes WHERE domain = ? AND aliasTarget IS NOT NULL ORDER BY name', [ domain ], function (error, results) {
-        if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
+    database.query('SELECT ' + MAILBOX_FIELDS + ' FROM mailboxes WHERE domain = ? AND type = ? ORDER BY name',
+        [ domain, exports.TYPE_ALIAS ], function (error, results) {
+            if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
 
-        results.forEach(function (result) { postProcess(result); });
+            results.forEach(function (result) { postProcess(result); });
 
-        callback(null, results);
-    });
+            callback(null, results);
+        });
 }
 
 function getAlias(name, domain, callback) {
@@ -296,12 +305,13 @@ function getAlias(name, domain, callback) {
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    database.query('SELECT ' + MAILBOX_FIELDS + ' FROM mailboxes WHERE name = ? AND domain = ? AND aliasTarget IS NOT NULL', [ name, domain ], function (error, results) {
-        if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
-        if (results.length === 0) return callback(new DatabaseError(DatabaseError.NOT_FOUND));
+    database.query('SELECT ' + MAILBOX_FIELDS + ' FROM mailboxes WHERE name = ? AND type = ? AND domain = ?',
+        [ name, exports.TYPE_ALIAS, domain ], function (error, results) {
+            if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
+            if (results.length === 0) return callback(new DatabaseError(DatabaseError.NOT_FOUND));
 
-        results.forEach(function (result) { postProcess(result); });
+            results.forEach(function (result) { postProcess(result); });
 
-        callback(null, results[0]);
-    });
+            callback(null, results[0]);
+        });
 }
