@@ -50,48 +50,30 @@ bundle_dir=$(mktemp -d -t box 2>/dev/null || mktemp -d box-XXXXXXXXXX --tmpdir=$
 [[ -z "$bundle_file" ]] && bundle_file="${TMPDIR}/box-${box_version:0:10}-${dashboard_version:0:10}.tar.gz"
 
 chmod "o+rx,g+rx" "${bundle_dir}" # otherwise extracted tarball director won't be readable by others/group
-echo "Checking out code box version [${box_version}] and dashboard version [${dashboard_version}] into ${bundle_dir}"
+echo "==> Checking out code box version [${box_version}] and dashboard version [${dashboard_version}] into ${bundle_dir}"
 (cd "${SOURCE_DIR}" && git archive --format=tar ${box_version} | (cd "${bundle_dir}" && tar xf -))
-(cd "${SOURCE_DIR}/../dashboard" && git archive --format=tar ${dashboard_version} | (cd "${bundle_dir}" && tar xf -))
+(cd "${SOURCE_DIR}/../dashboard" && git archive --format=tar ${dashboard_version} | (mkdir -p "${bundle_dir}/dashboard.build" && cd "${bundle_dir}/dashboard.build" && tar xf -))
 (cp "${SOURCE_DIR}/../dashboard/LICENSE" "${bundle_dir}")
 
-if diff "${TMPDIR}/boxtarball.cache/package-lock.json.all" "${bundle_dir}/package-lock.json" >/dev/null 2>&1; then
-    echo "Reusing dev modules from cache"
-    cp -r "${TMPDIR}/boxtarball.cache/node_modules-all/." "${bundle_dir}/node_modules"
-else
-    echo "Installing modules with dev dependencies"
-    (cd "${bundle_dir}" && npm install)
+echo "==> Installing modules for dashboard asset generation"
+(cd "${bundle_dir}/dashboard.build" && npm install --production)
 
-    echo "Caching dev dependencies"
-    mkdir -p "${TMPDIR}/boxtarball.cache/node_modules-all"
-    rsync -a --delete "${bundle_dir}/node_modules/" "${TMPDIR}/boxtarball.cache/node_modules-all/"
-    cp "${bundle_dir}/package-lock.json" "${TMPDIR}/boxtarball.cache/package-lock.json.all"
-fi
+echo "==> Building dashboard assets"
+(cd "${bundle_dir}/dashboard.build" && ./node_modules/.bin/gulp --revision ${dashboard_version})
 
-echo "Building dashboard assets"
-(cd "${bundle_dir}/dashboard" && ../node_modules/.bin/gulp --revision ${dashboard_version})
+echo "==> Move built dashboard assets into destination"
+mkdir -p "${bundle_dir}/dashboard"
+mv "${bundle_dir}/dashboard.build/dist" "${bundle_dir}/dashboard/"
 
-echo "Remove intermediate files required at build-time only"
-rm -rf "${bundle_dir}/node_modules/"
-rm -rf "${bundle_dir}/dashboard/src"
-rm -rf "${bundle_dir}/gulpfile.js"
+echo "==> Cleanup dashboard build artifacts"
+rm -rf "${bundle_dir}/dashboard.build"
 
-if diff "${TMPDIR}/boxtarball.cache/package-lock.json.prod" "${bundle_dir}/package-lock.json" >/dev/null 2>&1; then
-    echo "Reusing prod modules from cache"
-    cp -r "${TMPDIR}/boxtarball.cache/node_modules-prod/." "${bundle_dir}/node_modules"
-else
-    echo "Installing modules for production"
-    (cd "${bundle_dir}" && npm install --production --no-optional)
+echo "==> Installing toplevel node modules"
+(cd "${bundle_dir}" && npm install --production --no-optional)
 
-    echo "Caching prod dependencies"
-    mkdir -p "${TMPDIR}/boxtarball.cache/node_modules-prod"
-    rsync -a --delete "${bundle_dir}/node_modules/" "${TMPDIR}/boxtarball.cache/node_modules-prod/"
-    cp "${bundle_dir}/package-lock.json" "${TMPDIR}/boxtarball.cache/package-lock.json.prod"
-fi
-
-echo "Create final tarball"
+echo "==> Create final tarball"
 (cd "${bundle_dir}" && tar czf "${bundle_file}" .)
-echo "Cleaning up ${bundle_dir}"
+echo "==> Cleaning up ${bundle_dir}"
 rm -rf "${bundle_dir}"
 
-echo "Tarball saved at ${bundle_file}"
+echo "==> Tarball saved at ${bundle_file}"
