@@ -220,8 +220,8 @@ function add(id, appStoreId, manifest, location, domain, portBindings, data, cal
     // only allocate a mailbox if mailboxName is set
     if (data.mailboxName) {
         queries.push({
-            query: 'INSERT INTO mailboxes (name, domain, ownerId, ownerType) VALUES (?, ?, ?, ?)',
-            args: [ data.mailboxName, domain, id, mailboxdb.OWNER_TYPE_APP ]
+            query: 'INSERT INTO mailboxes (name, type, domain, ownerId, ownerType) VALUES (?, ?, ?, ?, ?)',
+            args: [ data.mailboxName, mailboxdb.TYPE_MAILBOX, domain, id, mailboxdb.OWNER_TYPE_APP ]
         });
     }
 
