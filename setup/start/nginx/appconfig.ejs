@@ -160,6 +160,7 @@ server {
         # }
 
         location / {
+            add_header Content-Security-Policy "default-src wss: https: *.cloudron.io <%= adminOrigin %>; script-src https: 'self' 'unsafe-inline' 'unsafe-eval'; img-src * data:; style-src https: 'unsafe-inline'";
             root   <%= sourceDir %>/dashboard/dist;
             index  index.html index.htm;
         }
