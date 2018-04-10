@@ -73,6 +73,7 @@ echo "==> Installing toplevel node modules"
 
 echo "==> Create final tarball"
 (cd "${bundle_dir}" && tar czf "${bundle_file}" .)
+
 echo "==> Cleaning up ${bundle_dir}"
 rm -rf "${bundle_dir}"
 
