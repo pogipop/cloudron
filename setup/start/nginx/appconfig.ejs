@@ -91,7 +91,7 @@ server {
 
     # CSP headers for the admin/dashboard resources
 <% if ( endpoint === 'admin' ) { -%>
-    add_header Content-Security-Policy "default-src wss: https: *.cloudron.io <%= adminOrigin %>; script-src https: 'self' 'unsafe-inline' 'unsafe-eval'; img-src * data:; style-src https: 'unsafe-inline'";
+    add_header Content-Security-Policy "default-src 'none'; connect-src wss: https: 'self' *.cloudron.io; script-src https: 'self' 'unsafe-inline' 'unsafe-eval'; img-src * data:; style-src https: 'unsafe-inline'; object-src 'none'; font-src https: 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self';";
 <% } -%>
 
     proxy_http_version 1.1;
