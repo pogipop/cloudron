@@ -89,6 +89,11 @@ server {
     add_header Referrer-Policy "no-referrer-when-downgrade";
     proxy_hide_header Referrer-Policy;
 
+    # CSP headers for the admin/dashboard resources
+<% if ( endpoint === 'admin' ) { -%>
+    add_header Content-Security-Policy "default-src wss: https: *.cloudron.io <%= adminOrigin %>; script-src https: 'self' 'unsafe-inline' 'unsafe-eval'; img-src * data:; style-src https: 'unsafe-inline'";
+<% } -%>
+
     proxy_http_version 1.1;
     proxy_intercept_errors on;
     proxy_read_timeout       3500;
@@ -160,7 +165,6 @@ server {
         # }
 
         location / {
-            add_header Content-Security-Policy "default-src wss: https: *.cloudron.io <%= adminOrigin %>; script-src https: 'self' 'unsafe-inline' 'unsafe-eval'; img-src * data:; style-src https: 'unsafe-inline'";
             root   <%= sourceDir %>/dashboard/dist;
             index  index.html index.htm;
         }
