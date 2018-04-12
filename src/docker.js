@@ -45,6 +45,7 @@ var addons = require('./addons.js'),
     debug = require('debug')('box:docker.js'),
     once = require('once'),
     safe = require('safetydance'),
+    shell = require('./shell.js'),
     spawn = child_process.spawn,
     util = require('util'),
     _ = require('underscore');
@@ -58,42 +59,24 @@ function debugApp(app, args) {
 function pullImage(manifest, callback) {
     var docker = exports.connection;
 
-    docker.pull(manifest.dockerImage, function (err, stream) {
-        if (err) return callback(new Error('Error connecting to docker. statusCode: ' + err.statusCode));
+    // Use docker CLI here to support downloading of private repos. for dockerode, we have to use
+    // https://github.com/apocas/dockerode#pull-from-private-repos
+    shell.exec('pullImage', '/usr/bin/docker', [ 'pull', manifest.dockerImage ], { }, function (error) {
+        if (error) {
+            debug(`pullImage: Error pulling image ${manifest.dockerImage} of ${manifest.id}: ${error.message}`);
+            return callback(new Error('Failed to pull image'));
+        }
 
-        // https://github.com/dotcloud/docker/issues/1074 says each status message
-        // is emitted as a chunk
-        stream.on('data', function (chunk) {
-            var data = safe.JSON.parse(chunk) || { };
-            debug('pullImage %s: %j', manifest.id, data);
+        var image = docker.getImage(manifest.dockerImage);
 
-            // The information here is useless because this is per layer as opposed to per image
-            if (data.status) {
-            } else if (data.error) {
-                debug('pullImage error %s: %s', manifest.id, data.errorDetail.message);
-            }
-        });
+        image.inspect(function (err, data) {
+            if (err) return callback(new Error('Error inspecting image:' + err.message));
+            if (!data || !data.Config) return callback(new Error('Missing Config in image:' + JSON.stringify(data, null, 4)));
+            if (!data.Config.Entrypoint && !data.Config.Cmd) return callback(new Error('Only images with entry point are allowed'));
 
-        stream.on('end', function () {
-            debug('downloaded image %s of %s successfully', manifest.dockerImage, manifest.id);
+            if (data.Config.ExposedPorts) debug('This image of %s exposes ports: %j', manifest.id, data.Config.ExposedPorts);
 
-            var image = docker.getImage(manifest.dockerImage);
-
-            image.inspect(function (err, data) {
-                if (err) return callback(new Error('Error inspecting image:' + err.message));
-                if (!data || !data.Config) return callback(new Error('Missing Config in image:' + JSON.stringify(data, null, 4)));
-                if (!data.Config.Entrypoint && !data.Config.Cmd) return callback(new Error('Only images with entry point are allowed'));
-
-                if (data.Config.ExposedPorts) debug('This image of %s exposes ports: %j', manifest.id, data.Config.ExposedPorts);
-
-                callback(null);
-            });
-        });
-
-        stream.on('error', function (error) {
-            debug('error pulling image %s of %s: %j', manifest.dockerImage, manifest.id, error);
-
-            callback(error);
+            callback(null);
         });
     });
 }
