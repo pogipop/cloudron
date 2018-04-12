@@ -138,10 +138,11 @@ function setCatchAllAddress(req, res, next) {
     assert.strictEqual(typeof req.params.domain, 'string');
     assert.strictEqual(typeof req.body, 'object');
 
-    if (!req.body.address || !Array.isArray(req.body.address)) return next(new HttpError(400, 'address array is required'));
+    if (!req.body.address) return next(new HttpError(400, 'address is required'));
+    if (!Array.isArray(req.body.address)) return next(new HttpError(400, 'address must be an array of strings'));
 
     for (var i = 0; i < req.body.address.length; i++) {
-        if (typeof req.body.address[i] !== 'string') return next(new HttpError(400, 'address must be an array of string'));
+        if (typeof req.body.address[i] !== 'string') return next(new HttpError(400, 'address must be an array of strings'));
     }
 
     mail.setCatchAllAddress(req.params.domain, req.body.address, function (error) {
