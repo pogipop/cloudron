@@ -787,12 +787,12 @@ function setMailFromValidation(domain, enabled, callback) {
     });
 }
 
-function setCatchAllAddress(domain, address, callback) {
+function setCatchAllAddress(domain, addresses, callback) {
     assert.strictEqual(typeof domain, 'string');
-    assert(Array.isArray(address));
+    assert(Array.isArray(addresses));
     assert.strictEqual(typeof callback, 'function');
 
-    maildb.update(domain, { catchAll: address }, function (error) {
+    maildb.update(domain, { catchAll: addresses }, function (error) {
         if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new MailError(MailError.NOT_FOUND));
         if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
 

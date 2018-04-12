@@ -138,14 +138,14 @@ function setCatchAllAddress(req, res, next) {
     assert.strictEqual(typeof req.params.domain, 'string');
     assert.strictEqual(typeof req.body, 'object');
 
-    if (!req.body.address) return next(new HttpError(400, 'address is required'));
-    if (!Array.isArray(req.body.address)) return next(new HttpError(400, 'address must be an array of strings'));
+    if (!req.body.addresses) return next(new HttpError(400, 'addresses is required'));
+    if (!Array.isArray(req.body.addresses)) return next(new HttpError(400, 'addresses must be an array of strings'));
 
-    for (var i = 0; i < req.body.address.length; i++) {
-        if (typeof req.body.address[i] !== 'string') return next(new HttpError(400, 'address must be an array of strings'));
+    for (var i = 0; i < req.body.addresses.length; i++) {
+        if (typeof req.body.addresses[i] !== 'string') return next(new HttpError(400, 'addresses must be an array of strings'));
     }
 
-    mail.setCatchAllAddress(req.params.domain, req.body.address, function (error) {
+    mail.setCatchAllAddress(req.params.domain, req.body.addresses, function (error) {
         if (error && error.reason === MailError.NOT_FOUND) return next(new HttpError(404, error.message));
         if (error && error.reason === MailError.BAD_FIELD) return next(new HttpError(400, error.message));
         if (error) return next(new HttpError(500, error));
