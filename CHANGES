@@ -1240,7 +1240,7 @@
 
 [2.1.0]
 * Make S3 backend work reliably with slow internet connections
-* Update docker to 17.12.0-ce
+* Update docker to 18.03.0-ce
 * Finalize the Email and Mailbox API
 * Move mailbox settings from users to email view
 * mail: fix issue where hosts with valid SPF for a Cloudron domain are unable to send mail to Cloudron
