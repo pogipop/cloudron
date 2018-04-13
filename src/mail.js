@@ -990,6 +990,11 @@ function setAliases(name, domain, aliases, callback) {
     }
 
     mailboxdb.setAliasesForName(name, domain, aliases, function (error) {
+        if (error && error.reason === DatabaseError.ALREADY_EXISTS && error.message.indexOf('mailboxes_name_domain_unique_index') !== -1) {
+            var aliasMatch = error.message.match(new RegExp(`^ER_DUP_ENTRY: Duplicate entry '(.*)-${domain}' for key 'mailboxes_name_domain_unique_index'$`))
+            if (!aliasMatch) return callback(new MailError(MailError.ALREADY_EXISTS, error.message));
+            return callback(new MailError(MailError.ALREADY_EXISTS, `Mailbox, mailinglist or alias for ${aliasMatch[1]} already exists`));
+        }
         if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(new MailError(MailError.ALREADY_EXISTS, error.message));
         if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new MailError(MailError.NOT_FOUND, 'no such mailbox'));
         if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
