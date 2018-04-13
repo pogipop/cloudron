@@ -26,8 +26,8 @@ const DOMAIN_0 = {
     fallbackCertificate: null,
     tlsConfig: { provider: 'fallback' }
 };
-var USERNAME = 'superadmin', PASSWORD = 'Foobar?1337', EMAIL ='silly@me.com', MAILBOX_NAME = 'superman';
-const GROUP_NAME = 'maillistgroup', LIST_NAME = 'devs';
+const USERNAME = 'superadmin', PASSWORD = 'Foobar?1337', EMAIL ='silly@me.com', MAILBOX_NAME = 'superman';
+const LIST_NAME = 'devs';
 var token = null;
 var userId = '';
 
@@ -78,7 +78,7 @@ function cleanup(done) {
 }
 
 describe('Mail API', function () {
-    this.timeout(5000);
+    this.timeout(10000);
 
     before(setup);
     after(cleanup);
@@ -533,7 +533,7 @@ describe('Mail API', function () {
                 });
         });
 
-        it('cannot set without address field', function (done) {
+        it('cannot set without addresses field', function (done) {
             superagent.post(SERVER_URL + '/api/v1/mail/' + DOMAIN_0.domain + '/catch_all')
                 .query({ access_token: token })
                 .end(function (err, res) {
@@ -542,10 +542,10 @@ describe('Mail API', function () {
                 });
         });
 
-        it('cannot set with bad address field', function (done) {
+        it('cannot set with bad addresses field', function (done) {
             superagent.post(SERVER_URL + '/api/v1/mail/' + DOMAIN_0.domain + '/catch_all')
                 .query({ access_token: token })
-                .send({ address: [ 'user1', 123 ] })
+                .send({ addresses: [ 'user1', 123 ] })
                 .end(function (err, res) {
                     expect(res.statusCode).to.equal(400);
                     done();
@@ -555,7 +555,7 @@ describe('Mail API', function () {
         it('set succeeds', function (done) {
             superagent.post(SERVER_URL + '/api/v1/mail/' + DOMAIN_0.domain + '/catch_all')
                 .query({ access_token: token })
-                .send({ address: [ 'user1' ] })
+                .send({ addresses: [ 'user1' ] })
                 .end(function (err, res) {
                     expect(res.statusCode).to.equal(202);
                     done();
