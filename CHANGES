@@ -1248,3 +1248,13 @@
 * Add CSP header for dashboard
 * Add support for installing private docker images
 
+[2.1.1]
+* Make S3 backend work reliably with slow internet connections
+* Update docker to 18.03.0-ce
+* Finalize the Email and Mailbox API
+* Move mailbox settings from users to email view
+* mail: fix issue where hosts with valid SPF for a Cloudron domain are unable to send mail to Cloudron
+* mail: fix crash when bounce emails have a null sender
+* Add CSP header for dashboard
+* Add support for installing private docker images
+
