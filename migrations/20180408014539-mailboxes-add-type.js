@@ -17,7 +17,7 @@ exports.up = function(db, callback) {
                     } else if (mailbox.membersJson) {
                         type = 'list';
                     }
-                    db.runSql('UPDATE mailboxes SET type = ? WHERE name = ?', [ type, mailbox.name ], iteratorCallback);
+                    db.runSql('UPDATE mailboxes SET type = ? WHERE name = ? AND domain = ?', [ type, mailbox.name, mailbox.domain ], iteratorCallback);
                 }, done);
             });
         },
