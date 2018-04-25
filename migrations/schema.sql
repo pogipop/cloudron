@@ -22,8 +22,10 @@ CREATE TABLE IF NOT EXISTS users(
     createdAt VARCHAR(512) NOT NULL,
     modifiedAt VARCHAR(512) NOT NULL,
     admin INTEGER NOT NULL,
-    displayName VARCHAR(512) DEFAULT '',
-    fallbackEmail VARCHAR(512) DEFAULT ""
+    displayName VARCHAR(512) DEFAULT "",
+    fallbackEmail VARCHAR(512) DEFAULT "",
+    twoFactorAuthenticationSecret VARCHAR(128) DEFAULT "",
+    twoFactorAuthenticationEnabled BOOLEAN DEFAULT false,
 
     PRIMARY KEY(id));
 
