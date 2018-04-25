@@ -21,7 +21,10 @@ exports = module.exports = {
     createOwner: createOwner,
     getOwner: getOwner,
     sendInvite: sendInvite,
-    setGroups: setGroups
+    setGroups: setGroups,
+    setTwoFactorAuthenticationSecret: setTwoFactorAuthenticationSecret,
+    enableTwoFactorAuthentication: enableTwoFactorAuthentication,
+    disableTwoFactorAuthentication: disableTwoFactorAuthentication
 };
 
 var assert = require('assert'),
@@ -37,7 +40,9 @@ var assert = require('assert'),
     GroupError = groups.GroupError,
     hat = require('hat'),
     mailer = require('./mailer.js'),
+    qrcode = require('qrcode'),
     safe = require('safetydance'),
+    speakeasy = require('speakeasy'),
     tokendb = require('./tokendb.js'),
     userdb = require('./userdb.js'),
     util = require('util'),
@@ -560,3 +565,59 @@ function sendInvite(userId, options, callback) {
     });
 }
 
+function setTwoFactorAuthenticationSecret(userId, callback) {
+    assert.strictEqual(typeof userId, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    userdb.get(userId, function (error, result) {
+        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new UserError(UserError.NOT_FOUND));
+        if (error) return callback(new UserError(UserError.INTERNAL_ERROR, error));
+
+        if (result.twoFactorAuthenticationEnabled) return callback(new UserError(UserError.ALREADY_EXISTS, 'TwoFactor Authentication is enabled, disable first'));
+
+        var secret = speakeasy.generateSecret({ name: 'cloudron' });
+
+        userdb.update(userId, { twoFactorAuthenticationSecret: secret.base32, twoFactorAuthenticationEnabled: false }, function (error) {
+            if (error) return callback(new UserError(UserError.INTERNAL_ERROR, error));
+
+            qrcode.toDataURL(secret.otpauth_url, function (error, dataUrl) {
+                if (error) console.error(error);
+
+                callback(null, { secret: secret.base32, qrcode: dataUrl });
+            });
+        });
+    });
+}
+
+function enableTwoFactorAuthentication(userId, totpToken, callback) {
+    assert.strictEqual(typeof userId, 'string');
+    assert.strictEqual(typeof totpToken, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    userdb.get(userId, function (error, result) {
+        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new UserError(UserError.NOT_FOUND));
+        if (error) return callback(new UserError(UserError.INTERNAL_ERROR, error));
+
+        var verified = speakeasy.totp.verify({ secret: result.twoFactorAuthenticationSecret, encoding: 'base32', token: totpToken });
+        if (!verified) return callback(new UserError(UserError.BAD_TOKEN, 'Invalid token'));
+
+        if (result.twoFactorAuthenticationEnabled) return callback(new UserError(UserError.ALREADY_EXISTS, 'TwoFactor Authentication is already enabled'));
+
+        userdb.update(userId, { twoFactorAuthenticationEnabled: true }, function (error) {
+            if (error) return callback(new UserError(UserError.INTERNAL_ERROR, error));
+
+            callback(null);
+        });
+    });
+}
+
+function disableTwoFactorAuthentication(userId, callback) {
+    assert.strictEqual(typeof userId, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    userdb.update(userId, { twoFactorAuthenticationEnabled: false, twoFactorAuthenticationSecret: '' }, function (error) {
+        if (error) return callback(new UserError(UserError.INTERNAL_ERROR, error));
+
+        callback(null);
+    });
+}
