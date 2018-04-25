@@ -23,10 +23,12 @@ var assert = require('assert'),
     debug = require('debug')('box:userdb'),
     DatabaseError = require('./databaseerror');
 
-var USERS_FIELDS = [ 'id', 'username', 'email', 'fallbackEmail', 'password', 'salt', 'createdAt', 'modifiedAt', 'resetToken', 'displayName' ].join(',');
+var USERS_FIELDS = [ 'id', 'username', 'email', 'fallbackEmail', 'password', 'salt', 'createdAt', 'modifiedAt', 'resetToken', 'displayName', 'twoFactorAuthenticationEnabled', 'twoFactorAuthenticationSecret' ].join(',');
 
 function postProcess(result) {
     assert.strictEqual(typeof result, 'object');
+
+    result.twoFactorAuthenticationEnabled = !!result.twoFactorAuthenticationEnabled;
 
     return result;
 }
@@ -209,6 +211,9 @@ function update(userId, user, callback) {
         } else if (k === 'fallbackEmail') {
             assert.strictEqual(typeof user.fallbackEmail, 'string');
             args.push(user.fallbackEmail);
+        } else if (k === 'twoFactorAuthenticationEnabled') {
+            assert.strictEqual(typeof user.twoFactorAuthenticationEnabled, 'boolean');
+            args.push(user.twoFactorAuthenticationEnabled ? 1 : 0);
         } else {
             args.push(user[k]);
         }
