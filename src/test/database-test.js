@@ -35,7 +35,9 @@ var USER_0 = {
     createdAt: 'sometime back',
     modifiedAt: 'now',
     resetToken: hat(256),
-    displayName: ''
+    displayName: '',
+    twoFactorAuthenticationEnabled: false,
+    twoFactorAuthenticationSecret: ''
 };
 
 var USER_1 = {
@@ -48,7 +50,9 @@ var USER_1 = {
     createdAt: 'sometime back',
     modifiedAt: 'now',
     resetToken: '',
-    displayName: 'Herbert 1'
+    displayName: 'Herbert 1',
+    twoFactorAuthenticationEnabled: false,
+    twoFactorAuthenticationSecret: ''
 };
 
 var USER_2 = {
@@ -61,7 +65,9 @@ var USER_2 = {
     createdAt: 'sometime back',
     modifiedAt: 'now',
     resetToken: '',
-    displayName: 'Herbert 2'
+    displayName: 'Herbert 2',
+    twoFactorAuthenticationEnabled: false,
+    twoFactorAuthenticationSecret: ''
 };
 
 const DOMAIN_0 = {
