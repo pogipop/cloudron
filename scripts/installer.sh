@@ -54,6 +54,12 @@ if [[ $(docker version --format {{.Client.Version}}) != "18.03.0-ce" ]]; then
         sleep 1
     done
 
+    # the latest docker might need newer packages
+    while ! apt update -y; do
+        echo "==> installer: Failed to update packages. Retry"
+        sleep 1
+    done
+
     while ! apt install -y /tmp/docker.deb; do
         echo "==> installer: Failed to install docker. Retry"
         sleep 1
