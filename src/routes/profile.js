@@ -70,9 +70,9 @@ function changePassword(req, res, next) {
 }
 
 function setTwoFactorAuthenticationSecret(req, res, next) {
-    assert.strictEqual(typeof req.params.userId, 'string');
+    assert.strictEqual(typeof req.user, 'object');
 
-    user.setTwoFactorAuthenticationSecret(req.params.userId, function (error, result) {
+    user.setTwoFactorAuthenticationSecret(req.user.id, function (error, result) {
         if (error && error.reason === UserError.ALREADY_EXISTS) return next(new HttpError(409, 'TwoFactor Authentication is enabled, disable first'));
         if (error) return next(new HttpError(500, error));
 
@@ -81,20 +81,21 @@ function setTwoFactorAuthenticationSecret(req, res, next) {
 }
 
 function enableTwoFactorAuthentication(req, res, next) {
-    assert.strictEqual(typeof req.params.userId, 'string');
+    assert.strictEqual(typeof req.body, 'object');
+    assert.strictEqual(typeof req.user, 'object');
 
     if (!req.body.totpToken || typeof req.body.totpToken !== 'string') return next(new HttpError(400, 'totpToken must be a nonempty string'));
 
-    user.enableTwoFactorAuthentication(req.params.userId, req.body.totpToken, function (error) {
+    user.enableTwoFactorAuthentication(req.user.id, req.body.totpToken, function (error) {
         if (error) return next(new HttpError(500, error));
         next(new HttpSuccess(202, {}));
     });
 }
 
 function disableTwoFactorAuthentication(req, res, next) {
-    assert.strictEqual(typeof req.params.userId, 'string');
+    assert.strictEqual(typeof req.user, 'object');
 
-    user.disableTwoFactorAuthentication(req.params.userId, function (error) {
+    user.disableTwoFactorAuthentication(req.user.id, function (error) {
         if (error) return next(new HttpError(500, error));
         next(new HttpSuccess(202, {}));
     });
