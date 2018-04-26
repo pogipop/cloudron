@@ -87,6 +87,9 @@ function enableTwoFactorAuthentication(req, res, next) {
     if (!req.body.totpToken || typeof req.body.totpToken !== 'string') return next(new HttpError(400, 'totpToken must be a nonempty string'));
 
     user.enableTwoFactorAuthentication(req.user.id, req.body.totpToken, function (error) {
+        if (error && error.reason === UserError.NOT_FOUND) return next(new HttpError(404, 'User not found'));
+        if (error && error.reason === UserError.BAD_TOKEN) return next(new HttpError(403, 'Invalid token'));
+        if (error && error.reason === UserError.ALREADY_EXISTS) return next(new HttpError(409, 'TwoFactor Authentication is already enabled'));
         if (error) return next(new HttpError(500, error));
         next(new HttpSuccess(202, {}));
     });

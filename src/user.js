@@ -573,7 +573,7 @@ function setTwoFactorAuthenticationSecret(userId, callback) {
         if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new UserError(UserError.NOT_FOUND));
         if (error) return callback(new UserError(UserError.INTERNAL_ERROR, error));
 
-        if (result.twoFactorAuthenticationEnabled) return callback(new UserError(UserError.ALREADY_EXISTS, 'TwoFactor Authentication is enabled, disable first'));
+        if (result.twoFactorAuthenticationEnabled) return callback(new UserError(UserError.ALREADY_EXISTS));
 
         var secret = speakeasy.generateSecret({ name: 'cloudron' });
 
@@ -599,9 +599,9 @@ function enableTwoFactorAuthentication(userId, totpToken, callback) {
         if (error) return callback(new UserError(UserError.INTERNAL_ERROR, error));
 
         var verified = speakeasy.totp.verify({ secret: result.twoFactorAuthenticationSecret, encoding: 'base32', token: totpToken });
-        if (!verified) return callback(new UserError(UserError.BAD_TOKEN, 'Invalid token'));
+        if (!verified) return callback(new UserError(UserError.BAD_TOKEN));
 
-        if (result.twoFactorAuthenticationEnabled) return callback(new UserError(UserError.ALREADY_EXISTS, 'TwoFactor Authentication is already enabled'));
+        if (result.twoFactorAuthenticationEnabled) return callback(new UserError(UserError.ALREADY_EXISTS));
 
         userdb.update(userId, { twoFactorAuthenticationEnabled: true }, function (error) {
             if (error) return callback(new UserError(UserError.INTERNAL_ERROR, error));
