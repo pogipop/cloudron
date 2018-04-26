@@ -251,7 +251,6 @@ function initializeExpressSync() {
     router.get ('/api/v1/domains', settingsScope, routes.user.requireAdmin, routes.domains.getAll);
     router.get ('/api/v1/domains/:domain', settingsScope, routes.user.requireAdmin, routes.domains.get);
     router.put ('/api/v1/domains/:domain', settingsScope, routes.user.requireAdmin, routes.domains.update);
-    router.post('/api/v1/domains/:domain/set_admin', settingsScope, routes.user.requireAdmin, routes.domains.setAdmin);
     router.del ('/api/v1/domains/:domain', settingsScope, routes.user.requireAdmin, routes.user.verifyPassword, routes.domains.del);
 
     // caas routes
