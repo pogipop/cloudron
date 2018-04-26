@@ -103,8 +103,6 @@ function validateName(name) {
     if (name.length < 1) return new MailError(MailError.BAD_FIELD, 'mailbox name must be atleast 1 char');
     if (name.length >= 200) return new MailError(MailError.BAD_FIELD, 'mailbox name too long');
 
-    if (constants.RESERVED_NAMES.indexOf(name) !== -1) return new MailError(MailError.BAD_FIELD, `mailbox name ${name} is reserved`);
-
     // +/- can be tricky in emails. also need to consider valid LDAP characters here (e.g '+' is reserved)
     if (/[^a-zA-Z0-9.]/.test(name)) return new MailError(MailError.BAD_FIELD, 'mailbox name can only contain alphanumerals and dot');
 

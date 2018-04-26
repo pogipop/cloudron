@@ -938,16 +938,6 @@ describe('Mail API', function () {
                 });
         });
 
-        it('cannot add reserved group', function (done) {
-            superagent.post(SERVER_URL + '/api/v1/mail/' + DOMAIN_0.domain + '/lists')
-                .send({ name: LIST_NAME, members: [ 'Admin', USERNAME ]})
-                .query({ access_token: token })
-                .end(function (err, res) {
-                    expect(res.statusCode).to.equal(400);
-                    done();
-                });
-        });
-
         it('add succeeds', function (done) {
             superagent.post(SERVER_URL + '/api/v1/mail/' + DOMAIN_0.domain + '/lists')
                 .send({ name: LIST_NAME, members: [ 'admin2', USERNAME ]})
