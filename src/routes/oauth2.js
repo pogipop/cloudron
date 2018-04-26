@@ -546,8 +546,8 @@ function websocketAuth(requestedScopes, req, res, next) {
         req.user = user;
         req.authInfo = info;
 
-        var error = validateRequestedScopes(req, requestedScopes);
-        if (error) return next(new HttpError(401, error.message));
+        var e = validateRequestedScopes(req, requestedScopes);
+        if (e) return next(new HttpError(401, e.message));
 
         next();
     });
