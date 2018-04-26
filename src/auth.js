@@ -48,7 +48,7 @@ function initialize(callback) {
                 if (error && error.reason === UserError.WRONG_PASSWORD) return callback(null, false);
                 if (error) return callback(error);
                 if (!result) return callback(null, false);
-                callback(null, _.pick(result, 'id', 'username', 'email', 'admin'));
+                callback(null, result);
             });
         } else {
             user.verifyWithEmail(username, password, function (error, result) {
@@ -56,7 +56,7 @@ function initialize(callback) {
                 if (error && error.reason === UserError.WRONG_PASSWORD) return callback(null, false);
                 if (error) return callback(error);
                 if (!result) return callback(null, false);
-                callback(null, _.pick(result, 'id', 'username', 'email', 'admin'));
+                callback(null, result);
             });
         }
     }));
