@@ -34,8 +34,9 @@ function create(req, res, next) {
     if (typeof req.body.invite !== 'boolean') return next(new HttpError(400, 'invite must be boolean'));
     if ('username' in req.body && typeof req.body.username !== 'string') return next(new HttpError(400, 'username must be string'));
     if ('displayName' in req.body && typeof req.body.displayName !== 'string') return next(new HttpError(400, 'displayName must be string'));
+    if ('password' in req.body && typeof req.body.password !== 'string') return next(new HttpError(400, 'password must be string'));
 
-    var password = generatePassword();
+    var password = req.body.password || generatePassword();
     var email = req.body.email;
     var sendInvite = req.body.invite;
     var username = 'username' in req.body ? req.body.username : null;

@@ -33,6 +33,7 @@ const USERNAME_0 = 'superaDmIn', PASSWORD = 'Foobar?1337', EMAIL_0 = 'silLY@me.c
 const USERNAME_1 = 'userTheFirst', EMAIL_1 = 'taO@zen.mac';
 const USERNAME_2 = 'userTheSecond', EMAIL_2 = 'USER@foo.bar', EMAIL_2_NEW = 'happy@ME.com';
 const USERNAME_3 = 'ut', EMAIL_3 = 'user3@FOO.bar';
+const USERNAME_4 = 'importedUser', EMAIL_4 = 'import@external.com';
 
 var groupObject;
 
@@ -80,7 +81,7 @@ function checkMails(number, done) {
 describe('User API', function () {
     this.timeout(5000);
 
-    var user_0, user_1, user_2;
+    var user_0, user_1, user_2, user_4;
     var token = null;
     var token_1 = tokendb.generateToken();
 
@@ -257,6 +258,19 @@ describe('User API', function () {
                 expect(res.statusCode).to.equal(401);
                 done();
             });
+    });
+
+    it('cannot create user without email', function (done) {
+        mailer._clearMailQueue();
+
+        superagent.post(SERVER_URL + '/api/v1/users')
+            .query({ access_token: token })
+            .send({ username: USERNAME_1, invite: true })
+            .end(function (error, result) {
+                expect(error).to.be.ok();
+                expect(result.statusCode).to.equal(400);
+                done();
+        });
     });
 
     it('create second user succeeds', function (done) {
@@ -656,4 +670,47 @@ describe('User API', function () {
                     });
             });
     });
+
+    it('cannot create user with bad password', function (done) {
+        mailer._clearMailQueue();
+
+        superagent.post(SERVER_URL + '/api/v1/users')
+            .query({ access_token: token })
+            .send({ username: USERNAME_4, email: EMAIL_4, invite: false, password: 'tooweak' })
+            .end(function (error, result) {
+                expect(error).to.be.ok();
+                expect(result.statusCode).to.equal(400);
+                done();
+        });
+    });
+
+    it('can create user with a password', function (done) {
+        superagent.post(SERVER_URL + '/api/v1/users')
+            .query({ access_token: token })
+            .send({ username: USERNAME_4, email: EMAIL_4, invite: false, password: 'Secret1#' })
+            .end(function (error, result) {
+                expect(error).to.not.be.ok();
+                expect(result.statusCode).to.equal(201);
+
+                user_4 = result.body;
+
+                token = tokendb.generateToken();
+                var expires = Date.now() + 2000; // 1 sec
+
+                tokendb.add(token, user_4.id, null, expires, '*', done);
+            });
+    });
+
+    it('can get profile of user with pre-set password', function (done) {
+        superagent.get(SERVER_URL + '/api/v1/profile')
+            .query({ access_token: token })
+            .end(function (err, res) {
+                expect(res.statusCode).to.equal(200);
+
+                expect(res.body.email).to.be(EMAIL_4);
+
+                done();
+            });
+    });
 });
+
