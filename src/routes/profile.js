@@ -30,7 +30,8 @@ function get(req, res, next) {
         email: req.user.email,
         fallbackEmail: req.user.fallbackEmail,
         admin: req.user.admin,
-        displayName: req.user.displayName
+        displayName: req.user.displayName,
+        twoFactorAuthenticationEnabled: req.user.twoFactorAuthenticationEnabled
     }));
 }
 
@@ -91,6 +92,7 @@ function enableTwoFactorAuthentication(req, res, next) {
         if (error && error.reason === UserError.BAD_TOKEN) return next(new HttpError(403, 'Invalid token'));
         if (error && error.reason === UserError.ALREADY_EXISTS) return next(new HttpError(409, 'TwoFactor Authentication is already enabled'));
         if (error) return next(new HttpError(500, error));
+
         next(new HttpSuccess(202, {}));
     });
 }
@@ -100,6 +102,7 @@ function disableTwoFactorAuthentication(req, res, next) {
 
     user.disableTwoFactorAuthentication(req.user.id, function (error) {
         if (error) return next(new HttpError(500, error));
+
         next(new HttpSuccess(202, {}));
     });
 }
