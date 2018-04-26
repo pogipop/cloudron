@@ -1,6 +1,7 @@
 'use strict';
 
 exports = module.exports = {
+    accesscontrol: require('./accesscontrol.js'),
     apps: require('./apps.js'),
     backups: require('./backups.js'),
     caas: require('./caas.js'),

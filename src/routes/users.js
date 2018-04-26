@@ -12,13 +12,12 @@ exports = module.exports = {
     setGroups: setGroups
 };
 
-var assert = require('assert'),
-    clients = require('../clients.js'),
+var accesscontrol = require('../accesscontrol.js'),
+    assert = require('assert'),
     constants = require('../constants.js'),
     generatePassword = require('../password.js').generate,
     HttpError = require('connect-lastmile').HttpError,
     HttpSuccess = require('connect-lastmile').HttpSuccess,
-    oauth2 = require('./oauth2.js'),
     users = require('../users.js'),
     UserssError = users.UserssError;
 
@@ -131,7 +130,7 @@ function verifyPassword(req, res, next) {
     assert.strictEqual(typeof req.body, 'object');
 
     // using an 'sdk' token we skip password checks
-    var error = oauth2.validateRequestedScopes(req, [ clients.SCOPE_ROLE_SDK ]);
+    var error = accesscontrol.validateRequestedScopes(req.authInfo || null, [ accesscontrol.SCOPE_ROLE_SDK ]);
     if (!error) return next();
 
     if (typeof req.body.password !== 'string') return next(new HttpError(400, 'API call requires user password'));

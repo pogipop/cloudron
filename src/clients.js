@@ -16,20 +16,6 @@ exports = module.exports = {
 
     addDefaultClients: addDefaultClients,
 
-    // keep this in sync with start.sh ADMIN_SCOPES that generates the cid-webadmin
-    SCOPE_APPS: 'apps',
-    SCOPE_DEVELOPER: 'developer', // obsolete
-    SCOPE_PROFILE: 'profile',
-    SCOPE_CLOUDRON: 'cloudron',
-    SCOPE_SETTINGS: 'settings',
-    SCOPE_USERS: 'users',
-    SCOPE_MAIL: 'mail',
-    SCOPE_CLIENTS: 'clients',
-
-    // roles are handled just like the above scopes, they are parallel to scopes
-    // scopes enclose API groups, roles specify the usage role
-    SCOPE_ROLE_SDK: 'roleSdk',
-
     // client type enums
     TYPE_EXTERNAL: 'external',
     TYPE_BUILT_IN: 'built-in',
@@ -44,6 +30,7 @@ var apps = require('./apps.js'),
     DatabaseError = require('./databaseerror.js'),
     debug = require('debug')('box:clients'),
     hat = require('hat'),
+    accesscontrol = require('./accesscontrol.js'),
     tokendb = require('./tokendb.js'),
     util = require('util'),
     uuid = require('uuid');
@@ -86,30 +73,6 @@ function validateName(name) {
     return null;
 }
 
-function validateScope(scope) {
-    assert.strictEqual(typeof scope, 'string');
-
-    var VALID_SCOPES = [
-        exports.SCOPE_APPS,
-        exports.SCOPE_DEVELOPER,
-        exports.SCOPE_PROFILE,
-        exports.SCOPE_CLOUDRON,
-        exports.SCOPE_SETTINGS,
-        exports.SCOPE_USERS,
-        exports.SCOPE_MAIL,
-        exports.SCOPE_CLIENTS,
-        '*',    // includes all scopes, but not roles
-        exports.SCOPE_ROLE_SDK
-    ];
-
-    if (scope === '') return new ClientsError(ClientsError.INVALID_SCOPE, 'Empty scope not allowed');
-
-    var allValid = scope.split(',').every(function (s) { return VALID_SCOPES.indexOf(s) !== -1; });
-    if (!allValid) return new ClientsError(ClientsError.INVALID_SCOPE, 'Invalid scope. Available scopes are ' + VALID_SCOPES.join(', '));
-
-    return null;
-}
-
 function add(appId, type, redirectURI, scope, callback) {
     assert.strictEqual(typeof appId, 'string');
     assert.strictEqual(typeof type, 'string');
@@ -117,8 +80,8 @@ function add(appId, type, redirectURI, scope, callback) {
     assert.strictEqual(typeof scope, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    var error = validateScope(scope);
-    if (error) return callback(error);
+    var error = accesscontrol.validateScope(scope);
+    if (error) return callback(new ClientsError(ClientsError.INVALID_SCOPE, error.message));
 
     // appId is also client name
     error = validateName(appId);

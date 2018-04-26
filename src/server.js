@@ -5,10 +5,10 @@ exports = module.exports = {
     stop: stop
 };
 
-var assert = require('assert'),
+var accesscontrol = require('./accesscontrol.js'),
+    assert = require('assert'),
     async = require('async'),
     auth = require('./auth.js'),
-    clients = require('./clients.js'),
     cloudron = require('./cloudron.js'),
     config = require('./config.js'),
     database = require('./database.js'),
@@ -90,13 +90,13 @@ function initializeExpressSync() {
     var multipart = middleware.multipart({ maxFieldsSize: FIELD_LIMIT, limit: FILE_SIZE_LIMIT, timeout: FILE_TIMEOUT });
 
     // scope middleware implicitly also adds bearer token verification
-    var cloudronScope = routes.oauth2.scope(clients.SCOPE_CLOUDRON);
-    var profileScope = routes.oauth2.scope(clients.SCOPE_PROFILE);
-    var usersScope = routes.oauth2.scope(clients.SCOPE_USERS);
-    var appsScope = routes.oauth2.scope(clients.SCOPE_APPS);
-    var settingsScope = routes.oauth2.scope(clients.SCOPE_SETTINGS);
-    var mailScope = routes.oauth2.scope(clients.SCOPE_MAIL);
-    var clientsScope = routes.oauth2.scope(clients.SCOPE_CLIENTS);
+    var cloudronScope = routes.accesscontrol.scope(accesscontrol.SCOPE_CLOUDRON);
+    var profileScope = routes.accesscontrol.scope(accesscontrol.SCOPE_PROFILE);
+    var usersScope = routes.accesscontrol.scope(accesscontrol.SCOPE_USERS);
+    var appsScope = routes.accesscontrol.scope(accesscontrol.SCOPE_APPS);
+    var settingsScope = routes.accesscontrol.scope(accesscontrol.SCOPE_SETTINGS);
+    var mailScope = routes.accesscontrol.scope(accesscontrol.SCOPE_MAIL);
+    var clientsScope = routes.accesscontrol.scope(accesscontrol.SCOPE_CLIENTS);
 
     // csrf protection
     var csrf = routes.oauth2.csrf;
@@ -198,7 +198,7 @@ function initializeExpressSync() {
     router.get ('/api/v1/apps/:id/logs',      appsScope, routes.users.requireAdmin, routes.apps.getLogs);
     router.get ('/api/v1/apps/:id/exec',      appsScope, routes.users.requireAdmin, routes.apps.exec);
     // websocket cannot do bearer authentication
-    router.get ('/api/v1/apps/:id/execws',    routes.oauth2.websocketAuth.bind(null, [ clients.SCOPE_APPS ]), routes.users.requireAdmin, routes.apps.execWebSocket);
+    router.get ('/api/v1/apps/:id/execws',    routes.accesscontrol.websocketAuth.bind(null, [ accesscontrol.SCOPE_APPS ]), routes.users.requireAdmin, routes.apps.execWebSocket);
     router.post('/api/v1/apps/:id/clone',     appsScope, routes.users.requireAdmin, routes.apps.cloneApp);
     router.get ('/api/v1/apps/:id/download',  appsScope, routes.users.requireAdmin, routes.apps.downloadFile);
     router.post('/api/v1/apps/:id/upload',    appsScope, routes.users.requireAdmin, multipart, routes.apps.uploadFile);

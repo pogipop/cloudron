@@ -15,7 +15,8 @@ exports = module.exports = {
     _teardownOauth: teardownOauth
 };
 
-var appdb = require('./appdb.js'),
+var accesscontrol = require('./accesscontrol.js'),
+    appdb = require('./appdb.js'),
     assert = require('assert'),
     async = require('async'),
     clients = require('./clients.js'),
@@ -251,7 +252,7 @@ function setupOauth(app, options, callback) {
 
     var appId = app.id;
     var redirectURI = 'https://' + app.fqdn;
-    var scope = clients.SCOPE_PROFILE;
+    var scope = accesscontrol.SCOPE_PROFILE;
 
     clients.delByAppIdAndType(appId, clients.TYPE_OAUTH, function (error) { // remove existing creds
         if (error && error.reason !== ClientsError.NOT_FOUND) return callback(error);

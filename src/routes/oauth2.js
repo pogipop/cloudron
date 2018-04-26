@@ -2,7 +2,6 @@
 
 var apps = require('../apps'),
     assert = require('assert'),
-    auth = require('../auth.js'),
     authcodedb = require('../authcodedb'),
     clients = require('../clients'),
     ClientsError = clients.ClientsError,
@@ -233,9 +232,9 @@ function loginForm(req, res) {
         if (error) return sendError(req, res, 'Unknown OAuth client');
 
         switch (result.type) {
-            case clients.TYPE_BUILT_IN: return renderBuiltIn();
-            case clients.TYPE_EXTERNAL: return render(result.appId, '/api/v1/cloudron/avatar');
-            default: break;
+        case clients.TYPE_BUILT_IN: return renderBuiltIn();
+        case clients.TYPE_EXTERNAL: return render(result.appId, '/api/v1/cloudron/avatar');
+        default: break;
         }
 
         apps.get(result.appId, function (error, result) {
@@ -496,73 +495,6 @@ var token = [
     gServer.errorHandler()
 ];
 
-// tests if all requestedScopes are attached to the request
-function validateRequestedScopes(req, requestedScopes) {
-    assert.strictEqual(typeof req, 'object');
-    assert(Array.isArray(requestedScopes));
-
-    if (!req.authInfo || !req.authInfo.scope) return new Error('No scope found');
-
-    var scopes = req.authInfo.scope.split(',');
-
-    // check for roles separately
-    if (requestedScopes.indexOf(clients.SCOPE_ROLE_SDK) !== -1 && scopes.indexOf(clients.SCOPE_ROLE_SDK) === -1) {
-        return new Error('Missing required scope role "' + clients.SCOPE_ROLE_SDK + '"');
-    }
-
-    if (scopes.indexOf('*') !== -1) return null;
-
-    for (var i = 0; i < requestedScopes.length; ++i) {
-        if (scopes.indexOf(requestedScopes[i]) === -1) {
-            debug('scope: missing scope "%s".', requestedScopes[i]);
-            return new Error('Missing required scope "' + requestedScopes[i] + '"');
-        }
-    }
-
-    return null;
-}
-
-//  The scope middleware provides an auth middleware for routes.
-//
-//  It is used for API routes, which are authenticated using accesstokens.
-//  Those accesstokens carry OAuth scopes and the middleware takes the required
-//  scope as an argument and will verify the accesstoken against it.
-function scope(requestedScope) {
-    assert.strictEqual(typeof requestedScope, 'string');
-
-    var requestedScopes = requestedScope.split(',');
-    debug('scope: add routes with requested scopes', requestedScopes);
-
-    return [
-        passport.authenticate(['bearer'], { session: false }),
-        function (req, res, next) {
-            var error = validateRequestedScopes(req, requestedScopes);
-            if (error) return next(new HttpError(401, error.message));
-
-            next();
-        }
-    ];
-}
-
-function websocketAuth(requestedScopes, req, res, next) {
-    assert(Array.isArray(requestedScopes));
-
-    if (typeof req.query.access_token !== 'string') return next(new HttpError(401, 'Unauthorized'));
-
-    auth.accessTokenAuth(req.query.access_token, function (error, user, info) {
-        if (error) return next(new HttpError(500, error.message));
-        if (!user) return next(new HttpError(401, 'Unauthorized'));
-
-        req.user = user;
-        req.authInfo = info;
-
-        var e = validateRequestedScopes(req, requestedScopes);
-        if (e) return next(new HttpError(401, e.message));
-
-        next();
-    });
-}
-
 // Cross-site request forgery protection middleware for login form
 var csrf = [
     middleware.csrf(),
@@ -587,8 +519,5 @@ exports = module.exports = {
     accountSetup: accountSetup,
     authorization: authorization,
     token: token,
-    validateRequestedScopes: validateRequestedScopes,
-    scope: scope,
-    websocketAuth: websocketAuth,
     csrf: csrf
 };

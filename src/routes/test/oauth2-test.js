@@ -6,7 +6,8 @@
 
 'use strict';
 
-var appdb = require('../../appdb.js'),
+var accesscontrol = require('../../accesscontrol.js'),
+    appdb = require('../../appdb.js'),
     async = require('async'),
     clientdb = require('../../clientdb.js'),
     clients = require('../../clients.js'),
@@ -15,10 +16,8 @@ var appdb = require('../../appdb.js'),
     domains = require('../../domains.js'),
     expect = require('expect.js'),
     hat = require('hat'),
-    HttpError = require('connect-lastmile').HttpError,
     nock = require('nock'),
     oauth2 = require('../oauth2.js'),
-    passport = require('passport'),
     querystring = require('querystring'),
     request = require('request'),
     server = require('../../server.js'),
@@ -32,111 +31,6 @@ var appdb = require('../../appdb.js'),
 var SERVER_URL = 'http://localhost:' + config.get('port');
 
 describe('OAuth2', function () {
-
-    describe('scopes middleware', function () {
-        var passportAuthenticateSave = null;
-
-        before(function () {
-            passportAuthenticateSave = passport.authenticate;
-            passport.authenticate = function () {
-                return function (req, res, next) { next(); };
-            };
-        });
-
-        after(function () {
-            passport.authenticate = passportAuthenticateSave;
-        });
-
-        it('fails due to missing authInfo', function (done) {
-            var mw = oauth2.scope('admin')[1];
-            var req = {};
-
-            mw(req, null, function (error) {
-                expect(error).to.be.a(HttpError);
-                done();
-            });
-        });
-
-        it('fails due to missing scope property in authInfo', function (done) {
-            var mw = oauth2.scope('admin')[1];
-            var req = { authInfo: {} };
-
-            mw(req, null, function (error) {
-                expect(error).to.be.a(HttpError);
-                done();
-            });
-        });
-
-        it('fails due to missing scope in request', function (done) {
-            var mw = oauth2.scope('admin')[1];
-            var req = { authInfo: { scope: '' } };
-
-            mw(req, null, function (error) {
-                expect(error).to.be.a(HttpError);
-                done();
-            });
-        });
-
-        it('fails due to wrong scope in request', function (done) {
-            var mw = oauth2.scope('admin')[1];
-            var req = { authInfo: { scope: 'foobar,something' } };
-
-            mw(req, null, function (error) {
-                expect(error).to.be.a(HttpError);
-                done();
-            });
-        });
-
-        it('fails due to wrong scope in request', function (done) {
-            var mw = oauth2.scope('admin,users')[1];
-            var req = { authInfo: { scope: 'foobar,admin' } };
-
-            mw(req, null, function (error) {
-                expect(error).to.be.a(HttpError);
-                done();
-            });
-        });
-
-        it('succeeds with one requested scope and one provided scope', function (done) {
-            var mw = oauth2.scope('admin')[1];
-            var req = { authInfo: { scope: 'admin' } };
-
-            mw(req, null, function (error) {
-                expect(error).to.not.be.ok();
-                done();
-            });
-        });
-
-        it('succeeds with one requested scope and two provided scopes', function (done) {
-            var mw = oauth2.scope('admin')[1];
-            var req = { authInfo: { scope: 'foobar,admin' } };
-
-            mw(req, null, function (error) {
-                expect(error).to.not.be.ok();
-                done();
-            });
-        });
-
-        it('succeeds with two requested scope and two provided scopes', function (done) {
-            var mw = oauth2.scope('admin,foobar')[1];
-            var req = { authInfo: { scope: 'foobar,admin' } };
-
-            mw(req, null, function (error) {
-                expect(error).to.not.be.ok();
-                done();
-            });
-        });
-
-        it('succeeds with two requested scope and provided wildcard scope', function (done) {
-            var mw = oauth2.scope('admin,foobar')[1];
-            var req = { authInfo: { scope: '*' } };
-
-            mw(req, null, function (error) {
-                expect(error).to.not.be.ok();
-                done();
-            });
-        });
-    });
 
     describe('flow', function () {
         const DOMAIN_0 = {
@@ -211,7 +105,7 @@ describe('OAuth2', function () {
             type: clients.TYPE_OAUTH,
             clientSecret: 'secret0',
             redirectURI: 'http://redirect0',
-            scope: clients.SCOPE_PROFILE
+            scope: accesscontrol.SCOPE_PROFILE
         };
 
         // unknown app through addon
@@ -221,7 +115,7 @@ describe('OAuth2', function () {
             type: clients.TYPE_OAUTH,
             clientSecret: 'secret1',
             redirectURI: 'http://redirect1',
-            scope: clients.SCOPE_PROFILE
+            scope: accesscontrol.SCOPE_PROFILE
         };
 
         // known app
@@ -231,7 +125,7 @@ describe('OAuth2', function () {
             type: clients.TYPE_OAUTH,
             clientSecret: 'secret2',
             redirectURI: 'http://redirect2',
-            scope: clients.SCOPE_PROFILE
+            scope: accesscontrol.SCOPE_PROFILE
         };
 
         // known app through addon
@@ -241,7 +135,7 @@ describe('OAuth2', function () {
             type: clients.TYPE_OAUTH,
             clientSecret: 'secret3',
             redirectURI: 'http://redirect1',
-            scope: clients.SCOPE_PROFILE
+            scope: accesscontrol.SCOPE_PROFILE
         };
 
         // unknown app through proxy
@@ -251,7 +145,7 @@ describe('OAuth2', function () {
             type: clients.TYPE_PROXY,
             clientSecret: 'secret4',
             redirectURI: 'http://redirect4',
-            scope: clients.SCOPE_PROFILE
+            scope: accesscontrol.SCOPE_PROFILE
         };
 
         // known app through proxy
@@ -261,7 +155,7 @@ describe('OAuth2', function () {
             type: clients.TYPE_PROXY,
             clientSecret: 'secret5',
             redirectURI: 'http://redirect5',
-            scope: clients.SCOPE_PROFILE
+            scope: accesscontrol.SCOPE_PROFILE
         };
 
         // app with accessRestriction not allowing user
@@ -271,7 +165,7 @@ describe('OAuth2', function () {
             type: clients.TYPE_OAUTH,
             clientSecret: 'secret6',
             redirectURI: 'http://redirect6',
-            scope: clients.SCOPE_PROFILE
+            scope: accesscontrol.SCOPE_PROFILE
         };
 
         // app with accessRestriction allowing user
@@ -281,7 +175,7 @@ describe('OAuth2', function () {
             type: clients.TYPE_OAUTH,
             clientSecret: 'secret7',
             redirectURI: 'http://redirect7',
-            scope: clients.SCOPE_PROFILE
+            scope: accesscontrol.SCOPE_PROFILE
         };
 
         // app with accessRestriction allowing group
@@ -291,7 +185,7 @@ describe('OAuth2', function () {
             type: clients.TYPE_OAUTH,
             clientSecret: 'secret9',
             redirectURI: 'http://redirect9',
-            scope: clients.SCOPE_PROFILE
+            scope: accesscontrol.SCOPE_PROFILE
         };
 
         // make csrf always succeed for testing
