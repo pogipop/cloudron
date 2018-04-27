@@ -16,6 +16,8 @@ module.exports = exports = {
 
     waitForDnsRecord: waitForDnsRecord,
 
+    removePrivateFields: removePrivateFields,
+
     DomainError: DomainError
 };
 
@@ -32,7 +34,8 @@ var assert = require('assert'),
     shell = require('./shell.js'),
     sysinfo = require('./sysinfo.js'),
     tld = require('tldjs'),
-    util = require('util');
+    util = require('util'),
+    _ = require('underscore');
 
 var RESTART_CMD = path.join(__dirname, 'scripts/restart.sh');
 var NOOP_CALLBACK = function (error) { if (error) debug(error); };
@@ -357,3 +360,8 @@ function fqdn(location, domain, provider) {
     return location + (location ? (provider !== 'caas' ? '.' : '-') : '') + domain;
 }
 
+function removePrivateFields(domain) {
+    var result = _.pick(domain, 'domain', 'zoneName', 'provider', 'config', 'tlsConfig', 'fallbackCertificate');
+    if (result.fallbackCertificate) delete result.fallbackCertificate.key;  // do not return the 'key'. in caas, this is private
+    return result;
+}

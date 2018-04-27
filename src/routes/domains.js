@@ -47,15 +47,15 @@ function get(req, res, next) {
         if (error && error.reason === DomainError.NOT_FOUND) return next(new HttpError(404, error.message));
         if (error) return next(new HttpError(500, error));
 
-        delete result.fallbackCertificate.key; // do not return the 'key'. in caas, this is private
-
-        next(new HttpSuccess(200, result));
+        next(new HttpSuccess(200, domains.removePrivateFields(result)));
     });
 }
 
 function getAll(req, res, next) {
     domains.getAll(function (error, result) {
         if (error) return next(new HttpError(500, error));
+
+        result = result.map(domains.removePrivateFields);
 
         next(new HttpSuccess(200, { domains: result }));
     });
