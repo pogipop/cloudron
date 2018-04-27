@@ -134,7 +134,6 @@ function initializeExpressSync() {
     router.post('/api/v1/profile/twofactorauthentication/enable', profileScope, routes.profile.enableTwoFactorAuthentication);
     router.post('/api/v1/profile/twofactorauthentication/disable', profileScope, routes.user.verifyPassword, routes.profile.disableTwoFactorAuthentication);
 
-
     // user routes
     router.get ('/api/v1/users', usersScope, routes.user.requireAdmin, routes.user.list);
     router.post('/api/v1/users', usersScope, routes.user.requireAdmin, routes.user.create);

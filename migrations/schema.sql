@@ -21,7 +21,6 @@ CREATE TABLE IF NOT EXISTS users(
     salt VARCHAR(512) NOT NULL,
     createdAt VARCHAR(512) NOT NULL,
     modifiedAt VARCHAR(512) NOT NULL,
-    admin INTEGER NOT NULL,
     displayName VARCHAR(512) DEFAULT "",
     fallbackEmail VARCHAR(512) DEFAULT "",
     twoFactorAuthenticationSecret VARCHAR(128) DEFAULT "",
