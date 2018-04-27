@@ -77,7 +77,7 @@ function setTwoFactorAuthenticationSecret(req, res, next) {
         if (error && error.reason === UserError.ALREADY_EXISTS) return next(new HttpError(409, 'TwoFactor Authentication is enabled, disable first'));
         if (error) return next(new HttpError(500, error));
 
-        next(new HttpSuccess(201, { enabled: false, secret: result.secret, qrcode: result.qrcode }));
+        next(new HttpSuccess(201, { secret: result.secret, qrcode: result.qrcode }));
     });
 }
 
