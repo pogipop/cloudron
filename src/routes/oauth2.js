@@ -19,6 +19,7 @@ var apps = require('../apps'),
     querystring = require('querystring'),
     session = require('connect-ensure-login'),
     settings = require('../settings'),
+    speakeasy = require('speakeasy'),
     tokendb = require('../tokendb'),
     url = require('url'),
     user = require('../user.js'),
@@ -254,6 +255,19 @@ function login(req, res) {
     passport.authenticate('local', {
         failureRedirect: '/api/v1/session/login?' + failureQuery
     })(req, res, function () {
+        if (req.user.twoFactorAuthenticationEnabled) {
+            if (!req.body.totpToken) {
+                let failureQuery = querystring.stringify({ error: 'A 2fa token is required', returnTo: returnTo });
+                return res.redirect('/api/v1/session/login?' + failureQuery);
+            }
+
+            let verified = speakeasy.totp.verify({ secret: req.user.twoFactorAuthenticationSecret, encoding: 'base32', token: req.body.totpToken });
+            if (!verified) {
+                let failureQuery = querystring.stringify({ error: 'The 2fa token is invalid', returnTo: returnTo });
+                return res.redirect('/api/v1/session/login?' + failureQuery);
+            }
+        }
+
         res.redirect(returnTo);
     });
 }

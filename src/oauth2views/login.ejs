@@ -31,6 +31,10 @@
             <label class="control-label" for="inputPassword">Password</label>
             <input type="password" class="form-control" name="password" id="inputPassword" value="<%= password %>" required>
           </div>
+          <div class="form-group">
+            <label class="control-label" for="inputPassword">2fa Token (if enabled)</label>
+            <input type="text" class="form-control" name="totpToken" id="inputTotpToken" value="">
+          </div>
           <input class="btn btn-primary btn-outline pull-right" type="submit" value="Sign in"/>
         </form>
         <a href="/api/v1/session/password/resetRequest.html">Reset password</a>
