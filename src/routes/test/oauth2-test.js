@@ -25,6 +25,7 @@ var expect = require('expect.js'),
     appdb = require('../../appdb.js'),
     config = require('../../config.js'),
     request = require('request'),
+    speakeasy = require('speakeasy'),
     superagent = require('superagent'),
     passport = require('passport');
 
@@ -674,6 +675,129 @@ describe('OAuth2', function () {
                     var data = {
                         username: USER_0.email,
                         password: USER_0.password
+                    };
+
+                    request.post({ url: url, jar: jar, form: data }, function (error, response, body) {
+                        expect(error).to.not.be.ok();
+                        expect(response.statusCode).to.eql(302);
+
+                        var tmp = urlParse(response.headers.location, true);
+                        expect(tmp.query.redirect_uri).to.eql(CLIENT_2.redirectURI);
+                        expect(tmp.query.client_id).to.eql(CLIENT_2.id);
+                        expect(tmp.query.response_type).to.eql('code');
+
+                        done();
+                    });
+                });
+            });
+        });
+
+        describe('loginForm 2fa submit', function () {
+            var secret, accessToken;
+
+            before(function (done) {
+                async.series([
+                    setup,
+                    function (callback) {
+                        superagent.post(`${SERVER_URL}/api/v1/developer/login`).send({ username: USER_0.username, password: USER_0.password }).end(function (error, result) {
+                            accessToken = result.body.token;
+                            callback(error);
+                        });
+                    },
+                    function (callback) {
+                        superagent.post(`${SERVER_URL}/api/v1/user/profile/twofactorauthentication`).query({ access_token: accessToken }).end(function (error, result) {
+                            secret = result.body.secret;
+                            callback(error);
+                        });
+                    },
+                    function (callback) {
+                        var totpToken = speakeasy.totp({
+                            secret: secret,
+                            encoding: 'base32'
+                        });
+
+                        superagent.post(`${SERVER_URL}/api/v1/user/profile/twofactorauthentication/enable`).query({ access_token: accessToken }).send({ totpToken: totpToken }).end(function (error, result) {
+                            callback(error);
+                        });
+                    }
+                ], done);
+            });
+
+            after(cleanup);
+
+            function startAuthorizationFlow(client, callback) {
+                var jar = request.jar();
+                var url = SERVER_URL + '/api/v1/oauth/dialog/authorize?redirect_uri=' + client.redirectURI + '&client_id=' + client.id + '&response_type=code';
+
+                request.get(url, { jar: jar }, function (error, response, body) {
+                    expect(error).to.not.be.ok();
+                    expect(response.statusCode).to.eql(200);
+                    expect(body).to.eql('<script>window.location.href = "/api/v1/session/login?returnTo=' + client.redirectURI + '";</script>');
+
+                    request.get(SERVER_URL + '/api/v1/session/login?returnTo=' + client.redirectURI, { jar: jar, followRedirect: false }, function (error, response, body) {
+                        expect(error).to.not.be.ok();
+                        expect(response.statusCode).to.eql(200);
+                        expect(body.indexOf('<!-- login tester -->')).to.not.equal(-1);
+
+                        callback(jar);
+                    });
+                });
+            }
+
+            it('fails due to missing token', function (done) {
+                startAuthorizationFlow(CLIENT_2, function (jar) {
+                    var url = SERVER_URL + '/api/v1/session/login?returnTo=' + CLIENT_2.redirectURI;
+                    var data = {
+                        username: USER_0.username,
+                        password: USER_0.password
+                    };
+
+                    request.post({ url: url, jar: jar, form: data }, function (error, response, body) {
+                        expect(error).to.not.be.ok();
+                        expect(response.statusCode).to.eql(302);
+
+                        var tmp = urlParse(response.headers.location, true);
+                        expect(tmp.query.error).to.eql('A 2fa token is required');
+                        expect(tmp.query.returnTo).to.eql('/api/v1/oauth/dialog/authorize?redirect_uri=' + CLIENT_2.redirectURI + '&client_id=' + CLIENT_2.id + '&response_type=code');
+
+                        done();
+                    });
+                });
+            });
+
+            it('fails due to wrong token', function (done) {
+                startAuthorizationFlow(CLIENT_2, function (jar) {
+                    var url = SERVER_URL + '/api/v1/session/login?returnTo=' + CLIENT_2.redirectURI;
+                    var data = {
+                        username: USER_0.username,
+                        password: USER_0.password,
+                        totpToken: 'wrongtoken'
+                    };
+
+                    request.post({ url: url, jar: jar, form: data }, function (error, response, body) {
+                        expect(error).to.not.be.ok();
+                        expect(response.statusCode).to.eql(302);
+
+                        var tmp = urlParse(response.headers.location, true);
+                        expect(tmp.query.error).to.eql('The 2fa token is invalid');
+                        expect(tmp.query.returnTo).to.eql('/api/v1/oauth/dialog/authorize?redirect_uri=' + CLIENT_2.redirectURI + '&client_id=' + CLIENT_2.id + '&response_type=code');
+
+                        done();
+                    });
+                });
+            });
+
+            it('succeeds', function (done) {
+                startAuthorizationFlow(CLIENT_2, function (jar) {
+                    var totpToken = speakeasy.totp({
+                        secret: secret,
+                        encoding: 'base32'
+                    });
+                    var url = SERVER_URL + '/api/v1/session/login?returnTo=' + CLIENT_2.redirectURI;
+                    var data = {
+                        username: USER_0.username,
+                        password: USER_0.password,
+                        totpToken: totpToken
                     };
 
                     request.post({ url: url, jar: jar, form: data }, function (error, response, body) {
