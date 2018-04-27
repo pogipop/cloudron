@@ -3,6 +3,7 @@
 exports = module.exports = {
     getApp: getApp,
     getApps: getApps,
+    getAllByUser: getAllByUser,
     getAppIcon: getAppIcon,
     installApp: installApp,
     configureApp: configureApp,
@@ -82,8 +83,19 @@ function getApp(req, res, next) {
 function getApps(req, res, next) {
     assert.strictEqual(typeof req.user, 'object');
 
-    var func = req.user.admin ? apps.getAll : apps.getAllByUser.bind(null, req.user);
-    func(function (error, allApps) {
+    apps.getAll(function (error, allApps) {
+        if (error) return next(new HttpError(500, error));
+
+        allApps = allApps.map(removeInternalAppFields);
+
+        next(new HttpSuccess(200, { apps: allApps }));
+    });
+}
+
+function getAllByUser(req, res, next) {
+    assert.strictEqual(typeof req.user, 'object');
+
+    apps.getAllByUser(req.user, function (error, allApps) {
         if (error) return next(new HttpError(500, error));
 
         allApps = allApps.map(removeInternalAppFields);

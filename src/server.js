@@ -127,6 +127,7 @@ function initializeExpressSync() {
     router.get ('/api/v1/cloudron/eventlog', cloudronScope, routes.user.requireAdmin, routes.eventlog.get);
 
     // working off the user behind the provided token
+    router.get ('/api/v1/user/apps', profileScope, routes.apps.getAllByUser);
     router.get ('/api/v1/user/profile', profileScope, routes.profile.get);
     router.post('/api/v1/user/profile', profileScope, routes.profile.update);
     router.post('/api/v1/user/profile/password', profileScope, routes.user.verifyPassword, routes.profile.changePassword);
