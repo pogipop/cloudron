@@ -369,7 +369,7 @@ describe('Clients', function () {
             setup,
 
             function (callback) {
-                superagent.get(SERVER_URL + '/api/v1/profile')
+                superagent.get(SERVER_URL + '/api/v1/user/profile')
                     .query({ access_token: token })
                     .end(function (error, result) {
                         expect(result).to.be.ok();
@@ -533,7 +533,7 @@ describe('Clients', function () {
                             expect(result.statusCode).to.equal(204);
 
                             // further calls with this token should not work
-                            superagent.get(SERVER_URL + '/api/v1/profile')
+                            superagent.get(SERVER_URL + '/api/v1/user/profile')
                                 .query({ access_token: token })
                                 .end(function (error, result) {
                                     expect(result.statusCode).to.equal(401);

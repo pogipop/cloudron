@@ -205,14 +205,14 @@ describe('Developer API', function () {
         after(cleanup);
 
         it('fails with non sdk token', function (done) {
-            superagent.post(SERVER_URL + '/api/v1/profile/password').query({ access_token: token_normal }).send({ newPassword: 'Some?$123' }).end(function (error, result) {
+            superagent.post(SERVER_URL + '/api/v1/user/profile/password').query({ access_token: token_normal }).send({ newPassword: 'Some?$123' }).end(function (error, result) {
                 expect(result.statusCode).to.equal(400);
                 done();
             });
         });
 
         it('succeeds', function (done) {
-            superagent.post(SERVER_URL + '/api/v1/profile/password').query({ access_token: token_sdk }).send({ newPassword: 'Some?$123' }).end(function (error, result) {
+            superagent.post(SERVER_URL + '/api/v1/user/profile/password').query({ access_token: token_sdk }).send({ newPassword: 'Some?$123' }).end(function (error, result) {
                 expect(result.statusCode).to.equal(204);
                 done();
             });

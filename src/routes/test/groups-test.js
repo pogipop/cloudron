@@ -45,7 +45,7 @@ function setup(done) {
                     // stash token for further use
                     token = result.body.token;
 
-                    superagent.get(SERVER_URL + '/api/v1/profile')
+                    superagent.get(SERVER_URL + '/api/v1/user/profile')
                         .query({ access_token: token })
                         .end(function (error, result) {
                             expect(result).to.be.ok();

@@ -126,7 +126,7 @@ describe('User API', function () {
                 // stash for later use
                 token = res.body.token;
 
-                superagent.get(SERVER_URL + '/api/v1/profile').query({ access_token: token }).end(function (error, result) {
+                superagent.get(SERVER_URL + '/api/v1/user/profile').query({ access_token: token }).end(function (error, result) {
                     expect(error).to.eql(null);
                     expect(result.status).to.equal(200);
 
@@ -702,7 +702,7 @@ describe('User API', function () {
     });
 
     it('can get profile of user with pre-set password', function (done) {
-        superagent.get(SERVER_URL + '/api/v1/profile')
+        superagent.get(SERVER_URL + '/api/v1/user/profile')
             .query({ access_token: token })
             .end(function (err, res) {
                 expect(res.statusCode).to.equal(200);
