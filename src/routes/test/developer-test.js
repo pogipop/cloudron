@@ -10,6 +10,7 @@ var async = require('async'),
     config = require('../../config.js'),
     database = require('../../database.js'),
     expect = require('expect.js'),
+    speakeasy = require('speakeasy'),
     superagent = require('superagent'),
     server = require('../../server.js');
 
@@ -36,6 +37,8 @@ function cleanup(done) {
 }
 
 describe('Developer API', function () {
+    this.timeout(20000);
+
     describe('login', function () {
         before(function (done) {
             async.series([
@@ -168,6 +171,83 @@ describe('Developer API', function () {
                     expect(result.body.token).to.be.a('string');
                     done();
                 });
+        });
+    });
+
+    describe('2fa login', function () {
+        var secret, accessToken;
+
+        before(function (done) {
+            async.series([
+                setup,
+                function (callback) {
+                    superagent.post(`${SERVER_URL}/api/v1/cloudron/activate`).query({ setupToken: 'somesetuptoken' }).send({ username: USERNAME, password: PASSWORD, email: EMAIL }).end(function (error, result) {
+                        callback(error);
+                    });
+                },
+                function (callback) {
+                    superagent.post(`${SERVER_URL}/api/v1/developer/login`).send({ username: USERNAME, password: PASSWORD }).end(function (error, result) {
+                        accessToken = result.body.token;
+                        callback(error);
+                    });
+                },
+                function (callback) {
+                    superagent.post(`${SERVER_URL}/api/v1/user/profile/twofactorauthentication`).query({ access_token: accessToken }).end(function (error, result) {
+                        secret = result.body.secret;
+                        callback(error);
+                    });
+                },
+                function (callback) {
+                    var totpToken = speakeasy.totp({
+                        secret: secret,
+                        encoding: 'base32'
+                    });
+
+                    superagent.post(`${SERVER_URL}/api/v1/user/profile/twofactorauthentication/enable`).query({ access_token: accessToken }).send({ totpToken: totpToken }).end(function (error, result) {
+                        callback(error);
+                    });
+                }
+            ], done);
+        });
+
+        after(function (done) {
+            async.series([
+                function (callback) {
+                    superagent.post(`${SERVER_URL}/api/v1/user/profile/twofactorauthentication/disable`).query({ access_token: accessToken }).send({ password: PASSWORD }).end(function (error, result) {
+                        callback(error);
+                    });
+                },
+                cleanup
+            ], done);
+        });
+
+        it('fails due to missing token', function (done) {
+            superagent.post(`${SERVER_URL}/api/v1/developer/login`).send({ username: USERNAME, password: PASSWORD }).end(function (error, result) {
+                expect(result.statusCode).to.equal(401);
+                done();
+            });
+        });
+
+        it('fails due to wrong token', function (done) {
+            superagent.post(`${SERVER_URL}/api/v1/developer/login`).send({ username: USERNAME, password: PASSWORD }).send({ totpToken: 'wrongtoken' }).end(function (error, result) {
+                expect(result.statusCode).to.equal(401);
+                done();
+            });
+        });
+
+        it('succeeds', function (done) {
+            var totpToken = speakeasy.totp({
+                secret: secret,
+                encoding: 'base32'
+            });
+
+            superagent.post(`${SERVER_URL}/api/v1/developer/login`).send({ username: USERNAME, password: PASSWORD }).send({ totpToken: totpToken }).end(function (error, result) {
+                expect(error).to.be(null);
+                expect(result.statusCode).to.equal(200);
+                expect(result.body).to.be.an(Object);
+                expect(result.body.token).to.be.a('string');
+                done();
+            });
         });
     });
 
