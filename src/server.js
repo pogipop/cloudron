@@ -96,6 +96,7 @@ function initializeExpressSync() {
     var appsScope = routes.oauth2.scope(clients.SCOPE_APPS);
     var settingsScope = routes.oauth2.scope(clients.SCOPE_SETTINGS);
     var mailScope = routes.oauth2.scope(clients.SCOPE_MAIL);
+    var clientsScope = routes.oauth2.scope(clients.SCOPE_CLIENTS);
 
     // csrf protection
     var csrf = routes.oauth2.csrf;
@@ -168,15 +169,16 @@ function initializeExpressSync() {
     // oauth2 routes
     router.get ('/api/v1/oauth/dialog/authorize', routes.oauth2.authorization);
     router.post('/api/v1/oauth/token', routes.oauth2.token);
-    router.get ('/api/v1/oauth/clients', settingsScope, routes.clients.getAll);
-    router.post('/api/v1/oauth/clients', settingsScope, routes.clients.add);
-    router.get ('/api/v1/oauth/clients/:clientId', settingsScope, routes.clients.get);
-    router.post('/api/v1/oauth/clients/:clientId', settingsScope, routes.clients.add);
-    router.del ('/api/v1/oauth/clients/:clientId', settingsScope, routes.clients.del);
-    router.get ('/api/v1/oauth/clients/:clientId/tokens', settingsScope, routes.clients.getTokens);
-    router.post('/api/v1/oauth/clients/:clientId/tokens', settingsScope, routes.clients.addToken);
-    router.del ('/api/v1/oauth/clients/:clientId/tokens', settingsScope, routes.clients.delTokens);
-    router.del ('/api/v1/oauth/clients/:clientId/tokens/:tokenId', settingsScope, routes.clients.delToken);
+
+    router.get ('/api/v1/oauth/clients', clientsScope, routes.clients.getAll);
+    router.post('/api/v1/oauth/clients', clientsScope, routes.clients.add);
+    router.get ('/api/v1/oauth/clients/:clientId', clientsScope, routes.clients.get);
+    router.post('/api/v1/oauth/clients/:clientId', clientsScope, routes.clients.add);
+    router.del ('/api/v1/oauth/clients/:clientId', clientsScope, routes.clients.del);
+    router.get ('/api/v1/oauth/clients/:clientId/tokens', clientsScope, routes.clients.getTokens);
+    router.post('/api/v1/oauth/clients/:clientId/tokens', clientsScope, routes.clients.addToken);
+    router.del ('/api/v1/oauth/clients/:clientId/tokens', clientsScope, routes.clients.delTokens);
+    router.del ('/api/v1/oauth/clients/:clientId/tokens/:tokenId', clientsScope, routes.clients.delToken);
 
     // app routes
     router.get ('/api/v1/apps',          appsScope, routes.apps.getApps);
