@@ -211,7 +211,7 @@ describe('OAuth2', function () {
             type: clients.TYPE_OAUTH,
             clientSecret: 'secret0',
             redirectURI: 'http://redirect0',
-            scope: 'profile'
+            scope: clients.SCOPE_PROFILE
         };
 
         // unknown app through addon
@@ -221,7 +221,7 @@ describe('OAuth2', function () {
             type: clients.TYPE_OAUTH,
             clientSecret: 'secret1',
             redirectURI: 'http://redirect1',
-            scope: 'profile'
+            scope: clients.SCOPE_PROFILE
         };
 
         // known app
@@ -231,7 +231,7 @@ describe('OAuth2', function () {
             type: clients.TYPE_OAUTH,
             clientSecret: 'secret2',
             redirectURI: 'http://redirect2',
-            scope: 'profile'
+            scope: clients.SCOPE_PROFILE
         };
 
         // known app through addon
@@ -241,7 +241,7 @@ describe('OAuth2', function () {
             type: clients.TYPE_OAUTH,
             clientSecret: 'secret3',
             redirectURI: 'http://redirect1',
-            scope: 'profile'
+            scope: clients.SCOPE_PROFILE
         };
 
         // unknown app through proxy
@@ -251,7 +251,7 @@ describe('OAuth2', function () {
             type: clients.TYPE_PROXY,
             clientSecret: 'secret4',
             redirectURI: 'http://redirect4',
-            scope: 'profile'
+            scope: clients.SCOPE_PROFILE
         };
 
         // known app through proxy
@@ -261,7 +261,7 @@ describe('OAuth2', function () {
             type: clients.TYPE_PROXY,
             clientSecret: 'secret5',
             redirectURI: 'http://redirect5',
-            scope: 'profile'
+            scope: clients.SCOPE_PROFILE
         };
 
         // app with accessRestriction not allowing user
@@ -271,7 +271,7 @@ describe('OAuth2', function () {
             type: clients.TYPE_OAUTH,
             clientSecret: 'secret6',
             redirectURI: 'http://redirect6',
-            scope: 'profile'
+            scope: clients.SCOPE_PROFILE
         };
 
         // app with accessRestriction allowing user
@@ -281,7 +281,7 @@ describe('OAuth2', function () {
             type: clients.TYPE_OAUTH,
             clientSecret: 'secret7',
             redirectURI: 'http://redirect7',
-            scope: 'profile'
+            scope: clients.SCOPE_PROFILE
         };
 
         // app with accessRestriction allowing group
@@ -291,7 +291,7 @@ describe('OAuth2', function () {
             type: clients.TYPE_OAUTH,
             clientSecret: 'secret9',
             redirectURI: 'http://redirect9',
-            scope: 'profile'
+            scope: clients.SCOPE_PROFILE
         };
 
         // make csrf always succeed for testing

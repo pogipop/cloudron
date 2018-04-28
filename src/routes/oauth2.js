@@ -527,10 +527,6 @@ function validateRequestedScopes(req, requestedScopes) {
 //  It is used for API routes, which are authenticated using accesstokens.
 //  Those accesstokens carry OAuth scopes and the middleware takes the required
 //  scope as an argument and will verify the accesstoken against it.
-//
-//  See server.js:
-//    var profileScope = routes.oauth2.scope('profile');
-//
 function scope(requestedScope) {
     assert.strictEqual(typeof requestedScope, 'string');
 

@@ -251,7 +251,7 @@ function setupOauth(app, options, callback) {
 
     var appId = app.id;
     var redirectURI = 'https://' + app.fqdn;
-    var scope = 'profile';
+    var scope = clients.SCOPE_PROFILE;
 
     clients.delByAppIdAndType(appId, clients.TYPE_OAUTH, function (error) { // remove existing creds
         if (error && error.reason !== ClientsError.NOT_FOUND) return callback(error);
