@@ -95,6 +95,7 @@ function initializeExpressSync() {
     var usersScope = routes.oauth2.scope(clients.SCOPE_USERS);
     var appsScope = routes.oauth2.scope(clients.SCOPE_APPS);
     var settingsScope = routes.oauth2.scope(clients.SCOPE_SETTINGS);
+    var mailScope = routes.oauth2.scope(clients.SCOPE_MAIL);
 
     // csrf protection
     var csrf = routes.oauth2.csrf;
@@ -218,30 +219,30 @@ function initializeExpressSync() {
     router.post('/api/v1/settings/appstore_config',    settingsScope, routes.users.requireAdmin, routes.settings.setAppstoreConfig);
 
     // email routes
-    router.get ('/api/v1/mail/:domain',       settingsScope, routes.users.requireAdmin, routes.mail.getDomain);
-    router.post('/api/v1/mail/:domain',       settingsScope, routes.users.requireAdmin, routes.mail.updateDomain);
-    router.post('/api/v1/mail',               settingsScope, routes.users.requireAdmin, routes.mail.addDomain);
-    router.get ('/api/v1/mail/:domain/stats', settingsScope, routes.users.requireAdmin, routes.users.verifyPassword, routes.mail.getDomainStats);
-    router.del ('/api/v1/mail/:domain',       settingsScope, routes.users.requireAdmin, routes.users.verifyPassword, routes.mail.removeDomain);
-    router.get ('/api/v1/mail/:domain/status',       settingsScope, routes.users.requireAdmin, routes.mail.getStatus);
-    router.post('/api/v1/mail/:domain/mail_from_validation', settingsScope, routes.users.requireAdmin, routes.mail.setMailFromValidation);
-    router.post('/api/v1/mail/:domain/catch_all',  settingsScope, routes.users.requireAdmin, routes.mail.setCatchAllAddress);
-    router.post('/api/v1/mail/:domain/relay',         settingsScope, routes.users.requireAdmin, routes.mail.setMailRelay);
-    router.post('/api/v1/mail/:domain/enable',        settingsScope, routes.users.requireAdmin, routes.mail.setMailEnabled);
-    router.post('/api/v1/mail/:domain/send_test_mail',  settingsScope, routes.users.requireAdmin, routes.mail.sendTestMail);
-    router.get ('/api/v1/mail/:domain/mailboxes',  settingsScope, routes.users.requireAdmin, routes.mail.getMailboxes);
-    router.get ('/api/v1/mail/:domain/mailboxes/:name',  settingsScope, routes.users.requireAdmin, routes.mail.getMailbox);
-    router.post('/api/v1/mail/:domain/mailboxes',  settingsScope, routes.users.requireAdmin, routes.mail.addMailbox);
-    router.post('/api/v1/mail/:domain/mailboxes/:name',  settingsScope, routes.users.requireAdmin, routes.mail.updateMailbox);
-    router.del ('/api/v1/mail/:domain/mailboxes/:name',  settingsScope, routes.users.requireAdmin, routes.mail.removeMailbox);
-    router.get ('/api/v1/mail/:domain/aliases', settingsScope, routes.users.requireAdmin, routes.mail.listAliases);
-    router.get ('/api/v1/mail/:domain/aliases/:name', settingsScope, routes.users.requireAdmin, routes.mail.getAliases);
-    router.put ('/api/v1/mail/:domain/aliases/:name', settingsScope, routes.users.requireAdmin, routes.mail.setAliases);
-    router.get ('/api/v1/mail/:domain/lists', settingsScope, routes.users.requireAdmin, routes.mail.getLists);
-    router.post('/api/v1/mail/:domain/lists', settingsScope, routes.users.requireAdmin, routes.mail.addList);
-    router.get ('/api/v1/mail/:domain/lists/:name', settingsScope, routes.users.requireAdmin, routes.mail.getList);
-    router.post('/api/v1/mail/:domain/lists/:name', settingsScope, routes.users.requireAdmin, routes.mail.updateList);
-    router.del ('/api/v1/mail/:domain/lists/:name', settingsScope, routes.users.requireAdmin, routes.mail.removeList);
+    router.get ('/api/v1/mail/:domain',       mailScope, routes.users.requireAdmin, routes.mail.getDomain);
+    router.post('/api/v1/mail/:domain',       mailScope, routes.users.requireAdmin, routes.mail.updateDomain);
+    router.post('/api/v1/mail',               mailScope, routes.users.requireAdmin, routes.mail.addDomain);
+    router.get ('/api/v1/mail/:domain/stats', mailScope, routes.users.requireAdmin, routes.users.verifyPassword, routes.mail.getDomainStats);
+    router.del ('/api/v1/mail/:domain',       mailScope, routes.users.requireAdmin, routes.users.verifyPassword, routes.mail.removeDomain);
+    router.get ('/api/v1/mail/:domain/status',       mailScope, routes.users.requireAdmin, routes.mail.getStatus);
+    router.post('/api/v1/mail/:domain/mail_from_validation', mailScope, routes.users.requireAdmin, routes.mail.setMailFromValidation);
+    router.post('/api/v1/mail/:domain/catch_all',  mailScope, routes.users.requireAdmin, routes.mail.setCatchAllAddress);
+    router.post('/api/v1/mail/:domain/relay',         mailScope, routes.users.requireAdmin, routes.mail.setMailRelay);
+    router.post('/api/v1/mail/:domain/enable',        mailScope, routes.users.requireAdmin, routes.mail.setMailEnabled);
+    router.post('/api/v1/mail/:domain/send_test_mail',  mailScope, routes.users.requireAdmin, routes.mail.sendTestMail);
+    router.get ('/api/v1/mail/:domain/mailboxes',  mailScope, routes.users.requireAdmin, routes.mail.getMailboxes);
+    router.get ('/api/v1/mail/:domain/mailboxes/:name',  mailScope, routes.users.requireAdmin, routes.mail.getMailbox);
+    router.post('/api/v1/mail/:domain/mailboxes',  mailScope, routes.users.requireAdmin, routes.mail.addMailbox);
+    router.post('/api/v1/mail/:domain/mailboxes/:name',  mailScope, routes.users.requireAdmin, routes.mail.updateMailbox);
+    router.del ('/api/v1/mail/:domain/mailboxes/:name',  mailScope, routes.users.requireAdmin, routes.mail.removeMailbox);
+    router.get ('/api/v1/mail/:domain/aliases', mailScope, routes.users.requireAdmin, routes.mail.listAliases);
+    router.get ('/api/v1/mail/:domain/aliases/:name', mailScope, routes.users.requireAdmin, routes.mail.getAliases);
+    router.put ('/api/v1/mail/:domain/aliases/:name', mailScope, routes.users.requireAdmin, routes.mail.setAliases);
+    router.get ('/api/v1/mail/:domain/lists', mailScope, routes.users.requireAdmin, routes.mail.getLists);
+    router.post('/api/v1/mail/:domain/lists', mailScope, routes.users.requireAdmin, routes.mail.addList);
+    router.get ('/api/v1/mail/:domain/lists/:name', mailScope, routes.users.requireAdmin, routes.mail.getList);
+    router.post('/api/v1/mail/:domain/lists/:name', mailScope, routes.users.requireAdmin, routes.mail.updateList);
+    router.del ('/api/v1/mail/:domain/lists/:name', mailScope, routes.users.requireAdmin, routes.mail.removeList);
 
     // feedback
     router.post('/api/v1/feedback', usersScope, routes.cloudron.feedback);
