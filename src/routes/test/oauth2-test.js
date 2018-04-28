@@ -692,7 +692,7 @@ describe('OAuth2', function () {
             });
         });
 
-        describe('loginForm 2fa submit', function () {
+        describe('loginForm 2FA submit', function () {
             var secret, accessToken;
 
             before(function (done) {
@@ -757,7 +757,7 @@ describe('OAuth2', function () {
                         expect(response.statusCode).to.eql(302);
 
                         var tmp = urlParse(response.headers.location, true);
-                        expect(tmp.query.error).to.eql('A 2fa token is required');
+                        expect(tmp.query.error).to.eql('A 2FA token is required');
                         expect(tmp.query.returnTo).to.eql('/api/v1/oauth/dialog/authorize?redirect_uri=' + CLIENT_2.redirectURI + '&client_id=' + CLIENT_2.id + '&response_type=code');
 
                         done();
@@ -779,7 +779,7 @@ describe('OAuth2', function () {
                         expect(response.statusCode).to.eql(302);
 
                         var tmp = urlParse(response.headers.location, true);
-                        expect(tmp.query.error).to.eql('The 2fa token is invalid');
+                        expect(tmp.query.error).to.eql('The 2FA token is invalid');
                         expect(tmp.query.returnTo).to.eql('/api/v1/oauth/dialog/authorize?redirect_uri=' + CLIENT_2.redirectURI + '&client_id=' + CLIENT_2.id + '&response_type=code');
 
                         done();

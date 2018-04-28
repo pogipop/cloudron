@@ -257,13 +257,13 @@ function login(req, res) {
     })(req, res, function () {
         if (req.user.twoFactorAuthenticationEnabled) {
             if (!req.body.totpToken) {
-                let failureQuery = querystring.stringify({ error: 'A 2fa token is required', returnTo: returnTo });
+                let failureQuery = querystring.stringify({ error: 'A 2FA token is required', returnTo: returnTo });
                 return res.redirect('/api/v1/session/login?' + failureQuery);
             }
 
             let verified = speakeasy.totp.verify({ secret: req.user.twoFactorAuthenticationSecret, encoding: 'base32', token: req.body.totpToken });
             if (!verified) {
-                let failureQuery = querystring.stringify({ error: 'The 2fa token is invalid', returnTo: returnTo });
+                let failureQuery = querystring.stringify({ error: 'The 2FA token is invalid', returnTo: returnTo });
                 return res.redirect('/api/v1/session/login?' + failureQuery);
             }
         }
