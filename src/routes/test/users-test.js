@@ -5,7 +5,8 @@
 
 'use strict';
 
-var async = require('async'),
+var accesscontrol = require('../../accesscontrol.js'),
+    async = require('async'),
     config = require('../../config.js'),
     constants = require('../../constants.js'),
     database = require('../../database.js'),
@@ -174,7 +175,7 @@ describe('Users API', function () {
         var token = tokendb.generateToken();
         var expires = Date.now() + 2000; // 1 sec
 
-        tokendb.add(token, user_0.id, null, expires, '*', function (error) {
+        tokendb.add(token, user_0.id, null, expires, accesscontrol.SCOPE_PROFILE, function (error) {
             expect(error).to.not.be.ok();
 
             setTimeout(function () {
@@ -270,7 +271,7 @@ describe('Users API', function () {
                 expect(error).to.be.ok();
                 expect(result.statusCode).to.equal(400);
                 done();
-        });
+            });
     });
 
     it('create second user succeeds', function (done) {
@@ -287,7 +288,7 @@ describe('Users API', function () {
 
                 checkMails(2, function () {
                     // HACK to get a token for second user (passwords are generated and the user should have gotten a password setup link...)
-                    tokendb.add(token_1, user_1.id, 'test-client-id',  Date.now() + 10000, '*', done);
+                    tokendb.add(token_1, user_1.id, 'test-client-id',  Date.now() + 10000, accesscontrol.SCOPE_PROFILE, done);
                 });
             });
     });
@@ -681,7 +682,7 @@ describe('Users API', function () {
                 expect(error).to.be.ok();
                 expect(result.statusCode).to.equal(400);
                 done();
-        });
+            });
     });
 
     it('can create user with a password', function (done) {
@@ -697,7 +698,7 @@ describe('Users API', function () {
                 token = tokendb.generateToken();
                 var expires = Date.now() + 2000; // 1 sec
 
-                tokendb.add(token, user_4.id, null, expires, '*', done);
+                tokendb.add(token, user_4.id, null, expires, accesscontrol.SCOPE_PROFILE, done);
             });
     });
 

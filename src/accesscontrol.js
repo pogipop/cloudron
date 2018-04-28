@@ -12,6 +12,8 @@ exports = module.exports = {
     SCOPE_CLIENTS: 'clients',
     SCOPE_DOMAINS: 'domains',
 
+    SCOPE_ANY: '*',
+
     // roles are handled just like the above scopes, they are parallel to scopes
     // scopes enclose API groups, roles specify the usage role
     SCOPE_ROLE_SDK: 'roleSdk',

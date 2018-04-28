@@ -6,7 +6,8 @@
 
 'use strict';
 
-var async = require('async'),
+var accesscontrol = require('../../accesscontrol.js'),
+    async = require('async'),
     config = require('../../config.js'),
     database = require('../../database.js'),
     expect = require('expect.js'),
@@ -62,7 +63,7 @@ function setup(done) {
             token_1 = tokendb.generateToken();
 
             // HACK to get a token for second user (passwords are generated and the user should have gotten a password setup link...)
-            tokendb.add(token_1, USER_1_ID, 'test-client-id',  Date.now() + 100000, '*', callback);
+            tokendb.add(token_1, USER_1_ID, 'test-client-id',  Date.now() + 100000, accesscontrol.SCOPE_PROFILE, callback);
         }
 
     ], done);

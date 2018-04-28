@@ -6,7 +6,8 @@
 
 'use strict';
 
-var async = require('async'),
+var accesscontrol = require('../../accesscontrol.js'),
+    async = require('async'),
     config = require('../../config.js'),
     database = require('../../database.js'),
     expect = require('expect.js'),
@@ -69,7 +70,7 @@ function setup(done) {
                     userId_1 = result.body.id;
 
                     // HACK to get a token for second user (passwords are generated and the user should have gotten a password setup link...)
-                    tokendb.add(token_1, userId_1, 'test-client-id',  Date.now() + 100000, '*', callback);
+                    tokendb.add(token_1, userId_1, 'test-client-id',  Date.now() + 100000, accesscontrol.SCOPE_PROFILE, callback);
                 });
         }
     ], done);
@@ -276,6 +277,20 @@ describe('Groups API', function () {
                     expect(result.body.userIds[0]).to.be(userId);
                     expect(result.body.userIds[1]).to.be(userId_1);
                     done();
+                });
+        });
+
+        it('can add user_1 to admin', function (done) {
+            superagent.put(SERVER_URL + '/api/v1/users/' + userId_1 + '/groups')
+                .query({ access_token: token })
+                .send({ groupIds: [ 'admin' ]})
+                .end(function (error, result) {
+                    expect(result.statusCode).to.equal(204);
+
+                    token_1 = tokendb.generateToken();
+
+                    // HACK to get a token for second user (passwords are generated and the user should have gotten a password setup link...)
+                    tokendb.add(token_1, userId_1, 'test-client-id',  Date.now() + 100000, accesscontrol.SCOPE_ANY, done);
                 });
         });
 

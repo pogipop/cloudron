@@ -32,7 +32,7 @@ function scope(requestedScope) {
 
         function (req, res, next) {
             var error = accesscontrol.validateRequestedScopes(req.authInfo || null, requestedScopes);
-            if (error) return next(new HttpError(401, error.message));
+            if (error) return next(new HttpError(403, error.message));
 
             next();
         }
