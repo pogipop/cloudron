@@ -5,9 +5,9 @@ exports = module.exports = {
     get: get,
     del: del,
     getAll: getAll,
-    addClientToken: addClientToken,
-    getClientTokens: getClientTokens,
-    delClientTokens: delClientTokens,
+    addToken: addToken,
+    getTokens: getTokens,
+    delTokens: delTokens,
     delToken: delToken
 };
 
@@ -72,36 +72,36 @@ function getAll(req, res, next) {
     });
 }
 
-function addClientToken(req, res, next) {
+function addToken(req, res, next) {
     assert.strictEqual(typeof req.params.clientId, 'string');
     assert.strictEqual(typeof req.user, 'object');
 
     var expiresAt = req.query.expiresAt ? parseInt(req.query.expiresAt, 10) : Date.now() + constants.DEFAULT_TOKEN_EXPIRATION;
     if (isNaN(expiresAt) || expiresAt <= Date.now()) return next(new HttpError(400, 'expiresAt must be a timestamp in the future'));
 
-    clients.addClientTokenByUserId(req.params.clientId, req.user.id, expiresAt, function (error, result) {
+    clients.addTokenByUserId(req.params.clientId, req.user.id, expiresAt, function (error, result) {
         if (error && error.reason === ClientsError.NOT_FOUND) return next(new HttpError(404, error.message));
         if (error) return next(new HttpError(500, error));
         next(new HttpSuccess(201, { token: result }));
     });
 }
 
-function getClientTokens(req, res, next) {
+function getTokens(req, res, next) {
     assert.strictEqual(typeof req.params.clientId, 'string');
     assert.strictEqual(typeof req.user, 'object');
 
-    clients.getClientTokensByUserId(req.params.clientId, req.user.id, function (error, result) {
+    clients.getTokensByUserId(req.params.clientId, req.user.id, function (error, result) {
         if (error && error.reason === ClientsError.NOT_FOUND) return next(new HttpError(404, error.message));
         if (error) return next(new HttpError(500, error));
         next(new HttpSuccess(200, { tokens: result }));
     });
 }
 
-function delClientTokens(req, res, next) {
+function delTokens(req, res, next) {
     assert.strictEqual(typeof req.params.clientId, 'string');
     assert.strictEqual(typeof req.user, 'object');
 
-    clients.delClientTokensByUserId(req.params.clientId, req.user.id, function (error) {
+    clients.delTokensByUserId(req.params.clientId, req.user.id, function (error) {
         if (error && error.reason === ClientsError.NOT_FOUND) return next(new HttpError(404, error.message));
         if (error) return next(new HttpError(500, error));
         next(new HttpSuccess(204));

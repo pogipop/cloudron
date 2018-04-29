@@ -8,10 +8,10 @@ exports = module.exports = {
     del: del,
     getAll: getAll,
     getByAppIdAndType: getByAppIdAndType,
-    getClientTokensByUserId: getClientTokensByUserId,
-    delClientTokensByUserId: delClientTokensByUserId,
+    getTokensByUserId: getTokensByUserId,
+    delTokensByUserId: delTokensByUserId,
     delByAppIdAndType: delByAppIdAndType,
-    addClientTokenByUserId: addClientTokenByUserId,
+    addTokenByUserId: addTokenByUserId,
     delToken: delToken,
 
     addDefaultClients: addDefaultClients,
@@ -216,7 +216,7 @@ function getByAppIdAndType(appId, type, callback) {
     });
 }
 
-function getClientTokensByUserId(clientId, userId, callback) {
+function getTokensByUserId(clientId, userId, callback) {
     assert.strictEqual(typeof clientId, 'string');
     assert.strictEqual(typeof userId, 'string');
     assert.strictEqual(typeof callback, 'function');
@@ -235,7 +235,7 @@ function getClientTokensByUserId(clientId, userId, callback) {
     });
 }
 
-function delClientTokensByUserId(clientId, userId, callback) {
+function delTokensByUserId(clientId, userId, callback) {
     assert.strictEqual(typeof clientId, 'string');
     assert.strictEqual(typeof userId, 'string');
     assert.strictEqual(typeof callback, 'function');
@@ -275,7 +275,7 @@ function delByAppIdAndType(appId, type, callback) {
     });
 }
 
-function addClientTokenByUserId(clientId, userId, expiresAt, callback) {
+function addTokenByUserId(clientId, userId, expiresAt, callback) {
     assert.strictEqual(typeof clientId, 'string');
     assert.strictEqual(typeof userId, 'string');
     assert.strictEqual(typeof expiresAt, 'number');
