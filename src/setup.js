@@ -37,8 +37,8 @@ var assert = require('assert'),
     superagent = require('superagent'),
     sysinfo = require('./sysinfo.js'),
     tokendb = require('./tokendb.js'),
-    user = require('./user.js'),
-    UserError = user.UserError,
+    users = require('./users.js'),
+    UserError = users.UserError,
     tld = require('tldjs'),
     util = require('util');
 
@@ -240,7 +240,7 @@ function activate(username, password, email, displayName, ip, auditSource, callb
 
     setTimeZone(ip, function () { }); // TODO: get this from user. note that timezone is detected based on the browser location and not the cloudron region
 
-    user.createOwner(username, password, email, displayName, auditSource, function (error, userObject) {
+    users.createOwner(username, password, email, displayName, auditSource, function (error, userObject) {
         if (error && error.reason === UserError.ALREADY_EXISTS) return callback(new SetupError(SetupError.ALREADY_PROVISIONED));
         if (error && error.reason === UserError.BAD_FIELD) return callback(new SetupError(SetupError.BAD_FIELD, error.message));
         if (error) return callback(new SetupError(SetupError.INTERNAL_ERROR, error));
@@ -276,7 +276,7 @@ function restore(backupConfig, backupId, version, callback) {
 
     if (gWebadminStatus.configuring || gWebadminStatus.restoring) return callback(new SetupError(SetupError.BAD_STATE, 'Already restoring or configuring'));
 
-    user.count(function (error, count) {
+    users.count(function (error, count) {
         if (error) return callback(new SetupError(SetupError.INTERNAL_ERROR, error));
         if (count) return callback(new SetupError(SetupError.ALREADY_PROVISIONED, 'Already activated'));
 
@@ -309,7 +309,7 @@ function restore(backupConfig, backupId, version, callback) {
 function getStatus(callback) {
     assert.strictEqual(typeof callback, 'function');
 
-    user.count(function (error, count) {
+    users.count(function (error, count) {
         if (error) return callback(new SetupError(SetupError.INTERNAL_ERROR, error));
 
         settings.getCloudronName(function (error, cloudronName) {

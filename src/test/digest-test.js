@@ -19,8 +19,8 @@ var async = require('async'),
     safe = require('safetydance'),
     settings = require('../settings.js'),
     updatechecker = require('../updatechecker.js'),
-    user = require('../user.js'),
-    userdb = require('../userdb.js');
+    userdb = require('../userdb.js'),
+    users = require('../users.js');
 
 // owner
 var USER_0 = {
@@ -73,14 +73,14 @@ describe('digest', function () {
             settings.initialize,
             domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0.zoneName, DOMAIN_0.provider, DOMAIN_0.config, DOMAIN_0.fallbackCertificate, DOMAIN_0.tlsConfig),
             mail.addDomain.bind(null, DOMAIN_0.domain),
-            user.createOwner.bind(null, USER_0.username, USER_0.password, USER_0.email, USER_0.displayName, AUDIT_SOURCE),
+            users.createOwner.bind(null, USER_0.username, USER_0.password, USER_0.email, USER_0.displayName, AUDIT_SOURCE),
             function (callback) {
                 userdb.getByUsername(USER_0.username, function (error, result) {
                     if (error) return callback(error);
 
                     USER_0.id = result.id;
 
-                    user.update(USER_0.id, { fallbackEmail: USER_0.fallbackEmail }, AUDIT_SOURCE, callback);
+                    users.update(USER_0.id, { fallbackEmail: USER_0.fallbackEmail }, AUDIT_SOURCE, callback);
                 });
             },
             eventlog.add.bind(null, eventlog.ACTION_UPDATE, AUDIT_SOURCE, { boxUpdateInfo: { sourceTarballUrl: 'xx', version: '1.2.3', changelog: [ 'good stuff' ] } }),

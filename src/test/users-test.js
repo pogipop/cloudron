@@ -18,9 +18,9 @@ var async = require('async'),
     mailboxdb = require('../mailboxdb.js'),
     maildb = require('../maildb.js'),
     mailer = require('../mailer.js'),
-    user = require('../user.js'),
     userdb = require('../userdb.js'),
-    UserError = user.UserError;
+    users = require('../users.js'),
+    UserError = users.UserError;
 
 var USERNAME = 'noBody';
 var USERNAME_NEW = 'noBodyNew';
@@ -59,7 +59,7 @@ function cleanupUsers(done) {
 
 function createOwner(done) {
     groups.create('admin', function () { // ignore error since it might already exist
-        user.createOwner(USERNAME, PASSWORD, EMAIL, DISPLAY_NAME, AUDIT_SOURCE, function (error, result) {
+        users.createOwner(USERNAME, PASSWORD, EMAIL, DISPLAY_NAME, AUDIT_SOURCE, function (error, result) {
             expect(error).to.not.be.ok();
             expect(result).to.be.ok();
 
@@ -119,7 +119,7 @@ describe('User', function () {
         after(cleanupUsers);
 
         it('fails due to short password', function (done) {
-            user.create(USERNAME, 'Fo$%23', EMAIL, DISPLAY_NAME, AUDIT_SOURCE, function (error, result) {
+            users.create(USERNAME, 'Fo$%23', EMAIL, DISPLAY_NAME, AUDIT_SOURCE, function (error, result) {
                 expect(error).to.be.ok();
                 expect(result).to.not.be.ok();
                 expect(error.reason).to.equal(UserError.BAD_FIELD);
@@ -129,7 +129,7 @@ describe('User', function () {
         });
 
         it('fails due to missing upper case password', function (done) {
-            user.create(USERNAME, 'thisiseightch%$234arslong', EMAIL, DISPLAY_NAME, AUDIT_SOURCE, function (error, result) {
+            users.create(USERNAME, 'thisiseightch%$234arslong', EMAIL, DISPLAY_NAME, AUDIT_SOURCE, function (error, result) {
                 expect(error).to.be.ok();
                 expect(result).to.not.be.ok();
                 expect(error.reason).to.equal(UserError.BAD_FIELD);
@@ -139,7 +139,7 @@ describe('User', function () {
         });
 
         it('fails due to missing numerics in password', function (done) {
-            user.create(USERNAME, 'foobaRASDF%', EMAIL, DISPLAY_NAME, AUDIT_SOURCE, function (error, result) {
+            users.create(USERNAME, 'foobaRASDF%', EMAIL, DISPLAY_NAME, AUDIT_SOURCE, function (error, result) {
                 expect(error).to.be.ok();
                 expect(result).to.not.be.ok();
                 expect(error.reason).to.equal(UserError.BAD_FIELD);
@@ -149,7 +149,7 @@ describe('User', function () {
         });
 
         it('fails due to missing special chars in password', function (done) {
-            user.create(USERNAME, 'foobaRASDF23423', EMAIL, DISPLAY_NAME, AUDIT_SOURCE, function (error, result) {
+            users.create(USERNAME, 'foobaRASDF23423', EMAIL, DISPLAY_NAME, AUDIT_SOURCE, function (error, result) {
                 expect(error).to.be.ok();
                 expect(result).to.not.be.ok();
                 expect(error.reason).to.equal(UserError.BAD_FIELD);
@@ -159,7 +159,7 @@ describe('User', function () {
         });
 
         it('fails due to reserved username', function (done) {
-            user.create('admin', PASSWORD, EMAIL, DISPLAY_NAME, AUDIT_SOURCE, function (error, result) {
+            users.create('admin', PASSWORD, EMAIL, DISPLAY_NAME, AUDIT_SOURCE, function (error, result) {
                 expect(error).to.be.ok();
                 expect(result).to.not.be.ok();
                 expect(error.reason).to.equal(UserError.BAD_FIELD);
@@ -169,7 +169,7 @@ describe('User', function () {
         });
 
         it('fails due to invalid username', function (done) {
-            user.create('moo-daemon', PASSWORD, EMAIL, DISPLAY_NAME, AUDIT_SOURCE, function (error, result) {
+            users.create('moo-daemon', PASSWORD, EMAIL, DISPLAY_NAME, AUDIT_SOURCE, function (error, result) {
                 expect(error).to.be.ok();
                 expect(result).to.not.be.ok();
                 expect(error.reason).to.equal(UserError.BAD_FIELD);
@@ -179,7 +179,7 @@ describe('User', function () {
         });
 
         it('fails due to short username', function (done) {
-            user.create('', PASSWORD, EMAIL, DISPLAY_NAME, AUDIT_SOURCE, function (error, result) {
+            users.create('', PASSWORD, EMAIL, DISPLAY_NAME, AUDIT_SOURCE, function (error, result) {
                 expect(error).to.be.ok();
                 expect(result).to.not.be.ok();
                 expect(error.reason).to.equal(UserError.BAD_FIELD);
@@ -189,7 +189,7 @@ describe('User', function () {
         });
 
         it('fails due to long username', function (done) {
-            user.create(new Array(257).fill('Z').join(''), PASSWORD, EMAIL, DISPLAY_NAME, AUDIT_SOURCE, function (error, result) {
+            users.create(new Array(257).fill('Z').join(''), PASSWORD, EMAIL, DISPLAY_NAME, AUDIT_SOURCE, function (error, result) {
                 expect(error).to.be.ok();
                 expect(result).to.not.be.ok();
                 expect(error.reason).to.equal(UserError.BAD_FIELD);
@@ -199,7 +199,7 @@ describe('User', function () {
         });
 
         it('fails due to reserved pattern', function (done) {
-            user.create('maybe-app', PASSWORD, EMAIL, DISPLAY_NAME, AUDIT_SOURCE, function (error, result) {
+            users.create('maybe-app', PASSWORD, EMAIL, DISPLAY_NAME, AUDIT_SOURCE, function (error, result) {
                 expect(error).to.be.ok();
                 expect(result).to.not.be.ok();
                 expect(error.reason).to.equal(UserError.BAD_FIELD);
@@ -209,7 +209,7 @@ describe('User', function () {
         });
 
         it('succeeds and attempts to send invite', function (done) {
-            user.createOwner(USERNAME, PASSWORD, EMAIL, DISPLAY_NAME, AUDIT_SOURCE, function (error, result) {
+            users.createOwner(USERNAME, PASSWORD, EMAIL, DISPLAY_NAME, AUDIT_SOURCE, function (error, result) {
                 expect(error).not.to.be.ok();
                 expect(result).to.be.ok();
                 expect(result.username).to.equal(USERNAME.toLowerCase());
@@ -223,29 +223,29 @@ describe('User', function () {
 
         it('fails because of invalid BAD_FIELD', function (done) {
             expect(function () {
-                user.create(EMAIL, {}, function () {});
+                users.create(EMAIL, {}, function () {});
             }).to.throwException();
             expect(function () {
-                user.create(12345, PASSWORD, EMAIL, function () {});
+                users.create(12345, PASSWORD, EMAIL, function () {});
             }).to.throwException();
             expect(function () {
-                user.create(USERNAME, PASSWORD, EMAIL, {});
+                users.create(USERNAME, PASSWORD, EMAIL, {});
             }).to.throwException();
             expect(function () {
-                user.create(USERNAME, PASSWORD, EMAIL, {}, function () {});
+                users.create(USERNAME, PASSWORD, EMAIL, {}, function () {});
             }).to.throwException();
             expect(function () {
-                user.create(USERNAME, PASSWORD, EMAIL, {});
+                users.create(USERNAME, PASSWORD, EMAIL, {});
             }).to.throwException();
             expect(function () {
-                user.create(USERNAME, PASSWORD, EMAIL, false, null, 'foobar');
+                users.create(USERNAME, PASSWORD, EMAIL, false, null, 'foobar');
             }).to.throwException();
 
             done();
         });
 
         it('fails because user exists', function (done) {
-            user.create(USERNAME, PASSWORD, EMAIL, DISPLAY_NAME, AUDIT_SOURCE, function (error, result) {
+            users.create(USERNAME, PASSWORD, EMAIL, DISPLAY_NAME, AUDIT_SOURCE, function (error, result) {
                 expect(error).to.be.ok();
                 expect(result).not.to.be.ok();
                 expect(error.reason).to.equal(UserError.ALREADY_EXISTS);
@@ -255,7 +255,7 @@ describe('User', function () {
         });
 
         it('fails because password is empty', function (done) {
-            user.create(USERNAME, '', EMAIL, DISPLAY_NAME, AUDIT_SOURCE, function (error, result) {
+            users.create(USERNAME, '', EMAIL, DISPLAY_NAME, AUDIT_SOURCE, function (error, result) {
                 expect(error).to.be.ok();
                 expect(result).not.to.be.ok();
                 expect(error.reason).to.equal(UserError.BAD_FIELD);
@@ -269,7 +269,7 @@ describe('User', function () {
             maildb.update(DOMAIN_0.domain, { enabled: true }, function (error) {
                 expect(error).not.to.be.ok();
 
-                user.create(USERNAME_1, PASSWORD_1, EMAIL_1, DISPLAY_NAME_1, AUDIT_SOURCE, { sendInvite: true }, function (error, result) {
+                users.create(USERNAME_1, PASSWORD_1, EMAIL_1, DISPLAY_NAME_1, AUDIT_SOURCE, { sendInvite: true }, function (error, result) {
                     expect(error).not.to.be.ok();
                     expect(result).to.be.ok();
                     expect(result.username).to.equal(USERNAME_1.toLowerCase());
@@ -292,7 +292,7 @@ describe('User', function () {
         after(cleanupUsers);
 
         it('fails because there is no owner', function (done) {
-            user.getOwner(function (error) {
+            users.getOwner(function (error) {
                 expect(error.reason).to.be(UserError.NOT_FOUND);
                 done();
             });
@@ -302,7 +302,7 @@ describe('User', function () {
             createOwner(function (error) {
                 if (error) return done(error);
 
-                user.getOwner(function (error, owner) {
+                users.getOwner(function (error, owner) {
                     expect(error).to.be(null);
                     expect(owner.email).to.be(EMAIL.toLowerCase());
                     done();
@@ -316,7 +316,7 @@ describe('User', function () {
         after(cleanupUsers);
 
         it('fails due to non existing user', function (done) {
-            user.verify('somerandomid', PASSWORD, function (error, result) {
+            users.verify('somerandomid', PASSWORD, function (error, result) {
                 expect(error).to.be.ok();
                 expect(result).to.not.be.ok();
                 expect(error.reason).to.equal(UserError.NOT_FOUND);
@@ -326,7 +326,7 @@ describe('User', function () {
         });
 
         it('fails due to empty password', function (done) {
-            user.verify(userObject.id, '', function (error, result) {
+            users.verify(userObject.id, '', function (error, result) {
                 expect(error).to.be.ok();
                 expect(result).to.not.be.ok();
                 expect(error.reason).to.equal(UserError.WRONG_PASSWORD);
@@ -336,7 +336,7 @@ describe('User', function () {
         });
 
         it('fails due to wrong password', function (done) {
-            user.verify(userObject.id, PASSWORD+PASSWORD, function (error, result) {
+            users.verify(userObject.id, PASSWORD+PASSWORD, function (error, result) {
                 expect(error).to.be.ok();
                 expect(result).to.not.be.ok();
                 expect(error.reason).to.equal(UserError.WRONG_PASSWORD);
@@ -346,7 +346,7 @@ describe('User', function () {
         });
 
         it('succeeds', function (done) {
-            user.verify(userObject.id, PASSWORD, function (error, result) {
+            users.verify(userObject.id, PASSWORD, function (error, result) {
                 expect(error).to.not.be.ok();
                 expect(result).to.be.ok();
 
@@ -355,7 +355,7 @@ describe('User', function () {
         });
 
         it('fails for ghost if not enabled', function (done) {
-            user.verify(userObject.id, 'foobar', function (error) {
+            users.verify(userObject.id, 'foobar', function (error) {
                 expect(error).to.be.a(UserError);
                 expect(error.reason).to.equal(UserError.WRONG_PASSWORD);
                 done();
@@ -367,7 +367,7 @@ describe('User', function () {
             ghost[userObject.username] = 'testpassword';
             fs.writeFileSync(constants.GHOST_USER_FILE, JSON.stringify(ghost), 'utf8');
 
-            user.verify(userObject.id, 'foobar', function (error) {
+            users.verify(userObject.id, 'foobar', function (error) {
                 fs.unlinkSync(constants.GHOST_USER_FILE);
 
                 expect(error).to.be.a(UserError);
@@ -381,7 +381,7 @@ describe('User', function () {
             ghost[userObject.username] = 'testpassword';
             fs.writeFileSync(constants.GHOST_USER_FILE, JSON.stringify(ghost), 'utf8');
 
-            user.verify(userObject.id, 'testpassword', function (error, result) {
+            users.verify(userObject.id, 'testpassword', function (error, result) {
                 fs.unlinkSync(constants.GHOST_USER_FILE);
 
                 expect(error).to.equal(null);
@@ -399,7 +399,7 @@ describe('User', function () {
             ghost[userObject.username] = 'testpassword';
             fs.writeFileSync(constants.GHOST_USER_FILE, JSON.stringify(ghost), 'utf8');
 
-            user.verify(userObject.id, PASSWORD, function (error, result) {
+            users.verify(userObject.id, PASSWORD, function (error, result) {
                 fs.unlinkSync(constants.GHOST_USER_FILE);
 
                 expect(error).to.not.be.ok();
@@ -416,7 +416,7 @@ describe('User', function () {
         after(cleanupUsers);
 
         it('fails due to non existing username', function (done) {
-            user.verifyWithUsername(USERNAME+USERNAME, PASSWORD, function (error, result) {
+            users.verifyWithUsername(USERNAME+USERNAME, PASSWORD, function (error, result) {
                 expect(error).to.be.ok();
                 expect(result).to.not.be.ok();
                 expect(error.reason).to.equal(UserError.NOT_FOUND);
@@ -426,7 +426,7 @@ describe('User', function () {
         });
 
         it('fails due to empty password', function (done) {
-            user.verifyWithUsername(USERNAME, '', function (error, result) {
+            users.verifyWithUsername(USERNAME, '', function (error, result) {
                 expect(error).to.be.ok();
                 expect(result).to.not.be.ok();
                 expect(error.reason).to.equal(UserError.WRONG_PASSWORD);
@@ -436,7 +436,7 @@ describe('User', function () {
         });
 
         it('fails due to wrong password', function (done) {
-            user.verifyWithUsername(USERNAME, PASSWORD+PASSWORD, function (error, result) {
+            users.verifyWithUsername(USERNAME, PASSWORD+PASSWORD, function (error, result) {
                 expect(error).to.be.ok();
                 expect(result).to.not.be.ok();
                 expect(error.reason).to.equal(UserError.WRONG_PASSWORD);
@@ -446,7 +446,7 @@ describe('User', function () {
         });
 
         it('succeeds', function (done) {
-            user.verifyWithUsername(USERNAME, PASSWORD, function (error, result) {
+            users.verifyWithUsername(USERNAME, PASSWORD, function (error, result) {
                 expect(error).to.not.be.ok();
                 expect(result).to.be.ok();
 
@@ -455,7 +455,7 @@ describe('User', function () {
         });
 
         it('succeeds for different username case', function (done) {
-            user.verifyWithUsername(USERNAME.toUpperCase(), PASSWORD, function (error, result) {
+            users.verifyWithUsername(USERNAME.toUpperCase(), PASSWORD, function (error, result) {
                 expect(error).to.not.be.ok();
                 expect(result).to.be.ok();
 
@@ -469,7 +469,7 @@ describe('User', function () {
 
             fs.writeFileSync(constants.GHOST_USER_FILE, JSON.stringify(ghost), 'utf8');
 
-            user.verifyWithUsername(USERNAME, 'foobar', function (error) {
+            users.verifyWithUsername(USERNAME, 'foobar', function (error) {
                 fs.unlinkSync(constants.GHOST_USER_FILE);
 
                 expect(error).to.be.a(UserError);
@@ -484,7 +484,7 @@ describe('User', function () {
 
             fs.writeFileSync(constants.GHOST_USER_FILE, JSON.stringify(ghost), 'utf8');
 
-            user.verifyWithUsername(USERNAME, 'testpassword', function (error, result) {
+            users.verifyWithUsername(USERNAME, 'testpassword', function (error, result) {
                 fs.unlinkSync(constants.GHOST_USER_FILE);
 
                 expect(error).to.equal(null);
@@ -503,7 +503,7 @@ describe('User', function () {
         after(cleanupUsers);
 
         it('fails due to non existing user', function (done) {
-            user.verifyWithEmail(EMAIL+EMAIL, PASSWORD, function (error, result) {
+            users.verifyWithEmail(EMAIL+EMAIL, PASSWORD, function (error, result) {
                 expect(error).to.be.ok();
                 expect(result).to.not.be.ok();
                 expect(error.reason).to.equal(UserError.NOT_FOUND);
@@ -513,7 +513,7 @@ describe('User', function () {
         });
 
         it('fails due to empty password', function (done) {
-            user.verifyWithEmail(EMAIL, '', function (error, result) {
+            users.verifyWithEmail(EMAIL, '', function (error, result) {
                 expect(error).to.be.ok();
                 expect(result).to.not.be.ok();
                 expect(error.reason).to.equal(UserError.WRONG_PASSWORD);
@@ -523,7 +523,7 @@ describe('User', function () {
         });
 
         it('fails due to wrong password', function (done) {
-            user.verifyWithEmail(EMAIL, PASSWORD+PASSWORD, function (error, result) {
+            users.verifyWithEmail(EMAIL, PASSWORD+PASSWORD, function (error, result) {
                 expect(error).to.be.ok();
                 expect(result).to.not.be.ok();
                 expect(error.reason).to.equal(UserError.WRONG_PASSWORD);
@@ -533,7 +533,7 @@ describe('User', function () {
         });
 
         it('succeeds', function (done) {
-            user.verifyWithEmail(EMAIL, PASSWORD, function (error, result) {
+            users.verifyWithEmail(EMAIL, PASSWORD, function (error, result) {
                 expect(error).to.not.be.ok();
                 expect(result).to.be.ok();
 
@@ -542,7 +542,7 @@ describe('User', function () {
         });
 
         it('succeeds for different email case', function (done) {
-            user.verifyWithEmail(EMAIL.toUpperCase(), PASSWORD, function (error, result) {
+            users.verifyWithEmail(EMAIL.toUpperCase(), PASSWORD, function (error, result) {
                 expect(error).to.not.be.ok();
                 expect(result).to.be.ok();
 
@@ -556,7 +556,7 @@ describe('User', function () {
 
             fs.writeFileSync(constants.GHOST_USER_FILE, JSON.stringify(ghost), 'utf8');
 
-            user.verifyWithEmail(EMAIL, 'foobar', function (error) {
+            users.verifyWithEmail(EMAIL, 'foobar', function (error) {
                 fs.unlinkSync(constants.GHOST_USER_FILE);
 
                 expect(error).to.be.a(UserError);
@@ -571,7 +571,7 @@ describe('User', function () {
 
             fs.writeFileSync(constants.GHOST_USER_FILE, JSON.stringify(ghost), 'utf8');
 
-            user.verifyWithEmail(EMAIL, 'testpassword', function (error, result) {
+            users.verifyWithEmail(EMAIL, 'testpassword', function (error, result) {
                 fs.unlinkSync(constants.GHOST_USER_FILE);
 
                 expect(error).to.equal(null);
@@ -590,7 +590,7 @@ describe('User', function () {
         after(cleanupUsers);
 
         it('fails due to non existing user', function (done) {
-            user.get('some non existing username', function (error, result) {
+            users.get('some non existing username', function (error, result) {
                 expect(error).to.be.ok();
                 expect(result).to.not.be.ok();
 
@@ -599,7 +599,7 @@ describe('User', function () {
         });
 
         it('succeeds', function (done) {
-            user.get(userObject.id, function (error, result) {
+            users.get(userObject.id, function (error, result) {
                 expect(error).to.not.be.ok();
                 expect(result).to.be.ok();
                 expect(result.id).to.equal(userObject.id);
@@ -617,7 +617,7 @@ describe('User', function () {
             maildb.update(DOMAIN_0.domain, { enabled: true }, function (error) {
                 expect(error).not.to.be.ok();
 
-                user.get(userObject.id, function (error, result) {
+                users.get(userObject.id, function (error, result) {
                     expect(error).to.not.be.ok();
                     expect(result).to.be.ok();
                     expect(result.id).to.equal(userObject.id);
@@ -638,7 +638,7 @@ describe('User', function () {
 
         it('fails due to unknown userid', function (done) {
             var data = { username: USERNAME_NEW, email: EMAIL_NEW, displayName: DISPLAY_NAME_NEW };
-            user.update(USERNAME, data, AUDIT_SOURCE, function (error) {
+            users.update(USERNAME, data, AUDIT_SOURCE, function (error) {
                 expect(error).to.be.a(UserError);
                 expect(error.reason).to.equal(UserError.NOT_FOUND);
 
@@ -648,7 +648,7 @@ describe('User', function () {
 
         it('fails due to invalid email', function (done) {
             var data = { username: USERNAME_NEW, email: 'brokenemailaddress', displayName: DISPLAY_NAME_NEW };
-            user.update(userObject.id, data, AUDIT_SOURCE, function (error) {
+            users.update(userObject.id, data, AUDIT_SOURCE, function (error) {
                 expect(error).to.be.a(UserError);
                 expect(error.reason).to.equal(UserError.BAD_FIELD);
 
@@ -659,10 +659,10 @@ describe('User', function () {
         it('succeeds', function (done) {
             var data = { username: USERNAME_NEW, email: EMAIL_NEW, displayName: DISPLAY_NAME_NEW };
 
-            user.update(userObject.id, data, AUDIT_SOURCE, function (error) {
+            users.update(userObject.id, data, AUDIT_SOURCE, function (error) {
                 expect(error).to.not.be.ok();
 
-                user.get(userObject.id, function (error, result) {
+                users.get(userObject.id, function (error, result) {
                     expect(error).to.not.be.ok();
                     expect(result).to.be.ok();
                     expect(result.email).to.equal(EMAIL_NEW.toLowerCase());
@@ -677,10 +677,10 @@ describe('User', function () {
         it('succeeds with same data', function (done) {
             var data = { username: USERNAME_NEW, email: EMAIL_NEW, displayName: DISPLAY_NAME_NEW };
 
-            user.update(userObject.id, data, AUDIT_SOURCE, function (error) {
+            users.update(userObject.id, data, AUDIT_SOURCE, function (error) {
                 expect(error).to.not.be.ok();
 
-                user.get(userObject.id, function (error, result) {
+                users.get(userObject.id, function (error, result) {
                     expect(error).to.not.be.ok();
                     expect(result).to.be.ok();
                     expect(result.email).to.equal(EMAIL_NEW.toLowerCase());
@@ -720,13 +720,13 @@ describe('User', function () {
         it('make second user admin succeeds', function (done) {
 
             var invitor = { username: USERNAME, email: EMAIL };
-            user.create(user1.username, user1.password, user1.email, DISPLAY_NAME, AUDIT_SOURCE, { invitor: invitor }, function (error, result) {
+            users.create(user1.username, user1.password, user1.email, DISPLAY_NAME, AUDIT_SOURCE, { invitor: invitor }, function (error, result) {
                 expect(error).to.not.be.ok();
                 expect(result).to.be.ok();
 
                 user1.id = result.id;
 
-                user.setGroups(user1.id, [ constants.ADMIN_GROUP_ID ], function (error) {
+                users.setGroups(user1.id, [ constants.ADMIN_GROUP_ID ], function (error) {
                     expect(error).to.not.be.ok();
 
                     // one mail for user creation, one mail for admin change
@@ -736,7 +736,7 @@ describe('User', function () {
         });
 
         it('add user to non admin group does not trigger admin mail', function (done) {
-            user.setGroups(user1.id, [ constants.ADMIN_GROUP_ID, groupObject.id ], function (error) {
+            users.setGroups(user1.id, [ constants.ADMIN_GROUP_ID, groupObject.id ], function (error) {
                 expect(error).to.equal(null);
 
                 checkMails(0, done);
@@ -744,7 +744,7 @@ describe('User', function () {
         });
 
         it('succeeds to remove admin flag', function (done) {
-            user.setGroups(user1.id, [ groupObject.id ], function (error) {
+            users.setGroups(user1.id, [ groupObject.id ], function (error) {
                 expect(error).to.eql(null);
 
                 checkMails(1, done);
@@ -757,7 +757,7 @@ describe('User', function () {
         after(cleanupUsers);
 
         it('succeeds for one admins', function (done) {
-            user.getAllAdmins(function (error, admins) {
+            users.getAllAdmins(function (error, admins) {
                 expect(error).to.eql(null);
                 expect(admins.length).to.equal(1);
                 expect(admins[0].username).to.equal(USERNAME.toLowerCase());
@@ -773,7 +773,7 @@ describe('User', function () {
             };
 
             var invitor = { username: USERNAME, email: EMAIL };
-            user.create(user1.username, user1.password, user1.email, DISPLAY_NAME, AUDIT_SOURCE, { invitor: invitor }, function (error, result) {
+            users.create(user1.username, user1.password, user1.email, DISPLAY_NAME, AUDIT_SOURCE, { invitor: invitor }, function (error, result) {
                 expect(error).to.eql(null);
                 expect(result).to.be.ok();
 
@@ -782,7 +782,7 @@ describe('User', function () {
                 groups.setGroups(user1.id, [ constants.ADMIN_GROUP_ID ], function (error) {
                     expect(error).to.eql(null);
 
-                    user.getAllAdmins(function (error, admins) {
+                    users.getAllAdmins(function (error, admins) {
                         expect(error).to.eql(null);
                         expect(admins.length).to.equal(2);
                         expect(admins[0].username).to.equal(USERNAME.toLowerCase());
@@ -801,7 +801,7 @@ describe('User', function () {
         after(cleanupUsers);
 
         it('succeeds', function (done) {
-            user.count(function (error, count) {
+            users.count(function (error, count) {
                 expect(error).to.not.be.ok();
                 expect(count).to.be(1);
                 done();
@@ -814,35 +814,35 @@ describe('User', function () {
         after(cleanupUsers);
 
         it('fails due to unknown user', function (done) {
-            user.setPassword('doesnotexist', NEW_PASSWORD, function (error) {
+            users.setPassword('doesnotexist', NEW_PASSWORD, function (error) {
                 expect(error).to.be.ok();
                 done();
             });
         });
 
         it('fails due to empty password', function (done) {
-            user.setPassword(userObject.id, '', function (error) {
+            users.setPassword(userObject.id, '', function (error) {
                 expect(error).to.be.ok();
                 done();
             });
         });
 
         it('fails due to invalid password', function (done) {
-            user.setPassword(userObject.id, 'foobar', function (error) {
+            users.setPassword(userObject.id, 'foobar', function (error) {
                 expect(error).to.be.ok();
                 done();
             });
         });
 
         it('succeeds', function (done) {
-            user.setPassword(userObject.id, NEW_PASSWORD, function (error) {
+            users.setPassword(userObject.id, NEW_PASSWORD, function (error) {
                 expect(error).to.not.be.ok();
                 done();
             });
         });
 
         it('actually changed the password (unable to login with old pasword)', function (done) {
-            user.verify(userObject.id, PASSWORD, function (error, result) {
+            users.verify(userObject.id, PASSWORD, function (error, result) {
                 expect(error).to.be.ok();
                 expect(result).to.not.be.ok();
                 expect(error.reason).to.equal(UserError.WRONG_PASSWORD);
@@ -851,7 +851,7 @@ describe('User', function () {
         });
 
         it('actually changed the password (login with new password)', function (done) {
-            user.verify(userObject.id, NEW_PASSWORD, function (error, result) {
+            users.verify(userObject.id, NEW_PASSWORD, function (error, result) {
                 expect(error).to.not.be.ok();
                 expect(result).to.be.ok();
                 done();
@@ -864,7 +864,7 @@ describe('User', function () {
         after(cleanupUsers);
 
         it('fails due to unkown email', function (done) {
-            user.resetPasswordByIdentifier('unknown@mail.com', function (error) {
+            users.resetPasswordByIdentifier('unknown@mail.com', function (error) {
                 expect(error).to.be.an(UserError);
                 expect(error.reason).to.eql(UserError.NOT_FOUND);
                 done();
@@ -872,7 +872,7 @@ describe('User', function () {
         });
 
         it('fails due to unkown username', function (done) {
-            user.resetPasswordByIdentifier('unknown', function (error) {
+            users.resetPasswordByIdentifier('unknown', function (error) {
                 expect(error).to.be.an(UserError);
                 expect(error.reason).to.eql(UserError.NOT_FOUND);
                 done();
@@ -880,14 +880,14 @@ describe('User', function () {
         });
 
         it('succeeds with email', function (done) {
-            user.resetPasswordByIdentifier(EMAIL, function (error) {
+            users.resetPasswordByIdentifier(EMAIL, function (error) {
                 expect(error).to.not.be.ok();
                 checkMails(1, done);
             });
         });
 
         it('succeeds with username', function (done) {
-            user.resetPasswordByIdentifier(USERNAME, function (error) {
+            users.resetPasswordByIdentifier(USERNAME, function (error) {
                 expect(error).to.not.be.ok();
                 checkMails(1, done);
             });
@@ -899,7 +899,7 @@ describe('User', function () {
         after(cleanupUsers);
 
         it('fails for unknown user', function (done) {
-            user.sendInvite('unknown user', { }, function (error) {
+            users.sendInvite('unknown user', { }, function (error) {
                 expect(error).to.be.a(UserError);
                 expect(error.reason).to.equal(UserError.NOT_FOUND);
 
@@ -908,7 +908,7 @@ describe('User', function () {
         });
 
         it('succeeds', function (done) {
-            user.sendInvite(userObject.id, { }, function (error) {
+            users.sendInvite(userObject.id, { }, function (error) {
                 expect(error).to.eql(null);
                 checkMails(1, done);
             });
@@ -920,14 +920,14 @@ describe('User', function () {
         after(cleanupUsers);
 
         it('fails for unknown user', function (done) {
-            user.remove('unknown', { }, function (error) {
+            users.remove('unknown', { }, function (error) {
                 expect(error.reason).to.be(UserError.NOT_FOUND);
                 done();
             });
         });
 
         it('can remove valid user', function (done) {
-            user.remove(userObject.id, { }, function (error) {
+            users.remove(userObject.id, { }, function (error) {
                 expect(!error).to.be.ok();
                 done();
             });

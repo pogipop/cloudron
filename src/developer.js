@@ -13,7 +13,7 @@ var assert = require('assert'),
     constants = require('./constants.js'),
     eventlog = require('./eventlog.js'),
     tokendb = require('./tokendb.js'),
-    user = require('./user.js'),
+    users = require('./users.js'),
     util = require('util');
 
 function DeveloperError(reason, errorOrMessage) {
@@ -50,7 +50,7 @@ function issueDeveloperToken(userObject, ip, callback) {
     tokendb.add(token, userObject.id, 'cid-cli', expiresAt, scopes, function (error) {
         if (error) return callback(new DeveloperError(DeveloperError.INTERNAL_ERROR, error));
 
-        eventlog.add(eventlog.ACTION_USER_LOGIN, { authType: 'cli', ip: ip }, { userId: userObject.id, user: user.removePrivateFields(userObject) });
+        eventlog.add(eventlog.ACTION_USER_LOGIN, { authType: 'cli', ip: ip }, { userId: userObject.id, user: users.removePrivateFields(userObject) });
 
         callback(null, { token: token, expiresAt: new Date(expiresAt).toISOString() });
     });

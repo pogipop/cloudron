@@ -18,5 +18,5 @@ exports = module.exports = {
     sysadmin: require('./sysadmin.js'),
     settings: require('./settings.js'),
     ssh: require('./ssh.js'),
-    user: require('./user.js')
+    users: require('./users.js')
 };

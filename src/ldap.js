@@ -13,8 +13,8 @@ var assert = require('assert'),
     DatabaseError = require('./databaseerror.js'),
     debug = require('debug')('box:ldap'),
     eventlog = require('./eventlog.js'),
-    user = require('./user.js'),
-    UserError = user.UserError,
+    users = require('./users.js'),
+    UserError = users.UserError,
     ldap = require('ldapjs'),
     mail = require('./mail.js'),
     MailError = mail.MailError,
@@ -51,7 +51,7 @@ function getUsersWithAccessToApp(req, callback) {
     getAppByRequest(req, function (error, app) {
         if (error) return callback(error);
 
-        user.list(function (error, result){
+        users.list(function (error, result){
             if (error) return callback(new ldap.OperationsError(error.toString()));
 
             async.filter(result, apps.hasAccessTo.bind(null, app), function (error, result) {
@@ -378,13 +378,13 @@ function authenticateUser(req, res, next) {
 
     var api;
     if (attributeName === 'mail') {
-        api = user.verifyWithEmail;
+        api = users.verifyWithEmail;
     } else if (commonName.indexOf('@') !== -1) { // if mail is specified, enforce mail check
-        api = user.verifyWithEmail;
+        api = users.verifyWithEmail;
     } else if (commonName.indexOf('uid-') === 0) {
-        api = user.verify;
+        api = users.verify;
     } else {
-        api = user.verifyWithUsername;
+        api = users.verifyWithUsername;
     }
 
     api(commonName, req.credentials || '', function (error, user) {
@@ -410,7 +410,7 @@ function authorizeUserForApp(req, res, next) {
             // we return no such object, to avoid leakage of a users existence
             if (!result) return next(new ldap.NoSuchObjectError(req.dn.toString()));
 
-            eventlog.add(eventlog.ACTION_USER_LOGIN, { authType: 'ldap', appId: app.id, app: app }, { userId: req.user.id, user: user.removePrivateFields(req.user) });
+            eventlog.add(eventlog.ACTION_USER_LOGIN, { authType: 'ldap', appId: app.id, app: app }, { userId: req.user.id, user: users.removePrivateFields(req.user) });
 
             res.end();
         });
@@ -451,12 +451,12 @@ function authenticateMailbox(req, res, next) {
             } else if (mailbox.ownerType === mailboxdb.OWNER_TYPE_USER) {
                 if (!domain.enabled) return next(new ldap.NoSuchObjectError(req.dn.toString()));
 
-                user.verify(mailbox.ownerId, req.credentials || '', function (error, result) {
+                users.verify(mailbox.ownerId, req.credentials || '', function (error, result) {
                     if (error && error.reason === UserError.NOT_FOUND) return next(new ldap.NoSuchObjectError(req.dn.toString()));
                     if (error && error.reason === UserError.WRONG_PASSWORD) return next(new ldap.InvalidCredentialsError(req.dn.toString()));
                     if (error) return next(new ldap.OperationsError(error.message));
 
-                    eventlog.add(eventlog.ACTION_USER_LOGIN, { authType: 'ldap', mailboxId: email }, { userId: result.id, user: user.removePrivateFields(result) });
+                    eventlog.add(eventlog.ACTION_USER_LOGIN, { authType: 'ldap', mailboxId: email }, { userId: result.id, user: users.removePrivateFields(result) });
                     res.end();
                 });
             } else {

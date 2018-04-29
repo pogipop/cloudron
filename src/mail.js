@@ -65,7 +65,7 @@ var assert = require('assert'),
     shell = require('./shell.js'),
     smtpTransport = require('nodemailer-smtp-transport'),
     sysinfo = require('./sysinfo.js'),
-    user = require('./user.js'),
+    users = require('./users.js'),
     util = require('util'),
     _ = require('underscore');
 
@@ -478,7 +478,7 @@ function createMailConfig(callback) {
     getDomains(function (error, mailDomains) {
         if (error) return callback(error);
 
-        user.getOwner(function (error, owner) {
+        users.getOwner(function (error, owner) {
             const mailFqdn = config.mailFqdn();
             const defaultDomain = config.adminDomain();
             const alertsFrom = `no-reply@${defaultDomain}`;

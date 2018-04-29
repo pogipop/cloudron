@@ -22,8 +22,8 @@ var apps = require('../apps'),
     speakeasy = require('speakeasy'),
     tokendb = require('../tokendb'),
     url = require('url'),
-    user = require('../user.js'),
-    UserError = user.UserError,
+    users = require('../users.js'),
+    UserError = users.UserError,
     util = require('util'),
     _ = require('underscore');
 
@@ -300,7 +300,7 @@ function passwordResetRequest(req, res, next) {
 
     debug('passwordResetRequest: email or username %s.', req.body.identifier);
 
-    user.resetPasswordByIdentifier(req.body.identifier, function (error) {
+    users.resetPasswordByIdentifier(req.body.identifier, function (error) {
         if (error && error.reason !== UserError.NOT_FOUND) {
             console.error(error);
             return sendErrorPageOrRedirect(req, res, 'User not found');
@@ -329,7 +329,7 @@ function renderAccountSetupSite(res, req, userObject, error) {
 function accountSetupSite(req, res) {
     if (!req.query.reset_token) return sendError(req, res, 'Missing Reset Token');
 
-    user.getByResetToken(req.query.reset_token, function (error, userObject) {
+    users.getByResetToken(req.query.reset_token, function (error, userObject) {
         if (error) return sendError(req, res, 'Invalid Reset Token');
 
         renderAccountSetupSite(res, req, userObject, '');
@@ -347,11 +347,11 @@ function accountSetup(req, res, next) {
 
     debug('acountSetup: with token %s.', req.body.resetToken);
 
-    user.getByResetToken(req.body.resetToken, function (error, userObject) {
+    users.getByResetToken(req.body.resetToken, function (error, userObject) {
         if (error) return sendError(req, res, 'Invalid Reset Token');
 
         var data = _.pick(req.body, 'username', 'displayName');
-        user.update(userObject.id, data, auditSource(req), function (error) {
+        users.update(userObject.id, data, auditSource(req), function (error) {
             if (error && error.reason === UserError.ALREADY_EXISTS) return renderAccountSetupSite(res, req, userObject, 'Username already exists');
             if (error && error.reason === UserError.BAD_FIELD) return renderAccountSetupSite(res, req, userObject, error.message);
             if (error && error.reason === UserError.NOT_FOUND) return renderAccountSetupSite(res, req, userObject, 'No such user');
@@ -361,7 +361,7 @@ function accountSetup(req, res, next) {
             userObject.displayName = req.body.displayName;
 
             // setPassword clears the resetToken
-            user.setPassword(userObject.id, req.body.password, function (error, result) {
+            users.setPassword(userObject.id, req.body.password, function (error, result) {
                 if (error && error.reason === UserError.BAD_FIELD) return renderAccountSetupSite(res, req, userObject, error.message);
 
                 if (error) return next(new HttpError(500, error));
@@ -376,7 +376,7 @@ function accountSetup(req, res, next) {
 function passwordResetSite(req, res, next) {
     if (!req.query.reset_token) return next(new HttpError(400, 'Missing reset_token'));
 
-    user.getByResetToken(req.query.reset_token, function (error, user) {
+    users.getByResetToken(req.query.reset_token, function (error, user) {
         if (error) return next(new HttpError(401, 'Invalid reset_token'));
 
         renderTemplate(res, 'password_reset', {
@@ -397,13 +397,13 @@ function passwordReset(req, res, next) {
 
     debug('passwordReset: with token %s.', req.body.resetToken);
 
-    user.getByResetToken(req.body.resetToken, function (error, userObject) {
+    users.getByResetToken(req.body.resetToken, function (error, userObject) {
         if (error) return next(new HttpError(401, 'Invalid resetToken'));
 
         if (!userObject.username) return next(new HttpError(401, 'No username set'));
 
         // setPassword clears the resetToken
-        user.setPassword(userObject.id, req.body.password, function (error, result) {
+        users.setPassword(userObject.id, req.body.password, function (error, result) {
             if (error && error.reason === UserError.BAD_FIELD) return next(new HttpError(406, error.message));
             if (error) return next(new HttpError(500, error));
 
@@ -462,7 +462,7 @@ var authorization = [
         var type = req.oauth2.client.type;
 
         if (type === clients.TYPE_EXTERNAL || type === clients.TYPE_BUILT_IN) {
-            eventlog.add(eventlog.ACTION_USER_LOGIN, auditSource(req, req.oauth2.client.appId), { userId: req.oauth2.user.id, user: user.removePrivateFields(req.oauth2.user) });
+            eventlog.add(eventlog.ACTION_USER_LOGIN, auditSource(req, req.oauth2.client.appId), { userId: req.oauth2.user.id, user: users.removePrivateFields(req.oauth2.user) });
             return next();
         }
 
@@ -473,7 +473,7 @@ var authorization = [
                 if (error) return sendError(req, res, 'Internal error');
                 if (!access) return sendErrorPageOrRedirect(req, res, 'No access to this app.');
 
-                eventlog.add(eventlog.ACTION_USER_LOGIN, auditSource(req, appObject.id, appObject), { userId: req.oauth2.user.id, user: user.removePrivateFields(req.oauth2.user) });
+                eventlog.add(eventlog.ACTION_USER_LOGIN, auditSource(req, appObject.id, appObject), { userId: req.oauth2.user.id, user: users.removePrivateFields(req.oauth2.user) });
 
                 next();
             });

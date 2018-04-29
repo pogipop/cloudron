@@ -6,28 +6,28 @@
 
 'use strict';
 
-var expect = require('expect.js'),
-    uuid = require('uuid'),
+var appdb = require('../../appdb.js'),
     async = require('async'),
-    hat = require('hat'),
-    urlParse = require('url').parse,
-    nock = require('nock'),
-    HttpError = require('connect-lastmile').HttpError,
-    oauth2 = require('../oauth2.js'),
-    server = require('../../server.js'),
-    querystring = require('querystring'),
-    database = require('../../database.js'),
-    domains = require('../../domains.js'),
     clientdb = require('../../clientdb.js'),
     clients = require('../../clients.js'),
-    userdb = require('../../userdb.js'),
-    user = require('../../user.js'),
-    appdb = require('../../appdb.js'),
     config = require('../../config.js'),
+    database = require('../../database.js'),
+    domains = require('../../domains.js'),
+    expect = require('expect.js'),
+    hat = require('hat'),
+    HttpError = require('connect-lastmile').HttpError,
+    nock = require('nock'),
+    oauth2 = require('../oauth2.js'),
+    passport = require('passport'),
+    querystring = require('querystring'),
     request = require('request'),
+    server = require('../../server.js'),
     speakeasy = require('speakeasy'),
     superagent = require('superagent'),
-    passport = require('passport');
+    urlParse = require('url').parse,
+    userdb = require('../../userdb.js'),
+    users = require('../../users.js'),
+    uuid = require('uuid');
 
 var SERVER_URL = 'http://localhost:' + config.get('port');
 
@@ -323,7 +323,7 @@ describe('OAuth2', function () {
                 appdb.add.bind(null, APP_2.id, APP_2.appStoreId, APP_2.manifest, APP_2.location, APP_2.domain, APP_2.portBindings, APP_2),
                 appdb.add.bind(null, APP_3.id, APP_3.appStoreId, APP_3.manifest, APP_3.location, APP_3.domain, APP_3.portBindings, APP_3),
                 function (callback) {
-                    user.create(USER_0.username, USER_0.password, USER_0.email, USER_0.displayName, null /* source */, function (error, userObject) {
+                    users.create(USER_0.username, USER_0.password, USER_0.email, USER_0.displayName, null /* source */, function (error, userObject) {
                         expect(error).to.not.be.ok();
 
                         // update the global objects to reflect the new user id

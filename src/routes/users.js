@@ -19,8 +19,8 @@ var assert = require('assert'),
     HttpError = require('connect-lastmile').HttpError,
     HttpSuccess = require('connect-lastmile').HttpSuccess,
     oauth2 = require('./oauth2.js'),
-    user = require('../user.js'),
-    UserError = user.UserError;
+    users = require('../users.js'),
+    UserError = users.UserError;
 
 function auditSource(req) {
     var ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress || null;
@@ -42,7 +42,7 @@ function create(req, res, next) {
     var username = 'username' in req.body ? req.body.username : null;
     var displayName = req.body.displayName || '';
 
-    user.create(username, password, email, displayName, auditSource(req), { invitor: req.user, sendInvite: sendInvite }, function (error, user) {
+    users.create(username, password, email, displayName, auditSource(req), { invitor: req.user, sendInvite: sendInvite }, function (error, user) {
         if (error && error.reason === UserError.BAD_FIELD) return next(new HttpError(400, error.message));
         if (error && error.reason === UserError.ALREADY_EXISTS) return next(new HttpError(409, error.message));
         if (error) return next(new HttpError(500, error));
@@ -74,7 +74,7 @@ function update(req, res, next) {
 
     if (req.user.id !== req.params.userId && !req.user.admin) return next(new HttpError(403, 'Not allowed'));
 
-    user.update(req.params.userId, req.body, auditSource(req), function (error) {
+    users.update(req.params.userId, req.body, auditSource(req), function (error) {
         if (error && error.reason === UserError.BAD_FIELD) return next(new HttpError(400, error.message));
         if (error && error.reason === UserError.ALREADY_EXISTS) return next(new HttpError(409, error.message));
         if (error && error.reason === UserError.NOT_FOUND) return next(new HttpError(404, 'User not found'));
@@ -85,12 +85,12 @@ function update(req, res, next) {
 }
 
 function list(req, res, next) {
-    user.list(function (error, results) {
+    users.list(function (error, results) {
         if (error) return next(new HttpError(500, error));
 
-        var users = results.map(user.removePrivateFields);
+        results = results.map(users.removePrivateFields);
 
-        next(new HttpSuccess(200, { users: users }));
+        next(new HttpSuccess(200, { users: results }));
     });
 }
 
@@ -100,11 +100,11 @@ function get(req, res, next) {
 
     if (req.user.id !== req.params.userId && !req.user.admin) return next(new HttpError(403, 'Not allowed'));
 
-    user.get(req.params.userId, function (error, result) {
+    users.get(req.params.userId, function (error, result) {
         if (error && error.reason === UserError.NOT_FOUND) return next(new HttpError(404, 'No such user'));
         if (error) return next(new HttpError(500, error));
 
-        next(new HttpSuccess(200, user.removePrivateFields(result)));
+        next(new HttpSuccess(200, users.removePrivateFields(result)));
     });
 }
 
@@ -118,7 +118,7 @@ function remove(req, res, next) {
 
     if (req.user.id === req.params.userId) return next(new HttpError(403, 'Not allowed to remove yourself.'));
 
-    user.remove(req.params.userId, auditSource(req), function (error) {
+    users.remove(req.params.userId, auditSource(req), function (error) {
         if (error && error.reason === UserError.BAD_FIELD) return next(new HttpError(400, error.message));
         if (error && error.reason === UserError.NOT_FOUND) return next(new HttpError(404, 'No such user'));
         if (error) return next(new HttpError(500, error));
@@ -136,7 +136,7 @@ function verifyPassword(req, res, next) {
 
     if (typeof req.body.password !== 'string') return next(new HttpError(400, 'API call requires user password'));
 
-    user.verifyWithUsername(req.user.username, req.body.password, function (error) {
+    users.verifyWithUsername(req.user.username, req.body.password, function (error) {
         if (error && error.reason === UserError.WRONG_PASSWORD) return next(new HttpError(403, 'Password incorrect'));
         if (error && error.reason === UserError.NOT_FOUND) return next(new HttpError(403, 'Password incorrect'));
         if (error) return next(new HttpError(500, error));
@@ -161,7 +161,7 @@ function requireAdmin(req, res, next) {
 function sendInvite(req, res, next) {
     assert.strictEqual(typeof req.params.userId, 'string');
 
-    user.sendInvite(req.params.userId, { invitor: req.user }, function (error, result) {
+    users.sendInvite(req.params.userId, { invitor: req.user }, function (error, result) {
         if (error && error.reason === UserError.NOT_FOUND) return next(new HttpError(404, 'User not found'));
         if (error) return next(new HttpError(500, error));
 
@@ -178,7 +178,7 @@ function setGroups(req, res, next) {
     // this route is only allowed for admins, so req.user has to be an admin
     if (req.user.id === req.params.userId && req.body.groupIds.indexOf(constants.ADMIN_GROUP_ID) === -1) return next(new HttpError(403, 'Admin removing itself from admins is not allowed'));
 
-    user.setGroups(req.params.userId, req.body.groupIds, function (error) {
+    users.setGroups(req.params.userId, req.body.groupIds, function (error) {
         if (error && error.reason === UserError.NOT_FOUND) return next(new HttpError(404, 'One or more groups not found'));
         if (error) return next(new HttpError(500, error));
 

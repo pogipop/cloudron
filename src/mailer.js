@@ -39,7 +39,7 @@ var assert = require('assert'),
     settings = require('./settings.js'),
     showdown = require('showdown'),
     smtpTransport = require('nodemailer-smtp-transport'),
-    users = require('./user.js'),
+    users = require('./users.js'),
     util = require('util'),
     _ = require('underscore');
 

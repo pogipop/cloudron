@@ -46,7 +46,7 @@ var acme = require('./cert/acme.js'),
     platform = require('./platform.js'),
     safe = require('safetydance'),
     shell = require('./shell.js'),
-    user = require('./user.js'),
+    users = require('./users.js'),
     util = require('util');
 
 var NGINX_APPCONFIG_EJS = fs.readFileSync(__dirname + '/../setup/start/nginx/appconfig.ejs', { encoding: 'utf8' }),
@@ -98,7 +98,7 @@ function getApi(app, callback) {
         // we cannot use admin@fqdn because the user might not have set it up.
         // we simply update the account with the latest email we have each time when getting letsencrypt certs
         // https://github.com/ietf-wg-acme/acme/issues/30
-        user.getOwner(function (error, owner) {
+        users.getOwner(function (error, owner) {
             options.email = error ? 'support@cloudron.io' : (owner.fallbackEmail || owner.email); // can error if not activated yet
 
             callback(null, api, options);

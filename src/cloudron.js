@@ -40,7 +40,7 @@ var assert = require('assert'),
     spawn = require('child_process').spawn,
     split = require('split'),
     updateChecker = require('./updatechecker.js'),
-    user = require('./user.js'),
+    users = require('./users.js'),
     util = require('util'),
     _ = require('underscore');
 
@@ -103,7 +103,7 @@ function onActivated(callback) {
     // Starting the platform after a user is available means:
     // 1. mail bounces can now be sent to the cloudron owner
     // 2. the restore code path can run without sudo (since mail/ is non-root)
-    user.count(function (error, count) {
+    users.count(function (error, count) {
         if (error) return callback(new CloudronError(CloudronError.INTERNAL_ERROR, error));
         if (!count) return callback(); // not activated
 

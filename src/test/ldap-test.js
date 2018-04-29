@@ -20,7 +20,7 @@ var appdb = require('../appdb.js'),
     maildb = require('../maildb.js'),
     mailboxdb = require('../mailboxdb.js'),
     ldap = require('ldapjs'),
-    user = require('../user.js');
+    users = require('../users.js');
 
 const DOMAIN_0 = {
     domain: 'example.com',
@@ -106,7 +106,7 @@ function setup(done) {
         mailboxdb.addMailbox.bind(null, APP_0.location + '.app', APP_0.domain, APP_0.id, mailboxdb.OWNER_TYPE_APP),
 
         function (callback) {
-            user.createOwner(USER_0.username, USER_0.password, USER_0.email, USER_0.displayName, AUDIT_SOURCE, function (error, result) {
+            users.createOwner(USER_0.username, USER_0.password, USER_0.email, USER_0.displayName, AUDIT_SOURCE, function (error, result) {
                 if (error) return callback(error);
 
                 USER_0.id = result.id;
@@ -115,7 +115,7 @@ function setup(done) {
             });
         },
         function (callback) {
-            user.create(USER_1.username, USER_1.password, USER_1.email, USER_0.displayName, AUDIT_SOURCE, { invitor: USER_0 }, function (error, result) {
+            users.create(USER_1.username, USER_1.password, USER_1.email, USER_0.displayName, AUDIT_SOURCE, { invitor: USER_0 }, function (error, result) {
                 if (error) return callback(error);
 
                 USER_1.id = result.id;
@@ -124,7 +124,7 @@ function setup(done) {
             });
         },
         function (callback) {
-            user.create(USER_2.username, USER_2.password, USER_2.email, USER_0.displayName, AUDIT_SOURCE, { invitor: USER_0 }, function (error, result) {
+            users.create(USER_2.username, USER_2.password, USER_2.email, USER_0.displayName, AUDIT_SOURCE, { invitor: USER_0 }, function (error, result) {
                 if (error) return callback(error);
 
                 USER_2.id = result.id;
