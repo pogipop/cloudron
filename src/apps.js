@@ -4,6 +4,7 @@ exports = module.exports = {
     AppsError: AppsError,
 
     hasAccessTo: hasAccessTo,
+    removeInternalAppFields: removeInternalAppFields,
 
     get: get,
     getByIpAddress: getByIpAddress,
@@ -83,7 +84,8 @@ var addons = require('./addons.js'),
     url = require('url'),
     util = require('util'),
     uuid = require('uuid'),
-    validator = require('validator');
+    validator = require('validator'),
+    _ = require('underscore');
 
 // http://dustinsenos.com/articles/customErrorsInNode
 // http://code.google.com/p/v8/wiki/JavaScriptStackTraceApi
@@ -320,6 +322,13 @@ function getAppConfig(app) {
         robotsTxt: app.robotsTxt,
         sso: app.sso
     };
+}
+
+function removeInternalAppFields(app) {
+    return _.pick(app, 'id', 'appStoreId', 'installationState', 'installationProgress', 'runState', 'health',
+        'location', 'domain', 'fqdn',
+        'accessRestriction', 'manifest', 'portBindings', 'iconUrl', 'memoryLimit', 'xFrameOptions',
+        'sso', 'debugMode', 'robotsTxt', 'enableBackup', 'creationTime', 'updateTime');
 }
 
 function getIconUrlSync(app) {
