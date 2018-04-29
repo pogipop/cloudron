@@ -37,7 +37,7 @@ var assert = require('assert'),
     eventlog = require('./eventlog.js'),
     groupdb = require('./groupdb.js'),
     groups = require('./groups.js'),
-    GroupError = groups.GroupError,
+    GroupsError = groups.GroupsError,
     hat = require('hat'),
     mailer = require('./mailer.js'),
     qrcode = require('qrcode'),
@@ -398,12 +398,12 @@ function setGroups(userId, groupIds, callback) {
     assert.strictEqual(typeof callback, 'function');
 
     groups.getGroups(userId, function (error, oldGroupIds) {
-        if (error && error.reason !== GroupError.NOT_FOUND) return callback(new UserError(UserError.INTERNAL_ERROR, error));
+        if (error && error.reason !== GroupsError.NOT_FOUND) return callback(new UserError(UserError.INTERNAL_ERROR, error));
 
         oldGroupIds = oldGroupIds || [];
 
         groups.setGroups(userId, groupIds, function (error) {
-            if (error && error.reason === GroupError.NOT_FOUND) return callback(new UserError(UserError.NOT_FOUND, 'One or more groups not found'));
+            if (error && error.reason === GroupsError.NOT_FOUND) return callback(new UserError(UserError.NOT_FOUND, 'One or more groups not found'));
             if (error) return callback(new UserError(UserError.INTERNAL_ERROR, error));
 
             var isAdmin = groupIds.some(function (g) { return g === constants.ADMIN_GROUP_ID; });

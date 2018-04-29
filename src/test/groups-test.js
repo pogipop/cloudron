@@ -13,7 +13,7 @@ var async = require('async'),
     DatabaseError = require('../databaseerror.js'),
     expect = require('expect.js'),
     groups = require('../groups.js'),
-    GroupError = groups.GroupError,
+    GroupsError = groups.GroupsError,
     hat = require('hat'),
     mailboxdb = require('../mailboxdb.js'),
     userdb = require('../userdb.js');
@@ -81,35 +81,35 @@ describe('Groups', function () {
 
     it('cannot create group - too small', function (done) {
         groups.create('', function (error) {
-            expect(error.reason).to.be(GroupError.BAD_FIELD);
+            expect(error.reason).to.be(GroupsError.BAD_FIELD);
             done();
         });
     });
 
     it('cannot create group - too big', function (done) {
         groups.create(new Array(256).join('a'), function (error) {
-            expect(error.reason).to.be(GroupError.BAD_FIELD);
+            expect(error.reason).to.be(GroupsError.BAD_FIELD);
             done();
         });
     });
 
     it('cannot create group - bad name', function (done) {
         groups.create('bad:name', function (error) {
-            expect(error.reason).to.be(GroupError.BAD_FIELD);
+            expect(error.reason).to.be(GroupsError.BAD_FIELD);
             done();
         });
     });
 
     it('cannot create group - reserved', function (done) {
         groups.create('users', function (error) {
-            expect(error.reason).to.be(GroupError.BAD_FIELD);
+            expect(error.reason).to.be(GroupsError.BAD_FIELD);
             done();
         });
     });
 
     it('cannot create group - invalid', function (done) {
         groups.create('cloudron-admin', function (error) {
-            expect(error.reason).to.be(GroupError.BAD_FIELD);
+            expect(error.reason).to.be(GroupsError.BAD_FIELD);
             done();
         });
     });
@@ -125,21 +125,21 @@ describe('Groups', function () {
     it('cannot create existing group with mixed case', function (done) {
         var name = GROUP0_NAME[0].toUpperCase() + GROUP0_NAME.substr(1);
         groups.create(name, function (error, result) {
-            expect(error.reason).to.be(GroupError.ALREADY_EXISTS);
+            expect(error.reason).to.be(GroupsError.ALREADY_EXISTS);
             done();
         });
     });
 
     it('cannot add existing group', function (done) {
         groups.create(GROUP0_NAME, function (error) {
-            expect(error.reason).to.be(GroupError.ALREADY_EXISTS);
+            expect(error.reason).to.be(GroupsError.ALREADY_EXISTS);
             done();
         });
     });
 
     it('cannot get invalid group', function (done) {
         groups.get('sometrandom', function (error) {
-            expect(error.reason).to.be(GroupError.NOT_FOUND);
+            expect(error.reason).to.be(GroupsError.NOT_FOUND);
             done();
         });
     });
@@ -154,7 +154,7 @@ describe('Groups', function () {
 
     it('cannot delete invalid group', function (done) {
         groups.remove('random', function (error) {
-            expect(error.reason).to.be(GroupError.NOT_FOUND);
+            expect(error.reason).to.be(GroupsError.NOT_FOUND);
             done();
         });
     });
@@ -193,14 +193,14 @@ describe('Group membership', function () {
 
     it('cannot add non-existent user', function (done) {
         groups.addMember(group0Object.id, 'randomuser', function (error) {
-            expect(error.reason).to.be(GroupError.NOT_FOUND);
+            expect(error.reason).to.be(GroupsError.NOT_FOUND);
             done();
         });
     });
 
     it('cannot add non-existent group', function (done) {
         groups.addMember('randomgroup', USER_0.id, function (error) {
-            expect(error.reason).to.be(GroupError.NOT_FOUND);
+            expect(error.reason).to.be(GroupsError.NOT_FOUND);
             done();
         });
     });
@@ -254,14 +254,14 @@ describe('Group membership', function () {
 
     it('cannot remove non-existent user', function (done) {
         groups.removeMember(group0Object.id, 'randomuser', function (error) {
-            expect(error.reason).to.be(GroupError.NOT_FOUND);
+            expect(error.reason).to.be(GroupsError.NOT_FOUND);
             done();
         });
     });
 
     it('cannot remove non-existent group', function (done) {
         groups.removeMember('randomgroup', USER_0.id, function (error) {
-            expect(error.reason).to.be(GroupError.NOT_FOUND);
+            expect(error.reason).to.be(GroupsError.NOT_FOUND);
             done();
         });
     });
@@ -373,7 +373,7 @@ describe('Admin group', function () {
 
     it('cannot delete admin group ever', function (done) {
         groups.remove(constants.ADMIN_GROUP_ID, function (error) {
-            expect(error.reason).to.equal(GroupError.NOT_ALLOWED);
+            expect(error.reason).to.equal(GroupsError.NOT_ALLOWED);
 
             done();
         });
