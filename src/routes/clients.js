@@ -78,8 +78,10 @@ function getAll(req, res, next) {
 function addToken(req, res, next) {
     assert.strictEqual(typeof req.params.clientId, 'string');
     assert.strictEqual(typeof req.user, 'object');
+    assert.strictEqual(typeof req.body, 'object');
 
-    var expiresAt = req.query.expiresAt ? parseInt(req.query.expiresAt, 10) : Date.now() + constants.DEFAULT_TOKEN_EXPIRATION;
+    var data = req.body;
+    var expiresAt = data.expiresAt ? parseInt(data.expiresAt, 10) : Date.now() + constants.DEFAULT_TOKEN_EXPIRATION;
     if (isNaN(expiresAt) || expiresAt <= Date.now()) return next(new HttpError(400, 'expiresAt must be a timestamp in the future'));
 
     clients.addTokenByUserId(req.params.clientId, req.user.id, expiresAt, function (error, result) {
