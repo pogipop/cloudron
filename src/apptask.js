@@ -37,7 +37,7 @@ var addons = require('./addons.js'),
     debug = require('debug')('box:apptask'),
     docker = require('./docker.js'),
     domains = require('./domains.js'),
-    DomainError = domains.DomainError,
+    DomainsError = domains.DomainsError,
     ejs = require('ejs'),
     fs = require('fs'),
     manifestFormat = require('cloudron-manifestformat'),
@@ -274,7 +274,7 @@ function registerSubdomain(app, overwrite, callback) {
                 if (values.length !== 0 && !overwrite) return retryCallback(null, new Error('DNS Record already exists'));
 
                 domains.upsertDnsRecords(app.location, app.domain, 'A', [ ip ], function (error, changeId) {
-                    if (error && (error.reason === DomainError.STILL_BUSY || error.reason === DomainError.EXTERNAL_ERROR)) return retryCallback(error); // try again
+                    if (error && (error.reason === DomainsError.STILL_BUSY || error.reason === DomainsError.EXTERNAL_ERROR)) return retryCallback(error); // try again
 
                     retryCallback(null, error || changeId);
                 });
@@ -306,8 +306,8 @@ function unregisterSubdomain(app, location, domain, callback) {
             debugApp(app, 'Unregistering subdomain: %s', app.fqdn);
 
             domains.removeDnsRecords(location, domain, 'A', [ ip ], function (error) {
-                if (error && error.reason === DomainError.NOT_FOUND) return retryCallback(null, null); // domain can be not found if oldConfig.domain or restoreConfig.domain was removed
-                if (error && (error.reason === DomainError.STILL_BUSY || error.reason === DomainError.EXTERNAL_ERROR)) return retryCallback(error); // try again
+                if (error && error.reason === DomainsError.NOT_FOUND) return retryCallback(null, null); // domain can be not found if oldConfig.domain or restoreConfig.domain was removed
+                if (error && (error.reason === DomainsError.STILL_BUSY || error.reason === DomainsError.EXTERNAL_ERROR)) return retryCallback(error); // try again
 
                 retryCallback(null, error);
             });

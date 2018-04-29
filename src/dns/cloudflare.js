@@ -12,7 +12,7 @@ var assert = require('assert'),
     async = require('async'),
     debug = require('debug')('box:dns/cloudflare'),
     dns = require('../native-dns.js'),
-    DomainError = require('../domains.js').DomainError,
+    DomainsError = require('../domains.js').DomainsError,
     superagent = require('superagent'),
     util = require('util'),
     _ = require('underscore');
@@ -24,8 +24,8 @@ function translateRequestError(result, callback) {
     assert.strictEqual(typeof result, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    if (result.statusCode === 404) return callback(new DomainError(DomainError.NOT_FOUND, util.format('%s %j', result.statusCode, 'API does not exist')));
-    if (result.statusCode === 422) return callback(new DomainError(DomainError.BAD_FIELD, result.body.message));
+    if (result.statusCode === 404) return callback(new DomainsError(DomainsError.NOT_FOUND, util.format('%s %j', result.statusCode, 'API does not exist')));
+    if (result.statusCode === 422) return callback(new DomainsError(DomainsError.BAD_FIELD, result.body.message));
     if ((result.statusCode === 400 || result.statusCode === 401 || result.statusCode === 403) && result.body.errors.length > 0) {
         let error = result.body.errors[0];
         let message = error.message;
@@ -34,10 +34,10 @@ function translateRequestError(result, callback) {
             else message = 'Invalid credentials';
         }
 
-        return callback(new DomainError(DomainError.ACCESS_DENIED, message));
+        return callback(new DomainsError(DomainsError.ACCESS_DENIED, message));
     }
 
-    callback(new DomainError(DomainError.EXTERNAL_ERROR, util.format('%s %j', result.statusCode, result.body)));
+    callback(new DomainsError(DomainsError.EXTERNAL_ERROR, util.format('%s %j', result.statusCode, result.body)));
 }
 
 function getZoneByName(dnsConfig, zoneName, callback) {
@@ -52,7 +52,7 @@ function getZoneByName(dnsConfig, zoneName, callback) {
         .end(function (error, result) {
             if (error && !error.response) return callback(error);
             if (result.statusCode !== 200 || result.body.success !== true) return translateRequestError(result, callback);
-            if (!result.body.result.length) return callback(new DomainError(DomainError.NOT_FOUND, util.format('%s %j', result.statusCode, result.body)));
+            if (!result.body.result.length) return callback(new DomainsError(DomainsError.NOT_FOUND, util.format('%s %j', result.statusCode, result.body)));
 
             callback(null, result.body.result[0]);
         });
@@ -233,8 +233,8 @@ function verifyDnsConfig(dnsConfig, fqdn, zoneName, ip, callback) {
     assert.strictEqual(typeof ip, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    if (!dnsConfig.token || typeof dnsConfig.token !== 'string') return callback(new DomainError(DomainError.BAD_FIELD, 'token must be a non-empty string'));
-    if (!dnsConfig.email || typeof dnsConfig.email !== 'string') return callback(new DomainError(DomainError.BAD_FIELD, 'email must be a non-empty string'));
+    if (!dnsConfig.token || typeof dnsConfig.token !== 'string') return callback(new DomainsError(DomainsError.BAD_FIELD, 'token must be a non-empty string'));
+    if (!dnsConfig.email || typeof dnsConfig.email !== 'string') return callback(new DomainsError(DomainsError.BAD_FIELD, 'email must be a non-empty string'));
 
     var credentials = {
         token: dnsConfig.token,
@@ -244,15 +244,15 @@ function verifyDnsConfig(dnsConfig, fqdn, zoneName, ip, callback) {
     if (process.env.BOX_ENV === 'test') return callback(null, credentials); // this shouldn't be here
 
     dns.resolve(zoneName, 'NS', { timeout: 5000 }, function (error, nameservers) {
-        if (error && error.code === 'ENOTFOUND') return callback(new DomainError(DomainError.BAD_FIELD, 'Unable to resolve nameservers for this domain'));
-        if (error || !nameservers) return callback(new DomainError(DomainError.BAD_FIELD, error ? error.message : 'Unable to get nameservers'));
+        if (error && error.code === 'ENOTFOUND') return callback(new DomainsError(DomainsError.BAD_FIELD, 'Unable to resolve nameservers for this domain'));
+        if (error || !nameservers) return callback(new DomainsError(DomainsError.BAD_FIELD, error ? error.message : 'Unable to get nameservers'));
 
         getZoneByName(dnsConfig, zoneName, function(error, result) {
             if (error) return callback(error);
 
             if (!_.isEqual(result.name_servers.sort(), nameservers.sort())) {
                 debug('verifyDnsConfig: %j and %j do not match', nameservers, result.name_servers);
-                return callback(new DomainError(DomainError.BAD_FIELD, 'Domain nameservers are not set to Cloudflare'));
+                return callback(new DomainsError(DomainsError.BAD_FIELD, 'Domain nameservers are not set to Cloudflare'));
             }
 
             const testSubdomain = 'cloudrontestdns';

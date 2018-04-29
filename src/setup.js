@@ -21,7 +21,7 @@ var assert = require('assert'),
     cloudron = require('./cloudron.js'),
     debug = require('debug')('box:setup'),
     domains = require('./domains.js'),
-    DomainError = domains.DomainError,
+    DomainsError = domains.DomainsError,
     eventlog = require('./eventlog.js'),
     fs = require('fs'),
     mail = require('./mail.js'),
@@ -174,7 +174,7 @@ function dnsSetup(adminFqdn, domain, zoneName, provider, dnsConfig, tlsConfig, c
     debug(`dnsSetup: Setting up Cloudron with domain ${domain} and zone ${zoneName} using admin fqdn ${adminFqdn}`);
 
     function done(error) {
-        if (error && error.reason === DomainError.BAD_FIELD) return callback(new SetupError(SetupError.BAD_FIELD, error.message));
+        if (error && error.reason === DomainsError.BAD_FIELD) return callback(new SetupError(SetupError.BAD_FIELD, error.message));
         if (error) return callback(new SetupError(SetupError.INTERNAL_ERROR, error));
 
         config.setAdminDomain(domain); // set fqdn only after dns config is valid, otherwise cannot re-setup if we failed
@@ -191,7 +191,7 @@ function dnsSetup(adminFqdn, domain, zoneName, provider, dnsConfig, tlsConfig, c
     }
 
     domains.get(domain, function (error, result) {
-        if (error && error.reason !== DomainError.NOT_FOUND) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
+        if (error && error.reason !== DomainsError.NOT_FOUND) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
 
         if (result) return callback(new SettingsError(SettingsError.ALREADY_EXISTS, 'domain already exists'));
 

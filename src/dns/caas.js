@@ -11,7 +11,7 @@ exports = module.exports = {
 var assert = require('assert'),
     config = require('../config.js'),
     debug = require('debug')('box:dns/caas'),
-    DomainError = require('../domains.js').DomainError,
+    DomainsError = require('../domains.js').DomainsError,
     superagent = require('superagent'),
     util = require('util');
 
@@ -45,10 +45,10 @@ function add(dnsConfig, zoneName, subdomain, type, values, callback) {
         .send(data)
         .timeout(30 * 1000)
         .end(function (error, result) {
-            if (error && !error.response) return callback(new DomainError(DomainError.EXTERNAL_ERROR, util.format('Network error %s', error.message)));
-            if (result.statusCode === 400) return callback(new DomainError(DomainError.BAD_FIELD, result.body.message));
-            if (result.statusCode === 420) return callback(new DomainError(DomainError.STILL_BUSY));
-            if (result.statusCode !== 201) return callback(new DomainError(DomainError.EXTERNAL_ERROR, util.format('%s %j', result.statusCode, result.body)));
+            if (error && !error.response) return callback(new DomainsError(DomainsError.EXTERNAL_ERROR, util.format('Network error %s', error.message)));
+            if (result.statusCode === 400) return callback(new DomainsError(DomainsError.BAD_FIELD, result.body.message));
+            if (result.statusCode === 420) return callback(new DomainsError(DomainsError.STILL_BUSY));
+            if (result.statusCode !== 201) return callback(new DomainsError(DomainsError.EXTERNAL_ERROR, util.format('%s %j', result.statusCode, result.body)));
 
             return callback(null, result.body.changeId);
         });
@@ -70,8 +70,8 @@ function get(dnsConfig, zoneName, subdomain, type, callback) {
         .query({ token: dnsConfig.token, type: type })
         .timeout(30 * 1000)
         .end(function (error, result) {
-            if (error && !error.response) return callback(new DomainError(DomainError.EXTERNAL_ERROR, util.format('Network error %s', error.message)));
-            if (result.statusCode !== 200) return callback(new DomainError(DomainError.EXTERNAL_ERROR, util.format('%s %j', result.statusCode, result.body)));
+            if (error && !error.response) return callback(new DomainsError(DomainsError.EXTERNAL_ERROR, util.format('Network error %s', error.message)));
+            if (result.statusCode !== 200) return callback(new DomainsError(DomainsError.EXTERNAL_ERROR, util.format('%s %j', result.statusCode, result.body)));
 
             return callback(null, result.body.values);
         });
@@ -109,11 +109,11 @@ function del(dnsConfig, zoneName, subdomain, type, values, callback) {
         .send(data)
         .timeout(30 * 1000)
         .end(function (error, result) {
-            if (error && !error.response) return callback(new DomainError(DomainError.EXTERNAL_ERROR, util.format('Network error %s', error.message)));
-            if (result.statusCode === 400) return callback(new DomainError(DomainError.BAD_FIELD, result.body.message));
-            if (result.statusCode === 420) return callback(new DomainError(DomainError.STILL_BUSY));
-            if (result.statusCode === 404) return callback(new DomainError(DomainError.NOT_FOUND));
-            if (result.statusCode !== 204) return callback(new DomainError(DomainError.EXTERNAL_ERROR, util.format('%s %j', result.statusCode, result.body)));
+            if (error && !error.response) return callback(new DomainsError(DomainsError.EXTERNAL_ERROR, util.format('Network error %s', error.message)));
+            if (result.statusCode === 400) return callback(new DomainsError(DomainsError.BAD_FIELD, result.body.message));
+            if (result.statusCode === 420) return callback(new DomainsError(DomainsError.STILL_BUSY));
+            if (result.statusCode === 404) return callback(new DomainsError(DomainsError.NOT_FOUND));
+            if (result.statusCode !== 204) return callback(new DomainsError(DomainsError.EXTERNAL_ERROR, util.format('%s %j', result.statusCode, result.body)));
 
             return callback(null);
         });

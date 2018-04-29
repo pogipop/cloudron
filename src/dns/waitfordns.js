@@ -6,7 +6,7 @@ var assert = require('assert'),
     async = require('async'),
     debug = require('debug')('box:dns/waitfordns'),
     dns = require('../native-dns.js'),
-    DomainError = require('../domains.js').DomainError;
+    DomainsError = require('../domains.js').DomainsError;
 
 function resolveIp(hostname, options, callback) {
     assert.strictEqual(typeof hostname, 'string');
@@ -80,12 +80,12 @@ function waitForDns(domain, zoneName, value, options, callback) {
         debug(`waitForDns (try ${attempt}): ${domain} to be ${value} in zone ${zoneName}`);
 
         dns.resolve(zoneName, 'NS', { timeout: 5000 }, function (error, nameservers) {
-            if (error || !nameservers) return retryCallback(error || new DomainError(DomainError.EXTERNAL_ERROR, 'Unable to get nameservers'));
+            if (error || !nameservers) return retryCallback(error || new DomainsError(DomainsError.EXTERNAL_ERROR, 'Unable to get nameservers'));
 
             async.every(nameservers, isChangeSynced.bind(null, domain, value), function (error, synced) {
                 debug('waitForDns: %s %s ns: %j', domain, synced ? 'done' : 'not done', nameservers);
 
-                retryCallback(synced ? null : new DomainError(DomainError.EXTERNAL_ERROR, 'ETRYAGAIN'));
+                retryCallback(synced ? null : new DomainsError(DomainsError.EXTERNAL_ERROR, 'ETRYAGAIN'));
             });
         });
     }, function retryDone(error) {

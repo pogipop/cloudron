@@ -10,7 +10,7 @@ exports = module.exports = {
 
 var assert = require('assert'),
     domains = require('../domains.js'),
-    DomainError = domains.DomainError,
+    DomainsError = domains.DomainsError,
     HttpError = require('connect-lastmile').HttpError,
     HttpSuccess = require('connect-lastmile').HttpSuccess;
 
@@ -31,9 +31,9 @@ function add(req, res, next) {
     req.clearTimeout();
 
     domains.add(req.body.domain, req.body.zoneName || '', req.body.provider, req.body.config, req.body.fallbackCertificate || null, req.body.tlsConfig || { provider: 'letsencrypt-prod' }, function (error) {
-        if (error && error.reason === DomainError.ALREADY_EXISTS) return next(new HttpError(409, error.message));
-        if (error && error.reason === DomainError.BAD_FIELD) return next(new HttpError(400, error.message));
-        if (error && error.reason === DomainError.INVALID_PROVIDER) return next(new HttpError(400, error.message));
+        if (error && error.reason === DomainsError.ALREADY_EXISTS) return next(new HttpError(409, error.message));
+        if (error && error.reason === DomainsError.BAD_FIELD) return next(new HttpError(400, error.message));
+        if (error && error.reason === DomainsError.INVALID_PROVIDER) return next(new HttpError(400, error.message));
         if (error) return next(new HttpError(500, error));
 
         next(new HttpSuccess(201, { domain: req.body.domain, config: req.body.config }));
@@ -44,7 +44,7 @@ function get(req, res, next) {
     assert.strictEqual(typeof req.params.domain, 'string');
 
     domains.get(req.params.domain, function (error, result) {
-        if (error && error.reason === DomainError.NOT_FOUND) return next(new HttpError(404, error.message));
+        if (error && error.reason === DomainsError.NOT_FOUND) return next(new HttpError(404, error.message));
         if (error) return next(new HttpError(500, error));
 
         next(new HttpSuccess(200, domains.removePrivateFields(result)));
@@ -77,9 +77,9 @@ function update(req, res, next) {
     req.clearTimeout();
 
     domains.update(req.params.domain, req.body.provider, req.body.config, req.body.fallbackCertificate || null, req.body.tlsConfig || { provider: 'letsencrypt-prod' }, function (error) {
-        if (error && error.reason === DomainError.NOT_FOUND) return next(new HttpError(404, error.message));
-        if (error && error.reason === DomainError.BAD_FIELD) return next(new HttpError(400, error.message));
-        if (error && error.reason === DomainError.INVALID_PROVIDER) return next(new HttpError(400, error.message));
+        if (error && error.reason === DomainsError.NOT_FOUND) return next(new HttpError(404, error.message));
+        if (error && error.reason === DomainsError.BAD_FIELD) return next(new HttpError(400, error.message));
+        if (error && error.reason === DomainsError.INVALID_PROVIDER) return next(new HttpError(400, error.message));
         if (error) return next(new HttpError(500, error));
 
         next(new HttpSuccess(204, {}));
@@ -90,8 +90,8 @@ function del(req, res, next) {
     assert.strictEqual(typeof req.params.domain, 'string');
 
     domains.del(req.params.domain, function (error) {
-        if (error && error.reason === DomainError.NOT_FOUND) return next(new HttpError(404, error.message));
-        if (error && error.reason === DomainError.IN_USE) return next(new HttpError(409, 'Domain is still in use. Remove all apps and mailboxes using this domain'));
+        if (error && error.reason === DomainsError.NOT_FOUND) return next(new HttpError(404, error.message));
+        if (error && error.reason === DomainsError.IN_USE) return next(new HttpError(409, 'Domain is still in use. Remove all apps and mailboxes using this domain'));
         if (error) return next(new HttpError(500, error));
 
         next(new HttpSuccess(204));

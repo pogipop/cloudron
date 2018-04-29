@@ -18,7 +18,7 @@ module.exports = exports = {
 
     removePrivateFields: removePrivateFields,
 
-    DomainError: DomainError
+    DomainsError: DomainsError
 };
 
 var assert = require('assert'),
@@ -40,7 +40,7 @@ var assert = require('assert'),
 var RESTART_CMD = path.join(__dirname, 'scripts/restart.sh');
 var NOOP_CALLBACK = function (error) { if (error) debug(error); };
 
-function DomainError(reason, errorOrMessage) {
+function DomainsError(reason, errorOrMessage) {
     assert.strictEqual(typeof reason, 'string');
     assert(errorOrMessage instanceof Error || typeof errorOrMessage === 'string' || typeof errorOrMessage === 'undefined');
 
@@ -58,17 +58,17 @@ function DomainError(reason, errorOrMessage) {
         this.nestedError = errorOrMessage;
     }
 }
-util.inherits(DomainError, Error);
+util.inherits(DomainsError, Error);
 
-DomainError.NOT_FOUND = 'No such domain';
-DomainError.ALREADY_EXISTS = 'Domain already exists';
-DomainError.EXTERNAL_ERROR = 'External error';
-DomainError.BAD_FIELD = 'Bad Field';
-DomainError.STILL_BUSY = 'Still busy';
-DomainError.IN_USE = 'In Use';
-DomainError.INTERNAL_ERROR = 'Internal error';
-DomainError.ACCESS_DENIED = 'Access denied';
-DomainError.INVALID_PROVIDER = 'provider must be route53, gcdns, digitalocean, cloudflare, noop, manual or caas';
+DomainsError.NOT_FOUND = 'No such domain';
+DomainsError.ALREADY_EXISTS = 'Domain already exists';
+DomainsError.EXTERNAL_ERROR = 'External error';
+DomainsError.BAD_FIELD = 'Bad Field';
+DomainsError.STILL_BUSY = 'Still busy';
+DomainsError.IN_USE = 'In Use';
+DomainsError.INTERNAL_ERROR = 'Internal error';
+DomainsError.ACCESS_DENIED = 'Access denied';
+DomainsError.INVALID_PROVIDER = 'provider must be route53, gcdns, digitalocean, cloudflare, noop, manual or caas';
 
 // choose which subdomain backend we use for test purpose we use route53
 function api(provider) {
@@ -95,7 +95,7 @@ function verifyDnsConfig(config, domain, zoneName, provider, ip, callback) {
     assert.strictEqual(typeof callback, 'function');
 
     var backend = api(provider);
-    if (!backend) return callback(new DomainError(DomainError.INVALID_PROVIDER));
+    if (!backend) return callback(new DomainsError(DomainsError.INVALID_PROVIDER));
 
     api(provider).verifyDnsConfig(config, domain, zoneName, ip, callback);
 }
@@ -110,40 +110,40 @@ function add(domain, zoneName, provider, config, fallbackCertificate, tlsConfig,
     assert.strictEqual(typeof tlsConfig, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    if (!tld.isValid(domain)) return callback(new DomainError(DomainError.BAD_FIELD, 'Invalid domain'));
+    if (!tld.isValid(domain)) return callback(new DomainsError(DomainsError.BAD_FIELD, 'Invalid domain'));
 
     if (zoneName) {
-        if (!tld.isValid(zoneName)) return callback(new DomainError(DomainError.BAD_FIELD, 'Invalid zoneName'));
+        if (!tld.isValid(zoneName)) return callback(new DomainsError(DomainsError.BAD_FIELD, 'Invalid zoneName'));
     } else {
         zoneName = tld.getDomain(domain) || domain;
     }
 
     if (fallbackCertificate) {
         let error = reverseProxy.validateCertificate(`test.${domain}`, fallbackCertificate.cert, fallbackCertificate.key);
-        if (error) return callback(new DomainError(DomainError.BAD_FIELD, error.message));
+        if (error) return callback(new DomainsError(DomainsError.BAD_FIELD, error.message));
     }
 
     if (tlsConfig.provider !== 'fallback' && tlsConfig.provider !== 'caas' && tlsConfig.provider.indexOf('letsencrypt-') !== 0) {
-        return callback(new DomainError(DomainError.BAD_FIELD, 'tlsConfig.provider must be caas, fallback or le-*'));
+        return callback(new DomainsError(DomainsError.BAD_FIELD, 'tlsConfig.provider must be caas, fallback or le-*'));
     }
 
     sysinfo.getPublicIp(function (error, ip) {
-        if (error) return callback(new DomainError(DomainError.INTERNAL_ERROR, 'Error getting IP:' + error.message));
+        if (error) return callback(new DomainsError(DomainsError.INTERNAL_ERROR, 'Error getting IP:' + error.message));
 
         verifyDnsConfig(config, domain, zoneName, provider, ip, function (error, result) {
-            if (error && error.reason === DomainError.ACCESS_DENIED) return callback(new DomainError(DomainError.BAD_FIELD, 'Error adding A record. Access denied'));
-            if (error && error.reason === DomainError.NOT_FOUND) return callback(new DomainError(DomainError.BAD_FIELD, 'Zone not found'));
-            if (error && error.reason === DomainError.EXTERNAL_ERROR) return callback(new DomainError(DomainError.BAD_FIELD, 'Error adding A record:' + error.message));
-            if (error && error.reason === DomainError.BAD_FIELD) return callback(new DomainError(DomainError.BAD_FIELD, error.message));
-            if (error && error.reason === DomainError.INVALID_PROVIDER) return callback(new DomainError(DomainError.BAD_FIELD, error.message));
-            if (error) return callback(new DomainError(DomainError.INTERNAL_ERROR, error));
+            if (error && error.reason === DomainsError.ACCESS_DENIED) return callback(new DomainsError(DomainsError.BAD_FIELD, 'Error adding A record. Access denied'));
+            if (error && error.reason === DomainsError.NOT_FOUND) return callback(new DomainsError(DomainsError.BAD_FIELD, 'Zone not found'));
+            if (error && error.reason === DomainsError.EXTERNAL_ERROR) return callback(new DomainsError(DomainsError.BAD_FIELD, 'Error adding A record:' + error.message));
+            if (error && error.reason === DomainsError.BAD_FIELD) return callback(new DomainsError(DomainsError.BAD_FIELD, error.message));
+            if (error && error.reason === DomainsError.INVALID_PROVIDER) return callback(new DomainsError(DomainsError.BAD_FIELD, error.message));
+            if (error) return callback(new DomainsError(DomainsError.INTERNAL_ERROR, error));
 
             domaindb.add(domain, { zoneName: zoneName, provider: provider, config: result, tlsConfig: tlsConfig }, function (error) {
-                if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(new DomainError(DomainError.ALREADY_EXISTS));
-                if (error) return callback(new DomainError(DomainError.INTERNAL_ERROR, error));
+                if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(new DomainsError(DomainsError.ALREADY_EXISTS));
+                if (error) return callback(new DomainsError(DomainsError.INTERNAL_ERROR, error));
 
                 reverseProxy.setFallbackCertificate(domain, fallbackCertificate, function (error) {
-                    if (error) return callback(new DomainError(DomainError.INTERNAL_ERROR, error));
+                    if (error) return callback(new DomainsError(DomainsError.INTERNAL_ERROR, error));
 
                     callback();
                 });
@@ -158,16 +158,16 @@ function get(domain, callback) {
 
     domaindb.get(domain, function (error, result) {
         // TODO try to find subdomain entries maybe based on zoneNames or so
-        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new DomainError(DomainError.NOT_FOUND));
-        if (error) return callback(new DomainError(DomainError.INTERNAL_ERROR, error));
+        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new DomainsError(DomainsError.NOT_FOUND));
+        if (error) return callback(new DomainsError(DomainsError.INTERNAL_ERROR, error));
 
         reverseProxy.getFallbackCertificate(domain, function (error, bundle) {
-            if (error && error.reason !== ReverseProxyError.NOT_FOUND) return callback(new DomainError(DomainError.INTERNAL_ERROR, error));
+            if (error && error.reason !== ReverseProxyError.NOT_FOUND) return callback(new DomainsError(DomainsError.INTERNAL_ERROR, error));
 
             var cert = safe.fs.readFileSync(bundle.certFilePath, 'utf-8');
             var key = safe.fs.readFileSync(bundle.keyFilePath, 'utf-8');
 
-            if (!cert || !key) return callback(new DomainError(DomainError.INTERNAL_ERROR, 'unable to read certificates from disk'));
+            if (!cert || !key) return callback(new DomainsError(DomainsError.INTERNAL_ERROR, 'unable to read certificates from disk'));
 
             result.fallbackCertificate = { cert: cert, key: key };
 
@@ -180,7 +180,7 @@ function getAll(callback) {
     assert.strictEqual(typeof callback, 'function');
 
     domaindb.getAll(function (error, result) {
-        if (error) return callback(new DomainError(DomainError.INTERNAL_ERROR, error));
+        if (error) return callback(new DomainsError(DomainsError.INTERNAL_ERROR, error));
 
         return callback(null, result);
     });
@@ -195,37 +195,37 @@ function update(domain, provider, config, fallbackCertificate, tlsConfig, callba
     assert.strictEqual(typeof callback, 'function');
 
     domaindb.get(domain, function (error, result) {
-        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new DomainError(DomainError.NOT_FOUND));
-        if (error) return callback(new DomainError(DomainError.INTERNAL_ERROR, error));
+        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new DomainsError(DomainsError.NOT_FOUND));
+        if (error) return callback(new DomainsError(DomainsError.INTERNAL_ERROR, error));
 
         if (fallbackCertificate) {
             let error = reverseProxy.validateCertificate(`test.${domain}`, fallbackCertificate.cert, fallbackCertificate.key);
-            if (error) return callback(new DomainError(DomainError.BAD_FIELD, error.message));
+            if (error) return callback(new DomainsError(DomainsError.BAD_FIELD, error.message));
         }
 
         if (tlsConfig.provider !== 'fallback' && tlsConfig.provider !== 'caas' && tlsConfig.provider.indexOf('letsencrypt-') !== 0) {
-            return callback(new DomainError(DomainError.BAD_FIELD, 'tlsConfig.provider must be caas, fallback or letsencrypt-*'));
+            return callback(new DomainsError(DomainsError.BAD_FIELD, 'tlsConfig.provider must be caas, fallback or letsencrypt-*'));
         }
 
         sysinfo.getPublicIp(function (error, ip) {
-            if (error) return callback(new DomainError(DomainError.INTERNAL_ERROR, 'Error getting IP:' + error.message));
+            if (error) return callback(new DomainsError(DomainsError.INTERNAL_ERROR, 'Error getting IP:' + error.message));
 
             verifyDnsConfig(config, domain, result.zoneName, provider, ip, function (error, result) {
-                if (error && error.reason === DomainError.ACCESS_DENIED) return callback(new DomainError(DomainError.BAD_FIELD, 'Error adding A record. Access denied'));
-                if (error && error.reason === DomainError.NOT_FOUND) return callback(new DomainError(DomainError.BAD_FIELD, 'Zone not found'));
-                if (error && error.reason === DomainError.EXTERNAL_ERROR) return callback(new DomainError(DomainError.BAD_FIELD, 'Error adding A record:' + error.message));
-                if (error && error.reason === DomainError.BAD_FIELD) return callback(new DomainError(DomainError.BAD_FIELD, error.message));
-                if (error && error.reason === DomainError.INVALID_PROVIDER) return callback(new DomainError(DomainError.BAD_FIELD, error.message));
-                if (error) return callback(new DomainError(DomainError.INTERNAL_ERROR, error));
+                if (error && error.reason === DomainsError.ACCESS_DENIED) return callback(new DomainsError(DomainsError.BAD_FIELD, 'Error adding A record. Access denied'));
+                if (error && error.reason === DomainsError.NOT_FOUND) return callback(new DomainsError(DomainsError.BAD_FIELD, 'Zone not found'));
+                if (error && error.reason === DomainsError.EXTERNAL_ERROR) return callback(new DomainsError(DomainsError.BAD_FIELD, 'Error adding A record:' + error.message));
+                if (error && error.reason === DomainsError.BAD_FIELD) return callback(new DomainsError(DomainsError.BAD_FIELD, error.message));
+                if (error && error.reason === DomainsError.INVALID_PROVIDER) return callback(new DomainsError(DomainsError.BAD_FIELD, error.message));
+                if (error) return callback(new DomainsError(DomainsError.INTERNAL_ERROR, error));
 
                 domaindb.update(domain, { provider: provider, config: result, tlsConfig: tlsConfig }, function (error) {
-                    if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new DomainError(DomainError.NOT_FOUND));
-                    if (error) return callback(new DomainError(DomainError.INTERNAL_ERROR, error));
+                    if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new DomainsError(DomainsError.NOT_FOUND));
+                    if (error) return callback(new DomainsError(DomainsError.INTERNAL_ERROR, error));
 
                     if (!fallbackCertificate) return callback();
 
                     reverseProxy.setFallbackCertificate(domain, fallbackCertificate, function (error) {
-                        if (error) return callback(new DomainError(DomainError.INTERNAL_ERROR, error));
+                        if (error) return callback(new DomainsError(DomainsError.INTERNAL_ERROR, error));
 
                         callback();
                     });
@@ -240,9 +240,9 @@ function del(domain, callback) {
     assert.strictEqual(typeof callback, 'function');
 
     domaindb.del(domain, function (error) {
-        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new DomainError(DomainError.NOT_FOUND));
-        if (error && error.reason === DatabaseError.IN_USE) return callback(new DomainError(DomainError.IN_USE));
-        if (error) return callback(new DomainError(DomainError.INTERNAL_ERROR, error));
+        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new DomainsError(DomainsError.NOT_FOUND));
+        if (error && error.reason === DatabaseError.IN_USE) return callback(new DomainsError(DomainsError.IN_USE));
+        if (error) return callback(new DomainsError(DomainsError.INTERNAL_ERROR, error));
 
         return callback(null);
     });
@@ -266,7 +266,7 @@ function getDnsRecords(subdomain, domain, type, callback) {
     assert.strictEqual(typeof callback, 'function');
 
     get(domain, function (error, result) {
-        if (error) return callback(new DomainError(DomainError.INTERNAL_ERROR, error));
+        if (error) return callback(new DomainsError(DomainsError.INTERNAL_ERROR, error));
 
         api(result.provider).get(result.config, result.zoneName, getName(result, subdomain), type, function (error, values) {
             if (error) return callback(error);
@@ -286,7 +286,7 @@ function upsertDnsRecords(subdomain, domain, type, values, callback) {
     debug('upsertDNSRecord: %s on %s type %s values', subdomain, domain, type, values);
 
     get(domain, function (error, result) {
-        if (error) return callback(new DomainError(DomainError.INTERNAL_ERROR, error));
+        if (error) return callback(new DomainsError(DomainsError.INTERNAL_ERROR, error));
 
         api(result.provider).upsert(result.config, result.zoneName, getName(result, subdomain), type, values, function (error, changeId) {
             if (error) return callback(error);
@@ -309,7 +309,7 @@ function removeDnsRecords(subdomain, domain, type, values, callback) {
         if (error) return callback(error);
 
         api(result.provider).del(result.config, result.zoneName, getName(result, subdomain), type, values, function (error) {
-            if (error && error.reason !== DomainError.NOT_FOUND) return callback(error);
+            if (error && error.reason !== DomainsError.NOT_FOUND) return callback(error);
 
             callback(null);
         });
@@ -343,7 +343,7 @@ function setAdmin(domain, callback) {
         var setPtrRecord = config.provider() === 'caas' ? caas.setPtrRecord : function (d, next) { next(); };
 
         setPtrRecord(domain, function (error) {
-            if (error) return callback(new DomainError(DomainError.EXTERNAL_ERROR, 'Error setting PTR record:' + error.message));
+            if (error) return callback(new DomainsError(DomainsError.EXTERNAL_ERROR, 'Error setting PTR record:' + error.message));
 
             config.setAdminDomain(result.domain);
             config.setAdminLocation('my');

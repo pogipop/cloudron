@@ -62,7 +62,7 @@ var addons = require('./addons.js'),
     docker = require('./docker.js'),
     domaindb = require('./domaindb.js'),
     domains = require('./domains.js'),
-    DomainError = require('./domains.js').DomainError,
+    DomainsError = require('./domains.js').DomainsError,
     eventlog = require('./eventlog.js'),
     fs = require('fs'),
     groups = require('./groups.js'),
@@ -528,7 +528,7 @@ function install(data, auditSource, callback) {
         }
 
         domains.get(domain, function (error, domainObject) {
-            if (error && error.reason === DomainError.NOT_FOUND) return callback(new AppsError(AppsError.NOT_FOUND, 'No such domain'));
+            if (error && error.reason === DomainsError.NOT_FOUND) return callback(new AppsError(AppsError.NOT_FOUND, 'No such domain'));
             if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, 'Could not get domain info:' + error.message));
 
             var fqdn = domains.fqdn(location, domain, domainObject.provider);
@@ -643,7 +643,7 @@ function configure(appId, data, auditSource, callback) {
         }
 
         domains.get(domain, function (error, domainObject) {
-            if (error && error.reason === DomainError.NOT_FOUND) return callback(new AppsError(AppsError.NOT_FOUND, 'No such domain'));
+            if (error && error.reason === DomainsError.NOT_FOUND) return callback(new AppsError(AppsError.NOT_FOUND, 'No such domain'));
             if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, 'Could not get domain info:' + error.message));
 
             var fqdn = domains.fqdn(location, domain, domainObject.provider);
@@ -901,7 +901,7 @@ function clone(appId, data, auditSource, callback) {
             if (error) return callback(error);
 
             domains.get(domain, function (error, domainObject) {
-                if (error && error.reason === DomainError.NOT_FOUND) return callback(new AppsError(AppsError.EXTERNAL_ERROR, 'No such domain'));
+                if (error && error.reason === DomainsError.NOT_FOUND) return callback(new AppsError(AppsError.EXTERNAL_ERROR, 'No such domain'));
                 if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, 'Could not get domain info:' + error.message));
 
                 error = validateHostname(location, domain, domains.fqdn(location, domain, domainObject.provider));

@@ -11,7 +11,7 @@ exports = module.exports = {
 var assert = require('assert'),
     debug = require('debug')('box:dns/manual'),
     dns = require('../native-dns.js'),
-    DomainError = require('../domains.js').DomainError,
+    DomainsError = require('../domains.js').DomainsError,
     util = require('util');
 
 function upsert(dnsConfig, zoneName, subdomain, type, values, callback) {
@@ -57,7 +57,7 @@ function verifyDnsConfig(dnsConfig, domain, zoneName, ip, callback) {
 
     // Very basic check if the nameservers can be fetched
     dns.resolve(zoneName, 'NS', { timeout: 5000 }, function (error, nameservers) {
-        if (error || !nameservers) return callback(new DomainError(DomainError.BAD_FIELD, 'Unable to get nameservers'));
+        if (error || !nameservers) return callback(new DomainsError(DomainsError.BAD_FIELD, 'Unable to get nameservers'));
 
         callback(null, { wildcard: !!dnsConfig.wildcard });
     });
