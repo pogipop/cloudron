@@ -20,7 +20,7 @@ var assert = require('assert'),
     HttpSuccess = require('connect-lastmile').HttpSuccess,
     oauth2 = require('./oauth2.js'),
     users = require('../users.js'),
-    UserError = users.UserError;
+    UserssError = users.UserssError;
 
 function auditSource(req) {
     var ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress || null;
@@ -43,8 +43,8 @@ function create(req, res, next) {
     var displayName = req.body.displayName || '';
 
     users.create(username, password, email, displayName, auditSource(req), { invitor: req.user, sendInvite: sendInvite }, function (error, user) {
-        if (error && error.reason === UserError.BAD_FIELD) return next(new HttpError(400, error.message));
-        if (error && error.reason === UserError.ALREADY_EXISTS) return next(new HttpError(409, error.message));
+        if (error && error.reason === UserssError.BAD_FIELD) return next(new HttpError(400, error.message));
+        if (error && error.reason === UserssError.ALREADY_EXISTS) return next(new HttpError(409, error.message));
         if (error) return next(new HttpError(500, error));
 
         var userInfo = {
@@ -75,9 +75,9 @@ function update(req, res, next) {
     if (req.user.id !== req.params.userId && !req.user.admin) return next(new HttpError(403, 'Not allowed'));
 
     users.update(req.params.userId, req.body, auditSource(req), function (error) {
-        if (error && error.reason === UserError.BAD_FIELD) return next(new HttpError(400, error.message));
-        if (error && error.reason === UserError.ALREADY_EXISTS) return next(new HttpError(409, error.message));
-        if (error && error.reason === UserError.NOT_FOUND) return next(new HttpError(404, 'User not found'));
+        if (error && error.reason === UserssError.BAD_FIELD) return next(new HttpError(400, error.message));
+        if (error && error.reason === UserssError.ALREADY_EXISTS) return next(new HttpError(409, error.message));
+        if (error && error.reason === UserssError.NOT_FOUND) return next(new HttpError(404, 'User not found'));
         if (error) return next(new HttpError(500, error));
 
         next(new HttpSuccess(204));
@@ -101,7 +101,7 @@ function get(req, res, next) {
     if (req.user.id !== req.params.userId && !req.user.admin) return next(new HttpError(403, 'Not allowed'));
 
     users.get(req.params.userId, function (error, result) {
-        if (error && error.reason === UserError.NOT_FOUND) return next(new HttpError(404, 'No such user'));
+        if (error && error.reason === UserssError.NOT_FOUND) return next(new HttpError(404, 'No such user'));
         if (error) return next(new HttpError(500, error));
 
         next(new HttpSuccess(200, users.removePrivateFields(result)));
@@ -119,8 +119,8 @@ function remove(req, res, next) {
     if (req.user.id === req.params.userId) return next(new HttpError(403, 'Not allowed to remove yourself.'));
 
     users.remove(req.params.userId, auditSource(req), function (error) {
-        if (error && error.reason === UserError.BAD_FIELD) return next(new HttpError(400, error.message));
-        if (error && error.reason === UserError.NOT_FOUND) return next(new HttpError(404, 'No such user'));
+        if (error && error.reason === UserssError.BAD_FIELD) return next(new HttpError(400, error.message));
+        if (error && error.reason === UserssError.NOT_FOUND) return next(new HttpError(404, 'No such user'));
         if (error) return next(new HttpError(500, error));
 
         next(new HttpSuccess(204));
@@ -137,8 +137,8 @@ function verifyPassword(req, res, next) {
     if (typeof req.body.password !== 'string') return next(new HttpError(400, 'API call requires user password'));
 
     users.verifyWithUsername(req.user.username, req.body.password, function (error) {
-        if (error && error.reason === UserError.WRONG_PASSWORD) return next(new HttpError(403, 'Password incorrect'));
-        if (error && error.reason === UserError.NOT_FOUND) return next(new HttpError(403, 'Password incorrect'));
+        if (error && error.reason === UserssError.WRONG_PASSWORD) return next(new HttpError(403, 'Password incorrect'));
+        if (error && error.reason === UserssError.NOT_FOUND) return next(new HttpError(403, 'Password incorrect'));
         if (error) return next(new HttpError(500, error));
 
         req.body.password = '<redacted>'; // this will prevent logs from displaying plain text password
@@ -162,7 +162,7 @@ function sendInvite(req, res, next) {
     assert.strictEqual(typeof req.params.userId, 'string');
 
     users.sendInvite(req.params.userId, { invitor: req.user }, function (error, result) {
-        if (error && error.reason === UserError.NOT_FOUND) return next(new HttpError(404, 'User not found'));
+        if (error && error.reason === UserssError.NOT_FOUND) return next(new HttpError(404, 'User not found'));
         if (error) return next(new HttpError(500, error));
 
         next(new HttpSuccess(200, { resetToken: result }));
@@ -179,7 +179,7 @@ function setGroups(req, res, next) {
     if (req.user.id === req.params.userId && req.body.groupIds.indexOf(constants.ADMIN_GROUP_ID) === -1) return next(new HttpError(403, 'Admin removing itself from admins is not allowed'));
 
     users.setGroups(req.params.userId, req.body.groupIds, function (error) {
-        if (error && error.reason === UserError.NOT_FOUND) return next(new HttpError(404, 'One or more groups not found'));
+        if (error && error.reason === UserssError.NOT_FOUND) return next(new HttpError(404, 'One or more groups not found'));
         if (error) return next(new HttpError(500, error));
 
         next(new HttpSuccess(204));

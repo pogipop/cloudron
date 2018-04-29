@@ -23,7 +23,7 @@ var apps = require('../apps'),
     tokendb = require('../tokendb'),
     url = require('url'),
     users = require('../users.js'),
-    UserError = users.UserError,
+    UserssError = users.UserssError,
     util = require('util'),
     _ = require('underscore');
 
@@ -301,7 +301,7 @@ function passwordResetRequest(req, res, next) {
     debug('passwordResetRequest: email or username %s.', req.body.identifier);
 
     users.resetPasswordByIdentifier(req.body.identifier, function (error) {
-        if (error && error.reason !== UserError.NOT_FOUND) {
+        if (error && error.reason !== UserssError.NOT_FOUND) {
             console.error(error);
             return sendErrorPageOrRedirect(req, res, 'User not found');
         }
@@ -352,9 +352,9 @@ function accountSetup(req, res, next) {
 
         var data = _.pick(req.body, 'username', 'displayName');
         users.update(userObject.id, data, auditSource(req), function (error) {
-            if (error && error.reason === UserError.ALREADY_EXISTS) return renderAccountSetupSite(res, req, userObject, 'Username already exists');
-            if (error && error.reason === UserError.BAD_FIELD) return renderAccountSetupSite(res, req, userObject, error.message);
-            if (error && error.reason === UserError.NOT_FOUND) return renderAccountSetupSite(res, req, userObject, 'No such user');
+            if (error && error.reason === UserssError.ALREADY_EXISTS) return renderAccountSetupSite(res, req, userObject, 'Username already exists');
+            if (error && error.reason === UserssError.BAD_FIELD) return renderAccountSetupSite(res, req, userObject, error.message);
+            if (error && error.reason === UserssError.NOT_FOUND) return renderAccountSetupSite(res, req, userObject, 'No such user');
             if (error) return next(new HttpError(500, error));
 
             userObject.username = req.body.username;
@@ -362,7 +362,7 @@ function accountSetup(req, res, next) {
 
             // setPassword clears the resetToken
             users.setPassword(userObject.id, req.body.password, function (error, result) {
-                if (error && error.reason === UserError.BAD_FIELD) return renderAccountSetupSite(res, req, userObject, error.message);
+                if (error && error.reason === UserssError.BAD_FIELD) return renderAccountSetupSite(res, req, userObject, error.message);
 
                 if (error) return next(new HttpError(500, error));
 
@@ -404,7 +404,7 @@ function passwordReset(req, res, next) {
 
         // setPassword clears the resetToken
         users.setPassword(userObject.id, req.body.password, function (error, result) {
-            if (error && error.reason === UserError.BAD_FIELD) return next(new HttpError(406, error.message));
+            if (error && error.reason === UserssError.BAD_FIELD) return next(new HttpError(406, error.message));
             if (error) return next(new HttpError(500, error));
 
             res.redirect(util.format('%s?accessToken=%s&expiresAt=%s', config.adminOrigin(), result.token, result.expiresAt));
