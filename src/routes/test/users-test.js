@@ -78,7 +78,7 @@ function checkMails(number, done) {
     }, 500);
 }
 
-describe('User API', function () {
+describe('Users API', function () {
     this.timeout(5000);
 
     var user_0, user_1, user_2, user_4;
