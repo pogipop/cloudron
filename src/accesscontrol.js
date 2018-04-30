@@ -10,6 +10,7 @@ exports = module.exports = {
     SCOPE_USERS: 'users',
     SCOPE_MAIL: 'mail',
     SCOPE_CLIENTS: 'clients',
+    SCOPE_DOMAINS: 'domains',
 
     // roles are handled just like the above scopes, they are parallel to scopes
     // scopes enclose API groups, roles specify the usage role
@@ -32,6 +33,9 @@ function validateScope(scope) {
         exports.SCOPE_CLOUDRON,
         exports.SCOPE_SETTINGS,
         exports.SCOPE_USERS,
+        exports.SCOPE_DOMAIN,
+        exports.SCOPE_CLIENTS,
+        exports.SCOPE_MAIL,
         '*',    // includes all scopes, but not roles
         exports.SCOPE_ROLE_SDK
     ];

@@ -97,6 +97,7 @@ function initializeExpressSync() {
     var settingsScope = routes.accesscontrol.scope(accesscontrol.SCOPE_SETTINGS);
     var mailScope = routes.accesscontrol.scope(accesscontrol.SCOPE_MAIL);
     var clientsScope = routes.accesscontrol.scope(accesscontrol.SCOPE_CLIENTS);
+    var domainsScope = routes.accesscontrol.scope(accesscontrol.SCOPE_DOMAINS);
 
     // csrf protection
     var csrf = routes.oauth2.csrf;
@@ -254,11 +255,11 @@ function initializeExpressSync() {
     router.post('/api/v1/backups', settingsScope, routes.users.requireAdmin, routes.backups.create);
 
     // domain routes
-    router.post('/api/v1/domains', settingsScope, routes.users.requireAdmin, routes.domains.add);
-    router.get ('/api/v1/domains', settingsScope, routes.users.requireAdmin, routes.domains.getAll);
-    router.get ('/api/v1/domains/:domain', settingsScope, routes.users.requireAdmin, routes.domains.get);
-    router.put ('/api/v1/domains/:domain', settingsScope, routes.users.requireAdmin, routes.domains.update);
-    router.del ('/api/v1/domains/:domain', settingsScope, routes.users.requireAdmin, routes.users.verifyPassword, routes.domains.del);
+    router.post('/api/v1/domains', domainsScope, routes.users.requireAdmin, routes.domains.add);
+    router.get ('/api/v1/domains', domainsScope, routes.users.requireAdmin, routes.domains.getAll);
+    router.get ('/api/v1/domains/:domain', domainsScope, routes.users.requireAdmin, routes.domains.get);
+    router.put ('/api/v1/domains/:domain', domainsScope, routes.users.requireAdmin, routes.domains.update);
+    router.del ('/api/v1/domains/:domain', domainsScope, routes.users.requireAdmin, routes.users.verifyPassword, routes.domains.del);
 
     // caas routes
     router.post('/api/v1/caas/change_plan', cloudronScope, routes.users.requireAdmin, routes.users.verifyPassword, routes.caas.changePlan);
