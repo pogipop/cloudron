@@ -1,7 +1,7 @@
 'use strict';
 
 exports = module.exports = {
-    UserssError: UserssError,
+    UsersError: UsersError,
 
     removePrivateFields: removePrivateFields,
 
@@ -58,7 +58,7 @@ var CRYPTO_DIGEST = 'sha1'; // used to be the default in node 4.1.1 cannot chang
 
 // http://dustinsenos.com/articles/customErrorsInNode
 // http://code.google.com/p/v8/wiki/JavaScriptStackTraceApi
-function UserssError(reason, errorOrMessage) {
+function UsersError(reason, errorOrMessage) {
     assert.strictEqual(typeof reason, 'string');
     assert(errorOrMessage instanceof Error || typeof errorOrMessage === 'string' || typeof errorOrMessage === 'undefined');
 
@@ -76,28 +76,28 @@ function UserssError(reason, errorOrMessage) {
         this.nestedError = errorOrMessage;
     }
 }
-util.inherits(UserssError, Error);
-UserssError.INTERNAL_ERROR = 'Internal Error';
-UserssError.ALREADY_EXISTS = 'Already Exists';
-UserssError.NOT_FOUND = 'Not Found';
-UserssError.WRONG_PASSWORD = 'Wrong User or Password';
-UserssError.BAD_FIELD = 'Bad field';
-UserssError.BAD_TOKEN = 'Bad token';
+util.inherits(UsersError, Error);
+UsersError.INTERNAL_ERROR = 'Internal Error';
+UsersError.ALREADY_EXISTS = 'Already Exists';
+UsersError.NOT_FOUND = 'Not Found';
+UsersError.WRONG_PASSWORD = 'Wrong User or Password';
+UsersError.BAD_FIELD = 'Bad field';
+UsersError.BAD_TOKEN = 'Bad token';
 
 // keep this in sync with validateGroupname and validateAlias
 function validateUsername(username) {
     assert.strictEqual(typeof username, 'string');
 
-    if (username.length < 1) return new UserssError(UserssError.BAD_FIELD, 'Username must be atleast 1 char');
-    if (username.length >= 200) return new UserssError(UserssError.BAD_FIELD, 'Username too long');
+    if (username.length < 1) return new UsersError(UsersError.BAD_FIELD, 'Username must be atleast 1 char');
+    if (username.length >= 200) return new UsersError(UsersError.BAD_FIELD, 'Username too long');
 
-    if (constants.RESERVED_NAMES.indexOf(username) !== -1) return new UserssError(UserssError.BAD_FIELD, 'Username is reserved');
+    if (constants.RESERVED_NAMES.indexOf(username) !== -1) return new UsersError(UsersError.BAD_FIELD, 'Username is reserved');
 
     // +/- can be tricky in emails. also need to consider valid LDAP characters here (e.g '+' is reserved)
-    if (/[^a-zA-Z0-9.]/.test(username)) return new UserssError(UserssError.BAD_FIELD, 'Username can only contain alphanumerals and dot');
+    if (/[^a-zA-Z0-9.]/.test(username)) return new UsersError(UsersError.BAD_FIELD, 'Username can only contain alphanumerals and dot');
 
     // app emails are sent using the .app suffix
-    if (username.indexOf('.app') !== -1) return new UserssError(UserssError.BAD_FIELD, 'Username pattern is reserved for apps');
+    if (username.indexOf('.app') !== -1) return new UsersError(UsersError.BAD_FIELD, 'Username pattern is reserved for apps');
 
     return null;
 }
@@ -105,7 +105,7 @@ function validateUsername(username) {
 function validateEmail(email) {
     assert.strictEqual(typeof email, 'string');
 
-    if (!validator.isEmail(email)) return new UserssError(UserssError.BAD_FIELD, 'Invalid email');
+    if (!validator.isEmail(email)) return new UsersError(UsersError.BAD_FIELD, 'Invalid email');
 
     return null;
 }
@@ -113,7 +113,7 @@ function validateEmail(email) {
 function validateToken(token) {
     assert.strictEqual(typeof token, 'string');
 
-    if (token.length !== 64) return new UserssError(UserssError.BAD_TOKEN, 'Invalid token'); // 256-bit hex coded token
+    if (token.length !== 64) return new UsersError(UsersError.BAD_TOKEN, 'Invalid token'); // 256-bit hex coded token
 
     return null;
 }
@@ -153,7 +153,7 @@ function createUser(username, password, email, displayName, auditSource, options
     }
 
     error = validatePassword(password);
-    if (error) return callback(new UserssError(UserssError.BAD_FIELD, error.message));
+    if (error) return callback(new UsersError(UsersError.BAD_FIELD, error.message));
 
     email = email.toLowerCase();
     error = validateEmail(email);
@@ -163,10 +163,10 @@ function createUser(username, password, email, displayName, auditSource, options
     if (error) return callback(error);
 
     crypto.randomBytes(CRYPTO_SALT_SIZE, function (error, salt) {
-        if (error) return callback(new UserssError(UserssError.INTERNAL_ERROR, error));
+        if (error) return callback(new UsersError(UsersError.INTERNAL_ERROR, error));
 
         crypto.pbkdf2(password, salt, CRYPTO_ITERATIONS, CRYPTO_KEY_LENGTH, CRYPTO_DIGEST, function (error, derivedKey) {
-            if (error) return callback(new UserssError(UserssError.INTERNAL_ERROR, error));
+            if (error) return callback(new UsersError(UsersError.INTERNAL_ERROR, error));
 
             var now = (new Date()).toISOString();
             var user = {
@@ -183,8 +183,8 @@ function createUser(username, password, email, displayName, auditSource, options
             };
 
             userdb.add(user.id, user, function (error) {
-                if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(new UserssError(UserssError.ALREADY_EXISTS, error.message));
-                if (error) return callback(new UserssError(UserssError.INTERNAL_ERROR, error));
+                if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(new UsersError(UsersError.ALREADY_EXISTS, error.message));
+                if (error) return callback(new UsersError(UsersError.INTERNAL_ERROR, error));
 
                 callback(null, user);
 
@@ -226,10 +226,10 @@ function verify(userId, password, callback) {
 
         var saltBinary = new Buffer(user.salt, 'hex');
         crypto.pbkdf2(password, saltBinary, CRYPTO_ITERATIONS, CRYPTO_KEY_LENGTH, CRYPTO_DIGEST, function (error, derivedKey) {
-            if (error) return callback(new UserssError(UserssError.INTERNAL_ERROR, error));
+            if (error) return callback(new UsersError(UsersError.INTERNAL_ERROR, error));
 
             var derivedKeyHex = new Buffer(derivedKey, 'binary').toString('hex');
-            if (derivedKeyHex !== user.password) return callback(new UserssError(UserssError.WRONG_PASSWORD));
+            if (derivedKeyHex !== user.password) return callback(new UsersError(UsersError.WRONG_PASSWORD));
 
             callback(null, user);
         });
@@ -242,8 +242,8 @@ function verifyWithUsername(username, password, callback) {
     assert.strictEqual(typeof callback, 'function');
 
     userdb.getByUsername(username.toLowerCase(), function (error, user) {
-        if (error && error.reason == DatabaseError.NOT_FOUND) return callback(new UserssError(UserssError.NOT_FOUND));
-        if (error) return callback(new UserssError(UserssError.INTERNAL_ERROR, error));
+        if (error && error.reason == DatabaseError.NOT_FOUND) return callback(new UsersError(UsersError.NOT_FOUND));
+        if (error) return callback(new UsersError(UsersError.INTERNAL_ERROR, error));
 
         verify(user.id, password, callback);
     });
@@ -255,8 +255,8 @@ function verifyWithEmail(email, password, callback) {
     assert.strictEqual(typeof callback, 'function');
 
     userdb.getByEmail(email.toLowerCase(), function (error, user) {
-        if (error && error.reason == DatabaseError.NOT_FOUND) return callback(new UserssError(UserssError.NOT_FOUND));
-        if (error) return callback(new UserssError(UserssError.INTERNAL_ERROR, error));
+        if (error && error.reason == DatabaseError.NOT_FOUND) return callback(new UsersError(UsersError.NOT_FOUND));
+        if (error) return callback(new UsersError(UsersError.INTERNAL_ERROR, error));
 
         verify(user.id, password, callback);
     });
@@ -270,11 +270,11 @@ function removeUser(userId, auditSource, callback) {
     getUser(userId, function (error, user) {
         if (error) return callback(error);
 
-        if (config.isDemo() && user.username === constants.DEMO_USERNAME) return callback(new UserssError(UserssError.BAD_FIELD, 'Not allowed in demo mode'));
+        if (config.isDemo() && user.username === constants.DEMO_USERNAME) return callback(new UsersError(UsersError.BAD_FIELD, 'Not allowed in demo mode'));
 
         userdb.del(userId, function (error) {
-            if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new UserssError(UserssError.NOT_FOUND));
-            if (error) return callback(new UserssError(UserssError.INTERNAL_ERROR, error));
+            if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new UsersError(UsersError.NOT_FOUND));
+            if (error) return callback(new UsersError(UsersError.INTERNAL_ERROR, error));
 
             eventlog.add(eventlog.ACTION_USER_REMOVE, auditSource, { userId: userId, user: removePrivateFields(user) });
 
@@ -289,7 +289,7 @@ function listUsers(callback) {
     assert.strictEqual(typeof callback, 'function');
 
     userdb.getAllWithGroupIds(function (error, results) {
-        if (error) return callback(new UserssError(UserssError.INTERNAL_ERROR, error));
+        if (error) return callback(new UsersError(UsersError.INTERNAL_ERROR, error));
 
         results.forEach(function (result) {
             result.admin = result.groupIds.indexOf(constants.ADMIN_GROUP_ID) !== -1;
@@ -303,7 +303,7 @@ function count(callback) {
     assert.strictEqual(typeof callback, 'function');
 
     userdb.count(function (error, count) {
-        if (error) return callback(new UserssError(UserssError.INTERNAL_ERROR, error));
+        if (error) return callback(new UsersError(UsersError.INTERNAL_ERROR, error));
 
         callback(null, count);
     });
@@ -314,11 +314,11 @@ function getUser(userId, callback) {
     assert.strictEqual(typeof callback, 'function');
 
     userdb.get(userId, function (error, result) {
-        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new UserssError(UserssError.NOT_FOUND));
-        if (error) return callback(new UserssError(UserssError.INTERNAL_ERROR, error));
+        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new UsersError(UsersError.NOT_FOUND));
+        if (error) return callback(new UsersError(UsersError.INTERNAL_ERROR, error));
 
         groups.getGroups(userId, function (error, groupIds) {
-            if (error) return callback(new UserssError(UserssError.INTERNAL_ERROR, error));
+            if (error) return callback(new UsersError(UsersError.INTERNAL_ERROR, error));
 
             result.groupIds = groupIds;
             result.admin = groupIds.indexOf(constants.ADMIN_GROUP_ID) !== -1;
@@ -336,8 +336,8 @@ function getByResetToken(resetToken, callback) {
     if (error) return callback(error);
 
     userdb.getByResetToken(resetToken, function (error, result) {
-        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new UserssError(UserssError.NOT_FOUND));
-        if (error) return callback(new UserssError(UserssError.INTERNAL_ERROR, error));
+        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new UsersError(UsersError.NOT_FOUND));
+        if (error) return callback(new UsersError(UsersError.INTERNAL_ERROR, error));
 
         getUser(result.id, callback);
     });
@@ -373,13 +373,13 @@ function updateUser(userId, data, auditSource, callback) {
     }
 
     userdb.get(userId, function (error) {
-        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new UserssError(UserssError.NOT_FOUND));
-        if (error) return callback(new UserssError(UserssError.INTERNAL_ERROR, error));
+        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new UsersError(UsersError.NOT_FOUND));
+        if (error) return callback(new UsersError(UsersError.INTERNAL_ERROR, error));
 
         userdb.update(userId, data, function (error) {
-            if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(new UserssError(UserssError.ALREADY_EXISTS, error.message));
-            if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new UserssError(UserssError.NOT_FOUND, error));
-            if (error) return callback(new UserssError(UserssError.INTERNAL_ERROR, error));
+            if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(new UsersError(UsersError.ALREADY_EXISTS, error.message));
+            if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new UsersError(UsersError.NOT_FOUND, error));
+            if (error) return callback(new UsersError(UsersError.INTERNAL_ERROR, error));
 
             callback();
 
@@ -398,13 +398,13 @@ function setGroups(userId, groupIds, callback) {
     assert.strictEqual(typeof callback, 'function');
 
     groups.getGroups(userId, function (error, oldGroupIds) {
-        if (error && error.reason !== GroupsError.NOT_FOUND) return callback(new UserssError(UserssError.INTERNAL_ERROR, error));
+        if (error && error.reason !== GroupsError.NOT_FOUND) return callback(new UsersError(UsersError.INTERNAL_ERROR, error));
 
         oldGroupIds = oldGroupIds || [];
 
         groups.setGroups(userId, groupIds, function (error) {
-            if (error && error.reason === GroupsError.NOT_FOUND) return callback(new UserssError(UserssError.NOT_FOUND, 'One or more groups not found'));
-            if (error) return callback(new UserssError(UserssError.INTERNAL_ERROR, error));
+            if (error && error.reason === GroupsError.NOT_FOUND) return callback(new UsersError(UsersError.NOT_FOUND, 'One or more groups not found'));
+            if (error) return callback(new UsersError(UsersError.INTERNAL_ERROR, error));
 
             var isAdmin = groupIds.some(function (g) { return g === constants.ADMIN_GROUP_ID; });
             var wasAdmin = oldGroupIds.some(function (g) { return g === constants.ADMIN_GROUP_ID; });
@@ -426,7 +426,7 @@ function getAllAdmins(callback) {
     assert.strictEqual(typeof callback, 'function');
 
     userdb.getAllAdmins(function (error, admins) {
-        if (error) return callback(new UserssError(UserssError.INTERNAL_ERROR, error));
+        if (error) return callback(new UsersError(UsersError.INTERNAL_ERROR, error));
 
         callback(null, admins);
     });
@@ -441,14 +441,14 @@ function resetPasswordByIdentifier(identifier, callback) {
     else getter = userdb.getByEmail;
 
     getter(identifier.toLowerCase(), function (error, result) {
-        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new UserssError(UserssError.NOT_FOUND));
-        if (error) return callback(new UserssError(UserssError.INTERNAL_ERROR, error));
+        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new UsersError(UsersError.NOT_FOUND));
+        if (error) return callback(new UsersError(UsersError.INTERNAL_ERROR, error));
 
         result.resetToken = hat(256);
 
         userdb.update(result.id, result, function (error) {
-            if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new UserssError(UserssError.NOT_FOUND));
-            if (error) return callback(new UserssError(UserssError.INTERNAL_ERROR, error));
+            if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new UsersError(UsersError.NOT_FOUND));
+            if (error) return callback(new UsersError(UsersError.INTERNAL_ERROR, error));
 
             mailer.passwordReset(result);
 
@@ -463,35 +463,35 @@ function setPassword(userId, newPassword, callback) {
     assert.strictEqual(typeof callback, 'function');
 
     var error = validatePassword(newPassword);
-    if (error) return callback(new UserssError(UserssError.BAD_FIELD, error.message));
+    if (error) return callback(new UsersError(UsersError.BAD_FIELD, error.message));
 
     userdb.get(userId, function (error, user) {
-        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new UserssError(UserssError.NOT_FOUND));
-        if (error) return callback(new UserssError(UserssError.INTERNAL_ERROR, error));
+        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new UsersError(UsersError.NOT_FOUND));
+        if (error) return callback(new UsersError(UsersError.INTERNAL_ERROR, error));
 
-        if (config.isDemo() && user.username === constants.DEMO_USERNAME) return callback(new UserssError(UserssError.BAD_FIELD, 'Not allowed in demo mode'));
+        if (config.isDemo() && user.username === constants.DEMO_USERNAME) return callback(new UsersError(UsersError.BAD_FIELD, 'Not allowed in demo mode'));
 
         var saltBuffer = new Buffer(user.salt, 'hex');
         crypto.pbkdf2(newPassword, saltBuffer, CRYPTO_ITERATIONS, CRYPTO_KEY_LENGTH, CRYPTO_DIGEST, function (error, derivedKey) {
-            if (error) return callback(new UserssError(UserssError.INTERNAL_ERROR, error));
+            if (error) return callback(new UsersError(UsersError.INTERNAL_ERROR, error));
 
             user.modifiedAt = (new Date()).toISOString();
             user.password = new Buffer(derivedKey, 'binary').toString('hex');
             user.resetToken = '';
 
             userdb.update(userId, user, function (error) {
-                if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new UserssError(UserssError.NOT_FOUND));
-                if (error) return callback(new UserssError(UserssError.INTERNAL_ERROR, error));
+                if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new UsersError(UsersError.NOT_FOUND));
+                if (error) return callback(new UsersError(UsersError.INTERNAL_ERROR, error));
 
                 // Also generate a token so the new user can get logged in immediately
                 clients.get('cid-webadmin', function (error, result) {
-                    if (error) return callback(new UserssError(UserssError.INTERNAL_ERROR, error));
+                    if (error) return callback(new UsersError(UsersError.INTERNAL_ERROR, error));
 
                     var token = tokendb.generateToken();
                     var expiresAt = Date.now() + constants.DEFAULT_TOKEN_EXPIRATION;
 
                     tokendb.add(token, user.id, result.id, expiresAt, '*', function (error) {
-                        if (error) return callback(new UserssError(UserssError.INTERNAL_ERROR, error));
+                        if (error) return callback(new UsersError(UsersError.INTERNAL_ERROR, error));
 
                         callback(null, { token: token, expiresAt: expiresAt });
                     });
@@ -510,22 +510,22 @@ function createOwner(username, password, email, displayName, auditSource, callba
     assert.strictEqual(typeof callback, 'function');
 
     // This is only not allowed for the owner
-    if (username === '') return callback(new UserssError(UserssError.BAD_FIELD, 'Username cannot be empty'));
+    if (username === '') return callback(new UsersError(UsersError.BAD_FIELD, 'Username cannot be empty'));
 
     userdb.count(function (error, count) {
-        if (error) return callback(new UserssError(UserssError.INTERNAL_ERROR, error));
-        if (count !== 0) return callback(new UserssError(UserssError.ALREADY_EXISTS, 'Owner already exists'));
+        if (error) return callback(new UsersError(UsersError.INTERNAL_ERROR, error));
+        if (count !== 0) return callback(new UsersError(UsersError.ALREADY_EXISTS, 'Owner already exists'));
 
         // have to provide the group id explicitly so using db layer directly
         groupdb.add(constants.ADMIN_GROUP_ID, constants.ADMIN_GROUP_NAME, function (error) {
             // we proceed if it already exists so we can re-create the owner if need be
-            if (error && error.reason !== DatabaseError.ALREADY_EXISTS) return callback(new UserssError(UserssError.INTERNAL_ERROR, error));
+            if (error && error.reason !== DatabaseError.ALREADY_EXISTS) return callback(new UsersError(UsersError.INTERNAL_ERROR, error));
 
             createUser(username, password, email, displayName, auditSource, { owner: true }, function (error, user) {
                 if (error) return callback(error);
 
                 groups.addMember(constants.ADMIN_GROUP_ID, user.id, function (error) {
-                    if (error) return callback(new UserssError(UserssError.INTERNAL_ERROR, error));
+                    if (error) return callback(new UsersError(UsersError.INTERNAL_ERROR, error));
 
                     callback(null, user);
                 });
@@ -536,8 +536,8 @@ function createOwner(username, password, email, displayName, auditSource, callba
 
 function getOwner(callback) {
     userdb.getOwner(function (error, owner) {
-        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new UserssError(UserssError.NOT_FOUND));
-        if (error) return callback(new UserssError(UserssError.INTERNAL_ERROR, error));
+        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new UsersError(UsersError.NOT_FOUND));
+        if (error) return callback(new UsersError(UsersError.INTERNAL_ERROR, error));
 
         return callback(null, owner);
     });
@@ -549,14 +549,14 @@ function sendInvite(userId, options, callback) {
     assert.strictEqual(typeof callback, 'function');
 
     userdb.get(userId, function (error, userObject) {
-        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new UserssError(UserssError.NOT_FOUND));
-        if (error) return callback(new UserssError(UserssError.INTERNAL_ERROR, error));
+        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new UsersError(UsersError.NOT_FOUND));
+        if (error) return callback(new UsersError(UsersError.INTERNAL_ERROR, error));
 
         userObject.resetToken = hat(256);
 
         userdb.update(userId, userObject, function (error) {
-            if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new UserssError(UserssError.NOT_FOUND));
-            if (error) return callback(new UserssError(UserssError.INTERNAL_ERROR, error));
+            if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new UsersError(UsersError.NOT_FOUND));
+            if (error) return callback(new UsersError(UsersError.INTERNAL_ERROR, error));
 
             mailer.sendInvite(userObject, options.invitor || null);
 
@@ -570,15 +570,15 @@ function setTwoFactorAuthenticationSecret(userId, callback) {
     assert.strictEqual(typeof callback, 'function');
 
     userdb.get(userId, function (error, result) {
-        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new UserssError(UserssError.NOT_FOUND));
-        if (error) return callback(new UserssError(UserssError.INTERNAL_ERROR, error));
+        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new UsersError(UsersError.NOT_FOUND));
+        if (error) return callback(new UsersError(UsersError.INTERNAL_ERROR, error));
 
-        if (result.twoFactorAuthenticationEnabled) return callback(new UserssError(UserssError.ALREADY_EXISTS));
+        if (result.twoFactorAuthenticationEnabled) return callback(new UsersError(UsersError.ALREADY_EXISTS));
 
         var secret = speakeasy.generateSecret({ name: `Cloudron (${config.adminFqdn()})` });
 
         userdb.update(userId, { twoFactorAuthenticationSecret: secret.base32, twoFactorAuthenticationEnabled: false }, function (error) {
-            if (error) return callback(new UserssError(UserssError.INTERNAL_ERROR, error));
+            if (error) return callback(new UsersError(UsersError.INTERNAL_ERROR, error));
 
             qrcode.toDataURL(secret.otpauth_url, function (error, dataUrl) {
                 if (error) console.error(error);
@@ -595,16 +595,16 @@ function enableTwoFactorAuthentication(userId, totpToken, callback) {
     assert.strictEqual(typeof callback, 'function');
 
     userdb.get(userId, function (error, result) {
-        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new UserssError(UserssError.NOT_FOUND));
-        if (error) return callback(new UserssError(UserssError.INTERNAL_ERROR, error));
+        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new UsersError(UsersError.NOT_FOUND));
+        if (error) return callback(new UsersError(UsersError.INTERNAL_ERROR, error));
 
         var verified = speakeasy.totp.verify({ secret: result.twoFactorAuthenticationSecret, encoding: 'base32', token: totpToken });
-        if (!verified) return callback(new UserssError(UserssError.BAD_TOKEN));
+        if (!verified) return callback(new UsersError(UsersError.BAD_TOKEN));
 
-        if (result.twoFactorAuthenticationEnabled) return callback(new UserssError(UserssError.ALREADY_EXISTS));
+        if (result.twoFactorAuthenticationEnabled) return callback(new UsersError(UsersError.ALREADY_EXISTS));
 
         userdb.update(userId, { twoFactorAuthenticationEnabled: true }, function (error) {
-            if (error) return callback(new UserssError(UserssError.INTERNAL_ERROR, error));
+            if (error) return callback(new UsersError(UsersError.INTERNAL_ERROR, error));
 
             callback(null);
         });
@@ -616,7 +616,7 @@ function disableTwoFactorAuthentication(userId, callback) {
     assert.strictEqual(typeof callback, 'function');
 
     userdb.update(userId, { twoFactorAuthenticationEnabled: false, twoFactorAuthenticationSecret: '' }, function (error) {
-        if (error) return callback(new UserssError(UserssError.INTERNAL_ERROR, error));
+        if (error) return callback(new UsersError(UsersError.INTERNAL_ERROR, error));
 
         callback(null);
     });

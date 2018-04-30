@@ -20,7 +20,7 @@ var async = require('async'),
     mailer = require('../mailer.js'),
     userdb = require('../userdb.js'),
     users = require('../users.js'),
-    UserssError = users.UserssError;
+    UsersError = users.UsersError;
 
 var USERNAME = 'noBody';
 var USERNAME_NEW = 'noBodyNew';
@@ -122,7 +122,7 @@ describe('User', function () {
             users.create(USERNAME, 'Fo$%23', EMAIL, DISPLAY_NAME, AUDIT_SOURCE, function (error, result) {
                 expect(error).to.be.ok();
                 expect(result).to.not.be.ok();
-                expect(error.reason).to.equal(UserssError.BAD_FIELD);
+                expect(error.reason).to.equal(UsersError.BAD_FIELD);
 
                 done();
             });
@@ -132,7 +132,7 @@ describe('User', function () {
             users.create(USERNAME, 'thisiseightch%$234arslong', EMAIL, DISPLAY_NAME, AUDIT_SOURCE, function (error, result) {
                 expect(error).to.be.ok();
                 expect(result).to.not.be.ok();
-                expect(error.reason).to.equal(UserssError.BAD_FIELD);
+                expect(error.reason).to.equal(UsersError.BAD_FIELD);
 
                 done();
             });
@@ -142,7 +142,7 @@ describe('User', function () {
             users.create(USERNAME, 'foobaRASDF%', EMAIL, DISPLAY_NAME, AUDIT_SOURCE, function (error, result) {
                 expect(error).to.be.ok();
                 expect(result).to.not.be.ok();
-                expect(error.reason).to.equal(UserssError.BAD_FIELD);
+                expect(error.reason).to.equal(UsersError.BAD_FIELD);
 
                 done();
             });
@@ -152,7 +152,7 @@ describe('User', function () {
             users.create(USERNAME, 'foobaRASDF23423', EMAIL, DISPLAY_NAME, AUDIT_SOURCE, function (error, result) {
                 expect(error).to.be.ok();
                 expect(result).to.not.be.ok();
-                expect(error.reason).to.equal(UserssError.BAD_FIELD);
+                expect(error.reason).to.equal(UsersError.BAD_FIELD);
 
                 done();
             });
@@ -162,7 +162,7 @@ describe('User', function () {
             users.create('admin', PASSWORD, EMAIL, DISPLAY_NAME, AUDIT_SOURCE, function (error, result) {
                 expect(error).to.be.ok();
                 expect(result).to.not.be.ok();
-                expect(error.reason).to.equal(UserssError.BAD_FIELD);
+                expect(error.reason).to.equal(UsersError.BAD_FIELD);
 
                 done();
             });
@@ -172,7 +172,7 @@ describe('User', function () {
             users.create('moo-daemon', PASSWORD, EMAIL, DISPLAY_NAME, AUDIT_SOURCE, function (error, result) {
                 expect(error).to.be.ok();
                 expect(result).to.not.be.ok();
-                expect(error.reason).to.equal(UserssError.BAD_FIELD);
+                expect(error.reason).to.equal(UsersError.BAD_FIELD);
 
                 done();
             });
@@ -182,7 +182,7 @@ describe('User', function () {
             users.create('', PASSWORD, EMAIL, DISPLAY_NAME, AUDIT_SOURCE, function (error, result) {
                 expect(error).to.be.ok();
                 expect(result).to.not.be.ok();
-                expect(error.reason).to.equal(UserssError.BAD_FIELD);
+                expect(error.reason).to.equal(UsersError.BAD_FIELD);
 
                 done();
             });
@@ -192,7 +192,7 @@ describe('User', function () {
             users.create(new Array(257).fill('Z').join(''), PASSWORD, EMAIL, DISPLAY_NAME, AUDIT_SOURCE, function (error, result) {
                 expect(error).to.be.ok();
                 expect(result).to.not.be.ok();
-                expect(error.reason).to.equal(UserssError.BAD_FIELD);
+                expect(error.reason).to.equal(UsersError.BAD_FIELD);
 
                 done();
             });
@@ -202,7 +202,7 @@ describe('User', function () {
             users.create('maybe-app', PASSWORD, EMAIL, DISPLAY_NAME, AUDIT_SOURCE, function (error, result) {
                 expect(error).to.be.ok();
                 expect(result).to.not.be.ok();
-                expect(error.reason).to.equal(UserssError.BAD_FIELD);
+                expect(error.reason).to.equal(UsersError.BAD_FIELD);
 
                 done();
             });
@@ -248,7 +248,7 @@ describe('User', function () {
             users.create(USERNAME, PASSWORD, EMAIL, DISPLAY_NAME, AUDIT_SOURCE, function (error, result) {
                 expect(error).to.be.ok();
                 expect(result).not.to.be.ok();
-                expect(error.reason).to.equal(UserssError.ALREADY_EXISTS);
+                expect(error.reason).to.equal(UsersError.ALREADY_EXISTS);
 
                 done();
             });
@@ -258,7 +258,7 @@ describe('User', function () {
             users.create(USERNAME, '', EMAIL, DISPLAY_NAME, AUDIT_SOURCE, function (error, result) {
                 expect(error).to.be.ok();
                 expect(result).not.to.be.ok();
-                expect(error.reason).to.equal(UserssError.BAD_FIELD);
+                expect(error.reason).to.equal(UsersError.BAD_FIELD);
 
                 done();
             });
@@ -293,7 +293,7 @@ describe('User', function () {
 
         it('fails because there is no owner', function (done) {
             users.getOwner(function (error) {
-                expect(error.reason).to.be(UserssError.NOT_FOUND);
+                expect(error.reason).to.be(UsersError.NOT_FOUND);
                 done();
             });
         });
@@ -319,7 +319,7 @@ describe('User', function () {
             users.verify('somerandomid', PASSWORD, function (error, result) {
                 expect(error).to.be.ok();
                 expect(result).to.not.be.ok();
-                expect(error.reason).to.equal(UserssError.NOT_FOUND);
+                expect(error.reason).to.equal(UsersError.NOT_FOUND);
 
                 done();
             });
@@ -329,7 +329,7 @@ describe('User', function () {
             users.verify(userObject.id, '', function (error, result) {
                 expect(error).to.be.ok();
                 expect(result).to.not.be.ok();
-                expect(error.reason).to.equal(UserssError.WRONG_PASSWORD);
+                expect(error.reason).to.equal(UsersError.WRONG_PASSWORD);
 
                 done();
             });
@@ -339,7 +339,7 @@ describe('User', function () {
             users.verify(userObject.id, PASSWORD+PASSWORD, function (error, result) {
                 expect(error).to.be.ok();
                 expect(result).to.not.be.ok();
-                expect(error.reason).to.equal(UserssError.WRONG_PASSWORD);
+                expect(error.reason).to.equal(UsersError.WRONG_PASSWORD);
 
                 done();
             });
@@ -356,8 +356,8 @@ describe('User', function () {
 
         it('fails for ghost if not enabled', function (done) {
             users.verify(userObject.id, 'foobar', function (error) {
-                expect(error).to.be.a(UserssError);
-                expect(error.reason).to.equal(UserssError.WRONG_PASSWORD);
+                expect(error).to.be.a(UsersError);
+                expect(error.reason).to.equal(UsersError.WRONG_PASSWORD);
                 done();
             });
         });
@@ -370,8 +370,8 @@ describe('User', function () {
             users.verify(userObject.id, 'foobar', function (error) {
                 fs.unlinkSync(constants.GHOST_USER_FILE);
 
-                expect(error).to.be.a(UserssError);
-                expect(error.reason).to.equal(UserssError.WRONG_PASSWORD);
+                expect(error).to.be.a(UsersError);
+                expect(error.reason).to.equal(UsersError.WRONG_PASSWORD);
                 done();
             });
         });
@@ -419,7 +419,7 @@ describe('User', function () {
             users.verifyWithUsername(USERNAME+USERNAME, PASSWORD, function (error, result) {
                 expect(error).to.be.ok();
                 expect(result).to.not.be.ok();
-                expect(error.reason).to.equal(UserssError.NOT_FOUND);
+                expect(error.reason).to.equal(UsersError.NOT_FOUND);
 
                 done();
             });
@@ -429,7 +429,7 @@ describe('User', function () {
             users.verifyWithUsername(USERNAME, '', function (error, result) {
                 expect(error).to.be.ok();
                 expect(result).to.not.be.ok();
-                expect(error.reason).to.equal(UserssError.WRONG_PASSWORD);
+                expect(error.reason).to.equal(UsersError.WRONG_PASSWORD);
 
                 done();
             });
@@ -439,7 +439,7 @@ describe('User', function () {
             users.verifyWithUsername(USERNAME, PASSWORD+PASSWORD, function (error, result) {
                 expect(error).to.be.ok();
                 expect(result).to.not.be.ok();
-                expect(error.reason).to.equal(UserssError.WRONG_PASSWORD);
+                expect(error.reason).to.equal(UsersError.WRONG_PASSWORD);
 
                 done();
             });
@@ -472,8 +472,8 @@ describe('User', function () {
             users.verifyWithUsername(USERNAME, 'foobar', function (error) {
                 fs.unlinkSync(constants.GHOST_USER_FILE);
 
-                expect(error).to.be.a(UserssError);
-                expect(error.reason).to.equal(UserssError.WRONG_PASSWORD);
+                expect(error).to.be.a(UsersError);
+                expect(error.reason).to.equal(UsersError.WRONG_PASSWORD);
                 done();
             });
         });
@@ -506,7 +506,7 @@ describe('User', function () {
             users.verifyWithEmail(EMAIL+EMAIL, PASSWORD, function (error, result) {
                 expect(error).to.be.ok();
                 expect(result).to.not.be.ok();
-                expect(error.reason).to.equal(UserssError.NOT_FOUND);
+                expect(error.reason).to.equal(UsersError.NOT_FOUND);
 
                 done();
             });
@@ -516,7 +516,7 @@ describe('User', function () {
             users.verifyWithEmail(EMAIL, '', function (error, result) {
                 expect(error).to.be.ok();
                 expect(result).to.not.be.ok();
-                expect(error.reason).to.equal(UserssError.WRONG_PASSWORD);
+                expect(error.reason).to.equal(UsersError.WRONG_PASSWORD);
 
                 done();
             });
@@ -526,7 +526,7 @@ describe('User', function () {
             users.verifyWithEmail(EMAIL, PASSWORD+PASSWORD, function (error, result) {
                 expect(error).to.be.ok();
                 expect(result).to.not.be.ok();
-                expect(error.reason).to.equal(UserssError.WRONG_PASSWORD);
+                expect(error.reason).to.equal(UsersError.WRONG_PASSWORD);
 
                 done();
             });
@@ -559,8 +559,8 @@ describe('User', function () {
             users.verifyWithEmail(EMAIL, 'foobar', function (error) {
                 fs.unlinkSync(constants.GHOST_USER_FILE);
 
-                expect(error).to.be.a(UserssError);
-                expect(error.reason).to.equal(UserssError.WRONG_PASSWORD);
+                expect(error).to.be.a(UsersError);
+                expect(error.reason).to.equal(UsersError.WRONG_PASSWORD);
                 done();
             });
         });
@@ -639,8 +639,8 @@ describe('User', function () {
         it('fails due to unknown userid', function (done) {
             var data = { username: USERNAME_NEW, email: EMAIL_NEW, displayName: DISPLAY_NAME_NEW };
             users.update(USERNAME, data, AUDIT_SOURCE, function (error) {
-                expect(error).to.be.a(UserssError);
-                expect(error.reason).to.equal(UserssError.NOT_FOUND);
+                expect(error).to.be.a(UsersError);
+                expect(error.reason).to.equal(UsersError.NOT_FOUND);
 
                 done();
             });
@@ -649,8 +649,8 @@ describe('User', function () {
         it('fails due to invalid email', function (done) {
             var data = { username: USERNAME_NEW, email: 'brokenemailaddress', displayName: DISPLAY_NAME_NEW };
             users.update(userObject.id, data, AUDIT_SOURCE, function (error) {
-                expect(error).to.be.a(UserssError);
-                expect(error.reason).to.equal(UserssError.BAD_FIELD);
+                expect(error).to.be.a(UsersError);
+                expect(error.reason).to.equal(UsersError.BAD_FIELD);
 
                 done();
             });
@@ -845,7 +845,7 @@ describe('User', function () {
             users.verify(userObject.id, PASSWORD, function (error, result) {
                 expect(error).to.be.ok();
                 expect(result).to.not.be.ok();
-                expect(error.reason).to.equal(UserssError.WRONG_PASSWORD);
+                expect(error.reason).to.equal(UsersError.WRONG_PASSWORD);
                 done();
             });
         });
@@ -865,16 +865,16 @@ describe('User', function () {
 
         it('fails due to unkown email', function (done) {
             users.resetPasswordByIdentifier('unknown@mail.com', function (error) {
-                expect(error).to.be.an(UserssError);
-                expect(error.reason).to.eql(UserssError.NOT_FOUND);
+                expect(error).to.be.an(UsersError);
+                expect(error.reason).to.eql(UsersError.NOT_FOUND);
                 done();
             });
         });
 
         it('fails due to unkown username', function (done) {
             users.resetPasswordByIdentifier('unknown', function (error) {
-                expect(error).to.be.an(UserssError);
-                expect(error.reason).to.eql(UserssError.NOT_FOUND);
+                expect(error).to.be.an(UsersError);
+                expect(error.reason).to.eql(UsersError.NOT_FOUND);
                 done();
             });
         });
@@ -900,8 +900,8 @@ describe('User', function () {
 
         it('fails for unknown user', function (done) {
             users.sendInvite('unknown user', { }, function (error) {
-                expect(error).to.be.a(UserssError);
-                expect(error.reason).to.equal(UserssError.NOT_FOUND);
+                expect(error).to.be.a(UsersError);
+                expect(error.reason).to.equal(UsersError.NOT_FOUND);
 
                 checkMails(0, done);
             });
@@ -921,7 +921,7 @@ describe('User', function () {
 
         it('fails for unknown user', function (done) {
             users.remove('unknown', { }, function (error) {
-                expect(error.reason).to.be(UserssError.NOT_FOUND);
+                expect(error.reason).to.be(UsersError.NOT_FOUND);
                 done();
             });
         });

@@ -13,7 +13,7 @@ var assert = require('assert'),
     HttpError = require('connect-lastmile').HttpError,
     HttpSuccess = require('connect-lastmile').HttpSuccess,
     users = require('../users.js'),
-    UserssError = users.UserssError,
+    UsersError = users.UsersError,
     _ = require('underscore');
 
 function auditSource(req) {
@@ -46,9 +46,9 @@ function update(req, res, next) {
     var data = _.pick(req.body, 'email', 'fallbackEmail', 'displayName');
 
     users.update(req.user.id, data, auditSource(req), function (error) {
-        if (error && error.reason === UserssError.BAD_FIELD) return next(new HttpError(400, error.message));
-        if (error && error.reason === UserssError.ALREADY_EXISTS) return next(new HttpError(409, error.message));
-        if (error && error.reason === UserssError.NOT_FOUND) return next(new HttpError(404, 'User not found'));
+        if (error && error.reason === UsersError.BAD_FIELD) return next(new HttpError(400, error.message));
+        if (error && error.reason === UsersError.ALREADY_EXISTS) return next(new HttpError(409, error.message));
+        if (error && error.reason === UsersError.NOT_FOUND) return next(new HttpError(404, 'User not found'));
         if (error) return next(new HttpError(500, error));
 
         next(new HttpSuccess(204));
@@ -62,8 +62,8 @@ function changePassword(req, res, next) {
     if (typeof req.body.newPassword !== 'string') return next(new HttpError(400, 'newPassword must be a string'));
 
     users.setPassword(req.user.id, req.body.newPassword, function (error) {
-        if (error && error.reason === UserssError.BAD_FIELD) return next(new HttpError(400, error.message));
-        if (error && error.reason === UserssError.NOT_FOUND) return next(new HttpError(403, 'Wrong password'));
+        if (error && error.reason === UsersError.BAD_FIELD) return next(new HttpError(400, error.message));
+        if (error && error.reason === UsersError.NOT_FOUND) return next(new HttpError(403, 'Wrong password'));
         if (error) return next(new HttpError(500, error));
 
         next(new HttpSuccess(204));
@@ -74,7 +74,7 @@ function setTwoFactorAuthenticationSecret(req, res, next) {
     assert.strictEqual(typeof req.user, 'object');
 
     users.setTwoFactorAuthenticationSecret(req.user.id, function (error, result) {
-        if (error && error.reason === UserssError.ALREADY_EXISTS) return next(new HttpError(409, 'TwoFactor Authentication is enabled, disable first'));
+        if (error && error.reason === UsersError.ALREADY_EXISTS) return next(new HttpError(409, 'TwoFactor Authentication is enabled, disable first'));
         if (error) return next(new HttpError(500, error));
 
         next(new HttpSuccess(201, { secret: result.secret, qrcode: result.qrcode }));
@@ -88,9 +88,9 @@ function enableTwoFactorAuthentication(req, res, next) {
     if (!req.body.totpToken || typeof req.body.totpToken !== 'string') return next(new HttpError(400, 'totpToken must be a nonempty string'));
 
     users.enableTwoFactorAuthentication(req.user.id, req.body.totpToken, function (error) {
-        if (error && error.reason === UserssError.NOT_FOUND) return next(new HttpError(404, 'User not found'));
-        if (error && error.reason === UserssError.BAD_TOKEN) return next(new HttpError(403, 'Invalid token'));
-        if (error && error.reason === UserssError.ALREADY_EXISTS) return next(new HttpError(409, 'TwoFactor Authentication is already enabled'));
+        if (error && error.reason === UsersError.NOT_FOUND) return next(new HttpError(404, 'User not found'));
+        if (error && error.reason === UsersError.BAD_TOKEN) return next(new HttpError(403, 'Invalid token'));
+        if (error && error.reason === UsersError.ALREADY_EXISTS) return next(new HttpError(409, 'TwoFactor Authentication is already enabled'));
         if (error) return next(new HttpError(500, error));
 
         next(new HttpSuccess(202, {}));

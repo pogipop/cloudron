@@ -38,7 +38,7 @@ var assert = require('assert'),
     sysinfo = require('./sysinfo.js'),
     tokendb = require('./tokendb.js'),
     users = require('./users.js'),
-    UserssError = users.UserssError,
+    UsersError = users.UsersError,
     tld = require('tldjs'),
     util = require('util');
 
@@ -241,8 +241,8 @@ function activate(username, password, email, displayName, ip, auditSource, callb
     setTimeZone(ip, function () { }); // TODO: get this from user. note that timezone is detected based on the browser location and not the cloudron region
 
     users.createOwner(username, password, email, displayName, auditSource, function (error, userObject) {
-        if (error && error.reason === UserssError.ALREADY_EXISTS) return callback(new SetupError(SetupError.ALREADY_PROVISIONED));
-        if (error && error.reason === UserssError.BAD_FIELD) return callback(new SetupError(SetupError.BAD_FIELD, error.message));
+        if (error && error.reason === UsersError.ALREADY_EXISTS) return callback(new SetupError(SetupError.ALREADY_PROVISIONED));
+        if (error && error.reason === UsersError.BAD_FIELD) return callback(new SetupError(SetupError.BAD_FIELD, error.message));
         if (error) return callback(new SetupError(SetupError.INTERNAL_ERROR, error));
 
         clients.get('cid-webadmin', function (error, result) {

@@ -20,7 +20,7 @@ var assert = require('assert'),
     passport = require('passport'),
     tokendb = require('./tokendb'),
     users = require('./users.js'),
-    UserssError = users.UserssError,
+    UsersError = users.UsersError,
     _ = require('underscore');
 
 function initialize(callback) {
@@ -44,16 +44,16 @@ function initialize(callback) {
     passport.use(new LocalStrategy(function (username, password, callback) {
         if (username.indexOf('@') === -1) {
             users.verifyWithUsername(username, password, function (error, result) {
-                if (error && error.reason === UserssError.NOT_FOUND) return callback(null, false);
-                if (error && error.reason === UserssError.WRONG_PASSWORD) return callback(null, false);
+                if (error && error.reason === UsersError.NOT_FOUND) return callback(null, false);
+                if (error && error.reason === UsersError.WRONG_PASSWORD) return callback(null, false);
                 if (error) return callback(error);
                 if (!result) return callback(null, false);
                 callback(null, result);
             });
         } else {
             users.verifyWithEmail(username, password, function (error, result) {
-                if (error && error.reason === UserssError.NOT_FOUND) return callback(null, false);
-                if (error && error.reason === UserssError.WRONG_PASSWORD) return callback(null, false);
+                if (error && error.reason === UsersError.NOT_FOUND) return callback(null, false);
+                if (error && error.reason === UsersError.WRONG_PASSWORD) return callback(null, false);
                 if (error) return callback(error);
                 if (!result) return callback(null, false);
                 callback(null, result);
@@ -74,8 +74,8 @@ function initialize(callback) {
             });
         } else {
             users.verifyWithUsername(username, password, function (error, result) {
-                if (error && error.reason === UserssError.NOT_FOUND) return callback(null, false);
-                if (error && error.reason === UserssError.WRONG_PASSWORD) return callback(null, false);
+                if (error && error.reason === UsersError.NOT_FOUND) return callback(null, false);
+                if (error && error.reason === UsersError.WRONG_PASSWORD) return callback(null, false);
                 if (error) return callback(error);
                 if (!result) return callback(null, false);
                 callback(null, result);
@@ -116,7 +116,7 @@ function accessTokenAuth(accessToken, callback) {
         var info = { scope: token.scope };
 
         users.get(token.identifier, function (error, user) {
-            if (error && error.reason === UserssError.NOT_FOUND) return callback(null, false);
+            if (error && error.reason === UsersError.NOT_FOUND) return callback(null, false);
             if (error) return callback(error);
 
             callback(null, user, info);

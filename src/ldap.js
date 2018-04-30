@@ -14,7 +14,7 @@ var assert = require('assert'),
     debug = require('debug')('box:ldap'),
     eventlog = require('./eventlog.js'),
     users = require('./users.js'),
-    UserssError = users.UserssError,
+    UsersError = users.UsersError,
     ldap = require('ldapjs'),
     mail = require('./mail.js'),
     MailError = mail.MailError,
@@ -388,8 +388,8 @@ function authenticateUser(req, res, next) {
     }
 
     api(commonName, req.credentials || '', function (error, user) {
-        if (error && error.reason === UserssError.NOT_FOUND) return next(new ldap.NoSuchObjectError(req.dn.toString()));
-        if (error && error.reason === UserssError.WRONG_PASSWORD) return next(new ldap.InvalidCredentialsError(req.dn.toString()));
+        if (error && error.reason === UsersError.NOT_FOUND) return next(new ldap.NoSuchObjectError(req.dn.toString()));
+        if (error && error.reason === UsersError.WRONG_PASSWORD) return next(new ldap.InvalidCredentialsError(req.dn.toString()));
         if (error) return next(new ldap.OperationsError(error.message));
 
         req.user = user;
@@ -452,8 +452,8 @@ function authenticateMailbox(req, res, next) {
                 if (!domain.enabled) return next(new ldap.NoSuchObjectError(req.dn.toString()));
 
                 users.verify(mailbox.ownerId, req.credentials || '', function (error, result) {
-                    if (error && error.reason === UserssError.NOT_FOUND) return next(new ldap.NoSuchObjectError(req.dn.toString()));
-                    if (error && error.reason === UserssError.WRONG_PASSWORD) return next(new ldap.InvalidCredentialsError(req.dn.toString()));
+                    if (error && error.reason === UsersError.NOT_FOUND) return next(new ldap.NoSuchObjectError(req.dn.toString()));
+                    if (error && error.reason === UsersError.WRONG_PASSWORD) return next(new ldap.InvalidCredentialsError(req.dn.toString()));
                     if (error) return next(new ldap.OperationsError(error.message));
 
                     eventlog.add(eventlog.ACTION_USER_LOGIN, { authType: 'ldap', mailboxId: email }, { userId: result.id, user: users.removePrivateFields(result) });
