@@ -100,7 +100,7 @@ function initializeExpressSync() {
     var domainsScope = routes.accesscontrol.scope(accesscontrol.SCOPE_DOMAINS);
 
     // csrf protection
-    var csrf = routes.oauth2.csrf;
+    var csrf = routes.oauth2.csrf();
 
     // public routes
     router.post('/api/v1/cloudron/dns_setup', routes.setup.providerTokenAuth, routes.setup.dnsSetup);    // only available until no-domain
@@ -158,7 +158,7 @@ function initializeExpressSync() {
     router.get ('/api/v1/session/login', csrf, routes.oauth2.loginForm);
     router.post('/api/v1/session/login', csrf, routes.oauth2.login);
     router.get ('/api/v1/session/logout', routes.oauth2.logout);
-    router.get ('/api/v1/session/callback', routes.oauth2.callback);
+    router.get ('/api/v1/session/callback', routes.oauth2.sessionCallback());
     router.get ('/api/v1/session/password/resetRequest.html', csrf, routes.oauth2.passwordResetRequestSite);
     router.post('/api/v1/session/password/resetRequest', csrf, routes.oauth2.passwordResetRequest);
     router.get ('/api/v1/session/password/sent.html', routes.oauth2.passwordSentSite);
@@ -168,8 +168,8 @@ function initializeExpressSync() {
     router.post('/api/v1/session/account/setup', csrf, routes.oauth2.accountSetup);
 
     // oauth2 routes
-    router.get ('/api/v1/oauth/dialog/authorize', routes.oauth2.authorization);
-    router.post('/api/v1/oauth/token', routes.oauth2.token);
+    router.get ('/api/v1/oauth/dialog/authorize', routes.oauth2.authorization());
+    router.post('/api/v1/oauth/token', routes.oauth2.token());
 
     router.get ('/api/v1/oauth/clients', clientsScope, routes.clients.getAll);
     router.post('/api/v1/oauth/clients', clientsScope, routes.clients.add);
@@ -330,6 +330,8 @@ function start(callback) {
     assert.strictEqual(typeof callback, 'function');
     assert.strictEqual(gHttpServer, null, 'Server is already up and running.');
 
+    routes.oauth2.initialize();
+
     gHttpServer = initializeExpressSync();
     gSysadminHttpServer = initializeSysadminExpressSync();
 
@@ -357,6 +359,8 @@ function stop(callback) {
         gSysadminHttpServer.close.bind(gSysadminHttpServer)
     ], function (error) {
         if (error) console.error(error);
+
+        routes.oauth2.uninitialize();
 
         gHttpServer = null;
         gSysadminHttpServer = null;

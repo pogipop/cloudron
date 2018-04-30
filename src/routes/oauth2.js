@@ -1,5 +1,24 @@
 'use strict';
 
+exports = module.exports = {
+    initialize: initialize,
+    uninitialize: uninitialize,
+    loginForm: loginForm,
+    login: login,
+    logout: logout,
+    sessionCallback: sessionCallback,
+    passwordResetRequestSite: passwordResetRequestSite,
+    passwordResetRequest: passwordResetRequest,
+    passwordSentSite: passwordSentSite,
+    passwordResetSite: passwordResetSite,
+    passwordReset: passwordReset,
+    accountSetupSite: accountSetupSite,
+    accountSetup: accountSetup,
+    authorization: authorization,
+    token: token,
+    csrf: csrf
+};
+
 var apps = require('../apps'),
     assert = require('assert'),
     authcodedb = require('../authcodedb'),
@@ -33,110 +52,120 @@ function auditSource(req, appId, appObject) {
 }
 
 // create OAuth 2.0 server
-var gServer = oauth2orize.createServer();
+var gServer = null;
 
-// Register serialialization and deserialization functions.
-//
-// The client id is stored in the session and can thus be retrieved for each
-// step in the oauth flow transaction, which involves multiple http requests.
+function initialize() {
+    assert(gServer === null);
 
-gServer.serializeClient(function (client, callback) {
-    return callback(null, client.id);
-});
+    gServer = oauth2orize.createServer();
 
-gServer.deserializeClient(function (id, callback) {
-    clients.get(id, callback);
-});
+    // Register serialialization and deserialization functions.
+    //
+    // The client id is stored in the session and can thus be retrieved for each
+    // step in the oauth flow transaction, which involves multiple http requests.
 
-
-// Register supported grant types.
-
-// Grant authorization codes.  The callback takes the `client` requesting
-// authorization, the `redirectURI` (which is used as a verifier in the
-// subsequent exchange), the authenticated `user` granting access, and
-// their response, which contains approved scope, duration, etc. as parsed by
-// the application.  The application issues a code, which is bound to these
-// values, and will be exchanged for an access token.
-
-gServer.grant(oauth2orize.grant.code({ scopeSeparator: ',' }, function (client, redirectURI, user, ares, callback) {
-    debug('grant code:', client.id, redirectURI, user.id, ares);
-
-    var code = hat(256);
-    var expiresAt = Date.now() + 60 * 60000; // 1 hour
-
-    authcodedb.add(code, client.id, user.id, expiresAt, function (error) {
-        if (error) return callback(error);
-
-        debug('grant code: new auth code for client %s code %s', client.id, code);
-
-        callback(null, code);
+    gServer.serializeClient(function (client, callback) {
+        return callback(null, client.id);
     });
-}));
 
-
-gServer.grant(oauth2orize.grant.token({ scopeSeparator: ',' }, function (client, user, ares, callback) {
-    debug('grant token:', client.id, user.id, ares);
-
-    var token = tokendb.generateToken();
-    var expires = Date.now() + constants.DEFAULT_TOKEN_EXPIRATION;
-
-    tokendb.add(token, user.id, client.id, expires, client.scope, function (error) {
-        if (error) return callback(error);
-
-        debug('grant token: new access token for client %s token %s', client.id, token);
-
-        callback(null, token);
+    gServer.deserializeClient(function (id, callback) {
+        clients.get(id, callback);
     });
-}));
 
 
-// Exchange authorization codes for access tokens.  The callback accepts the
-// `client`, which is exchanging `code` and any `redirectURI` from the
-// authorization request for verification.  If these values are validated, the
-// application issues an access token on behalf of the user who authorized the
-// code.
+    // Register supported grant types.
 
-gServer.exchange(oauth2orize.exchange.code(function (client, code, redirectURI, callback) {
-    debug('exchange:', client, code, redirectURI);
+    // Grant authorization codes.  The callback takes the `client` requesting
+    // authorization, the `redirectURI` (which is used as a verifier in the
+    // subsequent exchange), the authenticated `user` granting access, and
+    // their response, which contains approved scope, duration, etc. as parsed by
+    // the application.  The application issues a code, which is bound to these
+    // values, and will be exchanged for an access token.
 
-    authcodedb.get(code, function (error, authCode) {
-        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(null, false);
-        if (error) return callback(error);
-        if (client.id !== authCode.clientId) return callback(null, false);
+    gServer.grant(oauth2orize.grant.code({ scopeSeparator: ',' }, function (client, redirectURI, user, ares, callback) {
+        debug('grant code:', client.id, redirectURI, user.id, ares);
 
-        authcodedb.del(code, function (error) {
-            if(error) return callback(error);
+        var code = hat(256);
+        var expiresAt = Date.now() + 60 * 60000; // 1 hour
 
-            var token = tokendb.generateToken();
-            var expires = Date.now() + constants.DEFAULT_TOKEN_EXPIRATION;
+        authcodedb.add(code, client.id, user.id, expiresAt, function (error) {
+            if (error) return callback(error);
 
-            tokendb.add(token, authCode.userId, authCode.clientId, expires, client.scope, function (error) {
-                if (error) return callback(error);
+            debug('grant code: new auth code for client %s code %s', client.id, code);
 
-                debug('exchange: new access token for client %s token %s', client.id, token);
+            callback(null, code);
+        });
+    }));
 
-                callback(null, token);
+
+    gServer.grant(oauth2orize.grant.token({ scopeSeparator: ',' }, function (client, user, ares, callback) {
+        debug('grant token:', client.id, user.id, ares);
+
+        var token = tokendb.generateToken();
+        var expires = Date.now() + constants.DEFAULT_TOKEN_EXPIRATION;
+
+        tokendb.add(token, user.id, client.id, expires, client.scope, function (error) {
+            if (error) return callback(error);
+
+            debug('grant token: new access token for client %s token %s', client.id, token);
+
+            callback(null, token);
+        });
+    }));
+
+
+    // Exchange authorization codes for access tokens.  The callback accepts the
+    // `client`, which is exchanging `code` and any `redirectURI` from the
+    // authorization request for verification.  If these values are validated, the
+    // application issues an access token on behalf of the user who authorized the
+    // code.
+
+    gServer.exchange(oauth2orize.exchange.code(function (client, code, redirectURI, callback) {
+        debug('exchange:', client, code, redirectURI);
+
+        authcodedb.get(code, function (error, authCode) {
+            if (error && error.reason === DatabaseError.NOT_FOUND) return callback(null, false);
+            if (error) return callback(error);
+            if (client.id !== authCode.clientId) return callback(null, false);
+
+            authcodedb.del(code, function (error) {
+                if(error) return callback(error);
+
+                var token = tokendb.generateToken();
+                var expires = Date.now() + constants.DEFAULT_TOKEN_EXPIRATION;
+
+                tokendb.add(token, authCode.userId, authCode.clientId, expires, client.scope, function (error) {
+                    if (error) return callback(error);
+
+                    debug('exchange: new access token for client %s token %s', client.id, token);
+
+                    callback(null, token);
+                });
             });
         });
-    });
-}));
+    }));
 
-// overwrite the session.ensureLoggedIn to not use res.redirect() due to a chrome bug not sending cookies on redirects
-session.ensureLoggedIn = function (redirectTo) {
-    assert.strictEqual(typeof redirectTo, 'string');
+    // overwrite the session.ensureLoggedIn to not use res.redirect() due to a chrome bug not sending cookies on redirects
+    session.ensureLoggedIn = function (redirectTo) {
+        assert.strictEqual(typeof redirectTo, 'string');
 
-    return function (req, res, next) {
-        if (!req.isAuthenticated || !req.isAuthenticated()) {
-            if (req.session) {
-                req.session.returnTo = req.originalUrl || req.url;
+        return function (req, res, next) {
+            if (!req.isAuthenticated || !req.isAuthenticated()) {
+                if (req.session) {
+                    req.session.returnTo = req.originalUrl || req.url;
+                }
+
+                res.status(200).send(util.format('<script>window.location.href = "%s";</script>', redirectTo));
+            } else {
+                next();
             }
-
-            res.status(200).send(util.format('<script>window.location.href = "%s";</script>', redirectTo));
-        } else {
-            next();
-        }
+        };
     };
-};
+}
+
+function uninitialize() {
+    gServer = null;
+}
 
 function renderTemplate(res, template, data) {
     assert.strictEqual(typeof res, 'object');
@@ -415,13 +444,14 @@ function passwordReset(req, res, next) {
 // The callback page takes the redirectURI and the authCode and redirects the browser accordingly
 //
 // -> GET /api/v1/session/callback
-var callback = [
-    session.ensureLoggedIn('/api/v1/session/login'),
-    function (req, res) {
-        renderTemplate(res, 'callback', { callbackServer: req.query.redirectURI });
-    }
-];
-
+function sessionCallback() {
+    return [
+        session.ensureLoggedIn('/api/v1/session/login'),
+        function (req, res) {
+            renderTemplate(res, 'callback', { callbackServer: req.query.redirectURI });
+        }
+    ];
+}
 
 // The authorization endpoint is the entry point for an OAuth login.
 //
@@ -433,54 +463,55 @@ var callback = [
 //  - Then it will redirect the browser to the given <callbackURL> containing the authcode in the query
 //
 // -> GET /api/v1/oauth/dialog/authorize
-var authorization = [
-    function (req, res, next) {
-        if (!req.query.redirect_uri) return sendErrorPageOrRedirect(req, res, 'Invalid request. redirect_uri query param is not set.');
-        if (!req.query.client_id) return sendErrorPageOrRedirect(req, res, 'Invalid request. client_id query param is not set.');
-        if (!req.query.response_type) return sendErrorPageOrRedirect(req, res, 'Invalid request. response_type query param is not set.');
-        if (req.query.response_type !== 'code' && req.query.response_type !== 'token') return sendErrorPageOrRedirect(req, res, 'Invalid request. Only token and code response types are supported.');
+function authorization() {
+    return [
+        function (req, res, next) {
+            if (!req.query.redirect_uri) return sendErrorPageOrRedirect(req, res, 'Invalid request. redirect_uri query param is not set.');
+            if (!req.query.client_id) return sendErrorPageOrRedirect(req, res, 'Invalid request. client_id query param is not set.');
+            if (!req.query.response_type) return sendErrorPageOrRedirect(req, res, 'Invalid request. response_type query param is not set.');
+            if (req.query.response_type !== 'code' && req.query.response_type !== 'token') return sendErrorPageOrRedirect(req, res, 'Invalid request. Only token and code response types are supported.');
 
-        session.ensureLoggedIn('/api/v1/session/login?returnTo=' + req.query.redirect_uri)(req, res, next);
-    },
-    gServer.authorization({}, function (clientId, redirectURI, callback) {
-        debug('authorization: client %s with callback to %s.', clientId, redirectURI);
+            session.ensureLoggedIn('/api/v1/session/login?returnTo=' + req.query.redirect_uri)(req, res, next);
+        },
+        gServer.authorization({}, function (clientId, redirectURI, callback) {
+            debug('authorization: client %s with callback to %s.', clientId, redirectURI);
 
-        clients.get(clientId, function (error, client) {
-            if (error && error.reason === ClientsError.NOT_FOUND) return callback(null, false);
-            if (error) return callback(error);
+            clients.get(clientId, function (error, client) {
+                if (error && error.reason === ClientsError.NOT_FOUND) return callback(null, false);
+                if (error) return callback(error);
 
-            // ignore the origin passed into form the client, but use the one from the clientdb
-            var redirectPath = url.parse(redirectURI).path;
-            var redirectOrigin = client.redirectURI;
+                // ignore the origin passed into form the client, but use the one from the clientdb
+                var redirectPath = url.parse(redirectURI).path;
+                var redirectOrigin = client.redirectURI;
 
-            callback(null, client, '/api/v1/session/callback?redirectURI=' + encodeURIComponent(url.resolve(redirectOrigin, redirectPath)));
-        });
-    }),
-    function (req, res, next) {
-        // Handle our different types of oauth clients
-        var type = req.oauth2.client.type;
-
-        if (type === clients.TYPE_EXTERNAL || type === clients.TYPE_BUILT_IN) {
-            eventlog.add(eventlog.ACTION_USER_LOGIN, auditSource(req, req.oauth2.client.appId), { userId: req.oauth2.user.id, user: users.removePrivateFields(req.oauth2.user) });
-            return next();
-        }
-
-        apps.get(req.oauth2.client.appId, function (error, appObject) {
-            if (error) return sendErrorPageOrRedirect(req, res, 'Invalid request. Unknown app for this client_id.');
-
-            apps.hasAccessTo(appObject, req.oauth2.user, function (error, access) {
-                if (error) return sendError(req, res, 'Internal error');
-                if (!access) return sendErrorPageOrRedirect(req, res, 'No access to this app.');
-
-                eventlog.add(eventlog.ACTION_USER_LOGIN, auditSource(req, appObject.id, appObject), { userId: req.oauth2.user.id, user: users.removePrivateFields(req.oauth2.user) });
-
-                next();
+                callback(null, client, '/api/v1/session/callback?redirectURI=' + encodeURIComponent(url.resolve(redirectOrigin, redirectPath)));
             });
-        });
-    },
-    gServer.decision({ loadTransaction: false })
-];
+        }),
+        function (req, res, next) {
+            // Handle our different types of oauth clients
+            var type = req.oauth2.client.type;
 
+            if (type === clients.TYPE_EXTERNAL || type === clients.TYPE_BUILT_IN) {
+                eventlog.add(eventlog.ACTION_USER_LOGIN, auditSource(req, req.oauth2.client.appId), { userId: req.oauth2.user.id, user: users.removePrivateFields(req.oauth2.user) });
+                return next();
+            }
+
+            apps.get(req.oauth2.client.appId, function (error, appObject) {
+                if (error) return sendErrorPageOrRedirect(req, res, 'Invalid request. Unknown app for this client_id.');
+
+                apps.hasAccessTo(appObject, req.oauth2.user, function (error, access) {
+                    if (error) return sendError(req, res, 'Internal error');
+                    if (!access) return sendErrorPageOrRedirect(req, res, 'No access to this app.');
+
+                    eventlog.add(eventlog.ACTION_USER_LOGIN, auditSource(req, appObject.id, appObject), { userId: req.oauth2.user.id, user: users.removePrivateFields(req.oauth2.user) });
+
+                    next();
+                });
+            });
+        },
+        gServer.decision({ loadTransaction: false })
+    ];
+}
 
 //  The token endpoint allows an OAuth client to exchange an authcode with an accesstoken.
 //
@@ -489,35 +520,22 @@ var authorization = [
 //  An authcode is only good for one such exchange to an accesstoken.
 //
 // -> POST /api/v1/oauth/token
-var token = [
-    passport.authenticate(['basic', 'oauth2-client-password'], { session: false }),
-    gServer.token(),
-    gServer.errorHandler()
-];
+function token() {
+    return [
+        passport.authenticate(['basic', 'oauth2-client-password'], { session: false }),
+        gServer.token(),
+        gServer.errorHandler()
+    ];
+}
 
 // Cross-site request forgery protection middleware for login form
-var csrf = [
-    middleware.csrf(),
-    function (err, req, res, next) {
-        if (err.code !== 'EBADCSRFTOKEN') return next(err);
+function csrf() {
+    return [
+        middleware.csrf(),
+        function (err, req, res, next) {
+            if (err.code !== 'EBADCSRFTOKEN') return next(err);
 
-        sendErrorPageOrRedirect(req, res, 'Form expired');
-    }
-];
-
-exports = module.exports = {
-    loginForm: loginForm,
-    login: login,
-    logout: logout,
-    callback: callback,
-    passwordResetRequestSite: passwordResetRequestSite,
-    passwordResetRequest: passwordResetRequest,
-    passwordSentSite: passwordSentSite,
-    passwordResetSite: passwordResetSite,
-    passwordReset: passwordReset,
-    accountSetupSite: accountSetupSite,
-    accountSetup: accountSetup,
-    authorization: authorization,
-    token: token,
-    csrf: csrf
-};
+            sendErrorPageOrRedirect(req, res, 'Form expired');
+        }
+    ];
+}

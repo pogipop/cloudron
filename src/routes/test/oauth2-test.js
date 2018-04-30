@@ -189,9 +189,11 @@ describe('OAuth2', function () {
         };
 
         // make csrf always succeed for testing
-        oauth2.csrf = function (req, res, next) {
-            req.csrfToken = function () { return hat(256); };
-            next();
+        oauth2.csrf = function () {
+            return function (req, res, next) {
+                req.csrfToken = function () { return hat(256); };
+                next();
+            };
         };
 
         function setup(done) {
@@ -1281,9 +1283,11 @@ describe('Password', function () {
     };
 
     // make csrf always succeed for testing
-    oauth2.csrf = function (req, res, next) {
-        req.csrfToken = function () { return hat(256); };
-        next();
+    oauth2.csrf = function () {
+        return function (req, res, next) {
+            req.csrfToken = function () { return hat(256); };
+            next();
+        };
     };
 
     function setup(done) {
