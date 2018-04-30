@@ -431,7 +431,7 @@ function passwordReset(req, res, next) {
         if (!userObject.username) return next(new HttpError(401, 'No username set'));
 
         // setPassword clears the resetToken
-        users.setPassword(userObject.id, req.body.password, function (error, result) {
+        users.setPassword(userObject.id, req.body.password, function (error) {
             if (error && error.reason === UsersError.BAD_FIELD) return next(new HttpError(406, error.message));
             if (error) return next(new HttpError(500, error));
 
