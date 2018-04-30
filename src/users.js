@@ -28,7 +28,6 @@ exports = module.exports = {
 };
 
 var assert = require('assert'),
-    clients = require('./clients.js'),
     crypto = require('crypto'),
     config = require('./config.js'),
     constants = require('./constants.js'),
@@ -43,7 +42,6 @@ var assert = require('assert'),
     qrcode = require('qrcode'),
     safe = require('safetydance'),
     speakeasy = require('speakeasy'),
-    tokendb = require('./tokendb.js'),
     userdb = require('./userdb.js'),
     util = require('util'),
     uuid = require('uuid'),
@@ -483,19 +481,7 @@ function setPassword(userId, newPassword, callback) {
                 if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new UsersError(UsersError.NOT_FOUND));
                 if (error) return callback(new UsersError(UsersError.INTERNAL_ERROR, error));
 
-                // Also generate a token so the new user can get logged in immediately
-                clients.get('cid-webadmin', function (error, result) {
-                    if (error) return callback(new UsersError(UsersError.INTERNAL_ERROR, error));
-
-                    var token = tokendb.generateToken();
-                    var expiresAt = Date.now() + constants.DEFAULT_TOKEN_EXPIRATION;
-
-                    tokendb.add(token, user.id, result.id, expiresAt, '*', function (error) {
-                        if (error) return callback(new UsersError(UsersError.INTERNAL_ERROR, error));
-
-                        callback(null, { token: token, expiresAt: expiresAt });
-                    });
-                });
+                callback();
             });
         });
     });
