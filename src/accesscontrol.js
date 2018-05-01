@@ -17,11 +17,13 @@ exports = module.exports = {
     SCOPE_ROLE_SDK: 'roleSdk',
 
     validateScope: validateScope,
-    validateRequestedScopes: validateRequestedScopes
+    validateRequestedScopes: validateRequestedScopes,
+    normalizeScope: normalizeScope
 };
 
 var assert = require('assert'),
-    debug = require('debug')('box:accesscontrol');
+    debug = require('debug')('box:accesscontrol'),
+    _ = require('underscore');
 
 function validateScope(scope) {
     assert.strictEqual(typeof scope, 'string');
@@ -72,4 +74,13 @@ function validateRequestedScopes(authInfo, requestedScopes) {
     }
 
     return null;
+}
+
+function normalizeScope(maxScope, allowedScope) {
+    assert.strictEqual(typeof maxScope, 'string');
+    assert.strictEqual(typeof allowedScope, 'string');
+
+    if (maxScope === '*') return allowedScope;
+
+    return _.intersection(maxScope.split(','), allowedScope.split(',')).join(',');
 }

@@ -19,7 +19,8 @@ exports = module.exports = {
     csrf: csrf
 };
 
-var apps = require('../apps.js'),
+var accesscontrol = require('../accesscontrol.js'),
+    apps = require('../apps.js'),
     assert = require('assert'),
     authcodedb = require('../authcodedb.js'),
     clients = require('../clients'),
@@ -103,8 +104,9 @@ function initialize() {
 
         var token = tokendb.generateToken();
         var expires = Date.now() + constants.DEFAULT_TOKEN_EXPIRATION;
+        var scope = accesscontrol.normalizeScope(client.scope, user.scope);
 
-        tokendb.add(token, user.id, client.id, expires, client.scope, function (error) {
+        tokendb.add(token, user.id, client.id, expires, scope, function (error) {
             if (error) return callback(error);
 
             debug('grant token: new access token for client %s token %s', client.id, token);
