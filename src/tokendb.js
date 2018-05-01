@@ -50,12 +50,12 @@ function add(accessToken, identifier, clientId, expires, scope, callback) {
     assert.strictEqual(typeof callback, 'function');
 
     database.query('INSERT INTO tokens (accessToken, identifier, clientId, expires, scope) VALUES (?, ?, ?, ?, ?)',
-           [ accessToken, identifier, clientId, expires, scope ], function (error, result) {
-        if (error && error.code === 'ER_DUP_ENTRY') return callback(new DatabaseError(DatabaseError.ALREADY_EXISTS));
-        if (error || result.affectedRows !== 1) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
+        [ accessToken, identifier, clientId, expires, scope ], function (error, result) {
+            if (error && error.code === 'ER_DUP_ENTRY') return callback(new DatabaseError(DatabaseError.ALREADY_EXISTS));
+            if (error || result.affectedRows !== 1) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
 
-        callback(null);
-    });
+            callback(null);
+        });
 }
 
 function del(accessToken, callback) {
