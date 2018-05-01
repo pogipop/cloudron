@@ -1,22 +1,22 @@
 'use strict';
 
 exports = module.exports = {
-    // keep this in sync with start.sh ADMIN_SCOPES that generates the cid-webadmin
     SCOPE_APPS: 'apps',
-    SCOPE_DEVELOPER: 'developer', // obsolete
-    SCOPE_PROFILE: 'profile',
+    SCOPE_CLIENTS: 'clients',
     SCOPE_CLOUDRON: 'cloudron',
+    SCOPE_DOMAINS: 'domains',
+    SCOPE_MAIL: 'mail',
+    SCOPE_PROFILE: 'profile',
     SCOPE_SETTINGS: 'settings',
     SCOPE_USERS: 'users',
-    SCOPE_MAIL: 'mail',
-    SCOPE_CLIENTS: 'clients',
-    SCOPE_DOMAINS: 'domains',
+    VALID_SCOPES: [ 'apps', 'clients', 'cloudron', 'domains', 'mail', 'profile', 'settings', 'users' ],
 
     SCOPE_ANY: '*',
 
     validateScope: validateScope,
     validateRequestedScopes: validateRequestedScopes,
-    normalizeScope: normalizeScope
+    normalizeScope: normalizeScope,
+    canonicalScope: canonicalScope
 };
 
 var assert = require('assert'),
@@ -26,23 +26,10 @@ var assert = require('assert'),
 function validateScope(scope) {
     assert.strictEqual(typeof scope, 'string');
 
-    var VALID_SCOPES = [
-        exports.SCOPE_APPS,
-        exports.SCOPE_DEVELOPER,
-        exports.SCOPE_PROFILE,
-        exports.SCOPE_CLOUDRON,
-        exports.SCOPE_SETTINGS,
-        exports.SCOPE_USERS,
-        exports.SCOPE_DOMAIN,
-        exports.SCOPE_CLIENTS,
-        exports.SCOPE_MAIL,
-        exports.SCOPE_ANY    // includes all scopes
-    ];
-
     if (scope === '') return new Error('Empty scope not allowed');
 
-    var allValid = scope.split(',').every(function (s) { return VALID_SCOPES.indexOf(s) !== -1; });
-    if (!allValid) return new Error('Invalid scope. Available scopes are ' + VALID_SCOPES.join(', '));
+    var allValid = scope.split(',').every(function (s) { return exports.VALID_SCOPES.indexOf(s) !== -1; });
+    if (!allValid) return new Error('Invalid scope. Available scopes are ' + exports.VALID_SCOPES.join(', '));
 
     return null;
 }
@@ -79,4 +66,8 @@ function normalizeScope(allowedScope, wantedScope) {
     if (wantedScopes.indexOf(exports.SCOPE_ANY) !== -1) return allowedScope;
 
     return _.intersection(allowedScopes, wantedScopes).join(',');
+}
+
+function canonicalScope(scope) {
+    return scope.replace(exports.SCOPE_ANY, exports.VALID_SCOPES.join(','));
 }
