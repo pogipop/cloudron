@@ -30,7 +30,6 @@ var assert = require('assert'),
     clients = require('./clients'),
     ClientPasswordStrategy = require('passport-oauth2-client-password').Strategy,
     ClientsError = clients.ClientsError,
-    crypto = require('crypto'),
     DatabaseError = require('./databaseerror'),
     debug = require('debug')('box:accesscontrol'),
     LocalStrategy = require('passport-local').Strategy,
@@ -50,9 +49,6 @@ function initialize(callback) {
     passport.deserializeUser(function(userId, callback) {
         users.get(userId, function (error, result) {
             if (error) return callback(error);
-
-            var md5 = crypto.createHash('md5').update(result.email).digest('hex');
-            result.gravatar = 'https://www.gravatar.com/avatar/' + md5 + '.jpg?s=24&d=mm';
 
             callback(null, result);
         });
