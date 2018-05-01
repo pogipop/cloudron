@@ -11,7 +11,8 @@ exports = module.exports = {
     SetupError: SetupError
 };
 
-var assert = require('assert'),
+var accesscontrol = require('./accesscontrol.js'),
+    assert = require('assert'),
     async = require('async'),
     backups = require('./backups.js'),
     BackupsError = require('./backups.js').BackupsError,
@@ -252,7 +253,7 @@ function activate(username, password, email, displayName, ip, auditSource, callb
             var token = tokendb.generateToken();
             var expires = Date.now() + constants.DEFAULT_TOKEN_EXPIRATION;
 
-            tokendb.add(token, userObject.id, result.id, expires, '*', function (error) {
+            tokendb.add(token, userObject.id, result.id, expires, accesscontrol.SCOPE_ANY, function (error) {
                 if (error) return callback(new SetupError(SetupError.INTERNAL_ERROR, error));
 
                 eventlog.add(eventlog.ACTION_ACTIVATE, auditSource, { });

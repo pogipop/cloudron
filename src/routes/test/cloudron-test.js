@@ -5,7 +5,8 @@
 /* global before:false */
 /* global after:false */
 
-var async = require('async'),
+var accesscontrol = require('../../accesscontrol.js'),
+    async = require('async'),
     config = require('../../config.js'),
     database = require('../../database.js'),
     expect = require('expect.js'),
@@ -166,7 +167,7 @@ describe('Cloudron', function () {
                             userId_1 = result.body.id;
 
                             // HACK to get a token for second user (passwords are generated and the user should have gotten a password setup link...)
-                            tokendb.add(token_1, userId_1, 'test-client-id',  Date.now() + 100000, '*', callback);
+                            tokendb.add(token_1, userId_1, 'test-client-id',  Date.now() + 100000, accesscontrol.SCOPE_ANY, callback);
                         });
                 }
             ], done);

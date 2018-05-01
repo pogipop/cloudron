@@ -6,13 +6,14 @@
 
 'use strict';
 
-var config = require('../../config.js'),
+var accesscontrol = require('../../accesscontrol.js'),
+    config = require('../../config.js'),
     database = require('../../database.js'),
-    tokendb = require('../../tokendb.js'),
     expect = require('expect.js'),
     mailer = require('../../mailer.js'),
     superagent = require('superagent'),
-    server = require('../../server.js');
+    server = require('../../server.js'),
+    tokendb = require('../../tokendb.js');
 
 const SERVER_URL = 'http://localhost:' + config.get('port');
 
@@ -116,7 +117,7 @@ describe('Profile API', function () {
             var token = tokendb.generateToken();
             var expires = Date.now() - 2000; // 1 sec
 
-            tokendb.add(token, user_0.id, null, expires, '*', function (error) {
+            tokendb.add(token, user_0.id, null, expires, accesscontrol.SCOPE_ANY, function (error) {
                 expect(error).to.not.be.ok();
 
                 superagent.get(SERVER_URL + '/api/v1/user/profile').query({ access_token: token }).end(function (error, result) {

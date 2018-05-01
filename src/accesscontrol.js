@@ -40,7 +40,7 @@ function validateScope(scope) {
         exports.SCOPE_DOMAIN,
         exports.SCOPE_CLIENTS,
         exports.SCOPE_MAIL,
-        '*',    // includes all scopes, but not roles
+        exports.SCOPE_ANY,    // includes all scopes, but not roles
         exports.SCOPE_ROLE_SDK
     ];
 
@@ -66,7 +66,7 @@ function validateRequestedScopes(authInfo, requestedScopes) {
         return new Error('Missing required scope role "' + exports.SCOPE_ROLE_SDK + '"');
     }
 
-    if (scopes.indexOf('*') !== -1) return null;
+    if (scopes.indexOf(exports.SCOPE_ANY) !== -1) return null;
 
     for (var i = 0; i < requestedScopes.length; ++i) {
         if (scopes.indexOf(requestedScopes[i]) === -1) {
@@ -82,7 +82,7 @@ function normalizeScope(maxScope, allowedScope) {
     assert.strictEqual(typeof maxScope, 'string');
     assert.strictEqual(typeof allowedScope, 'string');
 
-    if (maxScope === '*') return allowedScope;
+    if (maxScope === exports.SCOPE_ANY) return allowedScope;
 
     return _.intersection(maxScope.split(','), allowedScope.split(',')).join(',');
 }

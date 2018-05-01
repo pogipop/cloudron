@@ -6,7 +6,8 @@
 /* global before:false */
 /* global after:false */
 
-var appdb = require('../../appdb.js'),
+var accesscontrol = require('../../accesscontrol.js'),
+    appdb = require('../../appdb.js'),
     apps = require('../../apps.js'),
     assert = require('assert'),
     async = require('async'),
@@ -215,7 +216,7 @@ function startBox(done) {
             token_1 = tokendb.generateToken();
 
             // HACK to get a token for second user (passwords are generated and the user should have gotten a password setup link...)
-            tokendb.add(token_1, user_1_id, 'test-client-id',  Date.now() + 1000000, '*', callback);
+            tokendb.add(token_1, user_1_id, 'test-client-id',  Date.now() + 1000000, accesscontrol.SCOPE_ANY, callback);
         },
 
         function (callback) {
@@ -628,7 +629,7 @@ describe('App API', function () {
 describe('App installation', function () {
     this.timeout(100000);
 
-    var apiHockInstance = hock.createHock({ throwOnUnmatched: false }), apiHockServer;
+    var apiHockInstance = hock.createHock({ throwOnUnmatched: false });
 
     var validCert1, validKey1;
 
