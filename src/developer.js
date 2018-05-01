@@ -10,7 +10,6 @@ exports = module.exports = {
 
 var accesscontrol = require('./accesscontrol.js'),
     assert = require('assert'),
-    clients = require('./clients.js'),
     constants = require('./constants.js'),
     eventlog = require('./eventlog.js'),
     tokendb = require('./tokendb.js'),
@@ -46,9 +45,8 @@ function issueDeveloperToken(userObject, ip, callback) {
 
     var token = tokendb.generateToken();
     var expiresAt = Date.now() + constants.DEFAULT_TOKEN_EXPIRATION;
-    var scopes = '*,' + accesscontrol.SCOPE_ROLE_SDK;
 
-    tokendb.add(token, userObject.id, 'cid-cli', expiresAt, scopes, function (error) {
+    tokendb.add(token, userObject.id, 'cid-cli', expiresAt, accesscontrol.SCOPE_ANY, function (error) {
         if (error) return callback(new DeveloperError(DeveloperError.INTERNAL_ERROR, error));
 
         eventlog.add(eventlog.ACTION_USER_LOGIN, { authType: 'cli', ip: ip }, { userId: userObject.id, user: users.removePrivateFields(userObject) });

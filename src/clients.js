@@ -288,13 +288,10 @@ function addDefaultClients(origin, callback) {
     debug('Adding default clients');
 
     // The domain might have changed, therefor we have to update the record
-    // !!! This needs to be in sync with the webadmin, specifically login_callback.js
-    const ADMIN_SCOPES = 'cloudron,developer,profile,users,apps,settings';
-
     // id, appId, type, clientSecret, redirectURI, scope
     async.series([
-        clientdb.upsert.bind(null, 'cid-webadmin', 'Settings', 'built-in', 'secret-webadmin', origin, ADMIN_SCOPES),
-        clientdb.upsert.bind(null, 'cid-sdk', 'SDK', 'built-in', 'secret-sdk', origin, '*,roleSdk'),
-        clientdb.upsert.bind(null, 'cid-cli', 'Cloudron Tool', 'built-in', 'secret-cli', origin, '*, roleSdk')
+        clientdb.upsert.bind(null, 'cid-webadmin', 'Settings', 'built-in', 'secret-webadmin', origin, '*'),
+        clientdb.upsert.bind(null, 'cid-sdk', 'SDK', 'built-in', 'secret-sdk', origin, '*'),
+        clientdb.upsert.bind(null, 'cid-cli', 'Cloudron Tool', 'built-in', 'secret-cli', origin, '*')
     ], callback);
 }

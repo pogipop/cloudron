@@ -11,8 +11,7 @@ exports = module.exports = {
     setGroups: setGroups
 };
 
-var accesscontrol = require('../accesscontrol.js'),
-    assert = require('assert'),
+var assert = require('assert'),
     constants = require('../constants.js'),
     generatePassword = require('../password.js').generate,
     HttpError = require('connect-lastmile').HttpError,
@@ -129,8 +128,7 @@ function verifyPassword(req, res, next) {
     assert.strictEqual(typeof req.body, 'object');
 
     // using an 'sdk' token we skip password checks
-    var error = accesscontrol.validateRequestedScopes(req.authInfo || null, [ accesscontrol.SCOPE_ROLE_SDK ]);
-    if (!error) return next();
+    if (req.authInfo.clientId === 'cid-sdk' || req.authInfo.clientId === 'cid-cli') return next();
 
     if (typeof req.body.password !== 'string') return next(new HttpError(400, 'API call requires user password'));
 

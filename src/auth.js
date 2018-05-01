@@ -118,7 +118,7 @@ function accessTokenAuth(accessToken, callback) {
             // scopes here can define what capabilities that token carries
             // passport put the 'info' object into req.authInfo, where we can further validate the scopes
             var scope = accesscontrol.normalizeScope(user.scope, token.scope);
-            var info = { scope: scope };
+            var info = { scope: scope, clientId: token.clientId };
 
             callback(null, user, info);
         });

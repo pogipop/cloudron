@@ -14,10 +14,6 @@ exports = module.exports = {
 
     SCOPE_ANY: '*',
 
-    // roles are handled just like the above scopes, they are parallel to scopes
-    // scopes enclose API groups, roles specify the usage role
-    SCOPE_ROLE_SDK: 'roleSdk',
-
     validateScope: validateScope,
     validateRequestedScopes: validateRequestedScopes,
     normalizeScope: normalizeScope
@@ -40,8 +36,7 @@ function validateScope(scope) {
         exports.SCOPE_DOMAIN,
         exports.SCOPE_CLIENTS,
         exports.SCOPE_MAIL,
-        exports.SCOPE_ANY,    // includes all scopes, but not roles
-        exports.SCOPE_ROLE_SDK
+        exports.SCOPE_ANY    // includes all scopes
     ];
 
     if (scope === '') return new Error('Empty scope not allowed');
@@ -60,11 +55,6 @@ function validateRequestedScopes(authInfo, requestedScopes) {
     if (!authInfo || !authInfo.scope) return new Error('No scope found');
 
     var scopes = authInfo.scope.split(',');
-
-    // check for roles separately
-    if (requestedScopes.indexOf(exports.SCOPE_ROLE_SDK) !== -1 && scopes.indexOf(exports.SCOPE_ROLE_SDK) === -1) {
-        return new Error('Missing required scope role "' + exports.SCOPE_ROLE_SDK + '"');
-    }
 
     if (scopes.indexOf(exports.SCOPE_ANY) !== -1) return null;
 

@@ -182,8 +182,8 @@ function clear(callback) {
 
 function addDefaultClients(callback) {
     async.series([
-        add.bind(null, 'cid-webadmin', 'Settings', 'built-in', 'secret-webadmin', 'https://admin-localhost', 'cloudron,profile,users,apps,settings'),
-        add.bind(null, 'cid-sdk', 'SDK', 'built-in', 'secret-sdk', 'https://admin-localhost', '*,roleSdk'),
-        add.bind(null, 'cid-cli', 'Cloudron Tool', 'built-in', 'secret-cli', 'https://admin-localhost', '*,roleSdk')
+        add.bind(null, 'cid-webadmin', 'Settings', 'built-in', 'secret-webadmin', 'https://admin-localhost', '*'),
+        add.bind(null, 'cid-sdk', 'SDK', 'built-in', 'secret-sdk', 'https://admin-localhost', '*'),
+        add.bind(null, 'cid-cli', 'Cloudron Tool', 'built-in', 'secret-cli', 'https://admin-localhost', '*')
     ], callback);
 }
