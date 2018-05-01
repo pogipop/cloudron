@@ -29,6 +29,6 @@ function login(req, res, next) {
 
             next(new HttpSuccess(200, { token: result.token, expiresAt: result.expiresAt }));
         });
-  })(req, res, next);
+    })(req, res, next);
 }
 
