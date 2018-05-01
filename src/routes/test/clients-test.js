@@ -61,7 +61,7 @@ describe('OAuth Clients API', function () {
         after(cleanup);
 
         it('fails without token', function (done) {
-            superagent.post(SERVER_URL + '/api/v1/oauth/clients')
+            superagent.post(SERVER_URL + '/api/v1/clients')
                 .send({ appId: 'someApp', redirectURI: 'http://foobar.com', scope: accesscontrol.SCOPE_PROFILE })
                 .end(function (error, result) {
                     expect(result.statusCode).to.equal(401);
@@ -70,7 +70,7 @@ describe('OAuth Clients API', function () {
         });
 
         it('fails without appId', function (done) {
-            superagent.post(SERVER_URL + '/api/v1/oauth/clients')
+            superagent.post(SERVER_URL + '/api/v1/clients')
                 .query({ access_token: token })
                 .send({ redirectURI: 'http://foobar.com', scope: accesscontrol.SCOPE_PROFILE })
                 .end(function (error, result) {
@@ -80,7 +80,7 @@ describe('OAuth Clients API', function () {
         });
 
         it('fails with empty appId', function (done) {
-            superagent.post(SERVER_URL + '/api/v1/oauth/clients')
+            superagent.post(SERVER_URL + '/api/v1/clients')
                 .query({ access_token: token })
                 .send({ appId: '', redirectURI: 'http://foobar.com', scope: accesscontrol.SCOPE_PROFILE })
                 .end(function (error, result) {
@@ -90,7 +90,7 @@ describe('OAuth Clients API', function () {
         });
 
         it('fails without scope', function (done) {
-            superagent.post(SERVER_URL + '/api/v1/oauth/clients')
+            superagent.post(SERVER_URL + '/api/v1/clients')
                 .query({ access_token: token })
                 .send({ appId: 'someApp', redirectURI: 'http://foobar.com' })
                 .end(function (error, result) {
@@ -100,7 +100,7 @@ describe('OAuth Clients API', function () {
         });
 
         it('fails with empty scope', function (done) {
-            superagent.post(SERVER_URL + '/api/v1/oauth/clients')
+            superagent.post(SERVER_URL + '/api/v1/clients')
                 .query({ access_token: token })
                 .send({ appId: 'someApp', redirectURI: 'http://foobar.com', scope: '' })
                 .end(function (error, result) {
@@ -110,7 +110,7 @@ describe('OAuth Clients API', function () {
         });
 
         it('fails without redirectURI', function (done) {
-            superagent.post(SERVER_URL + '/api/v1/oauth/clients')
+            superagent.post(SERVER_URL + '/api/v1/clients')
                 .query({ access_token: token })
                 .send({ appId: 'someApp', scope: accesscontrol.SCOPE_PROFILE })
                 .end(function (error, result) {
@@ -120,7 +120,7 @@ describe('OAuth Clients API', function () {
         });
 
         it('fails with empty redirectURI', function (done) {
-            superagent.post(SERVER_URL + '/api/v1/oauth/clients')
+            superagent.post(SERVER_URL + '/api/v1/clients')
                 .query({ access_token: token })
                 .send({ appId: 'someApp', redirectURI: '', scope: accesscontrol.SCOPE_PROFILE })
                 .end(function (error, result) {
@@ -130,7 +130,7 @@ describe('OAuth Clients API', function () {
         });
 
         it('fails with malformed redirectURI', function (done) {
-            superagent.post(SERVER_URL + '/api/v1/oauth/clients')
+            superagent.post(SERVER_URL + '/api/v1/clients')
                 .query({ access_token: token })
                 .send({ appId: 'someApp', redirectURI: 'foobar', scope: accesscontrol.SCOPE_PROFILE })
                 .end(function (error, result) {
@@ -140,7 +140,7 @@ describe('OAuth Clients API', function () {
         });
 
         it('fails with invalid name', function (done) {
-            superagent.post(SERVER_URL + '/api/v1/oauth/clients')
+            superagent.post(SERVER_URL + '/api/v1/clients')
                 .query({ access_token: token })
                 .send({ appId: '$"$%^45asdfasdfadf.adf.', redirectURI: 'http://foobar.com', scope: accesscontrol.SCOPE_PROFILE })
                 .end(function (error, result) {
@@ -150,7 +150,7 @@ describe('OAuth Clients API', function () {
         });
 
         it('succeeds with dash', function (done) {
-            superagent.post(SERVER_URL + '/api/v1/oauth/clients')
+            superagent.post(SERVER_URL + '/api/v1/clients')
                 .query({ access_token: token })
                 .send({ appId: 'fo-1234-bar', redirectURI: 'http://foobar.com', scope: accesscontrol.SCOPE_PROFILE })
                 .end(function (error, result) {
@@ -160,7 +160,7 @@ describe('OAuth Clients API', function () {
         });
 
         it('succeeds', function (done) {
-            superagent.post(SERVER_URL + '/api/v1/oauth/clients')
+            superagent.post(SERVER_URL + '/api/v1/clients')
                 .query({ access_token: token })
                 .send({ appId: 'someApp', redirectURI: 'http://foobar.com', scope: accesscontrol.SCOPE_PROFILE })
                 .end(function (error, result) {
@@ -190,7 +190,7 @@ describe('OAuth Clients API', function () {
                 setup,
 
                 function (callback) {
-                    superagent.post(SERVER_URL + '/api/v1/oauth/clients')
+                    superagent.post(SERVER_URL + '/api/v1/clients')
                         .query({ access_token: token })
                         .send({ appId: CLIENT_0.appId, redirectURI: CLIENT_0.redirectURI, scope: CLIENT_0.scope })
                         .end(function (error, result) {
@@ -207,7 +207,7 @@ describe('OAuth Clients API', function () {
         after(cleanup);
 
         it('fails without token', function (done) {
-            superagent.get(SERVER_URL + '/api/v1/oauth/clients/' + CLIENT_0.id)
+            superagent.get(SERVER_URL + '/api/v1/clients/' + CLIENT_0.id)
                 .end(function (error, result) {
                     expect(result.statusCode).to.equal(401);
                     done();
@@ -216,7 +216,7 @@ describe('OAuth Clients API', function () {
 
 
         it('fails with unknown id', function (done) {
-            superagent.get(SERVER_URL + '/api/v1/oauth/clients/' + CLIENT_0.id.toUpperCase())
+            superagent.get(SERVER_URL + '/api/v1/clients/' + CLIENT_0.id.toUpperCase())
                 .query({ access_token: token })
                 .end(function (error, result) {
                     expect(result.statusCode).to.equal(404);
@@ -225,7 +225,7 @@ describe('OAuth Clients API', function () {
         });
 
         it('succeeds', function (done) {
-            superagent.get(SERVER_URL + '/api/v1/oauth/clients/' + CLIENT_0.id)
+            superagent.get(SERVER_URL + '/api/v1/clients/' + CLIENT_0.id)
                 .query({ access_token: token })
                 .end(function (error, result) {
                     expect(result.statusCode).to.equal(200);
@@ -256,7 +256,7 @@ describe('OAuth Clients API', function () {
                 setup,
 
                 function (callback) {
-                    superagent.post(SERVER_URL + '/api/v1/oauth/clients')
+                    superagent.post(SERVER_URL + '/api/v1/clients')
                         .query({ access_token: token })
                         .send({ appId: CLIENT_0.appId, redirectURI: CLIENT_0.redirectURI, scope: CLIENT_0.scope })
                         .end(function (error, result) {
@@ -273,7 +273,7 @@ describe('OAuth Clients API', function () {
         after(cleanup);
 
         it('fails without token', function (done) {
-            superagent.del(SERVER_URL + '/api/v1/oauth/clients/' + CLIENT_0.id)
+            superagent.del(SERVER_URL + '/api/v1/clients/' + CLIENT_0.id)
                 .end(function (error, result) {
                     expect(result.statusCode).to.equal(401);
                     done();
@@ -282,7 +282,7 @@ describe('OAuth Clients API', function () {
 
 
         it('fails with unknown id', function (done) {
-            superagent.del(SERVER_URL + '/api/v1/oauth/clients/' + CLIENT_0.id.toUpperCase())
+            superagent.del(SERVER_URL + '/api/v1/clients/' + CLIENT_0.id.toUpperCase())
                 .query({ access_token: token })
                 .end(function (error, result) {
                     expect(result.statusCode).to.equal(404);
@@ -291,12 +291,12 @@ describe('OAuth Clients API', function () {
         });
 
         it('succeeds', function (done) {
-            superagent.del(SERVER_URL + '/api/v1/oauth/clients/' + CLIENT_0.id)
+            superagent.del(SERVER_URL + '/api/v1/clients/' + CLIENT_0.id)
                 .query({ access_token: token })
                 .end(function (error, result) {
                     expect(result.statusCode).to.equal(204);
 
-                    superagent.get(SERVER_URL + '/api/v1/oauth/clients/' + CLIENT_0.id)
+                    superagent.get(SERVER_URL + '/api/v1/clients/' + CLIENT_0.id)
                         .query({ access_token: token })
                         .end(function (error, result) {
                             expect(result.statusCode).to.equal(404);
@@ -307,12 +307,12 @@ describe('OAuth Clients API', function () {
         });
 
         it('fails for cid-webadmin', function (done) {
-            superagent.del(SERVER_URL + '/api/v1/oauth/clients/cid-webadmin')
+            superagent.del(SERVER_URL + '/api/v1/clients/cid-webadmin')
                 .query({ access_token: token })
                 .end(function (error, result) {
                     expect(result.statusCode).to.equal(405);
 
-                    superagent.get(SERVER_URL + '/api/v1/oauth/clients/cid-webadmin')
+                    superagent.get(SERVER_URL + '/api/v1/clients/cid-webadmin')
                         .query({ access_token: token })
                         .end(function (error, result) {
                             expect(result.statusCode).to.equal(200);
@@ -328,12 +328,12 @@ describe('OAuth Clients API', function () {
 
                 CLIENT_1.id = result.id;
 
-                superagent.del(SERVER_URL + '/api/v1/oauth/clients/' + CLIENT_1.id)
+                superagent.del(SERVER_URL + '/api/v1/clients/' + CLIENT_1.id)
                     .query({ access_token: token })
                     .end(function (error, result) {
                         expect(result.statusCode).to.equal(405);
 
-                        superagent.get(SERVER_URL + '/api/v1/oauth/clients/' + CLIENT_1.id)
+                        superagent.get(SERVER_URL + '/api/v1/clients/' + CLIENT_1.id)
                             .query({ access_token: token })
                             .end(function (error, result) {
                                 expect(result.statusCode).to.equal(200);
@@ -391,7 +391,7 @@ describe('Clients', function () {
         after(cleanup);
 
         it('fails due to missing token', function (done) {
-            superagent.get(SERVER_URL + '/api/v1/oauth/clients')
+            superagent.get(SERVER_URL + '/api/v1/clients')
                 .end(function (error, result) {
                     expect(result.statusCode).to.equal(401);
                     done();
@@ -399,7 +399,7 @@ describe('Clients', function () {
         });
 
         it('fails due to empty token', function (done) {
-            superagent.get(SERVER_URL + '/api/v1/oauth/clients')
+            superagent.get(SERVER_URL + '/api/v1/clients')
                 .query({ access_token: '' })
                 .end(function (error, result) {
                     expect(result.statusCode).to.equal(401);
@@ -408,7 +408,7 @@ describe('Clients', function () {
         });
 
         it('fails due to wrong token', function (done) {
-            superagent.get(SERVER_URL + '/api/v1/oauth/clients')
+            superagent.get(SERVER_URL + '/api/v1/clients')
                 .query({ access_token: token.toUpperCase() })
                 .end(function (error, result) {
                     expect(result.statusCode).to.equal(401);
@@ -417,7 +417,7 @@ describe('Clients', function () {
         });
 
         it('succeeds', function (done) {
-            superagent.get(SERVER_URL + '/api/v1/oauth/clients')
+            superagent.get(SERVER_URL + '/api/v1/clients')
                 .query({ access_token: token })
                 .end(function (error, result) {
                     expect(result.statusCode).to.equal(200);
@@ -434,7 +434,7 @@ describe('Clients', function () {
         after(cleanup);
 
         it('fails due to missing token', function (done) {
-            superagent.get(SERVER_URL + '/api/v1/oauth/clients/cid-webadmin/tokens')
+            superagent.get(SERVER_URL + '/api/v1/clients/cid-webadmin/tokens')
                 .end(function (error, result) {
                     expect(result.statusCode).to.equal(401);
                     done();
@@ -442,7 +442,7 @@ describe('Clients', function () {
         });
 
         it('fails due to empty token', function (done) {
-            superagent.get(SERVER_URL + '/api/v1/oauth/clients/cid-webadmin/tokens')
+            superagent.get(SERVER_URL + '/api/v1/clients/cid-webadmin/tokens')
                 .query({ access_token: '' })
                 .end(function (error, result) {
                     expect(result.statusCode).to.equal(401);
@@ -451,7 +451,7 @@ describe('Clients', function () {
         });
 
         it('fails due to wrong token', function (done) {
-            superagent.get(SERVER_URL + '/api/v1/oauth/clients/cid-webadmin/tokens')
+            superagent.get(SERVER_URL + '/api/v1/clients/cid-webadmin/tokens')
                 .query({ access_token: token.toUpperCase() })
                 .end(function (error, result) {
                     expect(result.statusCode).to.equal(401);
@@ -460,7 +460,7 @@ describe('Clients', function () {
         });
 
         it('fails due to unkown client', function (done) {
-            superagent.get(SERVER_URL + '/api/v1/oauth/clients/CID-WEBADMIN/tokens')
+            superagent.get(SERVER_URL + '/api/v1/clients/CID-WEBADMIN/tokens')
                 .query({ access_token: token })
                 .end(function (error, result) {
                     expect(result.statusCode).to.equal(404);
@@ -469,7 +469,7 @@ describe('Clients', function () {
         });
 
         it('succeeds', function (done) {
-            superagent.get(SERVER_URL + '/api/v1/oauth/clients/cid-webadmin/tokens')
+            superagent.get(SERVER_URL + '/api/v1/clients/cid-webadmin/tokens')
                 .query({ access_token: token })
                 .end(function (error, result) {
                     expect(result.statusCode).to.equal(200);
@@ -487,7 +487,7 @@ describe('Clients', function () {
         after(cleanup);
 
         it('fails due to missing token', function (done) {
-            superagent.del(SERVER_URL + '/api/v1/oauth/clients/cid-webadmin/tokens')
+            superagent.del(SERVER_URL + '/api/v1/clients/cid-webadmin/tokens')
                 .end(function (error, result) {
                     expect(result.statusCode).to.equal(401);
                     done();
@@ -495,7 +495,7 @@ describe('Clients', function () {
         });
 
         it('fails due to empty token', function (done) {
-            superagent.del(SERVER_URL + '/api/v1/oauth/clients/cid-webadmin/tokens')
+            superagent.del(SERVER_URL + '/api/v1/clients/cid-webadmin/tokens')
                 .query({ access_token: '' })
                 .end(function (error, result) {
                     expect(result.statusCode).to.equal(401);
@@ -504,7 +504,7 @@ describe('Clients', function () {
         });
 
         it('fails due to wrong token', function (done) {
-            superagent.del(SERVER_URL + '/api/v1/oauth/clients/cid-webadmin/tokens')
+            superagent.del(SERVER_URL + '/api/v1/clients/cid-webadmin/tokens')
                 .query({ access_token: token.toUpperCase() })
                 .end(function (error, result) {
                     expect(result.statusCode).to.equal(401);
@@ -513,7 +513,7 @@ describe('Clients', function () {
         });
 
         it('fails due to unkown client', function (done) {
-            superagent.del(SERVER_URL + '/api/v1/oauth/clients/CID-WEBADMIN/tokens')
+            superagent.del(SERVER_URL + '/api/v1/clients/CID-WEBADMIN/tokens')
                 .query({ access_token: token })
                 .end(function (error, result) {
                     expect(result.statusCode).to.equal(404);
@@ -522,7 +522,7 @@ describe('Clients', function () {
         });
 
         it('succeeds', function (done) {
-            superagent.get(SERVER_URL + '/api/v1/oauth/clients/cid-webadmin/tokens')
+            superagent.get(SERVER_URL + '/api/v1/clients/cid-webadmin/tokens')
                 .query({ access_token: token })
                 .end(function (error, result) {
                     expect(result.statusCode).to.equal(200);
@@ -530,7 +530,7 @@ describe('Clients', function () {
                     expect(result.body.tokens.length).to.eql(1);
                     expect(result.body.tokens[0].identifier).to.eql(USER_0.id);
 
-                    superagent.del(SERVER_URL + '/api/v1/oauth/clients/cid-webadmin/tokens')
+                    superagent.del(SERVER_URL + '/api/v1/clients/cid-webadmin/tokens')
                         .query({ access_token: token })
                         .end(function (error, result) {
                             expect(result.statusCode).to.equal(204);
