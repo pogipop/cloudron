@@ -82,7 +82,11 @@ function normalizeScope(maxScope, allowedScope) {
     assert.strictEqual(typeof maxScope, 'string');
     assert.strictEqual(typeof allowedScope, 'string');
 
-    if (maxScope === exports.SCOPE_ANY) return allowedScope;
+    const maxScopes = maxScope.split(',');
+    const allowedScopes = allowedScope.split(',');
 
-    return _.intersection(maxScope.split(','), allowedScope.split(',')).join(',');
+    if (maxScopes.indexOf(exports.SCOPE_ANY) !== -1) return allowedScope;
+    if (allowedScopes.indexOf(exports.SCOPE_ANY) !== -1) return maxScope;
+
+    return _.intersection(maxScopes, allowedScopes).join(',');
 }

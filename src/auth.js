@@ -7,7 +7,8 @@ exports = module.exports = {
     accessTokenAuth: accessTokenAuth
 };
 
-var assert = require('assert'),
+var accesscontrol = require('./accesscontrol.js'),
+    assert = require('assert'),
     BasicStrategy = require('passport-http').BasicStrategy,
     BearerStrategy = require('passport-http-bearer').Strategy,
     clients = require('./clients'),
@@ -20,8 +21,7 @@ var assert = require('assert'),
     passport = require('passport'),
     tokendb = require('./tokendb'),
     users = require('./users.js'),
-    UsersError = users.UsersError,
-    _ = require('underscore');
+    UsersError = users.UsersError;
 
 function initialize(callback) {
     assert.strictEqual(typeof callback, 'function');
@@ -111,13 +111,14 @@ function accessTokenAuth(accessToken, callback) {
         if (error && error.reason === DatabaseError.NOT_FOUND) return callback(null, false);
         if (error) return callback(error);
 
-        // scopes here can define what capabilities that token carries
-        // passport put the 'info' object into req.authInfo, where we can further validate the scopes
-        var info = { scope: token.scope };
-
         users.get(token.identifier, function (error, user) {
             if (error && error.reason === UsersError.NOT_FOUND) return callback(null, false);
             if (error) return callback(error);
+
+            // scopes here can define what capabilities that token carries
+            // passport put the 'info' object into req.authInfo, where we can further validate the scopes
+            var scope = accesscontrol.normalizeScope(user.scope, token.scope);
+            var info = { scope: scope };
 
             callback(null, user, info);
         });

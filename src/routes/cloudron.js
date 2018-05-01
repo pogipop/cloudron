@@ -44,10 +44,6 @@ function getConfig(req, res, next) {
     cloudron.getConfig(function (error, cloudronConfig) {
         if (error) return next(new HttpError(500, error));
 
-        if (!req.user.admin) {
-            cloudronConfig = _.pick(cloudronConfig, 'apiServerOrigin', 'webServerOrigin', 'fqdn', 'adminFqdn', 'version', 'progress', 'isDemo', 'cloudronName', 'provider');
-        }
-
         next(new HttpSuccess(200, cloudronConfig));
     });
 }

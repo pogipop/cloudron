@@ -203,25 +203,11 @@ describe('Cloudron', function () {
                 });
         });
 
-        it('succeeds (non-admin)', function (done) {
+        it('fails (non-admin)', function (done) {
             superagent.get(SERVER_URL + '/api/v1/cloudron/config')
                 .query({ access_token: token_1 })
                 .end(function (error, result) {
-                    expect(result.statusCode).to.equal(200);
-
-                    expect(result.body.apiServerOrigin).to.eql('http://localhost:6060');
-                    expect(result.body.webServerOrigin).to.eql(null);
-                    expect(result.body.adminFqdn).to.eql(config.adminFqdn());
-                    expect(result.body.progress).to.be.an('object');
-                    expect(result.body.version).to.eql(config.version());
-                    expect(result.body.cloudronName).to.be.a('string');
-                    expect(result.body.provider).to.be.a('string');
-
-                    expect(result.body.update).to.be(undefined);
-                    expect(result.body.size).to.be(undefined);
-                    expect(result.body.region).to.be(undefined);
-                    expect(result.body.memory).to.be(undefined);
-
+                    expect(result.statusCode).to.equal(403);
                     done();
                 });
         });
