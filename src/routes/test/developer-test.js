@@ -134,8 +134,8 @@ describe('Developer API', function () {
                 .send({ username: USERNAME, password: PASSWORD })
                 .end(function (error, result) {
                     expect(result.statusCode).to.equal(200);
-                    expect(new Date(result.body.expiresAt).toString()).to.not.be('Invalid Date');
-                    expect(result.body.token).to.be.a('string');
+                    expect(new Date(result.body.expires).toString()).to.not.be('Invalid Date');
+                    expect(result.body.accessToken).to.be.a('string');
                     done();
                 });
         });
@@ -145,8 +145,8 @@ describe('Developer API', function () {
                 .send({ username: USERNAME.toUpperCase(), password: PASSWORD })
                 .end(function (error, result) {
                     expect(result.statusCode).to.equal(200);
-                    expect(new Date(result.body.expiresAt).toString()).to.not.be('Invalid Date');
-                    expect(result.body.token).to.be.a('string');
+                    expect(new Date(result.body.expires).toString()).to.not.be('Invalid Date');
+                    expect(result.body.accessToken).to.be.a('string');
                     done();
                 });
         });
@@ -156,8 +156,8 @@ describe('Developer API', function () {
                 .send({ username: EMAIL, password: PASSWORD })
                 .end(function (error, result) {
                     expect(result.statusCode).to.equal(200);
-                    expect(new Date(result.body.expiresAt).toString()).to.not.be('Invalid Date');
-                    expect(result.body.token).to.be.a('string');
+                    expect(new Date(result.body.expires).toString()).to.not.be('Invalid Date');
+                    expect(result.body.accessToken).to.be.a('string');
                     done();
                 });
         });
@@ -167,8 +167,8 @@ describe('Developer API', function () {
                 .send({ username: EMAIL.toUpperCase(), password: PASSWORD })
                 .end(function (error, result) {
                     expect(result.statusCode).to.equal(200);
-                    expect(new Date(result.body.expiresAt).toString()).to.not.be('Invalid Date');
-                    expect(result.body.token).to.be.a('string');
+                    expect(new Date(result.body.expires).toString()).to.not.be('Invalid Date');
+                    expect(result.body.accessToken).to.be.a('string');
                     done();
                 });
         });
@@ -187,7 +187,7 @@ describe('Developer API', function () {
                 },
                 function (callback) {
                     superagent.post(`${SERVER_URL}/api/v1/developer/login`).send({ username: USERNAME, password: PASSWORD }).end(function (error, result) {
-                        accessToken = result.body.token;
+                        accessToken = result.body.accessToken;
                         callback(error);
                     });
                 },
@@ -245,7 +245,7 @@ describe('Developer API', function () {
                 expect(error).to.be(null);
                 expect(result.statusCode).to.equal(200);
                 expect(result.body).to.be.an(Object);
-                expect(result.body.token).to.be.a('string');
+                expect(result.body.accessToken).to.be.a('string');
                 done();
             });
         });
@@ -264,16 +264,16 @@ describe('Developer API', function () {
                         .end(function (error, result) {
                             expect(result).to.be.ok();
 
-                            token_normal = result.body.token;
+                            token_normal = result.body.accessToken;
 
                             superagent.post(SERVER_URL + '/api/v1/developer/login')
                                 .send({ username: USERNAME, password: PASSWORD })
                                 .end(function (error, result) {
                                     expect(result.statusCode).to.equal(200);
-                                    expect(new Date(result.body.expiresAt).toString()).to.not.be('Invalid Date');
-                                    expect(result.body.token).to.be.a('string');
+                                    expect(new Date(result.body.expires).toString()).to.not.be('Invalid Date');
+                                    expect(result.body.accessToken).to.be.a('string');
 
-                                    token_sdk = result.body.token;
+                                    token_sdk = result.body.accessToken;
 
                                     callback();
                                 });
@@ -286,7 +286,7 @@ describe('Developer API', function () {
 
         it('fails with non sdk token', function (done) {
             superagent.post(SERVER_URL + '/api/v1/user/profile/password').query({ access_token: token_normal }).send({ newPassword: 'Some?$123' }).end(function (error, result) {
-                expect(result.statusCode).to.equal(400);
+                expect(result.statusCode).to.equal(401);
                 done();
             });
         });

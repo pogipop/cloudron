@@ -596,7 +596,7 @@ describe('OAuth2', function () {
                     setup,
                     function (callback) {
                         superagent.post(`${SERVER_URL}/api/v1/developer/login`).send({ username: USER_0.username, password: USER_0.password }).end(function (error, result) {
-                            accessToken = result.body.token;
+                            accessToken = result.body.accessToken;
                             callback(error);
                         });
                     },

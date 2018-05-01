@@ -4,7 +4,7 @@ exports = module.exports = {
     login: login
 };
 
-var developer = require('../developer.js'),
+var clients = require('../clients.js'),
     passport = require('passport'),
     HttpError = require('connect-lastmile').HttpError,
     HttpSuccess = require('connect-lastmile').HttpSuccess,
@@ -24,10 +24,10 @@ function login(req, res, next) {
             if (!verified) return next(new HttpError(401, 'Invalid totpToken'));
         }
 
-        developer.issueDeveloperToken(user, ip, function (error, result) {
+        clients.issueDeveloperToken(user, ip, function (error, result) {
             if (error) return next(new HttpError(500, error));
 
-            next(new HttpSuccess(200, { token: result.token, expiresAt: result.expiresAt }));
+            next(new HttpSuccess(200, result));
         });
     })(req, res, next);
 }

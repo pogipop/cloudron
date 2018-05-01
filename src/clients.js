@@ -14,6 +14,8 @@ exports = module.exports = {
     addTokenByUserId: addTokenByUserId,
     delToken: delToken,
 
+    issueDeveloperToken: issueDeveloperToken,
+
     addDefaultClients: addDefaultClients,
 
     // client type enums
@@ -27,11 +29,14 @@ var apps = require('./apps.js'),
     assert = require('assert'),
     async = require('async'),
     clientdb = require('./clientdb.js'),
+    constants = require('./constants.js'),
     DatabaseError = require('./databaseerror.js'),
     debug = require('debug')('box:clients'),
+    eventlog = require('./eventlog.js'),
     hat = require('hat'),
     accesscontrol = require('./accesscontrol.js'),
     tokendb = require('./tokendb.js'),
+    users = require('./users.js'),
     util = require('util'),
     uuid = require('uuid');
 
@@ -261,6 +266,23 @@ function addTokenByUserId(clientId, userId, expiresAt, callback) {
                 expires: expiresAt
             });
         });
+    });
+}
+
+// this issues a cid-cli token that does not require a password in various routes
+function issueDeveloperToken(userObject, ip, callback) {
+    assert.strictEqual(typeof userObject, 'object');
+    assert.strictEqual(typeof ip, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    const expiresAt = Date.now() + constants.DEFAULT_TOKEN_EXPIRATION;
+
+    addTokenByUserId('cid-cli', userObject.id, expiresAt, function (error, result) {
+        if (error) return callback(error);
+
+        eventlog.add(eventlog.ACTION_USER_LOGIN, { authType: 'cli', ip: ip }, { userId: userObject.id, user: users.removePrivateFields(userObject) });
+
+        callback(null, result);
     });
 }
 
