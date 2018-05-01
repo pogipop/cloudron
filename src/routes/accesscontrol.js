@@ -7,7 +7,6 @@ exports = module.exports = {
 
 var accesscontrol = require('../accesscontrol.js'),
     assert = require('assert'),
-    auth = require('../auth.js'),
     debug = require('debug')('box:routes/accesscontrol'),
     HttpError = require('connect-lastmile').HttpError,
     passport = require('passport');
@@ -44,7 +43,7 @@ function websocketAuth(requestedScopes, req, res, next) {
 
     if (typeof req.query.access_token !== 'string') return next(new HttpError(401, 'Unauthorized'));
 
-    auth.accessTokenAuth(req.query.access_token, function (error, user, info) {
+    accesscontrol.accessTokenAuth(req.query.access_token, function (error, user, info) {
         if (error) return next(new HttpError(500, error.message));
         if (!user) return next(new HttpError(401, 'Unauthorized'));
 

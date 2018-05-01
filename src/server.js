@@ -8,7 +8,6 @@ exports = module.exports = {
 var accesscontrol = require('./accesscontrol.js'),
     assert = require('assert'),
     async = require('async'),
-    auth = require('./auth.js'),
     cloudron = require('./cloudron.js'),
     config = require('./config.js'),
     database = require('./database.js'),
@@ -332,13 +331,13 @@ function start(callback) {
     assert.strictEqual(typeof callback, 'function');
     assert.strictEqual(gHttpServer, null, 'Server is already up and running.');
 
-    routes.oauth2.initialize();
+    routes.oauth2.initialize(); // init's the oauth server
 
     gHttpServer = initializeExpressSync();
     gSysadminHttpServer = initializeSysadminExpressSync();
 
     async.series([
-        auth.initialize,
+        accesscontrol.initialize,  // hooks up authentication strategies into passport
         database.initialize,
         cloudron.initialize,
         setup.configureWebadmin,
@@ -356,7 +355,7 @@ function stop(callback) {
     async.series([
         cloudron.uninitialize,
         database.uninitialize,
-        auth.uninitialize,
+        accesscontrol.uninitialize,
         gHttpServer.close.bind(gHttpServer),
         gSysadminHttpServer.close.bind(gSysadminHttpServer)
     ], function (error) {
