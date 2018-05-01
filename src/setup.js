@@ -253,7 +253,7 @@ function activate(username, password, email, displayName, ip, auditSource, callb
             var token = tokendb.generateToken();
             var expires = Date.now() + constants.DEFAULT_TOKEN_EXPIRATION;
 
-            tokendb.add(token, userObject.id, result.id, expires, accesscontrol.SCOPE_ANY, function (error) {
+            tokendb.add(token, userObject.id, result.id, expires, result.scope, function (error) {
                 if (error) return callback(new SetupError(SetupError.INTERNAL_ERROR, error));
 
                 eventlog.add(eventlog.ACTION_ACTIVATE, auditSource, { });

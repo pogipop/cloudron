@@ -68,15 +68,15 @@ function validateRequestedScopes(authInfo, requestedScopes) {
     return null;
 }
 
-function normalizeScope(maxScope, allowedScope) {
-    assert.strictEqual(typeof maxScope, 'string');
+function normalizeScope(allowedScope, wantedScope) {
     assert.strictEqual(typeof allowedScope, 'string');
+    assert.strictEqual(typeof wantedScope, 'string');
 
-    const maxScopes = maxScope.split(',');
     const allowedScopes = allowedScope.split(',');
+    const wantedScopes = wantedScope.split(',');
 
-    if (maxScopes.indexOf(exports.SCOPE_ANY) !== -1) return allowedScope;
-    if (allowedScopes.indexOf(exports.SCOPE_ANY) !== -1) return maxScope;
+    if (allowedScopes.indexOf(exports.SCOPE_ANY) !== -1) return wantedScope;
+    if (wantedScopes.indexOf(exports.SCOPE_ANY) !== -1) return allowedScope;
 
-    return _.intersection(maxScopes, allowedScopes).join(',');
+    return _.intersection(allowedScopes, wantedScopes).join(',');
 }
