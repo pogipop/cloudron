@@ -257,7 +257,7 @@ function addTokenByUserId(clientId, userId, expiresAt, callback) {
                 accessToken: token,
                 identifier: userId,
                 clientId: result.id,
-                scope: result.id,
+                scope: result.scope,
                 expires: expiresAt
             });
         });
