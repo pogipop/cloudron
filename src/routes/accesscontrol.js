@@ -7,7 +7,6 @@ exports = module.exports = {
 
 var accesscontrol = require('../accesscontrol.js'),
     assert = require('assert'),
-    debug = require('debug')('box:routes/accesscontrol'),
     HttpError = require('connect-lastmile').HttpError,
     passport = require('passport');
 
@@ -24,7 +23,6 @@ function scope(requestedScope) {
     assert.strictEqual(typeof requestedScope, 'string');
 
     var requestedScopes = requestedScope.split(',');
-    debug('scope: add routes with requested scopes', requestedScopes);
 
     return [
         passport.authenticate(['bearer'], { session: false }),
