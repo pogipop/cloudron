@@ -28,9 +28,6 @@ function add(req, res, next) {
     if (typeof data.scope !== 'string' || !data.scope) return next(new HttpError(400, 'scope is required'));
     if (!validUrl.isWebUri(data.redirectURI)) return next(new HttpError(400, 'redirectURI must be a valid uri'));
 
-    // allow whitespace
-    data.scope = data.scope.split(',').map(function (s) { return s.trim(); }).join(',');
-
     clients.add(data.appId, clients.TYPE_EXTERNAL, data.redirectURI, data.scope, function (error, result) {
         if (error && error.reason === ClientsError.INVALID_SCOPE) return next(new HttpError(400, error.message));
         if (error && error.reason === ClientsError.BAD_FIELD) return next(new HttpError(400, error.message));

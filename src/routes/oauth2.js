@@ -135,6 +135,7 @@ function initialize() {
 
                 var token = tokendb.generateToken();
                 var expires = Date.now() + constants.DEFAULT_TOKEN_EXPIRATION;
+                var scope = accesscontrol.canonicalScope(client.scope);
 
                 tokendb.add(token, authCode.userId, authCode.clientId, expires, client.scope, function (error) {
                     if (error) return callback(error);

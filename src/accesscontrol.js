@@ -116,6 +116,10 @@ function uninitialize(callback) {
     callback(null);
 }
 
+function canonicalScope(scope) {
+    return scope.replace(exports.SCOPE_ANY, exports.VALID_SCOPES.join(','));
+}
+
 function normalizeScope(allowedScope, wantedScope) {
     assert.strictEqual(typeof allowedScope, 'string');
     assert.strictEqual(typeof wantedScope, 'string');
@@ -123,8 +127,8 @@ function normalizeScope(allowedScope, wantedScope) {
     const allowedScopes = allowedScope.split(',');
     const wantedScopes = wantedScope.split(',');
 
-    if (allowedScopes.indexOf(exports.SCOPE_ANY) !== -1) return wantedScope;
-    if (wantedScopes.indexOf(exports.SCOPE_ANY) !== -1) return allowedScope;
+    if (allowedScopes.indexOf(exports.SCOPE_ANY) !== -1) return canonicalScope(wantedScope);
+    if (wantedScopes.indexOf(exports.SCOPE_ANY) !== -1) return canonicalScope(allowedScope);
 
     return _.intersection(allowedScopes, wantedScopes).join(',');
 }
@@ -156,6 +160,8 @@ function validateScope(scope) {
 
     if (scope === '') return new Error('Empty scope not allowed');
 
+    // NOTE: this function intentionally does not allow '*'. This is only allowed in the db to allow
+    // us not write a migration script every time we add a new scope
     var allValid = scope.split(',').every(function (s) { return exports.VALID_SCOPES.indexOf(s) !== -1; });
     if (!allValid) return new Error('Invalid scope. Available scopes are ' + exports.VALID_SCOPES.join(', '));
 
@@ -181,8 +187,4 @@ function validateRequestedScopes(authInfo, requestedScopes) {
     }
 
     return null;
-}
-
-function canonicalScope(scope) {
-    return scope.replace(exports.SCOPE_ANY, exports.VALID_SCOPES.join(','));
 }

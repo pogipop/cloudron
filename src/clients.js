@@ -88,7 +88,6 @@ function add(appId, type, redirectURI, scope, callback) {
     var error = accesscontrol.validateScope(scope);
     if (error) return callback(new ClientsError(ClientsError.INVALID_SCOPE, error.message));
 
-    // appId is also client name
     error = validateName(appId);
     if (error) return callback(error);
 
@@ -254,8 +253,9 @@ function addTokenByUserId(clientId, userId, expiresAt, callback) {
         if (error) return callback(error);
 
         var token = tokendb.generateToken();
+        var scope = accesscontrol.canonicalScope(result.scope);
 
-        tokendb.add(token, userId, result.id, expiresAt, result.scope, function (error) {
+        tokendb.add(token, userId, result.id, expiresAt, scope, function (error) {
             if (error) return callback(new ClientsError(ClientsError.INTERNAL_ERROR, error));
 
             callback(null, {
