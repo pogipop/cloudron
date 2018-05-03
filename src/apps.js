@@ -543,28 +543,38 @@ function install(data, auditSource, callback) {
 
             debug('Will install app with id : ' + appId);
 
-            appstore.purchase(appId, appStoreId, function (error) {
-                if (error && error.reason === AppstoreError.NOT_FOUND) return callback(new AppsError(AppsError.NOT_FOUND));
-                if (error && error.reason === AppstoreError.BILLING_REQUIRED) return callback(new AppsError(AppsError.BILLING_REQUIRED, error.message));
-                if (error && error.reason === AppstoreError.EXTERNAL_ERROR) return callback(new AppsError(AppsError.EXTERNAL_ERROR, error.message));
+            var data = {
+                accessRestriction: accessRestriction,
+                memoryLimit: memoryLimit,
+                xFrameOptions: xFrameOptions,
+                sso: sso,
+                debugMode: debugMode,
+                mailboxName: (location ? location : manifest.title.toLowerCase().replace(/[^a-zA-Z0-9]/g, '')) + '.app',
+                restoreConfig: backupId ? { backupId: backupId, backupFormat: backupFormat } : null,
+                enableBackup: enableBackup,
+                robotsTxt: robotsTxt
+            };
+
+            appdb.add(appId, appStoreId, manifest, location, domain, portBindings, data, function (error) {
+                if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(getDuplicateErrorDetails(location, portBindings, error));
+                if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new AppsError(AppsError.NOT_FOUND, error.message));
                 if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
 
-                var data = {
-                    accessRestriction: accessRestriction,
-                    memoryLimit: memoryLimit,
-                    xFrameOptions: xFrameOptions,
-                    sso: sso,
-                    debugMode: debugMode,
-                    mailboxName: (location ? location : manifest.title.toLowerCase().replace(/[^a-zA-Z0-9]/g, '')) + '.app',
-                    restoreConfig: backupId ? { backupId: backupId, backupFormat: backupFormat } : null,
-                    enableBackup: enableBackup,
-                    robotsTxt: robotsTxt
-                };
+                appstore.purchase(appId, appStoreId, function (appstoreError) {
+                    // if purchase failed, rollback the appdb record
+                    if (appstoreError) {
+                        appdb.del(appId, function (error) {
+                            if (error) console.error('Failed to rollback app installation.', error);
 
-                appdb.add(appId, appStoreId, manifest, location, domain, portBindings, data, function (error) {
-                    if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(getDuplicateErrorDetails(location, portBindings, error));
-                    if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new AppsError(AppsError.NOT_FOUND, error.message));
-                    if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
+                            if (appstoreError.reason === AppstoreError.NOT_FOUND) return callback(new AppsError(AppsError.NOT_FOUND, appstoreError.message));
+                            if (appstoreError && appstoreError.reason === AppstoreError.BILLING_REQUIRED) return callback(new AppsError(AppsError.BILLING_REQUIRED, appstoreError.message));
+                            if (appstoreError && appstoreError.reason === AppstoreError.EXTERNAL_ERROR) return callback(new AppsError(AppsError.EXTERNAL_ERROR, appstoreError.message));
+
+                            callback(new AppsError(AppsError.INTERNAL_ERROR, appstoreError));
+                        });
+
+                        return;
+                    }
 
                     // save cert to boxdata/certs
                     if (cert && key) {
@@ -909,27 +919,37 @@ function clone(appId, data, auditSource, callback) {
 
                 var newAppId = uuid.v4(), manifest = backupInfo.manifest;
 
-                appstore.purchase(newAppId, app.appStoreId, function (error) {
-                    if (error && error.reason === AppstoreError.NOT_FOUND) return callback(new AppsError(AppsError.NOT_FOUND, error.message));
-                    if (error && error.reason === AppstoreError.BILLING_REQUIRED) return callback(new AppsError(AppsError.BILLING_REQUIRED, error.message));
-                    if (error && error.reason === AppstoreError.EXTERNAL_ERROR) return callback(new AppsError(AppsError.EXTERNAL_ERROR, error.message));
+                var data = {
+                    installationState: appdb.ISTATE_PENDING_CLONE,
+                    memoryLimit: app.memoryLimit,
+                    accessRestriction: app.accessRestriction,
+                    xFrameOptions: app.xFrameOptions,
+                    restoreConfig: { backupId: backupId, backupFormat: backupInfo.format },
+                    sso: !!app.sso,
+                    mailboxName: (location ? location : manifest.title.toLowerCase().replace(/[^a-zA-Z0-9]/g, '')) + '.app',
+                    enableBackup: app.enableBackup,
+                    robotsTxt: app.robotsTxt
+                };
+
+                appdb.add(newAppId, app.appStoreId, manifest, location, domain, portBindings, data, function (error) {
+                    if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(getDuplicateErrorDetails(location, portBindings, error));
                     if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
 
-                    var data = {
-                        installationState: appdb.ISTATE_PENDING_CLONE,
-                        memoryLimit: app.memoryLimit,
-                        accessRestriction: app.accessRestriction,
-                        xFrameOptions: app.xFrameOptions,
-                        restoreConfig: { backupId: backupId, backupFormat: backupInfo.format },
-                        sso: !!app.sso,
-                        mailboxName: (location ? location : manifest.title.toLowerCase().replace(/[^a-zA-Z0-9]/g, '')) + '.app',
-                        enableBackup: app.enableBackup,
-                        robotsTxt: app.robotsTxt
-                    };
+                    appstore.purchase(newAppId, app.appStoreId, function (appstoreError) {
+                        // if purchase failed, rollback the appdb record
+                        if (appstoreError) {
+                            appdb.del(newAppId, function (error) {
+                                if (error) console.error('Failed to rollback app installation.', error);
 
-                    appdb.add(newAppId, app.appStoreId, manifest, location, domain, portBindings, data, function (error) {
-                        if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(getDuplicateErrorDetails(location, portBindings, error));
-                        if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
+                                if (appstoreError.reason === AppstoreError.NOT_FOUND) return callback(new AppsError(AppsError.NOT_FOUND, appstoreError.message));
+                                if (appstoreError && appstoreError.reason === AppstoreError.BILLING_REQUIRED) return callback(new AppsError(AppsError.BILLING_REQUIRED, appstoreError.message));
+                                if (appstoreError && appstoreError.reason === AppstoreError.EXTERNAL_ERROR) return callback(new AppsError(AppsError.EXTERNAL_ERROR, appstoreError.message));
+
+                                callback(new AppsError(AppsError.INTERNAL_ERROR, appstoreError));
+                            });
+
+                            return;
+                        }
 
                         taskmanager.restartAppTask(newAppId);
 
