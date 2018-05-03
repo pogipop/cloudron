@@ -258,38 +258,80 @@ function groupAdminsCompare(req, res, next) {
 function mailboxSearch(req, res, next) {
     debug('mailbox search: dn %s, scope %s, filter %s (from %s)', req.dn.toString(), req.scope, req.filter.toString(), req.connection.ldap.id);
 
-    if (!req.dn.rdns[0].attrs.cn) return next(new ldap.NoSuchObjectError(req.dn.toString()));
+    // if cn is set we only search for one mailbox specifically
+    if (req.dn.rdns[0].attrs.cn) {
+        var email = req.dn.rdns[0].attrs.cn.value.toLowerCase();
+        var parts = email.split('@');
+        if (parts.length !== 2) return next(new ldap.NoSuchObjectError(req.dn.toString()));
 
-    var email = req.dn.rdns[0].attrs.cn.value.toLowerCase();
-    var parts = email.split('@');
-    if (parts.length !== 2) return next(new ldap.NoSuchObjectError(req.dn.toString()));
+        mailboxdb.getMailbox(parts[0], parts[1], function (error, mailbox) {
+            if (error && error.reason === DatabaseError.NOT_FOUND) return next(new ldap.NoSuchObjectError(req.dn.toString()));
+            if (error) return next(new ldap.OperationsError(error.toString()));
 
-    mailboxdb.getMailbox(parts[0], parts[1], function (error, mailbox) {
-        if (error && error.reason === DatabaseError.NOT_FOUND) return next(new ldap.NoSuchObjectError(req.dn.toString()));
-        if (error) return next(new ldap.OperationsError(error.toString()));
+            var obj = {
+                dn: req.dn.toString(),
+                attributes: {
+                    objectclass: ['mailbox'],
+                    objectcategory: 'mailbox',
+                    cn: `${mailbox.name}@${mailbox.domain}`,
+                    uid: `${mailbox.name}@${mailbox.domain}`,
+                    mail: `${mailbox.name}@${mailbox.domain}`,
+                    ownerType: mailbox.ownerType,
+                    displayname: 'Max Mustermann',
+                    givenName: 'Max',
+                    username: 'mmustermann',
+                    samaccountname: 'mmustermann'
+                }
+            };
 
-        var obj = {
-            dn: req.dn.toString(),
-            attributes: {
-                objectclass: ['mailbox'],
-                objectcategory: 'mailbox',
-                cn: `${mailbox.name}@${mailbox.domain}`,
-                uid: `${mailbox.name}@${mailbox.domain}`,
-                mail: `${mailbox.name}@${mailbox.domain}`,
-                ownerType: mailbox.ownerType
+            // ensure all filter values are also lowercase
+            var lowerCaseFilter = safe(function () { return ldap.parseFilter(req.filter.toString().toLowerCase()); }, null);
+            if (!lowerCaseFilter) return next(new ldap.OperationsError(safe.error.toString()));
+
+            if (lowerCaseFilter.matches(obj.attributes)) {
+                finalSend([ obj ], req, res, next);
+            } else {
+                res.end();
             }
-        };
+        });
+    } else if (req.dn.rdns[0].attrs.domain) {
+        var domain = req.dn.rdns[0].attrs.domain.value.toLowerCase();
 
-        // ensure all filter values are also lowercase
-        var lowerCaseFilter = safe(function () { return ldap.parseFilter(req.filter.toString().toLowerCase()); }, null);
-        if (!lowerCaseFilter) return next(new ldap.OperationsError(safe.error.toString()));
+        mailboxdb.listMailboxes(domain, function (error, result) {
+            if (error) return next(new ldap.OperationsError(error.toString()));
 
-        if (lowerCaseFilter.matches(obj.attributes)) {
-            finalSend([ obj ], req, res, next);
-        } else {
-            res.end();
-        }
-    });
+            var results = [];
+
+            // send mailbox objects
+            result.forEach(function (mailbox) {
+                var dn = ldap.parseDN(`cn=${mailbox.name}@${domain},domain=${domain},ou=mailboxes,dc=cloudron`);
+
+                var obj = {
+                    dn: dn.toString(),
+                    attributes: {
+                        objectclass: ['mailbox'],
+                        objectcategory: 'mailbox',
+                        cn: `${mailbox.name}@${domain}`,
+                        uid: `${mailbox.name}@${domain}`,
+                        mail: `${mailbox.name}@${domain}`,
+                        ownerType: mailbox.ownerType
+                    }
+                };
+
+                // ensure all filter values are also lowercase
+                var lowerCaseFilter = safe(function () { return ldap.parseFilter(req.filter.toString().toLowerCase()); }, null);
+                if (!lowerCaseFilter) return next(new ldap.OperationsError(safe.error.toString()));
+
+                if ((req.dn.equals(dn) || req.dn.parentOf(dn)) && lowerCaseFilter.matches(obj.attributes)) {
+                    results.push(obj);
+                }
+            });
+
+            finalSend(results, req, res, next);
+        });
+    } else {
+        return next(new ldap.NoSuchObjectError(req.dn.toString()));
+    }
 }
 
 function mailAliasSearch(req, res, next) {
