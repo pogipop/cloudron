@@ -1258,3 +1258,9 @@
 * Add CSP header for dashboard
 * Add support for installing private docker images
 
+[2.2.0]
+* Add 2FA support for the admin dashboard
+* Cleanup scope management in REST API
+* Enhance user creation API to take a password
+* Relax restriction on mailbox names now that it is decoupled from user management
+
