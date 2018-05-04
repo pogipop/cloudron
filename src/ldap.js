@@ -302,6 +302,9 @@ function mailboxSearch(req, res, next) {
 
             var results = [];
 
+            // only send user mailboxes
+            result = result.filter(function (m) { return m.ownerType === mailboxdb.OWNER_TYPE_USER; });
+
             // send mailbox objects
             result.forEach(function (mailbox) {
                 var dn = ldap.parseDN(`cn=${mailbox.name}@${domain},domain=${domain},ou=mailboxes,dc=cloudron`);
