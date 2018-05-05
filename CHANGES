@@ -1264,3 +1264,9 @@
 * Enhance user creation API to take a password
 * Relax restriction on mailbox names now that it is decoupled from user management
 
+[2.2.1]
+* Add 2FA support for the admin dashboard
+* Cleanup scope management in REST API
+* Enhance user creation API to take a password
+* Relax restriction on mailbox names now that it is decoupled from user management
+* Fix issue where mail container incorrectly advertised CRAM-MD5 support
