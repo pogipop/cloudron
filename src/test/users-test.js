@@ -198,8 +198,8 @@ describe('User', function () {
             });
         });
 
-        it('fails due to reserved pattern', function (done) {
-            users.create('maybe-app', PASSWORD, EMAIL, DISPLAY_NAME, AUDIT_SOURCE, function (error, result) {
+        it('fails due to reserved app pattern', function (done) {
+            users.create('maybe.app', PASSWORD, EMAIL, DISPLAY_NAME, AUDIT_SOURCE, function (error, result) {
                 expect(error).to.be.ok();
                 expect(result).to.not.be.ok();
                 expect(error.reason).to.equal(UsersError.BAD_FIELD);
