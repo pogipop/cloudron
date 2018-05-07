@@ -68,7 +68,7 @@ DomainsError.STILL_BUSY = 'Still busy';
 DomainsError.IN_USE = 'In Use';
 DomainsError.INTERNAL_ERROR = 'Internal error';
 DomainsError.ACCESS_DENIED = 'Access denied';
-DomainsError.INVALID_PROVIDER = 'provider must be route53, gcdns, digitalocean, cloudflare, noop, manual or caas';
+DomainsError.INVALID_PROVIDER = 'provider must be route53, gcdns, digitalocean, gandi, cloudflare, noop, manual or caas';
 
 // choose which subdomain backend we use for test purpose we use route53
 function api(provider) {
@@ -80,6 +80,7 @@ function api(provider) {
     case 'route53': return require('./dns/route53.js');
     case 'gcdns': return require('./dns/gcdns.js');
     case 'digitalocean': return require('./dns/digitalocean.js');
+    case 'gandi': return require('./dns/gandi.js');
     case 'noop': return require('./dns/noop.js');
     case 'manual': return require('./dns/manual.js');
     default: return null;
@@ -133,7 +134,7 @@ function add(domain, zoneName, provider, config, fallbackCertificate, tlsConfig,
         verifyDnsConfig(config, domain, zoneName, provider, ip, function (error, result) {
             if (error && error.reason === DomainsError.ACCESS_DENIED) return callback(new DomainsError(DomainsError.BAD_FIELD, 'Error adding A record. Access denied'));
             if (error && error.reason === DomainsError.NOT_FOUND) return callback(new DomainsError(DomainsError.BAD_FIELD, 'Zone not found'));
-            if (error && error.reason === DomainsError.EXTERNAL_ERROR) return callback(new DomainsError(DomainsError.BAD_FIELD, 'Error adding A record:' + error.message));
+            if (error && error.reason === DomainsError.EXTERNAL_ERROR) return callback(new DomainsError(DomainsError.BAD_FIELD, 'Error adding A record: ' + error.message));
             if (error && error.reason === DomainsError.BAD_FIELD) return callback(new DomainsError(DomainsError.BAD_FIELD, error.message));
             if (error && error.reason === DomainsError.INVALID_PROVIDER) return callback(new DomainsError(DomainsError.BAD_FIELD, error.message));
             if (error) return callback(new DomainsError(DomainsError.INTERNAL_ERROR, error));
