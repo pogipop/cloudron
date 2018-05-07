@@ -35,7 +35,7 @@ function upsert(dnsConfig, zoneName, subdomain, type, values, callback) {
 
     var data = {
         'rrset_ttl': 300, // this is the minimum allowed
-        'rrset_values': values
+        'rrset_values': values // for mx records, value is already of the '<priority> <server>' format
     };
 
     superagent.put(`${GANDI_API}/domains/${zoneName}/records/${subdomain}/${type}`)

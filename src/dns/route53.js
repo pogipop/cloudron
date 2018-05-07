@@ -87,7 +87,7 @@ function add(dnsConfig, zoneName, subdomain, type, values, callback) {
         if (error) return callback(error);
 
         var fqdn = subdomain === '' ? zoneName : subdomain + '.' + zoneName;
-        var records = values.map(function (v) { return { Value: v }; });
+        var records = values.map(function (v) { return { Value: v }; });  // for mx records, value is already of the '<priority> <server>' format
 
         var params = {
             ChangeBatch: {
