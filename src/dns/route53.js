@@ -39,7 +39,7 @@ function getZoneByName(dnsConfig, zoneName, callback) {
     assert.strictEqual(typeof callback, 'function');
 
     var route53 = new AWS.Route53(getDnsCredentials(dnsConfig));
-    route53.listHostedZones({}, function (error, result) {
+    route53.listHostedZonesByName({ MaxItems: '1', DNSName: zoneName + '.' }, function (error, result) {
         if (error && error.code === 'AccessDenied') return callback(new DomainsError(DomainsError.ACCESS_DENIED, error.message));
         if (error && error.code === 'InvalidClientTokenId') return callback(new DomainsError(DomainsError.ACCESS_DENIED, error.message));
         if (error) return callback(new DomainsError(DomainsError.EXTERNAL_ERROR, error.message));
