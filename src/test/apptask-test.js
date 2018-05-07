@@ -239,7 +239,7 @@ describe('apptask', function () {
         nock.cleanAll();
 
         var awsScope = nock('http://localhost:5353')
-            .get('/2013-04-01/hostedzone')
+            .get('/2013-04-01/hostedzonesbyname?dnsname=example.com.&maxitems=1')
             .times(2)
             .reply(200, js2xml('ListHostedZonesResponse', awsHostedZones, { wrapHandlers: { HostedZones: () => 'HostedZone'} }))
             .get('/2013-04-01/hostedzone/ZONEID/rrset?maxitems=1&name=applocation.' + DOMAIN_0.domain + '.&type=A')
@@ -258,7 +258,7 @@ describe('apptask', function () {
         nock.cleanAll();
 
         var awsScope = nock('http://localhost:5353')
-            .get('/2013-04-01/hostedzone')
+            .get('/2013-04-01/hostedzonesbyname?dnsname=example.com.&maxitems=1')
             .reply(200, js2xml('ListHostedZonesResponse', awsHostedZones, { wrapHandlers: { HostedZones: () => 'HostedZone'} }))
             .post('/2013-04-01/hostedzone/ZONEID/rrset/')
             .reply(200, js2xml('ChangeResourceRecordSetsResponse', { ChangeInfo: { Id: 'RRID', Status: 'INSYNC' } }));
