@@ -81,6 +81,7 @@ function api(provider) {
     case 'gcdns': return require('./dns/gcdns.js');
     case 'digitalocean': return require('./dns/digitalocean.js');
     case 'gandi': return require('./dns/gandi.js');
+    case 'godaddy': return require('./dns/godaddy.js');
     case 'noop': return require('./dns/noop.js');
     case 'manual': return require('./dns/manual.js');
     default: return null;
