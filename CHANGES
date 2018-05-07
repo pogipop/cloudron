@@ -1267,6 +1267,7 @@
 [2.2.1]
 * Add 2FA support for the admin dashboard
 * Add Gandi & GoDaddy DNS providers
+* Fix zone detection logic on Route53 accounts with more than 100 zones
 * Warn using when disabling email
 * Cleanup scope management in REST API
 * Enhance user creation API to take a password
