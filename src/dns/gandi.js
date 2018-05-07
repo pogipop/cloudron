@@ -18,7 +18,7 @@ var assert = require('assert'),
 var GANDI_API = 'https://dns.api.gandi.net/api/v5';
 
 function formatError(response) {
-    return util.format('Gandi DNS error [%s] %j', response.statusCode, response.body);
+    return util.format(`Gandi DNS error [${response.statusCode}] ${response.body.message}`);
 }
 
 function upsert(dnsConfig, zoneName, subdomain, type, values, callback) {
@@ -45,6 +45,7 @@ function upsert(dnsConfig, zoneName, subdomain, type, values, callback) {
         .end(function (error, result) {
             if (error && !error.response) return callback(new DomainsError(DomainsError.EXTERNAL_ERROR, util.format('Network error %s', error.message)));
             if (result.statusCode === 403 || result.statusCode === 401) return callback(new DomainsError(DomainsError.ACCESS_DENIED, formatError(result)));
+            if (result.statusCode === 400) return callback(new DomainsError(DomainsError.BAD_FIELD, formatError(result)));
             if (result.statusCode !== 201) return callback(new DomainsError(DomainsError.EXTERNAL_ERROR, formatError(result)));
 
             return callback(null, 'unused-id');
@@ -67,8 +68,8 @@ function get(dnsConfig, zoneName, subdomain, type, callback) {
         .timeout(30 * 1000)
         .end(function (error, result) {
             if (error && !error.response) return callback(new DomainsError(DomainsError.EXTERNAL_ERROR, util.format('Network error %s', error.message)));
-            if (result.statusCode === 404) return callback(new DomainsError(DomainsError.NOT_FOUND, formatError(result)));
             if (result.statusCode === 403 || result.statusCode === 401) return callback(new DomainsError(DomainsError.ACCESS_DENIED, formatError(result)));
+            if (result.statusCode === 404) return callback(null, [ ]);
             if (result.statusCode !== 200) return callback(new DomainsError(DomainsError.EXTERNAL_ERROR, formatError(result)));
 
             debug('get: %j', result.body);
