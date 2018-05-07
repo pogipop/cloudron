@@ -43,14 +43,9 @@ function getZoneByName(dnsConfig, zoneName, callback) {
         if (error && error.code === 'AccessDenied') return callback(new DomainsError(DomainsError.ACCESS_DENIED, error.message));
         if (error && error.code === 'InvalidClientTokenId') return callback(new DomainsError(DomainsError.ACCESS_DENIED, error.message));
         if (error) return callback(new DomainsError(DomainsError.EXTERNAL_ERROR, error.message));
+        if (!result.HostedZones[0]) return callback(new DomainsError(DomainsError.NOT_FOUND, 'no such zone'));
 
-        var zone = result.HostedZones.filter(function (zone) {
-            return zone.Name.slice(0, -1) === zoneName;     // aws zone name contains a '.' at the end
-        })[0];
-
-        if (!zone) return callback(new DomainsError(DomainsError.NOT_FOUND, 'no such zone'));
-
-        callback(null, zone);
+        callback(null, result.HostedZones[0]);
     });
 }
 
