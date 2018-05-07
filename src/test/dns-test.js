@@ -341,6 +341,94 @@ describe('dns provider', function () {
         });
     });
 
+    describe('godaddy', function () {
+        var KEY = 'somekey', SECRET = 'somesecret';
+        var GODADDY_API = 'https://api.godaddy.com/v1/domains';
+
+        before(function (done) {
+            DOMAIN_0.provider = 'godaddy';
+            DOMAIN_0.config = {
+                apiKey: KEY,
+                apiSecret: SECRET
+            };
+
+            domains.update(DOMAIN_0.domain, DOMAIN_0.provider, DOMAIN_0.config, null, DOMAIN_0.tlsConfig, done);
+        });
+
+        it('upsert record succeeds', function (done) {
+            nock.cleanAll();
+
+            var DOMAIN_RECORD_0 = [{
+                ttl: 600,
+                data: '1.2.3.4'
+            }];
+
+            var req1 = nock(GODADDY_API)
+                .put('/' + DOMAIN_0.zoneName + '/records/A/test', DOMAIN_RECORD_0)
+                .reply(200, { });
+
+            domains.upsertDnsRecords('test', DOMAIN_0.domain, 'A', [ '1.2.3.4' ], function (error) {
+                expect(error).to.eql(null);
+                expect(req1.isDone()).to.be.ok();
+
+                done();
+            });
+        });
+
+        it('get succeeds', function (done) {
+            nock.cleanAll();
+
+            var DOMAIN_RECORD_0 = [{
+                ttl: 600,
+                data: '1.2.3.4'
+            }];
+
+            var req1 = nock(GODADDY_API)
+                .get('/' + DOMAIN_0.zoneName + '/records/A/test')
+                .reply(200, DOMAIN_RECORD_0);
+
+            domains.getDnsRecords('test', DOMAIN_0.domain, 'A', function (error, result) {
+                expect(error).to.eql(null);
+                expect(result).to.be.an(Array);
+                expect(result.length).to.eql(1);
+                expect(result[0]).to.eql(DOMAIN_RECORD_0[0].data);
+                expect(req1.isDone()).to.be.ok();
+
+                done();
+            });
+        });
+
+        it('del succeeds', function (done) {
+            nock.cleanAll();
+
+            var DOMAIN_RECORD_0 = [{ // existing
+                ttl: 600,
+                data: '1.2.3.4'
+            }];
+
+            var DOMAIN_RECORD_1 = [{ // replaced
+                ttl: 600,
+                data: '0.0.0.0'
+            }];
+
+            var req1 = nock(GODADDY_API)
+                .get('/' + DOMAIN_0.zoneName + '/records/A/test')
+                .reply(200, DOMAIN_RECORD_0);
+
+            var req2 = nock(GODADDY_API)
+                .put('/' + DOMAIN_0.zoneName + '/records/A/test', DOMAIN_RECORD_1)
+                .reply(200, { });
+
+            domains.removeDnsRecords('test', DOMAIN_0.domain, 'A', ['1.2.3.4'], function (error) {
+                expect(error).to.eql(null);
+                expect(req1.isDone()).to.be.ok();
+                expect(req2.isDone()).to.be.ok();
+
+                done();
+            });
+        });
+    });
+
     describe('gandi', function () {
         var TOKEN = 'sometoken';
         var GANDI_API = 'https://dns.api.gandi.net/api/v5';
