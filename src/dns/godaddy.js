@@ -18,6 +18,10 @@ var assert = require('assert'),
 // const GODADDY_API_OTE = 'https://api.ote-godaddy.com/v1/domains';
 const GODADDY_API = 'https://api.godaddy.com/v1/domains';
 
+// this is a workaround for godaddy not having a delete API
+// https://stackoverflow.com/questions/39347464/delete-record-libcloud-godaddy-api
+const GODADDY_INVALID_IP = '0.0.0.0';
+
 function formatError(response) {
     return util.format(`GoDaddy DNS error [${response.statusCode}] ${response.body.message}`);
 }
@@ -87,6 +91,8 @@ function get(dnsConfig, zoneName, subdomain, type, callback) {
 
             var values = result.body.map(function (record) { return record.data; });
 
+            if (values.length === 1 && values[0] === GODADDY_INVALID_IP) return callback(null, [ ]); // pretend this record doesn't exist
+
             return callback(null, values);
         });
 }
@@ -103,20 +109,34 @@ function del(dnsConfig, zoneName, subdomain, type, values, callback) {
 
     debug(`get: ${subdomain} in zone ${zoneName} of type ${type} with values ${JSON.stringify(values)}`);
 
-    superagent.put(`${GODADDY_API}/${zoneName}/records/${type}/${subdomain}`)
-        .set('Authorization', `sso-key ${dnsConfig.apiKey}:${dnsConfig.apiSecret}`)
-        .send([ ])
-        .timeout(30 * 1000)
-        .end(function (error, result) {
-            if (error && !error.response) return callback(new DomainsError(DomainsError.EXTERNAL_ERROR, util.format('Network error %s', error.message)));
-            if (result.statusCode === 404) return callback(null);
-            if (result.statusCode === 403 || result.statusCode === 401) return callback(new DomainsError(DomainsError.ACCESS_DENIED, formatError(result)));
-            if (result.statusCode !== 200) return callback(new DomainsError(DomainsError.EXTERNAL_ERROR, formatError(result)));
+    if (type !== 'A') return callback(new DomainsError(DomainsError.EXTERNAL_ERROR, new Error('Not supported by GoDaddy API'))); // can never happen
 
-            debug('del: done');
+    // check if the record exists at all so that we don't insert the "Dead" record for no reason
+    get(dnsConfig, zoneName, subdomain, type, function (error, values) {
+        if (error) return callback(error);
+        if (values.length === 0) return callback();
 
-            return callback(null);
-        });
+        // godaddy does not have a delete API. so fill it up with an invalid IP that we can ignore in future get()
+        var records = [{
+            ttl: 600,
+            data: GODADDY_INVALID_IP
+        }];
+
+        superagent.put(`${GODADDY_API}/${zoneName}/records/${type}/${subdomain}`)
+            .set('Authorization', `sso-key ${dnsConfig.apiKey}:${dnsConfig.apiSecret}`)
+            .send(records)
+            .timeout(30 * 1000)
+            .end(function (error, result) {
+                if (error && !error.response) return callback(new DomainsError(DomainsError.EXTERNAL_ERROR, util.format('Network error %s', error.message)));
+                if (result.statusCode === 404) return callback(null);
+                if (result.statusCode === 403 || result.statusCode === 401) return callback(new DomainsError(DomainsError.ACCESS_DENIED, formatError(result)));
+                if (result.statusCode !== 200) return callback(new DomainsError(DomainsError.EXTERNAL_ERROR, formatError(result)));
+
+                debug('del: done');
+
+                return callback(null);
+            });
+    });
 }
 
 function verifyDnsConfig(dnsConfig, fqdn, zoneName, ip, callback) {
