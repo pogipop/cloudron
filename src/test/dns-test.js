@@ -486,7 +486,7 @@ describe('dns provider', function () {
             Route53Mock.prototype.getChange = mockery(awsAnswerQueue);
             Route53Mock.prototype.changeResourceRecordSets = mockery(awsAnswerQueue);
             Route53Mock.prototype.listResourceRecordSets = mockery(awsAnswerQueue);
-            Route53Mock.prototype.listHostedZones = mockery(awsAnswerQueue);
+            Route53Mock.prototype.listHostedZonesByName = mockery(awsAnswerQueue);
 
             // override route53 in AWS
             // Comment this out and replace the config with real tokens to test against AWS proper
