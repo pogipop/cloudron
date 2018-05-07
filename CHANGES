@@ -1266,6 +1266,8 @@
 
 [2.2.1]
 * Add 2FA support for the admin dashboard
+* Add Gandi & GoDaddy DNS providers
+* Warn using when disabling email
 * Cleanup scope management in REST API
 * Enhance user creation API to take a password
 * Relax restriction on mailbox names now that it is decoupled from user management
