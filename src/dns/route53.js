@@ -237,7 +237,8 @@ function verifyDnsConfig(dnsConfig, fqdn, zoneName, ip, callback) {
         accessKeyId: dnsConfig.accessKeyId,
         secretAccessKey: dnsConfig.secretAccessKey,
         region: dnsConfig.region || 'us-east-1',
-        endpoint: dnsConfig.endpoint || null
+        endpoint: dnsConfig.endpoint || null,
+        listHostedZonesByName: true // new/updated creds require this perm
     };
 
     if (process.env.BOX_ENV === 'test') return callback(null, credentials); // this shouldn't be here
