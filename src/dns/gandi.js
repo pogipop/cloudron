@@ -88,7 +88,7 @@ function del(dnsConfig, zoneName, subdomain, type, values, callback) {
 
     subdomain = subdomain || '@';
 
-    debug(`get: ${subdomain} in zone ${zoneName} of type ${type} with values ${JSON.stringify(values)}`);
+    debug(`del: ${subdomain} in zone ${zoneName} of type ${type} with values ${JSON.stringify(values)}`);
 
     superagent.del(`${GANDI_API}/domains/${zoneName}/records/${subdomain}/${type}`)
         .set('X-Api-Key', dnsConfig.token)

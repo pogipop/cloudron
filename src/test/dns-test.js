@@ -341,6 +341,80 @@ describe('dns provider', function () {
         });
     });
 
+    describe('gandi', function () {
+        var TOKEN = 'sometoken';
+        var GANDI_API = 'https://dns.api.gandi.net/api/v5';
+
+        before(function (done) {
+            DOMAIN_0.provider = 'gandi';
+            DOMAIN_0.config = {
+                token: TOKEN
+            };
+
+            domains.update(DOMAIN_0.domain, DOMAIN_0.provider, DOMAIN_0.config, null, DOMAIN_0.tlsConfig, done);
+        });
+
+        it('upsert record succeeds', function (done) {
+            nock.cleanAll();
+
+            var DOMAIN_RECORD_0 = {
+                'rrset_ttl': 300,
+                'rrset_values': [ '1.2.3.4' ]
+            };
+
+            var req1 = nock(GANDI_API)
+                .put('/domains/' + DOMAIN_0.zoneName + '/records/test/A', DOMAIN_RECORD_0)
+                .reply(201, { message: 'Zone Record Created' });
+
+            domains.upsertDnsRecords('test', DOMAIN_0.domain, 'A', [ '1.2.3.4' ], function (error) {
+                expect(error).to.eql(null);
+                expect(req1.isDone()).to.be.ok();
+
+                done();
+            });
+        });
+
+        it('get succeeds', function (done) {
+            nock.cleanAll();
+
+            var DOMAIN_RECORD_0 = {
+                'rrset_type': 'A',
+                'rrset_ttl': 600,
+                'rrset_name': 'test',
+                'rrset_values': [ '1.2.3.4' ]
+            };
+
+            var req1 = nock(GANDI_API)
+                .get('/domains/' + DOMAIN_0.zoneName + '/records/test/A')
+                .reply(200, DOMAIN_RECORD_0);
+
+            domains.getDnsRecords('test', DOMAIN_0.domain, 'A', function (error, result) {
+                expect(error).to.eql(null);
+                expect(result).to.be.an(Array);
+                expect(result.length).to.eql(1);
+                expect(result[0]).to.eql(DOMAIN_RECORD_0.rrset_values[0]);
+                expect(req1.isDone()).to.be.ok();
+
+                done();
+            });
+        });
+
+        it('del succeeds', function (done) {
+            nock.cleanAll();
+
+            var req2 = nock(GANDI_API)
+                .delete('/domains/' + DOMAIN_0.zoneName + '/records/test/A')
+                .reply(204, { });
+
+            domains.removeDnsRecords('test', DOMAIN_0.domain, 'A', ['1.2.3.4'], function (error) {
+                expect(error).to.eql(null);
+                expect(req2.isDone()).to.be.ok();
+
+                done();
+            });
+        });
+    });
+
     describe('route53', function () {
         // do not clear this with [] but .length = 0 so we don't loose the reference in mockery
         var awsAnswerQueue = [];
