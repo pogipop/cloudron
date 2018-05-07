@@ -39,7 +39,16 @@ function getZoneByName(dnsConfig, zoneName, callback) {
     assert.strictEqual(typeof callback, 'function');
 
     var route53 = new AWS.Route53(getDnsCredentials(dnsConfig));
-    route53.listHostedZonesByName({ MaxItems: '1', DNSName: zoneName + '.' }, function (error, result) {
+
+    // backward compat for 2.2, where we only required access to "listHostedZones"
+    let listHostedZones;
+    if (dnsConfig.listHostedZonesByName) {
+        listHostedZones = route53.listHostedZonesByName.bind(route53, { MaxItems: '1', DNSName: zoneName + '.' });
+    } else {
+        listHostedZones = route53.listHostedZones.bind(route53, {}); // currently, this route does not support > 100 zones
+    }
+
+    listHostedZones(function (error, result) {
         if (error && error.code === 'AccessDenied') return callback(new DomainsError(DomainsError.ACCESS_DENIED, error.message));
         if (error && error.code === 'InvalidClientTokenId') return callback(new DomainsError(DomainsError.ACCESS_DENIED, error.message));
         if (error) return callback(new DomainsError(DomainsError.EXTERNAL_ERROR, error.message));
