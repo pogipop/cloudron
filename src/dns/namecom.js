@@ -47,7 +47,7 @@ function addRecord(dnsConfig, zoneName, subdomain, type, values, callback) {
             if (result.statusCode === 403) return callback(new DomainsError(DomainsError.ACCESS_DENIED, formatError(result)));
             if (result.statusCode !== 200) return callback(new DomainsError(DomainsError.EXTERNAL_ERROR, formatError(result)));
 
-            return callback();
+            return callback(null, 'unused-id');
         });
     }
 
@@ -78,7 +78,7 @@ function updateRecord(dnsConfig, zoneName, recordId, subdomain, type, values, ca
             if (result.statusCode === 403) return callback(new DomainsError(DomainsError.ACCESS_DENIED, formatError(result)));
             if (result.statusCode !== 200) return callback(new DomainsError(DomainsError.EXTERNAL_ERROR, formatError(result)));
 
-            return callback();
+            return callback(null, 'unused-id');
         });
 }
 
