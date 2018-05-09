@@ -68,7 +68,7 @@ DomainsError.STILL_BUSY = 'Still busy';
 DomainsError.IN_USE = 'In Use';
 DomainsError.INTERNAL_ERROR = 'Internal error';
 DomainsError.ACCESS_DENIED = 'Access denied';
-DomainsError.INVALID_PROVIDER = 'provider must be route53, gcdns, digitalocean, gandi, cloudflare, noop, manual or caas';
+DomainsError.INVALID_PROVIDER = 'provider must be route53, gcdns, digitalocean, gandi, cloudflare, namecom, noop, manual or caas';
 
 // choose which subdomain backend we use for test purpose we use route53
 function api(provider) {
@@ -82,6 +82,7 @@ function api(provider) {
     case 'digitalocean': return require('./dns/digitalocean.js');
     case 'gandi': return require('./dns/gandi.js');
     case 'godaddy': return require('./dns/godaddy.js');
+    case 'namecom': return require('./dns/namecom.js');
     case 'noop': return require('./dns/noop.js');
     case 'manual': return require('./dns/manual.js');
     default: return null;
