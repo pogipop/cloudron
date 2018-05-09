@@ -503,6 +503,100 @@ describe('dns provider', function () {
         });
     });
 
+    describe('name.com', function () {
+        const TOKEN = 'sometoken';
+        const NAMECOM_API = 'https://api.name.com/v4';
+
+        before(function (done) {
+            DOMAIN_0.provider = 'namecom';
+            DOMAIN_0.config = {
+                token: TOKEN
+            };
+
+            domains.update(DOMAIN_0.domain, DOMAIN_0.provider, DOMAIN_0.config, null, DOMAIN_0.tlsConfig, done);
+        });
+
+        it('upsert record succeeds', function (done) {
+            nock.cleanAll();
+
+            var DOMAIN_RECORD_0 = {
+                host: 'test',
+                type: 'A',
+                answer: '1.2.3.4',
+                ttl: 300
+            };
+
+            var req1 = nock(NAMECOM_API)
+                .get(`/domains/${DOMAIN_0.zoneName}/records`)
+                .reply(200, { records: [] });
+
+            var req2 = nock(NAMECOM_API)
+                .post(`/domains/${DOMAIN_0.zoneName}/records`, DOMAIN_RECORD_0)
+                .reply(200, {});
+
+            domains.upsertDnsRecords('test', DOMAIN_0.domain, 'A', [ '1.2.3.4' ], function (error) {
+                expect(error).to.eql(null);
+                expect(req1.isDone()).to.be.ok();
+                expect(req2.isDone()).to.be.ok();
+
+                done();
+            });
+        });
+
+        it('get succeeds', function (done) {
+            nock.cleanAll();
+
+            var DOMAIN_RECORD_0 = {
+                host: 'test',
+                type: 'A',
+                answer: '1.2.3.4',
+                ttl: 300
+            };
+
+            var req1 = nock(NAMECOM_API)
+                .get(`/domains/${DOMAIN_0.zoneName}/records`)
+                .reply(200, { records: [ DOMAIN_RECORD_0 ] });
+
+            domains.getDnsRecords('test', DOMAIN_0.domain, 'A', function (error, result) {
+                expect(error).to.eql(null);
+                expect(result).to.be.an(Array);
+                expect(result.length).to.eql(1);
+                expect(result[0]).to.eql(DOMAIN_RECORD_0.answer);
+                expect(req1.isDone()).to.be.ok();
+
+                done();
+            });
+        });
+
+        it('del succeeds', function (done) {
+            nock.cleanAll();
+
+            var DOMAIN_RECORD_0 = {
+                id: 'someid',
+                host: 'test',
+                type: 'A',
+                answer: '1.2.3.4',
+                ttl: 300
+            };
+
+            var req1 = nock(NAMECOM_API)
+                .get(`/domains/${DOMAIN_0.zoneName}/records`)
+                .reply(200, { records: [ DOMAIN_RECORD_0 ] });
+
+            var req2 = nock(NAMECOM_API)
+                .delete(`/domains/${DOMAIN_0.zoneName}/records/${DOMAIN_RECORD_0.id}`)
+                .reply(200, {});
+
+            domains.removeDnsRecords('test', DOMAIN_0.domain, 'A', ['1.2.3.4'], function (error) {
+                expect(error).to.eql(null);
+                expect(req1.isDone()).to.be.ok();
+                expect(req2.isDone()).to.be.ok();
+
+                done();
+            });
+        });
+    });
+
     describe('route53', function () {
         // do not clear this with [] but .length = 0 so we don't loose the reference in mockery
         var awsAnswerQueue = [];
