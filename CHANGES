@@ -1273,3 +1273,7 @@
 * Enhance user creation API to take a password
 * Relax restriction on mailbox names now that it is decoupled from user management
 * Fix issue where mail container incorrectly advertised CRAM-MD5 support
+
+[2.2.2]
+* Add Name.com DNS provider
+
