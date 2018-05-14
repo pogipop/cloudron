@@ -131,13 +131,12 @@ function initializeExpressSync() {
     // working off the user behind the provided token
     router.get ('/api/v1/user/apps', profileScope, routes.apps.getAllByUser);
     router.get ('/api/v1/user/cloudron_config', profileScope, routes.user.getCloudronConfig);
-    router.get ('/api/v1/profile', profileScope, routes.profile.get); // duplicate route for compatibility
-    router.get ('/api/v1/user/profile', profileScope, routes.profile.get);
-    router.post('/api/v1/user/profile', profileScope, routes.profile.update);
-    router.post('/api/v1/user/profile/password', profileScope, routes.users.verifyPassword, routes.profile.changePassword);
-    router.post('/api/v1/user/profile/twofactorauthentication', profileScope, routes.profile.setTwoFactorAuthenticationSecret);
-    router.post('/api/v1/user/profile/twofactorauthentication/enable', profileScope, routes.profile.enableTwoFactorAuthentication);
-    router.post('/api/v1/user/profile/twofactorauthentication/disable', profileScope, routes.users.verifyPassword, routes.profile.disableTwoFactorAuthentication);
+    router.get ('/api/v1/profile', profileScope, routes.profile.get);
+    router.post('/api/v1/profile', profileScope, routes.profile.update);
+    router.post('/api/v1/profile/password', profileScope, routes.users.verifyPassword, routes.profile.changePassword);
+    router.post('/api/v1/profile/twofactorauthentication', profileScope, routes.profile.setTwoFactorAuthenticationSecret);
+    router.post('/api/v1/profile/twofactorauthentication/enable', profileScope, routes.profile.enableTwoFactorAuthentication);
+    router.post('/api/v1/profile/twofactorauthentication/disable', profileScope, routes.users.verifyPassword, routes.profile.disableTwoFactorAuthentication);
 
     // user routes
     router.get ('/api/v1/users', usersScope, routes.users.list);

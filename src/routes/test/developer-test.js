@@ -192,7 +192,7 @@ describe('Developer API', function () {
                     });
                 },
                 function (callback) {
-                    superagent.post(`${SERVER_URL}/api/v1/user/profile/twofactorauthentication`).query({ access_token: accessToken }).end(function (error, result) {
+                    superagent.post(`${SERVER_URL}/api/v1/profile/twofactorauthentication`).query({ access_token: accessToken }).end(function (error, result) {
                         secret = result.body.secret;
                         callback(error);
                     });
@@ -203,7 +203,7 @@ describe('Developer API', function () {
                         encoding: 'base32'
                     });
 
-                    superagent.post(`${SERVER_URL}/api/v1/user/profile/twofactorauthentication/enable`).query({ access_token: accessToken }).send({ totpToken: totpToken }).end(function (error, result) {
+                    superagent.post(`${SERVER_URL}/api/v1/profile/twofactorauthentication/enable`).query({ access_token: accessToken }).send({ totpToken: totpToken }).end(function (error, result) {
                         callback(error);
                     });
                 }
@@ -213,7 +213,7 @@ describe('Developer API', function () {
         after(function (done) {
             async.series([
                 function (callback) {
-                    superagent.post(`${SERVER_URL}/api/v1/user/profile/twofactorauthentication/disable`).query({ access_token: accessToken }).send({ password: PASSWORD }).end(function (error, result) {
+                    superagent.post(`${SERVER_URL}/api/v1/profile/twofactorauthentication/disable`).query({ access_token: accessToken }).send({ password: PASSWORD }).end(function (error, result) {
                         callback(error);
                     });
                 },
@@ -285,14 +285,14 @@ describe('Developer API', function () {
         after(cleanup);
 
         it('fails with non sdk token', function (done) {
-            superagent.post(SERVER_URL + '/api/v1/user/profile/password').query({ access_token: token_normal }).send({ newPassword: 'Some?$123' }).end(function (error, result) {
+            superagent.post(SERVER_URL + '/api/v1/profile/password').query({ access_token: token_normal }).send({ newPassword: 'Some?$123' }).end(function (error, result) {
                 expect(result.statusCode).to.equal(401);
                 done();
             });
         });
 
         it('succeeds', function (done) {
-            superagent.post(SERVER_URL + '/api/v1/user/profile/password').query({ access_token: token_sdk }).send({ newPassword: 'Some?$123' }).end(function (error, result) {
+            superagent.post(SERVER_URL + '/api/v1/profile/password').query({ access_token: token_sdk }).send({ newPassword: 'Some?$123' }).end(function (error, result) {
                 expect(result.statusCode).to.equal(204);
                 done();
             });

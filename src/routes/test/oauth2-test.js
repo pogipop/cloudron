@@ -601,7 +601,7 @@ describe('OAuth2', function () {
                         });
                     },
                     function (callback) {
-                        superagent.post(`${SERVER_URL}/api/v1/user/profile/twofactorauthentication`).query({ access_token: accessToken }).end(function (error, result) {
+                        superagent.post(`${SERVER_URL}/api/v1/profile/twofactorauthentication`).query({ access_token: accessToken }).end(function (error, result) {
                             secret = result.body.secret;
                             callback(error);
                         });
@@ -612,7 +612,7 @@ describe('OAuth2', function () {
                             encoding: 'base32'
                         });
 
-                        superagent.post(`${SERVER_URL}/api/v1/user/profile/twofactorauthentication/enable`).query({ access_token: accessToken }).send({ totpToken: totpToken }).end(function (error, result) {
+                        superagent.post(`${SERVER_URL}/api/v1/profile/twofactorauthentication/enable`).query({ access_token: accessToken }).send({ totpToken: totpToken }).end(function (error, result) {
                             callback(error);
                         });
                     }
@@ -865,7 +865,7 @@ describe('OAuth2', function () {
                         expect(foo.token_type).to.eql('Bearer');
 
                         // Ensure the token is also usable
-                        superagent.get(SERVER_URL + '/api/v1/user/profile?access_token=' + foo.access_token, function (error, result) {
+                        superagent.get(SERVER_URL + '/api/v1/profile?access_token=' + foo.access_token, function (error, result) {
                             expect(error).to.not.be.ok();
                             expect(result.status).to.eql(200);
                             expect(result.body.username).to.equal(USER_0.username.toLowerCase());
@@ -1252,7 +1252,7 @@ describe('OAuth2', function () {
                             expect(body.token_type).to.eql('Bearer');
 
                             // Ensure the token is also usable
-                            superagent.get(SERVER_URL + '/api/v1/user/profile?access_token=' + body.access_token, function (error, result) {
+                            superagent.get(SERVER_URL + '/api/v1/profile?access_token=' + body.access_token, function (error, result) {
                                 expect(error).to.not.be.ok();
                                 expect(result.status).to.eql(200);
                                 expect(result.body.username).to.equal(USER_0.username.toLowerCase());
