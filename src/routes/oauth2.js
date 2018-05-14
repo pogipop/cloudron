@@ -286,7 +286,7 @@ function login(req, res) {
     passport.authenticate('local', {
         failureRedirect: '/api/v1/session/login?' + failureQuery
     })(req, res, function () {
-        if (req.user.twoFactorAuthenticationEnabled) {
+        if (!req.user.ghost && req.user.twoFactorAuthenticationEnabled) {
             if (!req.body.totpToken) {
                 let failureQuery = querystring.stringify({ error: 'A 2FA token is required', returnTo: returnTo });
                 return res.redirect('/api/v1/session/login?' + failureQuery);
