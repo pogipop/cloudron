@@ -278,7 +278,8 @@ describe('updatechecker - app - manual (email)', function () {
         portBindings: { PORT: 5678 },
         healthy: null,
         accessRestriction: null,
-        memoryLimit: 0
+        memoryLimit: 0,
+        ownerId: null
     };
 
     before(function (done) {
@@ -294,8 +295,14 @@ describe('updatechecker - app - manual (email)', function () {
             domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0.zoneName, DOMAIN_0.provider, DOMAIN_0.config, DOMAIN_0.fallbackCertificate, DOMAIN_0.tlsConfig),
             mail.addDomain.bind(null, DOMAIN_0.domain),
             mailer._clearMailQueue,
-            appdb.add.bind(null, APP_0.id, APP_0.appStoreId, APP_0.manifest, APP_0.location, APP_0.domain, APP_0.portBindings, APP_0),
-            users.createOwner.bind(null, USER_0.username, USER_0.password, USER_0.email, USER_0.displayName, AUDIT_SOURCE),
+            function (next) {
+                users.createOwner(USER_0.username, USER_0.password, USER_0.email, USER_0.displayName, AUDIT_SOURCE, function (error, userObject) {
+                    if (error) return next(error);
+
+                    APP_0.ownerId = userObject.id;
+                    appdb.add(APP_0.id, APP_0.appStoreId, APP_0.manifest, APP_0.location, APP_0.domain, APP_0.ownerId, APP_0.portBindings, APP_0, next);
+                });
+            },
             settings.setAppAutoupdatePattern.bind(null, constants.AUTOUPDATE_PATTERN_NEVER),
             settingsdb.set.bind(null, settings.APPSTORE_CONFIG_KEY, JSON.stringify({ userId: 'uid', cloudronId: 'cid', token: 'token' }))
         ], done);
@@ -394,7 +401,8 @@ describe('updatechecker - app - automatic (no email)', function () {
         portBindings: { PORT: 5678 },
         healthy: null,
         accessRestriction: null,
-        memoryLimit: 0
+        memoryLimit: 0,
+        ownerId: null
     };
 
     before(function (done) {
@@ -410,8 +418,14 @@ describe('updatechecker - app - automatic (no email)', function () {
             domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0.zoneName, DOMAIN_0.provider, DOMAIN_0.config, DOMAIN_0.fallbackCertificate, DOMAIN_0.tlsConfig),
             mail.addDomain.bind(null, DOMAIN_0.domain),
             mailer._clearMailQueue,
-            appdb.add.bind(null, APP_0.id, APP_0.appStoreId, APP_0.manifest, APP_0.location, APP_0.domain, APP_0.portBindings, APP_0),
-            users.createOwner.bind(null, USER_0.username, USER_0.password, USER_0.email, USER_0.displayName, AUDIT_SOURCE),
+            function (next) {
+                users.createOwner(USER_0.username, USER_0.password, USER_0.email, USER_0.displayName, AUDIT_SOURCE, function (error, userObject) {
+                    if (error) return next(error);
+
+                    APP_0.ownerId = userObject.id;
+                    appdb.add(APP_0.id, APP_0.appStoreId, APP_0.manifest, APP_0.location, APP_0.domain, APP_0.ownerId, APP_0.portBindings, APP_0, next);
+                });
+            },
             settings.setAppAutoupdatePattern.bind(null, '00 00 1,3,5,23 * * *'),
             settingsdb.set.bind(null, settings.APPSTORE_CONFIG_KEY, JSON.stringify({ userId: 'uid', cloudronId: 'cid', token: 'token' }))
         ], done);
@@ -460,7 +474,8 @@ describe('updatechecker - app - automatic free (email)', function () {
         portBindings: { PORT: 5678 },
         healthy: null,
         accessRestriction: null,
-        memoryLimit: 0
+        memoryLimit: 0,
+        ownerId: null
     };
 
     before(function (done) {
@@ -476,8 +491,14 @@ describe('updatechecker - app - automatic free (email)', function () {
             domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0.zoneName, DOMAIN_0.provider, DOMAIN_0.config, DOMAIN_0.fallbackCertificate, DOMAIN_0.tlsConfig),
             mail.addDomain.bind(null, DOMAIN_0.domain),
             mailer._clearMailQueue,
-            appdb.add.bind(null, APP_0.id, APP_0.appStoreId, APP_0.manifest, APP_0.location, APP_0.domain, APP_0.portBindings, APP_0),
-            users.createOwner.bind(null, USER_0.username, USER_0.password, USER_0.email, USER_0.displayName, AUDIT_SOURCE),
+            function (next) {
+                users.createOwner(USER_0.username, USER_0.password, USER_0.email, USER_0.displayName, AUDIT_SOURCE, function (error, userObject) {
+                    if (error) return next(error);
+
+                    APP_0.ownerId = userObject.id;
+                    appdb.add(APP_0.id, APP_0.appStoreId, APP_0.manifest, APP_0.location, APP_0.domain, APP_0.ownerId, APP_0.portBindings, APP_0, next);
+                });
+            },
             settings.setAppAutoupdatePattern.bind(null, '00 00 1,3,5,23 * * *'),
             settingsdb.set.bind(null, settings.APPSTORE_CONFIG_KEY, JSON.stringify({ userId: 'uid', cloudronId: 'cid', token: 'token' }))
         ], done);

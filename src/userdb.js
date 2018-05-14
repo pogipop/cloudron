@@ -147,6 +147,7 @@ function add(userId, user, callback) {
     database.query(query, args, function (error) {
         if (error && error.code === 'ER_DUP_ENTRY' && error.sqlMessage.indexOf('users_email') !== -1) return callback(new DatabaseError(DatabaseError.ALREADY_EXISTS, 'email already exists'));
         if (error && error.code === 'ER_DUP_ENTRY' && error.sqlMessage.indexOf('users_username') !== -1) return callback(new DatabaseError(DatabaseError.ALREADY_EXISTS, 'username already exists'));
+        if (error && error.code === 'ER_DUP_ENTRY' && error.sqlMessage.indexOf('PRIMARY') !== -1) return callback(new DatabaseError(DatabaseError.ALREADY_EXISTS, 'id already exists'));
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
 
         callback(null);

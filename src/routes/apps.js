@@ -79,6 +79,7 @@ function installApp(req, res, next) {
     assert.strictEqual(typeof req.body, 'object');
 
     var data = req.body;
+    data.ownerId = req.user.id;
 
     // atleast one
     if ('manifest' in data && typeof data.manifest !== 'object') return next(new HttpError(400, 'manifest must be an object'));
@@ -202,6 +203,7 @@ function cloneApp(req, res, next) {
     assert.strictEqual(typeof req.params.id, 'string');
 
     var data = req.body;
+    data.ownerId = req.user.id;
 
     debug('Clone app id:%s', req.params.id);
 

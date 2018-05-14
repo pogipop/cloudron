@@ -62,7 +62,8 @@ describe('OAuth2', function () {
             domain: DOMAIN_0.domain,
             portBindings: {},
             accessRestriction: null,
-            memoryLimit: 0
+            memoryLimit: 0,
+            ownerId: USER_0.id
         };
 
         var APP_1 = {
@@ -73,7 +74,8 @@ describe('OAuth2', function () {
             domain: DOMAIN_0.domain,
             portBindings: {},
             accessRestriction: { users: [ 'foobar' ] },
-            memoryLimit: 0
+            memoryLimit: 0,
+            ownerId: USER_0.id
         };
 
         var APP_2 = {
@@ -84,7 +86,8 @@ describe('OAuth2', function () {
             domain: DOMAIN_0.domain,
             portBindings: {},
             accessRestriction: { users: [ USER_0.id ] },
-            memoryLimit: 0
+            memoryLimit: 0,
+            ownerId: USER_0.id
         };
 
         var APP_3 = {
@@ -95,7 +98,8 @@ describe('OAuth2', function () {
             domain: DOMAIN_0.domain,
             portBindings: {},
             accessRestriction: { groups: [ 'someothergroup', 'admin', 'anothergroup' ] },
-            memoryLimit: 0
+            memoryLimit: 0,
+            ownerId: USER_0.id
         };
 
         // unknown app
@@ -214,19 +218,22 @@ describe('OAuth2', function () {
                 clientdb.add.bind(null, CLIENT_6.id, CLIENT_6.appId, CLIENT_6.type, CLIENT_6.clientSecret, CLIENT_6.redirectURI, CLIENT_6.scope),
                 clientdb.add.bind(null, CLIENT_7.id, CLIENT_7.appId, CLIENT_7.type, CLIENT_7.clientSecret, CLIENT_7.redirectURI, CLIENT_7.scope),
                 clientdb.add.bind(null, CLIENT_9.id, CLIENT_9.appId, CLIENT_9.type, CLIENT_9.clientSecret, CLIENT_9.redirectURI, CLIENT_9.scope),
-                appdb.add.bind(null, APP_0.id, APP_0.appStoreId, APP_0.manifest, APP_0.location, APP_0.domain, APP_0.portBindings, APP_0),
-                appdb.add.bind(null, APP_1.id, APP_1.appStoreId, APP_1.manifest, APP_1.location, APP_1.domain, APP_1.portBindings, APP_1),
-                appdb.add.bind(null, APP_2.id, APP_2.appStoreId, APP_2.manifest, APP_2.location, APP_2.domain, APP_2.portBindings, APP_2),
-                appdb.add.bind(null, APP_3.id, APP_3.appStoreId, APP_3.manifest, APP_3.location, APP_3.domain, APP_3.portBindings, APP_3),
                 function (callback) {
                     users.create(USER_0.username, USER_0.password, USER_0.email, USER_0.displayName, { }, null /* source */, function (error, userObject) {
                         expect(error).to.not.be.ok();
 
                         // update the global objects to reflect the new user id
-                        USER_0.id = userObject.id;
+                        USER_0.id = APP_0.ownerId = APP_1.ownerId = APP_2.ownerId = APP_3.ownerId = userObject.id;
                         APP_2.accessRestriction = { users: [ 'foobar', userObject.id ] };
 
-                        appdb.update(APP_2.id, APP_2, callback);
+                        async.series([
+                            appdb.add.bind(null, APP_0.id, APP_0.appStoreId, APP_0.manifest, APP_0.location, APP_0.domain, APP_0.ownerId, APP_0.portBindings, APP_0),
+                            appdb.add.bind(null, APP_1.id, APP_1.appStoreId, APP_1.manifest, APP_1.location, APP_1.domain, APP_1.ownerId, APP_1.portBindings, APP_1),
+                            appdb.add.bind(null, APP_2.id, APP_2.appStoreId, APP_2.manifest, APP_2.location, APP_2.domain, APP_2.ownerId, APP_2.portBindings, APP_2),
+                            appdb.add.bind(null, APP_3.id, APP_3.appStoreId, APP_3.manifest, APP_3.location, APP_3.domain, APP_3.ownerId, APP_3.portBindings, APP_3),
+
+                            appdb.update.bind(null, APP_2.id, APP_2)
+                        ], callback);
                     });
                 },
             ], done);

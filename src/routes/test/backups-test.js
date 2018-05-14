@@ -29,7 +29,7 @@ const DOMAIN_0 = {
     tlsConfig: { provider: 'fallback' }
 };
 
-var token = null;
+var token = null, ownerId = null;
 
 function setup(done) {
     nock.cleanAll();
@@ -49,6 +49,7 @@ function setup(done) {
                     expect(result.statusCode).to.eql(201);
 
                     // stash token for further use
+                    ownerId = result.body.userId;
                     token = result.body.token;
 
                     callback();
@@ -57,7 +58,7 @@ function setup(done) {
 
         function addApp(callback) {
             var manifest = { version: '0.0.1', manifestVersion: 1, dockerImage: 'foo', healthCheckPath: '/', httpPort: 3, title: 'ok', addons: { } };
-            appdb.add('appid', 'appStoreId', manifest, 'location', DOMAIN_0.domain, [ ] /* portBindings */, { }, callback);
+            appdb.add('appid', 'appStoreId', manifest, 'location', DOMAIN_0.domain, ownerId, [ ] /* portBindings */, { }, callback);
         },
 
         function createSettings(callback) {

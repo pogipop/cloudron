@@ -78,7 +78,8 @@ var APP_0 = {
     accessRestriction: null,
     restoreConfig: null,
     oldConfig: null,
-    memoryLimit: 4294967296
+    memoryLimit: 4294967296,
+    ownerId: null
 };
 
 var dockerProxy;
@@ -99,21 +100,20 @@ function setup(done) {
         ldapServer.start.bind(null),
         domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0.zoneName, DOMAIN_0.provider, DOMAIN_0.config, DOMAIN_0.fallbackCertificate, DOMAIN_0.tlsConfig),
         maildb.add.bind(null, DOMAIN_0.domain),
-        appdb.add.bind(null, APP_0.id, APP_0.appStoreId, APP_0.manifest, APP_0.location, APP_0.domain, APP_0.portBindings, APP_0),
+        function (callback) {
+            users.createOwner(USER_0.username, USER_0.password, USER_0.email, USER_0.displayName, AUDIT_SOURCE, function (error, result) {
+                if (error) return callback(error);
+
+                USER_0.id = APP_0.ownerId = result.id;
+
+                appdb.add(APP_0.id, APP_0.appStoreId, APP_0.manifest, APP_0.location, APP_0.domain, APP_0.ownerId, APP_0.portBindings, APP_0, callback);
+            });
+        },
         appdb.update.bind(null, APP_0.id, { containerId: APP_0.containerId }),
         appdb.setAddonConfig.bind(null, APP_0.id, 'sendmail', [{ name: 'MAIL_SMTP_PASSWORD', value : 'sendmailpassword' }]),
         appdb.setAddonConfig.bind(null, APP_0.id, 'recvmail', [{ name: 'MAIL_IMAP_PASSWORD', value : 'recvmailpassword' }]),
         mailboxdb.addMailbox.bind(null, APP_0.location + '.app', APP_0.domain, APP_0.id, mailboxdb.OWNER_TYPE_APP),
 
-        function (callback) {
-            users.createOwner(USER_0.username, USER_0.password, USER_0.email, USER_0.displayName, AUDIT_SOURCE, function (error, result) {
-                if (error) return callback(error);
-
-                USER_0.id = result.id;
-
-                callback(null);
-            });
-        },
         function (callback) {
             users.create(USER_1.username, USER_1.password, USER_1.email, USER_0.displayName, { invitor: USER_0 }, AUDIT_SOURCE, function (error, result) {
                 if (error) return callback(error);

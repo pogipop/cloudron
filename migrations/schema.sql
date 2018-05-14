@@ -86,6 +86,9 @@ CREATE TABLE IF NOT EXISTS apps(
     oldConfigJson TEXT, // used to pass old config to apptask (configure, restore)
     updateConfigJson TEXT, // used to pass new config to apptask (update)
 
+    ownerId VARCHAR(128),
+
+    FOREIGN KEY(ownerId) REFERENCES users(id),
     FOREIGN KEY(domain) REFERENCES domains(domain),
     PRIMARY KEY(id));
 
@@ -142,6 +145,10 @@ CREATE TABLE IF NOT EXISTS domains(
     provider VARCHAR(16) NOT NULL,
     configJson TEXT, /* JSON containing the dns backend provider config */
     tlsConfigJson TEXT, /* JSON containing the tls provider config */
+
+    ownerId VARCHAR(128),
+
+    FOREIGN KEY(ownerId) REFERENCES users(id),
 
     PRIMARY KEY (domain))
 

@@ -104,7 +104,8 @@ describe('Apps', function () {
         accessRestriction: null,
         memoryLimit: 0,
         robotsTxt: null,
-        sso: false
+        sso: false,
+        ownerId: USER_0.id
     };
 
     var APP_1 = {
@@ -118,7 +119,8 @@ describe('Apps', function () {
         },
         portBindings: {},
         accessRestriction: { users: [ 'someuser' ], groups: [ GROUP_0.id ] },
-        memoryLimit: 0
+        memoryLimit: 0,
+        ownerId: USER_0.id
     };
 
     var APP_2 = {
@@ -134,7 +136,8 @@ describe('Apps', function () {
         accessRestriction: { users: [ 'someuser', USER_0.id ], groups: [ GROUP_1.id ] },
         memoryLimit: 0,
         robotsTxt: null,
-        sso: false
+        sso: false,
+        ownerId: USER_0.id
     };
 
     before(function (done) {
@@ -156,9 +159,9 @@ describe('Apps', function () {
             groupdb.add.bind(null, GROUP_1.id, GROUP_1.name, [ /* roles */ ]),
             groups.addMember.bind(null, constants.ADMIN_GROUP_ID, ADMIN_0.id),
             groups.addMember.bind(null, GROUP_0.id, USER_1.id),
-            appdb.add.bind(null, APP_0.id, APP_0.appStoreId, APP_0.manifest, APP_0.location, APP_0.domain, APP_0.portBindings, APP_0),
-            appdb.add.bind(null, APP_1.id, APP_1.appStoreId, APP_1.manifest, APP_1.location, APP_1.domain, APP_1.portBindings, APP_1),
-            appdb.add.bind(null, APP_2.id, APP_2.appStoreId, APP_2.manifest, APP_2.location, APP_2.domain, APP_2.portBindings, APP_2),
+            appdb.add.bind(null, APP_0.id, APP_0.appStoreId, APP_0.manifest, APP_0.location, APP_0.domain, APP_0.ownerId, APP_0.portBindings, APP_0),
+            appdb.add.bind(null, APP_1.id, APP_1.appStoreId, APP_1.manifest, APP_1.location, APP_1.domain, APP_1.ownerId, APP_1.portBindings, APP_1),
+            appdb.add.bind(null, APP_2.id, APP_2.appStoreId, APP_2.manifest, APP_2.location, APP_2.domain, APP_2.ownerId, APP_2.portBindings, APP_2),
             settingsdb.set.bind(null, settings.BACKUP_CONFIG_KEY, JSON.stringify({ provider: 'caas', token: 'BACKUP_TOKEN', bucket: 'Bucket', prefix: 'Prefix' }))
         ], done);
     });

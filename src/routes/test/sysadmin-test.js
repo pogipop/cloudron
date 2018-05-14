@@ -38,6 +38,8 @@ const DOMAIN_0 = {
     tlsConfig: { provider: 'fallback' }
 };
 
+var ownerId = null;
+
 function setup(done) {
     config._reset();
     config.setFqdn(DOMAIN_0.domain);
@@ -56,13 +58,15 @@ function setup(done) {
                     expect(result).to.be.ok();
                     expect(result.statusCode).to.eql(201);
 
+                    ownerId = result.body.userId;
+
                     callback();
                 });
         },
 
         function addApp(callback) {
             var manifest = { version: '0.0.1', manifestVersion: 1, dockerImage: 'foo', healthCheckPath: '/', httpPort: 3, title: 'ok', addons: { } };
-            appdb.add('appid', 'appStoreId', manifest, 'location', DOMAIN_0.domain, [ ] /* portBindings */, { }, callback);
+            appdb.add('appid', 'appStoreId', manifest, 'location', DOMAIN_0.domain, ownerId, [ ] /* portBindings */, { }, callback);
         },
 
         function createSettings(callback) {

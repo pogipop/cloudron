@@ -509,7 +509,8 @@ function install(data, auditSource, callback) {
         robotsTxt = data.robotsTxt || null,
         enableBackup = 'enableBackup' in data ? data.enableBackup : true,
         backupId = data.backupId || null,
-        backupFormat = data.backupFormat || 'tgz';
+        backupFormat = data.backupFormat || 'tgz',
+        ownerId = data.ownerId;
 
     assert(data.appStoreId || data.manifest); // atleast one of them is required
 
@@ -585,7 +586,7 @@ function install(data, auditSource, callback) {
                 robotsTxt: robotsTxt
             };
 
-            appdb.add(appId, appStoreId, manifest, location, domain, portBindings, data, function (error) {
+            appdb.add(appId, appStoreId, manifest, location, domain, ownerId, portBindings, data, function (error) {
                 if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(getDuplicateErrorDetails(location, portBindings, error));
                 if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new AppsError(AppsError.NOT_FOUND, error.message));
                 if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
@@ -924,12 +925,14 @@ function clone(appId, data, auditSource, callback) {
     var location = data.location.toLowerCase(),
         domain = data.domain.toLowerCase(),
         portBindings = data.portBindings || null,
-        backupId = data.backupId;
+        backupId = data.backupId,
+        ownerId = data.ownerId;
 
     assert.strictEqual(typeof backupId, 'string');
     assert.strictEqual(typeof location, 'string');
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof portBindings, 'object');
+    assert(ownerId === null || typeof ownerId === 'string');
 
     get(appId, function (error, app) {
         if (error) return callback(error);
@@ -969,7 +972,7 @@ function clone(appId, data, auditSource, callback) {
                     robotsTxt: app.robotsTxt
                 };
 
-                appdb.add(newAppId, app.appStoreId, manifest, location, domain, portBindings, data, function (error) {
+                appdb.add(newAppId, app.appStoreId, manifest, location, domain, ownerId, portBindings, data, function (error) {
                     if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(getDuplicateErrorDetails(location, portBindings, error));
                     if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
 

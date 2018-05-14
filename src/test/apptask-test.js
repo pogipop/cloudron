@@ -19,6 +19,7 @@ var addons = require('../addons.js'),
     nock = require('nock'),
     paths = require('../paths.js'),
     settings = require('../settings.js'),
+    userdb = require('../userdb.js'),
     _ = require('underscore');
 
 var MANIFEST = {
@@ -61,6 +62,19 @@ const DOMAIN_0 = {
     tlsConfig: { provider: 'caas' }
 };
 
+var ADMIN = {
+    id: 'admin123',
+    username: 'admin123',
+    password: 'secret',
+    email: 'admin@me.com',
+    fallbackEmail: 'admin@me.com',
+    salt: 'morton',
+    createdAt: 'sometime back',
+    modifiedAt: 'now',
+    resetToken: '',
+    displayName: ''
+};
+
 var APP = {
     id: 'appid',
     appStoreId: 'appStoreId',
@@ -75,7 +89,8 @@ var APP = {
     portBindings: null,
     accessRestriction: null,
     dnsRecordId: 'someDnsRecordId',
-    memoryLimit: 0
+    memoryLimit: 0,
+    ownerId: ADMIN.id
 };
 
 var awsHostedZones;
@@ -105,7 +120,8 @@ describe('apptask', function () {
             database.initialize,
             database._clear,
             domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0.zoneName, DOMAIN_0.provider, DOMAIN_0.config, null, DOMAIN_0.tlsConfig),
-            appdb.add.bind(null, APP.id, APP.appStoreId, APP.manifest, APP.location, APP.domain, APP.portBindings, APP),
+            userdb.add.bind(null, ADMIN.id, ADMIN),
+            appdb.add.bind(null, APP.id, APP.appStoreId, APP.manifest, APP.location, APP.domain, APP.ownerId, APP.portBindings, APP),
             settings.initialize
         ], done);
     });

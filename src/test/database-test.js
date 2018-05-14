@@ -116,6 +116,14 @@ describe('database', function () {
     });
 
     describe('domains', function () {
+        before(function (done) {
+            userdb.add(USER_0.id, USER_0, done);
+        });
+
+        after(function (done) {
+            database._clear(done);
+        });
+
         it('can add domain', function (done) {
             domaindb.add(DOMAIN_0.domain, { zoneName: DOMAIN_0.zoneName, provider: DOMAIN_0.provider, config: DOMAIN_0.config, tlsConfig: DOMAIN_0.tlsConfig }, done);
         });
@@ -223,11 +231,12 @@ describe('database', function () {
             sso: true,
             debugMode: null,
             robotsTxt: null,
-            enableBackup: true
+            enableBackup: true,
+            ownerId: USER_0.id
         };
 
         it('cannot delete referenced domain', function (done) {
-            appdb.add(APP_0.id, APP_0.appStoreId, APP_0.manifest, APP_0.location, APP_0.domain, APP_0.portBindings, APP_0, function (error) {
+            appdb.add(APP_0.id, APP_0.appStoreId, APP_0.manifest, APP_0.location, APP_0.domain, APP_0.ownerId, APP_0.portBindings, APP_0, function (error) {
                 expect(error).to.be(null);
 
                 domaindb.del(DOMAIN_0.domain, function (error) {
@@ -713,7 +722,7 @@ describe('database', function () {
         });
     });
 
-    describe('app', function () {
+    describe('apps', function () {
         var APP_0 = {
             id: 'appid-0',
             appStoreId: 'appStoreId-0',
@@ -737,7 +746,8 @@ describe('database', function () {
             sso: true,
             debugMode: null,
             robotsTxt: null,
-            enableBackup: true
+            enableBackup: true,
+            ownerId: USER_0.id
         };
 
         var APP_1 = {
@@ -763,11 +773,15 @@ describe('database', function () {
             sso: true,
             debugMode: null,
             robotsTxt: null,
-            enableBackup: true
+            enableBackup: true,
+            ownerId: USER_0.id
         };
 
         before(function (done) {
-            domaindb.add(DOMAIN_0.domain, { zoneName: DOMAIN_0.zoneName, provider: DOMAIN_0.provider, config: DOMAIN_0.config, tlsConfig: DOMAIN_0.tlsConfig }, done);
+            async.series([
+                userdb.add.bind(null, USER_0.id, USER_0),
+                domaindb.add.bind(null, DOMAIN_0.domain, { zoneName: DOMAIN_0.zoneName, provider: DOMAIN_0.provider, config: DOMAIN_0.config, tlsConfig: DOMAIN_0.tlsConfig })
+            ], done);
         });
 
         after(function (done) {
@@ -788,7 +802,7 @@ describe('database', function () {
         });
 
         it('add succeeds', function (done) {
-            appdb.add(APP_0.id, APP_0.appStoreId, APP_0.manifest, APP_0.location, APP_0.domain, APP_0.portBindings, APP_0, function (error) {
+            appdb.add(APP_0.id, APP_0.appStoreId, APP_0.manifest, APP_0.location, APP_0.domain, APP_0.ownerId, APP_0.portBindings, APP_0, function (error) {
                 expect(error).to.be(null);
                 done();
             });
@@ -812,7 +826,7 @@ describe('database', function () {
         });
 
         it('add of same app fails', function (done) {
-            appdb.add(APP_0.id, APP_0.appStoreId, APP_0.manifest, APP_0.location, APP_0.domain, [], APP_0, function (error) {
+            appdb.add(APP_0.id, APP_0.appStoreId, APP_0.manifest, APP_0.location, APP_0.domain, APP_0.ownerId, [], APP_0, function (error) {
                 expect(error).to.be.a(DatabaseError);
                 expect(error.reason).to.be(DatabaseError.ALREADY_EXISTS);
                 done();
@@ -884,7 +898,7 @@ describe('database', function () {
         });
 
         it('add second app succeeds', function (done) {
-            appdb.add(APP_1.id, APP_1.appStoreId, APP_1.manifest, APP_1.location, APP_1.domain, [], APP_1, function (error) {
+            appdb.add(APP_1.id, APP_1.appStoreId, APP_1.manifest, APP_1.location, APP_1.domain, APP_0.ownerId, [], APP_1, function (error) {
                 expect(error).to.be(null);
                 done();
             });
