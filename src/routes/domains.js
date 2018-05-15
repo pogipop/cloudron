@@ -67,6 +67,7 @@ function update(req, res, next) {
 
     if (typeof req.body.provider !== 'string') return next(new HttpError(400, 'provider must be an object'));
     if (typeof req.body.config !== 'object') return next(new HttpError(400, 'config must be an object'));
+    if ('zoneName' in req.body && typeof req.body.zoneName !== 'string') return next(new HttpError(400, 'zoneName must be a string'));
     if ('fallbackCertificate' in req.body && typeof req.body.fallbackCertificate !== 'object') return next(new HttpError(400, 'fallbackCertificate must be a object with cert and key strings'));
     if (req.body.fallbackCertificate && (!req.body.fallbackCertificate.cert || typeof req.body.fallbackCertificate.cert !== 'string')) return next(new HttpError(400, 'fallbackCertificate.cert must be a string'));
     if (req.body.fallbackCertificate && (!req.body.fallbackCertificate.key || typeof req.body.fallbackCertificate.key !== 'string')) return next(new HttpError(400, 'fallbackCertificate.key must be a string'));
@@ -76,7 +77,7 @@ function update(req, res, next) {
     // some DNS providers like DigitalOcean take a really long time to verify credentials (https://github.com/expressjs/timeout/issues/26)
     req.clearTimeout();
 
-    domains.update(req.params.domain, req.body.provider, req.body.config, req.body.fallbackCertificate || null, req.body.tlsConfig || { provider: 'letsencrypt-prod' }, function (error) {
+    domains.update(req.params.domain, req.body.zoneName || '', req.body.provider, req.body.config, req.body.fallbackCertificate || null, req.body.tlsConfig || { provider: 'letsencrypt-prod' }, function (error) {
         if (error && error.reason === DomainsError.NOT_FOUND) return next(new HttpError(404, error.message));
         if (error && error.reason === DomainsError.BAD_FIELD) return next(new HttpError(400, error.message));
         if (error && error.reason === DomainsError.INVALID_PROVIDER) return next(new HttpError(400, error.message));

@@ -121,7 +121,7 @@ describe('Certificates', function () {
 
             async.series([
                 setup,
-                domains.update.bind(null, DOMAIN_0.domain, DOMAIN_0.provider, DOMAIN_0.config, DOMAIN_0.fallbackCertificate, DOMAIN_0.tlsConfig)
+                domains.update.bind(null, DOMAIN_0.domain, DOMAIN_0.zoneName, DOMAIN_0.provider, DOMAIN_0.config, DOMAIN_0.fallbackCertificate, DOMAIN_0.tlsConfig)
             ], done);
         });
 
@@ -152,7 +152,7 @@ describe('Certificates', function () {
 
             async.series([
                 setup,
-                domains.update.bind(null, DOMAIN_0.domain, DOMAIN_0.provider, DOMAIN_0.config, DOMAIN_0.fallbackCertificate, DOMAIN_0.tlsConfig)
+                domains.update.bind(null, DOMAIN_0.domain, DOMAIN_0.zoneName, DOMAIN_0.provider, DOMAIN_0.config, DOMAIN_0.fallbackCertificate, DOMAIN_0.tlsConfig)
             ], done);
         });
 
@@ -183,7 +183,7 @@ describe('Certificates', function () {
 
             async.series([
                 setup,
-                domains.update.bind(null, DOMAIN_0.domain, DOMAIN_0.provider, DOMAIN_0.config, DOMAIN_0.fallbackCertificate, DOMAIN_0.tlsConfig)
+                domains.update.bind(null, DOMAIN_0.domain, DOMAIN_0.zoneName, DOMAIN_0.provider, DOMAIN_0.config, DOMAIN_0.fallbackCertificate, DOMAIN_0.tlsConfig)
             ], done);
         });
 

@@ -51,7 +51,7 @@ describe('dns provider', function () {
             DOMAIN_0.provider = 'noop';
             DOMAIN_0.config = {};
 
-            domains.update(DOMAIN_0.domain, DOMAIN_0.provider, DOMAIN_0.config, null, DOMAIN_0.tlsConfig, done);
+            domains.update(DOMAIN_0.domain, DOMAIN_0.zoneName, DOMAIN_0.provider, DOMAIN_0.config, null, DOMAIN_0.tlsConfig, done);
         });
 
         it('upsert succeeds', function (done) {
@@ -92,7 +92,7 @@ describe('dns provider', function () {
                 token: TOKEN
             };
 
-            domains.update(DOMAIN_0.domain, DOMAIN_0.provider, DOMAIN_0.config, null, DOMAIN_0.tlsConfig, done);
+            domains.update(DOMAIN_0.domain, '', DOMAIN_0.provider, DOMAIN_0.config, null, DOMAIN_0.tlsConfig, done);
         });
 
         it('upsert non-existing record succeeds', function (done) {
@@ -352,7 +352,7 @@ describe('dns provider', function () {
                 apiSecret: SECRET
             };
 
-            domains.update(DOMAIN_0.domain, DOMAIN_0.provider, DOMAIN_0.config, null, DOMAIN_0.tlsConfig, done);
+            domains.update(DOMAIN_0.domain, '', DOMAIN_0.provider, DOMAIN_0.config, null, DOMAIN_0.tlsConfig, done);
         });
 
         it('upsert record succeeds', function (done) {
@@ -439,7 +439,7 @@ describe('dns provider', function () {
                 token: TOKEN
             };
 
-            domains.update(DOMAIN_0.domain, DOMAIN_0.provider, DOMAIN_0.config, null, DOMAIN_0.tlsConfig, done);
+            domains.update(DOMAIN_0.domain, DOMAIN_0.zoneName, DOMAIN_0.provider, DOMAIN_0.config, null, DOMAIN_0.tlsConfig, done);
         });
 
         it('upsert record succeeds', function (done) {
@@ -513,7 +513,7 @@ describe('dns provider', function () {
                 token: TOKEN
             };
 
-            domains.update(DOMAIN_0.domain, DOMAIN_0.provider, DOMAIN_0.config, null, DOMAIN_0.tlsConfig, done);
+            domains.update(DOMAIN_0.domain, '', DOMAIN_0.provider, DOMAIN_0.config, null, DOMAIN_0.tlsConfig, done);
         });
 
         it('upsert record succeeds', function (done) {
@@ -675,7 +675,7 @@ describe('dns provider', function () {
             AWS._originalRoute53 = AWS.Route53;
             AWS.Route53 = Route53Mock;
 
-            domains.update(DOMAIN_0.domain, DOMAIN_0.provider, DOMAIN_0.config, null, DOMAIN_0.tlsConfig, done);
+            domains.update(DOMAIN_0.domain, '', DOMAIN_0.provider, DOMAIN_0.config, null, DOMAIN_0.tlsConfig, done);
         });
 
         after(function () {
@@ -831,7 +831,7 @@ describe('dns provider', function () {
             _OriginalGCDNS = GCDNS.prototype.getZones;
             GCDNS.prototype.getZones = mockery(zoneQueue);
 
-            domains.update(DOMAIN_0.domain, DOMAIN_0.provider, DOMAIN_0.config, null, DOMAIN_0.tlsConfig, done);
+            domains.update(DOMAIN_0.domain, DOMAIN_0.zoneName, DOMAIN_0.provider, DOMAIN_0.config, null, DOMAIN_0.tlsConfig, done);
         });
 
         after(function () {

@@ -189,8 +189,9 @@ function getAll(callback) {
     });
 }
 
-function update(domain, provider, config, fallbackCertificate, tlsConfig, callback) {
+function update(domain, zoneName, provider, config, fallbackCertificate, tlsConfig, callback) {
     assert.strictEqual(typeof domain, 'string');
+    assert.strictEqual(typeof zoneName, 'string');
     assert.strictEqual(typeof provider, 'string');
     assert.strictEqual(typeof config, 'object');
     assert.strictEqual(typeof fallbackCertificate, 'object');
@@ -200,6 +201,12 @@ function update(domain, provider, config, fallbackCertificate, tlsConfig, callba
     domaindb.get(domain, function (error, result) {
         if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new DomainsError(DomainsError.NOT_FOUND));
         if (error) return callback(new DomainsError(DomainsError.INTERNAL_ERROR, error));
+
+        if (zoneName) {
+            if (!tld.isValid(zoneName)) return callback(new DomainsError(DomainsError.BAD_FIELD, 'Invalid zoneName'));
+        } else {
+            zoneName = result.zoneName;
+        }
 
         if (fallbackCertificate) {
             let error = reverseProxy.validateCertificate(`test.${domain}`, fallbackCertificate.cert, fallbackCertificate.key);
@@ -213,7 +220,7 @@ function update(domain, provider, config, fallbackCertificate, tlsConfig, callba
         sysinfo.getPublicIp(function (error, ip) {
             if (error) return callback(new DomainsError(DomainsError.INTERNAL_ERROR, 'Error getting IP:' + error.message));
 
-            verifyDnsConfig(config, domain, result.zoneName, provider, ip, function (error, result) {
+            verifyDnsConfig(config, domain, zoneName, provider, ip, function (error, result) {
                 if (error && error.reason === DomainsError.ACCESS_DENIED) return callback(new DomainsError(DomainsError.BAD_FIELD, 'Error adding A record. Access denied'));
                 if (error && error.reason === DomainsError.NOT_FOUND) return callback(new DomainsError(DomainsError.BAD_FIELD, 'Zone not found'));
                 if (error && error.reason === DomainsError.EXTERNAL_ERROR) return callback(new DomainsError(DomainsError.BAD_FIELD, 'Error adding A record:' + error.message));
@@ -221,7 +228,7 @@ function update(domain, provider, config, fallbackCertificate, tlsConfig, callba
                 if (error && error.reason === DomainsError.INVALID_PROVIDER) return callback(new DomainsError(DomainsError.BAD_FIELD, error.message));
                 if (error) return callback(new DomainsError(DomainsError.INTERNAL_ERROR, error));
 
-                domaindb.update(domain, { provider: provider, config: result, tlsConfig: tlsConfig }, function (error) {
+                domaindb.update(domain, { zoneName: zoneName, provider: provider, config: result, tlsConfig: tlsConfig }, function (error) {
                     if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new DomainsError(DomainsError.NOT_FOUND));
                     if (error) return callback(new DomainsError(DomainsError.INTERNAL_ERROR, error));
 
