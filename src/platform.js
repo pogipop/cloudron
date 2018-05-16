@@ -47,6 +47,7 @@ function start(callback) {
     // short-circuit for the restart case
     if (_.isEqual(infra, existingInfra)) {
         debug('platform is uptodate at version %s', infra.version);
+        updateAddons();
         emitPlatformReady();
         return callback();
     }
@@ -67,6 +68,7 @@ function start(callback) {
 
         locker.unlock(locker.OP_PLATFORM_START);
 
+        updateAddons();
         emitPlatformReady();
 
         callback();
@@ -78,6 +80,21 @@ function stop(callback) {
     gPlatformReadyTimer = null;
     exports.events = null;
     taskmanager.pauseTasks(callback);
+}
+
+function updateAddons() {
+    var platformConfig = safe.JSON.parse(safe.fs.readFileSync(paths.PLATFORM_CONFIG_FILE, 'utf8'));
+    if (!platformConfig) platformConfig = { };
+
+    for (var containerName of [ 'mysql', 'postgresql', 'mail', 'mongodb' ]) {
+        const containerConfig = platformConfig[containerName];
+        if (!containerConfig) continue;
+
+        if (!containerConfig.memory || !containerConfig.memorySwap) continue;
+
+        const cmd = `docker update --memory ${containerConfig.memory} --memory-swap ${containerConfig.memorySwap} ${containerName}`;
+        shell.execSync(`update${containerName}`, cmd);
+    }
 }
 
 function emitPlatformReady() {
