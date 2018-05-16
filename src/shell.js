@@ -10,7 +10,6 @@ exports = module.exports = {
 var assert = require('assert'),
     child_process = require('child_process'),
     debug = require('debug')('box:shell'),
-    fs = require('fs'),
     once = require('once'),
     util = require('util');
 
