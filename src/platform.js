@@ -61,7 +61,7 @@ function start(callback) {
         startAddons.bind(null, existingInfra),
         removeOldImages,
         startApps.bind(null, existingInfra),
-        fs.writeFile.bind(fs, paths.INFRA_VERSION_FILE, JSON.stringify(infra))
+        fs.writeFile.bind(fs, paths.INFRA_VERSION_FILE, JSON.stringify(infra, null, 4))
     ], function (error) {
         if (error) return callback(error);
 
