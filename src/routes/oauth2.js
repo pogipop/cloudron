@@ -397,7 +397,7 @@ function accountSetup(req, res, next) {
 
                 if (error) return next(new HttpError(500, error));
 
-                res.redirect(util.format('%s?accessToken=%s&expiresAt=%s', config.adminOrigin(), result.token, result.expiresAt));
+                res.redirect(config.adminOrigin());
             });
         });
     });
