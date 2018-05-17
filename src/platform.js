@@ -102,6 +102,8 @@ function updateAddons(callback) {
             const cmd = `docker update --memory ${containerConfig.memory} --memory-swap ${containerConfig.memorySwap} ${containerName}`;
             shell.execSync(`update${containerName}`, cmd);
         }
+
+        callback();
     });
 }
 
