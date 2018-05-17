@@ -1274,6 +1274,8 @@
 * Relax restriction on mailbox names now that it is decoupled from user management
 * Fix issue where mail container incorrectly advertised CRAM-MD5 support
 
-[2.2.2]
+[2.3.0]
 * Add Name.com DNS provider
+* Fix issue where account setup page was crashing
+* Add advanced DNS configuration UI
 
