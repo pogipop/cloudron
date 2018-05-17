@@ -32,7 +32,6 @@ exports = module.exports = {
     APP_CERTS_DIR: path.join(config.baseDir(), 'boxdata/certs'),
     CLOUDRON_AVATAR_FILE: path.join(config.baseDir(), 'boxdata/avatar.png'),
     UPDATE_CHECKER_FILE: path.join(config.baseDir(), 'boxdata/updatechecker.json'),
-    PLATFORM_CONFIG_FILE: path.join(config.baseDir(), 'boxdata/platform.json'),
 
     AUTO_PROVISION_FILE: path.join(config.baseDir(), 'configs/autoprovision.json')
 };

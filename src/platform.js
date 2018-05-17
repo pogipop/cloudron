@@ -22,6 +22,7 @@ var apps = require('./apps.js'),
     reverseProxy = require('./reverseproxy.js'),
     safe = require('safetydance'),
     semver = require('semver'),
+    settings = require('./settings.js'),
     shell = require('./shell.js'),
     taskmanager = require('./taskmanager.js'),
     util = require('util'),
@@ -47,9 +48,15 @@ function start(callback) {
     // short-circuit for the restart case
     if (_.isEqual(infra, existingInfra)) {
         debug('platform is uptodate at version %s', infra.version);
-        updateAddons();
-        emitPlatformReady();
-        return callback();
+
+        updateAddons(function (error) {
+            if (error) return callback(error);
+
+            emitPlatformReady();
+
+            callback();
+        });
+        return;
     }
 
     debug('Updating infrastructure from %s to %s', existingInfra.version, infra.version);
@@ -62,13 +69,13 @@ function start(callback) {
         startAddons.bind(null, existingInfra),
         removeOldImages,
         startApps.bind(null, existingInfra),
-        fs.writeFile.bind(fs, paths.INFRA_VERSION_FILE, JSON.stringify(infra, null, 4))
+        fs.writeFile.bind(fs, paths.INFRA_VERSION_FILE, JSON.stringify(infra, null, 4)),
+        updateAddons
     ], function (error) {
         if (error) return callback(error);
 
         locker.unlock(locker.OP_PLATFORM_START);
 
-        updateAddons();
         emitPlatformReady();
 
         callback();
@@ -82,19 +89,20 @@ function stop(callback) {
     taskmanager.pauseTasks(callback);
 }
 
-function updateAddons() {
-    var platformConfig = safe.JSON.parse(safe.fs.readFileSync(paths.PLATFORM_CONFIG_FILE, 'utf8'));
-    if (!platformConfig) platformConfig = { };
+function updateAddons(callback) {
+    settings.getPlatformConfig(function (error, platformConfig) {
+        if (error) return callback(error);
 
-    for (var containerName of [ 'mysql', 'postgresql', 'mail', 'mongodb' ]) {
-        const containerConfig = platformConfig[containerName];
-        if (!containerConfig) continue;
+        for (var containerName of [ 'mysql', 'postgresql', 'mail', 'mongodb' ]) {
+            const containerConfig = platformConfig[containerName];
+            if (!containerConfig) continue;
 
-        if (!containerConfig.memory || !containerConfig.memorySwap) continue;
+            if (!containerConfig.memory || !containerConfig.memorySwap) continue;
 
-        const cmd = `docker update --memory ${containerConfig.memory} --memory-swap ${containerConfig.memorySwap} ${containerName}`;
-        shell.execSync(`update${containerName}`, cmd);
-    }
+            const cmd = `docker update --memory ${containerConfig.memory} --memory-swap ${containerConfig.memorySwap} ${containerName}`;
+            shell.execSync(`update${containerName}`, cmd);
+        }
+    });
 }
 
 function emitPlatformReady() {
