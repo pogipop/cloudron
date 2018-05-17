@@ -22,6 +22,7 @@ var accesscontrol = require('./accesscontrol.js'),
     clients = require('./clients.js'),
     config = require('./config.js'),
     ClientsError = clients.ClientsError,
+    crypto = require('crypto'),
     debug = require('debug')('box:addons'),
     docker = require('./docker.js'),
     dockerConnection = docker.connection,
@@ -431,6 +432,15 @@ function teardownRecvMail(app, options, callback) {
     appdb.unsetAddonConfig(app.id, 'recvmail', callback);
 }
 
+function mysqlDatabaseName(appId, prefix) {
+    assert.strictEqual(typeof appId, 'string');
+
+    var md5sum = crypto.createHash('md5'); // get rid of "-"
+    md5sum.update(appId);
+    var dbname = md5sum.digest('hex').substring(0, 16);  // max length of mysql usernames is 16
+    return prefix ? `${dbname}_` : dbname;
+}
+
 function setupMySql(app, options, callback) {
     assert.strictEqual(typeof app, 'object');
     assert.strictEqual(typeof options, 'object');
@@ -438,13 +448,29 @@ function setupMySql(app, options, callback) {
 
     debugApp(app, 'Setting up mysql');
 
-    var cmd = [ '/addons/mysql/service.sh', options.multipleDatabases ? 'add-prefix' : 'add', app.id ];
+    const dbname = mysqlDatabaseName(app.id, options.multipleDatabases);
+    const password = hat(4 * 48); // see box#362 for password length
 
-    docker.execContainer('mysql', cmd, { bufferStdout: true }, function (error, stdout) {
+    var cmd = [ '/addons/mysql/service.sh', options.multipleDatabases ? 'add-prefix' : 'add', dbname, password ];
+
+    docker.execContainer('mysql', cmd, { bufferStdout: true }, function (error) {
         if (error) return callback(error);
 
-        var result = stdout.toString('utf8').split('\n').slice(0, -1); // remove trailing newline
-        var env = result.map(function (r) { var idx = r.indexOf('='); return { name: r.substr(0, idx), value: r.substr(idx + 1) }; });
+        var env = [
+            { name: 'MYSQL_USERNAME', value: dbname },
+            { name: 'MYSQL_PASSWORD', value: password },
+            { name: 'MYSQL_HOST', value: 'mysql' },
+            { name: 'MYSQL_PORT', value: '3306' }
+        ];
+
+        if (options.multipleDatabases) {
+            env = env.concat({ name: 'MYSQL_DATABASE_PREFIX', value: dbname });
+        } else {
+            env = env.concat(
+                { name: 'MYSQL_URL', value: `mysql://${dbname}:${password}@mysql/${dbname}` },
+                { name: 'MYSQL_DATABASE', value: dbname }
+            );
+        }
 
         debugApp(app, 'Setting mysql addon config to %j', env);
         appdb.setAddonConfig(app.id, 'mysql', env, callback);
@@ -456,7 +482,8 @@ function teardownMySql(app, options, callback) {
     assert.strictEqual(typeof options, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    var cmd = [ '/addons/mysql/service.sh', options.multipleDatabases ? 'remove-prefix' : 'remove', app.id ];
+    const dbname = mysqlDatabaseName(app.id, options.multipleDatabases);
+    var cmd = [ '/addons/mysql/service.sh', options.multipleDatabases ? 'remove-prefix' : 'remove', dbname ];
 
     debugApp(app, 'Tearing down mysql');
 
@@ -479,7 +506,8 @@ function backupMySql(app, options, callback) {
     var output = fs.createWriteStream(path.join(paths.APPS_DATA_DIR, app.id, 'mysqldump'));
     output.on('error', callback);
 
-    var cmd = [ '/addons/mysql/service.sh', options.multipleDatabases ? 'backup-prefix' : 'backup', app.id ];
+    const dbname = mysqlDatabaseName(app.id, options.multipleDatabases);
+    var cmd = [ '/addons/mysql/service.sh', options.multipleDatabases ? 'backup-prefix' : 'backup', dbname ];
 
     docker.execContainer('mysql', cmd, { stdout: output }, callback);
 }
@@ -499,7 +527,8 @@ function restoreMySql(app, options, callback) {
         var input = fs.createReadStream(path.join(paths.APPS_DATA_DIR, app.id, 'mysqldump'));
         input.on('error', callback);
 
-        var cmd = [ '/addons/mysql/service.sh', options.multipleDatabases ? 'restore-prefix' : 'restore', app.id ];
+        const dbname = mysqlDatabaseName(app.id, options.multipleDatabases);
+        var cmd = [ '/addons/mysql/service.sh', options.multipleDatabases ? 'restore-prefix' : 'restore', dbname ];
         docker.execContainer('mysql', cmd, { stdin: input }, callback);
     });
 }
