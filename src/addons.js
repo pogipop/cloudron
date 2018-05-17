@@ -627,13 +627,22 @@ function setupMongoDb(app, options, callback) {
 
     debugApp(app, 'Setting up mongodb');
 
-    var cmd = [ '/addons/mongodb/service.sh', 'add', app.id ];
+    const dbname = app.id;
+    const password = hat(4 * 128);
 
-    docker.execContainer('mongodb', cmd, { bufferStdout: true }, function (error, stdout) {
+    var cmd = [ '/addons/mongodb/service.sh', 'add', dbname, password ];
+
+    docker.execContainer('mongodb', cmd, { bufferStdout: true }, function (error) {
         if (error) return callback(error);
 
-        var result = stdout.toString('utf8').split('\n').slice(0, -1); // remove trailing newline
-        var env = result.map(function (r) { var idx = r.indexOf('='); return { name: r.substr(0, idx), value: r.substr(idx + 1) }; });
+        var env = [
+            { name: 'MONGODB_URL', value : `mongodb://${dbname}:${password}@mongodb/${dbname}` },
+            { name: 'MONGODB_USERNAME', value : dbname },
+            { name: 'MONGODB_PASSWORD', value: password },
+            { name: 'MONGODB_HOST', value : 'mongodb' },
+            { name: 'MONGODB_PORT', value : '27017' },
+            { name: 'MONGODB_DATABASE', value : dbname }
+        ];
 
         debugApp(app, 'Setting mongodb addon config to %j', env);
         appdb.setAddonConfig(app.id, 'mongodb', env, callback);
@@ -645,7 +654,8 @@ function teardownMongoDb(app, options, callback) {
     assert.strictEqual(typeof options, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    var cmd = [ '/addons/mongodb/service.sh', 'remove', app.id ];
+    const dbname = app.id;
+    var cmd = [ '/addons/mongodb/service.sh', 'remove', dbname ];
 
     debugApp(app, 'Tearing down mongodb');
 
@@ -668,7 +678,8 @@ function backupMongoDb(app, options, callback) {
     var output = fs.createWriteStream(path.join(paths.APPS_DATA_DIR, app.id, 'mongodbdump'));
     output.on('error', callback);
 
-    var cmd = [ '/addons/mongodb/service.sh', 'backup', app.id ];
+    const dbname = app.id;
+    var cmd = [ '/addons/mongodb/service.sh', 'backup', dbname ];
 
     docker.execContainer('mongodb', cmd, { stdout: output }, callback);
 }
@@ -688,7 +699,9 @@ function restoreMongoDb(app, options, callback) {
         var input = fs.createReadStream(path.join(paths.APPS_DATA_DIR, app.id, 'mongodbdump'));
         input.on('error', callback);
 
-        var cmd = [ '/addons/mongodb/service.sh', 'restore', app.id ];
+        const dbname = app.id;
+        var cmd = [ '/addons/mongodb/service.sh', 'restore', dbname ];
+
         docker.execContainer('mongodb', cmd, { stdin: input }, callback);
     });
 }
