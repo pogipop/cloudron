@@ -540,13 +540,22 @@ function setupPostgreSql(app, options, callback) {
 
     debugApp(app, 'Setting up postgresql');
 
-    var cmd = [ '/addons/postgresql/service.sh', 'add', app.id ];
+    const appId = app.id.replace(/-/g, '');
+    const password = hat(4 * 128);
 
-    docker.execContainer('postgresql', cmd, { bufferStdout: true }, function (error, stdout) {
+    var cmd = [ '/addons/postgresql/service.sh', 'add', appId, password ];
+
+    docker.execContainer('postgresql', cmd, { bufferStdout: true }, function (error) {
         if (error) return callback(error);
 
-        var result = stdout.toString('utf8').split('\n').slice(0, -1); // remove trailing newline
-        var env = result.map(function (r) { var idx = r.indexOf('='); return { name: r.substr(0, idx), value: r.substr(idx + 1) }; });
+        var env = [
+            { name: 'POSTGRESQL_URL', value: `postgres://user${appId}:${password}@postgresql/db${appId}` },
+            { name: 'POSTGRESQL_USERNAME', value: `user${appId}` },
+            { name: 'POSTGRESQL_PASSWORD', value: password },
+            { name: 'POSTGRESQL_HOST', value: 'postgresql' },
+            { name: 'POSTGRESQL_PORT', value: '5432' },
+            { name: 'POSTGRESQL_DATABASE', value: `db${appId}` }
+        ];
 
         debugApp(app, 'Setting postgresql addon config to %j', env);
         appdb.setAddonConfig(app.id, 'postgresql', env, callback);
@@ -558,7 +567,9 @@ function teardownPostgreSql(app, options, callback) {
     assert.strictEqual(typeof options, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    var cmd = [ '/addons/postgresql/service.sh', 'remove', app.id ];
+    const appId = app.id.replace(/-/g, '');
+
+    var cmd = [ '/addons/postgresql/service.sh', 'remove', appId ];
 
     debugApp(app, 'Tearing down postgresql');
 
@@ -581,7 +592,8 @@ function backupPostgreSql(app, options, callback) {
     var output = fs.createWriteStream(path.join(paths.APPS_DATA_DIR, app.id, 'postgresqldump'));
     output.on('error', callback);
 
-    var cmd = [ '/addons/postgresql/service.sh', 'backup', app.id ];
+    const appId = app.id.replace(/-/g, '');
+    var cmd = [ '/addons/postgresql/service.sh', 'backup', appId ];
 
     docker.execContainer('postgresql', cmd, { stdout: output }, callback);
 }
@@ -601,7 +613,8 @@ function restorePostgreSql(app, options, callback) {
         var input = fs.createReadStream(path.join(paths.APPS_DATA_DIR, app.id, 'postgresqldump'));
         input.on('error', callback);
 
-        var cmd = [ '/addons/postgresql/service.sh', 'restore', app.id ];
+        const appId = app.id.replace(/-/g, '');
+        var cmd = [ '/addons/postgresql/service.sh', 'restore', appId ];
 
         docker.execContainer('postgresql', cmd, { stdin: input }, callback);
     });
