@@ -23,11 +23,11 @@ var accesscontrol = require('./accesscontrol.js'),
     config = require('./config.js'),
     ClientsError = clients.ClientsError,
     crypto = require('crypto'),
+    DatabaseError = require('./databaseerror.js'),
     debug = require('debug')('box:addons'),
     docker = require('./docker.js'),
     dockerConnection = docker.connection,
     fs = require('fs'),
-    generatePassword = require('password-generator'),
     hat = require('hat'),
     infra = require('./infra_version.js'),
     mail = require('./mail.js'),
@@ -365,23 +365,28 @@ function setupSendMail(app, options, callback) {
 
     debugApp(app, 'Setting up SendMail');
 
-    mailboxdb.getByOwnerId(app.id, function (error, results) {
-        if (error) return callback(error);
+    appdb.getAddonConfigByName(app.id, 'sendmail', 'MAIL_SMTP_PASSWORD', function (error, existingPassword) {
+        if (error && error.reason !== DatabaseError.NOT_FOUND) return callback(error);
 
-        var mailbox = results.filter(function (r) { return !r.aliasTarget; })[0];
-        var password = generatePassword(128, false /* memorable */, /[\w\d_]/);
+        var password = error ? hat(4 * 128) : existingPassword;
 
-        var env = [
-            { name: 'MAIL_SMTP_SERVER', value: 'mail' },
-            { name: 'MAIL_SMTP_PORT', value: '2525' },
-            { name: 'MAIL_SMTPS_PORT', value: '2465' },
-            { name: 'MAIL_SMTP_USERNAME', value: mailbox.name + '@' + app.domain },
-            { name: 'MAIL_SMTP_PASSWORD', value: password },
-            { name: 'MAIL_FROM', value: mailbox.name + '@' + app.domain },
-            { name: 'MAIL_DOMAIN', value: app.domain }
-        ];
-        debugApp(app, 'Setting sendmail addon config to %j', env);
-        appdb.setAddonConfig(app.id, 'sendmail', env, callback);
+        mailboxdb.getByOwnerId(app.id, function (error, results) {
+            if (error) return callback(error);
+
+            var mailbox = results.filter(function (r) { return !r.aliasTarget; })[0];
+
+            var env = [
+                { name: 'MAIL_SMTP_SERVER', value: 'mail' },
+                { name: 'MAIL_SMTP_PORT', value: '2525' },
+                { name: 'MAIL_SMTPS_PORT', value: '2465' },
+                { name: 'MAIL_SMTP_USERNAME', value: mailbox.name + '@' + app.domain },
+                { name: 'MAIL_SMTP_PASSWORD', value: password },
+                { name: 'MAIL_FROM', value: mailbox.name + '@' + app.domain },
+                { name: 'MAIL_DOMAIN', value: app.domain }
+            ];
+            debugApp(app, 'Setting sendmail addon config to %j', env);
+            appdb.setAddonConfig(app.id, 'sendmail', env, callback);
+        });
     });
 }
 
@@ -402,23 +407,28 @@ function setupRecvMail(app, options, callback) {
 
     debugApp(app, 'Setting up recvmail');
 
-    mailboxdb.getByOwnerId(app.id, function (error, results) {
-        if (error) return callback(error);
+    appdb.getAddonConfigByName(app.id, 'recvmail', 'MAIL_IMAP_PASSWORD', function (error, existingPassword) {
+        if (error && error.reason !== DatabaseError.NOT_FOUND) return callback(error);
 
-        var mailbox = results.filter(function (r) { return !r.aliasTarget; })[0];
-        var password = generatePassword(128, false /* memorable */, /[\w\d_]/);
+        var password = error ? hat(4 * 128) : existingPassword;
 
-        var env = [
-            { name: 'MAIL_IMAP_SERVER', value: 'mail' },
-            { name: 'MAIL_IMAP_PORT', value: '9993' },
-            { name: 'MAIL_IMAP_USERNAME', value: mailbox.name + '@' + app.domain },
-            { name: 'MAIL_IMAP_PASSWORD', value: password },
-            { name: 'MAIL_TO', value: mailbox.name + '@' + app.domain },
-            { name: 'MAIL_DOMAIN', value: app.domain }
-        ];
+        mailboxdb.getByOwnerId(app.id, function (error, results) {
+            if (error) return callback(error);
 
-        debugApp(app, 'Setting sendmail addon config to %j', env);
-        appdb.setAddonConfig(app.id, 'recvmail', env, callback);
+            var mailbox = results.filter(function (r) { return !r.aliasTarget; })[0];
+
+            var env = [
+                { name: 'MAIL_IMAP_SERVER', value: 'mail' },
+                { name: 'MAIL_IMAP_PORT', value: '9993' },
+                { name: 'MAIL_IMAP_USERNAME', value: mailbox.name + '@' + app.domain },
+                { name: 'MAIL_IMAP_PASSWORD', value: password },
+                { name: 'MAIL_TO', value: mailbox.name + '@' + app.domain },
+                { name: 'MAIL_DOMAIN', value: app.domain }
+            ];
+
+            debugApp(app, 'Setting sendmail addon config to %j', env);
+            appdb.setAddonConfig(app.id, 'recvmail', env, callback);
+        });
     });
 }
 
@@ -448,32 +458,36 @@ function setupMySql(app, options, callback) {
 
     debugApp(app, 'Setting up mysql');
 
-    const dbname = mysqlDatabaseName(app.id, options.multipleDatabases);
-    const password = hat(4 * 48); // see box#362 for password length
+    appdb.getAddonConfigByName(app.id, 'mysql', 'MYSQL_PASSWORD', function (error, existingPassword) {
+        if (error && error.reason !== DatabaseError.NOT_FOUND) return callback(error);
 
-    var cmd = [ '/addons/mysql/service.sh', options.multipleDatabases ? 'add-prefix' : 'add', dbname, password ];
+        const dbname = mysqlDatabaseName(app.id, options.multipleDatabases);
+        const password = error ? hat(4 * 48) : existingPassword; // see box#362 for password length
 
-    docker.execContainer('mysql', cmd, { bufferStdout: true }, function (error) {
-        if (error) return callback(error);
+        var cmd = [ '/addons/mysql/service.sh', options.multipleDatabases ? 'add-prefix' : 'add', dbname, password ];
 
-        var env = [
-            { name: 'MYSQL_USERNAME', value: dbname },
-            { name: 'MYSQL_PASSWORD', value: password },
-            { name: 'MYSQL_HOST', value: 'mysql' },
-            { name: 'MYSQL_PORT', value: '3306' }
-        ];
+        docker.execContainer('mysql', cmd, { bufferStdout: true }, function (error) {
+            if (error) return callback(error);
 
-        if (options.multipleDatabases) {
-            env = env.concat({ name: 'MYSQL_DATABASE_PREFIX', value: dbname });
-        } else {
-            env = env.concat(
-                { name: 'MYSQL_URL', value: `mysql://${dbname}:${password}@mysql/${dbname}` },
-                { name: 'MYSQL_DATABASE', value: dbname }
-            );
-        }
+            var env = [
+                { name: 'MYSQL_USERNAME', value: dbname },
+                { name: 'MYSQL_PASSWORD', value: password },
+                { name: 'MYSQL_HOST', value: 'mysql' },
+                { name: 'MYSQL_PORT', value: '3306' }
+            ];
 
-        debugApp(app, 'Setting mysql addon config to %j', env);
-        appdb.setAddonConfig(app.id, 'mysql', env, callback);
+            if (options.multipleDatabases) {
+                env = env.concat({ name: 'MYSQL_DATABASE_PREFIX', value: dbname });
+            } else {
+                env = env.concat(
+                    { name: 'MYSQL_URL', value: `mysql://${dbname}:${password}@mysql/${dbname}` },
+                    { name: 'MYSQL_DATABASE', value: dbname }
+                );
+            }
+
+            debugApp(app, 'Setting mysql addon config to %j', env);
+            appdb.setAddonConfig(app.id, 'mysql', env, callback);
+        });
     });
 }
 
@@ -540,25 +554,29 @@ function setupPostgreSql(app, options, callback) {
 
     debugApp(app, 'Setting up postgresql');
 
-    const appId = app.id.replace(/-/g, '');
-    const password = hat(4 * 128);
+    appdb.getAddonConfigByName(app.id, 'postgresql', 'POSTGRESQL_PASSWORD', function (error, existingPassword) {
+        if (error && error.reason !== DatabaseError.NOT_FOUND) return callback(error);
 
-    var cmd = [ '/addons/postgresql/service.sh', 'add', appId, password ];
+        const password = error ? hat(4 * 128) : existingPassword;
+        const appId = app.id.replace(/-/g, '');
 
-    docker.execContainer('postgresql', cmd, { bufferStdout: true }, function (error) {
-        if (error) return callback(error);
+        var cmd = [ '/addons/postgresql/service.sh', 'add', appId, password ];
 
-        var env = [
-            { name: 'POSTGRESQL_URL', value: `postgres://user${appId}:${password}@postgresql/db${appId}` },
-            { name: 'POSTGRESQL_USERNAME', value: `user${appId}` },
-            { name: 'POSTGRESQL_PASSWORD', value: password },
-            { name: 'POSTGRESQL_HOST', value: 'postgresql' },
-            { name: 'POSTGRESQL_PORT', value: '5432' },
-            { name: 'POSTGRESQL_DATABASE', value: `db${appId}` }
-        ];
+        docker.execContainer('postgresql', cmd, { bufferStdout: true }, function (error) {
+            if (error) return callback(error);
 
-        debugApp(app, 'Setting postgresql addon config to %j', env);
-        appdb.setAddonConfig(app.id, 'postgresql', env, callback);
+            var env = [
+                { name: 'POSTGRESQL_URL', value: `postgres://user${appId}:${password}@postgresql/db${appId}` },
+                { name: 'POSTGRESQL_USERNAME', value: `user${appId}` },
+                { name: 'POSTGRESQL_PASSWORD', value: password },
+                { name: 'POSTGRESQL_HOST', value: 'postgresql' },
+                { name: 'POSTGRESQL_PORT', value: '5432' },
+                { name: 'POSTGRESQL_DATABASE', value: `db${appId}` }
+            ];
+
+            debugApp(app, 'Setting postgresql addon config to %j', env);
+            appdb.setAddonConfig(app.id, 'postgresql', env, callback);
+        });
     });
 }
 
@@ -627,25 +645,30 @@ function setupMongoDb(app, options, callback) {
 
     debugApp(app, 'Setting up mongodb');
 
-    const dbname = app.id;
-    const password = hat(4 * 128);
+    appdb.getAddonConfigByName(app.id, 'mongodb', 'MONGODB_PASSWORD', function (error, existingPassword) {
+        if (error && error.reason !== DatabaseError.NOT_FOUND) return callback(error);
 
-    var cmd = [ '/addons/mongodb/service.sh', 'add', dbname, password ];
+        const password = error ? hat(4 * 128) : existingPassword;
 
-    docker.execContainer('mongodb', cmd, { bufferStdout: true }, function (error) {
-        if (error) return callback(error);
+        const dbname = app.id;
 
-        var env = [
-            { name: 'MONGODB_URL', value : `mongodb://${dbname}:${password}@mongodb/${dbname}` },
-            { name: 'MONGODB_USERNAME', value : dbname },
-            { name: 'MONGODB_PASSWORD', value: password },
-            { name: 'MONGODB_HOST', value : 'mongodb' },
-            { name: 'MONGODB_PORT', value : '27017' },
-            { name: 'MONGODB_DATABASE', value : dbname }
-        ];
+        var cmd = [ '/addons/mongodb/service.sh', 'add', dbname, password ];
 
-        debugApp(app, 'Setting mongodb addon config to %j', env);
-        appdb.setAddonConfig(app.id, 'mongodb', env, callback);
+        docker.execContainer('mongodb', cmd, { bufferStdout: true }, function (error) {
+            if (error) return callback(error);
+
+            var env = [
+                { name: 'MONGODB_URL', value : `mongodb://${dbname}:${password}@mongodb/${dbname}` },
+                { name: 'MONGODB_USERNAME', value : dbname },
+                { name: 'MONGODB_PASSWORD', value: password },
+                { name: 'MONGODB_HOST', value : 'mongodb' },
+                { name: 'MONGODB_PORT', value : '27017' },
+                { name: 'MONGODB_DATABASE', value : dbname }
+            ];
+
+            debugApp(app, 'Setting mongodb addon config to %j', env);
+            appdb.setAddonConfig(app.id, 'mongodb', env, callback);
+        });
     });
 }
 
@@ -712,58 +735,63 @@ function setupRedis(app, options, callback) {
     assert.strictEqual(typeof options, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    var redisPassword = generatePassword(128, false /* memorable */, /[\w\d_]/); // ensure no / in password for being sed friendly (and be uri friendly)
-    var redisVarsFile = path.join(paths.ADDON_CONFIG_DIR, 'redis-' + app.id + '_vars.sh');
-    var redisDataDir = path.join(paths.APPS_DATA_DIR, app.id + '/redis');
+    appdb.getAddonConfigByName(app.id, 'redis', 'REDIS_PASSWORD', function (error, existingPassword) {
+        if (error && error.reason !== DatabaseError.NOT_FOUND) return callback(error);
 
-    if (!safe.fs.writeFileSync(redisVarsFile, 'REDIS_PASSWORD=' + redisPassword)) {
-        return callback(new Error('Error writing redis config'));
-    }
+        const redisPassword = error ? hat(4 * 48) : existingPassword; // see box#362 for password length
 
-    if (!safe.fs.mkdirSync(redisDataDir) && safe.error.code !== 'EEXIST') return callback(new Error('Error creating redis data dir:' + safe.error));
+        var redisVarsFile = path.join(paths.ADDON_CONFIG_DIR, 'redis-' + app.id + '_vars.sh');
+        var redisDataDir = path.join(paths.APPS_DATA_DIR, app.id + '/redis');
 
-    // Compute redis memory limit based on app's memory limit (this is arbitrary)
-    var memoryLimit = app.memoryLimit || app.manifest.memoryLimit || 0;
+        if (!safe.fs.writeFileSync(redisVarsFile, 'REDIS_PASSWORD=' + redisPassword)) {
+            return callback(new Error('Error writing redis config'));
+        }
 
-    if (memoryLimit === -1) { // unrestricted (debug mode)
-        memoryLimit = 0;
-    } else if (memoryLimit === 0 || memoryLimit <= (2 * 1024 * 1024 * 1024)) { // less than 2G (ram+swap)
-        memoryLimit = 150 * 1024 * 1024; // 150m
-    } else {
-        memoryLimit = 600 * 1024 * 1024; // 600m
-    }
+        if (!safe.fs.mkdirSync(redisDataDir) && safe.error.code !== 'EEXIST') return callback(new Error('Error creating redis data dir:' + safe.error));
 
-    const tag = infra.images.redis.tag, redisName = 'redis-' + app.id;
-    const label = app.fqdn;
-    // note that we do not add appId label because this interferes with the stop/start app logic
-    const cmd = `docker run --restart=always -d --name=${redisName} \
-                --label=location=${label} \
-                --net cloudron \
-                --net-alias ${redisName} \
-                -m ${memoryLimit/2} \
-                --memory-swap ${memoryLimit} \
-                --dns 172.18.0.1 \
-                --dns-search=. \
-                -v ${redisVarsFile}:/etc/redis/redis_vars.sh:ro \
-                -v ${redisDataDir}:/var/lib/redis:rw \
-                --read-only -v /tmp -v /run ${tag}`;
+        // Compute redis memory limit based on app's memory limit (this is arbitrary)
+        var memoryLimit = app.memoryLimit || app.manifest.memoryLimit || 0;
 
-    var env = [
-        { name: 'REDIS_URL', value: 'redis://redisuser:' + redisPassword + '@redis-' + app.id },
-        { name: 'REDIS_PASSWORD', value: redisPassword },
-        { name: 'REDIS_HOST', value: redisName },
-        { name: 'REDIS_PORT', value: '6379' }
-    ];
+        if (memoryLimit === -1) { // unrestricted (debug mode)
+            memoryLimit = 0;
+        } else if (memoryLimit === 0 || memoryLimit <= (2 * 1024 * 1024 * 1024)) { // less than 2G (ram+swap)
+            memoryLimit = 150 * 1024 * 1024; // 150m
+        } else {
+            memoryLimit = 600 * 1024 * 1024; // 600m
+        }
 
-    async.series([
-        // stop so that redis can flush itself with SIGTERM
-        shell.execSync.bind(null, 'stopRedis', `docker stop --time=10 ${redisName} 2>/dev/null || true`),
-        shell.execSync.bind(null, 'stopRedis', `docker rm --volumes ${redisName} 2>/dev/null || true`),
-        shell.execSync.bind(null, 'startRedis', cmd),
-        appdb.setAddonConfig.bind(null, app.id, 'redis', env)
-    ], function (error) {
-        if (error) debug('Error setting up redis: ', error);
-        callback(error);
+        const tag = infra.images.redis.tag, redisName = 'redis-' + app.id;
+        const label = app.fqdn;
+        // note that we do not add appId label because this interferes with the stop/start app logic
+        const cmd = `docker run --restart=always -d --name=${redisName} \
+                    --label=location=${label} \
+                    --net cloudron \
+                    --net-alias ${redisName} \
+                    -m ${memoryLimit/2} \
+                    --memory-swap ${memoryLimit} \
+                    --dns 172.18.0.1 \
+                    --dns-search=. \
+                    -v ${redisVarsFile}:/etc/redis/redis_vars.sh:ro \
+                    -v ${redisDataDir}:/var/lib/redis:rw \
+                    --read-only -v /tmp -v /run ${tag}`;
+
+        var env = [
+            { name: 'REDIS_URL', value: 'redis://redisuser:' + redisPassword + '@redis-' + app.id },
+            { name: 'REDIS_PASSWORD', value: redisPassword },
+            { name: 'REDIS_HOST', value: redisName },
+            { name: 'REDIS_PORT', value: '6379' }
+        ];
+
+        async.series([
+            // stop so that redis can flush itself with SIGTERM
+            shell.execSync.bind(null, 'stopRedis', `docker stop --time=10 ${redisName} 2>/dev/null || true`),
+            shell.execSync.bind(null, 'stopRedis', `docker rm --volumes ${redisName} 2>/dev/null || true`),
+            shell.execSync.bind(null, 'startRedis', cmd),
+            appdb.setAddonConfig.bind(null, app.id, 'redis', env)
+        ], function (error) {
+            if (error) debug('Error setting up redis: ', error);
+            callback(error);
+        });
     });
 }
 
