@@ -1279,4 +1279,5 @@
 * Fix issue where account setup page was crashing
 * Add advanced DNS configuration UI
 * Preserve addon/database configuration across app updates and restores
+* ManageSieve port now offers STARTTLS
 
