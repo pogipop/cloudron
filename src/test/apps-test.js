@@ -102,7 +102,9 @@ describe('Apps', function () {
         },
         portBindings: { PORT: 5678 },
         accessRestriction: null,
-        memoryLimit: 0
+        memoryLimit: 0,
+        robotsTxt: null,
+        sso: false
     };
 
     var APP_1 = {
@@ -114,7 +116,7 @@ describe('Apps', function () {
             version: '0.1', dockerImage: 'docker/app1', healthCheckPath: '/', httpPort: 80, title: 'app1',
             tcpPorts: {}
         },
-        portBindings: null,
+        portBindings: {},
         accessRestriction: { users: [ 'someuser' ], groups: [ GROUP_0.id ] },
         memoryLimit: 0
     };
@@ -128,9 +130,11 @@ describe('Apps', function () {
             version: '0.1', dockerImage: 'docker/app2', healthCheckPath: '/', httpPort: 80, title: 'app2',
             tcpPorts: {}
         },
-        portBindings: null,
+        portBindings: {},
         accessRestriction: { users: [ 'someuser', USER_0.id ], groups: [ GROUP_1.id ] },
-        memoryLimit: 0
+        memoryLimit: 0,
+        robotsTxt: null,
+        sso: false
     };
 
     before(function (done) {
@@ -409,12 +413,12 @@ describe('Apps', function () {
             apps.restoreInstalledApps(function (error) {
                 expect(error).to.be(null);
 
-                apps.getAll(function (error, apps) {
-                    expect(apps[0].installationState).to.be(appdb.ISTATE_PENDING_RESTORE);
-                    expect(apps[0].oldConfig).to.be(null);
-                    expect(apps[1].installationState).to.be(appdb.ISTATE_PENDING_RESTORE);
-                    expect(apps[2].installationState).to.be(appdb.ISTATE_PENDING_RESTORE);
-                    expect(apps[2].oldConfig).to.be(null);
+                apps.getAll(function (error, result) {
+                    expect(result[0].installationState).to.be(appdb.ISTATE_PENDING_RESTORE);
+                    expect(result[0].oldConfig).to.eql(apps.getAppConfig(APP_0));
+                    expect(result[1].installationState).to.be(appdb.ISTATE_PENDING_RESTORE);
+                    expect(result[2].installationState).to.be(appdb.ISTATE_PENDING_RESTORE);
+                    expect(result[2].oldConfig).to.eql(apps.getAppConfig(APP_2));
 
                     done();
                 });
