@@ -374,8 +374,14 @@ function install(app, callback) {
         removeLogrotateConfig.bind(null, app),
         stopApp.bind(null, app),
         deleteContainers.bind(null, app),
-        // oldConfig can be null during upgrades
-        addons.teardownAddons.bind(null, app, app.oldConfig ? app.oldConfig.manifest.addons : app.manifest.addons),
+        function teardownAddons(next) {
+            // when restoring, app does not require these addons anymore. remove carefully to preserve the db passwords
+            var addonsToRemove = !isRestoring
+                ? app.manifest.addons
+                : _.omit(app.oldConfig.manifest.addons, Object.keys(app.manifest.addons));
+
+            addons.teardownAddons(app, addonsToRemove, next);
+        },
         deleteVolume.bind(null, app, { removeDirectory: false }), // do not remove any symlinked volume
 
         // for restore case

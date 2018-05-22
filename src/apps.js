@@ -1203,7 +1203,7 @@ function restoreInstalledApps(callback) {
 
                 debug(`marking ${app.fqdn} for restore using restore config ${JSON.stringify(restoreConfig)}`);
 
-                appdb.setInstallationCommand(app.id, appdb.ISTATE_PENDING_RESTORE, { restoreConfig: restoreConfig, oldConfig: null }, function (error) {
+                appdb.setInstallationCommand(app.id, appdb.ISTATE_PENDING_RESTORE, { restoreConfig: restoreConfig, oldConfig: getAppConfig(app) }, function (error) {
                     if (error) debug(`Error marking ${app.fqdn} for restore: ${JSON.stringify(error)}`);
 
                     iteratorDone(); // always succeed
