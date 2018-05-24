@@ -34,9 +34,15 @@ function addRecord(dnsConfig, zoneName, subdomain, type, values, callback) {
     var data = {
         host: subdomain,
         type: type,
-        answer: values[0],
         ttl: 300    // 300 is the lowest
     };
+
+    if (type === 'MX') {
+        data.priority = parseInt(values[0].split(' ')[0], 10);
+        data.answer = values[0].split(' ')[1];
+    } else {
+        data.answer = values[0];
+    }
 
     superagent.post(`${NAMECOM_API}/domains/${zoneName}/records`)
         .auth(dnsConfig.username, dnsConfig.token)
@@ -49,7 +55,7 @@ function addRecord(dnsConfig, zoneName, subdomain, type, values, callback) {
 
             return callback(null, 'unused-id');
         });
-    }
+}
 
 function updateRecord(dnsConfig, zoneName, recordId, subdomain, type, values, callback) {
     assert.strictEqual(typeof dnsConfig, 'object');
@@ -65,9 +71,15 @@ function updateRecord(dnsConfig, zoneName, recordId, subdomain, type, values, ca
     var data = {
         host: subdomain,
         type: type,
-        answer: values[0],
         ttl: 300    // 300 is the lowest
     };
+
+    if (type === 'MX') {
+        data.priority = parseInt(values[0].split(' ')[0], 10);
+        data.answer = values[0].split(' ')[1];
+    } else {
+        data.answer = values[0];
+    }
 
     superagent.put(`${NAMECOM_API}/domains/${zoneName}/records/${recordId}`)
         .auth(dnsConfig.username, dnsConfig.token)
