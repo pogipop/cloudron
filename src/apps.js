@@ -324,8 +324,9 @@ function getAppConfig(app) {
 }
 
 function removeInternalAppFields(app) {
-    return _.pick(app, 'id', 'appStoreId', 'installationState', 'installationProgress', 'runState', 'health',
-        'location', 'domain', 'fqdn',
+    return _.pick(app,
+        'id', 'appStoreId', 'installationState', 'installationProgress', 'runState', 'health',
+        'location', 'domain', 'fqdn', 'mailboxName',
         'accessRestriction', 'manifest', 'portBindings', 'iconUrl', 'memoryLimit', 'xFrameOptions',
         'sso', 'debugMode', 'robotsTxt', 'enableBackup', 'creationTime', 'updateTime');
 }
@@ -375,7 +376,13 @@ function get(appId, callback) {
             app.iconUrl = getIconUrlSync(app);
             app.fqdn = domains.fqdn(app.location, app.domain, result.provider);
 
-            callback(null, app);
+            mailboxdb.getByOwnerId(app.id, function (error, mailboxes) {
+                if (error && error.reason !== DatabaseError.NOT_FOUND) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
+
+                if (!error) app.mailboxName = mailboxes[0].name;
+
+                callback(null, app);
+            });
         });
     });
 }
@@ -397,7 +404,13 @@ function getByIpAddress(ip, callback) {
                 app.iconUrl = getIconUrlSync(app);
                 app.fqdn = domains.fqdn(app.location, app.domain, result.provider);
 
-                callback(null, app);
+                mailboxdb.getByOwnerId(app.id, function (error, mailboxes) {
+                    if (error && error.reason !== DatabaseError.NOT_FOUND) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
+
+                    if (!error) app.mailboxName = mailboxes[0].name;
+
+                    callback(null, app);
+                });
             });
         });
     });
@@ -416,7 +429,13 @@ function getAll(callback) {
                 app.iconUrl = getIconUrlSync(app);
                 app.fqdn = domains.fqdn(app.location, app.domain, result.provider);
 
-                iteratorDone();
+                mailboxdb.getByOwnerId(app.id, function (error, mailboxes) {
+                    if (error && error.reason !== DatabaseError.NOT_FOUND) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
+
+                    if (!error) app.mailboxName = mailboxes[0].name;
+
+                    iteratorDone(null, app);
+                });
             });
         }, function (error) {
             if (error) return callback(error);
