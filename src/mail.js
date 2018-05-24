@@ -12,6 +12,8 @@ exports = module.exports = {
 
     addDnsRecords: addDnsRecords,
 
+    validateName: validateName,
+
     setMailFromValidation: setMailFromValidation,
     setCatchAllAddress: setCatchAllAddress,
     setMailRelay: setMailRelay,
@@ -46,7 +48,6 @@ exports = module.exports = {
 var assert = require('assert'),
     async = require('async'),
     config = require('./config.js'),
-    constants = require('./constants.js'),
     DatabaseError = require('./databaseerror.js'),
     debug = require('debug')('box:mail'),
     dns = require('./native-dns.js'),

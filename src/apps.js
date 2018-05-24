@@ -66,6 +66,7 @@ var addons = require('./addons.js'),
     eventlog = require('./eventlog.js'),
     fs = require('fs'),
     groups = require('./groups.js'),
+    mail = require('./mail.js'),
     mailboxdb = require('./mailboxdb.js'),
     manifestFormat = require('cloudron-manifestformat'),
     os = require('os'),
@@ -670,6 +671,11 @@ function configure(appId, data, auditSource, callback) {
             if (error) return callback(error);
         }
 
+        if ('mailboxName' in data) {
+            error = mail.validateName(data.mailboxName);
+            if (error) return callback(error);
+        }
+
         domains.get(domain, function (error, domainObject) {
             if (error && error.reason === DomainsError.NOT_FOUND) return callback(new AppsError(AppsError.NOT_FOUND, 'No such domain'));
             if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, 'Could not get domain info:' + error.message));
@@ -699,8 +705,8 @@ function configure(appId, data, auditSource, callback) {
 
             debug('Will configure app with id:%s values:%j', appId, values);
 
-            var oldName = (app.location ? app.location : app.manifest.title.toLowerCase().replace(/[^a-zA-Z0-9]/g, '')) + '.app';
-            var newName = (location ? location : app.manifest.title.toLowerCase().replace(/[^a-zA-Z0-9]/g, '')) + '.app';
+            var oldName = app.mailboxName;
+            var newName = data.mailboxName || app.mailboxName;
             mailboxdb.updateName(oldName, values.oldConfig.domain, newName, domain, function (error) {
                 if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(new AppsError(AppsError.ALREADY_EXISTS, 'This mailbox is already taken'));
                 if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new AppsError(AppsError.BAD_STATE));

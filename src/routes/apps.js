@@ -170,6 +170,8 @@ function configureApp(req, res, next) {
 
     if (data.robotsTxt && typeof data.robotsTxt !== 'string') return next(new HttpError(400, 'robotsTxt must be a string'));
 
+    if ('mailboxName' in data && typeof data.mailboxName !== 'string') return next(new HttpError(400, 'mailboxName must be a string'));
+
     debug('Configuring app id:%s data:%j', req.params.id, data);
 
     apps.configure(req.params.id, data, auditSource(req), function (error) {
