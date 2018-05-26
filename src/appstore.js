@@ -18,7 +18,8 @@ exports = module.exports = {
     AppstoreError: AppstoreError
 };
 
-var apps = require('./apps.js'),
+var appdb = require('./appdb.js'),
+    apps = require('./apps.js'),
     assert = require('assert'),
     async = require('async'),
     config = require('./config.js'),
@@ -96,20 +97,41 @@ function purchase(appId, appstoreId, callback) {
 
     if (appstoreId === '') return callback(null);
 
-    getAppstoreConfig(function (error, appstoreConfig) {
+    function doThePurchase() {
+        getAppstoreConfig(function (error, appstoreConfig) {
+            if (error) return callback(error);
+
+            var url = config.apiServerOrigin() + '/api/v1/users/' + appstoreConfig.userId + '/cloudrons/' + appstoreConfig.cloudronId + '/apps/' + appId;
+            var data = { appstoreId: appstoreId };
+
+            superagent.post(url).send(data).query({ accessToken: appstoreConfig.token }).timeout(30 * 1000).end(function (error, result) {
+                if (error && !error.response) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, error.message));
+                if (result.statusCode === 404) return callback(new AppstoreError(AppstoreError.NOT_FOUND));
+                if (result.statusCode === 403 || result.statusCode === 401) return callback(new AppstoreError(AppstoreError.BILLING_REQUIRED));
+                if (result.statusCode === 402) return callback(new AppstoreError(AppstoreError.BILLING_REQUIRED, result.body.message));
+                if (result.statusCode !== 201 && result.statusCode !== 200) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, util.format('App purchase failed. %s %j', result.status, result.body)));
+
+                callback(null);
+            });
+        });
+    }
+
+    getSubscription(function (error, result) {
         if (error) return callback(error);
 
-        var url = config.apiServerOrigin() + '/api/v1/users/' + appstoreConfig.userId + '/cloudrons/' + appstoreConfig.cloudronId + '/apps/' + appId;
-        var data = { appstoreId: appstoreId };
+        // only check for app install count if on the free plan or subscription is not active
+        if (result.id !== 'free' && result.status === 'active') return doThePurchase();
 
-        superagent.post(url).send(data).query({ accessToken: appstoreConfig.token }).timeout(30 * 1000).end(function (error, result) {
-            if (error && !error.response) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, error.message));
-            if (result.statusCode === 404) return callback(new AppstoreError(AppstoreError.NOT_FOUND));
-            if (result.statusCode === 403 || result.statusCode === 401) return callback(new AppstoreError(AppstoreError.BILLING_REQUIRED));
-            if (result.statusCode === 402) return callback(new AppstoreError(AppstoreError.BILLING_REQUIRED, result.body.message));
-            if (result.statusCode !== 201 && result.statusCode !== 200) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, util.format('App purchase failed. %s %j', result.status, result.body)));
+        appdb.getAppStoreIds(function (error, result) {
+            if (error) return callback(new AppstoreError(AppstoreError.INTERNAL_ERROR, error));
 
-            callback(null);
+            var count = result.filter(function (a) { return !!a.appStoreId; }).length;
+
+            // we only allow max of 2 app installations without a subscription
+            // WARNING install and clone in apps.js will first add the db record and then call purchase() so we test for more than 2 here
+            if (count > 2) return callback(new AppstoreError(AppstoreError.BILLING_REQUIRED, 'Too many apps installed'));
+
+            doThePurchase();
         });
     });
 }
