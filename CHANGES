@@ -1292,4 +1292,5 @@
 * Add the ability to manually trigger a backup of an application
 * Enable/disable mail from validation within UI
 * Allow setting app visibility for non-SSO apps
+* Add Clone UI
 
