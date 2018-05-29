@@ -105,7 +105,7 @@ function checkAppUpdates(callback) {
                     }
 
                     // always send notifications if user is on the free plan
-                    if (result.plan.id === 'free') {
+                    if (appstore.isFreePlan(result)) {
                         debug('Notifying user of app update for %s from %s to %s', app.id, app.manifest.version, updateInfo.manifest.version);
                         mailer.appUpdateAvailable(app, false /* subscription */, updateInfo);
                         return iteratorDone();
@@ -162,7 +162,7 @@ function checkBoxUpdates(callback) {
             }
 
             // always send notifications if user is on the free plan
-            if (result.plan.id === 'free') {
+            if (appstore.isFreePlan(result)) {
                 mailer.boxUpdateAvailable(false /* hasSubscription */, updateInfo.version, updateInfo.changelog);
                 return done();
             }

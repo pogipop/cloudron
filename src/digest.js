@@ -28,10 +28,8 @@ function maybeSend(callback) {
         var pendingAppUpdates = updateInfo.apps || {};
         pendingAppUpdates = Object.keys(pendingAppUpdates).map(function (key) { return pendingAppUpdates[key]; });
 
-        appstore.getSubscription(function (error, result) {
+        appstore.getSubscription(function (error, subscription) {
             if (error) debug('Error getting subscription:', error);
-
-            var hasSubscription = result && result.plan.id !== 'free';
 
             eventlog.getByCreationTime(new Date(new Date() - 7*86400000), function (error, events) {
                 if (error) return callback(error);
@@ -46,7 +44,7 @@ function maybeSend(callback) {
                 if (error) return callback(error);
 
                 var info = {
-                    hasSubscription: hasSubscription,
+                    hasSubscription: appstore.isFreePlan(subscription),
 
                     pendingAppUpdates: pendingAppUpdates,
                     pendingBoxUpdate: updateInfo.box || null,

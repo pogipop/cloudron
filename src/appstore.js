@@ -5,6 +5,7 @@ exports = module.exports = {
     unpurchase: unpurchase,
 
     getSubscription: getSubscription,
+    isFreePlan: isFreePlan,
 
     sendAliveStatus: sendAliveStatus,
 
@@ -88,6 +89,10 @@ function getSubscription(callback) {
             callback(null, result.body.subscription);
         });
     });
+}
+
+function isFreePlan(subscription) {
+    return !subscription || subscription.plan.id === 'free';
 }
 
 function purchase(appId, appstoreId, callback) {
