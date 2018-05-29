@@ -124,8 +124,8 @@ function purchase(appId, appstoreId, callback) {
     getSubscription(function (error, result) {
         if (error) return callback(error);
 
-        // only check for app install count if on the free plan or subscription is not active
-        if (result.id !== 'free' && result.status === 'active') return doThePurchase();
+        // only check for app install count if on the free plan
+        if (result.id !== 'free') return doThePurchase();
 
         appdb.getAppStoreIds(function (error, result) {
             if (error) return callback(new AppstoreError(AppstoreError.INTERNAL_ERROR, error));
