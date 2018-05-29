@@ -182,6 +182,7 @@ function setMailEnabled(req, res, next) {
     mail.setMailEnabled(req.params.domain, !!req.body.enabled, function (error) {
         if (error && error.reason === MailError.NOT_FOUND) return next(new HttpError(404, error.message));
         if (error && error.reason === MailError.BAD_FIELD) return next(new HttpError(400, error.message));
+        if (error && error.reason === MailError.BILLING_REQUIRED) return next(new HttpError(402, error.message));
         if (error) return next(new HttpError(500, error));
 
         next(new HttpSuccess(202));

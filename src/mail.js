@@ -47,6 +47,7 @@ exports = module.exports = {
 
 var assert = require('assert'),
     async = require('async'),
+    appstore = require('./appstore.js'),
     config = require('./config.js'),
     DatabaseError = require('./databaseerror.js'),
     debug = require('debug')('box:mail'),
@@ -93,10 +94,12 @@ function MailError(reason, errorOrMessage) {
 }
 util.inherits(MailError, Error);
 MailError.INTERNAL_ERROR = 'Internal Error';
+MailError.EXTERNAL_ERROR = 'External Error';
 MailError.BAD_FIELD = 'Bad Field';
 MailError.ALREADY_EXISTS = 'Already Exists';
 MailError.NOT_FOUND = 'Not Found';
 MailError.IN_USE = 'In Use';
+MailError.BILLING_REQUIRED = 'Billing Required';
 
 function validateName(name) {
     assert.strictEqual(typeof name, 'string');
@@ -824,25 +827,32 @@ function setMailEnabled(domain, enabled, callback) {
     assert.strictEqual(typeof enabled, 'boolean');
     assert.strictEqual(typeof callback, 'function');
 
-    maildb.update(domain, { enabled: enabled }, function (error) {
-        if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
+    appstore.getSubscription(function (error, result) {
+        if (error) return callback(new MailError(MailError.EXTERNAL_ERROR, error));
 
-        restartMail(NOOP_CALLBACK);
+        // we only allow enabling email on a paid plan
+        if (enabled && appstore.isFreePlan(result)) return callback(new MailError(MailError.BILLING_REQUIRED));
 
-        if (!enabled || process.env.BOX_ENV === 'test') return callback(null);
+        maildb.update(domain, { enabled: enabled }, function (error) {
+            if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
 
-        // Add MX and DMARC record. Note that DMARC policy depends on DKIM signing and thus works
-        // only if we use our internal mail server.
-        var records = [
-            { subdomain: '_dmarc', type: 'TXT', values: [ '"v=DMARC1; p=reject; pct=100"' ] },
-            { subdomain: '', type: 'MX', values: [ '10 ' + config.mailFqdn() + '.' ] }
-        ];
+            restartMail(NOOP_CALLBACK);
 
-        async.mapSeries(records, function (record, iteratorCallback) {
-            domains.upsertDnsRecords(record.subdomain, domain, record.type, record.values, iteratorCallback);
-        }, NOOP_CALLBACK);
+            if (!enabled || process.env.BOX_ENV === 'test') return callback(null);
 
-        callback(null);
+            // Add MX and DMARC record. Note that DMARC policy depends on DKIM signing and thus works
+            // only if we use our internal mail server.
+            var records = [
+                { subdomain: '_dmarc', type: 'TXT', values: [ '"v=DMARC1; p=reject; pct=100"' ] },
+                { subdomain: '', type: 'MX', values: [ '10 ' + config.mailFqdn() + '.' ] }
+            ];
+
+            async.mapSeries(records, function (record, iteratorCallback) {
+                domains.upsertDnsRecords(record.subdomain, domain, record.type, record.values, iteratorCallback);
+            }, NOOP_CALLBACK);
+
+            callback(null);
+        });
     });
 }
 
