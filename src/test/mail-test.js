@@ -2,6 +2,7 @@
 /* global describe:false */
 /* global before:false */
 /* global after:false */
+/* global beforeEach:false */
 
 'use strict';
 
@@ -11,7 +12,9 @@ var async = require('async'),
     domains = require('../domains.js'),
     expect = require('expect.js'),
     mail = require('../mail.js'),
-    maildb = require('../maildb.js');
+    maildb = require('../maildb.js'),
+    nock = require('nock'),
+    settings = require('../settings.js');
 
 const DOMAIN_0 = {
     domain: 'example.com',
@@ -22,6 +25,10 @@ const DOMAIN_0 = {
     tlsConfig: { provider: 'fallback' }
 };
 
+const APPSTORE_USER_ID = 'appstoreuserid';
+const APPSTORE_TOKEN = 'appstoretoken';
+const CLOUDRON_ID = 'cloudronid';
+
 function setup(done) {
     config._reset();
     config.set('fqdn', 'example.com');
@@ -30,13 +37,27 @@ function setup(done) {
     async.series([
         database.initialize,
         database._clear,
+        settings.initialize,
         domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0.zoneName, DOMAIN_0.provider, DOMAIN_0.config, DOMAIN_0.fallbackCertificate, DOMAIN_0.tlsConfig),
-        mail.addDomain.bind(null, DOMAIN_0.domain)
+        mail.addDomain.bind(null, DOMAIN_0.domain),
+        function (callback) {
+            var scope = nock('http://localhost:6060')
+                .post(`/api/v1/users/${APPSTORE_USER_ID}/cloudrons?accessToken=${APPSTORE_TOKEN}`, function () { return true; })
+                .reply(201, { cloudron: { id: CLOUDRON_ID }});
+
+            settings.setAppstoreConfig({ userId: APPSTORE_USER_ID, token: APPSTORE_TOKEN }, function (error) {
+                expect(error).to.not.be.ok();
+                expect(scope.isDone()).to.be.ok();
+
+                callback();
+            });
+        }
     ], done);
 }
 
 function cleanup(done) {
     async.series([
+        settings.uninitialize,
         database._clear,
         database.uninitialize
     ], done);
@@ -45,6 +66,8 @@ function cleanup(done) {
 describe('Mail', function () {
     before(setup);
     after(cleanup);
+
+    beforeEach(nock.cleanAll);
 
     describe('values', function () {
         it('can get default', function (done) {
@@ -98,8 +121,13 @@ describe('Mail', function () {
         });
 
         it('can enable mail', function (done) {
+            var scope = nock('http://localhost:6060')
+                .get(`/api/v1/users/${APPSTORE_USER_ID}/cloudrons/${CLOUDRON_ID}/subscription?accessToken=${APPSTORE_TOKEN}`, function () { return true; })
+                .reply(200, { subscription: { id: 'basic', plan: { id: 'basic' }}});
+
             mail.setMailEnabled(DOMAIN_0.domain, true, function (error) {
                 expect(error).to.be(null);
+                expect(scope.isDone()).to.be.ok();
 
                 mail.getDomain(DOMAIN_0.domain, function (error, mailConfig) {
                     expect(error).to.be(null);
