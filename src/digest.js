@@ -31,7 +31,7 @@ function maybeSend(callback) {
         appstore.getSubscription(function (error, result) {
             if (error) debug('Error getting subscription:', error);
 
-            var hasSubscription = result && result.plan.id !== 'free' && result.plan.id !== 'undecided';
+            var hasSubscription = result && result.plan.id !== 'free';
 
             eventlog.getByCreationTime(new Date(new Date() - 7*86400000), function (error, events) {
                 if (error) return callback(error);
