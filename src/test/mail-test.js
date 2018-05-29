@@ -12,6 +12,7 @@ var async = require('async'),
     domains = require('../domains.js'),
     expect = require('expect.js'),
     mail = require('../mail.js'),
+    MailError = mail.MailError,
     maildb = require('../maildb.js'),
     nock = require('nock'),
     settings = require('../settings.js');
@@ -117,6 +118,19 @@ describe('Mail', function () {
                     expect(mailConfig.relay).to.eql(relay);
                     done();
                 });
+            });
+        });
+
+        it('cannot enable mail without a subscription', function (done) {
+            var scope = nock('http://localhost:6060')
+                .get(`/api/v1/users/${APPSTORE_USER_ID}/cloudrons/${CLOUDRON_ID}/subscription?accessToken=${APPSTORE_TOKEN}`, function () { return true; })
+                .reply(200, { subscription: { id: 'free', plan: { id: 'free' }}});
+
+            mail.setMailEnabled(DOMAIN_0.domain, true, function (error) {
+                expect(error).to.be.a(MailError);
+                expect(error.reason).to.equal(MailError.BILLING_REQUIRED);
+                expect(scope.isDone()).to.be.ok();
+                done();
             });
         });
 
