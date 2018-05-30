@@ -60,6 +60,19 @@ function splatchError(error) {
     return util.inspect(result, { depth: null, showHidden: true });
 }
 
+function getAdminEmails(callback) {
+    users.getAllAdmins(function (error, admins) {
+        if (error) return callback(error);
+
+        if (admins.length === 0) return callback(new Error('No admins on this cloudron')); // box not activated yet
+
+        var adminEmails = [ ];
+        admins.forEach(function (admin) { adminEmails.push(admin.email); });
+
+        callback(null, adminEmails);
+    });
+}
+
 // This will collect the most common details required for notification emails
 function getMailConfig(callback) {
     assert.strictEqual(typeof callback, 'function');
@@ -155,20 +168,6 @@ function render(templateFile, params) {
     }
 
     return content;
-}
-
-function getAdminEmails(callback) {
-    users.getAllAdmins(function (error, admins) {
-        if (error) return callback(error);
-
-        if (admins.length === 0) return callback(new Error('No admins on this cloudron')); // box not activated yet
-
-        var adminEmails = [ ];
-        adminEmails.push(admins[0].fallbackEmail);
-        admins.forEach(function (admin) { adminEmails.push(admin.email); });
-
-        callback(null, adminEmails);
-    });
 }
 
 function mailUserEventToAdmins(user, event) {

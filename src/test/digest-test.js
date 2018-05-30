@@ -123,7 +123,7 @@ describe('digest', function () {
             digest.maybeSend(function (error) {
                 if (error) return done(error);
 
-                checkMails(1, `${USER_0.fallbackEmail}, ${USER_0.email}`, done);
+                checkMails(1, `${USER_0.email}`, done);
             });
         });
 
@@ -133,7 +133,7 @@ describe('digest', function () {
             digest.maybeSend(function (error) {
                 if (error) return done(error);
 
-                checkMails(1, `${USER_0.fallbackEmail}, ${USER_0.email}`, done);
+                checkMails(1, `${USER_0.email}`, done);
             });
         });
 
@@ -146,7 +146,7 @@ describe('digest', function () {
                 digest.maybeSend(function (error) {
                     if (error) return done(error);
 
-                    checkMails(1, `${USER_0.fallbackEmail}, ${USER_0.email}`, done);
+                    checkMails(1, `${USER_0.email}`, done);
                 });
             });
         });
