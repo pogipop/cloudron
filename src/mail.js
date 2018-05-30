@@ -48,6 +48,7 @@ exports = module.exports = {
 var assert = require('assert'),
     async = require('async'),
     appstore = require('./appstore.js'),
+    AppstoreError = appstore.AppstoreError,
     config = require('./config.js'),
     DatabaseError = require('./databaseerror.js'),
     debug = require('debug')('box:mail'),
@@ -823,6 +824,7 @@ function setMailEnabled(domain, enabled, callback) {
     assert.strictEqual(typeof callback, 'function');
 
     appstore.getSubscription(function (error, result) {
+        if (error && error.reason === AppstoreError.BILLING_REQUIRED) return callback(new MailError(MailError.BILLING_REQUIRED));
         if (error) return callback(new MailError(MailError.EXTERNAL_ERROR, error));
 
         // we only allow enabling email on a paid plan
