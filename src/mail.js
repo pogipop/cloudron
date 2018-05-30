@@ -362,11 +362,6 @@ const RBL_LIST = [
         'site': 'http://sorbs.net'
     },
     {
-        'name': 'Spam Cannibal',
-        'dns': 'bl.spamcannibal.org',
-        'site': 'http://www.spamcannibal.org/cannibal.cgi'
-    },
-    {
         'name': 'SpamCop',
         'dns': 'bl.spamcop.net',
         'site': 'http://spamcop.net'
