@@ -815,16 +815,28 @@ function getLogs(appId, options, callback) {
         if (error) return callback(error);
 
         var lines = options.lines || 100,
+            format = options.format || 'json',
             follow = !!options.follow;
 
-        var args = [ '--no-pager', '--lines=' + lines ];
+        var args = [ '--lines=' + lines ];
         if (follow) args.push('--follow');
-        args = args.push(path.join(paths.LOG_DIR, appId, 'app.log'));
+        args.push(path.join(paths.LOG_DIR, appId, 'app.log'));
 
         var cp = spawn('/usr/bin/tail', args);
 
         var transformStream = split(function mapper(line) {
-            return line + '\n';
+            if (format !== 'json') return line + '\n';
+
+            var obj = safe.JSON.parse(line);
+            if (!obj) return undefined;
+
+            var data = line.split(' '); // logs are <ISOtimestamp> <msg>
+            return JSON.stringify({
+                realtimeTimestamp: data[0],
+                monotonicTimestamp: data[0],
+                message: data[1],
+                source: appId
+            }) + '\n';
         });
 
         transformStream.close = cp.kill.bind(cp, 'SIGKILL'); // closing stream kills the child process
