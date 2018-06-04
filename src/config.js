@@ -2,6 +2,7 @@
 
 exports = module.exports = {
     baseDir: baseDir,
+    logDir: logDir,
 
     // values set here will be lost after a upgrade/update. use the sqlite database
     // for persistent values that need to be backed up
@@ -59,6 +60,11 @@ var data = { };
 function baseDir() {
     if (exports.CLOUDRON) return homeDir;
     if (exports.TEST) return path.join(homeDir, '.cloudron_test');
+}
+
+function logDir() {
+    if (exports.CLOUDRON) return '/var/log';
+    if (exports.TEST) return path.join(homeDir, '.cloudron_test', 'log');
 }
 
 var cloudronConfigFileName = path.join(baseDir(), 'configs/cloudron.conf');

@@ -127,8 +127,8 @@ function startAppTask(appId, callback) {
     }
 
     // ensure log folder
-    mkdirp.sync(path.join(paths.LOG_FOLDER, appId));
-    var logFilePath = path.join(paths.LOG_FOLDER, appId, 'apptask-' + Date.now() + '.log');
+    mkdirp.sync(path.join(paths.LOG_DIR, appId));
+    var logFilePath = path.join(paths.LOG_DIR, appId, 'apptask-' + Date.now() + '.log');
 
     // will autoclose
     fs.open(logFilePath, 'w', function (error, fd) {

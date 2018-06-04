@@ -35,5 +35,5 @@ exports = module.exports = {
 
     AUTO_PROVISION_FILE: path.join(config.baseDir(), 'configs/autoprovision.json'),
 
-    LOG_FOLDER: '/var/log/cloudron'
+    LOG_DIR: path.join(config.logDir(), 'cloudron')
 };

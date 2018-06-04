@@ -329,10 +329,8 @@ function cleanupLogs(app, callback) {
     assert.strictEqual(typeof app, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    const logFolder = path.join(paths.LOG_FOLDER, app.id);
-
-    rimraf(logFolder, function (error) {
-        if (error) debugApp(app, 'cannot cleanup logs at %s: %s', logFolder, error);
+    rimraf(path.join(paths.LOG_DIR, app.id), function (error) {
+        if (error) debugApp(app, 'cannot cleanup logs: %s', error);
         callback(null);
     });
 }
