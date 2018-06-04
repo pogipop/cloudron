@@ -159,7 +159,7 @@ function validateHostname(location, domain, hostname) {
 function validatePortBindings(portBindings, tcpPorts) {
     assert.strictEqual(typeof portBindings, 'object');
 
-    // keep the public ports in sync with firewall rules in scripts/initializeBaseUbuntuImage.sh
+    // keep the public ports in sync with firewall rules in setup/start/cloudron-firewall.sh
     // these ports are reserved even if we listen only on 127.0.0.1 because we setup HostIp to be 127.0.0.1
     // for custom tcp ports
     var RESERVED_PORTS = [
