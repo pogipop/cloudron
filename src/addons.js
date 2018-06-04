@@ -442,13 +442,12 @@ function teardownRecvMail(app, options, callback) {
     appdb.unsetAddonConfig(app.id, 'recvmail', callback);
 }
 
-function mysqlDatabaseName(appId, prefix) {
+function mysqlDatabaseName(appId) {
     assert.strictEqual(typeof appId, 'string');
 
     var md5sum = crypto.createHash('md5'); // get rid of "-"
     md5sum.update(appId);
-    var dbname = md5sum.digest('hex').substring(0, 16);  // max length of mysql usernames is 16
-    return prefix ? `${dbname}_` : dbname;
+    return md5sum.digest('hex').substring(0, 16);  // max length of mysql usernames is 16
 }
 
 function setupMySql(app, options, callback) {
@@ -461,7 +460,7 @@ function setupMySql(app, options, callback) {
     appdb.getAddonConfigByName(app.id, 'mysql', 'MYSQL_PASSWORD', function (error, existingPassword) {
         if (error && error.reason !== DatabaseError.NOT_FOUND) return callback(error);
 
-        const dbname = mysqlDatabaseName(app.id, options.multipleDatabases);
+        const dbname = mysqlDatabaseName(app.id);
         const password = error ? hat(4 * 48) : existingPassword; // see box#362 for password length
 
         var cmd = [ '/addons/mysql/service.sh', options.multipleDatabases ? 'add-prefix' : 'add', dbname, password ];
@@ -477,7 +476,7 @@ function setupMySql(app, options, callback) {
             ];
 
             if (options.multipleDatabases) {
-                env = env.concat({ name: 'MYSQL_DATABASE_PREFIX', value: dbname });
+                env = env.concat({ name: 'MYSQL_DATABASE_PREFIX', value: `${dbname}_` });
             } else {
                 env = env.concat(
                     { name: 'MYSQL_URL', value: `mysql://${dbname}:${password}@mysql/${dbname}` },
@@ -496,7 +495,7 @@ function teardownMySql(app, options, callback) {
     assert.strictEqual(typeof options, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    const dbname = mysqlDatabaseName(app.id, options.multipleDatabases);
+    const dbname = mysqlDatabaseName(app.id);
     var cmd = [ '/addons/mysql/service.sh', options.multipleDatabases ? 'remove-prefix' : 'remove', dbname ];
 
     debugApp(app, 'Tearing down mysql');
@@ -520,7 +519,7 @@ function backupMySql(app, options, callback) {
     var output = fs.createWriteStream(path.join(paths.APPS_DATA_DIR, app.id, 'mysqldump'));
     output.on('error', callback);
 
-    const dbname = mysqlDatabaseName(app.id, options.multipleDatabases);
+    const dbname = mysqlDatabaseName(app.id);
     var cmd = [ '/addons/mysql/service.sh', options.multipleDatabases ? 'backup-prefix' : 'backup', dbname ];
 
     docker.execContainer('mysql', cmd, { stdout: output }, callback);
@@ -541,7 +540,7 @@ function restoreMySql(app, options, callback) {
         var input = fs.createReadStream(path.join(paths.APPS_DATA_DIR, app.id, 'mysqldump'));
         input.on('error', callback);
 
-        const dbname = mysqlDatabaseName(app.id, options.multipleDatabases);
+        const dbname = mysqlDatabaseName(app.id);
         var cmd = [ '/addons/mysql/service.sh', options.multipleDatabases ? 'restore-prefix' : 'restore', dbname ];
         docker.execContainer('mysql', cmd, { stdin: input }, callback);
     });
