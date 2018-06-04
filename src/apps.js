@@ -827,14 +827,13 @@ function getLogs(appId, options, callback) {
         var transformStream = split(function mapper(line) {
             if (format !== 'json') return line + '\n';
 
-            var obj = safe.JSON.parse(line);
-            if (!obj) return undefined;
-
             var data = line.split(' '); // logs are <ISOtimestamp> <msg>
+            var timestamp = (new Date(data[0])).getTime();
+            if (isNaN(timestamp)) timestamp = 0;
+
             return JSON.stringify({
-                realtimeTimestamp: data[0],
-                monotonicTimestamp: data[0],
-                message: data[1],
+                realtimeTimestamp: timestamp * 1000,
+                message: line.slice(data[0].length+1),
                 source: appId
             }) + '\n';
         });
