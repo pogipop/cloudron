@@ -20,11 +20,6 @@ exports = module.exports = {
 
 require('supererror')({ splatchError: true });
 
-// remove timestamp from debug() based output
-require('debug').formatArgs = function formatArgs(args) {
-    args[0] = this.namespace + ' ' + args[0];
-};
-
 var addons = require('./addons.js'),
     appdb = require('./appdb.js'),
     apps = require('./apps.js'),
