@@ -41,6 +41,7 @@ var addons = require('./addons.js'),
     path = require('path'),
     paths = require('./paths.js'),
     reverseProxy = require('./reverseproxy.js'),
+    rimraf = require('rimraf'),
     safe = require('safetydance'),
     shell = require('./shell.js'),
     superagent = require('superagent'),
@@ -320,6 +321,18 @@ function removeIcon(app, callback) {
 
     fs.unlink(path.join(paths.APP_ICONS_DIR, app.id + '.png'), function (error) {
         if (error && error.code !== 'ENOENT') debugApp(app, 'cannot remove icon : %s', error);
+        callback(null);
+    });
+}
+
+function cleanupLogs(app, callback) {
+    assert.strictEqual(typeof app, 'object');
+    assert.strictEqual(typeof callback, 'function');
+
+    const logFolder = path.join(paths.LOG_FOLDER, app.id);
+
+    rimraf(logFolder, function (error) {
+        if (error) debugApp(app, 'cannot cleanup logs at %s: %s', logFolder, error);
         callback(null);
     });
 }
@@ -677,11 +690,14 @@ function uninstall(app, callback) {
         updateApp.bind(null, app, { installationProgress: '60, Unregistering subdomain' }),
         unregisterSubdomain.bind(null, app, app.location, app.domain),
 
-        updateApp.bind(null, app, { installationProgress: '80, Cleanup icon' }),
+        updateApp.bind(null, app, { installationProgress: '70, Cleanup icon' }),
         removeIcon.bind(null, app),
 
-        updateApp.bind(null, app, { installationProgress: '90, Unconfiguring reverse proxy' }),
+        updateApp.bind(null, app, { installationProgress: '80, Unconfiguring reverse proxy' }),
         unconfigureReverseProxy.bind(null, app),
+
+        updateApp.bind(null, app, { installationProgress: '90, Cleanup logs' }),
+        cleanupLogs.bind(null, app),
 
         updateApp.bind(null, app, { installationProgress: '95, Remove app from database' }),
         appdb.del.bind(null, app.id)
