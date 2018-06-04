@@ -803,12 +803,6 @@ function update(appId, data, auditSource, callback) {
     });
 }
 
-function appLogFilter(app) {
-    var names = [ app.id ].concat(addons.getContainerNamesSync(app, app.manifest.addons));
-
-    return names.map(function (name) { return 'CONTAINER_NAME=' + name; });
-}
-
 function getLogs(appId, options, callback) {
     assert.strictEqual(typeof appId, 'string');
     assert(options && typeof options === 'object');
@@ -820,29 +814,16 @@ function getLogs(appId, options, callback) {
         if (error) return callback(error);
 
         var lines = options.lines || 100,
-            follow = !!options.follow,
-            format = options.format || 'json';
+            follow = !!options.follow;
 
         var args = [ '--no-pager', '--lines=' + lines ];
         if (follow) args.push('--follow');
-        if (format == 'short') args.push('--output=short', '-a'); else args.push('--output=json');
-        args = args.concat(appLogFilter(app));
+        args = args.push(path.join(paths.LOG_DIR, appId, 'app.log'));
 
-        var cp = spawn('/bin/journalctl', args);
+        var cp = spawn('/usr/bin/tail', args);
 
         var transformStream = split(function mapper(line) {
-            if (format !== 'json') return line + '\n';
-
-            var obj = safe.JSON.parse(line);
-            if (!obj) return undefined;
-
-            var source = obj.CONTAINER_NAME.slice(app.id.length + 1);
-            return JSON.stringify({
-                realtimeTimestamp: obj.__REALTIME_TIMESTAMP,
-                monotonicTimestamp: obj.__MONOTONIC_TIMESTAMP,
-                message: obj.MESSAGE,
-                source: source || 'main'
-            }) + '\n';
+            return line + '\n';
         });
 
         transformStream.close = cp.kill.bind(cp, 'SIGKILL'); // closing stream kills the child process
