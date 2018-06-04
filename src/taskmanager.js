@@ -17,7 +17,11 @@ var appdb = require('./appdb.js'),
     async = require('async'),
     child_process = require('child_process'),
     debug = require('debug')('box:taskmanager'),
+    fs = require('fs'),
     locker = require('./locker.js'),
+    mkdirp = require('mkdirp'),
+    path = require('path'),
+    paths = require('./paths.js'),
     sendFailureLogs = require('./logcollector.js').sendFailureLogs,
     util = require('util'),
     _ = require('underscore');
@@ -122,26 +126,39 @@ function startAppTask(appId, callback) {
         return callback();
     }
 
-    // when parent process dies, apptask processes are killed because KillMode=control-group in systemd unit file
-    gActiveTasks[appId] = child_process.fork(__dirname + '/apptask.js', [ appId ]);
+    // ensure log folder
+    mkdirp.sync(path.join(paths.LOG_FOLDER, appId));
+    var logFilePath = path.join(paths.LOG_FOLDER, appId, 'apptask-' + Date.now() + '.log');
 
-    var pid = gActiveTasks[appId].pid;
-    debug('Started task of %s pid: %s', appId, pid);
-
-    gActiveTasks[appId].once('exit', function (code, signal) {
-        debug('Task for %s pid %s completed with status %s', appId, pid, code);
-        if (code === null /* signal */ || (code !== 0 && code !== 50)) { // apptask crashed
-            debug('Apptask crashed with code %s and signal %s', code, signal);
-            sendFailureLogs('apptask', { unit: 'box' });
-            appdb.update(appId, { installationState: appdb.ISTATE_ERROR, installationProgress: 'Apptask crashed with code ' + code + ' and signal ' + signal }, NOOP_CALLBACK);
-        } else if (code === 50) {
-            sendFailureLogs('apptask', { unit: 'box' });
+    // will autoclose
+    fs.open(logFilePath, 'w', function (error, fd) {
+        if (error) {
+            debug('Unable to open log file, queueing task for %s', appId, error);
+            gPendingTasks.push(appId);
+            return callback();
         }
-        delete gActiveTasks[appId];
-        locker.unlock(locker.OP_APPTASK); // unlock event will trigger next task
-    });
 
-    callback();
+        // when parent process dies, apptask processes are killed because KillMode=control-group in systemd unit file
+        gActiveTasks[appId] = child_process.fork(__dirname + '/apptask.js', [ appId ], { stdio: [ 'pipe', fd, fd, 'ipc' ]});
+
+        var pid = gActiveTasks[appId].pid;
+        debug('Started task of %s pid: %s. See logs at %s', appId, pid, logFilePath);
+
+        gActiveTasks[appId].once('exit', function (code, signal) {
+            debug('Task for %s pid %s completed with status %s', appId, pid, code);
+            if (code === null /* signal */ || (code !== 0 && code !== 50)) { // apptask crashed
+                debug('Apptask crashed with code %s and signal %s', code, signal);
+                sendFailureLogs('apptask', { unit: 'box' });
+                appdb.update(appId, { installationState: appdb.ISTATE_ERROR, installationProgress: 'Apptask crashed with code ' + code + ' and signal ' + signal }, NOOP_CALLBACK);
+            } else if (code === 50) {
+                sendFailureLogs('apptask', { unit: 'box' });
+            }
+            delete gActiveTasks[appId];
+            locker.unlock(locker.OP_APPTASK); // unlock event will trigger next task
+        });
+
+        callback();
+    });
 }
 
 function stopAppTask(appId, callback) {

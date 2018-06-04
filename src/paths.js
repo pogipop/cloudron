@@ -33,5 +33,7 @@ exports = module.exports = {
     CLOUDRON_AVATAR_FILE: path.join(config.baseDir(), 'boxdata/avatar.png'),
     UPDATE_CHECKER_FILE: path.join(config.baseDir(), 'boxdata/updatechecker.json'),
 
-    AUTO_PROVISION_FILE: path.join(config.baseDir(), 'configs/autoprovision.json')
+    AUTO_PROVISION_FILE: path.join(config.baseDir(), 'configs/autoprovision.json'),
+
+    LOG_FOLDER: '/var/log/cloudron'
 };
