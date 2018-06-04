@@ -183,7 +183,7 @@ function createSubcontainer(app, name, cmd, options, callback) {
                     Type: 'syslog',
                     Config: {
                         'tag': app.id,
-                        'syslog-address': 'udp://127.0.0.1:555',
+                        'syslog-address': 'udp://127.0.0.1:2514', // see apps.js:validatePortBindings()
                         'syslog-format': 'rfc5424'
                     }
                 },

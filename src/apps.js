@@ -176,6 +176,7 @@ function validatePortBindings(portBindings, tcpPorts) {
         2003, /* graphite (lo) */
         2004, /* graphite (lo) */
         2020, /* mail server */
+        2514, /* cloudron-syslog (lo) */
         config.get('port'), /* app server (lo) */
         config.get('sysadminPort'), /* sysadmin app server (lo) */
         config.get('smtpPort'), /* internal smtp port (lo) */
