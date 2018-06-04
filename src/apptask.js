@@ -785,6 +785,8 @@ function startTask(appId, callback) {
 if (require.main === module) {
     assert.strictEqual(process.argv.length, 3, 'Pass the appid as argument');
 
+    // add a separator for the log file
+    debug('------------------------------------------------------------');
     debug('Apptask for %s', process.argv[2]);
 
     process.on('SIGTERM', function () {

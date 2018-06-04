@@ -128,10 +128,10 @@ function startAppTask(appId, callback) {
 
     // ensure log folder
     mkdirp.sync(path.join(paths.LOG_DIR, appId));
-    var logFilePath = path.join(paths.LOG_DIR, appId, 'apptask-' + Date.now() + '.log');
+    var logFilePath = path.join(paths.LOG_DIR, appId, 'apptask.log');
 
     // will autoclose
-    fs.open(logFilePath, 'w', function (error, fd) {
+    fs.open(logFilePath, 'a', function (error, fd) {
         if (error) {
             debug('Unable to open log file, queueing task for %s', appId, error);
             gPendingTasks.push(appId);
