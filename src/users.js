@@ -565,7 +565,7 @@ function setTwoFactorAuthenticationSecret(userId, callback) {
 
         if (result.twoFactorAuthenticationEnabled) return callback(new UsersError(UsersError.ALREADY_EXISTS));
 
-        var secret = speakeasy.generateSecret({ name: `Cloudron (${config.adminFqdn()})` });
+        var secret = speakeasy.generateSecret({ name: `Cloudron ${config.adminFqdn()} (${result.username})` });
 
         userdb.update(userId, { twoFactorAuthenticationSecret: secret.base32, twoFactorAuthenticationEnabled: false }, function (error) {
             if (error) return callback(new UsersError(UsersError.INTERNAL_ERROR, error));
