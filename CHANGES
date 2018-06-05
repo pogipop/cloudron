@@ -1294,3 +1294,7 @@
 * Allow setting app visibility for non-SSO apps
 * Add Clone UI
 
+[2.3.2]
+* Fix issue where multi-db apps were not provisioned correctly
+* Improve setup, restore views to have field labels
+
