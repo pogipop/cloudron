@@ -766,6 +766,10 @@ function setupRedis(app, options, callback) {
                     --label=location=${label} \
                     --net cloudron \
                     --net-alias ${redisName} \
+                    --log-driver syslog \
+                    --log-opt syslog-address=udp://127.0.0.1:2514 \
+                    --log-opt syslog-format=rfc5424 \
+                    --log-opt tag="${tag}" \
                     -m ${memoryLimit/2} \
                     --memory-swap ${memoryLimit} \
                     --dns 172.18.0.1 \

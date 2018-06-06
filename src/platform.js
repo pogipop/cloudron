@@ -162,6 +162,10 @@ function startGraphite(callback) {
     const cmd = `docker run --restart=always -d --name="graphite" \
                 --net cloudron \
                 --net-alias graphite \
+                --log-driver syslog \
+                --log-opt syslog-address=udp://127.0.0.1:2514 \
+                --log-opt syslog-format=rfc5424 \
+                --log-opt tag="${tag}" \
                 -m 75m \
                 --memory-swap 150m \
                 --dns 172.18.0.1 \
@@ -191,6 +195,10 @@ function startMysql(callback) {
     const cmd = `docker run --restart=always -d --name="mysql" \
                 --net cloudron \
                 --net-alias mysql \
+                --log-driver syslog \
+                --log-opt syslog-address=udp://127.0.0.1:2514 \
+                --log-opt syslog-format=rfc5424 \
+                --log-opt tag="${tag}" \
                 -m ${memoryLimit}m \
                 --memory-swap ${memoryLimit * 2}m \
                 --dns 172.18.0.1 \
@@ -217,6 +225,10 @@ function startPostgresql(callback) {
     const cmd = `docker run --restart=always -d --name="postgresql" \
                 --net cloudron \
                 --net-alias postgresql \
+                --log-driver syslog \
+                --log-opt syslog-address=udp://127.0.0.1:2514 \
+                --log-opt syslog-format=rfc5424 \
+                --log-opt tag="${tag}" \
                 -m ${memoryLimit}m \
                 --memory-swap ${memoryLimit * 2}m \
                 --dns 172.18.0.1 \
@@ -243,6 +255,10 @@ function startMongodb(callback) {
     const cmd = `docker run --restart=always -d --name="mongodb" \
                 --net cloudron \
                 --net-alias mongodb \
+                --log-driver syslog \
+                --log-opt syslog-address=udp://127.0.0.1:2514 \
+                --log-opt syslog-format=rfc5424 \
+                --log-opt tag="${tag}" \
                 -m ${memoryLimit}m \
                 --memory-swap ${memoryLimit * 2}m \
                 --dns 172.18.0.1 \

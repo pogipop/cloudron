@@ -562,6 +562,10 @@ function restartMail(callback) {
             const cmd = `docker run --restart=always -d --name="mail" \
                         --net cloudron \
                         --net-alias mail \
+                        --log-driver syslog \
+                        --log-opt syslog-address=udp://127.0.0.1:2514 \
+                        --log-opt syslog-format=rfc5424 \
+                        --log-opt tag="${tag}" \
                         -m ${memoryLimit}m \
                         --memory-swap ${memoryLimit * 2}m \
                         --dns 172.18.0.1 \
