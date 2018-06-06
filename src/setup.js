@@ -11,8 +11,7 @@ exports = module.exports = {
     SetupError: SetupError
 };
 
-var accesscontrol = require('./accesscontrol.js'),
-    assert = require('assert'),
+var assert = require('assert'),
     async = require('async'),
     backups = require('./backups.js'),
     BackupsError = require('./backups.js').BackupsError,
