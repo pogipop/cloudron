@@ -386,6 +386,7 @@ function renewAll(auditSource, callback) {
 
         async.eachSeries(allApps, function (app, iteratorCallback) {
             ensureCertificate(app, auditSource, function (error, bundle) {
+                if (error) return iteratorCallback(error); // this can happen if cloudron is not setup yet
                 if (bundle.reason !== 'new-le' && bundle.reason !== 'fallback') return iteratorCallback();
 
                 // reconfigure for the case where we got a renewed cert after fallback
