@@ -151,6 +151,7 @@ if ! grep -q "^include ${PLATFORM_DATA_DIR}/logrotate.d" /etc/logrotate.conf; th
     echo -e "\ninclude ${PLATFORM_DATA_DIR}/logrotate.d\n" >> /etc/logrotate.conf
 fi
 cp "${script_dir}/start/app-logrotate" "${PLATFORM_DATA_DIR}/logrotate.d/app-logrotate"
+chown root:root "${PLATFORM_DATA_DIR}/logrotate.d/app-logrotate"
 
 echo "==> Adding motd message for admins"
 cp "${script_dir}/start/cloudron-motd" /etc/update-motd.d/92-cloudron
