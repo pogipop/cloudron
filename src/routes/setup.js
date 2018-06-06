@@ -78,6 +78,7 @@ function dnsSetup(req, res, next) {
     setup.dnsSetup(req.body.adminFqdn.toLowerCase(), req.body.domain.toLowerCase(), req.body.zoneName || '', req.body.provider, req.body.config, req.body.tlsConfig || { provider: 'letsencrypt-prod' }, function (error) {
         if (error && error.reason === SetupError.ALREADY_SETUP) return next(new HttpError(409, error.message));
         if (error && error.reason === SetupError.BAD_FIELD) return next(new HttpError(400, error.message));
+        if (error && error.reason === SetupError.BAD_STATE) return next(new HttpError(409, error.message));
         if (error) return next(new HttpError(500, error));
 
         next(new HttpSuccess(200));

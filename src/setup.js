@@ -32,7 +32,6 @@ var assert = require('assert'),
     semver = require('semver'),
     settingsdb = require('./settingsdb.js'),
     settings = require('./settings.js'),
-    SettingsError = settings.SettingsError,
     shell = require('./shell.js'),
     superagent = require('superagent'),
     sysinfo = require('./sysinfo.js'),
@@ -192,9 +191,9 @@ function dnsSetup(adminFqdn, domain, zoneName, provider, dnsConfig, tlsConfig, c
     }
 
     domains.get(domain, function (error, result) {
-        if (error && error.reason !== DomainsError.NOT_FOUND) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
+        if (error && error.reason !== DomainsError.NOT_FOUND) return callback(new SetupError(SetupError.INTERNAL_ERROR, error));
 
-        if (result) return callback(new SettingsError(SettingsError.ALREADY_EXISTS, 'domain already exists'));
+        if (result) return callback(new SetupError(SetupError.BAD_STATE, 'Domain already exists'));
 
         async.series([
             domains.add.bind(null, domain, zoneName, provider, dnsConfig, null /* cert */, tlsConfig),
