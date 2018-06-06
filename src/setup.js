@@ -175,6 +175,7 @@ function dnsSetup(adminFqdn, domain, zoneName, provider, dnsConfig, tlsConfig, c
 
     function done(error) {
         if (error && error.reason === DomainsError.BAD_FIELD) return callback(new SetupError(SetupError.BAD_FIELD, error.message));
+        if (error && error.reason === DomainsError.ALREADY_EXISTS) return callback(new SetupError(SetupError.BAD_FIELD, error.message));
         if (error) return callback(new SetupError(SetupError.INTERNAL_ERROR, error));
 
         config.setAdminDomain(domain); // set fqdn only after dns config is valid, otherwise cannot re-setup if we failed
