@@ -120,6 +120,7 @@ echo "==> Adding systemd services"
 cp -r "${script_dir}/start/systemd/." /etc/systemd/system/
 systemctl daemon-reload
 systemctl enable unbound
+systemctl enable cloudron-syslog
 systemctl enable cloudron.target
 systemctl enable cloudron-firewall
 
@@ -131,6 +132,9 @@ systemctl enable --now cron
 
 # ensure unbound runs
 systemctl restart unbound
+
+# ensure cloudron-syslog runs
+systemctl restart cloudron-syslog
 
 echo "==> Configuring sudoers"
 rm -f /etc/sudoers.d/${USER}

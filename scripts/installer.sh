@@ -93,6 +93,15 @@ if [[ ${try} -eq 10 ]]; then
     exit 4
 fi
 
+echo "==> installer: update cloudron-syslog"
+if [[ "$(cloudron-syslog --version)" != "1.0.0" ]]; then
+    CLOUDRON_SYSLOG_DIR=/usr/local/cloudron-syslog
+    rm -rf ${CLOUDRON_SYSLOG_DIR}
+    mkdir -p ${CLOUDRON_SYSLOG_DIR}
+    $curl -sL https://git.cloudron.io/cloudron/cloudron-syslog/-/archive/master/cloudron-syslog-master.tar.gz | tar zxvf - --strip-components=1 -C ${CLOUDRON_SYSLOG_DIR}
+    $(cd ${CLOUDRON_SYSLOG_DIR} && npm install)
+fi
+
 if ! id "${USER}" 2>/dev/null; then
     useradd "${USER}" -m
 fi
