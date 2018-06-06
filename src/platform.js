@@ -165,7 +165,7 @@ function startGraphite(callback) {
                 --log-driver syslog \
                 --log-opt syslog-address=udp://127.0.0.1:2514 \
                 --log-opt syslog-format=rfc5424 \
-                --log-opt tag="${tag}" \
+                --log-opt tag=graphite \
                 -m 75m \
                 --memory-swap 150m \
                 --dns 172.18.0.1 \
@@ -198,7 +198,7 @@ function startMysql(callback) {
                 --log-driver syslog \
                 --log-opt syslog-address=udp://127.0.0.1:2514 \
                 --log-opt syslog-format=rfc5424 \
-                --log-opt tag="${tag}" \
+                --log-opt tag=mysql \
                 -m ${memoryLimit}m \
                 --memory-swap ${memoryLimit * 2}m \
                 --dns 172.18.0.1 \
@@ -228,7 +228,7 @@ function startPostgresql(callback) {
                 --log-driver syslog \
                 --log-opt syslog-address=udp://127.0.0.1:2514 \
                 --log-opt syslog-format=rfc5424 \
-                --log-opt tag="${tag}" \
+                --log-opt tag=postgresql \
                 -m ${memoryLimit}m \
                 --memory-swap ${memoryLimit * 2}m \
                 --dns 172.18.0.1 \
@@ -258,7 +258,7 @@ function startMongodb(callback) {
                 --log-driver syslog \
                 --log-opt syslog-address=udp://127.0.0.1:2514 \
                 --log-opt syslog-format=rfc5424 \
-                --log-opt tag="${tag}" \
+                --log-opt tag=mongodb \
                 -m ${memoryLimit}m \
                 --memory-swap ${memoryLimit * 2}m \
                 --dns 172.18.0.1 \

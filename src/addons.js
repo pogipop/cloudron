@@ -769,7 +769,7 @@ function setupRedis(app, options, callback) {
                     --log-driver syslog \
                     --log-opt syslog-address=udp://127.0.0.1:2514 \
                     --log-opt syslog-format=rfc5424 \
-                    --log-opt tag="${tag}" \
+                    --log-opt tag="${redisName}" \
                     -m ${memoryLimit/2} \
                     --memory-swap ${memoryLimit} \
                     --dns 172.18.0.1 \
