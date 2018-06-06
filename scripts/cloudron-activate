@@ -40,8 +40,9 @@ adminPassword="Secret123#"
 adminEmail="admin@server.local"
 appstoreUserId=""
 appstoreToken=""
+backupDir="/var/backups"
 
-args=$(getopt -o "" -l "domain:,domain-provider:,domain-tls-provider:,admin-username:,admin-password:,admin-email:,appstore-user:,appstore-token:" -n "$0" -- "$@")
+args=$(getopt -o "" -l "domain:,domain-provider:,domain-tls-provider:,admin-username:,admin-password:,admin-email:,appstore-user:,appstore-token:,backup-dir:" -n "$0" -- "$@")
 eval set -- "${args}"
 
 while true; do
@@ -54,6 +55,7 @@ while true; do
     --admin-email) adminEmail="$2"; shift 2;;
     --appstore-user) appstoreUser="$2"; shift 2;;
     --appstore-token) appstoreToken="$2"; shift 2;;
+    --backup-dir) backupDir="$2"; shift 2;;
     --) break;;
     *) echo "Unknown option $1"; exit 1;;
     esac
@@ -103,6 +105,16 @@ appstoreData=$(printf '{"userId":"%s", "token":"%s" }' "${appstoreUser}" "${apps
 
 if ! appstoreResult=$($curl -X POST -H "Content-Type: application/json" -d "${appstoreData}" "http://localhost:3000/api/v1/settings/appstore_config?access_token=${accessToken}"); then
     echo "Failed to setup Appstore account with ${appstoreData}: ${appstoreResult}"
+    exit 1
+fi
+
+echo "=> Setting up Backup Directory with accessToken ${accessToken}"
+backupData=$(printf '{"provider":"filesystem", "key":"", "backupFolder":"%s", "retentionSecs": 864000, "format": "tgz"}' "${backupDir}")
+
+chown -R yellowtent:yellowtent "${backupDir}"
+
+if ! backupResult=$($curl -X POST -H "Content-Type: application/json" -d "${backupData}" "http://localhost:3000/api/v1/settings/backup_config?access_token=${accessToken}"); then
+    echo "Failed to setup backup configuration with ${backupDir}: ${backupResult}"
     exit 1
 fi
 
