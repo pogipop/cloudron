@@ -114,9 +114,11 @@ function add(domain, zoneName, provider, config, fallbackCertificate, tlsConfig,
     assert.strictEqual(typeof callback, 'function');
 
     if (!tld.isValid(domain)) return callback(new DomainsError(DomainsError.BAD_FIELD, 'Invalid domain'));
+    domain = domain.replace(/\.$/,''); // strip any trailing '.' since tld.isValid() returns true
 
     if (zoneName) {
         if (!tld.isValid(zoneName)) return callback(new DomainsError(DomainsError.BAD_FIELD, 'Invalid zoneName'));
+        zoneName = zoneName.replace(/\.$/,''); // strip any trailing '.' since tld.isValid() returns true
     } else {
         zoneName = tld.getDomain(domain) || domain;
     }
