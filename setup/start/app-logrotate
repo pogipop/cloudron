@@ -1,0 +1,10 @@
+# logrotate config for app logs
+
+/home/yellowtent/platformdata/logs/*/*.log {
+    # only keep one rotated file, we currently do not send that over the api
+    rotate 1
+    size 10M
+    # we never compress so we can simply tail the files
+    nocompress
+    copytruncate
+}
