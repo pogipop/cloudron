@@ -98,7 +98,7 @@ if [[ "$(cloudron-syslog --version)" != "1.0.0" ]]; then
     CLOUDRON_SYSLOG_DIR=/usr/local/cloudron-syslog
     rm -rf ${CLOUDRON_SYSLOG_DIR}
     mkdir -p ${CLOUDRON_SYSLOG_DIR}
-    $curl -sL https://git.cloudron.io/cloudron/cloudron-syslog/-/archive/master/cloudron-syslog-master.tar.gz | tar zxvf - --strip-components=1 -C ${CLOUDRON_SYSLOG_DIR}
+    $curl -sL https://git.cloudron.io/cloudron/cloudron-syslog/-/archive/v1.0.0/cloudron-syslog-v1.0.0.tar.gz | tar zxvf - --strip-components=1 -C ${CLOUDRON_SYSLOG_DIR}
     (cd ${CLOUDRON_SYSLOG_DIR} && npm install --unsafe-perm) # need --unsafe-perm since we run as root and npm drops privileges
 fi
 
