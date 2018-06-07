@@ -162,6 +162,8 @@ function testConfig(apiConfig, callback) {
 
     if ('noHardlinks' in apiConfig && typeof apiConfig.noHardlinks !== 'boolean') return callback(new BackupsError(BackupsError.BAD_FIELD, 'noHardlinks must be boolean'));
 
+    if ('externalDisk' in apiConfig && typeof apiConfig.externalDisk !== 'boolean') return callback(new BackupsError(BackupsError.BAD_FIELD, 'externalDisk must be boolean'));
+
     fs.stat(apiConfig.backupFolder, function (error, result) {
         if (error) return callback(new BackupsError(BackupsError.BAD_FIELD, 'Directory does not exist or cannot be accessed: ' + error.message));
         if (!result.isDirectory()) return callback(new BackupsError(BackupsError.BAD_FIELD, 'Backup location is not a directory'));
