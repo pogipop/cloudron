@@ -47,7 +47,7 @@ function setAppAutoupdatePattern(req, res, next) {
         if (error && error.reason === SettingsError.BAD_FIELD) return next(new HttpError(400, error.message));
         if (error) return next(new HttpError(500, error));
 
-        next(new HttpSuccess(200));
+        next(new HttpSuccess(200, {}));
     });
 }
 
@@ -68,7 +68,7 @@ function setBoxAutoupdatePattern(req, res, next) {
         if (error && error.reason === SettingsError.BAD_FIELD) return next(new HttpError(400, error.message));
         if (error) return next(new HttpError(500, error));
 
-        next(new HttpSuccess(200));
+        next(new HttpSuccess(200, {}));
     });
 }
 
@@ -81,7 +81,7 @@ function setCloudronName(req, res, next) {
         if (error && error.reason === SettingsError.BAD_FIELD) return next(new HttpError(400, error.message));
         if (error) return next(new HttpError(500, error));
 
-        next(new HttpSuccess(202));
+        next(new HttpSuccess(202, {}));
     });
 }
 
@@ -110,7 +110,7 @@ function setTimeZone(req, res, next) {
         if (error && error.reason === SettingsError.BAD_FIELD) return next(new HttpError(400, error.message));
         if (error) return next(new HttpError(500, error));
 
-        next(new HttpSuccess(200));
+        next(new HttpSuccess(200, {}));
     });
 }
 
@@ -123,7 +123,7 @@ function setCloudronAvatar(req, res, next) {
     settings.setCloudronAvatar(avatar, function (error) {
         if (error) return next(new HttpError(500, error));
 
-        next(new HttpSuccess(202));
+        next(new HttpSuccess(202, {}));
     });
 }
 
@@ -165,7 +165,7 @@ function setBackupConfig(req, res, next) {
         if (error && error.reason === SettingsError.EXTERNAL_ERROR) return next(new HttpError(402, error.message));
         if (error) return next(new HttpError(500, error));
 
-        next(new HttpSuccess(200));
+        next(new HttpSuccess(200, {}));
     });
 }
 
