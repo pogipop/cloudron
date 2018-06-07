@@ -109,7 +109,7 @@ if ! appstoreResult=$($curl -X POST -H "Content-Type: application/json" -d "${ap
 fi
 
 echo "=> Setting up Backup Directory with accessToken ${accessToken}"
-backupData=$(printf '{"provider":"filesystem", "key":"", "backupFolder":"%s", "retentionSecs": 864000, "format": "tgz"}' "${backupDir}")
+backupData=$(printf '{"provider":"filesystem", "key":"", "backupFolder":"%s", "retentionSecs": 864000, "format": "tgz", "externalDisk": true}' "${backupDir}")
 
 chown -R yellowtent:yellowtent "${backupDir}"
 
