@@ -61,7 +61,7 @@ echo "==> Installing Docker"
 mkdir -p /etc/systemd/system/docker.service.d
 echo -e "[Service]\nExecStart=\nExecStart=/usr/bin/dockerd -H fd:// --log-driver=journald --exec-opt native.cgroupdriver=cgroupfs --storage-driver=overlay2" > /etc/systemd/system/docker.service.d/cloudron.conf
 
-curl -sL https://download.docker.com/linux/ubuntu/dists/xenial/pool/stable/amd64/docker-ce_17.09.0~ce-0~ubuntu_amd64.deb -o /tmp/docker.deb
+curl -sL https://download.docker.com/linux/ubuntu/dists/xenial/pool/stable/amd64/docker-ce_18.03.1~ce-0~ubuntu_amd64.deb -o /tmp/docker.deb
 # apt install with install deps (as opposed to dpkg -i)
 apt install -y /tmp/docker.deb
 rm /tmp/docker.deb
