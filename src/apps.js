@@ -1112,7 +1112,11 @@ function exec(appId, options, callback) {
                 if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
 
                 if (options.rows && options.columns) {
-                    exec.resize({ h: options.rows, w: options.columns }, function (error) { if (error) debug('Error resizing console', error); });
+                    // there is a race where resizing too early results in a 404 "no such exec"
+                    // https://git.cloudron.io/cloudron/box/issues/549
+                    setTimeout(function () {
+                        exec.resize({ h: options.rows, w: options.columns }, function (error) { if (error) debug('Error resizing console', error); });
+                    }, 2000);
                 }
 
                 return callback(null, stream);
