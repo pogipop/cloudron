@@ -69,11 +69,11 @@ if [[ $(docker version --format {{.Client.Version}}) != "18.03.0-ce" ]]; then
 fi
 
 echo "==> installer: updating node"
-if [[ "$(node --version)" != "v8.9.3" ]]; then
-    mkdir -p /usr/local/node-8.9.3
-    $curl -sL https://nodejs.org/dist/v8.9.3/node-v8.9.3-linux-x64.tar.gz | tar zxvf - --strip-components=1 -C /usr/local/node-8.9.3
-    ln -sf /usr/local/node-8.9.3/bin/node /usr/bin/node
-    ln -sf /usr/local/node-8.9.3/bin/npm /usr/bin/npm
+if [[ "$(node --version)" != "v8.11.2" ]]; then
+    mkdir -p /usr/local/node-8.11.2
+    $curl -sL https://nodejs.org/dist/v8.11.2/node-v8.11.2-linux-x64.tar.gz | tar zxvf - --strip-components=1 -C /usr/local/node-8.11.2
+    ln -sf /usr/local/node-8.11.2/bin/node /usr/bin/node
+    ln -sf /usr/local/node-8.11.2/bin/npm /usr/bin/npm
     rm -rf /usr/local/node-6.11.5
 fi
 
