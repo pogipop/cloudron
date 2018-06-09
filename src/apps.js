@@ -47,8 +47,7 @@ exports = module.exports = {
     _validateAccessRestriction: validateAccessRestriction
 };
 
-var addons = require('./addons.js'),
-    appdb = require('./appdb.js'),
+var appdb = require('./appdb.js'),
     appstore = require('./appstore.js'),
     AppstoreError = require('./appstore.js').AppstoreError,
     assert = require('assert'),
@@ -480,6 +479,10 @@ function downloadManifest(appStoreId, manifest, callback) {
     });
 }
 
+function mailboxNameForLocation(location, manifest) {
+    return (location ? location : manifest.title.toLowerCase().replace(/[^a-zA-Z0-9]/g, '')) + '.app';
+}
+
 function install(data, auditSource, callback) {
     assert(data && typeof data === 'object');
     assert.strictEqual(typeof auditSource, 'object');
@@ -569,7 +572,7 @@ function install(data, auditSource, callback) {
                 xFrameOptions: xFrameOptions,
                 sso: sso,
                 debugMode: debugMode,
-                mailboxName: (location ? location : manifest.title.toLowerCase().replace(/[^a-zA-Z0-9]/g, '')) + '.app',
+                mailboxName: mailboxNameForLocation(location, manifest),
                 restoreConfig: backupId ? { backupId: backupId, backupFormat: backupFormat } : null,
                 enableBackup: enableBackup,
                 robotsTxt: robotsTxt
@@ -706,8 +709,9 @@ function configure(appId, data, auditSource, callback) {
 
             debug('Will configure app with id:%s values:%j', appId, values);
 
+            // make the mailbox name follow the apps new location, if the user did not set it explicitly
             var oldName = app.mailboxName;
-            var newName = data.mailboxName || app.mailboxName;
+            var newName = data.mailboxName || (app.mailboxName.endsWith('.app') ? mailboxNameForLocation(location, app.manifest) : app.mailboxName);
             mailboxdb.updateName(oldName, values.oldConfig.domain, newName, domain, function (error) {
                 if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(new AppsError(AppsError.ALREADY_EXISTS, 'This mailbox is already taken'));
                 if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new AppsError(AppsError.BAD_STATE));
@@ -811,7 +815,7 @@ function getLogs(appId, options, callback) {
 
     debug('Getting logs for %s', appId);
 
-    get(appId, function (error, app) {
+    get(appId, function (error /*, app */) {
         if (error) return callback(error);
 
         var lines = options.lines || 100,
