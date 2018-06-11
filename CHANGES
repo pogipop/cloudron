@@ -1298,3 +1298,11 @@
 * Fix issue where multi-db apps were not provisioned correctly
 * Improve setup, restore views to have field labels
 
+[2.4.0]
+* Use custom logging backend to have more control over log rotation
+* Make user explicitly confirm that fs backup dir is on external storage
+* Update node to 8.11.2
+* Update docker to 18.03.1
+* Fix docker exec terminal resize issue
+* Make the mailbox name follow the apps new location, if the user did not set it explicitly
+
