@@ -13,7 +13,7 @@ var accesscontrol = require('../../accesscontrol.js'),
     oauth2 = require('../oauth2.js'),
     expect = require('expect.js'),
     uuid = require('uuid'),
-    hat = require('hat'),
+    hat = require('../../hat.js'),
     superagent = require('superagent'),
     server = require('../../server.js');
 

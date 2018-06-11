@@ -20,8 +20,7 @@ exports = module.exports = {
 var assert = require('assert'),
     database = require('./database.js'),
     DatabaseError = require('./databaseerror'),
-    hat = require('hat');
-
+    hat = require('./hat.js');
 
 var TOKENS_FIELDS = [ 'accessToken', 'identifier', 'clientId', 'scope', 'expires' ].join(',');
 

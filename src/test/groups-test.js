@@ -14,7 +14,7 @@ var async = require('async'),
     expect = require('expect.js'),
     groups = require('../groups.js'),
     GroupsError = groups.GroupsError,
-    hat = require('hat'),
+    hat = require('../hat.js'),
     mailboxdb = require('../mailboxdb.js'),
     userdb = require('../userdb.js');
 
