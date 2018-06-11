@@ -119,7 +119,7 @@ describe('User', function () {
         after(cleanupUsers);
 
         it('fails due to short password', function (done) {
-            users.create(USERNAME, 'Fo$%23', EMAIL, DISPLAY_NAME, AUDIT_SOURCE, function (error, result) {
+            users.create(USERNAME, 'Fo$%23', EMAIL, DISPLAY_NAME, { }, AUDIT_SOURCE, function (error, result) {
                 expect(error).to.be.ok();
                 expect(result).to.not.be.ok();
                 expect(error.reason).to.equal(UsersError.BAD_FIELD);
@@ -129,7 +129,7 @@ describe('User', function () {
         });
 
         it('fails due to reserved username', function (done) {
-            users.create('admin', PASSWORD, EMAIL, DISPLAY_NAME, AUDIT_SOURCE, function (error, result) {
+            users.create('admin', PASSWORD, EMAIL, DISPLAY_NAME, { }, AUDIT_SOURCE, function (error, result) {
                 expect(error).to.be.ok();
                 expect(result).to.not.be.ok();
                 expect(error.reason).to.equal(UsersError.BAD_FIELD);
@@ -139,7 +139,7 @@ describe('User', function () {
         });
 
         it('fails due to invalid username', function (done) {
-            users.create('moo+daemon', PASSWORD, EMAIL, DISPLAY_NAME, AUDIT_SOURCE, function (error, result) {
+            users.create('moo+daemon', PASSWORD, EMAIL, DISPLAY_NAME, { }, AUDIT_SOURCE, function (error, result) {
                 expect(error).to.be.ok();
                 expect(result).to.not.be.ok();
                 expect(error.reason).to.equal(UsersError.BAD_FIELD);
@@ -149,7 +149,7 @@ describe('User', function () {
         });
 
         it('fails due to short username', function (done) {
-            users.create('', PASSWORD, EMAIL, DISPLAY_NAME, AUDIT_SOURCE, function (error, result) {
+            users.create('', PASSWORD, EMAIL, DISPLAY_NAME, { }, AUDIT_SOURCE, function (error, result) {
                 expect(error).to.be.ok();
                 expect(result).to.not.be.ok();
                 expect(error.reason).to.equal(UsersError.BAD_FIELD);
@@ -159,7 +159,7 @@ describe('User', function () {
         });
 
         it('fails due to long username', function (done) {
-            users.create(new Array(257).fill('Z').join(''), PASSWORD, EMAIL, DISPLAY_NAME, AUDIT_SOURCE, function (error, result) {
+            users.create(new Array(257).fill('Z').join(''), PASSWORD, EMAIL, DISPLAY_NAME, { }, AUDIT_SOURCE, function (error, result) {
                 expect(error).to.be.ok();
                 expect(result).to.not.be.ok();
                 expect(error.reason).to.equal(UsersError.BAD_FIELD);
@@ -169,7 +169,7 @@ describe('User', function () {
         });
 
         it('fails due to reserved app pattern', function (done) {
-            users.create('maybe.app', PASSWORD, EMAIL, DISPLAY_NAME, AUDIT_SOURCE, function (error, result) {
+            users.create('maybe.app', PASSWORD, EMAIL, DISPLAY_NAME, { }, AUDIT_SOURCE, function (error, result) {
                 expect(error).to.be.ok();
                 expect(result).to.not.be.ok();
                 expect(error.reason).to.equal(UsersError.BAD_FIELD);
@@ -191,31 +191,8 @@ describe('User', function () {
             });
         });
 
-        it('fails because of invalid BAD_FIELD', function (done) {
-            expect(function () {
-                users.create(EMAIL, {}, function () {});
-            }).to.throwException();
-            expect(function () {
-                users.create(12345, PASSWORD, EMAIL, function () {});
-            }).to.throwException();
-            expect(function () {
-                users.create(USERNAME, PASSWORD, EMAIL, {});
-            }).to.throwException();
-            expect(function () {
-                users.create(USERNAME, PASSWORD, EMAIL, {}, function () {});
-            }).to.throwException();
-            expect(function () {
-                users.create(USERNAME, PASSWORD, EMAIL, {});
-            }).to.throwException();
-            expect(function () {
-                users.create(USERNAME, PASSWORD, EMAIL, false, null, 'foobar');
-            }).to.throwException();
-
-            done();
-        });
-
         it('fails because user exists', function (done) {
-            users.create(USERNAME, PASSWORD, EMAIL, DISPLAY_NAME, AUDIT_SOURCE, function (error, result) {
+            users.create(USERNAME, PASSWORD, EMAIL, DISPLAY_NAME, { }, AUDIT_SOURCE, function (error, result) {
                 expect(error).to.be.ok();
                 expect(result).not.to.be.ok();
                 expect(error.reason).to.equal(UsersError.ALREADY_EXISTS);
@@ -225,7 +202,7 @@ describe('User', function () {
         });
 
         it('fails because password is empty', function (done) {
-            users.create(USERNAME, '', EMAIL, DISPLAY_NAME, AUDIT_SOURCE, function (error, result) {
+            users.create(USERNAME, '', EMAIL, DISPLAY_NAME, { }, AUDIT_SOURCE, function (error, result) {
                 expect(error).to.be.ok();
                 expect(result).not.to.be.ok();
                 expect(error.reason).to.equal(UsersError.BAD_FIELD);
@@ -239,7 +216,7 @@ describe('User', function () {
             maildb.update(DOMAIN_0.domain, { enabled: true }, function (error) {
                 expect(error).not.to.be.ok();
 
-                users.create(USERNAME_1, PASSWORD_1, EMAIL_1, DISPLAY_NAME_1, AUDIT_SOURCE, { sendInvite: true }, function (error, result) {
+                users.create(USERNAME_1, PASSWORD_1, EMAIL_1, DISPLAY_NAME_1, { sendInvite: true }, AUDIT_SOURCE, function (error, result) {
                     expect(error).not.to.be.ok();
                     expect(result).to.be.ok();
                     expect(result.username).to.equal(USERNAME_1.toLowerCase());
@@ -690,7 +667,7 @@ describe('User', function () {
         it('make second user admin succeeds', function (done) {
 
             var invitor = { username: USERNAME, email: EMAIL };
-            users.create(user1.username, user1.password, user1.email, DISPLAY_NAME, AUDIT_SOURCE, { invitor: invitor }, function (error, result) {
+            users.create(user1.username, user1.password, user1.email, DISPLAY_NAME, { invitor: invitor }, AUDIT_SOURCE, function (error, result) {
                 expect(error).to.not.be.ok();
                 expect(result).to.be.ok();
 
@@ -743,7 +720,7 @@ describe('User', function () {
             };
 
             var invitor = { username: USERNAME, email: EMAIL };
-            users.create(user1.username, user1.password, user1.email, DISPLAY_NAME, AUDIT_SOURCE, { invitor: invitor }, function (error, result) {
+            users.create(user1.username, user1.password, user1.email, DISPLAY_NAME, { invitor: invitor }, AUDIT_SOURCE, function (error, result) {
                 expect(error).to.eql(null);
                 expect(result).to.be.ok();
 

@@ -38,7 +38,7 @@ function create(req, res, next) {
     var username = 'username' in req.body ? req.body.username : null;
     var displayName = req.body.displayName || '';
 
-    users.create(username, password, email, displayName, auditSource(req), { invitor: req.user, sendInvite: sendInvite }, function (error, user) {
+    users.create(username, password, email, displayName, { invitor: req.user, sendInvite: sendInvite }, auditSource(req), function (error, user) {
         if (error && error.reason === UsersError.BAD_FIELD) return next(new HttpError(400, error.message));
         if (error && error.reason === UsersError.ALREADY_EXISTS) return next(new HttpError(409, error.message));
         if (error) return next(new HttpError(500, error));

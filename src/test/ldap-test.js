@@ -115,7 +115,7 @@ function setup(done) {
             });
         },
         function (callback) {
-            users.create(USER_1.username, USER_1.password, USER_1.email, USER_0.displayName, AUDIT_SOURCE, { invitor: USER_0 }, function (error, result) {
+            users.create(USER_1.username, USER_1.password, USER_1.email, USER_0.displayName, { invitor: USER_0 }, AUDIT_SOURCE, function (error, result) {
                 if (error) return callback(error);
 
                 USER_1.id = result.id;
@@ -124,7 +124,7 @@ function setup(done) {
             });
         },
         function (callback) {
-            users.create(USER_2.username, USER_2.password, USER_2.email, USER_0.displayName, AUDIT_SOURCE, { invitor: USER_0 }, function (error, result) {
+            users.create(USER_2.username, USER_2.password, USER_2.email, USER_0.displayName, { invitor: USER_0 }, AUDIT_SOURCE, function (error, result) {
                 if (error) return callback(error);
 
                 USER_2.id = result.id;

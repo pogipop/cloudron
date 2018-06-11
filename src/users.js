@@ -133,21 +133,17 @@ function removePrivateFields(user) {
     return _.pick(user, 'id', 'username', 'email', 'fallbackEmail', 'displayName', 'groupIds', 'admin');
 }
 
-function create(username, password, email, displayName, auditSource, options, callback) {
+function create(username, password, email, displayName, options, auditSource, callback) {
     assert(username === null || typeof username === 'string');
     assert(password === null || typeof password === 'string');
     assert.strictEqual(typeof email, 'string');
     assert.strictEqual(typeof displayName, 'string');
+    assert(options && typeof options === 'object');
     assert.strictEqual(typeof auditSource, 'object');
 
-    if (typeof options === 'function') {
-        callback = options;
-        options = null;
-    }
-
-    var invitor = options && options.invitor ? options.invitor : null,
-        sendInvite = options && options.sendInvite ? true : false,
-        owner = options && options.owner ? true : false;
+    var invitor = options.invitor || null,
+        sendInvite = !!options.sendInvite,
+        owner = !!options.owner;
 
     var error;
 
@@ -522,7 +518,7 @@ function createOwner(username, password, email, displayName, auditSource, callba
             // we proceed if it already exists so we can re-create the owner if need be
             if (error && error.reason !== DatabaseError.ALREADY_EXISTS) return callback(new UsersError(UsersError.INTERNAL_ERROR, error));
 
-            create(username, password, email, displayName, auditSource, { owner: true }, function (error, user) {
+            create(username, password, email, displayName, { owner: true }, auditSource, function (error, user) {
                 if (error) return callback(error);
 
                 groups.addMember(constants.ADMIN_GROUP_ID, user.id, function (error) {
