@@ -54,7 +54,6 @@
     "passport-http-bearer": "^1.0.1",
     "passport-local": "^1.0.0",
     "passport-oauth2-client-password": "^0.1.2",
-    "password-generator": "^2.2.0",
     "progress-stream": "^2.0.0",
     "proxy-middleware": "^0.15.0",
     "qrcode": "^1.2.0",

@@ -13,7 +13,6 @@ exports = module.exports = {
 
 var assert = require('assert'),
     constants = require('../constants.js'),
-    generatePassword = require('../password.js').generate,
     HttpError = require('connect-lastmile').HttpError,
     HttpSuccess = require('connect-lastmile').HttpSuccess,
     users = require('../users.js'),
@@ -33,7 +32,7 @@ function create(req, res, next) {
     if ('displayName' in req.body && typeof req.body.displayName !== 'string') return next(new HttpError(400, 'displayName must be string'));
     if ('password' in req.body && typeof req.body.password !== 'string') return next(new HttpError(400, 'password must be string'));
 
-    var password = req.body.password || generatePassword();
+    var password = req.body.password || null;
     var email = req.body.email;
     var sendInvite = req.body.invite;
     var username = 'username' in req.body ? req.body.username : null;

@@ -135,7 +135,7 @@ function removePrivateFields(user) {
 
 function create(username, password, email, displayName, auditSource, options, callback) {
     assert(username === null || typeof username === 'string');
-    assert.strictEqual(typeof password, 'string');
+    assert(password === null || typeof password === 'string');
     assert.strictEqual(typeof email, 'string');
     assert.strictEqual(typeof displayName, 'string');
     assert.strictEqual(typeof auditSource, 'object');
@@ -157,8 +157,12 @@ function create(username, password, email, displayName, auditSource, options, ca
         if (error) return callback(error);
     }
 
-    error = validatePassword(password);
-    if (error) return callback(new UsersError(UsersError.BAD_FIELD, error.message));
+    if (password !== null) {
+        error = validatePassword(password);
+        if (error) return callback(new UsersError(UsersError.BAD_FIELD, error.message));
+    } else {
+        password = hat(8 * 8);
+    }
 
     email = email.toLowerCase();
     error = validateEmail(email);
