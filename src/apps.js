@@ -822,6 +822,9 @@ function getLogs(appId, options, callback) {
             format = options.format || 'json',
             follow = !!options.follow;
 
+        assert.strictEqual(typeof lines, 'number');
+        assert.strictEqual(typeof format, 'string');
+
         var args = [ '--lines=' + lines ];
         if (follow) args.push('--follow');
         args.push(path.join(paths.LOG_DIR, appId, 'app.log'));

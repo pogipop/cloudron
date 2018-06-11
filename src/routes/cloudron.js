@@ -97,19 +97,18 @@ function feedback(req, res, next) {
 }
 
 function getLogs(req, res, next) {
+    assert.strictEqual(typeof req.params.unit, 'string');
+
     var lines = req.query.lines ? parseInt(req.query.lines, 10) : 100;
     if (isNaN(lines)) return next(new HttpError(400, 'lines must be a number'));
-
-    var units = req.query.units || 'all';
 
     var options = {
         lines: lines,
         follow: false,
-        units: units.split(','),
         format: req.query.format
     };
 
-    cloudron.getLogs(options, function (error, logStream) {
+    cloudron.getLogs(req.params.unit, options, function (error, logStream) {
         if (error && error.reason === CloudronError.BAD_FIELD) return next(new HttpError(404, 'Invalid type'));
         if (error) return next(new HttpError(500, error));
 
@@ -124,10 +123,10 @@ function getLogs(req, res, next) {
 }
 
 function getLogStream(req, res, next) {
+    assert.strictEqual(typeof req.params.unit, 'string');
+
     var lines = req.query.lines ? parseInt(req.query.lines, 10) : -10; // we ignore last-event-id
     if (isNaN(lines)) return next(new HttpError(400, 'lines must be a valid number'));
-
-    var units = req.query.units || 'all';
 
     function sse(id, data) { return 'id: ' + id + '\ndata: ' + data + '\n\n'; }
 
@@ -136,11 +135,10 @@ function getLogStream(req, res, next) {
     var options = {
         lines: lines,
         follow: true,
-        units: units.split(','),
         format: req.query.format
     };
 
-    cloudron.getLogs(options, function (error, logStream) {
+    cloudron.getLogs(req.params.unit, options, function (error, logStream) {
         if (error && error.reason === CloudronError.BAD_FIELD) return next(new HttpError(404, 'Invalid type'));
         if (error) return next(new HttpError(500, error));
 

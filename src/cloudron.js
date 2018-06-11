@@ -327,42 +327,40 @@ function checkDiskSpace(callback) {
     });
 }
 
-function getLogs(options, callback) {
+function getLogs(unit, options, callback) {
+    assert.strictEqual(typeof unit, 'string');
     assert(options && typeof options === 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    var units = options.units || [],
-        lines = options.lines || 100,
+    var lines = options.lines || 100,
         format = options.format || 'json',
         follow = !!options.follow;
 
-    assert(Array.isArray(units));
     assert.strictEqual(typeof lines, 'number');
     assert.strictEqual(typeof format, 'string');
 
-    debug('Getting logs for %j', units);
+    assert.strictEqual(typeof lines, 'number');
+    assert.strictEqual(typeof format, 'string');
 
-    var args = [ '--no-pager', '--lines=' + lines ];
-    units.forEach(function (u) {
-        if (u === 'box') args.push('--unit=box');
-        else if (u === 'mail') args.push('CONTAINER_NAME=mail');
-    });
-    if (format === 'short') args.push('--output=short', '-a'); else args.push('--output=json');
+    debug('Getting logs for %s as %s', unit, format);
+
+    var args = [ '--lines=' + lines ];
     if (follow) args.push('--follow');
+    args.push(path.join(paths.LOG_DIR, unit, 'app.log'));
 
-    var cp = spawn('/bin/journalctl', args);
+    var cp = spawn('/usr/bin/tail', args);
 
     var transformStream = split(function mapper(line) {
         if (format !== 'json') return line + '\n';
 
-        var obj = safe.JSON.parse(line);
-        if (!obj) return undefined;
+        var data = line.split(' '); // logs are <ISOtimestamp> <msg>
+        var timestamp = (new Date(data[0])).getTime();
+        if (isNaN(timestamp)) timestamp = 0;
 
         return JSON.stringify({
-            realtimeTimestamp: obj.__REALTIME_TIMESTAMP,
-            monotonicTimestamp: obj.__MONOTONIC_TIMESTAMP,
-            message: obj.MESSAGE,
-            source: obj.SYSLOG_IDENTIFIER || ''
+            realtimeTimestamp: timestamp * 1000,
+            message: line.slice(data[0].length+1),
+            source: unit
         }) + '\n';
     });
 
