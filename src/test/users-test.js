@@ -128,36 +128,6 @@ describe('User', function () {
             });
         });
 
-        it('fails due to missing upper case password', function (done) {
-            users.create(USERNAME, 'thisiseightch%$234arslong', EMAIL, DISPLAY_NAME, AUDIT_SOURCE, function (error, result) {
-                expect(error).to.be.ok();
-                expect(result).to.not.be.ok();
-                expect(error.reason).to.equal(UsersError.BAD_FIELD);
-
-                done();
-            });
-        });
-
-        it('fails due to missing numerics in password', function (done) {
-            users.create(USERNAME, 'foobaRASDF%', EMAIL, DISPLAY_NAME, AUDIT_SOURCE, function (error, result) {
-                expect(error).to.be.ok();
-                expect(result).to.not.be.ok();
-                expect(error.reason).to.equal(UsersError.BAD_FIELD);
-
-                done();
-            });
-        });
-
-        it('fails due to missing special chars in password', function (done) {
-            users.create(USERNAME, 'foobaRASDF23423', EMAIL, DISPLAY_NAME, AUDIT_SOURCE, function (error, result) {
-                expect(error).to.be.ok();
-                expect(result).to.not.be.ok();
-                expect(error.reason).to.equal(UsersError.BAD_FIELD);
-
-                done();
-            });
-        });
-
         it('fails due to reserved username', function (done) {
             users.create('admin', PASSWORD, EMAIL, DISPLAY_NAME, AUDIT_SOURCE, function (error, result) {
                 expect(error).to.be.ok();

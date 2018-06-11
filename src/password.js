@@ -5,8 +5,7 @@
 // From https://www.npmjs.com/package/password-generator
 
 exports = module.exports = {
-    generate: generate,
-    validate: validate
+    generate: generate
 };
 
 var assert = require('assert'),
@@ -36,12 +35,4 @@ function generate() {
     while (!isStrongEnough(password)) password = generatePassword(8, false, /[\w\d\?\-]/);
 
     return password;
-}
-
-function validate(password) {
-    assert.strictEqual(typeof password, 'string');
-
-    if (!password.match(gPasswordTestRegExp)) return new Error('Password must be 8-30 character with at least one uppercase, one numeric and one special character');
-
-    return null;
 }

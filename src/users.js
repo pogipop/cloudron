@@ -45,7 +45,6 @@ var assert = require('assert'),
     userdb = require('./userdb.js'),
     util = require('util'),
     uuid = require('uuid'),
-    validatePassword = require('./password.js').validate,
     validator = require('validator'),
     _ = require('underscore');
 
@@ -118,6 +117,14 @@ function validateToken(token) {
 
 function validateDisplayName(name) {
     assert.strictEqual(typeof name, 'string');
+
+    return null;
+}
+
+function validatePassword(password) {
+    assert.strictEqual(typeof password, 'string');
+
+    if (password.length < 8) return new UsersError(UsersError.BAD_FIELD, 'Password must be atleast 8 characters');
 
     return null;
 }
