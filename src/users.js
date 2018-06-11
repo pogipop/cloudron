@@ -5,14 +5,14 @@ exports = module.exports = {
 
     removePrivateFields: removePrivateFields,
 
-    list: listUsers,
-    create: createUser,
+    list: list,
+    create: create,
     count: count,
     verify: verify,
     verifyWithUsername: verifyWithUsername,
     verifyWithEmail: verifyWithEmail,
     remove: removeUser,
-    get: getUser,
+    get: get,
     getByResetToken: getByResetToken,
     getAllAdmins: getAllAdmins,
     resetPasswordByIdentifier: resetPasswordByIdentifier,
@@ -126,7 +126,7 @@ function removePrivateFields(user) {
     return _.pick(user, 'id', 'username', 'email', 'fallbackEmail', 'displayName', 'groupIds', 'admin');
 }
 
-function createUser(username, password, email, displayName, auditSource, options, callback) {
+function create(username, password, email, displayName, auditSource, options, callback) {
     assert(username === null || typeof username === 'string');
     assert.strictEqual(typeof password, 'string');
     assert.strictEqual(typeof email, 'string');
@@ -216,7 +216,7 @@ function verify(userId, password, callback) {
     assert.strictEqual(typeof password, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    getUser(userId, function (error, user) {
+    get(userId, function (error, user) {
         if (error) return callback(error);
 
         // for just invited users the username may be still null
@@ -268,7 +268,7 @@ function removeUser(userId, auditSource, callback) {
     assert.strictEqual(typeof auditSource, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    getUser(userId, function (error, user) {
+    get(userId, function (error, user) {
         if (error) return callback(error);
 
         if (config.isDemo() && user.username === constants.DEMO_USERNAME) return callback(new UsersError(UsersError.BAD_FIELD, 'Not allowed in demo mode'));
@@ -286,7 +286,7 @@ function removeUser(userId, auditSource, callback) {
     });
 }
 
-function listUsers(callback) {
+function list(callback) {
     assert.strictEqual(typeof callback, 'function');
 
     userdb.getAllWithGroupIds(function (error, results) {
@@ -310,7 +310,7 @@ function count(callback) {
     });
 }
 
-function getUser(userId, callback) {
+function get(userId, callback) {
     assert.strictEqual(typeof userId, 'string');
     assert.strictEqual(typeof callback, 'function');
 
@@ -341,7 +341,7 @@ function getByResetToken(resetToken, callback) {
         if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new UsersError(UsersError.NOT_FOUND));
         if (error) return callback(new UsersError(UsersError.INTERNAL_ERROR, error));
 
-        getUser(result.id, callback);
+        get(result.id, callback);
     });
 }
 
@@ -385,7 +385,7 @@ function updateUser(userId, data, auditSource, callback) {
 
             callback();
 
-            getUser(userId, function (error, result) {
+            get(userId, function (error, result) {
                 if (error) return console.error(error);
 
                 eventlog.add(eventlog.ACTION_USER_UPDATE, auditSource, { userId: userId, user: removePrivateFields(result) });
@@ -412,7 +412,7 @@ function setGroups(userId, groupIds, callback) {
             var wasAdmin = oldGroupIds.some(function (g) { return g === constants.ADMIN_GROUP_ID; });
 
             if ((isAdmin && !wasAdmin) || (!isAdmin && wasAdmin)) {
-                getUser(userId, function (error, result) {
+                get(userId, function (error, result) {
                     if (error) return debug('Failed to send admin change mail.', error);
 
                     mailer.adminChanged(result, isAdmin);
@@ -511,7 +511,7 @@ function createOwner(username, password, email, displayName, auditSource, callba
             // we proceed if it already exists so we can re-create the owner if need be
             if (error && error.reason !== DatabaseError.ALREADY_EXISTS) return callback(new UsersError(UsersError.INTERNAL_ERROR, error));
 
-            createUser(username, password, email, displayName, auditSource, { owner: true }, function (error, user) {
+            create(username, password, email, displayName, auditSource, { owner: true }, function (error, user) {
                 if (error) return callback(error);
 
                 groups.addMember(constants.ADMIN_GROUP_ID, user.id, function (error) {
