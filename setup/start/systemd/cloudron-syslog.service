@@ -3,7 +3,7 @@ Description=Cloudron Syslog
 After=network.target
 
 [Service]
-ExecStart=/usr/local/cloudron-syslog/bin/cloudron-syslog
+ExecStart=/usr/local/cloudron-syslog/bin/cloudron-syslog --port 2514 --logdir /home/yellowtent/platformdata/logs
 WorkingDirectory=/usr/local/cloudron-syslog
 Environment="NODE_ENV=production"
 Restart=always
