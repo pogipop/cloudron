@@ -1,0 +1,14 @@
+[Unit]
+Description=Cloudron Syslog
+After=network.target
+
+[Service]
+ExecStart=/usr/local/cloudron-syslog/bin/cloudron-syslog
+WorkingDirectory=/usr/local/cloudron-syslog
+Environment="NODE_ENV=production"
+Restart=always
+User=yellowtent
+Group=yellowtent
+
+[Install]
+WantedBy=multi-user.target
