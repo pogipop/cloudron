@@ -239,7 +239,7 @@ function userAdded(user, inviteSent) {
 
         var templateData = {
             user: user,
-            inviteLink: inviteSent ? null : config.adminOrigin() + '/api/v1/session/account/setup.html?reset_token=' + user.resetToken,
+            inviteLink: inviteSent ? null : `${config.adminOrigin()}/api/v1/session/account/setup.html?reset_token=${user.resetToken}&email=${user.email}`,
             cloudronName: mailConfig.cloudronName,
             cloudronAvatarUrl: config.adminOrigin() + '/api/v1/cloudron/avatar'
         };
