@@ -811,6 +811,7 @@ function setMailRelay(domain, relay, callback) {
         if (error) return callback(error);
 
         maildb.update(domain, { relay: relay }, function (error) {
+            if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new MailError(MailError.NOT_FOUND));
             if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
 
             restartMail(NOOP_CALLBACK);
@@ -826,6 +827,7 @@ function setMailEnabled(domain, enabled, callback) {
     assert.strictEqual(typeof callback, 'function');
 
     maildb.update(domain, { enabled: enabled }, function (error) {
+        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new MailError(MailError.NOT_FOUND));
         if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
 
         restartMail(NOOP_CALLBACK);
