@@ -315,8 +315,8 @@ describe('database', function () {
             });
         });
 
-        it('can get by resetToken fails for empty resetToken', function (done) {
-            userdb.getByResetToken('', function (error, user) {
+        it('getByResetToken fails for empty resetToken', function (done) {
+            userdb.getByResetToken(USER_0.email, '', function (error, user) {
                 expect(error).to.be.ok();
                 expect(error.reason).to.be(DatabaseError.INTERNAL_ERROR);
                 expect(user).to.not.be.ok();
@@ -324,8 +324,17 @@ describe('database', function () {
             });
         });
 
+        it('getByResetToken fails for bad email', function (done) {
+            userdb.getByResetToken(USER_0.email + 'x', USER_0.resetToken, function (error, user) {
+                expect(error).to.be.ok();
+                expect(error.reason).to.be(DatabaseError.NOT_FOUND);
+                expect(user).to.not.be.ok();
+                done();
+            });
+        });
+
         it('can get by resetToken', function (done) {
-            userdb.getByResetToken(USER_0.resetToken, function (error, user) {
+            userdb.getByResetToken(USER_0.email, USER_0.resetToken, function (error, user) {
                 expect(error).to.not.be.ok();
                 expect(user).to.eql(USER_0);
                 done();

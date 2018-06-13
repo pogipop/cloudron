@@ -1341,9 +1341,19 @@ describe('Password', function () {
                 });
         });
 
-        it('setup succeeds', function (done) {
+        it('setup fails without email', function (done) {
             superagent.get(SERVER_URL + '/api/v1/session/account/setup.html')
                 .query({ reset_token: USER_0.resetToken })
+                .end(function (error, result) {
+                    expect(result.statusCode).to.equal(200);
+                    expect(result.text.indexOf('<!-- error tester -->')).to.not.equal(-1);
+                    done();
+                });
+        });
+
+        it('setup succeeds', function (done) {
+            superagent.get(SERVER_URL + '/api/v1/session/account/setup.html')
+                .query({ email: USER_0.email, reset_token: USER_0.resetToken })
                 .end(function (error, result) {
                     expect(result.statusCode).to.equal(200);
                     expect(result.text.indexOf('<!-- tester -->')).to.not.equal(-1);
@@ -1361,7 +1371,16 @@ describe('Password', function () {
 
         it('reset fails due to invalid reset_token', function (done) {
             superagent.get(SERVER_URL + '/api/v1/session/password/reset.html')
-                .query({ reset_token: hat(256) })
+                .query({ email: USER_0.email, reset_token: hat(256) })
+                .end(function (error, result) {
+                    expect(result.statusCode).to.equal(401);
+                    done();
+                });
+        });
+
+        it('reset fails due to invalid email', function (done) {
+            superagent.get(SERVER_URL + '/api/v1/session/password/reset.html')
+                .query({ email: USER_0.email + 'x', reset_token: hat(256) })
                 .end(function (error, result) {
                     expect(result.statusCode).to.equal(401);
                     done();
@@ -1370,7 +1389,7 @@ describe('Password', function () {
 
         it('reset succeeds', function (done) {
             superagent.get(SERVER_URL + '/api/v1/session/password/reset.html')
-                .query({ reset_token: USER_0.resetToken })
+                .query({ email: USER_0.email, reset_token: USER_0.resetToken })
                 .end(function (error, result) {
                     expect(result.text.indexOf('<!-- tester -->')).to.not.equal(-1);
                     expect(result.statusCode).to.equal(200);
@@ -1427,7 +1446,7 @@ describe('Password', function () {
 
         it('fails due to empty password', function (done) {
             superagent.post(SERVER_URL + '/api/v1/session/password/reset')
-                .send({ password: '', resetToken: hat(256) })
+                .send({ password: '', email: USER_0.email, resetToken: hat(256) })
                 .end(function (error, result) {
                     expect(result.statusCode).to.equal(401);
                     done();
@@ -1436,7 +1455,7 @@ describe('Password', function () {
 
         it('fails due to empty resetToken', function (done) {
             superagent.post(SERVER_URL + '/api/v1/session/password/reset')
-                .send({ password: '', resetToken: '' })
+                .send({ password: '', email: USER_0.email, resetToken: '' })
                 .end(function (error, result) {
                     expect(result.statusCode).to.equal(401);
                     done();
@@ -1445,7 +1464,7 @@ describe('Password', function () {
 
         it('fails due to weak password', function (done) {
             superagent.post(SERVER_URL + '/api/v1/session/password/reset')
-                .send({ password: 'foobar', resetToken: USER_0.resetToken })
+                .send({ password: 'foobar', email: USER_0.email, resetToken: USER_0.resetToken })
                 .end(function (error, result) {
                     expect(result.statusCode).to.equal(406);
                     done();
@@ -1460,7 +1479,7 @@ describe('Password', function () {
                 .get('/').reply(200, {});
 
             superagent.post(SERVER_URL + '/api/v1/session/password/reset')
-                .send({ password: 'ASF23$%somepassword', resetToken: USER_0.resetToken })
+                .send({ password: '12345678', email: USER_0.email, resetToken: USER_0.resetToken })
                 .end(function (error, result) {
                     expect(scope.isDone()).to.be.ok();
                     expect(result.statusCode).to.equal(200);

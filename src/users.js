@@ -337,14 +337,18 @@ function get(userId, callback) {
     });
 }
 
-function getByResetToken(resetToken, callback) {
+function getByResetToken(email, resetToken, callback) {
+    assert.strictEqual(typeof email, 'string');
     assert.strictEqual(typeof resetToken, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    var error = validateToken(resetToken);
+    var error = validateEmail(email);
     if (error) return callback(error);
 
-    userdb.getByResetToken(resetToken, function (error, result) {
+    error = validateToken(resetToken);
+    if (error) return callback(error);
+
+    userdb.getByResetToken(email, resetToken, function (error, result) {
         if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new UsersError(UsersError.NOT_FOUND));
         if (error) return callback(new UsersError(UsersError.INTERNAL_ERROR, error));
 

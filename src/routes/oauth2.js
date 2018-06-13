@@ -327,7 +327,7 @@ function passwordResetRequestSite(req, res) {
 function passwordResetRequest(req, res, next) {
     assert.strictEqual(typeof req.body, 'object');
 
-    if (typeof req.body.identifier !== 'string') return next(new HttpError(400, 'Missing identifier'));
+    if (typeof req.body.identifier !== 'string') return next(new HttpError(400, 'Missing identifier')); // email or username
 
     debug('passwordResetRequest: email or username %s.', req.body.identifier);
 
@@ -352,6 +352,7 @@ function renderAccountSetupSite(res, req, userObject, error) {
         error: error,
         csrf: req.csrfToken(),
         resetToken: req.query.reset_token || req.body.resetToken,
+        email: req.query.email || req.body.email,
         title: 'Password Setup'
     });
 }
@@ -359,9 +360,10 @@ function renderAccountSetupSite(res, req, userObject, error) {
 // -> GET /api/v1/session/account/setup.html
 function accountSetupSite(req, res) {
     if (!req.query.reset_token) return sendError(req, res, 'Missing Reset Token');
+    if (!req.query.email) return sendError(req, res, 'Missing Email');
 
-    users.getByResetToken(req.query.reset_token, function (error, userObject) {
-        if (error) return sendError(req, res, 'Invalid Reset Token');
+    users.getByResetToken(req.query.email, req.query.reset_token, function (error, userObject) {
+        if (error) return sendError(req, res, 'Invalid Email or Reset Token');
 
         renderAccountSetupSite(res, req, userObject, '');
     });
@@ -371,14 +373,15 @@ function accountSetupSite(req, res) {
 function accountSetup(req, res, next) {
     assert.strictEqual(typeof req.body, 'object');
 
+    if (typeof req.body.email !== 'string') return next(new HttpError(400, 'Missing email'));
     if (typeof req.body.resetToken !== 'string') return next(new HttpError(400, 'Missing resetToken'));
     if (typeof req.body.password !== 'string') return next(new HttpError(400, 'Missing password'));
     if (typeof req.body.username !== 'string') return next(new HttpError(400, 'Missing username'));
     if (typeof req.body.displayName !== 'string') return next(new HttpError(400, 'Missing displayName'));
 
-    debug('acountSetup: with token %s.', req.body.resetToken);
+    debug(`acountSetup: for email ${req.body.email} with token ${req.body.resetToken}`);
 
-    users.getByResetToken(req.body.resetToken, function (error, userObject) {
+    users.getByResetToken(req.body.email, req.body.resetToken, function (error, userObject) {
         if (error) return sendError(req, res, 'Invalid Reset Token');
 
         var data = _.pick(req.body, 'username', 'displayName');
@@ -405,15 +408,17 @@ function accountSetup(req, res, next) {
 
 // -> GET /api/v1/session/password/reset.html
 function passwordResetSite(req, res, next) {
+    if (!req.query.email) return next(new HttpError(400, 'Missing email'));
     if (!req.query.reset_token) return next(new HttpError(400, 'Missing reset_token'));
 
-    users.getByResetToken(req.query.reset_token, function (error, user) {
-        if (error) return next(new HttpError(401, 'Invalid reset_token'));
+    users.getByResetToken(req.query.email, req.query.reset_token, function (error, user) {
+        if (error) return next(new HttpError(401, 'Invalid email or reset token'));
 
         renderTemplate(res, 'password_reset', {
             user: user,
             csrf: req.csrfToken(),
             resetToken: req.query.reset_token,
+            email: req.query.email,
             title: 'Password Reset'
         });
     });
@@ -423,13 +428,14 @@ function passwordResetSite(req, res, next) {
 function passwordReset(req, res, next) {
     assert.strictEqual(typeof req.body, 'object');
 
+    if (typeof req.body.email !== 'string') return next(new HttpError(400, 'Missing email'));
     if (typeof req.body.resetToken !== 'string') return next(new HttpError(400, 'Missing resetToken'));
     if (typeof req.body.password !== 'string') return next(new HttpError(400, 'Missing password'));
 
-    debug('passwordReset: with token %s.', req.body.resetToken);
+    debug(`passwordReset: for ${req.body.email} with token ${req.body.resetToken}`);
 
-    users.getByResetToken(req.body.resetToken, function (error, userObject) {
-        if (error) return next(new HttpError(401, 'Invalid resetToken'));
+    users.getByResetToken(req.body.email, req.body.resetToken, function (error, userObject) {
+        if (error) return next(new HttpError(401, 'Invalid email or resetToken'));
 
         if (!userObject.username) return next(new HttpError(401, 'No username set'));
 
