@@ -838,10 +838,14 @@ function getLogs(appId, options, callback) {
             var data = line.split(' '); // logs are <ISOtimestamp> <msg>
             var timestamp = (new Date(data[0])).getTime();
             if (isNaN(timestamp)) timestamp = 0;
+            var message = line.slice(data[0].length+1);
+
+            // ignore faulty empty logs
+            if (!timestamp && !message) return;
 
             return JSON.stringify({
                 realtimeTimestamp: timestamp * 1000,
-                message: line.slice(data[0].length+1),
+                message: message,
                 source: appId
             }) + '\n';
         });
