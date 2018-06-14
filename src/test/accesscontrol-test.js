@@ -50,6 +50,8 @@ describe('access control', function () {
         it('allows valid scopes', function () {
             expect(accesscontrol.validateScope('apps')).to.be(null);
             expect(accesscontrol.validateScope('apps,mail')).to.be(null);
+            expect(accesscontrol.validateScope('apps:read,mail')).to.be(null);
+            expect(accesscontrol.validateScope('apps,mail:write')).to.be(null);
         });
 
         it('disallows invalid scopes', function () {
@@ -64,11 +66,20 @@ describe('access control', function () {
             expect(accesscontrol.hasScopes({ scope: 'apps' }, [ 'apps' ])).to.be(null);
             expect(accesscontrol.hasScopes({ scope: 'apps,mail' }, [ 'mail' ])).to.be(null);
             expect(accesscontrol.hasScopes({ scope: 'clients,*,apps,mail' }, [ 'mail' ])).to.be(null);
+
+            // subscope
+            expect(accesscontrol.hasScopes({ scope: 'apps' }, [ 'apps:read' ])).to.be(null);
+            expect(accesscontrol.hasScopes({ scope: 'apps:read' }, [ 'apps:read' ])).to.be(null);
+            expect(accesscontrol.hasScopes({ scope: 'apps,mail' }, [ 'apps:*' ])).to.be(null);
+            expect(accesscontrol.hasScopes({ scope: '*' }, [ 'apps:read' ])).to.be(null);
         });
 
         it('fails if it does not contain the scope', function () {
             expect(accesscontrol.hasScopes({ scope: 'apps' }, [ 'mail' ])).to.be.an(Error);
             expect(accesscontrol.hasScopes({ scope: 'apps,mail' }, [ 'clients' ])).to.be.an(Error);
+
+            // subscope
+            expect(accesscontrol.hasScopes({ scope: 'apps:write' }, [ 'apps:read' ])).to.be.an(Error);
         });
     });
 });

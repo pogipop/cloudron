@@ -164,7 +164,7 @@ function validateScope(scope) {
 
     // NOTE: this function intentionally does not allow '*'. This is only allowed in the db to allow
     // us not write a migration script every time we add a new scope
-    var allValid = scope.split(',').every(function (s) { return exports.VALID_SCOPES.indexOf(s) !== -1; });
+    var allValid = scope.split(',').every(function (s) { return exports.VALID_SCOPES.indexOf(s.split(':')[0]) !== -1; });
     if (!allValid) return new Error('Invalid scope. Available scopes are ' + exports.VALID_SCOPES.join(', '));
 
     return null;
@@ -182,7 +182,10 @@ function hasScopes(authInfo, requiredScopes) {
     if (scopes.indexOf(exports.SCOPE_ANY) !== -1) return null;
 
     for (var i = 0; i < requiredScopes.length; ++i) {
-        if (scopes.indexOf(requiredScopes[i]) === -1) {
+        const scopeParts = requiredScopes[i].split(':');
+
+        // this allows apps:write if the token has a higher apps scope
+        if (scopes.indexOf(requiredScopes[i]) === -1 && scopes.indexOf(scopeParts[0]) === -1) {
             debug('scope: missing scope "%s".', requiredScopes[i]);
             return new Error('Missing required scope "' + requiredScopes[i] + '"');
         }
