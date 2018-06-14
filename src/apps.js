@@ -826,7 +826,7 @@ function getLogs(appId, options, callback) {
         assert.strictEqual(typeof format, 'string');
 
         var args = [ '--lines=' + lines ];
-        if (follow) args.push('--follow', '--retry'); // same as -F. to make it work if file doesn't exist
+        if (follow) args.push('--follow', '--retry', '--quiet'); // same as -F. to make it work if file doesn't exist, --quiet to not output file headers, which are no logs
         args.push(path.join(paths.LOG_DIR, appId, 'app.log'));
         args.push(path.join(paths.LOG_DIR, appId, 'apptask.log'));
 
