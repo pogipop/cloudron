@@ -249,7 +249,7 @@ function initializeExpressSync() {
     router.del ('/api/v1/mail/:domain/lists/:name', mailScope, routes.mail.removeList);
 
     // feedback
-    router.post('/api/v1/feedback', usersScope, routes.cloudron.feedback);
+    router.post('/api/v1/feedback', cloudronScope, routes.cloudron.feedback);
 
     // backup routes
     router.get ('/api/v1/backups', settingsScope, routes.backups.get);
