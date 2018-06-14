@@ -95,10 +95,10 @@ fi
 
 echo "==> installer: update cloudron-syslog"
 CLOUDRON_SYSLOG_DIR=/usr/local/cloudron-syslog
-if [[ "$($CLOUDRON_SYSLOG_DIR/bin/cloudron-syslog --version)" != "1.0.1" ]]; then
+if [[ "$($CLOUDRON_SYSLOG_DIR/bin/cloudron-syslog --version)" != "1.0.2" ]]; then
     rm -rf "${CLOUDRON_SYSLOG_DIR}"
     mkdir -p "${CLOUDRON_SYSLOG_DIR}"
-    if npm install --unsafe-perm -g --prefix "${CLOUDRON_SYSLOG_DIR}" cloudron-syslog@1.0.1; then break; fi
+    if npm install --unsafe-perm -g --prefix "${CLOUDRON_SYSLOG_DIR}" cloudron-syslog@1.0.2; then break; fi
     echo "===> installer: Failed to install cloudron-syslog, trying again"
     sleep 5
 fi
