@@ -20,7 +20,7 @@ exports = module.exports = {
 
     validateScope: validateScope,
     validateRequestedScopes: validateRequestedScopes,
-    normalizeScope: normalizeScope,
+    intersectScope: intersectScope,
     canonicalScope: canonicalScope
 };
 
@@ -122,7 +122,7 @@ function canonicalScope(scope) {
     return scopes.join(',');
 }
 
-function normalizeScope(allowedScope, wantedScope) {
+function intersectScope(allowedScope, wantedScope) {
     assert.strictEqual(typeof allowedScope, 'string');
     assert.strictEqual(typeof wantedScope, 'string');
 
@@ -149,7 +149,7 @@ function accessTokenAuth(accessToken, callback) {
 
             // scopes here can define what capabilities that token carries
             // passport put the 'info' object into req.authInfo, where we can further validate the scopes
-            var scope = normalizeScope(user.scope, token.scope);
+            var scope = intersectScope(user.scope, token.scope);
             var info = { scope: scope, clientId: token.clientId };
 
             callback(null, user, info);
