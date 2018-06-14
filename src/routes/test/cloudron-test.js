@@ -372,7 +372,7 @@ describe('Cloudron', function () {
         after(cleanup);
 
         it('logStream - requires event-stream accept header', function (done) {
-            superagent.get(SERVER_URL + '/api/v1/cloudron/logstream')
+            superagent.get(SERVER_URL + '/api/v1/cloudron/logstream/box')
                 .query({ access_token: token, fromLine: 0 })
                 .end(function (err, res) {
                     expect(res.statusCode).to.be(400);
@@ -382,7 +382,9 @@ describe('Cloudron', function () {
 
         it('logStream - stream logs', function (done) {
             var options = {
-                port: config.get('port'), host: 'localhost', path: '/api/v1/cloudron/logstream?units=all&lines=10&access_token=' + token,
+                host: 'localhost',
+                port: config.get('port'),
+                path: '/api/v1/cloudron/logstream/mail?units=all&lines=10&access_token=' + token,
                 headers: { 'Accept': 'text/event-stream', 'Connection': 'keep-alive' }
             };
 
