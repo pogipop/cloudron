@@ -19,16 +19,16 @@ var accesscontrol = require('../accesscontrol.js'),
 //  See server.js:
 //    var profileScope = routes.oauth2.scope('profile');
 //
-function scope(requestedScope) {
-    assert.strictEqual(typeof requestedScope, 'string');
+function scope(requiredScope) {
+    assert.strictEqual(typeof requiredScope, 'string');
 
-    var requestedScopes = requestedScope.split(',');
+    var requiredScopes = requiredScope.split(',');
 
     return [
         passport.authenticate(['bearer'], { session: false }),
 
         function (req, res, next) {
-            var error = accesscontrol.validateRequestedScopes(req.authInfo || null, requestedScopes);
+            var error = accesscontrol.hasScopes(req.authInfo || null, requiredScopes);
             if (error) return next(new HttpError(403, error.message));
 
             next();
@@ -36,8 +36,8 @@ function scope(requestedScope) {
     ];
 }
 
-function websocketAuth(requestedScopes, req, res, next) {
-    assert(Array.isArray(requestedScopes));
+function websocketAuth(requiredScopes, req, res, next) {
+    assert(Array.isArray(requiredScopes));
 
     if (typeof req.query.access_token !== 'string') return next(new HttpError(401, 'Unauthorized'));
 
@@ -48,7 +48,7 @@ function websocketAuth(requestedScopes, req, res, next) {
         req.user = user;
         req.authInfo = info;
 
-        var e = accesscontrol.validateRequestedScopes(req.authInfo, requestedScopes);
+        var e = accesscontrol.hasScopes(req.authInfo, requiredScopes);
         if (e) return next(new HttpError(401, e.message));
 
         next();

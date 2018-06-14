@@ -44,6 +44,18 @@ describe('access control', function () {
         it('everything is different', function () {
             expect(accesscontrol.intersectScope('cloudron,domains', 'clients,apps')).to.be('');
         });
+    });
 
+    describe('hasScopes', function () {
+        it('succeeds if it contains the scope', function () {
+            expect(accesscontrol.hasScopes({ scope: 'apps' }, [ 'apps' ])).to.be(null);
+            expect(accesscontrol.hasScopes({ scope: 'apps,mail' }, [ 'mail' ])).to.be(null);
+            expect(accesscontrol.hasScopes({ scope: 'clients,*,apps,mail' }, [ 'mail' ])).to.be(null);
+        });
+
+        it('fails if it does not contain the scope', function () {
+            expect(accesscontrol.hasScopes({ scope: 'apps' }, [ 'mail' ])).to.be.an(Error);
+            expect(accesscontrol.hasScopes({ scope: 'apps,mail' }, [ 'clients' ])).to.be.an(Error);
+        });
     });
 });

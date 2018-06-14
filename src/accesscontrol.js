@@ -19,7 +19,7 @@ exports = module.exports = {
     accessTokenAuth: accessTokenAuth,
 
     validateScope: validateScope,
-    validateRequestedScopes: validateRequestedScopes,
+    hasScopes: hasScopes,
     intersectScope: intersectScope,
     canonicalScope: canonicalScope
 };
@@ -170,10 +170,10 @@ function validateScope(scope) {
     return null;
 }
 
-// tests if all requestedScopes are attached to the request
-function validateRequestedScopes(authInfo, requestedScopes) {
+// tests if all requiredScopes are attached to the request
+function hasScopes(authInfo, requiredScopes) {
     assert.strictEqual(typeof authInfo, 'object');
-    assert(Array.isArray(requestedScopes));
+    assert(Array.isArray(requiredScopes), 'Expecting array');
 
     if (!authInfo || !authInfo.scope) return new Error('No scope found');
 
@@ -181,10 +181,10 @@ function validateRequestedScopes(authInfo, requestedScopes) {
 
     if (scopes.indexOf(exports.SCOPE_ANY) !== -1) return null;
 
-    for (var i = 0; i < requestedScopes.length; ++i) {
-        if (scopes.indexOf(requestedScopes[i]) === -1) {
-            debug('scope: missing scope "%s".', requestedScopes[i]);
-            return new Error('Missing required scope "' + requestedScopes[i] + '"');
+    for (var i = 0; i < requiredScopes.length; ++i) {
+        if (scopes.indexOf(requiredScopes[i]) === -1) {
+            debug('scope: missing scope "%s".', requiredScopes[i]);
+            return new Error('Missing required scope "' + requiredScopes[i] + '"');
         }
     }
 
