@@ -827,8 +827,8 @@ function getLogs(appId, options, callback) {
 
         var args = [ '--lines=' + lines ];
         if (follow) args.push('--follow', '--retry', '--quiet'); // same as -F. to make it work if file doesn't exist, --quiet to not output file headers, which are no logs
-        args.push(path.join(paths.LOG_DIR, appId, 'app.log'));
         args.push(path.join(paths.LOG_DIR, appId, 'apptask.log'));
+        args.push(path.join(paths.LOG_DIR, appId, 'app.log'));
 
         var cp = spawn('/usr/bin/tail', args);
 
