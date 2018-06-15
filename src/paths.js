@@ -8,7 +8,6 @@ exports = module.exports = {
     CLOUDRON_DEFAULT_AVATAR_FILE: path.join(__dirname + '/../assets/avatar.png'),
     INFRA_VERSION_FILE: path.join(config.baseDir(), 'platformdata/INFRA_VERSION'),
     BACKUP_RESULT_FILE: path.join(config.baseDir(), 'platformdata/backup/result.txt'),
-    BACKUP_LOG_FILE: path.join(config.baseDir(), 'platformdata/backup/logs.txt'),
 
     OLD_DATA_DIR: path.join(config.baseDir(), 'data'),
     PLATFORM_DATA_DIR: path.join(config.baseDir(), 'platformdata'),
@@ -35,5 +34,7 @@ exports = module.exports = {
 
     AUTO_PROVISION_FILE: path.join(config.baseDir(), 'configs/autoprovision.json'),
 
-    LOG_DIR: path.join(config.baseDir(), 'platformdata/logs')
+    LOG_DIR: path.join(config.baseDir(), 'platformdata/logs'),
+    // this pattern is for the cloudron logs API route to work
+    BACKUP_LOG_FILE: path.join(config.baseDir(), 'platformdata/logs/backup/app.log'),
 };

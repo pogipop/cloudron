@@ -366,7 +366,7 @@ function getLogs(unit, options, callback) {
                 source: obj.SYSLOG_IDENTIFIER || ''
             }) + '\n';
         });
-    } else { // mail, mongodb, mysql, postgresql
+    } else { // mail, mongodb, mysql, postgresql, backup
         let args = [ '--lines=' + lines ];
         if (follow) args.push('--follow');
         args.push(path.join(paths.LOG_DIR, unit, 'app.log'));
