@@ -117,7 +117,9 @@ function uninitialize(callback) {
 }
 
 function canonicalScope(scope) {
-    return scope.replace(exports.SCOPE_ANY, exports.VALID_SCOPES.join(','));
+    var scopes = scope.split(',');
+    scopes = scopes.map(function (s) { return s.replace(exports.SCOPE_ANY, exports.VALID_SCOPES.join(',')); });
+    return scopes.join(',');
 }
 
 function normalizeScope(allowedScope, wantedScope) {
