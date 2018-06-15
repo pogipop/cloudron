@@ -44,7 +44,7 @@ function maybeSend(callback) {
                 if (error) return callback(error);
 
                 var info = {
-                    hasSubscription: appstore.isFreePlan(subscription),
+                    hasSubscription: !appstore.isFreePlan(subscription),
 
                     pendingAppUpdates: pendingAppUpdates,
                     pendingBoxUpdate: updateInfo.box || null,
