@@ -109,7 +109,7 @@ function initialize() {
         tokendb.add(token, user.id, client.id, expires, scope, function (error) {
             if (error) return callback(error);
 
-            debug('grant token: new access token for client %s token %s', client.id, token);
+            debug('grant token: new access token for client %s token %s', client.id, token.slice(0, 6)); // partial token for security
 
             callback(null, token);
         });
