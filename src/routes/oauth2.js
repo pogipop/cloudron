@@ -395,7 +395,7 @@ function accountSetup(req, res, next) {
             userObject.displayName = req.body.displayName;
 
             // setPassword clears the resetToken
-            users.setPassword(userObject.id, req.body.password, function (error, result) {
+            users.setPassword(userObject.id, req.body.password, function (error) {
                 if (error && error.reason === UsersError.BAD_FIELD) return renderAccountSetupSite(res, req, userObject, error.message);
 
                 if (error) return next(new HttpError(500, error));
