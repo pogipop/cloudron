@@ -351,7 +351,7 @@ function getByResetToken(email, resetToken, callback) {
         if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new UsersError(UsersError.NOT_FOUND));
         if (error) return callback(new UsersError(UsersError.INTERNAL_ERROR, error));
 
-        get(result.id, callback);
+        callback(null, result);
     });
 }
 
