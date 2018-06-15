@@ -82,26 +82,13 @@ function initialize(callback) {
     }));
 
     // Used to authenticate a OAuth2 client which uses clientId and clientSecret in the Authorization header
-    passport.use(new BasicStrategy(function (username, password, callback) {
-        if (username.indexOf('cid-') === 0) {
-            debug('BasicStrategy: detected client id %s instead of username:password', username);
-            // username is actually client id here
-            // password is client secret
-            clients.get(username, function (error, client) {
-                if (error && error.reason === ClientsError.NOT_FOUND) return callback(null, false);
-                if (error) return callback(error);
-                if (client.clientSecret != password) return callback(null, false);
-                return callback(null, client);
-            });
-        } else {
-            users.verifyWithUsername(username, password, function (error, result) {
-                if (error && error.reason === UsersError.NOT_FOUND) return callback(null, false);
-                if (error && error.reason === UsersError.WRONG_PASSWORD) return callback(null, false);
-                if (error) return callback(error);
-                if (!result) return callback(null, false);
-                callback(null, result);
-            });
-        }
+    passport.use(new BasicStrategy(function (clientId, clientSecret, callback) {
+        clients.get(clientId, function (error, client) {
+            if (error && error.reason === ClientsError.NOT_FOUND) return callback(null, false);
+            if (error) return callback(error);
+            if (client.clientSecret !== clientSecret) return callback(null, false);
+            callback(null, client);
+        });
     }));
 
     // Used to authenticate a OAuth2 client which uses clientId and clientSecret in the request body (client_id, client_secret)
@@ -109,8 +96,8 @@ function initialize(callback) {
         clients.get(clientId, function(error, client) {
             if (error && error.reason === ClientsError.NOT_FOUND) return callback(null, false);
             if (error) { return callback(error); }
-            if (client.clientSecret != clientSecret) { return callback(null, false); }
-            return callback(null, client);
+            if (client.clientSecret !== clientSecret) { return callback(null, false); }
+            callback(null, client);
         });
     }));
 
