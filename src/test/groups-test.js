@@ -7,6 +7,7 @@
 'use strict';
 
 var async = require('async'),
+    accesscontrol = require('../accesscontrol.js'),
     config = require('../config.js'),
     constants = require('../constants.js'),
     database = require('../database.js'),
@@ -375,6 +376,44 @@ describe('Admin group', function () {
         groups.remove(constants.ADMIN_GROUP_ID, function (error) {
             expect(error.reason).to.equal(GroupsError.NOT_ALLOWED);
 
+            done();
+        });
+    });
+});
+
+describe('Roles', function () {
+    before(function (done) {
+        async.series([
+            setup,
+            function (next) {
+                groups.create(GROUP0_NAME, [ /* roles */ ], function (error, result) {
+                    if (error) return next(error);
+                    group0Object = result;
+                    next();
+                });
+            },
+        ], done);
+    });
+    after(cleanup);
+
+    it('can set roles', function (done) {
+        groups.setRoles(group0Object.id, [ accesscontrol.ROLE_OWNER ], function (error) {
+            expect(error).to.be(null);
+            done();
+        });
+    });
+
+    it('can get roles', function (done) {
+        groups.get(group0Object.id, function (error, result) {
+            expect(error).to.be(null);
+            expect(result.roles).to.eql([ accesscontrol.ROLE_OWNER ]);
+            done();
+        });
+    });
+
+    it('cannot set invalid role', function (done) {
+        groups.setRoles(group0Object.id, [ accesscontrol.ROLE_OWNER, 'janitor' ], function (error) {
+            expect(error).to.be.ok();
             done();
         });
     });

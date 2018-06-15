@@ -4,6 +4,7 @@ exports = module.exports = {
     get: get,
     list: list,
     create: create,
+    setRoles: setRoles,
     remove: remove,
     updateMembers: updateMembers
 };
@@ -47,6 +48,23 @@ function get(req, res, next) {
         if (error) return next(new HttpError(500, error));
 
         next(new HttpSuccess(200, result));
+    });
+}
+
+function setRoles(req, res, next) {
+    assert.strictEqual(typeof req.params.groupId, 'string');
+    assert.strictEqual(typeof req.body, 'object');
+
+    if (!Array.isArray(req.body.roles)) return next(new HttpError(400, 'roles must be an array'));
+    for (let role of req.body.roles) {
+        if (typeof role !== 'string') return next(new HttpError(400, 'roles must be an array of strings'));
+    }
+
+    groups.setRoles(req.params.groupId, req.body.roles, function (error, group) {
+        if (error && error.reason === GroupsError.BAD_FIELD) return next(new HttpError(400, error.message));
+        if (error) return next(new HttpError(500, error));
+
+        next(new HttpSuccess(200, { }));
     });
 }
 

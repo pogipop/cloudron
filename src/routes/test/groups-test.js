@@ -154,6 +154,38 @@ describe('Groups API', function () {
         });
     });
 
+    describe('Roles', function () {
+        it('can set roles', function (done) {
+            superagent.put(SERVER_URL + '/api/v1/groups/' + groupObject.id + '/roles')
+                .query({ access_token: token })
+                .send({ roles: [ accesscontrol.ROLE_OWNER ]})
+                .end(function (error, result) {
+                    expect(result.statusCode).to.equal(200);
+                    done();
+                });
+        });
+
+        it('fails with invalid roles', function (done) {
+            superagent.put(SERVER_URL + '/api/v1/groups/' + groupObject.id + '/roles')
+                .query({ access_token: token })
+                .send({ roles: [ 'bogus' ]})
+                .end(function (error, result) {
+                    expect(result.statusCode).to.equal(400);
+                    done();
+                });
+        });
+
+        it('can get roles', function (done) {
+            superagent.get(SERVER_URL + '/api/v1/groups/' + groupObject.id)
+                .query({ access_token: token })
+                .end(function (error, result) {
+                    expect(result.statusCode).to.equal(200);
+                    expect(result.body.roles).to.eql([ accesscontrol.ROLE_OWNER ]);
+                    done();
+                });
+        });
+    });
+
     describe('get', function () {
         it('cannot get non-existing group', function (done) {
             superagent.get(SERVER_URL + '/api/v1/groups/nope')

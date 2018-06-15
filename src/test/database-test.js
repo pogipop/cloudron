@@ -1566,6 +1566,17 @@ describe('database', function () {
                 done();
             });
         });
+
+        it('can update roles of the group', function (done) {
+            groupdb.update(GROUP_ID_1, { roles: [ 'manage_app' ] }, function (error) {
+                expect(error).to.be(null);
+
+                groupdb.get(GROUP_ID_1, function (error, result) {
+                    expect(result.roles).to.eql([ 'manage_app' ]);
+                    done();
+                });
+            });
+        });
     });
 
     describe('importFromFile', function () {

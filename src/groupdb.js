@@ -120,21 +120,22 @@ function update(id, data, callback) {
     var args = [ ];
     var fields = [ ];
     for (var k in data) {
-        fields.push(k + ' = ?');
-
         if (k === 'roles') {
             assert(Array.isArray(data.roles));
+            fields.push('rolesJson = ?');
             args.push(data.roles.length === 0 ? null : JSON.stringify(data.roles));
         } else if (k === 'name') {
             assert.strictEqual(typeof data.name, 'string');
+            fields.push(k + ' = ?');
             args.push(data.name);
         }
     }
     args.push(id);
 
-    database.query('UPDATE groups SET ' + fields.join(', ') + ' WHERE id = ?', args, function (error) {
+    database.query('UPDATE groups SET ' + fields.join(', ') + ' WHERE id = ?', args, function (error, result) {
         if (error && error.code === 'ER_DUP_ENTRY' && error.sqlMessage.indexOf('groups_name') !== -1) return callback(new DatabaseError(DatabaseError.ALREADY_EXISTS, 'name already exists'));
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
+        if (result.affectedRows !== 1) return callback(new DatabaseError(DatabaseError.NOT_FOUND));
 
         return callback(null);
     });
