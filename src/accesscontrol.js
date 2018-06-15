@@ -46,10 +46,12 @@ var assert = require('assert'),
 function initialize(callback) {
     assert.strictEqual(typeof callback, 'function');
 
+    // serialize user into session
     passport.serializeUser(function (user, callback) {
         callback(null, user.id);
     });
 
+    // deserialize user from session
     passport.deserializeUser(function(userId, callback) {
         users.get(userId, function (error, result) {
             if (error) return callback(error);
@@ -58,6 +60,7 @@ function initialize(callback) {
         });
     });
 
+    // used when username/password is sent in request body. used in CLI tool login route
     passport.use(new LocalStrategy(function (username, password, callback) {
         if (username.indexOf('@') === -1) {
             users.verifyWithUsername(username, password, function (error, result) {
@@ -78,6 +81,7 @@ function initialize(callback) {
         }
     }));
 
+    // Used to authenticate a OAuth2 client which uses clientId and clientSecret in the Authorization header
     passport.use(new BasicStrategy(function (username, password, callback) {
         if (username.indexOf('cid-') === 0) {
             debug('BasicStrategy: detected client id %s instead of username:password', username);
@@ -100,6 +104,7 @@ function initialize(callback) {
         }
     }));
 
+    // Used to authenticate a OAuth2 client which uses clientId and clientSecret in the request body (client_id, client_secret)
     passport.use(new ClientPasswordStrategy(function (clientId, clientSecret, callback) {
         clients.get(clientId, function(error, client) {
             if (error && error.reason === ClientsError.NOT_FOUND) return callback(null, false);
@@ -109,6 +114,7 @@ function initialize(callback) {
         });
     }));
 
+    // used for "Authorization: Bearer token" or access_token query param authentication
     passport.use(new BearerStrategy(accessTokenAuth));
 
     callback(null);
