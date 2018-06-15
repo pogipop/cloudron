@@ -46,6 +46,19 @@ describe('access control', function () {
         });
     });
 
+    describe('validateScope', function () {
+        it('allows valid scopes', function () {
+            expect(accesscontrol.validateScope('apps')).to.be(null);
+            expect(accesscontrol.validateScope('apps,mail')).to.be(null);
+        });
+
+        it('disallows invalid scopes', function () {
+            expect(accesscontrol.validateScope('apps, mail')).to.be.an(Error);
+            expect(accesscontrol.validateScope('random')).to.be.an(Error);
+            expect(accesscontrol.validateScope('')).to.be.an(Error);
+        });
+    });
+
     describe('hasScopes', function () {
         it('succeeds if it contains the scope', function () {
             expect(accesscontrol.hasScopes({ scope: 'apps' }, [ 'apps' ])).to.be(null);
