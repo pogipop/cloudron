@@ -137,7 +137,7 @@ function initialize() {
                 var expires = Date.now() + constants.DEFAULT_TOKEN_EXPIRATION;
                 var scope = accesscontrol.canonicalScope(client.scope);
 
-                tokendb.add(token, authCode.userId, authCode.clientId, expires, client.scope, function (error) {
+                tokendb.add(token, authCode.userId, authCode.clientId, expires, scope, function (error) {
                     if (error) return callback(error);
 
                     debug('exchange: new access token for client %s token %s', client.id, token);
