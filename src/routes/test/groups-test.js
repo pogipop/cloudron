@@ -219,9 +219,9 @@ describe('Groups API', function () {
     describe('Set groups', function () {
         var group0Object, group1Object;
         before(function (done) {
-            groups.create('group0', function (e, r) {
+            groups.create('group0', [ ], function (e, r) {
                 group0Object = r;
-                groups.create('group1', function (e, r) {
+                groups.create('group1', [ ], function (e, r) {
                     group1Object = r;
                     done();
                 });

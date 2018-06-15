@@ -58,7 +58,7 @@ function cleanupUsers(done) {
 }
 
 function createOwner(done) {
-    groups.create('admin', function () { // ignore error since it might already exist
+    groups.addOwnerGroup(function () { // ignore error since it might already exist
         users.createOwner(USERNAME, PASSWORD, EMAIL, DISPLAY_NAME, AUDIT_SOURCE, function (error, result) {
             expect(error).to.not.be.ok();
             expect(result).to.be.ok();
@@ -647,7 +647,7 @@ describe('User', function () {
             createOwner(function (error) {
                 expect(error).to.not.be.ok();
 
-                groups.create(NON_ADMIN_GROUP, function (error, result) {
+                groups.create(NON_ADMIN_GROUP, [ /* roles */ ], function (error, result) {
                     expect(error).to.be(null);
                     groupObject = result;
 

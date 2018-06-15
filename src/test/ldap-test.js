@@ -133,7 +133,7 @@ function setup(done) {
             });
         },
         function (callback) {
-            groups.create(GROUP_NAME, function (error, result) {
+            groups.create(GROUP_NAME, [ /* roles */ ], function (error, result) {
                 if (error) return callback(error);
 
                 GROUP_ID = result.id;

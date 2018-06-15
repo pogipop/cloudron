@@ -34,7 +34,6 @@ var assert = require('assert'),
     debug = require('debug')('box:user'),
     DatabaseError = require('./databaseerror.js'),
     eventlog = require('./eventlog.js'),
-    groupdb = require('./groupdb.js'),
     groups = require('./groups.js'),
     GroupsError = groups.GroupsError,
     hat = require('./hat.js'),
@@ -518,7 +517,7 @@ function createOwner(username, password, email, displayName, auditSource, callba
         if (count !== 0) return callback(new UsersError(UsersError.ALREADY_EXISTS, 'Owner already exists'));
 
         // have to provide the group id explicitly so using db layer directly
-        groupdb.add(constants.ADMIN_GROUP_ID, constants.ADMIN_GROUP_NAME, function (error) {
+        groups.addOwnerGroup(function (error) {
             // we proceed if it already exists so we can re-create the owner if need be
             if (error && error.reason !== DatabaseError.ALREADY_EXISTS) return callback(new UsersError(UsersError.INTERNAL_ERROR, error));
 

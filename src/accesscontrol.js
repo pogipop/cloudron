@@ -13,10 +13,14 @@ exports = module.exports = {
 
     SCOPE_ANY: '*',
 
+    ROLE_OWNER: 'owner',
+
     initialize: initialize,
     uninitialize: uninitialize,
 
     accessTokenAuth: accessTokenAuth,
+
+    validateRoles: validateRoles,
 
     validateScope: validateScope,
     hasScopes: hasScopes,
@@ -155,6 +159,15 @@ function accessTokenAuth(accessToken, callback) {
             callback(null, user, info);
         });
     });
+}
+
+function validateRoles(roles) {
+    assert(Array.isArray(roles));
+
+    if (roles.length === 0) return null;
+    if (roles.length === 1 && roles[0] === exports.ROLE_OWNER) return null;
+
+    return new Error('Invalid role');
 }
 
 function validateScope(scope) {

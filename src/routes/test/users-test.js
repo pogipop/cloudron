@@ -50,7 +50,7 @@ function setup(done) {
     ], function (error) {
         expect(error).to.not.be.ok();
 
-        groups.create('somegroupname', function (error, result) {
+        groups.create('somegroupname', [ ], function (error, result) {
             expect(error).to.not.be.ok();
 
             groupObject = result;

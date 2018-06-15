@@ -3,6 +3,8 @@
 exports = module.exports = {
     GroupsError: GroupsError,
 
+    addOwnerGroup: addOwnerGroup,
+
     create: create,
     remove: remove,
     get: get,
@@ -20,7 +22,8 @@ exports = module.exports = {
     setGroups: setGroups
 };
 
-var assert = require('assert'),
+var accesscontrol = require('./accesscontrol.js'),
+    assert = require('assert'),
     constants = require('./constants.js'),
     DatabaseError = require('./databaseerror.js'),
     groupdb = require('./groupdb.js'),
@@ -70,8 +73,9 @@ function validateGroupname(name) {
     return null;
 }
 
-function create(name, callback) {
+function create(name, roles, callback) {
     assert.strictEqual(typeof name, 'string');
+    assert(Array.isArray(roles));
     assert.strictEqual(typeof callback, 'function');
 
     // we store names in lowercase
@@ -80,8 +84,11 @@ function create(name, callback) {
     var error = validateGroupname(name);
     if (error) return callback(error);
 
+    error = accesscontrol.validateRoles(roles);
+    if (error) return callback(error);
+
     var id = 'gid-' + uuid.v4();
-    groupdb.add(id, name, function (error) {
+    groupdb.add(id, name, roles, function (error) {
         if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(new GroupsError(GroupsError.ALREADY_EXISTS));
         if (error) return callback(new GroupsError(GroupsError.INTERNAL_ERROR, error));
 
@@ -235,4 +242,10 @@ function isMember(groupId, userId, callback) {
 
         return callback(null, result);
     });
+}
+
+function addOwnerGroup(callback) {
+    assert.strictEqual(typeof callback, 'function');
+
+    groupdb.add(constants.ADMIN_GROUP_ID, constants.ADMIN_GROUP_NAME, [ accesscontrol.ROLE_OWNER ], callback);
 }

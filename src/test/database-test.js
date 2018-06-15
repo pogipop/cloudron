@@ -1452,7 +1452,7 @@ describe('database', function () {
             async.series([
                 database.initialize,
                 database._clear,
-                groupdb.add.bind(null, constants.ADMIN_GROUP_ID, constants.ADMIN_GROUP_NAME),
+                groupdb.add.bind(null, constants.ADMIN_GROUP_ID, constants.ADMIN_GROUP_NAME, [ /* roles */]),
                 userdb.add.bind(null, USER_0.id, USER_0),
                 userdb.add.bind(null, USER_1.id, USER_1),
                 userdb.add.bind(null, USER_2.id, USER_2)
@@ -1462,7 +1462,7 @@ describe('database', function () {
         var GROUP_ID_1 = 'foundersid';
 
         it('can create a group', function (done) {
-            groupdb.add(GROUP_ID_1, 'founders', function (error) {
+            groupdb.add(GROUP_ID_1, 'founders', [ /* roles */ ], function (error) {
                 expect(error).to.be(null);
                 done();
             });

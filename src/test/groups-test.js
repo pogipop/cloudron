@@ -80,42 +80,42 @@ describe('Groups', function () {
     after(cleanup);
 
     it('cannot create group - too small', function (done) {
-        groups.create('', function (error) {
+        groups.create('', [ ], function (error) {
             expect(error.reason).to.be(GroupsError.BAD_FIELD);
             done();
         });
     });
 
     it('cannot create group - too big', function (done) {
-        groups.create(new Array(256).join('a'), function (error) {
+        groups.create(new Array(256).join('a'), [ ], function (error) {
             expect(error.reason).to.be(GroupsError.BAD_FIELD);
             done();
         });
     });
 
     it('cannot create group - bad name', function (done) {
-        groups.create('bad:name', function (error) {
+        groups.create('bad:name', [ ], function (error) {
             expect(error.reason).to.be(GroupsError.BAD_FIELD);
             done();
         });
     });
 
     it('cannot create group - reserved', function (done) {
-        groups.create('users', function (error) {
+        groups.create('users', [ ], function (error) {
             expect(error.reason).to.be(GroupsError.BAD_FIELD);
             done();
         });
     });
 
     it('cannot create group - invalid', function (done) {
-        groups.create('cloudron+admin', function (error) {
+        groups.create('cloudron+admin', [ ], function (error) {
             expect(error.reason).to.be(GroupsError.BAD_FIELD);
             done();
         });
     });
 
     it('can create valid group', function (done) {
-        groups.create(GROUP0_NAME, function (error, result) {
+        groups.create(GROUP0_NAME, [ ], function (error, result) {
             expect(error).to.be(null);
             group0Object = result;
             done();
@@ -124,14 +124,14 @@ describe('Groups', function () {
 
     it('cannot create existing group with mixed case', function (done) {
         var name = GROUP0_NAME[0].toUpperCase() + GROUP0_NAME.substr(1);
-        groups.create(name, function (error) {
+        groups.create(name, [ ], function (error) {
             expect(error.reason).to.be(GroupsError.ALREADY_EXISTS);
             done();
         });
     });
 
     it('cannot add existing group', function (done) {
-        groups.create(GROUP0_NAME, function (error) {
+        groups.create(GROUP0_NAME, [ ], function (error) {
             expect(error.reason).to.be(GroupsError.ALREADY_EXISTS);
             done();
         });
@@ -179,7 +179,7 @@ describe('Group membership', function () {
         async.series([
             setup,
             function (next) {
-                groups.create(GROUP0_NAME, function (error, result) {
+                groups.create(GROUP0_NAME, [ /* roles */ ], function (error, result) {
                     if (error) return next(error);
                     group0Object = result;
                     next();
@@ -296,7 +296,7 @@ describe('Group membership', function () {
     });
 
     it('can remove group with member', function (done) {
-        groups.create(GROUP0_NAME, function (error, result) {
+        groups.create(GROUP0_NAME, [ /* roles */ ], function (error, result) {
             expect(error).to.eql(null);
             group0Object = result;
 
@@ -317,14 +317,14 @@ describe('Set user groups', function () {
         async.series([
             setup,
             function (next) {
-                groups.create(GROUP0_NAME, function (error, result) {
+                groups.create(GROUP0_NAME, [ ], function (error, result) {
                     if (error) return next(error);
                     group0Object = result;
                     next();
                 });
             },
             function (next) {
-                groups.create(GROUP1_NAME, function (error, result) {
+                groups.create(GROUP1_NAME, [ ], function (error, result) {
                     if (error) return next(error);
                     group1Object = result;
                     next();
