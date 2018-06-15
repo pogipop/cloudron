@@ -49,12 +49,11 @@ function create(req, res, next) {
             displayName: user.displayName,
             email: user.email,
             fallbackEmail: user.fallbackEmail,
-            admin: user.admin,
             groupIds: [ ],
             resetToken: user.resetToken
         };
 
-        next(new HttpSuccess(201, userInfo ));
+        next(new HttpSuccess(201, userInfo));
     });
 }
 
@@ -67,8 +66,6 @@ function update(req, res, next) {
     if ('fallbackEmail' in req.body && typeof req.body.fallbackEmail !== 'string') return next(new HttpError(400, 'fallbackEmail must be string'));
     if ('displayName' in req.body && typeof req.body.displayName !== 'string') return next(new HttpError(400, 'displayName must be string'));
     if ('username' in req.body && typeof req.body.username !== 'string') return next(new HttpError(400, 'username must be a string'));
-
-    if (req.user.id !== req.params.userId && !req.user.admin) return next(new HttpError(403, 'Not allowed'));
 
     users.update(req.params.userId, req.body, auditSource(req), function (error) {
         if (error && error.reason === UsersError.BAD_FIELD) return next(new HttpError(400, error.message));
@@ -93,8 +90,6 @@ function list(req, res, next) {
 function get(req, res, next) {
     assert.strictEqual(typeof req.params.userId, 'string');
     assert.strictEqual(typeof req.user, 'object');
-
-    if (req.user.id !== req.params.userId && !req.user.admin) return next(new HttpError(403, 'Not allowed'));
 
     users.get(req.params.userId, function (error, result) {
         if (error && error.reason === UsersError.NOT_FOUND) return next(new HttpError(404, 'No such user'));
