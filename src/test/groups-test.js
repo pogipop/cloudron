@@ -108,7 +108,7 @@ describe('Groups', function () {
     });
 
     it('cannot create group - invalid', function (done) {
-        groups.create('cloudron-admin', function (error) {
+        groups.create('cloudron+admin', function (error) {
             expect(error.reason).to.be(GroupsError.BAD_FIELD);
             done();
         });
@@ -124,7 +124,7 @@ describe('Groups', function () {
 
     it('cannot create existing group with mixed case', function (done) {
         var name = GROUP0_NAME[0].toUpperCase() + GROUP0_NAME.substr(1);
-        groups.create(name, function (error, result) {
+        groups.create(name, function (error) {
             expect(error.reason).to.be(GroupsError.ALREADY_EXISTS);
             done();
         });
