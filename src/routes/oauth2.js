@@ -52,18 +52,12 @@ function auditSource(req, appId, appObject) {
     return { authType: 'oauth', ip: ip, appId: appId, app: appObject };
 }
 
-// create OAuth 2.0 server
 var gServer = null;
 
 function initialize() {
-    assert(gServer === null);
+    assert.strictEqual(gServer, null);
 
     gServer = oauth2orize.createServer();
-
-    // Register serialialization and deserialization functions.
-    //
-    // The client id is stored in the session and can thus be retrieved for each
-    // step in the oauth flow transaction, which involves multiple http requests.
 
     gServer.serializeClient(function (client, callback) {
         return callback(null, client.id);
@@ -73,16 +67,7 @@ function initialize() {
         clients.get(id, callback);
     });
 
-
-    // Register supported grant types.
-
-    // Grant authorization codes.  The callback takes the `client` requesting
-    // authorization, the `redirectURI` (which is used as a verifier in the
-    // subsequent exchange), the authenticated `user` granting access, and
-    // their response, which contains approved scope, duration, etc. as parsed by
-    // the application.  The application issues a code, which is bound to these
-    // values, and will be exchanged for an access token.
-
+    // grant authorization code that can be exchanged for access tokens. this is used by external oauth clients
     gServer.grant(oauth2orize.grant.code({ scopeSeparator: ',' }, function (client, redirectURI, user, ares, callback) {
         debug('grant code:', client.id, redirectURI, user.id, ares);
 
@@ -98,30 +83,7 @@ function initialize() {
         });
     }));
 
-
-    gServer.grant(oauth2orize.grant.token({ scopeSeparator: ',' }, function (client, user, ares, callback) {
-        debug('grant token:', client.id, user.id, ares);
-
-        var token = tokendb.generateToken();
-        var expires = Date.now() + constants.DEFAULT_TOKEN_EXPIRATION;
-        var scope = accesscontrol.intersectScope(user.scope, client.scope);
-
-        tokendb.add(token, user.id, client.id, expires, scope, function (error) {
-            if (error) return callback(error);
-
-            debug('grant token: new access token for client %s token %s', client.id, token.slice(0, 6)); // partial token for security
-
-            callback(null, token);
-        });
-    }));
-
-
-    // Exchange authorization codes for access tokens.  The callback accepts the
-    // `client`, which is exchanging `code` and any `redirectURI` from the
-    // authorization request for verification.  If these values are validated, the
-    // application issues an access token on behalf of the user who authorized the
-    // code.
-
+    // exchange authorization codes for access tokens. this is used by external oauth clients
     gServer.exchange(oauth2orize.exchange.code(function (client, code, redirectURI, callback) {
         debug('exchange:', client, code, redirectURI);
 
@@ -145,6 +107,23 @@ function initialize() {
                     callback(null, token);
                 });
             });
+        });
+    }));
+
+    // implicit token grant that skips issuing auth codes. this is used by our webadmin
+    gServer.grant(oauth2orize.grant.token({ scopeSeparator: ',' }, function (client, user, ares, callback) {
+        debug('grant token:', client.id, user.id, ares);
+
+        var token = tokendb.generateToken();
+        var expires = Date.now() + constants.DEFAULT_TOKEN_EXPIRATION;
+        var scope = accesscontrol.intersectScope(user.scope, client.scope);
+
+        tokendb.add(token, user.id, client.id, expires, scope, function (error) {
+            if (error) return callback(error);
+
+            debug('grant token: new access token for client %s token %s', client.id, token.slice(0, 6)); // partial token for security
+
+            callback(null, token);
         });
     }));
 
