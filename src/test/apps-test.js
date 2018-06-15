@@ -148,6 +148,7 @@ describe('Apps', function () {
             database._clear,
             domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0.zoneName, DOMAIN_0.provider, DOMAIN_0.config, null, DOMAIN_0.tlsConfig),
             domains.add.bind(null, DOMAIN_1.domain, DOMAIN_1.zoneName, DOMAIN_1.provider, DOMAIN_1.config, null, DOMAIN_1.tlsConfig),
+            groupdb.add.bind(null, constants.ADMIN_GROUP_ID, constants.ADMIN_GROUP_NAME),
             userdb.add.bind(null, ADMIN_0.id, ADMIN_0),
             userdb.add.bind(null, USER_0.id, USER_0),
             userdb.add.bind(null, USER_1.id, USER_1),

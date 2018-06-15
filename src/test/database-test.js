@@ -11,6 +11,7 @@ var appdb = require('../appdb.js'),
     backupdb = require('../backupdb.js'),
     clientdb = require('../clientdb.js'),
     config = require('../config.js'),
+    constants = require('../constants.js'),
     database = require('../database'),
     DatabaseError = require('../databaseerror.js'),
     domaindb = require('../domaindb'),
@@ -1451,6 +1452,7 @@ describe('database', function () {
             async.series([
                 database.initialize,
                 database._clear,
+                groupdb.add.bind(null, constants.ADMIN_GROUP_ID, constants.ADMIN_GROUP_NAME),
                 userdb.add.bind(null, USER_0.id, USER_0),
                 userdb.add.bind(null, USER_1.id, USER_1),
                 userdb.add.bind(null, USER_2.id, USER_2)
