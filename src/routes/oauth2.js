@@ -511,7 +511,7 @@ function authorization() {
 function token() {
     return [
         passport.authenticate(['basic', 'oauth2-client-password'], { session: false }),
-        gServer.token(),
+        gServer.token(), // will call the token grant callback registered in initialize()
         gServer.errorHandler()
     ];
 }
