@@ -338,7 +338,7 @@ function start(callback) {
     gSysadminHttpServer = initializeSysadminExpressSync();
 
     async.series([
-        accesscontrol.initialize,  // hooks up authentication strategies into passport
+        routes.accesscontrol.initialize,  // hooks up authentication strategies into passport
         database.initialize,
         cloudron.initialize,
         setup.configureWebadmin,
@@ -356,7 +356,7 @@ function stop(callback) {
     async.series([
         cloudron.uninitialize,
         database.uninitialize,
-        accesscontrol.uninitialize,
+        routes.accesscontrol.uninitialize,
         gHttpServer.close.bind(gHttpServer),
         gSysadminHttpServer.close.bind(gSysadminHttpServer)
     ], function (error) {

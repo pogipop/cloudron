@@ -2,13 +2,117 @@
 
 exports = module.exports = {
     scope: scope,
-    websocketAuth: websocketAuth
+    websocketAuth: websocketAuth,
+    initialize: initialize,
+    uninitialize: uninitialize
 };
 
 var accesscontrol = require('../accesscontrol.js'),
     assert = require('assert'),
+    BasicStrategy = require('passport-http').BasicStrategy,
+    BearerStrategy = require('passport-http-bearer').Strategy,
+    clients = require('../clients.js'),
+    ClientPasswordStrategy = require('passport-oauth2-client-password').Strategy,
+    ClientsError = clients.ClientsError,
+    DatabaseError = require('../databaseerror.js'),
     HttpError = require('connect-lastmile').HttpError,
-    passport = require('passport');
+    LocalStrategy = require('passport-local').Strategy,
+    passport = require('passport'),
+    tokendb = require('../tokendb'),
+    users = require('../users.js'),
+    UsersError = users.UsersError;
+
+function initialize(callback) {
+    assert.strictEqual(typeof callback, 'function');
+
+    // serialize user into session
+    passport.serializeUser(function (user, callback) {
+        callback(null, user.id);
+    });
+
+    // deserialize user from session
+    passport.deserializeUser(function(userId, callback) {
+        users.get(userId, function (error, result) {
+            if (error) return callback(error);
+
+            callback(null, result);
+        });
+    });
+
+    // used when username/password is sent in request body. used in CLI tool login route
+    passport.use(new LocalStrategy(function (username, password, callback) {
+        if (username.indexOf('@') === -1) {
+            users.verifyWithUsername(username, password, function (error, result) {
+                if (error && error.reason === UsersError.NOT_FOUND) return callback(null, false);
+                if (error && error.reason === UsersError.WRONG_PASSWORD) return callback(null, false);
+                if (error) return callback(error);
+                if (!result) return callback(null, false);
+                callback(null, result);
+            });
+        } else {
+            users.verifyWithEmail(username, password, function (error, result) {
+                if (error && error.reason === UsersError.NOT_FOUND) return callback(null, false);
+                if (error && error.reason === UsersError.WRONG_PASSWORD) return callback(null, false);
+                if (error) return callback(error);
+                if (!result) return callback(null, false);
+                callback(null, result);
+            });
+        }
+    }));
+
+    // Used to authenticate a OAuth2 client which uses clientId and clientSecret in the Authorization header
+    passport.use(new BasicStrategy(function (clientId, clientSecret, callback) {
+        clients.get(clientId, function (error, client) {
+            if (error && error.reason === ClientsError.NOT_FOUND) return callback(null, false);
+            if (error) return callback(error);
+            if (client.clientSecret !== clientSecret) return callback(null, false);
+            callback(null, client);
+        });
+    }));
+
+    // Used to authenticate a OAuth2 client which uses clientId and clientSecret in the request body (client_id, client_secret)
+    passport.use(new ClientPasswordStrategy(function (clientId, clientSecret, callback) {
+        clients.get(clientId, function(error, client) {
+            if (error && error.reason === ClientsError.NOT_FOUND) return callback(null, false);
+            if (error) { return callback(error); }
+            if (client.clientSecret !== clientSecret) { return callback(null, false); }
+            callback(null, client);
+        });
+    }));
+
+    // used for "Authorization: Bearer token" or access_token query param authentication
+    passport.use(new BearerStrategy(accessTokenAuth));
+
+    callback(null);
+}
+
+function uninitialize(callback) {
+    assert.strictEqual(typeof callback, 'function');
+
+    callback(null);
+}
+
+function accessTokenAuth(accessToken, callback) {
+    assert.strictEqual(typeof accessToken, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    tokendb.get(accessToken, function (error, token) {
+        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(null, false);
+        if (error) return callback(error);
+
+        users.get(token.identifier, function (error, user) {
+            if (error && error.reason === UsersError.NOT_FOUND) return callback(null, false);
+            if (error) return callback(error);
+
+            // scopes here can define what capabilities that token carries
+            // passport put the 'info' object into req.authInfo, where we can further validate the scopes
+            var scope = accesscontrol.intersectScope(user.scope, token.scope);
+            var info = { scope: scope, clientId: token.clientId };
+
+            callback(null, user, info);
+        });
+    });
+}
 
 //  The scope middleware provides an auth middleware for routes.
 //
@@ -41,7 +145,7 @@ function websocketAuth(requiredScopes, req, res, next) {
 
     if (typeof req.query.access_token !== 'string') return next(new HttpError(401, 'Unauthorized'));
 
-    accesscontrol.accessTokenAuth(req.query.access_token, function (error, user, info) {
+    accessTokenAuth(req.query.access_token, function (error, user, info) {
         if (error) return next(new HttpError(500, error.message));
         if (!user) return next(new HttpError(401, 'Unauthorized'));
 
