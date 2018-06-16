@@ -295,8 +295,6 @@ function getRoles(userId, callback) {
 
         results.forEach(postProcess);
 
-        var merged = [].concat.apply([], results.map(function (r) { return r.roles; }));
-
-        callback(null, _.uniq(merged));
+        callback(null, _.uniq(_.flatten(results.map(function (r) { return r.roles; }))));
     });
 }
