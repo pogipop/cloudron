@@ -285,7 +285,7 @@ describe('Groups API', function () {
                 .query({ access_token: token })
                 .send({ groupIds: [ group0Object.id, group1Object.id ]})
                 .end(function (error, result) {
-                    expect(result.statusCode).to.equal(403); // not allowed
+                    expect(result.statusCode).to.equal(409); // not allowed
                     done();
                 });
         });

@@ -153,7 +153,7 @@ function websocketAuth(requiredScopes, req, res, next) {
         req.authInfo = info;
 
         var e = accesscontrol.hasScopes(req.authInfo, requiredScopes);
-        if (e) return next(new HttpError(401, e.message));
+        if (e) return next(new HttpError(403, e.message));
 
         next();
     });

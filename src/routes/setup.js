@@ -35,7 +35,7 @@ function providerTokenAuth(req, res, next) {
             if (error && !error.response) return next(new HttpError(500, error));
             if (result.statusCode !== 200) return next(new HttpError(500, 'Unable to get meta data'));
 
-            if (result.text !== req.body.providerToken) return next(new HttpError(403, 'Invalid providerToken'));
+            if (result.text !== req.body.providerToken) return next(new HttpError(401, 'Invalid providerToken'));
 
             next();
         });
@@ -53,7 +53,7 @@ function setupTokenAuth(req, res, next) {
 
     caas.verifySetupToken(req.query.setupToken, function (error) {
         if (error && error.reason === CaasError.BAD_STATE) return next(new HttpError(409, 'Already setup'));
-        if (error && error.reason === CaasError.INVALID_TOKEN) return next(new HttpError(403, 'Invalid token'));
+        if (error && error.reason === CaasError.INVALID_TOKEN) return next(new HttpError(401, 'Invalid token'));
         if (error && error.reason === CaasError.EXTERNAL_ERROR) return next(new HttpError(503, error.message));
 
         if (error) return next(new HttpError(500, error));
@@ -119,7 +119,7 @@ function activate(req, res, next) {
 
         caas.setupDone(req.query.setupToken, function (error) {
             if (error && error.reason === CaasError.BAD_STATE) return next(new HttpError(409, 'Already setup'));
-            if (error && error.reason === CaasError.INVALID_TOKEN) return next(new HttpError(403, 'Invalid token'));
+            if (error && error.reason === CaasError.INVALID_TOKEN) return next(new HttpError(401, 'Invalid token'));
             if (error && error.reason === CaasError.EXTERNAL_ERROR) return next(new HttpError(503, error.message));
 
             if (error) return next(new HttpError(500, error));

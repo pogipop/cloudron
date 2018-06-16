@@ -107,7 +107,7 @@ function remove(req, res, next) {
     // - admin cannot remove admin
     // - user cannot remove himself <- TODO should this actually work?
 
-    if (req.user.id === req.params.userId) return next(new HttpError(403, 'Not allowed to remove yourself.'));
+    if (req.user.id === req.params.userId) return next(new HttpError(409, 'Not allowed to remove yourself.'));
 
     users.remove(req.params.userId, auditSource(req), function (error) {
         if (error && error.reason === UsersError.BAD_FIELD) return next(new HttpError(400, error.message));
@@ -127,8 +127,8 @@ function verifyPassword(req, res, next) {
     if (typeof req.body.password !== 'string') return next(new HttpError(400, 'API call requires user password'));
 
     users.verifyWithUsername(req.user.username, req.body.password, function (error) {
-        if (error && error.reason === UsersError.WRONG_PASSWORD) return next(new HttpError(403, 'Password incorrect'));
-        if (error && error.reason === UsersError.NOT_FOUND) return next(new HttpError(403, 'Password incorrect'));
+        if (error && error.reason === UsersError.WRONG_PASSWORD) return next(new HttpError(401, 'Password incorrect'));
+        if (error && error.reason === UsersError.NOT_FOUND) return next(new HttpError(404, 'No such user'));
         if (error) return next(new HttpError(500, error));
 
         req.body.password = '<redacted>'; // this will prevent logs from displaying plain text password
@@ -155,7 +155,7 @@ function setGroups(req, res, next) {
     if (!Array.isArray(req.body.groupIds)) return next(new HttpError(400, 'API call requires a groups array.'));
 
     // this route is only allowed for admins, so req.user has to be an admin
-    if (req.user.id === req.params.userId && req.body.groupIds.indexOf(constants.ADMIN_GROUP_ID) === -1) return next(new HttpError(403, 'Admin removing itself from admins is not allowed'));
+    if (req.user.id === req.params.userId && req.body.groupIds.indexOf(constants.ADMIN_GROUP_ID) === -1) return next(new HttpError(409, 'Admin removing itself from admins is not allowed'));
 
     users.setGroups(req.params.userId, req.body.groupIds, function (error) {
         if (error && error.reason === UsersError.NOT_FOUND) return next(new HttpError(404, 'One or more groups not found'));

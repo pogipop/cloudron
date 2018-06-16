@@ -234,7 +234,7 @@ describe('Domains API', function () {
                 .query({ access_token: token })
                 .send({ password: PASSWORD + PASSWORD })
                 .end(function (error, result) {
-                    expect(result.statusCode).to.equal(403);
+                    expect(result.statusCode).to.equal(401);
 
                     done();
                 });

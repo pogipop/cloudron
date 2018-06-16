@@ -65,7 +65,7 @@ function changePassword(req, res, next) {
 
     users.setPassword(req.user.id, req.body.newPassword, function (error) {
         if (error && error.reason === UsersError.BAD_FIELD) return next(new HttpError(400, error.message));
-        if (error && error.reason === UsersError.NOT_FOUND) return next(new HttpError(403, 'Wrong password'));
+        if (error && error.reason === UsersError.NOT_FOUND) return next(new HttpError(404, 'User not found'));
         if (error) return next(new HttpError(500, error));
 
         next(new HttpSuccess(204));
@@ -91,7 +91,7 @@ function enableTwoFactorAuthentication(req, res, next) {
 
     users.enableTwoFactorAuthentication(req.user.id, req.body.totpToken, function (error) {
         if (error && error.reason === UsersError.NOT_FOUND) return next(new HttpError(404, 'User not found'));
-        if (error && error.reason === UsersError.BAD_TOKEN) return next(new HttpError(403, 'Invalid token'));
+        if (error && error.reason === UsersError.BAD_TOKEN) return next(new HttpError(401, 'Invalid token'));
         if (error && error.reason === UsersError.ALREADY_EXISTS) return next(new HttpError(409, 'TwoFactor Authentication is already enabled'));
         if (error) return next(new HttpError(500, error));
 

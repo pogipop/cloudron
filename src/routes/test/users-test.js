@@ -358,7 +358,7 @@ describe('Users API', function () {
             .query({ access_token: token })
             .send({ groupIds: [ groupObject.id ] })
             .end(function (err, res) {
-                expect(res.statusCode).to.equal(403);
+                expect(res.statusCode).to.equal(409);
                 done();
             });
     });
@@ -525,7 +525,7 @@ describe('Users API', function () {
             .query({ access_token: token })
             .send({ password: PASSWORD })
             .end(function (err, res) {
-                expect(res.statusCode).to.equal(403);
+                expect(res.statusCode).to.equal(409);
                 done();
             });
     });
@@ -544,7 +544,7 @@ describe('Users API', function () {
             .query({ access_token: token })
             .send({ password: '' })
             .end(function (err, res) {
-                expect(res.statusCode).to.equal(403);
+                expect(res.statusCode).to.equal(401);
                 done();
             });
     });
@@ -554,7 +554,7 @@ describe('Users API', function () {
             .query({ access_token: token })
             .send({ password: PASSWORD + PASSWORD })
             .end(function (err, res) {
-                expect(res.statusCode).to.equal(403);
+                expect(res.statusCode).to.equal(401);
                 done();
             });
     });
@@ -574,7 +574,7 @@ describe('Users API', function () {
             .query({ access_token: token })
             .send({ password: PASSWORD })
             .end(function (err, res) {
-                expect(res.statusCode).to.equal(403);
+                expect(res.statusCode).to.equal(409);
                 done();
             });
     });
