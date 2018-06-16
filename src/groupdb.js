@@ -19,13 +19,16 @@ exports = module.exports = {
     getGroups: getGroups,
     setGroups: setGroups,
 
+    getRoles: getRoles,
+
     _clear: clear
 };
 
 var assert = require('assert'),
     database = require('./database.js'),
     DatabaseError = require('./databaseerror'),
-    safe = require('safetydance');
+    safe = require('safetydance'),
+    _ = require('underscore');
 
 var GROUPS_FIELDS = [ 'id', 'name', 'rolesJson' ].join(',');
 
@@ -278,5 +281,22 @@ function isMember(groupId, userId, callback) {
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
 
         callback(null, result.length !== 0);
+    });
+}
+
+function getRoles(userId, callback) {
+    assert.strictEqual(typeof userId, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    database.query('SELECT ' + GROUPS_FIELDS + ' ' +
+        ' FROM groups INNER JOIN groupMembers ON groups.id = groupMembers.groupId AND groupMembers.userId = ?', [ userId ], function (error, results) {
+        if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
+        if (results.length === 0) return callback(new DatabaseError(DatabaseError.NOT_FOUND));
+
+        results.forEach(postProcess);
+
+        var merged = [].concat.apply([], results.map(function (r) { return r.roles; }));
+
+        callback(null, _.uniq(merged));
     });
 }

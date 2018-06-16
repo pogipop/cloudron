@@ -19,6 +19,7 @@ exports = module.exports = {
     isMember: isMember,
 
     setRoles: setRoles,
+    getRoles: getRoles,
 
     getGroups: getGroups,
     setGroups: setGroups
@@ -265,5 +266,17 @@ function setRoles(groupId, roles, callback) {
         if (error) return callback(new GroupsError(GroupsError.INTERNAL_ERROR, error));
 
         callback(null);
+    });
+}
+
+function getRoles(userId, callback) {
+    assert.strictEqual(typeof userId, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    groupdb.getRoles(userId, function (error, roles) {
+        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new GroupsError(GroupsError.NOT_FOUND));
+        if (error) return callback(new GroupsError(GroupsError.INTERNAL_ERROR, error));
+
+        callback(null, roles);
     });
 }

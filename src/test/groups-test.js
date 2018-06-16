@@ -385,11 +385,13 @@ describe('Roles', function () {
     before(function (done) {
         async.series([
             setup,
+            userdb.add.bind(null, USER_0.id, USER_0),
             function (next) {
                 groups.create(GROUP0_NAME, [ /* roles */ ], function (error, result) {
                     if (error) return next(error);
                     group0Object = result;
-                    next();
+
+                    groups.setGroups(USER_0.id, [ group0Object.id ], next);
                 });
             },
         ], done);
@@ -403,10 +405,18 @@ describe('Roles', function () {
         });
     });
 
-    it('can get roles', function (done) {
+    it('can get roles of a group', function (done) {
         groups.get(group0Object.id, function (error, result) {
             expect(error).to.be(null);
             expect(result.roles).to.eql([ accesscontrol.ROLE_OWNER ]);
+            done();
+        });
+    });
+
+    it('can get roles of a user', function (done) {
+        groups.getRoles(USER_0.id, function (error, roles) {
+            expect(roles.length).to.be(1);
+            expect(roles[0]).to.be('owner');
             done();
         });
     });
