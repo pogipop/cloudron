@@ -298,10 +298,6 @@ function list(callback) {
     userdb.getAllWithGroupIds(function (error, results) {
         if (error) return callback(new UsersError(UsersError.INTERNAL_ERROR, error));
 
-        results.forEach(function (result) {
-            result.admin = result.groupIds.indexOf(constants.ADMIN_GROUP_ID) !== -1;
-        });
-
         return callback(null, results);
     });
 }
@@ -328,7 +324,6 @@ function get(userId, callback) {
             if (error) return callback(new UsersError(UsersError.INTERNAL_ERROR, error));
 
             result.groupIds = groupIds;
-            result.admin = groupIds.indexOf(constants.ADMIN_GROUP_ID) !== -1;
 
             return callback(null, result);
         });

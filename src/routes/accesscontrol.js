@@ -14,6 +14,7 @@ var accesscontrol = require('../accesscontrol.js'),
     clients = require('../clients.js'),
     ClientPasswordStrategy = require('passport-oauth2-client-password').Strategy,
     ClientsError = clients.ClientsError,
+    constants = require('../constants.js'),
     DatabaseError = require('../databaseerror.js'),
     HttpError = require('connect-lastmile').HttpError,
     LocalStrategy = require('passport-local').Strategy,
@@ -106,7 +107,7 @@ function accessTokenAuth(accessToken, callback) {
 
             // scopes here can define what capabilities that token carries
             // passport put the 'info' object into req.authInfo, where we can further validate the scopes
-            const userScope = user.admin ? '*' : 'profile';
+            const userScope = user.groupIds.indexOf(constants.ADMIN_GROUP_ID) !== -1 ? '*' : 'profile';
             var scope = accesscontrol.intersectScope(userScope, token.scope);
             // these clients do not require password checks unlike UI
             const skipPasswordVerification = token.clientId === 'cid-sdk' || token.clientId === 'cid-cli';

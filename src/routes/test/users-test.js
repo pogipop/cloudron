@@ -165,7 +165,7 @@ describe('Users API', function () {
                 expect(res.statusCode).to.equal(200);
                 expect(res.body.username).to.equal(USERNAME_0.toLowerCase());
                 expect(res.body.email).to.equal(EMAIL_0.toLowerCase());
-                expect(res.body.admin).to.be.ok();
+                expect(res.body.groupIds).to.eql(['admin']);
 
                 done();
             });
@@ -196,7 +196,8 @@ describe('Users API', function () {
                 expect(res.statusCode).to.equal(200);
                 expect(res.body.username).to.equal(USERNAME_0.toLowerCase());
                 expect(res.body.email).to.equal(EMAIL_0.toLowerCase());
-                expect(res.body.admin).to.be.ok();
+                expect(res.body.groupIds).to.eql(['admin']);
+
                 done();
             });
     });
@@ -235,7 +236,7 @@ describe('Users API', function () {
                 expect(res.statusCode).to.equal(200);
                 expect(res.body.username).to.equal(USERNAME_0.toLowerCase());
                 expect(res.body.email).to.equal(EMAIL_0.toLowerCase());
-                expect(res.body.admin).to.be.ok();
+                expect(res.body.groupIds).to.eql(['admin']);
                 expect(res.body.displayName).to.be.a('string');
                 expect(res.body.password).to.not.be.ok();
                 expect(res.body.salt).to.not.be.ok();
@@ -330,7 +331,7 @@ describe('Users API', function () {
                     .query({ access_token: token })
                     .end(function (err, res) {
                         expect(res.statusCode).to.equal(200);
-                        expect(res.body.admin).to.equal(true);
+                        expect(res.body.groupIds).to.eql(['admin']);
 
                         done();
                     });
@@ -346,7 +347,6 @@ describe('Users API', function () {
                 expect(res.body.users).to.be.an('array');
 
                 res.body.users.forEach(function (user) {
-                    expect(user.admin).to.be(true);
                     expect(user.groupIds).to.eql([ constants.ADMIN_GROUP_ID ]);
                 });
                 done();
@@ -374,7 +374,7 @@ describe('Users API', function () {
                     .query({ access_token: token })
                     .end(function (err, res) {
                         expect(res.statusCode).to.equal(200);
-                        expect(res.body.admin).to.equal(false);
+                        expect(res.body.groupIds).to.eql([ groupObject.id ]);
 
                         done();
                     });
@@ -461,7 +461,7 @@ describe('Users API', function () {
                 expect(result.statusCode).to.equal(200);
                 expect(result.body.username).to.equal(USERNAME_2.toLowerCase());
                 expect(result.body.email).to.equal(EMAIL_2.toLowerCase());
-                expect(result.body.admin).to.not.be.ok();
+                expect(result.body.groupIds).to.eql([]);
 
                 done();
             });
@@ -503,7 +503,6 @@ describe('Users API', function () {
                     expect(user.password).to.not.be.ok();
                     expect(user.salt).to.not.be.ok();
                     expect(user.groupIds).to.be.an(Array);
-                    expect(user.admin).to.be.a('boolean');
                 });
 
                 done();
@@ -622,7 +621,6 @@ describe('Users API', function () {
                         expect(res.statusCode).to.equal(200);
                         expect(res.body.username).to.equal(USERNAME_2.toLowerCase());
                         expect(res.body.email).to.equal(EMAIL_2_NEW.toLowerCase());
-                        expect(res.body.admin).to.equal(false);
                         expect(res.body.displayName).to.equal('');
 
                         done();
@@ -643,7 +641,6 @@ describe('Users API', function () {
                         expect(res.statusCode).to.equal(200);
                         expect(res.body.username).to.equal(USERNAME_2.toLowerCase());
                         expect(res.body.email).to.equal(EMAIL_2.toLowerCase());
-                        expect(res.body.admin).to.equal(false);
                         expect(res.body.displayName).to.equal('');
 
                         done();
@@ -664,7 +661,6 @@ describe('Users API', function () {
                         expect(res.statusCode).to.equal(200);
                         expect(res.body.username).to.equal(USERNAME_0.toLowerCase());
                         expect(res.body.email).to.equal(EMAIL_0.toLowerCase());
-                        expect(res.body.admin).to.be.ok();
                         expect(res.body.displayName).to.equal(DISPLAY_NAME_0_NEW);
 
                         done();

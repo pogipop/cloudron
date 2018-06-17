@@ -10,6 +10,7 @@ var assert = require('assert'),
     apps = require('./apps.js'),
     async = require('async'),
     config = require('./config.js'),
+    constants = require('./constants.js'),
     DatabaseError = require('./databaseerror.js'),
     debug = require('debug')('box:ldap'),
     eventlog = require('./eventlog.js'),
@@ -56,6 +57,9 @@ function getUsersWithAccessToApp(req, callback) {
 
             async.filter(result, apps.hasAccessTo.bind(null, app), function (error, result) {
                 if (error) return callback(new ldap.OperationsError(error.toString()));
+
+                // TODO: in the long run, we should probably get rid of this "admin" integration altogether
+                result.forEach(function (r) { r.admin = r.groupIds.indexOf(constants.ADMIN_GROUP_ID) !== -1; });
 
                 callback(null, result);
             });
