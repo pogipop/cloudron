@@ -102,7 +102,7 @@ function initialize() {
                 tokendb.add(token, authCode.userId, authCode.clientId, expires, scope, function (error) {
                     if (error) return callback(error);
 
-                    debug('exchange: new access token for client %s token %s', client.id, token);
+                    debug('exchange: new access token for client %s token %s', client.id, token.slice(0, 6)); // partial token for security
 
                     callback(null, token);
                 });
