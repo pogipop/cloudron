@@ -63,23 +63,23 @@ describe('access control', function () {
 
     describe('hasScopes', function () {
         it('succeeds if it contains the scope', function () {
-            expect(accesscontrol.hasScopes({ scope: 'apps' }, [ 'apps' ])).to.be(null);
-            expect(accesscontrol.hasScopes({ scope: 'apps,mail' }, [ 'mail' ])).to.be(null);
-            expect(accesscontrol.hasScopes({ scope: 'clients,*,apps,mail' }, [ 'mail' ])).to.be(null);
+            expect(accesscontrol.hasScopes('apps', [ 'apps' ])).to.be(null);
+            expect(accesscontrol.hasScopes('apps,mail', [ 'mail' ])).to.be(null);
+            expect(accesscontrol.hasScopes('clients,*,apps,mail', [ 'mail' ])).to.be(null);
 
             // subscope
-            expect(accesscontrol.hasScopes({ scope: 'apps' }, [ 'apps:read' ])).to.be(null);
-            expect(accesscontrol.hasScopes({ scope: 'apps:read' }, [ 'apps:read' ])).to.be(null);
-            expect(accesscontrol.hasScopes({ scope: 'apps,mail' }, [ 'apps:*' ])).to.be(null);
-            expect(accesscontrol.hasScopes({ scope: '*' }, [ 'apps:read' ])).to.be(null);
+            expect(accesscontrol.hasScopes('apps', [ 'apps:read' ])).to.be(null);
+            expect(accesscontrol.hasScopes('apps:read', [ 'apps:read' ])).to.be(null);
+            expect(accesscontrol.hasScopes('apps,mail', [ 'apps:*' ])).to.be(null);
+            expect(accesscontrol.hasScopes('*', [ 'apps:read' ])).to.be(null);
         });
 
         it('fails if it does not contain the scope', function () {
-            expect(accesscontrol.hasScopes({ scope: 'apps' }, [ 'mail' ])).to.be.an(Error);
-            expect(accesscontrol.hasScopes({ scope: 'apps,mail' }, [ 'clients' ])).to.be.an(Error);
+            expect(accesscontrol.hasScopes('apps', [ 'mail' ])).to.be.an(Error);
+            expect(accesscontrol.hasScopes('apps,mail', [ 'clients' ])).to.be.an(Error);
 
             // subscope
-            expect(accesscontrol.hasScopes({ scope: 'apps:write' }, [ 'apps:read' ])).to.be.an(Error);
+            expect(accesscontrol.hasScopes('apps:write', [ 'apps:read' ])).to.be.an(Error);
         });
     });
 

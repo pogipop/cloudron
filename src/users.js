@@ -329,7 +329,6 @@ function get(userId, callback) {
 
             result.groupIds = groupIds;
             result.admin = groupIds.indexOf(constants.ADMIN_GROUP_ID) !== -1;
-            result.scope = result.admin ? '*' : 'profile';
 
             return callback(null, result);
         });

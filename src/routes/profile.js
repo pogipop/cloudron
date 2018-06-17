@@ -9,8 +9,7 @@ exports = module.exports = {
     disableTwoFactorAuthentication: disableTwoFactorAuthentication
 };
 
-var accesscontrol = require('../accesscontrol.js'),
-    assert = require('assert'),
+var assert = require('assert'),
     HttpError = require('connect-lastmile').HttpError,
     HttpSuccess = require('connect-lastmile').HttpSuccess,
     users = require('../users.js'),
@@ -31,7 +30,7 @@ function get(req, res, next) {
         email: req.user.email,
         fallbackEmail: req.user.fallbackEmail,
         admin: req.user.admin,
-        scope: accesscontrol.canonicalScope(req.authInfo.scope), // this returns the token scope and not the user's scope
+        tokenScope: req.authInfo.authorizedScope,
         displayName: req.user.displayName,
         twoFactorAuthenticationEnabled: req.user.twoFactorAuthenticationEnabled
     }));

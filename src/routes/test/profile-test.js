@@ -106,6 +106,7 @@ describe('Profile API', function () {
                 expect(result.body.displayName).to.be.a('string');
                 expect(result.body.password).to.not.be.ok();
                 expect(result.body.salt).to.not.be.ok();
+                expect(result.body.tokenScope).to.be('apps,clients,cloudron,domains,mail,profile,settings,users');
 
                 user_0 = result.body;
 
@@ -144,6 +145,7 @@ describe('Profile API', function () {
                 expect(result.body.displayName).to.be.a('string');
                 expect(result.body.password).to.not.be.ok();
                 expect(result.body.salt).to.not.be.ok();
+                expect(result.body.tokenScope).to.be('apps,clients,cloudron,domains,mail,profile,settings,users');
                 done();
             });
         });

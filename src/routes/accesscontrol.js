@@ -97,11 +97,11 @@ function accessTokenAuth(accessToken, callback) {
     assert.strictEqual(typeof callback, 'function');
 
     tokendb.get(accessToken, function (error, token) {
-        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(null, false);
-        if (error) return callback(error);
+        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(null, null /* user */, 'Invalid Token'); // will end up as a 401
+        if (error) return callback(error); // this triggers 'internal error' in passport
 
         users.get(token.identifier, function (error, user) {
-            if (error && error.reason === UsersError.NOT_FOUND) return callback(null, false);
+            if (error && error.reason === UsersError.NOT_FOUND) return callback(null, null /* user */, 'Invalid Token'); // will end up as a 401
             if (error) return callback(error);
 
             // scopes here can define what capabilities that token carries
@@ -110,7 +110,7 @@ function accessTokenAuth(accessToken, callback) {
             var scope = accesscontrol.intersectScope(userScope, token.scope);
             // these clients do not require password checks unlike UI
             const skipPasswordVerification = token.clientId === 'cid-sdk' || token.clientId === 'cid-cli';
-            var info = { scope: scope, skipPasswordVerification: skipPasswordVerification };
+            var info = { authorizedScope: scope, skipPasswordVerification: skipPasswordVerification };
 
             callback(null, user, info);
         });
@@ -135,7 +135,9 @@ function scope(requiredScope) {
         passport.authenticate(['bearer'], { session: false }),
 
         function (req, res, next) {
-            var error = accesscontrol.hasScopes(req.authInfo || null, requiredScopes);
+            assert(req.authInfo && typeof req.authInfo === 'object');
+
+            var error = accesscontrol.hasScopes(req.authInfo.authorizedScope, requiredScopes);
             if (error) return next(new HttpError(403, error.message));
 
             next();
@@ -153,9 +155,8 @@ function websocketAuth(requiredScopes, req, res, next) {
         if (!user) return next(new HttpError(401, 'Unauthorized'));
 
         req.user = user;
-        req.authInfo = info;
 
-        var e = accesscontrol.hasScopes(req.authInfo, requiredScopes);
+        var e = accesscontrol.hasScopes(info.authorizedScope, requiredScopes);
         if (e) return next(new HttpError(403, e.message));
 
         next();

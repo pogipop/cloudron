@@ -69,13 +69,11 @@ function validateScope(scope) {
 }
 
 // tests if all requiredScopes are attached to the request
-function hasScopes(authInfo, requiredScopes) {
-    assert.strictEqual(typeof authInfo, 'object');
+function hasScopes(authorizedScope, requiredScopes) {
+    assert.strictEqual(typeof authorizedScope, 'string');
     assert(Array.isArray(requiredScopes), 'Expecting array');
 
-    if (!authInfo || !authInfo.scope) return new Error('No scope found');
-
-    var scopes = authInfo.scope.split(',');
+    var scopes = authorizedScope.split(',');
 
     if (scopes.indexOf(exports.SCOPE_ANY) !== -1) return null;
 
