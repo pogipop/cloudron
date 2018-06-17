@@ -121,8 +121,7 @@ function remove(req, res, next) {
 function verifyPassword(req, res, next) {
     assert.strictEqual(typeof req.body, 'object');
 
-    // using an 'sdk' token we skip password checks
-    if (req.authInfo.clientId === 'cid-sdk' || req.authInfo.clientId === 'cid-cli') return next();
+    if (req.authInfo.skipPasswordVerification) return next(); // using an 'sdk' token we skip password checks
 
     if (typeof req.body.password !== 'string') return next(new HttpError(400, 'API call requires user password'));
 
