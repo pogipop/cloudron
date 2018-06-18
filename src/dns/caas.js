@@ -133,5 +133,19 @@ function verifyDnsConfig(dnsConfig, domain, zoneName, ip, callback) {
         fqdn: domain
     };
 
-    return callback(null, credentials);
+    const testSubdomain = 'cloudrontestdns';
+
+    upsert(credentials, zoneName, testSubdomain, 'A', [ ip ], function (error, changeId) {
+        if (error) return callback(error);
+
+        debug('verifyDnsConfig: Test A record added with change id %s', changeId);
+
+        del(credentials, zoneName, testSubdomain, 'A', [ ip ], function (error) {
+            if (error) return callback(error);
+
+            debug('verifyDnsConfig: Test A record removed again');
+
+            callback(null, credentials);
+        });
+    });
 }
