@@ -21,17 +21,15 @@ exports = module.exports = {
     validateScopeString: validateScopeString,
     hasScopes: hasScopes,
     intersectScopes: intersectScopes,
-    canonicalScope: canonicalScope
+    canonicalScopeString: canonicalScopeString
 };
 
 var assert = require('assert'),
     debug = require('debug')('box:accesscontrol'),
     _ = require('underscore');
 
-function canonicalScope(scope) {
-    var scopes = scope.split(',');
-    scopes = scopes.map(function (s) { return s.replace(exports.SCOPE_ANY, exports.VALID_SCOPES.join(',')); });
-    return scopes.join(',');
+function canonicalScopeString(scope) {
+    return scope === exports.SCOPE_ANY ? exports.VALID_SCOPES.join(',') : scope;
 }
 
 function intersectScopes(allowedScopes, wantedScopes) {

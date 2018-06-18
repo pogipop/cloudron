@@ -253,7 +253,7 @@ function addTokenByUserId(clientId, userId, expiresAt, callback) {
         if (error) return callback(error);
 
         var token = tokendb.generateToken();
-        var scope = accesscontrol.canonicalScope(result.scope);
+        var scope = accesscontrol.canonicalScopeString(result.scope);
 
         tokendb.add(token, userId, result.id, expiresAt, scope, function (error) {
             if (error) return callback(new ClientsError(ClientsError.INTERNAL_ERROR, error));

@@ -10,13 +10,17 @@ var accesscontrol = require('../accesscontrol.js'),
     expect = require('expect.js');
 
 describe('access control', function () {
-    describe('canonicalScope', function () {
+    describe('canonicalScopeString', function () {
         it('only * scope', function () {
-            expect(accesscontrol.canonicalScope('*')).to.be(accesscontrol.VALID_SCOPES.join(','));
+            expect(accesscontrol.canonicalScopeString('*')).to.be(accesscontrol.VALID_SCOPES.join(','));
         });
 
-        it('* in the middle', function () {
-            expect(accesscontrol.canonicalScope('foo,bar,*')).to.be('foo,bar,' + accesscontrol.VALID_SCOPES.join(','));
+        it('identity for non-*', function () {
+            expect(accesscontrol.canonicalScopeString('foo,bar')).to.be('foo,bar');
+        });
+
+        it('* is not expanded otherwise', function () {
+            expect(accesscontrol.canonicalScopeString('foo,bar,*')).to.be('foo,bar,*');
         });
     });
 

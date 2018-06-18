@@ -97,7 +97,7 @@ function initialize() {
 
                 var token = tokendb.generateToken();
                 var expires = Date.now() + constants.DEFAULT_TOKEN_EXPIRATION;
-                var scope = accesscontrol.canonicalScope(client.scope);
+                var scope = accesscontrol.canonicalScopeString(client.scope);
 
                 tokendb.add(token, authCode.userId, authCode.clientId, expires, scope, function (error) {
                     if (error) return callback(error);
@@ -116,7 +116,7 @@ function initialize() {
 
         var token = tokendb.generateToken();
         var expires = Date.now() + constants.DEFAULT_TOKEN_EXPIRATION;
-        var scope = accesscontrol.canonicalScope(client.scope);
+        var scope = accesscontrol.canonicalScopeString(client.scope);
 
         tokendb.add(token, user.id, client.id, expires, scope, function (error) {
             if (error) return callback(error);
