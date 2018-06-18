@@ -156,7 +156,7 @@ describe('Groups API', function () {
 
     describe('Roles', function () {
         it('can set roles', function (done) {
-            superagent.put(SERVER_URL + '/api/v1/groups/' + groupObject.id + '/roles')
+            superagent.post(SERVER_URL + '/api/v1/groups/' + groupObject.id)
                 .query({ access_token: token })
                 .send({ roles: [ accesscontrol.ROLE_OWNER ]})
                 .end(function (error, result) {
@@ -166,7 +166,7 @@ describe('Groups API', function () {
         });
 
         it('fails with invalid roles', function (done) {
-            superagent.put(SERVER_URL + '/api/v1/groups/' + groupObject.id + '/roles')
+            superagent.post(SERVER_URL + '/api/v1/groups/' + groupObject.id)
                 .query({ access_token: token })
                 .send({ roles: [ 'bogus' ]})
                 .end(function (error, result) {

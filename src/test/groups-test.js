@@ -399,7 +399,7 @@ describe('Roles', function () {
     after(cleanup);
 
     it('can set roles', function (done) {
-        groups.setRoles(group0Object.id, [ accesscontrol.ROLE_OWNER ], function (error) {
+        groups.update(group0Object.id, { roles: [ accesscontrol.ROLE_OWNER ] }, function (error) {
             expect(error).to.be(null);
             done();
         });
@@ -422,7 +422,7 @@ describe('Roles', function () {
     });
 
     it('cannot set invalid role', function (done) {
-        groups.setRoles(group0Object.id, [ accesscontrol.ROLE_OWNER, 'janitor' ], function (error) {
+        groups.update(group0Object.id, { roles: [ accesscontrol.ROLE_OWNER, 'janitor' ] }, function (error) {
             expect(error).to.be.ok();
             done();
         });

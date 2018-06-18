@@ -8,6 +8,7 @@ exports = module.exports = {
     create: create,
     remove: remove,
     get: get,
+    update: update,
     getWithMembers: getWithMembers,
     getAll: getAll,
     getAllWithMembers: getAllWithMembers,
@@ -18,7 +19,6 @@ exports = module.exports = {
     removeMember: removeMember,
     isMember: isMember,
 
-    setRoles: setRoles,
     getRoles: getRoles,
 
     getGroups: getGroups,
@@ -253,15 +253,16 @@ function addOwnerGroup(callback) {
     groupdb.add(constants.ADMIN_GROUP_ID, constants.ADMIN_GROUP_NAME, [ accesscontrol.ROLE_OWNER ], callback);
 }
 
-function setRoles(groupId, roles, callback) {
+function update(groupId, data, callback) {
     assert.strictEqual(typeof groupId, 'string');
-    assert(Array.isArray(roles));
+    assert(data && typeof data === 'object');
+    assert(Array.isArray(data.roles));
     assert.strictEqual(typeof callback, 'function');
 
-    var error = accesscontrol.validateRoles(roles);
+    var error = accesscontrol.validateRoles(data.roles);
     if (error) return callback(new GroupsError(GroupsError.BAD_FIELD, error.message));
 
-    groupdb.update(groupId, { roles: roles }, function (error) {
+    groupdb.update(groupId, { roles: data.roles }, function (error) {
         if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new GroupsError(GroupsError.NOT_FOUND));
         if (error) return callback(new GroupsError(GroupsError.INTERNAL_ERROR, error));
 

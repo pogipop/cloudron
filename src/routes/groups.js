@@ -4,7 +4,7 @@ exports = module.exports = {
     get: get,
     list: list,
     create: create,
-    setRoles: setRoles,
+    update: update,
     remove: remove,
     updateMembers: updateMembers
 };
@@ -51,7 +51,7 @@ function get(req, res, next) {
     });
 }
 
-function setRoles(req, res, next) {
+function update(req, res, next) {
     assert.strictEqual(typeof req.params.groupId, 'string');
     assert.strictEqual(typeof req.body, 'object');
 
@@ -60,7 +60,7 @@ function setRoles(req, res, next) {
         if (typeof role !== 'string') return next(new HttpError(400, 'roles must be an array of strings'));
     }
 
-    groups.setRoles(req.params.groupId, req.body.roles, function (error, group) {
+    groups.update(req.params.groupId, { roles: req.body.roles }, function (error) {
         if (error && error.reason === GroupsError.BAD_FIELD) return next(new HttpError(400, error.message));
         if (error) return next(new HttpError(500, error));
 
