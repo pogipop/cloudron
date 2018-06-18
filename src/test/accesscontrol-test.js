@@ -20,29 +20,18 @@ describe('access control', function () {
         });
     });
 
-    describe('intersectScope', function () { // args: allowed, wanted
+    describe('intersectScopes', function () { // args: allowed, wanted
         it('both are same', function () {
-            expect(accesscontrol.intersectScope('apps,clients', 'clients,apps')).to.be('apps,clients');
+            expect(accesscontrol.intersectScopes([ 'apps', 'clients' ], [ 'clients', 'apps' ])).to.eql([ 'apps', 'clients' ]);
         });
 
         it('some are different', function () {
-            expect(accesscontrol.intersectScope('apps', 'clients,apps')).to.be('apps');
-            expect(accesscontrol.intersectScope('clients,domains,mail', 'mail')).to.be('mail');
-        });
-
-        it('* in allowed', function () {
-            expect(accesscontrol.intersectScope('*', 'clients,apps')).to.be('clients,apps');
-            expect(accesscontrol.intersectScope('foo,*,bar', 'mail')).to.be('mail');
-        });
-
-        it('* in wanted', function () {
-            expect(accesscontrol.intersectScope('clients,apps', '*')).to.be('clients,apps');
-            expect(accesscontrol.intersectScope('mail', 'bar,*,foo')).to.be('mail');
-            expect(accesscontrol.intersectScope('*', '*')).to.be(accesscontrol.VALID_SCOPES.join(','));
+            expect(accesscontrol.intersectScopes([ 'apps' ], [ 'clients', 'apps' ])).to.eql(['apps']);
+            expect(accesscontrol.intersectScopes([ 'clients', 'domains', 'mail' ], [ 'mail' ])).to.eql(['mail']);
         });
 
         it('everything is different', function () {
-            expect(accesscontrol.intersectScope('cloudron,domains', 'clients,apps')).to.be('');
+            expect(accesscontrol.intersectScopes(['cloudron', 'domains' ], ['clients', 'apps'])).to.eql('');
         });
     });
 

@@ -20,7 +20,7 @@ exports = module.exports = {
 
     validateScopeString: validateScopeString,
     hasScopes: hasScopes,
-    intersectScope: intersectScope,
+    intersectScopes: intersectScopes,
     canonicalScope: canonicalScope
 };
 
@@ -34,17 +34,11 @@ function canonicalScope(scope) {
     return scopes.join(',');
 }
 
-function intersectScope(allowedScope, wantedScope) {
-    assert.strictEqual(typeof allowedScope, 'string');
-    assert.strictEqual(typeof wantedScope, 'string');
+function intersectScopes(allowedScopes, wantedScopes) {
+    assert(Array.isArray(allowedScopes), 'Expecting array');
+    assert(Array.isArray(wantedScopes), 'Expecting array');
 
-    const allowedScopes = allowedScope.split(',');
-    const wantedScopes = wantedScope.split(',');
-
-    if (allowedScopes.indexOf(exports.SCOPE_ANY) !== -1) return canonicalScope(wantedScope);
-    if (wantedScopes.indexOf(exports.SCOPE_ANY) !== -1) return canonicalScope(allowedScope);
-
-    return _.intersection(allowedScopes, wantedScopes).join(',');
+    return _.intersection(allowedScopes, wantedScopes);
 }
 
 function validateRoles(roles) {

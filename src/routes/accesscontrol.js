@@ -107,11 +107,11 @@ function accessTokenAuth(accessToken, callback) {
 
             // scopes here can define what capabilities that token carries
             // passport put the 'info' object into req.authInfo, where we can further validate the scopes
-            const userScope = user.groupIds.indexOf(constants.ADMIN_GROUP_ID) !== -1 ? '*' : 'profile';
-            var scope = accesscontrol.intersectScope(userScope, token.scope).split(',');
+            const userScopes = user.groupIds.indexOf(constants.ADMIN_GROUP_ID) !== -1 ? accesscontrol.VALID_SCOPES : [ 'profile' ];
+            var authorizedScopes = accesscontrol.intersectScopes(userScopes, token.scope.split(','));
             // these clients do not require password checks unlike UI
             const skipPasswordVerification = token.clientId === 'cid-sdk' || token.clientId === 'cid-cli';
-            var info = { authorizedScopes: scope, skipPasswordVerification: skipPasswordVerification };
+            var info = { authorizedScopes: authorizedScopes, skipPasswordVerification: skipPasswordVerification };
 
             callback(null, user, info);
         });
