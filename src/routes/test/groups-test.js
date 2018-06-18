@@ -322,7 +322,7 @@ describe('Groups API', function () {
                     token_1 = tokendb.generateToken();
 
                     // HACK to get a token for second user (passwords are generated and the user should have gotten a password setup link...)
-                    tokendb.add(token_1, userId_1, 'test-client-id',  Date.now() + 100000, accesscontrol.SCOPE_ANY, done);
+                    tokendb.add(token_1, userId_1, 'test-client-id',  Date.now() + 100000, 'users', done);
                 });
         });
 

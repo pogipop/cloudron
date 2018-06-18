@@ -547,21 +547,21 @@ describe('database', function () {
             identifier: '0',
             clientId: 'clientid-0',
             expires: Date.now() + 60 * 60000,
-            scope: '*'
+            scope: 'clients'
         };
         var TOKEN_1 = {
             accessToken: tokendb.generateToken(),
             identifier: '1',
             clientId: 'clientid-1',
             expires: Number.MAX_SAFE_INTEGER,
-            scope: '*'
+            scope: 'settings'
         };
         var TOKEN_2 = {
             accessToken: tokendb.generateToken(),
             identifier: '2',
             clientId: 'clientid-2',
             expires: Date.now(),
-            scope: '*'
+            scope: 'apps'
         };
 
         it('add fails due to missing arguments', function () {
