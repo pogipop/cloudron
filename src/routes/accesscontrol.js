@@ -108,10 +108,10 @@ function accessTokenAuth(accessToken, callback) {
             // scopes here can define what capabilities that token carries
             // passport put the 'info' object into req.authInfo, where we can further validate the scopes
             const userScope = user.groupIds.indexOf(constants.ADMIN_GROUP_ID) !== -1 ? '*' : 'profile';
-            var scope = accesscontrol.intersectScope(userScope, token.scope);
+            var scope = accesscontrol.intersectScope(userScope, token.scope).split(',');
             // these clients do not require password checks unlike UI
             const skipPasswordVerification = token.clientId === 'cid-sdk' || token.clientId === 'cid-cli';
-            var info = { authorizedScope: scope, skipPasswordVerification: skipPasswordVerification };
+            var info = { authorizedScopes: scope, skipPasswordVerification: skipPasswordVerification };
 
             callback(null, user, info);
         });
@@ -138,7 +138,7 @@ function scope(requiredScope) {
         function (req, res, next) {
             assert(req.authInfo && typeof req.authInfo === 'object');
 
-            var error = accesscontrol.hasScopes(req.authInfo.authorizedScope, requiredScopes);
+            var error = accesscontrol.hasScopes(req.authInfo.authorizedScopes, requiredScopes);
             if (error) return next(new HttpError(403, error.message));
 
             next();
@@ -157,7 +157,7 @@ function websocketAuth(requiredScopes, req, res, next) {
 
         req.user = user;
 
-        var e = accesscontrol.hasScopes(info.authorizedScope, requiredScopes);
+        var e = accesscontrol.hasScopes(info.authorizedScopes, requiredScopes);
         if (e) return next(new HttpError(403, e.message));
 
         next();

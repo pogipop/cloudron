@@ -70,19 +70,17 @@ function validateScope(scope) {
 }
 
 // tests if all requiredScopes are attached to the request
-function hasScopes(authorizedScope, requiredScopes) {
-    assert.strictEqual(typeof authorizedScope, 'string');
+function hasScopes(authorizedScopes, requiredScopes) {
+    assert(Array.isArray(authorizedScopes), 'Expecting array');
     assert(Array.isArray(requiredScopes), 'Expecting array');
 
-    var scopes = authorizedScope.split(',');
-
-    if (scopes.indexOf(exports.SCOPE_ANY) !== -1) return null;
+    if (authorizedScopes.indexOf(exports.SCOPE_ANY) !== -1) return null;
 
     for (var i = 0; i < requiredScopes.length; ++i) {
         const scopeParts = requiredScopes[i].split(':');
 
         // this allows apps:write if the token has a higher apps scope
-        if (scopes.indexOf(requiredScopes[i]) === -1 && scopes.indexOf(scopeParts[0]) === -1) {
+        if (authorizedScopes.indexOf(requiredScopes[i]) === -1 && authorizedScopes.indexOf(scopeParts[0]) === -1) {
             debug('scope: missing scope "%s".', requiredScopes[i]);
             return new Error('Missing required scope "' + requiredScopes[i] + '"');
         }

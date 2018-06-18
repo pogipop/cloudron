@@ -29,7 +29,7 @@ function get(req, res, next) {
         username: req.user.username,
         email: req.user.email,
         fallbackEmail: req.user.fallbackEmail,
-        tokenScope: req.authInfo.authorizedScope,
+        tokenScope: req.authInfo.authorizedScopes,
         displayName: req.user.displayName,
         twoFactorAuthenticationEnabled: req.user.twoFactorAuthenticationEnabled
     }));
