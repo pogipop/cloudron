@@ -46,18 +46,18 @@ describe('access control', function () {
         });
     });
 
-    describe('validateScope', function () {
+    describe('validateScopeString', function () {
         it('allows valid scopes', function () {
-            expect(accesscontrol.validateScope('apps')).to.be(null);
-            expect(accesscontrol.validateScope('apps,mail')).to.be(null);
-            expect(accesscontrol.validateScope('apps:read,mail')).to.be(null);
-            expect(accesscontrol.validateScope('apps,mail:write')).to.be(null);
+            expect(accesscontrol.validateScopeString('apps')).to.be(null);
+            expect(accesscontrol.validateScopeString('apps,mail')).to.be(null);
+            expect(accesscontrol.validateScopeString('apps:read,mail')).to.be(null);
+            expect(accesscontrol.validateScopeString('apps,mail:write')).to.be(null);
         });
 
         it('disallows invalid scopes', function () {
-            expect(accesscontrol.validateScope('apps, mail')).to.be.an(Error);
-            expect(accesscontrol.validateScope('random')).to.be.an(Error);
-            expect(accesscontrol.validateScope('')).to.be.an(Error);
+            expect(accesscontrol.validateScopeString('apps, mail')).to.be.an(Error);
+            expect(accesscontrol.validateScopeString('random')).to.be.an(Error);
+            expect(accesscontrol.validateScopeString('')).to.be.an(Error);
         });
     });
 

@@ -18,7 +18,7 @@ exports = module.exports = {
 
     validateRoles: validateRoles,
 
-    validateScope: validateScope,
+    validateScopeString: validateScopeString,
     hasScopes: hasScopes,
     intersectScope: intersectScope,
     canonicalScope: canonicalScope
@@ -56,7 +56,7 @@ function validateRoles(roles) {
     return new Error('Invalid role');
 }
 
-function validateScope(scope) {
+function validateScopeString(scope) {
     assert.strictEqual(typeof scope, 'string');
 
     if (scope === '') return new Error('Empty scope not allowed');
