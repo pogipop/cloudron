@@ -414,9 +414,9 @@ describe('Roles', function () {
     });
 
     it('can get roles of a user', function (done) {
-        groups.getRoles(USER_0.id, function (error, roles) {
-            expect(roles.length).to.be(1);
-            expect(roles[0]).to.be('owner');
+        groups.getGroups(USER_0.id, function (error, results) {
+            expect(results.length).to.be(1);
+            expect(results[0].roles).to.eql([ 'owner' ]);
             done();
         });
     });

@@ -19,7 +19,7 @@ exports = module.exports = {
     removeMember: removeMember,
     isMember: isMember,
 
-    getRoles: getRoles,
+    getGroups: getGroups,
 
     setMembership: setMembership,
     getMembership: getMembership
@@ -270,14 +270,14 @@ function update(groupId, data, callback) {
     });
 }
 
-function getRoles(userId, callback) {
+function getGroups(userId, callback) {
     assert.strictEqual(typeof userId, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    groupdb.getRoles(userId, function (error, roles) {
+    groupdb.getGroups(userId, function (error, results) {
         if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new GroupsError(GroupsError.NOT_FOUND));
         if (error) return callback(new GroupsError(GroupsError.INTERNAL_ERROR, error));
 
-        callback(null, roles);
+        callback(null, results);
     });
 }

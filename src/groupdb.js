@@ -19,7 +19,7 @@ exports = module.exports = {
     getMembership: getMembership,
     setMembership: setMembership,
 
-    getRoles: getRoles,
+    getGroups: getGroups,
 
     _clear: clear
 };
@@ -284,7 +284,7 @@ function isMember(groupId, userId, callback) {
     });
 }
 
-function getRoles(userId, callback) {
+function getGroups(userId, callback) {
     assert.strictEqual(typeof userId, 'string');
     assert.strictEqual(typeof callback, 'function');
 
@@ -295,6 +295,6 @@ function getRoles(userId, callback) {
 
         results.forEach(postProcess);
 
-        callback(null, _.uniq(_.flatten(results.map(function (r) { return r.roles; }))));
+        callback(null, results);
     });
 }
