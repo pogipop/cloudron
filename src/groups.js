@@ -21,8 +21,8 @@ exports = module.exports = {
 
     getRoles: getRoles,
 
-    getGroups: getGroups,
-    setGroups: setGroups
+    setMembership: setMembership,
+    getMembership: getMembership
 };
 
 var accesscontrol = require('./accesscontrol.js'),
@@ -170,11 +170,11 @@ function getMembers(groupId, callback) {
     });
 }
 
-function getGroups(userId, callback) {
+function getMembership(userId, callback) {
     assert.strictEqual(typeof userId, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    groupdb.getGroups(userId, function (error, result) {
+    groupdb.getMembership(userId, function (error, result) {
         if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new GroupsError(GroupsError.NOT_FOUND));
         if (error) return callback(new GroupsError(GroupsError.INTERNAL_ERROR, error));
 
@@ -182,12 +182,12 @@ function getGroups(userId, callback) {
     });
 }
 
-function setGroups(userId, groupIds, callback) {
+function setMembership(userId, groupIds, callback) {
     assert.strictEqual(typeof userId, 'string');
     assert(Array.isArray(groupIds));
     assert.strictEqual(typeof callback, 'function');
 
-    groupdb.setGroups(userId, groupIds, function (error) {
+    groupdb.setMembership(userId, groupIds, function (error) {
         if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new GroupsError(GroupsError.NOT_FOUND));
         if (error) return callback(new GroupsError(GroupsError.INTERNAL_ERROR, error));
 

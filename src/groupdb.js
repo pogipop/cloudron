@@ -16,8 +16,8 @@ exports = module.exports = {
     setMembers: setMembers,
     isMember: isMember,
 
-    getGroups: getGroups,
-    setGroups: setGroups,
+    getMembership: getMembership,
+    setMembership: setMembership,
 
     getRoles: getRoles,
 
@@ -214,7 +214,7 @@ function setMembers(groupId, userIds, callback) {
     });
 }
 
-function getGroups(userId, callback) {
+function getMembership(userId, callback) {
     assert.strictEqual(typeof userId, 'string');
     assert.strictEqual(typeof callback, 'function');
 
@@ -226,7 +226,7 @@ function getGroups(userId, callback) {
     });
 }
 
-function setGroups(userId, groupIds, callback) {
+function setMembership(userId, groupIds, callback) {
     assert.strictEqual(typeof userId, 'string');
     assert(Array.isArray(groupIds));
     assert.strictEqual(typeof callback, 'function');

@@ -21,7 +21,7 @@ exports = module.exports = {
     createOwner: createOwner,
     getOwner: getOwner,
     sendInvite: sendInvite,
-    setGroups: setGroups,
+    setMembership: setMembership,
     setTwoFactorAuthenticationSecret: setTwoFactorAuthenticationSecret,
     enableTwoFactorAuthentication: enableTwoFactorAuthentication,
     disableTwoFactorAuthentication: disableTwoFactorAuthentication
@@ -320,7 +320,7 @@ function get(userId, callback) {
         if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new UsersError(UsersError.NOT_FOUND));
         if (error) return callback(new UsersError(UsersError.INTERNAL_ERROR, error));
 
-        groups.getGroups(userId, function (error, groupIds) {
+        groups.getMembership(userId, function (error, groupIds) {
             if (error) return callback(new UsersError(UsersError.INTERNAL_ERROR, error));
 
             result.groupIds = groupIds;
@@ -398,17 +398,17 @@ function updateUser(userId, data, auditSource, callback) {
     });
 }
 
-function setGroups(userId, groupIds, callback) {
+function setMembership(userId, groupIds, callback) {
     assert.strictEqual(typeof userId, 'string');
     assert(Array.isArray(groupIds));
     assert.strictEqual(typeof callback, 'function');
 
-    groups.getGroups(userId, function (error, oldGroupIds) {
+    groups.getMembership(userId, function (error, oldGroupIds) {
         if (error && error.reason !== GroupsError.NOT_FOUND) return callback(new UsersError(UsersError.INTERNAL_ERROR, error));
 
         oldGroupIds = oldGroupIds || [];
 
-        groups.setGroups(userId, groupIds, function (error) {
+        groups.setMembership(userId, groupIds, function (error) {
             if (error && error.reason === GroupsError.NOT_FOUND) return callback(new UsersError(UsersError.NOT_FOUND, 'One or more groups not found'));
             if (error) return callback(new UsersError(UsersError.INTERNAL_ERROR, error));
 

@@ -1553,14 +1553,14 @@ describe('database', function () {
         });
 
         it('can set groups', function (done) {
-            groupdb.setGroups(USER_0.id, [ 'admin', GROUP_ID_1 ], function (error) {
+            groupdb.setMembership(USER_0.id, [ 'admin', GROUP_ID_1 ], function (error) {
                 expect(error).to.be(null);
                 done();
             });
         });
 
         it('can get groups', function (done) {
-            groupdb.getGroups(USER_0.id, function (error, result) {
+            groupdb.getMembership(USER_0.id, function (error, result) {
                 expect(error).to.be(null);
                 expect(result).to.eql([ 'admin', GROUP_ID_1 ]);
                 done();

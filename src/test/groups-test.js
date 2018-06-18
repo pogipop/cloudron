@@ -337,10 +337,10 @@ describe('Set user groups', function () {
     after(cleanup);
 
     it('can set user to single group', function (done) {
-        groups.setGroups(USER_0.id, [ group0Object.id ], function (error) {
+        groups.setMembership(USER_0.id, [ group0Object.id ], function (error) {
             expect(error).to.be(null);
 
-            groups.getGroups(USER_0.id, function (error, groupIds) {
+            groups.getMembership(USER_0.id, function (error, groupIds) {
                 expect(error).to.be(null);
                 expect(groupIds.length).to.be(1);
                 expect(groupIds[0]).to.be(group0Object.id);
@@ -350,10 +350,10 @@ describe('Set user groups', function () {
     });
 
     it('can set user to multiple groups', function (done) {
-        groups.setGroups(USER_0.id, [ group0Object.id, group1Object.id ], function (error) {
+        groups.setMembership(USER_0.id, [ group0Object.id, group1Object.id ], function (error) {
             expect(error).to.be(null);
 
-            groups.getGroups(USER_0.id, function (error, groupIds) {
+            groups.getMembership(USER_0.id, function (error, groupIds) {
                 expect(error).to.be(null);
                 expect(groupIds.length).to.be(2);
                 expect(groupIds.sort()).to.eql([ group0Object.id, group1Object.id ].sort());
@@ -391,7 +391,7 @@ describe('Roles', function () {
                     if (error) return next(error);
                     group0Object = result;
 
-                    groups.setGroups(USER_0.id, [ group0Object.id ], next);
+                    groups.setMembership(USER_0.id, [ group0Object.id ], next);
                 });
             },
         ], done);

@@ -156,7 +156,7 @@ function setGroups(req, res, next) {
     // this route is only allowed for admins, so req.user has to be an admin
     if (req.user.id === req.params.userId && req.body.groupIds.indexOf(constants.ADMIN_GROUP_ID) === -1) return next(new HttpError(409, 'Admin removing itself from admins is not allowed'));
 
-    users.setGroups(req.params.userId, req.body.groupIds, function (error) {
+    users.setMembership(req.params.userId, req.body.groupIds, function (error) {
         if (error && error.reason === UsersError.NOT_FOUND) return next(new HttpError(404, 'One or more groups not found'));
         if (error) return next(new HttpError(500, error));
 

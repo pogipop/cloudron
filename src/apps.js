@@ -348,7 +348,7 @@ function hasAccessTo(app, user, callback) {
     if (app.accessRestriction.users.some(function (e) { return e === user.id; })) return callback(null, true);
 
     // check group access
-    groups.getGroups(user.id, function (error, groupIds) {
+    groups.getMembership(user.id, function (error, groupIds) {
         if (error) return callback(null, false);
 
         const isAdmin = groupIds.indexOf(constants.ADMIN_GROUP_ID) !== -1;
