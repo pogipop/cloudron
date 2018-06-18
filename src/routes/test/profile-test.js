@@ -105,7 +105,7 @@ describe('Profile API', function () {
                 expect(result.body.displayName).to.be.a('string');
                 expect(result.body.password).to.not.be.ok();
                 expect(result.body.salt).to.not.be.ok();
-                expect(result.body.tokenScope).to.eql(accesscontrol.VALID_SCOPES);
+                expect(result.body.tokenScopes).to.eql(accesscontrol.VALID_SCOPES);
 
                 user_0 = result.body;
 
@@ -143,7 +143,7 @@ describe('Profile API', function () {
                 expect(result.body.displayName).to.be.a('string');
                 expect(result.body.password).to.not.be.ok();
                 expect(result.body.salt).to.not.be.ok();
-                expect(result.body.tokenScope).to.eql(accesscontrol.VALID_SCOPES);
+                expect(result.body.tokenScopes).to.eql(accesscontrol.VALID_SCOPES);
                 done();
             });
         });
@@ -196,7 +196,7 @@ describe('Profile API', function () {
                             expect(res.body.username).to.equal(USERNAME_0.toLowerCase());
                             expect(res.body.email).to.equal(EMAIL_0_NEW.toLowerCase());
                             expect(res.body.fallbackEmail).to.equal(EMAIL_0_NEW_FALLBACK.toLowerCase());
-                            expect(res.body.tokenScope).to.eql(accesscontrol.VALID_SCOPES);
+                            expect(res.body.tokenScopes).to.eql(accesscontrol.VALID_SCOPES);
                             expect(res.body.displayName).to.equal('');
 
                             done();
@@ -217,7 +217,7 @@ describe('Profile API', function () {
                             expect(res.statusCode).to.equal(200);
                             expect(res.body.username).to.equal(USERNAME_0.toLowerCase());
                             expect(res.body.email).to.equal(EMAIL_0_NEW.toLowerCase());
-                            expect(res.body.tokenScope).to.eql(accesscontrol.VALID_SCOPES);
+                            expect(res.body.tokenScopes).to.eql(accesscontrol.VALID_SCOPES);
                             expect(res.body.displayName).to.equal(DISPLAY_NAME_0_NEW);
 
                             done();
