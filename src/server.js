@@ -97,6 +97,7 @@ function initializeExpressSync() {
     var mailScope = routes.accesscontrol.scope(accesscontrol.SCOPE_MAIL);
     var clientsScope = routes.accesscontrol.scope(accesscontrol.SCOPE_CLIENTS);
     var domainsScope = routes.accesscontrol.scope(accesscontrol.SCOPE_DOMAINS);
+    var appstoreScope = routes.accesscontrol.scope(accesscontrol.SCOPE_APPSTORE);
 
     // csrf protection
     var csrf = routes.oauth2.csrf();
@@ -220,8 +221,8 @@ function initializeExpressSync() {
 
     router.get ('/api/v1/settings/time_zone',          settingsScope, routes.settings.getTimeZone);
     router.post('/api/v1/settings/time_zone',          settingsScope, routes.settings.setTimeZone);
-    router.get ('/api/v1/settings/appstore_config',    settingsScope, routes.settings.getAppstoreConfig);
-    router.post('/api/v1/settings/appstore_config',    settingsScope, routes.settings.setAppstoreConfig);
+    router.get ('/api/v1/settings/appstore_config',    appstoreScope, routes.settings.getAppstoreConfig);
+    router.post('/api/v1/settings/appstore_config',    appstoreScope, routes.settings.setAppstoreConfig);
 
     // email routes
     router.get ('/api/v1/mail/:domain',       mailScope, routes.mail.getDomain);

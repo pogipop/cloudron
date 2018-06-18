@@ -9,7 +9,8 @@ exports = module.exports = {
     SCOPE_PROFILE: 'profile',
     SCOPE_SETTINGS: 'settings',
     SCOPE_USERS: 'users',
-    VALID_SCOPES: [ 'apps', 'clients', 'cloudron', 'domains', 'mail', 'profile', 'settings', 'users' ],
+    SCOPE_APPSTORE: 'appstore',
+    VALID_SCOPES: [ 'apps', 'appstore', 'clients', 'cloudron', 'domains', 'mail', 'profile', 'settings', 'users' ],
 
     SCOPE_ANY: '*',
 

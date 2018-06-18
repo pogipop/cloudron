@@ -12,11 +12,11 @@ var accesscontrol = require('../accesscontrol.js'),
 describe('access control', function () {
     describe('canonicalScope', function () {
         it('only * scope', function () {
-            expect(accesscontrol.canonicalScope('*')).to.be('apps,clients,cloudron,domains,mail,profile,settings,users');
+            expect(accesscontrol.canonicalScope('*')).to.be(accesscontrol.VALID_SCOPES.join(','));
         });
 
         it('* in the middle', function () {
-            expect(accesscontrol.canonicalScope('foo,bar,*')).to.be('foo,bar,apps,clients,cloudron,domains,mail,profile,settings,users');
+            expect(accesscontrol.canonicalScope('foo,bar,*')).to.be('foo,bar,' + accesscontrol.VALID_SCOPES.join(','));
         });
     });
 
@@ -38,7 +38,7 @@ describe('access control', function () {
         it('* in wanted', function () {
             expect(accesscontrol.intersectScope('clients,apps', '*')).to.be('clients,apps');
             expect(accesscontrol.intersectScope('mail', 'bar,*,foo')).to.be('mail');
-            expect(accesscontrol.intersectScope('*', '*')).to.be('apps,clients,cloudron,domains,mail,profile,settings,users');
+            expect(accesscontrol.intersectScope('*', '*')).to.be(accesscontrol.VALID_SCOPES.join(','));
         });
 
         it('everything is different', function () {
