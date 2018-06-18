@@ -233,6 +233,9 @@ function verifyDnsConfig(dnsConfig, fqdn, zoneName, ip, callback) {
     assert.strictEqual(typeof ip, 'string');
     assert.strictEqual(typeof callback, 'function');
 
+    if (!dnsConfig.accessKeyId || typeof dnsConfig.accessKeyId !== 'string') return callback(new DomainsError(DomainsError.BAD_FIELD, 'accessKeyId must be a non-empty string'));
+    if (!dnsConfig.secretAccessKey || typeof dnsConfig.secretAccessKey !== 'string') return callback(new DomainsError(DomainsError.BAD_FIELD, 'secretAccessKey must be a non-empty string'));
+
     var credentials = {
         accessKeyId: dnsConfig.accessKeyId,
         secretAccessKey: dnsConfig.secretAccessKey,

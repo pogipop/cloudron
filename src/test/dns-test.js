@@ -791,7 +791,10 @@ describe('dns provider', function () {
             DOMAIN_0.provider = 'gcdns';
             DOMAIN_0.config = {
                 projectId: 'my-dns-proj',
-                keyFilename: __dirname + '/gcdns.json'
+                credentials: {
+                    'client_email': '123456789349-compute@developer.gserviceaccount.com',
+                    'private_key': 'privatehushhush'
+                }
             };
 
             function mockery (queue) {

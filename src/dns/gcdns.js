@@ -19,19 +19,13 @@ var assert = require('assert'),
 function getDnsCredentials(dnsConfig) {
     assert.strictEqual(typeof dnsConfig, 'object');
 
-    var config = {
+    return {
         projectId: dnsConfig.projectId,
-        keyFilename: dnsConfig.keyFilename,
-        email: dnsConfig.email
-    };
-
-    if (dnsConfig.credentials) {
-        config.credentials = {
+        credentials: {
             client_email: dnsConfig.credentials.client_email,
             private_key: dnsConfig.credentials.private_key
-        };
-    }
-    return config;
+        }
+    };
 }
 
 function getZoneByName(dnsConfig, zoneName, callback) {
@@ -168,6 +162,11 @@ function verifyDnsConfig(dnsConfig, fqdn, zoneName, ip, callback) {
     assert.strictEqual(typeof zoneName, 'string');
     assert.strictEqual(typeof ip, 'string');
     assert.strictEqual(typeof callback, 'function');
+
+    if (typeof dnsConfig.projectId !== 'string') return callback(new DomainsError(DomainsError.BAD_FIELD, 'projectId must be a string'));
+    if (!dnsConfig.credentials || typeof dnsConfig.credentials !== 'object') return callback(new DomainsError(DomainsError.BAD_FIELD, 'credentials must be an object'));
+    if (typeof dnsConfig.credentials.client_email !== 'string') return callback(new DomainsError(DomainsError.BAD_FIELD, 'credentials.client_email must be a string'));
+    if (typeof dnsConfig.credentials.private_key !== 'string') return callback(new DomainsError(DomainsError.BAD_FIELD, 'credentials.private_key must be a string'));
 
     var credentials = getDnsCredentials(dnsConfig);
     if (process.env.BOX_ENV === 'test') return callback(null, credentials); // this shouldn't be here

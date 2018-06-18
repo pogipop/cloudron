@@ -146,6 +146,9 @@ function verifyDnsConfig(dnsConfig, fqdn, zoneName, ip, callback) {
     assert.strictEqual(typeof ip, 'string');
     assert.strictEqual(typeof callback, 'function');
 
+    if (!dnsConfig.apiKey || typeof dnsConfig.apiKey !== 'string') return callback(new DomainsError(DomainsError.BAD_FIELD, 'apiKey must be a non-empty string'));
+    if (!dnsConfig.apiSecret || typeof dnsConfig.apiSecret !== 'string') return callback(new DomainsError(DomainsError.BAD_FIELD, 'apiSecret must be a non-empty string'));
+
     var credentials = {
         apiKey: dnsConfig.apiKey,
         apiSecret: dnsConfig.apiSecret
