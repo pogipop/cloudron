@@ -291,7 +291,6 @@ function getGroups(userId, callback) {
     database.query('SELECT ' + GROUPS_FIELDS + ' ' +
         ' FROM groups INNER JOIN groupMembers ON groups.id = groupMembers.groupId AND groupMembers.userId = ?', [ userId ], function (error, results) {
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
-        if (results.length === 0) return callback(new DatabaseError(DatabaseError.NOT_FOUND));
 
         results.forEach(postProcess);
 

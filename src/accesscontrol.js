@@ -16,12 +16,27 @@ exports = module.exports = {
 
     ROLE_OWNER: 'owner',
 
+    scopesForRoles: scopesForRoles,
+
     validateRoles: validateRoles,
 
     validateScopeString: validateScopeString,
     hasScopes: hasScopes,
     intersectScopes: intersectScopes,
     canonicalScopeString: canonicalScopeString
+};
+
+// https://docs.microsoft.com/en-us/azure/role-based-access-control/role-definitions
+const ROLE_DEFINITIONS = {
+    'owner': {
+        scopes: exports.VALID_SCOPES
+    },
+    'manage_apps': {
+        scopes: [ 'apps', 'domains', 'users' ]
+    },
+    'manage_users': {
+        scopes: [ 'users' ]
+    }
 };
 
 var assert = require('assert'),
@@ -79,4 +94,18 @@ function hasScopes(authorizedScopes, requiredScopes) {
     }
 
     return null;
+}
+
+function scopesForRoles(roles) {
+    assert(Array.isArray(roles), 'Expecting array');
+
+    var scopes = [ 'profile' ];
+
+    for (let r of roles) {
+        if (!ROLE_DEFINITIONS[r]) continue; // unknown or some legacy role
+
+        scopes = scopes.concat(ROLE_DEFINITIONS[r].scopes);
+    }
+
+    return _.uniq(scopes.sort(), true /* isSorted */);
 }

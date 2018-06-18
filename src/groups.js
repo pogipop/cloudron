@@ -275,7 +275,6 @@ function getGroups(userId, callback) {
     assert.strictEqual(typeof callback, 'function');
 
     groupdb.getGroups(userId, function (error, results) {
-        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new GroupsError(GroupsError.NOT_FOUND));
         if (error) return callback(new GroupsError(GroupsError.INTERNAL_ERROR, error));
 
         callback(null, results);

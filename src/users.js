@@ -13,6 +13,7 @@ exports = module.exports = {
     verifyWithEmail: verifyWithEmail,
     remove: removeUser,
     get: get,
+    getWithRoles: getWithRoles,
     getByResetToken: getByResetToken,
     getAllAdmins: getAllAdmins,
     resetPasswordByIdentifier: resetPasswordByIdentifier,
@@ -324,6 +325,24 @@ function get(userId, callback) {
             if (error) return callback(new UsersError(UsersError.INTERNAL_ERROR, error));
 
             result.groupIds = groupIds;
+
+            return callback(null, result);
+        });
+    });
+}
+
+function getWithRoles(userId, callback) {
+    assert.strictEqual(typeof userId, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    userdb.get(userId, function (error, result) {
+        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new UsersError(UsersError.NOT_FOUND));
+        if (error) return callback(new UsersError(UsersError.INTERNAL_ERROR, error));
+
+        groups.getGroups(userId, function (error, userGroups) {
+            if (error) return callback(new UsersError(UsersError.INTERNAL_ERROR, error));
+
+            result.roles = _.uniq(_.flatten(userGroups.map(function (r) { return r.roles; })));
 
             return callback(null, result);
         });

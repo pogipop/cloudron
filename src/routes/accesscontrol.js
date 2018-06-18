@@ -101,13 +101,13 @@ function accessTokenAuth(accessToken, callback) {
         if (error && error.reason === DatabaseError.NOT_FOUND) return callback(null, null /* user */, 'Invalid Token'); // will end up as a 401
         if (error) return callback(error); // this triggers 'internal error' in passport
 
-        users.get(token.identifier, function (error, user) {
+        users.getWithRoles(token.identifier, function (error, user) {
             if (error && error.reason === UsersError.NOT_FOUND) return callback(null, null /* user */, 'Invalid Token'); // will end up as a 401
             if (error) return callback(error);
 
             // scopes here can define what capabilities that token carries
             // passport put the 'info' object into req.authInfo, where we can further validate the scopes
-            const userScopes = user.groupIds.indexOf(constants.ADMIN_GROUP_ID) !== -1 ? accesscontrol.VALID_SCOPES : [ 'profile' ];
+            const userScopes = accesscontrol.scopesForRoles(user.roles);
             var authorizedScopes = accesscontrol.intersectScopes(userScopes, token.scope.split(','));
             // these clients do not require password checks unlike UI
             const skipPasswordVerification = token.clientId === 'cid-sdk' || token.clientId === 'cid-cli';
