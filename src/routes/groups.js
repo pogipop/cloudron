@@ -55,12 +55,14 @@ function update(req, res, next) {
     assert.strictEqual(typeof req.params.groupId, 'string');
     assert.strictEqual(typeof req.body, 'object');
 
+    if (typeof req.body.name !== 'string') return next(new HttpError(400, 'name must be a string'));
+
     if (!Array.isArray(req.body.roles)) return next(new HttpError(400, 'roles must be an array'));
     for (let role of req.body.roles) {
         if (typeof role !== 'string') return next(new HttpError(400, 'roles must be an array of strings'));
     }
 
-    groups.update(req.params.groupId, { roles: req.body.roles }, function (error) {
+    groups.update(req.params.groupId, { name: req.body.name, roles: req.body.roles }, function (error) {
         if (error && error.reason === GroupsError.BAD_FIELD) return next(new HttpError(400, error.message));
         if (error) return next(new HttpError(500, error));
 

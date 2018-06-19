@@ -27,8 +27,7 @@ exports = module.exports = {
 var assert = require('assert'),
     database = require('./database.js'),
     DatabaseError = require('./databaseerror'),
-    safe = require('safetydance'),
-    _ = require('underscore');
+    safe = require('safetydance');
 
 var GROUPS_FIELDS = [ 'id', 'name', 'rolesJson' ].join(',');
 

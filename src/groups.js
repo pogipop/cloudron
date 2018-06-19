@@ -259,10 +259,13 @@ function update(groupId, data, callback) {
     assert(Array.isArray(data.roles));
     assert.strictEqual(typeof callback, 'function');
 
-    var error = accesscontrol.validateRoles(data.roles);
+    var error = validateGroupname(data.name);
+    if (error) return callback(error);
+
+    error = accesscontrol.validateRoles(data.roles);
     if (error) return callback(new GroupsError(GroupsError.BAD_FIELD, error.message));
 
-    groupdb.update(groupId, { roles: data.roles }, function (error) {
+    groupdb.update(groupId, { name: data.name, roles: data.roles }, function (error) {
         if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new GroupsError(GroupsError.NOT_FOUND));
         if (error) return callback(new GroupsError(GroupsError.INTERNAL_ERROR, error));
 
