@@ -36,6 +36,9 @@ const ROLE_DEFINITIONS = {
     },
     'manage_users': {
         scopes: [ 'users' ]
+    },
+    'manage_domains': {
+        scopes: [ 'domains' ]
     }
 };
 
@@ -57,10 +60,11 @@ function intersectScopes(allowedScopes, wantedScopes) {
 function validateRoles(roles) {
     assert(Array.isArray(roles));
 
-    if (roles.length === 0) return null;
-    if (roles.length === 1 && roles[0] === exports.ROLE_OWNER) return null;
+    for (let role of roles) {
+        if (Object.keys(ROLE_DEFINITIONS).indexOf(role) === -1) return new Error(`Invalid role ${role}`);
+    }
 
-    return new Error('Invalid role');
+    return null;
 }
 
 function validateScopeString(scope) {
