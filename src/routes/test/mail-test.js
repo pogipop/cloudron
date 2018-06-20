@@ -163,7 +163,7 @@ describe('Mail API', function () {
                 .send({ password: PASSWORD+PASSWORD })
                 .query({ access_token: token })
                 .end(function (err, res) {
-                    expect(res.statusCode).to.equal(401);
+                    expect(res.statusCode).to.equal(403);
                     done();
                 });
         });

@@ -543,7 +543,7 @@ describe('Users API', function () {
             .query({ access_token: token })
             .send({ password: '' })
             .end(function (err, res) {
-                expect(res.statusCode).to.equal(401);
+                expect(res.statusCode).to.equal(403);
                 done();
             });
     });
@@ -553,7 +553,7 @@ describe('Users API', function () {
             .query({ access_token: token })
             .send({ password: PASSWORD + PASSWORD })
             .end(function (err, res) {
-                expect(res.statusCode).to.equal(401);
+                expect(res.statusCode).to.equal(403);
                 done();
             });
     });
