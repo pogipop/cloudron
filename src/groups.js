@@ -31,7 +31,8 @@ var accesscontrol = require('./accesscontrol.js'),
     DatabaseError = require('./databaseerror.js'),
     groupdb = require('./groupdb.js'),
     util = require('util'),
-    uuid = require('uuid');
+    uuid = require('uuid'),
+    _ = require('underscore');
 
 // http://dustinsenos.com/articles/customErrorsInNode
 // http://code.google.com/p/v8/wiki/JavaScriptStackTraceApi
@@ -256,16 +257,22 @@ function addOwnerGroup(callback) {
 function update(groupId, data, callback) {
     assert.strictEqual(typeof groupId, 'string');
     assert(data && typeof data === 'object');
-    assert(Array.isArray(data.roles));
     assert.strictEqual(typeof callback, 'function');
 
-    var error = validateGroupname(data.name);
-    if (error) return callback(error);
+    let error;
+    if ('name' in data) {
+        assert.strictEqual(typeof data.name, 'string');
+        error = validateGroupname(data.name);
+        if (error) return callback(error);
+    }
 
-    error = accesscontrol.validateRoles(data.roles);
-    if (error) return callback(new GroupsError(GroupsError.BAD_FIELD, error.message));
+    if ('roles' in data) {
+        assert(Array.isArray(data.roles));
+        error = accesscontrol.validateRoles(data.roles);
+        if (error) return callback(new GroupsError(GroupsError.BAD_FIELD, error.message));
+    }
 
-    groupdb.update(groupId, { name: data.name, roles: data.roles }, function (error) {
+    groupdb.update(groupId, _.pick(data, 'name', 'roles'), function (error) {
         if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new GroupsError(GroupsError.NOT_FOUND));
         if (error) return callback(new GroupsError(GroupsError.INTERNAL_ERROR, error));
 
