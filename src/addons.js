@@ -376,7 +376,7 @@ function setupSendMail(app, options, callback) {
     appdb.getAddonConfigByName(app.id, 'sendmail', 'MAIL_SMTP_PASSWORD', function (error, existingPassword) {
         if (error && error.reason !== DatabaseError.NOT_FOUND) return callback(error);
 
-        var password = error ? hat(4 * 128) : existingPassword;
+        var password = error ? hat(4 * 48) : existingPassword; // see box#565 for password length
 
         mailboxdb.getByOwnerId(app.id, function (error, results) {
             if (error) return callback(error);
@@ -418,7 +418,7 @@ function setupRecvMail(app, options, callback) {
     appdb.getAddonConfigByName(app.id, 'recvmail', 'MAIL_IMAP_PASSWORD', function (error, existingPassword) {
         if (error && error.reason !== DatabaseError.NOT_FOUND) return callback(error);
 
-        var password = error ? hat(4 * 128) : existingPassword;
+        var password = error ? hat(4 * 48) : existingPassword;  // see box#565 for password length
 
         mailboxdb.getByOwnerId(app.id, function (error, results) {
             if (error) return callback(error);
