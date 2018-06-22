@@ -219,7 +219,7 @@ function getBindsSync(app, addons) {
 
             for (let mount of addons[addon].bindMounts) {
                 let [ host, container ] = mount.split(':');
-                binds.push(path.join(paths.APPS_DATA_DIR, app.id, 'data', host) + ':' + container);
+                binds.push(path.join(paths.APPS_DATA_DIR, app.id, 'data', path.normalize(host)) + ':' + container);
             }
             break;
         default: break;
