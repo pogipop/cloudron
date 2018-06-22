@@ -207,13 +207,21 @@ function getBindsSync(app, addons) {
     assert.strictEqual(typeof app, 'object');
     assert(!addons || typeof addons === 'object');
 
-    var binds = [ ];
+    let binds = [ ];
 
     if (!addons) return binds;
 
-    for (var addon in addons) {
+    for (let addon in addons) {
         switch (addon) {
-        case 'localstorage': binds.push(path.join(paths.APPS_DATA_DIR, app.id, 'data') + ':/app/data:rw'); break;
+        case 'localstorage':
+            binds.push(path.join(paths.APPS_DATA_DIR, app.id, 'data') + ':/app/data:rw');
+            if (!Array.isArray(addons[addon].bindMounts)) break;
+
+            for (let mount of addons[addon].bindMounts) {
+                let [ host, container ] = mount.split(':');
+                binds.push(path.join(paths.APPS_DATA_DIR, app.id, 'data', host) + ':' + container);
+            }
+            break;
         default: break;
         }
     }
