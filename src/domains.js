@@ -17,6 +17,7 @@ module.exports = exports = {
     waitForDnsRecord: waitForDnsRecord,
 
     removePrivateFields: removePrivateFields,
+    removeRestrictedFields: removeRestrictedFields,
 
     DomainsError: DomainsError
 };
@@ -372,8 +373,15 @@ function fqdn(location, domain, provider) {
     return location + (location ? (provider !== 'caas' ? '.' : '-') : '') + domain;
 }
 
+// removes all fields that are strictly private and should never be returned by API calls
 function removePrivateFields(domain) {
     var result = _.pick(domain, 'domain', 'zoneName', 'provider', 'config', 'tlsConfig', 'fallbackCertificate');
     if (result.fallbackCertificate) delete result.fallbackCertificate.key;  // do not return the 'key'. in caas, this is private
+    return result;
+}
+
+// removes all fields that are not accessible by a normal user
+function removeRestrictedFields(domain) {
+    var result = _.pick(domain, 'domain', 'zoneName', 'provider');
     return result;
 }

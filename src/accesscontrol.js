@@ -4,7 +4,8 @@ exports = module.exports = {
     SCOPE_APPS: 'apps',
     SCOPE_CLIENTS: 'clients',
     SCOPE_CLOUDRON: 'cloudron',
-    SCOPE_DOMAINS: 'domains',
+    SCOPE_DOMAINS_READ: 'domains:read',
+    SCOPE_DOMAINS_MANAGE: 'domains:manage',
     SCOPE_MAIL: 'mail',
     SCOPE_PROFILE: 'profile',
     SCOPE_SETTINGS: 'settings',
@@ -32,7 +33,7 @@ const ROLE_DEFINITIONS = {
         scopes: exports.VALID_SCOPES
     },
     'manage_apps': {
-        scopes: [ 'apps', 'domains', 'users' ]
+        scopes: [ 'apps', 'domains:read', 'users' ]
     },
     'manage_users': {
         scopes: [ 'users' ]

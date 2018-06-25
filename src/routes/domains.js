@@ -55,7 +55,7 @@ function getAll(req, res, next) {
     domains.getAll(function (error, result) {
         if (error) return next(new HttpError(500, error));
 
-        result = result.map(domains.removePrivateFields);
+        result = result.map(domains.removeRestrictedFields);
 
         next(new HttpSuccess(200, { domains: result }));
     });
@@ -98,4 +98,3 @@ function del(req, res, next) {
         next(new HttpSuccess(204));
     });
 }
-
