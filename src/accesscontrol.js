@@ -1,7 +1,8 @@
 'use strict';
 
 exports = module.exports = {
-    SCOPE_APPS: 'apps',
+    SCOPE_APPS_READ: 'apps:read',
+    SCOPE_APPS_MANAGE: 'apps:manage',
     SCOPE_CLIENTS: 'clients',
     SCOPE_CLOUDRON: 'cloudron',
     SCOPE_DOMAINS_READ: 'domains:read',
@@ -105,7 +106,7 @@ function hasScopes(authorizedScopes, requiredScopes) {
 function scopesForRoles(roles) {
     assert(Array.isArray(roles), 'Expecting array');
 
-    var scopes = [ 'profile' ];
+    var scopes = [ 'profile', 'apps:read' ];
 
     for (let r of roles) {
         if (!ROLE_DEFINITIONS[r]) continue; // unknown or some legacy role

@@ -3,7 +3,6 @@
 exports = module.exports = {
     getApp: getApp,
     getApps: getApps,
-    getAllByUser: getAllByUser,
     getAppIcon: getAppIcon,
     installApp: installApp,
     configureApp: configureApp,
@@ -60,19 +59,7 @@ function getApps(req, res, next) {
     apps.getAll(function (error, allApps) {
         if (error) return next(new HttpError(500, error));
 
-        allApps = allApps.map(apps.removeInternalFields);
-
-        next(new HttpSuccess(200, { apps: allApps }));
-    });
-}
-
-function getAllByUser(req, res, next) {
-    assert.strictEqual(typeof req.user, 'object');
-
-    apps.getAllByUser(req.user, function (error, allApps) {
-        if (error) return next(new HttpError(500, error));
-
-        allApps = allApps.map(apps.removeInternalFields);
+        allApps = allApps.map(apps.removeRestrictedFields);
 
         next(new HttpSuccess(200, { apps: allApps }));
     });

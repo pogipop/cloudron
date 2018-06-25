@@ -5,6 +5,7 @@ exports = module.exports = {
 
     hasAccessTo: hasAccessTo,
     removeInternalFields: removeInternalFields,
+    removeRestrictedFields: removeRestrictedFields,
 
     get: get,
     getByIpAddress: getByIpAddress,
@@ -330,6 +331,12 @@ function removeInternalFields(app) {
         'location', 'domain', 'fqdn', 'mailboxName',
         'accessRestriction', 'manifest', 'portBindings', 'iconUrl', 'memoryLimit', 'xFrameOptions',
         'sso', 'debugMode', 'robotsTxt', 'enableBackup', 'creationTime', 'updateTime');
+}
+
+function removeRestrictedFields(app) {
+    return _.pick(app,
+        'id', 'appStoreId', 'installationState', 'installationProgress', 'runState', 'health',
+        'location', 'domain', 'fqdn', 'manifest', 'portBindings', 'iconUrl', 'creationTime', 'updateTime');
 }
 
 function getIconUrlSync(app) {

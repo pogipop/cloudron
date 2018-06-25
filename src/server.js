@@ -93,7 +93,8 @@ function initializeExpressSync() {
     var profileScope = routes.accesscontrol.scope(accesscontrol.SCOPE_PROFILE);
     var usersReadScope = routes.accesscontrol.scope(accesscontrol.SCOPE_USERS_READ);
     var usersManageScope = routes.accesscontrol.scope(accesscontrol.SCOPE_USERS_MANAGE);
-    var appsScope = routes.accesscontrol.scope(accesscontrol.SCOPE_APPS);
+    var appsReadScope = routes.accesscontrol.scope(accesscontrol.SCOPE_APPS_READ);
+    var appsManageScope = routes.accesscontrol.scope(accesscontrol.SCOPE_APPS_MANAGE);
     var settingsScope = routes.accesscontrol.scope(accesscontrol.SCOPE_SETTINGS);
     var mailScope = routes.accesscontrol.scope(accesscontrol.SCOPE_MAIL);
     var clientsScope = routes.accesscontrol.scope(accesscontrol.SCOPE_CLIENTS);
@@ -132,7 +133,6 @@ function initializeExpressSync() {
     router.get ('/api/v1/cloudron/eventlog', cloudronScope, routes.eventlog.get);
 
     // working off the user behind the provided token
-    router.get ('/api/v1/user/apps', profileScope, routes.apps.getAllByUser);
     router.get ('/api/v1/user/cloudron_config', profileScope, routes.user.getCloudronConfig);
     router.get ('/api/v1/profile', profileScope, routes.profile.get);
     router.post('/api/v1/profile', profileScope, routes.profile.update);
@@ -187,27 +187,27 @@ function initializeExpressSync() {
     router.del ('/api/v1/clients/:clientId/tokens/:tokenId', clientsScope, routes.clients.delToken);
 
     // app routes
-    router.get ('/api/v1/apps',          appsScope, routes.apps.getApps);
-    router.get ('/api/v1/apps/:id',      appsScope, routes.apps.getApp);
+    router.get ('/api/v1/apps',          appsReadScope, routes.apps.getApps);
+    router.get ('/api/v1/apps/:id',      appsManageScope, routes.apps.getApp);
     router.get ('/api/v1/apps/:id/icon', routes.apps.getAppIcon);
 
-    router.post('/api/v1/apps/install',       appsScope, routes.apps.installApp);
-    router.post('/api/v1/apps/:id/uninstall', appsScope, routes.users.verifyPassword, routes.apps.uninstallApp);
-    router.post('/api/v1/apps/:id/configure', appsScope, routes.apps.configureApp);
-    router.post('/api/v1/apps/:id/update',    appsScope, routes.apps.updateApp);
-    router.post('/api/v1/apps/:id/restore',   appsScope, routes.users.verifyPassword, routes.apps.restoreApp);
-    router.post('/api/v1/apps/:id/backup',    appsScope, routes.apps.backupApp);
-    router.get ('/api/v1/apps/:id/backups',   appsScope, routes.apps.listBackups);
-    router.post('/api/v1/apps/:id/stop',      appsScope, routes.apps.stopApp);
-    router.post('/api/v1/apps/:id/start',     appsScope, routes.apps.startApp);
-    router.get ('/api/v1/apps/:id/logstream', appsScope, routes.apps.getLogStream);
-    router.get ('/api/v1/apps/:id/logs',      appsScope, routes.apps.getLogs);
-    router.get ('/api/v1/apps/:id/exec',      appsScope, routes.apps.exec);
+    router.post('/api/v1/apps/install',       appsManageScope, routes.apps.installApp);
+    router.post('/api/v1/apps/:id/uninstall', appsManageScope, routes.users.verifyPassword, routes.apps.uninstallApp);
+    router.post('/api/v1/apps/:id/configure', appsManageScope, routes.apps.configureApp);
+    router.post('/api/v1/apps/:id/update',    appsManageScope, routes.apps.updateApp);
+    router.post('/api/v1/apps/:id/restore',   appsManageScope, routes.users.verifyPassword, routes.apps.restoreApp);
+    router.post('/api/v1/apps/:id/backup',    appsManageScope, routes.apps.backupApp);
+    router.get ('/api/v1/apps/:id/backups',   appsManageScope, routes.apps.listBackups);
+    router.post('/api/v1/apps/:id/stop',      appsManageScope, routes.apps.stopApp);
+    router.post('/api/v1/apps/:id/start',     appsManageScope, routes.apps.startApp);
+    router.get ('/api/v1/apps/:id/logstream', appsManageScope, routes.apps.getLogStream);
+    router.get ('/api/v1/apps/:id/logs',      appsManageScope, routes.apps.getLogs);
+    router.get ('/api/v1/apps/:id/exec',      appsManageScope, routes.apps.exec);
     // websocket cannot do bearer authentication
-    router.get ('/api/v1/apps/:id/execws',    routes.accesscontrol.websocketAuth.bind(null, [ accesscontrol.SCOPE_APPS ]), routes.apps.execWebSocket);
-    router.post('/api/v1/apps/:id/clone',     appsScope, routes.apps.cloneApp);
-    router.get ('/api/v1/apps/:id/download',  appsScope, routes.apps.downloadFile);
-    router.post('/api/v1/apps/:id/upload',    appsScope, multipart, routes.apps.uploadFile);
+    router.get ('/api/v1/apps/:id/execws',    routes.accesscontrol.websocketAuth.bind(null, [ accesscontrol.SCOPE_APPS_MANAGE ]), routes.apps.execWebSocket);
+    router.post('/api/v1/apps/:id/clone',     appsManageScope, routes.apps.cloneApp);
+    router.get ('/api/v1/apps/:id/download',  appsManageScope, routes.apps.downloadFile);
+    router.post('/api/v1/apps/:id/upload',    appsManageScope, multipart, routes.apps.uploadFile);
 
     // settings routes (these are for the settings tab - avatar & name have public routes for normal users. see above)
     router.get ('/api/v1/settings/app_autoupdate_pattern', settingsScope, routes.settings.getAppAutoupdatePattern);
