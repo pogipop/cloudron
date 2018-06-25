@@ -4,6 +4,7 @@ exports = module.exports = {
     UsersError: UsersError,
 
     removePrivateFields: removePrivateFields,
+    removeRestrictedFields: removeRestrictedFields,
 
     list: list,
     create: create,
@@ -129,8 +130,14 @@ function validatePassword(password) {
     return null;
 }
 
+// remove all fields that should never be sent out via REST API
 function removePrivateFields(user) {
     return _.pick(user, 'id', 'username', 'email', 'fallbackEmail', 'displayName', 'groupIds', 'admin');
+}
+
+// remove all fields that Non-privileged users must not see
+function removeRestrictedFields(user) {
+    return _.pick(user, 'id', 'username', 'email', 'displayName');
 }
 
 function create(username, password, email, displayName, options, auditSource, callback) {

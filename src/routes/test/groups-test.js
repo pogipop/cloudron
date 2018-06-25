@@ -114,9 +114,7 @@ describe('Groups API', function () {
                     expect(res.body.groups).to.be.an(Array);
                     expect(res.body.groups.length).to.be(1);
                     expect(res.body.groups[0].name).to.eql('admin');
-                    expect(res.body.groups[0].userIds).to.be.an(Array);
-                    expect(res.body.groups[0].userIds.length).to.be(1);
-                    expect(res.body.groups[0].userIds[0]).to.be(userId);
+                    expect(res.body.groups[0].userIds).to.not.be.ok();
                     done();
                 });
         });

@@ -91,7 +91,8 @@ function initializeExpressSync() {
     // scope middleware implicitly also adds bearer token verification
     var cloudronScope = routes.accesscontrol.scope(accesscontrol.SCOPE_CLOUDRON);
     var profileScope = routes.accesscontrol.scope(accesscontrol.SCOPE_PROFILE);
-    var usersScope = routes.accesscontrol.scope(accesscontrol.SCOPE_USERS);
+    var usersReadScope = routes.accesscontrol.scope(accesscontrol.SCOPE_USERS_READ);
+    var usersManageScope = routes.accesscontrol.scope(accesscontrol.SCOPE_USERS_MANAGE);
     var appsScope = routes.accesscontrol.scope(accesscontrol.SCOPE_APPS);
     var settingsScope = routes.accesscontrol.scope(accesscontrol.SCOPE_SETTINGS);
     var mailScope = routes.accesscontrol.scope(accesscontrol.SCOPE_MAIL);
@@ -141,21 +142,21 @@ function initializeExpressSync() {
     router.post('/api/v1/profile/twofactorauthentication/disable', profileScope, routes.users.verifyPassword, routes.profile.disableTwoFactorAuthentication);
 
     // user routes
-    router.get ('/api/v1/users', usersScope, routes.users.list);
-    router.post('/api/v1/users', usersScope, routes.users.create);
-    router.get ('/api/v1/users/:userId', usersScope, routes.users.get);
-    router.del ('/api/v1/users/:userId', usersScope, routes.users.verifyPassword, routes.users.remove);
-    router.post('/api/v1/users/:userId', usersScope, routes.users.update);
-    router.put ('/api/v1/users/:userId/groups', usersScope, routes.users.setGroups);
-    router.post('/api/v1/users/:userId/invite', usersScope, routes.users.sendInvite);
+    router.get ('/api/v1/users', usersReadScope, routes.users.list);
+    router.post('/api/v1/users', usersManageScope, routes.users.create);
+    router.get ('/api/v1/users/:userId', usersManageScope, routes.users.get);
+    router.del ('/api/v1/users/:userId', usersManageScope, routes.users.verifyPassword, routes.users.remove);
+    router.post('/api/v1/users/:userId', usersManageScope, routes.users.update);
+    router.put ('/api/v1/users/:userId/groups', usersManageScope, routes.users.setGroups);
+    router.post('/api/v1/users/:userId/invite', usersManageScope, routes.users.sendInvite);
 
     // Group management
-    router.get ('/api/v1/groups', usersScope, routes.groups.list);
-    router.post('/api/v1/groups', usersScope, routes.groups.create);
-    router.get ('/api/v1/groups/:groupId', usersScope, routes.groups.get);
-    router.put ('/api/v1/groups/:groupId/members', usersScope, routes.groups.updateMembers);
-    router.post('/api/v1/groups/:groupId', usersScope, routes.groups.update);
-    router.del ('/api/v1/groups/:groupId', usersScope, routes.users.verifyPassword, routes.groups.remove);
+    router.get ('/api/v1/groups', usersReadScope, routes.groups.list);
+    router.post('/api/v1/groups', usersManageScope, routes.groups.create);
+    router.get ('/api/v1/groups/:groupId', usersManageScope, routes.groups.get);
+    router.put ('/api/v1/groups/:groupId/members', usersManageScope, routes.groups.updateMembers);
+    router.post('/api/v1/groups/:groupId', usersManageScope, routes.groups.update);
+    router.del ('/api/v1/groups/:groupId', usersManageScope, routes.users.verifyPassword, routes.groups.remove);
 
     // form based login routes used by oauth2 frame
     router.get ('/api/v1/session/login', csrf, routes.oauth2.loginForm);

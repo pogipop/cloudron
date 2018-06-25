@@ -81,7 +81,7 @@ function list(req, res, next) {
     users.list(function (error, results) {
         if (error) return next(new HttpError(500, error));
 
-        results = results.map(users.removePrivateFields);
+        results = results.map(users.removeRestrictedFields);
 
         next(new HttpSuccess(200, { users: results }));
     });

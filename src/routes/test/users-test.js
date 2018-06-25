@@ -338,7 +338,7 @@ describe('Users API', function () {
             });
     });
 
-    it('list groupIds when listing users', function (done) {
+    it('does not list groupIds when listing users', function (done) {
         superagent.get(SERVER_URL + '/api/v1/users')
             .query({ access_token: token })
             .end(function (error, res) {
@@ -347,7 +347,7 @@ describe('Users API', function () {
                 expect(res.body.users).to.be.an('array');
 
                 res.body.users.forEach(function (user) {
-                    expect(user.groupIds).to.eql([ constants.ADMIN_GROUP_ID ]);
+                    expect('groupIds' in user).to.be(false);
                 });
                 done();
             });
@@ -502,7 +502,7 @@ describe('Users API', function () {
                     expect(user.email).to.be.ok();
                     expect(user.password).to.not.be.ok();
                     expect(user.salt).to.not.be.ok();
-                    expect(user.groupIds).to.be.an(Array);
+                    expect(user.groupIds).to.not.be.ok();
                 });
 
                 done();
