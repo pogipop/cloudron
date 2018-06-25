@@ -4,7 +4,7 @@ exports = module.exports = {
     AppsError: AppsError,
 
     hasAccessTo: hasAccessTo,
-    removeInternalAppFields: removeInternalAppFields,
+    removeInternalFields: removeInternalFields,
 
     get: get,
     getByIpAddress: getByIpAddress,
@@ -324,7 +324,7 @@ function getAppConfig(app) {
     };
 }
 
-function removeInternalAppFields(app) {
+function removeInternalFields(app) {
     return _.pick(app,
         'id', 'appStoreId', 'installationState', 'installationProgress', 'runState', 'health',
         'location', 'domain', 'fqdn', 'mailboxName',

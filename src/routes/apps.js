@@ -50,7 +50,7 @@ function getApp(req, res, next) {
         if (error && error.reason === AppsError.NOT_FOUND) return next(new HttpError(404, 'No such app'));
         if (error) return next(new HttpError(500, error));
 
-        next(new HttpSuccess(200, apps.removeInternalAppFields(app)));
+        next(new HttpSuccess(200, apps.removeInternalFields(app)));
     });
 }
 
@@ -60,7 +60,7 @@ function getApps(req, res, next) {
     apps.getAll(function (error, allApps) {
         if (error) return next(new HttpError(500, error));
 
-        allApps = allApps.map(apps.removeInternalAppFields);
+        allApps = allApps.map(apps.removeInternalFields);
 
         next(new HttpSuccess(200, { apps: allApps }));
     });
@@ -72,7 +72,7 @@ function getAllByUser(req, res, next) {
     apps.getAllByUser(req.user, function (error, allApps) {
         if (error) return next(new HttpError(500, error));
 
-        allApps = allApps.map(apps.removeInternalAppFields);
+        allApps = allApps.map(apps.removeInternalFields);
 
         next(new HttpSuccess(200, { apps: allApps }));
     });
