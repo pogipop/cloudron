@@ -330,7 +330,7 @@ function removeInternalFields(app) {
         'id', 'appStoreId', 'installationState', 'installationProgress', 'runState', 'health',
         'location', 'domain', 'fqdn', 'mailboxName',
         'accessRestriction', 'manifest', 'portBindings', 'iconUrl', 'memoryLimit', 'xFrameOptions',
-        'sso', 'debugMode', 'robotsTxt', 'enableBackup', 'creationTime', 'updateTime');
+        'sso', 'debugMode', 'robotsTxt', 'enableBackup', 'creationTime', 'updateTime', 'ts');
 }
 
 function removeRestrictedFields(app) {
