@@ -71,8 +71,8 @@ CREATE TABLE IF NOT EXISTS apps(
     domain VARCHAR(128) NOT NULL,
     dnsRecordId VARCHAR(512), // tracks any id that we got back to track dns updates
     accessRestrictionJson TEXT, // { users: [ ], groups: [ ] }
-    createdAt TIMESTAMP(2) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updatedAt TIMESTAMP(2) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    creationTime TIMESTAMP(2) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updateTime TIMESTAMP(2) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     memoryLimit BIGINT DEFAULT 0,
     xFrameOptions VARCHAR(512),
     sso BOOLEAN DEFAULT 1, // whether user chose to enable SSO
