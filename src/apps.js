@@ -336,7 +336,7 @@ function removeInternalFields(app) {
 function removeRestrictedFields(app) {
     return _.pick(app,
         'id', 'appStoreId', 'installationState', 'installationProgress', 'runState', 'health',
-        'location', 'domain', 'fqdn', 'manifest', 'portBindings', 'iconUrl', 'creationTime', 'updateTime');
+        'location', 'domain', 'fqdn', 'manifest', 'portBindings', 'iconUrl', 'creationTime', 'ts');
 }
 
 function getIconUrlSync(app) {
