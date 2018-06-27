@@ -13,7 +13,7 @@ exports = module.exports = {
     SCOPE_USERS_READ: 'users:read',
     SCOPE_USERS_MANAGE: 'users:manage',
     SCOPE_APPSTORE: 'appstore',
-    VALID_SCOPES: [ 'apps', 'appstore', 'clients', 'cloudron', 'domains', 'mail', 'profile', 'settings', 'users' ],
+    VALID_SCOPES: [ 'apps', 'appstore', 'clients', 'cloudron', 'domains', 'mail', 'profile', 'settings', 'users' ], // keep this sorted
 
     SCOPE_ANY: '*',
 
@@ -49,13 +49,16 @@ var assert = require('assert'),
     debug = require('debug')('box:accesscontrol'),
     _ = require('underscore');
 
+// returns scopes that does not have wildcards and is sorted
 function canonicalScopeString(scope) {
-    return scope === exports.SCOPE_ANY ? exports.VALID_SCOPES.join(',') : scope;
+    if (scope === exports.SCOPE_ANY) return exports.VALID_SCOPES.join(',');
+
+    return scope.split(',').sort().join(',');
 }
 
 function intersectScopes(allowedScopes, wantedScopes) {
-    assert(Array.isArray(allowedScopes), 'Expecting array');
-    assert(Array.isArray(wantedScopes), 'Expecting array');
+    assert(Array.isArray(allowedScopes), 'Expecting sorted array');
+    assert(Array.isArray(wantedScopes), 'Expecting sorted array');
 
     return _.intersection(allowedScopes, wantedScopes);
 }

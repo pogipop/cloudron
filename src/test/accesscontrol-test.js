@@ -16,11 +16,7 @@ describe('access control', function () {
         });
 
         it('identity for non-*', function () {
-            expect(accesscontrol.canonicalScopeString('foo,bar')).to.be('foo,bar');
-        });
-
-        it('* is not expanded otherwise', function () {
-            expect(accesscontrol.canonicalScopeString('foo,bar,*')).to.be('foo,bar,*');
+            expect(accesscontrol.canonicalScopeString('foo,bar')).to.be('bar,foo'); // becomes sorted
         });
     });
 
@@ -35,7 +31,12 @@ describe('access control', function () {
         });
 
         it('everything is different', function () {
-            expect(accesscontrol.intersectScopes(['cloudron', 'domains' ], ['clients', 'apps'])).to.eql('');
+            expect(accesscontrol.intersectScopes(['cloudron', 'domains' ], ['clients', 'apps'])).to.eql([]);
+        });
+
+        xit('subscopes', function () {
+            expect(accesscontrol.intersectScopes(['apps:read' ], ['apps'])).to.eql(['apps:read']);
+            expect(accesscontrol.intersectScopes(['apps:read','profile','domains'], ['apps','domains:manage','profile'])).to.eql(['apps:read','domains:manage','profile']);
         });
     });
 
