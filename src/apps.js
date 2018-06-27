@@ -720,6 +720,8 @@ function configure(appId, data, auditSource, callback) {
             var oldName = app.mailboxName;
             var newName = data.mailboxName || (app.mailboxName.endsWith('.app') ? mailboxNameForLocation(location, app.manifest) : app.mailboxName);
             mailboxdb.updateName(oldName, values.oldConfig.domain, newName, domain, function (error) {
+                if (newName.endsWith('.app')) error = null; // ignore internal mailbox conflict errors since we want to show location conflict errors in the UI
+
                 if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(new AppsError(AppsError.ALREADY_EXISTS, 'This mailbox is already taken'));
                 if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new AppsError(AppsError.BAD_STATE));
                 if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
