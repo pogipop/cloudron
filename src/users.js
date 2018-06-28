@@ -26,10 +26,13 @@ exports = module.exports = {
     setMembership: setMembership,
     setTwoFactorAuthenticationSecret: setTwoFactorAuthenticationSecret,
     enableTwoFactorAuthentication: enableTwoFactorAuthentication,
-    disableTwoFactorAuthentication: disableTwoFactorAuthentication
+    disableTwoFactorAuthentication: disableTwoFactorAuthentication,
+    transferOwnership: transferOwnership
 };
 
-var assert = require('assert'),
+var apps = require('./apps.js'),
+    AppsError = apps.AppsError,
+    assert = require('assert'),
     crypto = require('crypto'),
     config = require('./config.js'),
     constants = require('./constants.js'),
@@ -636,6 +639,19 @@ function disableTwoFactorAuthentication(userId, callback) {
     assert.strictEqual(typeof callback, 'function');
 
     userdb.update(userId, { twoFactorAuthenticationEnabled: false, twoFactorAuthenticationSecret: '' }, function (error) {
+        if (error) return callback(new UsersError(UsersError.INTERNAL_ERROR, error));
+
+        callback(null);
+    });
+}
+
+function transferOwnership(oldOwnerId, newOwnerId, callback) {
+    assert.strictEqual(typeof oldOwnerId, 'string');
+    assert.strictEqual(typeof newOwnerId, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    apps.transferOwnership(oldOwnerId, newOwnerId, function (error) {
+        if (error && error.reason === AppsError.NOT_FOUND) return callback(new UsersError(UsersError.NOT_FOUND, error.message));
         if (error) return callback(new UsersError(UsersError.INTERNAL_ERROR, error));
 
         callback(null);

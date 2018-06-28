@@ -42,6 +42,9 @@ exports = module.exports = {
     downloadFile: downloadFile,
     uploadFile: uploadFile,
 
+    setOwner: setOwner,
+    transferOwnership: transferOwnership,
+
     // exported for testing
     _validateHostname: validateHostname,
     _validatePortBindings: validatePortBindings,
@@ -1355,5 +1358,30 @@ function uploadFile(appId, sourceFilePath, destFilePath, callback) {
         readFile.pipe(stream);
 
         callback(null);
+    });
+}
+
+function setOwner(appId, ownerId, callback) {
+    assert.strictEqual(typeof appId, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    appdb.setOwner(appId, ownerId, function (error) {
+        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new AppsError(AppsError.NOT_FOUND, error.message));
+        if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
+
+        callback();
+    });
+}
+
+function transferOwnership(oldOwnerId, newOwnerId, callback) {
+    assert.strictEqual(typeof oldOwnerId, 'string');
+    assert.strictEqual(typeof newOwnerId, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    appdb.transferOwnership(oldOwnerId, newOwnerId, function (error) {
+        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new AppsError(AppsError.NOT_FOUND, error.message));
+        if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
+
+        callback();
     });
 }

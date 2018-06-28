@@ -24,6 +24,9 @@ exports = module.exports = {
     setRunCommand: setRunCommand,
     getAppStoreIds: getAppStoreIds,
 
+    setOwner: setOwner,
+    transferOwnership: transferOwnership,
+
     // installation codes (keep in sync in UI)
     ISTATE_PENDING_INSTALL: 'pending_install', // installs and fresh reinstalls
     ISTATE_PENDING_CLONE: 'pending_clone', // clone
@@ -504,5 +507,33 @@ function getAddonConfigByName(appId, addonId, name, callback) {
         if (results.length === 0) return callback(new DatabaseError(DatabaseError.NOT_FOUND));
 
         callback(null, results[0].value);
+    });
+}
+
+function setOwner(appId, ownerId, callback) {
+    assert.strictEqual(typeof appId, 'string');
+    assert.strictEqual(typeof ownerId, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    database.query('UPDATE apps SET ownerId=? WHERE appId=?', [ ownerId, appId ], function (error, results) {
+        if (error && error.code === 'ER_NO_REFERENCED_ROW_2') return callback(new DatabaseError(DatabaseError.NOT_FOUND, 'No such user'));
+        if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
+
+        if (results.length === 0) return callback(new DatabaseError(DatabaseError.NOT_FOUND, 'No such app'));
+
+        callback(null);
+    });
+}
+
+function transferOwnership(oldOwnerId, newOwnerId, callback) {
+    assert.strictEqual(typeof oldOwnerId, 'string');
+    assert.strictEqual(typeof newOwnerId, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    database.query('UPDATE apps SET ownerId=? WHERE ownerId=?', [ newOwnerId, oldOwnerId ], function (error, results) {
+        if (error && error.code === 'ER_NO_REFERENCED_ROW_2') return callback(new DatabaseError(DatabaseError.NOT_FOUND, 'No such user'));
+        if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
+
+        callback(null);
     });
 }
