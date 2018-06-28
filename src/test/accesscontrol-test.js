@@ -34,9 +34,10 @@ describe('access control', function () {
             expect(accesscontrol.intersectScopes(['cloudron', 'domains' ], ['clients', 'apps'])).to.eql([]);
         });
 
-        xit('subscopes', function () {
+        it('subscopes', function () {
             expect(accesscontrol.intersectScopes(['apps:read' ], ['apps'])).to.eql(['apps:read']);
-            expect(accesscontrol.intersectScopes(['apps:read','profile','domains'], ['apps','domains:manage','profile'])).to.eql(['apps:read','domains:manage','profile']);
+            expect(accesscontrol.intersectScopes(['apps:read','domains','profile'], ['apps','domains:manage','profile'])).to.eql(['apps:read','domains:manage','profile']);
+            expect(accesscontrol.intersectScopes(['apps:read','domains','profile'], ['apps','apps:read'])).to.eql(['apps:read']);
         });
     });
 

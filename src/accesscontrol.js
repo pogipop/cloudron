@@ -60,7 +60,32 @@ function intersectScopes(allowedScopes, wantedScopes) {
     assert(Array.isArray(allowedScopes), 'Expecting sorted array');
     assert(Array.isArray(wantedScopes), 'Expecting sorted array');
 
-    return _.intersection(allowedScopes, wantedScopes);
+    let wantedScopesMap = new Map();
+    let results = [];
+
+    // make a map of scope -> [ subscopes ]
+    for (let w of wantedScopes) {
+        let parts = w.split(':');
+        let subscopes = wantedScopesMap.get(parts[0]) || new Set();
+        subscopes.add(parts[1] || '*');
+        wantedScopesMap.set(parts[0], subscopes);
+    }
+
+    for (let a of allowedScopes) {
+        let parts = a.split(':');
+        let as = parts[1] || '*';
+
+        let subscopes = wantedScopesMap.get(parts[0]);
+        if (!subscopes) continue;
+
+        if (subscopes.has('*') || subscopes.has(as)) {
+            results.push(a);
+        } else if (as === '*') {
+            results = results.concat(Array.from(subscopes).map(function (ss) { return `${a}:${ss}`; }));
+        }
+    }
+
+    return results;
 }
 
 function validateRoles(roles) {
