@@ -22,16 +22,16 @@ describe('access control', function () {
 
     describe('intersectScopes', function () { // args: allowed, wanted
         it('both are same', function () {
-            expect(accesscontrol.intersectScopes([ 'apps', 'clients' ], [ 'clients', 'apps' ])).to.eql([ 'apps', 'clients' ]);
+            expect(accesscontrol.intersectScopes([ 'apps', 'clients' ], [ 'apps', 'clients' ])).to.eql([ 'apps', 'clients' ]);
         });
 
         it('some are different', function () {
-            expect(accesscontrol.intersectScopes([ 'apps' ], [ 'clients', 'apps' ])).to.eql(['apps']);
+            expect(accesscontrol.intersectScopes([ 'apps' ], [ 'apps', 'clients' ])).to.eql(['apps']);
             expect(accesscontrol.intersectScopes([ 'clients', 'domains', 'mail' ], [ 'mail' ])).to.eql(['mail']);
         });
 
         it('everything is different', function () {
-            expect(accesscontrol.intersectScopes(['cloudron', 'domains' ], ['clients', 'apps'])).to.eql([]);
+            expect(accesscontrol.intersectScopes(['cloudron', 'domains' ], ['apps','clients'])).to.eql([]);
         });
 
         it('subscopes', function () {

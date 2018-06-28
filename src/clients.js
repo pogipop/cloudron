@@ -37,6 +37,7 @@ var apps = require('./apps.js'),
     accesscontrol = require('./accesscontrol.js'),
     tokendb = require('./tokendb.js'),
     users = require('./users.js'),
+    UsersError = users.UsersError,
     util = require('util'),
     uuid = require('uuid');
 
@@ -252,18 +253,26 @@ function addTokenByUserId(clientId, userId, expiresAt, callback) {
     get(clientId, function (error, result) {
         if (error) return callback(error);
 
-        var token = tokendb.generateToken();
-        var scope = accesscontrol.canonicalScopeString(result.scope);
-
-        tokendb.add(token, userId, result.id, expiresAt, scope, function (error) {
+        users.getWithRoles(userId, function (error, user) {
+            if (error && error.reason === UsersError.NOT_FOUND) return callback(new ClientsError(ClientsError.NOT_FOUND, 'No such user'));
             if (error) return callback(new ClientsError(ClientsError.INTERNAL_ERROR, error));
 
-            callback(null, {
-                accessToken: token,
-                identifier: userId,
-                clientId: result.id,
-                scope: result.scope,
-                expires: expiresAt
+            const userScopes = accesscontrol.scopesForRoles(user.roles);
+            var scope = accesscontrol.canonicalScopeString(result.scope);
+            var authorizedScopes = accesscontrol.intersectScopes(userScopes, scope.split(',')).join(',');
+
+            var token = tokendb.generateToken();
+
+            tokendb.add(token, userId, result.id, expiresAt, authorizedScopes, function (error) {
+                if (error) return callback(new ClientsError(ClientsError.INTERNAL_ERROR, error));
+
+                callback(null, {
+                    accessToken: token,
+                    identifier: userId,
+                    clientId: result.id,
+                    scope: authorizedScopes,
+                    expires: expiresAt
+                });
             });
         });
     });

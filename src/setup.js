@@ -246,22 +246,14 @@ function activate(username, password, email, displayName, ip, auditSource, callb
         if (error && error.reason === UsersError.BAD_FIELD) return callback(new SetupError(SetupError.BAD_FIELD, error.message));
         if (error) return callback(new SetupError(SetupError.INTERNAL_ERROR, error));
 
-        clients.get('cid-webadmin', function (error, result) {
+        clients.addTokenByUserId('cid-webadmin', userObject.id, Date.now() + constants.DEFAULT_TOKEN_EXPIRATION, function (error, result) {
             if (error) return callback(new SetupError(SetupError.INTERNAL_ERROR, error));
 
-            // Also generate a token so the admin creation can also act as a login
-            var token = tokendb.generateToken();
-            var expires = Date.now() + constants.DEFAULT_TOKEN_EXPIRATION;
+            eventlog.add(eventlog.ACTION_ACTIVATE, auditSource, { });
 
-            tokendb.add(token, userObject.id, result.id, expires, accesscontrol.canonicalScopeString(result.scope), function (error) {
-                if (error) return callback(new SetupError(SetupError.INTERNAL_ERROR, error));
+            callback(null, { token: result.accessToken, expires: result.expires });
 
-                eventlog.add(eventlog.ACTION_ACTIVATE, auditSource, { });
-
-                callback(null, { token: token, expires: expires });
-
-                setTimeout(cloudron.onActivated, 3000); // hack for now to not block the above http response
-            });
+            setTimeout(cloudron.onActivated, 3000); // hack for now to not block the above http response
         });
     });
 }

@@ -19,14 +19,14 @@ exports = module.exports = {
 
     ROLE_OWNER: 'owner',
 
-    scopesForRoles: scopesForRoles,
-
     validateRoles: validateRoles,
 
     validateScopeString: validateScopeString,
     hasScopes: hasScopes,
+    canonicalScopeString: canonicalScopeString,
     intersectScopes: intersectScopes,
-    canonicalScopeString: canonicalScopeString
+    validateToken: validateToken,
+    scopesForRoles: scopesForRoles
 };
 
 // https://docs.microsoft.com/en-us/azure/role-based-access-control/role-definitions
@@ -46,7 +46,11 @@ const ROLE_DEFINITIONS = {
 };
 
 var assert = require('assert'),
+    DatabaseError = require('./databaseerror.js'),
     debug = require('debug')('box:accesscontrol'),
+    tokendb = require('./tokendb.js'),
+    users = require('./users.js'),
+    UsersError = users.UsersError,
     _ = require('underscore');
 
 // returns scopes that does not have wildcards and is sorted
@@ -59,6 +63,8 @@ function canonicalScopeString(scope) {
 function intersectScopes(allowedScopes, wantedScopes) {
     assert(Array.isArray(allowedScopes), 'Expecting sorted array');
     assert(Array.isArray(wantedScopes), 'Expecting sorted array');
+
+    if (_.isEqual(allowedScopes, wantedScopes)) return allowedScopes; // quick path
 
     let wantedScopesMap = new Map();
     let results = [];
@@ -134,7 +140,7 @@ function hasScopes(authorizedScopes, requiredScopes) {
 function scopesForRoles(roles) {
     assert(Array.isArray(roles), 'Expecting array');
 
-    var scopes = [ 'profile', 'apps:read' ];
+    let scopes = [ 'profile', 'apps:read' ]; // the minimum scopes
 
     for (let r of roles) {
         if (!ROLE_DEFINITIONS[r]) continue; // unknown or some legacy role
@@ -142,5 +148,35 @@ function scopesForRoles(roles) {
         scopes = scopes.concat(ROLE_DEFINITIONS[r].scopes);
     }
 
-    return _.uniq(scopes.sort(), true /* isSorted */);
+    // fold scopes so we don't have duplicate scopes
+    let sortedScopes = scopes.sort();
+    let set = new Set();
+    for (let s of sortedScopes) {
+        var parts = s.split(':');
+        if (set.has(parts[0])) continue;
+        set.add(s);
+    }
+    return Array.from(set);
+}
+
+function validateToken(accessToken, callback) {
+    assert.strictEqual(typeof accessToken, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    tokendb.get(accessToken, function (error, token) {
+        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(null, null /* user */, 'Invalid Token'); // will end up as a 401
+        if (error) return callback(error); // this triggers 'internal error' in passport
+
+        users.getWithRoles(token.identifier, function (error, user) {
+            if (error && error.reason === UsersError.NOT_FOUND) return callback(null, null /* user */, 'Invalid Token'); // will end up as a 401
+            if (error) return callback(error);
+
+            const userScopes = scopesForRoles(user.roles);
+            var authorizedScopes = intersectScopes(userScopes, token.scope.split(','));
+            const skipPasswordVerification = token.clientId === 'cid-sdk' || token.clientId === 'cid-cli'; // these clients do not require password checks unlike UI
+            var info = { authorizedScopes: authorizedScopes, skipPasswordVerification: skipPasswordVerification }; // ends up in req.authInfo
+
+            callback(null, user, info);
+        });
+    });
 }

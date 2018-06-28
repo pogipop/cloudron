@@ -14,12 +14,9 @@ var accesscontrol = require('../accesscontrol.js'),
     clients = require('../clients.js'),
     ClientPasswordStrategy = require('passport-oauth2-client-password').Strategy,
     ClientsError = clients.ClientsError,
-    constants = require('../constants.js'),
-    DatabaseError = require('../databaseerror.js'),
     HttpError = require('connect-lastmile').HttpError,
     LocalStrategy = require('passport-local').Strategy,
     passport = require('passport'),
-    tokendb = require('../tokendb'),
     users = require('../users.js'),
     UsersError = users.UsersError;
 
@@ -82,7 +79,9 @@ function initialize(callback) {
     }));
 
     // used for "Authorization: Bearer token" or access_token query param authentication
-    passport.use(new BearerStrategy(accessTokenAuth));
+    passport.use(new BearerStrategy(function (token, callback) {
+        accesscontrol.validateToken(token, callback);
+    }));
 
     callback(null);
 }
@@ -91,31 +90,6 @@ function uninitialize(callback) {
     assert.strictEqual(typeof callback, 'function');
 
     callback(null);
-}
-
-function accessTokenAuth(accessToken, callback) {
-    assert.strictEqual(typeof accessToken, 'string');
-    assert.strictEqual(typeof callback, 'function');
-
-    tokendb.get(accessToken, function (error, token) {
-        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(null, null /* user */, 'Invalid Token'); // will end up as a 401
-        if (error) return callback(error); // this triggers 'internal error' in passport
-
-        users.getWithRoles(token.identifier, function (error, user) {
-            if (error && error.reason === UsersError.NOT_FOUND) return callback(null, null /* user */, 'Invalid Token'); // will end up as a 401
-            if (error) return callback(error);
-
-            // scopes here can define what capabilities that token carries
-            // passport put the 'info' object into req.authInfo, where we can further validate the scopes
-            const userScopes = accesscontrol.scopesForRoles(user.roles);
-            var authorizedScopes = accesscontrol.intersectScopes(userScopes, token.scope.split(','));
-            // these clients do not require password checks unlike UI
-            const skipPasswordVerification = token.clientId === 'cid-sdk' || token.clientId === 'cid-cli';
-            var info = { authorizedScopes: authorizedScopes, skipPasswordVerification: skipPasswordVerification };
-
-            callback(null, user, info);
-        });
-    });
 }
 
 //  The scope middleware provides an auth middleware for routes.
@@ -151,7 +125,7 @@ function websocketAuth(requiredScopes, req, res, next) {
 
     if (typeof req.query.access_token !== 'string') return next(new HttpError(401, 'Unauthorized'));
 
-    accessTokenAuth(req.query.access_token, function (error, user, info) {
+    accesscontrol.validateToken(req.query.access_token, function (error, user, info) {
         if (error) return next(new HttpError(500, error.message));
         if (!user) return next(new HttpError(401, 'Unauthorized'));
 

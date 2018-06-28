@@ -19,8 +19,7 @@ exports = module.exports = {
     csrf: csrf
 };
 
-var accesscontrol = require('../accesscontrol.js'),
-    apps = require('../apps.js'),
+var apps = require('../apps.js'),
     assert = require('assert'),
     authcodedb = require('../authcodedb.js'),
     clients = require('../clients'),
@@ -39,7 +38,6 @@ var accesscontrol = require('../accesscontrol.js'),
     session = require('connect-ensure-login'),
     settings = require('../settings.js'),
     speakeasy = require('speakeasy'),
-    tokendb = require('../tokendb.js'),
     url = require('url'),
     users = require('../users.js'),
     UsersError = users.UsersError,
@@ -85,8 +83,6 @@ function initialize() {
 
     // exchange authorization codes for access tokens. this is used by external oauth clients
     gServer.exchange(oauth2orize.exchange.code(function (client, code, redirectURI, callback) {
-        debug('exchange:', client, code, redirectURI);
-
         authcodedb.get(code, function (error, authCode) {
             if (error && error.reason === DatabaseError.NOT_FOUND) return callback(null, false);
             if (error) return callback(error);
@@ -95,16 +91,12 @@ function initialize() {
             authcodedb.del(code, function (error) {
                 if(error) return callback(error);
 
-                var token = tokendb.generateToken();
-                var expires = Date.now() + constants.DEFAULT_TOKEN_EXPIRATION;
-                var scope = accesscontrol.canonicalScopeString(client.scope);
-
-                tokendb.add(token, authCode.userId, authCode.clientId, expires, scope, function (error) {
+                clients.addTokenByUserId(client.id, authCode.userId, Date.now() + constants.DEFAULT_TOKEN_EXPIRATION, function (error, result) {
                     if (error) return callback(error);
 
-                    debug('exchange: new access token for client %s token %s (scope: %s)', client.id, token.slice(0, 6), scope); // partial token for security
+                    debug('exchange: new access token for client %s user %s token %s', client.id, authCode.userId, result.accessToken.slice(0, 6)); // partial token for security
 
-                    callback(null, token);
+                    callback(null, result.accessToken);
                 });
             });
         });
@@ -112,18 +104,12 @@ function initialize() {
 
     // implicit token grant that skips issuing auth codes. this is used by our webadmin
     gServer.grant(oauth2orize.grant.token({ scopeSeparator: ',' }, function (client, user, ares, callback) {
-        debug('grant token:', client.id, user.id, ares);
-
-        var token = tokendb.generateToken();
-        var expires = Date.now() + constants.DEFAULT_TOKEN_EXPIRATION;
-        var scope = accesscontrol.canonicalScopeString(client.scope);
-
-        tokendb.add(token, user.id, client.id, expires, scope, function (error) {
+        clients.addTokenByUserId(client.id, user.id, Date.now() + constants.DEFAULT_TOKEN_EXPIRATION, function (error, result) {
             if (error) return callback(error);
 
-            debug('grant token: new access token for client %s token %s (scope: %s)', client.id, token.slice(0, 6), scope); // partial token for security
+            debug('grant token: new access token for client %s user %s token %s', client.id, user.id, result.accessToken.slice(0, 6)); // partial token for security
 
-            callback(null, token);
+            callback(null, result.accessToken);
         });
     }));
 
