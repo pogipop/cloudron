@@ -102,11 +102,6 @@ function get(req, res, next) {
 function remove(req, res, next) {
     assert.strictEqual(typeof req.params.userId, 'string');
 
-    // rules:
-    // - admin can remove any user
-    // - admin cannot remove admin
-    // - user cannot remove himself <- TODO should this actually work?
-
     if (req.user.id === req.params.userId) return next(new HttpError(409, 'Not allowed to remove yourself.'));
 
     users.remove(req.params.userId, auditSource(req), function (error) {
