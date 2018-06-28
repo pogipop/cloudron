@@ -185,3 +185,13 @@ CREATE TABLE IF NOT EXISTS mailboxes(
     FOREIGN KEY(domain) REFERENCES mail(domain),
     UNIQUE (name, domain));
 
+CREATE TABLE IF NOT EXISTS subdomains(
+    appId VARCHAR(128) NOT NULL,
+    domain VARCHAR(128) NOT NULL,
+    subdomain VARCHAR(128) NOT NULL,
+    type VARCHAR(128) NOT NULL,
+    FOREIGN KEY(domain) REFERENCES domains(domain),
+    FOREIGN KEY(appId) REFERENCES apps(id),
+    UNIQUE (subdomain, domain))
+    
+    CHARACTER SET utf8 COLLATE utf8_bin;
