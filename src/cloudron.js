@@ -151,7 +151,6 @@ function getConfig(callback) {
             adminFqdn: config.adminFqdn(),
             mailFqdn: config.mailFqdn(),
             version: config.version(),
-            update: updateChecker.getUpdateInfo(),
             progress: progress.getAll(),
             isDemo: config.isDemo(),
             memory: os.totalmem(),

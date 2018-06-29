@@ -5,6 +5,7 @@ exports = module.exports = {
     getProgress: getProgress,
     getConfig: getConfig,
     getDisks: getDisks,
+    getUpdateInfo: getUpdateInfo,
     update: update,
     feedback: feedback,
     checkForUpdates: checkForUpdates,
@@ -65,6 +66,10 @@ function update(req, res, next) {
 
         next(new HttpSuccess(202, {}));
     });
+}
+
+function getUpdateInfo(req, res, next) {
+    next(new HttpSuccess(200, { update: updateChecker.getUpdateInfo() }));
 }
 
 function checkForUpdates(req, res, next) {
