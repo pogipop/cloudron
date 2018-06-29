@@ -367,7 +367,7 @@ function configureAppRedirect(app, fqdn, bundle, callback) {
     };
     var nginxConf = ejs.render(NGINX_APPCONFIG_EJS, data);
 
-    var nginxConfigFilename = path.join(paths.NGINX_APPCONFIG_DIR, `${app.id}-${fqdn}.conf`);
+    var nginxConfigFilename = path.join(paths.NGINX_APPCONFIG_DIR, `${app.id}-redirect-${fqdn}.conf`);
     debug('writing config for "%s" redirecting to "%s" to %s with options %j', app.fqdn, fqdn, nginxConfigFilename, data);
 
     if (!safe.fs.writeFileSync(nginxConfigFilename, nginxConf)) {
