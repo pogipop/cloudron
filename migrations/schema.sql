@@ -89,7 +89,6 @@ CREATE TABLE IF NOT EXISTS apps(
     ownerId VARCHAR(128),
 
     FOREIGN KEY(ownerId) REFERENCES users(id),
-    FOREIGN KEY(domain) REFERENCES domains(domain),
     PRIMARY KEY(id));
 
 CREATE TABLE IF NOT EXISTS appPortBindings(
@@ -190,6 +189,7 @@ CREATE TABLE IF NOT EXISTS subdomains(
     domain VARCHAR(128) NOT NULL,
     subdomain VARCHAR(128) NOT NULL,
     type VARCHAR(128) NOT NULL,
+
     FOREIGN KEY(domain) REFERENCES domains(domain),
     FOREIGN KEY(appId) REFERENCES apps(id),
     UNIQUE (subdomain, domain))
