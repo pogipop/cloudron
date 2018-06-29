@@ -367,6 +367,7 @@ function configureAppRedirect(app, fqdn, bundle, callback) {
     };
     var nginxConf = ejs.render(NGINX_APPCONFIG_EJS, data);
 
+    // if we change the filename, also change it in unconfigureApp()
     var nginxConfigFilename = path.join(paths.NGINX_APPCONFIG_DIR, `${app.id}-redirect-${fqdn}.conf`);
     debug('writing config for "%s" redirecting to "%s" to %s with options %j', app.fqdn, fqdn, nginxConfigFilename, data);
 
@@ -407,11 +408,17 @@ function unconfigureApp(app, callback) {
     assert.strictEqual(typeof app, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    var nginxConfigFilename = path.join(paths.NGINX_APPCONFIG_DIR, app.id + '.conf');
-    if (!safe.fs.unlinkSync(nginxConfigFilename)) {
-        if (safe.error.code !== 'ENOENT') debug('Error removing nginx configuration of "%s": %s', app.fqdn, safe.error.message);
-        return callback(null);
-    }
+    var nginxConfigFilenames = [ path.join(paths.NGINX_APPCONFIG_DIR, `${app.id}.conf`) ];
+    app.alternateDomains.forEach(function (d) {
+        var fqdn = (d.subdomain ? (d.subdomain + '.') : '') + d.domain;
+        nginxConfigFilenames.push(path.join(paths.NGINX_APPCONFIG_DIR, `${app.id}-redirect-${fqdn}.conf`))
+    });
+
+    nginxConfigFilenames.forEach(function (filename) {
+        if (!safe.fs.unlinkSync(filename)) {
+            if (safe.error.code !== 'ENOENT') debug('Error removing nginx configuration of "%s" at %s: %s', app.fqdn, filename, safe.error.message);
+        }
+    });
 
     reload(callback);
 }

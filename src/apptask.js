@@ -350,6 +350,39 @@ function registerAlternateDomains(app, overwrite, callback) {
     });
 }
 
+function unregisterAlternateDomains(app, all, callback) {
+    assert.strictEqual(typeof app, 'object');
+    assert.strictEqual(typeof all, 'boolean');
+    assert.strictEqual(typeof callback, 'function');
+
+    var obsoleteDomains
+    if (all) obsoleteDomains = app.alternateDomains;
+    else obsoleteDomains = app.oldConfig.alternateDomains.filter(function (o) { return !app.alternateDomains.some(function (n) { return n.subdomain === o.subdomain && n.domain === o.domain; }); });
+
+    if (obsoleteDomains.length === 0) return callback();
+
+    sysinfo.getPublicIp(function (error, ip) {
+        if (error) return callback(error);
+
+        async.eachSeries(obsoleteDomains, function (domain, callback) {
+            async.retry({ times: 30, interval: 5000 }, function (retryCallback) {
+                debugApp(app, 'Unregistering subdomain: %s%s', domain.subdomain ? (domain.subdomain + '.') : '', domain.domain);
+
+                domains.removeDnsRecords(domain.subdomain, domain.domain, 'A', [ ip ], function (error) {
+                    if (error && error.reason === DomainsError.NOT_FOUND) return retryCallback(null, null);
+                    if (error && (error.reason === DomainsError.STILL_BUSY || error.reason === DomainsError.EXTERNAL_ERROR)) return retryCallback(error); // try again
+
+                    retryCallback(null, error);
+                });
+            }, function (error, result) {
+                if (error || result instanceof Error) return callback(error || result);
+
+                appdb.setSubdomainDnsRecordId(domain.domain, domain.subdomain, '', callback);
+            });
+        }, callback);
+    });
+}
+
 function removeIcon(app, callback) {
     assert.strictEqual(typeof app, 'object');
     assert.strictEqual(typeof callback, 'function');
@@ -528,11 +561,13 @@ function configure(app, callback) {
         removeLogrotateConfig.bind(null, app),
         stopApp.bind(null, app),
         deleteContainers.bind(null, app),
+        unregisterAlternateDomains.bind(null, app, false /* all */),
         function (next) {
             if (!locationChanged) return next();
 
             unregisterSubdomain(app, app.oldConfig.location, app.oldConfig.domain, next);
         },
+
 
         reserveHttpPort.bind(null, app),
 
@@ -723,7 +758,8 @@ function uninstall(app, callback) {
         updateApp.bind(null, app, { installationProgress: '50, Deleting image' }),
         docker.deleteImage.bind(null, app.manifest),
 
-        updateApp.bind(null, app, { installationProgress: '60, Unregistering subdomain' }),
+        updateApp.bind(null, app, { installationProgress: '60, Unregistering domains' }),
+        unregisterAlternateDomains.bind(null, app, true /* all */),
         unregisterSubdomain.bind(null, app, app.location, app.domain),
 
         updateApp.bind(null, app, { installationProgress: '70, Cleanup icon' }),
