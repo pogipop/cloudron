@@ -324,7 +324,8 @@ function getAppConfig(app) {
         memoryLimit: app.memoryLimit,
         xFrameOptions: app.xFrameOptions || 'SAMEORIGIN',
         robotsTxt: app.robotsTxt,
-        sso: app.sso
+        sso: app.sso,
+        alternateDomains: app.alternateDomains || []
     };
 }
 
@@ -333,7 +334,7 @@ function removeInternalFields(app) {
         'id', 'appStoreId', 'installationState', 'installationProgress', 'runState', 'health',
         'location', 'domain', 'fqdn', 'mailboxName',
         'accessRestriction', 'manifest', 'portBindings', 'iconUrl', 'memoryLimit', 'xFrameOptions',
-        'sso', 'debugMode', 'robotsTxt', 'enableBackup', 'creationTime', 'updateTime', 'ts');
+        'sso', 'debugMode', 'robotsTxt', 'enableBackup', 'creationTime', 'updateTime', 'ts', 'alternateDomains');
 }
 
 function removeRestrictedFields(app) {
