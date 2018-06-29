@@ -396,7 +396,7 @@ function configureApp(app, auditSource, callback) {
                 ensureCertificate({ fqdn: fqdn, domain: domain.domain }, auditSource, function (error, bundle) {
                     if (error) return callback(error);
 
-                    configureAppRedirect(app, domain, bundle, callback);
+                    configureAppRedirect(app, fqdn, bundle, callback);
                 });
             }, callback);
         });
