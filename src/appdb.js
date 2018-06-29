@@ -121,7 +121,11 @@ function postProcess(result) {
     result.debugMode = safe.JSON.parse(result.debugModeJson);
     delete result.debugModeJson;
 
-    result.alternateDomains = [];
+    result.alternateDomains = result.alternateDomains || [];
+    result.alternateDomains.forEach(function (d) {
+        delete d.appId;
+        delete d.type;
+    });
 }
 
 function get(id, callback) {
@@ -137,9 +141,15 @@ function get(id, callback) {
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
         if (result.length === 0) return callback(new DatabaseError(DatabaseError.NOT_FOUND));
 
-        postProcess(result[0]);
+        database.query('SELECT * FROM subdomains WHERE appId = ? AND type = ?', [ id, exports.SUBDOMAIN_TYPE_REDIRECT ], function (error, alternateDomains) {
+            if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
 
-        callback(null, result[0]);
+            result[0].alternateDomains = alternateDomains;
+
+            postProcess(result[0]);
+
+            callback(null, result[0]);
+        })
     });
 }
 
@@ -156,9 +166,14 @@ function getByHttpPort(httpPort, callback) {
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
         if (result.length === 0) return callback(new DatabaseError(DatabaseError.NOT_FOUND));
 
-        postProcess(result[0]);
+        database.query('SELECT * FROM subdomains WHERE appId = ? AND type = ?', [ result[0].id, exports.SUBDOMAIN_TYPE_REDIRECT ], function (error, alternateDomains) {
+            if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
 
-        callback(null, result[0]);
+            result[0].alternateDomains = alternateDomains;
+            postProcess(result[0]);
+
+            callback(null, result[0]);
+        });
     });
 }
 
@@ -175,9 +190,14 @@ function getByContainerId(containerId, callback) {
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
         if (result.length === 0) return callback(new DatabaseError(DatabaseError.NOT_FOUND));
 
-        postProcess(result[0]);
+        database.query('SELECT * FROM subdomains WHERE appId = ? AND type = ?', [ result[0].id, exports.SUBDOMAIN_TYPE_REDIRECT ], function (error, alternateDomains) {
+            if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
 
-        callback(null, result[0]);
+            result[0].alternateDomains = alternateDomains;
+            postProcess(result[0]);
+
+            callback(null, result[0]);
+        });
     });
 }
 
@@ -192,9 +212,21 @@ function getAll(callback) {
         + ' GROUP BY apps.id ORDER BY apps.id', [ exports.SUBDOMAIN_TYPE_PRIMARY ], function (error, results) {
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
 
-        results.forEach(postProcess);
+        database.query('SELECT * FROM subdomains WHERE type = ?', [ exports.SUBDOMAIN_TYPE_REDIRECT ], function (error, alternateDomains) {
+            if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
 
-        callback(null, results);
+            alternateDomains.forEach(function (d) {
+                var domain = results.find(function (a) { return d.appId === a.id; });
+                if (!domain) return;
+
+                domain.alternateDomains = domain.alternateDomains || [];
+                domain.alternateDomains.push(d);
+            });
+
+            results.forEach(postProcess);
+
+            callback(null, results);
+        });
     });
 }
 
@@ -249,6 +281,15 @@ function add(id, appStoreId, manifest, location, domain, ownerId, portBindings, 
         queries.push({
             query: 'INSERT INTO mailboxes (name, type, domain, ownerId, ownerType) VALUES (?, ?, ?, ?, ?)',
             args: [ data.mailboxName, mailboxdb.TYPE_MAILBOX, domain, id, mailboxdb.OWNER_TYPE_APP ]
+        });
+    }
+
+    if (data.alternateDomains) {
+        data.alternateDomains.forEach(function (d) {
+            queries.push({
+                query: 'INSERT INTO subdomains (appId, domain, subdomain, type) VALUES (?, ?, ?, ?)',
+                args: [ id, d.domain, d.subdomain, exports.SUBDOMAIN_TYPE_REDIRECT ]
+            });
         });
     }
 
