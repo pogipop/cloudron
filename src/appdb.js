@@ -354,7 +354,7 @@ function del(id, callback) {
 
     database.transaction(queries, function (error, results) {
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
-        if (results[2].affectedRows !== 1) return callback(new DatabaseError(DatabaseError.NOT_FOUND));
+        if (results[3].affectedRows !== 1) return callback(new DatabaseError(DatabaseError.NOT_FOUND));
 
         callback(null);
     });
