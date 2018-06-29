@@ -315,6 +315,45 @@ function unregisterSubdomain(app, location, domain, callback) {
     });
 }
 
+function registerAlternateDomains(app, overwrite, callback) {
+    assert.strictEqual(typeof app, 'object');
+    assert.strictEqual(typeof overwrite, 'boolean');
+    assert.strictEqual(typeof callback, 'function');
+
+    if (!app.alternateDomains || app.alternateDomains.length === 0) return callback();
+
+    sysinfo.getPublicIp(function (error, ip) {
+        if (error) return callback(error);
+
+        async.eachSeries(app.alternateDomains, function (domain, callback) {
+            async.retry({ times: 200, interval: 5000 }, function (retryCallback) {
+                debugApp(app, 'Registering alternate subdomain [%s.%s] overwrite: %s', domain.subdomain, domain.domain, overwrite);
+
+                // get the current record before updating it
+                domains.getDnsRecords(domain.subdomain, domain.domain, 'A', function (error, values) {
+                    if (error) return retryCallback(error);
+
+                    // refuse to update any existing DNS record for custom domains that we did not create
+                    if (values.length !== 0 && !overwrite) return retryCallback(null, new Error('DNS Record already exists'));
+
+                    domains.upsertDnsRecords(domain.location, domain.domain, 'A', [ ip ], function (error, changeId) {
+                        if (error && (error.reason === DomainsError.STILL_BUSY || error.reason === DomainsError.EXTERNAL_ERROR)) return retryCallback(error); // try again
+
+                        retryCallback(null, error || changeId);
+                    });
+                });
+            }, function (error, result) {
+                if (error || result instanceof Error) return callback(error || result);
+
+                // TODO we need to stash this into the subdomains table instead of apps table
+                // dnsRecordId tracks whether we created this DNS record so that we can unregister later
+                // updateApp(app, { dnsRecordId: result }, callback);
+                callback();
+            });
+        }, callback);
+    });
+}
+
 function removeIcon(app, callback) {
     assert.strictEqual(typeof app, 'object');
     assert.strictEqual(typeof callback, 'function');
@@ -504,8 +543,11 @@ function configure(app, callback) {
         updateApp.bind(null, app, { installationProgress: '20, Downloading icon' }),
         downloadIcon.bind(null, app),
 
-        updateApp.bind(null, app, { installationProgress: '35, Registering subdomain' }),
+        updateApp.bind(null, app, { installationProgress: '30, Registering subdomain' }),
         registerSubdomain.bind(null, app, !locationChanged /* overwrite */), // if location changed, do not overwrite to detect conflicts
+
+        updateApp.bind(null, app, { installationProgress: '35, Registering alternate domains'}),
+        registerAlternateDomains.bind(null, app, true /* overwrite */), // figure out when to overwrite
 
         updateApp.bind(null, app, { installationProgress: '40, Downloading image' }),
         docker.downloadImage.bind(null, app.manifest),

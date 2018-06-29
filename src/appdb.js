@@ -120,6 +120,8 @@ function postProcess(result) {
     assert(result.debugModeJson === null || typeof result.debugModeJson === 'string');
     result.debugMode = safe.JSON.parse(result.debugModeJson);
     delete result.debugModeJson;
+
+    result.alternateDomains = [];
 }
 
 function get(id, callback) {
