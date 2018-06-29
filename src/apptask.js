@@ -320,14 +320,12 @@ function registerAlternateDomains(app, overwrite, callback) {
     assert.strictEqual(typeof overwrite, 'boolean');
     assert.strictEqual(typeof callback, 'function');
 
-    if (!app.alternateDomains || app.alternateDomains.length === 0) return callback();
-
     sysinfo.getPublicIp(function (error, ip) {
         if (error) return callback(error);
 
         async.eachSeries(app.alternateDomains, function (domain, callback) {
             async.retry({ times: 200, interval: 5000 }, function (retryCallback) {
-                debugApp(app, 'Registering alternate subdomain [%s.%s] overwrite: %s', domain.subdomain, domain.domain, overwrite);
+                debugApp(app, 'Registering alternate subdomain [%s] overwrite: %s', (domain.subdomain ? (domain.subdomain + '.') : '') + domain.domain, overwrite);
 
                 // get the current record before updating it
                 domains.getDnsRecords(domain.subdomain, domain.domain, 'A', function (error, values) {
@@ -336,7 +334,7 @@ function registerAlternateDomains(app, overwrite, callback) {
                     // refuse to update any existing DNS record for custom domains that we did not create
                     if (values.length !== 0 && !overwrite) return retryCallback(null, new Error('DNS Record already exists'));
 
-                    domains.upsertDnsRecords(domain.location, domain.domain, 'A', [ ip ], function (error, changeId) {
+                    domains.upsertDnsRecords(domain.subdomain, domain.domain, 'A', [ ip ], function (error, changeId) {
                         if (error && (error.reason === DomainsError.STILL_BUSY || error.reason === DomainsError.EXTERNAL_ERROR)) return retryCallback(error); // try again
 
                         retryCallback(null, error || changeId);
