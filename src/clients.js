@@ -268,9 +268,9 @@ function addTokenByUserId(clientId, userId, expiresAt, callback) {
 
                 callback(null, {
                     accessToken: token,
+                    tokenScopes: authorizedScopes,
                     identifier: userId,
                     clientId: result.id,
-                    scope: authorizedScopes,
                     expires: expiresAt
                 });
             });

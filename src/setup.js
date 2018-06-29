@@ -251,7 +251,12 @@ function activate(username, password, email, displayName, ip, auditSource, callb
 
             eventlog.add(eventlog.ACTION_ACTIVATE, auditSource, { });
 
-            callback(null, { userId: userObject.id, token: result.accessToken, expires: result.expires });
+            callback(null, {
+                userId: userObject.id,
+                token: result.accessToken,
+                tokenScopes: result.tokenScopes,
+                expires: result.expires
+            });
 
             setTimeout(cloudron.onActivated, 3000); // hack for now to not block the above http response
         });
