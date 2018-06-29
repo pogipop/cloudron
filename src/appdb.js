@@ -227,9 +227,9 @@ function add(id, appStoreId, manifest, location, domain, ownerId, portBindings, 
     var queries = [];
 
     queries.push({
-        query: 'INSERT INTO apps (id, appStoreId, manifestJson, installationState, location, domain, accessRestrictionJson, memoryLimit, xFrameOptions, restoreConfigJson, sso, debugModeJson, robotsTxt, ownerId) ' +
-            ' VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-        args: [ id, appStoreId, manifestJson, installationState, location, domain, accessRestrictionJson, memoryLimit, xFrameOptions, restoreConfigJson, sso, debugModeJson, robotsTxt, ownerId ]
+        query: 'INSERT INTO apps (id, appStoreId, manifestJson, installationState, accessRestrictionJson, memoryLimit, xFrameOptions, restoreConfigJson, sso, debugModeJson, robotsTxt, ownerId) ' +
+            ' VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        args: [ id, appStoreId, manifestJson, installationState, accessRestrictionJson, memoryLimit, xFrameOptions, restoreConfigJson, sso, debugModeJson, robotsTxt, ownerId ]
     });
 
     queries.push({
