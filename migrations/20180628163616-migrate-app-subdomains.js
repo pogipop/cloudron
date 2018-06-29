@@ -11,7 +11,7 @@ exports.up = function(db, callback) {
         ];
 
         results.forEach(function (app) {
-            queries.push(db.runSql.bind(db, 'INSERT INTO subdomains (appId, domain, subdomain, type), (?, ?, ?, ?)', [ app.id, app.domain, app.location, 'primary' ]));
+            queries.push(db.runSql.bind(db, 'INSERT INTO subdomains (appId, domain, subdomain, type) VALUES (?, ?, ?, ?)', [ app.id, app.domain, app.location, 'primary' ]));
         });
 
         queries.push(db.runSql.bind(db, 'COMMIT'));
