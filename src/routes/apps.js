@@ -162,6 +162,11 @@ function configureApp(req, res, next) {
 
     if ('mailboxName' in data && typeof data.mailboxName !== 'string') return next(new HttpError(400, 'mailboxName must be a string'));
 
+    if ('alternateDomains' in data) {
+        if (!Array.isArray(data.alternateDomains)) return next(new HttpError(400, 'alternateDomains must be an array'));
+        if (data.alternateDomains.some(function (d) { return (typeof d.domain !== 'string' || typeof d.subdomain !== 'string'); })) return next(new HttpError(400, 'alternateDomains array must contain objects with domain and subdomain strings'));
+    }
+
     debug('Configuring app id:%s data:%j', req.params.id, data);
 
     apps.configure(req.params.id, data, auditSource(req), function (error) {

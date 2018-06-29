@@ -342,6 +342,7 @@ function updateWithConstraints(id, app, constraints, callback) {
     assert.strictEqual(typeof callback, 'function');
     assert(!('portBindings' in app) || typeof app.portBindings === 'object');
     assert(!('accessRestriction' in app) || typeof app.accessRestriction === 'object' || app.accessRestriction === '');
+    assert(!('alternateDomains' in app) || Array.isArray(alternateDomains));
 
     var queries = [ ];
 
@@ -361,6 +362,13 @@ function updateWithConstraints(id, app, constraints, callback) {
 
     if ('domain' in app) {
         queries.push({ query: 'UPDATE subdomains SET domain = ? WHERE appId = ? AND type = ?', args: [ app.domain, id, exports.SUBDOMAIN_TYPE_PRIMARY ]});
+    }
+
+    if ('alternateDomains' in app) {
+        queries.push({ query: 'DELETE FROM subdomains WHERE appId = ? AND type = ?', args: [ id, exports.SUBDOMAIN_TYPE_REDIRECT ]});
+        app.alternateDomains.forEach(function (d) {
+            queries.push({ query: 'INSERT INTO subdomains (appId, domain, subdomain, type) VALUES (?, ?, ?, ?)', args: [ id, d.domain, d.subdomain, exports.SUBDOMAIN_TYPE_REDIRECT ]});
+        });
     }
 
     var fields = [ ], values = [ ];

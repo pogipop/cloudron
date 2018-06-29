@@ -691,6 +691,11 @@ function configure(appId, data, auditSource, callback) {
             if (error) return callback(error);
         }
 
+        if ('alternateDomains' in data) {
+            // TODO validate all subdomains [{ domain: '', subdomain: ''}]
+            values.alternateDomains = data.alternateDomains;
+        }
+
         domains.get(domain, function (error, domainObject) {
             if (error && error.reason === DomainsError.NOT_FOUND) return callback(new AppsError(AppsError.NOT_FOUND, 'No such domain'));
             if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, 'Could not get domain info:' + error.message));
