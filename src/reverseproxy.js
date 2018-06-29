@@ -348,6 +348,36 @@ function configureAppInternal(app, bundle, callback) {
     reload(callback);
 }
 
+function configureAppRedirect(app, fqdn, bundle, callback) {
+    assert.strictEqual(typeof app, 'object');
+    assert.strictEqual(typeof fqdn, 'string');
+    assert.strictEqual(typeof bundle, 'object');
+    assert.strictEqual(typeof callback, 'function');
+
+    var data = {
+        sourceDir: path.resolve(__dirname, '..'),
+        vhost: fqdn,
+        redirectTo: app.fqdn,
+        hasIPv6: config.hasIPv6(),
+        endpoint: 'redirect',
+        certFilePath: bundle.certFilePath,
+        keyFilePath: bundle.keyFilePath,
+        robotsTxtQuoted: null,
+        xFrameOptions: 'SAMEORIGIN'
+    };
+    var nginxConf = ejs.render(NGINX_APPCONFIG_EJS, data);
+
+    var nginxConfigFilename = path.join(paths.NGINX_APPCONFIG_DIR, `${app.id}-${fqdn}.conf`);
+    debug('writing config for "%s" redirecting to "%s" to %s with options %j', app.fqdn, fqdn, nginxConfigFilename, data);
+
+    if (!safe.fs.writeFileSync(nginxConfigFilename, nginxConf)) {
+        debug('Error creating nginx redirect config for "%s" : %s', app.fqdn, safe.error.message);
+        return callback(safe.error);
+    }
+
+    reload(callback);
+}
+
 function configureApp(app, auditSource, callback) {
     assert.strictEqual(typeof app, 'object');
     assert.strictEqual(typeof auditSource, 'object');
@@ -363,7 +393,8 @@ function configureApp(app, auditSource, callback) {
             async.eachSeries(app.alternateDomains, function (domain, callback) {
                 ensureCertificate({ fqdn: `${domain.subdomain}.${domain.domain}`, domain: domain.domain }, auditSource, function (error, bundle) {
                     if (error) return callback(error);
-                    callback();
+
+                    configureAppRedirect(app, domain, bundle, callback);
                 });
             }, callback);
         });
