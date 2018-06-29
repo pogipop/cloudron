@@ -13,6 +13,7 @@ exports = module.exports = {
 };
 
 var appdb = require('./appdb.js'),
+    apps = require('./apps.js'),
     assert = require('assert'),
     async = require('async'),
     child_process = require('child_process'),
@@ -43,12 +44,11 @@ function resumeTasks(callback) {
 
     gPaused = false;
 
-    appdb.getAll(function (error, apps) {
+    apps.getAll(function (error, result) {
         if (error) return callback(error);
 
-        apps.forEach(function (app) {
+        result.forEach(function (app) {
             if (app.installationState === appdb.ISTATE_INSTALLED && app.runState === appdb.RSTATE_RUNNING) return;
-
             if (app.installationState === appdb.ISTATE_ERROR) return;
 
             debug('Creating process for %s (%s) with state %s', app.fqdn, app.id, app.installationState);
