@@ -343,10 +343,8 @@ function registerAlternateDomains(app, overwrite, callback) {
             }, function (error, result) {
                 if (error || result instanceof Error) return callback(error || result);
 
-                // TODO we need to stash this into the subdomains table instead of apps table
                 // dnsRecordId tracks whether we created this DNS record so that we can unregister later
-                // updateApp(app, { dnsRecordId: result }, callback);
-                callback();
+                appdb.setSubdomainDnsRecordId(domain.domain, domain.subdomain, result, callback);
             });
         }, callback);
     });

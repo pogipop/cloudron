@@ -27,6 +27,8 @@ exports = module.exports = {
     setOwner: setOwner,
     transferOwnership: transferOwnership,
 
+    setSubdomainDnsRecordId: setSubdomainDnsRecordId,
+
     // installation codes (keep in sync in UI)
     ISTATE_PENDING_INSTALL: 'pending_install', // installs and fresh reinstalls
     ISTATE_PENDING_CLONE: 'pending_clone', // clone
@@ -618,6 +620,20 @@ function transferOwnership(oldOwnerId, newOwnerId, callback) {
 
     database.query('UPDATE apps SET ownerId=? WHERE ownerId=?', [ newOwnerId, oldOwnerId ], function (error, results) {
         if (error && error.code === 'ER_NO_REFERENCED_ROW_2') return callback(new DatabaseError(DatabaseError.NOT_FOUND, 'No such user'));
+        if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
+
+        callback(null);
+    });
+}
+
+function setSubdomainDnsRecordId(domain, subdomain, dnsRecordId, callback) {
+    assert.strictEqual(typeof domain, 'string');
+    assert.strictEqual(typeof subdomain, 'string');
+    assert.strictEqual(typeof dnsRecordId, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    database.query('UPDATE subdomains SET dnsRecordId = ? WHERE domain = ? AND subdomain = ?', [ dnsRecordId, domain, subdomain ], function (error, results) {
+        if (error && error.code === 'ER_NO_REFERENCED_ROW_2') return callback(new DatabaseError(DatabaseError.NOT_FOUND, 'No such subdomain'));
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
 
         callback(null);
