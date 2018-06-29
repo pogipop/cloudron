@@ -716,7 +716,7 @@ function configure(appId, data, auditSource, callback) {
                     if (!safe.fs.writeFileSync(path.join(paths.APP_CERTS_DIR, `${fqdn}.user.key`), data.key)) return callback(new AppsError(AppsError.INTERNAL_ERROR, 'Error saving key: ' + safe.error.message));
                 } else { // remove existing cert/key
                     if (!safe.fs.unlinkSync(path.join(paths.APP_CERTS_DIR, `${fqdn}.user.cert`))) debug('Error removing cert: ' + safe.error.message);
-                    if (!safe.fs.unlinkSync(path.join(paths.APP_CERTS_DIR, `${fqdn}..user.key`))) debug('Error removing key: ' + safe.error.message);
+                    if (!safe.fs.unlinkSync(path.join(paths.APP_CERTS_DIR, `${fqdn}.user.key`))) debug('Error removing key: ' + safe.error.message);
                 }
             }
 
