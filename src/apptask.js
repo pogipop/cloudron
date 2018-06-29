@@ -405,7 +405,15 @@ function waitForDnsPropagation(app, callback) {
     sysinfo.getPublicIp(function (error, ip) {
         if (error) return callback(error);
 
-        domains.waitForDnsRecord(app.fqdn, app.domain, ip, { interval: 5000, times: 240 }, callback);
+        domains.waitForDnsRecord(app.fqdn, app.domain, ip, { interval: 5000, times: 240 }, function (error) {
+            if (error) return callback(error);
+
+            // now wait for alternateDomains, if any
+            async.eachSeries(app.alternateDomains, function (domain, callback) {
+                var fqdn = (domain.subdomain ? (domain.subdomain + '.') : '') + domain.domain;
+                domains.waitForDnsRecord(fqdn, domain.domain, ip, { interval: 5000, times: 240 }, callback);
+            }, callback);
+        });
     });
 }
 
