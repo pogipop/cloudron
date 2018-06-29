@@ -44,6 +44,7 @@ var acme = require('./cert/acme.js'),
     path = require('path'),
     paths = require('./paths.js'),
     platform = require('./platform.js'),
+    rimraf = require('rimraf'),
     safe = require('safetydance'),
     shell = require('./shell.js'),
     users = require('./users.js'),
@@ -408,19 +409,12 @@ function unconfigureApp(app, callback) {
     assert.strictEqual(typeof app, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    var nginxConfigFilenames = [ path.join(paths.NGINX_APPCONFIG_DIR, `${app.id}.conf`) ];
-    app.alternateDomains.forEach(function (d) {
-        var fqdn = (d.subdomain ? (d.subdomain + '.') : '') + d.domain;
-        nginxConfigFilenames.push(path.join(paths.NGINX_APPCONFIG_DIR, `${app.id}-redirect-${fqdn}.conf`))
-    });
+    // we use globbing to find all nginx configs for an app
+    rimraf(path.join(paths.NGINX_APPCONFIG_DIR, `${app.id}*.conf`), function (error) {
+        if (error) debug('Error removing nginx configurations of "%s":', app.fqdn, error);
 
-    nginxConfigFilenames.forEach(function (filename) {
-        if (!safe.fs.unlinkSync(filename)) {
-            if (safe.error.code !== 'ENOENT') debug('Error removing nginx configuration of "%s" at %s: %s', app.fqdn, filename, safe.error.message);
-        }
+        reload(callback);
     });
-
-    reload(callback);
 }
 
 function renewAll(auditSource, callback) {
