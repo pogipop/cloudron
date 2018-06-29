@@ -259,11 +259,11 @@ function addTokenByUserId(clientId, userId, expiresAt, callback) {
 
             const userScopes = accesscontrol.scopesForRoles(user.roles);
             var scope = accesscontrol.canonicalScopeString(result.scope);
-            var authorizedScopes = accesscontrol.intersectScopes(userScopes, scope.split(',')).join(',');
+            var authorizedScopes = accesscontrol.intersectScopes(userScopes, scope.split(','));
 
             var token = tokendb.generateToken();
 
-            tokendb.add(token, userId, result.id, expiresAt, authorizedScopes, function (error) {
+            tokendb.add(token, userId, result.id, expiresAt, authorizedScopes.join(','), function (error) {
                 if (error) return callback(new ClientsError(ClientsError.INTERNAL_ERROR, error));
 
                 callback(null, {
