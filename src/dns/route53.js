@@ -121,7 +121,7 @@ function add(dnsConfig, zoneName, subdomain, type, values, callback) {
             if (error && error.code === 'InvalidChangeBatch') return callback(new DomainsError(DomainsError.BAD_FIELD, error.message));
             if (error) return callback(new DomainsError(DomainsError.EXTERNAL_ERROR, error.message));
 
-            callback(null, result.ChangeInfo.Id);
+            callback(null);
         });
     });
 }

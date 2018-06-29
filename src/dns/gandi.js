@@ -48,7 +48,7 @@ function upsert(dnsConfig, zoneName, subdomain, type, values, callback) {
             if (result.statusCode === 400) return callback(new DomainsError(DomainsError.BAD_FIELD, formatError(result)));
             if (result.statusCode !== 201) return callback(new DomainsError(DomainsError.EXTERNAL_ERROR, formatError(result)));
 
-            return callback(null, 'unused-id');
+            return callback(null);
         });
 }
 

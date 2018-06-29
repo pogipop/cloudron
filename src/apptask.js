@@ -269,17 +269,16 @@ function registerSubdomain(app, overwrite, callback) {
                 // refuse to update any existing DNS record for custom domains that we did not create
                 if (values.length !== 0 && !overwrite) return retryCallback(null, new Error('DNS Record already exists'));
 
-                domains.upsertDnsRecords(app.location, app.domain, 'A', [ ip ], function (error, changeId) {
+                domains.upsertDnsRecords(app.location, app.domain, 'A', [ ip ], function (error) {
                     if (error && (error.reason === DomainsError.STILL_BUSY || error.reason === DomainsError.EXTERNAL_ERROR)) return retryCallback(error); // try again
 
-                    retryCallback(null, error || changeId);
+                    retryCallback(null, error);
                 });
             });
         }, function (error, result) {
             if (error || result instanceof Error) return callback(error || result);
 
-            // dnsRecordId tracks whether we created this DNS record so that we can unregister later
-            updateApp(app, { dnsRecordId: result }, callback);
+            callback();
         });
     });
 }
@@ -289,11 +288,6 @@ function unregisterSubdomain(app, location, domain, callback) {
     assert.strictEqual(typeof location, 'string');
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof callback, 'function');
-
-    if (!app.dnsRecordId) {
-        debugApp(app, 'Skip unregister of record not created by cloudron');
-        return callback(null);
-    }
 
     sysinfo.getPublicIp(function (error, ip) {
         if (error) return callback(error);
@@ -309,8 +303,7 @@ function unregisterSubdomain(app, location, domain, callback) {
             });
         }, function (error, result) {
             if (error || result instanceof Error) return callback(error || result);
-
-            updateApp(app, { dnsRecordId: null }, callback);
+            callback();
         });
     });
 }
@@ -334,17 +327,15 @@ function registerAlternateDomains(app, overwrite, callback) {
                     // refuse to update any existing DNS record for custom domains that we did not create
                     if (values.length !== 0 && !overwrite) return retryCallback(null, new Error('DNS Record already exists'));
 
-                    domains.upsertDnsRecords(domain.subdomain, domain.domain, 'A', [ ip ], function (error, changeId) {
+                    domains.upsertDnsRecords(domain.subdomain, domain.domain, 'A', [ ip ], function (error) {
                         if (error && (error.reason === DomainsError.STILL_BUSY || error.reason === DomainsError.EXTERNAL_ERROR)) return retryCallback(error); // try again
 
-                        retryCallback(null, error || changeId);
+                        retryCallback(null, error);
                     });
                 });
             }, function (error, result) {
                 if (error || result instanceof Error) return callback(error || result);
-
-                // dnsRecordId tracks whether we created this DNS record so that we can unregister later
-                appdb.setSubdomainDnsRecordId(domain.domain, domain.subdomain, result, callback);
+                callback();
             });
         }, callback);
     });
@@ -376,8 +367,7 @@ function unregisterAlternateDomains(app, all, callback) {
                 });
             }, function (error, result) {
                 if (error || result instanceof Error) return callback(error || result);
-
-                appdb.setSubdomainDnsRecordId(domain.domain, domain.subdomain, '', callback);
+                callback();
             });
         }, callback);
     });

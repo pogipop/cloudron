@@ -301,10 +301,10 @@ function upsertDnsRecords(subdomain, domain, type, values, callback) {
     get(domain, function (error, result) {
         if (error) return callback(new DomainsError(DomainsError.INTERNAL_ERROR, error));
 
-        api(result.provider).upsert(result.config, result.zoneName, getName(result, subdomain), type, values, function (error, changeId) {
+        api(result.provider).upsert(result.config, result.zoneName, getName(result, subdomain), type, values, function (error) {
             if (error) return callback(error);
 
-            callback(null, changeId);
+            callback(null);
         });
     });
 }

@@ -90,7 +90,7 @@ function updateRecord(dnsConfig, zoneName, recordId, subdomain, type, values, ca
             if (result.statusCode === 403) return callback(new DomainsError(DomainsError.ACCESS_DENIED, formatError(result)));
             if (result.statusCode !== 200) return callback(new DomainsError(DomainsError.EXTERNAL_ERROR, formatError(result)));
 
-            return callback(null, 'unused-id');
+            return callback(null);
         });
 }
 

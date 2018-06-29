@@ -91,7 +91,7 @@ function upsert(dnsConfig, zoneName, subdomain, type, values, callback) {
                     return callback(new DomainsError(DomainsError.EXTERNAL_ERROR, error.message));
                 }
 
-                callback(null, change.id);
+                callback(null);
             });
         });
     });

@@ -50,7 +50,7 @@ function add(dnsConfig, zoneName, subdomain, type, values, callback) {
             if (result.statusCode === 420) return callback(new DomainsError(DomainsError.STILL_BUSY));
             if (result.statusCode !== 201) return callback(new DomainsError(DomainsError.EXTERNAL_ERROR, util.format('%s %j', result.statusCode, result.body)));
 
-            return callback(null, result.body.changeId);
+            return callback(null);
         });
 }
 

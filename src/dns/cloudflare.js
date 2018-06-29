@@ -152,11 +152,7 @@ function upsert(dnsConfig, zoneName, subdomain, type, values, callback) {
                             callback(null);
                         });
                 }
-            }, function (error) {
-                if (error) return callback(error);
-
-                callback(null, 'unused');
-            });
+            }, callback);
         });
     });
 }

@@ -64,7 +64,6 @@ var AUDIT_SOURCE = {
 var APP_0 = {
     id: 'appid-0',
     appStoreId: 'appStoreId-0',
-    dnsRecordId: null,
     installationState: appdb.ISTATE_INSTALLED,
     installationProgress: null,
     runState: appdb.RSTATE_RUNNING,

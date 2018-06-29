@@ -22,7 +22,7 @@ function upsert(dnsConfig, zoneName, subdomain, type, values, callback) {
 
     debug('upsert: %s for zone %s of type %s with values %j', subdomain, zoneName, type, values);
 
-    return callback(null, 'noop-record-id');
+    return callback(null);
 }
 
 function get(dnsConfig, zoneName, subdomain, type, callback) {

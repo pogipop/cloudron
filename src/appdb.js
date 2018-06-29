@@ -27,8 +27,6 @@ exports = module.exports = {
     setOwner: setOwner,
     transferOwnership: transferOwnership,
 
-    setSubdomainDnsRecordId: setSubdomainDnsRecordId,
-
     // installation codes (keep in sync in UI)
     ISTATE_PENDING_INSTALL: 'pending_install', // installs and fresh reinstalls
     ISTATE_PENDING_CLONE: 'pending_clone', // clone
@@ -68,7 +66,7 @@ var assert = require('assert'),
     util = require('util');
 
 var APPS_FIELDS_PREFIXED = [ 'apps.id', 'apps.appStoreId', 'apps.installationState', 'apps.installationProgress', 'apps.runState',
-    'apps.health', 'apps.containerId', 'apps.manifestJson', 'apps.httpPort', 'subdomains.subdomain AS location', 'subdomains.domain', 'subdomains.dnsRecordId',
+    'apps.health', 'apps.containerId', 'apps.manifestJson', 'apps.httpPort', 'subdomains.subdomain AS location', 'subdomains.domain',
     'apps.accessRestrictionJson', 'apps.restoreConfigJson', 'apps.oldConfigJson', 'apps.updateConfigJson', 'apps.memoryLimit',
     'apps.xFrameOptions', 'apps.sso', 'apps.debugModeJson', 'apps.robotsTxt', 'apps.enableBackup',
     'apps.creationTime', 'apps.updateTime', 'apps.ownerId', 'apps.ts' ].join(',');
@@ -409,10 +407,6 @@ function updateWithConstraints(id, app, constraints, callback) {
         queries.push({ query: 'UPDATE subdomains SET domain = ? WHERE appId = ? AND type = ?', args: [ app.domain, id, exports.SUBDOMAIN_TYPE_PRIMARY ]});
     }
 
-    if ('dnsRecordId' in app) {
-        queries.push({ query: 'UPDATE subdomains SET dnsRecordId = ? WHERE appId = ? AND type = ?', args: [ app.dnsRecordId, id, exports.SUBDOMAIN_TYPE_PRIMARY ]});
-    }
-
     if ('alternateDomains' in app) {
         queries.push({ query: 'DELETE FROM subdomains WHERE appId = ? AND type = ?', args: [ id, exports.SUBDOMAIN_TYPE_REDIRECT ]});
         app.alternateDomains.forEach(function (d) {
@@ -425,7 +419,7 @@ function updateWithConstraints(id, app, constraints, callback) {
         if (p === 'manifest' || p === 'oldConfig' || p === 'updateConfig' || p === 'restoreConfig' || p === 'accessRestriction' || p === 'debugMode') {
             fields.push(`${p}Json = ?`);
             values.push(JSON.stringify(app[p]));
-        } else if (p !== 'portBindings' && p !== 'location' && p !== 'domain' && p !== 'dnsRecordId' && p !== 'alternateDomains') {
+        } else if (p !== 'portBindings' && p !== 'location' && p !== 'domain' && p !== 'alternateDomains') {
             fields.push(p + ' = ?');
             values.push(app[p]);
         }
@@ -620,20 +614,6 @@ function transferOwnership(oldOwnerId, newOwnerId, callback) {
 
     database.query('UPDATE apps SET ownerId=? WHERE ownerId=?', [ newOwnerId, oldOwnerId ], function (error, results) {
         if (error && error.code === 'ER_NO_REFERENCED_ROW_2') return callback(new DatabaseError(DatabaseError.NOT_FOUND, 'No such user'));
-        if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
-
-        callback(null);
-    });
-}
-
-function setSubdomainDnsRecordId(domain, subdomain, dnsRecordId, callback) {
-    assert.strictEqual(typeof domain, 'string');
-    assert.strictEqual(typeof subdomain, 'string');
-    assert.strictEqual(typeof dnsRecordId, 'string');
-    assert.strictEqual(typeof callback, 'function');
-
-    database.query('UPDATE subdomains SET dnsRecordId = ? WHERE domain = ? AND subdomain = ?', [ dnsRecordId, domain, subdomain ], function (error, results) {
-        if (error && error.code === 'ER_NO_REFERENCED_ROW_2') return callback(new DatabaseError(DatabaseError.NOT_FOUND, 'No such subdomain'));
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
 
         callback(null);

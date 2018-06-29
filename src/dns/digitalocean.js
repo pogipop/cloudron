@@ -129,11 +129,7 @@ function upsert(dnsConfig, zoneName, subdomain, type, values, callback) {
                         return iteratorCallback(null);
                     });
             }
-        }, function (error) {
-            if (error) return callback(error);
-
-            callback(null, '' + recordIds[0]); // DO ids are integers
-        });
+        }, callback);
     });
 }
 

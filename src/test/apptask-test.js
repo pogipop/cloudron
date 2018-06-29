@@ -88,7 +88,6 @@ var APP = {
     httpPort: 4567,
     portBindings: null,
     accessRestriction: null,
-    dnsRecordId: 'someDnsRecordId',
     memoryLimit: 0,
     ownerId: ADMIN.id
 };

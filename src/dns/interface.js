@@ -26,7 +26,7 @@ function upsert(dnsConfig, zoneName, subdomain, type, values, callback) {
     assert(util.isArray(values));
     assert.strictEqual(typeof callback, 'function');
 
-    // Result: backend specific change id, to be passed into getChangeStatus()
+    // Result: none
 
     callback(new Error('not implemented'));
 }

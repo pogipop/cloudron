@@ -188,7 +188,6 @@ CREATE TABLE IF NOT EXISTS subdomains(
     domain VARCHAR(128) NOT NULL,
     subdomain VARCHAR(128) NOT NULL,
     type VARCHAR(128) NOT NULL,
-    dnsRecordId VARCHAR(512), // tracks any id that we got back to track dns updates
 
     FOREIGN KEY(domain) REFERENCES domains(domain),
     FOREIGN KEY(appId) REFERENCES apps(id),
