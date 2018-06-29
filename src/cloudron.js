@@ -140,47 +140,23 @@ function getDisks(callback) {
 function getConfig(callback) {
     assert.strictEqual(typeof callback, 'function');
 
-    // result to not depend on the appstore
-    const BOX_AND_USER_TEMPLATE = {
-        box: {
-            region: null,
-            size: null,
-            plan: 'Custom Plan'
-        },
-        user: {
-            billing: false,
-            currency: ''
-        }
-    };
+    settings.getCloudronName(function (error, cloudronName) {
+        if (error) return callback(new CloudronError(CloudronError.INTERNAL_ERROR, error));
 
-    caas.getBoxAndUserDetails(function (error, result) {
-        if (error) debug('Failed to fetch cloudron details.', error.reason, error.message);
-
-        result = _.extend(BOX_AND_USER_TEMPLATE, result || {});
-
-        settings.getCloudronName(function (error, cloudronName) {
-            if (error) return callback(new CloudronError(CloudronError.INTERNAL_ERROR, error));
-
-            callback(null, {
-                apiServerOrigin: config.apiServerOrigin(),
-                webServerOrigin: config.webServerOrigin(),
-                adminDomain: config.adminDomain(),
-                adminLocation: config.adminLocation(),
-                adminFqdn: config.adminFqdn(),
-                mailFqdn: config.mailFqdn(),
-                version: config.version(),
-                update: updateChecker.getUpdateInfo(),
-                progress: progress.getAll(),
-                isDemo: config.isDemo(),
-                region: result.box.region,
-                size: result.box.size,
-                billing: !!result.user.billing,
-                plan: result.box.plan,
-                currency: result.user.currency,
-                memory: os.totalmem(),
-                provider: config.provider(),
-                cloudronName: cloudronName
-            });
+        callback(null, {
+            apiServerOrigin: config.apiServerOrigin(),
+            webServerOrigin: config.webServerOrigin(),
+            adminDomain: config.adminDomain(),
+            adminLocation: config.adminLocation(),
+            adminFqdn: config.adminFqdn(),
+            mailFqdn: config.mailFqdn(),
+            version: config.version(),
+            update: updateChecker.getUpdateInfo(),
+            progress: progress.getAll(),
+            isDemo: config.isDemo(),
+            memory: os.totalmem(),
+            provider: config.provider(),
+            cloudronName: cloudronName
         });
     });
 }

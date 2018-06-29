@@ -269,6 +269,7 @@ function initializeExpressSync() {
     router.del ('/api/v1/domains/:domain', domainsManageScope, routes.users.verifyPassword, routes.domains.del);
 
     // caas routes
+    router.get('/api/v1/caas/config', cloudronScope, routes.caas.getConfig);
     router.post('/api/v1/caas/change_plan', cloudronScope, routes.users.verifyPassword, routes.caas.changePlan);
 
     // disable server socket "idle" timeout. we use the timeout middleware to handle timeouts on a route level

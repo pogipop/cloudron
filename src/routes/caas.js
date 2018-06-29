@@ -1,6 +1,7 @@
 'use strict';
 
 exports = module.exports = {
+    getConfig: getConfig,
     changePlan: changePlan
 };
 
@@ -12,8 +13,25 @@ var caas = require('../caas.js'),
     HttpSuccess = require('connect-lastmile').HttpSuccess,
     _ = require('underscore');
 
+function getConfig(req, res, next) {
+    if (config.provider() !== 'caas') return next(new HttpError(422, 'Cannot use this API with this provider'));
+
+    caas.getBoxAndUserDetails(function (error, result) {
+        if (error) return next(new HttpError(500, error));
+
+        // the result is { box: { region, size, plan }, user: { billing, currency } }
+        next(new HttpSuccess(200, {
+            region: result.box.region,
+            size: result.box.size,
+            billing: !!result.user.billing,
+            plan: result.box.plan,
+            currency: result.user.currency
+        }));
+    });
+}
+
 function changePlan(req, res, next) {
-    if (config.provider() !== 'caas') return next(new HttpError(422, 'Cannot use migrate API with this provider'));
+    if (config.provider() !== 'caas') return next(new HttpError(422, 'Cannot use this API with this provider'));
 
     if ('size' in req.body && typeof req.body.size !== 'string') return next(new HttpError(400, 'size must be string'));
     if ('region' in req.body && typeof req.body.region !== 'string') return next(new HttpError(400, 'region must be string'));

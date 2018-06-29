@@ -154,21 +154,12 @@ describe('Caas', function () {
                 .get('/api/v1/boxes/BOX_ID?token=ACCESS_TOKEN2')
                 .reply(200, { box: { region: 'sfo', size: '1gb' }, user: { }});
 
-            superagent.get(SERVER_URL + '/api/v1/cloudron/config')
+            superagent.get(SERVER_URL + '/api/v1/caas/config')
                 .query({ access_token: token })
                 .end(function (error, result) {
                     expect(result.statusCode).to.equal(200);
-                    expect(result.body.apiServerOrigin).to.eql('http://localhost:6060');
-                    expect(result.body.webServerOrigin).to.eql(null);
-                    expect(result.body.adminFqdn).to.eql(config.adminFqdn());
-                    expect(result.body.progress).to.be.an('object');
-                    expect(result.body.update).to.be.an('object');
-                    expect(result.body.version).to.eql(config.version());
                     expect(result.body.size).to.eql('1gb');
                     expect(result.body.region).to.eql('sfo');
-                    expect(result.body.memory).to.eql(os.totalmem());
-                    expect(result.body.cloudronName).to.be.a('string');
-                    expect(result.body.provider).to.be.a('string');
 
                     expect(scope.isDone()).to.be.ok();
 
