@@ -193,5 +193,5 @@ CREATE TABLE IF NOT EXISTS subdomains(
     FOREIGN KEY(domain) REFERENCES domains(domain),
     FOREIGN KEY(appId) REFERENCES apps(id),
     UNIQUE (subdomain, domain))
-    
+
     CHARACTER SET utf8 COLLATE utf8_bin;
