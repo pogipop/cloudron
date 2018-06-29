@@ -353,10 +353,20 @@ function configureApp(app, auditSource, callback) {
     assert.strictEqual(typeof auditSource, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    ensureCertificate(app, auditSource, function (error, bundle) {
+    ensureCertificate({ fqdn: app.fqdn, domain: app.domain }, auditSource, function (error, bundle) {
         if (error) return callback(error);
 
-        configureAppInternal(app, bundle, callback);
+        configureAppInternal(app, bundle, function (error) {
+            if (error) return callback(error);
+
+            // now setup alternateDomain redirects if any
+            async.eachSeries(app.alternateDomains, function (domain, callback) {
+                ensureCertificate({ fqdn: `${domain.subdomain}.${domain.domain}`, domain: domain.domain }, auditSource, function (error, bundle) {
+                    if (error) return callback(error);
+                    callback();
+                });
+            }, callback);
+        });
     });
 }
 
