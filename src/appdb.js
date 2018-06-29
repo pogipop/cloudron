@@ -419,7 +419,7 @@ function updateWithConstraints(id, app, constraints, callback) {
         if (p === 'manifest' || p === 'oldConfig' || p === 'updateConfig' || p === 'restoreConfig' || p === 'accessRestriction' || p === 'debugMode') {
             fields.push(`${p}Json = ?`);
             values.push(JSON.stringify(app[p]));
-        } else if (p !== 'portBindings' && p !== 'location' && p !== 'domain') {
+        } else if (p !== 'portBindings' && p !== 'location' && p !== 'domain' && p !== 'alternateDomains') {
             fields.push(p + ' = ?');
             values.push(app[p]);
         }
