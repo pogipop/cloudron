@@ -391,7 +391,9 @@ function configureApp(app, auditSource, callback) {
 
             // now setup alternateDomain redirects if any
             async.eachSeries(app.alternateDomains, function (domain, callback) {
-                ensureCertificate({ fqdn: `${domain.subdomain}.${domain.domain}`, domain: domain.domain }, auditSource, function (error, bundle) {
+                var fqdn = (domain.subdomain ? (domain.subdomain + '.') : '') + domain.domain;
+
+                ensureCertificate({ fqdn: fqdn, domain: domain.domain }, auditSource, function (error, bundle) {
                     if (error) return callback(error);
 
                     configureAppRedirect(app, domain, bundle, callback);
