@@ -125,14 +125,14 @@ describe('Server', function () {
         });
 
         it('config fails due missing token', function (done) {
-            superagent.get(SERVER_URL + '/api/v1/cloudron/config', function (err, res) {
+            superagent.get(SERVER_URL + '/api/v1/config', function (err, res) {
                 expect(res.statusCode).to.equal(401);
                 done();
             });
         });
 
         it('config fails due wrong token', function (done) {
-            superagent.get(SERVER_URL + '/api/v1/cloudron/config').query({ access_token: 'somewrongtoken' }).end(function (err, res) {
+            superagent.get(SERVER_URL + '/api/v1/config').query({ access_token: 'somewrongtoken' }).end(function (err, res) {
                 expect(res.statusCode).to.equal(401);
                 done();
             });

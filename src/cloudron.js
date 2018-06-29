@@ -143,11 +143,11 @@ function getConfig(callback) {
     settings.getCloudronName(function (error, cloudronName) {
         if (error) return callback(new CloudronError(CloudronError.INTERNAL_ERROR, error));
 
+        // be picky about what we send out here since this is sent for 'normal' users as well
         callback(null, {
             apiServerOrigin: config.apiServerOrigin(),
             webServerOrigin: config.webServerOrigin(),
             adminDomain: config.adminDomain(),
-            adminLocation: config.adminLocation(),
             adminFqdn: config.adminFqdn(),
             mailFqdn: config.mailFqdn(),
             version: config.version(),

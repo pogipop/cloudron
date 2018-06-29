@@ -176,7 +176,7 @@ describe('Cloudron', function () {
         after(cleanup);
 
         it('cannot get without token', function (done) {
-            superagent.get(SERVER_URL + '/api/v1/cloudron/config')
+            superagent.get(SERVER_URL + '/api/v1/config')
                 .end(function (error, result) {
                     expect(result.statusCode).to.equal(401);
                     done();
@@ -184,7 +184,7 @@ describe('Cloudron', function () {
         });
 
         it('succeeds (admin)', function (done) {
-            superagent.get(SERVER_URL + '/api/v1/cloudron/config')
+            superagent.get(SERVER_URL + '/api/v1/config')
                 .query({ access_token: token })
                 .end(function (error, result) {
                     expect(result.statusCode).to.equal(200);
@@ -202,7 +202,7 @@ describe('Cloudron', function () {
         });
 
         it('fails (non-admin)', function (done) {
-            superagent.get(SERVER_URL + '/api/v1/cloudron/config')
+            superagent.get(SERVER_URL + '/api/v1/config')
                 .query({ access_token: token_1 })
                 .end(function (error, result) {
                     expect(result.statusCode).to.equal(403);
