@@ -6,6 +6,7 @@ exports.up = function(db, callback) {
                 'domain VARCHAR(128) NOT NULL,' +
                 'subdomain VARCHAR(128) NOT NULL,' +
                 'type VARCHAR(128) NOT NULL,' +
+                'dnsRecordId VARCHAR(512),' +
                 'FOREIGN KEY(domain) REFERENCES domains(domain),' +
                 'FOREIGN KEY(appId) REFERENCES apps(id),' +
                 'UNIQUE (subdomain, domain)) CHARACTER SET utf8 COLLATE utf8_bin';

@@ -3,7 +3,7 @@
 var async = require('async');
 
 exports.up = function(db, callback) {
-    db.all('SELECT id,location,domain from apps', [ ], function (error, results) {
+    db.all('SELECT * from apps', [ ], function (error, results) {
         if (error) return done(error);
 
         var queries = [
@@ -11,7 +11,7 @@ exports.up = function(db, callback) {
         ];
 
         results.forEach(function (app) {
-            queries.push(db.runSql.bind(db, 'INSERT INTO subdomains (appId, domain, subdomain, type) VALUES (?, ?, ?, ?)', [ app.id, app.domain, app.location, 'primary' ]));
+            queries.push(db.runSql.bind(db, 'INSERT INTO subdomains (appId, domain, subdomain, type, dnsRecordId) VALUES (?, ?, ?, ?, ?)', [ app.id, app.domain, app.location, 'primary', app.dnsRecordId ]));
         });
 
         queries.push(db.runSql.bind(db, 'COMMIT'));

@@ -69,7 +69,6 @@ CREATE TABLE IF NOT EXISTS apps(
     httpPort INTEGER,                        // this is the nginx proxy port and not manifest.httpPort
     location VARCHAR(128) NOT NULL,
     domain VARCHAR(128) NOT NULL,
-    dnsRecordId VARCHAR(512), // tracks any id that we got back to track dns updates
     accessRestrictionJson TEXT, // { users: [ ], groups: [ ] }
     creationTime TIMESTAMP(2) NOT NULL DEFAULT CURRENT_TIMESTAMP, // when the app was installed
     updateTime TIMESTAMP(2) NOT NULL DEFAULT CURRENT_TIMESTAMP,   // when the last app update was done
@@ -189,6 +188,7 @@ CREATE TABLE IF NOT EXISTS subdomains(
     domain VARCHAR(128) NOT NULL,
     subdomain VARCHAR(128) NOT NULL,
     type VARCHAR(128) NOT NULL,
+    dnsRecordId VARCHAR(512), // tracks any id that we got back to track dns updates
 
     FOREIGN KEY(domain) REFERENCES domains(domain),
     FOREIGN KEY(appId) REFERENCES apps(id),

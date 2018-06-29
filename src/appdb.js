@@ -66,7 +66,7 @@ var assert = require('assert'),
     util = require('util');
 
 var APPS_FIELDS_PREFIXED = [ 'apps.id', 'apps.appStoreId', 'apps.installationState', 'apps.installationProgress', 'apps.runState',
-    'apps.health', 'apps.containerId', 'apps.manifestJson', 'apps.httpPort', 'subdomains.subdomain AS location', 'subdomains.domain', 'apps.dnsRecordId',
+    'apps.health', 'apps.containerId', 'apps.manifestJson', 'apps.httpPort', 'subdomains.subdomain AS location', 'subdomains.domain', 'subdomains.dnsRecordId',
     'apps.accessRestrictionJson', 'apps.restoreConfigJson', 'apps.oldConfigJson', 'apps.updateConfigJson', 'apps.memoryLimit',
     'apps.xFrameOptions', 'apps.sso', 'apps.debugModeJson', 'apps.robotsTxt', 'apps.enableBackup',
     'apps.creationTime', 'apps.updateTime', 'apps.ownerId', 'apps.ts' ].join(',');
@@ -407,6 +407,10 @@ function updateWithConstraints(id, app, constraints, callback) {
         queries.push({ query: 'UPDATE subdomains SET domain = ? WHERE appId = ? AND type = ?', args: [ app.domain, id, exports.SUBDOMAIN_TYPE_PRIMARY ]});
     }
 
+    if ('dnsRecordId' in app) {
+        queries.push({ query: 'UPDATE subdomains SET dnsRecordId = ? WHERE appId = ? AND type = ?', args: [ app.dnsRecordId, id, exports.SUBDOMAIN_TYPE_PRIMARY ]});
+    }
+
     if ('alternateDomains' in app) {
         queries.push({ query: 'DELETE FROM subdomains WHERE appId = ? AND type = ?', args: [ id, exports.SUBDOMAIN_TYPE_REDIRECT ]});
         app.alternateDomains.forEach(function (d) {
@@ -419,7 +423,7 @@ function updateWithConstraints(id, app, constraints, callback) {
         if (p === 'manifest' || p === 'oldConfig' || p === 'updateConfig' || p === 'restoreConfig' || p === 'accessRestriction' || p === 'debugMode') {
             fields.push(`${p}Json = ?`);
             values.push(JSON.stringify(app[p]));
-        } else if (p !== 'portBindings' && p !== 'location' && p !== 'domain' && p !== 'alternateDomains') {
+        } else if (p !== 'portBindings' && p !== 'location' && p !== 'domain' && p !== 'dnsRecordId' && p !== 'alternateDomains') {
             fields.push(p + ' = ?');
             values.push(app[p]);
         }
