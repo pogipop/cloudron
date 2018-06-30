@@ -55,9 +55,8 @@ describe('dns provider', function () {
         });
 
         it('upsert succeeds', function (done) {
-            domains.upsertDnsRecords('test', DOMAIN_0.domain, 'A', [ '1.2.3.4' ], function (error, result) {
+            domains.upsertDnsRecords('test', DOMAIN_0.domain, 'A', [ '1.2.3.4' ], function (error) {
                 expect(error).to.eql(null);
-                expect(result).to.eql('noop-record-id');
 
                 done();
             });
@@ -115,9 +114,8 @@ describe('dns provider', function () {
                 .post('/v2/domains/' + DOMAIN_0.zoneName + '/records')
                 .reply(201, { domain_record: DOMAIN_RECORD_0 });
 
-            domains.upsertDnsRecords('test', DOMAIN_0.domain, 'A', [ '1.2.3.4' ], function (error, result) {
+            domains.upsertDnsRecords('test', DOMAIN_0.domain, 'A', [ '1.2.3.4' ], function (error) {
                 expect(error).to.eql(null);
-                expect(result).to.eql('3352892');
                 expect(req1.isDone()).to.be.ok();
                 expect(req2.isDone()).to.be.ok();
 
@@ -165,9 +163,8 @@ describe('dns provider', function () {
                 .put('/v2/domains/' + DOMAIN_0.zoneName + '/records/' + DOMAIN_RECORD_1.id)
                 .reply(200, { domain_record: DOMAIN_RECORD_1_NEW });
 
-            domains.upsertDnsRecords('test', DOMAIN_0.domain, 'A', [ DOMAIN_RECORD_1_NEW.data ], function (error, result) {
+            domains.upsertDnsRecords('test', DOMAIN_0.domain, 'A', [ DOMAIN_RECORD_1_NEW.data ], function (error) {
                 expect(error).to.eql(null);
-                expect(result).to.eql('3352893');
                 expect(req1.isDone()).to.be.ok();
                 expect(req2.isDone()).to.be.ok();
 
@@ -251,9 +248,8 @@ describe('dns provider', function () {
                 .post('/v2/domains/' + DOMAIN_0.zoneName + '/records')
                 .reply(201, { domain_record: DOMAIN_RECORD_2_NEW });
 
-            domains.upsertDnsRecords('', DOMAIN_0.domain, 'TXT', [ DOMAIN_RECORD_2_NEW.data, DOMAIN_RECORD_1_NEW.data, DOMAIN_RECORD_3_NEW.data ], function (error, result) {
+            domains.upsertDnsRecords('', DOMAIN_0.domain, 'TXT', [ DOMAIN_RECORD_2_NEW.data, DOMAIN_RECORD_1_NEW.data, DOMAIN_RECORD_3_NEW.data ], function (error) {
                 expect(error).to.eql(null);
-                expect(result).to.eql('3352893');
                 expect(req1.isDone()).to.be.ok();
                 expect(req2.isDone()).to.be.ok();
                 expect(req3.isDone()).to.be.ok();
@@ -693,9 +689,8 @@ describe('dns provider', function () {
                 }
             }]);
 
-            domains.upsertDnsRecords('test', DOMAIN_0.domain, 'A', [ '1.2.3.4' ], function (error, result) {
+            domains.upsertDnsRecords('test', DOMAIN_0.domain, 'A', [ '1.2.3.4' ], function (error) {
                 expect(error).to.eql(null);
-                expect(result).to.eql('/change/C2QLKQIWEI0BZF');
                 expect(awsAnswerQueue.length).to.eql(0);
 
                 done();
@@ -712,9 +707,8 @@ describe('dns provider', function () {
                 }
             }]);
 
-            domains.upsertDnsRecords('test', DOMAIN_0.domain, 'A', [ '1.2.3.4' ], function (error, result) {
+            domains.upsertDnsRecords('test', DOMAIN_0.domain, 'A', [ '1.2.3.4' ], function (error) {
                 expect(error).to.eql(null);
-                expect(result).to.eql('/change/C2QLKQIWEI0BZF');
                 expect(awsAnswerQueue.length).to.eql(0);
 
                 done();
@@ -731,9 +725,8 @@ describe('dns provider', function () {
                 }
             }]);
 
-            domains.upsertDnsRecords('', DOMAIN_0.domain, 'TXT', [ 'first', 'second', 'third' ], function (error, result) {
+            domains.upsertDnsRecords('', DOMAIN_0.domain, 'TXT', [ 'first', 'second', 'third' ], function (error) {
                 expect(error).to.eql(null);
-                expect(result).to.eql('/change/C2QLKQIWEI0BZF');
                 expect(awsAnswerQueue.length).to.eql(0);
 
                 done();
@@ -847,9 +840,8 @@ describe('dns provider', function () {
             zoneQueue.push([null, [ ]]); // getRecords
             zoneQueue.push([null, {id: '1'}]);
 
-            domains.upsertDnsRecords('test', DOMAIN_0.domain, 'A', [ '1.2.3.4' ], function (error, result) {
+            domains.upsertDnsRecords('test', DOMAIN_0.domain, 'A', [ '1.2.3.4' ], function (error) {
                 expect(error).to.eql(null);
-                expect(result).to.eql('1');
                 expect(zoneQueue.length).to.eql(0);
 
                 done();
@@ -861,9 +853,8 @@ describe('dns provider', function () {
             zoneQueue.push([null, [GCDNS().zone('test').record('A', {'name': 'test', data:['5.6.7.8'], ttl: 1})]]);
             zoneQueue.push([null, {id: '2'}]);
 
-            domains.upsertDnsRecords('test', DOMAIN_0.domain, 'A', [ '1.2.3.4' ], function (error, result) {
+            domains.upsertDnsRecords('test', DOMAIN_0.domain, 'A', [ '1.2.3.4' ], function (error) {
                 expect(error).to.eql(null);
-                expect(result).to.eql('2');
                 expect(zoneQueue.length).to.eql(0);
 
                 done();
@@ -875,9 +866,8 @@ describe('dns provider', function () {
             zoneQueue.push([null, [ ]]); // getRecords
             zoneQueue.push([null, {id: '3'}]);
 
-            domains.upsertDnsRecords('', DOMAIN_0.domain, 'TXT', [ 'first', 'second', 'third' ], function (error, result) {
+            domains.upsertDnsRecords('', DOMAIN_0.domain, 'TXT', [ 'first', 'second', 'third' ], function (error) {
                 expect(error).to.eql(null);
-                expect(result).to.eql('3');
                 expect(zoneQueue.length).to.eql(0);
 
                 done();
