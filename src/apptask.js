@@ -277,8 +277,7 @@ function registerSubdomain(app, overwrite, callback) {
             });
         }, function (error, result) {
             if (error || result instanceof Error) return callback(error || result);
-
-            callback();
+            callback(null);
         });
     });
 }
@@ -303,7 +302,7 @@ function unregisterSubdomain(app, location, domain, callback) {
             });
         }, function (error, result) {
             if (error || result instanceof Error) return callback(error || result);
-            callback();
+            callback(null);
         });
     });
 }
