@@ -745,7 +745,8 @@ describe('database', function () {
             debugMode: null,
             robotsTxt: null,
             enableBackup: true,
-            ownerId: USER_0.id
+            ownerId: USER_0.id,
+            alternateDomains: []
         };
 
         var APP_1 = {
@@ -771,7 +772,8 @@ describe('database', function () {
             debugMode: null,
             robotsTxt: null,
             enableBackup: true,
-            ownerId: USER_0.id
+            ownerId: USER_0.id,
+            alternateDomains: []
         };
 
         before(function (done) {
