@@ -202,7 +202,7 @@ function sendInvite(user, invitor) {
         var templateData = {
             user: user,
             webadminUrl: config.adminOrigin(),
-            setupLink: `${config.adminOrigin()}/api/v1/session/account/setup.html?reset_token=${user.resetToken}&email=${user.email}`,
+            setupLink: `${config.adminOrigin()}/api/v1/session/account/setup.html?reset_token=${user.resetToken}&email=${encodeURIComponent(user.email)}`,
             invitor: invitor,
             cloudronName: mailConfig.cloudronName,
             cloudronAvatarUrl: config.adminOrigin() + '/api/v1/cloudron/avatar'
@@ -239,7 +239,7 @@ function userAdded(user, inviteSent) {
 
         var templateData = {
             user: user,
-            inviteLink: inviteSent ? null : `${config.adminOrigin()}/api/v1/session/account/setup.html?reset_token=${user.resetToken}&email=${user.email}`,
+            inviteLink: inviteSent ? null : `${config.adminOrigin()}/api/v1/session/account/setup.html?reset_token=${user.resetToken}&email=${encodeURIComponent(user.email)}`,
             cloudronName: mailConfig.cloudronName,
             cloudronAvatarUrl: config.adminOrigin() + '/api/v1/cloudron/avatar'
         };
@@ -289,7 +289,7 @@ function passwordReset(user) {
 
         var templateData = {
             user: user,
-            resetLink: `${config.adminOrigin()}/api/v1/session/password/reset.html?reset_token=${user.resetToken}&email=${user.email}`,
+            resetLink: `${config.adminOrigin()}/api/v1/session/password/reset.html?reset_token=${user.resetToken}&email=${encodeURIComponent(user.email)}`,
             cloudronName: mailConfig.cloudronName,
             cloudronAvatarUrl: config.adminOrigin() + '/api/v1/cloudron/avatar'
         };
