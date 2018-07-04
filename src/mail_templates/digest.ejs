@@ -53,11 +53,6 @@ Last successful backup: <%- info.finishedBackups[0].backupId || info.finishedBac
 This Cloudron did **not** backup successfully in the last week!
 <% } -%>
 
-<% if (!info.hasSubscription) { -%>
-
-*Keep your Cloudron automatically up-to-date and secure by upgrading to a paid plan at* <%= webadminUrl %>/#/settings
-<% } -%>
-
 Powered by https://cloudron.io
 
 Sent at: <%= new Date().toUTCString() %>
@@ -153,12 +148,6 @@ Sent at: <%= new Date().toUTCString() %>
         <p><b>Last successful backup : </b> <%= info.finishedBackups[0].backupId || info.finishedBackups[0].filename %> </p>
     <% } else { %>
         <p><b>This Cloudron did not backup successfully in the last week!</b></p>
-    <% } %>
-
-        <br/>
-
-    <% if (!info.hasSubscription) { %>
-        Keep your Cloudron automatically up-to-date and secure by upgrading to a <a href="<%= webadminUrl %>/#/settings">paid plan</a>.
     <% } %>
 
         <br/>

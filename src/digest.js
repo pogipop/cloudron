@@ -28,42 +28,36 @@ function maybeSend(callback) {
         var pendingAppUpdates = updateInfo.apps || {};
         pendingAppUpdates = Object.keys(pendingAppUpdates).map(function (key) { return pendingAppUpdates[key]; });
 
-        appstore.getSubscription(function (error, subscription) {
-            if (error) debug('Error getting subscription:', error);
+        eventlog.getByCreationTime(new Date(new Date() - 7*86400000), function (error, events) {
+            if (error) return callback(error);
 
-            eventlog.getByCreationTime(new Date(new Date() - 7*86400000), function (error, events) {
-                if (error) return callback(error);
+            var appUpdates = events.filter(function (e) { return e.action === eventlog.ACTION_APP_UPDATE; }).map(function (e) { return e.data; });
+            var boxUpdates = events.filter(function (e) { return e.action === eventlog.ACTION_UPDATE; }).map(function (e) { return e.data; });
+            var certRenewals = events.filter(function (e) { return e.action === eventlog.ACTION_CERTIFICATE_RENEWAL; }).map(function (e) { return e.data; });
+            var usersAdded = events.filter(function (e) { return e.action === eventlog.ACTION_USER_ADD; }).map(function (e) { return e.data; });
+            var usersRemoved = events.filter(function (e) { return e.action === eventlog.ACTION_USER_REMOVE; }).map(function (e) { return e.data; });
+            var finishedBackups = events.filter(function (e) { return e.action === eventlog.ACTION_BACKUP_FINISH && !e.errorMessage; }).map(function (e) { return e.data; });
 
-                var appUpdates = events.filter(function (e) { return e.action === eventlog.ACTION_APP_UPDATE; }).map(function (e) { return e.data; });
-                var boxUpdates = events.filter(function (e) { return e.action === eventlog.ACTION_UPDATE; }).map(function (e) { return e.data; });
-                var certRenewals = events.filter(function (e) { return e.action === eventlog.ACTION_CERTIFICATE_RENEWAL; }).map(function (e) { return e.data; });
-                var usersAdded = events.filter(function (e) { return e.action === eventlog.ACTION_USER_ADD; }).map(function (e) { return e.data; });
-                var usersRemoved = events.filter(function (e) { return e.action === eventlog.ACTION_USER_REMOVE; }).map(function (e) { return e.data; });
-                var finishedBackups = events.filter(function (e) { return e.action === eventlog.ACTION_BACKUP_FINISH && !e.errorMessage; }).map(function (e) { return e.data; });
+            if (error) return callback(error);
 
-                if (error) return callback(error);
+            var info = {
+                pendingAppUpdates: pendingAppUpdates,
+                pendingBoxUpdate: updateInfo.box || null,
 
-                var info = {
-                    hasSubscription: !appstore.isFreePlan(subscription),
+                finishedAppUpdates: appUpdates,
+                finishedBoxUpdates: boxUpdates,
 
-                    pendingAppUpdates: pendingAppUpdates,
-                    pendingBoxUpdate: updateInfo.box || null,
+                certRenewals: certRenewals,
+                finishedBackups: finishedBackups, // only the successful backups
+                usersAdded: usersAdded,
+                usersRemoved: usersRemoved // unused because we don't have username to work with
+            };
 
-                    finishedAppUpdates: appUpdates,
-                    finishedBoxUpdates: boxUpdates,
+            // always send digest for backup failure notification
+            debug('maybeSend: sending digest email', info);
+            mailer.sendDigest(info);
 
-                    certRenewals: certRenewals,
-                    finishedBackups: finishedBackups, // only the successful backups
-                    usersAdded: usersAdded,
-                    usersRemoved: usersRemoved // unused because we don't have username to work with
-                };
-
-                // always send digest for backup failure notification
-                debug('maybeSend: sending digest email', info);
-                mailer.sendDigest(info);
-
-                callback();
-            });
+            callback();
         });
     });
 }
