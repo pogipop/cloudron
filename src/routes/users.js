@@ -166,7 +166,7 @@ function transferOwnership(req, res, next) {
 
     if (typeof req.body.ownerId !== 'string') return next(new HttpError(400, 'ownerId must be a string'));
 
-    users.transferOwnership(req.params.userId, req.body.ownerId, function (error) {
+    users.transferOwnership(req.params.userId, req.body.ownerId, auditSource(req), function (error) {
         if (error && error.reason === UsersError.NOT_FOUND) return next(new HttpError(404, 'No such user'));
         if (error) return next(new HttpError(500, error));
 

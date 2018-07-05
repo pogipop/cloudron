@@ -645,14 +645,17 @@ function disableTwoFactorAuthentication(userId, callback) {
     });
 }
 
-function transferOwnership(oldOwnerId, newOwnerId, callback) {
+function transferOwnership(oldOwnerId, newOwnerId, auditSource, callback) {
     assert.strictEqual(typeof oldOwnerId, 'string');
     assert.strictEqual(typeof newOwnerId, 'string');
+    assert.strictEqual(typeof auditSource, 'object');
     assert.strictEqual(typeof callback, 'function');
 
     apps.transferOwnership(oldOwnerId, newOwnerId, function (error) {
         if (error && error.reason === AppsError.NOT_FOUND) return callback(new UsersError(UsersError.NOT_FOUND, error.message));
         if (error) return callback(new UsersError(UsersError.INTERNAL_ERROR, error));
+
+        eventlog.add(eventlog.ACTION_USER_TRANSFER, auditSource, { oldOwnerId: oldOwnerId, newOwnerId: newOwnerId });
 
         callback(null);
     });

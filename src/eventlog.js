@@ -27,7 +27,8 @@ exports = module.exports = {
     ACTION_USER_ADD: 'user.add',
     ACTION_USER_LOGIN: 'user.login',
     ACTION_USER_REMOVE: 'user.remove',
-    ACTION_USER_UPDATE: 'user.update'
+    ACTION_USER_UPDATE: 'user.update',
+    ACTION_USER_TRANSFER: 'user.transfer',
 };
 
 var assert = require('assert'),
