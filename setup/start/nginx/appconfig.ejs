@@ -172,8 +172,9 @@ server {
 <% } else if ( endpoint === 'app' ) { %>
         proxy_pass http://127.0.0.1:<%= port %>;
 <% } else if ( endpoint === 'redirect' ) { %>
-        # redirect everything to the app
-        return 301 https://<%= redirectTo %>$request_uri;
+        # redirect everything to the app. this is temporary because there is no way
+        # to clear a permanent redirect on the browser
+        return 302 https://<%= redirectTo %>$request_uri;
 <% } %>
     }
 }
