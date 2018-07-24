@@ -162,6 +162,8 @@ function checkSmtpRelay(relay, callback) {
     };
 
     var transporter = nodemailer.createTransport(smtpTransport({
+        connectionTimeout: 5000,
+        greetingTimeout: 5000,
         host: relay.host,
         port: relay.port,
         auth: {
