@@ -201,6 +201,7 @@ function verifyRelay(relay, callback) {
 function checkDkim(domain, callback) {
     var dkim = {
         domain: config.dkimSelector() + '._domainkey.' + domain,
+        name: config.dkimSelector() + '._domainkey',
         type: 'TXT',
         expected: null,
         value: null,
@@ -227,6 +228,7 @@ function checkDkim(domain, callback) {
 function checkSpf(domain, callback) {
     var spf = {
         domain: domain,
+        name: '@',
         type: 'TXT',
         value: null,
         expected: 'v=spf1 a:' + config.mailFqdn() + ' ~all',
@@ -258,6 +260,7 @@ function checkSpf(domain, callback) {
 function checkMx(domain, callback) {
     var mx = {
         domain: domain,
+        name: '@',
         type: 'MX',
         value: null,
         expected: '10 ' + config.mailFqdn() + '.',
@@ -279,6 +282,7 @@ function checkMx(domain, callback) {
 function checkDmarc(domain, callback) {
     var dmarc = {
         domain: '_dmarc.' + domain,
+        name: '_dmarc',
         type: 'TXT',
         value: null,
         expected: 'v=DMARC1; p=reject; pct=100',
