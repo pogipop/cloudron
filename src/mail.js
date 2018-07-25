@@ -8,10 +8,8 @@ exports = module.exports = {
     getDomain: getDomain,
     addDomain: addDomain,
     removeDomain: removeDomain,
-    updateDomain: updateDomain,
 
-    addDnsRecords: addDnsRecords,
-    setDnsRecords: setDnsRecords, // TODO: merge with above
+    setDnsRecords: setDnsRecords,
 
     validateName: validateName,
 
@@ -694,40 +692,49 @@ function readDkimPublicKeySync(domain) {
     return publicKey;
 }
 
-function addDnsRecords(domain, callback) {
+function setDnsRecords(domain, callback) {
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    var error = ensureDkimKeySync(domain);
-    if (error) return callback(error);
+    maildb.get(domain, function (error, result) {
+        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new MailError(MailError.NOT_FOUND));
+        if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
 
-    if (process.env.BOX_ENV === 'test') return callback();
-
-    var dkimKey = readDkimPublicKeySync(domain);
-    if (!dkimKey) return callback(new MailError(MailError.INTERNAL_ERROR, new Error('Failed to read dkim public key')));
-
-    // t=s limits the domainkey to this domain and not it's subdomains
-    var dkimRecord = { subdomain: config.dkimSelector() + '._domainkey', domain: domain, type: 'TXT', values: [ '"v=DKIM1; t=s; p=' + dkimKey + '"' ] };
-
-    var records = [ ];
-    records.push(dkimRecord);
-
-    debug('addDnsRecords: %j', records);
-
-    txtRecordsWithSpf(domain, function (error, txtRecords) {
+        error = ensureDkimKeySync(domain);
         if (error) return callback(error);
 
-        if (txtRecords) records.push({ subdomain: '', domain: domain, type: 'TXT', values: txtRecords });
+        if (process.env.BOX_ENV === 'test') return callback();
 
-        debug('addDnsRecords: will update %j', records);
+        var dkimKey = readDkimPublicKeySync(domain);
+        if (!dkimKey) return callback(new MailError(MailError.INTERNAL_ERROR, new Error('Failed to read dkim public key')));
 
-        async.mapSeries(records, function (record, iteratorCallback) {
-            domains.upsertDnsRecords(record.subdomain, record.domain, record.type, record.values, iteratorCallback);
-        }, function (error, changeIds) {
-            if (error) debug('addDnsRecords: failed to update : %s. will retry', error);
-            else debug('addDnsRecords: records %j added with changeIds %j', records, changeIds);
+        // t=s limits the domainkey to this domain and not it's subdomains
+        var dkimRecord = { subdomain: config.dkimSelector() + '._domainkey', domain: domain, type: 'TXT', values: [ '"v=DKIM1; t=s; p=' + dkimKey + '"' ] };
 
-            callback(error);
+        var records = [ ];
+        records.push(dkimRecord);
+        if (result.enabled) {
+            records.push({ subdomain: '_dmarc', type: 'TXT', values: [ '"v=DMARC1; p=reject; pct=100"' ] });
+            records.push({ subdomain: '', type: 'MX', values: [ '10 ' + config.mailFqdn() + '.' ] });
+        }
+
+        debug('addDnsRecords: %j', records);
+
+        txtRecordsWithSpf(domain, function (error, txtRecords) {
+            if (error) return callback(error);
+
+            if (txtRecords) records.push({ subdomain: '', domain: domain, type: 'TXT', values: txtRecords });
+
+            debug('addDnsRecords: will update %j', records);
+
+            async.mapSeries(records, function (record, iteratorCallback) {
+                domains.upsertDnsRecords(record.subdomain, record.domain, record.type, record.values, iteratorCallback);
+            }, function (error, changeIds) {
+                if (error) debug('addDnsRecords: failed to update : %s. will retry', error);
+                else debug('addDnsRecords: records %j added with changeIds %j', records, changeIds);
+
+                callback(error);
+            });
         });
     });
 }
@@ -742,23 +749,9 @@ function addDomain(domain, callback) {
         if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
 
         async.series([
-            addDnsRecords.bind(null, domain), // do this first to ensure DKIM keys
+            setDnsRecords.bind(null, domain), // do this first to ensure DKIM keys
             restartMail
         ], NOOP_CALLBACK); // do these asynchronously
-
-        callback();
-    });
-}
-
-// this is just a way to resync the mail "dns" records via the UI
-function updateDomain(domain, callback) {
-    assert.strictEqual(typeof domain, 'string');
-    assert.strictEqual(typeof callback, 'function');
-
-    getDomain(domain, function (error) {
-        if (error) return callback(error);
-
-        addDnsRecords(domain, NOOP_CALLBACK);
 
         callback();
     });
@@ -838,31 +831,6 @@ function setMailEnabled(domain, enabled, callback) {
         if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
 
         restartMail(NOOP_CALLBACK);
-
-        callback(null);
-    });
-}
-
-function setDnsRecords(domain, callback) {
-    assert.strictEqual(typeof domain, 'string');
-    assert.strictEqual(typeof callback, 'function');
-
-    maildb.get(domain, function (error, result) {
-        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new MailError(MailError.NOT_FOUND));
-        if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
-
-        if (!result.enabled) return callback(null);
-
-        // Add MX and DMARC record. Note that DMARC policy depends on DKIM signing and thus works
-        // only if we use our internal mail server.
-        var records = [
-            { subdomain: '_dmarc', type: 'TXT', values: [ '"v=DMARC1; p=reject; pct=100"' ] },
-            { subdomain: '', type: 'MX', values: [ '10 ' + config.mailFqdn() + '.' ] }
-        ];
-
-        async.mapSeries(records, function (record, iteratorCallback) {
-            domains.upsertDnsRecords(record.subdomain, domain, record.type, record.values, iteratorCallback);
-        }, NOOP_CALLBACK);
 
         callback(null);
     });

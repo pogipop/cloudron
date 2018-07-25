@@ -232,7 +232,6 @@ function initializeExpressSync() {
 
     // email routes
     router.get ('/api/v1/mail/:domain',       mailScope, routes.mail.getDomain);
-    router.post('/api/v1/mail/:domain',       mailScope, routes.mail.updateDomain);
     router.post('/api/v1/mail',               mailScope, routes.mail.addDomain);
     router.get ('/api/v1/mail/:domain/stats', mailScope, routes.users.verifyPassword, routes.mail.getDomainStats);
     router.del ('/api/v1/mail/:domain',       mailScope, routes.users.verifyPassword, routes.mail.removeDomain);

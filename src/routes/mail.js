@@ -4,7 +4,6 @@ exports = module.exports = {
     getDomain: getDomain,
     addDomain: addDomain,
     getDomainStats: getDomainStats,
-    updateDomain: updateDomain,
     removeDomain: removeDomain,
 
     setDnsRecords: setDnsRecords,
@@ -81,18 +80,6 @@ function getDomainStats(req, res, next) {
     req.url = url.format({ pathname: req.params.domain, query: parsedUrl.query });
 
     mailProxy(req, res, next);
-}
-
-function updateDomain(req, res, next) {
-    assert.strictEqual(typeof req.body, 'object');
-    assert.strictEqual(typeof req.params.domain, 'string');
-
-    mail.updateDomain(req.params.domain, function (error) {
-        if (error && error.reason === MailError.NOT_FOUND) return next(new HttpError(404, error.message));
-        if (error) return next(new HttpError(500, error));
-
-        next(new HttpSuccess(202));
-    });
 }
 
 function setDnsRecords(req, res, next) {
