@@ -20,7 +20,10 @@ exports = module.exports = {
     setTimeZone: setTimeZone,
 
     getAppstoreConfig: getAppstoreConfig,
-    setAppstoreConfig: setAppstoreConfig
+    setAppstoreConfig: setAppstoreConfig,
+
+    getPlatformConfig: getPlatformConfig,
+    setPlatformConfig: setPlatformConfig
 };
 
 var assert = require('assert'),
@@ -161,6 +164,34 @@ function setBackupConfig(req, res, next) {
     if ('acceptSelfSignedCerts' in req.body && typeof req.body.acceptSelfSignedCerts !== 'boolean') return next(new HttpError(400, 'format must be a boolean'));
 
     settings.setBackupConfig(req.body, function (error) {
+        if (error && error.reason === SettingsError.BAD_FIELD) return next(new HttpError(400, error.message));
+        if (error && error.reason === SettingsError.EXTERNAL_ERROR) return next(new HttpError(402, error.message));
+        if (error) return next(new HttpError(500, error));
+
+        next(new HttpSuccess(200, {}));
+    });
+}
+
+function getPlatformConfig(req, res, next) {
+    settings.getPlatformConfig(function (error, config) {
+        if (error) return next(new HttpError(500, error));
+
+        next(new HttpSuccess(200, config));
+    });
+}
+
+function setPlatformConfig(req, res, next) {
+    assert.strictEqual(typeof req.body, 'object');
+
+    for (let addon of [ 'mysql', 'postgresql', 'mail', 'mongodb' ]) {
+        if (!(addon in req.body)) continue;
+        if (typeof req.body[addon] !== 'object') return next(new HttpError(400, 'addon config must be an object'));
+
+        if (typeof req.body[addon].memory !== 'number') return next(new HttpError(400, 'memory must be a number'));
+        if (typeof req.body[addon].memorySwap !== 'number') return next(new HttpError(400, 'memorySwap must be a number'));
+    }
+
+    settings.setPlatformConfig(req.body, function (error) {
         if (error && error.reason === SettingsError.BAD_FIELD) return next(new HttpError(400, error.message));
         if (error && error.reason === SettingsError.EXTERNAL_ERROR) return next(new HttpError(402, error.message));
         if (error) return next(new HttpError(500, error));

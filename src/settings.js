@@ -390,6 +390,11 @@ function getPlatformConfig(callback) {
 function setPlatformConfig(platformConfig, callback) {
     assert.strictEqual(typeof callback, 'function');
 
+    for (let addon of [ 'mysql', 'postgresql', 'mail', 'mongodb' ]) {
+        if (!platformConfig[addon]) continue;
+        if (platformConfig[addon].memorySwap < platformConfig[addon].memory) return callback(new SettingsError(SettingsError.BAD_FIELD, 'memorySwap must be larger than memory'));
+    }
+
     settingsdb.set(exports.PLATFORM_CONFIG_KEY, JSON.stringify(platformConfig), function (error) {
         if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
 

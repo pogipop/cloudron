@@ -45,18 +45,15 @@ function start(callback) {
         if (!existingInfra) existingInfra = { version: 'corrupt' };
     }
 
+    settings.events.on(settings.PLATFORM_CONFIG_KEY, updateAddons);
+
     // short-circuit for the restart case
     if (_.isEqual(infra, existingInfra)) {
         debug('platform is uptodate at version %s', infra.version);
 
-        updateAddons(function (error) {
-            if (error) return callback(error);
+        emitPlatformReady();
 
-            emitPlatformReady();
-
-            callback();
-        });
-        return;
+        return callback();
     }
 
     debug('Updating infrastructure from %s to %s', existingInfra.version, infra.version);
@@ -69,8 +66,7 @@ function start(callback) {
         startAddons.bind(null, existingInfra),
         removeOldImages,
         startApps.bind(null, existingInfra),
-        fs.writeFile.bind(fs, paths.INFRA_VERSION_FILE, JSON.stringify(infra, null, 4)),
-        updateAddons
+        fs.writeFile.bind(fs, paths.INFRA_VERSION_FILE, JSON.stringify(infra, null, 4))
     ], function (error) {
         if (error) return callback(error);
 
@@ -89,22 +85,19 @@ function stop(callback) {
     taskmanager.pauseTasks(callback);
 }
 
-function updateAddons(callback) {
-    settings.getPlatformConfig(function (error, platformConfig) {
-        if (error) return callback(error);
+function updateAddons(platformConfig, callback) {
+    callback = callback || NOOP_CALLBACK;
 
-        for (var containerName of [ 'mysql', 'postgresql', 'mail', 'mongodb' ]) {
-            const containerConfig = platformConfig[containerName];
-            if (!containerConfig) continue;
+    // TODO: this should possibly also rollback memory to default
+    async.eachSeries([ 'mysql', 'postgresql', 'mail', 'mongodb' ], function iterator(containerName, iteratorCallback) {
+        const containerConfig = platformConfig[containerName];
+        if (!containerConfig) return iteratorCallback();
 
-            if (!containerConfig.memory || !containerConfig.memorySwap) continue;
+        if (!containerConfig.memory || !containerConfig.memorySwap) return iteratorCallback();
 
-            const cmd = `docker update --memory ${containerConfig.memory} --memory-swap ${containerConfig.memorySwap} ${containerName}`;
-            shell.execSync(`update${containerName}`, cmd);
-        }
-
-        callback();
-    });
+        const args = `update --memory ${containerConfig.memory} --memory-swap ${containerConfig.memorySwap} ${containerName}`.split(' ');
+        shell.exec(`update${containerName}`, '/usr/bin/docker', args, { }, iteratorCallback);
+    }, callback);
 }
 
 function emitPlatformReady() {
@@ -291,7 +284,15 @@ function startAddons(existingInfra, callback) {
         debug('startAddons: existing infra. incremental addon create %j', startFuncs.map(function (f) { return f.name; }));
     }
 
-    async.series(startFuncs, callback);
+    async.series(startFuncs, function (error) {
+        if (error) return callback(error);
+
+        settings.getPlatformConfig(function (error, platformConfig) {
+            if (error) return callback(error);
+
+            updateAddons(platformConfig, callback);
+        });
+    });
 }
 
 function startApps(existingInfra, callback) {
