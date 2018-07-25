@@ -160,6 +160,7 @@ server {
         }
 
         # graphite paths (uncomment block below and visit /graphite/index.html)
+        # remember to comment out the CSP policy as well to access the graphite dashboard
         # location ~ ^/(graphite|content|metrics|dashboard|render|browser|composer)/ {
         #     proxy_pass   http://127.0.0.1:8000;
         #     client_max_body_size 1m;
