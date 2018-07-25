@@ -82,7 +82,7 @@ function updateMembers(req, res, next) {
         if (error && error.reason === GroupsError.NOT_FOUND) return next(new HttpError(404, 'Invalid group or user id'));
         if (error) return next(new HttpError(500, error));
 
-        next(new HttpSuccess(200));
+        next(new HttpSuccess(200, { }));
     });
 }
 
