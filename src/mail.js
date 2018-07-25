@@ -11,6 +11,7 @@ exports = module.exports = {
     updateDomain: updateDomain,
 
     addDnsRecords: addDnsRecords,
+    setDnsRecords: setDnsRecords, // TODO: merge with above
 
     validateName: validateName,
 
@@ -838,7 +839,19 @@ function setMailEnabled(domain, enabled, callback) {
 
         restartMail(NOOP_CALLBACK);
 
-        if (!enabled || process.env.BOX_ENV === 'test') return callback(null);
+        callback(null);
+    });
+}
+
+function setDnsRecords(domain, callback) {
+    assert.strictEqual(typeof domain, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    maildb.get(domain, function (error, result) {
+        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new MailError(MailError.NOT_FOUND));
+        if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
+
+        if (!result.enabled) return callback(null);
 
         // Add MX and DMARC record. Note that DMARC policy depends on DKIM signing and thus works
         // only if we use our internal mail server.

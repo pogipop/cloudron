@@ -7,6 +7,8 @@ exports = module.exports = {
     updateDomain: updateDomain,
     removeDomain: removeDomain,
 
+    setDnsRecords: setDnsRecords,
+
     getStatus: getStatus,
 
     setMailFromValidation: setMailFromValidation,
@@ -90,6 +92,18 @@ function updateDomain(req, res, next) {
         if (error) return next(new HttpError(500, error));
 
         next(new HttpSuccess(202));
+    });
+}
+
+function setDnsRecords(req, res, next) {
+    assert.strictEqual(typeof req.body, 'object');
+    assert.strictEqual(typeof req.params.domain, 'string');
+
+    mail.setDnsRecords(req.params.domain, function (error) {
+        if (error && error.reason === MailError.NOT_FOUND) return next(new HttpError(404, error.message));
+        if (error) return next(new HttpError(500, error));
+
+        next(new HttpSuccess(201));
     });
 }
 
