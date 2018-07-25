@@ -11,8 +11,7 @@ exports = module.exports = {
     SetupError: SetupError
 };
 
-var accesscontrol = require('./accesscontrol.js'),
-    assert = require('assert'),
+var assert = require('assert'),
     async = require('async'),
     backups = require('./backups.js'),
     BackupsError = require('./backups.js').BackupsError,
@@ -36,7 +35,6 @@ var accesscontrol = require('./accesscontrol.js'),
     shell = require('./shell.js'),
     superagent = require('superagent'),
     sysinfo = require('./sysinfo.js'),
-    tokendb = require('./tokendb.js'),
     users = require('./users.js'),
     UsersError = users.UsersError,
     tld = require('tldjs'),
