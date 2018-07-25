@@ -714,8 +714,8 @@ function setDnsRecords(domain, callback) {
         var records = [ ];
         records.push(dkimRecord);
         if (result.enabled) {
-            records.push({ subdomain: '_dmarc', type: 'TXT', values: [ '"v=DMARC1; p=reject; pct=100"' ] });
-            records.push({ subdomain: '', type: 'MX', values: [ '10 ' + config.mailFqdn() + '.' ] });
+            records.push({ subdomain: '_dmarc', domain: domain, type: 'TXT', values: [ '"v=DMARC1; p=reject; pct=100"' ] });
+            records.push({ subdomain: '', domain: domain, type: 'MX', values: [ '10 ' + config.mailFqdn() + '.' ] });
         }
 
         debug('addDnsRecords: %j', records);
