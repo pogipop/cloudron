@@ -26,18 +26,9 @@ exports = module.exports = {
 
 var assert = require('assert'),
     database = require('./database.js'),
-    DatabaseError = require('./databaseerror'),
-    safe = require('safetydance');
+    DatabaseError = require('./databaseerror');
 
-var GROUPS_FIELDS = [ 'id', 'name', 'rolesJson' ].join(',');
-
-function postProcess(result) {
-    assert.strictEqual(typeof result, 'object');
-
-    assert(result.rolesJson === null || typeof result.rolesJson === 'string');
-    result.roles = safe.JSON.parse(result.rolesJson) || [ ];
-    delete result.rolesJson;
-}
+var GROUPS_FIELDS = [ 'id', 'name' ].join(',');
 
 function get(groupId, callback) {
     assert.strictEqual(typeof groupId, 'string');
@@ -46,8 +37,6 @@ function get(groupId, callback) {
     database.query('SELECT ' + GROUPS_FIELDS + ' FROM groups WHERE id = ? ORDER BY name', [ groupId ], function (error, result) {
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
         if (result.length === 0) return callback(new DatabaseError(DatabaseError.NOT_FOUND));
-
-        postProcess(result[0]);
 
         callback(null, result[0]);
     });
@@ -67,8 +56,6 @@ function getWithMembers(groupId, callback) {
         var result = results[0];
         result.userIds = result.userIds ? result.userIds.split(',') : [ ];
 
-        postProcess(result);
-
         callback(null, result);
     });
 }
@@ -78,8 +65,6 @@ function getAll(callback) {
 
     database.query('SELECT ' + GROUPS_FIELDS + ' FROM groups', function (error, results) {
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
-
-        results.forEach(postProcess);
 
         callback(null, results);
     });
@@ -94,19 +79,16 @@ function getAllWithMembers(callback) {
 
         results.forEach(function (result) { result.userIds = result.userIds ? result.userIds.split(',') : [ ]; });
 
-        results.forEach(postProcess);
-
         callback(null, results);
     });
 }
 
-function add(id, name, roles, callback) {
+function add(id, name, callback) {
     assert.strictEqual(typeof id, 'string');
     assert.strictEqual(typeof name, 'string');
-    assert(Array.isArray(roles));
     assert.strictEqual(typeof callback, 'function');
 
-    database.query('INSERT INTO groups (id, name, rolesJson) VALUES (?, ?, ?)', [ id, name, JSON.stringify(roles) ], function (error, result) {
+    database.query('INSERT INTO groups (id, name) VALUES (?, ?)', [ id, name ], function (error, result) {
         if (error && error.code === 'ER_DUP_ENTRY') return callback(new DatabaseError(DatabaseError.ALREADY_EXISTS, error));
         if (error || result.affectedRows !== 1) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
 
@@ -122,11 +104,7 @@ function update(id, data, callback) {
     var args = [ ];
     var fields = [ ];
     for (var k in data) {
-        if (k === 'roles') {
-            assert(Array.isArray(data.roles));
-            fields.push('rolesJson = ?');
-            args.push(data.roles.length === 0 ? null : JSON.stringify(data.roles));
-        } else if (k === 'name') {
+        if (k === 'name') {
             assert.strictEqual(typeof data.name, 'string');
             fields.push(k + ' = ?');
             args.push(data.name);
@@ -290,8 +268,6 @@ function getGroups(userId, callback) {
     database.query('SELECT ' + GROUPS_FIELDS + ' ' +
         ' FROM groups INNER JOIN groupMembers ON groups.id = groupMembers.groupId AND groupMembers.userId = ?', [ userId ], function (error, results) {
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
-
-        results.forEach(postProcess);
 
         callback(null, results);
     });

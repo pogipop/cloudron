@@ -17,32 +17,12 @@ exports = module.exports = {
 
     SCOPE_ANY: '*',
 
-    ROLE_OWNER: 'owner',
-
-    validateRoles: validateRoles,
-
     validateScopeString: validateScopeString,
     hasScopes: hasScopes,
     canonicalScopeString: canonicalScopeString,
     intersectScopes: intersectScopes,
     validateToken: validateToken,
-    scopesForRoles: scopesForRoles
-};
-
-// https://docs.microsoft.com/en-us/azure/role-based-access-control/role-definitions
-const ROLE_DEFINITIONS = {
-    'owner': {
-        scopes: exports.VALID_SCOPES
-    },
-    'manage_apps': {
-        scopes: [ 'apps', 'domains:read', 'users:read' ]
-    },
-    'manage_users': {
-        scopes: [ 'users' ]
-    },
-    'manage_domains': {
-        scopes: [ 'domains' ]
-    }
+    scopesForUser: scopesForUser
 };
 
 var assert = require('assert'),
@@ -94,16 +74,6 @@ function intersectScopes(allowedScopes, wantedScopes) {
     return results;
 }
 
-function validateRoles(roles) {
-    assert(Array.isArray(roles));
-
-    for (let role of roles) {
-        if (Object.keys(ROLE_DEFINITIONS).indexOf(role) === -1) return new Error(`Invalid role ${role}`);
-    }
-
-    return null;
-}
-
 function validateScopeString(scope) {
     assert.strictEqual(typeof scope, 'string');
 
@@ -137,26 +107,8 @@ function hasScopes(authorizedScopes, requiredScopes) {
     return null;
 }
 
-function scopesForRoles(roles) {
-    assert(Array.isArray(roles), 'Expecting array');
-
-    let scopes = [ 'profile', 'apps:read' ]; // the minimum scopes
-
-    for (let r of roles) {
-        if (!ROLE_DEFINITIONS[r]) continue; // unknown or some legacy role
-
-        scopes = scopes.concat(ROLE_DEFINITIONS[r].scopes);
-    }
-
-    // fold scopes so we don't have duplicate scopes
-    let sortedScopes = scopes.sort();
-    let set = new Set();
-    for (let s of sortedScopes) {
-        var parts = s.split(':');
-        if (set.has(parts[0])) continue;
-        set.add(s);
-    }
-    return Array.from(set);
+function scopesForUser(user) {
+    return users.isAdmin(user) ? exports.VALID_SCOPES : [ 'profile', 'apps:read' ];
 }
 
 function validateToken(accessToken, callback) {
@@ -167,11 +119,11 @@ function validateToken(accessToken, callback) {
         if (error && error.reason === DatabaseError.NOT_FOUND) return callback(null, null /* user */, 'Invalid Token'); // will end up as a 401
         if (error) return callback(error); // this triggers 'internal error' in passport
 
-        users.getWithRoles(token.identifier, function (error, user) {
+        users.get(token.identifier, function (error, user) {
             if (error && error.reason === UsersError.NOT_FOUND) return callback(null, null /* user */, 'Invalid Token'); // will end up as a 401
             if (error) return callback(error);
 
-            const userScopes = scopesForRoles(user.roles);
+            const userScopes = scopesForUser(user);
             var authorizedScopes = intersectScopes(userScopes, token.scope.split(','));
             const skipPasswordVerification = token.clientId === 'cid-sdk' || token.clientId === 'cid-cli'; // these clients do not require password checks unlike UI
             var info = { authorizedScopes: authorizedScopes, skipPasswordVerification: skipPasswordVerification }; // ends up in req.authInfo

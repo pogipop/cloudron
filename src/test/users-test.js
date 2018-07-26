@@ -647,7 +647,7 @@ describe('User', function () {
             createOwner(function (error) {
                 expect(error).to.not.be.ok();
 
-                groups.create(NON_ADMIN_GROUP, [ /* roles */ ], function (error, result) {
+                groups.create(NON_ADMIN_GROUP, function (error, result) {
                     expect(error).to.be(null);
                     groupObject = result;
 

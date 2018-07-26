@@ -1465,7 +1465,7 @@ describe('database', function () {
             async.series([
                 database.initialize,
                 database._clear,
-                groupdb.add.bind(null, constants.ADMIN_GROUP_ID, constants.ADMIN_GROUP_NAME, [ /* roles */]),
+                groupdb.add.bind(null, constants.ADMIN_GROUP_ID, constants.ADMIN_GROUP_NAME),
                 userdb.add.bind(null, USER_0.id, USER_0),
                 userdb.add.bind(null, USER_1.id, USER_1),
                 userdb.add.bind(null, USER_2.id, USER_2)
@@ -1475,7 +1475,7 @@ describe('database', function () {
         var GROUP_ID_1 = 'foundersid';
 
         it('can create a group', function (done) {
-            groupdb.add(GROUP_ID_1, 'founders', [ /* roles */ ], function (error) {
+            groupdb.add(GROUP_ID_1, 'founders', function (error) {
                 expect(error).to.be(null);
                 done();
             });
@@ -1577,17 +1577,6 @@ describe('database', function () {
                 expect(error).to.be(null);
                 expect(result).to.eql([ 'admin', GROUP_ID_1 ]);
                 done();
-            });
-        });
-
-        it('can update roles of the group', function (done) {
-            groupdb.update(GROUP_ID_1, { roles: [ 'manage_app' ] }, function (error) {
-                expect(error).to.be(null);
-
-                groupdb.get(GROUP_ID_1, function (error, result) {
-                    expect(result.roles).to.eql([ 'manage_app' ]);
-                    done();
-                });
             });
         });
     });

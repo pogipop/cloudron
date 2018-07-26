@@ -77,9 +77,8 @@ function validateGroupname(name) {
     return null;
 }
 
-function create(name, roles, callback) {
+function create(name, callback) {
     assert.strictEqual(typeof name, 'string');
-    assert(Array.isArray(roles));
     assert.strictEqual(typeof callback, 'function');
 
     // we store names in lowercase
@@ -88,11 +87,8 @@ function create(name, roles, callback) {
     var error = validateGroupname(name);
     if (error) return callback(error);
 
-    error = accesscontrol.validateRoles(roles);
-    if (error) return callback(new GroupsError(GroupsError.BAD_FIELD, error.message));
-
     var id = 'gid-' + uuid.v4();
-    groupdb.add(id, name, roles, function (error) {
+    groupdb.add(id, name, function (error) {
         if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(new GroupsError(GroupsError.ALREADY_EXISTS));
         if (error) return callback(new GroupsError(GroupsError.INTERNAL_ERROR, error));
 
@@ -251,7 +247,7 @@ function isMember(groupId, userId, callback) {
 function addOwnerGroup(callback) {
     assert.strictEqual(typeof callback, 'function');
 
-    groupdb.add(constants.ADMIN_GROUP_ID, constants.ADMIN_GROUP_NAME, [ accesscontrol.ROLE_OWNER ], callback);
+    groupdb.add(constants.ADMIN_GROUP_ID, constants.ADMIN_GROUP_NAME, callback);
 }
 
 function update(groupId, data, callback) {
@@ -266,13 +262,7 @@ function update(groupId, data, callback) {
         if (error) return callback(error);
     }
 
-    if ('roles' in data) {
-        assert(Array.isArray(data.roles));
-        error = accesscontrol.validateRoles(data.roles);
-        if (error) return callback(new GroupsError(GroupsError.BAD_FIELD, error.message));
-    }
-
-    groupdb.update(groupId, _.pick(data, 'name', 'roles'), function (error) {
+    groupdb.update(groupId, _.pick(data, 'name'), function (error) {
         if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new GroupsError(GroupsError.NOT_FOUND));
         if (error) return callback(new GroupsError(GroupsError.INTERNAL_ERROR, error));
 

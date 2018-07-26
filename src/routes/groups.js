@@ -19,14 +19,8 @@ function create(req, res, next) {
     assert.strictEqual(typeof req.body, 'object');
 
     if (typeof req.body.name !== 'string') return next(new HttpError(400, 'name must be string'));
-    if ('roles' in req.body) {
-        if (!Array.isArray(req.body.roles)) return next(new HttpError(400, 'roles must be an array'));
-        for (let role of req.body.roles) {
-            if (typeof role !== 'string') return next(new HttpError(400, 'roles must be an array of strings'));
-        }
-    }
 
-    groups.create(req.body.name, req.body.roles || [ ], function (error, group) {
+    groups.create(req.body.name, function (error, group) {
         if (error && error.reason === GroupsError.BAD_FIELD) return next(new HttpError(400, error.message));
         if (error && error.reason === GroupsError.ALREADY_EXISTS) return next(new HttpError(409, 'Already exists'));
         if (error) return next(new HttpError(500, error));
@@ -56,13 +50,6 @@ function update(req, res, next) {
     assert.strictEqual(typeof req.body, 'object');
 
     if ('name' in req.body && typeof req.body.name !== 'string') return next(new HttpError(400, 'name must be a string'));
-
-    if ('roles' in req.body) {
-        if (!Array.isArray(req.body.roles)) return next(new HttpError(400, 'roles must be an array'));
-        for (let role of req.body.roles) {
-            if (typeof role !== 'string') return next(new HttpError(400, 'roles must be an array of strings'));
-        }
-    }
 
     groups.update(req.params.groupId, req.body, function (error) {
         if (error && error.reason === GroupsError.BAD_FIELD) return next(new HttpError(400, error.message));

@@ -253,11 +253,11 @@ function addTokenByUserId(clientId, userId, expiresAt, callback) {
     get(clientId, function (error, result) {
         if (error) return callback(error);
 
-        users.getWithRoles(userId, function (error, user) {
+        users.get(userId, function (error, user) {
             if (error && error.reason === UsersError.NOT_FOUND) return callback(new ClientsError(ClientsError.NOT_FOUND, 'No such user'));
             if (error) return callback(new ClientsError(ClientsError.INTERNAL_ERROR, error));
 
-            const userScopes = accesscontrol.scopesForRoles(user.roles);
+            const userScopes = accesscontrol.scopesForUser(user);
             var scope = accesscontrol.canonicalScopeString(result.scope);
             var authorizedScopes = accesscontrol.intersectScopes(userScopes, scope.split(','));
 

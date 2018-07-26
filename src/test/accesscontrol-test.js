@@ -77,14 +77,4 @@ describe('access control', function () {
             expect(accesscontrol.hasScopes([ 'apps:write' ], [ 'apps:read' ])).to.be.an(Error);
         });
     });
-
-    describe('validateRoles', function () {
-        it('succeeds for valid roles', function () {
-            expect(accesscontrol.validateRoles([ accesscontrol.ROLE_OWNER ])).to.be(null);
-        });
-
-        it('fails for invalid roles', function () {
-            expect(accesscontrol.validateRoles([ 'janitor' ])).to.be.an(Error);
-        });
-    });
 });

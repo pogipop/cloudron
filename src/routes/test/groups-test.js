@@ -152,38 +152,6 @@ describe('Groups API', function () {
         });
     });
 
-    describe('Roles', function () {
-        it('can set roles', function (done) {
-            superagent.post(SERVER_URL + '/api/v1/groups/' + groupObject.id)
-                .query({ access_token: token })
-                .send({ roles: [ accesscontrol.ROLE_OWNER ]})
-                .end(function (error, result) {
-                    expect(result.statusCode).to.equal(200);
-                    done();
-                });
-        });
-
-        it('fails with invalid roles', function (done) {
-            superagent.post(SERVER_URL + '/api/v1/groups/' + groupObject.id)
-                .query({ access_token: token })
-                .send({ roles: [ 'bogus' ]})
-                .end(function (error, result) {
-                    expect(result.statusCode).to.equal(400);
-                    done();
-                });
-        });
-
-        it('can get roles', function (done) {
-            superagent.get(SERVER_URL + '/api/v1/groups/' + groupObject.id)
-                .query({ access_token: token })
-                .end(function (error, result) {
-                    expect(result.statusCode).to.equal(200);
-                    expect(result.body.roles).to.eql([ accesscontrol.ROLE_OWNER ]);
-                    done();
-                });
-        });
-    });
-
     describe('get', function () {
         it('cannot get non-existing group', function (done) {
             superagent.get(SERVER_URL + '/api/v1/groups/nope')
@@ -249,9 +217,9 @@ describe('Groups API', function () {
     describe('Set groups', function () {
         var group0Object, group1Object;
         before(function (done) {
-            groups.create('group0', [ ], function (e, r) {
+            groups.create('group0', function (e, r) {
                 group0Object = r;
-                groups.create('group1', [ ], function (e, r) {
+                groups.create('group1', function (e, r) {
                     group1Object = r;
                     done();
                 });
