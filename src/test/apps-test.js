@@ -32,7 +32,8 @@ describe('Apps', function () {
         createdAt: 'sometime back',
         modifiedAt: 'now',
         resetToken: hat(256),
-        displayName: ''
+        displayName: '',
+        groupIds: [ 'admin' ]
     };
 
     var USER_0 = {
@@ -45,7 +46,8 @@ describe('Apps', function () {
         createdAt: 'sometime back',
         modifiedAt: 'now',
         resetToken: hat(256),
-        displayName: ''
+        displayName: '',
+        groupIds: []
     };
 
     var USER_1 = {
@@ -58,7 +60,8 @@ describe('Apps', function () {
         createdAt: 'sometime back',
         modifiedAt: 'now',
         resetToken: hat(256),
-        displayName: ''
+        displayName: '',
+        groupIds: [ 'somegroup' ]
     };
 
     var GROUP_0 = {
@@ -287,8 +290,11 @@ describe('Apps', function () {
     });
 
     describe('hasAccessTo', function () {
+        const someuser = { id: 'someuser', groupIds: [] };
+        const adminuser = { id: 'adminuser', groupIds: [ 'admin' ] };
+
         it('returns true for unrestricted access', function (done) {
-            apps.hasAccessTo({ accessRestriction: null }, { id: 'someuser' }, function (error, access) {
+            apps.hasAccessTo({ accessRestriction: null }, someuser, function (error, access) {
                 expect(error).to.be(null);
                 expect(access).to.be(true);
                 done();
@@ -296,7 +302,7 @@ describe('Apps', function () {
         });
 
         it('returns true for allowed user', function (done) {
-            apps.hasAccessTo({ accessRestriction: { users: [ 'someuser' ] } }, { id: 'someuser' }, function (error, access) {
+            apps.hasAccessTo({ accessRestriction: { users: [ 'someuser' ] } }, someuser, function (error, access) {
                 expect(error).to.be(null);
                 expect(access).to.be(true);
                 done();
@@ -304,7 +310,7 @@ describe('Apps', function () {
         });
 
         it('returns true for allowed user with multiple allowed', function (done) {
-            apps.hasAccessTo({ accessRestriction: { users: [ 'foo', 'someuser', 'anotheruser' ] } }, { id: 'someuser' }, function (error, access) {
+            apps.hasAccessTo({ accessRestriction: { users: [ 'foo', 'someuser', 'anotheruser' ] } }, someuser, function (error, access) {
                 expect(error).to.be(null);
                 expect(access).to.be(true);
                 done();
@@ -312,7 +318,7 @@ describe('Apps', function () {
         });
 
         it('returns false for not allowed user', function (done) {
-            apps.hasAccessTo({ accessRestriction: { users: [ 'foo' ] } }, { id: 'someuser' }, function (error, access) {
+            apps.hasAccessTo({ accessRestriction: { users: [ 'foo' ] } }, someuser, function (error, access) {
                 expect(error).to.be(null);
                 expect(access).to.be(false);
                 done();
@@ -320,7 +326,7 @@ describe('Apps', function () {
         });
 
         it('returns false for not allowed user with multiple allowed', function (done) {
-            apps.hasAccessTo({ accessRestriction: { users: [ 'foo', 'anotheruser' ] } }, { id: 'someuser' }, function (error, access) {
+            apps.hasAccessTo({ accessRestriction: { users: [ 'foo', 'anotheruser' ] } }, someuser, function (error, access) {
                 expect(error).to.be(null);
                 expect(access).to.be(false);
                 done();
@@ -328,7 +334,7 @@ describe('Apps', function () {
         });
 
         it('returns false for no group or user', function (done) {
-            apps.hasAccessTo({ accessRestriction: { users: [ ], groups: [ ] } }, { id: 'someuser' }, function (error, access) {
+            apps.hasAccessTo({ accessRestriction: { users: [ ], groups: [ ] } }, someuser, function (error, access) {
                 expect(error).to.be(null);
                 expect(access).to.be(false);
                 done();
@@ -336,9 +342,17 @@ describe('Apps', function () {
         });
 
         it('returns false for invalid group or user', function (done) {
-            apps.hasAccessTo({ accessRestriction: { users: [ ], groups: [ 'nop' ] } }, { id: 'someuser' }, function (error, access) {
+            apps.hasAccessTo({ accessRestriction: { users: [ ], groups: [ 'nop' ] } }, someuser, function (error, access) {
                 expect(error).to.be(null);
                 expect(access).to.be(false);
+                done();
+            });
+        });
+
+        it('returns true for admin user', function (done) {
+            apps.hasAccessTo({ accessRestriction: { users: [ ], groups: [ 'nop' ] } }, adminuser, function (error, access) {
+                expect(error).to.be(null);
+                expect(access).to.be(true);
                 done();
             });
         });

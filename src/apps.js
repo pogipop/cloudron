@@ -68,7 +68,6 @@ var appdb = require('./appdb.js'),
     DomainsError = require('./domains.js').DomainsError,
     eventlog = require('./eventlog.js'),
     fs = require('fs'),
-    groups = require('./groups.js'),
     mail = require('./mail.js'),
     mailboxdb = require('./mailboxdb.js'),
     manifestFormat = require('cloudron-manifestformat'),
@@ -86,6 +85,7 @@ var appdb = require('./appdb.js'),
     TransformStream = require('stream').Transform,
     updateChecker = require('./updatechecker.js'),
     url = require('url'),
+    users = require('./users.js'),
     util = require('util'),
     uuid = require('uuid'),
     validator = require('validator'),
@@ -358,20 +358,15 @@ function hasAccessTo(app, user, callback) {
     // check user access
     if (app.accessRestriction.users.some(function (e) { return e === user.id; })) return callback(null, true);
 
-    // check group access
-    groups.getMembership(user.id, function (error, groupIds) {
-        if (error) return callback(null, false);
+    const isAdmin = users.isAdmin(user);
 
-        const isAdmin = groupIds.indexOf(constants.ADMIN_GROUP_ID) !== -1;
+    if (isAdmin) return callback(null, true); // admins can always access any app
 
-        if (isAdmin) return callback(null, true); // admins can always access any app
+    if (!app.accessRestriction.groups) return callback(null, false);
 
-        if (!app.accessRestriction.groups) return callback(null, false);
+    if (app.accessRestriction.groups.some(function (gid) { return user.groupIds.indexOf(gid) !== -1; })) return callback(null, true);
 
-        if (app.accessRestriction.groups.some(function (gid) { return groupIds.indexOf(gid) !== -1; })) return callback(null, true);
-
-        callback(null, false);
-    });
+    callback(null, false);
 }
 
 function get(appId, callback) {
