@@ -1317,3 +1317,6 @@
 * Make the mailbox name follow the apps new location, if the user did not set it explicitly
 * Add backups view
 
+[3.0.0]
+* Support alternate app domains with redirects
+
