@@ -207,15 +207,12 @@ function update(userId, user, callback) {
         if (k === 'username') {
             assert(user.username === null || typeof user.username === 'string');
             args.push(user.username);
-        } else if (k === 'email') {
-            assert.strictEqual(typeof user.email, 'string');
-            args.push(user.email);
-        } else if (k === 'fallbackEmail') {
-            assert.strictEqual(typeof user.fallbackEmail, 'string');
-            args.push(user.fallbackEmail);
+        } else if (k === 'email' || k === 'fallbackEmail') {
+            assert.strictEqual(typeof user[k], 'string');
+            args.push(user[k]);
         } else if (k === 'twoFactorAuthenticationEnabled') {
-            assert.strictEqual(typeof user.twoFactorAuthenticationEnabled, 'boolean');
-            args.push(user.twoFactorAuthenticationEnabled ? 1 : 0);
+            assert.strictEqual(typeof user[k], 'boolean');
+            args.push(user[k] ? 1 : 0);
         } else {
             args.push(user[k]);
         }
