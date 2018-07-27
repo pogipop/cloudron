@@ -122,15 +122,18 @@ function downloadDir(apiConfig, backupFilePath, destDir) {
         mkdirp(path.dirname(destFilePath), function (error) {
             if (error) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
 
-            let sourceStream = fs.createReadStream(sourceFilePath);
-            sourceStream.on('error', callback);
+            download(apiConfig, sourceFilePath, function (error, sourceStream) {
+                if (error) return callback(error);
 
-            let destStream = fs.createWriteStream(destFilePath);
-            destStream.on('error', callback);
+                sourceStream.on('error', callback);
 
-            events.emit('progress', `downloadDir: Copying ${sourceFilePath} to ${destFilePath}`);
+                let destStream = fs.createWriteStream(destFilePath);
+                destStream.on('error', callback);
 
-            sourceStream.pipe(destStream, { end: true }).on('finish', callback);
+                events.emit('progress', `downloadDir: Copying ${sourceFilePath} to ${destFilePath}`);
+
+                sourceStream.pipe(destStream, { end: true }).on('finish', callback);
+            });
         });
     }
 
