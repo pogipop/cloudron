@@ -57,7 +57,7 @@
     "progress-stream": "^2.0.0",
     "proxy-middleware": "^0.15.0",
     "qrcode": "^1.2.0",
-    "recursive-readdir": "^2.2.2",
+    "readdirp": "^2.1.0",
     "request": "^2.87.0",
     "rimraf": "^2.6.2",
     "s3-block-read-stream": "^0.5.0",
@@ -86,7 +86,7 @@
     "mock-aws-s3": "git+https://github.com/cloudron-io/mock-aws-s3.git",
     "nock": "^9.0.14",
     "node-sass": "^4.6.1",
-    "readdirp": "https://registry.npmjs.org/readdirp/-/readdirp-2.1.0.tgz"
+    "recursive-readdir": "^2.2.2"
   },
   "scripts": {
     "migrate_local": "DATABASE_URL=mysql://root:@localhost/box node_modules/.bin/db-migrate up",

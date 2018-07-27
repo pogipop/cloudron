@@ -14,12 +14,14 @@ exports = module.exports = {
 };
 
 var assert = require('assert'),
+    async = require('async'),
     BackupsError = require('../backups.js').BackupsError,
     debug = require('debug')('box:storage/filesystem'),
     EventEmitter = require('events'),
     fs = require('fs'),
     mkdirp = require('mkdirp'),
     path = require('path'),
+    readdirp = require('readdirp'),
     safe = require('safetydance'),
     shell = require('../shell.js');
 
@@ -74,6 +76,34 @@ function download(apiConfig, sourceFilePath, callback) {
     callback(null, fileStream);
 }
 
+function listDir(apiConfig, dir, batchSize, iteratorCallback, callback) {
+    assert.strictEqual(typeof apiConfig, 'object');
+    assert.strictEqual(typeof dir, 'string');
+    assert.strictEqual(typeof batchSize, 'number');
+    assert.strictEqual(typeof iteratorCallback, 'function');
+    assert.strictEqual(typeof callback, 'function');
+
+    var entries = [];
+    var entryStream = readdirp({ root: dir, entryType: 'files' });
+    entryStream.on('data', function (data) {
+        entries.push(data.path);
+        if (entries.length < batchSize) return;
+        entryStream.pause();
+        iteratorCallback(entries, function (error) {
+            if (error) return callback(error);
+
+            entries = [];
+            entryStream.resume();
+        });
+    });
+    entryStream.on('warn', function (error) {
+        debug('listDir: warning ', error);
+    });
+    entryStream.on('end', function () {
+        iteratorCallback(entries, callback);
+    });
+}
+
 function downloadDir(apiConfig, backupFilePath, destDir) {
     assert.strictEqual(typeof apiConfig, 'object');
     assert.strictEqual(typeof backupFilePath, 'string');
@@ -83,7 +113,28 @@ function downloadDir(apiConfig, backupFilePath, destDir) {
 
     events.emit('progress', `downloadDir: ${backupFilePath} to ${destDir}`);
 
-    shell.exec('downloadDir', '/bin/cp', [ '-r', backupFilePath + '/.', destDir ], { }, function (error) {
+    function downloadFile(filePath, callback) {
+        const sourceFilePath = path.join(backupFilePath, filePath);
+        const destFilePath = path.join(destDir, filePath);
+
+        mkdirp(path.dirname(destFilePath), function (error) {
+            if (error) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
+
+            let sourceStream = fs.createReadStream(sourceFilePath);
+            sourceStream.on('error', callback);
+
+            let destStream = fs.createWriteStream(destFilePath);
+            destStream.on('error', callback);
+
+            events.emit('progress', `downloadDir: Copying ${sourceFilePath} to ${destFilePath}`);
+
+            sourceStream.pipe(destStream, { end: true }).on('finish', callback);
+        });
+    }
+
+    listDir(apiConfig, backupFilePath, 1000, function (filePaths, done) {
+        async.each(filePaths, downloadFile, done);
+    }, function (error) {
         if (error) return events.emit('done', new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
 
         events.emit('done', null);
