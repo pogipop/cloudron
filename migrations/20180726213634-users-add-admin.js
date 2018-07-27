@@ -1,5 +1,7 @@
 'use strict';
 
+var async = require('async');
+
 exports.up = function(db, callback) {
     db.runSql('ALTER TABLE users ADD COLUMN admin BOOLEAN DEFAULT 0', function (error) {
         if (error) return callback(error);
