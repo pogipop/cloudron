@@ -183,6 +183,48 @@ function log(detail) {
     progress.setDetail(progress.BACKUP, detail);
 }
 
+function encryptFilePath(filePath, key) {
+    assert.strictEqual(typeof filePath, 'string');
+    assert.strictEqual(typeof key, 'string');
+
+    var encryptedParts = filePath.split('/').map(function (part) {
+        const cipher = crypto.createCipher('aes-256-cbc', key);
+        let crypt = cipher.update(part);
+        crypt = Buffer.concat([ crypt, cipher.final() ]);
+        return crypt.toString('base64').replace(/\//g, '-').replace(/=/g,'');
+    });
+
+    return encryptedParts.join('/');
+}
+
+function createReadStream(sourceFile, key) {
+    assert.strictEqual(typeof sourceFile, 'string');
+    assert(key === null || typeof key === 'string');
+
+    var stream = fs.createReadStream(sourceFile);
+    var ps = progressStream({ time: 10000 }); // display a progress every 10 seconds
+
+    stream.on('error', function (error) {
+        debug('createReadStream: tar stream error.', error);
+        ps.emit('error', new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
+    });
+
+    ps.on('progress', function(progress) {
+        debug('createReadStream: %s@%s (%s)', Math.round(progress.transferred/1024/1024) + 'M', Math.round(progress.speed/1024/1024) + 'Mbps', sourceFile);
+    });
+
+    if (key !== null) {
+        var encrypt = crypto.createCipher('aes-256-cbc', key);
+        encrypt.on('error', function (error) {
+            debug('createReadStream: encrypt stream error.', error);
+            ps.emit('error', new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
+        });
+        return stream.pipe(encrypt).pipe(ps);
+    } else {
+        return stream.pipe(ps);
+    }
+}
+
 function createTarPackStream(sourceDir, key) {
     assert.strictEqual(typeof sourceDir, 'string');
     assert(key === null || typeof key === 'string');
@@ -239,7 +281,8 @@ function sync(backupConfig, backupId, dataDir, callback) {
 
     syncer.sync(dataDir, function processTask(task, iteratorCallback) {
         debug('sync: processing task: %j', task);
-        var backupFilePath = path.join(getBackupFilePath(backupConfig, backupId, backupConfig.format), task.path);
+        const destPath = backupConfig.key ? encryptFilePath(task.path, backupConfig.key) : task.path;
+        const backupFilePath = path.join(getBackupFilePath(backupConfig, backupId, backupConfig.format), destPath);
 
         if (task.operation === 'removedir') {
             safe.fs.writeFileSync(paths.BACKUP_RESULT_FILE, `Removing directory ${task.path}`);
@@ -259,7 +302,7 @@ function sync(backupConfig, backupId, dataDir, callback) {
             debug(`${task.operation} ${task.path} try ${retryCount}`);
             if (task.operation === 'add') {
                 setBackupProgress(`Adding ${task.path} position ${task.position} try ${retryCount}`);
-                var stream = fs.createReadStream(path.join(dataDir, task.path));
+                var stream = createReadStream(path.join(dataDir, task.path), backupConfig.key || null);
                 stream.on('error', function (error) {
                     setBackupProgress(`read stream error for ${task.path}: ${error.message}`);
                     retryCallback();
