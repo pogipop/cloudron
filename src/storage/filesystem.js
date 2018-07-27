@@ -3,7 +3,6 @@
 exports = module.exports = {
     upload: upload,
     download: download,
-    downloadDir: downloadDir,
 
     copy: copy,
 
@@ -16,7 +15,6 @@ exports = module.exports = {
 };
 
 var assert = require('assert'),
-    async = require('async'),
     BackupsError = require('../backups.js').BackupsError,
     debug = require('debug')('box:storage/filesystem'),
     EventEmitter = require('events'),
@@ -106,48 +104,6 @@ function listDir(apiConfig, dir, batchSize, iteratorCallback, callback) {
     });
 }
 
-function downloadDir(apiConfig, backupFilePath, destDir) {
-    assert.strictEqual(typeof apiConfig, 'object');
-    assert.strictEqual(typeof backupFilePath, 'string');
-    assert.strictEqual(typeof destDir, 'string');
-
-    var events = new EventEmitter();
-
-    events.emit('progress', `downloadDir: ${backupFilePath} to ${destDir}`);
-
-    function downloadFile(file, callback) {
-        const sourceFilePath = path.join(backupFilePath, file.path);
-        const destFilePath = path.join(destDir, file.path);
-
-        mkdirp(path.dirname(destFilePath), function (error) {
-            if (error) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
-
-            download(apiConfig, sourceFilePath, function (error, sourceStream) {
-                if (error) return callback(error);
-
-                sourceStream.on('error', callback);
-
-                let destStream = fs.createWriteStream(destFilePath);
-                destStream.on('error', callback);
-
-                events.emit('progress', `downloadDir: Copying ${sourceFilePath} to ${destFilePath}`);
-
-                sourceStream.pipe(destStream, { end: true }).on('finish', callback);
-            });
-        });
-    }
-
-    listDir(apiConfig, backupFilePath, 1000, function (entries, done) {
-        async.each(entries, downloadFile, done);
-    }, function (error) {
-        if (error) return events.emit('done', new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
-
-        events.emit('done', null);
-    });
-
-    return events;
-}
-
 function copy(apiConfig, oldFilePath, newFilePath) {
     assert.strictEqual(typeof apiConfig, 'object');
     assert.strictEqual(typeof oldFilePath, 'string');
@@ -195,7 +151,7 @@ function removeDir(apiConfig, pathPrefix) {
 
     var events = new EventEmitter();
 
-    events.emit('progress', `downloadDir: ${pathPrefix}`);
+    events.emit('progress', `removeDir: ${pathPrefix}`);
 
     shell.exec('removeDir', '/bin/rm', [ '-rf', pathPrefix ], { }, function (error) {
         if (error) return events.emit('done', new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
