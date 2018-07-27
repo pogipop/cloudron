@@ -20,8 +20,6 @@ exports = module.exports = {
     remove: remove,
     removeDir: removeDir,
 
-    backupDone: backupDone,
-
     testConfig: testConfig
 };
 
@@ -98,11 +96,3 @@ function testConfig(apiConfig, callback) {
     callback(new Error('not implemented'));
 }
 
-function backupDone(apiConfig, backupId, appBackupIds, callback) {
-    assert.strictEqual(typeof apiConfig, 'object');
-    assert.strictEqual(typeof backupId, 'string');
-    assert(Array.isArray(appBackupIds));
-    assert.strictEqual(typeof callback, 'function');
-
-    callback(new Error('not implemented'));
-}

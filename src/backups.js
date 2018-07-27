@@ -58,6 +58,7 @@ var addons = require('./addons.js'),
     safe = require('safetydance'),
     shell = require('./shell.js'),
     settings = require('./settings.js'),
+    superagent = require('superagent'),
     syncer = require('./syncer.js'),
     tar = require('tar-fs'),
     util = require('util'),
@@ -562,6 +563,34 @@ function uploadBoxSnapshot(backupConfig, callback) {
     });
 }
 
+
+function backupDone(apiConfig, backupId, appBackupIds, callback) {
+    assert.strictEqual(typeof apiConfig, 'object');
+    assert.strictEqual(typeof backupId, 'string');
+    assert(Array.isArray(appBackupIds));
+    assert.strictEqual(typeof callback, 'function');
+
+    if (apiConfig.provider !== 'caas') return callback();
+
+    debug('[%s] backupDone: %s apps %j', backupId, backupId, appBackupIds);
+
+    var url = config.apiServerOrigin() + '/api/v1/boxes/' + apiConfig.fqdn + '/backupDone';
+    var data = {
+        boxVersion: config.version(),
+        backupId: backupId,
+        appId: null,        // now unused
+        appVersion: null,   // now unused
+        appBackupIds: appBackupIds
+    };
+
+    superagent.post(url).send(data).query({ token: apiConfig.token }).timeout(30 * 1000).end(function (error, result) {
+        if (error && !error.response) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error));
+        if (result.statusCode !== 200) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, result.text));
+
+        return callback(null);
+    });
+}
+
 function rotateBoxBackup(backupConfig, timestamp, appBackupIds, callback) {
     assert.strictEqual(typeof backupConfig, 'object');
     assert.strictEqual(typeof timestamp, 'string');
@@ -591,8 +620,7 @@ function rotateBoxBackup(backupConfig, timestamp, appBackupIds, callback) {
 
                 log(`Rotated box backup successfully as id ${backupId}`);
 
-                // FIXME this is only needed for caas, hopefully we can remove that in the future
-                api(backupConfig.provider).backupDone(backupConfig, backupId, appBackupIds, function (error) {
+                backupDone(backupConfig, backupId, appBackupIds, function (error) {
                     if (error) return callback(error);
 
                     callback(null, backupId);
