@@ -1319,4 +1319,7 @@
 
 [3.0.0]
 * Support alternate app domains with redirects
+* Allow hyphen in mailbox names
+* Fix issue where the UI timesout when relay server is not reachable
+* Add support for personal spaces
 
