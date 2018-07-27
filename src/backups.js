@@ -191,10 +191,30 @@ function encryptFilePath(filePath, key) {
         const cipher = crypto.createCipher('aes-256-cbc', key);
         let crypt = cipher.update(part);
         crypt = Buffer.concat([ crypt, cipher.final() ]);
-        return crypt.toString('base64').replace(/\//g, '-').replace(/=/g,'');
+
+        return crypt.toString('base64')     // ensures path is valid
+            .replace(/\//g, '-')            // replace '/' of base64 since it conflicts with path separator
+            .replace(/=/g,'');              // strip trailing = padding. this is only needed if we concat base64 strings, which we don't
     });
 
     return encryptedParts.join('/');
+}
+
+function decryptFilePath(filePath, key) {
+    assert.strictEqual(typeof filePath, 'string');
+    assert.strictEqual(typeof key, 'string');
+
+    var decryptedParts = filePath.split('/').map(function (part) {
+        part = part + Array(part.length % 4).join('='); // add back = padding
+        part = part.replace(/-/g, '/');                 // replace with '/'
+
+        var decrypt = crypto.createDecipher('aes-256-cbc', 'incremental');
+        let text = decrypt.update(Buffer.from(part, 'base64'));
+        text = Buffer.concat([ text, decrypt.final() ]);
+        return text.toString('utf8');
+    });
+
+    return decryptedParts.join('/');
 }
 
 function createReadStream(sourceFile, key) {
@@ -222,6 +242,24 @@ function createReadStream(sourceFile, key) {
         return stream.pipe(encrypt).pipe(ps);
     } else {
         return stream.pipe(ps);
+    }
+}
+
+function createWriteStream(destFile, key) {
+    assert.strictEqual(typeof destFile, 'string');
+    assert(key === null || typeof key === 'string');
+
+    var stream = fs.createWriteStream(destFile);
+
+    if (key !== null) {
+        var decrypt = crypto.createDecipher('aes-256-cbc', key);
+        decrypt.on('error', function (error) {
+            debug('createWriteStream: decrypt stream error.', error);
+        });
+        decrypt.pipe(stream);
+        return decrypt;
+    } else {
+        return stream;
     }
 }
 
@@ -454,7 +492,7 @@ function downloadDir(backupConfig, backupFilePath, destDir, callback) {
 
     function downloadFile(entry, callback) {
         const sourceFilePath = path.join(backupFilePath, entry.path);
-        const destFilePath = path.join(destDir, entry.path);
+        const destFilePath = path.join(destDir, backupConfig.key ? decryptFilePath(entry.path, backupConfig.key) : entry.path);
 
         mkdirp(path.dirname(destFilePath), function (error) {
             if (error) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
@@ -464,7 +502,7 @@ function downloadDir(backupConfig, backupFilePath, destDir, callback) {
 
                 sourceStream.on('error', callback);
 
-                let destStream = fs.createWriteStream(destFilePath);
+                let destStream = createWriteStream(destFilePath, backupConfig.key || null);
                 destStream.on('error', callback);
 
                 log(`downloadDir: Copying ${sourceFilePath} to ${destFilePath}`);
