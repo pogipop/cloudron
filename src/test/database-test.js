@@ -11,7 +11,6 @@ var appdb = require('../appdb.js'),
     backupdb = require('../backupdb.js'),
     clientdb = require('../clientdb.js'),
     config = require('../config.js'),
-    constants = require('../constants.js'),
     database = require('../database'),
     DatabaseError = require('../databaseerror.js'),
     domaindb = require('../domaindb'),
@@ -38,7 +37,8 @@ var USER_0 = {
     resetToken: hat(256),
     displayName: '',
     twoFactorAuthenticationEnabled: false,
-    twoFactorAuthenticationSecret: ''
+    twoFactorAuthenticationSecret: '',
+    admin: false
 };
 
 var USER_1 = {
@@ -53,7 +53,8 @@ var USER_1 = {
     resetToken: '',
     displayName: 'Herbert 1',
     twoFactorAuthenticationEnabled: false,
-    twoFactorAuthenticationSecret: ''
+    twoFactorAuthenticationSecret: '',
+    admin: false
 };
 
 var USER_2 = {
@@ -68,7 +69,8 @@ var USER_2 = {
     resetToken: '',
     displayName: 'Herbert 2',
     twoFactorAuthenticationEnabled: false,
-    twoFactorAuthenticationSecret: ''
+    twoFactorAuthenticationSecret: '',
+    admin: false
 };
 
 const DOMAIN_0 = {
@@ -1465,7 +1467,6 @@ describe('database', function () {
             async.series([
                 database.initialize,
                 database._clear,
-                groupdb.add.bind(null, constants.ADMIN_GROUP_ID, constants.ADMIN_GROUP_NAME),
                 userdb.add.bind(null, USER_0.id, USER_0),
                 userdb.add.bind(null, USER_1.id, USER_1),
                 userdb.add.bind(null, USER_2.id, USER_2)
@@ -1544,9 +1545,8 @@ describe('database', function () {
         it('can getAll', function (done) {
             groupdb.getAll(function (error, result) {
                 expect(error).to.be(null);
-                expect(result.length).to.be(2); // admin!
-                expect(result[0].name).to.be('admin');
-                expect(result[1].name).to.be('founders');
+                expect(result.length).to.be(1);
+                expect(result[0].name).to.be('founders');
                 done();
             });
         });
@@ -1554,19 +1554,17 @@ describe('database', function () {
         it('can getAllWithMembers', function (done) {
             groupdb.getAllWithMembers(function (error, result) {
                 expect(error).to.be(null);
-                expect(result.length).to.be(2); // admin!
-                expect(result[0].name).to.be('admin');
-                expect(result[0].userIds).to.eql([ ]);
+                expect(result.length).to.be(1);
 
-                expect(result[1].name).to.be('founders');
-                expect(result[1].userIds).to.eql([ USER_2.id ]);
+                expect(result[0].name).to.be('founders');
+                expect(result[0].userIds).to.eql([ USER_2.id ]);
 
                 done();
             });
         });
 
         it('can set groups', function (done) {
-            groupdb.setMembership(USER_0.id, [ 'admin', GROUP_ID_1 ], function (error) {
+            groupdb.setMembership(USER_0.id, [ GROUP_ID_1 ], function (error) {
                 expect(error).to.be(null);
                 done();
             });
@@ -1575,7 +1573,7 @@ describe('database', function () {
         it('can get groups', function (done) {
             groupdb.getMembership(USER_0.id, function (error, result) {
                 expect(error).to.be(null);
-                expect(result).to.eql([ 'admin', GROUP_ID_1 ]);
+                expect(result).to.eql([ GROUP_ID_1 ]);
                 done();
             });
         });

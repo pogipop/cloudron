@@ -7,9 +7,7 @@
 'use strict';
 
 var async = require('async'),
-    accesscontrol = require('../accesscontrol.js'),
     config = require('../config.js'),
-    constants = require('../constants.js'),
     database = require('../database.js'),
     DatabaseError = require('../databaseerror.js'),
     expect = require('expect.js'),
@@ -359,24 +357,6 @@ describe('Set user groups', function () {
                 expect(groupIds.sort()).to.eql([ group0Object.id, group1Object.id ].sort());
                 done();
             });
-        });
-    });
-});
-
-describe('Admin group', function () {
-    before(function (done) {
-        async.series([
-            setup,
-            userdb.add.bind(null, USER_0.id, USER_0)
-        ], done);
-    });
-    after(cleanup);
-
-    it('cannot delete admin group ever', function (done) {
-        groups.remove(constants.ADMIN_GROUP_ID, function (error) {
-            expect(error.reason).to.equal(GroupsError.NOT_ALLOWED);
-
-            done();
         });
     });
 });

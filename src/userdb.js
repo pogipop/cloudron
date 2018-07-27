@@ -18,17 +18,18 @@ exports = module.exports = {
 };
 
 var assert = require('assert'),
-    constants = require('./constants.js'),
     database = require('./database.js'),
     debug = require('debug')('box:userdb'),
     DatabaseError = require('./databaseerror');
 
-var USERS_FIELDS = [ 'id', 'username', 'email', 'fallbackEmail', 'password', 'salt', 'createdAt', 'modifiedAt', 'resetToken', 'displayName', 'twoFactorAuthenticationEnabled', 'twoFactorAuthenticationSecret' ].join(',');
+var USERS_FIELDS = [ 'id', 'username', 'email', 'fallbackEmail', 'password', 'salt', 'createdAt', 'modifiedAt', 'resetToken', 'displayName',
+    'twoFactorAuthenticationEnabled', 'twoFactorAuthenticationSecret', 'admin' ].join(',');
 
 function postProcess(result) {
     assert.strictEqual(typeof result, 'object');
 
     result.twoFactorAuthenticationEnabled = !!result.twoFactorAuthenticationEnabled;
+    result.admin = !!result.admin;
 
     return result;
 }
@@ -73,8 +74,7 @@ function getOwner(callback) {
     assert.strictEqual(typeof callback, 'function');
 
     // the first created user it the 'owner'
-    database.query('SELECT ' + USERS_FIELDS + ' FROM users, groupMembers WHERE groupMembers.groupId = ? AND users.id = groupMembers.userId ORDER BY createdAt LIMIT 1',
-        [ constants.ADMIN_GROUP_ID ], function (error, result) {
+    database.query('SELECT ' + USERS_FIELDS + ' FROM users WHERE admin=1 ORDER BY createdAt LIMIT 1', function (error, result) {
             if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
             if (result.length === 0) return callback(new DatabaseError(DatabaseError.NOT_FOUND));
 
@@ -119,7 +119,7 @@ function getAllAdmins(callback) {
     assert.strictEqual(typeof callback, 'function');
 
     // the mailer code relies on the first object being the 'owner' (thus the ORDER)
-    database.query('SELECT ' + USERS_FIELDS + ' FROM users, groupMembers WHERE groupMembers.groupId = ? AND users.id = groupMembers.userId ORDER BY createdAt', [ constants.ADMIN_GROUP_ID ], function (error, results) {
+    database.query('SELECT ' + USERS_FIELDS + ' FROM users WHERE admin=1 ORDER BY createdAt', function (error, results) {
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
 
         results.forEach(postProcess);
@@ -139,10 +139,11 @@ function add(userId, user, callback) {
     assert.strictEqual(typeof user.modifiedAt, 'string');
     assert.strictEqual(typeof user.resetToken, 'string');
     assert.strictEqual(typeof user.displayName, 'string');
+    assert.strictEqual(typeof user.admin, 'boolean');
     assert.strictEqual(typeof callback, 'function');
 
-    const query = 'INSERT INTO users (id, username, password, email, fallbackEmail, salt, createdAt, modifiedAt, resetToken, displayName) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
-    const args = [ userId, user.username, user.password, user.email, user.fallbackEmail, user.salt, user.createdAt, user.modifiedAt, user.resetToken, user.displayName ];
+    const query = 'INSERT INTO users (id, username, password, email, fallbackEmail, salt, createdAt, modifiedAt, resetToken, displayName, admin) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+    const args = [ userId, user.username, user.password, user.email, user.fallbackEmail, user.salt, user.createdAt, user.modifiedAt, user.resetToken, user.displayName, user.admin ];
 
     database.query(query, args, function (error) {
         if (error && error.code === 'ER_DUP_ENTRY' && error.sqlMessage.indexOf('users_email') !== -1) return callback(new DatabaseError(DatabaseError.ALREADY_EXISTS, 'email already exists'));
@@ -210,7 +211,7 @@ function update(userId, user, callback) {
         } else if (k === 'email' || k === 'fallbackEmail') {
             assert.strictEqual(typeof user[k], 'string');
             args.push(user[k]);
-        } else if (k === 'twoFactorAuthenticationEnabled') {
+        } else if (k === 'twoFactorAuthenticationEnabled' || k === 'admin') {
             assert.strictEqual(typeof user[k], 'boolean');
             args.push(user[k] ? 1 : 0);
         } else {

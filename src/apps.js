@@ -85,7 +85,6 @@ var appdb = require('./appdb.js'),
     TransformStream = require('stream').Transform,
     updateChecker = require('./updatechecker.js'),
     url = require('url'),
-    users = require('./users.js'),
     util = require('util'),
     uuid = require('uuid'),
     validator = require('validator'),
@@ -358,9 +357,7 @@ function hasAccessTo(app, user, callback) {
     // check user access
     if (app.accessRestriction.users.some(function (e) { return e === user.id; })) return callback(null, true);
 
-    const isAdmin = users.isAdmin(user);
-
-    if (isAdmin) return callback(null, true); // admins can always access any app
+    if (user.admin) return callback(null, true); // admins can always access any app
 
     if (!app.accessRestriction.groups) return callback(null, false);
 

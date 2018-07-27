@@ -58,9 +58,6 @@ function getUsersWithAccessToApp(req, callback) {
             async.filter(result, apps.hasAccessTo.bind(null, app), function (error, allowedUsers) {
                 if (error) return callback(new ldap.OperationsError(error.toString()));
 
-                // TODO: in the long run, we should probably get rid of this "admin" integration altogether
-                allowedUsers.forEach(function (r) { r.admin = users.isAdmin(r); });
-
                 callback(null, allowedUsers);
             });
         });

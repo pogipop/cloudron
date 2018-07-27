@@ -26,9 +26,7 @@ exports = module.exports = {
     setTwoFactorAuthenticationSecret: setTwoFactorAuthenticationSecret,
     enableTwoFactorAuthentication: enableTwoFactorAuthentication,
     disableTwoFactorAuthentication: disableTwoFactorAuthentication,
-    transferOwnership: transferOwnership,
-
-    isAdmin: isAdmin
+    transferOwnership: transferOwnership
 };
 
 var apps = require('./apps.js'),
@@ -195,7 +193,8 @@ function create(username, password, email, displayName, options, auditSource, ca
                 createdAt: now,
                 modifiedAt: now,
                 resetToken: hat(256),
-                displayName: displayName
+                displayName: displayName,
+                admin: owner
             };
 
             userdb.add(user.id, user, function (error) {
@@ -324,10 +323,6 @@ function count(callback) {
     });
 }
 
-function isAdmin(user) {
-    return user.groupIds.indexOf(constants.ADMIN_GROUP_ID) !== -1;
-}
-
 function get(userId, callback) {
     assert.strictEqual(typeof userId, 'string');
     assert.strictEqual(typeof callback, 'function');
@@ -372,7 +367,7 @@ function updateUser(userId, data, auditSource, callback) {
     assert.strictEqual(typeof callback, 'function');
 
     var error;
-    data = _.pick(data, 'email', 'fallbackEmail', 'displayName', 'username');
+    data = _.pick(data, 'email', 'fallbackEmail', 'displayName', 'username', 'admin');
 
     if (_.isEmpty(data)) return callback();
 
@@ -394,7 +389,7 @@ function updateUser(userId, data, auditSource, callback) {
         if (error) return callback(error);
     }
 
-    userdb.get(userId, function (error) {
+    userdb.get(userId, function (error, oldUser) {
         if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new UsersError(UsersError.NOT_FOUND));
         if (error) return callback(new UsersError(UsersError.INTERNAL_ERROR, error));
 
@@ -403,12 +398,14 @@ function updateUser(userId, data, auditSource, callback) {
             if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new UsersError(UsersError.NOT_FOUND, error));
             if (error) return callback(new UsersError(UsersError.INTERNAL_ERROR, error));
 
-            callback();
+            callback(null);
 
             get(userId, function (error, result) {
                 if (error) return console.error(error);
 
                 eventlog.add(eventlog.ACTION_USER_UPDATE, auditSource, { userId: userId, user: removePrivateFields(result) });
+
+                if ((result.admin && !oldUser.admin) || (!result.admin && oldUser.admin)) mailer.adminChanged(result, result.admin);
             });
         });
     });
@@ -419,28 +416,11 @@ function setMembership(userId, groupIds, callback) {
     assert(Array.isArray(groupIds));
     assert.strictEqual(typeof callback, 'function');
 
-    groups.getMembership(userId, function (error, oldGroupIds) {
-        if (error && error.reason !== GroupsError.NOT_FOUND) return callback(new UsersError(UsersError.INTERNAL_ERROR, error));
+    groups.setMembership(userId, groupIds, function (error) {
+        if (error && error.reason === GroupsError.NOT_FOUND) return callback(new UsersError(UsersError.NOT_FOUND, 'One or more groups not found'));
+        if (error) return callback(new UsersError(UsersError.INTERNAL_ERROR, error));
 
-        oldGroupIds = oldGroupIds || [];
-
-        groups.setMembership(userId, groupIds, function (error) {
-            if (error && error.reason === GroupsError.NOT_FOUND) return callback(new UsersError(UsersError.NOT_FOUND, 'One or more groups not found'));
-            if (error) return callback(new UsersError(UsersError.INTERNAL_ERROR, error));
-
-            var isAdmin = groupIds.some(function (g) { return g === constants.ADMIN_GROUP_ID; });
-            var wasAdmin = oldGroupIds.some(function (g) { return g === constants.ADMIN_GROUP_ID; });
-
-            if ((isAdmin && !wasAdmin) || (!isAdmin && wasAdmin)) {
-                get(userId, function (error, result) {
-                    if (error) return debug('Failed to send admin change mail.', error);
-
-                    mailer.adminChanged(result, isAdmin);
-                });
-            }
-
-            callback(null);
-        });
+        callback(null);
     });
 }
 
@@ -526,20 +506,10 @@ function createOwner(username, password, email, displayName, auditSource, callba
         if (error) return callback(new UsersError(UsersError.INTERNAL_ERROR, error));
         if (count !== 0) return callback(new UsersError(UsersError.ALREADY_EXISTS, 'Owner already exists'));
 
-        // have to provide the group id explicitly so using db layer directly
-        groups.addOwnerGroup(function (error) {
-            // we proceed if it already exists so we can re-create the owner if need be
-            if (error && error.reason !== DatabaseError.ALREADY_EXISTS) return callback(new UsersError(UsersError.INTERNAL_ERROR, error));
+        create(username, password, email, displayName, { owner: true }, auditSource, function (error, user) {
+            if (error) return callback(error);
 
-            create(username, password, email, displayName, { owner: true }, auditSource, function (error, user) {
-                if (error) return callback(error);
-
-                groups.addMember(constants.ADMIN_GROUP_ID, user.id, function (error) {
-                    if (error) return callback(new UsersError(UsersError.INTERNAL_ERROR, error));
-
-                    callback(null, user);
-                });
-            });
+            callback(null, user);
         });
     });
 }

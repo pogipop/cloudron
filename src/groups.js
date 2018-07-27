@@ -3,8 +3,6 @@
 exports = module.exports = {
     GroupsError: GroupsError,
 
-    addOwnerGroup: addOwnerGroup,
-
     create: create,
     remove: remove,
     get: get,
@@ -25,8 +23,7 @@ exports = module.exports = {
     getMembership: getMembership
 };
 
-var accesscontrol = require('./accesscontrol.js'),
-    assert = require('assert'),
+var assert = require('assert'),
     constants = require('./constants.js'),
     DatabaseError = require('./databaseerror.js'),
     groupdb = require('./groupdb.js'),
@@ -99,9 +96,6 @@ function create(name, callback) {
 function remove(id, callback) {
     assert.strictEqual(typeof id, 'string');
     assert.strictEqual(typeof callback, 'function');
-
-    // never allow admin group to be deleted
-    if (id === constants.ADMIN_GROUP_ID) return callback(new GroupsError(GroupsError.NOT_ALLOWED));
 
     groupdb.del(id, function (error) {
         if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new GroupsError(GroupsError.NOT_FOUND));
@@ -242,12 +236,6 @@ function isMember(groupId, userId, callback) {
 
         return callback(null, result);
     });
-}
-
-function addOwnerGroup(callback) {
-    assert.strictEqual(typeof callback, 'function');
-
-    groupdb.add(constants.ADMIN_GROUP_ID, constants.ADMIN_GROUP_NAME, callback);
 }
 
 function update(groupId, data, callback) {

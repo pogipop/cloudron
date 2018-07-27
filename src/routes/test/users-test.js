@@ -165,7 +165,8 @@ describe('Users API', function () {
                 expect(res.statusCode).to.equal(200);
                 expect(res.body.username).to.equal(USERNAME_0.toLowerCase());
                 expect(res.body.email).to.equal(EMAIL_0.toLowerCase());
-                expect(res.body.groupIds).to.eql(['admin']);
+                expect(res.body.groupIds).to.eql([]);
+                expect(res.body.admin).to.be(true);
 
                 done();
             });
@@ -196,7 +197,8 @@ describe('Users API', function () {
                 expect(res.statusCode).to.equal(200);
                 expect(res.body.username).to.equal(USERNAME_0.toLowerCase());
                 expect(res.body.email).to.equal(EMAIL_0.toLowerCase());
-                expect(res.body.groupIds).to.eql(['admin']);
+                expect(res.body.groupIds).to.eql([]);
+                expect(res.body.admin).to.be(true);
 
                 done();
             });
@@ -236,7 +238,8 @@ describe('Users API', function () {
                 expect(res.statusCode).to.equal(200);
                 expect(res.body.username).to.equal(USERNAME_0.toLowerCase());
                 expect(res.body.email).to.equal(EMAIL_0.toLowerCase());
-                expect(res.body.groupIds).to.eql(['admin']);
+                expect(res.body.groupIds).to.eql([]);
+                expect(res.body.admin).to.be(true);
                 expect(res.body.displayName).to.be.a('string');
                 expect(res.body.password).to.not.be.ok();
                 expect(res.body.salt).to.not.be.ok();
@@ -321,9 +324,9 @@ describe('Users API', function () {
     });
 
     it('set second user as admin succeeds', function (done) {
-        superagent.put(SERVER_URL + '/api/v1/users/' + user_1.id + '/groups')
+        superagent.post(SERVER_URL + '/api/v1/users/' + user_1.id)
             .query({ access_token: token })
-            .send({ groupIds: [ constants.ADMIN_GROUP_ID ] })
+            .send({ admin: true })
             .end(function (err, res) {
                 expect(res.statusCode).to.equal(204);
 
@@ -331,7 +334,7 @@ describe('Users API', function () {
                     .query({ access_token: token })
                     .end(function (err, res) {
                         expect(res.statusCode).to.equal(200);
-                        expect(res.body.groupIds).to.eql(['admin']);
+                        expect(res.body.admin).to.be(true);
 
                         done();
                     });
@@ -353,10 +356,10 @@ describe('Users API', function () {
             });
     });
 
-    it('remove itself from admins fails', function (done) {
-        superagent.put(SERVER_URL + '/api/v1/users/' + user_0.id + '/groups')
+    it('remove self as admin fails', function (done) {
+        superagent.post(SERVER_URL + '/api/v1/users/' + user_0.id)
             .query({ access_token: token })
-            .send({ groupIds: [ groupObject.id ] })
+            .send({ admin: false })
             .end(function (err, res) {
                 expect(res.statusCode).to.equal(409);
                 done();

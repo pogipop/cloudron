@@ -72,7 +72,8 @@ var ADMIN = {
     createdAt: 'sometime back',
     modifiedAt: 'now',
     resetToken: '',
-    displayName: ''
+    displayName: '',
+    admin: true
 };
 
 var APP = {

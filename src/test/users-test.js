@@ -58,15 +58,13 @@ function cleanupUsers(done) {
 }
 
 function createOwner(done) {
-    groups.addOwnerGroup(function () { // ignore error since it might already exist
-        users.createOwner(USERNAME, PASSWORD, EMAIL, DISPLAY_NAME, AUDIT_SOURCE, function (error, result) {
-            expect(error).to.not.be.ok();
-            expect(result).to.be.ok();
+    users.createOwner(USERNAME, PASSWORD, EMAIL, DISPLAY_NAME, AUDIT_SOURCE, function (error, result) {
+        expect(error).to.not.be.ok();
+        expect(result).to.be.ok();
 
-            userObject = result;
+        userObject = result;
 
-            done();
-        });
+        done();
     });
 }
 
@@ -673,7 +671,7 @@ describe('User', function () {
 
                 user1.id = result.id;
 
-                users.setMembership(user1.id, [ constants.ADMIN_GROUP_ID ], function (error) {
+                users.update(user1.id, { admin: true }, { ip: '1.2.3.4' }, function (error) {
                     expect(error).to.not.be.ok();
 
                     // one mail for user creation, one mail for admin change
@@ -682,16 +680,8 @@ describe('User', function () {
             });
         });
 
-        it('add user to non admin group does not trigger admin mail', function (done) {
-            users.setMembership(user1.id, [ constants.ADMIN_GROUP_ID, groupObject.id ], function (error) {
-                expect(error).to.equal(null);
-
-                checkMails(0, done);
-            });
-        });
-
         it('succeeds to remove admin flag', function (done) {
-            users.setMembership(user1.id, [ groupObject.id ], function (error) {
+            users.update(user1.id, { admin: false }, { ip: '1.2.3.4' }, function (error) {
                 expect(error).to.eql(null);
 
                 checkMails(1, done);
@@ -726,7 +716,7 @@ describe('User', function () {
 
                 user1.id = result.id;
 
-                groups.setMembership(user1.id, [ constants.ADMIN_GROUP_ID ], function (error) {
+                users.update(user1.id, { admin: true }, { ip: '1.2.3.4' }, function (error) {
                     expect(error).to.eql(null);
 
                     users.getAllAdmins(function (error, admins) {
@@ -735,8 +725,7 @@ describe('User', function () {
                         expect(admins[0].username).to.equal(USERNAME.toLowerCase());
                         expect(admins[1].username).to.equal(user1.username.toLowerCase());
 
-                        // one mail for user creation one mail for admin change
-                        checkMails(1, done);    // FIXME should be 2 for admin change
+                        checkMails(2, done); // one mail for user creation one mail for admin change
                     });
                 });
             });

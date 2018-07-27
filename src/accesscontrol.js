@@ -108,7 +108,7 @@ function hasScopes(authorizedScopes, requiredScopes) {
 }
 
 function scopesForUser(user) {
-    return users.isAdmin(user) ? exports.VALID_SCOPES : [ 'profile', 'apps:read' ];
+    return user.admin ? exports.VALID_SCOPES : [ 'profile', 'apps:read' ];
 }
 
 function validateToken(accessToken, callback) {

@@ -13,7 +13,6 @@ exports = module.exports = {
 };
 
 var assert = require('assert'),
-    constants = require('../constants.js'),
     HttpError = require('connect-lastmile').HttpError,
     HttpSuccess = require('connect-lastmile').HttpSuccess,
     users = require('../users.js'),
@@ -67,6 +66,12 @@ function update(req, res, next) {
     if ('fallbackEmail' in req.body && typeof req.body.fallbackEmail !== 'string') return next(new HttpError(400, 'fallbackEmail must be string'));
     if ('displayName' in req.body && typeof req.body.displayName !== 'string') return next(new HttpError(400, 'displayName must be string'));
     if ('username' in req.body && typeof req.body.username !== 'string') return next(new HttpError(400, 'username must be a string'));
+
+    if ('admin' in req.body) {
+        if (typeof req.body.admin !== 'boolean') return next(new HttpError(400, 'admin must be a boolean'));
+        // this route is only allowed for admins, so req.user has to be an admin
+        if (req.user.id === req.params.userId) return next(new HttpError(409, 'Cannot change admin flag on self'));
+    }
 
     users.update(req.params.userId, req.body, auditSource(req), function (error) {
         if (error && error.reason === UsersError.BAD_FIELD) return next(new HttpError(400, error.message));
@@ -148,9 +153,6 @@ function setGroups(req, res, next) {
     assert.strictEqual(typeof req.params.userId, 'string');
 
     if (!Array.isArray(req.body.groupIds)) return next(new HttpError(400, 'API call requires a groups array.'));
-
-    // this route is only allowed for admins, so req.user has to be an admin
-    if (req.user.id === req.params.userId && req.body.groupIds.indexOf(constants.ADMIN_GROUP_ID) === -1) return next(new HttpError(409, 'Admin removing itself from admins is not allowed'));
 
     users.setMembership(req.params.userId, req.body.groupIds, function (error) {
         if (error && error.reason === UsersError.NOT_FOUND) return next(new HttpError(404, 'One or more groups not found'));

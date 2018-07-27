@@ -25,6 +25,7 @@ CREATE TABLE IF NOT EXISTS users(
     fallbackEmail VARCHAR(512) DEFAULT "",
     twoFactorAuthenticationSecret VARCHAR(128) DEFAULT "",
     twoFactorAuthenticationEnabled BOOLEAN DEFAULT false,
+    admin BOOLEAN DEFAULT false,
 
     PRIMARY KEY(id));
 

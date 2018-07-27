@@ -10,7 +10,6 @@ var appdb = require('../appdb.js'),
     AppsError = apps.AppsError,
     async = require('async'),
     config = require('../config.js'),
-    constants = require('../constants.js'),
     database = require('../database.js'),
     domains = require('../domains.js'),
     expect = require('expect.js'),
@@ -33,7 +32,8 @@ describe('Apps', function () {
         modifiedAt: 'now',
         resetToken: hat(256),
         displayName: '',
-        groupIds: [ 'admin' ]
+        groupIds: [],
+        admin: true
     };
 
     var USER_0 = {
@@ -47,7 +47,8 @@ describe('Apps', function () {
         modifiedAt: 'now',
         resetToken: hat(256),
         displayName: '',
-        groupIds: []
+        groupIds: [],
+        admin: false
     };
 
     var USER_1 = {
@@ -61,7 +62,8 @@ describe('Apps', function () {
         modifiedAt: 'now',
         resetToken: hat(256),
         displayName: '',
-        groupIds: [ 'somegroup' ]
+        groupIds: [ 'somegroup' ],
+        admin: false
     };
 
     var GROUP_0 = {
@@ -154,13 +156,11 @@ describe('Apps', function () {
             database._clear,
             domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0.zoneName, DOMAIN_0.provider, DOMAIN_0.config, null, DOMAIN_0.tlsConfig),
             domains.add.bind(null, DOMAIN_1.domain, DOMAIN_1.zoneName, DOMAIN_1.provider, DOMAIN_1.config, null, DOMAIN_1.tlsConfig),
-            groups.addOwnerGroup,
             userdb.add.bind(null, ADMIN_0.id, ADMIN_0),
             userdb.add.bind(null, USER_0.id, USER_0),
             userdb.add.bind(null, USER_1.id, USER_1),
             groupdb.add.bind(null, GROUP_0.id, GROUP_0.name),
             groupdb.add.bind(null, GROUP_1.id, GROUP_1.name),
-            groups.addMember.bind(null, constants.ADMIN_GROUP_ID, ADMIN_0.id),
             groups.addMember.bind(null, GROUP_0.id, USER_1.id),
             appdb.add.bind(null, APP_0.id, APP_0.appStoreId, APP_0.manifest, APP_0.location, APP_0.domain, APP_0.ownerId, APP_0.portBindings, APP_0),
             appdb.add.bind(null, APP_1.id, APP_1.appStoreId, APP_1.manifest, APP_1.location, APP_1.domain, APP_1.ownerId, APP_1.portBindings, APP_1),
@@ -290,8 +290,8 @@ describe('Apps', function () {
     });
 
     describe('hasAccessTo', function () {
-        const someuser = { id: 'someuser', groupIds: [] };
-        const adminuser = { id: 'adminuser', groupIds: [ 'admin' ] };
+        const someuser = { id: 'someuser', groupIds: [], admin: false };
+        const adminuser = { id: 'adminuser', groupIds: [ 'groupie' ], admin: true };
 
         it('returns true for unrestricted access', function (done) {
             apps.hasAccessTo({ accessRestriction: null }, someuser, function (error, access) {
