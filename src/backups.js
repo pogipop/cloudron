@@ -401,6 +401,41 @@ function restoreFsMetadata(appDataDir, callback) {
     });
 }
 
+function downloadDir(backupConfig, backupFilePath, destDir, callback) {
+    assert.strictEqual(typeof backupConfig, 'object');
+    assert.strictEqual(typeof backupFilePath, 'string');
+    assert.strictEqual(typeof destDir, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    log(`downloadDir: ${backupFilePath} to ${destDir}`);
+
+    function downloadFile(entry, callback) {
+        const sourceFilePath = path.join(backupFilePath, entry.path);
+        const destFilePath = path.join(destDir, entry.path);
+
+        mkdirp(path.dirname(destFilePath), function (error) {
+            if (error) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
+
+            api(backupConfig.provider).download(backupConfig, sourceFilePath, function (error, sourceStream) {
+                if (error) return callback(error);
+
+                sourceStream.on('error', callback);
+
+                let destStream = fs.createWriteStream(destFilePath);
+                destStream.on('error', callback);
+
+                log(`downloadDir: Copying ${sourceFilePath} to ${destFilePath}`);
+
+                sourceStream.pipe(destStream, { end: true }).on('finish', callback);
+            });
+        });
+    }
+
+    api(backupConfig.provider).listDir(backupConfig, backupFilePath, 1000, function (entries, done) {
+        async.each(entries, downloadFile, done);
+    }, callback);
+}
+
 function download(backupConfig, backupId, format, dataDir, callback) {
     assert.strictEqual(typeof backupConfig, 'object');
     assert.strictEqual(typeof backupId, 'string');
@@ -419,9 +454,7 @@ function download(backupConfig, backupId, format, dataDir, callback) {
             tarExtract(sourceStream, dataDir, backupConfig.key || null, callback);
         });
     } else {
-        var events = api(backupConfig.provider).downloadDir(backupConfig, getBackupFilePath(backupConfig, backupId, format), dataDir);
-        events.on('progress', log);
-        events.on('done', function (error) {
+        downloadDir(backupConfig, getBackupFilePath(backupConfig, backupId, format), dataDir, function (error) {
             if (error) return callback(error);
 
             restoreFsMetadata(dataDir, callback);
