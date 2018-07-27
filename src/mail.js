@@ -105,8 +105,8 @@ function validateName(name) {
     if (name.length < 1) return new MailError(MailError.BAD_FIELD, 'mailbox name must be atleast 1 char');
     if (name.length >= 200) return new MailError(MailError.BAD_FIELD, 'mailbox name too long');
 
-    // +/- can be tricky in emails. also need to consider valid LDAP characters here (e.g '+' is reserved)
-    if (/[^a-zA-Z0-9.]/.test(name)) return new MailError(MailError.BAD_FIELD, 'mailbox name can only contain alphanumerals and dot');
+    // also need to consider valid LDAP characters here (e.g '+' is reserved)
+    if (/[^a-zA-Z0-9.-]/.test(name)) return new MailError(MailError.BAD_FIELD, 'mailbox name can only contain alphanumerals and dot');
 
     // app emails are sent using the .app suffix
     if (name.indexOf('.app') !== -1) return new MailError(MailError.BAD_FIELD, 'mailbox name pattern is reserved for apps');
