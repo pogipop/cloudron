@@ -17,6 +17,8 @@ exports = module.exports = {
     downloadDir: downloadDir,
     copy: copy,
 
+    listDir: listDir,
+
     remove: remove,
     removeDir: removeDir,
 
@@ -65,6 +67,16 @@ function copy(apiConfig, oldFilePath, newFilePath) {
     var events = new EventEmitter();
     process.nextTick(function () { events.emit('done', null); });
     return events;
+}
+
+function listDir(apiConfig, dir, batchSize, iteratorCallback, callback) {
+    assert.strictEqual(typeof apiConfig, 'object');
+    assert.strictEqual(typeof dir, 'string');
+    assert.strictEqual(typeof batchSize, 'number');
+    assert.strictEqual(typeof iteratorCallback, 'function');
+    assert.strictEqual(typeof callback, 'function');
+
+    callback(new Error('not implemented'));
 }
 
 function remove(apiConfig, filename, callback) {

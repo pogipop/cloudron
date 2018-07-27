@@ -197,10 +197,7 @@ function listDir(apiConfig, dir, iteratorCallback, callback) {
 
         async.forever(function listAndDownload(foreverCallback) {
             s3.listObjects(listParams, function (error, listData) {
-                if (error) {
-                    debug('remove: Failed to list %s. Not fatal.', error);
-                    return foreverCallback(error);
-                }
+                if (error) return foreverCallback(error);
 
                 if (listData.Contents.length === 0) return foreverCallback(new Error('Done'));
 

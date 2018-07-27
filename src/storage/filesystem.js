@@ -7,6 +7,8 @@ exports = module.exports = {
 
     copy: copy,
 
+    listDir: listDir,
+
     remove: remove,
     removeDir: removeDir,
 
@@ -86,7 +88,7 @@ function listDir(apiConfig, dir, batchSize, iteratorCallback, callback) {
     var entries = [];
     var entryStream = readdirp({ root: dir, entryType: 'files' });
     entryStream.on('data', function (data) {
-        entries.push(data.path);
+        entries.push({ path: data.path, size: data.stat.size });
         if (entries.length < batchSize) return;
         entryStream.pause();
         iteratorCallback(entries, function (error) {
@@ -113,9 +115,9 @@ function downloadDir(apiConfig, backupFilePath, destDir) {
 
     events.emit('progress', `downloadDir: ${backupFilePath} to ${destDir}`);
 
-    function downloadFile(filePath, callback) {
-        const sourceFilePath = path.join(backupFilePath, filePath);
-        const destFilePath = path.join(destDir, filePath);
+    function downloadFile(file, callback) {
+        const sourceFilePath = path.join(backupFilePath, file.path);
+        const destFilePath = path.join(destDir, file.path);
 
         mkdirp(path.dirname(destFilePath), function (error) {
             if (error) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
@@ -132,8 +134,8 @@ function downloadDir(apiConfig, backupFilePath, destDir) {
         });
     }
 
-    listDir(apiConfig, backupFilePath, 1000, function (filePaths, done) {
-        async.each(filePaths, downloadFile, done);
+    listDir(apiConfig, backupFilePath, 1000, function (entries, done) {
+        async.each(entries, downloadFile, done);
     }, function (error) {
         if (error) return events.emit('done', new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
 

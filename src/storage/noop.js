@@ -6,6 +6,8 @@ exports = module.exports = {
     downloadDir: downloadDir,
     copy: copy,
 
+    listDir: listDir,
+
     remove: remove,
     removeDir: removeDir,
 
@@ -35,6 +37,16 @@ function download(apiConfig, backupFilePath, callback) {
     debug('download: %s', backupFilePath);
 
     callback(new Error('Cannot download from noop backend'));
+}
+
+function listDir(apiConfig, dir, batchSize, iteratorCallback, callback) {
+    assert.strictEqual(typeof apiConfig, 'object');
+    assert.strictEqual(typeof dir, 'string');
+    assert.strictEqual(typeof batchSize, 'number');
+    assert.strictEqual(typeof iteratorCallback, 'function');
+    assert.strictEqual(typeof callback, 'function');
+
+    callback();
 }
 
 function downloadDir(apiConfig, backupFilePath, destDir) {
