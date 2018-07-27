@@ -70,7 +70,7 @@ function update(req, res, next) {
     if ('admin' in req.body) {
         if (typeof req.body.admin !== 'boolean') return next(new HttpError(400, 'admin must be a boolean'));
         // this route is only allowed for admins, so req.user has to be an admin
-        if (req.user.id === req.params.userId) return next(new HttpError(409, 'Cannot change admin flag on self'));
+        if (req.user.id === req.params.userId && !req.body.admin) return next(new HttpError(409, 'Cannot remove admin flag on self'));
     }
 
     users.update(req.params.userId, req.body, auditSource(req), function (error) {
