@@ -208,7 +208,7 @@ function decryptFilePath(filePath, key) {
         part = part + Array(part.length % 4).join('='); // add back = padding
         part = part.replace(/-/g, '/');                 // replace with '/'
 
-        var decrypt = crypto.createDecipher('aes-256-cbc', 'incremental');
+        var decrypt = crypto.createDecipher('aes-256-cbc', key);
         let text = decrypt.update(Buffer.from(part, 'base64'));
         text = Buffer.concat([ text, decrypt.final() ]);
         return text.toString('utf8');
@@ -488,16 +488,16 @@ function downloadDir(backupConfig, backupFilePath, destDir, callback) {
     assert.strictEqual(typeof destDir, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    log(`downloadDir: ${backupFilePath} to ${destDir}`);
+    debug(`downloadDir: ${backupFilePath} to ${destDir}`);
 
     function downloadFile(entry, callback) {
-        const sourceFilePath = path.join(backupFilePath, entry.path);
-        const destFilePath = path.join(destDir, backupConfig.key ? decryptFilePath(entry.path, backupConfig.key) : entry.path);
+        const relativePath = path.relative(backupFilePath, entry.fullPath);
+        const destFilePath = path.join(destDir, backupConfig.key ? decryptFilePath(relativePath, backupConfig.key) : relativePath);
 
         mkdirp(path.dirname(destFilePath), function (error) {
             if (error) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
 
-            api(backupConfig.provider).download(backupConfig, sourceFilePath, function (error, sourceStream) {
+            api(backupConfig.provider).download(backupConfig, entry.fullPath, function (error, sourceStream) {
                 if (error) return callback(error);
 
                 sourceStream.on('error', callback);
@@ -505,7 +505,7 @@ function downloadDir(backupConfig, backupFilePath, destDir, callback) {
                 let destStream = createWriteStream(destFilePath, backupConfig.key || null);
                 destStream.on('error', callback);
 
-                log(`downloadDir: Copying ${sourceFilePath} to ${destFilePath}`);
+                debug(`downloadDir: Copying ${entry.fullPath} to ${destFilePath}`);
 
                 sourceStream.pipe(destStream, { end: true }).on('finish', callback);
             });

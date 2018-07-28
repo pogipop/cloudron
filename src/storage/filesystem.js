@@ -86,7 +86,7 @@ function listDir(apiConfig, dir, batchSize, iteratorCallback, callback) {
     var entries = [];
     var entryStream = readdirp({ root: dir, entryType: 'files' });
     entryStream.on('data', function (data) {
-        entries.push({ path: data.path, size: data.stat.size });
+        entries.push({ fullPath: data.fullPath });
         if (entries.length < batchSize) return;
         entryStream.pause();
         iteratorCallback(entries, function (error) {
