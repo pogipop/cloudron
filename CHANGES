@@ -1327,4 +1327,5 @@
 * Open logs and terminal in a new tab instead of a window
 * Add button to view backup logs
 * Add Mailjet mail relay support
+* Encryption support for incremental backups
 
