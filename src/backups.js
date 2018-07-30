@@ -204,15 +204,21 @@ function decryptFilePath(filePath, key) {
     assert.strictEqual(typeof filePath, 'string');
     assert.strictEqual(typeof key, 'string');
 
-    var decryptedParts = filePath.split('/').map(function (part) {
+    let decryptedParts = [];
+    for (let part of filePath.split('/')) {
         part = part + Array(part.length % 4).join('='); // add back = padding
         part = part.replace(/-/g, '/');                 // replace with '/'
 
-        var decrypt = crypto.createDecipher('aes-256-cbc', key);
-        let text = decrypt.update(Buffer.from(part, 'base64'));
-        text = Buffer.concat([ text, decrypt.final() ]);
-        return text.toString('utf8');
-    });
+        try {
+            let decrypt = crypto.createDecipher('aes-256-cbc', key);
+            let text = decrypt.update(Buffer.from(part, 'base64'));
+            text = Buffer.concat([ text, decrypt.final() ]);
+            decryptedParts.push(text.toString('utf8'));
+        } catch (error) {
+            debug(`Error decrypting file ${filePath} part ${part}:`, error);
+            return null;
+        }
+    }
 
     return decryptedParts.join('/');
 }
@@ -491,8 +497,12 @@ function downloadDir(backupConfig, backupFilePath, destDir, callback) {
     debug(`downloadDir: ${backupFilePath} to ${destDir}`);
 
     function downloadFile(entry, callback) {
-        const relativePath = path.relative(backupFilePath, entry.fullPath);
-        const destFilePath = path.join(destDir, backupConfig.key ? decryptFilePath(relativePath, backupConfig.key) : relativePath);
+        let relativePath = path.relative(backupFilePath, entry.fullPath);
+        if (backupConfig.key) {
+            relativePath = decryptFilePath(relativePath, backupConfig.key);
+            if (!relativePath) return callback(new BackupsError(BackupsError.BAD_STATE, 'Unable to decrypt file'));
+        }
+        const destFilePath = path.join(destDir, relativePath);
 
         mkdirp(path.dirname(destFilePath), function (error) {
             if (error) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
