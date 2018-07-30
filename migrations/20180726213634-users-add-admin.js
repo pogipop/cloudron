@@ -11,8 +11,8 @@ exports.up = function(db, callback) {
 
             if (results.length === 0) return callback();
 
-            async.eachSeries(results, function (userId, iteratorDone) {
-                db.runSql('UPDATE users SET admin=1 WHERE id=?', [ userId ], iteratorDone);
+            async.eachSeries(results, function (result, iteratorDone) {
+                db.runSql('UPDATE users SET admin=1 WHERE id=?', [ result.userId ], iteratorDone);
             }, function (error) {
                 if (error) return callback(error);
 
