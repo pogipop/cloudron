@@ -1328,4 +1328,5 @@
 * Add button to view backup logs
 * Add Mailjet mail relay support
 * Encryption support for incremental backups
+* Display restore errors in the UI
 
