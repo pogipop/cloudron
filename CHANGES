@@ -1329,4 +1329,4 @@
 * Add Mailjet mail relay support
 * Encryption support for incremental backups
 * Display restore errors in the UI
-
+* Update Haraka to 2.8.19
