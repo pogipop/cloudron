@@ -48,7 +48,10 @@ var gWebadminStatus = {
     dns: false,
     tls: false,
     configuring: false,
-    restoring: false
+    restore: {
+        active: false,
+        error: null
+    }
 };
 
 function SetupError(reason, errorOrMessage) {
@@ -163,7 +166,7 @@ function dnsSetup(adminFqdn, domain, zoneName, provider, dnsConfig, tlsConfig, c
 
     if (config.adminDomain()) return callback(new SetupError(SetupError.ALREADY_SETUP));
 
-    if (gWebadminStatus.configuring || gWebadminStatus.restoring) return callback(new SetupError(SetupError.BAD_STATE, 'Already restoring or configuring'));
+    if (gWebadminStatus.configuring || gWebadminStatus.restore.active) return callback(new SetupError(SetupError.BAD_STATE, 'Already restoring or configuring'));
 
     if (!tld.isValid(adminFqdn) || !adminFqdn.endsWith(domain)) return callback(new SetupError(SetupError.BAD_FIELD, 'adminFqdn must be a subdomain of domain'));
 
@@ -270,7 +273,7 @@ function restore(backupConfig, backupId, version, callback) {
     if (!semver.valid(version)) return callback(new SetupError(SetupError.BAD_STATE, 'version is not a valid semver'));
     if (semver.major(config.version()) !== semver.major(version) || semver.minor(config.version()) !== semver.minor(version)) return callback(new SetupError(SetupError.BAD_STATE, `Run cloudron-setup with --version ${version} to restore from this backup`));
 
-    if (gWebadminStatus.configuring || gWebadminStatus.restoring) return callback(new SetupError(SetupError.BAD_STATE, 'Already restoring or configuring'));
+    if (gWebadminStatus.configuring || gWebadminStatus.restore.active) return callback(new SetupError(SetupError.BAD_STATE, 'Already restoring or configuring'));
 
     users.count(function (error, count) {
         if (error) return callback(new SetupError(SetupError.INTERNAL_ERROR, error));
@@ -283,7 +286,8 @@ function restore(backupConfig, backupId, version, callback) {
 
             debug(`restore: restoring from ${backupId} from provider ${backupConfig.provider} with format ${backupConfig.format}`);
 
-            gWebadminStatus.restoring = true;
+            gWebadminStatus.restore.active = true;
+            gWebadminStatus.restore.error = null;
 
             callback(null); // do no block
 
@@ -296,7 +300,8 @@ function restore(backupConfig, backupId, version, callback) {
                 shell.sudo.bind(null, 'restart', [ RESTART_CMD ])
             ], function (error) {
                 debug('restore:', error);
-                gWebadminStatus.restoring = false;
+                if (error) gWebadminStatus.restore.error = error.message;
+                gWebadminStatus.restore.active = false;
             });
         });
     });
