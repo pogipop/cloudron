@@ -36,6 +36,11 @@ if [[ "${disk_size_gb}" -lt "${MINIMUM_DISK_SIZE_GB}" ]]; then
     exit 1
 fi
 
+if systemctl -q is-active box; then
+    echo "Error: Cloudron is already installed. To reinstall, start afresh"
+    exit 1
+fi
+
 initBaseImage="true"
 # provisioning data
 provider=""
