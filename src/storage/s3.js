@@ -44,6 +44,10 @@ function mockRestore() {
 
 var gCachedCaasCredentials = { issueDate: null, credentials: null };
 
+function S3_NOT_FOUND(error) {
+    return error.code === 'NoSuchKey' || error.code === 'NotFound' || error.code === 'ENOENT';
+}
+
 function getCaasConfig(apiConfig, callback) {
     assert.strictEqual(typeof apiConfig, 'object');
     assert.strictEqual(typeof callback, 'function');
@@ -170,8 +174,8 @@ function download(apiConfig, backupFilePath, callback) {
         var multipartDownload = new S3BlockReadStream(s3, params, { blockSize: 64 * 1024 * 1024 /*, logCallback: debug */ });
 
         multipartDownload.on('error', function (error) {
-            if (error.code === 'NoSuchKey' || error.code === 'ENOENT') {
-                ps.emit('error', new BackupsError(BackupsError.NOT_FOUND));
+            if (S3_NOT_FOUND(error)) {
+                ps.emit('error', new BackupsError(BackupsError.NOT_FOUND, `Backup not found: ${backupFilePath}`));
             } else {
                 debug(`download: ${apiConfig.bucket}:${backupFilePath} s3 stream error.`, error);
                 ps.emit('error', new BackupsError(BackupsError.EXTERNAL_ERROR, error.message || error.code)); // DO sets 'code'
@@ -259,7 +263,7 @@ function copy(apiConfig, oldFilePath, newFilePath) {
             function done(error) {
                 if (error) debug(`copy: s3 copy error when copying ${entry.fullPath}: ${error}`);
 
-                if (error && error.code === 'NoSuchKey') return iteratorCallback(new BackupsError(BackupsError.NOT_FOUND, `Old backup not found: ${entry.fullPath}`));
+                if (error && S3_NOT_FOUND(error)) return iteratorCallback(new BackupsError(BackupsError.NOT_FOUND, `Old backup not found: ${entry.fullPath}`));
                 if (error) return iteratorCallback(new BackupsError(BackupsError.EXTERNAL_ERROR, `Error copying ${entry.fullPath} : ${error.code} ${error}`));
 
                 iteratorCallback(null);

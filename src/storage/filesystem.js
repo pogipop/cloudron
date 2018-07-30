@@ -68,9 +68,9 @@ function download(apiConfig, sourceFilePath, callback) {
     assert.strictEqual(typeof sourceFilePath, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    debug('download: %s', sourceFilePath);
+    debug(`download: ${sourceFilePath}`);
 
-    if (!safe.fs.existsSync(sourceFilePath)) return callback(new BackupsError(BackupsError.NOT_FOUND, 'File not found'));
+    if (!safe.fs.existsSync(sourceFilePath)) return callback(new BackupsError(BackupsError.NOT_FOUND, `File not found: ${sourceFilePath}`));
 
     var fileStream = fs.createReadStream(sourceFilePath);
     callback(null, fileStream);

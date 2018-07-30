@@ -158,7 +158,7 @@ function get(backupId, callback) {
     assert.strictEqual(typeof callback, 'function');
 
     backupdb.get(backupId, function (error, result) {
-        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new BackupsError(BackupsError.NOT_FOUND, error));
+        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new BackupsError(BackupsError.NOT_FOUND));
         if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
 
         callback(null, result);
