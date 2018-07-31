@@ -22,6 +22,7 @@ var apps = require('./apps.js'),
     reverseProxy = require('./reverseproxy.js'),
     scheduler = require('./scheduler.js'),
     settings = require('./settings.js'),
+    updater = require('./updater.js'),
     updateChecker = require('./updatechecker.js');
 
 var gJobs = {
@@ -207,7 +208,7 @@ function boxAutoupdatePatternChanged(pattern) {
             var updateInfo = updateChecker.getUpdateInfo();
             if (updateInfo.box) {
                 debug('Starting autoupdate to %j', updateInfo.box);
-                cloudron.updateToLatest(AUDIT_SOURCE, NOOP_CALLBACK);
+                updater.updateToLatest(AUDIT_SOURCE, NOOP_CALLBACK);
             } else {
                 debug('No box auto updates available');
             }

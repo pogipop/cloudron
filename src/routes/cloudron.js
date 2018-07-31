@@ -22,7 +22,9 @@ var appstore = require('../appstore.js'),
     HttpError = require('connect-lastmile').HttpError,
     HttpSuccess = require('connect-lastmile').HttpSuccess,
     progress = require('../progress.js'),
+    updater = require('../updater.js'),
     updateChecker = require('../updatechecker.js'),
+    UpdaterError = require('../updater.js').UpdaterError,
     _ = require('underscore');
 
 function auditSource(req) {
@@ -58,10 +60,10 @@ function getDisks(req, res, next) {
 
 function update(req, res, next) {
     // this only initiates the update, progress can be checked via the progress route
-    cloudron.updateToLatest(auditSource(req), function (error) {
-        if (error && error.reason === CloudronError.ALREADY_UPTODATE) return next(new HttpError(422, error.message));
-        if (error && error.reason === CloudronError.BAD_STATE) return next(new HttpError(409, error.message));
-        if (error && error.reason === CloudronError.SELF_UPGRADE_NOT_SUPPORTED) return next(new HttpError(412, error.message));
+    updater.updateToLatest(auditSource(req), function (error) {
+        if (error && error.reason === UpdaterError.ALREADY_UPTODATE) return next(new HttpError(422, error.message));
+        if (error && error.reason === UpdaterError.BAD_STATE) return next(new HttpError(409, error.message));
+        if (error && error.reason === UpdaterError.SELF_UPGRADE_NOT_SUPPORTED) return next(new HttpError(412, error.message));
         if (error) return next(new HttpError(500, error));
 
         next(new HttpSuccess(202, {}));

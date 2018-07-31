@@ -9,7 +9,6 @@ exports = module.exports = {
     getDisks: getDisks,
     getLogs: getLogs,
 
-    updateToLatest: updateToLatest,
     reboot: reboot,
 
     onActivated: onActivated,
@@ -19,14 +18,10 @@ exports = module.exports = {
 
 var assert = require('assert'),
     async = require('async'),
-    backups = require('./backups.js'),
-    caas = require('./caas.js'),
     config = require('./config.js'),
     cron = require('./cron.js'),
     debug = require('debug')('box:cloudron'),
     df = require('@sindresorhus/df'),
-    eventlog = require('./eventlog.js'),
-    locker = require('./locker.js'),
     mailer = require('./mailer.js'),
     os = require('os'),
     path = require('path'),
@@ -39,13 +34,10 @@ var assert = require('assert'),
     shell = require('./shell.js'),
     spawn = require('child_process').spawn,
     split = require('split'),
-    updateChecker = require('./updatechecker.js'),
     users = require('./users.js'),
-    util = require('util'),
-    _ = require('underscore');
+    util = require('util');
 
-var REBOOT_CMD = path.join(__dirname, 'scripts/reboot.sh'),
-    UPDATE_CMD = path.join(__dirname, 'scripts/update.sh');
+var REBOOT_CMD = path.join(__dirname, 'scripts/reboot.sh');
 
 var NOOP_CALLBACK = function (error) { if (error) debug(error); };
 
@@ -162,102 +154,6 @@ function getConfig(callback) {
 
 function reboot(callback) {
     shell.sudo('reboot', [ REBOOT_CMD ], callback);
-}
-
-function update(boxUpdateInfo, auditSource, callback) {
-    assert.strictEqual(typeof boxUpdateInfo, 'object');
-    assert.strictEqual(typeof auditSource, 'object');
-    assert.strictEqual(typeof callback, 'function');
-
-    if (!boxUpdateInfo) return callback(null);
-
-    var error = locker.lock(locker.OP_BOX_UPDATE);
-    if (error) return callback(new CloudronError(CloudronError.BAD_STATE, error.message));
-
-    eventlog.add(eventlog.ACTION_UPDATE, auditSource, { boxUpdateInfo: boxUpdateInfo });
-
-    // ensure tools can 'wait' on progress
-    progress.set(progress.UPDATE, 0, 'Starting');
-
-    // initiate the update/upgrade but do not wait for it
-    if (boxUpdateInfo.upgrade) {
-        debug('Starting upgrade');
-        caas.upgrade(boxUpdateInfo, function (error) {
-            if (error) {
-                debug('Upgrade failed with error:', error);
-                locker.unlock(locker.OP_BOX_UPDATE);
-            }
-        });
-    } else {
-        debug('Starting update');
-        doUpdate(boxUpdateInfo, function (error) {
-            if (error) {
-                debug('Update failed with error:', error);
-                locker.unlock(locker.OP_BOX_UPDATE);
-            }
-        });
-    }
-
-    callback(null);
-}
-
-function updateToLatest(auditSource, callback) {
-    assert.strictEqual(typeof auditSource, 'object');
-    assert.strictEqual(typeof callback, 'function');
-
-    var boxUpdateInfo = updateChecker.getUpdateInfo().box;
-    if (!boxUpdateInfo) return callback(new CloudronError(CloudronError.ALREADY_UPTODATE, 'No update available'));
-    if (!boxUpdateInfo.sourceTarballUrl) return callback(new CloudronError(CloudronError.BAD_STATE, 'No automatic update available'));
-
-    if (boxUpdateInfo.upgrade && config.provider() !== 'caas') return callback(new CloudronError(CloudronError.SELF_UPGRADE_NOT_SUPPORTED));
-
-    update(boxUpdateInfo, auditSource, callback);
-}
-
-function doUpdate(boxUpdateInfo, callback) {
-    assert(boxUpdateInfo && typeof boxUpdateInfo === 'object');
-
-    function updateError(e) {
-        progress.set(progress.UPDATE, -1, e.message);
-        callback(e);
-    }
-
-    progress.set(progress.UPDATE, 5, 'Backing up for update');
-
-    backups.backupBoxAndApps({ userId: null, username: 'updater' }, function (error) {
-        if (error) return updateError(error);
-
-        // NOTE: this data is opaque and will be passed through the installer.sh
-        var data= {
-            provider: config.provider(),
-            apiServerOrigin: config.apiServerOrigin(),
-            webServerOrigin: config.webServerOrigin(),
-            adminDomain: config.adminDomain(),
-            adminFqdn: config.adminFqdn(),
-            adminLocation: config.adminLocation(),
-            isDemo: config.isDemo(),
-
-            appstore: {
-                apiServerOrigin: config.apiServerOrigin()
-            },
-            caas: {
-                apiServerOrigin: config.apiServerOrigin(),
-                webServerOrigin: config.webServerOrigin()
-            },
-
-            version: boxUpdateInfo.version
-        };
-
-        debug('updating box %s %j', boxUpdateInfo.sourceTarballUrl, _.omit(data, 'tlsCert', 'tlsKey', 'token', 'appstore', 'caas'));
-
-        progress.set(progress.UPDATE, 5, 'Downloading and installing new version');
-
-        shell.sudo('update', [ UPDATE_CMD, boxUpdateInfo.sourceTarballUrl, JSON.stringify(data) ], function (error) {
-            if (error) return updateError(error);
-
-            // Do not add any code here. The installer script will stop the box code any instant
-        });
-    });
 }
 
 function checkDiskSpace(callback) {
