@@ -265,7 +265,7 @@ function getBoxUpdate(callback) {
         var url = config.apiServerOrigin() + '/api/v1/users/' + appstoreConfig.userId + '/cloudrons/' + appstoreConfig.cloudronId + '/boxupdate';
 
         superagent.get(url).query({ accessToken: appstoreConfig.token, boxVersion: config.version() }).timeout(10 * 1000).end(function (error, result) {
-            if (error && !error.response) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, error));
+            if (error && !error.response) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, error.message));
             if (result.statusCode === 204) return callback(null); // no update
             if (result.statusCode !== 200 || !result.body) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, util.format('Bad response: %s %s', result.statusCode, result.text)));
 
@@ -275,7 +275,7 @@ function getBoxUpdate(callback) {
                 return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, util.format('Bad response: %s %s', result.statusCode, result.text)));
             }
 
-            // { version, changelog, upgrade, sourceTarballUrl}
+            // updateInfo: { version, changelog, upgrade, sourceTarballUrl, sourceTarballSigUrl, boxVersionsUrl, boxVersionsSigUrl }
             callback(null, updateInfo);
         });
     });
