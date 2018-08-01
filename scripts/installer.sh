@@ -95,8 +95,9 @@ fi
 
 echo "==> installer: update cloudron-syslog"
 CLOUDRON_SYSLOG_DIR=/usr/local/cloudron-syslog
+CLOUDRON_SYSLOG="${CLOUDRON_SYSLOG_DIR}/bin/cloudron-syslog"
 CLOUDRON_SYSLOG_VERSION="1.0.3"
-while "$($CLOUDRON_SYSLOG_DIR/bin/cloudron-syslog --version)" != ${CLOUDRON_SYSLOG_VERSION}; do
+while [[ ! -f "${CLOUDRON_SYSLOG}" || "$(${CLOUDRON_SYSLOG} --version)" != ${CLOUDRON_SYSLOG_VERSION} ]]; do
     rm -rf "${CLOUDRON_SYSLOG_DIR}"
     mkdir -p "${CLOUDRON_SYSLOG_DIR}"
     if npm install --unsafe-perm -g --prefix "${CLOUDRON_SYSLOG_DIR}" cloudron-syslog@${CLOUDRON_SYSLOG_VERSION}; then break; fi
