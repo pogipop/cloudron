@@ -319,7 +319,7 @@ function sync(backupConfig, backupId, dataDir, callback) {
     assert.strictEqual(typeof callback, 'function');
 
     function setBackupProgress(message) {
-        debug('%s: %s', (new Date()).toISOString(), message);
+        debug('%s', message);
         safe.fs.writeFileSync(paths.BACKUP_RESULT_FILE, message);
     }
 
@@ -329,12 +329,12 @@ function sync(backupConfig, backupId, dataDir, callback) {
         const backupFilePath = path.join(getBackupFilePath(backupConfig, backupId, backupConfig.format), destPath);
 
         if (task.operation === 'removedir') {
-            safe.fs.writeFileSync(paths.BACKUP_RESULT_FILE, `Removing directory ${task.path}`);
+            setBackupProgress(`Removing directory ${backupFilePath}`);
             return api(backupConfig.provider).removeDir(backupConfig, backupFilePath)
                 .on('progress', setBackupProgress)
                 .on('done', iteratorCallback);
         } else if (task.operation === 'remove') {
-            setBackupProgress(`Removing ${task.path}`);
+            setBackupProgress(`Removing ${backupFilePath}`);
             return api(backupConfig.provider).remove(backupConfig, backupFilePath, iteratorCallback);
         }
 
