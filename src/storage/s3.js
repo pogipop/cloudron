@@ -420,7 +420,7 @@ function removeDir(apiConfig, pathPrefix) {
                     }
                 };
 
-                events.emit('progress', `Removing ${objects.length} files from ${objects[0].fullPath} to ${objects[objects.length-1].Key}`);
+                events.emit('progress', `Removing ${objects.length} files from ${objects[0].fullPath} to ${objects[objects.length-1].fullPath}`);
 
                 // deleteObjects does not return error if key is not found
                 s3.deleteObjects(deleteParams, function (error /*, deleteData */) {

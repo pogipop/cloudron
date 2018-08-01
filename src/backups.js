@@ -325,7 +325,8 @@ function sync(backupConfig, backupId, dataDir, callback) {
 
     syncer.sync(dataDir, function processTask(task, iteratorCallback) {
         debug('sync: processing task: %j', task);
-        const destPath = backupConfig.key ? encryptFilePath(task.path, backupConfig.key) : task.path;
+        // the empty task.path is special to signify the directory
+        const destPath = task.path && backupConfig.key ? encryptFilePath(task.path, backupConfig.key) : task.path;
         const backupFilePath = path.join(getBackupFilePath(backupConfig, backupId, backupConfig.format), destPath);
 
         if (task.operation === 'removedir') {
