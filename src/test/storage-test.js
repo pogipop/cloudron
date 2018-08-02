@@ -6,6 +6,7 @@
 'use strict';
 
 var BackupsError = require('../backups.js').BackupsError,
+    execSync = require('child_process').execSync,
     expect = require('expect.js'),
     filesystem = require('../storage/filesystem.js'),
     fs = require('fs'),
@@ -103,13 +104,17 @@ describe('Storage', function () {
             });
         });
 
-        it('download dir copies contents of source dir', function (done) {
+        it('list dir lists the source dir', function (done) {
             var sourceDir = path.join(__dirname, 'storage');
 
-            var events = filesystem.downloadDir(gBackupConfig, sourceDir, gTmpFolder);
-            events.on('done', function (error) {
-                expect(error).to.be(null);
-                expect(fs.statSync(path.join(gTmpFolder, 'data/empty')).size).to.be(0);
+            var allFiles = [ ];
+            filesystem.listDir(gBackupConfig, sourceDir, 1, function (files, iteratorCallback) {
+                allFiles = allFiles.concat(files);
+                iteratorCallback();
+            }, function () {
+                var expectedFiles = execSync(`find ${sourceDir} -type f`, { encoding: 'utf8' }).trim().split('\n');
+                expect(allFiles.map(function (f) { return f.fullPath; }).sort()).to.eql(expectedFiles.sort());
+
                 done();
             });
         });
@@ -168,12 +173,10 @@ describe('Storage', function () {
             });
         });
 
-        it('download dir copies contents of source dir', function (done) {
-            var events = noop.downloadDir(gBackupConfig, 'sourceDir', 'destDir');
-            events.on('done', function (error) {
-                expect(error).to.be.an(Error);
-                done();
-            });
+        it('list dir contents of source dir', function (done) {
+            noop.listDir(gBackupConfig, 'sourceDir', 1000, function (files, iteratorDone) {
+                iteratorDone();
+            }, done);
         });
 
         it('can copy', function (done) {
@@ -248,15 +251,14 @@ describe('Storage', function () {
             });
         });
 
-        it('download dir copies contents of source dir', function (done) {
-            var sourceFile = path.join(__dirname, 'storage/data/test.txt');
-            var sourceKey = '';
-            var destDir = path.join(os.tmpdir(), 's3-destdir');
+        it('list dir lists contents of source dir', function (done) {
+            var allFiles = [ ];
+            s3.listDir(gBackupConfig, '', 1, function (files, iteratorCallback) {
+                allFiles = allFiles.concat(files);
+                iteratorCallback();
+            }, function () {
+                expect(allFiles.map(function (f) { return f.fullPath; }).sort()).to.eql([ 'uploadtest/test.txt' ]);
 
-            var events = s3.downloadDir(gBackupConfig, sourceKey, destDir);
-            events.on('done', function (error) {
-                expect(error).to.be(null);
-                expect(fs.statSync(path.join(destDir, 'uploadtest/test.txt')).size).to.be(fs.statSync(sourceFile).size);
                 done();
             });
         });
@@ -405,16 +407,14 @@ describe('Storage', function () {
             });
         });
 
-        it('download dir copies contents of source dir', function (done) {
-            var sourceFile = path.join(__dirname, 'storage/data/test.txt');
-            var sourceKey = '';
-            var destDir = path.join(os.tmpdir(), 'gcs-destdir');
-            rimraf.sync(destDir+'/*');
+        it('list dir lists contents of source dir', function (done) {
+            var allFiles = [ ];
+            gcs.listDir(gBackupConfig, '', 1, function (files, iteratorCallback) {
+                allFiles = allFiles.concat(files);
+                iteratorCallback();
+            }, function () {
+                expect(allFiles.map(function (f) { return f.fullPath; }).sort()).to.eql([ 'uploadtest/test.txt' ]);
 
-            var events = gcs.downloadDir(gBackupConfig, sourceKey, destDir);
-            events.on('done', function (error) {
-                expect(error).to.be(null);
-                expect(fs.statSync(path.join(destDir, 'uploadtest/test.txt')).size).to.be(fs.statSync(sourceFile).size);
                 done();
             });
         });

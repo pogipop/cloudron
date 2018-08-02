@@ -84,8 +84,10 @@ function listDir(apiConfig, dir, batchSize, iteratorCallback, callback) {
     assert.strictEqual(typeof callback, 'function');
 
     var entries = [];
-    var entryStream = readdirp({ root: dir, entryType: 'files' });
+    var entryStream = readdirp({ root: dir, entryType: 'files', lstat: true });
     entryStream.on('data', function (data) {
+        if (data.stat.isSymbolicLink()) return;
+
         entries.push({ fullPath: data.fullPath });
         if (entries.length < batchSize) return;
         entryStream.pause();
