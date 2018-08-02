@@ -144,10 +144,6 @@ CREATE TABLE IF NOT EXISTS domains(
     configJson TEXT, /* JSON containing the dns backend provider config */
     tlsConfigJson TEXT, /* JSON containing the tls provider config */
 
-    ownerId VARCHAR(128),
-
-    FOREIGN KEY(ownerId) REFERENCES users(id),
-
     PRIMARY KEY (domain))
 
     /* the default db collation is utf8mb4_unicode_ci but for the app table domain constraint we have to use the old one */
