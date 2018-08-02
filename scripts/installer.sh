@@ -77,6 +77,7 @@ if [[ "$(node --version)" != "v8.11.2" ]]; then
     rm -rf /usr/local/node-6.11.5
 fi
 
+# this is here (and not in updater.js) because rebuild requires the above node
 for try in `seq 1 10`; do
     # for reasons unknown, the dtrace package will fail. but rebuilding second time will work
 
