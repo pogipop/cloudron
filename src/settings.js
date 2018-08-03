@@ -38,6 +38,9 @@ exports = module.exports = {
     getPlatformConfig: getPlatformConfig,
     setPlatformConfig: setPlatformConfig,
 
+    getSpacesConfig: getSpacesConfig,
+    setSpacesConfig: setSpacesConfig,
+
     getAll: getAll,
 
     // booleans. if you add an entry here, be sure to fix getAll
@@ -50,6 +53,7 @@ exports = module.exports = {
     APPSTORE_CONFIG_KEY: 'appstore_config',
     CAAS_CONFIG_KEY: 'caas_config',
     PLATFORM_CONFIG_KEY: 'platform_config',
+    SPACES_CONFIG_KEY: 'spaces_config',
 
     // strings
     APP_AUTOUPDATE_PATTERN_KEY: 'app_autoupdate_pattern',
@@ -93,6 +97,7 @@ var gDefaults = (function () {
     result[exports.CAAS_CONFIG_KEY] = {};
     result[exports.EMAIL_DIGEST] = true;
     result[exports.PLATFORM_CONFIG_KEY] = {};
+    result[exports.SPACES_CONFIG_KEY] = { enabled: false };
 
     return result;
 })();
@@ -352,6 +357,32 @@ function setEmailDigest(enabled, callback) {
     });
 }
 
+function getSpacesConfig(callback) {
+    assert.strictEqual(typeof callback, 'function');
+
+    settingsdb.get(exports.SPACES_CONFIG_KEY, function (error, value) {
+        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(null, gDefaults[exports.SPACES_CONFIG_KEY]);
+        if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
+
+        callback(null, JSON.parse(value));
+    });
+}
+
+function setSpacesConfig(value, callback) {
+    assert.strictEqual(typeof value, 'object');
+    assert.strictEqual(typeof callback, 'function');
+
+    if ('enabled' in value && typeof value.enabled !== 'boolean') return callback(new SettingsError(SettingsError.BAD_FIELD, 'enabled must be a boolean'));
+
+    settingsdb.set(exports.SPACES_CONFIG_KEY, JSON.stringify(value), function (error) {
+        if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
+
+        exports.events.emit(exports.SPACES_CONFIG_KEY, value);
+
+        callback(null);
+    });
+}
+
 function getCaasConfig(callback) {
     assert.strictEqual(typeof callback, 'function');
 
@@ -474,7 +505,7 @@ function getAll(callback) {
         result[exports.DYNAMIC_DNS_KEY] = !!result[exports.DYNAMIC_DNS_KEY];
 
         // convert JSON objects
-        [exports.BACKUP_CONFIG_KEY, exports.UPDATE_CONFIG_KEY, exports.APPSTORE_CONFIG_KEY, exports.PLATFORM_CONFIG_KEY ].forEach(function (key) {
+        [exports.BACKUP_CONFIG_KEY, exports.UPDATE_CONFIG_KEY, exports.APPSTORE_CONFIG_KEY, exports.PLATFORM_CONFIG_KEY, exports.SPACES_CONFIG_KEY ].forEach(function (key) {
             result[key] = typeof result[key] === 'object' ? result[key] : safe.JSON.parse(result[key]);
         });
 

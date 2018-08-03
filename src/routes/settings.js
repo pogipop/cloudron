@@ -23,7 +23,10 @@ exports = module.exports = {
     setAppstoreConfig: setAppstoreConfig,
 
     getPlatformConfig: getPlatformConfig,
-    setPlatformConfig: setPlatformConfig
+    setPlatformConfig: setPlatformConfig,
+
+    setSpacesConfig: setSpacesConfig,
+    getSpacesConfig: getSpacesConfig
 };
 
 var assert = require('assert'),
@@ -192,6 +195,26 @@ function setPlatformConfig(req, res, next) {
     }
 
     settings.setPlatformConfig(req.body, function (error) {
+        if (error && error.reason === SettingsError.BAD_FIELD) return next(new HttpError(400, error.message));
+        if (error && error.reason === SettingsError.EXTERNAL_ERROR) return next(new HttpError(402, error.message));
+        if (error) return next(new HttpError(500, error));
+
+        next(new HttpSuccess(200, {}));
+    });
+}
+
+function getSpacesConfig(req, res, next) {
+    settings.getSpacesConfig(function (error, config) {
+        if (error) return next(new HttpError(500, error));
+
+        next(new HttpSuccess(200, config));
+    });
+}
+
+function setSpacesConfig(req, res, next) {
+    assert.strictEqual(typeof req.body, 'object');
+
+    settings.setSpacesConfig(req.body, function (error) {
         if (error && error.reason === SettingsError.BAD_FIELD) return next(new HttpError(400, error.message));
         if (error && error.reason === SettingsError.EXTERNAL_ERROR) return next(new HttpError(402, error.message));
         if (error) return next(new HttpError(500, error));

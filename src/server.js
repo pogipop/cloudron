@@ -226,6 +226,8 @@ function initializeExpressSync() {
     router.post('/api/v1/settings/backup_config',      settingsScope, routes.settings.setBackupConfig);
     router.get ('/api/v1/settings/platform_config',      settingsScope, routes.settings.getPlatformConfig);
     router.post('/api/v1/settings/platform_config',      settingsScope, routes.settings.setPlatformConfig);
+    router.get ('/api/v1/settings/spaces_config',      settingsScope, routes.settings.getSpacesConfig);
+    router.post('/api/v1/settings/spaces_config',      settingsScope, routes.settings.setSpacesConfig);
 
     router.get ('/api/v1/settings/time_zone',          settingsScope, routes.settings.getTimeZone);
     router.post('/api/v1/settings/time_zone',          settingsScope, routes.settings.setTimeZone);
