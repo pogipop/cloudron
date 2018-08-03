@@ -29,7 +29,6 @@ function get(req, res, next) {
         username: req.user.username,
         email: req.user.email,
         fallbackEmail: req.user.fallbackEmail,
-        tokenScopes: req.authInfo.authorizedScopes,
         displayName: req.user.displayName,
         twoFactorAuthenticationEnabled: req.user.twoFactorAuthenticationEnabled,
         admin: req.user.admin

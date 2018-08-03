@@ -255,7 +255,6 @@ function activate(username, password, email, displayName, ip, auditSource, callb
             callback(null, {
                 userId: userObject.id,
                 token: result.accessToken,
-                tokenScopes: result.tokenScopes,
                 expires: result.expires
             });
 
