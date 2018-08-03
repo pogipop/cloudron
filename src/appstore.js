@@ -272,7 +272,7 @@ function getBoxUpdate(callback) {
             var updateInfo = result.body;
 
             if (!semver.valid(updateInfo.version) || semver.gt(config.version(), updateInfo.version)) {
-                return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, util.format('Bad response: %s %s', result.statusCode, result.text)));
+                return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, util.format('Invalid update version: %s %s', result.statusCode, result.text)));
             }
 
             // updateInfo: { version, changelog, upgrade, sourceTarballUrl, sourceTarballSigUrl, boxVersionsUrl, boxVersionsSigUrl }
