@@ -120,6 +120,21 @@ describe('Settings', function () {
             });
         });
 
+        it('can set spaces config', function (done) {
+            settings.setSpacesConfig({ enabled: true }, function (error) {
+                expect(error).to.be(null);
+                done();
+            });
+        });
+
+        it('can get backup config', function (done) {
+            settings.getSpacesConfig(function (error, spacesConfig) {
+                expect(error).to.be(null);
+                expect(spacesConfig.enabled).to.be(true);
+                done();
+            });
+        });
+
         it('can enable mail digest', function (done) {
             settings.setEmailDigest(true, function (error) {
                 expect(error).to.be(null);
