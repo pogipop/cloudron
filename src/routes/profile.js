@@ -31,7 +31,8 @@ function get(req, res, next) {
         fallbackEmail: req.user.fallbackEmail,
         tokenScopes: req.authInfo.authorizedScopes,
         displayName: req.user.displayName,
-        twoFactorAuthenticationEnabled: req.user.twoFactorAuthenticationEnabled
+        twoFactorAuthenticationEnabled: req.user.twoFactorAuthenticationEnabled,
+        admin: req.user.admin
     }));
 }
 
