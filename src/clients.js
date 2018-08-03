@@ -257,21 +257,24 @@ function addTokenByUserId(clientId, userId, expiresAt, callback) {
             if (error && error.reason === UsersError.NOT_FOUND) return callback(new ClientsError(ClientsError.NOT_FOUND, 'No such user'));
             if (error) return callback(new ClientsError(ClientsError.INTERNAL_ERROR, error));
 
-            const userScopes = accesscontrol.scopesForUser(user);
-            var scope = accesscontrol.canonicalScopeString(result.scope);
-            var authorizedScopes = accesscontrol.intersectScopes(userScopes, scope.split(','));
-
-            var token = tokendb.generateToken();
-
-            tokendb.add(token, userId, result.id, expiresAt, authorizedScopes.join(','), function (error) {
+            accesscontrol.scopesForUser(user, function (error, userScopes) {
                 if (error) return callback(new ClientsError(ClientsError.INTERNAL_ERROR, error));
 
-                callback(null, {
-                    accessToken: token,
-                    tokenScopes: authorizedScopes,
-                    identifier: userId,
-                    clientId: result.id,
-                    expires: expiresAt
+                var scope = accesscontrol.canonicalScopeString(result.scope);
+                var authorizedScopes = accesscontrol.intersectScopes(userScopes, scope.split(','));
+
+                var token = tokendb.generateToken();
+
+                tokendb.add(token, userId, result.id, expiresAt, authorizedScopes.join(','), function (error) {
+                    if (error) return callback(new ClientsError(ClientsError.INTERNAL_ERROR, error));
+
+                    callback(null, {
+                        accessToken: token,
+                        tokenScopes: authorizedScopes,
+                        identifier: userId,
+                        clientId: result.id,
+                        expires: expiresAt
+                    });
                 });
             });
         });

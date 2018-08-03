@@ -107,8 +107,11 @@ function hasScopes(authorizedScopes, requiredScopes) {
     return null;
 }
 
-function scopesForUser(user) {
-    return user.admin ? exports.VALID_SCOPES : [ 'profile', 'apps:read' ];
+function scopesForUser(user, callback) {
+    assert.strictEqual(typeof user, 'object');
+    assert.strictEqual(typeof callback, 'function');
+
+    return callback(null, user.admin ? exports.VALID_SCOPES : [ 'profile', 'apps:read' ]);
 }
 
 function validateToken(accessToken, callback) {
@@ -123,12 +126,15 @@ function validateToken(accessToken, callback) {
             if (error && error.reason === UsersError.NOT_FOUND) return callback(null, null /* user */, 'Invalid Token'); // will end up as a 401
             if (error) return callback(error);
 
-            const userScopes = scopesForUser(user);
-            var authorizedScopes = intersectScopes(userScopes, token.scope.split(','));
-            const skipPasswordVerification = token.clientId === 'cid-sdk' || token.clientId === 'cid-cli'; // these clients do not require password checks unlike UI
-            var info = { authorizedScopes: authorizedScopes, skipPasswordVerification: skipPasswordVerification }; // ends up in req.authInfo
+            scopesForUser(user, function (error, userScopes) {
+                if (error) return callback(error);
 
-            callback(null, user, info);
+                var authorizedScopes = intersectScopes(userScopes, token.scope.split(','));
+                const skipPasswordVerification = token.clientId === 'cid-sdk' || token.clientId === 'cid-cli'; // these clients do not require password checks unlike UI
+                var info = { authorizedScopes: authorizedScopes, skipPasswordVerification: skipPasswordVerification }; // ends up in req.authInfo
+
+                callback(null, user, info);
+            });
         });
     });
 }
