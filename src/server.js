@@ -146,7 +146,7 @@ function initializeExpressSync() {
     // user routes
     router.get ('/api/v1/users', usersReadScope, routes.users.list);
     router.post('/api/v1/users', usersManageScope, routes.users.create);
-    router.get ('/api/v1/users/:userId', usersManageScope, routes.users.get);
+    router.get ('/api/v1/users/:userId', usersManageScope, routes.users.get); // this is manage scope because it returns non-restricted fields
     router.del ('/api/v1/users/:userId', usersManageScope, routes.users.verifyPassword, routes.users.remove);
     router.post('/api/v1/users/:userId', usersManageScope, routes.users.update);
     router.put ('/api/v1/users/:userId/groups', usersManageScope, routes.users.setGroups);
@@ -270,7 +270,7 @@ function initializeExpressSync() {
     // domain routes
     router.post('/api/v1/domains', domainsManageScope, routes.domains.add);
     router.get ('/api/v1/domains', domainsReadScope, routes.domains.getAll);
-    router.get ('/api/v1/domains/:domain', domainsManageScope, routes.domains.get);
+    router.get ('/api/v1/domains/:domain', domainsManageScope, routes.domains.get);  // this is manage scope because it returns non-restricted fields
     router.put ('/api/v1/domains/:domain', domainsManageScope, routes.domains.update);
     router.del ('/api/v1/domains/:domain', domainsManageScope, routes.users.verifyPassword, routes.domains.del);
 
