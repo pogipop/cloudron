@@ -28,6 +28,7 @@ exports = module.exports = {
 var assert = require('assert'),
     DatabaseError = require('./databaseerror.js'),
     debug = require('debug')('box:accesscontrol'),
+    settings = require('./settings.js'),
     tokendb = require('./tokendb.js'),
     users = require('./users.js'),
     UsersError = users.UsersError,
@@ -111,7 +112,13 @@ function scopesForUser(user, callback) {
     assert.strictEqual(typeof user, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    return callback(null, user.admin ? exports.VALID_SCOPES : [ 'profile', 'apps:read' ]);
+    if (user.admin) return callback(null, exports.VALID_SCOPES);
+
+    settings.getSpacesConfig(function (error, spaces) {
+        if (error) return callback(error);
+
+        callback(null, spaces.enabled ? [ 'profile', 'apps', 'domains:read', 'users:read' ] : [ 'profile', 'apps:read' ]);
+    });
 }
 
 function validateToken(accessToken, callback) {

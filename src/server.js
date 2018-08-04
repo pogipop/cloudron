@@ -94,7 +94,7 @@ function initializeExpressSync() {
     var usersReadScope = routes.accesscontrol.scope(accesscontrol.SCOPE_USERS_READ);
     var usersManageScope = routes.accesscontrol.scope(accesscontrol.SCOPE_USERS_MANAGE);
     var appsReadScope = routes.accesscontrol.scope(accesscontrol.SCOPE_APPS_READ);
-    var appsManageScope = routes.accesscontrol.scope(accesscontrol.SCOPE_APPS_MANAGE);
+    var appsManageScope = [ routes.accesscontrol.scope(accesscontrol.SCOPE_APPS_MANAGE), routes.accesscontrol.verifyAppOwnership ];
     var settingsScope = routes.accesscontrol.scope(accesscontrol.SCOPE_SETTINGS);
     var mailScope = routes.accesscontrol.scope(accesscontrol.SCOPE_MAIL);
     var clientsScope = routes.accesscontrol.scope(accesscontrol.SCOPE_CLIENTS);

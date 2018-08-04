@@ -1,13 +1,17 @@
 'use strict';
 
 exports = module.exports = {
+    initialize: initialize,
+    uninitialize: uninitialize,
+
     scope: scope,
     websocketAuth: websocketAuth,
-    initialize: initialize,
-    uninitialize: uninitialize
+    verifyAppOwnership: verifyAppOwnership
 };
 
 var accesscontrol = require('../accesscontrol.js'),
+    apps = require('../apps.js'),
+    AppsError = apps.AppsError,
     assert = require('assert'),
     BasicStrategy = require('passport-http').BasicStrategy,
     BearerStrategy = require('passport-http-bearer').Strategy,
@@ -17,6 +21,7 @@ var accesscontrol = require('../accesscontrol.js'),
     HttpError = require('connect-lastmile').HttpError,
     LocalStrategy = require('passport-local').Strategy,
     passport = require('passport'),
+    settings = require('../settings.js'),
     users = require('../users.js'),
     UsersError = users.UsersError;
 
@@ -135,5 +140,27 @@ function websocketAuth(requiredScopes, req, res, next) {
         if (e) return next(new HttpError(403, e.message));
 
         next();
+    });
+}
+
+function verifyAppOwnership(req, res, next) {
+    if (req.user.admin) return next();
+
+    const appCreate = !('id' in req.params);
+
+    settings.getSpacesConfig(function (error, spaces) {
+        if (error) return next(new HttpError(500, error));
+        if (!spaces.enabled) return next();
+
+        if (appCreate) return next(); // ok to install app
+
+        apps.get(req.params.id, function (error, app) {
+            if (error && error.reason === AppsError.NOT_FOUND) return next(new HttpError(404, 'No such app'));
+            if (error) return next(new HttpError(500, error));
+
+            if (app.ownerId !== req.user.id) return next(new HttpError(401, 'Unauthorized'));
+
+            next();
+        });
     });
 }
