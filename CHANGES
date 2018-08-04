@@ -1331,4 +1331,5 @@
 * Display restore errors in the UI
 * Update Haraka to 2.8.19
 * GPG verify releases
+* Allow subdomains in location field
 

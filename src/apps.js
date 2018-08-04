@@ -149,9 +149,9 @@ function validateHostname(location, domain, hostname) {
 
     if (location) {
         // label validation
-        if (location.length > 63) return new AppsError(AppsError.BAD_FIELD, 'Subdomain exceeds 63 characters');
-        if (location.match(/^[A-Za-z0-9-]+$/) === null) return new AppsError(AppsError.BAD_FIELD, 'Subdomain can only contain alphanumerics and hyphen');
-        if (location.startsWith('-') || location.endsWith('-')) return new AppsError(AppsError.BAD_FIELD, 'Subdomain cannot start or end with hyphen');
+        if (location.split('.').some(function (p) { return p.length > 63 || p.length < 1; })) return new AppsError(AppsError.BAD_FIELD, 'Invalid subdomain length');
+        if (location.match(/^[A-Za-z0-9-.]+$/) === null) return new AppsError(AppsError.BAD_FIELD, 'Subdomain can only contain alphanumeric, hyphen and dot');
+        if (/^[-.]/.test(location)) return new AppsError(AppsError.BAD_FIELD, 'Subdomain cannot start or end with hyphen or dot');
     }
 
     return null;
