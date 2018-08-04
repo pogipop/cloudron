@@ -333,12 +333,13 @@ function removeInternalFields(app) {
         'id', 'appStoreId', 'installationState', 'installationProgress', 'runState', 'health',
         'location', 'domain', 'fqdn', 'mailboxName',
         'accessRestriction', 'manifest', 'portBindings', 'iconUrl', 'memoryLimit', 'xFrameOptions',
-        'sso', 'debugMode', 'robotsTxt', 'enableBackup', 'creationTime', 'updateTime', 'ts', 'alternateDomains');
+        'sso', 'debugMode', 'robotsTxt', 'enableBackup', 'creationTime', 'updateTime', 'ts',
+        'alternateDomains', 'ownerId');
 }
 
 function removeRestrictedFields(app) {
     return _.pick(app,
-        'id', 'appStoreId', 'installationState', 'installationProgress', 'runState', 'health',
+        'id', 'appStoreId', 'installationState', 'installationProgress', 'runState', 'health', 'ownerId',
         'location', 'domain', 'fqdn', 'manifest', 'portBindings', 'iconUrl', 'creationTime', 'ts');
 }
 
