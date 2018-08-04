@@ -132,7 +132,7 @@ function getDisks(callback) {
 function getConfig(callback) {
     assert.strictEqual(typeof callback, 'function');
 
-    settings.getCloudronName(function (error, cloudronName) {
+    settings.getAll(function (error, allSettings) {
         if (error) return callback(new CloudronError(CloudronError.INTERNAL_ERROR, error));
 
         // be picky about what we send out here since this is sent for 'normal' users as well
@@ -147,7 +147,8 @@ function getConfig(callback) {
             isDemo: config.isDemo(),
             memory: os.totalmem(),
             provider: config.provider(),
-            cloudronName: cloudronName
+            cloudronName: allSettings[settings.CLOUDRON_NAME_KEY],
+            spaces: allSettings[settings.SPACES_CONFIG_KEY] // here because settings route cannot be accessed by spaces users
         });
     });
 }
