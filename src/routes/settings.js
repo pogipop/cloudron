@@ -166,6 +166,9 @@ function setBackupConfig(req, res, next) {
     if (typeof req.body.format !== 'string') return next(new HttpError(400, 'format must be a string'));
     if ('acceptSelfSignedCerts' in req.body && typeof req.body.acceptSelfSignedCerts !== 'boolean') return next(new HttpError(400, 'format must be a boolean'));
 
+    // testing the backup using put/del takes a bit of time at times
+    req.clearTimeout();
+
     settings.setBackupConfig(req.body, function (error) {
         if (error && error.reason === SettingsError.BAD_FIELD) return next(new HttpError(400, error.message));
         if (error && error.reason === SettingsError.EXTERNAL_ERROR) return next(new HttpError(402, error.message));
