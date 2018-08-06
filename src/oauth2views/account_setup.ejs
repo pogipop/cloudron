@@ -52,7 +52,7 @@ app.controller('Controller', ['$scope', function ($scope) {
 <% } %>
 
           <div class="form-group">
-            <label class="control-label">Display Name</label>
+            <label class="control-label">Full Name</label>
             <input type="displayName" class="form-control" ng-model="displayName" name="displayName" required>
           </div>
 
@@ -72,7 +72,7 @@ app.controller('Controller', ['$scope', function ($scope) {
             <input type="password" class="form-control" ng-model="passwordRepeat" name="passwordRepeat" required>
           </div>
 
-          <input class="btn btn-primary btn-outline pull-right" type="submit" value="Create" ng-disabled="setupForm.$invalid || password !== passwordRepeat"/>
+          <center><input class="btn btn-primary btn-outline" type="submit" value="Setup" ng-disabled="setupForm.$invalid || password !== passwordRepeat"/></center>
         </form>
       </div>
     </div>

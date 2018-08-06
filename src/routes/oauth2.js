@@ -318,7 +318,7 @@ function renderAccountSetupSite(res, req, userObject, error) {
         csrf: req.csrfToken(),
         resetToken: req.query.reset_token || req.body.resetToken,
         email: req.query.email || req.body.email,
-        title: 'Password Setup'
+        title: 'Account Setup'
     });
 }
 
