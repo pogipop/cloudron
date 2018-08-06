@@ -455,7 +455,7 @@ function tarExtract(inStream, destination, key, callback) {
         var decrypt = crypto.createDecipher('aes-256-cbc', key);
         decrypt.on('error', function (error) {
             debug('tarExtract: decrypt stream error.', error);
-            callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
+            callback(new BackupsError(BackupsError.EXTERNAL_ERROR, `Failed to decrypt: ${error.message}`));
         });
         inStream.pipe(ps).pipe(decrypt).pipe(gunzip).pipe(extract);
     } else {
