@@ -1333,3 +1333,19 @@
 * GPG verify releases
 * Allow subdomains in location field
 
+[3.0.1]
+* Support alternate app domains with redirects
+* Allow hyphen in mailbox names
+* Fix issue where the UI timesout when relay server is not reachable
+* Add support for personal spaces
+* Add UI to edit users in the groups dialog
+* Add UI to set groups when creating a user
+* Open logs and terminal in a new tab instead of a window
+* Add button to view backup logs
+* Add Mailjet mail relay support
+* Encryption support for incremental backups
+* Display restore errors in the UI
+* Update Haraka to 2.8.19
+* GPG verify releases
+* Allow subdomains in location field
+
