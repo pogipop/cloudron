@@ -109,6 +109,12 @@ var KNOWN_ADDONS = {
         teardown: NOOP,
         backup: NOOP,
         restore: NOOP
+    },
+    _docker: {
+        setup: NOOP,
+        teardown: NOOP,
+        backup: NOOP,
+        restore: NOOP
     }
 };
 
@@ -213,6 +219,7 @@ function getBindsSync(app, addons) {
 
     for (let addon in addons) {
         switch (addon) {
+        case '_docker': binds.push('/var/run/docker.sock:/var/run/docker.sock:rw'); break;
         case 'localstorage':
             binds.push(path.join(paths.APPS_DATA_DIR, app.id, 'data') + ':/app/data:rw');
             if (!Array.isArray(addons[addon].bindMounts)) break;
