@@ -278,6 +278,15 @@ function checkMx(domain, callback) {
     });
 }
 
+function txtToDict(txt) {
+    var dict = {};
+    txt.split(';').forEach(function(v) {
+        var p = v.trim().split('=');
+        dict[p[0]]=p[1];
+    });
+    return dict;
+}
+
 function checkDmarc(domain, callback) {
     var dmarc = {
         domain: '_dmarc.' + domain,
@@ -293,7 +302,9 @@ function checkDmarc(domain, callback) {
 
         if (txtRecords.length !== 0) {
             dmarc.value = txtRecords[0].join('');
-            dmarc.status = (dmarc.value === dmarc.expected);
+            // allow extra fields in dmarc like rua
+            const actual = txtToDict(dmarc.value), expected = txtToDict(dmarc.expected);
+            dmarc.status = Object.keys(expected).every(k => expected[k] === actual[k]);
         }
 
         callback(null, dmarc);

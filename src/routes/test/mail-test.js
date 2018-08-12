@@ -408,6 +408,25 @@ describe('Mail API', function () {
                 });
         });
 
+        it('succeeds with modified DMARC1 values', function (done) {
+            clearDnsAnswerQueue();
+
+            dnsAnswerQueue[dmarcDomain].TXT = [['v=DMARC1; p=reject; rua=mailto:rua@example.com; pct=100']];
+
+            superagent.get(SERVER_URL + '/api/v1/mail/' + DOMAIN_0.domain + '/status')
+                .query({ access_token: token })
+                .end(function (err, res) {
+                    expect(res.statusCode).to.equal(200);
+
+                    expect(res.body.dns.dmarc).to.be.an('object');
+                    expect(res.body.dns.dmarc.expected).to.eql('v=DMARC1; p=reject; pct=100');
+                    expect(res.body.dns.dmarc.status).to.eql(true);
+                    expect(res.body.dns.dmarc.value).to.eql('v=DMARC1; p=reject; rua=mailto:rua@example.com; pct=100');
+
+                    done();
+                });
+        });
+
         it('succeeds with all correct records', function (done) {
             clearDnsAnswerQueue();
 
