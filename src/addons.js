@@ -205,9 +205,6 @@ function getEnvironment(app, callback) {
     appdb.getAddonConfigByAppId(app.id, function (error, result) {
         if (error) return callback(error);
 
-        // expose the /app/data location of the host when localstorage and docker addons are used
-        if (app.manifest.addons['localstorage'] && app.manifest.addons['docker']) result.push({ name: 'DOCKER_DATA_DIR', value: path.join(paths.APPS_DATA_DIR, app.id, 'data') });
-
         return callback(null, result.map(function (e) { return e.name + '=' + e.value; }));
     });
 }
