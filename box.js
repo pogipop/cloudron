@@ -13,6 +13,7 @@ var appHealthMonitor = require('./src/apphealthmonitor.js'),
     async = require('async'),
     config = require('./src/config.js'),
     ldap = require('./src/ldap.js'),
+    dockerProxy = require('./src/dockerproxy.js'),
     server = require('./src/server.js');
 
 console.log();
@@ -25,6 +26,9 @@ console.log(' Version:                        ', config.version());
 console.log(' Admin Origin:                   ', config.adminOrigin());
 console.log(' Appstore API server origin:     ', config.apiServerOrigin());
 console.log(' Appstore Web server origin:     ', config.webServerOrigin());
+console.log(' SysAdmin Port:                  ', config.get('sysadminPort'));
+console.log(' LDAP Server Port:               ', config.get('ldapPort'));
+console.log(' Docker Proxy Port:              ', config.get('dockerProxyPort'));
 console.log();
 console.log('==========================================');
 console.log();
@@ -32,6 +36,7 @@ console.log();
 async.series([
     server.start,
     ldap.start,
+    dockerProxy.start,
     appHealthMonitor.start,
 ], function (error) {
     if (error) {
@@ -46,11 +51,13 @@ var NOOP_CALLBACK = function () { };
 process.on('SIGINT', function () {
     server.stop(NOOP_CALLBACK);
     ldap.stop(NOOP_CALLBACK);
+    dockerProxy.stop(NOOP_CALLBACK);
     setTimeout(process.exit.bind(process), 3000);
 });
 
 process.on('SIGTERM', function () {
     server.stop(NOOP_CALLBACK);
     ldap.stop(NOOP_CALLBACK);
+    dockerProxy.stop(NOOP_CALLBACK);
     setTimeout(process.exit.bind(process), 3000);
 });

@@ -103,7 +103,7 @@ function initConfig() {
     data.smtpPort = 2525; // this value comes from mail container
     data.sysadminPort = 3001;
     data.ldapPort = 3002;
-    data.dockerProxyPort = 5687;
+    data.dockerProxyPort = 3003;
 
     // keep in sync with start.sh
     data.database = {
