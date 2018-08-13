@@ -342,7 +342,7 @@ function startDockerProxy(callback) {
             req.pipe(dockerRequest, { end: true });
         }
 
-    }).listen(5687, callback);
+    }).listen(config.get('dockerProxyPort'), callback);
 }
 
 function handleCertChanged(cn) {
