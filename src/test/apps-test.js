@@ -216,26 +216,26 @@ describe('Apps', function () {
 
     describe('validatePortBindings', function () {
         it('does not allow invalid host port', function () {
-            expect(apps._validatePortBindings({ port: -1 }, { port: 5000 })).to.be.an(Error);
-            expect(apps._validatePortBindings({ port: 0 }, { port: 5000 })).to.be.an(Error);
-            expect(apps._validatePortBindings({ port: 'text' }, { port: 5000 })).to.be.an(Error);
-            expect(apps._validatePortBindings({ port: 65536 }, { port: 5000 })).to.be.an(Error);
-            expect(apps._validatePortBindings({ port: 470 }, { port: 5000 })).to.be.an(Error);
+            expect(apps._validatePortBindings({ port: -1 }, { tcpPorts: { port: 5000 } })).to.be.an(Error);
+            expect(apps._validatePortBindings({ port: 0 }, { tcpPorts: { port: 5000 } })).to.be.an(Error);
+            expect(apps._validatePortBindings({ port: 'text' }, { tcpPorts: { port: 5000 } })).to.be.an(Error);
+            expect(apps._validatePortBindings({ port: 65536 }, { tcpPorts: { port: 5000 } })).to.be.an(Error);
+            expect(apps._validatePortBindings({ port: 470 }, { tcpPorts: { port: 5000 } })).to.be.an(Error);
         });
 
         it('does not allow ports not as part of manifest', function () {
-            expect(apps._validatePortBindings({ port: 1567 }, { })).to.be.an(Error);
-            expect(apps._validatePortBindings({ port: 1567 }, { port3: null })).to.be.an(Error);
+            expect(apps._validatePortBindings({ port: 1567 }, { tcpPorts: { } })).to.be.an(Error);
+            expect(apps._validatePortBindings({ port: 1567 }, { tcpPorts: { port3: null } })).to.be.an(Error);
         });
 
         it('allows valid bindings', function () {
-            expect(apps._validatePortBindings({ port: 1024 }, { port: 5000 })).to.be(null);
+            expect(apps._validatePortBindings({ port: 1024 }, { tcpPorts: { port: 5000 } })).to.be(null);
 
             expect(apps._validatePortBindings({
                 port1: 4033,
                 port2: 3242,
                 port3: 1234
-            }, { port1: null, port2: null, port3: null })).to.be(null);
+            }, { tcpPorts: { port1: null, port2: null, port3: null } })).to.be(null);
         });
     });
 

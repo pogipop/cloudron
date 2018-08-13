@@ -161,8 +161,9 @@ function validateHostname(location, domain, hostname) {
 }
 
 // validate the port bindings
-function validatePortBindings(portBindings, tcpPorts) {
+function validatePortBindings(portBindings, manifest) {
     assert.strictEqual(typeof portBindings, 'object');
+    assert.strictEqual(typeof manifest, 'object');
 
     // keep the public ports in sync with firewall rules in setup/start/cloudron-firewall.sh
     // these ports are reserved even if we listen only on 127.0.0.1 because we setup HostIp to be 127.0.0.1
@@ -205,7 +206,7 @@ function validatePortBindings(portBindings, tcpPorts) {
 
     // it is OK if there is no 1-1 mapping between values in manifest.tcpPorts and portBindings. missing values implies
     // that the user wants the service disabled
-    tcpPorts = tcpPorts || { };
+    const tcpPorts = manifest.tcpPorts || { };
     for (let portName in portBindings) {
         if (!(portName in tcpPorts)) return new AppsError(AppsError.BAD_FIELD, `Invalid portBindings ${portName}`);
     }
@@ -547,7 +548,7 @@ function install(data, auditSource, callback) {
         error = checkManifestConstraints(manifest);
         if (error) return callback(error);
 
-        error = validatePortBindings(portBindings, manifest.tcpPorts);
+        error = validatePortBindings(portBindings, manifest);
         if (error) return callback(error);
 
         error = validateAccessRestriction(accessRestriction);
@@ -676,7 +677,7 @@ function configure(appId, data, auditSource, callback) {
         }
 
         if ('portBindings' in data) {
-            error = validatePortBindings(data.portBindings, app.manifest.tcpPorts);
+            error = validatePortBindings(data.portBindings, app.manifest);
             if (error) return callback(error);
             values.portBindings = translatePortBindings(data.portBindings)
             portBindings = data.portBindings;
@@ -978,7 +979,7 @@ function clone(appId, data, auditSource, callback) {
             error = checkManifestConstraints(backupInfo.manifest);
             if (error) return callback(error);
 
-            error = validatePortBindings(portBindings, backupInfo.manifest.tcpPorts);
+            error = validatePortBindings(portBindings, backupInfo.manifest);
             if (error) return callback(error);
 
             domains.get(domain, function (error, domainObject) {
