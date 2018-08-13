@@ -205,6 +205,8 @@ function getEnvironment(app, callback) {
     appdb.getAddonConfigByAppId(app.id, function (error, result) {
         if (error) return callback(error);
 
+        if (app.manifest.addons['docker']) result.push({ name: 'DOCKER_URL', value: `tcp://172.18.0.1:${config.get('dockerProxyPort')}` });
+
         return callback(null, result.map(function (e) { return e.name + '=' + e.value; }));
     });
 }
@@ -219,7 +221,6 @@ function getBindsSync(app, addons) {
 
     for (let addon in addons) {
         switch (addon) {
-        case 'docker': binds.push('/var/run/docker.sock:/var/run/docker.sock:rw'); break;
         case 'localstorage':
             binds.push(path.join(paths.APPS_DATA_DIR, app.id, 'data') + ':/app/data:rw');
             if (!Array.isArray(addons[addon].bindMounts)) break;
