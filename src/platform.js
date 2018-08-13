@@ -14,6 +14,7 @@ var apps = require('./apps.js'),
     debug = require('debug')('box:platform'),
     fs = require('fs'),
     hat = require('./hat.js'),
+    http = require('http'),
     infra = require('./infra_version.js'),
     locker = require('./locker.js'),
     mail = require('./mail.js'),
@@ -62,6 +63,7 @@ function start(callback) {
     if (error) return callback(error);
 
     async.series([
+        startDockerProxy,
         stopContainers.bind(null, existingInfra),
         startAddons.bind(null, existingInfra),
         removeOldImages,
@@ -312,6 +314,35 @@ function startApps(existingInfra, callback) {
         reverseProxy.removeAppConfigs(); // should we change the cert location, nginx will not start
         apps.configureInstalledApps(callback);
     }
+}
+
+function startDockerProxy(callback) {
+    assert.strictEqual(typeof callback, 'function');
+
+    function interceptor(req, res) {
+        debug(`dockerInterceptor: ${req.method} ${req.url}`);
+        return false;
+    }
+
+    return http.createServer(function (req, res) {
+        if (interceptor(req, res)) return;
+
+        // rejectUnauthorized should not be required but it doesn't work without it
+        var options = _.extend({ }, { socketPath: '/var/run/docker.sock' }, { method: req.method, path: req.url, headers: req.headers, rejectUnauthorized: false });
+        var dockerRequest = http.request(options, function (dockerResponse) {
+            res.writeHead(dockerResponse.statusCode, dockerResponse.headers);
+            dockerResponse.on('error', console.error);
+            dockerResponse.pipe(res, { end: true });
+        });
+
+        req.on('error', console.error);
+        if (!req.readable) {
+            dockerRequest.end();
+        } else {
+            req.pipe(dockerRequest, { end: true });
+        }
+
+    }).listen(5687, callback);
 }
 
 function handleCertChanged(cn) {
