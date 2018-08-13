@@ -205,7 +205,7 @@ function getEnvironment(app, callback) {
     appdb.getAddonConfigByAppId(app.id, function (error, result) {
         if (error) return callback(error);
 
-        if (app.manifest.addons['docker']) result.push({ name: 'DOCKER_URL', value: `tcp://172.18.0.1:${config.get('dockerProxyPort')}` });
+        if (app.manifest.addons['docker']) result.push({ name: 'DOCKER_HOST', value: `tcp://172.18.0.1:${config.get('dockerProxyPort')}` });
 
         return callback(null, result.map(function (e) { return e.name + '=' + e.value; }));
     });
