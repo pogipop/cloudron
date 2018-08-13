@@ -670,12 +670,12 @@ function update(app, callback) {
 
         // free unused ports
         function (next) {
-            // make sure we always have objects
-            var currentPorts = app.portBindings || {};
-            var newPorts = app.updateConfig.manifest.tcpPorts || {};
+            const currentPorts = app.portBindings || {};
+            const newTcpPorts = app.updateConfig.manifest.tcpPorts || {};
+            const newUdpPorts = app.updateConfig.manifest.udpPorts || {};
 
             async.each(Object.keys(currentPorts), function (portName, callback) {
-                if (newPorts[portName]) return callback(); // port still in use
+                if (newTcpPorts[portName] || newUdpPorts[portName]) return callback(); // port still in use
 
                 appdb.delPortBinding(currentPorts[portName], apps.PORT_TYPE_TCP, function (error) {
                     if (error && error.reason === DatabaseError.NOT_FOUND) console.error('Portbinding does not exist in database.');

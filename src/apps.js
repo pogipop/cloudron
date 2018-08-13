@@ -207,8 +207,9 @@ function validatePortBindings(portBindings, manifest) {
     // it is OK if there is no 1-1 mapping between values in manifest.tcpPorts and portBindings. missing values implies
     // that the user wants the service disabled
     const tcpPorts = manifest.tcpPorts || { };
+    const udpPorts = manifest.udpPorts || { };
     for (let portName in portBindings) {
-        if (!(portName in tcpPorts)) return new AppsError(AppsError.BAD_FIELD, `Invalid portBindings ${portName}`);
+        if (!(portName in tcpPorts) && !(portName in udpPorts)) return new AppsError(AppsError.BAD_FIELD, `Invalid portBindings ${portName}`);
     }
 
     return null;

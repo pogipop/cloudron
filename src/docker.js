@@ -128,13 +128,16 @@ function createSubcontainer(app, name, cmd, options, callback) {
 
     var portEnv = [];
     for (let portName in app.portBindings) {
-        var hostPort = app.portBindings[portName];
-        var containerPort = manifest.tcpPorts[portName].containerPort || hostPort;
+        const hostPort = app.portBindings[portName];
+        const portType = portName in manifest.tcpPorts ? 'tcp' : 'udp';
+        const ports = portType == 'tcp' ? manifest.tcpPorts : manifest.udpPorts;
 
-        exposedPorts[containerPort + '/tcp'] = {};
+        var containerPort = ports[portName].containerPort || hostPort;
+
+        exposedPorts[`${containerPort}/${portType}`] = {};
         portEnv.push(`${portName}=${hostPort}`);
 
-        dockerPortBindings[containerPort + '/tcp'] = [ { HostIp: '0.0.0.0', HostPort: hostPort + '' } ];
+        dockerPortBindings[`${containerPort}/${portType}`] = [ { HostIp: '0.0.0.0', HostPort: hostPort + '' } ];
     }
 
     // first check db record, then manifest
