@@ -8,8 +8,7 @@ exports = module.exports = {
 var assert = require('assert'),
     config = require('./config.js'),
     debug = require('debug')('box:ldap'),
-    http = require('http'),
-    _ = require('underscore');
+    http = require('http');
 
 var gServer = null;
 
@@ -27,7 +26,14 @@ function start(callback) {
         if (interceptor(req, res)) return;
 
         // rejectUnauthorized should not be required but it doesn't work without it
-        var options = _.extend({ }, { socketPath: '/var/run/docker.sock' }, { method: req.method, path: req.url, headers: req.headers, rejectUnauthorized: false });
+        var options = {
+            socketPath: '/var/run/docker.sock',
+            method: req.method,
+            path: req.url,
+            headers: req.headers,
+            rejectUnauthorized: false
+        };
+
         var dockerRequest = http.request(options, function (dockerResponse) {
             res.writeHead(dockerResponse.statusCode, dockerResponse.headers);
             dockerResponse.on('error', console.error);
