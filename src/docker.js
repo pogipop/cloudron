@@ -127,12 +127,12 @@ function createSubcontainer(app, name, cmd, options, callback) {
     dockerPortBindings[manifest.httpPort + '/tcp'] = [ { HostIp: '127.0.0.1', HostPort: app.httpPort + '' } ];
 
     var portEnv = [];
-    for (var e in app.portBindings) {
-        var hostPort = app.portBindings[e];
-        var containerPort = manifest.tcpPorts[e].containerPort || hostPort;
+    for (let portName in app.portBindings) {
+        var hostPort = app.portBindings[portName];
+        var containerPort = manifest.tcpPorts[portName].containerPort || hostPort;
 
         exposedPorts[containerPort + '/tcp'] = {};
-        portEnv.push(e + '=' + hostPort);
+        portEnv.push(`${portName}=${hostPort}`);
 
         dockerPortBindings[containerPort + '/tcp'] = [ { HostIp: '0.0.0.0', HostPort: hostPort + '' } ];
     }

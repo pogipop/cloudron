@@ -6,6 +6,7 @@
 'use strict';
 
 var appdb = require('../appdb.js'),
+    apps = require('../apps.js'),
     async = require('async'),
     config = require('../config.js'),
     constants = require('../constants.js'),
@@ -300,7 +301,7 @@ describe('updatechecker - app - manual (email)', function () {
                     if (error) return next(error);
 
                     APP_0.ownerId = userObject.id;
-                    appdb.add(APP_0.id, APP_0.appStoreId, APP_0.manifest, APP_0.location, APP_0.domain, APP_0.ownerId, APP_0.portBindings, APP_0, next);
+                    appdb.add(APP_0.id, APP_0.appStoreId, APP_0.manifest, APP_0.location, APP_0.domain, APP_0.ownerId, apps._translatePortBindings(APP_0.portBindings), APP_0, next);
                 });
             },
             settings.setAppAutoupdatePattern.bind(null, constants.AUTOUPDATE_PATTERN_NEVER),
@@ -423,7 +424,7 @@ describe('updatechecker - app - automatic (no email)', function () {
                     if (error) return next(error);
 
                     APP_0.ownerId = userObject.id;
-                    appdb.add(APP_0.id, APP_0.appStoreId, APP_0.manifest, APP_0.location, APP_0.domain, APP_0.ownerId, APP_0.portBindings, APP_0, next);
+                    appdb.add(APP_0.id, APP_0.appStoreId, APP_0.manifest, APP_0.location, APP_0.domain, APP_0.ownerId, apps._translatePortBindings(APP_0.portBindings), APP_0, next);
                 });
             },
             settings.setAppAutoupdatePattern.bind(null, '00 00 1,3,5,23 * * *'),
@@ -496,7 +497,7 @@ describe('updatechecker - app - automatic free (email)', function () {
                     if (error) return next(error);
 
                     APP_0.ownerId = userObject.id;
-                    appdb.add(APP_0.id, APP_0.appStoreId, APP_0.manifest, APP_0.location, APP_0.domain, APP_0.ownerId, APP_0.portBindings, APP_0, next);
+                    appdb.add(APP_0.id, APP_0.appStoreId, APP_0.manifest, APP_0.location, APP_0.domain, APP_0.ownerId, apps._translatePortBindings(APP_0.portBindings), APP_0, next);
                 });
             },
             settings.setAppAutoupdatePattern.bind(null, '00 00 1,3,5,23 * * *'),

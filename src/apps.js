@@ -48,7 +48,8 @@ exports = module.exports = {
     // exported for testing
     _validateHostname: validateHostname,
     _validatePortBindings: validatePortBindings,
-    _validateAccessRestriction: validateAccessRestriction
+    _validateAccessRestriction: validateAccessRestriction,
+    _translatePortBindings: translatePortBindings
 };
 
 var appdb = require('./appdb.js'),
@@ -190,24 +191,42 @@ function validatePortBindings(portBindings, tcpPorts) {
 
     if (!portBindings) return null;
 
-    var env;
-    for (env in portBindings) {
-        if (!/^[a-zA-Z0-9_]+$/.test(env)) return new AppsError(AppsError.BAD_FIELD, env + ' is not valid environment variable');
+    for (let portName in portBindings) {
+        if (!/^[a-zA-Z0-9_]+$/.test(portName)) return new AppsError(AppsError.BAD_FIELD, `${portName} is not a valid environment variable`);
 
-        if (!Number.isInteger(portBindings[env])) return new AppsError(AppsError.BAD_FIELD, portBindings[env] + ' is not an integer');
-        if (RESERVED_PORTS.indexOf(portBindings[env]) !== -1) return new AppsError(AppsError.PORT_RESERVED, String(portBindings[env]));
-        if (portBindings[env] <= 1023 || portBindings[env] > 65535) return new AppsError(AppsError.BAD_FIELD, portBindings[env] + ' is not in permitted range');
+        const hostPort = portBindings[portName];
+        if (!Number.isInteger(hostPort)) return new AppsError(AppsError.BAD_FIELD, `${hostPort} is not an integer`);
+        if (RESERVED_PORTS.indexOf(hostPort) !== -1) return new AppsError(AppsError.PORT_RESERVED, String(hostPort));
+        if (hostPort <= 1023 || hostPort > 65535) return new AppsError(AppsError.BAD_FIELD, `${hostPort} is not in permitted range`);
 
     }
 
     // it is OK if there is no 1-1 mapping between values in manifest.tcpPorts and portBindings. missing values implies
     // that the user wants the service disabled
     tcpPorts = tcpPorts || { };
-    for (env in portBindings) {
-        if (!(env in tcpPorts)) return new AppsError(AppsError.BAD_FIELD, 'Invalid portBindings ' + env);
+    for (let portName in portBindings) {
+        if (!(portName in tcpPorts)) return new AppsError(AppsError.BAD_FIELD, `Invalid portBindings ${portName}`);
     }
 
     return null;
+}
+
+function translatePortBindings(portBindings) {
+    if (!portBindings) return null;
+
+    let result = {};
+    for (let portName in portBindings) {
+        result[portName] = { hostPort: portBindings[portName] };
+    }
+    return result;
+}
+
+function postProcess(app) {
+    let result = {};
+    for (let portName in app.portBindings) {
+        result[portName] = app.portBindings[portName].hostPort;
+    }
+    app.portBindings = result;
 }
 
 function validateAccessRestriction(accessRestriction) {
@@ -305,8 +324,8 @@ function getDuplicateErrorDetails(location, portBindings, error) {
     if (match[1] === location) return new AppsError(AppsError.ALREADY_EXISTS);
 
     // check if any of the port bindings conflict
-    for (var env in portBindings) {
-        if (portBindings[env] === parseInt(match[1])) return new AppsError(AppsError.PORT_CONFLICT, match[1]);
+    for (let portName in portBindings) {
+        if (portBindings[portName] === parseInt(match[1])) return new AppsError(AppsError.PORT_CONFLICT, match[1]);
     }
 
     return new AppsError(AppsError.ALREADY_EXISTS);
@@ -375,6 +394,8 @@ function get(appId, callback) {
         if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new AppsError(AppsError.NOT_FOUND, 'No such app'));
         if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
 
+        postProcess(app);
+
         domaindb.get(app.domain, function (error, result) {
             if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
 
@@ -403,6 +424,8 @@ function getByIpAddress(ip, callback) {
             if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new AppsError(AppsError.NOT_FOUND, 'No such app'));
             if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
 
+            postProcess(app);
+
             domaindb.get(app.domain, function (error, result) {
                 if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
 
@@ -426,6 +449,8 @@ function getAll(callback) {
 
     appdb.getAll(function (error, apps) {
         if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
+
+        apps.forEach(postProcess);
 
         async.eachSeries(apps, function (app, iteratorDone) {
             domaindb.get(app.domain, function (error, result) {
@@ -583,7 +608,7 @@ function install(data, auditSource, callback) {
                 robotsTxt: robotsTxt
             };
 
-            appdb.add(appId, appStoreId, manifest, location, domain, ownerId, portBindings, data, function (error) {
+            appdb.add(appId, appStoreId, manifest, location, domain, ownerId, translatePortBindings(portBindings), data, function (error) {
                 if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(getDuplicateErrorDetails(location, portBindings, error));
                 if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new AppsError(AppsError.NOT_FOUND, error.message));
                 if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
@@ -649,9 +674,10 @@ function configure(appId, data, auditSource, callback) {
         }
 
         if ('portBindings' in data) {
-            portBindings = values.portBindings = data.portBindings;
-            error = validatePortBindings(values.portBindings, app.manifest.tcpPorts);
+            error = validatePortBindings(data.portBindings, app.manifest.tcpPorts);
             if (error) return callback(error);
+            values.portBindings = translatePortBindings(data.portBindings)
+            portBindings = data.portBindings;
         } else {
             portBindings = app.portBindings;
         }
@@ -974,7 +1000,7 @@ function clone(appId, data, auditSource, callback) {
                     robotsTxt: app.robotsTxt
                 };
 
-                appdb.add(newAppId, app.appStoreId, manifest, location, domain, ownerId, portBindings, data, function (error) {
+                appdb.add(newAppId, app.appStoreId, manifest, location, domain, ownerId, translatePortBindings(portBindings), data, function (error) {
                     if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(getDuplicateErrorDetails(location, portBindings, error));
                     if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
 
@@ -1162,8 +1188,8 @@ function autoupdateApps(updateInfo, auditSource, callback) { // updateInfo is { 
         var newTcpPorts = newManifest.tcpPorts || { };
         var portBindings = app.portBindings; // this is never null
 
-        for (var env in portBindings) {
-            if (!(env in newTcpPorts)) return new Error(env + ' was in use but new update removes it');
+        for (let portName in portBindings) {
+            if (!(portName in newTcpPorts)) return new Error(`${portName} was in use but new update removes it`);
         }
 
         // it's fine if one or more (unused) keys got removed

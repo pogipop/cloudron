@@ -103,7 +103,7 @@ function postProcess(result) {
     delete result.environmentVariables;
 
     for (var i = 0; i < environmentVariables.length; i++) {
-        result.portBindings[environmentVariables[i]] = parseInt(hostPorts[i], 10);
+        result.portBindings[environmentVariables[i]] = { hostPort: parseInt(hostPorts[i], 10) };
     }
 
     assert(result.accessRestrictionJson === null || typeof result.accessRestrictionJson === 'string');
@@ -272,7 +272,7 @@ function add(id, appStoreId, manifest, location, domain, ownerId, portBindings, 
     Object.keys(portBindings).forEach(function (env) {
         queries.push({
             query: 'INSERT INTO appPortBindings (environmentVariable, hostPort, appId) VALUES (?, ?, ?)',
-            args: [ env, portBindings[env], id ]
+            args: [ env, portBindings[env].hostPort, id ]
         });
     });
 
@@ -394,7 +394,7 @@ function updateWithConstraints(id, app, constraints, callback) {
         // replace entries by app id
         queries.push({ query: 'DELETE FROM appPortBindings WHERE appId = ?', args: [ id ] });
         Object.keys(portBindings).forEach(function (env) {
-            var values = [ portBindings[env], env, id ];
+            var values = [ portBindings[env].hostPort, env, id ];
             queries.push({ query: 'INSERT INTO appPortBindings (hostPort, environmentVariable, appId) VALUES(?, ?, ?)', args: values });
         });
     }
