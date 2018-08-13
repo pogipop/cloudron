@@ -45,6 +45,8 @@ exports = module.exports = {
     setOwner: setOwner,
     transferOwnership: transferOwnership,
 
+    PORT_TYPE_TCP: 'tcp',
+
     // exported for testing
     _validateHostname: validateHostname,
     _validatePortBindings: validatePortBindings,
@@ -216,7 +218,7 @@ function translatePortBindings(portBindings) {
 
     let result = {};
     for (let portName in portBindings) {
-        result[portName] = { hostPort: portBindings[portName] };
+        result[portName] = { hostPort: portBindings[portName], type: exports.PORT_TYPE_TCP };
     }
     return result;
 }

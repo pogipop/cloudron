@@ -677,7 +677,7 @@ function update(app, callback) {
             async.each(Object.keys(currentPorts), function (portName, callback) {
                 if (newPorts[portName]) return callback(); // port still in use
 
-                appdb.delPortBinding(currentPorts[portName], function (error) {
+                appdb.delPortBinding(currentPorts[portName], apps.PORT_TYPE_TCP, function (error) {
                     if (error && error.reason === DatabaseError.NOT_FOUND) console.error('Portbinding does not exist in database.');
                     else if (error) return next(error);
 
