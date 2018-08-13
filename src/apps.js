@@ -46,6 +46,7 @@ exports = module.exports = {
     transferOwnership: transferOwnership,
 
     PORT_TYPE_TCP: 'tcp',
+    PORT_TYPE_UDP: 'udp',
 
     // exported for testing
     _validateHostname: validateHostname,
@@ -215,12 +216,18 @@ function validatePortBindings(portBindings, manifest) {
     return null;
 }
 
-function translatePortBindings(portBindings) {
+function translatePortBindings(portBindings, manifest) {
+    assert.strictEqual(typeof portBindings, 'object');
+    assert.strictEqual(typeof manifest, 'object');
+
     if (!portBindings) return null;
 
     let result = {};
+    const tcpPorts = manifest.tcpPorts || { };
+
     for (let portName in portBindings) {
-        result[portName] = { hostPort: portBindings[portName], type: exports.PORT_TYPE_TCP };
+        const portType = portName in tcpPorts ? exports.PORT_TYPE_TCP : exports.PORT_TYPE_UDP;
+        result[portName] = { hostPort: portBindings[portName], type: portType };
     }
     return result;
 }
@@ -612,7 +619,7 @@ function install(data, auditSource, callback) {
                 robotsTxt: robotsTxt
             };
 
-            appdb.add(appId, appStoreId, manifest, location, domain, ownerId, translatePortBindings(portBindings), data, function (error) {
+            appdb.add(appId, appStoreId, manifest, location, domain, ownerId, translatePortBindings(portBindings, manifest), data, function (error) {
                 if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(getDuplicateErrorDetails(location, portBindings, error));
                 if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new AppsError(AppsError.NOT_FOUND, error.message));
                 if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
@@ -680,7 +687,7 @@ function configure(appId, data, auditSource, callback) {
         if ('portBindings' in data) {
             error = validatePortBindings(data.portBindings, app.manifest);
             if (error) return callback(error);
-            values.portBindings = translatePortBindings(data.portBindings)
+            values.portBindings = translatePortBindings(data.portBindings, app.manifest);
             portBindings = data.portBindings;
         } else {
             portBindings = app.portBindings;
@@ -1004,7 +1011,7 @@ function clone(appId, data, auditSource, callback) {
                     robotsTxt: app.robotsTxt
                 };
 
-                appdb.add(newAppId, app.appStoreId, manifest, location, domain, ownerId, translatePortBindings(portBindings), data, function (error) {
+                appdb.add(newAppId, app.appStoreId, manifest, location, domain, ownerId, translatePortBindings(portBindings, manifest), data, function (error) {
                     if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(getDuplicateErrorDetails(location, portBindings, error));
                     if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
 
