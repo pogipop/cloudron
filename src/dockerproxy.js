@@ -7,7 +7,7 @@ exports = module.exports = {
 
 var assert = require('assert'),
     config = require('./config.js'),
-    debug = require('debug')('box:ldap'),
+    debug = require('debug')('box:dockerproxy'),
     http = require('http');
 
 var gServer = null;
@@ -16,7 +16,7 @@ function start(callback) {
     assert.strictEqual(typeof callback, 'function');
 
     function interceptor(req, res) {
-        debug(`dockerInterceptor: ${req.method} ${req.url}`);
+        debug(`request: ${req.method} ${req.url}`);
         return false;
     }
 
