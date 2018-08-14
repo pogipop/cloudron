@@ -106,7 +106,7 @@ function setup(done) {
 
                 USER_0.id = APP_0.ownerId = result.id;
 
-                appdb.add(APP_0.id, APP_0.appStoreId, APP_0.manifest, APP_0.location, APP_0.domain, APP_0.ownerId, apps._translatePortBindings(APP_0.portBindings), APP_0, callback);
+                appdb.add(APP_0.id, APP_0.appStoreId, APP_0.manifest, APP_0.location, APP_0.domain, APP_0.ownerId, apps._translatePortBindings(APP_0.portBindings, APP_0.manifest), APP_0, callback);
             });
         },
         appdb.update.bind(null, APP_0.id, { containerId: APP_0.containerId }),
