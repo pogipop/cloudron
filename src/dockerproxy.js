@@ -13,27 +13,25 @@ var assert = require('assert'),
     net = require('net');
 
 var gServer = null;
+var gJSONParser = bodyParser.json();
 
 function start(callback) {
     assert.strictEqual(typeof callback, 'function');
 
-    var parser = bodyParser.json();
 
-    function interceptor(req, res) {
-        console.log(`request: ${req.method} ${req.url}`, req.body);
+    function authorized(req, res) {
+        // TODO add here some authorization
+        // - block apps not using the docker addon
+        // - block calls regarding platform containers
+        // - only allow managing and inspection of containers belonging to the app
 
-        if (req.method === 'POST' && req.url.match(/\/containers\/create/)) {
-            debug('patching container creation');
-        }
-
-        return false;
+        return true;
     }
 
     debug(`startDockerProxy: starting proxy on port ${config.get('dockerProxyPort')}`);
 
-
     gServer = http.createServer(function (req, res) {
-        if (interceptor(req, res)) return;
+        if (!authorized(req, res)) return;
 
         var options = {
             socketPath: '/var/run/docker.sock',
@@ -54,7 +52,17 @@ function start(callback) {
 
         req.on('error', function (error) { console.error('req error:', error); });
 
-        if (!req.readable) {
+        if (req.method === 'POST' && req.url.match(/\/containers\/create/)) {
+            gJSONParser(req, res, function () {
+                // overwrite the network the container lives in
+                req.body.HostConfig.NetworkMode = 'cloudron';
+
+                var plainBody = JSON.stringify(req.body);
+
+                dockerRequest.setHeader('Content-Length', Buffer.byteLength(plainBody));
+                dockerRequest.end(plainBody);
+            });
+        } else if (!req.readable) {
             dockerRequest.end();
         } else {
             req.pipe(dockerRequest, { end: true });

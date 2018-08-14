@@ -30,9 +30,17 @@ describe('Cloudron', function () {
 
     it('can create container', function (done) {
         var cmd = DOCKER + ` run ubuntu "/bin/bash" "-c" "echo 'hello'"`;
-        console.log(cmd)
         exec(cmd, function (error, stdout, stderr) {
-            console.log(error, stdout, stderr)
+            expect(error).to.be(null);
+            expect(stdout).to.contain('hello');
+            expect(stderr).to.be.empty();
+            done();
+        });
+    });
+
+    it('proxy overwrites the container network option', function (done) {
+        var cmd = DOCKER + ` run --network ifnotrewritethiswouldfail ubuntu "/bin/bash" "-c" "echo 'hello'"`;
+        exec(cmd, function (error, stdout, stderr) {
             expect(error).to.be(null);
             expect(stdout).to.contain('hello');
             expect(stderr).to.be.empty();
