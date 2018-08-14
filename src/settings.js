@@ -90,7 +90,8 @@ var gDefaults = (function () {
         provider: 'filesystem',
         key: '',
         backupFolder: '/var/backups',
-        retentionSecs: 172800
+        retentionSecs: 2 * 24 * 60 * 60, // 2 days
+        intervalSecs: 24 * 60 * 60 // ~1 day
     };
     result[exports.UPDATE_CONFIG_KEY] = { prerelease: false };
     result[exports.APPSTORE_CONFIG_KEY] = {};

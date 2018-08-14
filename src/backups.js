@@ -124,6 +124,8 @@ function testConfig(backupConfig, callback) {
 
     if (backupConfig.format !== 'tgz' && backupConfig.format !== 'rsync') return callback(new BackupsError(BackupsError.BAD_FIELD, 'unknown format'));
 
+    if (backupConfig.intervalSecs < 6 * 60 * 60) return callback(new BackupsError(BackupsError.BAD_FIELD, 'Interval must be atleast 6 hours'));
+
     api(backupConfig.provider).testConfig(backupConfig, callback);
 }
 
@@ -984,12 +986,16 @@ function ensureBackup(auditSource, callback) {
             return callback(error); // no point trying to backup if appstore is down
         }
 
-        if (backups.length !== 0 && (new Date() - new Date(backups[0].creationTime) < 23 * 60 * 60 * 1000)) { // ~1 day ago
-            debug('Previous backup was %j, no need to backup now', backups[0]);
-            return callback(null);
-        }
+        settings.getBackupConfig(function (error, backupConfig) {
+            if (error) return callback(error);
 
-        backup(auditSource, callback);
+            if (backups.length !== 0 && (new Date() - new Date(backups[0].creationTime) < (backupConfig.intervalSecs - 3600) * 1000)) { // adjust 1 hour
+                debug('Previous backup was %j, no need to backup now', backups[0]);
+                return callback(null);
+            }
+
+            backup(auditSource, callback);
+        });
     });
 }
 
