@@ -29,7 +29,11 @@ function authorizeApp(req, res, next) {
     // - only allow managing and inspection of containers belonging to the app
     // - allow docker to be called from child containers spun of from an authorized app
 
-    if (config.TEST) return next(); // make the tests pass for now
+    // make the tests pass for now
+    if (config.TEST) {
+        req.app = { id: 'testappid' };
+        return next();
+    }
 
     apps.getByIpAddress(req.connection.remoteAddress, function (error, app) {
         if (error && error.reason === AppsError.NOT_FOUND) return next(new HttpError(401, 'Unauthorized'));
@@ -68,17 +72,21 @@ function containersCreate(req, res, next) {
     safe.set(req.body, 'HostConfig.NetworkMode', 'cloudron'); // overwrite the network the container lives in
     safe.set(req.body, 'Labels',  _.extend({ }, safe.query(req.body, 'Labels'), { appId: req.app.id }));    // overwrite the app id to track containers of an app
 
+    const appDataDir = path.join(paths.APPS_DATA_DIR, req.app.id, 'data');
+
     debug('Original volume binds:', req.body.HostConfig.Binds);
+
     let binds = [];
     for (let bind of (req.body.HostConfig.Binds || [])) {
-        if (!bind.startsWith('/app/data')) {
-            debug(`Dropping mount ${bind}`);
-            continue;
-        }
-        binds.push(bind.replace(new RegExp('^/app/data'), path.join(paths.APPS_DATA_DIR, req.app.id, 'data')));
+        if (bind.startsWith(appDataDir)) binds.push(bind);
+        else binds.push(appDataDir + '/' + bind);
     }
+
+    // cleanup the paths from potential double slashes
+    binds = binds.map(function (bind) { return bind.replace(/\/+/g, '/'); });
+
+    debug('Rewritten volume binds:', binds);
     safe.set(req.body, 'HostConfig.Binds', binds);
-    debug('Rewritten volume binds:', req.body.HostConfig.Binds);
 
     let plainBody = JSON.stringify(req.body);
 
