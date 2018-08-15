@@ -13,7 +13,7 @@ var assert = require('assert'),
     middleware = require('./middleware'),
     net = require('net');
 
-var gServer = null;
+var gHttpServer = null;
 
 function authorizeApp(req, res, next) {
     // TODO add here some authorization
@@ -65,6 +65,7 @@ function process(req, res, next) {
 
 function start(callback) {
     assert.strictEqual(typeof callback, 'function');
+    assert(gHttpServer === null, 'Already started');
 
     let json = middleware.json({ strict: true });
     let router = new express.Router();
@@ -76,12 +77,12 @@ function start(callback) {
         .use(router)
         .use(process);
 
-    gServer = http.createServer(proxyServer);
-    gServer.listen(config.get('dockerProxyPort'), callback);
+    gHttpServer = http.createServer(proxyServer);
+    gHttpServer.listen(config.get('dockerProxyPort'), callback);
 
     debug(`startDockerProxy: started proxy on port ${config.get('dockerProxyPort')}`);
 
-    gServer.on('upgrade', function (req, client, head) {
+    gHttpServer.on('upgrade', function (req, client, head) {
         // Create a new tcp connection to the TCP server
         var remote = net.connect('/var/run/docker.sock', function () {
             // two-way pipes between client and docker daemon
@@ -101,7 +102,9 @@ function start(callback) {
 function stop(callback) {
     assert.strictEqual(typeof callback, 'function');
 
-    if (gServer) gServer.close();
+    if (gHttpServer) gHttpServer.close();
+
+    gHttpServer = null;
 
     callback();
 }
