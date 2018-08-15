@@ -6,68 +6,80 @@ exports = module.exports = {
 };
 
 var assert = require('assert'),
-    bodyParser = require('body-parser'),
     config = require('./config.js'),
+    express = require('express'),
     debug = require('debug')('box:dockerproxy'),
     http = require('http'),
+    middleware = require('./middleware'),
     net = require('net');
 
 var gServer = null;
-var gJSONParser = bodyParser.json();
+
+function authorizeApp(req, res, next) {
+    // TODO add here some authorization
+    // - block apps not using the docker addon
+    // - block calls regarding platform containers
+    // - only allow managing and inspection of containers belonging to the app
+
+    return next();
+}
+
+function attachDockerRequest(req, res, next) {
+    var options = {
+        socketPath: '/var/run/docker.sock',
+        method: req.method,
+        path: req.url,
+        headers: req.headers
+    };
+
+    req.dockerRequest = http.request(options, function (dockerResponse) {
+        res.writeHead(dockerResponse.statusCode, dockerResponse.headers);
+
+        // Force node to send out the headers, this is required for the /container/wait api to make the docker cli proceed
+        res.write(' ');
+
+        dockerResponse.on('error', function (error) { console.error('dockerResponse error:', error); });
+        dockerResponse.pipe(res, { end: true });
+    });
+
+    next();
+}
+
+function containersCreate(req, res, next) {
+    // overwrite the network the container lives in
+    req.body.HostConfig.NetworkMode = 'cloudron';
+
+    var plainBody = JSON.stringify(req.body);
+
+    req.dockerRequest.setHeader('Content-Length', Buffer.byteLength(plainBody));
+    req.dockerRequest.end(plainBody);
+}
+
+function process(req, res, next) {
+    if (!req.readable) {
+        req.dockerRequest.end();
+    } else {
+        req.pipe(req.dockerRequest, { end: true });
+    }
+}
 
 function start(callback) {
     assert.strictEqual(typeof callback, 'function');
 
+    let json = middleware.json({ strict: true });
+    let router = new express.Router();
+    router.post('/:version/containers/create', json, containersCreate);    // only available until no-domain
 
-    function authorized(req, res) {
-        // TODO add here some authorization
-        // - block apps not using the docker addon
-        // - block calls regarding platform containers
-        // - only allow managing and inspection of containers belonging to the app
+    var proxyServer = express();
+    proxyServer.use(authorizeApp)
+        .use(attachDockerRequest)
+        .use(router)
+        .use(process);
 
-        return true;
-    }
+    gServer = http.createServer(proxyServer);
+    gServer.listen(config.get('dockerProxyPort'), callback);
 
-    debug(`startDockerProxy: starting proxy on port ${config.get('dockerProxyPort')}`);
-
-    gServer = http.createServer(function (req, res) {
-        if (!authorized(req, res)) return;
-
-        var options = {
-            socketPath: '/var/run/docker.sock',
-            method: req.method,
-            path: req.url,
-            headers: req.headers
-        };
-
-        var dockerRequest = http.request(options, function (dockerResponse) {
-            res.writeHead(dockerResponse.statusCode, dockerResponse.headers);
-
-            // Force node to send out the headers, this is required for the /container/wait api to make the docker cli proceed
-            res.write(' ');
-
-            dockerResponse.on('error', function (error) { console.error('dockerResponse error:', error); });
-            dockerResponse.pipe(res, { end: true });
-        });
-
-        req.on('error', function (error) { console.error('req error:', error); });
-
-        if (req.method === 'POST' && req.url.match(/\/containers\/create/)) {
-            gJSONParser(req, res, function () {
-                // overwrite the network the container lives in
-                req.body.HostConfig.NetworkMode = 'cloudron';
-
-                var plainBody = JSON.stringify(req.body);
-
-                dockerRequest.setHeader('Content-Length', Buffer.byteLength(plainBody));
-                dockerRequest.end(plainBody);
-            });
-        } else if (!req.readable) {
-            dockerRequest.end();
-        } else {
-            req.pipe(dockerRequest, { end: true });
-        }
-    }).listen(config.get('dockerProxyPort'), callback);
+    debug(`startDockerProxy: started proxy on port ${config.get('dockerProxyPort')}`);
 
     gServer.on('upgrade', function (req, client, head) {
         // Create a new tcp connection to the TCP server
