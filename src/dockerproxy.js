@@ -14,7 +14,11 @@ var apps = require('./apps.js'),
     http = require('http'),
     HttpError = require('connect-lastmile').HttpError,
     middleware = require('./middleware'),
-    net = require('net');
+    net = require('net'),
+    path = require('path'),
+    paths = require('./paths.js'),
+    safe = require('safetydance'),
+    _ = require('underscore');
 
 var gHttpServer = null;
 
@@ -60,8 +64,18 @@ function attachDockerRequest(req, res, next) {
 }
 
 function containersCreate(req, res, next) {
-    req.body.HostConfig.NetworkMode = 'cloudron'; // overwrite the network the container lives in
-    req.body.Config.Labels.appId = req.app.id;    // overwrite the app id to track containers of an app
+    safe.set(req.body, 'HostConfig.NetworkMode', 'cloudron'); // overwrite the network the container lives in
+    safe.set(req.body, 'Config.Labels',  _.extend({ }, safe.query(req.body, 'Config.Labels'), { appId: req.app.id }));    // overwrite the app id to track containers of an app
+
+    let binds = [];
+    for (let bind of (req.body.HostConfig.Binds || [])) {
+        if (!bind.startsWith('/app/data')) {
+            debug(`Dropping mount ${bind}`);
+            continue;
+        }
+        binds.push(bind.replace(new RegExp('^/app/data'), path.join(paths.APPS_DATA_DIR, req.app.id, 'data')));
+    }
+    safe.set(req.body, 'HostConfig.Binds', binds);
 
     let plainBody = JSON.stringify(req.body);
 
@@ -83,7 +97,7 @@ function start(callback) {
 
     let json = middleware.json({ strict: true });
     let router = new express.Router();
-    router.post('/:version/containers/create', containersCreate);    // only available until no-domain
+    router.post('/:version/containers/create', containersCreate);
 
     let proxyServer = express();
     proxyServer.use(authorizeApp)
