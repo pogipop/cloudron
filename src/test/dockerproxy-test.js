@@ -39,12 +39,34 @@ describe('Cloudron', function () {
     });
 
     it('proxy overwrites the container network option', function (done) {
-        var cmd = DOCKER + ` run --network ifnotrewritethiswouldfail ubuntu "/bin/bash" "-c" "echo 'hello'"`;
+        var cmd = `${DOCKER} run --network ifnotrewritethiswouldfail ubuntu "/bin/bash" "-c" "echo 'hello'"`;
         exec(cmd, function (error, stdout, stderr) {
             expect(error).to.be(null);
             expect(stdout).to.contain('hello');
             expect(stderr).to.be.empty();
             done();
+        });
+    });
+
+    it('can see logs', function (done) {
+        exec(`${DOCKER} run -d ubuntu "bin/bash" "-c" "while true; do echo 'perpetual walrus'; sleep 1; done"`, function (error, stdout, stderr) {
+            expect(error).to.be(null);
+            expect(stderr).to.be.empty();
+
+            var containerId = stdout.slice(0, -1); // removes the trailing \n
+
+            exec(`${DOCKER} logs ${containerId}`, function (error, stdout, stderr) {
+                expect(error).to.be(null);
+                expect(stderr).to.be.empty();
+                expect(stdout).to.contain('perpetual walrus');
+
+                exec(`${DOCKER} rm -f ${containerId}`, function (error, stdout, stderr) {
+                    expect(error).to.be(null);
+                    expect(stderr).to.be.empty();
+
+                    done();
+                });
+            });
         });
     });
 });
