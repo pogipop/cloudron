@@ -72,14 +72,16 @@ function containersCreate(req, res, next) {
     safe.set(req.body, 'HostConfig.NetworkMode', 'cloudron'); // overwrite the network the container lives in
     safe.set(req.body, 'Labels',  _.extend({ }, safe.query(req.body, 'Labels'), { appId: req.app.id }));    // overwrite the app id to track containers of an app
 
-    const appDataDir = path.join(paths.APPS_DATA_DIR, req.app.id, 'data');
+    const appDataDir = path.join(paths.APPS_DATA_DIR, req.app.id, 'data'),
+        dockerDataDir = path.join(paths.APPS_DATA_DIR, req.app.id, 'docker');
 
     debug('Original volume binds:', req.body.HostConfig.Binds);
 
     let binds = [];
     for (let bind of (req.body.HostConfig.Binds || [])) {
-        if (bind.startsWith(appDataDir)) binds.push(bind);
-        else binds.push(appDataDir + '/' + bind);
+        if (bind.startsWith('/app/data')) binds.push(bind.replace(new RegExp('^/app/data'), appDataDir));
+
+        else binds.push(`${dockerDataDir}/${bind}`);
     }
 
     // cleanup the paths from potential double slashes
