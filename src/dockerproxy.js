@@ -66,7 +66,7 @@ function attachDockerRequest(req, res, next) {
 
 function containersCreate(req, res, next) {
     safe.set(req.body, 'HostConfig.NetworkMode', 'cloudron'); // overwrite the network the container lives in
-    safe.set(req.body, 'Config.Labels',  _.extend({ }, safe.query(req.body, 'Config.Labels'), { appId: req.app.id }));    // overwrite the app id to track containers of an app
+    safe.set(req.body, 'Labels',  _.extend({ }, safe.query(req.body, 'Labels'), { appId: req.app.id }));    // overwrite the app id to track containers of an app
 
     let binds = [];
     for (let bind of (req.body.HostConfig.Binds || [])) {
