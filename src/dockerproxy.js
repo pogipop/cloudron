@@ -5,11 +5,14 @@ exports = module.exports = {
     stop: stop
 };
 
-var assert = require('assert'),
+var apps = require('./apps.js'),
+    AppsError = apps.AppsError,
+    assert = require('assert'),
     config = require('./config.js'),
     express = require('express'),
     debug = require('debug')('box:dockerproxy'),
     http = require('http'),
+    HttpError = require('connect-lastmile').HttpError,
     middleware = require('./middleware'),
     net = require('net');
 
@@ -21,7 +24,18 @@ function authorizeApp(req, res, next) {
     // - block calls regarding platform containers
     // - only allow managing and inspection of containers belonging to the app
 
-    return next();
+    if (config.TEST) return next(); // make the tests pass for now
+
+    apps.getByIpAddress(req.connection.remoteAddress, function (error, app) {
+        if (error && error.reason === AppsError.NOT_FOUND) return next(new HttpError(401, 'Unauthorized'));
+        if (error) return next(new HttpError(500, error));
+
+        if (!('docker' in app.manifest.addons)) return next(new HttpError(401, 'Unauthorized'));
+
+        req.app = app;
+
+        next();
+    });
 }
 
 function attachDockerRequest(req, res, next) {
@@ -46,10 +60,10 @@ function attachDockerRequest(req, res, next) {
 }
 
 function containersCreate(req, res, next) {
-    // overwrite the network the container lives in
-    req.body.HostConfig.NetworkMode = 'cloudron';
+    req.body.HostConfig.NetworkMode = 'cloudron'; // overwrite the network the container lives in
+    req.body.Config.Labels.appId = req.app.id;    // overwrite the app id to track containers of an app
 
-    var plainBody = JSON.stringify(req.body);
+    let plainBody = JSON.stringify(req.body);
 
     req.dockerRequest.setHeader('Content-Length', Buffer.byteLength(plainBody));
     req.dockerRequest.end(plainBody);
@@ -69,16 +83,18 @@ function start(callback) {
 
     let json = middleware.json({ strict: true });
     let router = new express.Router();
-    router.post('/:version/containers/create', json, containersCreate);    // only available until no-domain
+    router.post('/:version/containers/create', containersCreate);    // only available until no-domain
 
-    var proxyServer = express();
+    let proxyServer = express();
     proxyServer.use(authorizeApp)
         .use(attachDockerRequest)
+        .use(json)
         .use(router)
-        .use(process);
+        .use(process)
+        .use(middleware.lastMile());
 
     gHttpServer = http.createServer(proxyServer);
-    gHttpServer.listen(config.get('dockerProxyPort'), callback);
+    gHttpServer.listen(config.get('dockerProxyPort'), '0.0.0.0', callback);
 
     debug(`startDockerProxy: started proxy on port ${config.get('dockerProxyPort')}`);
 
