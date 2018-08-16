@@ -80,8 +80,8 @@ function containersCreate(req, res, next) {
 
     let binds = [];
     for (let bind of (req.body.HostConfig.Binds || [])) {
-        if (bind.startsWith('/app/data')) binds.push(bind.replace(new RegExp('^/app/data'), appDataDir));
-
+        if (bind.startsWith(appDataDir)) binds.push(bind); // eclipse will inspect docker to find out the host folders and pass that to child containers
+        else if (bind.startsWith('/app/data')) binds.push(bind.replace(new RegExp('^/app/data'), appDataDir));
         else binds.push(`${dockerDataDir}/${bind}`);
     }
 
@@ -99,7 +99,7 @@ function containersCreate(req, res, next) {
 
 function process(req, res, next) {
     // we have to rebuild the body since we consumed in in the parser
-    if (req.body) {
+    if (Object.keys(req.body).length !== 0) {
         let plainBody = JSON.stringify(req.body);
         req.dockerRequest.setHeader('Content-Length', Buffer.byteLength(plainBody));
         req.dockerRequest.end(plainBody);
@@ -119,6 +119,9 @@ function start(callback) {
     router.post('/:version/containers/create', containersCreate);
 
     let proxyServer = express();
+
+    if (config.TEST) proxyServer.use(function (req, res, next) { console.log('Proxying: ' + req.method, req.url); next(); })
+
     proxyServer.use(authorizeApp)
         .use(attachDockerRequest)
         .use(json)

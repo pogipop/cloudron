@@ -14,10 +14,12 @@ var dockerProxy = require('../dockerproxy.js'),
 const DOCKER = `docker -H tcp://localhost:${config.get('dockerProxyPort')} `;
 
 describe('Cloudron', function () {
-    this.timeout(1000000);
-
     before(dockerProxy.start);
     after(dockerProxy.stop);
+
+    // uncomment this to run the proxy for manual testing
+    // this.timeout(1000000);
+    // it('wait', function (done) {} );
 
     it('can get info', function (done) {
         exec(DOCKER + ' info', function (error, stdout, stderr) {
@@ -58,6 +60,28 @@ describe('Cloudron', function () {
             exec(`${DOCKER} logs ${containerId}`, function (error, stdout, stderr) {
                 expect(error.message).to.contain('configured logging driver does not support reading');
                 expect(stderr).to.contain('configured logging driver does not support reading');
+                expect(stdout).to.be.empty();
+
+                exec(`${DOCKER} rm -f ${containerId}`, function (error, stdout, stderr) {
+                    expect(error).to.be(null);
+                    expect(stderr).to.be.empty();
+
+                    done();
+                });
+            });
+        });
+    });
+
+    it('can use PUT to upload archive into a container', function (done) {
+        exec(`${DOCKER} run -d ubuntu "bin/bash" "-c" "while true; do echo 'perpetual walrus'; sleep 1; done"`, function (error, stdout, stderr) {
+            expect(error).to.be(null);
+            expect(stderr).to.be.empty();
+
+            var containerId = stdout.slice(0, -1); // removes the trailing \n
+
+            exec(`${DOCKER} cp -a ${__dirname}/proxytestarchive.tar ${containerId}:/tmp/`, function (error, stdout, stderr) {
+                expect(error).to.be(null);
+                expect(stderr).to.be.empty();
                 expect(stdout).to.be.empty();
 
                 exec(`${DOCKER} rm -f ${containerId}`, function (error, stdout, stderr) {
