@@ -98,7 +98,12 @@ function containersCreate(req, res, next) {
 }
 
 function process(req, res, next) {
-    if (!req.readable) {
+    // we have to rebuild the body since we consumed in in the parser
+    if (req.body) {
+        let plainBody = JSON.stringify(req.body);
+        req.dockerRequest.setHeader('Content-Length', Buffer.byteLength(plainBody));
+        req.dockerRequest.end(plainBody);
+    } else if (!req.readable) {
         req.dockerRequest.end();
     } else {
         req.pipe(req.dockerRequest, { end: true });
