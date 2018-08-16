@@ -48,7 +48,7 @@ describe('Cloudron', function () {
         });
     });
 
-    it('can see logs', function (done) {
+    it('cannot see logs through docker logs, since syslog is configured', function (done) {
         exec(`${DOCKER} run -d ubuntu "bin/bash" "-c" "while true; do echo 'perpetual walrus'; sleep 1; done"`, function (error, stdout, stderr) {
             expect(error).to.be(null);
             expect(stderr).to.be.empty();
@@ -56,9 +56,9 @@ describe('Cloudron', function () {
             var containerId = stdout.slice(0, -1); // removes the trailing \n
 
             exec(`${DOCKER} logs ${containerId}`, function (error, stdout, stderr) {
-                expect(error).to.be(null);
-                expect(stderr).to.be.empty();
-                expect(stdout).to.contain('perpetual walrus');
+                expect(error.message).to.contain('configured logging driver does not support reading');
+                expect(stderr).to.contain('configured logging driver does not support reading');
+                expect(stdout).to.be.empty();
 
                 exec(`${DOCKER} rm -f ${containerId}`, function (error, stdout, stderr) {
                     expect(error).to.be(null);
