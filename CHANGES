@@ -1349,3 +1349,6 @@
 * GPG verify releases
 * Allow subdomains in location field
 
+[3.0.2]
+* Fix issue where normal users are shown apps they don't have access to
+
