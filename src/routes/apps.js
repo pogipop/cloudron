@@ -58,7 +58,7 @@ function getApp(req, res, next) {
 function getApps(req, res, next) {
     assert.strictEqual(typeof req.user, 'object');
 
-    apps.getAll(function (error, allApps) {
+    apps.getAllByUser(req.user, function (error, allApps) {
         if (error) return next(new HttpError(500, error));
 
         allApps = allApps.map(apps.removeRestrictedFields);
