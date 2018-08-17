@@ -176,7 +176,7 @@ describe('User', function () {
             });
         });
 
-        it('succeeds and attempts to send invite', function (done) {
+        it('succeeds', function (done) {
             users.createOwner(USERNAME, PASSWORD, EMAIL, DISPLAY_NAME, AUDIT_SOURCE, function (error, result) {
                 expect(error).not.to.be.ok();
                 expect(result).to.be.ok();
@@ -184,8 +184,7 @@ describe('User', function () {
                 expect(result.email).to.equal(EMAIL.toLowerCase());
                 expect(result.fallbackEmail).to.equal(EMAIL.toLowerCase());
 
-                // first user is owner, do not send mail to admins
-                checkMails(0, done);
+                done();
             });
         });
 
@@ -222,7 +221,7 @@ describe('User', function () {
                     expect(result.fallbackEmail).to.equal(EMAIL_1.toLowerCase());
 
                     // first user is owner, do not send mail to admins
-                    checkMails(2, { sentTo: EMAIL_1.toLowerCase() }, function (error) {
+                    checkMails(1, { sentTo: EMAIL_1.toLowerCase() }, function (error) {
                         expect(error).not.to.be.ok();
 
                         maildb.update(DOMAIN_0.domain, { enabled: false }, done);
@@ -830,7 +829,7 @@ describe('User', function () {
         });
     });
 
-    describe('send invite', function () {
+    describe('invite', function () {
         before(createOwner);
         after(cleanupUsers);
 
@@ -843,9 +842,24 @@ describe('User', function () {
             });
         });
 
-        it('succeeds', function (done) {
+        it('fails as expected', function (done) {
             users.sendInvite(userObject.id, { }, function (error) {
-                expect(error).to.eql(null);
+                expect(error).to.be.ok(); // have to create resetToken first
+                done();
+            });
+        });
+
+        it('can create token', function (done) {
+            users.createInvite(userObject.id, function (error, resetToken) {
+                expect(error).to.be(null);
+                expect(resetToken).to.be.ok();
+                done();
+            });
+        });
+
+        it('send invite', function (done) {
+            users.sendInvite(userObject.id, { }, function (error) {
+                expect(error).to.be(null);
                 checkMails(1, done);
             });
         });

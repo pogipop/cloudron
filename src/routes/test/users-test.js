@@ -266,11 +266,9 @@ describe('Users API', function () {
     });
 
     it('cannot create user without email', function (done) {
-        mailer._clearMailQueue();
-
         superagent.post(SERVER_URL + '/api/v1/users')
             .query({ access_token: token })
-            .send({ username: USERNAME_1, invite: true })
+            .send({ username: USERNAME_1 })
             .end(function (error, result) {
                 expect(error).to.be.ok();
                 expect(result.statusCode).to.equal(400);
@@ -279,45 +277,62 @@ describe('Users API', function () {
     });
 
     it('create second user succeeds', function (done) {
-        mailer._clearMailQueue();
-
         superagent.post(SERVER_URL + '/api/v1/users')
             .query({ access_token: token })
-            .send({ username: USERNAME_1, email: EMAIL_1, invite: true })
+            .send({ username: USERNAME_1, email: EMAIL_1 })
             .end(function (error, result) {
                 expect(error).to.not.be.ok();
                 expect(result.statusCode).to.equal(201);
 
                 user_1 = result.body;
 
-                checkMails(2, function () {
-                    // HACK to get a token for second user (passwords are generated and the user should have gotten a password setup link...)
-                    tokendb.add(token_1, user_1.id, 'test-client-id',  Date.now() + 10000, accesscontrol.SCOPE_PROFILE, done);
-                });
+                // HACK to get a token for second user (passwords are generated and the user should have gotten a password setup link...)
+                tokendb.add(token_1, user_1.id, 'test-client-id',  Date.now() + 10000, accesscontrol.SCOPE_PROFILE, done);
             });
     });
 
     it('reinvite unknown user fails', function (done) {
-        mailer._clearMailQueue();
-
-        superagent.post(SERVER_URL + '/api/v1/users/' + USERNAME_1+USERNAME_1 + '/invite')
+        superagent.post(SERVER_URL + '/api/v1/users/' + USERNAME_1+USERNAME_1 + '/create_invite')
             .query({ access_token: token })
             .send({})
             .end(function (err, res) {
                 expect(err).to.be.an(Error);
                 expect(res.statusCode).to.equal(404);
-                checkMails(0, done);
+                done();
             });
     });
 
-    it('reinvite second user succeeds', function (done) {
-        mailer._clearMailQueue();
+    it('send invite without creating invite fails succeeds', function (done) {
+        superagent.post(SERVER_URL + '/api/v1/users/' + user_1.id + '/send_invite')
+            .query({ access_token: token })
+            .send({})
+            .end(function (err, res) {
+                expect(err).to.be.an(Error);
+                expect(res.statusCode).to.equal(409);
+                done();
+            });
+    });
 
-        superagent.post(SERVER_URL + '/api/v1/users/' + user_1.id + '/invite')
+    it('create invite second user succeeds', function (done) {
+        superagent.post(SERVER_URL + '/api/v1/users/' + user_1.id + '/create_invite')
             .query({ access_token: token })
             .send({})
             .end(function (err, res) {
                 expect(err).to.not.be.ok();
+                expect(res.statusCode).to.equal(200);
+                expect(res.body.resetToken).to.be.ok();
+                done();
+            });
+    });
+
+    it('can send invite', function (done) {
+        mailer._clearMailQueue();
+
+        superagent.post(SERVER_URL + '/api/v1/users/' + user_1.id + '/send_invite')
+            .query({ access_token: token })
+            .send({})
+            .end(function (err, res) {
+                expect(err).to.be(null);
                 expect(res.statusCode).to.equal(200);
                 checkMails(1, done);
             });
@@ -384,12 +399,12 @@ describe('Users API', function () {
             });
     });
 
-    it('create user missing username fails', function (done) {
+    it('create user missing username succeeds', function (done) {
         superagent.post(SERVER_URL + '/api/v1/users')
             .query({ access_token: token })
-            .send({ email: EMAIL_2 })
+            .send({ email: `unnamed${EMAIL_2}` })
             .end(function (error, result) {
-                expect(result.statusCode).to.equal(400);
+                expect(result.statusCode).to.equal(201);
                 done();
             });
     });
@@ -398,16 +413,6 @@ describe('Users API', function () {
         superagent.post(SERVER_URL + '/api/v1/users')
             .query({ access_token: token })
             .send({ username: USERNAME_2 })
-            .end(function (error, result) {
-                expect(result.statusCode).to.equal(400);
-                done();
-            });
-    });
-
-    it('create user missing invite fails', function (done) {
-        superagent.post(SERVER_URL + '/api/v1/users')
-            .query({ access_token: token })
-            .send({ username: USERNAME_2, email: EMAIL_2 })
             .end(function (error, result) {
                 expect(result.statusCode).to.equal(400);
                 done();
@@ -436,10 +441,9 @@ describe('Users API', function () {
 
     it('create second and third user', function (done) {
         mailer._clearMailQueue();
-
         superagent.post(SERVER_URL + '/api/v1/users')
             .query({ access_token: token })
-            .send({ username: USERNAME_2, email: EMAIL_2, invite: false })
+            .send({ username: USERNAME_2, email: EMAIL_2 })
             .end(function (error, result) {
                 expect(result.statusCode).to.equal(201);
 
@@ -447,12 +451,12 @@ describe('Users API', function () {
 
                 superagent.post(SERVER_URL + '/api/v1/users')
                     .query({ access_token: token })
-                    .send({ username: USERNAME_3, email: EMAIL_3, invite: true })
+                    .send({ username: USERNAME_3, email: EMAIL_3 })
                     .end(function (error, result) {
                         expect(result.statusCode).to.equal(201);
 
-                        // one mail for first user creation, two mails for second user creation (see 'invite' flag)
-                        checkMails(3, done);
+                        // two mails for user creation
+                        checkMails(2, done);
                     });
             });
     });
@@ -496,13 +500,13 @@ describe('Users API', function () {
                 expect(error).to.be(null);
                 expect(res.statusCode).to.equal(200);
                 expect(res.body.users).to.be.an('array');
-                expect(res.body.users.length).to.equal(4);
+                expect(res.body.users.length).to.equal(5);
 
                 res.body.users.forEach(function (user) {
                     expect(user).to.be.an('object');
                     expect(user.id).to.be.ok();
-                    expect(user.username).to.be.ok();
                     expect(user.email).to.be.ok();
+                    if (!user.email.startsWith('unnamed')) expect(user.username).to.be.ok();
                     expect(user.password).to.not.be.ok();
                     expect(user.salt).to.not.be.ok();
                     expect(user.groupIds).to.not.be.ok();

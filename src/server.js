@@ -150,7 +150,8 @@ function initializeExpressSync() {
     router.del ('/api/v1/users/:userId', usersManageScope, routes.users.verifyPassword, routes.users.remove);
     router.post('/api/v1/users/:userId', usersManageScope, routes.users.update);
     router.put ('/api/v1/users/:userId/groups', usersManageScope, routes.users.setGroups);
-    router.post('/api/v1/users/:userId/invite', usersManageScope, routes.users.sendInvite);
+    router.post('/api/v1/users/:userId/send_invite', usersManageScope, routes.users.sendInvite);
+    router.post('/api/v1/users/:userId/create_invite', usersManageScope, routes.users.createInvite);
     router.post('/api/v1/users/:userId/transfer', usersManageScope, routes.users.transferOwnership);
 
     // Group management

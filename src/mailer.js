@@ -226,11 +226,10 @@ function sendInvite(user, invitor) {
     });
 }
 
-function userAdded(user, inviteSent) {
+function userAdded(user) {
     assert.strictEqual(typeof user, 'object');
-    assert.strictEqual(typeof inviteSent, 'boolean');
 
-    debug('Sending mail for userAdded %s including invite link', inviteSent ? 'not' : '');
+    debug('Sending mail for userAdded');
 
     getMailConfig(function (error, mailConfig) {
         if (error) return debug('Error getting mail details:', error);
@@ -239,7 +238,7 @@ function userAdded(user, inviteSent) {
 
         var templateData = {
             user: user,
-            inviteLink: inviteSent ? null : `${config.adminOrigin()}/api/v1/session/account/setup.html?reset_token=${user.resetToken}&email=${encodeURIComponent(user.email)}`,
+            inviteLink: `${config.adminOrigin()}/api/v1/session/account/setup.html?reset_token=${user.resetToken}&email=${encodeURIComponent(user.email)}`,
             cloudronName: mailConfig.cloudronName,
             cloudronAvatarUrl: config.adminOrigin() + '/api/v1/cloudron/avatar'
         };

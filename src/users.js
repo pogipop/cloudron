@@ -21,6 +21,7 @@ exports = module.exports = {
     update: updateUser,
     createOwner: createOwner,
     getOwner: getOwner,
+    createInvite: createInvite,
     sendInvite: sendInvite,
     setMembership: setMembership,
     setTwoFactorAuthenticationSecret: setTwoFactorAuthenticationSecret,
@@ -150,9 +151,8 @@ function create(username, password, email, displayName, options, auditSource, ca
     assert(options && typeof options === 'object');
     assert.strictEqual(typeof auditSource, 'object');
 
-    var invitor = options.invitor || null,
-        sendInvite = !!options.sendInvite,
-        owner = !!options.owner;
+    const isOwner = !!options.owner;
+    const invitor = options.invitor || null;
 
     var error;
 
@@ -192,9 +192,9 @@ function create(username, password, email, displayName, options, auditSource, ca
                 salt: salt.toString('hex'),
                 createdAt: now,
                 modifiedAt: now,
-                resetToken: hat(256),
+                resetToken: '',
                 displayName: displayName,
-                admin: owner
+                admin: isOwner
             };
 
             userdb.add(user.id, user, function (error) {
@@ -203,10 +203,9 @@ function create(username, password, email, displayName, options, auditSource, ca
 
                 callback(null, user);
 
-                eventlog.add(eventlog.ACTION_USER_ADD, auditSource, { userId: user.id, email: user.email, user: removePrivateFields(user) });
+                eventlog.add(eventlog.ACTION_USER_ADD, auditSource, { userId: user.id, email: user.email, user: removePrivateFields(user), invitor: invitor });
 
-                if (!owner) mailer.userAdded(user, sendInvite);
-                if (sendInvite) mailer.sendInvite(user, invitor);
+                if (!isOwner) mailer.userAdded(user);
             });
         });
     });
@@ -523,9 +522,8 @@ function getOwner(callback) {
     });
 }
 
-function sendInvite(userId, options, callback) {
+function createInvite(userId, callback) {
     assert.strictEqual(typeof userId, 'string');
-    assert.strictEqual(typeof options, 'object');
     assert.strictEqual(typeof callback, 'function');
 
     userdb.get(userId, function (error, userObject) {
@@ -538,10 +536,25 @@ function sendInvite(userId, options, callback) {
             if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new UsersError(UsersError.NOT_FOUND));
             if (error) return callback(new UsersError(UsersError.INTERNAL_ERROR, error));
 
-            mailer.sendInvite(userObject, options.invitor || null);
-
             callback(null, userObject.resetToken);
         });
+    });
+}
+
+function sendInvite(userId, options, callback) {
+    assert.strictEqual(typeof userId, 'string');
+    assert.strictEqual(typeof options, 'object');
+    assert.strictEqual(typeof callback, 'function');
+
+    userdb.get(userId, function (error, userObject) {
+        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new UsersError(UsersError.NOT_FOUND));
+        if (error) return callback(new UsersError(UsersError.INTERNAL_ERROR, error));
+
+        if (!userObject.resetToken) return callback(new UsersError(UsersError.BAD_FIELD, 'Must generate resetToken to send inivitation'));
+
+        mailer.sendInvite(userObject, options.invitor || null);
+
+        callback(null);
     });
 }
 

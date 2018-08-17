@@ -141,7 +141,7 @@ describe('Eventlog API', function () {
                 .query({ access_token: token, page: 1, per_page: 10, search: EMAIL })
                 .end(function (error, result) {
                     expect(result.statusCode).to.equal(200);
-                    expect(result.body.eventlogs.length).to.equal(1);
+                    expect(result.body.eventlogs.length).to.equal(2);
 
                     done();
                 });

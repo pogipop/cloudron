@@ -7,6 +7,7 @@ exports = module.exports = {
     create: create,
     remove: remove,
     verifyPassword: verifyPassword,
+    createInvite: createInvite,
     sendInvite: sendInvite,
     setGroups: setGroups,
     transferOwnership: transferOwnership
@@ -27,18 +28,16 @@ function create(req, res, next) {
     assert.strictEqual(typeof req.body, 'object');
 
     if (typeof req.body.email !== 'string') return next(new HttpError(400, 'email must be string'));
-    if (typeof req.body.invite !== 'boolean') return next(new HttpError(400, 'invite must be boolean'));
     if ('username' in req.body && typeof req.body.username !== 'string') return next(new HttpError(400, 'username must be string'));
     if ('displayName' in req.body && typeof req.body.displayName !== 'string') return next(new HttpError(400, 'displayName must be string'));
     if ('password' in req.body && typeof req.body.password !== 'string') return next(new HttpError(400, 'password must be string'));
 
     var password = req.body.password || null;
     var email = req.body.email;
-    var sendInvite = req.body.invite;
     var username = 'username' in req.body ? req.body.username : null;
     var displayName = req.body.displayName || '';
 
-    users.create(username, password, email, displayName, { invitor: req.user, sendInvite: sendInvite }, auditSource(req), function (error, user) {
+    users.create(username, password, email, displayName, { invitor: req.user }, auditSource(req), function (error, user) {
         if (error && error.reason === UsersError.BAD_FIELD) return next(new HttpError(400, error.message));
         if (error && error.reason === UsersError.ALREADY_EXISTS) return next(new HttpError(409, error.message));
         if (error) return next(new HttpError(500, error));
@@ -137,14 +136,26 @@ function verifyPassword(req, res, next) {
     });
 }
 
-function sendInvite(req, res, next) {
+function createInvite(req, res, next) {
     assert.strictEqual(typeof req.params.userId, 'string');
 
-    users.sendInvite(req.params.userId, { invitor: req.user }, function (error, result) {
+    users.createInvite(req.params.userId, function (error, resetToken) {
         if (error && error.reason === UsersError.NOT_FOUND) return next(new HttpError(404, 'User not found'));
         if (error) return next(new HttpError(500, error));
 
-        next(new HttpSuccess(200, { resetToken: result }));
+        next(new HttpSuccess(200, { resetToken: resetToken }));
+    });
+}
+
+function sendInvite(req, res, next) {
+    assert.strictEqual(typeof req.params.userId, 'string');
+
+    users.sendInvite(req.params.userId, { invitor: req.user }, function (error) {
+        if (error && error.reason === UsersError.NOT_FOUND) return next(new HttpError(404, 'User not found'));
+        if (error && error.reason === UsersError.BAD_FIELD) return next(new HttpError(409, 'Call createInvite API first'));
+        if (error) return next(new HttpError(500, error));
+
+        next(new HttpSuccess(200, { }));
     });
 }
 
