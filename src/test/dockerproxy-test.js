@@ -14,8 +14,32 @@ var dockerProxy = require('../dockerproxy.js'),
 const DOCKER = `docker -H tcp://localhost:${config.get('dockerProxyPort')} `;
 
 describe('Cloudron', function () {
-    before(dockerProxy.start);
-    after(dockerProxy.stop);
+    var containerId;
+
+    // create a container to test against
+    before(function (done) {
+        dockerProxy.start(function (error) {
+            expect(error).to.not.be.ok();
+
+            exec(`${DOCKER} run -d ubuntu "bin/bash" "-c" "while true; do echo 'perpetual walrus'; sleep 1; done"`, function (error, stdout, stderr) {
+                expect(error).to.be(null);
+                expect(stderr).to.be.empty();
+
+                containerId = stdout.slice(0, -1); // removes the trailing \n
+
+                done();
+            });
+        });
+    });
+
+    after(function (done) {
+        exec(`${DOCKER} rm -f ${containerId}`, function (error, stdout, stderr) {
+            expect(error).to.be(null);
+            expect(stderr).to.be.empty();
+
+            dockerProxy.stop(done);
+        });
+    });
 
     // uncomment this to run the proxy for manual testing
     // this.timeout(1000000);
@@ -51,46 +75,32 @@ describe('Cloudron', function () {
     });
 
     it('cannot see logs through docker logs, since syslog is configured', function (done) {
-        exec(`${DOCKER} run -d ubuntu "bin/bash" "-c" "while true; do echo 'perpetual walrus'; sleep 1; done"`, function (error, stdout, stderr) {
-            expect(error).to.be(null);
-            expect(stderr).to.be.empty();
+        exec(`${DOCKER} logs ${containerId}`, function (error, stdout, stderr) {
+            expect(error.message).to.contain('configured logging driver does not support reading');
+            expect(stderr).to.contain('configured logging driver does not support reading');
+            expect(stdout).to.be.empty();
 
-            var containerId = stdout.slice(0, -1); // removes the trailing \n
-
-            exec(`${DOCKER} logs ${containerId}`, function (error, stdout, stderr) {
-                expect(error.message).to.contain('configured logging driver does not support reading');
-                expect(stderr).to.contain('configured logging driver does not support reading');
-                expect(stdout).to.be.empty();
-
-                exec(`${DOCKER} rm -f ${containerId}`, function (error, stdout, stderr) {
-                    expect(error).to.be(null);
-                    expect(stderr).to.be.empty();
-
-                    done();
-                });
-            });
+            done();
         });
     });
 
     it('can use PUT to upload archive into a container', function (done) {
-        exec(`${DOCKER} run -d ubuntu "bin/bash" "-c" "while true; do echo 'perpetual walrus'; sleep 1; done"`, function (error, stdout, stderr) {
+        exec(`${DOCKER} cp -a ${__dirname}/proxytestarchive.tar ${containerId}:/tmp/`, function (error, stdout, stderr) {
             expect(error).to.be(null);
             expect(stderr).to.be.empty();
+            expect(stdout).to.be.empty();
 
-            var containerId = stdout.slice(0, -1); // removes the trailing \n
+            done();
+        });
+    });
 
-            exec(`${DOCKER} cp -a ${__dirname}/proxytestarchive.tar ${containerId}:/tmp/`, function (error, stdout, stderr) {
-                expect(error).to.be(null);
-                expect(stderr).to.be.empty();
-                expect(stdout).to.be.empty();
+    it('can exec into a container', function (done) {
+        exec(`${DOCKER} exec ${containerId} ls`, function (error, stdout, stderr) {
+            expect(error).to.be(null);
+            expect(stderr).to.be.empty();
+            expect(stdout).to.be.empty();
 
-                exec(`${DOCKER} rm -f ${containerId}`, function (error, stdout, stderr) {
-                    expect(error).to.be(null);
-                    expect(stderr).to.be.empty();
-
-                    done();
-                });
-            });
+            done();
         });
     });
 });
