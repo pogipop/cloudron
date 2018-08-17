@@ -1349,7 +1349,10 @@
 * GPG verify releases
 * Allow subdomains in location field
 
+[3.0.2]
+* Fix issue where normal users are shown apps they don't have access to
+* Re-configure email apps when email is enabled/disabled
+
 [3.1.0]
 * Add UDP support
-* Re-configure email apps when email is enabled/disabled
 
