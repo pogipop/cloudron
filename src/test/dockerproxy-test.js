@@ -13,7 +13,7 @@ var dockerProxy = require('../dockerproxy.js'),
 
 const DOCKER = `docker -H tcp://localhost:${config.get('dockerProxyPort')} `;
 
-describe('Cloudron', function () {
+describe('Dockerproxy', function () {
     var containerId;
 
     // create a container to test against
