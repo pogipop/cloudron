@@ -137,16 +137,27 @@ function start(callback) {
     gHttpServer.on('upgrade', function (req, client, head) {
         // Create a new tcp connection to the TCP server
         var remote = net.connect('/var/run/docker.sock', function () {
-            // two-way pipes between client and docker daemon
-            client.pipe(remote).pipe(client);
+            var upgradeMessage = req.method + ' ' + req.url + ' HTTP/1.1\r\n' +
+                                `Host: ${req.headers.host}\r\n` +
+                                'Connection: Upgrade\r\n' +
+                                'Upgrade: tcp\r\n';
+
+            if (req.headers['content-type'] === 'application/json') {
+                // TODO we have to parse the immediate upgrade request body, but I don't know how
+                let plainBody = '{"Detach":false,"Tty":false}\r\n';
+                upgradeMessage += `Content-Type: application/json\r\n`;
+                upgradeMessage += `Content-Length: ${Buffer.byteLength(plainBody)}\r\n`;
+                upgradeMessage += '\r\n';
+                upgradeMessage += plainBody;
+            }
+
+            upgradeMessage += '\r\n';
 
             // resend the upgrade event to the docker daemon, so it responds with the proper message through the pipes
-            remote.write(req.method + ' ' + req.url + ' HTTP/1.1\r\n' +
-                `Host: ${req.headers.host}\r\n` +
-                'Connection: Upgrade\r\n' +
-                'Upgrade: tcp\r\n' +
-                '\r\n'
-            );
+            remote.write(upgradeMessage);
+
+            // two-way pipes between client and docker daemon
+            client.pipe(remote).pipe(client);
         });
     });
 }

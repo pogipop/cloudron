@@ -98,7 +98,7 @@ describe('Cloudron', function () {
         exec(`${DOCKER} exec ${containerId} ls`, function (error, stdout, stderr) {
             expect(error).to.be(null);
             expect(stderr).to.be.empty();
-            expect(stdout).to.be.empty();
+            expect(stdout).to.equal('bin\nboot\ndev\netc\nhome\nlib\nlib64\nmedia\nmnt\nopt\nproc\nroot\nrun\nsbin\nsrv\nsys\ntmp\nusr\nvar\n');
 
             done();
         });
