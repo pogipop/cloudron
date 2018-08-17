@@ -1351,4 +1351,5 @@
 
 [3.0.2]
 * Fix issue where normal users are shown apps they don't have access to
+* Re-configure mail apps when mail is enabled/disabled
 
