@@ -72,8 +72,7 @@ function containersCreate(req, res, next) {
     safe.set(req.body, 'HostConfig.NetworkMode', 'cloudron'); // overwrite the network the container lives in
     safe.set(req.body, 'NetworkingConfig', {}); // drop any custom network configs
     safe.set(req.body, 'Labels',  _.extend({ }, safe.query(req.body, 'Labels'), { appId: req.app.id }));    // overwrite the app id to track containers of an app
-
-    if (!req.app.manifest.addons.docker.nativeLogging) safe.set(req.body, 'HostConfig.LogConfig', { Type: 'syslog', Config: { 'tag': req.app.id, 'syslog-address': 'udp://127.0.0.1:2514', 'syslog-format': 'rfc5424' }});
+    safe.set(req.body, 'HostConfig.LogConfig', { Type: 'syslog', Config: { 'tag': req.app.id, 'syslog-address': 'udp://127.0.0.1:2514', 'syslog-format': 'rfc5424' }});
 
     const appDataDir = path.join(paths.APPS_DATA_DIR, req.app.id, 'data'),
         dockerDataDir = path.join(paths.APPS_DATA_DIR, req.app.id, 'docker');
