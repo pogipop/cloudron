@@ -62,7 +62,6 @@ function start(callback) {
     if (error) return callback(error);
 
     async.series([
-        startDockerProxy,
         stopContainers.bind(null, existingInfra),
         startAddons.bind(null, existingInfra),
         removeOldImages,
