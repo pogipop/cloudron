@@ -121,7 +121,12 @@ function start(callback) {
 
     let proxyServer = express();
 
-    if (config.TEST) proxyServer.use(function (req, res, next) { console.log('Proxying: ' + req.method, req.url); next(); })
+    if (config.TEST) {
+        proxyServer.use(function (req, res, next) {
+            console.log('Proxying: ' + req.method, req.url);
+            next();
+        });
+    }
 
     proxyServer.use(authorizeApp)
         .use(attachDockerRequest)
