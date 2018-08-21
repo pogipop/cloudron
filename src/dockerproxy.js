@@ -27,7 +27,6 @@ function authorizeApp(req, res, next) {
     // - block apps not using the docker addon
     // - block calls regarding platform containers
     // - only allow managing and inspection of containers belonging to the app
-    // - allow docker to be called from child containers spun of from an authorized app
 
     // make the tests pass for now
     if (config.TEST) {

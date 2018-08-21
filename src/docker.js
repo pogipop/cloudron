@@ -14,7 +14,6 @@ exports = module.exports = {
     deleteContainers: deleteContainers,
     createSubcontainer: createSubcontainer,
     getContainerIdByIp: getContainerIdByIp,
-    getAppIdByContainerIp: getAppIdByContainerIp,
     inspect: inspect,
     inspectByName: inspect,
     execContainer: execContainer
@@ -382,24 +381,6 @@ function getContainerIdByIp(ip, callback) {
         if (!containerId) return callback(new Error('No container with that ip'));
 
         callback(null, containerId);
-    });
-}
-
-function getAppIdByContainerIp(ip, callback) {
-    assert.strictEqual(typeof ip, 'string');
-    assert.strictEqual(typeof callback, 'function');
-
-    getContainerIdByIp(ip, function (error, containerId) {
-        if (error) return callback(error);
-
-        inspect(containerId, function (error, result) {
-            if (error) return callback(error);
-
-            var appId = result.Config.Labels.appId;
-            if (!appId) return callback(new Error('No app associated with this ip'));
-
-            callback(null, appId);
-        });
     });
 }
 

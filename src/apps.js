@@ -428,10 +428,10 @@ function getByIpAddress(ip, callback) {
     assert.strictEqual(typeof ip, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    docker.getAppIdByContainerIp(ip, function (error, appId) {
+    docker.getContainerIdByIp(ip, function (error, containerId) {
         if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
 
-        appdb.get(appId, function (error, app) {
+        appdb.getByContainerId(containerId, function (error, app) {
             if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new AppsError(AppsError.NOT_FOUND, 'No such app'));
             if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
 
