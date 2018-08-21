@@ -152,6 +152,7 @@ function create(username, password, email, displayName, options, auditSource, ca
     assert.strictEqual(typeof auditSource, 'object');
 
     const isOwner = !!options.owner;
+    const isAdmin = !!options.admin;
     const invitor = options.invitor || null;
 
     var error;
@@ -194,7 +195,7 @@ function create(username, password, email, displayName, options, auditSource, ca
                 modifiedAt: now,
                 resetToken: '',
                 displayName: displayName,
-                admin: isOwner
+                admin: isOwner || isAdmin
             };
 
             userdb.add(user.id, user, function (error) {

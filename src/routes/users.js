@@ -31,13 +31,14 @@ function create(req, res, next) {
     if ('username' in req.body && typeof req.body.username !== 'string') return next(new HttpError(400, 'username must be string'));
     if ('displayName' in req.body && typeof req.body.displayName !== 'string') return next(new HttpError(400, 'displayName must be string'));
     if ('password' in req.body && typeof req.body.password !== 'string') return next(new HttpError(400, 'password must be string'));
+    if ('admin' in req.body && typeof req.body.admin !== 'boolean') return next(new HttpError(400, 'admin flag must be a boolean'));
 
     var password = req.body.password || null;
     var email = req.body.email;
     var username = 'username' in req.body ? req.body.username : null;
     var displayName = req.body.displayName || '';
 
-    users.create(username, password, email, displayName, { invitor: req.user }, auditSource(req), function (error, user) {
+    users.create(username, password, email, displayName, { invitor: req.user, admin: req.body.admin }, auditSource(req), function (error, user) {
         if (error && error.reason === UsersError.BAD_FIELD) return next(new HttpError(400, error.message));
         if (error && error.reason === UsersError.ALREADY_EXISTS) return next(new HttpError(409, error.message));
         if (error) return next(new HttpError(500, error));
