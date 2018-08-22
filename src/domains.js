@@ -382,5 +382,9 @@ function removePrivateFields(domain) {
 // removes all fields that are not accessible by a normal user
 function removeRestrictedFields(domain) {
     var result = _.pick(domain, 'domain', 'zoneName', 'provider');
+
+    // always ensure config object
+    result.config = { hyphenatedSubdomains: !!domain.config.hyphenatedSubdomains };
+
     return result;
 }
