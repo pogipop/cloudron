@@ -145,6 +145,7 @@ function getConfig(callback) {
             version: config.version(),
             progress: progress.getAll(),
             isDemo: config.isDemo(),
+            edition: config.edition(),
             memory: os.totalmem(),
             provider: config.provider(),
             cloudronName: allSettings[settings.CLOUDRON_NAME_KEY],
