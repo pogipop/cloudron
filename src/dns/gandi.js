@@ -115,7 +115,8 @@ function verifyDnsConfig(dnsConfig, fqdn, zoneName, ip, callback) {
     if (!dnsConfig.token || typeof dnsConfig.token !== 'string') return callback(new DomainsError(DomainsError.BAD_FIELD, 'token must be a non-empty string'));
 
     var credentials = {
-        token: dnsConfig.token
+        token: dnsConfig.token,
+        hyphenatedSubdomains: !!dnsConfig.hyphenatedSubdomains
     };
 
     if (process.env.BOX_ENV === 'test') return callback(null, credentials); // this shouldn't be here

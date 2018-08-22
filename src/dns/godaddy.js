@@ -151,7 +151,8 @@ function verifyDnsConfig(dnsConfig, fqdn, zoneName, ip, callback) {
 
     var credentials = {
         apiKey: dnsConfig.apiKey,
-        apiSecret: dnsConfig.apiSecret
+        apiSecret: dnsConfig.apiSecret,
+        hyphenatedSubdomains: !!dnsConfig.hyphenatedSubdomains
     };
 
     if (process.env.BOX_ENV === 'test') return callback(null, credentials); // this shouldn't be here

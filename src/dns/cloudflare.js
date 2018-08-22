@@ -234,7 +234,8 @@ function verifyDnsConfig(dnsConfig, fqdn, zoneName, ip, callback) {
 
     var credentials = {
         token: dnsConfig.token,
-        email: dnsConfig.email
+        email: dnsConfig.email,
+        hyphenatedSubdomains: !!dnsConfig.hyphenatedSubdomains
     };
 
     if (process.env.BOX_ENV === 'test') return callback(null, credentials); // this shouldn't be here

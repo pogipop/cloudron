@@ -130,7 +130,8 @@ function verifyDnsConfig(dnsConfig, domain, zoneName, ip, callback) {
 
     var credentials = {
         token: dnsConfig.token,
-        fqdn: domain
+        fqdn: domain,
+        hyphenatedSubdomains: true  // this will ensure we always use them, regardless of passed-in configs
     };
 
     const testSubdomain = 'cloudrontestdns';

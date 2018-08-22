@@ -24,7 +24,8 @@ function getDnsCredentials(dnsConfig) {
         credentials: {
             client_email: dnsConfig.credentials.client_email,
             private_key: dnsConfig.credentials.private_key
-        }
+        },
+        hyphenatedSubdomains: !!dnsConfig.hyphenatedSubdomains
     };
 }
 

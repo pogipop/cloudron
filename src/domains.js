@@ -101,15 +101,7 @@ function verifyDnsConfig(config, domain, zoneName, provider, ip, callback) {
     var backend = api(provider);
     if (!backend) return callback(new DomainsError(DomainsError.INVALID_PROVIDER));
 
-    api(provider).verifyDnsConfig(config, domain, zoneName, ip, function (error, result) {
-        if (error) return callback(error);
-
-        // set potential hyphenatedSubdomains property if true, otherwise unset
-        // TODO this should possibly be verified against in the backend and passed normally through the result
-        if ('hyphenatedSubdomains' in config && !!config.hyphenatedSubdomains) result.hyphenatedSubdomains = !!config.hyphenatedSubdomains;
-
-        callback(null, result);
-    });
+    api(provider).verifyDnsConfig(config, domain, zoneName, ip, callback);
 }
 
 function add(domain, zoneName, provider, config, fallbackCertificate, tlsConfig, callback) {
