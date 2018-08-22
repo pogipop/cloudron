@@ -268,7 +268,7 @@ function getName(domain, subdomain) {
 
     var part = domain.domain.slice(0, -domain.zoneName.length - 1);
 
-    return subdomain === '' ? part : subdomain + '.' + part;
+    return subdomain === '' ? part : (subdomain + (domain.config.hyphenatedSubdomains ? '-' : '.') + part);
 }
 
 function getDnsRecords(subdomain, domain, type, callback) {
