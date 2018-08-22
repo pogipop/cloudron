@@ -14,6 +14,7 @@ arg_version=""
 arg_web_server_origin=""
 arg_provider=""
 arg_is_demo="false"
+arg_edition=""
 
 args=$(getopt -o "" -l "data:,retire-reason:,retire-info:" -n "$0" -- "$@")
 eval set -- "${args}"
@@ -55,6 +56,9 @@ while true; do
         arg_provider=$(echo "$2" | $json provider)
         [[ "${arg_provider}" == "" ]] && arg_provider="generic"
 
+        arg_edition=$(echo "$2" | $json edition)
+        [[ "${arg_edition}" == "" ]] && arg_edition=""
+
         shift 2
         ;;
     --) break;;
@@ -69,3 +73,4 @@ echo "fqdn: ${arg_fqdn}"
 echo "version: ${arg_version}"
 echo "web server: ${arg_web_server_origin}"
 echo "provider: ${arg_provider}"
+echo "edition: ${arg_edition}"

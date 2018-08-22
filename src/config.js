@@ -37,6 +37,7 @@ exports = module.exports = {
     dkimSelector: dkimSelector,
 
     isDemo: isDemo,
+    edition: edition,
 
     // for testing resets to defaults
     _reset: _reset
@@ -76,7 +77,8 @@ function saveSync() {
         adminFqdn: data.adminFqdn,
         adminLocation: data.adminLocation,
         provider: data.provider,
-        isDemo: data.isDemo
+        isDemo: data.isDemo,
+        edition: data.edition
     };
 
     fs.writeFileSync(cloudronConfigFileName, JSON.stringify(conf, null, 4)); // functions are ignored by JSON.stringify
@@ -104,6 +106,7 @@ function initConfig() {
     data.sysadminPort = 3001;
     data.ldapPort = 3002;
     data.dockerProxyPort = 3003;
+    data.edition = '';
 
     // keep in sync with start.sh
     data.database = {
@@ -236,3 +239,6 @@ function dkimSelector() {
     return loc === 'my' ? 'cloudron' : `cloudron-${loc.replace(/\./g, '')}`;
 }
 
+function edition() {
+    return get('edition');
+}
