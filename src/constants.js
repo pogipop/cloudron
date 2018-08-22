@@ -19,8 +19,6 @@ exports = module.exports = {
 
     ADMIN_NAME: 'Settings',
 
-    ADMIN_CLIENT_ID: 'webadmin', // oauth client id
-
     NGINX_ADMIN_CONFIG_FILE_NAME: 'admin.conf',
 
     GHOST_USER_FILE: '/tmp/cloudron_ghost.json',

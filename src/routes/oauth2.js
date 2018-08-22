@@ -362,10 +362,13 @@ function accountSetup(req, res, next) {
             // setPassword clears the resetToken
             users.setPassword(userObject.id, req.body.password, function (error) {
                 if (error && error.reason === UsersError.BAD_FIELD) return renderAccountSetupSite(res, req, userObject, error.message);
-
                 if (error) return next(new HttpError(500, error));
 
-                res.redirect(config.adminOrigin());
+                clients.addTokenByUserId('cid-webadmin', userObject.id, Date.now() + constants.DEFAULT_TOKEN_EXPIRATION, function (error, result) {
+                    if (error) return next(new HttpError(500, error));
+
+                    res.redirect(`${config.adminOrigin()}?accessToken=${result.accessToken}&expiresAt=${result.expires}`);
+                });
             });
         });
     });
@@ -409,7 +412,11 @@ function passwordReset(req, res, next) {
             if (error && error.reason === UsersError.BAD_FIELD) return next(new HttpError(406, error.message));
             if (error) return next(new HttpError(500, error));
 
-            res.redirect(config.adminOrigin());
+            clients.addTokenByUserId('cid-webadmin', userObject.id, Date.now() + constants.DEFAULT_TOKEN_EXPIRATION, function (error, result) {
+                if (error) return next(new HttpError(500, error));
+
+                res.redirect(`${config.adminOrigin()}?accessToken=${result.accessToken}&expiresAt=${result.expires}`);
+            });
         });
     });
 }
