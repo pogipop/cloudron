@@ -407,11 +407,11 @@ function get(appId, callback) {
 
         postProcess(app);
 
-        domaindb.get(app.domain, function (error, result) {
+        domaindb.get(app.domain, function (error, domainObject) {
             if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
 
             app.iconUrl = getIconUrlSync(app);
-            app.fqdn = domains.fqdn(app.location, app.domain, result.provider);
+            app.fqdn = domains.fqdn(app.location, app.domain, domainObject);
 
             mailboxdb.getByOwnerId(app.id, function (error, mailboxes) {
                 if (error && error.reason !== DatabaseError.NOT_FOUND) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
@@ -437,11 +437,11 @@ function getByIpAddress(ip, callback) {
 
             postProcess(app);
 
-            domaindb.get(app.domain, function (error, result) {
+            domaindb.get(app.domain, function (error, domainObject) {
                 if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
 
                 app.iconUrl = getIconUrlSync(app);
-                app.fqdn = domains.fqdn(app.location, app.domain, result.provider);
+                app.fqdn = domains.fqdn(app.location, app.domain, domainObject);
 
                 mailboxdb.getByOwnerId(app.id, function (error, mailboxes) {
                     if (error && error.reason !== DatabaseError.NOT_FOUND) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
@@ -464,11 +464,11 @@ function getAll(callback) {
         apps.forEach(postProcess);
 
         async.eachSeries(apps, function (app, iteratorDone) {
-            domaindb.get(app.domain, function (error, result) {
+            domaindb.get(app.domain, function (error, domainObject) {
                 if (error) return iteratorDone(new AppsError(AppsError.INTERNAL_ERROR, error));
 
                 app.iconUrl = getIconUrlSync(app);
-                app.fqdn = domains.fqdn(app.location, app.domain, result.provider);
+                app.fqdn = domains.fqdn(app.location, app.domain, domainObject);
 
                 mailboxdb.getByOwnerId(app.id, function (error, mailboxes) {
                     if (error && error.reason !== DatabaseError.NOT_FOUND) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
@@ -595,7 +595,7 @@ function install(data, auditSource, callback) {
             if (error && error.reason === DomainsError.NOT_FOUND) return callback(new AppsError(AppsError.NOT_FOUND, 'No such domain'));
             if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, 'Could not get domain info:' + error.message));
 
-            var fqdn = domains.fqdn(location, domain, domainObject.provider);
+            var fqdn = domains.fqdn(location, domain, domainObject);
 
             error = validateHostname(location, domain, fqdn);
             if (error) return callback(error);
@@ -731,7 +731,7 @@ function configure(appId, data, auditSource, callback) {
             if (error && error.reason === DomainsError.NOT_FOUND) return callback(new AppsError(AppsError.NOT_FOUND, 'No such domain'));
             if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, 'Could not get domain info:' + error.message));
 
-            var fqdn = domains.fqdn(location, domain, domainObject.provider);
+            var fqdn = domains.fqdn(location, domain, domainObject);
 
             error = validateHostname(location, domain, fqdn);
             if (error) return callback(error);
@@ -994,7 +994,7 @@ function clone(appId, data, auditSource, callback) {
                 if (error && error.reason === DomainsError.NOT_FOUND) return callback(new AppsError(AppsError.EXTERNAL_ERROR, 'No such domain'));
                 if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, 'Could not get domain info:' + error.message));
 
-                error = validateHostname(location, domain, domains.fqdn(location, domain, domainObject.provider));
+                error = validateHostname(location, domain, domains.fqdn(location, domain, domainObject));
                 if (error) return callback(error);
 
                 var newAppId = uuid.v4(), manifest = backupInfo.manifest;

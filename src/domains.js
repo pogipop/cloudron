@@ -367,7 +367,7 @@ function setAdmin(domain, callback) {
 
             config.setAdminDomain(result.domain);
             config.setAdminLocation('my');
-            config.setAdminFqdn('my' + (result.provider === 'caas' ? '-' : '.') + result.domain);
+            config.setAdminFqdn('my' + (result.config.hyphenatedSubdomains ? '-' : '.') + result.domain);
 
             callback();
 
@@ -376,8 +376,8 @@ function setAdmin(domain, callback) {
     });
 }
 
-function fqdn(location, domain, provider) {
-    return location + (location ? (provider !== 'caas' ? '.' : '-') : '') + domain;
+function fqdn(location, domain, domainObject) {
+    return location + (location ? (domainObject.config.hyphenatedSubdomains ? '-' : '.') : '') + domain;
 }
 
 // removes all fields that are strictly private and should never be returned by API calls
