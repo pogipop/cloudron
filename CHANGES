@@ -1356,3 +1356,5 @@
 [3.1.0]
 * Add UDP support
 * Clicking invite button does not send an invite immediately
+* Implement docker addon
+
