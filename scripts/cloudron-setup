@@ -44,6 +44,7 @@ fi
 initBaseImage="true"
 # provisioning data
 provider=""
+edition=""
 requestedVersion=""
 apiServerOrigin="https://api.cloudron.io"
 webServerOrigin="https://cloudron.io"
@@ -52,13 +53,14 @@ sourceTarballUrl=""
 rebootServer="true"
 baseDataDir=""
 
-args=$(getopt -o "" -l "help,skip-baseimage-init,data-dir:,provider:,version:,env:,prerelease,skip-reboot" -n "$0" -- "$@")
+args=$(getopt -o "" -l "help,skip-baseimage-init,data-dir:,provider:,version:,env:,prerelease,edition:,skip-reboot" -n "$0" -- "$@")
 eval set -- "${args}"
 
 while true; do
     case "$1" in
     --help) echo "See https://cloudron.io/documentation/installation/ on how to install Cloudron"; exit 0;;
     --provider) provider="$2"; shift 2;;
+    --edition) edition="$2"; shift 2;;
     --version) requestedVersion="$2"; shift 2;;
     --env)
         if [[ "$2" == "dev" ]]; then
@@ -171,6 +173,7 @@ fi
 data=$(cat <<EOF
 {
     "provider": "${provider}",
+    "edition": "${edition}",
     "apiServerOrigin": "${apiServerOrigin}",
     "webServerOrigin": "${webServerOrigin}",
     "version": "${version}"
