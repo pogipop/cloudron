@@ -77,22 +77,22 @@ ReverseProxyError.INTERNAL_ERROR = 'Internal Error';
 ReverseProxyError.INVALID_CERT = 'Invalid certificate';
 ReverseProxyError.NOT_FOUND = 'Not Found';
 
-function getApi(app, callback) {
-    assert.strictEqual(typeof app, 'object');
+function getApi(domain, callback) {
+    assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    domains.get(app.domain, function (error, domain) {
+    domains.get(domain, function (error, result) {
         if (error) return callback(error);
 
-        if (domain.tlsConfig.provider === 'fallback') return callback(null, fallback, {});
+        if (result.tlsConfig.provider === 'fallback') return callback(null, fallback, {});
 
-        var api = domain.tlsConfig.provider === 'caas' ? caas : acme;
+        var api = result.tlsConfig.provider === 'caas' ? caas : acme;
 
         var options = { };
-        if (domain.tlsConfig.provider === 'caas') {
+        if (result.tlsConfig.provider === 'caas') {
             options.prod = true;
         } else { // acme
-            options.prod = domain.tlsConfig.provider.match(/.*-prod/) !== null; // matches 'le-prod' or 'letsencrypt-prod'
+            options.prod = result.tlsConfig.provider.match(/.*-prod/) !== null; // matches 'le-prod' or 'letsencrypt-prod'
         }
 
         // registering user with an email requires A or MX record (https://github.com/letsencrypt/boulder/issues/1197)
@@ -248,7 +248,7 @@ function ensureCertificate(app, auditSource, callback) {
         debug('ensureCertificate: %s cert does not exist', vhost);
     }
 
-    getApi(app, function (error, api, apiOptions) {
+    getApi(app.domain, function (error, api, apiOptions) {
         if (error) return callback(error);
 
         debug('ensureCertificate: getting certificate for %s with options %j', vhost, apiOptions);
