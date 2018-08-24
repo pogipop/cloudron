@@ -273,7 +273,7 @@ function ensureCertificate(appDomain, auditSource, callback) {
     });
 }
 
-function configureAdminInternal(bundle, configFileName, vhost, callback) {
+function writeAdminConfig(bundle, configFileName, vhost, callback) {
     assert.strictEqual(typeof bundle, 'object');
     assert.strictEqual(typeof configFileName, 'string');
     assert.strictEqual(typeof vhost, 'string');
@@ -306,11 +306,11 @@ function configureAdmin(auditSource, callback) {
     ensureCertificate(adminAppDomain, auditSource, function (error, bundle) {
         if (error) return callback(error);
 
-        configureAdminInternal(bundle, constants.NGINX_ADMIN_CONFIG_FILE_NAME, config.adminFqdn(), callback);
+        writeAdminConfig(bundle, constants.NGINX_ADMIN_CONFIG_FILE_NAME, config.adminFqdn(), callback);
     });
 }
 
-function configureAppInternal(app, bundle, callback) {
+function writeAppConfig(app, bundle, callback) {
     assert.strictEqual(typeof app, 'object');
     assert.strictEqual(typeof bundle, 'object');
     assert.strictEqual(typeof callback, 'function');
@@ -343,7 +343,7 @@ function configureAppInternal(app, bundle, callback) {
     reload(callback);
 }
 
-function configureAppRedirect(app, fqdn, bundle, callback) {
+function writeAppRedirectConfig(app, fqdn, bundle, callback) {
     assert.strictEqual(typeof app, 'object');
     assert.strictEqual(typeof fqdn, 'string');
     assert.strictEqual(typeof bundle, 'object');
@@ -382,7 +382,7 @@ function configureApp(app, auditSource, callback) {
     ensureCertificate({ fqdn: app.fqdn, domain: app.domain }, auditSource, function (error, bundle) {
         if (error) return callback(error);
 
-        configureAppInternal(app, bundle, function (error) {
+        writeAppConfig(app, bundle, function (error) {
             if (error) return callback(error);
 
             // now setup alternateDomain redirects if any
@@ -392,7 +392,7 @@ function configureApp(app, auditSource, callback) {
                 ensureCertificate({ fqdn: fqdn, domain: domain.domain }, auditSource, function (error, bundle) {
                     if (error) return callback(error);
 
-                    configureAppRedirect(app, fqdn, bundle, callback);
+                    writeAppRedirectConfig(app, fqdn, bundle, callback);
                 });
             }, callback);
         });
@@ -429,8 +429,8 @@ function renewAll(auditSource, callback) {
 
                 // reconfigure for the case where we got a renewed cert after fallback
                 var configureFunc = app.fqdn === config.adminFqdn() ?
-                    configureAdminInternal.bind(null, bundle, constants.NGINX_ADMIN_CONFIG_FILE_NAME, config.adminFqdn())
-                    : configureAppInternal.bind(null, app, bundle);
+                    writeAdminConfig.bind(null, bundle, constants.NGINX_ADMIN_CONFIG_FILE_NAME, config.adminFqdn())
+                    : writeAppConfig.bind(null, app, bundle);
 
                 configureFunc(function (ignoredError) {
                     if (ignoredError) debug('fallbackExpiredCertificates: error reconfiguring app', ignoredError);
@@ -464,7 +464,7 @@ function configureDefaultServer(callback) {
         safe.child_process.execSync(certCommand);
     }
 
-    configureAdminInternal({ certFilePath, keyFilePath }, 'default.conf', '', function (error) {
+    writeAdminConfig({ certFilePath, keyFilePath }, 'default.conf', '', function (error) {
         if (error) return callback(error);
 
         debug('configureDefaultServer: done');
