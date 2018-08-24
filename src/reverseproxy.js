@@ -127,14 +127,6 @@ function validateCertificate(domain, cert, key) {
     assert.strictEqual(typeof cert, 'string');
     assert.strictEqual(typeof key, 'string');
 
-    function matchesDomain(candidate) {
-        if (typeof candidate !== 'string') return false;
-        if (candidate === domain) return true;
-        if (candidate.indexOf('*') === 0 && candidate.slice(2) === domain.slice(domain.indexOf('.') + 1)) return true;
-
-        return false;
-    }
-
     // check for empty cert and key strings
     if (!cert && key) return new ReverseProxyError(ReverseProxyError.INVALID_CERT, 'missing cert');
     if (cert && !key) return new ReverseProxyError(ReverseProxyError.INVALID_CERT, 'missing key');
