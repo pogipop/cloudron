@@ -73,6 +73,8 @@ var APPS_FIELDS_PREFIXED = [ 'apps.id', 'apps.appStoreId', 'apps.installationSta
 
 var PORT_BINDINGS_FIELDS = [ 'hostPort', 'type', 'environmentVariable', 'appId' ].join(',');
 
+const SUBDOMAIN_FIELDS = [ 'appId', 'domain', 'subdomain', 'type' ].join(',');
+
 function postProcess(result) {
     assert.strictEqual(typeof result, 'object');
 
@@ -143,7 +145,7 @@ function get(id, callback) {
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
         if (result.length === 0) return callback(new DatabaseError(DatabaseError.NOT_FOUND));
 
-        database.query('SELECT * FROM subdomains WHERE appId = ? AND type = ?', [ id, exports.SUBDOMAIN_TYPE_REDIRECT ], function (error, alternateDomains) {
+        database.query('SELECT ' + SUBDOMAIN_FIELDS + ' FROM subdomains WHERE appId = ? AND type = ?', [ id, exports.SUBDOMAIN_TYPE_REDIRECT ], function (error, alternateDomains) {
             if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
 
             result[0].alternateDomains = alternateDomains;
@@ -168,7 +170,7 @@ function getByHttpPort(httpPort, callback) {
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
         if (result.length === 0) return callback(new DatabaseError(DatabaseError.NOT_FOUND));
 
-        database.query('SELECT * FROM subdomains WHERE appId = ? AND type = ?', [ result[0].id, exports.SUBDOMAIN_TYPE_REDIRECT ], function (error, alternateDomains) {
+        database.query('SELECT ' + SUBDOMAIN_FIELDS + ' FROM subdomains WHERE appId = ? AND type = ?', [ result[0].id, exports.SUBDOMAIN_TYPE_REDIRECT ], function (error, alternateDomains) {
             if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
 
             result[0].alternateDomains = alternateDomains;
@@ -192,7 +194,7 @@ function getByContainerId(containerId, callback) {
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
         if (result.length === 0) return callback(new DatabaseError(DatabaseError.NOT_FOUND));
 
-        database.query('SELECT * FROM subdomains WHERE appId = ? AND type = ?', [ result[0].id, exports.SUBDOMAIN_TYPE_REDIRECT ], function (error, alternateDomains) {
+        database.query('SELECT ' + SUBDOMAIN_FIELDS + ' FROM subdomains WHERE appId = ? AND type = ?', [ result[0].id, exports.SUBDOMAIN_TYPE_REDIRECT ], function (error, alternateDomains) {
             if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
 
             result[0].alternateDomains = alternateDomains;
@@ -214,7 +216,7 @@ function getAll(callback) {
         + ' GROUP BY apps.id ORDER BY apps.id', [ exports.SUBDOMAIN_TYPE_PRIMARY ], function (error, results) {
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
 
-        database.query('SELECT * FROM subdomains WHERE type = ?', [ exports.SUBDOMAIN_TYPE_REDIRECT ], function (error, alternateDomains) {
+        database.query('SELECT ' + SUBDOMAIN_FIELDS + ' FROM subdomains WHERE type = ?', [ exports.SUBDOMAIN_TYPE_REDIRECT ], function (error, alternateDomains) {
             if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
 
             alternateDomains.forEach(function (d) {
