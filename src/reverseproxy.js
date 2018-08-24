@@ -221,12 +221,14 @@ function getCertificate(app, callback) {
     return getFallbackCertificate(app.domain, callback);
 }
 
-function ensureCertificate(app, auditSource, callback) {
-    assert.strictEqual(typeof app, 'object');
+function ensureCertificate(appDomain, auditSource, callback) {
+    assert.strictEqual(typeof appDomain, 'object');
+    assert.strictEqual(typeof appDomain.fqdn, 'string');
+    assert.strictEqual(typeof appDomain.domain, 'string');
     assert.strictEqual(typeof auditSource, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    const vhost = app.fqdn;
+    const vhost = appDomain.fqdn;
 
     var certFilePath = path.join(paths.APP_CERTS_DIR, `${vhost}.user.cert`);
     var keyFilePath = path.join(paths.APP_CERTS_DIR, `${vhost}.user.key`);
@@ -248,7 +250,7 @@ function ensureCertificate(app, auditSource, callback) {
         debug('ensureCertificate: %s cert does not exist', vhost);
     }
 
-    getApi(app.domain, function (error, api, apiOptions) {
+    getApi(appDomain.domain, function (error, api, apiOptions) {
         if (error) return callback(error);
 
         debug('ensureCertificate: getting certificate for %s with options %j', vhost, apiOptions);
@@ -264,7 +266,7 @@ function ensureCertificate(app, auditSource, callback) {
             eventlog.add(eventlog.ACTION_CERTIFICATE_RENEWAL, auditSource, { domain: vhost, errorMessage: errorMessage });
 
             // if no cert was returned use fallback. the fallback/caas provider will not provide any for example
-            if (!certFilePath || !keyFilePath) return getFallbackCertificate(app.domain, callback);
+            if (!certFilePath || !keyFilePath) return getFallbackCertificate(appDomain.domain, callback);
 
             callback(null, { certFilePath, keyFilePath, reason: 'new-le' });
         });
@@ -300,8 +302,8 @@ function configureAdmin(auditSource, callback) {
     assert.strictEqual(typeof auditSource, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    var adminApp = { domain: config.adminDomain(), fqdn: config.adminFqdn() };
-    ensureCertificate(adminApp, auditSource, function (error, bundle) {
+    var adminAppDomain = { domain: config.adminDomain(), fqdn: config.adminFqdn() };
+    ensureCertificate(adminAppDomain, auditSource, function (error, bundle) {
         if (error) return callback(error);
 
         configureAdminInternal(bundle, constants.NGINX_ADMIN_CONFIG_FILE_NAME, config.adminFqdn(), callback);
@@ -421,7 +423,7 @@ function renewAll(auditSource, callback) {
         allApps.push({ domain: config.adminDomain(), fqdn: config.adminFqdn() }); // inject fake webadmin app
 
         async.eachSeries(allApps, function (app, iteratorCallback) {
-            ensureCertificate(app, auditSource, function (error, bundle) {
+            ensureCertificate({ fqdn: app.fqdn, domain: app.domain }, auditSource, function (error, bundle) {
                 if (error) return iteratorCallback(error); // this can happen if cloudron is not setup yet
                 if (bundle.reason !== 'new-le' && bundle.reason !== 'fallback') return iteratorCallback();
 
