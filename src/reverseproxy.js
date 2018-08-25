@@ -420,24 +420,42 @@ function renewAll(auditSource, callback) {
     apps.getAll(function (error, allApps) {
         if (error) return callback(error);
 
-        allApps.push({ domain: config.adminDomain(), fqdn: config.adminFqdn() }); // inject fake webadmin app
+        var allDomains = [];
 
-        async.eachSeries(allApps, function (app, iteratorCallback) {
-            ensureCertificate({ fqdn: app.fqdn, domain: app.domain }, auditSource, function (error, bundle) {
+         // add webadmin domain
+        allDomains.push({ domain: config.adminDomain(), fqdn: config.adminFqdn(), type: 'webadmin' });
+
+        // add app main
+        allApps.forEach(function (app) {
+            allDomains.push({ domain: app.domain, fqdn: app.fqdn, type: 'main', app: app });
+
+            // and alternate domains
+            app.alternateDomains.forEach(function (domain) {
+                // TODO support hyphenated domains here as well
+                var fqdn = (domain.subdomain ? (domain.subdomain + '.') : '') + domain.domain;
+
+                allDomains.push({ domain: domain.domain, fqdn: fqdn, type: 'alternate', app: app });
+            });
+        });
+
+        async.eachSeries(allDomains, function (domain, iteratorCallback) {
+            ensureCertificate(domain, auditSource, function (error, bundle) {
                 if (error) return iteratorCallback(error); // this can happen if cloudron is not setup yet
                 if (bundle.reason !== 'new-le' && bundle.reason !== 'fallback') return iteratorCallback();
 
                 // reconfigure for the case where we got a renewed cert after fallback
-                var configureFunc = app.fqdn === config.adminFqdn() ?
-                    writeAdminConfig.bind(null, bundle, constants.NGINX_ADMIN_CONFIG_FILE_NAME, config.adminFqdn())
-                    : writeAppConfig.bind(null, app, bundle);
+                var configureFunc;
+                if (domain.type === 'webadmin') configureFunc = writeAdminConfig.bind(null, bundle, constants.NGINX_ADMIN_CONFIG_FILE_NAME, config.adminFqdn());
+                else if (domain.type === 'main') configureFunc = writeAppConfig.bind(null, domain.app, bundle);
+                else if (domain.type === 'alternate') configureFunc = writeAppRedirectConfig.bind(null, domain.app, domain.fqdn, bundle);
+                else return callback(new Error(`Unknown domain type for ${domain.fqdn}. This should never happen`));
 
                 configureFunc(function (ignoredError) {
-                    if (ignoredError) debug('fallbackExpiredCertificates: error reconfiguring app', ignoredError);
+                    if (ignoredError) debug('renewAll: error reconfiguring app', ignoredError);
 
-                    platform.handleCertChanged(app.fqdn);
+                    platform.handleCertChanged(domain.fqdn);
 
-                    iteratorCallback(); // move to next app
+                    iteratorCallback(); // move to next domain
                 });
             });
         });
