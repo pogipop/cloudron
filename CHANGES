@@ -1359,3 +1359,5 @@
 * Implement docker addon
 * Automatically login after password reset and account setup
 * Make backup interval configurable
+* Fix alternate domain certificate renewal
+
