@@ -1361,3 +1361,6 @@
 * Make backup interval configurable
 * Fix alternate domain certificate renewal
 
+[3.1.1]
+* Fix caas domain migration
+
