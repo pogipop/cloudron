@@ -506,6 +506,7 @@ describe('dns provider', function () {
         before(function (done) {
             DOMAIN_0.provider = 'namecom';
             DOMAIN_0.config = {
+                username: 'fake',
                 token: TOKEN
             };
 

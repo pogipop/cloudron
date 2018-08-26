@@ -168,6 +168,7 @@ function verifyDnsConfig(dnsConfig, fqdn, zoneName, ip, callback) {
     if (!dnsConfig.credentials || typeof dnsConfig.credentials !== 'object') return callback(new DomainsError(DomainsError.BAD_FIELD, 'credentials must be an object'));
     if (typeof dnsConfig.credentials.client_email !== 'string') return callback(new DomainsError(DomainsError.BAD_FIELD, 'credentials.client_email must be a string'));
     if (typeof dnsConfig.credentials.private_key !== 'string') return callback(new DomainsError(DomainsError.BAD_FIELD, 'credentials.private_key must be a string'));
+    if ('hyphenatedSubdomains' in dnsConfig && typeof dnsConfig.hyphenatedSubdomains !== 'boolean') return callback(new DomainsError(DomainsError.BAD_FIELD, 'hyphenatedSubdomains must be a boolean'));
 
     var credentials = getDnsCredentials(dnsConfig);
     if (process.env.BOX_ENV === 'test') return callback(null, credentials); // this shouldn't be here

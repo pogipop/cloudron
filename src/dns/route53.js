@@ -114,7 +114,7 @@ function add(dnsConfig, zoneName, subdomain, type, values, callback) {
         };
 
         var route53 = new AWS.Route53(getDnsCredentials(dnsConfig));
-        route53.changeResourceRecordSets(params, function(error, result) {
+        route53.changeResourceRecordSets(params, function(error) {
             if (error && error.code === 'AccessDenied') return callback(new DomainsError(DomainsError.ACCESS_DENIED, error.message));
             if (error && error.code === 'InvalidClientTokenId') return callback(new DomainsError(DomainsError.ACCESS_DENIED, error.message));
             if (error && error.code === 'PriorRequestNotComplete') return callback(new DomainsError(DomainsError.STILL_BUSY, error.message));
@@ -235,6 +235,7 @@ function verifyDnsConfig(dnsConfig, fqdn, zoneName, ip, callback) {
 
     if (!dnsConfig.accessKeyId || typeof dnsConfig.accessKeyId !== 'string') return callback(new DomainsError(DomainsError.BAD_FIELD, 'accessKeyId must be a non-empty string'));
     if (!dnsConfig.secretAccessKey || typeof dnsConfig.secretAccessKey !== 'string') return callback(new DomainsError(DomainsError.BAD_FIELD, 'secretAccessKey must be a non-empty string'));
+    if ('hyphenatedSubdomains' in dnsConfig && typeof dnsConfig.hyphenatedSubdomains !== 'boolean') return callback(new DomainsError(DomainsError.BAD_FIELD, 'hyphenatedSubdomains must be a boolean'));
 
     var credentials = {
         accessKeyId: dnsConfig.accessKeyId,

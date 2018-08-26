@@ -55,10 +55,13 @@ function verifyDnsConfig(dnsConfig, domain, zoneName, ip, callback) {
     assert.strictEqual(typeof ip, 'string');
     assert.strictEqual(typeof callback, 'function');
 
+    if ('wildcard' in dnsConfig && typeof dnsConfig.wildcard !== 'boolean') return callback(new DomainsError(DomainsError.BAD_FIELD, 'wildcard must be a boolean'));
+    if ('hyphenatedSubdomains' in dnsConfig && typeof dnsConfig.hyphenatedSubdomains !== 'boolean') return callback(new DomainsError(DomainsError.BAD_FIELD, 'hyphenatedSubdomains must be a boolean'));
+
     var config = {
         wildcard: !!dnsConfig.wildcard,
         hyphenatedSubdomains: !!dnsConfig.hyphenatedSubdomains
-    }
+    };
 
     // Very basic check if the nameservers can be fetched
     dns.resolve(zoneName, 'NS', { timeout: 5000 }, function (error, nameservers) {
