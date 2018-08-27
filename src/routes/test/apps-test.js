@@ -216,7 +216,7 @@ function startBox(done) {
             token_1 = tokendb.generateToken();
 
             // HACK to get a token for second user (passwords are generated and the user should have gotten a password setup link...)
-            tokendb.add(token_1, user_1_id, 'test-client-id',  Date.now() + 1000000, accesscontrol.SCOPE_ANY, callback);
+            tokendb.add(token_1, user_1_id, 'test-client-id',  Date.now() + 1000000, accesscontrol.SCOPE_ANY, '', callback);
         },
 
         function (callback) {

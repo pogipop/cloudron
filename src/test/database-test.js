@@ -553,6 +553,7 @@ describe('database', function () {
 
     describe('token', function () {
         var TOKEN_0 = {
+            name: 'token0',
             accessToken: tokendb.generateToken(),
             identifier: '0',
             clientId: 'clientid-0',
@@ -560,6 +561,7 @@ describe('database', function () {
             scope: 'clients'
         };
         var TOKEN_1 = {
+            name: 'token1',
             accessToken: tokendb.generateToken(),
             identifier: '1',
             clientId: 'clientid-1',
@@ -567,6 +569,7 @@ describe('database', function () {
             scope: 'settings'
         };
         var TOKEN_2 = {
+            name: 'token2',
             accessToken: tokendb.generateToken(),
             identifier: '2',
             clientId: 'clientid-2',
@@ -582,14 +585,14 @@ describe('database', function () {
         });
 
         it('add succeeds', function (done) {
-            tokendb.add(TOKEN_0.accessToken, TOKEN_0.identifier, TOKEN_0.clientId, TOKEN_0.expires, TOKEN_0.scope, function (error) {
+            tokendb.add(TOKEN_0.accessToken, TOKEN_0.identifier, TOKEN_0.clientId, TOKEN_0.expires, TOKEN_0.scope, TOKEN_0.name, function (error) {
                 expect(error).to.be(null);
                 done();
             });
         });
 
         it('add of same token fails', function (done) {
-            tokendb.add(TOKEN_0.accessToken, TOKEN_0.identifier, TOKEN_0.clientId, TOKEN_0.expires, TOKEN_0.scope, function (error) {
+            tokendb.add(TOKEN_0.accessToken, TOKEN_0.identifier, TOKEN_0.clientId, TOKEN_0.expires, TOKEN_0.scope, TOKEN_0.name, function (error) {
                 expect(error).to.be.a(DatabaseError);
                 expect(error.reason).to.be(DatabaseError.ALREADY_EXISTS);
                 done();
@@ -642,7 +645,7 @@ describe('database', function () {
         });
 
         it('delByIdentifier succeeds', function (done) {
-            tokendb.add(TOKEN_1.accessToken, TOKEN_1.identifier, TOKEN_1.clientId, TOKEN_1.expires, TOKEN_1.scope, function (error) {
+            tokendb.add(TOKEN_1.accessToken, TOKEN_1.identifier, TOKEN_1.clientId, TOKEN_1.expires, TOKEN_1.scope, '', function (error) {
                 expect(error).to.be(null);
 
                 tokendb.delByIdentifier(TOKEN_1.identifier, function (error) {
@@ -661,7 +664,7 @@ describe('database', function () {
         });
 
         it('getByIdentifierAndClientId succeeds', function (done) {
-            tokendb.add(TOKEN_0.accessToken, TOKEN_0.identifier, TOKEN_0.clientId, TOKEN_0.expires, TOKEN_0.scope, function (error) {
+            tokendb.add(TOKEN_0.accessToken, TOKEN_0.identifier, TOKEN_0.clientId, TOKEN_0.expires, TOKEN_0.scope, TOKEN_0.name, function (error) {
                 expect(error).to.be(null);
 
                 tokendb.getByIdentifierAndClientId(TOKEN_0.identifier, TOKEN_0.clientId, function (error, result) {
@@ -675,7 +678,7 @@ describe('database', function () {
         });
 
         it('delExpired succeeds', function (done) {
-            tokendb.add(TOKEN_2.accessToken, TOKEN_2.identifier, TOKEN_2.clientId, TOKEN_2.expires, TOKEN_2.scope, function (error) {
+            tokendb.add(TOKEN_2.accessToken, TOKEN_2.identifier, TOKEN_2.clientId, TOKEN_2.expires, TOKEN_2.scope, TOKEN_2.name, function (error) {
                 expect(error).to.be(null);
 
                 tokendb.delExpired(function (error, result) {
@@ -706,7 +709,7 @@ describe('database', function () {
         });
 
         it('delByClientId succeeds', function (done) {
-            tokendb.add(TOKEN_0.accessToken, TOKEN_0.identifier, TOKEN_0.clientId, TOKEN_0.expires, TOKEN_0.scope, function (error) {
+            tokendb.add(TOKEN_0.accessToken, TOKEN_0.identifier, TOKEN_0.clientId, TOKEN_0.expires, TOKEN_0.scope, TOKEN_0.name, function (error) {
                 expect(error).to.be(null);
 
                 tokendb.delByClientId(TOKEN_0.clientId, function (error) {

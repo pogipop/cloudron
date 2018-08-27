@@ -33,7 +33,8 @@ describe('janitor', function () {
         identifier: '0',
         clientId: 'clientid-0',
         expires: Date.now() + 60 * 60 * 1000,
-        scope: 'settings'
+        scope: 'settings',
+        name: 'clientid0'
     };
     var TOKEN_1 = {
         accessToken: tokendb.generateToken(),
@@ -41,6 +42,7 @@ describe('janitor', function () {
         clientId: 'clientid-1',
         expires: Date.now() - 1000,
         scope: 'apps',
+        name: 'clientid1'
     };
 
     before(function (done) {
@@ -49,8 +51,8 @@ describe('janitor', function () {
             database._clear,
             authcodedb.add.bind(null, AUTHCODE_0.authCode, AUTHCODE_0.clientId, AUTHCODE_0.userId, AUTHCODE_0.expiresAt),
             authcodedb.add.bind(null, AUTHCODE_1.authCode, AUTHCODE_1.clientId, AUTHCODE_1.userId, AUTHCODE_1.expiresAt),
-            tokendb.add.bind(null, TOKEN_0.accessToken, TOKEN_0.identifier, TOKEN_0.clientId, TOKEN_0.expires, TOKEN_0.scope),
-            tokendb.add.bind(null, TOKEN_1.accessToken, TOKEN_1.identifier, TOKEN_1.clientId, TOKEN_1.expires, TOKEN_1.scope)
+            tokendb.add.bind(null, TOKEN_0.accessToken, TOKEN_0.identifier, TOKEN_0.clientId, TOKEN_0.expires, TOKEN_0.scope, TOKEN_0.name),
+            tokendb.add.bind(null, TOKEN_1.accessToken, TOKEN_1.identifier, TOKEN_1.clientId, TOKEN_1.expires, TOKEN_1.scope, TOKEN_1.name)
         ], done);
     });
 

@@ -24,7 +24,8 @@ function login(req, res, next) {
             if (!verified) return next(new HttpError(401, 'Invalid totpToken'));
         }
 
-        clients.issueDeveloperToken(user, ip, function (error, result) {
+        const auditSource = { authType: 'cli', ip: ip };
+        clients.issueDeveloperToken(user, auditSource, function (error, result) {
             if (error) return next(new HttpError(500, error));
 
             next(new HttpSuccess(200, result));

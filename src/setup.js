@@ -247,7 +247,7 @@ function activate(username, password, email, displayName, ip, auditSource, callb
         if (error && error.reason === UsersError.BAD_FIELD) return callback(new SetupError(SetupError.BAD_FIELD, error.message));
         if (error) return callback(new SetupError(SetupError.INTERNAL_ERROR, error));
 
-        clients.addTokenByUserId('cid-webadmin', userObject.id, Date.now() + constants.DEFAULT_TOKEN_EXPIRATION, function (error, result) {
+        clients.addTokenByUserId('cid-webadmin', userObject.id, Date.now() + constants.DEFAULT_TOKEN_EXPIRATION, {}, function (error, result) {
             if (error) return callback(new SetupError(SetupError.INTERNAL_ERROR, error));
 
             eventlog.add(eventlog.ACTION_ACTIVATE, auditSource, { });

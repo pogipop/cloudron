@@ -176,7 +176,7 @@ describe('Users API', function () {
         var token = tokendb.generateToken();
         var expires = Date.now() + 2000; // 1 sec
 
-        tokendb.add(token, user_0.id, null, expires, accesscontrol.SCOPE_PROFILE, function (error) {
+        tokendb.add(token, user_0.id, null, expires, accesscontrol.SCOPE_PROFILE, 'tokenname', function (error) {
             expect(error).to.not.be.ok();
 
             setTimeout(function () {
@@ -287,7 +287,7 @@ describe('Users API', function () {
                 user_1 = result.body;
 
                 // HACK to get a token for second user (passwords are generated and the user should have gotten a password setup link...)
-                tokendb.add(token_1, user_1.id, 'test-client-id',  Date.now() + 10000, accesscontrol.SCOPE_PROFILE, done);
+                tokendb.add(token_1, user_1.id, 'test-client-id',  Date.now() + 10000, accesscontrol.SCOPE_PROFILE, 'fromtest', done);
             });
     });
 
@@ -701,7 +701,7 @@ describe('Users API', function () {
                 token = tokendb.generateToken();
                 var expires = Date.now() + 2000; // 1 sec
 
-                tokendb.add(token, user_4.id, null, expires, accesscontrol.SCOPE_PROFILE, done);
+                tokendb.add(token, user_4.id, null, expires, accesscontrol.SCOPE_PROFILE, '', done);
             });
     });
 

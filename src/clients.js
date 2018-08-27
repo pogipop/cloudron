@@ -79,6 +79,14 @@ function validateClientName(name) {
     return null;
 }
 
+function validateTokenName(name) {
+    assert.strictEqual(typeof name, 'string');
+
+    if (name.length > 64) return new ClientsError(ClientsError.BAD_FIELD, 'Name too long');
+
+    return null;
+}
+
 function add(appId, type, redirectURI, scope, callback) {
     assert.strictEqual(typeof appId, 'string');
     assert.strictEqual(typeof type, 'string');
@@ -244,11 +252,16 @@ function delByAppIdAndType(appId, type, callback) {
     });
 }
 
-function addTokenByUserId(clientId, userId, expiresAt, callback) {
+function addTokenByUserId(clientId, userId, expiresAt, options, callback) {
     assert.strictEqual(typeof clientId, 'string');
     assert.strictEqual(typeof userId, 'string');
     assert.strictEqual(typeof expiresAt, 'number');
+    assert.strictEqual(typeof options, 'object');
     assert.strictEqual(typeof callback, 'function');
+
+    const name = options.name || '';
+    let error = validateTokenName(name);
+    if (error) return callback(error);
 
     get(clientId, function (error, result) {
         if (error) return callback(error);
@@ -265,7 +278,7 @@ function addTokenByUserId(clientId, userId, expiresAt, callback) {
 
                 var token = tokendb.generateToken();
 
-                tokendb.add(token, userId, result.id, expiresAt, authorizedScopes.join(','), function (error) {
+                tokendb.add(token, userId, result.id, expiresAt, authorizedScopes.join(','), name, function (error) {
                     if (error) return callback(new ClientsError(ClientsError.INTERNAL_ERROR, error));
 
                     callback(null, {
@@ -282,17 +295,17 @@ function addTokenByUserId(clientId, userId, expiresAt, callback) {
 }
 
 // this issues a cid-cli token that does not require a password in various routes
-function issueDeveloperToken(userObject, ip, callback) {
+function issueDeveloperToken(userObject, auditSource, callback) {
     assert.strictEqual(typeof userObject, 'object');
-    assert.strictEqual(typeof ip, 'string');
+    assert.strictEqual(typeof auditSource, 'object');
     assert.strictEqual(typeof callback, 'function');
 
     const expiresAt = Date.now() + constants.DEFAULT_TOKEN_EXPIRATION;
 
-    addTokenByUserId('cid-cli', userObject.id, expiresAt, function (error, result) {
+    addTokenByUserId('cid-cli', userObject.id, expiresAt, {}, function (error, result) {
         if (error) return callback(error);
 
-        eventlog.add(eventlog.ACTION_USER_LOGIN, { authType: 'cli', ip: ip }, { userId: userObject.id, user: users.removePrivateFields(userObject) });
+        eventlog.add(eventlog.ACTION_USER_LOGIN, auditSource, { userId: userObject.id, user: users.removePrivateFields(userObject) });
 
         callback(null, result);
     });

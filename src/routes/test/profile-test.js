@@ -115,7 +115,7 @@ describe('Profile API', function () {
             var token = tokendb.generateToken();
             var expires = Date.now() - 2000; // 1 sec
 
-            tokendb.add(token, user_0.id, null, expires, 'profile', function (error) {
+            tokendb.add(token, user_0.id, null, expires, 'profile', 'tokenname', function (error) {
                 expect(error).to.not.be.ok();
 
                 superagent.get(SERVER_URL + '/api/v1/profile').query({ access_token: token }).end(function (error, result) {

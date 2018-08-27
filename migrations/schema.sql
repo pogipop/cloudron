@@ -41,6 +41,7 @@ CREATE TABLE IF NOT EXISTS groupMembers(
     FOREIGN KEY(userId) REFERENCES users(id));
 
 CREATE TABLE IF NOT EXISTS tokens(
+    name VARCHAR(64) DEFAULT "", // description
     accessToken VARCHAR(128) NOT NULL UNIQUE,
     identifier VARCHAR(128) NOT NULL,
     clientId VARCHAR(128),

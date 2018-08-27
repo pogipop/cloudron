@@ -80,8 +80,9 @@ function addToken(req, res, next) {
     var data = req.body;
     var expiresAt = data.expiresAt ? parseInt(data.expiresAt, 10) : Date.now() + constants.DEFAULT_TOKEN_EXPIRATION;
     if (isNaN(expiresAt) || expiresAt <= Date.now()) return next(new HttpError(400, 'expiresAt must be a timestamp in the future'));
+    if ('name' in req.body && typeof req.body.name !== 'string') return next(new HttpError(400, 'name must be a string'));
 
-    clients.addTokenByUserId(req.params.clientId, req.user.id, expiresAt, function (error, result) {
+    clients.addTokenByUserId(req.params.clientId, req.user.id, expiresAt, { name: req.body.name || '' }, function (error, result) {
         if (error && error.reason === ClientsError.NOT_FOUND) return next(new HttpError(404, error.message));
         if (error) return next(new HttpError(500, error));
         next(new HttpSuccess(201, { token: result }));

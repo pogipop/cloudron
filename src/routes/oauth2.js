@@ -91,7 +91,7 @@ function initialize() {
             authcodedb.del(code, function (error) {
                 if(error) return callback(error);
 
-                clients.addTokenByUserId(client.id, authCode.userId, Date.now() + constants.DEFAULT_TOKEN_EXPIRATION, function (error, result) {
+                clients.addTokenByUserId(client.id, authCode.userId, Date.now() + constants.DEFAULT_TOKEN_EXPIRATION, {}, function (error, result) {
                     if (error) return callback(error);
 
                     debug('exchange: new access token for client %s user %s token %s', client.id, authCode.userId, result.accessToken.slice(0, 6)); // partial token for security
@@ -104,7 +104,7 @@ function initialize() {
 
     // implicit token grant that skips issuing auth codes. this is used by our webadmin
     gServer.grant(oauth2orize.grant.token({ scopeSeparator: ',' }, function (client, user, ares, callback) {
-        clients.addTokenByUserId(client.id, user.id, Date.now() + constants.DEFAULT_TOKEN_EXPIRATION, function (error, result) {
+        clients.addTokenByUserId(client.id, user.id, Date.now() + constants.DEFAULT_TOKEN_EXPIRATION, {}, function (error, result) {
             if (error) return callback(error);
 
             debug('grant token: new access token for client %s user %s token %s', client.id, user.id, result.accessToken.slice(0, 6)); // partial token for security
@@ -364,7 +364,7 @@ function accountSetup(req, res, next) {
                 if (error && error.reason === UsersError.BAD_FIELD) return renderAccountSetupSite(res, req, userObject, error.message);
                 if (error) return next(new HttpError(500, error));
 
-                clients.addTokenByUserId('cid-webadmin', userObject.id, Date.now() + constants.DEFAULT_TOKEN_EXPIRATION, function (error, result) {
+                clients.addTokenByUserId('cid-webadmin', userObject.id, Date.now() + constants.DEFAULT_TOKEN_EXPIRATION, {}, function (error, result) {
                     if (error) return next(new HttpError(500, error));
 
                     res.redirect(`${config.adminOrigin()}?accessToken=${result.accessToken}&expiresAt=${result.expires}`);
@@ -412,7 +412,7 @@ function passwordReset(req, res, next) {
             if (error && error.reason === UsersError.BAD_FIELD) return next(new HttpError(406, error.message));
             if (error) return next(new HttpError(500, error));
 
-            clients.addTokenByUserId('cid-webadmin', userObject.id, Date.now() + constants.DEFAULT_TOKEN_EXPIRATION, function (error, result) {
+            clients.addTokenByUserId('cid-webadmin', userObject.id, Date.now() + constants.DEFAULT_TOKEN_EXPIRATION, {}, function (error, result) {
                 if (error) return next(new HttpError(500, error));
 
                 res.redirect(`${config.adminOrigin()}?accessToken=${result.accessToken}&expiresAt=${result.expires}`);

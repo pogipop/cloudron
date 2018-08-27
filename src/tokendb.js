@@ -22,7 +22,7 @@ var assert = require('assert'),
     DatabaseError = require('./databaseerror'),
     hat = require('./hat.js');
 
-var TOKENS_FIELDS = [ 'accessToken', 'identifier', 'clientId', 'scope', 'expires' ].join(',');
+var TOKENS_FIELDS = [ 'accessToken', 'identifier', 'clientId', 'scope', 'expires', 'name' ].join(',');
 
 function generateToken() {
     return hat(8 * 32); // TODO: make this stronger
@@ -40,16 +40,17 @@ function get(accessToken, callback) {
     });
 }
 
-function add(accessToken, identifier, clientId, expires, scope, callback) {
+function add(accessToken, identifier, clientId, expires, scope, name, callback) {
     assert.strictEqual(typeof accessToken, 'string');
     assert.strictEqual(typeof identifier, 'string');
     assert(typeof clientId === 'string' || clientId === null);
     assert.strictEqual(typeof expires, 'number');
     assert.strictEqual(typeof scope, 'string');
+    assert.strictEqual(typeof name, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    database.query('INSERT INTO tokens (accessToken, identifier, clientId, expires, scope) VALUES (?, ?, ?, ?, ?)',
-        [ accessToken, identifier, clientId, expires, scope ], function (error, result) {
+    database.query('INSERT INTO tokens (accessToken, identifier, clientId, expires, scope, name) VALUES (?, ?, ?, ?, ?, ?)',
+        [ accessToken, identifier, clientId, expires, scope, name ], function (error, result) {
             if (error && error.code === 'ER_DUP_ENTRY') return callback(new DatabaseError(DatabaseError.ALREADY_EXISTS));
             if (error || result.affectedRows !== 1) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
 
