@@ -1196,11 +1196,12 @@ function autoupdateApps(updateInfo, auditSource, callback) { // updateInfo is { 
     function canAutoupdateApp(app, newManifest) {
         if ((semver.major(app.manifest.version) !== 0) && (semver.major(app.manifest.version) !== semver.major(newManifest.version))) return new Error('Major version change'); // major changes are blocking
 
-        var newTcpPorts = newManifest.tcpPorts || { };
-        var portBindings = app.portBindings; // this is never null
+        const newTcpPorts = newManifest.tcpPorts || { };
+        const newUdpPorts = newManifest.udpPorts || { };
+        const portBindings = app.portBindings; // this is never null
 
         for (let portName in portBindings) {
-            if (!(portName in newTcpPorts)) return new Error(`${portName} was in use but new update removes it`);
+            if (!(portName in newTcpPorts) && !(portName in newUdpPorts)) return new Error(`${portName} was in use but new update removes it`);
         }
 
         // it's fine if one or more (unused) keys got removed
