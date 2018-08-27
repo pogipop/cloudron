@@ -4,15 +4,6 @@ Dear <%= cloudronName %> Admin,
 
 A new user with email <%= user.email %> was added to <%= cloudronName %>.
 
-<% if (inviteLink) { %>
-As requested, this user has not been sent an invitation email.
-
-To set a password and perform any configuration on behalf of the user, please use this link:
-<%= inviteLink %>
-
-<% } %>
-
-
 Powered by https://cloudron.io
 
 <% } else { %>
@@ -26,14 +17,6 @@ Powered by https://cloudron.io
 <p>
     A new user with email <%= user.email %> was added to <%= cloudronName %>.
 </p>
-
-<% if (inviteLink) { %>
-<p>
-    As requested, this user has not been sent an invitation email.<br/>
-    <br/>
-    <a href="<%= inviteLink %>">Set a password and perform any configuration on behalf of the user</a>
-</p>
-<% } %>
 
 <br/>
 <br/>
