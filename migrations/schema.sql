@@ -50,7 +50,7 @@ CREATE TABLE IF NOT EXISTS tokens(
 
 CREATE TABLE IF NOT EXISTS clients(
     id VARCHAR(128) NOT NULL UNIQUE, // prefixed with cid- to identify token easily in auth routes
-    appId VARCHAR(128) NOT NULL,
+    appId VARCHAR(128) NOT NULL,     // name of the client (for external apps) or id of app (for built-in apps)
     type VARCHAR(16) NOT NULL,
     clientSecret VARCHAR(512) NOT NULL,
     redirectURI VARCHAR(512) NOT NULL,

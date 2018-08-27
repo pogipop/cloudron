@@ -68,7 +68,7 @@ ClientsError.NOT_FOUND = 'Not found';
 ClientsError.INTERNAL_ERROR = 'Internal Error';
 ClientsError.NOT_ALLOWED = 'Not allowed to remove this client';
 
-function validateName(name) {
+function validateClientName(name) {
     assert.strictEqual(typeof name, 'string');
 
     if (name.length < 1) return new ClientsError(ClientsError.BAD_FIELD, 'Name must be atleast 1 character');
@@ -89,7 +89,7 @@ function add(appId, type, redirectURI, scope, callback) {
     var error = accesscontrol.validateScopeString(scope);
     if (error) return callback(new ClientsError(ClientsError.INVALID_SCOPE, error.message));
 
-    error = validateName(appId);
+    error = validateClientName(appId);
     if (error) return callback(error);
 
     var id = 'cid-' + uuid.v4();
