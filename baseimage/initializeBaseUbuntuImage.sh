@@ -14,8 +14,11 @@ function die {
 
 export DEBIAN_FRONTEND=noninteractive
 
+# hold grub since updating it breaks on some VPS providers
+apt-mark hold grub* >/dev/null
 apt-get -o Dpkg::Options::="--force-confdef" update -y
 apt-get -o Dpkg::Options::="--force-confdef" dist-upgrade -y
+apt-mark unhold grub* >/dev/null
 
 echo "==> Installing required packages"
 
