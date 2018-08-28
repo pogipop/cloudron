@@ -94,7 +94,7 @@ fi
 
 # validate arguments in the absence of data
 if [[ -z "${provider}" ]]; then
-    echo "--provider is required (azure, cloudscale, digitalocean, ec2, exoscale, hetzner, lightsail, linode, ovh, rosehosting, scaleway, vultr or generic)"
+    echo "--provider is required (azure, digitalocean, ec2, exoscale, gce, hetzner, lightsail, linode, ovh, rosehosting, scaleway, vultr or generic)"
     exit 1
 elif [[  \
             "${provider}" != "ami" && \
@@ -104,6 +104,8 @@ elif [[  \
             "${provider}" != "digitalocean" && \
             "${provider}" != "ec2" && \
             "${provider}" != "exoscale" && \
+            "${provider}" != "galaxygate" && \
+            "${provider}" != "digitalocean" && \
             "${provider}" != "gce" && \
             "${provider}" != "hetzner" && \
             "${provider}" != "lightsail" && \
@@ -114,7 +116,7 @@ elif [[  \
             "${provider}" != "vultr" && \
             "${provider}" != "generic" \
         ]]; then
-    echo "--provider must be one of: azure, cloudscale.ch, digitalocean, ec2, exoscale, gce, hetzner, lightsail, linode, ovh, rosehosting, scaleway, vultr or generic"
+    echo "--provider must be one of: azure, cloudscale.ch, digitalocean, ec2, exoscale, galaxygate, gce, hetzner, lightsail, linode, ovh, rosehosting, scaleway, vultr or generic"
     exit 1
 fi
 
