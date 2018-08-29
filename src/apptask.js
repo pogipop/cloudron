@@ -134,6 +134,20 @@ function createContainer(app, callback) {
     });
 }
 
+// Only delete the main container of the app, not destroy any docker addon created ones
+function deleteMainContainer(app, callback) {
+    assert.strictEqual(typeof app, 'object');
+    assert.strictEqual(typeof callback, 'function');
+
+    debugApp(app, 'deleting main app container');
+
+    docker.deleteContainer(app.containerId, function (error) {
+        if (error) return callback(new Error('Error deleting container: ' + error));
+
+        updateApp(app, { containerId: null }, callback);
+    });
+}
+
 function deleteContainers(app, callback) {
     assert.strictEqual(typeof app, 'object');
     assert.strictEqual(typeof callback, 'function');
@@ -443,7 +457,7 @@ function install(app, callback) {
         removeCollectdProfile.bind(null, app),
         removeLogrotateConfig.bind(null, app),
         stopApp.bind(null, app),
-        deleteContainers.bind(null, app),
+        deleteMainContainer.bind(null, app),
         function teardownAddons(next) {
             // when restoring, app does not require these addons anymore. remove carefully to preserve the db passwords
             var addonsToRemove = !isRestoring
@@ -556,7 +570,7 @@ function configure(app, callback) {
         removeCollectdProfile.bind(null, app),
         removeLogrotateConfig.bind(null, app),
         stopApp.bind(null, app),
-        deleteContainers.bind(null, app),
+        deleteMainContainer.bind(null, app),
         unregisterAlternateDomains.bind(null, app, false /* all */),
         function (next) {
             if (!locationChanged) return next();
@@ -657,7 +671,7 @@ function update(app, callback) {
         removeCollectdProfile.bind(null, app),
         removeLogrotateConfig.bind(null, app),
         stopApp.bind(null, app),
-        deleteContainers.bind(null, app),
+        deleteMainContainer.bind(null, app),
         function deleteImageIfChanged(done) {
             if (app.manifest.dockerImage === app.updateConfig.manifest.dockerImage) return done();
 
