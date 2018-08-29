@@ -46,7 +46,6 @@ var addons = require('./addons.js'),
     shell = require('./shell.js'),
     superagent = require('superagent'),
     sysinfo = require('./sysinfo.js'),
-    tld = require('tldjs'),
     util = require('util'),
     _ = require('underscore');
 
