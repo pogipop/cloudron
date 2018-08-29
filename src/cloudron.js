@@ -148,8 +148,7 @@ function getConfig(callback) {
             edition: config.edition(),
             memory: os.totalmem(),
             provider: config.provider(),
-            cloudronName: allSettings[settings.CLOUDRON_NAME_KEY],
-            spaces: allSettings[settings.SPACES_CONFIG_KEY] // here because settings route cannot be accessed by spaces users
+            cloudronName: allSettings[settings.CLOUDRON_NAME_KEY]
         });
     });
 }

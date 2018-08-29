@@ -18,10 +18,10 @@ var accesscontrol = require('../accesscontrol.js'),
     clients = require('../clients.js'),
     ClientPasswordStrategy = require('passport-oauth2-client-password').Strategy,
     ClientsError = clients.ClientsError,
+    config = require('../config.js'),
     HttpError = require('connect-lastmile').HttpError,
     LocalStrategy = require('passport-local').Strategy,
     passport = require('passport'),
-    settings = require('../settings.js'),
     users = require('../users.js'),
     UsersError = users.UsersError;
 
@@ -146,21 +146,18 @@ function websocketAuth(requiredScopes, req, res, next) {
 function verifyAppOwnership(req, res, next) {
     if (req.user.admin) return next();
 
+    if (!config.isSpacesEnabled) return next();
+
     const appCreate = !('id' in req.params);
 
-    settings.getSpacesConfig(function (error, spaces) {
+    if (appCreate) return next(); // ok to install app
+
+    apps.get(req.params.id, function (error, app) {
+        if (error && error.reason === AppsError.NOT_FOUND) return next(new HttpError(404, 'No such app'));
         if (error) return next(new HttpError(500, error));
-        if (!spaces.enabled) return next();
 
-        if (appCreate) return next(); // ok to install app
+        if (app.ownerId !== req.user.id) return next(new HttpError(401, 'Unauthorized'));
 
-        apps.get(req.params.id, function (error, app) {
-            if (error && error.reason === AppsError.NOT_FOUND) return next(new HttpError(404, 'No such app'));
-            if (error) return next(new HttpError(500, error));
-
-            if (app.ownerId !== req.user.id) return next(new HttpError(401, 'Unauthorized'));
-
-            next();
-        });
+        next();
     });
 }

@@ -26,9 +26,9 @@ exports = module.exports = {
 };
 
 var assert = require('assert'),
+    config = require('./config.js'),
     DatabaseError = require('./databaseerror.js'),
     debug = require('debug')('box:accesscontrol'),
-    settings = require('./settings.js'),
     tokendb = require('./tokendb.js'),
     users = require('./users.js'),
     UsersError = users.UsersError,
@@ -114,11 +114,7 @@ function scopesForUser(user, callback) {
 
     if (user.admin) return callback(null, exports.VALID_SCOPES);
 
-    settings.getSpacesConfig(function (error, spaces) {
-        if (error) return callback(error);
-
-        callback(null, spaces.enabled ? [ 'profile', 'apps', 'domains:read', 'users:read' ] : [ 'profile', 'apps:read' ]);
-    });
+    callback(null, config.isSpacesEnabled() ? [ 'profile', 'apps', 'domains:read', 'users:read' ] : [ 'profile', 'apps:read' ]);
 }
 
 function validateToken(accessToken, callback) {

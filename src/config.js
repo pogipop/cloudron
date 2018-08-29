@@ -24,6 +24,7 @@ exports = module.exports = {
     version: version,
     setVersion: setVersion,
     database: database,
+    edition: edition,
 
     // these values are derived
     adminOrigin: adminOrigin,
@@ -37,7 +38,7 @@ exports = module.exports = {
     dkimSelector: dkimSelector,
 
     isDemo: isDemo,
-    edition: edition,
+    isSpacesEnabled: isSpacesEnabled,
 
     // for testing resets to defaults
     _reset: _reset
@@ -221,6 +222,10 @@ function database() {
 
 function isDemo() {
     return get('isDemo') === true;
+}
+
+function isSpacesEnabled() {
+    return get('edition') === 'spaces';
 }
 
 function provider() {
