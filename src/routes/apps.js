@@ -30,6 +30,7 @@ exports = module.exports = {
 var apps = require('../apps.js'),
     AppsError = apps.AppsError,
     assert = require('assert'),
+    config = require('../config.js'),
     debug = require('debug')('box:routes/apps'),
     fs = require('fs'),
     HttpError = require('connect-lastmile').HttpError,
@@ -42,6 +43,13 @@ var apps = require('../apps.js'),
 function auditSource(req) {
     var ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress || null;
     return { ip: ip, username: req.user ? req.user.username : null, userId: req.user ? req.user.id : null };
+}
+
+function addSpacesSuffix(location, user) {
+    if (user.admin || !config.isSpacesEnabled()) return location;
+
+    const spacesSuffix = user.username.replace(/\./g, '-');
+    return location === '' ? spacesSuffix : `${location}-${spacesSuffix}`;
 }
 
 function getApp(req, res, next) {
@@ -90,6 +98,7 @@ function installApp(req, res, next) {
 
     // required
     if (typeof data.location !== 'string') return next(new HttpError(400, 'location is required'));
+    data.location = addSpacesSuffix(data.location, req.user);
     if (typeof data.domain !== 'string') return next(new HttpError(400, 'domain is required'));
     if (typeof data.accessRestriction !== 'object') return next(new HttpError(400, 'accessRestriction is required'));
 
@@ -141,6 +150,7 @@ function configureApp(req, res, next) {
     var data = req.body;
 
     if ('location' in data && typeof data.location !== 'string') return next(new HttpError(400, 'location must be string'));
+    data.location = addSpacesSuffix(data.location, req.user);
     if ('domain' in data && typeof data.domain !== 'string') return next(new HttpError(400, 'domain must be string'));
     if ('portBindings' in data && typeof data.portBindings !== 'object') return next(new HttpError(400, 'portBindings must be an object'));
     if ('accessRestriction' in data && typeof data.accessRestriction !== 'object') return next(new HttpError(400, 'accessRestriction must be an object'));
@@ -216,6 +226,7 @@ function cloneApp(req, res, next) {
 
     if (typeof data.backupId !== 'string') return next(new HttpError(400, 'backupId must be a string'));
     if (typeof data.location !== 'string') return next(new HttpError(400, 'location is required'));
+    data.location = addSpacesSuffix(data.location, req.user);
     if (typeof data.domain !== 'string') return next(new HttpError(400, 'domain is required'));
     if (('portBindings' in data) && typeof data.portBindings !== 'object') return next(new HttpError(400, 'portBindings must be an object'));
 
