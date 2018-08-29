@@ -322,6 +322,7 @@ function getStatus(callback) {
                 cloudronName: cloudronName,
                 adminFqdn: config.adminDomain() ? config.adminFqdn() : null,
                 activated: count !== 0,
+                edition: config.edition(),
                 webadminStatus: gWebadminStatus // only valid when !activated
             });
         });

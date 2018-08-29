@@ -45,6 +45,7 @@ function auditSource(req) {
     return { ip: ip, username: req.user ? req.user.username : null, userId: req.user ? req.user.id : null };
 }
 
+// TODO: move this to model code
 function addSpacesSuffix(location, user) {
     if (user.admin || !config.isSpacesEnabled()) return location;
 
