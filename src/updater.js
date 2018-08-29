@@ -185,6 +185,7 @@ function doUpdate(boxUpdateInfo, callback) {
                 adminFqdn: config.adminFqdn(),
                 adminLocation: config.adminLocation(),
                 isDemo: config.isDemo(),
+                edition: config.edition(),
 
                 appstore: {
                     apiServerOrigin: config.apiServerOrigin()
