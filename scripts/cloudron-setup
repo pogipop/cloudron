@@ -138,6 +138,8 @@ echo ""
 echo " Join us at https://forum.cloudron.io for any questions."
 echo ""
 
+echo "Running cloudron-setup with args : $@" >> "${LOG_FILE}"
+
 if [[ "${initBaseImage}" == "true" ]]; then
     echo "=> Updating apt and installing script dependencies"
     if ! apt-get update &>> "${LOG_FILE}"; then
