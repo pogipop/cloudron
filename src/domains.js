@@ -260,7 +260,8 @@ function del(domain, callback) {
     });
 }
 
-function getName(domain, subdomain) {
+// returns the 'name' that needs to be inserted into zone
+function getName(domain, subdomain, type) {
     // support special caas domains
     if (domain.provider === 'caas') return subdomain;
 
@@ -268,7 +269,13 @@ function getName(domain, subdomain) {
 
     var part = domain.domain.slice(0, -domain.zoneName.length - 1);
 
-    return subdomain === '' ? part : (subdomain + (domain.config.hyphenatedSubdomains ? '-' : '.') + part);
+    if (subdomain === '') {
+        return part;
+    } else if (type === 'TXT') {
+        return `${subdomain}.${part}`;
+    } else {
+        return subdomain + (domain.config.hyphenatedSubdomains ? '-' : '.') + part;
+    }
 }
 
 function getDnsRecords(subdomain, domain, type, callback) {
@@ -280,7 +287,7 @@ function getDnsRecords(subdomain, domain, type, callback) {
     get(domain, function (error, result) {
         if (error) return callback(new DomainsError(DomainsError.INTERNAL_ERROR, error));
 
-        api(result.provider).get(result.config, result.zoneName, getName(result, subdomain), type, function (error, values) {
+        api(result.provider).get(result.config, result.zoneName, getName(result, subdomain, type), type, function (error, values) {
             if (error) return callback(error);
 
             callback(null, values);
@@ -300,7 +307,7 @@ function upsertDnsRecords(subdomain, domain, type, values, callback) {
     get(domain, function (error, result) {
         if (error) return callback(new DomainsError(DomainsError.INTERNAL_ERROR, error));
 
-        api(result.provider).upsert(result.config, result.zoneName, getName(result, subdomain), type, values, function (error) {
+        api(result.provider).upsert(result.config, result.zoneName, getName(result, subdomain, type), type, values, function (error) {
             if (error) return callback(error);
 
             callback(null);
@@ -320,7 +327,7 @@ function removeDnsRecords(subdomain, domain, type, values, callback) {
     get(domain, function (error, result) {
         if (error) return callback(error);
 
-        api(result.provider).del(result.config, result.zoneName, getName(result, subdomain), type, values, function (error) {
+        api(result.provider).del(result.config, result.zoneName, getName(result, subdomain, type), type, values, function (error) {
             if (error && error.reason !== DomainsError.NOT_FOUND) return callback(error);
 
             callback(null);
