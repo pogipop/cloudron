@@ -53,6 +53,8 @@ sourceTarballUrl=""
 rebootServer="true"
 baseDataDir=""
 
+echo "Running cloudron-setup with args : $@" > "${LOG_FILE}"
+
 args=$(getopt -o "" -l "help,skip-baseimage-init,data-dir:,provider:,version:,env:,prerelease,edition:,skip-reboot" -n "$0" -- "$@")
 eval set -- "${args}"
 
@@ -137,8 +139,6 @@ echo " $ tail -f ${LOG_FILE}"
 echo ""
 echo " Join us at https://forum.cloudron.io for any questions."
 echo ""
-
-echo "Running cloudron-setup with args : $@" >> "${LOG_FILE}"
 
 if [[ "${initBaseImage}" == "true" ]]; then
     echo "=> Updating apt and installing script dependencies"
