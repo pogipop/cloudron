@@ -375,8 +375,8 @@ function setAdmin(domain, callback) {
     });
 }
 
-function fqdn(location, domain, domainObject) {
-    return location + (location ? (domainObject.config.hyphenatedSubdomains ? '-' : '.') : '') + domain;
+function fqdn(location, domainObject) {
+    return location + (location ? (domainObject.config.hyphenatedSubdomains ? '-' : '.') : '') + domainObject.domain;
 }
 
 // removes all fields that are strictly private and should never be returned by API calls
