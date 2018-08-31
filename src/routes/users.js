@@ -6,6 +6,7 @@ exports = module.exports = {
     list: list,
     create: create,
     remove: remove,
+    changePassword: changePassword,
     verifyPassword: verifyPassword,
     createInvite: createInvite,
     sendInvite: sendInvite,
@@ -185,5 +186,20 @@ function transferOwnership(req, res, next) {
         if (error) return next(new HttpError(500, error));
 
         next(new HttpSuccess(200, {}));
+    });
+}
+
+function changePassword(req, res, next) {
+    assert.strictEqual(typeof req.body, 'object');
+    assert.strictEqual(typeof req.params.userId, 'string');
+
+    if (typeof req.body.password !== 'string') return next(new HttpError(400, 'password must be a string'));
+
+    users.setPassword(req.params.userId, req.body.password, function (error) {
+        if (error && error.reason === UsersError.BAD_FIELD) return next(new HttpError(400, error.message));
+        if (error && error.reason === UsersError.NOT_FOUND) return next(new HttpError(404, 'User not found'));
+        if (error) return next(new HttpError(500, error));
+
+        next(new HttpSuccess(204));
     });
 }

@@ -8,7 +8,6 @@
 var accesscontrol = require('../../accesscontrol.js'),
     async = require('async'),
     config = require('../../config.js'),
-    constants = require('../../constants.js'),
     database = require('../../database.js'),
     domains = require('../../domains.js'),
     tokendb = require('../../tokendb.js'),
@@ -17,7 +16,8 @@ var accesscontrol = require('../../accesscontrol.js'),
     mail = require('../../mail.js'),
     mailer = require('../../mailer.js'),
     superagent = require('superagent'),
-    server = require('../../server.js');
+    server = require('../../server.js'),
+    users = require('../../users.js');
 
 const SERVER_URL = 'http://localhost:' + config.get('port');
 
@@ -83,7 +83,7 @@ describe('Users API', function () {
     this.timeout(5000);
 
     var user_0, user_1, user_2, user_4;
-    var token = null;
+    var token = null, userToken = null;
     var token_1 = tokendb.generateToken();
 
     before(setup);
@@ -680,7 +680,7 @@ describe('Users API', function () {
 
         superagent.post(SERVER_URL + '/api/v1/users')
             .query({ access_token: token })
-            .send({ username: USERNAME_4, email: EMAIL_4, invite: false, password: 'tooweak' })
+            .send({ username: USERNAME_4, email: EMAIL_4, password: 'tooweak' })
             .end(function (error, result) {
                 expect(error).to.be.ok();
                 expect(result.statusCode).to.equal(400);
@@ -691,23 +691,23 @@ describe('Users API', function () {
     it('can create user with a password', function (done) {
         superagent.post(SERVER_URL + '/api/v1/users')
             .query({ access_token: token })
-            .send({ username: USERNAME_4, email: EMAIL_4, invite: false, password: 'Secret1#' })
+            .send({ username: USERNAME_4, email: EMAIL_4, password: 'Secret1#' })
             .end(function (error, result) {
                 expect(error).to.not.be.ok();
                 expect(result.statusCode).to.equal(201);
 
                 user_4 = result.body;
 
-                token = tokendb.generateToken();
+                userToken = tokendb.generateToken();
                 var expires = Date.now() + 2000; // 1 sec
 
-                tokendb.add(token, user_4.id, null, expires, accesscontrol.SCOPE_PROFILE, '', done);
+                tokendb.add(userToken, user_4.id, null, expires, accesscontrol.SCOPE_PROFILE, '', done);
             });
     });
 
     it('can get profile of user with pre-set password', function (done) {
         superagent.get(SERVER_URL + '/api/v1/profile')
-            .query({ access_token: token })
+            .query({ access_token: userToken })
             .end(function (err, res) {
                 expect(res.statusCode).to.equal(200);
 
@@ -715,6 +715,43 @@ describe('Users API', function () {
 
                 done();
             });
+    });
+
+    // Change password
+    it('change password fails due to missing token', function (done) {
+        superagent.post(SERVER_URL + '/api/v1/users/' + user_0.id + '/password')
+            .send({ password: 'youdontsay' })
+            .end(function (error, result) {
+                expect(result.statusCode).to.equal(401);
+                done();
+            });
+    });
+
+    it('change password fails due to small password', function (done) {
+        superagent.post(SERVER_URL + '/api/v1/users/' + user_0.id + '/password')
+            .query({ access_token: token })
+            .send({ password: 'small' })
+            .end(function (error, result) {
+                expect(result.statusCode).to.equal(400);
+                done();
+            });
+    });
+
+    it('change password succeeds', function (done) {
+        superagent.post(SERVER_URL + '/api/v1/users/' + user_0.id + '/password')
+            .query({ access_token: token })
+            .send({ password: 'bigenough' })
+            .end(function (error, result) {
+                expect(result.statusCode).to.equal(204);
+                done();
+            });
+    });
+
+    it('did change the user password', function (done) {
+        users.verify(user_0.id, 'bigenough', function (error) {
+            expect(error).to.be(null);
+            done();
+        });
     });
 });
 

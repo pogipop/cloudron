@@ -149,6 +149,7 @@ function initializeExpressSync() {
     router.get ('/api/v1/users/:userId', usersManageScope, routes.users.get); // this is manage scope because it returns non-restricted fields
     router.del ('/api/v1/users/:userId', usersManageScope, routes.users.verifyPassword, routes.users.remove);
     router.post('/api/v1/users/:userId', usersManageScope, routes.users.update);
+    router.post('/api/v1/users/:userId/password', usersManageScope, routes.users.changePassword);
     router.put ('/api/v1/users/:userId/groups', usersManageScope, routes.users.setGroups);
     router.post('/api/v1/users/:userId/send_invite', usersManageScope, routes.users.sendInvite);
     router.post('/api/v1/users/:userId/create_invite', usersManageScope, routes.users.createInvite);
