@@ -19,12 +19,15 @@ module.exports = exports = {
     removePrivateFields: removePrivateFields,
     removeRestrictedFields: removeRestrictedFields,
 
+    validateHostname: validateHostname,
+
     DomainsError: DomainsError
 };
 
 var assert = require('assert'),
     caas = require('./caas.js'),
     config = require('./config.js'),
+    constants = require('./constants.js'),
     DatabaseError = require('./databaseerror.js'),
     debug = require('debug')('box:domains'),
     domaindb = require('./domaindb.js'),
@@ -102,6 +105,45 @@ function verifyDnsConfig(config, domain, zoneName, provider, ip, callback) {
     if (!backend) return callback(new DomainsError(DomainsError.INVALID_PROVIDER));
 
     api(provider).verifyDnsConfig(config, domain, zoneName, ip, callback);
+}
+
+function fqdn(location, domainObject) {
+    return location + (location ? (domainObject.config.hyphenatedSubdomains ? '-' : '.') : '') + domainObject.domain;
+}
+
+// Hostname validation comes from RFC 1123 (section 2.1)
+// Domain name validation comes from RFC 2181 (Name syntax)
+// https://en.wikipedia.org/wiki/Hostname#Restrictions_on_valid_host_names
+// We are validating the validity of the location-fqdn as host name (and not dns name)
+function validateHostname(location, domainObject) {
+    assert.strictEqual(typeof location, 'string');
+    assert.strictEqual(typeof domainObject, 'object');
+
+    const hostname = fqdn(location, domainObject);
+
+    const RESERVED_LOCATIONS = [
+        constants.API_LOCATION,
+        constants.SMTP_LOCATION,
+        constants.IMAP_LOCATION
+    ];
+    if (RESERVED_LOCATIONS.indexOf(location) !== -1) return new DomainsError(DomainsError.BAD_FIELD, location + ' is reserved');
+
+    if (hostname === config.adminFqdn()) return new DomainsError(DomainsError.BAD_FIELD, location + ' is reserved');
+
+    // workaround https://github.com/oncletom/tld.js/issues/73
+    var tmp = hostname.replace('_', '-');
+    if (!tld.isValid(tmp)) return new DomainsError(DomainsError.BAD_FIELD, 'Hostname is not a valid domain name');
+
+    if (hostname.length > 253) return new DomainsError(DomainsError.BAD_FIELD, 'Hostname length exceeds 253 characters');
+
+    if (location) {
+        // label validation
+        if (location.split('.').some(function (p) { return p.length > 63 || p.length < 1; })) return new DomainsError(DomainsError.BAD_FIELD, 'Invalid subdomain length');
+        if (location.match(/^[A-Za-z0-9-.]+$/) === null) return new DomainsError(DomainsError.BAD_FIELD, 'Subdomain can only contain alphanumeric, hyphen and dot');
+        if (/^[-.]/.test(location)) return new DomainsError(DomainsError.BAD_FIELD, 'Subdomain cannot start or end with hyphen or dot');
+    }
+
+    return null;
 }
 
 function add(domain, zoneName, provider, config, fallbackCertificate, tlsConfig, callback) {
@@ -373,10 +415,6 @@ function setAdmin(domain, callback) {
             shell.sudo('restart', [ RESTART_CMD ], NOOP_CALLBACK);
         });
     });
-}
-
-function fqdn(location, domainObject) {
-    return location + (location ? (domainObject.config.hyphenatedSubdomains ? '-' : '.') : '') + domainObject.domain;
 }
 
 // removes all fields that are strictly private and should never be returned by API calls

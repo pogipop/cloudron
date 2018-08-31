@@ -176,44 +176,6 @@ describe('Apps', function () {
         ], done);
     });
 
-    describe('validateHostname', function () {
-        it('does not allow admin subdomain', function () {
-            expect(apps._validateHostname('my', DOMAIN_0.domain, 'my.' + DOMAIN_0.domain)).to.be.an(Error);
-        });
-
-        it('cannot have >63 length subdomains', function () {
-            var s = Array(64).fill('s').join('');
-            expect(apps._validateHostname(s, 'example.com', s + '.example.com')).to.be.an(Error);
-            expect(apps._validateHostname(`dev.${s}`, 'example.com', `dev.${s}.example.com`)).to.be.an(Error);
-        });
-
-        it('allows only alphanumerics and hypen', function () {
-            expect(apps._validateHostname('#2r', 'example.com', '#2r.example.com')).to.be.an(Error);
-            expect(apps._validateHostname('a%b', 'example.com', 'a%b.example.com')).to.be.an(Error);
-            expect(apps._validateHostname('ab_', 'example.com', 'ab_.example.com')).to.be.an(Error);
-            expect(apps._validateHostname('ab.', 'example.com', 'ab.example.com')).to.be.an(Error);
-            expect(apps._validateHostname('ab..c', 'example.com', 'ab..c.example.com')).to.be.an(Error);
-            expect(apps._validateHostname('.ab', 'example.com', '.ab.example.com')).to.be.an(Error);
-            expect(apps._validateHostname('-ab', 'example.com', '-ab.example.com')).to.be.an(Error);
-            expect(apps._validateHostname('ab-', 'example.com', 'ab-.example.com')).to.be.an(Error);
-        });
-
-        it('total length cannot exceed 255', function () {
-            var s = '';
-            for (var i = 0; i < (255 - 'example.com'.length); i++) s += 's';
-
-            expect(apps._validateHostname(s, 'example.com', s + '.example.com')).to.be.an(Error);
-        });
-
-        it('allow valid domains', function () {
-            expect(apps._validateHostname('a', 'example.com', 'a.example.com')).to.be(null);
-            expect(apps._validateHostname('a0-x', 'example.com', 'a0-x.example.com')).to.be(null);
-            expect(apps._validateHostname('a0.x', 'example.com', 'a0-x.example.com')).to.be(null);
-            expect(apps._validateHostname('a0.x.y', 'example.com', 'a0.x.y.example.com')).to.be(null);
-            expect(apps._validateHostname('01', 'example.com', '01.example.com')).to.be(null);
-        });
-    });
-
     describe('validatePortBindings', function () {
         it('does not allow invalid host port', function () {
             expect(apps._validatePortBindings({ port: -1 }, { tcpPorts: { port: 5000 } })).to.be.an(Error);

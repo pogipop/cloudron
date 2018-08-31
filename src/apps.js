@@ -49,7 +49,6 @@ exports = module.exports = {
     PORT_TYPE_UDP: 'udp',
 
     // exported for testing
-    _validateHostname: validateHostname,
     _validatePortBindings: validatePortBindings,
     _validateAccessRestriction: validateAccessRestriction,
     _translatePortBindings: translatePortBindings
@@ -85,7 +84,6 @@ var appdb = require('./appdb.js'),
     split = require('split'),
     superagent = require('superagent'),
     taskmanager = require('./taskmanager.js'),
-    tld = require('tldjs'),
     TransformStream = require('stream').Transform,
     updateChecker = require('./updatechecker.js'),
     url = require('url'),
@@ -126,40 +124,6 @@ AppsError.PORT_CONFLICT = 'Port Conflict';
 AppsError.BILLING_REQUIRED = 'Billing Required';
 AppsError.ACCESS_DENIED = 'Access denied';
 AppsError.BAD_CERTIFICATE = 'Invalid certificate';
-
-// Hostname validation comes from RFC 1123 (section 2.1)
-// Domain name validation comes from RFC 2181 (Name syntax)
-// https://en.wikipedia.org/wiki/Hostname#Restrictions_on_valid_host_names
-// We are validating the validity of the location-fqdn as host name (and not dns name)
-function validateHostname(location, domain, hostname) {
-    assert.strictEqual(typeof location, 'string');
-    assert.strictEqual(typeof domain, 'string');
-    assert.strictEqual(typeof hostname, 'string');
-
-    const RESERVED_LOCATIONS = [
-        constants.API_LOCATION,
-        constants.SMTP_LOCATION,
-        constants.IMAP_LOCATION
-    ];
-    if (RESERVED_LOCATIONS.indexOf(location) !== -1) return new AppsError(AppsError.BAD_FIELD, location + ' is reserved');
-
-    if (hostname === config.adminFqdn()) return new AppsError(AppsError.BAD_FIELD, location + ' is reserved');
-
-    // workaround https://github.com/oncletom/tld.js/issues/73
-    var tmp = hostname.replace('_', '-');
-    if (!tld.isValid(tmp)) return new AppsError(AppsError.BAD_FIELD, 'Hostname is not a valid domain name');
-
-    if (hostname.length > 253) return new AppsError(AppsError.BAD_FIELD, 'Hostname length exceeds 253 characters');
-
-    if (location) {
-        // label validation
-        if (location.split('.').some(function (p) { return p.length > 63 || p.length < 1; })) return new AppsError(AppsError.BAD_FIELD, 'Invalid subdomain length');
-        if (location.match(/^[A-Za-z0-9-.]+$/) === null) return new AppsError(AppsError.BAD_FIELD, 'Subdomain can only contain alphanumeric, hyphen and dot');
-        if (/^[-.]/.test(location)) return new AppsError(AppsError.BAD_FIELD, 'Subdomain cannot start or end with hyphen or dot');
-    }
-
-    return null;
-}
 
 // validate the port bindings
 function validatePortBindings(portBindings, manifest) {
@@ -595,12 +559,11 @@ function install(data, auditSource, callback) {
             if (error && error.reason === DomainsError.NOT_FOUND) return callback(new AppsError(AppsError.NOT_FOUND, 'No such domain'));
             if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, 'Could not get domain info:' + error.message));
 
-            var fqdn = domains.fqdn(location, domainObject);
-
-            error = validateHostname(location, domain, fqdn);
-            if (error) return callback(error);
+            error = domains.validateHostname(location, domainObject);
+            if (error) return callback(new AppsError(AppsError.BAD_FIELD, 'Bad location: ' + error.message));
 
             if (cert && key) {
+                let fqdn = domains.fqdn(location, domain, domainObject);
                 error = reverseProxy.validateCertificate(fqdn, cert, key);
                 if (error) return callback(new AppsError(AppsError.BAD_CERTIFICATE, error.message));
             }
@@ -642,6 +605,7 @@ function install(data, auditSource, callback) {
 
                     // save cert to boxdata/certs
                     if (cert && key) {
+                        let fqdn = domains.fqdn(location, domain, domainObject);
                         if (!safe.fs.writeFileSync(path.join(paths.APP_CERTS_DIR, fqdn + '.user.cert'), cert)) return callback(new AppsError(AppsError.INTERNAL_ERROR, 'Error saving cert: ' + safe.error.message));
                         if (!safe.fs.writeFileSync(path.join(paths.APP_CERTS_DIR, fqdn + '.user.key'), key)) return callback(new AppsError(AppsError.INTERNAL_ERROR, 'Error saving key: ' + safe.error.message));
                     }
@@ -731,13 +695,13 @@ function configure(appId, data, auditSource, callback) {
             if (error && error.reason === DomainsError.NOT_FOUND) return callback(new AppsError(AppsError.NOT_FOUND, 'No such domain'));
             if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, 'Could not get domain info:' + error.message));
 
-            var fqdn = domains.fqdn(location, domainObject);
-
-            error = validateHostname(location, domain, fqdn);
-            if (error) return callback(error);
+            error = domains.validateHostname(location, domainObject);
+            if (error) return callback(new AppsError(AppsError.BAD_FIELD, 'Bad location: ' + error.message));
 
             // save cert to boxdata/certs. TODO: move this to apptask when we have a real task queue
             if ('cert' in data && 'key' in data) {
+                let fqdn = domains.fqdn(location, domain, domainObject);
+
                 if (data.cert && data.key) {
                     error = reverseProxy.validateCertificate(fqdn, data.cert, data.key);
                     if (error) return callback(new AppsError(AppsError.BAD_CERTIFICATE, error.message));
@@ -994,8 +958,8 @@ function clone(appId, data, auditSource, callback) {
                 if (error && error.reason === DomainsError.NOT_FOUND) return callback(new AppsError(AppsError.EXTERNAL_ERROR, 'No such domain'));
                 if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, 'Could not get domain info:' + error.message));
 
-                error = validateHostname(location, domain, domains.fqdn(location, domainObject));
-                if (error) return callback(error);
+                error = domains.validateHostname(location, domainObject);
+                if (error) return callback(new AppsError(AppsError.BAD_FIELD, 'Bad location: ' + error.message));
 
                 var newAppId = uuid.v4(), manifest = backupInfo.manifest;
 
