@@ -129,14 +129,9 @@ describe('Appstore', function () {
             .post(`/api/v1/users/${APPSTORE_USER_ID}/cloudrons/${CLOUDRON_ID}/apps/${APP_ID}?accessToken=${APPSTORE_TOKEN}`, function () { return true; })
             .reply(201, {});
 
-        var scope2 = nock('http://localhost:6060')
-            .get(`/api/v1/users/${APPSTORE_USER_ID}/cloudrons/${CLOUDRON_ID}/subscription?accessToken=${APPSTORE_TOKEN}`, function () { return true; })
-            .reply(200, { subscription: { id: 'basic' }});
-
         appstore.purchase(APP_ID, APPSTORE_APP_ID, function (error) {
             expect(error).to.not.be.ok();
             expect(scope1.isDone()).to.be.ok();
-            expect(scope2.isDone()).to.be.ok();
 
             done();
         });
