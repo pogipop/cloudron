@@ -150,11 +150,11 @@ function validateHostname(location, domainObject) {
     return null;
 }
 
-function add(domain, zoneName, provider, config, fallbackCertificate, tlsConfig, callback) {
+function add(domain, zoneName, provider, dnsConfig, fallbackCertificate, tlsConfig, callback) {
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof zoneName, 'string');
     assert.strictEqual(typeof provider, 'string');
-    assert.strictEqual(typeof config, 'object');
+    assert.strictEqual(typeof dnsConfig, 'object');
     assert.strictEqual(typeof fallbackCertificate, 'object');
     assert.strictEqual(typeof tlsConfig, 'object');
     assert.strictEqual(typeof callback, 'function');
@@ -178,10 +178,12 @@ function add(domain, zoneName, provider, config, fallbackCertificate, tlsConfig,
         return callback(new DomainsError(DomainsError.BAD_FIELD, 'tlsConfig.provider must be caas, fallback or le-*'));
     }
 
+    if (dnsConfig.hyphenatedSubdomains && !config.allowHyphenatedSubdomains()) return callback(new DomainsError(DomainsError.BAD_FIELD, 'Not allowed in this edition'));
+
     sysinfo.getPublicIp(function (error, ip) {
         if (error) return callback(new DomainsError(DomainsError.INTERNAL_ERROR, 'Error getting IP:' + error.message));
 
-        verifyDnsConfig(config, domain, zoneName, provider, ip, function (error, result) {
+        verifyDnsConfig(dnsConfig, domain, zoneName, provider, ip, function (error, result) {
             if (error && error.reason === DomainsError.ACCESS_DENIED) return callback(new DomainsError(DomainsError.BAD_FIELD, 'Error adding A record. Access denied'));
             if (error && error.reason === DomainsError.NOT_FOUND) return callback(new DomainsError(DomainsError.BAD_FIELD, 'Zone not found'));
             if (error && error.reason === DomainsError.EXTERNAL_ERROR) return callback(new DomainsError(DomainsError.BAD_FIELD, 'Error adding A record: ' + error.message));
@@ -237,11 +239,11 @@ function getAll(callback) {
     });
 }
 
-function update(domain, zoneName, provider, config, fallbackCertificate, tlsConfig, callback) {
+function update(domain, zoneName, provider, dnsConfig, fallbackCertificate, tlsConfig, callback) {
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof zoneName, 'string');
     assert.strictEqual(typeof provider, 'string');
-    assert.strictEqual(typeof config, 'object');
+    assert.strictEqual(typeof dnsConfig, 'object');
     assert.strictEqual(typeof fallbackCertificate, 'object');
     assert.strictEqual(typeof tlsConfig, 'object');
     assert.strictEqual(typeof callback, 'function');
@@ -265,10 +267,12 @@ function update(domain, zoneName, provider, config, fallbackCertificate, tlsConf
             return callback(new DomainsError(DomainsError.BAD_FIELD, 'tlsConfig.provider must be caas, fallback or letsencrypt-*'));
         }
 
+        if (dnsConfig.hyphenatedSubdomains && !config.allowHyphenatedSubdomains()) return callback(new DomainsError(DomainsError.BAD_FIELD, 'Not allowed in this edition'));
+
         sysinfo.getPublicIp(function (error, ip) {
             if (error) return callback(new DomainsError(DomainsError.INTERNAL_ERROR, 'Error getting IP:' + error.message));
 
-            verifyDnsConfig(config, domain, zoneName, provider, ip, function (error, result) {
+            verifyDnsConfig(dnsConfig, domain, zoneName, provider, ip, function (error, result) {
                 if (error && error.reason === DomainsError.ACCESS_DENIED) return callback(new DomainsError(DomainsError.BAD_FIELD, 'Error adding A record. Access denied'));
                 if (error && error.reason === DomainsError.NOT_FOUND) return callback(new DomainsError(DomainsError.BAD_FIELD, 'Zone not found'));
                 if (error && error.reason === DomainsError.EXTERNAL_ERROR) return callback(new DomainsError(DomainsError.BAD_FIELD, 'Error adding A record:' + error.message));

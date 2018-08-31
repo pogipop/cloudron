@@ -39,6 +39,7 @@ exports = module.exports = {
 
     isDemo: isDemo,
     isSpacesEnabled: isSpacesEnabled,
+    allowHyphenatedSubdomains: allowHyphenatedSubdomains,
 
     // for testing resets to defaults
     _reset: _reset
@@ -225,7 +226,11 @@ function isDemo() {
 }
 
 function isSpacesEnabled() {
-    return get('edition') === 'spaces';
+    return get('edition') === 'education';
+}
+
+function allowHyphenatedSubdomains() {
+    return get('edition') === 'hostingprovider';
 }
 
 function provider() {
