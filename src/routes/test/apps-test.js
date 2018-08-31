@@ -359,7 +359,7 @@ describe('App API', function () {
             .send({ manifest: APP_MANIFEST, location: 'my', accessRestriction: null, domain: DOMAIN_0.domain })
             .end(function (err, res) {
                 expect(res.statusCode).to.equal(400);
-                expect(res.body.message).to.eql('my is reserved');
+                expect(res.body.message).to.contain('my is reserved');
                 done();
             });
     });
@@ -370,7 +370,7 @@ describe('App API', function () {
             .send({ manifest: APP_MANIFEST, location: constants.API_LOCATION, accessRestriction: null, domain: DOMAIN_0.domain })
             .end(function (err, res) {
                 expect(res.statusCode).to.equal(400);
-                expect(res.body.message).to.eql(constants.API_LOCATION + ' is reserved');
+                expect(res.body.message).to.contain(constants.API_LOCATION + ' is reserved');
                 done();
             });
     });
@@ -381,7 +381,7 @@ describe('App API', function () {
             .send({ manifest: APP_MANIFEST, location: APP_LOCATION, portBindings: 23, accessRestriction: null, domain: DOMAIN_0.domain })
             .end(function (err, res) {
                 expect(res.statusCode).to.equal(400);
-                expect(res.body.message).to.eql('portBindings must be an object');
+                expect(res.body.message).to.contain('portBindings must be an object');
                 done();
             });
     });
@@ -392,7 +392,7 @@ describe('App API', function () {
             .send({ manifest: APP_MANIFEST, location: APP_LOCATION, portBindings: {}, domain: DOMAIN_0.domain })
             .end(function (err, res) {
                 expect(res.statusCode).to.equal(400);
-                expect(res.body.message).to.eql('accessRestriction is required');
+                expect(res.body.message).to.contain('accessRestriction is required');
                 done();
             });
     });
@@ -403,7 +403,7 @@ describe('App API', function () {
             .send({ manifest: APP_MANIFEST, location: APP_LOCATION, portBindings: {}, accessRestriction: '', domain: DOMAIN_0.domain })
             .end(function (err, res) {
                 expect(res.statusCode).to.equal(400);
-                expect(res.body.message).to.eql('accessRestriction is required');
+                expect(res.body.message).to.contain('accessRestriction is required');
                 done();
             });
     });
