@@ -75,10 +75,13 @@ if [[ "${storage_driver}" != "overlay2" ]]; then
     exit 1
 fi
 
-# echo "==> Enable memory accounting"
-# apt-get -y install grub2
-# sed -e 's/^GRUB_CMDLINE_LINUX="\(.*\)"$/GRUB_CMDLINE_LINUX="\1 cgroup_enable=memory swapaccount=1 panic_on_oops=1 panic=5"/' -i /etc/default/grub
-# update-grub
+# temporarily disable this for some providers which have issues updating grub unattended
+if [[ "${arg_provider}" != "galaxygate" ]]; then
+    echo "==> Enable memory accounting"
+    apt-get -y install grub2
+    sed -e 's/^GRUB_CMDLINE_LINUX="\(.*\)"$/GRUB_CMDLINE_LINUX="\1 cgroup_enable=memory swapaccount=1 panic_on_oops=1 panic=5"/' -i /etc/default/grub
+    update-grub
+fi
 
 echo "==> Downloading docker images"
 if [ ! -f "${arg_infraversionpath}/infra_version.js" ]; then
