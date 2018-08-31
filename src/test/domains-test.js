@@ -9,7 +9,8 @@ var async = require('async'),
     config = require('../config.js'),
     database = require('../database.js'),
     domains = require('../domains.js'),
-    expect = require('expect.js');
+    expect = require('expect.js'),
+    _ = require('underscore');
 
 describe('Domains', function () {
     before(function (done) {
@@ -28,7 +29,7 @@ describe('Domains', function () {
         ], done);
     });
 
-    let domain = {
+    const domain = {
         domain: 'example.com',
         zoneName: 'example.com',
         config: {}
@@ -73,6 +74,15 @@ describe('Domains', function () {
             expect(domains.validateHostname('a0.x',     domain)).to.be(null);
             expect(domains.validateHostname('a0.x.y',   domain)).to.be(null);
             expect(domains.validateHostname('01',       domain)).to.be(null);
+        });
+
+        it('hyphenatedSubdomains', function () {
+            let domainCopy = _.extend({}, domain);
+            domainCopy.config.hyphenatedSubdomains = true;
+
+            expect(domains.validateHostname('a',        domain)).to.be(null);
+            expect(domains.validateHostname('a0-x',     domain)).to.be(null);
+            expect(domains.validateHostname('a0.x',     domain)).to.be.an(Error);
         });
     });
 });

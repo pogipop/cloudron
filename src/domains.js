@@ -143,6 +143,10 @@ function validateHostname(location, domainObject) {
         if (/^[-.]/.test(location)) return new DomainsError(DomainsError.BAD_FIELD, 'Subdomain cannot start or end with hyphen or dot');
     }
 
+    if (domainObject.config.hyphenatedSubdomains) {
+        if (location.indexOf('.') !== -1) return new DomainsError(DomainsError.BAD_FIELD, 'Subdomain cannot contain a dot');
+    }
+
     return null;
 }
 
