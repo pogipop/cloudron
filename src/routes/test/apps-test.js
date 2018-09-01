@@ -447,8 +447,7 @@ describe('App API', function () {
     it('app install succeeds with purchase', function (done) {
         var fake1 = nock(config.apiServerOrigin()).post(function (uri) { return uri.indexOf('/api/v1/users/' + user_1_id + '/cloudrons') >= 0; }, { 'domain': DOMAIN_0.domain }).reply(201, { cloudron: { id: CLOUDRON_ID } });
         var fake2 = nock(config.apiServerOrigin()).get('/api/v1/apps/' + APP_STORE_ID).reply(200, { manifest: APP_MANIFEST });
-        var fake3 = nock(config.apiServerOrigin()).get(function (uri) { return uri.indexOf('/api/v1/users/' + user_1_id + '/cloudrons/' + CLOUDRON_ID + '/subscription') >= 0; }).reply(200, { subscription: { id: 'free' }});
-        var fake4 = nock(config.apiServerOrigin()).post(function (uri) { return uri.indexOf('/api/v1/users/' + user_1_id + '/cloudrons/' + CLOUDRON_ID + '/apps/') >= 0; }, { 'appstoreId': APP_STORE_ID }).reply(201, { });
+        var fake3 = nock(config.apiServerOrigin()).post(function (uri) { return uri.indexOf('/api/v1/users/' + user_1_id + '/cloudrons/' + CLOUDRON_ID + '/apps/') >= 0; }, { 'appstoreId': APP_STORE_ID }).reply(201, { });
 
         settings.setAppstoreConfig({ userId: user_1_id, token: USER_1_APPSTORE_TOKEN }, function (error) {
             if (error) return done(error);
@@ -464,7 +463,6 @@ describe('App API', function () {
                     APP_ID = res.body.id;
                     expect(fake2.isDone()).to.be.ok();
                     expect(fake3.isDone()).to.be.ok();
-                    expect(fake4.isDone()).to.be.ok();
                     done();
                 });
         });
@@ -579,8 +577,7 @@ describe('App API', function () {
 
     it('app install succeeds again', function (done) {
         var fake1 = nock(config.apiServerOrigin()).get('/api/v1/apps/' + APP_STORE_ID).reply(200, { manifest: APP_MANIFEST });
-        var fake2 = nock(config.apiServerOrigin()).get(function (uri) { return uri.indexOf('/api/v1/users/' + user_1_id + '/cloudrons/' + CLOUDRON_ID + '/subscription') >= 0; }).reply(200, { subscription: { id: 'free' }});
-        var fake3 = nock(config.apiServerOrigin()).post(function (uri) { return uri.indexOf('/api/v1/users/' + user_1_id + '/cloudrons/' + CLOUDRON_ID + '/apps/') >= 0; }, { 'appstoreId': APP_STORE_ID }).reply(201, { });
+        var fake2 = nock(config.apiServerOrigin()).post(function (uri) { return uri.indexOf('/api/v1/users/' + user_1_id + '/cloudrons/' + CLOUDRON_ID + '/apps/') >= 0; }, { 'appstoreId': APP_STORE_ID }).reply(201, { });
 
         superagent.post(SERVER_URL + '/api/v1/apps/install')
             .query({ access_token: token })
@@ -591,7 +588,6 @@ describe('App API', function () {
                 APP_ID = res.body.id;
                 expect(fake1.isDone()).to.be.ok();
                 expect(fake2.isDone()).to.be.ok();
-                expect(fake3.isDone()).to.be.ok();
                 done();
             });
     });
@@ -678,7 +674,6 @@ describe('App installation', function () {
     it('can install test app', function (done) {
         var fake1 = nock(config.apiServerOrigin()).get('/api/v1/apps/' + APP_STORE_ID).reply(200, { manifest: APP_MANIFEST });
         var fake2 = nock(config.apiServerOrigin()).post(function (uri) { return uri.indexOf('/api/v1/users/' + user_1_id + '/cloudrons/' + CLOUDRON_ID + '/apps/') >= 0; }, { 'appstoreId': APP_STORE_ID }).reply(201, { });
-        var fake3 = nock(config.apiServerOrigin()).get(function (uri) { return uri.indexOf('/api/v1/users/' + user_1_id + '/cloudrons/' + CLOUDRON_ID + '/subscription') >= 0; }).reply(200, { subscription: { id: 'free' }});
 
         var count = 0;
         function checkInstallStatus() {
@@ -700,7 +695,6 @@ describe('App installation', function () {
                 expect(res.statusCode).to.equal(202);
                 expect(fake1.isDone()).to.be.ok();
                 expect(fake2.isDone()).to.be.ok();
-                expect(fake3.isDone()).to.be.ok();
                 APP_ID = res.body.id;
                 checkInstallStatus();
             });
