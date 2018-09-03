@@ -194,7 +194,7 @@ function groupSearch(req, res, next) {
 
         groups.forEach(function (group) {
             var dn = ldap.parseDN('cn=' + group.name + ',ou=groups,dc=cloudron');
-            var members = group.admin ? result.filter(function (entry) { return entry.admin; }) : result;
+            var members = group.admin ? result.filter(function (entry) { return entry.admin || req.app.ownerId === entry.id; }) : result;
 
             var obj = {
                 dn: dn.toString(),
@@ -243,7 +243,7 @@ function groupAdminsCompare(req, res, next) {
         // we only support memberuid here, if we add new group attributes later add them here
         if (req.attribute === 'memberuid') {
             var found = result.find(function (u) { return u.id === req.value; });
-            if (found && found.admin) return res.end(true);
+            if (found && (found.admin || req.app.ownerId == found.id)) return res.end(true);
         }
 
         res.end(false);
