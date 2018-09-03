@@ -28,37 +28,32 @@ var NOOP = function () {};
 var GROUP_USERS_DN = 'cn=users,ou=groups,dc=cloudron';
 var GROUP_ADMINS_DN = 'cn=admins,ou=groups,dc=cloudron';
 
-function getAppByRequest(req, callback) {
-    assert.strictEqual(typeof req, 'object');
-    assert.strictEqual(typeof callback, 'function');
-
+// Will attach req.app if successful
+function authenticateApp(req, res, next) {
     var sourceIp = req.connection.ldap.id.split(':')[0];
-    if (sourceIp.split('.').length !== 4) return callback(new ldap.InsufficientAccessRightsError('Missing source identifier'));
+    if (sourceIp.split('.').length !== 4) return next(new ldap.InsufficientAccessRightsError('Missing source identifier'));
 
     apps.getByIpAddress(sourceIp, function (error, app) {
-        if (error) return callback(new ldap.OperationsError(error.message));
+        if (error) return next(new ldap.OperationsError(error.message));
+        if (!app) return next(new ldap.OperationsError('Could not detect app source'));
 
-        if (!app) return callback(new ldap.OperationsError('Could not detect app source'));
+        req.app = app;
 
-        callback(null, app);
+        next();
     });
 }
 
 function getUsersWithAccessToApp(req, callback) {
-    assert.strictEqual(typeof req, 'object');
+    assert.strictEqual(typeof req.app, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    getAppByRequest(req, function (error, app) {
-        if (error) return callback(error);
+    users.list(function (error, result) {
+        if (error) return callback(new ldap.OperationsError(error.toString()));
 
-        users.list(function (error, result) {
+        async.filter(result, apps.hasAccessTo.bind(null, req.app), function (error, allowedUsers) {
             if (error) return callback(new ldap.OperationsError(error.toString()));
 
-            async.filter(result, apps.hasAccessTo.bind(null, app), function (error, allowedUsers) {
-                if (error) return callback(new ldap.OperationsError(error.toString()));
-
-                callback(null, allowedUsers);
-            });
+            callback(null, allowedUsers);
         });
     });
 }
@@ -413,6 +408,7 @@ function mailingListSearch(req, res, next) {
     });
 }
 
+// Will attach req.user if successful
 function authenticateUser(req, res, next) {
     debug('user bind: %s (from %s)', req.dn.toString(), req.connection.ldap.id);
 
@@ -444,21 +440,18 @@ function authenticateUser(req, res, next) {
 }
 
 function authorizeUserForApp(req, res, next) {
-    assert(req.user);
+    assert.strictEqual(typeof req.user, 'object');
+    assert.strictEqual(typeof req.app, 'object');
 
-    getAppByRequest(req, function (error, app) {
-        if (error) return next(error);
+    apps.hasAccessTo(req.app, req.user, function (error, result) {
+        if (error) return next(new ldap.OperationsError(error.toString()));
 
-        apps.hasAccessTo(app, req.user, function (error, result) {
-            if (error) return next(new ldap.OperationsError(error.toString()));
+        // we return no such object, to avoid leakage of a users existence
+        if (!result) return next(new ldap.NoSuchObjectError(req.dn.toString()));
 
-            // we return no such object, to avoid leakage of a users existence
-            if (!result) return next(new ldap.NoSuchObjectError(req.dn.toString()));
+        eventlog.add(eventlog.ACTION_USER_LOGIN, { authType: 'ldap', appId: req.app.id, app: req.app }, { userId: req.user.id, user: users.removePrivateFields(req.user) });
 
-            eventlog.add(eventlog.ACTION_USER_LOGIN, { authType: 'ldap', appId: app.id, app: app }, { userId: req.user.id, user: users.removePrivateFields(req.user) });
-
-            res.end();
-        });
+        res.end();
     });
 }
 
@@ -525,9 +518,9 @@ function start(callback) {
 
     gServer = ldap.createServer({ log: logger });
 
-    gServer.search('ou=users,dc=cloudron', userSearch);
-    gServer.search('ou=groups,dc=cloudron', groupSearch);
-    gServer.bind('ou=users,dc=cloudron', authenticateUser, authorizeUserForApp);
+    gServer.search('ou=users,dc=cloudron', authenticateApp, userSearch);
+    gServer.search('ou=groups,dc=cloudron', authenticateApp, groupSearch);
+    gServer.bind('ou=users,dc=cloudron', authenticateApp, authenticateUser, authorizeUserForApp);
 
     // http://www.ietf.org/proceedings/43/I-D/draft-srivastava-ldap-mail-00.txt
     gServer.search('ou=mailboxes,dc=cloudron', mailboxSearch);
@@ -538,8 +531,8 @@ function start(callback) {
     gServer.bind('ou=recvmail,dc=cloudron', authenticateMailbox);
     gServer.bind('ou=sendmail,dc=cloudron', authenticateMailbox);
 
-    gServer.compare('cn=users,ou=groups,dc=cloudron', groupUsersCompare);
-    gServer.compare('cn=admins,ou=groups,dc=cloudron', groupAdminsCompare);
+    gServer.compare('cn=users,ou=groups,dc=cloudron', authenticateApp, groupUsersCompare);
+    gServer.compare('cn=admins,ou=groups,dc=cloudron', authenticateApp, groupAdminsCompare);
 
     // this is the bind for addons (after bind, they might search and authenticate)
     gServer.bind('ou=addons,dc=cloudron', function(req, res /*, next */) {
