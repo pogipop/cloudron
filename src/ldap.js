@@ -134,7 +134,7 @@ function userSearch(req, res, next) {
             var dn = ldap.parseDN('cn=' + entry.id + ',ou=users,dc=cloudron');
 
             var groups = [ GROUP_USERS_DN ];
-            if (entry.admin) groups.push(GROUP_ADMINS_DN);
+            if (entry.admin || req.app.ownerId === entry.id) groups.push(GROUP_ADMINS_DN);
 
             var displayName = entry.displayName || entry.username || ''; // displayName can be empty and username can be null
             var nameParts = displayName.split(' ');
@@ -154,7 +154,7 @@ function userSearch(req, res, next) {
                     givenName: firstName,
                     username: entry.username,
                     samaccountname: entry.username,      // to support ActiveDirectory clients
-                    isadmin: entry.admin ? 1 : 0,
+                    isadmin: (entry.admin || req.app.ownerId === entry.id) ? 1 : 0,
                     memberof: groups
                 }
             };

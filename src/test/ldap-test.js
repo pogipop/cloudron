@@ -540,6 +540,42 @@ describe('Ldap', function () {
                 });
             });
         });
+
+        it ('lists the owner as admin', function (done) {
+            // make a normal user the owner
+            appdb.update(APP_0.id, { ownerId: USER_1.id, accessRestriction: { users: [], groups: [ GROUP_ID ] } }, function (error) {
+                expect(error).to.be(null);
+
+                var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + config.get('ldapPort') });
+
+                var opts = {
+                    filter: 'objectcategory=person'
+                };
+
+                client.search('ou=users,dc=cloudron', opts, function (error, result) {
+                    expect(error).to.be(null);
+                    expect(result).to.be.an(EventEmitter);
+
+                    var entries = [];
+
+                    result.on('searchEntry', function (entry) { entries.push(entry.object); });
+                    result.on('error', done);
+                    result.on('end', function (result) {
+                        expect(result.status).to.equal(0);
+                        expect(entries.length).to.equal(2);
+                        entries.sort(function (a, b) { return a.username > b.username; });
+
+                        expect(entries[0].username).to.equal(USER_0.username.toLowerCase());
+                        expect(entries[1].username).to.equal(USER_1.username.toLowerCase());
+                        expect(entries[1].isadmin).to.equal('1');
+
+                        client.unbind();
+
+                        appdb.update(APP_0.id, { ownerId: USER_0.id, accessRestriction: null }, done);
+                    });
+                });
+            });
+        });
     });
 
     describe('search groups', function () {
