@@ -127,6 +127,13 @@ function installApp(req, res, next) {
 
     if (data.robotsTxt && typeof data.robotsTxt !== 'string') return next(new HttpError(400, 'robotsTxt must be a string'));
 
+    if ('alternateDomains' in data) {
+        if (!Array.isArray(data.alternateDomains)) return next(new HttpError(400, 'alternateDomains must be an array'));
+        if (data.alternateDomains.some(function (d) { return (typeof d.domain !== 'string' || typeof d.subdomain !== 'string'); })) return next(new HttpError(400, 'alternateDomains array must contain objects with domain and subdomain strings'));
+
+        data.alternateDomains.forEach(function (ad) { ad.subdomain = addSpacesSuffix(ad.subdomain, req.user); });
+    }
+
     debug('Installing app :%j', data);
 
     apps.install(data, auditSource(req), function (error, app) {

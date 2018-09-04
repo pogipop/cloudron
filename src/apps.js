@@ -507,7 +507,8 @@ function install(data, auditSource, callback) {
         enableBackup = 'enableBackup' in data ? data.enableBackup : true,
         backupId = data.backupId || null,
         backupFormat = data.backupFormat || 'tgz',
-        ownerId = data.ownerId;
+        ownerId = data.ownerId,
+        alternateDomains = data.alternateDomains || [];
 
     assert(data.appStoreId || data.manifest); // atleast one of them is required
 
@@ -579,7 +580,8 @@ function install(data, auditSource, callback) {
                 mailboxName: mailboxNameForLocation(location, manifest),
                 restoreConfig: backupId ? { backupId: backupId, backupFormat: backupFormat } : null,
                 enableBackup: enableBackup,
-                robotsTxt: robotsTxt
+                robotsTxt: robotsTxt,
+                alternateDomains: alternateDomains
             };
 
             appdb.add(appId, appStoreId, manifest, location, domain, ownerId, translatePortBindings(portBindings, manifest), data, function (error) {
