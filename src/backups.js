@@ -124,6 +124,7 @@ function testConfig(backupConfig, callback) {
 
     if (backupConfig.format !== 'tgz' && backupConfig.format !== 'rsync') return callback(new BackupsError(BackupsError.BAD_FIELD, 'unknown format'));
 
+    // remember to adjust the cron ensureBackup task interval accordingly
     if (backupConfig.intervalSecs < 6 * 60 * 60) return callback(new BackupsError(BackupsError.BAD_FIELD, 'Interval must be atleast 6 hours'));
 
     api(backupConfig.provider).testConfig(backupConfig, callback);
@@ -983,7 +984,7 @@ function ensureBackup(auditSource, callback) {
     getByStatePaged(backupdb.BACKUP_STATE_NORMAL, 1, 1, function (error, backups) {
         if (error) {
             debug('Unable to list backups', error);
-            return callback(error); // no point trying to backup if appstore is down
+            return callback(error);
         }
 
         settings.getBackupConfig(function (error, backupConfig) {

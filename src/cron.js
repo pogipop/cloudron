@@ -102,7 +102,7 @@ function recreateJobs(tz) {
 
     if (gJobs.backup) gJobs.backup.stop();
     gJobs.backup = new CronJob({
-        cronTime: '00 00 */6 * * *', // every 6 hours. backups.ensureBackup() will only trigger a backup once per day
+        cronTime: '00 00 */6 * * *', // check every 6 hours
         onTick: backups.ensureBackup.bind(null, AUDIT_SOURCE, NOOP_CALLBACK),
         start: true,
         timeZone: tz
