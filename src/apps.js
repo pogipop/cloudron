@@ -605,7 +605,7 @@ function install(data, auditSource, callback) {
 
                     // save cert to boxdata/certs
                     if (cert && key) {
-                        let fqdn = domains.fqdn(location, domain, domainObject);
+                        let fqdn = domains.fqdn(location, domainObject);
                         if (!safe.fs.writeFileSync(path.join(paths.APP_CERTS_DIR, fqdn + '.user.cert'), cert)) return callback(new AppsError(AppsError.INTERNAL_ERROR, 'Error saving cert: ' + safe.error.message));
                         if (!safe.fs.writeFileSync(path.join(paths.APP_CERTS_DIR, fqdn + '.user.key'), key)) return callback(new AppsError(AppsError.INTERNAL_ERROR, 'Error saving key: ' + safe.error.message));
                     }
@@ -700,7 +700,7 @@ function configure(appId, data, auditSource, callback) {
 
             // save cert to boxdata/certs. TODO: move this to apptask when we have a real task queue
             if ('cert' in data && 'key' in data) {
-                let fqdn = domains.fqdn(location, domain, domainObject);
+                let fqdn = domains.fqdn(location, domainObject);
 
                 if (data.cert && data.key) {
                     error = reverseProxy.validateCertificate(fqdn, data.cert, data.key);
