@@ -204,6 +204,13 @@ function postProcess(app) {
     app.portBindings = result;
 }
 
+function addSpacesSuffix(location, user) {
+    if (user.admin || !config.isSpacesEnabled()) return location;
+
+    const spacesSuffix = user.username.replace(/\./g, '-');
+    return location === '' ? spacesSuffix : `${location}-${spacesSuffix}`;
+}
+
 function validateAccessRestriction(accessRestriction) {
     assert.strictEqual(typeof accessRestriction, 'object');
 
@@ -487,8 +494,9 @@ function mailboxNameForLocation(location, manifest) {
     return (location ? location : manifest.title.toLowerCase().replace(/[^a-zA-Z0-9]/g, '')) + '.app';
 }
 
-function install(data, auditSource, callback) {
+function install(data, user, auditSource, callback) {
     assert(data && typeof data === 'object');
+    assert(user && typeof user === 'object');
     assert.strictEqual(typeof auditSource, 'object');
     assert.strictEqual(typeof callback, 'function');
 
@@ -560,6 +568,9 @@ function install(data, auditSource, callback) {
             if (error && error.reason === DomainsError.NOT_FOUND) return callback(new AppsError(AppsError.NOT_FOUND, 'No such domain'));
             if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, 'Could not get domain info:' + error.message));
 
+            location = addSpacesSuffix(location, user);
+            alternateDomains.forEach(function (ad) { ad.subdomain = addSpacesSuffix(ad.subdomain, user); }); // TODO: validate these
+
             error = domains.validateHostname(location, domainObject);
             if (error) return callback(new AppsError(AppsError.BAD_FIELD, 'Bad location: ' + error.message));
 
@@ -628,9 +639,10 @@ function install(data, auditSource, callback) {
     });
 }
 
-function configure(appId, data, auditSource, callback) {
+function configure(appId, data, user, auditSource, callback) {
     assert.strictEqual(typeof appId, 'string');
     assert(data && typeof data === 'object');
+    assert(user && typeof user === 'object');
     assert.strictEqual(typeof auditSource, 'object');
     assert.strictEqual(typeof callback, 'function');
 
@@ -691,11 +703,14 @@ function configure(appId, data, auditSource, callback) {
         if ('alternateDomains' in data) {
             // TODO validate all subdomains [{ domain: '', subdomain: ''}]
             values.alternateDomains = data.alternateDomains;
+            values.alternateDomains.forEach(function (ad) { ad.subdomain = addSpacesSuffix(ad.subdomain, user); }); // TODO: validate these
         }
 
         domains.get(domain, function (error, domainObject) {
             if (error && error.reason === DomainsError.NOT_FOUND) return callback(new AppsError(AppsError.NOT_FOUND, 'No such domain'));
             if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, 'Could not get domain info:' + error.message));
+
+            location = addSpacesSuffix(location, user);
 
             error = domains.validateHostname(location, domainObject);
             if (error) return callback(new AppsError(AppsError.BAD_FIELD, 'Bad location: ' + error.message));
@@ -919,9 +934,10 @@ function restore(appId, data, auditSource, callback) {
     });
 }
 
-function clone(appId, data, auditSource, callback) {
+function clone(appId, data, user, auditSource, callback) {
     assert.strictEqual(typeof appId, 'string');
     assert.strictEqual(typeof data, 'object');
+    assert(user && typeof user === 'object');
     assert.strictEqual(typeof auditSource, 'object');
     assert.strictEqual(typeof callback, 'function');
 
@@ -960,6 +976,7 @@ function clone(appId, data, auditSource, callback) {
                 if (error && error.reason === DomainsError.NOT_FOUND) return callback(new AppsError(AppsError.EXTERNAL_ERROR, 'No such domain'));
                 if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, 'Could not get domain info:' + error.message));
 
+                location = addSpacesSuffix(location, user);
                 error = domains.validateHostname(location, domainObject);
                 if (error) return callback(new AppsError(AppsError.BAD_FIELD, 'Bad location: ' + error.message));
 

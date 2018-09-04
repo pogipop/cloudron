@@ -30,7 +30,6 @@ exports = module.exports = {
 var apps = require('../apps.js'),
     AppsError = apps.AppsError,
     assert = require('assert'),
-    config = require('../config.js'),
     debug = require('debug')('box:routes/apps'),
     fs = require('fs'),
     HttpError = require('connect-lastmile').HttpError,
@@ -43,14 +42,6 @@ var apps = require('../apps.js'),
 function auditSource(req) {
     var ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress || null;
     return { ip: ip, username: req.user ? req.user.username : null, userId: req.user ? req.user.id : null };
-}
-
-// TODO: move this to model code
-function addSpacesSuffix(location, user) {
-    if (user.admin || !config.isSpacesEnabled()) return location;
-
-    const spacesSuffix = user.username.replace(/\./g, '-');
-    return location === '' ? spacesSuffix : `${location}-${spacesSuffix}`;
 }
 
 function getApp(req, res, next) {
@@ -99,7 +90,6 @@ function installApp(req, res, next) {
 
     // required
     if (typeof data.location !== 'string') return next(new HttpError(400, 'location is required'));
-    data.location = addSpacesSuffix(data.location, req.user);
     if (typeof data.domain !== 'string') return next(new HttpError(400, 'domain is required'));
     if (typeof data.accessRestriction !== 'object') return next(new HttpError(400, 'accessRestriction is required'));
 
@@ -130,13 +120,11 @@ function installApp(req, res, next) {
     if ('alternateDomains' in data) {
         if (!Array.isArray(data.alternateDomains)) return next(new HttpError(400, 'alternateDomains must be an array'));
         if (data.alternateDomains.some(function (d) { return (typeof d.domain !== 'string' || typeof d.subdomain !== 'string'); })) return next(new HttpError(400, 'alternateDomains array must contain objects with domain and subdomain strings'));
-
-        data.alternateDomains.forEach(function (ad) { ad.subdomain = addSpacesSuffix(ad.subdomain, req.user); });
     }
 
     debug('Installing app :%j', data);
 
-    apps.install(data, auditSource(req), function (error, app) {
+    apps.install(data, req.user, auditSource(req), function (error, app) {
         if (error && error.reason === AppsError.NOT_FOUND) return next(new HttpError(404, error.message));
         if (error && error.reason === AppsError.ALREADY_EXISTS) return next(new HttpError(409, error.message));
         if (error && error.reason === AppsError.PORT_RESERVED) return next(new HttpError(409, 'Port ' + error.message + ' is reserved.'));
@@ -157,11 +145,7 @@ function configureApp(req, res, next) {
 
     var data = req.body;
 
-    if ('location' in data) {
-        if (typeof data.location !== 'string') return next(new HttpError(400, 'location must be string'));
-        data.location = addSpacesSuffix(data.location, req.user);
-    }
-
+    if ('location' in data && typeof data.location !== 'string') return next(new HttpError(400, 'location must be string'));
     if ('domain' in data && typeof data.domain !== 'string') return next(new HttpError(400, 'domain must be string'));
     if ('portBindings' in data && typeof data.portBindings !== 'object') return next(new HttpError(400, 'portBindings must be an object'));
     if ('accessRestriction' in data && typeof data.accessRestriction !== 'object') return next(new HttpError(400, 'accessRestriction must be an object'));
@@ -186,13 +170,11 @@ function configureApp(req, res, next) {
     if ('alternateDomains' in data) {
         if (!Array.isArray(data.alternateDomains)) return next(new HttpError(400, 'alternateDomains must be an array'));
         if (data.alternateDomains.some(function (d) { return (typeof d.domain !== 'string' || typeof d.subdomain !== 'string'); })) return next(new HttpError(400, 'alternateDomains array must contain objects with domain and subdomain strings'));
-
-        data.alternateDomains.forEach(function (ad) { ad.subdomain = addSpacesSuffix(ad.subdomain, req.user); });
     }
 
     debug('Configuring app id:%s data:%j', req.params.id, data);
 
-    apps.configure(req.params.id, data, auditSource(req), function (error) {
+    apps.configure(req.params.id, data, req.user, auditSource(req), function (error) {
         if (error && error.reason === AppsError.ALREADY_EXISTS) return next(new HttpError(409, error.message));
         if (error && error.reason === AppsError.PORT_RESERVED) return next(new HttpError(409, 'Port ' + error.message + ' is reserved.'));
         if (error && error.reason === AppsError.PORT_CONFLICT) return next(new HttpError(409, 'Port ' + error.message + ' is already in use.'));
@@ -239,11 +221,10 @@ function cloneApp(req, res, next) {
 
     if (typeof data.backupId !== 'string') return next(new HttpError(400, 'backupId must be a string'));
     if (typeof data.location !== 'string') return next(new HttpError(400, 'location is required'));
-    data.location = addSpacesSuffix(data.location, req.user);
     if (typeof data.domain !== 'string') return next(new HttpError(400, 'domain is required'));
     if (('portBindings' in data) && typeof data.portBindings !== 'object') return next(new HttpError(400, 'portBindings must be an object'));
 
-    apps.clone(req.params.id, data, auditSource(req), function (error, result) {
+    apps.clone(req.params.id, data, req.user, auditSource(req), function (error, result) {
         if (error && error.reason === AppsError.NOT_FOUND) return next(new HttpError(404, 'No such app'));
         if (error && error.reason === AppsError.PORT_RESERVED) return next(new HttpError(409, 'Port ' + error.message + ' is reserved.'));
         if (error && error.reason === AppsError.PORT_CONFLICT) return next(new HttpError(409, 'Port ' + error.message + ' is already in use.'));
