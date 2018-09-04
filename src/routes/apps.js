@@ -150,8 +150,11 @@ function configureApp(req, res, next) {
 
     var data = req.body;
 
-    if ('location' in data && typeof data.location !== 'string') return next(new HttpError(400, 'location must be string'));
-    if ('location' in data) data.location = addSpacesSuffix(data.location, req.user);
+    if ('location' in data) {
+        if (typeof data.location !== 'string') return next(new HttpError(400, 'location must be string'));
+        data.location = addSpacesSuffix(data.location, req.user);
+    }
+
     if ('domain' in data && typeof data.domain !== 'string') return next(new HttpError(400, 'domain must be string'));
     if ('portBindings' in data && typeof data.portBindings !== 'object') return next(new HttpError(400, 'portBindings must be an object'));
     if ('accessRestriction' in data && typeof data.accessRestriction !== 'object') return next(new HttpError(400, 'accessRestriction must be an object'));
@@ -176,6 +179,8 @@ function configureApp(req, res, next) {
     if ('alternateDomains' in data) {
         if (!Array.isArray(data.alternateDomains)) return next(new HttpError(400, 'alternateDomains must be an array'));
         if (data.alternateDomains.some(function (d) { return (typeof d.domain !== 'string' || typeof d.subdomain !== 'string'); })) return next(new HttpError(400, 'alternateDomains array must contain objects with domain and subdomain strings'));
+
+        data.alternateDomains.forEach(function (ad) { ad.subdomain = addSpacesSuffix(ad.subdomain, req.user); });
     }
 
     debug('Configuring app id:%s data:%j', req.params.id, data);
