@@ -102,6 +102,8 @@ function initializeExpressSync() {
     var domainsManageScope = routes.accesscontrol.scope(accesscontrol.SCOPE_DOMAINS_MANAGE);
     var appstoreScope = routes.accesscontrol.scope(accesscontrol.SCOPE_APPSTORE);
 
+    const verifyOperator = routes.accesscontrol.verifyOperator;
+
     // csrf protection
     var csrf = routes.oauth2.csrf();
 
@@ -126,10 +128,10 @@ function initializeExpressSync() {
     router.get ('/api/v1/cloudron/disks', cloudronScope, routes.cloudron.getDisks);
     router.get ('/api/v1/cloudron/logs/:unit', cloudronScope, routes.cloudron.getLogs);
     router.get ('/api/v1/cloudron/logstream/:unit', cloudronScope, routes.cloudron.getLogStream);
-    router.get ('/api/v1/cloudron/ssh/authorized_keys', cloudronScope, routes.ssh.getAuthorizedKeys);
-    router.put ('/api/v1/cloudron/ssh/authorized_keys', cloudronScope, routes.ssh.addAuthorizedKey);
-    router.get ('/api/v1/cloudron/ssh/authorized_keys/:identifier', cloudronScope, routes.ssh.getAuthorizedKey);
-    router.del ('/api/v1/cloudron/ssh/authorized_keys/:identifier', cloudronScope, routes.ssh.delAuthorizedKey);
+    router.get ('/api/v1/cloudron/ssh/authorized_keys', cloudronScope, verifyOperator, routes.ssh.getAuthorizedKeys);
+    router.put ('/api/v1/cloudron/ssh/authorized_keys', cloudronScope, verifyOperator, routes.ssh.addAuthorizedKey);
+    router.get ('/api/v1/cloudron/ssh/authorized_keys/:identifier', cloudronScope, verifyOperator, routes.ssh.getAuthorizedKey);
+    router.del ('/api/v1/cloudron/ssh/authorized_keys/:identifier', cloudronScope, verifyOperator, routes.ssh.delAuthorizedKey);
     router.get ('/api/v1/cloudron/eventlog', cloudronScope, routes.eventlog.get);
 
     // config route (for dashboard)
@@ -224,15 +226,15 @@ function initializeExpressSync() {
     router.post('/api/v1/settings/cloudron_name',      settingsScope, routes.settings.setCloudronName);
     router.get ('/api/v1/settings/cloudron_avatar',    settingsScope, routes.settings.getCloudronAvatar);
     router.post('/api/v1/settings/cloudron_avatar',    settingsScope, multipart, routes.settings.setCloudronAvatar);
-    router.get ('/api/v1/settings/backup_config',      settingsScope, routes.settings.getBackupConfig);
-    router.post('/api/v1/settings/backup_config',      settingsScope, routes.settings.setBackupConfig);
-    router.get ('/api/v1/settings/platform_config',      settingsScope, routes.settings.getPlatformConfig);
-    router.post('/api/v1/settings/platform_config',      settingsScope, routes.settings.setPlatformConfig);
+    router.get ('/api/v1/settings/backup_config',      settingsScope, verifyOperator, routes.settings.getBackupConfig);
+    router.post('/api/v1/settings/backup_config',      settingsScope, verifyOperator, routes.settings.setBackupConfig);
+    router.get ('/api/v1/settings/platform_config',    settingsScope, verifyOperator, routes.settings.getPlatformConfig);
+    router.post('/api/v1/settings/platform_config',    settingsScope, verifyOperator, routes.settings.setPlatformConfig);
 
     router.get ('/api/v1/settings/time_zone',          settingsScope, routes.settings.getTimeZone);
     router.post('/api/v1/settings/time_zone',          settingsScope, routes.settings.setTimeZone);
-    router.get ('/api/v1/settings/appstore_config',    appstoreScope, routes.settings.getAppstoreConfig);
-    router.post('/api/v1/settings/appstore_config',    appstoreScope, routes.settings.setAppstoreConfig);
+    router.get ('/api/v1/settings/appstore_config',    appstoreScope, verifyOperator, routes.settings.getAppstoreConfig);
+    router.post('/api/v1/settings/appstore_config',    appstoreScope, verifyOperator, routes.settings.setAppstoreConfig);
 
     // email routes
     router.get ('/api/v1/mail/:domain',       mailScope, routes.mail.getDomain);
@@ -261,7 +263,7 @@ function initializeExpressSync() {
     router.del ('/api/v1/mail/:domain/lists/:name', mailScope, routes.mail.removeList);
 
     // feedback
-    router.post('/api/v1/feedback', cloudronScope, routes.cloudron.feedback);
+    router.post('/api/v1/feedback', cloudronScope, verifyOperator, routes.cloudron.feedback);
 
     // backup routes
     router.get ('/api/v1/backups', settingsScope, routes.backups.get);

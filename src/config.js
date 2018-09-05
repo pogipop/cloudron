@@ -38,8 +38,11 @@ exports = module.exports = {
     dkimSelector: dkimSelector,
 
     isDemo: isDemo,
+
+    // feature flags based on editions (these have a separate license from standard edition)
     isSpacesEnabled: isSpacesEnabled,
     allowHyphenatedSubdomains: allowHyphenatedSubdomains,
+    allowOperatorActions: allowOperatorActions,
 
     // for testing resets to defaults
     _reset: _reset
@@ -231,6 +234,10 @@ function isSpacesEnabled() {
 
 function allowHyphenatedSubdomains() {
     return get('edition') === 'hostingprovider';
+}
+
+function allowOperatorActions() {
+    return get('edition') !== 'hostingprovider';
 }
 
 function provider() {

@@ -6,7 +6,8 @@ exports = module.exports = {
 
     scope: scope,
     websocketAuth: websocketAuth,
-    verifyAppOwnership: verifyAppOwnership
+    verifyAppOwnership: verifyAppOwnership,
+    verifyOperator: verifyOperator
 };
 
 var accesscontrol = require('../accesscontrol.js'),
@@ -160,4 +161,10 @@ function verifyAppOwnership(req, res, next) {
 
         next();
     });
+}
+
+function verifyOperator(req, res, next) {
+    if (config.allowOperatorActions()) return next();
+
+    next(new HttpError(401, 'Not allowed in this edition'));
 }
