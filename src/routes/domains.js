@@ -5,7 +5,9 @@ exports = module.exports = {
     get: get,
     getAll: getAll,
     update: update,
-    del: del
+    del: del,
+
+    verifyDomainLock: verifyDomainLock
 };
 
 var assert = require('assert'),
@@ -13,6 +15,14 @@ var assert = require('assert'),
     DomainsError = domains.DomainsError,
     HttpError = require('connect-lastmile').HttpError,
     HttpSuccess = require('connect-lastmile').HttpSuccess;
+
+function verifyDomainLock(req, res, next) {
+    assert.strictEqual(typeof req.params.domain, 'string');
+
+    if (domains.isLocked(req.params.domain)) return next(new HttpError(423, 'This domain is locked'));
+
+    next();
+}
 
 function add(req, res, next) {
     assert.strictEqual(typeof req.body, 'object');

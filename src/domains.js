@@ -6,6 +6,7 @@ module.exports = exports = {
     getAll: getAll,
     update: update,
     del: del,
+    isLocked: isLocked,
 
     fqdn: fqdn,
     setAdmin: setAdmin,
@@ -205,6 +206,10 @@ function add(domain, zoneName, provider, dnsConfig, fallbackCertificate, tlsConf
     });
 }
 
+function isLocked(domain) {
+    return domain === config.adminDomain() && config.isAdminDomainLocked();
+}
+
 function get(domain, callback) {
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof callback, 'function');
@@ -213,6 +218,8 @@ function get(domain, callback) {
         // TODO try to find subdomain entries maybe based on zoneNames or so
         if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new DomainsError(DomainsError.NOT_FOUND));
         if (error) return callback(new DomainsError(DomainsError.INTERNAL_ERROR, error));
+
+        result.locked = isLocked(domain);
 
         reverseProxy.getFallbackCertificate(domain, function (error, bundle) {
             if (error && error.reason !== ReverseProxyError.NOT_FOUND) return callback(new DomainsError(DomainsError.INTERNAL_ERROR, error));
@@ -234,6 +241,8 @@ function getAll(callback) {
 
     domaindb.getAll(function (error, result) {
         if (error) return callback(new DomainsError(DomainsError.INTERNAL_ERROR, error));
+
+        result.forEach(function (r) { r.locked = isLocked(r.domain); });
 
         return callback(null, result);
     });
@@ -429,14 +438,14 @@ function setAdmin(domain, callback) {
 
 // removes all fields that are strictly private and should never be returned by API calls
 function removePrivateFields(domain) {
-    var result = _.pick(domain, 'domain', 'zoneName', 'provider', 'config', 'tlsConfig', 'fallbackCertificate');
+    var result = _.pick(domain, 'domain', 'zoneName', 'provider', 'config', 'tlsConfig', 'fallbackCertificate', 'locked');
     if (result.fallbackCertificate) delete result.fallbackCertificate.key;  // do not return the 'key'. in caas, this is private
     return result;
 }
 
 // removes all fields that are not accessible by a normal user
 function removeRestrictedFields(domain) {
-    var result = _.pick(domain, 'domain', 'zoneName', 'provider');
+    var result = _.pick(domain, 'domain', 'zoneName', 'provider', 'locked');
 
     // always ensure config object
     result.config = { hyphenatedSubdomains: !!domain.config.hyphenatedSubdomains };

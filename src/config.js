@@ -43,6 +43,7 @@ exports = module.exports = {
     isSpacesEnabled: isSpacesEnabled,
     allowHyphenatedSubdomains: allowHyphenatedSubdomains,
     allowOperatorActions: allowOperatorActions,
+    isAdminDomainLocked: isAdminDomainLocked,
 
     // for testing resets to defaults
     _reset: _reset
@@ -238,6 +239,10 @@ function allowHyphenatedSubdomains() {
 
 function allowOperatorActions() {
     return get('edition') !== 'hostingprovider';
+}
+
+function isAdminDomainLocked() {
+    return get('edition') === 'hostingprovider';
 }
 
 function provider() {

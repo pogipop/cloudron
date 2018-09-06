@@ -103,6 +103,7 @@ function initializeExpressSync() {
     var appstoreScope = routes.accesscontrol.scope(accesscontrol.SCOPE_APPSTORE);
 
     const verifyOperator = routes.accesscontrol.verifyOperator;
+    const verifyDomainLock = routes.domains.verifyDomainLock;
 
     // csrf protection
     var csrf = routes.oauth2.csrf();
@@ -272,9 +273,9 @@ function initializeExpressSync() {
     // domain routes
     router.post('/api/v1/domains', domainsManageScope, routes.domains.add);
     router.get ('/api/v1/domains', domainsReadScope, routes.domains.getAll);
-    router.get ('/api/v1/domains/:domain', domainsManageScope, routes.domains.get);  // this is manage scope because it returns non-restricted fields
-    router.put ('/api/v1/domains/:domain', domainsManageScope, routes.domains.update);
-    router.del ('/api/v1/domains/:domain', domainsManageScope, routes.users.verifyPassword, routes.domains.del);
+    router.get ('/api/v1/domains/:domain', domainsManageScope, verifyDomainLock, routes.domains.get);  // this is manage scope because it returns non-restricted fields
+    router.put ('/api/v1/domains/:domain', domainsManageScope, verifyDomainLock, routes.domains.update);
+    router.del ('/api/v1/domains/:domain', domainsManageScope, verifyDomainLock, routes.users.verifyPassword, routes.domains.del);
 
     // caas routes
     router.get('/api/v1/caas/config', cloudronScope, routes.caas.getConfig);
