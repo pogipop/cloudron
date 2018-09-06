@@ -147,7 +147,7 @@ function websocketAuth(requiredScopes, req, res, next) {
 function verifyAppOwnership(req, res, next) {
     if (req.user.admin) return next();
 
-    if (!config.isSpacesEnabled) return next();
+    if (!config.isSpacesEnabled()) return next();
 
     const appCreate = !('id' in req.params);
 
