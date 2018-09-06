@@ -88,6 +88,7 @@ function setDnsRecords(req, res, next) {
 
     mail.setDnsRecords(req.params.domain, function (error) {
         if (error && error.reason === MailError.NOT_FOUND) return next(new HttpError(404, error.message));
+        if (error && error.reason === MailError.EXTERNAL_ERROR) return next(new HttpError(503, error.message));
         if (error) return next(new HttpError(500, error));
 
         next(new HttpSuccess(201));

@@ -625,7 +625,7 @@ function txtRecordsWithSpf(domain, callback) {
     assert.strictEqual(typeof callback, 'function');
 
     domains.getDnsRecords('', domain, 'TXT', function (error, txtRecords) {
-        if (error) return callback(error);
+        if (error) return new MailError(MailError.EXTERNAL_ERROR, error.message);
 
         debug('txtRecordsWithSpf: current txt records - %j', txtRecords);
 
@@ -741,10 +741,14 @@ function setDnsRecords(domain, callback) {
             async.mapSeries(records, function (record, iteratorCallback) {
                 domains.upsertDnsRecords(record.subdomain, record.domain, record.type, record.values, iteratorCallback);
             }, function (error, changeIds) {
-                if (error) debug('addDnsRecords: failed to update : %s. will retry', error);
-                else debug('addDnsRecords: records %j added with changeIds %j', records, changeIds);
+                if (error) {
+                    debug(`addDnsRecords: failed to update: ${error}`);
+                    return callback(new MailError(MailError.EXTERNAL_ERROR, error.message));
+                }
 
-                callback(error);
+                debug('addDnsRecords: records %j added with changeIds %j', records, changeIds);
+
+                callback(null);
             });
         });
     });

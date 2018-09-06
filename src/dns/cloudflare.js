@@ -28,7 +28,7 @@ function translateRequestError(result, callback) {
     if (result.statusCode === 422) return callback(new DomainsError(DomainsError.BAD_FIELD, result.body.message));
     if ((result.statusCode === 400 || result.statusCode === 401 || result.statusCode === 403) && result.body.errors.length > 0) {
         let error = result.body.errors[0];
-        let message = error.message;
+        let message = `message: ${error.message} statusCode: ${result.statusCode} code:${error.code}`;
         if (error.code === 6003) {
             if (error.error_chain[0] && error.error_chain[0].code === 6103) message = 'Invalid API Key';
             else message = 'Invalid credentials';
