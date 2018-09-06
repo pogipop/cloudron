@@ -301,6 +301,8 @@ function del(domain, callback) {
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof callback, 'function');
 
+    if (domain === config.adminDomain()) return callback(new DomainsError(DomainsError.IN_USE));
+
     domaindb.del(domain, function (error) {
         if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new DomainsError(DomainsError.NOT_FOUND));
         if (error && error.reason === DatabaseError.IN_USE) return callback(new DomainsError(DomainsError.IN_USE));
