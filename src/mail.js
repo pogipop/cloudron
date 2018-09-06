@@ -772,6 +772,8 @@ function removeDomain(domain, callback) {
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof callback, 'function');
 
+    if (domain === config.adminDomain()) return callback(new MailError(MailError.IN_USE));
+
     maildb.del(domain, function (error) {
         if (error && error.reason === DatabaseError.IN_USE) return callback(new MailError(MailError.IN_USE));
         if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new MailError(MailError.NOT_FOUND, error.message));
