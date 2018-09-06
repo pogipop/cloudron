@@ -11,10 +11,12 @@ exports = module.exports = {
     createInvite: createInvite,
     sendInvite: sendInvite,
     setGroups: setGroups,
-    transferOwnership: transferOwnership
+    transferOwnership: transferOwnership,
+    verifyOperator: verifyOperator
 };
 
 var assert = require('assert'),
+    config = require('../config.js'),
     HttpError = require('connect-lastmile').HttpError,
     HttpSuccess = require('connect-lastmile').HttpSuccess,
     users = require('../users.js'),
@@ -23,6 +25,12 @@ var assert = require('assert'),
 function auditSource(req) {
     var ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress || null;
     return { ip: ip, username: req.user ? req.user.username : null, userId: req.user ? req.user.id : null };
+}
+
+function verifyOperator(req, res, next) {
+    if (config.allowOperatorActions()) return next();
+
+    next(new HttpError(401, 'Not allowed in this edition'));
 }
 
 function create(req, res, next) {
