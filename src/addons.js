@@ -754,6 +754,7 @@ function setupRedis(app, options, callback) {
         if (error && error.reason !== DatabaseError.NOT_FOUND) return callback(error);
 
         const redisPassword = error ? hat(4 * 48) : existingPassword; // see box#362 for password length
+        const redisServiceToken = 'CHANGEME';
 
         var redisVarsFile = path.join(paths.ADDON_CONFIG_DIR, 'redis-' + app.id + '_vars.sh');
         var redisDataDir = path.join(paths.APPS_DATA_DIR, app.id + '/redis');
@@ -790,6 +791,8 @@ function setupRedis(app, options, callback) {
                     --memory-swap ${memoryLimit} \
                     --dns 172.18.0.1 \
                     --dns-search=. \
+                    -e CLOUDRON_REDIS_PASSWORD="${redisPassword}" \
+                    -e CLOUDRON_REDIS_TOKEN="${redisServiceToken}" \
                     -v ${redisVarsFile}:/etc/redis/redis_vars.sh:ro \
                     -v ${redisDataDir}:/var/lib/redis:rw \
                     --read-only -v /tmp -v /run ${tag}`;
