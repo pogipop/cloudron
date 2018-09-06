@@ -14,10 +14,10 @@ function die {
 
 export DEBIAN_FRONTEND=noninteractive
 
-# hold grub since updating it breaks on some VPS providers
+# hold grub since updating it breaks on some VPS providers. also, dist-upgrade will trigger it
 apt-mark hold grub* >/dev/null
 apt-get -o Dpkg::Options::="--force-confdef" update -y
-apt-get -o Dpkg::Options::="--force-confdef" dist-upgrade -y
+apt-get -o Dpkg::Options::="--force-confdef" upgrade -y
 apt-mark unhold grub* >/dev/null
 
 echo "==> Installing required packages"
@@ -75,13 +75,11 @@ if [[ "${storage_driver}" != "overlay2" ]]; then
     exit 1
 fi
 
-# temporarily disable this for some providers which have issues updating grub unattended
-if [[ "${arg_provider}" != "galaxygate" ]]; then
-    echo "==> Enable memory accounting"
-    apt-get -y install grub2
-    sed -e 's/^GRUB_CMDLINE_LINUX="\(.*\)"$/GRUB_CMDLINE_LINUX="\1 cgroup_enable=memory swapaccount=1 panic_on_oops=1 panic=5"/' -i /etc/default/grub
-    update-grub
-fi
+# do not upgrade grub because it might prompt user and break this script
+echo "==> Enable memory accounting"
+apt-get -y --no-upgrade install grub2-common
+sed -e 's/^GRUB_CMDLINE_LINUX="\(.*\)"$/GRUB_CMDLINE_LINUX="\1 cgroup_enable=memory swapaccount=1 panic_on_oops=1 panic=5"/' -i /etc/default/grub
+update-grub
 
 echo "==> Downloading docker images"
 if [ ! -f "${arg_infraversionpath}/infra_version.js" ]; then

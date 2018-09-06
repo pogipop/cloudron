@@ -143,12 +143,12 @@ echo ""
 if [[ "${initBaseImage}" == "true" ]]; then
     echo "=> Updating apt and installing script dependencies"
     if ! apt-get update &>> "${LOG_FILE}"; then
-        echo "Could not update package repositories"
+        echo "Could not update package repositories. See ${LOG_FILE}"
         exit 1
     fi
 
     if ! apt-get install curl python3 ubuntu-standard -y &>> "${LOG_FILE}"; then
-        echo "Could not install setup dependencies (curl)"
+        echo "Could not install setup dependencies (curl). See ${LOG_FILE}"
         exit 1
     fi
 fi
