@@ -6,13 +6,10 @@ exports = module.exports = {
 
     scope: scope,
     websocketAuth: websocketAuth,
-    verifyAppOwnership: verifyAppOwnership,
     verifyOperator: verifyOperator
 };
 
 var accesscontrol = require('../accesscontrol.js'),
-    apps = require('../apps.js'),
-    AppsError = apps.AppsError,
     assert = require('assert'),
     BasicStrategy = require('passport-http').BasicStrategy,
     BearerStrategy = require('passport-http-bearer').Strategy,
@@ -139,25 +136,6 @@ function websocketAuth(requiredScopes, req, res, next) {
 
         var e = accesscontrol.hasScopes(info.authorizedScopes, requiredScopes);
         if (e) return next(new HttpError(403, e.message));
-
-        next();
-    });
-}
-
-function verifyAppOwnership(req, res, next) {
-    if (req.user.admin) return next();
-
-    if (!config.isSpacesEnabled()) return next();
-
-    const appCreate = !('id' in req.params);
-
-    if (appCreate) return next(); // ok to install app
-
-    apps.get(req.params.id, function (error, app) {
-        if (error && error.reason === AppsError.NOT_FOUND) return next(new HttpError(404, 'No such app'));
-        if (error) return next(new HttpError(500, error));
-
-        if (app.ownerId !== req.user.id) return next(new HttpError(401, 'Unauthorized'));
 
         next();
     });

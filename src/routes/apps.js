@@ -1,6 +1,8 @@
 'use strict';
 
 exports = module.exports = {
+    verifyOwnership: verifyOwnership,
+
     getApp: getApp,
     getApps: getApps,
     getAppIcon: getAppIcon,
@@ -30,6 +32,7 @@ exports = module.exports = {
 var apps = require('../apps.js'),
     AppsError = apps.AppsError,
     assert = require('assert'),
+    config = require('../config.js'),
     debug = require('debug')('box:routes/apps'),
     fs = require('fs'),
     HttpError = require('connect-lastmile').HttpError,
@@ -42,6 +45,25 @@ var apps = require('../apps.js'),
 function auditSource(req) {
     var ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress || null;
     return { ip: ip, username: req.user ? req.user.username : null, userId: req.user ? req.user.id : null };
+}
+
+function verifyOwnership(req, res, next) {
+    if (req.user.admin) return next();
+
+    if (!config.isSpacesEnabled()) return next();
+
+    const appCreate = !('id' in req.params);
+
+    if (appCreate) return next(); // ok to install app
+
+    apps.get(req.params.id, function (error, app) {
+        if (error && error.reason === AppsError.NOT_FOUND) return next(new HttpError(404, 'No such app'));
+        if (error) return next(new HttpError(500, error));
+
+        if (app.ownerId !== req.user.id) return next(new HttpError(401, 'Unauthorized'));
+
+        next();
+    });
 }
 
 function getApp(req, res, next) {
