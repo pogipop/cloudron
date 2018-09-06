@@ -207,6 +207,9 @@ function getEnvironment(app, callback) {
 
         if (app.manifest.addons['docker']) result.push({ name: 'DOCKER_HOST', value: `tcp://172.18.0.1:${config.get('dockerProxyPort')}` });
 
+        // filter out internal settings like service auth tokens. Those start with INTERNAL_
+        result = result.filter(function (e) { return e.name.indexOf('INTERNAL_') !== 0; });
+
         return callback(null, result.map(function (e) { return e.name + '=' + e.value; }));
     });
 }
@@ -750,11 +753,11 @@ function setupRedis(app, options, callback) {
     assert.strictEqual(typeof options, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    appdb.getAddonConfigByName(app.id, 'redis', 'REDIS_PASSWORD', function (error, existingPassword) {
+    appdb.getAddonConfig(app.id, 'redis', function (error, result) {
         if (error && error.reason !== DatabaseError.NOT_FOUND) return callback(error);
 
-        const redisPassword = error ? hat(4 * 48) : existingPassword; // see box#362 for password length
-        const redisServiceToken = 'CHANGEME';
+        const redisPassword = (result && result.REDIS_PASSWORD) ? result.REDIS_PASSWORD : hat(4 * 48); // see box#362 for password length
+        const redisServiceToken = (result && result.INTERNAL_REDIS_TOKEN) ? result.INTERNAL_REDIS_TOKEN : hat(4 * 48);
 
         var redisVarsFile = path.join(paths.ADDON_CONFIG_DIR, 'redis-' + app.id + '_vars.sh');
         var redisDataDir = path.join(paths.APPS_DATA_DIR, app.id + '/redis');
@@ -801,7 +804,8 @@ function setupRedis(app, options, callback) {
             { name: 'REDIS_URL', value: 'redis://redisuser:' + redisPassword + '@redis-' + app.id },
             { name: 'REDIS_PASSWORD', value: redisPassword },
             { name: 'REDIS_HOST', value: redisName },
-            { name: 'REDIS_PORT', value: '6379' }
+            { name: 'REDIS_PORT', value: '6379' },
+            { name: 'INTERNAL_REDIS_TOKEN', value: redisServiceToken }
         ];
 
         async.series([
