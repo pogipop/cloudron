@@ -37,6 +37,7 @@ var accesscontrol = require('./accesscontrol.js'),
     paths = require('./paths.js'),
     safe = require('safetydance'),
     shell = require('./shell.js'),
+    superagent = require('superagent'),
     util = require('util');
 
 var NOOP = function (app, options, callback) { return callback(); };
@@ -756,8 +757,13 @@ function setupRedis(app, options, callback) {
     appdb.getAddonConfig(app.id, 'redis', function (error, result) {
         if (error && error.reason !== DatabaseError.NOT_FOUND) return callback(error);
 
-        const redisPassword = (result && result.REDIS_PASSWORD) ? result.REDIS_PASSWORD : hat(4 * 48); // see box#362 for password length
-        const redisServiceToken = (result && result.INTERNAL_REDIS_TOKEN) ? result.INTERNAL_REDIS_TOKEN : hat(4 * 48);
+        var tmp;
+        tmp = result.find(function (o) { return o.name === 'REDIS_PASSWORD'; });
+        const redisPassword = (tmp && tmp.value) ? tmp.value : hat(4 * 48); // see box#362 for password length
+
+        tmp = result.find(function (o) { return o.name === 'INTERNAL_REDIS_TOKEN'; });
+        const redisServiceToken = (tmp && tmp.value) ? tmp.value : hat(4 * 48);
+
         const redisDataDir = path.join(paths.APPS_DATA_DIR, app.id + '/redis');
 
         if (!safe.fs.mkdirSync(redisDataDir) && safe.error.code !== 'EEXIST') return callback(new Error('Error creating redis data dir:' + safe.error));
@@ -844,7 +850,22 @@ function backupRedis(app, options, callback) {
 
     debugApp(app, 'Backing up redis');
 
-    var cmd = [ '/addons/redis/service.sh', 'backup' ]; // the redis dir is volume mounted
+    appdb.getAddonConfigByName(app.id, 'redis', 'INTERNAL_REDIS_TOKEN', function (error, token) {
+        if (error && error.reason !== DatabaseError.NOT_FOUND) return callback(error);
 
-    docker.execContainer('redis-' + app.id, cmd, { }, callback);
+        var container = dockerConnection.getContainer('redis-' + app.id);
+        container.inspect(function (error, result) {
+            if (error) return callback(new Error('Error inspecting redis container: ' + error));
+
+            const containerIp = safe.query(result, 'NetworkSettings.Networks.cloudron.IPAddress', null);
+            if (!containerIp) return callback(new Error('Error getting redis container ip'));
+
+            superagent.post(`http://${containerIp}:3000/backup?access_token=${token}`).end(function (error, result) {
+                if (error) return callback(new Error('Error backing up redis: ' + error));
+                if (result.statusCode !== 201) return callback(new Error('Error backing up redis. Status code: ' + result.statusCode));
+
+                callback(null);
+            });
+        });
+    });
 }
