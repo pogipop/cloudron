@@ -758,13 +758,7 @@ function setupRedis(app, options, callback) {
 
         const redisPassword = (result && result.REDIS_PASSWORD) ? result.REDIS_PASSWORD : hat(4 * 48); // see box#362 for password length
         const redisServiceToken = (result && result.INTERNAL_REDIS_TOKEN) ? result.INTERNAL_REDIS_TOKEN : hat(4 * 48);
-
-        var redisVarsFile = path.join(paths.ADDON_CONFIG_DIR, 'redis-' + app.id + '_vars.sh');
-        var redisDataDir = path.join(paths.APPS_DATA_DIR, app.id + '/redis');
-
-        if (!safe.fs.writeFileSync(redisVarsFile, 'REDIS_PASSWORD=' + redisPassword)) {
-            return callback(new Error('Error writing redis config'));
-        }
+        const redisDataDir = path.join(paths.APPS_DATA_DIR, app.id + '/redis');
 
         if (!safe.fs.mkdirSync(redisDataDir) && safe.error.code !== 'EEXIST') return callback(new Error('Error creating redis data dir:' + safe.error));
 
@@ -796,7 +790,6 @@ function setupRedis(app, options, callback) {
                     --dns-search=. \
                     -e CLOUDRON_REDIS_PASSWORD="${redisPassword}" \
                     -e CLOUDRON_REDIS_TOKEN="${redisServiceToken}" \
-                    -v ${redisVarsFile}:/etc/redis/redis_vars.sh:ro \
                     -v ${redisDataDir}:/var/lib/redis:rw \
                     --read-only -v /tmp -v /run ${tag}`;
 
@@ -835,8 +828,6 @@ function teardownRedis(app, options, callback) {
 
     container.remove(removeOptions, function (error) {
         if (error && error.statusCode !== 404) return callback(new Error('Error removing container:' + error));
-
-        safe.fs.unlinkSync(paths.ADDON_CONFIG_DIR, 'redis-' + app.id + '_vars.sh');
 
         shell.sudo('teardownRedis', [ RMAPPDIR_CMD, app.id + '/redis', true /* delete directory */ ], function (error /* ,stdout , stderr*/) {
             if (error) return callback(new Error('Error removing redis data:' + error));
