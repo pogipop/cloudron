@@ -4,7 +4,7 @@ var async = require('async');
 
 exports.up = function(db, callback) {
     db.all('SELECT * from apps', [ ], function (error, results) {
-        if (error) return done(error);
+        if (error) return callback(error);
 
         var queries = [
             db.runSql.bind(db, 'START TRANSACTION;')
