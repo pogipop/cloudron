@@ -24,7 +24,7 @@ function get(req, res, next) {
     if (!perPage || perPage < 0) return next(new HttpError(400, 'per_page query param has to be a postive number'));
 
     backups.getByStatePaged(backupdb.BACKUP_STATE_NORMAL, page, perPage, function (error, result) {
-        if (error && error.reason === BackupsError.EXTERNAL_ERROR) return next(new HttpError(503, error.message));
+        if (error && error.reason === BackupsError.EXTERNAL_ERROR) return next(new HttpError(424, error.message));
         if (error) return next(new HttpError(500, error));
 
         next(new HttpSuccess(200, { backups: result }));
