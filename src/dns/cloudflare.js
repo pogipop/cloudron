@@ -112,7 +112,7 @@ function upsert(dnsConfig, zoneName, subdomain, type, values, callback) {
                 var priority = null;
 
                 if (type === 'MX') {
-                    priority = value.split(' ')[0];
+                    priority = parseInt(value.split(' ')[0], 10);
                     value = value.split(' ')[1];
                 }
 
