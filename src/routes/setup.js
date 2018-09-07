@@ -54,7 +54,7 @@ function setupTokenAuth(req, res, next) {
     caas.verifySetupToken(req.query.setupToken, function (error) {
         if (error && error.reason === CaasError.BAD_STATE) return next(new HttpError(409, 'Already setup'));
         if (error && error.reason === CaasError.INVALID_TOKEN) return next(new HttpError(401, 'Invalid token'));
-        if (error && error.reason === CaasError.EXTERNAL_ERROR) return next(new HttpError(503, error.message));
+        if (error && error.reason === CaasError.EXTERNAL_ERROR) return next(new HttpError(424, error.message));
 
         if (error) return next(new HttpError(500, error));
 
@@ -120,7 +120,7 @@ function activate(req, res, next) {
         caas.setupDone(req.query.setupToken, function (error) {
             if (error && error.reason === CaasError.BAD_STATE) return next(new HttpError(409, 'Already setup'));
             if (error && error.reason === CaasError.INVALID_TOKEN) return next(new HttpError(401, 'Invalid token'));
-            if (error && error.reason === CaasError.EXTERNAL_ERROR) return next(new HttpError(503, error.message));
+            if (error && error.reason === CaasError.EXTERNAL_ERROR) return next(new HttpError(424, error.message));
 
             if (error) return next(new HttpError(500, error));
 
@@ -147,7 +147,7 @@ function restore(req, res, next) {
         if (error && error.reason === SetupError.ALREADY_SETUP) return next(new HttpError(409, error.message));
         if (error && error.reason === SetupError.BAD_FIELD) return next(new HttpError(400, error.message));
         if (error && error.reason === SetupError.BAD_STATE) return next(new HttpError(409, error.message));
-        if (error && error.reason === SetupError.EXTERNAL_ERROR) return next(new HttpError(402, error.message));
+        if (error && error.reason === SetupError.EXTERNAL_ERROR) return next(new HttpError(424, error.message));
         if (error) return next(new HttpError(500, error));
 
         next(new HttpSuccess(200));

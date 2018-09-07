@@ -154,7 +154,7 @@ function installApp(req, res, next) {
         if (error && error.reason === AppsError.BAD_FIELD) return next(new HttpError(400, error.message));
         if (error && error.reason === AppsError.BILLING_REQUIRED) return next(new HttpError(402, error.message));
         if (error && error.reason === AppsError.BAD_CERTIFICATE) return next(new HttpError(400, error.message));
-        if (error && error.reason === AppsError.EXTERNAL_ERROR) return next(new HttpError(503, error.message));
+        if (error && error.reason === AppsError.EXTERNAL_ERROR) return next(new HttpError(424, error.message));
         if (error) return next(new HttpError(500, error));
 
         next(new HttpSuccess(202, app));
@@ -270,7 +270,7 @@ function backupApp(req, res, next) {
     apps.backup(req.params.id, function (error) {
         if (error && error.reason === AppsError.NOT_FOUND) return next(new HttpError(404, 'No such app'));
         if (error && error.reason === AppsError.BAD_STATE) return next(new HttpError(409, error.message));
-        if (error && error.reason === AppsError.EXTERNAL_ERROR) return next(new HttpError(503, error));
+        if (error && error.reason === AppsError.EXTERNAL_ERROR) return next(new HttpError(424, error));
         if (error) return next(new HttpError(500, error));
 
         next(new HttpSuccess(202, { }));

@@ -169,7 +169,7 @@ function setBackupConfig(req, res, next) {
 
     settings.setBackupConfig(req.body, function (error) {
         if (error && error.reason === SettingsError.BAD_FIELD) return next(new HttpError(400, error.message));
-        if (error && error.reason === SettingsError.EXTERNAL_ERROR) return next(new HttpError(402, error.message));
+        if (error && error.reason === SettingsError.EXTERNAL_ERROR) return next(new HttpError(424, error.message));
         if (error) return next(new HttpError(500, error));
 
         next(new HttpSuccess(200, {}));
@@ -197,7 +197,7 @@ function setPlatformConfig(req, res, next) {
 
     settings.setPlatformConfig(req.body, function (error) {
         if (error && error.reason === SettingsError.BAD_FIELD) return next(new HttpError(400, error.message));
-        if (error && error.reason === SettingsError.EXTERNAL_ERROR) return next(new HttpError(402, error.message));
+        if (error && error.reason === SettingsError.EXTERNAL_ERROR) return next(new HttpError(424, error.message));
         if (error) return next(new HttpError(500, error));
 
         next(new HttpSuccess(200, {}));
@@ -225,7 +225,7 @@ function setAppstoreConfig(req, res, next) {
 
     settings.setAppstoreConfig(options, function (error) {
         if (error && error.reason === SettingsError.BAD_FIELD) return next(new HttpError(400, error.message));
-        if (error && error.reason === SettingsError.EXTERNAL_ERROR) return next(new HttpError(406, error.message));
+        if (error && error.reason === SettingsError.EXTERNAL_ERROR) return next(new HttpError(424, error.message));
         if (error) return next(new HttpError(500, error));
 
         settings.getAppstoreConfig(function (error, result) {
