@@ -32,6 +32,8 @@ function translateRequestError(result, callback) {
         if (error.code === 6003) {
             if (error.error_chain[0] && error.error_chain[0].code === 6103) message = 'Invalid API Key';
             else message = 'Invalid credentials';
+        } else if (error.error_chain[0] && error.error_chain[0].message) {
+            message = message + ' ' + error.error_chain[0].message;
         }
 
         return callback(new DomainsError(DomainsError.ACCESS_DENIED, message));
