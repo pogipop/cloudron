@@ -90,7 +90,7 @@ function api(provider) {
     case 'namecom': return require('./dns/namecom.js');
     case 'noop': return require('./dns/noop.js');
     case 'manual': return require('./dns/manual.js');
-    case 'wildcard': return require('./dns/manual.js');
+    case 'wildcard': return require('./dns/wildcard.js');
     default: return null;
     }
 }
@@ -186,9 +186,9 @@ function add(domain, zoneName, provider, dnsConfig, fallbackCertificate, tlsConf
         if (error) return callback(new DomainsError(DomainsError.INTERNAL_ERROR, 'Error getting IP:' + error.message));
 
         verifyDnsConfig(dnsConfig, domain, zoneName, provider, ip, function (error, result) {
-            if (error && error.reason === DomainsError.ACCESS_DENIED) return callback(new DomainsError(DomainsError.BAD_FIELD, 'Error adding A record. Access denied'));
+            if (error && error.reason === DomainsError.ACCESS_DENIED) return callback(new DomainsError(DomainsError.BAD_FIELD, 'Incorrect configuration. Access denied'));
             if (error && error.reason === DomainsError.NOT_FOUND) return callback(new DomainsError(DomainsError.BAD_FIELD, 'Zone not found'));
-            if (error && error.reason === DomainsError.EXTERNAL_ERROR) return callback(new DomainsError(DomainsError.BAD_FIELD, 'Error adding A record: ' + error.message));
+            if (error && error.reason === DomainsError.EXTERNAL_ERROR) return callback(new DomainsError(DomainsError.BAD_FIELD, 'Configuration error: ' + error.message));
             if (error && error.reason === DomainsError.BAD_FIELD) return callback(new DomainsError(DomainsError.BAD_FIELD, error.message));
             if (error && error.reason === DomainsError.INVALID_PROVIDER) return callback(new DomainsError(DomainsError.BAD_FIELD, error.message));
             if (error) return callback(new DomainsError(DomainsError.INTERNAL_ERROR, error));
