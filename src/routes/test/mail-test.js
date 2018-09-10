@@ -18,6 +18,15 @@ var async = require('async'),
 
 var SERVER_URL = 'http://localhost:' + config.get('port');
 
+const ADMIN_DOMAIN = {
+    domain: 'admin.com',
+    zoneName: 'admin.com',
+    config: {},
+    provider: 'noop',
+    fallbackCertificate: null,
+    tlsConfig: { provider: 'fallback' }
+};
+
 const DOMAIN_0 = {
     domain: 'example-mail-test.com',
     zoneName: 'example-mail-test.com',
@@ -33,13 +42,21 @@ var userId = '';
 
 function setup(done) {
     config._reset();
-    config.setFqdn(DOMAIN_0.domain);
-    config.setAdminFqdn('my.example-mail-test.com');
 
     async.series([
         server.start.bind(null),
         database._clear.bind(null),
-        domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0.zoneName, DOMAIN_0.provider, DOMAIN_0.config, DOMAIN_0.fallbackCertificate, DOMAIN_0.tlsConfig),
+
+        function dnsSetup(callback) {
+            superagent.post(SERVER_URL + '/api/v1/cloudron/dns_setup')
+                .send({ provider: ADMIN_DOMAIN.provider, domain: ADMIN_DOMAIN.domain, adminFqdn: 'my.' + ADMIN_DOMAIN.domain, config: ADMIN_DOMAIN.config })
+                .end(function (error, result) {
+                    expect(result).to.be.ok();
+                    expect(result.statusCode).to.eql(200);
+
+                    callback();
+                });
+        },
 
         function createAdmin(callback) {
             superagent.post(SERVER_URL + '/api/v1/cloudron/activate')
@@ -52,6 +69,17 @@ function setup(done) {
 
                     // stash token for further use
                     token = result.body.token;
+
+                    callback();
+                });
+        },
+
+        function createDomain(callback) {
+            superagent.post(SERVER_URL + '/api/v1/domains')
+                .query({ access_token: token })
+                .send(DOMAIN_0)
+                .end(function (error, result) {
+                    expect(result.statusCode).to.equal(201);
 
                     callback();
                 });
@@ -178,7 +206,17 @@ describe('Mail API', function () {
                 });
         });
 
-        it('can delete domain', function (done) {
+        it('cannot delete admin mail domain', function (done) {
+            superagent.del(SERVER_URL + '/api/v1/mail/' + ADMIN_DOMAIN.domain)
+                .send({ password: PASSWORD })
+                .query({ access_token: token })
+                .end(function (err, res) {
+                    expect(res.statusCode).to.equal(409);
+                    done();
+                });
+        });
+
+        it('can delete admin mail domain', function (done) {
             superagent.del(SERVER_URL + '/api/v1/mail/' + DOMAIN_0.domain)
                 .send({ password: PASSWORD })
                 .query({ access_token: token })

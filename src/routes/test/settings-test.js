@@ -320,7 +320,7 @@ describe('Settings API', function () {
                 .send({ userId: 'nebulon', token: 'sometoken' })
                 .end(function (err, res) {
                     expect(scope.isDone()).to.be.ok();
-                    expect(res.statusCode).to.equal(406);
+                    expect(res.statusCode).to.equal(424);
                     expect(res.body.message).to.equal('invalid appstore token');
 
                     done();
@@ -350,7 +350,7 @@ describe('Settings API', function () {
                 .send({ userId: 'nebulon', token: 'sometoken' })
                 .end(function (err, res) {
                     expect(scope.isDone()).to.be.ok();
-                    expect(res.statusCode).to.equal(406);
+                    expect(res.statusCode).to.equal(424);
                     expect(res.body.message).to.equal('wrong user');
 
                     done();

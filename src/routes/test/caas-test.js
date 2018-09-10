@@ -122,7 +122,7 @@ describe('Caas', function () {
                 .query({ setupToken: 'somesetuptoken' })
                 .send({ username: 'someuser', password: 'strong#A3asdf', email: 'admin@foo.bar' })
                 .end(function (error, result) {
-                    expect(result.statusCode).to.equal(503);
+                    expect(result.statusCode).to.equal(424);
                     expect(scope.isDone()).to.be.ok();
                     done();
                 });
