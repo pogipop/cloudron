@@ -1377,3 +1377,8 @@
 * Prevent dashboard domain from being deleted
 * Add alternateDomains to app install route
 * cloudflare: Fix crash when access denied
+
+[3.1.4]
+* Add DO Spaces SFO2 region
+* Wildcard DNS now validates the config
+
