@@ -25,7 +25,7 @@ exports = module.exports = {
     _getApi: getApi
 };
 
-var acme = require('./cert/acme.js'),
+var acme = require('./cert/acme1.js'),
     apps = require('./apps.js'),
     assert = require('assert'),
     async = require('async'),

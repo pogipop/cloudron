@@ -3,7 +3,7 @@
 var assert = require('assert'),
     async = require('async'),
     crypto = require('crypto'),
-    debug = require('debug')('box:cert/acme'),
+    debug = require('debug')('box:cert/acme1'),
     execSync = require('safetydance').child_process.execSync,
     fs = require('fs'),
     parseLinks = require('parse-links'),
@@ -25,7 +25,7 @@ exports = module.exports = {
     _name: 'acme'
 };
 
-function AcmeError(reason, errorOrMessage) {
+function Acme1Error(reason, errorOrMessage) {
     assert.strictEqual(typeof reason, 'string');
     assert(errorOrMessage instanceof Error || typeof errorOrMessage === 'string' || typeof errorOrMessage === 'undefined');
 
@@ -43,18 +43,18 @@ function AcmeError(reason, errorOrMessage) {
         this.nestedError = errorOrMessage;
     }
 }
-util.inherits(AcmeError, Error);
-AcmeError.INTERNAL_ERROR = 'Internal Error';
-AcmeError.EXTERNAL_ERROR = 'External Error';
-AcmeError.ALREADY_EXISTS = 'Already Exists';
-AcmeError.NOT_COMPLETED = 'Not Completed';
-AcmeError.FORBIDDEN = 'Forbidden';
+util.inherits(Acme1Error, Error);
+Acme1Error.INTERNAL_ERROR = 'Internal Error';
+Acme1Error.EXTERNAL_ERROR = 'External Error';
+Acme1Error.ALREADY_EXISTS = 'Already Exists';
+Acme1Error.NOT_COMPLETED = 'Not Completed';
+Acme1Error.FORBIDDEN = 'Forbidden';
 
 // http://jose.readthedocs.org/en/latest/
 // https://www.ietf.org/proceedings/92/slides/slides-92-acme-1.pdf
 // https://community.letsencrypt.org/t/list-of-client-implementations/2103
 
-function Acme(options) {
+function Acme1(options) {
     assert.strictEqual(typeof options, 'object');
 
     this.caOrigin = options.prod ? CA_PROD : CA_STAGING;
@@ -62,7 +62,7 @@ function Acme(options) {
     this.email = options.email;
 }
 
-Acme.prototype.getNonce = function (callback) {
+Acme1.prototype.getNonce = function (callback) {
     superagent.get(this.caOrigin + '/directory').timeout(30 * 1000).end(function (error, response) {
         if (error && !error.response) return callback(error);
         if (response.statusCode !== 200) return callback(new Error('Invalid response code when fetching nonce : ' + response.statusCode));
@@ -91,7 +91,7 @@ function getModulus(pem) {
     return Buffer.from(match[1], 'hex');
 }
 
-Acme.prototype.sendSignedRequest = function (url, payload, callback) {
+Acme1.prototype.sendSignedRequest = function (url, payload, callback) {
     assert.strictEqual(typeof url, 'string');
     assert.strictEqual(typeof payload, 'string');
     assert.strictEqual(typeof callback, 'function');
@@ -136,7 +136,7 @@ Acme.prototype.sendSignedRequest = function (url, payload, callback) {
     });
 };
 
-Acme.prototype.updateContact = function (registrationUri, callback) {
+Acme1.prototype.updateContact = function (registrationUri, callback) {
     assert.strictEqual(typeof registrationUri, 'string');
     assert.strictEqual(typeof callback, 'function');
 
@@ -151,8 +151,8 @@ Acme.prototype.updateContact = function (registrationUri, callback) {
 
     var that = this;
     this.sendSignedRequest(registrationUri, JSON.stringify(payload), function (error, result) {
-        if (error) return callback(new AcmeError(AcmeError.EXTERNAL_ERROR, 'Network error when registering user: ' + error.message));
-        if (result.statusCode !== 202) return callback(new AcmeError(AcmeError.EXTERNAL_ERROR, util.format('Failed to update contact. Expecting 202, got %s %s', result.statusCode, result.text)));
+        if (error) return callback(new Acme1Error(Acme1Error.EXTERNAL_ERROR, 'Network error when registering user: ' + error.message));
+        if (result.statusCode !== 202) return callback(new Acme1Error(Acme1Error.EXTERNAL_ERROR, util.format('Failed to update contact. Expecting 202, got %s %s', result.statusCode, result.text)));
 
         debug('updateContact: contact of user updated to %s', that.email);
 
@@ -160,7 +160,7 @@ Acme.prototype.updateContact = function (registrationUri, callback) {
     });
 };
 
-Acme.prototype.registerUser = function (callback) {
+Acme1.prototype.registerUser = function (callback) {
     assert.strictEqual(typeof callback, 'function');
 
     var payload = {
@@ -173,9 +173,9 @@ Acme.prototype.registerUser = function (callback) {
 
     var that = this;
     this.sendSignedRequest(this.caOrigin + '/acme/new-reg', JSON.stringify(payload), function (error, result) {
-        if (error) return callback(new AcmeError(AcmeError.EXTERNAL_ERROR, 'Network error when registering user: ' + error.message));
+        if (error) return callback(new Acme1Error(Acme1Error.EXTERNAL_ERROR, 'Network error when registering user: ' + error.message));
         if (result.statusCode === 409) return that.updateContact(result.headers.location, callback); // already exists
-        if (result.statusCode !== 201) return callback(new AcmeError(AcmeError.EXTERNAL_ERROR, util.format('Failed to register user. Expecting 201, got %s %s', result.statusCode, result.text)));
+        if (result.statusCode !== 201) return callback(new Acme1Error(Acme1Error.EXTERNAL_ERROR, util.format('Failed to register user. Expecting 201, got %s %s', result.statusCode, result.text)));
 
         debug('registerUser: registered user %s', that.email);
 
@@ -183,7 +183,7 @@ Acme.prototype.registerUser = function (callback) {
     });
 };
 
-Acme.prototype.registerDomain = function (domain, callback) {
+Acme1.prototype.registerDomain = function (domain, callback) {
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof callback, 'function');
 
@@ -198,9 +198,9 @@ Acme.prototype.registerDomain = function (domain, callback) {
     debug('registerDomain: %s', domain);
 
     this.sendSignedRequest(this.caOrigin + '/acme/new-authz', JSON.stringify(payload), function (error, result) {
-        if (error) return callback(new AcmeError(AcmeError.EXTERNAL_ERROR, 'Network error when registering domain: ' + error.message));
-        if (result.statusCode === 403) return callback(new AcmeError(AcmeError.FORBIDDEN, result.body.detail));
-        if (result.statusCode !== 201) return callback(new AcmeError(AcmeError.EXTERNAL_ERROR, util.format('Failed to register user. Expecting 201, got %s %s', result.statusCode, result.text)));
+        if (error) return callback(new Acme1Error(Acme1Error.EXTERNAL_ERROR, 'Network error when registering domain: ' + error.message));
+        if (result.statusCode === 403) return callback(new Acme1Error(Acme1Error.FORBIDDEN, result.body.detail));
+        if (result.statusCode !== 201) return callback(new Acme1Error(Acme1Error.EXTERNAL_ERROR, util.format('Failed to register user. Expecting 201, got %s %s', result.statusCode, result.text)));
 
         debug('registerDomain: registered %s', domain);
 
@@ -208,7 +208,7 @@ Acme.prototype.registerDomain = function (domain, callback) {
     });
 };
 
-Acme.prototype.prepareHttpChallenge = function (challenge, callback) {
+Acme1.prototype.prepareHttpChallenge = function (challenge, callback) {
     assert.strictEqual(typeof challenge, 'object');
     assert.strictEqual(typeof callback, 'function');
 
@@ -232,13 +232,13 @@ Acme.prototype.prepareHttpChallenge = function (challenge, callback) {
     debug('prepareHttpChallenge: writing %s to %s', keyAuthorization, path.join(paths.ACME_CHALLENGES_DIR, token));
 
     fs.writeFile(path.join(paths.ACME_CHALLENGES_DIR, token), token + '.' + thumbprint, function (error) {
-        if (error) return callback(new AcmeError(AcmeError.INTERNAL_ERROR, error));
+        if (error) return callback(new Acme1Error(Acme1Error.INTERNAL_ERROR, error));
 
         callback();
     });
 };
 
-Acme.prototype.notifyChallengeReady = function (challenge, callback) {
+Acme1.prototype.notifyChallengeReady = function (challenge, callback) {
     assert.strictEqual(typeof challenge, 'object');
     assert.strictEqual(typeof callback, 'function');
 
@@ -252,14 +252,14 @@ Acme.prototype.notifyChallengeReady = function (challenge, callback) {
     };
 
     this.sendSignedRequest(challenge.uri, JSON.stringify(payload), function (error, result) {
-        if (error) return callback(new AcmeError(AcmeError.EXTERNAL_ERROR, 'Network error when notifying challenge: ' + error.message));
-        if (result.statusCode !== 202) return callback(new AcmeError(AcmeError.EXTERNAL_ERROR, util.format('Failed to notify challenge. Expecting 202, got %s %s', result.statusCode, result.text)));
+        if (error) return callback(new Acme1Error(Acme1Error.EXTERNAL_ERROR, 'Network error when notifying challenge: ' + error.message));
+        if (result.statusCode !== 202) return callback(new Acme1Error(Acme1Error.EXTERNAL_ERROR, util.format('Failed to notify challenge. Expecting 202, got %s %s', result.statusCode, result.text)));
 
         callback();
     });
 };
 
-Acme.prototype.waitForChallenge = function (challenge, callback) {
+Acme1.prototype.waitForChallenge = function (challenge, callback) {
     assert.strictEqual(typeof challenge, 'object');
     assert.strictEqual(typeof callback, 'function');
 
@@ -271,18 +271,18 @@ Acme.prototype.waitForChallenge = function (challenge, callback) {
         superagent.get(challenge.uri).timeout(30 * 1000).end(function (error, result) {
             if (error && !error.response) {
                 debug('waitForChallenge: network error getting uri %s', challenge.uri);
-                return retryCallback(new AcmeError(AcmeError.EXTERNAL_ERROR, error.message)); // network error
+                return retryCallback(new Acme1Error(Acme1Error.EXTERNAL_ERROR, error.message)); // network error
             }
             if (result.statusCode !== 202) {
                 debug('waitForChallenge: invalid response code getting uri %s', result.statusCode);
-                return retryCallback(new AcmeError(AcmeError.EXTERNAL_ERROR, 'Bad response code:' + result.statusCode));
+                return retryCallback(new Acme1Error(Acme1Error.EXTERNAL_ERROR, 'Bad response code:' + result.statusCode));
             }
 
             debug('waitForChallenge: status is "%s %j', result.body.status, result.body);
 
-            if (result.body.status === 'pending') return retryCallback(new AcmeError(AcmeError.NOT_COMPLETED));
+            if (result.body.status === 'pending') return retryCallback(new Acme1Error(Acme1Error.NOT_COMPLETED));
             else if (result.body.status === 'valid') return retryCallback();
-            else return retryCallback(new AcmeError(AcmeError.EXTERNAL_ERROR, 'Unexpected status: ' + result.body.status));
+            else return retryCallback(new Acme1Error(Acme1Error.EXTERNAL_ERROR, 'Unexpected status: ' + result.body.status));
         });
     }, function retryFinished(error) {
         // async.retry will pass 'undefined' as second arg making it unusable with async.waterfall()
@@ -291,7 +291,7 @@ Acme.prototype.waitForChallenge = function (challenge, callback) {
 };
 
 // https://community.letsencrypt.org/t/public-beta-rate-limits/4772 for rate limits
-Acme.prototype.signCertificate = function (domain, csrDer, callback) {
+Acme1.prototype.signCertificate = function (domain, csrDer, callback) {
     assert.strictEqual(typeof domain, 'string');
     assert(util.isBuffer(csrDer));
     assert.strictEqual(typeof callback, 'function');
@@ -306,13 +306,13 @@ Acme.prototype.signCertificate = function (domain, csrDer, callback) {
     debug('signCertificate: sending new-cert request');
 
     this.sendSignedRequest(this.caOrigin + '/acme/new-cert', JSON.stringify(payload), function (error, result) {
-        if (error) return callback(new AcmeError(AcmeError.EXTERNAL_ERROR, 'Network error when signing certificate: ' + error.message));
+        if (error) return callback(new Acme1Error(Acme1Error.EXTERNAL_ERROR, 'Network error when signing certificate: ' + error.message));
         // 429 means we reached the cert limit for this domain
-        if (result.statusCode !== 201) return callback(new AcmeError(AcmeError.EXTERNAL_ERROR, util.format('Failed to sign certificate. Expecting 201, got %s %s', result.statusCode, result.text)));
+        if (result.statusCode !== 201) return callback(new Acme1Error(Acme1Error.EXTERNAL_ERROR, util.format('Failed to sign certificate. Expecting 201, got %s %s', result.statusCode, result.text)));
 
         var certUrl = result.headers.location;
 
-        if (!certUrl) return callback(new AcmeError(AcmeError.EXTERNAL_ERROR, 'Missing location in downloadCertificate'));
+        if (!certUrl) return callback(new Acme1Error(Acme1Error.EXTERNAL_ERROR, 'Missing location in downloadCertificate'));
 
         safe.fs.writeFileSync(path.join(outdir, domain + '.url'), certUrl, 'utf8'); // maybe use for renewal
 
@@ -320,7 +320,7 @@ Acme.prototype.signCertificate = function (domain, csrDer, callback) {
     });
 };
 
-Acme.prototype.createKeyAndCsr = function (domain, callback) {
+Acme1.prototype.createKeyAndCsr = function (domain, callback) {
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof callback, 'function');
 
@@ -333,15 +333,15 @@ Acme.prototype.createKeyAndCsr = function (domain, callback) {
         debug('createKeyAndCsr: reuse the key for renewal at %s', privateKeyFile);
     } else {
         var key = execSync('openssl genrsa 4096');
-        if (!key) return callback(new AcmeError(AcmeError.INTERNAL_ERROR, safe.error));
-        if (!safe.fs.writeFileSync(privateKeyFile, key)) return callback(new AcmeError(AcmeError.INTERNAL_ERROR, safe.error));
+        if (!key) return callback(new Acme1Error(Acme1Error.INTERNAL_ERROR, safe.error));
+        if (!safe.fs.writeFileSync(privateKeyFile, key)) return callback(new Acme1Error(Acme1Error.INTERNAL_ERROR, safe.error));
 
         debug('createKeyAndCsr: key file saved at %s', privateKeyFile);
     }
 
     var csrDer = execSync(util.format('openssl req -new -key %s -outform DER -subj /CN=%s', privateKeyFile, domain));
-    if (!csrDer) return callback(new AcmeError(AcmeError.INTERNAL_ERROR, safe.error));
-    if (!safe.fs.writeFileSync(csrFile, csrDer)) return callback(new AcmeError(AcmeError.INTERNAL_ERROR, safe.error)); // bookkeeping
+    if (!csrDer) return callback(new Acme1Error(Acme1Error.INTERNAL_ERROR, safe.error));
+    if (!safe.fs.writeFileSync(csrFile, csrDer)) return callback(new Acme1Error(Acme1Error.INTERNAL_ERROR, safe.error)); // bookkeeping
 
     debug('createKeyAndCsr: csr file (DER) saved at %s', csrFile);
 
@@ -349,13 +349,13 @@ Acme.prototype.createKeyAndCsr = function (domain, callback) {
 };
 
 // TODO: download the chain in a loop following 'up' header
-Acme.prototype.downloadChain = function (linkHeader, callback) {
-    if (!linkHeader) return new AcmeError(AcmeError.EXTERNAL_ERROR, 'Empty link header when downloading certificate chain');
+Acme1.prototype.downloadChain = function (linkHeader, callback) {
+    if (!linkHeader) return new Acme1Error(Acme1Error.EXTERNAL_ERROR, 'Empty link header when downloading certificate chain');
 
     debug('downloadChain: linkHeader %s', linkHeader);
 
     var linkInfo = parseLinks(linkHeader);
-    if (!linkInfo || !linkInfo.up) return new AcmeError(AcmeError.EXTERNAL_ERROR, 'Failed to parse link header when downloading certificate chain');
+    if (!linkInfo || !linkInfo.up) return new Acme1Error(Acme1Error.EXTERNAL_ERROR, 'Failed to parse link header when downloading certificate chain');
 
     var intermediateCertUrl = linkInfo.up.startsWith('https://') ? linkInfo.up : (this.caOrigin + linkInfo.up);
 
@@ -366,18 +366,18 @@ Acme.prototype.downloadChain = function (linkHeader, callback) {
         res.on('data', function(chunk) { data.push(chunk); });
         res.on('end', function () { res.text = Buffer.concat(data); done(); });
     }).timeout(30 * 1000).end(function (error, result) {
-        if (error && !error.response) return callback(new AcmeError(AcmeError.EXTERNAL_ERROR, 'Network error when downloading certificate'));
-        if (result.statusCode !== 200) return callback(new AcmeError(AcmeError.EXTERNAL_ERROR, util.format('Failed to get cert. Expecting 200, got %s %s', result.statusCode, result.text)));
+        if (error && !error.response) return callback(new Acme1Error(Acme1Error.EXTERNAL_ERROR, 'Network error when downloading certificate'));
+        if (result.statusCode !== 200) return callback(new Acme1Error(Acme1Error.EXTERNAL_ERROR, util.format('Failed to get cert. Expecting 200, got %s %s', result.statusCode, result.text)));
 
         var chainDer = result.text;
         var chainPem = execSync('openssl x509 -inform DER -outform PEM', { input: chainDer }); // this is really just base64 encoding with header
-        if (!chainPem) return callback(new AcmeError(AcmeError.INTERNAL_ERROR, safe.error));
+        if (!chainPem) return callback(new Acme1Error(Acme1Error.INTERNAL_ERROR, safe.error));
 
         callback(null, chainPem);
     });
 };
 
-Acme.prototype.downloadCertificate = function (domain, certUrl, callback) {
+Acme1.prototype.downloadCertificate = function (domain, certUrl, callback) {
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof certUrl, 'string');
     assert.strictEqual(typeof callback, 'function');
@@ -390,9 +390,9 @@ Acme.prototype.downloadCertificate = function (domain, certUrl, callback) {
         res.on('data', function(chunk) { data.push(chunk); });
         res.on('end', function () { res.text = Buffer.concat(data); done(); });
     }).timeout(30 * 1000).end(function (error, result) {
-        if (error && !error.response) return callback(new AcmeError(AcmeError.EXTERNAL_ERROR, 'Network error when downloading certificate'));
-        if (result.statusCode === 202) return callback(new AcmeError(AcmeError.INTERNAL_ERROR, 'Retry not implemented yet'));
-        if (result.statusCode !== 200) return callback(new AcmeError(AcmeError.EXTERNAL_ERROR, util.format('Failed to get cert. Expecting 200, got %s %s', result.statusCode, result.text)));
+        if (error && !error.response) return callback(new Acme1Error(Acme1Error.EXTERNAL_ERROR, 'Network error when downloading certificate'));
+        if (result.statusCode === 202) return callback(new Acme1Error(Acme1Error.INTERNAL_ERROR, 'Retry not implemented yet'));
+        if (result.statusCode !== 200) return callback(new Acme1Error(Acme1Error.EXTERNAL_ERROR, util.format('Failed to get cert. Expecting 200, got %s %s', result.statusCode, result.text)));
 
         var certificateDer = result.text;
 
@@ -400,14 +400,14 @@ Acme.prototype.downloadCertificate = function (domain, certUrl, callback) {
         debug('downloadCertificate: cert der file for %s saved', domain);
 
         var certificatePem = execSync('openssl x509 -inform DER -outform PEM', { input: certificateDer }); // this is really just base64 encoding with header
-        if (!certificatePem) return callback(new AcmeError(AcmeError.INTERNAL_ERROR, safe.error));
+        if (!certificatePem) return callback(new Acme1Error(Acme1Error.INTERNAL_ERROR, safe.error));
 
         that.downloadChain(result.header['link'], function (error, chainPem) {
             if (error) return callback(error);
 
             var certificateFile = path.join(outdir, domain + '.cert');
             var fullChainPem = Buffer.concat([certificatePem, chainPem]);
-            if (!safe.fs.writeFileSync(certificateFile, fullChainPem)) return callback(new AcmeError(AcmeError.INTERNAL_ERROR, safe.error));
+            if (!safe.fs.writeFileSync(certificateFile, fullChainPem)) return callback(new Acme1Error(Acme1Error.INTERNAL_ERROR, safe.error));
 
             debug('downloadCertificate: cert file for %s saved at %s', domain, certificateFile);
 
@@ -416,14 +416,14 @@ Acme.prototype.downloadCertificate = function (domain, certUrl, callback) {
     });
 };
 
-Acme.prototype.acmeFlow = function (domain, callback) {
+Acme1.prototype.acmeFlow = function (domain, callback) {
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof callback, 'function');
 
     if (!fs.existsSync(paths.ACME_ACCOUNT_KEY_FILE)) {
         debug('getCertificate: generating acme account key on first run');
         this.accountKeyPem = safe.child_process.execSync('openssl genrsa 4096');
-        if (!this.accountKeyPem) return callback(new AcmeError(AcmeError.INTERNAL_ERROR, safe.error));
+        if (!this.accountKeyPem) return callback(new Acme1Error(Acme1Error.INTERNAL_ERROR, safe.error));
 
         safe.fs.writeFileSync(paths.ACME_ACCOUNT_KEY_FILE, this.accountKeyPem);
     } else {
@@ -441,7 +441,7 @@ Acme.prototype.acmeFlow = function (domain, callback) {
             debug('acmeFlow: challenges: %j', result);
 
             var httpChallenges = result.challenges.filter(function(x) { return x.type === 'http-01'; });
-            if (httpChallenges.length === 0) return callback(new AcmeError(AcmeError.EXTERNAL_ERROR, 'no http challenges'));
+            if (httpChallenges.length === 0) return callback(new Acme1Error(Acme1Error.EXTERNAL_ERROR, 'no http challenges'));
             var challenge = httpChallenges[0];
 
             async.waterfall([
@@ -456,7 +456,7 @@ Acme.prototype.acmeFlow = function (domain, callback) {
     });
 };
 
-Acme.prototype.getCertificate = function (domain, callback) {
+Acme1.prototype.getCertificate = function (domain, callback) {
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof callback, 'function');
 
@@ -474,6 +474,6 @@ function getCertificate(domain, options, callback) {
     assert.strictEqual(typeof options, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    var acme = new Acme(options || { });
+    var acme = new Acme1(options || { });
     acme.getCertificate(domain, callback);
 }
