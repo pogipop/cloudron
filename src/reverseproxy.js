@@ -25,7 +25,7 @@ exports = module.exports = {
     _getApi: getApi
 };
 
-var acme = require('./cert/acme1.js'),
+var acme2 = require('./cert/acme2.js'),
     apps = require('./apps.js'),
     assert = require('assert'),
     async = require('async'),
@@ -86,7 +86,7 @@ function getApi(domain, callback) {
 
         if (result.tlsConfig.provider === 'fallback') return callback(null, fallback, {});
 
-        var api = result.tlsConfig.provider === 'caas' ? caas : acme;
+        var api = result.tlsConfig.provider === 'caas' ? caas : acme2;
 
         var options = { };
         if (result.tlsConfig.provider === 'caas') {
