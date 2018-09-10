@@ -48,6 +48,10 @@ function S3_NOT_FOUND(error) {
     return error.code === 'NoSuchKey' || error.code === 'NotFound' || error.code === 'ENOENT';
 }
 
+function S3_ACCESS_DENIED(error) {
+    return error.code === 'AccessDenied' || error.statusCode === 403;
+}
+
 function getCaasConfig(apiConfig, callback) {
     assert.strictEqual(typeof apiConfig, 'object');
     assert.strictEqual(typeof callback, 'function');
