@@ -453,9 +453,9 @@ Acme2.prototype.acmeFlow = function (domain, callback) {
                         that.signCertificate.bind(that, domain, order.finalize),
                         that.waitForOrder.bind(that, orderUrl),
                         that.downloadCertificate.bind(that, domain)
-                    ], callback);
+                    ], iteratorCallback);
                 });
-            });
+            }, callback);
         });
     });
 };
