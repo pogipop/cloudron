@@ -22,7 +22,7 @@ exports = module.exports = {
     removeAppConfigs: removeAppConfigs,
 
     // exported for testing
-    _getApi: getApi
+    _getCertApi: getCertApi
 };
 
 var acme2 = require('./cert/acme2.js'),
@@ -255,7 +255,7 @@ function ensureCertificate(appDomain, auditSource, callback) {
 
         debug('ensureCertificate: getting certificate for %s with options %j', vhost, apiOptions);
 
-        api.getCertificate(vhost, apiOptions, function (error, certFilePath, keyFilePath) {
+        api.getCertificate(vhost, appDomain.domain, apiOptions, function (error, certFilePath, keyFilePath) {
             var errorMessage = error ? error.message : '';
 
             if (error) {
