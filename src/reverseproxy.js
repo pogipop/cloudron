@@ -77,7 +77,7 @@ ReverseProxyError.INTERNAL_ERROR = 'Internal Error';
 ReverseProxyError.INVALID_CERT = 'Invalid certificate';
 ReverseProxyError.NOT_FOUND = 'Not Found';
 
-function getApi(domain, callback) {
+function getCertApi(domain, callback) {
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof callback, 'function');
 
@@ -250,7 +250,7 @@ function ensureCertificate(appDomain, auditSource, callback) {
         debug('ensureCertificate: %s cert does not exist', vhost);
     }
 
-    getApi(appDomain.domain, function (error, api, apiOptions) {
+    getCertApi(appDomain.domain, function (error, api, apiOptions) {
         if (error) return callback(error);
 
         debug('ensureCertificate: getting certificate for %s with options %j', vhost, apiOptions);
