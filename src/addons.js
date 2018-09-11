@@ -668,7 +668,7 @@ function getMongoDbDetails(callback) {
         if (!ip) return callback(new Error('Error getting mongodb container ip'));
 
         // extract the cloudron token for auth
-        const env = safe.query(result, 'HostConfig.Config.Env', null);
+        const env = safe.query(result, 'Config.Env', null);
         if (!env) return callback(new Error('Error getting mongodb env'));
         const tmp = env.find(function (e) { return e.indexOf('MONGODB_CLOUDRON_TOKEN') === 0; });
         if (!tmp) return callback(new Error('Error getting mongodb cloudron token env var'));
