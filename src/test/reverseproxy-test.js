@@ -131,16 +131,7 @@ describe('Certificates', function () {
             reverseProxy._getCertApi(DOMAIN_0.domain, function (error, api, options) {
                 expect(error).to.be(null);
                 expect(api._name).to.be('caas');
-                expect(options.prod).to.be(true);
-                done();
-            });
-        });
-
-        it('returns prod caas for dev cloudron', function (done) {
-            reverseProxy._getCertApi(DOMAIN_0.domain, function (error, api, options) {
-                expect(error).to.be(null);
-                expect(api._name).to.be('caas');
-                expect(options.prod).to.be(true);
+                expect(options).to.eql({ email: 'support@cloudron.io' });
                 done();
             });
         });

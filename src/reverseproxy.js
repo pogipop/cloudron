@@ -89,10 +89,9 @@ function getCertApi(domain, callback) {
         var api = result.tlsConfig.provider === 'caas' ? caas : acme2;
 
         var options = { };
-        if (result.tlsConfig.provider === 'caas') {
-            options.prod = true;
-        } else { // acme
-            options.prod = result.tlsConfig.provider.match(/.*-prod/) !== null; // matches 'le-prod' or 'letsencrypt-prod'
+        if (result.tlsConfig.provider !== 'caas') { // matches 'le-prod' or 'letsencrypt-prod'
+            options.prod = result.tlsConfig.provider.match(/.*-prod/) !== null;
+            options.performHttpAuthorization = result.provider.match(/noop|manual|wildcard/) !== null;
         }
 
         // registering user with an email requires A or MX record (https://github.com/letsencrypt/boulder/issues/1197)
