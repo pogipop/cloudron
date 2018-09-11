@@ -744,15 +744,20 @@ function backupMongoDb(app, options, callback) {
 
     debugApp(app, 'Backing up mongodb');
 
-    callback = once(callback); // ChildProcess exit may or may not be called after error
+    callback = once(callback); // protect from multiple returns with streams
 
-    var output = fs.createWriteStream(path.join(paths.APPS_DATA_DIR, app.id, 'mongodbdump'));
-    output.on('error', callback);
+    getMongoDbDetails(function (error, result) {
+        if (error) return callback(error);
 
-    const dbname = app.id;
-    var cmd = [ '/addons/mongodb/service.sh', 'backup', dbname ];
+        var output = fs.createWriteStream(path.join(paths.APPS_DATA_DIR, app.id, 'mongodbdump'));
+        output.on('error', callback);
 
-    docker.execContainer('mongodb', cmd, { stdout: output }, callback);
+        var req = superagent.post(`http://${result.ip}:3000/databases/${app.id}/backup?access_token=${result.token}`);
+        req.on('error', callback);
+        req.on('end', callback);
+
+        req.pipe(output);
+    });
 }
 
 function restoreMongoDb(app, options, callback) {
@@ -760,20 +765,25 @@ function restoreMongoDb(app, options, callback) {
     assert.strictEqual(typeof options, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    callback = once(callback); // ChildProcess exit may or may not be called after error
+    callback = once(callback); // protect from multiple returns with streams
 
     setupMongoDb(app, options, function (error) {
         if (error) return callback(error);
 
         debugApp(app, 'restoreMongoDb');
 
-        var input = fs.createReadStream(path.join(paths.APPS_DATA_DIR, app.id, 'mongodbdump'));
-        input.on('error', callback);
+        getMongoDbDetails(function (error, result) {
+            if (error) return callback(error);
 
-        const dbname = app.id;
-        var cmd = [ '/addons/mongodb/service.sh', 'restore', dbname ];
+            var input = fs.createReadStream(path.join(paths.APPS_DATA_DIR, app.id, 'mongodbdump'));
+            input.on('error', callback);
 
-        docker.execContainer('mongodb', cmd, { stdin: input }, callback);
+            var req = superagent.post(`http://${result.ip}:3000/databases/${app.id}/restore?access_token=${result.token}`);
+            req.on('error', callback);
+            req.on('end', callback);
+
+            input.pipe(req);
+        });
     });
 }
 
