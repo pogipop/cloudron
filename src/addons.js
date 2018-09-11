@@ -657,6 +657,28 @@ function restorePostgreSql(app, options, callback) {
     });
 }
 
+function getMongoDbDetails(callback) {
+    assert.strictEqual(typeof callback, 'function');
+
+    var container = dockerConnection.getContainer('mongodb');
+    container.inspect(function (error, result) {
+        if (error) return callback(new Error('Error inspecting mongodb container: ' + error));
+
+        const ip = safe.query(result, 'NetworkSettings.Networks.cloudron.IPAddress', null);
+        if (!ip) return callback(new Error('Error getting mongodb container ip'));
+
+        // extract the cloudron token for auth
+        const env = safe.query(result, 'HostConfig.Config.Env', null);
+        if (!env) return callback(new Error('Error getting mongodb env'));
+        const tmp = env.find(function (e) { return e.indexOf('MONGODB_CLOUDRON_TOKEN') === 0; });
+        if (!tmp) return callback(new Error('Error getting mongodb cloudron token env var'));
+        const token = tmp.slice('MONGODB_CLOUDRON_TOKEN='.length);
+        if (!token)  return callback(new Error('Error getting mongodb cloudron token'));
+
+        callback(null, { ip: ip, token: token });
+    });
+}
+
 function setupMongoDb(app, options, callback) {
     assert.strictEqual(typeof app, 'object');
     assert.strictEqual(typeof options, 'object');
@@ -667,26 +689,31 @@ function setupMongoDb(app, options, callback) {
     appdb.getAddonConfigByName(app.id, 'mongodb', 'MONGODB_PASSWORD', function (error, existingPassword) {
         if (error && error.reason !== DatabaseError.NOT_FOUND) return callback(error);
 
-        const password = error ? hat(4 * 128) : existingPassword;
+        const data = {
+            database: app.id,
+            username: app.id,
+            password: error ? hat(4 * 128) : existingPassword
+        };
 
-        const dbname = app.id;
-
-        var cmd = [ '/addons/mongodb/service.sh', 'add', dbname, password ];
-
-        docker.execContainer('mongodb', cmd, { bufferStdout: true }, function (error) {
+        getMongoDbDetails(function (error, result) {
             if (error) return callback(error);
 
-            var env = [
-                { name: 'MONGODB_URL', value : `mongodb://${dbname}:${password}@mongodb/${dbname}` },
-                { name: 'MONGODB_USERNAME', value : dbname },
-                { name: 'MONGODB_PASSWORD', value: password },
-                { name: 'MONGODB_HOST', value : 'mongodb' },
-                { name: 'MONGODB_PORT', value : '27017' },
-                { name: 'MONGODB_DATABASE', value : dbname }
-            ];
+            superagent.post(`http://${result.ip}:3000/databases?access_token=${result.token}`, data).end(function (error, result) {
+                if (error) return callback(new Error('Error setting up mongodb: ' + error));
+                if (result.statusCode !== 201) return callback(new Error('Error setting up mongodb. Status code: ' + result.statusCode));
 
-            debugApp(app, 'Setting mongodb addon config to %j', env);
-            appdb.setAddonConfig(app.id, 'mongodb', env, callback);
+                var env = [
+                    { name: 'MONGODB_URL', value : `mongodb://${data.username}:${data.password}@mongodb/${data.database}` },
+                    { name: 'MONGODB_USERNAME', value : data.username },
+                    { name: 'MONGODB_PASSWORD', value: data.password },
+                    { name: 'MONGODB_HOST', value : 'mongodb' },
+                    { name: 'MONGODB_PORT', value : '27017' },
+                    { name: 'MONGODB_DATABASE', value : data.database }
+                ];
+
+                debugApp(app, 'Setting mongodb addon config to %j', env);
+                appdb.setAddonConfig(app.id, 'mongodb', env, callback);
+            });
         });
     });
 }
@@ -696,15 +723,17 @@ function teardownMongoDb(app, options, callback) {
     assert.strictEqual(typeof options, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    const dbname = app.id;
-    var cmd = [ '/addons/mongodb/service.sh', 'remove', dbname ];
-
     debugApp(app, 'Tearing down mongodb');
 
-    docker.execContainer('mongodb', cmd, { }, function (error) {
+    getMongoDbDetails(function (error, result) {
         if (error) return callback(error);
 
-        appdb.unsetAddonConfig(app.id, 'mongodb', callback);
+        superagent.delete(`http://${result.ip}:3000/databases/${app.id}?access_token=${result.token}`).end(function (error, result) {
+            if (error) return callback(new Error('Error tearing down mongodb: ' + error));
+            if (result.statusCode !== 200) return callback(new Error('Error tearing down mongodb. Status code: ' + result.statusCode));
+
+            appdb.unsetAddonConfig(app.id, 'mongodb', callback);
+        });
     });
 }
 
