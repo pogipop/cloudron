@@ -239,11 +239,8 @@ function startMongodb(callback) {
     const tag = infra.images.mongodb.tag;
     const dataDir = paths.PLATFORM_DATA_DIR;
     const rootPassword = hat(8 * 128);
+    const cloudronToken = hat(8 * 128);
     const memoryLimit = (1 + Math.round(os.totalmem()/(1024*1024*1024)/4)) * 200;
-
-    if (!safe.fs.writeFileSync(paths.ADDON_CONFIG_DIR + '/mongodb_vars.sh', 'MONGODB_ROOT_PASSWORD=' + rootPassword, 'utf8')) {
-        return callback(new Error('Could not create mongodb var file:' + safe.error.message));
-    }
 
     const cmd = `docker run --restart=always -d --name="mongodb" \
                 --net cloudron \
@@ -256,8 +253,9 @@ function startMongodb(callback) {
                 --memory-swap ${memoryLimit * 2}m \
                 --dns 172.18.0.1 \
                 --dns-search=. \
+                -e MONGODB_ROOT_PASSWORD="${rootPassword}" \
+                -e MONGODB_CLOUDRON_TOKEN="${cloudronToken}" \
                 -v "${dataDir}/mongodb:/var/lib/mongodb" \
-                -v "${dataDir}/addons/mongodb_vars.sh:/etc/mongodb_vars.sh:ro" \
                 --read-only -v /tmp -v /run "${tag}"`;
 
     shell.execSync('startMongodb', cmd);
