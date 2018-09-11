@@ -12,7 +12,8 @@ exports = module.exports = {
 
 var assert = require('assert');
 
-function getCertificate(domain, options, callback) {
+function getCertificate(hostname, domain, options, callback) {
+    assert.strictEqual(typeof hostname, 'string');
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof options, 'object');
     assert.strictEqual(typeof callback, 'function');

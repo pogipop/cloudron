@@ -456,24 +456,26 @@ Acme1.prototype.acmeFlow = function (domain, callback) {
     });
 };
 
-Acme1.prototype.getCertificate = function (domain, callback) {
+Acme1.prototype.getCertificate = function (hostname, domain, callback) {
+    assert.strictEqual(typeof hostname, 'string');
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    debug('getCertificate: start acme flow for %s from %s', domain, this.caOrigin);
-    this.acmeFlow(domain, function (error) {
+    debug('getCertificate: start acme flow for %s from %s', hostname, this.caOrigin);
+    this.acmeFlow(hostname, function (error) {
         if (error) return callback(error);
 
         var outdir = paths.APP_CERTS_DIR;
-        callback(null, path.join(outdir, domain + '.cert'), path.join(outdir, domain + '.key'));
+        callback(null, path.join(outdir, hostname + '.cert'), path.join(outdir, hostname + '.key'));
     });
 };
 
-function getCertificate(domain, options, callback) {
+function getCertificate(hostname, domain, options, callback) {
+    assert.strictEqual(typeof hostname, 'string');
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof options, 'object');
     assert.strictEqual(typeof callback, 'function');
 
     var acme = new Acme1(options || { });
-    acme.getCertificate(domain, callback);
+    acme.getCertificate(hostname, domain, callback);
 }
