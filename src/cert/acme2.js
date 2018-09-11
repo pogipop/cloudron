@@ -4,6 +4,7 @@ var assert = require('assert'),
     async = require('async'),
     crypto = require('crypto'),
     debug = require('debug')('box:cert/acme2'),
+    domains = require('../domains.js'),
     execSync = require('safetydance').child_process.execSync,
     fs = require('fs'),
     path = require('path'),
@@ -60,6 +61,7 @@ function Acme2(options) {
     this.keyId = null;
     this.caDirectory = options.prod ? CA_PROD_DIRECTORY_URL : CA_STAGING_DIRECTORY_URL;
     this.directory = {};
+    this.performHttpAuthorization = !!options.performHttpAuthorization;
 }
 
 Acme2.prototype.getNonce = function (callback) {
@@ -244,34 +246,19 @@ Acme2.prototype.waitForOrder = function (orderUrl, callback) {
     }, callback);
 };
 
-Acme2.prototype.prepareHttpChallenge = function (challenge, callback) {
-    assert.strictEqual(typeof challenge, 'object'); // { type, status, url, token }
-    assert.strictEqual(typeof callback, 'function');
-
-    debug('prepareHttpChallenge: preparing for challenge %j', challenge);
-
-    var token = challenge.token;
-
+Acme2.prototype.getKeyAuthorization = function (token) {
     assert(util.isBuffer(this.accountKeyPem));
 
-    var jwk = {
+    let jwk = {
         e: b64(Buffer.from([0x01, 0x00, 0x01])), // Exponent - 65537
         kty: 'RSA',
         n: b64(getModulus(this.accountKeyPem))
     };
 
-    var shasum = crypto.createHash('sha256');
+    let shasum = crypto.createHash('sha256');
     shasum.update(JSON.stringify(jwk));
-    var thumbprint = urlBase64Encode(shasum.digest('base64'));
-    var keyAuthorization = token + '.' + thumbprint;
-
-    debug('prepareHttpChallenge: writing %s to %s', keyAuthorization, path.join(paths.ACME_CHALLENGES_DIR, token));
-
-    fs.writeFile(path.join(paths.ACME_CHALLENGES_DIR, token), token + '.' + thumbprint, function (error) {
-        if (error) return callback(new Acme2Error(Acme2Error.INTERNAL_ERROR, error));
-
-        callback();
-    });
+    let thumbprint = urlBase64Encode(shasum.digest('base64'));
+    return token + '.' + thumbprint;
 };
 
 Acme2.prototype.notifyChallengeReady = function (challenge, callback) {
@@ -280,7 +267,7 @@ Acme2.prototype.notifyChallengeReady = function (challenge, callback) {
 
     debug('notifyChallengeReady: %s was met', challenge.url);
 
-    var keyAuthorization = fs.readFileSync(path.join(paths.ACME_CHALLENGES_DIR, challenge.token), 'utf8');
+    const keyAuthorization = this.getKeyAuthorization(challenge.token);
 
     var payload = {
         resource: 'challenge',
@@ -403,16 +390,128 @@ Acme2.prototype.downloadCertificate = function (domain, certUrl, callback) {
     });
 };
 
-Acme2.prototype.getAuthorization = function (url, callback) {
-    superagent.get(url).timeout(30 * 1000).end(function (error, response) {
-        if (error && !error.response) return callback(error);
-        if (response.statusCode !== 200) return callback(new Error('Invalid response code getting authorization : ' + response.statusCode));
+Acme2.prototype.prepareHttpChallenge = function (hostname, domain, authorization, callback) {
+    assert.strictEqual(typeof hostname, 'string');
+    assert.strictEqual(typeof domain, 'string');
+    assert.strictEqual(typeof authorization, 'object');
+    assert.strictEqual(typeof callback, 'function');
 
-        return callback(null, response.body);
+    debug('acmeFlow: challenges: %j', authorization);
+    let httpChallenges = authorization.challenges.filter(function(x) { return x.type === 'http-01'; });
+    if (httpChallenges.length === 0) return callback(new Acme2Error(Acme2Error.EXTERNAL_ERROR, 'no http challenges'));
+    let challenge = httpChallenges[0];
+
+    debug('prepareHttpChallenge: preparing for challenge %j', challenge);
+
+    let keyAuthorization = this.getKeyAuthorization(challenge.token);
+
+    debug('prepareHttpChallenge: writing %s to %s', keyAuthorization, path.join(paths.ACME_CHALLENGES_DIR, challenge.token));
+
+    fs.writeFile(path.join(paths.ACME_CHALLENGES_DIR, challenge.token), keyAuthorization, function (error) {
+        if (error) return callback(new Acme2Error(Acme2Error.INTERNAL_ERROR, error));
+
+        callback(null, challenge);
     });
 };
 
-Acme2.prototype.acmeFlow = function (domain, callback) {
+Acme2.prototype.cleanupHttpChallenge = function (hostname, domain, challenge, callback) {
+    assert.strictEqual(typeof hostname, 'string');
+    assert.strictEqual(typeof domain, 'string');
+    assert.strictEqual(typeof challenge, 'object');
+    assert.strictEqual(typeof callback, 'function');
+
+    safe.fs.unlinkSync(path.join(paths.ACME_CHALLENGES_DIR, challenge.token));
+
+    callback();
+};
+
+Acme2.prototype.prepareDnsChallenge = function (hostname, domain, authorization, callback) {
+    assert.strictEqual(typeof hostname, 'string');
+    assert.strictEqual(typeof domain, 'string');
+    assert.strictEqual(typeof authorization, 'object');
+    assert.strictEqual(typeof callback, 'function');
+
+    debug('acmeFlow: challenges: %j', authorization);
+    let dnsChallenges = authorization.challenges.filter(function(x) { return x.type === 'dns-01'; });
+    if (dnsChallenges.length === 0) return callback(new Acme2Error(Acme2Error.EXTERNAL_ERROR, 'no dns challenges'));
+    let challenge = dnsChallenges[0];
+
+    const keyAuthorization = this.getKeyAuthorization(challenge.token);
+    let shasum = crypto.createHash('sha256');
+    shasum.update(keyAuthorization);
+
+    const txtValue = urlBase64Encode(shasum.digest('base64'));
+    const subdomain = '_acme-challenge.' + hostname.slice(0, -domain.length - 1);
+
+    debug(`prepareDnsChallenge: update ${subdomain}} with ${txtValue}`);
+
+    domains.upsertDnsRecords(subdomain, domain, 'TXT', [ txtValue ], function (error) {
+        if (error) return callback(new Acme2Error(Acme2Error.EXTERNAL_ERROR, error));
+
+        callback(null, challenge);
+    });
+};
+
+Acme2.prototype.cleanupDnsChallenge = function (hostname, domain, challenge, callback) {
+    assert.strictEqual(typeof hostname, 'string');
+    assert.strictEqual(typeof domain, 'string');
+    assert.strictEqual(typeof challenge, 'object');
+    assert.strictEqual(typeof callback, 'function');
+
+    const keyAuthorization = this.getKeyAuthorization(challenge.token);
+    let shasum = crypto.createHash('sha256');
+    shasum.update(keyAuthorization);
+
+    const txtValue = urlBase64Encode(shasum.digest('base64'));
+    const subdomain = '_acme-challenge.' + hostname.slice(0, -domain.length - 1);
+
+    debug(`prepareDnsChallenge: remove ${subdomain} with ${txtValue}`);
+
+    domains.removeDnsRecords(subdomain, domain, 'TXT', [ txtValue ], function (error) {
+        if (error) return callback(new Acme2Error(Acme2Error.EXTERNAL_ERROR, error));
+
+        callback(null, challenge);
+    });
+
+    callback();
+};
+
+Acme2.prototype.prepareChallenge = function (hostname, domain, authorizationUrl, callback) {
+    assert.strictEqual(typeof hostname, 'string');
+    assert.strictEqual(typeof domain, 'string');
+    assert.strictEqual(typeof authorizationUrl, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    const that = this;
+    superagent.get(authorizationUrl).timeout(30 * 1000).end(function (error, response) {
+        if (error && !error.response) return callback(error);
+        if (response.statusCode !== 200) return callback(new Error('Invalid response code getting authorization : ' + response.statusCode));
+
+        const authorization = response.body;
+
+        if (that.performHttpAuthorization) {
+            that.prepareHttpChallenge(hostname, domain, authorization, callback);
+        } else {
+            that.prepareDnsChallenge(hostname, domain, authorization, callback);
+        }
+    });
+};
+
+Acme2.prototype.cleanupChallenge = function (hostname, domain, challenge, callback) {
+    assert.strictEqual(typeof hostname, 'string');
+    assert.strictEqual(typeof domain, 'string');
+    assert.strictEqual(typeof challenge, 'object');
+    assert.strictEqual(typeof callback, 'function');
+
+    if (this.performHttpAuthorization) {
+        this.cleanupHttpChallenge(hostname, domain, challenge, callback);
+    } else {
+        this.cleanupDnsChallenge(hostname, domain, challenge, callback);
+    }
+};
+
+Acme2.prototype.acmeFlow = function (hostname, domain, callback) {
+    assert.strictEqual(typeof hostname, 'string');
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof callback, 'function');
 
@@ -431,29 +530,27 @@ Acme2.prototype.acmeFlow = function (domain, callback) {
     this.registerUser(function (error) {
         if (error) return callback(error);
 
-        that.newOrder(domain, function (error, order, orderUrl) {
+        that.newOrder(hostname, function (error, order, orderUrl) {
             if (error) return callback(error);
 
             async.eachSeries(order.authorizations, function (authorizationUrl, iteratorCallback) {
                 debug(`acmeFlow: authorizing ${authorizationUrl}`);
 
-                that.getAuthorization(authorizationUrl, function (error, authorization) {
+                that.prepareChallenge(hostname, domain, authorizationUrl, function (error, challenge) {
                     if (error) return iteratorCallback(error);
 
-                    debug('acmeFlow: challenges: %j', authorization);
-                    var httpChallenges = authorization.challenges.filter(function(x) { return x.type === 'http-01'; });
-                    if (httpChallenges.length === 0) return callback(new Acme2Error(Acme2Error.EXTERNAL_ERROR, 'no http challenges'));
-                    var challenge = httpChallenges[0];
-
                     async.waterfall([
-                        that.prepareHttpChallenge.bind(that, challenge),
                         that.notifyChallengeReady.bind(that, challenge),
                         that.waitForChallenge.bind(that, challenge),
-                        that.createKeyAndCsr.bind(that, domain),
-                        that.signCertificate.bind(that, domain, order.finalize),
+                        that.createKeyAndCsr.bind(that, hostname),
+                        that.signCertificate.bind(that, hostname, order.finalize),
                         that.waitForOrder.bind(that, orderUrl),
-                        that.downloadCertificate.bind(that, domain)
-                    ], iteratorCallback);
+                        that.downloadCertificate.bind(that, hostname)
+                    ], function (error) {
+                        that.cleanupChallenge(hostname, domain, challenge, function () {
+                            iteratorCallback(error);
+                        });
+                    });
                 });
             }, callback);
         });
@@ -488,7 +585,7 @@ Acme2.prototype.getCertificate = function (hostname, domain, callback) {
     this.getDirectory(function (error) {
         if (error) return callback(error);
 
-        that.acmeFlow(hostname, function (error) {
+        that.acmeFlow(hostname, domain, function (error) {
             if (error) return callback(error);
 
             var outdir = paths.APP_CERTS_DIR;
