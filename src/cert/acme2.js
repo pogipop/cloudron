@@ -467,9 +467,9 @@ Acme2.prototype.getDirectory = function (callback) {
         if (error && !error.response) return callback(error);
         if (response.statusCode !== 200) return callback(new Error('Invalid response code when fetching directory : ' + response.statusCode));
 
-        if (typeof response.body.newNonce !== 'string'
-            || typeof response.body.newOrder !== 'string'
-            || typeof response.body.newAccount !== 'string') return callback(new Error(`Invalid response body : ${response.body}`));
+        if (typeof response.body.newNonce !== 'string' ||
+            typeof response.body.newOrder !== 'string' ||
+            typeof response.body.newAccount !== 'string') return callback(new Error(`Invalid response body : ${response.body}`));
 
         that.directory = response.body;
 
