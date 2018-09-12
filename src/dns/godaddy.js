@@ -148,12 +148,10 @@ function verifyDnsConfig(dnsConfig, fqdn, zoneName, ip, callback) {
 
     if (!dnsConfig.apiKey || typeof dnsConfig.apiKey !== 'string') return callback(new DomainsError(DomainsError.BAD_FIELD, 'apiKey must be a non-empty string'));
     if (!dnsConfig.apiSecret || typeof dnsConfig.apiSecret !== 'string') return callback(new DomainsError(DomainsError.BAD_FIELD, 'apiSecret must be a non-empty string'));
-    if ('hyphenatedSubdomains' in dnsConfig && typeof dnsConfig.hyphenatedSubdomains !== 'boolean') return callback(new DomainsError(DomainsError.BAD_FIELD, 'hyphenatedSubdomains must be a boolean'));
 
     var credentials = {
         apiKey: dnsConfig.apiKey,
-        apiSecret: dnsConfig.apiSecret,
-        hyphenatedSubdomains: !!dnsConfig.hyphenatedSubdomains
+        apiSecret: dnsConfig.apiSecret
     };
 
     if (process.env.BOX_ENV === 'test') return callback(null, credentials); // this shouldn't be here

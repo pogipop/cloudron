@@ -95,8 +95,8 @@ function api(provider) {
     }
 }
 
-function verifyDnsConfig(config, domain, zoneName, provider, ip, callback) {
-    assert(config && typeof config === 'object'); // the dns config to test with
+function verifyDnsConfig(dnsConfig, domain, zoneName, provider, ip, callback) {
+    assert(dnsConfig && typeof dnsConfig === 'object'); // the dns config to test with
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof zoneName, 'string');
     assert.strictEqual(typeof provider, 'string');
@@ -104,9 +104,22 @@ function verifyDnsConfig(config, domain, zoneName, provider, ip, callback) {
     assert.strictEqual(typeof callback, 'function');
 
     var backend = api(provider);
-    if (!backend) return callback(new DomainsError(DomainsError.INVALID_PROVIDER));
+    if (!backend) return callback(new DomainsError(DomainsError.BAD_FIELD, 'Invalid provider'));
 
-    api(provider).verifyDnsConfig(config, domain, zoneName, ip, callback);
+    if ('hyphenatedSubdomains' in dnsConfig && typeof dnsConfig.hyphenatedSubdomains !== 'boolean') return callback(new DomainsError(DomainsError.BAD_FIELD, 'hyphenatedSubdomains must be a boolean'));
+
+    api(provider).verifyDnsConfig(dnsConfig, domain, zoneName, ip, function (error, result) {
+        if (error && error.reason === DomainsError.ACCESS_DENIED) return callback(new DomainsError(DomainsError.BAD_FIELD, 'Incorrect configuration. Access denied'));
+        if (error && error.reason === DomainsError.NOT_FOUND) return callback(new DomainsError(DomainsError.BAD_FIELD, 'Zone not found'));
+        if (error && error.reason === DomainsError.EXTERNAL_ERROR) return callback(new DomainsError(DomainsError.BAD_FIELD, 'Configuration error: ' + error.message));
+        if (error && error.reason === DomainsError.BAD_FIELD) return callback(new DomainsError(DomainsError.BAD_FIELD, error.message));
+        if (error && error.reason === DomainsError.INVALID_PROVIDER) return callback(new DomainsError(DomainsError.BAD_FIELD, error.message));
+        if (error) return callback(new DomainsError(DomainsError.INTERNAL_ERROR, error));
+
+        result.hyphenatedSubdomains = !!dnsConfig.hyphenatedSubdomains;
+
+        callback(null, result);
+    });
 }
 
 function fqdn(location, domainObject) {
@@ -186,12 +199,7 @@ function add(domain, zoneName, provider, dnsConfig, fallbackCertificate, tlsConf
         if (error) return callback(new DomainsError(DomainsError.INTERNAL_ERROR, 'Error getting IP:' + error.message));
 
         verifyDnsConfig(dnsConfig, domain, zoneName, provider, ip, function (error, result) {
-            if (error && error.reason === DomainsError.ACCESS_DENIED) return callback(new DomainsError(DomainsError.BAD_FIELD, 'Incorrect configuration. Access denied'));
-            if (error && error.reason === DomainsError.NOT_FOUND) return callback(new DomainsError(DomainsError.BAD_FIELD, 'Zone not found'));
-            if (error && error.reason === DomainsError.EXTERNAL_ERROR) return callback(new DomainsError(DomainsError.BAD_FIELD, 'Configuration error: ' + error.message));
-            if (error && error.reason === DomainsError.BAD_FIELD) return callback(new DomainsError(DomainsError.BAD_FIELD, error.message));
-            if (error && error.reason === DomainsError.INVALID_PROVIDER) return callback(new DomainsError(DomainsError.BAD_FIELD, error.message));
-            if (error) return callback(new DomainsError(DomainsError.INTERNAL_ERROR, error));
+            if (error) return callback(error);
 
             domaindb.add(domain, { zoneName: zoneName, provider: provider, config: result, tlsConfig: tlsConfig }, function (error) {
                 if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(new DomainsError(DomainsError.ALREADY_EXISTS));
@@ -283,12 +291,7 @@ function update(domain, zoneName, provider, dnsConfig, fallbackCertificate, tlsC
             if (error) return callback(new DomainsError(DomainsError.INTERNAL_ERROR, 'Error getting IP:' + error.message));
 
             verifyDnsConfig(dnsConfig, domain, zoneName, provider, ip, function (error, result) {
-                if (error && error.reason === DomainsError.ACCESS_DENIED) return callback(new DomainsError(DomainsError.BAD_FIELD, 'Error adding A record. Access denied'));
-                if (error && error.reason === DomainsError.NOT_FOUND) return callback(new DomainsError(DomainsError.BAD_FIELD, 'Zone not found'));
-                if (error && error.reason === DomainsError.EXTERNAL_ERROR) return callback(new DomainsError(DomainsError.BAD_FIELD, 'Error adding A record:' + error.message));
-                if (error && error.reason === DomainsError.BAD_FIELD) return callback(new DomainsError(DomainsError.BAD_FIELD, error.message));
-                if (error && error.reason === DomainsError.INVALID_PROVIDER) return callback(new DomainsError(DomainsError.BAD_FIELD, error.message));
-                if (error) return callback(new DomainsError(DomainsError.INTERNAL_ERROR, error));
+                if (error) return callback(error);
 
                 domaindb.update(domain, { zoneName: zoneName, provider: provider, config: result, tlsConfig: tlsConfig }, function (error) {
                     if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new DomainsError(DomainsError.NOT_FOUND));

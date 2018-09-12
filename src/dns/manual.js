@@ -55,17 +55,11 @@ function verifyDnsConfig(dnsConfig, domain, zoneName, ip, callback) {
     assert.strictEqual(typeof ip, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    if ('hyphenatedSubdomains' in dnsConfig && typeof dnsConfig.hyphenatedSubdomains !== 'boolean') return callback(new DomainsError(DomainsError.BAD_FIELD, 'hyphenatedSubdomains must be a boolean'));
-
-    var config = {
-        hyphenatedSubdomains: !!dnsConfig.hyphenatedSubdomains
-    };
-
     // Very basic check if the nameservers can be fetched
     dns.resolve(zoneName, 'NS', { timeout: 5000 }, function (error, nameservers) {
         if (error && error.code === 'ENOTFOUND') return callback(new DomainsError(DomainsError.BAD_FIELD, 'Unable to resolve nameservers for this domain'));
         if (error || !nameservers) return callback(new DomainsError(DomainsError.BAD_FIELD, error ? error.message : 'Unable to get nameservers'));
 
-        callback(null, config);
+        callback(null, {});
     });
 }

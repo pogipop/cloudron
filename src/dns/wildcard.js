@@ -56,18 +56,12 @@ function verifyDnsConfig(dnsConfig, domain, zoneName, ip, callback) {
     assert.strictEqual(typeof ip, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    if ('hyphenatedSubdomains' in dnsConfig && typeof dnsConfig.hyphenatedSubdomains !== 'boolean') return callback(new DomainsError(DomainsError.BAD_FIELD, 'hyphenatedSubdomains must be a boolean'));
-
-    var config = {
-        hyphenatedSubdomains: !!dnsConfig.hyphenatedSubdomains
-    };
-
     // Very basic check if the nameservers can be fetched
     dns.resolve(zoneName, 'NS', { timeout: 5000 }, function (error, nameservers) {
         if (error && error.code === 'ENOTFOUND') return callback(new DomainsError(DomainsError.BAD_FIELD, 'Unable to resolve nameservers for this domain'));
         if (error || !nameservers) return callback(new DomainsError(DomainsError.BAD_FIELD, error ? error.message : 'Unable to get nameservers'));
 
-        const separator = config.hyphenatedSubdomains ? '-' : '.';
+        const separator = dnsConfig.hyphenatedSubdomains ? '-' : '.';
         const fqdn = `cloudrontest${separator}${domain}`;
         dns.resolve(fqdn, 'A', { server: '127.0.0.1', timeout: 5000 }, function (error, result) {
             if (error && error.code === 'ENOTFOUND') return callback(new DomainsError(DomainsError.BAD_FIELD, `Unable to resolve ${fqdn}`));
@@ -78,7 +72,7 @@ function verifyDnsConfig(dnsConfig, domain, zoneName, ip, callback) {
 
                 if (result.length !== 1 || ip !== result[0]) return callback(new DomainsError(DomainsError.EXTERNAL_ERROR, `Domain resolves to ${JSON.stringify(result)} instead of ${ip}`));
 
-                callback(null, config);
+                callback(null, {});
             });
         });
     });
