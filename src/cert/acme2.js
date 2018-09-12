@@ -444,8 +444,14 @@ Acme2.prototype.prepareDnsChallenge = function (hostname, domain, authorization,
     shasum.update(keyAuthorization);
 
     const txtValue = urlBase64Encode(shasum.digest('base64'));
-    const subdomain = hostname.slice(0, -domain.length - 1).replace('*', '');
-    const challengeSubdomain = `_acme-challenge${subdomain}`;
+    let challengeSubdomain;
+    if (hostname === domain) {
+        challengeSubdomain = '_acme-challenge';
+    } else if (hostname.includes('*')) { // wildcard
+        challengeSubdomain = hostname.replace('*', '_acme-challenge').slice(0, -domain.length - 1);
+    } else {
+        challengeSubdomain = '_acme-challenge.' + hostname.slice(0, -domain.length - 1);
+    }
 
     debug(`prepareDnsChallenge: update ${challengeSubdomain} with ${txtValue}`);
 
@@ -471,8 +477,8 @@ Acme2.prototype.cleanupDnsChallenge = function (hostname, domain, challenge, cal
     shasum.update(keyAuthorization);
 
     const txtValue = urlBase64Encode(shasum.digest('base64'));
-    const subdomain = hostname.slice(0, -domain.length - 1).replace('*', '');
-    const challengeSubdomain = `_acme-challenge${subdomain}`;
+    const subdomain = hostname.slice(0, -domain.length - 1);
+    const challengeSubdomain = this.wildcard ? subdomain.replace('*', '_acme-challenge') : `_acme-challenge.${subdomain}`;
 
     debug(`cleanupDnsChallenge: remove ${subdomain} with ${txtValue}`);
 
