@@ -46,9 +46,10 @@ function del(dnsConfig, zoneName, subdomain, type, values, callback) {
     return callback();
 }
 
-function waitForDns(domain, zoneName, value, options, callback) {
+function waitForDns(domain, zoneName, type, value, options, callback) {
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof zoneName, 'string');
+    assert.strictEqual(typeof type, 'string');
     assert.strictEqual(typeof value, 'string');
     assert(options && typeof options === 'object'); // { interval: 5000, times: 50000 }
     assert.strictEqual(typeof callback, 'function');

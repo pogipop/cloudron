@@ -30,6 +30,7 @@ function resolve(hostname, rrtype, options, callback) {
         // result is an empty array if there was no error but there is no record. when you query a random
         // domain, it errors with ENOTFOUND. But if you query an existing domain (A record) but with different
         // type (CNAME) it is not an error and empty array
+        // for TXT records, result is 2d array of strings
         callback(error, result);
     });
 }
