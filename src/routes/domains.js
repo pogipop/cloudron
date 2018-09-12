@@ -32,6 +32,7 @@ function add(req, res, next) {
 
     if (!req.body.config || typeof req.body.config !== 'object') return next(new HttpError(400, 'config must be an object'));
     if ('hyphenatedSubdomains' in req.body.config && typeof req.body.config.hyphenatedSubdomains !== 'boolean') return next(new HttpError(400, 'hyphenatedSubdomains must be a boolean'));
+    if ('wildcard' in req.body.config && typeof req.body.config.wildcard !== 'boolean') return next(new HttpError(400, 'wildcard must be a boolean'));
 
     if ('zoneName' in req.body && typeof req.body.zoneName !== 'string') return next(new HttpError(400, 'zoneName must be a string'));
     if ('fallbackCertificate' in req.body && typeof req.body.fallbackCertificate !== 'object') return next(new HttpError(400, 'fallbackCertificate must be a object with cert and key strings'));
@@ -85,6 +86,7 @@ function update(req, res, next) {
 
     if (!req.body.config || typeof req.body.config !== 'object') return next(new HttpError(400, 'config must be an object'));
     if ('hyphenatedSubdomains' in req.body.config && typeof req.body.config.hyphenatedSubdomains !== 'boolean') return next(new HttpError(400, 'hyphenatedSubdomains must be a boolean'));
+    if ('wildcard' in req.body.config && typeof req.body.config.wildcard !== 'boolean') return next(new HttpError(400, 'wildcard must be a boolean'));
 
     if ('zoneName' in req.body && typeof req.body.zoneName !== 'string') return next(new HttpError(400, 'zoneName must be a string'));
     if ('fallbackCertificate' in req.body && typeof req.body.fallbackCertificate !== 'object') return next(new HttpError(400, 'fallbackCertificate must be a object with cert and key strings'));

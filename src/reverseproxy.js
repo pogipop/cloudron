@@ -92,6 +92,7 @@ function getCertApi(domain, callback) {
         if (result.tlsConfig.provider !== 'caas') { // matches 'le-prod' or 'letsencrypt-prod'
             options.prod = result.tlsConfig.provider.match(/.*-prod/) !== null;
             options.performHttpAuthorization = result.provider.match(/noop|manual|wildcard/) !== null;
+            options.wildcard = !!result.tlsConfig.wildcard;
         }
 
         // registering user with an email requires A or MX record (https://github.com/letsencrypt/boulder/issues/1197)
@@ -217,6 +218,12 @@ function getCertificate(app, callback) {
 
     if (fs.existsSync(certFilePath) && fs.existsSync(keyFilePath)) return callback(null, { certFilePath, keyFilePath });
 
+    let certName = domains.makeWildcard(app.fqdn).replace('*.', '_.');
+    certFilePath = path.join(paths.APP_CERTS_DIR, `${certName}.cert`);
+    keyFilePath = path.join(paths.APP_CERTS_DIR, `${certName}.key`);
+
+    if (fs.existsSync(certFilePath) && fs.existsSync(keyFilePath)) return callback(null, { certFilePath, keyFilePath });
+
     return getFallbackCertificate(app.domain, callback);
 }
 
@@ -245,7 +252,7 @@ function ensureCertificate(appDomain, auditSource, callback) {
 
         if (!isExpiringSync(certFilePath, 24 * 30)) return callback(null, { certFilePath, keyFilePath, reason: 'existing-le' });
         debug('ensureCertificate: %s cert require renewal', vhost);
-    } else {
+    } else { // FIXME: check wildcard cert
         debug('ensureCertificate: %s cert does not exist', vhost);
     }
 
