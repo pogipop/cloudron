@@ -22,6 +22,8 @@ module.exports = exports = {
 
     validateHostname: validateHostname,
 
+    makeWildcard: makeWildcard,
+
     DomainsError: DomainsError
 };
 
@@ -461,4 +463,12 @@ function removeRestrictedFields(domain) {
     result.config = { hyphenatedSubdomains: !!domain.config.hyphenatedSubdomains };
 
     return result;
+}
+
+function makeWildcard(hostname) {
+    assert.strictEqual(typeof hostname, 'string');
+
+    let parts = hostname.split('.');
+    parts[0] = '*';
+    return parts.join('.');
 }

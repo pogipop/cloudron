@@ -62,6 +62,7 @@ function Acme2(options) {
     this.caDirectory = options.prod ? CA_PROD_DIRECTORY_URL : CA_STAGING_DIRECTORY_URL;
     this.directory = {};
     this.performHttpAuthorization = !!options.performHttpAuthorization;
+    this.wildcard = !!options.wildcard;
 }
 
 Acme2.prototype.getNonce = function (callback) {
@@ -335,13 +336,14 @@ Acme2.prototype.signCertificate = function (domain, finalizationUrl, csrDer, cal
     });
 };
 
-Acme2.prototype.createKeyAndCsr = function (domain, callback) {
-    assert.strictEqual(typeof domain, 'string');
+Acme2.prototype.createKeyAndCsr = function (hostname, callback) {
+    assert.strictEqual(typeof hostname, 'string');
     assert.strictEqual(typeof callback, 'function');
 
     var outdir = paths.APP_CERTS_DIR;
-    var csrFile = path.join(outdir, domain + '.csr');
-    var privateKeyFile = path.join(outdir, domain + '.key');
+    const certName = hostname.replace('*.', '_.');
+    var csrFile = path.join(outdir, `${certName}.csr`);
+    var privateKeyFile = path.join(outdir, `${certName}.key`);
 
     if (safe.fs.existsSync(privateKeyFile)) {
         // in some old releases, csr file was corrupt. so always regenerate it
@@ -354,7 +356,7 @@ Acme2.prototype.createKeyAndCsr = function (domain, callback) {
         debug('createKeyAndCsr: key file saved at %s', privateKeyFile);
     }
 
-    var csrDer = execSync(util.format('openssl req -new -key %s -outform DER -subj /CN=%s', privateKeyFile, domain));
+    var csrDer = execSync(`openssl req -new -key ${privateKeyFile} -outform DER -subj /CN=${hostname}`);
     if (!csrDer) return callback(new Acme2Error(Acme2Error.INTERNAL_ERROR, safe.error));
     if (!safe.fs.writeFileSync(csrFile, csrDer)) return callback(new Acme2Error(Acme2Error.INTERNAL_ERROR, safe.error)); // bookkeeping
 
@@ -363,8 +365,8 @@ Acme2.prototype.createKeyAndCsr = function (domain, callback) {
     callback(null, csrDer);
 };
 
-Acme2.prototype.downloadCertificate = function (domain, certUrl, callback) {
-    assert.strictEqual(typeof domain, 'string');
+Acme2.prototype.downloadCertificate = function (hostname, certUrl, callback) {
+    assert.strictEqual(typeof hostname, 'string');
     assert.strictEqual(typeof certUrl, 'string');
     assert.strictEqual(typeof callback, 'function');
 
@@ -381,10 +383,11 @@ Acme2.prototype.downloadCertificate = function (domain, certUrl, callback) {
 
         const fullChainPem = result.text;
 
-        var certificateFile = path.join(outdir, domain + '.cert');
+        const certName = hostname.replace('*.', '_.');
+        var certificateFile = path.join(outdir, `${certName}.cert`);
         if (!safe.fs.writeFileSync(certificateFile, fullChainPem)) return callback(new Acme2Error(Acme2Error.INTERNAL_ERROR, safe.error));
 
-        debug('downloadCertificate: cert file for %s saved at %s', domain, certificateFile);
+        debug('downloadCertificate: cert file for %s saved at %s', hostname, certificateFile);
 
         callback();
     });
@@ -441,14 +444,15 @@ Acme2.prototype.prepareDnsChallenge = function (hostname, domain, authorization,
     shasum.update(keyAuthorization);
 
     const txtValue = urlBase64Encode(shasum.digest('base64'));
-    const subdomain = '_acme-challenge.' + hostname.slice(0, -domain.length - 1);
+    const subdomain = hostname.slice(0, -domain.length - 1).replace('*', '');
+    const challengeSubdomain = `_acme-challenge${subdomain}`;
 
-    debug(`prepareDnsChallenge: update ${subdomain}} with ${txtValue}`);
+    debug(`prepareDnsChallenge: update ${challengeSubdomain} with ${txtValue}`);
 
-    domains.upsertDnsRecords(subdomain, domain, 'TXT', [ txtValue ], function (error) {
+    domains.upsertDnsRecords(challengeSubdomain, domain, 'TXT', [ txtValue ], function (error) {
         if (error) return callback(new Acme2Error(Acme2Error.EXTERNAL_ERROR, error.message));
 
-        domains.waitForDnsRecord(`${subdomain}.${domain}`, domain, 'TXT', txtValue, { interval: 5000, times: 200 }, function (error) {
+        domains.waitForDnsRecord(`${challengeSubdomain}.${domain}`, domain, 'TXT', txtValue, { interval: 5000, times: 200 }, function (error) {
             if (error) return callback(new Acme2Error(Acme2Error.EXTERNAL_ERROR, error.message));
 
             callback(null, challenge);
@@ -467,11 +471,12 @@ Acme2.prototype.cleanupDnsChallenge = function (hostname, domain, challenge, cal
     shasum.update(keyAuthorization);
 
     const txtValue = urlBase64Encode(shasum.digest('base64'));
-    const subdomain = '_acme-challenge.' + hostname.slice(0, -domain.length - 1);
+    const subdomain = hostname.slice(0, -domain.length - 1).replace('*', '');
+    const challengeSubdomain = `_acme-challenge${subdomain}`;
 
-    debug(`prepareDnsChallenge: remove ${subdomain} with ${txtValue}`);
+    debug(`cleanupDnsChallenge: remove ${subdomain} with ${txtValue}`);
 
-    domains.removeDnsRecords(subdomain, domain, 'TXT', [ txtValue ], function (error) {
+    domains.removeDnsRecords(challengeSubdomain, domain, 'TXT', [ txtValue ], function (error) {
         if (error) return callback(new Acme2Error(Acme2Error.EXTERNAL_ERROR, error));
 
         callback(null, challenge);
@@ -585,6 +590,11 @@ Acme2.prototype.getCertificate = function (hostname, domain, callback) {
 
     debug(`getCertificate: start acme flow for ${hostname} from ${this.caDirectory}`);
 
+    if (hostname !== domain && this.wildcard) {
+        hostname = domains.makeWildcard(hostname);
+        debug(`getCertificate: will get wildcard cert for ${hostname}`);
+    }
+
     const that = this;
     this.getDirectory(function (error) {
         if (error) return callback(error);
@@ -593,7 +603,8 @@ Acme2.prototype.getCertificate = function (hostname, domain, callback) {
             if (error) return callback(error);
 
             var outdir = paths.APP_CERTS_DIR;
-            callback(null, path.join(outdir, hostname + '.cert'), path.join(outdir, hostname + '.key'));
+            const certName = hostname.replace('*.', '_.');
+            callback(null, path.join(outdir, `${certName}.cert`), path.join(outdir, `${certName}.key`));
         });
     });
 };
