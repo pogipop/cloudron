@@ -165,11 +165,23 @@ function validateHostname(location, domainObject) {
     return null;
 }
 
-function validateTlsConfig(tlsConfig) {
+function validateTlsConfig(tlsConfig, dnsProvider) {
     assert.strictEqual(typeof tlsConfig, 'object');
+    assert.strictEqual(typeof dnsProvider, 'string');
 
-    if (tlsConfig.provider !== 'fallback' && tlsConfig.provider !== 'caas' && tlsConfig.provider.indexOf('letsencrypt-') !== 0) {
-        return new DomainsError(DomainsError.BAD_FIELD, 'tlsConfig.provider must be caas, fallback or letsencrypt-*');
+    switch (tlsConfig.provider) {
+    case 'letsencrypt-prod':
+    case 'letsencrypt-staging':
+    case 'fallback':
+    case 'caas':
+        break;
+    default:
+        return new DomainsError(DomainsError.BAD_FIELD, 'tlsConfig.provider must be caas, fallback, letsencrypt-prod/staging');
+    }
+
+    if (tlsConfig.wildcard) {
+        if (!tlsConfig.provider.startsWith('letsencrypt')) return new DomainsError(DomainsError.BAD_FIELD, 'wildcard can only be set with letsencrypt');
+        if (dnsProvider === 'manual' || dnsProvider === 'noop' || dnsProvider === 'wildcard') return new DomainsError(DomainsError.BAD_FIELD, 'wildcard cert requires a programmable DNS backend');
     }
 
     return null;
@@ -199,7 +211,7 @@ function add(domain, zoneName, provider, dnsConfig, fallbackCertificate, tlsConf
         if (error) return callback(new DomainsError(DomainsError.BAD_FIELD, error.message));
     }
 
-    let error = validateTlsConfig(tlsConfig);
+    let error = validateTlsConfig(tlsConfig, provider);
     if (error) return callback(error);
 
     if (dnsConfig.hyphenatedSubdomains && !config.allowHyphenatedSubdomains()) return callback(new DomainsError(DomainsError.BAD_FIELD, 'Not allowed in this edition'));
@@ -290,7 +302,7 @@ function update(domain, zoneName, provider, dnsConfig, fallbackCertificate, tlsC
             if (error) return callback(new DomainsError(DomainsError.BAD_FIELD, error.message));
         }
 
-        error = validateTlsConfig(tlsConfig);
+        error = validateTlsConfig(tlsConfig, provider);
         if (error) return callback(error);
 
         if (dnsConfig.hyphenatedSubdomains && !config.allowHyphenatedSubdomains()) return callback(new DomainsError(DomainsError.BAD_FIELD, 'Not allowed in this edition'));
