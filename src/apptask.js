@@ -358,7 +358,7 @@ function unregisterAlternateDomains(app, all, callback) {
     assert.strictEqual(typeof all, 'boolean');
     assert.strictEqual(typeof callback, 'function');
 
-    var obsoleteDomains
+    var obsoleteDomains;
     if (all) obsoleteDomains = app.alternateDomains;
     else obsoleteDomains = app.oldConfig.alternateDomains.filter(function (o) { return !app.alternateDomains.some(function (n) { return n.subdomain === o.subdomain && n.domain === o.domain; }); });
 

@@ -195,34 +195,43 @@ function getFallbackCertificate(domain, callback) {
     var certFilePath = path.join(paths.NGINX_CERT_DIR, `${domain}.host.cert`);
     var keyFilePath = path.join(paths.NGINX_CERT_DIR, `${domain}.host.key`);
 
-    if (fs.existsSync(certFilePath) && fs.existsSync(keyFilePath)) return callback(null, { certFilePath, keyFilePath });
+    if (fs.existsSync(certFilePath) && fs.existsSync(keyFilePath)) return callback(null, { certFilePath, keyFilePath, type: 'provisioned' });
 
     // check for auto-generated or user set fallback certs
     certFilePath = path.join(paths.APP_CERTS_DIR, `${domain}.host.cert`);
     keyFilePath = path.join(paths.APP_CERTS_DIR, `${domain}.host.key`);
 
-    callback(null, { certFilePath, keyFilePath });
+    callback(null, { certFilePath, keyFilePath, type: 'fallback' });
+}
+
+function getCertificateByHostname(hostname) {
+    assert.strictEqual(typeof hostname, 'string');
+
+    var certFilePath = path.join(paths.APP_CERTS_DIR, `${hostname}.user.cert`);
+    var keyFilePath = path.join(paths.APP_CERTS_DIR, `${hostname}.user.key`);
+
+    if (fs.existsSync(certFilePath) && fs.existsSync(keyFilePath)) return { certFilePath, keyFilePath, type: 'user' };
+
+    certFilePath = path.join(paths.APP_CERTS_DIR, `${hostname}.cert`);
+    keyFilePath = path.join(paths.APP_CERTS_DIR, `${hostname}.key`);
+
+    if (fs.existsSync(certFilePath) && fs.existsSync(keyFilePath)) return { certFilePath, keyFilePath, type: 'existing-le' };
+
+    let certName = domains.makeWildcard(hostname).replace('*.', '_.');
+    certFilePath = path.join(paths.APP_CERTS_DIR, `${certName}.cert`);
+    keyFilePath = path.join(paths.APP_CERTS_DIR, `${certName}.key`);
+
+    if (fs.existsSync(certFilePath) && fs.existsSync(keyFilePath)) return { certFilePath, keyFilePath, type: 'wildcard-le' };
+
+    return null;
 }
 
 function getCertificate(app, callback) {
     assert.strictEqual(typeof app, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    var certFilePath = path.join(paths.APP_CERTS_DIR, `${app.fqdn}.user.cert`);
-    var keyFilePath = path.join(paths.APP_CERTS_DIR, `${app.fqdn}.user.key`);
-
-    if (fs.existsSync(certFilePath) && fs.existsSync(keyFilePath)) return callback(null, { certFilePath, keyFilePath });
-
-    certFilePath = path.join(paths.APP_CERTS_DIR, `${app.fqdn}.cert`);
-    keyFilePath = path.join(paths.APP_CERTS_DIR, `${app.fqdn}.key`);
-
-    if (fs.existsSync(certFilePath) && fs.existsSync(keyFilePath)) return callback(null, { certFilePath, keyFilePath });
-
-    let certName = domains.makeWildcard(app.fqdn).replace('*.', '_.');
-    certFilePath = path.join(paths.APP_CERTS_DIR, `${certName}.cert`);
-    keyFilePath = path.join(paths.APP_CERTS_DIR, `${certName}.key`);
-
-    if (fs.existsSync(certFilePath) && fs.existsSync(keyFilePath)) return callback(null, { certFilePath, keyFilePath });
+    const result = getCertificateByHostname(app.fqdn);
+    if (result) return callback(null, result);
 
     return getFallbackCertificate(app.domain, callback);
 }
@@ -236,24 +245,16 @@ function ensureCertificate(appDomain, auditSource, callback) {
 
     const vhost = appDomain.fqdn;
 
-    var certFilePath = path.join(paths.APP_CERTS_DIR, `${vhost}.user.cert`);
-    var keyFilePath = path.join(paths.APP_CERTS_DIR, `${vhost}.user.key`);
+    const result = getCertificateByHostname(vhost);
 
-    if (fs.existsSync(certFilePath) && fs.existsSync(keyFilePath)) {
-        debug('ensureCertificate: %s. user certificate already exists at %s', vhost, keyFilePath);
-        return callback(null, { certFilePath, keyFilePath, reason: 'user' });
-    }
+    if (result) {
+        debug(`ensureCertificate: ${vhost}. ${result.type} certificate already exists at ${result.keyFilePath}`);
 
-    certFilePath = path.join(paths.APP_CERTS_DIR, `${vhost}.cert`);
-    keyFilePath = path.join(paths.APP_CERTS_DIR, `${vhost}.key`);
-
-    if (fs.existsSync(certFilePath) && fs.existsSync(keyFilePath)) {
-        debug('ensureCertificate: %s. certificate already exists at %s', vhost, keyFilePath);
-
-        if (!isExpiringSync(certFilePath, 24 * 30)) return callback(null, { certFilePath, keyFilePath, reason: 'existing-le' });
-        debug('ensureCertificate: %s cert require renewal', vhost);
-    } else { // FIXME: check wildcard cert
-        debug('ensureCertificate: %s cert does not exist', vhost);
+        if (result.type === 'user') return callback(null, result);
+        if (!isExpiringSync(result.certFilePath, 24 * 30)) return callback(null, result);
+        debug(`ensureCertificate: ${vhost} cert require renewal`);
+    } else {
+        debug(`ensureCertificate: ${vhost} cert does not exist`);
     }
 
     getCertApi(appDomain.domain, function (error, api, apiOptions) {
@@ -274,7 +275,7 @@ function ensureCertificate(appDomain, auditSource, callback) {
             // if no cert was returned use fallback. the fallback/caas provider will not provide any for example
             if (!certFilePath || !keyFilePath) return getFallbackCertificate(appDomain.domain, callback);
 
-            callback(null, { certFilePath, keyFilePath, reason: 'new-le' });
+            callback(null, { certFilePath, keyFilePath, type: 'new-le' });
         });
     });
 }
@@ -428,7 +429,7 @@ function renewAll(auditSource, callback) {
 
         var allDomains = [];
 
-         // add webadmin domain
+        // add webadmin domain
         allDomains.push({ domain: config.adminDomain(), fqdn: config.adminFqdn(), type: 'webadmin' });
 
         // add app main
@@ -447,7 +448,7 @@ function renewAll(auditSource, callback) {
         async.eachSeries(allDomains, function (domain, iteratorCallback) {
             ensureCertificate(domain, auditSource, function (error, bundle) {
                 if (error) return iteratorCallback(error); // this can happen if cloudron is not setup yet
-                if (bundle.reason !== 'new-le' && bundle.reason !== 'fallback') return iteratorCallback();
+                if (bundle.type !== 'new-le' && bundle.type !== 'fallback') return iteratorCallback();
 
                 // reconfigure for the case where we got a renewed cert after fallback
                 var configureFunc;
