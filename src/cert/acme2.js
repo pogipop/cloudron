@@ -479,10 +479,8 @@ Acme2.prototype.cleanupDnsChallenge = function (hostname, domain, challenge, cal
     domains.removeDnsRecords(challengeSubdomain, domain, 'TXT', [ txtValue ], function (error) {
         if (error) return callback(new Acme2Error(Acme2Error.EXTERNAL_ERROR, error));
 
-        callback(null, challenge);
+        callback(null);
     });
-
-    callback();
 };
 
 Acme2.prototype.prepareChallenge = function (hostname, domain, authorizationUrl, callback) {
