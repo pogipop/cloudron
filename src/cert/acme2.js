@@ -446,9 +446,13 @@ Acme2.prototype.prepareDnsChallenge = function (hostname, domain, authorization,
     debug(`prepareDnsChallenge: update ${subdomain}} with ${txtValue}`);
 
     domains.upsertDnsRecords(subdomain, domain, 'TXT', [ txtValue ], function (error) {
-        if (error) return callback(new Acme2Error(Acme2Error.EXTERNAL_ERROR, error));
+        if (error) return callback(new Acme2Error(Acme2Error.EXTERNAL_ERROR, error.message));
 
-        callback(null, challenge);
+        domains.waitForDnsRecord(`${subdomain}.${domain}`, domain, 'TXT', txtValue, { interval: 5000, times: 200 }, function (error) {
+            if (error) return callback(new Acme2Error(Acme2Error.EXTERNAL_ERROR, error.message));
+
+            callback(null, challenge);
+        });
     });
 };
 
