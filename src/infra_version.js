@@ -16,8 +16,8 @@ exports = module.exports = {
     'images': {
         'mysql': { repo: 'cloudron/mysql', tag: 'cloudron/mysql:1.1.0' },
         'postgresql': { repo: 'cloudron/postgresql', tag: 'cloudron/postgresql:1.1.0' },
-        'mongodb': { repo: 'cloudron/mongodb', tag: 'cloudron/mongodb:1.1.0' },
-        'redis': { repo: 'cloudron/redis', tag: 'cloudron/redis:1.0.0' },
+        'mongodb': { repo: 'cloudron/mongodb', tag: 'cloudron/mongodb:2.0.0' },
+        'redis': { repo: 'cloudron/redis', tag: 'cloudron/redis:2.0.0' },
         'mail': { repo: 'cloudron/mail', tag: 'cloudron/mail:1.4.0' },
         'graphite': { repo: 'cloudron/graphite', tag: 'cloudron/graphite:1.0.0' }
     }
