@@ -233,12 +233,10 @@ function verifyDnsConfig(dnsConfig, fqdn, zoneName, ip, callback) {
 
     if (!dnsConfig.token || typeof dnsConfig.token !== 'string') return callback(new DomainsError(DomainsError.BAD_FIELD, 'token must be a non-empty string'));
     if (!dnsConfig.email || typeof dnsConfig.email !== 'string') return callback(new DomainsError(DomainsError.BAD_FIELD, 'email must be a non-empty string'));
-    if ('hyphenatedSubdomains' in dnsConfig && typeof dnsConfig.hyphenatedSubdomains !== 'boolean') return callback(new DomainsError(DomainsError.BAD_FIELD, 'hyphenatedSubdomains must be a boolean'));
 
     var credentials = {
         token: dnsConfig.token,
-        email: dnsConfig.email,
-        hyphenatedSubdomains: !!dnsConfig.hyphenatedSubdomains
+        email: dnsConfig.email
     };
 
     if (process.env.BOX_ENV === 'test') return callback(null, credentials); // this shouldn't be here

@@ -235,7 +235,6 @@ function verifyDnsConfig(dnsConfig, fqdn, zoneName, ip, callback) {
 
     if (!dnsConfig.accessKeyId || typeof dnsConfig.accessKeyId !== 'string') return callback(new DomainsError(DomainsError.BAD_FIELD, 'accessKeyId must be a non-empty string'));
     if (!dnsConfig.secretAccessKey || typeof dnsConfig.secretAccessKey !== 'string') return callback(new DomainsError(DomainsError.BAD_FIELD, 'secretAccessKey must be a non-empty string'));
-    if ('hyphenatedSubdomains' in dnsConfig && typeof dnsConfig.hyphenatedSubdomains !== 'boolean') return callback(new DomainsError(DomainsError.BAD_FIELD, 'hyphenatedSubdomains must be a boolean'));
 
     var credentials = {
         accessKeyId: dnsConfig.accessKeyId,
@@ -243,7 +242,6 @@ function verifyDnsConfig(dnsConfig, fqdn, zoneName, ip, callback) {
         region: dnsConfig.region || 'us-east-1',
         endpoint: dnsConfig.endpoint || null,
         listHostedZonesByName: true, // new/updated creds require this perm
-        hyphenatedSubdomains: !!dnsConfig.hyphenatedSubdomains
     };
 
     if (process.env.BOX_ENV === 'test') return callback(null, credentials); // this shouldn't be here
