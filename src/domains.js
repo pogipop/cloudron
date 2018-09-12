@@ -106,8 +106,6 @@ function verifyDnsConfig(dnsConfig, domain, zoneName, provider, ip, callback) {
     var backend = api(provider);
     if (!backend) return callback(new DomainsError(DomainsError.BAD_FIELD, 'Invalid provider'));
 
-    if ('hyphenatedSubdomains' in dnsConfig && typeof dnsConfig.hyphenatedSubdomains !== 'boolean') return callback(new DomainsError(DomainsError.BAD_FIELD, 'hyphenatedSubdomains must be a boolean'));
-
     api(provider).verifyDnsConfig(dnsConfig, domain, zoneName, ip, function (error, result) {
         if (error && error.reason === DomainsError.ACCESS_DENIED) return callback(new DomainsError(DomainsError.BAD_FIELD, 'Incorrect configuration. Access denied'));
         if (error && error.reason === DomainsError.NOT_FOUND) return callback(new DomainsError(DomainsError.BAD_FIELD, 'Zone not found'));
