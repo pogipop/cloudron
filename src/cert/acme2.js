@@ -590,7 +590,7 @@ Acme2.prototype.getCertificate = function (hostname, domain, callback) {
 
     debug(`getCertificate: start acme flow for ${hostname} from ${this.caDirectory}`);
 
-    if (hostname !== domain && this.wildcard) {
+    if (hostname !== domain && this.wildcard) { // bare domain is not part of wildcard SAN
         hostname = domains.makeWildcard(hostname);
         debug(`getCertificate: will get wildcard cert for ${hostname}`);
     }
