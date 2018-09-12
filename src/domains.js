@@ -165,6 +165,16 @@ function validateHostname(location, domainObject) {
     return null;
 }
 
+function validateTlsConfig(tlsConfig) {
+    assert.strictEqual(typeof tlsConfig, 'object');
+
+    if (tlsConfig.provider !== 'fallback' && tlsConfig.provider !== 'caas' && tlsConfig.provider.indexOf('letsencrypt-') !== 0) {
+        return new DomainsError(DomainsError.BAD_FIELD, 'tlsConfig.provider must be caas, fallback or letsencrypt-*');
+    }
+
+    return null;
+}
+
 function add(domain, zoneName, provider, dnsConfig, fallbackCertificate, tlsConfig, callback) {
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof zoneName, 'string');
@@ -189,9 +199,8 @@ function add(domain, zoneName, provider, dnsConfig, fallbackCertificate, tlsConf
         if (error) return callback(new DomainsError(DomainsError.BAD_FIELD, error.message));
     }
 
-    if (tlsConfig.provider !== 'fallback' && tlsConfig.provider !== 'caas' && tlsConfig.provider.indexOf('letsencrypt-') !== 0) {
-        return callback(new DomainsError(DomainsError.BAD_FIELD, 'tlsConfig.provider must be caas, fallback or le-*'));
-    }
+    let error = validateTlsConfig(tlsConfig);
+    if (error) return callback(error);
 
     if (dnsConfig.hyphenatedSubdomains && !config.allowHyphenatedSubdomains()) return callback(new DomainsError(DomainsError.BAD_FIELD, 'Not allowed in this edition'));
 
@@ -281,9 +290,8 @@ function update(domain, zoneName, provider, dnsConfig, fallbackCertificate, tlsC
             if (error) return callback(new DomainsError(DomainsError.BAD_FIELD, error.message));
         }
 
-        if (tlsConfig.provider !== 'fallback' && tlsConfig.provider !== 'caas' && tlsConfig.provider.indexOf('letsencrypt-') !== 0) {
-            return callback(new DomainsError(DomainsError.BAD_FIELD, 'tlsConfig.provider must be caas, fallback or letsencrypt-*'));
-        }
+        error = validateTlsConfig(tlsConfig);
+        if (error) return callback(error);
 
         if (dnsConfig.hyphenatedSubdomains && !config.allowHyphenatedSubdomains()) return callback(new DomainsError(DomainsError.BAD_FIELD, 'Not allowed in this edition'));
 
