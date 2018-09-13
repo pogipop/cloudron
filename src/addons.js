@@ -7,7 +7,7 @@ exports = module.exports = {
     restoreAddons: restoreAddons,
 
     getEnvironment: getEnvironment,
-    getBindsSync: getBindsSync,
+    getMountsSync: getMountsSync,
     getContainerNamesSync: getContainerNamesSync,
 
     // exported for testing
@@ -58,8 +58,8 @@ var KNOWN_ADDONS = {
         restore: setupLdap
     },
     localstorage: {
-        setup: NOOP, // docker creates the directory for us
-        teardown: NOOP,
+        setup: setupLocalStorage, // docker creates the directory for us
+        teardown: teardownLocalStorage,
         backup: NOOP, // no backup because it's already inside app data
         restore: NOOP
     },
@@ -118,8 +118,6 @@ var KNOWN_ADDONS = {
         restore: NOOP
     }
 };
-
-var RMAPPDIR_CMD = path.join(__dirname, 'scripts/rmappdir.sh');
 
 function debugApp(app, args) {
     assert(typeof app === 'object');
@@ -215,30 +213,29 @@ function getEnvironment(app, callback) {
     });
 }
 
-function getBindsSync(app, addons) {
+function getMountsSync(app, addons) {
     assert.strictEqual(typeof app, 'object');
     assert(!addons || typeof addons === 'object');
 
-    let binds = [ ];
+    let mounts = [ ];
 
-    if (!addons) return binds;
+    if (!addons) return mounts;
 
     for (let addon in addons) {
         switch (addon) {
         case 'localstorage':
-            binds.push(path.join(paths.APPS_DATA_DIR, app.id, 'data') + ':/app/data:rw');
-            if (!Array.isArray(addons[addon].bindMounts)) break;
-
-            for (let mount of addons[addon].bindMounts) {
-                let [ host, container ] = mount.split(':');
-                binds.push(path.join(paths.APPS_DATA_DIR, app.id, 'data', path.normalize(host)) + ':' + container);
-            }
+            mounts.push({
+                Target: '/app/data',
+                Source: `${app.id}-localstorage`,
+                Type: 'volume',
+                ReadOnly: false
+            });
             break;
         default: break;
         }
     }
 
-    return binds;
+    return mounts;
 }
 
 function getContainerNamesSync(app, addons) {
@@ -260,6 +257,27 @@ function getContainerNamesSync(app, addons) {
     }
 
     return names;
+}
+
+function setupLocalStorage(app, options, callback) {
+    assert.strictEqual(typeof app, 'object');
+    assert.strictEqual(typeof options, 'object');
+    assert.strictEqual(typeof callback, 'function');
+
+    debugApp(app, 'setupLocalStorage');
+
+    // if you change the name, you have to change getMountsSync
+    docker.createVolume(app, `${app.id}-localstorage`, 'data', callback);
+}
+
+function teardownLocalStorage(app, options, callback) {
+    assert.strictEqual(typeof app, 'object');
+    assert.strictEqual(typeof options, 'object');
+    assert.strictEqual(typeof callback, 'function');
+
+    debugApp(app, 'teardownLocalStorage');
+
+    docker.removeVolume(app, `${app.id}-localstorage`, 'data', callback);
 }
 
 function setupOauth(app, options, callback) {
@@ -810,8 +828,6 @@ function setupRedis(app, options, callback) {
 
         const redisDataDir = path.join(paths.APPS_DATA_DIR, app.id + '/redis');
 
-        if (!safe.fs.mkdirSync(redisDataDir) && safe.error.code !== 'EEXIST') return callback(new Error('Error creating redis data dir:' + safe.error));
-
         // Compute redis memory limit based on app's memory limit (this is arbitrary)
         var memoryLimit = app.memoryLimit || app.manifest.memoryLimit || 0;
 
@@ -840,7 +856,7 @@ function setupRedis(app, options, callback) {
                     --dns-search=. \
                     -e CLOUDRON_REDIS_PASSWORD="${redisPassword}" \
                     -e CLOUDRON_REDIS_TOKEN="${redisServiceToken}" \
-                    -v ${redisDataDir}:/var/lib/redis:rw \
+                    --mount "source=${app.id}-redis,target=/var/lib/redis" \
                     --read-only -v /tmp -v /run ${tag}`;
 
         var env = [
@@ -852,6 +868,7 @@ function setupRedis(app, options, callback) {
         ];
 
         async.series([
+            docker.createVolume.bind(null, app, `${app.id}-redis`, 'redis'),
             // stop so that redis can flush itself with SIGTERM
             shell.execSync.bind(null, 'stopRedis', `docker stop --time=10 ${redisName} 2>/dev/null || true`),
             shell.execSync.bind(null, 'stopRedis', `docker rm --volumes ${redisName} 2>/dev/null || true`),
@@ -879,7 +896,7 @@ function teardownRedis(app, options, callback) {
     container.remove(removeOptions, function (error) {
         if (error && error.statusCode !== 404) return callback(new Error('Error removing container:' + error));
 
-        shell.sudo('teardownRedis', [ RMAPPDIR_CMD, app.id + '/redis', true /* delete directory */ ], function (error /* ,stdout , stderr*/) {
+        docker.removeVolume(app, `${app.id}-redis`, 'redis', function (error) {
             if (error) return callback(new Error('Error removing redis data:' + error));
 
             appdb.unsetAddonConfig(app.id, 'redis', callback);

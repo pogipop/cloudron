@@ -243,6 +243,7 @@ chown "${USER}:${USER}" -R "${CONFIG_DIR}"
 chown "${USER}:${USER}" -R "${PLATFORM_DATA_DIR}/nginx" "${PLATFORM_DATA_DIR}/collectd" "${PLATFORM_DATA_DIR}/addons" "${PLATFORM_DATA_DIR}/acme" "${PLATFORM_DATA_DIR}/backup" "${PLATFORM_DATA_DIR}/logs" "${PLATFORM_DATA_DIR}/update"
 chown "${USER}:${USER}" "${PLATFORM_DATA_DIR}/INFRA_VERSION" 2>/dev/null || true
 chown "${USER}:${USER}" "${PLATFORM_DATA_DIR}"
+chown "${USER}:${USER}" "${APPS_DATA_DIR}"
 
 # logrotate files have to be owned by root, this is here to fixup existing installations where we were resetting the owner to yellowtent
 chown root:root -R "${PLATFORM_DATA_DIR}/logrotate.d"

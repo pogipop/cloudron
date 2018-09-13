@@ -36,6 +36,7 @@ var addons = require('./addons.js'),
     ejs = require('ejs'),
     fs = require('fs'),
     manifestFormat = require('cloudron-manifestformat'),
+    mkdirp = require('mkdirp'),
     net = require('net'),
     os = require('os'),
     path = require('path'),
@@ -52,9 +53,7 @@ var addons = require('./addons.js'),
 var COLLECTD_CONFIG_EJS = fs.readFileSync(__dirname + '/collectd.config.ejs', { encoding: 'utf8' }),
     CONFIGURE_COLLECTD_CMD = path.join(__dirname, 'scripts/configurecollectd.sh'),
     LOGROTATE_CONFIG_EJS = fs.readFileSync(__dirname + '/logrotate.ejs', { encoding: 'utf8' }),
-    CONFIGURE_LOGROTATE_CMD = path.join(__dirname, 'scripts/configurelogrotate.sh'),
-    RMAPPDIR_CMD = path.join(__dirname, 'scripts/rmappdir.sh'),
-    CREATEAPPDIR_CMD = path.join(__dirname, 'scripts/createappdir.sh');
+    CONFIGURE_LOGROTATE_CMD = path.join(__dirname, 'scripts/configurelogrotate.sh');
 
 function initialize(callback) {
     assert.strictEqual(typeof callback, 'function');
@@ -165,7 +164,7 @@ function createVolume(app, callback) {
     assert.strictEqual(typeof app, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    shell.sudo('createVolume', [ CREATEAPPDIR_CMD, app.id ], callback);
+    mkdirp(path.join(paths.APPS_DATA_DIR, app.id), callback);
 }
 
 function deleteVolume(app, options, callback) {
@@ -173,7 +172,20 @@ function deleteVolume(app, options, callback) {
     assert.strictEqual(typeof options, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    shell.sudo('deleteVolume', [ RMAPPDIR_CMD, app.id, !!options.removeDirectory ], callback);
+    // remove symlinked directory contents and not the symlink
+    const volumeDir = path.join(paths.APPS_DATA_DIR, app.id);
+    let resolvedVolumeDir = safe.fs.readlinkSync(volumeDir) || volumeDir;
+
+    rimraf(`${resolvedVolumeDir}/*`, function (error) {
+        if (error) {
+            debug(`deleteVolume: error removing ${resolvedVolumeDir}: ${error}`);
+            return callback(error);
+        }
+
+        if (options.removeDirectory && !safe.fs.rmdirSync(volumeDir)) return callback(safe.error.code === 'ENOENT' ? null : safe.error);
+
+        callback();
+    });
 }
 
 function addCollectdProfile(app, callback) {

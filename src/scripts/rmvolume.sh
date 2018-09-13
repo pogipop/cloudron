@@ -20,18 +20,13 @@ fi
 # this script is called from redis addon as well!
 
 appid="$1"
-rmdir="$2"
+subdir="$2"
 
 if [[ "${BOX_ENV}" == "cloudron" ]]; then
-    readonly app_data_dir="${HOME}/appsdata/${appid}"
+    readonly volume_dir="${HOME}/appsdata/${appid}/${subdir}"
 else
-    readonly app_data_dir="${HOME}/.cloudron_test/appsdata/${appid}"
+    readonly volume_dir="${HOME}/.cloudron_test/appsdata/${appid}/${subdir}"
 fi
 
-# the approach below ensures symlinked contents are also deleted
+rm -rf "${volume_dir}"
 
-find -H "${app_data_dir}" -mindepth 1 -delete || true  # -H means resolve symlink in args
-
-if [[ "${rmdir}" == "true" ]]; then
-    rm -rf "${app_data_dir}"
-fi

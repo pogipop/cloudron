@@ -16,7 +16,9 @@ exports = module.exports = {
     getContainerIdByIp: getContainerIdByIp,
     inspect: inspect,
     inspectByName: inspect,
-    execContainer: execContainer
+    execContainer: execContainer,
+    createVolume: createVolume,
+    removeVolume: removeVolume
 };
 
 function connectionInstance() {
@@ -43,12 +45,17 @@ var addons = require('./addons.js'),
     config = require('./config.js'),
     constants = require('./constants.js'),
     debug = require('debug')('box:docker.js'),
+    mkdirp = require('mkdirp'),
     once = require('once'),
+    path = require('path'),
+    paths = require('./paths.js'),
     safe = require('safetydance'),
     shell = require('./shell.js'),
     spawn = child_process.spawn,
     util = require('util'),
     _ = require('underscore');
+
+const RMVOLUME_CMD = path.join(__dirname, 'scripts/rmvolume.sh');
 
 function debugApp(app, args) {
     assert(typeof app === 'object');
@@ -181,7 +188,7 @@ function createSubcontainer(app, name, cmd, options, callback) {
                 'isSubcontainer': String(!isAppContainer)
             },
             HostConfig: {
-                Binds: addons.getBindsSync(app, app.manifest.addons),
+                Mounts: addons.getMountsSync(app, app.manifest.addons),
                 LogConfig: {
                     Type: 'syslog',
                     Config: {
@@ -425,4 +432,58 @@ function execContainer(containerId, cmd, options, callback) {
     cp.stderr.pipe(options.stderr || process.stderr);
 
     if (options.stdin) options.stdin.pipe(cp.stdin).on('error', callback);
+}
+
+function createVolume(app, name, subdir, callback) {
+    assert.strictEqual(typeof app, 'object');
+    assert.strictEqual(typeof name, 'string');
+    assert.strictEqual(typeof subdir, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    let docker = exports.connection;
+
+    const volumeDataDir = path.join(paths.APPS_DATA_DIR, app.id, subdir);
+
+    const volumeOptions = {
+        Name: name,
+        Driver: 'local',
+        DriverOpts: { // https://github.com/moby/moby/issues/19990#issuecomment-248955005
+            type: 'none',
+            device: volumeDataDir,
+            o: 'bind'
+        },
+        Labels: {
+            'fqdn': app.fqdn,
+            'appId': app.id
+        },
+    };
+
+    mkdirp(volumeDataDir, function (error) {
+        if (error) return callback(new Error(`Error creating app data dir: ${error.message}`));
+
+        docker.createVolume(volumeOptions, function (error) {
+            if (error) return callback(error);
+
+            callback();
+        });
+    });
+}
+
+function removeVolume(app, name, subdir, callback) {
+    assert.strictEqual(typeof app, 'object');
+    assert.strictEqual(typeof name, 'string');
+    assert.strictEqual(typeof subdir, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    let docker = exports.connection;
+
+    let volume = docker.getVolume(name);
+    volume.remove(function (error) {
+        if (error && error.statusCode !== 404) {
+            debug(`removeVolume: Error removing volume of ${app.id} ${error}`);
+            callback(error);
+        }
+
+        shell.sudo('removeVolume', [ RMVOLUME_CMD, app.id, subdir ], callback);
+    });
 }
