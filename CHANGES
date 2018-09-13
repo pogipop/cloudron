@@ -1377,3 +1377,6 @@
 * Prevent dashboard domain from being deleted
 * Add alternateDomains to app install route
 
+[3.1.4]
+* Fix issue where support tab was redirecting
+
