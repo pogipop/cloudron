@@ -1384,3 +1384,6 @@
 * Add ACMEv2 support
 * Add Wildcard Let's Encrypt provider
 
+[3.1.4]
+* Fix issue where support tab was redirecting
+
