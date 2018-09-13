@@ -37,7 +37,7 @@ var accesscontrol = require('./accesscontrol.js'),
     paths = require('./paths.js'),
     safe = require('safetydance'),
     shell = require('./shell.js'),
-    superagent = require('superagent'),
+    request = require('request'),
     util = require('util');
 
 var NOOP = function (app, options, callback) { return callback(); };
@@ -698,9 +698,9 @@ function setupMongoDb(app, options, callback) {
         getMongoDbDetails(function (error, result) {
             if (error) return callback(error);
 
-            superagent.post(`http://${result.ip}:3000/databases?access_token=${result.token}`, data).end(function (error, result) {
+            request.post(`http://${result.ip}:3000/databases?access_token=${result.token}`, { json: data }, function (error, response, body) {
                 if (error) return callback(new Error('Error setting up mongodb: ' + error));
-                if (result.statusCode !== 201) return callback(new Error('Error setting up mongodb. Status code: ' + result.statusCode));
+                if (response.statusCode !== 201) return callback(new Error(`Error setting up mongodb. Status code: ${response.statusCode}`));
 
                 var env = [
                     { name: 'MONGODB_URL', value : `mongodb://${data.username}:${data.password}@mongodb/${data.database}` },
@@ -728,9 +728,9 @@ function teardownMongoDb(app, options, callback) {
     getMongoDbDetails(function (error, result) {
         if (error) return callback(error);
 
-        superagent.delete(`http://${result.ip}:3000/databases/${app.id}?access_token=${result.token}`).end(function (error, result) {
+        request.delete(`http://${result.ip}:3000/databases/${app.id}?access_token=${result.token}`, function (error, response, body) {
             if (error) return callback(new Error('Error tearing down mongodb: ' + error));
-            if (result.statusCode !== 200) return callback(new Error('Error tearing down mongodb. Status code: ' + result.statusCode));
+            if (response.statusCode !== 200) return callback(new Error(`Error tearing down mongodb. Status code: ${response.statusCode}`));
 
             appdb.unsetAddonConfig(app.id, 'mongodb', callback);
         });
@@ -749,14 +749,16 @@ function backupMongoDb(app, options, callback) {
     getMongoDbDetails(function (error, result) {
         if (error) return callback(error);
 
-        var output = fs.createWriteStream(path.join(paths.APPS_DATA_DIR, app.id, 'mongodbdump'));
-        output.on('error', callback);
+        const writeStream = fs.createWriteStream(path.join(paths.APPS_DATA_DIR, app.id, 'mongodbdump'));
+        writeStream.on('error', callback);
 
-        var req = superagent.post(`http://${result.ip}:3000/databases/${app.id}/backup?access_token=${result.token}`);
-        req.on('error', callback);
-        req.on('end', callback);
+        const req = request.post(`http://${result.ip}:3000/databases/${app.id}/backup?access_token=${result.token}`, function (error, response, body) {
+            if (error) return callback(error);
+            if (response.statusCode !== 200) return callback(new Error(`Unexpected response from mongodb addon ${response.statusCode}`));
 
-        req.pipe(output);
+            callback(null);
+        });
+        req.pipe(writeStream);
     });
 }
 
@@ -775,14 +777,17 @@ function restoreMongoDb(app, options, callback) {
         getMongoDbDetails(function (error, result) {
             if (error) return callback(error);
 
-            var input = fs.createReadStream(path.join(paths.APPS_DATA_DIR, app.id, 'mongodbdump'));
-            input.on('error', callback);
+            const readStream = fs.createReadStream(path.join(paths.APPS_DATA_DIR, app.id, 'mongodbdump'));
+            readStream.on('error', callback);
 
-            var req = superagent.post(`http://${result.ip}:3000/databases/${app.id}/restore?access_token=${result.token}`);
-            req.on('error', callback);
-            req.on('end', callback);
+            const restoreReq = request.post(`http://${result.ip}:3000/databases/${app.id}/restore?access_token=${result.token}`, function (error, response, body) {
+                if (error) return callback(error);
+                if (response.statusCode !== 200) return callback(new Error(`Unexpected response from mongodb addon ${response.statusCode}`));
 
-            input.pipe(req);
+                callback(null);
+            });
+
+            readStream.pipe(restoreReq);
         });
     });
 }
@@ -899,9 +904,9 @@ function backupRedis(app, options, callback) {
             const containerIp = safe.query(result, 'NetworkSettings.Networks.cloudron.IPAddress', null);
             if (!containerIp) return callback(new Error('Error getting redis container ip'));
 
-            superagent.post(`http://${containerIp}:3000/backup?access_token=${token}`).end(function (error, result) {
+            request.post(`http://${containerIp}:3000/backup?access_token=${token}`, function (error, response, body) {
                 if (error) return callback(new Error('Error backing up redis: ' + error));
-                if (result.statusCode !== 201) return callback(new Error('Error backing up redis. Status code: ' + result.statusCode));
+                if (response.statusCode !== 201) return callback(new Error(`Error backing up redis. Status code: ${response.statusCode}`));
 
                 callback(null);
             });
