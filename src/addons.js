@@ -698,7 +698,7 @@ function setupMongoDb(app, options, callback) {
         getMongoDbDetails(function (error, result) {
             if (error) return callback(error);
 
-            request.post(`http://${result.ip}:3000/databases?access_token=${result.token}`, { json: data }, function (error, response, body) {
+            request.post(`https://${result.ip}:3000/databases?access_token=${result.token}`, { rejectUnauthorized: false, json: data }, function (error, response, body) {
                 if (error) return callback(new Error('Error setting up mongodb: ' + error));
                 if (response.statusCode !== 201) return callback(new Error(`Error setting up mongodb. Status code: ${response.statusCode}`));
 
@@ -728,7 +728,7 @@ function teardownMongoDb(app, options, callback) {
     getMongoDbDetails(function (error, result) {
         if (error) return callback(error);
 
-        request.delete(`http://${result.ip}:3000/databases/${app.id}?access_token=${result.token}`, function (error, response, body) {
+        request.delete(`https://${result.ip}:3000/databases/${app.id}?access_token=${result.token}`, { rejectUnauthorized: false }, function (error, response, body) {
             if (error) return callback(new Error('Error tearing down mongodb: ' + error));
             if (response.statusCode !== 200) return callback(new Error(`Error tearing down mongodb. Status code: ${response.statusCode}`));
 
@@ -752,7 +752,7 @@ function backupMongoDb(app, options, callback) {
         const writeStream = fs.createWriteStream(path.join(paths.APPS_DATA_DIR, app.id, 'mongodbdump'));
         writeStream.on('error', callback);
 
-        const req = request.post(`http://${result.ip}:3000/databases/${app.id}/backup?access_token=${result.token}`, function (error, response, body) {
+        const req = request.post(`https://${result.ip}:3000/databases/${app.id}/backup?access_token=${result.token}`, { rejectUnauthorized: false }, function (error, response, body) {
             if (error) return callback(error);
             if (response.statusCode !== 200) return callback(new Error(`Unexpected response from mongodb addon ${response.statusCode}`));
 
@@ -780,7 +780,7 @@ function restoreMongoDb(app, options, callback) {
             const readStream = fs.createReadStream(path.join(paths.APPS_DATA_DIR, app.id, 'mongodbdump'));
             readStream.on('error', callback);
 
-            const restoreReq = request.post(`http://${result.ip}:3000/databases/${app.id}/restore?access_token=${result.token}`, function (error, response, body) {
+            const restoreReq = request.post(`https://${result.ip}:3000/databases/${app.id}/restore?access_token=${result.token}`, { rejectUnauthorized: false }, function (error, response, body) {
                 if (error) return callback(error);
                 if (response.statusCode !== 200) return callback(new Error(`Unexpected response from mongodb addon ${response.statusCode}`));
 
@@ -904,7 +904,7 @@ function backupRedis(app, options, callback) {
             const containerIp = safe.query(result, 'NetworkSettings.Networks.cloudron.IPAddress', null);
             if (!containerIp) return callback(new Error('Error getting redis container ip'));
 
-            request.post(`http://${containerIp}:3000/backup?access_token=${token}`, function (error, response, body) {
+            request.post(`https://${containerIp}:3000/backup?access_token=${token}`, { rejectUnauthorized: false }, function (error, response, body) {
                 if (error) return callback(new Error('Error backing up redis: ' + error));
                 if (response.statusCode !== 201) return callback(new Error(`Error backing up redis. Status code: ${response.statusCode}`));
 
