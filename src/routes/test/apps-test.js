@@ -745,7 +745,13 @@ describe('App installation', function () {
 
     it('installation - volume created', function (done) {
         expect(fs.existsSync(paths.APPS_DATA_DIR + '/' + APP_ID));
-        done();
+        let volume = docker.getVolume(APP_ID + '-localstorage');
+        volume.inspect(function (error, volume) {
+            expect(error).to.be(null);
+            expect(volume.Labels.appId).to.eql(APP_ID);
+            expect(volume.Options.device).to.eql(paths.APPS_DATA_DIR + '/' + APP_ID + '/data');
+            done();
+        });
     });
 
     it('installation - http is up and running', function (done) {
@@ -781,13 +787,7 @@ describe('App installation', function () {
     it('installation - running container has volume mounted', function (done) {
         docker.getContainer(appEntry.containerId).inspect(function (error, data) {
             expect(error).to.not.be.ok();
-
-            // support newer docker versions
-            if (data.Volumes) {
-                expect(data.Volumes['/app/data']).to.eql(paths.APPS_DATA_DIR + '/' + APP_ID + '/data');
-            } else {
-                expect(data.Mounts.filter(function (mount) { return mount.Destination === '/app/data'; })[0].Source).to.eql(paths.APPS_DATA_DIR + '/' + APP_ID + '/data');
-            }
+            expect(data.Mounts.filter(function (mount) { return mount.Destination === '/app/data'; })[0].Type).to.eql('volume');
 
             done();
         });

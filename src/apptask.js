@@ -10,8 +10,8 @@ exports = module.exports = {
     _reserveHttpPort: reserveHttpPort,
     _configureReverseProxy: configureReverseProxy,
     _unconfigureReverseProxy: unconfigureReverseProxy,
-    _createVolume: createVolume,
-    _deleteVolume: deleteVolume,
+    _createAppDir: createAppDir,
+    _deleteAppDir: deleteAppDir,
     _verifyManifest: verifyManifest,
     _registerSubdomain: registerSubdomain,
     _unregisterSubdomain: unregisterSubdomain,
@@ -160,14 +160,14 @@ function deleteContainers(app, callback) {
     });
 }
 
-function createVolume(app, callback) {
+function createAppDir(app, callback) {
     assert.strictEqual(typeof app, 'object');
     assert.strictEqual(typeof callback, 'function');
 
     mkdirp(path.join(paths.APPS_DATA_DIR, app.id), callback);
 }
 
-function deleteVolume(app, options, callback) {
+function deleteAppDir(app, options, callback) {
     assert.strictEqual(typeof app, 'object');
     assert.strictEqual(typeof options, 'object');
     assert.strictEqual(typeof callback, 'function');
@@ -479,7 +479,7 @@ function install(app, callback) {
 
             addons.teardownAddons(app, addonsToRemove, next);
         },
-        deleteVolume.bind(null, app, { removeDirectory: false }), // do not remove any symlinked volume
+        deleteAppDir.bind(null, app, { removeDirectory: false }), // do not remove any symlinked volume
 
         // for restore case
         function deleteImageIfChanged(done) {
@@ -500,7 +500,7 @@ function install(app, callback) {
         docker.downloadImage.bind(null, app.manifest),
 
         updateApp.bind(null, app, { installationProgress: '50, Creating volume' }),
-        createVolume.bind(null, app),
+        createAppDir.bind(null, app),
 
         function restoreFromBackup(next) {
             if (!restoreConfig) {
@@ -607,7 +607,7 @@ function configure(app, callback) {
         docker.downloadImage.bind(null, app.manifest),
 
         updateApp.bind(null, app, { installationProgress: '45, Ensuring volume' }),
-        createVolume.bind(null, app),
+        createAppDir.bind(null, app),
 
         // re-setup addons since they rely on the app's fqdn (e.g oauth)
         updateApp.bind(null, app, { installationProgress: '50, Setting up addons' }),
@@ -776,7 +776,7 @@ function uninstall(app, callback) {
         addons.teardownAddons.bind(null, app, app.manifest.addons),
 
         updateApp.bind(null, app, { installationProgress: '40, Deleting volume' }),
-        deleteVolume.bind(null, app, { removeDirectory: true }),
+        deleteAppDir.bind(null, app, { removeDirectory: true }),
 
         updateApp.bind(null, app, { installationProgress: '50, Deleting image' }),
         docker.deleteImage.bind(null, app.manifest),
