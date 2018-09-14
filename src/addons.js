@@ -206,9 +206,6 @@ function getEnvironment(app, callback) {
 
         if (app.manifest.addons['docker']) result.push({ name: 'DOCKER_HOST', value: `tcp://172.18.0.1:${config.get('dockerProxyPort')}` });
 
-        // filter out internal settings like service auth tokens. Those start with INTERNAL_
-        result = result.filter(function (e) { return e.name.indexOf('INTERNAL_') !== 0; });
-
         return callback(null, result.map(function (e) { return e.name + '=' + e.value; }));
     });
 }
@@ -816,16 +813,11 @@ function setupRedis(app, options, callback) {
     assert.strictEqual(typeof options, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    appdb.getAddonConfig(app.id, 'redis', function (error, result) {
+    appdb.getAddonConfigByName(app.id, 'redis', 'REDIS_PASSWORD', function (error, existingPassword) {
         if (error && error.reason !== DatabaseError.NOT_FOUND) return callback(error);
 
-        var tmp;
-        tmp = result.find(function (o) { return o.name === 'REDIS_PASSWORD'; });
-        const redisPassword = (tmp && tmp.value) ? tmp.value : hat(4 * 48); // see box#362 for password length
-
-        tmp = result.find(function (o) { return o.name === 'INTERNAL_REDIS_TOKEN'; });
-        const redisServiceToken = (tmp && tmp.value) ? tmp.value : hat(4 * 48);
-
+        const redisPassword = error ? hat(4 * 48) : existingPassword; // see box#362 for password length
+        const redisServiceToken = hat(4 * 48);
         const redisDataDir = path.join(paths.APPS_DATA_DIR, app.id + '/redis');
 
         // Compute redis memory limit based on app's memory limit (this is arbitrary)
@@ -863,8 +855,7 @@ function setupRedis(app, options, callback) {
             { name: 'REDIS_URL', value: 'redis://redisuser:' + redisPassword + '@redis-' + app.id },
             { name: 'REDIS_PASSWORD', value: redisPassword },
             { name: 'REDIS_HOST', value: redisName },
-            { name: 'REDIS_PORT', value: '6379' },
-            { name: 'INTERNAL_REDIS_TOKEN', value: redisServiceToken }
+            { name: 'REDIS_PORT', value: '6379' }
         ];
 
         async.series([
@@ -911,22 +902,26 @@ function backupRedis(app, options, callback) {
 
     debugApp(app, 'Backing up redis');
 
-    appdb.getAddonConfigByName(app.id, 'redis', 'INTERNAL_REDIS_TOKEN', function (error, token) {
-        if (error && error.reason !== DatabaseError.NOT_FOUND) return callback(error);
+    var container = dockerConnection.getContainer('redis-' + app.id);
+    container.inspect(function (error, result) {
+        if (error) return callback(new Error('Error inspecting redis container: ' + error));
 
-        var container = dockerConnection.getContainer('redis-' + app.id);
-        container.inspect(function (error, result) {
-            if (error) return callback(new Error('Error inspecting redis container: ' + error));
+        const containerIp = safe.query(result, 'NetworkSettings.Networks.cloudron.IPAddress', null);
+        if (!containerIp) return callback(new Error('Error getting redis container ip'));
 
-            const containerIp = safe.query(result, 'NetworkSettings.Networks.cloudron.IPAddress', null);
-            if (!containerIp) return callback(new Error('Error getting redis container ip'));
+        // extract the cloudron token for auth
+        const env = safe.query(result, 'Config.Env', null);
+        if (!env) return callback(new Error('Error getting redis env'));
+        const tmp = env.find(function (e) { return e.indexOf('CLOUDRON_REDIS_TOKEN') === 0; });
+        if (!tmp) return callback(new Error('Error getting redis cloudron token env var'));
+        const token = tmp.slice('CLOUDRON_REDIS_TOKEN='.length);
+        if (!token)  return callback(new Error('Error getting redis cloudron token'));
 
-            request.post(`https://${containerIp}:3000/backup?access_token=${token}`, { rejectUnauthorized: false }, function (error, response, body) {
-                if (error) return callback(new Error('Error backing up redis: ' + error));
-                if (response.statusCode !== 201) return callback(new Error(`Error backing up redis. Status code: ${response.statusCode}`));
+        request.post(`https://${containerIp}:3000/backup?access_token=${token}`, { rejectUnauthorized: false }, function (error, response, body) {
+            if (error) return callback(new Error('Error backing up redis: ' + error));
+            if (response.statusCode !== 201) return callback(new Error(`Error backing up redis. Status code: ${response.statusCode}`));
 
-                callback(null);
-            });
+            callback(null);
         });
     });
 }
