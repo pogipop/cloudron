@@ -174,15 +174,16 @@ function deleteVolume(app, options, callback) {
 
     // remove symlinked directory contents and not the symlink
     const volumeDir = path.join(paths.APPS_DATA_DIR, app.id);
-    let resolvedVolumeDir = safe.fs.readlinkSync(volumeDir) || volumeDir;
+    const isSymlinked = safe.fs.readlinkSync(volumeDir) !== volumeDir;
 
-    rimraf(`${resolvedVolumeDir}/*`, function (error) {
+    // only remove folder contents if removeDirectory is falsy and we do have a symlink
+    const subdir = options.removeDirectory || isSymlinked ? '' : '*';
+
+    docker.removeVolume(app, app.id, subdir, function (error) {
         if (error) {
-            debug(`deleteVolume: error removing ${resolvedVolumeDir}: ${error}`);
+            debug(`deleteVolume: error removing ${volumeDir} (symlink ${isSymlinked}): ${error}`);
             return callback(error);
         }
-
-        if (options.removeDirectory && !safe.fs.rmdirSync(volumeDir)) return callback(safe.error.code === 'ENOENT' ? null : safe.error);
 
         callback();
     });
