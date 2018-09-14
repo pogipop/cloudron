@@ -672,23 +672,25 @@ function restorePostgreSql(app, options, callback) {
     });
 }
 
-function getMongoDbDetails(callback) {
+function getAddonDetails(containerName, tokenEnvName, callback) {
+    assert.strictEqual(typeof containerName, 'string');
+    assert.strictEqual(typeof tokenEnvName, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    var container = dockerConnection.getContainer('mongodb');
+    var container = dockerConnection.getContainer(containerName);
     container.inspect(function (error, result) {
-        if (error) return callback(new Error('Error inspecting mongodb container: ' + error));
+        if (error) return callback(new Error('Error inspecting ${containerName} container: ' + error));
 
         const ip = safe.query(result, 'NetworkSettings.Networks.cloudron.IPAddress', null);
-        if (!ip) return callback(new Error('Error getting mongodb container ip'));
+        if (!ip) return callback(new Error('Error getting ${containerName} container ip'));
 
         // extract the cloudron token for auth
         const env = safe.query(result, 'Config.Env', null);
-        if (!env) return callback(new Error('Error getting mongodb env'));
-        const tmp = env.find(function (e) { return e.indexOf('MONGODB_CLOUDRON_TOKEN') === 0; });
-        if (!tmp) return callback(new Error('Error getting mongodb cloudron token env var'));
-        const token = tmp.slice('MONGODB_CLOUDRON_TOKEN='.length);
-        if (!token)  return callback(new Error('Error getting mongodb cloudron token'));
+        if (!env) return callback(new Error('Error getting ${containerName} env'));
+        const tmp = env.find(function (e) { return e.indexOf(tokenEnvName) === 0; });
+        if (!tmp) return callback(new Error('Error getting ${containerName} cloudron token env var'));
+        const token = tmp.slice(tokenEnvName.length + 1); // +1 for the = sign
+        if (!token)  return callback(new Error('Error getting ${containerName} cloudron token'));
 
         callback(null, { ip: ip, token: token });
     });
@@ -710,7 +712,7 @@ function setupMongoDb(app, options, callback) {
             password: error ? hat(4 * 128) : existingPassword
         };
 
-        getMongoDbDetails(function (error, result) {
+        getAddonDetails('mongodb', 'MONGODB_CLOUDRON_TOKEN', function (error, result) {
             if (error) return callback(error);
 
             request.post(`https://${result.ip}:3000/databases?access_token=${result.token}`, { rejectUnauthorized: false, json: data }, function (error, response, body) {
@@ -740,7 +742,7 @@ function teardownMongoDb(app, options, callback) {
 
     debugApp(app, 'Tearing down mongodb');
 
-    getMongoDbDetails(function (error, result) {
+    getAddonDetails('mongodb', 'MONGODB_CLOUDRON_TOKEN', function (error, result) {
         if (error) return callback(error);
 
         request.delete(`https://${result.ip}:3000/databases/${app.id}?access_token=${result.token}`, { rejectUnauthorized: false }, function (error, response, body) {
@@ -761,7 +763,7 @@ function backupMongoDb(app, options, callback) {
 
     callback = once(callback); // protect from multiple returns with streams
 
-    getMongoDbDetails(function (error, result) {
+    getAddonDetails('mongodb', 'MONGODB_CLOUDRON_TOKEN', function (error, result) {
         if (error) return callback(error);
 
         const writeStream = fs.createWriteStream(path.join(paths.APPS_DATA_DIR, app.id, 'mongodbdump'));
@@ -789,7 +791,7 @@ function restoreMongoDb(app, options, callback) {
 
         debugApp(app, 'restoreMongoDb');
 
-        getMongoDbDetails(function (error, result) {
+        getAddonDetails('mongodb', 'MONGODB_CLOUDRON_TOKEN', function (error, result) {
             if (error) return callback(error);
 
             const readStream = fs.createReadStream(path.join(paths.APPS_DATA_DIR, app.id, 'mongodbdump'));
@@ -901,22 +903,10 @@ function backupRedis(app, options, callback) {
 
     debugApp(app, 'Backing up redis');
 
-    var container = dockerConnection.getContainer('redis-' + app.id);
-    container.inspect(function (error, result) {
-        if (error) return callback(new Error('Error inspecting redis container: ' + error));
+    getAddonDetails('redis-' + app.id, 'CLOUDRON_REDIS_TOKEN', function (error, result) {
+        if (error) return callback(error);
 
-        const containerIp = safe.query(result, 'NetworkSettings.Networks.cloudron.IPAddress', null);
-        if (!containerIp) return callback(new Error('Error getting redis container ip'));
-
-        // extract the cloudron token for auth
-        const env = safe.query(result, 'Config.Env', null);
-        if (!env) return callback(new Error('Error getting redis env'));
-        const tmp = env.find(function (e) { return e.indexOf('CLOUDRON_REDIS_TOKEN') === 0; });
-        if (!tmp) return callback(new Error('Error getting redis cloudron token env var'));
-        const token = tmp.slice('CLOUDRON_REDIS_TOKEN='.length);
-        if (!token)  return callback(new Error('Error getting redis cloudron token'));
-
-        request.post(`https://${containerIp}:3000/backup?access_token=${token}`, { rejectUnauthorized: false }, function (error, response, body) {
+        request.post(`https://${result.ip}:3000/backup?access_token=${result.token}`, { rejectUnauthorized: false }, function (error, response, body) {
             if (error) return callback(new Error('Error backing up redis: ' + error));
             if (response.statusCode !== 201) return callback(new Error(`Error backing up redis. Status code: ${response.statusCode}`));
 
