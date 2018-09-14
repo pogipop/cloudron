@@ -818,7 +818,6 @@ function setupRedis(app, options, callback) {
 
         const redisPassword = error ? hat(4 * 48) : existingPassword; // see box#362 for password length
         const redisServiceToken = hat(4 * 48);
-        const redisDataDir = path.join(paths.APPS_DATA_DIR, app.id + '/redis');
 
         // Compute redis memory limit based on app's memory limit (this is arbitrary)
         var memoryLimit = app.memoryLimit || app.manifest.memoryLimit || 0;
