@@ -116,10 +116,11 @@ function removeOldImages(callback) {
 
     for (var imageName in infra.images) {
         if (imageName === 'redis') continue; // see #223
-        var image = infra.images[imageName];
+        const image = infra.images[imageName];
+        const tag = image.tag.replace(/@sha256.*/, '');
         debug('cleaning up images of %j', image);
-        var cmd = 'docker images "%s" | tail -n +2 | awk \'{ print $1 ":" $2 }\' | grep -v "%s" | xargs --no-run-if-empty docker rmi';
-        shell.execSync('removeOldImagesSync', util.format(cmd, image.repo, image.tag));
+        const cmd = `docker images "${image.repo}" | tail -n +2 | awk '{ print $1 ":" $2 }' | grep -v "${tag}" | xargs --no-run-if-empty docker rmi`;
+        shell.execSync('removeOldImagesSync', cmd);
     }
 
     callback();
