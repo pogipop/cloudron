@@ -177,12 +177,13 @@ function deleteAppDir(app, options, callback) {
 
     if (!safe.fs.existsSync(resolvedAppDataDir)) return callback();
 
-    const dirents = safe.fs.readdirSync(resolvedAppDataDir, { withFileTypes: true });
-    if (!dirents) return callback(`Error listing ${resolvedAppDataDir}: ${safe.error.message}`);
+    const entries = safe.fs.readdirSync(resolvedAppDataDir);
+    if (!entries) return callback(`Error listing ${resolvedAppDataDir}: ${safe.error.message}`);
 
     // remove only files. directories inside app dir are currently volumes managed by the addons
-    dirents.forEach(function (dirent) {
-        if (!dirent.isDirectory()) safe.fs.unlinkSync(path.join(resolvedAppDataDir, name));
+    entries.forEach(function (entry) {
+        let stat = safe.fs.statSync(path.join(resolvedAppDataDir, entry));
+        if (stat && !stat.isDirectory()) safe.fs.unlinkSync(path.join(resolvedAppDataDir, entry));
     });
 
     // if this fails, it's probably because the localstorage/redis addons have not cleaned up properly
