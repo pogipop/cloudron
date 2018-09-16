@@ -5,6 +5,7 @@ exports = module.exports = {
     teardownAddons: teardownAddons,
     backupAddons: backupAddons,
     restoreAddons: restoreAddons,
+    clearAddons: clearAddons,
 
     getEnvironment: getEnvironment,
     getMountsSync: getMountsSync,
@@ -49,73 +50,85 @@ var KNOWN_ADDONS = {
         setup: setupEmail,
         teardown: teardownEmail,
         backup: NOOP,
-        restore: setupEmail
+        restore: setupEmail,
+        clear: NOOP
     },
     ldap: {
         setup: setupLdap,
         teardown: teardownLdap,
         backup: NOOP,
-        restore: setupLdap
+        restore: setupLdap,
+        clear: NOOP
     },
     localstorage: {
         setup: setupLocalStorage, // docker creates the directory for us
         teardown: teardownLocalStorage,
         backup: NOOP, // no backup because it's already inside app data
-        restore: NOOP
+        restore: NOOP,
+        clear: clearLocalStorage
     },
     mongodb: {
         setup: setupMongoDb,
         teardown: teardownMongoDb,
         backup: backupMongoDb,
-        restore: restoreMongoDb
+        restore: restoreMongoDb,
+        clear: clearMongodb
     },
     mysql: {
         setup: setupMySql,
         teardown: teardownMySql,
         backup: backupMySql,
         restore: restoreMySql,
+        clear: clearMySql
     },
     oauth: {
         setup: setupOauth,
         teardown: teardownOauth,
         backup: NOOP,
-        restore: setupOauth
+        restore: setupOauth,
+        clear: NOOP
     },
     postgresql: {
         setup: setupPostgreSql,
         teardown: teardownPostgreSql,
         backup: backupPostgreSql,
-        restore: restorePostgreSql
+        restore: restorePostgreSql,
+        clear: clearPostgreSql
     },
     recvmail: {
         setup: setupRecvMail,
         teardown: teardownRecvMail,
         backup: NOOP,
-        restore: setupRecvMail
+        restore: setupRecvMail,
+        clear: NOOP
     },
     redis: {
         setup: setupRedis,
         teardown: teardownRedis,
         backup: backupRedis,
-        restore: setupRedis // same thing
+        restore: setupRedis, // same thing
+        clear: clearRedis
     },
     sendmail: {
         setup: setupSendMail,
         teardown: teardownSendMail,
         backup: NOOP,
-        restore: setupSendMail
+        restore: setupSendMail,
+        clear: NOOP
     },
     scheduler: {
         setup: NOOP,
         teardown: NOOP,
         backup: NOOP,
-        restore: NOOP
+        restore: NOOP,
+        clear: NOOP
     },
     docker: {
         setup: NOOP,
         teardown: NOOP,
         backup: NOOP,
-        restore: NOOP
+        restore: NOOP,
+        clear: NOOP
     }
 };
 
@@ -176,6 +189,24 @@ function backupAddons(app, addons, callback) {
         if (!(addon in KNOWN_ADDONS)) return iteratorCallback(new Error('No such addon:' + addon));
 
         KNOWN_ADDONS[addon].backup(app, addons[addon], iteratorCallback);
+    }, callback);
+}
+
+function clearAddons(app, addons, callback) {
+    assert.strictEqual(typeof app, 'object');
+    assert(!addons || typeof addons === 'object');
+    assert.strictEqual(typeof callback, 'function');
+
+    debugApp(app, 'clearAddons');
+
+    if (!addons) return callback(null);
+
+    debugApp(app, 'clearAddons: clearing %j', Object.keys(addons));
+
+    async.eachSeries(Object.keys(addons), function iterator (addon, iteratorCallback) {
+        if (!(addon in KNOWN_ADDONS)) return iteratorCallback(new Error('No such addon:' + addon));
+
+        KNOWN_ADDONS[addon].clear(app, addons[addon], iteratorCallback);
     }, callback);
 }
 
@@ -265,6 +296,16 @@ function setupLocalStorage(app, options, callback) {
 
     // if you change the name, you have to change getMountsSync
     docker.createVolume(app, `${app.id}-localstorage`, 'data', callback);
+}
+
+function clearLocalStorage(app, options, callback) {
+    assert.strictEqual(typeof app, 'object');
+    assert.strictEqual(typeof options, 'object');
+    assert.strictEqual(typeof callback, 'function');
+
+    debugApp(app, 'clearLocalStorage');
+
+    docker.clearVolume(app, `${app.id}-localstorage`, 'data', callback);
 }
 
 function teardownLocalStorage(app, options, callback) {
@@ -525,6 +566,23 @@ function setupMySql(app, options, callback) {
     });
 }
 
+function clearMySql(app, options, callback) {
+    assert.strictEqual(typeof app, 'object');
+    assert.strictEqual(typeof options, 'object');
+    assert.strictEqual(typeof callback, 'function');
+
+    const dbname = mysqlDatabaseName(app.id);
+    var cmd = [ '/addons/mysql/service.sh', options.multipleDatabases ? 'clear-prefix' : 'clear', dbname ]; // FIXME: clear-prefix does not exist!
+
+    debugApp(app, 'Clearing mysql');
+
+    docker.execContainer('mysql', cmd, { }, function (error) {
+        if (error) return callback(error);
+
+        callback();
+    });
+}
+
 function teardownMySql(app, options, callback) {
     assert.strictEqual(typeof app, 'object');
     assert.strictEqual(typeof options, 'object');
@@ -567,18 +625,14 @@ function restoreMySql(app, options, callback) {
 
     callback = once(callback); // ChildProcess exit may or may not be called after error
 
-    setupMySql(app, options, function (error) {
-        if (error) return callback(error);
+    debugApp(app, 'restoreMySql');
 
-        debugApp(app, 'restoreMySql');
+    var input = fs.createReadStream(path.join(paths.APPS_DATA_DIR, app.id, 'mysqldump'));
+    input.on('error', callback);
 
-        var input = fs.createReadStream(path.join(paths.APPS_DATA_DIR, app.id, 'mysqldump'));
-        input.on('error', callback);
-
-        const dbname = mysqlDatabaseName(app.id);
-        var cmd = [ '/addons/mysql/service.sh', options.multipleDatabases ? 'restore-prefix' : 'restore', dbname ];
-        docker.execContainer('mysql', cmd, { stdin: input }, callback);
-    });
+    const dbname = mysqlDatabaseName(app.id);
+    var cmd = [ '/addons/mysql/service.sh', options.multipleDatabases ? 'restore-prefix' : 'restore', dbname ];
+    docker.execContainer('mysql', cmd, { stdin: input }, callback);
 }
 
 function setupPostgreSql(app, options, callback) {
@@ -611,6 +665,24 @@ function setupPostgreSql(app, options, callback) {
             debugApp(app, 'Setting postgresql addon config to %j', env);
             appdb.setAddonConfig(app.id, 'postgresql', env, callback);
         });
+    });
+}
+
+function clearPostgreSql(app, options, callback) {
+    assert.strictEqual(typeof app, 'object');
+    assert.strictEqual(typeof options, 'object');
+    assert.strictEqual(typeof callback, 'function');
+
+    const appId = app.id.replace(/-/g, '');
+
+    var cmd = [ '/addons/postgresql/service.sh', 'clear', appId ];
+
+    debugApp(app, 'Clearing postgresql');
+
+    docker.execContainer('postgresql', cmd, { }, function (error) {
+        if (error) return callback(error);
+
+        callback();
     });
 }
 
@@ -657,19 +729,15 @@ function restorePostgreSql(app, options, callback) {
 
     callback = once(callback);
 
-    setupPostgreSql(app, options, function (error) {
-        if (error) return callback(error);
+    debugApp(app, 'restorePostgreSql');
 
-        debugApp(app, 'restorePostgreSql');
+    var input = fs.createReadStream(path.join(paths.APPS_DATA_DIR, app.id, 'postgresqldump'));
+    input.on('error', callback);
 
-        var input = fs.createReadStream(path.join(paths.APPS_DATA_DIR, app.id, 'postgresqldump'));
-        input.on('error', callback);
+    const appId = app.id.replace(/-/g, '');
+    var cmd = [ '/addons/postgresql/service.sh', 'restore', appId ];
 
-        const appId = app.id.replace(/-/g, '');
-        var cmd = [ '/addons/postgresql/service.sh', 'restore', appId ];
-
-        docker.execContainer('postgresql', cmd, { stdin: input }, callback);
-    });
+    docker.execContainer('postgresql', cmd, { stdin: input }, callback);
 }
 
 function getAddonDetails(containerName, tokenEnvName, callback) {
@@ -735,6 +803,25 @@ function setupMongoDb(app, options, callback) {
     });
 }
 
+function clearMongodb(app, options, callback) {
+    assert.strictEqual(typeof app, 'object');
+    assert.strictEqual(typeof options, 'object');
+    assert.strictEqual(typeof callback, 'function');
+
+    debugApp(app, 'Clearing mongodb');
+
+    getAddonDetails('mongodb', 'MONGODB_CLOUDRON_TOKEN', function (error, result) {
+        if (error) return callback(error);
+
+        request.post(`https://${result.ip}:3000/databases/${app.id}/clear?access_token=${result.token}`, { rejectUnauthorized: false }, function (error, response, body) {
+            if (error) return callback(new Error('Error clearing mongodb: ' + error));
+            if (response.statusCode !== 200) return callback(new Error(`Error clearing mongodb. Status code: ${response.statusCode}`));
+
+            callback();
+        });
+    });
+}
+
 function teardownMongoDb(app, options, callback) {
     assert.strictEqual(typeof app, 'object');
     assert.strictEqual(typeof options, 'object');
@@ -786,26 +873,22 @@ function restoreMongoDb(app, options, callback) {
 
     callback = once(callback); // protect from multiple returns with streams
 
-    setupMongoDb(app, options, function (error) {
+    debugApp(app, 'restoreMongoDb');
+
+    getAddonDetails('mongodb', 'MONGODB_CLOUDRON_TOKEN', function (error, result) {
         if (error) return callback(error);
 
-        debugApp(app, 'restoreMongoDb');
+        const readStream = fs.createReadStream(path.join(paths.APPS_DATA_DIR, app.id, 'mongodbdump'));
+        readStream.on('error', callback);
 
-        getAddonDetails('mongodb', 'MONGODB_CLOUDRON_TOKEN', function (error, result) {
+        const restoreReq = request.post(`https://${result.ip}:3000/databases/${app.id}/restore?access_token=${result.token}`, { rejectUnauthorized: false }, function (error, response, body) {
             if (error) return callback(error);
+            if (response.statusCode !== 200) return callback(new Error(`Unexpected response from mongodb addon ${response.statusCode}`));
 
-            const readStream = fs.createReadStream(path.join(paths.APPS_DATA_DIR, app.id, 'mongodbdump'));
-            readStream.on('error', callback);
-
-            const restoreReq = request.post(`https://${result.ip}:3000/databases/${app.id}/restore?access_token=${result.token}`, { rejectUnauthorized: false }, function (error, response, body) {
-                if (error) return callback(error);
-                if (response.statusCode !== 200) return callback(new Error(`Unexpected response from mongodb addon ${response.statusCode}`));
-
-                callback(null);
-            });
-
-            readStream.pipe(restoreReq);
+            callback(null);
         });
+
+        readStream.pipe(restoreReq);
     });
 }
 
@@ -869,6 +952,25 @@ function setupRedis(app, options, callback) {
         ], function (error) {
             if (error) debug('Error setting up redis: ', error);
             callback(error);
+        });
+    });
+}
+
+function clearRedis(app, options, callback) {
+    assert.strictEqual(typeof app, 'object');
+    assert.strictEqual(typeof options, 'object');
+    assert.strictEqual(typeof callback, 'function');
+
+    debugApp(app, 'Clearing redis');
+
+    getAddonDetails('redis-' + app.id, 'CLOUDRON_REDIS_TOKEN', function (error, result) {
+        if (error) return callback(error);
+
+        request.post(`https://${result.ip}:3000/clear?access_token=${result.token}`, { rejectUnauthorized: false }, function (error, response, body) {
+            if (error) return callback(new Error('Error clearing redis: ' + error));
+            if (response.statusCode !== 201) return callback(new Error(`Error clearing redis. Status code: ${response.statusCode}`));
+
+            callback(null);
         });
     });
 }

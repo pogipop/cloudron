@@ -172,21 +172,23 @@ function deleteAppDir(app, options, callback) {
     assert.strictEqual(typeof options, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    // remove symlinked directory contents and not the symlink
-    const volumeDir = path.join(paths.APPS_DATA_DIR, app.id);
-    const isSymlinked = safe.fs.readlinkSync(volumeDir) !== volumeDir;
+    const appDataDir = path.join(paths.APPS_DATA_DIR, app.id);
+    let resolvedAppDataDir = safe.fs.readlinkSync(appDataDir) || appDataDir;
 
-    // only remove folder contents if removeDirectory is falsy and we do have a symlink
-    const subdir = options.removeDirectory || isSymlinked ? '' : '*';
+    if (!safe.fs.existsSync(resolvedAppDataDir)) return callback();
 
-    docker.removeVolume(app, app.id, subdir, function (error) {
-        if (error) {
-            debug(`deleteVolume: error removing ${volumeDir} (symlink ${isSymlinked}): ${error}`);
-            return callback(error);
-        }
+    const dirents = safe.fs.readdirSync(resolvedAppDataDir, { withFileTypes: true });
+    if (!dirents) return callback(`Error listing ${resolvedAppDataDir}: ${safe.error.message}`);
 
-        callback();
+    // remove only files. directories inside app dir are currently volumes managed by the addons
+    dirents.forEach(function (dirent) {
+        if (!dirent.isDirectory()) safe.fs.unlinkSync(path.join(resolvedAppDataDir, name));
     });
+
+    // if this fails, it's probably because the localstorage/redis addons have not cleaned up properly
+    if (options.removeDirectory && !safe.fs.rmdirSync(appDataDir)) return callback(safe.error.code === 'ENOENT' ? null : safe.error);
+
+    callback(null);
 }
 
 function addCollectdProfile(app, callback) {
@@ -473,9 +475,7 @@ function install(app, callback) {
         deleteMainContainer.bind(null, app),
         function teardownAddons(next) {
             // when restoring, app does not require these addons anymore. remove carefully to preserve the db passwords
-            var addonsToRemove = !isRestoring
-                ? app.manifest.addons
-                : _.omit(app.oldConfig.manifest.addons, Object.keys(app.manifest.addons));
+            var addonsToRemove = !isRestoring ? app.manifest.addons : _.omit(app.oldConfig.manifest.addons, Object.keys(app.manifest.addons));
 
             addons.teardownAddons(app, addonsToRemove, next);
         },
@@ -511,6 +511,8 @@ function install(app, callback) {
             } else {
                 async.series([
                     updateApp.bind(null, app, { installationProgress: '60, Download backup and restoring addons' }),
+                    addons.setupAddons.bind(null, app, app.manifest.addons),
+                    addons.clearAddons.bind(null, app, app.manifest.addons),
                     backups.restoreApp.bind(null, app, app.manifest.addons, restoreConfig),
                 ], next);
             }

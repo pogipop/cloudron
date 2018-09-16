@@ -18,7 +18,8 @@ exports = module.exports = {
     inspectByName: inspect,
     execContainer: execContainer,
     createVolume: createVolume,
-    removeVolume: removeVolume
+    removeVolume: removeVolume,
+    clearVolume: clearVolume
 };
 
 function connectionInstance() {
@@ -467,6 +468,15 @@ function createVolume(app, name, subdir, callback) {
             callback();
         });
     });
+}
+
+function clearVolume(app, name, subdir, callback) {
+    assert.strictEqual(typeof app, 'object');
+    assert.strictEqual(typeof name, 'string');
+    assert.strictEqual(typeof subdir, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    shell.sudo('removeVolume', [ RMVOLUME_CMD, app.id, subdir ], callback);
 }
 
 function removeVolume(app, name, subdir, callback) {
