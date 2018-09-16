@@ -254,8 +254,8 @@ function startMongodb(callback) {
                 --memory-swap ${memoryLimit * 2}m \
                 --dns 172.18.0.1 \
                 --dns-search=. \
-                -e MONGODB_ROOT_PASSWORD="${rootPassword}" \
-                -e MONGODB_CLOUDRON_TOKEN="${cloudronToken}" \
+                -e CLOUDRON_MONGODB_ROOT_PASSWORD="${rootPassword}" \
+                -e CLOUDRON_MONGODB_TOKEN="${cloudronToken}" \
                 -v "${dataDir}/mongodb:/var/lib/mongodb" \
                 --read-only -v /tmp -v /run "${tag}"`;
 
