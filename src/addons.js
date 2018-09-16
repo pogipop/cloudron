@@ -642,28 +642,36 @@ function setupPostgreSql(app, options, callback) {
 
     debugApp(app, 'Setting up postgresql');
 
-    appdb.getAddonConfigByName(app.id, 'postgresql', 'POSTGRESQL_PASSWORD', function (error, existingPassword) {
+    const appId = app.id.replace(/-/g, '');
+
+    appdb.getAddonConfigByName(appId, 'postgresql', 'POSTGRESQL_PASSWORD', function (error, existingPassword) {
         if (error && error.reason !== DatabaseError.NOT_FOUND) return callback(error);
 
-        const password = error ? hat(4 * 128) : existingPassword;
-        const appId = app.id.replace(/-/g, '');
+        const data = {
+            database: `db${appId}`,
+            username: `user${appId}`,
+            password: error ? hat(4 * 128) : existingPassword
+        };
 
-        var cmd = [ '/addons/postgresql/service.sh', 'add', appId, password ];
-
-        docker.execContainer('postgresql', cmd, { bufferStdout: true }, function (error) {
+        getAddonDetails('postgresql', 'CLOUDRON_POSTGRESQL_TOKEN', function (error, result) {
             if (error) return callback(error);
 
-            var env = [
-                { name: 'POSTGRESQL_URL', value: `postgres://user${appId}:${password}@postgresql/db${appId}` },
-                { name: 'POSTGRESQL_USERNAME', value: `user${appId}` },
-                { name: 'POSTGRESQL_PASSWORD', value: password },
-                { name: 'POSTGRESQL_HOST', value: 'postgresql' },
-                { name: 'POSTGRESQL_PORT', value: '5432' },
-                { name: 'POSTGRESQL_DATABASE', value: `db${appId}` }
-            ];
+            request.post(`https://${result.ip}:3000/databases?access_token=${result.token}`, { rejectUnauthorized: false, json: data }, function (error, response, body) {
+                if (error) return callback(new Error('Error setting up postgresql: ' + error));
+                if (response.statusCode !== 201) return callback(new Error(`Error setting up postgresql. Status code: ${response.statusCode}`));
 
-            debugApp(app, 'Setting postgresql addon config to %j', env);
-            appdb.setAddonConfig(app.id, 'postgresql', env, callback);
+                var env = [
+                    { name: 'POSTGRESQL_URL', value: `postgres://${data.username}:${data.password}@postgresql/${data.database}` },
+                    { name: 'POSTGRESQL_USERNAME', value: data.username },
+                    { name: 'POSTGRESQL_PASSWORD', value: data.password },
+                    { name: 'POSTGRESQL_HOST', value: 'postgresql' },
+                    { name: 'POSTGRESQL_PORT', value: '5432' },
+                    { name: 'POSTGRESQL_DATABASE', value: data.database }
+                ];
+
+                debugApp(app, 'Setting postgresql addon config to %j', env);
+                appdb.setAddonConfig(app.id, 'postgresql', env, callback);
+            });
         });
     });
 }
@@ -675,14 +683,17 @@ function clearPostgreSql(app, options, callback) {
 
     const appId = app.id.replace(/-/g, '');
 
-    var cmd = [ '/addons/postgresql/service.sh', 'clear', appId ];
-
     debugApp(app, 'Clearing postgresql');
 
-    docker.execContainer('postgresql', cmd, { }, function (error) {
+    getAddonDetails('postgresql', 'CLOUDRON_POSTGRESQL_TOKEN', function (error, result) {
         if (error) return callback(error);
 
-        callback();
+        request.delete(`https://${result.ip}:3000/databases/db${appId}/clear?access_token=${result.token}}`, { rejectUnauthorized: false }, function (error, response, body) {
+            if (error) return callback(new Error('Error clearing postgresql: ' + error));
+            if (response.statusCode !== 200) return callback(new Error(`Error clearing postgresql. Status code: ${response.statusCode}`));
+
+            callback(null);
+        });
     });
 }
 
@@ -693,14 +704,15 @@ function teardownPostgreSql(app, options, callback) {
 
     const appId = app.id.replace(/-/g, '');
 
-    var cmd = [ '/addons/postgresql/service.sh', 'remove', appId ];
-
-    debugApp(app, 'Tearing down postgresql');
-
-    docker.execContainer('postgresql', cmd, { }, function (error) {
+    getAddonDetails('postgresql', 'CLOUDRON_POSTGRESQL_TOKEN', function (error, result) {
         if (error) return callback(error);
 
-        appdb.unsetAddonConfig(app.id, 'postgresql', callback);
+        request.delete(`https://${result.ip}:3000/databases/db${appId}?access_token=${result.token}&username=user${appId}`, { rejectUnauthorized: false }, function (error, response, body) {
+            if (error) return callback(new Error('Error tearing down postgresql: ' + error));
+            if (response.statusCode !== 200) return callback(new Error(`Error tearing down postgresql. Status code: ${response.statusCode}`));
+
+            appdb.unsetAddonConfig(app.id, 'postgresql', callback);
+        });
     });
 }
 
@@ -711,15 +723,22 @@ function backupPostgreSql(app, options, callback) {
 
     debugApp(app, 'Backing up postgresql');
 
-    callback = once(callback); // ChildProcess exit may or may not be called after error
+    callback = once(callback); // protect from multiple returns with streams
 
-    var output = fs.createWriteStream(path.join(paths.APPS_DATA_DIR, app.id, 'postgresqldump'));
-    output.on('error', callback);
+    getAddonDetails('postgresql', 'CLOUDRON_POSTGRESQL_TOKEN', function (error, result) {
+        if (error) return callback(error);
 
-    const appId = app.id.replace(/-/g, '');
-    var cmd = [ '/addons/postgresql/service.sh', 'backup', appId ];
+        const writeStream = fs.createWriteStream(path.join(paths.APPS_DATA_DIR, app.id, 'postgresqldump'));
+        writeStream.on('error', callback);
 
-    docker.execContainer('postgresql', cmd, { stdout: output }, callback);
+        const req = request.post(`https://${result.ip}:3000/databases/${app.id}/backup?access_token=${result.token}`, { rejectUnauthorized: false }, function (error, response, body) {
+            if (error) return callback(error);
+            if (response.statusCode !== 200) return callback(new Error(`Unexpected response from mongodb addon ${response.statusCode}`));
+
+            callback(null);
+        });
+        req.pipe(writeStream);
+    });
 }
 
 function restorePostgreSql(app, options, callback) {
@@ -727,17 +746,31 @@ function restorePostgreSql(app, options, callback) {
     assert.strictEqual(typeof options, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    callback = once(callback);
-
-    debugApp(app, 'restorePostgreSql');
-
-    var input = fs.createReadStream(path.join(paths.APPS_DATA_DIR, app.id, 'postgresqldump'));
-    input.on('error', callback);
+    debugApp(app, 'Restore postgresql');
 
     const appId = app.id.replace(/-/g, '');
-    var cmd = [ '/addons/postgresql/service.sh', 'restore', appId ];
 
-    docker.execContainer('postgresql', cmd, { stdin: input }, callback);
+    callback = once(callback); // protect from multiple returns with streams
+
+    setupPostgreSql(app, options, function (error) {
+        if (error) return callback(error);
+
+        getAddonDetails('postgresql', 'CLOUDRON_POSTGRESQL_TOKEN', function (error, result) {
+            if (error) return callback(error);
+
+        var input = fs.createReadStream(path.join(paths.APPS_DATA_DIR, app.id, 'postgresqldump'));
+        input.on('error', callback);
+
+            const restoreReq = request.post(`https://${result.ip}:3000/databases/${app.id}/restore?access_token=${result.token}&username=user${appId}`, { rejectUnauthorized: false }, function (error, response, body) {
+                if (error) return callback(error);
+                if (response.statusCode !== 200) return callback(new Error(`Unexpected response from postgresql addon ${response.statusCode}`));
+
+                callback(null);
+            });
+
+            input.pipe(restoreReq);
+        });
+    });
 }
 
 function getAddonDetails(containerName, tokenEnvName, callback) {
