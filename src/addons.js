@@ -780,7 +780,7 @@ function setupMongoDb(app, options, callback) {
             password: error ? hat(4 * 128) : existingPassword
         };
 
-        getAddonDetails('mongodb', 'MONGODB_CLOUDRON_TOKEN', function (error, result) {
+        getAddonDetails('mongodb', 'CLOUDRON_MONGODB_TOKEN', function (error, result) {
             if (error) return callback(error);
 
             request.post(`https://${result.ip}:3000/databases?access_token=${result.token}`, { rejectUnauthorized: false, json: data }, function (error, response, body) {
@@ -810,7 +810,7 @@ function clearMongodb(app, options, callback) {
 
     debugApp(app, 'Clearing mongodb');
 
-    getAddonDetails('mongodb', 'MONGODB_CLOUDRON_TOKEN', function (error, result) {
+    getAddonDetails('mongodb', 'CLOUDRON_MONGODB_TOKEN', function (error, result) {
         if (error) return callback(error);
 
         request.post(`https://${result.ip}:3000/databases/${app.id}/clear?access_token=${result.token}`, { rejectUnauthorized: false }, function (error, response, body) {
@@ -829,7 +829,7 @@ function teardownMongoDb(app, options, callback) {
 
     debugApp(app, 'Tearing down mongodb');
 
-    getAddonDetails('mongodb', 'MONGODB_CLOUDRON_TOKEN', function (error, result) {
+    getAddonDetails('mongodb', 'CLOUDRON_MONGODB_TOKEN', function (error, result) {
         if (error) return callback(error);
 
         request.delete(`https://${result.ip}:3000/databases/${app.id}?access_token=${result.token}`, { rejectUnauthorized: false }, function (error, response, body) {
@@ -850,7 +850,7 @@ function backupMongoDb(app, options, callback) {
 
     callback = once(callback); // protect from multiple returns with streams
 
-    getAddonDetails('mongodb', 'MONGODB_CLOUDRON_TOKEN', function (error, result) {
+    getAddonDetails('mongodb', 'CLOUDRON_MONGODB_TOKEN', function (error, result) {
         if (error) return callback(error);
 
         const writeStream = fs.createWriteStream(path.join(paths.APPS_DATA_DIR, app.id, 'mongodbdump'));
@@ -875,7 +875,7 @@ function restoreMongoDb(app, options, callback) {
 
     debugApp(app, 'restoreMongoDb');
 
-    getAddonDetails('mongodb', 'MONGODB_CLOUDRON_TOKEN', function (error, result) {
+    getAddonDetails('mongodb', 'CLOUDRON_MONGODB_TOKEN', function (error, result) {
         if (error) return callback(error);
 
         const readStream = fs.createReadStream(path.join(paths.APPS_DATA_DIR, app.id, 'mongodbdump'));
