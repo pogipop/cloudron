@@ -117,9 +117,9 @@ function removeOldImages(callback) {
     for (var imageName in infra.images) {
         if (imageName === 'redis') continue; // see #223
         const image = infra.images[imageName];
-        const tag = image.tag.replace(/@sha256.*/, '');
+        const tag = image.tag.replace(/:.*@/, '@'); // this remove the semver tag
         debug('cleaning up images of %j', image);
-        const cmd = `docker images "${image.repo}" | tail -n +2 | awk '{ print $1 ":" $2 }' | grep -v "${tag}" | xargs --no-run-if-empty docker rmi`;
+        const cmd = `docker images --digests "${image.repo}" | tail -n +2 | awk '{ print $1 "@" $3 }' | grep -v "${tag}" | xargs --no-run-if-empty docker rmi`;
         shell.execSync('removeOldImagesSync', cmd);
     }
 
