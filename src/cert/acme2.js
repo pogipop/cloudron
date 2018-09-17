@@ -179,7 +179,7 @@ Acme2.prototype.registerUser = function (callback) {
     var that = this;
     this.sendSignedRequest(this.directory.newAccount, JSON.stringify(payload), function (error, result) {
         if (error) return callback(new Acme2Error(Acme2Error.EXTERNAL_ERROR, 'Network error when registering new account: ' + error.message));
-        if (result.statusCode !== 200) return callback(new Acme2Error(Acme2Error.EXTERNAL_ERROR, util.format('Failed to register new account. Expecting 200, got %s %s', result.statusCode, result.text)));
+        if (result.statusCode !== 201) return callback(new Acme2Error(Acme2Error.EXTERNAL_ERROR, util.format('Failed to register new account. Expecting 201, got %s %s', result.statusCode, result.text)));
 
         debug(`registerUser: user registered keyid: ${result.headers.location}`);
 
