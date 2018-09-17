@@ -224,7 +224,7 @@ function startPostgresql(callback) {
                 --memory-swap ${memoryLimit * 2}m \
                 --dns 172.18.0.1 \
                 --dns-search=. \
-                -e POSTGRESQL_ROOT_PASSWORD="${rootPassword}" \
+                -e CLOUDRON_POSTGRESQL_ROOT_PASSWORD="${rootPassword}" \
                 -e CLOUDRON_POSTGRESQL_TOKEN="${cloudronToken}" \
                 -v "${dataDir}/postgresql:/var/lib/postgresql" \
                 --read-only -v /tmp -v /run "${tag}"`;
