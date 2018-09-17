@@ -119,7 +119,8 @@ function removeOldImages(callback) {
         const image = infra.images[imageName];
         const tag = image.tag.replace(/:.*@/, '@'); // this remove the semver tag
         debug('cleaning up images of %j', image);
-        const cmd = `docker images --digests "${image.repo}" | tail -n +2 | awk '{ print $1 "@" $3 }' | grep -v "${tag}" | xargs --no-run-if-empty docker rmi`;
+        // older docker images did not have sha256 and thus have it as <none>
+        const cmd = `docker images --digests "${image.repo}" | tail -n +2 | awk '{ print $1 ($3=="<none>" ? (":" $2) : ("@" $3)) }' | grep -v "${tag}" | xargs --no-run-if-empty docker rmi`;
         shell.execSync('removeOldImagesSync', cmd);
     }
 
