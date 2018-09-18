@@ -981,9 +981,11 @@ function setupRedis(app, options, callback) {
             shell.execSync.bind(null, 'stopRedis', `docker stop --time=10 ${redisName} 2>/dev/null || true`),
             shell.execSync.bind(null, 'stopRedis', `docker rm --volumes ${redisName} 2>/dev/null || true`),
             shell.execSync.bind(null, 'startRedis', cmd),
-            appdb.setAddonConfig.bind(null, app.id, 'redis', env)
+            appdb.setAddonConfig.bind(null, app.id, 'redis', env),
+            function (next) { setTimeout(next, 5000); } // TODO: waitForRedis?
         ], function (error) {
             if (error) debug('Error setting up redis: ', error);
+
             callback(error);
         });
     });
