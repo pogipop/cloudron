@@ -180,12 +180,8 @@ function startMysql(callback) {
     const tag = infra.images.mysql.tag;
     const dataDir = paths.PLATFORM_DATA_DIR;
     const rootPassword = hat(8 * 128);
+    const cloudronToken = hat(8 * 128);
     const memoryLimit = (1 + Math.round(os.totalmem()/(1024*1024*1024)/4)) * 256;
-
-    if (!safe.fs.writeFileSync(paths.ADDON_CONFIG_DIR + '/mysql_vars.sh',
-        'MYSQL_ROOT_PASSWORD=' + rootPassword +'\nMYSQL_ROOT_HOST=172.18.0.1', 'utf8')) {
-        return callback(new Error('Could not create mysql var file:' + safe.error.message));
-    }
 
     const cmd = `docker run --restart=always -d --name="mysql" \
                 --net cloudron \
@@ -198,8 +194,10 @@ function startMysql(callback) {
                 --memory-swap ${memoryLimit * 2}m \
                 --dns 172.18.0.1 \
                 --dns-search=. \
+                -e CLOUDRON_MYSQL_TOKEN=${cloudronToken} \
+                -e CLOUDRON_MYSQL_ROOT_HOST=172.18.0.1 \
+                -e CLOUDRON_MYSQL_ROOT_PASSWORD=${rootPassword} \
                 -v "${dataDir}/mysql:/var/lib/mysql" \
-                -v "${dataDir}/addons/mysql_vars.sh:/etc/mysql/mysql_vars.sh:ro" \
                 --read-only -v /tmp -v /run "${tag}"`;
 
     shell.execSync('startMysql', cmd);
