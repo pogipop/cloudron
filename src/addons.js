@@ -745,7 +745,7 @@ function clearPostgreSql(app, options, callback) {
     getAddonDetails('postgresql', 'CLOUDRON_POSTGRESQL_TOKEN', function (error, result) {
         if (error) return callback(error);
 
-        request.delete(`https://${result.ip}:3000/databases/db${appId}/clear?access_token=${result.token}}`, { rejectUnauthorized: false }, function (error, response) {
+        request.post(`https://${result.ip}:3000/databases/db${appId}/clear?access_token=${result.token}}`, { rejectUnauthorized: false }, function (error, response) {
             if (error) return callback(new Error('Error clearing postgresql: ' + error));
             if (response.statusCode !== 200) return callback(new Error(`Error clearing postgresql. Status code: ${response.statusCode}`));
 
