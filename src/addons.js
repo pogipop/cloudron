@@ -536,32 +536,41 @@ function setupMySql(app, options, callback) {
     appdb.getAddonConfigByName(app.id, 'mysql', 'MYSQL_PASSWORD', function (error, existingPassword) {
         if (error && error.reason !== DatabaseError.NOT_FOUND) return callback(error);
 
-        const dbname = mysqlDatabaseName(app.id);
-        const password = error ? hat(4 * 48) : existingPassword; // see box#362 for password length
+        const tmp = mysqlDatabaseName(app.id);
 
-        var cmd = [ '/addons/mysql/service.sh', options.multipleDatabases ? 'add-prefix' : 'add', dbname, password ];
+        const data = {
+            database: tmp,
+            prefix: tmp,
+            username: tmp,
+            password: error ? hat(4 * 48) : existingPassword // see box#362 for password length
+        };
 
-        docker.execContainer('mysql', cmd, { bufferStdout: true }, function (error) {
+        getAddonDetails('mysql', 'CLOUDRON_MYSQL_TOKEN', function (error, result) {
             if (error) return callback(error);
 
-            var env = [
-                { name: 'MYSQL_USERNAME', value: dbname },
-                { name: 'MYSQL_PASSWORD', value: password },
-                { name: 'MYSQL_HOST', value: 'mysql' },
-                { name: 'MYSQL_PORT', value: '3306' }
-            ];
+            request.post(`https://${result.ip}:3000/` + (options.multipleDatabases ? 'prefixes' : 'databases') + `?access_token=${result.token}`, { rejectUnauthorized: false, json: data }, function (error, response, body) {
+                if (error) return callback(new Error('Error setting up mysql: ' + error));
+                if (response.statusCode !== 201) return callback(new Error(`Error setting up mysql. Status code: ${response.statusCode}`));
 
-            if (options.multipleDatabases) {
-                env = env.concat({ name: 'MYSQL_DATABASE_PREFIX', value: `${dbname}_` });
-            } else {
-                env = env.concat(
-                    { name: 'MYSQL_URL', value: `mysql://${dbname}:${password}@mysql/${dbname}` },
-                    { name: 'MYSQL_DATABASE', value: dbname }
-                );
-            }
+                var env = [
+                    { name: 'MYSQL_USERNAME', value: data.username },
+                    { name: 'MYSQL_PASSWORD', value: data.password },
+                    { name: 'MYSQL_HOST', value: 'mysql' },
+                    { name: 'MYSQL_PORT', value: '3306' }
+                ];
 
-            debugApp(app, 'Setting mysql addon config to %j', env);
-            appdb.setAddonConfig(app.id, 'mysql', env, callback);
+                if (options.multipleDatabases) {
+                    env = env.concat({ name: 'MYSQL_DATABASE_PREFIX', value: `${data.prefix}_` });
+                } else {
+                    env = env.concat(
+                        { name: 'MYSQL_URL', value: `mysql://${data.username}:${data.password}@mysql/${data.database}` },
+                        { name: 'MYSQL_DATABASE', value: data.database }
+                    );
+                }
+
+                debugApp(app, 'Setting mysql addon config to %j', env);
+                appdb.setAddonConfig(app.id, 'mysql', env, callback);
+            });
         });
     });
 }
@@ -571,15 +580,16 @@ function clearMySql(app, options, callback) {
     assert.strictEqual(typeof options, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    const dbname = mysqlDatabaseName(app.id);
-    var cmd = [ '/addons/mysql/service.sh', options.multipleDatabases ? 'clear-prefix' : 'clear', dbname ]; // FIXME: clear-prefix does not exist!
+    const database = mysqlDatabaseName(app.id);
 
-    debugApp(app, 'Clearing mysql');
-
-    docker.execContainer('mysql', cmd, { }, function (error) {
+    getAddonDetails('mysql', 'CLOUDRON_MYSQL_TOKEN', function (error, result) {
         if (error) return callback(error);
 
-        callback();
+        request.post(`https://${result.ip}:3000/` + (options.multipleDatabases ? 'prefixes' : 'databases') + `/${database}/clear?access_token=${result.token}`, { rejectUnauthorized: false, json: data }, function (error, response, body) {
+            if (error) return callback(new Error('Error clearing mysql: ' + error));
+            if (response.statusCode !== 200) return callback(new Error(`Error clearing mysql. Status code: ${response.statusCode}`));
+            callback();
+        });
     });
 }
 
@@ -588,15 +598,18 @@ function teardownMySql(app, options, callback) {
     assert.strictEqual(typeof options, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    const dbname = mysqlDatabaseName(app.id);
-    var cmd = [ '/addons/mysql/service.sh', options.multipleDatabases ? 'remove-prefix' : 'remove', dbname ];
+    const database = mysqlDatabaseName(app.id);
+    const username = database;
 
-    debugApp(app, 'Tearing down mysql');
-
-    docker.execContainer('mysql', cmd, { }, function (error) {
+    getAddonDetails('mysql', 'CLOUDRON_MYSQL_TOKEN', function (error, result) {
         if (error) return callback(error);
 
-        appdb.unsetAddonConfig(app.id, 'mysql', callback);
+        request.delete(`https://${result.ip}:3000/` + (options.multipleDatabases ? 'prefixes' : 'databases') + `/${database}?access_token=${result.token}&username=${username}`, { rejectUnauthorized: false, json: data }, function (error, response, body) {
+            if (error) return callback(new Error('Error clearing mysql: ' + error));
+            if (response.statusCode !== 200) return callback(new Error(`Error clearing mysql. Status code: ${response.statusCode}`));
+
+            appdb.unsetAddonConfig(app.id, 'mysql', callback);
+        });
     });
 }
 
@@ -605,17 +618,26 @@ function backupMySql(app, options, callback) {
     assert.strictEqual(typeof options, 'object');
     assert.strictEqual(typeof callback, 'function');
 
+    const database = mysqlDatabaseName(app.id);
+
     debugApp(app, 'Backing up mysql');
 
-    callback = once(callback); // ChildProcess exit may or may not be called after error
+    callback = once(callback); // protect from multiple returns with streams
 
-    var output = fs.createWriteStream(path.join(paths.APPS_DATA_DIR, app.id, 'mysqldump'));
-    output.on('error', callback);
+    getAddonDetails('mysql', 'CLOUDRON_MYSQL_TOKEN', function (error, result) {
+        if (error) return callback(error);
 
-    const dbname = mysqlDatabaseName(app.id);
-    var cmd = [ '/addons/mysql/service.sh', options.multipleDatabases ? 'backup-prefix' : 'backup', dbname ];
+        const writeStream = fs.createWriteStream(path.join(paths.APPS_DATA_DIR, app.id, 'mysqldump'));
+        writeStream.on('error', callback);
 
-    docker.execContainer('mysql', cmd, { stdout: output }, callback);
+        const req = request.post(`https://${result.ip}:3000/` + (options.multipleDatabases ? 'prefixes' : 'databases') + `/${database}/backup?access_token=${result.token}`, { rejectUnauthorized: false }, function (error, response, body) {
+            if (error) return callback(error);
+            if (response.statusCode !== 200) return callback(new Error(`Unexpected response from mysql addon ${response.statusCode}`));
+
+            callback(null);
+        });
+        req.pipe(writeStream);
+    });
 }
 
 function restoreMySql(app, options, callback) {
@@ -623,16 +645,27 @@ function restoreMySql(app, options, callback) {
     assert.strictEqual(typeof options, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    callback = once(callback); // ChildProcess exit may or may not be called after error
+    const database = mysqlDatabaseName(app.id);
 
     debugApp(app, 'restoreMySql');
 
-    var input = fs.createReadStream(path.join(paths.APPS_DATA_DIR, app.id, 'mysqldump'));
-    input.on('error', callback);
+    callback = once(callback); // protect from multiple returns with streams
 
-    const dbname = mysqlDatabaseName(app.id);
-    var cmd = [ '/addons/mysql/service.sh', options.multipleDatabases ? 'restore-prefix' : 'restore', dbname ];
-    docker.execContainer('mysql', cmd, { stdin: input }, callback);
+    getAddonDetails('mysql', 'CLOUDRON_MYSQL_TOKEN', function (error, result) {
+        if (error) return callback(error);
+
+        var input = fs.createReadStream(path.join(paths.APPS_DATA_DIR, app.id, 'mysqldump'));
+        input.on('error', callback);
+
+        const restoreReq = request.post(`https://${result.ip}:3000/` + (options.multipleDatabases ? 'prefixes' : 'databases') + `/${database}/restore?access_token=${result.token}&username=user${appId}`, { rejectUnauthorized: false }, function (error, response, body) {
+            if (error) return callback(error);
+            if (response.statusCode !== 200) return callback(new Error(`Unexpected response from mysql addon ${response.statusCode}`));
+
+            callback(null);
+        });
+
+        input.pipe(restoreReq);
+    });
 }
 
 function setupPostgreSql(app, options, callback) {
