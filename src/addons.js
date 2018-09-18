@@ -731,7 +731,7 @@ function backupPostgreSql(app, options, callback) {
         const writeStream = fs.createWriteStream(path.join(paths.APPS_DATA_DIR, app.id, 'postgresqldump'));
         writeStream.on('error', callback);
 
-        const req = request.post(`https://${result.ip}:3000/databases/${app.id}/backup?access_token=${result.token}`, { rejectUnauthorized: false }, function (error, response, body) {
+        const req = request.post(`https://${result.ip}:3000/databases/db${app.id}/backup?access_token=${result.token}`, { rejectUnauthorized: false }, function (error, response, body) {
             if (error) return callback(error);
             if (response.statusCode !== 200) return callback(new Error(`Unexpected response from mongodb addon ${response.statusCode}`));
 
@@ -761,7 +761,7 @@ function restorePostgreSql(app, options, callback) {
         var input = fs.createReadStream(path.join(paths.APPS_DATA_DIR, app.id, 'postgresqldump'));
         input.on('error', callback);
 
-            const restoreReq = request.post(`https://${result.ip}:3000/databases/${app.id}/restore?access_token=${result.token}&username=user${appId}`, { rejectUnauthorized: false }, function (error, response, body) {
+            const restoreReq = request.post(`https://${result.ip}:3000/databases/db${app.id}/restore?access_token=${result.token}&username=user${appId}`, { rejectUnauthorized: false }, function (error, response, body) {
                 if (error) return callback(error);
                 if (response.statusCode !== 200) return callback(new Error(`Unexpected response from postgresql addon ${response.statusCode}`));
 
