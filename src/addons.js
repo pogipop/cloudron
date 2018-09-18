@@ -36,6 +36,7 @@ var accesscontrol = require('./accesscontrol.js'),
     once = require('once'),
     path = require('path'),
     paths = require('./paths.js'),
+    rimraf = require('rimraf'),
     safe = require('safetydance'),
     shell = require('./shell.js'),
     request = require('request'),
@@ -961,59 +962,66 @@ function setupRedis(app, options, callback) {
     assert.strictEqual(typeof options, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    appdb.getAddonConfigByName(app.id, 'redis', 'REDIS_PASSWORD', function (error, existingPassword) {
-        if (error && error.reason !== DatabaseError.NOT_FOUND) return callback(error);
+    const redisName = 'redis-' + app.id;
 
-        const redisPassword = error ? hat(4 * 48) : existingPassword; // see box#362 for password length
-        const redisServiceToken = hat(4 * 48);
-
-        // Compute redis memory limit based on app's memory limit (this is arbitrary)
-        var memoryLimit = app.memoryLimit || app.manifest.memoryLimit || 0;
-
-        if (memoryLimit === -1) { // unrestricted (debug mode)
-            memoryLimit = 0;
-        } else if (memoryLimit === 0 || memoryLimit <= (2 * 1024 * 1024 * 1024)) { // less than 2G (ram+swap)
-            memoryLimit = 150 * 1024 * 1024; // 150m
-        } else {
-            memoryLimit = 600 * 1024 * 1024; // 600m
+    docker.inspect(redisName, function (error, result) {
+        if (!error) {
+            debug(`Re-using existing redis container with state: ${result.State}`);
+            return callback();
         }
 
-        const tag = infra.images.redis.tag, redisName = 'redis-' + app.id;
-        const label = app.fqdn;
-        // note that we do not add appId label because this interferes with the stop/start app logic
-        const cmd = `docker run --restart=always -d --name=${redisName} \
-                    --label=location=${label} \
-                    --net cloudron \
-                    --net-alias ${redisName} \
-                    --log-driver syslog \
-                    --log-opt syslog-address=udp://127.0.0.1:2514 \
-                    --log-opt syslog-format=rfc5424 \
-                    --log-opt tag="${redisName}" \
-                    -m ${memoryLimit/2} \
-                    --memory-swap ${memoryLimit} \
-                    --dns 172.18.0.1 \
-                    --dns-search=. \
-                    -e CLOUDRON_REDIS_PASSWORD="${redisPassword}" \
-                    -e CLOUDRON_REDIS_TOKEN="${redisServiceToken}" \
-                    -v "${paths.PLATFORM_DATA_DIR}/redis/${app.id}:/var/lib/redis" \
-                    --read-only -v /tmp -v /run ${tag}`;
+        appdb.getAddonConfigByName(app.id, 'redis', 'REDIS_PASSWORD', function (error, existingPassword) {
+            if (error && error.reason !== DatabaseError.NOT_FOUND) return callback(error);
 
-        var env = [
-            { name: 'REDIS_URL', value: 'redis://redisuser:' + redisPassword + '@redis-' + app.id },
-            { name: 'REDIS_PASSWORD', value: redisPassword },
-            { name: 'REDIS_HOST', value: redisName },
-            { name: 'REDIS_PORT', value: '6379' }
-        ];
+            const redisPassword = error ? hat(4 * 48) : existingPassword; // see box#362 for password length
+            const redisServiceToken = hat(4 * 48);
 
-        async.series([
-            // stop so that redis can flush itself with SIGTERM
-            shell.execSync.bind(null, 'stopRedis', `docker stop --time=10 ${redisName} 2>/dev/null || true`),
-            shell.execSync.bind(null, 'stopRedis', `docker rm --volumes ${redisName} 2>/dev/null || true`),
-            shell.execSync.bind(null, 'startRedis', cmd),
-            appdb.setAddonConfig.bind(null, app.id, 'redis', env)
-        ], function (error) {
-            if (error) debug('Error setting up redis: ', error);
-            callback(error);
+            // Compute redis memory limit based on app's memory limit (this is arbitrary)
+            var memoryLimit = app.memoryLimit || app.manifest.memoryLimit || 0;
+
+            if (memoryLimit === -1) { // unrestricted (debug mode)
+                memoryLimit = 0;
+            } else if (memoryLimit === 0 || memoryLimit <= (2 * 1024 * 1024 * 1024)) { // less than 2G (ram+swap)
+                memoryLimit = 150 * 1024 * 1024; // 150m
+            } else {
+                memoryLimit = 600 * 1024 * 1024; // 600m
+            }
+
+            const tag = infra.images.redis.tag;
+            const label = app.fqdn;
+            // note that we do not add appId label because this interferes with the stop/start app logic
+            const cmd = `docker run --restart=always -d --name=${redisName} \
+                        --label=location=${label} \
+                        --net cloudron \
+                        --net-alias ${redisName} \
+                        --log-driver syslog \
+                        --log-opt syslog-address=udp://127.0.0.1:2514 \
+                        --log-opt syslog-format=rfc5424 \
+                        --log-opt tag="${redisName}" \
+                        -m ${memoryLimit/2} \
+                        --memory-swap ${memoryLimit} \
+                        --dns 172.18.0.1 \
+                        --dns-search=. \
+                        -e CLOUDRON_REDIS_PASSWORD="${redisPassword}" \
+                        -e CLOUDRON_REDIS_TOKEN="${redisServiceToken}" \
+                        -v "${paths.PLATFORM_DATA_DIR}/redis/${app.id}:/var/lib/redis" \
+                        --read-only -v /tmp -v /run ${tag}`;
+
+            var env = [
+                { name: 'REDIS_URL', value: 'redis://redisuser:' + redisPassword + '@redis-' + app.id },
+                { name: 'REDIS_PASSWORD', value: redisPassword },
+                { name: 'REDIS_HOST', value: redisName },
+                { name: 'REDIS_PORT', value: '6379' }
+            ];
+
+            async.series([
+                shell.execSync.bind(null, 'startRedis', cmd),
+                appdb.setAddonConfig.bind(null, app.id, 'redis', env),
+                function (next) { setTimeout(next, 3000); } // waitForRedis
+            ], function (error) {
+                if (error) debug('Error setting up redis: ', error);
+                callback(error);
+            });
         });
     });
 }
@@ -1030,7 +1038,7 @@ function clearRedis(app, options, callback) {
 
         request.post(`https://${result.ip}:3000/clear?access_token=${result.token}`, { rejectUnauthorized: false }, function (error, response) {
             if (error) return callback(new Error('Error clearing redis: ' + error));
-            if (response.statusCode !== 201) return callback(new Error(`Error clearing redis. Status code: ${response.statusCode}`));
+            if (response.statusCode !== 200) return callback(new Error(`Error clearing redis. Status code: ${response.statusCode}`));
 
             callback(null);
         });
@@ -1055,7 +1063,11 @@ function teardownRedis(app, options, callback) {
         shell.sudo('removeVolume', [ RMREDIS_CMD, app.id ], function (error) {
             if (error) return callback(new Error('Error removing redis data:' + error));
 
-            appdb.unsetAddonConfig(app.id, 'redis', callback);
+            rimraf(path.join(paths.LOG_DIR, `redis-${app.id}`), function (error) {
+                if (error) debugApp(app, 'cannot cleanup logs: %s', error);
+
+                appdb.unsetAddonConfig(app.id, 'redis', callback);
+            });
         });
     });
 }
@@ -1098,7 +1110,7 @@ function restoreRedis(app, options, callback) {
         var input = fs.createReadStream(path.join(paths.APPS_DATA_DIR, app.id, 'dump.rdb'));
         input.on('error', callback);
 
-        const restoreReq = request.post(`https://${result.ip}:3000?access_token=${result.token}`, { rejectUnauthorized: false }, function (error, response) {
+        const restoreReq = request.post(`https://${result.ip}:3000/restore?access_token=${result.token}`, { rejectUnauthorized: false }, function (error, response) {
             if (error) return callback(error);
             if (response.statusCode !== 200) return callback(new Error(`Unexpected response from redis addon: ${response.statusCode}`));
 

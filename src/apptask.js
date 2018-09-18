@@ -415,8 +415,10 @@ function cleanupLogs(app, callback) {
     assert.strictEqual(typeof app, 'object');
     assert.strictEqual(typeof callback, 'function');
 
+    // note that redis container logs are cleaned up by the addon
     rimraf(path.join(paths.LOG_DIR, app.id), function (error) {
         if (error) debugApp(app, 'cannot cleanup logs: %s', error);
+
         callback(null);
     });
 }

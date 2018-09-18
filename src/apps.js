@@ -845,7 +845,7 @@ function getLogs(appId, options, callback) {
 
     debug('Getting logs for %s', appId);
 
-    get(appId, function (error /*, app */) {
+    get(appId, function (error, app) {
         if (error) return callback(error);
 
         var lines = options.lines || 100,
@@ -859,6 +859,7 @@ function getLogs(appId, options, callback) {
         if (follow) args.push('--follow', '--retry', '--quiet'); // same as -F. to make it work if file doesn't exist, --quiet to not output file headers, which are no logs
         args.push(path.join(paths.LOG_DIR, appId, 'apptask.log'));
         args.push(path.join(paths.LOG_DIR, appId, 'app.log'));
+        if (app.manifest.addons && app.manifest.addons.redis) args.push(path.join(paths.LOG_DIR, `redis-${appId}/app.log`));
 
         var cp = spawn('/usr/bin/tail', args);
 
