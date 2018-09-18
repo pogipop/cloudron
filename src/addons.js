@@ -138,6 +138,30 @@ function debugApp(app, args) {
     debug(app.fqdn + ' ' + util.format.apply(util, Array.prototype.slice.call(arguments, 1)));
 }
 
+function getAddonDetails(containerName, tokenEnvName, callback) {
+    assert.strictEqual(typeof containerName, 'string');
+    assert.strictEqual(typeof tokenEnvName, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    var container = dockerConnection.getContainer(containerName);
+    container.inspect(function (error, result) {
+        if (error) return callback(new Error(`Error inspecting ${containerName} container: ` + error));
+
+        const ip = safe.query(result, 'NetworkSettings.Networks.cloudron.IPAddress', null);
+        if (!ip) return callback(new Error(`Error getting ${containerName} container ip`));
+
+        // extract the cloudron token for auth
+        const env = safe.query(result, 'Config.Env', null);
+        if (!env) return callback(new Error(`Error getting ${containerName} env`));
+        const tmp = env.find(function (e) { return e.indexOf(tokenEnvName) === 0; });
+        if (!tmp) return callback(new Error(`Error getting ${containerName} cloudron token env var`));
+        const token = tmp.slice(tokenEnvName.length + 1); // +1 for the = sign
+        if (!token)  return callback(new Error(`Error getting ${containerName} cloudron token`));
+
+        callback(null, { ip: ip, token: token });
+    });
+}
+
 function setupAddons(app, addons, callback) {
     assert.strictEqual(typeof app, 'object');
     assert(!addons || typeof addons === 'object');
@@ -803,30 +827,6 @@ function restorePostgreSql(app, options, callback) {
 
             input.pipe(restoreReq);
         });
-    });
-}
-
-function getAddonDetails(containerName, tokenEnvName, callback) {
-    assert.strictEqual(typeof containerName, 'string');
-    assert.strictEqual(typeof tokenEnvName, 'string');
-    assert.strictEqual(typeof callback, 'function');
-
-    var container = dockerConnection.getContainer(containerName);
-    container.inspect(function (error, result) {
-        if (error) return callback(new Error('Error inspecting ${containerName} container: ' + error));
-
-        const ip = safe.query(result, 'NetworkSettings.Networks.cloudron.IPAddress', null);
-        if (!ip) return callback(new Error('Error getting ${containerName} container ip'));
-
-        // extract the cloudron token for auth
-        const env = safe.query(result, 'Config.Env', null);
-        if (!env) return callback(new Error('Error getting ${containerName} env'));
-        const tmp = env.find(function (e) { return e.indexOf(tokenEnvName) === 0; });
-        if (!tmp) return callback(new Error('Error getting ${containerName} cloudron token env var'));
-        const token = tmp.slice(tokenEnvName.length + 1); // +1 for the = sign
-        if (!token)  return callback(new Error('Error getting ${containerName} cloudron token'));
-
-        callback(null, { ip: ip, token: token });
     });
 }
 
