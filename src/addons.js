@@ -1077,7 +1077,7 @@ function backupRedis(app, options, callback) {
 
         const req = request.post(`https://${result.ip}:3000/backup?access_token=${result.token}`, { rejectUnauthorized: false }, function (error, response) {
             if (error) return callback(new Error('Error backing up redis: ' + error));
-            if (response.statusCode !== 201) return callback(new Error(`Error backing up redis. Status code: ${response.statusCode}`));
+            if (response.statusCode !== 200) return callback(new Error(`Error backing up redis. Status code: ${response.statusCode}`));
 
             callback(null);
         });
