@@ -42,6 +42,7 @@ var accesscontrol = require('./accesscontrol.js'),
     util = require('util');
 
 var NOOP = function (app, options, callback) { return callback(); };
+const RMREDIS_CMD = path.join(__dirname, 'scripts/rmredis.sh');
 
 // setup can be called multiple times for the same app (configure crash restart) and existing data must not be lost
 // teardown is destructive. app data stored with the addon is lost
@@ -106,7 +107,7 @@ var KNOWN_ADDONS = {
         setup: setupRedis,
         teardown: teardownRedis,
         backup: backupRedis,
-        restore: setupRedis, // same thing
+        restore: restoreRedis,
         clear: clearRedis
     },
     sendmail: {
@@ -994,7 +995,7 @@ function setupRedis(app, options, callback) {
                     --dns-search=. \
                     -e CLOUDRON_REDIS_PASSWORD="${redisPassword}" \
                     -e CLOUDRON_REDIS_TOKEN="${redisServiceToken}" \
-                    --mount "source=${app.id}-redis,target=/var/lib/redis" \
+                    -v "${paths.PLATFORM_DATA_DIR}/redis/${app.id}:/var/lib/redis" \
                     --read-only -v /tmp -v /run ${tag}`;
 
         var env = [
@@ -1005,7 +1006,6 @@ function setupRedis(app, options, callback) {
         ];
 
         async.series([
-            docker.createVolume.bind(null, app, `${app.id}-redis`, 'redis'),
             // stop so that redis can flush itself with SIGTERM
             shell.execSync.bind(null, 'stopRedis', `docker stop --time=10 ${redisName} 2>/dev/null || true`),
             shell.execSync.bind(null, 'stopRedis', `docker rm --volumes ${redisName} 2>/dev/null || true`),
@@ -1052,7 +1052,7 @@ function teardownRedis(app, options, callback) {
     container.remove(removeOptions, function (error) {
         if (error && error.statusCode !== 404) return callback(new Error('Error removing container:' + error));
 
-        docker.removeVolume(app, `${app.id}-redis`, 'redis', function (error) {
+        shell.sudo('removeVolume', [ RMREDIS_CMD, app.id ], function (error) {
             if (error) return callback(new Error('Error removing redis data:' + error));
 
             appdb.unsetAddonConfig(app.id, 'redis', callback);
@@ -1067,14 +1067,44 @@ function backupRedis(app, options, callback) {
 
     debugApp(app, 'Backing up redis');
 
+    callback = once(callback); // protect from multiple returns with streams
+
     getAddonDetails('redis-' + app.id, 'CLOUDRON_REDIS_TOKEN', function (error, result) {
         if (error) return callback(error);
 
-        request.post(`https://${result.ip}:3000/backup?access_token=${result.token}`, { rejectUnauthorized: false }, function (error, response) {
+        const writeStream = fs.createWriteStream(path.join(paths.APPS_DATA_DIR, app.id, 'dump.rdb'));
+        writeStream.on('error', callback);
+
+        const req = request.post(`https://${result.ip}:3000/backup?access_token=${result.token}`, { rejectUnauthorized: false }, function (error, response) {
             if (error) return callback(new Error('Error backing up redis: ' + error));
             if (response.statusCode !== 201) return callback(new Error(`Error backing up redis. Status code: ${response.statusCode}`));
 
             callback(null);
         });
+        req.pipe(writeStream);
+    });
+}
+
+function restoreRedis(app, options, callback) {
+    assert.strictEqual(typeof app, 'object');
+    assert.strictEqual(typeof options, 'object');
+    assert.strictEqual(typeof callback, 'function');
+
+    debugApp(app, 'Restoring redis');
+
+    getAddonDetails('redis-' + app.id, 'CLOUDRON_REDIS_TOKEN', function (error, result) {
+        if (error) return callback(error);
+
+        var input = fs.createReadStream(path.join(paths.APPS_DATA_DIR, app.id, 'dump.rdb'));
+        input.on('error', callback);
+
+        const restoreReq = request.post(`https://${result.ip}:3000?access_token=${result.token}`, { rejectUnauthorized: false }, function (error, response) {
+            if (error) return callback(error);
+            if (response.statusCode !== 200) return callback(new Error(`Unexpected response from redis addon: ${response.statusCode}`));
+
+            callback(null);
+        });
+
+        input.pipe(restoreReq);
     });
 }
