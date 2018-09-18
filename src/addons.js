@@ -790,7 +790,7 @@ function backupPostgreSql(app, options, callback) {
 
         const req = request.post(`https://${result.ip}:3000/databases/${app.id}/backup?access_token=${result.token}`, { rejectUnauthorized: false }, function (error, response) {
             if (error) return callback(error);
-            if (response.statusCode !== 200) return callback(new Error(`Unexpected response from mongodb addon ${response.statusCode}`));
+            if (response.statusCode !== 200) return callback(new Error(`Unexpected response from postgresql addon ${response.statusCode}`));
 
             callback(null);
         });
@@ -809,24 +809,20 @@ function restorePostgreSql(app, options, callback) {
 
     callback = once(callback); // protect from multiple returns with streams
 
-    setupPostgreSql(app, options, function (error) {
+    getAddonDetails('postgresql', 'CLOUDRON_POSTGRESQL_TOKEN', function (error, result) {
         if (error) return callback(error);
 
-        getAddonDetails('postgresql', 'CLOUDRON_POSTGRESQL_TOKEN', function (error, result) {
+    var input = fs.createReadStream(path.join(paths.APPS_DATA_DIR, app.id, 'postgresqldump'));
+    input.on('error', callback);
+
+        const restoreReq = request.post(`https://${result.ip}:3000/databases/${app.id}/restore?access_token=${result.token}&username=user${appId}`, { rejectUnauthorized: false }, function (error, response) {
             if (error) return callback(error);
+            if (response.statusCode !== 200) return callback(new Error(`Unexpected response from postgresql addon ${response.statusCode}`));
 
-        var input = fs.createReadStream(path.join(paths.APPS_DATA_DIR, app.id, 'postgresqldump'));
-        input.on('error', callback);
-
-            const restoreReq = request.post(`https://${result.ip}:3000/databases/${app.id}/restore?access_token=${result.token}&username=user${appId}`, { rejectUnauthorized: false }, function (error, response) {
-                if (error) return callback(error);
-                if (response.statusCode !== 200) return callback(new Error(`Unexpected response from postgresql addon ${response.statusCode}`));
-
-                callback(null);
-            });
-
-            input.pipe(restoreReq);
+            callback(null);
         });
+
+        input.pipe(restoreReq);
     });
 }
 
