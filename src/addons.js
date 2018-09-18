@@ -1003,7 +1003,7 @@ function clearRedis(app, options, callback) {
 
         request.post(`https://${result.ip}:3000/clear?access_token=${result.token}`, { rejectUnauthorized: false }, function (error, response, body) {
             if (error) return callback(new Error('Error clearing redis: ' + error));
-            if (response.statusCode !== 201) return callback(new Error(`Error clearing redis. Status code: ${response.statusCode}`));
+            if (response.statusCode !== 200) return callback(new Error(`Error clearing redis. Status code: ${response.statusCode}`));
 
             callback(null);
         });
