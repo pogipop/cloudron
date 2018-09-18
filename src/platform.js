@@ -25,7 +25,6 @@ var apps = require('./apps.js'),
     settings = require('./settings.js'),
     shell = require('./shell.js'),
     taskmanager = require('./taskmanager.js'),
-    util = require('util'),
     _ = require('underscore');
 
 var gPlatformReadyTimer = null;
