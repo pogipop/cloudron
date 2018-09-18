@@ -15,7 +15,7 @@ exports = module.exports = {
     // This is because we upgrade using dumps instead of mysql_upgrade, pg_upgrade etc
     // docker inspect --format='{{index .RepoDigests 0}}' $IMAGE to get the sha256
     'images': {
-        'mysql': { repo: 'cloudron/mysql', tag: 'cloudron/mysql:1.1.0@sha256:0459023f16e65985e8d74b490b5c4f38c9d1b7a4e5ec8049c08256d42decf00e' },
+        'mysql': { repo: 'cloudron/mysql', tag: 'cloudron/mysql:2.0.0@sha256:6c83241e43e5f5cb39cbb9b8b44e050d6592aa8914962632fea5dfb0cadf97ba' },
         'postgresql': { repo: 'cloudron/postgresql', tag: 'cloudron/postgresql:2.0.1@sha256:029949062abfc1bed125e7d34882b8ce8465dab2288b04d6f8e5984105a41cee' },
         'mongodb': { repo: 'cloudron/mongodb', tag: 'cloudron/mongodb:2.0.1@sha256:931267c9243d23c5b41118f29f011f529ca9865db10a5c1c26157eed9efaa676' },
         'redis': { repo: 'cloudron/redis', tag: 'cloudron/redis:2.0.1@sha256:73d300c87d0fd1b8f01157fd69c65aa04377498bc7daa7aafd6d6fdcf2e5a35e' },
