@@ -696,7 +696,7 @@ function restoreMySql(app, options, callback) {
 
 function postgreSqlNames(appId) {
     appId = appId.replace(/-/g, '');
-    return { database: `db${appId}`, user: `user${appId}` };
+    return { database: `db${appId}`, username: `user${appId}` };
 }
 
 function setupPostgreSql(app, options, callback) {
@@ -722,7 +722,7 @@ function setupPostgreSql(app, options, callback) {
 
             request.post(`https://${result.ip}:3000/databases?access_token=${result.token}`, { rejectUnauthorized: false, json: data }, function (error, response) {
                 if (error) return callback(new Error('Error setting up postgresql: ' + error));
-                if (response.statusCode !== 201) return callback(new Error(`Error setting up postgresql. Status code: ${response.statusCode}`));
+                if (response.statusCode !== 201) return callback(new Error(`Error setting up postgresql. Status code: ${response.statusCode} message: ${response.body.message}`));
 
                 var env = [
                     { name: 'POSTGRESQL_URL', value: `postgres://${data.username}:${data.password}@postgresql/${data.database}` },
@@ -754,7 +754,7 @@ function clearPostgreSql(app, options, callback) {
 
         request.post(`https://${result.ip}:3000/databases/${database}/clear?access_token=${result.token}&username=${username}`, { rejectUnauthorized: false }, function (error, response) {
             if (error) return callback(new Error('Error clearing postgresql: ' + error));
-            if (response.statusCode !== 200) return callback(new Error(`Error clearing postgresql. Status code: ${response.statusCode}`));
+            if (response.statusCode !== 200) return callback(new Error(`Error clearing postgresql. Status code: ${response.statusCode} message: ${response.body.message}`));
 
             callback(null);
         });
@@ -773,7 +773,7 @@ function teardownPostgreSql(app, options, callback) {
 
         request.delete(`https://${result.ip}:3000/databases/${database}?access_token=${result.token}&username=${username}`, { rejectUnauthorized: false }, function (error, response) {
             if (error) return callback(new Error('Error tearing down postgresql: ' + error));
-            if (response.statusCode !== 200) return callback(new Error(`Error tearing down postgresql. Status code: ${response.statusCode}`));
+            if (response.statusCode !== 200) return callback(new Error(`Error tearing down postgresql. Status code: ${response.statusCode} message: ${response.body.message}`));
 
             appdb.unsetAddonConfig(app.id, 'postgresql', callback);
         });
@@ -799,7 +799,7 @@ function backupPostgreSql(app, options, callback) {
 
         const req = request.post(`https://${result.ip}:3000/databases/${database}/backup?access_token=${result.token}`, { rejectUnauthorized: false }, function (error, response) {
             if (error) return callback(error);
-            if (response.statusCode !== 200) return callback(new Error(`Unexpected response from postgresql addon ${response.statusCode}`));
+            if (response.statusCode !== 200) return callback(new Error(`Unexpected response from postgresql addon ${response.statusCode} message: ${response.body.message}`));
 
             callback(null);
         });
@@ -826,7 +826,7 @@ function restorePostgreSql(app, options, callback) {
 
         const restoreReq = request.post(`https://${result.ip}:3000/databases/${database}/restore?access_token=${result.token}&username=${username}`, { rejectUnauthorized: false }, function (error, response) {
             if (error) return callback(error);
-            if (response.statusCode !== 200) return callback(new Error(`Unexpected response from postgresql addon ${response.statusCode}`));
+            if (response.statusCode !== 200) return callback(new Error(`Unexpected response from postgresql addon ${response.statusCode} message: ${response.body.message}`));
 
             callback(null);
         });
@@ -859,7 +859,7 @@ function setupMongoDb(app, options, callback) {
                 if (response.statusCode !== 201) return callback(new Error(`Error setting up mongodb. Status code: ${response.statusCode}`));
 
                 var env = [
-                    { name: 'MONGODB_URL', value : `mongodb://${data.username}:${data.password}@mongodb/${data.database}` },
+                    { name: 'MONGODB_URL', value : `mongodb://${data.username}:${data.password}@mongodb/${data.database} message: ${response.body.message}` },
                     { name: 'MONGODB_USERNAME', value : data.username },
                     { name: 'MONGODB_PASSWORD', value: data.password },
                     { name: 'MONGODB_HOST', value : 'mongodb' },
@@ -886,7 +886,7 @@ function clearMongodb(app, options, callback) {
 
         request.post(`https://${result.ip}:3000/databases/${app.id}/clear?access_token=${result.token}`, { rejectUnauthorized: false }, function (error, response) {
             if (error) return callback(new Error('Error clearing mongodb: ' + error));
-            if (response.statusCode !== 200) return callback(new Error(`Error clearing mongodb. Status code: ${response.statusCode}`));
+            if (response.statusCode !== 200) return callback(new Error(`Error clearing mongodb. Status code: ${response.statusCode} message: ${response.body.message}`));
 
             callback();
         });
@@ -905,7 +905,7 @@ function teardownMongoDb(app, options, callback) {
 
         request.delete(`https://${result.ip}:3000/databases/${app.id}?access_token=${result.token}`, { rejectUnauthorized: false }, function (error, response) {
             if (error) return callback(new Error('Error tearing down mongodb: ' + error));
-            if (response.statusCode !== 200) return callback(new Error(`Error tearing down mongodb. Status code: ${response.statusCode}`));
+            if (response.statusCode !== 200) return callback(new Error(`Error tearing down mongodb. Status code: ${response.statusCode} message: ${response.body.message}`));
 
             appdb.unsetAddonConfig(app.id, 'mongodb', callback);
         });
@@ -929,7 +929,7 @@ function backupMongoDb(app, options, callback) {
 
         const req = request.post(`https://${result.ip}:3000/databases/${app.id}/backup?access_token=${result.token}`, { rejectUnauthorized: false }, function (error, response) {
             if (error) return callback(error);
-            if (response.statusCode !== 200) return callback(new Error(`Unexpected response from mongodb addon ${response.statusCode}`));
+            if (response.statusCode !== 200) return callback(new Error(`Unexpected response from mongodb addon ${response.statusCode} message: ${response.body.message}`));
 
             callback(null);
         });
@@ -954,7 +954,7 @@ function restoreMongoDb(app, options, callback) {
 
         const restoreReq = request.post(`https://${result.ip}:3000/databases/${app.id}/restore?access_token=${result.token}`, { rejectUnauthorized: false }, function (error, response) {
             if (error) return callback(error);
-            if (response.statusCode !== 200) return callback(new Error(`Unexpected response from mongodb addon ${response.statusCode}`));
+            if (response.statusCode !== 200) return callback(new Error(`Unexpected response from mongodb addon ${response.statusCode} message: ${response.body.message}`));
 
             callback(null);
         });
@@ -1045,7 +1045,7 @@ function clearRedis(app, options, callback) {
 
         request.post(`https://${result.ip}:3000/clear?access_token=${result.token}`, { rejectUnauthorized: false }, function (error, response) {
             if (error) return callback(new Error('Error clearing redis: ' + error));
-            if (response.statusCode !== 200) return callback(new Error(`Error clearing redis. Status code: ${response.statusCode}`));
+            if (response.statusCode !== 200) return callback(new Error(`Error clearing redis. Status code: ${response.statusCode} message: ${response.body.message}`));
 
             callback(null);
         });
@@ -1096,7 +1096,7 @@ function backupRedis(app, options, callback) {
 
         const req = request.post(`https://${result.ip}:3000/backup?access_token=${result.token}`, { rejectUnauthorized: false }, function (error, response) {
             if (error) return callback(new Error('Error backing up redis: ' + error));
-            if (response.statusCode !== 200) return callback(new Error(`Error backing up redis. Status code: ${response.statusCode}`));
+            if (response.statusCode !== 200) return callback(new Error(`Error backing up redis. Status code: ${response.statusCode} message: ${response.body.message}`));
 
             callback(null);
         });
@@ -1119,7 +1119,7 @@ function restoreRedis(app, options, callback) {
 
         const restoreReq = request.post(`https://${result.ip}:3000/restore?access_token=${result.token}`, { rejectUnauthorized: false }, function (error, response) {
             if (error) return callback(error);
-            if (response.statusCode !== 200) return callback(new Error(`Unexpected response from redis addon: ${response.statusCode}`));
+            if (response.statusCode !== 200) return callback(new Error(`Unexpected response from redis addon: ${response.statusCode} message: ${response.body.message}`));
 
             callback(null);
         });
