@@ -694,6 +694,11 @@ function restoreMySql(app, options, callback) {
     });
 }
 
+function postgreSqlNames(appId) {
+    appId = appId.replace(/-/g, '');
+    return { database: `db${appId}`, user: `user${appId}` };
+}
+
 function setupPostgreSql(app, options, callback) {
     assert.strictEqual(typeof app, 'object');
     assert.strictEqual(typeof options, 'object');
@@ -701,14 +706,14 @@ function setupPostgreSql(app, options, callback) {
 
     debugApp(app, 'Setting up postgresql');
 
-    const appId = app.id.replace(/-/g, '');
+    const { database, username } = postgreSqlNames(app.id);
 
-    appdb.getAddonConfigByName(appId, 'postgresql', 'POSTGRESQL_PASSWORD', function (error, existingPassword) {
+    appdb.getAddonConfigByName(app.id, 'postgresql', 'POSTGRESQL_PASSWORD', function (error, existingPassword) {
         if (error && error.reason !== DatabaseError.NOT_FOUND) return callback(error);
 
         const data = {
-            database: `db${appId}`,
-            username: `user${appId}`,
+            database: database,
+            username: username,
             password: error ? hat(4 * 128) : existingPassword
         };
 
@@ -740,14 +745,14 @@ function clearPostgreSql(app, options, callback) {
     assert.strictEqual(typeof options, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    const appId = app.id.replace(/-/g, '');
+    const { database, username } = postgreSqlNames(app.id);
 
     debugApp(app, 'Clearing postgresql');
 
     getAddonDetails('postgresql', 'CLOUDRON_POSTGRESQL_TOKEN', function (error, result) {
         if (error) return callback(error);
 
-        request.post(`https://${result.ip}:3000/databases/db${appId}/clear?access_token=${result.token}}`, { rejectUnauthorized: false }, function (error, response) {
+        request.post(`https://${result.ip}:3000/databases/${database}/clear?access_token=${result.token}&username=${username}`, { rejectUnauthorized: false }, function (error, response) {
             if (error) return callback(new Error('Error clearing postgresql: ' + error));
             if (response.statusCode !== 200) return callback(new Error(`Error clearing postgresql. Status code: ${response.statusCode}`));
 
@@ -761,12 +766,12 @@ function teardownPostgreSql(app, options, callback) {
     assert.strictEqual(typeof options, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    const appId = app.id.replace(/-/g, '');
+    const { database, username } = postgreSqlNames(app.id);
 
     getAddonDetails('postgresql', 'CLOUDRON_POSTGRESQL_TOKEN', function (error, result) {
         if (error) return callback(error);
 
-        request.delete(`https://${result.ip}:3000/databases/db${appId}?access_token=${result.token}&username=user${appId}`, { rejectUnauthorized: false }, function (error, response) {
+        request.delete(`https://${result.ip}:3000/databases/${database}?access_token=${result.token}&username=${username}`, { rejectUnauthorized: false }, function (error, response) {
             if (error) return callback(new Error('Error tearing down postgresql: ' + error));
             if (response.statusCode !== 200) return callback(new Error(`Error tearing down postgresql. Status code: ${response.statusCode}`));
 
@@ -782,6 +787,8 @@ function backupPostgreSql(app, options, callback) {
 
     debugApp(app, 'Backing up postgresql');
 
+    const { database } = postgreSqlNames(app.id);
+
     callback = once(callback); // protect from multiple returns with streams
 
     getAddonDetails('postgresql', 'CLOUDRON_POSTGRESQL_TOKEN', function (error, result) {
@@ -790,7 +797,7 @@ function backupPostgreSql(app, options, callback) {
         const writeStream = fs.createWriteStream(path.join(paths.APPS_DATA_DIR, app.id, 'postgresqldump'));
         writeStream.on('error', callback);
 
-        const req = request.post(`https://${result.ip}:3000/databases/${app.id}/backup?access_token=${result.token}`, { rejectUnauthorized: false }, function (error, response) {
+        const req = request.post(`https://${result.ip}:3000/databases/${database}/backup?access_token=${result.token}`, { rejectUnauthorized: false }, function (error, response) {
             if (error) return callback(error);
             if (response.statusCode !== 200) return callback(new Error(`Unexpected response from postgresql addon ${response.statusCode}`));
 
@@ -807,7 +814,7 @@ function restorePostgreSql(app, options, callback) {
 
     debugApp(app, 'Restore postgresql');
 
-    const appId = app.id.replace(/-/g, '');
+    const { database, username } = postgreSqlNames(app.id);
 
     callback = once(callback); // protect from multiple returns with streams
 
@@ -817,7 +824,7 @@ function restorePostgreSql(app, options, callback) {
     var input = fs.createReadStream(path.join(paths.APPS_DATA_DIR, app.id, 'postgresqldump'));
     input.on('error', callback);
 
-        const restoreReq = request.post(`https://${result.ip}:3000/databases/${app.id}/restore?access_token=${result.token}&username=user${appId}`, { rejectUnauthorized: false }, function (error, response) {
+        const restoreReq = request.post(`https://${result.ip}:3000/databases/${database}/restore?access_token=${result.token}&username=${username}`, { rejectUnauthorized: false }, function (error, response) {
             if (error) return callback(error);
             if (response.statusCode !== 200) return callback(new Error(`Unexpected response from postgresql addon ${response.statusCode}`));
 
