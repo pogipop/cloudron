@@ -859,7 +859,7 @@ function setupMongoDb(app, options, callback) {
                 if (response.statusCode !== 201) return callback(new Error(`Error setting up mongodb. Status code: ${response.statusCode}`));
 
                 var env = [
-                    { name: 'MONGODB_URL', value : `mongodb://${data.username}:${data.password}@mongodb/${data.database} message: ${response.body.message}` },
+                    { name: 'MONGODB_URL', value : `mongodb://${data.username}:${data.password}@mongodb/${data.database}` },
                     { name: 'MONGODB_USERNAME', value : data.username },
                     { name: 'MONGODB_PASSWORD', value: data.password },
                     { name: 'MONGODB_HOST', value : 'mongodb' },
