@@ -821,8 +821,8 @@ function restorePostgreSql(app, options, callback) {
     getAddonDetails('postgresql', 'CLOUDRON_POSTGRESQL_TOKEN', function (error, result) {
         if (error) return callback(error);
 
-    var input = fs.createReadStream(path.join(paths.APPS_DATA_DIR, app.id, 'postgresqldump'));
-    input.on('error', callback);
+        var input = fs.createReadStream(path.join(paths.APPS_DATA_DIR, app.id, 'postgresqldump'));
+        input.on('error', callback);
 
         const restoreReq = request.post(`https://${result.ip}:3000/databases/${database}/restore?access_token=${result.token}&username=${username}`, { rejectUnauthorized: false }, function (error, response) {
             if (error) return callback(error);
@@ -1024,12 +1024,32 @@ function setupRedis(app, options, callback) {
             async.series([
                 shell.execSync.bind(null, 'startRedis', cmd),
                 appdb.setAddonConfig.bind(null, app.id, 'redis', env),
-                function (next) { setTimeout(next, 3000); } // waitForRedis
+                waitForRedis.bind(null, app)
             ], function (error) {
                 if (error) debug('Error setting up redis: ', error);
                 callback(error);
             });
         });
+    });
+}
+
+function waitForRedis(app, callback) {
+    assert.strictEqual(typeof app, 'object');
+    assert.strictEqual(typeof callback, 'function');
+
+    debugApp(app, 'Waiting for redis');
+
+    getAddonDetails('redis-' + app.id, 'CLOUDRON_REDIS_TOKEN', function (error, result) {
+        if (error) return callback(error);
+
+        async.retry({ times: 10, interval: 5000 }, function (retryCallback) {
+            request.get(`https://${result.ip}:3000/healthcheck?access_token=${result.token}`, { json: true, rejectUnauthorized: false }, function (error, response) {
+                if (error) return retryCallback(new Error(`Error waiting for redis: ${error.message}`));
+                if (response.statusCode !== 200) return retryCallback(new Error(`Error waiting for redis. Status code: ${response.statusCode} message: ${response.body.message}`));
+
+                retryCallback(null);
+            });
+        }, callback);
     });
 }
 
