@@ -144,7 +144,7 @@ function configureWebadmin(callback) {
             debug('addWebadminDnsRecord: updated records with error:', error);
             if (error) return configureReverseProxy(error);
 
-            domains.waitForDnsRecord(config.adminFqdn(), config.adminDomain(), 'A', ip, { interval: 30000, times: 50000 }, function (error) {
+            domains.waitForDnsRecord(config.adminLocation(), config.adminDomain(), 'A', ip, { interval: 30000, times: 50000 }, function (error) {
                 if (error) return configureReverseProxy(error);
 
                 gWebadminStatus.dns = true;
