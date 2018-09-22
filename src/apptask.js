@@ -499,6 +499,9 @@ function install(app, callback) {
         updateApp.bind(null, app, { installationProgress: '30, Registering subdomain' }),
         registerSubdomain.bind(null, app, isRestoring /* overwrite */),
 
+        updateApp.bind(null, app, { installationProgress: '35, Registering alternate domains'}),
+        registerAlternateDomains.bind(null, app, isRestoring /* overwrite */),
+
         updateApp.bind(null, app, { installationProgress: '40, Downloading image' }),
         docker.downloadImage.bind(null, app.manifest),
 
