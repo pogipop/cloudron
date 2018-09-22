@@ -459,7 +459,7 @@ Acme2.prototype.prepareDnsChallenge = function (hostname, domain, authorization,
     domains.upsertDnsRecords(challengeSubdomain, domain, 'TXT', [ txtValue ], function (error) {
         if (error) return callback(new Acme2Error(Acme2Error.EXTERNAL_ERROR, error.message));
 
-        domains.waitForDnsRecord(`${challengeSubdomain}.${domain}`, domain, 'TXT', txtValue, { interval: 5000, times: 200 }, function (error) {
+        domains.waitForDnsRecord(`${challengeSubdomain}`, domain, 'TXT', txtValue, { interval: 5000, times: 200 }, function (error) {
             if (error) return callback(new Acme2Error(Acme2Error.EXTERNAL_ERROR, error.message));
 
             callback(null, challenge);
