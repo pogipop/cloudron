@@ -397,14 +397,11 @@ function configureApp(app, auditSource, callback) {
         writeAppConfig(app, bundle, function (error) {
             if (error) return callback(error);
 
-            // now setup alternateDomain redirects if any
-            async.eachSeries(app.alternateDomains, function (domain, callback) {
-                const fqdn = (domain.subdomain ? (domain.subdomain + '.') : '') + domain.domain;
-
-                ensureCertificate(fqdn, domain.domain, auditSource, function (error, bundle) {
+            async.eachSeries(app.alternateDomains, function (alternateDomain, callback) {
+                ensureCertificate(alternateDomain.fqdn, alternateDomain.domain, auditSource, function (error, bundle) {
                     if (error) return callback(error);
 
-                    writeAppRedirectConfig(app, fqdn, bundle, callback);
+                    writeAppRedirectConfig(app, alternateDomain.fqdn, bundle, callback);
                 });
             }, callback);
         });
@@ -441,12 +438,9 @@ function renewAll(auditSource, callback) {
         allApps.forEach(function (app) {
             appDomains.push({ domain: app.domain, fqdn: app.fqdn, type: 'main', app: app, nginxConfigFilename: path.join(paths.NGINX_APPCONFIG_DIR, app.id + '.conf') });
 
-            // and alternate domains
-            app.alternateDomains.forEach(function (domain) {
-                // TODO support hyphenated domains here as well
-                const fqdn = (domain.subdomain ? (domain.subdomain + '.') : '') + domain.domain;
-
-                appDomains.push({ domain: domain.domain, fqdn: fqdn, type: 'alternate', app: app, nginxConfigFilename: path.join(paths.NGINX_APPCONFIG_DIR, `${app.id}-redirect-${fqdn}.conf`) });
+            app.alternateDomains.forEach(function (alternateDomain) {
+                let nginxConfigFilename = path.join(paths.NGINX_APPCONFIG_DIR, `${app.id}-redirect-${alternateDomain.fqdn}.conf`);
+                appDomains.push({ domain: alternateDomain.domain, fqdn: alternateDomain.fqdn, type: 'alternate', app: app, nginxConfigFilename: nginxConfigFilename });
             });
         });
 
