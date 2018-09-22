@@ -372,14 +372,14 @@ function get(appId, callback) {
     assert.strictEqual(typeof appId, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    appdb.get(appId, function (error, app) {
-        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new AppsError(AppsError.NOT_FOUND, 'No such app'));
+    domaindb.getAll(function (error, domainObjects) {
         if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
 
-        postProcess(app);
-
-        domaindb.getAll(function (error, domainObjects) {
+        appdb.get(appId, function (error, app) {
+            if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new AppsError(AppsError.NOT_FOUND, 'No such app'));
             if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
+
+            postProcess(app);
 
             let domainObjectMap = {};
             for (let d of domainObjects) { domainObjectMap[d.domain] = d; }
@@ -403,31 +403,38 @@ function getByIpAddress(ip, callback) {
     assert.strictEqual(typeof ip, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    docker.getContainerIdByIp(ip, function (error, containerId) {
+    domaindb.getAll(function (error, domainObjects) {
         if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
 
-        appdb.getByContainerId(containerId, function (error, app) {
-            if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new AppsError(AppsError.NOT_FOUND, 'No such app'));
+        let domainObjectMap = {};
+        for (let d of domainObjects) { domainObjectMap[d.domain] = d; }
+
+        docker.getContainerIdByIp(ip, function (error, containerId) {
             if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
 
-            postProcess(app);
-
-            domaindb.getAll(function (error, domainObjects) {
+            appdb.getByContainerId(containerId, function (error, app) {
+                if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new AppsError(AppsError.NOT_FOUND, 'No such app'));
                 if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
 
-                let domainObjectMap = {};
-                for (let d of domainObjects) { domainObjectMap[d.domain] = d; }
+                postProcess(app);
 
-                app.iconUrl = getIconUrlSync(app);
-                app.fqdn = domains.fqdn(app.location, domainObjectMap[app.domain]);
-                app.alternateDomains.forEach(function (ad) { ad.fqdn = domains.fqdn(ad.subdomain, domainObjectMap[ad.domain]); });
+                domaindb.getAll(function (error, domainObjects) {
+                    if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
 
-                mailboxdb.getByOwnerId(app.id, function (error, mailboxes) {
-                    if (error && error.reason !== DatabaseError.NOT_FOUND) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
+                    let domainObjectMap = {};
+                    for (let d of domainObjects) { domainObjectMap[d.domain] = d; }
 
-                    if (!error) app.mailboxName = mailboxes[0].name;
+                    app.iconUrl = getIconUrlSync(app);
+                    app.fqdn = domains.fqdn(app.location, domainObjectMap[app.domain]);
+                    app.alternateDomains.forEach(function (ad) { ad.fqdn = domains.fqdn(ad.subdomain, domainObjectMap[ad.domain]); });
 
-                    callback(null, app);
+                    mailboxdb.getByOwnerId(app.id, function (error, mailboxes) {
+                        if (error && error.reason !== DatabaseError.NOT_FOUND) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
+
+                        if (!error) app.mailboxName = mailboxes[0].name;
+
+                        callback(null, app);
+                    });
                 });
             });
         });
@@ -437,34 +444,34 @@ function getByIpAddress(ip, callback) {
 function getAll(callback) {
     assert.strictEqual(typeof callback, 'function');
 
-    appdb.getAll(function (error, apps) {
+    domaindb.getAll(function (error, domainObjects) {
         if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
 
-        apps.forEach(postProcess);
+        let domainObjectMap = {};
+        for (let d of domainObjects) { domainObjectMap[d.domain] = d; }
 
-        async.eachSeries(apps, function (app, iteratorDone) {
-            domaindb.getAll(function (error, domainObjects) {
-                if (error) return iteratorDone(new AppsError(AppsError.INTERNAL_ERROR, error));
+        appdb.getAll(function (error, apps) {
+            if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
 
-                let domainObjectMap = {};
-                for (let d of domainObjects) { domainObjectMap[d.domain] = d; }
+            apps.forEach(postProcess);
 
+            async.eachSeries(apps, function (app, iteratorDone) {
                 app.iconUrl = getIconUrlSync(app);
                 app.fqdn = domains.fqdn(app.location, domainObjectMap[app.domain]);
                 app.alternateDomains.forEach(function (ad) { ad.fqdn = domains.fqdn(ad.subdomain, domainObjectMap[ad.domain]); });
 
                 mailboxdb.getByOwnerId(app.id, function (error, mailboxes) {
-                    if (error && error.reason !== DatabaseError.NOT_FOUND) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
+                    if (error && error.reason !== DatabaseError.NOT_FOUND) return iteratorDone(new AppsError(AppsError.INTERNAL_ERROR, error));
 
                     if (!error) app.mailboxName = mailboxes[0].name;
 
                     iteratorDone(null, app);
                 });
-            });
-        }, function (error) {
-            if (error) return callback(error);
+            }, function (error) {
+                if (error) return callback(error);
 
-            callback(null, apps);
+                callback(null, apps);
+            });
         });
     });
 }
