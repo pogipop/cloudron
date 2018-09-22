@@ -234,7 +234,8 @@ function isSpacesEnabled() {
 }
 
 function allowHyphenatedSubdomains() {
-    return get('edition') === 'hostingprovider';
+    // we should move caas also to hostingprovider edition at some point
+    return get('edition') === 'hostingprovider' || get('provider') === 'caas';
 }
 
 function allowOperatorActions() {
