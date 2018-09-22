@@ -378,11 +378,15 @@ function get(appId, callback) {
 
         postProcess(app);
 
-        domaindb.get(app.domain, function (error, domainObject) {
+        domaindb.getAll(function (error, domainObjects) {
             if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
 
+            let domainObjectMap = {};
+            for (let d of domainObjects) { domainObjectMap[d.domain] = d; }
+
             app.iconUrl = getIconUrlSync(app);
-            app.fqdn = domains.fqdn(app.location, domainObject);
+            app.fqdn = domains.fqdn(app.location, domainObjectMap[app.domain]);
+            app.alternateDomains.forEach(function (ad) { ad.fqdn = domains.fqdn(ad.subdomain, domainObjectMap[ad.domain]); });
 
             mailboxdb.getByOwnerId(app.id, function (error, mailboxes) {
                 if (error && error.reason !== DatabaseError.NOT_FOUND) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
@@ -408,11 +412,15 @@ function getByIpAddress(ip, callback) {
 
             postProcess(app);
 
-            domaindb.get(app.domain, function (error, domainObject) {
+            domaindb.getAll(function (error, domainObjects) {
                 if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
 
+                let domainObjectMap = {};
+                for (let d of domainObjects) { domainObjectMap[d.domain] = d; }
+
                 app.iconUrl = getIconUrlSync(app);
-                app.fqdn = domains.fqdn(app.location, domainObject);
+                app.fqdn = domains.fqdn(app.location, domainObjectMap[app.domain]);
+                app.alternateDomains.forEach(function (ad) { ad.fqdn = domains.fqdn(ad.subdomain, domainObjectMap[ad.domain]); });
 
                 mailboxdb.getByOwnerId(app.id, function (error, mailboxes) {
                     if (error && error.reason !== DatabaseError.NOT_FOUND) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
@@ -435,11 +443,15 @@ function getAll(callback) {
         apps.forEach(postProcess);
 
         async.eachSeries(apps, function (app, iteratorDone) {
-            domaindb.get(app.domain, function (error, domainObject) {
+            domaindb.getAll(function (error, domainObjects) {
                 if (error) return iteratorDone(new AppsError(AppsError.INTERNAL_ERROR, error));
 
+                let domainObjectMap = {};
+                for (let d of domainObjects) { domainObjectMap[d.domain] = d; }
+
                 app.iconUrl = getIconUrlSync(app);
-                app.fqdn = domains.fqdn(app.location, domainObject);
+                app.fqdn = domains.fqdn(app.location, domainObjectMap[app.domain]);
+                app.alternateDomains.forEach(function (ad) { ad.fqdn = domains.fqdn(ad.subdomain, domainObjectMap[ad.domain]); });
 
                 mailboxdb.getByOwnerId(app.id, function (error, mailboxes) {
                     if (error && error.reason !== DatabaseError.NOT_FOUND) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
