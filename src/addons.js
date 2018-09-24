@@ -576,7 +576,7 @@ function setupMySql(app, options, callback) {
 
             request.post(`https://${result.ip}:3000/` + (options.multipleDatabases ? 'prefixes' : 'databases') + `?access_token=${result.token}`, { rejectUnauthorized: false, json: data }, function (error, response) {
                 if (error) return callback(new Error('Error setting up mysql: ' + error));
-                if (response.statusCode !== 201) return callback(new Error(`Error setting up mysql. Status code: ${response.statusCode}`));
+                if (response.statusCode !== 201) return callback(new Error(`Error setting up mysql. Status code: ${response.statusCode} message: ${response.body.message}`));
 
                 var env = [
                     { name: 'MYSQL_USERNAME', value: data.username },
@@ -613,7 +613,7 @@ function clearMySql(app, options, callback) {
 
         request.post(`https://${result.ip}:3000/` + (options.multipleDatabases ? 'prefixes' : 'databases') + `/${database}/clear?access_token=${result.token}`, { rejectUnauthorized: false }, function (error, response) {
             if (error) return callback(new Error('Error clearing mysql: ' + error));
-            if (response.statusCode !== 200) return callback(new Error(`Error clearing mysql. Status code: ${response.statusCode}`));
+            if (response.statusCode !== 200) return callback(new Error(`Error clearing mysql. Status code: ${response.statusCode} message: ${response.body.message}`));
             callback();
         });
     });
@@ -632,7 +632,7 @@ function teardownMySql(app, options, callback) {
 
         request.delete(`https://${result.ip}:3000/` + (options.multipleDatabases ? 'prefixes' : 'databases') + `/${database}?access_token=${result.token}&username=${username}`, { rejectUnauthorized: false }, function (error, response) {
             if (error) return callback(new Error('Error clearing mysql: ' + error));
-            if (response.statusCode !== 200) return callback(new Error(`Error clearing mysql. Status code: ${response.statusCode}`));
+            if (response.statusCode !== 200) return callback(new Error(`Error clearing mysql. Status code: ${response.statusCode} message: ${response.body.message}`));
 
             appdb.unsetAddonConfig(app.id, 'mysql', callback);
         });
@@ -658,7 +658,7 @@ function backupMySql(app, options, callback) {
 
         const req = request.post(`https://${result.ip}:3000/` + (options.multipleDatabases ? 'prefixes' : 'databases') + `/${database}/backup?access_token=${result.token}`, { rejectUnauthorized: false }, function (error, response) {
             if (error) return callback(error);
-            if (response.statusCode !== 200) return callback(new Error(`Unexpected response from mysql addon ${response.statusCode}`));
+            if (response.statusCode !== 200) return callback(new Error(`Unexpected response from mysql addon ${response.statusCode} message: ${response.body.message}`));
 
             callback(null);
         });
@@ -685,7 +685,7 @@ function restoreMySql(app, options, callback) {
 
         const restoreReq = request.post(`https://${result.ip}:3000/` + (options.multipleDatabases ? 'prefixes' : 'databases') + `/${database}/restore?access_token=${result.token}`, { rejectUnauthorized: false }, function (error, response) {
             if (error) return callback(error);
-            if (response.statusCode !== 200) return callback(new Error(`Unexpected response from mysql addon ${response.statusCode}`));
+            if (response.statusCode !== 200) return callback(new Error(`Unexpected response from mysql addon ${response.statusCode} message: ${response.body.message}`));
 
             callback(null);
         });
