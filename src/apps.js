@@ -668,7 +668,7 @@ function configure(appId, data, user, auditSource, callback) {
     get(appId, function (error, app) {
         if (error) return callback(error);
 
-        var domain, location, portBindings, values = { };
+        let domain, location, portBindings, values = { }, mailboxName;
         if ('location' in data) location = values.location = data.location.toLowerCase();
         else location = app.location;
 
@@ -715,8 +715,14 @@ function configure(appId, data, user, auditSource, callback) {
         }
 
         if ('mailboxName' in data) {
-            error = mail.validateName(data.mailboxName);
-            if (error) return callback(error);
+            if (data.mailboxName === '') { // special case to reset back to .app
+                mailboxName = mailboxNameForLocation(location, app.manifest);
+            } else {
+                error = mail.validateName(data.mailboxName);
+                if (error) return callback(error);
+                // make the mailboxName follow any new location
+                mailboxName = data.mailboxName || (app.mailboxName.endsWith('.app') ? mailboxNameForLocation(location, app.manifest) : app.mailboxName);
+            }
         }
 
         if ('alternateDomains' in data) {
@@ -757,10 +763,8 @@ function configure(appId, data, user, auditSource, callback) {
             debug('Will configure app with id:%s values:%j', appId, values);
 
             // make the mailbox name follow the apps new location, if the user did not set it explicitly
-            var oldName = app.mailboxName;
-            var newName = data.mailboxName || (app.mailboxName.endsWith('.app') ? mailboxNameForLocation(location, app.manifest) : app.mailboxName);
-            mailboxdb.updateName(oldName, values.oldConfig.domain, newName, domain, function (error) {
-                if (newName.endsWith('.app')) error = null; // ignore internal mailbox conflict errors since we want to show location conflict errors in the UI
+            mailboxdb.updateName(app.mailboxName /* old */, values.oldConfig.domain, mailboxName, domain, function (error) {
+                if (mailboxName.endsWith('.app')) error = null; // ignore internal mailbox conflict errors since we want to show location conflict errors in the UI
 
                 if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(new AppsError(AppsError.ALREADY_EXISTS, 'This mailbox is already taken'));
                 if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new AppsError(AppsError.BAD_STATE));
