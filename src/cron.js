@@ -1,8 +1,10 @@
 'use strict';
 
 exports = module.exports = {
-    initialize: initialize,
-    uninitialize: uninitialize
+    startPostActivationJobs: startPostActivationJobs,
+    startPreActivationJobs: startPreActivationJobs,
+
+    stopJobs: stopJobs
 };
 
 var apps = require('./apps.js'),
@@ -55,9 +57,7 @@ var AUDIT_SOURCE = { userId: null, username: 'cron' };
 // Months: 0-11
 // Day of Week: 0-6
 
-function initialize(callback) {
-    assert.strictEqual(typeof callback, 'function');
-
+function startPreActivationJobs(callback) {
     if (config.provider() === 'caas') {
         // hack: send the first heartbeat only after we are running for 60 seconds
         // required as we end up sending a heartbeat and then cloudron-setup reboots the server
@@ -70,6 +70,12 @@ function initialize(callback) {
             start: true
         });
     }
+
+    callback();
+}
+
+function startPostActivationJobs(callback) {
+    assert.strictEqual(typeof callback, 'function');
 
     var randomHourMinute = Math.floor(60*Math.random());
     gJobs.alive = new CronJob({
@@ -263,7 +269,7 @@ function dynamicDnsChanged(enabled) {
     }
 }
 
-function uninitialize(callback) {
+function stopJobs(callback) {
     assert.strictEqual(typeof callback, 'function');
 
     settings.events.removeListener(settings.TIME_ZONE_KEY, recreateJobs);

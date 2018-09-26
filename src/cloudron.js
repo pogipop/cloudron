@@ -74,7 +74,7 @@ function initialize(callback) {
     async.series([
         settings.initialize,
         reverseProxy.configureDefaultServer,
-        cron.initialize, // required for caas heartbeat before activation
+        cron.startPreActivationJobs,
         onActivated
     ], callback);
 }
@@ -83,7 +83,7 @@ function uninitialize(callback) {
     assert.strictEqual(typeof callback, 'function');
 
     async.series([
-        cron.uninitialize,
+        cron.stopJobs,
         platform.stop,
         settings.uninitialize
     ], callback);
@@ -99,7 +99,10 @@ function onActivated(callback) {
         if (error) return callback(new CloudronError(CloudronError.INTERNAL_ERROR, error));
         if (!count) return callback(); // not activated
 
-        platform.start(callback);
+        async.series([
+            platform.start,
+            cron.startPostActivationJobs
+        ], callback);
     });
 }
 
