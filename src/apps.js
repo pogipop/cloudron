@@ -720,9 +720,10 @@ function configure(appId, data, user, auditSource, callback) {
             } else {
                 error = mail.validateName(data.mailboxName);
                 if (error) return callback(error);
-                // make the mailboxName follow any new location
-                mailboxName = data.mailboxName || (app.mailboxName.endsWith('.app') ? mailboxNameForLocation(location, app.manifest) : app.mailboxName);
+                mailboxName = data.mailboxName;
             }
+        } else { // keep existing name or follow the new location
+            mailboxName = app.mailboxName.endsWith('.app') ? mailboxNameForLocation(location, app.manifest) : app.mailboxName;
         }
 
         if ('alternateDomains' in data) {
