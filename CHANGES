@@ -1383,3 +1383,13 @@
 [3.1.4]
 * Fix issue where support tab was redirecting
 
+[3.2.0]
+* Add acme2 support. This provides DNS based validation removing inbound port 80 requirement
+* Add support for wildcard certificates
+* Allow mailbox name to be reset to the buit-in '.app' name
+* Fix permission issue when restoring a Cloudron
+* Fix a crash when restoring Cloudron
+* Allow alternate domains to be set in app installation REST API
+* Add SFO2 region for DigitalOcean Spaces
+* Show the title in port bindings instead of the long description
+
