@@ -1134,7 +1134,13 @@ function restoreRedis(app, options, callback) {
     getAddonDetails('redis-' + app.id, 'CLOUDRON_REDIS_TOKEN', function (error, result) {
         if (error) return callback(error);
 
-        var input = fs.createReadStream(path.join(paths.APPS_DATA_DIR, app.id, 'dump.rdb'));
+        let input;
+        let oldDumpLocation = path.join(paths.APPS_DATA_DIR, app.id, 'redis/dump.rdb');
+        if (fs.existsSync(oldDumpLocation)) {
+            input = fs.createReadStream(oldDumpLocation);
+        } else {
+            input = fs.createReadStream(path.join(paths.APPS_DATA_DIR, app.id, 'dump.rdb'));
+        }
         input.on('error', callback);
 
         const restoreReq = request.post(`https://${result.ip}:3000/restore?access_token=${result.token}`, { rejectUnauthorized: false }, function (error, response) {
