@@ -565,8 +565,12 @@ function restore(backupConfig, backupId, callback) {
     download(backupConfig, backupId, backupConfig.format, paths.BOX_DATA_DIR, function (error) {
         if (error) return callback(error);
 
+        debug('restore: download completed, importing database');
+
         database.importFromFile(`${paths.BOX_DATA_DIR}/box.mysqldump`, function (error) {
             if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
+
+            debug('restore: database imported');
 
             callback();
         });

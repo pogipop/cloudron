@@ -293,8 +293,9 @@ function restore(backupConfig, backupId, version, callback) {
             async.series([
                 backups.restore.bind(null, backupConfig, backupId),
                 autoprovision,
-                // currently, our suggested restore flow is after a dnsSetup. This re-creates DKIM keys and updates the DNS
-                // for this reason, we have to re-setup DNS after a restore. Once we have a 100% IP based restore, we can skip this
+                // currently, our suggested restore flow is after a dnsSetup. The dnSetup creates DKIM keys and updates the DNS
+                // for this reason, we have to re-setup DNS after a restore so it has DKIm from the backup
+                // Once we have a 100% IP based restore, we can skip this
                 mail.setDnsRecords.bind(null, config.adminDomain()),
                 shell.sudo.bind(null, 'restart', [ RESTART_CMD ])
             ], function (error) {
