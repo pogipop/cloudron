@@ -597,6 +597,20 @@ function restartMail(callback) {
     });
 }
 
+function restartMailIfActivated(callback) {
+    assert.strictEqual(typeof callback, 'function');
+
+    users.count(function (error, count) {
+        if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
+        if (!count) {
+            debug('restartMailIfActivated: skipping restart of mail container since Cloudron is not activated yet');
+            return callback(); // not provisioned yet, do not restart container after dns setup
+        }
+
+        restartMail(callback);
+    });
+}
+
 function getDomain(domain, callback) {
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof callback, 'function');
@@ -765,7 +779,7 @@ function addDomain(domain, callback) {
 
         async.series([
             setDnsRecords.bind(null, domain), // do this first to ensure DKIM keys
-            restartMail
+            restartMailIfActivated
         ], NOOP_CALLBACK); // do these asynchronously
 
         callback();
