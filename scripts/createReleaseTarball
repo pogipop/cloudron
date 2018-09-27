@@ -41,7 +41,11 @@ fi
 
 box_version=$(cd "${SOURCE_DIR}" && git rev-parse "HEAD")
 branch=$(git rev-parse --abbrev-ref HEAD)
-dashboard_version=$(cd "${SOURCE_DIR}/../dashboard" && git rev-parse "master")
+if [[ "${branch}" == "master" ]]; then
+    dashboard_version=$(cd "${SOURCE_DIR}/../dashboard" && git rev-parse "${branch}")
+else
+    dashboard_version=$(cd "${SOURCE_DIR}/../dashboard" && git fetch && git rev-parse "origin/${branch}")
+fi
 bundle_dir=$(mktemp -d -t box 2>/dev/null || mktemp -d box-XXXXXXXXXX --tmpdir=$TMPDIR)
 [[ -z "$bundle_file" ]] && bundle_file="${TMPDIR}/box-${box_version:0:10}-${dashboard_version:0:10}.tar.gz"
 
