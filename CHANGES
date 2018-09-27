@@ -1378,12 +1378,12 @@
 * Add alternateDomains to app install route
 * cloudflare: Fix crash when access denied
 
+[3.1.4]
+* Fix issue where support tab was redirecting
+
 [3.2.0]
 * Add DO Spaces SFO2 region
 * Wildcard DNS now validates the config
 * Add ACMEv2 support
 * Add Wildcard Let's Encrypt provider
-
-[3.1.4]
-* Fix issue where support tab was redirecting
 
