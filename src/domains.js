@@ -380,6 +380,7 @@ function getDnsRecords(subdomain, domain, type, callback) {
     });
 }
 
+// note: for TXT records the values must be quoted
 function upsertDnsRecords(subdomain, domain, type, values, callback) {
     assert.strictEqual(typeof subdomain, 'string');
     assert.strictEqual(typeof domain, 'string');

@@ -456,7 +456,7 @@ Acme2.prototype.prepareDnsChallenge = function (hostname, domain, authorization,
 
     debug(`prepareDnsChallenge: update ${challengeSubdomain} with ${txtValue}`);
 
-    domains.upsertDnsRecords(challengeSubdomain, domain, 'TXT', [ txtValue ], function (error) {
+    domains.upsertDnsRecords(challengeSubdomain, domain, 'TXT', [ `"${txtValue}"` ], function (error) {
         if (error) return callback(new Acme2Error(Acme2Error.EXTERNAL_ERROR, error.message));
 
         domains.waitForDnsRecord(`${challengeSubdomain}`, domain, 'TXT', txtValue, { interval: 5000, times: 200 }, function (error) {
