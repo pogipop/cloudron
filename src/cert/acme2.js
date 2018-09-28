@@ -424,9 +424,7 @@ Acme2.prototype.cleanupHttpChallenge = function (hostname, domain, challenge, ca
     assert.strictEqual(typeof challenge, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    safe.fs.unlinkSync(path.join(paths.ACME_CHALLENGES_DIR, challenge.token));
-
-    callback();
+    fs.unlinkSync(path.join(paths.ACME_CHALLENGES_DIR, challenge.token), callback);
 };
 
 function getChallengeSubdomain(hostname, domain) {
@@ -567,7 +565,9 @@ Acme2.prototype.acmeFlow = function (hostname, domain, callback) {
                         that.waitForOrder.bind(that, orderUrl),
                         that.downloadCertificate.bind(that, hostname)
                     ], function (error) {
-                        that.cleanupChallenge(hostname, domain, challenge, function () {
+                        that.cleanupChallenge(hostname, domain, challenge, function (cleanupError) {
+                            if (error) debug('acmeFlow: ignoring error when cleaning up challenge:', cleanupError);
+
                             iteratorCallback(error);
                         });
                     });
