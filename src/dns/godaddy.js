@@ -109,7 +109,7 @@ function del(dnsConfig, zoneName, subdomain, type, values, callback) {
 
     debug(`get: ${subdomain} in zone ${zoneName} of type ${type} with values ${JSON.stringify(values)}`);
 
-    if (type !== 'A') return callback(new DomainsError(DomainsError.EXTERNAL_ERROR, new Error('Not supported by GoDaddy API'))); // can never happen
+    if (type !== 'A') return callback(new DomainsError(DomainsError.EXTERNAL_ERROR, new Error('Record deletion is not supported by GoDaddy API')));
 
     // check if the record exists at all so that we don't insert the "Dead" record for no reason
     get(dnsConfig, zoneName, subdomain, type, function (error, values) {
