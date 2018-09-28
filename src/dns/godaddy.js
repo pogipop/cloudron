@@ -21,6 +21,7 @@ const GODADDY_API = 'https://api.godaddy.com/v1/domains';
 // this is a workaround for godaddy not having a delete API
 // https://stackoverflow.com/questions/39347464/delete-record-libcloud-godaddy-api
 const GODADDY_INVALID_IP = '0.0.0.0';
+const GODADDY_INVALID_TXT = '""';
 
 function formatError(response) {
     return util.format(`GoDaddy DNS error [${response.statusCode}] ${response.body.message}`);
@@ -109,7 +110,7 @@ function del(dnsConfig, zoneName, subdomain, type, values, callback) {
 
     debug(`get: ${subdomain} in zone ${zoneName} of type ${type} with values ${JSON.stringify(values)}`);
 
-    if (type !== 'A') return callback(new DomainsError(DomainsError.EXTERNAL_ERROR, new Error('Record deletion is not supported by GoDaddy API')));
+    if (type !== 'A' && type !== 'TXT') return callback(new DomainsError(DomainsError.EXTERNAL_ERROR, new Error('Record deletion is not supported by GoDaddy API')));
 
     // check if the record exists at all so that we don't insert the "Dead" record for no reason
     get(dnsConfig, zoneName, subdomain, type, function (error, values) {
@@ -119,7 +120,7 @@ function del(dnsConfig, zoneName, subdomain, type, values, callback) {
         // godaddy does not have a delete API. so fill it up with an invalid IP that we can ignore in future get()
         var records = [{
             ttl: 600,
-            data: GODADDY_INVALID_IP
+            data: type === 'A' ? GODADDY_INVALID_IP : GODADDY_INVALID_TXT
         }];
 
         superagent.put(`${GODADDY_API}/${zoneName}/records/${type}/${subdomain}`)
