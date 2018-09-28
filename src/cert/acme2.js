@@ -429,6 +429,20 @@ Acme2.prototype.cleanupHttpChallenge = function (hostname, domain, challenge, ca
     callback();
 };
 
+function getChallengeSubdomain(hostname, domain) {
+    let challengeSubdomain;
+
+    if (hostname === domain) {
+        challengeSubdomain = '_acme-challenge';
+    } else if (hostname.includes('*')) { // wildcard
+        challengeSubdomain = hostname.replace('*', '_acme-challenge').slice(0, -domain.length - 1);
+    } else {
+        challengeSubdomain = '_acme-challenge.' + hostname.slice(0, -domain.length - 1);
+    }
+
+    return challengeSubdomain;
+}
+
 Acme2.prototype.prepareDnsChallenge = function (hostname, domain, authorization, callback) {
     assert.strictEqual(typeof hostname, 'string');
     assert.strictEqual(typeof domain, 'string');
@@ -445,14 +459,7 @@ Acme2.prototype.prepareDnsChallenge = function (hostname, domain, authorization,
     shasum.update(keyAuthorization);
 
     const txtValue = urlBase64Encode(shasum.digest('base64'));
-    let challengeSubdomain;
-    if (hostname === domain) {
-        challengeSubdomain = '_acme-challenge';
-    } else if (hostname.includes('*')) { // wildcard
-        challengeSubdomain = hostname.replace('*', '_acme-challenge').slice(0, -domain.length - 1);
-    } else {
-        challengeSubdomain = '_acme-challenge.' + hostname.slice(0, -domain.length - 1);
-    }
+    let challengeSubdomain = getChallengeSubdomain(hostname, domain);
 
     debug(`prepareDnsChallenge: update ${challengeSubdomain} with ${txtValue}`);
 
@@ -478,12 +485,11 @@ Acme2.prototype.cleanupDnsChallenge = function (hostname, domain, challenge, cal
     shasum.update(keyAuthorization);
 
     const txtValue = urlBase64Encode(shasum.digest('base64'));
-    const subdomain = hostname.slice(0, -domain.length - 1);
-    const challengeSubdomain = this.wildcard ? subdomain.replace('*', '_acme-challenge') : `_acme-challenge.${subdomain}`;
+    let challengeSubdomain = getChallengeSubdomain(hostname, domain);
 
-    debug(`cleanupDnsChallenge: remove ${subdomain} with ${txtValue}`);
+    debug(`cleanupDnsChallenge: remove ${challengeSubdomain} with ${txtValue}`);
 
-    domains.removeDnsRecords(challengeSubdomain, domain, 'TXT', [ txtValue ], function (error) {
+    domains.removeDnsRecords(challengeSubdomain, domain, 'TXT', [ `"${txtValue}"` ], function (error) {
         if (error) return callback(new Acme2Error(Acme2Error.EXTERNAL_ERROR, error));
 
         callback(null);
