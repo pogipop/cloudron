@@ -566,7 +566,7 @@ Acme2.prototype.acmeFlow = function (hostname, domain, callback) {
                         that.downloadCertificate.bind(that, hostname)
                     ], function (error) {
                         that.cleanupChallenge(hostname, domain, challenge, function (cleanupError) {
-                            if (error) debug('acmeFlow: ignoring error when cleaning up challenge:', cleanupError);
+                            if (cleanupError) debug('acmeFlow: ignoring error when cleaning up challenge:', cleanupError);
 
                             iteratorCallback(error);
                         });
