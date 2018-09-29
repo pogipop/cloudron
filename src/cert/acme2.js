@@ -424,7 +424,9 @@ Acme2.prototype.cleanupHttpChallenge = function (hostname, domain, challenge, ca
     assert.strictEqual(typeof challenge, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    fs.unlinkSync(path.join(paths.ACME_CHALLENGES_DIR, challenge.token), callback);
+    debug('cleanupHttpChallenge: unlinking %s', path.join(paths.ACME_CHALLENGES_DIR, challenge.token));
+
+    fs.unlink(path.join(paths.ACME_CHALLENGES_DIR, challenge.token), callback);
 };
 
 function getChallengeSubdomain(hostname, domain) {
