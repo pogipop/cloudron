@@ -1403,3 +1403,7 @@
 * Add SFO2 region for DigitalOcean Spaces
 * Show the title in port bindings instead of the long description
 
+[3.2.2]
+* Update Haraka to 2.8.20
+* (mail) Fix issue where LDAP connections where not cleaned up
+
