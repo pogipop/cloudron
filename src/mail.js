@@ -743,24 +743,24 @@ function setDnsRecords(domain, callback) {
             records.push({ subdomain: '', domain: domain, type: 'MX', values: [ '10 ' + config.mailFqdn() + '.' ] });
         }
 
-        debug('addDnsRecords: %j', records);
+        debug('setDnsRecords: %j', records);
 
         txtRecordsWithSpf(domain, function (error, txtRecords) {
             if (error) return callback(error);
 
             if (txtRecords) records.push({ subdomain: '', domain: domain, type: 'TXT', values: txtRecords });
 
-            debug('addDnsRecords: will update %j', records);
+            debug('setDnsRecords: will update %j', records);
 
             async.mapSeries(records, function (record, iteratorCallback) {
                 domains.upsertDnsRecords(record.subdomain, record.domain, record.type, record.values, iteratorCallback);
             }, function (error, changeIds) {
                 if (error) {
-                    debug(`addDnsRecords: failed to update: ${error}`);
+                    debug(`setDnsRecords: failed to update: ${error}`);
                     return callback(new MailError(MailError.EXTERNAL_ERROR, error.message));
                 }
 
-                debug('addDnsRecords: records %j added with changeIds %j', records, changeIds);
+                debug('setDnsRecords: records %j added with changeIds %j', records, changeIds);
 
                 callback(null);
             });
