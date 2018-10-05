@@ -9,7 +9,7 @@ exports = module.exports = {
     // a minor version makes all apps re-configure themselves
     'version': '48.12.0',
 
-    'baseImages': [ 'cloudron/base:0.10.0' ],
+    'baseImages': [ 'cloudron/base:0.10.0', 'cloudron/base:1.0.0' ],
 
     // Note that if any of the databases include an upgrade, bump the infra version above
     // This is because we upgrade using dumps instead of mysql_upgrade, pg_upgrade etc
