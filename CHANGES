@@ -1403,4 +1403,5 @@
 
 [3.3.0]
 * Use new addons with REST APIs
+* Ubuntu 18.04 LTS support
 
