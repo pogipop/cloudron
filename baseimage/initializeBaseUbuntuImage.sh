@@ -39,7 +39,6 @@ apt-get -y install \
     nginx-full \
     openssh-server \
     pwgen \
-    rcconf \
     swaks \
     unattended-upgrades \
     unbound \
