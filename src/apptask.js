@@ -299,7 +299,10 @@ function registerSubdomain(app, overwrite, callback) {
                 if (values.length !== 0 && !overwrite) return retryCallback(null, new Error('DNS Record already exists'));
 
                 domains.upsertDnsRecords(app.location, app.domain, 'A', [ ip ], function (error) {
-                    if (error && (error.reason === DomainsError.STILL_BUSY || error.reason === DomainsError.EXTERNAL_ERROR)) return retryCallback(error); // try again
+                    if (error && (error.reason === DomainsError.STILL_BUSY || error.reason === DomainsError.EXTERNAL_ERROR)) {
+                        debug('Upsert error. Will retry.', error.message);
+                        return retryCallback(error); // try again
+                    }
 
                     retryCallback(null, error);
                 });
@@ -356,8 +359,10 @@ function registerAlternateDomains(app, overwrite, callback) {
                     if (values.length !== 0 && !overwrite) return retryCallback(null, new Error('DNS Record already exists'));
 
                     domains.upsertDnsRecords(domain.subdomain, domain.domain, 'A', [ ip ], function (error) {
-                        if (error && (error.reason === DomainsError.STILL_BUSY || error.reason === DomainsError.EXTERNAL_ERROR)) return retryCallback(error); // try again
-
+                        if (error && (error.reason === DomainsError.STILL_BUSY || error.reason === DomainsError.EXTERNAL_ERROR)) {
+                            debug('Upsert error. Will retry.', error.message);
+                            return retryCallback(error); // try again
+                        }
                         retryCallback(null, error);
                     });
                 });
