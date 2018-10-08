@@ -20,6 +20,6 @@ exports = module.exports = {
         'mongodb': { repo: 'cloudron/mongodb', tag: 'cloudron/mongodb:2.0.0@sha256:ef77e926811b775dd2b208ec619c902c22cb583838663cdd901811dacfbedbb9' },
         'redis': { repo: 'cloudron/redis', tag: 'cloudron/redis:2.0.0@sha256:8a88dd334b62b578530a014ca1a2425a54cb9df1e475f5d3a36806e5cfa22121' },
         'mail': { repo: 'cloudron/mail', tag: 'cloudron/mail:2.0.0@sha256:eb2463d768cccb681c404eae6d06516688dc04d8b64cbc49b3b834b78cef0a61' },
-        'graphite': { repo: 'cloudron/graphite', tag: 'cloudron/graphite:1.0.0@sha256:196bf1d19782a015b361da48d06ba1017b3d04b4256d93fbb9c0b50599f69f5d' }
+        'graphite': { repo: 'cloudron/graphite', tag: 'cloudron/graphite:2.0.0@sha256:454f035d60b768153d4f31210380271b5ba1c09367c9d95c7fa37f9e39d2f59c' }
     }
 };
