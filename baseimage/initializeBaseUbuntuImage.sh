@@ -112,3 +112,7 @@ systemctl disable dnsmasq || true
 systemctl stop postfix || true
 systemctl disable postfix || true
 
+# on ubuntu 18.04, this is the default
+systemctl stop systemd-resolved || true
+systemctl disable systemd-resolved || true
+
