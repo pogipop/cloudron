@@ -147,6 +147,8 @@ function createSubcontainer(app, name, cmd, options, callback) {
 
         dockerPortBindings[`${containerPort}/${portType}`] = [ { HostIp: '0.0.0.0', HostPort: hostPort + '' } ];
     }
+    let appEnv = [];
+    Object.keys(app.env).forEach(function (name) { appEnv.push(`${name}=${app.env[name]}`); });
 
     // first check db record, then manifest
     var memoryLimit = app.memoryLimit || manifest.memoryLimit || 0;
@@ -177,7 +179,7 @@ function createSubcontainer(app, name, cmd, options, callback) {
             Tty: isAppContainer,
             Image: app.manifest.dockerImage,
             Cmd: (isAppContainer && app.debugMode && app.debugMode.cmd) ? app.debugMode.cmd : cmd,
-            Env: stdEnv.concat(addonEnv).concat(portEnv),
+            Env: stdEnv.concat(addonEnv).concat(portEnv).concat(appEnv),
             ExposedPorts: isAppContainer ? exposedPorts : { },
             Volumes: { // see also ReadonlyRootfs
                 '/tmp': {},

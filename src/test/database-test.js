@@ -233,7 +233,8 @@ describe('database', function () {
             debugMode: null,
             robotsTxt: null,
             enableBackup: true,
-            ownerId: USER_0.id
+            ownerId: USER_0.id,
+            env: {}
         };
 
         it('cannot delete referenced domain', function (done) {
@@ -751,7 +752,10 @@ describe('database', function () {
             robotsTxt: null,
             enableBackup: true,
             ownerId: USER_0.id,
-            alternateDomains: []
+            alternateDomains: [],
+            env: {
+                'CUSTOM_KEY': 'CUSTOM_VALUE'
+            }
         };
 
         var APP_1 = {
@@ -778,7 +782,8 @@ describe('database', function () {
             robotsTxt: null,
             enableBackup: true,
             ownerId: USER_0.id,
-            alternateDomains: []
+            alternateDomains: [],
+            env: {}
         };
 
         before(function (done) {

@@ -118,6 +118,12 @@ CREATE TABLE IF NOT EXISTS appAddonConfigs(
     value VARCHAR(512) NOT NULL,
     FOREIGN KEY(appId) REFERENCES apps(id));
 
+CREATE TABLE IF NOT EXISTS appEnvVars(
+    appId VARCHAR(128) NOT NULL,
+    name TEXT NOT NULL,
+    value TEXT NOT NULL,
+    FOREIGN KEY(appId) REFERENCES apps(id));
+
 CREATE TABLE IF NOT EXISTS backups(
     id VARCHAR(128) NOT NULL,
     creationTime TIMESTAMP,

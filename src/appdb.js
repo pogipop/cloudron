@@ -106,7 +106,7 @@ function postProcess(result) {
     delete result.environmentVariables;
     delete result.portTypes;
 
-    for (var i = 0; i < environmentVariables.length; i++) {
+    for (let i = 0; i < environmentVariables.length; i++) {
         result.portBindings[environmentVariables[i]] = { hostPort: parseInt(hostPorts[i], 10), type: portTypes[i] };
     }
 
@@ -130,6 +130,14 @@ function postProcess(result) {
         delete d.appId;
         delete d.type;
     });
+
+    let envNames = JSON.parse(result.envNames), envValues = JSON.parse(result.envValues);
+    delete result.envNames;
+    delete result.envValues;
+    result.env = {};
+    for (let i = 0; i < envNames.length; i++) { // NOTE: envNames is [ null ] when env of an app is empty
+        if (envNames[i]) result.env[envNames[i]] = envValues[i];
+    }
 }
 
 function get(id, callback) {
@@ -137,9 +145,11 @@ function get(id, callback) {
     assert.strictEqual(typeof callback, 'function');
 
     database.query('SELECT ' + APPS_FIELDS_PREFIXED + ','
-        + 'GROUP_CONCAT(CAST(appPortBindings.hostPort AS CHAR(6))) AS hostPorts, GROUP_CONCAT(appPortBindings.environmentVariable) AS environmentVariables, GROUP_CONCAT(appPortBindings.type) AS portTypes'
+        + 'GROUP_CONCAT(CAST(appPortBindings.hostPort AS CHAR(6))) AS hostPorts, GROUP_CONCAT(appPortBindings.environmentVariable) AS environmentVariables, GROUP_CONCAT(appPortBindings.type) AS portTypes, '
+        + 'JSON_ARRAYAGG(appEnvVars.name) AS envNames, JSON_ARRAYAGG(appEnvVars.value) AS envValues'
         + ' FROM apps'
         + '  LEFT OUTER JOIN appPortBindings ON apps.id = appPortBindings.appId'
+        + '  LEFT OUTER JOIN appEnvVars ON apps.id = appEnvVars.appId'
         + '  LEFT OUTER JOIN subdomains ON apps.id = subdomains.appId AND subdomains.type = ?'
         + ' WHERE apps.id = ? GROUP BY apps.id', [ exports.SUBDOMAIN_TYPE_PRIMARY, id ], function (error, result) {
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
@@ -153,7 +163,7 @@ function get(id, callback) {
             postProcess(result[0]);
 
             callback(null, result[0]);
-        })
+        });
     });
 }
 
@@ -162,9 +172,11 @@ function getByHttpPort(httpPort, callback) {
     assert.strictEqual(typeof callback, 'function');
 
     database.query('SELECT ' + APPS_FIELDS_PREFIXED + ','
-    + 'GROUP_CONCAT(CAST(appPortBindings.hostPort AS CHAR(6))) AS hostPorts, GROUP_CONCAT(appPortBindings.environmentVariable) AS environmentVariables, GROUP_CONCAT(appPortBindings.type) AS portTypes'
+    + 'GROUP_CONCAT(CAST(appPortBindings.hostPort AS CHAR(6))) AS hostPorts, GROUP_CONCAT(appPortBindings.environmentVariable) AS environmentVariables, GROUP_CONCAT(appPortBindings.type) AS portTypes,'
+    + 'JSON_ARRAYAGG(appEnvVars.name) AS envNames, JSON_ARRAYAGG(appEnvVars.value) AS envValues'
         + ' FROM apps'
         + '  LEFT OUTER JOIN appPortBindings ON apps.id = appPortBindings.appId'
+        + '  LEFT OUTER JOIN appEnvVars ON apps.id = appEnvVars.appId'
         + '  LEFT OUTER JOIN subdomains ON apps.id = subdomains.appId AND subdomains.type = ?'
         + ' WHERE httpPort = ? GROUP BY apps.id', [ exports.SUBDOMAIN_TYPE_PRIMARY, httpPort ], function (error, result) {
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
@@ -186,9 +198,11 @@ function getByContainerId(containerId, callback) {
     assert.strictEqual(typeof callback, 'function');
 
     database.query('SELECT ' + APPS_FIELDS_PREFIXED + ','
-        + 'GROUP_CONCAT(CAST(appPortBindings.hostPort AS CHAR(6))) AS hostPorts, GROUP_CONCAT(appPortBindings.environmentVariable) AS environmentVariables, GROUP_CONCAT(appPortBindings.type) AS portTypes'
+        + 'GROUP_CONCAT(CAST(appPortBindings.hostPort AS CHAR(6))) AS hostPorts, GROUP_CONCAT(appPortBindings.environmentVariable) AS environmentVariables, GROUP_CONCAT(appPortBindings.type) AS portTypes,'
+        + 'JSON_ARRAYAGG(appEnvVars.name) AS envNames, JSON_ARRAYAGG(appEnvVars.value) AS envValues'
         + ' FROM apps'
         + '  LEFT OUTER JOIN appPortBindings ON apps.id = appPortBindings.appId'
+        + '  LEFT OUTER JOIN appEnvVars ON apps.id = appEnvVars.appId'
         + '  LEFT OUTER JOIN subdomains ON apps.id = subdomains.appId AND subdomains.type = ?'
         + ' WHERE containerId = ? GROUP BY apps.id', [ exports.SUBDOMAIN_TYPE_PRIMARY, containerId ], function (error, result) {
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
@@ -209,9 +223,11 @@ function getAll(callback) {
     assert.strictEqual(typeof callback, 'function');
 
     database.query('SELECT ' + APPS_FIELDS_PREFIXED + ','
-        + 'GROUP_CONCAT(CAST(appPortBindings.hostPort AS CHAR(6))) AS hostPorts, GROUP_CONCAT(appPortBindings.environmentVariable) AS environmentVariables, GROUP_CONCAT(appPortBindings.type) AS portTypes'
+        + 'GROUP_CONCAT(CAST(appPortBindings.hostPort AS CHAR(6))) AS hostPorts, GROUP_CONCAT(appPortBindings.environmentVariable) AS environmentVariables, GROUP_CONCAT(appPortBindings.type) AS portTypes,'
+        + 'JSON_ARRAYAGG(appEnvVars.name) AS envNames, JSON_ARRAYAGG(appEnvVars.value) AS envValues'
         + ' FROM apps'
         + '  LEFT OUTER JOIN appPortBindings ON apps.id = appPortBindings.appId'
+        + '  LEFT OUTER JOIN appEnvVars ON apps.id = appEnvVars.appId'
         + '  LEFT OUTER JOIN subdomains ON apps.id = subdomains.appId AND subdomains.type = ?'
         + ' GROUP BY apps.id ORDER BY apps.id', [ exports.SUBDOMAIN_TYPE_PRIMARY ], function (error, results) {
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
@@ -259,6 +275,7 @@ function add(id, appStoreId, manifest, location, domain, ownerId, portBindings, 
     var sso = 'sso' in data ? data.sso : null;
     var robotsTxt = 'robotsTxt' in data ? data.robotsTxt : null;
     var debugModeJson = data.debugMode ? JSON.stringify(data.debugMode) : null;
+    var env = data.env || {};
 
     var queries = [];
 
@@ -277,6 +294,13 @@ function add(id, appStoreId, manifest, location, domain, ownerId, portBindings, 
         queries.push({
             query: 'INSERT INTO appPortBindings (environmentVariable, hostPort, type, appId) VALUES (?, ?, ?, ?)',
             args: [ env, portBindings[env].hostPort, portBindings[env].type, id ]
+        });
+    });
+
+    Object.keys(env).forEach(function (name) {
+        queries.push({
+            query: 'INSERT INTO appEnvVars (appId, name, value) VALUES (?, ?, ?)',
+            args: [ id, name, env[name] ]
         });
     });
 
@@ -354,12 +378,13 @@ function del(id, callback) {
         { query: 'DELETE FROM subdomains WHERE appId = ?', args: [ id ] },
         { query: 'DELETE FROM mailboxes WHERE ownerId=?', args: [ id ] },
         { query: 'DELETE FROM appPortBindings WHERE appId = ?', args: [ id ] },
+        { query: 'DELETE FROM appEnvVars WHERE appId = ?', args: [ id ] },
         { query: 'DELETE FROM apps WHERE id = ?', args: [ id ] }
     ];
 
     database.transaction(queries, function (error, results) {
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
-        if (results[3].affectedRows !== 1) return callback(new DatabaseError(DatabaseError.NOT_FOUND));
+        if (results[4].affectedRows !== 1) return callback(new DatabaseError(DatabaseError.NOT_FOUND));
 
         callback(null);
     });
@@ -372,6 +397,7 @@ function clear(callback) {
         database.query.bind(null, 'DELETE FROM subdomains'),
         database.query.bind(null, 'DELETE FROM appPortBindings'),
         database.query.bind(null, 'DELETE FROM appAddonConfigs'),
+        database.query.bind(null, 'DELETE FROM appEnvVars'),
         database.query.bind(null, 'DELETE FROM apps')
     ], function (error) {
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
@@ -391,6 +417,7 @@ function updateWithConstraints(id, app, constraints, callback) {
     assert(!('portBindings' in app) || typeof app.portBindings === 'object');
     assert(!('accessRestriction' in app) || typeof app.accessRestriction === 'object' || app.accessRestriction === '');
     assert(!('alternateDomains' in app) || Array.isArray(app.alternateDomains));
+    assert(!('env' in app) || typeof app.env === 'object');
 
     var queries = [ ];
 
@@ -401,6 +428,17 @@ function updateWithConstraints(id, app, constraints, callback) {
         Object.keys(portBindings).forEach(function (env) {
             var values = [ portBindings[env].hostPort, portBindings[env].type, env, id ];
             queries.push({ query: 'INSERT INTO appPortBindings (hostPort, type, environmentVariable, appId) VALUES(?, ?, ?, ?)', args: values });
+        });
+    }
+
+    if ('env' in app) {
+        queries.push({ query: 'DELETE FROM appEnvVars WHERE appId = ?', args: [ id ] });
+
+        Object.keys(app.env).forEach(function (name) {
+            queries.push({
+                query: 'INSERT INTO appEnvVars (appId, name, value) VALUES (?, ?, ?)',
+                args: [ id, name, app.env[name] ]
+            });
         });
     }
 
@@ -424,7 +462,7 @@ function updateWithConstraints(id, app, constraints, callback) {
         if (p === 'manifest' || p === 'oldConfig' || p === 'updateConfig' || p === 'restoreConfig' || p === 'accessRestriction' || p === 'debugMode') {
             fields.push(`${p}Json = ?`);
             values.push(JSON.stringify(app[p]));
-        } else if (p !== 'portBindings' && p !== 'location' && p !== 'domain' && p !== 'alternateDomains') {
+        } else if (p !== 'portBindings' && p !== 'location' && p !== 'domain' && p !== 'alternateDomains' && p !== 'env') {
             fields.push(p + ' = ?');
             values.push(app[p]);
         }
@@ -617,7 +655,7 @@ function transferOwnership(oldOwnerId, newOwnerId, callback) {
     assert.strictEqual(typeof newOwnerId, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    database.query('UPDATE apps SET ownerId=? WHERE ownerId=?', [ newOwnerId, oldOwnerId ], function (error, results) {
+    database.query('UPDATE apps SET ownerId=? WHERE ownerId=?', [ newOwnerId, oldOwnerId ], function (error) {
         if (error && error.code === 'ER_NO_REFERENCED_ROW_2') return callback(new DatabaseError(DatabaseError.NOT_FOUND, 'No such user'));
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
 

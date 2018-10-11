@@ -110,7 +110,10 @@ describe('Apps', function () {
         memoryLimit: 0,
         robotsTxt: null,
         sso: false,
-        ownerId: USER_0.id
+        ownerId: USER_0.id,
+        env: {
+            'CUSTOM_KEY': 'CUSTOM_VALUE'
+        }
     };
 
     var APP_1 = {
@@ -125,7 +128,8 @@ describe('Apps', function () {
         portBindings: {},
         accessRestriction: { users: [ 'someuser' ], groups: [ GROUP_0.id ] },
         memoryLimit: 0,
-        ownerId: USER_0.id
+        ownerId: USER_0.id,
+        env: {}
     };
 
     var APP_2 = {
@@ -142,7 +146,8 @@ describe('Apps', function () {
         memoryLimit: 0,
         robotsTxt: null,
         sso: false,
-        ownerId: USER_0.id
+        ownerId: USER_0.id,
+        env: {}
     };
 
     before(function (done) {

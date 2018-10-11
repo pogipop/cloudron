@@ -144,6 +144,11 @@ function installApp(req, res, next) {
         if (data.alternateDomains.some(function (d) { return (typeof d.domain !== 'string' || typeof d.subdomain !== 'string'); })) return next(new HttpError(400, 'alternateDomains array must contain objects with domain and subdomain strings'));
     }
 
+    if ('env' in data) {
+        if (!data.env || typeof data.env !== 'object') return next(new HttpError(400, 'env must be an object'));
+        if (Object.keys(data.env).some(function (key) { return typeof data.env[key] !== 'string'; })) return next(new HttpError(400, 'env must contain values as strings'));
+    }
+
     debug('Installing app :%j', data);
 
     apps.install(data, req.user, auditSource(req), function (error, app) {
@@ -192,6 +197,11 @@ function configureApp(req, res, next) {
     if ('alternateDomains' in data) {
         if (!Array.isArray(data.alternateDomains)) return next(new HttpError(400, 'alternateDomains must be an array'));
         if (data.alternateDomains.some(function (d) { return (typeof d.domain !== 'string' || typeof d.subdomain !== 'string'); })) return next(new HttpError(400, 'alternateDomains array must contain objects with domain and subdomain strings'));
+    }
+
+    if ('env' in data) {
+        if (!data.env || typeof data.env !== 'object') return next(new HttpError(400, 'env must be an object'));
+        if (Object.keys(data.env).some(function (key) { return typeof data.env[key] !== 'string'; })) return next(new HttpError(400, 'env must contain values as strings'));
     }
 
     debug('Configuring app id:%s data:%j', req.params.id, data);

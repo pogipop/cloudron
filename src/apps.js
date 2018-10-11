@@ -325,7 +325,8 @@ function getAppConfig(app) {
         xFrameOptions: app.xFrameOptions || 'SAMEORIGIN',
         robotsTxt: app.robotsTxt,
         sso: app.sso,
-        alternateDomains: app.alternateDomains || []
+        alternateDomains: app.alternateDomains || [],
+        env: app.env
     };
 }
 
@@ -335,7 +336,7 @@ function removeInternalFields(app) {
         'location', 'domain', 'fqdn', 'mailboxName',
         'accessRestriction', 'manifest', 'portBindings', 'iconUrl', 'memoryLimit', 'xFrameOptions',
         'sso', 'debugMode', 'robotsTxt', 'enableBackup', 'creationTime', 'updateTime', 'ts',
-        'alternateDomains', 'ownerId');
+        'alternateDomains', 'ownerId', 'env');
 }
 
 function removeRestrictedFields(app) {
@@ -535,7 +536,8 @@ function install(data, user, auditSource, callback) {
         backupId = data.backupId || null,
         backupFormat = data.backupFormat || 'tgz',
         ownerId = data.ownerId,
-        alternateDomains = data.alternateDomains || [];
+        alternateDomains = data.alternateDomains || [],
+        env = data.env || {};
 
     assert(data.appStoreId || data.manifest); // atleast one of them is required
 
@@ -611,7 +613,8 @@ function install(data, user, auditSource, callback) {
                 restoreConfig: backupId ? { backupId: backupId, backupFormat: backupFormat } : null,
                 enableBackup: enableBackup,
                 robotsTxt: robotsTxt,
-                alternateDomains: alternateDomains
+                alternateDomains: alternateDomains,
+                env: env
             };
 
             appdb.add(appId, appStoreId, manifest, location, domain, ownerId, translatePortBindings(portBindings, manifest), data, function (error) {
@@ -730,6 +733,10 @@ function configure(appId, data, user, auditSource, callback) {
             // TODO validate all subdomains [{ domain: '', subdomain: ''}]
             values.alternateDomains = data.alternateDomains;
             values.alternateDomains.forEach(function (ad) { ad.subdomain = addSpacesSuffix(ad.subdomain, user); }); // TODO: validate these
+        }
+
+        if ('env' in data) {
+            values.env = data.env;
         }
 
         domains.get(domain, function (error, domainObject) {
@@ -1016,7 +1023,8 @@ function clone(appId, data, user, auditSource, callback) {
                     sso: !!app.sso,
                     mailboxName: (location ? location : manifest.title.toLowerCase().replace(/[^a-zA-Z0-9]/g, '')) + '.app',
                     enableBackup: app.enableBackup,
-                    robotsTxt: app.robotsTxt
+                    robotsTxt: app.robotsTxt,
+                    env: app.env
                 };
 
                 appdb.add(newAppId, app.appStoreId, manifest, location, domain, ownerId, translatePortBindings(portBindings, manifest), data, function (error) {
