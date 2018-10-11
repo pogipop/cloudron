@@ -88,6 +88,9 @@ function checkAppHealth(app, callback) {
             return setHealth(app, appdb.HEALTH_DEAD, callback);
         }
 
+        // non-appstore apps may not have healthCheckPath
+        if (!manifest.healthCheckPath) return setHealth(app, appdb.HEALTH_HEALTHY, callback);
+
         // poll through docker network instead of nginx to bypass any potential oauth proxy
         var healthCheckUrl = 'http://127.0.0.1:' + app.httpPort + manifest.healthCheckPath;
         superagent
