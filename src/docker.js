@@ -147,6 +147,7 @@ function createSubcontainer(app, name, cmd, options, callback) {
 
         dockerPortBindings[`${containerPort}/${portType}`] = [ { HostIp: '0.0.0.0', HostPort: hostPort + '' } ];
     }
+
     let appEnv = [];
     Object.keys(app.env).forEach(function (name) { appEnv.push(`${name}=${app.env[name]}`); });
 
