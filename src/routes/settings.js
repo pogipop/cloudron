@@ -23,10 +23,14 @@ exports = module.exports = {
     setAppstoreConfig: setAppstoreConfig,
 
     getPlatformConfig: getPlatformConfig,
-    setPlatformConfig: setPlatformConfig
+    setPlatformConfig: setPlatformConfig,
+
+    setRegistryConfig: setRegistryConfig
 };
 
 var assert = require('assert'),
+    docker = require('../docker.js'),
+    DockerError = docker.DockerError,
     HttpError = require('connect-lastmile').HttpError,
     HttpSuccess = require('connect-lastmile').HttpSuccess,
     safe = require('safetydance'),
@@ -233,5 +237,20 @@ function setAppstoreConfig(req, res, next) {
 
             next(new HttpSuccess(202, result));
         });
+    });
+}
+
+function setRegistryConfig(req, res, next) {
+    assert.strictEqual(typeof req.body, 'object');
+
+    if (typeof req.body.serveraddress !== 'string') return next(new HttpError(400, 'serveraddress is required'));
+    if ('username' in req.body && typeof req.body.username !== 'string') return next(new HttpError(400, 'username is required'));
+    if ('password' in req.body && typeof req.body.password !== 'string') return next(new HttpError(400, 'password is required'));
+
+    docker.setRegistryConfig(req.body, function (error) {
+        if (error && error.reason === DockerError.BAD_FIELD) return next(new HttpError(400, error.message));
+        if (error) return next(new HttpError(500, error));
+
+        next(new HttpSuccess(200));
     });
 }

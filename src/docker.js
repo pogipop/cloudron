@@ -2,6 +2,8 @@
 
 exports = module.exports = {
     connection: connectionInstance(),
+    setRegistryConfig: setRegistryConfig,
+
     downloadImage: downloadImage,
     createContainer: createContainer,
     startContainer: startContainer,
@@ -58,10 +60,48 @@ var addons = require('./addons.js'),
 
 const RMVOLUME_CMD = path.join(__dirname, 'scripts/rmvolume.sh');
 
+function DockerError(reason, errorOrMessage) {
+    assert.strictEqual(typeof reason, 'string');
+    assert(errorOrMessage instanceof Error || typeof errorOrMessage === 'string' || typeof errorOrMessage === 'undefined');
+
+    Error.call(this);
+    Error.captureStackTrace(this, this.constructor);
+
+    this.name = this.constructor.name;
+    this.reason = reason;
+    if (typeof errorOrMessage === 'undefined') {
+        this.message = reason;
+    } else if (typeof errorOrMessage === 'string') {
+        this.message = errorOrMessage;
+    } else {
+        this.message = 'Internal error';
+        this.nestedError = errorOrMessage;
+    }
+}
+util.inherits(DockerError, Error);
+DockerError.INTERNAL_ERROR = 'Internal Error';
+DockerError.BAD_FIELD = 'Bad field';
+
 function debugApp(app, args) {
     assert(typeof app === 'object');
 
     debug(app.fqdn + ' ' + util.format.apply(util, Array.prototype.slice.call(arguments, 1)));
+}
+
+function setRegistryConfig(auth, callback) {
+    assert.strictEqual(typeof auth, 'object');
+    assert.strictEqual(typeof callback, 'function');
+
+    const isLogin = !!auth.password;
+
+    // currently, auth info is not stashed in the db but maybe it should for restore to work?
+    const cmd = isLogin ? `docker login ${auth.serveraddress} --username ${auth.username} --password ${auth.password}` : `docker logout ${auth.serveraddress}`;
+
+    child_process.exec(cmd, { }, function (error, stdout, stderr) {
+        if (error) return callback(new DockerError(DockerError.BAD_FIELD, stderr));
+
+        callback();
+    });
 }
 
 function pullImage(manifest, callback) {
