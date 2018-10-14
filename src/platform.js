@@ -7,7 +7,8 @@ exports = module.exports = {
     handleCertChanged: handleCertChanged
 };
 
-var apps = require('./apps.js'),
+var addons = require('./addons.js'),
+    apps = require('./apps.js'),
     assert = require('assert'),
     async = require('async'),
     config = require('./config.js'),
@@ -201,7 +202,7 @@ function startMysql(callback) {
 
     shell.execSync('startMysql', cmd);
 
-    setTimeout(callback, 5000);
+    addons.waitForAddon('mysql', 'CLOUDRON_MYSQL_TOKEN', callback);
 }
 
 function startPostgresql(callback) {
@@ -229,7 +230,7 @@ function startPostgresql(callback) {
 
     shell.execSync('startPostgresql', cmd);
 
-    setTimeout(callback, 5000);
+    addons.waitForAddon('postgresql', 'CLOUDRON_POSTGRESQL_TOKEN', callback);
 }
 
 function startMongodb(callback) {
@@ -257,7 +258,7 @@ function startMongodb(callback) {
 
     shell.execSync('startMongodb', cmd);
 
-    setTimeout(callback, 5000);
+    addons.waitForAddon('mongodb', 'CLOUDRON_MONGODB_TOKEN', callback);
 }
 
 function startAddons(existingInfra, callback) {

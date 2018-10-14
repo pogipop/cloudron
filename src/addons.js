@@ -7,6 +7,8 @@ exports = module.exports = {
     restoreAddons: restoreAddons,
     clearAddons: clearAddons,
 
+    waitForAddon: waitForAddon,
+
     getEnvironment: getEnvironment,
     getMountsSync: getMountsSync,
     getContainerNamesSync: getContainerNamesSync,
@@ -161,6 +163,27 @@ function getAddonDetails(containerName, tokenEnvName, callback) {
         if (!token)  return callback(new Error(`Error getting ${containerName} cloudron token`));
 
         callback(null, { ip: ip, token: token });
+    });
+}
+
+function waitForAddon(containerName, tokenEnvName, callback) {
+    assert.strictEqual(typeof containerName, 'string');
+    assert.strictEqual(typeof tokenEnvName, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    debug(`Waiting for ${containerName}`);
+
+    getAddonDetails(containerName, tokenEnvName, function (error, result) {
+        if (error) return callback(error);
+
+        async.retry({ times: 10, interval: 5000 }, function (retryCallback) {
+            request.get(`https://${result.ip}:3000/healthcheck?access_token=${result.token}`, { json: true, rejectUnauthorized: false }, function (error, response) {
+                if (error) return retryCallback(new Error(`Error waiting for ${containerName}: ${error.message}`));
+                if (response.statusCode !== 200) return retryCallback(new Error(`Error waiting for ${containerName}. Status code: ${response.statusCode} message: ${response.body.message}`));
+
+                retryCallback(null);
+            });
+        }, callback);
     });
 }
 
@@ -1024,32 +1047,12 @@ function setupRedis(app, options, callback) {
             async.series([
                 shell.execSync.bind(null, 'startRedis', cmd),
                 appdb.setAddonConfig.bind(null, app.id, 'redis', env),
-                waitForRedis.bind(null, app)
+                waitForAddon.bind(null, 'redis-' + app.id, 'CLOUDRON_REDIS_TOKEN')
             ], function (error) {
                 if (error) debug('Error setting up redis: ', error);
                 callback(error);
             });
         });
-    });
-}
-
-function waitForRedis(app, callback) {
-    assert.strictEqual(typeof app, 'object');
-    assert.strictEqual(typeof callback, 'function');
-
-    debugApp(app, 'Waiting for redis');
-
-    getAddonDetails('redis-' + app.id, 'CLOUDRON_REDIS_TOKEN', function (error, result) {
-        if (error) return callback(error);
-
-        async.retry({ times: 10, interval: 5000 }, function (retryCallback) {
-            request.get(`https://${result.ip}:3000/healthcheck?access_token=${result.token}`, { json: true, rejectUnauthorized: false }, function (error, response) {
-                if (error) return retryCallback(new Error(`Error waiting for redis: ${error.message}`));
-                if (response.statusCode !== 200) return retryCallback(new Error(`Error waiting for redis. Status code: ${response.statusCode} message: ${response.body.message}`));
-
-                retryCallback(null);
-            });
-        }, callback);
     });
 }
 
