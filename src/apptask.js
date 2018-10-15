@@ -379,9 +379,14 @@ function unregisterAlternateDomains(app, all, callback) {
     assert.strictEqual(typeof all, 'boolean');
     assert.strictEqual(typeof callback, 'function');
 
-    var obsoleteDomains;
-    if (all) obsoleteDomains = app.alternateDomains;
-    else obsoleteDomains = app.oldConfig.alternateDomains.filter(function (o) { return !app.alternateDomains.some(function (n) { return n.subdomain === o.subdomain && n.domain === o.domain; }); });
+    let obsoleteDomains = [];
+    if (all) {
+        obsoleteDomains = app.alternateDomains;
+    } else if (app.oldConfig) { // oldConfig can be null during an infra update
+        obsoleteDomains = app.oldConfig.alternateDomains.filter(function (o) {
+            return !app.alternateDomains.some(function (n) { return n.subdomain === o.subdomain && n.domain === o.domain; });
+        });
+    }
 
     if (obsoleteDomains.length === 0) return callback();
 
