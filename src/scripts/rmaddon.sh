@@ -25,9 +25,9 @@ if [[ "${addon}" != "postgresql" && "${addon}" != "mysql" && "${addon}" != "mong
 fi
 
 if [[ "${BOX_ENV}" == "cloudron" ]]; then
-    readonly addon_dir="${HOME}/platformdata/${addon}"
+    readonly addon_dir="${HOME}/platformdata/${addon}/${appid}"
 else
-    readonly addon_dir="${HOME}/.cloudron_test/platformdata/${addon}"
+    readonly addon_dir="${HOME}/.cloudron_test/platformdata/${addon}/${appid}"
 fi
 
 rm -rf "${addon_dir}"

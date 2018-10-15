@@ -47,7 +47,7 @@ var accesscontrol = require('./accesscontrol.js'),
     util = require('util');
 
 var NOOP = function (app, options, callback) { return callback(); };
-const RMREDIS_CMD = path.join(__dirname, 'scripts/rmredis.sh');
+const RMADDON_CMD = path.join(__dirname, 'scripts/rmaddon.sh');
 
 // setup can be called multiple times for the same app (configure crash restart) and existing data must not be lost
 // teardown is destructive. app data stored with the addon is lost
@@ -1116,7 +1116,7 @@ function teardownRedis(app, options, callback) {
     container.remove(removeOptions, function (error) {
         if (error && error.statusCode !== 404) return callback(new Error('Error removing container:' + error));
 
-        shell.sudo('removeVolume', [ RMREDIS_CMD, app.id ], function (error) {
+        shell.sudo('removeVolume', [ RMADDON_CMD, 'redis', app.id ], function (error) {
             if (error) return callback(new Error('Error removing redis data:' + error));
 
             rimraf(path.join(paths.LOG_DIR, `redis-${app.id}`), function (error) {

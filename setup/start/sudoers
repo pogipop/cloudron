@@ -4,9 +4,6 @@ Defaults !syslog
 Defaults!/home/yellowtent/box/src/scripts/rmvolume.sh env_keep="HOME BOX_ENV"
 yellowtent ALL=(root) NOPASSWD: /home/yellowtent/box/src/scripts/rmvolume.sh
 
-Defaults!/home/yellowtent/box/src/scripts/rmredis.sh env_keep="HOME BOX_ENV"
-yellowtent ALL=(root) NOPASSWD: /home/yellowtent/box/src/scripts/rmredis.sh
-
 Defaults!/home/yellowtent/box/src/scripts/rmaddon.sh env_keep="HOME BOX_ENV"
 yellowtent ALL=(root) NOPASSWD: /home/yellowtent/box/src/scripts/rmaddon.sh
 
