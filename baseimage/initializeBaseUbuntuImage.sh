@@ -26,6 +26,7 @@ debconf-set-selections <<< 'mysql-server mysql-server/root_password password pas
 debconf-set-selections <<< 'mysql-server mysql-server/root_password_again password password'
 
 # this enables automatic security upgrades (https://help.ubuntu.com/community/AutomaticSecurityUpdates)
+# resolvconf is needed for unbound to work property after disabling systemd-resolved in 18.04
 apt-get -y install \
     acl \
     awscli \
@@ -39,6 +40,7 @@ apt-get -y install \
     nginx-full \
     openssh-server \
     pwgen \
+    resolvconf \
     swaks \
     unattended-upgrades \
     unbound \
@@ -112,7 +114,7 @@ systemctl disable dnsmasq || true
 systemctl stop postfix || true
 systemctl disable postfix || true
 
-# on ubuntu 18.04, this is the default
+# on ubuntu 18.04, this is the default. this requires resolvconf for DNS to work further after the disable
 systemctl stop systemd-resolved || true
 systemctl disable systemd-resolved || true
 
