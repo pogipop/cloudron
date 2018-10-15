@@ -7,6 +7,8 @@ exports = module.exports = {
     restoreAddons: restoreAddons,
     clearAddons: clearAddons,
 
+    importDatabase: importDatabase,
+
     waitForAddon: waitForAddon,
 
     getEnvironment: getEnvironment,
@@ -275,6 +277,24 @@ function restoreAddons(app, addons, callback) {
 
         KNOWN_ADDONS[addon].restore(app, addons[addon], iteratorCallback);
     }, callback);
+}
+
+function importDatabase(addon, callback) {
+    assert.strictEqual(typeof addon, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    debug(`importDatabase: Importing ${addon}`);
+
+    if (!(addon in KNOWN_ADDONS)) return callback(new Error(`No such addon: ${addon}`));
+
+    appdb.getAll(function (error, apps) {
+        if (error) return callback(error);
+
+        async.eachSeries(apps, function iterator (app, iteratorCallback) {
+            debug(`importDatabase: Importing app ${app.id}`)
+            KNOWN_ADDONS[addon].restore(app, addon, iteratorCallback);
+        }, callback);
+    });
 }
 
 function getEnvironment(app, callback) {
