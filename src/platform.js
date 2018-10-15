@@ -19,6 +19,7 @@ var addons = require('./addons.js'),
     locker = require('./locker.js'),
     mail = require('./mail.js'),
     os = require('os'),
+    path = require('path'),
     paths = require('./paths.js'),
     reverseProxy = require('./reverseproxy.js'),
     safe = require('safetydance'),
@@ -29,6 +30,8 @@ var addons = require('./addons.js'),
     _ = require('underscore');
 
 var gPlatformReadyTimer = null;
+
+const RMADDON_CMD = path.join(__dirname, 'scripts/rmaddon.sh');
 
 var NOOP_CALLBACK = function (error) { if (error) debug(error); };
 
@@ -176,6 +179,20 @@ function startGraphite(callback) {
     callback();
 }
 
+function parseImageTag(tag) {
+    let repository = tag.split(':', 1)[0];
+    let version = tag.substr(repository.length + 1).split('@', 1)[0];
+    let digest = tag.substr(repository.length + 1 + version.length + 1).split(':', 2)[1];
+
+    return { repository, version: semver.parse(version), digest };
+}
+
+function requiresUpgrade(existingTag, currentTag) {
+    let etag = parseImageTag(existingTag), ctag = parseImageTag(currentTag);
+
+    return etag.version.major !== ctag.version.major;
+}
+
 function startMysql(existingInfra, callback) {
     assert.strictEqual(typeof existingInfra, 'object');
     assert.strictEqual(typeof callback, 'function');
@@ -185,6 +202,13 @@ function startMysql(existingInfra, callback) {
     const rootPassword = hat(8 * 128);
     const cloudronToken = hat(8 * 128);
     const memoryLimit = (1 + Math.round(os.totalmem()/(1024*1024*1024)/4)) * 256;
+
+    const upgrading = existingInfra.version !== 'none' && requiresUpgrade(existingInfra.images.mysql.tag, tag);
+
+    if (upgrading) {
+        debug('startMysql: mysql will be upgraded');
+        shell.sudoSync('startMysql', `${RMADDON_CMD} mysql`);
+    }
 
     const cmd = `docker run --restart=always -d --name="mysql" \
                 --net cloudron \
@@ -205,7 +229,12 @@ function startMysql(existingInfra, callback) {
 
     shell.execSync('startMysql', cmd);
 
-    addons.waitForAddon('mysql', 'CLOUDRON_MYSQL_TOKEN', callback);
+    addons.waitForAddon('mysql', 'CLOUDRON_MYSQL_TOKEN', function (error) {
+        if (error) return callback(error);
+        if (!upgrading) return callback(null);
+
+        addons.importDatabase('mysql', callback);
+    });
 }
 
 function startPostgresql(existingInfra, callback) {
@@ -217,6 +246,13 @@ function startPostgresql(existingInfra, callback) {
     const rootPassword = hat(8 * 128);
     const cloudronToken = hat(8 * 128);
     const memoryLimit = (1 + Math.round(os.totalmem()/(1024*1024*1024)/4)) * 256;
+
+    const upgrading = existingInfra.version !== 'none' && requiresUpgrade(existingInfra.images.postgresql.tag, tag);
+
+    if (upgrading) {
+        debug('startPostgresql: postgresql will be upgraded');
+        shell.sudoSync('startPostgresql', `${RMADDON_CMD} postgresql`);
+    }
 
     const cmd = `docker run --restart=always -d --name="postgresql" \
                 --net cloudron \
@@ -236,7 +272,12 @@ function startPostgresql(existingInfra, callback) {
 
     shell.execSync('startPostgresql', cmd);
 
-    addons.waitForAddon('postgresql', 'CLOUDRON_POSTGRESQL_TOKEN', callback);
+    addons.waitForAddon('postgresql', 'CLOUDRON_POSTGRESQL_TOKEN', function (error) {
+        if (error) return callback(error);
+        if (!upgrading) return callback(null);
+
+        addons.importDatabase('postgresql', callback);
+    });
 }
 
 function startMongodb(existingInfra, callback) {
@@ -248,6 +289,14 @@ function startMongodb(existingInfra, callback) {
     const rootPassword = hat(8 * 128);
     const cloudronToken = hat(8 * 128);
     const memoryLimit = (1 + Math.round(os.totalmem()/(1024*1024*1024)/4)) * 200;
+
+
+    const upgrading = existingInfra.version !== 'none' && requiresUpgrade(existingInfra.images.mongodb.tag, tag);
+
+    if (upgrading) {
+        debug('startMongodb: mongodb will be upgraded');
+        shell.sudoSync('startMongodb', `${RMADDON_CMD} mongodb`);
+    }
 
     const cmd = `docker run --restart=always -d --name="mongodb" \
                 --net cloudron \
@@ -267,7 +316,12 @@ function startMongodb(existingInfra, callback) {
 
     shell.execSync('startMongodb', cmd);
 
-    addons.waitForAddon('mongodb', 'CLOUDRON_MONGODB_TOKEN', callback);
+    addons.waitForAddon('mongodb', 'CLOUDRON_MONGODB_TOKEN', function (error) {
+        if (error) return callback(error);
+        if (!upgrading) return callback(null);
+
+        addons.importDatabase('mongodb', callback);
+    });
 }
 
 function startAddons(existingInfra, callback) {

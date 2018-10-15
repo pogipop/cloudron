@@ -141,7 +141,7 @@ var KNOWN_ADDONS = {
 function debugApp(app, args) {
     assert(typeof app === 'object');
 
-    debug(app.fqdn + ' ' + util.format.apply(util, Array.prototype.slice.call(arguments, 1)));
+    debug((app.fqdn || app.location) + ' ' + util.format.apply(util, Array.prototype.slice.call(arguments, 1)));
 }
 
 function getAddonDetails(containerName, tokenEnvName, callback) {
@@ -291,8 +291,14 @@ function importDatabase(addon, callback) {
         if (error) return callback(error);
 
         async.eachSeries(apps, function iterator (app, iteratorCallback) {
-            debug(`importDatabase: Importing app ${app.id}`)
-            KNOWN_ADDONS[addon].restore(app, addon, iteratorCallback);
+            if (!(addon in app.manifest.addons)) return iteratorCallback(); // app doesn't use the addon
+
+            debug(`importDatabase: Importing addon ${addon} of app ${app.id}`);
+
+            async.series([
+                KNOWN_ADDONS[addon].setup.bind(null, app, app.manifest.addons[addon]),
+                KNOWN_ADDONS[addon].restore.bind(null, app, app.manifest.addons[addon])
+            ], iteratorCallback);
         }, callback);
     });
 }
