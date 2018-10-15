@@ -176,7 +176,10 @@ function startGraphite(callback) {
     callback();
 }
 
-function startMysql(callback) {
+function startMysql(existingInfra, callback) {
+    assert.strictEqual(typeof existingInfra, 'object');
+    assert.strictEqual(typeof callback, 'function');
+
     const tag = infra.images.mysql.tag;
     const dataDir = paths.PLATFORM_DATA_DIR;
     const rootPassword = hat(8 * 128);
@@ -205,7 +208,10 @@ function startMysql(callback) {
     addons.waitForAddon('mysql', 'CLOUDRON_MYSQL_TOKEN', callback);
 }
 
-function startPostgresql(callback) {
+function startPostgresql(existingInfra, callback) {
+    assert.strictEqual(typeof existingInfra, 'object');
+    assert.strictEqual(typeof callback, 'function');
+
     const tag = infra.images.postgresql.tag;
     const dataDir = paths.PLATFORM_DATA_DIR;
     const rootPassword = hat(8 * 128);
@@ -233,7 +239,10 @@ function startPostgresql(callback) {
     addons.waitForAddon('postgresql', 'CLOUDRON_POSTGRESQL_TOKEN', callback);
 }
 
-function startMongodb(callback) {
+function startMongodb(existingInfra, callback) {
+    assert.strictEqual(typeof existingInfra, 'object');
+    assert.strictEqual(typeof callback, 'function');
+
     const tag = infra.images.mongodb.tag;
     const dataDir = paths.PLATFORM_DATA_DIR;
     const rootPassword = hat(8 * 128);
@@ -267,14 +276,19 @@ function startAddons(existingInfra, callback) {
     // always start addons on any infra change, regardless of minor or major update
     if (existingInfra.version !== infra.version) {
         debug('startAddons: no existing infra or infra upgrade. starting all addons');
-        startFuncs.push(startGraphite, startMysql, startPostgresql, startMongodb, mail.startMail);
+        startFuncs.push(
+            startGraphite,
+            startMysql.bind(null, existingInfra),
+            startPostgresql.bind(null, existingInfra),
+            startMongodb.bind(null, existingInfra),
+            mail.startMail);
     } else {
         assert.strictEqual(typeof existingInfra.images, 'object');
 
         if (infra.images.graphite.tag !== existingInfra.images.graphite.tag) startFuncs.push(startGraphite);
-        if (infra.images.mysql.tag !== existingInfra.images.mysql.tag) startFuncs.push(startMysql);
-        if (infra.images.postgresql.tag !== existingInfra.images.postgresql.tag) startFuncs.push(startPostgresql);
-        if (infra.images.mongodb.tag !== existingInfra.images.mongodb.tag) startFuncs.push(startMongodb);
+        if (infra.images.mysql.tag !== existingInfra.images.mysql.tag) startFuncs.push(startMysql.bind(null, existingInfra));
+        if (infra.images.postgresql.tag !== existingInfra.images.postgresql.tag) startFuncs.push(startPostgresql.bind(null, existingInfra));
+        if (infra.images.mongodb.tag !== existingInfra.images.mongodb.tag) startFuncs.push(startMongodb.bind(null, existingInfra));
         if (infra.images.mail.tag !== existingInfra.images.mail.tag) startFuncs.push(mail.startMail);
 
         debug('startAddons: existing infra. incremental addon create %j', startFuncs.map(function (f) { return f.name; }));
