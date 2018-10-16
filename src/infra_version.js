@@ -5,14 +5,12 @@
 // Do not require anything here!
 
 exports = module.exports = {
-    // a major version makes all apps restore from backup. #451 must be fixed before we do this.
-    // a minor version makes all apps re-configure themselves
+    // a version change recreates all containers with latest docker config
     'version': '48.12.0',
 
     'baseImages': [ 'cloudron/base:1.0.0@sha256:147a648a068a2e746644746bbfb42eb7a50d682437cead3c67c933c546357617' ],
 
-    // Note that if any of the databases include an upgrade, bump the infra version above
-    // This is because we upgrade using dumps instead of mysql_upgrade, pg_upgrade etc
+    // a major version bump in the db containers will trigger the restore logic that uses the db dumps
     // docker inspect --format='{{index .RepoDigests 0}}' $IMAGE to get the sha256
     'images': {
         'mysql': { repo: 'cloudron/mysql', tag: 'cloudron/mysql:2.0.0@sha256:1c177c3fa079695aea13cec6daf52b772f400022131f31e8da237f55d683d9f4' },

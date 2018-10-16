@@ -360,21 +360,16 @@ function startAddons(existingInfra, callback) {
 }
 
 function startApps(existingInfra, callback) {
-    // Infra version change strategy:
-    // * no existing version - restore apps
-    // * major versions - restore apps
-    // * minor versions - reconfigure apps
-
-    if (existingInfra.version === infra.version) {
-        debug('startApp: apps are already uptodate');
-        callback();
-    } else if (existingInfra.version === 'none' || !semver.valid(existingInfra.version) || semver.major(existingInfra.version) !== semver.major(infra.version)) {
+    if (existingInfra.version === 'none') {
         debug('startApps: restoring installed apps');
         apps.restoreInstalledApps(callback);
-    } else {
+    } else if (existingInfra.version !== infra.version) {
         debug('startApps: reconfiguring installed apps');
         reverseProxy.removeAppConfigs(); // should we change the cert location, nginx will not start
         apps.configureInstalledApps(callback);
+    } else {
+        debug('startApps: apps are already uptodate');
+        callback();
     }
 }
 
