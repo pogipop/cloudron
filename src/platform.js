@@ -131,11 +131,10 @@ function removeOldImages(callback) {
 }
 
 function stopContainers(existingInfra, callback) {
-    // TODO: be nice and stop addons cleanly (example, shutdown commands)
-
     // always stop addons to restart them on any infra change, regardless of minor or major update
     if (existingInfra.version !== infra.version) {
         debug('stopping all containers for infra upgrade');
+        shell.execSync('stopContainers', 'docker ps -qa | xargs --no-run-if-empty docker stop');
         shell.execSync('stopContainers', 'docker ps -qa | xargs --no-run-if-empty docker rm -f');
     } else {
         assert(typeof infra.images, 'object');
@@ -145,9 +144,11 @@ function stopContainers(existingInfra, callback) {
             if (infra.images[imageName].tag !== existingInfra.images[imageName].tag) changedAddons.push(imageName);
         }
 
-        debug('stopping addons for incremental infra update: %j', changedAddons);
+        debug('stopContainer: stopping addons for incremental infra update: %j', changedAddons);
+        let filterArg = changedAddons.map(function (c) { return `--filter 'name=${c}`; }).join(' '); // name=c matches *c*. required for redis-{appid}
         // ignore error if container not found (and fail later) so that this code works across restarts
-        shell.execSync('stopContainers', 'docker rm -f ' + changedAddons.join(' ') + ' || true');
+        shell.execSync('stopContainers', `docker ps -qa ${filterArg} | xargs --no-run-if-empty docker stop || true`);
+        shell.execSync('stopContainers', `docker ps -qa ${filterArg} | xargs --no-run-if-empty docker rm -f || true`);
     }
 
     callback();
