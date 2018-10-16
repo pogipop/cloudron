@@ -348,6 +348,7 @@ function startAddons(existingInfra, callback) {
             startMysql.bind(null, existingInfra),
             startPostgresql.bind(null, existingInfra),
             startMongodb.bind(null, existingInfra),
+            startRedis.bind(null, existingInfra),
             mail.startMail);
     } else {
         assert.strictEqual(typeof existingInfra.images, 'object');
@@ -356,6 +357,7 @@ function startAddons(existingInfra, callback) {
         if (infra.images.postgresql.tag !== existingInfra.images.postgresql.tag) startFuncs.push(startPostgresql.bind(null, existingInfra));
         if (infra.images.mongodb.tag !== existingInfra.images.mongodb.tag) startFuncs.push(startMongodb.bind(null, existingInfra));
         if (infra.images.mail.tag !== existingInfra.images.mail.tag) startFuncs.push(mail.startMail);
+        if (infra.images.redis.tag !== existingInfra.images.redis.tag) startFuncs.push(startRedis.bind(null, existingInfra));
 
         debug('startAddons: existing infra. incremental addon create %j', startFuncs.map(function (f) { return f.name; }));
     }
@@ -1209,6 +1211,13 @@ function restoreMongoDb(app, options, callback) {
 
         readStream.pipe(restoreReq);
     });
+}
+
+function startRedis(existingInfra, callback) {
+    assert.strictEqual(typeof existingInfra, 'object');
+    assert.strictEqual(typeof callback, 'function');
+
+    importDatabase('redis', callback); // setupRedis currently starts the app container
 }
 
 // Ensures that app's addon redis container is running. Can be called when named container already exists/running

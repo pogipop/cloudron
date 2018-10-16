@@ -96,7 +96,6 @@ function removeOldImages(callback) {
     debug('removing old addon images');
 
     for (var imageName in infra.images) {
-        if (imageName === 'redis') continue; // see #223
         const image = infra.images[imageName];
         const tag = image.tag.replace(/:.*@/, '@'); // this remove the semver tag
         debug('cleaning up images of %j', image);
@@ -118,7 +117,6 @@ function stopContainers(existingInfra, callback) {
         assert(typeof infra.images, 'object');
         var changedAddons = [ ];
         for (var imageName in infra.images) {
-            if (imageName === 'redis') continue; // see #223
             if (infra.images[imageName].tag !== existingInfra.images[imageName].tag) changedAddons.push(imageName);
         }
 
