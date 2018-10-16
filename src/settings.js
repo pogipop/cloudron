@@ -60,7 +60,8 @@ exports = module.exports = {
     events: null
 };
 
-var assert = require('assert'),
+var addons = require('./addons.js'),
+    assert = require('assert'),
     backups = require('./backups.js'),
     BackupsError = backups.BackupsError,
     config = require('./config.js'),
@@ -397,9 +398,7 @@ function setPlatformConfig(platformConfig, callback) {
     settingsdb.set(exports.PLATFORM_CONFIG_KEY, JSON.stringify(platformConfig), function (error) {
         if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
 
-        exports.events.emit(exports.PLATFORM_CONFIG_KEY, platformConfig);
-
-        callback(null);
+        addons.updateAddonConfig(platformConfig, callback);
     });
 }
 

@@ -1,15 +1,14 @@
 'use strict';
 
 exports = module.exports = {
+    startAddons: startAddons,
+    updateAddonConfig: updateAddonConfig,
+
     setupAddons: setupAddons,
     teardownAddons: teardownAddons,
     backupAddons: backupAddons,
     restoreAddons: restoreAddons,
     clearAddons: clearAddons,
-
-    importDatabase: importDatabase,
-
-    waitForAddon: waitForAddon,
 
     getEnvironment: getEnvironment,
     getMountsSync: getMountsSync,
@@ -38,15 +37,19 @@ var accesscontrol = require('./accesscontrol.js'),
     mail = require('./mail.js'),
     mailboxdb = require('./mailboxdb.js'),
     once = require('once'),
+    os = require('os'),
     path = require('path'),
     paths = require('./paths.js'),
     rimraf = require('rimraf'),
     safe = require('safetydance'),
+    semver = require('semver'),
+    settings = require('./settings.js'),
     shell = require('./shell.js'),
     request = require('request'),
     util = require('util');
 
-var NOOP = function (app, options, callback) { return callback(); };
+const NOOP = function (app, options, callback) { return callback(); };
+const NOOP_CALLBACK = function (error) { if (error) debug(error); };
 const RMADDON_CMD = path.join(__dirname, 'scripts/rmaddon.sh');
 
 // setup can be called multiple times for the same app (configure crash restart) and existing data must not be lost
@@ -142,6 +145,20 @@ function debugApp(app, args) {
     assert(typeof app === 'object');
 
     debug((app.fqdn || app.location) + ' ' + util.format.apply(util, Array.prototype.slice.call(arguments, 1)));
+}
+
+function parseImageTag(tag) {
+    let repository = tag.split(':', 1)[0];
+    let version = tag.substr(repository.length + 1).split('@', 1)[0];
+    let digest = tag.substr(repository.length + 1 + version.length + 1).split(':', 2)[1];
+
+    return { repository, version: semver.parse(version), digest };
+}
+
+function requiresUpgrade(existingTag, currentTag) {
+    let etag = parseImageTag(existingTag), ctag = parseImageTag(currentTag);
+
+    return etag.version.major !== ctag.version.major;
 }
 
 function getAddonDetails(containerName, tokenEnvName, callback) {
@@ -300,6 +317,57 @@ function importDatabase(addon, callback) {
                 KNOWN_ADDONS[addon].restore.bind(null, app, app.manifest.addons[addon])
             ], iteratorCallback);
         }, callback);
+    });
+}
+
+function updateAddonConfig(platformConfig, callback) {
+    callback = callback || NOOP_CALLBACK;
+
+    // TODO: this should possibly also rollback memory to default
+    async.eachSeries([ 'mysql', 'postgresql', 'mail', 'mongodb' ], function iterator(containerName, iteratorCallback) {
+        const containerConfig = platformConfig[containerName];
+        if (!containerConfig) return iteratorCallback();
+
+        if (!containerConfig.memory || !containerConfig.memorySwap) return iteratorCallback();
+
+        const args = `update --memory ${containerConfig.memory} --memory-swap ${containerConfig.memorySwap} ${containerName}`.split(' ');
+        shell.exec(`update${containerName}`, '/usr/bin/docker', args, { }, iteratorCallback);
+    }, callback);
+}
+
+function startAddons(existingInfra, callback) {
+    assert.strictEqual(typeof existingInfra, 'object');
+    assert.strictEqual(typeof callback, 'function');
+
+    let startFuncs = [ ];
+
+    // always start addons on any infra change, regardless of minor or major update
+    if (existingInfra.version !== infra.version) {
+        debug('startAddons: no existing infra or infra upgrade. starting all addons');
+        startFuncs.push(
+            startMysql.bind(null, existingInfra),
+            startPostgresql.bind(null, existingInfra),
+            startMongodb.bind(null, existingInfra),
+            mail.startMail);
+    } else {
+        assert.strictEqual(typeof existingInfra.images, 'object');
+
+        if (infra.images.mysql.tag !== existingInfra.images.mysql.tag) startFuncs.push(startMysql.bind(null, existingInfra));
+        if (infra.images.postgresql.tag !== existingInfra.images.postgresql.tag) startFuncs.push(startPostgresql.bind(null, existingInfra));
+        if (infra.images.mongodb.tag !== existingInfra.images.mongodb.tag) startFuncs.push(startMongodb.bind(null, existingInfra));
+        if (infra.images.mail.tag !== existingInfra.images.mail.tag) startFuncs.push(mail.startMail);
+
+        debug('startAddons: existing infra. incremental addon create %j', startFuncs.map(function (f) { return f.name; }));
+    }
+
+    async.series(startFuncs, function (error) {
+        if (error) return callback(error);
+
+        settings.getPlatformConfig(function (error, platformConfig) {
+            if (error) return callback(error);
+
+            updateAddonConfig(platformConfig, callback);
+        });
     });
 }
 
@@ -601,6 +669,50 @@ function mysqlDatabaseName(appId) {
     return md5sum.digest('hex').substring(0, 16);  // max length of mysql usernames is 16
 }
 
+function startMysql(existingInfra, callback) {
+    assert.strictEqual(typeof existingInfra, 'object');
+    assert.strictEqual(typeof callback, 'function');
+
+    const tag = infra.images.mysql.tag;
+    const dataDir = paths.PLATFORM_DATA_DIR;
+    const rootPassword = hat(8 * 128);
+    const cloudronToken = hat(8 * 128);
+    const memoryLimit = (1 + Math.round(os.totalmem()/(1024*1024*1024)/4)) * 256;
+
+    const upgrading = existingInfra.version !== 'none' && requiresUpgrade(existingInfra.images.mysql.tag, tag);
+
+    if (upgrading) {
+        debug('startMysql: mysql will be upgraded');
+        shell.sudoSync('startMysql', `${RMADDON_CMD} mysql`);
+    }
+
+    const cmd = `docker run --restart=always -d --name="mysql" \
+                --net cloudron \
+                --net-alias mysql \
+                --log-driver syslog \
+                --log-opt syslog-address=udp://127.0.0.1:2514 \
+                --log-opt syslog-format=rfc5424 \
+                --log-opt tag=mysql \
+                -m ${memoryLimit}m \
+                --memory-swap ${memoryLimit * 2}m \
+                --dns 172.18.0.1 \
+                --dns-search=. \
+                -e CLOUDRON_MYSQL_TOKEN=${cloudronToken} \
+                -e CLOUDRON_MYSQL_ROOT_HOST=172.18.0.1 \
+                -e CLOUDRON_MYSQL_ROOT_PASSWORD=${rootPassword} \
+                -v "${dataDir}/mysql:/var/lib/mysql" \
+                --read-only -v /tmp -v /run "${tag}"`;
+
+    shell.execSync('startMysql', cmd);
+
+    waitForAddon('mysql', 'CLOUDRON_MYSQL_TOKEN', function (error) {
+        if (error) return callback(error);
+        if (!upgrading) return callback(null);
+
+        importDatabase('mysql', callback);
+    });
+}
+
 function setupMySql(app, options, callback) {
     assert.strictEqual(typeof app, 'object');
     assert.strictEqual(typeof options, 'object');
@@ -748,6 +860,49 @@ function postgreSqlNames(appId) {
     return { database: `db${appId}`, username: `user${appId}` };
 }
 
+function startPostgresql(existingInfra, callback) {
+    assert.strictEqual(typeof existingInfra, 'object');
+    assert.strictEqual(typeof callback, 'function');
+
+    const tag = infra.images.postgresql.tag;
+    const dataDir = paths.PLATFORM_DATA_DIR;
+    const rootPassword = hat(8 * 128);
+    const cloudronToken = hat(8 * 128);
+    const memoryLimit = (1 + Math.round(os.totalmem()/(1024*1024*1024)/4)) * 256;
+
+    const upgrading = existingInfra.version !== 'none' && requiresUpgrade(existingInfra.images.postgresql.tag, tag);
+
+    if (upgrading) {
+        debug('startPostgresql: postgresql will be upgraded');
+        shell.sudoSync('startPostgresql', `${RMADDON_CMD} postgresql`);
+    }
+
+    const cmd = `docker run --restart=always -d --name="postgresql" \
+                --net cloudron \
+                --net-alias postgresql \
+                --log-driver syslog \
+                --log-opt syslog-address=udp://127.0.0.1:2514 \
+                --log-opt syslog-format=rfc5424 \
+                --log-opt tag=postgresql \
+                -m ${memoryLimit}m \
+                --memory-swap ${memoryLimit * 2}m \
+                --dns 172.18.0.1 \
+                --dns-search=. \
+                -e CLOUDRON_POSTGRESQL_ROOT_PASSWORD="${rootPassword}" \
+                -e CLOUDRON_POSTGRESQL_TOKEN="${cloudronToken}" \
+                -v "${dataDir}/postgresql:/var/lib/postgresql" \
+                --read-only -v /tmp -v /run "${tag}"`;
+
+    shell.execSync('startPostgresql', cmd);
+
+    waitForAddon('postgresql', 'CLOUDRON_POSTGRESQL_TOKEN', function (error) {
+        if (error) return callback(error);
+        if (!upgrading) return callback(null);
+
+        importDatabase('postgresql', callback);
+    });
+}
+
 function setupPostgreSql(app, options, callback) {
     assert.strictEqual(typeof app, 'object');
     assert.strictEqual(typeof options, 'object');
@@ -881,6 +1036,50 @@ function restorePostgreSql(app, options, callback) {
         });
 
         input.pipe(restoreReq);
+    });
+}
+
+function startMongodb(existingInfra, callback) {
+    assert.strictEqual(typeof existingInfra, 'object');
+    assert.strictEqual(typeof callback, 'function');
+
+    const tag = infra.images.mongodb.tag;
+    const dataDir = paths.PLATFORM_DATA_DIR;
+    const rootPassword = hat(8 * 128);
+    const cloudronToken = hat(8 * 128);
+    const memoryLimit = (1 + Math.round(os.totalmem()/(1024*1024*1024)/4)) * 200;
+
+
+    const upgrading = existingInfra.version !== 'none' && requiresUpgrade(existingInfra.images.mongodb.tag, tag);
+
+    if (upgrading) {
+        debug('startMongodb: mongodb will be upgraded');
+        shell.sudoSync('startMongodb', `${RMADDON_CMD} mongodb`);
+    }
+
+    const cmd = `docker run --restart=always -d --name="mongodb" \
+                --net cloudron \
+                --net-alias mongodb \
+                --log-driver syslog \
+                --log-opt syslog-address=udp://127.0.0.1:2514 \
+                --log-opt syslog-format=rfc5424 \
+                --log-opt tag=mongodb \
+                -m ${memoryLimit}m \
+                --memory-swap ${memoryLimit * 2}m \
+                --dns 172.18.0.1 \
+                --dns-search=. \
+                -e CLOUDRON_MONGODB_ROOT_PASSWORD="${rootPassword}" \
+                -e CLOUDRON_MONGODB_TOKEN="${cloudronToken}" \
+                -v "${dataDir}/mongodb:/var/lib/mongodb" \
+                --read-only -v /tmp -v /run "${tag}"`;
+
+    shell.execSync('startMongodb', cmd);
+
+    waitForAddon('mongodb', 'CLOUDRON_MONGODB_TOKEN', function (error) {
+        if (error) return callback(error);
+        if (!upgrading) return callback(null);
+
+        importDatabase('mongodb', callback);
     });
 }
 
