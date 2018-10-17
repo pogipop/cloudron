@@ -1372,11 +1372,11 @@ function restoreRedis(app, options, callback) {
         if (error) return callback(error);
 
         let input;
-        let oldDumpLocation = path.join(paths.APPS_DATA_DIR, app.id, 'redis/dump.rdb');
-        if (fs.existsSync(oldDumpLocation)) {
-            input = fs.createReadStream(oldDumpLocation);
-        } else {
-            input = fs.createReadStream(path.join(paths.APPS_DATA_DIR, app.id, 'dump.rdb'));
+        const newDumpLocation = path.join(paths.APPS_DATA_DIR, app.id, 'dump.rdb');
+        if (fs.existsSync(newDumpLocation)) {
+            input = fs.createReadStream(newDumpLocation);
+        } else { // old location of dumps
+            input = fs.createReadStream(path.join(paths.APPS_DATA_DIR, app.id, 'redis/dump.rdb'));
         }
         input.on('error', callback);
 
