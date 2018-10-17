@@ -121,7 +121,7 @@ function stopContainers(existingInfra, callback) {
         }
 
         debug('stopContainer: stopping addons for incremental infra update: %j', changedAddons);
-        let filterArg = changedAddons.map(function (c) { return `--filter 'name=${c}`; }).join(' '); // name=c matches *c*. required for redis-{appid}
+        let filterArg = changedAddons.map(function (c) { return `--filter 'name=${c}'`; }).join(' '); // name=c matches *c*. required for redis-{appid}
         // ignore error if container not found (and fail later) so that this code works across restarts
         shell.execSync('stopContainers', `docker ps -qa ${filterArg} | xargs --no-run-if-empty docker stop || true`);
         shell.execSync('stopContainers', `docker ps -qa ${filterArg} | xargs --no-run-if-empty docker rm -f || true`);
