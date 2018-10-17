@@ -343,7 +343,7 @@ function startAddons(existingInfra, callback) {
 
     // always start addons on any infra change, regardless of minor or major update
     if (existingInfra.version !== infra.version) {
-        debug('startAddons: no existing infra or infra upgrade. starting all addons');
+        debug(`startAddons: ${existingInfra.version} -> ${infra.version}. starting all addons`);
         startFuncs.push(
             startMysql.bind(null, existingInfra),
             startPostgresql.bind(null, existingInfra),
@@ -1216,6 +1216,11 @@ function restoreMongoDb(app, options, callback) {
 function startRedis(existingInfra, callback) {
     assert.strictEqual(typeof existingInfra, 'object');
     assert.strictEqual(typeof callback, 'function');
+
+    const tag = infra.images.redis.tag;
+    const upgrading = existingInfra.version !== 'none' && requiresUpgrade(existingInfra.images.redis.tag, tag);
+
+    if (!upgrading) return callback();
 
     importDatabase('redis', callback); // setupRedis currently starts the app container
 }
