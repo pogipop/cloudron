@@ -98,7 +98,7 @@ function isFreePlan(subscription) {
 function purchase(appId, data, callback) {
     assert.strictEqual(typeof appId, 'string');
     assert.strictEqual(typeof data, 'object');
-    assert(data.appStoreId || data.manifestId);
+    assert(data.appstoreId || data.manifestId);
     assert.strictEqual(typeof callback, 'function');
 
     getAppstoreConfig(function (error, appstoreConfig) {
@@ -121,7 +121,7 @@ function purchase(appId, data, callback) {
 function unpurchase(appId, data, callback) {
     assert.strictEqual(typeof appId, 'string');
     assert.strictEqual(typeof data, 'object');
-    assert(data.appStoreId || data.manifestId);
+    assert(data.appstoreId || data.manifestId);
     assert.strictEqual(typeof callback, 'function');
 
     getAppstoreConfig(function (error, appstoreConfig) {

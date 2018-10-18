@@ -635,7 +635,7 @@ function install(data, user, auditSource, callback) {
                 if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new AppsError(AppsError.NOT_FOUND, error.message));
                 if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
 
-                appstore.purchase(appId, { appStoreId: appStoreId, manifestId: manifest.id }, function (appstoreError) {
+                appstore.purchase(appId, { appstoreId: appStoreId, manifestId: manifest.id }, function (appstoreError) {
                     // if purchase failed, rollback the appdb record
                     if (appstoreError) {
                         appdb.del(appId, function (error) {
@@ -1089,7 +1089,7 @@ function uninstall(appId, auditSource, callback) {
     get(appId, function (error, app) {
         if (error) return callback(error);
 
-        appstore.unpurchase(appId, { appStoreId: app.appStoreId, manifestId: app.manifest.id }, function (error) {
+        appstore.unpurchase(appId, { appstoreId: app.appStoreId, manifestId: app.manifest.id }, function (error) {
             if (error && error.reason === AppstoreError.NOT_FOUND) return callback(new AppsError(AppsError.NOT_FOUND));
             if (error && error.reason === AppstoreError.BILLING_REQUIRED) return callback(new AppsError(AppsError.BILLING_REQUIRED, error.message));
             if (error && error.reason === AppstoreError.EXTERNAL_ERROR) return callback(new AppsError(AppsError.EXTERNAL_ERROR, error.message));
