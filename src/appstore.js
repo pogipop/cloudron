@@ -19,8 +19,7 @@ exports = module.exports = {
     AppstoreError: AppstoreError
 };
 
-var appdb = require('./appdb.js'),
-    apps = require('./apps.js'),
+var apps = require('./apps.js'),
     assert = require('assert'),
     async = require('async'),
     config = require('./config.js'),
@@ -96,18 +95,16 @@ function isFreePlan(subscription) {
 }
 
 // See app.js install it will create a db record first but remove it again if appstore purchase fails
-function purchase(appId, appstoreId, callback) {
+function purchase(appId, data, callback) {
     assert.strictEqual(typeof appId, 'string');
-    assert.strictEqual(typeof appstoreId, 'string');
+    assert.strictEqual(typeof data, 'object');
+    assert(data.appStoreId || data.manifestId);
     assert.strictEqual(typeof callback, 'function');
-
-    if (appstoreId === '') return callback(null);
 
     getAppstoreConfig(function (error, appstoreConfig) {
         if (error) return callback(error);
 
         var url = config.apiServerOrigin() + '/api/v1/users/' + appstoreConfig.userId + '/cloudrons/' + appstoreConfig.cloudronId + '/apps/' + appId;
-        var data = { appstoreId: appstoreId };
 
         superagent.post(url).send(data).query({ accessToken: appstoreConfig.token }).timeout(30 * 1000).end(function (error, result) {
             if (error && !error.response) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, error.message));
@@ -121,12 +118,11 @@ function purchase(appId, appstoreId, callback) {
     });
 }
 
-function unpurchase(appId, appstoreId, callback) {
+function unpurchase(appId, data, callback) {
     assert.strictEqual(typeof appId, 'string');
-    assert.strictEqual(typeof appstoreId, 'string');
+    assert.strictEqual(typeof data, 'object');
+    assert(data.appStoreId || data.manifestId);
     assert.strictEqual(typeof callback, 'function');
-
-    if (appstoreId === '') return callback(null);
 
     getAppstoreConfig(function (error, appstoreConfig) {
         if (error) return callback(error);
@@ -139,7 +135,7 @@ function unpurchase(appId, appstoreId, callback) {
             if (result.statusCode === 404) return callback(null);   // was never purchased
             if (result.statusCode !== 201 && result.statusCode !== 200) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, util.format('App unpurchase failed. %s %j', result.status, result.body)));
 
-            superagent.del(url).query({ accessToken: appstoreConfig.token }).timeout(30 * 1000).end(function (error, result) {
+            superagent.del(url).send(data).query({ accessToken: appstoreConfig.token }).timeout(30 * 1000).end(function (error, result) {
                 if (error && !error.response) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, error));
                 if (result.statusCode === 403 || result.statusCode === 401) return callback(new AppstoreError(AppstoreError.BILLING_REQUIRED));
                 if (result.statusCode !== 204) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, util.format('App unpurchase failed. %s %j', result.status, result.body)));

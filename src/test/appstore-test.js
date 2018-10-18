@@ -129,7 +129,7 @@ describe('Appstore', function () {
             .post(`/api/v1/users/${APPSTORE_USER_ID}/cloudrons/${CLOUDRON_ID}/apps/${APP_ID}?accessToken=${APPSTORE_TOKEN}`, function () { return true; })
             .reply(201, {});
 
-        appstore.purchase(APP_ID, APPSTORE_APP_ID, function (error) {
+        appstore.purchase(APP_ID, { appStoreId: APPSTORE_APP_ID, manifestId: APPSTORE_APP_ID }, function (error) {
             expect(error).to.not.be.ok();
             expect(scope1.isDone()).to.be.ok();
 
@@ -146,7 +146,7 @@ describe('Appstore', function () {
             .delete(`/api/v1/users/${APPSTORE_USER_ID}/cloudrons/${CLOUDRON_ID}/apps/${APP_ID}?accessToken=${APPSTORE_TOKEN}`, function () { return true; })
             .reply(204, {});
 
-        appstore.unpurchase(APP_ID, APPSTORE_APP_ID, function (error) {
+        appstore.unpurchase(APP_ID, { appStoreId: APPSTORE_APP_ID, manifestId: APPSTORE_APP_ID }, function (error) {
             expect(error).to.not.be.ok();
             expect(scope1.isDone()).to.be.ok();
             expect(scope2.isDone()).to.not.be.ok();
@@ -164,7 +164,7 @@ describe('Appstore', function () {
             .delete(`/api/v1/users/${APPSTORE_USER_ID}/cloudrons/${CLOUDRON_ID}/apps/${APP_ID}?accessToken=${APPSTORE_TOKEN}`, function () { return true; })
             .reply(204, {});
 
-        appstore.unpurchase(APP_ID, APPSTORE_APP_ID, function (error) {
+        appstore.unpurchase(APP_ID, { appStoreId: APPSTORE_APP_ID, manifestId: APPSTORE_APP_ID }, function (error) {
             expect(error).to.not.be.ok();
             expect(scope1.isDone()).to.be.ok();
             expect(scope2.isDone()).to.be.ok();
