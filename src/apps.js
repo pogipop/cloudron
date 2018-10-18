@@ -291,6 +291,16 @@ function validateBackupFormat(format) {
     return new AppsError(AppsError.BAD_FIELD, 'Invalid backup format');
 }
 
+function validateEnv(env) {
+    for (let key in env) {
+        if (key.length > 512) return new AppsError(AppsError.BAD_FIELD, 'Max env var key length is 512');
+        // http://pubs.opengroup.org/onlinepubs/000095399/basedefs/xbd_chap08.html
+        if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(key)) return new AppsError(AppsError.BAD_FIELD, `"${key}" is not a valid environment variable`);
+    }
+
+    return null;
+}
+
 function getDuplicateErrorDetails(location, portBindings, error) {
     assert.strictEqual(typeof location, 'string');
     assert.strictEqual(typeof portBindings, 'object');
@@ -575,6 +585,9 @@ function install(data, user, auditSource, callback) {
         // if sso was unspecified, enable it by default if possible
         if (sso === null) sso = !!manifest.addons['ldap'] || !!manifest.addons['oauth'];
 
+        error = validateEnv(env);
+        if (error) return callback(error);
+
         var appId = uuid.v4();
 
         if (icon) {
@@ -737,6 +750,8 @@ function configure(appId, data, user, auditSource, callback) {
 
         if ('env' in data) {
             values.env = data.env;
+            error = validateEnv(data.env);
+            if (error) return callback(error);
         }
 
         domains.get(domain, function (error, domainObject) {
