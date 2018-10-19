@@ -173,21 +173,32 @@ function deleteAppDir(app, options, callback) {
     assert.strictEqual(typeof callback, 'function');
 
     const appDataDir = path.join(paths.APPS_DATA_DIR, app.id);
-    let resolvedAppDataDir = safe.fs.readlinkSync(appDataDir) || appDataDir;
 
-    if (!safe.fs.existsSync(resolvedAppDataDir)) return callback();
+    // resolve any symlinked data dir
+    const stat = safe.fs.lstatSync(appDataDir);
+    if (!stat) return callback(null);
 
-    const entries = safe.fs.readdirSync(resolvedAppDataDir);
-    if (!entries) return callback(`Error listing ${resolvedAppDataDir}: ${safe.error.message}`);
+    const resolvedAppDataDir = stat.isSymbolicLink() ? safe.fs.readlinkSync(appDataDir) : appDataDir;
 
-    // remove only files. directories inside app dir are currently volumes managed by the addons
-    entries.forEach(function (entry) {
-        let stat = safe.fs.statSync(path.join(resolvedAppDataDir, entry));
-        if (stat && !stat.isDirectory()) safe.fs.unlinkSync(path.join(resolvedAppDataDir, entry));
-    });
+    if (safe.fs.existsSync(resolvedAppDataDir)) {
+        const entries = safe.fs.readdirSync(resolvedAppDataDir);
+        if (!entries) return callback(`Error listing ${resolvedAppDataDir}: ${safe.error.message}`);
+
+        // remove only files. directories inside app dir are currently volumes managed by the addons
+        entries.forEach(function (entry) {
+            let stat = safe.fs.statSync(path.join(resolvedAppDataDir, entry));
+            if (stat && !stat.isDirectory()) safe.fs.unlinkSync(path.join(resolvedAppDataDir, entry));
+        });
+    }
 
     // if this fails, it's probably because the localstorage/redis addons have not cleaned up properly
-    if (options.removeDirectory && !safe.fs.rmdirSync(appDataDir)) return callback(safe.error.code === 'ENOENT' ? null : safe.error);
+    if (options.removeDirectory) {
+        if (stat.isSymbolicLink()) {
+            if (!safe.fs.unlinkSync(appDataDir)) return callback(safe.error.code === 'ENOENT' ? null : safe.error);
+        } else {
+            if (!safe.fs.rmdirSync(appDataDir)) return callback(safe.error.code === 'ENOENT' ? null : safe.error);
+        }
+    }
 
     callback(null);
 }
