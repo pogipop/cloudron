@@ -33,5 +33,7 @@ fi
 rm -rf "${addon_dir}"
 if [[ "${addon}" != "redis" ]]; then
     mkdir "${addon_dir}"
+elif [[ "${BOX_ENV}" == "cloudron" ]]; then
+    rm -rf "${HOME}/appsdata/${appid}/redis" # legacy directory
 fi
 
