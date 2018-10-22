@@ -7,7 +7,8 @@ exports = module.exports = {
     stopJobs: stopJobs
 };
 
-var apps = require('./apps.js'),
+var appHealthMonitor = require('./apphealthmonitor.js'),
+    apps = require('./apps.js'),
     appstore = require('./appstore.js'),
     assert = require('assert'),
     backups = require('./backups.js'),
@@ -43,7 +44,8 @@ var gJobs = {
     digestEmail: null,
     dockerVolumeCleaner: null,
     dynamicDNS: null,
-    schedulerSync: null
+    schedulerSync: null,
+    appHealthMonitor: null
 };
 
 var NOOP_CALLBACK = function (error) { if (error) console.error(error); };
@@ -193,6 +195,14 @@ function recreateJobs(tz) {
     gJobs.digestEmail = new CronJob({
         cronTime: '00 00 00 * * 3', // every wednesday
         onTick: digest.maybeSend,
+        start: true,
+        timeZone: tz
+    });
+
+    if (gJobs.appHealthMonitor) gJobs.appHealthMonitor.stop();
+    gJobs.appHealthMonitor = new CronJob({
+        cronTime: '*/10 * * * * *', // every 10 seconds
+        onTick: appHealthMonitor.run.bind(null, 10),
         start: true,
         timeZone: tz
     });

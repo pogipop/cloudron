@@ -9,8 +9,7 @@ require('debug').formatArgs = function formatArgs(args) {
     args[0] = this.namespace + ' ' + args[0];
 };
 
-var appHealthMonitor = require('./src/apphealthmonitor.js'),
-    async = require('async'),
+let async = require('async'),
     config = require('./src/config.js'),
     ldap = require('./src/ldap.js'),
     dockerProxy = require('./src/dockerproxy.js'),
@@ -36,8 +35,7 @@ console.log();
 async.series([
     server.start,
     ldap.start,
-    dockerProxy.start,
-    appHealthMonitor.start,
+    dockerProxy.start
 ], function (error) {
     if (error) {
         console.error('Error starting server', error);

@@ -15,7 +15,6 @@ var accesscontrol = require('../../accesscontrol.js'),
     clients = require('../../clients.js'),
     config = require('../../config.js'),
     constants = require('../../constants.js'),
-    apphealthmonitor = require('../../apphealthmonitor.js'),
     database = require('../../database.js'),
     docker = require('../../docker.js').connection,
     expect = require('expect.js'),
@@ -251,7 +250,6 @@ function stopBox(done) {
 
     // db is not cleaned up here since it's too late to call it after server.stop. if called before server.stop taskmanager apptasks are unhappy :/
     async.series([
-        apphealthmonitor.stop,
         taskmanager.stopPendingTasks,
         taskmanager.waitForPendingTasks,
         appdb._clear,
@@ -643,7 +641,6 @@ describe('App installation', function () {
 
         async.series([
             startBox,
-            apphealthmonitor.start,
 
             function (callback) {
                 apiHockInstance

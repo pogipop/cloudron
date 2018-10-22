@@ -12,15 +12,14 @@ var appdb = require('./appdb.js'),
     util = require('util');
 
 exports = module.exports = {
-    start: start,
-    stop: stop
+    run: run
 };
 
 var HEALTHCHECK_INTERVAL = 10 * 1000; // every 10 seconds. this needs to be small since the UI makes only healthy apps clickable
 var UNHEALTHY_THRESHOLD = 10 * 60 * 1000; // 10 minutes
 var gHealthInfo = { }; // { time, emailSent }
-var gRunTimeout = null;
-var gDockerEventStream = null;
+
+const NOOP_CALLBACK = function (error) { if (error) console.error(error); };
 
 function debugApp(app) {
     assert(typeof app === 'object');
@@ -113,48 +112,23 @@ function checkAppHealth(app, callback) {
     });
 }
 
-function processApps(callback) {
-    apps.getAll(function (error, result) {
-        if (error) return callback(error);
-
-        async.each(result, checkAppHealth, function (error) {
-            if (error) console.error(error);
-
-            var alive = result
-                .filter(function (a) { return a.installationState === appdb.ISTATE_INSTALLED && a.runState === appdb.RSTATE_RUNNING && a.health === appdb.HEALTH_HEALTHY; })
-                .map(function (a) { return (a.location || 'naked_domain') + '|' + a.manifest.id; }).join(', ');
-
-            debug('apps alive: [%s]', alive);
-
-            callback(null);
-        });
-    });
-}
-
-function run() {
-    processApps(function (error) {
-        if (error) console.error(error);
-
-        gRunTimeout = setTimeout(run, HEALTHCHECK_INTERVAL);
-    });
-}
-
 /*
     OOM can be tested using stress tool like so:
         docker run -ti -m 100M cloudron/base:0.10.0 /bin/bash
         apt-get update && apt-get install stress
         stress --vm 1 --vm-bytes 200M --vm-hang 0
 */
-function processDockerEvents() {
-    // note that for some reason, the callback is called only on the first event
-    debug('Listening for docker events');
+function processDockerEvents(interval, callback) {
+    assert.strictEqual(typeof interval, 'number');
+    assert.strictEqual(typeof callback, 'function');
+
     const OOM_MAIL_LIMIT = 60 * 60 * 1000; // 60 minutes
-    var lastOomMailTime = new Date(new Date() - OOM_MAIL_LIMIT);
+    let lastOomMailTime = new Date(new Date() - OOM_MAIL_LIMIT);
+    const since = ((new Date().getTime() / 1000) - interval).toFixed(0);
+    const until = ((new Date().getTime() / 1000) - 1).toFixed(0);
 
-    docker.getEvents({ filters: JSON.stringify({ event: [ 'oom' ] }) }, function (error, stream) {
-        if (error) return console.error(error);
-
-        gDockerEventStream = stream;
+    docker.getEvents({ since: since, until: until, filters: JSON.stringify({ event: [ 'oom' ] }) }, function (error, stream) {
+        if (error) return callback(error);
 
         stream.setEncoding('utf8');
         stream.on('data', function (data) {
@@ -176,34 +150,48 @@ function processDockerEvents() {
         });
 
         stream.on('error', function (error) {
-            console.error('Error reading docker events', error);
-            gDockerEventStream = null; // TODO: reconnect?
+            debug('Error reading docker events', error);
+            callback();
         });
 
-        stream.on('end', function () {
-            console.error('Docker event stream ended');
-            gDockerEventStream = null; // TODO: reconnect?
+        stream.on('end', callback);
+
+        // safety hatch if 'until' doesn't work (there are cases where docker is working with a different time)
+        setTimeout(stream.destroy.bind(stream), 3000); // https://github.com/apocas/dockerode/issues/179
+    });
+}
+
+function processApp(callback) {
+    assert.strictEqual(typeof callback, 'function');
+
+    apps.getAll(function (error, result) {
+        if (error) return callback(error);
+
+        async.each(result, checkAppHealth, function (error) {
+            if (error) console.error(error);
+
+            var alive = result
+                .filter(function (a) { return a.installationState === appdb.ISTATE_INSTALLED && a.runState === appdb.RSTATE_RUNNING && a.health === appdb.HEALTH_HEALTHY; })
+                .map(function (a) { return (a.location || 'naked_domain') + '|' + a.manifest.id; }).join(', ');
+
+            debug('apps alive: [%s]', alive);
+
+            callback(null);
         });
     });
 }
 
-function start(callback) {
-    assert.strictEqual(typeof callback, 'function');
+function run(interval, callback) {
+    assert.strictEqual(typeof interval, 'number');
 
-    debug('Starting apphealthmonitor');
+    callback = callback || NOOP_CALLBACK;
 
-    processDockerEvents();
+    async.series([
+        processDockerEvents.bind(null, interval),
+        processApp
+    ], function (error) {
+        if (error) debug(error);
 
-    run();
-
-    callback();
-}
-
-function stop(callback) {
-    assert.strictEqual(typeof callback, 'function');
-
-    clearTimeout(gRunTimeout);
-    if (gDockerEventStream) gDockerEventStream.end();
-
-    callback();
+        callback();
+    });
 }
