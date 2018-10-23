@@ -1407,3 +1407,6 @@
 * Update Haraka to 2.8.20
 * (mail) Fix issue where LDAP connections where not cleaned up
 
+[3.2.3]
+* Fix crash in restore logic caused by app health monitor
+
