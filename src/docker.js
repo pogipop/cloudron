@@ -403,7 +403,8 @@ function deleteImage(manifest, callback) {
     // just removes the tag). we used to remove the image by id. this is not required anymore because aliases are
     // not created anymore after https://github.com/docker/docker/pull/10571
     docker.getImage(dockerImage).remove(removeOptions, function (error) {
-        if (error && error.statusCode === 404) return callback(null);
+        if (error && error.statusCode === 400) return callback(null); // invalid image format. this can happen if user installed with a bad --docker-image
+        if (error && error.statusCode === 404) return callback(null); // not found
         if (error && error.statusCode === 409) return callback(null); // another container using the image
 
         if (error) debug('Error removing image %s : %j', dockerImage, error);
