@@ -277,6 +277,7 @@ function initializeExpressSync() {
     router.get ('/api/v1/domains', domainsReadScope, routes.domains.getAll);
     router.get ('/api/v1/domains/:domain', domainsManageScope, verifyDomainLock, routes.domains.get);  // this is manage scope because it returns non-restricted fields
     router.put ('/api/v1/domains/:domain', domainsManageScope, verifyDomainLock, routes.domains.update);
+    router.post ('/api/v1/domains/:domain/renew_certs', domainsManageScope, verifyDomainLock, routes.domains.renewCerts);
     router.del ('/api/v1/domains/:domain', domainsManageScope, verifyDomainLock, routes.users.verifyPassword, routes.domains.del);
 
     // caas routes

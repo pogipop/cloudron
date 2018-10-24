@@ -11,6 +11,7 @@ exports = module.exports = {
     getCertificate: getCertificate,
 
     renewAll: renewAll,
+    renewCerts: renewCerts,
 
     configureDefaultServer: configureDefaultServer,
 
@@ -420,11 +421,10 @@ function unconfigureApp(app, callback) {
     });
 }
 
-function renewAll(auditSource, callback) {
+function renewCerts(options, auditSource, callback) {
+    assert.strictEqual(typeof options, 'object');
     assert.strictEqual(typeof auditSource, 'object');
     assert.strictEqual(typeof callback, 'function');
-
-    debug('renewAll: Checking certificates for renewal');
 
     apps.getAll(function (error, allApps) {
         if (error) return callback(error);
@@ -443,6 +443,8 @@ function renewAll(auditSource, callback) {
                 appDomains.push({ domain: alternateDomain.domain, fqdn: alternateDomain.fqdn, type: 'alternate', app: app, nginxConfigFilename: nginxConfigFilename });
             });
         });
+
+        if (options.domain) appDomains = appDomains.filter(function (appDomain) { return appDomain.domain === options.domain; });
 
         async.eachSeries(appDomains, function (appDomain, iteratorCallback) {
             ensureCertificate(appDomain.fqdn, appDomain.domain, auditSource, function (error, bundle) {
@@ -469,6 +471,15 @@ function renewAll(auditSource, callback) {
             });
         });
     });
+}
+
+function renewAll(auditSource, callback) {
+    assert.strictEqual(typeof auditSource, 'object');
+    assert.strictEqual(typeof callback, 'function');
+
+    debug('renewAll: Checking certificates for renewal');
+
+    renewCerts({}, auditSource, callback);
 }
 
 function removeAppConfigs() {

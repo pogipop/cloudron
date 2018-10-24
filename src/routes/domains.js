@@ -7,6 +7,8 @@ exports = module.exports = {
     update: update,
     del: del,
 
+    renewCerts: renewCerts,
+
     verifyDomainLock: verifyDomainLock
 };
 
@@ -14,7 +16,13 @@ var assert = require('assert'),
     domains = require('../domains.js'),
     DomainsError = domains.DomainsError,
     HttpError = require('connect-lastmile').HttpError,
-    HttpSuccess = require('connect-lastmile').HttpSuccess;
+    HttpSuccess = require('connect-lastmile').HttpSuccess,
+    reverseProxy = require('../reverseproxy.js');
+
+function auditSource(req) {
+    var ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress || null;
+    return { ip: ip, username: req.user ? req.user.username : null, userId: req.user ? req.user.id : null };
+}
 
 function verifyDomainLock(req, res, next) {
     assert.strictEqual(typeof req.params.domain, 'string');
@@ -121,4 +129,13 @@ function del(req, res, next) {
 
         next(new HttpSuccess(204));
     });
+}
+
+function renewCerts(req, res, next) {
+    assert.strictEqual(typeof req.params.domain, 'string');
+
+    // trigger renewal in the background
+    reverseProxy.renewCerts({ domain: req.params.domain }, auditSource(req), function () { });
+
+    next(new HttpSuccess(202, {}));
 }
