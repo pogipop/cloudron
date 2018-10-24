@@ -128,29 +128,6 @@ describe('updatechecker - box - manual (email)', function () {
         });
     });
 
-    it('offers prerelease', function (done) {
-        nock.cleanAll();
-
-        var scope = nock('http://localhost:4444')
-            .get('/api/v1/users/uid/cloudrons/cid/boxupdate')
-            .query({ boxVersion: config.version(), accessToken: 'token' })
-            .reply(200, { version: '2.0.0-pre.0', changelog: [''], sourceTarballUrl: '2.0.0-pre.0.tar.gz' } );
-
-        var scope2 = nock('http://localhost:4444')
-            .get('/api/v1/users/uid/cloudrons/cid/subscription')
-            .query({ accessToken: 'token' })
-            .reply(200, { subscription: { plan: { id: 'pro' } } } );
-
-        updatechecker.checkBoxUpdates(function (error) {
-            expect(!error).to.be.ok();
-            expect(updatechecker.getUpdateInfo().box.version).to.be('2.0.0-pre.0');
-            expect(scope.isDone()).to.be.ok();
-            expect(scope2.isDone()).to.be.ok();
-
-            checkMails(1, done);
-        });
-    });
-
     it('bad response offers nothing', function (done) {
         nock.cleanAll();
 

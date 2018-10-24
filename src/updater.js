@@ -123,9 +123,6 @@ function verifyUpdateInfo(versionsFile, updateInfo, callback) {
     assert.strictEqual(typeof updateInfo, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    // skip verification for prereleases because we remove it from release.json
-    if (semver.prerelease(config.version()) !== null) return callback();
-
     var releases = safe.JSON.parse(safe.fs.readFileSync(versionsFile, 'utf8')) || { };
     if (!releases[config.version()] || !releases[config.version()].next) return callback(new UpdaterError(UpdaterError.EXTERNAL_ERROR, 'No version info'));
     var nextVersion = releases[config.version()].next;

@@ -48,14 +48,13 @@ edition=""
 requestedVersion=""
 apiServerOrigin="https://api.cloudron.io"
 webServerOrigin="https://cloudron.io"
-prerelease="false"
 sourceTarballUrl=""
 rebootServer="true"
 baseDataDir=""
 
 echo "Running cloudron-setup with args : $@" > "${LOG_FILE}"
 
-args=$(getopt -o "" -l "help,skip-baseimage-init,data-dir:,provider:,version:,env:,prerelease,edition:,skip-reboot" -n "$0" -- "$@")
+args=$(getopt -o "" -l "help,skip-baseimage-init,data-dir:,provider:,version:,env:,edition:,skip-reboot" -n "$0" -- "$@")
 eval set -- "${args}"
 
 while true; do
@@ -68,16 +67,13 @@ while true; do
         if [[ "$2" == "dev" ]]; then
             apiServerOrigin="https://api.dev.cloudron.io"
             webServerOrigin="https://dev.cloudron.io"
-            prerelease="true"
         elif [[ "$2" == "staging" ]]; then
             apiServerOrigin="https://api.staging.cloudron.io"
             webServerOrigin="https://staging.cloudron.io"
-            prerelease="true"
         fi
         shift 2;;
     --skip-baseimage-init) initBaseImage="false"; shift;;
     --skip-reboot) rebootServer="false"; shift;;
-    --prerelease) prerelease="true"; shift;;
     --data-dir) baseDataDir=$(realpath "$2"); shift 2;;
     --) break;;
     *) echo "Unknown option $1"; exit 1;;
@@ -155,7 +151,7 @@ if [[ "${initBaseImage}" == "true" ]]; then
 fi
 
 echo "=> Checking version"
-if ! releaseJson=$($curl -s "${apiServerOrigin}/api/v1/releases?prerelease=${prerelease}&boxVersion=${requestedVersion}"); then
+if ! releaseJson=$($curl -s "${apiServerOrigin}/api/v1/releases?boxVersion=${requestedVersion}"); then
     echo "Failed to get release information"
     exit 1
 fi

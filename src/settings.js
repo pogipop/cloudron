@@ -90,7 +90,7 @@ var gDefaults = (function () {
         retentionSecs: 2 * 24 * 60 * 60, // 2 days
         intervalSecs: 24 * 60 * 60 // ~1 day
     };
-    result[exports.UPDATE_CONFIG_KEY] = { prerelease: false };
+    result[exports.UPDATE_CONFIG_KEY] = {};
     result[exports.APPSTORE_CONFIG_KEY] = {};
     result[exports.CAAS_CONFIG_KEY] = {};
     result[exports.EMAIL_DIGEST] = true;
