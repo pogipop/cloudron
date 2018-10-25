@@ -52,8 +52,6 @@ sourceTarballUrl=""
 rebootServer="true"
 baseDataDir=""
 
-echo "Running cloudron-setup with args : $@" > "${LOG_FILE}"
-
 args=$(getopt -o "" -l "help,skip-baseimage-init,data-dir:,provider:,version:,env:,edition:,skip-reboot" -n "$0" -- "$@")
 eval set -- "${args}"
 
@@ -92,6 +90,9 @@ if [[ "${ubuntu_version}" != "16.04" && "${ubuntu_version}" != "18.04" ]]; then
     echo "Cloudron requires Ubuntu 16.04 or 18.04" > /dev/stderr
     exit 1
 fi
+
+# Can only write after we have confirmed script has root access
+echo "Running cloudron-setup with args : $@" > "${LOG_FILE}"
 
 # validate arguments in the absence of data
 if [[ -z "${provider}" ]]; then
