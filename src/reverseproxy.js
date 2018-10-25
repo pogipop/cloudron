@@ -89,7 +89,7 @@ function getCertApi(domain, callback) {
 
         var api = result.tlsConfig.provider === 'caas' ? caas : acme2;
 
-        var options = { };
+        var options = { prod: false, performHttpAuthorization: false, wildcard: false, email: '' };
         if (result.tlsConfig.provider !== 'caas') { // matches 'le-prod' or 'letsencrypt-prod'
             options.prod = result.tlsConfig.provider.match(/.*-prod/) !== null;
             options.performHttpAuthorization = result.provider.match(/noop|manual|wildcard/) !== null;
@@ -119,6 +119,27 @@ function isExpiringSync(certFilePath, hours) {
     debug('isExpiringSync: %s %s %s', certFilePath, result.stdout.toString('utf8').trim(), result.status);
 
     return result.status === 1; // 1 - expired 0 - not expired
+}
+
+function providerMatchesSync(certFilePath, apiOptions) {
+    assert.strictEqual(typeof certFilePath, 'string');
+    assert.strictEqual(typeof apiOptions, 'object');
+
+    if (!fs.existsSync(certFilePath)) return false; // not found
+
+    const subjectAndIssuer = safe.child_process.execSync(`/usr/bin/openssl x509 -noout -subject -issuer -in "${certFilePath}"`, { encoding: 'utf8' });
+
+    const isWildcardCert = subjectAndIssuer.match(/^subject=(.*)$/m)[1].includes('*');
+    const isLetsEncryptProd = subjectAndIssuer.match(/^issuer=(.*)$/m)[1].includes('Let\'s Encrypt Authority');
+
+    const mismatch = ((apiOptions.wildcard && !isWildcardCert)
+        || (!apiOptions.wildcard && isWildcardCert)
+        || (apiOptions.prod && !isLetsEncryptProd)
+        || (!apiOptions.prod && isLetsEncryptProd));
+
+    debug(`providerMatchesSync: ${certFilePath} ${subjectAndIssuer.trim().replace('\n', ' ')} wildcard=${isWildcardCert}/${apiOptions.wildcard} prod=${isLetsEncryptProd}/${apiOptions.prod} match=${!mismatch}`);
+
+    return !mismatch;
 }
 
 // note: https://tools.ietf.org/html/rfc4346#section-7.4.2 (certificate_list) requires that the
@@ -252,19 +273,19 @@ function ensureCertificate(vhost, domain, auditSource, callback) {
     assert.strictEqual(typeof auditSource, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    getCertificateByHostname(vhost, domain, function (error, result) {
-        if (result) {
-            debug(`ensureCertificate: ${vhost}. certificate already exists at ${result.keyFilePath}`);
+    getCertApi(domain, function (error, api, apiOptions) {
+        if (error) return callback(error);
 
-            if (result.certFilePath.endsWith('.user.cert')) return callback(null, result); // user certs cannot be renewed
-            if (!isExpiringSync(result.certFilePath, 24 * 30)) return callback(null, result);
-            debug(`ensureCertificate: ${vhost} cert require renewal`);
-        } else {
-            debug(`ensureCertificate: ${vhost} cert does not exist`);
-        }
+        getCertificateByHostname(vhost, domain, function (error, result) {
+            if (result) {
+                debug(`ensureCertificate: ${vhost} certificate already exists at ${result.keyFilePath}`);
 
-        getCertApi(domain, function (error, api, apiOptions) {
-            if (error) return callback(error);
+                if (result.certFilePath.endsWith('.user.cert')) return callback(null, result); // user certs cannot be renewed
+                if (!isExpiringSync(result.certFilePath, 24 * 30) && providerMatchesSync(result.certFilePath, apiOptions)) return callback(null, result);
+                debug(`ensureCertificate: ${vhost} cert require renewal`);
+            } else {
+                debug(`ensureCertificate: ${vhost} cert does not exist`);
+            }
 
             debug('ensureCertificate: getting certificate for %s with options %j', vhost, apiOptions);
 
