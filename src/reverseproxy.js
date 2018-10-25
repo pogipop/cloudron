@@ -432,7 +432,7 @@ function renewCerts(options, auditSource, callback) {
         var appDomains = [];
 
         // add webadmin domain
-        appDomains.push({ domain: config.adminDomain(), fqdn: config.adminFqdn(), type: 'webadmin', nginxConfigFilename: constants.NGINX_ADMIN_CONFIG_FILE_NAME });
+        appDomains.push({ domain: config.adminDomain(), fqdn: config.adminFqdn(), type: 'webadmin', nginxConfigFilename: path.join(paths.NGINX_APPCONFIG_DIR, constants.NGINX_ADMIN_CONFIG_FILE_NAME) });
 
         // add app main
         allApps.forEach(function (app) {
