@@ -147,6 +147,8 @@ function startApps(existingInfra, callback) {
 function handleCertChanged(cn) {
     assert.strictEqual(typeof cn, 'string');
 
+    debug('handleCertChanged', cn);
+
     if (cn === '*.' + config.adminDomain() || cn === config.adminFqdn()) {
         mail.startMail(NOOP_CALLBACK);
     }

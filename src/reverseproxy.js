@@ -454,6 +454,8 @@ function renewCerts(options, auditSource, callback) {
                 let currentNginxConfig = safe.fs.readFileSync(appDomain.nginxConfigFilename, 'utf8') || '';
                 if (currentNginxConfig.includes(bundle.certFilePath)) return iteratorCallback();
 
+                debug(`renewCerts: creating new nginx config since ${appDomain.nginxConfigFilename} does not have ${bundle.certFilePath}`);
+
                 // reconfigure since the cert changed
                 var configureFunc;
                 if (appDomain.type === 'webadmin') configureFunc = writeAdminConfig.bind(null, bundle, constants.NGINX_ADMIN_CONFIG_FILE_NAME, config.adminFqdn());
