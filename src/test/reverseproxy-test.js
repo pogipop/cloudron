@@ -131,7 +131,7 @@ describe('Certificates', function () {
             reverseProxy._getCertApi(DOMAIN_0.domain, function (error, api, options) {
                 expect(error).to.be(null);
                 expect(api._name).to.be('caas');
-                expect(options).to.eql({ email: 'support@cloudron.io' });
+                expect(options).to.eql({ email: 'support@cloudron.io', "performHttpAuthorization": false, "prod": false, "wildcard": false });
                 done();
             });
         });
