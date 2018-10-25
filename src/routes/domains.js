@@ -16,8 +16,7 @@ var assert = require('assert'),
     domains = require('../domains.js'),
     DomainsError = domains.DomainsError,
     HttpError = require('connect-lastmile').HttpError,
-    HttpSuccess = require('connect-lastmile').HttpSuccess,
-    reverseProxy = require('../reverseproxy.js');
+    HttpSuccess = require('connect-lastmile').HttpSuccess;
 
 function auditSource(req) {
     var ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress || null;
@@ -134,8 +133,12 @@ function del(req, res, next) {
 function renewCerts(req, res, next) {
     assert.strictEqual(typeof req.params.domain, 'string');
 
-    // trigger renewal in the background
-    reverseProxy.renewCerts({ domain: req.params.domain }, auditSource(req), function () { });
+    domains.renewCerts(req.params.domain, auditSource(req), function (error) {
+        if (error && error.reason === DomainsError.NOT_FOUND) return next(new HttpError(404, error.message));
+        if (error) return next(new HttpError(500, error));
+
+        next(new HttpSuccess(202, {}));
+    });
 
     next(new HttpSuccess(202, {}));
 }
