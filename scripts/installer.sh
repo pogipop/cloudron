@@ -14,27 +14,12 @@ fi
 readonly USER=yellowtent
 readonly BOX_SRC_DIR=/home/${USER}/box
 readonly BASE_DATA_DIR=/home/${USER}
-readonly CLOUDRON_CONF=/home/yellowtent/configs/cloudron.conf
 
 readonly curl="curl --fail --connect-timeout 20 --retry 10 --retry-delay 2 --max-time 2400"
 readonly script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 readonly box_src_tmp_dir="$(realpath ${script_dir}/..)"
 
-readonly is_update=$([[ -f "${CLOUDRON_CONF}" ]] && echo "yes" || echo "no")
-
-arg_data=""
-
-args=$(getopt -o "" -l "data:,data-file:," -n "$0" -- "$@")
-eval set -- "${args}"
-
-while true; do
-    case "$1" in
-    --data) arg_data="$2"; shift 2;;
-    --data-file) arg_data=$(cat $2); shift 2;;
-    --) break;;
-    *) echo "Unknown option $1"; exit 1;;
-    esac
-done
+readonly is_update=$(systemctl is-active box && echo "yes" || echo "no")
 
 echo "==> installer: updating docker"
 if [[ $(docker version --format {{.Client.Version}}) != "18.03.1-ce" ]]; then
@@ -126,4 +111,4 @@ mv "${box_src_tmp_dir}" "${BOX_SRC_DIR}"
 chown -R "${USER}:${USER}" "${BOX_SRC_DIR}"
 
 echo "==> installer: calling box setup script"
-"${BOX_SRC_DIR}/setup/start.sh" --data "${arg_data}"
+"${BOX_SRC_DIR}/setup/start.sh"

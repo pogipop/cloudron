@@ -4,7 +4,6 @@ set -eu -o pipefail
 
 # change this to a hash when we make a upgrade release
 readonly LOG_FILE="/var/log/cloudron-setup.log"
-readonly DATA_FILE="/root/cloudron-install-data.json"
 readonly MINIMUM_DISK_SIZE_GB="18" # this is the size of "/" and required to fit in docker images 18 is a safe bet for different reporting on 20GB min
 readonly MINIMUM_MEMORY="974"      # this is mostly reported for 1GB main memory (DO 992, EC2 990, Linode 989, Serverdiscounter.com 974)
 
@@ -198,12 +197,21 @@ if [[ "${initBaseImage}" == "true" ]]; then
 fi
 
 echo "=> Installing version ${version} (this takes some time) ..."
-echo "${data}" > "${DATA_FILE}"
-if ! /bin/bash "${box_src_tmp_dir}/scripts/installer.sh" --data-file "${DATA_FILE}" &>> "${LOG_FILE}"; then
+mkdir -p /etc/cloudron
+cat > "/etc/cloudron/cloudron.conf" <<CONF_END
+{
+    "version": "${version}",
+    "apiServerOrigin": "${apiServerOrigin}",
+    "webServerOrigin": "${webServerOrigin}",
+    "provider": "${provider}",
+    "edition": "${edition}"
+}
+CONF_END
+
+if ! /bin/bash "${box_src_tmp_dir}/scripts/installer.sh" &>> "${LOG_FILE}"; then
     echo "Failed to install cloudron. See ${LOG_FILE} for details"
     exit 1
 fi
-rm "${DATA_FILE}"
 
 echo -n "=> Waiting for cloudron to be ready (this takes some time) ..."
 while true; do

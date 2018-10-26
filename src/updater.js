@@ -173,33 +173,11 @@ function doUpdate(boxUpdateInfo, callback) {
         backups.backupBoxAndApps({ userId: null, username: 'updater' }, function (error) {
             if (error) return updateError(error);
 
-            // NOTE: this data is opaque and will be passed through the installer.sh
-            var data= {
-                provider: config.provider(),
-                apiServerOrigin: config.apiServerOrigin(),
-                webServerOrigin: config.webServerOrigin(),
-                adminDomain: config.adminDomain(),
-                adminFqdn: config.adminFqdn(),
-                adminLocation: config.adminLocation(),
-                isDemo: config.isDemo(),
-                edition: config.edition(),
-
-                appstore: {
-                    apiServerOrigin: config.apiServerOrigin()
-                },
-                caas: {
-                    apiServerOrigin: config.apiServerOrigin(),
-                    webServerOrigin: config.webServerOrigin()
-                },
-
-                version: boxUpdateInfo.version
-            };
-
-            debug('updating box %s %j', boxUpdateInfo.sourceTarballUrl, _.omit(data, 'tlsCert', 'tlsKey', 'token', 'appstore', 'caas'));
+            debug('updating box %s', boxUpdateInfo.sourceTarballUrl);
 
             progress.set(progress.UPDATE, 70, 'Installing update');
 
-            shell.sudo('update', [ UPDATE_CMD, packageInfo.file, JSON.stringify(data) ], function (error) {
+            shell.sudo('update', [ UPDATE_CMD, packageInfo.file ], function (error) {
                 if (error) return updateError(error);
 
                 // Do not add any code here. The installer script will stop the box code any instant

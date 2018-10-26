@@ -8,20 +8,18 @@ if [[ ${EUID} -ne 0 ]]; then
 fi
 
 readonly UPDATER_SERVICE="cloudron-updater"
-readonly DATA_FILE="/root/cloudron-update-data.json"
 
 if [[ $# == 1 && "$1" == "--check" ]]; then
     echo "OK"
     exit 0
 fi
 
-if [[ $# != 2 ]]; then
-    echo "sourceDir and data arguments required"
+if [[ $# != 1 ]]; then
+    echo "sourceDir argument required"
     exit 1
 fi
 
 readonly source_dir="${1}"
-readonly data="${2}"
 
 echo "Updating Cloudron with ${source_dir}"
 
@@ -32,11 +30,8 @@ if systemctl reset-failed "${UPDATER_SERVICE}"; then
     echo "=> service has failed earlier"
 fi
 
-# Save user data in file, to avoid argument length limit with systemd-run
-echo "${data}" > "${DATA_FILE}"
-
 echo "=> Run installer.sh as cloudron-updater.service"
-if ! systemd-run --unit "${UPDATER_SERVICE}" ${installer_path} --data-file "${DATA_FILE}"; then
+if ! systemd-run --unit "${UPDATER_SERVICE}" ${installer_path}; then
     echo "Failed to install cloudron. See ${LOG_FILE} for details"
     exit 1
 fi

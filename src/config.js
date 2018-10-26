@@ -59,19 +59,16 @@ var assert = require('assert'),
 // assert on unknown environment can't proceed
 assert(exports.CLOUDRON || exports.TEST, 'Unknown environment. This should not happen!');
 
-var homeDir = process.env.HOME || process.env.HOMEPATH || process.env.USERPROFILE;
-
 var data = { };
 
 function baseDir() {
+    const homeDir = process.env.HOME || process.env.HOMEPATH || process.env.USERPROFILE;
     if (exports.CLOUDRON) return homeDir;
     if (exports.TEST) return path.join(homeDir, '.cloudron_test');
+    // cannot reach
 }
 
-var cloudronConfigFileName = path.join(baseDir(), 'configs/cloudron.conf');
-
-// only tests can run without a config file on disk, they use the defaults with runtime overrides
-if (exports.CLOUDRON) assert(fs.existsSync(cloudronConfigFileName), 'No cloudron.conf found, cannot proceed');
+const cloudronConfigFileName = exports.CLOUDRON ? '/etc/cloudron/cloudron.conf' : path.join(baseDir(), 'cloudron.conf');
 
 function saveSync() {
     // only save values we want to have in the cloudron.conf, see start.sh

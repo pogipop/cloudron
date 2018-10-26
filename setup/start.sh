@@ -16,8 +16,7 @@ readonly BOX_DATA_DIR="${HOME_DIR}/boxdata" # box data
 readonly CONFIG_DIR="${HOME_DIR}/configs"
 
 readonly script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-
-source "${script_dir}/argparser.sh" "$@" # this injects the arg_* variables used below
+readonly get_config="$(realpath ${script_dir}/../node_modules/.bin/json) -f /etc/cloudron/cloudron.conf"
 
 echo "==> Configuring docker"
 cp "${script_dir}/start/docker-cloudron-app.apparmor" /etc/apparmor.d/docker-cloudron-app
@@ -92,6 +91,14 @@ setfacl -n -m u:${USER}:r /var/log/journal/*/system.journal
 echo "==> Creating config directory"
 mkdir -p "${CONFIG_DIR}"
 
+# migration for cloudron.conf file. Can be removed after 3.3
+if [[ ! -d /etc/cloudron ]]; then
+    echo "==> Migrating existing cloudron.conf to new location"
+    mkdir -p /etc/cloudron
+    cp "${CONFIG_DIR}/cloudron.conf" /etc/cloudron/cloudron.conf
+fi
+chown -R "${USER}" /etc/cloudron
+
 echo "==> Setting up unbound"
 # DO uses Google nameservers by default. This causes RBL queries to fail (host 2.0.0.127.zen.spamhaus.org)
 # We do not use dnsmasq because it is not a recursive resolver and defaults to the value in the interfaces file (which is Google DNS!)
@@ -156,9 +163,6 @@ if ! grep -q "^Restart=" /etc/systemd/system/multi-user.target.wants/nginx.servi
 fi
 systemctl start nginx
 
-# bookkeep the version as part of data
-echo "{ \"version\": \"${arg_version}\", \"apiServerOrigin\": \"${arg_api_server_origin}\" }" > "${BOX_DATA_DIR}/version"
-
 # restart mysql to make sure it has latest config
 if [[ ! -f /etc/mysql/mysql.cnf ]] || ! diff -q "${script_dir}/start/mysql.cnf" /etc/mysql/mysql.cnf >/dev/null; then
     # wait for all running mysql jobs
@@ -187,28 +191,6 @@ set -eu
 cd "${BOX_SRC_DIR}"
 BOX_ENV=cloudron DATABASE_URL=mysql://root:${mysql_root_password}@127.0.0.1/box "${BOX_SRC_DIR}/node_modules/.bin/db-migrate" up
 EOF
-
-echo "==> Creating cloudron.conf"
-cat > "${CONFIG_DIR}/cloudron.conf" <<CONF_END
-{
-    "version": "${arg_version}",
-    "apiServerOrigin": "${arg_api_server_origin}",
-    "webServerOrigin": "${arg_web_server_origin}",
-    "adminDomain": "${arg_admin_domain}",
-    "adminFqdn": "${arg_admin_fqdn}",
-    "adminLocation": "${arg_admin_location}",
-    "provider": "${arg_provider}",
-    "isDemo": ${arg_is_demo},
-    "edition": "${arg_edition}"
-}
-CONF_END
-
-echo "==> Creating config.json for dashboard"
-cat > "${BOX_SRC_DIR}/dashboard/dist/config.json" <<CONF_END
-{
-    "webServerOrigin": "${arg_web_server_origin}"
-}
-CONF_END
 
 if [[ ! -f "${BOX_DATA_DIR}/dhparams.pem" ]]; then
     echo "==> Generating dhparams (takes forever)"
