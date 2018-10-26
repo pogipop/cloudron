@@ -93,6 +93,7 @@ images=$(node -e "var i = require('${arg_infraversionpath}/infra_version.js'); c
 echo -e "\tPulling docker images: ${images}"
 for image in ${images}; do
     docker pull "${image}"
+    docker pull "${image%@sha256:*}" # this will tag the image for readability
 done
 
 echo "==> Install collectd"

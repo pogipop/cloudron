@@ -81,6 +81,15 @@ if [[ ${try} -eq 10 ]]; then
     exit 4
 fi
 
+echo "==> installer: downloading new addon images"
+images=$(node -e "var i = require('${box_src_tmp_dir}/src/infra_version.js'); console.log(i.baseImages.join(' '), Object.keys(i.images).map(function (x) { return i.images[x].tag; }).join(' '));")
+
+echo -e "\tPulling docker images: ${images}"
+for image in ${images}; do
+    docker pull "${image}"           # this pulls the image using the sha256
+    docker pull "${image%@sha256:*}" # this will tag the image for readability
+done
+
 echo "==> installer: update cloudron-syslog"
 CLOUDRON_SYSLOG_DIR=/usr/local/cloudron-syslog
 CLOUDRON_SYSLOG="${CLOUDRON_SYSLOG_DIR}/bin/cloudron-syslog"
