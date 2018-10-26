@@ -18,12 +18,6 @@ readonly script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 source "${script_dir}/argparser.sh" "$@" # this injects the arg_* variables used below
 
-echo "==> Configuring host"
-sed -e 's/^#NTP=/NTP=0.ubuntu.pool.ntp.org 1.ubuntu.pool.ntp.org 2.ubuntu.pool.ntp.org 3.ubuntu.pool.ntp.org/' -i /etc/systemd/timesyncd.conf
-timedatectl set-ntp 1
-timedatectl set-timezone UTC
-hostnamectl set-hostname "${arg_admin_fqdn}"
-
 echo "==> Configuring docker"
 cp "${script_dir}/start/docker-cloudron-app.apparmor" /etc/apparmor.d/docker-cloudron-app
 systemctl enable apparmor
