@@ -206,11 +206,6 @@ if ! /bin/bash "${box_src_tmp_dir}/scripts/installer.sh" --data-file "${DATA_FIL
 fi
 rm "${DATA_FILE}"
 
-echo "=> Configuring host"
-sed -e 's/^#NTP=/NTP=0.ubuntu.pool.ntp.org 1.ubuntu.pool.ntp.org 2.ubuntu.pool.ntp.org 3.ubuntu.pool.ntp.org/' -i /etc/systemd/timesyncd.conf
-timedatectl set-ntp 1
-timedatectl set-timezone UTC
-
 echo -n "=> Waiting for cloudron to be ready (this takes some time) ..."
 while true; do
     echo -n "."

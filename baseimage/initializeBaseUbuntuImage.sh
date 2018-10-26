@@ -102,6 +102,11 @@ if ! apt-get install -y collectd collectd-utils; then
     sed -e 's/^FQDNLookup true/FQDNLookup false/' -i /etc/collectd/collectd.conf
 fi
 
+echo "==> Configuring host"
+sed -e 's/^#NTP=/NTP=0.ubuntu.pool.ntp.org 1.ubuntu.pool.ntp.org 2.ubuntu.pool.ntp.org 3.ubuntu.pool.ntp.org/' -i /etc/systemd/timesyncd.conf
+timedatectl set-ntp 1
+timedatectl set-timezone UTC
+
 # Disable bind for good measure (on online.net, kimsufi servers these are pre-installed and conflicts with unbound)
 systemctl stop bind9 || true
 systemctl disable bind9 || true
