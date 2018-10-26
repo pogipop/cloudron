@@ -88,7 +88,7 @@ if [ ! -f "${arg_infraversionpath}/infra_version.js" ]; then
     exit 1
 fi
 
-images=$(node -e "var i = require('${arg_infraversionpath}/infra_version.js'); console.log(i.baseImages.join(' '), Object.keys(i.images).map(function (x) { return i.images[x].tag; }).join(' '));")
+images=$(node -e "var i = require('${arg_infraversionpath}/infra_version.js'); console.log(i.baseImages.map(function (x) { return x.tag; }).join(' '), Object.keys(i.images).map(function (x) { return i.images[x].tag; }).join(' '));")
 
 echo -e "\tPulling docker images: ${images}"
 for image in ${images}; do

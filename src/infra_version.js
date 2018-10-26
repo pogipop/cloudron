@@ -8,7 +8,9 @@ exports = module.exports = {
     // a version change recreates all containers with latest docker config
     'version': '48.12.0',
 
-    'baseImages': [ 'cloudron/base:1.0.0@sha256:147a648a068a2e746644746bbfb42eb7a50d682437cead3c67c933c546357617' ],
+    'baseImages': [
+        { repo: 'cloudron/base', tag: 'cloudron/base:1.0.0@sha256:147a648a068a2e746644746bbfb42eb7a50d682437cead3c67c933c546357617' }
+    ],
 
     // a major version bump in the db containers will trigger the restore logic that uses the db dumps
     // docker inspect --format='{{index .RepoDigests 0}}' $IMAGE to get the sha256
