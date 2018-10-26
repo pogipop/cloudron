@@ -52,7 +52,7 @@ sourceTarballUrl=""
 rebootServer="true"
 baseDataDir=""
 
-args=$(getopt -o "" -l "help,skip-baseimage-init,data-dir:,provider:,version:,env:,edition:,skip-reboot" -n "$0" -- "$@")
+args=$(getopt -o "" -l "help,skip-baseimage-init,provider:,version:,env:,edition:,skip-reboot" -n "$0" -- "$@")
 eval set -- "${args}"
 
 while true; do
@@ -72,7 +72,6 @@ while true; do
         shift 2;;
     --skip-baseimage-init) initBaseImage="false"; shift;;
     --skip-reboot) rebootServer="false"; shift;;
-    --data-dir) baseDataDir=$(realpath "$2"); shift 2;;
     --) break;;
     *) echo "Unknown option $1"; exit 1;;
     esac
@@ -200,7 +199,7 @@ fi
 
 echo "=> Installing version ${version} (this takes some time) ..."
 echo "${data}" > "${DATA_FILE}"
-if ! /bin/bash "${box_src_tmp_dir}/scripts/installer.sh" --data-file "${DATA_FILE}" --data-dir "${baseDataDir}" &>> "${LOG_FILE}"; then
+if ! /bin/bash "${box_src_tmp_dir}/scripts/installer.sh" --data-file "${DATA_FILE}" &>> "${LOG_FILE}"; then
     echo "Failed to install cloudron. See ${LOG_FILE} for details"
     exit 1
 fi
