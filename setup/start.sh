@@ -2,6 +2,9 @@
 
 set -eu -o pipefail
 
+# This script is run after the box code is switched. This means that this script
+# should pretty much always succeed. No network logic/download code here.
+
 echo "==> Cloudron Start"
 
 readonly USER="yellowtent"

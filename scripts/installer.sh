@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# This script is run before the box code is switched. This means that we can
+# put network related/curl downloads here. If the script fails, the old code
+# will continue to run
+
 set -eu -o pipefail
 
 if [[ ${EUID} -ne 0 ]]; then
