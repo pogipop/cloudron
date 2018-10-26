@@ -12,8 +12,6 @@ readonly APPS_DATA_DIR="${HOME_DIR}/appsdata" # app data
 readonly BOX_DATA_DIR="${HOME_DIR}/boxdata" # box data
 readonly CONFIG_DIR="${HOME_DIR}/configs"
 
-readonly curl="curl --fail --connect-timeout 20 --retry 10 --retry-delay 2 --max-time 2400"
-
 readonly script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 source "${script_dir}/argparser.sh" "$@" # this injects the arg_* variables used below
