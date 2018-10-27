@@ -61,7 +61,7 @@ function start(callback) {
         stopContainers.bind(null, existingInfra),
         graphs.startGraphite.bind(null, existingInfra),
         addons.startAddons.bind(null, existingInfra),
-        pruneAddonImages,
+        pruneInfraImages,
         startApps.bind(null, existingInfra),
         fs.writeFile.bind(fs, paths.INFRA_VERSION_FILE, JSON.stringify(infra, null, 4))
     ], function (error) {
@@ -93,21 +93,21 @@ function emitPlatformReady() {
     }, 15000);
 }
 
-function pruneAddonImages(callback) {
-    debug('pruneAddonImages: checking existing images');
+function pruneInfraImages(callback) {
+    debug('pruneInfraImages: checking existing images');
 
     // cannot blindly remove all unused images since redis image may not be used
-    for (let addonName in infra.images) {
-        const image = infra.images[addonName];
+    let images = infra.baseImages.concat(Object.keys(infra.images).map(function (addon) { return infra.images[addon]; }));
 
-        let output = execSync('removeOldImagesSync', `docker images --digests ${image.repo} --format "{{.ID}} {{.Repository}}:{{.Tag}}@{{.Digest}}"`, { encoding: 'utf8' });
+    for (let image of images) {
+        let output = execSync(`docker images --digests ${image.repo} --format "{{.ID}} {{.Repository}}:{{.Tag}}@{{.Digest}}"`, { encoding: 'utf8' });
         let lines = output.trim().split('\n');
         for (let line of lines) {
             if (!line) continue;
             let parts = line.split(' '); // [ ID, Repo:Tag@Digest ]
             if (image.tag === parts[1]) continue; // keep
-            debug(`pruneAddonImages: removing unused image of ${addonName}: ${line}`);
-            shell.execSync('removeOldImagesSync', `docker rmi ${parts[0]}`);
+            debug(`pruneInfraImages: removing unused image of ${image.repo}: ${line}`);
+            shell.execSync('pruneInfraImages', `docker rmi ${parts[0]}`);
         }
     }
 
