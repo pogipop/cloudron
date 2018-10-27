@@ -36,12 +36,6 @@ describe('config', function () {
         expect(config.adminLocation()).to.equal('my');
     });
 
-    it('set saves value in file', function (done) {
-        config.set('version', '1.3.0');
-        expect(JSON.parse(fs.readFileSync(path.join(config.baseDir(), 'cloudron.conf'))).version).to.eql('1.3.0');
-        done();
-    });
-
     it('set does not save custom values in file', function (done) {
         config.set('foobar', 'somevalue');
         expect(JSON.parse(fs.readFileSync(path.join(config.baseDir(), 'cloudron.conf'))).foobar).to.not.be.ok();

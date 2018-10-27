@@ -72,7 +72,6 @@ const cloudronConfigFileName = exports.CLOUDRON ? '/etc/cloudron/cloudron.conf' 
 function saveSync() {
     // only save values we want to have in the cloudron.conf, see start.sh
     var conf = {
-        version: data.version,
         apiServerOrigin: data.apiServerOrigin,
         webServerOrigin: data.webServerOrigin,
         adminDomain: data.adminDomain,
@@ -100,7 +99,6 @@ function initConfig() {
     data.adminDomain = '';
     data.adminLocation = 'my';
     data.port = 3000;
-    data.version = null;
     data.apiServerOrigin = null;
     data.webServerOrigin = null;
     data.provider = 'generic';
@@ -121,7 +119,6 @@ function initConfig() {
 
     // overrides for local testings
     if (exports.TEST) {
-        data.version = '1.1.1-test';
         data.port = 5454;
         data.apiServerOrigin = 'http://localhost:6060'; // hock doesn't support https
         data.database.password = '';
@@ -210,6 +207,7 @@ function sysadminOrigin() {
 }
 
 function version() {
+    if (exports.TEST) return '3.0.0-test';
     return fs.readFileSync(path.join(__dirname, '../VERSION'), 'utf8').trim();
 }
 

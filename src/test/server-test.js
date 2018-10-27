@@ -94,7 +94,7 @@ describe('Server', function () {
             superagent.get(SERVER_URL + '/api/v1/cloudron/status', function (err, res) {
                 expect(err).to.not.be.ok();
                 expect(res.statusCode).to.equal(200);
-                expect(res.body.version).to.equal('1.1.1-test');
+                expect(res.body.version).to.contain('-test');
                 done();
             });
         });

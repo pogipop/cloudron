@@ -18,6 +18,7 @@ var appdb = require('../appdb.js'),
     nock = require('nock'),
     paths = require('../paths.js'),
     safe = require('safetydance'),
+    semver = require('semver'),
     settings = require('../settings.js'),
     settingsdb = require('../settingsdb.js'),
     updatechecker = require('../updatechecker.js'),
@@ -43,6 +44,8 @@ const DOMAIN_0 = {
 var AUDIT_SOURCE = {
     ip: '1.2.3.4'
 };
+
+const UPDATE_VERSION = semver.inc(config.version(), 'major');
 
 function checkMails(number, done) {
     // mails are enqueued async
@@ -110,7 +113,7 @@ describe('updatechecker - box - manual (email)', function () {
         var scope = nock('http://localhost:4444')
             .get('/api/v1/users/uid/cloudrons/cid/boxupdate')
             .query({ boxVersion: config.version(), accessToken: 'token' })
-            .reply(200, { version: '2.0.0', changelog: [''], sourceTarballUrl: '2.0.0.tar.gz' } );
+            .reply(200, { version: UPDATE_VERSION, changelog: [''], sourceTarballUrl: 'box.tar.gz' } );
 
         var scope2 = nock('http://localhost:4444')
             .get('/api/v1/users/uid/cloudrons/cid/subscription')
@@ -119,8 +122,8 @@ describe('updatechecker - box - manual (email)', function () {
 
         updatechecker.checkBoxUpdates(function (error) {
             expect(!error).to.be.ok();
-            expect(updatechecker.getUpdateInfo().box.version).to.be('2.0.0');
-            expect(updatechecker.getUpdateInfo().box.sourceTarballUrl).to.be('2.0.0.tar.gz');
+            expect(updatechecker.getUpdateInfo().box.version).to.be(UPDATE_VERSION);
+            expect(updatechecker.getUpdateInfo().box.sourceTarballUrl).to.be('box.tar.gz');
             expect(scope.isDone()).to.be.ok();
             expect(scope2.isDone()).to.be.ok();
 
@@ -134,7 +137,7 @@ describe('updatechecker - box - manual (email)', function () {
         var scope = nock('http://localhost:4444')
             .get('/api/v1/users/uid/cloudrons/cid/boxupdate')
             .query({ boxVersion: config.version(), accessToken: 'token' })
-            .reply(404, { version: '2.0.0-pre.0', changelog: [''], sourceTarballUrl: '2.0.0-pre.0.tar.gz' } );
+            .reply(404, { version: '2.0.0-pre.0', changelog: [''], sourceTarballUrl: 'box-pre.tar.gz' } );
 
         updatechecker.checkBoxUpdates(function (error) {
             expect(error).to.be.ok();
@@ -171,7 +174,7 @@ describe('updatechecker - box - automatic (no email)', function () {
         var scope = nock('http://localhost:4444')
             .get('/api/v1/users/uid/cloudrons/cid/boxupdate')
             .query({ boxVersion: config.version(), accessToken: 'token' })
-            .reply(200, { version: '2.0.0', sourceTarballUrl: '2.0.0.tar.gz' } );
+            .reply(200, { version: UPDATE_VERSION, sourceTarballUrl: 'box.tar.gz' } );
 
         var scope2 = nock('http://localhost:4444')
             .get('/api/v1/users/uid/cloudrons/cid/subscription')
@@ -180,7 +183,7 @@ describe('updatechecker - box - automatic (no email)', function () {
 
         updatechecker.checkBoxUpdates(function (error) {
             expect(!error).to.be.ok();
-            expect(updatechecker.getUpdateInfo().box.version).to.be('2.0.0');
+            expect(updatechecker.getUpdateInfo().box.version).to.be(UPDATE_VERSION);
             expect(scope.isDone()).to.be.ok();
             expect(scope2.isDone()).to.be.ok();
 
@@ -215,7 +218,7 @@ describe('updatechecker - box - automatic free (email)', function () {
         var scope = nock('http://localhost:4444')
             .get('/api/v1/users/uid/cloudrons/cid/boxupdate')
             .query({ boxVersion: config.version(), accessToken: 'token' })
-            .reply(200, { version: '2.0.0', changelog: [''], sourceTarballUrl: '2.0.0.tar.gz' } );
+            .reply(200, { version: UPDATE_VERSION, changelog: [''], sourceTarballUrl: 'box.tar.gz' } );
 
         var scope2 = nock('http://localhost:4444')
             .get('/api/v1/users/uid/cloudrons/cid/subscription')
@@ -224,7 +227,7 @@ describe('updatechecker - box - automatic free (email)', function () {
 
         updatechecker.checkBoxUpdates(function (error) {
             expect(!error).to.be.ok();
-            expect(updatechecker.getUpdateInfo().box.version).to.be('2.0.0');
+            expect(updatechecker.getUpdateInfo().box.version).to.be(UPDATE_VERSION);
             expect(scope.isDone()).to.be.ok();
             expect(scope2.isDone()).to.be.ok();
 
