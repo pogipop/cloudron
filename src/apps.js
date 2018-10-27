@@ -1187,6 +1187,8 @@ function exec(appId, options, callback) {
         };
 
         container.exec(execOptions, function (error, exec) {
+            if (error && error.statusCode === 409) return callback(new AppsError(AppsError.BAD_STATE, error.message)); // container restarting/not running
+
             if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
             var startOptions = {
                 Detach: false,
