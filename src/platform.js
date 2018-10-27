@@ -13,6 +13,7 @@ var addons = require('./addons.js'),
     async = require('async'),
     config = require('./config.js'),
     debug = require('debug')('box:platform'),
+    execSync = require('child_process').execSync,
     fs = require('fs'),
     graphs = require('./graphs.js'),
     infra = require('./infra_version.js'),
@@ -60,7 +61,7 @@ function start(callback) {
         stopContainers.bind(null, existingInfra),
         graphs.startGraphite.bind(null, existingInfra),
         addons.startAddons.bind(null, existingInfra),
-        removeOldImages,
+        pruneAddonImages,
         startApps.bind(null, existingInfra),
         fs.writeFile.bind(fs, paths.INFRA_VERSION_FILE, JSON.stringify(infra, null, 4))
     ], function (error) {
@@ -92,10 +93,23 @@ function emitPlatformReady() {
     }, 15000);
 }
 
-function removeOldImages(callback) {
-    debug('removing old addon images');
+function pruneAddonImages(callback) {
+    debug('pruneAddonImages: checking existing images');
 
-    shell.execSync('removeOldImagesSync', 'docker image prune --force --all');
+    // cannot blindly remove all unused images since redis image may not be used
+    for (let addonName in infra.images) {
+        const image = infra.images[addonName];
+
+        let output = execSync('removeOldImagesSync', `docker images --digests ${image.repo} --format "{{.ID}} {{.Repository}}:{{.Tag}}@{{.Digest}}"`, { encoding: 'utf8' });
+        let lines = output.trim().split('\n');
+        for (let line of lines) {
+            if (!line) continue;
+            let parts = line.split(' '); // [ ID, Repo:Tag@Digest ]
+            if (image.tag === parts[1]) continue; // keep
+            debug(`pruneAddonImages: removing unused image of ${addonName}: ${line}`);
+            shell.execSync('removeOldImagesSync', `docker rmi ${parts[0]}`);
+        }
+    }
 
     callback();
 }
