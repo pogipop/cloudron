@@ -45,7 +45,6 @@ exports = module.exports = {
     isAdminDomainLocked: isAdminDomainLocked,
 
     // for testing resets to defaults
-    _setVersion: setVersion,
     _reset: _reset
 };
 
@@ -211,11 +210,7 @@ function sysadminOrigin() {
 }
 
 function version() {
-    return get('version');
-}
-
-function setVersion(version) {
-    set('version', version);
+    return fs.readFileSync(path.join(__dirname, '../VERSION'), 'utf8').trim();
 }
 
 function database() {

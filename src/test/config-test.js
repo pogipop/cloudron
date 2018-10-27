@@ -24,9 +24,9 @@ describe('config', function () {
         done();
     });
 
-    it('can get and set version', function (done) {
-        config._setVersion('1.2.3');
-        expect(config.version()).to.be('1.2.3');
+    it('can get version', function (done) {
+        expect(config.version()).to.be.ok(); // this gets a dummy text string
+        expect(config.version().includes('\n')).to.not.be.ok();
         done();
     });
 

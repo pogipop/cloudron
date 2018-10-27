@@ -50,7 +50,6 @@ function setup(done) {
     nock.cleanAll();
     config._reset();
     config.set('provider', 'caas');
-    config._setVersion('1.2.3');
 
     async.series([
         server.start.bind(server),

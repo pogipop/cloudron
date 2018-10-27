@@ -173,8 +173,7 @@ data=$(cat <<EOF
     "provider": "${provider}",
     "edition": "${edition}",
     "apiServerOrigin": "${apiServerOrigin}",
-    "webServerOrigin": "${webServerOrigin}",
-    "version": "${version}"
+    "webServerOrigin": "${webServerOrigin}"
 }
 EOF
 )
@@ -200,7 +199,6 @@ echo "=> Installing version ${version} (this takes some time) ..."
 mkdir -p /etc/cloudron
 cat > "/etc/cloudron/cloudron.conf" <<CONF_END
 {
-    "version": "${version}",
     "apiServerOrigin": "${apiServerOrigin}",
     "webServerOrigin": "${webServerOrigin}",
     "provider": "${provider}",
