@@ -20,7 +20,7 @@ var token = null;
 
 function setup(done) {
     config._reset();
-    config.setVersion('1.2.3');
+    config._setVersion('1.2.3');
 
     async.series([
         server.start,

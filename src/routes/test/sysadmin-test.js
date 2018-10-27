@@ -32,7 +32,7 @@ const DOMAIN_0 = {
 function setup(done) {
     config._reset();
     config.setFqdn(DOMAIN_0.domain);
-    config.setVersion('1.2.3');
+    config._setVersion('1.2.3');
 
     async.series([
         server.start,

@@ -22,7 +22,6 @@ exports = module.exports = {
     setAdminFqdn: setAdminFqdn,
     setAdminLocation: setAdminLocation,
     version: version,
-    setVersion: setVersion,
     database: database,
     edition: edition,
 
@@ -46,6 +45,7 @@ exports = module.exports = {
     isAdminDomainLocked: isAdminDomainLocked,
 
     // for testing resets to defaults
+    _setVersion: setVersion,
     _reset: _reset
 };
 

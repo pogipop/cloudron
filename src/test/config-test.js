@@ -25,7 +25,7 @@ describe('config', function () {
     });
 
     it('can get and set version', function (done) {
-        config.setVersion('1.2.3');
+        config._setVersion('1.2.3');
         expect(config.version()).to.be('1.2.3');
         done();
     });
