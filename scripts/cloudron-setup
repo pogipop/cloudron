@@ -166,18 +166,6 @@ if ! sourceTarballUrl=$(echo "${releaseJson}" | python3 -c 'import json,sys;obj=
     exit 1
 fi
 
-# Build data
-# from 1.9, we use autoprovision.json
-data=$(cat <<EOF
-{
-    "provider": "${provider}",
-    "edition": "${edition}",
-    "apiServerOrigin": "${apiServerOrigin}",
-    "webServerOrigin": "${webServerOrigin}"
-}
-EOF
-)
-
 echo "=> Downloading version ${version} ..."
 box_src_tmp_dir=$(mktemp -dt box-src-XXXXXX)
 
@@ -195,9 +183,31 @@ if [[ "${initBaseImage}" == "true" ]]; then
     echo ""
 fi
 
+# NOTE: this install script only supports 3.x and above
 echo "=> Installing version ${version} (this takes some time) ..."
-mkdir -p /etc/cloudron
-cat > "/etc/cloudron/cloudron.conf" <<CONF_END
+if [[ "${version}" =~ 3\.[0-2]+\.[0-9]+ ]]; then
+    readonly DATA_FILE="/root/cloudron-install-data.json"
+    data=$(cat <<EOF
+{
+    "provider": "${provider}",
+    "edition": "${edition}",
+    "apiServerOrigin": "${apiServerOrigin}",
+    "webServerOrigin": "${webServerOrigin}",
+    "version": "${version}"
+}
+EOF
+)
+    echo "${data}" > "${DATA_FILE}"
+
+    if ! /bin/bash "${box_src_tmp_dir}/scripts/installer.sh" --data-file "${DATA_FILE}" &>> "${LOG_FILE}"; then
+        echo "Failed to install cloudron. See ${LOG_FILE} for details"
+        exit 1
+    fi
+
+    rm "${DATA_FILE}"
+else
+    mkdir -p /etc/cloudron
+    cat > "/etc/cloudron/cloudron.conf" <<CONF_END
 {
     "apiServerOrigin": "${apiServerOrigin}",
     "webServerOrigin": "${webServerOrigin}",
@@ -206,9 +216,10 @@ cat > "/etc/cloudron/cloudron.conf" <<CONF_END
 }
 CONF_END
 
-if ! /bin/bash "${box_src_tmp_dir}/scripts/installer.sh" &>> "${LOG_FILE}"; then
-    echo "Failed to install cloudron. See ${LOG_FILE} for details"
-    exit 1
+    if ! /bin/bash "${box_src_tmp_dir}/scripts/installer.sh" &>> "${LOG_FILE}"; then
+        echo "Failed to install cloudron. See ${LOG_FILE} for details"
+        exit 1
+    fi
 fi
 
 echo -n "=> Waiting for cloudron to be ready (this takes some time) ..."
