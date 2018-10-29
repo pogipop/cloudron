@@ -85,7 +85,7 @@ function getCertApi(domain, callback) {
     domains.get(domain, function (error, result) {
         if (error) return callback(error);
 
-        if (result.tlsConfig.provider === 'fallback') return callback(null, fallback, {});
+        if (result.tlsConfig.provider === 'fallback') return callback(null, fallback, { fallback: true });
 
         var api = result.tlsConfig.provider === 'caas' ? caas : acme2;
 
@@ -126,6 +126,10 @@ function providerMatchesSync(certFilePath, apiOptions) {
     assert.strictEqual(typeof apiOptions, 'object');
 
     if (!fs.existsSync(certFilePath)) return false; // not found
+
+    if (apiOptions.fallback) {
+        return certFilePath.includes('.host.cert');
+    }
 
     const subjectAndIssuer = safe.child_process.execSync(`/usr/bin/openssl x509 -noout -subject -issuer -in "${certFilePath}"`, { encoding: 'utf8' });
 
