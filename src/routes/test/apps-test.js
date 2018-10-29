@@ -27,6 +27,7 @@ var accesscontrol = require('../../accesscontrol.js'),
     nock = require('nock'),
     path = require('path'),
     paths = require('../../paths.js'),
+    platform = require('../../platform.js'),
     safe = require('safetydance'),
     server = require('../../server.js'),
     settings = require('../../settings.js'),
@@ -233,13 +234,16 @@ function startBox(done) {
                 }
                 return false;
             }, callback);
-        }
-    ], function (error) {
-        if (error) return done(error);
+        },
 
-        console.log('This test can take ~40 seconds to start as it waits for infra to be ready');
-        setTimeout(done, 40000);
-    });
+        function (callback) {
+            async.retry({ times: 50, interval: 10000 }, function (retryCallback) {
+                if (platform._isReady) return retryCallback();
+                console.log('Platform not ready yet, retry in 10 secs');
+                retryCallback('Platform not ready yet');
+            }, callback);
+        }
+    ], done);
 }
 
 function stopBox(done) {
@@ -445,7 +449,7 @@ describe('App API', function () {
     it('app install succeeds with purchase', function (done) {
         var fake1 = nock(config.apiServerOrigin()).post(function (uri) { return uri.indexOf('/api/v1/users/' + user_1_id + '/cloudrons') >= 0; }, { 'domain': DOMAIN_0.domain }).reply(201, { cloudron: { id: CLOUDRON_ID } });
         var fake2 = nock(config.apiServerOrigin()).get('/api/v1/apps/' + APP_STORE_ID).reply(200, { manifest: APP_MANIFEST });
-        var fake3 = nock(config.apiServerOrigin()).post(function (uri) { return uri.indexOf('/api/v1/users/' + user_1_id + '/cloudrons/' + CLOUDRON_ID + '/apps/') >= 0; }, { 'appstoreId': APP_STORE_ID }).reply(201, { });
+        var fake3 = nock(config.apiServerOrigin()).post(function (uri) { return uri.indexOf('/api/v1/users/' + user_1_id + '/cloudrons/' + CLOUDRON_ID + '/apps/') >= 0; }, { 'appstoreId': APP_STORE_ID, 'manifestId': APP_MANIFEST.id }).reply(201, { });
 
         settings.setAppstoreConfig({ userId: user_1_id, token: USER_1_APPSTORE_TOKEN }, function (error) {
             if (error) return done(error);
@@ -575,7 +579,7 @@ describe('App API', function () {
 
     it('app install succeeds again', function (done) {
         var fake1 = nock(config.apiServerOrigin()).get('/api/v1/apps/' + APP_STORE_ID).reply(200, { manifest: APP_MANIFEST });
-        var fake2 = nock(config.apiServerOrigin()).post(function (uri) { return uri.indexOf('/api/v1/users/' + user_1_id + '/cloudrons/' + CLOUDRON_ID + '/apps/') >= 0; }, { 'appstoreId': APP_STORE_ID }).reply(201, { });
+        var fake2 = nock(config.apiServerOrigin()).post(function (uri) { return uri.indexOf('/api/v1/users/' + user_1_id + '/cloudrons/' + CLOUDRON_ID + '/apps/') >= 0; }, { 'appstoreId': APP_STORE_ID, 'manifestId': APP_MANIFEST.id }).reply(201, { });
 
         superagent.post(SERVER_URL + '/api/v1/apps/install')
             .query({ access_token: token })
@@ -590,7 +594,7 @@ describe('App API', function () {
             });
     });
 
-    it('app install succeeds without password but developer token', function (done) {
+    it('app install fails with developer token', function (done) {
         superagent.post(SERVER_URL + '/api/v1/developer/login')
             .send({ username: USERNAME, password: PASSWORD })
             .end(function (error, result) {
@@ -606,20 +610,9 @@ describe('App API', function () {
                     .query({ access_token: token })
                     .send({ manifest: APP_MANIFEST, location: APP_LOCATION+APP_LOCATION, domain: DOMAIN_0.domain, portBindings: null, accessRestriction: null })
                     .end(function (err, res) {
-                        expect(res.statusCode).to.equal(202);
-                        expect(res.body.id).to.be.a('string');
-                        APP_ID = res.body.id;
+                        expect(res.statusCode).to.equal(424); // appstore purchase external error
                         done();
                     });
-            });
-    });
-
-    it('can uninstall app without password but developer token', function (done) {
-        superagent.post(SERVER_URL + '/api/v1/apps/' + APP_ID + '/uninstall')
-            .query({ access_token: token })
-            .end(function (err, res) {
-                expect(res.statusCode).to.equal(202);
-                done();
             });
     });
 });
@@ -670,7 +663,7 @@ describe('App installation', function () {
 
     it('can install test app', function (done) {
         var fake1 = nock(config.apiServerOrigin()).get('/api/v1/apps/' + APP_STORE_ID).reply(200, { manifest: APP_MANIFEST });
-        var fake2 = nock(config.apiServerOrigin()).post(function (uri) { return uri.indexOf('/api/v1/users/' + user_1_id + '/cloudrons/' + CLOUDRON_ID + '/apps/') >= 0; }, { 'appstoreId': APP_STORE_ID }).reply(201, { });
+        var fake2 = nock(config.apiServerOrigin()).post(function (uri) { return uri.indexOf('/api/v1/users/' + user_1_id + '/cloudrons/' + CLOUDRON_ID + '/apps/') >= 0; }, { 'appstoreId': APP_STORE_ID, 'manifestId': APP_MANIFEST.id }).reply(201, { });
 
         var count = 0;
         function checkInstallStatus() {
