@@ -75,11 +75,11 @@ function getOwner(callback) {
 
     // the first created user it the 'owner'
     database.query('SELECT ' + USERS_FIELDS + ' FROM users WHERE admin=1 ORDER BY createdAt LIMIT 1', function (error, result) {
-            if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
-            if (result.length === 0) return callback(new DatabaseError(DatabaseError.NOT_FOUND));
+        if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
+        if (result.length === 0) return callback(new DatabaseError(DatabaseError.NOT_FOUND));
 
-            callback(null, postProcess(result[0]));
-        });
+        callback(null, postProcess(result[0]));
+    });
 }
 
 function getByResetToken(email, resetToken, callback) {
