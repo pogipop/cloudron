@@ -401,7 +401,7 @@ function updateUser(userId, data, auditSource, callback) {
             callback(null);
 
             get(userId, function (error, result) {
-                if (error) return console.error(error);
+                if (error) return callback(new UsersError(UsersError.INTERNAL_ERROR, error));
 
                 eventlog.add(eventlog.ACTION_USER_UPDATE, auditSource, { userId: userId, user: removePrivateFields(result) });
 
@@ -575,7 +575,7 @@ function setTwoFactorAuthenticationSecret(userId, callback) {
             if (error) return callback(new UsersError(UsersError.INTERNAL_ERROR, error));
 
             qrcode.toDataURL(secret.otpauth_url, function (error, dataUrl) {
-                if (error) console.error(error);
+                if (error) return callback(new UsersError(UsersError.INTERNAL_ERROR, error));
 
                 callback(null, { secret: secret.base32, qrcode: dataUrl });
             });
