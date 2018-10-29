@@ -4,7 +4,10 @@ exports = module.exports = {
     start: start,
     stop: stop,
 
-    handleCertChanged: handleCertChanged
+    handleCertChanged: handleCertChanged,
+
+    // exported for testing
+    _isReady: false
 };
 
 var addons = require('./addons.js'),
@@ -26,8 +29,6 @@ var addons = require('./addons.js'),
     taskmanager = require('./taskmanager.js'),
     _ = require('underscore');
 
-var gPlatformReadyTimer = null;
-
 var NOOP_CALLBACK = function (error) { if (error) debug(error); };
 
 function start(callback) {
@@ -47,7 +48,7 @@ function start(callback) {
     if (_.isEqual(infra, existingInfra)) {
         debug('platform is uptodate at version %s', infra.version);
 
-        emitPlatformReady();
+        onPlatformReady();
 
         return callback();
     }
@@ -69,28 +70,21 @@ function start(callback) {
 
         locker.unlock(locker.OP_PLATFORM_START);
 
-        emitPlatformReady();
+        onPlatformReady();
 
         callback();
     });
 }
 
 function stop(callback) {
-    clearTimeout(gPlatformReadyTimer);
-    gPlatformReadyTimer = null;
     exports.events = null;
     taskmanager.pauseTasks(callback);
 }
 
-function emitPlatformReady() {
-    // give some time for the platform to "settle". For example, mysql might still be initing the
-    // database dir and we cannot call service scripts until that's done.
-    // TODO: make this smarter to not wait for 15secs for the crash-restart case
-    gPlatformReadyTimer = setTimeout(function () {
-        debug('emitting platform ready');
-        gPlatformReadyTimer = null;
-        taskmanager.resumeTasks();
-    }, 15000);
+function onPlatformReady() {
+    debug('onPlatformReady: resuming task manager');
+    exports._isReady = true;
+    taskmanager.resumeTasks();
 }
 
 function pruneInfraImages(callback) {
