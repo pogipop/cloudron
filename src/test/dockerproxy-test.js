@@ -21,7 +21,7 @@ describe('Dockerproxy', function () {
         dockerProxy.start(function (error) {
             expect(error).to.not.be.ok();
 
-            exec(`${DOCKER} run -d ubuntu "bin/bash" "-c" "while true; do echo 'perpetual walrus'; sleep 1; done"`, function (error, stdout, stderr) {
+            exec(`${DOCKER} run -d cloudron/base:1.0.0 "bin/bash" "-c" "while true; do echo 'perpetual walrus'; sleep 1; done"`, function (error, stdout, stderr) {
                 expect(error).to.be(null);
                 expect(stderr).to.be.empty();
 
@@ -55,7 +55,7 @@ describe('Dockerproxy', function () {
     });
 
     it('can create container', function (done) {
-        var cmd = DOCKER + ` run ubuntu "/bin/bash" "-c" "echo 'hello'"`;
+        var cmd = `${DOCKER} run cloudron/base:1.0.0 "/bin/bash" "-c" "echo 'hello'"`;
         exec(cmd, function (error, stdout, stderr) {
             expect(error).to.be(null);
             expect(stdout).to.contain('hello');
@@ -65,7 +65,7 @@ describe('Dockerproxy', function () {
     });
 
     it('proxy overwrites the container network option', function (done) {
-        var cmd = `${DOCKER} run --network ifnotrewritethiswouldfail ubuntu "/bin/bash" "-c" "echo 'hello'"`;
+        var cmd = `${DOCKER} run --network ifnotrewritethiswouldfail cloudron/base:1.0.0 "/bin/bash" "-c" "echo 'hello'"`;
         exec(cmd, function (error, stdout, stderr) {
             expect(error).to.be(null);
             expect(stdout).to.contain('hello');
@@ -85,7 +85,7 @@ describe('Dockerproxy', function () {
     });
 
     it('can use PUT to upload archive into a container', function (done) {
-        exec(`${DOCKER} cp -a ${__dirname}/proxytestarchive.tar ${containerId}:/tmp/`, function (error, stdout, stderr) {
+        exec(`${DOCKER} cp ${__dirname}/proxytestarchive.tar ${containerId}:/tmp/`, function (error, stdout, stderr) {
             expect(error).to.be(null);
             expect(stderr).to.be.empty();
             expect(stdout).to.be.empty();

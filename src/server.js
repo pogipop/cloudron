@@ -109,7 +109,7 @@ function initializeExpressSync() {
     var csrf = routes.oauth2.csrf();
 
     // public routes
-    router.post('/api/v1/cloudron/dns_setup', routes.setup.providerTokenAuth, routes.setup.dnsSetup);    // only available until no-domain
+    router.post('/api/v1/cloudron/setup', routes.setup.providerTokenAuth, routes.setup.provision);    // only available until no-domain
     router.post('/api/v1/cloudron/restore', routes.setup.restore);    // only available until activated
     router.post('/api/v1/cloudron/activate', routes.setup.setupTokenAuth, routes.setup.activate);
     router.get ('/api/v1/cloudron/status', routes.setup.getStatus);

@@ -10,7 +10,6 @@ var async = require('async'),
     database = require('../../database.js'),
     expect = require('expect.js'),
     mail = require('../../mail.js'),
-    domains = require('../../domains.js'),
     maildb = require('../../maildb.js'),
     server = require('../../server.js'),
     superagent = require('superagent'),
@@ -48,8 +47,8 @@ function setup(done) {
         database._clear.bind(null),
 
         function dnsSetup(callback) {
-            superagent.post(SERVER_URL + '/api/v1/cloudron/dns_setup')
-                .send({ provider: ADMIN_DOMAIN.provider, domain: ADMIN_DOMAIN.domain, adminFqdn: 'my.' + ADMIN_DOMAIN.domain, config: ADMIN_DOMAIN.config })
+            superagent.post(SERVER_URL + '/api/v1/cloudron/setup')
+                .send({ dnsConfig: { provider: ADMIN_DOMAIN.provider, domain: ADMIN_DOMAIN.domain, config: ADMIN_DOMAIN.config } })
                 .end(function (error, result) {
                     expect(result).to.be.ok();
                     expect(result.statusCode).to.eql(200);

@@ -1,7 +1,7 @@
 'use strict';
 
 exports = module.exports = {
-    dnsSetup: dnsSetup,
+    provision: provision,
     restore: restore,
     getStatus: getStatus,
     activate: activate,
@@ -155,24 +155,20 @@ function configureWebadmin(callback) {
     });
 }
 
-function dnsSetup(adminFqdn, domain, zoneName, provider, dnsConfig, tlsConfig, callback) {
-    assert.strictEqual(typeof adminFqdn, 'string');
-    assert.strictEqual(typeof domain, 'string');
-    assert.strictEqual(typeof zoneName, 'string');
-    assert.strictEqual(typeof provider, 'string');
+function provision(dnsConfig, callback) {
     assert.strictEqual(typeof dnsConfig, 'object');
-    assert.strictEqual(typeof tlsConfig, 'object');
     assert.strictEqual(typeof callback, 'function');
 
     if (config.adminDomain()) return callback(new SetupError(SetupError.ALREADY_SETUP));
 
     if (gWebadminStatus.configuring || gWebadminStatus.restore.active) return callback(new SetupError(SetupError.BAD_STATE, 'Already restoring or configuring'));
 
-    if (!tld.isValid(adminFqdn) || !adminFqdn.endsWith(domain)) return callback(new SetupError(SetupError.BAD_FIELD, 'adminFqdn must be a subdomain of domain'));
+    const domain = dnsConfig.domain.toLowerCase();
+    const zoneName = dnsConfig.zoneName ? dnsConfig.zoneName : (tld.getDomain(domain) || domain);
 
-    if (!zoneName) zoneName = tld.getDomain(domain) || domain;
+    const adminFqdn = 'my' + (dnsConfig.config.hyphenatedSubdomains ? '-' : '.') + domain;
 
-    debug(`dnsSetup: Setting up Cloudron with domain ${domain} and zone ${zoneName} using admin fqdn ${adminFqdn}`);
+    debug(`provision: Setting up Cloudron with domain ${domain} and zone ${zoneName} using admin fqdn ${adminFqdn}`);
 
     function done(error) {
         if (error && error.reason === DomainsError.BAD_FIELD) return callback(new SetupError(SetupError.BAD_FIELD, error.message));
@@ -198,7 +194,7 @@ function dnsSetup(adminFqdn, domain, zoneName, provider, dnsConfig, tlsConfig, c
         if (result) return callback(new SetupError(SetupError.BAD_STATE, 'Domain already exists'));
 
         async.series([
-            domains.add.bind(null, domain, zoneName, provider, dnsConfig, null /* cert */, tlsConfig),
+            domains.add.bind(null, domain, zoneName, dnsConfig.provider, dnsConfig.config, null /* cert */, dnsConfig.tlsConfig || { provider: 'letsencrypt-prod' }),
             mail.addDomain.bind(null, domain)
         ], done);
     });

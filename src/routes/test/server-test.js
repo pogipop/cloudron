@@ -39,234 +39,212 @@ describe('REST API', function () {
     after(cleanup);
 
     it('dns setup fails without provider', function (done) {
-        superagent.post(SERVER_URL + '/api/v1/cloudron/dns_setup')
-        .send({ domain: DOMAIN, adminFqdn: 'my.' + DOMAIN, config: {} })
-        .end(function (error, result) {
-            expect(result).to.be.ok();
-            expect(result.statusCode).to.eql(400);
+        superagent.post(SERVER_URL + '/api/v1/cloudron/setup')
+            .send({ dnsConfig: { domain: DOMAIN, config: {} } })
+            .end(function (error, result) {
+                expect(result).to.be.ok();
+                expect(result.statusCode).to.eql(400);
 
-            done();
-        });
+                done();
+            });
     });
 
     it('dns setup fails with invalid provider', function (done) {
-        superagent.post(SERVER_URL + '/api/v1/cloudron/dns_setup')
-        .send({ provider: 'foobar', domain: DOMAIN, adminFqdn: 'my.' + DOMAIN, config: {} })
-        .end(function (error, result) {
-            expect(result).to.be.ok();
-            expect(result.statusCode).to.eql(400);
+        superagent.post(SERVER_URL + '/api/v1/cloudron/setup')
+            .send({ dnsConfig: { provider: 'foobar', domain: DOMAIN, config: {} } })
+            .end(function (error, result) {
+                expect(result).to.be.ok();
+                expect(result.statusCode).to.eql(400);
 
-            done();
-        });
+                done();
+            });
     });
 
     it('dns setup fails with missing domain', function (done) {
-        superagent.post(SERVER_URL + '/api/v1/cloudron/dns_setup')
-        .send({ provider: 'noop', adminFqdn: 'my.' + DOMAIN, config: {} })
-        .end(function (error, result) {
-            expect(result).to.be.ok();
-            expect(result.statusCode).to.eql(400);
+        superagent.post(SERVER_URL + '/api/v1/cloudron/setup')
+            .send({ dnsConfig: { provider: 'noop', config: {} } })
+            .end(function (error, result) {
+                expect(result).to.be.ok();
+                expect(result.statusCode).to.eql(400);
 
-            done();
-        });
+                done();
+            });
     });
 
     it('dns setup fails with invalid domain', function (done) {
-        superagent.post(SERVER_URL + '/api/v1/cloudron/dns_setup')
-        .send({ provider: 'noop', domain: '.foo', adminFqdn: 'my.' + DOMAIN, config: {} })
-        .end(function (error, result) {
-            expect(result).to.be.ok();
-            expect(result.statusCode).to.eql(400);
+        superagent.post(SERVER_URL + '/api/v1/cloudron/setup')
+            .send({ dnsConfig: { provider: 'noop', domain: '.foo', config: {} } })
+            .end(function (error, result) {
+                expect(result).to.be.ok();
+                expect(result.statusCode).to.eql(400);
 
-            done();
-        });
-    });
-
-    it('dns setup fails with missing adminFqdn', function (done) {
-        superagent.post(SERVER_URL + '/api/v1/cloudron/dns_setup')
-        .send({ provider: 'noop', domain: DOMAIN, config: {} })
-        .end(function (error, result) {
-            expect(result).to.be.ok();
-            expect(result.statusCode).to.eql(400);
-
-            done();
-        });
-    });
-
-    it('dns setup fails with invalid adminFqdn', function (done) {
-        superagent.post(SERVER_URL + '/api/v1/cloudron/dns_setup')
-        .send({ provider: 'noop', domain: DOMAIN, adminFqdn: 'my', config: {} })
-        .end(function (error, result) {
-            expect(result).to.be.ok();
-            expect(result.statusCode).to.eql(400);
-
-            done();
-        });
+                done();
+            });
     });
 
     it('dns setup fails with invalid config', function (done) {
-        superagent.post(SERVER_URL + '/api/v1/cloudron/dns_setup')
-        .send({ provider: 'noop', domain: DOMAIN, adminFqdn: 'my' + DOMAIN, config: 'not an object' })
-        .end(function (error, result) {
-            expect(result).to.be.ok();
-            expect(result.statusCode).to.eql(400);
+        superagent.post(SERVER_URL + '/api/v1/cloudron/setup')
+            .send({ dnsConfig: { provider: 'noop', domain: DOMAIN, config: 'not an object' } })
+            .end(function (error, result) {
+                expect(result).to.be.ok();
+                expect(result.statusCode).to.eql(400);
 
-            done();
-        });
+                done();
+            });
     });
 
     it('dns setup fails with invalid zoneName', function (done) {
-        superagent.post(SERVER_URL + '/api/v1/cloudron/dns_setup')
-        .send({ provider: 'noop', domain: DOMAIN, adminFqdn: 'my' + DOMAIN, config: {}, zoneName: 1337 })
-        .end(function (error, result) {
-            expect(result).to.be.ok();
-            expect(result.statusCode).to.eql(400);
+        superagent.post(SERVER_URL + '/api/v1/cloudron/setup')
+            .send({ dnsConfig: { provider: 'noop', domain: DOMAIN, config: {}, zoneName: 1337 } })
+            .end(function (error, result) {
+                expect(result).to.be.ok();
+                expect(result.statusCode).to.eql(400);
 
-            done();
-        });
+                done();
+            });
     });
 
     it('dns setup fails with invalid tlsConfig', function (done) {
-        superagent.post(SERVER_URL + '/api/v1/cloudron/dns_setup')
-        .send({ provider: 'noop', domain: DOMAIN, adminFqdn: 'my' + DOMAIN, config: {}, tlsConfig: 'foobar' })
-        .end(function (error, result) {
-            expect(result).to.be.ok();
-            expect(result.statusCode).to.eql(400);
+        superagent.post(SERVER_URL + '/api/v1/cloudron/setup')
+            .send({ dnsConfig: { provider: 'noop', domain: DOMAIN, config: {}, tlsConfig: 'foobar' } })
+            .end(function (error, result) {
+                expect(result).to.be.ok();
+                expect(result.statusCode).to.eql(400);
 
-            done();
-        });
+                done();
+            });
     });
 
     it('dns setup fails with invalid tlsConfig provider', function (done) {
-        superagent.post(SERVER_URL + '/api/v1/cloudron/dns_setup')
-        .send({ provider: 'noop', domain: DOMAIN, adminFqdn: 'my' + DOMAIN, config: {}, tlsConfig: { provider: 1337 } })
-        .end(function (error, result) {
-            expect(result).to.be.ok();
-            expect(result.statusCode).to.eql(400);
+        superagent.post(SERVER_URL + '/api/v1/cloudron/setup')
+            .send({ dnsConfig: { provider: 'noop', domain: DOMAIN, config: {}, tlsConfig: { provider: 1337 } } })
+            .end(function (error, result) {
+                expect(result).to.be.ok();
+                expect(result.statusCode).to.eql(400);
 
-            done();
-        });
+                done();
+            });
     });
 
     it('dns setup succeeds', function (done) {
-        superagent.post(SERVER_URL + '/api/v1/cloudron/dns_setup')
-        .send({ provider: 'noop', domain: DOMAIN, adminFqdn: 'my.' + DOMAIN, config: {} })
-        .end(function (error, result) {
-            expect(result).to.be.ok();
-            expect(result.statusCode).to.eql(200);
+        superagent.post(SERVER_URL + '/api/v1/cloudron/setup')
+            .send({ dnsConfig: { provider: 'noop', domain: DOMAIN, adminFqdn: 'my.' + DOMAIN, config: {} } })
+            .end(function (error, result) {
+                expect(result).to.be.ok();
+                expect(result.statusCode).to.eql(200);
 
-            done();
-        });
+                done();
+            });
     });
 
     it('dns setup twice fails', function (done) {
-        superagent.post(SERVER_URL + '/api/v1/cloudron/dns_setup')
-        .send({ provider: 'noop', domain: DOMAIN, adminFqdn: 'my.' + DOMAIN, config: {} })
-        .end(function (error, result) {
-            expect(result).to.be.ok();
-            expect(result.statusCode).to.eql(409);
+        superagent.post(SERVER_URL + '/api/v1/cloudron/setup')
+            .send({ dnsConfig: { provider: 'noop', domain: DOMAIN, DOMAIN, config: {} } })
+            .end(function (error, result) {
+                expect(result).to.be.ok();
+                expect(result.statusCode).to.eql(409);
 
-            done();
-        });
+                done();
+            });
     });
 
     it('activation fails without username', function (done) {
         superagent.post(SERVER_URL + '/api/v1/cloudron/activate')
-        .query({ setupToken: 'somesetuptoken' })
-        .send({ password: PASSWORD, email: EMAIL })
-        .end(function (error, result) {
-            expect(result).to.be.ok();
-            expect(result.statusCode).to.eql(400);
+            .query({ setupToken: 'somesetuptoken' })
+            .send({ password: PASSWORD, email: EMAIL })
+            .end(function (error, result) {
+                expect(result).to.be.ok();
+                expect(result.statusCode).to.eql(400);
 
-            done();
-        });
+                done();
+            });
     });
 
     it('activation fails with invalid username', function (done) {
         superagent.post(SERVER_URL + '/api/v1/cloudron/activate')
-        .query({ setupToken: 'somesetuptoken' })
-        .send({ username: '?this.is-not!valid', password: PASSWORD, email: EMAIL })
-        .end(function (error, result) {
-            expect(result).to.be.ok();
-            expect(result.statusCode).to.eql(400);
+            .query({ setupToken: 'somesetuptoken' })
+            .send({ username: '?this.is-not!valid', password: PASSWORD, email: EMAIL })
+            .end(function (error, result) {
+                expect(result).to.be.ok();
+                expect(result.statusCode).to.eql(400);
 
-            done();
-        });
+                done();
+            });
     });
 
     it('activation fails without email', function (done) {
         superagent.post(SERVER_URL + '/api/v1/cloudron/activate')
-        .query({ setupToken: 'somesetuptoken' })
-        .send({ username: USERNAME, password: PASSWORD })
-        .end(function (error, result) {
-            expect(result).to.be.ok();
-            expect(result.statusCode).to.eql(400);
+            .query({ setupToken: 'somesetuptoken' })
+            .send({ username: USERNAME, password: PASSWORD })
+            .end(function (error, result) {
+                expect(result).to.be.ok();
+                expect(result.statusCode).to.eql(400);
 
-            done();
-        });
+                done();
+            });
     });
 
     it('activation fails with invalid email', function (done) {
         superagent.post(SERVER_URL + '/api/v1/cloudron/activate')
-        .query({ setupToken: 'somesetuptoken' })
-        .send({ username: USERNAME, password: PASSWORD, email: 'notanemail' })
-        .end(function (error, result) {
-            expect(result).to.be.ok();
-            expect(result.statusCode).to.eql(400);
+            .query({ setupToken: 'somesetuptoken' })
+            .send({ username: USERNAME, password: PASSWORD, email: 'notanemail' })
+            .end(function (error, result) {
+                expect(result).to.be.ok();
+                expect(result.statusCode).to.eql(400);
 
-            done();
-        });
+                done();
+            });
     });
 
     it('activation fails without password', function (done) {
         superagent.post(SERVER_URL + '/api/v1/cloudron/activate')
-        .query({ setupToken: 'somesetuptoken' })
-        .send({ username: USERNAME, email: EMAIL })
-        .end(function (error, result) {
-            expect(result).to.be.ok();
-            expect(result.statusCode).to.eql(400);
+            .query({ setupToken: 'somesetuptoken' })
+            .send({ username: USERNAME, email: EMAIL })
+            .end(function (error, result) {
+                expect(result).to.be.ok();
+                expect(result.statusCode).to.eql(400);
 
-            done();
-        });
+                done();
+            });
     });
 
     it('activation fails with invalid password', function (done) {
         superagent.post(SERVER_URL + '/api/v1/cloudron/activate')
-        .query({ setupToken: 'somesetuptoken' })
-        .send({ username: USERNAME, password: 'short', email: EMAIL })
-        .end(function (error, result) {
-            expect(result).to.be.ok();
-            expect(result.statusCode).to.eql(400);
+            .query({ setupToken: 'somesetuptoken' })
+            .send({ username: USERNAME, password: 'short', email: EMAIL })
+            .end(function (error, result) {
+                expect(result).to.be.ok();
+                expect(result.statusCode).to.eql(400);
 
-            done();
-        });
+                done();
+            });
     });
 
     it('activation succeeds', function (done) {
         superagent.post(SERVER_URL + '/api/v1/cloudron/activate')
-        .query({ setupToken: 'somesetuptoken' })
-        .send({ username: USERNAME, password: PASSWORD, email: EMAIL })
-        .end(function (error, result) {
-            expect(result).to.be.ok();
-            expect(result.statusCode).to.eql(201);
+            .query({ setupToken: 'somesetuptoken' })
+            .send({ username: USERNAME, password: PASSWORD, email: EMAIL })
+            .end(function (error, result) {
+                expect(result).to.be.ok();
+                expect(result.statusCode).to.eql(201);
 
-            // stash token for further use
-            token = result.body.token;
+                // stash token for further use
+                token = result.body.token;
 
-            done();
-        });
+                done();
+            });
     });
 
     it('activating twice fails', function (done) {
         superagent.post(SERVER_URL + '/api/v1/cloudron/activate')
-        .query({ setupToken: 'somesetuptoken' })
-        .send({ username: USERNAME, password: PASSWORD, email: EMAIL })
-        .end(function (error, result) {
-            expect(result).to.be.ok();
-            expect(result.statusCode).to.eql(409);
+            .query({ setupToken: 'somesetuptoken' })
+            .send({ username: USERNAME, password: PASSWORD, email: EMAIL })
+            .end(function (error, result) {
+                expect(result).to.be.ok();
+                expect(result.statusCode).to.eql(409);
 
-            done();
-        });
+                done();
+            });
     });
 
     it('does not crash with invalid JSON', function (done) {

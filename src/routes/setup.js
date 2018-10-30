@@ -3,7 +3,7 @@
 exports = module.exports = {
     providerTokenAuth: providerTokenAuth,
     setupTokenAuth: setupTokenAuth,
-    dnsSetup: dnsSetup,
+    provision: provision,
     activate: activate,
     restore: restore,
     getStatus: getStatus,
@@ -62,20 +62,23 @@ function setupTokenAuth(req, res, next) {
     });
 }
 
-function dnsSetup(req, res, next) {
+function provision(req, res, next) {
     assert.strictEqual(typeof req.body, 'object');
 
-    if (typeof req.body.provider !== 'string' || !req.body.provider) return next(new HttpError(400, 'provider is required'));
-    if (typeof req.body.domain !== 'string' || !req.body.domain) return next(new HttpError(400, 'domain is required'));
-    if (typeof req.body.adminFqdn !== 'string' || !req.body.adminFqdn) return next(new HttpError(400, 'adminFqdn is required'));
+    if (!req.body.dnsConfig || typeof req.body.dnsConfig !== 'object') return next(new HttpError(400, 'dnsConfig is required'));
 
-    if ('zoneName' in req.body && typeof req.body.zoneName !== 'string') return next(new HttpError(400, 'zoneName must be a string'));
-    if (!req.body.config || typeof req.body.config !== 'object') return next(new HttpError(400, 'config must be an object'));
+    const dnsConfig = req.body.dnsConfig;
 
-    if ('tlsConfig' in req.body && typeof req.body.tlsConfig !== 'object') return next(new HttpError(400, 'tlsConfig must be an object'));
-    if (req.body.tlsConfig && (!req.body.tlsConfig.provider || typeof req.body.tlsConfig.provider !== 'string')) return next(new HttpError(400, 'tlsConfig.provider must be a string'));
+    if (typeof dnsConfig.provider !== 'string' || !dnsConfig.provider) return next(new HttpError(400, 'provider is required'));
+    if (typeof dnsConfig.domain !== 'string' || !dnsConfig.domain) return next(new HttpError(400, 'domain is required'));
 
-    setup.dnsSetup(req.body.adminFqdn.toLowerCase(), req.body.domain.toLowerCase(), req.body.zoneName || '', req.body.provider, req.body.config, req.body.tlsConfig || { provider: 'letsencrypt-prod' }, function (error) {
+    if ('zoneName' in dnsConfig && typeof dnsConfig.zoneName !== 'string') return next(new HttpError(400, 'zoneName must be a string'));
+    if (!dnsConfig.config || typeof dnsConfig.config !== 'object') return next(new HttpError(400, 'config must be an object'));
+
+    if ('tlsConfig' in dnsConfig && typeof dnsConfig.tlsConfig !== 'object') return next(new HttpError(400, 'tlsConfig must be an object'));
+    if (dnsConfig.tlsConfig && (!dnsConfig.tlsConfig.provider || typeof dnsConfig.tlsConfig.provider !== 'string')) return next(new HttpError(400, 'tlsConfig.provider must be a string'));
+
+    setup.provision(dnsConfig, function (error) {
         if (error && error.reason === SetupError.ALREADY_SETUP) return next(new HttpError(409, error.message));
         if (error && error.reason === SetupError.BAD_FIELD) return next(new HttpError(400, error.message));
         if (error && error.reason === SetupError.BAD_STATE) return next(new HttpError(409, error.message));
