@@ -36,6 +36,7 @@ exports = module.exports = {
     hasIPv6: hasIPv6,
     dkimSelector: dkimSelector,
 
+    isManaged: isManaged,
     isDemo: isDemo,
 
     // feature flags based on editions (these have a separate license from standard edition)
@@ -222,6 +223,10 @@ function isSpacesEnabled() {
 
 function provider() {
     return get('provider');
+}
+
+function isManaged() {
+    return edition() === 'hostingprovider';
 }
 
 function hasIPv6() {

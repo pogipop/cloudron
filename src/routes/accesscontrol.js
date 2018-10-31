@@ -4,7 +4,7 @@ exports = module.exports = {
     initialize: initialize,
     uninitialize: uninitialize,
 
-    verifyOperator: verifyOperator,
+    isUnmanaged: isUnmanaged,
 
     scope: scope,
     websocketAuth: websocketAuth
@@ -142,8 +142,8 @@ function websocketAuth(requiredScopes, req, res, next) {
     });
 }
 
-function verifyOperator(req, res, next) {
-    if (config.edition() !== 'hostingprovider') return next();
+function isUnmanaged(req, res, next) {
+    if (!config.isManaged()) return next();
 
-    next(new HttpError(401, 'Not allowed in this edition'));
+    next(new HttpError(401, 'Managed instance does not permit this operation'));
 }
