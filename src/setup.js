@@ -23,7 +23,6 @@ var assert = require('assert'),
     domains = require('./domains.js'),
     DomainsError = domains.DomainsError,
     eventlog = require('./eventlog.js'),
-    fs = require('fs'),
     mail = require('./mail.js'),
     path = require('path'),
     paths = require('./paths.js'),
@@ -95,12 +94,6 @@ function autoprovision(callback) {
         case 'appstoreConfig': name = settings.APPSTORE_CONFIG_KEY; break;
         case 'caasConfig': name = settings.CAAS_CONFIG_KEY; break;
         case 'backupConfig': name = settings.BACKUP_CONFIG_KEY; break;
-        case 'tlsCert':
-            debug(`autoprovision: ${key}`);
-            return fs.writeFile(path.join(paths.NGINX_CERT_DIR, config.adminDomain() + '.host.cert'), conf[key], iteratorDone);
-        case 'tlsKey':
-            debug(`autoprovision: ${key}`);
-            return fs.writeFile(path.join(paths.NGINX_CERT_DIR, config.adminDomain() + '.host.key'), conf[key], iteratorDone);
         default:
             debug(`autoprovision: ${key} ignored`);
             return iteratorDone();
@@ -194,7 +187,7 @@ function provision(dnsConfig, callback) {
         if (result) return callback(new SetupError(SetupError.BAD_STATE, 'Domain already exists'));
 
         async.series([
-            domains.add.bind(null, domain, zoneName, dnsConfig.provider, dnsConfig.config, null /* cert */, dnsConfig.tlsConfig || { provider: 'letsencrypt-prod' }),
+            domains.add.bind(null, domain, zoneName, dnsConfig.provider, dnsConfig.config, dnsConfig.fallbackCertificate, dnsConfig.tlsConfig || { provider: 'letsencrypt-prod' }),
             mail.addDomain.bind(null, domain)
         ], done);
     });

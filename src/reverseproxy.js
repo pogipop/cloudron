@@ -190,9 +190,13 @@ function setFallbackCertificate(domain, fallback, callback) {
     const keyFilePath = path.join(paths.APP_CERTS_DIR, `${domain}.host.key`);
 
     if (fallback) {
-        // backup the cert
-        if (!safe.fs.writeFileSync(path.join(paths.APP_CERTS_DIR, `${domain}.host.cert`), fallback.cert)) return callback(new ReverseProxyError(ReverseProxyError.INTERNAL_ERROR, safe.error.message));
-        if (!safe.fs.writeFileSync(path.join(paths.APP_CERTS_DIR, `${domain}.host.key`), fallback.key)) return callback(new ReverseProxyError(ReverseProxyError.INTERNAL_ERROR, safe.error.message));
+        if (fallback.restricted) { // restricted certs are not backed up
+            if (!safe.fs.writeFileSync(path.join(paths.NGINX_CERT_DIR, `${domain}.host.cert`), fallback.cert)) return callback(new ReverseProxyError(ReverseProxyError.INTERNAL_ERROR, safe.error.message));
+            if (!safe.fs.writeFileSync(path.join(paths.NGINX_CERT_DIR, `${domain}.host.key`), fallback.key)) return callback(new ReverseProxyError(ReverseProxyError.INTERNAL_ERROR, safe.error.message));
+        } else {
+            if (!safe.fs.writeFileSync(path.join(paths.APP_CERTS_DIR, `${domain}.host.cert`), fallback.cert)) return callback(new ReverseProxyError(ReverseProxyError.INTERNAL_ERROR, safe.error.message));
+            if (!safe.fs.writeFileSync(path.join(paths.APP_CERTS_DIR, `${domain}.host.key`), fallback.key)) return callback(new ReverseProxyError(ReverseProxyError.INTERNAL_ERROR, safe.error.message));
+        }
     } else if (!fs.existsSync(certFilePath) || !fs.existsSync(keyFilePath)) { // generate it
         let opensslConf = safe.fs.readFileSync('/etc/ssl/openssl.cnf', 'utf8');
         // SAN must contain all the domains since CN check is based on implementation if SAN is found. -checkhost also checks only SAN if present!
