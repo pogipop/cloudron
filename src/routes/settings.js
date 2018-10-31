@@ -25,6 +25,9 @@ exports = module.exports = {
     getPlatformConfig: getPlatformConfig,
     setPlatformConfig: setPlatformConfig,
 
+    getDynamicDnsConfig: getDynamicDnsConfig,
+    setDynamicDnsConfig: setDynamicDnsConfig,
+
     setRegistryConfig: setRegistryConfig
 };
 
@@ -207,6 +210,28 @@ function setPlatformConfig(req, res, next) {
         next(new HttpSuccess(200, {}));
     });
 }
+
+function getDynamicDnsConfig(req, res, next) {
+    settings.getDynamicDnsConfig(function (error, enabled) {
+        if (error) return next(new HttpError(500, error));
+
+        next(new HttpSuccess(200, { enabled: enabled }));
+    });
+}
+
+function setDynamicDnsConfig(req, res, next) {
+    assert.strictEqual(typeof req.body, 'object');
+
+    if (typeof req.body.enabled !== 'boolean') return next(new HttpError(400, 'enabled boolean is required'));
+
+    settings.setDynamicDnsConfig(req.body.enabled, function (error) {
+        if (error && error.reason === SettingsError.BAD_FIELD) return next(new HttpError(400, error.message));
+        if (error) return next(new HttpError(500, error));
+
+        next(new HttpSuccess(200, {}));
+    });
+}
+
 
 function getAppstoreConfig(req, res, next) {
     settings.getAppstoreConfig(function (error, result) {

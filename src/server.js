@@ -231,6 +231,8 @@ function initializeExpressSync() {
     router.post('/api/v1/settings/backup_config',      settingsScope, isUnmanaged, routes.settings.setBackupConfig);
     router.get ('/api/v1/settings/platform_config',    settingsScope, isUnmanaged, routes.settings.getPlatformConfig);
     router.post('/api/v1/settings/platform_config',    settingsScope, isUnmanaged, routes.settings.setPlatformConfig);
+    router.get ('/api/v1/settings/dynamic_dns',        settingsScope, isUnmanaged, routes.settings.getDynamicDnsConfig);
+    router.post('/api/v1/settings/dynamic_dns',        settingsScope, isUnmanaged, routes.settings.setDynamicDnsConfig);
 
     router.get ('/api/v1/settings/time_zone',          settingsScope, routes.settings.getTimeZone);
     router.post('/api/v1/settings/time_zone',          settingsScope, routes.settings.setTimeZone);
