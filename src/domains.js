@@ -240,7 +240,7 @@ function add(domain, zoneName, provider, dnsConfig, fallbackCertificate, tlsConf
 }
 
 function isLocked(domain) {
-    return domain === config.adminDomain() && config.isAdminDomainLocked();
+    return domain === config.adminDomain() && config.edition() === 'hostingprovider';
 }
 
 function get(domain, callback) {
