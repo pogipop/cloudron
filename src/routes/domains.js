@@ -23,6 +23,7 @@ function auditSource(req) {
     return { ip: ip, username: req.user ? req.user.username : null, userId: req.user ? req.user.id : null };
 }
 
+// this code exists for the hosting provider edition
 function verifyDomainLock(req, res, next) {
     assert.strictEqual(typeof req.params.domain, 'string');
 

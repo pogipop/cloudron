@@ -4,6 +4,8 @@ exports = module.exports = {
     initialize: initialize,
     uninitialize: uninitialize,
 
+    verifyOperator: verifyOperator,
+
     scope: scope,
     websocketAuth: websocketAuth
 };
@@ -15,6 +17,7 @@ var accesscontrol = require('../accesscontrol.js'),
     clients = require('../clients.js'),
     ClientPasswordStrategy = require('passport-oauth2-client-password').Strategy,
     ClientsError = clients.ClientsError,
+    config = require('../config.js'),
     HttpError = require('connect-lastmile').HttpError,
     LocalStrategy = require('passport-local').Strategy,
     passport = require('passport'),
@@ -137,4 +140,10 @@ function websocketAuth(requiredScopes, req, res, next) {
 
         next();
     });
+}
+
+function verifyOperator(req, res, next) {
+    if (config.edition() !== 'hostingprovider') return next();
+
+    next(new HttpError(401, 'Not allowed in this edition'));
 }

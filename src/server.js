@@ -102,7 +102,7 @@ function initializeExpressSync() {
     var domainsManageScope = routes.accesscontrol.scope(accesscontrol.SCOPE_DOMAINS_MANAGE);
     var appstoreScope = routes.accesscontrol.scope(accesscontrol.SCOPE_APPSTORE);
 
-    const verifyOperator = routes.users.verifyOperator;
+    const verifyOperator = routes.accesscontrol.verifyOperator;
     const verifyDomainLock = routes.domains.verifyDomainLock;
 
     // csrf protection
