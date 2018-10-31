@@ -237,7 +237,7 @@ function initializeExpressSync() {
     router.get ('/api/v1/settings/appstore_config',    appstoreScope, verifyOperator, routes.settings.getAppstoreConfig);
     router.post('/api/v1/settings/appstore_config',    appstoreScope, verifyOperator, routes.settings.setAppstoreConfig);
 
-    router.post('/api/v1/settings/registry_config',    appstoreScope, verifyOperator, routes.settings.setRegistryConfig);
+    router.post('/api/v1/settings/registry_config',    appstoreScope, routes.settings.setRegistryConfig);
 
     // email routes
     router.get ('/api/v1/mail/:domain',       mailScope, routes.mail.getDomain);
