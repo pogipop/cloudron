@@ -26,7 +26,10 @@ module.exports = exports = {
 
     makeWildcard: makeWildcard,
 
-    DomainsError: DomainsError
+    DomainsError: DomainsError,
+
+    // exported for testing
+    _getName: getName
 };
 
 var assert = require('assert'),
@@ -347,19 +350,25 @@ function del(domain, callback) {
 
 // returns the 'name' that needs to be inserted into zone
 function getName(domain, subdomain, type) {
-    // support special caas domains
+    // hack for supporting special caas domains. if we want to remove this, we have to fix the appstore domain API first
     if (domain.provider === 'caas') return subdomain;
 
-    if (domain.domain === domain.zoneName) return subdomain;
+    const part = domain.domain.slice(0, -domain.zoneName.length - 1);
 
-    var part = domain.domain.slice(0, -domain.zoneName.length - 1);
+    if (subdomain === '') return part;
 
-    if (subdomain === '') {
-        return part;
-    } else if (type === 'TXT') {
-        return `${subdomain}.${part}`;
+    if (!domain.config.hyphenatedSubdomains) return part ? `${subdomain}.${part}` : subdomain;
+
+    // hyphenatedSubdomains
+    if (type !== 'TXT') return `${subdomain}-${part}`;
+
+    if (subdomain.startsWith('_acme-challenge.')) {
+        return `${subdomain}-${part}`;
+    } else if (subdomain === '_acme-challenge') {
+        const up = part.replace(/^[^.]*\.?/, ''); // this gets the domain one level up
+        return up ? `${subdomain}.${up}` : subdomain;
     } else {
-        return subdomain + (domain.config.hyphenatedSubdomains ? '-' : '.') + part;
+        return `${subdomain}.${part}`;
     }
 }
 
@@ -432,7 +441,8 @@ function waitForDnsRecord(subdomain, domain, type, value, options, callback) {
     get(domain, function (error, domainObject) {
         if (error) return callback(error);
 
-        const hostname = fqdn(subdomain, domainObject);
+        const name = getName(domainObject, subdomain, type);
+        const hostname = `${name}.${domainObject.zoneName}`;
 
         api(domainObject.provider).waitForDns(hostname, domainObject.zoneName, type, value, options, callback);
     });

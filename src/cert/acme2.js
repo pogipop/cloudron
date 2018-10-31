@@ -21,7 +21,8 @@ exports = module.exports = {
     getCertificate: getCertificate,
 
     // testing
-    _name: 'acme'
+    _name: 'acme',
+    _getChallengeSubdomain: getChallengeSubdomain
 };
 
 function Acme2Error(reason, errorOrMessage) {
@@ -435,10 +436,13 @@ function getChallengeSubdomain(hostname, domain) {
     if (hostname === domain) {
         challengeSubdomain = '_acme-challenge';
     } else if (hostname.includes('*')) { // wildcard
-        challengeSubdomain = hostname.replace('*', '_acme-challenge').slice(0, -domain.length - 1);
+        let subdomain = hostname.slice(0, -domain.length - 1);
+        challengeSubdomain = subdomain ? subdomain.replace('*', '_acme-challenge') : '_acme-challenge';
     } else {
         challengeSubdomain = '_acme-challenge.' + hostname.slice(0, -domain.length - 1);
     }
+
+    debug(`getChallengeSubdomain: challenge subdomain for hostname ${hostname} at domain ${domain} is ${challengeSubdomain}`);
 
     return challengeSubdomain;
 }
@@ -466,7 +470,7 @@ Acme2.prototype.prepareDnsChallenge = function (hostname, domain, authorization,
     domains.upsertDnsRecords(challengeSubdomain, domain, 'TXT', [ `"${txtValue}"` ], function (error) {
         if (error) return callback(new Acme2Error(Acme2Error.EXTERNAL_ERROR, error.message));
 
-        domains.waitForDnsRecord(`${challengeSubdomain}`, domain, 'TXT', txtValue, { interval: 5000, times: 200 }, function (error) {
+        domains.waitForDnsRecord(challengeSubdomain, domain, 'TXT', txtValue, { interval: 5000, times: 200 }, function (error) {
             if (error) return callback(new Acme2Error(Acme2Error.EXTERNAL_ERROR, error.message));
 
             callback(null, challenge);

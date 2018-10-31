@@ -29,13 +29,13 @@ describe('Domains', function () {
         ], done);
     });
 
-    const domain = {
-        domain: 'example.com',
-        zoneName: 'example.com',
-        config: {}
-    };
-
     describe('validateHostname', function () {
+        const domain = {
+            domain: 'example.com',
+            zoneName: 'example.com',
+            config: {}
+        };
+
         it('does not allow admin subdomain', function () {
             config.setFqdn('example.com');
             config.setAdminFqdn('my.example.com');
@@ -83,6 +83,111 @@ describe('Domains', function () {
             expect(domains.validateHostname('a',        domain)).to.be(null);
             expect(domains.validateHostname('a0-x',     domain)).to.be(null);
             expect(domains.validateHostname('a0.x',     domain)).to.be.an(Error);
+        });
+    });
+
+    describe('getName', function () {
+        it('works with zoneName==domain (not hyphenated)', function () {
+            const domain = {
+                domain: 'example.com',
+                zoneName: 'example.com',
+                config: {}
+            };
+
+            expect(domains._getName(domain, '', 'A')).to.be('');
+            expect(domains._getName(domain, 'www', 'A')).to.be('www');
+            expect(domains._getName(domain, 'www.dev', 'A')).to.be('www.dev');
+
+            expect(domains._getName(domain, '', 'MX')).to.be('');
+
+            expect(domains._getName(domain, '', 'TXT')).to.be('');
+            expect(domains._getName(domain, 'www', 'TXT')).to.be('www');
+            expect(domains._getName(domain, 'www.dev', 'TXT')).to.be('www.dev');
+        });
+
+        it('works when zoneName!=domain (not hyphenated)', function () {
+            const domain = {
+                domain: 'dev.example.com',
+                zoneName: 'example.com',
+                config: {}
+            };
+
+            expect(domains._getName(domain, '', 'A')).to.be('dev');
+            expect(domains._getName(domain, 'www', 'A')).to.be('www.dev');
+            expect(domains._getName(domain, 'www.dev', 'A')).to.be('www.dev.dev');
+
+            expect(domains._getName(domain, '', 'MX')).to.be('dev');
+
+            expect(domains._getName(domain, '', 'TXT')).to.be('dev');
+            expect(domains._getName(domain, 'www', 'TXT')).to.be('www.dev');
+            expect(domains._getName(domain, 'www.dev', 'TXT')).to.be('www.dev.dev');
+        });
+
+        it('works when hyphenated - level1', function () {
+            const domain = {
+                domain: 'customer.example.com',
+                zoneName: 'example.com',
+                config: {
+                    hyphenatedSubdomains: true
+                }
+            };
+
+            expect(domains._getName(domain, '', 'A')).to.be('customer');
+            expect(domains._getName(domain, 'www', 'A')).to.be('www-customer');
+            expect(domains._getName(domain, 'www.dev', 'A')).to.be('www.dev-customer');
+
+            expect(domains._getName(domain, '', 'MX')).to.be('customer');
+
+            expect(domains._getName(domain, '', 'TXT')).to.be('customer');
+            expect(domains._getName(domain, '_dmarc', 'TXT')).to.be('_dmarc.customer');
+            expect(domains._getName(domain, 'cloudron._domainkey', 'TXT')).to.be('cloudron._domainkey.customer');
+            expect(domains._getName(domain, '_acme-challenge.my', 'TXT')).to.be('_acme-challenge.my-customer');
+            expect(domains._getName(domain, '_acme-challenge', 'TXT')).to.be('_acme-challenge');
+        });
+
+        it('works when hyphenated - level2', function () {
+            const domain = {
+                domain: 'customer.dev.example.com',
+                zoneName: 'example.com',
+                config: {
+                    hyphenatedSubdomains: true
+                }
+            };
+
+            expect(domains._getName(domain, '', 'A')).to.be('customer.dev');
+            expect(domains._getName(domain, 'www', 'A')).to.be('www-customer.dev');
+            expect(domains._getName(domain, 'www.dev', 'A')).to.be('www.dev-customer.dev');
+
+            expect(domains._getName(domain, '', 'MX')).to.be('customer.dev');
+
+            expect(domains._getName(domain, '', 'TXT')).to.be('customer.dev');
+            expect(domains._getName(domain, '_dmarc', 'TXT')).to.be('_dmarc.customer.dev');
+            expect(domains._getName(domain, 'cloudron._domainkey', 'TXT')).to.be('cloudron._domainkey.customer.dev');
+            expect(domains._getName(domain, '_acme-challenge.my', 'TXT')).to.be('_acme-challenge.my-customer.dev');
+            expect(domains._getName(domain, '_acme-challenge', 'TXT')).to.be('_acme-challenge.dev');
+        });
+
+        it('works with caas', function () {
+            const domain = {
+                domain: 'customer.example.com',
+                provider: 'caas',
+                zoneName: 'example.com',
+                config: {
+                    hyphenatedSubdomains: true
+                }
+            };
+
+            expect(domains._getName(domain, '', 'A')).to.be('');
+            expect(domains._getName(domain, 'www', 'A')).to.be('www');
+            expect(domains._getName(domain, 'www.dev', 'A')).to.be('www.dev');
+
+            expect(domains._getName(domain, '', 'MX')).to.be('');
+
+            expect(domains._getName(domain, '', 'TXT')).to.be('');
+            expect(domains._getName(domain, '_dmarc', 'TXT')).to.be('_dmarc');
+            expect(domains._getName(domain, 'cloudron._domainkey', 'TXT')).to.be('cloudron._domainkey');
+            expect(domains._getName(domain, '_acme-challenge.my', 'TXT')).to.be('_acme-challenge.my');
+            expect(domains._getName(domain, '_acme-challenge', 'TXT')).to.be('_acme-challenge');
         });
     });
 });
