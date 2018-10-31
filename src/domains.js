@@ -208,8 +208,6 @@ function add(domain, zoneName, provider, dnsConfig, fallbackCertificate, tlsConf
         zoneName = tld.getDomain(domain) || domain;
     }
 
-    if (dnsConfig.hyphenatedSubdomains && !config.allowHyphenatedSubdomains()) return callback(new DomainsError(DomainsError.BAD_FIELD, 'Not allowed in this edition'));
-
     if (fallbackCertificate) {
         let subdomain = dnsConfig.hyphenatedSubdomains ? `test-${domain}` : `test.${domain}`;
         let error = reverseProxy.validateCertificate(subdomain, fallbackCertificate.cert, fallbackCertificate.key);
@@ -299,8 +297,6 @@ function update(domain, zoneName, provider, dnsConfig, fallbackCertificate, tlsC
         } else {
             zoneName = result.zoneName;
         }
-
-        if (dnsConfig.hyphenatedSubdomains && !config.allowHyphenatedSubdomains()) return callback(new DomainsError(DomainsError.BAD_FIELD, 'Not allowed in this edition'));
 
         if (fallbackCertificate) {
             let subdomain = dnsConfig.hyphenatedSubdomains ? `test-${domain}` : `test.${domain}`;

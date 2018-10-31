@@ -40,7 +40,6 @@ exports = module.exports = {
 
     // feature flags based on editions (these have a separate license from standard edition)
     isSpacesEnabled: isSpacesEnabled,
-    allowHyphenatedSubdomains: allowHyphenatedSubdomains,
 
     // for testing resets to defaults
     _reset: _reset
@@ -219,11 +218,6 @@ function isDemo() {
 
 function isSpacesEnabled() {
     return get('edition') === 'education';
-}
-
-function allowHyphenatedSubdomains() {
-    // we should move caas also to hostingprovider edition at some point
-    return get('edition') === 'hostingprovider' || get('provider') === 'caas';
 }
 
 function provider() {
