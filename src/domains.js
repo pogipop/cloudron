@@ -208,15 +208,16 @@ function add(domain, zoneName, provider, dnsConfig, fallbackCertificate, tlsConf
         zoneName = tld.getDomain(domain) || domain;
     }
 
+    if (dnsConfig.hyphenatedSubdomains && !config.allowHyphenatedSubdomains()) return callback(new DomainsError(DomainsError.BAD_FIELD, 'Not allowed in this edition'));
+
     if (fallbackCertificate) {
-        let error = reverseProxy.validateCertificate(`test.${domain}`, fallbackCertificate.cert, fallbackCertificate.key);
+        let subdomain = dnsConfig.hyphenatedSubdomains ? `test-${domain}` : `test.${domain}`;
+        let error = reverseProxy.validateCertificate(subdomain, fallbackCertificate.cert, fallbackCertificate.key);
         if (error) return callback(new DomainsError(DomainsError.BAD_FIELD, error.message));
     }
 
     let error = validateTlsConfig(tlsConfig, provider);
     if (error) return callback(error);
-
-    if (dnsConfig.hyphenatedSubdomains && !config.allowHyphenatedSubdomains()) return callback(new DomainsError(DomainsError.BAD_FIELD, 'Not allowed in this edition'));
 
     sysinfo.getPublicIp(function (error, ip) {
         if (error) return callback(new DomainsError(DomainsError.INTERNAL_ERROR, 'Error getting IP:' + error.message));
@@ -299,15 +300,16 @@ function update(domain, zoneName, provider, dnsConfig, fallbackCertificate, tlsC
             zoneName = result.zoneName;
         }
 
+        if (dnsConfig.hyphenatedSubdomains && !config.allowHyphenatedSubdomains()) return callback(new DomainsError(DomainsError.BAD_FIELD, 'Not allowed in this edition'));
+
         if (fallbackCertificate) {
-            let error = reverseProxy.validateCertificate(`test.${domain}`, fallbackCertificate.cert, fallbackCertificate.key);
+            let subdomain = dnsConfig.hyphenatedSubdomains ? `test-${domain}` : `test.${domain}`;
+            let error = reverseProxy.validateCertificate(subdomain, fallbackCertificate.cert, fallbackCertificate.key);
             if (error) return callback(new DomainsError(DomainsError.BAD_FIELD, error.message));
         }
 
         error = validateTlsConfig(tlsConfig, provider);
         if (error) return callback(error);
-
-        if (dnsConfig.hyphenatedSubdomains && !config.allowHyphenatedSubdomains()) return callback(new DomainsError(DomainsError.BAD_FIELD, 'Not allowed in this edition'));
 
         sysinfo.getPublicIp(function (error, ip) {
             if (error) return callback(new DomainsError(DomainsError.INTERNAL_ERROR, 'Error getting IP:' + error.message));

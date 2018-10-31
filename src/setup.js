@@ -25,7 +25,6 @@ var assert = require('assert'),
     eventlog = require('./eventlog.js'),
     mail = require('./mail.js'),
     path = require('path'),
-    paths = require('./paths.js'),
     reverseProxy = require('./reverseproxy.js'),
     safe = require('safetydance'),
     semver = require('semver'),
@@ -79,16 +78,11 @@ SetupError.INTERNAL_ERROR = 'Internal Error';
 SetupError.EXTERNAL_ERROR = 'External Error';
 SetupError.ALREADY_PROVISIONED = 'Already Provisioned';
 
-function autoprovision(callback) {
+function autoprovision(autoconf, callback) {
+    assert.strictEqual(typeof autoconf, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    const confJson = safe.fs.readFileSync(paths.AUTO_PROVISION_FILE, 'utf8');
-    if (!confJson) return callback();
-
-    const conf = safe.JSON.parse(confJson);
-    if (!conf) return callback();
-
-    async.eachSeries(Object.keys(conf), function (key, iteratorDone) {
+    async.eachSeries(Object.keys(autoconf), function (key, iteratorDone) {
         var name;
         switch (key) {
         case 'appstoreConfig': name = settings.APPSTORE_CONFIG_KEY; break;
@@ -100,8 +94,12 @@ function autoprovision(callback) {
         }
 
         debug(`autoprovision: ${name}`);
-        settingsdb.set(name, JSON.stringify(conf[key]), iteratorDone);
-    }, callback);
+        settingsdb.set(name, JSON.stringify(autoconf[key]), iteratorDone);
+    }, function (error) {
+        if (error) return callback(new SetupError(SetupError.INTERNAL_ERROR, error));
+
+        callback(null);
+    });
 }
 
 function configureWebadmin(callback) {
@@ -148,8 +146,9 @@ function configureWebadmin(callback) {
     });
 }
 
-function provision(dnsConfig, callback) {
+function provision(dnsConfig, autoconf, callback) {
     assert.strictEqual(typeof dnsConfig, 'object');
+    assert.strictEqual(typeof autoconf, 'object');
     assert.strictEqual(typeof callback, 'function');
 
     if (config.adminDomain()) return callback(new SetupError(SetupError.ALREADY_SETUP));
@@ -163,33 +162,31 @@ function provision(dnsConfig, callback) {
 
     debug(`provision: Setting up Cloudron with domain ${domain} and zone ${zoneName} using admin fqdn ${adminFqdn}`);
 
-    function done(error) {
-        if (error && error.reason === DomainsError.BAD_FIELD) return callback(new SetupError(SetupError.BAD_FIELD, error.message));
-        if (error && error.reason === DomainsError.ALREADY_EXISTS) return callback(new SetupError(SetupError.BAD_FIELD, error.message));
-        if (error) return callback(new SetupError(SetupError.INTERNAL_ERROR, error));
-
-        config.setAdminDomain(domain); // set fqdn only after dns config is valid, otherwise cannot re-setup if we failed
-        config.setAdminFqdn(adminFqdn);
-        config.setAdminLocation('my');
-
-        autoprovision(function (error) {
-            if (error) return callback(new SetupError(SetupError.INTERNAL_ERROR, error));
-
-            clients.addDefaultClients(config.adminOrigin(), callback);
-
-            configureWebadmin(NOOP_CALLBACK);
-        });
-    }
-
     domains.get(domain, function (error, result) {
         if (error && error.reason !== DomainsError.NOT_FOUND) return callback(new SetupError(SetupError.INTERNAL_ERROR, error));
 
         if (result) return callback(new SetupError(SetupError.BAD_STATE, 'Domain already exists'));
 
         async.series([
-            domains.add.bind(null, domain, zoneName, dnsConfig.provider, dnsConfig.config, dnsConfig.fallbackCertificate, dnsConfig.tlsConfig || { provider: 'letsencrypt-prod' }),
+            domains.add.bind(null, domain, zoneName, dnsConfig.provider, dnsConfig.config, dnsConfig.fallbackCertificate || null, dnsConfig.tlsConfig || { provider: 'letsencrypt-prod' }),
             mail.addDomain.bind(null, domain)
-        ], done);
+        ],  function (error) {
+            if (error && error.reason === DomainsError.BAD_FIELD) return callback(new SetupError(SetupError.BAD_FIELD, error.message));
+            if (error && error.reason === DomainsError.ALREADY_EXISTS) return callback(new SetupError(SetupError.BAD_FIELD, error.message));
+            if (error) return callback(new SetupError(SetupError.INTERNAL_ERROR, error));
+
+            config.setAdminDomain(domain); // set fqdn only after dns config is valid, otherwise cannot re-setup if we failed
+            config.setAdminFqdn(adminFqdn);
+            config.setAdminLocation('my');
+
+            autoprovision(autoconf, function (error) {
+                if (error) return callback(error);
+
+                clients.addDefaultClients(config.adminOrigin(), callback);
+
+                configureWebadmin(NOOP_CALLBACK);
+            });
+        });
     });
 }
 
@@ -252,10 +249,11 @@ function activate(username, password, email, displayName, ip, auditSource, callb
     });
 }
 
-function restore(backupConfig, backupId, version, callback) {
+function restore(backupConfig, backupId, version, autoconf, callback) {
     assert.strictEqual(typeof backupConfig, 'object');
     assert.strictEqual(typeof backupId, 'string');
     assert.strictEqual(typeof version, 'string');
+    assert.strictEqual(typeof autoconf, 'object');
     assert.strictEqual(typeof callback, 'function');
 
     if (!semver.valid(version)) return callback(new SetupError(SetupError.BAD_STATE, 'version is not a valid semver'));
@@ -281,7 +279,7 @@ function restore(backupConfig, backupId, version, callback) {
 
             async.series([
                 backups.restore.bind(null, backupConfig, backupId),
-                autoprovision,
+                autoprovision.bind(null, autoconf),
                 // currently, our suggested restore flow is after a dnsSetup. The dnSetup creates DKIM keys and updates the DNS
                 // for this reason, we have to re-setup DNS after a restore so it has DKIm from the backup
                 // Once we have a 100% IP based restore, we can skip this

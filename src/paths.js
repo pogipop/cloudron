@@ -33,8 +33,6 @@ exports = module.exports = {
     CLOUDRON_AVATAR_FILE: path.join(config.baseDir(), 'boxdata/avatar.png'),
     UPDATE_CHECKER_FILE: path.join(config.baseDir(), 'boxdata/updatechecker.json'),
 
-    AUTO_PROVISION_FILE: path.join(config.baseDir(), 'configs/autoprovision.json'),
-
     LOG_DIR: path.join(config.baseDir(), 'platformdata/logs'),
     // this pattern is for the cloudron logs API route to work
     BACKUP_LOG_FILE: path.join(config.baseDir(), 'platformdata/logs/backup/app.log'),

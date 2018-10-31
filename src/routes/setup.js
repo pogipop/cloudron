@@ -18,7 +18,8 @@ var assert = require('assert'),
     HttpSuccess = require('connect-lastmile').HttpSuccess,
     setup = require('../setup.js'),
     SetupError = require('../setup.js').SetupError,
-    superagent = require('superagent');
+    superagent = require('superagent'),
+    _ = require('underscore');
 
 function auditSource(req) {
     var ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress || null;
@@ -78,7 +79,10 @@ function provision(req, res, next) {
     if ('tlsConfig' in dnsConfig && typeof dnsConfig.tlsConfig !== 'object') return next(new HttpError(400, 'tlsConfig must be an object'));
     if (dnsConfig.tlsConfig && (!dnsConfig.tlsConfig.provider || typeof dnsConfig.tlsConfig.provider !== 'string')) return next(new HttpError(400, 'tlsConfig.provider must be a string'));
 
-    setup.provision(dnsConfig, function (error) {
+    // TODO: validate subfields of these objects
+    if (req.body.autoconf && typeof req.body.autoconf !== 'object') return next(new HttpError(400, 'autoconf must be an object'));
+
+    setup.provision(dnsConfig, req.body.autoconf || {}, function (error) {
         if (error && error.reason === SetupError.ALREADY_SETUP) return next(new HttpError(409, error.message));
         if (error && error.reason === SetupError.BAD_FIELD) return next(new HttpError(400, error.message));
         if (error && error.reason === SetupError.BAD_STATE) return next(new HttpError(409, error.message));
@@ -146,7 +150,10 @@ function restore(req, res, next) {
     if (typeof req.body.backupId !== 'string') return next(new HttpError(400, 'backupId must be a string or null'));
     if (typeof req.body.version !== 'string') return next(new HttpError(400, 'version must be a string'));
 
-    setup.restore(backupConfig, req.body.backupId, req.body.version, function (error) {
+    // TODO: validate subfields of these objects
+    if (req.body.autoconf && typeof req.body.autoconf !== 'object') return next(new HttpError(400, 'autoconf must be an object'));
+
+    setup.restore(backupConfig, req.body.backupId, req.body.version, req.body.autoconf || {}, function (error) {
         if (error && error.reason === SetupError.ALREADY_SETUP) return next(new HttpError(409, error.message));
         if (error && error.reason === SetupError.BAD_FIELD) return next(new HttpError(400, error.message));
         if (error && error.reason === SetupError.BAD_STATE) return next(new HttpError(409, error.message));
