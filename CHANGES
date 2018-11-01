@@ -1410,3 +1410,6 @@
 * cloudflare: Fix crash when using bad email
 * cloudflare: HTTP proxying works now
 * add new exoscale-sos regions
+* Add UI to toggle dynamic DNS
+* Add support for hyphenated subdomains
+
