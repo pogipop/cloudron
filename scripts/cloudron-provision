@@ -1,0 +1,69 @@
+#!/bin/bash
+
+set -eu -o pipefail
+
+readonly curl="curl --fail --connect-timeout 20 --retry 10 --retry-delay 2 --max-time 2400"
+
+ip=""
+zone=""
+subdomain=""
+cloudflare_token=""
+cloudflare_email=""
+
+args=$(getopt -o "" -l "subdomain:,zone:,ip:,cloudflare-token:,cloudflare-email:" -n "$0" -- "$@")
+eval set -- "${args}"
+
+while true; do
+    case "$1" in
+    --ip) ip="$2"; shift 2;;
+    --subdomain) subdomain="$2"; shift 2;;
+    --zone) zone="$2"; shift 2;;
+    --cloudflare-token) cloudflare_token="$2"; shift 2;;
+    --cloudflare-email) cloudflare_email="$2"; shift 2;;
+    --) break;;
+    *) echo "Unknown option $1"; exit 1;;
+    esac
+done
+
+function get_status() {
+    key="$1"
+    if status=$($curl -q -f -k "https://${ip}/api/v1/cloudron/status" 2>/dev/null); then
+        currentValue=$(echo "${status}" | python3 -c 'import sys, json; print(json.dumps(json.load(sys.stdin)[sys.argv[1]]))' "${key}")
+        echo "${currentValue}"
+        return 0
+    fi
+
+    return 1
+}
+
+function wait_for_status() {
+    key="$1"
+    expectedValue="$2"
+
+    echo "wait_for_status: $key to be $expectedValue"
+    while true; do
+        if currentValue=$(get_status "${key}"); then
+            echo "wait_for_status: $key is current: $currentValue expecting: $expectedValue"
+            if [[ "${currentValue}" == $expectedValue ]]; then
+                break
+            fi
+        fi
+        sleep 3
+    done
+}
+
+echo "=> Waiting for cloudron to be ready"
+wait_for_status "version" '*'
+
+echo "Provisioning Cloudron ${subdomain}.${zone}"
+setupData=$(printf '{ "dnsConfig": { "domain": "%s", "provider": "cloudflare", "config": { "token": "%s", "email": "%s", "hyphenatedSubdomains": true }, "tlsConfig": { "provider": "fallback" } } }' "${subdomain}.${zone}" "${cloudflare_token}" "${cloudflare_email}")
+
+if ! setupResult=$($curl -k -X POST -H "Content-Type: application/json" -d "${setupData}" https://${ip}/api/v1/cloudron/setup); then
+    echo "Failed to setup with ${setupData}: ${setupResult}"
+    exit 1
+fi
+
+wait_for_status "webadminStatus" '*"tls": true*'
+
+echo "Cloudron is ready at https://my-${subdomain}.${zone}"
+
