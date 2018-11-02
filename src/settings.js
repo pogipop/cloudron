@@ -68,6 +68,7 @@ var addons = require('./addons.js'),
     constants = require('./constants.js'),
     CronJob = require('cron').CronJob,
     DatabaseError = require('./databaseerror.js'),
+    debug = require('box:settings'),
     moment = require('moment-timezone'),
     paths = require('./paths.js'),
     safe = require('safetydance'),
@@ -437,6 +438,8 @@ function setAppstoreConfig(appstoreConfig, callback) {
                 if (error && !error.response) return callback(new SettingsError(SettingsError.EXTERNAL_ERROR, error.message));
                 if (result.statusCode === 401) return callback(new SettingsError(SettingsError.EXTERNAL_ERROR, 'invalid appstore token'));
                 if (result.statusCode !== 201) return callback(new SettingsError(SettingsError.EXTERNAL_ERROR, 'unable to register cloudron'));
+
+                debug(`setAppstoreConfig: Cloudron registered with id ${cloudronId}`);
 
                 cloudronId = result.body.cloudron.id;
 
