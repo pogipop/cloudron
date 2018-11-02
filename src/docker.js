@@ -218,6 +218,7 @@ function createSubcontainer(app, name, cmd, options, callback) {
         var containerOptions = {
             name: name, // used for filtering logs
             Tty: isAppContainer,
+            Hostname: app.id, // set to something 'constant' so app containers can use this to communicate (across app updates)
             Image: app.manifest.dockerImage,
             Cmd: (isAppContainer && app.debugMode && app.debugMode.cmd) ? app.debugMode.cmd : cmd,
             Env: stdEnv.concat(addonEnv).concat(portEnv).concat(appEnv),
