@@ -85,16 +85,24 @@ function autoprovision(autoconf, callback) {
     async.eachSeries(Object.keys(autoconf), function (key, iteratorDone) {
         var name;
         switch (key) {
-        case 'appstoreConfig': name = settings.APPSTORE_CONFIG_KEY; break;
-        case 'caasConfig': name = settings.CAAS_CONFIG_KEY; break;
-        case 'backupConfig': name = settings.BACKUP_CONFIG_KEY; break;
+        case 'appstoreConfig':
+            if (config.provider() === 'caas') { // skip registration
+                settingsdb.set(settings.APPSTORE_CONFIG_KEY, JSON.stringify(autoconf[key]), iteratorDone);
+            } else { // register cloudron
+                settings.setAppstoreConfig(autoconf[key], iteratorDone);
+            }
+            break;
+        case 'caasConfig':
+            settingsdb.set(settings.CAAS_CONFIG_KEY, JSON.stringify(autoconf[key]), iteratorDone);
+            break;
+        case 'backupConfig':
+            debug(`autoprovision: ${name}`);
+            settings.setBackupConfig(autoconf[key], iteratorDone);
+            break;
         default:
             debug(`autoprovision: ${key} ignored`);
             return iteratorDone();
         }
-
-        debug(`autoprovision: ${name}`);
-        settingsdb.set(name, JSON.stringify(autoconf[key]), iteratorDone);
     }, function (error) {
         if (error) return callback(new SetupError(SetupError.INTERNAL_ERROR, error));
 
