@@ -32,7 +32,13 @@ if [[ "${BOX_ENV}" == "cloudron" ]]; then
     if [[ "${cmd}" == "remove" ]]; then
         echo "Removing collectd stats of ${appid}"
 
-        rm -rf ${HOME}/platformdata/graphite/whisper/collectd/localhost/*${appid}*
+        for i in {1..10}; do
+            if rm -rf ${HOME}/platformdata/graphite/whisper/collectd/localhost/*${appid}*; then
+                break
+            fi
+            echo "Failed to remove collectd directory. collectd possibly generated data in the middle of removal"
+            sleep 3
+        done
     fi
 fi
 
