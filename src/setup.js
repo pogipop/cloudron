@@ -83,7 +83,8 @@ function autoprovision(autoconf, callback) {
     assert.strictEqual(typeof callback, 'function');
 
     async.eachSeries(Object.keys(autoconf), function (key, iteratorDone) {
-        var name;
+        debug(`autoprovision: ${key}`);
+
         switch (key) {
         case 'appstoreConfig':
             if (config.provider() === 'caas') { // skip registration
@@ -96,7 +97,6 @@ function autoprovision(autoconf, callback) {
             settingsdb.set(settings.CAAS_CONFIG_KEY, JSON.stringify(autoconf[key]), iteratorDone);
             break;
         case 'backupConfig':
-            debug(`autoprovision: ${name}`);
             settings.setBackupConfig(autoconf[key], iteratorDone);
             break;
         default:
