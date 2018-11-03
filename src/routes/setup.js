@@ -82,6 +82,9 @@ function provision(req, res, next) {
     // TODO: validate subfields of these objects
     if (req.body.autoconf && typeof req.body.autoconf !== 'object') return next(new HttpError(400, 'autoconf must be an object'));
 
+    // it can take sometime to setup DNS, register cloudron
+    req.clearTimeout();
+
     setup.provision(dnsConfig, req.body.autoconf || {}, function (error) {
         if (error && error.reason === SetupError.ALREADY_SETUP) return next(new HttpError(409, error.message));
         if (error && error.reason === SetupError.BAD_FIELD) return next(new HttpError(400, error.message));

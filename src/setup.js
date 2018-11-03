@@ -187,13 +187,12 @@ function provision(dnsConfig, autoconf, callback) {
             config.setAdminFqdn(adminFqdn);
             config.setAdminLocation('my');
 
-            autoprovision(autoconf, function (error) {
-                if (error) return callback(error);
+            clients.addDefaultClients(config.adminOrigin(), callback);
 
-                clients.addDefaultClients(config.adminOrigin(), callback);
-
-                configureWebadmin(NOOP_CALLBACK);
-            });
+            async.series([
+                autoprovision.bind(null, autoconf),
+                configureWebadmin
+            ], NOOP_CALLBACK);
         });
     });
 }
