@@ -449,8 +449,7 @@ function waitForDnsRecord(subdomain, domain, type, value, options, callback) {
     get(domain, function (error, domainObject) {
         if (error) return callback(error);
 
-        const name = getName(domainObject, subdomain, type);
-        const hostname = `${name}.${domainObject.zoneName}`;
+        const hostname = fqdn(subdomain, domainObject);
 
         api(domainObject.provider).waitForDns(hostname, domainObject.zoneName, type, value, options, callback);
     });
