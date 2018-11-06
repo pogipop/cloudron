@@ -45,9 +45,10 @@ function add(req, res, next) {
     if ('zoneName' in req.body && typeof req.body.zoneName !== 'string') return next(new HttpError(400, 'zoneName must be a string'));
     if ('fallbackCertificate' in req.body && typeof req.body.fallbackCertificate !== 'object') return next(new HttpError(400, 'fallbackCertificate must be a object with cert and key strings'));
     if (req.body.fallbackCertificate) {
-        if (!req.body.cert || typeof req.body.cert !== 'string') return next(new HttpError(400, 'fallbackCertificate.cert must be a string'));
-        if (!req.body.key || typeof req.body.key !== 'string') return next(new HttpError(400, 'fallbackCertificate.key must be a string'));
-        if ('restricted' in req.body && typeof req.body.fallbackCertificate.restricted !== 'boolean') return next(new HttpError(400, 'fallbackCertificate.restricted must be a boolean'));
+        let fallbackCertificate = req.body.fallbackCertificate;
+        if (!fallbackCertificate.cert || typeof fallbackCertificate.cert !== 'string') return next(new HttpError(400, 'fallbackCertificate.cert must be a string'));
+        if (!fallbackCertificate.key || typeof fallbackCertificate.key !== 'string') return next(new HttpError(400, 'fallbackCertificate.key must be a string'));
+        if ('restricted' in fallbackCertificate && typeof fallbackCertificate.restricted !== 'boolean') return next(new HttpError(400, 'fallbackCertificate.restricted must be a boolean'));
     }
 
     if ('tlsConfig' in req.body) {
@@ -101,8 +102,12 @@ function update(req, res, next) {
 
     if ('zoneName' in req.body && typeof req.body.zoneName !== 'string') return next(new HttpError(400, 'zoneName must be a string'));
     if ('fallbackCertificate' in req.body && typeof req.body.fallbackCertificate !== 'object') return next(new HttpError(400, 'fallbackCertificate must be a object with cert and key strings'));
-    if (req.body.fallbackCertificate && (!req.body.fallbackCertificate.cert || typeof req.body.fallbackCertificate.cert !== 'string')) return next(new HttpError(400, 'fallbackCertificate.cert must be a string'));
-    if (req.body.fallbackCertificate && (!req.body.fallbackCertificate.key || typeof req.body.fallbackCertificate.key !== 'string')) return next(new HttpError(400, 'fallbackCertificate.key must be a string'));
+    if (req.body.fallbackCertificate) {
+        let fallbackCertificate = req.body.fallbackCertificate;
+        if (!fallbackCertificate.cert || typeof fallbackCertificate.cert !== 'string') return next(new HttpError(400, 'fallbackCertificate.cert must be a string'));
+        if (!fallbackCertificate.key || typeof fallbackCertificate.key !== 'string') return next(new HttpError(400, 'fallbackCertificate.key must be a string'));
+        if ('restricted' in fallbackCertificate && typeof fallbackCertificate.restricted !== 'boolean') return next(new HttpError(400, 'fallbackCertificate.restricted must be a boolean'));
+    }
 
     if ('tlsConfig' in req.body) {
         if (!req.body.tlsConfig || typeof req.body.tlsConfig !== 'object') return next(new HttpError(400, 'tlsConfig must be a object with a provider string property'));
