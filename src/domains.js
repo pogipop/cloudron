@@ -219,7 +219,7 @@ function add(domain, zoneName, provider, dnsConfig, fallbackCertificate, tlsConf
     }
 
     if (fallbackCertificate) {
-        let error = reverseProxy.validateCertificate('test', { config: dnsConfig }, fallbackCertificate.cert, fallbackCertificate.key);
+        let error = reverseProxy.validateCertificate('test', { domain: domain, config: dnsConfig }, fallbackCertificate.cert, fallbackCertificate.key);
         if (error) return callback(new DomainsError(DomainsError.BAD_FIELD, error.message));
     } else {
         fallbackCertificate = reverseProxy.generateFallbackCertificateSync({ domain: domain, config: dnsConfig });

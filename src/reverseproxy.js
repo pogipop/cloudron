@@ -151,9 +151,9 @@ function providerMatchesSync(certFilePath, apiOptions) {
 
 // note: https://tools.ietf.org/html/rfc4346#section-7.4.2 (certificate_list) requires that the
 // servers certificate appears first (and not the intermediate cert)
-function validateCertificate(location, domain, cert, key) {
+function validateCertificate(location, domainObject, cert, key) {
     assert.strictEqual(typeof location, 'string');
-    assert.strictEqual(typeof domain, 'object');
+    assert.strictEqual(typeof domainObject, 'object');
     assert.strictEqual(typeof cert, 'string');
     assert.strictEqual(typeof key, 'string');
 
@@ -162,12 +162,12 @@ function validateCertificate(location, domain, cert, key) {
     if (cert && !key) return new ReverseProxyError(ReverseProxyError.INVALID_CERT, 'missing key');
 
     // -checkhost checks for SAN or CN exclusively. SAN takes precedence and if present, ignores the CN.
-    const fqdn = domains.fqdn(location, domain);
+    const fqdn = domains.fqdn(location, domainObject);
 
     var result = safe.child_process.execSync(`openssl x509 -noout -checkhost "${fqdn}"`, { encoding: 'utf8', input: cert });
     if (!result) return new ReverseProxyError(ReverseProxyError.INVALID_CERT, 'Unable to get certificate subject.');
 
-    if (result.indexOf('does match certificate') === -1) return new ReverseProxyError(ReverseProxyError.INVALID_CERT, `Certificate is not valid for this domain. Expecting ${domain}`);
+    if (result.indexOf('does match certificate') === -1) return new ReverseProxyError(ReverseProxyError.INVALID_CERT, `Certificate is not valid for this domain. Expecting ${fqdn}`);
 
     // http://httpd.apache.org/docs/2.0/ssl/ssl_faq.html#verify
     var certModulus = safe.child_process.execSync('openssl x509 -noout -modulus', { encoding: 'utf8', input: cert });
