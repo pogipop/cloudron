@@ -639,7 +639,7 @@ function install(data, user, auditSource, callback) {
                     // if purchase failed, rollback the appdb record
                     if (appstoreError) {
                         appdb.del(appId, function (error) {
-                            if (error) console.error('Failed to rollback app installation.', error);
+                            if (error) debug('install: Failed to rollback app installation.', error);
 
                             if (appstoreError.reason === AppstoreError.NOT_FOUND) return callback(new AppsError(AppsError.NOT_FOUND, appstoreError.message));
                             if (appstoreError && appstoreError.reason === AppstoreError.BILLING_REQUIRED) return callback(new AppsError(AppsError.BILLING_REQUIRED, appstoreError.message));
