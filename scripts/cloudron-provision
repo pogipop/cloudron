@@ -9,8 +9,8 @@ zone=""
 subdomain=""
 cloudflare_token=""
 cloudflare_email=""
-tls_cert=""
-tls_key=""
+tls_cert_file=""
+tls_key_file=""
 appstore_id=""
 appstore_token=""
 
@@ -24,8 +24,8 @@ while true; do
     --zone) zone="$2"; shift 2;;
     --cloudflare-token) cloudflare_token="$2"; shift 2;;
     --cloudflare-email) cloudflare_email="$2"; shift 2;;
-    --tls-cert) tls_cert_file="$(cat $2)"; shift 2;;
-    --tls-key) tls_key_file="$(cat $2)"; shift 2;;
+    --tls-cert) tls_cert_file="$2"; shift 2;;
+    --tls-key) tls_key_file="$2"; shift 2;;
     --appstore-id) appstore_id="$2"; shift 2;;
     --appstore-token) appstore_token="$2"; shift 2;;
     --) break;;
@@ -64,7 +64,15 @@ echo "=> Waiting for cloudron to be ready"
 wait_for_status "version" '*'
 
 echo "Provisioning Cloudron ${subdomain}.${zone}"
-setupData=$(printf '{ "dnsConfig": { "domain": "%s", "provider": "cloudflare", "config": { "token": "%s", "email": "%s", "hyphenatedSubdomains": true }, "tlsConfig": { "provider": "fallback" } }, "autoconf": { "appstoreConfig": { "userId": "%s", "token": "%s" } } }' "${subdomain}.${zone}" "${cloudflare_token}" "${cloudflare_email}" "${appstore_id}" "${appstore_token}")
+if [[ -n "${tls_cert_file}" && -n "${tls_key_file}" ]]; then
+    tls_cert=$(cat "${tls_cert_file}")
+    tls_key=$(cat "${tls_key_file}")
+    tls_config=$(printf '{ "cert": "%s", "key": "%s", "provider": "fallback", "restricted": true }' "${tls_cert}" "${tls_key}")
+else
+    tls_config='{ "provider": "fallback" }'
+fi
+
+setupData=$(printf '{ "dnsConfig": { "domain": "%s", "provider": "cloudflare", "config": { "token": "%s", "email": "%s", "hyphenatedSubdomains": true }, "tlsConfig": %s } }, "autoconf": { "appstoreConfig": { "userId": "%s", "token": "%s" } } }' "${subdomain}.${zone}" "${cloudflare_token}" "${cloudflare_email}" "${tls_config}" "${appstore_id}" "${appstore_token}")
 
 if ! setupResult=$($curl -kq -X POST -H "Content-Type: application/json" -d "${setupData}" https://${ip}/api/v1/cloudron/setup); then
     echo "Failed to setup with ${setupData}: ${setupResult}"
