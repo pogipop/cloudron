@@ -609,8 +609,7 @@ function install(data, user, auditSource, callback) {
             if (error) return callback(new AppsError(AppsError.BAD_FIELD, 'Bad location: ' + error.message));
 
             if (cert && key) {
-                let fqdn = domains.fqdn(location, domainObject);
-                error = reverseProxy.validateCertificate(fqdn, cert, key);
+                error = reverseProxy.validateCertificate(location, domainObject, cert, key);
                 if (error) return callback(new AppsError(AppsError.BAD_CERTIFICATE, error.message));
             }
 
@@ -653,9 +652,8 @@ function install(data, user, auditSource, callback) {
 
                     // save cert to boxdata/certs
                     if (cert && key) {
-                        let fqdn = domains.fqdn(location, domainObject);
-                        if (!safe.fs.writeFileSync(path.join(paths.APP_CERTS_DIR, fqdn + '.user.cert'), cert)) return callback(new AppsError(AppsError.INTERNAL_ERROR, 'Error saving cert: ' + safe.error.message));
-                        if (!safe.fs.writeFileSync(path.join(paths.APP_CERTS_DIR, fqdn + '.user.key'), key)) return callback(new AppsError(AppsError.INTERNAL_ERROR, 'Error saving key: ' + safe.error.message));
+                        let error = reverseProxy.setAppCertificateSync(location, domainObject, cert, key);
+                        if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, 'Error setting cert: ' + error.message));
                     }
 
                     taskmanager.restartAppTask(appId);
@@ -765,18 +763,13 @@ function configure(appId, data, user, auditSource, callback) {
 
             // save cert to boxdata/certs. TODO: move this to apptask when we have a real task queue
             if ('cert' in data && 'key' in data) {
-                let fqdn = domains.fqdn(location, domainObject);
-
                 if (data.cert && data.key) {
-                    error = reverseProxy.validateCertificate(fqdn, data.cert, data.key);
+                    error = reverseProxy.validateCertificate(location, domainObject, data.cert, data.key);
                     if (error) return callback(new AppsError(AppsError.BAD_CERTIFICATE, error.message));
-
-                    if (!safe.fs.writeFileSync(path.join(paths.APP_CERTS_DIR, `${fqdn}.user.cert`), data.cert)) return callback(new AppsError(AppsError.INTERNAL_ERROR, 'Error saving cert: ' + safe.error.message));
-                    if (!safe.fs.writeFileSync(path.join(paths.APP_CERTS_DIR, `${fqdn}.user.key`), data.key)) return callback(new AppsError(AppsError.INTERNAL_ERROR, 'Error saving key: ' + safe.error.message));
-                } else { // remove existing cert/key
-                    if (!safe.fs.unlinkSync(path.join(paths.APP_CERTS_DIR, `${fqdn}.user.cert`))) debug('Error removing cert: ' + safe.error.message);
-                    if (!safe.fs.unlinkSync(path.join(paths.APP_CERTS_DIR, `${fqdn}.user.key`))) debug('Error removing key: ' + safe.error.message);
                 }
+
+                error = reverseProxy.setAppCertificateSync(location, domainObject, data.cert, data.key);
+                if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, 'Error setting cert: ' + error.message));
             }
 
             if ('enableBackup' in data) values.enableBackup = data.enableBackup;
@@ -1050,7 +1043,7 @@ function clone(appId, data, user, auditSource, callback) {
                         // if purchase failed, rollback the appdb record
                         if (appstoreError) {
                             appdb.del(newAppId, function (error) {
-                                if (error) console.error('Failed to rollback app installation.', error);
+                                if (error) debug('install: Failed to rollback app installation.', error);
 
                                 if (appstoreError.reason === AppstoreError.NOT_FOUND) return callback(new AppsError(AppsError.NOT_FOUND, appstoreError.message));
                                 if (appstoreError && appstoreError.reason === AppstoreError.BILLING_REQUIRED) return callback(new AppsError(AppsError.BILLING_REQUIRED, appstoreError.message));

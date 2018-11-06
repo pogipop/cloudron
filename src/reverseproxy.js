@@ -6,6 +6,9 @@ exports = module.exports = {
     setFallbackCertificate: setFallbackCertificate,
     getFallbackCertificate: getFallbackCertificate,
 
+    generateFallbackCertificateSync: generateFallbackCertificateSync,
+    setAppCertificateSync: setAppCertificateSync,
+
     validateCertificate: validateCertificate,
 
     getCertificate: getCertificate,
@@ -148,8 +151,9 @@ function providerMatchesSync(certFilePath, apiOptions) {
 
 // note: https://tools.ietf.org/html/rfc4346#section-7.4.2 (certificate_list) requires that the
 // servers certificate appears first (and not the intermediate cert)
-function validateCertificate(domain, cert, key) {
-    assert.strictEqual(typeof domain, 'string');
+function validateCertificate(location, domain, cert, key) {
+    assert.strictEqual(typeof location, 'string');
+    assert.strictEqual(typeof domain, 'object');
     assert.strictEqual(typeof cert, 'string');
     assert.strictEqual(typeof key, 'string');
 
@@ -158,7 +162,9 @@ function validateCertificate(domain, cert, key) {
     if (cert && !key) return new ReverseProxyError(ReverseProxyError.INVALID_CERT, 'missing key');
 
     // -checkhost checks for SAN or CN exclusively. SAN takes precedence and if present, ignores the CN.
-    var result = safe.child_process.execSync(`openssl x509 -noout -checkhost "${domain}"`, { encoding: 'utf8', input: cert });
+    const fqdn = domains.fqdn(location, domain);
+
+    var result = safe.child_process.execSync(`openssl x509 -noout -checkhost "${fqdn}"`, { encoding: 'utf8', input: cert });
     if (!result) return new ReverseProxyError(ReverseProxyError.INVALID_CERT, 'Unable to get certificate subject.');
 
     if (result.indexOf('does match certificate') === -1) return new ReverseProxyError(ReverseProxyError.INVALID_CERT, `Certificate is not valid for this domain. Expecting ${domain}`);
@@ -181,31 +187,51 @@ function reload(callback) {
     shell.sudo('reload', [ RELOAD_NGINX_CMD ], callback);
 }
 
+function generateFallbackCertificateSync(domainObject) {
+    assert.strictEqual(typeof domainObject, 'object');
+
+    const domain = domainObject.domain;
+    const certFilePath = path.join(os.tmpdir(), `${domain}-${crypto.randomBytes(4).readUInt32LE(0)}.cert`);
+    const keyFilePath = path.join(os.tmpdir(), `${domain}-${crypto.randomBytes(4).readUInt32LE(0)}.key`);
+
+    let opensslConf = safe.fs.readFileSync('/etc/ssl/openssl.cnf', 'utf8');
+    // SAN must contain all the domains since CN check is based on implementation if SAN is found. -checkhost also checks only SAN if present!
+    let opensslConfWithSan;
+    if (domainObject.config.hyphenatedSubdomains) {
+        let parentDomain = domains.parentDomain(domain);
+        opensslConfWithSan = `${opensslConf}\n[SAN]\nsubjectAltName=DNS:${domain},DNS:*.${parentDomain}\n`;
+    } else {
+        opensslConfWithSan = `${opensslConf}\n[SAN]\nsubjectAltName=DNS:${domain},DNS:*.${domain}\n`;
+    }
+    let configFile = path.join(os.tmpdir(), 'openssl-' + crypto.randomBytes(4).readUInt32LE(0) + '.conf');
+    safe.fs.writeFileSync(configFile, opensslConfWithSan, 'utf8');
+    let certCommand = util.format(`openssl req -x509 -newkey rsa:2048 -keyout ${keyFilePath} -out ${certFilePath} -days 3650 -subj /CN=*.${domain} -extensions SAN -config ${configFile} -nodes`);
+    if (!safe.child_process.execSync(certCommand)) return { error: new ReverseProxyError(ReverseProxyError.INTERNAL_ERROR, safe.error.message) };
+    safe.fs.unlinkSync(configFile);
+
+    const cert = safe.fs.readFileSync(certFilePath, 'utf8');
+    if (!cert) return { error: safe.error };
+    safe.fs.unlinkSync(certFilePath);
+
+    const key = safe.fs.readFileSync(keyFilePath, 'utf8');
+    if (!key) return { error: safe.error };
+    safe.fs.unlinkSync(keyFilePath);
+
+    return { cert: cert, key: key, error: null };
+}
+
 function setFallbackCertificate(domain, fallback, callback) {
     assert.strictEqual(typeof domain, 'string');
+    assert(fallback && typeof fallback === 'object');
     assert.strictEqual(typeof fallback, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    const certFilePath = path.join(paths.APP_CERTS_DIR, `${domain}.host.cert`);
-    const keyFilePath = path.join(paths.APP_CERTS_DIR, `${domain}.host.key`);
-
-    if (fallback) {
-        if (fallback.restricted) { // restricted certs are not backed up
-            if (!safe.fs.writeFileSync(path.join(paths.NGINX_CERT_DIR, `${domain}.host.cert`), fallback.cert)) return callback(new ReverseProxyError(ReverseProxyError.INTERNAL_ERROR, safe.error.message));
-            if (!safe.fs.writeFileSync(path.join(paths.NGINX_CERT_DIR, `${domain}.host.key`), fallback.key)) return callback(new ReverseProxyError(ReverseProxyError.INTERNAL_ERROR, safe.error.message));
-        } else {
-            if (!safe.fs.writeFileSync(path.join(paths.APP_CERTS_DIR, `${domain}.host.cert`), fallback.cert)) return callback(new ReverseProxyError(ReverseProxyError.INTERNAL_ERROR, safe.error.message));
-            if (!safe.fs.writeFileSync(path.join(paths.APP_CERTS_DIR, `${domain}.host.key`), fallback.key)) return callback(new ReverseProxyError(ReverseProxyError.INTERNAL_ERROR, safe.error.message));
-        }
-    } else if (!fs.existsSync(certFilePath) || !fs.existsSync(keyFilePath)) { // generate it
-        let opensslConf = safe.fs.readFileSync('/etc/ssl/openssl.cnf', 'utf8');
-        // SAN must contain all the domains since CN check is based on implementation if SAN is found. -checkhost also checks only SAN if present!
-        let opensslConfWithSan = `${opensslConf}\n[SAN]\nsubjectAltName=DNS:${domain},DNS:*.${domain}\n`;
-        let configFile = path.join(os.tmpdir(), 'openssl-' + crypto.randomBytes(4).readUInt32LE(0) + '.conf');
-        safe.fs.writeFileSync(configFile, opensslConfWithSan, 'utf8');
-        let certCommand = util.format(`openssl req -x509 -newkey rsa:2048 -keyout ${keyFilePath} -out ${certFilePath} -days 3650 -subj /CN=*.${domain} -extensions SAN -config ${configFile} -nodes`);
-        if (!safe.child_process.execSync(certCommand)) return callback(new ReverseProxyError(ReverseProxyError.INTERNAL_ERROR, safe.error.message));
-        safe.fs.unlinkSync(configFile);
+    if (fallback.restricted) { // restricted certs are not backed up
+        if (!safe.fs.writeFileSync(path.join(paths.NGINX_CERT_DIR, `${domain}.host.cert`), fallback.cert)) return callback(new ReverseProxyError(ReverseProxyError.INTERNAL_ERROR, safe.error.message));
+        if (!safe.fs.writeFileSync(path.join(paths.NGINX_CERT_DIR, `${domain}.host.key`), fallback.key)) return callback(new ReverseProxyError(ReverseProxyError.INTERNAL_ERROR, safe.error.message));
+    } else {
+        if (!safe.fs.writeFileSync(path.join(paths.APP_CERTS_DIR, `${domain}.host.cert`), fallback.cert)) return callback(new ReverseProxyError(ReverseProxyError.INTERNAL_ERROR, safe.error.message));
+        if (!safe.fs.writeFileSync(path.join(paths.APP_CERTS_DIR, `${domain}.host.key`), fallback.key)) return callback(new ReverseProxyError(ReverseProxyError.INTERNAL_ERROR, safe.error.message));
     }
 
     platform.handleCertChanged('*.' + domain);
@@ -232,6 +258,24 @@ function getFallbackCertificate(domain, callback) {
     keyFilePath = path.join(paths.APP_CERTS_DIR, `${domain}.host.key`);
 
     callback(null, { certFilePath, keyFilePath, type: 'fallback' });
+}
+
+function setAppCertificateSync(location, domainObject, cert, key) {
+    assert.strictEqual(typeof location, 'string');
+    assert.strictEqual(typeof domainObject, 'object');
+    assert.strictEqual(typeof cert, 'string');
+    assert.strictEqual(typeof key, 'string');
+
+    let fqdn = domains.fqdn(location, domainObject);
+    if (cert && key) {
+        if (!safe.fs.writeFileSync(path.join(paths.APP_CERTS_DIR, `${fqdn}.user.cert`), cert)) return safe.error;
+        if (!safe.fs.writeFileSync(path.join(paths.APP_CERTS_DIR, `${fqdn}.user.key`), key)) return safe.error;
+    } else { // remove existing cert/key
+        if (!safe.fs.unlinkSync(path.join(paths.APP_CERTS_DIR, `${fqdn}.user.cert`))) debug('Error removing cert: ' + safe.error.message);
+        if (!safe.fs.unlinkSync(path.join(paths.APP_CERTS_DIR, `${fqdn}.user.key`))) debug('Error removing key: ' + safe.error.message);
+    }
+
+    return null;
 }
 
 function getCertificateByHostname(hostname, domain, callback) {

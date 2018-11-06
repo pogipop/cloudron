@@ -39,6 +39,15 @@ function cleanup(done) {
 
 describe('Certificates', function () {
     describe('validateCertificate', function () {
+        let foobarDomain = {
+            domain: 'foobar.com',
+            config: { hypenatedSubdomains: false }
+        };
+
+        let amazingDomain = {
+            domain: 'amazing.com',
+            config: {}
+        };
         /*
           Generate these with:
             openssl genrsa -out server.key 512
@@ -65,53 +74,94 @@ describe('Certificates', function () {
         var validKey3 = '-----BEGIN PRIVATE KEY-----\nMIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQC+nx2TXe7i+YB8\np9E047z6tVDyr6/JHyxxz0S6PSlOh0sF+UzYrpmTSKyKtHMIv+N3ifUDpCs94n6v\nYnjG0eTaP6lq+3xJrYajYzOkB7c5O4ipgl9S3sibd/YtvruK1M+ukDZNHcD90MWV\nrOO754F3e3fj3oOjxoE+lcB05pt8+yu/ecTH3u+uvi3N4reQb27sZi6h3mDKLAXa\n3nBJ4xZsWTaiqQ4K0dFcTvskMpXEgaJ6mdROeRb1vuMiSIFDXHTEcbiyh7BXbKYY\ndLZetQdnjkUUwbvJVinK0pP0jP23L/PlVwtno3OBT+kp9Boh7wymgOlV/lQ14HYM\n4AASgkorAgMBAAECggEAdVSVLMcNqlGuv4vAHtDq2lpOaAKxrZbtkWPlxsisqzRl\nfljT7y+RQfHimkG16LXL+iFFWadsIlxOY/+1nZNGTPwQeNQwzVzs2ZbPC3DgW28E\nkGm56NVOHzu4oLGc2DhjWOxVMCRXTSN66sUPK/K0YunxgqXM2zrtBKvCWXI0VLlo\nN/UWAwHf4i0GWRl8u8PvxgMXlSW9p9l6gSsivWRMag9ADwRQ/NSKrRYkiOoRe3vz\nLxXARBvzeZXvOPVLGVRX4SIR7OmS8cC6Ol/rp1/ZFFID7aN+wdzphPSL1UNUriw4\nDv1mxz73SNakgeYSFBoWRS5BsJI01JoCoILsnhVCiQKBgQDyW+k5+j4K17fzwsmi\nyxZ0Nz/ncpkqxVrWYZM3pn7OVkb2NDArimEk53kmJ0hrT84kKJUYDx55R2TpnzpV\nMLmjxgs9TUrzZzsL/DP2ppkfE3OrPS+06OGa5GbURxD6KPvqDtOmU3oFyJ3f4YJR\nVK7RW+zO4sXEpHIxwdBXbYov1QKBgQDJWbt+W5M0sA2D5LrUBNMTvMdNnKH0syc2\nZlcIOdj6HuUIveYpBRq64Jn9VJpXMxQanwE+IUjCpPTa8wF0OA6MZPy6cfovqb8a\ni1/M/lvCoYVS3KHLcTOvTGD3xej0EUj13xWGNu8y3i7Z9/Bl21hEyjd0q0I5OqJx\no9Qa5TGR/wKBgBPfkYpdiMTe14i3ik09FgRFm4nhDcpCEKbPrYC8uF03Ge6KbQDF\nAh5ClN6aDggurRqt8Tvd0YPkZNP7aI8fxbk2PimystiuuFrNPX2WP6warjt2cvkE\nt6s522zAvxWkUrPor1ZONg1PXBLFrSf6J7OnNA3q7oina23FFM52fwRZAoGAZ7l7\nFffU2IKNI9HT0N7/YZ6RSVEUOXuFCsgjs5AhT5BUynERPTZs87I6gb9wltUwWRpq\nSHhbBDJ4FMa0jAtIq1hmvSF0EdOvJ9x+qJqr6JLOnMYd7zDMwFRna5yfigPRgx+9\n9dsc1CaTGiRYyg/5484MTWTgA51KC6Kq5IQHSj8CgYBr9rWgqM8hVCKSt1cMguQV\nTPaV97+u3kV2jFd/aVgDtCDIVvp5TPuqfskE1v3MsSjJ8hfHdYvyxZB8h8T4LlTD\n2HdxwCjVh2qirAvkar2b1mfA6R8msmVaIxBu4MqDcIPqR823klF7A8jSD3MGzYcU\nbnnxMdwgWQkmx0/6/90ZCg==\n-----END PRIVATE KEY-----\n';
 
         it('does not allow empty string for cert', function () {
-            expect(reverseProxy.validateCertificate('foobar.com', '', 'key')).to.be.an(Error);
+            expect(reverseProxy.validateCertificate('', foobarDomain, '', 'key')).to.be.an(Error);
         });
 
         it('does not allow empty string for key', function () {
-            expect(reverseProxy.validateCertificate('foobar.com', 'cert', '')).to.be.an(Error);
+            expect(reverseProxy.validateCertificate('', foobarDomain, 'cert', '')).to.be.an(Error);
         });
 
         it('does not allow invalid cert', function () {
-            expect(reverseProxy.validateCertificate('foobar.com', 'someinvalidcert', validKey0)).to.be.an(Error);
+            expect(reverseProxy.validateCertificate('', foobarDomain, 'someinvalidcert', validKey0)).to.be.an(Error);
         });
 
         it('does not allow invalid key', function () {
-            expect(reverseProxy.validateCertificate('foobar.com', validCert0, 'invalidkey')).to.be.an(Error);
+            expect(reverseProxy.validateCertificate('', foobarDomain, validCert0, 'invalidkey')).to.be.an(Error);
         });
 
         it('does not allow cert without matching domain', function () {
-            expect(reverseProxy.validateCertificate('cloudron.io', validCert0, validKey0)).to.be.an(Error);
+            expect(reverseProxy.validateCertificate('', { domain: 'cloudron.io' }, validCert0, validKey0)).to.be.an(Error);
+            expect(reverseProxy.validateCertificate('cloudron.io', foobarDomain, validCert0, validKey0)).to.be.an(Error);
         });
 
         it('allows valid cert with matching domain', function () {
-            expect(reverseProxy.validateCertificate('foobar.com', validCert0, validKey0)).to.be(null);
+            expect(reverseProxy.validateCertificate('', foobarDomain, validCert0, validKey0)).to.be(null);
         });
 
         it('allows valid cert with matching domain (wildcard)', function () {
-            expect(reverseProxy.validateCertificate('abc.foobar.com', validCert1, validKey1)).to.be(null);
+            expect(reverseProxy.validateCertificate('abc', foobarDomain, validCert1, validKey1)).to.be(null);
         });
 
         it('does now allow cert without matching domain (wildcard)', function () {
-            expect(reverseProxy.validateCertificate('foobar.com', validCert1, validKey1)).to.be.an(Error);
-            expect(reverseProxy.validateCertificate('bar.abc.foobar.com', validCert1, validKey1)).to.be.an(Error);
+            expect(reverseProxy.validateCertificate('', foobarDomain, validCert1, validKey1)).to.be.an(Error);
+            expect(reverseProxy.validateCertificate('bar.abc', foobarDomain, validCert1, validKey1)).to.be.an(Error);
         });
 
         it('allows valid cert with matching domain (subdomain)', function () {
-            expect(reverseProxy.validateCertificate('baz.foobar.com', validCert2, validKey2)).to.be(null);
+            expect(reverseProxy.validateCertificate('baz', foobarDomain, validCert2, validKey2)).to.be(null);
         });
 
         it('does not allow cert without matching domain (subdomain)', function () {
-            expect(reverseProxy.validateCertificate('baz.foobar.com', validCert0, validKey0)).to.be.an(Error);
+            expect(reverseProxy.validateCertificate('baz', foobarDomain, validCert0, validKey0)).to.be.an(Error);
         });
 
         it('does not allow invalid cert/key tuple', function () {
-            expect(reverseProxy.validateCertificate('foobar.com', validCert0, validKey1)).to.be.an(Error);
+            expect(reverseProxy.validateCertificate('', foobarDomain, validCert0, validKey1)).to.be.an(Error);
         });
 
         it('picks certificate in SAN', function () {
-            expect(reverseProxy.validateCertificate('amazing.com', validCert3, validKey3)).to.be(null);
-            expect(reverseProxy.validateCertificate('subdomain.amazing.com', validCert3, validKey3)).to.be(null);
+            expect(reverseProxy.validateCertificate('', amazingDomain, validCert3, validKey3)).to.be(null);
+            expect(reverseProxy.validateCertificate('subdomain', amazingDomain, validCert3, validKey3)).to.be(null);
+        });
+    });
+
+    describe('generateFallbackCertificiate - non-hyphenated', function () {
+        let domainObject = {
+            domain: 'cool.com',
+            config: {}
+        };
+        let result;
+
+        it('can generate fallback certs', function () {
+            result = reverseProxy.generateFallbackCertificateSync(domainObject);
+            expect(result).to.be.ok();
+            expect(result.error).to.be(null);
+        });
+
+        it('can validate the certs', function () {
+            expect(reverseProxy.validateCertificate('foo', domainObject, result.cert, result.key)).to.be(null);
+            expect(reverseProxy.validateCertificate('', domainObject, result.cert, result.key)).to.be(null);
+        });
+    });
+
+    describe('generateFallbackCertificiate - hyphenated', function () {
+        let domainObject = {
+            domain: 'customer.cool.com',
+            config: { hyphenatedSubdomains: true }
+        };
+        let result;
+
+        it('can generate fallback certs', function () {
+            result = reverseProxy.generateFallbackCertificateSync(domainObject);
+            expect(result).to.be.ok();
+            expect(result.error).to.be(null);
+        });
+
+        it('can validate the certs', function () {
+            expect(reverseProxy.validateCertificate('foo', domainObject, result.cert, result.key)).to.be(null);
+            expect(reverseProxy.validateCertificate('', domainObject, result.cert, result.key)).to.be(null);
+
+            expect(reverseProxy.validateCertificate('foo', { domain: 'customer.cool.com', config: {} }, result.cert, result.key)).to.be.an(Error);
         });
     });
 

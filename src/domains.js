@@ -26,6 +26,8 @@ module.exports = exports = {
 
     makeWildcard: makeWildcard,
 
+    parentDomain: parentDomain,
+
     DomainsError: DomainsError,
 
     // exported for testing
@@ -100,6 +102,11 @@ function api(provider) {
     case 'wildcard': return require('./dns/wildcard.js');
     default: return null;
     }
+}
+
+function parentDomain(domain) {
+    assert.strictEqual(typeof domain, 'string');
+    return domain.replace(/^\S+?\./, ''); // +? means non-greedy
 }
 
 function verifyDnsConfig(dnsConfig, domain, zoneName, provider, ip, callback) {
@@ -212,9 +219,11 @@ function add(domain, zoneName, provider, dnsConfig, fallbackCertificate, tlsConf
     }
 
     if (fallbackCertificate) {
-        let subdomain = dnsConfig.hyphenatedSubdomains ? `test-${domain}` : `test.${domain}`;
-        let error = reverseProxy.validateCertificate(subdomain, fallbackCertificate.cert, fallbackCertificate.key);
+        let error = reverseProxy.validateCertificate('test', { config: dnsConfig }, fallbackCertificate.cert, fallbackCertificate.key);
         if (error) return callback(new DomainsError(DomainsError.BAD_FIELD, error.message));
+    } else {
+        fallbackCertificate = reverseProxy.generateFallbackCertificateSync({ domain: domain, config: dnsConfig });
+        if (fallbackCertificate.error) return callback(new DomainsError(DomainsError.INTERNAL_ERROR, fallbackCertificate.error));
     }
 
     let error = validateTlsConfig(tlsConfig, provider);
@@ -291,19 +300,18 @@ function update(domain, zoneName, provider, dnsConfig, fallbackCertificate, tlsC
     assert.strictEqual(typeof tlsConfig, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    domaindb.get(domain, function (error, result) {
+    domaindb.get(domain, function (error, domainObject) {
         if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new DomainsError(DomainsError.NOT_FOUND));
         if (error) return callback(new DomainsError(DomainsError.INTERNAL_ERROR, error));
 
         if (zoneName) {
             if (!tld.isValid(zoneName)) return callback(new DomainsError(DomainsError.BAD_FIELD, 'Invalid zoneName'));
         } else {
-            zoneName = result.zoneName;
+            zoneName = domainObject.zoneName;
         }
 
         if (fallbackCertificate) {
-            let subdomain = dnsConfig.hyphenatedSubdomains ? `test-${domain}` : `test.${domain}`;
-            let error = reverseProxy.validateCertificate(subdomain, fallbackCertificate.cert, fallbackCertificate.key);
+            let error = reverseProxy.validateCertificate('test', domainObject, fallbackCertificate.cert, fallbackCertificate.key);
             if (error) return callback(new DomainsError(DomainsError.BAD_FIELD, error.message));
         }
 
