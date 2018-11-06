@@ -66,7 +66,7 @@ wait_for_status "version" '*'
 echo "Provisioning Cloudron ${subdomain}.${zone}"
 setupData=$(printf '{ "dnsConfig": { "domain": "%s", "provider": "cloudflare", "config": { "token": "%s", "email": "%s", "hyphenatedSubdomains": true }, "tlsConfig": { "provider": "fallback" } }, "autoconf": { "appstoreConfig": { "userId": "%s", "token": "%s" } } }' "${subdomain}.${zone}" "${cloudflare_token}" "${cloudflare_email}" "${appstore_id}" "${appstore_token}")
 
-if ! setupResult=$($curl -k -X POST -H "Content-Type: application/json" -d "${setupData}" https://${ip}/api/v1/cloudron/setup); then
+if ! setupResult=$($curl -kq -X POST -H "Content-Type: application/json" -d "${setupData}" https://${ip}/api/v1/cloudron/setup); then
     echo "Failed to setup with ${setupData}: ${setupResult}"
     exit 1
 fi

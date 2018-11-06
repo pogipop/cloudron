@@ -197,15 +197,14 @@ function generateFallbackCertificateSync(domainObject) {
     let opensslConf = safe.fs.readFileSync('/etc/ssl/openssl.cnf', 'utf8');
     // SAN must contain all the domains since CN check is based on implementation if SAN is found. -checkhost also checks only SAN if present!
     let opensslConfWithSan;
-    if (domainObject.config.hyphenatedSubdomains) {
-        let parentDomain = domains.parentDomain(domain);
-        opensslConfWithSan = `${opensslConf}\n[SAN]\nsubjectAltName=DNS:${domain},DNS:*.${parentDomain}\n`;
-    } else {
-        opensslConfWithSan = `${opensslConf}\n[SAN]\nsubjectAltName=DNS:${domain},DNS:*.${domain}\n`;
-    }
+    let cn = domainObject.config.hyphenatedSubdomains ? domains.parentDomain(domain) : domain;
+
+    debug(`generateFallbackCertificateSync: domain=${domainObject.domain} cn=${cn} hyphenated=${domainObject.config.hyphenatedSubdomains}`);
+
+    opensslConfWithSan = `${opensslConf}\n[SAN]\nsubjectAltName=DNS:${domain},DNS:*.${cn}\n`;
     let configFile = path.join(os.tmpdir(), 'openssl-' + crypto.randomBytes(4).readUInt32LE(0) + '.conf');
     safe.fs.writeFileSync(configFile, opensslConfWithSan, 'utf8');
-    let certCommand = util.format(`openssl req -x509 -newkey rsa:2048 -keyout ${keyFilePath} -out ${certFilePath} -days 3650 -subj /CN=*.${domain} -extensions SAN -config ${configFile} -nodes`);
+    let certCommand = util.format(`openssl req -x509 -newkey rsa:2048 -keyout ${keyFilePath} -out ${certFilePath} -days 3650 -subj /CN=*.${cn} -extensions SAN -config ${configFile} -nodes`);
     if (!safe.child_process.execSync(certCommand)) return { error: new ReverseProxyError(ReverseProxyError.INTERNAL_ERROR, safe.error.message) };
     safe.fs.unlinkSync(configFile);
 
@@ -227,9 +226,11 @@ function setFallbackCertificate(domain, fallback, callback) {
     assert.strictEqual(typeof callback, 'function');
 
     if (fallback.restricted) { // restricted certs are not backed up
+        debug(`setFallbackCertificate: setting restricted certs for domain ${domain}`);
         if (!safe.fs.writeFileSync(path.join(paths.NGINX_CERT_DIR, `${domain}.host.cert`), fallback.cert)) return callback(new ReverseProxyError(ReverseProxyError.INTERNAL_ERROR, safe.error.message));
         if (!safe.fs.writeFileSync(path.join(paths.NGINX_CERT_DIR, `${domain}.host.key`), fallback.key)) return callback(new ReverseProxyError(ReverseProxyError.INTERNAL_ERROR, safe.error.message));
     } else {
+        debug(`setFallbackCertificate: setting certs for domain ${domain}`);
         if (!safe.fs.writeFileSync(path.join(paths.APP_CERTS_DIR, `${domain}.host.cert`), fallback.cert)) return callback(new ReverseProxyError(ReverseProxyError.INTERNAL_ERROR, safe.error.message));
         if (!safe.fs.writeFileSync(path.join(paths.APP_CERTS_DIR, `${domain}.host.key`), fallback.key)) return callback(new ReverseProxyError(ReverseProxyError.INTERNAL_ERROR, safe.error.message));
     }
