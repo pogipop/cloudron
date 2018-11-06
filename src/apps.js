@@ -609,7 +609,7 @@ function install(data, user, auditSource, callback) {
             if (error) return callback(new AppsError(AppsError.BAD_FIELD, 'Bad location: ' + error.message));
 
             if (cert && key) {
-                let fqdn = domains.fqdn(location, domain, domainObject);
+                let fqdn = domains.fqdn(location, domainObject);
                 error = reverseProxy.validateCertificate(fqdn, cert, key);
                 if (error) return callback(new AppsError(AppsError.BAD_CERTIFICATE, error.message));
             }
