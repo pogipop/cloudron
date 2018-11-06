@@ -439,9 +439,9 @@ function setAppstoreConfig(appstoreConfig, callback) {
                 if (result.statusCode === 401) return callback(new SettingsError(SettingsError.EXTERNAL_ERROR, 'invalid appstore token'));
                 if (result.statusCode !== 201) return callback(new SettingsError(SettingsError.EXTERNAL_ERROR, 'unable to register cloudron'));
 
-                debug(`setAppstoreConfig: Cloudron registered with id ${cloudronId}`);
-
                 cloudronId = result.body.cloudron.id;
+
+                debug(`setAppstoreConfig: Cloudron registered with id ${cloudronId}`);
 
                 setNewConfig();
             });
