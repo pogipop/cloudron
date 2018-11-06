@@ -151,11 +151,12 @@ function providerMatchesSync(certFilePath, apiOptions) {
 
 // note: https://tools.ietf.org/html/rfc4346#section-7.4.2 (certificate_list) requires that the
 // servers certificate appears first (and not the intermediate cert)
-function validateCertificate(location, domainObject, cert, key) {
+function validateCertificate(location, domainObject, certificate) {
     assert.strictEqual(typeof location, 'string');
     assert.strictEqual(typeof domainObject, 'object');
-    assert.strictEqual(typeof cert, 'string');
-    assert.strictEqual(typeof key, 'string');
+    assert(certificate && typeof certificate, 'object');
+
+    const cert = certificate.cert, key = certificate.key;
 
     // check for empty cert and key strings
     if (!cert && key) return new ReverseProxyError(ReverseProxyError.INVALID_CERT, 'missing cert');
@@ -261,16 +262,15 @@ function getFallbackCertificate(domain, callback) {
     callback(null, { certFilePath, keyFilePath, type: 'fallback' });
 }
 
-function setAppCertificateSync(location, domainObject, cert, key) {
+function setAppCertificateSync(location, domainObject, certificate) {
     assert.strictEqual(typeof location, 'string');
     assert.strictEqual(typeof domainObject, 'object');
-    assert.strictEqual(typeof cert, 'string');
-    assert.strictEqual(typeof key, 'string');
+    assert.strictEqual(typeof certificate, 'object');
 
     let fqdn = domains.fqdn(location, domainObject);
-    if (cert && key) {
-        if (!safe.fs.writeFileSync(path.join(paths.APP_CERTS_DIR, `${fqdn}.user.cert`), cert)) return safe.error;
-        if (!safe.fs.writeFileSync(path.join(paths.APP_CERTS_DIR, `${fqdn}.user.key`), key)) return safe.error;
+    if (certificate.cert && certificate.key) {
+        if (!safe.fs.writeFileSync(path.join(paths.APP_CERTS_DIR, `${fqdn}.user.cert`), certificate.cert)) return safe.error;
+        if (!safe.fs.writeFileSync(path.join(paths.APP_CERTS_DIR, `${fqdn}.user.key`), certificate.key)) return safe.error;
     } else { // remove existing cert/key
         if (!safe.fs.unlinkSync(path.join(paths.APP_CERTS_DIR, `${fqdn}.user.cert`))) debug('Error removing cert: ' + safe.error.message);
         if (!safe.fs.unlinkSync(path.join(paths.APP_CERTS_DIR, `${fqdn}.user.key`))) debug('Error removing key: ' + safe.error.message);

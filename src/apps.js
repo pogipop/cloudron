@@ -609,7 +609,7 @@ function install(data, user, auditSource, callback) {
             if (error) return callback(new AppsError(AppsError.BAD_FIELD, 'Bad location: ' + error.message));
 
             if (cert && key) {
-                error = reverseProxy.validateCertificate(location, domainObject, cert, key);
+                error = reverseProxy.validateCertificate(location, domainObject, { cert, key });
                 if (error) return callback(new AppsError(AppsError.BAD_CERTIFICATE, error.message));
             }
 
@@ -652,7 +652,7 @@ function install(data, user, auditSource, callback) {
 
                     // save cert to boxdata/certs
                     if (cert && key) {
-                        let error = reverseProxy.setAppCertificateSync(location, domainObject, cert, key);
+                        let error = reverseProxy.setAppCertificateSync(location, domainObject, { cert, key });
                         if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, 'Error setting cert: ' + error.message));
                     }
 
@@ -764,11 +764,11 @@ function configure(appId, data, user, auditSource, callback) {
             // save cert to boxdata/certs. TODO: move this to apptask when we have a real task queue
             if ('cert' in data && 'key' in data) {
                 if (data.cert && data.key) {
-                    error = reverseProxy.validateCertificate(location, domainObject, data.cert, data.key);
+                    error = reverseProxy.validateCertificate(location, domainObject, { cert: data.cert, key: data.key });
                     if (error) return callback(new AppsError(AppsError.BAD_CERTIFICATE, error.message));
                 }
 
-                error = reverseProxy.setAppCertificateSync(location, domainObject, data.cert, data.key);
+                error = reverseProxy.setAppCertificateSync(location, domainObject, { cert: data.cert, key: data.key });
                 if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, 'Error setting cert: ' + error.message));
             }
 
