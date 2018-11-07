@@ -32,7 +32,7 @@ echo "Username: ${ssh_user}" >> $OUT
 echo "Port:     ${ssh_port}" >> $OUT
 
 echo -e $LINE"cloudron.conf"$LINE >> $OUT
-cat /home/yellowtent/configs/cloudron.conf &>> $OUT
+cat /etc/cloudron/cloudron.conf &>> $OUT
 
 echo -e $LINE"Docker container"$LINE >> $OUT
 docker ps -a &>> $OUT
@@ -53,7 +53,7 @@ echo -n "Uploading information..."
 paste_key=$(curl -X POST ${PASTEBIN}/documents --silent -d "$(cat $OUT)" | python3 -c "import sys, json; print(json.load(sys.stdin)['key'])")
 echo "Done"
 
-echo -n "Enabling ssh access to the Cloudron support team..."
+echo -n "Enabling ssh access for the Cloudron support team..."
 mkdir -p "${ssh_folder}"
 echo "${CLOUDRON_SUPPORT_PUBLIC_KEY}" >> ${authorized_key_file}
 chown -R ${ssh_user} "${ssh_folder}"
