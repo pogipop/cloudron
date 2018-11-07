@@ -202,7 +202,8 @@ fi
 
 echo "==> Changing ownership"
 chown "${USER}:${USER}" -R "${CONFIG_DIR}"
-chown "${USER}:${USER}" -R "${PLATFORM_DATA_DIR}/nginx" "${PLATFORM_DATA_DIR}/collectd" "${PLATFORM_DATA_DIR}/addons" "${PLATFORM_DATA_DIR}/acme" "${PLATFORM_DATA_DIR}/backup" "${PLATFORM_DATA_DIR}/logs" "${PLATFORM_DATA_DIR}/update" "${PLATFORM_DATA_DIR}/redis"
+# be careful of what is chown'ed here. subdirs like mysql,redis etc are owned by the containers and will stop working if perms change
+chown "${USER}:${USER}" -R "${PLATFORM_DATA_DIR}/nginx" "${PLATFORM_DATA_DIR}/collectd" "${PLATFORM_DATA_DIR}/addons" "${PLATFORM_DATA_DIR}/acme" "${PLATFORM_DATA_DIR}/backup" "${PLATFORM_DATA_DIR}/logs" "${PLATFORM_DATA_DIR}/update"
 chown "${USER}:${USER}" "${PLATFORM_DATA_DIR}/INFRA_VERSION" 2>/dev/null || true
 chown "${USER}:${USER}" "${PLATFORM_DATA_DIR}"
 chown "${USER}:${USER}" "${APPS_DATA_DIR}"
