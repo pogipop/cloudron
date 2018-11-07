@@ -1,0 +1,66 @@
+#!/bin/bash
+
+PASTEBIN="https://paste.cloudron.io"
+OUT="/tmp/cloudron-support.log"
+LINE="\n========================================================\n"
+CLOUDRON_SUPPORT_PUBLIC_KEY="ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDQVilclYAIu+ioDp/sgzzFz6YU0hPcRYY7ze/LiF/lC7uQqK062O54BFXTvQ3ehtFZCx3bNckjlT2e6gB8Qq07OM66De4/S/g+HJW4TReY2ppSPMVNag0TNGxDzVH8pPHOysAm33LqT2b6L/wEXwC6zWFXhOhHjcMqXvi8Ejaj20H1HVVcf/j8qs5Thkp9nAaFTgQTPu8pgwD8wDeYX1hc9d0PYGesTADvo6HF4hLEoEnefLw7PaStEbzk2fD3j7/g5r5HcgQQXBe74xYZ/1gWOX2pFNuRYOBSEIrNfJEjFJsqk3NR1+ZoMGK7j+AZBR4k0xbrmncQLcQzl6MMDzkp support@cloudron.io"
+
+# We require root
+if [[ ${EUID} -ne 0 ]]; then
+    echo "This script should be run as root." > /dev/stderr
+    exit 1
+fi
+
+echo -n "Generating Cloudron Support stats..."
+
+# clear file
+rm -rf $OUT
+
+ssh_port=$(cat /etc/ssh/sshd_config | grep "Port " | sed -e "s/.*Port //")
+if [[ `cat /etc/ssh/sshd_config | grep PermitRootLogin | grep yes` ]]; then
+    ssh_user="root"
+    ssh_folder="/root/.ssh/"
+    authorized_key_file="${ssh_folder}/authorized_keys"
+else
+    ssh_user="ubuntu"
+    ssh_folder="/home/ubuntu/.ssh/"
+    authorized_key_file="${ssh_folder}/authorized_keys"
+fi
+
+echo -e $LINE"SSH"$LINE >> $OUT
+echo "Username: ${ssh_user}" >> $OUT
+echo "Port:     ${ssh_port}" >> $OUT
+
+echo -e $LINE"cloudron.conf"$LINE >> $OUT
+cat /home/yellowtent/configs/cloudron.conf &>> $OUT
+
+echo -e $LINE"Docker container"$LINE >> $OUT
+docker ps -a &>> $OUT
+
+echo -e $LINE"Filesystem stats"$LINE >> $OUT
+df -h &>> $OUT
+
+echo -e $LINE"System daemon status"$LINE >> $OUT
+systemctl status --lines=100 cloudron.target box mysql unbound cloudron-syslog nginx &>> $OUT
+
+echo -e $LINE"Firewall chains"$LINE >> $OUT
+iptables -L &>> $OUT
+
+echo "Done"
+
+echo -n "Uploading information..."
+# for some reason not using $(cat $OUT) will not contain newlines!?
+paste_key=$(curl -X POST ${PASTEBIN}/documents --silent -d "$(cat $OUT)" | python3 -c "import sys, json; print(json.load(sys.stdin)['key'])")
+echo "Done"
+
+echo -n "Enabling ssh access to the Cloudron support team..."
+mkdir -p "${ssh_folder}"
+echo "${CLOUDRON_SUPPORT_PUBLIC_KEY}" >> ${authorized_key_file}
+chown -R ${ssh_user} "${ssh_folder}"
+chmod 600 "${authorized_key_file}"
+echo "Done"
+
+echo ""
+echo "Please send the following link to support@cloudron.io"
+echo ""
+echo "${PASTEBIN}/${paste_key}"
