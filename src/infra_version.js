@@ -16,7 +16,7 @@ exports = module.exports = {
     // docker inspect --format='{{index .RepoDigests 0}}' $IMAGE to get the sha256
     'images': {
         'mysql': { repo: 'cloudron/mysql', tag: 'cloudron/mysql:2.0.1@sha256:5a13360da4a2085c7d474bea6b1090c5eb24732d4f73459942af7612d4993d7f' },
-        'postgresql': { repo: 'cloudron/postgresql', tag: 'cloudron/postgresql:2.0.1@sha256:3cb04e1ca7fb3ac402eb0603b4cbaec8bacc531b40f903655ec7b979c757a8d7' },
+        'postgresql': { repo: 'cloudron/postgresql', tag: 'cloudron/postgresql:2.0.2@sha256:6dcee0731dfb9b013ed94d56205eee219040ee806c7e251db3b3886eaa4947ff' },
         'mongodb': { repo: 'cloudron/mongodb', tag: 'cloudron/mongodb:2.0.1@sha256:0f320ba40080943840fadb3e66b98066fc4f3dc98b96638e3067a8a5ab84bcee' },
         'redis': { repo: 'cloudron/redis', tag: 'cloudron/redis:2.0.0@sha256:8a88dd334b62b578530a014ca1a2425a54cb9df1e475f5d3a36806e5cfa22121' },
         'mail': { repo: 'cloudron/mail', tag: 'cloudron/mail:2.0.0@sha256:3c0fbb2a042ac471940ac3e9f6ffa900c8a294941fb7de509b2e3309b09fbffd' },
