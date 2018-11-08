@@ -47,6 +47,8 @@ async.series([
 var NOOP_CALLBACK = function () { };
 
 process.on('SIGINT', function () {
+    console.log('Received SIGINT. Shutting down.');
+
     server.stop(NOOP_CALLBACK);
     ldap.stop(NOOP_CALLBACK);
     dockerProxy.stop(NOOP_CALLBACK);
@@ -54,6 +56,8 @@ process.on('SIGINT', function () {
 });
 
 process.on('SIGTERM', function () {
+    console.log('Received SIGTERM. Shutting down.');
+
     server.stop(NOOP_CALLBACK);
     ldap.stop(NOOP_CALLBACK);
     dockerProxy.stop(NOOP_CALLBACK);
