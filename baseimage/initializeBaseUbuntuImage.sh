@@ -41,6 +41,7 @@ apt-get -y install \
     openssh-server \
     pwgen \
     resolvconf \
+    sudo \
     swaks \
     unattended-upgrades \
     unbound \
