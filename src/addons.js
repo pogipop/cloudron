@@ -161,6 +161,16 @@ function requiresUpgrade(existingTag, currentTag) {
     return etag.version.major !== ctag.version.major;
 }
 
+// paths for dumps
+function dumpPath(addon, appId) {
+    switch (addon) {
+    case 'postgres': return path.join(paths.APPS_DATA_DIR, appId, 'postgresqldump');
+    case 'mysql': return path.join(paths.APPS_DATA_DIR, appId, 'mysqldump');
+    case 'mongodb': return path.join(paths.APPS_DATA_DIR, appId, 'mongodbdump');
+    case 'redis': return path.join(paths.APPS_DATA_DIR, appId, 'dump.rdb');
+    }
+}
+
 function getAddonDetails(containerName, tokenEnvName, callback) {
     assert.strictEqual(typeof containerName, 'string');
     assert.strictEqual(typeof tokenEnvName, 'string');
@@ -816,7 +826,7 @@ function backupMySql(app, options, callback) {
     getAddonDetails('mysql', 'CLOUDRON_MYSQL_TOKEN', function (error, result) {
         if (error) return callback(error);
 
-        const writeStream = fs.createWriteStream(path.join(paths.APPS_DATA_DIR, app.id, 'mysqldump'));
+        const writeStream = fs.createWriteStream(dumpPath('mysql', app.id));
         writeStream.on('error', callback);
 
         const req = request.post(`https://${result.ip}:3000/` + (options.multipleDatabases ? 'prefixes' : 'databases') + `/${database}/backup?access_token=${result.token}`, { rejectUnauthorized: false }, function (error, response) {
@@ -843,7 +853,7 @@ function restoreMySql(app, options, callback) {
     getAddonDetails('mysql', 'CLOUDRON_MYSQL_TOKEN', function (error, result) {
         if (error) return callback(error);
 
-        var input = fs.createReadStream(path.join(paths.APPS_DATA_DIR, app.id, 'mysqldump'));
+        var input = fs.createReadStream(dumpPath('mysql', app.id));
         input.on('error', callback);
 
         const restoreReq = request.post(`https://${result.ip}:3000/` + (options.multipleDatabases ? 'prefixes' : 'databases') + `/${database}/restore?access_token=${result.token}`, { rejectUnauthorized: false }, function (error, response) {
@@ -1000,7 +1010,7 @@ function backupPostgreSql(app, options, callback) {
     getAddonDetails('postgresql', 'CLOUDRON_POSTGRESQL_TOKEN', function (error, result) {
         if (error) return callback(error);
 
-        const writeStream = fs.createWriteStream(path.join(paths.APPS_DATA_DIR, app.id, 'postgresqldump'));
+        const writeStream = fs.createWriteStream(dumpPath('postgresql', app.id));
         writeStream.on('error', callback);
 
         const req = request.post(`https://${result.ip}:3000/databases/${database}/backup?access_token=${result.token}`, { rejectUnauthorized: false }, function (error, response) {
@@ -1027,7 +1037,7 @@ function restorePostgreSql(app, options, callback) {
     getAddonDetails('postgresql', 'CLOUDRON_POSTGRESQL_TOKEN', function (error, result) {
         if (error) return callback(error);
 
-        var input = fs.createReadStream(path.join(paths.APPS_DATA_DIR, app.id, 'postgresqldump'));
+        var input = fs.createReadStream(dumpPath('postgresql', app.id));
         input.on('error', callback);
 
         const restoreReq = request.post(`https://${result.ip}:3000/databases/${database}/restore?access_token=${result.token}&username=${username}`, { rejectUnauthorized: false }, function (error, response) {
@@ -1174,7 +1184,7 @@ function backupMongoDb(app, options, callback) {
     getAddonDetails('mongodb', 'CLOUDRON_MONGODB_TOKEN', function (error, result) {
         if (error) return callback(error);
 
-        const writeStream = fs.createWriteStream(path.join(paths.APPS_DATA_DIR, app.id, 'mongodbdump'));
+        const writeStream = fs.createWriteStream(dumpPath('mongo', app.id));
         writeStream.on('error', callback);
 
         const req = request.post(`https://${result.ip}:3000/databases/${app.id}/backup?access_token=${result.token}`, { rejectUnauthorized: false }, function (error, response) {
@@ -1199,7 +1209,7 @@ function restoreMongoDb(app, options, callback) {
     getAddonDetails('mongodb', 'CLOUDRON_MONGODB_TOKEN', function (error, result) {
         if (error) return callback(error);
 
-        const readStream = fs.createReadStream(path.join(paths.APPS_DATA_DIR, app.id, 'mongodbdump'));
+        const readStream = fs.createReadStream(dumpPath('mongo', app.id));
         readStream.on('error', callback);
 
         const restoreReq = request.post(`https://${result.ip}:3000/databases/${app.id}/restore?access_token=${result.token}`, { rejectUnauthorized: false }, function (error, response) {
@@ -1353,7 +1363,7 @@ function backupRedis(app, options, callback) {
     getAddonDetails('redis-' + app.id, 'CLOUDRON_REDIS_TOKEN', function (error, result) {
         if (error) return callback(error);
 
-        const writeStream = fs.createWriteStream(path.join(paths.APPS_DATA_DIR, app.id, 'dump.rdb'));
+        const writeStream = fs.createWriteStream(dumpPath('redis', app.id));
         writeStream.on('error', callback);
 
         const req = request.post(`https://${result.ip}:3000/backup?access_token=${result.token}`, { rejectUnauthorized: false }, function (error, response) {
@@ -1377,7 +1387,7 @@ function restoreRedis(app, options, callback) {
         if (error) return callback(error);
 
         let input;
-        const newDumpLocation = path.join(paths.APPS_DATA_DIR, app.id, 'dump.rdb');
+        const newDumpLocation = dumpPath('redis', app.id);
         if (fs.existsSync(newDumpLocation)) {
             input = fs.createReadStream(newDumpLocation);
         } else { // old location of dumps
