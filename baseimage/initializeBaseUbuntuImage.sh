@@ -35,6 +35,7 @@ apt-get -y install \
     curl \
     dmsetup \
     iptables \
+    libpython2.7 \
     logrotate \
     mysql-server-5.7 \
     nginx-full \
