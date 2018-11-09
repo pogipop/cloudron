@@ -41,7 +41,7 @@ echo -e $LINE"Filesystem stats"$LINE >> $OUT
 df -h &>> $OUT
 
 echo -e $LINE"System daemon status"$LINE >> $OUT
-systemctl status --lines=100 cloudron.target box mysql unbound cloudron-syslog nginx &>> $OUT
+systemctl status --lines=100 cloudron.target box mysql unbound cloudron-syslog nginx collectd docker &>> $OUT
 
 echo -e $LINE"Firewall chains"$LINE >> $OUT
 iptables -L &>> $OUT
