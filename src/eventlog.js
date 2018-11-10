@@ -26,6 +26,7 @@ exports = module.exports = {
     ACTION_CERTIFICATE_RENEWAL: 'certificate.renew',
 
     ACTION_MAIL_ENABLED: 'mail.enabled',
+    ACTION_MAIL_DISABLED: 'mail.disabled',
     ACTION_MAIL_MAILBOX_ADD: 'mail.box.add',
     ACTION_MAIL_MAILBOX_REMOVE: 'mail.box.remove',
     ACTION_MAIL_LIST_ADD: 'mail.list.add',

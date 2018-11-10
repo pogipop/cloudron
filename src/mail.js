@@ -865,7 +865,7 @@ function setMailEnabled(domain, enabled, auditSource, callback) {
 
         restartMail(NOOP_CALLBACK);
 
-        eventlog.add(eventlog.ACTION_MAIL_ENABLED, auditSource, { domain, enabled });
+        eventlog.add(enabled ? eventlog.ACTION_MAIL_ENABLED : eventlog.ACTION_MAIL_DISABLED, auditSource, { domain });
 
         callback(null);
     });
