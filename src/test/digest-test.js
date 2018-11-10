@@ -70,7 +70,6 @@ describe('digest', function () {
         async.series([
             database.initialize,
             database._clear,
-            settings.initialize,
             domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0, AUDIT_SOURCE),
             mail.addDomain.bind(null, DOMAIN_0.domain),
             users.createOwner.bind(null, USER_0.username, USER_0.password, USER_0.email, USER_0.displayName, AUDIT_SOURCE),
@@ -94,7 +93,6 @@ describe('digest', function () {
         safe.fs.unlinkSync(paths.UPDATE_CHECKER_FILE);
 
         async.series([
-            settings.uninitialize,
             database._clear,
             database.uninitialize
         ], done);

@@ -86,10 +86,10 @@ function startPostActivationJobs(callback) {
         start: true
     });
 
-    settings.events.on(settings.TIME_ZONE_KEY, recreateJobs);
-    settings.events.on(settings.APP_AUTOUPDATE_PATTERN_KEY, appAutoupdatePatternChanged);
-    settings.events.on(settings.BOX_AUTOUPDATE_PATTERN_KEY, boxAutoupdatePatternChanged);
-    settings.events.on(settings.DYNAMIC_DNS_KEY, dynamicDnsChanged);
+    settings.on(settings.TIME_ZONE_KEY, recreateJobs);
+    settings.on(settings.APP_AUTOUPDATE_PATTERN_KEY, appAutoupdatePatternChanged);
+    settings.on(settings.BOX_AUTOUPDATE_PATTERN_KEY, boxAutoupdatePatternChanged);
+    settings.on(settings.DYNAMIC_DNS_KEY, dynamicDnsChanged);
 
     settings.getAll(function (error, allSettings) {
         if (error) return callback(error);
@@ -282,10 +282,10 @@ function dynamicDnsChanged(enabled) {
 function stopJobs(callback) {
     assert.strictEqual(typeof callback, 'function');
 
-    settings.events.removeListener(settings.TIME_ZONE_KEY, recreateJobs);
-    settings.events.removeListener(settings.APP_AUTOUPDATE_PATTERN_KEY, appAutoupdatePatternChanged);
-    settings.events.removeListener(settings.BOX_AUTOUPDATE_PATTERN_KEY, boxAutoupdatePatternChanged);
-    settings.events.removeListener(settings.DYNAMIC_DNS_KEY, dynamicDnsChanged);
+    settings.removeListener(settings.TIME_ZONE_KEY, recreateJobs);
+    settings.removeListener(settings.APP_AUTOUPDATE_PATTERN_KEY, appAutoupdatePatternChanged);
+    settings.removeListener(settings.BOX_AUTOUPDATE_PATTERN_KEY, boxAutoupdatePatternChanged);
+    settings.removeListener(settings.DYNAMIC_DNS_KEY, dynamicDnsChanged);
 
     for (var job in gJobs) {
         if (!gJobs[job]) continue;

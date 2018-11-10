@@ -9,8 +9,7 @@ var async = require('async'),
     database = require('../database.js'),
     domains = require('../domains.js'),
     expect = require('expect.js'),
-    reverseProxy = require('../reverseproxy.js'),
-    settings = require('../settings.js');
+    reverseProxy = require('../reverseproxy.js');
 
 const DOMAIN_0 = {
     domain: 'example-reverseproxy-test.com',
@@ -26,7 +25,6 @@ let AUDIT_SOURCE = { ip: '1.2.3.4' };
 function setup(done) {
     async.series([
         database.initialize,
-        settings.initialize,
         database._clear,
         domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0, AUDIT_SOURCE)
     ], done);

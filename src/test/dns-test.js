@@ -14,7 +14,6 @@ var async = require('async'),
     domains = require('../domains.js'),
     expect = require('expect.js'),
     nock = require('nock'),
-    settings = require('../settings.js'),
     util = require('util');
 
 var DOMAIN_0 = {
@@ -35,7 +34,6 @@ describe('dns provider', function () {
 
         async.series([
             database.initialize,
-            settings.initialize,
             database._clear,
             domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0, AUDIT_SOURCE)
         ], done);

@@ -98,7 +98,6 @@ describe('backups', function () {
             mkdirp.bind(null, BACKUP_DIR),
             database.initialize,
             database._clear,
-            settings.initialize,
             settings.setBackupConfig.bind(null, {
                 provider: 'filesystem',
                 key: 'enckey',
@@ -111,7 +110,6 @@ describe('backups', function () {
 
     after(function (done) {
         async.series([
-            settings.uninitialize,
             database._clear
         ], done);
     });

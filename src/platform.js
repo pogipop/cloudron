@@ -77,7 +77,6 @@ function start(callback) {
 }
 
 function stop(callback) {
-    exports.events = null;
     taskmanager.pauseTasks(callback);
 }
 

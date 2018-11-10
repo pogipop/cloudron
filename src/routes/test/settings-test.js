@@ -82,7 +82,7 @@ describe('Settings API', function () {
 
         it('can set app_autoupdate_pattern', function (done) {
             var eventPattern = null;
-            settings.events.on(settings.APP_AUTOUPDATE_PATTERN_KEY, function (pattern) {
+            settings.on(settings.APP_AUTOUPDATE_PATTERN_KEY, function (pattern) {
                 eventPattern = pattern;
             });
 
@@ -98,7 +98,7 @@ describe('Settings API', function () {
 
         it('can set app_autoupdate_pattern to never', function (done) {
             var eventPattern = null;
-            settings.events.on(settings.APP_AUTOUPDATE_PATTERN_KEY, function (pattern) {
+            settings.on(settings.APP_AUTOUPDATE_PATTERN_KEY, function (pattern) {
                 eventPattern = pattern;
             });
 
@@ -145,7 +145,7 @@ describe('Settings API', function () {
 
         it('can set box_autoupdate_pattern', function (done) {
             var eventPattern = null;
-            settings.events.on(settings.BOX_AUTOUPDATE_PATTERN_KEY, function (pattern) {
+            settings.on(settings.BOX_AUTOUPDATE_PATTERN_KEY, function (pattern) {
                 eventPattern = pattern;
             });
 
@@ -161,7 +161,7 @@ describe('Settings API', function () {
 
         it('can set box_autoupdate_pattern to never', function (done) {
             var eventPattern = null;
-            settings.events.on(settings.BOX_AUTOUPDATE_PATTERN_KEY, function (pattern) {
+            settings.on(settings.BOX_AUTOUPDATE_PATTERN_KEY, function (pattern) {
                 eventPattern = pattern;
             });
 

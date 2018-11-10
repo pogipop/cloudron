@@ -72,7 +72,6 @@ function initialize(callback) {
     assert.strictEqual(typeof callback, 'function');
 
     async.series([
-        settings.initialize,
         reverseProxy.configureDefaultServer,
         cron.startPreActivationJobs,
         onActivated
@@ -84,8 +83,7 @@ function uninitialize(callback) {
 
     async.series([
         cron.stopJobs,
-        platform.stop,
-        settings.uninitialize
+        platform.stop
     ], callback);
 }
 

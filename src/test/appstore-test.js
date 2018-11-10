@@ -30,8 +30,7 @@ function setup(done) {
 
     async.series([
         database.initialize,
-        database._clear,
-        settings.initialize
+        database._clear
     ], done);
 }
 
@@ -39,7 +38,6 @@ function cleanup(done) {
     nock.cleanAll();
 
     async.series([
-        settings.uninitialize,
         database._clear,
         database.uninitialize
     ], done);

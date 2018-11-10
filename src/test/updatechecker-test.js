@@ -61,7 +61,6 @@ function cleanup(done) {
     safe.fs.unlinkSync(paths.UPDATE_CHECKER_FILE);
 
     async.series([
-        settings.uninitialize,
         database._clear,
         database.uninitialize
     ], done);
@@ -78,7 +77,6 @@ describe('updatechecker - box - manual (email)', function () {
         async.series([
             database.initialize,
             database._clear,
-            settings.initialize,
             domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0, AUDIT_SOURCE),
             mail.addDomain.bind(null, DOMAIN_0.domain),
             users.createOwner.bind(null, USER_0.username, USER_0.password, USER_0.email, USER_0.displayName, AUDIT_SOURCE),
@@ -157,7 +155,6 @@ describe('updatechecker - box - automatic (no email)', function () {
 
         async.series([
             database.initialize,
-            settings.initialize,
             domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0, AUDIT_SOURCE),
             mail.addDomain.bind(null, DOMAIN_0.domain),
             mailer._clearMailQueue,
@@ -201,7 +198,6 @@ describe('updatechecker - box - automatic free (email)', function () {
 
         async.series([
             database.initialize,
-            settings.initialize,
             domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0, AUDIT_SOURCE),
             mail.addDomain.bind(null, DOMAIN_0.domain),
             mailer._clearMailQueue,
@@ -272,7 +268,6 @@ describe('updatechecker - app - manual (email)', function () {
         async.series([
             database.initialize,
             database._clear,
-            settings.initialize,
             domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0, AUDIT_SOURCE),
             mail.addDomain.bind(null, DOMAIN_0.domain),
             mailer._clearMailQueue,
@@ -395,7 +390,6 @@ describe('updatechecker - app - automatic (no email)', function () {
         async.series([
             database.initialize,
             database._clear,
-            settings.initialize,
             domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0, AUDIT_SOURCE),
             mail.addDomain.bind(null, DOMAIN_0.domain),
             mailer._clearMailQueue,
@@ -468,7 +462,6 @@ describe('updatechecker - app - automatic free (email)', function () {
         async.series([
             database.initialize,
             database._clear,
-            settings.initialize,
             domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0, AUDIT_SOURCE),
             mail.addDomain.bind(null, DOMAIN_0.domain),
             mailer._clearMailQueue,

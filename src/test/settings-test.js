@@ -29,7 +29,6 @@ function setup(done) {
 
     async.series([
         database.initialize,
-        settings.initialize,
         function (callback) {
             MockS3.config.basePath = path.join(os.tmpdir(), 's3-settings-test-buckets/');
 
@@ -49,7 +48,6 @@ function cleanup(done) {
     rimraf.sync(MockS3.config.basePath);
 
     async.series([
-        settings.uninitialize,
         database._clear,
         database.uninitialize
     ], done);

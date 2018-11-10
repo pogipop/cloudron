@@ -41,7 +41,6 @@ function setup(done) {
     async.series([
         database.initialize,
         database._clear,
-        settings.initialize,
         domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0, AUDIT_SOURCE),
         mail.addDomain.bind(null, DOMAIN_0.domain),
         function (callback) {
@@ -61,7 +60,6 @@ function setup(done) {
 
 function cleanup(done) {
     async.series([
-        settings.uninitialize,
         database._clear,
         database.uninitialize
     ], done);

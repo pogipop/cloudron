@@ -18,7 +18,6 @@ var addons = require('../addons.js'),
     net = require('net'),
     nock = require('nock'),
     paths = require('../paths.js'),
-    settings = require('../settings.js'),
     userdb = require('../userdb.js'),
     _ = require('underscore');
 
@@ -124,8 +123,7 @@ describe('apptask', function () {
             database._clear,
             domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0, AUDIT_SOURCE),
             userdb.add.bind(null, ADMIN.id, ADMIN),
-            appdb.add.bind(null, APP.id, APP.appStoreId, APP.manifest, APP.location, APP.domain, APP.ownerId, APP.portBindings, APP),
-            settings.initialize
+            appdb.add.bind(null, APP.id, APP.appStoreId, APP.manifest, APP.location, APP.domain, APP.ownerId, APP.portBindings, APP)
         ], done);
     });
 

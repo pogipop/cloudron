@@ -380,7 +380,7 @@ function stop(callback) {
         gHttpServer.close.bind(gHttpServer),
         gSysadminHttpServer.close.bind(gSysadminHttpServer)
     ], function (error) {
-        if (error) console.error(error);
+        if (error) return callback(error);
 
         routes.oauth2.uninitialize();
 
