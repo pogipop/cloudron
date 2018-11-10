@@ -51,6 +51,7 @@ var assert = require('assert'),
     debug = require('debug')('box:mail'),
     dns = require('./native-dns.js'),
     domains = require('./domains.js'),
+    eventlog = require('./eventlog.js'),
     infra = require('./infra_version.js'),
     mailboxdb = require('./mailboxdb.js'),
     maildb = require('./maildb.js'),
@@ -916,10 +917,11 @@ function getMailbox(name, domain, callback) {
     });
 }
 
-function addMailbox(name, domain, userId, callback) {
+function addMailbox(name, domain, userId, auditSource, callback) {
     assert.strictEqual(typeof name, 'string');
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof userId, 'string');
+    assert.strictEqual(typeof auditSource, 'object');
     assert.strictEqual(typeof callback, 'function');
 
     name = name.toLowerCase();
@@ -930,6 +932,8 @@ function addMailbox(name, domain, userId, callback) {
     mailboxdb.addMailbox(name, domain, userId, mailboxdb.OWNER_TYPE_USER, function (error) {
         if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(new MailError(MailError.ALREADY_EXISTS, `mailbox ${name} already exists`));
         if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
+
+        eventlog.add(eventlog.ACTION_MAILBOX_ADD, auditSource, { name, domain, userId });
 
         callback(null);
     });
@@ -954,14 +958,17 @@ function updateMailbox(name, domain, userId, callback) {
     });
 }
 
-function removeMailbox(name, domain, callback) {
+function removeMailbox(name, domain, auditSource, callback) {
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof name, 'string');
+    assert.strictEqual(typeof auditSource, 'object');
     assert.strictEqual(typeof callback, 'function');
 
     mailboxdb.del(name, domain, function (error) {
         if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new MailError(MailError.NOT_FOUND, 'no such mailbox'));
         if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
+
+        eventlog.add(eventlog.ACTION_MAILBOX_REMOVE, auditSource, { name, domain });
 
         callback(null);
     });

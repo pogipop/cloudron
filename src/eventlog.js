@@ -18,12 +18,19 @@ exports = module.exports = {
     ACTION_APP_UNINSTALL: 'app.uninstall',
     ACTION_APP_UPDATE: 'app.update',
     ACTION_APP_LOGIN: 'app.login',
+
     ACTION_BACKUP_FINISH: 'backup.finish',
     ACTION_BACKUP_START: 'backup.start',
     ACTION_BACKUP_CLEANUP: 'backup.cleanup',
+
     ACTION_CERTIFICATE_RENEWAL: 'certificate.renew',
+
+    ACTION_MAILBOX_ADD: 'mailbox.add',
+    ACTION_MAILBOX_REMOVE: 'mailbox.remove',
+
     ACTION_START: 'cloudron.start',
     ACTION_UPDATE: 'cloudron.update',
+
     ACTION_USER_ADD: 'user.add',
     ACTION_USER_LOGIN: 'user.login',
     ACTION_USER_REMOVE: 'user.remove',
