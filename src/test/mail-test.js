@@ -26,6 +26,10 @@ const DOMAIN_0 = {
     tlsConfig: { provider: 'fallback' }
 };
 
+const AUDIT_SOURCE = {
+    ip: '1.2.3.4'
+};
+
 const APPSTORE_USER_ID = 'appstoreuserid';
 const APPSTORE_TOKEN = 'appstoretoken';
 const CLOUDRON_ID = 'cloudronid';
@@ -122,7 +126,7 @@ describe('Mail', function () {
         });
 
         it('can enable mail', function (done) {
-            mail.setMailEnabled(DOMAIN_0.domain, true, function (error) {
+            mail.setMailEnabled(DOMAIN_0.domain, true, AUDIT_SOURCE, function (error) {
                 expect(error).to.be(null);
 
                 mail.getDomain(DOMAIN_0.domain, function (error, mailConfig) {
