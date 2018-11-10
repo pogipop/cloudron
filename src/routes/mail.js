@@ -354,7 +354,7 @@ function addList(req, res, next) {
         if (typeof req.body.members[i] !== 'string') return next(new HttpError(400, 'member must be a string'));
     }
 
-    mail.addList(req.body.name, req.params.domain, req.body.members, function (error) {
+    mail.addList(req.body.name, req.params.domain, req.body.members, auditSource(req), function (error) {
         if (error && error.reason === MailError.NOT_FOUND) return next(new HttpError(404, error.message));
         if (error && error.reason === MailError.ALREADY_EXISTS) return next(new HttpError(409, 'list already exists'));
         if (error && error.reason === MailError.BAD_FIELD) return next(new HttpError(400, error.message));
@@ -387,7 +387,7 @@ function removeList(req, res, next) {
     assert.strictEqual(typeof req.params.domain, 'string');
     assert.strictEqual(typeof req.params.name, 'string');
 
-    mail.removeList(req.params.domain, req.params.name, function (error) {
+    mail.removeList(req.params.name, req.params.domain, auditSource(req), function (error) {
         if (error && error.reason === MailError.NOT_FOUND) return next(new HttpError(404, error.message));
         if (error) return next(new HttpError(500, error));
 

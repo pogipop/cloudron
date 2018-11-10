@@ -933,7 +933,7 @@ function addMailbox(name, domain, userId, auditSource, callback) {
         if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(new MailError(MailError.ALREADY_EXISTS, `mailbox ${name} already exists`));
         if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
 
-        eventlog.add(eventlog.ACTION_MAILBOX_ADD, auditSource, { name, domain, userId });
+        eventlog.add(eventlog.ACTION_MAIL_MAILBOX_ADD, auditSource, { name, domain, userId });
 
         callback(null);
     });
@@ -968,7 +968,7 @@ function removeMailbox(name, domain, auditSource, callback) {
         if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new MailError(MailError.NOT_FOUND, 'no such mailbox'));
         if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
 
-        eventlog.add(eventlog.ACTION_MAILBOX_REMOVE, auditSource, { name, domain });
+        eventlog.add(eventlog.ACTION_MAIL_MAILBOX_REMOVE, auditSource, { name, domain });
 
         callback(null);
     });
@@ -1054,10 +1054,11 @@ function getList(domain, listName, callback) {
     });
 }
 
-function addList(name, domain, members, callback) {
+function addList(name, domain, members, auditSource, callback) {
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof name, 'string');
     assert(Array.isArray(members));
+    assert.strictEqual(typeof auditSource, 'object');
     assert.strictEqual(typeof callback, 'function');
 
     name = name.toLowerCase();
@@ -1075,6 +1076,8 @@ function addList(name, domain, members, callback) {
     mailboxdb.addGroup(name, domain, members, function (error) {
         if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(new MailError(MailError.ALREADY_EXISTS, 'list already exits'));
         if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
+
+        eventlog.add(eventlog.ACTION_MAIL_LIST_ADD, auditSource, { name, domain });
 
         callback();
     });
@@ -1106,14 +1109,17 @@ function updateList(name, domain, members, callback) {
     });
 }
 
-function removeList(domain, listName, callback) {
+function removeList(name, domain, auditSource, callback) {
+    assert.strictEqual(typeof name, 'string');
     assert.strictEqual(typeof domain, 'string');
-    assert.strictEqual(typeof listName, 'string');
+    assert.strictEqual(typeof auditSource, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    mailboxdb.del(listName, domain, function (error) {
+    mailboxdb.del(name, domain, function (error) {
         if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new MailError(MailError.NOT_FOUND, 'no such list'));
         if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
+
+        eventlog.add(eventlog.ACTION_MAIL_LIST_ADD, auditSource, { name, domain });
 
         callback();
     });

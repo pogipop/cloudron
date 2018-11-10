@@ -25,8 +25,11 @@ exports = module.exports = {
 
     ACTION_CERTIFICATE_RENEWAL: 'certificate.renew',
 
-    ACTION_MAILBOX_ADD: 'mailbox.add',
-    ACTION_MAILBOX_REMOVE: 'mailbox.remove',
+    ACTION_MAIL_MAILBOX_ADD: 'mail.box.add',
+    ACTION_MAIL_MAILBOX_REMOVE: 'mail.box.remove',
+
+    ACTION_MAIL_LIST_ADD: 'mail.list.add',
+    ACTION_MAIL_LIST_REMOVE: 'mail.list.remove',
 
     ACTION_START: 'cloudron.start',
     ACTION_UPDATE: 'cloudron.update',
