@@ -25,6 +25,10 @@ exports = module.exports = {
 
     ACTION_CERTIFICATE_RENEWAL: 'certificate.renew',
 
+    ACTION_DOMAIN_ADD: 'domain.add',
+    ACTION_DOMAIN_UPDATE: 'domain.update',
+    ACTION_DOMAIN_REMOVE: 'domain.remove',
+
     ACTION_MAIL_ENABLED: 'mail.enabled',
     ACTION_MAIL_DISABLED: 'mail.disabled',
     ACTION_MAIL_MAILBOX_ADD: 'mail.box.add',
@@ -32,6 +36,8 @@ exports = module.exports = {
     ACTION_MAIL_LIST_ADD: 'mail.list.add',
     ACTION_MAIL_LIST_REMOVE: 'mail.list.remove',
 
+    ACTION_PROVISION: 'cloudron.provision',
+    ACTION_RESTORE: 'cloudron.restore', // unused
     ACTION_START: 'cloudron.start',
     ACTION_UPDATE: 'cloudron.update',
 

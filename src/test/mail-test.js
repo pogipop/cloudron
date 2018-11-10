@@ -12,7 +12,6 @@ var async = require('async'),
     domains = require('../domains.js'),
     expect = require('expect.js'),
     mail = require('../mail.js'),
-    MailError = mail.MailError,
     maildb = require('../maildb.js'),
     nock = require('nock'),
     settings = require('../settings.js');
@@ -43,7 +42,7 @@ function setup(done) {
         database.initialize,
         database._clear,
         settings.initialize,
-        domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0.zoneName, DOMAIN_0.provider, DOMAIN_0.config, DOMAIN_0.fallbackCertificate, DOMAIN_0.tlsConfig),
+        domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0, AUDIT_SOURCE),
         mail.addDomain.bind(null, DOMAIN_0.domain),
         function (callback) {
             var scope = nock('http://localhost:6060')

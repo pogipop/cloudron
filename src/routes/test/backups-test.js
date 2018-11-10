@@ -29,6 +29,8 @@ const DOMAIN_0 = {
     tlsConfig: { provider: 'fallback' }
 };
 
+let AUDIT_SOURCE = { ip: '1.2.3.4' };
+
 var token = null, ownerId = null;
 
 function setup(done) {
@@ -38,7 +40,7 @@ function setup(done) {
     async.series([
         server.start,
         database._clear,
-        domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0.zoneName, DOMAIN_0.provider, DOMAIN_0.config, DOMAIN_0.fallbackCertificate, DOMAIN_0.tlsConfig),
+        domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0, AUDIT_SOURCE),
 
         function createAdmin(callback) {
             superagent.post(SERVER_URL + '/api/v1/cloudron/activate')

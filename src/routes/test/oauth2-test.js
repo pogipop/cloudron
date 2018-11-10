@@ -30,6 +30,8 @@ var accesscontrol = require('../../accesscontrol.js'),
 
 var SERVER_URL = 'http://localhost:' + config.get('port');
 
+let AUDIT_SOURCE = { ip: '1.2.3.4' };
+
 describe('OAuth2', function () {
 
     describe('flow', function () {
@@ -208,7 +210,7 @@ describe('OAuth2', function () {
             async.series([
                 server.start,
                 database._clear,
-                domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0.zoneName, DOMAIN_0.provider, DOMAIN_0.config, DOMAIN_0.fallbackCertificate, DOMAIN_0.tlsConfig),
+                domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0, AUDIT_SOURCE),
                 clientdb.add.bind(null, CLIENT_0.id, CLIENT_0.appId, CLIENT_0.type, CLIENT_0.clientSecret, CLIENT_0.redirectURI, CLIENT_0.scope),
                 clientdb.add.bind(null, CLIENT_1.id, CLIENT_1.appId, CLIENT_1.type, CLIENT_1.clientSecret, CLIENT_1.redirectURI, CLIENT_1.scope),
                 clientdb.add.bind(null, CLIENT_2.id, CLIENT_2.appId, CLIENT_2.type, CLIENT_2.clientSecret, CLIENT_2.redirectURI, CLIENT_2.scope),

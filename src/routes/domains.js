@@ -59,7 +59,15 @@ function add(req, res, next) {
     // some DNS providers like DigitalOcean take a really long time to verify credentials (https://github.com/expressjs/timeout/issues/26)
     req.clearTimeout();
 
-    domains.add(req.body.domain, req.body.zoneName || '', req.body.provider, req.body.config, req.body.fallbackCertificate || null, req.body.tlsConfig || { provider: 'letsencrypt-prod' }, function (error) {
+    let data = {
+        zoneName: req.body.zoneName || '',
+        provider: req.body.provider,
+        config: req.body.config,
+        fallbackCertificate: req.body.fallbackCertificate || null,
+        tlsConfig: req.body.tlsConfig || { provider: 'letsencrypt-prod' }
+    };
+
+    domains.add(req.body.domain, data, auditSource(req), function (error) {
         if (error && error.reason === DomainsError.ALREADY_EXISTS) return next(new HttpError(409, error.message));
         if (error && error.reason === DomainsError.BAD_FIELD) return next(new HttpError(400, error.message));
         if (error && error.reason === DomainsError.INVALID_PROVIDER) return next(new HttpError(400, error.message));
@@ -117,7 +125,15 @@ function update(req, res, next) {
     // some DNS providers like DigitalOcean take a really long time to verify credentials (https://github.com/expressjs/timeout/issues/26)
     req.clearTimeout();
 
-    domains.update(req.params.domain, req.body.zoneName || '', req.body.provider, req.body.config, req.body.fallbackCertificate || null, req.body.tlsConfig || { provider: 'letsencrypt-prod' }, function (error) {
+    let data = {
+        zoneName: req.body.zoneName || '',
+        provider: req.body.provider,
+        config: req.body.config,
+        fallbackCertificate: req.body.fallbackCertificate || null,
+        tlsConfig: req.body.tlsConfig || { provider: 'letsencrypt-prod' }
+    };
+
+    domains.update(req.params.domain, data, auditSource(req), function (error) {
         if (error && error.reason === DomainsError.NOT_FOUND) return next(new HttpError(404, error.message));
         if (error && error.reason === DomainsError.BAD_FIELD) return next(new HttpError(400, error.message));
         if (error && error.reason === DomainsError.INVALID_PROVIDER) return next(new HttpError(400, error.message));
@@ -130,7 +146,7 @@ function update(req, res, next) {
 function del(req, res, next) {
     assert.strictEqual(typeof req.params.domain, 'string');
 
-    domains.del(req.params.domain, function (error) {
+    domains.del(req.params.domain, auditSource(req), function (error) {
         if (error && error.reason === DomainsError.NOT_FOUND) return next(new HttpError(404, error.message));
         if (error && error.reason === DomainsError.IN_USE) return next(new HttpError(409, 'Domain is still in use. Remove all apps and mailboxes using this domain'));
         if (error) return next(new HttpError(500, error));

@@ -41,6 +41,7 @@ var assert = require('assert'),
     DatabaseError = require('./databaseerror.js'),
     debug = require('debug')('box:domains'),
     domaindb = require('./domaindb.js'),
+    eventlog = require('./eventlog.js'),
     path = require('path'),
     reverseProxy = require('./reverseproxy.js'),
     ReverseProxyError = reverseProxy.ReverseProxyError,
@@ -199,14 +200,16 @@ function validateTlsConfig(tlsConfig, dnsProvider) {
     return null;
 }
 
-function add(domain, zoneName, provider, dnsConfig, fallbackCertificate, tlsConfig, callback) {
+function add(domain, data, auditSource, callback) {
     assert.strictEqual(typeof domain, 'string');
-    assert.strictEqual(typeof zoneName, 'string');
-    assert.strictEqual(typeof provider, 'string');
-    assert.strictEqual(typeof dnsConfig, 'object');
-    assert.strictEqual(typeof fallbackCertificate, 'object');
-    assert.strictEqual(typeof tlsConfig, 'object');
+    assert.strictEqual(typeof data.zoneName, 'string');
+    assert.strictEqual(typeof data.provider, 'string');
+    assert.strictEqual(typeof data.config, 'object');
+    assert.strictEqual(typeof data.fallbackCertificate, 'object');
+    assert.strictEqual(typeof data.tlsConfig, 'object');
     assert.strictEqual(typeof callback, 'function');
+
+    let { zoneName, provider, config, fallbackCertificate, tlsConfig } = data;
 
     if (!tld.isValid(domain)) return callback(new DomainsError(DomainsError.BAD_FIELD, 'Invalid domain'));
     if (domain.endsWith('.')) return callback(new DomainsError(DomainsError.BAD_FIELD, 'Invalid domain'));
@@ -219,10 +222,10 @@ function add(domain, zoneName, provider, dnsConfig, fallbackCertificate, tlsConf
     }
 
     if (fallbackCertificate) {
-        let error = reverseProxy.validateCertificate('test', { domain: domain, config: dnsConfig }, fallbackCertificate);
+        let error = reverseProxy.validateCertificate('test', { domain, config }, fallbackCertificate);
         if (error) return callback(new DomainsError(DomainsError.BAD_FIELD, error.message));
     } else {
-        fallbackCertificate = reverseProxy.generateFallbackCertificateSync({ domain: domain, config: dnsConfig });
+        fallbackCertificate = reverseProxy.generateFallbackCertificateSync({ domain, config });
         if (fallbackCertificate.error) return callback(new DomainsError(DomainsError.INTERNAL_ERROR, fallbackCertificate.error));
     }
 
@@ -232,15 +235,17 @@ function add(domain, zoneName, provider, dnsConfig, fallbackCertificate, tlsConf
     sysinfo.getPublicIp(function (error, ip) {
         if (error) return callback(new DomainsError(DomainsError.INTERNAL_ERROR, 'Error getting IP:' + error.message));
 
-        verifyDnsConfig(dnsConfig, domain, zoneName, provider, ip, function (error, result) {
+        verifyDnsConfig(config, domain, zoneName, provider, ip, function (error, sanitizedConfig) {
             if (error) return callback(error);
 
-            domaindb.add(domain, { zoneName: zoneName, provider: provider, config: result, tlsConfig: tlsConfig }, function (error) {
+            domaindb.add(domain, { zoneName: zoneName, provider: provider, config: sanitizedConfig, tlsConfig: tlsConfig }, function (error) {
                 if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(new DomainsError(DomainsError.ALREADY_EXISTS));
                 if (error) return callback(new DomainsError(DomainsError.INTERNAL_ERROR, error));
 
                 reverseProxy.setFallbackCertificate(domain, fallbackCertificate, function (error) {
                     if (error) return callback(new DomainsError(DomainsError.INTERNAL_ERROR, error));
+
+                    eventlog.add(eventlog.ACTION_DOMAIN_ADD, auditSource, { domain, zoneName, provider });
 
                     callback();
                 });
@@ -291,14 +296,17 @@ function getAll(callback) {
     });
 }
 
-function update(domain, zoneName, provider, dnsConfig, fallbackCertificate, tlsConfig, callback) {
+function update(domain, data, auditSource, callback) {
     assert.strictEqual(typeof domain, 'string');
-    assert.strictEqual(typeof zoneName, 'string');
-    assert.strictEqual(typeof provider, 'string');
-    assert.strictEqual(typeof dnsConfig, 'object');
-    assert.strictEqual(typeof fallbackCertificate, 'object');
-    assert.strictEqual(typeof tlsConfig, 'object');
+    assert.strictEqual(typeof data.zoneName, 'string');
+    assert.strictEqual(typeof data.provider, 'string');
+    assert.strictEqual(typeof data.config, 'object');
+    assert.strictEqual(typeof data.fallbackCertificate, 'object');
+    assert.strictEqual(typeof data.tlsConfig, 'object');
+    assert.strictEqual(typeof auditSource, 'object');
     assert.strictEqual(typeof callback, 'function');
+
+    let { zoneName, provider, config, fallbackCertificate, tlsConfig } = data;
 
     domaindb.get(domain, function (error, domainObject) {
         if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new DomainsError(DomainsError.NOT_FOUND));
@@ -321,10 +329,10 @@ function update(domain, zoneName, provider, dnsConfig, fallbackCertificate, tlsC
         sysinfo.getPublicIp(function (error, ip) {
             if (error) return callback(new DomainsError(DomainsError.INTERNAL_ERROR, 'Error getting IP:' + error.message));
 
-            verifyDnsConfig(dnsConfig, domain, zoneName, provider, ip, function (error, result) {
+            verifyDnsConfig(config, domain, zoneName, provider, ip, function (error, sanitizedConfig) {
                 if (error) return callback(error);
 
-                domaindb.update(domain, { zoneName: zoneName, provider: provider, config: result, tlsConfig: tlsConfig }, function (error) {
+                domaindb.update(domain, { zoneName: zoneName, provider: provider, config: sanitizedConfig, tlsConfig: tlsConfig }, function (error) {
                     if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new DomainsError(DomainsError.NOT_FOUND));
                     if (error) return callback(new DomainsError(DomainsError.INTERNAL_ERROR, error));
 
@@ -332,6 +340,8 @@ function update(domain, zoneName, provider, dnsConfig, fallbackCertificate, tlsC
 
                     reverseProxy.setFallbackCertificate(domain, fallbackCertificate, function (error) {
                         if (error) return callback(new DomainsError(DomainsError.INTERNAL_ERROR, error));
+
+                        eventlog.add(eventlog.ACTION_DOMAIN_UPDATE, auditSource, { domain, zoneName, provider });
 
                         callback();
                     });
@@ -341,8 +351,9 @@ function update(domain, zoneName, provider, dnsConfig, fallbackCertificate, tlsC
     });
 }
 
-function del(domain, callback) {
+function del(domain, auditSource, callback) {
     assert.strictEqual(typeof domain, 'string');
+    assert.strictEqual(typeof auditSource, 'object');
     assert.strictEqual(typeof callback, 'function');
 
     if (domain === config.adminDomain()) return callback(new DomainsError(DomainsError.IN_USE));
@@ -351,6 +362,8 @@ function del(domain, callback) {
         if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new DomainsError(DomainsError.NOT_FOUND));
         if (error && error.reason === DatabaseError.IN_USE) return callback(new DomainsError(DomainsError.IN_USE));
         if (error) return callback(new DomainsError(DomainsError.INTERNAL_ERROR, error));
+
+        eventlog.add(eventlog.ACTION_DOMAIN_REMOVE, auditSource, { domain });
 
         return callback(null);
     });

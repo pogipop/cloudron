@@ -21,6 +21,8 @@ const DOMAIN_0 = {
     tlsConfig: { provider: 'fallback' }
 };
 
+let AUDIT_SOURCE = { ip: '1.2.3.4' };
+
 function setup(done) {
     async.series([
         database.initialize,
@@ -171,7 +173,7 @@ describe('Certificates', function () {
 
             async.series([
                 setup,
-                domains.update.bind(null, DOMAIN_0.domain, DOMAIN_0.zoneName, DOMAIN_0.provider, DOMAIN_0.config, DOMAIN_0.fallbackCertificate, DOMAIN_0.tlsConfig)
+                domains.update.bind(null, DOMAIN_0.domain, DOMAIN_0, AUDIT_SOURCE)
             ], done);
         });
 
@@ -181,7 +183,7 @@ describe('Certificates', function () {
             reverseProxy._getCertApi(DOMAIN_0.domain, function (error, api, options) {
                 expect(error).to.be(null);
                 expect(api._name).to.be('caas');
-                expect(options).to.eql({ email: 'support@cloudron.io', "performHttpAuthorization": false, "prod": false, "wildcard": false });
+                expect(options).to.eql({ email: 'support@cloudron.io', 'performHttpAuthorization': false, 'prod': false, 'wildcard': false });
                 done();
             });
         });
@@ -193,7 +195,7 @@ describe('Certificates', function () {
 
             async.series([
                 setup,
-                domains.update.bind(null, DOMAIN_0.domain, DOMAIN_0.zoneName, DOMAIN_0.provider, DOMAIN_0.config, DOMAIN_0.fallbackCertificate, DOMAIN_0.tlsConfig)
+                domains.update.bind(null, DOMAIN_0.domain, DOMAIN_0, AUDIT_SOURCE)
             ], done);
         });
 
@@ -224,7 +226,7 @@ describe('Certificates', function () {
 
             async.series([
                 setup,
-                domains.update.bind(null, DOMAIN_0.domain, DOMAIN_0.zoneName, DOMAIN_0.provider, DOMAIN_0.config, DOMAIN_0.fallbackCertificate, DOMAIN_0.tlsConfig)
+                domains.update.bind(null, DOMAIN_0.domain, DOMAIN_0, AUDIT_SOURCE)
             ], done);
         });
 

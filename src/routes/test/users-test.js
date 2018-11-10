@@ -30,6 +30,8 @@ const DOMAIN_0 = {
     tlsConfig: { provider: 'fallback' }
 };
 
+let AUDIT_SOURCE = { ip: '1.2.3.4' };
+
 const USERNAME_0 = 'superaDmIn', PASSWORD = 'Foobar?1337', EMAIL_0 = 'silLY@me.com', EMAIL_0_NEW = 'stupID@me.com', DISPLAY_NAME_0_NEW = 'New Name';
 const USERNAME_1 = 'userTheFirst', EMAIL_1 = 'taO@zen.mac';
 const USERNAME_2 = 'userTheSecond', EMAIL_2 = 'USER@foo.bar', EMAIL_2_NEW = 'happy@ME.com';
@@ -45,7 +47,7 @@ function setup(done) {
         server.start,
         database._clear,
         mailer._clearMailQueue,
-        domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0.zoneName, DOMAIN_0.provider, DOMAIN_0.config, DOMAIN_0.fallbackCertificate, DOMAIN_0.tlsConfig),
+        domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0, AUDIT_SOURCE),
         mail.addDomain.bind(null, DOMAIN_0.domain)
     ], function (error) {
         expect(error).to.not.be.ok();

@@ -18,8 +18,7 @@ var assert = require('assert'),
     HttpSuccess = require('connect-lastmile').HttpSuccess,
     setup = require('../setup.js'),
     SetupError = require('../setup.js').SetupError,
-    superagent = require('superagent'),
-    _ = require('underscore');
+    superagent = require('superagent');
 
 function auditSource(req) {
     var ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress || null;
@@ -85,7 +84,7 @@ function provision(req, res, next) {
     // it can take sometime to setup DNS, register cloudron
     req.clearTimeout();
 
-    setup.provision(dnsConfig, req.body.autoconf || {}, function (error) {
+    setup.provision(dnsConfig, req.body.autoconf || {}, auditSource(req), function (error) {
         if (error && error.reason === SetupError.ALREADY_SETUP) return next(new HttpError(409, error.message));
         if (error && error.reason === SetupError.BAD_FIELD) return next(new HttpError(400, error.message));
         if (error && error.reason === SetupError.BAD_STATE) return next(new HttpError(409, error.message));
@@ -156,7 +155,7 @@ function restore(req, res, next) {
     // TODO: validate subfields of these objects
     if (req.body.autoconf && typeof req.body.autoconf !== 'object') return next(new HttpError(400, 'autoconf must be an object'));
 
-    setup.restore(backupConfig, req.body.backupId, req.body.version, req.body.autoconf || {}, function (error) {
+    setup.restore(backupConfig, req.body.backupId, req.body.version, req.body.autoconf || {}, auditSource(req), function (error) {
         if (error && error.reason === SetupError.ALREADY_SETUP) return next(new HttpError(409, error.message));
         if (error && error.reason === SetupError.BAD_FIELD) return next(new HttpError(400, error.message));
         if (error && error.reason === SetupError.BAD_STATE) return next(new HttpError(409, error.message));

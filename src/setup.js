@@ -154,9 +154,10 @@ function configureWebadmin(callback) {
     });
 }
 
-function provision(dnsConfig, autoconf, callback) {
+function provision(dnsConfig, autoconf, auditSource, callback) {
     assert.strictEqual(typeof dnsConfig, 'object');
     assert.strictEqual(typeof autoconf, 'object');
+    assert.strictEqual(typeof auditSource, 'object');
     assert.strictEqual(typeof callback, 'function');
 
     if (config.adminDomain()) return callback(new SetupError(SetupError.ALREADY_SETUP));
@@ -175,8 +176,16 @@ function provision(dnsConfig, autoconf, callback) {
 
         if (result) return callback(new SetupError(SetupError.BAD_STATE, 'Domain already exists'));
 
+        let data = {
+            zoneName: zoneName,
+            provider: dnsConfig.provider,
+            config: dnsConfig.config,
+            fallbackCertificate: dnsConfig.fallbackCertificate || null,
+            tlsConfig: dnsConfig.tlsConfig || { provider: 'letsencrypt-prod' }
+        };
+
         async.series([
-            domains.add.bind(null, domain, zoneName, dnsConfig.provider, dnsConfig.config, dnsConfig.fallbackCertificate || null, dnsConfig.tlsConfig || { provider: 'letsencrypt-prod' }),
+            domains.add.bind(null, domain, data, auditSource),
             mail.addDomain.bind(null, domain)
         ],  function (error) {
             if (error && error.reason === DomainsError.BAD_FIELD) return callback(new SetupError(SetupError.BAD_FIELD, error.message));
@@ -186,6 +195,8 @@ function provision(dnsConfig, autoconf, callback) {
             config.setAdminDomain(domain); // set fqdn only after dns config is valid, otherwise cannot re-setup if we failed
             config.setAdminFqdn(adminFqdn);
             config.setAdminLocation('my');
+
+            eventlog.add(eventlog.ACTION_PROVISION, auditSource, { });
 
             clients.addDefaultClients(config.adminOrigin(), callback);
 
@@ -256,11 +267,12 @@ function activate(username, password, email, displayName, ip, auditSource, callb
     });
 }
 
-function restore(backupConfig, backupId, version, autoconf, callback) {
+function restore(backupConfig, backupId, version, autoconf, auditSource, callback) {
     assert.strictEqual(typeof backupConfig, 'object');
     assert.strictEqual(typeof backupId, 'string');
     assert.strictEqual(typeof version, 'string');
     assert.strictEqual(typeof autoconf, 'object');
+    assert.strictEqual(typeof auditSource, 'object');
     assert.strictEqual(typeof callback, 'function');
 
     if (!semver.valid(version)) return callback(new SetupError(SetupError.BAD_STATE, 'version is not a valid semver'));

@@ -20,6 +20,8 @@ var appdb = require('../appdb.js'),
     settingsdb = require('../settingsdb.js'),
     userdb = require('../userdb.js');
 
+let AUDIT_SOURCE = { ip: '1.2.3.4' };
+
 describe('Apps', function () {
     var ADMIN_0 = {
         id: 'admin123',
@@ -80,6 +82,7 @@ describe('Apps', function () {
         zoneName: 'example.com',
         provider: 'manual',
         config: { },
+        fallbackCertificate: null,
         tlsConfig: { provider: 'fallback' }
     };
 
@@ -88,6 +91,7 @@ describe('Apps', function () {
         zoneName: 'example2.com',
         provider: 'manual',
         config: { },
+        fallbackCertificate: null,
         tlsConfig: { provider: 'fallback' }
     };
 
@@ -159,8 +163,8 @@ describe('Apps', function () {
         async.series([
             database.initialize,
             database._clear,
-            domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0.zoneName, DOMAIN_0.provider, DOMAIN_0.config, null, DOMAIN_0.tlsConfig),
-            domains.add.bind(null, DOMAIN_1.domain, DOMAIN_1.zoneName, DOMAIN_1.provider, DOMAIN_1.config, null, DOMAIN_1.tlsConfig),
+            domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0, AUDIT_SOURCE),
+            domains.add.bind(null, DOMAIN_1.domain, DOMAIN_1, AUDIT_SOURCE),
             userdb.add.bind(null, ADMIN_0.id, ADMIN_0),
             userdb.add.bind(null, USER_0.id, USER_0),
             userdb.add.bind(null, USER_1.id, USER_1),

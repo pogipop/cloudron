@@ -59,8 +59,11 @@ const DOMAIN_0 = {
         secretAccessKey: 'secretAccessKey',
         endpoint: 'http://localhost:5353'
     },
+    fallbackCertificate: null,
     tlsConfig: { provider: 'caas' }
 };
+
+let AUDIT_SOURCE = { ip: '1.2.3.4' };
 
 var ADMIN = {
     id: 'admin123',
@@ -119,7 +122,7 @@ describe('apptask', function () {
         async.series([
             database.initialize,
             database._clear,
-            domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0.zoneName, DOMAIN_0.provider, DOMAIN_0.config, null, DOMAIN_0.tlsConfig),
+            domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0, AUDIT_SOURCE),
             userdb.add.bind(null, ADMIN.id, ADMIN),
             appdb.add.bind(null, APP.id, APP.appStoreId, APP.manifest, APP.location, APP.domain, APP.ownerId, APP.portBindings, APP),
             settings.initialize
