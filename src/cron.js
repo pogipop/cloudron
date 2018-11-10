@@ -43,7 +43,7 @@ var gJobs = {
     cleanupTokens: null,
     digestEmail: null,
     dockerVolumeCleaner: null,
-    dynamicDNS: null,
+    dynamicDns: null,
     schedulerSync: null,
     appHealthMonitor: null
 };
@@ -267,15 +267,15 @@ function dynamicDnsChanged(enabled) {
     debug('Dynamic DNS setting changed to %s', enabled);
 
     if (enabled) {
-        gJobs.dynamicDNS = new CronJob({
+        gJobs.dynamicDns = new CronJob({
             cronTime: '00 */10 * * * *',
             onTick: dyndns.sync,
             start: true,
             timeZone: gJobs.boxUpdateCheckerJob.cronTime.zone // hack
         });
     } else {
-        if (gJobs.dynamicDNS) gJobs.dynamicDNS.stop();
-        gJobs.dynamicDNS = null;
+        if (gJobs.dynamicDns) gJobs.dynamicDns.stop();
+        gJobs.dynamicDns = null;
     }
 }
 
