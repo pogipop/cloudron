@@ -186,7 +186,7 @@ function setMailEnabled(req, res, next) {
 
     if (typeof req.body.enabled !== 'boolean') return next(new HttpError(400, 'enabled is required'));
 
-    mail.setMailEnabled(req.params.domain, !!req.body.enabled, function (error) {
+    mail.setMailEnabled(req.params.domain, !!req.body.enabled, auditSource(req), function (error) {
         if (error && error.reason === MailError.NOT_FOUND) return next(new HttpError(404, error.message));
         if (error && error.reason === MailError.BAD_FIELD) return next(new HttpError(400, error.message));
         if (error && error.reason === MailError.BILLING_REQUIRED) return next(new HttpError(402, error.message));

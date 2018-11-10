@@ -853,9 +853,10 @@ function setMailRelay(domain, relay, callback) {
     });
 }
 
-function setMailEnabled(domain, enabled, callback) {
+function setMailEnabled(domain, enabled, auditSource, callback) {
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof enabled, 'boolean');
+    assert.strictEqual(typeof auditSource, 'object');
     assert.strictEqual(typeof callback, 'function');
 
     maildb.update(domain, { enabled: enabled }, function (error) {
@@ -863,6 +864,8 @@ function setMailEnabled(domain, enabled, callback) {
         if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
 
         restartMail(NOOP_CALLBACK);
+
+        eventlog.add(eventlog.ACTION_MAIL_ENABLED, auditSource, { domain, enabled });
 
         callback(null);
     });
