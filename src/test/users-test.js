@@ -75,7 +75,7 @@ function setup(done) {
     async.series([
         database.initialize,
         database._clear,
-        domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0.zoneName, DOMAIN_0.provider, DOMAIN_0.config, DOMAIN_0.fallbackCertificate, DOMAIN_0.tlsConfig),
+        domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0, AUDIT_SOURCE),
         mail.addDomain.bind(null, DOMAIN_0.domain),
         mailer._clearMailQueue
     ], done);

@@ -28,7 +28,7 @@ function setup(done) {
         database.initialize,
         settings.initialize,
         database._clear,
-        domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0.zoneName, DOMAIN_0.provider, DOMAIN_0.config, DOMAIN_0.fallbackCertificate, DOMAIN_0.tlsConfig)
+        domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0, AUDIT_SOURCE)
     ], done);
 }
 

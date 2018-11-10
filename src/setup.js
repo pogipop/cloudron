@@ -298,6 +298,7 @@ function restore(backupConfig, backupId, version, autoconf, auditSource, callbac
 
             async.series([
                 backups.restore.bind(null, backupConfig, backupId),
+                eventlog.add.bind(null, eventlog.ACTION_RESTORE, auditSource, { backupId }),
                 autoprovision.bind(null, autoconf),
                 // currently, our suggested restore flow is after a dnsSetup. The dnSetup creates DKIM keys and updates the DNS
                 // for this reason, we have to re-setup DNS after a restore so it has DKIm from the backup
