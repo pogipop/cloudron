@@ -280,9 +280,9 @@ function restore(backupConfig, backupId, version, autoconf, auditSource, callbac
 
     if (gWebadminStatus.configuring || gWebadminStatus.restore.active) return callback(new SetupError(SetupError.BAD_STATE, 'Already restoring or configuring'));
 
-    users.count(function (error, count) {
+    users.isActivated(function (error, activated) {
         if (error) return callback(new SetupError(SetupError.INTERNAL_ERROR, error));
-        if (count) return callback(new SetupError(SetupError.ALREADY_PROVISIONED, 'Already activated'));
+        if (activated) return callback(new SetupError(SetupError.ALREADY_PROVISIONED, 'Already activated'));
 
         backups.testConfig(backupConfig, function (error) {
             if (error && error.reason === BackupsError.BAD_FIELD) return callback(new SetupError(SetupError.BAD_FIELD, error.message));
@@ -317,7 +317,7 @@ function restore(backupConfig, backupId, version, autoconf, auditSource, callbac
 function getStatus(callback) {
     assert.strictEqual(typeof callback, 'function');
 
-    users.count(function (error, count) {
+    users.isActivated(function (error, activated) {
         if (error) return callback(new SetupError(SetupError.INTERNAL_ERROR, error));
 
         settings.getCloudronName(function (error, cloudronName) {
@@ -329,7 +329,7 @@ function getStatus(callback) {
                 provider: config.provider(),
                 cloudronName: cloudronName,
                 adminFqdn: config.adminDomain() ? config.adminFqdn() : null,
-                activated: count !== 0,
+                activated: activated,
                 edition: config.edition(),
                 webadminStatus: gWebadminStatus // only valid when !activated
             });

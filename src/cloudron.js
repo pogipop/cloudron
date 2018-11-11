@@ -93,9 +93,9 @@ function onActivated(callback) {
     // Starting the platform after a user is available means:
     // 1. mail bounces can now be sent to the cloudron owner
     // 2. the restore code path can run without sudo (since mail/ is non-root)
-    users.count(function (error, count) {
+    users.isActivated(function (error, activated) {
         if (error) return callback(new CloudronError(CloudronError.INTERNAL_ERROR, error));
-        if (!count) return callback(); // not activated
+        if (!activated) return callback(); // not activated
 
         async.series([
             platform.start,

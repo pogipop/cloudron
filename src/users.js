@@ -8,7 +8,7 @@ exports = module.exports = {
 
     list: list,
     create: create,
-    count: count,
+    isActivated: isActivated,
     verify: verify,
     verifyWithUsername: verifyWithUsername,
     verifyWithEmail: verifyWithEmail,
@@ -320,6 +320,16 @@ function count(callback) {
         if (error) return callback(new UsersError(UsersError.INTERNAL_ERROR, error));
 
         callback(null, count);
+    });
+}
+
+function isActivated(callback) {
+    assert.strictEqual(typeof callback, 'function');
+
+    count(function (error, count) {
+        if (error) return callback(error);
+
+        callback(null, count !== 0);
     });
 }
 

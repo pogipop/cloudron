@@ -731,14 +731,25 @@ describe('User', function () {
         });
     });
 
-    describe('count', function () {
-        before(createOwner);
+    describe('activated', function () {
         after(cleanupUsers);
 
-        it('succeeds', function (done) {
-            users.count(function (error, count) {
+        it('succeeds with no users', function (done) {
+            users.isActivated(function (error, activated) {
                 expect(error).to.not.be.ok();
-                expect(count).to.be(1);
+                expect(activated).to.be(false);
+                done();
+            });
+        });
+
+        it('create users', function (done) {
+            createOwner(done);
+        });
+
+        it('succeeds with users', function (done) {
+            users.isActivated(function (error, activated) {
+                expect(error).to.not.be.ok();
+                expect(activated).to.be(true);
                 done();
             });
         });

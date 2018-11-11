@@ -601,9 +601,9 @@ function restartMail(callback) {
 function restartMailIfActivated(callback) {
     assert.strictEqual(typeof callback, 'function');
 
-    users.count(function (error, count) {
+    users.isActivated(function (error, activated) {
         if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
-        if (!count) {
+        if (!activated) {
             debug('restartMailIfActivated: skipping restart of mail container since Cloudron is not activated yet');
             return callback(); // not provisioned yet, do not restart container after dns setup
         }
