@@ -71,11 +71,9 @@ CloudronError.SELF_UPGRADE_NOT_SUPPORTED = 'Self upgrade not supported';
 function initialize(callback) {
     assert.strictEqual(typeof callback, 'function');
 
-    async.series([
-        reverseProxy.configureDefaultServer,
-        cron.startPreActivationJobs,
-        onActivated
-    ], callback);
+    cron.startPreActivationJobs(callback);
+
+    runStartupTasks();
 }
 
 function uninitialize(callback) {
@@ -88,19 +86,28 @@ function uninitialize(callback) {
 }
 
 function onActivated(callback) {
-    callback = callback || NOOP_CALLBACK;
+    assert.strictEqual(typeof callback, 'function');
 
     // Starting the platform after a user is available means:
     // 1. mail bounces can now be sent to the cloudron owner
     // 2. the restore code path can run without sudo (since mail/ is non-root)
-    users.isActivated(function (error, activated) {
-        if (error) return callback(new CloudronError(CloudronError.INTERNAL_ERROR, error));
-        if (!activated) return callback(); // not activated
+    async.series([
+        platform.start,
+        cron.startPostActivationJobs
+    ], callback);
+}
 
-        async.series([
-            platform.start,
-            cron.startPostActivationJobs
-        ], callback);
+// each of these tasks can fail. we will add some routes to fix/re-run them
+function runStartupTasks() {
+    // configure nginx to be reachable by IP
+    reverseProxy.configureDefaultServer(NOOP_CALLBACK);
+
+    // check activation state and start the platform
+    users.isActivated(function (error, activated) {
+        if (error) return debug(error);
+        if (!activated) return debug('initialize: not activated yet'); // not activated
+
+        onActivated(NOOP_CALLBACK);
     });
 }
 

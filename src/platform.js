@@ -131,7 +131,7 @@ function stopContainers(existingInfra, callback) {
 }
 
 function startApps(existingInfra, callback) {
-    if (existingInfra.version === 'none') {
+    if (existingInfra.version === 'none') { // cloudron is being restored from backup
         debug('startApps: restoring installed apps');
         apps.restoreInstalledApps(callback);
     } else if (existingInfra.version !== infra.version) {

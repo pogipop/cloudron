@@ -262,7 +262,7 @@ function activate(username, password, email, displayName, ip, auditSource, callb
                 expires: result.expires
             });
 
-            setTimeout(cloudron.onActivated, 3000); // hack for now to not block the above http response
+            setImmediate(cloudron.onActivated.bind(null, NOOP_CALLBACK)); // hack for now to not block the above http response
         });
     });
 }

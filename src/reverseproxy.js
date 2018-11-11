@@ -55,8 +55,7 @@ var acme2 = require('./cert/acme2.js'),
     util = require('util');
 
 var NGINX_APPCONFIG_EJS = fs.readFileSync(__dirname + '/../setup/start/nginx/appconfig.ejs', { encoding: 'utf8' }),
-    RELOAD_NGINX_CMD = path.join(__dirname, 'scripts/reloadnginx.sh'),
-    NOOP_CALLBACK = function (error) { if (error) debug(error); };
+    RELOAD_NGINX_CMD = path.join(__dirname, 'scripts/reloadnginx.sh');
 
 function ReverseProxyError(reason, errorOrMessage) {
     assert.strictEqual(typeof reason, 'string');
@@ -565,7 +564,7 @@ function removeAppConfigs() {
 }
 
 function configureDefaultServer(callback) {
-    callback = callback || NOOP_CALLBACK;
+    assert.strictEqual(typeof callback, 'function');
 
     var certFilePath = path.join(paths.NGINX_CERT_DIR,  'default.cert');
     var keyFilePath = path.join(paths.NGINX_CERT_DIR, 'default.key');
