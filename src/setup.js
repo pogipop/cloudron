@@ -3,10 +3,7 @@
 exports = module.exports = {
     provision: provision,
     restore: restore,
-    getStatus: getStatus,
     activate: activate,
-
-    configureWebadmin: configureWebadmin,
 
     SetupError: SetupError
 };
@@ -25,14 +22,12 @@ var assert = require('assert'),
     eventlog = require('./eventlog.js'),
     mail = require('./mail.js'),
     path = require('path'),
-    reverseProxy = require('./reverseproxy.js'),
     safe = require('safetydance'),
     semver = require('semver'),
     settingsdb = require('./settingsdb.js'),
     settings = require('./settings.js'),
     shell = require('./shell.js'),
     superagent = require('superagent'),
-    sysinfo = require('./sysinfo.js'),
     users = require('./users.js'),
     UsersError = users.UsersError,
     tld = require('tldjs'),
@@ -41,16 +36,6 @@ var assert = require('assert'),
 var RESTART_CMD = path.join(__dirname, 'scripts/restart.sh');
 
 var NOOP_CALLBACK = function (error) { if (error) debug(error); };
-
-var gWebadminStatus = {
-    dns: false,
-    tls: false,
-    configuring: false,
-    restore: {
-        active: false,
-        error: null
-    }
-};
 
 function SetupError(reason, errorOrMessage) {
     assert.strictEqual(typeof reason, 'string');
@@ -110,50 +95,6 @@ function autoprovision(autoconf, callback) {
     });
 }
 
-function configureWebadmin(callback) {
-    callback = callback || NOOP_CALLBACK;
-
-    debug('configureWebadmin: adminDomain:%s status:%j', config.adminDomain(), gWebadminStatus);
-
-    if (process.env.BOX_ENV === 'test' || !config.adminDomain() || gWebadminStatus.configuring) return callback();
-
-    gWebadminStatus.configuring = true; // re-entracy guard
-
-    function configureReverseProxy(error) {
-        debug('configureReverseProxy: error %j', error || null);
-
-        reverseProxy.configureAdmin({ userId: null, username: 'setup' }, function (error) {
-            debug('configureWebadmin: done error: %j', error || {});
-            gWebadminStatus.configuring = false;
-
-            if (error) return callback(error);
-
-            gWebadminStatus.tls = true;
-
-            callback();
-        });
-    }
-
-    // update the DNS. configure nginx regardless of whether it succeeded so that
-    // box is accessible even if dns creds are invalid
-    sysinfo.getPublicIp(function (error, ip) {
-        if (error) return configureReverseProxy(error);
-
-        domains.upsertDnsRecords(config.adminLocation(), config.adminDomain(), 'A', [ ip ], function (error) {
-            debug('addWebadminDnsRecord: updated records with error:', error);
-            if (error) return configureReverseProxy(error);
-
-            domains.waitForDnsRecord(config.adminLocation(), config.adminDomain(), 'A', ip, { interval: 30000, times: 50000 }, function (error) {
-                if (error) return configureReverseProxy(error);
-
-                gWebadminStatus.dns = true;
-
-                configureReverseProxy();
-            });
-        });
-    });
-}
-
 function provision(dnsConfig, autoconf, auditSource, callback) {
     assert.strictEqual(typeof dnsConfig, 'object');
     assert.strictEqual(typeof autoconf, 'object');
@@ -162,7 +103,9 @@ function provision(dnsConfig, autoconf, auditSource, callback) {
 
     if (config.adminDomain()) return callback(new SetupError(SetupError.ALREADY_SETUP));
 
-    if (gWebadminStatus.configuring || gWebadminStatus.restore.active) return callback(new SetupError(SetupError.BAD_STATE, 'Already restoring or configuring'));
+    let webadminStatus = cloudron.getWebadminStatus();
+
+    if (webadminStatus.configuring || webadminStatus.restore.active) return callback(new SetupError(SetupError.BAD_STATE, 'Already restoring or configuring'));
 
     const domain = dnsConfig.domain.toLowerCase();
     const zoneName = dnsConfig.zoneName ? dnsConfig.zoneName : (tld.getDomain(domain) || domain);
@@ -202,7 +145,7 @@ function provision(dnsConfig, autoconf, auditSource, callback) {
 
             async.series([
                 autoprovision.bind(null, autoconf),
-                configureWebadmin
+                cloudron.configureWebadmin
             ], NOOP_CALLBACK);
         });
     });
@@ -278,7 +221,9 @@ function restore(backupConfig, backupId, version, autoconf, auditSource, callbac
     if (!semver.valid(version)) return callback(new SetupError(SetupError.BAD_STATE, 'version is not a valid semver'));
     if (semver.major(config.version()) !== semver.major(version) || semver.minor(config.version()) !== semver.minor(version)) return callback(new SetupError(SetupError.BAD_STATE, `Run cloudron-setup with --version ${version} to restore from this backup`));
 
-    if (gWebadminStatus.configuring || gWebadminStatus.restore.active) return callback(new SetupError(SetupError.BAD_STATE, 'Already restoring or configuring'));
+    let webadminStatus = cloudron.getWebadminStatus();
+
+    if (webadminStatus.configuring || webadminStatus.restore.active) return callback(new SetupError(SetupError.BAD_STATE, 'Already restoring or configuring'));
 
     users.isActivated(function (error, activated) {
         if (error) return callback(new SetupError(SetupError.INTERNAL_ERROR, error));
@@ -291,8 +236,8 @@ function restore(backupConfig, backupId, version, autoconf, auditSource, callbac
 
             debug(`restore: restoring from ${backupId} from provider ${backupConfig.provider} with format ${backupConfig.format}`);
 
-            gWebadminStatus.restore.active = true;
-            gWebadminStatus.restore.error = null;
+            webadminStatus.restore.active = true;
+            webadminStatus.restore.error = null;
 
             callback(null); // do no block
 
@@ -307,31 +252,8 @@ function restore(backupConfig, backupId, version, autoconf, auditSource, callbac
                 shell.sudo.bind(null, 'restart', [ RESTART_CMD ])
             ], function (error) {
                 debug('restore:', error);
-                if (error) gWebadminStatus.restore.error = error.message;
-                gWebadminStatus.restore.active = false;
-            });
-        });
-    });
-}
-
-function getStatus(callback) {
-    assert.strictEqual(typeof callback, 'function');
-
-    users.isActivated(function (error, activated) {
-        if (error) return callback(new SetupError(SetupError.INTERNAL_ERROR, error));
-
-        settings.getCloudronName(function (error, cloudronName) {
-            if (error) return callback(new SetupError(SetupError.INTERNAL_ERROR, error));
-
-            callback(null, {
-                version: config.version(),
-                apiServerOrigin: config.apiServerOrigin(), // used by CaaS tool
-                provider: config.provider(),
-                cloudronName: cloudronName,
-                adminFqdn: config.adminDomain() ? config.adminFqdn() : null,
-                activated: activated,
-                edition: config.edition(),
-                webadminStatus: gWebadminStatus // only valid when !activated
+                if (error) webadminStatus.restore.error = error.message;
+                webadminStatus.restore.active = false;
             });
         });
     });

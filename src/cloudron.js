@@ -8,12 +8,17 @@ exports = module.exports = {
     getConfig: getConfig,
     getDisks: getDisks,
     getLogs: getLogs,
+    getStatus: getStatus,
 
     reboot: reboot,
 
     onActivated: onActivated,
 
-    checkDiskSpace: checkDiskSpace
+
+    checkDiskSpace: checkDiskSpace,
+
+    configureWebadmin: configureWebadmin,
+    getWebadminStatus: getWebadminStatus
 };
 
 var assert = require('assert'),
@@ -21,6 +26,7 @@ var assert = require('assert'),
     config = require('./config.js'),
     cron = require('./cron.js'),
     debug = require('debug')('box:cloudron'),
+    domains = require('./domains.js'),
     df = require('@sindresorhus/df'),
     mailer = require('./mailer.js'),
     os = require('os'),
@@ -35,12 +41,23 @@ var assert = require('assert'),
     shell = require('./shell.js'),
     spawn = require('child_process').spawn,
     split = require('split'),
+    sysinfo = require('./sysinfo.js'),
     users = require('./users.js'),
     util = require('util');
 
 var REBOOT_CMD = path.join(__dirname, 'scripts/reboot.sh');
 
 var NOOP_CALLBACK = function (error) { if (error) debug(error); };
+
+let gWebadminStatus = {
+    dns: false,
+    tls: false,
+    configuring: false,
+    restore: {
+        active: false,
+        error: null
+    }
+};
 
 function CloudronError(reason, errorOrMessage) {
     assert.strictEqual(typeof reason, 'string');
@@ -104,7 +121,7 @@ function runStartupTasks() {
     reverseProxy.configureDefaultServer(NOOP_CALLBACK);
 
     // always generate webadmin config since we have no versioning mechanism for the ejs
-    setup.configureWebadmin(NOOP_CALLBACK);
+    configureWebadmin(NOOP_CALLBACK);
 
     // check activation state and start the platform
     users.isActivated(function (error, activated) {
@@ -277,4 +294,75 @@ function getLogs(unit, options, callback) {
     cp.stdout.pipe(transformStream);
 
     return callback(null, transformStream);
+}
+
+function configureWebadmin(callback) {
+    assert.strictEqual(typeof callback, 'function');
+
+    debug('configureWebadmin: adminDomain:%s status:%j', config.adminDomain(), gWebadminStatus);
+
+    if (process.env.BOX_ENV === 'test' || !config.adminDomain() || gWebadminStatus.configuring) return callback();
+
+    gWebadminStatus.configuring = true; // re-entracy guard
+
+    function configureReverseProxy(error) {
+        debug('configureReverseProxy: error %j', error || null);
+
+        reverseProxy.configureAdmin({ userId: null, username: 'setup' }, function (error) {
+            debug('configureWebadmin: done error: %j', error || {});
+            gWebadminStatus.configuring = false;
+
+            if (error) return callback(error);
+
+            gWebadminStatus.tls = true;
+
+            callback();
+        });
+    }
+
+    // update the DNS. configure nginx regardless of whether it succeeded so that
+    // box is accessible even if dns creds are invalid
+    sysinfo.getPublicIp(function (error, ip) {
+        if (error) return configureReverseProxy(error);
+
+        domains.upsertDnsRecords(config.adminLocation(), config.adminDomain(), 'A', [ ip ], function (error) {
+            debug('addWebadminDnsRecord: updated records with error:', error);
+            if (error) return configureReverseProxy(error);
+
+            domains.waitForDnsRecord(config.adminLocation(), config.adminDomain(), 'A', ip, { interval: 30000, times: 50000 }, function (error) {
+                if (error) return configureReverseProxy(error);
+
+                gWebadminStatus.dns = true;
+
+                configureReverseProxy();
+            });
+        });
+    });
+}
+
+function getWebadminStatus() {
+    return gWebadminStatus;
+}
+
+function getStatus(callback) {
+    assert.strictEqual(typeof callback, 'function');
+
+    users.isActivated(function (error, activated) {
+        if (error) return callback(new CloudronError(CloudronError.INTERNAL_ERROR, error));
+
+        settings.getCloudronName(function (error, cloudronName) {
+            if (error) return callback(new CloudronError(CloudronError.INTERNAL_ERROR, error));
+
+            callback(null, {
+                version: config.version(),
+                apiServerOrigin: config.apiServerOrigin(), // used by CaaS tool
+                provider: config.provider(),
+                cloudronName: cloudronName,
+                adminFqdn: config.adminDomain() ? config.adminFqdn() : null,
+                activated: activated,
+                edition: config.edition(),
+                webadminStatus: gWebadminStatus // only valid when !activated
+            });
+        });
+    });
 }

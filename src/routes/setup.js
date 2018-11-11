@@ -5,8 +5,7 @@ exports = module.exports = {
     setupTokenAuth: setupTokenAuth,
     provision: provision,
     activate: activate,
-    restore: restore,
-    getStatus: getStatus,
+    restore: restore
 };
 
 var assert = require('assert'),
@@ -91,14 +90,6 @@ function provision(req, res, next) {
         if (error) return next(new HttpError(500, error));
 
         next(new HttpSuccess(200));
-    });
-}
-
-function getStatus(req, res, next) {
-    setup.getStatus(function (error, status) {
-        if (error) return next(new HttpError(500, error));
-
-        next(new HttpSuccess(200, status));
     });
 }
 

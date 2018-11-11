@@ -10,7 +10,8 @@ exports = module.exports = {
     feedback: feedback,
     checkForUpdates: checkForUpdates,
     getLogs: getLogs,
-    getLogStream: getLogStream
+    getLogStream: getLogStream,
+    getStatus: getStatus,
 };
 
 var appstore = require('../appstore.js'),
@@ -164,5 +165,13 @@ function getLogStream(req, res, next) {
         });
         logStream.on('end', res.end.bind(res));
         logStream.on('error', res.end.bind(res, null));
+    });
+}
+
+function getStatus(req, res, next) {
+    cloudron.getStatus(function (error, status) {
+        if (error) return next(new HttpError(500, error));
+
+        next(new HttpSuccess(200, status));
     });
 }

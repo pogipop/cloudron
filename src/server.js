@@ -111,7 +111,7 @@ function initializeExpressSync() {
     router.post('/api/v1/cloudron/setup', routes.setup.providerTokenAuth, routes.setup.provision);    // only available until no-domain
     router.post('/api/v1/cloudron/restore', routes.setup.restore);    // only available until activated
     router.post('/api/v1/cloudron/activate', routes.setup.setupTokenAuth, routes.setup.activate);
-    router.get ('/api/v1/cloudron/status', routes.setup.getStatus);
+    router.get ('/api/v1/cloudron/status', routes.cloudron.getStatus);
 
     router.get ('/api/v1/cloudron/progress', routes.cloudron.getProgress);
     router.get ('/api/v1/cloudron/avatar', routes.settings.getCloudronAvatar); // this is a public alias for /api/v1/settings/cloudron_avatar
