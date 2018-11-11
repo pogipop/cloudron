@@ -325,7 +325,12 @@ function importDatabase(addon, callback) {
             async.series([
                 KNOWN_ADDONS[addon].setup.bind(null, app, app.manifest.addons[addon]),
                 KNOWN_ADDONS[addon].restore.bind(null, app, app.manifest.addons[addon])
-            ], iteratorCallback);
+            ], function (error) {
+                if (!error) return iteratorCallback();
+
+                debug(`importDatabase: Error importing ${addon} of app ${app.id}. Marking as errored`, error);
+                appdb.update(app.id, { installationState: appdb.ISTATE_ERROR, installationProgress: error.message }, iteratorCallback);
+            });
         }, callback);
     });
 }
@@ -1062,7 +1067,6 @@ function startMongodb(existingInfra, callback) {
     const rootPassword = hat(8 * 128);
     const cloudronToken = hat(8 * 128);
     const memoryLimit = (1 + Math.round(os.totalmem()/(1024*1024*1024)/4)) * 200;
-
 
     const upgrading = existingInfra.version !== 'none' && requiresUpgrade(existingInfra.images.mongodb.tag, tag);
 

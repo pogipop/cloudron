@@ -60,10 +60,11 @@ function start(callback) {
 
     async.series([
         stopContainers.bind(null, existingInfra),
+        // mark app state before we start addons. this gives the db import logic a chance to mark an app as errored
+        startApps.bind(null, existingInfra),
         graphs.startGraphite.bind(null, existingInfra),
         addons.startAddons.bind(null, existingInfra),
         pruneInfraImages,
-        startApps.bind(null, existingInfra),
         fs.writeFile.bind(fs, paths.INFRA_VERSION_FILE, JSON.stringify(infra, null, 4))
     ], function (error) {
         if (error) return callback(error);
