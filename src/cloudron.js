@@ -31,6 +31,7 @@ var assert = require('assert'),
     reverseProxy = require('./reverseproxy.js'),
     safe = require('safetydance'),
     settings = require('./settings.js'),
+    setup = require('./setup.js'),
     shell = require('./shell.js'),
     spawn = require('child_process').spawn,
     split = require('split'),
@@ -101,6 +102,9 @@ function onActivated(callback) {
 function runStartupTasks() {
     // configure nginx to be reachable by IP
     reverseProxy.configureDefaultServer(NOOP_CALLBACK);
+
+    // always generate webadmin config since we have no versioning mechanism for the ejs
+    setup.configureWebadmin(NOOP_CALLBACK);
 
     // check activation state and start the platform
     users.isActivated(function (error, activated) {
