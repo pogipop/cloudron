@@ -558,8 +558,10 @@ function renewAll(auditSource, callback) {
 }
 
 function removeAppConfigs() {
-    for (var appConfigFile of fs.readdirSync(paths.NGINX_APPCONFIG_DIR)) {
-        fs.unlinkSync(path.join(paths.NGINX_APPCONFIG_DIR, appConfigFile));
+    for (let appConfigFile of fs.readdirSync(paths.NGINX_APPCONFIG_DIR)) {
+        if (appConfigFile !== constants.NGINX_DEFAULT_CONFIG_FILE_NAME && appConfigFile !== constants.NGINX_ADMIN_CONFIG_FILE_NAME) {
+            fs.unlinkSync(path.join(paths.NGINX_APPCONFIG_DIR, appConfigFile));
+        }
     }
 }
 
@@ -577,7 +579,7 @@ function configureDefaultServer(callback) {
         safe.child_process.execSync(certCommand);
     }
 
-    writeAdminConfig({ certFilePath, keyFilePath }, 'default.conf', '', function (error) {
+    writeAdminConfig({ certFilePath, keyFilePath }, constants.NGINX_DEFAULT_CONFIG_FILE_NAME, '', function (error) {
         if (error) return callback(error);
 
         debug('configureDefaultServer: done');
