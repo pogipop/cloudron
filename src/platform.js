@@ -110,6 +110,7 @@ function pruneInfraImages(callback) {
 function stopContainers(existingInfra, callback) {
     // always stop addons to restart them on any infra change, regardless of minor or major update
     if (existingInfra.version !== infra.version) {
+        // TODO: only nuke containers with isCloudronManaged=true
         debug('stopping all containers for infra upgrade');
         shell.execSync('stopContainers', 'docker ps -qa | xargs --no-run-if-empty docker stop');
         shell.execSync('stopContainers', 'docker ps -qa | xargs --no-run-if-empty docker rm -f');

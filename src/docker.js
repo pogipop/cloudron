@@ -230,7 +230,8 @@ function createSubcontainer(app, name, cmd, options, callback) {
             Labels: {
                 'fqdn': app.fqdn,
                 'appId': app.id,
-                'isSubcontainer': String(!isAppContainer)
+                'isSubcontainer': String(!isAppContainer),
+                'isCloudronManaged': String(true)
             },
             HostConfig: {
                 Mounts: addons.getMountsSync(app, app.manifest.addons),

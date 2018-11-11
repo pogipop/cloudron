@@ -589,6 +589,7 @@ function restartMail(callback) {
                         -v "${paths.PLATFORM_DATA_DIR}/addons/mail:/etc/mail" \
                         ${ports} \
                         -p 127.0.0.1:2020:2020 \
+                        --label isCloudronManaged=true \
                         --read-only -v /run -v /tmp ${tag}`;
 
             shell.execSync('startMail', cmd);

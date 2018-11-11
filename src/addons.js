@@ -713,6 +713,7 @@ function startMysql(existingInfra, callback) {
                 -e CLOUDRON_MYSQL_ROOT_HOST=172.18.0.1 \
                 -e CLOUDRON_MYSQL_ROOT_PASSWORD=${rootPassword} \
                 -v "${dataDir}/mysql:/var/lib/mysql" \
+                --label isCloudronManaged=true \
                 --read-only -v /tmp -v /run "${tag}"`;
 
     shell.execSync('startMysql', cmd);
@@ -903,6 +904,7 @@ function startPostgresql(existingInfra, callback) {
                 -e CLOUDRON_POSTGRESQL_ROOT_PASSWORD="${rootPassword}" \
                 -e CLOUDRON_POSTGRESQL_TOKEN="${cloudronToken}" \
                 -v "${dataDir}/postgresql:/var/lib/postgresql" \
+                --label isCloudronManaged=true \
                 --read-only -v /tmp -v /run "${tag}"`;
 
     shell.execSync('startPostgresql', cmd);
@@ -1083,6 +1085,7 @@ function startMongodb(existingInfra, callback) {
                 -e CLOUDRON_MONGODB_ROOT_PASSWORD="${rootPassword}" \
                 -e CLOUDRON_MONGODB_TOKEN="${cloudronToken}" \
                 -v "${dataDir}/mongodb:/var/lib/mongodb" \
+                --label isCloudronManaged=true \
                 --read-only -v /tmp -v /run "${tag}"`;
 
     shell.execSync('startMongodb', cmd);
@@ -1284,6 +1287,7 @@ function setupRedis(app, options, callback) {
                         -e CLOUDRON_REDIS_PASSWORD="${redisPassword}" \
                         -e CLOUDRON_REDIS_TOKEN="${redisServiceToken}" \
                         -v "${paths.PLATFORM_DATA_DIR}/redis/${app.id}:/var/lib/redis" \
+                        --label isCloudronManaged=true \
                         --read-only -v /tmp -v /run ${tag}`;
 
             var env = [
