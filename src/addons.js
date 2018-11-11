@@ -338,14 +338,27 @@ function importDatabase(addon, callback) {
 function updateAddonConfig(platformConfig, callback) {
     callback = callback || NOOP_CALLBACK;
 
+    // TODO: maybe derive these defaults based on how many apps are using them
+    const defaultMemoryLimits = {
+        mysql: (1 + Math.round(os.totalmem()/(1024*1024*1024)/4)) * 256 * 1024 * 1024,
+        mongodb: (1 + Math.round(os.totalmem()/(1024*1024*1024)/4)) * 200 * 1024 * 1024,
+        postgresql: (1 + Math.round(os.totalmem()/(1024*1024*1024)/4)) * 256 * 1024 * 1024,
+        mail: Math.max((1 + Math.round(os.totalmem()/(1024*1024*1024)/4)) * 128, 256) * 1024 * 1024
+    };
+
     // TODO: this should possibly also rollback memory to default
     async.eachSeries([ 'mysql', 'postgresql', 'mail', 'mongodb' ], function iterator(containerName, iteratorCallback) {
         const containerConfig = platformConfig[containerName];
-        if (!containerConfig) return iteratorCallback();
+        let memory, memorySwap;
+        if (containerConfig && containerConfig.memory && containerConfig.memorySwap) {
+            memory = containerConfig.memory;
+            memorySwap = containerConfig.memorySwap;
+        } else {
+            memory = defaultMemoryLimits[containerName];
+            memorySwap = memory * 2;
+        }
 
-        if (!containerConfig.memory || !containerConfig.memorySwap) return iteratorCallback();
-
-        const args = `update --memory ${containerConfig.memory} --memory-swap ${containerConfig.memorySwap} ${containerName}`.split(' ');
+        const args = `update --memory ${memory} --memory-swap ${memorySwap} ${containerName}`.split(' ');
         shell.exec(`update${containerName}`, '/usr/bin/docker', args, { }, iteratorCallback);
     }, callback);
 }
@@ -380,6 +393,7 @@ function startAddons(existingInfra, callback) {
     async.series(startFuncs, function (error) {
         if (error) return callback(error);
 
+        // once addons are started/imported, scale them back
         settings.getPlatformConfig(function (error, platformConfig) {
             if (error) return callback(error);
 
@@ -694,7 +708,7 @@ function startMysql(existingInfra, callback) {
     const dataDir = paths.PLATFORM_DATA_DIR;
     const rootPassword = hat(8 * 128);
     const cloudronToken = hat(8 * 128);
-    const memoryLimit = (1 + Math.round(os.totalmem()/(1024*1024*1024)/4)) * 256;
+    const memoryLimit = 4 * 256;
 
     const upgrading = existingInfra.version !== 'none' && requiresUpgrade(existingInfra.images.mysql.tag, tag);
 
@@ -886,7 +900,7 @@ function startPostgresql(existingInfra, callback) {
     const dataDir = paths.PLATFORM_DATA_DIR;
     const rootPassword = hat(8 * 128);
     const cloudronToken = hat(8 * 128);
-    const memoryLimit = (1 + Math.round(os.totalmem()/(1024*1024*1024)/4)) * 256;
+    const memoryLimit = 4 * 256;
 
     const upgrading = existingInfra.version !== 'none' && requiresUpgrade(existingInfra.images.postgresql.tag, tag);
 
@@ -1066,7 +1080,7 @@ function startMongodb(existingInfra, callback) {
     const dataDir = paths.PLATFORM_DATA_DIR;
     const rootPassword = hat(8 * 128);
     const cloudronToken = hat(8 * 128);
-    const memoryLimit = (1 + Math.round(os.totalmem()/(1024*1024*1024)/4)) * 200;
+    const memoryLimit = 4 * 256;
 
     const upgrading = existingInfra.version !== 'none' && requiresUpgrade(existingInfra.images.mongodb.tag, tag);
 

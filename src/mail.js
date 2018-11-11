@@ -554,7 +554,7 @@ function restartMail(callback) {
     if (process.env.BOX_ENV === 'test' && !process.env.TEST_CREATE_INFRA) return callback();
 
     const tag = infra.images.mail.tag;
-    const memoryLimit = Math.max((1 + Math.round(os.totalmem()/(1024*1024*1024)/4)) * 128, 256);
+    const memoryLimit = 4 * 256;
 
     // admin and mail share the same certificate
     reverseProxy.getCertificate({ fqdn: config.adminFqdn(), domain: config.adminDomain() }, function (error, bundle) {
