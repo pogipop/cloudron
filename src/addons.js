@@ -164,7 +164,7 @@ function requiresUpgrade(existingTag, currentTag) {
 // paths for dumps
 function dumpPath(addon, appId) {
     switch (addon) {
-    case 'postgres': return path.join(paths.APPS_DATA_DIR, appId, 'postgresqldump');
+    case 'postgresql': return path.join(paths.APPS_DATA_DIR, appId, 'postgresqldump');
     case 'mysql': return path.join(paths.APPS_DATA_DIR, appId, 'mysqldump');
     case 'mongodb': return path.join(paths.APPS_DATA_DIR, appId, 'mongodbdump');
     case 'redis': return path.join(paths.APPS_DATA_DIR, appId, 'dump.rdb');
