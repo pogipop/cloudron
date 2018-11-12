@@ -1214,7 +1214,7 @@ function backupMongoDb(app, options, callback) {
     getAddonDetails('mongodb', 'CLOUDRON_MONGODB_TOKEN', function (error, result) {
         if (error) return callback(error);
 
-        const writeStream = fs.createWriteStream(dumpPath('mongo', app.id));
+        const writeStream = fs.createWriteStream(dumpPath('mongodb', app.id));
         writeStream.on('error', callback);
 
         const req = request.post(`https://${result.ip}:3000/databases/${app.id}/backup?access_token=${result.token}`, { rejectUnauthorized: false }, function (error, response) {
@@ -1239,7 +1239,7 @@ function restoreMongoDb(app, options, callback) {
     getAddonDetails('mongodb', 'CLOUDRON_MONGODB_TOKEN', function (error, result) {
         if (error) return callback(error);
 
-        const readStream = fs.createReadStream(dumpPath('mongo', app.id));
+        const readStream = fs.createReadStream(dumpPath('mongodb', app.id));
         readStream.on('error', callback);
 
         const restoreReq = request.post(`https://${result.ip}:3000/databases/${app.id}/restore?access_token=${result.token}`, { rejectUnauthorized: false }, function (error, response) {
