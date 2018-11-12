@@ -306,13 +306,25 @@ function restoreAddons(app, addons, callback) {
     }, callback);
 }
 
+function importAppDatabase(app, addon, callback) {
+    assert.strictEqual(typeof app, 'object');
+    assert.strictEqual(typeof addon, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    if (!(addon in KNOWN_ADDONS)) return callback(new Error(`No such addon: ${addon}`));
+
+    async.series([
+        KNOWN_ADDONS[addon].setup.bind(null, app, app.manifest.addons[addon]),
+        KNOWN_ADDONS[addon].clear.bind(null, app, app.manifest.addons[addon]), // clear in case we crashed in a restore
+        KNOWN_ADDONS[addon].restore.bind(null, app, app.manifest.addons[addon])
+    ], callback);
+}
+
 function importDatabase(addon, callback) {
     assert.strictEqual(typeof addon, 'string');
     assert.strictEqual(typeof callback, 'function');
 
     debug(`importDatabase: Importing ${addon}`);
-
-    if (!(addon in KNOWN_ADDONS)) return callback(new Error(`No such addon: ${addon}`));
 
     appdb.getAll(function (error, apps) {
         if (error) return callback(error);
@@ -322,10 +334,7 @@ function importDatabase(addon, callback) {
 
             debug(`importDatabase: Importing addon ${addon} of app ${app.id}`);
 
-            async.series([
-                KNOWN_ADDONS[addon].setup.bind(null, app, app.manifest.addons[addon]),
-                KNOWN_ADDONS[addon].restore.bind(null, app, app.manifest.addons[addon])
-            ], function (error) {
+            importAppDatabase(app, addon, function (error) {
                 if (!error) return iteratorCallback();
 
                 debug(`importDatabase: Error importing ${addon} of app ${app.id}. Marking as errored`, error);

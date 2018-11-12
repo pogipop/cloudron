@@ -343,6 +343,7 @@ function initializeSysadminExpressSync() {
     router.post('/api/v1/backup', routes.sysadmin.backup);
     router.post('/api/v1/update', routes.sysadmin.update);
     router.post('/api/v1/retire', routes.sysadmin.retire);
+    router.post('/api/v1/apps/:id/import', routes.sysadmin.importAppDatabase);
 
     return httpServer;
 }
