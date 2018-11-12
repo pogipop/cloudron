@@ -513,7 +513,7 @@ function execWebSocket(req, res, next) {
         if (error && error.reason === AppsError.BAD_STATE) return next(new HttpError(409, error.message));
         if (error) return next(new HttpError(500, error));
 
-        console.log('Connected to terminal');
+        debug('Connected to terminal');
 
         req.clearTimeout();
 
@@ -521,7 +521,7 @@ function execWebSocket(req, res, next) {
             duplexStream.on('end', function () { ws.close(); });
             duplexStream.on('close', function () { ws.close(); });
             duplexStream.on('error', function (error) {
-                console.error('duplexStream error:', error);
+                debug('duplexStream error:', error);
             });
             duplexStream.on('data', function (data) {
                 if (ws.readyState !== WebSocket.OPEN) return;
@@ -529,7 +529,7 @@ function execWebSocket(req, res, next) {
             });
 
             ws.on('error', function (error) {
-                console.error('websocket error:', error);
+                debug('websocket error:', error);
             });
             ws.on('message', function (msg) {
                 duplexStream.write(msg);
