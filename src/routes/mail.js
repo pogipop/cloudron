@@ -91,6 +91,10 @@ function setDnsRecords(req, res, next) {
     assert.strictEqual(typeof req.body, 'object');
     assert.strictEqual(typeof req.params.domain, 'string');
 
+    // can take a setup all the DNS entries. this is mostly because some backends try to list DNS entries (DO)
+    // for upsert and this takes a lot of time
+    req.clearTimeout();
+
     mail.setDnsRecords(req.params.domain, function (error) {
         if (error && error.reason === MailError.NOT_FOUND) return next(new HttpError(404, error.message));
         if (error && error.reason === MailError.EXTERNAL_ERROR) return next(new HttpError(424, error.message));
