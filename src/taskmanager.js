@@ -98,6 +98,7 @@ function startNextTask() {
     startAppTask(gPendingTasks.shift(), NOOP_CALLBACK);
 }
 
+// WARNING callback has to be called in sync for the concurrency check to work!
 function startAppTask(appId, callback) {
     assert.strictEqual(typeof appId, 'string');
     assert.strictEqual(typeof callback, 'function');
@@ -126,39 +127,39 @@ function startAppTask(appId, callback) {
         return callback();
     }
 
-    // ensure log folder
-    mkdirp.sync(path.join(paths.LOG_DIR, appId));
     var logFilePath = path.join(paths.LOG_DIR, appId, 'apptask.log');
+    var fd;
 
-    // will autoclose
-    fs.open(logFilePath, 'a', function (error, fd) {
-        if (error) {
-            debug('Unable to open log file, queueing task for %s', appId, error);
-            gPendingTasks.push(appId);
-            return callback();
+    // have to use sync here to avoid async callback, breaking concurrency check
+    try {
+        mkdirp.sync(path.join(paths.LOG_DIR, appId)); // ensure log folder
+        fd = fs.openSync(logFilePath, 'a'); // will autoclose
+    } catch (e) {
+        debug('Unable to get log filedescriptor, queueing task for %s', appId, e);
+        gPendingTasks.push(appId);
+        return callback();
+    }
+
+    // when parent process dies, apptask processes are killed because KillMode=control-group in systemd unit file
+    gActiveTasks[appId] = child_process.fork(__dirname + '/apptask.js', [ appId ], { stdio: [ 'pipe', fd, fd, 'ipc' ]});
+
+    var pid = gActiveTasks[appId].pid;
+    debug('Started task of %s pid: %s. See logs at %s', appId, pid, logFilePath);
+
+    gActiveTasks[appId].once('exit', function (code, signal) {
+        debug('Task for %s pid %s completed with status %s', appId, pid, code);
+        if (code === null /* signal */ || (code !== 0 && code !== 50)) { // apptask crashed
+            debug('Apptask crashed with code %s and signal %s', code, signal);
+            sendFailureLogs('apptask', { unit: 'box' });
+            appdb.update(appId, { installationState: appdb.ISTATE_ERROR, installationProgress: 'Apptask crashed with code ' + code + ' and signal ' + signal }, NOOP_CALLBACK);
+        } else if (code === 50) {
+            sendFailureLogs('apptask', { unit: 'box' });
         }
-
-        // when parent process dies, apptask processes are killed because KillMode=control-group in systemd unit file
-        gActiveTasks[appId] = child_process.fork(__dirname + '/apptask.js', [ appId ], { stdio: [ 'pipe', fd, fd, 'ipc' ]});
-
-        var pid = gActiveTasks[appId].pid;
-        debug('Started task of %s pid: %s. See logs at %s', appId, pid, logFilePath);
-
-        gActiveTasks[appId].once('exit', function (code, signal) {
-            debug('Task for %s pid %s completed with status %s', appId, pid, code);
-            if (code === null /* signal */ || (code !== 0 && code !== 50)) { // apptask crashed
-                debug('Apptask crashed with code %s and signal %s', code, signal);
-                sendFailureLogs('apptask', { unit: 'box' });
-                appdb.update(appId, { installationState: appdb.ISTATE_ERROR, installationProgress: 'Apptask crashed with code ' + code + ' and signal ' + signal }, NOOP_CALLBACK);
-            } else if (code === 50) {
-                sendFailureLogs('apptask', { unit: 'box' });
-            }
-            delete gActiveTasks[appId];
-            locker.unlock(locker.OP_APPTASK); // unlock event will trigger next task
-        });
-
-        callback();
+        delete gActiveTasks[appId];
+        locker.unlock(locker.OP_APPTASK); // unlock event will trigger next task
     });
+
+    callback();
 }
 
 function stopAppTask(appId, callback) {
