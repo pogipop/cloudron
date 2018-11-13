@@ -11,13 +11,31 @@ if [[ ${EUID} -ne 0 ]]; then
     exit 1
 fi
 
+# check if at least 10mb root partition space is available
+if [[ "`df --output="avail" / | sed -n 2p`" -lt "10240" ]]; then
+    echo "No more space left on /"
+    echo "This is likely the root case of the issue. Free up some space and also check other partitions below:"
+    echo ""
+    df -h
+    echo ""
+    echo "To recover from a full disk, follow the guide at https://cloudron.io/documentation/server/#recovery-after-disk-full"
+    exit 1
+fi
+
+# check for at least 5mb free /tmp space for the log file
+if [[ "`df --output="avail" /tmp | sed -n 2p`" -lt "5120" ]]; then
+    echo "Not enough space left on /tmp"
+    echo "Free up some space first by deleting files from /tmp"
+    exit 1
+fi
+
 echo -n "Generating Cloudron Support stats..."
 
 # clear file
 rm -rf $OUT
 
 ssh_port=$(cat /etc/ssh/sshd_config | grep "Port " | sed -e "s/.*Port //")
-if [[ $SUDO_USER === "" ]]; then
+if [[ $SUDO_USER == "" ]]; then
     ssh_user="root"
     ssh_folder="/root/.ssh/"
     authorized_key_file="${ssh_folder}/authorized_keys"
@@ -35,6 +53,7 @@ echo -e $LINE"cloudron.conf"$LINE >> $OUT
 cat /etc/cloudron/cloudron.conf &>> $OUT
 
 echo -e $LINE"Docker container"$LINE >> $OUT
+# TODO this may just hang and thus the script never ends, so we have to timeout we have examples
 docker ps -a &>> $OUT
 
 echo -e $LINE"Filesystem stats"$LINE >> $OUT
