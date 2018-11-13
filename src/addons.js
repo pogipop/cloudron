@@ -43,7 +43,6 @@ var accesscontrol = require('./accesscontrol.js'),
     rimraf = require('rimraf'),
     safe = require('safetydance'),
     semver = require('semver'),
-    settings = require('./settings.js'),
     shell = require('./shell.js'),
     request = require('request'),
     util = require('util');
@@ -355,6 +354,8 @@ function updateAddonConfig(platformConfig, callback) {
         mail: Math.max((1 + Math.round(os.totalmem()/(1024*1024*1024)/4)) * 128, 256) * 1024 * 1024
     };
 
+    debug('updateAddonConfig: %j', platformConfig);
+
     // TODO: this should possibly also rollback memory to default
     async.eachSeries([ 'mysql', 'postgresql', 'mail', 'mongodb' ], function iterator(containerName, iteratorCallback) {
         const containerConfig = platformConfig[containerName];
@@ -399,16 +400,7 @@ function startAddons(existingInfra, callback) {
         debug('startAddons: existing infra. incremental addon create %j', startFuncs.map(function (f) { return f.name; }));
     }
 
-    async.series(startFuncs, function (error) {
-        if (error) return callback(error);
-
-        // once addons are started/imported, scale them back
-        settings.getPlatformConfig(function (error, platformConfig) {
-            if (error) return callback(error);
-
-            updateAddonConfig(platformConfig, callback);
-        });
-    });
+    async.series(startFuncs, callback);
 }
 
 function getEnvironment(app, callback) {

@@ -25,6 +25,7 @@ var addons = require('./addons.js'),
     paths = require('./paths.js'),
     reverseProxy = require('./reverseproxy.js'),
     safe = require('safetydance'),
+    settings = require('./settings.js'),
     shell = require('./shell.js'),
     taskmanager = require('./taskmanager.js'),
     _ = require('underscore');
@@ -82,9 +83,27 @@ function stop(callback) {
 }
 
 function onPlatformReady() {
-    debug('onPlatformReady: resuming task manager');
+    debug('onPlatformReady: platform is ready');
     exports._isReady = true;
     taskmanager.resumeTasks();
+    applyPlatformConfig(NOOP_CALLBACK);
+}
+
+function applyPlatformConfig(callback) {
+    // scale back db containers, if possible. this is retried because updating memory constraints can fail
+    // with failed to write to memory.memsw.limit_in_bytes: write /sys/fs/cgroup/memory/docker/xx/memory.memsw.limit_in_bytes: device or resource busy
+
+    async.retry({ times: 10, interval: 5 * 60 * 1000 }, function (retryCallback) {
+        settings.getPlatformConfig(function (error, platformConfig) {
+            if (error) return retryCallback(error);
+
+            addons.updateAddonConfig(platformConfig, function (error) {
+                if (error) debug('Error updating addons. Will rety in 5 minutes', platformConfig, error);
+
+                retryCallback(error);
+            });
+        });
+    }, callback);
 }
 
 function pruneInfraImages(callback) {

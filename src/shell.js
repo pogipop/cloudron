@@ -38,7 +38,7 @@ function exec(tag, file, args, options, callback) {
 
     callback = once(callback); // exit may or may not be called after an 'error'
 
-    debug(tag + ' execFile: %s', file); // do not dump args as it might have sensitive info
+    debug(tag + ' execFile: %s %s', file, args.join(' '));
 
     var cp = child_process.spawn(file, args, options);
     if (options.logStream) {
