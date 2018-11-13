@@ -76,6 +76,9 @@ function getUpdateInfo(req, res, next) {
 }
 
 function checkForUpdates(req, res, next) {
+    // it can take a while sometimes to get all the app updates one by one
+    req.clearTimeout();
+
     async.series([
         updateChecker.checkAppUpdates,
         updateChecker.checkBoxUpdates
