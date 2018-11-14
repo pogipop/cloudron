@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# This script collects diagnostic information to help debug server related issues
+# It also enables SSH access for the cloudron support team
+
 PASTEBIN="https://paste.cloudron.io"
 OUT="/tmp/cloudron-support.log"
 LINE="\n========================================================\n"
