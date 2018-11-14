@@ -53,8 +53,9 @@ echo -e $LINE"cloudron.conf"$LINE >> $OUT
 cat /etc/cloudron/cloudron.conf &>> $OUT
 
 echo -e $LINE"Docker container"$LINE >> $OUT
-# TODO this may just hang and thus the script never ends, so we have to timeout we have examples
-docker ps -a &>> $OUT
+if ! timeout --kill-after 10s 15s docker ps -a &>> $OUT 2>&1; then
+    echo -e "Docker is not responding" >> $OUT
+fi
 
 echo -e $LINE"Filesystem stats"$LINE >> $OUT
 df -h &>> $OUT
@@ -80,6 +81,6 @@ chmod 600 "${authorized_key_file}"
 echo "Done"
 
 echo ""
-echo "Please send the following link to support@cloudron.io"
+echo "Please email the following link to support@cloudron.io"
 echo ""
 echo "${PASTEBIN}/${paste_key}"
