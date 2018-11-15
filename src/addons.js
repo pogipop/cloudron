@@ -1,6 +1,14 @@
 'use strict';
 
 exports = module.exports = {
+    AddonsError: AddonsError,
+
+    getAddons: getAddons,
+    getStatus: getStatus,
+    getLogs: getLogs,
+    startAddon: startAddon,
+    stopAddon: stopAddon,
+
     startAddons: startAddons,
     updateAddonConfig: updateAddonConfig,
 
@@ -47,6 +55,30 @@ var accesscontrol = require('./accesscontrol.js'),
     request = require('request'),
     util = require('util');
 
+// http://dustinsenos.com/articles/customErrorsInNode
+// http://code.google.com/p/v8/wiki/JavaScriptStackTraceApi
+function AddonsError(reason, errorOrMessage) {
+    assert.strictEqual(typeof reason, 'string');
+    assert(errorOrMessage instanceof Error || typeof errorOrMessage === 'string' || typeof errorOrMessage === 'undefined');
+
+    Error.call(this);
+    Error.captureStackTrace(this, this.constructor);
+
+    this.name = this.constructor.name;
+    this.reason = reason;
+    if (typeof errorOrMessage === 'undefined') {
+        this.message = reason;
+    } else if (typeof errorOrMessage === 'string') {
+        this.message = errorOrMessage;
+    } else {
+        this.message = 'Internal error';
+        this.nestedError = errorOrMessage;
+    }
+}
+util.inherits(AddonsError, Error);
+AddonsError.INTERNAL_ERROR = 'Internal Error';
+AddonsError.NOT_FOUND = 'Not Found';
+
 const NOOP = function (app, options, callback) { return callback(); };
 const NOOP_CALLBACK = function (error) { if (error) debug(error); };
 const RMADDON_CMD = path.join(__dirname, 'scripts/rmaddon.sh');
@@ -59,84 +91,96 @@ var KNOWN_ADDONS = {
         teardown: teardownEmail,
         backup: NOOP,
         restore: setupEmail,
-        clear: NOOP
+        clear: NOOP,
+        status: statusEmail
     },
     ldap: {
         setup: setupLdap,
         teardown: teardownLdap,
         backup: NOOP,
         restore: setupLdap,
-        clear: NOOP
+        clear: NOOP,
+        status: null
     },
     localstorage: {
         setup: setupLocalStorage, // docker creates the directory for us
         teardown: teardownLocalStorage,
         backup: NOOP, // no backup because it's already inside app data
         restore: NOOP,
-        clear: clearLocalStorage
+        clear: clearLocalStorage,
+        status: null
     },
     mongodb: {
         setup: setupMongoDb,
         teardown: teardownMongoDb,
         backup: backupMongoDb,
         restore: restoreMongoDb,
-        clear: clearMongodb
+        clear: clearMongodb,
+        status: statusMongoDb
     },
     mysql: {
         setup: setupMySql,
         teardown: teardownMySql,
         backup: backupMySql,
         restore: restoreMySql,
-        clear: clearMySql
+        clear: clearMySql,
+        status: statusMySql
     },
     oauth: {
         setup: setupOauth,
         teardown: teardownOauth,
         backup: NOOP,
         restore: setupOauth,
-        clear: NOOP
+        clear: NOOP,
+        status: null
     },
     postgresql: {
         setup: setupPostgreSql,
         teardown: teardownPostgreSql,
         backup: backupPostgreSql,
         restore: restorePostgreSql,
-        clear: clearPostgreSql
+        clear: clearPostgreSql,
+        status: statusPostgreSql
     },
     recvmail: {
         setup: setupRecvMail,
         teardown: teardownRecvMail,
         backup: NOOP,
         restore: setupRecvMail,
-        clear: NOOP
+        clear: NOOP,
+        status: null
     },
     redis: {
         setup: setupRedis,
         teardown: teardownRedis,
         backup: backupRedis,
         restore: restoreRedis,
-        clear: clearRedis
+        clear: clearRedis,
+        status: null
     },
     sendmail: {
         setup: setupSendMail,
         teardown: teardownSendMail,
         backup: NOOP,
         restore: setupSendMail,
-        clear: NOOP
+        clear: NOOP,
+        status: null
     },
     scheduler: {
         setup: NOOP,
         teardown: NOOP,
         backup: NOOP,
         restore: NOOP,
-        clear: NOOP
+        clear: NOOP,
+        status: null
     },
     docker: {
         setup: NOOP,
         teardown: NOOP,
         backup: NOOP,
         restore: NOOP,
-        clear: NOOP
+        clear: NOOP,
+        status: statusDocker
     }
 };
 
@@ -168,6 +212,89 @@ function dumpPath(addon, appId) {
     case 'mongodb': return path.join(paths.APPS_DATA_DIR, appId, 'mongodbdump');
     case 'redis': return path.join(paths.APPS_DATA_DIR, appId, 'dump.rdb');
     }
+}
+
+function getAddons(callback) {
+    assert.strictEqual(typeof callback, 'function');
+
+    // we currently list only addons which have a status function to report
+    var addons = Object.keys(KNOWN_ADDONS).filter(function (a) { return !!KNOWN_ADDONS[a].status; });
+
+    callback(null, addons);
+}
+
+function getStatus(addon, callback) {
+    assert.strictEqual(typeof containerName, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    if (!KNOWN_ADDONS[addon] || !KNOWN_ADDONS[addon].status) return callback(new AddonsError(AddonsError.NOT_FOUND));
+
+    KNOWN_ADDONS[addon].status(function (error, result) {
+        if (error) return callback(new AddonsError(AddonsError.INTERNAL_ERROR, error));
+
+        callback(null, { name: addon, status: result });
+    });
+}
+
+function getLogs(addon, options, callback) {
+    assert.strictEqual(typeof addon, 'string');
+    assert(options && typeof options === 'object');
+    assert.strictEqual(typeof callback, 'function');
+
+    if (!KNOWN_ADDONS[addon] || !KNOWN_ADDONS[addon].status) return callback(new AddonsError(AddonsError.NOT_FOUND));
+
+    debug('Getting logs for %s', addon);
+
+    var lines = options.lines || 100,
+        format = options.format || 'json',
+        follow = !!options.follow;
+
+    assert.strictEqual(typeof lines, 'number');
+    assert.strictEqual(typeof format, 'string');
+
+    var args = [ '--lines=' + lines ];
+    if (follow) args.push('--follow', '--retry', '--quiet'); // same as -F. to make it work if file doesn't exist, --quiet to not output file headers, which are no logs
+    args.push(path.join(paths.LOG_DIR, addon, 'app.log'));
+
+    var cp = spawn('/usr/bin/tail', args);
+
+    var transformStream = split(function mapper(line) {
+        if (format !== 'json') return line + '\n';
+
+        var data = line.split(' '); // logs are <ISOtimestamp> <msg>
+        var timestamp = (new Date(data[0])).getTime();
+        if (isNaN(timestamp)) timestamp = 0;
+        var message = line.slice(data[0].length+1);
+
+        // ignore faulty empty logs
+        if (!timestamp && !message) return;
+
+        return JSON.stringify({
+            realtimeTimestamp: timestamp * 1000,
+            message: message,
+            source: appId
+        }) + '\n';
+    });
+
+    transformStream.close = cp.kill.bind(cp, 'SIGKILL'); // closing stream kills the child process
+
+    cp.stdout.pipe(transformStream);
+
+    callback(null, transformStream);
+}
+
+function startAddon(addon, callback) {
+    assert.strictEqual(typeof addon, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    callback(new AddonsError(AddonsError.INTERNAL_ERROR, 'not implemented'));
+}
+
+function stopAddon(addon, callback) {
+    assert.strictEqual(typeof addon, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    callback(new AddonsError(AddonsError.INTERNAL_ERROR, 'not implemented'));
 }
 
 function getAddonDetails(containerName, tokenEnvName, callback) {
@@ -577,6 +704,11 @@ function teardownEmail(app, options, callback) {
     appdb.unsetAddonConfig(app.id, 'email', callback);
 }
 
+function statusEmail(callback) {
+    assert.strictEqual(typeof callback, 'function');
+    callback(null, { active: true });
+}
+
 function setupLdap(app, options, callback) {
     assert.strictEqual(typeof app, 'object');
     assert.strictEqual(typeof options, 'object');
@@ -904,6 +1036,11 @@ function restoreMySql(app, options, callback) {
     });
 }
 
+function statusMySql(callback) {
+    assert.strictEqual(typeof callback, 'function');
+    callback(null, { active: true });
+}
+
 function postgreSqlNames(appId) {
     appId = appId.replace(/-/g, '');
     return { database: `db${appId}`, username: `user${appId}` };
@@ -1079,6 +1216,11 @@ function restorePostgreSql(app, options, callback) {
     });
 }
 
+function statusPostgreSql(callback) {
+    assert.strictEqual(typeof callback, 'function');
+    callback(null, { active: true });
+}
+
 function startMongodb(existingInfra, callback) {
     assert.strictEqual(typeof existingInfra, 'object');
     assert.strictEqual(typeof callback, 'function');
@@ -1239,6 +1381,11 @@ function restoreMongoDb(app, options, callback) {
 
         readStream.pipe(restoreReq);
     });
+}
+
+function statusMongoDb(callback) {
+    assert.strictEqual(typeof callback, 'function');
+    callback(null, { active: true });
 }
 
 function startRedis(existingInfra, callback) {
@@ -1413,4 +1560,9 @@ function restoreRedis(app, options, callback) {
 
         input.pipe(restoreReq);
     });
+}
+
+function statusDocker(callback) {
+    assert.strictEqual(typeof callback, 'function');
+    callback(null, { active: true });
 }

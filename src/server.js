@@ -284,6 +284,14 @@ function initializeExpressSync() {
     router.post('/api/v1/domains/:domain/renew_certs', domainsManageScope, verifyDomainLock, routes.domains.renewCerts);
     router.del ('/api/v1/domains/:domain', domainsManageScope, verifyDomainLock, routes.users.verifyPassword, routes.domains.del);
 
+    // addon routes
+    router.get ('/api/v1/addons', cloudronScope, routes.addons.getAll);
+    router.get ('/api/v1/addons/:addon', cloudronScope, routes.addons.get);
+    router.get ('/api/v1/addons/:addon/logs', cloudronScope, routes.addons.getLogs);
+    router.get ('/api/v1/addons/:addon/logstream', cloudronScope, routes.addons.getLogStream);
+    router.post('/api/v1/addons/:addon/start', cloudronScope, routes.addons.start);
+    router.post('/api/v1/addons/:addon/stop', cloudronScope, routes.addons.stop);
+
     // caas routes
     router.get('/api/v1/caas/config', cloudronScope, routes.caas.getConfig);
     router.post('/api/v1/caas/change_plan', cloudronScope, routes.users.verifyPassword, routes.caas.changePlan);

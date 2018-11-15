@@ -2,6 +2,7 @@
 
 exports = module.exports = {
     accesscontrol: require('./accesscontrol.js'),
+    addons: require('./addons.js'),
     apps: require('./apps.js'),
     backups: require('./backups.js'),
     caas: require('./caas.js'),
