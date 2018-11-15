@@ -17,7 +17,7 @@ require('debug').formatArgs = function formatArgs(args) {
 var assert = require('assert'),
     backups = require('./backups.js'),
     database = require('./database.js'),
-    debug = require('debug')('box:backuptask'),
+    debug = require('debug')('box:backupupload'),
     paths = require('./paths.js'),
     safe = require('safetydance');
 

@@ -66,7 +66,7 @@ var addons = require('./addons.js'),
 
 var NOOP_CALLBACK = function (error) { if (error) debug(error); };
 
-var BACKUPTASK_CMD = path.join(__dirname, 'backuptask.js');
+var BACKUP_UPLOAD_CMD = path.join(__dirname, 'backupupload.js');
 
 function debugApp(app) {
     assert(typeof app === 'object');
@@ -610,7 +610,7 @@ function runBackupTask(backupId, format, dataDir, callback) {
     var killTimerId = null, progressTimerId = null;
 
     var logStream = fs.createWriteStream(paths.BACKUP_LOG_FILE, { flags: 'a' });
-    var cp = shell.sudo(`backup-${backupId}`, [ BACKUPTASK_CMD, backupId, format, dataDir ], { env: process.env, logStream: logStream }, function (error) {
+    var cp = shell.sudo(`backup-${backupId}`, [ BACKUP_UPLOAD_CMD, backupId, format, dataDir ], { env: process.env, logStream: logStream }, function (error) {
         clearTimeout(killTimerId);
         clearInterval(progressTimerId);
 
