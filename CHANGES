@@ -1451,3 +1451,16 @@
 * Add support for hyphenated subdomains
 * Add domain, mail events to eventlog
 
+[3.3.4]
+* Use new addons with REST APIs
+* Ubuntu 18.04 LTS support
+* Custom env vars can be set per application
+* Add a button to renew certs
+* Add better support for private builds
+* cloudflare: Fix crash when using bad email
+* cloudflare: HTTP proxying works now
+* add new exoscale-sos regions
+* Add UI to toggle dynamic DNS
+* Add support for hyphenated subdomains
+* Add domain, mail events to eventlog
+
