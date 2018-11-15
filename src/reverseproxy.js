@@ -132,17 +132,18 @@ function providerMatchesSync(domainObject, certFilePath, apiOptions) {
     const subjectAndIssuer = safe.child_process.execSync(`/usr/bin/openssl x509 -noout -subject -issuer -in "${certFilePath}"`, { encoding: 'utf8' });
 
     const subject = subjectAndIssuer.match(/^subject=(.*)$/m)[1];
+    const domain = subject.substr(subject.indexOf('=') + 1).trim(); // subject can be /CN=, CN=, CN = and other forms
     const issuer = subjectAndIssuer.match(/^issuer=(.*)$/m)[1];
-    const isWildcardCert = subject.includes('*');
+    const isWildcardCert = domain.includes('*');
     const isLetsEncryptProd = issuer.includes('Let\'s Encrypt Authority');
 
     const issuerMismatch = (apiOptions.prod && !isLetsEncryptProd) || (!apiOptions.prod && isLetsEncryptProd);
     // bare domain is not part of wildcard SAN
-    const wildcardMismatch = (subject !== domainObject.domain) && (apiOptions.wildcard && !isWildcardCert) || (!apiOptions.wildcard && isWildcardCert);
+    const wildcardMismatch = (domain !== domainObject.domain) && (apiOptions.wildcard && !isWildcardCert) || (!apiOptions.wildcard && isWildcardCert);
 
     const mismatch = issuerMismatch || wildcardMismatch;
 
-    debug(`providerMatchesSync: ${certFilePath} subject=${subject} issuer=${issuer} wildcard=${isWildcardCert}/${apiOptions.wildcard} prod=${isLetsEncryptProd}/${apiOptions.prod} match=${!mismatch}`);
+    debug(`providerMatchesSync: ${certFilePath} subject=${subject} domain=${domain} issuer=${issuer} wildcard=${isWildcardCert}/${apiOptions.wildcard} prod=${isLetsEncryptProd}/${apiOptions.prod} match=${!mismatch}`);
 
     return !mismatch;
 }
