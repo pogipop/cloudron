@@ -23,6 +23,7 @@ exports = module.exports = {
     ACTION_BACKUP_START: 'backup.start',
     ACTION_BACKUP_CLEANUP: 'backup.cleanup',
 
+    ACTION_CERTIFICATE_NEW: 'certificate.new',
     ACTION_CERTIFICATE_RENEWAL: 'certificate.renew',
 
     ACTION_DOMAIN_ADD: 'domain.add',

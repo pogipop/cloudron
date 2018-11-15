@@ -330,12 +330,12 @@ function ensureCertificate(vhost, domain, auditSource, callback) {
         getCertApi(domainObject, function (error, api, apiOptions) {
             if (error) return callback(error);
 
-            getCertificateByHostname(vhost, domainObject, function (error, result) {
-                if (result) {
-                    debug(`ensureCertificate: ${vhost} certificate already exists at ${result.keyFilePath}`);
+            getCertificateByHostname(vhost, domainObject, function (error, currentBundle) {
+                if (currentBundle) {
+                    debug(`ensureCertificate: ${vhost} certificate already exists at ${currentBundle.keyFilePath}`);
 
-                    if (result.certFilePath.endsWith('.user.cert')) return callback(null, result); // user certs cannot be renewed
-                    if (!isExpiringSync(result.certFilePath, 24 * 30) && providerMatchesSync(domainObject, result.certFilePath, apiOptions)) return callback(null, result);
+                    if (currentBundle.certFilePath.endsWith('.user.cert')) return callback(null, currentBundle); // user certs cannot be renewed
+                    if (!isExpiringSync(currentBundle.certFilePath, 24 * 30) && providerMatchesSync(domainObject, currentBundle.certFilePath, apiOptions)) return callback(null, currentBundle);
                     debug(`ensureCertificate: ${vhost} cert require renewal`);
                 } else {
                     debug(`ensureCertificate: ${vhost} cert does not exist`);
@@ -351,7 +351,7 @@ function ensureCertificate(vhost, domain, auditSource, callback) {
                         mailer.certificateRenewalError(vhost, errorMessage);
                     }
 
-                    eventlog.add(eventlog.ACTION_CERTIFICATE_RENEWAL, auditSource, { domain: vhost, errorMessage: errorMessage });
+                    eventlog.add(currentBundle ? eventlog.ACTION_CERTIFICATE_RENEWAL : eventlog.ACTION_CERTIFICATE_NEW, auditSource, { domain: vhost, errorMessage: errorMessage });
 
                     // if no cert was returned use fallback. the fallback/caas provider will not provide any for example
                     if (!certFilePath || !keyFilePath) return getFallbackCertificate(domain, callback);
