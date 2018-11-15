@@ -131,7 +131,7 @@ function providerMatchesSync(domainObject, certFilePath, apiOptions) {
 
     const subjectAndIssuer = safe.child_process.execSync(`/usr/bin/openssl x509 -noout -subject -issuer -in "${certFilePath}"`, { encoding: 'utf8' });
 
-    const subject = subjectAndIssuer.match(/^subject=CN = (.*)$/m)[1];
+    const subject = subjectAndIssuer.match(/^subject=(.*)$/m)[1];
     const issuer = subjectAndIssuer.match(/^issuer=(.*)$/m)[1];
     const isWildcardCert = subject.includes('*');
     const isLetsEncryptProd = issuer.includes('Let\'s Encrypt Authority');
