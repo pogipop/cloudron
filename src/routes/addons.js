@@ -12,7 +12,9 @@ exports = module.exports = {
 var addons = require('../addons.js'),
     AddonsError = addons.AddonsError,
     assert = require('assert'),
-    debug = require('debug')('box:routes/addons');
+    debug = require('debug')('box:routes/addons'),
+    HttpError = require('connect-lastmile').HttpError,
+    HttpSuccess = require('connect-lastmile').HttpSuccess;
 
 function getAll(req, res, next) {
     addons.getAddons(function (error, result) {
