@@ -80,33 +80,29 @@ ReverseProxyError.INTERNAL_ERROR = 'Internal Error';
 ReverseProxyError.INVALID_CERT = 'Invalid certificate';
 ReverseProxyError.NOT_FOUND = 'Not Found';
 
-function getCertApi(domain, callback) {
-    assert.strictEqual(typeof domain, 'string');
+function getCertApi(domainObject, callback) {
+    assert.strictEqual(typeof domainObject, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    domains.get(domain, function (error, result) {
-        if (error) return callback(error);
+    if (domainObject.tlsConfig.provider === 'fallback') return callback(null, fallback, { fallback: true });
 
-        if (result.tlsConfig.provider === 'fallback') return callback(null, fallback, { fallback: true });
+    var api = domainObject.tlsConfig.provider === 'caas' ? caas : acme2;
 
-        var api = result.tlsConfig.provider === 'caas' ? caas : acme2;
+    var options = { prod: false, performHttpAuthorization: false, wildcard: false, email: '' };
+    if (domainObject.tlsConfig.provider !== 'caas') { // matches 'le-prod' or 'letsencrypt-prod'
+        options.prod = domainObject.tlsConfig.provider.match(/.*-prod/) !== null;
+        options.performHttpAuthorization = domainObject.provider.match(/noop|manual|wildcard/) !== null;
+        options.wildcard = !!domainObject.tlsConfig.wildcard;
+    }
 
-        var options = { prod: false, performHttpAuthorization: false, wildcard: false, email: '' };
-        if (result.tlsConfig.provider !== 'caas') { // matches 'le-prod' or 'letsencrypt-prod'
-            options.prod = result.tlsConfig.provider.match(/.*-prod/) !== null;
-            options.performHttpAuthorization = result.provider.match(/noop|manual|wildcard/) !== null;
-            options.wildcard = !!result.tlsConfig.wildcard;
-        }
+    // registering user with an email requires A or MX record (https://github.com/letsencrypt/boulder/issues/1197)
+    // we cannot use admin@fqdn because the user might not have set it up.
+    // we simply update the account with the latest email we have each time when getting letsencrypt certs
+    // https://github.com/ietf-wg-acme/acme/issues/30
+    users.getOwner(function (error, owner) {
+        options.email = error ? 'support@cloudron.io' : (owner.fallbackEmail || owner.email); // can error if not activated yet
 
-        // registering user with an email requires A or MX record (https://github.com/letsencrypt/boulder/issues/1197)
-        // we cannot use admin@fqdn because the user might not have set it up.
-        // we simply update the account with the latest email we have each time when getting letsencrypt certs
-        // https://github.com/ietf-wg-acme/acme/issues/30
-        users.getOwner(function (error, owner) {
-            options.email = error ? 'support@cloudron.io' : (owner.fallbackEmail || owner.email); // can error if not activated yet
-
-            callback(null, api, options);
-        });
+        callback(null, api, options);
     });
 }
 
@@ -278,9 +274,9 @@ function setAppCertificateSync(location, domainObject, certificate) {
     return null;
 }
 
-function getCertificateByHostname(hostname, domain, callback) {
+function getCertificateByHostname(hostname, domainObject, callback) {
     assert.strictEqual(typeof hostname, 'string');
-    assert.strictEqual(typeof domain, 'string');
+    assert.strictEqual(typeof domainObject, 'object');
     assert.strictEqual(typeof callback, 'function');
 
     let certFilePath = path.join(paths.APP_CERTS_DIR, `${hostname}.user.cert`);
@@ -288,34 +284,34 @@ function getCertificateByHostname(hostname, domain, callback) {
 
     if (fs.existsSync(certFilePath) && fs.existsSync(keyFilePath)) return callback(null, { certFilePath, keyFilePath });
 
-    domains.get(domain, function (error, domainObject) {
-        if (error) return callback(error);
+    if (hostname !== domainObject.domain && domainObject.tlsConfig.wildcard) { // bare domain is not part of wildcard SAN
+        let certName = domains.makeWildcard(hostname).replace('*.', '_.');
+        certFilePath = path.join(paths.APP_CERTS_DIR, `${certName}.cert`);
+        keyFilePath = path.join(paths.APP_CERTS_DIR, `${certName}.key`);
 
-        if (hostname !== domain && domainObject.tlsConfig.wildcard) { // bare domain is not part of wildcard SAN
-            let certName = domains.makeWildcard(hostname).replace('*.', '_.');
-            certFilePath = path.join(paths.APP_CERTS_DIR, `${certName}.cert`);
-            keyFilePath = path.join(paths.APP_CERTS_DIR, `${certName}.key`);
+        if (fs.existsSync(certFilePath) && fs.existsSync(keyFilePath)) return callback(null, { certFilePath, keyFilePath });
+    } else {
+        certFilePath = path.join(paths.APP_CERTS_DIR, `${hostname}.cert`);
+        keyFilePath = path.join(paths.APP_CERTS_DIR, `${hostname}.key`);
 
-            if (fs.existsSync(certFilePath) && fs.existsSync(keyFilePath)) return callback(null, { certFilePath, keyFilePath });
-        } else {
-            certFilePath = path.join(paths.APP_CERTS_DIR, `${hostname}.cert`);
-            keyFilePath = path.join(paths.APP_CERTS_DIR, `${hostname}.key`);
+        if (fs.existsSync(certFilePath) && fs.existsSync(keyFilePath)) return callback(null, { certFilePath, keyFilePath });
+    }
 
-            if (fs.existsSync(certFilePath) && fs.existsSync(keyFilePath)) return callback(null, { certFilePath, keyFilePath });
-        }
-
-        callback(null);
-    });
+    callback(null);
 }
 
 function getCertificate(app, callback) {
     assert.strictEqual(typeof app, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    getCertificateByHostname(app.fqdn, app.domain, function (error, result) {
-        if (error || result) return callback(error, result);
+    domains.get(app.domain, function (error, domainObject) {
+        if (error) return callback(error);
 
-        return getFallbackCertificate(app.domain, callback);
+        getCertificateByHostname(app.fqdn, domainObject, function (error, result) {
+            if (error || result) return callback(error, result);
+
+            return getFallbackCertificate(app.domain, callback);
+        });
     });
 }
 
@@ -325,36 +321,40 @@ function ensureCertificate(vhost, domain, auditSource, callback) {
     assert.strictEqual(typeof auditSource, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    getCertApi(domain, function (error, api, apiOptions) {
+    domains.get(domain, function (error, domainObject) {
         if (error) return callback(error);
 
-        getCertificateByHostname(vhost, domain, function (error, result) {
-            if (result) {
-                debug(`ensureCertificate: ${vhost} certificate already exists at ${result.keyFilePath}`);
+        getCertApi(domainObject, function (error, api, apiOptions) {
+            if (error) return callback(error);
 
-                if (result.certFilePath.endsWith('.user.cert')) return callback(null, result); // user certs cannot be renewed
-                if (!isExpiringSync(result.certFilePath, 24 * 30) && providerMatchesSync(result.certFilePath, apiOptions)) return callback(null, result);
-                debug(`ensureCertificate: ${vhost} cert require renewal`);
-            } else {
-                debug(`ensureCertificate: ${vhost} cert does not exist`);
-            }
+            getCertificateByHostname(vhost, domainObject, function (error, result) {
+                if (result) {
+                    debug(`ensureCertificate: ${vhost} certificate already exists at ${result.keyFilePath}`);
 
-            debug('ensureCertificate: getting certificate for %s with options %j', vhost, apiOptions);
-
-            api.getCertificate(vhost, domain, apiOptions, function (error, certFilePath, keyFilePath) {
-                var errorMessage = error ? error.message : '';
-
-                if (error) {
-                    debug('ensureCertificate: could not get certificate. using fallback certs', error);
-                    mailer.certificateRenewalError(vhost, errorMessage);
+                    if (result.certFilePath.endsWith('.user.cert')) return callback(null, result); // user certs cannot be renewed
+                    if (!isExpiringSync(result.certFilePath, 24 * 30) && providerMatchesSync(result.certFilePath, apiOptions)) return callback(null, result);
+                    debug(`ensureCertificate: ${vhost} cert require renewal`);
+                } else {
+                    debug(`ensureCertificate: ${vhost} cert does not exist`);
                 }
 
-                eventlog.add(eventlog.ACTION_CERTIFICATE_RENEWAL, auditSource, { domain: vhost, errorMessage: errorMessage });
+                debug('ensureCertificate: getting certificate for %s with options %j', vhost, apiOptions);
 
-                // if no cert was returned use fallback. the fallback/caas provider will not provide any for example
-                if (!certFilePath || !keyFilePath) return getFallbackCertificate(domain, callback);
+                api.getCertificate(vhost, domain, apiOptions, function (error, certFilePath, keyFilePath) {
+                    var errorMessage = error ? error.message : '';
 
-                callback(null, { certFilePath, keyFilePath, type: 'new-le' });
+                    if (error) {
+                        debug('ensureCertificate: could not get certificate. using fallback certs', error);
+                        mailer.certificateRenewalError(vhost, errorMessage);
+                    }
+
+                    eventlog.add(eventlog.ACTION_CERTIFICATE_RENEWAL, auditSource, { domain: vhost, errorMessage: errorMessage });
+
+                    // if no cert was returned use fallback. the fallback/caas provider will not provide any for example
+                    if (!certFilePath || !keyFilePath) return getFallbackCertificate(domain, callback);
+
+                    callback(null, { certFilePath, keyFilePath, type: 'new-le' });
+                });
             });
         });
     });
@@ -523,7 +523,7 @@ function renewCerts(options, auditSource, callback) {
             ensureCertificate(appDomain.fqdn, appDomain.domain, auditSource, function (error, bundle) {
                 if (error) return iteratorCallback(error); // this can happen if cloudron is not setup yet
 
-                // hack to check if the app's cert changed or not
+                // hack to check if the app's cert changed or not. this doesn't handle prod/staging le change since they use same file name
                 let currentNginxConfig = safe.fs.readFileSync(appDomain.nginxConfigFilename, 'utf8') || '';
                 if (currentNginxConfig.includes(bundle.certFilePath)) return iteratorCallback();
 
