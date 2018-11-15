@@ -119,27 +119,30 @@ function isExpiringSync(certFilePath, hours) {
     return result.status === 1; // 1 - expired 0 - not expired
 }
 
-function providerMatchesSync(certFilePath, apiOptions) {
+// checks if the certificate matches the options provided by user (like wildcard, le-staging etc)
+function providerMatchesSync(domainObject, certFilePath, apiOptions) {
+    assert.strictEqual(typeof domainObject, 'object');
     assert.strictEqual(typeof certFilePath, 'string');
     assert.strictEqual(typeof apiOptions, 'object');
 
     if (!fs.existsSync(certFilePath)) return false; // not found
 
-    if (apiOptions.fallback) {
-        return certFilePath.includes('.host.cert');
-    }
+    if (apiOptions.fallback) return certFilePath.includes('.host.cert');
 
     const subjectAndIssuer = safe.child_process.execSync(`/usr/bin/openssl x509 -noout -subject -issuer -in "${certFilePath}"`, { encoding: 'utf8' });
 
-    const isWildcardCert = subjectAndIssuer.match(/^subject=(.*)$/m)[1].includes('*');
-    const isLetsEncryptProd = subjectAndIssuer.match(/^issuer=(.*)$/m)[1].includes('Let\'s Encrypt Authority');
+    const subject = subjectAndIssuer.match(/^subject=CN = (.*)$/m)[1];
+    const issuer = subjectAndIssuer.match(/^issuer=(.*)$/m)[1];
+    const isWildcardCert = subject.includes('*');
+    const isLetsEncryptProd = issuer.includes('Let\'s Encrypt Authority');
 
-    const mismatch = ((apiOptions.wildcard && !isWildcardCert)
-        || (!apiOptions.wildcard && isWildcardCert)
-        || (apiOptions.prod && !isLetsEncryptProd)
-        || (!apiOptions.prod && isLetsEncryptProd));
+    const issuerMismatch = (apiOptions.prod && !isLetsEncryptProd) || (!apiOptions.prod && isLetsEncryptProd);
+    // bare domain is not part of wildcard SAN
+    const wildcardMismatch = (subject !== domainObject.domain) && (apiOptions.wildcard && !isWildcardCert) || (!apiOptions.wildcard && isWildcardCert);
 
-    debug(`providerMatchesSync: ${certFilePath} ${subjectAndIssuer.trim().replace('\n', ' ')} wildcard=${isWildcardCert}/${apiOptions.wildcard} prod=${isLetsEncryptProd}/${apiOptions.prod} match=${!mismatch}`);
+    const mismatch = issuerMismatch || wildcardMismatch;
+
+    debug(`providerMatchesSync: ${certFilePath} subject=${subject} issuer=${issuer} wildcard=${isWildcardCert}/${apiOptions.wildcard} prod=${isLetsEncryptProd}/${apiOptions.prod} match=${!mismatch}`);
 
     return !mismatch;
 }
@@ -332,7 +335,7 @@ function ensureCertificate(vhost, domain, auditSource, callback) {
                     debug(`ensureCertificate: ${vhost} certificate already exists at ${result.keyFilePath}`);
 
                     if (result.certFilePath.endsWith('.user.cert')) return callback(null, result); // user certs cannot be renewed
-                    if (!isExpiringSync(result.certFilePath, 24 * 30) && providerMatchesSync(result.certFilePath, apiOptions)) return callback(null, result);
+                    if (!isExpiringSync(result.certFilePath, 24 * 30) && providerMatchesSync(domainObject, result.certFilePath, apiOptions)) return callback(null, result);
                     debug(`ensureCertificate: ${vhost} cert require renewal`);
                 } else {
                     debug(`ensureCertificate: ${vhost} cert does not exist`);
