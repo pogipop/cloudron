@@ -833,6 +833,32 @@ function teardownMySql(app, options, callback) {
     });
 }
 
+function pipeRequestToFile(url, filename, callback) {
+    assert.strictEqual(typeof url, 'string');
+    assert.strictEqual(typeof filename, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    const writeStream = fs.createWriteStream(filename);
+
+    const done = once(function (error) { // the writeStream and the request can both error
+        if (error) writeStream.close();
+        callback(error);
+    });
+
+    writeStream.on('error', done);
+    writeStream.on('open', function () {
+        // note: do not attach to post callback handler because this will buffer the entire reponse!
+        // see https://github.com/request/request/issues/2270
+        const req = request.post(url, { rejectUnauthorized: false });
+        req.on('error', done); // network error, dns error, request errored in middle etc
+        req.on('response', function (response) {
+            if (response.statusCode !== 200) return done(new Error(`Unexpected response code: ${response.statusCode} message: ${response.statusMessage} filename: ${filename}`));
+
+            response.pipe(writeStream).on('finish', done); // this is hit after data written to disk
+        });
+    });
+}
+
 function backupMySql(app, options, callback) {
     assert.strictEqual(typeof app, 'object');
     assert.strictEqual(typeof options, 'object');
@@ -842,21 +868,11 @@ function backupMySql(app, options, callback) {
 
     debugApp(app, 'Backing up mysql');
 
-    callback = once(callback); // protect from multiple returns with streams
-
     getAddonDetails('mysql', 'CLOUDRON_MYSQL_TOKEN', function (error, result) {
         if (error) return callback(error);
 
-        const writeStream = fs.createWriteStream(dumpPath('mysql', app.id));
-        writeStream.on('error', callback);
-
-        const req = request.post(`https://${result.ip}:3000/` + (options.multipleDatabases ? 'prefixes' : 'databases') + `/${database}/backup?access_token=${result.token}`, { rejectUnauthorized: false }, function (error, response) {
-            if (error) return callback(error);
-            if (response.statusCode !== 200) return callback(new Error(`Unexpected response from mysql addon ${response.statusCode} message: ${response.body.message}`));
-
-            callback(null);
-        });
-        req.pipe(writeStream);
+        const url = `https://${result.ip}:3000/` + (options.multipleDatabases ? 'prefixes' : 'databases') + `/${database}/backup?access_token=${result.token}`;
+        pipeRequestToFile(url, dumpPath('mysql', app.id), callback);
     });
 }
 
@@ -1027,21 +1043,11 @@ function backupPostgreSql(app, options, callback) {
 
     const { database } = postgreSqlNames(app.id);
 
-    callback = once(callback); // protect from multiple returns with streams
-
     getAddonDetails('postgresql', 'CLOUDRON_POSTGRESQL_TOKEN', function (error, result) {
         if (error) return callback(error);
 
-        const writeStream = fs.createWriteStream(dumpPath('postgresql', app.id));
-        writeStream.on('error', callback);
-
-        const req = request.post(`https://${result.ip}:3000/databases/${database}/backup?access_token=${result.token}`, { rejectUnauthorized: false }, function (error, response) {
-            if (error) return callback(error);
-            if (response.statusCode !== 200) return callback(new Error(`Unexpected response from postgresql addon ${response.statusCode} message: ${response.body.message}`));
-
-            callback(null);
-        });
-        req.pipe(writeStream);
+        const url = `https://${result.ip}:3000/databases/${database}/backup?access_token=${result.token}`;
+        pipeRequestToFile(url, dumpPath('postgresql', app.id), callback);
     });
 }
 
@@ -1201,21 +1207,11 @@ function backupMongoDb(app, options, callback) {
 
     debugApp(app, 'Backing up mongodb');
 
-    callback = once(callback); // protect from multiple returns with streams
-
     getAddonDetails('mongodb', 'CLOUDRON_MONGODB_TOKEN', function (error, result) {
         if (error) return callback(error);
 
-        const writeStream = fs.createWriteStream(dumpPath('mongodb', app.id));
-        writeStream.on('error', callback);
-
-        const req = request.post(`https://${result.ip}:3000/databases/${app.id}/backup?access_token=${result.token}`, { rejectUnauthorized: false }, function (error, response) {
-            if (error) return callback(error);
-            if (response.statusCode !== 200) return callback(new Error(`Unexpected response from mongodb addon ${response.statusCode} message: ${response.body.message}`));
-
-            callback(null);
-        });
-        req.pipe(writeStream);
+        const url = `https://${result.ip}:3000/databases/${app.id}/backup?access_token=${result.token}`;
+        pipeRequestToFile(url, dumpPath('mongodb', app.id), callback);
     });
 }
 
@@ -1381,21 +1377,11 @@ function backupRedis(app, options, callback) {
 
     debugApp(app, 'Backing up redis');
 
-    callback = once(callback); // protect from multiple returns with streams
-
     getAddonDetails('redis-' + app.id, 'CLOUDRON_REDIS_TOKEN', function (error, result) {
         if (error) return callback(error);
 
-        const writeStream = fs.createWriteStream(dumpPath('redis', app.id));
-        writeStream.on('error', callback);
-
-        const req = request.post(`https://${result.ip}:3000/backup?access_token=${result.token}`, { rejectUnauthorized: false }, function (error, response) {
-            if (error) return callback(new Error('Error backing up redis: ' + error));
-            if (response.statusCode !== 200) return callback(new Error(`Error backing up redis. Status code: ${response.statusCode} message: ${response.body.message}`));
-
-            callback(null);
-        });
-        req.pipe(writeStream);
+        const url = `https://${result.ip}:3000/backup?access_token=${result.token}`;
+        pipeRequestToFile(url, dumpPath('redis', app.id), callback);
     });
 }
 
