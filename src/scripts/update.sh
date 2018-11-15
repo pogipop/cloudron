@@ -32,6 +32,7 @@ if systemctl reset-failed "${UPDATER_SERVICE}"; then
     echo "=> service has failed earlier"
 fi
 
+# StandardError will follow StandardOutput in default inherit mode. https://www.freedesktop.org/software/systemd/man/systemd.exec.html
 echo "=> Run installer.sh as cloudron-updater.service"
 if ! systemd-run --unit "${UPDATER_SERVICE}" -p "StandardOutput=file:${LOG_FILE}" ${installer_path}; then
     echo "Failed to install cloudron. See ${LOG_FILE} for details"
