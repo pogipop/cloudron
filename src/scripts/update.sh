@@ -8,6 +8,8 @@ if [[ ${EUID} -ne 0 ]]; then
 fi
 
 readonly UPDATER_SERVICE="cloudron-updater"
+readonly DATETIME=`date '+%Y-%m-%d_%H-%M-%S'`
+readonly LOG_FILE="/var/log/cloudron-updater-${DATETIME}.log"
 
 if [[ $# == 1 && "$1" == "--check" ]]; then
     echo "OK"
@@ -31,7 +33,7 @@ if systemctl reset-failed "${UPDATER_SERVICE}"; then
 fi
 
 echo "=> Run installer.sh as cloudron-updater.service"
-if ! systemd-run --unit "${UPDATER_SERVICE}" ${installer_path}; then
+if ! systemd-run --unit "${UPDATER_SERVICE}" -p "StandardOutput=file:${LOG_FILE}" ${installer_path}; then
     echo "Failed to install cloudron. See ${LOG_FILE} for details"
     exit 1
 fi
