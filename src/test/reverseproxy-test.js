@@ -178,7 +178,7 @@ describe('Certificates', function () {
         after(cleanup);
 
         it('returns prod caas for prod cloudron', function (done) {
-            reverseProxy._getCertApi(DOMAIN_0.domain, function (error, api, options) {
+            reverseProxy._getCertApi(DOMAIN_0, function (error, api, options) {
                 expect(error).to.be(null);
                 expect(api._name).to.be('caas');
                 expect(options).to.eql({ email: 'support@cloudron.io', 'performHttpAuthorization': false, 'prod': false, 'wildcard': false });
@@ -200,7 +200,7 @@ describe('Certificates', function () {
         after(cleanup);
 
         it('returns prod acme in prod cloudron', function (done) {
-            reverseProxy._getCertApi(DOMAIN_0.domain, function (error, api, options) {
+            reverseProxy._getCertApi(DOMAIN_0, function (error, api, options) {
                 expect(error).to.be(null);
                 expect(api._name).to.be('acme');
                 expect(options.prod).to.be(true);
@@ -209,7 +209,7 @@ describe('Certificates', function () {
         });
 
         it('returns prod acme in dev cloudron', function (done) {
-            reverseProxy._getCertApi(DOMAIN_0.domain, function (error, api, options) {
+            reverseProxy._getCertApi(DOMAIN_0, function (error, api, options) {
                 expect(error).to.be(null);
                 expect(api._name).to.be('acme');
                 expect(options.prod).to.be(true);
@@ -231,7 +231,7 @@ describe('Certificates', function () {
         after(cleanup);
 
         it('returns staging acme in prod cloudron', function (done) {
-            reverseProxy._getCertApi(DOMAIN_0.domain, function (error, api, options) {
+            reverseProxy._getCertApi(DOMAIN_0, function (error, api, options) {
                 expect(error).to.be(null);
                 expect(api._name).to.be('acme');
                 expect(options.prod).to.be(false);
@@ -240,7 +240,7 @@ describe('Certificates', function () {
         });
 
         it('returns staging acme in dev cloudron', function (done) {
-            reverseProxy._getCertApi(DOMAIN_0.domain, function (error, api, options) {
+            reverseProxy._getCertApi(DOMAIN_0, function (error, api, options) {
                 expect(error).to.be(null);
                 expect(api._name).to.be('acme');
                 expect(options.prod).to.be(false);
