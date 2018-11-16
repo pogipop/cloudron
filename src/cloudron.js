@@ -244,49 +244,28 @@ function getLogs(unit, options, callback) {
 
     debug('Getting logs for %s as %s', unit, format);
 
-    var cp, transformStream;
-    if (unit === 'box') {
-        let args = [ '--no-pager', `--lines=${lines}` ];
-        if (format === 'short') args.push('--output=short', '-a'); else args.push('--output=json');
-        if (follow) args.push('--follow');
-        args.push('--unit=box');
-        args.push('--unit=cloudron-updater');
-        cp = spawn('/bin/journalctl', args);
+    let args = [ '--lines=' + lines ];
+    if (follow) args.push('--follow');
 
-        transformStream = split(function mapper(line) {
-            if (format !== 'json') return line + '\n';
+    // need to handle box.log without subdir
+    if (unit === 'box') args.push(path.join(paths.LOG_DIR, 'box.log'));
+    else args.push(path.join(paths.LOG_DIR, unit, 'app.log'));
 
-            var obj = safe.JSON.parse(line);
-            if (!obj) return undefined;
+    var cp = spawn('/usr/bin/tail', args);
 
-            return JSON.stringify({
-                realtimeTimestamp: obj.__REALTIME_TIMESTAMP,
-                monotonicTimestamp: obj.__MONOTONIC_TIMESTAMP,
-                message: obj.MESSAGE,
-                source: obj.SYSLOG_IDENTIFIER || ''
-            }) + '\n';
-        });
-    } else { // mail, mongodb, mysql, postgresql, backup
-        let args = [ '--lines=' + lines ];
-        if (follow) args.push('--follow');
-        args.push(path.join(paths.LOG_DIR, unit, 'app.log'));
+    var transformStream = split(function mapper(line) {
+        if (format !== 'json') return line + '\n';
 
-        cp = spawn('/usr/bin/tail', args);
+        var data = line.split(' '); // logs are <ISOtimestamp> <msg>
+        var timestamp = (new Date(data[0])).getTime();
+        if (isNaN(timestamp)) timestamp = 0;
 
-        transformStream = split(function mapper(line) {
-            if (format !== 'json') return line + '\n';
-
-            var data = line.split(' '); // logs are <ISOtimestamp> <msg>
-            var timestamp = (new Date(data[0])).getTime();
-            if (isNaN(timestamp)) timestamp = 0;
-
-            return JSON.stringify({
-                realtimeTimestamp: timestamp * 1000,
-                message: line.slice(data[0].length+1),
-                source: unit
-            }) + '\n';
-        });
-    }
+        return JSON.stringify({
+            realtimeTimestamp: timestamp * 1000,
+            message: line.slice(data[0].length+1),
+            source: unit
+        }) + '\n';
+    });
 
     transformStream.close = cp.kill.bind(cp, 'SIGKILL'); // closing stream kills the child process
 
