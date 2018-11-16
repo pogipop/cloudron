@@ -12,7 +12,8 @@ exports = module.exports = {
 
     ensureBackup: ensureBackup,
 
-    backup: backup,
+    runBackupTask: runBackupTask,
+
     restore: restore,
 
     backupApp: backupApp,
@@ -40,6 +41,7 @@ var addons = require('./addons.js'),
     async = require('async'),
     assert = require('assert'),
     backupdb = require('./backupdb.js'),
+    child_process = require('child_process'),
     config = require('./config.js'),
     crypto = require('crypto'),
     database = require('./database.js'),
@@ -182,7 +184,7 @@ function getBackupFilePath(backupConfig, backupId, format) {
 }
 
 function log(detail) {
-    safe.fs.appendFileSync(paths.BACKUP_LOG_FILE, detail + '\n', 'utf8');
+    debug(detail);
     progress.setDetail(progress.BACKUP, detail);
 }
 
@@ -388,7 +390,7 @@ function saveFsMetadata(appDataDir, callback) {
     callback();
 }
 
-// this function is called via backuptask (since it needs root to traverse app's directory)
+// this function is called via backupupload (since it needs root to traverse app's directory)
 function upload(backupId, format, dataDir, callback) {
     assert.strictEqual(typeof backupId, 'string');
     assert.strictEqual(typeof format, 'string');
@@ -537,8 +539,6 @@ function download(backupConfig, backupId, format, dataDir, callback) {
     assert.strictEqual(typeof format, 'string');
     assert.strictEqual(typeof dataDir, 'string');
     assert.strictEqual(typeof callback, 'function');
-
-    safe.fs.unlinkSync(paths.BACKUP_LOG_FILE); // start fresh log file
 
     log(`Downloading ${backupId} of format ${format} to ${dataDir}`);
 
@@ -887,7 +887,6 @@ function backupApp(app, callback) {
     assert.strictEqual(typeof callback, 'function');
 
     const timestamp = (new Date()).toISOString().replace(/[T.]/g, '-').replace(/[:Z]/g,'');
-    safe.fs.unlinkSync(paths.BACKUP_LOG_FILE); // start fresh log file
 
     progress.set(progress.BACKUP, 10,  'Backing up ' + app.fqdn);
 
@@ -905,7 +904,6 @@ function backupBoxAndApps(auditSource, callback) {
     callback = callback || NOOP_CALLBACK;
 
     var timestamp = (new Date()).toISOString().replace(/[T.]/g, '-').replace(/[:Z]/g,'');
-    safe.fs.unlinkSync(paths.BACKUP_LOG_FILE); // start fresh log file
 
     eventlog.add(eventlog.ACTION_BACKUP_START, auditSource, { });
 
@@ -956,23 +954,41 @@ function backupBoxAndApps(auditSource, callback) {
     });
 }
 
-function backup(auditSource, callback) {
+function runBackupTask(auditSource, callback) {
     assert.strictEqual(typeof auditSource, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    var error = locker.lock(locker.OP_FULL_BACKUP);
+    // fork and run!
+    let error = locker.lock(locker.OP_FULL_BACKUP);
     if (error) return callback(new BackupsError(BackupsError.BAD_STATE, error.message));
 
-    var startTime = new Date();
+    let startTime = new Date();
     progress.set(progress.BACKUP, 0, 'Starting'); // ensure tools can 'wait' on progress
 
-    backupBoxAndApps(auditSource, function (error) { // start the backup operation in the background
-        if (error) {
-            debug('backup failed.', error);
-            mailer.backupFailed(error);
+    let fd = safe.fs.openSync(paths.BACKUP_LOG_FILE, 'a'); // will autoclose
+    if (!fd) {
+        debug('Unable to get log filedescriptor %s', safe.error.message);
+        return callback(safe.error);
+    }
+
+    debug(`starting backuptask. logs at ${paths.BACKUP_LOG_FILE}`);
+
+    // when parent process dies, this process is killed because KillMode=control-group in systemd unit file
+    let cp = child_process.fork(__dirname + '/backuptask.js', [ JSON.stringify(auditSource) ], { stdio: [ 'pipe', fd, fd, 'ipc' ]});
+    cp.once('exit', function (code, signal) {
+        debug(`backuptask completed with code ${code} and signal ${signal}`);
+
+        let error;
+        if (code === null /* signal */ || (code !== 0 && code !== 50)) { // apptask crashed
+            error = new Error(`backuptask completed with code ${code} and signal ${signal}`);
+        } else if (code === 50) {
+            error = new Error(safe.fs.readFileSync(paths.BACKUP_RESULT_FILE, 'utf8') || safe.error.message);
         }
 
         locker.unlock(locker.OP_FULL_BACKUP);
+
+        progress.set(progress.BACKUP, 100, error ? error.message : '');
+        if (error) mailer.backupFailed(error);
 
         debug('backup took %s seconds', (new Date() - startTime)/1000);
     });
@@ -999,7 +1015,7 @@ function ensureBackup(auditSource, callback) {
                 return callback(null);
             }
 
-            backup(auditSource, callback);
+            runBackupTask(auditSource, callback);
         });
     });
 }
