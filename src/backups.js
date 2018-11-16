@@ -601,7 +601,7 @@ function restoreApp(app, addonsToRestore, restoreConfig, callback) {
     });
 }
 
-function runBackupTask(backupId, format, dataDir, callback) {
+function runBackupUpload(backupId, format, dataDir, callback) {
     assert.strictEqual(typeof backupId, 'string');
     assert.strictEqual(typeof format, 'string');
     assert.strictEqual(typeof dataDir, 'string');
@@ -632,12 +632,12 @@ function runBackupTask(backupId, format, dataDir, callback) {
     }, 1000); // every second
 
     killTimerId = setTimeout(function () {
-        debug('runBackupTask: backup task taking too long. killing');
+        debug('runBackupUpload: backup task taking too long. killing');
         cp.kill();
     }, 4 * 60 * 60 * 1000); // 4 hours
 
     logStream.on('error', function (error) {
-        debug('runBackupTask: error in logging stream', error);
+        debug('runBackupUpload: error in logging stream', error);
         cp.kill();
     });
 }
@@ -685,7 +685,7 @@ function uploadBoxSnapshot(backupConfig, callback) {
     snapshotBox(function (error) {
         if (error) return callback(error);
 
-        runBackupTask('snapshot/box', backupConfig.format, paths.BOX_DATA_DIR, function (error) {
+        runBackupUpload('snapshot/box', backupConfig.format, paths.BOX_DATA_DIR, function (error) {
             if (error) return callback(error);
 
             debug('uploadBoxSnapshot: time: %s secs', (new Date() - startTime)/1000);
@@ -854,7 +854,7 @@ function uploadAppSnapshot(backupConfig, app, callback) {
 
         var backupId = util.format('snapshot/app_%s', app.id);
         var appDataDir = safe.fs.realpathSync(path.join(paths.APPS_DATA_DIR, app.id));
-        runBackupTask(backupId, backupConfig.format, appDataDir, function (error) {
+        runBackupUpload(backupId, backupConfig.format, appDataDir, function (error) {
             if (error) return callback(error);
 
             debugApp(app, 'uploadAppSnapshot: %s done time: %s secs', backupId, (new Date() - startTime)/1000);
