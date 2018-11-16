@@ -19,6 +19,7 @@ var addons = require('../addons.js'),
 function getAll(req, res, next) {
     addons.getAddons(function (error, result) {
         if (error) return next(new HttpError(500, error));
+
         next(new HttpSuccess(200, { addons: result }));
     });
 }

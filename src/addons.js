@@ -24,7 +24,11 @@ exports = module.exports = {
 
     // exported for testing
     _setupOauth: setupOauth,
-    _teardownOauth: teardownOauth
+    _teardownOauth: teardownOauth,
+
+    ADDON_STATUS_ERROR: 'error',
+    ADDON_STATUS_ACTIVE: 'active',
+    ADDON_STATUS_INACTIVE: 'inactive'
 };
 
 var accesscontrol = require('./accesscontrol.js'),
@@ -52,6 +56,7 @@ var accesscontrol = require('./accesscontrol.js'),
     safe = require('safetydance'),
     semver = require('semver'),
     shell = require('./shell.js'),
+    spawn = require('child_process').spawn,
     request = require('request'),
     util = require('util');
 
@@ -224,7 +229,7 @@ function getAddons(callback) {
 }
 
 function getStatus(addon, callback) {
-    assert.strictEqual(typeof containerName, 'string');
+    assert.strictEqual(typeof addon, 'string');
     assert.strictEqual(typeof callback, 'function');
 
     if (!KNOWN_ADDONS[addon] || !KNOWN_ADDONS[addon].status) return callback(new AddonsError(AddonsError.NOT_FOUND));
@@ -232,7 +237,9 @@ function getStatus(addon, callback) {
     KNOWN_ADDONS[addon].status(function (error, result) {
         if (error) return callback(new AddonsError(AddonsError.INTERNAL_ERROR, error));
 
-        callback(null, { name: addon, status: result });
+        result.name = addon;
+
+        callback(null, result);
     });
 }
 
@@ -706,7 +713,7 @@ function teardownEmail(app, options, callback) {
 
 function statusEmail(callback) {
     assert.strictEqual(typeof callback, 'function');
-    callback(null, { active: true });
+    callback(null, { status: exports.ADDON_STATUS_ACTIVE });
 }
 
 function setupLdap(app, options, callback) {
@@ -1038,7 +1045,7 @@ function restoreMySql(app, options, callback) {
 
 function statusMySql(callback) {
     assert.strictEqual(typeof callback, 'function');
-    callback(null, { active: true });
+    callback(null, { status: exports.ADDON_STATUS_ACTIVE });
 }
 
 function postgreSqlNames(appId) {
@@ -1218,7 +1225,7 @@ function restorePostgreSql(app, options, callback) {
 
 function statusPostgreSql(callback) {
     assert.strictEqual(typeof callback, 'function');
-    callback(null, { active: true });
+    callback(null, { status: exports.ADDON_STATUS_ACTIVE });
 }
 
 function startMongodb(existingInfra, callback) {
@@ -1385,7 +1392,8 @@ function restoreMongoDb(app, options, callback) {
 
 function statusMongoDb(callback) {
     assert.strictEqual(typeof callback, 'function');
-    callback(null, { active: true });
+
+    callback(null, { status: exports.ADDON_STATUS_ACTIVE });
 }
 
 function startRedis(existingInfra, callback) {
@@ -1564,5 +1572,5 @@ function restoreRedis(app, options, callback) {
 
 function statusDocker(callback) {
     assert.strictEqual(typeof callback, 'function');
-    callback(null, { active: true });
+    callback(null, { status: exports.ADDON_STATUS_ACTIVE });
 }
