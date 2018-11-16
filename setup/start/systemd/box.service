@@ -13,7 +13,7 @@ Type=idle
 WorkingDirectory=/home/yellowtent/box
 Restart=always
 ; Systemd does not append logs when logging to files, we spawn a shell first and exec to replace it after setting up the pipes
-ExecStart=/bin/sh -c 'exec /usr/bin/node --max_old_space_size=150 /home/yellowtent/box/box.js >> /home/yellowtent/platformdata/logs/box.log 2>&1'
+ExecStart=/bin/sh -c 'echo "Logging to /home/yellowtent/platformdata/logs/box.log"; exec /usr/bin/node --max_old_space_size=150 /home/yellowtent/box/box.js >> /home/yellowtent/platformdata/logs/box.log 2>&1'
 Environment="HOME=/home/yellowtent" "USER=yellowtent" "DEBUG=box*,connect-lastmile" "BOX_ENV=cloudron" "NODE_ENV=production"
 ; kill apptask processes as well
 KillMode=control-group

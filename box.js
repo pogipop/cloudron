@@ -2,12 +2,16 @@
 
 'use strict';
 
-require('supererror')({ splatchError: true });
+// prefix all output with a timestamp
+// debug() already prefixes and uses process.stderr NOT console.*
+['log', 'info', 'warn', 'debug', 'error'].forEach(function (log) {
+    var orig = console[log];
+    console[log] = function () {
+        orig.apply(console, [new Date().toISOString()].concat(Array.prototype.slice.call(arguments)));
+    };
+});
 
-// remove timestamp from debug() based output
-require('debug').formatArgs = function formatArgs(args) {
-    args[0] = this.namespace + ' ' + args[0];
-};
+require('supererror')({ splatchError: true });
 
 let async = require('async'),
     config = require('./src/config.js'),
