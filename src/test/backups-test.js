@@ -21,7 +21,8 @@ var async = require('async'),
     progress = require('../progress.js'),
     rimraf = require('rimraf'),
     settings = require('../settings.js'),
-    SettingsError = require('../settings.js').SettingsError;
+    SettingsError = require('../settings.js').SettingsError,
+    tasks = require('../tasks.js');
 
 function compareDirectories(one, two, callback) {
     readdirp({ root: one }, function (error, treeOne) {
@@ -73,16 +74,19 @@ function createBackup(callback) {
         if (error) return callback(error);
 
         function waitForBackup() {
-            var p = progress.getAll();
-            if (p.backup.percent !== 100) return setTimeout(waitForBackup, 1000);
-
-            if (p.backup.message) return callback(new Error('backup failed:' + p.backup.message));
-
-            backups.getByStatePaged(backupdb.BACKUP_STATE_NORMAL, 1, 1, function (error, result) {
+            tasks.getProgress(tasks.TASK_BACKUP, function (error, p) {
                 if (error) return callback(error);
-                if (result.length !== 1) return callback(new Error('result is not of length 1'));
 
-                callback(null, result[0]);
+                if (p.percent !== 100) return setTimeout(waitForBackup, 1000);
+
+                if (p.result) return callback(new Error('backup failed:' + p.result));
+
+                backups.getByStatePaged(backupdb.BACKUP_STATE_NORMAL, 1, 1, function (error, result) {
+                    if (error) return callback(error);
+                    if (result.length !== 1) return callback(new Error('result is not of length 1'));
+
+                    callback(null, result[0]);
+                });
             });
         }
 

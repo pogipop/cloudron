@@ -195,6 +195,17 @@ CREATE TABLE IF NOT EXISTS subdomains(
 
     FOREIGN KEY(domain) REFERENCES domains(domain),
     FOREIGN KEY(appId) REFERENCES apps(id),
-    UNIQUE (subdomain, domain))
+    UNIQUE (subdomain, domain));
+
+CREATE TABLE IF NOT EXISTS tasks(
+    id VARCHAR(32) NOT NULL UNIQUE,
+    percent INTEGER DEFAULT 0,
+    message TEXT,
+    detail TEXT,
+    result TEXT,
+    creationTime TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id));
 
     CHARACTER SET utf8 COLLATE utf8_bin;
+

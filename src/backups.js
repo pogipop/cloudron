@@ -56,7 +56,6 @@ var addons = require('./addons.js'),
     once = require('once'),
     path = require('path'),
     paths = require('./paths.js'),
-    progress = require('./progress.js'),
     progressStream = require('progress-stream'),
     safe = require('safetydance'),
     shell = require('./shell.js'),
@@ -64,6 +63,7 @@ var addons = require('./addons.js'),
     superagent = require('superagent'),
     syncer = require('./syncer.js'),
     tar = require('tar-fs'),
+    tasks = require('./tasks.js'),
     util = require('util'),
     zlib = require('zlib');
 
@@ -184,11 +184,6 @@ function getBackupFilePath(backupConfig, backupId, format) {
     } else {
         return path.join(backupConfig.prefix || backupConfig.backupFolder || '', backupId);
     }
-}
-
-function log(detail) {
-    debug(detail);
-    progress.setDetail(progress.BACKUP, detail);
 }
 
 function encryptFilePath(filePath, key) {
@@ -470,7 +465,7 @@ function restoreFsMetadata(appDataDir, callback) {
     assert.strictEqual(typeof appDataDir, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    log('Recreating empty directories');
+    tasks.setProgress(tasks.TASK_BACKUP, { detail: 'Recreating empty directories' }, NOOP_CALLBACK);
 
     var metadataJson = safe.fs.readFileSync(path.join(appDataDir, 'fsmetadata.json'), 'utf8');
     if (metadataJson === null) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, 'Error loading fsmetadata.txt:' + safe.error.message));
@@ -538,7 +533,7 @@ function download(backupConfig, backupId, format, dataDir, callback) {
     assert.strictEqual(typeof dataDir, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    log(`Downloading ${backupId} of format ${format} to ${dataDir}`);
+    tasks.setProgress(tasks.TASK_BACKUP, { detail: `Downloading ${backupId} of format ${format} to ${dataDir}` }, NOOP_CALLBACK);
 
     if (format === 'tgz') {
         api(backupConfig.provider).download(backupConfig, getBackupFilePath(backupConfig, backupId, format), function (error, sourceStream) {
@@ -642,7 +637,7 @@ function setSnapshotInfo(id, info, callback) {
 function snapshotBox(callback) {
     assert.strictEqual(typeof callback, 'function');
 
-    log('Snapshotting box');
+    tasks.setProgress(tasks.TASK_BACKUP, { detail: 'Snapshotting box' }, NOOP_CALLBACK);
 
     database.exportToFile(`${paths.BOX_DATA_DIR}/box.mysqldump`, function (error) {
         if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
@@ -711,13 +706,13 @@ function rotateBoxBackup(backupConfig, timestamp, appBackupIds, callback) {
     var backupId = util.format('%s/box_%s_v%s', timestamp, snapshotTime, config.version());
     const format = backupConfig.format;
 
-    log(`Rotating box backup to id ${backupId}`);
+    tasks.setProgress(tasks.TASK_BACKUP, { detail: `Rotating box backup to id ${backupId}` }, NOOP_CALLBACK);
 
     backupdb.add({ id: backupId, version: config.version(), type: backupdb.BACKUP_TYPE_BOX, dependsOn: appBackupIds, manifest: null, format: format }, function (error) {
         if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
 
         var copy = api(backupConfig.provider).copy(backupConfig, getBackupFilePath(backupConfig, 'snapshot/box', format), getBackupFilePath(backupConfig, backupId, format));
-        copy.on('progress', log);
+        copy.on('progress', function (detail) { tasks.setProgress(tasks.TASK_BACKUP, { detail }, NOOP_CALLBACK); });
         copy.on('done', function (copyBackupError) {
             const state = copyBackupError ? backupdb.BACKUP_STATE_ERROR : backupdb.BACKUP_STATE_NORMAL;
 
@@ -725,7 +720,7 @@ function rotateBoxBackup(backupConfig, timestamp, appBackupIds, callback) {
                 if (copyBackupError) return callback(copyBackupError);
                 if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
 
-                log(`Rotated box backup successfully as id ${backupId}`);
+                tasks.setProgress(tasks.TASK_BACKUP, { detail: `Rotated box backup successfully as id ${backupId}` }, NOOP_CALLBACK);
 
                 backupDone(backupConfig, backupId, appBackupIds, function (error) {
                     if (error) return callback(error);
@@ -766,7 +761,7 @@ function snapshotApp(app, callback) {
     assert.strictEqual(typeof app, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    log(`Snapshotting app ${app.id}`);
+    tasks.setProgress(tasks.TASK_BACKUP, { detail: `Snapshotting app ${app.id}` }, NOOP_CALLBACK);
 
     if (!safe.fs.writeFileSync(path.join(paths.APPS_DATA_DIR, app.id + '/config.json'), JSON.stringify(apps.getAppConfig(app)))) {
         return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, 'Error creating config.json: ' + safe.error.message));
@@ -793,13 +788,13 @@ function rotateAppBackup(backupConfig, app, timestamp, callback) {
     var backupId = util.format('%s/app_%s_%s_v%s', timestamp, app.id, snapshotTime, manifest.version);
     const format = backupConfig.format;
 
-    log(`Rotating app backup of ${app.id} to id ${backupId}`);
+    tasks.setProgress(tasks.TASK_BACKUP, { detail: `Rotating app backup of ${app.id} to id ${backupId}` }, NOOP_CALLBACK);
 
     backupdb.add({ id: backupId, version: manifest.version, type: backupdb.BACKUP_TYPE_APP, dependsOn: [ ], manifest: manifest, format: format }, function (error) {
         if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
 
         var copy = api(backupConfig.provider).copy(backupConfig, getBackupFilePath(backupConfig, `snapshot/app_${app.id}`, format), getBackupFilePath(backupConfig, backupId, format));
-        copy.on('progress', log);
+        copy.on('progress', function (detail) { tasks.setProgress(tasks.TASK_BACKUP, { detail }, NOOP_CALLBACK); });
         copy.on('done', function (copyBackupError) {
             const state = copyBackupError ? backupdb.BACKUP_STATE_ERROR : backupdb.BACKUP_STATE_NORMAL;
 
@@ -807,7 +802,7 @@ function rotateAppBackup(backupConfig, app, timestamp, callback) {
                 if (copyBackupError) return callback(copyBackupError);
                 if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
 
-                log(`Rotated app backup of ${app.id} successfully to id ${backupId}`);
+                tasks.setProgress(tasks.TASK_BACKUP, { detail: `Rotated app backup of ${app.id} successfully to id ${backupId}` }, NOOP_CALLBACK);
 
                 callback(null, backupId);
             });
@@ -863,10 +858,10 @@ function backupApp(app, callback) {
 
     const timestamp = (new Date()).toISOString().replace(/[T.]/g, '-').replace(/[:Z]/g,'');
 
-    progress.set(progress.BACKUP, 10,  'Backing up ' + app.fqdn);
+    tasks.setProgress(tasks.TASK_BACKUP, { precent: 10, mesage: `Backing up ${app.fqdn}` }, NOOP_CALLBACK);
 
     backupAppWithTimestamp(app, timestamp, function (error) {
-        progress.set(progress.BACKUP, 100, error ? error.message : '');
+        tasks.setProgress(tasks.TASK_BACKUP, { percent: 100, result: error ? error.message : '' }, NOOP_CALLBACK);
 
         callback(error);
     });
@@ -889,12 +884,12 @@ function backupBoxAndApps(auditSource, callback) {
         var step = 100/(allApps.length+2);
 
         async.mapSeries(allApps, function iterator(app, iteratorCallback) {
-            progress.set(progress.BACKUP, step * processed,  'Backing up ' + app.fqdn);
+            tasks.setProgress(tasks.TASK_BACKUP, { percent: step * processed, message: `Backing up ${app.fqdn}` }, NOOP_CALLBACK);
 
             ++processed;
 
             if (!app.enableBackup) {
-                progress.set(progress.BACKUP, step * processed, 'Skipped backup ' + app.fqdn);
+                tasks.setProgress(tasks.TASK_BACKUP, { percent: step * processed, message: `Skipped backup ${app.fqdn}` }, NOOP_CALLBACK);
                 return iteratorCallback(null, null); // nothing to backup
             }
 
@@ -904,22 +899,22 @@ function backupBoxAndApps(auditSource, callback) {
                     return iteratorCallback(error);
                 }
 
-                progress.set(progress.BACKUP, step * processed, 'Backed up ' + app.fqdn);
+                tasks.setProgress(tasks.TASK_BACKUP, { percent: step * processed, message: `Backed up ${app.fqdn}` }, NOOP_CALLBACK);
 
                 iteratorCallback(null, backupId || null); // clear backupId if is in BAD_STATE and never backed up
             });
         }, function appsBackedUp(error, backupIds) {
             if (error) {
-                progress.set(progress.BACKUP, 100, error.message);
+                tasks.setProgress(tasks.TASK_BACKUP, { percent: 100, result: error.message }, NOOP_CALLBACK);
                 return callback(error);
             }
 
             backupIds = backupIds.filter(function (id) { return id !== null; }); // remove apps in bad state that were never backed up
 
-            progress.set(progress.BACKUP, step * processed, 'Backing up system data');
+            tasks.setProgress(tasks.TASK_BACKUP, { percent: step * processed, message: 'Backing up system data' }, NOOP_CALLBACK);
 
             backupBoxWithAppBackupIds(backupIds, timestamp, function (error, backupId) {
-                progress.set(progress.BACKUP, 100, error ? error.message : '');
+                tasks.setProgress(tasks.TASK_BACKUP, { percent: 100, result: error ? error.message : '' }, NOOP_CALLBACK);
 
                 eventlog.add(eventlog.ACTION_BACKUP_FINISH, auditSource, { errorMessage: error ? error.message : null, backupId: backupId, timestamp: timestamp });
 
@@ -937,7 +932,7 @@ function startBackupTask(auditSource, callback) {
     if (error) return callback(new BackupsError(BackupsError.BAD_STATE, error.message));
 
     let startTime = new Date();
-    progress.set(progress.BACKUP, 0, 'Starting'); // ensure tools can 'wait' on progress
+    tasks.setProgress(tasks.TASK_BACKUP, { percent: 0, message: 'Starting' }, NOOP_CALLBACK); // ensure tools can 'wait' on progress
 
     let fd = safe.fs.openSync(paths.BACKUP_LOG_FILE, 'a'); // will autoclose
     if (!fd) {
@@ -964,7 +959,7 @@ function startBackupTask(auditSource, callback) {
 
         locker.unlock(locker.OP_FULL_BACKUP);
 
-        progress.set(progress.BACKUP, 100, error ? error.message : '');
+        tasks.setProgress(tasks.TASK_BACKUP, { percent: 100, result: error ? error.message : '' }, NOOP_CALLBACK);
         if (error) mailer.backupFailed(error);
 
         debug('startBackupTask: backup took %s seconds', (new Date() - startTime)/1000);
