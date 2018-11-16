@@ -9,11 +9,6 @@ if (process.argv[2] === '--check') return console.log('OK');
 
 require('supererror')({ splatchError: true });
 
-// remove timestamp from debug() based output
-require('debug').formatArgs = function formatArgs(args) {
-    args[0] = this.namespace + ' ' + args[0];
-};
-
 var assert = require('assert'),
     backups = require('./backups.js'),
     database = require('./database.js'),
