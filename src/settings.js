@@ -86,6 +86,7 @@ var gDefaults = (function () {
         provider: 'filesystem',
         key: '',
         backupFolder: '/var/backups',
+        format: 'tgz',
         retentionSecs: 2 * 24 * 60 * 60, // 2 days
         intervalSecs: 24 * 60 * 60 // ~1 day
     };
