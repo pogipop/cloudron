@@ -602,13 +602,8 @@ function runBackupUpload(backupId, format, dataDir, callback) {
     assert.strictEqual(typeof dataDir, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    var killTimerId = null, progressTimerId = null;
-
     var logStream = fs.createWriteStream(paths.BACKUP_LOG_FILE, { flags: 'a' });
     var cp = shell.sudo(`backup-${backupId}`, [ BACKUP_UPLOAD_CMD, backupId, format, dataDir ], { env: process.env, logStream: logStream }, function (error) {
-        clearTimeout(killTimerId);
-        clearInterval(progressTimerId);
-
         cp = null;
 
         if (error && (error.code === null /* signal */ || (error.code !== 0 && error.code !== 50))) { // backuptask crashed
@@ -620,16 +615,6 @@ function runBackupUpload(backupId, format, dataDir, callback) {
 
         callback();
     });
-
-    progressTimerId = setInterval(function () {
-        var result = safe.fs.readFileSync(paths.BACKUP_RESULT_FILE, 'utf8');
-        if (result) progress.setDetail(progress.BACKUP, result);
-    }, 1000); // every second
-
-    killTimerId = setTimeout(function () {
-        debug('runBackupUpload: backup task taking too long. killing');
-        cp.kill();
-    }, 4 * 60 * 60 * 1000); // 4 hours
 
     logStream.on('error', function (error) {
         debug('runBackupUpload: error in logging stream', error);
