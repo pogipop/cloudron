@@ -323,11 +323,6 @@ function sync(backupConfig, backupId, dataDir, callback) {
     assert.strictEqual(typeof dataDir, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    function setBackupProgress(message) {
-        debug('%s', message);
-        safe.fs.writeFileSync(paths.BACKUP_RESULT_FILE, message);
-    }
-
     syncer.sync(dataDir, function processTask(task, iteratorCallback) {
         debug('sync: processing task: %j', task);
         // the empty task.path is special to signify the directory
@@ -335,12 +330,12 @@ function sync(backupConfig, backupId, dataDir, callback) {
         const backupFilePath = path.join(getBackupFilePath(backupConfig, backupId, backupConfig.format), destPath);
 
         if (task.operation === 'removedir') {
-            setBackupProgress(`Removing directory ${backupFilePath}`);
+            debug(`Removing directory ${backupFilePath}`);
             return api(backupConfig.provider).removeDir(backupConfig, backupFilePath)
-                .on('progress', setBackupProgress)
+                .on('progress', debug)
                 .on('done', iteratorCallback);
         } else if (task.operation === 'remove') {
-            setBackupProgress(`Removing ${backupFilePath}`);
+            debug(`Removing ${backupFilePath}`);
             return api(backupConfig.provider).remove(backupConfig, backupFilePath, iteratorCallback);
         }
 
@@ -351,14 +346,14 @@ function sync(backupConfig, backupId, dataDir, callback) {
             ++retryCount;
             debug(`${task.operation} ${task.path} try ${retryCount}`);
             if (task.operation === 'add') {
-                setBackupProgress(`Adding ${task.path} position ${task.position} try ${retryCount}`);
+                debug(`Adding ${task.path} position ${task.position} try ${retryCount}`);
                 var stream = createReadStream(path.join(dataDir, task.path), backupConfig.key || null);
                 stream.on('error', function (error) {
-                    setBackupProgress(`read stream error for ${task.path}: ${error.message}`);
+                    debug(`read stream error for ${task.path}: ${error.message}`);
                     retryCallback();
                 }); // ignore error if file disappears
                 api(backupConfig.provider).upload(backupConfig, backupFilePath, stream, function (error) {
-                    setBackupProgress(error ? `Error uploading ${task.path} try ${retryCount}: ${error.message}` : `Uploaded ${task.path}`);
+                    debug(error ? `Error uploading ${task.path} try ${retryCount}: ${error.message}` : `Uploaded ${task.path}`);
                     retryCallback(error);
                 });
             }
