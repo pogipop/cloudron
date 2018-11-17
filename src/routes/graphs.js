@@ -7,7 +7,7 @@ exports = module.exports = {
 var middleware = require('../middleware/index.js'),
     url = require('url');
 
-var graphiteProxy = middleware.proxy(url.parse('http://127.0.0.1:8000'));
+var graphiteProxy = middleware.proxy(url.parse('http://127.0.0.1:8417'));
 
 function getGraphs(req, res, next) {
     var parsedUrl = url.parse(req.url, true /* parseQueryString */);

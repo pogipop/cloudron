@@ -31,7 +31,7 @@ function startGraphite(existingInfra, callback) {
                 --dns-search=. \
                 -p 127.0.0.1:2003:2003 \
                 -p 127.0.0.1:2004:2004 \
-                -p 127.0.0.1:8000:8000 \
+                -p 127.0.0.1:8417:8000 \
                 -v "${dataDir}/graphite:/var/lib/graphite" \
                 --label isCloudronManaged=true \
                 --read-only -v /tmp -v /run "${tag}"`;

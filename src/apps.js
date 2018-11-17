@@ -154,7 +154,8 @@ function validatePortBindings(portBindings, manifest) {
         config.get('ldapPort'), /* ldap server (lo) */
         3306, /* mysql (lo) */
         4190, /* managesieve */
-        8000, /* graphite (lo) */
+        8000, /* ESXi monitoring */
+        8417, /* graphite (lo) */
     ];
 
     if (!portBindings) return null;
