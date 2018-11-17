@@ -602,10 +602,7 @@ function runBackupUpload(backupId, format, dataDir, callback) {
     assert.strictEqual(typeof dataDir, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    var logStream = fs.createWriteStream(paths.BACKUP_LOG_FILE, { flags: 'a' });
-    var cp = shell.sudo(`backup-${backupId}`, [ BACKUP_UPLOAD_CMD, backupId, format, dataDir ], { env: process.env, logStream: logStream }, function (error) {
-        cp = null;
-
+    shell.sudo(`backup-${backupId}`, [ BACKUP_UPLOAD_CMD, backupId, format, dataDir ], { env: process.env }, function (error) {
         if (error && (error.code === null /* signal */ || (error.code !== 0 && error.code !== 50))) { // backuptask crashed
             return callback(new BackupsError(BackupsError.INTERNAL_ERROR, 'Backuptask crashed'));
         } else if (error && error.code === 50) { // exited with error
@@ -614,11 +611,6 @@ function runBackupUpload(backupId, format, dataDir, callback) {
         }
 
         callback();
-    });
-
-    logStream.on('error', function (error) {
-        debug('runBackupUpload: error in logging stream', error);
-        cp.kill();
     });
 }
 
