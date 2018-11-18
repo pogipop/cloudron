@@ -2,6 +2,7 @@
 
 exports = module.exports = {
     spawn: spawn,
+    exec: exec,
     execSync: execSync,
     sudo: sudo,
     sudoSync: sudoSync
@@ -29,6 +30,21 @@ function execSync(tag, cmd, callback) {
     if (callback) callback();
 }
 
+function exec(tag, cmd, callback) {
+    assert.strictEqual(typeof tag, 'string');
+    assert.strictEqual(typeof cmd, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    debug(`${tag} exec: ${cmd}`);
+
+    child_process.execSync(cmd, function (error, stdout, stderr) {
+        debug(`${tag} (stdout): %s`, stdout.toString('utf8'));
+        debug(`${tag} (stderr): %s`, stderr.toString('utf8'));
+
+        callback(error);
+    });
+}
+
 function spawn(tag, file, args, options, callback) {
     assert.strictEqual(typeof tag, 'string');
     assert.strictEqual(typeof file, 'string');
@@ -38,7 +54,7 @@ function spawn(tag, file, args, options, callback) {
 
     callback = once(callback); // exit may or may not be called after an 'error'
 
-    debug(tag + ' execFile: %s %s', file, args.join(' '));
+    debug(tag + ' spawn: %s %s', file, args.join(' '));
 
     var cp = child_process.spawn(file, args, options);
     if (options.logStream) {
@@ -50,7 +66,7 @@ function spawn(tag, file, args, options, callback) {
         });
 
         cp.stderr.on('data', function (data) {
-            debug(tag + ' (stderr): %s', data.toString('utf8'));
+            debug(tag + ' (stdout): %s', data.toString('utf8'));
         });
     }
 
