@@ -75,7 +75,7 @@ function downloadUrl(url, file, callback) {
 
         debug(`downloadUrl: curl ${args}`);
 
-        shell.exec('downloadUrl', '/usr/bin/curl', args.split(' '), { }, function (error) {
+        shell.spawn('downloadUrl', '/usr/bin/curl', args.split(' '), { }, function (error) {
             if (error) return retryCallback(new UpdaterError(UpdaterError.EXTERNAL_ERROR, `Failed to download ${url}: ${error.message}`));
 
             debug(`downloadUrl: downloadUrl ${url} to ${file}`);
@@ -106,7 +106,7 @@ function extractTarball(tarball, dir, callback) {
 
     debug(`extractTarball: tar ${args}`);
 
-    shell.exec('extractTarball', '/bin/tar', args.split(' '), { }, function (error) {
+    shell.spawn('extractTarball', '/bin/tar', args.split(' '), { }, function (error) {
         if (error) return callback(new UpdaterError(UpdaterError.EXTERNAL_ERROR, `Failed to extract release package: ${error.message}`));
 
         safe.fs.unlinkSync(tarball);

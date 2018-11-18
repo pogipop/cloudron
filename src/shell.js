@@ -1,7 +1,7 @@
 'use strict';
 
 exports = module.exports = {
-    exec: exec,
+    spawn: spawn,
     execSync: execSync,
     sudo: sudo,
     sudoSync: sudoSync
@@ -29,7 +29,7 @@ function execSync(tag, cmd, callback) {
     if (callback) callback();
 }
 
-function exec(tag, file, args, options, callback) {
+function spawn(tag, file, args, options, callback) {
     assert.strictEqual(typeof tag, 'string');
     assert.strictEqual(typeof file, 'string');
     assert(util.isArray(args));
@@ -84,7 +84,7 @@ function sudo(tag, args, options, callback) {
     assert.strictEqual(typeof options, 'object');
 
     // -S makes sudo read stdin for password. -E preserves environment
-    var cp = exec(tag, SUDO, [ options.env ? '-SE' : '-S' ].concat(args), options, callback);
+    var cp = spawn(tag, SUDO, [ options.env ? '-SE' : '-S' ].concat(args), options, callback);
     cp.stdin.end();
     return cp;
 }

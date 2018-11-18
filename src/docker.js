@@ -109,7 +109,7 @@ function pullImage(manifest, callback) {
 
     // Use docker CLI here to support downloading of private repos. for dockerode, we have to use
     // https://github.com/apocas/dockerode#pull-from-private-repos
-    shell.exec('pullImage', '/usr/bin/docker', [ 'pull', manifest.dockerImage ], { }, function (error) {
+    shell.spawn('pullImage', '/usr/bin/docker', [ 'pull', manifest.dockerImage ], { }, function (error) {
         if (error) {
             debug(`pullImage: Error pulling image ${manifest.dockerImage} of ${manifest.id}: ${error.message}`);
             return callback(new Error('Failed to pull image'));

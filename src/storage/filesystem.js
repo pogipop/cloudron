@@ -120,7 +120,7 @@ function copy(apiConfig, oldFilePath, newFilePath) {
 
         // this will hardlink backups saving space
         var cpOptions = apiConfig.noHardlinks ? '-a' : '-al';
-        shell.exec('copy', '/bin/cp', [ cpOptions, oldFilePath, newFilePath ], { }, function (error) {
+        shell.spawn('copy', '/bin/cp', [ cpOptions, oldFilePath, newFilePath ], { }, function (error) {
             if (error) return events.emit('done', new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
 
             events.emit('done', null);
@@ -155,7 +155,7 @@ function removeDir(apiConfig, pathPrefix) {
 
     events.emit('progress', `removeDir: ${pathPrefix}`);
 
-    shell.exec('removeDir', '/bin/rm', [ '-rf', pathPrefix ], { }, function (error) {
+    shell.spawn('removeDir', '/bin/rm', [ '-rf', pathPrefix ], { }, function (error) {
         if (error) return events.emit('done', new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
 
         events.emit('done', null);

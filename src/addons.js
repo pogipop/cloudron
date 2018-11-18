@@ -369,7 +369,7 @@ function updateAddonConfig(platformConfig, callback) {
         }
 
         const args = `update --memory ${memory} --memory-swap ${memorySwap} ${containerName}`.split(' ');
-        shell.exec(`update${containerName}`, '/usr/bin/docker', args, { }, iteratorCallback);
+        shell.spawn(`update${containerName}`, '/usr/bin/docker', args, { }, iteratorCallback);
     }, callback);
 }
 
