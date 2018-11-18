@@ -12,7 +12,8 @@ exports = module.exports = {
 
     ensureBackup: ensureBackup,
 
-    runBackupTask: runBackupTask,
+    startBackupTask: startBackupTask,
+    stopBackupTask: stopBackupTask,
 
     restore: restore,
 
@@ -69,6 +70,8 @@ var addons = require('./addons.js'),
 var NOOP_CALLBACK = function (error) { if (error) debug(error); };
 
 var BACKUP_UPLOAD_CMD = path.join(__dirname, 'backupupload.js');
+
+let gBackupTask = null;
 
 function debugApp(app) {
     assert(typeof app === 'object');
@@ -926,11 +929,10 @@ function backupBoxAndApps(auditSource, callback) {
     });
 }
 
-function runBackupTask(auditSource, callback) {
+function startBackupTask(auditSource, callback) {
     assert.strictEqual(typeof auditSource, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    // fork and run!
     let error = locker.lock(locker.OP_FULL_BACKUP);
     if (error) return callback(new BackupsError(BackupsError.BAD_STATE, error.message));
 
@@ -939,16 +941,17 @@ function runBackupTask(auditSource, callback) {
 
     let fd = safe.fs.openSync(paths.BACKUP_LOG_FILE, 'a'); // will autoclose
     if (!fd) {
-        debug('Unable to get log filedescriptor %s', safe.error.message);
+        debug('startBackupTask: unable to get log filedescriptor %s', safe.error.message);
         return callback(safe.error);
     }
 
     debug(`starting backuptask. logs at ${paths.BACKUP_LOG_FILE}`);
 
     // when parent process dies, this process is killed because KillMode=control-group in systemd unit file
-    let cp = child_process.fork(__dirname + '/backuptask.js', [ JSON.stringify(auditSource) ], { stdio: [ 'pipe', fd, fd, 'ipc' ]});
-    cp.once('exit', function (code, signal) {
-        debug(`backuptask completed with code ${code} and signal ${signal}`);
+    assert.strictEqual(gBackupTask, null);
+    gBackupTask = child_process.fork(__dirname + '/backuptask.js', [ JSON.stringify(auditSource) ], { stdio: [ 'pipe', fd, fd, 'ipc' ]});
+    gBackupTask.once('exit', function (code, signal) {
+        debug(`startBackupTask: completed with code ${code} and signal ${signal}`);
 
         let error;
         if (code === null /* signal */ || (code !== 0 && code !== 50)) { // apptask crashed
@@ -957,13 +960,28 @@ function runBackupTask(auditSource, callback) {
             error = new Error(safe.fs.readFileSync(paths.BACKUP_RESULT_FILE, 'utf8') || safe.error.message);
         }
 
+        gBackupTask = null;
+
         locker.unlock(locker.OP_FULL_BACKUP);
 
         progress.set(progress.BACKUP, 100, error ? error.message : '');
         if (error) mailer.backupFailed(error);
 
-        debug('backup took %s seconds', (new Date() - startTime)/1000);
+        debug('startBackupTask: backup took %s seconds', (new Date() - startTime)/1000);
     });
+
+    callback(null);
+}
+
+function stopBackupTask(auditSource, callback) {
+    assert.strictEqual(typeof auditSource, 'object');
+    assert.strictEqual(typeof callback, 'function');
+
+    if (!gBackupTask) return callback(new BackupsError(BackupsError.BAD_STATE, 'Backup task is not active'));
+
+    debug('stopBackupTask: stopping backup process');
+
+    gBackupTask.kill('SIGTERM'); // this will end up calling the 'exit' signal handler
 
     callback(null);
 }
@@ -987,7 +1005,7 @@ function ensureBackup(auditSource, callback) {
                 return callback(null);
             }
 
-            runBackupTask(auditSource, callback);
+            startBackupTask(auditSource, callback);
         });
     });
 }

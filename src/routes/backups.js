@@ -1,8 +1,9 @@
 'use strict';
 
 exports = module.exports = {
-    get: get,
-    create: create
+    list: list,
+    startBackup: startBackup,
+    stopBackup: stopBackup
 };
 
 var backupdb = require('../backupdb.js'),
@@ -16,7 +17,7 @@ function auditSource(req) {
     return { ip: ip, username: req.user ? req.user.username : null, userId: req.user ? req.user.id : null };
 }
 
-function get(req, res, next) {
+function list(req, res, next) {
     var page = typeof req.query.page !== 'undefined' ? parseInt(req.query.page) : 1;
     if (!page || page < 0) return next(new HttpError(400, 'page query param has to be a postive number'));
 
@@ -31,10 +32,19 @@ function get(req, res, next) {
     });
 }
 
-function create(req, res, next) {
+function startBackup(req, res, next) {
     // note that cloudron.backup only waits for backup initiation and not for backup to complete
     // backup progress can be checked up ny polling the progress api call
-    backups.runBackupTask(auditSource(req), function (error) {
+    backups.startBackupTask(auditSource(req), function (error) {
+        if (error && error.reason === BackupsError.BAD_STATE) return next(new HttpError(409, error.message));
+        if (error) return next(new HttpError(500, error));
+
+        next(new HttpSuccess(202, {}));
+    });
+}
+
+function stopBackup(req, res, next) {
+    backups.stopBackupTask(auditSource(req), function (error) {
         if (error && error.reason === BackupsError.BAD_STATE) return next(new HttpError(409, error.message));
         if (error) return next(new HttpError(500, error));
 

@@ -69,7 +69,7 @@ function compareDirectories(one, two, callback) {
 }
 
 function createBackup(callback) {
-    backups.runBackupTask({ username: 'test' }, function (error) { // this call does not wait for the backup!
+    backups.startBackupTask({ username: 'test' }, function (error) { // this call does not wait for the backup!
         if (error) return callback(error);
 
         function waitForBackup() {

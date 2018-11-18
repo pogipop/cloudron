@@ -134,6 +134,10 @@ function initializeExpressSync() {
     router.del ('/api/v1/cloudron/ssh/authorized_keys/:identifier', cloudronScope, isUnmanaged, routes.ssh.delAuthorizedKey);
     router.get ('/api/v1/cloudron/eventlog', cloudronScope, routes.eventlog.get);
 
+    router.get ('/api/v1/cloudron/backups', settingsScope, routes.backups.list);
+    router.post('/api/v1/cloudron/start_backup', settingsScope, routes.backups.startBackup);
+    router.post('/api/v1/cloudron/stop_backup', settingsScope, routes.backups.stopBackup);
+
     // config route (for dashboard)
     router.get ('/api/v1/config', profileScope, routes.cloudron.getConfig);
 
@@ -268,10 +272,6 @@ function initializeExpressSync() {
 
     // feedback
     router.post('/api/v1/feedback', cloudronScope, isUnmanaged, routes.cloudron.feedback);
-
-    // backup routes
-    router.get ('/api/v1/backups', settingsScope, routes.backups.get);
-    router.post('/api/v1/backups', settingsScope, routes.backups.create);
 
     // domain routes
     router.post('/api/v1/domains', domainsManageScope, routes.domains.add);
