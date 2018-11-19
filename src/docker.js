@@ -1,8 +1,12 @@
 'use strict';
 
 exports = module.exports = {
+    DockerError: DockerError,
+
     connection: connectionInstance(),
     setRegistryConfig: setRegistryConfig,
+
+    ping: ping,
 
     downloadImage: downloadImage,
     createContainer: createContainer,
@@ -80,6 +84,7 @@ function DockerError(reason, errorOrMessage) {
 }
 util.inherits(DockerError, Error);
 DockerError.INTERNAL_ERROR = 'Internal Error';
+DockerError.NOT_FOUND = 'Not found';
 DockerError.BAD_FIELD = 'Bad field';
 
 function debugApp(app, args) {
@@ -101,6 +106,20 @@ function setRegistryConfig(auth, callback) {
         if (error) return callback(new DockerError(DockerError.BAD_FIELD, stderr));
 
         callback();
+    });
+}
+
+function ping(callback) {
+    assert.strictEqual(typeof callback, 'function');
+
+    var docker = exports.connection;
+
+    docker.ping(function (error, result) {
+        if (error) return callback(new DockerError(DockerError.INTERNAL_ERROR, error));
+
+        console.log('-----', result);
+
+        callback(null);
     });
 }
 
@@ -445,7 +464,9 @@ function inspect(containerId, callback) {
     var container = exports.connection.getContainer(containerId);
 
     container.inspect(function (error, result) {
-        if (error) return callback(error);
+        if (error && error.statusCode === 404) return callback(new DockerError(DockerError.NOT_FOUND));
+        if (error) return callback(new DockerError(DockerError.INTERNAL_ERROR, error));
+
         callback(null, result);
     });
 }

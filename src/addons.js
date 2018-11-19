@@ -26,7 +26,6 @@ exports = module.exports = {
     _setupOauth: setupOauth,
     _teardownOauth: teardownOauth,
 
-    ADDON_STATUS_ERROR: 'error',
     ADDON_STATUS_ACTIVE: 'active',
     ADDON_STATUS_INACTIVE: 'inactive'
 };
@@ -43,6 +42,7 @@ var accesscontrol = require('./accesscontrol.js'),
     debug = require('debug')('box:addons'),
     docker = require('./docker.js'),
     dockerConnection = docker.connection,
+    DockerError = docker.DockerError,
     fs = require('fs'),
     hat = require('./hat.js'),
     infra = require('./infra_version.js'),
@@ -713,7 +713,13 @@ function teardownEmail(app, options, callback) {
 
 function statusEmail(callback) {
     assert.strictEqual(typeof callback, 'function');
-    callback(null, { status: exports.ADDON_STATUS_ACTIVE });
+
+    docker.inspect('mail', function (error, result) {
+        if (error && error.reason === DockerError.NOT_FOUND) return callback(null, { status: exports.ADDON_STATUS_INACTIVE });
+        if (error) return callback(new AddonsError(AddonsError.INTERNAL_ERROR, error));
+
+        callback(null, { status: result.State.Running ? exports.ADDON_STATUS_ACTIVE : exports.ADDON_STATUS_INACTIVE });
+    });
 }
 
 function setupLdap(app, options, callback) {
@@ -1045,7 +1051,13 @@ function restoreMySql(app, options, callback) {
 
 function statusMySql(callback) {
     assert.strictEqual(typeof callback, 'function');
-    callback(null, { status: exports.ADDON_STATUS_ACTIVE });
+
+    docker.inspect('mysql', function (error, result) {
+        if (error && error.reason === DockerError.NOT_FOUND) return callback(null, { status: exports.ADDON_STATUS_INACTIVE });
+        if (error) return callback(new AddonsError(AddonsError.INTERNAL_ERROR, error));
+
+        callback(null, { status: result.State.Running ? exports.ADDON_STATUS_ACTIVE : exports.ADDON_STATUS_INACTIVE });
+    });
 }
 
 function postgreSqlNames(appId) {
@@ -1225,7 +1237,13 @@ function restorePostgreSql(app, options, callback) {
 
 function statusPostgreSql(callback) {
     assert.strictEqual(typeof callback, 'function');
-    callback(null, { status: exports.ADDON_STATUS_ACTIVE });
+
+    docker.inspect('postgresql', function (error, result) {
+        if (error && error.reason === DockerError.NOT_FOUND) return callback(null, { status: exports.ADDON_STATUS_INACTIVE });
+        if (error) return callback(new AddonsError(AddonsError.INTERNAL_ERROR, error));
+
+        callback(null, { status: result.State.Running ? exports.ADDON_STATUS_ACTIVE : exports.ADDON_STATUS_INACTIVE });
+    });
 }
 
 function startMongodb(existingInfra, callback) {
@@ -1393,7 +1411,12 @@ function restoreMongoDb(app, options, callback) {
 function statusMongoDb(callback) {
     assert.strictEqual(typeof callback, 'function');
 
-    callback(null, { status: exports.ADDON_STATUS_ACTIVE });
+    docker.inspect('mongodb', function (error, result) {
+        if (error && error.reason === DockerError.NOT_FOUND) return callback(null, { status: exports.ADDON_STATUS_INACTIVE });
+        if (error) return callback(new AddonsError(AddonsError.INTERNAL_ERROR, error));
+
+        callback(null, { status: result.State.Running ? exports.ADDON_STATUS_ACTIVE : exports.ADDON_STATUS_INACTIVE });
+    });
 }
 
 function startRedis(existingInfra, callback) {
@@ -1572,5 +1595,8 @@ function restoreRedis(app, options, callback) {
 
 function statusDocker(callback) {
     assert.strictEqual(typeof callback, 'function');
-    callback(null, { status: exports.ADDON_STATUS_ACTIVE });
+
+    docker.ping(function (error) {
+        callback(null, { status: error ? exports.ADDON_STATUS_INACTIVE: exports.ADDON_STATUS_ACTIVE });
+    });
 }
