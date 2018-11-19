@@ -66,6 +66,9 @@ df -h &>> $OUT
 echo -e $LINE"System daemon status"$LINE >> $OUT
 systemctl status --lines=100 cloudron.target box mysql unbound cloudron-syslog nginx collectd docker &>> $OUT
 
+echo -e $LINE"Box logs"$LINE >> $OUT
+tail -n 100 /home/yellowtent/platformdata/logs/box.log &>> $OUT
+
 echo -e $LINE"Firewall chains"$LINE >> $OUT
 iptables -L &>> $OUT
 
