@@ -57,6 +57,7 @@ var accesscontrol = require('./accesscontrol.js'),
     semver = require('semver'),
     shell = require('./shell.js'),
     spawn = require('child_process').spawn,
+    split = require('split'),
     request = require('request'),
     util = require('util');
 
@@ -279,7 +280,7 @@ function getLogs(addon, options, callback) {
         return JSON.stringify({
             realtimeTimestamp: timestamp * 1000,
             message: message,
-            source: appId
+            source: addon
         }) + '\n';
     });
 
