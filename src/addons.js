@@ -83,6 +83,7 @@ function AddonsError(reason, errorOrMessage) {
 }
 util.inherits(AddonsError, Error);
 AddonsError.INTERNAL_ERROR = 'Internal Error';
+AddonsError.NOT_SUPPORTED = 'Not Supported';
 AddonsError.NOT_FOUND = 'Not Found';
 
 const NOOP = function (app, options, callback) { return callback(); };
@@ -295,14 +296,36 @@ function startAddon(addon, callback) {
     assert.strictEqual(typeof addon, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    callback(new AddonsError(AddonsError.INTERNAL_ERROR, 'not implemented'));
+    // only allow certain addon types to be started
+    const allowedAddons = ['email', 'mysql', 'mongodb', 'postgresql'];
+    if (allowedAddons.indexOf(addon) === -1) return callback(new AddonsError(AddonsError.NOT_SUPPORTED));
+
+    // email container has a different name
+    const containerName = addon === 'email' ? 'mail' : addon;
+
+    docker.startContainer(containerName, function (error) {
+        if (error) return callback(new AddonsError(AddonsError.INTERNAL_ERROR, error));
+
+        callback(null);
+    });
 }
 
 function stopAddon(addon, callback) {
     assert.strictEqual(typeof addon, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    callback(new AddonsError(AddonsError.INTERNAL_ERROR, 'not implemented'));
+    // only allow certain addon types to be stopped
+    const allowedAddons = ['email', 'mysql', 'mongodb', 'postgresql'];
+    if (allowedAddons.indexOf(addon) === -1) return callback(new AddonsError(AddonsError.NOT_SUPPORTED));
+
+    // email container has a different name
+    const containerName = addon === 'email' ? 'mail' : addon;
+
+    docker.stopContainer(containerName, function (error) {
+        if (error) return callback(new AddonsError(AddonsError.INTERNAL_ERROR, error));
+
+        callback(null);
+    });
 }
 
 function getAddonDetails(containerName, tokenEnvName, callback) {
