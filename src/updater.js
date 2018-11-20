@@ -186,11 +186,9 @@ function doUpdate(boxUpdateInfo, callback) {
 }
 
 function update(boxUpdateInfo, auditSource, callback) {
-    assert.strictEqual(typeof boxUpdateInfo, 'object');
+    assert(boxUpdateInfo && typeof boxUpdateInfo === 'object');
     assert.strictEqual(typeof auditSource, 'object');
     assert.strictEqual(typeof callback, 'function');
-
-    if (!boxUpdateInfo) return callback(null);
 
     var error = locker.lock(locker.OP_BOX_UPDATE);
     if (error) return callback(new UpdaterError(UpdaterError.BAD_STATE, error.message));
