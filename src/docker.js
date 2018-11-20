@@ -116,8 +116,7 @@ function ping(callback) {
 
     docker.ping(function (error, result) {
         if (error) return callback(new DockerError(DockerError.INTERNAL_ERROR, error));
-
-        console.log('-----', result);
+        if (result !== 'OK') return callback(new DockerError(DockerError.INTERNAL_ERROR, 'Unable to ping the docker daemon'));
 
         callback(null);
     });
