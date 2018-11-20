@@ -937,6 +937,7 @@ function startBackupTask(auditSource, callback) {
     let fd = safe.fs.openSync(paths.BACKUP_LOG_FILE, 'a'); // will autoclose
     if (!fd) {
         debug('startBackupTask: unable to get log filedescriptor %s', safe.error.message);
+        locker.unlock(locker.OP_FULL_BACKUP);
         return callback(safe.error);
     }
 
