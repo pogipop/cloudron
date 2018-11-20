@@ -82,7 +82,6 @@ CloudronError.EXTERNAL_ERROR = 'External Error';
 CloudronError.BAD_STATE = 'Bad state';
 CloudronError.ALREADY_UPTODATE = 'No Update Available';
 CloudronError.NOT_FOUND = 'Not found';
-CloudronError.SELF_UPGRADE_NOT_SUPPORTED = 'Self upgrade not supported';
 
 function initialize(callback) {
     assert.strictEqual(typeof callback, 'function');

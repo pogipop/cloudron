@@ -42,7 +42,6 @@ function update(req, res, next) {
     updater.updateToLatest(auditSource, function (error) {
         if (error && error.reason === UpdaterError.ALREADY_UPTODATE) return next(new HttpError(422, error.message));
         if (error && error.reason === UpdaterError.BAD_STATE) return next(new HttpError(409, error.message));
-        if (error && error.reason === UpdaterError.SELF_UPGRADE_NOT_SUPPORTED) return next(new HttpError(412, error.message));
         if (error) return next(new HttpError(500, error));
 
         next(new HttpSuccess(202, {}));

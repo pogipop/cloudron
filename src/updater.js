@@ -54,7 +54,6 @@ UpdaterError.EXTERNAL_ERROR = 'External Error';
 UpdaterError.BAD_STATE = 'Bad state';
 UpdaterError.ALREADY_UPTODATE = 'No Update Available';
 UpdaterError.NOT_FOUND = 'Not found';
-UpdaterError.SELF_UPGRADE_NOT_SUPPORTED = 'Self upgrade not supported';
 UpdaterError.NOT_SIGNED = 'Not signed';
 
 function downloadUrl(url, file, callback) {
@@ -198,24 +197,13 @@ function update(boxUpdateInfo, auditSource, callback) {
     // ensure tools can 'wait' on progress
     tasks.setProgress(tasks.TASK_UPDATE, { percent: 0, message: 'Starting' }, NOOP_CALLBACK);
 
-    // initiate the update/upgrade but do not wait for it
-    if (boxUpdateInfo.upgrade) {
-        debug('Starting upgrade');
-        caas.upgrade(boxUpdateInfo, function (error) {
-            if (error) {
-                debug('Upgrade failed with error:', error);
-                locker.unlock(locker.OP_BOX_UPDATE);
-            }
-        });
-    } else {
-        debug('Starting update');
-        doUpdate(boxUpdateInfo, function (error) {
-            if (error) {
-                debug('Update failed with error:', error);
-                locker.unlock(locker.OP_BOX_UPDATE);
-            }
-        });
-    }
+    debug('Starting update');
+    doUpdate(boxUpdateInfo, function (error) {
+        if (error) {
+            debug('Update failed with error:', error);
+            locker.unlock(locker.OP_BOX_UPDATE);
+        }
+    });
 
     callback(null);
 }
@@ -227,8 +215,6 @@ function updateToLatest(auditSource, callback) {
     var boxUpdateInfo = updateChecker.getUpdateInfo().box;
     if (!boxUpdateInfo) return callback(new UpdaterError(UpdaterError.ALREADY_UPTODATE, 'No update available'));
     if (!boxUpdateInfo.sourceTarballUrl) return callback(new UpdaterError(UpdaterError.BAD_STATE, 'No automatic update available'));
-
-    if (boxUpdateInfo.upgrade && config.provider() !== 'caas') return callback(new UpdaterError(UpdaterError.SELF_UPGRADE_NOT_SUPPORTED));
 
     update(boxUpdateInfo, auditSource, callback);
 }

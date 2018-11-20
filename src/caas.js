@@ -5,7 +5,6 @@ exports = module.exports = {
     setupDone: setupDone,
 
     changePlan: changePlan,
-    upgrade: upgrade,
     sendHeartbeat: sendHeartbeat,
     getBoxAndUserDetails: getBoxAndUserDetails,
     setPtrRecord: setPtrRecord,
@@ -56,7 +55,7 @@ CaasError.EXTERNAL_ERROR = 'External Error';
 var NOOP_CALLBACK = function (error) { if (error) debug(error); };
 
 function retire(reason, info, callback) {
-    assert(reason === 'migrate' || reason === 'upgrade');
+    assert(reason === 'migrate');
     info = info || { };
     callback = callback || NOOP_CALLBACK;
 
@@ -169,42 +168,6 @@ function changePlan(options, callback) {
         if (error) return callback(error);
 
         doMigrate(options, result, callback);
-    });
-}
-
-// this function expects a lock
-function upgrade(boxUpdateInfo, callback) {
-    assert(boxUpdateInfo !== null && typeof boxUpdateInfo === 'object');
-
-    function upgradeError(e) {
-        tasks.setProgress(tasks.TASK_MIGRATE, { percent: -1, result: e.message }, NOOP_CALLBACK);
-        callback(e);
-    }
-
-    tasks.setProgress(tasks.TASK_MIGRATE, { percent: 5, result: 'Backing up for upgrade' }, NOOP_CALLBACK);
-
-    backups.backupBoxAndApps({ userId: null, username: 'upgrader' }, function (error) {
-        if (error) return upgradeError(error);
-
-        getCaasConfig(function (error, result) {
-            if (error) return upgradeError(error);
-
-            superagent.post(config.apiServerOrigin() + '/api/v1/boxes/' + result.boxId + '/upgrade')
-                .query({ token: result.token })
-                .send({ version: boxUpdateInfo.version })
-                .timeout(30 * 1000)
-                .end(function (error, result) {
-                    if (error && !error.response) return upgradeError(new Error('Network error making upgrade request: ' + error));
-                    if (result.statusCode !== 202) return upgradeError(new Error(util.format('Server not ready to upgrade. statusCode: %s body: %j', result.status, result.body)));
-
-                    tasks.setProgress(tasks.TASK_MIGRATE, { percent: 10, result: 'Updating base system' }, NOOP_CALLBACK);
-
-                    // no need to unlock since this is the last thing we ever do on this box
-                    callback();
-
-                    retire('upgrade');
-                });
-        });
     });
 }
 
