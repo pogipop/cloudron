@@ -1077,11 +1077,18 @@ function restoreMySql(app, options, callback) {
 function statusMySql(callback) {
     assert.strictEqual(typeof callback, 'function');
 
-    docker.inspect('mysql', function (error, result) {
-        if (error && error.reason === DockerError.NOT_FOUND) return callback(null, { status: exports.ADDON_STATUS_INACTIVE });
-        if (error) return callback(new AddonsError(AddonsError.INTERNAL_ERROR, error));
+    const containerName = 'mysql';
 
-        callback(null, { status: result.State.Running ? exports.ADDON_STATUS_ACTIVE : exports.ADDON_STATUS_INACTIVE });
+    getAddonDetails(containerName, 'CLOUDRON_MYSQL_TOKEN', function (error, result) {
+        if (error && error.reason === AddonsError.NOT_ACTIVE) return callback(null, { status: exports.ADDON_STATUS_INACTIVE });
+        if (error) return callback(error);
+
+        request.get(`https://${result.ip}:3000/healthcheck?access_token=${result.token}`, { json: true, rejectUnauthorized: false }, function (error, response) {
+            if (error) return callback(null, { status: exports.ADDON_STATUS_INACTIVE, error: `Error waiting for ${containerName}: ${error.message}` });
+            if (response.statusCode !== 200 || !response.body.status) return callback(null, { status: exports.ADDON_STATUS_INACTIVE, error: `Error waiting for ${containerName}. Status code: ${response.statusCode} message: ${response.body.message}` });
+
+            callback(null, { status: result.State.Running ? exports.ADDON_STATUS_ACTIVE : exports.ADDON_STATUS_INACTIVE });
+        });
     });
 }
 
@@ -1263,11 +1270,18 @@ function restorePostgreSql(app, options, callback) {
 function statusPostgreSql(callback) {
     assert.strictEqual(typeof callback, 'function');
 
-    docker.inspect('postgresql', function (error, result) {
-        if (error && error.reason === DockerError.NOT_FOUND) return callback(null, { status: exports.ADDON_STATUS_INACTIVE });
-        if (error) return callback(new AddonsError(AddonsError.INTERNAL_ERROR, error));
+    const containerName = 'postgresql';
 
-        callback(null, { status: result.State.Running ? exports.ADDON_STATUS_ACTIVE : exports.ADDON_STATUS_INACTIVE });
+    getAddonDetails(containerName, 'CLOUDRON_POSTGRESQL_TOKEN', function (error, result) {
+        if (error && error.reason === AddonsError.NOT_ACTIVE) return callback(null, { status: exports.ADDON_STATUS_INACTIVE });
+        if (error) return callback(error);
+
+        request.get(`https://${result.ip}:3000/healthcheck?access_token=${result.token}`, { json: true, rejectUnauthorized: false }, function (error, response) {
+            if (error) return callback(null, { status: exports.ADDON_STATUS_INACTIVE, error: `Error waiting for ${containerName}: ${error.message}` });
+            if (response.statusCode !== 200 || !response.body.status) return callback(null, { status: exports.ADDON_STATUS_INACTIVE, error: `Error waiting for ${containerName}. Status code: ${response.statusCode} message: ${response.body.message}` });
+
+            callback(null, { status: result.State.Running ? exports.ADDON_STATUS_ACTIVE : exports.ADDON_STATUS_INACTIVE });
+        });
     });
 }
 
@@ -1436,11 +1450,18 @@ function restoreMongoDb(app, options, callback) {
 function statusMongoDb(callback) {
     assert.strictEqual(typeof callback, 'function');
 
-    docker.inspect('mongodb', function (error, result) {
-        if (error && error.reason === DockerError.NOT_FOUND) return callback(null, { status: exports.ADDON_STATUS_INACTIVE });
-        if (error) return callback(new AddonsError(AddonsError.INTERNAL_ERROR, error));
+    const containerName = 'mongodb';
 
-        callback(null, { status: result.State.Running ? exports.ADDON_STATUS_ACTIVE : exports.ADDON_STATUS_INACTIVE });
+    getAddonDetails(containerName, 'CLOUDRON_MONGODB_TOKEN', function (error, result) {
+        if (error && error.reason === AddonsError.NOT_ACTIVE) return callback(null, { status: exports.ADDON_STATUS_INACTIVE });
+        if (error) return callback(error);
+
+        request.get(`https://${result.ip}:3000/healthcheck?access_token=${result.token}`, { json: true, rejectUnauthorized: false }, function (error, response) {
+            if (error) return callback(null, { status: exports.ADDON_STATUS_INACTIVE, error: `Error waiting for ${containerName}: ${error.message}` });
+            if (response.statusCode !== 200 || !response.body.status) return callback(null, { status: exports.ADDON_STATUS_INACTIVE, error: `Error waiting for ${containerName}. Status code: ${response.statusCode} message: ${response.body.message}` });
+
+            callback(null, { status: result.State.Running ? exports.ADDON_STATUS_ACTIVE : exports.ADDON_STATUS_INACTIVE });
+        });
     });
 }
 
