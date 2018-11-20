@@ -945,7 +945,7 @@ function startBackupTask(auditSource, callback) {
 
     // when parent process dies, this process is killed because KillMode=control-group in systemd unit file
     assert.strictEqual(gBackupTask, null);
-    gBackupTask = child_process.fork(__dirname + '/backuptask.js', [ JSON.stringify(auditSource) ], { stdio: [ 'pipe', fd, fd, 'ipc' ]});
+    gBackupTask = child_process.fork(__dirname + '/tasks/backuptask.js', [ JSON.stringify(auditSource) ], { stdio: [ 'pipe', fd, fd, 'ipc' ]});
     gBackupTask.once('exit', function (code, signal) {
         debug(`startBackupTask: completed with code ${code} and signal ${signal}`);
 

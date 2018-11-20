@@ -8,10 +8,10 @@
 require('supererror')({ splatchError: true });
 
 var assert = require('assert'),
-    backups = require('./backups.js'),
-    database = require('./database.js'),
-    debug = require('debug')('box:backupupload'),
-    paths = require('./paths.js'),
+    backups = require('../backups.js'),
+    database = require('../database.js'),
+    debug = require('debug')('box:backuptask'),
+    paths = require('../paths.js'),
     safe = require('safetydance');
 
 function initialize(callback) {
