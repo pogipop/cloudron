@@ -349,7 +349,7 @@ function getAddonDetails(containerName, tokenEnvName, callback) {
         const token = tmp.slice(tokenEnvName.length + 1); // +1 for the = sign
         if (!token)  return callback(new AddonsError(AddonsError.INTERNAL_ERROR, `Error getting ${containerName} cloudron token`));
 
-        callback(null, { ip: ip, token: token });
+        callback(null, { ip: ip, token: token, state: result.State });
     });
 }
 
@@ -1087,7 +1087,7 @@ function statusMySql(callback) {
             if (error) return callback(null, { status: exports.ADDON_STATUS_INACTIVE, error: `Error waiting for ${containerName}: ${error.message}` });
             if (response.statusCode !== 200 || !response.body.status) return callback(null, { status: exports.ADDON_STATUS_INACTIVE, error: `Error waiting for ${containerName}. Status code: ${response.statusCode} message: ${response.body.message}` });
 
-            callback(null, { status: result.State.Running ? exports.ADDON_STATUS_ACTIVE : exports.ADDON_STATUS_INACTIVE });
+            callback(null, { status: result.state.Running ? exports.ADDON_STATUS_ACTIVE : exports.ADDON_STATUS_INACTIVE });
         });
     });
 }
@@ -1280,7 +1280,7 @@ function statusPostgreSql(callback) {
             if (error) return callback(null, { status: exports.ADDON_STATUS_INACTIVE, error: `Error waiting for ${containerName}: ${error.message}` });
             if (response.statusCode !== 200 || !response.body.status) return callback(null, { status: exports.ADDON_STATUS_INACTIVE, error: `Error waiting for ${containerName}. Status code: ${response.statusCode} message: ${response.body.message}` });
 
-            callback(null, { status: result.State.Running ? exports.ADDON_STATUS_ACTIVE : exports.ADDON_STATUS_INACTIVE });
+            callback(null, { status: result.state.Running ? exports.ADDON_STATUS_ACTIVE : exports.ADDON_STATUS_INACTIVE });
         });
     });
 }
@@ -1460,7 +1460,7 @@ function statusMongoDb(callback) {
             if (error) return callback(null, { status: exports.ADDON_STATUS_INACTIVE, error: `Error waiting for ${containerName}: ${error.message}` });
             if (response.statusCode !== 200 || !response.body.status) return callback(null, { status: exports.ADDON_STATUS_INACTIVE, error: `Error waiting for ${containerName}. Status code: ${response.statusCode} message: ${response.body.message}` });
 
-            callback(null, { status: result.State.Running ? exports.ADDON_STATUS_ACTIVE : exports.ADDON_STATUS_INACTIVE });
+            callback(null, { status: result.state.Running ? exports.ADDON_STATUS_ACTIVE : exports.ADDON_STATUS_INACTIVE });
         });
     });
 }
