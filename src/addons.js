@@ -85,6 +85,7 @@ util.inherits(AddonsError, Error);
 AddonsError.INTERNAL_ERROR = 'Internal Error';
 AddonsError.NOT_SUPPORTED = 'Not Supported';
 AddonsError.NOT_FOUND = 'Not Found';
+AddonsError.NOT_ACTIVE = 'Not Active';
 
 const NOOP = function (app, options, callback) { return callback(); };
 const NOOP_CALLBACK = function (error) { if (error) debug(error); };
@@ -333,20 +334,20 @@ function getAddonDetails(containerName, tokenEnvName, callback) {
     assert.strictEqual(typeof tokenEnvName, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    var container = dockerConnection.getContainer(containerName);
-    container.inspect(function (error, result) {
-        if (error) return callback(new Error(`Error inspecting ${containerName} container: ` + error));
+    docker.inspect(containerName, function (error, result) {
+        if (error && error.reason === DockerError.NOT_FOUND) return callback(new AddonsError(AddonsError.NOT_ACTIVE, error));
+        if (error) return callback(new AddonsError(AddonsError.INTERNAL_ERROR, error));
 
         const ip = safe.query(result, 'NetworkSettings.Networks.cloudron.IPAddress', null);
-        if (!ip) return callback(new Error(`Error getting ${containerName} container ip`));
+        if (!ip) return callback(new AddonsError(AddonsError.NOT_ACTIVE, `Error getting ${containerName} container ip`));
 
         // extract the cloudron token for auth
         const env = safe.query(result, 'Config.Env', null);
-        if (!env) return callback(new Error(`Error getting ${containerName} env`));
+        if (!env) return callback(new AddonsError(AddonsError.INTERNAL_ERROR, `Error getting ${containerName} env`));
         const tmp = env.find(function (e) { return e.indexOf(tokenEnvName) === 0; });
-        if (!tmp) return callback(new Error(`Error getting ${containerName} cloudron token env var`));
+        if (!tmp) return callback(new AddonsError(AddonsError.INTERNAL_ERROR, `Error getting ${containerName} cloudron token env var`));
         const token = tmp.slice(tokenEnvName.length + 1); // +1 for the = sign
-        if (!token)  return callback(new Error(`Error getting ${containerName} cloudron token`));
+        if (!token)  return callback(new AddonsError(AddonsError.INTERNAL_ERROR, `Error getting ${containerName} cloudron token`));
 
         callback(null, { ip: ip, token: token });
     });
