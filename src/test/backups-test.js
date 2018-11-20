@@ -18,7 +18,6 @@ var async = require('async'),
     mkdirp = require('mkdirp'),
     readdirp = require('readdirp'),
     path = require('path'),
-    progress = require('../progress.js'),
     rimraf = require('rimraf'),
     settings = require('../settings.js'),
     SettingsError = require('../settings.js').SettingsError,
@@ -309,7 +308,6 @@ describe('backups', function () {
 
         after(function (done) {
             rimraf.sync(gBackupConfig.backupFolder);
-            progress.clear(progress.BACKUP);
             done();
         });
 

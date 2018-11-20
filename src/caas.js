@@ -19,10 +19,10 @@ var assert = require('assert'),
     debug = require('debug')('box:caas'),
     locker = require('./locker.js'),
     path = require('path'),
-    progress = require('./progress.js'),
     settings = require('./settings.js'),
     shell = require('./shell.js'),
     superagent = require('superagent'),
+    tasks = require('./tasks.js'),
     util = require('util'),
     _ = require('underscore');
 
@@ -128,10 +128,10 @@ function doMigrate(options, caasConfig, callback) {
     function unlock(error) {
         debug('Failed to migrate', error);
         locker.unlock(locker.OP_MIGRATE);
-        progress.set(progress.MIGRATE, -1, 'Backup failed: ' + error.message);
+        tasks.setProgress(tasks.TASK_MIGRATE, { percent: -1, result: `Backup failed: ${error.message}` }, NOOP_CALLBACK);
     }
 
-    progress.set(progress.MIGRATE, 10, 'Backing up for migration');
+    tasks.setProgress(tasks.TASK_MIGRATE, { percent: 10, result: 'Backing up for migration' }, NOOP_CALLBACK);
 
     // initiate the migration in the background
     backups.backupBoxAndApps({ userId: null, username: 'migrator' }, function (error) {
@@ -150,7 +150,7 @@ function doMigrate(options, caasConfig, callback) {
                 if (result.statusCode === 404) return unlock(new CaasError(CaasError.NOT_FOUND));
                 if (result.statusCode !== 202) return unlock(new CaasError(CaasError.EXTERNAL_ERROR, util.format('%s %j', result.status, result.body)));
 
-                progress.set(progress.MIGRATE, 10, 'Migrating');
+                tasks.setProgress(tasks.TASK_MIGRATE, { percent: 40, result: 'Migrating' }, NOOP_CALLBACK);
 
                 retire('migrate', _.pick(options, 'domain', 'size', 'region'));
             });
@@ -177,11 +177,11 @@ function upgrade(boxUpdateInfo, callback) {
     assert(boxUpdateInfo !== null && typeof boxUpdateInfo === 'object');
 
     function upgradeError(e) {
-        progress.set(progress.UPDATE, -1, e.message);
+        tasks.setProgress(tasks.TASK_MIGRATE, { percent: -1, result: e.message }, NOOP_CALLBACK);
         callback(e);
     }
 
-    progress.set(progress.UPDATE, 5, 'Backing up for upgrade');
+    tasks.setProgress(tasks.TASK_MIGRATE, { percent: 5, result: 'Backing up for upgrade' }, NOOP_CALLBACK);
 
     backups.backupBoxAndApps({ userId: null, username: 'upgrader' }, function (error) {
         if (error) return upgradeError(error);
@@ -197,7 +197,7 @@ function upgrade(boxUpdateInfo, callback) {
                     if (error && !error.response) return upgradeError(new Error('Network error making upgrade request: ' + error));
                     if (result.statusCode !== 202) return upgradeError(new Error(util.format('Server not ready to upgrade. statusCode: %s body: %j', result.status, result.body)));
 
-                    progress.set(progress.UPDATE, 10, 'Updating base system');
+                    tasks.setProgress(tasks.TASK_MIGRATE, { percent: 10, result: 'Updating base system' }, NOOP_CALLBACK);
 
                     // no need to unlock since this is the last thing we ever do on this box
                     callback();

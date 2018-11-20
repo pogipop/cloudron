@@ -2,7 +2,6 @@
 
 exports = module.exports = {
     reboot: reboot,
-    getProgress: getProgress,
     getConfig: getConfig,
     getDisks: getDisks,
     getUpdateInfo: getUpdateInfo,
@@ -22,7 +21,6 @@ var appstore = require('../appstore.js'),
     CloudronError = cloudron.CloudronError,
     HttpError = require('connect-lastmile').HttpError,
     HttpSuccess = require('connect-lastmile').HttpSuccess,
-    progress = require('../progress.js'),
     updater = require('../updater.js'),
     updateChecker = require('../updatechecker.js'),
     UpdaterError = require('../updater.js').UpdaterError,
@@ -31,10 +29,6 @@ var appstore = require('../appstore.js'),
 function auditSource(req) {
     var ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress || null;
     return { ip: ip, username: req.user ? req.user.username : null, userId: req.user ? req.user.id : null };
-}
-
-function getProgress(req, res, next) {
-    return next(new HttpSuccess(200, progress.getAll()));
 }
 
 function reboot(req, res, next) {

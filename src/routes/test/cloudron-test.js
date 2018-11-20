@@ -191,7 +191,6 @@ describe('Cloudron', function () {
                     expect(result.body.apiServerOrigin).to.eql('http://localhost:6060');
                     expect(result.body.webServerOrigin).to.eql(null);
                     expect(result.body.adminFqdn).to.eql(config.adminFqdn());
-                    expect(result.body.progress).to.be.an('object');
                     expect(result.body.version).to.eql(config.version());
                     expect(result.body.memory).to.eql(os.totalmem());
                     expect(result.body.cloudronName).to.be.a('string');

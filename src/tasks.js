@@ -8,7 +8,9 @@ exports = module.exports = {
 
     TaskError: TaskError,
 
-    TASK_BACKUP: 'backup'
+    TASK_BACKUP: 'backup',
+    TASK_UPDATE: 'update',
+    TASK_MIGRATE: 'migrate'
 };
 
 let assert = require('assert'),

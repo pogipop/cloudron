@@ -20,15 +20,15 @@ var assert = require('assert'),
     os = require('os'),
     path = require('path'),
     paths = require('./paths.js'),
-    progress = require('./progress.js'),
     safe = require('safetydance'),
     shell = require('./shell.js'),
+    tasks = require('./tasks.js'),
     updateChecker = require('./updatechecker.js'),
-    util = require('util'),
-    _ = require('underscore');
+    util = require('util');
 
 const RELEASES_PUBLIC_KEY = path.join(__dirname, 'releases.gpg');
 const UPDATE_CMD = path.join(__dirname, 'scripts/update.sh');
+const NOOP_CALLBACK = function (error) { if (error) debug(error); };
 
 function UpdaterError(reason, errorOrMessage) {
     assert.strictEqual(typeof reason, 'string');
@@ -158,23 +158,23 @@ function doUpdate(boxUpdateInfo, callback) {
     assert(boxUpdateInfo && typeof boxUpdateInfo === 'object');
 
     function updateError(e) {
-        progress.set(progress.UPDATE, -1, e.message);
+        tasks.setProgress(tasks.TASK_UPDATE, { percent: -1, result: e.message }, NOOP_CALLBACK);
         callback(e);
     }
 
-    progress.set(progress.UPDATE, 5, 'Downloading and verifying release');
+    tasks.setProgress(tasks.TASK_UPDATE, { percent: 5, message: 'Downloading and verifying release' }, NOOP_CALLBACK);
 
     downloadAndVerifyRelease(boxUpdateInfo, function (error, packageInfo) {
         if (error) return updateError(error);
 
-        progress.set(progress.UPDATE, 10, 'Backing up');
+        tasks.setProgress(tasks.TASK_UPDATE, { percent: 10, message: 'Backing up' }, NOOP_CALLBACK);
 
         backups.backupBoxAndApps({ userId: null, username: 'updater' }, function (error) {
             if (error) return updateError(error);
 
             debug('updating box %s', boxUpdateInfo.sourceTarballUrl);
 
-            progress.set(progress.UPDATE, 70, 'Installing update');
+            tasks.setProgress(tasks.TASK_UPDATE, { percent: 70, message: 'Installing update' }, NOOP_CALLBACK);
 
             shell.sudo('update', [ UPDATE_CMD, packageInfo.file ], function (error) {
                 if (error) return updateError(error);
@@ -198,7 +198,7 @@ function update(boxUpdateInfo, auditSource, callback) {
     eventlog.add(eventlog.ACTION_UPDATE, auditSource, { boxUpdateInfo: boxUpdateInfo });
 
     // ensure tools can 'wait' on progress
-    progress.set(progress.UPDATE, 0, 'Starting');
+    tasks.setProgress(tasks.TASK_UPDATE, { percent: 0, message: 'Starting' }, NOOP_CALLBACK);
 
     // initiate the update/upgrade but do not wait for it
     if (boxUpdateInfo.upgrade) {
