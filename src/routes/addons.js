@@ -27,7 +27,7 @@ function getAll(req, res, next) {
 function get(req, res, next) {
     assert.strictEqual(typeof req.params.addon, 'string');
 
-    addons.getStatus(req.params.addon, function (error, result) {
+    addons.getAddon(req.params.addon, function (error, result) {
         if (error && error.reason === AddonsError.NOT_FOUND) return next(new HttpError(404, 'No such addon'));
         if (error) return next(new HttpError(500, error));
 

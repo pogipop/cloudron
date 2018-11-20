@@ -4,7 +4,7 @@ exports = module.exports = {
     AddonsError: AddonsError,
 
     getAddons: getAddons,
-    getStatus: getStatus,
+    getAddon: getAddon,
     getLogs: getLogs,
     startAddon: startAddon,
     stopAddon: stopAddon,
@@ -55,6 +55,7 @@ var accesscontrol = require('./accesscontrol.js'),
     rimraf = require('rimraf'),
     safe = require('safetydance'),
     semver = require('semver'),
+    settings = require('./settings.js'),
     shell = require('./shell.js'),
     spawn = require('child_process').spawn,
     split = require('split'),
@@ -90,6 +91,14 @@ AddonsError.NOT_ACTIVE = 'Not Active';
 const NOOP = function (app, options, callback) { return callback(); };
 const NOOP_CALLBACK = function (error) { if (error) debug(error); };
 const RMADDON_CMD = path.join(__dirname, 'scripts/rmaddon.sh');
+
+// TODO: maybe derive these defaults based on how many apps are using them
+const DEFAULT_MEMORY_LIMITS = {
+    mysql: (1 + Math.round(os.totalmem()/(1024*1024*1024)/4)) * 256 * 1024 * 1024,
+    mongodb: (1 + Math.round(os.totalmem()/(1024*1024*1024)/4)) * 200 * 1024 * 1024,
+    postgresql: (1 + Math.round(os.totalmem()/(1024*1024*1024)/4)) * 256 * 1024 * 1024,
+    mail: Math.max((1 + Math.round(os.totalmem()/(1024*1024*1024)/4)) * 128, 256) * 1024 * 1024
+};
 
 // setup can be called multiple times for the same app (configure crash restart) and existing data must not be lost
 // teardown is destructive. app data stored with the addon is lost
@@ -231,18 +240,44 @@ function getAddons(callback) {
     callback(null, addons);
 }
 
-function getStatus(addon, callback) {
-    assert.strictEqual(typeof addon, 'string');
+function getAddon(addonName, callback) {
+    assert.strictEqual(typeof addonName, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    if (!KNOWN_ADDONS[addon] || !KNOWN_ADDONS[addon].status) return callback(new AddonsError(AddonsError.NOT_FOUND));
+    if (!KNOWN_ADDONS[addonName]) return callback(new AddonsError(AddonsError.NOT_FOUND));
 
-    KNOWN_ADDONS[addon].status(function (error, result) {
+    var tmp = {
+        name: addonName,
+        status: null,
+        config: {
+            // If a property is not set then we cannot change it through the api, see below
+            // memory: 0,
+            // memorySwap: 0
+        }
+    };
+
+    settings.getPlatformConfig(function (error, platformConfig) {
         if (error) return callback(new AddonsError(AddonsError.INTERNAL_ERROR, error));
 
-        result.name = addon;
+        if (platformConfig[addonName] && platformConfig[addonName].memory && platformConfig[addonName].memorySwap) {
+            tmp.config.memory = platformConfig[addonName].memory;
+            tmp.config.memorySwap = platformConfig[addonName].memorySwap;
+        } else if (DEFAULT_MEMORY_LIMITS[addonName]) {
+            tmp.config.memory = DEFAULT_MEMORY_LIMITS[addonName];
+            tmp.config.memorySwap = tmp.config.memory * 2;
+        }
 
-        callback(null, result);
+        // we are done if the addon has no specific status function
+        if (!KNOWN_ADDONS[addonName].status) return callback(null, tmp);
+
+        KNOWN_ADDONS[addonName].status(function (error, result) {
+            if (error) return callback(new AddonsError(AddonsError.INTERNAL_ERROR, error));
+
+            tmp.status = result.status;
+            tmp.error = result.error || null;
+
+            callback(null, tmp);
+        });
     });
 }
 
@@ -505,14 +540,6 @@ function importDatabase(addon, callback) {
 function updateAddonConfig(platformConfig, callback) {
     callback = callback || NOOP_CALLBACK;
 
-    // TODO: maybe derive these defaults based on how many apps are using them
-    const defaultMemoryLimits = {
-        mysql: (1 + Math.round(os.totalmem()/(1024*1024*1024)/4)) * 256 * 1024 * 1024,
-        mongodb: (1 + Math.round(os.totalmem()/(1024*1024*1024)/4)) * 200 * 1024 * 1024,
-        postgresql: (1 + Math.round(os.totalmem()/(1024*1024*1024)/4)) * 256 * 1024 * 1024,
-        mail: Math.max((1 + Math.round(os.totalmem()/(1024*1024*1024)/4)) * 128, 256) * 1024 * 1024
-    };
-
     debug('updateAddonConfig: %j', platformConfig);
 
     // TODO: this should possibly also rollback memory to default
@@ -523,7 +550,7 @@ function updateAddonConfig(platformConfig, callback) {
             memory = containerConfig.memory;
             memorySwap = containerConfig.memorySwap;
         } else {
-            memory = defaultMemoryLimits[containerName];
+            memory = DEFAULT_MEMORY_LIMITS[containerName];
             memorySwap = memory * 2;
         }
 
