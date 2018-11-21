@@ -287,6 +287,7 @@ function initializeExpressSync() {
     // addon routes
     router.get ('/api/v1/addons', cloudronScope, routes.addons.getAll);
     router.get ('/api/v1/addons/:addon', cloudronScope, routes.addons.get);
+    router.post('/api/v1/addons/:addon', cloudronScope, routes.addons.configure);
     router.get ('/api/v1/addons/:addon/logs', cloudronScope, routes.addons.getLogs);
     router.get ('/api/v1/addons/:addon/logstream', cloudronScope, routes.addons.getLogStream);
     router.post('/api/v1/addons/:addon/start', cloudronScope, routes.addons.start);

@@ -5,6 +5,7 @@ exports = module.exports = {
 
     getAddons: getAddons,
     getAddon: getAddon,
+    configureAddon: configureAddon,
     getLogs: getLogs,
     startAddon: startAddon,
     stopAddon: stopAddon,
@@ -277,6 +278,34 @@ function getAddon(addonName, callback) {
             tmp.error = result.error || null;
 
             callback(null, tmp);
+        });
+    });
+}
+
+function configureAddon(addonName, data, callback) {
+    assert.strictEqual(typeof addonName, 'string');
+    assert.strictEqual(typeof data, 'object');
+    assert.strictEqual(typeof callback, 'function');
+
+    if (!KNOWN_ADDONS[addonName]) return callback(new AddonsError(AddonsError.NOT_FOUND));
+
+    settings.getPlatformConfig(function (error, platformConfig) {
+        if (error) return callback(new AddonsError(AddonsError.INTERNAL_ERROR, error));
+
+        if (!platformConfig[addonName]) platformConfig[addonName] = {};
+
+        // if not specified we clear the entry and use defaults
+        if (!data.memory || !data.memorySwap) {
+            delete platformConfig[addonName];
+        } else {
+            platformConfig[addonName].memory = data.memory;
+            platformConfig[addonName].memorySwap = data.memorySwap;
+        }
+
+        settings.setPlatformConfig(platformConfig, function (error) {
+            if (error) return callback(new AddonsError(AddonsError.INTERNAL_ERROR, error));
+
+            callback(null);
         });
     });
 }

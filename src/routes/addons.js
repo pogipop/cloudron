@@ -3,6 +3,7 @@
 exports = module.exports = {
     getAll: getAll,
     get: get,
+    configure: configure,
     getLogs: getLogs,
     getLogStream: getLogStream,
     start: start,
@@ -32,6 +33,24 @@ function get(req, res, next) {
         if (error) return next(new HttpError(500, error));
 
         next(new HttpSuccess(200, { addon: result }));
+    });
+}
+
+function configure(req, res, next) {
+    assert.strictEqual(typeof req.params.addon, 'string');
+
+    if (typeof req.body.memory !== 'number') return next(new HttpError(400, 'memory must be a number'));
+
+    const data = {
+        memory: req.body.memory,
+        memorySwap: req.body.memory * 2
+    };
+
+    addons.configureAddon(req.params.addon, data, function (error) {
+        if (error && error.reason === AddonsError.NOT_FOUND) return next(new HttpError(404, 'No such addon'));
+        if (error) return next(new HttpError(500, error));
+
+        next(new HttpSuccess(202, {}));
     });
 }
 
