@@ -6,8 +6,7 @@ exports = module.exports = {
     configure: configure,
     getLogs: getLogs,
     getLogStream: getLogStream,
-    start: start,
-    stop: stop
+    restart: restart
 };
 
 var addons = require('../addons.js'),
@@ -122,24 +121,12 @@ function getLogStream(req, res, next) {
     });
 }
 
-function start(req, res, next) {
+function restart(req, res, next) {
     assert.strictEqual(typeof req.params.addon, 'string');
 
-    debug(`Starting addon ${req.params.addon}`);
+    debug(`Restarting addon ${req.params.addon}`);
 
-    addons.startAddon(req.params.addon, function (error) {
-        if (error) return next(new HttpError(500, error));
-
-        next(new HttpSuccess(202, {}));
-    });
-}
-
-function stop(req, res, next) {
-    assert.strictEqual(typeof req.params.addon, 'string');
-
-    debug(`Stopping addon ${req.params.addon}`);
-
-    addons.stopAddon(req.params.addon, function (error) {
+    addons.restartAddon(req.params.addon, function (error) {
         if (error) return next(new HttpError(500, error));
 
         next(new HttpSuccess(202, {}));

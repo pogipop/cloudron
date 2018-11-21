@@ -7,8 +7,7 @@ exports = module.exports = {
     getAddon: getAddon,
     configureAddon: configureAddon,
     getLogs: getLogs,
-    startAddon: startAddon,
-    stopAddon: stopAddon,
+    restartAddon: restartAddon,
 
     startAddons: startAddons,
     updateAddonConfig: updateAddonConfig,
@@ -110,7 +109,8 @@ var KNOWN_ADDONS = {
         backup: NOOP,
         restore: setupEmail,
         clear: NOOP,
-        status: statusEmail
+        status: statusEmail,
+        restart: restartContainerAddon.bind(null, 'email')
     },
     ldap: {
         setup: setupLdap,
@@ -118,7 +118,8 @@ var KNOWN_ADDONS = {
         backup: NOOP,
         restore: setupLdap,
         clear: NOOP,
-        status: null
+        status: null,
+        restart: null
     },
     localstorage: {
         setup: setupLocalStorage, // docker creates the directory for us
@@ -126,7 +127,8 @@ var KNOWN_ADDONS = {
         backup: NOOP, // no backup because it's already inside app data
         restore: NOOP,
         clear: clearLocalStorage,
-        status: null
+        status: null,
+        restart: null
     },
     mongodb: {
         setup: setupMongoDb,
@@ -134,7 +136,8 @@ var KNOWN_ADDONS = {
         backup: backupMongoDb,
         restore: restoreMongoDb,
         clear: clearMongodb,
-        status: statusMongoDb
+        status: statusMongoDb,
+        restart: restartContainerAddon.bind(null, 'mongodb')
     },
     mysql: {
         setup: setupMySql,
@@ -142,7 +145,8 @@ var KNOWN_ADDONS = {
         backup: backupMySql,
         restore: restoreMySql,
         clear: clearMySql,
-        status: statusMySql
+        status: statusMySql,
+        restart: restartContainerAddon.bind(null, 'mysql')
     },
     oauth: {
         setup: setupOauth,
@@ -150,7 +154,8 @@ var KNOWN_ADDONS = {
         backup: NOOP,
         restore: setupOauth,
         clear: NOOP,
-        status: null
+        status: null,
+        restart: null
     },
     postgresql: {
         setup: setupPostgreSql,
@@ -158,7 +163,8 @@ var KNOWN_ADDONS = {
         backup: backupPostgreSql,
         restore: restorePostgreSql,
         clear: clearPostgreSql,
-        status: statusPostgreSql
+        status: statusPostgreSql,
+        restart: restartContainerAddon.bind(null, 'postgresql')
     },
     recvmail: {
         setup: setupRecvMail,
@@ -166,7 +172,8 @@ var KNOWN_ADDONS = {
         backup: NOOP,
         restore: setupRecvMail,
         clear: NOOP,
-        status: null
+        status: null,
+        restart: null
     },
     redis: {
         setup: setupRedis,
@@ -174,7 +181,8 @@ var KNOWN_ADDONS = {
         backup: backupRedis,
         restore: restoreRedis,
         clear: clearRedis,
-        status: null
+        status: null,
+        restart: null
     },
     sendmail: {
         setup: setupSendMail,
@@ -182,7 +190,8 @@ var KNOWN_ADDONS = {
         backup: NOOP,
         restore: setupSendMail,
         clear: NOOP,
-        status: null
+        status: null,
+        restart: null
     },
     scheduler: {
         setup: NOOP,
@@ -190,7 +199,8 @@ var KNOWN_ADDONS = {
         backup: NOOP,
         restore: NOOP,
         clear: NOOP,
-        status: null
+        status: null,
+        restart: null
     },
     docker: {
         setup: NOOP,
@@ -198,7 +208,8 @@ var KNOWN_ADDONS = {
         backup: NOOP,
         restore: NOOP,
         clear: NOOP,
-        status: statusDocker
+        status: statusDocker,
+        restart: null
     }
 };
 
@@ -230,6 +241,28 @@ function dumpPath(addon, appId) {
     case 'mongodb': return path.join(paths.APPS_DATA_DIR, appId, 'mongodbdump');
     case 'redis': return path.join(paths.APPS_DATA_DIR, appId, 'dump.rdb');
     }
+}
+
+function restartContainerAddon(addon, callback) {
+    assert.strictEqual(typeof addon, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    // only allow certain addon types to be started
+    const allowedAddons = ['email', 'mysql', 'mongodb', 'postgresql'];
+    if (allowedAddons.indexOf(addon) === -1) return callback(new AddonsError(AddonsError.NOT_SUPPORTED));
+
+    // email container has a different name
+    const containerName = addon === 'email' ? 'mail' : addon;
+
+    docker.stopContainer(containerName, function (error) {
+        if (error) return callback(new AddonsError(AddonsError.INTERNAL_ERROR, error));
+
+        docker.startContainer(containerName, function (error) {
+            if (error) return callback(new AddonsError(AddonsError.INTERNAL_ERROR, error));
+
+            callback(null);
+        });
+    });
 }
 
 function getAddons(callback) {
@@ -357,40 +390,14 @@ function getLogs(addon, options, callback) {
     callback(null, transformStream);
 }
 
-function startAddon(addon, callback) {
+function restartAddon(addon, callback) {
     assert.strictEqual(typeof addon, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    // only allow certain addon types to be started
-    const allowedAddons = ['email', 'mysql', 'mongodb', 'postgresql'];
-    if (allowedAddons.indexOf(addon) === -1) return callback(new AddonsError(AddonsError.NOT_SUPPORTED));
+    if (!KNOWN_ADDONS[addon]) return callback(new AddonsError(AddonsError.NOT_FOUND));
+    if (!KNOWN_ADDONS[addon].restart) return callback(null);
 
-    // email container has a different name
-    const containerName = addon === 'email' ? 'mail' : addon;
-
-    docker.startContainer(containerName, function (error) {
-        if (error) return callback(new AddonsError(AddonsError.INTERNAL_ERROR, error));
-
-        callback(null);
-    });
-}
-
-function stopAddon(addon, callback) {
-    assert.strictEqual(typeof addon, 'string');
-    assert.strictEqual(typeof callback, 'function');
-
-    // only allow certain addon types to be stopped
-    const allowedAddons = ['email', 'mysql', 'mongodb', 'postgresql'];
-    if (allowedAddons.indexOf(addon) === -1) return callback(new AddonsError(AddonsError.NOT_SUPPORTED));
-
-    // email container has a different name
-    const containerName = addon === 'email' ? 'mail' : addon;
-
-    docker.stopContainer(containerName, function (error) {
-        if (error) return callback(new AddonsError(AddonsError.INTERNAL_ERROR, error));
-
-        callback(null);
-    });
+    KNOWN_ADDONS[addon].restart(callback);
 }
 
 function getAddonDetails(containerName, tokenEnvName, callback) {
