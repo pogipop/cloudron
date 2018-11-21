@@ -434,7 +434,7 @@ function waitForAddon(containerName, tokenEnvName, callback) {
     getAddonDetails(containerName, tokenEnvName, function (error, result) {
         if (error) return callback(error);
 
-        async.retry({ times: 10, interval: 5000 }, function (retryCallback) {
+        async.retry({ times: 10, interval: 15000 }, function (retryCallback) {
             request.get(`https://${result.ip}:3000/healthcheck?access_token=${result.token}`, { json: true, rejectUnauthorized: false }, function (error, response) {
                 if (error) return retryCallback(new Error(`Error waiting for ${containerName}: ${error.message}`));
                 if (response.statusCode !== 200 || !response.body.status) return retryCallback(new Error(`Error waiting for ${containerName}. Status code: ${response.statusCode} message: ${response.body.message}`));
