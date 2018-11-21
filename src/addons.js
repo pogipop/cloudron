@@ -361,14 +361,14 @@ function configureAddon(addonName, data, callback) {
     });
 }
 
-function getLogs(addon, options, callback) {
-    assert.strictEqual(typeof addon, 'string');
+function getLogs(addonName, options, callback) {
+    assert.strictEqual(typeof addonName, 'string');
     assert(options && typeof options === 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    if (!KNOWN_ADDONS[addon] || !KNOWN_ADDONS[addon].status) return callback(new AddonsError(AddonsError.NOT_FOUND));
+    if (!KNOWN_ADDONS[addonName] || !KNOWN_ADDONS[addonName].status) return callback(new AddonsError(AddonsError.NOT_FOUND));
 
-    debug('Getting logs for %s', addon);
+    debug('Getting logs for %s', addonName);
 
     var lines = options.lines || 100,
         format = options.format || 'json',
@@ -377,9 +377,14 @@ function getLogs(addon, options, callback) {
     assert.strictEqual(typeof lines, 'number');
     assert.strictEqual(typeof format, 'string');
 
+    // email, recvmail, sendmail addons all use the same log file
+    const containerName = addonName.indexOf('mail') !== -1 ? 'mail' : addonName;
+
     var args = [ '--lines=' + lines ];
     if (follow) args.push('--follow', '--retry', '--quiet'); // same as -F. to make it work if file doesn't exist, --quiet to not output file headers, which are no logs
-    args.push(path.join(paths.LOG_DIR, addon, 'app.log'));
+    args.push(path.join(paths.LOG_DIR, containerName, 'app.log'));
+
+    console.log('----', args);
 
     var cp = spawn('/usr/bin/tail', args);
 
