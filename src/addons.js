@@ -136,7 +136,7 @@ var KNOWN_ADDONS = {
         backup: backupMongoDb,
         restore: restoreMongoDb,
         clear: clearMongodb,
-        status: statusMongoDb,
+        status: statusContainerAddon.bind(null, 'mongodb', 'CLOUDRON_MONGODB_TOKEN'),
         restart: restartContainerAddon.bind(null, 'mongodb')
     },
     mysql: {
@@ -145,7 +145,7 @@ var KNOWN_ADDONS = {
         backup: backupMySql,
         restore: restoreMySql,
         clear: clearMySql,
-        status: statusMySql,
+        status: statusContainerAddon.bind(null, 'mysql', 'CLOUDRON_MYSQL_TOKEN'),
         restart: restartContainerAddon.bind(null, 'mysql')
     },
     oauth: {
@@ -163,7 +163,7 @@ var KNOWN_ADDONS = {
         backup: backupPostgreSql,
         restore: restorePostgreSql,
         clear: clearPostgreSql,
-        status: statusPostgreSql,
+        status: statusContainerAddon.bind(null, 'postgresql', 'CLOUDRON_POSTGRESQL_TOKEN'),
         restart: restartContainerAddon.bind(null, 'postgresql')
     },
     recvmail: {
@@ -243,16 +243,16 @@ function dumpPath(addon, appId) {
     }
 }
 
-function restartContainerAddon(addon, callback) {
-    assert.strictEqual(typeof addon, 'string');
+function restartContainerAddon(addonName, callback) {
+    assert.strictEqual(typeof addonName, 'string');
     assert.strictEqual(typeof callback, 'function');
 
     // only allow certain addon types to be started
     const allowedAddons = ['email', 'mysql', 'mongodb', 'postgresql'];
-    if (allowedAddons.indexOf(addon) === -1) return callback(new AddonsError(AddonsError.NOT_SUPPORTED));
+    if (allowedAddons.indexOf(addonName) === -1) return callback(new AddonsError(AddonsError.NOT_SUPPORTED));
 
     // email container has a different name
-    const containerName = addon === 'email' ? 'mail' : addon;
+    const containerName = addonName === 'email' ? 'mail' : addonName;
 
     docker.stopContainer(containerName, function (error) {
         if (error) return callback(new AddonsError(AddonsError.INTERNAL_ERROR, error));
@@ -261,6 +261,24 @@ function restartContainerAddon(addon, callback) {
             if (error) return callback(new AddonsError(AddonsError.INTERNAL_ERROR, error));
 
             callback(null);
+        });
+    });
+}
+
+function statusContainerAddon(addonName, addonTokenName, callback) {
+    assert.strictEqual(typeof addonName, 'string');
+    assert.strictEqual(typeof addonTokenName, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    getAddonDetails(addonName, addonTokenName, function (error, result) {
+        if (error && error.reason === AddonsError.NOT_ACTIVE) return callback(null, { status: exports.ADDON_STATUS_INACTIVE });
+        if (error) return callback(error);
+
+        request.get(`https://${result.ip}:3000/healthcheck?access_token=${result.token}`, { json: true, rejectUnauthorized: false }, function (error, response) {
+            if (error) return callback(null, { status: exports.ADDON_STATUS_INACTIVE, error: `Error waiting for ${addonName}: ${error.message}` });
+            if (response.statusCode !== 200 || !response.body.status) return callback(null, { status: exports.ADDON_STATUS_INACTIVE, error: `Error waiting for ${addonName}. Status code: ${response.statusCode} message: ${response.body.message}` });
+
+            callback(null, { status: result.state.Running ? exports.ADDON_STATUS_ACTIVE : exports.ADDON_STATUS_INACTIVE });
         });
     });
 }
@@ -1137,24 +1155,6 @@ function restoreMySql(app, options, callback) {
     });
 }
 
-function statusMySql(callback) {
-    assert.strictEqual(typeof callback, 'function');
-
-    const containerName = 'mysql';
-
-    getAddonDetails(containerName, 'CLOUDRON_MYSQL_TOKEN', function (error, result) {
-        if (error && error.reason === AddonsError.NOT_ACTIVE) return callback(null, { status: exports.ADDON_STATUS_INACTIVE });
-        if (error) return callback(error);
-
-        request.get(`https://${result.ip}:3000/healthcheck?access_token=${result.token}`, { json: true, rejectUnauthorized: false }, function (error, response) {
-            if (error) return callback(null, { status: exports.ADDON_STATUS_INACTIVE, error: `Error waiting for ${containerName}: ${error.message}` });
-            if (response.statusCode !== 200 || !response.body.status) return callback(null, { status: exports.ADDON_STATUS_INACTIVE, error: `Error waiting for ${containerName}. Status code: ${response.statusCode} message: ${response.body.message}` });
-
-            callback(null, { status: result.state.Running ? exports.ADDON_STATUS_ACTIVE : exports.ADDON_STATUS_INACTIVE });
-        });
-    });
-}
-
 function postgreSqlNames(appId) {
     appId = appId.replace(/-/g, '');
     return { database: `db${appId}`, username: `user${appId}` };
@@ -1330,24 +1330,6 @@ function restorePostgreSql(app, options, callback) {
     });
 }
 
-function statusPostgreSql(callback) {
-    assert.strictEqual(typeof callback, 'function');
-
-    const containerName = 'postgresql';
-
-    getAddonDetails(containerName, 'CLOUDRON_POSTGRESQL_TOKEN', function (error, result) {
-        if (error && error.reason === AddonsError.NOT_ACTIVE) return callback(null, { status: exports.ADDON_STATUS_INACTIVE });
-        if (error) return callback(error);
-
-        request.get(`https://${result.ip}:3000/healthcheck?access_token=${result.token}`, { json: true, rejectUnauthorized: false }, function (error, response) {
-            if (error) return callback(null, { status: exports.ADDON_STATUS_INACTIVE, error: `Error waiting for ${containerName}: ${error.message}` });
-            if (response.statusCode !== 200 || !response.body.status) return callback(null, { status: exports.ADDON_STATUS_INACTIVE, error: `Error waiting for ${containerName}. Status code: ${response.statusCode} message: ${response.body.message}` });
-
-            callback(null, { status: result.state.Running ? exports.ADDON_STATUS_ACTIVE : exports.ADDON_STATUS_INACTIVE });
-        });
-    });
-}
-
 function startMongodb(existingInfra, callback) {
     assert.strictEqual(typeof existingInfra, 'object');
     assert.strictEqual(typeof callback, 'function');
@@ -1507,24 +1489,6 @@ function restoreMongoDb(app, options, callback) {
         });
 
         readStream.pipe(restoreReq);
-    });
-}
-
-function statusMongoDb(callback) {
-    assert.strictEqual(typeof callback, 'function');
-
-    const containerName = 'mongodb';
-
-    getAddonDetails(containerName, 'CLOUDRON_MONGODB_TOKEN', function (error, result) {
-        if (error && error.reason === AddonsError.NOT_ACTIVE) return callback(null, { status: exports.ADDON_STATUS_INACTIVE });
-        if (error) return callback(error);
-
-        request.get(`https://${result.ip}:3000/healthcheck?access_token=${result.token}`, { json: true, rejectUnauthorized: false }, function (error, response) {
-            if (error) return callback(null, { status: exports.ADDON_STATUS_INACTIVE, error: `Error waiting for ${containerName}: ${error.message}` });
-            if (response.statusCode !== 200 || !response.body.status) return callback(null, { status: exports.ADDON_STATUS_INACTIVE, error: `Error waiting for ${containerName}. Status code: ${response.statusCode} message: ${response.body.message}` });
-
-            callback(null, { status: result.state.Running ? exports.ADDON_STATUS_ACTIVE : exports.ADDON_STATUS_INACTIVE });
-        });
     });
 }
 
