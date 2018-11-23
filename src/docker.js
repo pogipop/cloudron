@@ -179,8 +179,10 @@ function createSubcontainer(app, name, cmd, options, callback) {
     var manifest = app.manifest;
     var exposedPorts = {}, dockerPortBindings = { };
     var domain = app.fqdn;
+    // TODO: these should all have the CLOUDRON_ prefix
     var stdEnv = [
         'CLOUDRON=1',
+        'CLOUDRON_PROXY_IP=172.18.0.1',
         'WEBADMIN_ORIGIN=' + config.adminOrigin(),
         'API_ORIGIN=' + config.adminOrigin(),
         'APP_ORIGIN=https://' + domain,
