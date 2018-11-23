@@ -224,9 +224,6 @@ function createSubcontainer(app, name, cmd, options, callback) {
     // if required, we can make this a manifest and runtime argument later
     if (!isAppContainer) memoryLimit *= 2;
 
-    // apparmor is disabled on few servers
-    var enableSecurityOpt = config.CLOUDRON && safe(function () { return child_process.spawnSync('aa-enabled').status === 0; }, false);
-
     addons.getEnvironment(app, function (error, addonEnv) {
         if (error) return callback(new Error('Error getting addon environment : ' + error));
 
@@ -277,7 +274,7 @@ function createSubcontainer(app, name, cmd, options, callback) {
                 NetworkMode: 'cloudron',
                 Dns: ['172.18.0.1'], // use internal dns
                 DnsSearch: ['.'], // use internal dns
-                SecurityOpt: enableSecurityOpt ? [ 'apparmor=docker-cloudron-app' ] : null // profile available only on cloudron
+                SecurityOpt: [ 'apparmor=docker-cloudron-app' ]
             }
         };
 
