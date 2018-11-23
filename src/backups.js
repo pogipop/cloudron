@@ -465,7 +465,7 @@ function restoreFsMetadata(appDataDir, callback) {
     assert.strictEqual(typeof appDataDir, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    tasks.setProgress(tasks.TASK_BACKUP, { detail: 'Recreating empty directories' }, NOOP_CALLBACK);
+    debug(`Recreating empty directories in ${appDataDir}`);
 
     var metadataJson = safe.fs.readFileSync(path.join(appDataDir, 'fsmetadata.json'), 'utf8');
     if (metadataJson === null) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, 'Error loading fsmetadata.txt:' + safe.error.message));
@@ -637,7 +637,7 @@ function setSnapshotInfo(id, info, callback) {
 function snapshotBox(callback) {
     assert.strictEqual(typeof callback, 'function');
 
-    tasks.setProgress(tasks.TASK_BACKUP, { detail: 'Snapshotting box' }, NOOP_CALLBACK);
+    debug('Snapshotting box');
 
     database.exportToFile(`${paths.BOX_DATA_DIR}/box.mysqldump`, function (error) {
         if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
