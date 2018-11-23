@@ -114,6 +114,8 @@ function isExpiringSync(certFilePath, hours) {
 
     var result = safe.child_process.spawnSync('/usr/bin/openssl', [ 'x509', '-checkend', String(60 * 60 * hours), '-in', certFilePath ]);
 
+    if (!result) return 3; // some error
+
     debug('isExpiringSync: %s %s %s', certFilePath, result.stdout.toString('utf8').trim(), result.status);
 
     return result.status === 1; // 1 - expired 0 - not expired
