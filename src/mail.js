@@ -58,7 +58,6 @@ var assert = require('assert'),
     mailer = require('./mailer.js'),
     net = require('net'),
     nodemailer = require('nodemailer'),
-    os = require('os'),
     path = require('path'),
     paths = require('./paths.js'),
     reverseProxy = require('./reverseproxy.js'),
@@ -567,34 +566,34 @@ function restartMail(callback) {
         if (!safe.child_process.execSync(`cp ${bundle.certFilePath} ${mailCertFilePath}`)) return callback(new Error('Could not create cert file:' + safe.error.message));
         if (!safe.child_process.execSync(`cp ${bundle.keyFilePath} ${mailKeyFilePath}`)) return callback(new Error('Could not create key file:' + safe.error.message));
 
-        shell.execSync('startMail', 'docker rm -f mail || true');
-
-        createMailConfig(function (error, allowInbound) {
+        shell.exec('startMail', 'docker rm -f mail || true', function (error) {
             if (error) return callback(error);
 
-            var ports = allowInbound ? '-p 587:2525 -p 993:9993 -p 4190:4190 -p 25:2525' : '';
+            createMailConfig(function (error, allowInbound) {
+                if (error) return callback(error);
 
-            const cmd = `docker run --restart=always -d --name="mail" \
-                        --net cloudron \
-                        --net-alias mail \
-                        --log-driver syslog \
-                        --log-opt syslog-address=udp://127.0.0.1:2514 \
-                        --log-opt syslog-format=rfc5424 \
-                        --log-opt tag=mail \
-                        -m ${memoryLimit}m \
-                        --memory-swap ${memoryLimit * 2}m \
-                        --dns 172.18.0.1 \
-                        --dns-search=. \
-                        -v "${paths.MAIL_DATA_DIR}:/app/data" \
-                        -v "${paths.PLATFORM_DATA_DIR}/addons/mail:/etc/mail" \
-                        ${ports} \
-                        -p 127.0.0.1:2020:2020 \
-                        --label isCloudronManaged=true \
-                        --read-only -v /run -v /tmp ${tag}`;
+                var ports = allowInbound ? '-p 587:2525 -p 993:9993 -p 4190:4190 -p 25:2525' : '';
 
-            shell.execSync('startMail', cmd);
+                const cmd = `docker run --restart=always -d --name="mail" \
+                            --net cloudron \
+                            --net-alias mail \
+                            --log-driver syslog \
+                            --log-opt syslog-address=udp://127.0.0.1:2514 \
+                            --log-opt syslog-format=rfc5424 \
+                            --log-opt tag=mail \
+                            -m ${memoryLimit}m \
+                            --memory-swap ${memoryLimit * 2}m \
+                            --dns 172.18.0.1 \
+                            --dns-search=. \
+                            -v "${paths.MAIL_DATA_DIR}:/app/data" \
+                            -v "${paths.PLATFORM_DATA_DIR}/addons/mail:/etc/mail" \
+                            ${ports} \
+                            -p 127.0.0.1:2020:2020 \
+                            --label isCloudronManaged=true \
+                            --read-only -v /run -v /tmp ${tag}`;
 
-            callback();
+                shell.exec('startMail', cmd, callback);
+            });
         });
     });
 }

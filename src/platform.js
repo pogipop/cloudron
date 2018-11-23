@@ -132,8 +132,10 @@ function stopContainers(existingInfra, callback) {
     if (existingInfra.version !== infra.version) {
         // TODO: only nuke containers with isCloudronManaged=true
         debug('stopping all containers for infra upgrade');
-        shell.execSync('stopContainers', 'docker ps -qa | xargs --no-run-if-empty docker stop');
-        shell.execSync('stopContainers', 'docker ps -qa | xargs --no-run-if-empty docker rm -f');
+        async.series([
+            shell.exec.bind(null, 'stopContainers', 'docker ps -qa | xargs --no-run-if-empty docker stop'),
+            shell.exec.bind(null, 'stopContainers', 'docker ps -qa | xargs --no-run-if-empty docker rm -f')
+        ], callback);
     } else {
         assert(typeof infra.images, 'object');
         var changedAddons = [ ];
@@ -144,11 +146,11 @@ function stopContainers(existingInfra, callback) {
         debug('stopContainer: stopping addons for incremental infra update: %j', changedAddons);
         let filterArg = changedAddons.map(function (c) { return `--filter 'name=${c}'`; }).join(' '); // name=c matches *c*. required for redis-{appid}
         // ignore error if container not found (and fail later) so that this code works across restarts
-        shell.execSync('stopContainers', `docker ps -qa ${filterArg} | xargs --no-run-if-empty docker stop || true`);
-        shell.execSync('stopContainers', `docker ps -qa ${filterArg} | xargs --no-run-if-empty docker rm -f || true`);
+        async.series([
+            shell.exec.bind(null, 'stopContainers', `docker ps -qa ${filterArg} | xargs --no-run-if-empty docker stop || true`),
+            shell.exec.bind(null, 'stopContainers', `docker ps -qa ${filterArg} | xargs --no-run-if-empty docker rm -f || true`)
+        ], callback);
     }
-
-    callback();
 }
 
 function startApps(existingInfra, callback) {

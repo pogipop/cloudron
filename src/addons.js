@@ -993,13 +993,15 @@ function startMysql(existingInfra, callback) {
                 --label isCloudronManaged=true \
                 --read-only -v /tmp -v /run "${tag}"`;
 
-    shell.execSync('startMysql', cmd);
-
-    waitForAddon('mysql', 'CLOUDRON_MYSQL_TOKEN', function (error) {
+    shell.exec('startMysql', cmd, function (error) {
         if (error) return callback(error);
-        if (!upgrading) return callback(null);
 
-        importDatabase('mysql', callback);
+        waitForAddon('mysql', 'CLOUDRON_MYSQL_TOKEN', function (error) {
+            if (error) return callback(error);
+            if (!upgrading) return callback(null);
+
+            importDatabase('mysql', callback);
+        });
     });
 }
 
@@ -1200,13 +1202,15 @@ function startPostgresql(existingInfra, callback) {
                 --label isCloudronManaged=true \
                 --read-only -v /tmp -v /run "${tag}"`;
 
-    shell.execSync('startPostgresql', cmd);
-
-    waitForAddon('postgresql', 'CLOUDRON_POSTGRESQL_TOKEN', function (error) {
+    shell.exec('startPostgresql', cmd, function (error) {
         if (error) return callback(error);
-        if (!upgrading) return callback(null);
 
-        importDatabase('postgresql', callback);
+        waitForAddon('postgresql', 'CLOUDRON_POSTGRESQL_TOKEN', function (error) {
+            if (error) return callback(error);
+            if (!upgrading) return callback(null);
+
+            importDatabase('postgresql', callback);
+        });
     });
 }
 
@@ -1370,13 +1374,15 @@ function startMongodb(existingInfra, callback) {
                 --label isCloudronManaged=true \
                 --read-only -v /tmp -v /run "${tag}"`;
 
-    shell.execSync('startMongodb', cmd);
-
-    waitForAddon('mongodb', 'CLOUDRON_MONGODB_TOKEN', function (error) {
+    shell.exec('startMongodb', cmd, function (error) {
         if (error) return callback(error);
-        if (!upgrading) return callback(null);
 
-        importDatabase('mongodb', callback);
+        waitForAddon('mongodb', 'CLOUDRON_MONGODB_TOKEN', function (error) {
+            if (error) return callback(error);
+            if (!upgrading) return callback(null);
+
+            importDatabase('mongodb', callback);
+        });
     });
 }
 
@@ -1570,7 +1576,7 @@ function setupRedis(app, options, callback) {
             ];
 
             async.series([
-                shell.execSync.bind(null, 'startRedis', cmd),
+                shell.exec.bind(null, 'startRedis', cmd),
                 appdb.setAddonConfig.bind(null, app.id, 'redis', env),
                 waitForAddon.bind(null, 'redis-' + app.id, 'CLOUDRON_REDIS_TOKEN')
             ], function (error) {

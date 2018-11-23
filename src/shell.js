@@ -3,7 +3,6 @@
 exports = module.exports = {
     spawn: spawn,
     exec: exec,
-    execSync: execSync,
     sudo: sudo,
     sudoSync: sudoSync
 };
@@ -16,20 +15,6 @@ var assert = require('assert'),
 
 var SUDO = '/usr/bin/sudo';
 
-function execSync(tag, cmd, callback) {
-    assert.strictEqual(typeof tag, 'string');
-    assert.strictEqual(typeof cmd, 'string');
-
-    debug(cmd);
-    try {
-        child_process.execSync(cmd, { stdio: 'inherit' });
-    } catch (e) {
-        if (callback) return callback(e);
-        throw e;
-    }
-    if (callback) callback();
-}
-
 function exec(tag, cmd, callback) {
     assert.strictEqual(typeof tag, 'string');
     assert.strictEqual(typeof cmd, 'string');
@@ -37,7 +22,7 @@ function exec(tag, cmd, callback) {
 
     debug(`${tag} exec: ${cmd}`);
 
-    child_process.execSync(cmd, function (error, stdout, stderr) {
+    child_process.exec(cmd, function (error, stdout, stderr) {
         debug(`${tag} (stdout): %s`, stdout.toString('utf8'));
         debug(`${tag} (stderr): %s`, stderr.toString('utf8'));
 

@@ -36,7 +36,5 @@ function startGraphite(existingInfra, callback) {
                 --label isCloudronManaged=true \
                 --read-only -v /tmp -v /run "${tag}"`;
 
-    shell.execSync('startGraphite', cmd);
-
-    callback();
+    shell.exec('startGraphite', cmd, callback);
 }

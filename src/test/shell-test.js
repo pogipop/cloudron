@@ -1,8 +1,6 @@
 /* jslint node:true */
 /* global it:false */
 /* global describe:false */
-/* global after:false */
-/* global before:false */
 
 'use strict';
 
@@ -20,21 +18,21 @@ describe('shell', function () {
     });
 
     it('fails on invalid program', function (done) {
-        var cp = shell.spawn('test', 'randomprogram', [ ], { }, function (error) {
+        shell.spawn('test', 'randomprogram', [ ], { }, function (error) {
             expect(error).to.be.ok();
             done();
         });
     });
 
     it('fails on failing program', function (done) {
-        var cp = shell.spawn('test', '/usr/bin/false', [ ], { }, function (error) {
+        shell.spawn('test', '/usr/bin/false', [ ], { }, function (error) {
             expect(error).to.be.ok();
             done();
         });
     });
 
     it('cannot sudo invalid program', function (done) {
-        var cp = shell.sudo('test', [ 'randomprogram' ], function (error) {
+        shell.sudo('test', [ 'randomprogram' ], function (error) {
             expect(error).to.be.ok();
             done();
         });
@@ -42,24 +40,30 @@ describe('shell', function () {
 
     it('can sudo valid program', function (done) {
         var RELOAD_NGINX_CMD = path.join(__dirname, '../src/scripts/reloadnginx.sh');
-        var cp = shell.sudo('test', [ RELOAD_NGINX_CMD ], function (error) {
+        shell.sudo('test', [ RELOAD_NGINX_CMD ], function (error) {
             expect(error).to.be.ok();
             done();
         });
     });
 
-    it('execSync a valid program', function (done) {
-        shell.execSync('test', 'ls -l | wc -c');
-        done();
+    it('execSync a valid shell program', function (done) {
+        shell.exec('test', 'ls -l | wc -c', function (error) {
+            console.log(error);
+            done(error);
+        });
     });
 
     it('execSync throws for invalid program', function (done) {
-        expect(function () { shell.execSync('test', 'cannotexist') }).to.throwException();
-        done();
+        shell.exec('test', 'cannotexist', function (error) {
+            expect(error).to.be.ok();
+            done();
+        });
     });
 
     it('execSync throws for failed program', function (done) {
-        expect(function () { shell.execSync('test', 'false'); }).to.throwException();
-        done();
+        shell.exec('test', 'false', function (error) {
+            expect(error).to.be.ok();
+            done();
+        });
     });
 });
