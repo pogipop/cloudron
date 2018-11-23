@@ -37,3 +37,5 @@ yellowtent ALL=(root) NOPASSWD:SETENV: /home/yellowtent/box/src/backupupload.js
 Defaults!/home/yellowtent/box/src/scripts/restart.sh env_keep="HOME BOX_ENV"
 yellowtent ALL=(root) NOPASSWD: /home/yellowtent/box/src/scripts/restart.sh
 
+Defaults!/home/yellowtent/box/src/scripts/restartdocker.sh env_keep="HOME BOX_ENV"
+yellowtent ALL=(root) NOPASSWD: /home/yellowtent/box/src/scripts/restartdocker.sh

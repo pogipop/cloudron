@@ -210,7 +210,7 @@ var KNOWN_ADDONS = {
         restore: NOOP,
         clear: NOOP,
         status: statusDocker,
-        restart: null
+        restart: restartDocker
     }
 };
 
@@ -1684,4 +1684,12 @@ function statusDocker(callback) {
     docker.ping(function (error) {
         callback(null, { status: error ? exports.ADDON_STATUS_STOPPED: exports.ADDON_STATUS_ACTIVE });
     });
+}
+
+function restartDocker(callback) {
+    assert.strictEqual(typeof callback, 'function');
+
+    shell.sudo('restartdocker', [ path.join(__dirname, 'scripts/restartdocker.sh') ], NOOP_CALLBACK);
+
+    callback(null);
 }

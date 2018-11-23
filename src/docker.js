@@ -28,18 +28,19 @@ exports = module.exports = {
     clearVolume: clearVolume
 };
 
-function connectionInstance() {
+// timeout is optional
+function connectionInstance(timeout) {
     var Docker = require('dockerode');
     var docker;
 
     if (process.env.BOX_ENV === 'test') {
         // test code runs a docker proxy on this port
-        docker = new Docker({ host: 'http://localhost', port: 5687 });
+        docker = new Docker({ host: 'http://localhost', port: 5687, timeout: timeout });
 
         // proxy code uses this to route to the real docker
         docker.options = { socketPath: '/var/run/docker.sock' };
     } else {
-        docker = new Docker({ socketPath: '/var/run/docker.sock' });
+        docker = new Docker({ socketPath: '/var/run/docker.sock', timeout: timeout });
     }
 
     return docker;
@@ -112,7 +113,8 @@ function setRegistryConfig(auth, callback) {
 function ping(callback) {
     assert.strictEqual(typeof callback, 'function');
 
-    var docker = exports.connection;
+    // do not let the request linger
+    var docker = connectionInstance(1000);
 
     docker.ping(function (error, result) {
         if (error) return callback(new DockerError(DockerError.INTERNAL_ERROR, error));
