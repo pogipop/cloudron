@@ -86,8 +86,14 @@ images=$(node -e "var i = require('${box_src_tmp_dir}/src/infra_version.js'); co
 
 echo -e "\tPulling docker images: ${images}"
 for image in ${images}; do
-    docker pull "${image}"           # this pulls the image using the sha256
-    docker pull "${image%@sha256:*}" # this will tag the image for readability
+    if ! docker pull "${image}"; then           # this pulls the image using the sha256
+        echo "==> installer: Could not pull ${image}"
+        exit 5
+    fi
+    if ! docker pull "${image%@sha256:*}"; then  # this will tag the image for readability
+        echo "==> installer: Could not pull ${image%@sha256:*}"
+        exit 6
+   fi
 done
 
 echo "==> installer: update cloudron-syslog"
