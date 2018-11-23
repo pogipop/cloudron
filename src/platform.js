@@ -16,7 +16,6 @@ var addons = require('./addons.js'),
     async = require('async'),
     config = require('./config.js'),
     debug = require('debug')('box:platform'),
-    execSync = require('child_process').execSync,
     fs = require('fs'),
     graphs = require('./graphs.js'),
     infra = require('./infra_version.js'),
@@ -114,7 +113,9 @@ function pruneInfraImages(callback) {
     const images = infra.baseImages.concat(Object.keys(infra.images).map(function (addon) { return infra.images[addon]; }));
 
     async.eachSeries(images, function (image, iteratorCallback) {
-        let output = execSync(`docker images --digests ${image.repo} --format "{{.ID}} {{.Repository}}:{{.Tag}}@{{.Digest}}"`, { encoding: 'utf8' });
+        let output = safe.child_process.execSync(`docker images --digests ${image.repo} --format "{{.ID}} {{.Repository}}:{{.Tag}}@{{.Digest}}"`, { encoding: 'utf8' });
+        if (output === null) return iteratorCallback(safe.error);
+
         let lines = output.trim().split('\n');
         for (let line of lines) {
             if (!line) continue;

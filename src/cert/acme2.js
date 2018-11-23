@@ -5,7 +5,6 @@ var assert = require('assert'),
     crypto = require('crypto'),
     debug = require('debug')('box:cert/acme2'),
     domains = require('../domains.js'),
-    execSync = require('safetydance').child_process.execSync,
     fs = require('fs'),
     path = require('path'),
     paths = require('../paths.js'),
@@ -88,7 +87,7 @@ function b64(str) {
 function getModulus(pem) {
     assert(util.isBuffer(pem));
 
-    var stdout = execSync('openssl rsa -modulus -noout', { input: pem, encoding: 'utf8' });
+    var stdout = safe.child_process.execSync('openssl rsa -modulus -noout', { input: pem, encoding: 'utf8' });
     if (!stdout) return null;
     var match = stdout.match(/Modulus=([0-9a-fA-F]+)$/m);
     if (!match) return null;
@@ -351,14 +350,14 @@ Acme2.prototype.createKeyAndCsr = function (hostname, callback) {
         // in some old releases, csr file was corrupt. so always regenerate it
         debug('createKeyAndCsr: reuse the key for renewal at %s', privateKeyFile);
     } else {
-        var key = execSync('openssl genrsa 4096');
+        var key = safe.child_process.execSync('openssl genrsa 4096');
         if (!key) return callback(new Acme2Error(Acme2Error.INTERNAL_ERROR, safe.error));
         if (!safe.fs.writeFileSync(privateKeyFile, key)) return callback(new Acme2Error(Acme2Error.INTERNAL_ERROR, safe.error));
 
         debug('createKeyAndCsr: key file saved at %s', privateKeyFile);
     }
 
-    var csrDer = execSync(`openssl req -new -key ${privateKeyFile} -outform DER -subj /CN=${hostname}`);
+    var csrDer = safe.child_process.execSync(`openssl req -new -key ${privateKeyFile} -outform DER -subj /CN=${hostname}`);
     if (!csrDer) return callback(new Acme2Error(Acme2Error.INTERNAL_ERROR, safe.error));
     if (!safe.fs.writeFileSync(csrFile, csrDer)) return callback(new Acme2Error(Acme2Error.INTERNAL_ERROR, safe.error)); // bookkeeping
 

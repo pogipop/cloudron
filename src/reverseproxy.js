@@ -132,6 +132,7 @@ function providerMatchesSync(domainObject, certFilePath, apiOptions) {
     if (apiOptions.fallback) return certFilePath.includes('.host.cert');
 
     const subjectAndIssuer = safe.child_process.execSync(`/usr/bin/openssl x509 -noout -subject -issuer -in "${certFilePath}"`, { encoding: 'utf8' });
+    if (!subjectAndIssuer) return false; // something bad happenned
 
     const subject = subjectAndIssuer.match(/^subject=(.*)$/m)[1];
     const domain = subject.substr(subject.indexOf('=') + 1).trim(); // subject can be /CN=, CN=, CN = and other forms
@@ -167,13 +168,17 @@ function validateCertificate(location, domainObject, certificate) {
     const fqdn = domains.fqdn(location, domainObject);
 
     var result = safe.child_process.execSync(`openssl x509 -noout -checkhost "${fqdn}"`, { encoding: 'utf8', input: cert });
-    if (!result) return new ReverseProxyError(ReverseProxyError.INVALID_CERT, 'Unable to get certificate subject.');
+    if (result === null) return new ReverseProxyError(ReverseProxyError.INVALID_CERT, 'Unable to get certificate subject:' + safe.error.message);
 
     if (result.indexOf('does match certificate') === -1) return new ReverseProxyError(ReverseProxyError.INVALID_CERT, `Certificate is not valid for this domain. Expecting ${fqdn}`);
 
     // http://httpd.apache.org/docs/2.0/ssl/ssl_faq.html#verify
     var certModulus = safe.child_process.execSync('openssl x509 -noout -modulus', { encoding: 'utf8', input: cert });
+    if (certModulus === null) return new ReverseProxyError(ReverseProxyError.INVALID_CERT, `Unable to get cert modulus: ${safe.error.message}`);
+
     var keyModulus = safe.child_process.execSync('openssl rsa -noout -modulus', { encoding: 'utf8', input: key });
+    if (keyModulus === null) return new ReverseProxyError(ReverseProxyError.INVALID_CERT, `Unable to get key modulus: ${safe.error.message}`);
+
     if (certModulus !== keyModulus) return new ReverseProxyError(ReverseProxyError.INVALID_CERT, 'Key does not match the certificate.');
 
     // check expiration
@@ -581,8 +586,10 @@ function configureDefaultServer(callback) {
         debug('configureDefaultServer: create new cert');
 
         var cn = 'cloudron-' + (new Date()).toISOString(); // randomize date a bit to keep firefox happy
-        var certCommand = util.format('openssl req -x509 -newkey rsa:2048 -keyout %s -out %s -days 3650 -subj /CN=%s -nodes', keyFilePath, certFilePath, cn);
-        safe.child_process.execSync(certCommand);
+        if (!safe.child_process.execSync(`openssl req -x509 -newkey rsa:2048 -keyout ${keyFilePath} -out ${certFilePath} -days 3650 -subj /CN=${cn} -nodes`)) {
+            debug(`configureDefaultServer: could not generate certificate: ${safe.error.message}`);
+            return callback(safe.error);
+        }
     }
 
     writeAdminConfig({ certFilePath, keyFilePath }, constants.NGINX_DEFAULT_CONFIG_FILE_NAME, '', function (error) {
