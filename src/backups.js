@@ -858,7 +858,7 @@ function backupApp(app, callback) {
 
     const timestamp = (new Date()).toISOString().replace(/[T.]/g, '-').replace(/[:Z]/g,'');
 
-    tasks.setProgress(tasks.TASK_BACKUP, { precent: 10, mesage: `Backing up ${app.fqdn}` }, NOOP_CALLBACK);
+    tasks.setProgress(tasks.TASK_BACKUP, { percent: 10, mesage: `Backing up ${app.fqdn}` }, NOOP_CALLBACK);
 
     backupAppWithTimestamp(app, timestamp, function (error) {
         tasks.setProgress(tasks.TASK_BACKUP, { percent: 100, result: error ? error.message : '' }, NOOP_CALLBACK);
