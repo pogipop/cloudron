@@ -600,7 +600,7 @@ function runBackupUpload(backupId, format, dataDir, callback) {
     assert.strictEqual(typeof dataDir, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    shell.sudo(`backup-${backupId}`, [ BACKUP_UPLOAD_CMD, backupId, format, dataDir ], { env: process.env }, function (error) {
+    shell.sudo(`backup-${backupId}`, [ BACKUP_UPLOAD_CMD, backupId, format, dataDir ], { preserveEnv: true }, function (error) {
         if (error && (error.code === null /* signal */ || (error.code !== 0 && error.code !== 50))) { // backuptask crashed
             return callback(new BackupsError(BackupsError.INTERNAL_ERROR, 'Backuptask crashed'));
         } else if (error && error.code === 50) { // exited with error

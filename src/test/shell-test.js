@@ -32,7 +32,7 @@ describe('shell', function () {
     });
 
     it('cannot sudo invalid program', function (done) {
-        shell.sudo('test', [ 'randomprogram' ], function (error) {
+        shell.sudo('test', [ 'randomprogram' ], {}, function (error) {
             expect(error).to.be.ok();
             done();
         });
@@ -40,7 +40,7 @@ describe('shell', function () {
 
     it('can sudo valid program', function (done) {
         var RELOAD_NGINX_CMD = path.join(__dirname, '../src/scripts/reloadnginx.sh');
-        shell.sudo('test', [ RELOAD_NGINX_CMD ], function (error) {
+        shell.sudo('test', [ RELOAD_NGINX_CMD ], {}, function (error) {
             expect(error).to.be.ok();
             done();
         });

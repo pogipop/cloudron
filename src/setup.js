@@ -249,7 +249,7 @@ function restore(backupConfig, backupId, version, autoconf, auditSource, callbac
                 // for this reason, we have to re-setup DNS after a restore so it has DKIm from the backup
                 // Once we have a 100% IP based restore, we can skip this
                 mail.setDnsRecords.bind(null, config.adminDomain()),
-                shell.sudo.bind(null, 'restart', [ RESTART_CMD ])
+                shell.sudo.bind(null, 'restart', [ RESTART_CMD ], {})
             ], function (error) {
                 debug('restore:', error);
                 if (error) webadminStatus.restore.error = error.message;

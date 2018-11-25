@@ -488,7 +488,7 @@ function setAdmin(domain, callback) {
 
             callback();
 
-            shell.sudo('restart', [ RESTART_CMD ], NOOP_CALLBACK);
+            shell.sudo('restart', [ RESTART_CMD ], {}, NOOP_CALLBACK);
         });
     });
 }

@@ -63,7 +63,7 @@ function retire(reason, info, callback) {
         apiServerOrigin: config.apiServerOrigin(),
         adminFqdn: config.adminFqdn()
     };
-    shell.sudo('retire', [ RETIRE_CMD, reason, JSON.stringify(info), JSON.stringify(data) ], callback);
+    shell.sudo('retire', [ RETIRE_CMD, reason, JSON.stringify(info), JSON.stringify(data) ], {}, callback);
 }
 
 function getCaasConfig(callback) {

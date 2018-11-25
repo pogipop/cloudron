@@ -1627,7 +1627,7 @@ function teardownRedis(app, options, callback) {
     container.remove(removeOptions, function (error) {
         if (error && error.statusCode !== 404) return callback(new Error('Error removing container:' + error));
 
-        shell.sudo('removeVolume', [ RMADDONDIR_CMD, 'redis', app.id ], function (error) {
+        shell.sudo('removeVolume', [ RMADDONDIR_CMD, 'redis', app.id ], {}, function (error) {
             if (error) return callback(new Error('Error removing redis data:' + error));
 
             rimraf(path.join(paths.LOG_DIR, `redis-${app.id}`), function (error) {
@@ -1695,7 +1695,7 @@ function statusDocker(callback) {
 function restartDocker(callback) {
     assert.strictEqual(typeof callback, 'function');
 
-    shell.sudo('restartdocker', [ path.join(__dirname, 'scripts/restartdocker.sh') ], NOOP_CALLBACK);
+    shell.sudo('restartdocker', [ path.join(__dirname, 'scripts/restartdocker.sh') ], {}, NOOP_CALLBACK);
 
     callback(null);
 }

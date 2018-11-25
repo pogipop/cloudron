@@ -179,7 +179,7 @@ function getConfig(callback) {
 }
 
 function reboot(callback) {
-    shell.sudo('reboot', [ REBOOT_CMD ], callback);
+    shell.sudo('reboot', [ REBOOT_CMD ], {}, callback);
 }
 
 function checkDiskSpace(callback) {

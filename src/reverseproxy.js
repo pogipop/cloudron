@@ -191,7 +191,7 @@ function validateCertificate(location, domainObject, certificate) {
 function reload(callback) {
     if (process.env.BOX_ENV === 'test') return callback();
 
-    shell.sudo('reload', [ RELOAD_NGINX_CMD ], callback);
+    shell.sudo('reload', [ RELOAD_NGINX_CMD ], {}, callback);
 }
 
 function generateFallbackCertificateSync(domainObject) {

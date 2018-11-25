@@ -210,7 +210,7 @@ function addCollectdProfile(app, callback) {
     var collectdConf = ejs.render(COLLECTD_CONFIG_EJS, { appId: app.id, containerId: app.containerId });
     fs.writeFile(path.join(paths.COLLECTD_APPCONFIG_DIR, app.id + '.conf'), collectdConf, function (error) {
         if (error) return callback(error);
-        shell.sudo('addCollectdProfile', [ CONFIGURE_COLLECTD_CMD, 'add', app.id ], callback);
+        shell.sudo('addCollectdProfile', [ CONFIGURE_COLLECTD_CMD, 'add', app.id ], {}, callback);
     });
 }
 
@@ -220,7 +220,7 @@ function removeCollectdProfile(app, callback) {
 
     fs.unlink(path.join(paths.COLLECTD_APPCONFIG_DIR, app.id + '.conf'), function (error) {
         if (error && error.code !== 'ENOENT') debugApp(app, 'Error removing collectd profile', error);
-        shell.sudo('removeCollectdProfile', [ CONFIGURE_COLLECTD_CMD, 'remove', app.id ], callback);
+        shell.sudo('removeCollectdProfile', [ CONFIGURE_COLLECTD_CMD, 'remove', app.id ], {}, callback);
     });
 }
 
@@ -239,7 +239,7 @@ function addLogrotateConfig(app, callback) {
         var tmpFilePath = path.join(os.tmpdir(), app.id + '.logrotate');
         fs.writeFile(tmpFilePath, logrotateConf, function (error) {
             if (error) return callback(error);
-            shell.sudo('addLogrotateConfig', [ CONFIGURE_LOGROTATE_CMD, 'add', app.id, tmpFilePath ], callback);
+            shell.sudo('addLogrotateConfig', [ CONFIGURE_LOGROTATE_CMD, 'add', app.id, tmpFilePath ], {}, callback);
         });
     });
 }
@@ -248,7 +248,7 @@ function removeLogrotateConfig(app, callback) {
     assert.strictEqual(typeof app, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    shell.sudo('removeLogrotateConfig', [ CONFIGURE_LOGROTATE_CMD, 'remove', app.id ], callback);
+    shell.sudo('removeLogrotateConfig', [ CONFIGURE_LOGROTATE_CMD, 'remove', app.id ], {}, callback);
 }
 
 function verifyManifest(manifest, callback) {

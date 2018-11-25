@@ -75,16 +75,11 @@ function spawn(tag, file, args, options, callback) {
 function sudo(tag, args, options, callback) {
     assert.strictEqual(typeof tag, 'string');
     assert(util.isArray(args));
-
-    if (typeof options === 'function') {
-        callback = options;
-        options = { };
-    }
-
     assert.strictEqual(typeof options, 'object');
+    assert.strictEqual(typeof callback, 'function');
 
     // -S makes sudo read stdin for password. -E preserves environment
-    var cp = spawn(tag, SUDO, [ options.env ? '-SE' : '-S' ].concat(args), options, callback);
+    var cp = spawn(tag, SUDO, [ options.preserveEnv ? '-SE' : '-S' ].concat(args), options, callback);
     cp.stdin.end();
     return cp;
 }

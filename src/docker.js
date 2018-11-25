@@ -129,7 +129,7 @@ function pullImage(manifest, callback) {
 
     // Use docker CLI here to support downloading of private repos. for dockerode, we have to use
     // https://github.com/apocas/dockerode#pull-from-private-repos
-    shell.spawn('pullImage', '/usr/bin/docker', [ 'pull', manifest.dockerImage ], { }, function (error) {
+    shell.spawn('pullImage', '/usr/bin/docker', [ 'pull', manifest.dockerImage ], {}, function (error) {
         if (error) {
             debug(`pullImage: Error pulling image ${manifest.dockerImage} of ${manifest.id}: ${error.message}`);
             return callback(new Error('Failed to pull image'));
@@ -543,7 +543,7 @@ function clearVolume(app, name, subdir, callback) {
     assert.strictEqual(typeof subdir, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    shell.sudo('removeVolume', [ RMVOLUME_CMD, app.id, subdir ], callback);
+    shell.sudo('removeVolume', [ RMVOLUME_CMD, app.id, subdir ], {}, callback);
 }
 
 function removeVolume(app, name, subdir, callback) {
@@ -561,6 +561,6 @@ function removeVolume(app, name, subdir, callback) {
             callback(error);
         }
 
-        shell.sudo('removeVolume', [ RMVOLUME_CMD, app.id, subdir ], callback);
+        shell.sudo('removeVolume', [ RMVOLUME_CMD, app.id, subdir ], {}, callback);
     });
 }
