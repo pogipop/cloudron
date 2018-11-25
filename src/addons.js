@@ -91,7 +91,7 @@ AddonsError.NOT_ACTIVE = 'Not Active';
 
 const NOOP = function (app, options, callback) { return callback(); };
 const NOOP_CALLBACK = function (error) { if (error) debug(error); };
-const RMADDON_CMD = path.join(__dirname, 'scripts/rmaddon.sh');
+const RMADDONDIR_CMD = path.join(__dirname, 'scripts/rmaddondir.sh');
 
 // TODO: maybe derive these defaults based on how many apps are using them
 const DEFAULT_MEMORY_LIMITS = {
@@ -970,37 +970,39 @@ function startMysql(existingInfra, callback) {
 
     const upgrading = existingInfra.version !== 'none' && requiresUpgrade(existingInfra.images.mysql.tag, tag);
 
-    if (upgrading) {
-        debug('startMysql: mysql will be upgraded');
-        shell.sudoSync('startMysql', `${RMADDON_CMD} mysql`);
-    }
+    if (upgrading) debug('startMysql: mysql will be upgraded');
+    const upgradeFunc = upgrading ? shell.sudo.bind(null, 'startMysql', [ RMADDONDIR_CMD, 'mysql' ], {}) : NOOP;
 
-    const cmd = `docker run --restart=always -d --name="mysql" \
-                --net cloudron \
-                --net-alias mysql \
-                --log-driver syslog \
-                --log-opt syslog-address=udp://127.0.0.1:2514 \
-                --log-opt syslog-format=rfc5424 \
-                --log-opt tag=mysql \
-                -m ${memoryLimit}m \
-                --memory-swap ${memoryLimit * 2}m \
-                --dns 172.18.0.1 \
-                --dns-search=. \
-                -e CLOUDRON_MYSQL_TOKEN=${cloudronToken} \
-                -e CLOUDRON_MYSQL_ROOT_HOST=172.18.0.1 \
-                -e CLOUDRON_MYSQL_ROOT_PASSWORD=${rootPassword} \
-                -v "${dataDir}/mysql:/var/lib/mysql" \
-                --label isCloudronManaged=true \
-                --read-only -v /tmp -v /run "${tag}"`;
-
-    shell.exec('startMysql', cmd, function (error) {
+    upgradeFunc(function (error) {
         if (error) return callback(error);
 
-        waitForAddon('mysql', 'CLOUDRON_MYSQL_TOKEN', function (error) {
-            if (error) return callback(error);
-            if (!upgrading) return callback(null);
+        const cmd = `docker run --restart=always -d --name="mysql" \
+                    --net cloudron \
+                    --net-alias mysql \
+                    --log-driver syslog \
+                    --log-opt syslog-address=udp://127.0.0.1:2514 \
+                    --log-opt syslog-format=rfc5424 \
+                    --log-opt tag=mysql \
+                    -m ${memoryLimit}m \
+                    --memory-swap ${memoryLimit * 2}m \
+                    --dns 172.18.0.1 \
+                    --dns-search=. \
+                    -e CLOUDRON_MYSQL_TOKEN=${cloudronToken} \
+                    -e CLOUDRON_MYSQL_ROOT_HOST=172.18.0.1 \
+                    -e CLOUDRON_MYSQL_ROOT_PASSWORD=${rootPassword} \
+                    -v "${dataDir}/mysql:/var/lib/mysql" \
+                    --label isCloudronManaged=true \
+                    --read-only -v /tmp -v /run "${tag}"`;
 
-            importDatabase('mysql', callback);
+        shell.exec('startMysql', cmd, function (error) {
+            if (error) return callback(error);
+
+            waitForAddon('mysql', 'CLOUDRON_MYSQL_TOKEN', function (error) {
+                if (error) return callback(error);
+                if (!upgrading) return callback(null);
+
+                importDatabase('mysql', callback);
+            });
         });
     });
 }
@@ -1180,36 +1182,38 @@ function startPostgresql(existingInfra, callback) {
 
     const upgrading = existingInfra.version !== 'none' && requiresUpgrade(existingInfra.images.postgresql.tag, tag);
 
-    if (upgrading) {
-        debug('startPostgresql: postgresql will be upgraded');
-        shell.sudoSync('startPostgresql', `${RMADDON_CMD} postgresql`);
-    }
+    if (upgrading) debug('startPostgresql: postgresql will be upgraded');
+    const upgradeFunc = upgrading ? shell.sudo.bind(null, 'startPostgresql', [ RMADDONDIR_CMD, 'postgresql' ], {}) : NOOP;
 
-    const cmd = `docker run --restart=always -d --name="postgresql" \
-                --net cloudron \
-                --net-alias postgresql \
-                --log-driver syslog \
-                --log-opt syslog-address=udp://127.0.0.1:2514 \
-                --log-opt syslog-format=rfc5424 \
-                --log-opt tag=postgresql \
-                -m ${memoryLimit}m \
-                --memory-swap ${memoryLimit * 2}m \
-                --dns 172.18.0.1 \
-                --dns-search=. \
-                -e CLOUDRON_POSTGRESQL_ROOT_PASSWORD="${rootPassword}" \
-                -e CLOUDRON_POSTGRESQL_TOKEN="${cloudronToken}" \
-                -v "${dataDir}/postgresql:/var/lib/postgresql" \
-                --label isCloudronManaged=true \
-                --read-only -v /tmp -v /run "${tag}"`;
-
-    shell.exec('startPostgresql', cmd, function (error) {
+    upgradeFunc(function (error) {
         if (error) return callback(error);
 
-        waitForAddon('postgresql', 'CLOUDRON_POSTGRESQL_TOKEN', function (error) {
-            if (error) return callback(error);
-            if (!upgrading) return callback(null);
+        const cmd = `docker run --restart=always -d --name="postgresql" \
+                    --net cloudron \
+                    --net-alias postgresql \
+                    --log-driver syslog \
+                    --log-opt syslog-address=udp://127.0.0.1:2514 \
+                    --log-opt syslog-format=rfc5424 \
+                    --log-opt tag=postgresql \
+                    -m ${memoryLimit}m \
+                    --memory-swap ${memoryLimit * 2}m \
+                    --dns 172.18.0.1 \
+                    --dns-search=. \
+                    -e CLOUDRON_POSTGRESQL_ROOT_PASSWORD="${rootPassword}" \
+                    -e CLOUDRON_POSTGRESQL_TOKEN="${cloudronToken}" \
+                    -v "${dataDir}/postgresql:/var/lib/postgresql" \
+                    --label isCloudronManaged=true \
+                    --read-only -v /tmp -v /run "${tag}"`;
 
-            importDatabase('postgresql', callback);
+        shell.exec('startPostgresql', cmd, function (error) {
+            if (error) return callback(error);
+
+            waitForAddon('postgresql', 'CLOUDRON_POSTGRESQL_TOKEN', function (error) {
+                if (error) return callback(error);
+                if (!upgrading) return callback(null);
+
+                importDatabase('postgresql', callback);
+            });
         });
     });
 }
@@ -1352,36 +1356,38 @@ function startMongodb(existingInfra, callback) {
 
     const upgrading = existingInfra.version !== 'none' && requiresUpgrade(existingInfra.images.mongodb.tag, tag);
 
-    if (upgrading) {
-        debug('startMongodb: mongodb will be upgraded');
-        shell.sudoSync('startMongodb', `${RMADDON_CMD} mongodb`);
-    }
+    if (upgrading) debug('startMongodb: mongodb will be upgraded');
+    const upgradeFunc = upgrading ? shell.sudo.bind(null, 'startMongodb', [ RMADDONDIR_CMD, 'mongodb' ], {}) : NOOP;
 
-    const cmd = `docker run --restart=always -d --name="mongodb" \
-                --net cloudron \
-                --net-alias mongodb \
-                --log-driver syslog \
-                --log-opt syslog-address=udp://127.0.0.1:2514 \
-                --log-opt syslog-format=rfc5424 \
-                --log-opt tag=mongodb \
-                -m ${memoryLimit}m \
-                --memory-swap ${memoryLimit * 2}m \
-                --dns 172.18.0.1 \
-                --dns-search=. \
-                -e CLOUDRON_MONGODB_ROOT_PASSWORD="${rootPassword}" \
-                -e CLOUDRON_MONGODB_TOKEN="${cloudronToken}" \
-                -v "${dataDir}/mongodb:/var/lib/mongodb" \
-                --label isCloudronManaged=true \
-                --read-only -v /tmp -v /run "${tag}"`;
-
-    shell.exec('startMongodb', cmd, function (error) {
+    upgradeFunc(function (error) {
         if (error) return callback(error);
 
-        waitForAddon('mongodb', 'CLOUDRON_MONGODB_TOKEN', function (error) {
-            if (error) return callback(error);
-            if (!upgrading) return callback(null);
+        const cmd = `docker run --restart=always -d --name="mongodb" \
+                    --net cloudron \
+                    --net-alias mongodb \
+                    --log-driver syslog \
+                    --log-opt syslog-address=udp://127.0.0.1:2514 \
+                    --log-opt syslog-format=rfc5424 \
+                    --log-opt tag=mongodb \
+                    -m ${memoryLimit}m \
+                    --memory-swap ${memoryLimit * 2}m \
+                    --dns 172.18.0.1 \
+                    --dns-search=. \
+                    -e CLOUDRON_MONGODB_ROOT_PASSWORD="${rootPassword}" \
+                    -e CLOUDRON_MONGODB_TOKEN="${cloudronToken}" \
+                    -v "${dataDir}/mongodb:/var/lib/mongodb" \
+                    --label isCloudronManaged=true \
+                    --read-only -v /tmp -v /run "${tag}"`;
 
-            importDatabase('mongodb', callback);
+        shell.exec('startMongodb', cmd, function (error) {
+            if (error) return callback(error);
+
+            waitForAddon('mongodb', 'CLOUDRON_MONGODB_TOKEN', function (error) {
+                if (error) return callback(error);
+                if (!upgrading) return callback(null);
+
+                importDatabase('mongodb', callback);
+            });
         });
     });
 }
@@ -1621,7 +1627,7 @@ function teardownRedis(app, options, callback) {
     container.remove(removeOptions, function (error) {
         if (error && error.statusCode !== 404) return callback(new Error('Error removing container:' + error));
 
-        shell.sudo('removeVolume', [ RMADDON_CMD, 'redis', app.id ], function (error) {
+        shell.sudo('removeVolume', [ RMADDONDIR_CMD, 'redis', app.id ], function (error) {
             if (error) return callback(new Error('Error removing redis data:' + error));
 
             rimraf(path.join(paths.LOG_DIR, `redis-${app.id}`), function (error) {

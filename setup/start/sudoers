@@ -4,8 +4,8 @@ Defaults !syslog
 Defaults!/home/yellowtent/box/src/scripts/rmvolume.sh env_keep="HOME BOX_ENV"
 yellowtent ALL=(root) NOPASSWD: /home/yellowtent/box/src/scripts/rmvolume.sh
 
-Defaults!/home/yellowtent/box/src/scripts/rmaddon.sh env_keep="HOME BOX_ENV"
-yellowtent ALL=(root) NOPASSWD: /home/yellowtent/box/src/scripts/rmaddon.sh
+Defaults!/home/yellowtent/box/src/scripts/rmaddondir.sh env_keep="HOME BOX_ENV"
+yellowtent ALL=(root) NOPASSWD: /home/yellowtent/box/src/scripts/rmaddondir.sh
 
 Defaults!/home/yellowtent/box/src/scripts/reloadnginx.sh env_keep="HOME BOX_ENV"
 yellowtent ALL=(root) NOPASSWD: /home/yellowtent/box/src/scripts/reloadnginx.sh
