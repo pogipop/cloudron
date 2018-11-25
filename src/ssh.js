@@ -14,7 +14,6 @@ exports = module.exports = {
 var assert = require('assert'),
     config = require('./config.js'),
     debug = require('debug')('box:ssh'),
-    fs = require('fs'),
     path = require('path'),
     safe = require('safetydance'),
     shell = require('./shell.js'),
@@ -56,61 +55,72 @@ function clear(callback) {
     callback();
 }
 
-function saveKeys(keys) {
+function saveKeys(keys, callback) {
     assert(Array.isArray(keys));
+    assert.strictEqual(typeof callback, 'function');
 
     if (!safe.fs.writeFileSync(AUTHORIZED_KEYS_TMP_FILEPATH, keys.map(function (k) { return k.key; }).join('\n'))) {
         debug('Error writing to temporary file', safe.error);
-        return false;
+        return callback(safe.error);
     }
 
-    try {
-        // 600 = rw-------
-        fs.chmodSync(AUTHORIZED_KEYS_TMP_FILEPATH, '600');
-    } catch (e) {
-        debug('Failed to adjust permissions of %s %j', AUTHORIZED_KEYS_TMP_FILEPATH, e);
-        return false;
+    if (!safe.fs.chmodSync(AUTHORIZED_KEYS_TMP_FILEPATH, '600')) { // 600 = rw-------
+        debug('Failed to adjust permissions of %s %s', AUTHORIZED_KEYS_TMP_FILEPATH, safe.error);
+        return callback(safe.error);
     }
 
     var user = config.TEST ? process.env.USER : ((config.provider() === 'ec2' || config.provider() === 'lightsail' || config.provider() === 'ami') ? 'ubuntu' : 'root');
-    shell.sudoSync('authorized_keys', util.format('%s %s %s %s', AUTHORIZED_KEYS_CMD, user, AUTHORIZED_KEYS_TMP_FILEPATH, AUTHORIZED_KEYS_FILEPATH));
+    shell.sudo('authorized_keys', [ AUTHORIZED_KEYS_CMD, user, AUTHORIZED_KEYS_TMP_FILEPATH, AUTHORIZED_KEYS_FILEPATH ], {}, function (error) {
+        if (error) return callback(error);
 
-    return true;
+        callback(null);
+    });
 }
 
-function getKeys() {
-    shell.sudoSync('authorized_keys', util.format('%s %s %s %s', AUTHORIZED_KEYS_CMD, process.env.USER, AUTHORIZED_KEYS_FILEPATH, AUTHORIZED_KEYS_TMP_FILEPATH));
+function getKeys(callback) {
+    assert.strictEqual(typeof callback, 'function');
 
-    var content = safe.fs.readFileSync(AUTHORIZED_KEYS_TMP_FILEPATH, 'utf8');
-    if (!content) return [];
+    shell.sudo('authorized_keys', [ AUTHORIZED_KEYS_CMD, process.env.USER, AUTHORIZED_KEYS_FILEPATH, AUTHORIZED_KEYS_TMP_FILEPATH ], {}, function (error) {
+        if (error) return callback(error);
 
-    var keys = content.split('\n')
-        .filter(function (k) { return !!k.trim(); })
-        .map(function (k) { return { identifier: k.split(' ')[2], key: k }; })
-        .filter(function (k) { return k.identifier && k.key; });
+        var content = safe.fs.readFileSync(AUTHORIZED_KEYS_TMP_FILEPATH, 'utf8');
+        if (!content) return callback(null, []);
 
-    safe.fs.unlinkSync(AUTHORIZED_KEYS_TMP_FILEPATH);
+        var keys = content.split('\n')
+            .filter(function (k) { return !!k.trim(); })
+            .map(function (k) { return { identifier: k.split(' ')[2], key: k }; })
+            .filter(function (k) { return k.identifier && k.key; });
 
-    return keys;
+        safe.fs.unlinkSync(AUTHORIZED_KEYS_TMP_FILEPATH);
+
+        return callback(null, keys);
+    });
 }
 
 function getAuthorizedKeys(callback) {
     assert.strictEqual(typeof callback, 'function');
 
-    return callback(null, getKeys().sort(function (a, b) { return a.identifier.localeCompare(b.identifier); }));
+    getKeys(function (error, keys) {
+        if (error) return callback(new SshError(SshError.INTERNAL_ERROR, error));
+
+        return callback(null, keys.sort(function (a, b) { return a.identifier.localeCompare(b.identifier); }));
+    });
 }
 
 function getAuthorizedKey(identifier, callback) {
     assert.strictEqual(typeof identifier, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    var keys = getKeys();
-    if (keys.length === 0) return callback(new SshError(SshError.NOT_FOUND));
+    getKeys(function (error, keys) {
+        if (error) return callback(new SshError(SshError.INTERNAL_ERROR, error));
 
-    var key = keys.find(function (k) { return k.identifier === identifier; });
-    if (!key) return callback(new SshError(SshError.NOT_FOUND));
+        if (keys.length === 0) return callback(new SshError(SshError.NOT_FOUND));
 
-    callback(null, key);
+        var key = keys.find(function (k) { return k.identifier === identifier; });
+        if (!key) return callback(new SshError(SshError.NOT_FOUND));
+
+        callback(null, key);
+    });
 }
 
 function addAuthorizedKey(key, callback) {
@@ -124,28 +134,38 @@ function addAuthorizedKey(key, callback) {
 
     var identifier = tmp[2];
 
-    var keys = getKeys();
-    var index = keys.findIndex(function (k) { return k.identifier === identifier; });
-    if (index !== -1) keys[index] = { identifier: identifier, key: key };
-    else keys.push({ identifier: identifier, key: key });
+    getKeys(function (error, keys) {
+        if (error) return callback(new SshError(SshError.INTERNAL_ERROR, error));
 
-    if (!saveKeys(keys)) return callback(new SshError(SshError.INTERNAL_ERROR));
+        var index = keys.findIndex(function (k) { return k.identifier === identifier; });
+        if (index !== -1) keys[index] = { identifier: identifier, key: key };
+        else keys.push({ identifier: identifier, key: key });
 
-    callback();
+        saveKeys(keys, function (error) {
+            if (error) return callback(new SshError(SshError.INTERNAL_ERROR, error));
+
+            callback(null);
+        });
+    });
 }
 
 function delAuthorizedKey(identifier, callback) {
     assert.strictEqual(typeof identifier, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    var keys = getKeys();
-    var index = keys.findIndex(function (k) { return k.identifier === identifier; });
-    if (index === -1) return callback(new SshError(SshError.NOT_FOUND));
+    getKeys(function (error, keys) {
+        if (error) return callback(new SshError(SshError.INTERNAL_ERROR, error));
 
-    // now remove the key
-    keys.splice(index, 1);
+        let index = keys.findIndex(function (k) { return k.identifier === identifier; });
+        if (index === -1) return callback(new SshError(SshError.NOT_FOUND));
 
-    if (!saveKeys(keys)) return callback(new SshError(SshError.INTERNAL_ERROR));
+        // now remove the key
+        keys.splice(index, 1);
 
-    callback();
+        saveKeys(keys, function (error) {
+            if (error) return callback(new SshError(SshError.INTERNAL_ERROR, error));
+
+            callback(null);
+        });
+    });
 }
