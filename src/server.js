@@ -122,6 +122,7 @@ function initializeExpressSync() {
     router.get ('/api/v1/cloudron/update', cloudronScope, routes.cloudron.getUpdateInfo);
     router.post('/api/v1/cloudron/update', cloudronScope, routes.cloudron.update);
     router.post('/api/v1/cloudron/check_for_updates', cloudronScope, routes.cloudron.checkForUpdates);
+    router.get ('/api/v1/cloudron/reboot', cloudronScope, routes.cloudron.isRebootRequired);
     router.post('/api/v1/cloudron/reboot', cloudronScope, routes.cloudron.reboot);
     router.get ('/api/v1/cloudron/graphs', cloudronScope, routes.graphs.getGraphs);
     router.get ('/api/v1/cloudron/disks', cloudronScope, routes.cloudron.getDisks);

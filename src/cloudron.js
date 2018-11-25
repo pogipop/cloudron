@@ -11,6 +11,7 @@ exports = module.exports = {
     getStatus: getStatus,
 
     reboot: reboot,
+    isRebootRequired: isRebootRequired,
 
     onActivated: onActivated,
 
@@ -28,13 +29,13 @@ var assert = require('assert'),
     debug = require('debug')('box:cloudron'),
     domains = require('./domains.js'),
     df = require('@sindresorhus/df'),
+    fs = require('fs'),
     mailer = require('./mailer.js'),
     os = require('os'),
     path = require('path'),
     paths = require('./paths.js'),
     platform = require('./platform.js'),
     reverseProxy = require('./reverseproxy.js'),
-    safe = require('safetydance'),
     settings = require('./settings.js'),
     shell = require('./shell.js'),
     spawn = require('child_process').spawn,
@@ -180,6 +181,13 @@ function getConfig(callback) {
 
 function reboot(callback) {
     shell.sudo('reboot', [ REBOOT_CMD ], {}, callback);
+}
+
+function isRebootRequired(callback) {
+    assert.strictEqual(typeof callback, 'function');
+
+    // https://serverfault.com/questions/92932/how-does-ubuntu-keep-track-of-the-system-restart-required-flag-in-motd
+    callback(null, fs.existsSync('/var/run/reboot-required'));
 }
 
 function checkDiskSpace(callback) {

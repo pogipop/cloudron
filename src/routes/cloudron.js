@@ -2,6 +2,7 @@
 
 exports = module.exports = {
     reboot: reboot,
+    isRebootRequired: isRebootRequired,
     getConfig: getConfig,
     getDisks: getDisks,
     getUpdateInfo: getUpdateInfo,
@@ -36,6 +37,14 @@ function reboot(req, res, next) {
     next(new HttpSuccess(202, {}));
 
     cloudron.reboot(function () { });
+}
+
+function isRebootRequired(req, res, next) {
+    cloudron.isRebootRequired(function (error, result) {
+        if (error) return next(new HttpError(500, error));
+
+        next(new HttpSuccess(200, { rebootRequired: result }));
+    });
 }
 
 function getConfig(req, res, next) {
