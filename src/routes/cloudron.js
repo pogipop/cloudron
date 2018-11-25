@@ -33,10 +33,10 @@ function auditSource(req) {
 }
 
 function reboot(req, res, next) {
-    // Finish the request, to let the appstore know we triggered the restore it
+    // Finish the request, to let the appstore know we triggered the reboot
     next(new HttpSuccess(202, {}));
 
-    cloudron.reboot(function () { });
+    cloudron.reboot(function () {});
 }
 
 function isRebootRequired(req, res, next) {
