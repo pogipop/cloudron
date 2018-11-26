@@ -385,8 +385,6 @@ function getLogs(addonName, options, callback) {
     if (follow) args.push('--follow', '--retry', '--quiet'); // same as -F. to make it work if file doesn't exist, --quiet to not output file headers, which are no logs
     args.push(path.join(paths.LOG_DIR, containerName, 'app.log'));
 
-    console.log('----', args);
-
     var cp = spawn('/usr/bin/tail', args);
 
     var transformStream = split(function mapper(line) {
