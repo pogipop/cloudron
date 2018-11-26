@@ -12,9 +12,7 @@ require('supererror')({ splatchError: true });
 var assert = require('assert'),
     backups = require('./backups.js'),
     database = require('./database.js'),
-    debug = require('debug')('box:backupupload'),
-    paths = require('./paths.js'),
-    safe = require('safetydance');
+    debug = require('debug')('box:backupupload');
 
 function initialize(callback) {
     assert.strictEqual(typeof callback, 'function');
