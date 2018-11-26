@@ -40,6 +40,8 @@ function spawn(tag, file, args, options, callback) {
 
     debug(tag + ' spawn: %s %s', file, args.join(' '));
 
+    if (options.ipc) options.stdio = ['pipe', 'pipe', 'pipe', 'ipc'];
+
     var cp = child_process.spawn(file, args, options);
     if (options.logStream) {
         cp.stdout.pipe(options.logStream);
@@ -78,8 +80,11 @@ function sudo(tag, args, options, callback) {
     assert.strictEqual(typeof options, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    // -S makes sudo read stdin for password. -E preserves environment
-    var cp = spawn(tag, SUDO, [ options.preserveEnv ? '-SE' : '-S' ].concat(args), options, callback);
+    let sudoArgs = [ '-S' ]; // -S makes sudo read stdin for password
+    if (options.preserveEnv) sudoArgs.push('-E'); // -E preserves environment
+    if (options.ipc) sudoArgs.push('--close-from=4'); // keep the ipc open. requires closefrom_override in sudoers file
+
+    var cp = spawn(tag, SUDO, sudoArgs.concat(args), options, callback);
     cp.stdin.end();
     return cp;
 }

@@ -36,14 +36,12 @@ process.on('SIGTERM', function () {
 initialize(function (error) {
     if (error) throw error;
 
-    safe.fs.writeFileSync(paths.BACKUP_RESULT_FILE, '');
-
     backups.upload(backupId, format, dataDir, function resultHandler(error) {
         if (error) debug('upload completed with error', error);
 
         debug('upload completed');
 
-        safe.fs.writeFileSync(paths.BACKUP_RESULT_FILE, error ? error.message : '');
+        process.send({ result: error ? error.message : '' });
 
         // https://nodejs.org/api/process.html are exit codes used by node. apps.js uses the value below
         // to check apptask crashes

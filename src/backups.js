@@ -600,15 +600,21 @@ function runBackupUpload(backupId, format, dataDir, callback) {
     assert.strictEqual(typeof dataDir, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    shell.sudo(`backup-${backupId}`, [ BACKUP_UPLOAD_CMD, backupId, format, dataDir ], { preserveEnv: true }, function (error) {
+    let result = '';
+
+    let cp = shell.sudo(`backup-${backupId}`, [ BACKUP_UPLOAD_CMD, backupId, format, dataDir ], { preserveEnv: true, ipc: true }, function (error) {
         if (error && (error.code === null /* signal */ || (error.code !== 0 && error.code !== 50))) { // backuptask crashed
             return callback(new BackupsError(BackupsError.INTERNAL_ERROR, 'Backuptask crashed'));
         } else if (error && error.code === 50) { // exited with error
-            var result = safe.fs.readFileSync(paths.BACKUP_RESULT_FILE, 'utf8') || safe.error.message;
             return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, result));
         }
 
         callback();
+    });
+
+    cp.on('message', function (message) {
+        debug(`runBackupUpload: message - ${message}`);
+        result = message.result;
     });
 }
 
