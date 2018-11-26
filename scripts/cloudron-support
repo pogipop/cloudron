@@ -7,12 +7,33 @@ PASTEBIN="https://paste.cloudron.io"
 OUT="/tmp/cloudron-support.log"
 LINE="\n========================================================\n"
 CLOUDRON_SUPPORT_PUBLIC_KEY="ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDQVilclYAIu+ioDp/sgzzFz6YU0hPcRYY7ze/LiF/lC7uQqK062O54BFXTvQ3ehtFZCx3bNckjlT2e6gB8Qq07OM66De4/S/g+HJW4TReY2ppSPMVNag0TNGxDzVH8pPHOysAm33LqT2b6L/wEXwC6zWFXhOhHjcMqXvi8Ejaj20H1HVVcf/j8qs5Thkp9nAaFTgQTPu8pgwD8wDeYX1hc9d0PYGesTADvo6HF4hLEoEnefLw7PaStEbzk2fD3j7/g5r5HcgQQXBe74xYZ/1gWOX2pFNuRYOBSEIrNfJEjFJsqk3NR1+ZoMGK7j+AZBR4k0xbrmncQLcQzl6MMDzkp support@cloudron.io"
+HELP_MESSAGE="
+This script collects diagnostic information to help debug server related issues
+
+ Options:
+   --enable-ssh    Enable SSH access for the Cloudron support team
+   --help          Show this message
+"
 
 # We require root
 if [[ ${EUID} -ne 0 ]]; then
     echo "This script should be run as root." > /dev/stderr
     exit 1
 fi
+
+enableSSH="false"
+
+args=$(getopt -o "" -l "help,enable-ssh" -n "$0" -- "$@")
+eval set -- "${args}"
+
+while true; do
+    case "$1" in
+    --help) echo -e "${HELP_MESSAGE}"; exit 0;;
+    --enable-ssh) enableSSH="true"; shift;;
+    --) break;;
+    *) echo "Unknown option $1"; exit 1;;
+    esac
+done
 
 # check if at least 10mb root partition space is available
 if [[ "`df --output="avail" / | sed -n 2p`" -lt "10240" ]]; then
@@ -79,12 +100,14 @@ echo -n "Uploading information..."
 paste_key=$(curl -X POST ${PASTEBIN}/documents --silent -d "$(cat $OUT)" | python3 -c "import sys, json; print(json.load(sys.stdin)['key'])")
 echo "Done"
 
-echo -n "Enabling ssh access for the Cloudron support team..."
-mkdir -p "${ssh_folder}"
-echo "${CLOUDRON_SUPPORT_PUBLIC_KEY}" >> ${authorized_key_file}
-chown -R ${ssh_user} "${ssh_folder}"
-chmod 600 "${authorized_key_file}"
-echo "Done"
+if [[ "${enableSSH}" == "true" ]]; then
+    echo -n "Enabling ssh access for the Cloudron support team..."
+    mkdir -p "${ssh_folder}"
+    echo "${CLOUDRON_SUPPORT_PUBLIC_KEY}" >> ${authorized_key_file}
+    chown -R ${ssh_user} "${ssh_folder}"
+    chmod 600 "${authorized_key_file}"
+    echo "Done"
+fi
 
 echo ""
 echo "Please email the following link to support@cloudron.io"
