@@ -641,10 +641,11 @@ function setSnapshotInfo(id, info, callback) {
     callback();
 }
 
-function snapshotBox(callback) {
+function snapshotBox(progressCallback, callback) {
+    assert.strictEqual(typeof progressCallback, 'function');
     assert.strictEqual(typeof callback, 'function');
 
-    debug('Snapshotting box');
+    progressCallback({ message: 'Snapshotting box' });
 
     database.exportToFile(`${paths.BOX_DATA_DIR}/box.mysqldump`, function (error) {
         if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
@@ -660,7 +661,7 @@ function uploadBoxSnapshot(backupConfig, progressCallback, callback) {
 
     var startTime = new Date();
 
-    snapshotBox(function (error) {
+    snapshotBox(progressCallback, function (error) {
         if (error) return callback(error);
 
         runBackupUpload('snapshot/box', backupConfig.format, paths.BOX_DATA_DIR, progressCallback, function (error) {
@@ -767,11 +768,12 @@ function canBackupApp(app) {
             app.installationState === appdb.ISTATE_PENDING_UPDATE; // called from apptask
 }
 
-function snapshotApp(app, callback) {
+function snapshotApp(app, progressCallback, callback) {
     assert.strictEqual(typeof app, 'object');
+    assert.strictEqual(typeof progressCallback, 'function');
     assert.strictEqual(typeof callback, 'function');
 
-    tasks.setProgress(tasks.TASK_BACKUP, { detail: `Snapshotting app ${app.id}` }, NOOP_CALLBACK);
+    progressCallback({ message: `Snapshotting app ${app.id}` });
 
     if (!safe.fs.writeFileSync(path.join(paths.APPS_DATA_DIR, app.id + '/config.json'), JSON.stringify(apps.getAppConfig(app)))) {
         return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, 'Error creating config.json: ' + safe.error.message));
@@ -831,7 +833,7 @@ function uploadAppSnapshot(backupConfig, app, progressCallback, callback) {
 
     var startTime = new Date();
 
-    snapshotApp(app, function (error) {
+    snapshotApp(app, progressCallback, function (error) {
         if (error) return callback(error);
 
         var backupId = util.format('snapshot/app_%s', app.id);
