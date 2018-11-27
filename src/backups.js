@@ -287,7 +287,7 @@ function createTarPackStream(sourceDir, key) {
     });
 
     var gzip = zlib.createGzip({});
-    var ps = progressStream({ time: 10000 }); // display a progress every 10 seconds
+    var ps = progressStream({ time: 10000 }); // emit 'pgoress' every 10 seconds
 
     pack.on('error', function (error) {
         debug('createTarPackStream: tar stream error.', error);
@@ -297,10 +297,6 @@ function createTarPackStream(sourceDir, key) {
     gzip.on('error', function (error) {
         debug('createTarPackStream: gzip stream error.', error);
         ps.emit('error', new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
-    });
-
-    ps.on('progress', function(progress) {
-        debug('createTarPackStream: %s@%s', Math.round(progress.transferred/1024/1024) + 'M', Math.round(progress.speed/1024/1024) + 'Mbps');
     });
 
     if (key !== null) {
@@ -315,10 +311,11 @@ function createTarPackStream(sourceDir, key) {
     }
 }
 
-function sync(backupConfig, backupId, dataDir, callback) {
+function sync(backupConfig, backupId, dataDir, progressCallback, callback) {
     assert.strictEqual(typeof backupConfig, 'object');
     assert.strictEqual(typeof backupId, 'string');
     assert.strictEqual(typeof dataDir, 'string');
+    assert.strictEqual(typeof progressCallback, 'function');
     assert.strictEqual(typeof callback, 'function');
 
     syncer.sync(dataDir, function processTask(task, iteratorCallback) {
@@ -330,7 +327,7 @@ function sync(backupConfig, backupId, dataDir, callback) {
         if (task.operation === 'removedir') {
             debug(`Removing directory ${backupFilePath}`);
             return api(backupConfig.provider).removeDir(backupConfig, backupFilePath)
-                .on('progress', debug)
+                .on('progress', (message) => progressCallback({ message }))
                 .on('done', iteratorCallback);
         } else if (task.operation === 'remove') {
             debug(`Removing ${backupFilePath}`);
@@ -342,7 +339,7 @@ function sync(backupConfig, backupId, dataDir, callback) {
             retryCallback = once(retryCallback); // protect again upload() erroring much later after read stream error
 
             ++retryCount;
-            debug(`${task.operation} ${task.path} try ${retryCount}`);
+            progressCallback({ message: `${task.operation} ${task.path} try ${retryCount}` });
             if (task.operation === 'add') {
                 debug(`Adding ${task.path} position ${task.position} try ${retryCount}`);
                 var stream = createReadStream(path.join(dataDir, task.path), backupConfig.key || null);
@@ -384,13 +381,14 @@ function saveFsMetadata(appDataDir, callback) {
 }
 
 // this function is called via backupupload (since it needs root to traverse app's directory)
-function upload(backupId, format, dataDir, callback) {
+function upload(backupId, format, dataDir, progressCallback, callback) {
     assert.strictEqual(typeof backupId, 'string');
     assert.strictEqual(typeof format, 'string');
     assert.strictEqual(typeof dataDir, 'string');
+    assert.strictEqual(typeof progressCallback, 'function');
     assert.strictEqual(typeof callback, 'function');
 
-    debug('upload: id %s format %s dataDir %s', backupId, format, dataDir);
+    debug(`upload: id ${backupId} format ${format} dataDir ${dataDir}`);
 
     settings.getBackupConfig(function (error, backupConfig) {
         if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
@@ -400,6 +398,9 @@ function upload(backupId, format, dataDir, callback) {
                 retryCallback = once(retryCallback); // protect again upload() erroring much later after tar stream error
 
                 var tarStream = createTarPackStream(dataDir, backupConfig.key || null);
+                tarStream.on('progress', function(progress) {
+                    progressCallback({ message: `${Math.round(progress.transferred/1024/1024)}M@${Math.round(progress.speed/1024/1024)}Mbps` });
+                });
                 tarStream.on('error', retryCallback); // already returns BackupsError
 
                 api(backupConfig.provider).upload(backupConfig, getBackupFilePath(backupConfig, backupId, format), tarStream, retryCallback);
@@ -407,7 +408,7 @@ function upload(backupId, format, dataDir, callback) {
         } else {
             async.series([
                 saveFsMetadata.bind(null, dataDir),
-                sync.bind(null, backupConfig, backupId, dataDir)
+                sync.bind(null, backupConfig, backupId, dataDir, progressCallback)
             ], callback);
         }
     });
@@ -594,15 +595,16 @@ function restoreApp(app, addonsToRestore, restoreConfig, callback) {
     });
 }
 
-function runBackupUpload(backupId, format, dataDir, callback) {
+function runBackupUpload(backupId, format, dataDir, progressCallback, callback) {
     assert.strictEqual(typeof backupId, 'string');
     assert.strictEqual(typeof format, 'string');
     assert.strictEqual(typeof dataDir, 'string');
+    assert.strictEqual(typeof progressCallback, 'function');
     assert.strictEqual(typeof callback, 'function');
 
     let result = '';
 
-    let cp = shell.sudo(`backup-${backupId}`, [ BACKUP_UPLOAD_CMD, backupId, format, dataDir ], { preserveEnv: true, ipc: true }, function (error) {
+    shell.sudo(`backup-${backupId}`, [ BACKUP_UPLOAD_CMD, backupId, format, dataDir ], { preserveEnv: true, ipc: true }, function (error) {
         if (error && (error.code === null /* signal */ || (error.code !== 0 && error.code !== 50))) { // backuptask crashed
             return callback(new BackupsError(BackupsError.INTERNAL_ERROR, 'Backuptask crashed'));
         } else if (error && error.code === 50) { // exited with error
@@ -610,10 +612,9 @@ function runBackupUpload(backupId, format, dataDir, callback) {
         }
 
         callback();
-    });
-
-    cp.on('message', function (message) {
-        debug(`runBackupUpload: message - ${message}`);
+    }).on('message', function (message) {
+        if (!message.result) return progressCallback(message);
+        debug(`runBackupUpload: result - ${message}`);
         result = message.result;
     });
 }
@@ -652,8 +653,9 @@ function snapshotBox(callback) {
     });
 }
 
-function uploadBoxSnapshot(backupConfig, callback) {
+function uploadBoxSnapshot(backupConfig, progressCallback, callback) {
     assert.strictEqual(typeof backupConfig, 'object');
+    assert.strictEqual(typeof progressCallback, 'function');
     assert.strictEqual(typeof callback, 'function');
 
     var startTime = new Date();
@@ -661,7 +663,7 @@ function uploadBoxSnapshot(backupConfig, callback) {
     snapshotBox(function (error) {
         if (error) return callback(error);
 
-        runBackupUpload('snapshot/box', backupConfig.format, paths.BOX_DATA_DIR, function (error) {
+        runBackupUpload('snapshot/box', backupConfig.format, paths.BOX_DATA_DIR, progressCallback, function (error) {
             if (error) return callback(error);
 
             debug('uploadBoxSnapshot: time: %s secs', (new Date() - startTime)/1000);
@@ -738,15 +740,16 @@ function rotateBoxBackup(backupConfig, timestamp, appBackupIds, callback) {
     });
 }
 
-function backupBoxWithAppBackupIds(appBackupIds, timestamp, callback) {
+function backupBoxWithAppBackupIds(appBackupIds, timestamp, progressCallback, callback) {
     assert(Array.isArray(appBackupIds));
     assert.strictEqual(typeof timestamp, 'string');
+    assert.strictEqual(typeof progressCallback, 'function');
     assert.strictEqual(typeof callback, 'function');
 
     settings.getBackupConfig(function (error, backupConfig) {
         if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
 
-        uploadBoxSnapshot(backupConfig, function (error) {
+        uploadBoxSnapshot(backupConfig, progressCallback, function (error) {
             if (error) return callback(error);
 
             rotateBoxBackup(backupConfig, timestamp, appBackupIds, callback);
@@ -816,9 +819,10 @@ function rotateAppBackup(backupConfig, app, timestamp, callback) {
     });
 }
 
-function uploadAppSnapshot(backupConfig, app, callback) {
+function uploadAppSnapshot(backupConfig, app, progressCallback, callback) {
     assert.strictEqual(typeof backupConfig, 'object');
     assert.strictEqual(typeof app, 'object');
+    assert.strictEqual(typeof progressCallback, 'function');
     assert.strictEqual(typeof callback, 'function');
 
     if (!canBackupApp(app)) return callback(); // nothing to do
@@ -830,7 +834,7 @@ function uploadAppSnapshot(backupConfig, app, callback) {
 
         var backupId = util.format('snapshot/app_%s', app.id);
         var appDataDir = safe.fs.realpathSync(path.join(paths.APPS_DATA_DIR, app.id));
-        runBackupUpload(backupId, backupConfig.format, appDataDir, function (error) {
+        runBackupUpload(backupId, backupConfig.format, appDataDir, progressCallback, function (error) {
             if (error) return callback(error);
 
             debugApp(app, 'uploadAppSnapshot: %s done time: %s secs', backupId, (new Date() - startTime)/1000);
@@ -840,9 +844,10 @@ function uploadAppSnapshot(backupConfig, app, callback) {
     });
 }
 
-function backupAppWithTimestamp(app, timestamp, callback) {
+function backupAppWithTimestamp(app, timestamp, progressCallback, callback) {
     assert.strictEqual(typeof app, 'object');
     assert.strictEqual(typeof timestamp, 'string');
+    assert.strictEqual(typeof progressCallback, 'function');
     assert.strictEqual(typeof callback, 'function');
 
     if (!canBackupApp(app)) return callback(); // nothing to do
@@ -850,7 +855,7 @@ function backupAppWithTimestamp(app, timestamp, callback) {
     settings.getBackupConfig(function (error, backupConfig) {
         if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
 
-        uploadAppSnapshot(backupConfig, app, function (error) {
+        uploadAppSnapshot(backupConfig, app, progressCallback, function (error) {
             if (error) return callback(error);
 
             rotateAppBackup(backupConfig, app, timestamp, callback);
@@ -858,15 +863,16 @@ function backupAppWithTimestamp(app, timestamp, callback) {
     });
 }
 
-function backupApp(app, callback) {
+function backupApp(app, progressCallback, callback) {
     assert.strictEqual(typeof app, 'object');
+    assert.strictEqual(typeof progressCallback, 'function');
     assert.strictEqual(typeof callback, 'function');
 
     const timestamp = (new Date()).toISOString().replace(/[T.]/g, '-').replace(/[:Z]/g,'');
 
     tasks.setProgress(tasks.TASK_BACKUP, { percent: 10, mesage: `Backing up ${app.fqdn}` }, NOOP_CALLBACK);
 
-    backupAppWithTimestamp(app, timestamp, function (error) {
+    backupAppWithTimestamp(app, timestamp, progressCallback, function (error) {
         tasks.setProgress(tasks.TASK_BACKUP, { percent: 100, result: error ? error.message : '' }, NOOP_CALLBACK);
 
         callback(error);
@@ -899,7 +905,7 @@ function backupBoxAndApps(auditSource, callback) {
                 return iteratorCallback(null, null); // nothing to backup
             }
 
-            backupAppWithTimestamp(app, timestamp, function (error, backupId) {
+            backupAppWithTimestamp(app, timestamp, (progress) => tasks.setProgress(tasks.TASK_BACKUP, { message: progress.message }, NOOP_CALLBACK), function (error, backupId) {
                 if (error && error.reason !== BackupsError.BAD_STATE) {
                     debugApp(app, 'Unable to backup', error);
                     return iteratorCallback(error);
@@ -919,7 +925,7 @@ function backupBoxAndApps(auditSource, callback) {
 
             tasks.setProgress(tasks.TASK_BACKUP, { percent: step * processed, message: 'Backing up system data' }, NOOP_CALLBACK);
 
-            backupBoxWithAppBackupIds(backupIds, timestamp, function (error, backupId) {
+            backupBoxWithAppBackupIds(backupIds, timestamp, (progress) => tasks.setProgress(tasks.TASK_BACKUP, { message: progress.message }, NOOP_CALLBACK), function (error, backupId) {
                 tasks.setProgress(tasks.TASK_BACKUP, { percent: 100, result: error ? error.message : '' }, NOOP_CALLBACK);
 
                 eventlog.add(eventlog.ACTION_BACKUP_FINISH, auditSource, { errorMessage: error ? error.message : null, backupId: backupId, timestamp: timestamp });

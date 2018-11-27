@@ -40,7 +40,7 @@ process.on('disconnect', function () {
 initialize(function (error) {
     if (error) throw error;
 
-    backups.upload(backupId, format, dataDir, function resultHandler(error) {
+    backups.upload(backupId, format, dataDir, (progress) => process.send(progress), function resultHandler(error) {
         if (error) debug('upload completed with error', error);
 
         debug('upload completed');
