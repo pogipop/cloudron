@@ -701,10 +701,11 @@ function backupDone(apiConfig, backupId, appBackupIds, callback) {
     });
 }
 
-function rotateBoxBackup(backupConfig, timestamp, appBackupIds, callback) {
+function rotateBoxBackup(backupConfig, timestamp, appBackupIds, progressCallback, callback) {
     assert.strictEqual(typeof backupConfig, 'object');
     assert.strictEqual(typeof timestamp, 'string');
     assert(Array.isArray(appBackupIds));
+    assert.strictEqual(typeof progressCallback, 'function');
     assert.strictEqual(typeof callback, 'function');
 
     var snapshotInfo = getSnapshotInfo('box');
@@ -714,13 +715,13 @@ function rotateBoxBackup(backupConfig, timestamp, appBackupIds, callback) {
     var backupId = util.format('%s/box_%s_v%s', timestamp, snapshotTime, config.version());
     const format = backupConfig.format;
 
-    tasks.setProgress(tasks.TASK_BACKUP, { detail: `Rotating box backup to id ${backupId}` }, NOOP_CALLBACK);
+    debug(`Rotating box backup to id ${backupId}`);
 
     backupdb.add({ id: backupId, version: config.version(), type: backupdb.BACKUP_TYPE_BOX, dependsOn: appBackupIds, manifest: null, format: format }, function (error) {
         if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
 
         var copy = api(backupConfig.provider).copy(backupConfig, getBackupFilePath(backupConfig, 'snapshot/box', format), getBackupFilePath(backupConfig, backupId, format));
-        copy.on('progress', function (detail) { tasks.setProgress(tasks.TASK_BACKUP, { detail }, NOOP_CALLBACK); });
+        copy.on('progress', (message) => progressCallback({ message }));
         copy.on('done', function (copyBackupError) {
             const state = copyBackupError ? backupdb.BACKUP_STATE_ERROR : backupdb.BACKUP_STATE_NORMAL;
 
@@ -728,7 +729,7 @@ function rotateBoxBackup(backupConfig, timestamp, appBackupIds, callback) {
                 if (copyBackupError) return callback(copyBackupError);
                 if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
 
-                tasks.setProgress(tasks.TASK_BACKUP, { detail: `Rotated box backup successfully as id ${backupId}` }, NOOP_CALLBACK);
+                debug(`Rotated box backup successfully as id ${backupId}`);
 
                 backupDone(backupConfig, backupId, appBackupIds, function (error) {
                     if (error) return callback(error);
@@ -752,7 +753,7 @@ function backupBoxWithAppBackupIds(appBackupIds, timestamp, progressCallback, ca
         uploadBoxSnapshot(backupConfig, progressCallback, function (error) {
             if (error) return callback(error);
 
-            rotateBoxBackup(backupConfig, timestamp, appBackupIds, callback);
+            rotateBoxBackup(backupConfig, timestamp, appBackupIds, progressCallback, callback);
         });
     });
 }
@@ -783,10 +784,11 @@ function snapshotApp(app, callback) {
     });
 }
 
-function rotateAppBackup(backupConfig, app, timestamp, callback) {
+function rotateAppBackup(backupConfig, app, timestamp, progressCallback, callback) {
     assert.strictEqual(typeof backupConfig, 'object');
     assert.strictEqual(typeof app, 'object');
     assert.strictEqual(typeof timestamp, 'string');
+    assert.strictEqual(typeof progressCallback, 'function');
     assert.strictEqual(typeof callback, 'function');
 
     var snapshotInfo = getSnapshotInfo(app.id);
@@ -797,13 +799,13 @@ function rotateAppBackup(backupConfig, app, timestamp, callback) {
     var backupId = util.format('%s/app_%s_%s_v%s', timestamp, app.id, snapshotTime, manifest.version);
     const format = backupConfig.format;
 
-    tasks.setProgress(tasks.TASK_BACKUP, { detail: `Rotating app backup of ${app.id} to id ${backupId}` }, NOOP_CALLBACK);
+    debug(`Rotating app backup of ${app.id} to id ${backupId}`);
 
     backupdb.add({ id: backupId, version: manifest.version, type: backupdb.BACKUP_TYPE_APP, dependsOn: [ ], manifest: manifest, format: format }, function (error) {
         if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
 
         var copy = api(backupConfig.provider).copy(backupConfig, getBackupFilePath(backupConfig, `snapshot/app_${app.id}`, format), getBackupFilePath(backupConfig, backupId, format));
-        copy.on('progress', function (detail) { tasks.setProgress(tasks.TASK_BACKUP, { detail }, NOOP_CALLBACK); });
+        copy.on('progress', (message) => progressCallback({ message }));
         copy.on('done', function (copyBackupError) {
             const state = copyBackupError ? backupdb.BACKUP_STATE_ERROR : backupdb.BACKUP_STATE_NORMAL;
 
@@ -811,7 +813,7 @@ function rotateAppBackup(backupConfig, app, timestamp, callback) {
                 if (copyBackupError) return callback(copyBackupError);
                 if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
 
-                tasks.setProgress(tasks.TASK_BACKUP, { detail: `Rotated app backup of ${app.id} successfully to id ${backupId}` }, NOOP_CALLBACK);
+                debug(`Rotated app backup of ${app.id} successfully to id ${backupId}`);
 
                 callback(null, backupId);
             });
@@ -858,7 +860,7 @@ function backupAppWithTimestamp(app, timestamp, progressCallback, callback) {
         uploadAppSnapshot(backupConfig, app, progressCallback, function (error) {
             if (error) return callback(error);
 
-            rotateAppBackup(backupConfig, app, timestamp, callback);
+            rotateAppBackup(backupConfig, app, timestamp, progressCallback, callback);
         });
     });
 }
