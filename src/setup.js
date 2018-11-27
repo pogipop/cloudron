@@ -242,7 +242,7 @@ function restore(backupConfig, backupId, version, autoconf, auditSource, callbac
             callback(null); // do no block
 
             async.series([
-                backups.restore.bind(null, backupConfig, backupId),
+                backups.restore.bind(null, backupConfig, backupId, (progress) => debug(`restore: ${progress}`)),
                 eventlog.add.bind(null, eventlog.ACTION_RESTORE, auditSource, { backupId }),
                 autoprovision.bind(null, autoconf),
                 // currently, our suggested restore flow is after a dnsSetup. The dnSetup creates DKIM keys and updates the DNS
