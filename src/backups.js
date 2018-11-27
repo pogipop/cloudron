@@ -950,6 +950,7 @@ function startBackupTask(auditSource, callback) {
 
     // when parent process dies, this process is killed because KillMode=control-group in systemd unit file
     assert.strictEqual(gBackupTask, null);
+    let result = '';
     gBackupTask = child_process.fork(__dirname + '/tasks/backuptask.js', [ JSON.stringify(auditSource) ], { stdio: [ 'pipe', fd, fd, 'ipc' ]});
     gBackupTask.once('exit', function (code, signal) {
         debug(`startBackupTask: completed with code ${code} and signal ${signal}`);
@@ -958,7 +959,7 @@ function startBackupTask(auditSource, callback) {
         if (code === null /* signal */ || (code !== 0 && code !== 50)) { // apptask crashed
             error = new Error(`backuptask completed with code ${code} and signal ${signal}`);
         } else if (code === 50) {
-            error = new Error(safe.fs.readFileSync(paths.BACKUP_RESULT_FILE, 'utf8') || safe.error.message);
+            error = new Error(result);
         }
 
         gBackupTask = null;
@@ -970,7 +971,9 @@ function startBackupTask(auditSource, callback) {
 
         debug('startBackupTask: backup done');
     });
-
+    gBackupTask.on('message', function (message) {
+        result = message.result;
+    });
     callback(null);
 }
 

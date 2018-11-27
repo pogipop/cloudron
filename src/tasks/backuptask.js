@@ -10,9 +10,7 @@ require('supererror')({ splatchError: true });
 var assert = require('assert'),
     backups = require('../backups.js'),
     database = require('../database.js'),
-    debug = require('debug')('box:backuptask'),
-    paths = require('../paths.js'),
-    safe = require('safetydance');
+    debug = require('debug')('box:backuptask');
 
 function initialize(callback) {
     assert.strictEqual(typeof callback, 'function');
@@ -32,12 +30,10 @@ process.on('SIGTERM', function () {
 initialize(function (error) {
     if (error) throw error;
 
-    safe.fs.writeFileSync(paths.BACKUP_RESULT_FILE, '');
-
     backups.backupBoxAndApps(auditSource, function (error) {
         if (error) debug('backup failed.', error);
 
-        safe.fs.writeFileSync(paths.BACKUP_RESULT_FILE, error ? error.message : '');
+        process.send({ result: error ? error.message : '' });
 
         // https://nodejs.org/api/process.html are exit codes used by node. apps.js uses the value below
         // to check apptask crashes
