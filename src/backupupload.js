@@ -31,6 +31,12 @@ process.on('SIGTERM', function () {
     process.exit(0);
 });
 
+// this can happen when the backup task is terminated (not box code)
+process.on('disconnect', function () {
+    debug('parent process died');
+    process.exit(0);
+});
+
 initialize(function (error) {
     if (error) throw error;
 
