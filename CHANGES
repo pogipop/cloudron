@@ -1464,3 +1464,7 @@
 * Add support for hyphenated subdomains
 * Add domain, mail events to eventlog
 
+[3.4.0]
+* Improve error page
+* Add system view to manage addons
+
