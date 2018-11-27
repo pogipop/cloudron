@@ -16,57 +16,11 @@ var async = require('async'),
     fs = require('fs'),
     os = require('os'),
     mkdirp = require('mkdirp'),
-    readdirp = require('readdirp'),
     path = require('path'),
     rimraf = require('rimraf'),
     settings = require('../settings.js'),
     SettingsError = require('../settings.js').SettingsError,
     tasks = require('../tasks.js');
-
-function compareDirectories(one, two, callback) {
-    readdirp({ root: one }, function (error, treeOne) {
-        if (error) return callback(error);
-
-        readdirp({ root: two }, function (error, treeTwo) {
-            if (error) return callback(error);
-
-            var mismatch = [];
-
-            function compareDirs(a, b) {
-                a.forEach(function (tmpA) {
-                    var found = b.find(function (tmpB) {
-                        return tmpA.path === tmpB.path;
-                    });
-
-                    if (!found) mismatch.push(tmpA);
-                });
-            }
-
-            function compareFiles(a, b) {
-                a.forEach(function (tmpA) {
-                    var found = b.find(function (tmpB) {
-                        // TODO check file or symbolic link
-                        return tmpA.path === tmpB.path && tmpA.mode === tmpB.mode;
-                    });
-
-                    if (!found) mismatch.push(tmpA);
-                });
-            }
-
-            compareDirs(treeOne.directories, treeTwo.directories);
-            compareDirs(treeTwo.directories, treeOne.directories);
-            compareFiles(treeOne.files, treeTwo.files);
-            compareFiles(treeTwo.files, treeOne.files);
-
-            if (mismatch.length) {
-                console.error('Files not found in both: %j', mismatch);
-                return callback(new Error('file mismatch'));
-            }
-
-            callback(null);
-        });
-    });
-}
 
 function createBackup(callback) {
     backups.startBackupTask({ username: 'test' }, function (error) { // this call does not wait for the backup!

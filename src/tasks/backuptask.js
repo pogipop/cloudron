@@ -10,7 +10,8 @@ require('supererror')({ splatchError: true });
 var assert = require('assert'),
     backups = require('../backups.js'),
     database = require('../database.js'),
-    debug = require('debug')('box:backuptask');
+    debug = require('debug')('box:backuptask'),
+    tasks = require('../tasks.js');
 
 function initialize(callback) {
     assert.strictEqual(typeof callback, 'function');
@@ -19,6 +20,7 @@ function initialize(callback) {
 }
 
 // Main process starts here
+const NOOP_CALLBACK = function (error) { if (error) debug(error); };
 const auditSource = JSON.parse(process.argv[2]);
 
 debug('Staring complete backup');
@@ -30,7 +32,7 @@ process.on('SIGTERM', function () {
 initialize(function (error) {
     if (error) throw error;
 
-    backups.backupBoxAndApps(auditSource, function (error) {
+    backups.backupBoxAndApps(auditSource, (progress) => tasks.setProgress(tasks.TASK_BACKUP, progress, NOOP_CALLBACK), function (error) {
         if (error) debug('backup failed.', error);
 
         process.send({ result: error ? error.message : '' });

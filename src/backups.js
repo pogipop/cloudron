@@ -879,11 +879,11 @@ function backupApp(app, progressCallback, callback) {
     backupAppWithTimestamp(app, timestamp, progressCallback, callback);
 }
 
-// this function expects you to have a lock
-function backupBoxAndApps(auditSource, callback) {
+// this function expects you to have a lock. Unlike other progressCallback this also has a progress field
+function backupBoxAndApps(auditSource, progressCallback, callback) {
     assert.strictEqual(typeof auditSource, 'object');
-
-    callback = callback || NOOP_CALLBACK;
+    assert.strictEqual(typeof progressCallback, 'function');
+    assert.strictEqual(typeof callback, 'function');
 
     var timestamp = (new Date()).toISOString().replace(/[T.]/g, '-').replace(/[:Z]/g,'');
 
@@ -892,42 +892,37 @@ function backupBoxAndApps(auditSource, callback) {
     apps.getAll(function (error, allApps) {
         if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
 
-        var processed = 1;
-        var step = 100/(allApps.length+2);
+        let percent = 1;
+        let step = 100/(allApps.length+2);
 
         async.mapSeries(allApps, function iterator(app, iteratorCallback) {
-            tasks.setProgress(tasks.TASK_BACKUP, { percent: step * processed, message: `Backing up ${app.fqdn}` }, NOOP_CALLBACK);
-
-            ++processed;
+            progressCallback({ percent: percent, message: `Backing up ${app.fqdn}` });
+            percent += step;
 
             if (!app.enableBackup) {
-                tasks.setProgress(tasks.TASK_BACKUP, { percent: step * processed, message: `Skipped backup ${app.fqdn}` }, NOOP_CALLBACK);
+                debug(`Skipped backup ${app.fqdn}`);
                 return iteratorCallback(null, null); // nothing to backup
             }
 
-            backupAppWithTimestamp(app, timestamp, (progress) => tasks.setProgress(tasks.TASK_BACKUP, { message: progress.message }, NOOP_CALLBACK), function (error, backupId) {
+            backupAppWithTimestamp(app, timestamp, (progress) => progressCallback({ percent: percent, message: progress.message }), function (error, backupId) {
                 if (error && error.reason !== BackupsError.BAD_STATE) {
                     debugApp(app, 'Unable to backup', error);
                     return iteratorCallback(error);
                 }
 
-                tasks.setProgress(tasks.TASK_BACKUP, { percent: step * processed, message: `Backed up ${app.fqdn}` }, NOOP_CALLBACK);
+                debugApp(app, 'Backed up');
 
                 iteratorCallback(null, backupId || null); // clear backupId if is in BAD_STATE and never backed up
             });
         }, function appsBackedUp(error, backupIds) {
-            if (error) {
-                tasks.setProgress(tasks.TASK_BACKUP, { percent: 100, result: error.message }, NOOP_CALLBACK);
-                return callback(error);
-            }
+            if (error) return callback(error);
 
             backupIds = backupIds.filter(function (id) { return id !== null; }); // remove apps in bad state that were never backed up
 
-            tasks.setProgress(tasks.TASK_BACKUP, { percent: step * processed, message: 'Backing up system data' }, NOOP_CALLBACK);
+            progressCallback({ percent: percent, message: 'Backing up system data' });
+            percent += step;
 
-            backupBoxWithAppBackupIds(backupIds, timestamp, (progress) => tasks.setProgress(tasks.TASK_BACKUP, { message: progress.message }, NOOP_CALLBACK), function (error, backupId) {
-                tasks.setProgress(tasks.TASK_BACKUP, { percent: 100, result: error ? error.message : '' }, NOOP_CALLBACK);
-
+            backupBoxWithAppBackupIds(backupIds, timestamp, (progress) => progressCallback({ percent: percent, message: progress.message }), function (error, backupId) {
                 eventlog.add(eventlog.ACTION_BACKUP_FINISH, auditSource, { errorMessage: error ? error.message : null, backupId: backupId, timestamp: timestamp });
 
                 callback(error, backupId);
@@ -943,7 +938,7 @@ function startBackupTask(auditSource, callback) {
     let error = locker.lock(locker.OP_FULL_BACKUP);
     if (error) return callback(new BackupsError(BackupsError.BAD_STATE, error.message));
 
-    tasks.setProgress(tasks.TASK_BACKUP, { percent: 0, message: 'Starting' }, NOOP_CALLBACK); // ensure tools can 'wait' on progress
+    tasks.setProgress(tasks.TASK_BACKUP, { percent: 0, message: 'Starting' }, NOOP_CALLBACK);
 
     let fd = safe.fs.openSync(paths.BACKUP_LOG_FILE, 'a'); // will autoclose
     if (!fd) {
@@ -970,9 +965,10 @@ function startBackupTask(auditSource, callback) {
 
         gBackupTask = null;
 
+        tasks.setProgress(tasks.TASK_BACKUP, { percent: 100,  result: error ? error.message : '' }, NOOP_CALLBACK);
+
         locker.unlock(locker.OP_FULL_BACKUP);
 
-        tasks.setProgress(tasks.TASK_BACKUP, { percent: 100, result: error ? error.message : '' }, NOOP_CALLBACK);
         if (error) mailer.backupFailed(error);
 
         debug('startBackupTask: backup done');

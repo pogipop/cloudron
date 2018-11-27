@@ -133,7 +133,7 @@ function doMigrate(options, caasConfig, callback) {
     tasks.setProgress(tasks.TASK_MIGRATE, { percent: 10, result: 'Backing up for migration' }, NOOP_CALLBACK);
 
     // initiate the migration in the background
-    backups.backupBoxAndApps({ userId: null, username: 'migrator' }, function (error) {
+    backups.backupBoxAndApps({ userId: null, username: 'migrator' }, (progress) => tasks.setProgress(tasks.TASK_MIGRATE, { percent: 10+progress.percent*30/100, message: progress.message }, NOOP_CALLBACK), function (error) {
         if (error) return unlock(error);
 
         debug('migrate: domain: %s size %s region %s', options.domain, options.size, options.region);
