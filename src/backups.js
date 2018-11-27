@@ -874,13 +874,9 @@ function backupApp(app, progressCallback, callback) {
 
     const timestamp = (new Date()).toISOString().replace(/[T.]/g, '-').replace(/[:Z]/g,'');
 
-    tasks.setProgress(tasks.TASK_BACKUP, { percent: 10, mesage: `Backing up ${app.fqdn}` }, NOOP_CALLBACK);
+    debug(`backupApp - Backing up ${app.fqdn} with timestamp ${timestamp}`);
 
-    backupAppWithTimestamp(app, timestamp, progressCallback, function (error) {
-        tasks.setProgress(tasks.TASK_BACKUP, { percent: 100, result: error ? error.message : '' }, NOOP_CALLBACK);
-
-        callback(error);
-    });
+    backupAppWithTimestamp(app, timestamp, progressCallback, callback);
 }
 
 // this function expects you to have a lock
