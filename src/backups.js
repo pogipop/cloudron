@@ -937,7 +937,6 @@ function startBackupTask(auditSource, callback) {
     let error = locker.lock(locker.OP_FULL_BACKUP);
     if (error) return callback(new BackupsError(BackupsError.BAD_STATE, error.message));
 
-    let startTime = new Date();
     tasks.setProgress(tasks.TASK_BACKUP, { percent: 0, message: 'Starting' }, NOOP_CALLBACK); // ensure tools can 'wait' on progress
 
     let fd = safe.fs.openSync(paths.BACKUP_LOG_FILE, 'a'); // will autoclose
@@ -969,7 +968,7 @@ function startBackupTask(auditSource, callback) {
         tasks.setProgress(tasks.TASK_BACKUP, { percent: 100, result: error ? error.message : '' }, NOOP_CALLBACK);
         if (error) mailer.backupFailed(error);
 
-        debug('startBackupTask: backup took %s seconds', (new Date() - startTime)/1000);
+        debug('startBackupTask: backup done');
     });
 
     callback(null);
