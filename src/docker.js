@@ -22,6 +22,7 @@ exports = module.exports = {
     getContainerIdByIp: getContainerIdByIp,
     inspect: inspect,
     inspectByName: inspect,
+    memoryUsage: memoryUsage,
     execContainer: execContainer,
     createVolume: createVolume,
     removeVolume: removeVolume,
@@ -464,6 +465,20 @@ function inspect(containerId, callback) {
     var container = exports.connection.getContainer(containerId);
 
     container.inspect(function (error, result) {
+        if (error && error.statusCode === 404) return callback(new DockerError(DockerError.NOT_FOUND));
+        if (error) return callback(new DockerError(DockerError.INTERNAL_ERROR, error));
+
+        callback(null, result);
+    });
+}
+
+function memoryUsage(containerId, callback) {
+    assert.strictEqual(typeof containerId, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    var container = exports.connection.getContainer(containerId);
+
+    container.stats({ stream: false }, function (error, result) {
         if (error && error.statusCode === 404) return callback(new DockerError(DockerError.NOT_FOUND));
         if (error) return callback(new DockerError(DockerError.INTERNAL_ERROR, error));
 

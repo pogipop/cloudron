@@ -271,15 +271,25 @@ function statusContainerAddon(addonName, addonTokenName, callback) {
     assert.strictEqual(typeof addonTokenName, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    getAddonDetails(addonName, addonTokenName, function (error, result) {
+    getAddonDetails(addonName, addonTokenName, function (error, addonDetails) {
         if (error && error.reason === AddonsError.NOT_ACTIVE) return callback(null, { status: exports.ADDON_STATUS_STOPPED });
         if (error) return callback(error);
 
-        request.get(`https://${result.ip}:3000/healthcheck?access_token=${result.token}`, { json: true, rejectUnauthorized: false }, function (error, response) {
+        request.get(`https://${addonDetails.ip}:3000/healthcheck?access_token=${addonDetails.token}`, { json: true, rejectUnauthorized: false }, function (error, response) {
             if (error) return callback(null, { status: exports.ADDON_STATUS_STARTING, error: `Error waiting for ${addonName}: ${error.message}` });
             if (response.statusCode !== 200 || !response.body.status) return callback(null, { status: exports.ADDON_STATUS_STARTING, error: `Error waiting for ${addonName}. Status code: ${response.statusCode} message: ${response.body.message}` });
 
-            callback(null, { status: result.state.Running ? exports.ADDON_STATUS_ACTIVE : exports.ADDON_STATUS_STOPPED });
+            docker.memoryUsage(addonName, function (error, result) {
+                if (error) return callback(new AddonsError(AddonsError.INTERNAL_ERROR, error));
+
+                var tmp = {
+                    status: addonDetails.state.Running ? exports.ADDON_STATUS_ACTIVE : exports.ADDON_STATUS_STOPPED,
+                    memoryUsed: result.memory_stats.usage,
+                    memoryPercent: parseInt(100 * result.memory_stats.usage / result.memory_stats.limit)
+                };
+
+                callback(null, tmp);
+            });
         });
     });
 }
@@ -327,6 +337,8 @@ function getAddon(addonName, callback) {
             if (error) return callback(new AddonsError(AddonsError.INTERNAL_ERROR, error));
 
             tmp.status = result.status;
+            tmp.memoryUsed = result.memoryUsed;
+            tmp.memoryPercent = result.memoryPercent;
             tmp.error = result.error || null;
 
             callback(null, tmp);
