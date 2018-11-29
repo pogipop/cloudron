@@ -884,14 +884,11 @@ function backupApp(app, progressCallback, callback) {
 }
 
 // this function expects you to have a lock. Unlike other progressCallback this also has a progress field
-function backupBoxAndApps(auditSource, progressCallback, callback) {
-    assert.strictEqual(typeof auditSource, 'object');
+function backupBoxAndApps(progressCallback, callback) {
     assert.strictEqual(typeof progressCallback, 'function');
     assert.strictEqual(typeof callback, 'function');
 
     var timestamp = (new Date()).toISOString().replace(/[T.]/g, '-').replace(/[:Z]/g,'');
-
-    eventlog.add(eventlog.ACTION_BACKUP_START, auditSource, { });
 
     apps.getAll(function (error, allApps) {
         if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
@@ -926,11 +923,7 @@ function backupBoxAndApps(auditSource, progressCallback, callback) {
             progressCallback({ percent: percent, message: 'Backing up system data' });
             percent += step;
 
-            backupBoxWithAppBackupIds(backupIds, timestamp, (progress) => progressCallback({ percent: percent, message: progress.message }), function (error, backupId) {
-                eventlog.add(eventlog.ACTION_BACKUP_FINISH, auditSource, { errorMessage: error ? error.message : null, backupId: backupId, timestamp: timestamp });
-
-                callback(error, backupId);
-            });
+            backupBoxWithAppBackupIds(backupIds, timestamp, (progress) => progressCallback({ percent: percent, message: progress.message }), callback);
         });
     });
 }
@@ -942,7 +935,7 @@ function startBackupTask(auditSource, callback) {
     let error = locker.lock(locker.OP_FULL_BACKUP);
     if (error) return callback(new BackupsError(BackupsError.BAD_STATE, error.message));
 
-    tasks.setProgress(tasks.TASK_BACKUP, { percent: 0, message: 'Starting' }, NOOP_CALLBACK);
+    tasks.clearProgress(tasks.TASK_BACKUP, NOOP_CALLBACK);
 
     let fd = safe.fs.openSync(paths.BACKUP_LOG_FILE, 'a'); // will autoclose
     if (!fd) {
@@ -954,31 +947,26 @@ function startBackupTask(auditSource, callback) {
     debug(`starting backuptask. logs at ${paths.BACKUP_LOG_FILE}`);
 
     // when parent process dies, this process is killed because KillMode=control-group in systemd unit file
-    assert.strictEqual(gBackupTask, null);
-    let result = '';
-    gBackupTask = child_process.fork(__dirname + '/tasks/backuptask.js', [ JSON.stringify(auditSource) ], { stdio: [ 'pipe', fd, fd, 'ipc' ]});
+    assert(!gBackupTask, 'Previous backup task already running!');
+    eventlog.add(eventlog.ACTION_BACKUP_START, auditSource, { });
+
+    gBackupTask = child_process.fork(__dirname + '/tasks/backuptask.js', [ ], { stdio: [ 'pipe', fd, fd, 'ipc' ]});
     gBackupTask.once('exit', function (code, signal) {
         debug(`startBackupTask: completed with code ${code} and signal ${signal}`);
 
-        let error;
-        if (code === null /* signal */ || (code !== 0 && code !== 50)) { // apptask crashed
-            error = new Error(`backuptask completed with code ${code} and signal ${signal}`);
-        } else if (code === 50) {
-            error = new Error(result);
-        }
+        tasks.getProgress(tasks.TASK_BACKUP, function (error, progress) {
+            if (!error && progress.errorMessage) error = new Error(progress.errorMessage);
 
-        gBackupTask = null;
+            eventlog.add(eventlog.ACTION_BACKUP_FINISH, auditSource, { errorMessage: error ? error.message : null, backupId: progress ? progress.result : null });
 
-        tasks.setProgress(tasks.TASK_BACKUP, { percent: 100,  errorMessage: error ? error.message : '' }, NOOP_CALLBACK);
+            locker.unlock(locker.OP_FULL_BACKUP);
 
-        locker.unlock(locker.OP_FULL_BACKUP);
+            if (error) mailer.backupFailed(error);
 
-        if (error) mailer.backupFailed(error);
+            gBackupTask = null;
 
-        debug('startBackupTask: backup done');
-    });
-    gBackupTask.on('message', function (message) {
-        result = message.result;
+            debug('startBackupTask: backup done');
+        });
     });
     callback(null);
 }

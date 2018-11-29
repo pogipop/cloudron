@@ -32,7 +32,8 @@ function createBackup(callback) {
 
                 if (p.percent !== 100) return setTimeout(waitForBackup, 1000);
 
-                if (p.result) return callback(new Error('backup failed:' + p.result));
+                if (p.errorMessage) return callback(new Error('backup failed:' + p));
+                if (!p.result) return callback(new Error('backup has no result:' + p));
 
                 backups.getByStatePaged(backupdb.BACKUP_STATE_NORMAL, 1, 1, function (error, result) {
                     if (error) return callback(error);

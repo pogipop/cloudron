@@ -167,7 +167,7 @@ function doUpdate(boxUpdateInfo, callback) {
 
         tasks.setProgress(tasks.TASK_UPDATE, { percent: 10, message: 'Backing up' }, NOOP_CALLBACK);
 
-        backups.backupBoxAndApps({ userId: null, username: 'updater' }, (progress) => tasks.setProgress(tasks.TASK_MIGRATE, { percent: 10+progress.percent*70/100, message: progress.message }, NOOP_CALLBACK), function (error) {
+        backups.backupBoxAndApps((progress) => tasks.setProgress(tasks.TASK_MIGRATE, { percent: 10+progress.percent*70/100, message: progress.message }, NOOP_CALLBACK), function (error) {
             if (error) return updateError(error);
 
             debug('updating box %s', boxUpdateInfo.sourceTarballUrl);

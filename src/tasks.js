@@ -3,6 +3,7 @@
 exports = module.exports = {
     setProgress: setProgress,
     getProgress: getProgress,
+    clearProgress: clearProgress,
 
     stopTask: stopTask,
 
@@ -68,6 +69,13 @@ function getProgress(id, callback) {
 
         callback(null, progress);
     });
+}
+
+function clearProgress(id, callback) {
+    assert.strictEqual(typeof id, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    setProgress(id, { percent: 0, message: 'Starting', result: '', errorMessage: '' }, callback);
 }
 
 function stopTask(id, auditSource, callback) {
