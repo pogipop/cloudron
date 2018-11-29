@@ -1467,4 +1467,5 @@
 [3.4.0]
 * Improve error page
 * Add system view to manage addons
-
+* Fix iconset regression for account and Cloudron name edits
+* Add server reboot button and warn if reboot is required for security updates
