@@ -10,7 +10,7 @@ let assert = require('assert'),
     DatabaseError = require('./databaseerror'),
     _ = require('underscore');
 
-const TASKS_FIELDS = [ 'id', 'percent', 'message', 'detail', 'creationTime', 'result', 'ts' ];
+const TASKS_FIELDS = [ 'id', 'percent', 'message', 'errorMessage', 'creationTime', 'result', 'ts' ];
 
 function setProgress(id, progress, callback) {
     assert.strictEqual(typeof id, 'string');

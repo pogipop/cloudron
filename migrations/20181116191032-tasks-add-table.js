@@ -5,7 +5,7 @@ exports.up = function(db, callback) {
             "id VARCHAR(32) NOT NULL UNIQUE," +
             "percent INTEGER DEFAULT 0," +
             "message TEXT," +
-            "detail TEXT," +
+            "errorMessage TEXT," +
             "result TEXT," +
             "creationTime TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP," +
             "ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP," +

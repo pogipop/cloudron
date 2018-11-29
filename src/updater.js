@@ -156,7 +156,7 @@ function doUpdate(boxUpdateInfo, callback) {
     assert(boxUpdateInfo && typeof boxUpdateInfo === 'object');
 
     function updateError(e) {
-        tasks.setProgress(tasks.TASK_UPDATE, { percent: -1, result: e.message }, NOOP_CALLBACK);
+        tasks.setProgress(tasks.TASK_UPDATE, { percent: -1, errorMessage: e.message }, NOOP_CALLBACK);
         callback(e);
     }
 

@@ -969,7 +969,7 @@ function startBackupTask(auditSource, callback) {
 
         gBackupTask = null;
 
-        tasks.setProgress(tasks.TASK_BACKUP, { percent: 100,  result: error ? error.message : '' }, NOOP_CALLBACK);
+        tasks.setProgress(tasks.TASK_BACKUP, { percent: 100,  errorMessage: error ? error.message : '' }, NOOP_CALLBACK);
 
         locker.unlock(locker.OP_FULL_BACKUP);
 
