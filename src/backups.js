@@ -61,7 +61,7 @@ var addons = require('./addons.js'),
     zlib = require('zlib');
 
 const NOOP_CALLBACK = function (error) { if (error) debug(error); };
-const BACKUP_UPLOAD_CMD = path.join(__dirname, 'backupupload.js');
+const BACKUP_UPLOAD_CMD = path.join(__dirname, 'scripts/backupupload.js');
 
 function debugApp(app) {
     assert(typeof app === 'object');

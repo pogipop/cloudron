@@ -19,7 +19,7 @@ scripts=("${SOURCE_DIR}/src/scripts/rmvolume.sh" \
          "${SOURCE_DIR}/src/scripts/collectlogs.sh" \
          "${SOURCE_DIR}/src/scripts/configurecollectd.sh" \
          "${SOURCE_DIR}/src/scripts/authorized_keys.sh" \
-         "${SOURCE_DIR}/src/backupupload.js" \
+         "${SOURCE_DIR}/src/scripts/backupupload.js" \
          "${SOURCE_DIR}/src/scripts/configurelogrotate.sh")
 
 for script in "${scripts[@]}"; do
