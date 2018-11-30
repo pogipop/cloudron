@@ -11,12 +11,12 @@ exports = module.exports = {
 var apps = require('../apps.js'),
     AppsError = apps.AppsError,
     addons = require('../addons.js'),
-    backups = require('../backups.js'),
-    BackupsError = require('../backups.js').BackupsError,
     cloudron = require('../cloudron.js'),
     debug = require('debug')('box:routes/sysadmin'),
     HttpError = require('connect-lastmile').HttpError,
     HttpSuccess = require('connect-lastmile').HttpSuccess,
+    tasks = require('../tasks.js'),
+    TasksError = require('../tasks.js').TasksError,
     updater = require('../updater.js'),
     UpdaterError = require('../updater.js').UpdaterError;
 
@@ -26,8 +26,8 @@ function backup(req, res, next) {
     // note that cloudron.backup only waits for backup initiation and not for backup to complete
     // backup progress can be checked up ny polling the progress api call
     var auditSource = { userId: null, username: 'sysadmin' };
-    backups.startBackupTask(auditSource, function (error) {
-        if (error && error.reason === BackupsError.BAD_STATE) return next(new HttpError(409, error.message));
+    tasks.startTask(tasks.TASK_BACKUP, auditSource, function (error) {
+        if (error && error.reason === TasksError.BAD_STATE) return next(new HttpError(409, error.message));
         if (error) return next(new HttpError(500, error));
 
         next(new HttpSuccess(202, {}));

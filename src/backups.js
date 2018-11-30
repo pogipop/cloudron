@@ -12,9 +12,6 @@ exports = module.exports = {
 
     ensureBackup: ensureBackup,
 
-    startBackupTask: startBackupTask,
-    stopBackupTask: stopBackupTask,
-
     restore: restore,
 
     backupApp: backupApp,
@@ -42,16 +39,12 @@ var addons = require('./addons.js'),
     async = require('async'),
     assert = require('assert'),
     backupdb = require('./backupdb.js'),
-    child_process = require('child_process'),
     config = require('./config.js'),
     crypto = require('crypto'),
     database = require('./database.js'),
     DatabaseError = require('./databaseerror.js'),
     debug = require('debug')('box:backups'),
-    eventlog = require('./eventlog.js'),
     fs = require('fs'),
-    locker = require('./locker.js'),
-    mailer = require('./mailer.js'),
     mkdirp = require('mkdirp'),
     once = require('once'),
     path = require('path'),
@@ -67,11 +60,8 @@ var addons = require('./addons.js'),
     util = require('util'),
     zlib = require('zlib');
 
-var NOOP_CALLBACK = function (error) { if (error) debug(error); };
-
-var BACKUP_UPLOAD_CMD = path.join(__dirname, 'backupupload.js');
-
-let gBackupTask = null;
+const NOOP_CALLBACK = function (error) { if (error) debug(error); };
+const BACKUP_UPLOAD_CMD = path.join(__dirname, 'backupupload.js');
 
 function debugApp(app) {
     assert(typeof app === 'object');
@@ -928,62 +918,6 @@ function backupBoxAndApps(progressCallback, callback) {
     });
 }
 
-function startBackupTask(auditSource, callback) {
-    assert.strictEqual(typeof auditSource, 'object');
-    assert.strictEqual(typeof callback, 'function');
-
-    let error = locker.lock(locker.OP_FULL_BACKUP);
-    if (error) return callback(new BackupsError(BackupsError.BAD_STATE, error.message));
-
-    tasks.clearProgress(tasks.TASK_BACKUP, NOOP_CALLBACK);
-
-    let fd = safe.fs.openSync(paths.BACKUP_LOG_FILE, 'a'); // will autoclose
-    if (!fd) {
-        debug('startBackupTask: unable to get log filedescriptor %s', safe.error.message);
-        locker.unlock(locker.OP_FULL_BACKUP);
-        return callback(safe.error);
-    }
-
-    debug(`starting backuptask. logs at ${paths.BACKUP_LOG_FILE}`);
-
-    // when parent process dies, this process is killed because KillMode=control-group in systemd unit file
-    assert(!gBackupTask, 'Previous backup task already running!');
-    eventlog.add(eventlog.ACTION_BACKUP_START, auditSource, { });
-
-    gBackupTask = child_process.fork(__dirname + '/tasks/backuptask.js', [ ], { stdio: [ 'pipe', fd, fd, 'ipc' ]});
-    gBackupTask.once('exit', function (code, signal) {
-        debug(`startBackupTask: completed with code ${code} and signal ${signal}`);
-
-        tasks.getProgress(tasks.TASK_BACKUP, function (error, progress) {
-            if (!error && progress.errorMessage) error = new Error(progress.errorMessage);
-
-            eventlog.add(eventlog.ACTION_BACKUP_FINISH, auditSource, { errorMessage: error ? error.message : null, backupId: progress ? progress.result : null });
-
-            locker.unlock(locker.OP_FULL_BACKUP);
-
-            if (error) mailer.backupFailed(error);
-
-            gBackupTask = null;
-
-            debug('startBackupTask: backup done');
-        });
-    });
-    callback(null);
-}
-
-function stopBackupTask(auditSource, callback) {
-    assert.strictEqual(typeof auditSource, 'object');
-    assert.strictEqual(typeof callback, 'function');
-
-    if (!gBackupTask) return callback(new BackupsError(BackupsError.BAD_STATE, 'Backup task is not active'));
-
-    debug('stopBackupTask: stopping backup process');
-
-    gBackupTask.kill('SIGTERM'); // this will end up calling the 'exit' signal handler
-
-    callback(null);
-}
-
 function ensureBackup(auditSource, callback) {
     assert.strictEqual(typeof auditSource, 'object');
 
@@ -1003,7 +937,7 @@ function ensureBackup(auditSource, callback) {
                 return callback(null);
             }
 
-            startBackupTask(auditSource, callback);
+            tasks.startTask(tasks.TASK_BACKUP, auditSource, callback);
         });
     });
 }

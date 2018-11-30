@@ -5,6 +5,7 @@ exports = module.exports = {
     getProgress: getProgress,
     clearProgress: clearProgress,
 
+    startTask: startTask,
     stopTask: stopTask,
 
     TaskError: TaskError,
@@ -15,12 +16,31 @@ exports = module.exports = {
 };
 
 let assert = require('assert'),
-    BackupsError = require('./backups.js').BackupsError,
-    backups = require('./backups.js'),
+    child_process = require('child_process'),
     DatabaseError = require('./databaseerror.js'),
     debug = require('debug')('box:tasks'),
+    eventlog = require('./eventlog.js'),
+    locker = require('./locker.js'),
+    mailer = require('./mailer.js'),
+    paths = require('./paths.js'),
+    safe = require('safetydance'),
     taskdb = require('./taskdb.js'),
     util = require('util');
+
+const NOOP_CALLBACK = function (error) { if (error) debug(error); };
+
+const TASKS = {
+    'backup': {
+        lock: locker.OP_FULL_BACKUP,
+        logFile: paths.BACKUP_LOG_FILE,
+        program: __dirname + '/tasks/backuptask.js',
+        onFailure: mailer.backupFailed,
+        startEventId: eventlog.ACTION_BACKUP_START,
+        finishEventId: eventlog.ACTION_BACKUP_FINISH
+    }
+};
+
+let gTasks = {};
 
 function TaskError(reason, errorOrMessage) {
     assert.strictEqual(typeof reason, 'string');
@@ -78,22 +98,64 @@ function clearProgress(id, callback) {
     setProgress(id, { percent: 0, message: 'Starting', result: '', errorMessage: '' }, callback);
 }
 
+function startTask(id, auditSource, callback) {
+    assert.strictEqual(typeof id, 'string');
+    assert.strictEqual(typeof auditSource, 'object');
+    assert.strictEqual(typeof callback, 'function');
+
+    let taskInfo = TASKS[id];
+    if (!taskInfo) return callback(new TaskError(TaskError.NOT_FOUND, 'No such task'));
+
+    let error = locker.lock(taskInfo.lock);
+    if (error) return callback(new TaskError(TaskError.BAD_STATE, error.message));
+
+    let fd = safe.fs.openSync(taskInfo.logFile, 'a'); // will autoclose
+    if (!fd) {
+        debug(`startTask: unable to get log filedescriptor ${safe.error.message}`);
+        locker.unlock(taskInfo.lock);
+        return callback(new TaskError(TaskError.INTERNAL_ERROR, error.message));
+    }
+
+    debug(`startTask - starting task ${id}. logs at ${taskInfo.logFile}`);
+
+    // when parent process dies, this process is killed because KillMode=control-group in systemd unit file
+    assert(!gTasks[id], 'Task is already running');
+
+    clearProgress(id, NOOP_CALLBACK);
+    eventlog.add(taskInfo.startEventId, auditSource, { });
+
+    gTasks[id] = child_process.fork(taskInfo.program, [ ], { stdio: [ 'pipe', fd, fd, 'ipc' ]});
+    gTasks[id].once('exit', function (code, signal) {
+        debug(`startTask: ${id} completed with code ${code} and signal ${signal}`);
+
+        getProgress(id, function (error, progress) {
+            if (!error && progress.errorMessage) error = new Error(progress.errorMessage);
+
+            eventlog.add(taskInfo.finishEventId, auditSource, { errorMessage: error ? error.message : null, backupId: progress ? progress.result : null });
+
+            locker.unlock(taskInfo.lock);
+
+            if (error) taskInfo.onFailure(error);
+
+            gTasks[id] = null;
+
+            debug(`startTask: ${id} done`);
+        });
+    });
+
+    callback(null);
+}
+
 function stopTask(id, auditSource, callback) {
     assert.strictEqual(typeof id, 'string');
     assert.strictEqual(typeof auditSource, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    switch (id) {
-    case exports.TASK_BACKUP:
-        backups.stopBackupTask(auditSource, function (error) {
-            if (error && error.reason === BackupsError.BAD_STATE) return callback(new TaskError(TaskError.NOT_FOUND));
-            if (error) return callback(new TaskError(TaskError.INTERNAL_ERROR, error));
+    if (!gTasks[id]) return callback(new TaskError(TaskError.BAD_STATE, 'task is not active'));
 
-            callback(null);
-        });
-        break;
+    debug(`stopTask: stopping task ${id}`);
 
-    default:
-        return callback(new TaskError(TaskError.NOT_FOUND));
-    }
+    gTasks[id].kill('SIGTERM'); // this will end up calling the 'exit' signal handler
+
+    callback(null);
 }
