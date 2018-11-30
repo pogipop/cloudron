@@ -3,6 +3,7 @@
 exports.up = function(db, callback) {
     var cmd = "CREATE TABLE tasks(" +
             "id VARCHAR(32) NOT NULL UNIQUE," +
+            "argsJson TEXT," +
             "percent INTEGER DEFAULT 0," +
             "message TEXT," +
             "errorMessage TEXT," +

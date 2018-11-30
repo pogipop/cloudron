@@ -8,9 +8,18 @@ exports = module.exports = {
 let assert = require('assert'),
     database = require('./database.js'),
     DatabaseError = require('./databaseerror'),
+    safe = require('safetydance'),
     _ = require('underscore');
 
-const TASKS_FIELDS = [ 'id', 'percent', 'message', 'errorMessage', 'creationTime', 'result', 'ts' ];
+const TASKS_FIELDS = [ 'id', 'argsJson', 'percent', 'message', 'errorMessage', 'creationTime', 'result', 'ts' ];
+
+function postProcess(result) {
+    assert.strictEqual(typeof result, 'object');
+
+    assert(result.argsJson === null || typeof result.argsJson === 'string');
+    result.args = safe.JSON.parse(result.argsJson);
+    delete result.argsJson;
+}
 
 function setProgress(id, progress, callback) {
     assert.strictEqual(typeof id, 'string');
@@ -24,9 +33,17 @@ function setProgress(id, progress, callback) {
         fields = [ ], values = [ ];
 
     for (var f in data) {
-        keys.push(f);
-        fields.push(`${f} = ?`);
-        values.push(data[f]); // for the INSERT fields
+        let key, value;
+        if (f === 'args') {
+            key = 'argsJson';
+            value = JSON.stringify(data[f]);
+        } else {
+            key = f;
+            value = data[f];
+        }
+        keys.push(key);
+        fields.push(`${key} = ?`);
+        values.push(value); // for the INSERT fields
     }
 
     values = values.concat(values); // for the UPDATE fields
@@ -46,6 +63,6 @@ function getProgress(id, callback) {
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
         if (result.length === 0) return callback(new DatabaseError(DatabaseError.NOT_FOUND));
 
-        callback(null, result[0]);
+        callback(null, postProcess(result[0]));
     });
 }
