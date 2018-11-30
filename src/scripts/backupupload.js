@@ -10,8 +10,8 @@ if (process.argv[2] === '--check') return console.log('OK');
 require('supererror')({ splatchError: true });
 
 var assert = require('assert'),
-    backups = require('./backups.js'),
-    database = require('./database.js'),
+    backups = require('../backups.js'),
+    database = require('../database.js'),
     debug = require('debug')('box:backupupload');
 
 function initialize(callback) {

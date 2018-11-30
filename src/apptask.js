@@ -55,6 +55,8 @@ var COLLECTD_CONFIG_EJS = fs.readFileSync(__dirname + '/collectd.config.ejs', { 
     LOGROTATE_CONFIG_EJS = fs.readFileSync(__dirname + '/logrotate.ejs', { encoding: 'utf8' }),
     CONFIGURE_LOGROTATE_CMD = path.join(__dirname, 'scripts/configurelogrotate.sh');
 
+var NOOP_CALLBACK = function (error) { if (error) debug(error); };
+
 function initialize(callback) {
     assert.strictEqual(typeof callback, 'function');
 
@@ -581,7 +583,7 @@ function backup(app, callback) {
 
     async.series([
         updateApp.bind(null, app, { installationProgress: '10, Backing up' }),
-        backups.backupApp.bind(null, app, (progress) => updateApp(app, { installationProgress: progress.message })),
+        backups.backupApp.bind(null, app, (progress) => updateApp(app, { installationProgress: progress.message }, NOOP_CALLBACK)),
 
         // done!
         function (callback) {
