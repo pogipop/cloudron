@@ -127,13 +127,13 @@ function doMigrate(options, caasConfig, callback) {
     function unlock(error) {
         debug('Failed to migrate', error);
         locker.unlock(locker.OP_MIGRATE);
-        tasks.setProgress(tasks.TASK_MIGRATE, { percent: -1, errorMessage: `Backup failed: ${error.message}` }, NOOP_CALLBACK);
+        tasks.update(tasks.TASK_MIGRATE, { percent: -1, errorMessage: `Backup failed: ${error.message}` }, NOOP_CALLBACK);
     }
 
-    tasks.setProgress(tasks.TASK_MIGRATE, { percent: 10, message: 'Backing up for migration' }, NOOP_CALLBACK);
+    tasks.update(tasks.TASK_MIGRATE, { percent: 10, message: 'Backing up for migration' }, NOOP_CALLBACK);
 
     // initiate the migration in the background
-    backups.backupBoxAndApps((progress) => tasks.setProgress(tasks.TASK_MIGRATE, { percent: 10+progress.percent*30/100, message: progress.message }, NOOP_CALLBACK), function (error) {
+    backups.backupBoxAndApps((progress) => tasks.update(tasks.TASK_MIGRATE, { percent: 10+progress.percent*30/100, message: progress.message }, NOOP_CALLBACK), function (error) {
         if (error) return unlock(error);
 
         debug('migrate: domain: %s size %s region %s', options.domain, options.size, options.region);
@@ -149,7 +149,7 @@ function doMigrate(options, caasConfig, callback) {
                 if (result.statusCode === 404) return unlock(new CaasError(CaasError.NOT_FOUND));
                 if (result.statusCode !== 202) return unlock(new CaasError(CaasError.EXTERNAL_ERROR, util.format('%s %j', result.status, result.body)));
 
-                tasks.setProgress(tasks.TASK_MIGRATE, { percent: 40, message: 'Migrating' }, NOOP_CALLBACK);
+                tasks.update(tasks.TASK_MIGRATE, { percent: 40, message: 'Migrating' }, NOOP_CALLBACK);
 
                 retire('migrate', _.pick(options, 'domain', 'size', 'region'));
             });

@@ -1,8 +1,8 @@
 'use strict';
 
 exports = module.exports = {
-    setProgress: setProgress,
-    getProgress: getProgress
+    update: update,
+    get: get
 };
 
 let assert = require('assert'),
@@ -21,7 +21,7 @@ function postProcess(result) {
     delete result.argsJson;
 }
 
-function setProgress(id, progress, callback) {
+function update(id, progress, callback) {
     assert.strictEqual(typeof id, 'string');
     assert.strictEqual(typeof progress, 'object');
     assert.strictEqual(typeof callback, 'function');
@@ -55,7 +55,7 @@ function setProgress(id, progress, callback) {
     });
 }
 
-function getProgress(id, callback) {
+function get(id, callback) {
     assert.strictEqual(typeof id, 'string');
     assert.strictEqual(typeof callback, 'function');
 
@@ -63,6 +63,8 @@ function getProgress(id, callback) {
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
         if (result.length === 0) return callback(new DatabaseError(DatabaseError.NOT_FOUND));
 
-        callback(null, postProcess(result[0]));
+        postProcess(result[0]);
+
+        callback(null, result[0]);
     });
 }

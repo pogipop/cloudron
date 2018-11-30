@@ -1,7 +1,7 @@
 'use strict';
 
 exports = module.exports = {
-    getProgress: getProgress,
+    get: get,
     stopTask: stopTask
 };
 
@@ -28,10 +28,10 @@ function stopTask(req, res, next) {
     });
 }
 
-function getProgress(req, res, next) {
+function get(req, res, next) {
     assert.strictEqual(typeof req.params.taskId, 'string');
 
-    tasks.getProgress(req.params.taskId, function (error, progress) {
+    tasks.get(req.params.taskId, function (error, progress) {
         if (error && error.reason === TaskError.NOT_FOUND) return next(new HttpError(404, 'No such task'));
         if (error) return next(new HttpError(500, error));
 

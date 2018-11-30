@@ -156,23 +156,23 @@ function doUpdate(boxUpdateInfo, callback) {
     assert(boxUpdateInfo && typeof boxUpdateInfo === 'object');
 
     function updateError(e) {
-        tasks.setProgress(tasks.TASK_UPDATE, { percent: -1, errorMessage: e.message }, NOOP_CALLBACK);
+        tasks.update(tasks.TASK_UPDATE, { percent: -1, errorMessage: e.message }, NOOP_CALLBACK);
         callback(e);
     }
 
-    tasks.setProgress(tasks.TASK_UPDATE, { percent: 5, message: 'Downloading and verifying release' }, NOOP_CALLBACK);
+    tasks.update(tasks.TASK_UPDATE, { percent: 5, message: 'Downloading and verifying release' }, NOOP_CALLBACK);
 
     downloadAndVerifyRelease(boxUpdateInfo, function (error, packageInfo) {
         if (error) return updateError(error);
 
-        tasks.setProgress(tasks.TASK_UPDATE, { percent: 10, message: 'Backing up' }, NOOP_CALLBACK);
+        tasks.update(tasks.TASK_UPDATE, { percent: 10, message: 'Backing up' }, NOOP_CALLBACK);
 
-        backups.backupBoxAndApps((progress) => tasks.setProgress(tasks.TASK_MIGRATE, { percent: 10+progress.percent*70/100, message: progress.message }, NOOP_CALLBACK), function (error) {
+        backups.backupBoxAndApps((progress) => tasks.update(tasks.TASK_MIGRATE, { percent: 10+progress.percent*70/100, message: progress.message }, NOOP_CALLBACK), function (error) {
             if (error) return updateError(error);
 
             debug('updating box %s', boxUpdateInfo.sourceTarballUrl);
 
-            tasks.setProgress(tasks.TASK_UPDATE, { percent: 70, message: 'Installing update' }, NOOP_CALLBACK);
+            tasks.update(tasks.TASK_UPDATE, { percent: 70, message: 'Installing update' }, NOOP_CALLBACK);
 
             shell.sudo('update', [ UPDATE_CMD, packageInfo.file ], {}, function (error) {
                 if (error) return updateError(error);
@@ -194,7 +194,7 @@ function update(boxUpdateInfo, auditSource, callback) {
     eventlog.add(eventlog.ACTION_UPDATE, auditSource, { boxUpdateInfo: boxUpdateInfo });
 
     // ensure tools can 'wait' on progress
-    tasks.setProgress(tasks.TASK_UPDATE, { percent: 0, message: 'Starting' }, NOOP_CALLBACK);
+    tasks.update(tasks.TASK_UPDATE, { percent: 0, message: 'Starting' }, NOOP_CALLBACK);
 
     debug('Starting update');
     doUpdate(boxUpdateInfo, function (error) {

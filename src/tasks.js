@@ -1,9 +1,9 @@
 'use strict';
 
 exports = module.exports = {
-    setProgress: setProgress,
-    getProgress: getProgress,
-    clearProgress: clearProgress,
+    update: update,
+    get: get,
+    clear: clear,
 
     startTask: startTask,
     stopTask: stopTask,
@@ -65,25 +65,25 @@ TaskError.INTERNAL_ERROR = 'Internal Error';
 TaskError.BAD_STATE = 'Bad State';
 TaskError.NOT_FOUND = 'Not Found';
 
-function setProgress(id, progress, callback) {
+function update(id, progress, callback) {
     assert.strictEqual(typeof id, 'string');
     assert.strictEqual(typeof progress, 'object');
     assert.strictEqual(typeof callback, 'function');
 
     debug(`${id}: ${JSON.stringify(progress)}`);
 
-    taskdb.setProgress(id, progress, function (error) {
+    taskdb.update(id, progress, function (error) {
         if (error) return callback(new TaskError(TaskError.INTERNAL_ERROR, error));
 
         callback();
     });
 }
 
-function getProgress(id, callback) {
+function get(id, callback) {
     assert.strictEqual(typeof id, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    taskdb.getProgress(id, function (error, progress) {
+    taskdb.get(id, function (error, progress) {
         if (error && error.reason == DatabaseError.NOT_FOUND) return callback(new TaskError(TaskError.NOT_FOUND));
         if (error) return callback(new TaskError(TaskError.INTERNAL_ERROR, error));
 
@@ -93,11 +93,11 @@ function getProgress(id, callback) {
     });
 }
 
-function clearProgress(id, callback) {
+function clear(id, callback) {
     assert.strictEqual(typeof id, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    setProgress(id, { percent: 0, message: 'Starting', result: '', errorMessage: '' }, callback);
+    update(id, { percent: 0, message: 'Starting', result: '', errorMessage: '' }, callback);
 }
 
 function startTask(id, args, auditSource, callback) {
@@ -124,14 +124,14 @@ function startTask(id, args, auditSource, callback) {
     // when parent process dies, this process is killed because KillMode=control-group in systemd unit file
     assert(!gTasks[id], 'Task is already running');
 
-    clearProgress(id, NOOP_CALLBACK);
+    clear(id, NOOP_CALLBACK);
     eventlog.add(taskInfo.startEventId, auditSource, { });
 
     gTasks[id] = child_process.fork(taskInfo.program, args, { stdio: [ 'pipe', fd, fd, 'ipc' ]});
     gTasks[id].once('exit', function (code, signal) {
         debug(`startTask: ${id} completed with code ${code} and signal ${signal}`);
 
-        getProgress(id, function (error, progress) {
+        get(id, function (error, progress) {
             if (!error && progress.errorMessage) error = new Error(progress.errorMessage);
 
             eventlog.add(taskInfo.finishEventId, auditSource, { errorMessage: error ? error.message : null, backupId: progress ? progress.result : null });

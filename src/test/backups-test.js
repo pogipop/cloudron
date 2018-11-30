@@ -27,7 +27,7 @@ function createBackup(callback) {
         if (error) return callback(error);
 
         function waitForBackup() {
-            tasks.getProgress(tasks.TASK_BACKUP, function (error, p) {
+            tasks.get(tasks.TASK_BACKUP, function (error, p) {
                 if (error) return callback(error);
 
                 if (p.percent !== 100) return setTimeout(waitForBackup, 1000);
