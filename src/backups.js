@@ -568,7 +568,7 @@ function restoreApp(app, addonsToRestore, restoreConfig, progressCallback, callb
     assert.strictEqual(typeof app, 'object');
     assert.strictEqual(typeof addonsToRestore, 'object');
     assert.strictEqual(typeof restoreConfig, 'object');
-    assert.strictEqual(typeof progressCallback, 'object');
+    assert.strictEqual(typeof progressCallback, 'function');
     assert.strictEqual(typeof callback, 'function');
 
     var appDataDir = safe.fs.realpathSync(path.join(paths.APPS_DATA_DIR, app.id));

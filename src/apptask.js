@@ -541,7 +541,7 @@ function install(app, callback) {
                     updateApp.bind(null, app, { installationProgress: '60, Download backup and restoring addons' }),
                     addons.setupAddons.bind(null, app, app.manifest.addons),
                     addons.clearAddons.bind(null, app, app.manifest.addons),
-                    backups.restoreApp.bind(null, app, app.manifest.addons, restoreConfig, (progress) => updateApp(app, { installationProgress: progress.message }))
+                    backups.restoreApp.bind(null, app, app.manifest.addons, restoreConfig, (progress) => updateApp(app, { installationProgress: progress.message }, NOOP_CALLBACK))
                 ], next);
             }
         },
