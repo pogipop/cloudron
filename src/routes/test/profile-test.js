@@ -24,8 +24,6 @@ const EMAIL_0_NEW_FALLBACK = 'stupIDfallback@me.com';
 const DISPLAY_NAME_0_NEW = 'New Name';
 
 describe('Profile API', function () {
-    this.timeout(5000);
-
     var user_0 = null;
     var token_0;
 

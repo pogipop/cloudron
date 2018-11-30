@@ -37,8 +37,6 @@ function cleanup(done) {
 }
 
 describe('Developer API', function () {
-    this.timeout(20000);
-
     describe('login', function () {
         before(function (done) {
             async.series([

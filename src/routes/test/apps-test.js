@@ -264,8 +264,6 @@ function stopBox(done) {
 }
 
 describe('App API', function () {
-    this.timeout(100000);
-
     before(startBox);
     after(stopBox);
 
@@ -618,11 +616,7 @@ describe('App API', function () {
 });
 
 describe('App installation', function () {
-    this.timeout(100000);
-
     var apiHockInstance = hock.createHock({ throwOnUnmatched: false });
-    var apiHockServer;
-
     var validCert1, validKey1;
 
     before(function (done) {
@@ -820,7 +814,6 @@ describe('App installation', function () {
     });
 
     it('installation - app can check addons', function (done) {
-        this.timeout(120000);
         console.log('This test can take a while as it waits for scheduler addon to tick 3');
         checkAddons(appEntry, done);
     });
@@ -949,7 +942,6 @@ describe('App installation', function () {
     });
 
     it('installation - app can check addons', function (done) {
-        this.timeout(120000);
         console.log('This test can take a while as it waits for scheduler addon to tick 2');
         checkAddons(appEntry, done);
     });
@@ -1076,7 +1068,6 @@ describe('App installation', function () {
     });
 
     it('installation - app can check addons', function (done) {
-        this.timeout(120000);
         console.log('This test can take a while as it waits for scheduler addon to tick 4');
         checkAddons(appEntry, done);
     });

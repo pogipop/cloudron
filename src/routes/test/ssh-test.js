@@ -61,8 +61,6 @@ function cleanup(done) {
 }
 
 describe('SSH API', function () {
-    this.timeout(10000);
-
     before(setup);
     after(cleanup);
 

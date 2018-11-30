@@ -105,8 +105,6 @@ function cleanup(done) {
 }
 
 describe('Mail API', function () {
-    this.timeout(10000);
-
     before(setup);
     after(cleanup);
 
@@ -230,8 +228,6 @@ describe('Mail API', function () {
         var resolve = null;
         var dnsAnswerQueue = [];
         var dkimDomain, spfDomain, mxDomain, dmarcDomain;
-
-        this.timeout(10000);
 
         before(function (done) {
             var dns = require('../../native-dns.js');

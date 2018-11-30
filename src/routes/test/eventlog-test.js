@@ -78,8 +78,6 @@ function cleanup(done) {
 }
 
 describe('Eventlog API', function () {
-    this.timeout(10000);
-
     before(setup);
     after(cleanup);
 

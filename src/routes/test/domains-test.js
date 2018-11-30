@@ -43,8 +43,6 @@ var DOMAIN_1 = {
 };
 
 describe('Domains API', function () {
-    this.timeout(10000);
-
     before(function (done) {
         config._reset();
         config.setFqdn(DOMAIN);

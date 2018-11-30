@@ -483,8 +483,6 @@ describe('Clients', function () {
     });
 
     describe('delete tokens by client', function () {
-        this.timeout(5000);
-
         before(setup2);
         after(cleanup);
 

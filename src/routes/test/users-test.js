@@ -82,8 +82,6 @@ function checkMails(number, done) {
 }
 
 describe('Users API', function () {
-    this.timeout(5000);
-
     var user_0, user_1, user_2, user_4;
     var token = null, userToken = null;
     var token_1 = tokendb.generateToken();

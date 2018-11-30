@@ -98,8 +98,6 @@ const TEST_DOMAIN = {
 };
 
 describe('database', function () {
-    this.timeout(5000);
-
     before(function (done) {
         config._reset();
         config.setFqdn(TEST_DOMAIN.domain);

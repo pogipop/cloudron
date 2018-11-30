@@ -20,8 +20,6 @@ function cleanup(done) {
 }
 
 describe('Server', function () {
-    this.timeout(5000);
-
     before(function () {
         config._reset();
         config.setFqdn(DOMAIN);

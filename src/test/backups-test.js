@@ -73,8 +73,6 @@ describe('backups', function () {
     });
 
     describe('cleanup', function () {
-        this.timeout(20000);
-
         var BACKUP_0 = {
             id: 'backup-box-0',
             version: '1.0.0',
@@ -286,8 +284,6 @@ describe('backups', function () {
         });
 
         it('can backup', function (done) {
-            this.timeout(6000);
-
             createBackup(function (error, result) {
                 expect(error).to.be(null);
                 expect(fs.statSync(path.join(gBackupConfig.backupFolder, 'snapshot/box.tar.gz')).nlink).to.be(2); // hard linked to a rotated backup
@@ -300,8 +296,6 @@ describe('backups', function () {
         });
 
         it('can take another backup', function (done) {
-            this.timeout(6000);
-
             createBackup(function (error, result) {
                 expect(error).to.be(null);
                 expect(fs.statSync(path.join(gBackupConfig.backupFolder, 'snapshot/box.tar.gz')).nlink).to.be(2); // hard linked to a rotated backup

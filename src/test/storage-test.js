@@ -16,9 +16,8 @@ var BackupsError = require('../backups.js').BackupsError,
     path = require('path'),
     rimraf = require('rimraf'),
     mkdirp = require('mkdirp'),
-    recursive_readdir = require("recursive-readdir"),
+    recursive_readdir = require('recursive-readdir'),
     s3 = require('../storage/s3.js'),
-    debug = require('debug')('box:storage-test'),
     gcs = require('../storage/gcs.js'),
     chunk = require('lodash.chunk');
 
@@ -203,8 +202,6 @@ describe('Storage', function () {
     });
 
     describe('s3', function () {
-        this.timeout(10000);
-
         var gS3Folder;
         var gBackupConfig = {
             provider: 's3',
@@ -297,8 +294,6 @@ describe('Storage', function () {
     });
 
     describe('gcs', function () {
-        this.timeout(10000);
-
         var gBackupConfig = {
             provider: 'gcs',
             key: '',
@@ -351,7 +346,7 @@ describe('Storage', function () {
                                     .pipe(fs.createWriteStream(ensurePathWritable(dst)))
                                     .on('end', cb)
                                     .on('error', notFoundHandler)
-                                    ;
+                                ;
                             }
                         };
                     };
@@ -375,7 +370,7 @@ describe('Storage', function () {
                                 cb(null, gFiles, q.pageToken < chunkedFiles.length ? q : null);
                             });
                         }
-                    }
+                    };
                 }};
             };
             gcs._mockInject(mockGCS);

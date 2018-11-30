@@ -202,8 +202,6 @@ function cleanup(done) {
 }
 
 describe('Ldap', function () {
-    this.timeout(10000);
-
     before(setup);
     after(cleanup);
 

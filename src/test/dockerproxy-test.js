@@ -42,7 +42,6 @@ describe('Dockerproxy', function () {
     });
 
     // uncomment this to run the proxy for manual testing
-    // this.timeout(1000000);
     // it('wait', function (done) {} );
 
     it('can get info', function (done) {

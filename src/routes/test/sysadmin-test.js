@@ -65,29 +65,27 @@ function cleanup(done) {
 }
 
 describe('Internal API', function () {
-    this.timeout(5000);
-
     before(setup);
     after(cleanup);
 
     describe('backup', function () {
         it('succeeds', function (done) {
             superagent.post(config.sysadminOrigin() + '/api/v1/backup')
-              .end(function (error, result) {
-                expect(result.statusCode).to.equal(202);
+                .end(function (error, result) {
+                    expect(result.statusCode).to.equal(202);
 
-                function checkBackupStartEvent() {
-                    eventlog.getAllPaged([ eventlog.ACTION_BACKUP_START ], '', 1, 100, function (error, result) {
-                        expect(error).to.equal(null);
+                    function checkBackupStartEvent() {
+                        eventlog.getAllPaged([ eventlog.ACTION_BACKUP_START ], '', 1, 100, function (error, result) {
+                            expect(error).to.equal(null);
 
-                        if (result.length === 0) return setTimeout(checkBackupStartEvent, 1000);
+                            if (result.length === 0) return setTimeout(checkBackupStartEvent, 1000);
 
-                        done();
-                    });
-                }
+                            done();
+                        });
+                    }
 
-                checkBackupStartEvent();
-            });
+                    checkBackupStartEvent();
+                });
         });
     });
 });
