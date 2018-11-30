@@ -100,8 +100,9 @@ function clearProgress(id, callback) {
     setProgress(id, { percent: 0, message: 'Starting', result: '', errorMessage: '' }, callback);
 }
 
-function startTask(id, auditSource, callback) {
+function startTask(id, args, auditSource, callback) {
     assert.strictEqual(typeof id, 'string');
+    assert(Array.isArray(args));
     assert.strictEqual(typeof auditSource, 'object');
     assert.strictEqual(typeof callback, 'function');
 
@@ -126,7 +127,7 @@ function startTask(id, auditSource, callback) {
     clearProgress(id, NOOP_CALLBACK);
     eventlog.add(taskInfo.startEventId, auditSource, { });
 
-    gTasks[id] = child_process.fork(taskInfo.program, [ ], { stdio: [ 'pipe', fd, fd, 'ipc' ]});
+    gTasks[id] = child_process.fork(taskInfo.program, args, { stdio: [ 'pipe', fd, fd, 'ipc' ]});
     gTasks[id].once('exit', function (code, signal) {
         debug(`startTask: ${id} completed with code ${code} and signal ${signal}`);
 
