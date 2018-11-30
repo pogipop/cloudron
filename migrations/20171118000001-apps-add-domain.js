@@ -29,7 +29,7 @@ exports.up = function(db, callback) {
 
                 // this will be finally created once we have a domain when we create the owner in user.js
                 const ADMIN_GROUP_ID = 'admin'; // see constants.js
-                db.runSql('DELETE FROM groups WHERE id = ?', [ ADMIN_GROUP_ID ], function (error) {
+                db.runSql('DELETE FROM userGroups WHERE id = ?', [ ADMIN_GROUP_ID ], function (error) {
                     if (error) return done(error);
 
                     db.runSql('DELETE FROM mailboxes WHERE ownerId = ?', [ ADMIN_GROUP_ID ], done);

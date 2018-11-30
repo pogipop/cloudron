@@ -1,7 +1,7 @@
 'use strict';
 
 exports.up = function(db, callback) {
-    var cmd = "CREATE TABLE groups(" +
+    var cmd = "CREATE TABLE userGroups(" +
                 "id VARCHAR(128) NOT NULL UNIQUE," +
                 "name VARCHAR(128) NOT NULL UNIQUE," +
                 "PRIMARY KEY(id))";
@@ -13,7 +13,7 @@ exports.up = function(db, callback) {
 };
 
 exports.down = function(db, callback) {
-    db.runSql('DROP TABLE groups', function (error) {
+    db.runSql('DROP TABLE userGroups', function (error) {
         if (error) console.error(error);
         callback(error);
     });

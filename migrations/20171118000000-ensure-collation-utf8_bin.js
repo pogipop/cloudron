@@ -16,7 +16,7 @@ exports.up = function(db, callback) {
         db.runSql.bind(db, 'ALTER TABLE clients CONVERT TO CHARACTER SET utf8 COLLATE utf8_bin'),
         db.runSql.bind(db, 'ALTER TABLE eventlog CONVERT TO CHARACTER SET utf8 COLLATE utf8_bin'),
         db.runSql.bind(db, 'ALTER TABLE groupMembers CONVERT TO CHARACTER SET utf8 COLLATE utf8_bin'),
-        db.runSql.bind(db, 'ALTER TABLE groups CONVERT TO CHARACTER SET utf8 COLLATE utf8_bin'),
+        db.runSql.bind(db, 'ALTER TABLE userGroups CONVERT TO CHARACTER SET utf8 COLLATE utf8_bin'),
         db.runSql.bind(db, 'ALTER TABLE mailboxes CONVERT TO CHARACTER SET utf8 COLLATE utf8_bin'),
         db.runSql.bind(db, 'ALTER TABLE migrations CONVERT TO CHARACTER SET utf8 COLLATE utf8_bin'),
         db.runSql.bind(db, 'ALTER TABLE settings CONVERT TO CHARACTER SET utf8 COLLATE utf8_bin'),

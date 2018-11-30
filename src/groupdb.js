@@ -34,7 +34,7 @@ function get(groupId, callback) {
     assert.strictEqual(typeof groupId, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    database.query('SELECT ' + GROUPS_FIELDS + ' FROM groups WHERE id = ? ORDER BY name', [ groupId ], function (error, result) {
+    database.query('SELECT ' + GROUPS_FIELDS + ' FROM userGroups WHERE id = ? ORDER BY name', [ groupId ], function (error, result) {
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
         if (result.length === 0) return callback(new DatabaseError(DatabaseError.NOT_FOUND));
 
@@ -47,9 +47,9 @@ function getWithMembers(groupId, callback) {
     assert.strictEqual(typeof callback, 'function');
 
     database.query('SELECT ' + GROUPS_FIELDS + ',GROUP_CONCAT(groupMembers.userId) AS userIds ' +
-                    ' FROM groups LEFT OUTER JOIN groupMembers ON groups.id = groupMembers.groupId ' +
-                    ' WHERE groups.id = ? ' +
-                    ' GROUP BY groups.id', [ groupId ], function (error, results) {
+                    ' FROM userGroups LEFT OUTER JOIN groupMembers ON userGroups.id = groupMembers.groupId ' +
+                    ' WHERE userGroups.id = ? ' +
+                    ' GROUP BY userGroups.id', [ groupId ], function (error, results) {
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
         if (results.length === 0) return callback(new DatabaseError(DatabaseError.NOT_FOUND));
 
@@ -63,7 +63,7 @@ function getWithMembers(groupId, callback) {
 function getAll(callback) {
     assert.strictEqual(typeof callback, 'function');
 
-    database.query('SELECT ' + GROUPS_FIELDS + ' FROM groups', function (error, results) {
+    database.query('SELECT ' + GROUPS_FIELDS + ' FROM userGroups', function (error, results) {
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
 
         callback(null, results);
@@ -72,8 +72,8 @@ function getAll(callback) {
 
 function getAllWithMembers(callback) {
     database.query('SELECT ' + GROUPS_FIELDS + ',GROUP_CONCAT(groupMembers.userId) AS userIds ' +
-                    ' FROM groups LEFT OUTER JOIN groupMembers ON groups.id = groupMembers.groupId ' +
-                    ' GROUP BY groups.id', function (error, results) {
+                    ' FROM userGroups LEFT OUTER JOIN groupMembers ON userGroups.id = groupMembers.groupId ' +
+                    ' GROUP BY userGroups.id', function (error, results) {
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
         if (results.length === 0) return callback(new DatabaseError(DatabaseError.NOT_FOUND));
 
@@ -88,7 +88,7 @@ function add(id, name, callback) {
     assert.strictEqual(typeof name, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    database.query('INSERT INTO groups (id, name) VALUES (?, ?)', [ id, name ], function (error, result) {
+    database.query('INSERT INTO userGroups (id, name) VALUES (?, ?)', [ id, name ], function (error, result) {
         if (error && error.code === 'ER_DUP_ENTRY') return callback(new DatabaseError(DatabaseError.ALREADY_EXISTS, error));
         if (error || result.affectedRows !== 1) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
 
@@ -112,8 +112,8 @@ function update(id, data, callback) {
     }
     args.push(id);
 
-    database.query('UPDATE groups SET ' + fields.join(', ') + ' WHERE id = ?', args, function (error, result) {
-        if (error && error.code === 'ER_DUP_ENTRY' && error.sqlMessage.indexOf('groups_name') !== -1) return callback(new DatabaseError(DatabaseError.ALREADY_EXISTS, 'name already exists'));
+    database.query('UPDATE userGroups SET ' + fields.join(', ') + ' WHERE id = ?', args, function (error, result) {
+        if (error && error.code === 'ER_DUP_ENTRY' && error.sqlMessage.indexOf('userGroups_name') !== -1) return callback(new DatabaseError(DatabaseError.ALREADY_EXISTS, 'name already exists'));
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
         if (result.affectedRows !== 1) return callback(new DatabaseError(DatabaseError.NOT_FOUND));
 
@@ -128,7 +128,7 @@ function del(id, callback) {
     // also cleanup the groupMembers table
     var queries = [];
     queries.push({ query: 'DELETE FROM groupMembers WHERE groupId = ?', args: [ id ] });
-    queries.push({ query: 'DELETE FROM groups WHERE id = ?', args: [ id ] });
+    queries.push({ query: 'DELETE FROM userGroups WHERE id = ?', args: [ id ] });
 
     database.transaction(queries, function (error, result) {
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
@@ -141,7 +141,7 @@ function del(id, callback) {
 function count(callback) {
     assert.strictEqual(typeof callback, 'function');
 
-    database.query('SELECT COUNT(*) AS total FROM groups', function (error, result) {
+    database.query('SELECT COUNT(*) AS total FROM userGroups', function (error, result) {
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
 
         return callback(null, result[0].total);
@@ -152,7 +152,7 @@ function clear(callback) {
     database.query('DELETE FROM groupMembers', function (error) {
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
 
-        database.query('DELETE FROM groups', function (error) {
+        database.query('DELETE FROM userGroups', function (error) {
             if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
 
             callback(error);
@@ -266,7 +266,7 @@ function getGroups(userId, callback) {
     assert.strictEqual(typeof callback, 'function');
 
     database.query('SELECT ' + GROUPS_FIELDS + ' ' +
-        ' FROM groups INNER JOIN groupMembers ON groups.id = groupMembers.groupId AND groupMembers.userId = ?', [ userId ], function (error, results) {
+        ' FROM userGroups INNER JOIN groupMembers ON userGroups.id = groupMembers.groupId AND groupMembers.userId = ?', [ userId ], function (error, results) {
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
 
         callback(null, results);

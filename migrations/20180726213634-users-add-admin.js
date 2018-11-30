@@ -18,7 +18,7 @@ exports.up = function(db, callback) {
 
                 async.series([
                     db.runSql.bind(db, 'DELETE FROM groupMembers WHERE groupId=?', [ 'admin' ]),
-                    db.runSql.bind(db, 'DELETE FROM groups WHERE id=?', [ 'admin' ])
+                    db.runSql.bind(db, 'DELETE FROM userGroups WHERE id=?', [ 'admin' ])
                 ], callback);
             });
         });

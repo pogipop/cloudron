@@ -7,7 +7,7 @@ var ADMIN_GROUP_ID = 'admin'; // see constants.js
 exports.up = function(db, callback) {
 	async.series([
 		db.runSql.bind(db, 'START TRANSACTION;'),
-		db.runSql.bind(db, 'INSERT INTO groups (id, name) VALUES (?, ?)', [ ADMIN_GROUP_ID, 'admin' ]),
+		db.runSql.bind(db, 'INSERT INTO userGroups (id, name) VALUES (?, ?)', [ ADMIN_GROUP_ID, 'admin' ]),
 		function migrateAdminFlag(done) {
 			db.all('SELECT * FROM users WHERE admin=1', function (error, results) {
 				if (error) return done(error);

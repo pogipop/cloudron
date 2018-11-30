@@ -10,7 +10,7 @@ exports.up = function(db, callback) {
         function addGroupMailboxes(done) {
             console.log('Importing group mailboxes');
 
-            db.all('SELECT id, name FROM groups', function (error, results) {
+            db.all('SELECT id, name FROM userGroups', function (error, results) {
                 if (error) return done(error);
 
                 async.eachSeries(results, function (g, next) {

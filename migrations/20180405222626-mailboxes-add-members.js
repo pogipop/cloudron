@@ -19,8 +19,8 @@ exports.up = function(db, callback) {
         },
         function getGroups(done) {
             db.all('SELECT id, name, GROUP_CONCAT(groupMembers.userId) AS userIds ' +
-                ' FROM groups LEFT OUTER JOIN groupMembers ON groups.id = groupMembers.groupId ' +
-                ' GROUP BY groups.id', [ ], function (error, results) {
+                ' FROM userGroups LEFT OUTER JOIN groupMembers ON userGroups.id = groupMembers.groupId ' +
+                ' GROUP BY userGroups.id', [ ], function (error, results) {
                 if (error) return done(error);
 
                 results.forEach(function (result) {
