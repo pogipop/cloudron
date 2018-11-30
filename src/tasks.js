@@ -97,12 +97,12 @@ function clear(id, callback) {
     assert.strictEqual(typeof id, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    update(id, { percent: 0, message: 'Starting', result: '', errorMessage: '' }, callback);
+    update(id, { percent: 0, message: 'Starting', result: '', errorMessage: '', args: {} }, callback);
 }
 
 function startTask(id, args, auditSource, callback) {
     assert.strictEqual(typeof id, 'string');
-    assert(Array.isArray(args));
+    assert(args && typeof args === 'object');
     assert.strictEqual(typeof auditSource, 'object');
     assert.strictEqual(typeof callback, 'function');
 
@@ -125,9 +125,9 @@ function startTask(id, args, auditSource, callback) {
     assert(!gTasks[id], 'Task is already running');
 
     clear(id, NOOP_CALLBACK);
-    eventlog.add(taskInfo.startEventId, auditSource, { });
+    eventlog.add(taskInfo.startEventId, auditSource, args);
 
-    gTasks[id] = child_process.fork(taskInfo.program, args, { stdio: [ 'pipe', fd, fd, 'ipc' ]});
+    gTasks[id] = child_process.fork(taskInfo.program, [], { stdio: [ 'pipe', fd, fd, 'ipc' ]});
     gTasks[id].once('exit', function (code, signal) {
         debug(`startTask: ${id} completed with code ${code} and signal ${signal}`);
 

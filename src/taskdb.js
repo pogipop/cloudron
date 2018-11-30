@@ -17,7 +17,7 @@ function postProcess(result) {
     assert.strictEqual(typeof result, 'object');
 
     assert(result.argsJson === null || typeof result.argsJson === 'string');
-    result.args = safe.JSON.parse(result.argsJson);
+    result.args = safe.JSON.parse(result.argsJson) || {};
     delete result.argsJson;
 }
 

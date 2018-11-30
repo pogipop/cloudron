@@ -937,7 +937,7 @@ function ensureBackup(auditSource, callback) {
                 return callback(null);
             }
 
-            tasks.startTask(tasks.TASK_BACKUP, [], auditSource, callback);
+            tasks.startTask(tasks.TASK_BACKUP, {}, auditSource, callback);
         });
     });
 }
