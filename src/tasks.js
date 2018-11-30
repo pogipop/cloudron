@@ -87,6 +87,8 @@ function getProgress(id, callback) {
         if (error && error.reason == DatabaseError.NOT_FOUND) return callback(new TaskError(TaskError.NOT_FOUND));
         if (error) return callback(new TaskError(TaskError.INTERNAL_ERROR, error));
 
+        progress.active = !!gTasks[id];
+
         callback(null, progress);
     });
 }
