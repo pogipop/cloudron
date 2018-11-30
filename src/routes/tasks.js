@@ -21,6 +21,7 @@ function stopTask(req, res, next) {
 
     tasks.stopTask(req.params.taskId, auditSource(req), function (error) {
         if (error && error.reason === TaskError.NOT_FOUND) return next(new HttpError(404, 'No such task'));
+        if (error && error.reason === TaskError.BAD_STATE) return next(new HttpError(409, error.message));
         if (error) return next(new HttpError(500, error));
 
         next(new HttpSuccess(204, {}));

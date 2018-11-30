@@ -103,7 +103,7 @@ function startTask(id, auditSource, callback) {
     assert.strictEqual(typeof auditSource, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    let taskInfo = TASKS[id];
+    const taskInfo = TASKS[id];
     if (!taskInfo) return callback(new TaskError(TaskError.NOT_FOUND, 'No such task'));
 
     let error = locker.lock(taskInfo.lock);
@@ -150,6 +150,9 @@ function stopTask(id, auditSource, callback) {
     assert.strictEqual(typeof id, 'string');
     assert.strictEqual(typeof auditSource, 'object');
     assert.strictEqual(typeof callback, 'function');
+
+    const taskInfo = TASKS[id];
+    if (!taskInfo) return callback(new TaskError(TaskError.NOT_FOUND, 'No such task'));
 
     if (!gTasks[id]) return callback(new TaskError(TaskError.BAD_STATE, 'task is not active'));
 
