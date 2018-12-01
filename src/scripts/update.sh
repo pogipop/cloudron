@@ -33,20 +33,21 @@ if systemctl reset-failed "${UPDATER_SERVICE}"; then
 fi
 
 # StandardError will follow StandardOutput in default inherit mode. https://www.freedesktop.org/software/systemd/man/systemd.exec.html
-echo "=> Run installer.sh as cloudron-updater.service"
+echo "=> Run installer.sh as ${UPDATER_SERVICE}."
 if ! systemd-run --unit "${UPDATER_SERVICE}" -p "StandardOutput=file:${LOG_FILE}" ${installer_path}; then
     echo "Failed to install cloudron. See ${LOG_FILE} for details"
     exit 1
 fi
 
-echo "=> service ${UPDATER_SERVICE} started."
-echo "=> See logs with journalctl -u ${UPDATER_SERVICE} -f"
+echo "=> service ${UPDATER_SERVICE} started. see logs at ${LOG_FILE}"
 
 while true; do
-    if systemctl is-failed "${UPDATER_SERVICE}"; then
+    if systemctl is-failed "${UPDATER_SERVICE}" >/dev/null 2>&1; then
         echo "=> ${UPDATER_SERVICE} has failed"
         exit 1
     fi
+
+    echo "${UPDATER_SERVICE} is still active. will check in 5 seconds"
 
     sleep 5
     # this loop will stop once the update process stopped the box unit and thus terminating this child process
