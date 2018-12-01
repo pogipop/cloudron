@@ -89,7 +89,7 @@ AddonsError.NOT_SUPPORTED = 'Not Supported';
 AddonsError.NOT_FOUND = 'Not Found';
 AddonsError.NOT_ACTIVE = 'Not Active';
 
-const NOOP = function (callback) { return callback(); };
+const NOOP = function (app, options, callback) { return callback(); };
 const NOOP_CALLBACK = function (error) { if (error) debug(error); };
 const RMADDONDIR_CMD = path.join(__dirname, 'scripts/rmaddondir.sh');
 
@@ -981,7 +981,7 @@ function startMysql(existingInfra, callback) {
     const upgrading = existingInfra.version !== 'none' && requiresUpgrade(existingInfra.images.mysql.tag, tag);
 
     if (upgrading) debug('startMysql: mysql will be upgraded');
-    const upgradeFunc = upgrading ? shell.sudo.bind(null, 'startMysql', [ RMADDONDIR_CMD, 'mysql' ], {}) : NOOP;
+    const upgradeFunc = upgrading ? shell.sudo.bind(null, 'startMysql', [ RMADDONDIR_CMD, 'mysql' ], {}) : (next) => next();
 
     upgradeFunc(function (error) {
         if (error) return callback(error);
@@ -1193,7 +1193,7 @@ function startPostgresql(existingInfra, callback) {
     const upgrading = existingInfra.version !== 'none' && requiresUpgrade(existingInfra.images.postgresql.tag, tag);
 
     if (upgrading) debug('startPostgresql: postgresql will be upgraded');
-    const upgradeFunc = upgrading ? shell.sudo.bind(null, 'startPostgresql', [ RMADDONDIR_CMD, 'postgresql' ], {}) : NOOP;
+    const upgradeFunc = upgrading ? shell.sudo.bind(null, 'startPostgresql', [ RMADDONDIR_CMD, 'postgresql' ], {}) : (next) => next();
 
     upgradeFunc(function (error) {
         if (error) return callback(error);
@@ -1367,7 +1367,7 @@ function startMongodb(existingInfra, callback) {
     const upgrading = existingInfra.version !== 'none' && requiresUpgrade(existingInfra.images.mongodb.tag, tag);
 
     if (upgrading) debug('startMongodb: mongodb will be upgraded');
-    const upgradeFunc = upgrading ? shell.sudo.bind(null, 'startMongodb', [ RMADDONDIR_CMD, 'mongodb' ], {}) : NOOP;
+    const upgradeFunc = upgrading ? shell.sudo.bind(null, 'startMongodb', [ RMADDONDIR_CMD, 'mongodb' ], {}) : (next) => next();
 
     upgradeFunc(function (error) {
         if (error) return callback(error);
