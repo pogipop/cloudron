@@ -9,7 +9,7 @@ fi
 
 readonly UPDATER_SERVICE="cloudron-updater"
 readonly DATETIME=`date '+%Y-%m-%d_%H-%M-%S'`
-readonly LOG_FILE="/var/log/cloudron-updater-${DATETIME}.log"
+readonly LOG_FILE="/home/yellowtent/platformdata/logs/updater/cloudron-updater-${DATETIME}.log"
 
 if [[ $# == 1 && "$1" == "--check" ]]; then
     echo "OK"

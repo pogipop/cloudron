@@ -2,6 +2,7 @@
 
 exports = module.exports = {
     updateToLatest: updateToLatest,
+    update: update,
 
     UpdaterError: UpdaterError
 };
@@ -13,8 +14,6 @@ var assert = require('assert'),
     config = require('./config.js'),
     crypto = require('crypto'),
     debug = require('debug')('box:updater'),
-    eventlog = require('./eventlog.js'),
-    locker = require('./locker.js'),
     mkdirp = require('mkdirp'),
     os = require('os'),
     path = require('path'),
@@ -27,7 +26,6 @@ var assert = require('assert'),
 
 const RELEASES_PUBLIC_KEY = path.join(__dirname, 'releases.gpg');
 const UPDATE_CMD = path.join(__dirname, 'scripts/update.sh');
-const NOOP_CALLBACK = function (error) { if (error) debug(error); };
 
 function UpdaterError(reason, errorOrMessage) {
     assert.strictEqual(typeof reason, 'string');
@@ -152,59 +150,33 @@ function downloadAndVerifyRelease(updateInfo, callback) {
     });
 }
 
-function doUpdate(boxUpdateInfo, callback) {
+function update(boxUpdateInfo, progressCallback, callback) {
     assert(boxUpdateInfo && typeof boxUpdateInfo === 'object');
+    assert.strictEqual(typeof progressCallback, 'function');
+    assert.strictEqual(typeof callback, 'function');
 
-    function updateError(e) {
-        tasks.update(tasks.TASK_UPDATE, { percent: -1, errorMessage: e.message }, NOOP_CALLBACK);
-        callback(e);
-    }
-
-    tasks.update(tasks.TASK_UPDATE, { percent: 5, message: 'Downloading and verifying release' }, NOOP_CALLBACK);
+    progressCallback({ percent: 5, message: 'Downloading and verifying release' });
 
     downloadAndVerifyRelease(boxUpdateInfo, function (error, packageInfo) {
-        if (error) return updateError(error);
+        if (error) return callback(error);
 
-        tasks.update(tasks.TASK_UPDATE, { percent: 10, message: 'Backing up' }, NOOP_CALLBACK);
+        progressCallback({ percent: 10, message: 'Backing up' });
 
-        backups.backupBoxAndApps((progress) => tasks.update(tasks.TASK_MIGRATE, { percent: 10+progress.percent*70/100, message: progress.message }, NOOP_CALLBACK), function (error) {
-            if (error) return updateError(error);
+        backups.backupBoxAndApps((progress) => progressCallback({ percent: 10+progress.percent*70/100, message: progress.message }), function (error) {
+            if (error) return callback(error);
 
             debug('updating box %s', boxUpdateInfo.sourceTarballUrl);
 
-            tasks.update(tasks.TASK_UPDATE, { percent: 70, message: 'Installing update' }, NOOP_CALLBACK);
+            progressCallback({ percent: 70, message: 'Installing update' });
 
+            // run installer.sh from new box code as a separate service
             shell.sudo('update', [ UPDATE_CMD, packageInfo.file ], {}, function (error) {
-                if (error) return updateError(error);
+                if (error) return callback(error);
 
                 // Do not add any code here. The installer script will stop the box code any instant
             });
         });
     });
-}
-
-function update(boxUpdateInfo, auditSource, callback) {
-    assert(boxUpdateInfo && typeof boxUpdateInfo === 'object');
-    assert.strictEqual(typeof auditSource, 'object');
-    assert.strictEqual(typeof callback, 'function');
-
-    var error = locker.lock(locker.OP_BOX_UPDATE);
-    if (error) return callback(new UpdaterError(UpdaterError.BAD_STATE, error.message));
-
-    eventlog.add(eventlog.ACTION_UPDATE, auditSource, { boxUpdateInfo: boxUpdateInfo });
-
-    // ensure tools can 'wait' on progress
-    tasks.update(tasks.TASK_UPDATE, { percent: 0, message: 'Starting' }, NOOP_CALLBACK);
-
-    debug('Starting update');
-    doUpdate(boxUpdateInfo, function (error) {
-        if (error) {
-            debug('Update failed with error:', error);
-            locker.unlock(locker.OP_BOX_UPDATE);
-        }
-    });
-
-    callback(null);
 }
 
 function updateToLatest(auditSource, callback) {
@@ -215,5 +187,5 @@ function updateToLatest(auditSource, callback) {
     if (!boxUpdateInfo) return callback(new UpdaterError(UpdaterError.ALREADY_UPTODATE, 'No update available'));
     if (!boxUpdateInfo.sourceTarballUrl) return callback(new UpdaterError(UpdaterError.BAD_STATE, 'No automatic update available'));
 
-    update(boxUpdateInfo, auditSource, callback);
+    tasks.startTask(tasks.TASK_UPDATE, { boxUpdateInfo }, auditSource, callback);
 }

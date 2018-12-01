@@ -3,7 +3,6 @@
 exports = module.exports = {
     update: update,
     get: get,
-    clear: clear,
 
     startTask: startTask,
     stopTask: stopTask,
@@ -25,18 +24,27 @@ let assert = require('assert'),
     paths = require('./paths.js'),
     safe = require('safetydance'),
     taskdb = require('./taskdb.js'),
-    util = require('util');
+    util = require('util'),
+    _ = require('underscore');
 
 const NOOP_CALLBACK = function (error) { if (error) debug(error); };
 
 const TASKS = {
-    'backup': {
+    backup: {
         lock: locker.OP_FULL_BACKUP,
         logFile: paths.BACKUP_LOG_FILE,
         program: __dirname + '/tasks/backuptask.js',
         onFailure: mailer.backupFailed,
         startEventId: eventlog.ACTION_BACKUP_START,
         finishEventId: eventlog.ACTION_BACKUP_FINISH
+    },
+    update: {
+        lock: locker.OP_BOX_UPDATE,
+        logFile: paths.UPDATER_LOG_FILE,
+        program: __dirname + '/tasks/updatertask.js',
+        onFailure: NOOP_CALLBACK,
+        startEventId: eventlog.ACTION_UPDATE,
+        finishEventId: eventlog.ACTION_UPDATE
     }
 };
 
@@ -93,11 +101,12 @@ function get(id, callback) {
     });
 }
 
-function clear(id, callback) {
+function clear(id, args, callback) {
     assert.strictEqual(typeof id, 'string');
+    assert(args && typeof args === 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    update(id, { percent: 0, message: 'Starting', result: '', errorMessage: '', args: {} }, callback);
+    update(id, { percent: 0, message: 'Starting', result: '', errorMessage: '', args: args }, callback);
 }
 
 function startTask(id, args, auditSource, callback) {
@@ -124,17 +133,22 @@ function startTask(id, args, auditSource, callback) {
     // when parent process dies, this process is killed because KillMode=control-group in systemd unit file
     assert(!gTasks[id], 'Task is already running');
 
-    clear(id, NOOP_CALLBACK);
+    clear(id, args, NOOP_CALLBACK);
     eventlog.add(taskInfo.startEventId, auditSource, args);
 
-    gTasks[id] = child_process.fork(taskInfo.program, [], { stdio: [ 'pipe', fd, fd, 'ipc' ]});
+    gTasks[id] = child_process.fork(taskInfo.program, [], { stdio: [ 'pipe', fd, fd, 'ipc' ]}); // fork requires ipc
     gTasks[id].once('exit', function (code, signal) {
         debug(`startTask: ${id} completed with code ${code} and signal ${signal}`);
 
         get(id, function (error, progress) {
-            if (!error && progress.errorMessage) error = new Error(progress.errorMessage);
+            if (!error && progress.percent !== 100) { // task crashed or was killed by us (code 50)
+                error = code === 0 ? new Error(`${id} task stopped`) : new Error(`${id} task crashed with code ${code} and signal ${signal}`);
+                update(id, { percent: 100, errorMessage: error.message }, NOOP_CALLBACK);
+            } else if (!error && progress.errorMessage) {
+                error = new Error(progress.errorMessage);
+            }
 
-            eventlog.add(taskInfo.finishEventId, auditSource, { errorMessage: error ? error.message : null, backupId: progress ? progress.result : null });
+            eventlog.add(taskInfo.finishEventId, auditSource, _.extend({ errorMessage: error ? error.message : null }, progress ? progress.result : {}));
 
             locker.unlock(taskInfo.lock);
 

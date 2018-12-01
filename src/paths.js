@@ -35,4 +35,5 @@ exports = module.exports = {
     LOG_DIR: path.join(config.baseDir(), 'platformdata/logs'),
     // this pattern is for the cloudron logs API route to work
     BACKUP_LOG_FILE: path.join(config.baseDir(), 'platformdata/logs/backup/app.log'),
+    UPDATER_LOG_FILE: path.join(config.baseDir(), 'platformdata/logs/updater/app.log')
 };
