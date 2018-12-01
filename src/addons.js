@@ -89,7 +89,7 @@ AddonsError.NOT_SUPPORTED = 'Not Supported';
 AddonsError.NOT_FOUND = 'Not Found';
 AddonsError.NOT_ACTIVE = 'Not Active';
 
-const NOOP = function (app, options, callback) { return callback(); };
+const NOOP = function (callback) { return callback(); };
 const NOOP_CALLBACK = function (error) { if (error) debug(error); };
 const RMADDONDIR_CMD = path.join(__dirname, 'scripts/rmaddondir.sh');
 
