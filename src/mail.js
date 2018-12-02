@@ -52,6 +52,7 @@ var assert = require('assert'),
     dns = require('./native-dns.js'),
     domains = require('./domains.js'),
     eventlog = require('./eventlog.js'),
+    hat = require('./hat.js'),
     infra = require('./infra_version.js'),
     mailboxdb = require('./mailboxdb.js'),
     maildb = require('./maildb.js'),
@@ -554,6 +555,7 @@ function restartMail(callback) {
 
     const tag = infra.images.mail.tag;
     const memoryLimit = 4 * 256;
+    const cloudronToken = hat(8 * 128);
 
     // admin and mail share the same certificate
     reverseProxy.getCertificate({ fqdn: config.adminFqdn(), domain: config.adminDomain() }, function (error, bundle) {
@@ -585,6 +587,7 @@ function restartMail(callback) {
                             --memory-swap ${memoryLimit * 2}m \
                             --dns 172.18.0.1 \
                             --dns-search=. \
+                            -e CLOUDRON_MAIL_TOKEN="${cloudronToken}" \
                             -v "${paths.MAIL_DATA_DIR}:/app/data" \
                             -v "${paths.PLATFORM_DATA_DIR}/addons/mail:/etc/mail" \
                             ${ports} \
