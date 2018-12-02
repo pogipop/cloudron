@@ -110,7 +110,7 @@ var KNOWN_ADDONS = {
         backup: NOOP,
         restore: setupEmail,
         clear: NOOP,
-        status: statusEmail,
+        status: statusContainerAddon.bind(null, 'mail', 'CLOUDRON_MAIL_TOKEN'),
         restart: restartContainerAddon.bind(null, 'email')
     },
     ldap: {
@@ -831,17 +831,6 @@ function teardownEmail(app, options, callback) {
     debugApp(app, 'Tearing down Email');
 
     appdb.unsetAddonConfig(app.id, 'email', callback);
-}
-
-function statusEmail(callback) {
-    assert.strictEqual(typeof callback, 'function');
-
-    docker.inspect('mail', function (error, result) {
-        if (error && error.reason === DockerError.NOT_FOUND) return callback(null, { status: exports.ADDON_STATUS_STOPPED });
-        if (error) return callback(new AddonsError(AddonsError.INTERNAL_ERROR, error));
-
-        callback(null, { status: result.State.Running ? exports.ADDON_STATUS_ACTIVE : exports.ADDON_STATUS_STOPPED });
-    });
 }
 
 function setupLdap(app, options, callback) {
