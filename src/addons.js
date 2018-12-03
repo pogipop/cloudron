@@ -26,9 +26,9 @@ exports = module.exports = {
     _setupOauth: setupOauth,
     _teardownOauth: teardownOauth,
 
-    ADDON_STATUS_STARTING: 'starting',  // container up, waiting for healthcheck
-    ADDON_STATUS_ACTIVE: 'active',
-    ADDON_STATUS_STOPPED: 'stopped'
+    SERVICE_STATUS_STARTING: 'starting',  // container up, waiting for healthcheck
+    SERVICE_STATUS_ACTIVE: 'active',
+    SERVICE_STATUS_STOPPED: 'stopped'
 };
 
 var accesscontrol = require('./accesscontrol.js'),
@@ -267,18 +267,18 @@ function containerStatus(addonName, addonTokenName, callback) {
     assert.strictEqual(typeof callback, 'function');
 
     getServiceDetails(addonName, addonTokenName, function (error, addonDetails) {
-        if (error && error.reason === AddonsError.NOT_ACTIVE) return callback(null, { status: exports.ADDON_STATUS_STOPPED });
+        if (error && error.reason === AddonsError.NOT_ACTIVE) return callback(null, { status: exports.SERVICE_STATUS_STOPPED });
         if (error) return callback(error);
 
         request.get(`https://${addonDetails.ip}:3000/healthcheck?access_token=${addonDetails.token}`, { json: true, rejectUnauthorized: false }, function (error, response) {
-            if (error) return callback(null, { status: exports.ADDON_STATUS_STARTING, error: `Error waiting for ${addonName}: ${error.message}` });
-            if (response.statusCode !== 200 || !response.body.status) return callback(null, { status: exports.ADDON_STATUS_STARTING, error: `Error waiting for ${addonName}. Status code: ${response.statusCode} message: ${response.body.message}` });
+            if (error) return callback(null, { status: exports.SERVICE_STATUS_STARTING, error: `Error waiting for ${addonName}: ${error.message}` });
+            if (response.statusCode !== 200 || !response.body.status) return callback(null, { status: exports.SERVICE_STATUS_STARTING, error: `Error waiting for ${addonName}. Status code: ${response.statusCode} message: ${response.body.message}` });
 
             docker.memoryUsage(addonName, function (error, result) {
                 if (error) return callback(new AddonsError(AddonsError.INTERNAL_ERROR, error));
 
                 var tmp = {
-                    status: addonDetails.state.Running ? exports.ADDON_STATUS_ACTIVE : exports.ADDON_STATUS_STOPPED,
+                    status: addonDetails.state.Running ? exports.SERVICE_STATUS_ACTIVE : exports.SERVICE_STATUS_STOPPED,
                     memoryUsed: result.memory_stats.usage,
                     memoryPercent: parseInt(100 * result.memory_stats.usage / result.memory_stats.limit)
                 };
@@ -1674,7 +1674,7 @@ function statusDocker(callback) {
     assert.strictEqual(typeof callback, 'function');
 
     docker.ping(function (error) {
-        callback(null, { status: error ? exports.ADDON_STATUS_STOPPED: exports.ADDON_STATUS_ACTIVE });
+        callback(null, { status: error ? exports.SERVICE_STATUS_STOPPED: exports.SERVICE_STATUS_ACTIVE });
     });
 }
 
@@ -1690,7 +1690,7 @@ function statusUnbound(callback) {
     assert.strictEqual(typeof callback, 'function');
 
     shell.exec('statusUnbound', 'systemctl is-active unbound', function (error) {
-        callback(null, { status: error ? exports.ADDON_STATUS_STOPPED : exports.ADDON_STATUS_ACTIVE });
+        callback(null, { status: error ? exports.SERVICE_STATUS_STOPPED : exports.SERVICE_STATUS_ACTIVE });
     });
 }
 
