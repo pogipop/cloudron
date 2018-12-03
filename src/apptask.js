@@ -696,7 +696,7 @@ function update(app, callback) {
 
             async.series([
                 updateApp.bind(null, app, { installationProgress: '15, Backing up app' }),
-                backups.backupApp.bind(null, app, (progress) => updateApp(app, { installationProgress: progress.message }))
+                backups.backupApp.bind(null, app, (progress) => updateApp(app, { installationProgress: progress.message }, NOOP_CALLBACK))
             ], function (error) {
                 if (error) error.backupError = true;
                 next(error);
