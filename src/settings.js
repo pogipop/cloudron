@@ -394,7 +394,7 @@ function setPlatformConfig(platformConfig, callback) {
     settingsdb.set(exports.PLATFORM_CONFIG_KEY, JSON.stringify(platformConfig), function (error) {
         if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
 
-        addons.updateAddonConfig(platformConfig, callback);
+        addons.updateServiceConfig(platformConfig, callback);
     });
 }
 

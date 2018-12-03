@@ -63,7 +63,7 @@ function start(callback) {
         // mark app state before we start addons. this gives the db import logic a chance to mark an app as errored
         startApps.bind(null, existingInfra),
         graphs.startGraphite.bind(null, existingInfra),
-        addons.startAddons.bind(null, existingInfra),
+        addons.startServices.bind(null, existingInfra),
         fs.writeFile.bind(fs, paths.INFRA_VERSION_FILE, JSON.stringify(infra, null, 4))
     ], function (error) {
         if (error) return callback(error);
@@ -97,8 +97,8 @@ function applyPlatformConfig(callback) {
         settings.getPlatformConfig(function (error, platformConfig) {
             if (error) return retryCallback(error);
 
-            addons.updateAddonConfig(platformConfig, function (error) {
-                if (error) debug('Error updating addons. Will rety in 5 minutes', platformConfig, error);
+            addons.updateServiceConfig(platformConfig, function (error) {
+                if (error) debug('Error updating services. Will rety in 5 minutes', platformConfig, error);
 
                 retryCallback(error);
             });

@@ -9,8 +9,8 @@ exports = module.exports = {
     getServiceLogs: getServiceLogs,
     restartService: restartService,
 
-    startAddons: startAddons,
-    updateAddonConfig: updateAddonConfig,
+    startServices: startServices,
+    updateServiceConfig: updateServiceConfig,
 
     setupAddons: setupAddons,
     teardownAddons: teardownAddons,
@@ -261,7 +261,7 @@ function containerStatus(addonName, addonTokenName, callback) {
     assert.strictEqual(typeof addonTokenName, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    getAddonDetails(addonName, addonTokenName, function (error, addonDetails) {
+    getServiceDetails(addonName, addonTokenName, function (error, addonDetails) {
         if (error && error.reason === AddonsError.NOT_ACTIVE) return callback(null, { status: exports.ADDON_STATUS_STOPPED });
         if (error) return callback(error);
 
@@ -416,7 +416,7 @@ function restartService(serviceName, callback) {
     KNOWN_SERVICES[serviceName].restart(callback);
 }
 
-function getAddonDetails(containerName, tokenEnvName, callback) {
+function getServiceDetails(containerName, tokenEnvName, callback) {
     assert.strictEqual(typeof containerName, 'string');
     assert.strictEqual(typeof tokenEnvName, 'string');
     assert.strictEqual(typeof callback, 'function');
@@ -440,14 +440,14 @@ function getAddonDetails(containerName, tokenEnvName, callback) {
     });
 }
 
-function waitForAddon(containerName, tokenEnvName, callback) {
+function waitForService(containerName, tokenEnvName, callback) {
     assert.strictEqual(typeof containerName, 'string');
     assert.strictEqual(typeof tokenEnvName, 'string');
     assert.strictEqual(typeof callback, 'function');
 
     debug(`Waiting for ${containerName}`);
 
-    getAddonDetails(containerName, tokenEnvName, function (error, result) {
+    getServiceDetails(containerName, tokenEnvName, function (error, result) {
         if (error) return callback(error);
 
         async.retry({ times: 10, interval: 15000 }, function (retryCallback) {
@@ -589,10 +589,10 @@ function importDatabase(addon, callback) {
     });
 }
 
-function updateAddonConfig(platformConfig, callback) {
+function updateServiceConfig(platformConfig, callback) {
     callback = callback || NOOP_CALLBACK;
 
-    debug('updateAddonConfig: %j', platformConfig);
+    debug('updateServiceConfig: %j', platformConfig);
 
     // TODO: this should possibly also rollback memory to default
     async.eachSeries([ 'mysql', 'postgresql', 'mail', 'mongodb' ], function iterator(serviceName, iteratorCallback) {
@@ -611,7 +611,7 @@ function updateAddonConfig(platformConfig, callback) {
     }, callback);
 }
 
-function startAddons(existingInfra, callback) {
+function startServices(existingInfra, callback) {
     assert.strictEqual(typeof existingInfra, 'object');
     assert.strictEqual(typeof callback, 'function');
 
@@ -619,7 +619,7 @@ function startAddons(existingInfra, callback) {
 
     // always start addons on any infra change, regardless of minor or major update
     if (existingInfra.version !== infra.version) {
-        debug(`startAddons: ${existingInfra.version} -> ${infra.version}. starting all addons`);
+        debug(`startServices: ${existingInfra.version} -> ${infra.version}. starting all services`);
         startFuncs.push(
             startMysql.bind(null, existingInfra),
             startPostgresql.bind(null, existingInfra),
@@ -635,7 +635,7 @@ function startAddons(existingInfra, callback) {
         if (infra.images.mail.tag !== existingInfra.images.mail.tag) startFuncs.push(mail.startMail);
         if (infra.images.redis.tag !== existingInfra.images.redis.tag) startFuncs.push(startRedis.bind(null, existingInfra));
 
-        debug('startAddons: existing infra. incremental addon create %j', startFuncs.map(function (f) { return f.name; }));
+        debug('startServices: existing infra. incremental service create %j', startFuncs.map(function (f) { return f.name; }));
     }
 
     async.series(startFuncs, callback);
@@ -978,7 +978,7 @@ function startMysql(existingInfra, callback) {
         shell.exec('startMysql', cmd, function (error) {
             if (error) return callback(error);
 
-            waitForAddon('mysql', 'CLOUDRON_MYSQL_TOKEN', function (error) {
+            waitForService('mysql', 'CLOUDRON_MYSQL_TOKEN', function (error) {
                 if (error) return callback(error);
                 if (!upgrading) return callback(null);
 
@@ -1007,7 +1007,7 @@ function setupMySql(app, options, callback) {
             password: error ? hat(4 * 48) : existingPassword // see box#362 for password length
         };
 
-        getAddonDetails('mysql', 'CLOUDRON_MYSQL_TOKEN', function (error, result) {
+        getServiceDetails('mysql', 'CLOUDRON_MYSQL_TOKEN', function (error, result) {
             if (error) return callback(error);
 
             request.post(`https://${result.ip}:3000/` + (options.multipleDatabases ? 'prefixes' : 'databases') + `?access_token=${result.token}`, { rejectUnauthorized: false, json: data }, function (error, response) {
@@ -1044,7 +1044,7 @@ function clearMySql(app, options, callback) {
 
     const database = mysqlDatabaseName(app.id);
 
-    getAddonDetails('mysql', 'CLOUDRON_MYSQL_TOKEN', function (error, result) {
+    getServiceDetails('mysql', 'CLOUDRON_MYSQL_TOKEN', function (error, result) {
         if (error) return callback(error);
 
         request.post(`https://${result.ip}:3000/` + (options.multipleDatabases ? 'prefixes' : 'databases') + `/${database}/clear?access_token=${result.token}`, { rejectUnauthorized: false }, function (error, response) {
@@ -1063,7 +1063,7 @@ function teardownMySql(app, options, callback) {
     const database = mysqlDatabaseName(app.id);
     const username = database;
 
-    getAddonDetails('mysql', 'CLOUDRON_MYSQL_TOKEN', function (error, result) {
+    getServiceDetails('mysql', 'CLOUDRON_MYSQL_TOKEN', function (error, result) {
         if (error) return callback(error);
 
         request.delete(`https://${result.ip}:3000/` + (options.multipleDatabases ? 'prefixes' : 'databases') + `/${database}?access_token=${result.token}&username=${username}`, { rejectUnauthorized: false }, function (error, response) {
@@ -1110,7 +1110,7 @@ function backupMySql(app, options, callback) {
 
     debugApp(app, 'Backing up mysql');
 
-    getAddonDetails('mysql', 'CLOUDRON_MYSQL_TOKEN', function (error, result) {
+    getServiceDetails('mysql', 'CLOUDRON_MYSQL_TOKEN', function (error, result) {
         if (error) return callback(error);
 
         const url = `https://${result.ip}:3000/` + (options.multipleDatabases ? 'prefixes' : 'databases') + `/${database}/backup?access_token=${result.token}`;
@@ -1129,7 +1129,7 @@ function restoreMySql(app, options, callback) {
 
     callback = once(callback); // protect from multiple returns with streams
 
-    getAddonDetails('mysql', 'CLOUDRON_MYSQL_TOKEN', function (error, result) {
+    getServiceDetails('mysql', 'CLOUDRON_MYSQL_TOKEN', function (error, result) {
         if (error) return callback(error);
 
         var input = fs.createReadStream(dumpPath('mysql', app.id));
@@ -1189,7 +1189,7 @@ function startPostgresql(existingInfra, callback) {
         shell.exec('startPostgresql', cmd, function (error) {
             if (error) return callback(error);
 
-            waitForAddon('postgresql', 'CLOUDRON_POSTGRESQL_TOKEN', function (error) {
+            waitForService('postgresql', 'CLOUDRON_POSTGRESQL_TOKEN', function (error) {
                 if (error) return callback(error);
                 if (!upgrading) return callback(null);
 
@@ -1217,7 +1217,7 @@ function setupPostgreSql(app, options, callback) {
             password: error ? hat(4 * 128) : existingPassword
         };
 
-        getAddonDetails('postgresql', 'CLOUDRON_POSTGRESQL_TOKEN', function (error, result) {
+        getServiceDetails('postgresql', 'CLOUDRON_POSTGRESQL_TOKEN', function (error, result) {
             if (error) return callback(error);
 
             request.post(`https://${result.ip}:3000/databases?access_token=${result.token}`, { rejectUnauthorized: false, json: data }, function (error, response) {
@@ -1249,7 +1249,7 @@ function clearPostgreSql(app, options, callback) {
 
     debugApp(app, 'Clearing postgresql');
 
-    getAddonDetails('postgresql', 'CLOUDRON_POSTGRESQL_TOKEN', function (error, result) {
+    getServiceDetails('postgresql', 'CLOUDRON_POSTGRESQL_TOKEN', function (error, result) {
         if (error) return callback(error);
 
         request.post(`https://${result.ip}:3000/databases/${database}/clear?access_token=${result.token}&username=${username}`, { rejectUnauthorized: false }, function (error, response) {
@@ -1268,7 +1268,7 @@ function teardownPostgreSql(app, options, callback) {
 
     const { database, username } = postgreSqlNames(app.id);
 
-    getAddonDetails('postgresql', 'CLOUDRON_POSTGRESQL_TOKEN', function (error, result) {
+    getServiceDetails('postgresql', 'CLOUDRON_POSTGRESQL_TOKEN', function (error, result) {
         if (error) return callback(error);
 
         request.delete(`https://${result.ip}:3000/databases/${database}?access_token=${result.token}&username=${username}`, { rejectUnauthorized: false }, function (error, response) {
@@ -1289,7 +1289,7 @@ function backupPostgreSql(app, options, callback) {
 
     const { database } = postgreSqlNames(app.id);
 
-    getAddonDetails('postgresql', 'CLOUDRON_POSTGRESQL_TOKEN', function (error, result) {
+    getServiceDetails('postgresql', 'CLOUDRON_POSTGRESQL_TOKEN', function (error, result) {
         if (error) return callback(error);
 
         const url = `https://${result.ip}:3000/databases/${database}/backup?access_token=${result.token}`;
@@ -1308,7 +1308,7 @@ function restorePostgreSql(app, options, callback) {
 
     callback = once(callback); // protect from multiple returns with streams
 
-    getAddonDetails('postgresql', 'CLOUDRON_POSTGRESQL_TOKEN', function (error, result) {
+    getServiceDetails('postgresql', 'CLOUDRON_POSTGRESQL_TOKEN', function (error, result) {
         if (error) return callback(error);
 
         var input = fs.createReadStream(dumpPath('postgresql', app.id));
@@ -1363,7 +1363,7 @@ function startMongodb(existingInfra, callback) {
         shell.exec('startMongodb', cmd, function (error) {
             if (error) return callback(error);
 
-            waitForAddon('mongodb', 'CLOUDRON_MONGODB_TOKEN', function (error) {
+            waitForService('mongodb', 'CLOUDRON_MONGODB_TOKEN', function (error) {
                 if (error) return callback(error);
                 if (!upgrading) return callback(null);
 
@@ -1389,7 +1389,7 @@ function setupMongoDb(app, options, callback) {
             password: error ? hat(4 * 128) : existingPassword
         };
 
-        getAddonDetails('mongodb', 'CLOUDRON_MONGODB_TOKEN', function (error, result) {
+        getServiceDetails('mongodb', 'CLOUDRON_MONGODB_TOKEN', function (error, result) {
             if (error) return callback(error);
 
             request.post(`https://${result.ip}:3000/databases?access_token=${result.token}`, { rejectUnauthorized: false, json: data }, function (error, response) {
@@ -1419,7 +1419,7 @@ function clearMongodb(app, options, callback) {
 
     debugApp(app, 'Clearing mongodb');
 
-    getAddonDetails('mongodb', 'CLOUDRON_MONGODB_TOKEN', function (error, result) {
+    getServiceDetails('mongodb', 'CLOUDRON_MONGODB_TOKEN', function (error, result) {
         if (error) return callback(error);
 
         request.post(`https://${result.ip}:3000/databases/${app.id}/clear?access_token=${result.token}`, { rejectUnauthorized: false }, function (error, response) {
@@ -1438,7 +1438,7 @@ function teardownMongoDb(app, options, callback) {
 
     debugApp(app, 'Tearing down mongodb');
 
-    getAddonDetails('mongodb', 'CLOUDRON_MONGODB_TOKEN', function (error, result) {
+    getServiceDetails('mongodb', 'CLOUDRON_MONGODB_TOKEN', function (error, result) {
         if (error) return callback(error);
 
         request.delete(`https://${result.ip}:3000/databases/${app.id}?access_token=${result.token}`, { rejectUnauthorized: false }, function (error, response) {
@@ -1457,7 +1457,7 @@ function backupMongoDb(app, options, callback) {
 
     debugApp(app, 'Backing up mongodb');
 
-    getAddonDetails('mongodb', 'CLOUDRON_MONGODB_TOKEN', function (error, result) {
+    getServiceDetails('mongodb', 'CLOUDRON_MONGODB_TOKEN', function (error, result) {
         if (error) return callback(error);
 
         const url = `https://${result.ip}:3000/databases/${app.id}/backup?access_token=${result.token}`;
@@ -1474,7 +1474,7 @@ function restoreMongoDb(app, options, callback) {
 
     debugApp(app, 'restoreMongoDb');
 
-    getAddonDetails('mongodb', 'CLOUDRON_MONGODB_TOKEN', function (error, result) {
+    getServiceDetails('mongodb', 'CLOUDRON_MONGODB_TOKEN', function (error, result) {
         if (error) return callback(error);
 
         const readStream = fs.createReadStream(dumpPath('mongodb', app.id));
@@ -1565,7 +1565,7 @@ function setupRedis(app, options, callback) {
             async.series([
                 shell.exec.bind(null, 'startRedis', cmd),
                 appdb.setAddonConfig.bind(null, app.id, 'redis', env),
-                waitForAddon.bind(null, 'redis-' + app.id, 'CLOUDRON_REDIS_TOKEN')
+                waitForService.bind(null, 'redis-' + app.id, 'CLOUDRON_REDIS_TOKEN')
             ], function (error) {
                 if (error) debug('Error setting up redis: ', error);
                 callback(error);
@@ -1581,7 +1581,7 @@ function clearRedis(app, options, callback) {
 
     debugApp(app, 'Clearing redis');
 
-    getAddonDetails('redis-' + app.id, 'CLOUDRON_REDIS_TOKEN', function (error, result) {
+    getServiceDetails('redis-' + app.id, 'CLOUDRON_REDIS_TOKEN', function (error, result) {
         if (error) return callback(error);
 
         request.post(`https://${result.ip}:3000/clear?access_token=${result.token}`, { rejectUnauthorized: false }, function (error, response) {
@@ -1627,7 +1627,7 @@ function backupRedis(app, options, callback) {
 
     debugApp(app, 'Backing up redis');
 
-    getAddonDetails('redis-' + app.id, 'CLOUDRON_REDIS_TOKEN', function (error, result) {
+    getServiceDetails('redis-' + app.id, 'CLOUDRON_REDIS_TOKEN', function (error, result) {
         if (error) return callback(error);
 
         const url = `https://${result.ip}:3000/backup?access_token=${result.token}`;
@@ -1642,7 +1642,7 @@ function restoreRedis(app, options, callback) {
 
     debugApp(app, 'Restoring redis');
 
-    getAddonDetails('redis-' + app.id, 'CLOUDRON_REDIS_TOKEN', function (error, result) {
+    getServiceDetails('redis-' + app.id, 'CLOUDRON_REDIS_TOKEN', function (error, result) {
         if (error) return callback(error);
 
         let input;
