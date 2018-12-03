@@ -6,7 +6,7 @@ exports = module.exports = {
     getServices: getServices,
     getService: getService,
     configureService: configureService,
-    getLogs: getLogs,
+    getServiceLogs: getServiceLogs,
     restartService: restartService,
 
     startAddons: startAddons,
@@ -360,14 +360,14 @@ function configureService(serviceName, data, callback) {
     });
 }
 
-function getLogs(addonName, options, callback) {
-    assert.strictEqual(typeof addonName, 'string');
+function getServiceLogs(serviceName, options, callback) {
+    assert.strictEqual(typeof serviceName, 'string');
     assert(options && typeof options === 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    if (!KNOWN_ADDONS[addonName] || !KNOWN_ADDONS[addonName].status) return callback(new AddonsError(AddonsError.NOT_FOUND));
+    if (!KNOWN_SERVICES[serviceName]) return callback(new AddonsError(AddonsError.NOT_FOUND));
 
-    debug('Getting logs for %s', addonName);
+    debug(`Getting logs for ${serviceName}`);
 
     var lines = options.lines || 100,
         format = options.format || 'json',
@@ -376,12 +376,9 @@ function getLogs(addonName, options, callback) {
     assert.strictEqual(typeof lines, 'number');
     assert.strictEqual(typeof format, 'string');
 
-    // email, recvmail, sendmail addons all use the same log file
-    const containerName = addonName.indexOf('mail') !== -1 ? 'mail' : addonName;
-
     var args = [ '--lines=' + lines ];
     if (follow) args.push('--follow', '--retry', '--quiet'); // same as -F. to make it work if file doesn't exist, --quiet to not output file headers, which are no logs
-    args.push(path.join(paths.LOG_DIR, containerName, 'app.log'));
+    args.push(path.join(paths.LOG_DIR, serviceName, 'app.log'));
 
     var cp = spawn('/usr/bin/tail', args);
 
@@ -399,7 +396,7 @@ function getLogs(addonName, options, callback) {
         return JSON.stringify({
             realtimeTimestamp: timestamp * 1000,
             message: message,
-            source: addonName
+            source: serviceName
         }) + '\n';
     });
 
@@ -416,7 +413,7 @@ function restartService(serviceName, callback) {
 
     if (!KNOWN_SERVICES[serviceName]) return callback(new AddonsError(AddonsError.NOT_FOUND));
 
-    KNOWN_ADDONS[serviceName].restart(callback);
+    KNOWN_SERVICES[serviceName].restart(callback);
 }
 
 function getAddonDetails(containerName, tokenEnvName, callback) {

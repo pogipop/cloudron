@@ -67,7 +67,7 @@ function getLogs(req, res, next) {
         format: req.query.format
     };
 
-    addons.getLogs(req.params.service, options, function (error, logStream) {
+    addons.getServiceLogs(req.params.service, options, function (error, logStream) {
         if (error && error.reason === AddonsError.NOT_FOUND) return next(new HttpError(404, 'No such service'));
         if (error) return next(new HttpError(500, error));
 
@@ -99,7 +99,7 @@ function getLogStream(req, res, next) {
         follow: true
     };
 
-    addons.getLogs(req.params.service, options, function (error, logStream) {
+    addons.getServiceLogs(req.params.service, options, function (error, logStream) {
         if (error && error.reason === AddonsError.NOT_FOUND) return next(new HttpError(404, 'No such service'));
         if (error) return next(new HttpError(500, error));
 
