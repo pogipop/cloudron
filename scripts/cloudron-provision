@@ -2,7 +2,7 @@
 
 set -eu -o pipefail
 
-readonly curl="curl --fail --connect-timeout 20 --retry 10 --retry-delay 2 --max-time 2400"
+readonly curl="curl --fail --connect-timeout 20 --retry 10 --retry-delay 2 --max-time 2400 --http1.1"
 
 ip=""
 dns_config=""
