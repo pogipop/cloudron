@@ -71,8 +71,8 @@ CREATE TABLE IF NOT EXISTS apps(
     location VARCHAR(128) NOT NULL,
     domain VARCHAR(128) NOT NULL,
     accessRestrictionJson TEXT, // { users: [ ], groups: [ ] }
-    creationTime TIMESTAMP(2) NOT NULL DEFAULT CURRENT_TIMESTAMP, // when the app was installed
-    updateTime TIMESTAMP(2) NOT NULL DEFAULT CURRENT_TIMESTAMP,   // when the last app update was done
+    creationTime TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, // when the app was installed
+    updateTime TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,   // when the last app update was done
     ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, // when this db record was updated (useful for UI caching)
     memoryLimit BIGINT DEFAULT 0,
     xFrameOptions VARCHAR(512),
@@ -126,7 +126,7 @@ CREATE TABLE IF NOT EXISTS appEnvVars(
 
 CREATE TABLE IF NOT EXISTS backups(
     id VARCHAR(128) NOT NULL,
-    creationTime TIMESTAMP,
+    creationTime TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     version VARCHAR(128) NOT NULL, /* app version or box version */
     type VARCHAR(16) NOT NULL, /* 'box' or 'app' */
     dependsOn TEXT, /* comma separate list of objects this backup depends on */
@@ -141,7 +141,7 @@ CREATE TABLE IF NOT EXISTS eventlog(
     action VARCHAR(128) NOT NULL,
     source TEXT, /* { userId, username, ip }. userId can be null for cron,sysadmin */
     data TEXT, /* free flowing json based on action */
-    createdAt TIMESTAMP(2) NOT NULL,
+    creationTime TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     PRIMARY KEY (id));
 
@@ -181,7 +181,7 @@ CREATE TABLE IF NOT EXISTS mailboxes(
     ownerType VARCHAR(16) NOT NULL, /* 'app' or 'user' or 'group' */
     aliasTarget VARCHAR(128), /* the target name type is an alias */
     membersJson TEXT, /* members of a group */
-    creationTime TIMESTAMP,
+    creationTime TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     domain VARCHAR(128),
 
     FOREIGN KEY(domain) REFERENCES mail(domain),
