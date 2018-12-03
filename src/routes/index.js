@@ -2,7 +2,6 @@
 
 exports = module.exports = {
     accesscontrol: require('./accesscontrol.js'),
-    addons: require('./addons.js'),
     apps: require('./apps.js'),
     backups: require('./backups.js'),
     caas: require('./caas.js'),
@@ -16,9 +15,10 @@ exports = module.exports = {
     oauth2: require('./oauth2.js'),
     mail: require('./mail.js'),
     profile: require('./profile.js'),
+    services: require('./services.js'),
+    settings: require('./settings.js'),
     setup: require('./setup.js'),
     sysadmin: require('./sysadmin.js'),
-    settings: require('./settings.js'),
     ssh: require('./ssh.js'),
     tasks: require('./tasks.js'),
     users: require('./users.js')
