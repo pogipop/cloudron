@@ -286,12 +286,12 @@ function initializeExpressSync() {
     router.del ('/api/v1/domains/:domain', domainsManageScope, verifyDomainLock, routes.users.verifyPassword, routes.domains.del);
 
     // addon routes
-    router.get ('/api/v1/addons', cloudronScope, routes.addons.getAll);
-    router.get ('/api/v1/addons/:addon', cloudronScope, routes.addons.get);
-    router.post('/api/v1/addons/:addon', cloudronScope, routes.addons.configure);
-    router.get ('/api/v1/addons/:addon/logs', cloudronScope, routes.addons.getLogs);
-    router.get ('/api/v1/addons/:addon/logstream', cloudronScope, routes.addons.getLogStream);
-    router.post('/api/v1/addons/:addon/restart', cloudronScope, routes.addons.restart);
+    router.get ('/api/v1/services', cloudronScope, routes.addons.getAll);
+    router.get ('/api/v1/services/:service', cloudronScope, routes.addons.get);
+    router.post('/api/v1/services/:service', cloudronScope, routes.addons.configure);
+    router.get ('/api/v1/services/:service/logs', cloudronScope, routes.addons.getLogs);
+    router.get ('/api/v1/services/:service/logstream', cloudronScope, routes.addons.getLogStream);
+    router.post('/api/v1/services/:service/restart', cloudronScope, routes.addons.restart);
 
     // caas routes
     router.get('/api/v1/caas/config', cloudronScope, routes.caas.getConfig);

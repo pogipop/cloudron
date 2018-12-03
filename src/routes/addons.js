@@ -25,9 +25,9 @@ function getAll(req, res, next) {
 }
 
 function get(req, res, next) {
-    assert.strictEqual(typeof req.params.addon, 'string');
+    assert.strictEqual(typeof req.params.service, 'string');
 
-    addons.getAddon(req.params.addon, function (error, result) {
+    addons.getAddon(req.params.service, function (error, result) {
         if (error && error.reason === AddonsError.NOT_FOUND) return next(new HttpError(404, 'No such addon'));
         if (error) return next(new HttpError(500, error));
 
@@ -36,7 +36,7 @@ function get(req, res, next) {
 }
 
 function configure(req, res, next) {
-    assert.strictEqual(typeof req.params.addon, 'string');
+    assert.strictEqual(typeof req.params.service, 'string');
 
     if (typeof req.body.memory !== 'number') return next(new HttpError(400, 'memory must be a number'));
 
@@ -45,7 +45,7 @@ function configure(req, res, next) {
         memorySwap: req.body.memory * 2
     };
 
-    addons.configureAddon(req.params.addon, data, function (error) {
+    addons.configureAddon(req.params.service, data, function (error) {
         if (error && error.reason === AddonsError.NOT_FOUND) return next(new HttpError(404, 'No such addon'));
         if (error) return next(new HttpError(500, error));
 
@@ -54,12 +54,12 @@ function configure(req, res, next) {
 }
 
 function getLogs(req, res, next) {
-    assert.strictEqual(typeof req.params.addon, 'string');
+    assert.strictEqual(typeof req.params.service, 'string');
 
     var lines = req.query.lines ? parseInt(req.query.lines, 10) : 100;
     if (isNaN(lines)) return next(new HttpError(400, 'lines must be a number'));
 
-    debug(`Getting logs of addon ${req.params.addon}`);
+    debug(`Getting logs of addon ${req.params.service}`);
 
     var options = {
         lines: lines,
@@ -67,7 +67,7 @@ function getLogs(req, res, next) {
         format: req.query.format
     };
 
-    addons.getLogs(req.params.addon, options, function (error, logStream) {
+    addons.getLogs(req.params.service, options, function (error, logStream) {
         if (error && error.reason === AddonsError.NOT_FOUND) return next(new HttpError(404, 'No such addon'));
         if (error) return next(new HttpError(500, error));
 
@@ -83,9 +83,9 @@ function getLogs(req, res, next) {
 
 // this route is for streaming logs
 function getLogStream(req, res, next) {
-    assert.strictEqual(typeof req.params.addon, 'string');
+    assert.strictEqual(typeof req.params.service, 'string');
 
-    debug(`Getting logstream of addon ${req.params.addon}`);
+    debug(`Getting logstream of addon ${req.params.service}`);
 
     var lines = req.query.lines ? parseInt(req.query.lines, 10) : -10; // we ignore last-event-id
     if (isNaN(lines)) return next(new HttpError(400, 'lines must be a valid number'));
@@ -99,7 +99,7 @@ function getLogStream(req, res, next) {
         follow: true
     };
 
-    addons.getLogs(req.params.addon, options, function (error, logStream) {
+    addons.getLogs(req.params.service, options, function (error, logStream) {
         if (error && error.reason === AddonsError.NOT_FOUND) return next(new HttpError(404, 'No such addon'));
         if (error) return next(new HttpError(500, error));
 
@@ -122,11 +122,11 @@ function getLogStream(req, res, next) {
 }
 
 function restart(req, res, next) {
-    assert.strictEqual(typeof req.params.addon, 'string');
+    assert.strictEqual(typeof req.params.service, 'string');
 
-    debug(`Restarting addon ${req.params.addon}`);
+    debug(`Restarting addon ${req.params.service}`);
 
-    addons.restartAddon(req.params.addon, function (error) {
+    addons.restartAddon(req.params.service, function (error) {
         if (error) return next(new HttpError(500, error));
 
         next(new HttpSuccess(202, {}));
