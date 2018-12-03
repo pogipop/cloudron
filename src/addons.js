@@ -206,6 +206,11 @@ const KNOWN_SERVICES = {
         status: statusDocker,
         restart: restartDocker,
         defaultMemoryLimit: 0
+    },
+    unbound: {
+        status: statusUnbound,
+        restart: restartUnbound,
+        defaultMemoryLimit: 0
     }
 };
 
@@ -1677,6 +1682,22 @@ function restartDocker(callback) {
     assert.strictEqual(typeof callback, 'function');
 
     shell.sudo('restartdocker', [ path.join(__dirname, 'scripts/restartdocker.sh') ], {}, NOOP_CALLBACK);
+
+    callback(null);
+}
+
+function statusUnbound(callback) {
+    assert.strictEqual(typeof callback, 'function');
+
+    shell.exec('statusUnbound', 'systemctl is-active unbound', function (error) {
+        callback(null, { status: error ? exports.ADDON_STATUS_STOPPED : exports.ADDON_STATUS_ACTIVE });
+    });
+}
+
+function restartUnbound(callback) {
+    assert.strictEqual(typeof callback, 'function');
+
+    shell.sudo('restartunbound', [ path.join(__dirname, 'scripts/restartunbound.sh') ], {}, NOOP_CALLBACK);
 
     callback(null);
 }
