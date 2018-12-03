@@ -17,21 +17,21 @@ var addons = require('../addons.js'),
     HttpSuccess = require('connect-lastmile').HttpSuccess;
 
 function getAll(req, res, next) {
-    addons.getAddons(function (error, result) {
+    addons.getServices(function (error, result) {
         if (error) return next(new HttpError(500, error));
 
-        next(new HttpSuccess(200, { addons: result }));
+        next(new HttpSuccess(200, { services: result }));
     });
 }
 
 function get(req, res, next) {
     assert.strictEqual(typeof req.params.service, 'string');
 
-    addons.getAddon(req.params.service, function (error, result) {
-        if (error && error.reason === AddonsError.NOT_FOUND) return next(new HttpError(404, 'No such addon'));
+    addons.getService(req.params.service, function (error, result) {
+        if (error && error.reason === AddonsError.NOT_FOUND) return next(new HttpError(404, 'No such service'));
         if (error) return next(new HttpError(500, error));
 
-        next(new HttpSuccess(200, { addon: result }));
+        next(new HttpSuccess(200, { service: result }));
     });
 }
 
@@ -45,8 +45,8 @@ function configure(req, res, next) {
         memorySwap: req.body.memory * 2
     };
 
-    addons.configureAddon(req.params.service, data, function (error) {
-        if (error && error.reason === AddonsError.NOT_FOUND) return next(new HttpError(404, 'No such addon'));
+    addons.configureService(req.params.service, data, function (error) {
+        if (error && error.reason === AddonsError.NOT_FOUND) return next(new HttpError(404, 'No such service'));
         if (error) return next(new HttpError(500, error));
 
         next(new HttpSuccess(202, {}));
@@ -59,7 +59,7 @@ function getLogs(req, res, next) {
     var lines = req.query.lines ? parseInt(req.query.lines, 10) : 100;
     if (isNaN(lines)) return next(new HttpError(400, 'lines must be a number'));
 
-    debug(`Getting logs of addon ${req.params.service}`);
+    debug(`Getting logs of service ${req.params.service}`);
 
     var options = {
         lines: lines,
@@ -68,7 +68,7 @@ function getLogs(req, res, next) {
     };
 
     addons.getLogs(req.params.service, options, function (error, logStream) {
-        if (error && error.reason === AddonsError.NOT_FOUND) return next(new HttpError(404, 'No such addon'));
+        if (error && error.reason === AddonsError.NOT_FOUND) return next(new HttpError(404, 'No such service'));
         if (error) return next(new HttpError(500, error));
 
         res.writeHead(200, {
@@ -85,7 +85,7 @@ function getLogs(req, res, next) {
 function getLogStream(req, res, next) {
     assert.strictEqual(typeof req.params.service, 'string');
 
-    debug(`Getting logstream of addon ${req.params.service}`);
+    debug(`Getting logstream of service ${req.params.service}`);
 
     var lines = req.query.lines ? parseInt(req.query.lines, 10) : -10; // we ignore last-event-id
     if (isNaN(lines)) return next(new HttpError(400, 'lines must be a valid number'));
@@ -100,7 +100,7 @@ function getLogStream(req, res, next) {
     };
 
     addons.getLogs(req.params.service, options, function (error, logStream) {
-        if (error && error.reason === AddonsError.NOT_FOUND) return next(new HttpError(404, 'No such addon'));
+        if (error && error.reason === AddonsError.NOT_FOUND) return next(new HttpError(404, 'No such service'));
         if (error) return next(new HttpError(500, error));
 
         res.writeHead(200, {
@@ -124,9 +124,9 @@ function getLogStream(req, res, next) {
 function restart(req, res, next) {
     assert.strictEqual(typeof req.params.service, 'string');
 
-    debug(`Restarting addon ${req.params.service}`);
+    debug(`Restarting service ${req.params.service}`);
 
-    addons.restartAddon(req.params.service, function (error) {
+    addons.restartService(req.params.service, function (error) {
         if (error) return next(new HttpError(500, error));
 
         next(new HttpSuccess(202, {}));

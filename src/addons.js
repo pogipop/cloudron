@@ -3,11 +3,11 @@
 exports = module.exports = {
     AddonsError: AddonsError,
 
-    getAddons: getAddons,
-    getAddon: getAddon,
-    configureAddon: configureAddon,
+    getServices: getServices,
+    getService: getService,
+    configureService: configureService,
     getLogs: getLogs,
-    restartAddon: restartAddon,
+    restartService: restartService,
 
     startAddons: startAddons,
     updateAddonConfig: updateAddonConfig,
@@ -85,21 +85,12 @@ function AddonsError(reason, errorOrMessage) {
 }
 util.inherits(AddonsError, Error);
 AddonsError.INTERNAL_ERROR = 'Internal Error';
-AddonsError.NOT_SUPPORTED = 'Not Supported';
 AddonsError.NOT_FOUND = 'Not Found';
 AddonsError.NOT_ACTIVE = 'Not Active';
 
 const NOOP = function (app, options, callback) { return callback(); };
 const NOOP_CALLBACK = function (error) { if (error) debug(error); };
 const RMADDONDIR_CMD = path.join(__dirname, 'scripts/rmaddondir.sh');
-
-// TODO: maybe derive these defaults based on how many apps are using them
-const DEFAULT_MEMORY_LIMITS = {
-    mysql: (1 + Math.round(os.totalmem()/(1024*1024*1024)/4)) * 256 * 1024 * 1024,
-    mongodb: (1 + Math.round(os.totalmem()/(1024*1024*1024)/4)) * 200 * 1024 * 1024,
-    postgresql: (1 + Math.round(os.totalmem()/(1024*1024*1024)/4)) * 256 * 1024 * 1024,
-    mail: Math.max((1 + Math.round(os.totalmem()/(1024*1024*1024)/4)) * 128, 256) * 1024 * 1024
-};
 
 // setup can be called multiple times for the same app (configure crash restart) and existing data must not be lost
 // teardown is destructive. app data stored with the addon is lost
@@ -110,8 +101,6 @@ var KNOWN_ADDONS = {
         backup: NOOP,
         restore: setupEmail,
         clear: NOOP,
-        status: statusContainerAddon.bind(null, 'mail', 'CLOUDRON_MAIL_TOKEN'),
-        restart: restartContainerAddon.bind(null, 'email')
     },
     ldap: {
         setup: setupLdap,
@@ -119,8 +108,6 @@ var KNOWN_ADDONS = {
         backup: NOOP,
         restore: setupLdap,
         clear: NOOP,
-        status: null,
-        restart: null
     },
     localstorage: {
         setup: setupLocalStorage, // docker creates the directory for us
@@ -128,8 +115,6 @@ var KNOWN_ADDONS = {
         backup: NOOP, // no backup because it's already inside app data
         restore: NOOP,
         clear: clearLocalStorage,
-        status: null,
-        restart: null
     },
     mongodb: {
         setup: setupMongoDb,
@@ -137,8 +122,6 @@ var KNOWN_ADDONS = {
         backup: backupMongoDb,
         restore: restoreMongoDb,
         clear: clearMongodb,
-        status: statusContainerAddon.bind(null, 'mongodb', 'CLOUDRON_MONGODB_TOKEN'),
-        restart: restartContainerAddon.bind(null, 'mongodb')
     },
     mysql: {
         setup: setupMySql,
@@ -146,8 +129,6 @@ var KNOWN_ADDONS = {
         backup: backupMySql,
         restore: restoreMySql,
         clear: clearMySql,
-        status: statusContainerAddon.bind(null, 'mysql', 'CLOUDRON_MYSQL_TOKEN'),
-        restart: restartContainerAddon.bind(null, 'mysql')
     },
     oauth: {
         setup: setupOauth,
@@ -155,8 +136,6 @@ var KNOWN_ADDONS = {
         backup: NOOP,
         restore: setupOauth,
         clear: NOOP,
-        status: null,
-        restart: null
     },
     postgresql: {
         setup: setupPostgreSql,
@@ -164,8 +143,6 @@ var KNOWN_ADDONS = {
         backup: backupPostgreSql,
         restore: restorePostgreSql,
         clear: clearPostgreSql,
-        status: statusContainerAddon.bind(null, 'postgresql', 'CLOUDRON_POSTGRESQL_TOKEN'),
-        restart: restartContainerAddon.bind(null, 'postgresql')
     },
     recvmail: {
         setup: setupRecvMail,
@@ -173,8 +150,6 @@ var KNOWN_ADDONS = {
         backup: NOOP,
         restore: setupRecvMail,
         clear: NOOP,
-        status: null,
-        restart: null
     },
     redis: {
         setup: setupRedis,
@@ -182,8 +157,6 @@ var KNOWN_ADDONS = {
         backup: backupRedis,
         restore: restoreRedis,
         clear: clearRedis,
-        status: null,
-        restart: null
     },
     sendmail: {
         setup: setupSendMail,
@@ -191,8 +164,6 @@ var KNOWN_ADDONS = {
         backup: NOOP,
         restore: setupSendMail,
         clear: NOOP,
-        status: null,
-        restart: null
     },
     scheduler: {
         setup: NOOP,
@@ -200,8 +171,6 @@ var KNOWN_ADDONS = {
         backup: NOOP,
         restore: NOOP,
         clear: NOOP,
-        status: null,
-        restart: null
     },
     docker: {
         setup: NOOP,
@@ -209,8 +178,34 @@ var KNOWN_ADDONS = {
         backup: NOOP,
         restore: NOOP,
         clear: NOOP,
+    }
+};
+
+const KNOWN_SERVICES = {
+    mail: {
+        status: containerStatus.bind(null, 'mail', 'CLOUDRON_MAIL_TOKEN'),
+        restart: restartContainer.bind(null, 'mail'),
+        defaultMemoryLimit: Math.max((1 + Math.round(os.totalmem()/(1024*1024*1024)/4)) * 128, 256) * 1024 * 1024
+    },
+    mongodb: {
+        status: containerStatus.bind(null, 'mongodb', 'CLOUDRON_MONGODB_TOKEN'),
+        restart: restartContainer.bind(null, 'mongodb'),
+        defaultMemoryLimit: (1 + Math.round(os.totalmem()/(1024*1024*1024)/4)) * 200 * 1024 * 1024
+    },
+    mysql: {
+        status: containerStatus.bind(null, 'mysql', 'CLOUDRON_MYSQL_TOKEN'),
+        restart: restartContainer.bind(null, 'mysql'),
+        defaultMemoryLimit: (1 + Math.round(os.totalmem()/(1024*1024*1024)/4)) * 256 * 1024 * 1024
+    },
+    postgresql: {
+        status: containerStatus.bind(null, 'postgresql', 'CLOUDRON_POSTGRESQL_TOKEN'),
+        restart: restartContainer.bind(null, 'postgresql'),
+        defaultMemoryLimit: (1 + Math.round(os.totalmem()/(1024*1024*1024)/4)) * 256 * 1024 * 1024
+    },
+    docker: {
         status: statusDocker,
-        restart: restartDocker
+        restart: restartDocker,
+        defaultMemoryLimit: 0
     }
 };
 
@@ -244,21 +239,16 @@ function dumpPath(addon, appId) {
     }
 }
 
-function restartContainerAddon(addonName, callback) {
-    assert.strictEqual(typeof addonName, 'string');
+function restartContainer(serviceName, callback) {
+    assert.strictEqual(typeof serviceName, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    // only allow certain addon types to be started
-    const allowedAddons = ['email', 'mysql', 'mongodb', 'postgresql'];
-    if (allowedAddons.indexOf(addonName) === -1) return callback(new AddonsError(AddonsError.NOT_SUPPORTED));
+    assert(KNOWN_SERVICES[serviceName], `Unknown service ${serviceName}`);
 
-    // email container has a different name
-    const containerName = addonName === 'email' ? 'mail' : addonName;
-
-    docker.stopContainer(containerName, function (error) {
+    docker.stopContainer(serviceName, function (error) {
         if (error) return callback(new AddonsError(AddonsError.INTERNAL_ERROR, error));
 
-        docker.startContainer(containerName, function (error) {
+        docker.startContainer(serviceName, function (error) {
             if (error) return callback(new AddonsError(AddonsError.INTERNAL_ERROR, error));
 
             callback(null);
@@ -266,7 +256,7 @@ function restartContainerAddon(addonName, callback) {
     });
 }
 
-function statusContainerAddon(addonName, addonTokenName, callback) {
+function containerStatus(addonName, addonTokenName, callback) {
     assert.strictEqual(typeof addonName, 'string');
     assert.strictEqual(typeof addonTokenName, 'string');
     assert.strictEqual(typeof callback, 'function');
@@ -294,23 +284,22 @@ function statusContainerAddon(addonName, addonTokenName, callback) {
     });
 }
 
-function getAddons(callback) {
+function getServices(callback) {
     assert.strictEqual(typeof callback, 'function');
 
-    // we currently list only addons which have a status function to report
-    var addons = Object.keys(KNOWN_ADDONS).filter(function (a) { return !!KNOWN_ADDONS[a].status; });
+    let services = Object.keys(KNOWN_SERVICES);
 
-    callback(null, addons);
+    callback(null, services);
 }
 
-function getAddon(addonName, callback) {
-    assert.strictEqual(typeof addonName, 'string');
+function getService(serviceName, callback) {
+    assert.strictEqual(typeof serviceName, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    if (!KNOWN_ADDONS[addonName]) return callback(new AddonsError(AddonsError.NOT_FOUND));
+    if (!KNOWN_SERVICES[serviceName]) return callback(new AddonsError(AddonsError.NOT_FOUND));
 
     var tmp = {
-        name: addonName,
+        name: serviceName,
         status: null,
         config: {
             // If a property is not set then we cannot change it through the api, see below
@@ -322,18 +311,15 @@ function getAddon(addonName, callback) {
     settings.getPlatformConfig(function (error, platformConfig) {
         if (error) return callback(new AddonsError(AddonsError.INTERNAL_ERROR, error));
 
-        if (platformConfig[addonName] && platformConfig[addonName].memory && platformConfig[addonName].memorySwap) {
-            tmp.config.memory = platformConfig[addonName].memory;
-            tmp.config.memorySwap = platformConfig[addonName].memorySwap;
-        } else if (DEFAULT_MEMORY_LIMITS[addonName]) {
-            tmp.config.memory = DEFAULT_MEMORY_LIMITS[addonName];
+        if (platformConfig[serviceName] && platformConfig[serviceName].memory && platformConfig[serviceName].memorySwap) {
+            tmp.config.memory = platformConfig[serviceName].memory;
+            tmp.config.memorySwap = platformConfig[serviceName].memorySwap;
+        } else if (KNOWN_SERVICES[serviceName].defaultMemoryLimit) {
+            tmp.config.memory = KNOWN_SERVICES[serviceName].defaultMemoryLimit;
             tmp.config.memorySwap = tmp.config.memory * 2;
         }
 
-        // we are done if the addon has no specific status function
-        if (!KNOWN_ADDONS[addonName].status) return callback(null, tmp);
-
-        KNOWN_ADDONS[addonName].status(function (error, result) {
+        KNOWN_SERVICES[serviceName].status(function (error, result) {
             if (error) return callback(new AddonsError(AddonsError.INTERNAL_ERROR, error));
 
             tmp.status = result.status;
@@ -346,24 +332,24 @@ function getAddon(addonName, callback) {
     });
 }
 
-function configureAddon(addonName, data, callback) {
-    assert.strictEqual(typeof addonName, 'string');
+function configureService(serviceName, data, callback) {
+    assert.strictEqual(typeof serviceName, 'string');
     assert.strictEqual(typeof data, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    if (!KNOWN_ADDONS[addonName]) return callback(new AddonsError(AddonsError.NOT_FOUND));
+    if (!KNOWN_SERVICES[serviceName]) return callback(new AddonsError(AddonsError.NOT_FOUND));
 
     settings.getPlatformConfig(function (error, platformConfig) {
         if (error) return callback(new AddonsError(AddonsError.INTERNAL_ERROR, error));
 
-        if (!platformConfig[addonName]) platformConfig[addonName] = {};
+        if (!platformConfig[serviceName]) platformConfig[serviceName] = {};
 
         // if not specified we clear the entry and use defaults
         if (!data.memory || !data.memorySwap) {
-            delete platformConfig[addonName];
+            delete platformConfig[serviceName];
         } else {
-            platformConfig[addonName].memory = data.memory;
-            platformConfig[addonName].memorySwap = data.memorySwap;
+            platformConfig[serviceName].memory = data.memory;
+            platformConfig[serviceName].memorySwap = data.memorySwap;
         }
 
         settings.setPlatformConfig(platformConfig, function (error) {
@@ -424,14 +410,13 @@ function getLogs(addonName, options, callback) {
     callback(null, transformStream);
 }
 
-function restartAddon(addon, callback) {
-    assert.strictEqual(typeof addon, 'string');
+function restartService(serviceName, callback) {
+    assert.strictEqual(typeof serviceName, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    if (!KNOWN_ADDONS[addon]) return callback(new AddonsError(AddonsError.NOT_FOUND));
-    if (!KNOWN_ADDONS[addon].restart) return callback(null);
+    if (!KNOWN_SERVICES[serviceName]) return callback(new AddonsError(AddonsError.NOT_FOUND));
 
-    KNOWN_ADDONS[addon].restart(callback);
+    KNOWN_ADDONS[serviceName].restart(callback);
 }
 
 function getAddonDetails(containerName, tokenEnvName, callback) {
@@ -613,19 +598,19 @@ function updateAddonConfig(platformConfig, callback) {
     debug('updateAddonConfig: %j', platformConfig);
 
     // TODO: this should possibly also rollback memory to default
-    async.eachSeries([ 'mysql', 'postgresql', 'mail', 'mongodb' ], function iterator(containerName, iteratorCallback) {
-        const containerConfig = platformConfig[containerName];
+    async.eachSeries([ 'mysql', 'postgresql', 'mail', 'mongodb' ], function iterator(serviceName, iteratorCallback) {
+        const containerConfig = platformConfig[serviceName];
         let memory, memorySwap;
         if (containerConfig && containerConfig.memory && containerConfig.memorySwap) {
             memory = containerConfig.memory;
             memorySwap = containerConfig.memorySwap;
         } else {
-            memory = DEFAULT_MEMORY_LIMITS[containerName];
+            memory = KNOWN_SERVICES[serviceName].defaultMemoryLimit;
             memorySwap = memory * 2;
         }
 
-        const args = `update --memory ${memory} --memory-swap ${memorySwap} ${containerName}`.split(' ');
-        shell.spawn(`update${containerName}`, '/usr/bin/docker', args, { }, iteratorCallback);
+        const args = `update --memory ${memory} --memory-swap ${memorySwap} ${serviceName}`.split(' ');
+        shell.spawn(`update${serviceName}`, '/usr/bin/docker', args, { }, iteratorCallback);
     }, callback);
 }
 
