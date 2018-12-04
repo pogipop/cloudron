@@ -164,6 +164,4 @@ function renewCerts(req, res, next) {
 
         next(new HttpSuccess(202, {}));
     });
-
-    next(new HttpSuccess(202, {}));
 }
