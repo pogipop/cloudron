@@ -8,8 +8,6 @@ if [[ ${EUID} -ne 0 ]]; then
 fi
 
 readonly UPDATER_SERVICE="cloudron-updater"
-readonly DATETIME=`date '+%Y-%m-%d_%H-%M-%S'`
-readonly LOG_FILE="/home/yellowtent/platformdata/logs/updater/cloudron-updater-${DATETIME}.log"
 
 if [[ $# == 1 && "$1" == "--check" ]]; then
     echo "OK"
@@ -34,12 +32,21 @@ fi
 
 # StandardError will follow StandardOutput in default inherit mode. https://www.freedesktop.org/software/systemd/man/systemd.exec.html
 echo "=> Run installer.sh as ${UPDATER_SERVICE}."
-if ! systemd-run --unit "${UPDATER_SERVICE}" -p "StandardOutput=file:${LOG_FILE}" ${installer_path}; then
-    echo "Failed to install cloudron. See ${LOG_FILE} for details"
-    exit 1
+if [[ "$(systemd --version | head -n1)" != "systemd 22*" ]]; then
+    readonly DATETIME=`date '+%Y-%m-%d_%H-%M-%S'`
+    readonly LOG_FILE="/home/yellowtent/platformdata/logs/updater/cloudron-updater-${DATETIME}.log"
+
+    update_service_options="-p StandardOutput=file:${LOG_FILE}"
+    echo "=> starting service (ubuntu 18.04) ${UPDATER_SERVICE}. see logs at ${LOG_FILE}"
+else
+    update_service_options=""
+    echo "=> starting service (ubuntu 16.04) ${UPDATER_SERVICE}. see logs using journalctl -u ${UPDATER_SERVICE}"
 fi
 
-echo "=> service ${UPDATER_SERVICE} started. see logs at ${LOG_FILE}"
+if ! systemd-run --unit "${UPDATER_SERVICE}" $update_service_options ${installer_path}; then
+    echo "Failed to install cloudron. See log for details"
+    exit 1
+fi
 
 while true; do
     if systemctl is-failed "${UPDATER_SERVICE}" >/dev/null 2>&1; then
