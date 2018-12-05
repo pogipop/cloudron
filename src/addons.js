@@ -381,11 +381,26 @@ function getServiceLogs(serviceName, options, callback) {
     assert.strictEqual(typeof lines, 'number');
     assert.strictEqual(typeof format, 'string');
 
+    var cmd;
     var args = [ '--lines=' + lines ];
-    if (follow) args.push('--follow', '--retry', '--quiet'); // same as -F. to make it work if file doesn't exist, --quiet to not output file headers, which are no logs
-    args.push(path.join(paths.LOG_DIR, serviceName, 'app.log'));
 
-    var cp = spawn('/usr/bin/tail', args);
+    // docker and unbound use journald
+    if (serviceName === 'docker' || serviceName === 'unbound') {
+        cmd = 'journalctl';
+
+        args.push(`--unit=${serviceName}`);
+        args.push('--no-pager');
+        args.push('--output=short-iso');
+
+        if (follow) args.push('--follow');
+    } else {
+        cmd = '/usr/bin/tail';
+
+        if (follow) args.push('--follow', '--retry', '--quiet'); // same as -F. to make it work if file doesn't exist, --quiet to not output file headers, which are no logs
+        args.push(path.join(paths.LOG_DIR, serviceName, 'app.log'));
+    }
+
+    var cp = spawn(cmd, args);
 
     var transformStream = split(function mapper(line) {
         if (format !== 'json') return line + '\n';
