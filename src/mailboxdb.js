@@ -73,7 +73,7 @@ function updateMailboxOwner(name, domain, ownerId, ownerType, callback) {
     assert.strictEqual(typeof ownerType, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    database.query('UPDATE mailboxes SET ownerId = ? WHERE name = ? AND domain = ? AND ownerType = ?', [ ownerId, name, domain, ownerType ], function (error, result) {
+    database.query('UPDATE mailboxes SET ownerId = ?, ownerType = ? WHERE name = ? AND domain = ?', [ ownerId, ownerType, name, domain ], function (error, result) {
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
         if (result.affectedRows === 0) return callback(new DatabaseError(DatabaseError.NOT_FOUND));
 
