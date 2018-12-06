@@ -259,7 +259,7 @@ function updateMailbox(req, res, next) {
 
     if (typeof req.body.userId !== 'string') return next(new HttpError(400, 'userId must be a string'));
 
-    mail.updateMailbox(req.params.name, req.params.domain, req.body.userId, function (error) {
+    mail.updateMailboxOwner(req.params.name, req.params.domain, req.body.userId, function (error) {
         if (error && error.reason === MailError.NOT_FOUND) return next(new HttpError(404, error.message));
         if (error && error.reason === MailError.BAD_FIELD) return next(new HttpError(400, error.message));
         if (error) return next(new HttpError(500, error));

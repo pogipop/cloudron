@@ -912,7 +912,7 @@ describe('database', function () {
         });
 
         it('getAll succeeds', function (done) {
-            appdb.getAll(function (error, result) {
+            appdb.list(function (error, result) {
                 expect(error).to.be(null);
                 expect(result).to.be.an(Array);
                 expect(result.length).to.be(2);

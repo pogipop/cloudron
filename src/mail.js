@@ -26,7 +26,7 @@ exports = module.exports = {
     removeMailboxes: removeMailboxes,
     getMailbox: getMailbox,
     addMailbox: addMailbox,
-    updateMailbox: updateMailbox,
+    updateMailboxOwner: updateMailboxOwner,
     removeMailbox: removeMailbox,
 
     listAliases: listAliases,
@@ -630,7 +630,7 @@ function getDomain(domain, callback) {
 function getDomains(callback) {
     assert.strictEqual(typeof callback, 'function');
 
-    maildb.getAll(function (error, results) {
+    maildb.list(function (error, results) {
         if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
 
         return callback(null, results);
@@ -945,7 +945,7 @@ function addMailbox(name, domain, userId, auditSource, callback) {
     });
 }
 
-function updateMailbox(name, domain, userId, callback) {
+function updateMailboxOwner(name, domain, userId, callback) {
     assert.strictEqual(typeof name, 'string');
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof userId, 'string');
@@ -953,10 +953,7 @@ function updateMailbox(name, domain, userId, callback) {
 
     name = name.toLowerCase();
 
-    var error = validateName(name);
-    if (error) return callback(error);
-
-    mailboxdb.updateMailbox(name, domain, userId, mailboxdb.OWNER_TYPE_USER, function (error) {
+    mailboxdb.updateMailboxOwner(name, domain, userId, mailboxdb.OWNER_TYPE_USER, function (error) {
         if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new MailError(MailError.NOT_FOUND, 'no such mailbox'));
         if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
 

@@ -4,7 +4,7 @@ exports = module.exports = {
     addMailbox: addMailbox,
     addGroup: addGroup,
 
-    updateMailbox: updateMailbox,
+    updateMailboxOwner: updateMailboxOwner,
     updateList: updateList,
     del: del,
 
@@ -66,7 +66,7 @@ function addMailbox(name, domain, ownerId, ownerType, callback) {
     });
 }
 
-function updateMailbox(name, domain, ownerId, ownerType, callback) {
+function updateMailboxOwner(name, domain, ownerId, ownerType, callback) {
     assert.strictEqual(typeof name, 'string');
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof ownerId, 'string');
