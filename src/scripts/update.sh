@@ -32,7 +32,7 @@ fi
 
 # StandardError will follow StandardOutput in default inherit mode. https://www.freedesktop.org/software/systemd/man/systemd.exec.html
 echo "=> Run installer.sh as ${UPDATER_SERVICE}."
-if [[ "$(systemd --version | head -n1)" != "systemd 22*" ]]; then
+if [[ "$(systemd --version | head -n1)" != "systemd 22"* ]]; then
     readonly DATETIME=`date '+%Y-%m-%d_%H-%M-%S'`
     readonly LOG_FILE="/home/yellowtent/platformdata/logs/updater/cloudron-updater-${DATETIME}.log"
 
