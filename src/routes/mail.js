@@ -17,7 +17,7 @@ exports = module.exports = {
 
     sendTestMail: sendTestMail,
 
-    getMailboxes: getMailboxes,
+    listMailboxes: listMailboxes,
     getMailbox: getMailbox,
     addMailbox: addMailbox,
     updateMailbox: updateMailbox,
@@ -214,10 +214,10 @@ function sendTestMail(req, res, next) {
     });
 }
 
-function getMailboxes(req, res, next) {
+function listMailboxes(req, res, next) {
     assert.strictEqual(typeof req.params.domain, 'string');
 
-    mail.getMailboxes(req.params.domain, function (error, result) {
+    mail.listMailboxes(req.params.domain, function (error, result) {
         if (error && error.reason === MailError.NOT_FOUND) return next(new HttpError(404, error.message));
         if (error) return next(new HttpError(500, error));
 

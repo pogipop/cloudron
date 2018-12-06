@@ -4,7 +4,7 @@ exports = module.exports = {
     add: add,
     del: del,
     get: get,
-    getAll: getAll,
+    list: list,
     update: update,
 
     _clear: clear,
@@ -81,7 +81,7 @@ function get(domain, callback) {
     });
 }
 
-function getAll(callback) {
+function list(callback) {
     assert.strictEqual(typeof callback, 'function');
 
     database.query('SELECT ' + MAILDB_FIELDS + ' FROM mail ORDER BY domain', function (error, results) {

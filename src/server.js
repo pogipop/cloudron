@@ -260,7 +260,7 @@ function initializeExpressSync() {
     router.post('/api/v1/mail/:domain/enable',        mailScope, routes.mail.setMailEnabled);
     router.post('/api/v1/mail/:domain/dns',        mailScope, routes.mail.setDnsRecords);
     router.post('/api/v1/mail/:domain/send_test_mail',  mailScope, routes.mail.sendTestMail);
-    router.get ('/api/v1/mail/:domain/mailboxes',  mailScope, routes.mail.getMailboxes);
+    router.get ('/api/v1/mail/:domain/mailboxes',  mailScope, routes.mail.listMailboxes);
     router.get ('/api/v1/mail/:domain/mailboxes/:name',  mailScope, routes.mail.getMailbox);
     router.post('/api/v1/mail/:domain/mailboxes',  mailScope, routes.mail.addMailbox);
     router.post('/api/v1/mail/:domain/mailboxes/:name',  mailScope, routes.mail.updateMailbox);

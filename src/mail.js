@@ -22,7 +22,7 @@ exports = module.exports = {
 
     sendTestMail: sendTestMail,
 
-    getMailboxes: getMailboxes,
+    listMailboxes: listMailboxes,
     removeMailboxes: removeMailboxes,
     getMailbox: getMailbox,
     addMailbox: addMailbox,
@@ -888,7 +888,7 @@ function sendTestMail(domain, to, callback) {
     });
 }
 
-function getMailboxes(domain, callback) {
+function listMailboxes(domain, callback) {
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof callback, 'function');
 
