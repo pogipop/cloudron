@@ -140,7 +140,7 @@ echo ""
 if [[ "${initBaseImage}" == "true" ]]; then
     echo "=> Ensure required apt sources"
     if ! add-apt-repository universe &>> "${LOG_FILE}"; then
-        echo "Could not add required apt sources. See ${LOG_FILE}"
+        echo "Could not add required apt sources (for nginx-full). See ${LOG_FILE}"
         exit 1
     fi
 
