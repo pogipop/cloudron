@@ -241,7 +241,12 @@ done
 echo -e "\n\n${GREEN}Visit https://<IP> and accept the self-signed certificate to finish setup.${DONE}"
 
 if [[ "${rebootServer}" == "true" ]]; then
-    echo -e "\n${RED}Rebooting this server now to let changes take effect.${DONE}\n"
-    systemctl stop mysql # sometimes mysql ends up having corrupt privilege tables
-    systemctl reboot
+    systemctl stop box mysql # sometimes mysql ends up having corrupt privilege tables
+
+    read -p "This server has to rebooted to apply all the settings. Reboot now ? [Y/n] " yn
+    yn=${yn:-y}
+    case $yn in
+        [Yy]* ) systemctl reboot;;
+        * ) exit;;
+    esac
 fi
