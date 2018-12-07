@@ -271,7 +271,6 @@ function mailboxSearch(req, res, next) {
                     cn: `${mailbox.name}@${mailbox.domain}`,
                     uid: `${mailbox.name}@${mailbox.domain}`,
                     mail: `${mailbox.name}@${mailbox.domain}`,
-                    ownerType: mailbox.ownerType,
                     displayname: 'Max Mustermann',
                     givenName: 'Max',
                     username: 'mmustermann',
@@ -311,8 +310,7 @@ function mailboxSearch(req, res, next) {
                         objectcategory: 'mailbox',
                         cn: `${mailbox.name}@${domain}`,
                         uid: `${mailbox.name}@${domain}`,
-                        mail: `${mailbox.name}@${domain}`,
-                        ownerType: mailbox.ownerType
+                        mail: `${mailbox.name}@${domain}`
                     }
                 };
 
