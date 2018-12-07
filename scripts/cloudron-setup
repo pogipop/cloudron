@@ -238,7 +238,7 @@ while true; do
     sleep 10
 done
 
-echo -e "\n\n${GREEN}Visit https://<IP> and accept the self-signed certificate to finish setup.${DONE}"
+echo -e "\n\n${GREEN}Visit https://<IP> and accept the self-signed certificate to finish setup.${DONE}\n"
 
 if [[ "${rebootServer}" == "true" ]]; then
     systemctl stop box mysql # sometimes mysql ends up having corrupt privilege tables
