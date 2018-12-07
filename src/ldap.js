@@ -527,9 +527,8 @@ function start(callback) {
     gServer.search('ou=mailaliases,dc=cloudron', mailAliasSearch);
     gServer.search('ou=mailinglists,dc=cloudron', mailingListSearch);
 
-    gServer.bind('ou=mailboxes,dc=cloudron', authenticateMailbox);
-    gServer.bind('ou=recvmail,dc=cloudron', authenticateMailbox);
-    gServer.bind('ou=sendmail,dc=cloudron', authenticateMailbox);
+    gServer.bind('ou=recvmail,dc=cloudron', authenticateMailbox); // dovecot
+    gServer.bind('ou=sendmail,dc=cloudron', authenticateMailbox); // haraka
 
     gServer.compare('cn=users,ou=groups,dc=cloudron', authenticateApp, groupUsersCompare);
     gServer.compare('cn=admins,ou=groups,dc=cloudron', authenticateApp, groupAdminsCompare);
