@@ -232,7 +232,8 @@ describe('database', function () {
             robotsTxt: null,
             enableBackup: true,
             ownerId: USER_0.id,
-            env: {}
+            env: {},
+            mailboxName: 'talktome'
         };
 
         it('cannot delete referenced domain', function (done) {
@@ -753,7 +754,8 @@ describe('database', function () {
             alternateDomains: [],
             env: {
                 'CUSTOM_KEY': 'CUSTOM_VALUE'
-            }
+            },
+            mailboxName: 'talktome'
         };
 
         var APP_1 = {
@@ -781,7 +783,8 @@ describe('database', function () {
             enableBackup: true,
             ownerId: USER_0.id,
             alternateDomains: [],
-            env: {}
+            env: {},
+            mailboxName: 'callme'
         };
 
         before(function (done) {
@@ -912,7 +915,7 @@ describe('database', function () {
         });
 
         it('getAll succeeds', function (done) {
-            appdb.list(function (error, result) {
+            appdb.getAll(function (error, result) {
                 expect(error).to.be(null);
                 expect(result).to.be.an(Array);
                 expect(result.length).to.be(2);
@@ -1632,21 +1635,21 @@ describe('database', function () {
         });
 
         it('add user mailbox succeeds', function (done) {
-            mailboxdb.addMailbox('girish', DOMAIN_0.domain, 'uid-0', mailboxdb.OWNER_TYPE_USER, function (error) {
+            mailboxdb.addMailbox('girish', DOMAIN_0.domain, 'uid-0', function (error) {
                 expect(error).to.be(null);
                 done();
             });
         });
 
         it('cannot add dup entry', function (done) {
-            mailboxdb.addMailbox('girish', DOMAIN_0.domain, 'uid-1', mailboxdb.OWNER_TYPE_APP, function (error) {
+            mailboxdb.addMailbox('girish', DOMAIN_0.domain, 'uid-1', function (error) {
                 expect(error.reason).to.be(DatabaseError.ALREADY_EXISTS);
                 done();
             });
         });
 
         it('add app mailbox succeeds', function (done) {
-            mailboxdb.addMailbox('support', DOMAIN_0.domain, 'osticket', mailboxdb.OWNER_TYPE_APP, function (error) {
+            mailboxdb.addMailbox('support', DOMAIN_0.domain, 'osticket', function (error) {
                 expect(error).to.be(null);
                 done();
             });
@@ -1669,7 +1672,6 @@ describe('database', function () {
                 expect(error).to.be(null);
                 expect(mailboxes.length).to.be(2);
                 expect(mailboxes[0].name).to.be('girish');
-                expect(mailboxes[0].ownerType).to.be(mailboxdb.OWNER_TYPE_USER);
                 expect(mailboxes[1].name).to.be('support');
 
                 done();
@@ -1815,7 +1817,7 @@ describe('database', function () {
         });
 
         it('can get all domains', function (done) {
-            maildb.getAll(function (error, result) {
+            maildb.list(function (error, result) {
                 expect(error).to.equal(null);
                 expect(result).to.be.an(Array);
                 expect(result[0]).to.be.an('object');

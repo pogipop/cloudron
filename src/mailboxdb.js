@@ -29,11 +29,7 @@ exports = module.exports = {
 
     TYPE_MAILBOX: 'mailbox',
     TYPE_LIST: 'list',
-    TYPE_ALIAS: 'alias',
-
-    OWNER_TYPE_USER: 'user',
-    OWNER_TYPE_APP: 'app',
-    OWNER_TYPE_GROUP: 'group' // obsolete
+    TYPE_ALIAS: 'alias'
 };
 
 var assert = require('assert'),
@@ -42,7 +38,7 @@ var assert = require('assert'),
     safe = require('safetydance'),
     util = require('util');
 
-var MAILBOX_FIELDS = [ 'name', 'type', 'ownerId', 'ownerType', 'aliasTarget', 'creationTime', 'membersJson', 'domain' ].join(',');
+var MAILBOX_FIELDS = [ 'name', 'type', 'ownerId', 'aliasTarget', 'creationTime', 'membersJson', 'domain' ].join(',');
 
 function postProcess(data) {
     data.members = safe.JSON.parse(data.membersJson) || [ ];
@@ -51,14 +47,13 @@ function postProcess(data) {
     return data;
 }
 
-function addMailbox(name, domain, ownerId, ownerType, callback) {
+function addMailbox(name, domain, ownerId, callback) {
     assert.strictEqual(typeof name, 'string');
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof ownerId, 'string');
-    assert.strictEqual(typeof ownerType, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    database.query('INSERT INTO mailboxes (name, type, domain, ownerId, ownerType) VALUES (?, ?, ?, ?, ?)', [ name, exports.TYPE_MAILBOX, domain, ownerId, ownerType ], function (error) {
+    database.query('INSERT INTO mailboxes (name, type, domain, ownerId) VALUES (?, ?, ?, ?)', [ name, exports.TYPE_MAILBOX, domain, ownerId ], function (error) {
         if (error && error.code === 'ER_DUP_ENTRY') return callback(new DatabaseError(DatabaseError.ALREADY_EXISTS, 'mailbox already exists'));
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
 
@@ -66,14 +61,13 @@ function addMailbox(name, domain, ownerId, ownerType, callback) {
     });
 }
 
-function updateMailboxOwner(name, domain, ownerId, ownerType, callback) {
+function updateMailboxOwner(name, domain, ownerId, callback) {
     assert.strictEqual(typeof name, 'string');
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof ownerId, 'string');
-    assert.strictEqual(typeof ownerType, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    database.query('UPDATE mailboxes SET ownerId = ?, ownerType = ? WHERE name = ? AND domain = ?', [ ownerId, ownerType, name, domain ], function (error, result) {
+    database.query('UPDATE mailboxes SET ownerId = ? WHERE name = ? AND domain = ?', [ ownerId, name, domain ], function (error, result) {
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
         if (result.affectedRows === 0) return callback(new DatabaseError(DatabaseError.NOT_FOUND));
 
@@ -87,8 +81,8 @@ function addGroup(name, domain, members, callback) {
     assert(Array.isArray(members));
     assert.strictEqual(typeof callback, 'function');
 
-    database.query('INSERT INTO mailboxes (name, type, domain, ownerId, ownerType, membersJson) VALUES (?, ?, ?, ?, ?, ?)',
-        [ name, exports.TYPE_LIST, domain, 'admin', exports.OWNER_TYPE_GROUP, JSON.stringify(members) ], function (error) {
+    database.query('INSERT INTO mailboxes (name, type, domain, ownerId, membersJson) VALUES (?, ?, ?, ?, ?)',
+        [ name, exports.TYPE_LIST, domain, 'admin', JSON.stringify(members) ], function (error) {
             if (error && error.code === 'ER_DUP_ENTRY') return callback(new DatabaseError(DatabaseError.ALREADY_EXISTS, 'mailbox already exists'));
             if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
 
@@ -259,8 +253,8 @@ function setAliasesForName(name, domain, aliases, callback) {
         // clear existing aliases
         queries.push({ query: 'DELETE FROM mailboxes WHERE aliasTarget = ? AND domain = ? AND type = ?', args: [ name, domain, exports.TYPE_ALIAS ] });
         aliases.forEach(function (alias) {
-            queries.push({ query: 'INSERT INTO mailboxes (name, type, domain, aliasTarget, ownerId, ownerType) VALUES (?, ?, ?, ?, ?, ?)',
-                args: [ alias, exports.TYPE_ALIAS, domain, name, results[0].ownerId, results[0].ownerType ] });
+            queries.push({ query: 'INSERT INTO mailboxes (name, type, domain, aliasTarget, ownerId) VALUES (?, ?, ?, ?, ?)',
+                args: [ alias, exports.TYPE_ALIAS, domain, name, results[0].ownerId ] });
         });
 
         database.transaction(queries, function (error) {

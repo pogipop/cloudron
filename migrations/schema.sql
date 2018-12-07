@@ -80,6 +80,7 @@ CREATE TABLE IF NOT EXISTS apps(
     debugModeJson TEXT, // options for development mode
     robotsTxt TEXT,
     enableBackup BOOLEAN DEFAULT 1, // misnomer: controls automatic daily backups
+    mailboxName VARCHAR(128), // mailbox of this app
 
     // the following fields do not belong here, they can be removed when we use a queue for apptask
     restoreConfigJson VARCHAR(256), // used to pass backupId to restore from to apptask
@@ -173,12 +174,14 @@ CREATE TABLE IF NOT EXISTS mail(
 /* Future fields:
    * accessRestriction - to determine who can access it. So this has foreign keys
    * quota - per mailbox quota
+
+   NOTE: this table exists only real mailboxes. And has unique constraint to handle
+   conflict with aliases and mailbox names
 */
 CREATE TABLE IF NOT EXISTS mailboxes(
     name VARCHAR(128) NOT NULL,
     type VARCHAR(16) NOT NULL, /* 'mailbox', 'alias', 'list' */
-    ownerId VARCHAR(128) NOT NULL, /* app id or user id or group id */
-    ownerType VARCHAR(16) NOT NULL, /* 'app' or 'user' or 'group' */
+    ownerId VARCHAR(128) NOT NULL, /* user id */
     aliasTarget VARCHAR(128), /* the target name type is an alias */
     membersJson TEXT, /* members of a group */
     creationTime TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,

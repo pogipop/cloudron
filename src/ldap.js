@@ -296,9 +296,6 @@ function mailboxSearch(req, res, next) {
 
             var results = [];
 
-            // only send user mailboxes
-            result = result.filter(function (m) { return m.ownerType === mailboxdb.OWNER_TYPE_USER; });
-
             // send mailbox objects
             result.forEach(function (mailbox) {
                 var dn = ldap.parseDN(`cn=${mailbox.name}@${domain},domain=${domain},ou=mailboxes,dc=cloudron`);
@@ -462,30 +459,30 @@ function authenticateMailbox(req, res, next) {
     var parts = email.split('@');
     if (parts.length !== 2) return next(new ldap.NoSuchObjectError(req.dn.toString()));
 
-    mailboxdb.getMailbox(parts[0], parts[1], function (error, mailbox) {
-        if (error && error.reason === DatabaseError.NOT_FOUND) return next(new ldap.NoSuchObjectError(req.dn.toString()));
+    const addonId = req.dn.rdns[1].attrs.ou.value.toLowerCase(); // 'sendmail' or 'recvmail'
+
+    mail.getDomain(parts[1], function (error, domain) {
+        if (error && error.reason === MailError.NOT_FOUND) return next(new ldap.NoSuchObjectError(req.dn.toString()));
         if (error) return next(new ldap.OperationsError(error.message));
 
-        mail.getDomain(parts[1], function (error, domain) {
-            if (error && error.reason === MailError.NOT_FOUND) return next(new ldap.NoSuchObjectError(req.dn.toString()));
-            if (error) return next(new ldap.OperationsError(error.message));
+        if (addonId === 'recvmail' && !domain.enabled) return next(new ldap.NoSuchObjectError(req.dn.toString()));
 
-            if (mailbox.ownerType === mailboxdb.OWNER_TYPE_APP) {
-                var addonId = req.dn.rdns[1].attrs.ou.value.toLowerCase(); // 'sendmail' or 'recvmail'
-                var name;
-                if (addonId === 'sendmail') name = 'MAIL_SMTP_PASSWORD';
-                else if (addonId === 'recvmail') name = 'MAIL_IMAP_PASSWORD';
-                else return next(new ldap.OperationsError('Invalid DN'));
+        let name;
+        if (addonId === 'sendmail') name = 'MAIL_SMTP_PASSWORD';
+        else if (addonId === 'recvmail') name = 'MAIL_IMAP_PASSWORD';
+        else return next(new ldap.OperationsError('Invalid DN'));
 
-                appdb.getAddonConfigByName(mailbox.ownerId, addonId, name, function (error, value) {
-                    if (error) return next(new ldap.OperationsError(error.message));
-                    if (req.credentials !== value) return next(new ldap.InvalidCredentialsError(req.dn.toString()));
+        // note: with sendmail addon, apps can send mail without a mailbox (unlike users)
+        appdb.getAppIdByAddonConfigValue(addonId, name, req.credentials || '', function (error, appId) {
+            if (error && error.reason !== DatabaseError.NOT_FOUND) return next(new ldap.OperationsError(error.message));
+            if (appId) { // matched app password
+                eventlog.add(eventlog.ACTION_APP_LOGIN, { authType: 'ldap', mailboxId: email }, { appId: appId, addonId: addonId });
+                return res.end();
+            }
 
-                    eventlog.add(eventlog.ACTION_APP_LOGIN, { authType: 'ldap', mailboxId: name }, { appId: mailbox.ownerId, addonId: addonId });
-                    return res.end();
-                });
-            } else if (mailbox.ownerType === mailboxdb.OWNER_TYPE_USER) {
-                if (!domain.enabled) return next(new ldap.NoSuchObjectError(req.dn.toString()));
+            mailboxdb.getMailbox(parts[0], parts[1], function (error, mailbox) {
+                if (error && error.reason === DatabaseError.NOT_FOUND) return next(new ldap.NoSuchObjectError(req.dn.toString()));
+                if (error) return next(new ldap.OperationsError(error.message));
 
                 users.verify(mailbox.ownerId, req.credentials || '', function (error, result) {
                     if (error && error.reason === UsersError.NOT_FOUND) return next(new ldap.NoSuchObjectError(req.dn.toString()));
@@ -495,9 +492,7 @@ function authenticateMailbox(req, res, next) {
                     eventlog.add(eventlog.ACTION_USER_LOGIN, { authType: 'ldap', mailboxId: email }, { userId: result.id, user: users.removePrivateFields(result) });
                     res.end();
                 });
-            } else {
-                return next(new ldap.OperationsError('Unknown ownerType for mailbox'));
-            }
+            });
         });
     });
 }

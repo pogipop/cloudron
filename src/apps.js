@@ -72,7 +72,6 @@ var appdb = require('./appdb.js'),
     eventlog = require('./eventlog.js'),
     fs = require('fs'),
     mail = require('./mail.js'),
-    mailboxdb = require('./mailboxdb.js'),
     manifestFormat = require('cloudron-manifestformat'),
     os = require('os'),
     path = require('path'),
@@ -400,13 +399,7 @@ function get(appId, callback) {
             app.fqdn = domains.fqdn(app.location, domainObjectMap[app.domain]);
             app.alternateDomains.forEach(function (ad) { ad.fqdn = domains.fqdn(ad.subdomain, domainObjectMap[ad.domain]); });
 
-            mailboxdb.getByOwnerId(app.id, function (error, mailboxes) {
-                if (error && error.reason !== DatabaseError.NOT_FOUND) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
-
-                if (!error) app.mailboxName = mailboxes[0].name;
-
-                callback(null, app);
-            });
+            callback(null, app);
         });
     });
 }
@@ -440,13 +433,7 @@ function getByIpAddress(ip, callback) {
                     app.fqdn = domains.fqdn(app.location, domainObjectMap[app.domain]);
                     app.alternateDomains.forEach(function (ad) { ad.fqdn = domains.fqdn(ad.subdomain, domainObjectMap[ad.domain]); });
 
-                    mailboxdb.getByOwnerId(app.id, function (error, mailboxes) {
-                        if (error && error.reason !== DatabaseError.NOT_FOUND) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
-
-                        if (!error) app.mailboxName = mailboxes[0].name;
-
-                        callback(null, app);
-                    });
+                    callback(null, app);
                 });
             });
         });
@@ -472,13 +459,7 @@ function getAll(callback) {
                 app.fqdn = domains.fqdn(app.location, domainObjectMap[app.domain]);
                 app.alternateDomains.forEach(function (ad) { ad.fqdn = domains.fqdn(ad.subdomain, domainObjectMap[ad.domain]); });
 
-                mailboxdb.getByOwnerId(app.id, function (error, mailboxes) {
-                    if (error && error.reason !== DatabaseError.NOT_FOUND) return iteratorDone(new AppsError(AppsError.INTERNAL_ERROR, error));
-
-                    if (!error) app.mailboxName = mailboxes[0].name;
-
-                    iteratorDone(null, app);
-                });
+                iteratorDone(null, app);
             }, function (error) {
                 if (error) return callback(error);
 
@@ -683,7 +664,7 @@ function configure(appId, data, user, auditSource, callback) {
     get(appId, function (error, app) {
         if (error) return callback(error);
 
-        let domain, location, portBindings, values = { }, mailboxName;
+        let domain, location, portBindings, values = { };
         if ('location' in data) location = values.location = data.location.toLowerCase();
         else location = app.location;
 
@@ -731,14 +712,14 @@ function configure(appId, data, user, auditSource, callback) {
 
         if ('mailboxName' in data) {
             if (data.mailboxName === '') { // special case to reset back to .app
-                mailboxName = mailboxNameForLocation(location, app.manifest);
+                values.mailboxName = mailboxNameForLocation(location, app.manifest);
             } else {
                 error = mail.validateName(data.mailboxName);
                 if (error) return callback(error);
-                mailboxName = data.mailboxName;
+                values.mailboxName = data.mailboxName;
             }
         } else { // keep existing name or follow the new location
-            mailboxName = app.mailboxName.endsWith('.app') ? mailboxNameForLocation(location, app.manifest) : app.mailboxName;
+            values.mailboxName = app.mailboxName.endsWith('.app') ? mailboxNameForLocation(location, app.manifest) : app.mailboxName;
         }
 
         if ('alternateDomains' in data) {
@@ -779,29 +760,20 @@ function configure(appId, data, user, auditSource, callback) {
 
             debug('Will configure app with id:%s values:%j', appId, values);
 
-            // make the mailbox name follow the apps new location, if the user did not set it explicitly
-            mailboxdb.updateName(app.mailboxName /* old */, values.oldConfig.domain, mailboxName, domain, function (error) {
-                if (mailboxName.endsWith('.app')) error = null; // ignore internal mailbox conflict errors since we want to show location conflict errors in the UI
-
-                if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(new AppsError(AppsError.ALREADY_EXISTS, 'This mailbox is already taken'));
+            appdb.setInstallationCommand(appId, appdb.ISTATE_PENDING_CONFIGURE, values, function (error) {
+                if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(getDuplicateErrorDetails(location, portBindings, error));
                 if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new AppsError(AppsError.BAD_STATE));
                 if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
 
-                appdb.setInstallationCommand(appId, appdb.ISTATE_PENDING_CONFIGURE, values, function (error) {
-                    if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(getDuplicateErrorDetails(location, portBindings, error));
-                    if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new AppsError(AppsError.BAD_STATE));
+                taskmanager.restartAppTask(appId);
+
+                // fetch fresh app object for eventlog
+                get(appId, function (error, result) {
                     if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
 
-                    taskmanager.restartAppTask(appId);
+                    eventlog.add(eventlog.ACTION_APP_CONFIGURE, auditSource, { appId: appId, app: result });
 
-                    // fetch fresh app object for eventlog
-                    get(appId, function (error, result) {
-                        if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
-
-                        eventlog.add(eventlog.ACTION_APP_CONFIGURE, auditSource, { appId: appId, app: result });
-
-                        callback(null);
-                    });
+                    callback(null);
                 });
             });
         });

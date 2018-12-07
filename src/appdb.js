@@ -18,6 +18,7 @@ exports = module.exports = {
     getAddonConfigByName: getAddonConfigByName,
     unsetAddonConfig: unsetAddonConfig,
     unsetAddonConfigByAppId: unsetAddonConfigByAppId,
+    getAppIdByAddonConfigValue: getAppIdByAddonConfigValue,
 
     setHealth: setHealth,
     setInstallationCommand: setInstallationCommand,
@@ -61,7 +62,6 @@ var assert = require('assert'),
     async = require('async'),
     database = require('./database.js'),
     DatabaseError = require('./databaseerror'),
-    mailboxdb = require('./mailboxdb.js'),
     safe = require('safetydance'),
     util = require('util');
 
@@ -69,7 +69,7 @@ var APPS_FIELDS_PREFIXED = [ 'apps.id', 'apps.appStoreId', 'apps.installationSta
     'apps.health', 'apps.containerId', 'apps.manifestJson', 'apps.httpPort', 'subdomains.subdomain AS location', 'subdomains.domain',
     'apps.accessRestrictionJson', 'apps.restoreConfigJson', 'apps.oldConfigJson', 'apps.updateConfigJson', 'apps.memoryLimit',
     'apps.xFrameOptions', 'apps.sso', 'apps.debugModeJson', 'apps.robotsTxt', 'apps.enableBackup',
-    'apps.creationTime', 'apps.updateTime', 'apps.ownerId', 'apps.ts' ].join(',');
+    'apps.creationTime', 'apps.updateTime', 'apps.ownerId', 'apps.mailboxName', 'apps.ts' ].join(',');
 
 var PORT_BINDINGS_FIELDS = [ 'hostPort', 'type', 'environmentVariable', 'appId' ].join(',');
 
@@ -276,13 +276,14 @@ function add(id, appStoreId, manifest, location, domain, ownerId, portBindings, 
     var robotsTxt = 'robotsTxt' in data ? data.robotsTxt : null;
     var debugModeJson = data.debugMode ? JSON.stringify(data.debugMode) : null;
     var env = data.env || {};
+    const mailboxName = data.mailboxName || null;
 
     var queries = [];
 
     queries.push({
-        query: 'INSERT INTO apps (id, appStoreId, manifestJson, installationState, accessRestrictionJson, memoryLimit, xFrameOptions, restoreConfigJson, sso, debugModeJson, robotsTxt, ownerId) ' +
-            ' VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-        args: [ id, appStoreId, manifestJson, installationState, accessRestrictionJson, memoryLimit, xFrameOptions, restoreConfigJson, sso, debugModeJson, robotsTxt, ownerId ]
+        query: 'INSERT INTO apps (id, appStoreId, manifestJson, installationState, accessRestrictionJson, memoryLimit, xFrameOptions, restoreConfigJson, sso, debugModeJson, robotsTxt, ownerId, mailboxName) ' +
+            ' VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        args: [ id, appStoreId, manifestJson, installationState, accessRestrictionJson, memoryLimit, xFrameOptions, restoreConfigJson, sso, debugModeJson, robotsTxt, ownerId, mailboxName ]
     });
 
     queries.push({
@@ -303,14 +304,6 @@ function add(id, appStoreId, manifest, location, domain, ownerId, portBindings, 
             args: [ id, name, env[name] ]
         });
     });
-
-    // only allocate a mailbox if mailboxName is set
-    if (data.mailboxName) {
-        queries.push({
-            query: 'INSERT INTO mailboxes (name, type, domain, ownerId, ownerType) VALUES (?, ?, ?, ?, ?)',
-            args: [ data.mailboxName, mailboxdb.TYPE_MAILBOX, domain, id, mailboxdb.OWNER_TYPE_APP ]
-        });
-    }
 
     if (data.alternateDomains) {
         data.alternateDomains.forEach(function (d) {
@@ -376,7 +369,6 @@ function del(id, callback) {
 
     var queries = [
         { query: 'DELETE FROM subdomains WHERE appId = ?', args: [ id ] },
-        { query: 'DELETE FROM mailboxes WHERE ownerId=?', args: [ id ] },
         { query: 'DELETE FROM appPortBindings WHERE appId = ?', args: [ id ] },
         { query: 'DELETE FROM appEnvVars WHERE appId = ?', args: [ id ] },
         { query: 'DELETE FROM apps WHERE id = ?', args: [ id ] }
@@ -384,7 +376,7 @@ function del(id, callback) {
 
     database.transaction(queries, function (error, results) {
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
-        if (results[4].affectedRows !== 1) return callback(new DatabaseError(DatabaseError.NOT_FOUND));
+        if (results[3].affectedRows !== 1) return callback(new DatabaseError(DatabaseError.NOT_FOUND));
 
         callback(null);
     });
@@ -618,6 +610,20 @@ function getAddonConfigByAppId(appId, callback) {
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
 
         callback(null, results);
+    });
+}
+
+function getAppIdByAddonConfigValue(addonId, name, value, callback) {
+    assert.strictEqual(typeof addonId, 'string');
+    assert.strictEqual(typeof name, 'string');
+    assert.strictEqual(typeof value, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    database.query('SELECT appId FROM appAddonConfigs WHERE addonId = ? AND name = ? AND value = ?', [ addonId, name, value ], function (error, results) {
+        if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
+        if (results.length === 0) return callback(new DatabaseError(DatabaseError.NOT_FOUND));
+
+        callback(null, results[0].appId);
     });
 }
 

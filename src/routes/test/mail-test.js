@@ -761,7 +761,6 @@ describe('Mail API', function () {
                     expect(res.body.mailbox).to.be.an('object');
                     expect(res.body.mailbox.name).to.equal(MAILBOX_NAME);
                     expect(res.body.mailbox.ownerId).to.equal(userId);
-                    expect(res.body.mailbox.ownerType).to.equal('user');
                     expect(res.body.mailbox.aliasTarget).to.equal(null);
                     expect(res.body.mailbox.domain).to.equal(DOMAIN_0.domain);
                     done();
@@ -777,7 +776,6 @@ describe('Mail API', function () {
                     expect(res.body.mailboxes[0]).to.be.an('object');
                     expect(res.body.mailboxes[0].name).to.equal(MAILBOX_NAME);
                     expect(res.body.mailboxes[0].ownerId).to.equal(userId);
-                    expect(res.body.mailboxes[0].ownerType).to.equal('user');
                     expect(res.body.mailboxes[0].aliasTarget).to.equal(null);
                     expect(res.body.mailboxes[0].domain).to.equal(DOMAIN_0.domain);
                     done();
@@ -910,12 +908,10 @@ describe('Mail API', function () {
                     expect(res.body.aliases.length).to.eql(2);
                     expect(res.body.aliases[0].name).to.equal('hello');
                     expect(res.body.aliases[0].ownerId).to.equal(userId);
-                    expect(res.body.aliases[0].ownerType).to.equal('user');
                     expect(res.body.aliases[0].aliasTarget).to.equal(MAILBOX_NAME);
                     expect(res.body.aliases[0].domain).to.equal(DOMAIN_0.domain);
                     expect(res.body.aliases[1].name).to.equal('there');
                     expect(res.body.aliases[1].ownerId).to.equal(userId);
-                    expect(res.body.aliases[1].ownerType).to.equal('user');
                     expect(res.body.aliases[1].aliasTarget).to.equal(MAILBOX_NAME);
                     expect(res.body.aliases[1].domain).to.equal(DOMAIN_0.domain);
                     done();
@@ -1027,7 +1023,6 @@ describe('Mail API', function () {
                     expect(res.body.list).to.be.an('object');
                     expect(res.body.list.name).to.equal(LIST_NAME);
                     expect(res.body.list.ownerId).to.equal('admin');
-                    expect(res.body.list.ownerType).to.equal('group');
                     expect(res.body.list.aliasTarget).to.equal(null);
                     expect(res.body.list.domain).to.equal(DOMAIN_0.domain);
                     expect(res.body.list.members).to.eql([ 'admin2', 'superadmin' ]);
@@ -1044,7 +1039,6 @@ describe('Mail API', function () {
                     expect(res.body.lists.length).to.equal(1);
                     expect(res.body.lists[0].name).to.equal(LIST_NAME);
                     expect(res.body.lists[0].ownerId).to.equal('admin');
-                    expect(res.body.lists[0].ownerType).to.equal('group');
                     expect(res.body.lists[0].aliasTarget).to.equal(null);
                     expect(res.body.lists[0].domain).to.equal(DOMAIN_0.domain);
                     expect(res.body.lists[0].members).to.eql([ 'admin2', 'superadmin' ]);

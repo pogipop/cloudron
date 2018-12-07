@@ -879,23 +879,17 @@ function setupSendMail(app, options, callback) {
 
         var password = error ? hat(4 * 48) : existingPassword; // see box#565 for password length
 
-        mailboxdb.getByOwnerId(app.id, function (error, results) {
-            if (error) return callback(error);
-
-            var mailbox = results.filter(function (r) { return !r.aliasTarget; })[0];
-
-            var env = [
-                { name: 'MAIL_SMTP_SERVER', value: 'mail' },
-                { name: 'MAIL_SMTP_PORT', value: '2525' },
-                { name: 'MAIL_SMTPS_PORT', value: '2465' },
-                { name: 'MAIL_SMTP_USERNAME', value: mailbox.name + '@' + app.domain },
-                { name: 'MAIL_SMTP_PASSWORD', value: password },
-                { name: 'MAIL_FROM', value: mailbox.name + '@' + app.domain },
-                { name: 'MAIL_DOMAIN', value: app.domain }
-            ];
-            debugApp(app, 'Setting sendmail addon config to %j', env);
-            appdb.setAddonConfig(app.id, 'sendmail', env, callback);
-        });
+        var env = [
+            { name: 'MAIL_SMTP_SERVER', value: 'mail' },
+            { name: 'MAIL_SMTP_PORT', value: '2525' },
+            { name: 'MAIL_SMTPS_PORT', value: '2465' },
+            { name: 'MAIL_SMTP_USERNAME', value: app.mailboxName + '@' + app.domain },
+            { name: 'MAIL_SMTP_PASSWORD', value: password },
+            { name: 'MAIL_FROM', value: app.mailboxName + '@' + app.domain },
+            { name: 'MAIL_DOMAIN', value: app.domain }
+        ];
+        debugApp(app, 'Setting sendmail addon config to %j', env);
+        appdb.setAddonConfig(app.id, 'sendmail', env, callback);
     });
 }
 
@@ -921,23 +915,17 @@ function setupRecvMail(app, options, callback) {
 
         var password = error ? hat(4 * 48) : existingPassword;  // see box#565 for password length
 
-        mailboxdb.getByOwnerId(app.id, function (error, results) {
-            if (error) return callback(error);
+        var env = [
+            { name: 'MAIL_IMAP_SERVER', value: 'mail' },
+            { name: 'MAIL_IMAP_PORT', value: '9993' },
+            { name: 'MAIL_IMAP_USERNAME', value: app.mailboxName + '@' + app.domain },
+            { name: 'MAIL_IMAP_PASSWORD', value: password },
+            { name: 'MAIL_TO', value: app.mailboxName + '@' + app.domain },
+            { name: 'MAIL_DOMAIN', value: app.domain }
+        ];
 
-            var mailbox = results.filter(function (r) { return !r.aliasTarget; })[0];
-
-            var env = [
-                { name: 'MAIL_IMAP_SERVER', value: 'mail' },
-                { name: 'MAIL_IMAP_PORT', value: '9993' },
-                { name: 'MAIL_IMAP_USERNAME', value: mailbox.name + '@' + app.domain },
-                { name: 'MAIL_IMAP_PASSWORD', value: password },
-                { name: 'MAIL_TO', value: mailbox.name + '@' + app.domain },
-                { name: 'MAIL_DOMAIN', value: app.domain }
-            ];
-
-            debugApp(app, 'Setting sendmail addon config to %j', env);
-            appdb.setAddonConfig(app.id, 'recvmail', env, callback);
-        });
+        debugApp(app, 'Setting sendmail addon config to %j', env);
+        appdb.setAddonConfig(app.id, 'recvmail', env, callback);
     });
 }
 

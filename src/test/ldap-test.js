@@ -79,7 +79,8 @@ var APP_0 = {
     restoreConfig: null,
     oldConfig: null,
     memoryLimit: 4294967296,
-    ownerId: null
+    ownerId: null,
+    mailboxName: 'some-location-0.app'
 };
 
 var dockerProxy;
@@ -112,7 +113,7 @@ function setup(done) {
         appdb.update.bind(null, APP_0.id, { containerId: APP_0.containerId }),
         appdb.setAddonConfig.bind(null, APP_0.id, 'sendmail', [{ name: 'MAIL_SMTP_PASSWORD', value : 'sendmailpassword' }]),
         appdb.setAddonConfig.bind(null, APP_0.id, 'recvmail', [{ name: 'MAIL_IMAP_PASSWORD', value : 'recvmailpassword' }]),
-        mailboxdb.addMailbox.bind(null, APP_0.location + '.app', APP_0.domain, APP_0.id, mailboxdb.OWNER_TYPE_APP),
+        mailboxdb.addMailbox.bind(null, APP_0.location + '.app', APP_0.domain, APP_0.id),
 
         function (callback) {
             users.create(USER_1.username, USER_1.password, USER_1.email, USER_0.displayName, { invitor: USER_0 }, AUDIT_SOURCE, function (error, result) {
@@ -812,7 +813,7 @@ describe('Ldap', function () {
 
     describe('search mailbox', function () {
         before(function (done) {
-            mailboxdb.addMailbox(USER_0.username.toLowerCase(), DOMAIN_0.domain, USER_0.id, mailboxdb.OWNER_TYPE_USER, done);
+            mailboxdb.addMailbox(USER_0.username.toLowerCase(), DOMAIN_0.domain, USER_0.id, done);
         });
 
         it('get specific mailbox by email', function (done) {
@@ -923,7 +924,7 @@ describe('Ldap', function () {
             var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + config.get('ldapPort') });
 
             client.bind('cn=' + USER_0.username + '@example.com,ou=sendmail,dc=cloudron', USER_0.password + 'nope', function (error) {
-                expect(error).to.be.a(ldap.NoSuchObjectError);
+                expect(error).to.be.a(ldap.InvalidCredentialsError);
                 client.unbind(done);
             });
         });
@@ -991,7 +992,7 @@ describe('Ldap', function () {
             var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + config.get('ldapPort') });
 
             client.bind('cn=' + APP_0.location + '.app@example.com,ou=sendmail,dc=cloudron', 'nope', function (error) {
-                expect(error).to.be.a(ldap.InvalidCredentialsError);
+                expect(error).to.be.a(ldap.NoSuchObjectError);
                 client.unbind(done);
             });
         });
@@ -1082,7 +1083,7 @@ describe('Ldap', function () {
             var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + config.get('ldapPort') });
 
             client.bind('cn=' + APP_0.location + '.app@example.com,ou=recvmail,dc=cloudron', 'nope', function (error) {
-                expect(error).to.be.a(ldap.InvalidCredentialsError);
+                expect(error).to.be.a(ldap.NoSuchObjectError);
                 client.unbind(done);
             });
         });
