@@ -233,7 +233,8 @@ describe('database', function () {
             enableBackup: true,
             ownerId: USER_0.id,
             env: {},
-            mailboxName: 'talktome'
+            mailboxName: 'talktome',
+            enableAutomaticUpdate: true
         };
 
         it('cannot delete referenced domain', function (done) {
@@ -755,7 +756,8 @@ describe('database', function () {
             env: {
                 'CUSTOM_KEY': 'CUSTOM_VALUE'
             },
-            mailboxName: 'talktome'
+            mailboxName: 'talktome',
+            enableAutomaticUpdate: true
         };
 
         var APP_1 = {
@@ -784,7 +786,8 @@ describe('database', function () {
             ownerId: USER_0.id,
             alternateDomains: [],
             env: {},
-            mailboxName: 'callme'
+            mailboxName: 'callme',
+            enableAutomaticUpdate: true
         };
 
         before(function (done) {

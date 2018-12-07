@@ -69,7 +69,7 @@ var APPS_FIELDS_PREFIXED = [ 'apps.id', 'apps.appStoreId', 'apps.installationSta
     'apps.health', 'apps.containerId', 'apps.manifestJson', 'apps.httpPort', 'subdomains.subdomain AS location', 'subdomains.domain',
     'apps.accessRestrictionJson', 'apps.restoreConfigJson', 'apps.oldConfigJson', 'apps.updateConfigJson', 'apps.memoryLimit',
     'apps.xFrameOptions', 'apps.sso', 'apps.debugModeJson', 'apps.robotsTxt', 'apps.enableBackup',
-    'apps.creationTime', 'apps.updateTime', 'apps.ownerId', 'apps.mailboxName', 'apps.ts' ].join(',');
+    'apps.creationTime', 'apps.updateTime', 'apps.ownerId', 'apps.mailboxName', 'apps.enableAutomaticUpdate', 'apps.ts' ].join(',');
 
 var PORT_BINDINGS_FIELDS = [ 'hostPort', 'type', 'environmentVariable', 'appId' ].join(',');
 
@@ -120,6 +120,7 @@ function postProcess(result) {
 
     result.sso = !!result.sso; // make it bool
     result.enableBackup = !!result.enableBackup; // make it bool
+    result.enableAutomaticUpdate = !!result.enableAutomaticUpdate; // make it bool
 
     assert(result.debugModeJson === null || typeof result.debugModeJson === 'string');
     result.debugMode = safe.JSON.parse(result.debugModeJson);

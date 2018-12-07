@@ -80,6 +80,7 @@ CREATE TABLE IF NOT EXISTS apps(
     debugModeJson TEXT, // options for development mode
     robotsTxt TEXT,
     enableBackup BOOLEAN DEFAULT 1, // misnomer: controls automatic daily backups
+    enableAutomaticUpdate BOOLEAN DEFAULT 1,
     mailboxName VARCHAR(128), // mailbox of this app
 
     // the following fields do not belong here, they can be removed when we use a queue for apptask

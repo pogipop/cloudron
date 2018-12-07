@@ -346,7 +346,7 @@ function removeInternalFields(app) {
         'location', 'domain', 'fqdn', 'mailboxName',
         'accessRestriction', 'manifest', 'portBindings', 'iconUrl', 'memoryLimit', 'xFrameOptions',
         'sso', 'debugMode', 'robotsTxt', 'enableBackup', 'creationTime', 'updateTime', 'ts',
-        'alternateDomains', 'ownerId', 'env');
+        'alternateDomains', 'ownerId', 'env', 'enableAutomaticUpdate');
 }
 
 function removeRestrictedFields(app) {
@@ -525,6 +525,7 @@ function install(data, user, auditSource, callback) {
         debugMode = data.debugMode || null,
         robotsTxt = data.robotsTxt || null,
         enableBackup = 'enableBackup' in data ? data.enableBackup : true,
+        enableAutomaticUpdate = 'enableAutomaticUpdate' in data ? data.enableAutomaticUpdate : true,
         backupId = data.backupId || null,
         backupFormat = data.backupFormat || 'tgz',
         ownerId = data.ownerId,
@@ -606,6 +607,7 @@ function install(data, user, auditSource, callback) {
                 mailboxName: mailboxNameForLocation(location, manifest),
                 restoreConfig: backupId ? { backupId: backupId, backupFormat: backupFormat } : null,
                 enableBackup: enableBackup,
+                enableAutomaticUpdate: enableAutomaticUpdate,
                 robotsTxt: robotsTxt,
                 alternateDomains: alternateDomains,
                 env: env
@@ -755,6 +757,7 @@ function configure(appId, data, user, auditSource, callback) {
             }
 
             if ('enableBackup' in data) values.enableBackup = data.enableBackup;
+            if ('enableAutomaticUpdate' in data) values.enableAutomaticUpdate = data.enableAutomaticUpdate;
 
             values.oldConfig = getAppConfig(app);
 
@@ -1193,6 +1196,7 @@ function autoupdateApps(updateInfo, auditSource, callback) { // updateInfo is { 
     assert.strictEqual(typeof callback, 'function');
 
     function canAutoupdateApp(app, newManifest) {
+        if (!app.enableAutomaticUpdate) return new Error('Automatic update disabled');
         if ((semver.major(app.manifest.version) !== 0) && (semver.major(app.manifest.version) !== semver.major(newManifest.version))) return new Error('Major version change'); // major changes are blocking
 
         const newTcpPorts = newManifest.tcpPorts || { };

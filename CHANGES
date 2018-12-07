@@ -1472,4 +1472,5 @@
 * Backup and update tasks are now cancelable
 * Move graphite away from port 3000 (reserved by ESXi)
 * Flexible mailbox management
+* Automatic updates can be toggled per app
 
