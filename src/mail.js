@@ -8,6 +8,7 @@ exports = module.exports = {
     getDomain: getDomain,
     addDomain: addDomain,
     removeDomain: removeDomain,
+    clearDomains: clearDomains,
 
     setDnsRecords: setDnsRecords,
 
@@ -802,6 +803,16 @@ function removeDomain(domain, callback) {
         if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
 
         restartMail(NOOP_CALLBACK);
+
+        callback();
+    });
+}
+
+function clearDomains(callback) {
+    assert.strictEqual(typeof callback, 'function');
+
+    maildb.clear(function (error) {
+        if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
 
         callback();
     });

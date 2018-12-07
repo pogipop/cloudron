@@ -6,6 +6,7 @@ module.exports = exports = {
     getAll: getAll,
     update: update,
     del: del,
+    clear: clear,
     isLocked: isLocked,
 
     renewCerts: renewCerts,
@@ -364,6 +365,16 @@ function del(domain, auditSource, callback) {
         if (error) return callback(new DomainsError(DomainsError.INTERNAL_ERROR, error));
 
         eventlog.add(eventlog.ACTION_DOMAIN_REMOVE, auditSource, { domain });
+
+        return callback(null);
+    });
+}
+
+function clear(callback) {
+    assert.strictEqual(typeof callback, 'function');
+
+    domaindb.clear(function (error) {
+        if (error) return callback(new DomainsError(DomainsError.INTERNAL_ERROR, error));
 
         return callback(null);
     });

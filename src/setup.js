@@ -95,58 +95,75 @@ function autoprovision(autoconf, callback) {
     });
 }
 
+function unprovision(callback) {
+    assert.strictEqual(typeof callback, 'function');
+
+    debug('unprovision');
+
+    config.setAdminDomain('');
+    config.setAdminFqdn('');
+    config.setAdminLocation('my');
+
+    // TODO: also cancel any existing configureWebadmin task
+    async.series([
+        mail.clearDomains,
+        domains.clear
+    ], callback);
+}
+
 function provision(dnsConfig, autoconf, auditSource, callback) {
     assert.strictEqual(typeof dnsConfig, 'object');
     assert.strictEqual(typeof autoconf, 'object');
     assert.strictEqual(typeof auditSource, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    if (config.adminDomain()) return callback(new SetupError(SetupError.ALREADY_SETUP));
+    users.isActivated(function (error, activated) {
+        if (error) return callback(new SetupError(SetupError.INTERNAL_ERROR, error));
+        if (activated) return callback(new SetupError(SetupError.ALREADY_SETUP));
 
-    let webadminStatus = cloudron.getWebadminStatus();
-
-    if (webadminStatus.configuring || webadminStatus.restore.active) return callback(new SetupError(SetupError.BAD_STATE, 'Already restoring or configuring'));
-
-    const domain = dnsConfig.domain.toLowerCase();
-    const zoneName = dnsConfig.zoneName ? dnsConfig.zoneName : (tld.getDomain(domain) || domain);
-
-    const adminFqdn = 'my' + (dnsConfig.config.hyphenatedSubdomains ? '-' : '.') + domain;
-
-    debug(`provision: Setting up Cloudron with domain ${domain} and zone ${zoneName} using admin fqdn ${adminFqdn}`);
-
-    domains.get(domain, function (error, result) {
-        if (error && error.reason !== DomainsError.NOT_FOUND) return callback(new SetupError(SetupError.INTERNAL_ERROR, error));
-
-        if (result) return callback(new SetupError(SetupError.BAD_STATE, 'Domain already exists'));
-
-        let data = {
-            zoneName: zoneName,
-            provider: dnsConfig.provider,
-            config: dnsConfig.config,
-            fallbackCertificate: dnsConfig.fallbackCertificate || null,
-            tlsConfig: dnsConfig.tlsConfig || { provider: 'letsencrypt-prod' }
-        };
-
-        async.series([
-            domains.add.bind(null, domain, data, auditSource),
-            mail.addDomain.bind(null, domain)
-        ],  function (error) {
-            if (error && error.reason === DomainsError.BAD_FIELD) return callback(new SetupError(SetupError.BAD_FIELD, error.message));
-            if (error && error.reason === DomainsError.ALREADY_EXISTS) return callback(new SetupError(SetupError.BAD_FIELD, error.message));
+        unprovision(function (error) {
             if (error) return callback(new SetupError(SetupError.INTERNAL_ERROR, error));
 
-            config.setAdminDomain(domain); // set fqdn only after dns config is valid, otherwise cannot re-setup if we failed
-            config.setAdminFqdn(adminFqdn);
-            config.setAdminLocation('my');
+            let webadminStatus = cloudron.getWebadminStatus();
 
-            eventlog.add(eventlog.ACTION_PROVISION, auditSource, { });
+            if (webadminStatus.configuring || webadminStatus.restore.active) return callback(new SetupError(SetupError.BAD_STATE, 'Already restoring or configuring'));
 
-            clients.addDefaultClients(config.adminOrigin(), callback);
+            const domain = dnsConfig.domain.toLowerCase();
+            const zoneName = dnsConfig.zoneName ? dnsConfig.zoneName : (tld.getDomain(domain) || domain);
+
+            const adminFqdn = 'my' + (dnsConfig.config.hyphenatedSubdomains ? '-' : '.') + domain;
+
+            debug(`provision: Setting up Cloudron with domain ${domain} and zone ${zoneName} using admin fqdn ${adminFqdn}`);
+
+            let data = {
+                zoneName: zoneName,
+                provider: dnsConfig.provider,
+                config: dnsConfig.config,
+                fallbackCertificate: dnsConfig.fallbackCertificate || null,
+                tlsConfig: dnsConfig.tlsConfig || { provider: 'letsencrypt-prod' }
+            };
 
             async.series([
-                autoprovision.bind(null, autoconf),
-                cloudron.configureWebadmin
-            ], NOOP_CALLBACK);
+                domains.add.bind(null, domain, data, auditSource),
+                mail.addDomain.bind(null, domain)
+            ],  function (error) {
+                if (error && error.reason === DomainsError.BAD_FIELD) return callback(new SetupError(SetupError.BAD_FIELD, error.message));
+                if (error && error.reason === DomainsError.ALREADY_EXISTS) return callback(new SetupError(SetupError.BAD_FIELD, error.message));
+                if (error) return callback(new SetupError(SetupError.INTERNAL_ERROR, error));
+
+                config.setAdminDomain(domain); // set fqdn only after dns config is valid, otherwise cannot re-setup if we failed
+                config.setAdminFqdn(adminFqdn);
+                config.setAdminLocation('my');
+
+                eventlog.add(eventlog.ACTION_PROVISION, auditSource, { });
+
+                clients.addDefaultClients(config.adminOrigin(), callback);
+
+                async.series([
+                    autoprovision.bind(null, autoconf),
+                    cloudron.configureWebadmin
+                ], NOOP_CALLBACK);
+            });
         });
     });
 }

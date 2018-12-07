@@ -137,12 +137,12 @@ describe('REST API', function () {
             });
     });
 
-    it('dns setup twice fails', function (done) {
+    it('dns setup twice succeeds', function (done) {
         superagent.post(SERVER_URL + '/api/v1/cloudron/setup')
             .send({ dnsConfig: { provider: 'noop', domain: DOMAIN, DOMAIN, config: {} } })
             .end(function (error, result) {
                 expect(result).to.be.ok();
-                expect(result.statusCode).to.eql(409);
+                expect(result.statusCode).to.eql(200);
 
                 done();
             });
@@ -239,6 +239,17 @@ describe('REST API', function () {
         superagent.post(SERVER_URL + '/api/v1/cloudron/activate')
             .query({ setupToken: 'somesetuptoken' })
             .send({ username: USERNAME, password: PASSWORD, email: EMAIL })
+            .end(function (error, result) {
+                expect(result).to.be.ok();
+                expect(result.statusCode).to.eql(409);
+
+                done();
+            });
+    });
+
+    it('dns setup after activation fails', function (done) {
+        superagent.post(SERVER_URL + '/api/v1/cloudron/setup')
+            .send({ dnsConfig: { provider: 'noop', domain: DOMAIN, DOMAIN, config: {} } })
             .end(function (error, result) {
                 expect(result).to.be.ok();
                 expect(result.statusCode).to.eql(409);

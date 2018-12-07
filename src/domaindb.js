@@ -8,8 +8,7 @@ exports = module.exports = {
     getAll: getAll,
     update: update,
     del: del,
-
-    _clear: clear
+    clear: clear
 };
 
 var assert = require('assert'),

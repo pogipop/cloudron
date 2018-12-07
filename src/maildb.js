@@ -7,7 +7,7 @@ exports = module.exports = {
     list: list,
     update: update,
 
-    _clear: clear,
+    clear: clear,
 
     TYPE_USER: 'user',
     TYPE_APP: 'app',
@@ -49,7 +49,8 @@ function add(domain, callback) {
 function clear(callback) {
     assert.strictEqual(typeof callback, 'function');
 
-    database.query('TRUNCATE TABLE mail', [], function (error) {
+    // using TRUNCATE makes it fail foreign key check
+    database.query('DELETE FROM mail', [], function (error) {
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
         callback(null);
     });
