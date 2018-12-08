@@ -12,6 +12,7 @@ exports = module.exports = {
     getLogs: getLogs,
     getLogStream: getLogStream,
     getStatus: getStatus,
+    setAdmin: setAdmin
 };
 
 var appstore = require('../appstore.js'),
@@ -170,6 +171,17 @@ function getLogStream(req, res, next) {
         });
         logStream.on('end', res.end.bind(res));
         logStream.on('error', res.end.bind(res, null));
+    });
+}
+
+function setAdmin(req, res, next) {
+    if (!req.body.domain || typeof req.body.domain !== 'string') return next(new HttpError(400, 'domain must be a string'));
+
+    cloudron.setAdmin(req.body.domain, function (error) {
+        if (error && error.reason === CloudronError.BAD_FIELD) return next(new HttpError(404, error.message));
+        if (error) return next(new HttpError(500, error));
+
+        next(new HttpSuccess(200, status));
     });
 }
 

@@ -12,7 +12,6 @@ module.exports = exports = {
     renewCerts: renewCerts,
 
     fqdn: fqdn,
-    setAdmin: setAdmin,
 
     getDnsRecords: getDnsRecords,
     upsertDnsRecords: upsertDnsRecords,
@@ -36,25 +35,19 @@ module.exports = exports = {
 };
 
 var assert = require('assert'),
-    caas = require('./caas.js'),
     config = require('./config.js'),
     constants = require('./constants.js'),
     DatabaseError = require('./databaseerror.js'),
     debug = require('debug')('box:domains'),
     domaindb = require('./domaindb.js'),
     eventlog = require('./eventlog.js'),
-    path = require('path'),
     reverseProxy = require('./reverseproxy.js'),
     ReverseProxyError = reverseProxy.ReverseProxyError,
     safe = require('safetydance'),
-    shell = require('./shell.js'),
     sysinfo = require('./sysinfo.js'),
     tld = require('tldjs'),
     util = require('util'),
     _ = require('underscore');
-
-var RESTART_CMD = path.join(__dirname, 'scripts/restart.sh');
-var NOOP_CALLBACK = function (error) { if (error) debug(error); };
 
 function DomainsError(reason, errorOrMessage) {
     assert.strictEqual(typeof reason, 'string');
@@ -476,31 +469,6 @@ function waitForDnsRecord(subdomain, domain, type, value, options, callback) {
         const hostname = fqdn(subdomain, domainObject);
 
         api(domainObject.provider).waitForDns(hostname, domainObject.zoneName, type, value, options, callback);
-    });
-}
-
-function setAdmin(domain, callback) {
-    assert.strictEqual(typeof domain, 'string');
-    assert.strictEqual(typeof callback, 'function');
-
-    debug('setAdmin domain:%s', domain);
-
-    get(domain, function (error, result) {
-        if (error) return callback(error);
-
-        var setPtrRecord = config.provider() === 'caas' ? caas.setPtrRecord : function (d, next) { next(); };
-
-        setPtrRecord(domain, function (error) {
-            if (error) return callback(new DomainsError(DomainsError.EXTERNAL_ERROR, 'Error setting PTR record:' + error.message));
-
-            config.setAdminDomain(result.domain);
-            config.setAdminLocation('my');
-            config.setAdminFqdn('my' + (result.config.hyphenatedSubdomains ? '-' : '.') + result.domain);
-
-            callback();
-
-            shell.sudo('restart', [ RESTART_CMD ], {}, NOOP_CALLBACK);
-        });
     });
 }
 

@@ -15,6 +15,7 @@ exports = module.exports = {
 
     onActivated: onActivated,
 
+    setAdmin: setAdmin,
 
     checkDiskSpace: checkDiskSpace,
 
@@ -24,10 +25,12 @@ exports = module.exports = {
 
 var assert = require('assert'),
     async = require('async'),
+    clients = require('./clients.js'),
     config = require('./config.js'),
     cron = require('./cron.js'),
     debug = require('debug')('box:cloudron'),
     domains = require('./domains.js'),
+    DomainsError = require('./domains.js').DomainsError,
     df = require('@sindresorhus/df'),
     fs = require('fs'),
     mailer = require('./mailer.js'),
@@ -82,7 +85,6 @@ CloudronError.INTERNAL_ERROR = 'Internal Error';
 CloudronError.EXTERNAL_ERROR = 'External Error';
 CloudronError.BAD_STATE = 'Bad state';
 CloudronError.ALREADY_UPTODATE = 'No Update Available';
-CloudronError.NOT_FOUND = 'Not found';
 
 function initialize(callback) {
     assert.strictEqual(typeof callback, 'function');
@@ -346,6 +348,30 @@ function getStatus(callback) {
                 edition: config.edition(),
                 webadminStatus: gWebadminStatus // only valid when !activated
             });
+        });
+    });
+}
+
+function setAdmin(domain, callback) {
+    assert.strictEqual(typeof domain, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    debug('setAdmin domain:%s', domain);
+
+    domains.get(domain, function (error, result) {
+        if (error && error.reason === DomainsError.NOT_FOUND) return callback(new CloudronError(CloudronError.BAD_FIELD, 'No such domain'));
+        if (error) return callback(new CloudronError(CloudronError.INTERNAL_ERROR, error));
+
+        config.setAdminDomain(result.domain);
+        config.setAdminLocation('my');
+        config.setAdminFqdn('my' + (result.config.hyphenatedSubdomains ? '-' : '.') + result.domain);
+
+        clients.addDefaultClients(config.adminOrigin(), function (error) {
+            if (error) return callback(new CloudronError(CloudronError.INTERNAL_ERROR, error));
+
+            callback(null);
+
+            configureWebadmin(NOOP_CALLBACK); // ## trigger as task
         });
     });
 }

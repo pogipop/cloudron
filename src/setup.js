@@ -143,26 +143,17 @@ function provision(dnsConfig, autoconf, auditSource, callback) {
                 tlsConfig: dnsConfig.tlsConfig || { provider: 'letsencrypt-prod' }
             };
 
-            async.series([
-                domains.add.bind(null, domain, data, auditSource),
-                mail.addDomain.bind(null, domain)
-            ],  function (error) {
+            domains.add(domain, data, auditSource, function (error) {
                 if (error && error.reason === DomainsError.BAD_FIELD) return callback(new SetupError(SetupError.BAD_FIELD, error.message));
                 if (error && error.reason === DomainsError.ALREADY_EXISTS) return callback(new SetupError(SetupError.BAD_FIELD, error.message));
                 if (error) return callback(new SetupError(SetupError.INTERNAL_ERROR, error));
 
-                config.setAdminDomain(domain); // set fqdn only after dns config is valid, otherwise cannot re-setup if we failed
-                config.setAdminFqdn(adminFqdn);
-                config.setAdminLocation('my');
-
-                eventlog.add(eventlog.ACTION_PROVISION, auditSource, { });
-
-                clients.addDefaultClients(config.adminOrigin(), callback);
-
                 async.series([
+                    mail.addDomain.bind(null, domain),
+                    cloudron.setAdmin.bind(null, domain), // triggers task to setup my. dns/cert/reverseproxy
                     autoprovision.bind(null, autoconf),
-                    cloudron.configureWebadmin
-                ], NOOP_CALLBACK);
+                    eventlog.add.bind(null, eventlog.ACTION_PROVISION, auditSource, { })
+                ], callback);
             });
         });
     });
