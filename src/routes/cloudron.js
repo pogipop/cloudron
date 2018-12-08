@@ -181,7 +181,7 @@ function setAdmin(req, res, next) {
         if (error && error.reason === CloudronError.BAD_FIELD) return next(new HttpError(404, error.message));
         if (error) return next(new HttpError(500, error));
 
-        next(new HttpSuccess(200, status));
+        next(new HttpSuccess(204, {}));
     });
 }
 
