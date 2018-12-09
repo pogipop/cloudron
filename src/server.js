@@ -136,6 +136,7 @@ function initializeExpressSync() {
     router.get ('/api/v1/cloudron/eventlog', cloudronScope, routes.eventlog.get);
 
     // tasks
+    router.get ('/api/v1/tasks', settingsScope, routes.tasks.list);
     router.get ('/api/v1/tasks/:taskId', settingsScope, routes.tasks.get);
     router.post('/api/v1/tasks/:taskId/stop', settingsScope, routes.tasks.stopTask);
 

@@ -2,7 +2,8 @@
 
 exports = module.exports = {
     get: get,
-    stopTask: stopTask
+    stopTask: stopTask,
+    list: list
 };
 
 let assert = require('assert'),
@@ -31,10 +32,27 @@ function stopTask(req, res, next) {
 function get(req, res, next) {
     assert.strictEqual(typeof req.params.taskId, 'string');
 
-    tasks.get(req.params.taskId, function (error, progress) {
+    tasks.get(req.params.taskId, function (error, task) {
         if (error && error.reason === TaskError.NOT_FOUND) return next(new HttpError(404, 'No such task'));
         if (error) return next(new HttpError(500, error));
 
-        next(new HttpSuccess(200, progress));
+        next(new HttpSuccess(200, task));
+    });
+}
+
+function list(req, res, next) {
+    var page = typeof req.query.page !== 'undefined' ? parseInt(req.query.page) : 1;
+    if (!page || page < 0) return next(new HttpError(400, 'page query param has to be a postive number'));
+
+    var perPage = typeof req.query.per_page !== 'undefined'? parseInt(req.query.per_page) : 25;
+    if (!perPage || perPage < 0) return next(new HttpError(400, 'per_page query param has to be a postive number'));
+
+    if (req.query.type && typeof req.query.type !== 'string') return next(new HttpError(400, 'type must be a string'));
+
+    tasks.listPaged(req.query.type || null, page, perPage, function (error, tasks) {
+        if (error && error.reason === TaskError.NOT_FOUND) return next(new HttpError(404, 'No such task'));
+        if (error) return next(new HttpError(500, error));
+
+        next(new HttpSuccess(200, { tasks }));
     });
 }

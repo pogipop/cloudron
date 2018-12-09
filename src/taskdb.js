@@ -4,7 +4,8 @@ exports = module.exports = {
     get: get,
     add: add,
     update: update,
-    del: del
+    del: del,
+    listPaged: listPaged
 };
 
 let assert = require('assert'),
@@ -82,5 +83,33 @@ function del(id, callback) {
         if (result.affectedRows !== 1) return callback(new DatabaseError(DatabaseError.NOT_FOUND));
 
         callback(null);
+    });
+}
+
+function listPaged(type, page, perPage, callback) {
+    assert(typeof type === 'string' || type === null);
+    assert.strictEqual(typeof page, 'number');
+    assert.strictEqual(typeof perPage, 'number');
+    assert.strictEqual(typeof callback, 'function');
+
+    var data = [];
+    var query = 'SELECT ' + TASKS_FIELDS + ' FROM tasks';
+
+    if (type) {
+        query += ' WHERE TYPE=?';
+        data.push(type);
+    }
+
+    query += ' ORDER BY creationTime DESC LIMIT ?,?';
+
+    data.push((page-1)*perPage);
+    data.push(perPage);
+
+    database.query(query, data, function (error, results) {
+        if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
+
+        results.forEach(postProcess);
+
+        callback(null, results);
     });
 }

@@ -1138,6 +1138,32 @@ describe('database', function () {
             });
         });
 
+        it('list succeeds - does not exist', function (done) {
+            taskdb.listPaged('randomtask', 1, 1, function (error, tasks) {
+                expect(error).to.be(null);
+                expect(tasks.length).to.be(0);
+                done();
+            });
+        });
+
+        it('list succeeds - by type', function (done) {
+            taskdb.listPaged(TASK.type, 1, 1, function (error, tasks) {
+                expect(error).to.be(null);
+                expect(tasks.length).to.be(1);
+                expect(_.pick(tasks[0], Object.keys(TASK))).to.eql(TASK);
+                done();
+            });
+        });
+
+        it('list succeeds - all', function (done) {
+            taskdb.listPaged(null, 1, 1, function (error, tasks) {
+                expect(error).to.be(null);
+                expect(tasks.length).to.be(1);
+                expect(_.pick(tasks[0], Object.keys(TASK))).to.eql(TASK);
+                done();
+            });
+        });
+
         it('del succeeds', function (done) {
             taskdb.del(taskId, function (error) {
                 expect(error).to.be(null);
