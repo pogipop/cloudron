@@ -15,7 +15,7 @@ exports = module.exports = {
 
     onActivated: onActivated,
 
-    setAdmin: setAdmin,
+    setDashboardDomain: setDashboardDomain,
 
     checkDiskSpace: checkDiskSpace,
 
@@ -352,11 +352,11 @@ function getStatus(callback) {
     });
 }
 
-function setAdmin(domain, callback) {
+function setDashboardDomain(domain, callback) {
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    debug('setAdmin domain:%s', domain);
+    debug(`setDashboardDomain: ${domain}`);
 
     domains.get(domain, function (error, result) {
         if (error && error.reason === DomainsError.NOT_FOUND) return callback(new CloudronError(CloudronError.BAD_FIELD, 'No such domain'));

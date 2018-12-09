@@ -150,7 +150,7 @@ function provision(dnsConfig, autoconf, auditSource, callback) {
 
                 async.series([
                     mail.addDomain.bind(null, domain),
-                    cloudron.setAdmin.bind(null, domain), // triggers task to setup my. dns/cert/reverseproxy
+                    cloudron.setDashboardDomain.bind(null, domain), // triggers task to setup my. dns/cert/reverseproxy
                     autoprovision.bind(null, autoconf),
                     eventlog.add.bind(null, eventlog.ACTION_PROVISION, auditSource, { })
                 ], callback);

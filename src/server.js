@@ -121,7 +121,7 @@ function initializeExpressSync() {
     // cloudron routes
     router.get ('/api/v1/cloudron/update', cloudronScope, routes.cloudron.getUpdateInfo);
     router.post('/api/v1/cloudron/update', cloudronScope, routes.cloudron.update);
-    router.post('/api/v1/cloudron/set_admin', cloudronScope, routes.cloudron.setAdmin);
+    router.post('/api/v1/cloudron/set_dashboard_domain', cloudronScope, routes.cloudron.setDashboardDomain);
     router.post('/api/v1/cloudron/check_for_updates', cloudronScope, routes.cloudron.checkForUpdates);
     router.get ('/api/v1/cloudron/reboot', cloudronScope, routes.cloudron.isRebootRequired);
     router.post('/api/v1/cloudron/reboot', cloudronScope, routes.cloudron.reboot);
