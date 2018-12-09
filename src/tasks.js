@@ -12,7 +12,7 @@ exports = module.exports = {
 
     TaskError: TaskError,
 
-    // task types
+    // task types. if you add a task here, fill up the function table in taskworker
     TASK_BACKUP: 'backup',
     TASK_UPDATE: 'update',
     TASK_MIGRATE: 'migrate'
@@ -22,35 +22,15 @@ let assert = require('assert'),
     child_process = require('child_process'),
     DatabaseError = require('./databaseerror.js'),
     debug = require('debug')('box:tasks'),
-    eventlog = require('./eventlog.js'),
-    locker = require('./locker.js'),
-    mailer = require('./mailer.js'),
+    EventEmitter = require('events'),
     paths = require('./paths.js'),
     safe = require('safetydance'),
     spawn = require('child_process').spawn,
     split = require('split'),
     taskdb = require('./taskdb.js'),
-    util = require('util'),
-    _ = require('underscore');
+    util = require('util');
 
 const NOOP_CALLBACK = function (error) { if (error) debug(error); };
-
-const TASKS = { // indexed by task type
-    backup: {
-        lock: locker.OP_FULL_BACKUP,
-        program: __dirname + '/tasks/backuptask.js',
-        onFailure: mailer.backupFailed,
-        startEventId: eventlog.ACTION_BACKUP_START,
-        finishEventId: eventlog.ACTION_BACKUP_FINISH
-    },
-    update: {
-        lock: locker.OP_BOX_UPDATE,
-        program: __dirname + '/tasks/updatertask.js',
-        onFailure: NOOP_CALLBACK,
-        startEventId: eventlog.ACTION_UPDATE,
-        finishEventId: eventlog.ACTION_UPDATE
-    }
-};
 
 let gTasks = {}; // indexed by task id
 
@@ -106,33 +86,26 @@ function update(id, task, callback) {
     });
 }
 
-function startTask(type, args, auditSource, callback) {
+function startTask(type, args, auditSource) {
     assert.strictEqual(typeof type, 'string');
-    assert(args && typeof args === 'object');
+    assert(Array.isArray(args));
     assert.strictEqual(typeof auditSource, 'object');
-    assert.strictEqual(typeof callback, 'function');
 
-    const taskInfo = TASKS[type];
-    if (!taskInfo) return callback(new TaskError(TaskError.NOT_FOUND, 'No such task'));
-
-    let error = locker.lock(taskInfo.lock);
-    if (error) return callback(new TaskError(TaskError.BAD_STATE, error.message));
+    let events = new EventEmitter();
 
     taskdb.add({ type: type, percent: 0, message: 'Starting', args: args }, function (error, taskId) {
-        if (error) return callback(new TaskError(TaskError.INTERNAL_ERROR, error));
+        if (error) return events.emit('error', new TaskError(TaskError.INTERNAL_ERROR, error));
 
-        let fd = safe.fs.openSync(`${paths.TASKS_LOG_DIR}/${taskId}.log`, 'a'); // will autoclose
+        const logFile = `${paths.TASKS_LOG_DIR}/${taskId}.log`;
+        let fd = safe.fs.openSync(logFile, 'a'); // will autoclose
         if (!fd) {
             debug(`startTask: unable to get log filedescriptor ${safe.error.message}`);
-            locker.unlock(taskInfo.lock);
-            return callback(new TaskError(TaskError.INTERNAL_ERROR, error.message));
+            return events.emit('error', new TaskError(TaskError.INTERNAL_ERROR, error.message));
         }
 
-        debug(`startTask - starting task ${type}. logs at ${taskInfo.logFile}. id ${taskId}`);
+        debug(`startTask - starting task ${type}. logs at ${logFile} id ${taskId}`);
 
-        eventlog.add(taskInfo.startEventId, auditSource, args);
-
-        gTasks[taskId] = child_process.fork(taskInfo.program, [ taskId ], { stdio: [ 'pipe', fd, fd, 'ipc' ]}); // fork requires ipc
+        gTasks[taskId] = child_process.fork(`${__dirname}/taskworker.js`, [ taskId ], { stdio: [ 'pipe', fd, fd, 'ipc' ]}); // fork requires ipc
         gTasks[taskId].once('exit', function (code, signal) {
             debug(`startTask: ${taskId} completed with code ${code} and signal ${signal}`);
 
@@ -144,20 +117,18 @@ function startTask(type, args, auditSource, callback) {
                     error = new Error(task.errorMessage);
                 }
 
-                eventlog.add(taskInfo.finishEventId, auditSource, _.extend({ errorMessage: error ? error.message : null }, task ? task.result : {}));
-
-                locker.unlock(taskInfo.lock);
-
-                if (error) taskInfo.onFailure(error);
-
                 gTasks[taskId] = null;
+
+                events.emit('finish', error, task.result);
 
                 debug(`startTask: ${taskId} done`);
             });
         });
 
-        callback(null, taskId);
+        events.emit('start', taskId);
     });
+
+    return events;
 }
 
 function stopTask(id, auditSource, callback) {

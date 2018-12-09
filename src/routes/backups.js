@@ -9,9 +9,7 @@ var backupdb = require('../backupdb.js'),
     backups = require('../backups.js'),
     BackupsError = require('../backups.js').BackupsError,
     HttpError = require('connect-lastmile').HttpError,
-    HttpSuccess = require('connect-lastmile').HttpSuccess,
-    tasks = require('../tasks.js'),
-    TasksError = require('../tasks.js').TasksError;
+    HttpSuccess = require('connect-lastmile').HttpSuccess;
 
 function auditSource(req) {
     var ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress || null;
@@ -34,10 +32,8 @@ function list(req, res, next) {
 }
 
 function startBackup(req, res, next) {
-    // note that cloudron.backup only waits for backup initiation and not for backup to complete
-    // backup progress can be checked up ny polling the progress api call
-    tasks.startTask(tasks.TASK_BACKUP, {}, auditSource(req), function (error, taskId) {
-        if (error && error.reason === TasksError.BAD_STATE) return next(new HttpError(409, error.message));
+    backups.startBackupTask(auditSource(req), function (error, taskId) {
+        if (error && error.reason === BackupsError.BAD_STATE) return next(new HttpError(409, error.message));
         if (error) return next(new HttpError(500, error));
 
         next(new HttpSuccess(202, { taskId }));

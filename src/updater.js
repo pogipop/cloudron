@@ -14,6 +14,8 @@ var assert = require('assert'),
     config = require('./config.js'),
     crypto = require('crypto'),
     debug = require('debug')('box:updater'),
+    eventlog = require('./eventlog.js'),
+    locker = require('./locker.js'),
     mkdirp = require('mkdirp'),
     os = require('os'),
     path = require('path'),
@@ -21,7 +23,6 @@ var assert = require('assert'),
     safe = require('safetydance'),
     shell = require('./shell.js'),
     tasks = require('./tasks.js'),
-    TaskError = require('./tasks.js').TaskError,
     updateChecker = require('./updatechecker.js'),
     util = require('util');
 
@@ -188,10 +189,18 @@ function updateToLatest(auditSource, callback) {
     if (!boxUpdateInfo) return callback(new UpdaterError(UpdaterError.ALREADY_UPTODATE, 'No update available'));
     if (!boxUpdateInfo.sourceTarballUrl) return callback(new UpdaterError(UpdaterError.BAD_STATE, 'No automatic update available'));
 
-    tasks.startTask(tasks.TASK_UPDATE, { boxUpdateInfo }, auditSource, function (error, taskId) {
-        if (error && error.reason === TaskError.BAD_STATE) return callback(new UpdaterError(UpdaterError.BAD_STATE, error.message));
-        if (error) return callback(new UpdaterError(UpdaterError.INTERNAL_ERROR, error));
+    let error = locker.lock(locker.OP_BOX_UPDATE);
+    if (error) return callback(error);
 
+    let task = tasks.startTask(tasks.TASK_UPDATE, [ boxUpdateInfo ], auditSource);
+    task.on('error', (error) => callback(new UpdaterError(UpdaterError.INTERNAL_ERROR, error)));
+    task.on('start', (taskId) => {
+        eventlog.add(eventlog.ACTION_UPDATE, auditSource, { taskId });
         callback(null, taskId);
+    });
+    task.on('finish', (error) => {
+        locker.unlock(locker.OP_BOX_UPDATE);
+
+        debug('Update failed with error', error);
     });
 }

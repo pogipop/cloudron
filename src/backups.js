@@ -10,6 +10,7 @@ exports = module.exports = {
 
     get: get,
 
+    startBackupTask: startBackupTask,
     ensureBackup: ensureBackup,
 
     restore: restore,
@@ -44,7 +45,10 @@ var addons = require('./addons.js'),
     database = require('./database.js'),
     DatabaseError = require('./databaseerror.js'),
     debug = require('debug')('box:backups'),
+    eventlog = require('./eventlog.js'),
     fs = require('fs'),
+    locker = require('./locker.js'),
+    mailer = require('./mailer.js'),
     mkdirp = require('mkdirp'),
     once = require('once'),
     path = require('path'),
@@ -918,6 +922,25 @@ function backupBoxAndApps(progressCallback, callback) {
     });
 }
 
+function startBackupTask(auditSource, callback) {
+    let error = locker.lock(locker.OP_FULL_BACKUP);
+    if (error) return callback(error);
+
+    let task = tasks.startTask(tasks.TASK_BACKUP, [], auditSource);
+    task.on('error', (error) => callback(new BackupsError(BackupsError.INTERNAL_ERROR, error)));
+    task.on('start', (taskId) => {
+        eventlog.add(eventlog.ACTION_BACKUP_START, auditSource, { taskId });
+        callback(null, taskId);
+    });
+    task.on('finish', (error, result) => {
+        locker.unlock(locker.OP_FULL_BACKUP);
+
+        if (error) mailer.backupFailed(error);
+
+        eventlog.add(eventlog.ACTION_BACKUP_FINISH, auditSource, { errorMessage: error ? error.message : null, backupId: result });
+    });
+}
+
 function ensureBackup(auditSource, callback) {
     assert.strictEqual(typeof auditSource, 'object');
 
@@ -937,7 +960,7 @@ function ensureBackup(auditSource, callback) {
                 return callback(null);
             }
 
-            tasks.startTask(tasks.TASK_BACKUP, {}, auditSource, callback);
+            startBackupTask(auditSource, callback);
         });
     });
 }
