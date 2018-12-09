@@ -14,14 +14,17 @@ process.on('SIGTERM', function () {
     process.exit(0);
 });
 
+assert.strictEqual(process.argv.length, 3, 'Pass the taskid as argument');
+const taskId = process.argv[2];
+
 // Main process starts here
 debug('Staring backup');
 database.initialize(function (error) {
     if (error) return process.exit(50);
 
-    backups.backupBoxAndApps((progress) => tasks.update(tasks.TASK_BACKUP, progress, NOOP_CALLBACK), function (error, backupId) {
+    backups.backupBoxAndApps((progress) => tasks.update(taskId, progress, NOOP_CALLBACK), function (error, backupId) {
         const progress = { percent: 100, result: backupId || '', errorMessage: error ? error.message : '' };
 
-        tasks.update(tasks.TASK_BACKUP, progress, () => process.exit(error ? 50 : 0));
+        tasks.update(taskId, progress, () => process.exit(error ? 50 : 0));
     });
 });

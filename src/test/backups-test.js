@@ -23,11 +23,11 @@ var async = require('async'),
     tasks = require('../tasks.js');
 
 function createBackup(callback) {
-    tasks.startTask(tasks.TASK_BACKUP, [], { username: 'test' }, function (error) { // this call does not wait for the backup!
+    tasks.startTask(tasks.TASK_BACKUP, [], { username: 'test' }, function (error, taskId) { // this call does not wait for the backup!
         if (error) return callback(error);
 
         function waitForBackup() {
-            tasks.get(tasks.TASK_BACKUP, function (error, p) {
+            tasks.get(taskId, function (error, p) {
                 if (error) return callback(error);
 
                 if (p.percent !== 100) return setTimeout(waitForBackup, 1000);

@@ -1,17 +1,18 @@
 'use strict';
 
 exports = module.exports = {
+    get: get,
+    add: add,
     update: update,
-    get: get
+    del: del
 };
 
 let assert = require('assert'),
     database = require('./database.js'),
     DatabaseError = require('./databaseerror'),
-    safe = require('safetydance'),
-    _ = require('underscore');
+    safe = require('safetydance');
 
-const TASKS_FIELDS = [ 'id', 'argsJson', 'percent', 'message', 'errorMessage', 'creationTime', 'result', 'ts' ];
+const TASKS_FIELDS = [ 'id', 'type', 'argsJson', 'percent', 'message', 'errorMessage', 'creationTime', 'result', 'ts' ];
 
 function postProcess(result) {
     assert.strictEqual(typeof result, 'object');
@@ -19,39 +20,42 @@ function postProcess(result) {
     assert(result.argsJson === null || typeof result.argsJson === 'string');
     result.args = safe.JSON.parse(result.argsJson) || {};
     delete result.argsJson;
+
+    result.id = String(result.id);
 }
 
-function update(id, progress, callback) {
-    assert.strictEqual(typeof id, 'string');
-    assert.strictEqual(typeof progress, 'object');
+function add(task, callback) {
+    assert.strictEqual(typeof task, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    let data = _.extend({ id: id }, progress);
+    const query = 'INSERT INTO tasks (type, argsJson, percent, message) VALUES (?, ?, ?, ?)';
+    const args = [ task.type, JSON.stringify(task.args), task.percent, task.message ];
 
-    let keys = [ ],
-        questionMarks = Array(Object.keys(data).length).fill('?').join(','),
-        fields = [ ], values = [ ];
-
-    for (var f in data) {
-        let key, value;
-        if (f === 'args') {
-            key = 'argsJson';
-            value = JSON.stringify(data[f]);
-        } else {
-            key = f;
-            value = data[f];
-        }
-        keys.push(key);
-        fields.push(`${key} = ?`);
-        values.push(value); // for the INSERT fields
-    }
-
-    values = values.concat(values); // for the UPDATE fields
-
-    database.query(`INSERT INTO tasks (${keys.join(', ')}) VALUES (${questionMarks}) ON DUPLICATE KEY UPDATE ${fields}`, values, function (error) {
+    database.query(query, args, function (error, result) {
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
 
-        callback(null);
+        callback(null, String(result.insertId));
+    });
+}
+
+function update(id, data, callback) {
+    assert.strictEqual(typeof id, 'string');
+    assert.strictEqual(typeof data, 'object');
+    assert.strictEqual(typeof callback, 'function');
+
+    let args = [ ];
+    let fields = [ ];
+    for (let k in data) {
+        fields.push(k + ' = ?');
+        args.push(data[k]);
+    }
+    args.push(id);
+
+    database.query('UPDATE tasks SET ' + fields.join(', ') + ' WHERE id = ?', args, function (error, result) {
+        if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
+        if (result.affectedRows !== 1) return callback(new DatabaseError(DatabaseError.NOT_FOUND));
+
+        return callback(null);
     });
 }
 
@@ -66,5 +70,17 @@ function get(id, callback) {
         postProcess(result[0]);
 
         callback(null, result[0]);
+    });
+}
+
+function del(id, callback) {
+    assert.strictEqual(typeof id, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    database.query('DELETE FROM tasks WHERE id = ?', [ id ], function (error, result) {
+        if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
+        if (result.affectedRows !== 1) return callback(new DatabaseError(DatabaseError.NOT_FOUND));
+
+        callback(null);
     });
 }

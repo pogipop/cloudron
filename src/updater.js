@@ -188,10 +188,10 @@ function updateToLatest(auditSource, callback) {
     if (!boxUpdateInfo) return callback(new UpdaterError(UpdaterError.ALREADY_UPTODATE, 'No update available'));
     if (!boxUpdateInfo.sourceTarballUrl) return callback(new UpdaterError(UpdaterError.BAD_STATE, 'No automatic update available'));
 
-    tasks.startTask(tasks.TASK_UPDATE, { boxUpdateInfo }, auditSource, function (error) {
+    tasks.startTask(tasks.TASK_UPDATE, { boxUpdateInfo }, auditSource, function (error, taskId) {
         if (error && error.reason === TaskError.BAD_STATE) return callback(new UpdaterError(UpdaterError.BAD_STATE, error.message));
         if (error) return callback(new UpdaterError(UpdaterError.INTERNAL_ERROR, error));
 
-        callback(null);
+        callback(null, taskId);
     });
 }

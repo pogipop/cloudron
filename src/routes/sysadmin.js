@@ -26,11 +26,11 @@ function backup(req, res, next) {
     // note that cloudron.backup only waits for backup initiation and not for backup to complete
     // backup progress can be checked up ny polling the progress api call
     var auditSource = { userId: null, username: 'sysadmin' };
-    tasks.startTask(tasks.TASK_BACKUP, {}, auditSource, function (error) {
+    tasks.startTask(tasks.TASK_BACKUP, {}, auditSource, function (error, taskId) {
         if (error && error.reason === TasksError.BAD_STATE) return next(new HttpError(409, error.message));
         if (error) return next(new HttpError(500, error));
 
-        next(new HttpSuccess(202, {}));
+        next(new HttpSuccess(202, { taskId }));
     });
 }
 
@@ -39,12 +39,12 @@ function update(req, res, next) {
 
     // this only initiates the update, progress can be checked via the progress route
     var auditSource = { userId: null, username: 'sysadmin' };
-    updater.updateToLatest(auditSource, function (error) {
+    updater.updateToLatest(auditSource, function (error, taskId) {
         if (error && error.reason === UpdaterError.ALREADY_UPTODATE) return next(new HttpError(422, error.message));
         if (error && error.reason === UpdaterError.BAD_STATE) return next(new HttpError(409, error.message));
         if (error) return next(new HttpError(500, error));
 
-        next(new HttpSuccess(202, {}));
+        next(new HttpSuccess(202, { taskId }));
     });
 }
 

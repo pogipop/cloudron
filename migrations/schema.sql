@@ -202,7 +202,8 @@ CREATE TABLE IF NOT EXISTS subdomains(
     UNIQUE (subdomain, domain));
 
 CREATE TABLE IF NOT EXISTS tasks(
-    id VARCHAR(32) NOT NULL UNIQUE,
+    id int NOT NULL AUTO_INCREMENT,
+    type VARCHAR(32) NOT NULL,
     percent INTEGER DEFAULT 0,
     message TEXT,
     errorMessage TEXT,

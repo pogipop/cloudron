@@ -21,6 +21,7 @@ var appdb = require('../appdb.js'),
     mailboxdb = require('../mailboxdb.js'),
     maildb = require('../maildb.js'),
     settingsdb = require('../settingsdb.js'),
+    taskdb = require('../taskdb.js'),
     tokendb = require('../tokendb.js'),
     userdb = require('../userdb.js'),
     _ = require('underscore');
@@ -1094,6 +1095,56 @@ describe('database', function () {
                 expect(error).to.be(null);
                 expect(results).to.eql([ ]);
                 done();
+            });
+        });
+    });
+
+    describe('tasks', function () {
+        let taskId;
+
+        let TASK = {
+            type: 'tasktype',
+            args: { x: 1 },
+            percent: 0,
+            message: 'starting task'
+        };
+
+        it('add succeeds', function (done) {
+            taskdb.add(TASK, function (error, id) {
+                expect(error).to.be(null);
+                expect(id).to.be.ok();
+                taskId = id;
+                done();
+            });
+        });
+
+        it('get succeeds', function (done) {
+            taskdb.get(taskId, function (error, task) {
+                expect(error).to.be(null);
+                expect(_.pick(task, Object.keys(TASK))).to.eql(TASK);
+                done();
+            });
+        });
+
+        it('update succeeds', function (done) {
+            TASK.percent = 34;
+            TASK.message = 'almost ther';
+            taskdb.update(taskId, { percent: TASK.percent, message: TASK.message }, function (error) {
+                expect(error).to.be(null);
+                taskdb.get(taskId, function (error, task) {
+                    expect(_.pick(task, Object.keys(TASK))).to.eql(TASK);
+                    done();
+                });
+            });
+        });
+
+        it('del succeeds', function (done) {
+            taskdb.del(taskId, function (error) {
+                expect(error).to.be(null);
+                taskdb.get(taskId, function (error) {
+                    expect(error.reason).to.be(DatabaseError.NOT_FOUND);
+                    done();
+                });
             });
         });
     });
