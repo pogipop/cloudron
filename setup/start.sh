@@ -58,7 +58,7 @@ mkdir -p "${PLATFORM_DATA_DIR}/collectd/collectd.conf.d"
 mkdir -p "${PLATFORM_DATA_DIR}/logrotate.d"
 mkdir -p "${PLATFORM_DATA_DIR}/acme"
 mkdir -p "${PLATFORM_DATA_DIR}/backup"
-mkdir -p "${PLATFORM_DATA_DIR}/logs/backup" "${PLATFORM_DATA_DIR}/logs/updater"
+mkdir -p "${PLATFORM_DATA_DIR}/logs/backup" "${PLATFORM_DATA_DIR}/logs/updater" "${PLATFORM_DATA_DIR}/logs/tasks"
 mkdir -p "${PLATFORM_DATA_DIR}/update"
 
 mkdir -p "${BOX_DATA_DIR}/appicons"

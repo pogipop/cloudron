@@ -5,6 +5,8 @@ exports = module.exports = {
     update: update,
     listPaged: listPaged,
 
+    getLogs: getLogs,
+
     startTask: startTask,
     stopTask: stopTask,
 
@@ -25,6 +27,8 @@ let assert = require('assert'),
     mailer = require('./mailer.js'),
     paths = require('./paths.js'),
     safe = require('safetydance'),
+    spawn = require('child_process').spawn,
+    split = require('split'),
     taskdb = require('./taskdb.js'),
     util = require('util'),
     _ = require('underscore');
@@ -34,7 +38,6 @@ const NOOP_CALLBACK = function (error) { if (error) debug(error); };
 const TASKS = { // indexed by task type
     backup: {
         lock: locker.OP_FULL_BACKUP,
-        logFile: paths.BACKUP_LOG_FILE,
         program: __dirname + '/tasks/backuptask.js',
         onFailure: mailer.backupFailed,
         startEventId: eventlog.ACTION_BACKUP_START,
@@ -42,7 +45,6 @@ const TASKS = { // indexed by task type
     },
     update: {
         lock: locker.OP_BOX_UPDATE,
-        logFile: paths.UPDATER_LOG_FILE,
         program: __dirname + '/tasks/updatertask.js',
         onFailure: NOOP_CALLBACK,
         startEventId: eventlog.ACTION_UPDATE,
@@ -116,15 +118,15 @@ function startTask(type, args, auditSource, callback) {
     let error = locker.lock(taskInfo.lock);
     if (error) return callback(new TaskError(TaskError.BAD_STATE, error.message));
 
-    let fd = safe.fs.openSync(taskInfo.logFile, 'a'); // will autoclose
-    if (!fd) {
-        debug(`startTask: unable to get log filedescriptor ${safe.error.message}`);
-        locker.unlock(taskInfo.lock);
-        return callback(new TaskError(TaskError.INTERNAL_ERROR, error.message));
-    }
-
     taskdb.add({ type: type, percent: 0, message: 'Starting', args: args }, function (error, taskId) {
         if (error) return callback(new TaskError(TaskError.INTERNAL_ERROR, error));
+
+        let fd = safe.fs.openSync(`${paths.TASKS_LOG_DIR}/${taskId}.log`, 'a'); // will autoclose
+        if (!fd) {
+            debug(`startTask: unable to get log filedescriptor ${safe.error.message}`);
+            locker.unlock(taskInfo.lock);
+            return callback(new TaskError(TaskError.INTERNAL_ERROR, error.message));
+        }
 
         debug(`startTask - starting task ${type}. logs at ${taskInfo.logFile}. id ${taskId}`);
 
@@ -183,4 +185,51 @@ function listPaged(type, page, perPage, callback) {
 
         callback(null, tasks);
     });
+}
+
+function getLogs(taskId, options, callback) {
+    assert.strictEqual(typeof taskId, 'string');
+    assert(options && typeof options === 'object');
+    assert.strictEqual(typeof callback, 'function');
+
+    debug(`Getting logs for ${taskId}`);
+
+    var lines = options.lines || 100,
+        format = options.format || 'json',
+        follow = !!options.follow;
+
+    assert.strictEqual(typeof lines, 'number');
+    assert.strictEqual(typeof format, 'string');
+
+    let cmd = '/usr/bin/tail';
+    var args = [ '--lines=' + lines ];
+
+    if (follow) args.push('--follow', '--retry', '--quiet'); // same as -F. to make it work if file doesn't exist, --quiet to not output file headers, which are no logs
+    args.push(`${paths.TASKS_LOG_DIR}/${taskId}.log`);
+
+    var cp = spawn(cmd, args);
+
+    var transformStream = split(function mapper(line) {
+        if (format !== 'json') return line + '\n';
+
+        var data = line.split(' '); // logs are <ISOtimestamp> <msg>
+        var timestamp = (new Date(data[0])).getTime();
+        if (isNaN(timestamp)) timestamp = 0;
+        var message = line.slice(data[0].length+1);
+
+        // ignore faulty empty logs
+        if (!timestamp && !message) return;
+
+        return JSON.stringify({
+            realtimeTimestamp: timestamp * 1000,
+            message: message,
+            source: taskId
+        }) + '\n';
+    });
+
+    transformStream.close = cp.kill.bind(cp, 'SIGKILL'); // closing stream kills the child process
+
+    cp.stdout.pipe(transformStream);
+
+    callback(null, transformStream);
 }

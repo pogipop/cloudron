@@ -33,6 +33,8 @@ exports = module.exports = {
     UPDATE_CHECKER_FILE: path.join(config.baseDir(), 'boxdata/updatechecker.json'),
 
     LOG_DIR: path.join(config.baseDir(), 'platformdata/logs'),
+    TASKS_LOG_DIR: path.join(config.baseDir(), 'platformdata/logs/tasks'),
+
     // this pattern is for the cloudron logs API route to work
     BACKUP_LOG_FILE: path.join(config.baseDir(), 'platformdata/logs/backup/app.log'),
     UPDATER_LOG_FILE: path.join(config.baseDir(), 'platformdata/logs/updater/app.log')

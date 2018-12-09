@@ -138,6 +138,8 @@ function initializeExpressSync() {
     // tasks
     router.get ('/api/v1/tasks', settingsScope, routes.tasks.list);
     router.get ('/api/v1/tasks/:taskId', settingsScope, routes.tasks.get);
+    router.get ('/api/v1/tasks/:taskId/logs', cloudronScope, routes.tasks.getLogs);
+    router.get ('/api/v1/tasks/:taskId/logstream', cloudronScope, routes.tasks.getLogStream);
     router.post('/api/v1/tasks/:taskId/stop', settingsScope, routes.tasks.stopTask);
 
     // backups
