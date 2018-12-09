@@ -13,7 +13,7 @@ const NOOP_CALLBACK = function (error) { if (error) debug(error); };
 
 const TASKS = { // indexed by task type
     backup: backups.backupBoxAndApps,
-    updater: updater.update,
+    update: updater.update,
 };
 
 process.on('SIGTERM', function () {
