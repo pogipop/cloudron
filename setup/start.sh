@@ -16,7 +16,7 @@ readonly BOX_DATA_DIR="${HOME_DIR}/boxdata" # box data
 readonly CONFIG_DIR="${HOME_DIR}/configs"
 
 readonly script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-readonly get_config="$(realpath ${script_dir}/../node_modules/.bin/json) -f /etc/cloudron/cloudron.conf"
+readonly json="$(realpath ${script_dir}/../node_modules/.bin/json)"
 
 echo "==> Configuring docker"
 cp "${script_dir}/start/docker-cloudron-app.apparmor" /etc/apparmor.d/docker-cloudron-app
@@ -91,12 +91,9 @@ setfacl -n -m u:${USER}:r /var/log/journal/*/system.journal
 echo "==> Creating config directory"
 mkdir -p "${CONFIG_DIR}"
 
-# migration for cloudron.conf file. Can be removed after 3.3
-if [[ ! -d /etc/cloudron ]]; then
-    echo "==> Migrating existing cloudron.conf to new location"
-    mkdir -p /etc/cloudron
-    cp "${CONFIG_DIR}/cloudron.conf" /etc/cloudron/cloudron.conf
-fi
+# remove old cloudron.conf. Can be removed after 3.4
+rm -f "${CONFIG_DIR}/cloudron.conf"
+json -f /etc/cloudron/cloudron.conf -I -e "delete this.version" # remove the version field
 chown -R "${USER}" /etc/cloudron
 
 echo "==> Setting up unbound"
