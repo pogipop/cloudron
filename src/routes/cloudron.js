@@ -195,7 +195,7 @@ function getStatus(req, res, next) {
 }
 
 function renewCerts(req, res, next) {
-    cloudron.renewCerts({ domain: req.query.domain || null }, auditSource(req), function (error) {
+    cloudron.renewCerts({ domain: req.body.domain || null }, auditSource(req), function (error) {
         if (error && error.reason === CloudronError.NOT_FOUND) return next(new HttpError(404, error.message));
         if (error) return next(new HttpError(500, error));
 
