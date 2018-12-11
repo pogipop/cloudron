@@ -667,11 +667,13 @@ function configure(appId, data, user, auditSource, callback) {
         if (error) return callback(error);
 
         let domain, location, portBindings, values = { };
-        if ('location' in data) location = values.location = data.location.toLowerCase();
-        else location = app.location;
-
-        if ('domain' in data) domain = values.domain = data.domain.toLowerCase();
-        else domain = app.domain;
+        if ('location' in data && 'domain' in data) {
+            location = values.location = data.location.toLowerCase();
+            domain = values.domain = data.domain.toLowerCase();
+        } else {
+            location = app.location;
+            domain = app.domain;
+        }
 
         if ('accessRestriction' in data) {
             values.accessRestriction = data.accessRestriction;

@@ -435,12 +435,8 @@ function updateWithConstraints(id, app, constraints, callback) {
         });
     }
 
-    if ('location' in app) {
-        queries.push({ query: 'UPDATE subdomains SET subdomain = ? WHERE appId = ? AND type = ?', args: [ app.location, id, exports.SUBDOMAIN_TYPE_PRIMARY ]});
-    }
-
-    if ('domain' in app) {
-        queries.push({ query: 'UPDATE subdomains SET domain = ? WHERE appId = ? AND type = ?', args: [ app.domain, id, exports.SUBDOMAIN_TYPE_PRIMARY ]});
+    if ('location' in app && 'domain' in app) { // must be updated together as they are unique together
+        queries.push({ query: 'UPDATE subdomains SET subdomain = ?, domain = ? WHERE appId = ? AND type = ?', args: [ app.location, app.domain, id, exports.SUBDOMAIN_TYPE_PRIMARY ]});
     }
 
     if ('alternateDomains' in app) {

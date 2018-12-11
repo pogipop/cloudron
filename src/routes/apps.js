@@ -175,6 +175,10 @@ function configureApp(req, res, next) {
 
     if ('location' in data && typeof data.location !== 'string') return next(new HttpError(400, 'location must be string'));
     if ('domain' in data && typeof data.domain !== 'string') return next(new HttpError(400, 'domain must be string'));
+    // domain, location must both be provided since they are unique together
+    if ('location' in data && !('domain' in data)) return next(new HttpError(400, 'domain must be provided'));
+    if (!('location' in data) && 'domain' in data) return next(new HttpError(400, 'location must be provided'));
+
     if ('portBindings' in data && typeof data.portBindings !== 'object') return next(new HttpError(400, 'portBindings must be an object'));
     if ('accessRestriction' in data && typeof data.accessRestriction !== 'object') return next(new HttpError(400, 'accessRestriction must be an object'));
 
