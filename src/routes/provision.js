@@ -3,7 +3,7 @@
 exports = module.exports = {
     providerTokenAuth: providerTokenAuth,
     setupTokenAuth: setupTokenAuth,
-    provision: provision,
+    setup: setup,
     activate: activate,
     restore: restore
 };
@@ -15,8 +15,8 @@ var assert = require('assert'),
     debug = require('debug')('box:routes/setup'),
     HttpError = require('connect-lastmile').HttpError,
     HttpSuccess = require('connect-lastmile').HttpSuccess,
-    setup = require('../setup.js'),
-    SetupError = require('../setup.js').SetupError,
+    provision = require('../provision.js'),
+    ProvisionError = require('../provision.js').ProvisionError,
     superagent = require('superagent');
 
 function auditSource(req) {
@@ -61,7 +61,7 @@ function setupTokenAuth(req, res, next) {
     });
 }
 
-function provision(req, res, next) {
+function setup(req, res, next) {
     assert.strictEqual(typeof req.body, 'object');
 
     if (!req.body.dnsConfig || typeof req.body.dnsConfig !== 'object') return next(new HttpError(400, 'dnsConfig is required'));
@@ -83,10 +83,10 @@ function provision(req, res, next) {
     // it can take sometime to setup DNS, register cloudron
     req.clearTimeout();
 
-    setup.provision(dnsConfig, req.body.autoconf || {}, auditSource(req), function (error) {
-        if (error && error.reason === SetupError.ALREADY_SETUP) return next(new HttpError(409, error.message));
-        if (error && error.reason === SetupError.BAD_FIELD) return next(new HttpError(400, error.message));
-        if (error && error.reason === SetupError.BAD_STATE) return next(new HttpError(409, error.message));
+    provision.setup(dnsConfig, req.body.autoconf || {}, auditSource(req), function (error) {
+        if (error && error.reason === ProvisionError.ALREADY_SETUP) return next(new HttpError(409, error.message));
+        if (error && error.reason === ProvisionError.BAD_FIELD) return next(new HttpError(400, error.message));
+        if (error && error.reason === ProvisionError.BAD_STATE) return next(new HttpError(409, error.message));
         if (error) return next(new HttpError(500, error));
 
         next(new HttpSuccess(200));
@@ -109,9 +109,9 @@ function activate(req, res, next) {
     var ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
     debug('activate: username:%s ip:%s', username, ip);
 
-    setup.activate(username, password, email, displayName, ip, auditSource(req), function (error, info) {
-        if (error && error.reason === SetupError.ALREADY_PROVISIONED) return next(new HttpError(409, 'Already setup'));
-        if (error && error.reason === SetupError.BAD_FIELD) return next(new HttpError(400, error.message));
+    provision.activate(username, password, email, displayName, ip, auditSource(req), function (error, info) {
+        if (error && error.reason === ProvisionError.ALREADY_PROVISIONED) return next(new HttpError(409, 'Already setup'));
+        if (error && error.reason === ProvisionError.BAD_FIELD) return next(new HttpError(400, error.message));
         if (error) return next(new HttpError(500, error));
 
         // only in caas case do we have to notify the api server about activation
@@ -146,11 +146,11 @@ function restore(req, res, next) {
     // TODO: validate subfields of these objects
     if (req.body.autoconf && typeof req.body.autoconf !== 'object') return next(new HttpError(400, 'autoconf must be an object'));
 
-    setup.restore(backupConfig, req.body.backupId, req.body.version, req.body.autoconf || {}, auditSource(req), function (error) {
-        if (error && error.reason === SetupError.ALREADY_SETUP) return next(new HttpError(409, error.message));
-        if (error && error.reason === SetupError.BAD_FIELD) return next(new HttpError(400, error.message));
-        if (error && error.reason === SetupError.BAD_STATE) return next(new HttpError(409, error.message));
-        if (error && error.reason === SetupError.EXTERNAL_ERROR) return next(new HttpError(424, error.message));
+    provision.restore(backupConfig, req.body.backupId, req.body.version, req.body.autoconf || {}, auditSource(req), function (error) {
+        if (error && error.reason === ProvisionError.ALREADY_SETUP) return next(new HttpError(409, error.message));
+        if (error && error.reason === ProvisionError.BAD_FIELD) return next(new HttpError(400, error.message));
+        if (error && error.reason === ProvisionError.BAD_STATE) return next(new HttpError(409, error.message));
+        if (error && error.reason === ProvisionError.EXTERNAL_ERROR) return next(new HttpError(424, error.message));
         if (error) return next(new HttpError(500, error));
 
         next(new HttpSuccess(200));
