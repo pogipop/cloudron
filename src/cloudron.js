@@ -379,11 +379,11 @@ function setDashboardDomain(domain, callback) {
 }
 
 function renewCerts(options, auditSource, callback) {
-    assert.strictEqual(typeof option, 'object');
+    assert.strictEqual(typeof options, 'object');
     assert.strictEqual(typeof auditSource, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    let task = tasks.startTask(tasks.TASK_RENEW_CERTS, [ options, auditSource ]);
+    let task = tasks.startTask(tasks.TASK_RENEW_CERTS, [ options ], auditSource);
     task.on('error', (error) => callback(new CloudronError(CloudronError.INTERNAL_ERROR, error)));
     task.on('start', (taskId) => callback(null, taskId));
 }
