@@ -122,6 +122,7 @@ function initializeExpressSync() {
     router.get ('/api/v1/cloudron/update', cloudronScope, routes.cloudron.getUpdateInfo);
     router.post('/api/v1/cloudron/update', cloudronScope, routes.cloudron.update);
     router.post('/api/v1/cloudron/set_dashboard_domain', cloudronScope, routes.cloudron.setDashboardDomain);
+    router.post('/api/v1/cloudron/renew_certs', cloudronScope, routes.cloudron.renewCerts);
     router.post('/api/v1/cloudron/check_for_updates', cloudronScope, routes.cloudron.checkForUpdates);
     router.get ('/api/v1/cloudron/reboot', cloudronScope, routes.cloudron.isRebootRequired);
     router.post('/api/v1/cloudron/reboot', cloudronScope, routes.cloudron.reboot);
@@ -286,7 +287,6 @@ function initializeExpressSync() {
     router.get ('/api/v1/domains', domainsReadScope, routes.domains.getAll);
     router.get ('/api/v1/domains/:domain', domainsManageScope, verifyDomainLock, routes.domains.get);  // this is manage scope because it returns non-restricted fields
     router.put ('/api/v1/domains/:domain', domainsManageScope, verifyDomainLock, routes.domains.update);
-    router.post('/api/v1/domains/:domain/renew_certs', domainsManageScope, verifyDomainLock, routes.domains.renewCerts);
     router.del ('/api/v1/domains/:domain', domainsManageScope, verifyDomainLock, routes.users.verifyPassword, routes.domains.del);
 
     // addon routes

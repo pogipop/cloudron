@@ -7,8 +7,6 @@ exports = module.exports = {
     update: update,
     del: del,
 
-    renewCerts: renewCerts,
-
     verifyDomainLock: verifyDomainLock
 };
 
@@ -152,16 +150,5 @@ function del(req, res, next) {
         if (error) return next(new HttpError(500, error));
 
         next(new HttpSuccess(204));
-    });
-}
-
-function renewCerts(req, res, next) {
-    assert.strictEqual(typeof req.params.domain, 'string');
-
-    domains.renewCerts(req.params.domain, auditSource(req), function (error) {
-        if (error && error.reason === DomainsError.NOT_FOUND) return next(new HttpError(404, error.message));
-        if (error) return next(new HttpError(500, error));
-
-        next(new HttpSuccess(202, {}));
     });
 }

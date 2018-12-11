@@ -186,7 +186,7 @@ function recreateJobs(tz) {
     if (gJobs.certificateRenew) gJobs.certificateRenew.stop();
     gJobs.certificateRenew = new CronJob({
         cronTime: '00 00 */12 * * *', // every 12 hours
-        onTick: reverseProxy.renewAll.bind(null, AUDIT_SOURCE, NOOP_CALLBACK),
+        onTick: cloudron.renewCerts.bind(null, {}, AUDIT_SOURCE, NOOP_CALLBACK),
         start: true,
         timeZone: tz
     });

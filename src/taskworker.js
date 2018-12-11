@@ -6,6 +6,7 @@ var assert = require('assert'),
     backups = require('./backups.js'),
     database = require('./database.js'),
     debug = require('debug')('box:taskworker'),
+    reverseProxy = require('./reverseproxy.js'),
     tasks = require('./tasks.js'),
     updater = require('./updater.js');
 
@@ -14,6 +15,7 @@ const NOOP_CALLBACK = function (error) { if (error) debug(error); };
 const TASKS = { // indexed by task type
     backup: backups.backupBoxAndApps,
     update: updater.update,
+    renewcerts: reverseProxy.renewCerts
 };
 
 process.on('SIGTERM', function () {

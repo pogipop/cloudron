@@ -505,9 +505,10 @@ function unconfigureApp(app, callback) {
     });
 }
 
-function renewCerts(options, auditSource, callback) {
+function renewCerts(options, auditSource, progressCallback, callback) {
     assert.strictEqual(typeof options, 'object');
     assert.strictEqual(typeof auditSource, 'object');
+    assert.strictEqual(typeof progressCallback, 'function');
     assert.strictEqual(typeof callback, 'function');
 
     apps.getAll(function (error, allApps) {
@@ -530,7 +531,11 @@ function renewCerts(options, auditSource, callback) {
 
         if (options.domain) appDomains = appDomains.filter(function (appDomain) { return appDomain.domain === options.domain; });
 
+        let progress = 1;
         async.eachSeries(appDomains, function (appDomain, iteratorCallback) {
+            progressCallback({ percent: progress, message: `Renewing certs of ${appDomain.fqdn}` });
+            progress += Math.round(100/appDomains.length);
+
             ensureCertificate(appDomain.fqdn, appDomain.domain, auditSource, function (error, bundle) {
                 if (error) return iteratorCallback(error); // this can happen if cloudron is not setup yet
 

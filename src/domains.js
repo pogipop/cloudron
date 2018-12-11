@@ -9,8 +9,6 @@ module.exports = exports = {
     clear: clear,
     isLocked: isLocked,
 
-    renewCerts: renewCerts,
-
     fqdn: fqdn,
 
     getDnsRecords: getDnsRecords,
@@ -495,17 +493,4 @@ function makeWildcard(hostname) {
     let parts = hostname.split('.');
     parts[0] = '*';
     return parts.join('.');
-}
-
-function renewCerts(domain, auditSource, callback) {
-    assert.strictEqual(typeof domain, 'string');
-    assert.strictEqual(typeof auditSource, 'object');
-    assert.strictEqual(typeof callback, 'function');
-
-    // trigger renewal in the background
-    reverseProxy.renewCerts({ domain: domain }, auditSource, function (error) {
-        debug('renewCerts', error);
-    });
-
-    callback();
 }

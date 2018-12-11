@@ -12,7 +12,8 @@ exports = module.exports = {
     getLogs: getLogs,
     getLogStream: getLogStream,
     getStatus: getStatus,
-    setDashboardDomain: setDashboardDomain
+    setDashboardDomain: setDashboardDomain,
+    renewCerts: renewCerts
 };
 
 var appstore = require('../appstore.js'),
@@ -190,5 +191,14 @@ function getStatus(req, res, next) {
         if (error) return next(new HttpError(500, error));
 
         next(new HttpSuccess(200, status));
+    });
+}
+
+function renewCerts(req, res, next) {
+    cloudron.renewCerts({ domain: req.query.domain || null }, auditSource(req), function (error) {
+        if (error && error.reason === CloudronError.NOT_FOUND) return next(new HttpError(404, error.message));
+        if (error) return next(new HttpError(500, error));
+
+        next(new HttpSuccess(202, {}));
     });
 }

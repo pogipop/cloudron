@@ -16,6 +16,7 @@ exports = module.exports = {
     onActivated: onActivated,
 
     setDashboardDomain: setDashboardDomain,
+    renewCerts: renewCerts,
 
     checkDiskSpace: checkDiskSpace,
 
@@ -44,6 +45,7 @@ var assert = require('assert'),
     spawn = require('child_process').spawn,
     split = require('split'),
     sysinfo = require('./sysinfo.js'),
+    tasks = require('./tasks.js'),
     users = require('./users.js'),
     util = require('util');
 
@@ -374,4 +376,14 @@ function setDashboardDomain(domain, callback) {
             configureWebadmin(NOOP_CALLBACK); // ## trigger as task
         });
     });
+}
+
+function renewCerts(options, auditSource, callback) {
+    assert.strictEqual(typeof option, 'object');
+    assert.strictEqual(typeof auditSource, 'object');
+    assert.strictEqual(typeof callback, 'function');
+
+    let task = tasks.startTask(tasks.TASK_RENEW_CERTS, [ options, auditSource ]);
+    task.on('error', (error) => callback(new CloudronError(CloudronError.INTERNAL_ERROR, error)));
+    task.on('start', (taskId) => callback(null, taskId));
 }
