@@ -550,7 +550,7 @@ function renewCerts(options, auditSource, progressCallback, callback) {
                 if (appDomain.type === 'webadmin') configureFunc = writeAdminConfig.bind(null, bundle, constants.NGINX_ADMIN_CONFIG_FILE_NAME, config.adminFqdn());
                 else if (appDomain.type === 'main') configureFunc = writeAppConfig.bind(null, appDomain.app, bundle);
                 else if (appDomain.type === 'alternate') configureFunc = writeAppRedirectConfig.bind(null, appDomain.app, appDomain.fqdn, bundle);
-                else return callback(new Error(`Unknown domain type for ${appDomain.fqdn}. This should never happen`));
+                else return iteratorCallback(new Error(`Unknown domain type for ${appDomain.fqdn}. This should never happen`));
 
                 configureFunc(function (ignoredError) {
                     if (ignoredError) debug('renewAll: error reconfiguring app', ignoredError);
@@ -560,7 +560,7 @@ function renewCerts(options, auditSource, progressCallback, callback) {
                     iteratorCallback(); // move to next domain
                 });
             });
-        });
+        }, callback);
     });
 }
 
