@@ -93,10 +93,9 @@ function update(id, task, callback) {
     });
 }
 
-function startTask(type, args, auditSource) {
+function startTask(type, args) {
     assert.strictEqual(typeof type, 'string');
     assert(Array.isArray(args));
-    assert.strictEqual(typeof auditSource, 'object');
 
     let events = new EventEmitter();
 
@@ -140,9 +139,8 @@ function startTask(type, args, auditSource) {
     return events;
 }
 
-function stopTask(id, auditSource, callback) {
+function stopTask(id, callback) {
     assert.strictEqual(typeof id, 'string');
-    assert.strictEqual(typeof auditSource, 'object');
     assert.strictEqual(typeof callback, 'function');
 
     if (!gTasks[id]) return callback(new TaskError(TaskError.BAD_STATE, 'task is not active'));

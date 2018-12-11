@@ -13,8 +13,6 @@ var async = require('async'),
     paths = require('../paths.js'),
     tasks = require('../tasks.js');
 
-let AUDIT_SOURCE = { ip: '1.2.3.4' };
-
 function setup(done) {
     async.series([
         database.initialize,
@@ -35,7 +33,7 @@ describe('task', function () {
 
     it('can run valid task - success', function (done) {
         let taskId = null;
-        let task = tasks.startTask(tasks._TASK_IDENTITY, [ 'ping' ], AUDIT_SOURCE);
+        let task = tasks.startTask(tasks._TASK_IDENTITY, [ 'ping' ]);
         task.on('error', done);
         task.on('start', (tid) => { taskId = tid; });
         task.on('finish', function (error, result) {
@@ -48,7 +46,7 @@ describe('task', function () {
 
     it('can run valid task - error', function (done) {
         let taskId = null;
-        let task = tasks.startTask(tasks._TASK_ERROR, [ 'ping' ], AUDIT_SOURCE);
+        let task = tasks.startTask(tasks._TASK_ERROR, [ 'ping' ]);
         task.on('error', done);
         task.on('start', (tid) => { taskId = tid; });
         task.on('finish', function (error, result) {
@@ -62,7 +60,7 @@ describe('task', function () {
 
     it('can get logs of crash', function (done) {
         let taskId = null;
-        let task = tasks.startTask(tasks._TASK_CRASH, [ 'ping' ], AUDIT_SOURCE);
+        let task = tasks.startTask(tasks._TASK_CRASH, [ 'ping' ]);
         task.on('error', done);
         task.on('start', (tid) => { taskId = tid; });
         task.on('finish', function (error, result) {
@@ -79,11 +77,11 @@ describe('task', function () {
 
     it('can stop task', function (done) {
         let taskId = null;
-        let task = tasks.startTask(tasks._TASK_SLEEP, [ 10000 ], AUDIT_SOURCE);
+        let task = tasks.startTask(tasks._TASK_SLEEP, [ 10000 ]);
         task.on('error', done);
         task.on('start', (tid) => {
             taskId = tid;
-            tasks.stopTask(taskId, AUDIT_SOURCE, () => {});
+            tasks.stopTask(taskId, () => {});
         });
         task.on('finish', function (error, result) {
             expect(error).to.be.ok();

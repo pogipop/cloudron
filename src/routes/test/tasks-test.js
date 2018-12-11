@@ -53,15 +53,13 @@ function cleanup(done) {
     });
 }
 
-let AUDIT_SOURCE = { ip: '1.2.3.4' };
-
 describe('Tasks API', function () {
     before(setup);
     after(cleanup);
 
     it('can get task', function (done) {
         let taskId = null;
-        let task = tasks.startTask(tasks._TASK_IDENTITY, [ 'ping' ], AUDIT_SOURCE);
+        let task = tasks.startTask(tasks._TASK_IDENTITY, [ 'ping' ]);
         task.on('error', done);
         task.on('start', (tid) => { taskId = tid; });
 
@@ -81,7 +79,7 @@ describe('Tasks API', function () {
 
     it('can get logs', function (done) {
         let taskId = null;
-        let task = tasks.startTask(tasks._TASK_CRASH, [ 'ping' ], AUDIT_SOURCE);
+        let task = tasks.startTask(tasks._TASK_CRASH, [ 'ping' ]);
         task.on('error', done);
         task.on('start', (tid) => { taskId = tid; });
 
@@ -97,7 +95,7 @@ describe('Tasks API', function () {
 
     it('cannot stop inactive task', function (done) {
         let taskId = null;
-        let task = tasks.startTask(tasks._TASK_IDENTITY, [ 'ping' ], AUDIT_SOURCE);
+        let task = tasks.startTask(tasks._TASK_IDENTITY, [ 'ping' ]);
         task.on('error', done);
         task.on('start', (tid) => { taskId = tid; });
 
@@ -114,7 +112,7 @@ describe('Tasks API', function () {
 
     it('can stop task', function (done) {
         let taskId = null;
-        let task = tasks.startTask(tasks._TASK_SLEEP, [ 10000 ], AUDIT_SOURCE);
+        let task = tasks.startTask(tasks._TASK_SLEEP, [ 10000 ]);
         task.on('error', done);
         task.on('start', (tid) => {
             taskId = tid;

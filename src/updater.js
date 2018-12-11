@@ -192,7 +192,7 @@ function updateToLatest(auditSource, callback) {
     let error = locker.lock(locker.OP_BOX_UPDATE);
     if (error) return callback(error);
 
-    let task = tasks.startTask(tasks.TASK_UPDATE, [ boxUpdateInfo ], auditSource);
+    let task = tasks.startTask(tasks.TASK_UPDATE, [ boxUpdateInfo ]);
     task.on('error', (error) => callback(new UpdaterError(UpdaterError.INTERNAL_ERROR, error)));
     task.on('start', (taskId) => {
         eventlog.add(eventlog.ACTION_UPDATE, auditSource, { taskId });
