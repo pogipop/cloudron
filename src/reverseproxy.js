@@ -242,12 +242,14 @@ function setFallbackCertificate(domain, fallback, callback) {
         if (!safe.fs.writeFileSync(path.join(paths.APP_CERTS_DIR, `${domain}.host.key`), fallback.key)) return callback(new ReverseProxyError(ReverseProxyError.INTERNAL_ERROR, safe.error.message));
     }
 
-    platform.handleCertChanged('*.' + domain);
-
-    reload(function (error) {
+    platform.handleCertChanged('*.' + domain, function (error) {
         if (error) return callback(new ReverseProxyError(ReverseProxyError.INTERNAL_ERROR, error));
 
-        return callback(null);
+        reload(function (error) {
+            if (error) return callback(new ReverseProxyError(ReverseProxyError.INTERNAL_ERROR, error));
+
+            return callback(null);
+        });
     });
 }
 
@@ -555,9 +557,7 @@ function renewCerts(options, auditSource, progressCallback, callback) {
                 configureFunc(function (ignoredError) {
                     if (ignoredError) debug('renewAll: error reconfiguring app', ignoredError);
 
-                    platform.handleCertChanged(appDomain.fqdn);
-
-                    iteratorCallback(); // move to next domain
+                    platform.handleCertChanged(appDomain.fqdn, iteratorCallback);
                 });
             });
         }, callback);

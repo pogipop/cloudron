@@ -168,12 +168,13 @@ function startApps(existingInfra, callback) {
     }
 }
 
-function handleCertChanged(cn) {
+function handleCertChanged(cn, callback) {
     assert.strictEqual(typeof cn, 'string');
+    assert.strictEqual(typeof callback, 'function');
 
     debug('handleCertChanged', cn);
 
-    if (cn === '*.' + config.adminDomain() || cn === config.adminFqdn()) {
-        mail.startMail(NOOP_CALLBACK);
-    }
+    if (cn === '*.' + config.adminDomain() || cn === config.adminFqdn()) return mail.startMail(callback);
+
+    callback();
 }
