@@ -15,7 +15,11 @@ const NOOP_CALLBACK = function (error) { if (error) debug(error); };
 const TASKS = { // indexed by task type
     backup: backups.backupBoxAndApps,
     update: updater.update,
-    renewcerts: reverseProxy.renewCerts
+    renewcerts: reverseProxy.renewCerts,
+
+    _identity: (arg, progressCallback, callback) => callback(null, arg),
+    _error: (arg, progressCallback, callback) => callback(new Error(`Failed for arg: ${arg}`)),
+    _crash: (arg) => { throw new Error(`Crashing for arg: ${arg}`); }
 };
 
 process.on('SIGTERM', function () {
@@ -36,7 +40,7 @@ database.initialize(function (error) {
 
         const progressCallback = (progress) => tasks.update(taskId, progress, NOOP_CALLBACK);
         const resultCallback = (error, result) => {
-            const progress = { percent: 100, result: result || '', errorMessage: error ? error.message : '' };
+            const progress = { percent: 100, result: result || null, errorMessage: error ? error.message : null };
 
             tasks.update(taskId, progress, () => process.exit(error ? 50 : 0));
         };

@@ -16,7 +16,12 @@ exports = module.exports = {
     TASK_BACKUP: 'backup',
     TASK_UPDATE: 'update',
     TASK_MIGRATE: 'migrate',
-    TASK_RENEW_CERTS: 'renewcerts'
+    TASK_RENEW_CERTS: 'renewcerts',
+
+    // testing
+    _TASK_IDENTITY: '_identity',
+    _TASK_CRASH: '_crash',
+    _TASK_ERROR: '_error',
 };
 
 let assert = require('assert'),
