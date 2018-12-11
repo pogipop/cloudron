@@ -19,7 +19,8 @@ const TASKS = { // indexed by task type
 
     _identity: (arg, progressCallback, callback) => callback(null, arg),
     _error: (arg, progressCallback, callback) => callback(new Error(`Failed for arg: ${arg}`)),
-    _crash: (arg) => { throw new Error(`Crashing for arg: ${arg}`); }
+    _crash: (arg) => { throw new Error(`Crashing for arg: ${arg}`); },
+    _sleep: (arg) => setTimeout(process.exit, arg)
 };
 
 process.on('SIGTERM', function () {

@@ -22,6 +22,7 @@ exports = module.exports = {
     _TASK_IDENTITY: '_identity',
     _TASK_CRASH: '_crash',
     _TASK_ERROR: '_error',
+    _TASK_SLEEP: '_sleep'
 };
 
 let assert = require('assert'),

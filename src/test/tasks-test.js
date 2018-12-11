@@ -60,7 +60,7 @@ describe('task', function () {
         });
     });
 
-    it('can run valid task - crash', function (done) {
+    it('can get logs of crash', function (done) {
         let taskId = null;
         let task = tasks.startTask(tasks._TASK_CRASH, [ 'ping' ], AUDIT_SOURCE);
         task.on('error', done);
@@ -73,6 +73,23 @@ describe('task', function () {
 
             let logs = fs.readFileSync(`${paths.TASKS_LOG_DIR}/${taskId}.log`, 'utf8');
             expect(logs).to.contain('Crashing for arg: ping');
+            done();
+        });
+    });
+
+    it('can stop task', function (done) {
+        let taskId = null;
+        let task = tasks.startTask(tasks._TASK_SLEEP, [ 10000 ], AUDIT_SOURCE);
+        task.on('error', done);
+        task.on('start', (tid) => {
+            taskId = tid;
+            tasks.stopTask(taskId, AUDIT_SOURCE, () => {});
+        });
+        task.on('finish', function (error, result) {
+            expect(error).to.be.ok();
+            expect(error.message).to.contain('SIGTERM');
+            expect(result).to.be(null);
+            expect(taskId).to.be.ok();
             done();
         });
     });
