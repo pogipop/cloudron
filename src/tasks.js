@@ -116,11 +116,13 @@ function startTask(type, args, auditSource) {
                     update(taskId, { percent: 100, errorMessage: error.message }, NOOP_CALLBACK);
                 } else if (!error && task.errorMessage) {
                     error = new Error(task.errorMessage);
+                } else if (!task) { // db got cleared in tests
+                    error = new Error(`No such task ${taskId}`);
                 }
 
                 gTasks[taskId] = null;
 
-                events.emit('finish', error, task.result);
+                events.emit('finish', error, task ? task.result : null);
 
                 debug(`startTask: ${taskId} done`);
             });
