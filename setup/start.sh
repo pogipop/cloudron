@@ -93,7 +93,7 @@ mkdir -p "${CONFIG_DIR}"
 
 # remove old cloudron.conf. Can be removed after 3.4
 rm -f "${CONFIG_DIR}/cloudron.conf"
-json -f /etc/cloudron/cloudron.conf -I -e "delete this.version" # remove the version field
+$json -f /etc/cloudron/cloudron.conf -I -e "delete this.version" # remove the version field
 chown -R "${USER}" /etc/cloudron
 
 echo "==> Setting up unbound"
