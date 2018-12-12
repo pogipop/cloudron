@@ -530,7 +530,8 @@ function install(data, user, auditSource, callback) {
         backupFormat = data.backupFormat || 'tgz',
         ownerId = data.ownerId,
         alternateDomains = data.alternateDomains || [],
-        env = data.env || {};
+        env = data.env || {},
+        mailboxName = data.mailboxName || '';
 
     assert(data.appStoreId || data.manifest); // atleast one of them is required
 
@@ -571,6 +572,13 @@ function install(data, user, auditSource, callback) {
         error = validateEnv(env);
         if (error) return callback(error);
 
+        if (mailboxName) {
+            error = mail.validateName(mailboxName);
+            if (error) return callback(error);
+        } else {
+            mailboxName = mailboxNameForLocation(location, manifest);
+        }
+
         var appId = uuid.v4();
 
         if (icon) {
@@ -604,7 +612,7 @@ function install(data, user, auditSource, callback) {
                 xFrameOptions: xFrameOptions,
                 sso: sso,
                 debugMode: debugMode,
-                mailboxName: mailboxNameForLocation(location, manifest),
+                mailboxName: mailboxName,
                 restoreConfig: backupId ? { backupId: backupId, backupFormat: backupFormat } : null,
                 enableBackup: enableBackup,
                 enableAutomaticUpdate: enableAutomaticUpdate,
@@ -715,12 +723,12 @@ function configure(appId, data, user, auditSource, callback) {
         }
 
         if ('mailboxName' in data) {
-            if (data.mailboxName === '') { // special case to reset back to .app
-                values.mailboxName = mailboxNameForLocation(location, app.manifest);
-            } else {
+            if (data.mailboxName) {
                 error = mail.validateName(data.mailboxName);
                 if (error) return callback(error);
                 values.mailboxName = data.mailboxName;
+            } else {
+                values.mailboxName = mailboxNameForLocation(location, app.manifest);
             }
         } else { // keep existing name or follow the new location
             values.mailboxName = app.mailboxName.endsWith('.app') ? mailboxNameForLocation(location, app.manifest) : app.mailboxName;
@@ -965,7 +973,8 @@ function clone(appId, data, user, auditSource, callback) {
         domain = data.domain.toLowerCase(),
         portBindings = data.portBindings || null,
         backupId = data.backupId,
-        ownerId = data.ownerId;
+        ownerId = data.ownerId,
+        mailboxName = data.mailboxName || '';
 
     assert.strictEqual(typeof backupId, 'string');
     assert.strictEqual(typeof location, 'string');
@@ -983,12 +992,21 @@ function clone(appId, data, user, auditSource, callback) {
 
             if (!backupInfo.manifest) callback(new AppsError(AppsError.EXTERNAL_ERROR, 'Could not get restore config'));
 
+            const manifest = backupInfo.manifest;
+
             // re-validate because this new box version may not accept old configs
-            error = checkManifestConstraints(backupInfo.manifest);
+            error = checkManifestConstraints(manifest);
             if (error) return callback(error);
 
-            error = validatePortBindings(portBindings, backupInfo.manifest);
+            error = validatePortBindings(portBindings, manifest);
             if (error) return callback(error);
+
+            if (mailboxName) {
+                error = mail.validateName(mailboxName);
+                if (error) return callback(error);
+            } else {
+                mailboxName = mailboxNameForLocation(location, manifest);
+            }
 
             domains.get(domain, function (error, domainObject) {
                 if (error && error.reason === DomainsError.NOT_FOUND) return callback(new AppsError(AppsError.EXTERNAL_ERROR, 'No such domain'));
@@ -998,7 +1016,7 @@ function clone(appId, data, user, auditSource, callback) {
                 error = domains.validateHostname(location, domainObject);
                 if (error) return callback(new AppsError(AppsError.BAD_FIELD, 'Bad location: ' + error.message));
 
-                var newAppId = uuid.v4(), manifest = backupInfo.manifest;
+                var newAppId = uuid.v4();
 
                 var data = {
                     installationState: appdb.ISTATE_PENDING_CLONE,
@@ -1007,7 +1025,7 @@ function clone(appId, data, user, auditSource, callback) {
                     xFrameOptions: app.xFrameOptions,
                     restoreConfig: { backupId: backupId, backupFormat: backupInfo.format },
                     sso: !!app.sso,
-                    mailboxName: (location ? location : manifest.title.toLowerCase().replace(/[^a-zA-Z0-9]/g, '')) + '.app',
+                    mailboxName: mailboxName,
                     enableBackup: app.enableBackup,
                     robotsTxt: app.robotsTxt,
                     env: app.env
