@@ -876,6 +876,7 @@ describe('database', function () {
             var data = {
                 installationState: APP_0.installationState,
                 location: APP_0.location,
+                domain: APP_0.domain,
                 manifest: APP_0.manifest,
                 accessRestriction: APP_0.accessRestriction,
                 httpPort: APP_0.httpPort,
@@ -1139,7 +1140,7 @@ describe('database', function () {
         });
 
         it('list succeeds - does not exist', function (done) {
-            taskdb.listPaged('randomtask', 1, 1, function (error, tasks) {
+            taskdb.listByTypePaged('randomtask', 1, 1, function (error, tasks) {
                 expect(error).to.be(null);
                 expect(tasks.length).to.be(0);
                 done();
@@ -1147,7 +1148,7 @@ describe('database', function () {
         });
 
         it('list succeeds - by type', function (done) {
-            taskdb.listPaged(TASK.type, 1, 1, function (error, tasks) {
+            taskdb.listByTypePaged(TASK.type, 1, 1, function (error, tasks) {
                 expect(error).to.be(null);
                 expect(tasks.length).to.be(1);
                 expect(_.pick(tasks[0], Object.keys(TASK))).to.eql(TASK);
@@ -1156,7 +1157,7 @@ describe('database', function () {
         });
 
         it('list succeeds - all', function (done) {
-            taskdb.listPaged(null, 1, 1, function (error, tasks) {
+            taskdb.listByTypePaged(null, 1, 1, function (error, tasks) {
                 expect(error).to.be(null);
                 expect(tasks.length).to.be(1);
                 expect(_.pick(tasks[0], Object.keys(TASK))).to.eql(TASK);
