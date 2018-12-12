@@ -110,9 +110,6 @@ function validateName(name) {
     // also need to consider valid LDAP characters here (e.g '+' is reserved)
     if (/[^a-zA-Z0-9.-]/.test(name)) return new MailError(MailError.BAD_FIELD, 'mailbox name can only contain alphanumerals and dot');
 
-    // app emails are sent using the .app suffix
-    if (name.indexOf('.app') !== -1) return new MailError(MailError.BAD_FIELD, 'mailbox name pattern is reserved for apps');
-
     return null;
 }
 
