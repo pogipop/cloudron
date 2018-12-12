@@ -3,7 +3,7 @@
 exports = module.exports = {
     get: get,
     update: update,
-    listPaged: listPaged,
+    listByTypePaged: listByTypePaged,
 
     getLogs: getLogs,
 
@@ -17,6 +17,7 @@ exports = module.exports = {
     TASK_UPDATE: 'update',
     TASK_MIGRATE: 'migrate',
     TASK_RENEW_CERTS: 'renewcerts',
+    TASK_RESTORE: 'restore',
 
     // testing
     _TASK_IDENTITY: '_identity',
@@ -152,14 +153,16 @@ function stopTask(id, callback) {
     callback(null);
 }
 
-function listPaged(type, page, perPage, callback) {
+function listByTypePaged(type, page, perPage, callback) {
     assert(typeof type === 'string' || type === null);
     assert.strictEqual(typeof page, 'number');
     assert.strictEqual(typeof perPage, 'number');
     assert.strictEqual(typeof callback, 'function');
 
-    taskdb.listPaged(type, page, perPage, function (error, tasks) {
+    taskdb.listByTypePaged(type, page, perPage, function (error, tasks) {
         if (error) return callback(new TaskError(TaskError.INTERNAL_ERROR, error));
+
+        tasks.forEach((task) => { task.active = !!gTasks[task.id]; });
 
         callback(null, tasks);
     });

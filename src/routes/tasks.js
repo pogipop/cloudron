@@ -52,7 +52,7 @@ function list(req, res, next) {
 
     if (req.query.type && typeof req.query.type !== 'string') return next(new HttpError(400, 'type must be a string'));
 
-    tasks.listPaged(req.query.type || null, page, perPage, function (error, tasks) {
+    tasks.listByTypePaged(req.query.type || null, page, perPage, function (error, tasks) {
         if (error) return next(new HttpError(500, error));
 
         next(new HttpSuccess(200, { tasks }));

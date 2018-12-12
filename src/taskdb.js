@@ -5,7 +5,7 @@ exports = module.exports = {
     add: add,
     update: update,
     del: del,
-    listPaged: listPaged
+    listByTypePaged: listByTypePaged
 };
 
 let assert = require('assert'),
@@ -86,7 +86,7 @@ function del(id, callback) {
     });
 }
 
-function listPaged(type, page, perPage, callback) {
+function listByTypePaged(type, page, perPage, callback) {
     assert(typeof type === 'string' || type === null);
     assert.strictEqual(typeof page, 'number');
     assert.strictEqual(typeof perPage, 'number');
