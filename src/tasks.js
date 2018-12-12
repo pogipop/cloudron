@@ -10,6 +10,8 @@ exports = module.exports = {
     startTask: startTask,
     stopTask: stopTask,
 
+    removePrivateFields: removePrivateFields,
+
     TaskError: TaskError,
 
     // task types. if you add a task here, fill up the function table in taskworker
@@ -36,7 +38,8 @@ let assert = require('assert'),
     spawn = require('child_process').spawn,
     split = require('split'),
     taskdb = require('./taskdb.js'),
-    util = require('util');
+    util = require('util'),
+    _ = require('underscore');
 
 const NOOP_CALLBACK = function (error) { if (error) debug(error); };
 
@@ -69,13 +72,13 @@ function get(id, callback) {
     assert.strictEqual(typeof id, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    taskdb.get(id, function (error, progress) {
+    taskdb.get(id, function (error, task) {
         if (error && error.reason == DatabaseError.NOT_FOUND) return callback(new TaskError(TaskError.NOT_FOUND));
         if (error) return callback(new TaskError(TaskError.INTERNAL_ERROR, error));
 
-        progress.active = !!gTasks[id];
+        task.active = !!gTasks[id];
 
-        callback(null, progress);
+        callback(null, task);
     });
 }
 
@@ -213,4 +216,10 @@ function getLogs(taskId, options, callback) {
     cp.stdout.pipe(transformStream);
 
     callback(null, transformStream);
+}
+
+// removes all fields that are strictly private and should never be returned by API calls
+function removePrivateFields(task) {
+    var result = _.pick(task, 'id', 'type', 'percent', 'message', 'errorMessage', 'active', 'creationTime', 'result', 'ts');
+    return result;
 }

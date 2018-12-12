@@ -17,7 +17,6 @@ var SERVER_URL = 'http://localhost:' + config.get('port');
 
 var USERNAME = 'superadmin', PASSWORD = 'Foobar?1337', EMAIL ='silly@me.com';
 var token = null;
-let taskId = null;
 
 function setup(done) {
     config._reset();
@@ -63,12 +62,13 @@ describe('Tasks API', function () {
         task.on('error', done);
         task.on('start', (tid) => { taskId = tid; });
 
-        task.on('finish', function (error, result) {
+        task.on('finish', function () {
             superagent.get(SERVER_URL + '/api/v1/tasks/' + taskId)
                 .query({ access_token: token })
                 .end(function (err, res) {
                     expect(res.statusCode).to.equal(200);
                     expect(res.body.percent).to.be(100);
+                    expect(res.body.args).to.be(undefined);
                     expect(res.body.active).to.be(false); // finished
                     expect(res.body.result).to.be('ping');
                     expect(res.body.errorMessage).to.be(null);
@@ -83,7 +83,7 @@ describe('Tasks API', function () {
         task.on('error', done);
         task.on('start', (tid) => { taskId = tid; });
 
-        task.on('finish', function (error) {
+        task.on('finish', function () {
             superagent.get(SERVER_URL + '/api/v1/tasks/' + taskId + '/logs')
                 .query({ access_token: token })
                 .end(function (err, res) {
@@ -99,7 +99,7 @@ describe('Tasks API', function () {
         task.on('error', done);
         task.on('start', (tid) => { taskId = tid; });
 
-        task.on('finish', function (error) {
+        task.on('finish', function () {
             superagent.post(SERVER_URL + '/api/v1/tasks/' + taskId + '/stop')
                 .query({ access_token: token })
                 .end(function (err, res) {

@@ -15,11 +15,6 @@ let assert = require('assert'),
     TaskError = require('../tasks.js').TaskError,
     tasks = require('../tasks.js');
 
-function auditSource(req) {
-    var ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress || null;
-    return { ip: ip, username: req.user ? req.user.username : null, userId: req.user ? req.user.id : null };
-}
-
 function stopTask(req, res, next) {
     assert.strictEqual(typeof req.params.taskId, 'string');
 
@@ -39,7 +34,7 @@ function get(req, res, next) {
         if (error && error.reason === TaskError.NOT_FOUND) return next(new HttpError(404, 'No such task'));
         if (error) return next(new HttpError(500, error));
 
-        next(new HttpSuccess(200, task));
+        next(new HttpSuccess(200, tasks.removePrivateFields(task)));
     });
 }
 
@@ -52,10 +47,12 @@ function list(req, res, next) {
 
     if (req.query.type && typeof req.query.type !== 'string') return next(new HttpError(400, 'type must be a string'));
 
-    tasks.listByTypePaged(req.query.type || null, page, perPage, function (error, tasks) {
+    tasks.listByTypePaged(req.query.type || null, page, perPage, function (error, result) {
         if (error) return next(new HttpError(500, error));
 
-        next(new HttpSuccess(200, { tasks }));
+        result = result.map(tasks.removeRestrictedFields);
+
+        next(new HttpSuccess(200, { tasks: result }));
     });
 }
 
