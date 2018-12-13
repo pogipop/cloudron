@@ -17,9 +17,7 @@ exports = module.exports = {
     // task types. if you add a task here, fill up the function table in taskworker
     TASK_BACKUP: 'backup',
     TASK_UPDATE: 'update',
-    TASK_MIGRATE: 'migrate',
     TASK_RENEW_CERTS: 'renewcerts',
-    TASK_RESTORE: 'restore',
 
     // testing
     _TASK_IDENTITY: '_identity',

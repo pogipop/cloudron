@@ -4,28 +4,18 @@ exports = module.exports = {
     verifySetupToken: verifySetupToken,
     setupDone: setupDone,
 
-    changePlan: changePlan,
     sendHeartbeat: sendHeartbeat,
-    getBoxAndUserDetails: getBoxAndUserDetails,
     setPtrRecord: setPtrRecord,
 
     CaasError: CaasError
 };
 
 var assert = require('assert'),
-    backups = require('./backups.js'),
     config = require('./config.js'),
     debug = require('debug')('box:caas'),
-    locker = require('./locker.js'),
-    path = require('path'),
     settings = require('./settings.js'),
-    shell = require('./shell.js'),
     superagent = require('superagent'),
-    tasks = require('./tasks.js'),
-    util = require('util'),
-    _ = require('underscore');
-
-const RETIRE_CMD = path.join(__dirname, 'scripts/retire.sh');
+    util = require('util');
 
 function CaasError(reason, errorOrMessage) {
     assert.strictEqual(typeof reason, 'string');
@@ -51,20 +41,6 @@ CaasError.BAD_STATE = 'Bad state';
 CaasError.INVALID_TOKEN = 'Invalid Token';
 CaasError.INTERNAL_ERROR = 'Internal Error';
 CaasError.EXTERNAL_ERROR = 'External Error';
-
-var NOOP_CALLBACK = function (error) { if (error) debug(error); };
-
-function retire(reason, info, callback) {
-    assert(reason === 'migrate');
-    info = info || { };
-    callback = callback || NOOP_CALLBACK;
-
-    var data = {
-        apiServerOrigin: config.apiServerOrigin(),
-        adminFqdn: config.adminFqdn()
-    };
-    shell.sudo('retire', [ RETIRE_CMD, reason, JSON.stringify(info), JSON.stringify(data) ], {}, callback);
-}
 
 function getCaasConfig(callback) {
     assert.strictEqual(typeof callback, 'function');
@@ -116,60 +92,6 @@ function setupDone(setupToken, callback) {
             });
     });
 }
-function doMigrate(options, caasConfig, callback) {
-    assert.strictEqual(typeof options, 'object');
-    assert.strictEqual(typeof caasConfig, 'object');
-    assert.strictEqual(typeof callback, 'function');
-
-    var error = locker.lock(locker.OP_MIGRATE);
-    if (error) return callback(new CaasError(CaasError.BAD_STATE, error.message));
-
-    function unlock(error) {
-        debug('Failed to migrate', error);
-        locker.unlock(locker.OP_MIGRATE);
-        tasks.update(tasks.TASK_MIGRATE, { percent: -1, errorMessage: `Backup failed: ${error.message}` }, NOOP_CALLBACK);
-    }
-
-    tasks.update(tasks.TASK_MIGRATE, { percent: 10, message: 'Backing up for migration' }, NOOP_CALLBACK);
-
-    // initiate the migration in the background
-    backups.backupBoxAndApps((progress) => tasks.update(tasks.TASK_MIGRATE, { percent: 10+progress.percent*30/100, message: progress.message }, NOOP_CALLBACK), function (error) {
-        if (error) return unlock(error);
-
-        debug('migrate: domain: %s size %s region %s', options.domain, options.size, options.region);
-
-        superagent
-            .post(config.apiServerOrigin() + '/api/v1/boxes/' + caasConfig.boxId + '/migrate')
-            .query({ token: caasConfig.token })
-            .send(options)
-            .timeout(30 * 1000)
-            .end(function (error, result) {
-                if (error && !error.response) return unlock(error); // network error
-                if (result.statusCode === 409) return unlock(new CaasError(CaasError.BAD_STATE));
-                if (result.statusCode === 404) return unlock(new CaasError(CaasError.NOT_FOUND));
-                if (result.statusCode !== 202) return unlock(new CaasError(CaasError.EXTERNAL_ERROR, util.format('%s %j', result.status, result.body)));
-
-                tasks.update(tasks.TASK_MIGRATE, { percent: 40, message: 'Migrating' }, NOOP_CALLBACK);
-
-                retire('migrate', _.pick(options, 'domain', 'size', 'region'));
-            });
-    });
-
-    callback(null);
-}
-
-function changePlan(options, callback) {
-    assert.strictEqual(typeof options, 'object');
-    assert.strictEqual(typeof callback, 'function');
-
-    if (config.isDemo()) return callback(new CaasError(CaasError.BAD_FIELD, 'Not allowed in demo mode'));
-
-    getCaasConfig(function (error, result) {
-        if (error) return callback(error);
-
-        doMigrate(options, result, callback);
-    });
-}
 
 function sendHeartbeat() {
     assert(config.provider() === 'caas', 'Heartbeat is only sent for managed cloudrons');
@@ -183,27 +105,6 @@ function sendHeartbeat() {
             else if (result.statusCode !== 200) debug('Server responded to heartbeat with %s %s', result.statusCode, result.text);
             else debug('Heartbeat sent to %s', url);
         });
-    });
-}
-
-function getBoxAndUserDetails(callback) {
-    assert.strictEqual(typeof callback, 'function');
-
-    if (config.provider() !== 'caas') return callback(null, {});
-
-    getCaasConfig(function (error, caasConfig) {
-        if (error) return callback(error);
-
-        superagent
-            .get(config.apiServerOrigin() + '/api/v1/boxes/' + caasConfig.boxId)
-            .query({ token: caasConfig.token })
-            .timeout(30 * 1000)
-            .end(function (error, result) {
-                if (error && !error.response) return callback(new CaasError(CaasError.EXTERNAL_ERROR, 'Cannot reach appstore'));
-                if (result.statusCode !== 200) return callback(new CaasError(CaasError.EXTERNAL_ERROR, util.format('%s %j', result.statusCode, result.body)));
-
-                return callback(null, result.body);
-            });
     });
 }
 
