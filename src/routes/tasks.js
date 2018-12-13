@@ -50,7 +50,7 @@ function list(req, res, next) {
     tasks.listByTypePaged(req.query.type || null, page, perPage, function (error, result) {
         if (error) return next(new HttpError(500, error));
 
-        result = result.map(tasks.removeRestrictedFields);
+        result = result.map(tasks.removePrivateFields);
 
         next(new HttpSuccess(200, { tasks: result }));
     });
