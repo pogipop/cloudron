@@ -135,4 +135,27 @@ describe('Tasks API', function () {
                 });
         });
     });
+
+    it('can list tasks', function (done) {
+        let taskId = null;
+        let task = tasks.startTask(tasks._TASK_IDENTITY, [ 'ping' ]);
+        task.on('error', done);
+        task.on('start', (tid) => { taskId = tid; });
+
+        task.on('finish', function () {
+            superagent.get(SERVER_URL + '/api/v1/tasks?type=' + tasks._TASK_IDENTITY)
+                .query({ access_token: token })
+                .end(function (err, res) {
+                    expect(res.statusCode).to.equal(200);
+                    expect(res.body.tasks.length > 1).to.be(true);
+                    expect(res.body.tasks[0].id).to.be(taskId);
+                    expect(res.body.tasks[0].percent).to.be(100);
+                    expect(res.body.tasks[0].args).to.be(undefined);
+                    expect(res.body.tasks[0].active).to.be(false); // finished
+                    expect(res.body.tasks[0].result).to.be('ping');
+                    expect(res.body.tasks[0].errorMessage).to.be(null);
+                    done();
+                });
+        });
+    });
 });
