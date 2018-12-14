@@ -13,7 +13,6 @@ readonly BOX_SRC_DIR="${HOME_DIR}/box"
 readonly PLATFORM_DATA_DIR="${HOME_DIR}/platformdata" # platform data
 readonly APPS_DATA_DIR="${HOME_DIR}/appsdata" # app data
 readonly BOX_DATA_DIR="${HOME_DIR}/boxdata" # box data
-readonly CONFIG_DIR="${HOME_DIR}/configs"
 
 readonly script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 readonly json="$(realpath ${script_dir}/../node_modules/.bin/json)"
@@ -87,14 +86,6 @@ chown root:systemd-journal /var/log/journal
 systemctl daemon-reload
 systemctl restart systemd-journald
 setfacl -n -m u:${USER}:r /var/log/journal/*/system.journal
-
-echo "==> Creating config directory"
-mkdir -p "${CONFIG_DIR}"
-
-# remove old cloudron.conf. Can be removed after 3.4
-rm -f "${CONFIG_DIR}/cloudron.conf"
-$json -f /etc/cloudron/cloudron.conf -I -e "delete this.version" # remove the version field
-chown -R "${USER}" /etc/cloudron
 
 echo "==> Setting up unbound"
 # DO uses Google nameservers by default. This causes RBL queries to fail (host 2.0.0.127.zen.spamhaus.org)
@@ -198,7 +189,6 @@ else
 fi
 
 echo "==> Changing ownership"
-chown "${USER}:${USER}" -R "${CONFIG_DIR}"
 # be careful of what is chown'ed here. subdirs like mysql,redis etc are owned by the containers and will stop working if perms change
 chown "${USER}:${USER}" -R "${PLATFORM_DATA_DIR}/nginx" "${PLATFORM_DATA_DIR}/collectd" "${PLATFORM_DATA_DIR}/addons" "${PLATFORM_DATA_DIR}/acme" "${PLATFORM_DATA_DIR}/backup" "${PLATFORM_DATA_DIR}/logs" "${PLATFORM_DATA_DIR}/update"
 chown "${USER}:${USER}" "${PLATFORM_DATA_DIR}/INFRA_VERSION" 2>/dev/null || true
