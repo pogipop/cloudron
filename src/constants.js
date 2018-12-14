@@ -19,7 +19,6 @@ exports = module.exports = {
 
     ADMIN_LOCATION: 'my',
 
-    NGINX_ADMIN_CONFIG_FILE_NAME: 'admin.conf',
     NGINX_DEFAULT_CONFIG_FILE_NAME: 'default.conf',
 
     GHOST_USER_FILE: '/tmp/cloudron_ghost.json',

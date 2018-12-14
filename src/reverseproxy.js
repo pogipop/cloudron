@@ -397,6 +397,8 @@ function writeAdminNginxConfig(bundle, configFileName, vhost, callback) {
 
     if (!safe.fs.writeFileSync(nginxConfigFilename, nginxConf)) return callback(safe.error);
 
+    if (vhost) safe.fs.unlinkSync(path.join(paths.NGINX_APPCONFIG_DIR, 'admin.conf')); // remove legacy admin.conf. remove after 3.5
+
     reload(callback);
 }
 
@@ -413,7 +415,7 @@ function configureAdmin(domain, auditSource, callback) {
         ensureCertificate(adminFqdn, domainObject.domain, auditSource, function (error, bundle) {
             if (error) return callback(error);
 
-            writeAdminNginxConfig(bundle, constants.NGINX_ADMIN_CONFIG_FILE_NAME, adminFqdn, callback);
+            writeAdminNginxConfig(bundle, `${adminFqdn}.conf`, adminFqdn, callback);
         });
     });
 }
@@ -430,7 +432,7 @@ function writeAdminConfig(domain, callback) {
         getCertificate({ fqdn: adminFqdn, domain: domainObject.domain }, function (error, bundle) {
             if (error) return callback(error);
 
-            writeAdminNginxConfig(bundle, constants.NGINX_ADMIN_CONFIG_FILE_NAME, adminFqdn, callback);
+            writeAdminNginxConfig(bundle, `${adminFqdn}.conf`, adminFqdn, callback);
         });
     });
 }
@@ -545,7 +547,7 @@ function renewCerts(options, auditSource, progressCallback, callback) {
         var appDomains = [];
 
         // add webadmin domain
-        appDomains.push({ domain: config.adminDomain(), fqdn: config.adminFqdn(), type: 'webadmin', nginxConfigFilename: path.join(paths.NGINX_APPCONFIG_DIR, constants.NGINX_ADMIN_CONFIG_FILE_NAME) });
+        appDomains.push({ domain: config.adminDomain(), fqdn: config.adminFqdn(), type: 'webadmin', nginxConfigFilename: path.join(paths.NGINX_APPCONFIG_DIR, `${config.adminFqdn()}.conf`) });
 
         // add app main
         allApps.forEach(function (app) {
@@ -575,7 +577,7 @@ function renewCerts(options, auditSource, progressCallback, callback) {
 
                 // reconfigure since the cert changed
                 var configureFunc;
-                if (appDomain.type === 'webadmin') configureFunc = writeAdminNginxConfig.bind(null, bundle, constants.NGINX_ADMIN_CONFIG_FILE_NAME, config.adminFqdn());
+                if (appDomain.type === 'webadmin') configureFunc = writeAdminNginxConfig.bind(null, bundle, `${config.adminFqdn()}.conf`, config.adminFqdn());
                 else if (appDomain.type === 'main') configureFunc = writeAppNginxConfig.bind(null, appDomain.app, bundle);
                 else if (appDomain.type === 'alternate') configureFunc = writeAppRedirectNginxConfig.bind(null, appDomain.app, appDomain.fqdn, bundle);
                 else return iteratorCallback(new Error(`Unknown domain type for ${appDomain.fqdn}. This should never happen`));
@@ -601,7 +603,7 @@ function renewAll(auditSource, callback) {
 
 function removeAppConfigs() {
     for (let appConfigFile of fs.readdirSync(paths.NGINX_APPCONFIG_DIR)) {
-        if (appConfigFile !== constants.NGINX_DEFAULT_CONFIG_FILE_NAME && appConfigFile !== constants.NGINX_ADMIN_CONFIG_FILE_NAME) {
+        if (appConfigFile !== constants.NGINX_DEFAULT_CONFIG_FILE_NAME && !appConfigFile.startsWith(constants.ADMIN_LOCATION)) {
             fs.unlinkSync(path.join(paths.NGINX_APPCONFIG_DIR, appConfigFile));
         }
     }
