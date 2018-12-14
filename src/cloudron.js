@@ -15,19 +15,18 @@ exports = module.exports = {
 
     onActivated: onActivated,
 
+    setDashboardDns: setDashboardDns,
     setDashboardDomain: setDashboardDomain,
     renewCerts: renewCerts,
 
-    checkDiskSpace: checkDiskSpace,
-
-    configureWebadmin: configureWebadmin,
-    getWebadminStatus: getWebadminStatus
+    checkDiskSpace: checkDiskSpace
 };
 
 var assert = require('assert'),
     async = require('async'),
     clients = require('./clients.js'),
     config = require('./config.js'),
+    constants = require('./constants.js'),
     cron = require('./cron.js'),
     debug = require('debug')('box:cloudron'),
     domains = require('./domains.js'),
@@ -44,7 +43,6 @@ var assert = require('assert'),
     shell = require('./shell.js'),
     spawn = require('child_process').spawn,
     split = require('split'),
-    sysinfo = require('./sysinfo.js'),
     tasks = require('./tasks.js'),
     users = require('./users.js'),
     util = require('util');
@@ -283,54 +281,6 @@ function getLogs(unit, options, callback) {
     return callback(null, transformStream);
 }
 
-function configureWebadmin(callback) {
-    assert.strictEqual(typeof callback, 'function');
-
-    debug('configureWebadmin: adminDomain:%s status:%j', config.adminDomain(), gWebadminStatus);
-
-    if (process.env.BOX_ENV === 'test' || !config.adminDomain() || gWebadminStatus.configuring) return callback();
-
-    gWebadminStatus.configuring = true; // re-entracy guard
-
-    function configureReverseProxy(error) {
-        debug('configureReverseProxy: error %j', error || null);
-
-        reverseProxy.configureAdmin(config.adminDomain(), { userId: null, username: 'setup' }, function (error) {
-            debug('configureWebadmin: done error: %j', error || {});
-            gWebadminStatus.configuring = false;
-
-            if (error) return callback(error);
-
-            gWebadminStatus.tls = true;
-
-            callback();
-        });
-    }
-
-    // update the DNS. configure nginx regardless of whether it succeeded so that
-    // box is accessible even if dns creds are invalid
-    sysinfo.getPublicIp(function (error, ip) {
-        if (error) return configureReverseProxy(error);
-
-        domains.upsertDnsRecords(config.adminLocation(), config.adminDomain(), 'A', [ ip ], function (error) {
-            debug('addWebadminDnsRecord: updated records with error:', error);
-            if (error) return configureReverseProxy(error);
-
-            domains.waitForDnsRecord(config.adminLocation(), config.adminDomain(), 'A', ip, { interval: 30000, times: 50000 }, function (error) {
-                if (error) return configureReverseProxy(error);
-
-                gWebadminStatus.dns = true;
-
-                configureReverseProxy();
-            });
-        });
-    });
-}
-
-function getWebadminStatus() {
-    return gWebadminStatus;
-}
-
 function getStatus(callback) {
     assert.strictEqual(typeof callback, 'function');
 
@@ -354,26 +304,38 @@ function getStatus(callback) {
     });
 }
 
+function setDashboardDns(domain, auditSource, callback) {
+    assert.strictEqual(typeof domain, 'string');
+    assert.strictEqual(typeof auditSource, 'object');
+    assert.strictEqual(typeof callback, 'function');
+
+    debug(`setDashboardDns: ${domain}`);
+
+    let task = tasks.startTask(tasks.TASK_DASHBOARD_DNS, [ domain, auditSource ]);
+    task.on('error', (error) => callback(new CloudronError(CloudronError.INTERNAL_ERROR, error)));
+    task.on('start', (taskId) => callback(null, taskId));
+}
+
 function setDashboardDomain(domain, callback) {
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof callback, 'function');
 
     debug(`setDashboardDomain: ${domain}`);
 
-    domains.get(domain, function (error, result) {
+    domains.get(domain, function (error, domainObject) {
         if (error && error.reason === DomainsError.NOT_FOUND) return callback(new CloudronError(CloudronError.BAD_FIELD, 'No such domain'));
         if (error) return callback(new CloudronError(CloudronError.INTERNAL_ERROR, error));
 
-        config.setAdminDomain(result.domain);
-        config.setAdminLocation('my');
-        config.setAdminFqdn('my' + (result.config.hyphenatedSubdomains ? '-' : '.') + result.domain);
+        const fqdn = domains.fqdn(constants.ADMIN_LOCATION, domainObject);
+
+        config.setAdminDomain(domain);
+        config.setAdminLocation(constants.ADMIN_LOCATION);
+        config.setAdminFqdn(fqdn);
 
         clients.addDefaultClients(config.adminOrigin(), function (error) {
             if (error) return callback(new CloudronError(CloudronError.INTERNAL_ERROR, error));
 
             callback(null);
-
-            configureWebadmin(NOOP_CALLBACK); // ## trigger as task
         });
     });
 }

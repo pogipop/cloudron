@@ -18,6 +18,7 @@ exports = module.exports = {
     TASK_BACKUP: 'backup',
     TASK_UPDATE: 'update',
     TASK_RENEW_CERTS: 'renewcerts',
+    TASK_DASHBOARD_DNS: 'dashboardDns',
 
     // testing
     _TASK_IDENTITY: '_identity',

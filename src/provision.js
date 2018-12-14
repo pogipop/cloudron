@@ -150,7 +150,8 @@ function setup(dnsConfig, autoconf, auditSource, callback) {
 
                 async.series([
                     mail.addDomain.bind(null, domain),
-                    cloudron.setDashboardDomain.bind(null, domain), // triggers task to setup my. dns/cert/reverseproxy
+                    cloudron.setDashboardDns.bind(null, domain, auditSource),
+                    cloudron.setDashboardDomain.bind(null, domain),
                     autoprovision.bind(null, autoconf),
                     eventlog.add.bind(null, eventlog.ACTION_PROVISION, auditSource, { })
                 ], callback);

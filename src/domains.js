@@ -26,7 +26,7 @@ module.exports = exports = {
 
     parentDomain: parentDomain,
 
-    setupAdminDnsRecord: setupAdminDnsRecord,
+    setDashboardDnsRecord: setDashboardDnsRecord,
 
     DomainsError: DomainsError,
 
@@ -35,6 +35,7 @@ module.exports = exports = {
 };
 
 var assert = require('assert'),
+    async = require('async'),
     config = require('./config.js'),
     constants = require('./constants.js'),
     DatabaseError = require('./databaseerror.js'),
@@ -497,21 +498,23 @@ function makeWildcard(hostname) {
     return parts.join('.');
 }
 
-function setupAdminDnsRecord(domain, callback) {
+function setDashboardDnsRecord(domain, auditSource, progressCallback, callback) {
     assert.strictEqual(typeof domain, 'string');
+    assert.strictEqual(typeof auditSource, 'object');
+    assert.strictEqual(typeof progressCallback, 'function');
     assert.strictEqual(typeof callback, 'function');
 
-    sysinfo.getPublicIp(function (error, ip) {
+    get(domain, function (error, domainObject) {
         if (error) return callback(error);
 
-        upsertDnsRecords(constants.ADMIN_LOCATION, domain, 'A', [ ip ], function (error) {
-            if (error) return callback(error);
+        sysinfo.getPublicIp(function (error, ip) {
+            if (error) return callback(new DomainsError(DomainsError.EXTERNAL_ERROR, error.message));
 
-            waitForDnsRecord(constants.ADMIN_LOCATION, domain, 'A', ip, { interval: 30000, times: 50000 }, function (error) {
-                if (error) return callback(error);
-
-                callback();
-            });
+            async.series([
+                upsertDnsRecords.bind(null, constants.ADMIN_LOCATION, domain, 'A', [ ip ]),
+                waitForDnsRecord.bind(null, constants.ADMIN_LOCATION, domain, 'A', ip, { interval: 30000, times: 50000 }),
+                reverseProxy.ensureCertificate.bind(null, fqdn(constants.ADMIN_LOCATION, domainObject), domain, auditSource)
+            ], callback);
         });
     });
 }

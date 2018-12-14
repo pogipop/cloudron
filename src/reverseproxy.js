@@ -12,6 +12,7 @@ exports = module.exports = {
     validateCertificate: validateCertificate,
 
     getCertificate: getCertificate,
+    ensureCertificate: ensureCertificate,
 
     renewAll: renewAll,
     renewCerts: renewCerts,

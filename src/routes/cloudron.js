@@ -13,6 +13,7 @@ exports = module.exports = {
     getLogStream: getLogStream,
     getStatus: getStatus,
     setDashboardDomain: setDashboardDomain,
+    setDashboardDns: setDashboardDns,
     renewCerts: renewCerts
 };
 
@@ -183,6 +184,17 @@ function setDashboardDomain(req, res, next) {
         if (error) return next(new HttpError(500, error));
 
         next(new HttpSuccess(204, {}));
+    });
+}
+
+function setDashboardDns(req, res, next) {
+    if (!req.body.domain || typeof req.body.domain !== 'string') return next(new HttpError(400, 'domain must be a string'));
+
+    cloudron.setDashboardDns(req.body.domain, auditSource(req), function (error, taskId) {
+        if (error && error.reason === CloudronError.BAD_FIELD) return next(new HttpError(404, error.message));
+        if (error) return next(new HttpError(500, error));
+
+        next(new HttpSuccess(202, { taskId }));
     });
 }
 

@@ -6,6 +6,7 @@ var assert = require('assert'),
     backups = require('./backups.js'),
     database = require('./database.js'),
     debug = require('debug')('box:taskworker'),
+    domains = require('./domains.js'),
     reverseProxy = require('./reverseproxy.js'),
     tasks = require('./tasks.js'),
     updater = require('./updater.js');
@@ -16,6 +17,7 @@ const TASKS = { // indexed by task type
     backup: backups.backupBoxAndApps,
     update: updater.update,
     renewcerts: reverseProxy.renewCerts,
+    dashboardDns: domains.setDashboardDnsRecord,
 
     _identity: (arg, progressCallback, callback) => callback(null, arg),
     _error: (arg, progressCallback, callback) => callback(new Error(`Failed for arg: ${arg}`)),
