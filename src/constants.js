@@ -17,7 +17,7 @@ exports = module.exports = {
         'admins', 'users'         // ldap code uses 'users' pseudo group
     ],
 
-    ADMIN_NAME: 'Settings',
+    ADMIN_LOCATION: 'my',
 
     NGINX_ADMIN_CONFIG_FILE_NAME: 'admin.conf',
     NGINX_DEFAULT_CONFIG_FILE_NAME: 'default.conf',

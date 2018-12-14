@@ -295,7 +295,7 @@ function configureWebadmin(callback) {
     function configureReverseProxy(error) {
         debug('configureReverseProxy: error %j', error || null);
 
-        reverseProxy.configureAdmin({ userId: null, username: 'setup' }, function (error) {
+        reverseProxy.configureAdmin(config.adminDomain(), { userId: null, username: 'setup' }, function (error) {
             debug('configureWebadmin: done error: %j', error || {});
             gWebadminStatus.configuring = false;
 

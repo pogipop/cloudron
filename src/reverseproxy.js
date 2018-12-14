@@ -398,14 +398,21 @@ function writeAdminConfig(bundle, configFileName, vhost, callback) {
     reload(callback);
 }
 
-function configureAdmin(auditSource, callback) {
+function configureAdmin(domain, auditSource, callback) {
+    assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof auditSource, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    ensureCertificate(config.adminFqdn(), config.adminDomain(), auditSource, function (error, bundle) {
+    domains.get(domain, function (error, domainObject) {
         if (error) return callback(error);
 
-        writeAdminConfig(bundle, constants.NGINX_ADMIN_CONFIG_FILE_NAME, config.adminFqdn(), callback);
+        const adminFqdn = domains.fqdn(constants.ADMIN_LOCATION, domainObject);
+
+        ensureCertificate(adminFqdn, domainObject.domain, auditSource, function (error, bundle) {
+            if (error) return callback(error);
+
+            writeAdminConfig(bundle, constants.NGINX_ADMIN_CONFIG_FILE_NAME, adminFqdn, callback);
+        });
     });
 }
 
