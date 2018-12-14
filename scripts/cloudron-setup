@@ -243,7 +243,7 @@ echo -e "\n\n${GREEN}Visit https://<IP> and accept the self-signed certificate t
 if [[ "${rebootServer}" == "true" ]]; then
     systemctl stop box mysql # sometimes mysql ends up having corrupt privilege tables
 
-    read -p "This server has to rebooted to apply all the settings. Reboot now ? [Y/n] " yn
+    read -p "The server has to be rebooted to apply all the settings. Reboot now ? [Y/n] " yn
     yn=${yn:-y}
     case $yn in
         [Yy]* ) systemctl reboot;;
