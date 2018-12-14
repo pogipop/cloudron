@@ -26,6 +26,8 @@ module.exports = exports = {
 
     parentDomain: parentDomain,
 
+    setupAdminDnsRecord: setupAdminDnsRecord,
+
     DomainsError: DomainsError,
 
     // exported for testing
@@ -493,4 +495,23 @@ function makeWildcard(hostname) {
     let parts = hostname.split('.');
     parts[0] = '*';
     return parts.join('.');
+}
+
+function setupAdminDnsRecord(domain, callback) {
+    assert.strictEqual(typeof domain, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    sysinfo.getPublicIp(function (error, ip) {
+        if (error) return callback(error);
+
+        upsertDnsRecords(constants.ADMIN_LOCATION, domain, 'A', [ ip ], function (error) {
+            if (error) return callback(error);
+
+            waitForDnsRecord(constants.ADMIN_LOCATION, domain, 'A', ip, { interval: 30000, times: 50000 }, function (error) {
+                if (error) return callback(error);
+
+                callback();
+            });
+        });
+    });
 }
