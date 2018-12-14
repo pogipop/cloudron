@@ -54,7 +54,7 @@ var acme2 = require('./cert/acme2.js'),
     users = require('./users.js'),
     util = require('util');
 
-var NGINX_APPCONFIG_EJS = fs.readFileSync(__dirname + '/../setup/start/nginx/appconfig.ejs', { encoding: 'utf8' }),
+var NGINX_APPCONFIG_EJS = fs.readFileSync(__dirname + '/appconfig.ejs', { encoding: 'utf8' }),
     RELOAD_NGINX_CMD = path.join(__dirname, 'scripts/reloadnginx.sh');
 
 function ReverseProxyError(reason, errorOrMessage) {
