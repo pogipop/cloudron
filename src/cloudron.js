@@ -123,7 +123,7 @@ function runStartupTasks() {
     reverseProxy.configureDefaultServer(NOOP_CALLBACK);
 
     // always generate webadmin config since we have no versioning mechanism for the ejs
-    configureWebadmin(NOOP_CALLBACK);
+    if (config.adminDomain()) reverseProxy.writeAdminConfig(config.adminDomain(), NOOP_CALLBACK);
 
     // check activation state and start the platform
     users.isActivated(function (error, activated) {

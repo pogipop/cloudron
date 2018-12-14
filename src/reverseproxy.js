@@ -16,11 +16,13 @@ exports = module.exports = {
     renewAll: renewAll,
     renewCerts: renewCerts,
 
+    // the 'configure' functions always ensure a certificate
     configureDefaultServer: configureDefaultServer,
-
     configureAdmin: configureAdmin,
     configureApp: configureApp,
     unconfigureApp: unconfigureApp,
+
+    writeAdminConfig: writeAdminConfig,
 
     reload: reload,
     removeAppConfigs: removeAppConfigs,
@@ -373,7 +375,7 @@ function ensureCertificate(vhost, domain, auditSource, callback) {
     });
 }
 
-function writeAdminConfig(bundle, configFileName, vhost, callback) {
+function writeAdminNginxConfig(bundle, configFileName, vhost, callback) {
     assert.strictEqual(typeof bundle, 'object');
     assert.strictEqual(typeof configFileName, 'string');
     assert.strictEqual(typeof vhost, 'string');
@@ -411,12 +413,29 @@ function configureAdmin(domain, auditSource, callback) {
         ensureCertificate(adminFqdn, domainObject.domain, auditSource, function (error, bundle) {
             if (error) return callback(error);
 
-            writeAdminConfig(bundle, constants.NGINX_ADMIN_CONFIG_FILE_NAME, adminFqdn, callback);
+            writeAdminNginxConfig(bundle, constants.NGINX_ADMIN_CONFIG_FILE_NAME, adminFqdn, callback);
         });
     });
 }
 
-function writeAppConfig(app, bundle, callback) {
+function writeAdminConfig(domain, callback) {
+    assert.strictEqual(typeof domain, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    domains.get(domain, function (error, domainObject) {
+        if (error) return callback(error);
+
+        const adminFqdn = domains.fqdn(constants.ADMIN_LOCATION, domainObject);
+
+        getCertificate({ fqdn: adminFqdn, domain: domainObject.domain }, function (error, bundle) {
+            if (error) return callback(error);
+
+            writeAdminNginxConfig(bundle, constants.NGINX_ADMIN_CONFIG_FILE_NAME, adminFqdn, callback);
+        });
+    });
+}
+
+function writeAppNginxConfig(app, bundle, callback) {
     assert.strictEqual(typeof app, 'object');
     assert.strictEqual(typeof bundle, 'object');
     assert.strictEqual(typeof callback, 'function');
@@ -449,7 +468,7 @@ function writeAppConfig(app, bundle, callback) {
     reload(callback);
 }
 
-function writeAppRedirectConfig(app, fqdn, bundle, callback) {
+function writeAppRedirectNginxConfig(app, fqdn, bundle, callback) {
     assert.strictEqual(typeof app, 'object');
     assert.strictEqual(typeof fqdn, 'string');
     assert.strictEqual(typeof bundle, 'object');
@@ -488,14 +507,14 @@ function configureApp(app, auditSource, callback) {
     ensureCertificate(app.fqdn, app.domain, auditSource, function (error, bundle) {
         if (error) return callback(error);
 
-        writeAppConfig(app, bundle, function (error) {
+        writeAppNginxConfig(app, bundle, function (error) {
             if (error) return callback(error);
 
             async.eachSeries(app.alternateDomains, function (alternateDomain, callback) {
                 ensureCertificate(alternateDomain.fqdn, alternateDomain.domain, auditSource, function (error, bundle) {
                     if (error) return callback(error);
 
-                    writeAppRedirectConfig(app, alternateDomain.fqdn, bundle, callback);
+                    writeAppRedirectNginxConfig(app, alternateDomain.fqdn, bundle, callback);
                 });
             }, callback);
         });
@@ -556,9 +575,9 @@ function renewCerts(options, auditSource, progressCallback, callback) {
 
                 // reconfigure since the cert changed
                 var configureFunc;
-                if (appDomain.type === 'webadmin') configureFunc = writeAdminConfig.bind(null, bundle, constants.NGINX_ADMIN_CONFIG_FILE_NAME, config.adminFqdn());
-                else if (appDomain.type === 'main') configureFunc = writeAppConfig.bind(null, appDomain.app, bundle);
-                else if (appDomain.type === 'alternate') configureFunc = writeAppRedirectConfig.bind(null, appDomain.app, appDomain.fqdn, bundle);
+                if (appDomain.type === 'webadmin') configureFunc = writeAdminNginxConfig.bind(null, bundle, constants.NGINX_ADMIN_CONFIG_FILE_NAME, config.adminFqdn());
+                else if (appDomain.type === 'main') configureFunc = writeAppNginxConfig.bind(null, appDomain.app, bundle);
+                else if (appDomain.type === 'alternate') configureFunc = writeAppRedirectNginxConfig.bind(null, appDomain.app, appDomain.fqdn, bundle);
                 else return iteratorCallback(new Error(`Unknown domain type for ${appDomain.fqdn}. This should never happen`));
 
                 configureFunc(function (ignoredError) {
@@ -604,7 +623,7 @@ function configureDefaultServer(callback) {
         }
     }
 
-    writeAdminConfig({ certFilePath, keyFilePath }, constants.NGINX_DEFAULT_CONFIG_FILE_NAME, '', function (error) {
+    writeAdminNginxConfig({ certFilePath, keyFilePath }, constants.NGINX_DEFAULT_CONFIG_FILE_NAME, '', function (error) {
         if (error) return callback(error);
 
         debug('configureDefaultServer: done');
