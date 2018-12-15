@@ -771,7 +771,7 @@ function snapshotApp(app, progressCallback, callback) {
     assert.strictEqual(typeof progressCallback, 'function');
     assert.strictEqual(typeof callback, 'function');
 
-    progressCallback({ message: `Snapshotting app ${app.id}` });
+    progressCallback({ message: `Snapshotting app ${app.fqdn}` });
 
     if (!safe.fs.writeFileSync(path.join(paths.APPS_DATA_DIR, app.id + '/config.json'), JSON.stringify(apps.getAppConfig(app)))) {
         return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, 'Error creating config.json: ' + safe.error.message));
