@@ -26,7 +26,7 @@ module.exports = exports = {
 
     parentDomain: parentDomain,
 
-    setDashboardDnsRecord: setDashboardDnsRecord,
+    prepareDashboardDomain: prepareDashboardDomain,
 
     DomainsError: DomainsError,
 
@@ -498,7 +498,7 @@ function makeWildcard(hostname) {
     return parts.join('.');
 }
 
-function setDashboardDnsRecord(domain, auditSource, progressCallback, callback) {
+function prepareDashboardDomain(domain, auditSource, progressCallback, callback) {
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof auditSource, 'object');
     assert.strictEqual(typeof progressCallback, 'function');
@@ -511,8 +511,11 @@ function setDashboardDnsRecord(domain, auditSource, progressCallback, callback) 
             if (error) return callback(new DomainsError(DomainsError.EXTERNAL_ERROR, error.message));
 
             async.series([
+                (done) => { progressCallback({ message: 'Updating DNS' }); done(); },
                 upsertDnsRecords.bind(null, constants.ADMIN_LOCATION, domain, 'A', [ ip ]),
+                (done) => { progressCallback({ message: 'Waiting for DNS' }); done(); },
                 waitForDnsRecord.bind(null, constants.ADMIN_LOCATION, domain, 'A', ip, { interval: 30000, times: 50000 }),
+                (done) => { progressCallback({ message: 'Getting certificate' }); done(); },
                 reverseProxy.ensureCertificate.bind(null, fqdn(constants.ADMIN_LOCATION, domainObject), domain, auditSource)
             ], callback);
         });

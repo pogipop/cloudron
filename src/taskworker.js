@@ -17,7 +17,7 @@ const TASKS = { // indexed by task type
     backup: backups.backupBoxAndApps,
     update: updater.update,
     renewcerts: reverseProxy.renewCerts,
-    dashboardDns: domains.setDashboardDnsRecord,
+    prepareDashboardDomain: domains.prepareDashboardDomain,
 
     _identity: (arg, progressCallback, callback) => callback(null, arg),
     _error: (arg, progressCallback, callback) => callback(new Error(`Failed for arg: ${arg}`)),

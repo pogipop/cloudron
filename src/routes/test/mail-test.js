@@ -48,13 +48,28 @@ function setup(done) {
 
         function dnsSetup(callback) {
             superagent.post(SERVER_URL + '/api/v1/cloudron/setup')
-                .send({ dnsConfig: { provider: ADMIN_DOMAIN.provider, domain: ADMIN_DOMAIN.domain, config: ADMIN_DOMAIN.config } })
+                .send({ dnsConfig: { provider: ADMIN_DOMAIN.provider, domain: ADMIN_DOMAIN.domain, config: ADMIN_DOMAIN.config, tlsConfig: { provider: 'fallback' } } })
                 .end(function (error, result) {
                     expect(result).to.be.ok();
                     expect(result.statusCode).to.eql(200);
 
                     callback();
                 });
+        },
+
+        function waitForSetup(done) {
+            async.retry({ times: 5, interval: 4000 }, function (retryCallback) {
+                superagent.get(SERVER_URL + '/api/v1/cloudron/status')
+                    .end(function (error, result) {
+                        if (!result || result.statusCode !== 200) return retryCallback(new Error('Bad result'));
+
+                        console.dir(result.body);
+
+                        if (!result.body.setup.active && result.body.setup.errorMessage === '' && result.body.adminFqdn) return retryCallback();
+
+                        retryCallback(new Error('Not done yet: ' + JSON.stringify(result.body)));
+                    });
+            }, done);
         },
 
         function createAdmin(callback) {

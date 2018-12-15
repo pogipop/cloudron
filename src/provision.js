@@ -4,6 +4,7 @@ exports = module.exports = {
     setup: setup,
     restore: restore,
     activate: activate,
+    getStatus: getStatus,
 
     ProvisionError: ProvisionError
 };
@@ -21,21 +22,32 @@ var assert = require('assert'),
     DomainsError = domains.DomainsError,
     eventlog = require('./eventlog.js'),
     mail = require('./mail.js'),
-    path = require('path'),
     safe = require('safetydance'),
     semver = require('semver'),
     settingsdb = require('./settingsdb.js'),
     settings = require('./settings.js'),
-    shell = require('./shell.js'),
     superagent = require('superagent'),
     users = require('./users.js'),
     UsersError = users.UsersError,
     tld = require('tldjs'),
-    util = require('util');
+    util = require('util'),
+    _ = require('underscore');
 
-var RESTART_CMD = path.join(__dirname, 'scripts/restart.sh');
+const NOOP_CALLBACK = function (error) { if (error) debug(error); };
 
-var NOOP_CALLBACK = function (error) { if (error) debug(error); };
+// we cannot use tasks since the tasks table gets overwritten when db is imported
+let gProvisionStatus = {
+    setup: {
+        active: false,
+        message: '',
+        errorMessage: null
+    },
+    restore: {
+        active: false,
+        message: '',
+        errorMessage: null
+    }
+};
 
 function ProvisionError(reason, errorOrMessage) {
     assert.strictEqual(typeof reason, 'string');
@@ -62,6 +74,11 @@ ProvisionError.ALREADY_SETUP = 'Already Setup';
 ProvisionError.INTERNAL_ERROR = 'Internal Error';
 ProvisionError.EXTERNAL_ERROR = 'External Error';
 ProvisionError.ALREADY_PROVISIONED = 'Already Provisioned';
+
+function setProgress(task, message, callback) {
+    gProvisionStatus[task].message = message;
+    callback();
+}
 
 function autoprovision(autoconf, callback) {
     assert.strictEqual(typeof autoconf, 'object');
@@ -102,7 +119,7 @@ function unprovision(callback) {
 
     config.setAdminDomain('');
     config.setAdminFqdn('');
-    config.setAdminLocation('my');
+    config.setAdminLocation(constants.ADMIN_LOCATION);
 
     // TODO: also cancel any existing configureWebadmin task
     async.series([
@@ -117,23 +134,27 @@ function setup(dnsConfig, autoconf, auditSource, callback) {
     assert.strictEqual(typeof auditSource, 'object');
     assert.strictEqual(typeof callback, 'function');
 
+    if (gProvisionStatus.setup.active || gProvisionStatus.restore.active) return callback(new ProvisionError(ProvisionError.BAD_STATE, 'Already setting up or restoring'));
+
+    gProvisionStatus.setup = { active: true, errorMessage: '', message: 'Adding domain' };
+
+    function done(error) {
+        gProvisionStatus.setup.active = false;
+        gProvisionStatus.setup.errorMessage = error ? error.message : '';
+        callback(error);
+    }
+
     users.isActivated(function (error, activated) {
-        if (error) return callback(new ProvisionError(ProvisionError.INTERNAL_ERROR, error));
-        if (activated) return callback(new ProvisionError(ProvisionError.ALREADY_SETUP));
+        if (error) return done(new ProvisionError(ProvisionError.INTERNAL_ERROR, error));
+        if (activated) return done(new ProvisionError(ProvisionError.ALREADY_SETUP));
 
         unprovision(function (error) {
-            if (error) return callback(new ProvisionError(ProvisionError.INTERNAL_ERROR, error));
-
-            let webadminStatus = cloudron.getWebadminStatus();
-
-            if (webadminStatus.configuring || webadminStatus.restore.active) return callback(new ProvisionError(ProvisionError.BAD_STATE, 'Already restoring or configuring'));
+            if (error) return done(new ProvisionError(ProvisionError.INTERNAL_ERROR, error));
 
             const domain = dnsConfig.domain.toLowerCase();
             const zoneName = dnsConfig.zoneName ? dnsConfig.zoneName : (tld.getDomain(domain) || domain);
 
-            const adminFqdn = 'my' + (dnsConfig.config.hyphenatedSubdomains ? '-' : '.') + domain;
-
-            debug(`provision: Setting up Cloudron with domain ${domain} and zone ${zoneName} using admin fqdn ${adminFqdn}`);
+            debug(`provision: Setting up Cloudron with domain ${domain} and zone ${zoneName}`);
 
             let data = {
                 zoneName: zoneName,
@@ -144,17 +165,24 @@ function setup(dnsConfig, autoconf, auditSource, callback) {
             };
 
             domains.add(domain, data, auditSource, function (error) {
-                if (error && error.reason === DomainsError.BAD_FIELD) return callback(new ProvisionError(ProvisionError.BAD_FIELD, error.message));
-                if (error && error.reason === DomainsError.ALREADY_EXISTS) return callback(new ProvisionError(ProvisionError.BAD_FIELD, error.message));
-                if (error) return callback(new ProvisionError(ProvisionError.INTERNAL_ERROR, error));
+                if (error && error.reason === DomainsError.BAD_FIELD) return done(new ProvisionError(ProvisionError.BAD_FIELD, error.message));
+                if (error && error.reason === DomainsError.ALREADY_EXISTS) return done(new ProvisionError(ProvisionError.BAD_FIELD, error.message));
+                if (error) return done(new ProvisionError(ProvisionError.INTERNAL_ERROR, error));
+
+                callback(); // now that args are validated run the task in the background
 
                 async.series([
                     mail.addDomain.bind(null, domain),
-                    cloudron.setDashboardDns.bind(null, domain, auditSource),
+                    domains.prepareDashboardDomain.bind(null, domain, auditSource, (progress) => setProgress('setup', progress.message, NOOP_CALLBACK)),
                     cloudron.setDashboardDomain.bind(null, domain),
+                    setProgress.bind(null, 'setup', 'Applying auto-configuration'),
                     autoprovision.bind(null, autoconf),
+                    setProgress.bind(null, 'setup', 'Done'),
                     eventlog.add.bind(null, eventlog.ACTION_PROVISION, auditSource, { })
-                ], callback);
+                ], function (error) {
+                    gProvisionStatus.setup.active = false;
+                    gProvisionStatus.setup.errorMessage = error ? error.message : '';
+                });
             });
         });
     });
@@ -230,40 +258,67 @@ function restore(backupConfig, backupId, version, autoconf, auditSource, callbac
     if (!semver.valid(version)) return callback(new ProvisionError(ProvisionError.BAD_STATE, 'version is not a valid semver'));
     if (semver.major(config.version()) !== semver.major(version) || semver.minor(config.version()) !== semver.minor(version)) return callback(new ProvisionError(ProvisionError.BAD_STATE, `Run cloudron-setup with --version ${version} to restore from this backup`));
 
-    let webadminStatus = cloudron.getWebadminStatus();
+    if (gProvisionStatus.setup.active || gProvisionStatus.restore.active) return callback(new ProvisionError(ProvisionError.BAD_STATE, 'Already setting up or restoring'));
 
-    if (webadminStatus.configuring || webadminStatus.restore.active) return callback(new ProvisionError(ProvisionError.BAD_STATE, 'Already restoring or configuring'));
+    gProvisionStatus.restore = { active: true, errorMessage: '', message: 'Testing backup config' };
+
+    function done(error) {
+        gProvisionStatus.restore.active = false;
+        gProvisionStatus.restore.errorMessage = error ? error.message : '';
+        callback(error);
+    }
 
     users.isActivated(function (error, activated) {
-        if (error) return callback(new ProvisionError(ProvisionError.INTERNAL_ERROR, error));
-        if (activated) return callback(new ProvisionError(ProvisionError.ALREADY_PROVISIONED, 'Already activated'));
+        if (error) return done(new ProvisionError(ProvisionError.INTERNAL_ERROR, error));
+        if (activated) return done(new ProvisionError(ProvisionError.ALREADY_PROVISIONED, 'Already activated'));
 
         backups.testConfig(backupConfig, function (error) {
-            if (error && error.reason === BackupsError.BAD_FIELD) return callback(new ProvisionError(ProvisionError.BAD_FIELD, error.message));
-            if (error && error.reason === BackupsError.EXTERNAL_ERROR) return callback(new ProvisionError(ProvisionError.EXTERNAL_ERROR, error.message));
-            if (error) return callback(new ProvisionError(ProvisionError.INTERNAL_ERROR, error));
+            if (error && error.reason === BackupsError.BAD_FIELD) return done(new ProvisionError(ProvisionError.BAD_FIELD, error.message));
+            if (error && error.reason === BackupsError.EXTERNAL_ERROR) return done(new ProvisionError(ProvisionError.EXTERNAL_ERROR, error.message));
+            if (error) return done(new ProvisionError(ProvisionError.INTERNAL_ERROR, error));
 
             debug(`restore: restoring from ${backupId} from provider ${backupConfig.provider} with format ${backupConfig.format}`);
 
-            webadminStatus.restore.active = true;
-            webadminStatus.restore.error = null;
-
-            callback(null); // do no block
+            callback(); // now that the fields are validated, continue task in the background
 
             async.series([
-                backups.restore.bind(null, backupConfig, backupId, (progress) => debug(`restore: ${progress}`)),
-                eventlog.add.bind(null, eventlog.ACTION_RESTORE, auditSource, { backupId }),
+                setProgress.bind(null, 'restore', 'Downloading backup'),
+                backups.restore.bind(null, backupConfig, backupId, (progress) => setProgress('restore', progress.message, NOOP_CALLBACK)),
+                setProgress.bind(null, 'restore', 'Applying auto-configuration'),
                 autoprovision.bind(null, autoconf),
                 // currently, our suggested restore flow is after a dnsSetup. The dnSetup creates DKIM keys and updates the DNS
                 // for this reason, we have to re-setup DNS after a restore so it has DKIm from the backup
                 // Once we have a 100% IP based restore, we can skip this
                 mail.setDnsRecords.bind(null, config.adminDomain()),
-                shell.sudo.bind(null, 'restart', [ RESTART_CMD ], {})
+                eventlog.add.bind(null, eventlog.ACTION_RESTORE, auditSource, { backupId }),
             ], function (error) {
-                debug('restore:', error);
-                if (error) webadminStatus.restore.error = error.message;
-                webadminStatus.restore.active = false;
+                gProvisionStatus.restore.active = false;
+                gProvisionStatus.restore.errorMessage = error ? error.message : '';
+
+                if (!error) cloudron.onActivated(NOOP_CALLBACK);
             });
+        });
+    });
+}
+
+function getStatus(callback) {
+    assert.strictEqual(typeof callback, 'function');
+
+    users.isActivated(function (error, activated) {
+        if (error) return callback(new ProvisionError(ProvisionError.INTERNAL_ERROR, error));
+
+        settings.getCloudronName(function (error, cloudronName) {
+            if (error) return callback(new ProvisionError(ProvisionError.INTERNAL_ERROR, error));
+
+            callback(null, _.extend({
+                version: config.version(),
+                apiServerOrigin: config.apiServerOrigin(), // used by CaaS tool
+                provider: config.provider(),
+                cloudronName: cloudronName,
+                adminFqdn: config.adminDomain() ? config.adminFqdn() : null,
+                activated: activated,
+                edition: config.edition()
+            }, gProvisionStatus));
         });
     });
 }

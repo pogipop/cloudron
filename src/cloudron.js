@@ -8,14 +8,13 @@ exports = module.exports = {
     getConfig: getConfig,
     getDisks: getDisks,
     getLogs: getLogs,
-    getStatus: getStatus,
 
     reboot: reboot,
     isRebootRequired: isRebootRequired,
 
     onActivated: onActivated,
 
-    setDashboardDns: setDashboardDns,
+    prepareDashboardDomain: prepareDashboardDomain,
     setDashboardDomain: setDashboardDomain,
     renewCerts: renewCerts,
 
@@ -50,16 +49,6 @@ var assert = require('assert'),
 var REBOOT_CMD = path.join(__dirname, 'scripts/reboot.sh');
 
 var NOOP_CALLBACK = function (error) { if (error) debug(error); };
-
-let gWebadminStatus = {
-    dns: false,
-    tls: false,
-    configuring: false,
-    restore: {
-        active: false,
-        error: null
-    }
-};
 
 function CloudronError(reason, errorOrMessage) {
     assert.strictEqual(typeof reason, 'string');
@@ -281,37 +270,14 @@ function getLogs(unit, options, callback) {
     return callback(null, transformStream);
 }
 
-function getStatus(callback) {
-    assert.strictEqual(typeof callback, 'function');
-
-    users.isActivated(function (error, activated) {
-        if (error) return callback(new CloudronError(CloudronError.INTERNAL_ERROR, error));
-
-        settings.getCloudronName(function (error, cloudronName) {
-            if (error) return callback(new CloudronError(CloudronError.INTERNAL_ERROR, error));
-
-            callback(null, {
-                version: config.version(),
-                apiServerOrigin: config.apiServerOrigin(), // used by CaaS tool
-                provider: config.provider(),
-                cloudronName: cloudronName,
-                adminFqdn: config.adminDomain() ? config.adminFqdn() : null,
-                activated: activated,
-                edition: config.edition(),
-                webadminStatus: gWebadminStatus // only valid when !activated
-            });
-        });
-    });
-}
-
-function setDashboardDns(domain, auditSource, callback) {
+function prepareDashboardDomain(domain, auditSource, callback) {
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof auditSource, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    debug(`setDashboardDns: ${domain}`);
+    debug(`prepareDashboardDomain: ${domain}`);
 
-    let task = tasks.startTask(tasks.TASK_DASHBOARD_DNS, [ domain, auditSource ]);
+    let task = tasks.startTask(tasks.TASK_PREPARE_DASHBOARD_DOMAIN, [ domain, auditSource ]);
     task.on('error', (error) => callback(new CloudronError(CloudronError.INTERNAL_ERROR, error)));
     task.on('start', (taskId) => callback(null, taskId));
 }

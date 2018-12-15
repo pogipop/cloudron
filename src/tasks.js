@@ -18,7 +18,7 @@ exports = module.exports = {
     TASK_BACKUP: 'backup',
     TASK_UPDATE: 'update',
     TASK_RENEW_CERTS: 'renewcerts',
-    TASK_DASHBOARD_DNS: 'dashboardDns',
+    TASK_PREPARE_DASHBOARD_DOMAIN: 'prepareDashboardDomain',
 
     // testing
     _TASK_IDENTITY: '_identity',
