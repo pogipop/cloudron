@@ -106,7 +106,7 @@ function startTask(type, args) {
         if (error) return events.emit('error', new TaskError(TaskError.INTERNAL_ERROR, error));
 
         const logFile = `${paths.TASKS_LOG_DIR}/${taskId}.log`;
-        let fd = safe.fs.openSync(logFile, 'a'); // will autoclose
+        let fd = safe.fs.openSync(logFile, 'w'); // will autoclose
         if (!fd) {
             debug(`startTask: unable to get log filedescriptor ${safe.error.message}`);
             return events.emit('error', new TaskError(TaskError.INTERNAL_ERROR, error.message));
