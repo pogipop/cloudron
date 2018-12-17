@@ -1494,3 +1494,14 @@
 * Flexible mailbox management
 * Automatic updates can be toggled per app
 
+[3.4.3]
+* Improve error page
+* Add system view to manage addons and view their status
+* Fix iconset regression for account and Cloudron name edits
+* Add server reboot button and warn if reboot is required for security updates
+* Backup and update tasks are now cancelable
+* Move graphite away from port 3000 (reserved by ESXi)
+* Flexible mailbox management
+* Automatic updates can be toggled per app
+* Fix issue where OOM mails are sent out without a rate limit
+
