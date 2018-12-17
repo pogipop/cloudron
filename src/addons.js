@@ -815,7 +815,8 @@ function setupEmail(app, options, callback) {
             { name: 'MAIL_SIEVE_SERVER', value: 'mail' },
             { name: 'MAIL_SIEVE_PORT', value: '4190' },
             { name: 'MAIL_DOMAIN', value: app.domain },
-            { name: 'MAIL_DOMAINS', value: mailInDomains }
+            { name: 'MAIL_DOMAINS', value: mailInDomains },
+            { name: 'LDAP_MAILBOXES_BASE_DN', value: 'ou=mailboxes,dc=cloudron' }
         ];
 
         debugApp(app, 'Setting up Email');

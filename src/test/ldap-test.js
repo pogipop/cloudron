@@ -110,6 +110,8 @@ function setup(done) {
                 appdb.add(APP_0.id, APP_0.appStoreId, APP_0.manifest, APP_0.location, APP_0.domain, APP_0.ownerId, apps._translatePortBindings(APP_0.portBindings, APP_0.manifest), APP_0, callback);
             });
         },
+        (done) => mailboxdb.addMailbox(USER_0.username.toLowerCase(), DOMAIN_0.domain, USER_0.id, done),
+        (done) => mailboxdb.setAliasesForName(USER_0.username.toLowerCase(), DOMAIN_0.domain, [ USER_0_ALIAS.toLocaleLowerCase() ], done),
         appdb.update.bind(null, APP_0.id, { containerId: APP_0.containerId }),
         appdb.setAddonConfig.bind(null, APP_0.id, 'sendmail', [{ name: 'MAIL_SMTP_PASSWORD', value : 'sendmailpassword' }]),
         appdb.setAddonConfig.bind(null, APP_0.id, 'recvmail', [{ name: 'MAIL_IMAP_PASSWORD', value : 'recvmailpassword' }]),
@@ -812,10 +814,6 @@ describe('Ldap', function () {
     }
 
     describe('search mailbox', function () {
-        before(function (done) {
-            mailboxdb.addMailbox(USER_0.username.toLowerCase(), DOMAIN_0.domain, USER_0.id, done);
-        });
-
         it('get specific mailbox by email', function (done) {
             ldapSearch('cn=' + USER_0.username + '@example.com,ou=mailboxes,dc=cloudron', 'objectclass=mailbox', function (error, entries) {
                 if (error) return done(error);
@@ -848,10 +846,6 @@ describe('Ldap', function () {
     });
 
     describe('search aliases', function () {
-        before(function (done) {
-            mailboxdb.setAliasesForName(USER_0.username.toLowerCase(), DOMAIN_0.domain, [ USER_0_ALIAS.toLocaleLowerCase() ], done);
-        });
-
         it('get specific alias', function (done) {
             ldapSearch('cn=' + USER_0_ALIAS + '@example.com,ou=mailaliases,dc=cloudron', 'objectclass=nismailalias', function (error, entries) {
                 if (error) return done(error);
@@ -915,6 +909,68 @@ describe('Ldap', function () {
             ldapSearch('cn=random@example.com,ou=mailinglists,dc=cloudron', 'objectclass=mailGroup', function (error) {
                 expect(error).to.be.a(ldap.NoSuchObjectError);
                 done();
+            });
+        });
+    });
+
+    describe('user mailbox bind', function () {
+        it('email disabled - cannot find domain email', function (done) {
+            var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + config.get('ldapPort') });
+
+            client.bind('cn=' + USER_0.username + '@example.com,domain=example.com,ou=mailboxes,dc=cloudron', USER_0.password + 'nope', function (error) {
+                expect(error).to.be.a(ldap.NoSuchObjectError);
+                client.unbind(done);
+            });
+        });
+
+        it('email enabled - does not allow with invalid password', function (done) {
+            // use maildb to not trigger further events
+            maildb.update(DOMAIN_0.domain, { enabled: true }, function (error) {
+                expect(error).not.to.be.ok();
+
+                var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + config.get('ldapPort') });
+
+                client.bind('cn=' + USER_0.username + '@example.com,domain=example.com,ou=mailboxes,dc=cloudron', USER_0.password + 'nope', function (error) {
+                    expect(error).to.be.a(ldap.InvalidCredentialsError);
+
+                    client.unbind();
+
+                    maildb.update(DOMAIN_0.domain, { enabled: false }, done);
+                });
+            });
+        });
+
+        it('email enabled - allows with valid password', function (done) {
+            // use maildb to not trigger further events
+            maildb.update(DOMAIN_0.domain, { enabled: true }, function (error) {
+                expect(error).not.to.be.ok();
+
+                var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + config.get('ldapPort') });
+
+                client.bind('cn=' + USER_0.username + '@example.com,domain=example.com,ou=mailboxes,dc=cloudron', USER_0.password, function (error) {
+                    expect(error).not.to.be.ok();
+
+                    client.unbind();
+
+                    maildb.update(DOMAIN_0.domain, { enabled: false }, done);
+                });
+            });
+        });
+
+        it('email enabled - cannot auth with alias', function (done) {
+            // use maildb to not trigger further events
+            maildb.update(DOMAIN_0.domain, { enabled: true }, function (error) {
+                expect(error).not.to.be.ok();
+
+                var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + config.get('ldapPort') });
+
+                client.bind('cn=' + USER_0_ALIAS + '@example.com,domain=example.com,ou=mailboxes,dc=cloudron', USER_0.password, function (error) {
+                    expect(error).to.be.a(ldap.NoSuchObjectError);
+
+                    client.unbind();
+
+                    maildb.update(DOMAIN_0.domain, { enabled: false }, done);
+                });
             });
         });
     });

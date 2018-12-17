@@ -450,8 +450,39 @@ function authorizeUserForApp(req, res, next) {
     });
 }
 
-function authenticateMailbox(req, res, next) {
-    debug('mailbox auth: %s (from %s)', req.dn.toString(), req.connection.ldap.id);
+function authenticateUserMailbox(req, res, next) {
+    debug('user mailbox auth: %s (from %s)', req.dn.toString(), req.connection.ldap.id);
+
+    if (!req.dn.rdns[0].attrs.cn) return next(new ldap.NoSuchObjectError(req.dn.toString()));
+
+    var email = req.dn.rdns[0].attrs.cn.value.toLowerCase();
+    var parts = email.split('@');
+    if (parts.length !== 2) return next(new ldap.NoSuchObjectError(req.dn.toString()));
+
+    mail.getDomain(parts[1], function (error, domain) {
+        if (error && error.reason === MailError.NOT_FOUND) return next(new ldap.NoSuchObjectError(req.dn.toString()));
+        if (error) return next(new ldap.OperationsError(error.message));
+
+        if (!domain.enabled) return next(new ldap.NoSuchObjectError(req.dn.toString()));
+
+        mailboxdb.getMailbox(parts[0], parts[1], function (error, mailbox) {
+            if (error && error.reason === DatabaseError.NOT_FOUND) return next(new ldap.NoSuchObjectError(req.dn.toString()));
+            if (error) return next(new ldap.OperationsError(error.message));
+
+            users.verify(mailbox.ownerId, req.credentials || '', function (error, result) {
+                if (error && error.reason === UsersError.NOT_FOUND) return next(new ldap.NoSuchObjectError(req.dn.toString()));
+                if (error && error.reason === UsersError.WRONG_PASSWORD) return next(new ldap.InvalidCredentialsError(req.dn.toString()));
+                if (error) return next(new ldap.OperationsError(error.message));
+
+                eventlog.add(eventlog.ACTION_USER_LOGIN, { authType: 'ldap', mailboxId: email }, { userId: result.id, user: users.removePrivateFields(result) });
+                res.end();
+            });
+        });
+    });
+}
+
+function authenticateMailAddon(req, res, next) {
+    debug('mail addon auth: %s (from %s)', req.dn.toString(), req.connection.ldap.id);
 
     if (!req.dn.rdns[0].attrs.cn) return next(new ldap.NoSuchObjectError(req.dn.toString()));
 
@@ -516,12 +547,13 @@ function start(callback) {
     gServer.bind('ou=users,dc=cloudron', authenticateApp, authenticateUser, authorizeUserForApp);
 
     // http://www.ietf.org/proceedings/43/I-D/draft-srivastava-ldap-mail-00.txt
-    gServer.search('ou=mailboxes,dc=cloudron', mailboxSearch);
-    gServer.search('ou=mailaliases,dc=cloudron', mailAliasSearch);
-    gServer.search('ou=mailinglists,dc=cloudron', mailingListSearch);
+    gServer.search('ou=mailboxes,dc=cloudron', mailboxSearch); // haraka, dovecot
+    gServer.bind('ou=mailboxes,dc=cloudron', authenticateUserMailbox); // apps like sogo can use domain=${domain} to authenticate a mailbox
+    gServer.search('ou=mailaliases,dc=cloudron', mailAliasSearch); // haraka
+    gServer.search('ou=mailinglists,dc=cloudron', mailingListSearch); // haraka
 
-    gServer.bind('ou=recvmail,dc=cloudron', authenticateMailbox); // dovecot
-    gServer.bind('ou=sendmail,dc=cloudron', authenticateMailbox); // haraka
+    gServer.bind('ou=recvmail,dc=cloudron', authenticateMailAddon); // dovecot
+    gServer.bind('ou=sendmail,dc=cloudron', authenticateMailAddon); // haraka
 
     gServer.compare('cn=users,ou=groups,dc=cloudron', authenticateApp, groupUsersCompare);
     gServer.compare('cn=admins,ou=groups,dc=cloudron', authenticateApp, groupAdminsCompare);
