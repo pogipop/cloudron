@@ -22,7 +22,6 @@ var appHealthMonitor = require('./apphealthmonitor.js'),
     dyndns = require('./dyndns.js'),
     eventlog = require('./eventlog.js'),
     janitor = require('./janitor.js'),
-    reverseProxy = require('./reverseproxy.js'),
     scheduler = require('./scheduler.js'),
     settings = require('./settings.js'),
     updater = require('./updater.js'),
@@ -48,7 +47,7 @@ var gJobs = {
     appHealthMonitor: null
 };
 
-var NOOP_CALLBACK = function (error) { if (error) console.error(error); };
+var NOOP_CALLBACK = function (error) { if (error) debug(error); };
 var AUDIT_SOURCE = { userId: null, username: 'cron' };
 
 // cron format
@@ -202,7 +201,7 @@ function recreateJobs(tz) {
     if (gJobs.appHealthMonitor) gJobs.appHealthMonitor.stop();
     gJobs.appHealthMonitor = new CronJob({
         cronTime: '*/10 * * * * *', // every 10 seconds
-        onTick: appHealthMonitor.run.bind(null, 10),
+        onTick: appHealthMonitor.run.bind(null, 10, NOOP_CALLBACK),
         start: true,
         timeZone: tz
     });

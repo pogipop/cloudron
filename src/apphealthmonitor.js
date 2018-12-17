@@ -15,11 +15,12 @@ exports = module.exports = {
     run: run
 };
 
-var HEALTHCHECK_INTERVAL = 10 * 1000; // every 10 seconds. this needs to be small since the UI makes only healthy apps clickable
-var UNHEALTHY_THRESHOLD = 10 * 60 * 1000; // 10 minutes
-var gHealthInfo = { }; // { time, emailSent }
+const HEALTHCHECK_INTERVAL = 10 * 1000; // every 10 seconds. this needs to be small since the UI makes only healthy apps clickable
+const UNHEALTHY_THRESHOLD = 10 * 60 * 1000; // 10 minutes
+let gHealthInfo = { }; // { time, emailSent }
 
-const NOOP_CALLBACK = function (error) { if (error) console.error(error); };
+const OOM_MAIL_LIMIT = 60 * 60 * 1000; // 60 minutes
+let gLastOomMailTime = Date.now() - (5 * 60 * 1000); // pretend we sent email 5 minutes ago
 
 function debugApp(app) {
     assert(typeof app === 'object');
@@ -118,13 +119,11 @@ function checkAppHealth(app, callback) {
         apt-get update && apt-get install stress
         stress --vm 1 --vm-bytes 200M --vm-hang 0
 */
-function processDockerEvents(interval, callback) {
-    assert.strictEqual(typeof interval, 'number');
+function processDockerEvents(intervalSecs, callback) {
+    assert.strictEqual(typeof intervalSecs, 'number');
     assert.strictEqual(typeof callback, 'function');
 
-    const OOM_MAIL_LIMIT = 60 * 60 * 1000; // 60 minutes
-    let lastOomMailTime = new Date(new Date() - OOM_MAIL_LIMIT);
-    const since = ((new Date().getTime() / 1000) - interval).toFixed(0);
+    const since = ((new Date().getTime() / 1000) - intervalSecs).toFixed(0);
     const until = ((new Date().getTime() / 1000) - 1).toFixed(0);
 
     docker.getEvents({ since: since, until: until, filters: JSON.stringify({ event: [ 'oom' ] }) }, function (error, stream) {
@@ -136,15 +135,17 @@ function processDockerEvents(interval, callback) {
             appdb.getByContainerId(ev.id, function (error, app) { // this can error for addons
                 var program = error || !app.appStoreId ? ev.id : app.appStoreId;
                 var context = JSON.stringify(ev);
-                var now = new Date();
+                var now = Date.now();
                 if (app) context = context + '\n\n' + JSON.stringify(app, null, 4) + '\n';
 
-                debug('OOM Context: %s', context);
+                const notifyUser = (!app || !app.debugMode) && (now - gLastOomMailTime > OOM_MAIL_LIMIT);
+
+                debug('OOM Context: %s. notifyUser: %s. lastOomTime: %s (now: %s)', context, notifyUser, gLastOomMailTime, now);
 
                 // do not send mails for dev apps
-                if ((!app || !app.debugMode) && (now - lastOomMailTime > OOM_MAIL_LIMIT)) {
+                if (notifyUser) {
                     mailer.oomEvent(program, context); // app can be null if it's an addon crash
-                    lastOomMailTime = now;
+                    gLastOomMailTime = now;
                 }
             });
         });
@@ -181,14 +182,13 @@ function processApp(callback) {
     });
 }
 
-function run(interval, callback) {
-    assert.strictEqual(typeof interval, 'number');
-
-    callback = callback || NOOP_CALLBACK;
+function run(intervalSecs, callback) {
+    assert.strictEqual(typeof intervalSecs, 'number');
+    assert.strictEqual(typeof callback, 'function');
 
     async.series([
-        processDockerEvents.bind(null, interval),
-        processApp
+        processApp, // this is first because docker.getEvents seems to get 'stuck' sometimes
+        processDockerEvents.bind(null, intervalSecs)
     ], function (error) {
         if (error) debug(error);
 
