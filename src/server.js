@@ -96,6 +96,7 @@ function initializeExpressSync() {
     var appsManageScope = [ routes.accesscontrol.scope(accesscontrol.SCOPE_APPS_MANAGE), routes.apps.verifyOwnership ];
     var settingsScope = routes.accesscontrol.scope(accesscontrol.SCOPE_SETTINGS);
     var mailScope = routes.accesscontrol.scope(accesscontrol.SCOPE_MAIL);
+    var notificationsScope = [ routes.accesscontrol.scope(accesscontrol.SCOPE_PROFILE), routes.notifications.verifyOwnership ];
     var clientsScope = routes.accesscontrol.scope(accesscontrol.SCOPE_CLIENTS);
     var domainsReadScope = routes.accesscontrol.scope(accesscontrol.SCOPE_DOMAINS_READ);
     var domainsManageScope = routes.accesscontrol.scope(accesscontrol.SCOPE_DOMAINS_MANAGE);
@@ -143,6 +144,11 @@ function initializeExpressSync() {
     router.get ('/api/v1/tasks/:taskId/logs', cloudronScope, routes.tasks.getLogs);
     router.get ('/api/v1/tasks/:taskId/logstream', cloudronScope, routes.tasks.getLogStream);
     router.post('/api/v1/tasks/:taskId/stop', settingsScope, routes.tasks.stopTask);
+
+    // notifications
+    router.get ('/api/v1/notifications', notificationsScope, routes.notifications.list);
+    router.get ('/api/v1/notifications/:notificationId', notificationsScope, routes.notifications.get);
+    router.post('/api/v1/notifications/:notificationId', notificationsScope, routes.notifications.ack);
 
     // backups
     router.get ('/api/v1/backups', settingsScope, routes.backups.list);

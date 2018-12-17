@@ -13,6 +13,7 @@ exports = module.exports = {
     groups: require('./groups.js'),
     oauth2: require('./oauth2.js'),
     mail: require('./mail.js'),
+    notifications: require('./notifications.js'),
     profile: require('./profile.js'),
     provision: require('./provision.js'),
     services: require('./services.js'),
