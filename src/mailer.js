@@ -226,15 +226,14 @@ function sendInvite(user, invitor) {
     });
 }
 
-function userAdded(user) {
+function userAdded(emailTo, user) {
+    assert.strictEqual(typeof emailTo, 'string');
     assert.strictEqual(typeof user, 'object');
 
-    debug('Sending mail for userAdded');
+    debug(`userAdded: Sending mail for added users ${user.fallbackEmail} to ${emailTo}`);
 
     getMailConfig(function (error, mailConfig) {
         if (error) return debug('Error getting mail details:', error);
-
-        var adminEmails = _.difference(mailConfig.adminEmails, [ user.email ]);
 
         var templateData = {
             user: user,
@@ -250,7 +249,7 @@ function userAdded(user) {
 
         var mailOptions = {
             from: mailConfig.notificationFrom,
-            to: adminEmails.join(', '),
+            to: emailTo,
             subject: util.format('[%s] User %s added', mailConfig.cloudronName, user.fallbackEmail),
             text: render('user_added.ejs', templateDataText),
             html: render('user_added.ejs', templateDataHTML)

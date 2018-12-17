@@ -6,14 +6,22 @@ exports = module.exports = {
     add: add,
     get: get,
     ack: ack,
-    listPaged: listPaged
+    listPaged: listPaged,
+
+    // specialized notifications
+    userAdded: userAdded
 };
 
 var assert = require('assert'),
+    async = require('async'),
     DatabaseError = require('./databaseerror.js'),
     debug = require('debug')('box:notifications'),
+    mailer = require('./mailer.js'),
     notificationdb = require('./notificationdb.js'),
+    users = require('./users.js'),
     util = require('util');
+
+const NOOP_CALLBACK = function (error) { if (error) debug(error); };
 
 function NotificationsError(reason, errorOrMessage) {
     assert.strictEqual(typeof reason, 'string');
@@ -37,17 +45,14 @@ util.inherits(NotificationsError, Error);
 NotificationsError.INTERNAL_ERROR = 'Internal Error';
 NotificationsError.NOT_FOUND = 'Not Found';
 
-function au
-
-function add(userId, title, message, action, sendEmail, callback) {
+function add(userId, title, message, action, callback) {
     assert.strictEqual(typeof userId, 'string');
     assert.strictEqual(typeof title, 'string');
     assert.strictEqual(typeof message, 'string');
     assert.strictEqual(typeof action, 'string');
-    assert.strictEqual(typeof sendEmail, 'boolean');
     assert.strictEqual(typeof userId, 'function');
 
-    debug('add: ', userId, title, action, 'email: ', sendEmail);
+    debug('add: ', userId, title, action);
 
     notificationdb.add({
         userId: userId,
@@ -103,5 +108,21 @@ function listPaged(userId, acknowledged, page, perPage, callback) {
         if (acknowledged === null) return callback(null, result);
 
         callback(null, result.filter(function (r) { return r.acknowledged === acknowledged; }));
+    });
+}
+
+function userAdded(user, callback) {
+    assert.strictEqual(typeof user, 'object');
+    assert(typeof callback === 'undefined' || typeof callback === 'function');
+
+    callback = callback || NOOP_CALLBACK;
+
+    users.getAllAdmins(function (error, result) {
+        if (error) return callback(new NotificationsError(NotificationsError.INTERNAL_ERROR, error));
+
+        async.each(result, function (admin, callback) {
+            mailer.userAdded(admin.email, user);
+            add(admin.id, 'User added', `User ${user.fallbackEmail} was added`, '', callback);
+        }, callback);
     });
 }

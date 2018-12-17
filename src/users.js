@@ -42,6 +42,7 @@ var apps = require('./apps.js'),
     groups = require('./groups.js'),
     GroupsError = groups.GroupsError,
     hat = require('./hat.js'),
+    notifications = require('./notifications.js'),
     mailer = require('./mailer.js'),
     qrcode = require('qrcode'),
     safe = require('safetydance'),
@@ -206,7 +207,7 @@ function create(username, password, email, displayName, options, auditSource, ca
 
                 eventlog.add(eventlog.ACTION_USER_ADD, auditSource, { userId: user.id, email: user.email, user: removePrivateFields(user), invitor: invitor });
 
-                if (!isOwner) mailer.userAdded(user);
+                if (!isOwner) notifications.userAdded(user);
             });
         });
     });
