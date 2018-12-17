@@ -50,7 +50,7 @@ function add(userId, title, message, action, callback) {
     assert.strictEqual(typeof title, 'string');
     assert.strictEqual(typeof message, 'string');
     assert.strictEqual(typeof action, 'string');
-    assert.strictEqual(typeof userId, 'function');
+    assert.strictEqual(typeof callback, 'function');
 
     debug('add: ', userId, title, action);
 
