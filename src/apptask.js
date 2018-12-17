@@ -538,10 +538,10 @@ function install(app, callback) {
                 ], next);
             } else {
                 async.series([
-                    updateApp.bind(null, app, { installationProgress: '60, Download backup and restoring addons' }),
+                    updateApp.bind(null, app, { installationProgress: '65, Download backup and restoring addons' }),
                     addons.setupAddons.bind(null, app, app.manifest.addons),
                     addons.clearAddons.bind(null, app, app.manifest.addons),
-                    backups.restoreApp.bind(null, app, app.manifest.addons, restoreConfig, (progress) => updateApp(app, { installationProgress: progress.message }, NOOP_CALLBACK))
+                    backups.restoreApp.bind(null, app, app.manifest.addons, restoreConfig, (progress) => updateApp(app, { installationProgress: `65, Restore - ${progress.message}` }, NOOP_CALLBACK))
                 ], next);
             }
         },
@@ -583,7 +583,7 @@ function backup(app, callback) {
 
     async.series([
         updateApp.bind(null, app, { installationProgress: '10, Backing up' }),
-        backups.backupApp.bind(null, app, (progress) => updateApp(app, { installationProgress: progress.message }, NOOP_CALLBACK)),
+        backups.backupApp.bind(null, app, (progress) => updateApp(app, { installationProgress: `30, ${progress.message}` }, NOOP_CALLBACK)),
 
         // done!
         function (callback) {
@@ -696,7 +696,7 @@ function update(app, callback) {
 
             async.series([
                 updateApp.bind(null, app, { installationProgress: '15, Backing up app' }),
-                backups.backupApp.bind(null, app, (progress) => updateApp(app, { installationProgress: progress.message }, NOOP_CALLBACK))
+                backups.backupApp.bind(null, app, (progress) => updateApp(app, { installationProgress: `15, Backup - ${progress.message}` }, NOOP_CALLBACK))
             ], function (error) {
                 if (error) error.backupError = true;
                 next(error);
