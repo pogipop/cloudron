@@ -20,6 +20,7 @@ var appdb = require('../appdb.js'),
     hat = require('../hat.js'),
     mailboxdb = require('../mailboxdb.js'),
     maildb = require('../maildb.js'),
+    notificationdb = require('../notificationdb.js'),
     settingsdb = require('../settingsdb.js'),
     taskdb = require('../taskdb.js'),
     tokendb = require('../tokendb.js'),
@@ -114,6 +115,150 @@ describe('database', function () {
             database._clear,
             database.uninitialize
         ], done);
+    });
+
+    describe('notifications', function () {
+        var NOTIFICATION_0 = {
+            userId: USER_0.id,
+            title: 'first one',
+            message: 'some message there',
+            action: 'usually a url'
+        };
+
+        var NOTIFICATION_1 = {
+            userId: USER_0.id,
+            title: 'second one',
+            message: 'some message there',
+            action: 'usually a url'
+        };
+
+        var NOTIFICATION_2 = {
+            userId: USER_1.id,
+            title: 'third one',
+            message: 'some message there',
+            action: 'usually a url'
+        };
+
+        before(function (done) {
+            async.series([
+                userdb.add.bind(null, USER_0.id, USER_0),
+                userdb.add.bind(null, USER_1.id, USER_1),
+            ], done);
+        });
+
+        after(function (done) {
+            database._clear(done);
+        });
+
+        it('can add notification', function (done) {
+            notificationdb.add(NOTIFICATION_0, function (error, result) {
+                expect(error).to.equal(null);
+                expect(result).to.be.a('string');
+                NOTIFICATION_0.id = result;
+                done();
+            });
+        });
+
+        it('can add second notification', function (done) {
+            notificationdb.add(NOTIFICATION_1, function (error, result) {
+                expect(error).to.equal(null);
+                expect(result).to.be.a('string');
+                NOTIFICATION_1.id = result;
+                done();
+            });
+        });
+
+        it('can add third notification for another user', function (done) {
+            notificationdb.add(NOTIFICATION_2, function (error, result) {
+                expect(error).to.equal(null);
+                expect(result).to.be.a('string');
+                NOTIFICATION_2.id = result;
+                done();
+            });
+        });
+
+        it('can get by id', function (done) {
+            notificationdb.get(NOTIFICATION_0.id, function (error, result) {
+                expect(error).to.equal(null);
+                expect(result.id).to.equal(NOTIFICATION_0.id);
+                expect(result.title).to.equal(NOTIFICATION_0.title);
+                expect(result.message).to.equal(NOTIFICATION_0.message);
+                expect(result.action).to.equal(NOTIFICATION_0.action);
+                expect(result.acknowledged).to.equal(false);
+                done();
+            });
+        });
+
+        it('cannot get by non-existing id', function (done) {
+            notificationdb.get('nopenothere', function (error, result) {
+                expect(error).to.be.a(DatabaseError);
+                expect(error.reason).to.equal(DatabaseError.NOT_FOUND);
+                expect(result).to.not.be.ok();
+                done();
+            });
+        });
+
+        it('can list by user', function (done) {
+            notificationdb.listByUserIdPaged(USER_0.id, 1, 100, function (error, result) {
+                expect(error).to.equal(null);
+                expect(result).to.be.an('array');
+                expect(result.length).to.equal(2);
+                expect(result[0].id).to.equal(NOTIFICATION_0.id);
+                expect(result[0].title).to.equal(NOTIFICATION_0.title);
+                expect(result[0].message).to.equal(NOTIFICATION_0.message);
+                expect(result[0].action).to.equal(NOTIFICATION_0.action);
+                expect(result[0].acknowledged).to.equal(false);
+                done();
+            });
+        });
+
+        it('cannot update non-existing notification', function (done) {
+            notificationdb.update('isnotthere', { acknowledged: true }, function (error) {
+                expect(error).to.be.a(DatabaseError);
+                expect(error.reason).to.equal(DatabaseError.NOT_FOUND);
+                done();
+            });
+        });
+
+        it('update succeeds', function (done) {
+            notificationdb.update(NOTIFICATION_1.id, { acknowledged: true }, function (error) {
+                expect(error).to.equal(null);
+
+                notificationdb.get(NOTIFICATION_1.id, function (error, result) {
+                    expect(error).to.equal(null);
+                    expect(result.id).to.equal(NOTIFICATION_1.id);
+                    expect(result.title).to.equal(NOTIFICATION_1.title);
+                    expect(result.message).to.equal(NOTIFICATION_1.message);
+                    expect(result.action).to.equal(NOTIFICATION_1.action);
+                    expect(result.acknowledged).to.equal(true);
+
+                    done();
+                });
+            });
+        });
+
+        it('deletion succeeds', function (done) {
+            notificationdb.del(NOTIFICATION_0.id, function (error) {
+                expect(error).to.equal(null);
+
+                notificationdb.get(NOTIFICATION_0.id, function (error, result) {
+                    expect(error).to.be.a(DatabaseError);
+                    expect(error.reason).to.equal(DatabaseError.NOT_FOUND);
+                    expect(result).to.not.be.ok();
+
+                    done();
+                });
+            });
+        });
+
+        it('deletion for non-existing notification fails', function (done) {
+            notificationdb.del('doesnotexts', function (error) {
+                expect(error).to.be.a(DatabaseError);
+                expect(error.reason).to.equal(DatabaseError.NOT_FOUND);
+
+                done();
+            });
+        });
     });
 
     describe('domains', function () {
