@@ -511,13 +511,17 @@ function prepareDashboardDomain(domain, auditSource, progressCallback, callback)
             if (error) return callback(new DomainsError(DomainsError.EXTERNAL_ERROR, error.message));
 
             async.series([
-                (done) => { progressCallback({ message: 'Updating DNS' }); done(); },
+                (done) => { progressCallback({ percent: 10, message: 'Updating DNS' }); done(); },
                 upsertDnsRecords.bind(null, constants.ADMIN_LOCATION, domain, 'A', [ ip ]),
-                (done) => { progressCallback({ message: 'Waiting for DNS' }); done(); },
+                (done) => { progressCallback({ percent: 40, message: 'Waiting for DNS' }); done(); },
                 waitForDnsRecord.bind(null, constants.ADMIN_LOCATION, domain, 'A', ip, { interval: 30000, times: 50000 }),
-                (done) => { progressCallback({ message: 'Getting certificate' }); done(); },
+                (done) => { progressCallback({ percent: 70, message: 'Getting certificate' }); done(); },
                 reverseProxy.ensureCertificate.bind(null, fqdn(constants.ADMIN_LOCATION, domainObject), domain, auditSource)
-            ], callback);
+            ], function (error) {
+                if (error) return callback(error);
+
+                callback(null);
+            });
         });
     });
 }

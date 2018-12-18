@@ -122,7 +122,7 @@ function initializeExpressSync() {
     // cloudron routes
     router.get ('/api/v1/cloudron/update', cloudronScope, routes.cloudron.getUpdateInfo);
     router.post('/api/v1/cloudron/update', cloudronScope, routes.cloudron.update);
-    router.post('/api/v1/cloudron/prepare_dashboard_dns', cloudronScope, routes.cloudron.prepareDashboardDomain);
+    router.post('/api/v1/cloudron/prepare_dashboard_domain', cloudronScope, routes.cloudron.prepareDashboardDomain);
     router.post('/api/v1/cloudron/set_dashboard_domain', cloudronScope, routes.cloudron.setDashboardDomain);
     router.post('/api/v1/cloudron/renew_certs', cloudronScope, routes.cloudron.renewCerts);
     router.post('/api/v1/cloudron/check_for_updates', cloudronScope, routes.cloudron.checkForUpdates);
