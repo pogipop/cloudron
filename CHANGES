@@ -1505,3 +1505,6 @@
 * Automatic updates can be toggled per app
 * Fix issue where OOM mails are sent out without a rate limit
 
+[3.5.0]
+* Add UI to switch dashboard domain
+
