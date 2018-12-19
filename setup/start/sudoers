@@ -25,8 +25,8 @@ yellowtent ALL=(root) NOPASSWD: /home/yellowtent/box/src/scripts/retire.sh
 Defaults!/home/yellowtent/box/src/scripts/update.sh env_keep="HOME BOX_ENV"
 yellowtent ALL=(root) NOPASSWD: /home/yellowtent/box/src/scripts/update.sh
 
-Defaults!/home/yellowtent/box/src/scripts/authorized_keys.sh env_keep="HOME BOX_ENV"
-yellowtent ALL=(root) NOPASSWD: /home/yellowtent/box/src/scripts/authorized_keys.sh
+Defaults!/home/yellowtent/box/src/scripts/remotesupport.sh env_keep="HOME BOX_ENV"
+yellowtent ALL=(root) NOPASSWD: /home/yellowtent/box/src/scripts/remotesupport.sh
 
 Defaults!/home/yellowtent/box/src/scripts/configurelogrotate.sh env_keep="HOME BOX_ENV"
 yellowtent ALL=(root) NOPASSWD: /home/yellowtent/box/src/scripts/configurelogrotate.sh

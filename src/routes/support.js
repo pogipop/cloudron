@@ -1,7 +1,10 @@
 'use strict';
 
 exports = module.exports = {
-    feedback: feedback
+    feedback: feedback,
+
+    getRemoteSupport: getRemoteSupport,
+    enableRemoteSupport: enableRemoteSupport
 };
 
 var appstore = require('../appstore.js'),
@@ -9,6 +12,7 @@ var appstore = require('../appstore.js'),
     assert = require('assert'),
     HttpError = require('connect-lastmile').HttpError,
     HttpSuccess = require('connect-lastmile').HttpSuccess,
+    support = require('../support.js'),
     _ = require('underscore');
 
 function feedback(req, res, next) {
@@ -27,5 +31,25 @@ function feedback(req, res, next) {
         if (error) return next(new HttpError(503, 'Error contacting cloudron.io. Please email support@cloudron.io'));
 
         next(new HttpSuccess(201, {}));
+    });
+}
+
+function enableRemoteSupport(req, res, next) {
+    assert.strictEqual(typeof req.body, 'object');
+
+    if (typeof req.body.enable !== 'boolean') return next(new HttpError(400, 'enabled is required'));
+
+    support.enableRemoteSupport(req.body.enable, function (error) {
+        if (error) return next(new HttpError(500, error));
+
+        next(new HttpSuccess(202, {}));
+    });
+}
+
+function getRemoteSupport(req, res, next) {
+    support.getRemoteSupport(function (error, status) {
+        if (error) return next(new HttpError(500, error));
+
+        next(new HttpSuccess(200, status));
     });
 }

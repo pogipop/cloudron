@@ -132,10 +132,6 @@ function initializeExpressSync() {
     router.get ('/api/v1/cloudron/disks', cloudronScope, routes.cloudron.getDisks);
     router.get ('/api/v1/cloudron/logs/:unit', cloudronScope, routes.cloudron.getLogs);
     router.get ('/api/v1/cloudron/logstream/:unit', cloudronScope, routes.cloudron.getLogStream);
-    router.get ('/api/v1/cloudron/ssh/authorized_keys', cloudronScope, isUnmanaged, routes.ssh.getAuthorizedKeys);
-    router.put ('/api/v1/cloudron/ssh/authorized_keys', cloudronScope, isUnmanaged, routes.ssh.addAuthorizedKey);
-    router.get ('/api/v1/cloudron/ssh/authorized_keys/:identifier', cloudronScope, isUnmanaged, routes.ssh.getAuthorizedKey);
-    router.del ('/api/v1/cloudron/ssh/authorized_keys/:identifier', cloudronScope, isUnmanaged, routes.ssh.delAuthorizedKey);
     router.get ('/api/v1/cloudron/eventlog', cloudronScope, routes.eventlog.get);
 
     // tasks
@@ -288,6 +284,8 @@ function initializeExpressSync() {
 
     // feedback
     router.post('/api/v1/support/feedback', cloudronScope, isUnmanaged, routes.support.feedback);
+    router.get ('/api/v1/support/remote_support', cloudronScope, isUnmanaged, routes.support.getRemoteSupport);
+    router.post('/api/v1/support/remote_support', cloudronScope, isUnmanaged, routes.support.enableRemoteSupport);
 
     // domain routes
     router.post('/api/v1/domains', domainsManageScope, routes.domains.add);
