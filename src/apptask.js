@@ -504,7 +504,7 @@ function install(app, callback) {
 
             addons.teardownAddons(app, addonsToRemove, next);
         },
-        deleteAppDir.bind(null, app, { removeDirectory: false }), // do not remove any symlinked volume
+        deleteAppDir.bind(null, app, { removeDirectory: false }), // do not remove any symlinked appdata dir
 
         // for restore case
         function deleteImageIfChanged(done) {
@@ -527,7 +527,7 @@ function install(app, callback) {
         updateApp.bind(null, app, { installationProgress: '40, Downloading image' }),
         docker.downloadImage.bind(null, app.manifest),
 
-        updateApp.bind(null, app, { installationProgress: '50, Creating volume' }),
+        updateApp.bind(null, app, { installationProgress: '50, Creating app data directory' }),
         createAppDir.bind(null, app),
 
         function restoreFromBackup(next) {
@@ -636,7 +636,7 @@ function configure(app, callback) {
         updateApp.bind(null, app, { installationProgress: '40, Downloading image' }),
         docker.downloadImage.bind(null, app.manifest),
 
-        updateApp.bind(null, app, { installationProgress: '45, Ensuring volume' }),
+        updateApp.bind(null, app, { installationProgress: '45, Ensuring app data directory' }),
         createAppDir.bind(null, app),
 
         // re-setup addons since they rely on the app's fqdn (e.g oauth)
@@ -805,7 +805,7 @@ function uninstall(app, callback) {
         updateApp.bind(null, app, { installationProgress: '30, Teardown addons' }),
         addons.teardownAddons.bind(null, app, app.manifest.addons),
 
-        updateApp.bind(null, app, { installationProgress: '40, Deleting volume' }),
+        updateApp.bind(null, app, { installationProgress: '40, Deleting app data directory' }),
         deleteAppDir.bind(null, app, { removeDirectory: true }),
 
         updateApp.bind(null, app, { installationProgress: '50, Deleting image' }),
