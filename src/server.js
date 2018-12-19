@@ -287,7 +287,7 @@ function initializeExpressSync() {
     router.del ('/api/v1/mail/:domain/lists/:name', mailScope, routes.mail.removeList);
 
     // feedback
-    router.post('/api/v1/feedback', cloudronScope, isUnmanaged, routes.cloudron.feedback);
+    router.post('/api/v1/support/feedback', cloudronScope, isUnmanaged, routes.support.feedback);
 
     // domain routes
     router.post('/api/v1/domains', domainsManageScope, routes.domains.add);

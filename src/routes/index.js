@@ -18,8 +18,9 @@ exports = module.exports = {
     provision: require('./provision.js'),
     services: require('./services.js'),
     settings: require('./settings.js'),
-    sysadmin: require('./sysadmin.js'),
     ssh: require('./ssh.js'),
+    support: require('./support.js'),
+    sysadmin: require('./sysadmin.js'),
     tasks: require('./tasks.js'),
     users: require('./users.js')
 };
