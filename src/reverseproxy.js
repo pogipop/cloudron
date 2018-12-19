@@ -316,17 +316,18 @@ function getCertificateByHostname(hostname, domainObject, callback) {
     callback(null);
 }
 
-function getCertificate(app, callback) {
-    assert.strictEqual(typeof app, 'object');
+function getCertificate(fqdn, domain, callback) {
+    assert.strictEqual(typeof fqdn, 'string');
+    assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    domains.get(app.domain, function (error, domainObject) {
+    domains.get(domain, function (error, domainObject) {
         if (error) return callback(error);
 
-        getCertificateByHostname(app.fqdn, domainObject, function (error, result) {
+        getCertificateByHostname(fqdn, domainObject, function (error, result) {
             if (error || result) return callback(error, result);
 
-            return getFallbackCertificate(app.domain, callback);
+            return getFallbackCertificate(domain, callback);
         });
     });
 }
@@ -430,7 +431,7 @@ function writeAdminConfig(domain, callback) {
 
         const adminFqdn = domains.fqdn(constants.ADMIN_LOCATION, domainObject);
 
-        getCertificate({ fqdn: adminFqdn, domain: domainObject.domain }, function (error, bundle) {
+        getCertificate(adminFqdn, domainObject.domain, function (error, bundle) {
             if (error) return callback(error);
 
             writeAdminNginxConfig(bundle, `${adminFqdn}.conf`, adminFqdn, callback);

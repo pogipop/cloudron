@@ -556,7 +556,7 @@ function restartMail(callback) {
     const cloudronToken = hat(8 * 128);
 
     // admin and mail share the same certificate
-    reverseProxy.getCertificate({ fqdn: config.adminFqdn(), domain: config.adminDomain() }, function (error, bundle) {
+    reverseProxy.getCertificate(config.adminFqdn(), config.adminDomain(), function (error, bundle) {
         if (error) return callback(error);
 
         // the setup script copies dhparams.pem to /addons/mail
