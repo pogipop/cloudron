@@ -19,7 +19,7 @@ Environment="HOME=/home/yellowtent" "USER=yellowtent" "DEBUG=box*,connect-lastmi
 KillMode=control-group
 User=yellowtent
 Group=yellowtent
-MemoryLimit=200M
+MemoryLimit=400M
 TimeoutStopSec=5s
 StartLimitInterval=1
 StartLimitBurst=60
