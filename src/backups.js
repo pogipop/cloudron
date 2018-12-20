@@ -260,16 +260,23 @@ function createWriteStream(destFile, key) {
     }
 }
 
-function tarPack(sourceDir, key, callback) {
-    assert.strictEqual(typeof sourceDir, 'string');
+function tarPack(dataLayout, key, callback) {
+    assert(Array.isArray(dataLayout), 'dataLayout must be a string');
     assert(key === null || typeof key === 'string');
     assert.strictEqual(typeof callback, 'function');
 
+    let regexps = dataLayout.map((l) => new RegExp('^' + l.localDir + '/?'));
+
     var pack = tar.pack('/', {
         dereference: false, // pack the symlink and not what it points to
-        entries: [ sourceDir ],
+        entries: dataLayout.map((e) => e.localDir),
         map: function(header) {
-            header.name = header.name.replace(new RegExp('^' + sourceDir + '(/?)'), '.$1'); // make paths relative
+            for (let i = 0; i < dataLayout.length; i++) {
+                if (!header.name.match(regexps[i])) continue;
+                const maybeSlash = dataLayout[i].remoteDir ? '/' : '';
+                header.name = header.name.replace(regexps[i], './' + dataLayout[i].remoteDir + maybeSlash); // make paths relative
+                break;
+            }
             return header;
         },
         strict: false // do not error for unknown types (skip fifo, char/block devices)
@@ -381,14 +388,14 @@ function saveFsMetadata(appDataDir, callback) {
 }
 
 // this function is called via backupupload (since it needs root to traverse app's directory)
-function upload(backupId, format, dataDir, progressCallback, callback) {
+function upload(backupId, format, dataLayout, progressCallback, callback) {
     assert.strictEqual(typeof backupId, 'string');
     assert.strictEqual(typeof format, 'string');
-    assert.strictEqual(typeof dataDir, 'string');
+    assert(Array.isArray(dataLayout), 'dataLayout should be an array');
     assert.strictEqual(typeof progressCallback, 'function');
     assert.strictEqual(typeof callback, 'function');
 
-    debug(`upload: id ${backupId} format ${format} dataDir ${dataDir}`);
+    debug(`upload: id ${backupId} format ${format} dataLayout ${JSON.stringify(dataLayout)}`);
 
     settings.getBackupConfig(function (error, backupConfig) {
         if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
@@ -397,7 +404,7 @@ function upload(backupId, format, dataDir, progressCallback, callback) {
             async.retry({ times: 5, interval: 20000 }, function (retryCallback) {
                 retryCallback = once(retryCallback); // protect again upload() erroring much later after tar stream error
 
-                tarPack(dataDir, backupConfig.key || null, function (error, tarStream) {
+                tarPack(dataLayout, backupConfig.key || null, function (error, tarStream) {
                     if (error) return retryCallback(error);
 
                     tarStream.on('progress', function(progress) {
@@ -411,6 +418,7 @@ function upload(backupId, format, dataDir, progressCallback, callback) {
                 });
             }, callback);
         } else {
+            const dataDir = dataLayout[0].localDir; // FIXME: make rsync format support data layout
             async.series([
                 saveFsMetadata.bind(null, dataDir),
                 sync.bind(null, backupConfig, backupId, dataDir, progressCallback)
@@ -419,15 +427,28 @@ function upload(backupId, format, dataDir, progressCallback, callback) {
     });
 }
 
-function tarExtract(inStream, destination, key, callback) {
+function tarExtract(inStream, dataLayout, key, callback) {
     assert.strictEqual(typeof inStream, 'object');
-    assert.strictEqual(typeof destination, 'string');
+    assert(Array.isArray(dataLayout), 'dataLayout should be an array');
     assert(key === null || typeof key === 'string');
     assert.strictEqual(typeof callback, 'function');
 
+    // assumes the patterns in layout are reverse priorotized
+    let regexps = dataLayout.reverse().map((l) => new RegExp('^\\.' + l.remoteDir + '/?'));
+
     var gunzip = zlib.createGunzip({});
     var ps = progressStream({ time: 10000 }); // display a progress every 10 seconds
-    var extract = tar.extract(destination);
+    var extract = tar.extract('/', {
+        map: function (header) {
+            for (let i = 0; i < dataLayout.length; i++) {
+                if (!header.name.match(regexps[i])) continue;
+                header.name = header.name.replace(regexps[i], dataLayout[i].localDir + '/'); // make paths absolute
+                break;
+            }
+
+            return header;
+        }
+    });
 
     const emitError = once((error) => ps.emit('error', error));
 
@@ -539,21 +560,21 @@ function downloadDir(backupConfig, backupFilePath, destDir, progressCallback, ca
 
     api(backupConfig.provider).listDir(backupConfig, backupFilePath, 1000, function (entries, done) {
         // https://www.digitalocean.com/community/questions/rate-limiting-on-spaces?answer=40441
-        const concurrency = backupConfig.downloadConcurrency || (backupConfig.provider === 's3' ? 300 : 100);
+        const concurrency = backupConfig.downloadConcurrency || (backupConfig.provider === 's3' ? 30 : 10);
 
         async.eachLimit(entries, concurrency, downloadFile, done);
     }, callback);
 }
 
-function download(backupConfig, backupId, format, dataDir, progressCallback, callback) {
+function download(backupConfig, backupId, format, dataLayout, progressCallback, callback) {
     assert.strictEqual(typeof backupConfig, 'object');
     assert.strictEqual(typeof backupId, 'string');
     assert.strictEqual(typeof format, 'string');
-    assert.strictEqual(typeof dataDir, 'string');
+    assert(Array.isArray(dataLayout), 'dataLayout must be a string');
     assert.strictEqual(typeof progressCallback, 'function');
     assert.strictEqual(typeof callback, 'function');
 
-    debug(`download - Downloading ${backupId} of format ${format} to ${dataDir}`);
+    debug(`download - Downloading ${backupId} of format ${format} to ${JSON.stringify(dataLayout)}`);
 
     const backupFilePath = getBackupFilePath(backupConfig, backupId, format);
 
@@ -562,7 +583,7 @@ function download(backupConfig, backupId, format, dataDir, progressCallback, cal
             if (error) return callback(error);
 
             async.retry({ times: 5, interval: 20000 }, function (retryCallback) {
-                tarExtract(sourceStream, dataDir, backupConfig.key || null, function (error, ps) {
+                tarExtract(sourceStream, dataLayout, backupConfig.key || null, function (error, ps) {
                     if (error) return retryCallback(error);
 
                     ps.on('progress', function (progress) {
@@ -576,6 +597,7 @@ function download(backupConfig, backupId, format, dataDir, progressCallback, cal
             }, callback);
         });
     } else {
+        let dataDir = dataLayout[0].localDir; // FIXME: make rsync format support data layout
         downloadDir(backupConfig, backupFilePath, dataDir, progressCallback, function (error) {
             if (error) return callback(error);
 
@@ -590,7 +612,9 @@ function restore(backupConfig, backupId, progressCallback, callback) {
     assert.strictEqual(typeof progressCallback, 'function');
     assert.strictEqual(typeof callback, 'function');
 
-    download(backupConfig, backupId, backupConfig.format, paths.BOX_DATA_DIR, progressCallback, function (error) {
+    const dataLayout = [ { localDir: paths.BOX_DATA_DIR, remoteDir: '' } ];
+
+    download(backupConfig, backupId, backupConfig.format, dataLayout, progressCallback, function (error) {
         if (error) return callback(error);
 
         debug('restore: download completed, importing database');
@@ -613,6 +637,7 @@ function restoreApp(app, addonsToRestore, restoreConfig, progressCallback, callb
     assert.strictEqual(typeof callback, 'function');
 
     var appDataDir = safe.fs.realpathSync(path.join(paths.APPS_DATA_DIR, app.id));
+    const dataLayout = [ { localDir: appDataDir, remoteDir: '' } ];
 
     var startTime = new Date();
 
@@ -620,7 +645,7 @@ function restoreApp(app, addonsToRestore, restoreConfig, progressCallback, callb
         if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
 
         async.series([
-            download.bind(null, backupConfig, restoreConfig.backupId, restoreConfig.backupFormat, appDataDir, progressCallback),
+            download.bind(null, backupConfig, restoreConfig.backupId, restoreConfig.backupFormat, dataLayout, progressCallback),
             addons.restoreAddons.bind(null, app, addonsToRestore)
         ], function (error) {
             debug('restoreApp: time: %s', (new Date() - startTime)/1000);
@@ -630,16 +655,16 @@ function restoreApp(app, addonsToRestore, restoreConfig, progressCallback, callb
     });
 }
 
-function runBackupUpload(backupId, format, dataDir, progressCallback, callback) {
+function runBackupUpload(backupId, format, dataLayout, progressCallback, callback) {
     assert.strictEqual(typeof backupId, 'string');
     assert.strictEqual(typeof format, 'string');
-    assert.strictEqual(typeof dataDir, 'string');
+    assert(Array.isArray(dataLayout), 'dataLayout should be an array');
     assert.strictEqual(typeof progressCallback, 'function');
     assert.strictEqual(typeof callback, 'function');
 
     let result = '';
 
-    shell.sudo(`backup-${backupId}`, [ BACKUP_UPLOAD_CMD, backupId, format, dataDir ], { preserveEnv: true, ipc: true }, function (error) {
+    shell.sudo(`backup-${backupId}`, [ BACKUP_UPLOAD_CMD, backupId, format, JSON.stringify(dataLayout) ], { preserveEnv: true, ipc: true }, function (error) {
         if (error && (error.code === null /* signal */ || (error.code !== 0 && error.code !== 50))) { // backuptask crashed
             return callback(new BackupsError(BackupsError.INTERNAL_ERROR, 'Backuptask crashed'));
         } else if (error && error.code === 50) { // exited with error
@@ -702,7 +727,8 @@ function uploadBoxSnapshot(backupConfig, progressCallback, callback) {
         const boxDataDir = safe.fs.realpathSync(paths.BOX_DATA_DIR);
         if (!boxDataDir) return callback(safe.error);
 
-        runBackupUpload('snapshot/box', backupConfig.format, boxDataDir, progressCallback, function (error) {
+        const dataLayout = [ { localDir: boxDataDir, remoteDir: '' } ];
+        runBackupUpload('snapshot/box', backupConfig.format, dataLayout, progressCallback, function (error) {
             if (error) return callback(error);
 
             debug('uploadBoxSnapshot: time: %s secs', (new Date() - startTime)/1000);
@@ -878,7 +904,9 @@ function uploadAppSnapshot(backupConfig, app, progressCallback, callback) {
         const appDataDir = safe.fs.realpathSync(path.join(paths.APPS_DATA_DIR, app.id));
         if (!appDataDir) return callback(safe.error);
 
-        runBackupUpload(backupId, backupConfig.format, appDataDir, progressCallback, function (error) {
+        let dataLayout = [ { localDir: appDataDir, remoteDir: '' } ];
+        if (app.dataDir) dataLayout.push({ localDir: app.dataDir, remoteDir: 'data' });
+        runBackupUpload(backupId, backupConfig.format, dataLayout, progressCallback, function (error) {
             if (error) return callback(error);
 
             debugApp(app, 'uploadAppSnapshot: %s done time: %s secs', backupId, (new Date() - startTime)/1000);

@@ -52,6 +52,7 @@ var addons = require('./addons.js'),
 
 var COLLECTD_CONFIG_EJS = fs.readFileSync(__dirname + '/collectd.config.ejs', { encoding: 'utf8' }),
     CONFIGURE_COLLECTD_CMD = path.join(__dirname, 'scripts/configurecollectd.sh'),
+    MV_VOLUME_CMD = path.join(__dirname, 'scripts/mvvolume.sh'),
     LOGROTATE_CONFIG_EJS = fs.readFileSync(__dirname + '/logrotate.ejs', { encoding: 'utf8' }),
     CONFIGURE_LOGROTATE_CMD = path.join(__dirname, 'scripts/configurelogrotate.sh');
 
@@ -469,6 +470,19 @@ function waitForDnsPropagation(app, callback) {
     });
 }
 
+function migrateDataDir(app, sourceDir, callback) {
+    assert.strictEqual(typeof app, 'object');
+    assert.strictEqual(typeof sourceDir, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    let resolvedSourceDir = apps.getDataDir(app, sourceDir);
+    let resolvedTargetDir = apps.getDataDir(app, app.dataDir);
+
+    debug(`migrateDataDir: migrating data from ${resolvedSourceDir} to ${resolvedTargetDir}`);
+
+    shell.sudo('migrateDataDir', [ MV_VOLUME_CMD, resolvedSourceDir, resolvedTargetDir ], {}, callback);
+}
+
 // Ordering is based on the following rationale:
 //   - configure nginx, icon, oauth
 //   - register subdomain.
@@ -605,7 +619,8 @@ function configure(app, callback) {
     assert.strictEqual(typeof callback, 'function');
 
     // oldConfig can be null during an infra update
-    var locationChanged = app.oldConfig && (app.oldConfig.fqdn !== app.fqdn);
+    const locationChanged = app.oldConfig && (app.oldConfig.fqdn !== app.fqdn);
+    const dataDirChanged = app.oldConfig && (app.oldConfig.dataDir !== app.dataDir);
 
     async.series([
         updateApp.bind(null, app, { installationProgress: '10, Cleaning up old install' }),
@@ -642,6 +657,13 @@ function configure(app, callback) {
         // re-setup addons since they rely on the app's fqdn (e.g oauth)
         updateApp.bind(null, app, { installationProgress: '50, Setting up addons' }),
         addons.setupAddons.bind(null, app, app.manifest.addons),
+
+        // migrate dataDir
+        function (next) {
+            if (!dataDirChanged) return next();
+
+            migrateDataDir(app, app.oldConfig.dataDir, next);
+        },
 
         updateApp.bind(null, app, { installationProgress: '60, Creating container' }),
         createContainer.bind(null, app),

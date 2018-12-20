@@ -33,6 +33,7 @@ exports = module.exports = {
 
 var accesscontrol = require('./accesscontrol.js'),
     appdb = require('./appdb.js'),
+    apps = require('./apps.js'),
     assert = require('assert'),
     async = require('async'),
     clients = require('./clients.js'),
@@ -728,7 +729,7 @@ function setupLocalStorage(app, options, callback) {
 
     debugApp(app, 'setupLocalStorage');
 
-    const volumeDataDir = path.join(paths.APPS_DATA_DIR, app.id, 'data');
+    const volumeDataDir = apps.getDataDir(app, app.dataDir);
 
     // if you change the name, you have to change getMountsSync
     docker.createVolume(app, `${app.id}-localstorage`, volumeDataDir, callback);

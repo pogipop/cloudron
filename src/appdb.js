@@ -69,7 +69,8 @@ var APPS_FIELDS_PREFIXED = [ 'apps.id', 'apps.appStoreId', 'apps.installationSta
     'apps.health', 'apps.containerId', 'apps.manifestJson', 'apps.httpPort', 'subdomains.subdomain AS location', 'subdomains.domain',
     'apps.accessRestrictionJson', 'apps.restoreConfigJson', 'apps.oldConfigJson', 'apps.updateConfigJson', 'apps.memoryLimit',
     'apps.xFrameOptions', 'apps.sso', 'apps.debugModeJson', 'apps.robotsTxt', 'apps.enableBackup',
-    'apps.creationTime', 'apps.updateTime', 'apps.ownerId', 'apps.mailboxName', 'apps.enableAutomaticUpdate', 'apps.ts' ].join(',');
+    'apps.creationTime', 'apps.updateTime', 'apps.ownerId', 'apps.mailboxName', 'apps.enableAutomaticUpdate',
+    'apps.dataDir', 'apps.ts' ].join(',');
 
 var PORT_BINDINGS_FIELDS = [ 'hostPort', 'type', 'environmentVariable', 'appId' ].join(',');
 
@@ -139,6 +140,9 @@ function postProcess(result) {
     for (let i = 0; i < envNames.length; i++) { // NOTE: envNames is [ null ] when env of an app is empty
         if (envNames[i]) result.env[envNames[i]] = envValues[i];
     }
+
+    // in the db, we store dataDir as unique/nullable
+    result.dataDir = result.dataDir || '';
 }
 
 function get(id, callback) {

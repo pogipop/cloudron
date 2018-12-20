@@ -210,6 +210,8 @@ function configureApp(req, res, next) {
         if (Object.keys(data.env).some(function (key) { return typeof data.env[key] !== 'string'; })) return next(new HttpError(400, 'env must contain values as strings'));
     }
 
+    if ('dataDir' in data && typeof data.dataDir !== 'string') return next(new HttpError(400, 'dataDir must be a string'));
+
     debug('Configuring app id:%s data:%j', req.params.id, data);
 
     apps.configure(req.params.id, data, req.user, auditSource(req), function (error) {

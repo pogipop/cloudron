@@ -118,7 +118,8 @@ describe('Apps', function () {
         ownerId: USER_0.id,
         env: {
             'CUSTOM_KEY': 'CUSTOM_VALUE'
-        }
+        },
+        dataDir: ''
     };
 
     var APP_1 = {
@@ -135,7 +136,8 @@ describe('Apps', function () {
         accessRestriction: { users: [ 'someuser' ], groups: [ GROUP_0.id ] },
         memoryLimit: 0,
         ownerId: USER_0.id,
-        env: {}
+        env: {},
+        dataDir: ''
     };
 
     var APP_2 = {
@@ -154,7 +156,8 @@ describe('Apps', function () {
         robotsTxt: null,
         sso: false,
         ownerId: USER_0.id,
-        env: {}
+        env: {},
+        dataDir: ''
     };
 
     before(function (done) {

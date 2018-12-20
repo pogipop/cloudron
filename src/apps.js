@@ -38,6 +38,7 @@ exports = module.exports = {
     configureInstalledApps: configureInstalledApps,
 
     getAppConfig: getAppConfig,
+    getDataDir: getDataDir,
 
     downloadFile: downloadFile,
     uploadFile: uploadFile,
@@ -301,6 +302,26 @@ function validateEnv(env) {
     return null;
 }
 
+function validateDataDir(dataDir) {
+    if (!dataDir) return new AppsError(AppsError.BAD_FIELD, 'dataDir cannot be empty');
+
+    if (path.resolve(dataDir) !== dataDir) return new AppsError(AppsError.BAD_FIELD, 'dataDir must be an absolute path');
+
+    // nfs shares will have the directory mounted already
+    let stat = safe.fs.lstatSync(dataDir);
+    if (stat) {
+        if (!stat.isDirectory()) return new AppsError(AppsError.BAD_FIELD, `dataDir ${dataDir} is not a directory`);
+        let entries = safe.fs.readdirSync(dataDir);
+        if (!entries) return new AppsError(AppsError.BAD_FIELD, `dataDir ${dataDir} could not be listed`);
+        if (entries.length !== 0) return new AppsError(AppsError.BAD_FIELD, `dataDir ${dataDir} is not empty`);
+    }
+
+    // tgz backup logic relies on path not overlapping because it recurses
+    if (dataDir.startsWith(paths.APPS_DATA_DIR)) return new AppsError(AppsError.BAD_FIELD, `dataDir ${dataDir} cannot be inside apps data`);
+
+    return null;
+}
+
 function getDuplicateErrorDetails(location, portBindings, error) {
     assert.strictEqual(typeof location, 'string');
     assert.strictEqual(typeof portBindings, 'object');
@@ -337,8 +358,13 @@ function getAppConfig(app) {
         robotsTxt: app.robotsTxt,
         sso: app.sso,
         alternateDomains: app.alternateDomains || [],
-        env: app.env
+        env: app.env,
+        dataDir: app.dataDir
     };
+}
+
+function getDataDir(app, dataDir) {
+    return dataDir || path.join(paths.APPS_DATA_DIR, app.id, 'data');
 }
 
 function removeInternalFields(app) {
@@ -347,7 +373,7 @@ function removeInternalFields(app) {
         'location', 'domain', 'fqdn', 'mailboxName',
         'accessRestriction', 'manifest', 'portBindings', 'iconUrl', 'memoryLimit', 'xFrameOptions',
         'sso', 'debugMode', 'robotsTxt', 'enableBackup', 'creationTime', 'updateTime', 'ts',
-        'alternateDomains', 'ownerId', 'env', 'enableAutomaticUpdate');
+        'alternateDomains', 'ownerId', 'env', 'enableAutomaticUpdate', 'dataDir');
 }
 
 function removeRestrictedFields(app) {
@@ -745,6 +771,12 @@ function configure(appId, data, user, auditSource, callback) {
             values.env = data.env;
             error = validateEnv(data.env);
             if (error) return callback(error);
+        }
+
+        if ('dataDir' in data) {
+            error = validateDataDir(data.dataDir);
+            if (error) return callback(error);
+            values.dataDir = data.dataDir;
         }
 
         domains.get(domain, function (error, domainObject) {

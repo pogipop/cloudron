@@ -10,6 +10,8 @@ sudo -k || sudo --reset-timestamp
 
 # checks if all scripts are sudo access
 scripts=("${SOURCE_DIR}/src/scripts/rmvolume.sh" \
+         "${SOURCE_DIR}/src/scripts/mvvolume.sh" \
+         "${SOURCE_DIR}/src/scripts/mkdirvolume.sh" \
          "${SOURCE_DIR}/src/scripts/rmaddondir.sh" \
          "${SOURCE_DIR}/src/scripts/reloadnginx.sh" \
          "${SOURCE_DIR}/src/scripts/reboot.sh" \

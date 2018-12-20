@@ -54,7 +54,6 @@ var addons = require('./addons.js'),
     config = require('./config.js'),
     constants = require('./constants.js'),
     debug = require('debug')('box:docker.js'),
-    mkdirp = require('mkdirp'),
     once = require('once'),
     path = require('path'),
     shell = require('./shell.js'),
@@ -62,7 +61,8 @@ var addons = require('./addons.js'),
     util = require('util'),
     _ = require('underscore');
 
-const RMVOLUME_CMD = path.join(__dirname, 'scripts/rmvolume.sh');
+const RMVOLUME_CMD = path.join(__dirname, 'scripts/rmvolume.sh'),
+    MKDIRVOLUME_CMD = path.join(__dirname, 'scripts/mkdirvolume.sh');
 
 function DockerError(reason, errorOrMessage) {
     assert.strictEqual(typeof reason, 'string');
@@ -537,7 +537,8 @@ function createVolume(app, name, volumeDataDir, callback) {
         },
     };
 
-    mkdirp(volumeDataDir, function (error) {
+    // requires sudo because the path can be outside appsdata
+    shell.sudo('createVolume', [ MKDIRVOLUME_CMD, volumeDataDir ], {}, function (error) {
         if (error) return callback(new Error(`Error creating app data dir: ${error.message}`));
 
         docker.createVolume(volumeOptions, function (error) {
