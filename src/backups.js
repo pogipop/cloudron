@@ -354,6 +354,7 @@ function sync(backupConfig, backupId, dataDir, progressCallback, callback) {
     });
 }
 
+// this is not part of 'snapshotting' because we need root access to traverse
 function saveFsMetadata(appDataDir, callback) {
     assert.strictEqual(typeof appDataDir, 'string');
     assert.strictEqual(typeof callback, 'function');
