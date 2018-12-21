@@ -29,7 +29,6 @@ debconf-set-selections <<< 'mysql-server mysql-server/root_password_again passwo
 # resolvconf is needed for unbound to work property after disabling systemd-resolved in 18.04
 apt-get -y install \
     acl \
-    awscli \
     build-essential \
     cron \
     curl \
