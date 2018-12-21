@@ -231,7 +231,8 @@ function isManaged() {
 
 function hasIPv6() {
     const IPV6_PROC_FILE = '/proc/net/if_inet6';
-    return fs.existsSync(IPV6_PROC_FILE);
+    // on contabo, /proc/net/if_inet6 is an empty file. so just exists is not enough
+    return fs.existsSync(IPV6_PROC_FILE) && fs.readFileSync(IPV6_PROC_FILE, 'utf8').trim().length !== 0;
 }
 
 // it has to change with the adminLocation so that multiple cloudrons
