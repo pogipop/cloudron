@@ -396,7 +396,9 @@ function upload(backupId, format, dataDir, progressCallback, callback) {
                     if (error) return retryCallback(error);
 
                     tarStream.on('progress', function(progress) {
-                        progressCallback({ message: `Uploading ${Math.round(progress.transferred/1024/1024)}M@${Math.round(progress.speed/1024/1024)}Mbps` });
+                        const transferred = Math.round(progress.transferred/1024/1024), speed = Math.round(progress.speed/1024/1024);
+                        if (!transferred && !speed) return progressCallback({ message: 'Uploading' }); // 0M@0Mbps looks wrong
+                        progressCallback({ message: `Uploading ${transferred}M@${speed}Mbps` });
                     });
                     tarStream.on('error', retryCallback); // already returns BackupsError
 
@@ -542,7 +544,9 @@ function download(backupConfig, backupId, format, dataDir, progressCallback, cal
                 if (error) return callback(error);
 
                 ps.on('progress', function (progress) {
-                    progressCallback({ message: `Downloading ${Math.round(progress.transferred/1024/1024)}M@${Math.round(progress.speed/1024/1024)}Mbps` });
+                    const transferred = Math.round(progress.transferred/1024/1024), speed = Math.round(progress.speed/1024/1024);
+                    if (!transferred && !speed) return progressCallback({ message: 'Downloading' }); // 0M@0Mbps looks wrong
+                    progressCallback({ message: `Downloading ${transferred}M@${speed}Mbps` });
                 });
                 ps.on('error', callback);
                 ps.on('finish', callback);

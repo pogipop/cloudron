@@ -76,6 +76,7 @@ ProvisionError.EXTERNAL_ERROR = 'External Error';
 ProvisionError.ALREADY_PROVISIONED = 'Already Provisioned';
 
 function setProgress(task, message, callback) {
+    debug(`setProgress: ${task} - ${message}`);
     gProvisionStatus[task].message = message;
     callback();
 }
