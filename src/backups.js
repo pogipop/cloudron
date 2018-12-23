@@ -443,7 +443,8 @@ function tarExtract(inStream, destination, key, callback) {
 
     extract.on('finish', function () {
         debug('tarExtract: done.');
-        ps.emit('finish');
+        // we use a separate event because ps is a through2 stream which emits 'finish' event indicating end of inStream and not extract
+        ps.emit('done');
     });
 
     if (key !== null) {
@@ -549,7 +550,7 @@ function download(backupConfig, backupId, format, dataDir, progressCallback, cal
                     progressCallback({ message: `Downloading ${transferred}M@${speed}Mbps` });
                 });
                 ps.on('error', callback);
-                ps.on('finish', callback);
+                ps.on('done', callback);
             });
         });
     } else {
