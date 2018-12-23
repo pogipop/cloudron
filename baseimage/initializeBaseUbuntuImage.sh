@@ -127,7 +127,7 @@ systemctl disable systemd-resolved || true
 
 # ubuntu's default config for unbound does not work if ipv6 is disabled. this config is overwritten in start.sh
 # we need unbound to work as this is required for installer.sh to do any DNS requests
-ip6=[[ -s /proc/net/if_inet6 ]] && echo "yes" || echo "no"
+ip6=$([[ -s /proc/net/if_inet6 ]] && echo "yes" || echo "no")
 echo -e "server:\n\tinterface: 127.0.0.1\n\tdo-ip6: ${ip6}" > /etc/unbound/unbound.conf.d/cloudron-network.conf
 systemctl restart unbound
 
