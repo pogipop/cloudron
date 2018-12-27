@@ -17,6 +17,8 @@ readonly BOX_DATA_DIR="${HOME_DIR}/boxdata" # box data
 readonly script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 readonly json="$(realpath ${script_dir}/../node_modules/.bin/json)"
 
+cp -f "${script_dir}/../scripts/cloudron-support" /usr/bin/cloudron-support
+
 echo "==> Configuring docker"
 cp "${script_dir}/start/docker-cloudron-app.apparmor" /etc/apparmor.d/docker-cloudron-app
 systemctl enable apparmor
