@@ -122,9 +122,21 @@ function sendMails(queue, callback) {
         var mailServerIp = safe.query(data, 'NetworkSettings.Networks.cloudron.IPAddress');
         if (!mailServerIp) return callback('Error querying mail server IP');
 
+        // extract the relay token for auth
+        const env = safe.query(data, 'Config.Env', null);
+        if (!env) return callback(new Error('Error getting mail env'));
+        const tmp = env.find(function (e) { return e.indexOf('CLOUDRON_RELAY_TOKEN') === 0; });
+        if (!tmp) return callback(new Error('Error getting CLOUDRON_RELAY_TOKEN env var'));
+        const relayToken = tmp.slice('CLOUDRON_RELAY_TOKEN'.length + 1); // +1 for the = sign
+        if (!relayToken)  return callback(new Error('Error parsing CLOUDRON_RELAY_TOKEN'));
+
         var transport = nodemailer.createTransport(smtpTransport({
             host: mailServerIp,
-            port: config.get('smtpPort')
+            port: config.get('smtpPort'),
+            auth: {
+                user: `no-reply@${config.adminDomain()}`,
+                pass: relayToken
+            }
         }));
 
         debug('Processing mail queue of size %d (through %s:2525)', queue.length, mailServerIp);

@@ -552,7 +552,7 @@ function restartMail(callback) {
 
     const tag = infra.images.mail.tag;
     const memoryLimit = 4 * 256;
-    const cloudronToken = hat(8 * 128);
+    const cloudronToken = hat(8 * 128), relayToken = hat(8 * 128);
 
     // admin and mail share the same certificate
     reverseProxy.getCertificate(config.adminFqdn(), config.adminDomain(), function (error, bundle) {
@@ -585,6 +585,7 @@ function restartMail(callback) {
                             --dns 172.18.0.1 \
                             --dns-search=. \
                             -e CLOUDRON_MAIL_TOKEN="${cloudronToken}" \
+                            -e CLOUDRON_RELAY_TOKEN="${relayToken}" \
                             -v "${paths.MAIL_DATA_DIR}:/app/data" \
                             -v "${paths.PLATFORM_DATA_DIR}/addons/mail:/etc/mail" \
                             ${ports} \
