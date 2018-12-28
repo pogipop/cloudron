@@ -493,8 +493,7 @@ function createMailConfig(callback) {
 
         users.getOwner(function (error, owner) {
             const mailFqdn = config.mailFqdn();
-            const defaultDomain = config.adminDomain();
-            const alertsFrom = `no-reply@${defaultDomain}`;
+            const alertsFrom = `no-reply@${config.adminDomain()}`;
 
             const alertsTo = config.provider() === 'caas' ? [ 'support@cloudron.io' ] : [ ];
             alertsTo.concat(error ? [] : owner.email).join(','); // owner may not exist yet
@@ -503,7 +502,7 @@ function createMailConfig(callback) {
             const mailInDomains = mailDomains.filter(function (d) { return d.enabled; }).map(function (d) { return d.domain; }).join(',');
 
             if (!safe.fs.writeFileSync(path.join(paths.ADDON_CONFIG_DIR, 'mail/mail.ini'),
-                `mail_in_domains=${mailInDomains}\nmail_out_domains=${mailOutDomains}\nmail_default_domain=${defaultDomain}\nmail_server_name=${mailFqdn}\nalerts_from=${alertsFrom}\nalerts_to=${alertsTo}\n\n`, 'utf8')) {
+                `mail_in_domains=${mailInDomains}\nmail_out_domains=${mailOutDomains}\nmail_server_name=${mailFqdn}\nalerts_from=${alertsFrom}\nalerts_to=${alertsTo}\n\n`, 'utf8')) {
                 return callback(new Error('Could not create mail var file:' + safe.error.message));
             }
 
