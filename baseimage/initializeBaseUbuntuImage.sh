@@ -33,6 +33,7 @@ apt-get -y install \
     cron \
     curl \
     dmsetup \
+    gpg \
     iptables \
     libpython2.7 \
     logrotate \
