@@ -114,10 +114,13 @@ function upsert(dnsConfig, zoneName, subdomain, type, values, callback) {
                     name: fqdn,
                     content: value,
                     priority: priority,
+                    proxied: false,
                     ttl: 120  // 1 means "automatic" (meaning 300ms) and 120 is the lowest supported
                 };
 
                 if (i >= dnsRecords.length) { // create a new record
+                    debug(`upsert: Adding new record subdomain: ${subdomain}, zoneName: ${zoneName} proxied: false`);
+
                     superagent.post(CLOUDFLARE_ENDPOINT + '/zones/' + zoneId + '/dns_records')
                         .set('X-Auth-Key', dnsConfig.token)
                         .set('X-Auth-Email', dnsConfig.email)
@@ -130,6 +133,10 @@ function upsert(dnsConfig, zoneName, subdomain, type, values, callback) {
                             iteratorCallback(null);
                         });
                 } else { // replace existing record
+                    data.proxied = dnsRecords[i].proxied; // preserve proxied parameter
+
+                    debug(`upsert: Updating existing record subdomain: ${subdomain}, zoneName: ${zoneName} proxied: ${data.proxied}`);
+
                     superagent.put(CLOUDFLARE_ENDPOINT + '/zones/' + zoneId + '/dns_records/' + dnsRecords[i].id)
                         .set('X-Auth-Key', dnsConfig.token)
                         .set('X-Auth-Email', dnsConfig.email)
