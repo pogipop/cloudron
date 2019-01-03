@@ -103,7 +103,7 @@ function upsert(dnsConfig, zoneName, subdomain, type, values, callback) {
             // used to track available records to update instead of create
             var i = 0;
 
-            async.eachSeries(values, function (value, callback) {
+            async.eachSeries(values, function (value, iteratorCallback) {
                 var priority = null;
 
                 if (type === 'MX') {
@@ -126,10 +126,10 @@ function upsert(dnsConfig, zoneName, subdomain, type, values, callback) {
                         .send(data)
                         .timeout(30 * 1000)
                         .end(function (error, result) {
-                            if (error && !error.response) return callback(error);
-                            if (result.statusCode !== 200 || result.body.success !== true) return translateRequestError(result, callback);
+                            if (error && !error.response) return iteratorCallback(error);
+                            if (result.statusCode !== 200 || result.body.success !== true) return translateRequestError(result, iteratorCallback);
 
-                            callback(null);
+                            iteratorCallback(null);
                         });
                 } else {
                     superagent.put(CLOUDFLARE_ENDPOINT + '/zones/'+ zoneId + '/dns_records/' + dnsRecords[i].id)
@@ -141,10 +141,10 @@ function upsert(dnsConfig, zoneName, subdomain, type, values, callback) {
                         // increment, as we have consumed the record
                             ++i;
 
-                            if (error && !error.response) return callback(error);
-                            if (result.statusCode !== 200 || result.body.success !== true) return translateRequestError(result, callback);
+                            if (error && !error.response) return iteratorCallback(error);
+                            if (result.statusCode !== 200 || result.body.success !== true) return translateRequestError(result, iteratorCallback);
 
-                            callback(null);
+                            iteratorCallback(null);
                         });
                 }
             }, callback);
