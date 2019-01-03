@@ -53,7 +53,8 @@ function getZoneByName(dnsConfig, zoneName, callback) {
         });
 }
 
-function getDnsRecordsByZoneId(dnsConfig, zoneId, zoneName, subdomain, type, callback) {
+// gets records filtered by zone, type and fqdn
+function getDnsRecords(dnsConfig, zoneId, zoneName, subdomain, type, callback) {
     assert.strictEqual(typeof dnsConfig, 'object');
     assert.strictEqual(typeof zoneId, 'string');
     assert.strictEqual(typeof zoneName, 'string');
@@ -90,18 +91,15 @@ function upsert(dnsConfig, zoneName, subdomain, type, values, callback) {
 
     debug('upsert: %s for zone %s of type %s with values %j', subdomain, zoneName, type, values);
 
-    getZoneByName(dnsConfig, zoneName, function(error, result){
+    getZoneByName(dnsConfig, zoneName, function(error, result) {
         if (error) return callback(error);
 
-        var zoneId = result.id;
+        let zoneId = result.id;
 
-        getDnsRecordsByZoneId(dnsConfig, zoneId, zoneName, subdomain, type, function (error, result) {
+        getDnsRecords(dnsConfig, zoneId, zoneName, subdomain, type, function (error, dnsRecords) {
             if (error) return callback(error);
 
-            var dnsRecords = result;
-
-            // used to track available records to update instead of create
-            var i = 0;
+            let i = 0; // // used to track available records to update instead of create
 
             async.eachSeries(values, function (value, iteratorCallback) {
                 var priority = null;
@@ -119,10 +117,10 @@ function upsert(dnsConfig, zoneName, subdomain, type, values, callback) {
                     ttl: 120  // 1 means "automatic" (meaning 300ms) and 120 is the lowest supported
                 };
 
-                if (i >= dnsRecords.length) {
-                    superagent.post(CLOUDFLARE_ENDPOINT + '/zones/'+ zoneId + '/dns_records')
-                        .set('X-Auth-Key',dnsConfig.token)
-                        .set('X-Auth-Email',dnsConfig.email)
+                if (i >= dnsRecords.length) { // create a new record
+                    superagent.post(CLOUDFLARE_ENDPOINT + '/zones/' + zoneId + '/dns_records')
+                        .set('X-Auth-Key', dnsConfig.token)
+                        .set('X-Auth-Email', dnsConfig.email)
                         .send(data)
                         .timeout(30 * 1000)
                         .end(function (error, result) {
@@ -131,15 +129,14 @@ function upsert(dnsConfig, zoneName, subdomain, type, values, callback) {
 
                             iteratorCallback(null);
                         });
-                } else {
-                    superagent.put(CLOUDFLARE_ENDPOINT + '/zones/'+ zoneId + '/dns_records/' + dnsRecords[i].id)
-                        .set('X-Auth-Key',dnsConfig.token)
-                        .set('X-Auth-Email',dnsConfig.email)
+                } else { // replace existing record
+                    superagent.put(CLOUDFLARE_ENDPOINT + '/zones/' + zoneId + '/dns_records/' + dnsRecords[i].id)
+                        .set('X-Auth-Key', dnsConfig.token)
+                        .set('X-Auth-Email', dnsConfig.email)
                         .send(data)
                         .timeout(30 * 1000)
                         .end(function (error, result) {
-                        // increment, as we have consumed the record
-                            ++i;
+                            ++i; // increment, as we have consumed the record
 
                             if (error && !error.response) return iteratorCallback(error);
                             if (result.statusCode !== 200 || result.body.success !== true) return translateRequestError(result, iteratorCallback);
@@ -162,7 +159,7 @@ function get(dnsConfig, zoneName, subdomain, type, callback) {
     getZoneByName(dnsConfig, zoneName, function(error, result){
         if (error) return callback(error);
 
-        getDnsRecordsByZoneId(dnsConfig, result.id, zoneName, subdomain, type, function(error, result) {
+        getDnsRecords(dnsConfig, result.id, zoneName, subdomain, type, function(error, result) {
             if (error) return callback(error);
 
             var tmp = result.map(function (record) { return record.content; });
@@ -184,7 +181,7 @@ function del(dnsConfig, zoneName, subdomain, type, values, callback) {
     getZoneByName(dnsConfig, zoneName, function(error, result){
         if (error) return callback(error);
 
-        getDnsRecordsByZoneId(dnsConfig, result.id, zoneName, subdomain, type, function(error, result) {
+        getDnsRecords(dnsConfig, result.id, zoneName, subdomain, type, function(error, result) {
             if (error) return callback(error);
             if (result.length === 0) return callback(null);
 
@@ -197,8 +194,8 @@ function del(dnsConfig, zoneName, subdomain, type, values, callback) {
 
             async.eachSeries(tmp, function (record, callback) {
                 superagent.del(CLOUDFLARE_ENDPOINT + '/zones/'+ zoneId + '/dns_records/' + record.id)
-                    .set('X-Auth-Key',dnsConfig.token)
-                    .set('X-Auth-Email',dnsConfig.email)
+                    .set('X-Auth-Key', dnsConfig.token)
+                    .set('X-Auth-Email', dnsConfig.email)
                     .timeout(30 * 1000)
                     .end(function (error, result) {
                         if (error && !error.response) return callback(error);
