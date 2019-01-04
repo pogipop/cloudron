@@ -122,7 +122,7 @@ function start(callback) {
 
     if (config.TEST) {
         proxyServer.use(function (req, res, next) {
-            console.log('Proxying: ' + req.method, req.url);
+            debug('proxying: ' + req.method, req.url);
             next();
         });
     }

@@ -455,8 +455,7 @@ describe('Users API', function () {
                     .end(function (error, result) {
                         expect(result.statusCode).to.equal(201);
 
-                        // two mails for user creation
-                        checkMails(2, done);
+                        done();
                     });
             });
     });

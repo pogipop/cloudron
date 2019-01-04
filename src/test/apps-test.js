@@ -100,6 +100,7 @@ describe('Apps', function () {
         appStoreId: 'appStoreId-0',
         location: 'some-location-0',
         domain: DOMAIN_0.domain,
+        fqdn: 'some-location-0.' + DOMAIN_0.domain, // required for oldConfig
         manifest: {
             version: '0.1', dockerImage: 'docker/app0', healthCheckPath: '/', httpPort: 80, title: 'app0',
             tcpPorts: {
@@ -125,6 +126,7 @@ describe('Apps', function () {
         appStoreId: 'appStoreId-1',
         location: 'some-location-1',
         domain: DOMAIN_0.domain,
+        fqdn: 'some-location-1.' + DOMAIN_0.domain, // required for oldConfig
         manifest: {
             version: '0.1', dockerImage: 'docker/app1', healthCheckPath: '/', httpPort: 80, title: 'app1',
             tcpPorts: {}
@@ -141,6 +143,7 @@ describe('Apps', function () {
         appStoreId: 'appStoreId-2',
         location: 'some-location-2',
         domain: DOMAIN_1.domain,
+        fqdn: 'some-location-2.' + DOMAIN_1.domain, // required for oldConfig
         manifest: {
             version: '0.1', dockerImage: 'docker/app2', healthCheckPath: '/', httpPort: 80, title: 'app2',
             tcpPorts: {}

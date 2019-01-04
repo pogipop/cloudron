@@ -100,7 +100,7 @@ function listByTypePaged(type, page, perPage, callback) {
         data.push(type);
     }
 
-    query += ' ORDER BY creationTime DESC LIMIT ?,?';
+    query += ' ORDER BY creationTime DESC, id DESC LIMIT ?,?'; // put latest task first
 
     data.push((page-1)*perPage);
     data.push(perPage);

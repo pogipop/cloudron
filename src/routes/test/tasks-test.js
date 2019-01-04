@@ -147,7 +147,7 @@ describe('Tasks API', function () {
                 .query({ access_token: token })
                 .end(function (err, res) {
                     expect(res.statusCode).to.equal(200);
-                    expect(res.body.tasks.length > 1).to.be(true);
+                    expect(res.body.tasks.length >= 1).to.be(true);
                     expect(res.body.tasks[0].id).to.be(taskId);
                     expect(res.body.tasks[0].percent).to.be(100);
                     expect(res.body.tasks[0].args).to.be(undefined);
