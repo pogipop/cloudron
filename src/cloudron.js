@@ -292,7 +292,7 @@ function setDashboardDomain(domain, callback) {
         if (error && error.reason === DomainsError.NOT_FOUND) return callback(new CloudronError(CloudronError.BAD_FIELD, 'No such domain'));
         if (error) return callback(new CloudronError(CloudronError.INTERNAL_ERROR, error));
 
-        const fqdn = domains.fqdn(constants.ADMIN_LOCATION, domainObject);
+        const fqdn = domains.fqdn(constants.ADMIN_LOCATION, domainObject.domain, domainObject.config);
 
         config.setAdminDomain(domain);
         config.setAdminLocation(constants.ADMIN_LOCATION);

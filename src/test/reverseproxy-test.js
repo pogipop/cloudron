@@ -90,7 +90,7 @@ describe('Certificates', function () {
         });
 
         it('does not allow cert without matching domain', function () {
-            expect(reverseProxy.validateCertificate('', { domain: 'cloudron.io' }, { cert: validCert0, key: validKey0 })).to.be.an(Error);
+            expect(reverseProxy.validateCertificate('', { domain: 'cloudron.io', config: {} }, { cert: validCert0, key: validKey0 })).to.be.an(Error);
             expect(reverseProxy.validateCertificate('cloudron.io', foobarDomain, { cert: validCert0, key: validKey0 })).to.be.an(Error);
         });
 

@@ -130,8 +130,12 @@ function verifyDnsConfig(dnsConfig, domain, zoneName, provider, ip, callback) {
     });
 }
 
-function fqdn(location, domainObject) {
-    return location + (location ? (domainObject.config.hyphenatedSubdomains ? '-' : '.') : '') + domainObject.domain;
+function fqdn(location, domain, dnsConfig) {
+    assert.strictEqual(typeof location, 'string');
+    assert.strictEqual(typeof domain, 'string');
+    assert.strictEqual(typeof dnsConfig, 'object');
+
+    return location + (location ? (dnsConfig.hyphenatedSubdomains ? '-' : '.') : '') + domain;
 }
 
 // Hostname validation comes from RFC 1123 (section 2.1)
@@ -142,7 +146,7 @@ function validateHostname(location, domainObject) {
     assert.strictEqual(typeof location, 'string');
     assert.strictEqual(typeof domainObject, 'object');
 
-    const hostname = fqdn(location, domainObject);
+    const hostname = fqdn(location, domainObject.domain, domainObject.config);
 
     const RESERVED_LOCATIONS = [
         constants.API_LOCATION,
@@ -467,7 +471,7 @@ function waitForDnsRecord(subdomain, domain, type, value, options, callback) {
     get(domain, function (error, domainObject) {
         if (error) return callback(error);
 
-        const hostname = fqdn(subdomain, domainObject);
+        const hostname = fqdn(subdomain, domainObject.domain, domainObject.config);
 
         api(domainObject.provider).waitForDns(hostname, domainObject.zoneName, type, value, options, callback);
     });
@@ -516,7 +520,7 @@ function prepareDashboardDomain(domain, auditSource, progressCallback, callback)
                 (done) => { progressCallback({ percent: 40, message: 'Waiting for DNS' }); done(); },
                 waitForDnsRecord.bind(null, constants.ADMIN_LOCATION, domain, 'A', ip, { interval: 30000, times: 50000 }),
                 (done) => { progressCallback({ percent: 70, message: 'Getting certificate' }); done(); },
-                reverseProxy.ensureCertificate.bind(null, fqdn(constants.ADMIN_LOCATION, domainObject), domain, auditSource)
+                reverseProxy.ensureCertificate.bind(null, fqdn(constants.ADMIN_LOCATION, domainObject.domain, domainObject.config), domain, auditSource)
             ], function (error) {
                 if (error) return callback(error);
 
