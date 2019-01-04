@@ -43,7 +43,7 @@ function list(req, res, next) {
 
     if (req.query.acknowledged && typeof req.query.acknowledged !== 'boolean') return next(new HttpError(400, 'acknowledged must be a boolean'));
 
-    notifications.listPaged(req.user.id, typeof req.query.acknowledged === 'undefined' ? null : !!req.query.acknowledged, page, perPage, function (error, result) {
+    notifications.getAllPaged(req.user.id, typeof req.query.acknowledged === 'undefined' ? null : !!req.query.acknowledged, page, perPage, function (error, result) {
         if (error) return next(new HttpError(500, error));
 
         next(new HttpSuccess(200, { notifications: result }));

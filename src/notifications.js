@@ -6,7 +6,7 @@ exports = module.exports = {
     add: add,
     get: get,
     ack: ack,
-    listPaged: listPaged,
+    getAllPaged: getAllPaged,
 
     // specialized notifications
     userAdded: userAdded
@@ -95,7 +95,7 @@ function ack(id, callback) {
 }
 
 // if acknowledged === null we return all, otherwise yes or no based on acknowledged as a boolean
-function listPaged(userId, acknowledged, page, perPage, callback) {
+function getAllPaged(userId, acknowledged, page, perPage, callback) {
     assert.strictEqual(typeof userId, 'string');
     assert(acknowledged === null || typeof acknowledged === 'boolean');
     assert.strictEqual(typeof page, 'number');
