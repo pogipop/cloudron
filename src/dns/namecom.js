@@ -4,16 +4,19 @@ exports = module.exports = {
     upsert: upsert,
     get: get,
     del: del,
-    waitForDns: require('./waitfordns.js'),
+    wait: wait,
     verifyDnsConfig: verifyDnsConfig
 };
 
 var assert = require('assert'),
     debug = require('debug')('box:dns/namecom'),
     dns = require('../native-dns.js'),
-    safe = require('safetydance'),
+    domains = require('../domains.js'),
     DomainsError = require('../domains.js').DomainsError,
-    superagent = require('superagent');
+    safe = require('safetydance'),
+    superagent = require('superagent'),
+    util = require('util'),
+    waitForDns = require('./waitfordns.js');
 
 const NAMECOM_API = 'https://api.name.com/v4';
 
@@ -21,18 +24,18 @@ function formatError(response) {
     return `Name.com DNS error [${response.statusCode}] ${response.text}`;
 }
 
-function addRecord(dnsConfig, zoneName, subdomain, type, values, callback) {
+function addRecord(dnsConfig, zoneName, name, type, values, callback) {
     assert.strictEqual(typeof dnsConfig, 'object');
     assert.strictEqual(typeof zoneName, 'string');
-    assert.strictEqual(typeof subdomain, 'string');
+    assert.strictEqual(typeof name, 'string');
     assert.strictEqual(typeof type, 'string');
     assert(Array.isArray(values));
     assert.strictEqual(typeof callback, 'function');
 
-    debug(`add: ${subdomain} in zone ${zoneName} of type ${type} with values ${JSON.stringify(values)}`);
+    debug(`add: ${name} in zone ${zoneName} of type ${type} with values ${JSON.stringify(values)}`);
 
     var data = {
-        host: subdomain,
+        host: name,
         type: type,
         ttl: 300    // 300 is the lowest
     };
@@ -57,19 +60,19 @@ function addRecord(dnsConfig, zoneName, subdomain, type, values, callback) {
         });
 }
 
-function updateRecord(dnsConfig, zoneName, recordId, subdomain, type, values, callback) {
+function updateRecord(dnsConfig, zoneName, recordId, name, type, values, callback) {
     assert.strictEqual(typeof dnsConfig, 'object');
     assert.strictEqual(typeof zoneName, 'string');
     assert.strictEqual(typeof recordId, 'number');
-    assert.strictEqual(typeof subdomain, 'string');
+    assert.strictEqual(typeof name, 'string');
     assert.strictEqual(typeof type, 'string');
     assert(Array.isArray(values));
     assert.strictEqual(typeof callback, 'function');
 
-    debug(`update:${recordId} on ${subdomain} in zone ${zoneName} of type ${type} with values ${JSON.stringify(values)}`);
+    debug(`update:${recordId} on ${name} in zone ${zoneName} of type ${type} with values ${JSON.stringify(values)}`);
 
     var data = {
-        host: subdomain,
+        host: name,
         type: type,
         ttl: 300    // 300 is the lowest
     };
@@ -94,16 +97,14 @@ function updateRecord(dnsConfig, zoneName, recordId, subdomain, type, values, ca
         });
 }
 
-function getInternal(dnsConfig, zoneName, subdomain, type, callback) {
+function getInternal(dnsConfig, zoneName, name, type, callback) {
     assert.strictEqual(typeof dnsConfig, 'object');
     assert.strictEqual(typeof zoneName, 'string');
-    assert.strictEqual(typeof subdomain, 'string');
+    assert.strictEqual(typeof name, 'string');
     assert.strictEqual(typeof type, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    subdomain = subdomain || '@';
-
-    debug(`getInternal: ${subdomain} in zone ${zoneName} of type ${type}`);
+    debug(`getInternal: ${name} in zone ${zoneName} of type ${type}`);
 
     superagent.get(`${NAMECOM_API}/domains/${zoneName}/records`)
         .auth(dnsConfig.username, dnsConfig.token)
@@ -123,7 +124,7 @@ function getInternal(dnsConfig, zoneName, subdomain, type, callback) {
             });
 
             var results = result.body.records.filter(function (r) {
-                return (r.host === subdomain && r.type === type);
+                return (r.host === name && r.type === type);
             });
 
             debug('getInternal: %j', results);
@@ -132,35 +133,39 @@ function getInternal(dnsConfig, zoneName, subdomain, type, callback) {
         });
 }
 
-function upsert(dnsConfig, zoneName, subdomain, type, values, callback) {
-    assert.strictEqual(typeof dnsConfig, 'object');
-    assert.strictEqual(typeof zoneName, 'string');
-    assert.strictEqual(typeof subdomain, 'string');
+function upsert(domainObject, location, type, values, callback) {
+    assert.strictEqual(typeof domainObject, 'object');
+    assert.strictEqual(typeof location, 'string');
     assert.strictEqual(typeof type, 'string');
-    assert(Array.isArray(values));
+    assert(util.isArray(values));
     assert.strictEqual(typeof callback, 'function');
 
-    subdomain = subdomain || '@';
+    const dnsConfig = domainObject.config,
+        zoneName = domainObject.zoneName,
+        name = domains.getName(domainObject, location, type) || '@';
 
-    debug(`upsert: ${subdomain} in zone ${zoneName} of type ${type} with values ${JSON.stringify(values)}`);
+    debug(`upsert: ${name} in zone ${zoneName} of type ${type} with values ${JSON.stringify(values)}`);
 
-    getInternal(dnsConfig, zoneName, subdomain, type, function (error, result) {
+    getInternal(dnsConfig, zoneName, name, type, function (error, result) {
         if (error) return callback(error);
 
-        if (result.length === 0) return addRecord(dnsConfig, zoneName, subdomain, type, values, callback);
+        if (result.length === 0) return addRecord(dnsConfig, zoneName, name, type, values, callback);
 
-        return updateRecord(dnsConfig, zoneName, result[0].id, subdomain, type, values, callback);
+        return updateRecord(dnsConfig, zoneName, result[0].id, name, type, values, callback);
     });
 }
 
-function get(dnsConfig, zoneName, subdomain, type, callback) {
-    assert.strictEqual(typeof dnsConfig, 'object');
-    assert.strictEqual(typeof zoneName, 'string');
-    assert.strictEqual(typeof subdomain, 'string');
+function get(domainObject, location, type, callback) {
+    assert.strictEqual(typeof domainObject, 'object');
+    assert.strictEqual(typeof location, 'string');
     assert.strictEqual(typeof type, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    getInternal(dnsConfig, zoneName, subdomain, type, function (error, result) {
+    const dnsConfig = domainObject.config,
+        zoneName = domainObject.zoneName,
+        name = domains.getName(domainObject, location, type) || '@';
+
+    getInternal(dnsConfig, zoneName, name, type, function (error, result) {
         if (error) return callback(error);
 
         var tmp = result.map(function (record) { return record.answer; });
@@ -171,19 +176,20 @@ function get(dnsConfig, zoneName, subdomain, type, callback) {
     });
 }
 
-function del(dnsConfig, zoneName, subdomain, type, values, callback) {
-    assert.strictEqual(typeof dnsConfig, 'object');
-    assert.strictEqual(typeof zoneName, 'string');
-    assert.strictEqual(typeof subdomain, 'string');
+function del(domainObject, location, type, values, callback) {
+    assert.strictEqual(typeof domainObject, 'object');
+    assert.strictEqual(typeof location, 'string');
     assert.strictEqual(typeof type, 'string');
-    assert(Array.isArray(values));
+    assert(util.isArray(values));
     assert.strictEqual(typeof callback, 'function');
 
-    subdomain = subdomain || '@';
+    const dnsConfig = domainObject.config,
+        zoneName = domainObject.zoneName,
+        name = domains.getName(domainObject, location, type) || '@';
 
-    debug(`del: ${subdomain} in zone ${zoneName} of type ${type} with values ${JSON.stringify(values)}`);
+    debug(`del: ${name} in zone ${zoneName} of type ${type} with values ${JSON.stringify(values)}`);
 
-    getInternal(dnsConfig, zoneName, subdomain, type, function (error, result) {
+    getInternal(dnsConfig, zoneName, name, type, function (error, result) {
         if (error) return callback(error);
 
         if (result.length === 0) return callback();
@@ -201,12 +207,25 @@ function del(dnsConfig, zoneName, subdomain, type, values, callback) {
     });
 }
 
-function verifyDnsConfig(dnsConfig, fqdn, zoneName, ip, callback) {
-    assert.strictEqual(typeof dnsConfig, 'object');
-    assert.strictEqual(typeof fqdn, 'string');
-    assert.strictEqual(typeof zoneName, 'string');
-    assert.strictEqual(typeof ip, 'string');
+function wait(domainObject, location, type, value, options, callback) {
+    assert.strictEqual(typeof domainObject, 'object');
+    assert.strictEqual(typeof location, 'string');
+    assert.strictEqual(typeof type, 'string');
+    assert.strictEqual(typeof value, 'string');
+    assert(options && typeof options === 'object'); // { interval: 5000, times: 50000 }
     assert.strictEqual(typeof callback, 'function');
+
+    const fqdn = domains.fqdn(location, domainObject);
+
+    waitForDns(fqdn, domainObject.zoneName, type, value, options, callback);
+}
+
+function verifyDnsConfig(domainObject, callback) {
+    assert.strictEqual(typeof domainObject, 'object');
+    assert.strictEqual(typeof callback, 'function');
+
+    const dnsConfig = domainObject.config,
+        zoneName = domainObject.zoneName;
 
     if (typeof dnsConfig.username !== 'string') return callback(new DomainsError(DomainsError.BAD_FIELD, 'username must be a string'));
     if (typeof dnsConfig.token !== 'string') return callback(new DomainsError(DomainsError.BAD_FIELD, 'token must be a string'));
@@ -215,6 +234,8 @@ function verifyDnsConfig(dnsConfig, fqdn, zoneName, ip, callback) {
         username: dnsConfig.username,
         token: dnsConfig.token
     };
+
+    const ip = '127.0.0.1';
 
     if (process.env.BOX_ENV === 'test') return callback(null, credentials); // this shouldn't be here
 
@@ -227,14 +248,14 @@ function verifyDnsConfig(dnsConfig, fqdn, zoneName, ip, callback) {
             return callback(new DomainsError(DomainsError.BAD_FIELD, 'Domain nameservers are not set to Name.com'));
         }
 
-        const testSubdomain = 'cloudrontestdns';
+        const location = 'cloudrontestdns';
 
-        upsert(credentials, zoneName, testSubdomain, 'A', [ ip ], function (error, changeId) {
+        upsert(domainObject, location, 'A', [ ip ], function (error) {
             if (error) return callback(error);
 
-            debug('verifyDnsConfig: Test A record added with change id %s', changeId);
+            debug('verifyDnsConfig: Test A record added');
 
-            del(dnsConfig, zoneName, testSubdomain, 'A', [ ip ], function (error) {
+            del(domainObject, location, 'A', [ ip ], function (error) {
                 if (error) return callback(error);
 
                 debug('verifyDnsConfig: Test A record removed again');

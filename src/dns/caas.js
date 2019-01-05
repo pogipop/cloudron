@@ -4,35 +4,38 @@ exports = module.exports = {
     upsert: upsert,
     get: get,
     del: del,
-    waitForDns: require('./waitfordns.js'),
+    wait: wait,
     verifyDnsConfig: verifyDnsConfig
 };
 
 var assert = require('assert'),
     config = require('../config.js'),
     debug = require('debug')('box:dns/caas'),
+    domains = require('../domains.js'),
     DomainsError = require('../domains.js').DomainsError,
     superagent = require('superagent'),
-    util = require('util');
+    util = require('util'),
+    waitForDns = require('./waitfordns.js');
 
-function getFqdn(subdomain, domain) {
-    assert.strictEqual(typeof subdomain, 'string');
+function getFqdn(location, domain) {
+    assert.strictEqual(typeof location, 'string');
     assert.strictEqual(typeof domain, 'string');
 
-    return (subdomain === '') ? domain : subdomain + '-' + domain;
+    return (location === '') ? domain : location + '-' + domain;
 }
 
-function add(dnsConfig, zoneName, subdomain, type, values, callback) {
-    assert.strictEqual(typeof dnsConfig, 'object');
-    assert.strictEqual(typeof zoneName, 'string');
-    assert.strictEqual(typeof subdomain, 'string');
+function upsert(domainObject, location, type, values, callback) {
+    assert.strictEqual(typeof domainObject, 'object');
+    assert.strictEqual(typeof location, 'string');
     assert.strictEqual(typeof type, 'string');
     assert(util.isArray(values));
     assert.strictEqual(typeof callback, 'function');
 
-    var fqdn = subdomain !== '' && type === 'TXT' ? subdomain + '.' + dnsConfig.fqdn : getFqdn(subdomain, dnsConfig.fqdn);
+    const dnsConfig = domainObject.config;
 
-    debug('add: %s for zone %s of type %s with values %j', subdomain, dnsConfig.fqdn, type, values);
+    let fqdn = location !== '' && type === 'TXT' ? location + '.' + domainObject.domain : getFqdn(location, domainObject.domain);
+
+    debug('add: %s for zone %s of type %s with values %j', location, domainObject.domain, type, values);
 
     var data = {
         type: type,
@@ -54,16 +57,16 @@ function add(dnsConfig, zoneName, subdomain, type, values, callback) {
         });
 }
 
-function get(dnsConfig, zoneName, subdomain, type, callback) {
-    assert.strictEqual(typeof dnsConfig, 'object');
-    assert.strictEqual(typeof zoneName, 'string');
-    assert.strictEqual(typeof subdomain, 'string');
+function get(domainObject, location, type, callback) {
+    assert.strictEqual(typeof domainObject, 'object');
+    assert.strictEqual(typeof location, 'string');
     assert.strictEqual(typeof type, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    var fqdn = subdomain !== '' && type === 'TXT' ? subdomain + '.' + dnsConfig.fqdn : getFqdn(subdomain, dnsConfig.fqdn);
+    const dnsConfig = domainObject.config;
+    const fqdn = location !== '' && type === 'TXT' ? location + '.' + domainObject.domain : getFqdn(location, domainObject.domain);
 
-    debug('get: zoneName: %s subdomain: %s type: %s fqdn: %s', dnsConfig.fqdn, subdomain, type, fqdn);
+    debug('get: zoneName: %s subdomain: %s type: %s fqdn: %s', domainObject.domain, location, type, fqdn);
 
     superagent
         .get(config.apiServerOrigin() + '/api/v1/domains/' + fqdn)
@@ -77,26 +80,15 @@ function get(dnsConfig, zoneName, subdomain, type, callback) {
         });
 }
 
-function upsert(dnsConfig, zoneName, subdomain, type, values, callback) {
-    assert.strictEqual(typeof dnsConfig, 'object');
-    assert.strictEqual(typeof zoneName, 'string');
-    assert.strictEqual(typeof subdomain, 'string');
+function del(domainObject, location, type, values, callback) {
+    assert.strictEqual(typeof domainObject, 'object');
+    assert.strictEqual(typeof location, 'string');
     assert.strictEqual(typeof type, 'string');
     assert(util.isArray(values));
     assert.strictEqual(typeof callback, 'function');
 
-    add(dnsConfig, zoneName, subdomain, type, values, callback);
-}
-
-function del(dnsConfig, zoneName, subdomain, type, values, callback) {
-    assert.strictEqual(typeof dnsConfig, 'object');
-    assert.strictEqual(typeof zoneName, 'string');
-    assert.strictEqual(typeof subdomain, 'string');
-    assert.strictEqual(typeof type, 'string');
-    assert(util.isArray(values));
-    assert.strictEqual(typeof callback, 'function');
-
-    debug('del: %s for zone %s of type %s with values %j', subdomain, dnsConfig.fqdn, type, values);
+    const dnsConfig = domainObject.config;
+    debug('del: %s for zone %s of type %s with values %j', location, domainObject.domain, type, values);
 
     var data = {
         type: type,
@@ -104,7 +96,7 @@ function del(dnsConfig, zoneName, subdomain, type, values, callback) {
     };
 
     superagent
-        .del(config.apiServerOrigin() + '/api/v1/domains/' + getFqdn(subdomain, dnsConfig.fqdn))
+        .del(config.apiServerOrigin() + '/api/v1/domains/' + getFqdn(location, domainObject.domain))
         .query({ token: dnsConfig.token })
         .send(data)
         .timeout(30 * 1000)
@@ -119,29 +111,42 @@ function del(dnsConfig, zoneName, subdomain, type, values, callback) {
         });
 }
 
-function verifyDnsConfig(dnsConfig, domain, zoneName, ip, callback) {
-    assert.strictEqual(typeof dnsConfig, 'object');
-    assert.strictEqual(typeof domain, 'string');
-    assert.strictEqual(typeof zoneName, 'string');
-    assert.strictEqual(typeof ip, 'string');
+function wait(domainObject, location, type, value, options, callback) {
+    assert.strictEqual(typeof domainObject, 'object');
+    assert.strictEqual(typeof location, 'string');
+    assert.strictEqual(typeof type, 'string');
+    assert.strictEqual(typeof value, 'string');
+    assert(options && typeof options === 'object'); // { interval: 5000, times: 50000 }
     assert.strictEqual(typeof callback, 'function');
+
+    const fqdn = domains.fqdn(location, domainObject);
+
+    waitForDns(fqdn, domainObject.zoneName, type, value, options, callback);
+}
+
+function verifyDnsConfig(domainObject, callback) {
+    assert.strictEqual(typeof domainObject, 'object');
+    assert.strictEqual(typeof callback, 'function');
+
+    const dnsConfig = domainObject.config;
 
     if (!dnsConfig.token || typeof dnsConfig.token !== 'string') return callback(new DomainsError(DomainsError.BAD_FIELD, 'token must be a non-empty string'));
 
+    const ip = '127.0.0.1';
+
     var credentials = {
         token: dnsConfig.token,
-        fqdn: domain,
         hyphenatedSubdomains: true  // this will ensure we always use them, regardless of passed-in configs
     };
 
-    const testSubdomain = 'cloudrontestdns';
+    const location = 'cloudrontestdns';
 
-    upsert(credentials, zoneName, testSubdomain, 'A', [ ip ], function (error, changeId) {
+    upsert(domainObject, location, 'A', [ ip ], function (error) {
         if (error) return callback(error);
 
-        debug('verifyDnsConfig: Test A record added with change id %s', changeId);
+        debug('verifyDnsConfig: Test A record added');
 
-        del(credentials, zoneName, testSubdomain, 'A', [ ip ], function (error) {
+        del(domainObject, location, 'A', [ ip ], function (error) {
             if (error) return callback(error);
 
             debug('verifyDnsConfig: Test A record removed again');

@@ -397,8 +397,8 @@ function get(appId, callback) {
             for (let d of domainObjects) { domainObjectMap[d.domain] = d; }
 
             app.iconUrl = getIconUrlSync(app);
-            app.fqdn = domains.fqdn(app.location, app.domain, domainObjectMap[app.domain].config);
-            app.alternateDomains.forEach(function (ad) { ad.fqdn = domains.fqdn(ad.subdomain, ad.domain, domainObjectMap[ad.domain].config); });
+            app.fqdn = domains.fqdn(app.location, domainObjectMap[app.domain]);
+            app.alternateDomains.forEach(function (ad) { ad.fqdn = domains.fqdn(ad.subdomain, domainObjectMap[ad.domain]); });
 
             callback(null, app);
         });
@@ -431,8 +431,8 @@ function getByIpAddress(ip, callback) {
                     for (let d of domainObjects) { domainObjectMap[d.domain] = d; }
 
                     app.iconUrl = getIconUrlSync(app);
-                    app.fqdn = domains.fqdn(app.location, app.domain, domainObjectMap[app.domain].config);
-                    app.alternateDomains.forEach(function (ad) { ad.fqdn = domains.fqdn(ad.subdomain, ad.domain, domainObjectMap[ad.domain].config); });
+                    app.fqdn = domains.fqdn(app.location, domainObjectMap[app.domain]);
+                    app.alternateDomains.forEach(function (ad) { ad.fqdn = domains.fqdn(ad.subdomain, domainObjectMap[ad.domain]); });
 
                     callback(null, app);
                 });
@@ -457,8 +457,8 @@ function getAll(callback) {
 
             async.eachSeries(apps, function (app, iteratorDone) {
                 app.iconUrl = getIconUrlSync(app);
-                app.fqdn = domains.fqdn(app.location, app.domain, domainObjectMap[app.domain].config);
-                app.alternateDomains.forEach(function (ad) { ad.fqdn = domains.fqdn(ad.subdomain, ad.domain, domainObjectMap[ad.domain].config); });
+                app.fqdn = domains.fqdn(app.location, domainObjectMap[app.domain]);
+                app.alternateDomains.forEach(function (ad) { ad.fqdn = domains.fqdn(ad.subdomain, domainObjectMap[ad.domain]); });
 
                 iteratorDone(null, app);
             }, function (error) {

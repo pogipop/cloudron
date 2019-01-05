@@ -30,8 +30,8 @@ function resolveIp(hostname, options, callback) {
     });
 }
 
-function isChangeSynced(domain, type, value, nameserver, callback) {
-    assert.strictEqual(typeof domain, 'string');
+function isChangeSynced(hostname, type, value, nameserver, callback) {
+    assert.strictEqual(typeof hostname, 'string');
     assert.strictEqual(typeof type, 'string');
     assert.strictEqual(typeof value, 'string');
     assert.strictEqual(typeof nameserver, 'string');
@@ -46,16 +46,16 @@ function isChangeSynced(domain, type, value, nameserver, callback) {
 
         async.every(nsIps, function (nsIp, iteratorCallback) {
             const resolveOptions = { server: nsIp, timeout: 5000 };
-            const resolver = type === 'A' ? resolveIp.bind(null, domain) : dns.resolve.bind(null, domain, 'TXT');
+            const resolver = type === 'A' ? resolveIp.bind(null, hostname) : dns.resolve.bind(null, hostname, 'TXT');
 
             resolver(resolveOptions, function (error, answer) {
                 if (error && error.code === 'TIMEOUT') {
-                    debug(`isChangeSynced: NS ${nameserver} (${nsIp}) timed out when resolving ${domain} (${type})`);
+                    debug(`isChangeSynced: NS ${nameserver} (${nsIp}) timed out when resolving ${hostname} (${type})`);
                     return iteratorCallback(null, true); // should be ok if dns server is down
                 }
 
                 if (error) {
-                    debug(`isChangeSynced: NS ${nameserver} (${nsIp}) errored when resolve ${domain} (${type}): ${error}`);
+                    debug(`isChangeSynced: NS ${nameserver} (${nsIp}) errored when resolve ${hostname} (${type}): ${error}`);
                     return iteratorCallback(null, false);
                 }
 
@@ -66,7 +66,7 @@ function isChangeSynced(domain, type, value, nameserver, callback) {
                     match = answer.some(function (a) { return value === a.join(''); });
                 }
 
-                debug(`isChangeSynced: ${domain} (${type}) was resolved to ${answer} at NS ${nameserver} (${nsIp}). Expecting ${value}. Match ${match}`);
+                debug(`isChangeSynced: ${hostname} (${type}) was resolved to ${answer} at NS ${nameserver} (${nsIp}). Expecting ${value}. Match ${match}`);
 
                 iteratorCallback(null, match);
             });
@@ -76,26 +76,26 @@ function isChangeSynced(domain, type, value, nameserver, callback) {
 }
 
 // check if IP change has propagated to every nameserver
-function waitForDns(domain, zoneName, type, value, options, callback) {
-    assert.strictEqual(typeof domain, 'string');
+function waitForDns(hostname, zoneName, type, value, options, callback) {
+    assert.strictEqual(typeof hostname, 'string');
     assert.strictEqual(typeof zoneName, 'string');
     assert(type === 'A' || type === 'TXT');
     assert.strictEqual(typeof value, 'string');
     assert(options && typeof options === 'object'); // { interval: 5000, times: 50000 }
     assert.strictEqual(typeof callback, 'function');
 
-    debug('waitForDns: domain %s to be %s in zone %s.', domain, value, zoneName);
+    debug('waitForDns: hostname %s to be %s in zone %s.', hostname, value, zoneName);
 
     var attempt = 0;
     async.retry(options, function (retryCallback) {
         ++attempt;
-        debug(`waitForDns (try ${attempt}): ${domain} to be ${value} in zone ${zoneName}`);
+        debug(`waitForDns (try ${attempt}): ${hostname} to be ${value} in zone ${zoneName}`);
 
         dns.resolve(zoneName, 'NS', { timeout: 5000 }, function (error, nameservers) {
             if (error || !nameservers) return retryCallback(error || new DomainsError(DomainsError.EXTERNAL_ERROR, 'Unable to get nameservers'));
 
-            async.every(nameservers, isChangeSynced.bind(null, domain, type, value), function (error, synced) {
-                debug('waitForDns: %s %s ns: %j', domain, synced ? 'done' : 'not done', nameservers);
+            async.every(nameservers, isChangeSynced.bind(null, hostname, type, value), function (error, synced) {
+                debug('waitForDns: %s %s ns: %j', hostname, synced ? 'done' : 'not done', nameservers);
 
                 retryCallback(synced ? null : new DomainsError(DomainsError.EXTERNAL_ERROR, 'ETRYAGAIN'));
             });
@@ -103,7 +103,7 @@ function waitForDns(domain, zoneName, type, value, options, callback) {
     }, function retryDone(error) {
         if (error) return callback(error);
 
-        debug(`waitForDns: ${domain} has propagated`);
+        debug(`waitForDns: ${hostname} has propagated`);
 
         callback(null);
     });

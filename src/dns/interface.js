@@ -10,18 +10,16 @@ exports = module.exports = {
     upsert: upsert,
     get: get,
     del: del,
-    waitForDns: require('./waitfordns.js'),
+    wait: wait,
     verifyDnsConfig: verifyDnsConfig
 };
 
 var assert = require('assert'),
-    DomainsError = require('../domains.js').DomainsError,
     util = require('util');
 
-function upsert(dnsConfig, zoneName, subdomain, type, values, callback) {
-    assert.strictEqual(typeof dnsConfig, 'object');
-    assert.strictEqual(typeof zoneName, 'string');
-    assert.strictEqual(typeof subdomain, 'string');
+function upsert(domainObject, location, type, values, callback) {
+    assert.strictEqual(typeof domainObject, 'object');
+    assert.strictEqual(typeof location, 'string');
     assert.strictEqual(typeof type, 'string');
     assert(util.isArray(values));
     assert.strictEqual(typeof callback, 'function');
@@ -31,10 +29,9 @@ function upsert(dnsConfig, zoneName, subdomain, type, values, callback) {
     callback(new Error('not implemented'));
 }
 
-function get(dnsConfig, zoneName, subdomain, type, callback) {
-    assert.strictEqual(typeof dnsConfig, 'object');
-    assert.strictEqual(typeof zoneName, 'string');
-    assert.strictEqual(typeof subdomain, 'string');
+function get(domainObject, location, type, callback) {
+    assert.strictEqual(typeof domainObject, 'object');
+    assert.strictEqual(typeof location, 'string');
     assert.strictEqual(typeof type, 'string');
     assert.strictEqual(typeof callback, 'function');
 
@@ -43,10 +40,9 @@ function get(dnsConfig, zoneName, subdomain, type, callback) {
     callback(new Error('not implemented'));
 }
 
-function del(dnsConfig, zoneName, subdomain, type, values, callback) {
-    assert.strictEqual(typeof dnsConfig, 'object');
-    assert.strictEqual(typeof zoneName, 'string');
-    assert.strictEqual(typeof subdomain, 'string');
+function del(domainObject, location, type, values, callback) {
+    assert.strictEqual(typeof domainObject, 'object');
+    assert.strictEqual(typeof location, 'string');
     assert.strictEqual(typeof type, 'string');
     assert(util.isArray(values));
     assert.strictEqual(typeof callback, 'function');
@@ -56,11 +52,19 @@ function del(dnsConfig, zoneName, subdomain, type, values, callback) {
     callback(new Error('not implemented'));
 }
 
-function verifyDnsConfig(dnsConfig, domain, zoneName, ip, callback) {
-    assert.strictEqual(typeof dnsConfig, 'object');
-    assert.strictEqual(typeof domain, 'string');
-    assert.strictEqual(typeof zoneName, 'string');
-    assert.strictEqual(typeof ip, 'string');
+function wait(domainObject, location, type, value, options, callback) {
+    assert.strictEqual(typeof domainObject, 'object');
+    assert.strictEqual(typeof location, 'string');
+    assert.strictEqual(typeof type, 'string');
+    assert.strictEqual(typeof value, 'string');
+    assert(options && typeof options === 'object'); // { interval: 5000, times: 50000 }
+    assert.strictEqual(typeof callback, 'function');
+
+    callback();
+}
+
+function verifyDnsConfig(domainObject, callback) {
+    assert.strictEqual(typeof domainObject, 'object');
     assert.strictEqual(typeof callback, 'function');
 
     // Result: dnsConfig object

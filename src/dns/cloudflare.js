@@ -4,7 +4,7 @@ exports = module.exports = {
     upsert: upsert,
     get: get,
     del: del,
-    waitForDns: require('./waitfordns.js'),
+    wait: wait,
     verifyDnsConfig: verifyDnsConfig
 };
 
@@ -12,9 +12,11 @@ var assert = require('assert'),
     async = require('async'),
     debug = require('debug')('box:dns/cloudflare'),
     dns = require('../native-dns.js'),
+    domains = require('../domains.js'),
     DomainsError = require('../domains.js').DomainsError,
     superagent = require('superagent'),
     util = require('util'),
+    waitForDns = require('./waitfordns.js'),
     _ = require('underscore');
 
 // we are using latest v4 stable API https://api.cloudflare.com/#getting-started-endpoints
@@ -54,15 +56,12 @@ function getZoneByName(dnsConfig, zoneName, callback) {
 }
 
 // gets records filtered by zone, type and fqdn
-function getDnsRecords(dnsConfig, zoneId, zoneName, subdomain, type, callback) {
+function getDnsRecords(dnsConfig, zoneId, fqdn, type, callback) {
     assert.strictEqual(typeof dnsConfig, 'object');
     assert.strictEqual(typeof zoneId, 'string');
-    assert.strictEqual(typeof zoneName, 'string');
-    assert.strictEqual(typeof subdomain, 'string');
+    assert.strictEqual(typeof fqdn, 'string');
     assert.strictEqual(typeof type, 'string');
     assert.strictEqual(typeof callback, 'function');
-
-    var fqdn = subdomain === '' ? zoneName : subdomain + '.' + zoneName;
 
     superagent.get(CLOUDFLARE_ENDPOINT + '/zones/' + zoneId + '/dns_records')
         .set('X-Auth-Key',dnsConfig.token)
@@ -79,24 +78,25 @@ function getDnsRecords(dnsConfig, zoneId, zoneName, subdomain, type, callback) {
         });
 }
 
-function upsert(dnsConfig, zoneName, subdomain, type, values, callback) {
-    assert.strictEqual(typeof dnsConfig, 'object');
-    assert.strictEqual(typeof zoneName, 'string');
-    assert.strictEqual(typeof subdomain, 'string');
+function upsert(domainObject, location, type, values, callback) {
+    assert.strictEqual(typeof domainObject, 'object');
+    assert.strictEqual(typeof location, 'string');
     assert.strictEqual(typeof type, 'string');
     assert(util.isArray(values));
     assert.strictEqual(typeof callback, 'function');
 
-    var fqdn = subdomain === '' ? zoneName : subdomain + '.' + zoneName;
+    const dnsConfig = domainObject.config,
+        zoneName = domainObject.zoneName,
+        fqdn = domains.fqdn(location, domainObject);
 
-    debug('upsert: %s for zone %s of type %s with values %j', subdomain, zoneName, type, values);
+    debug('upsert: %s for zone %s of type %s with values %j', fqdn, zoneName, type, values);
 
     getZoneByName(dnsConfig, zoneName, function(error, result) {
         if (error) return callback(error);
 
         let zoneId = result.id;
 
-        getDnsRecords(dnsConfig, zoneId, zoneName, subdomain, type, function (error, dnsRecords) {
+        getDnsRecords(dnsConfig, zoneId, fqdn, type, function (error, dnsRecords) {
             if (error) return callback(error);
 
             let i = 0; // // used to track available records to update instead of create
@@ -119,7 +119,7 @@ function upsert(dnsConfig, zoneName, subdomain, type, values, callback) {
                 };
 
                 if (i >= dnsRecords.length) { // create a new record
-                    debug(`upsert: Adding new record subdomain: ${subdomain}, zoneName: ${zoneName} proxied: false`);
+                    debug(`upsert: Adding new record fqdn: ${fqdn}, zoneName: ${zoneName} proxied: false`);
 
                     superagent.post(CLOUDFLARE_ENDPOINT + '/zones/' + zoneId + '/dns_records')
                         .set('X-Auth-Key', dnsConfig.token)
@@ -135,7 +135,7 @@ function upsert(dnsConfig, zoneName, subdomain, type, values, callback) {
                 } else { // replace existing record
                     data.proxied = dnsRecords[i].proxied; // preserve proxied parameter
 
-                    debug(`upsert: Updating existing record subdomain: ${subdomain}, zoneName: ${zoneName} proxied: ${data.proxied}`);
+                    debug(`upsert: Updating existing record fqdn: ${fqdn}, zoneName: ${zoneName} proxied: ${data.proxied}`);
 
                     superagent.put(CLOUDFLARE_ENDPOINT + '/zones/' + zoneId + '/dns_records/' + dnsRecords[i].id)
                         .set('X-Auth-Key', dnsConfig.token)
@@ -156,17 +156,20 @@ function upsert(dnsConfig, zoneName, subdomain, type, values, callback) {
     });
 }
 
-function get(dnsConfig, zoneName, subdomain, type, callback) {
-    assert.strictEqual(typeof dnsConfig, 'object');
-    assert.strictEqual(typeof zoneName, 'string');
-    assert.strictEqual(typeof subdomain, 'string');
+function get(domainObject, location, type, callback) {
+    assert.strictEqual(typeof domainObject, 'object');
+    assert.strictEqual(typeof location, 'string');
     assert.strictEqual(typeof type, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    getZoneByName(dnsConfig, zoneName, function(error, result){
+    const dnsConfig = domainObject.config,
+        zoneName = domainObject.zoneName,
+        fqdn = domains.fqdn(location, domainObject);
+
+    getZoneByName(dnsConfig, zoneName, function(error, zone) {
         if (error) return callback(error);
 
-        getDnsRecords(dnsConfig, result.id, zoneName, subdomain, type, function(error, result) {
+        getDnsRecords(dnsConfig, zone.id, fqdn, type, function (error, result) {
             if (error) return callback(error);
 
             var tmp = result.map(function (record) { return record.content; });
@@ -177,18 +180,21 @@ function get(dnsConfig, zoneName, subdomain, type, callback) {
     });
 }
 
-function del(dnsConfig, zoneName, subdomain, type, values, callback) {
-    assert.strictEqual(typeof dnsConfig, 'object');
-    assert.strictEqual(typeof zoneName, 'string');
-    assert.strictEqual(typeof subdomain, 'string');
+function del(domainObject, location, type, values, callback) {
+    assert.strictEqual(typeof domainObject, 'object');
+    assert.strictEqual(typeof location, 'string');
     assert.strictEqual(typeof type, 'string');
     assert(util.isArray(values));
     assert.strictEqual(typeof callback, 'function');
 
-    getZoneByName(dnsConfig, zoneName, function(error, result){
+    const dnsConfig = domainObject.config,
+        zoneName = domainObject.zoneName,
+        fqdn = domains.fqdn(location, domainObject);
+
+    getZoneByName(dnsConfig, zoneName, function(error, zone) {
         if (error) return callback(error);
 
-        getDnsRecords(dnsConfig, result.id, zoneName, subdomain, type, function(error, result) {
+        getDnsRecords(dnsConfig, zone.id, fqdn, type, function(error, result) {
             if (error) return callback(error);
             if (result.length === 0) return callback(null);
 
@@ -221,15 +227,30 @@ function del(dnsConfig, zoneName, subdomain, type, values, callback) {
     });
 }
 
-function verifyDnsConfig(dnsConfig, fqdn, zoneName, ip, callback) {
-    assert.strictEqual(typeof dnsConfig, 'object');
-    assert.strictEqual(typeof fqdn, 'string');
-    assert.strictEqual(typeof zoneName, 'string');
-    assert.strictEqual(typeof ip, 'string');
+function wait(domainObject, location, type, value, options, callback) {
+    assert.strictEqual(typeof domainObject, 'object');
+    assert.strictEqual(typeof location, 'string');
+    assert.strictEqual(typeof type, 'string');
+    assert.strictEqual(typeof value, 'string');
+    assert(options && typeof options === 'object'); // { interval: 5000, times: 50000 }
     assert.strictEqual(typeof callback, 'function');
+
+    const fqdn = domains.fqdn(location, domainObject);
+
+    waitForDns(fqdn, domainObject.zoneName, type, value, options, callback);
+}
+
+function verifyDnsConfig(domainObject, callback) {
+    assert.strictEqual(typeof domainObject, 'object');
+    assert.strictEqual(typeof callback, 'function');
+
+    const dnsConfig = domainObject.config,
+        zoneName = domainObject.zoneName;
 
     if (!dnsConfig.token || typeof dnsConfig.token !== 'string') return callback(new DomainsError(DomainsError.BAD_FIELD, 'token must be a non-empty string'));
     if (!dnsConfig.email || typeof dnsConfig.email !== 'string') return callback(new DomainsError(DomainsError.BAD_FIELD, 'email must be a non-empty string'));
+
+    const ip = '127.0.0.1';
 
     var credentials = {
         token: dnsConfig.token,
@@ -242,22 +263,22 @@ function verifyDnsConfig(dnsConfig, fqdn, zoneName, ip, callback) {
         if (error && error.code === 'ENOTFOUND') return callback(new DomainsError(DomainsError.BAD_FIELD, 'Unable to resolve nameservers for this domain'));
         if (error || !nameservers) return callback(new DomainsError(DomainsError.BAD_FIELD, error ? error.message : 'Unable to get nameservers'));
 
-        getZoneByName(dnsConfig, zoneName, function(error, result) {
+        getZoneByName(dnsConfig, zoneName, function(error, zone) {
             if (error) return callback(error);
 
-            if (!_.isEqual(result.name_servers.sort(), nameservers.sort())) {
-                debug('verifyDnsConfig: %j and %j do not match', nameservers, result.name_servers);
+            if (!_.isEqual(zone.name_servers.sort(), nameservers.sort())) {
+                debug('verifyDnsConfig: %j and %j do not match', nameservers, zone.name_servers);
                 return callback(new DomainsError(DomainsError.BAD_FIELD, 'Domain nameservers are not set to Cloudflare'));
             }
 
-            const testSubdomain = 'cloudrontestdns';
+            const location = 'cloudrontestdns';
 
-            upsert(credentials, zoneName, testSubdomain, 'A', [ ip ], function (error, changeId) {
+            upsert(domainObject, location, 'A', [ ip ], function (error) {
                 if (error) return callback(error);
 
-                debug('verifyDnsConfig: Test A record added with change id %s', changeId);
+                debug('verifyDnsConfig: Test A record added');
 
-                del(dnsConfig, zoneName, testSubdomain, 'A', [ ip ], function (error) {
+                del(domainObject, location, 'A', [ ip ], function (error) {
                     if (error) return callback(error);
 
                     debug('verifyDnsConfig: Test A record removed again');

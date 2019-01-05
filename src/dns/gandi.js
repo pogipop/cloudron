@@ -4,16 +4,18 @@ exports = module.exports = {
     upsert: upsert,
     get: get,
     del: del,
-    waitForDns: require('./waitfordns.js'),
+    wait: wait,
     verifyDnsConfig: verifyDnsConfig
 };
 
 var assert = require('assert'),
     debug = require('debug')('box:dns/gandi'),
     dns = require('../native-dns.js'),
+    domains = require('../domains.js'),
     DomainsError = require('../domains.js').DomainsError,
     superagent = require('superagent'),
-    util = require('util');
+    util = require('util'),
+    waitForDns = require('./waitfordns.js');
 
 var GANDI_API = 'https://dns.api.gandi.net/api/v5';
 
@@ -21,24 +23,25 @@ function formatError(response) {
     return util.format(`Gandi DNS error [${response.statusCode}] ${response.body.message}`);
 }
 
-function upsert(dnsConfig, zoneName, subdomain, type, values, callback) {
-    assert.strictEqual(typeof dnsConfig, 'object');
-    assert.strictEqual(typeof zoneName, 'string');
-    assert.strictEqual(typeof subdomain, 'string');
+function upsert(domainObject, location, type, values, callback) {
+    assert.strictEqual(typeof domainObject, 'object');
+    assert.strictEqual(typeof location, 'string');
     assert.strictEqual(typeof type, 'string');
     assert(util.isArray(values));
     assert.strictEqual(typeof callback, 'function');
 
-    subdomain = subdomain || '@';
+    const dnsConfig = domainObject.config,
+        zoneName = domainObject.zoneName,
+        name = domains.getName(domainObject, location, type) || '@';
 
-    debug(`upsert: ${subdomain} in zone ${zoneName} of type ${type} with values ${JSON.stringify(values)}`);
+    debug(`upsert: ${name} in zone ${zoneName} of type ${type} with values ${JSON.stringify(values)}`);
 
     var data = {
         'rrset_ttl': 300, // this is the minimum allowed
         'rrset_values': values // for mx records, value is already of the '<priority> <server>' format
     };
 
-    superagent.put(`${GANDI_API}/domains/${zoneName}/records/${subdomain}/${type}`)
+    superagent.put(`${GANDI_API}/domains/${zoneName}/records/${name}/${type}`)
         .set('X-Api-Key', dnsConfig.token)
         .timeout(30 * 1000)
         .send(data)
@@ -52,18 +55,19 @@ function upsert(dnsConfig, zoneName, subdomain, type, values, callback) {
         });
 }
 
-function get(dnsConfig, zoneName, subdomain, type, callback) {
-    assert.strictEqual(typeof dnsConfig, 'object');
-    assert.strictEqual(typeof zoneName, 'string');
-    assert.strictEqual(typeof subdomain, 'string');
+function get(domainObject, location, type, callback) {
+    assert.strictEqual(typeof domainObject, 'object');
+    assert.strictEqual(typeof location, 'string');
     assert.strictEqual(typeof type, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    subdomain = subdomain || '@';
+    const dnsConfig = domainObject.config,
+        zoneName = domainObject.zoneName,
+        name = domains.getName(domainObject, location, type) || '@';
 
-    debug(`get: ${subdomain} in zone ${zoneName} of type ${type}`);
+    debug(`get: ${name} in zone ${zoneName} of type ${type}`);
 
-    superagent.get(`${GANDI_API}/domains/${zoneName}/records/${subdomain}/${type}`)
+    superagent.get(`${GANDI_API}/domains/${zoneName}/records/${name}/${type}`)
         .set('X-Api-Key', dnsConfig.token)
         .timeout(30 * 1000)
         .end(function (error, result) {
@@ -78,19 +82,20 @@ function get(dnsConfig, zoneName, subdomain, type, callback) {
         });
 }
 
-function del(dnsConfig, zoneName, subdomain, type, values, callback) {
-    assert.strictEqual(typeof dnsConfig, 'object');
-    assert.strictEqual(typeof zoneName, 'string');
-    assert.strictEqual(typeof subdomain, 'string');
+function del(domainObject, location, type, values, callback) {
+    assert.strictEqual(typeof domainObject, 'object');
+    assert.strictEqual(typeof location, 'string');
     assert.strictEqual(typeof type, 'string');
     assert(util.isArray(values));
     assert.strictEqual(typeof callback, 'function');
 
-    subdomain = subdomain || '@';
+    const dnsConfig = domainObject.config,
+        zoneName = domainObject.zoneName,
+        name = domains.getName(domainObject, location, type) || '@';
 
-    debug(`del: ${subdomain} in zone ${zoneName} of type ${type} with values ${JSON.stringify(values)}`);
+    debug(`del: ${name} in zone ${zoneName} of type ${type} with values ${JSON.stringify(values)}`);
 
-    superagent.del(`${GANDI_API}/domains/${zoneName}/records/${subdomain}/${type}`)
+    superagent.del(`${GANDI_API}/domains/${zoneName}/records/${name}/${type}`)
         .set('X-Api-Key', dnsConfig.token)
         .timeout(30 * 1000)
         .end(function (error, result) {
@@ -105,18 +110,33 @@ function del(dnsConfig, zoneName, subdomain, type, values, callback) {
         });
 }
 
-function verifyDnsConfig(dnsConfig, fqdn, zoneName, ip, callback) {
-    assert.strictEqual(typeof dnsConfig, 'object');
-    assert.strictEqual(typeof fqdn, 'string');
-    assert.strictEqual(typeof zoneName, 'string');
-    assert.strictEqual(typeof ip, 'string');
+function wait(domainObject, location, type, value, options, callback) {
+    assert.strictEqual(typeof domainObject, 'object');
+    assert.strictEqual(typeof location, 'string');
+    assert.strictEqual(typeof type, 'string');
+    assert.strictEqual(typeof value, 'string');
+    assert(options && typeof options === 'object'); // { interval: 5000, times: 50000 }
     assert.strictEqual(typeof callback, 'function');
+
+    const fqdn = domains.fqdn(location, domainObject);
+
+    waitForDns(fqdn, domainObject.zoneName, type, value, options, callback);
+}
+
+function verifyDnsConfig(domainObject, callback) {
+    assert.strictEqual(typeof domainObject, 'object');
+    assert.strictEqual(typeof callback, 'function');
+
+    const dnsConfig = domainObject.config,
+        zoneName = domainObject.zoneName;
 
     if (!dnsConfig.token || typeof dnsConfig.token !== 'string') return callback(new DomainsError(DomainsError.BAD_FIELD, 'token must be a non-empty string'));
 
     var credentials = {
         token: dnsConfig.token
     };
+
+    const ip = '127.0.0.1';
 
     if (process.env.BOX_ENV === 'test') return callback(null, credentials); // this shouldn't be here
 
@@ -129,14 +149,14 @@ function verifyDnsConfig(dnsConfig, fqdn, zoneName, ip, callback) {
             return callback(new DomainsError(DomainsError.BAD_FIELD, 'Domain nameservers are not set to Gandi'));
         }
 
-        const testSubdomain = 'cloudrontestdns';
+        const location = 'cloudrontestdns';
 
-        upsert(credentials, zoneName, testSubdomain, 'A', [ ip ], function (error, changeId) {
+        upsert(domainObject, location, 'A', [ ip ], function (error) {
             if (error) return callback(error);
 
-            debug('verifyDnsConfig: Test A record added with change id %s', changeId);
+            debug('verifyDnsConfig: Test A record added');
 
-            del(dnsConfig, zoneName, testSubdomain, 'A', [ ip ], function (error) {
+            del(domainObject, location, 'A', [ ip ], function (error) {
                 if (error) return callback(error);
 
                 debug('verifyDnsConfig: Test A record removed again');

@@ -4,16 +4,18 @@ exports = module.exports = {
     upsert: upsert,
     get: get,
     del: del,
-    waitForDns: require('./waitfordns.js'),
+    wait: wait,
     verifyDnsConfig: verifyDnsConfig
 };
 
 var assert = require('assert'),
     debug = require('debug')('box:dns/godaddy'),
     dns = require('../native-dns.js'),
+    domains = require('../domains.js'),
     DomainsError = require('../domains.js').DomainsError,
     superagent = require('superagent'),
-    util = require('util');
+    util = require('util'),
+    waitForDns = require('./waitfordns.js');
 
 // const GODADDY_API_OTE = 'https://api.ote-godaddy.com/v1/domains';
 const GODADDY_API = 'https://api.godaddy.com/v1/domains';
@@ -27,17 +29,18 @@ function formatError(response) {
     return util.format(`GoDaddy DNS error [${response.statusCode}] ${response.body.message}`);
 }
 
-function upsert(dnsConfig, zoneName, subdomain, type, values, callback) {
-    assert.strictEqual(typeof dnsConfig, 'object');
-    assert.strictEqual(typeof zoneName, 'string');
-    assert.strictEqual(typeof subdomain, 'string');
+function upsert(domainObject, location, type, values, callback) {
+    assert.strictEqual(typeof domainObject, 'object');
+    assert.strictEqual(typeof location, 'string');
     assert.strictEqual(typeof type, 'string');
     assert(util.isArray(values));
     assert.strictEqual(typeof callback, 'function');
 
-    subdomain = subdomain || '@';
+    const dnsConfig = domainObject.config,
+        zoneName = domainObject.zoneName,
+        name = domains.getName(domainObject, location, type) || '@';
 
-    debug(`upsert: ${subdomain} in zone ${zoneName} of type ${type} with values ${JSON.stringify(values)}`);
+    debug(`upsert: ${name} in zone ${zoneName} of type ${type} with values ${JSON.stringify(values)}`);
 
     var records = [ ];
     values.forEach(function (value) {
@@ -53,7 +56,7 @@ function upsert(dnsConfig, zoneName, subdomain, type, values, callback) {
         records.push(record);
     });
 
-    superagent.put(`${GODADDY_API}/${zoneName}/records/${type}/${subdomain}`)
+    superagent.put(`${GODADDY_API}/${zoneName}/records/${type}/${name}`)
         .set('Authorization', `sso-key ${dnsConfig.apiKey}:${dnsConfig.apiSecret}`)
         .timeout(30 * 1000)
         .send(records)
@@ -68,18 +71,19 @@ function upsert(dnsConfig, zoneName, subdomain, type, values, callback) {
         });
 }
 
-function get(dnsConfig, zoneName, subdomain, type, callback) {
-    assert.strictEqual(typeof dnsConfig, 'object');
-    assert.strictEqual(typeof zoneName, 'string');
-    assert.strictEqual(typeof subdomain, 'string');
+function get(domainObject, location, type, callback) {
+    assert.strictEqual(typeof domainObject, 'object');
+    assert.strictEqual(typeof location, 'string');
     assert.strictEqual(typeof type, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    subdomain = subdomain || '@';
+    const dnsConfig = domainObject.config,
+        zoneName = domainObject.zoneName,
+        name = domains.getName(domainObject, location, type) || '@';
 
-    debug(`get: ${subdomain} in zone ${zoneName} of type ${type}`);
+    debug(`get: ${name} in zone ${zoneName} of type ${type}`);
 
-    superagent.get(`${GODADDY_API}/${zoneName}/records/${type}/${subdomain}`)
+    superagent.get(`${GODADDY_API}/${zoneName}/records/${type}/${name}`)
         .set('Authorization', `sso-key ${dnsConfig.apiKey}:${dnsConfig.apiSecret}`)
         .timeout(30 * 1000)
         .end(function (error, result) {
@@ -98,22 +102,23 @@ function get(dnsConfig, zoneName, subdomain, type, callback) {
         });
 }
 
-function del(dnsConfig, zoneName, subdomain, type, values, callback) {
-    assert.strictEqual(typeof dnsConfig, 'object');
-    assert.strictEqual(typeof zoneName, 'string');
-    assert.strictEqual(typeof subdomain, 'string');
+function del(domainObject, location, type, values, callback) {
+    assert.strictEqual(typeof domainObject, 'object');
+    assert.strictEqual(typeof location, 'string');
     assert.strictEqual(typeof type, 'string');
     assert(util.isArray(values));
     assert.strictEqual(typeof callback, 'function');
 
-    subdomain = subdomain || '@';
+    const dnsConfig = domainObject.config,
+        zoneName = domainObject.zoneName,
+        name = domains.getName(domainObject, location, type) || '@';
 
-    debug(`get: ${subdomain} in zone ${zoneName} of type ${type} with values ${JSON.stringify(values)}`);
+    debug(`get: ${name} in zone ${zoneName} of type ${type} with values ${JSON.stringify(values)}`);
 
     if (type !== 'A' && type !== 'TXT') return callback(new DomainsError(DomainsError.EXTERNAL_ERROR, new Error('Record deletion is not supported by GoDaddy API')));
 
     // check if the record exists at all so that we don't insert the "Dead" record for no reason
-    get(dnsConfig, zoneName, subdomain, type, function (error, values) {
+    get(domainObject, location, type, function (error, values) {
         if (error) return callback(error);
         if (values.length === 0) return callback();
 
@@ -123,7 +128,7 @@ function del(dnsConfig, zoneName, subdomain, type, values, callback) {
             data: type === 'A' ? GODADDY_INVALID_IP : GODADDY_INVALID_TXT
         }];
 
-        superagent.put(`${GODADDY_API}/${zoneName}/records/${type}/${subdomain}`)
+        superagent.put(`${GODADDY_API}/${zoneName}/records/${type}/${name}`)
             .set('Authorization', `sso-key ${dnsConfig.apiKey}:${dnsConfig.apiSecret}`)
             .send(records)
             .timeout(30 * 1000)
@@ -140,15 +145,30 @@ function del(dnsConfig, zoneName, subdomain, type, values, callback) {
     });
 }
 
-function verifyDnsConfig(dnsConfig, fqdn, zoneName, ip, callback) {
-    assert.strictEqual(typeof dnsConfig, 'object');
-    assert.strictEqual(typeof fqdn, 'string');
-    assert.strictEqual(typeof zoneName, 'string');
-    assert.strictEqual(typeof ip, 'string');
+function wait(domainObject, location, type, value, options, callback) {
+    assert.strictEqual(typeof domainObject, 'object');
+    assert.strictEqual(typeof location, 'string');
+    assert.strictEqual(typeof type, 'string');
+    assert.strictEqual(typeof value, 'string');
+    assert(options && typeof options === 'object'); // { interval: 5000, times: 50000 }
     assert.strictEqual(typeof callback, 'function');
+
+    const fqdn = domains.fqdn(location, domainObject);
+
+    waitForDns(fqdn, domainObject.zoneName, type, value, options, callback);
+}
+
+function verifyDnsConfig(domainObject, callback) {
+    assert.strictEqual(typeof domainObject, 'object');
+    assert.strictEqual(typeof callback, 'function');
+
+    const dnsConfig = domainObject.config,
+        zoneName = domainObject.zoneName;
 
     if (!dnsConfig.apiKey || typeof dnsConfig.apiKey !== 'string') return callback(new DomainsError(DomainsError.BAD_FIELD, 'apiKey must be a non-empty string'));
     if (!dnsConfig.apiSecret || typeof dnsConfig.apiSecret !== 'string') return callback(new DomainsError(DomainsError.BAD_FIELD, 'apiSecret must be a non-empty string'));
+
+    const ip = '127.0.0.1';
 
     var credentials = {
         apiKey: dnsConfig.apiKey,
@@ -166,14 +186,14 @@ function verifyDnsConfig(dnsConfig, fqdn, zoneName, ip, callback) {
             return callback(new DomainsError(DomainsError.BAD_FIELD, 'Domain nameservers are not set to GoDaddy'));
         }
 
-        const testSubdomain = 'cloudrontestdns';
+        const location = 'cloudrontestdns';
 
-        upsert(credentials, zoneName, testSubdomain, 'A', [ ip ], function (error, changeId) {
+        upsert(domainObject, location, 'A', [ ip ], function (error) {
             if (error) return callback(error);
 
-            debug('verifyDnsConfig: Test A record added with change id %s', changeId);
+            debug('verifyDnsConfig: Test A record added');
 
-            del(dnsConfig, zoneName, testSubdomain, 'A', [ ip ], function (error) {
+            del(domainObject, location, 'A', [ ip ], function (error) {
                 if (error) return callback(error);
 
                 debug('verifyDnsConfig: Test A record removed again');

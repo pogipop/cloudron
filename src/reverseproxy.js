@@ -168,7 +168,7 @@ function validateCertificate(location, domainObject, certificate) {
     if (cert && !key) return new ReverseProxyError(ReverseProxyError.INVALID_CERT, 'missing key');
 
     // -checkhost checks for SAN or CN exclusively. SAN takes precedence and if present, ignores the CN.
-    const fqdn = domains.fqdn(location, domainObject.domain, domainObject.config);
+    const fqdn = domains.fqdn(location, domainObject);
 
     var result = safe.child_process.execSync(`openssl x509 -noout -checkhost "${fqdn}"`, { encoding: 'utf8', input: cert });
     if (result === null) return new ReverseProxyError(ReverseProxyError.INVALID_CERT, 'Unable to get certificate subject:' + safe.error.message);
@@ -278,7 +278,7 @@ function setAppCertificateSync(location, domainObject, certificate) {
     assert.strictEqual(typeof domainObject, 'object');
     assert.strictEqual(typeof certificate, 'object');
 
-    let fqdn = domains.fqdn(location, domainObject.domain, domainObject.config);
+    let fqdn = domains.fqdn(location, domainObject);
     if (certificate.cert && certificate.key) {
         if (!safe.fs.writeFileSync(path.join(paths.APP_CERTS_DIR, `${fqdn}.user.cert`), certificate.cert)) return safe.error;
         if (!safe.fs.writeFileSync(path.join(paths.APP_CERTS_DIR, `${fqdn}.user.key`), certificate.key)) return safe.error;
@@ -412,7 +412,7 @@ function configureAdmin(domain, auditSource, callback) {
     domains.get(domain, function (error, domainObject) {
         if (error) return callback(error);
 
-        const adminFqdn = domains.fqdn(constants.ADMIN_LOCATION, domainObject.domain, domainObject.config);
+        const adminFqdn = domains.fqdn(constants.ADMIN_LOCATION, domainObject);
 
         ensureCertificate(adminFqdn, domainObject.domain, auditSource, function (error, bundle) {
             if (error) return callback(error);
@@ -429,7 +429,7 @@ function writeAdminConfig(domain, callback) {
     domains.get(domain, function (error, domainObject) {
         if (error) return callback(error);
 
-        const adminFqdn = domains.fqdn(constants.ADMIN_LOCATION, domainObject.domain, domainObject.config);
+        const adminFqdn = domains.fqdn(constants.ADMIN_LOCATION, domainObject);
 
         getCertificate(adminFqdn, domainObject.domain, function (error, bundle) {
             if (error) return callback(error);

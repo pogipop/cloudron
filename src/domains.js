@@ -10,6 +10,7 @@ module.exports = exports = {
     isLocked: isLocked,
 
     fqdn: fqdn,
+    getName: getName,
 
     getDnsRecords: getDnsRecords,
     upsertDnsRecords: upsertDnsRecords,
@@ -28,10 +29,7 @@ module.exports = exports = {
 
     prepareDashboardDomain: prepareDashboardDomain,
 
-    DomainsError: DomainsError,
-
-    // exported for testing
-    _getName: getName
+    DomainsError: DomainsError
 };
 
 var assert = require('assert'),
@@ -105,18 +103,18 @@ function parentDomain(domain) {
     return domain.replace(/^\S+?\./, ''); // +? means non-greedy
 }
 
-function verifyDnsConfig(dnsConfig, domain, zoneName, provider, ip, callback) {
+function verifyDnsConfig(dnsConfig, domain, zoneName, provider, callback) {
     assert(dnsConfig && typeof dnsConfig === 'object'); // the dns config to test with
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof zoneName, 'string');
     assert.strictEqual(typeof provider, 'string');
-    assert.strictEqual(typeof ip, 'string');
     assert.strictEqual(typeof callback, 'function');
 
     var backend = api(provider);
     if (!backend) return callback(new DomainsError(DomainsError.BAD_FIELD, 'Invalid provider'));
 
-    api(provider).verifyDnsConfig(dnsConfig, domain, zoneName, ip, function (error, result) {
+    const domainObject = { config: dnsConfig, domain: domain, zoneName: zoneName };
+    api(provider).verifyDnsConfig(domainObject, function (error, result) {
         if (error && error.reason === DomainsError.ACCESS_DENIED) return callback(new DomainsError(DomainsError.BAD_FIELD, 'Incorrect configuration. Access denied'));
         if (error && error.reason === DomainsError.NOT_FOUND) return callback(new DomainsError(DomainsError.BAD_FIELD, 'Zone not found'));
         if (error && error.reason === DomainsError.EXTERNAL_ERROR) return callback(new DomainsError(DomainsError.BAD_FIELD, 'Configuration error: ' + error.message));
@@ -130,12 +128,8 @@ function verifyDnsConfig(dnsConfig, domain, zoneName, provider, ip, callback) {
     });
 }
 
-function fqdn(location, domain, dnsConfig) {
-    assert.strictEqual(typeof location, 'string');
-    assert.strictEqual(typeof domain, 'string');
-    assert.strictEqual(typeof dnsConfig, 'object');
-
-    return location + (location ? (dnsConfig.hyphenatedSubdomains ? '-' : '.') : '') + domain;
+function fqdn(location, domainObject) {
+    return location + (location ? (domainObject.config.hyphenatedSubdomains ? '-' : '.') : '') + domainObject.domain;
 }
 
 // Hostname validation comes from RFC 1123 (section 2.1)
@@ -146,7 +140,7 @@ function validateHostname(location, domainObject) {
     assert.strictEqual(typeof location, 'string');
     assert.strictEqual(typeof domainObject, 'object');
 
-    const hostname = fqdn(location, domainObject.domain, domainObject.config);
+    const hostname = fqdn(location, domainObject);
 
     const RESERVED_LOCATIONS = [
         constants.API_LOCATION,
@@ -231,23 +225,19 @@ function add(domain, data, auditSource, callback) {
     let error = validateTlsConfig(tlsConfig, provider);
     if (error) return callback(error);
 
-    sysinfo.getPublicIp(function (error, ip) {
-        if (error) return callback(new DomainsError(DomainsError.INTERNAL_ERROR, 'Error getting IP:' + error.message));
+    verifyDnsConfig(config, domain, zoneName, provider, function (error, sanitizedConfig) {
+        if (error) return callback(error);
 
-        verifyDnsConfig(config, domain, zoneName, provider, ip, function (error, sanitizedConfig) {
-            if (error) return callback(error);
+        domaindb.add(domain, { zoneName: zoneName, provider: provider, config: sanitizedConfig, tlsConfig: tlsConfig }, function (error) {
+            if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(new DomainsError(DomainsError.ALREADY_EXISTS));
+            if (error) return callback(new DomainsError(DomainsError.INTERNAL_ERROR, error));
 
-            domaindb.add(domain, { zoneName: zoneName, provider: provider, config: sanitizedConfig, tlsConfig: tlsConfig }, function (error) {
-                if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(new DomainsError(DomainsError.ALREADY_EXISTS));
+            reverseProxy.setFallbackCertificate(domain, fallbackCertificate, function (error) {
                 if (error) return callback(new DomainsError(DomainsError.INTERNAL_ERROR, error));
 
-                reverseProxy.setFallbackCertificate(domain, fallbackCertificate, function (error) {
-                    if (error) return callback(new DomainsError(DomainsError.INTERNAL_ERROR, error));
+                eventlog.add(eventlog.ACTION_DOMAIN_ADD, auditSource, { domain, zoneName, provider });
 
-                    eventlog.add(eventlog.ACTION_DOMAIN_ADD, auditSource, { domain, zoneName, provider });
-
-                    callback();
-                });
+                callback();
             });
         });
     });
@@ -325,25 +315,21 @@ function update(domain, data, auditSource, callback) {
         error = validateTlsConfig(tlsConfig, provider);
         if (error) return callback(error);
 
-        sysinfo.getPublicIp(function (error, ip) {
-            if (error) return callback(new DomainsError(DomainsError.INTERNAL_ERROR, 'Error getting IP:' + error.message));
+        verifyDnsConfig(config, domain, zoneName, provider, function (error, sanitizedConfig) {
+            if (error) return callback(error);
 
-            verifyDnsConfig(config, domain, zoneName, provider, ip, function (error, sanitizedConfig) {
-                if (error) return callback(error);
+            domaindb.update(domain, { zoneName: zoneName, provider: provider, config: sanitizedConfig, tlsConfig: tlsConfig }, function (error) {
+                if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new DomainsError(DomainsError.NOT_FOUND));
+                if (error) return callback(new DomainsError(DomainsError.INTERNAL_ERROR, error));
 
-                domaindb.update(domain, { zoneName: zoneName, provider: provider, config: sanitizedConfig, tlsConfig: tlsConfig }, function (error) {
-                    if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new DomainsError(DomainsError.NOT_FOUND));
+                if (!fallbackCertificate) return callback();
+
+                reverseProxy.setFallbackCertificate(domain, fallbackCertificate, function (error) {
                     if (error) return callback(new DomainsError(DomainsError.INTERNAL_ERROR, error));
 
-                    if (!fallbackCertificate) return callback();
+                    eventlog.add(eventlog.ACTION_DOMAIN_UPDATE, auditSource, { domain, zoneName, provider });
 
-                    reverseProxy.setFallbackCertificate(domain, fallbackCertificate, function (error) {
-                        if (error) return callback(new DomainsError(DomainsError.INTERNAL_ERROR, error));
-
-                        eventlog.add(eventlog.ACTION_DOMAIN_UPDATE, auditSource, { domain, zoneName, provider });
-
-                        callback();
-                    });
+                    callback();
                 });
             });
         });
@@ -379,39 +365,36 @@ function clear(callback) {
 }
 
 // returns the 'name' that needs to be inserted into zone
-function getName(domain, subdomain, type) {
-    // hack for supporting special caas domains. if we want to remove this, we have to fix the appstore domain API first
-    if (domain.provider === 'caas') return subdomain;
-
+function getName(domain, location, type) {
     const part = domain.domain.slice(0, -domain.zoneName.length - 1);
 
-    if (subdomain === '') return part;
+    if (location === '') return part;
 
-    if (!domain.config.hyphenatedSubdomains) return part ? `${subdomain}.${part}` : subdomain;
+    if (!domain.config.hyphenatedSubdomains) return part ? `${location}.${part}` : location;
 
     // hyphenatedSubdomains
-    if (type !== 'TXT') return `${subdomain}-${part}`;
+    if (type !== 'TXT') return `${location}-${part}`;
 
-    if (subdomain.startsWith('_acme-challenge.')) {
-        return `${subdomain}-${part}`;
-    } else if (subdomain === '_acme-challenge') {
+    if (location.startsWith('_acme-challenge.')) {
+        return `${location}-${part}`;
+    } else if (location === '_acme-challenge') {
         const up = part.replace(/^[^.]*\.?/, ''); // this gets the domain one level up
-        return up ? `${subdomain}.${up}` : subdomain;
+        return up ? `${location}.${up}` : location;
     } else {
-        return `${subdomain}.${part}`;
+        return `${location}.${part}`;
     }
 }
 
-function getDnsRecords(subdomain, domain, type, callback) {
-    assert.strictEqual(typeof subdomain, 'string');
+function getDnsRecords(location, domain, type, callback) {
+    assert.strictEqual(typeof location, 'string');
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof type, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    get(domain, function (error, result) {
+    get(domain, function (error, domainObject) {
         if (error) return callback(new DomainsError(DomainsError.INTERNAL_ERROR, error));
 
-        api(result.provider).get(result.config, result.zoneName, getName(result, subdomain, type), type, function (error, values) {
+        api(domainObject.provider).get(domainObject, location, type, function (error, values) {
             if (error) return callback(error);
 
             callback(null, values);
@@ -420,19 +403,19 @@ function getDnsRecords(subdomain, domain, type, callback) {
 }
 
 // note: for TXT records the values must be quoted
-function upsertDnsRecords(subdomain, domain, type, values, callback) {
-    assert.strictEqual(typeof subdomain, 'string');
+function upsertDnsRecords(location, domain, type, values, callback) {
+    assert.strictEqual(typeof location, 'string');
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof type, 'string');
     assert(util.isArray(values));
     assert.strictEqual(typeof callback, 'function');
 
-    debug('upsertDNSRecord: %s on %s type %s values', subdomain, domain, type, values);
+    debug('upsertDNSRecord: %s on %s type %s values', location, domain, type, values);
 
-    get(domain, function (error, result) {
+    get(domain, function (error, domainObject) {
         if (error) return callback(new DomainsError(DomainsError.INTERNAL_ERROR, error));
 
-        api(result.provider).upsert(result.config, result.zoneName, getName(result, subdomain, type), type, values, function (error) {
+        api(domainObject.provider).upsert(domainObject, location, type, values, function (error) {
             if (error) return callback(error);
 
             callback(null);
@@ -440,19 +423,19 @@ function upsertDnsRecords(subdomain, domain, type, values, callback) {
     });
 }
 
-function removeDnsRecords(subdomain, domain, type, values, callback) {
-    assert.strictEqual(typeof subdomain, 'string');
+function removeDnsRecords(location, domain, type, values, callback) {
+    assert.strictEqual(typeof location, 'string');
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof type, 'string');
     assert(util.isArray(values));
     assert.strictEqual(typeof callback, 'function');
 
-    debug('removeDNSRecord: %s on %s type %s values', subdomain, domain, type, values);
+    debug('removeDNSRecord: %s on %s type %s values', location, domain, type, values);
 
-    get(domain, function (error, result) {
+    get(domain, function (error, domainObject) {
         if (error) return callback(error);
 
-        api(result.provider).del(result.config, result.zoneName, getName(result, subdomain, type), type, values, function (error) {
+        api(domainObject.provider).del(domainObject, location, type, values, function (error) {
             if (error && error.reason !== DomainsError.NOT_FOUND) return callback(error);
 
             callback(null);
@@ -460,8 +443,8 @@ function removeDnsRecords(subdomain, domain, type, values, callback) {
     });
 }
 
-function waitForDnsRecord(subdomain, domain, type, value, options, callback) {
-    assert.strictEqual(typeof subdomain, 'string');
+function waitForDnsRecord(location, domain, type, value, options, callback) {
+    assert.strictEqual(typeof location, 'string');
     assert.strictEqual(typeof domain, 'string');
     assert(type === 'A' || type === 'TXT');
     assert.strictEqual(typeof value, 'string');
@@ -471,9 +454,7 @@ function waitForDnsRecord(subdomain, domain, type, value, options, callback) {
     get(domain, function (error, domainObject) {
         if (error) return callback(error);
 
-        const hostname = fqdn(subdomain, domainObject.domain, domainObject.config);
-
-        api(domainObject.provider).waitForDns(hostname, domainObject.zoneName, type, value, options, callback);
+        api(domainObject.provider).wait(domainObject, location, type, value, options, callback);
     });
 }
 
@@ -520,7 +501,7 @@ function prepareDashboardDomain(domain, auditSource, progressCallback, callback)
                 (done) => { progressCallback({ percent: 40, message: 'Waiting for DNS' }); done(); },
                 waitForDnsRecord.bind(null, constants.ADMIN_LOCATION, domain, 'A', ip, { interval: 30000, times: 50000 }),
                 (done) => { progressCallback({ percent: 70, message: 'Getting certificate' }); done(); },
-                reverseProxy.ensureCertificate.bind(null, fqdn(constants.ADMIN_LOCATION, domainObject.domain, domainObject.config), domain, auditSource)
+                reverseProxy.ensureCertificate.bind(null, fqdn(constants.ADMIN_LOCATION, domainObject), domain, auditSource)
             ], function (error) {
                 if (error) return callback(error);
 
