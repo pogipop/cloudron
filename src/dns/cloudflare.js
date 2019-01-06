@@ -235,9 +235,28 @@ function wait(domainObject, location, type, value, options, callback) {
     assert(options && typeof options === 'object'); // { interval: 5000, times: 50000 }
     assert.strictEqual(typeof callback, 'function');
 
-    const fqdn = domains.fqdn(location, domainObject);
+    const dnsConfig = domainObject.config,
+        zoneName = domainObject.zoneName,
+        fqdn = domains.fqdn(location, domainObject);
 
-    waitForDns(fqdn, domainObject.zoneName, type, value, options, callback);
+    debug('wait: %s for zone %s of type %s', fqdn, zoneName, type);
+
+    getZoneByName(dnsConfig, zoneName, function(error, result) {
+        if (error) return callback(error);
+
+        let zoneId = result.id;
+
+        getDnsRecords(dnsConfig, zoneId, fqdn, type, function (error, dnsRecords) {
+            if (error) return callback(error);
+            if (dnsRecords.length === 0) return callback(new DomainsError(DomainsError.NOT_FOUND, 'Domain not found'));
+
+            if (!dnsRecords[0].proxied) return waitForDns(fqdn, domainObject.zoneName, type, value, options, callback);
+
+            debug('wait: skipping wait of proxied domain');
+
+            callback(null); // maybe we can check for dns to be cloudflare IPs? https://api.cloudflare.com/#cloudflare-ips-cloudflare-ip-details
+        });
+    });
 }
 
 function verifyDnsConfig(domainObject, callback) {
