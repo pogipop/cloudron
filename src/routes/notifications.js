@@ -41,9 +41,11 @@ function list(req, res, next) {
     var perPage = typeof req.query.per_page !== 'undefined'? parseInt(req.query.per_page) : 25;
     if (!perPage || perPage < 0) return next(new HttpError(400, 'per_page query param has to be a postive number'));
 
-    if (req.query.acknowledged && typeof req.query.acknowledged !== 'boolean') return next(new HttpError(400, 'acknowledged must be a boolean'));
+    var acknowledged = null;
+    if (req.query.acknowledged && !(req.query.acknowledged === 'true' || req.query.acknowledged === 'false')) return next(new HttpError(400, 'acknowledged must be a true or false'));
+    else acknowledged = req.query.acknowledged === 'true' ? true : false;
 
-    notifications.getAllPaged(req.user.id, typeof req.query.acknowledged === 'undefined' ? null : !!req.query.acknowledged, page, perPage, function (error, result) {
+    notifications.getAllPaged(req.user.id, acknowledged, page, perPage, function (error, result) {
         if (error) return next(new HttpError(500, error));
 
         next(new HttpSuccess(200, { notifications: result }));
