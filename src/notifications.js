@@ -113,20 +113,27 @@ function getAllPaged(userId, acknowledged, page, perPage, callback) {
     });
 }
 
+// Calls iterator with (admin, callback)
+function actionForAllAdmins(iterator, callback) {
+    assert.strictEqual(typeof iterator, 'function');
+    assert.strictEqual(typeof callback, 'function');
+
+    users.getAllAdmins(function (error, result) {
+        if (error) return callback(new NotificationsError(NotificationsError.INTERNAL_ERROR, error));
+        async.each(result, iterator, callback);
+    });
+}
+
 function userAdded(user, callback) {
     assert.strictEqual(typeof user, 'object');
     assert(typeof callback === 'undefined' || typeof callback === 'function');
 
     callback = callback || NOOP_CALLBACK;
 
-    users.getAllAdmins(function (error, result) {
-        if (error) return callback(new NotificationsError(NotificationsError.INTERNAL_ERROR, error));
-
-        async.each(result, function (admin, callback) {
-            mailer.userAdded(admin.email, user);
-            add(admin.id, 'User added', `User ${user.fallbackEmail} was added`, '', callback);
-        }, callback);
-    });
+    actionForAllAdmins(function (admin, callback) {
+        mailer.userAdded(admin.email, user);
+        add(admin.id, 'User added', `User ${user.fallbackEmail} was added`, '', callback);
+    }, callback);
 }
 
 function oomEvent(program, context, callback) {
@@ -136,14 +143,10 @@ function oomEvent(program, context, callback) {
 
     callback = callback || NOOP_CALLBACK;
 
-    users.getAllAdmins(function (error, result) {
-        if (error) return callback(new NotificationsError(NotificationsError.INTERNAL_ERROR, error));
-
-        async.each(result, function (admin, callback) {
-            mailer.oomEvent(program, context);
-            add(admin.id, 'Process died out-of-memory', context, '', callback);
-        }, callback);
-    });
+    actionForAllAdmins(function (admin, callback) {
+        mailer.oomEvent(program, context);
+        add(admin.id, 'Process died out-of-memory', context, '', callback);
+    }, callback);
 }
 
 function appDied(app, callback) {
@@ -152,12 +155,8 @@ function appDied(app, callback) {
 
     callback = callback || NOOP_CALLBACK;
 
-    users.getAllAdmins(function (error, result) {
-        if (error) return callback(new NotificationsError(NotificationsError.INTERNAL_ERROR, error));
-
-        async.each(result, function (admin, callback) {
-            mailer.appDied(app);
-            add(admin.id, `App ${app.fqdn} died`, `The application ${app.manifest.title} installed at ${app.fqdn} is not responding.`, '', callback);
-        }, callback);
-    });
+    actionForAllAdmins(function (admin, callback) {
+        mailer.appDied(app);
+        add(admin.id, `App ${app.fqdn} died`, `The application ${app.manifest.title} installed at ${app.fqdn} is not responding.`, '', callback);
+    }, callback);
 }
