@@ -8,6 +8,7 @@ var appdb = require('./appdb.js'),
     debug = require('debug')('box:apphealthmonitor'),
     docker = require('./docker.js').connection,
     mailer = require('./mailer.js'),
+    notifications = require('./notifications.js'),
     superagent = require('superagent'),
     util = require('util');
 
@@ -144,7 +145,7 @@ function processDockerEvents(intervalSecs, callback) {
 
                 // do not send mails for dev apps
                 if (notifyUser) {
-                    mailer.oomEvent(program, context); // app can be null if it's an addon crash
+                    notifications.oomEvent(program, context); // app can be null if it's an addon crash
                     gLastOomMailTime = now;
                 }
             });
