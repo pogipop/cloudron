@@ -141,7 +141,7 @@ function oomEvent(program, context, callback) {
 
         async.each(result, function (admin, callback) {
             mailer.oomEvent(program, context);
-            add(admin.id, program, context, '', callback);
+            add(admin.id, 'Process died out-of-memory', context, '', callback);
         }, callback);
     });
 }
