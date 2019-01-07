@@ -10,7 +10,8 @@ exports = module.exports = {
 
     // specialized notifications
     userAdded: userAdded,
-    oomEvent: oomEvent
+    oomEvent: oomEvent,
+    appDied: appDied
 };
 
 var assert = require('assert'),
@@ -141,6 +142,22 @@ function oomEvent(program, context, callback) {
         async.each(result, function (admin, callback) {
             mailer.oomEvent(program, context);
             add(admin.id, program, context, '', callback);
+        }, callback);
+    });
+}
+
+function appDied(app, callback) {
+    assert.strictEqual(typeof app, 'object');
+    assert(typeof callback === 'undefined' || typeof callback === 'function');
+
+    callback = callback || NOOP_CALLBACK;
+
+    users.getAllAdmins(function (error, result) {
+        if (error) return callback(new NotificationsError(NotificationsError.INTERNAL_ERROR, error));
+
+        async.each(result, function (admin, callback) {
+            mailer.appDied(app);
+            add(admin.id, `App ${app.fqdn} died`, `The application ${app.manifest.title} installed at ${app.fqdn} is not responding.`, '', callback);
         }, callback);
     });
 }
