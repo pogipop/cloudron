@@ -369,24 +369,25 @@ function getServiceLogs(serviceName, options, callback) {
     assert(options && typeof options === 'object');
     assert.strictEqual(typeof callback, 'function');
 
+    assert.strictEqual(typeof options.lines, 'number');
+    assert.strictEqual(typeof options.format, 'string');
+    assert.strictEqual(typeof options.follow, 'boolean');
+
     if (!KNOWN_SERVICES[serviceName]) return callback(new AddonsError(AddonsError.NOT_FOUND));
 
     debug(`Getting logs for ${serviceName}`);
 
-    var lines = options.lines || 100,
+    var lines = options.lines,
         format = options.format || 'json',
-        follow = !!options.follow;
+        follow = options.follow;
 
-    assert.strictEqual(typeof lines, 'number');
-    assert.strictEqual(typeof format, 'string');
-
-    var cmd;
-    var args = [ '--lines=' + lines ];
+    let cmd, args = [];
 
     // docker and unbound use journald
     if (serviceName === 'docker' || serviceName === 'unbound') {
         cmd = 'journalctl';
 
+        args.push('--lines=' + (lines === -1 ? 'all' : lines));
         args.push(`--unit=${serviceName}`);
         args.push('--no-pager');
         args.push('--output=short-iso');
@@ -395,6 +396,7 @@ function getServiceLogs(serviceName, options, callback) {
     } else {
         cmd = '/usr/bin/tail';
 
+        args.push('--lines=' + (lines === -1 ? '+1' : lines));
         if (follow) args.push('--follow', '--retry', '--quiet'); // same as -F. to make it work if file doesn't exist, --quiet to not output file headers, which are no logs
         args.push(path.join(paths.LOG_DIR, serviceName, 'app.log'));
     }

@@ -175,11 +175,15 @@ function getLogs(taskId, options, callback) {
     assert(options && typeof options === 'object');
     assert.strictEqual(typeof callback, 'function');
 
+    assert.strictEqual(typeof options.lines, 'number');
+    assert.strictEqual(typeof options.format, 'string');
+    assert.strictEqual(typeof options.follow, 'boolean');
+
     debug(`Getting logs for ${taskId}`);
 
-    var lines = options.lines || 100,
+    var lines = options.lines === -1 ? '+1' : options.lines,
         format = options.format || 'json',
-        follow = !!options.follow;
+        follow = options.follow;
 
     assert.strictEqual(typeof lines, 'number');
     assert.strictEqual(typeof format, 'string');

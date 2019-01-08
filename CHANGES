@@ -1509,6 +1509,7 @@
 * Add UI to switch dashboard domain
 * Fix remote support button to not remove misparsed ssh keys
 * cloudflare: preseve domain proxying status
-* Fix issue where oom killer might kill the box code
+* Fix issue where oom killer might kill the box code or the updater
 * Add contabo and netcup as supported providers
+* Allow full logs to be downloaded
 

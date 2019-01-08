@@ -228,15 +228,13 @@ function getLogs(unit, options, callback) {
     assert(options && typeof options === 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    var lines = options.lines || 100,
+    assert.strictEqual(typeof options.lines, 'number');
+    assert.strictEqual(typeof options.format, 'string');
+    assert.strictEqual(typeof options.follow, 'boolean');
+
+    var lines = options.lines === -1 ? '+1' : options.lines,
         format = options.format || 'json',
-        follow = !!options.follow;
-
-    assert.strictEqual(typeof lines, 'number');
-    assert.strictEqual(typeof format, 'string');
-
-    assert.strictEqual(typeof lines, 'number');
-    assert.strictEqual(typeof format, 'string');
+        follow = options.follow;
 
     debug('Getting logs for %s as %s', unit, format);
 

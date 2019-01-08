@@ -90,13 +90,13 @@ function checkForUpdates(req, res, next) {
 function getLogs(req, res, next) {
     assert.strictEqual(typeof req.params.unit, 'string');
 
-    var lines = req.query.lines ? parseInt(req.query.lines, 10) : 100;
+    var lines = 'lines' in req.query ? parseInt(req.query.lines, 10) : 10; // we ignore last-event-id
     if (isNaN(lines)) return next(new HttpError(400, 'lines must be a number'));
 
     var options = {
         lines: lines,
         follow: false,
-        format: req.query.format
+        format: req.query.format || 'json'
     };
 
     cloudron.getLogs(req.params.unit, options, function (error, logStream) {
@@ -116,7 +116,7 @@ function getLogs(req, res, next) {
 function getLogStream(req, res, next) {
     assert.strictEqual(typeof req.params.unit, 'string');
 
-    var lines = req.query.lines ? parseInt(req.query.lines, 10) : -10; // we ignore last-event-id
+    var lines = 'lines' in req.query ? parseInt(req.query.lines, 10) : 10; // we ignore last-event-id
     if (isNaN(lines)) return next(new HttpError(400, 'lines must be a valid number'));
 
     function sse(id, data) { return 'id: ' + id + '\ndata: ' + data + '\n\n'; }
@@ -126,7 +126,7 @@ function getLogStream(req, res, next) {
     var options = {
         lines: lines,
         follow: true,
-        format: req.query.format
+        format: req.query.format || 'json'
     };
 
     cloudron.getLogs(req.params.unit, options, function (error, logStream) {
