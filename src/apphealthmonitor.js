@@ -133,18 +133,16 @@ function processDockerEvents(intervalSecs, callback) {
         stream.on('data', function (data) {
             var ev = JSON.parse(data);
             appdb.getByContainerId(ev.id, function (error, app) { // this can error for addons
-                var program = error || !app.appStoreId ? ev.id : app.appStoreId;
-                var context = JSON.stringify(ev);
+                var program = error || !app.id ? ev.id : `app-${app.id}`;
                 var now = Date.now();
-                if (app) context = context + '\n\n' + JSON.stringify(app, null, 4) + '\n';
 
                 const notifyUser = (!app || !app.debugMode) && (now - gLastOomMailTime > OOM_MAIL_LIMIT);
 
-                debug('OOM Context: %s. notifyUser: %s. lastOomTime: %s (now: %s)', context, notifyUser, gLastOomMailTime, now);
+                debug('OOM %s notifyUser: %s. lastOomTime: %s (now: %s)', program, notifyUser, gLastOomMailTime, now, ev);
 
                 // do not send mails for dev apps
                 if (notifyUser) {
-                    notifications.oomEvent(program, context); // app can be null if it's an addon crash
+                    notifications.oomEvent(program, { app: app || null, details: ev }); // app can be null if it's an addon crash
                     gLastOomMailTime = now;
                 }
             });

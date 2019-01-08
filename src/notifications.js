@@ -138,14 +138,19 @@ function userAdded(user, callback) {
 
 function oomEvent(program, context, callback) {
     assert.strictEqual(typeof program, 'string');
-    assert.strictEqual(typeof context, 'string');
+    assert.strictEqual(typeof context, 'object');
     assert(typeof callback === 'undefined' || typeof callback === 'function');
 
     callback = callback || NOOP_CALLBACK;
 
     actionForAllAdmins(function (admin, callback) {
-        mailer.oomEvent(program, context);
-        add(admin.id, 'Process died out-of-memory', context, '', callback);
+        mailer.oomEvent(program, JSON.stringify(context, null, 4));
+
+        var message;
+        if (context.app) message = `The application ${context.app.manifest.title} with id ${context.app.id} ran out of memory.`;
+        else message = `The container with id ${context.details.id} ran out of memory`;
+
+        add(admin.id, 'Process died out-of-memory', message, context.app ? '/#/apps' : '', callback);
     }, callback);
 }
 
@@ -157,6 +162,6 @@ function appDied(app, callback) {
 
     actionForAllAdmins(function (admin, callback) {
         mailer.appDied(app);
-        add(admin.id, `App ${app.fqdn} died`, `The application ${app.manifest.title} installed at ${app.fqdn} is not responding.`, '', callback);
+        add(admin.id, `App ${app.fqdn} died`, `The application ${app.manifest.title} installed at ${app.fqdn} is not responding.`, '/#/apps', callback);
     }, callback);
 }
