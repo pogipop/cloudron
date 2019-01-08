@@ -43,7 +43,7 @@ else
     echo "=> starting service (ubuntu 16.04) ${UPDATER_SERVICE}. see logs using journalctl -u ${UPDATER_SERVICE}"
 fi
 
-if ! systemd-run --unit "${UPDATER_SERVICE}" $update_service_options ${installer_path}; then
+if ! systemd-run --property=OOMScoreAdjust=-1000 --unit "${UPDATER_SERVICE}" $update_service_options ${installer_path}; then
     echo "Failed to install cloudron. See log for details"
     exit 1
 fi
