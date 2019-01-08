@@ -43,7 +43,7 @@ function list(req, res, next) {
 
     var acknowledged = null;
     if (req.query.acknowledged && !(req.query.acknowledged === 'true' || req.query.acknowledged === 'false')) return next(new HttpError(400, 'acknowledged must be a true or false'));
-    else acknowledged = req.query.acknowledged === 'true' ? true : false;
+    else if (req.query.acknowledged) acknowledged = req.query.acknowledged === 'true' ? true : false;
 
     notifications.getAllPaged(req.user.id, acknowledged, page, perPage, function (error, result) {
         if (error) return next(new HttpError(500, error));
