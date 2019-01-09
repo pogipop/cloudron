@@ -523,7 +523,9 @@ function downloadDir(backupConfig, backupFilePath, destDir, progressCallback, ca
     }
 
     api(backupConfig.provider).listDir(backupConfig, backupFilePath, 1000, function (entries, done) {
-        async.each(entries, downloadFile, done);
+        // https://www.digitalocean.com/community/questions/rate-limiting-on-spaces?answer=40441
+        const limit = backupConfig.provider !== 'digitalocean-spaces' ? 1000 : 100;
+        async.eachLimit(entries, limit, downloadFile, done);
     }, callback);
 }
 
