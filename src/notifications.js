@@ -138,7 +138,7 @@ function userAdded(user, callback) {
         if (admin.email === user.email || admin.email === user.fallbackEmail) return callback();
 
         mailer.userAdded(admin.email, user);
-        add(admin.id, 'User added', `User ${user.fallbackEmail} was added`, '', callback);
+        add(admin.id, 'User added', `User ${user.fallbackEmail} was added`, '/#/users', callback);
     }, callback);
 }
 
@@ -153,7 +153,7 @@ function userRemoved(user, callback) {
         if (admin.email === user.email || admin.email === user.fallbackEmail) return callback();
 
         mailer.userRemoved(admin.email, user);
-        add(admin.id, 'User removed', `User ${user.username || user.email || user.fallbackEmail} was removed`, '', callback);
+        add(admin.id, 'User removed', `User ${user.username || user.email || user.fallbackEmail} was removed`, '/#/users', callback);
     }, callback);
 }
 

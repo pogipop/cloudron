@@ -182,26 +182,6 @@ function render(templateFile, params) {
     return content;
 }
 
-function mailUserEventToAdmins(user, event) {
-    assert.strictEqual(typeof user, 'object');
-    assert.strictEqual(typeof event, 'string');
-
-    getMailConfig(function (error, mailConfig) {
-        if (error) return debug('Error getting mail details:', error);
-
-        var adminEmails = _.difference(mailConfig.adminEmails, [ user.email ]);
-
-        var mailOptions = {
-            from: mailConfig.notificationFrom,
-            to: adminEmails.join(', '),
-            subject: util.format('[%s] %s %s', mailConfig.cloudronName, user.username || user.fallbackEmail || user.email, event),
-            text: render('user_event.ejs', { user: user, event: event, format: 'text' }),
-        };
-
-        enqueue(mailOptions);
-    });
-}
-
 function mailUserEvent(mailTo, user, event) {
     assert.strictEqual(typeof mailTo, 'string');
     assert.strictEqual(typeof user, 'object');
