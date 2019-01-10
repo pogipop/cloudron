@@ -10,12 +10,15 @@ exports = module.exports = {
 
     // specialized notifications
     userAdded: userAdded,
+    userRemoved: userRemoved,
+    adminChanged: adminChanged,
     oomEvent: oomEvent,
     appDied: appDied
 };
 
 var assert = require('assert'),
     async = require('async'),
+    config = require('./config.js'),
     DatabaseError = require('./databaseerror.js'),
     debug = require('debug')('box:notifications'),
     mailer = require('./mailer.js'),
@@ -136,6 +139,31 @@ function userAdded(user, callback) {
     }, callback);
 }
 
+function userRemoved(user, callback) {
+    assert.strictEqual(typeof user, 'object');
+    assert(typeof callback === 'undefined' || typeof callback === 'function');
+
+    callback = callback || NOOP_CALLBACK;
+
+    actionForAllAdmins(function (admin, callback) {
+        mailer.userRemoved(admin.email, user);
+        add(admin.id, 'User removed', `User ${user.username || user.email || user.fallbackEmail} was removed`, '', callback);
+    }, callback);
+}
+
+function adminChanged(user, isAdmin, callback) {
+    assert.strictEqual(typeof user, 'object');
+    assert.strictEqual(typeof isAdmin, 'boolean');
+    assert(typeof callback === 'undefined' || typeof callback === 'function');
+
+    callback = callback || NOOP_CALLBACK;
+
+    actionForAllAdmins(function (admin, callback) {
+        mailer.adminChanged(admin.email, user, isAdmin);
+        add(admin.id, 'Admin status change', `User ${user.username || user.email || user.fallbackEmail} ${isAdmin ? 'is now an admin' : 'is no more an admin'}`, '/#/users', callback);
+    }, callback);
+}
+
 function oomEvent(program, context, callback) {
     assert.strictEqual(typeof program, 'string');
     assert.strictEqual(typeof context, 'object');
@@ -143,8 +171,11 @@ function oomEvent(program, context, callback) {
 
     callback = callback || NOOP_CALLBACK;
 
+    // also send us a notification mail
+    if (config.provider() === 'caas') mailer.oomEvent('support@cloudron.io', program, JSON.stringify(context, null, 4));
+
     actionForAllAdmins(function (admin, callback) {
-        mailer.oomEvent(program, JSON.stringify(context, null, 4));
+        mailer.oomEvent(admin.email, program, JSON.stringify(context, null, 4));
 
         var message;
         if (context.app) message = `The application ${context.app.manifest.title} with id ${context.app.id} ran out of memory.`;
@@ -160,8 +191,11 @@ function appDied(app, callback) {
 
     callback = callback || NOOP_CALLBACK;
 
+    // also send us a notification mail
+    if (config.provider() === 'caas') mailer.appDied('support@cloudron.io', app);
+
     actionForAllAdmins(function (admin, callback) {
-        mailer.appDied(app);
+        mailer.appDied(admin.email, app);
         add(admin.id, `App ${app.fqdn} died`, `The application ${app.manifest.title} installed at ${app.fqdn} is not responding.`, '/#/apps', callback);
     }, callback);
 }

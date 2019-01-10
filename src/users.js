@@ -299,7 +299,7 @@ function removeUser(userId, auditSource, callback) {
 
             callback();
 
-            mailer.userRemoved(user);
+            notifications.userRemoved(user);
         });
     });
 }
@@ -416,7 +416,7 @@ function updateUser(userId, data, auditSource, callback) {
 
                 eventlog.add(eventlog.ACTION_USER_UPDATE, auditSource, { userId: userId, user: removePrivateFields(result) });
 
-                if ((result.admin && !oldUser.admin) || (!result.admin && oldUser.admin)) mailer.adminChanged(result, result.admin);
+                if ((result.admin && !oldUser.admin) || (!result.admin && oldUser.admin)) notifications.adminChanged(result, result.admin);
             });
         });
     });

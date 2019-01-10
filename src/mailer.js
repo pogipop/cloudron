@@ -202,6 +202,29 @@ function mailUserEventToAdmins(user, event) {
     });
 }
 
+function mailUserEvent(mailTo, user, event) {
+    assert.strictEqual(typeof mailTo, 'string');
+    assert.strictEqual(typeof user, 'object');
+    assert.strictEqual(typeof event, 'string');
+
+    // skip sending mail to the same user
+    if (mailTo === user.email) return;
+
+    getMailConfig(function (error, mailConfig) {
+        if (error) return debug('Error getting mail details:', error);
+
+        var mailOptions = {
+            from: mailConfig.notificationFrom,
+            to: mailTo,
+            subject: util.format('[%s] %s %s', mailConfig.cloudronName, user.username || user.fallbackEmail || user.email, event),
+            text: render('user_event.ejs', { user: user, event: event, format: 'text' }),
+        };
+
+        enqueue(mailOptions);
+    });
+}
+
+
 function sendInvite(user, invitor) {
     assert.strictEqual(typeof user, 'object');
     assert(typeof invitor === 'object');
@@ -238,11 +261,11 @@ function sendInvite(user, invitor) {
     });
 }
 
-function userAdded(emailTo, user) {
-    assert.strictEqual(typeof emailTo, 'string');
+function userAdded(mailTo, user) {
+    assert.strictEqual(typeof mailTo, 'string');
     assert.strictEqual(typeof user, 'object');
 
-    debug(`userAdded: Sending mail for added users ${user.fallbackEmail} to ${emailTo}`);
+    debug(`userAdded: Sending mail for added users ${user.fallbackEmail} to ${mailTo}`);
 
     getMailConfig(function (error, mailConfig) {
         if (error) return debug('Error getting mail details:', error);
@@ -261,7 +284,7 @@ function userAdded(emailTo, user) {
 
         var mailOptions = {
             from: mailConfig.notificationFrom,
-            to: emailTo,
+            to: mailTo,
             subject: util.format('[%s] User %s added', mailConfig.cloudronName, user.fallbackEmail),
             text: render('user_added.ejs', templateDataText),
             html: render('user_added.ejs', templateDataHTML)
@@ -271,21 +294,23 @@ function userAdded(emailTo, user) {
     });
 }
 
-function userRemoved(user) {
+function userRemoved(mailTo, user) {
+    assert.strictEqual(typeof mailTo, 'string');
     assert.strictEqual(typeof user, 'object');
 
-    debug('Sending mail for userRemoved.', user.id, user.email);
+    debug('Sending mail for userRemoved.', user.id, user.username, user.email);
 
-    mailUserEventToAdmins(user, 'was removed');
+    mailUserEvent(mailTo, user, 'was removed');
 }
 
-function adminChanged(user, admin) {
+function adminChanged(mailTo, user, isAdmin) {
+    assert.strictEqual(typeof mailTo, 'string');
     assert.strictEqual(typeof user, 'object');
-    assert.strictEqual(typeof admin, 'boolean');
+    assert.strictEqual(typeof isAdmin, 'boolean');
 
     debug('Sending mail for adminChanged');
 
-    mailUserEventToAdmins(user, admin ? 'is now an admin' : 'is no more an admin');
+    mailUserEvent(mailTo, user, isAdmin ? 'is now an admin' : 'is no more an admin');
 }
 
 function passwordReset(user) {
@@ -321,7 +346,8 @@ function passwordReset(user) {
     });
 }
 
-function appDied(app) {
+function appDied(mailTo, app) {
+    assert.strictEqual(typeof mailTo, 'string');
     assert.strictEqual(typeof app, 'object');
 
     debug('Sending mail for app %s @ %s died', app.id, app.fqdn);
@@ -331,7 +357,7 @@ function appDied(app) {
 
         var mailOptions = {
             from: mailConfig.notificationFrom,
-            to: config.provider() === 'caas' ? 'support@cloudron.io' : mailConfig.adminEmails.join(', '),
+            to: mailTo,
             subject: util.format('[%s] App %s is down', mailConfig.cloudronName, app.fqdn),
             text: render('app_down.ejs', { title: app.manifest.title, appFqdn: app.fqdn, format: 'text' })
         };
@@ -499,7 +525,8 @@ function certificateRenewalError(domain, message) {
     });
 }
 
-function oomEvent(program, context) {
+function oomEvent(mailTo, program, context) {
+    assert.strictEqual(typeof mailTo, 'string');
     assert.strictEqual(typeof program, 'string');
     assert.strictEqual(typeof context, 'string');
 
@@ -508,7 +535,7 @@ function oomEvent(program, context) {
 
         var mailOptions = {
             from: mailConfig.notificationFrom,
-            to: config.provider() === 'caas' ? 'support@cloudron.io' : mailConfig.adminEmails.join(', '),
+            to: mailTo,
             subject: util.format('[%s] %s exited unexpectedly', mailConfig.cloudronName, program),
             text: render('oom_event.ejs', { cloudronName: mailConfig.cloudronName, program: program, context: context, format: 'text' })
         };
