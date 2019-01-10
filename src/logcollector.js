@@ -5,7 +5,7 @@ exports = module.exports = {
 };
 
 var assert = require('assert'),
-    mailer = require('./mailer.js'),
+    notifications = require('./notifications.js'),
     safe = require('safetydance'),
     path = require('path'),
     util = require('util');
@@ -62,9 +62,9 @@ function sendFailureLogs(processName, options) {
 
         var stashedLogs = safe.fs.readFileSync(CRASH_LOG_STASH_FILE, 'utf8');
         var compiledLogs = stashedLogs ? (stashedLogs + newLogs) : newLogs;
-        var mailSubject = processName + (stashedLogs ? ' and others' : '');
+        var subject = `${processName} ${stashedLogs ? ' and others' : ''} exited unexpectedly`;
 
-        mailer.unexpectedExit(mailSubject, compiledLogs, function (error) {
+        notifications.unexpectedExit(subject, compiledLogs, function (error) {
             if (error) {
                 console.log('Error sending crashlog. Stashing logs.');
                 return stashLogs(newLogs);

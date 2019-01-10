@@ -13,7 +13,8 @@ exports = module.exports = {
     userRemoved: userRemoved,
     adminChanged: adminChanged,
     oomEvent: oomEvent,
-    appDied: appDied
+    appDied: appDied,
+    unexpectedExit: unexpectedExit
 };
 
 var assert = require('assert'),
@@ -206,5 +207,21 @@ function appDied(app, callback) {
     actionForAllAdmins(function (admin, callback) {
         mailer.appDied(admin.email, app);
         add(admin.id, `App ${app.fqdn} died`, `The application ${app.manifest.title} installed at ${app.fqdn} is not responding.`, '/#/apps', callback);
+    }, callback);
+}
+
+function unexpectedExit(subject, compiledLogs, callback) {
+    assert.strictEqual(typeof subject, 'string');
+    assert.strictEqual(typeof compiledLogs, 'string');
+    assert(typeof callback === 'undefined' || typeof callback === 'function');
+
+    callback = callback || NOOP_CALLBACK;
+
+    // also send us a notification mail
+    if (config.provider() === 'caas') mailer.unexpectedExit('support@cloudron.io', subject, compiledLogs);
+
+    actionForAllAdmins(function (admin, callback) {
+        mailer.unexpectedExit(admin.email, subject, compiledLogs);
+        add(admin.id, subject, 'Detailed logs have been sent to your email address.', '/#/system', callback);
     }, callback);
 }

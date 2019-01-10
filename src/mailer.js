@@ -201,7 +201,6 @@ function mailUserEvent(mailTo, user, event) {
     });
 }
 
-
 function sendInvite(user, invitor) {
     assert.strictEqual(typeof user, 'object');
     assert(typeof invitor === 'object');
@@ -523,24 +522,22 @@ function oomEvent(mailTo, program, context) {
 
 // this function bypasses the queue intentionally. it is also expected to work without the mailer module initialized
 // NOTE: crashnotifier should ideally be able to send mail when there is no db, however we need the 'from' address domain from the db
-function unexpectedExit(program, context, callback) {
-    assert.strictEqual(typeof program, 'string');
+function unexpectedExit(mailTo, subject, context) {
+    assert.strictEqual(typeof mailTo, 'string');
+    assert.strictEqual(typeof subject, 'string');
     assert.strictEqual(typeof context, 'string');
-    assert.strictEqual(typeof callback, 'function');
-
-    if (config.provider() !== 'caas') return callback(); // no way to get admins without db access
 
     getMailConfig(function (error, mailConfig) {
         if (error) return debug('Error getting mail details:', error);
 
         var mailOptions = {
             from: mailConfig.notificationFrom,
-            to: 'support@cloudron.io',
-            subject: util.format('[%s] %s exited unexpectedly', mailConfig.cloudronName, program),
-            text: render('unexpected_exit.ejs', { cloudronName: mailConfig.cloudronName, program: program, context: context, format: 'text' })
+            to: mailTo,
+            subject: `[${mailConfig.cloudronName}] ${subject}`,
+            text: render('unexpected_exit.ejs', { cloudronName: mailConfig.cloudronName, subject: subject, context: context, format: 'text' })
         };
 
-        sendMails([ mailOptions ], callback);
+        sendMails([ mailOptions ]);
     });
 }
 
