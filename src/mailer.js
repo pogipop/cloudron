@@ -40,8 +40,7 @@ var assert = require('assert'),
     showdown = require('showdown'),
     smtpTransport = require('nodemailer-smtp-transport'),
     users = require('./users.js'),
-    util = require('util'),
-    _ = require('underscore');
+    util = require('util');
 
 var NOOP_CALLBACK = function (error) { if (error) debug(error); };
 
