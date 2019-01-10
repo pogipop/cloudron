@@ -134,6 +134,9 @@ function userAdded(user, callback) {
     callback = callback || NOOP_CALLBACK;
 
     actionForAllAdmins(function (admin, callback) {
+        // skip for the same user
+        if (admin.email === user.email || admin.email === user.fallbackEmail) return callback();
+
         mailer.userAdded(admin.email, user);
         add(admin.id, 'User added', `User ${user.fallbackEmail} was added`, '', callback);
     }, callback);
@@ -146,6 +149,9 @@ function userRemoved(user, callback) {
     callback = callback || NOOP_CALLBACK;
 
     actionForAllAdmins(function (admin, callback) {
+        // skip for the same user
+        if (admin.email === user.email || admin.email === user.fallbackEmail) return callback();
+
         mailer.userRemoved(admin.email, user);
         add(admin.id, 'User removed', `User ${user.username || user.email || user.fallbackEmail} was removed`, '', callback);
     }, callback);
@@ -159,6 +165,9 @@ function adminChanged(user, isAdmin, callback) {
     callback = callback || NOOP_CALLBACK;
 
     actionForAllAdmins(function (admin, callback) {
+        // skip for the same user
+        if (admin.email === user.email || admin.email === user.fallbackEmail) return callback();
+
         mailer.adminChanged(admin.email, user, isAdmin);
         add(admin.id, 'Admin status change', `User ${user.username || user.email || user.fallbackEmail} ${isAdmin ? 'is now an admin' : 'is no more an admin'}`, '/#/users', callback);
     }, callback);

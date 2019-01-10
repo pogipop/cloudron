@@ -207,9 +207,6 @@ function mailUserEvent(mailTo, user, event) {
     assert.strictEqual(typeof user, 'object');
     assert.strictEqual(typeof event, 'string');
 
-    // skip sending mail to the same user
-    if (mailTo === user.email) return;
-
     getMailConfig(function (error, mailConfig) {
         if (error) return debug('Error getting mail details:', error);
 
