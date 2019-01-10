@@ -140,7 +140,7 @@ echo ""
 
 if [[ "${initBaseImage}" == "true" ]]; then
     echo "=> Installing software-properties-common"
-    if ! apt-get install software-properties-common &>> "${LOG_FILE}"; then
+    if ! apt-get install -y software-properties-common &>> "${LOG_FILE}"; then
         echo "Could not install software-properties-common (for add-apt-repository below). See ${LOG_FILE}"
         exit 1
     fi
