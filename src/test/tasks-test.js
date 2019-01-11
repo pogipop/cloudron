@@ -65,7 +65,7 @@ describe('task', function () {
         task.on('start', (tid) => { taskId = tid; });
         task.on('finish', function (error, result) {
             expect(error).to.be.ok();
-            expect(error.message).to.contain('task crashed');
+            expect(error.message).to.contain(`task ${taskId} crashed`);
             expect(result).to.be(null);
             expect(taskId).to.be.ok();
 
