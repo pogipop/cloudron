@@ -1515,4 +1515,5 @@
 * Update Haraka to 2.8.22
 * Log events in the mail container
 * Fix issue where SpamAssassin and SPF checks were run for outbound email
+* Improve various eventlog messages
 

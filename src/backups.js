@@ -1024,22 +1024,24 @@ function cleanupAppBackups(backupConfig, referencedAppBackups, callback) {
     assert.strictEqual(typeof callback, 'function');
 
     const now = new Date();
+    let removedAppBackups = [];
 
     // we clean app backups of any state because the ones to keep are determined by the box cleanup code
     backupdb.getByTypePaged(backupdb.BACKUP_TYPE_APP, 1, 1000, function (error, appBackups) {
         if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
 
-        async.eachSeries(appBackups, function iterator(backup, iteratorDone) {
-            if (referencedAppBackups.indexOf(backup.id) !== -1) return iteratorDone();
-            if ((now - backup.creationTime) < (backupConfig.retentionSecs * 1000)) return iteratorDone();
+        async.eachSeries(appBackups, function iterator(appBackup, iteratorDone) {
+            if (referencedAppBackups.indexOf(appBackup.id) !== -1) return iteratorDone();
+            if ((now - appBackup.creationTime) < (backupConfig.retentionSecs * 1000)) return iteratorDone();
 
-            debug('cleanupAppBackups: removing %s', backup.id);
+            debug('cleanupAppBackups: removing %s', appBackup.id);
 
-            cleanupBackup(backupConfig, backup, iteratorDone);
+            removedAppBackups.push(appBackup.id);
+            cleanupBackup(backupConfig, appBackup, iteratorDone);
         }, function () {
             debug('cleanupAppBackups: done');
 
-            callback();
+            callback(null, removedAppBackups);
         });
     });
 }
@@ -1050,12 +1052,12 @@ function cleanupBoxBackups(backupConfig, auditSource, callback) {
     assert.strictEqual(typeof callback, 'function');
 
     const now = new Date();
-    var referencedAppBackups = [];
+    let referencedAppBackups = [], removedBoxBackups = [];
 
     backupdb.getByTypePaged(backupdb.BACKUP_TYPE_BOX, 1, 1000, function (error, boxBackups) {
         if (error) return callback(error);
 
-        if (boxBackups.length === 0) return callback(null, []);
+        if (boxBackups.length === 0) return callback(null, { removedBoxBackups, referencedAppBackups });
 
         // search for the first valid backup
         var i;
@@ -1072,21 +1074,22 @@ function cleanupBoxBackups(backupConfig, auditSource, callback) {
             debug('cleanupBoxBackups: no box backup to preserve');
         }
 
-        async.eachSeries(boxBackups, function iterator(backup, nextBackup) {
+        async.eachSeries(boxBackups, function iterator(boxBackup, iteratorNext) {
             // TODO: errored backups should probably be cleaned up before retention time, but we will
             // have to be careful not to remove any backup currently being created
-            if ((now - backup.creationTime) < (backupConfig.retentionSecs * 1000)) {
-                referencedAppBackups = referencedAppBackups.concat(backup.dependsOn);
-                return nextBackup();
+            if ((now - boxBackup.creationTime) < (backupConfig.retentionSecs * 1000)) {
+                referencedAppBackups = referencedAppBackups.concat(boxBackup.dependsOn);
+                return iteratorNext();
             }
 
-            debug('cleanupBoxBackups: removing %s', backup.id);
+            debug('cleanupBoxBackups: removing %s', boxBackup.id);
 
-            cleanupBackup(backupConfig, backup, nextBackup);
+            removedBoxBackups.push(boxBackup.id);
+            cleanupBackup(backupConfig, boxBackup, iteratorNext);
         }, function () {
             debug('cleanupBoxBackups: done');
 
-            return callback(null, referencedAppBackups);
+            callback(null, { removedBoxBackups, referencedAppBackups });
         });
     });
 }
@@ -1145,29 +1148,31 @@ function cleanup(auditSource, progressCallback, callback) {
     assert.strictEqual(typeof progressCallback, 'function');
     assert.strictEqual(typeof callback, 'function');
 
-    callback = callback || NOOP_CALLBACK;
-
     settings.getBackupConfig(function (error, backupConfig) {
         if (error) return callback(error);
 
         if (backupConfig.retentionSecs < 0) {
             debug('cleanup: keeping all backups');
-            return callback();
+            return callback(null, {});
         }
 
         progressCallback({ percent: 10, message: 'Cleaning box backups' });
 
-        cleanupBoxBackups(backupConfig, auditSource, function (error, referencedAppBackups) {
+        cleanupBoxBackups(backupConfig, auditSource, function (error, result) {
             if (error) return callback(error);
 
             progressCallback({ percent: 40, message: 'Cleaning app backups' });
 
-            cleanupAppBackups(backupConfig, referencedAppBackups, function (error) {
+            cleanupAppBackups(backupConfig, result.referencedAppBackups, function (error, removedAppBackups) {
                 if (error) return callback(error);
 
                 progressCallback({ percent: 90, message: 'Cleaning snapshots' });
 
-                cleanupSnapshots(backupConfig, callback);
+                cleanupSnapshots(backupConfig, function (error) {
+                    if (error) return callback(error);
+
+                    callback(null, { removedBoxBackups: result.removedBoxBackups, removedAppBackups: removedAppBackups });
+                });
             });
         });
     });
@@ -1177,7 +1182,10 @@ function startCleanupTask(auditSource, callback) {
     let task = tasks.startTask(tasks.TASK_CLEAN_BACKUPS, [ auditSource ]);
     task.on('error', (error) => callback(new BackupsError(BackupsError.INTERNAL_ERROR, error)));
     task.on('start', (taskId) => {
-        eventlog.add(eventlog.ACTION_BACKUP_CLEANUP, auditSource, { taskId });
+        eventlog.add(eventlog.ACTION_BACKUP_CLEANUP_START, auditSource, { taskId });
         callback(null, taskId);
+    });
+    task.on('finish', (error, result) => { // result is { removedBoxBackups, removedAppBackups }
+        eventlog.add(eventlog.ACTION_BACKUP_CLEANUP_FINISH, auditSource, { errorMessage: error ? error.message : null, result: result });
     });
 }

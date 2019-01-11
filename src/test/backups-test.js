@@ -58,7 +58,7 @@ function cleanupBackups(callback) {
 
                 if (p.percent !== 100) return setTimeout(waitForCleanup, 1000);
 
-                if (p.errorMessage) return callback(new Error('backup failed:' + p));
+                if (p.errorMessage) return callback(new Error('backup failed:' + p.errorMessage));
 
                 callback();
             });
