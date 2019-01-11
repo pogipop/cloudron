@@ -818,6 +818,18 @@ function update(appId, data, auditSource, callback) {
 
             updateConfig.manifest = manifest;
 
+            // prevent user from installing a app with different manifest id over an existing app
+            // this allows cloudron install -f --app <appid> for an app installed from the appStore
+            if (app.manifest.id !== updateConfig.manifest.id) {
+                if (!data.force) return callback(new AppsError(AppsError.BAD_FIELD, 'manifest id does not match. force to override'));
+                // clear appStoreId so that this app does not get updates anymore
+                updateConfig.appStoreId = '';
+            }
+
+            if (app.appStoreId !== '' && semver.lte(updateConfig.manifest.version, app.manifest.version)) {
+                if (!data.force) return callback(new AppsError(AppsError.BAD_FIELD, 'Downgrades are not permitted for apps installed from AppStore. force to override'));
+            }
+
             if ('icon' in data) {
                 if (data.icon) {
                     if (!validator.isBase64(data.icon)) return callback(new AppsError(AppsError.BAD_FIELD, 'icon is not base64'));
@@ -828,14 +840,6 @@ function update(appId, data, auditSource, callback) {
                 } else {
                     safe.fs.unlinkSync(path.join(paths.APP_ICONS_DIR, appId + '.png'));
                 }
-            }
-
-            // prevent user from installing a app with different manifest id over an existing app
-            // this allows cloudron install -f --app <appid> for an app installed from the appStore
-            if (app.manifest.id !== updateConfig.manifest.id) {
-                if (!data.force) return callback(new AppsError(AppsError.BAD_FIELD, 'manifest id does not match. force to override'));
-                // clear appStoreId so that this app does not get updates anymore
-                updateConfig.appStoreId = '';
             }
 
             // do not update apps in debug mode
