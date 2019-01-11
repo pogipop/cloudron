@@ -802,33 +802,33 @@ function update(appId, data, auditSource, callback) {
 
     debug('Will update app with id:%s', appId);
 
-    downloadManifest(data.appStoreId, data.manifest, function (error, appStoreId, manifest) {
+    get(appId, function (error, app) {
         if (error) return callback(error);
 
-        var updateConfig = { };
-
-        error = manifestFormat.parse(manifest);
-        if (error) return callback(new AppsError(AppsError.BAD_FIELD, 'Manifest error:' + error.message));
-
-        error = checkManifestConstraints(manifest);
-        if (error) return callback(error);
-
-        updateConfig.manifest = manifest;
-
-        if ('icon' in data) {
-            if (data.icon) {
-                if (!validator.isBase64(data.icon)) return callback(new AppsError(AppsError.BAD_FIELD, 'icon is not base64'));
-
-                if (!safe.fs.writeFileSync(path.join(paths.APP_ICONS_DIR, appId + '.png'), new Buffer(data.icon, 'base64'))) {
-                    return callback(new AppsError(AppsError.INTERNAL_ERROR, 'Error saving icon:' + safe.error.message));
-                }
-            } else {
-                safe.fs.unlinkSync(path.join(paths.APP_ICONS_DIR, appId + '.png'));
-            }
-        }
-
-        get(appId, function (error, app) {
+        downloadManifest(data.appStoreId, data.manifest, function (error, appStoreId, manifest) {
             if (error) return callback(error);
+
+            var updateConfig = { };
+
+            error = manifestFormat.parse(manifest);
+            if (error) return callback(new AppsError(AppsError.BAD_FIELD, 'Manifest error:' + error.message));
+
+            error = checkManifestConstraints(manifest);
+            if (error) return callback(error);
+
+            updateConfig.manifest = manifest;
+
+            if ('icon' in data) {
+                if (data.icon) {
+                    if (!validator.isBase64(data.icon)) return callback(new AppsError(AppsError.BAD_FIELD, 'icon is not base64'));
+
+                    if (!safe.fs.writeFileSync(path.join(paths.APP_ICONS_DIR, appId + '.png'), new Buffer(data.icon, 'base64'))) {
+                        return callback(new AppsError(AppsError.INTERNAL_ERROR, 'Error saving icon:' + safe.error.message));
+                    }
+                } else {
+                    safe.fs.unlinkSync(path.join(paths.APP_ICONS_DIR, appId + '.png'));
+                }
+            }
 
             // prevent user from installing a app with different manifest id over an existing app
             // this allows cloudron install -f --app <appid> for an app installed from the appStore
