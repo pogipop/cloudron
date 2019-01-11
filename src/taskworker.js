@@ -18,6 +18,7 @@ const TASKS = { // indexed by task type
     update: updater.update,
     renewcerts: reverseProxy.renewCerts,
     prepareDashboardDomain: domains.prepareDashboardDomain,
+    cleanBackups: backups.cleanup,
 
     _identity: (arg, progressCallback, callback) => callback(null, arg),
     _error: (arg, progressCallback, callback) => callback(new Error(`Failed for arg: ${arg}`)),

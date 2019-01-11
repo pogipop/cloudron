@@ -48,6 +48,26 @@ function createBackup(callback) {
     });
 }
 
+function cleanupBackups(callback) {
+    backups.startCleanupTask({ username: 'test' }, function (error, taskId) { // this call does not wait for the backup!
+        if (error) return callback(error);
+
+        function waitForCleanup() {
+            tasks.get(taskId, function (error, p) {
+                if (error) return callback(error);
+
+                if (p.percent !== 100) return setTimeout(waitForCleanup, 1000);
+
+                if (p.errorMessage) return callback(new Error('backup failed:' + p));
+
+                callback();
+            });
+        }
+
+        setTimeout(waitForCleanup, 1000);
+    });
+}
+
 describe('backups', function () {
     before(function (done) {
         const BACKUP_DIR = path.join(os.tmpdir(), 'cloudron-backup-test');
@@ -128,7 +148,7 @@ describe('backups', function () {
         };
 
         it('succeeds without backups', function (done) {
-            backups.cleanup({ username: 'test' }, done);
+            cleanupBackups(done);
         });
 
         it('succeeds with box backups, keeps latest', function (done) {
@@ -140,7 +160,7 @@ describe('backups', function () {
             }, function (error) {
                 expect(error).to.not.be.ok();
 
-                backups.cleanup({ username: 'test' }, function (error) {
+                cleanupBackups(function (error) {
                     expect(error).to.not.be.ok();
 
                     backupdb.getByTypePaged(backupdb.BACKUP_TYPE_BOX, 1, 1000, function (error, result) {
@@ -161,7 +181,7 @@ describe('backups', function () {
         });
 
         it('does not remove expired backups if only one left', function (done) {
-            backups.cleanup({ username: 'test' }, function (error) {
+            cleanupBackups(function (error) {
                 expect(error).to.not.be.ok();
 
                 backupdb.getByTypePaged(backupdb.BACKUP_TYPE_BOX, 1, 1000, function (error, result) {
@@ -186,7 +206,7 @@ describe('backups', function () {
 
                 // wait for expiration
                 setTimeout(function () {
-                    backups.cleanup({ username: 'test' }, function (error) {
+                    cleanupBackups(function (error) {
                         expect(error).to.not.be.ok();
 
                         backupdb.getByTypePaged(backupdb.BACKUP_TYPE_APP, 1, 1000, function (error, result) {

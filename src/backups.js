@@ -22,6 +22,7 @@ exports = module.exports = {
 
     upload: upload,
 
+    startCleanupTask: startCleanupTask,
     cleanup: cleanup,
     cleanupCacheFilesSync: cleanupCacheFilesSync,
 
@@ -1139,9 +1140,10 @@ function cleanupSnapshots(backupConfig, callback) {
     });
 }
 
-function cleanup(auditSource, callback) {
+function cleanup(auditSource, progressCallback, callback) {
     assert.strictEqual(typeof auditSource, 'object');
-    assert(!callback || typeof callback === 'function'); // callback is null when called from cronjob
+    assert.strictEqual(typeof progressCallback, 'function');
+    assert.strictEqual(typeof callback, 'function');
 
     callback = callback || NOOP_CALLBACK;
 
@@ -1153,11 +1155,17 @@ function cleanup(auditSource, callback) {
             return callback();
         }
 
+        progressCallback({ percent: 10, message: 'Cleaning box backups' });
+
         cleanupBoxBackups(backupConfig, auditSource, function (error, referencedAppBackups) {
             if (error) return callback(error);
 
+            progressCallback({ percent: 40, message: 'Cleaning app backups' });
+
             cleanupAppBackups(backupConfig, referencedAppBackups, function (error) {
                 if (error) return callback(error);
+
+                progressCallback({ percent: 90, message: 'Cleaning snapshots' });
 
                 cleanupSnapshots(backupConfig, callback);
             });
@@ -1165,3 +1173,11 @@ function cleanup(auditSource, callback) {
     });
 }
 
+function startCleanupTask(auditSource, callback) {
+    let task = tasks.startTask(tasks.TASK_CLEAN_BACKUPS, [ auditSource ]);
+    task.on('error', (error) => callback(new BackupsError(BackupsError.INTERNAL_ERROR, error)));
+    task.on('start', (taskId) => {
+        eventlog.add(eventlog.ACTION_BACKUP_CLEANUP, auditSource, { taskId });
+        callback(null, taskId);
+    });
+}
