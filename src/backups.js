@@ -943,7 +943,7 @@ function startBackupTask(auditSource, callback) {
     let error = locker.lock(locker.OP_FULL_BACKUP);
     if (error) return callback(error);
 
-    let task = tasks.startTask(tasks.TASK_BACKUP, [], auditSource);
+    let task = tasks.startTask(tasks.TASK_BACKUP, []);
     task.on('error', (error) => callback(new BackupsError(BackupsError.INTERNAL_ERROR, error)));
     task.on('start', (taskId) => {
         eventlog.add(eventlog.ACTION_BACKUP_START, auditSource, { taskId });
