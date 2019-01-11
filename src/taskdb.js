@@ -13,16 +13,19 @@ let assert = require('assert'),
     DatabaseError = require('./databaseerror'),
     safe = require('safetydance');
 
-const TASKS_FIELDS = [ 'id', 'type', 'argsJson', 'percent', 'message', 'errorMessage', 'creationTime', 'result', 'ts' ];
+const TASKS_FIELDS = [ 'id', 'type', 'argsJson', 'percent', 'message', 'errorMessage', 'creationTime', 'resultJson', 'ts' ];
 
-function postProcess(result) {
-    assert.strictEqual(typeof result, 'object');
+function postProcess(task) {
+    assert.strictEqual(typeof task, 'object');
 
-    assert(result.argsJson === null || typeof result.argsJson === 'string');
-    result.args = safe.JSON.parse(result.argsJson) || [];
-    delete result.argsJson;
+    assert(task.argsJson === null || typeof task.argsJson === 'string');
+    task.args = safe.JSON.parse(task.argsJson) || [];
+    delete task.argsJson;
 
-    result.id = String(result.id);
+    task.id = String(task.id);
+
+    task.result = JSON.parse(task.resultJson);
+    delete task.resultJson;
 }
 
 function add(task, callback) {
@@ -47,8 +50,13 @@ function update(id, data, callback) {
     let args = [ ];
     let fields = [ ];
     for (let k in data) {
-        fields.push(k + ' = ?');
-        args.push(data[k]);
+        if (k === 'result') {
+            fields.push('resultJson = ?');
+            args.push(JSON.stringify(data[k]));
+        } else {
+            fields.push(k + ' = ?');
+            args.push(data[k]);
+        }
     }
     args.push(id);
 
