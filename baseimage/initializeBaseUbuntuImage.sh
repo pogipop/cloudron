@@ -27,13 +27,15 @@ debconf-set-selections <<< 'mysql-server mysql-server/root_password_again passwo
 
 # this enables automatic security upgrades (https://help.ubuntu.com/community/AutomaticSecurityUpdates)
 # resolvconf is needed for unbound to work property after disabling systemd-resolved in 18.04
+ubuntu_version=$(lsb_release -rs)
+gpg_package=$([[ "${ubuntu_version}" == "16.04" ]] && echo "gnupg" || echo "gpg")
 apt-get -y install \
     acl \
     build-essential \
     cron \
     curl \
     dmsetup \
-    gpg \
+    $gpg_package \
     iptables \
     libpython2.7 \
     logrotate \
