@@ -956,7 +956,7 @@ function restore(appId, data, auditSource, callback) {
 
                 taskmanager.restartAppTask(appId);
 
-                eventlog.add(eventlog.ACTION_APP_RESTORE, auditSource, { appId: appId, app: app });
+                eventlog.add(eventlog.ACTION_APP_RESTORE, auditSource, { app: app, backupId: backupInfo.id, fromManifest: app.manifest, toManifest: backupInfo.manifest });
 
                 callback(null);
             });
