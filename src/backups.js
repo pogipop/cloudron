@@ -331,8 +331,8 @@ function sync(backupConfig, backupId, dataDir, progressCallback, callback) {
             retryCallback = once(retryCallback); // protect again upload() erroring much later after read stream error
 
             ++retryCount;
-            progressCallback({ message: `${task.operation} ${task.path} try ${retryCount}` });
             if (task.operation === 'add') {
+                progressCallback({ message: `Adding ${task.path}` + (retryCount > 1 ?  ` (Try ${retryCount})` : '') });
                 debug(`Adding ${task.path} position ${task.position} try ${retryCount}`);
                 var stream = createReadStream(path.join(dataDir, task.path), backupConfig.key || null);
                 stream.on('error', function (error) {
