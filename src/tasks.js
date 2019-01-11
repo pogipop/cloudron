@@ -121,7 +121,7 @@ function startTask(type, args) {
 
             get(taskId, function (error, task) {
                 if (!error && task.percent !== 100) { // task crashed or was killed by us (code 50)
-                    error = code === 0 ? new Error(`${taskId} task stopped`) : new Error(`${taskId} task crashed with code ${code} and signal ${signal}`);
+                    error = code === 0 ? new Error(`task ${taskId} stopped`) : new Error(`task ${taskId} crashed with code ${code} and signal ${signal}`);
                     update(taskId, { percent: 100, errorMessage: error.message }, NOOP_CALLBACK);
                 } else if (!error && task.errorMessage) {
                     error = new Error(task.errorMessage);
