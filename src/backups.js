@@ -1186,6 +1186,10 @@ function startCleanupTask(auditSource, callback) {
         callback(null, taskId);
     });
     task.on('finish', (error, result) => { // result is { removedBoxBackups, removedAppBackups }
-        eventlog.add(eventlog.ACTION_BACKUP_CLEANUP_FINISH, auditSource, { errorMessage: error ? error.message : null, result: result });
+        eventlog.add(eventlog.ACTION_BACKUP_CLEANUP_FINISH, auditSource, {
+            errorMessage: error ? error.message : null,
+            removedBoxBackups: result ? result.removedBoxBackups : [],
+            removedAppBackups: result ? result.removedAppBackups : []
+        });
     });
 }
