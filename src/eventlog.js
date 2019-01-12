@@ -48,6 +48,8 @@ exports = module.exports = {
     ACTION_USER_REMOVE: 'user.remove',
     ACTION_USER_UPDATE: 'user.update',
     ACTION_USER_TRANSFER: 'user.transfer',
+
+    ACTION_DYNDNS_UPDATE: 'dyndns.update'
 };
 
 var assert = require('assert'),

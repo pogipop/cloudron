@@ -10,6 +10,9 @@ var appdb = require('./appdb.js'),
     config = require('./config.js'),
     debug = require('debug')('box:dyndns'),
     domains = require('./domains.js'),
+    eventlog = require('./eventlog.js'),
+    paths = require('./paths.js'),
+    safe = require('safetydance'),
     sysinfo = require('./sysinfo.js');
 
 var NOOP_CALLBACK = function (error) { if (error) debug(error); };
@@ -21,12 +24,18 @@ function sync(callback) {
     sysinfo.getPublicIp(function (error, ip) {
         if (error) return callback(error);
 
-        debug('refreshDNS: current ip %s', ip);
+        let info = safe.JSON.parse(safe.fs.readFileSync(paths.DYNDNS_INFO_FILE, 'utf8')) || { ip: null };
+        if (info.ip === ip) {
+            debug(`refreshDNS: no change in IP ${ip}`);
+            return callback();
+        }
+
+        debug(`refreshDNS: updating ip from ${info.ip} to ${ip}`);
 
         domains.upsertDnsRecords(config.adminLocation(), config.adminDomain(), 'A', [ ip ], function (error) {
             if (error) return callback(error);
 
-            debug('refreshDNS: done for admin location');
+            debug('refreshDNS: updated admin location');
 
             apps.getAll(function (error, result) {
                 if (error) return callback(error);
@@ -39,7 +48,11 @@ function sync(callback) {
                 }, function (error) {
                     if (error) return callback(error);
 
-                    debug('refreshDNS: done for apps');
+                    debug('refreshDNS: updated apps');
+
+                    eventlog.add(eventlog.ACTION_DYNDNS_UPDATE, { userId: null, username: 'cron' }, { fromIp: info.ip, toIp: ip });
+                    info.ip = ip;
+                    safe.fs.writeFileSync(paths.DYNDNS_INFO_FILE, JSON.stringify(info), 'utf8');
 
                     callback();
                 });
