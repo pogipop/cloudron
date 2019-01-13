@@ -680,7 +680,10 @@ function uploadBoxSnapshot(backupConfig, progressCallback, callback) {
     snapshotBox(progressCallback, function (error) {
         if (error) return callback(error);
 
-        runBackupUpload('snapshot/box', backupConfig.format, paths.BOX_DATA_DIR, progressCallback, function (error) {
+        const boxDataDir = safe.fs.realpathSync(paths.BOX_DATA_DIR);
+        if (!boxDataDir) return callback(safe.error);
+
+        runBackupUpload('snapshot/box', backupConfig.format, boxDataDir, progressCallback, function (error) {
             if (error) return callback(error);
 
             debug('uploadBoxSnapshot: time: %s secs', (new Date() - startTime)/1000);
@@ -852,8 +855,10 @@ function uploadAppSnapshot(backupConfig, app, progressCallback, callback) {
     snapshotApp(app, progressCallback, function (error) {
         if (error) return callback(error);
 
-        var backupId = util.format('snapshot/app_%s', app.id);
-        var appDataDir = safe.fs.realpathSync(path.join(paths.APPS_DATA_DIR, app.id));
+        const backupId = util.format('snapshot/app_%s', app.id);
+        const appDataDir = safe.fs.realpathSync(path.join(paths.APPS_DATA_DIR, app.id));
+        if (!appDataDir) return callback(safe.error);
+
         runBackupUpload(backupId, backupConfig.format, appDataDir, progressCallback, function (error) {
             if (error) return callback(error);
 
