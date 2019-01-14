@@ -186,9 +186,6 @@ function getLogs(taskId, options, callback) {
         format = options.format || 'json',
         follow = options.follow;
 
-    assert.strictEqual(typeof lines, 'number');
-    assert.strictEqual(typeof format, 'string');
-
     let cmd = '/usr/bin/tail';
     var args = [ '--lines=' + lines ];
 
