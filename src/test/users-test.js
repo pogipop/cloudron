@@ -638,18 +638,11 @@ describe('User', function () {
     });
 
     describe('admin change triggers mail', function () {
-        var groupObject;
-
         before(function (done) {
             createOwner(function (error) {
                 expect(error).to.not.be.ok();
 
-                groups.create(NON_ADMIN_GROUP, function (error, result) {
-                    expect(error).to.be(null);
-                    groupObject = result;
-
-                    done();
-                });
+                groups.create(NON_ADMIN_GROUP, done);
             });
         });
 
