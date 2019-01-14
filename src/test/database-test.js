@@ -522,6 +522,36 @@ describe('database', function () {
             });
         });
 
+        it('can get all with group ids paged', function (done) {
+            userdb.getAllWithGroupIdsPaged(1, 2, function (error, all) {
+                expect(error).to.not.be.ok();
+                expect(all.length).to.equal(2);
+
+                var userCopy;
+
+                userCopy = _.extend({}, USER_0);
+                userCopy.groupIds = [];
+                expect(all[0]).to.eql(userCopy);
+
+                userCopy = _.extend({}, USER_1);
+                userCopy.groupIds = [];
+                expect(all[1]).to.eql(userCopy);
+
+                userdb.getAllWithGroupIdsPaged(2, 2, function (error, all) {
+                    expect(error).to.not.be.ok();
+                    expect(all.length).to.equal(1);
+
+                    var userCopy;
+
+                    userCopy = _.extend({}, USER_2);
+                    userCopy.groupIds = [];
+                    expect(all[0]).to.eql(userCopy);
+
+                    done();
+                });
+            });
+        });
+
         it('can get all admins', function (done) {
             userdb.getAllAdmins(function (error, all) {
                 expect(error).to.not.be.ok();
