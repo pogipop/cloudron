@@ -57,8 +57,6 @@ var addons = require('./addons.js'),
     mkdirp = require('mkdirp'),
     once = require('once'),
     path = require('path'),
-    paths = require('./paths.js'),
-    safe = require('safetydance'),
     shell = require('./shell.js'),
     spawn = child_process.spawn,
     util = require('util'),
@@ -517,15 +515,13 @@ function execContainer(containerId, cmd, options, callback) {
     if (options.stdin) options.stdin.pipe(cp.stdin).on('error', callback);
 }
 
-function createVolume(app, name, subdir, callback) {
+function createVolume(app, name, volumeDataDir, callback) {
     assert.strictEqual(typeof app, 'object');
     assert.strictEqual(typeof name, 'string');
-    assert.strictEqual(typeof subdir, 'string');
+    assert.strictEqual(typeof volumeDataDir, 'string');
     assert.strictEqual(typeof callback, 'function');
 
     let docker = exports.connection;
-
-    const volumeDataDir = path.join(paths.APPS_DATA_DIR, app.id, subdir);
 
     const volumeOptions = {
         Name: name,
@@ -552,30 +548,37 @@ function createVolume(app, name, subdir, callback) {
     });
 }
 
-function clearVolume(app, name, subdir, callback) {
+function clearVolume(app, name, callback) {
     assert.strictEqual(typeof app, 'object');
     assert.strictEqual(typeof name, 'string');
-    assert.strictEqual(typeof subdir, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    shell.sudo('removeVolume', [ RMVOLUME_CMD, app.id, subdir ], {}, callback);
+    let docker = exports.connection;
+    let volume = docker.getVolume(name);
+    volume.inspect(function (error, v) {
+        if (error && error.statusCode === 404) return callback();
+        if (error) return callback(error);
+
+        const volumeDataDir = v.Options.device;
+        shell.sudo('removeVolume', [ RMVOLUME_CMD, volumeDataDir ], {}, callback);
+    });
 }
 
-function removeVolume(app, name, subdir, callback) {
+function removeVolume(app, name, callback) {
     assert.strictEqual(typeof app, 'object');
     assert.strictEqual(typeof name, 'string');
-    assert.strictEqual(typeof subdir, 'string');
     assert.strictEqual(typeof callback, 'function');
 
     let docker = exports.connection;
 
-    let volume = docker.getVolume(name);
-    volume.remove(function (error) {
-        if (error && error.statusCode !== 404) {
-            debug(`removeVolume: Error removing volume of ${app.id} ${error}`);
-            callback(error);
-        }
+    clearVolume(app, name, function (error) {
+        if (error) return callback(error);
 
-        shell.sudo('removeVolume', [ RMVOLUME_CMD, app.id, subdir ], {}, callback);
+        let volume = docker.getVolume(name);
+        volume.remove(function (error) {
+            if (error && error.statusCode !== 404) return callback(new Error(`removeVolume: Error removing volume of ${app.id} ${error.message}`));
+
+            callback();
+        });
     });
 }

@@ -17,14 +17,11 @@ if [[ "$1" == "--check" ]]; then
     exit 0
 fi
 
-appid="$1"
-subdir="$2"
+volume_dir="$1"
 
-if [[ "${BOX_ENV}" == "cloudron" ]]; then
-    readonly volume_dir="${HOME}/appsdata/${appid}/${subdir}"
-else
-    readonly volume_dir="${HOME}/.cloudron_test/appsdata/${appid}/${subdir}"
+if [[ "${BOX_ENV}" == "test" ]]; then
+    # be careful not to nuke some random directory when testing
+    [[ "${volume_dir}" != *"./cloudron_test/"* ]] && exit 1
 fi
 
 rm -rf "${volume_dir}"
-

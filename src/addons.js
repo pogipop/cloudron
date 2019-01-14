@@ -728,8 +728,10 @@ function setupLocalStorage(app, options, callback) {
 
     debugApp(app, 'setupLocalStorage');
 
+    const volumeDataDir = path.join(paths.APPS_DATA_DIR, app.id, 'data');
+
     // if you change the name, you have to change getMountsSync
-    docker.createVolume(app, `${app.id}-localstorage`, 'data', callback);
+    docker.createVolume(app, `${app.id}-localstorage`, volumeDataDir, callback);
 }
 
 function clearLocalStorage(app, options, callback) {
@@ -739,7 +741,7 @@ function clearLocalStorage(app, options, callback) {
 
     debugApp(app, 'clearLocalStorage');
 
-    docker.clearVolume(app, `${app.id}-localstorage`, 'data', callback);
+    docker.clearVolume(app, `${app.id}-localstorage`, callback);
 }
 
 function teardownLocalStorage(app, options, callback) {
@@ -749,7 +751,7 @@ function teardownLocalStorage(app, options, callback) {
 
     debugApp(app, 'teardownLocalStorage');
 
-    docker.removeVolume(app, `${app.id}-localstorage`, 'data', callback);
+    docker.removeVolume(app, `${app.id}-localstorage`, callback);
 }
 
 function setupOauth(app, options, callback) {
