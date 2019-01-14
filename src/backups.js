@@ -540,24 +540,28 @@ function download(backupConfig, backupId, format, dataDir, progressCallback, cal
 
     debug(`download - Downloading ${backupId} of format ${format} to ${dataDir}`);
 
+    const backupFilePath = getBackupFilePath(backupConfig, backupId, format);
+
     if (format === 'tgz') {
-        api(backupConfig.provider).download(backupConfig, getBackupFilePath(backupConfig, backupId, format), function (error, sourceStream) {
+        api(backupConfig.provider).download(backupConfig, backupFilePath, function (error, sourceStream) {
             if (error) return callback(error);
 
-            tarExtract(sourceStream, dataDir, backupConfig.key || null, function (error, ps) {
-                if (error) return callback(error);
+            async.retry({ times: 5, interval: 20000 }, function (retryCallback) {
+                tarExtract(sourceStream, dataDir, backupConfig.key || null, function (error, ps) {
+                    if (error) return retryCallback(error);
 
-                ps.on('progress', function (progress) {
-                    const transferred = Math.round(progress.transferred/1024/1024), speed = Math.round(progress.speed/1024/1024);
-                    if (!transferred && !speed) return progressCallback({ message: 'Downloading' }); // 0M@0Mbps looks wrong
-                    progressCallback({ message: `Downloading ${transferred}M@${speed}Mbps` });
+                    ps.on('progress', function (progress) {
+                        const transferred = Math.round(progress.transferred/1024/1024), speed = Math.round(progress.speed/1024/1024);
+                        if (!transferred && !speed) return progressCallback({ message: 'Downloading' }); // 0M@0Mbps looks wrong
+                        progressCallback({ message: `Downloading ${transferred}M@${speed}Mbps` });
+                    });
+                    ps.on('error', retryCallback);
+                    ps.on('done', retryCallback);
                 });
-                ps.on('error', callback);
-                ps.on('done', callback);
-            });
+            }, callback);
         });
     } else {
-        downloadDir(backupConfig, getBackupFilePath(backupConfig, backupId, format), dataDir, progressCallback, function (error) {
+        downloadDir(backupConfig, backupFilePath, dataDir, progressCallback, function (error) {
             if (error) return callback(error);
 
             restoreFsMetadata(dataDir, callback);
