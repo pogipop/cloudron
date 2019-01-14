@@ -1517,4 +1517,5 @@
 * Fix issue where SpamAssassin and SPF checks were run for outbound email
 * Improve various eventlog messages
 * Track dyndns change events
+* Add new S3 regions - Paris/Stockholm/Osaka
 
