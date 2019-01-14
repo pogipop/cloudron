@@ -63,7 +63,6 @@ var addons = require('./addons.js'),
     util = require('util'),
     zlib = require('zlib');
 
-const NOOP_CALLBACK = function (error) { if (error) debug(error); };
 const BACKUP_UPLOAD_CMD = path.join(__dirname, 'scripts/backupupload.js');
 
 function debugApp(app) {
@@ -340,7 +339,9 @@ function sync(backupConfig, backupId, dataDir, progressCallback, callback) {
                     retryCallback();
                 }); // ignore error if file disappears
                 stream.on('progress', function(progress) {
-                    progressCallback({ message: `Uploading ${task.path}: ${Math.round(progress.transferred/1024/1024)}M@${Math.round(progress.speed/1024/1024)}` });
+                    const transferred = Math.round(progress.transferred/1024/1024), speed = Math.round(progress.speed/1024/1024);
+                    if (!transferred && !speed) return progressCallback({ message: `Uploading ${task.path}` }); // 0M@0Mbps looks wrong
+                    progressCallback({ message: `Uploading ${task.path}: ${transferred}M@${speed}Mbps` }); // 0M@0Mbps looks wrong
                 });
                 api(backupConfig.provider).upload(backupConfig, backupFilePath, stream, function (error) {
                     debug(error ? `Error uploading ${task.path} try ${retryCount}: ${error.message}` : `Uploaded ${task.path}`);
