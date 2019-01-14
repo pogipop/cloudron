@@ -511,18 +511,23 @@ function downloadDir(backupConfig, backupFilePath, destDir, callback) {
         mkdirp(path.dirname(destFilePath), function (error) {
             if (error) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
 
-            api(backupConfig.provider).download(backupConfig, entry.fullPath, function (error, sourceStream) {
-                if (error) return callback(error);
-
-                sourceStream.on('error', callback);
-
+            async.retry({ times: 5, interval: 20000 }, function (retryCallback) {
                 let destStream = createWriteStream(destFilePath, backupConfig.key || null);
-                destStream.on('error', callback);
 
-                debug(`downloadDir: Copying ${entry.fullPath} to ${destFilePath}`);
+                // protect against multiple errors. must destroy the write stream so that a previous retry does not write
+                let closeAndRetry = once((error) => { destStream.destroy(); retryCallback(error); });
 
-                sourceStream.pipe(destStream, { end: true }).on('finish', callback);
-            });
+                api(backupConfig.provider).download(backupConfig, entry.fullPath, function (error, sourceStream) {
+                    if (error) return closeAndRetry(error);
+
+                    sourceStream.on('error', closeAndRetry);
+                    destStream.on('error', closeAndRetry);
+
+                    debug(`Downloading ${entry.fullPath} to ${destFilePath}`);
+
+                    sourceStream.pipe(destStream, { end: true }).on('finish', closeAndRetry);
+                });
+            }, callback);
         });
     }
 
