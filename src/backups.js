@@ -309,6 +309,8 @@ function sync(backupConfig, backupId, dataDir, progressCallback, callback) {
     assert.strictEqual(typeof progressCallback, 'function');
     assert.strictEqual(typeof callback, 'function');
 
+    const concurrency = backupConfig.syncConcurrency || (backupConfig.provider === 's3' ? 200 : 10);
+
     syncer.sync(dataDir, function processTask(task, iteratorCallback) {
         debug('sync: processing task: %j', task);
         // the empty task.path is special to signify the directory
@@ -349,7 +351,7 @@ function sync(backupConfig, backupId, dataDir, progressCallback, callback) {
                 });
             }
         }, iteratorCallback);
-    }, backupConfig.syncConcurrency || 10 /* concurrency */, function (error) {
+    }, concurrency, function (error) {
         if (error) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
 
         callback();
@@ -531,8 +533,9 @@ function downloadDir(backupConfig, backupFilePath, destDir, progressCallback, ca
 
     api(backupConfig.provider).listDir(backupConfig, backupFilePath, 1000, function (entries, done) {
         // https://www.digitalocean.com/community/questions/rate-limiting-on-spaces?answer=40441
-        const limit = backupConfig.provider !== 'digitalocean-spaces' ? 1000 : 100;
-        async.eachLimit(entries, limit, downloadFile, done);
+        const concurrency = backupConfig.downloadConcurrency || (backupConfig.provider === 's3' ? 1000 : 100);
+
+        async.eachLimit(entries, concurrency, downloadFile, done);
     }, callback);
 }
 

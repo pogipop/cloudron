@@ -353,12 +353,12 @@ function copy(apiConfig, oldFilePath, newFilePath) {
         });
     }
 
-    var total = 0, concurrency = 4;
+    var total = 0;
+    const concurrency = apiConfig.copyConcurrency || (apiConfig.provider === 's3' ? 500 : 10);
 
     listDir(apiConfig, oldFilePath, 1000, function listDirIterator(entries, done) {
         total += entries.length;
 
-        if (retryCount === 0) concurrency = Math.min(concurrency + 1, 10); else concurrency = Math.max(concurrency - 1, 5);
         events.emit('progress', `Copying ${total-entries.length}-${total}. ${retryCount} errors so far. concurrency set to ${concurrency}`);
         retryCount = 0;
 
