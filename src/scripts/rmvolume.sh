@@ -17,8 +17,6 @@ if [[ "$1" == "--check" ]]; then
     exit 0
 fi
 
-# this script is called from redis addon as well!
-
 appid="$1"
 subdir="$2"
 
