@@ -47,7 +47,7 @@ function getUsersWithAccessToApp(req, callback) {
     assert.strictEqual(typeof req.app, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    users.list(function (error, result) {
+    users.getAll(function (error, result) {
         if (error) return callback(new ldap.OperationsError(error.toString()));
 
         async.filter(result, apps.hasAccessTo.bind(null, req.app), function (error, allowedUsers) {

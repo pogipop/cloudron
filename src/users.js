@@ -6,7 +6,8 @@ exports = module.exports = {
     removePrivateFields: removePrivateFields,
     removeRestrictedFields: removeRestrictedFields,
 
-    list: list,
+    getAll: getAll,
+    getAllPaged: getAllPaged,
     create: create,
     isActivated: isActivated,
     verify: verify,
@@ -304,10 +305,22 @@ function removeUser(userId, auditSource, callback) {
     });
 }
 
-function list(callback) {
+function getAll(callback) {
     assert.strictEqual(typeof callback, 'function');
 
     userdb.getAllWithGroupIds(function (error, results) {
+        if (error) return callback(new UsersError(UsersError.INTERNAL_ERROR, error));
+
+        return callback(null, results);
+    });
+}
+
+function getAllPaged(page, perPage, callback) {
+    assert.strictEqual(typeof page, 'number');
+    assert.strictEqual(typeof perPage, 'number');
+    assert.strictEqual(typeof callback, 'function');
+
+    userdb.getAllWithGroupIdsPaged(page, perPage, function (error, results) {
         if (error) return callback(new UsersError(UsersError.INTERNAL_ERROR, error));
 
         return callback(null, results);
