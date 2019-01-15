@@ -571,14 +571,10 @@ function removeVolume(app, name, callback) {
 
     let docker = exports.connection;
 
-    clearVolume(app, name, function (error) {
-        if (error) return callback(error);
+    let volume = docker.getVolume(name);
+    volume.remove(function (error) {
+        if (error && error.statusCode !== 404) return callback(new Error(`removeVolume: Error removing volume of ${app.id} ${error.message}`));
 
-        let volume = docker.getVolume(name);
-        volume.remove(function (error) {
-            if (error && error.statusCode !== 404) return callback(new Error(`removeVolume: Error removing volume of ${app.id} ${error.message}`));
-
-            callback();
-        });
+        callback();
     });
 }

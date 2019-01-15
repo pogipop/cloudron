@@ -751,7 +751,10 @@ function teardownLocalStorage(app, options, callback) {
 
     debugApp(app, 'teardownLocalStorage');
 
-    docker.removeVolume(app, `${app.id}-localstorage`, callback);
+    async.series([
+        docker.clearVolume.bind(null, app, `${app.id}-localstorage`),
+        docker.removeVolume.bind(null, app, `${app.id}-localstorage`)
+    ], callback);
 }
 
 function setupOauth(app, options, callback) {
