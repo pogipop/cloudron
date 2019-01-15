@@ -315,12 +315,13 @@ function getAll(callback) {
     });
 }
 
-function getAllPaged(page, perPage, callback) {
+function getAllPaged(search, page, perPage, callback) {
+    assert(typeof search === 'string' || search === null);
     assert.strictEqual(typeof page, 'number');
     assert.strictEqual(typeof perPage, 'number');
     assert.strictEqual(typeof callback, 'function');
 
-    userdb.getAllWithGroupIdsPaged(page, perPage, function (error, results) {
+    userdb.getAllWithGroupIdsPaged(search, page, perPage, function (error, results) {
         if (error) return callback(new UsersError(UsersError.INTERNAL_ERROR, error));
 
         return callback(null, results);

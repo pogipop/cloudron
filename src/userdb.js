@@ -21,7 +21,8 @@ exports = module.exports = {
 var assert = require('assert'),
     database = require('./database.js'),
     debug = require('debug')('box:userdb'),
-    DatabaseError = require('./databaseerror');
+    DatabaseError = require('./databaseerror'),
+    mysql = require('mysql');
 
 var USERS_FIELDS = [ 'id', 'username', 'email', 'fallbackEmail', 'password', 'salt', 'createdAt', 'modifiedAt', 'resetToken', 'displayName',
     'twoFactorAuthenticationEnabled', 'twoFactorAuthenticationSecret', 'admin' ].join(',');
@@ -116,16 +117,17 @@ function getAllWithGroupIds(callback) {
     });
 }
 
-function getAllWithGroupIdsPaged(page, perPage, callback) {
+function getAllWithGroupIdsPaged(search, page, perPage, callback) {
+    assert(typeof search === 'string' || search === null);
     assert.strictEqual(typeof page, 'number');
     assert.strictEqual(typeof perPage, 'number');
     assert.strictEqual(typeof callback, 'function');
 
-    var query = `SELECT ${USERS_FIELDS},GROUP_CONCAT(groupMembers.groupId) AS groupIds
-        FROM users LEFT OUTER JOIN groupMembers ON users.id = groupMembers.userId
-        GROUP BY users.id
-        ORDER BY users.username
-        ASC LIMIT ${(page-1)*perPage},${perPage}`;
+    var query = `SELECT ${USERS_FIELDS},GROUP_CONCAT(groupMembers.groupId) AS groupIds FROM users LEFT OUTER JOIN groupMembers ON users.id = groupMembers.userId `;
+
+    if (search) query += ' WHERE (users.username LIKE ' + mysql.escape(`%${search}%`) + ') ';
+
+    query += ` GROUP BY users.id ORDER BY users.username ASC LIMIT ${(page-1)*perPage},${perPage} `;
 
     database.query(query, function (error, results) {
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
