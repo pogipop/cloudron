@@ -515,7 +515,12 @@ function downloadDir(backupConfig, backupFilePath, destDir, progressCallback, ca
                 let destStream = createWriteStream(destFilePath, backupConfig.key || null);
 
                 // protect against multiple errors. must destroy the write stream so that a previous retry does not write
-                let closeAndRetry = once((error) => { destStream.destroy(); retryCallback(error); });
+                let closeAndRetry = once((error) => {
+                    if (error) progressCallback({ message: `Download ${entry.fullPath} errored: ${error.message}` });
+                    else progressCallback({ message: `Download ${entry.fullPath} finished` });
+                    destStream.destroy();
+                    retryCallback(error);
+                });
 
                 api(backupConfig.provider).download(backupConfig, entry.fullPath, function (error, sourceStream) {
                     if (error) return closeAndRetry(error);
@@ -533,7 +538,7 @@ function downloadDir(backupConfig, backupFilePath, destDir, progressCallback, ca
 
     api(backupConfig.provider).listDir(backupConfig, backupFilePath, 1000, function (entries, done) {
         // https://www.digitalocean.com/community/questions/rate-limiting-on-spaces?answer=40441
-        const concurrency = backupConfig.downloadConcurrency || (backupConfig.provider === 's3' ? 1000 : 100);
+        const concurrency = backupConfig.downloadConcurrency || (backupConfig.provider === 's3' ? 300 : 100);
 
         async.eachLimit(entries, concurrency, downloadFile, done);
     }, callback);
