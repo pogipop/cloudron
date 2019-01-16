@@ -309,7 +309,8 @@ function sync(backupConfig, backupId, dataDir, progressCallback, callback) {
     assert.strictEqual(typeof progressCallback, 'function');
     assert.strictEqual(typeof callback, 'function');
 
-    const concurrency = backupConfig.syncConcurrency || (backupConfig.provider === 's3' ? 200 : 10);
+    // the number here has to take into account the s3.upload partSize (which is 10MB). So 20=200MB
+    const concurrency = backupConfig.syncConcurrency || (backupConfig.provider === 's3' ? 20 : 10);
 
     syncer.sync(dataDir, function processTask(task, iteratorCallback) {
         debug('sync: processing task: %j', task);
