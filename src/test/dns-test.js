@@ -13,7 +13,9 @@ var async = require('async'),
     database = require('../database.js'),
     domains = require('../domains.js'),
     expect = require('expect.js'),
+    namecheap = require('namecheap'),
     nock = require('nock'),
+    sinon = require('sinon'),
     util = require('util');
 
 var DOMAIN_0 = {
@@ -55,7 +57,7 @@ describe('dns provider', function () {
         });
 
         it('upsert succeeds', function (done) {
-            domains.upsertDnsRecords('test', DOMAIN_0.domain, 'A', [ '1.2.3.4' ], function (error) {
+            domains.upsertDnsRecords('test', DOMAIN_0.domain, 'A', ['1.2.3.4'], function (error) {
                 expect(error).to.eql(null);
 
                 done();
@@ -73,7 +75,7 @@ describe('dns provider', function () {
         });
 
         it('del succeeds', function (done) {
-            domains.removeDnsRecords('test', DOMAIN_0.domain, 'A', [ '1.2.3.4' ], function (error) {
+            domains.removeDnsRecords('test', DOMAIN_0.domain, 'A', ['1.2.3.4'], function (error) {
                 expect(error).to.eql(null);
 
                 done();
@@ -114,7 +116,7 @@ describe('dns provider', function () {
                 .post('/v2/domains/' + DOMAIN_0.zoneName + '/records')
                 .reply(201, { domain_record: DOMAIN_RECORD_0 });
 
-            domains.upsertDnsRecords('test', DOMAIN_0.domain, 'A', [ '1.2.3.4' ], function (error) {
+            domains.upsertDnsRecords('test', DOMAIN_0.domain, 'A', ['1.2.3.4'], function (error) {
                 expect(error).to.eql(null);
                 expect(req1.isDone()).to.be.ok();
                 expect(req2.isDone()).to.be.ok();
@@ -158,12 +160,12 @@ describe('dns provider', function () {
 
             var req1 = nock(DIGITALOCEAN_ENDPOINT).filteringRequestBody(function () { return false; })
                 .get('/v2/domains/' + DOMAIN_0.zoneName + '/records')
-                .reply(200, { domain_records: [ DOMAIN_RECORD_0, DOMAIN_RECORD_1 ] });
+                .reply(200, { domain_records: [DOMAIN_RECORD_0, DOMAIN_RECORD_1] });
             var req2 = nock(DIGITALOCEAN_ENDPOINT).filteringRequestBody(function () { return false; })
                 .put('/v2/domains/' + DOMAIN_0.zoneName + '/records/' + DOMAIN_RECORD_1.id)
                 .reply(200, { domain_record: DOMAIN_RECORD_1_NEW });
 
-            domains.upsertDnsRecords('test', DOMAIN_0.domain, 'A', [ DOMAIN_RECORD_1_NEW.data ], function (error) {
+            domains.upsertDnsRecords('test', DOMAIN_0.domain, 'A', [DOMAIN_RECORD_1_NEW.data], function (error) {
                 expect(error).to.eql(null);
                 expect(req1.isDone()).to.be.ok();
                 expect(req2.isDone()).to.be.ok();
@@ -237,7 +239,7 @@ describe('dns provider', function () {
 
             var req1 = nock(DIGITALOCEAN_ENDPOINT).filteringRequestBody(function () { return false; })
                 .get('/v2/domains/' + DOMAIN_0.zoneName + '/records')
-                .reply(200, { domain_records: [ DOMAIN_RECORD_0, DOMAIN_RECORD_1, DOMAIN_RECORD_2 ] });
+                .reply(200, { domain_records: [DOMAIN_RECORD_0, DOMAIN_RECORD_1, DOMAIN_RECORD_2] });
             var req2 = nock(DIGITALOCEAN_ENDPOINT).filteringRequestBody(function () { return false; })
                 .put('/v2/domains/' + DOMAIN_0.zoneName + '/records/' + DOMAIN_RECORD_1.id)
                 .reply(200, { domain_record: DOMAIN_RECORD_1_NEW });
@@ -248,7 +250,7 @@ describe('dns provider', function () {
                 .post('/v2/domains/' + DOMAIN_0.zoneName + '/records')
                 .reply(201, { domain_record: DOMAIN_RECORD_2_NEW });
 
-            domains.upsertDnsRecords('', DOMAIN_0.domain, 'TXT', [ DOMAIN_RECORD_2_NEW.data, DOMAIN_RECORD_1_NEW.data, DOMAIN_RECORD_3_NEW.data ], function (error) {
+            domains.upsertDnsRecords('', DOMAIN_0.domain, 'TXT', [DOMAIN_RECORD_2_NEW.data, DOMAIN_RECORD_1_NEW.data, DOMAIN_RECORD_3_NEW.data], function (error) {
                 expect(error).to.eql(null);
                 expect(req1.isDone()).to.be.ok();
                 expect(req2.isDone()).to.be.ok();
@@ -284,7 +286,7 @@ describe('dns provider', function () {
 
             var req1 = nock(DIGITALOCEAN_ENDPOINT).filteringRequestBody(function () { return false; })
                 .get('/v2/domains/' + DOMAIN_0.zoneName + '/records')
-                .reply(200, { domain_records: [ DOMAIN_RECORD_0, DOMAIN_RECORD_1 ] });
+                .reply(200, { domain_records: [DOMAIN_RECORD_0, DOMAIN_RECORD_1] });
 
             domains.getDnsRecords('test', DOMAIN_0.domain, 'A', function (error, result) {
                 expect(error).to.eql(null);
@@ -322,7 +324,7 @@ describe('dns provider', function () {
 
             var req1 = nock(DIGITALOCEAN_ENDPOINT).filteringRequestBody(function () { return false; })
                 .get('/v2/domains/' + DOMAIN_0.zoneName + '/records')
-                .reply(200, { domain_records: [ DOMAIN_RECORD_0, DOMAIN_RECORD_1 ] });
+                .reply(200, { domain_records: [DOMAIN_RECORD_0, DOMAIN_RECORD_1] });
             var req2 = nock(DIGITALOCEAN_ENDPOINT).filteringRequestBody(function () { return false; })
                 .delete('/v2/domains/' + DOMAIN_0.zoneName + '/records/' + DOMAIN_RECORD_1.id)
                 .reply(204, {});
@@ -361,9 +363,9 @@ describe('dns provider', function () {
 
             var req1 = nock(GODADDY_API)
                 .put('/' + DOMAIN_0.zoneName + '/records/A/test', DOMAIN_RECORD_0)
-                .reply(200, { });
+                .reply(200, {});
 
-            domains.upsertDnsRecords('test', DOMAIN_0.domain, 'A', [ '1.2.3.4' ], function (error) {
+            domains.upsertDnsRecords('test', DOMAIN_0.domain, 'A', ['1.2.3.4'], function (error) {
                 expect(error).to.eql(null);
                 expect(req1.isDone()).to.be.ok();
 
@@ -413,7 +415,7 @@ describe('dns provider', function () {
 
             var req2 = nock(GODADDY_API)
                 .put('/' + DOMAIN_0.zoneName + '/records/A/test', DOMAIN_RECORD_1)
-                .reply(200, { });
+                .reply(200, {});
 
             domains.removeDnsRecords('test', DOMAIN_0.domain, 'A', ['1.2.3.4'], function (error) {
                 expect(error).to.eql(null);
@@ -443,14 +445,14 @@ describe('dns provider', function () {
 
             var DOMAIN_RECORD_0 = {
                 'rrset_ttl': 300,
-                'rrset_values': [ '1.2.3.4' ]
+                'rrset_values': ['1.2.3.4']
             };
 
             var req1 = nock(GANDI_API)
                 .put('/domains/' + DOMAIN_0.zoneName + '/records/test/A', DOMAIN_RECORD_0)
                 .reply(201, { message: 'Zone Record Created' });
 
-            domains.upsertDnsRecords('test', DOMAIN_0.domain, 'A', [ '1.2.3.4' ], function (error) {
+            domains.upsertDnsRecords('test', DOMAIN_0.domain, 'A', ['1.2.3.4'], function (error) {
                 expect(error).to.eql(null);
                 expect(req1.isDone()).to.be.ok();
 
@@ -465,7 +467,7 @@ describe('dns provider', function () {
                 'rrset_type': 'A',
                 'rrset_ttl': 600,
                 'rrset_name': 'test',
-                'rrset_values': [ '1.2.3.4' ]
+                'rrset_values': ['1.2.3.4']
             };
 
             var req1 = nock(GANDI_API)
@@ -488,7 +490,7 @@ describe('dns provider', function () {
 
             var req2 = nock(GANDI_API)
                 .delete('/domains/' + DOMAIN_0.zoneName + '/records/test/A')
-                .reply(204, { });
+                .reply(204, {});
 
             domains.removeDnsRecords('test', DOMAIN_0.domain, 'A', ['1.2.3.4'], function (error) {
                 expect(error).to.eql(null);
@@ -531,7 +533,7 @@ describe('dns provider', function () {
                 .post(`/domains/${DOMAIN_0.zoneName}/records`, DOMAIN_RECORD_0)
                 .reply(200, {});
 
-            domains.upsertDnsRecords('test', DOMAIN_0.domain, 'A', [ '1.2.3.4' ], function (error) {
+            domains.upsertDnsRecords('test', DOMAIN_0.domain, 'A', ['1.2.3.4'], function (error) {
                 expect(error).to.eql(null);
                 expect(req1.isDone()).to.be.ok();
                 expect(req2.isDone()).to.be.ok();
@@ -552,7 +554,7 @@ describe('dns provider', function () {
 
             var req1 = nock(NAMECOM_API)
                 .get(`/domains/${DOMAIN_0.zoneName}/records`)
-                .reply(200, { records: [ DOMAIN_RECORD_0 ] });
+                .reply(200, { records: [DOMAIN_RECORD_0] });
 
             domains.getDnsRecords('test', DOMAIN_0.domain, 'A', function (error, result) {
                 expect(error).to.eql(null);
@@ -578,7 +580,7 @@ describe('dns provider', function () {
 
             var req1 = nock(NAMECOM_API)
                 .get(`/domains/${DOMAIN_0.zoneName}/records`)
-                .reply(200, { records: [ DOMAIN_RECORD_0 ] });
+                .reply(200, { records: [DOMAIN_RECORD_0] });
 
             var req2 = nock(NAMECOM_API)
                 .delete(`/domains/${DOMAIN_0.zoneName}/records/${DOMAIN_RECORD_0.id}`)
@@ -592,6 +594,603 @@ describe('dns provider', function () {
                 done();
             });
         });
+    });
+
+    describe('namecheap', function () {
+        let sandbox = require('sinon').createSandbox();
+
+        let username = 'namecheapuser';
+        let apiKey = 'API_KEY';
+
+        before(function (done) {
+            DOMAIN_0.provider = 'namecheap';
+            DOMAIN_0.config = {
+                username,
+                apiKey
+            };
+
+            domains.update(DOMAIN_0.domain, DOMAIN_0, AUDIT_SOURCE, done);
+        });
+
+        after(function() {
+            sandbox.restore();
+        });
+
+        it('upsert non-existing record succeeds', function (done) {
+
+            let getHostsReturn = {
+                "Type": "namecheap.domains.dns.getHosts",
+                "DomainDNSGetHostsResult": {
+                    "Domain": "example-dns-test.com",
+                    "EmailType": "FWD",
+                    "IsUsingOurDNS": "true",
+                    "host": [
+                        {
+                            "HostId": "614433",
+                            "Name": "www",
+                            "Type": "CNAME",
+                            "Address": "parkingpage.namecheap.com.",
+                            "MXPref": "10",
+                            "TTL": "1800",
+                            "AssociatedAppTitle": "",
+                            "FriendlyName": "CNAME Record",
+                            "IsActive": "true",
+                            "IsDDNSEnabled": "false"
+                        },
+                        {
+                            "HostId": "614432",
+                            "Name": "@",
+                            "Type": "URL",
+                            "Address": "http://www.example-dns-test.com/",
+                            "MXPref": "10",
+                            "TTL": "1800",
+                            "AssociatedAppTitle": "URL Forwarding",
+                            "FriendlyName": "URL Record",
+                            "IsActive": "true",
+                            "IsDDNSEnabled": "false"
+                        }
+                    ]
+                }
+            };
+
+            let setInternalExpect = [
+                {
+                    "HostId": "614433",
+                    "HostName": "www",
+                    "RecordType": "CNAME",
+                    "Address": "parkingpage.namecheap.com.",
+                    "MXPref": "10",
+                    "TTL": "1800",
+                    "AssociatedAppTitle": "",
+                    "FriendlyName": "CNAME Record",
+                    "IsActive": "true",
+                    "IsDDNSEnabled": "false"
+                },
+                {
+                    "HostId": "614432",
+                    "HostName": "@",
+                    "RecordType": "URL",
+                    "Address": "http://www.example-dns-test.com/",
+                    "MXPref": "10",
+                    "TTL": "1800",
+                    "AssociatedAppTitle": "URL Forwarding",
+                    "FriendlyName": "URL Record",
+                    "IsActive": "true",
+                    "IsDDNSEnabled": "false"
+                },
+                {
+                    RecordType: 'A',
+                    HostName: 'test',
+                    Address: '1.2.3.4'
+                }
+            ];
+
+            let getHostsFake = sinon.fake.yields(null, getHostsReturn);
+            let setHostsFake = sinon.fake.yields(null, true);
+            let mockObj = {
+                    dns: {
+                        getHosts: getHostsFake,
+                        setHosts: setHostsFake
+                    }
+            };
+
+            sandbox.stub(namecheap.prototype, "domains").value(mockObj);
+
+            domains.upsertDnsRecords('test', DOMAIN_0.domain, 'A', ['1.2.3.4'], function (error) {
+                expect(error).to.eql(null);
+
+                expect(setHostsFake.calledOnce).to.eql(true);
+                expect(setHostsFake.calledWith(DOMAIN_0.domain, setInternalExpect)).to.eql(true);
+                
+                done();
+            });
+        });
+
+        it('upsert multiple non-existing records succeeds', function (done) {
+
+            let getHostsReturn = {
+                "Type": "namecheap.domains.dns.getHosts",
+                "DomainDNSGetHostsResult": {
+                    "Domain": "example-dns-test.com",
+                    "EmailType": "FWD",
+                    "IsUsingOurDNS": "true",
+                    "host": [
+                        {
+                            "HostId": "614433",
+                            "Name": "www",
+                            "Type": "CNAME",
+                            "Address": "parkingpage.namecheap.com.",
+                            "MXPref": "10",
+                            "TTL": "1800",
+                            "AssociatedAppTitle": "",
+                            "FriendlyName": "CNAME Record",
+                            "IsActive": "true",
+                            "IsDDNSEnabled": "false"
+                        },
+                        {
+                            "HostId": "614432",
+                            "Name": "@",
+                            "Type": "URL",
+                            "Address": "http://www.example-dns-test.com/",
+                            "MXPref": "10",
+                            "TTL": "1800",
+                            "AssociatedAppTitle": "URL Forwarding",
+                            "FriendlyName": "URL Record",
+                            "IsActive": "true",
+                            "IsDDNSEnabled": "false"
+                        }
+                    ]
+                }
+            };
+
+            let setInternalExpect = [
+                {
+                    "HostId": "614433",
+                    "HostName": "www",
+                    "RecordType": "CNAME",
+                    "Address": "parkingpage.namecheap.com.",
+                    "MXPref": "10",
+                    "TTL": "1800",
+                    "AssociatedAppTitle": "",
+                    "FriendlyName": "CNAME Record",
+                    "IsActive": "true",
+                    "IsDDNSEnabled": "false"
+                },
+                {
+                    "HostId": "614432",
+                    "HostName": "@",
+                    "RecordType": "URL",
+                    "Address": "http://www.example-dns-test.com/",
+                    "MXPref": "10",
+                    "TTL": "1800",
+                    "AssociatedAppTitle": "URL Forwarding",
+                    "FriendlyName": "URL Record",
+                    "IsActive": "true",
+                    "IsDDNSEnabled": "false"
+                },
+                {
+                    RecordType: 'TXT',
+                    HostName: 'test',
+                    Address: '1.2.3.4'
+                },
+                {
+                    RecordType: 'TXT',
+                    HostName: 'test',
+                    Address: '2.3.4.5'
+                },
+                {
+                    RecordType: 'TXT',
+                    HostName: 'test',
+                    Address: '3.4.5.6'
+                }
+            ];
+
+            let getHostsFake = sinon.fake.yields(null, getHostsReturn);
+            let setHostsFake = sinon.fake.yields(null, true);
+            let mockObj = {
+                    dns: {
+                        getHosts: getHostsFake,
+                        setHosts: setHostsFake
+                    }
+            };
+
+            sandbox.stub(namecheap.prototype, "domains").value(mockObj);
+
+            domains.upsertDnsRecords('test', DOMAIN_0.domain, 'TXT', ['1.2.3.4', '2.3.4.5', '3.4.5.6'], function (error) {
+                expect(error).to.eql(null);
+
+                expect(setHostsFake.calledOnce).to.eql(true);
+                expect(setHostsFake.calledWith(DOMAIN_0.domain, setInternalExpect)).to.eql(true);
+                
+                done();
+            });
+        });
+
+        it('upsert multiple non-existing MX records succeeds', function (done) {
+
+            let getHostsReturn = {
+                "Type": "namecheap.domains.dns.getHosts",
+                "DomainDNSGetHostsResult": {
+                    "Domain": "example-dns-test.com",
+                    "EmailType": "FWD",
+                    "IsUsingOurDNS": "true",
+                    "host": [
+                        {
+                            "HostId": "614433",
+                            "Name": "www",
+                            "Type": "CNAME",
+                            "Address": "parkingpage.namecheap.com.",
+                            "MXPref": "10",
+                            "TTL": "1800",
+                            "AssociatedAppTitle": "",
+                            "FriendlyName": "CNAME Record",
+                            "IsActive": "true",
+                            "IsDDNSEnabled": "false"
+                        },
+                        {
+                            "HostId": "614432",
+                            "Name": "@",
+                            "Type": "URL",
+                            "Address": "http://www.example-dns-test.com/",
+                            "MXPref": "10",
+                            "TTL": "1800",
+                            "AssociatedAppTitle": "URL Forwarding",
+                            "FriendlyName": "URL Record",
+                            "IsActive": "true",
+                            "IsDDNSEnabled": "false"
+                        }
+                    ]
+                }
+            };
+
+            let setInternalExpect = [
+                {
+                    "HostId": "614433",
+                    "HostName": "www",
+                    "RecordType": "CNAME",
+                    "Address": "parkingpage.namecheap.com.",
+                    "MXPref": "10",
+                    "TTL": "1800",
+                    "AssociatedAppTitle": "",
+                    "FriendlyName": "CNAME Record",
+                    "IsActive": "true",
+                    "IsDDNSEnabled": "false"
+                },
+                {
+                    "HostId": "614432",
+                    "HostName": "@",
+                    "RecordType": "URL",
+                    "Address": "http://www.example-dns-test.com/",
+                    "MXPref": "10",
+                    "TTL": "1800",
+                    "AssociatedAppTitle": "URL Forwarding",
+                    "FriendlyName": "URL Record",
+                    "IsActive": "true",
+                    "IsDDNSEnabled": "false"
+                },
+                {
+                    RecordType: 'MX',
+                    HostName: 'test',
+                    Address: '1.2.3.4',
+                    MXPref: '10'
+                },
+                {
+                    RecordType: 'MX',
+                    HostName: 'test',
+                    Address: '2.3.4.5',
+                    MXPref: '20'
+                },
+                {
+                    RecordType: 'MX',
+                    HostName: 'test',
+                    Address: '3.4.5.6',
+                    MXPref: '30'
+                }
+            ];
+
+            let getHostsFake = sinon.fake.yields(null, getHostsReturn);
+            let setHostsFake = sinon.fake.yields(null, true);
+            let mockObj = {
+                    dns: {
+                        getHosts: getHostsFake,
+                        setHosts: setHostsFake
+                    }
+            };
+
+            sandbox.stub(namecheap.prototype, "domains").value(mockObj);
+
+            domains.upsertDnsRecords('test', DOMAIN_0.domain, 'MX', ['10 1.2.3.4', '20 2.3.4.5', '30 3.4.5.6'], function (error) {
+                expect(error).to.eql(null);
+
+                expect(setHostsFake.calledOnce).to.eql(true);
+                expect(setHostsFake.calledWith(DOMAIN_0.domain, setInternalExpect)).to.eql(true);
+                
+                done();
+            });
+        });
+
+        it('upsert existing record succeeds', function (done) {
+
+            let getHostsReturn = {
+                "Type": "namecheap.domains.dns.getHosts",
+                "DomainDNSGetHostsResult": {
+                    "Domain": "example-dns-test.com",
+                    "EmailType": "FWD",
+                    "IsUsingOurDNS": "true",
+                    "host": [
+                        {
+                            "HostId": "614433",
+                            "Name": "www",
+                            "Type": "CNAME",
+                            "Address": DOMAIN_0.domain,
+                            "MXPref": "10",
+                            "TTL": "1800",
+                            "AssociatedAppTitle": "",
+                            "FriendlyName": "CNAME Record",
+                            "IsActive": "true",
+                            "IsDDNSEnabled": "false"
+                        },
+                        {
+                            "HostId": "614432",
+                            "Name": "@",
+                            "Type": "URL",
+                            "Address": "http://www.example-dns-test.com/",
+                            "MXPref": "10",
+                            "TTL": "1800",
+                            "AssociatedAppTitle": "URL Forwarding",
+                            "FriendlyName": "URL Record",
+                            "IsActive": "true",
+                            "IsDDNSEnabled": "false"
+                        }
+                    ]
+                }
+            };
+
+            let setInternalExpect = [
+                {
+                    "HostId": "614433",
+                    "HostName": "www",
+                    "RecordType": "CNAME",
+                    "Address": "1.2.3.4",
+                    "MXPref": "10",
+                    "TTL": "1800",
+                    "AssociatedAppTitle": "",
+                    "FriendlyName": "CNAME Record",
+                    "IsActive": "true",
+                    "IsDDNSEnabled": "false"
+                },
+                {
+                    "HostId": "614432",
+                    "HostName": "@",
+                    "RecordType": "URL",
+                    "Address": "http://www.example-dns-test.com/",
+                    "MXPref": "10",
+                    "TTL": "1800",
+                    "AssociatedAppTitle": "URL Forwarding",
+                    "FriendlyName": "URL Record",
+                    "IsActive": "true",
+                    "IsDDNSEnabled": "false"
+                }
+            ];
+
+            let getHostsFake = sinon.fake.yields(null, getHostsReturn);
+            let setHostsFake = sinon.fake.yields(null, true);
+            let mockObj = {
+                    dns: {
+                        getHosts: getHostsFake,
+                        setHosts: setHostsFake
+                    }
+            };
+
+            sandbox.stub(namecheap.prototype, "domains").value(mockObj);
+
+            domains.upsertDnsRecords('www', DOMAIN_0.domain, 'CNAME', ['1.2.3.4'], function (error) {
+                expect(error).to.eql(null);
+
+                expect(setHostsFake.calledOnce).to.eql(true);
+                expect(setHostsFake.calledWith(DOMAIN_0.domain, setInternalExpect)).to.eql(true);
+                
+                done();
+            });
+        });
+
+        it('get succeeds', function(done) {
+            let getHostsReturn = {
+                "Type": "namecheap.domains.dns.getHosts",
+                "DomainDNSGetHostsResult": {
+                    "Domain": "example-dns-test.com",
+                    "EmailType": "FWD",
+                    "IsUsingOurDNS": "true",
+                    "host": [
+                        {
+                            "HostId": "614433",
+                            "Name": "www",
+                            "Type": "CNAME",
+                            "Address": "1.2.3.4",
+                            "MXPref": "10",
+                            "TTL": "1800",
+                            "AssociatedAppTitle": "",
+                            "FriendlyName": "CNAME Record",
+                            "IsActive": "true",
+                            "IsDDNSEnabled": "false"
+                        },
+                        {
+                            "HostId": "614432",
+                            "Name": "test",
+                            "Type": "A",
+                            "Address": "1.2.3.4",
+                            "MXPref": "10",
+                            "TTL": "1800",
+                            "FriendlyName": "A Record",
+                            "IsActive": "true",
+                            "IsDDNSEnabled": "false"
+                        },
+                        {
+                            "HostId": "614431",
+                            "Name": "test",
+                            "Type": "A",
+                            "Address": "2.3.4.5",
+                            "MXPref": "10",
+                            "TTL": "1800",
+                            "FriendlyName": "A Record",
+                            "IsActive": "true",
+                            "IsDDNSEnabled": "false"
+                        }
+                    ]
+                }
+            };
+
+            let getHostsFake = sinon.fake.yields(null, getHostsReturn);
+            let mockObj = {
+                    dns: {
+                        getHosts: getHostsFake
+                    }
+            };
+
+            sandbox.stub(namecheap.prototype, "domains").value(mockObj);
+
+            domains.getDnsRecords('test', DOMAIN_0.domain, 'A', function (error, result) {
+                expect(error).to.eql(null);
+
+                expect(result).to.be.an(Array);
+                expect(result.length).to.eql(2);
+                expect(getHostsFake.calledOnce).to.eql(true);
+                expect(result).to.eql(['1.2.3.4', '2.3.4.5']);
+                
+                done();
+            });
+        });
+
+        it('del succeeds', function (done) {
+
+            let getHostsReturn = {
+                "Type": "namecheap.domains.dns.getHosts",
+                "DomainDNSGetHostsResult": {
+                    "Domain": "example-dns-test.com",
+                    "EmailType": "FWD",
+                    "IsUsingOurDNS": "true",
+                    "host": [
+                        {
+                            "HostId": "614433",
+                            "Name": "www",
+                            "Type": "CNAME",
+                            "Address": "1.2.3.4",
+                            "MXPref": "10",
+                            "TTL": "1800",
+                            "AssociatedAppTitle": "",
+                            "FriendlyName": "CNAME Record",
+                            "IsActive": "true",
+                            "IsDDNSEnabled": "false"
+                        },
+                        {
+                            "HostId": "614432",
+                            "Name": "@",
+                            "Type": "URL",
+                            "Address": "http://www.example-dns-test.com/",
+                            "MXPref": "10",
+                            "TTL": "1800",
+                            "AssociatedAppTitle": "URL Forwarding",
+                            "FriendlyName": "URL Record",
+                            "IsActive": "true",
+                            "IsDDNSEnabled": "false"
+                        }
+                    ]
+                }
+            };
+
+            let setInternalExpect = [
+                {
+                    "HostId": "614432",
+                    "HostName": "@",
+                    "RecordType": "URL",
+                    "Address": "http://www.example-dns-test.com/",
+                    "MXPref": "10",
+                    "TTL": "1800",
+                    "AssociatedAppTitle": "URL Forwarding",
+                    "FriendlyName": "URL Record",
+                    "IsActive": "true",
+                    "IsDDNSEnabled": "false"
+                }
+            ];
+
+            let getHostsFake = sinon.fake.yields(null, getHostsReturn);
+            let setHostsFake = sinon.fake.yields(null, true);
+            let mockObj = {
+                    dns: {
+                        getHosts: getHostsFake,
+                        setHosts: setHostsFake
+                    }
+            };
+
+            sandbox.stub(namecheap.prototype, "domains").value(mockObj);
+
+            domains.removeDnsRecords('www', DOMAIN_0.domain, 'CNAME', ['1.2.3.4'], function (error) {
+                expect(error).to.eql(null);
+
+                expect(setHostsFake.calledOnce).to.eql(true);
+                expect(setHostsFake.calledWith(DOMAIN_0.domain, setInternalExpect)).to.eql(true);
+                
+                done();
+            });
+        });
+
+        it('del succeeds w/ non-present host', function (done) {
+
+            let getHostsReturn = {
+                "Type": "namecheap.domains.dns.getHosts",
+                "DomainDNSGetHostsResult": {
+                    "Domain": "example-dns-test.com",
+                    "EmailType": "FWD",
+                    "IsUsingOurDNS": "true",
+                    "host": [
+                        {
+                            "HostId": "614433",
+                            "Name": "www",
+                            "Type": "CNAME",
+                            "Address": "parkingpage.namecheap.com.",
+                            "MXPref": "10",
+                            "TTL": "1800",
+                            "AssociatedAppTitle": "",
+                            "FriendlyName": "CNAME Record",
+                            "IsActive": "true",
+                            "IsDDNSEnabled": "false"
+                        },
+                        {
+                            "HostId": "614432",
+                            "Name": "@",
+                            "Type": "URL",
+                            "Address": "http://www.example-dns-test.com/",
+                            "MXPref": "10",
+                            "TTL": "1800",
+                            "AssociatedAppTitle": "URL Forwarding",
+                            "FriendlyName": "URL Record",
+                            "IsActive": "true",
+                            "IsDDNSEnabled": "false"
+                        }
+                    ]
+                }
+            };
+
+            let getHostsFake = sinon.fake.yields(null, getHostsReturn);
+            let setHostsFake = sinon.fake.yields(null, true);
+            let mockObj = {
+                    dns: {
+                        getHosts: getHostsFake,
+                        setHosts: setHostsFake
+                    }
+            };
+
+            sandbox.stub(namecheap.prototype, "domains").value(mockObj);
+
+            domains.removeDnsRecords('test', DOMAIN_0.domain, 'A', ['1.2.3.4'], function (error) {
+                expect(error).to.eql(null);
+
+                expect(setHostsFake.notCalled).to.eql(true);
+                
+                done();
+            });
+        });
+
     });
 
     describe('route53', function () {
@@ -632,12 +1231,12 @@ describe('dns provider', function () {
                 MaxItems: '100'
             };
 
-            function mockery (queue) {
-                return function(options, callback) {
+            function mockery(queue) {
+                return function (options, callback) {
                     expect(options).to.be.an(Object);
 
                     var elem = queue.shift();
-                    if (!util.isArray(elem)) throw(new Error('Mock answer required'));
+                    if (!util.isArray(elem)) throw (new Error('Mock answer required'));
 
                     // if no callback passed, return a req object with send();
                     if (typeof callback !== 'function') {
@@ -690,7 +1289,7 @@ describe('dns provider', function () {
                 }
             }]);
 
-            domains.upsertDnsRecords('test', DOMAIN_0.domain, 'A', [ '1.2.3.4' ], function (error) {
+            domains.upsertDnsRecords('test', DOMAIN_0.domain, 'A', ['1.2.3.4'], function (error) {
                 expect(error).to.eql(null);
                 expect(awsAnswerQueue.length).to.eql(0);
 
@@ -708,7 +1307,7 @@ describe('dns provider', function () {
                 }
             }]);
 
-            domains.upsertDnsRecords('test', DOMAIN_0.domain, 'A', [ '1.2.3.4' ], function (error) {
+            domains.upsertDnsRecords('test', DOMAIN_0.domain, 'A', ['1.2.3.4'], function (error) {
                 expect(error).to.eql(null);
                 expect(awsAnswerQueue.length).to.eql(0);
 
@@ -726,7 +1325,7 @@ describe('dns provider', function () {
                 }
             }]);
 
-            domains.upsertDnsRecords('', DOMAIN_0.domain, 'TXT', [ 'first', 'second', 'third' ], function (error) {
+            domains.upsertDnsRecords('', DOMAIN_0.domain, 'TXT', ['first', 'second', 'third'], function (error) {
                 expect(error).to.eql(null);
                 expect(awsAnswerQueue.length).to.eql(0);
 
@@ -791,12 +1390,12 @@ describe('dns provider', function () {
                 }
             };
 
-            function mockery (queue) {
-                return function() {
+            function mockery(queue) {
+                return function () {
                     var callback = arguments[--arguments.length];
 
                     var elem = queue.shift();
-                    if (!util.isArray(elem)) throw(new Error('Mock answer required'));
+                    if (!util.isArray(elem)) throw (new Error('Mock answer required'));
 
                     // if no callback passed, return a req object with send();
                     if (typeof callback !== 'function') {
@@ -823,7 +1422,7 @@ describe('dns provider', function () {
                 zone.deleteRecords = mockery(recordQueue || zoneQueue);
                 return zone;
             }
-            HOSTED_ZONES = [ fakeZone(DOMAIN_0.domain), fakeZone('cloudron.us') ];
+            HOSTED_ZONES = [fakeZone(DOMAIN_0.domain), fakeZone('cloudron.us')];
 
             _OriginalGCDNS = GCDNS.prototype.getZones;
             GCDNS.prototype.getZones = mockery(zoneQueue);
@@ -838,10 +1437,10 @@ describe('dns provider', function () {
 
         it('upsert non-existing record succeeds', function (done) {
             zoneQueue.push([null, HOSTED_ZONES]); // getZone
-            zoneQueue.push([null, [ ]]); // getRecords
-            zoneQueue.push([null, {id: '1'}]);
+            zoneQueue.push([null, []]); // getRecords
+            zoneQueue.push([null, { id: '1' }]);
 
-            domains.upsertDnsRecords('test', DOMAIN_0.domain, 'A', [ '1.2.3.4' ], function (error) {
+            domains.upsertDnsRecords('test', DOMAIN_0.domain, 'A', ['1.2.3.4'], function (error) {
                 expect(error).to.eql(null);
                 expect(zoneQueue.length).to.eql(0);
 
@@ -851,10 +1450,10 @@ describe('dns provider', function () {
 
         it('upsert existing record succeeds', function (done) {
             zoneQueue.push([null, HOSTED_ZONES]);
-            zoneQueue.push([null, [GCDNS().zone('test').record('A', {'name': 'test', data:['5.6.7.8'], ttl: 1})]]);
-            zoneQueue.push([null, {id: '2'}]);
+            zoneQueue.push([null, [GCDNS().zone('test').record('A', { 'name': 'test', data: ['5.6.7.8'], ttl: 1 })]]);
+            zoneQueue.push([null, { id: '2' }]);
 
-            domains.upsertDnsRecords('test', DOMAIN_0.domain, 'A', [ '1.2.3.4' ], function (error) {
+            domains.upsertDnsRecords('test', DOMAIN_0.domain, 'A', ['1.2.3.4'], function (error) {
                 expect(error).to.eql(null);
                 expect(zoneQueue.length).to.eql(0);
 
@@ -864,10 +1463,10 @@ describe('dns provider', function () {
 
         it('upsert multiple record succeeds', function (done) {
             zoneQueue.push([null, HOSTED_ZONES]);
-            zoneQueue.push([null, [ ]]); // getRecords
-            zoneQueue.push([null, {id: '3'}]);
+            zoneQueue.push([null, []]); // getRecords
+            zoneQueue.push([null, { id: '3' }]);
 
-            domains.upsertDnsRecords('', DOMAIN_0.domain, 'TXT', [ 'first', 'second', 'third' ], function (error) {
+            domains.upsertDnsRecords('', DOMAIN_0.domain, 'TXT', ['first', 'second', 'third'], function (error) {
                 expect(error).to.eql(null);
                 expect(zoneQueue.length).to.eql(0);
 
@@ -877,7 +1476,7 @@ describe('dns provider', function () {
 
         it('get succeeds', function (done) {
             zoneQueue.push([null, HOSTED_ZONES]);
-            zoneQueue.push([null, [GCDNS().zone('test').record('A', {'name': 'test', data:['1.2.3.4', '5.6.7.8'], ttl: 1})]]);
+            zoneQueue.push([null, [GCDNS().zone('test').record('A', { 'name': 'test', data: ['1.2.3.4', '5.6.7.8'], ttl: 1 })]]);
 
             domains.getDnsRecords('test', DOMAIN_0.domain, 'A', function (error, result) {
                 expect(error).to.eql(null);
@@ -892,8 +1491,8 @@ describe('dns provider', function () {
 
         it('del succeeds', function (done) {
             zoneQueue.push([null, HOSTED_ZONES]);
-            zoneQueue.push([null, [GCDNS().zone('test').record('A', {'name': 'test', data:['5.6.7.8'], ttl: 1})]]);
-            zoneQueue.push([null, {id: '5'}]);
+            zoneQueue.push([null, [GCDNS().zone('test').record('A', { 'name': 'test', data: ['5.6.7.8'], ttl: 1 })]]);
+            zoneQueue.push([null, { id: '5' }]);
 
             domains.removeDnsRecords('test', DOMAIN_0.domain, 'A', ['1.2.3.4'], function (error) {
                 expect(error).to.eql(null);

@@ -91,6 +91,7 @@ function api(provider) {
     case 'gandi': return require('./dns/gandi.js');
     case 'godaddy': return require('./dns/godaddy.js');
     case 'namecom': return require('./dns/namecom.js');
+    case 'namecheap': return require('./dns/namecheap.js');
     case 'noop': return require('./dns/noop.js');
     case 'manual': return require('./dns/manual.js');
     case 'wildcard': return require('./dns/wildcard.js');

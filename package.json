@@ -45,6 +45,7 @@
     "morgan": "^1.9.0",
     "multiparty": "^4.1.4",
     "mysql": "^2.15.0",
+    "namecheap": "github:joshuakarjala/node-namecheap#464a952",
     "nodemailer": "^4.6.5",
     "nodemailer-smtp-transport": "^2.7.4",
     "oauth2orize": "^1.11.0",
@@ -87,7 +88,8 @@
     "mock-aws-s3": "git+https://github.com/cloudron-io/mock-aws-s3.git",
     "nock": "^9.0.14",
     "node-sass": "^4.6.1",
-    "recursive-readdir": "^2.2.2"
+    "recursive-readdir": "^2.2.2",
+    "sinon": "^7.2.2"
   },
   "scripts": {
     "migrate_local": "DATABASE_URL=mysql://root:@localhost/box node_modules/.bin/db-migrate up",
