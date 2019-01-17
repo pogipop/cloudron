@@ -7,7 +7,7 @@ var appdb = require('./appdb.js'),
     DatabaseError = require('./databaseerror.js'),
     debug = require('debug')('box:apphealthmonitor'),
     docker = require('./docker.js').connection,
-    notifications = require('./notifications.js'),
+    eventlog = require('./eventlog.js'),
     superagent = require('superagent'),
     util = require('util');
 
@@ -132,8 +132,10 @@ function processDockerEvents(intervalSecs, callback) {
         stream.setEncoding('utf8');
         stream.on('data', function (data) {
             var ev = JSON.parse(data);
-            appdb.getByContainerId(ev.id, function (error, app) { // this can error for addons
-                var program = error || !app.id ? ev.id : `app-${app.id}`;
+            var containerId = ev.id;
+
+            appdb.getByContainerId(containerId, function (error, app) { // this can error for addons
+                var program = error || !app.id ? containerId : `app-${app.id}`;
                 var now = Date.now();
 
                 const notifyUser = (!app || !app.debugMode) && (now - gLastOomMailTime > OOM_MAIL_LIMIT);
@@ -142,7 +144,13 @@ function processDockerEvents(intervalSecs, callback) {
 
                 // do not send mails for dev apps
                 if (notifyUser) {
-                    notifications.oomEvent(program, { app: app || null, details: ev }); // app can be null if it's an addon crash
+                    var auditSource = {
+                        containerId: containerId,
+                        app: app || null  // app can be null if it's an addon crash
+                    };
+
+                    eventlog.add(eventlog.ACTION_APP_OOM, auditSource, ev);
+
                     gLastOomMailTime = now;
                 }
             });

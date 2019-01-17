@@ -169,12 +169,9 @@ function adminChanged(performedBy, user) {
     });
 }
 
-function oomEvent(program, context, callback) {
+function oomEvent(program, context) {
     assert.strictEqual(typeof program, 'string');
     assert.strictEqual(typeof context, 'object');
-    assert(typeof callback === 'undefined' || typeof callback === 'function');
-
-    callback = callback || NOOP_CALLBACK;
 
     // also send us a notification mail
     if (config.provider() === 'caas') mailer.oomEvent('support@cloudron.io', program, JSON.stringify(context, null, 4));
@@ -187,7 +184,9 @@ function oomEvent(program, context, callback) {
         else message = `The container with id ${context.details.id} ran out of memory`;
 
         add(admin.id, 'Process died out-of-memory', message, context.app ? '/#/apps' : '', callback);
-    }, callback);
+    }, function (error) {
+        if (error) console.error(error);
+    });
 }
 
 function appDied(app, callback) {

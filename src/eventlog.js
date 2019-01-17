@@ -18,6 +18,7 @@ exports = module.exports = {
     ACTION_APP_UNINSTALL: 'app.uninstall',
     ACTION_APP_UPDATE: 'app.update',
     ACTION_APP_LOGIN: 'app.login',
+    ACTION_APP_OOM: 'app.oom',
 
     ACTION_BACKUP_FINISH: 'backup.finish',
     ACTION_BACKUP_START: 'backup.start',
@@ -104,6 +105,8 @@ function add(action, source, data, callback) {
             notifications.userRemoved(source.userId, data.user);
         } if (action === exports.ACTION_USER_UPDATE && data.adminStatusChanged) {
             notifications.adminChanged(source.userId, data.user);
+        } if (action === exports.ACTION_APP_OOM) {
+            notifications.oomEvent(source.app ? source.app.id : source.containerId, data);
         } else {
             // no notification
         }
