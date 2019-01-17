@@ -731,8 +731,11 @@ function setupLocalStorage(app, options, callback) {
 
     const volumeDataDir = apps.getDataDir(app, app.dataDir);
 
-    // if you change the name, you have to change getMountsSync
-    docker.createVolume(app, `${app.id}-localstorage`, volumeDataDir, callback);
+    // reomve any existing volume in case it's bound with an old dataDir
+    async.series([
+        docker.removeVolume.bind(null, app, `${app.id}-localstorage`),
+        docker.createVolume.bind(null, app, `${app.id}-localstorage`, volumeDataDir)
+    ], callback);
 }
 
 function clearLocalStorage(app, options, callback) {
