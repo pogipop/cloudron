@@ -19,6 +19,7 @@ exports = module.exports = {
     ACTION_APP_UPDATE: 'app.update',
     ACTION_APP_LOGIN: 'app.login',
     ACTION_APP_OOM: 'app.oom',
+    ACTION_APP_DOWN: 'app.down',
 
     ACTION_BACKUP_FINISH: 'backup.finish',
     ACTION_BACKUP_START: 'backup.start',
@@ -106,7 +107,9 @@ function add(action, source, data, callback) {
         } if (action === exports.ACTION_USER_UPDATE && data.adminStatusChanged) {
             notifications.adminChanged(source.userId, data.user);
         } if (action === exports.ACTION_APP_OOM) {
-            notifications.oomEvent(source.app ? source.app.id : source.containerId, data);
+            notifications.oomEvent(source.app ? source.app.id : source.containerId, { app: source.app, details: data });
+        } if (action === exports.ACTION_APP_DOWN) {
+            notifications.appDied(source.app);
         } else {
             // no notification
         }

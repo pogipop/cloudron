@@ -189,19 +189,18 @@ function oomEvent(program, context) {
     });
 }
 
-function appDied(app, callback) {
+function appDied(app) {
     assert.strictEqual(typeof app, 'object');
-    assert(typeof callback === 'undefined' || typeof callback === 'function');
-
-    callback = callback || NOOP_CALLBACK;
 
     // also send us a notification mail
     if (config.provider() === 'caas') mailer.appDied('support@cloudron.io', app);
 
     actionForAllAdmins([], function (admin, callback) {
         mailer.appDied(admin.email, app);
-        add(admin.id, `App ${app.fqdn} died`, `The application ${app.manifest.title} installed at ${app.fqdn} is not responding.`, '/#/apps', callback);
-    }, callback);
+        add(admin.id, `App ${app.fqdn} is down`, `The application ${app.manifest.title} installed at ${app.fqdn} is not responding.`, '/#/apps', callback);
+    }, function (error) {
+        if (error) console.error(error);
+    });
 }
 
 function unexpectedExit(subject, compiledLogs, callback) {
