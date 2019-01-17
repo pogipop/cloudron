@@ -190,7 +190,7 @@ function updateToLatest(auditSource, callback) {
     if (!boxUpdateInfo.sourceTarballUrl) return callback(new UpdaterError(UpdaterError.BAD_STATE, 'No automatic update available'));
 
     let error = locker.lock(locker.OP_BOX_UPDATE);
-    if (error) return callback(error);
+    if (error) return callback(new UpdaterError(UpdaterError.BAD_STATE, `Cannot update now: ${error.message}`));
 
     let task = tasks.startTask(tasks.TASK_UPDATE, [ boxUpdateInfo ]);
     task.on('error', (error) => callback(new UpdaterError(UpdaterError.INTERNAL_ERROR, error)));

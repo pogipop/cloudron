@@ -994,7 +994,7 @@ function backupBoxAndApps(progressCallback, callback) {
 
 function startBackupTask(auditSource, callback) {
     let error = locker.lock(locker.OP_FULL_BACKUP);
-    if (error) return callback(error);
+    if (error) return callback(new BackupsError(BackupsError.BAD_STATE, `Cannot backup now: ${error.message}`));
 
     let task = tasks.startTask(tasks.TASK_BACKUP, []);
     task.on('error', (error) => callback(new BackupsError(BackupsError.INTERNAL_ERROR, error)));
