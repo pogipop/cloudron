@@ -24,4 +24,6 @@ if [[ "${BOX_ENV}" == "test" ]]; then
     [[ "${volume_dir}" != *"./cloudron_test/"* ]] && exit 1
 fi
 
-rm -rf "${volume_dir}"
+rm -rf "${volume_dir}"/*
+# mount points cannot be deleted
+rmdir "${volume_dir}" || true
