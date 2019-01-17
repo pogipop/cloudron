@@ -56,6 +56,7 @@ var assert = require('assert'),
     DatabaseError = require('./databaseerror.js'),
     debug = require('debug')('box:eventlog'),
     eventlogdb = require('./eventlogdb.js'),
+    notifications = require('./notifications.js'),
     util = require('util'),
     uuid = require('uuid');
 
@@ -95,6 +96,17 @@ function add(action, source, data, callback) {
 
     eventlogdb.add(id, action, source, data, function (error) {
         if (error) return callback(new EventLogError(EventLogError.INTERNAL_ERROR, error));
+
+        // decide if we want to add notifications as well
+        if (action === exports.ACTION_USER_ADD) {
+            notifications.userAdded(data.user);
+        } if (action === exports.ACTION_USER_REMOVE) {
+            notifications.userRemoved(data.user);
+        } if (action === exports.ACTION_USER_UPDATE && data.adminStatusChanged) {
+            notifications.adminChanged(data.user);
+        } else {
+            // no notification
+        }
 
         callback(null, { id: id });
     });

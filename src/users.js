@@ -204,11 +204,9 @@ function create(username, password, email, displayName, options, auditSource, ca
                 if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(new UsersError(UsersError.ALREADY_EXISTS, error.message));
                 if (error) return callback(new UsersError(UsersError.INTERNAL_ERROR, error));
 
-                callback(null, user);
-
                 eventlog.add(eventlog.ACTION_USER_ADD, auditSource, { userId: user.id, email: user.email, user: removePrivateFields(user), invitor: invitor });
 
-                if (!isOwner) notifications.userAdded(user);
+                callback(null, user);
             });
         });
     });
@@ -296,11 +294,7 @@ function removeUser(userId, auditSource, callback) {
             if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new UsersError(UsersError.NOT_FOUND));
             if (error) return callback(new UsersError(UsersError.INTERNAL_ERROR, error));
 
-            eventlog.add(eventlog.ACTION_USER_REMOVE, auditSource, { userId: userId, user: removePrivateFields(user) });
-
-            callback();
-
-            notifications.userRemoved(user);
+            eventlog.add(eventlog.ACTION_USER_REMOVE, auditSource, { userId: userId, user: removePrivateFields(user) }, callback);
         });
     });
 }
@@ -428,9 +422,11 @@ function updateUser(userId, data, auditSource, callback) {
             get(userId, function (error, result) {
                 if (error) return callback(new UsersError(UsersError.INTERNAL_ERROR, error));
 
-                eventlog.add(eventlog.ACTION_USER_UPDATE, auditSource, { userId: userId, user: removePrivateFields(result) });
-
-                if ((result.admin && !oldUser.admin) || (!result.admin && oldUser.admin)) notifications.adminChanged(result, result.admin);
+                eventlog.add(eventlog.ACTION_USER_UPDATE, auditSource, {
+                    userId: userId,
+                    user: removePrivateFields(result),
+                    adminStatusChanged: ((result.admin && !oldUser.admin) || (!result.admin && oldUser.admin))
+                });
             });
         });
     });

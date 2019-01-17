@@ -128,11 +128,8 @@ function actionForAllAdmins(iterator, callback) {
     });
 }
 
-function userAdded(user, callback) {
+function userAdded(user) {
     assert.strictEqual(typeof user, 'object');
-    assert(typeof callback === 'undefined' || typeof callback === 'function');
-
-    callback = callback || NOOP_CALLBACK;
 
     actionForAllAdmins(function (admin, callback) {
         // skip for the same user
@@ -140,14 +137,13 @@ function userAdded(user, callback) {
 
         mailer.userAdded(admin.email, user);
         add(admin.id, 'User added', `User ${user.fallbackEmail} was added`, '/#/users', callback);
-    }, callback);
+    }, function (error) {
+        if (error) console.error(error);
+    });
 }
 
-function userRemoved(user, callback) {
+function userRemoved(user) {
     assert.strictEqual(typeof user, 'object');
-    assert(typeof callback === 'undefined' || typeof callback === 'function');
-
-    callback = callback || NOOP_CALLBACK;
 
     actionForAllAdmins(function (admin, callback) {
         // skip for the same user
@@ -155,23 +151,23 @@ function userRemoved(user, callback) {
 
         mailer.userRemoved(admin.email, user);
         add(admin.id, 'User removed', `User ${user.username || user.email || user.fallbackEmail} was removed`, '/#/users', callback);
-    }, callback);
+    }, function (error) {
+        if (error) console.error(error);
+    });
 }
 
-function adminChanged(user, isAdmin, callback) {
+function adminChanged(user) {
     assert.strictEqual(typeof user, 'object');
-    assert.strictEqual(typeof isAdmin, 'boolean');
-    assert(typeof callback === 'undefined' || typeof callback === 'function');
-
-    callback = callback || NOOP_CALLBACK;
 
     actionForAllAdmins(function (admin, callback) {
         // skip for the same user
         if (admin.email === user.email || admin.email === user.fallbackEmail) return callback();
 
-        mailer.adminChanged(admin.email, user, isAdmin);
-        add(admin.id, 'Admin status change', `User ${user.username || user.email || user.fallbackEmail} ${isAdmin ? 'is now an admin' : 'is no more an admin'}`, '/#/users', callback);
-    }, callback);
+        mailer.adminChanged(admin.email, user, user.admin);
+        add(admin.id, 'Admin status change', `User ${user.username || user.email || user.fallbackEmail} ${user.admin ? 'is now an admin' : 'is no more an admin'}`, '/#/users', callback);
+    }, function (error) {
+        if (error) console.error(error);
+    });
 }
 
 function oomEvent(program, context, callback) {
