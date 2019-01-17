@@ -99,11 +99,11 @@ function add(action, source, data, callback) {
 
         // decide if we want to add notifications as well
         if (action === exports.ACTION_USER_ADD) {
-            notifications.userAdded(data.user);
+            notifications.userAdded(source.userId, data.user);
         } if (action === exports.ACTION_USER_REMOVE) {
-            notifications.userRemoved(data.user);
+            notifications.userRemoved(source.userId, data.user);
         } if (action === exports.ACTION_USER_UPDATE && data.adminStatusChanged) {
-            notifications.adminChanged(data.user);
+            notifications.adminChanged(source.userId, data.user);
         } else {
             // no notification
         }

@@ -118,23 +118,26 @@ function getAllPaged(userId, acknowledged, page, perPage, callback) {
 }
 
 // Calls iterator with (admin, callback)
-function actionForAllAdmins(iterator, callback) {
+function actionForAllAdmins(skippingUserIds, iterator, callback) {
+    assert(Array.isArray(skippingUserIds));
     assert.strictEqual(typeof iterator, 'function');
     assert.strictEqual(typeof callback, 'function');
 
     users.getAllAdmins(function (error, result) {
         if (error) return callback(new NotificationsError(NotificationsError.INTERNAL_ERROR, error));
+
+        // filter out users we want to skip (like the user who did the action or the user the action was performed on)
+        result = result.filter(function (r) { return skippingUserIds.indexOf(r.id) === -1; });
+
         async.each(result, iterator, callback);
     });
 }
 
-function userAdded(user) {
+function userAdded(performedBy, user) {
+    assert.strictEqual(typeof performedBy, 'string');
     assert.strictEqual(typeof user, 'object');
 
-    actionForAllAdmins(function (admin, callback) {
-        // skip for the same user
-        if (admin.email === user.email || admin.email === user.fallbackEmail) return callback();
-
+    actionForAllAdmins([ performedBy, user.id ], function (admin, callback) {
         mailer.userAdded(admin.email, user);
         add(admin.id, 'User added', `User ${user.fallbackEmail} was added`, '/#/users', callback);
     }, function (error) {
@@ -142,13 +145,11 @@ function userAdded(user) {
     });
 }
 
-function userRemoved(user) {
+function userRemoved(performedBy, user) {
+    assert.strictEqual(typeof performedBy, 'string');
     assert.strictEqual(typeof user, 'object');
 
-    actionForAllAdmins(function (admin, callback) {
-        // skip for the same user
-        if (admin.email === user.email || admin.email === user.fallbackEmail) return callback();
-
+    actionForAllAdmins([ performedBy, user.id ], function (admin, callback) {
         mailer.userRemoved(admin.email, user);
         add(admin.id, 'User removed', `User ${user.username || user.email || user.fallbackEmail} was removed`, '/#/users', callback);
     }, function (error) {
@@ -156,13 +157,11 @@ function userRemoved(user) {
     });
 }
 
-function adminChanged(user) {
+function adminChanged(performedBy, user) {
+    assert.strictEqual(typeof performedBy, 'string');
     assert.strictEqual(typeof user, 'object');
 
-    actionForAllAdmins(function (admin, callback) {
-        // skip for the same user
-        if (admin.email === user.email || admin.email === user.fallbackEmail) return callback();
-
+    actionForAllAdmins([ performedBy, user.id ], function (admin, callback) {
         mailer.adminChanged(admin.email, user, user.admin);
         add(admin.id, 'Admin status change', `User ${user.username || user.email || user.fallbackEmail} ${user.admin ? 'is now an admin' : 'is no more an admin'}`, '/#/users', callback);
     }, function (error) {
@@ -180,7 +179,7 @@ function oomEvent(program, context, callback) {
     // also send us a notification mail
     if (config.provider() === 'caas') mailer.oomEvent('support@cloudron.io', program, JSON.stringify(context, null, 4));
 
-    actionForAllAdmins(function (admin, callback) {
+    actionForAllAdmins([], function (admin, callback) {
         mailer.oomEvent(admin.email, program, JSON.stringify(context, null, 4));
 
         var message;
@@ -200,7 +199,7 @@ function appDied(app, callback) {
     // also send us a notification mail
     if (config.provider() === 'caas') mailer.appDied('support@cloudron.io', app);
 
-    actionForAllAdmins(function (admin, callback) {
+    actionForAllAdmins([], function (admin, callback) {
         mailer.appDied(admin.email, app);
         add(admin.id, `App ${app.fqdn} died`, `The application ${app.manifest.title} installed at ${app.fqdn} is not responding.`, '/#/apps', callback);
     }, callback);
@@ -216,7 +215,7 @@ function unexpectedExit(subject, compiledLogs, callback) {
     // also send us a notification mail
     if (config.provider() === 'caas') mailer.unexpectedExit('support@cloudron.io', subject, compiledLogs);
 
-    actionForAllAdmins(function (admin, callback) {
+    actionForAllAdmins([], function (admin, callback) {
         mailer.unexpectedExit(admin.email, subject, compiledLogs);
         add(admin.id, subject, 'Detailed logs have been sent to your email address.', '/#/system', callback);
     }, callback);
