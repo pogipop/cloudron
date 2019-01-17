@@ -565,6 +565,7 @@ function clearVolume(app, name, callback) {
     });
 }
 
+// this only removes the volume and not the data
 function removeVolume(app, name, callback) {
     assert.strictEqual(typeof app, 'object');
     assert.strictEqual(typeof name, 'string');

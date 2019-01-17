@@ -367,22 +367,31 @@ function sync(backupConfig, backupId, dataDir, progressCallback, callback) {
 }
 
 // this is not part of 'snapshotting' because we need root access to traverse
-function saveFsMetadata(appDataDir, callback) {
-    assert.strictEqual(typeof appDataDir, 'string');
+function saveFsMetadata(dataLayout, destFile, callback) {
+    assert(Array.isArray(dataLayout), 'dataLayout must be an array');
+    assert.strictEqual(typeof destFile, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    var emptyDirs = safe.child_process.execSync('find . -type d -empty', { cwd: `${appDataDir}`, encoding: 'utf8' });
-    if (emptyDirs === null) return callback(safe.error);
-
-    var execFiles = safe.child_process.execSync('find . -type f -executable', { cwd: `${appDataDir}`, encoding: 'utf8' });
-    if (execFiles === null) return callback(safe.error);
-
-    var metadata = {
-        emptyDirs: emptyDirs.length === 0 ? [ ] : emptyDirs.trim().split('\n'),
-        execFiles: execFiles.length === 0 ? [ ] : execFiles.trim().split('\n')
+    // contains paths prefixed with './'
+    let metadata = {
+        emptyDirs: [],
+        execFiles: []
     };
 
-    if (!safe.fs.writeFileSync(`${appDataDir}/fsmetadata.json`, JSON.stringify(metadata, null, 4))) return callback(safe.error);
+    for (let l of dataLayout) {
+        const maybeSlash = l.remoteDir === '' ? '' : '/';
+
+        var emptyDirs = safe.child_process.execSync('find . -type d -empty -printf "%P\n"', { cwd: `${l.localDir}`, encoding: 'utf8' }); // %P removes the ./
+        if (emptyDirs === null) return callback(safe.error);
+        if (emptyDirs.length) metadata.emptyDirs.push(emptyDirs.trim().split('\n').map((ed) => './' + l.remoteDir + maybeSlash + ed));
+
+        var execFiles = safe.child_process.execSync('find . -type f -executable -printf "%P\n"', { cwd: `${l.localDir}`, encoding: 'utf8' });
+        if (execFiles === null) return callback(safe.error);
+
+        if (execFiles.length) metadata.execFiles.push(execFiles.trim().split('\n').map((ef) => './' + l.remoteDir + maybeSlash + ef));
+    }
+
+    if (!safe.fs.writeFileSync(destFile, JSON.stringify(metadata, null, 4))) return callback(safe.error);
 
     callback();
 }
@@ -420,7 +429,7 @@ function upload(backupId, format, dataLayout, progressCallback, callback) {
         } else {
             const dataDir = dataLayout[0].localDir; // FIXME: make rsync format support data layout
             async.series([
-                saveFsMetadata.bind(null, dataDir),
+                saveFsMetadata.bind(null, dataLayout, `${dataDir}/fsmetadata.json`),
                 sync.bind(null, backupConfig, backupId, dataDir, progressCallback)
             ], callback);
         }
