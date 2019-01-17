@@ -16,6 +16,7 @@ readonly BOX_DATA_DIR="${HOME_DIR}/boxdata" # box data
 
 readonly script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 readonly json="$(realpath ${script_dir}/../node_modules/.bin/json)"
+readonly ubuntu_version=$(lsb_release -rs)
 
 cp -f "${script_dir}/../scripts/cloudron-support" /usr/bin/cloudron-support
 
@@ -101,6 +102,7 @@ unbound-anchor -a /var/lib/unbound/root.key
 
 echo "==> Adding systemd services"
 cp -r "${script_dir}/start/systemd/." /etc/systemd/system/
+[[ "${ubuntu_version}" == "16.04" ]] && sed -e 's/MemoryMax/MemoryLimit/g' -i /etc/systemd/system/box.service
 systemctl daemon-reload
 systemctl enable unbound
 systemctl enable cloudron-syslog

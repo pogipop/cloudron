@@ -21,7 +21,7 @@ KillMode=control-group
 OOMScoreAdjust=-999
 User=yellowtent
 Group=yellowtent
-; OOM killer is invoked in this unit beyond this
+; OOM killer is invoked in this unit beyond this. The start script replaces this with MemoryLimit for Ubuntu 16
 MemoryMax=400M
 TimeoutStopSec=5s
 StartLimitInterval=1
