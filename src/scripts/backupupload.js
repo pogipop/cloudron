@@ -23,9 +23,9 @@ function initialize(callback) {
 // Main process starts here
 const backupId = process.argv[2];
 const format = process.argv[3];
-const dataLayout = JSON.parse(process.argv[4]);
+const dataLayoutString = process.argv[4];
 
-debug(`Backing up ${JSON.stringify(dataLayout)} to ${backupId}`);
+debug(`Backing up ${dataLayoutString} to ${backupId}`);
 
 process.on('SIGTERM', function () {
     process.exit(0);
@@ -40,7 +40,7 @@ process.on('disconnect', function () {
 initialize(function (error) {
     if (error) throw error;
 
-    backups.upload(backupId, format, dataLayout, (progress) => process.send(progress), function resultHandler(error) {
+    backups.upload(backupId, format, dataLayoutString, (progress) => process.send(progress), function resultHandler(error) {
         if (error) debug('upload completed with error', error);
 
         debug('upload completed');

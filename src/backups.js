@@ -112,6 +112,49 @@ function api(provider) {
     }
 }
 
+class DataLayout {
+    constructor(localRoot, layout) {
+        assert.strictEqual(typeof localRoot, 'string');
+        assert(Array.isArray(layout), 'Expecting layout to be an array');
+
+        this._localRoot = localRoot;
+        this._layout = layout;
+        this._remoteRegexps = layout.map((l) => new RegExp('^\\./' + l.remoteDir + '/?'));
+        this._localRegexps = layout.map((l) => new RegExp('^' + l.localDir + '/?'));
+    }
+    getLocalPath(remoteName) {
+        assert.strictEqual(typeof remoteName, 'string');
+
+        for (let i = 0; i < this._remoteRegexps.length; i++) {
+            if (!remoteName.match(this._remoteRegexps[i])) continue;
+            return remoteName.replace(this._remoteRegexps[i], this._layout[i].localDir + '/'); // make paths absolute
+        }
+        return remoteName.replace(new RegExp('^\\.'), this._localRoot);
+    }
+    getRemotePath(localName) {
+        assert.strictEqual(typeof localName, 'string');
+
+        for (let i = 0; i < this._localRegexps.length; i++) {
+            if (!localName.match(this._localRegexps[i])) continue;
+            return localName.replace(this._localRegexps[i], './' + this._layout[i].remoteDir + '/'); // make paths relative
+        }
+        return localName.replace(new RegExp('^' + this._localRoot + '/?'), './');
+    }
+    getLocalRoot() {
+        return this._localRoot;
+    }
+    toString() {
+        return JSON.stringify({ localRoot: this._localRoot, layout: this._layout });
+    }
+    getLocalPaths() {
+        return [ this._localRoot ].concat(this._layout.map((l) => l.localDir));
+    }
+    static fromString(str) {
+        const obj = JSON.parse(str);
+        return new DataLayout(obj.localRoot, obj.layout);
+    }
+}
+
 function testConfig(backupConfig, callback) {
     assert.strictEqual(typeof backupConfig, 'object');
     assert.strictEqual(typeof callback, 'function');
@@ -226,7 +269,7 @@ function createReadStream(sourceFile, key) {
     var ps = progressStream({ time: 10000 }); // display a progress every 10 seconds
 
     stream.on('error', function (error) {
-        debug('createReadStream: tar stream error.', error);
+        debug('createReadStream: read stream error.', error);
         ps.emit('error', new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
     });
 
@@ -261,22 +304,15 @@ function createWriteStream(destFile, key) {
 }
 
 function tarPack(dataLayout, key, callback) {
-    assert(Array.isArray(dataLayout), 'dataLayout must be a string');
+    assert(dataLayout instanceof DataLayout, 'dataLayout must be a DataLayout');
     assert(key === null || typeof key === 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    let regexps = dataLayout.map((l) => new RegExp('^' + l.localDir + '/?'));
-
     var pack = tar.pack('/', {
         dereference: false, // pack the symlink and not what it points to
-        entries: dataLayout.map((e) => e.localDir),
+        entries: dataLayout.getLocalPaths(),
         map: function(header) {
-            for (let i = 0; i < dataLayout.length; i++) {
-                if (!header.name.match(regexps[i])) continue;
-                const maybeSlash = dataLayout[i].remoteDir ? '/' : '';
-                header.name = header.name.replace(regexps[i], './' + dataLayout[i].remoteDir + maybeSlash); // make paths relative
-                break;
-            }
+            header.name = dataLayout.getRemotePath(header.name);
             return header;
         },
         strict: false // do not error for unknown types (skip fifo, char/block devices)
@@ -309,17 +345,17 @@ function tarPack(dataLayout, key, callback) {
     callback(null, ps);
 }
 
-function sync(backupConfig, backupId, dataDir, progressCallback, callback) {
+function sync(backupConfig, backupId, dataLayout, progressCallback, callback) {
     assert.strictEqual(typeof backupConfig, 'object');
     assert.strictEqual(typeof backupId, 'string');
-    assert.strictEqual(typeof dataDir, 'string');
+    assert(dataLayout instanceof DataLayout, 'dataLayout must be a DataLayout');
     assert.strictEqual(typeof progressCallback, 'function');
     assert.strictEqual(typeof callback, 'function');
 
     // the number here has to take into account the s3.upload partSize (which is 10MB). So 20=200MB
     const concurrency = backupConfig.syncConcurrency || (backupConfig.provider === 's3' ? 20 : 10);
 
-    syncer.sync(dataDir, function processTask(task, iteratorCallback) {
+    syncer.sync(dataLayout.getLocalRoot(), function processTask(task, iteratorCallback) {
         debug('sync: processing task: %j', task);
         // the empty task.path is special to signify the directory
         const destPath = task.path && backupConfig.key ? encryptFilePath(task.path, backupConfig.key) : task.path;
@@ -343,7 +379,7 @@ function sync(backupConfig, backupId, dataDir, progressCallback, callback) {
             if (task.operation === 'add') {
                 progressCallback({ message: `Adding ${task.path}` + (retryCount > 1 ?  ` (Try ${retryCount})` : '') });
                 debug(`Adding ${task.path} position ${task.position} try ${retryCount}`);
-                var stream = createReadStream(path.join(dataDir, task.path), backupConfig.key || null);
+                var stream = createReadStream(dataLayout.getLocalPath('./' + task.path), backupConfig.key || null);
                 stream.on('error', function (error) {
                     debug(`read stream error for ${task.path}: ${error.message}`);
                     retryCallback();
@@ -367,9 +403,9 @@ function sync(backupConfig, backupId, dataDir, progressCallback, callback) {
 }
 
 // this is not part of 'snapshotting' because we need root access to traverse
-function saveFsMetadata(dataLayout, destFile, callback) {
-    assert(Array.isArray(dataLayout), 'dataLayout must be an array');
-    assert.strictEqual(typeof destFile, 'string');
+function saveFsMetadata(dataLayout, metadataFile, callback) {
+    assert(dataLayout instanceof DataLayout, 'dataLayout must be a DataLayout');
+    assert.strictEqual(typeof metadataFile, 'string');
     assert.strictEqual(typeof callback, 'function');
 
     // contains paths prefixed with './'
@@ -378,33 +414,33 @@ function saveFsMetadata(dataLayout, destFile, callback) {
         execFiles: []
     };
 
-    for (let l of dataLayout) {
-        const maybeSlash = l.remoteDir === '' ? '' : '/';
-
-        var emptyDirs = safe.child_process.execSync('find . -type d -empty -printf "%P\n"', { cwd: `${l.localDir}`, encoding: 'utf8' }); // %P removes the ./
+    for (let lp of dataLayout.getLocalPaths()) {
+        var emptyDirs = safe.child_process.execSync('find . -type d -empty\n', { cwd: lp, encoding: 'utf8' }); // %P removes the ./
         if (emptyDirs === null) return callback(safe.error);
-        if (emptyDirs.length) metadata.emptyDirs.push(emptyDirs.trim().split('\n').map((ed) => './' + l.remoteDir + maybeSlash + ed));
+        if (emptyDirs.length) metadata.emptyDirs = metadata.emptyDirs.concat(emptyDirs.trim().split('\n').map((ed) => dataLayout.getRemotePath(ed)));
 
-        var execFiles = safe.child_process.execSync('find . -type f -executable -printf "%P\n"', { cwd: `${l.localDir}`, encoding: 'utf8' });
+        var execFiles = safe.child_process.execSync('find . -type f -executable\n', { cwd: lp, encoding: 'utf8' });
         if (execFiles === null) return callback(safe.error);
 
-        if (execFiles.length) metadata.execFiles.push(execFiles.trim().split('\n').map((ef) => './' + l.remoteDir + maybeSlash + ef));
+        if (execFiles.length) metadata.execFiles = metadata.execFiles.concat(execFiles.trim().split('\n').map((ef) => dataLayout.getRemotePath(ef)));
     }
 
-    if (!safe.fs.writeFileSync(destFile, JSON.stringify(metadata, null, 4))) return callback(safe.error);
+    if (!safe.fs.writeFileSync(metadataFile, JSON.stringify(metadata, null, 4))) return callback(safe.error);
 
     callback();
 }
 
 // this function is called via backupupload (since it needs root to traverse app's directory)
-function upload(backupId, format, dataLayout, progressCallback, callback) {
+function upload(backupId, format, dataLayoutString, progressCallback, callback) {
     assert.strictEqual(typeof backupId, 'string');
     assert.strictEqual(typeof format, 'string');
-    assert(Array.isArray(dataLayout), 'dataLayout should be an array');
+    assert.strictEqual(typeof dataLayoutString, 'string');
     assert.strictEqual(typeof progressCallback, 'function');
     assert.strictEqual(typeof callback, 'function');
 
-    debug(`upload: id ${backupId} format ${format} dataLayout ${JSON.stringify(dataLayout)}`);
+    debug(`upload: id ${backupId} format ${format} dataLayout ${dataLayoutString}`);
+
+    const dataLayout = DataLayout.fromString(dataLayoutString);
 
     settings.getBackupConfig(function (error, backupConfig) {
         if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
@@ -427,10 +463,9 @@ function upload(backupId, format, dataLayout, progressCallback, callback) {
                 });
             }, callback);
         } else {
-            const dataDir = dataLayout[0].localDir; // FIXME: make rsync format support data layout
             async.series([
-                saveFsMetadata.bind(null, dataLayout, `${dataDir}/fsmetadata.json`),
-                sync.bind(null, backupConfig, backupId, dataDir, progressCallback)
+                saveFsMetadata.bind(null, dataLayout, `${dataLayout.getLocalRoot()}/fsmetadata.json`),
+                sync.bind(null, backupConfig, backupId, dataLayout, progressCallback)
             ], callback);
         }
     });
@@ -438,23 +473,15 @@ function upload(backupId, format, dataLayout, progressCallback, callback) {
 
 function tarExtract(inStream, dataLayout, key, callback) {
     assert.strictEqual(typeof inStream, 'object');
-    assert(Array.isArray(dataLayout), 'dataLayout should be an array');
+    assert(dataLayout instanceof DataLayout, 'dataLayout must be a DataLayout');
     assert(key === null || typeof key === 'string');
     assert.strictEqual(typeof callback, 'function');
-
-    // assumes the patterns in layout are reverse priorotized
-    let regexps = dataLayout.reverse().map((l) => new RegExp('^\\.' + l.remoteDir + '/?'));
 
     var gunzip = zlib.createGunzip({});
     var ps = progressStream({ time: 10000 }); // display a progress every 10 seconds
     var extract = tar.extract('/', {
         map: function (header) {
-            for (let i = 0; i < dataLayout.length; i++) {
-                if (!header.name.match(regexps[i])) continue;
-                header.name = header.name.replace(regexps[i], dataLayout[i].localDir + '/'); // make paths absolute
-                break;
-            }
-
+            header.name = dataLayout.getLocalPath(header.name);
             return header;
         }
     });
@@ -496,24 +523,25 @@ function tarExtract(inStream, dataLayout, key, callback) {
     callback(null, ps);
 }
 
-function restoreFsMetadata(appDataDir, callback) {
-    assert.strictEqual(typeof appDataDir, 'string');
+function restoreFsMetadata(dataLayout, metadataFile, callback) {
+    assert(dataLayout instanceof DataLayout, 'dataLayout must be a DataLayout');
+    assert.strictEqual(typeof metadataFile, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    debug(`Recreating empty directories in ${appDataDir}`);
+    debug(`Recreating empty directories in ${dataLayout.toString()}`);
 
-    var metadataJson = safe.fs.readFileSync(path.join(appDataDir, 'fsmetadata.json'), 'utf8');
+    var metadataJson = safe.fs.readFileSync(metadataFile, 'utf8');
     if (metadataJson === null) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, 'Error loading fsmetadata.txt:' + safe.error.message));
     var metadata = safe.JSON.parse(metadataJson);
     if (metadata === null) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, 'Error parsing fsmetadata.txt:' + safe.error.message));
 
     async.eachSeries(metadata.emptyDirs, function createPath(emptyDir, iteratorDone) {
-        mkdirp(path.join(appDataDir, emptyDir), iteratorDone);
+        mkdirp(dataLayout.getLocalPath(emptyDir), iteratorDone);
     }, function (error) {
         if (error) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, `unable to create path: ${error.message}`));
 
         async.eachSeries(metadata.execFiles, function createPath(execFile, iteratorDone) {
-            fs.chmod(path.join(appDataDir, execFile), parseInt('0755', 8), iteratorDone);
+            fs.chmod(dataLayout.getLocalPath(execFile), parseInt('0755', 8), iteratorDone);
         }, function (error) {
             if (error) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, `unable to chmod: ${error.message}`));
 
@@ -522,14 +550,14 @@ function restoreFsMetadata(appDataDir, callback) {
     });
 }
 
-function downloadDir(backupConfig, backupFilePath, destDir, progressCallback, callback) {
+function downloadDir(backupConfig, backupFilePath, dataLayout, progressCallback, callback) {
     assert.strictEqual(typeof backupConfig, 'object');
     assert.strictEqual(typeof backupFilePath, 'string');
-    assert.strictEqual(typeof destDir, 'string');
+    assert(dataLayout instanceof DataLayout, 'dataLayout must be a DataLayout');
     assert.strictEqual(typeof progressCallback, 'function');
     assert.strictEqual(typeof callback, 'function');
 
-    debug(`downloadDir: ${backupFilePath} to ${destDir}`);
+    debug(`downloadDir: ${backupFilePath} to ${dataLayout.toString()}`);
 
     function downloadFile(entry, callback) {
         let relativePath = path.relative(backupFilePath, entry.fullPath);
@@ -537,7 +565,7 @@ function downloadDir(backupConfig, backupFilePath, destDir, progressCallback, ca
             relativePath = decryptFilePath(relativePath, backupConfig.key);
             if (!relativePath) return callback(new BackupsError(BackupsError.BAD_STATE, 'Unable to decrypt file'));
         }
-        const destFilePath = path.join(destDir, relativePath);
+        const destFilePath = dataLayout.getLocalPath('./' + relativePath);
 
         mkdirp(path.dirname(destFilePath), function (error) {
             if (error) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
@@ -579,11 +607,11 @@ function download(backupConfig, backupId, format, dataLayout, progressCallback, 
     assert.strictEqual(typeof backupConfig, 'object');
     assert.strictEqual(typeof backupId, 'string');
     assert.strictEqual(typeof format, 'string');
-    assert(Array.isArray(dataLayout), 'dataLayout must be a string');
+    assert(dataLayout instanceof DataLayout, 'dataLayout must be a DataLayout');
     assert.strictEqual(typeof progressCallback, 'function');
     assert.strictEqual(typeof callback, 'function');
 
-    debug(`download - Downloading ${backupId} of format ${format} to ${JSON.stringify(dataLayout)}`);
+    debug(`download - Downloading ${backupId} of format ${format} to ${dataLayout.toString()}`);
 
     const backupFilePath = getBackupFilePath(backupConfig, backupId, format);
 
@@ -606,11 +634,10 @@ function download(backupConfig, backupId, format, dataLayout, progressCallback, 
             });
         }, callback);
     } else {
-        let dataDir = dataLayout[0].localDir; // FIXME: make rsync format support data layout
-        downloadDir(backupConfig, backupFilePath, dataDir, progressCallback, function (error) {
+        downloadDir(backupConfig, backupFilePath, dataLayout, progressCallback, function (error) {
             if (error) return callback(error);
 
-            restoreFsMetadata(dataDir, callback);
+            restoreFsMetadata(dataLayout, `${dataLayout.getLocalRoot()}/fsmetadata.json`, callback);
         });
     }
 }
@@ -621,14 +648,14 @@ function restore(backupConfig, backupId, progressCallback, callback) {
     assert.strictEqual(typeof progressCallback, 'function');
     assert.strictEqual(typeof callback, 'function');
 
-    const dataLayout = [ { localDir: paths.BOX_DATA_DIR, remoteDir: '' } ];
+    const dataLayout = new DataLayout(paths.BOX_DATA_DIR, []);
 
     download(backupConfig, backupId, backupConfig.format, dataLayout, progressCallback, function (error) {
         if (error) return callback(error);
 
         debug('restore: download completed, importing database');
 
-        database.importFromFile(`${paths.BOX_DATA_DIR}/box.mysqldump`, function (error) {
+        database.importFromFile(`${dataLayout.getLocalRoot()}/box.mysqldump`, function (error) {
             if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
 
             debug('restore: database imported');
@@ -645,8 +672,9 @@ function restoreApp(app, addonsToRestore, restoreConfig, progressCallback, callb
     assert.strictEqual(typeof progressCallback, 'function');
     assert.strictEqual(typeof callback, 'function');
 
-    var appDataDir = safe.fs.realpathSync(path.join(paths.APPS_DATA_DIR, app.id));
-    const dataLayout = [ { localDir: appDataDir, remoteDir: '' } ];
+    const appDataDir = safe.fs.realpathSync(path.join(paths.APPS_DATA_DIR, app.id));
+    if (!appDataDir) return callback(safe.error);
+    const dataLayout = new DataLayout(appDataDir, app.dataDir ? [{ localDir: app.dataDir, remoteDir: 'data' }] : []);
 
     var startTime = new Date();
 
@@ -667,13 +695,13 @@ function restoreApp(app, addonsToRestore, restoreConfig, progressCallback, callb
 function runBackupUpload(backupId, format, dataLayout, progressCallback, callback) {
     assert.strictEqual(typeof backupId, 'string');
     assert.strictEqual(typeof format, 'string');
-    assert(Array.isArray(dataLayout), 'dataLayout should be an array');
+    assert(dataLayout instanceof DataLayout, 'dataLayout must be a DataLayout');
     assert.strictEqual(typeof progressCallback, 'function');
     assert.strictEqual(typeof callback, 'function');
 
     let result = '';
 
-    shell.sudo(`backup-${backupId}`, [ BACKUP_UPLOAD_CMD, backupId, format, JSON.stringify(dataLayout) ], { preserveEnv: true, ipc: true }, function (error) {
+    shell.sudo(`backup-${backupId}`, [ BACKUP_UPLOAD_CMD, backupId, format, dataLayout.toString() ], { preserveEnv: true, ipc: true }, function (error) {
         if (error && (error.code === null /* signal */ || (error.code !== 0 && error.code !== 50))) { // backuptask crashed
             return callback(new BackupsError(BackupsError.INTERNAL_ERROR, 'Backuptask crashed'));
         } else if (error && error.code === 50) { // exited with error
@@ -736,7 +764,7 @@ function uploadBoxSnapshot(backupConfig, progressCallback, callback) {
         const boxDataDir = safe.fs.realpathSync(paths.BOX_DATA_DIR);
         if (!boxDataDir) return callback(safe.error);
 
-        const dataLayout = [ { localDir: boxDataDir, remoteDir: '' } ];
+        const dataLayout = new DataLayout(boxDataDir, []);
         runBackupUpload('snapshot/box', backupConfig.format, dataLayout, progressCallback, function (error) {
             if (error) return callback(error);
 
@@ -913,8 +941,8 @@ function uploadAppSnapshot(backupConfig, app, progressCallback, callback) {
         const appDataDir = safe.fs.realpathSync(path.join(paths.APPS_DATA_DIR, app.id));
         if (!appDataDir) return callback(safe.error);
 
-        let dataLayout = [ { localDir: appDataDir, remoteDir: '' } ];
-        if (app.dataDir) dataLayout.push({ localDir: app.dataDir, remoteDir: 'data' });
+        const dataLayout = new DataLayout(appDataDir, app.dataDir ? [{ localDir: app.dataDir, remoteDir: 'data' }] : []);
+
         runBackupUpload(backupId, backupConfig.format, dataLayout, progressCallback, function (error) {
             if (error) return callback(error);
 
