@@ -24,6 +24,8 @@ if [[ "${BOX_ENV}" == "test" ]]; then
     [[ "${volume_dir}" != *"./cloudron_test/"* ]] && exit 1
 fi
 
-rm -rf "${volume_dir}"/*
-# mount points cannot be deleted
+# this removes hidden files
+find "${volume_dir}" -maxdepth 1 -mindepth 1 -exec rm -rf '{}' \;
+# volume could be a mount point that cannot be deleted
 rmdir "${volume_dir}" || true
+

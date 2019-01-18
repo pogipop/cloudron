@@ -371,15 +371,19 @@ function deleteContainer(containerId, callback) {
     });
 }
 
-function deleteContainers(appId, callback) {
+function deleteContainers(appId, options, callback) {
     assert.strictEqual(typeof appId, 'string');
+    assert.strictEqual(typeof options, 'object');
     assert.strictEqual(typeof callback, 'function');
 
     var docker = exports.connection;
 
     debug('deleting containers of %s', appId);
 
-    docker.listContainers({ all: 1, filters: JSON.stringify({ label: [ 'appId=' + appId ] }) }, function (error, containers) {
+    let labels = [ 'appId=' + appId ];
+    if (options.managedOnly) labels.push('isCloudronManaged=true');
+
+    docker.listContainers({ all: 1, filters: JSON.stringify({ label: labels }) }, function (error, containers) {
         if (error) return callback(error);
 
         async.eachSeries(containers, function (container, iteratorDone) {

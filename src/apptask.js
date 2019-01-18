@@ -136,27 +136,14 @@ function createContainer(app, callback) {
     });
 }
 
-// Only delete the main container of the app, not destroy any docker addon created ones
-function deleteMainContainer(app, callback) {
+function deleteContainers(app, options, callback) {
     assert.strictEqual(typeof app, 'object');
-    assert.strictEqual(typeof callback, 'function');
-
-    debugApp(app, 'deleting main app container');
-
-    docker.deleteContainer(app.containerId, function (error) {
-        if (error) return callback(new Error('Error deleting container: ' + error));
-
-        updateApp(app, { containerId: null }, callback);
-    });
-}
-
-function deleteContainers(app, callback) {
-    assert.strictEqual(typeof app, 'object');
+    assert.strictEqual(typeof options, 'object');
     assert.strictEqual(typeof callback, 'function');
 
     debugApp(app, 'deleting app containers (app, scheduler)');
 
-    docker.deleteContainers(app.id, function (error) {
+    docker.deleteContainers(app.id, options, function (error) {
         if (error) return callback(new Error('Error deleting container: ' + error));
 
         updateApp(app, { containerId: null }, callback);
@@ -511,7 +498,7 @@ function install(app, callback) {
         removeCollectdProfile.bind(null, app),
         removeLogrotateConfig.bind(null, app),
         stopApp.bind(null, app),
-        deleteMainContainer.bind(null, app),
+        deleteContainers.bind(null, app, { managedOnly: true }),
         function teardownAddons(next) {
             // when restoring, app does not require these addons anymore. remove carefully to preserve the db passwords
             var addonsToRemove = !isRestoring ? app.manifest.addons : _.omit(app.oldConfig.manifest.addons, Object.keys(app.manifest.addons));
@@ -628,14 +615,13 @@ function configure(app, callback) {
         removeCollectdProfile.bind(null, app),
         removeLogrotateConfig.bind(null, app),
         stopApp.bind(null, app),
-        deleteMainContainer.bind(null, app),
+        deleteContainers.bind(null, app, { managedOnly: true }),
         unregisterAlternateDomains.bind(null, app, false /* all */),
         function (next) {
             if (!locationChanged) return next();
 
             unregisterSubdomain(app, app.oldConfig.location, app.oldConfig.domain, next);
         },
-
 
         reserveHttpPort.bind(null, app),
 
@@ -736,7 +722,7 @@ function update(app, callback) {
         removeCollectdProfile.bind(null, app),
         removeLogrotateConfig.bind(null, app),
         stopApp.bind(null, app),
-        deleteMainContainer.bind(null, app),
+        deleteContainers.bind(null, app, { managedOnly: true }),
         function deleteImageIfChanged(done) {
             if (app.manifest.dockerImage === app.updateConfig.manifest.dockerImage) return done();
 
@@ -822,7 +808,7 @@ function uninstall(app, callback) {
         stopApp.bind(null, app),
 
         updateApp.bind(null, app, { installationProgress: '20, Deleting container' }),
-        deleteContainers.bind(null, app),
+        deleteContainers.bind(null, app, {}),
 
         updateApp.bind(null, app, { installationProgress: '30, Teardown addons' }),
         addons.teardownAddons.bind(null, app, app.manifest.addons),
