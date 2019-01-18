@@ -603,8 +603,8 @@ function download(backupConfig, backupId, format, dataLayout, progressCallback, 
                     ps.on('error', retryCallback);
                     ps.on('done', retryCallback);
                 });
-            }, callback);
-        });
+            });
+        }, callback);
     } else {
         let dataDir = dataLayout[0].localDir; // FIXME: make rsync format support data layout
         downloadDir(backupConfig, backupFilePath, dataDir, progressCallback, function (error) {
