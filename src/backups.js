@@ -588,10 +588,10 @@ function download(backupConfig, backupId, format, dataLayout, progressCallback, 
     const backupFilePath = getBackupFilePath(backupConfig, backupId, format);
 
     if (format === 'tgz') {
-        api(backupConfig.provider).download(backupConfig, backupFilePath, function (error, sourceStream) {
-            if (error) return callback(error);
+        async.retry({ times: 5, interval: 20000 }, function (retryCallback) {
+            api(backupConfig.provider).download(backupConfig, backupFilePath, function (error, sourceStream) {
+                if (error) return retryCallback(error);
 
-            async.retry({ times: 5, interval: 20000 }, function (retryCallback) {
                 tarExtract(sourceStream, dataLayout, backupConfig.key || null, function (error, ps) {
                     if (error) return retryCallback(error);
 
