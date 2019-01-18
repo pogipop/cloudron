@@ -303,7 +303,7 @@ function validateEnv(env) {
 }
 
 function validateDataDir(dataDir) {
-    if (!dataDir) return new AppsError(AppsError.BAD_FIELD, 'dataDir cannot be empty');
+    if (dataDir === '') return null; // revert back to default dataDir
 
     if (path.resolve(dataDir) !== dataDir) return new AppsError(AppsError.BAD_FIELD, 'dataDir must be an absolute path');
 
@@ -773,7 +773,7 @@ function configure(appId, data, user, auditSource, callback) {
             if (error) return callback(error);
         }
 
-        if ('dataDir' in data) {
+        if ('dataDir' in data && data.dataDir !== app.dataDir) {
             error = validateDataDir(data.dataDir);
             if (error) return callback(error);
             values.dataDir = data.dataDir;

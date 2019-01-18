@@ -61,7 +61,7 @@ var addons = require('./addons.js'),
     util = require('util'),
     _ = require('underscore');
 
-const RMVOLUME_CMD = path.join(__dirname, 'scripts/rmvolume.sh'),
+const CLEARVOLUME_CMD = path.join(__dirname, 'scripts/clearvolume.sh'),
     MKDIRVOLUME_CMD = path.join(__dirname, 'scripts/mkdirvolume.sh');
 
 function DockerError(reason, errorOrMessage) {
@@ -553,9 +553,10 @@ function createVolume(app, name, volumeDataDir, callback) {
     });
 }
 
-function clearVolume(app, name, callback) {
+function clearVolume(app, name, options, callback) {
     assert.strictEqual(typeof app, 'object');
     assert.strictEqual(typeof name, 'string');
+    assert.strictEqual(typeof options, 'object');
     assert.strictEqual(typeof callback, 'function');
 
     let docker = exports.connection;
@@ -565,7 +566,7 @@ function clearVolume(app, name, callback) {
         if (error) return callback(error);
 
         const volumeDataDir = v.Options.device;
-        shell.sudo('removeVolume', [ RMVOLUME_CMD, volumeDataDir ], {}, callback);
+        shell.sudo('clearVolume', [ CLEARVOLUME_CMD, options.removeDirectory ? 'rmdir' : 'clear', volumeDataDir ], {}, callback);
     });
 }
 

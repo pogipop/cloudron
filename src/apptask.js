@@ -175,6 +175,7 @@ function deleteAppDir(app, options, callback) {
         if (!entries) return callback(`Error listing ${resolvedAppDataDir}: ${safe.error.message}`);
 
         // remove only files. directories inside app dir are currently volumes managed by the addons
+        // we cannot delete those dirs anyway because of perms
         entries.forEach(function (entry) {
             let stat = safe.fs.statSync(path.join(resolvedAppDataDir, entry));
             if (stat && !stat.isDirectory()) safe.fs.unlinkSync(path.join(resolvedAppDataDir, entry));

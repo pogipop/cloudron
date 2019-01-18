@@ -17,15 +17,24 @@ if [[ "$1" == "--check" ]]; then
     exit 0
 fi
 
-volume_dir="$1"
+cmd="$1"
+volume_dir="$2"
 
 if [[ "${BOX_ENV}" == "test" ]]; then
     # be careful not to nuke some random directory when testing
     [[ "${volume_dir}" != *"./cloudron_test/"* ]] && exit 1
 fi
 
-# this removes hidden files
-find "${volume_dir}" -maxdepth 1 -mindepth 1 -exec rm -rf '{}' \;
-# volume could be a mount point that cannot be deleted
-rmdir "${volume_dir}" || true
+if [[ -d "${volume_dir}" ]]; then
+    # this removes hidden files
+    find "${volume_dir}" -maxdepth 1 -mindepth 1 -exec rm -rf '{}' \;
+fi
 
+if [[ "${cmd}" == "clear" ]]; then
+    mkdir -p "${volume_dir}"
+    # set it up so that we can restore here as normal user
+    chown $SUDO_USER:$SUDO_USER "${volume_dir}"
+else
+    # this make not succeed if volume is a mount point
+    rmdir "${volume_dir}" || true
+fi

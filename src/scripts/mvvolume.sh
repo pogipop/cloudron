@@ -30,6 +30,6 @@ fi
 # the find logic is so that move to a subdir works (and we also move hidden files)
 find "${source_dir}" -maxdepth 1 -mindepth 1 -not -wholename "${target_dir}" -exec cp -ar '{}' "${target_dir}" \;
 find "${source_dir}" -maxdepth 1 -mindepth 1 -not -wholename "${target_dir}" -exec rm -rf '{}' \;
-# this will fail if target is a subdir
+# this will fail if target is a subdir or if source is a mountpoint
 rmdir "${source_dir}" || true
 

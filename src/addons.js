@@ -110,7 +110,7 @@ var KNOWN_ADDONS = {
         clear: NOOP,
     },
     localstorage: {
-        setup: setupLocalStorage, // docker creates the directory for us
+        setup: setupLocalStorage,
         teardown: teardownLocalStorage,
         backup: NOOP, // no backup because it's already inside app data
         restore: NOOP,
@@ -745,7 +745,7 @@ function clearLocalStorage(app, options, callback) {
 
     debugApp(app, 'clearLocalStorage');
 
-    docker.clearVolume(app, `${app.id}-localstorage`, callback);
+    docker.clearVolume(app, `${app.id}-localstorage`, { removeDirectory: false }, callback);
 }
 
 function teardownLocalStorage(app, options, callback) {
@@ -756,7 +756,7 @@ function teardownLocalStorage(app, options, callback) {
     debugApp(app, 'teardownLocalStorage');
 
     async.series([
-        docker.clearVolume.bind(null, app, `${app.id}-localstorage`),
+        docker.clearVolume.bind(null, app, `${app.id}-localstorage`, { removeDirectory: true }),
         docker.removeVolume.bind(null, app, `${app.id}-localstorage`)
     ], callback);
 }

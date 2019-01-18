@@ -9,7 +9,7 @@ readonly TEST_IMAGE="cloudron/test:25.2.0"
 sudo -k || sudo --reset-timestamp
 
 # checks if all scripts are sudo access
-scripts=("${SOURCE_DIR}/src/scripts/rmvolume.sh" \
+scripts=("${SOURCE_DIR}/src/scripts/clearvolume.sh" \
          "${SOURCE_DIR}/src/scripts/mvvolume.sh" \
          "${SOURCE_DIR}/src/scripts/mkdirvolume.sh" \
          "${SOURCE_DIR}/src/scripts/rmaddondir.sh" \

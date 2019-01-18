@@ -1,8 +1,8 @@
 # sudo logging breaks journalctl output with very long urls (systemd bug)
 Defaults !syslog
 
-Defaults!/home/yellowtent/box/src/scripts/rmvolume.sh env_keep="HOME BOX_ENV"
-yellowtent ALL=(root) NOPASSWD: /home/yellowtent/box/src/scripts/rmvolume.sh
+Defaults!/home/yellowtent/box/src/scripts/clearvolume.sh env_keep="HOME BOX_ENV"
+yellowtent ALL=(root) NOPASSWD: /home/yellowtent/box/src/scripts/clearvolume.sh
 
 Defaults!/home/yellowtent/box/src/scripts/mvvolume.sh env_keep="HOME BOX_ENV"
 yellowtent ALL=(root) NOPASSWD: /home/yellowtent/box/src/scripts/mvvolume.sh
