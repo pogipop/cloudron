@@ -154,7 +154,7 @@ function userRemoved(performedBy, eventId, user) {
 
     actionForAllAdmins([ performedBy, user.id ], function (admin, callback) {
         mailer.userRemoved(admin.email, user);
-        add(admin.id, 'User removed', `User ${user.username || user.email || user.fallbackEmail} was removed`, '/#/users', callback);
+        add(admin.id, eventId, 'User removed', `User ${user.username || user.email || user.fallbackEmail} was removed`, '/#/users', callback);
     }, function (error) {
         if (error) console.error(error);
     });
@@ -166,7 +166,7 @@ function adminChanged(performedBy, eventId, user) {
 
     actionForAllAdmins([ performedBy, user.id ], function (admin, callback) {
         mailer.adminChanged(admin.email, user, user.admin);
-        add(admin.id, 'Admin status change', `User ${user.username || user.email || user.fallbackEmail} ${user.admin ? 'is now an admin' : 'is no more an admin'}`, '/#/users', callback);
+        add(admin.id, eventId, 'Admin status change', `User ${user.username || user.email || user.fallbackEmail} ${user.admin ? 'is now an admin' : 'is no more an admin'}`, '/#/users', callback);
     }, function (error) {
         if (error) console.error(error);
     });
@@ -187,7 +187,7 @@ function oomEvent(eventId, program, context) {
         if (context.app) message = `The application ${context.app.manifest.title} with id ${context.app.id} ran out of memory.`;
         else message = `The container with id ${context.details.id} ran out of memory`;
 
-        add(admin.id, 'Process died out-of-memory', message, context.app ? '/#/apps' : '', callback);
+        add(admin.id, eventId, 'Process died out-of-memory', message, context.app ? '/#/apps' : '', callback);
     }, function (error) {
         if (error) console.error(error);
     });
@@ -202,7 +202,7 @@ function appDied(eventId, app) {
 
     actionForAllAdmins([], function (admin, callback) {
         mailer.appDied(admin.email, app);
-        add(admin.id, `App ${app.fqdn} is down`, `The application ${app.manifest.title} installed at ${app.fqdn} is not responding.`, '/#/apps', callback);
+        add(admin.id, eventId, `App ${app.fqdn} is down`, `The application ${app.manifest.title} installed at ${app.fqdn} is not responding.`, '/#/apps', callback);
     }, function (error) {
         if (error) console.error(error);
     });
@@ -221,7 +221,7 @@ function unexpectedExit(eventId, processName, crashLogFile) {
 
     actionForAllAdmins([], function (admin, callback) {
         mailer.unexpectedExit(admin.email, subject, crashLogs);
-        add(admin.id, subject, 'Detailed logs have been sent to your email address.', '/#/system', callback);
+        add(admin.id, eventId, subject, 'Detailed logs have been sent to your email address.', '/#/system', callback);
     }, function (error) {
         if (error) console.error(error);
     });
