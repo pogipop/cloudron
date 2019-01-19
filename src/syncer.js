@@ -21,13 +21,36 @@ function readCache(cacheFile) {
     return result;
 }
 
-function readTree(dir) {
-    assert.strictEqual(typeof dir, 'string');
+function readTree(dirPath) {
+    assert.strictEqual(typeof dirPath, 'string');
 
-    var list = safe.fs.readdirSync(dir).sort();
-    if (!list) return [ ];
+    const names = safe.fs.readdirSync(dirPath).sort();
+    if (!names) return [ ];
 
-    return list.map(function (e) { return { stat: safe.fs.lstatSync(path.join(dir, e)), name: e }; });
+    return names.map((name) => {
+        let absolutePath = path.join(dirPath, name);
+        return {
+            stat: safe.fs.lstatSync(absolutePath),
+            absolutePath: absolutePath,
+            name: name
+        };
+    });
+}
+
+function readDataLayoutTree(dataLayout) {
+    assert.strictEqual(typeof dataLayout, 'object');
+
+    let rootEntries = readTree(dataLayout.localRoot());
+
+    for (let l of dataLayout.directoryMap()) {
+        rootEntries.push({
+            stat: safe.fs.lstatSync(l.localDir),
+            absolutePath: l.localDir,
+            name: l.remoteDir,
+        });
+    }
+
+    return rootEntries.sort((e1, e2) => { return e1.name < e2.name ? -1 : (e1.name > e2.name ? +1 : 0); });
 }
 
 function ISDIR(x) {
@@ -38,16 +61,16 @@ function ISFILE(x) {
     return (x & fs.constants.S_IFREG) === fs.constants.S_IFREG;
 }
 
-function sync(dir, taskProcessor, concurrency, callback) {
-    assert.strictEqual(typeof dir, 'string');
+function sync(dataLayout, taskProcessor, concurrency, callback) {
+    assert.strictEqual(typeof dataLayout, 'object'); // is a DataLayout
     assert.strictEqual(typeof taskProcessor, 'function');
     assert.strictEqual(typeof concurrency, 'number');
     assert.strictEqual(typeof callback, 'function');
 
     var curCacheIndex = 0, addQueue = [ ], delQueue = [ ];
 
-    var cacheFile = path.join(paths.BACKUP_INFO_DIR, path.basename(dir) + '.sync.cache'),
-        newCacheFile = path.join(paths.BACKUP_INFO_DIR, path.basename(dir) + '.sync.cache.new');
+    var cacheFile = path.join(paths.BACKUP_INFO_DIR, dataLayout.getBasename() + '.sync.cache'),
+        newCacheFile = path.join(paths.BACKUP_INFO_DIR, dataLayout.getBasename() + '.sync.cache.new');
 
     var cache = [ ];
 
@@ -80,12 +103,10 @@ function sync(dir, taskProcessor, concurrency, callback) {
         }
     }
 
-    function traverse(relpath) {
-        var entries = readTree(path.join(dir, relpath));
-
-        for (var i = 0; i < entries.length; i++) {
-            var entryPath = path.join(relpath, entries[i].name);
-            var entryStat = entries[i].stat;
+    function traverse(entries, relpath) {
+        for (const entry of entries) {
+            let entryPath = path.join(relpath, entry.name);
+            let entryStat = entry.stat;
 
             if (!entryStat) continue; // some stat error. prented it doesn't exist
             if (!entryStat.isDirectory() && !entryStat.isFile()) continue; // ignore non-files and dirs
@@ -102,13 +123,15 @@ function sync(dir, taskProcessor, concurrency, callback) {
 
             if (cachePath === null || cachePath > entryPath) { // new files appeared
                 if (entryStat.isDirectory()) {
-                    traverse(entryPath);
+                    traverse(readTree(entry.absolutePath), entryPath);
                 } else {
                     addQueue.push({ operation: 'add', path: entryPath, reason: 'new', position: addQueue.length });
                 }
             } else if (ISDIR(cacheStat.mode) && entryStat.isDirectory()) { // dir names match
                 ++curCacheIndex;
-                traverse(entryPath);
+                // if we just pass path, have to keep looking into data layout!!! so pass an object
+                // the object needs to have the path where we are traversing...
+                traverse(readTree(entry.absolutePath), entryPath);
             } else if (ISFILE(cacheStat.mode) && entryStat.isFile()) { // file names match
                 if (entryStat.mtime.getTime() !== cacheStat.mtime || entryStat.size != cacheStat.size || entryStat.inode !== cacheStat.inode) { // file changed
                     addQueue.push({ operation: 'add', path: entryPath, reason: 'changed', position: addQueue.length });
@@ -117,7 +140,7 @@ function sync(dir, taskProcessor, concurrency, callback) {
             } else if (entryStat.isDirectory()) { // was a file, now a directory
                 delQueue.push({ operation: 'remove', path: cachePath, reason: 'wasfile' });
                 ++curCacheIndex;
-                traverse(entryPath);
+                traverse(readTree(entry.absolutePath), entryPath);
             } else { // was a dir, now a file
                 delQueue.push({ operation: 'removedir', path: cachePath, reason: 'wasdir' });
                 while (curCacheIndex !== cache.length && cache[curCacheIndex].path.startsWith(cachePath)) ++curCacheIndex;
@@ -126,7 +149,7 @@ function sync(dir, taskProcessor, concurrency, callback) {
         }
     }
 
-    traverse('');
+    traverse(readDataLayoutTree(dataLayout), '');
     advanceCache(''); // remove rest of the cache entries
 
     safe.fs.closeSync(newCacheFd);

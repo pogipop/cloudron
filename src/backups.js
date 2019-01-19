@@ -113,41 +113,47 @@ function api(provider) {
 }
 
 class DataLayout {
-    constructor(localRoot, layout) {
+    constructor(localRoot, dirMap) {
         assert.strictEqual(typeof localRoot, 'string');
-        assert(Array.isArray(layout), 'Expecting layout to be an array');
+        assert(Array.isArray(dirMap), 'Expecting layout to be an array');
 
         this._localRoot = localRoot;
-        this._layout = layout;
-        this._remoteRegexps = layout.map((l) => new RegExp('^\\./' + l.remoteDir + '/?'));
-        this._localRegexps = layout.map((l) => new RegExp('^' + l.localDir + '/?'));
+        this._dirMap = dirMap;
+        this._remoteRegexps = dirMap.map((l) => new RegExp('^\\./' + l.remoteDir + '/?'));
+        this._localRegexps = dirMap.map((l) => new RegExp('^' + l.localDir + '/?'));
     }
-    getLocalPath(remoteName) {
+    toLocalPath(remoteName) {
         assert.strictEqual(typeof remoteName, 'string');
 
         for (let i = 0; i < this._remoteRegexps.length; i++) {
             if (!remoteName.match(this._remoteRegexps[i])) continue;
-            return remoteName.replace(this._remoteRegexps[i], this._layout[i].localDir + '/'); // make paths absolute
+            return remoteName.replace(this._remoteRegexps[i], this._dirMap[i].localDir + '/'); // make paths absolute
         }
         return remoteName.replace(new RegExp('^\\.'), this._localRoot);
     }
-    getRemotePath(localName) {
+    toRemotePath(localName) {
         assert.strictEqual(typeof localName, 'string');
 
         for (let i = 0; i < this._localRegexps.length; i++) {
             if (!localName.match(this._localRegexps[i])) continue;
-            return localName.replace(this._localRegexps[i], './' + this._layout[i].remoteDir + '/'); // make paths relative
+            return localName.replace(this._localRegexps[i], './' + this._dirMap[i].remoteDir + '/'); // make paths relative
         }
         return localName.replace(new RegExp('^' + this._localRoot + '/?'), './');
     }
-    getLocalRoot() {
+    localRoot() {
         return this._localRoot;
     }
-    toString() {
-        return JSON.stringify({ localRoot: this._localRoot, layout: this._layout });
+    getBasename() { // used to generate cache file names
+        return path.basename(this._localRoot);
     }
-    getLocalPaths() {
-        return [ this._localRoot ].concat(this._layout.map((l) => l.localDir));
+    toString() {
+        return JSON.stringify({ localRoot: this._localRoot, layout: this._dirMap });
+    }
+    localPaths() {
+        return [ this._localRoot ].concat(this._dirMap.map((l) => l.localDir));
+    }
+    directoryMap() {
+        return this._dirMap;
     }
     static fromString(str) {
         const obj = JSON.parse(str);
@@ -310,9 +316,9 @@ function tarPack(dataLayout, key, callback) {
 
     var pack = tar.pack('/', {
         dereference: false, // pack the symlink and not what it points to
-        entries: dataLayout.getLocalPaths(),
+        entries: dataLayout.localPaths(),
         map: function(header) {
-            header.name = dataLayout.getRemotePath(header.name);
+            header.name = dataLayout.toRemotePath(header.name);
             return header;
         },
         strict: false // do not error for unknown types (skip fifo, char/block devices)
@@ -355,7 +361,7 @@ function sync(backupConfig, backupId, dataLayout, progressCallback, callback) {
     // the number here has to take into account the s3.upload partSize (which is 10MB). So 20=200MB
     const concurrency = backupConfig.syncConcurrency || (backupConfig.provider === 's3' ? 20 : 10);
 
-    syncer.sync(dataLayout.getLocalRoot(), function processTask(task, iteratorCallback) {
+    syncer.sync(dataLayout, function processTask(task, iteratorCallback) {
         debug('sync: processing task: %j', task);
         // the empty task.path is special to signify the directory
         const destPath = task.path && backupConfig.key ? encryptFilePath(task.path, backupConfig.key) : task.path;
@@ -379,7 +385,7 @@ function sync(backupConfig, backupId, dataLayout, progressCallback, callback) {
             if (task.operation === 'add') {
                 progressCallback({ message: `Adding ${task.path}` + (retryCount > 1 ?  ` (Try ${retryCount})` : '') });
                 debug(`Adding ${task.path} position ${task.position} try ${retryCount}`);
-                var stream = createReadStream(dataLayout.getLocalPath('./' + task.path), backupConfig.key || null);
+                var stream = createReadStream(dataLayout.toLocalPath('./' + task.path), backupConfig.key || null);
                 stream.on('error', function (error) {
                     debug(`read stream error for ${task.path}: ${error.message}`);
                     retryCallback();
@@ -414,15 +420,15 @@ function saveFsMetadata(dataLayout, metadataFile, callback) {
         execFiles: []
     };
 
-    for (let lp of dataLayout.getLocalPaths()) {
+    for (let lp of dataLayout.localPaths()) {
         var emptyDirs = safe.child_process.execSync('find . -type d -empty\n', { cwd: lp, encoding: 'utf8' }); // %P removes the ./
         if (emptyDirs === null) return callback(safe.error);
-        if (emptyDirs.length) metadata.emptyDirs = metadata.emptyDirs.concat(emptyDirs.trim().split('\n').map((ed) => dataLayout.getRemotePath(ed)));
+        if (emptyDirs.length) metadata.emptyDirs = metadata.emptyDirs.concat(emptyDirs.trim().split('\n').map((ed) => dataLayout.toRemotePath(ed)));
 
         var execFiles = safe.child_process.execSync('find . -type f -executable\n', { cwd: lp, encoding: 'utf8' });
         if (execFiles === null) return callback(safe.error);
 
-        if (execFiles.length) metadata.execFiles = metadata.execFiles.concat(execFiles.trim().split('\n').map((ef) => dataLayout.getRemotePath(ef)));
+        if (execFiles.length) metadata.execFiles = metadata.execFiles.concat(execFiles.trim().split('\n').map((ef) => dataLayout.toRemotePath(ef)));
     }
 
     if (!safe.fs.writeFileSync(metadataFile, JSON.stringify(metadata, null, 4))) return callback(safe.error);
@@ -464,7 +470,7 @@ function upload(backupId, format, dataLayoutString, progressCallback, callback) 
             }, callback);
         } else {
             async.series([
-                saveFsMetadata.bind(null, dataLayout, `${dataLayout.getLocalRoot()}/fsmetadata.json`),
+                saveFsMetadata.bind(null, dataLayout, `${dataLayout.localRoot()}/fsmetadata.json`),
                 sync.bind(null, backupConfig, backupId, dataLayout, progressCallback)
             ], callback);
         }
@@ -481,7 +487,7 @@ function tarExtract(inStream, dataLayout, key, callback) {
     var ps = progressStream({ time: 10000 }); // display a progress every 10 seconds
     var extract = tar.extract('/', {
         map: function (header) {
-            header.name = dataLayout.getLocalPath(header.name);
+            header.name = dataLayout.toLocalPath(header.name);
             return header;
         }
     });
@@ -536,12 +542,12 @@ function restoreFsMetadata(dataLayout, metadataFile, callback) {
     if (metadata === null) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, 'Error parsing fsmetadata.txt:' + safe.error.message));
 
     async.eachSeries(metadata.emptyDirs, function createPath(emptyDir, iteratorDone) {
-        mkdirp(dataLayout.getLocalPath(emptyDir), iteratorDone);
+        mkdirp(dataLayout.toLocalPath(emptyDir), iteratorDone);
     }, function (error) {
         if (error) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, `unable to create path: ${error.message}`));
 
         async.eachSeries(metadata.execFiles, function createPath(execFile, iteratorDone) {
-            fs.chmod(dataLayout.getLocalPath(execFile), parseInt('0755', 8), iteratorDone);
+            fs.chmod(dataLayout.toLocalPath(execFile), parseInt('0755', 8), iteratorDone);
         }, function (error) {
             if (error) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, `unable to chmod: ${error.message}`));
 
@@ -565,7 +571,7 @@ function downloadDir(backupConfig, backupFilePath, dataLayout, progressCallback,
             relativePath = decryptFilePath(relativePath, backupConfig.key);
             if (!relativePath) return callback(new BackupsError(BackupsError.BAD_STATE, 'Unable to decrypt file'));
         }
-        const destFilePath = dataLayout.getLocalPath('./' + relativePath);
+        const destFilePath = dataLayout.toLocalPath('./' + relativePath);
 
         mkdirp(path.dirname(destFilePath), function (error) {
             if (error) return callback(new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
@@ -637,7 +643,7 @@ function download(backupConfig, backupId, format, dataLayout, progressCallback, 
         downloadDir(backupConfig, backupFilePath, dataLayout, progressCallback, function (error) {
             if (error) return callback(error);
 
-            restoreFsMetadata(dataLayout, `${dataLayout.getLocalRoot()}/fsmetadata.json`, callback);
+            restoreFsMetadata(dataLayout, `${dataLayout.localRoot()}/fsmetadata.json`, callback);
         });
     }
 }
@@ -655,7 +661,7 @@ function restore(backupConfig, backupId, progressCallback, callback) {
 
         debug('restore: download completed, importing database');
 
-        database.importFromFile(`${dataLayout.getLocalRoot()}/box.mysqldump`, function (error) {
+        database.importFromFile(`${dataLayout.localRoot()}/box.mysqldump`, function (error) {
             if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
 
             debug('restore: database imported');
