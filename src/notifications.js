@@ -24,10 +24,9 @@ var assert = require('assert'),
     debug = require('debug')('box:notifications'),
     mailer = require('./mailer.js'),
     notificationdb = require('./notificationdb.js'),
+    safe = require('safetydance'),
     users = require('./users.js'),
     util = require('util');
-
-const NOOP_CALLBACK = function (error) { if (error) debug(error); };
 
 function NotificationsError(reason, errorOrMessage) {
     assert.strictEqual(typeof reason, 'string');
@@ -51,8 +50,9 @@ util.inherits(NotificationsError, Error);
 NotificationsError.INTERNAL_ERROR = 'Internal Error';
 NotificationsError.NOT_FOUND = 'Not Found';
 
-function add(userId, title, message, action, callback) {
+function add(userId, eventId, title, message, action, callback) {
     assert.strictEqual(typeof userId, 'string');
+    assert.strictEqual(typeof eventId, 'string');
     assert.strictEqual(typeof title, 'string');
     assert.strictEqual(typeof message, 'string');
     assert.strictEqual(typeof action, 'string');
@@ -62,6 +62,7 @@ function add(userId, title, message, action, callback) {
 
     notificationdb.add({
         userId: userId,
+        eventId: eventId,
         title: title,
         message: message,
         action: action
@@ -133,20 +134,22 @@ function actionForAllAdmins(skippingUserIds, iterator, callback) {
     });
 }
 
-function userAdded(performedBy, user) {
+function userAdded(performedBy, eventId, user) {
     assert.strictEqual(typeof performedBy, 'string');
+    assert.strictEqual(typeof eventId, 'string');
     assert.strictEqual(typeof user, 'object');
 
     actionForAllAdmins([ performedBy, user.id ], function (admin, callback) {
         mailer.userAdded(admin.email, user);
-        add(admin.id, 'User added', `User ${user.fallbackEmail} was added`, '/#/users', callback);
+        add(admin.id, eventId, 'User added', `User ${user.fallbackEmail} was added`, '/#/users', callback);
     }, function (error) {
         if (error) console.error(error);
     });
 }
 
-function userRemoved(performedBy, user) {
+function userRemoved(performedBy, eventId, user) {
     assert.strictEqual(typeof performedBy, 'string');
+    assert.strictEqual(typeof eventId, 'string');
     assert.strictEqual(typeof user, 'object');
 
     actionForAllAdmins([ performedBy, user.id ], function (admin, callback) {
@@ -157,7 +160,7 @@ function userRemoved(performedBy, user) {
     });
 }
 
-function adminChanged(performedBy, user) {
+function adminChanged(performedBy, eventId, user) {
     assert.strictEqual(typeof performedBy, 'string');
     assert.strictEqual(typeof user, 'object');
 
@@ -169,7 +172,8 @@ function adminChanged(performedBy, user) {
     });
 }
 
-function oomEvent(program, context) {
+function oomEvent(eventId, program, context) {
+    assert.strictEqual(typeof eventId, 'string');
     assert.strictEqual(typeof program, 'string');
     assert.strictEqual(typeof context, 'object');
 
@@ -189,7 +193,8 @@ function oomEvent(program, context) {
     });
 }
 
-function appDied(app) {
+function appDied(eventId, app) {
+    assert.strictEqual(typeof eventId, 'string');
     assert.strictEqual(typeof app, 'object');
 
     // also send us a notification mail
@@ -203,18 +208,21 @@ function appDied(app) {
     });
 }
 
-function unexpectedExit(subject, compiledLogs, callback) {
-    assert.strictEqual(typeof subject, 'string');
-    assert.strictEqual(typeof compiledLogs, 'string');
-    assert(typeof callback === 'undefined' || typeof callback === 'function');
+function unexpectedExit(eventId, processName, crashLogFile) {
+    assert.strictEqual(typeof eventId, 'string');
+    assert.strictEqual(typeof processName, 'string');
+    assert.strictEqual(typeof crashLogFile, 'string');
 
-    callback = callback || NOOP_CALLBACK;
+    var subject = `${processName} exited unexpectedly`;
+    var crashLogs = safe.fs.readFileSync(crashLogFile, 'utf8');
 
     // also send us a notification mail
-    if (config.provider() === 'caas') mailer.unexpectedExit('support@cloudron.io', subject, compiledLogs);
+    if (config.provider() === 'caas') mailer.unexpectedExit('support@cloudron.io', subject, crashLogs);
 
     actionForAllAdmins([], function (admin, callback) {
-        mailer.unexpectedExit(admin.email, subject, compiledLogs);
+        mailer.unexpectedExit(admin.email, subject, crashLogs);
         add(admin.id, subject, 'Detailed logs have been sent to your email address.', '/#/system', callback);
-    }, callback);
+    }, function (error) {
+        if (error) console.error(error);
+    });
 }

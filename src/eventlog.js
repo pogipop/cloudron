@@ -51,7 +51,9 @@ exports = module.exports = {
     ACTION_USER_UPDATE: 'user.update',
     ACTION_USER_TRANSFER: 'user.transfer',
 
-    ACTION_DYNDNS_UPDATE: 'dyndns.update'
+    ACTION_DYNDNS_UPDATE: 'dyndns.update',
+
+    ACTION_PROCESS_CRASH: 'system.crash'
 };
 
 var assert = require('assert'),
@@ -101,15 +103,17 @@ function add(action, source, data, callback) {
 
         // decide if we want to add notifications as well
         if (action === exports.ACTION_USER_ADD) {
-            notifications.userAdded(source.userId, data.user);
+            notifications.userAdded(source.userId, id, data.user);
         } if (action === exports.ACTION_USER_REMOVE) {
-            notifications.userRemoved(source.userId, data.user);
+            notifications.userRemoved(source.userId, id, data.user);
         } if (action === exports.ACTION_USER_UPDATE && data.adminStatusChanged) {
-            notifications.adminChanged(source.userId, data.user);
+            notifications.adminChanged(source.userId, id, data.user);
         } if (action === exports.ACTION_APP_OOM) {
-            notifications.oomEvent(source.app ? source.app.id : source.containerId, { app: source.app, details: data });
+            notifications.oomEvent(id, source.app ? source.app.id : source.containerId, { app: source.app, details: data });
         } if (action === exports.ACTION_APP_DOWN) {
-            notifications.appDied(source.app);
+            notifications.appDied(id, source.app);
+        } if (action === exports.ACTION_PROCESS_CRASH) {
+            notifications.unexpectedExit(id, source.processName, data.crashLogFile);
         } else {
             // no notification
         }
