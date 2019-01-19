@@ -12,6 +12,7 @@ exports = module.exports = {
 };
 
 var assert = require('assert'),
+    async = require('async'),
     database = require('./database.js'),
     DatabaseError = require('./databaseerror'),
     mysql = require('mysql'),
@@ -125,11 +126,19 @@ function delByCreationTime(creationTime, callback) {
     assert(util.isDate(creationTime));
     assert.strictEqual(typeof callback, 'function');
 
-    var query = 'DELETE FROM eventlog WHERE creationTime < ?';
-
-    database.query(query, [ creationTime ], function (error) {
+    // since notifications reference eventlog items, we have to clean them up as well
+    database.query('SELECT * FROM eventlog WHERE creationTime < ?', [ creationTime ], function (error, result) {
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
 
-        callback(error);
+        async.eachSeries(result, function (item, callback) {
+            database.query('DELETE FROM notifications WHERE eventId=?', [ item.id ], function (error) {
+                if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
+
+                database.query('DELETE FROM eventlog WHERE id=?', [ item.id ], function (error) {
+                    if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
+                    callback();
+                });
+            });
+        }, callback);
     });
 }

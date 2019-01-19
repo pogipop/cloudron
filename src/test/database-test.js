@@ -118,8 +118,30 @@ describe('database', function () {
     });
 
     describe('notifications', function () {
+        var EVENT_0 = {
+            id: 'event_0',
+            action: 'action',
+            source: {},
+            data: {}
+        };
+
+        var EVENT_1 = {
+            id: 'event_1',
+            action: 'action',
+            source: {},
+            data: {}
+        };
+
+        var EVENT_2 = {
+            id: 'event_2',
+            action: 'action',
+            source: {},
+            data: {}
+        };
+
         var NOTIFICATION_0 = {
             userId: USER_0.id,
+            eventId: EVENT_0.id,
             title: 'first one',
             message: 'some message there',
             action: 'usually a url'
@@ -127,6 +149,7 @@ describe('database', function () {
 
         var NOTIFICATION_1 = {
             userId: USER_0.id,
+            eventId: EVENT_1.id,
             title: 'second one',
             message: 'some message there',
             action: 'usually a url'
@@ -134,6 +157,7 @@ describe('database', function () {
 
         var NOTIFICATION_2 = {
             userId: USER_1.id,
+            eventId: EVENT_2.id,
             title: 'third one',
             message: 'some message there',
             action: 'usually a url'
@@ -143,6 +167,9 @@ describe('database', function () {
             async.series([
                 userdb.add.bind(null, USER_0.id, USER_0),
                 userdb.add.bind(null, USER_1.id, USER_1),
+                eventlogdb.add.bind(null, EVENT_0.id, EVENT_0.action, EVENT_0.source, EVENT_0.data),
+                eventlogdb.add.bind(null, EVENT_1.id, EVENT_1.action, EVENT_1.source, EVENT_1.data),
+                eventlogdb.add.bind(null, EVENT_2.id, EVENT_2.action, EVENT_2.source, EVENT_2.data),
             ], done);
         });
 
@@ -1725,6 +1752,39 @@ describe('database', function () {
         it('delByCreationTime succeeds', function (done) {
             async.each([ 'persistent.event', 'transient.event', 'anothertransient.event', 'anotherpersistent.event' ], function (e, callback) {
                 eventlogdb.add('someid' + Math.random(), e, { ip: '1.2.3.4' }, { appId: 'thatapp' }, callback);
+            }, function (error) {
+                expect(error).to.be(null);
+
+                eventlogdb.delByCreationTime(new Date(), function (error) {
+                    expect(error).to.be(null);
+
+                    eventlogdb.getAllPaged([], null, 1, 100, function (error, results) {
+                        expect(error).to.be(null);
+                        expect(results.length).to.be(0);
+
+                        done();
+                    });
+                });
+            });
+        });
+
+        it('delByCreationTime succeeds with notifications referencing it', function (done) {
+            async.each([ 'persistent.event', 'transient.event', 'anothertransient.event', 'anotherpersistent.event' ], function (e, callback) {
+                var eventId = 'someid' + Math.random();
+
+                eventlogdb.add(eventId, e, { ip: '1.2.3.4' }, { appId: 'thatapp' }, function (error) {
+                    expect(error).to.be(null);
+
+                    var notification = {
+                        userId: USER_0.id,
+                        eventId: eventId,
+                        title: 'first one',
+                        message: 'some message there',
+                        action: 'usually a url'
+                    };
+
+                    notificationdb.add(notification, callback);
+                });
             }, function (error) {
                 expect(error).to.be(null);
 
