@@ -20,6 +20,7 @@ exports = module.exports = {
     ACTION_APP_LOGIN: 'app.login',
     ACTION_APP_OOM: 'app.oom',
     ACTION_APP_DOWN: 'app.down',
+    ACTION_APP_TASK_CRASH: 'app.task.crash',
 
     ACTION_BACKUP_FINISH: 'backup.finish',
     ACTION_BACKUP_START: 'backup.start',

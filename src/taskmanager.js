@@ -23,7 +23,7 @@ var appdb = require('./appdb.js'),
     mkdirp = require('mkdirp'),
     path = require('path'),
     paths = require('./paths.js'),
-    sendFailureLogs = require('./logcollector.js').sendFailureLogs,
+    eventlog = require('./eventlog.js'),
     util = require('util'),
     _ = require('underscore');
 
@@ -150,10 +150,10 @@ function startAppTask(appId, callback) {
         debug('Task for %s pid %s completed with status %s', appId, pid, code);
         if (code === null /* signal */ || (code !== 0 && code !== 50)) { // apptask crashed
             debug('Apptask crashed with code %s and signal %s', code, signal);
-            sendFailureLogs('apptask', { unit: 'box' });
             appdb.update(appId, { installationState: appdb.ISTATE_ERROR, installationProgress: 'Apptask crashed with code ' + code + ' and signal ' + signal }, NOOP_CALLBACK);
+            eventlog.add(eventlog.ACTION_APP_TASK_CRASH, { appId: appId }, { crashLogFile: logFilePath }, NOOP_CALLBACK);
         } else if (code === 50) {
-            sendFailureLogs('apptask', { unit: 'box' });
+            eventlog.add(eventlog.ACTION_APP_TASK_CRASH, { appId: appId }, { crashLogFile: logFilePath }, NOOP_CALLBACK);
         }
         delete gActiveTasks[appId];
         locker.unlock(locker.OP_APPTASK); // unlock event will trigger next task
