@@ -113,6 +113,8 @@ function add(action, source, data, callback) {
             notifications.oomEvent(id, source.app ? source.app.id : source.containerId, { app: source.app, details: data });
         } if (action === exports.ACTION_APP_DOWN) {
             notifications.appDied(id, source.app);
+        } if (action === exports.ACTION_APP_TASK_CRASH) {
+            notifications.apptaskCrash(id, source.appId, data.crashLogFile);
         } if (action === exports.ACTION_PROCESS_CRASH) {
             notifications.unexpectedExit(id, source.processName, data.crashLogFile);
         } else {

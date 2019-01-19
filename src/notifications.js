@@ -14,7 +14,8 @@ exports = module.exports = {
     adminChanged: adminChanged,
     oomEvent: oomEvent,
     appDied: appDied,
-    unexpectedExit: unexpectedExit
+    unexpectedExit: unexpectedExit,
+    apptaskCrash: apptaskCrash
 };
 
 var assert = require('assert'),
@@ -214,6 +215,25 @@ function unexpectedExit(eventId, processName, crashLogFile) {
     assert.strictEqual(typeof crashLogFile, 'string');
 
     var subject = `${processName} exited unexpectedly`;
+    var crashLogs = safe.fs.readFileSync(crashLogFile, 'utf8');
+
+    // also send us a notification mail
+    if (config.provider() === 'caas') mailer.unexpectedExit('support@cloudron.io', subject, crashLogs);
+
+    actionForAllAdmins([], function (admin, callback) {
+        mailer.unexpectedExit(admin.email, subject, crashLogs);
+        add(admin.id, eventId, subject, 'Detailed logs have been sent to your email address.', '/#/system', callback);
+    }, function (error) {
+        if (error) console.error(error);
+    });
+}
+
+function apptaskCrash(eventId, appId, crashLogFile) {
+    assert.strictEqual(typeof eventId, 'string');
+    assert.strictEqual(typeof appId, 'string');
+    assert.strictEqual(typeof crashLogFile, 'string');
+
+    var subject = `Apptask for ${appId} crashed`;
     var crashLogs = safe.fs.readFileSync(crashLogFile, 'utf8');
 
     // also send us a notification mail
