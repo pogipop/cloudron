@@ -32,7 +32,7 @@ var DISPLAY_NAME = 'Nobody cares';
 var DISPLAY_NAME_NEW = 'Somone cares';
 var userObject = null;
 var NON_ADMIN_GROUP = 'members';
-var AUDIT_SOURCE = { ip: '1.2.3.4' };
+var AUDIT_SOURCE = { ip: '1.2.3.4', userId: 'someuserid' };
 
 var USERNAME_1 = 'secondUser';
 var EMAIL_1 = 'second@user.com';
@@ -655,15 +655,15 @@ describe('User', function () {
         };
 
         it('make second user admin succeeds', function (done) {
-
             var invitor = { username: USERNAME, email: EMAIL };
+
             users.create(user1.username, user1.password, user1.email, DISPLAY_NAME, { invitor: invitor }, AUDIT_SOURCE, function (error, result) {
                 expect(error).to.not.be.ok();
                 expect(result).to.be.ok();
 
                 user1.id = result.id;
 
-                users.update(user1.id, { admin: true }, { ip: '1.2.3.4' }, function (error) {
+                users.update(user1.id, { admin: true }, AUDIT_SOURCE, function (error) {
                     expect(error).to.not.be.ok();
 
                     // one mail for user creation, one mail for admin change
@@ -673,7 +673,7 @@ describe('User', function () {
         });
 
         it('succeeds to remove admin flag', function (done) {
-            users.update(user1.id, { admin: false }, { ip: '1.2.3.4' }, function (error) {
+            users.update(user1.id, { admin: false }, AUDIT_SOURCE, function (error) {
                 expect(error).to.eql(null);
 
                 checkMails(1, done);
@@ -708,7 +708,7 @@ describe('User', function () {
 
                 user1.id = result.id;
 
-                users.update(user1.id, { admin: true }, { ip: '1.2.3.4' }, function (error) {
+                users.update(user1.id, { admin: true }, AUDIT_SOURCE, function (error) {
                     expect(error).to.eql(null);
 
                     users.getAllAdmins(function (error, admins) {
@@ -874,14 +874,14 @@ describe('User', function () {
         after(cleanupUsers);
 
         it('fails for unknown user', function (done) {
-            users.remove('unknown', { }, function (error) {
+            users.remove('unknown', AUDIT_SOURCE, function (error) {
                 expect(error.reason).to.be(UsersError.NOT_FOUND);
                 done();
             });
         });
 
         it('can remove valid user', function (done) {
-            users.remove(userObject.id, { }, function (error) {
+            users.remove(userObject.id, AUDIT_SOURCE, function (error) {
                 expect(!error).to.be.ok();
                 done();
             });

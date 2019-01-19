@@ -26,7 +26,7 @@ function add(notification, callback) {
     assert.strictEqual(typeof notification, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    const query = 'INSERT INTO notifications (userId, eventId, title, message, action) VALUES (?, ?, ?, ?)';
+    const query = 'INSERT INTO notifications (userId, eventId, title, message, action) VALUES (?, ?, ?, ?, ?)';
     const args = [ notification.userId, notification.eventId, notification.title, notification.message, notification.action ];
 
     database.query(query, args, function (error, result) {
