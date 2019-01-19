@@ -12,7 +12,7 @@ let assert = require('assert'),
     database = require('./database.js'),
     DatabaseError = require('./databaseerror');
 
-const NOTIFICATION_FIELDS = [ 'id', 'userId', 'title', 'message', 'action', 'creationTime', 'acknowledged' ];
+const NOTIFICATION_FIELDS = [ 'id', 'userId', 'eventId', 'title', 'message', 'action', 'creationTime', 'acknowledged' ];
 
 function postProcess(result) {
     assert.strictEqual(typeof result, 'object');
@@ -26,8 +26,8 @@ function add(notification, callback) {
     assert.strictEqual(typeof notification, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    const query = 'INSERT INTO notifications (userId, title, message, action) VALUES (?, ?, ?, ?)';
-    const args = [ notification.userId, notification.title, notification.message, notification.action ];
+    const query = 'INSERT INTO notifications (userId, eventId, title, message, action) VALUES (?, ?, ?, ?)';
+    const args = [ notification.userId, notification.eventId, notification.title, notification.message, notification.action ];
 
     database.query(query, args, function (error, result) {
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
