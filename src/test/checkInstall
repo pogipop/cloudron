@@ -29,7 +29,7 @@ for script in "${scripts[@]}"; do
     if [[ $(sudo -n "${script}" --check 2>/dev/null) != "OK" ]]; then
         echo ""
         echo "${script} does not have sudo access."
-        echo "You have to add the lines below to /etc/sudoers.d/yellowtent."
+        echo "You have to add the lines below to /etc/sudoers.d/yellowtent"
         echo ""
         echo "Defaults!${script} env_keep=\"HOME BOX_ENV\""
         echo "${USER} ALL=(ALL) NOPASSWD: ${script}"
