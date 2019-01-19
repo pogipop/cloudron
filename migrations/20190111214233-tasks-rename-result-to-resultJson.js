@@ -9,7 +9,7 @@ exports.up = function(db, callback) {
 };
 
 exports.down = function(db, callback) {
-    db.runSql('ALTER TABLE apps CHANGE resultJson result TEXT', [], function (error) {
+    db.runSql('ALTER TABLE tasks CHANGE resultJson result TEXT', [], function (error) {
         if (error) console.error(error);
         callback(error);
     });
