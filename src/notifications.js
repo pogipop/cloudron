@@ -14,7 +14,7 @@ exports = module.exports = {
     adminChanged: adminChanged,
     oomEvent: oomEvent,
     appDied: appDied,
-    unexpectedExit: unexpectedExit,
+    processCrash: processCrash,
     apptaskCrash: apptaskCrash
 };
 
@@ -209,7 +209,7 @@ function appDied(eventId, app) {
     });
 }
 
-function unexpectedExit(eventId, processName, crashLogFile) {
+function processCrash(eventId, processName, crashLogFile) {
     assert.strictEqual(typeof eventId, 'string');
     assert.strictEqual(typeof processName, 'string');
     assert.strictEqual(typeof crashLogFile, 'string');

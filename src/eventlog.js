@@ -116,7 +116,7 @@ function add(action, source, data, callback) {
         } if (action === exports.ACTION_APP_TASK_CRASH) {
             notifications.apptaskCrash(id, source.appId, data.crashLogFile);
         } if (action === exports.ACTION_PROCESS_CRASH) {
-            notifications.unexpectedExit(id, source.processName, data.crashLogFile);
+            notifications.processCrash(id, source.processName, data.crashLogFile);
         } else {
             // no notification
         }
