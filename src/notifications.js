@@ -215,7 +215,7 @@ function processCrash(eventId, processName, crashLogFile) {
     assert.strictEqual(typeof crashLogFile, 'string');
 
     var subject = `${processName} exited unexpectedly`;
-    var crashLogs = safe.fs.readFileSync(crashLogFile, 'utf8');
+    var crashLogs = safe.fs.readFileSync(crashLogFile, 'utf8') || `No logs found at ${crashLogFile}`;
 
     // also send us a notification mail
     if (config.provider() === 'caas') mailer.unexpectedExit('support@cloudron.io', subject, crashLogs);
@@ -234,7 +234,7 @@ function apptaskCrash(eventId, appId, crashLogFile) {
     assert.strictEqual(typeof crashLogFile, 'string');
 
     var subject = `Apptask for ${appId} crashed`;
-    var crashLogs = safe.fs.readFileSync(crashLogFile, 'utf8');
+    var crashLogs = safe.fs.readFileSync(crashLogFile, 'utf8') || `No logs found at ${crashLogFile}`;
 
     // also send us a notification mail
     if (config.provider() === 'caas') mailer.unexpectedExit('support@cloudron.io', subject, crashLogs);
