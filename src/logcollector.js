@@ -5,7 +5,7 @@ exports = module.exports = {
 };
 
 var assert = require('assert'),
-    notifications = require('./notifications.js'),
+    eventlog = require('./eventlog.js'),
     safe = require('safetydance'),
     path = require('path'),
     util = require('util');
@@ -36,21 +36,19 @@ function stashLogs(logs) {
         return;
     }
 
-    // append here
-    safe.fs.writeFileSync(CRASH_LOG_STASH_FILE, logs, { flag: 'a' });
+    safe.fs.writeFileSync(CRASH_LOG_STASH_FILE, logs);
 }
 
-function sendFailureLogs(processName, options) {
-    assert.strictEqual(typeof processName, 'string');
-    assert.strictEqual(typeof options, 'object');
+function sendFailureLogs(unitName) {
+    assert.strictEqual(typeof unitName, 'string');
 
-    collectLogs(options.unit || processName, function (error, newLogs) {
+    collectLogs(unitName, function (error, newLogs) {
         if (error) {
             console.error('Failed to collect logs.', error);
             newLogs = util.format('Failed to collect logs.', error);
         }
 
-        console.log('Sending failure logs for', processName);
+        console.log('Sending failure logs for', unitName);
 
         var timestamp = safe.fs.readFileSync(CRASH_LOG_TIMESTAMP_FILE, 'utf8');
 
@@ -60,19 +58,14 @@ function sendFailureLogs(processName, options) {
             return stashLogs(newLogs);
         }
 
-        var stashedLogs = safe.fs.readFileSync(CRASH_LOG_STASH_FILE, 'utf8');
-        var compiledLogs = stashedLogs ? (stashedLogs + newLogs) : newLogs;
-        var subject = `${processName} ${stashedLogs ? ' and others' : ''} exited unexpectedly`;
-
-        notifications.unexpectedExit(subject, compiledLogs, function (error) {
+        eventlog.add(eventlog.ACTION_PROCESS_CRASH, { processName: unitName }, { crashLogFile: CRASH_LOG_STASH_FILE }, function (error) {
             if (error) {
-                console.log('Error sending crashlog. Stashing logs.');
+                console.log(`Error sending crashlog. Logs stashed at ${CRASH_LOG_STASH_FILE}`);
                 return stashLogs(newLogs);
             }
 
             // write the new timestamp file and delete stash file
             safe.fs.writeFileSync(CRASH_LOG_TIMESTAMP_FILE, String(Date.now()));
-            safe.fs.unlinkSync(CRASH_LOG_STASH_FILE);
         });
     });
 }
