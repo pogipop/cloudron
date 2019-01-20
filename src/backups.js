@@ -421,11 +421,11 @@ function saveFsMetadata(dataLayout, metadataFile, callback) {
     };
 
     for (let lp of dataLayout.localPaths()) {
-        var emptyDirs = safe.child_process.execSync('find . -type d -empty\n', { cwd: lp, encoding: 'utf8' }); // %P removes the ./
+        var emptyDirs = safe.child_process.execSync(`find ${lp} -type d -empty\n`, { encoding: 'utf8' });
         if (emptyDirs === null) return callback(safe.error);
         if (emptyDirs.length) metadata.emptyDirs = metadata.emptyDirs.concat(emptyDirs.trim().split('\n').map((ed) => dataLayout.toRemotePath(ed)));
 
-        var execFiles = safe.child_process.execSync('find . -type f -executable\n', { cwd: lp, encoding: 'utf8' });
+        var execFiles = safe.child_process.execSync(`find ${lp} -type f -executable\n`, { encoding: 'utf8' });
         if (execFiles === null) return callback(safe.error);
 
         if (execFiles.length) metadata.execFiles = metadata.execFiles.concat(execFiles.trim().split('\n').map((ef) => dataLayout.toRemotePath(ef)));
