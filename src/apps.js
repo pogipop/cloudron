@@ -316,8 +316,12 @@ function validateDataDir(dataDir) {
         if (entries.length !== 0) return new AppsError(AppsError.BAD_FIELD, `dataDir ${dataDir} is not empty`);
     }
 
-    // tgz backup logic relies on path not overlapping because it recurses
+    // backup logic relies on paths not overlapping (because it recurses)
     if (dataDir.startsWith(paths.APPS_DATA_DIR)) return new AppsError(AppsError.BAD_FIELD, `dataDir ${dataDir} cannot be inside apps data`);
+
+    // if we made it this far, it cannot start with any of these realistically
+    const fhs = [ '/bin', '/boot', '/etc', '/lib', '/lib32', '/lib64', '/proc', '/run', '/sbin', '/tmp', '/usr' ];
+    if (fhs.some((p) => dataDir.startsWith(p))) return new AppsError(AppsError.BAD_FIELD, `dataDir ${dataDir} cannot be placed inside this location`);
 
     return null;
 }
