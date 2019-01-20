@@ -327,21 +327,21 @@ function getDuplicateErrorDetails(location, portBindings, error) {
     assert.strictEqual(typeof portBindings, 'object');
     assert.strictEqual(error.reason, DatabaseError.ALREADY_EXISTS);
 
-    var match = error.message.match(/ER_DUP_ENTRY: Duplicate entry '(.*)' for key/);
+    var match = error.message.match(/ER_DUP_ENTRY: Duplicate entry '(.*)' for key '(.*)'/);
     if (!match) {
         debug('Unexpected SQL error message.', error);
-        return new AppsError(AppsError.INTERNAL_ERROR);
+        return new AppsError(AppsError.INTERNAL_ERROR, error);
     }
 
     // check if the location conflicts
-    if (match[1] === location) return new AppsError(AppsError.ALREADY_EXISTS);
+    if (match[1] === location) return new AppsError(AppsError.ALREADY_EXISTS, `${match[2]} '${match[1]}' is in use`);
 
     // check if any of the port bindings conflict
     for (let portName in portBindings) {
         if (portBindings[portName] === parseInt(match[1])) return new AppsError(AppsError.PORT_CONFLICT, match[1]);
     }
 
-    return new AppsError(AppsError.ALREADY_EXISTS);
+    return new AppsError(AppsError.ALREADY_EXISTS, `${match[2]} '${match[1]}' is in use`);
 }
 
 // app configs that is useful for 'archival' into the app backup config.json
