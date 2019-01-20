@@ -226,7 +226,7 @@ Acme2.prototype.waitForOrder = function (orderUrl, callback) {
 
     debug(`waitForOrder: ${orderUrl}`);
 
-    async.retry({ times: 10, interval: 5000 }, function (retryCallback) {
+    async.retry({ times: 15, interval: 20000 }, function (retryCallback) {
         debug('waitForOrder: getting status');
 
         superagent.get(orderUrl).timeout(30 * 1000).end(function (error, result) {
@@ -290,7 +290,7 @@ Acme2.prototype.waitForChallenge = function (challenge, callback) {
 
     debug('waitingForChallenge: %j', challenge);
 
-    async.retry({ times: 10, interval: 5000 }, function (retryCallback) {
+    async.retry({ times: 15, interval: 20000 }, function (retryCallback) {
         debug('waitingForChallenge: getting status');
 
         superagent.get(challenge.url).timeout(30 * 1000).end(function (error, result) {
