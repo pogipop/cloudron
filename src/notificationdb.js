@@ -30,6 +30,7 @@ function add(notification, callback) {
     const args = [ notification.userId, notification.eventId, notification.title, notification.message, notification.action ];
 
     database.query(query, args, function (error, result) {
+        if (error && error.code === 'ER_NO_REFERENCED_ROW_2') return callback(new DatabaseError(DatabaseError.NOT_FOUND, 'no such eventlog entry'));
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
 
         callback(null, String(result.insertId));

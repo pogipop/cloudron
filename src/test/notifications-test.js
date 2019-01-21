@@ -10,6 +10,7 @@ var async = require('async'),
     database = require('../database.js'),
     users = require('../users.js'),
     userdb = require('../userdb.js'),
+    eventlogdb = require('../eventlogdb.js'),
     notifications = require('../notifications.js'),
     NotificationsError = notifications.NotificationsError,
     expect = require('expect.js');
@@ -21,6 +22,13 @@ var USER_0 = {
     email: 'user0@email.com',
     fallbackEmail: 'user0fallback@email.com',
     displayName: 'User 0'
+};
+
+var EVENT_0 = {
+    id: 'event_0',
+    action: '',
+    source: {},
+    data: {}
 };
 
 var AUDIT_SOURCE = {
@@ -40,7 +48,8 @@ function setup(done) {
 
                 callback();
             });
-        }
+        },
+        eventlogdb.add.bind(null, EVENT_0.id, EVENT_0.action, EVENT_0.source, EVENT_0.data),
     ], done);
 }
 
@@ -57,8 +66,18 @@ describe('Notifications', function () {
 
     var notificationId;
 
+    it('add fails with unknown event', function (done) {
+        notifications.add(USER_0.id, 'eventunknown', 'title', 'message text', '/actionurl', function (error, result) {
+            expect(error).to.be.an('object');
+            expect(error.reason).to.equal(NotificationsError.NOT_FOUND);
+            expect(result).not.to.be.ok();
+
+            done();
+        });
+    });
+
     it('add succeeds', function (done) {
-        notifications.add(USER_0.id, 'title', 'message text', '/actionurl', function (error, result) {
+        notifications.add(USER_0.id, EVENT_0.id, 'title', 'message text', '/actionurl', function (error, result) {
             expect(error).to.eql(null);
             expect(result.id).to.be.ok();
 
@@ -146,7 +165,7 @@ describe('Notifications', function () {
 
     it('getAllPaged succeeds for second page', function (done) {
         async.timesSeries(20, function (n, callback) {
-            notifications.add(USER_0.id, 'title' + n, 'some message', 'some action', callback);
+            notifications.add(USER_0.id, EVENT_0.id, 'title' + n, 'some message', 'some action', callback);
         }, function (error) {
             expect(error).to.eql(null);
 

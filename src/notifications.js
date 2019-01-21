@@ -68,6 +68,7 @@ function add(userId, eventId, title, message, action, callback) {
         message: message,
         action: action
     }, function (error, result) {
+        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new NotificationsError(NotificationsError.NOT_FOUND, error.message));
         if (error) return callback(new NotificationsError(NotificationsError.INTERNAL_ERROR, error));
 
         callback(null, { id: result });
