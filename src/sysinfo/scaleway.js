@@ -5,7 +5,9 @@ exports = module.exports = {
 };
 
 var assert = require('assert'),
-    superagent = require('superagent');
+    superagent = require('superagent'),
+    SysInfoError = require('../sysinfo.js').SysInfoError,
+    util = require('util');
 
 function getPublicIp(callback) {
     assert.strictEqual(typeof callback, 'function');
