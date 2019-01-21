@@ -89,6 +89,17 @@ if [[ "${ubuntu_version}" != "16.04" && "${ubuntu_version}" != "18.04" ]]; then
     exit 1
 fi
 
+# check if this user has sudo access required for cloudron further on
+# some setups like scaleway have a root user who is not allowed to use sudo
+if [[ ! `sudo /bin/true` ]]; then
+    echo "Cloudron requires root to use sudo."
+    echo "Ensure /etc/sudoers contains the following line:"
+    echo ""
+    echo "root  ALL=(ALL:ALL)   ALL"
+    echo ""
+    exit 1;
+fi
+
 # Can only write after we have confirmed script has root access
 echo "Running cloudron-setup with args : $@" > "${LOG_FILE}"
 
