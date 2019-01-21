@@ -11,6 +11,7 @@ exports = module.exports = {
 var assert = require('assert'),
     debug = require('debug')('box:dns/namecheap'),
     dns = require('../native-dns.js'),
+    domains = require('../domains.js'),
     DomainsError = require('../domains.js').DomainsError,
     Namecheap = require('namecheap'),
     sysinfo = require('../sysinfo.js'),
@@ -40,6 +41,23 @@ function mapHosts(hosts) {
     return hosts;
 }
 
+function init(dnsConfig, callback) {
+    assert.strictEqual(typeof dnsConfig, 'object');
+    assert.strictEqual(typeof callback, 'function');
+
+    if (namecheap) return callback();
+
+    sysinfo.getPublicIp(function (error, ip) {
+        if (error) return callback(new DomainsError(DomainsError.INTERNAL_ERROR, error));
+
+        // Note that for all NameCheap calls to go through properly, the public IP returned by the getPublicIp method below must be whitelisted on NameCheap's API dashboard
+        namecheap = new Namecheap(dnsConfig.username, dnsConfig.apiKey, ip);
+        namecheap.setUsername(dnsConfig.username);
+
+        callback();
+    });
+}
+
 function getInternal(dnsConfig, zoneName, subdomain, type, callback) {
     assert.strictEqual(typeof dnsConfig, 'object');
     assert.strictEqual(typeof zoneName, 'string');
@@ -47,51 +65,44 @@ function getInternal(dnsConfig, zoneName, subdomain, type, callback) {
     assert.strictEqual(typeof type, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    if (!namecheap) {
-        // We haven't initialized our namecheap instance yet
-        // Note that for all NameCheap calls to go through properly, the public IP returned by the getPublicIp method below must be whitelisted on NameCheap's API dashboard
-        namecheap = new Namecheap(dnsConfig.username, dnsConfig.apiKey, sysinfo.getPublicIp());
-        namecheap.setUsername(dnsConfig.username);
-    }
+    init(dnsConfig, function (error) {
+        if (error) return callback(error);
 
-    namecheap.domains.dns.getHosts(zoneName, function (err, res) {
-        if (err) {
-            return callback(new DomainsError(DomainsError.EXTERNAL_ERROR, formatError(err)));
-        }
+        namecheap.domains.dns.getHosts(zoneName, function (error, result) {
+            if (error) return callback(new DomainsError(DomainsError.EXTERNAL_ERROR, formatError(error)));
 
-        debug('entire getInternal response: %j', res);
+            debug('entire getInternal response: %j', error);
 
-        return callback(null, res['DomainDNSGetHostsResult']['host']);
+            return callback(null, result['DomainDNSGetHostsResult']['host']);
+        });
     });
 }
 
 function setInternal(zoneName, hosts, callback) {
     let mappedHosts = mapHosts(hosts);
-    namecheap.domains.dns.setHosts(zoneName, mappedHosts, function (err, res) {
-        if (err) {
-            return callback(err);
-        }
+    namecheap.domains.dns.setHosts(zoneName, mappedHosts, function (error, result) {
+        if (error) return callback(new DomainsError(DomainsError.EXTERNAL_ERROR, formatError(error)));
 
-        return callback(null, res);
+        return callback(null, result);
     });
 }
 
-function upsert(dnsConfig, zoneName, subdomain, type, values, callback) {
-    assert.strictEqual(typeof dnsConfig, 'object');
-    assert.strictEqual(typeof zoneName, 'string');
+function upsert(domainObject, subdomain, type, values, callback) {
+    assert.strictEqual(typeof domainObject, 'object');
     assert.strictEqual(typeof subdomain, 'string');
     assert.strictEqual(typeof type, 'string');
     assert(util.isArray(values));
     assert.strictEqual(typeof callback, 'function');
 
-    subdomain = subdomain || '@';
+    const dnsConfig = domainObject.config;
+    const zoneName = domainObject.zoneName;
+
+    subdomain = domains.getName(domainObject, subdomain, type) || '@';
 
     debug('upsert: %s for zone %s of type %s with values %j', subdomain, zoneName, type, values);
 
     getInternal(dnsConfig, zoneName, subdomain, type, function (error, result) {
-        if (error) {
-            return callback(error);
-        }
+        if (error) return callback(error);
 
         // Array to keep track of records that need to be inserted
         let toInsert = [];
@@ -106,7 +117,7 @@ function upsert(dnsConfig, zoneName, subdomain, type, values, callback) {
                 if (curHost.Type === type && curHost.Name === subdomain) {
                     // Updating an already existing host
                     wasUpdate = true;
-                    if (type === "MX") {
+                    if (type === 'MX') {
                         curHost.MXPref = curValue.split(' ')[0];
                         curHost.Address = curValue.split(' ')[1];
                     } else {
@@ -124,7 +135,7 @@ function upsert(dnsConfig, zoneName, subdomain, type, values, callback) {
                 };
 
                 // Special case for MX records
-                if (type === "MX") {
+                if (type === 'MX') {
                     newRecord.MXPref = curValue.split(' ')[0];
                     newRecord.Address = curValue.split(' ')[1];
                 }
@@ -136,31 +147,27 @@ function upsert(dnsConfig, zoneName, subdomain, type, values, callback) {
 
         let toUpsert = result.concat(toInsert);
 
-        setInternal(zoneName, toUpsert, function (err, result) {
-            if (err) {
-                return callback(new DomainsError(DomainsError.EXTERNAL_ERROR, formatError(err)));
-            } else {
-                return callback(null);
-            }
-        });
+        setInternal(zoneName, toUpsert, callback);
     });
 }
 
-function get(dnsConfig, zoneName, subdomain, type, callback) {
-    assert.strictEqual(typeof dnsConfig, 'object');
-    assert.strictEqual(typeof zoneName, 'string');
+function get(domainObject, subdomain, type, callback) {
+    assert.strictEqual(typeof domainObject, 'object');
     assert.strictEqual(typeof subdomain, 'string');
     assert.strictEqual(typeof type, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    subdomain = subdomain || '@';
+    const dnsConfig = domainObject.config;
+    const zoneName = domainObject.zoneName;
+
+    subdomain = domains.getName(domainObject, subdomain, type) || '@';
 
     getInternal(dnsConfig, zoneName, subdomain, type, function (error, result) {
         if (error) return callback(error);
 
         // We need to filter hosts to ones with this subdomain and type
         let actualHosts = result.filter((host) => host.Type === type && host.Name === subdomain);
-        
+
         // We only return the value string
         var tmp = actualHosts.map(function (record) { return record.Address; });
 
@@ -170,20 +177,24 @@ function get(dnsConfig, zoneName, subdomain, type, callback) {
     });
 }
 
-function del(dnsConfig, zoneName, subdomain, type, values, callback) {
-    assert.strictEqual(typeof dnsConfig, 'object');
-    assert.strictEqual(typeof zoneName, 'string');
+function del(domainObject, subdomain, type, values, callback) {
+    assert.strictEqual(typeof domainObject, 'object');
     assert.strictEqual(typeof subdomain, 'string');
     assert.strictEqual(typeof type, 'string');
     assert(util.isArray(values));
     assert.strictEqual(typeof callback, 'function');
+
+    const dnsConfig = domainObject.config;
+    const zoneName = domainObject.zoneName;
+
+    subdomain = domains.getName(domainObject, subdomain, type) || '@';
 
     debug('del: %s for zone %s of type %s with values %j', subdomain, zoneName, type, values);
 
     getInternal(dnsConfig, zoneName, subdomain, type, function (error, result) {
         if (error) return callback(error);
 
-        if (result.length === 0) return callback(null);
+        if (result.length === 0) return callback();
 
         let removed = false;
 
@@ -195,33 +206,26 @@ function del(dnsConfig, zoneName, subdomain, type, values, callback) {
 
                 if (curHost.Type === type && curHost.Name === subdomain && curHost.Address === curValue) {
                     removed = true;
-                    
+
                     result.splice(i, 1); // Remove element from result array
                 }
             }
         }
 
-        if (removed) {
-            // Only set hosts if we actually removed a host
-            setInternal(zoneName, result, function (err, result) {
-                if (err) {
-                    return callback(new DomainsError(DomainsError.EXTERNAL_ERROR, formatError(err)));
-                } else {
-                    return callback(null);
-                }
-            });
-        } else {
-            return callback(null);
-        }
+        // Only set hosts if we actually removed a host
+        if (removed) return setInternal(zoneName, result, callback);
+
+        callback();
     });
 }
 
-function verifyDnsConfig(dnsConfig, domain, zoneName, ip, callback) {
-    assert.strictEqual(typeof dnsConfig, 'object');
-    assert.strictEqual(typeof domain, 'string');
-    assert.strictEqual(typeof zoneName, 'string');
-    assert.strictEqual(typeof ip, 'string');
+function verifyDnsConfig(domainObject, callback) {
+    assert.strictEqual(typeof domainObject, 'object');
     assert.strictEqual(typeof callback, 'function');
+
+    const dnsConfig = domainObject.config;
+    const zoneName = domainObject.zoneName;
+    const ip = '127.0.0.1';
 
     if (!dnsConfig.username || typeof dnsConfig.username !== 'string') return callback(new DomainsError(DomainsError.BAD_FIELD, 'username must be a non-empty string'));
     if (!dnsConfig.apiKey || typeof dnsConfig.apiKey !== 'string') return callback(new DomainsError(DomainsError.BAD_FIELD, 'apiKey must be a non-empty string'));
@@ -244,7 +248,7 @@ function verifyDnsConfig(dnsConfig, domain, zoneName, ip, callback) {
 
         const testSubdomain = 'cloudrontestdns';
 
-        upsert(dnsConfig, zoneName, testSubdomain, 'A', [ip], function (error, changeId) {
+        upsert(domainObject, testSubdomain, 'A', [ip], function (error, changeId) {
             if (error) return callback(error);
 
             debug('verifyDnsConfig: Test A record added with change id %s', changeId);
