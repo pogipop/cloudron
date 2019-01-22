@@ -4,8 +4,8 @@ exports = module.exports = {
     upsert: upsert,
     get: get,
     del: del,
-    waitForDns: require('./waitfordns.js'),
-    verifyDnsConfig: verifyDnsConfig
+    verifyDnsConfig: verifyDnsConfig,
+    wait: wait
 };
 
 var assert = require('assert'),
@@ -15,7 +15,8 @@ var assert = require('assert'),
     DomainsError = require('../domains.js').DomainsError,
     Namecheap = require('namecheap'),
     sysinfo = require('../sysinfo.js'),
-    util = require('util');
+    util = require('util'),
+    waitForDns = require('./waitfordns.js');
 
 var namecheap;
 
@@ -262,4 +263,17 @@ function verifyDnsConfig(domainObject, callback) {
             });
         });
     });
+}
+
+function wait(domainObject, subdomain, type, value, options, callback) {
+    assert.strictEqual(typeof domainObject, 'object');
+    assert.strictEqual(typeof subdomain, 'string');
+    assert.strictEqual(typeof type, 'string');
+    assert.strictEqual(typeof value, 'string');
+    assert(options && typeof options === 'object'); // { interval: 5000, times: 50000 }
+    assert.strictEqual(typeof callback, 'function');
+
+    const fqdn = domains.fqdn(subdomain, domainObject);
+
+    waitForDns(fqdn, domainObject.zoneName, type, value, options, callback);
 }
