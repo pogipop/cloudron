@@ -1520,4 +1520,5 @@
 * Add new S3 regions - Paris/Stockholm/Osaka
 * Retry errored downloads during restore
 * Add user pagination UI
+* Add namecheap as supported DNS provider
 
