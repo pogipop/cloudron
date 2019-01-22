@@ -241,7 +241,7 @@ function verifyDnsConfig(domainObject, callback) {
         if (error && error.code === 'ENOTFOUND') return callback(new DomainsError(DomainsError.BAD_FIELD, 'Unable to resolve nameservers for this domain'));
         if (error || !nameservers) return callback(new DomainsError(DomainsError.BAD_FIELD, error ? error.message : 'Unable to get nameservers'));
 
-        if (nameservers.map(function (n) { return n.toLowerCase(); }).indexOf('.registrar-servers.com') === -1) {
+        if (nameservers.some(function (n) { return n.toLowerCase().indexOf('.registrar-servers.com') === -1; })) {
             debug('verifyDnsConfig: %j does not contains NC NS', nameservers);
             return callback(new DomainsError(DomainsError.BAD_FIELD, 'Domain nameservers are not set to NameCheap'));
         }
