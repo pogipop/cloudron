@@ -253,7 +253,7 @@ function verifyDnsConfig(domainObject, callback) {
 
             debug('verifyDnsConfig: Test A record added with change id %s', changeId);
 
-            del(dnsConfig, zoneName, testSubdomain, 'A', [ip], function (error) {
+            del(domainObject, testSubdomain, 'A', [ip], function (error) {
                 if (error) return callback(error);
 
                 debug('verifyDnsConfig: Test A record removed again');
