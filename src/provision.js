@@ -173,9 +173,9 @@ function setup(dnsConfig, autoconf, auditSource, callback) {
                 callback(); // now that args are validated run the task in the background
 
                 async.series([
-                    mail.addDomain.bind(null, domain),
                     domains.prepareDashboardDomain.bind(null, domain, auditSource, (progress) => setProgress('setup', progress.message, NOOP_CALLBACK)),
-                    cloudron.setDashboardDomain.bind(null, domain),
+                    cloudron.setDashboardDomain.bind(null, domain), // this sets up the config.fqdn()
+                    mail.addDomain.bind(null, domain), // this relies on config.mailFqdn()
                     setProgress.bind(null, 'setup', 'Applying auto-configuration'),
                     autoprovision.bind(null, autoconf),
                     setProgress.bind(null, 'setup', 'Done'),
