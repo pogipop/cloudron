@@ -179,11 +179,7 @@ mysqladmin -u root -ppassword password password # reset default root password
 mysql -u root -p${mysql_root_password} -e 'CREATE DATABASE IF NOT EXISTS box'
 
 echo "==> Migrating data"
-sudo -u "${USER}" -H bash <<EOF
-set -eu
-cd "${BOX_SRC_DIR}"
-BOX_ENV=cloudron DATABASE_URL=mysql://root:${mysql_root_password}@127.0.0.1/box "${BOX_SRC_DIR}/node_modules/.bin/db-migrate" up
-EOF
+(cd "${BOX_SRC_DIR}" && BOX_ENV=cloudron DATABASE_URL=mysql://root:${mysql_root_password}@127.0.0.1/box "${BOX_SRC_DIR}/node_modules/.bin/db-migrate" up)
 
 if [[ ! -f "${BOX_DATA_DIR}/dhparams.pem" ]]; then
     echo "==> Generating dhparams (takes forever)"
