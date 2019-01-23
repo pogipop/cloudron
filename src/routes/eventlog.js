@@ -1,14 +1,25 @@
 'use strict';
 
 exports = module.exports = {
-    get: get
+    get: get,
+    list: list
 };
 
 var eventlog = require('../eventlog.js'),
+    EventLogError = eventlog.EventLogError,
     HttpError = require('connect-lastmile').HttpError,
     HttpSuccess = require('connect-lastmile').HttpSuccess;
 
 function get(req, res, next) {
+    eventlog.get(req.params.eventId, function (error, result) {
+        if (error && error.reason === EventLogError.NOT_FOUND) return next(new HttpError(404, 'no such eventlog'));
+        if (error) return next(new HttpError(500, error));
+
+        next(new HttpSuccess(200, { event: result }));
+    });
+}
+
+function list(req, res, next) {
     var page = typeof req.query.page !== 'undefined' ? parseInt(req.query.page) : 1;
     if (!page || page < 0) return next(new HttpError(400, 'page query param has to be a postive number'));
 

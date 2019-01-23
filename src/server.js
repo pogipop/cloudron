@@ -132,7 +132,8 @@ function initializeExpressSync() {
     router.get ('/api/v1/cloudron/disks', cloudronScope, routes.cloudron.getDisks);
     router.get ('/api/v1/cloudron/logs/:unit', cloudronScope, routes.cloudron.getLogs);
     router.get ('/api/v1/cloudron/logstream/:unit', cloudronScope, routes.cloudron.getLogStream);
-    router.get ('/api/v1/cloudron/eventlog', cloudronScope, routes.eventlog.get);
+    router.get ('/api/v1/cloudron/eventlog', cloudronScope, routes.eventlog.list);
+    router.get ('/api/v1/cloudron/eventlog/:eventId', cloudronScope, routes.eventlog.get);
 
     // tasks
     router.get ('/api/v1/tasks', settingsScope, routes.tasks.list);
