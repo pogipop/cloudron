@@ -10,6 +10,7 @@ var accesscontrol = require('../../accesscontrol.js'),
     async = require('async'),
     config = require('../../config.js'),
     database = require('../../database.js'),
+    eventlogdb = require('../../eventlogdb.js'),
     expect = require('expect.js'),
     superagent = require('superagent'),
     server = require('../../server.js'),
@@ -21,6 +22,17 @@ var USERNAME = 'superadmin', PASSWORD = 'Foobar?1337', EMAIL ='silly@me.com';
 var token = null;
 
 var USER_1_ID = null, token_1;
+
+var EVENT_0 = {
+    id: 'event_0',
+    action: 'foobaraction',
+    source: {
+        ip: '127.0.0.1'
+    },
+    data: {
+        something: 'is there'
+    }
+};
 
 function setup(done) {
     config._reset();
@@ -64,6 +76,10 @@ function setup(done) {
 
             // HACK to get a token for second user (passwords are generated and the user should have gotten a password setup link...)
             tokendb.add(token_1, USER_1_ID, 'test-client-id',  Date.now() + 100000, accesscontrol.SCOPE_PROFILE, '', callback);
+        },
+
+        function (callback) {
+            eventlogdb.add(EVENT_0.id, EVENT_0.action, EVENT_0.source, EVENT_0.data, callback);
         }
 
     ], done);
@@ -82,6 +98,53 @@ describe('Eventlog API', function () {
     after(cleanup);
 
     describe('get', function () {
+        it('fails due to wrong token', function (done) {
+            superagent.get(SERVER_URL + '/api/v1/cloudron/eventlog/' + EVENT_0.id)
+                .query({ access_token: token.toUpperCase() })
+                .end(function (error, result) {
+                    expect(result.statusCode).to.equal(401);
+
+                    done();
+                });
+        });
+
+        it('fails for non-admin', function (done) {
+            superagent.get(SERVER_URL + '/api/v1/cloudron/eventlog/' + EVENT_0.id)
+                .query({ access_token: token_1 })
+                .end(function (error, result) {
+                    expect(result.statusCode).to.equal(403);
+
+                    done();
+                });
+        });
+
+        it('fails if not exists', function (done) {
+            superagent.get(SERVER_URL + '/api/v1/cloudron/eventlog/doesnotexist')
+                .query({ access_token: token })
+                .end(function (error, result) {
+                    expect(result.statusCode).to.equal(404);
+
+                    done();
+                });
+        });
+
+        it('succeeds for admin', function (done) {
+            superagent.get(SERVER_URL + '/api/v1/cloudron/eventlog/' + EVENT_0.id)
+                .query({ access_token: token })
+                .end(function (error, result) {
+                    expect(result.statusCode).to.equal(200);
+                    expect(result.body.event).to.be.an('object');
+                    expect(result.body.event.creationTime).to.be.a('string');
+
+                    delete result.body.event.creationTime;
+                    expect(result.body.event).to.eql(EVENT_0);
+
+                    done();
+                });
+        });
+    });
+
+    describe('list', function () {
         it('fails due to wrong token', function (done) {
             superagent.get(SERVER_URL + '/api/v1/cloudron/eventlog')
                 .query({ access_token: token.toUpperCase() })
