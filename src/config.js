@@ -119,8 +119,9 @@ function initConfig() {
     if (exports.TEST) {
         data.port = 5454;
         data.apiServerOrigin = 'http://localhost:6060'; // hock doesn't support https
-        data.database.password = '';
-        data.database.name = 'boxtest';
+
+        // see setupTest script how the mysql-server is run
+        data.database.hostname = require('child_process').execSync('docker inspect -f "{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}" mysql-server').toString().trim();
     }
 
     // overwrite defaults with saved config

@@ -85,7 +85,7 @@ function reconnect(callback) {
 function clear(callback) {
     assert.strictEqual(typeof callback, 'function');
 
-    var cmd = util.format('mysql --host=%s --user="%s" --password="%s" -Nse "SHOW TABLES" %s | grep -v "^migrations$" | while read table; do mysql --host=%s --user="%s" --password="%s" -e "SET FOREIGN_KEY_CHECKS = 0; TRUNCATE TABLE $table" %s; done',
+    var cmd = util.format('mysql --host="%s" --user="%s" --password="%s" -Nse "SHOW TABLES" %s | grep -v "^migrations$" | while read table; do mysql --host="%s" --user="%s" --password="%s" -e "SET FOREIGN_KEY_CHECKS = 0; TRUNCATE TABLE $table" %s; done',
         config.database().hostname, config.database().username, config.database().password, config.database().name,
         config.database().hostname, config.database().username, config.database().password, config.database().name);
 
@@ -177,9 +177,7 @@ function importFromFile(file, callback) {
     assert.strictEqual(typeof file, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    var password = config.database().password ? '-p' + config.database().password : '--skip-password';
-
-    var cmd = `/usr/bin/mysql -u ${config.database().username} ${password} ${config.database().name} < ${file}`;
+    var cmd = `/usr/bin/mysql -h "${config.database().hostname}" -u ${config.database().username} -p${config.database().password} ${config.database().name} < ${file}`;
 
     async.series([
         query.bind(null, 'CREATE DATABASE IF NOT EXISTS box'),
@@ -191,9 +189,7 @@ function exportToFile(file, callback) {
     assert.strictEqual(typeof file, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    var password = config.database().password ? '-p' + config.database().password : '--skip-password';
-    var cmd = `/usr/bin/mysqldump -u root ${password} --single-transaction --routines \
-            --triggers ${config.database().name} > "${file}"`;
+    var cmd = `/usr/bin/mysqldump -h "${config.database().hostname}" -u root -p${config.database().password} --single-transaction --routines --triggers ${config.database().name} > "${file}"`;
 
     child_process.exec(cmd, callback);
 }

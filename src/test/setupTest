@@ -19,3 +19,26 @@ openssl req -x509 -newkey rsa:2048 -keyout platformdata/nginx/cert/host.key -out
 
 # create docker network (while the infra code does this, most tests skip infra setup)
 docker network create --subnet=172.18.0.0/16 cloudron || true
+
+# create the same mysql server version to test with
+OUT=`docker inspect mysql-server` || true
+if [[ "${OUT}" = "[]" ]]; then
+    echo "Starting mysql-server..."
+    docker run --name mysql-server -e MYSQL_ROOT_PASSWORD=password -d mysql:5.7
+else
+    echo "mysql-server already running. If you want to start fresh, run 'docker rm --force mysql-server'"
+fi
+
+export MYSQL_IP=`docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' mysql-server`
+
+echo "Waiting for mysql server to be ready..."
+while ! mysqladmin ping -h"${MYSQL_IP}" --silent; do
+    sleep 1
+done
+
+echo "Ensure database"
+mysql -h"${MYSQL_IP}" -uroot -ppassword -e 'CREATE DATABASE IF NOT EXISTS box'
+
+echo "Run database migrations"
+cd "${source_dir}"
+BOX_ENV=test DATABASE_URL=mysql://root:password@${MYSQL_IP}/box node_modules/.bin/db-migrate up
