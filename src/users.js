@@ -203,6 +203,8 @@ function create(username, password, email, displayName, options, auditSource, ca
                 if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(new UsersError(UsersError.ALREADY_EXISTS, error.message));
                 if (error) return callback(new UsersError(UsersError.INTERNAL_ERROR, error));
 
+                if (options.sendInvite) mailer.sendInvite(user, invitor);
+
                 // when this is used to create the owner, then we have to patch the auditSource to contain himself
                 if (isOwner) {
                     auditSource.userId = user.id;
