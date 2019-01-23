@@ -1,11 +1,11 @@
 /* global it:false */
 /* global describe:false */
 /* global before:false */
-/* global after:false */
 
 'use strict';
 
 var createTree = require('./common.js').createTree,
+    DataLayout = require('../datalayout.js'),
     execSync = require('child_process').execSync,
     expect = require('expect.js'),
     fs = require('fs'),
@@ -26,7 +26,7 @@ function collectTasks(task, callback) {
 
 describe('Syncer', function () {
     before(function () {
-        console.log('Tests are run in %s with cache file %s', gTmpDir, gCacheFile)
+        console.log('Tests are run in %s with cache file %s', gTmpDir, gCacheFile);
     });
 
     it('missing cache - removes remote dir', function (done) {
@@ -34,7 +34,9 @@ describe('Syncer', function () {
         safe.fs.unlinkSync(gCacheFile);
         createTree(gTmpDir, { });
 
-        syncer.sync(gTmpDir, collectTasks, 10, function (error) {
+        let dataLayout = new DataLayout(gTmpDir, []);
+
+        syncer.sync(dataLayout, collectTasks, 10, function (error) {
             expect(error).to.not.be.ok();
 
             expect(gTasks).to.eql([
@@ -49,7 +51,9 @@ describe('Syncer', function () {
         fs.writeFileSync(gCacheFile, '', 'utf8');
         createTree(gTmpDir, { 'src': { 'index.js': 'some code' }, 'test': { 'test.js': 'This is a README' }, 'walrus': 'animal' });
 
-        syncer.sync(gTmpDir, collectTasks, 10, function (error) {
+        let dataLayout = new DataLayout(gTmpDir, []);
+
+        syncer.sync(dataLayout, collectTasks, 10, function (error) {
             expect(error).to.not.be.ok();
 
             expect(gTasks).to.eql([
@@ -66,7 +70,9 @@ describe('Syncer', function () {
         fs.writeFileSync(gCacheFile, '', 'utf8');
         createTree(gTmpDir, { a: { b: { c: { d: { e: 'some code' } } } } });
 
-        syncer.sync(gTmpDir, collectTasks, 10, function (error) {
+        let dataLayout = new DataLayout(gTmpDir, []);
+
+        syncer.sync(dataLayout, collectTasks, 10, function (error) {
             expect(error).to.not.be.ok();
 
             expect(gTasks).to.eql([
@@ -81,7 +87,9 @@ describe('Syncer', function () {
         fs.writeFileSync(gCacheFile, '', 'utf8');
         createTree(gTmpDir, { 'link:file': '/tmp', 'readme': 'this is readme' });
 
-        syncer.sync(gTmpDir, collectTasks, 10, function (error) {
+        let dataLayout = new DataLayout(gTmpDir, []);
+
+        syncer.sync(dataLayout, collectTasks, 10, function (error) {
             expect(error).to.not.be.ok();
 
             expect(gTasks).to.eql([
@@ -96,14 +104,18 @@ describe('Syncer', function () {
         fs.writeFileSync(gCacheFile, '', 'utf8');
         createTree(gTmpDir, { 'src': { 'index.js': 'some code' }, 'test': { 'test.js': 'This is a README' }, 'walrus': 'animal' });
 
-        syncer.sync(gTmpDir, collectTasks, 10, function (error) {
+        let dataLayout = new DataLayout(gTmpDir, []);
+
+        syncer.sync(dataLayout, collectTasks, 10, function (error) {
             expect(error).to.not.be.ok();
             expect(gTasks.length).to.be(3);
 
-            execSync(`touch src/index.js test/test.js`, { cwd: gTmpDir });
+            execSync('touch src/index.js test/test.js', { cwd: gTmpDir });
 
             gTasks = [ ];
-            syncer.sync(gTmpDir, collectTasks, 10, function (error) {
+            let dataLayout = new DataLayout(gTmpDir, []);
+
+            syncer.sync(dataLayout, collectTasks, 10, function (error) {
                 expect(error).to.not.be.ok();
 
                 expect(gTasks).to.eql([
@@ -121,14 +133,16 @@ describe('Syncer', function () {
         fs.writeFileSync(gCacheFile, '', 'utf8');
         createTree(gTmpDir, { 'src': { 'index.js': 'some code' }, 'test': { 'test.js': 'This is a README' }, 'walrus': 'animal' });
 
-        syncer.sync(gTmpDir, collectTasks, 10, function (error) {
+        let dataLayout = new DataLayout(gTmpDir, []);
+
+        syncer.sync(dataLayout, collectTasks, 10, function (error) {
             expect(error).to.not.be.ok();
             expect(gTasks.length).to.be(3);
 
-            execSync(`rm src/index.js walrus`, { cwd: gTmpDir });
+            execSync('rm src/index.js walrus', { cwd: gTmpDir });
 
             gTasks = [ ];
-            syncer.sync(gTmpDir, collectTasks, 10, function (error) {
+            syncer.sync(dataLayout, collectTasks, 10, function (error) {
                 expect(error).to.not.be.ok();
 
                 expect(gTasks).to.eql([
@@ -146,14 +160,16 @@ describe('Syncer', function () {
         fs.writeFileSync(gCacheFile, '', 'utf8');
         createTree(gTmpDir, { 'src': { 'index.js': 'some code' }, 'test': { 'test.js': 'This is a README' }, 'walrus': 'animal' });
 
-        syncer.sync(gTmpDir, collectTasks, 10, function (error) {
+        let dataLayout = new DataLayout(gTmpDir, []);
+
+        syncer.sync(dataLayout, collectTasks, 10, function (error) {
             expect(error).to.not.be.ok();
             expect(gTasks.length).to.be(3);
 
-            execSync(`rm -rf src test`, { cwd: gTmpDir });
+            execSync('rm -rf src test', { cwd: gTmpDir });
 
             gTasks = [ ];
-            syncer.sync(gTmpDir, collectTasks, 10, function (error) {
+            syncer.sync(dataLayout, collectTasks, 10, function (error) {
                 expect(error).to.not.be.ok();
 
                 expect(gTasks).to.eql([
@@ -171,14 +187,16 @@ describe('Syncer', function () {
         fs.writeFileSync(gCacheFile, '', 'utf8');
         createTree(gTmpDir, { 'src': { 'index.js': 'some code' }, 'test': { 'test.js': 'This is a README' }, 'walrus': 'animal' });
 
-        syncer.sync(gTmpDir, collectTasks, 10, function (error) {
+        let dataLayout = new DataLayout(gTmpDir, []);
+
+        syncer.sync(dataLayout, collectTasks, 10, function (error) {
             expect(error).to.not.be.ok();
             expect(gTasks.length).to.be(3);
 
-            execSync(`find . -delete`, { cwd: gTmpDir });
+            execSync('find . -delete', { cwd: gTmpDir });
 
             gTasks = [ ];
-            syncer.sync(gTmpDir, collectTasks, 10, function (error) {
+            syncer.sync(dataLayout, collectTasks, 10, function (error) {
                 expect(error).to.not.be.ok();
 
                 expect(gTasks).to.eql([
@@ -197,14 +215,16 @@ describe('Syncer', function () {
         fs.writeFileSync(gCacheFile, '', 'utf8');
         createTree(gTmpDir, { a: { b: { c: { d: { e: 'some code' } } } } });
 
-        syncer.sync(gTmpDir, collectTasks, 10, function (error) {
+        let dataLayout = new DataLayout(gTmpDir, []);
+
+        syncer.sync(dataLayout, collectTasks, 10, function (error) {
             expect(error).to.not.be.ok();
             expect(gTasks.length).to.be(1);
 
-            execSync(`rm -r a/b; touch a/f`, { cwd: gTmpDir });
+            execSync('rm -r a/b; touch a/f', { cwd: gTmpDir });
 
             gTasks = [ ];
-            syncer.sync(gTmpDir, collectTasks, 10, function (error) {
+            syncer.sync(dataLayout, collectTasks, 10, function (error) {
                 expect(error).to.not.be.ok();
 
                 expect(gTasks).to.eql([
@@ -222,14 +242,16 @@ describe('Syncer', function () {
         fs.writeFileSync(gCacheFile, '', 'utf8');
         createTree(gTmpDir, { 'data': { 'src': { 'index.js': 'some code' }, 'test': { 'test.js': 'This is a README' }, 'walrus': 'animal' } });
 
-        syncer.sync(gTmpDir, collectTasks, 10, function (error) {
+        let dataLayout = new DataLayout(gTmpDir, []);
+
+        syncer.sync(dataLayout, collectTasks, 10, function (error) {
             expect(error).to.not.be.ok();
             expect(gTasks.length).to.be(3);
 
-            execSync(`rm data/test/test.js; mkdir data/test/test.js; touch data/test/test.js/trick`, { cwd: gTmpDir });
+            execSync('rm data/test/test.js; mkdir data/test/test.js; touch data/test/test.js/trick', { cwd: gTmpDir });
 
             gTasks = [ ];
-            syncer.sync(gTmpDir, collectTasks, 10, function (error) {
+            syncer.sync(dataLayout, collectTasks, 10, function (error) {
                 expect(error).to.not.be.ok();
 
                 expect(gTasks).to.eql([
@@ -247,14 +269,16 @@ describe('Syncer', function () {
         fs.writeFileSync(gCacheFile, '', 'utf8');
         createTree(gTmpDir, { 'src': { 'index.js': 'some code' }, 'test': { 'test.js': 'this', 'test2.js': 'test' }, 'walrus': 'animal' });
 
-        syncer.sync(gTmpDir, collectTasks, 10, function (error) {
+        let dataLayout = new DataLayout(gTmpDir, []);
+
+        syncer.sync(dataLayout, collectTasks, 10, function (error) {
             expect(error).to.not.be.ok();
             expect(gTasks.length).to.be(4);
 
-            execSync(`rm -r test; touch test`, { cwd: gTmpDir });
+            execSync('rm -r test; touch test', { cwd: gTmpDir });
 
             gTasks = [ ];
-            syncer.sync(gTmpDir, collectTasks, 10, function (error) {
+            syncer.sync(dataLayout, collectTasks, 10, function (error) {
                 expect(error).to.not.be.ok();
 
                 expect(gTasks).to.eql([
@@ -286,7 +310,9 @@ describe('Syncer', function () {
             }
         });
 
-        syncer.sync(gTmpDir, collectTasks, 10, function (error) {
+        let dataLayout = new DataLayout(gTmpDir, []);
+
+        syncer.sync(dataLayout, collectTasks, 10, function (error) {
             expect(error).to.not.be.ok();
 
             execSync(`rm a; \
@@ -301,7 +327,9 @@ describe('Syncer', function () {
                       rmdir j/m;`, { cwd: gTmpDir });
 
             gTasks = [ ];
-            syncer.sync(gTmpDir, collectTasks, 10, function (error) {
+            let dataLayout = new DataLayout(gTmpDir, []);
+
+            syncer.sync(dataLayout, collectTasks, 10, function (error) {
                 expect(error).to.not.be.ok();
 
                 expect(gTasks).to.eql([
@@ -318,7 +346,7 @@ describe('Syncer', function () {
                 ]);
 
                 gTasks = [ ];
-                syncer.sync(gTmpDir, collectTasks, 10, function (error) {
+                syncer.sync(dataLayout, collectTasks, 10, function (error) {
                     expect(error).to.not.be.ok();
                     expect(gTasks.length).to.be(0);
 

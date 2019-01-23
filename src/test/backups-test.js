@@ -12,6 +12,7 @@ var async = require('async'),
     createTree = require('./common.js').createTree,
     database = require('../database'),
     DatabaseError = require('../databaseerror.js'),
+    DataLayout = require('../datalayout.js'),
     expect = require('expect.js'),
     fs = require('fs'),
     os = require('os'),
@@ -234,7 +235,9 @@ describe('backups', function () {
             createTree(tmpdir, { 'data': { 'subdir': { 'emptydir': { } } }, 'dir2': { 'file': 'stuff' } });
             fs.chmodSync(path.join(tmpdir, 'dir2/file'), parseInt('0755', 8));
 
-            backups._saveFsMetadata(tmpdir, function (error) {
+            let dataLayout = new DataLayout(tmpdir, []);
+
+            backups._saveFsMetadata(dataLayout, `${dataLayout.localRoot()}/fsmetadata.json`, function (error) {
                 expect(error).to.not.be.ok();
 
                 var emptyDirs = JSON.parse(fs.readFileSync(path.join(tmpdir, 'fsmetadata.json'), 'utf8')).emptyDirs;
@@ -252,7 +255,9 @@ describe('backups', function () {
 
             expect(fs.existsSync(path.join(tmpdir, 'data/subdir/emptydir'))).to.be(false); // just make sure rimraf worked
 
-            backups._restoreFsMetadata(tmpdir, function (error) {
+            let dataLayout = new DataLayout(tmpdir, []);
+
+            backups._restoreFsMetadata(dataLayout, `${dataLayout.localRoot()}/fsmetadata.json`, function (error) {
                 expect(error).to.not.be.ok();
 
                 expect(fs.existsSync(path.join(tmpdir, 'data/subdir/emptydir'))).to.be(true);
