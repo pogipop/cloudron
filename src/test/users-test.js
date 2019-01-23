@@ -637,7 +637,7 @@ describe('User', function () {
         });
     });
 
-    describe('admin change triggers mail', function () {
+    describe('admin change mail triggers', function () {
         before(function (done) {
             createOwner(function (error) {
                 expect(error).to.not.be.ok();
@@ -654,7 +654,7 @@ describe('User', function () {
             email: 'some@thi.ng'
         };
 
-        it('make second user admin succeeds', function (done) {
+        it('make second user admin does not send mail to action performer', function (done) {
             var invitor = { username: USERNAME, email: EMAIL };
 
             users.create(user1.username, user1.password, user1.email, DISPLAY_NAME, { invitor: invitor }, AUDIT_SOURCE, function (error, result) {
@@ -666,14 +666,31 @@ describe('User', function () {
                 users.update(user1.id, { admin: true }, AUDIT_SOURCE, function (error) {
                     expect(error).to.not.be.ok();
 
-                    // one mail for user creation, one mail for admin change
-                    checkMails(2, done);
+                    // no emails should be sent out anymore, since the user performing the action does not get a notification anymore
+                    checkMails(0, done);
                 });
             });
         });
 
-        it('succeeds to remove admin flag', function (done) {
+        it('succeeds to remove admin flag does not send mail to action performer', function (done) {
             users.update(user1.id, { admin: false }, AUDIT_SOURCE, function (error) {
+                expect(error).to.eql(null);
+
+                // no emails should be sent out anymore, since the user performing the action does not get a notification anymore
+                checkMails(0, done);
+            });
+        });
+
+        it('make second user admin does send mail to other admins', function (done) {
+            users.update(user1.id, { admin: true }, { ip: '1.2.3.4', userId: 'someuserid' }, function (error) {
+                expect(error).to.not.be.ok();
+
+                checkMails(1, done);
+            });
+        });
+
+        it('succeeds to remove admin flag does send mail to other admins', function (done) {
+            users.update(user1.id, { admin: false }, { ip: '1.2.3.4', userId: 'someuserid' }, function (error) {
                 expect(error).to.eql(null);
 
                 checkMails(1, done);
@@ -717,7 +734,7 @@ describe('User', function () {
                         expect(admins[0].username).to.equal(USERNAME.toLowerCase());
                         expect(admins[1].username).to.equal(user1.username.toLowerCase());
 
-                        checkMails(2, done); // one mail for user creation one mail for admin change
+                        done();
                     });
                 });
             });
