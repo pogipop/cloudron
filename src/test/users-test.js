@@ -207,28 +207,6 @@ describe('User', function () {
                 done();
             });
         });
-
-        it('succeeds and attempts to send invite to fallbackEmail', function (done) {
-            // use maildb to not trigger further events
-            maildb.update(DOMAIN_0.domain, { enabled: true }, function (error) {
-                expect(error).not.to.be.ok();
-
-                users.create(USERNAME_1, PASSWORD_1, EMAIL_1, DISPLAY_NAME_1, { sendInvite: true }, AUDIT_SOURCE, function (error, result) {
-                    expect(error).not.to.be.ok();
-                    expect(result).to.be.ok();
-                    expect(result.username).to.equal(USERNAME_1.toLowerCase());
-                    expect(result.email).to.equal(EMAIL_1.toLowerCase());
-                    expect(result.fallbackEmail).to.equal(EMAIL_1.toLowerCase());
-
-                    // first user is owner, do not send mail to admins
-                    checkMails(1, { sentTo: EMAIL_1.toLowerCase() }, function (error) {
-                        expect(error).not.to.be.ok();
-
-                        maildb.update(DOMAIN_0.domain, { enabled: false }, done);
-                    });
-                });
-            });
-        });
     });
 
     describe('getOwner', function() {
