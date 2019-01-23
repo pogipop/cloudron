@@ -2,6 +2,7 @@
 
 var assert = require('assert'),
     async = require('async'),
+    DataLayout = require('./datalayout.js'),
     debug = require('debug')('box:syncer'),
     fs = require('fs'),
     path = require('path'),
@@ -62,7 +63,7 @@ function ISFILE(x) {
 }
 
 function sync(dataLayout, taskProcessor, concurrency, callback) {
-    assert.strictEqual(typeof dataLayout, 'object'); // is a DataLayout
+    assert(dataLayout instanceof DataLayout, 'Expecting dataLayout to be a DataLayout');
     assert.strictEqual(typeof taskProcessor, 'function');
     assert.strictEqual(typeof concurrency, 'number');
     assert.strictEqual(typeof callback, 'function');
