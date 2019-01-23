@@ -30,7 +30,7 @@ var accesscontrol = require('../../accesscontrol.js'),
 
 var SERVER_URL = 'http://localhost:' + config.get('port');
 
-let AUDIT_SOURCE = { ip: '1.2.3.4' };
+let AUDIT_SOURCE = { ip: '1.2.3.4', userId: 'someuserid' };
 
 describe('OAuth2', function () {
 
@@ -221,7 +221,7 @@ describe('OAuth2', function () {
                 clientdb.add.bind(null, CLIENT_7.id, CLIENT_7.appId, CLIENT_7.type, CLIENT_7.clientSecret, CLIENT_7.redirectURI, CLIENT_7.scope),
                 clientdb.add.bind(null, CLIENT_9.id, CLIENT_9.appId, CLIENT_9.type, CLIENT_9.clientSecret, CLIENT_9.redirectURI, CLIENT_9.scope),
                 function (callback) {
-                    users.create(USER_0.username, USER_0.password, USER_0.email, USER_0.displayName, { }, null /* source */, function (error, userObject) {
+                    users.create(USER_0.username, USER_0.password, USER_0.email, USER_0.displayName, { }, AUDIT_SOURCE, function (error, userObject) {
                         expect(error).to.not.be.ok();
 
                         // update the global objects to reflect the new user id

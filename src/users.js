@@ -150,7 +150,7 @@ function create(username, password, email, displayName, options, auditSource, ca
     assert.strictEqual(typeof email, 'string');
     assert.strictEqual(typeof displayName, 'string');
     assert(options && typeof options === 'object');
-    assert.strictEqual(typeof auditSource, 'object');
+    assert(auditSource && typeof auditSource === 'object');
 
     const isOwner = !!options.owner;
     const isAdmin = !!options.admin;
@@ -289,7 +289,7 @@ function verifyWithEmail(email, password, callback) {
 
 function removeUser(userId, auditSource, callback) {
     assert.strictEqual(typeof userId, 'string');
-    assert.strictEqual(typeof auditSource, 'object');
+    assert(auditSource && typeof auditSource === 'object');
     assert.strictEqual(typeof callback, 'function');
 
     get(userId, function (error, user) {
@@ -389,7 +389,7 @@ function getByResetToken(email, resetToken, callback) {
 function updateUser(userId, data, auditSource, callback) {
     assert.strictEqual(typeof userId, 'string');
     assert.strictEqual(typeof data, 'object');
-    assert.strictEqual(typeof auditSource, 'object');
+    assert(auditSource && typeof auditSource === 'object');
     assert.strictEqual(typeof callback, 'function');
 
     var error;
@@ -524,7 +524,7 @@ function createOwner(username, password, email, displayName, auditSource, callba
     assert.strictEqual(typeof password, 'string');
     assert.strictEqual(typeof email, 'string');
     assert.strictEqual(typeof displayName, 'string');
-    assert.strictEqual(typeof auditSource, 'object');
+    assert(auditSource && typeof auditSource === 'object');
     assert.strictEqual(typeof callback, 'function');
 
     // This is only not allowed for the owner
@@ -647,7 +647,7 @@ function disableTwoFactorAuthentication(userId, callback) {
 function transferOwnership(oldOwnerId, newOwnerId, auditSource, callback) {
     assert.strictEqual(typeof oldOwnerId, 'string');
     assert.strictEqual(typeof newOwnerId, 'string');
-    assert.strictEqual(typeof auditSource, 'object');
+    assert(auditSource && typeof auditSource === 'object');
     assert.strictEqual(typeof callback, 'function');
 
     apps.transferOwnership(oldOwnerId, newOwnerId, function (error) {
