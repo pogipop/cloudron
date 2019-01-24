@@ -72,7 +72,7 @@ function getInternal(dnsConfig, zoneName, subdomain, type, callback) {
         namecheap.domains.dns.getHosts(zoneName, function (error, result) {
             if (error) return callback(new DomainsError(DomainsError.EXTERNAL_ERROR, formatError(error)));
 
-            debug('entire getInternal response: %j', error);
+            debug('entire getInternal response: %j', result);
 
             return callback(null, result['DomainDNSGetHostsResult']['host']);
         });
