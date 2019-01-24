@@ -141,13 +141,13 @@ function checkOutboundPort25(callback) {
     });
     client.on('timeout', function () {
         relay.status = false;
-        relay.value = 'Connect to ' + smtpServer + ' timed out';
+        relay.value = `Connect to ${smtpServer} timed out. Please check if port 25 is blocked`;
         client.destroy();
         callback(new Error('Timeout'), relay);
     });
     client.on('error', function (error) {
         relay.status = false;
-        relay.value = 'Connect to ' + smtpServer + ' failed: ' + error.message;
+        relay.value = `Connect to ${smtpServer} failed: ${error.message}. Please check if port 25 is blocked`;
         client.destroy();
         callback(error, relay);
     });
