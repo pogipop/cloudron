@@ -79,8 +79,6 @@ function get(id, callback) {
     assert.strictEqual(typeof id, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    debug('get: ', id);
-
     notificationdb.get(id, function (error, result) {
         if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new NotificationsError(NotificationsError.NOT_FOUND));
         if (error) return callback(new NotificationsError(NotificationsError.INTERNAL_ERROR, error));
@@ -92,8 +90,6 @@ function get(id, callback) {
 function ack(id, callback) {
     assert.strictEqual(typeof id, 'string');
     assert.strictEqual(typeof callback, 'function');
-
-    debug('ack: ', id);
 
     notificationdb.update(id, { acknowledged: true }, function (error) {
         if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new NotificationsError(NotificationsError.NOT_FOUND));
