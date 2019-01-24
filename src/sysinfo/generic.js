@@ -19,11 +19,11 @@ function getPublicIp(callback) {
         superagent.get(config.apiServerOrigin() + '/api/v1/helper/public_ip').timeout(30 * 1000).end(function (error, result) {
             if (error || result.statusCode !== 200) {
                 console.error('Error getting IP', error);
-                return callback(new SysInfoError(SysInfoError.INTERNAL_ERROR, 'Unable to contact api server'));
+                return callback(new SysInfoError(SysInfoError.EXTERNAL_ERROR, 'Unable to detect IP. API server unreachable'));
             }
             if (!result.body && !result.body.ip) {
                 console.error('Unexpected answer. No "ip" found in response body.', result.body);
-                return callback(new SysInfoError(SysInfoError.INTERNAL_ERROR, 'No IP found in body'));
+                return callback(new SysInfoError(SysInfoError.EXTERNAL_ERROR, 'Unable to detect IP. No IP found in response'));
             }
 
             callback(null, result.body.ip);
