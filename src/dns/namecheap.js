@@ -24,22 +24,23 @@ function formatError(response) {
     return util.format('NameCheap DNS error [%s] %j', response.code, response.message);
 }
 
-// The keys that NameCheap returns us and the keys we need to provide it differ, so we need to map them properly
+// Only send required fields - https://www.namecheap.com/support/api/methods/domains-dns/set-hosts.aspx
 function mapHosts(hosts) {
-    for (var i = 0; i < hosts.length; i++) {
-        let curHost = hosts[i];
-        if (curHost.Name && !curHost.HostName) {
-            curHost.HostName = curHost.Name;
-            delete curHost.Name;
+    return hosts.map(function (host) {
+        let tmp = {};
+
+        tmp.TTL = '300';
+        tmp.RecordType = host.RecordType || host.Type;
+        tmp.HostName = host.HostName || host.Name;
+        tmp.Address = host.Address;
+
+        if (tmp.RecordType === 'MX') {
+            tmp.EmailType = 'MX';
+            if (host.MXPref) tmp.MXPref = host.MXPref;
         }
 
-        if (curHost.Type && !curHost.RecordType) {
-            curHost.RecordType = curHost.Type;
-            delete curHost.Type;
-        }
-    }
-
-    return hosts;
+        return tmp;
+    });
 }
 
 function init(dnsConfig, callback) {
