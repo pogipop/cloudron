@@ -105,17 +105,17 @@ function add(action, source, data, callback) {
         // decide if we want to add notifications as well
         if (action === exports.ACTION_USER_ADD) {
             notifications.userAdded(source.userId, id, data.user);
-        } if (action === exports.ACTION_USER_REMOVE) {
+        } else if (action === exports.ACTION_USER_REMOVE) {
             notifications.userRemoved(source.userId, id, data.user);
-        } if (action === exports.ACTION_USER_UPDATE && data.adminStatusChanged) {
+        } else if (action === exports.ACTION_USER_UPDATE && data.adminStatusChanged) {
             notifications.adminChanged(source.userId, id, data.user);
-        } if (action === exports.ACTION_APP_OOM) {
+        } else if (action === exports.ACTION_APP_OOM) {
             notifications.oomEvent(id, source.app ? source.app.id : source.containerId, { app: source.app, details: data });
-        } if (action === exports.ACTION_APP_DOWN) {
+        } else if (action === exports.ACTION_APP_DOWN) {
             notifications.appDied(id, source.app);
-        } if (action === exports.ACTION_APP_TASK_CRASH) {
+        } else if (action === exports.ACTION_APP_TASK_CRASH) {
             notifications.apptaskCrash(id, source.appId, data.crashLogFile);
-        } if (action === exports.ACTION_PROCESS_CRASH) {
+        } else if (action === exports.ACTION_PROCESS_CRASH) {
             notifications.processCrash(id, source.processName, data.crashLogFile);
         } else {
             // no notification
