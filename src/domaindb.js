@@ -16,13 +16,15 @@ var assert = require('assert'),
     DatabaseError = require('./databaseerror'),
     safe = require('safetydance');
 
-var DOMAINS_FIELDS = [ 'domain', 'zoneName', 'provider', 'configJson', 'tlsConfigJson' ].join(',');
+var DOMAINS_FIELDS = [ 'domain', 'zoneName', 'provider', 'configJson', 'tlsConfigJson', 'locked' ].join(',');
 
 function postProcess(data) {
     data.config = safe.JSON.parse(data.configJson);
     data.tlsConfig = safe.JSON.parse(data.tlsConfigJson);
     delete data.configJson;
     delete data.tlsConfigJson;
+
+    data.locked = !!data.locked; // make it bool
 
     return data;
 }

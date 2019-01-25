@@ -9,6 +9,7 @@ var async = require('async'),
     child_process = require('child_process'),
     config = require('../../config.js'),
     database = require('../../database.js'),
+    domaindb = require('../../domaindb.js'),
     expect = require('expect.js'),
     fs = require('fs'),
     path = require('path'),
@@ -216,9 +217,53 @@ describe('Domains API', function () {
         });
     });
 
+    describe('locked', function () {
+        before(function (done) {
+            domaindb.update(DOMAIN_0.domain, { locked: true }, done);
+        });
+
+        after(function (done) {
+            domaindb.update(DOMAIN_0.domain, { locked: false }, done);
+        });
+
+        it('can list the domains', function (done) {
+            superagent.get(SERVER_URL + '/api/v1/domains')
+                .query({ access_token: token })
+                .end(function (error, result) {
+                    expect(result.statusCode).to.equal(200);
+                    expect(result.body.domains).to.be.an(Array);
+                    expect(result.body.domains.length).to.equal(2);
+
+                    expect(result.body.domains[0].domain).to.equal(DOMAIN_0.domain);
+                    expect(result.body.domains[1].domain).to.equal(DOMAIN_1.domain);
+
+                    done();
+                });
+        });
+
+        it('cannot get locked domain', function (done) {
+            superagent.get(SERVER_URL + '/api/v1/domains/' + DOMAIN_0.domain)
+                .query({ access_token: token })
+                .end(function (error, result) {
+                    expect(result.statusCode).to.equal(423);
+                    done();
+                });
+        });
+
+        it('cannot delete locked domain', function (done) {
+            superagent.delete(SERVER_URL + '/api/v1/domains/' + DOMAIN_0.domain)
+                .query({ access_token: token })
+                .send({ password: PASSWORD })
+                .end(function (error, result) {
+                    expect(result.statusCode).to.equal(423);
+                    done();
+                });
+        });
+    });
+
     describe('delete', function () {
         it('fails without password', function (done) {
-            superagent.delete(SERVER_URL + '/api/v1/domains/' + DOMAIN_0.domain + DOMAIN_0.domain)
+            superagent.delete(SERVER_URL + '/api/v1/domains/' + DOMAIN_0.domain)
                 .query({ access_token: token })
                 .end(function (error, result) {
                     expect(result.statusCode).to.equal(400);
@@ -228,7 +273,7 @@ describe('Domains API', function () {
         });
 
         it('fails with wrong password', function (done) {
-            superagent.delete(SERVER_URL + '/api/v1/domains/' + DOMAIN_0.domain + DOMAIN_0.domain)
+            superagent.delete(SERVER_URL + '/api/v1/domains/' + DOMAIN_0.domain)
                 .query({ access_token: token })
                 .send({ password: PASSWORD + PASSWORD })
                 .end(function (error, result) {

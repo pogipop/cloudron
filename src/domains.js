@@ -7,7 +7,6 @@ module.exports = exports = {
     update: update,
     del: del,
     clear: clear,
-    isLocked: isLocked,
 
     fqdn: fqdn,
     getName: getName,
@@ -244,10 +243,6 @@ function add(domain, data, auditSource, callback) {
     });
 }
 
-function isLocked(domain) {
-    return domain === config.adminDomain() && config.edition() === 'hostingprovider';
-}
-
 function get(domain, callback) {
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof callback, 'function');
@@ -256,8 +251,6 @@ function get(domain, callback) {
         // TODO try to find subdomain entries maybe based on zoneNames or so
         if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new DomainsError(DomainsError.NOT_FOUND));
         if (error) return callback(new DomainsError(DomainsError.INTERNAL_ERROR, error));
-
-        result.locked = isLocked(domain);
 
         reverseProxy.getFallbackCertificate(domain, function (error, bundle) {
             if (error && error.reason !== ReverseProxyError.NOT_FOUND) return callback(new DomainsError(DomainsError.INTERNAL_ERROR, error));
@@ -279,8 +272,6 @@ function getAll(callback) {
 
     domaindb.getAll(function (error, result) {
         if (error) return callback(new DomainsError(DomainsError.INTERNAL_ERROR, error));
-
-        result.forEach(function (r) { r.locked = isLocked(r.domain); });
 
         return callback(null, result);
     });

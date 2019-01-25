@@ -21,13 +21,17 @@ function auditSource(req) {
     return { ip: ip, username: req.user ? req.user.username : null, userId: req.user ? req.user.id : null };
 }
 
-// this code exists for the hosting provider edition
 function verifyDomainLock(req, res, next) {
     assert.strictEqual(typeof req.params.domain, 'string');
 
-    if (domains.isLocked(req.params.domain)) return next(new HttpError(423, 'This domain is locked'));
+    domains.get(req.params.domain, function (error, domain) {
+        if (error && error.reason === DomainsError.NOT_FOUND) return next(new HttpError(404, 'No such domain'));
+        if (error) return next(new HttpError(500, error));
 
-    next();
+        if (domain.locked) return next(new HttpError(423, 'This domain is locked'));
+
+        next();
+    });
 }
 
 function add(req, res, next) {
