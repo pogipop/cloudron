@@ -412,8 +412,8 @@ function upload(backupId, format, dataLayoutString, progressCallback, callback) 
 
                     tarStream.on('progress', function(progress) {
                         const transferred = Math.round(progress.transferred/1024/1024), speed = Math.round(progress.speed/1024/1024);
-                        if (!transferred && !speed) return progressCallback({ message: 'Uploading' }); // 0M@0Mbps looks wrong
-                        progressCallback({ message: `Uploading ${transferred}M@${speed}Mbps` });
+                        if (!transferred && !speed) return progressCallback({ message: 'Uploading backup' }); // 0M@0Mbps looks wrong
+                        progressCallback({ message: `Uploading backup ${transferred}M@${speed}Mbps` });
                     });
                     tarStream.on('error', retryCallback); // already returns BackupsError
 
