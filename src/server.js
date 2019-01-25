@@ -103,6 +103,7 @@ function initializeExpressSync() {
 
     const isUnmanaged = routes.accesscontrol.isUnmanaged;
     const verifyDomainLock = routes.domains.verifyDomainLock;
+    const verifySettingsLock = routes.settings.verifySettingsLock;
 
     // csrf protection
     var csrf = routes.oauth2.csrf();
@@ -234,11 +235,10 @@ function initializeExpressSync() {
     router.post('/api/v1/apps/:id/owner',     appsManageScope, routes.apps.setOwner);
 
     // settings routes (these are for the settings tab - avatar & name have public routes for normal users. see above)
-    router.get('/api/v1/settings/cloudron_avatar', settingsScope, routes.settings.getCloudronAvatar);
-    router.post('/api/v1/settings/cloudron_avatar', settingsScope, multipart, routes.settings.setCloudronAvatar);
-
-    router.get ('/api/v1/settings/:setting', settingsScope, routes.settings.get);
-    router.post('/api/v1/settings/:setting', settingsScope, routes.settings.set);
+    router.get ('/api/v1/settings/:setting', settingsScope, verifySettingsLock, routes.settings.get);
+    router.post('/api/v1/settings/:setting', settingsScope, verifySettingsLock, (req, res, next) => {
+        return req.params.setting === 'cloudron_avatar' ? multipart(req, res, next) : next();
+    }, routes.settings.set);
 
     // email routes
     router.get ('/api/v1/mail/:domain',       mailScope, routes.mail.getDomain);

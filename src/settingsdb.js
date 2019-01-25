@@ -13,7 +13,7 @@ var assert = require('assert'),
     database = require('./database.js'),
     DatabaseError = require('./databaseerror');
 
-const SETTINGS_FIELDS = [ 'name', 'value' ].join(',');
+const SETTINGS_FIELDS = [ 'name', 'value', 'locked' ].join(',');
 
 function get(key, callback) {
     assert.strictEqual(typeof key, 'string');

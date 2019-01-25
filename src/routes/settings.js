@@ -4,12 +4,9 @@ exports = module.exports = {
     set: set,
     get: get,
 
-    // specialized routes as they need different scope or some additional middleware
     getCloudronAvatar: getCloudronAvatar,
-    setCloudronAvatar: setCloudronAvatar,
 
-    getAppstoreConfig: getAppstoreConfig,
-    setAppstoreConfig: setAppstoreConfig
+    verifySettingsLock: verifySettingsLock
 };
 
 var assert = require('assert'),
@@ -21,6 +18,20 @@ var assert = require('assert'),
     safe = require('safetydance'),
     settings = require('../settings.js'),
     SettingsError = settings.SettingsError;
+
+function verifySettingsLock(req, res, next) {
+    assert.strictEqual(typeof req.params.setting, 'string');
+
+    settings.get(req.params.setting, function (error, result) {
+        // not locked. let actual route return not found. this is useful for entries stored outside the database like cloudron_avatar
+        if (error && error.reason === SettingsError.NOT_FOUND) return next();
+        if (error) return next(new HttpError(500, error));
+
+        if (result.locked) return next(new HttpError(423, 'This setting is locked'));
+
+        next();
+    });
+}
 
 function getAppAutoupdatePattern(req, res, next) {
     settings.getAppAutoupdatePattern(function (error, pattern) {
@@ -295,6 +306,8 @@ function set(req, res, next) {
     case settings.BOX_AUTOUPDATE_PATTERN_KEY: return setBoxAutoupdatePattern(req, res, next);
     case settings.TIME_ZONE_KEY: return setTimeZone(req, res, next);
     case settings.CLOUDRON_NAME_KEY: return setCloudronName(req, res, next);
+
+    case settings.CLOUDRON_AVATAR_KEY: return setCloudronAvatar(req, res, next);
 
     default: return next(new HttpError(404, 'No such setting'));
     }

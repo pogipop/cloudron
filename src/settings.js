@@ -35,6 +35,7 @@ exports = module.exports = {
     getPlatformConfig: getPlatformConfig,
     setPlatformConfig: setPlatformConfig,
 
+    get: get,
     getAll: getAll,
 
     // booleans. if you add an entry here, be sure to fix getAll
@@ -54,7 +55,7 @@ exports = module.exports = {
     CLOUDRON_NAME_KEY: 'cloudron_name',
 
     // blobs
-    CLOUDRON_AVATAR_KEY: 'cloudron_avatar', // not stored in db
+    CLOUDRON_AVATAR_KEY: 'cloudron_avatar', // not stored in db but can be used for locked flag
 
     on: on,
     removeListener: removeListener
@@ -484,6 +485,18 @@ function getAll(callback) {
         [exports.BACKUP_CONFIG_KEY, exports.APPSTORE_CONFIG_KEY, exports.PLATFORM_CONFIG_KEY ].forEach(function (key) {
             result[key] = typeof result[key] === 'object' ? result[key] : safe.JSON.parse(result[key]);
         });
+
+        callback(null, result);
+    });
+}
+
+function get(name, callback) {
+    assert.strictEqual(typeof name, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    settingsdb.get(name, function (error, result) {
+        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(null, gDefaults[exports.PLATFORM_CONFIG_KEY]);
+        if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
 
         callback(null, result);
     });

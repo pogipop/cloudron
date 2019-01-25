@@ -113,6 +113,7 @@ CREATE TABLE IF NOT EXISTS authcodes(
 CREATE TABLE IF NOT EXISTS settings(
     name VARCHAR(128) NOT NULL UNIQUE,
     value TEXT,
+    locked BOOLEAN,
     PRIMARY KEY(name));
 
 CREATE TABLE IF NOT EXISTS appAddonConfigs(
@@ -155,6 +156,7 @@ CREATE TABLE IF NOT EXISTS domains(
     provider VARCHAR(16) NOT NULL,
     configJson TEXT, /* JSON containing the dns backend provider config */
     tlsConfigJson TEXT, /* JSON containing the tls provider config */
+    locked BOOLEAN,
 
     PRIMARY KEY (domain))
 
