@@ -53,6 +53,9 @@ exports = module.exports = {
     TIME_ZONE_KEY: 'time_zone',
     CLOUDRON_NAME_KEY: 'cloudron_name',
 
+    // blobs
+    CLOUDRON_AVATAR_KEY: 'cloudron_avatar', // not stored in db
+
     on: on,
     removeListener: removeListener
 };

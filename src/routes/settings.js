@@ -1,34 +1,15 @@
 'use strict';
 
 exports = module.exports = {
-    getAppAutoupdatePattern: getAppAutoupdatePattern,
-    setAppAutoupdatePattern: setAppAutoupdatePattern,
+    set: set,
+    get: get,
 
-    getBoxAutoupdatePattern: getBoxAutoupdatePattern,
-    setBoxAutoupdatePattern: setBoxAutoupdatePattern,
-
-    getCloudronName: getCloudronName,
-    setCloudronName: setCloudronName,
-
+    // specialized routes as they need different scope or some additional middleware
     getCloudronAvatar: getCloudronAvatar,
     setCloudronAvatar: setCloudronAvatar,
 
-    getBackupConfig: getBackupConfig,
-    setBackupConfig: setBackupConfig,
-
-    getTimeZone: getTimeZone,
-    setTimeZone: setTimeZone,
-
     getAppstoreConfig: getAppstoreConfig,
-    setAppstoreConfig: setAppstoreConfig,
-
-    getPlatformConfig: getPlatformConfig,
-    setPlatformConfig: setPlatformConfig,
-
-    getDynamicDnsConfig: getDynamicDnsConfig,
-    setDynamicDnsConfig: setDynamicDnsConfig,
-
-    setRegistryConfig: setRegistryConfig
+    setAppstoreConfig: setAppstoreConfig
 };
 
 var assert = require('assert'),
@@ -279,4 +260,40 @@ function setRegistryConfig(req, res, next) {
 
         next(new HttpSuccess(200));
     });
+}
+
+function get(req, res, next) {
+    assert.strictEqual(typeof req.params.setting, 'string');
+
+    switch (req.params.setting) {
+    case settings.DYNAMIC_DNS_KEY: return getDynamicDnsConfig(req, res, next);
+    case settings.BACKUP_CONFIG_KEY: return getBackupConfig(req, res, next);
+    case settings.PLATFORM_CONFIG_KEY: return getPlatformConfig(req, res, next);
+
+    case settings.APP_AUTOUPDATE_PATTERN_KEY: return getAppAutoupdatePattern(req, res, next);
+    case settings.BOX_AUTOUPDATE_PATTERN_KEY: return getBoxAutoupdatePattern(req, res, next);
+    case settings.TIME_ZONE_KEY: return getTimeZone(req, res, next);
+    case settings.CLOUDRON_NAME_KEY: return getCloudronName(req, res, next);
+
+    case settings.CLOUDRON_AVATAR_KEY: return getCloudronAvatar(req, res, next);
+
+    default: return next(new HttpError(404, 'No such setting'));
+    }
+}
+
+function set(req, res, next) {
+    assert.strictEqual(typeof req.body, 'object');
+
+    switch (req.params.setting) {
+    case settings.DYNAMIC_DNS_KEY: return setDynamicDnsConfig(req, res, next);
+    case settings.BACKUP_CONFIG_KEY: return setBackupConfig(req, res, next);
+    case settings.PLATFORM_CONFIG_KEY: return setPlatformConfig(req, res, next);
+
+    case settings.APP_AUTOUPDATE_PATTERN_KEY: return setAppAutoupdatePattern(req, res, next);
+    case settings.BOX_AUTOUPDATE_PATTERN_KEY: return setBoxAutoupdatePattern(req, res, next);
+    case settings.TIME_ZONE_KEY: return setTimeZone(req, res, next);
+    case settings.CLOUDRON_NAME_KEY: return setCloudronName(req, res, next);
+
+    default: return next(new HttpError(404, 'No such setting'));
+    }
 }

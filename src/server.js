@@ -235,27 +235,13 @@ function initializeExpressSync() {
     router.post('/api/v1/apps/:id/owner',     appsManageScope, routes.apps.setOwner);
 
     // settings routes (these are for the settings tab - avatar & name have public routes for normal users. see above)
-    router.get ('/api/v1/settings/app_autoupdate_pattern', settingsScope, routes.settings.getAppAutoupdatePattern);
-    router.post('/api/v1/settings/app_autoupdate_pattern', settingsScope, routes.settings.setAppAutoupdatePattern);
-    router.get ('/api/v1/settings/box_autoupdate_pattern', settingsScope, routes.settings.getBoxAutoupdatePattern);
-    router.post('/api/v1/settings/box_autoupdate_pattern', settingsScope, routes.settings.setBoxAutoupdatePattern);
-    router.get ('/api/v1/settings/cloudron_name',      settingsScope, routes.settings.getCloudronName);
-    router.post('/api/v1/settings/cloudron_name',      settingsScope, routes.settings.setCloudronName);
-    router.get ('/api/v1/settings/cloudron_avatar',    settingsScope, routes.settings.getCloudronAvatar);
-    router.post('/api/v1/settings/cloudron_avatar',    settingsScope, multipart, routes.settings.setCloudronAvatar);
-    router.get ('/api/v1/settings/backup_config',      settingsScope, isUnmanaged, routes.settings.getBackupConfig);
-    router.post('/api/v1/settings/backup_config',      settingsScope, isUnmanaged, routes.settings.setBackupConfig);
-    router.get ('/api/v1/settings/platform_config',    settingsScope, isUnmanaged, routes.settings.getPlatformConfig);
-    router.post('/api/v1/settings/platform_config',    settingsScope, isUnmanaged, routes.settings.setPlatformConfig);
-    router.get ('/api/v1/settings/dynamic_dns',        settingsScope, isUnmanaged, routes.settings.getDynamicDnsConfig);
-    router.post('/api/v1/settings/dynamic_dns',        settingsScope, isUnmanaged, routes.settings.setDynamicDnsConfig);
+    router.get('/api/v1/settings/cloudron_avatar', settingsScope, routes.settings.getCloudronAvatar);
+    router.post('/api/v1/settings/cloudron_avatar', settingsScope, multipart, routes.settings.setCloudronAvatar);
+    router.get ('/api/v1/settings/appstore_config', appstoreScope, routes.settings.getAppstoreConfig);
+    router.post('/api/v1/settings/appstore_config', appstoreScope, routes.settings.setAppstoreConfig);
 
-    router.get ('/api/v1/settings/time_zone',          settingsScope, routes.settings.getTimeZone);
-    router.post('/api/v1/settings/time_zone',          settingsScope, routes.settings.setTimeZone);
-    router.get ('/api/v1/settings/appstore_config',    appstoreScope, isUnmanaged, routes.settings.getAppstoreConfig);
-    router.post('/api/v1/settings/appstore_config',    appstoreScope, isUnmanaged, routes.settings.setAppstoreConfig);
-
-    router.post('/api/v1/settings/registry_config',    appstoreScope, routes.settings.setRegistryConfig);
+    router.get ('/api/v1/settings/:setting', settingsScope, routes.settings.get);
+    router.post('/api/v1/settings/:setting', settingsScope, routes.settings.set);
 
     // email routes
     router.get ('/api/v1/mail/:domain',       mailScope, routes.mail.getDomain);
