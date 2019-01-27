@@ -862,7 +862,10 @@ function update(appId, data, auditSource, callback) {
                 updateConfig.appStoreId = '';
             }
 
-            if (app.appStoreId !== '' && semver.lte(updateConfig.manifest.version, app.manifest.version)) {
+            // suffix '0' if prerelease is missing for semver.lte to work as expected
+            const currentVersion = semver.prerelease(app.manifest.version) ? app.manifest.version : `${app.manifest.version}-0`;
+            const updateVersion = semver.prerelease(updateConfig.manifest.version) ? updateConfig.manifest.version : `${updateConfig.manifest.version}-0`;
+            if (app.appStoreId !== '' && semver.lte(updateVersion, currentVersion)) {
                 if (!data.force) return callback(new AppsError(AppsError.BAD_FIELD, 'Downgrades are not permitted for apps installed from AppStore. force to override'));
             }
 
