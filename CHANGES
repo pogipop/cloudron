@@ -1522,3 +1522,6 @@
 * Add user pagination UI
 * Add namecheap as supported DNS provider
 
+[3.6.0]
+* Send notifications from dashboard domain
+

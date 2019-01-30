@@ -86,18 +86,10 @@ function getMailConfig(callback) {
                 cloudronName = 'Cloudron';
             }
 
-            mail.getDomains(function (error, domains) {
-                if (error) return callback(error);
-                if (domains.length === 0) return callback('No domains configured');
-
-                const defaultDomain = domains[0];
-
-                callback(null, {
-                    adminEmails: adminEmails,
-                    cloudronName: cloudronName,
-                    notificationDomain: defaultDomain.domain,
-                    notificationFrom: `"${cloudronName}" <no-reply@${defaultDomain.domain}>`
-                });
+            callback(null, {
+                adminEmails: adminEmails,
+                cloudronName: cloudronName,
+                notificationFrom: `"${cloudronName}" <no-reply@${config.adminDomain()}>`
             });
         });
     });
