@@ -1,7 +1,6 @@
 'use strict';
 
-var appstore = require('./appstore.js'),
-    debug = require('debug')('box:digest'),
+var debug = require('debug')('box:digest'),
     eventlog = require('./eventlog.js'),
     updatechecker = require('./updatechecker.js'),
     mailer = require('./mailer.js'),
