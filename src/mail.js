@@ -223,13 +223,17 @@ function checkDkim(domain, callback) {
     });
 }
 
-function checkSpf(domain, callback) {
+function checkSpf(domain, mailFqdn, callback) {
+    assert.strictEqual(typeof domain, 'string');
+    assert.strictEqual(typeof mailFqdn, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
     var spf = {
         domain: domain,
         name: '@',
         type: 'TXT',
         value: null,
-        expected: 'v=spf1 a:' + config.mailFqdn() + ' ~all',
+        expected: 'v=spf1 a:' + mailFqdn + ' ~all',
         status: false
     };
 
@@ -255,13 +259,17 @@ function checkSpf(domain, callback) {
     });
 }
 
-function checkMx(domain, callback) {
+function checkMx(domain, mailFqdn, callback) {
+    assert.strictEqual(typeof domain, 'string');
+    assert.strictEqual(typeof mailFqdn, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
     var mx = {
         domain: domain,
         name: '@',
         type: 'MX',
         value: null,
-        expected: '10 ' + config.mailFqdn() + '.',
+        expected: '10 ' + mailFqdn + '.',
         status: false
     };
 
@@ -269,7 +277,7 @@ function checkMx(domain, callback) {
         if (error) return callback(error, mx);
 
         if (mxRecords.length !== 0) {
-            mx.status = mxRecords.length == 1 && mxRecords[0].exchange === config.mailFqdn();
+            mx.status = mxRecords.length == 1 && mxRecords[0].exchange === mailFqdn;
             mx.value = mxRecords.map(function (r) { return r.priority + ' ' + r.exchange + '.'; }).join(' ');
         }
 
@@ -310,12 +318,15 @@ function checkDmarc(domain, callback) {
     });
 }
 
-function checkPtr(callback) {
+function checkPtr(mailFqdn, callback) {
+    assert.strictEqual(typeof mailFqdn, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
     var ptr = {
         domain: null,
         type: 'PTR',
         value: null,
-        expected: config.mailFqdn(), // any trailing '.' is added by client software (https://lists.gt.net/spf/devel/7918)
+        expected: mailFqdn, // any trailing '.' is added by client software (https://lists.gt.net/spf/devel/7918)
         status: false
     };
 
@@ -456,20 +467,22 @@ function getStatus(domain, callback) {
         };
     }
 
+    const mailFqdn = config.mailFqdn();
+
     getDomain(domain, function (error, result) {
         if (error) return callback(error);
 
         var checks = [
-            recordResult('dns.mx', checkMx.bind(null, domain)),
+            recordResult('dns.mx', checkMx.bind(null, domain, mailFqdn)),
             recordResult('dns.dmarc', checkDmarc.bind(null, domain))
         ];
 
         if (result.relay.provider === 'cloudron-smtp') {
             // these tests currently only make sense when using Cloudron's SMTP server at this point
             checks.push(
-                recordResult('dns.spf', checkSpf.bind(null, domain)),
+                recordResult('dns.spf', checkSpf.bind(null, domain, mailFqdn)),
                 recordResult('dns.dkim', checkDkim.bind(null, domain)),
-                recordResult('dns.ptr', checkPtr),
+                recordResult('dns.ptr', checkPtr.bind(null, mailFqdn)),
                 recordResult('relay', checkOutboundPort25),
                 recordResult('rbl', checkRblStatus.bind(null, domain))
             );
@@ -483,7 +496,8 @@ function getStatus(domain, callback) {
     });
 }
 
-function createMailConfig(callback) {
+function createMailConfig(mailFqdn, callback) {
+    assert.strictEqual(typeof mailFqdn, 'string');
     assert.strictEqual(typeof callback, 'function');
 
     debug('createMailConfig: generating mail config');
@@ -492,7 +506,6 @@ function createMailConfig(callback) {
         if (error) return callback(error);
 
         users.getOwner(function (error, owner) {
-            const mailFqdn = config.mailFqdn();
             const alertsFrom = `no-reply@${config.adminDomain()}`;
 
             const alertsTo = config.provider() === 'caas' ? [ 'support@cloudron.io' ] : [ ];
@@ -568,7 +581,7 @@ function restartMail(callback) {
         shell.exec('startMail', 'docker rm -f mail || true', function (error) {
             if (error) return callback(error);
 
-            createMailConfig(function (error, allowInbound) {
+            createMailConfig(config.mailFqdn(), function (error, allowInbound) {
                 if (error) return callback(error);
 
                 var ports = allowInbound ? '-p 587:2525 -p 993:9993 -p 4190:4190 -p 25:2525' : '';
@@ -636,8 +649,9 @@ function getDomains(callback) {
 }
 
 // https://agari.zendesk.com/hc/en-us/articles/202952749-How-long-can-my-SPF-record-be-
-function txtRecordsWithSpf(domain, callback) {
+function txtRecordsWithSpf(domain, mailFqdn, callback) {
     assert.strictEqual(typeof domain, 'string');
+    assert.strictEqual(typeof mailFqdn, 'string');
     assert.strictEqual(typeof callback, 'function');
 
     domains.getDnsRecords('', domain, 'TXT', function (error, txtRecords) {
@@ -652,17 +666,17 @@ function txtRecordsWithSpf(domain, callback) {
             if (matches === null) continue;
 
             // this won't work if the entry is arbitrarily "split" across quoted strings
-            validSpf = txtRecords[i].indexOf('a:' + config.mailFqdn()) !== -1;
+            validSpf = txtRecords[i].indexOf('a:' + mailFqdn) !== -1;
             break; // there can only be one SPF record
         }
 
         if (validSpf) return callback(null, null);
 
         if (!matches) { // no spf record was found, create one
-            txtRecords.push('"v=spf1 a:' + config.mailFqdn() + ' ~all"');
+            txtRecords.push('"v=spf1 a:' + mailFqdn + ' ~all"');
             debug('txtRecordsWithSpf: adding txt record');
         } else { // just add ourself
-            txtRecords[i] = matches[1] + ' a:' + config.mailFqdn() + txtRecords[i].slice(matches[1].length);
+            txtRecords[i] = matches[1] + ' a:' + mailFqdn + txtRecords[i].slice(matches[1].length);
             debug('txtRecordsWithSpf: inserting txt record');
         }
 
@@ -719,8 +733,9 @@ function readDkimPublicKeySync(domain) {
     return publicKey;
 }
 
-function setDnsRecords(domain, callback) {
+function setDnsRecords(domain, mailFqdn, callback) {
     assert.strictEqual(typeof domain, 'string');
+    assert.strictEqual(typeof mailFqdn, 'string');
     assert.strictEqual(typeof callback, 'function');
 
     maildb.get(domain, function (error, result) {
@@ -742,7 +757,7 @@ function setDnsRecords(domain, callback) {
         records.push(dkimRecord);
         if (result.enabled) {
             records.push({ subdomain: '_dmarc', domain: domain, type: 'TXT', values: [ '"v=DMARC1; p=reject; pct=100"' ] });
-            records.push({ subdomain: '', domain: domain, type: 'MX', values: [ '10 ' + config.mailFqdn() + '.' ] });
+            records.push({ subdomain: '', domain: domain, type: 'MX', values: [ '10 ' + mailFqdn + '.' ] });
         }
 
         debug('setDnsRecords: %j', records);
@@ -780,7 +795,7 @@ function addDomain(domain, callback) {
         if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
 
         async.series([
-            setDnsRecords.bind(null, domain), // do this first to ensure DKIM keys
+            setDnsRecords.bind(null, domain, config.mailFqdn()), // do this first to ensure DKIM keys
             restartMailIfActivated
         ], NOOP_CALLBACK); // do these asynchronously
 
