@@ -32,6 +32,7 @@ var assert = require('assert'),
     DomainsError = require('./domains.js').DomainsError,
     df = require('@sindresorhus/df'),
     fs = require('fs'),
+    mail = require('./mail.js'),
     mailer = require('./mailer.js'),
     os = require('os'),
     path = require('path'),
@@ -301,6 +302,8 @@ function setDashboardDomain(domain, callback) {
 
             clients.addDefaultClients(config.adminOrigin(), function (error) {
                 if (error) return callback(new CloudronError(CloudronError.INTERNAL_ERROR, error));
+
+                mail.setMailFqdn(fqdn, domain, NOOP_CALLBACK);
 
                 callback(null);
             });

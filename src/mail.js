@@ -11,6 +11,7 @@ exports = module.exports = {
     clearDomains: clearDomains,
 
     setDnsRecords: setDnsRecords,
+    setMailFqdn: setMailFqdn,
 
     validateName: validateName,
 
@@ -569,7 +570,6 @@ function configureMail(mailFqdn, mailDomain, callback) {
     const memoryLimit = 4 * 256;
     const cloudronToken = hat(8 * 128), relayToken = hat(8 * 128);
 
-    // admin and mail share the same certificate
     reverseProxy.getCertificate(mailFqdn, mailDomain, function (error, bundle) {
         if (error) return callback(error);
 
@@ -616,11 +616,6 @@ function configureMail(mailFqdn, mailDomain, callback) {
 
 function restartMail(callback) {
     assert.strictEqual(typeof callback, 'function');
-
-    // mail (note: 2525 is hardcoded in mail container and app use this port)
-    // MAIL_SERVER_NAME is the hostname of the mailserver i.e server uses these certs
-    // MAIL_DOMAIN is the domain for which this server is relaying mails
-    // mail container uses /app/data for backed up data and /run for restart-able data
 
     if (process.env.BOX_ENV === 'test' && !process.env.TEST_CREATE_INFRA) return callback();
 
@@ -796,6 +791,24 @@ function setDnsRecords(domain, mailFqdn, callback) {
 
                 callback(null);
             });
+        });
+    });
+}
+
+function setMailFqdn(mailFqdn, mailDomain, callback) {
+    assert.strictEqual(typeof mailFqdn, 'string');
+    assert.strictEqual(typeof mailDomain, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    domains.getAll(function (error, allDomains) {
+        if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
+
+        async.eachOfSeries(allDomains, function (domainObject, idx, iteratorDone) {
+            setDnsRecords(domainObject.domain, mailFqdn, iteratorDone);
+        }, function (error) {
+            if (error) return callback(new MailError(MailError.EXTERNAL_ERROR, error.message));
+
+            configureMail(mailFqdn, mailDomain, callback);
         });
     });
 }
