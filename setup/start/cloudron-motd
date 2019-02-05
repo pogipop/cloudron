@@ -1,13 +1,14 @@
 #!/bin/bash
 # motd hook to remind admins about updates
 
+printf "\t\t\tNOTE TO CLOUDRON ADMINS\n"
+printf "\t\t\t-----------------------\n"
+
 if [[ -z "$(ls -A /home/yellowtent/boxdata/mail/dkim)" ]]; then
-    printf '\e[1;32m%-6s\e[m\n' "Visit https://<IP> on your browser and accept the self-signed certificate to finish setup."
+    printf '\n\e[1;32m%-6s\e[m\n' "Visit https://<IP> on your browser and accept the self-signed certificate to finish setup."
     exit
 fi
 
-printf "\t\t\tNOTE TO CLOUDRON ADMINS\n"
-printf "\t\t\t-----------------------\n"
 printf "Please do not run apt upgrade manually as it will update packages that\n"
 printf "Cloudron relies on and may break your installation. Ubuntu security updates\n"
 printf "are automatically installed on this server every night.\n"
