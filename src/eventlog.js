@@ -99,9 +99,9 @@ function add(action, source, data, callback) {
 
     callback = callback || NOOP_CALLBACK;
 
-    var id = uuid.v4();
-
-    eventlogdb.add(id, action, source, data, function (error) {
+    // we do only daily upserts for login actions, so they don't spam the db
+    var api = action === exports.ACTION_USER_LOGIN ? eventlogdb.upsert : eventlogdb.add;
+    api(uuid.v4(), action, source, data, function (error, id) {
         if (error) return callback(new EventLogError(EventLogError.INTERNAL_ERROR, error));
 
         // decide if we want to add notifications as well
