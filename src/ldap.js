@@ -444,7 +444,7 @@ function authorizeUserForApp(req, res, next) {
         // we return no such object, to avoid leakage of a users existence
         if (!result) return next(new ldap.NoSuchObjectError(req.dn.toString()));
 
-        eventlog.add(eventlog.ACTION_USER_LOGIN, { authType: 'ldap', appId: req.app.id, app: req.app }, { userId: req.user.id, user: users.removePrivateFields(req.user) });
+        eventlog.add(eventlog.ACTION_USER_LOGIN, { authType: 'ldap', appId: req.app.id }, { userId: req.user.id, user: users.removePrivateFields(req.user) });
 
         res.end();
     });

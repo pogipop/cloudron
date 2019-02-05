@@ -44,10 +44,16 @@ var apps = require('../apps.js'),
     util = require('util'),
     _ = require('underscore');
 
-// appObject is optional here
-function auditSource(req, appId, appObject) {
-    var ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress || null;
-    return { authType: 'oauth', ip: ip, appId: appId, app: appObject };
+// appId is optional here
+function auditSource(req, appId) {
+    var tmp = {
+        authType: 'oauth',
+        ip: req.headers['x-forwarded-for'] || req.connection.remoteAddress || null
+    };
+
+    if (appId) tmp.appId = appId;
+
+    return tmp;
 }
 
 var gServer = null;
@@ -484,7 +490,7 @@ function authorization() {
                     if (error) return sendError(req, res, 'Internal error');
                     if (!access) return sendErrorPageOrRedirect(req, res, 'No access to this app.');
 
-                    eventlog.add(eventlog.ACTION_USER_LOGIN, auditSource(req, appObject.id, appObject), { userId: req.oauth2.user.id, user: users.removePrivateFields(req.oauth2.user) });
+                    eventlog.add(eventlog.ACTION_USER_LOGIN, auditSource(req, appObject.id), { userId: req.oauth2.user.id, user: users.removePrivateFields(req.oauth2.user) });
 
                     next();
                 });

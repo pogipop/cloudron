@@ -115,8 +115,8 @@ function upsert(id, action, source, data, callback) {
 
     // can't do a real sql upsert, for frequent eventlog entries we only have to do 2 queries once a day
     var queries = [{
-        query: 'UPDATE eventlog SET creationTime=NOW(), data="?" WHERE action = ? AND source LIKE ? AND DATE(creationTime)=CURDATE()',
-        args: [ data, action, JSON.stringify(source) ]
+        query: 'UPDATE eventlog SET creationTime=NOW(), data=? WHERE action = ? AND source LIKE ? AND DATE(creationTime)=CURDATE()',
+        args: [ JSON.stringify(data), action, JSON.stringify(source) ]
     }, {
         query: 'SELECT * FROM eventlog WHERE action = ? AND source LIKE ? AND DATE(creationTime)=CURDATE()',
         args: [ action, JSON.stringify(source) ]
