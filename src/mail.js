@@ -743,7 +743,7 @@ function readDkimPublicKeySync(domain) {
     return publicKey;
 }
 
-function setDnsRecords(domain, mailFqdn, callback) {
+function upsertDnsRecords(domain, mailFqdn, callback) {
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof mailFqdn, 'string');
     assert.strictEqual(typeof callback, 'function');
@@ -770,29 +770,36 @@ function setDnsRecords(domain, mailFqdn, callback) {
             records.push({ subdomain: '', domain: domain, type: 'MX', values: [ '10 ' + mailFqdn + '.' ] });
         }
 
-        debug('setDnsRecords: %j', records);
+        debug('upsertDnsRecords: %j', records);
 
         txtRecordsWithSpf(domain, mailFqdn, function (error, txtRecords) {
             if (error) return callback(error);
 
             if (txtRecords) records.push({ subdomain: '', domain: domain, type: 'TXT', values: txtRecords });
 
-            debug('setDnsRecords: will update %j', records);
+            debug('upsertDnsRecords: will update %j', records);
 
             async.mapSeries(records, function (record, iteratorCallback) {
                 domains.upsertDnsRecords(record.subdomain, record.domain, record.type, record.values, iteratorCallback);
             }, function (error, changeIds) {
                 if (error) {
-                    debug(`setDnsRecords: failed to update: ${error}`);
+                    debug(`upsertDnsRecords: failed to update: ${error}`);
                     return callback(new MailError(MailError.EXTERNAL_ERROR, error.message));
                 }
 
-                debug('setDnsRecords: records %j added with changeIds %j', records, changeIds);
+                debug('upsertDnsRecords: records %j added with changeIds %j', records, changeIds);
 
                 callback(null);
             });
         });
     });
+}
+
+function setDnsRecords(domain, callback) {
+    assert.strictEqual(typeof domain, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    upsertDnsRecords(domain, config.mailFqdn(), callback);
 }
 
 function setMailFqdn(mailFqdn, mailDomain, callback) {
@@ -804,7 +811,7 @@ function setMailFqdn(mailFqdn, mailDomain, callback) {
         if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
 
         async.eachOfSeries(allDomains, function (domainObject, idx, iteratorDone) {
-            setDnsRecords(domainObject.domain, mailFqdn, iteratorDone);
+            upsertDnsRecords(domainObject.domain, mailFqdn, iteratorDone);
         }, function (error) {
             if (error) return callback(new MailError(MailError.EXTERNAL_ERROR, error.message));
 
@@ -823,7 +830,7 @@ function addDomain(domain, callback) {
         if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
 
         async.series([
-            setDnsRecords.bind(null, domain, config.mailFqdn()), // do this first to ensure DKIM keys
+            upsertDnsRecords.bind(null, domain, config.mailFqdn()), // do this first to ensure DKIM keys
             restartMailIfActivated
         ], NOOP_CALLBACK); // do these asynchronously
 
