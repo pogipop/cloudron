@@ -5,6 +5,7 @@ exports = module.exports = {
     getAllPaged: getAllPaged,
     getByCreationTime: getByCreationTime,
     add: add,
+    upsert: upsert,
     count: count,
     delByCreationTime: delByCreationTime,
 
@@ -100,7 +101,33 @@ function add(id, action, source, data, callback) {
         if (error && error.code === 'ER_DUP_ENTRY') return callback(new DatabaseError(DatabaseError.ALREADY_EXISTS, error));
         if (error || result.affectedRows !== 1) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
 
-        callback(null);
+        callback(null, id);
+    });
+}
+
+// id is only used if we didn't do an update but insert instead
+function upsert(id, action, source, data, callback) {
+    assert.strictEqual(typeof id, 'string');
+    assert.strictEqual(typeof action, 'string');
+    assert.strictEqual(typeof source, 'object');
+    assert.strictEqual(typeof data, 'object');
+    assert.strictEqual(typeof callback, 'function');
+
+    // can't do a real sql upsert, for frequent eventlog entries we only have to do 2 queries once a day
+    var queries = [{
+        query: 'UPDATE eventlog SET creationTime=NOW(), data="?" WHERE action = ? AND source LIKE ? AND DATE(creationTime)=CURDATE()',
+        args: [ data, action, JSON.stringify(source) ]
+    }, {
+        query: 'SELECT * FROM eventlog WHERE action = ? AND source LIKE ? AND DATE(creationTime)=CURDATE()',
+        args: [ action, JSON.stringify(source) ]
+    }];
+
+    database.transaction(queries, function (error, result) {
+        if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
+        if (result[0].affectedRows >= 1) return callback(null, result[1][0].id);
+
+        // no existing eventlog found, create one
+        add(id, action, source, data, callback);
     });
 }
 

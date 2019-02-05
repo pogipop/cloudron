@@ -1675,8 +1675,9 @@ describe('database', function () {
     describe('eventlog', function () {
 
         it('add succeeds', function (done) {
-            eventlogdb.add('someid', 'some.event', { ip: '1.2.3.4' }, { appId: 'thatapp' }, function (error) {
+            eventlogdb.add('someid', 'some.event', { ip: '1.2.3.4' }, { appId: 'thatapp' }, function (error, result) {
                 expect(error).to.be(null);
+                expect(result).to.equal('someid');
                 done();
             });
         });
@@ -1746,6 +1747,39 @@ describe('database', function () {
                 expect(results[0].data).to.be.eql({ appId: 'thatapp' });
 
                 done();
+            });
+        });
+
+        it('upsert with no existing entry succeeds', function (done) {
+            eventlogdb.upsert('logineventid', 'user.login', { ip: '1.2.3.4' }, { appId: 'thatapp' }, function (error, result) {
+                expect(error).to.be(null);
+                expect(result).to.equal('logineventid');
+
+                done();
+            });
+        });
+
+        it('upsert with existing entry succeeds', function (done) {
+            eventlogdb.get('logineventid', function (error, result) {
+                expect(error).to.equal(null);
+
+                var oldCreationTime = result.creationTime;
+
+                // now wait 2sec
+                setTimeout(function () {
+                    eventlogdb.upsert('logineventid_notused', 'user.login', { ip: '1.2.3.4' }, { appId: 'thatapp' }, function (error, result) {
+                        expect(error).to.be(null);
+                        expect(result).to.equal('logineventid');
+
+                        eventlogdb.get('logineventid', function (error, result) {
+                            expect(error).to.equal(null);
+                            // should have changed
+                            expect(oldCreationTime).to.not.equal(result.creationTime);
+
+                            done();
+                        });
+                    });
+                }, 2000);
             });
         });
 
