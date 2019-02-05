@@ -30,6 +30,8 @@ exports = module.exports = {
     ACTION_CERTIFICATE_NEW: 'certificate.new',
     ACTION_CERTIFICATE_RENEWAL: 'certificate.renew',
 
+    ACTION_DASHBOARD_DOMAIN_UPDATE: 'dashboard.domain.update',
+
     ACTION_DOMAIN_ADD: 'domain.add',
     ACTION_DOMAIN_UPDATE: 'domain.update',
     ACTION_DOMAIN_REMOVE: 'domain.remove',

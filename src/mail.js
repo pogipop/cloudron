@@ -772,7 +772,7 @@ function setDnsRecords(domain, mailFqdn, callback) {
 
         debug('setDnsRecords: %j', records);
 
-        txtRecordsWithSpf(domain, function (error, txtRecords) {
+        txtRecordsWithSpf(domain, mailFqdn, function (error, txtRecords) {
             if (error) return callback(error);
 
             if (txtRecords) records.push({ subdomain: '', domain: domain, type: 'TXT', values: txtRecords });

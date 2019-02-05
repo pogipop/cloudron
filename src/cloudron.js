@@ -31,6 +31,7 @@ var assert = require('assert'),
     domains = require('./domains.js'),
     DomainsError = require('./domains.js').DomainsError,
     df = require('@sindresorhus/df'),
+    eventlog = require('./eventlog.js'),
     fs = require('fs'),
     mail = require('./mail.js'),
     mailer = require('./mailer.js'),
@@ -281,8 +282,9 @@ function prepareDashboardDomain(domain, auditSource, callback) {
     task.on('start', (taskId) => callback(null, taskId));
 }
 
-function setDashboardDomain(domain, callback) {
+function setDashboardDomain(domain, auditSource, callback) {
     assert.strictEqual(typeof domain, 'string');
+    assert.strictEqual(typeof auditSource, 'object');
     assert.strictEqual(typeof callback, 'function');
 
     debug(`setDashboardDomain: ${domain}`);
@@ -302,6 +304,8 @@ function setDashboardDomain(domain, callback) {
 
             clients.addDefaultClients(config.adminOrigin(), function (error) {
                 if (error) return callback(new CloudronError(CloudronError.INTERNAL_ERROR, error));
+
+                eventlog.add(eventlog.ACTION_DASHBOARD_DOMAIN_UPDATE, auditSource, { domain: domain, fqdn: fqdn });
 
                 mail.setMailFqdn(fqdn, domain, NOOP_CALLBACK);
 
