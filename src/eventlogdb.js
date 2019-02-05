@@ -20,7 +20,7 @@ var assert = require('assert'),
     safe = require('safetydance'),
     util = require('util');
 
-var EVENTLOGS_FIELDS = [ 'id', 'action', 'source', 'data', 'creationTime' ].join(',');
+var EVENTLOG_FIELDS = [ 'id', 'action', 'source', 'data', 'creationTime' ].join(',');
 
 function postProcess(eventLog) {
     // usually we have sourceJson and dataJson, however since this used to be the JSON data type, we don't
@@ -34,7 +34,7 @@ function get(eventId, callback) {
     assert.strictEqual(typeof eventId, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    database.query('SELECT ' + EVENTLOGS_FIELDS + ' FROM eventlog WHERE id = ?', [ eventId ], function (error, result) {
+    database.query('SELECT ' + EVENTLOG_FIELDS + ' FROM eventlog WHERE id = ?', [ eventId ], function (error, result) {
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
         if (result.length === 0) return callback(new DatabaseError(DatabaseError.NOT_FOUND));
 
@@ -50,7 +50,7 @@ function getAllPaged(actions, search, page, perPage, callback) {
     assert.strictEqual(typeof callback, 'function');
 
     var data = [];
-    var query = 'SELECT ' + EVENTLOGS_FIELDS + ' FROM eventlog';
+    var query = 'SELECT ' + EVENTLOG_FIELDS + ' FROM eventlog';
 
     if (actions.length || search) query += ' WHERE';
     if (search) query += ' (source LIKE ' + mysql.escape('%' + search + '%') + ' OR data LIKE ' + mysql.escape('%' + search + '%') + ')';
@@ -80,7 +80,7 @@ function getByCreationTime(creationTime, callback) {
     assert(util.isDate(creationTime));
     assert.strictEqual(typeof callback, 'function');
 
-    var query = 'SELECT ' + EVENTLOGS_FIELDS + ' FROM eventlog WHERE creationTime >= ? ORDER BY creationTime DESC';
+    var query = 'SELECT ' + EVENTLOG_FIELDS + ' FROM eventlog WHERE creationTime >= ? ORDER BY creationTime DESC';
     database.query(query, [ creationTime ], function (error, results) {
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
 
@@ -118,7 +118,7 @@ function upsert(id, action, source, data, callback) {
         query: 'UPDATE eventlog SET creationTime=NOW(), data=? WHERE action = ? AND source LIKE ? AND DATE(creationTime)=CURDATE()',
         args: [ JSON.stringify(data), action, JSON.stringify(source) ]
     }, {
-        query: 'SELECT * FROM eventlog WHERE action = ? AND source LIKE ? AND DATE(creationTime)=CURDATE()',
+        query: 'SELECT ' + EVENTLOG_FIELDS + ' FROM eventlog WHERE action = ? AND source LIKE ? AND DATE(creationTime)=CURDATE()',
         args: [ action, JSON.stringify(source) ]
     }];
 
