@@ -1783,6 +1783,22 @@ describe('database', function () {
             });
         });
 
+        it('upsert with existing old entry succeeds', function (done) {
+            var yesterday = new Date();
+            yesterday.setDate(yesterday.getDate() - 1);
+
+            database.query('INSERT INTO eventlog (id, action, source, data, creationTime) VALUES (?, ?, ?, ?, ?)', [ 'anotherid', 'user.login2', JSON.stringify({ ip: '1.2.3.4' }), JSON.stringify({ appId: 'thatapp' }), yesterday ], function (error, result) {
+                expect(error).to.equal(null);
+
+                eventlogdb.upsert('anotherid_new', 'user.login2', { ip: '1.2.3.4' }, { appId: 'thatapp' }, function (error, result) {
+                    expect(error).to.be(null);
+                    expect(result).to.equal('anotherid_new');
+
+                    done();
+                });
+            });
+        });
+
         it('delByCreationTime succeeds', function (done) {
             async.each([ 'persistent.event', 'transient.event', 'anothertransient.event', 'anotherpersistent.event' ], function (e, callback) {
                 eventlogdb.add('someid' + Math.random(), e, { ip: '1.2.3.4' }, { appId: 'thatapp' }, callback);
