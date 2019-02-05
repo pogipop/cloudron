@@ -555,20 +555,22 @@ function createMailConfig(mailFqdn, callback) {
     });
 }
 
-function restartMail(callback) {
+function configureMail(mailFqdn, mailDomain, callback) {
+    assert.strictEqual(typeof mailFqdn, 'string');
+    assert.strictEqual(typeof mailDomain, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
     // mail (note: 2525 is hardcoded in mail container and app use this port)
     // MAIL_SERVER_NAME is the hostname of the mailserver i.e server uses these certs
     // MAIL_DOMAIN is the domain for which this server is relaying mails
     // mail container uses /app/data for backed up data and /run for restart-able data
-
-    if (process.env.BOX_ENV === 'test' && !process.env.TEST_CREATE_INFRA) return callback();
 
     const tag = infra.images.mail.tag;
     const memoryLimit = 4 * 256;
     const cloudronToken = hat(8 * 128), relayToken = hat(8 * 128);
 
     // admin and mail share the same certificate
-    reverseProxy.getCertificate(config.adminFqdn(), config.adminDomain(), function (error, bundle) {
+    reverseProxy.getCertificate(mailFqdn, mailDomain, function (error, bundle) {
         if (error) return callback(error);
 
         // the setup script copies dhparams.pem to /addons/mail
@@ -581,7 +583,7 @@ function restartMail(callback) {
         shell.exec('startMail', 'docker rm -f mail || true', function (error) {
             if (error) return callback(error);
 
-            createMailConfig(config.mailFqdn(), function (error, allowInbound) {
+            createMailConfig(mailFqdn, function (error, allowInbound) {
                 if (error) return callback(error);
 
                 var ports = allowInbound ? '-p 587:2525 -p 993:9993 -p 4190:4190 -p 25:2525' : '';
@@ -610,6 +612,19 @@ function restartMail(callback) {
             });
         });
     });
+}
+
+function restartMail(callback) {
+    assert.strictEqual(typeof callback, 'function');
+
+    // mail (note: 2525 is hardcoded in mail container and app use this port)
+    // MAIL_SERVER_NAME is the hostname of the mailserver i.e server uses these certs
+    // MAIL_DOMAIN is the domain for which this server is relaying mails
+    // mail container uses /app/data for backed up data and /run for restart-able data
+
+    if (process.env.BOX_ENV === 'test' && !process.env.TEST_CREATE_INFRA) return callback();
+
+    configureMail(config.mailFqdn(), config.adminDomain(), callback);
 }
 
 function restartMailIfActivated(callback) {
