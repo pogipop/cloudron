@@ -56,7 +56,7 @@ NotificationsError.NOT_FOUND = 'Not Found';
 
 function add(userId, eventId, title, message, action, callback) {
     assert.strictEqual(typeof userId, 'string');
-    assert.strictEqual(typeof eventId, 'string');
+    assert(typeof eventId === 'string' || eventId === null);
     assert.strictEqual(typeof title, 'string');
     assert.strictEqual(typeof message, 'string');
     assert.strictEqual(typeof action, 'string');
@@ -80,7 +80,7 @@ function add(userId, eventId, title, message, action, callback) {
 
 function upsert(userId, eventId, title, message, action, callback) {
     assert.strictEqual(typeof userId, 'string');
-    assert.strictEqual(typeof eventId, 'string');
+    assert(typeof eventId === 'string' || eventId === null);
     assert.strictEqual(typeof title, 'string');
     assert.strictEqual(typeof message, 'string');
     assert.strictEqual(typeof action, 'string');
