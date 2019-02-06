@@ -276,6 +276,7 @@ function checkMailStatus(callback) {
             if (error || erroredDomainObjects.length === 0) return callback(error);
 
             const erroredDomains = erroredDomainObjects.map((d) => d.domain);
+            debug(`checkMailStatus: ${erroredDomains.join(',')} failed status checks`);
             if (erroredDomains.length) notifications.mailStatusWarning(`Email status check of one or more domains failed - ${erroredDomains.join(',')}`);
 
             callback();

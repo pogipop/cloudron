@@ -473,10 +473,13 @@ function getStatus(domain, callback) {
     getDomain(domain, function (error, result) {
         if (error) return callback(error);
 
-        var checks = [
-            recordResult('dns.mx', checkMx.bind(null, domain, mailFqdn)),
-            recordResult('dns.dmarc', checkDmarc.bind(null, domain))
-        ];
+        let checks = [];
+        if (result.enabled) {
+            checks.push(
+                recordResult('dns.mx', checkMx.bind(null, domain, mailFqdn)),
+                recordResult('dns.dmarc', checkDmarc.bind(null, domain))
+            );
+        }
 
         if (result.relay.provider === 'cloudron-smtp') {
             // these tests currently only make sense when using Cloudron's SMTP server at this point

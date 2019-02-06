@@ -286,7 +286,7 @@ function mailStatusWarning(message) {
     assert.strictEqual(typeof message, 'string');
 
     actionForAllAdmins([], function (admin, callback) {
-        upsert(admin.id, null, 'Mail Status', message, '/#/mail', callback);
+        upsert(admin.id, null, 'Mail Status', message, '/#/email', callback);
     }, function (error) {
         if (error) console.error(error);
     });
