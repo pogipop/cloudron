@@ -30,7 +30,7 @@ describe('Cloudron', function () {
     after(cleanup);
 
     it('can check for disk space', function (done) {
-        cloudron.checkDiskSpace(function (error) {
+        cloudron._checkDiskSpace(function (error) {
             expect(!error).to.be.ok();
             done();
         });

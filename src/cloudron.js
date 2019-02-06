@@ -19,8 +19,9 @@ exports = module.exports = {
     renewCerts: renewCerts,
 
     systemChecks: systemChecks,
-    checkBackupConfiguration: checkBackupConfiguration,
-    checkDiskSpace: checkDiskSpace
+
+    // exposed for testing
+    _checkDiskSpace: checkDiskSpace
 };
 
 var assert = require('assert'),
