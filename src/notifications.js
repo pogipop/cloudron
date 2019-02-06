@@ -296,7 +296,6 @@ function diskSpaceWarning(message) {
     assert.strictEqual(typeof message, 'string');
 
     actionForAllAdmins([], function (admin, callback) {
-        mailer.outOfDiskSpace(admin.email, message);
         upsert(admin.id, null, 'Out of Disk Space', message, '/#/graphs', callback);
     }, function (error) {
         if (error) console.error(error);

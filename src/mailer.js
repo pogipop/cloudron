@@ -15,7 +15,6 @@ exports = module.exports = {
     appDied: appDied,
     oomEvent: oomEvent,
 
-    outOfDiskSpace: outOfDiskSpace,
     backupFailed: backupFailed,
 
     certificateRenewalError: certificateRenewalError,
@@ -32,7 +31,6 @@ var assert = require('assert'),
     debug = require('debug')('box:mailer'),
     docker = require('./docker.js').connection,
     ejs = require('ejs'),
-    mail = require('./mail.js'),
     nodemailer = require('nodemailer'),
     path = require('path'),
     safe = require('safetydance'),
@@ -437,24 +435,6 @@ function sendDigest(info) {
         };
 
         enqueue(mailOptions);
-    });
-}
-
-function outOfDiskSpace(mailTo, message) {
-    assert.strictEqual(typeof mailTo, 'string');
-    assert.strictEqual(typeof message, 'string');
-
-    getMailConfig(function (error, mailConfig) {
-        if (error) return debug('Error getting mail details:', error);
-
-        var mailOptions = {
-            from: mailConfig.notificationFrom,
-            to: mailTo,
-            subject: util.format('[%s] Out of disk space alert', mailConfig.cloudronName),
-            text: render('out_of_disk_space.ejs', { cloudronName: mailConfig.cloudronName, message: message, format: 'text' })
-        };
-
-        sendMails([ mailOptions ]);
     });
 }
 
