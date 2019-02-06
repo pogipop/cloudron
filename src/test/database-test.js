@@ -163,6 +163,14 @@ describe('database', function () {
             action: 'usually a url'
         };
 
+        var NOTIFICATION_3 = {
+            userId: USER_0.id,
+            eventId: null,
+            title: 'third one',
+            message: 'some message there',
+            action: 'usually a url'
+        };
+
         before(function (done) {
             async.series([
                 userdb.add.bind(null, USER_0.id, USER_0),
@@ -282,6 +290,14 @@ describe('database', function () {
             notificationdb.del('doesnotexts', function (error) {
                 expect(error).to.be.a(DatabaseError);
                 expect(error.reason).to.equal(DatabaseError.NOT_FOUND);
+
+                done();
+            });
+        });
+
+        it('can add notification without eventId', function (done) {
+            notificationdb.add(NOTIFICATION_3, function (error) {
+                expect(error).to.equal(null);
 
                 done();
             });

@@ -215,14 +215,13 @@ CREATE TABLE IF NOT EXISTS tasks(
 CREATE TABLE IF NOT EXISTS notifications(
     id int NOT NULL AUTO_INCREMENT,
     userId VARCHAR(128) NOT NULL,
-    eventId VARCHAR(128) NOT NULL,
+    eventId VARCHAR(128),
     title VARCHAR(512) NOT NULL,
     message TEXT,
     action VARCHAR(512) NOT NULL,
     acknowledged BOOLEAN DEFAULT false,
     creationTime TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-    FOREIGN KEY (eventId) REFERENCES eventlog(id),
     PRIMARY KEY (id)
 );
 
