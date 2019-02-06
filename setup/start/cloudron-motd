@@ -1,22 +1,25 @@
 #!/bin/bash
-# motd hook to remind admins about updates
-
-printf "\t\t\tNOTE TO CLOUDRON ADMINS\n"
-printf "\t\t\t-----------------------\n"
 
 if [[ -z "$(ls -A /home/yellowtent/boxdata/mail/dkim)" ]]; then
-    printf '\n\e[1;32m%-6s\e[m\n' "Visit https://<IP> on your browser and accept the self-signed certificate to finish setup."
-    exit
+    printf "\t\t\tWELCOME TO CLOUDRON\n"
+    printf "\t\t\t-------------------\n"
+
+    printf '\n* \e[1;32m%-6s\e[m\n' "Visit https://<IP> on your browser and accept the self-signed certificate to finish setup."
+    printf "* Cloudron overview - https://cloudron.io/documentation/ \n"
+    printf "* Cloudron setup - https://cloudron.io/documentation/installation/ \n"
+else
+    printf "\t\t\tNOTE TO CLOUDRON ADMINS\n"
+    printf "\t\t\t-----------------------\n"
+    printf "Please do not run apt upgrade manually as it will update packages that\n"
+    printf "Cloudron relies on and may break your installation. Ubuntu security updates\n"
+    printf "are automatically installed on this server every night.\n"
+    printf "\n"
+    printf "Read more at https://cloudron.io/documentation/security/#os-updates\n"
+
+    if grep -q "^PasswordAuthentication yes" /etc/ssh/sshd_config; then
+        printf "\nPlease disable password based SSH access to secure your server. Read more at\n"
+        printf "https://cloudron.io/documentation/security/#securing-ssh-access\n"
+    fi
 fi
 
-printf "Please do not run apt upgrade manually as it will update packages that\n"
-printf "Cloudron relies on and may break your installation. Ubuntu security updates\n"
-printf "are automatically installed on this server every night.\n"
-printf "\n"
-printf "Read more at https://cloudron.io/documentation/security/#os-updates\n"
-
-if grep -q "^PasswordAuthentication yes" /etc/ssh/sshd_config; then
-    printf "\nPlease disable password based SSH access to secure your server. Read more at\n"
-    printf "https://cloudron.io/documentation/security/#securing-ssh-access\n"
-fi
-
+printf "\nFor help and more information, visit https://forum.cloudron.io\n\n"
