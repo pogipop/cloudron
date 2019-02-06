@@ -440,7 +440,8 @@ function sendDigest(info) {
     });
 }
 
-function outOfDiskSpace(message) {
+function outOfDiskSpace(mailTo, message) {
+    assert.strictEqual(typeof mailTo, 'string');
     assert.strictEqual(typeof message, 'string');
 
     getMailConfig(function (error, mailConfig) {
@@ -448,7 +449,7 @@ function outOfDiskSpace(message) {
 
         var mailOptions = {
             from: mailConfig.notificationFrom,
-            to: config.provider() === 'caas' ? 'support@cloudron.io' : mailConfig.adminEmails.join(', '),
+            to: mailTo,
             subject: util.format('[%s] Out of disk space alert', mailConfig.cloudronName),
             text: render('out_of_disk_space.ejs', { cloudronName: mailConfig.cloudronName, message: message, format: 'text' })
         };

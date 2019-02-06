@@ -18,6 +18,8 @@ exports = module.exports = {
     setDashboardDomain: setDashboardDomain,
     renewCerts: renewCerts,
 
+    systemChecks: systemChecks,
+    checkBackupConfiguration: checkBackupConfiguration,
     checkDiskSpace: checkDiskSpace
 };
 
@@ -35,6 +37,7 @@ var assert = require('assert'),
     fs = require('fs'),
     mail = require('./mail.js'),
     mailer = require('./mailer.js'),
+    notifications = require('./notifications.js'),
     os = require('os'),
     path = require('path'),
     paths = require('./paths.js'),
@@ -183,8 +186,34 @@ function isRebootRequired(callback) {
     callback(null, fs.existsSync('/var/run/reboot-required'));
 }
 
+// called from cron.js
+function systemChecks() {
+    async.parallel([
+        checkBackupConfiguration,
+        checkDiskSpace
+    ], function () {
+        debug('systemChecks: done');
+    });
+}
+
+function checkBackupConfiguration(callback) {
+    assert.strictEqual(typeof callback, 'function');
+
+    debug('Checking backup configuration');
+
+    settings.getBackupConfig(function (error, backupConfig) {
+        if (error) return console.error(error);
+
+        if (backupConfig.provider === 'noop') {
+            notifications.backupConfigWarning('Cloudron backups are disabled. Please ensure this server is backed up using alternate means.');
+        } else if (backupConfig.provider === 'filesystem' && !backupConfig.externalDisk) {
+            notifications.backupConfigWarning('Cloudron backups are currently on the same disk as the Cloudron server instance. This is dangerous and can lead to complete data loss if the disk fails.');
+        }
+    });
+}
+
 function checkDiskSpace(callback) {
-    callback = callback || NOOP_CALLBACK;
+    assert.strictEqual(typeof callback, 'function');
 
     debug('Checking disk space');
 
@@ -214,13 +243,12 @@ function checkDiskSpace(callback) {
 
             debug('Disk space checked. ok: %s', !oos);
 
-            if (oos) mailer.outOfDiskSpace(JSON.stringify(entries, null, 4));
+            if (oos) notifications.diskSpaceWarning(JSON.stringify(entries, null, 4));
 
             callback();
         }).catch(function (error) {
-            debug('df error %s', error.message);
-            mailer.outOfDiskSpace(error.message);
-            return callback();
+            if (error) console.error(error);
+            callback();
         });
     });
 }

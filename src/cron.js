@@ -35,7 +35,7 @@ var gJobs = {
     backup: null,
     boxUpdateChecker: null,
     caasHeartbeat: null,
-    checkDiskSpace: null,
+    systemChecks: null,
     certificateRenew: null,
     cleanupBackups: null,
     cleanupEventlog: null,
@@ -115,10 +115,10 @@ function recreateJobs(tz) {
         timeZone: tz
     });
 
-    if (gJobs.checkDiskSpace) gJobs.checkDiskSpace.stop();
-    gJobs.checkDiskSpace = new CronJob({
-        cronTime: '00 30 */4 * * *', // every 4 hours
-        onTick: cloudron.checkDiskSpace,
+    if (gJobs.systemChecks) gJobs.systemChecks.stop();
+    gJobs.systemChecks = new CronJob({
+        cronTime: '00 30 * * * *', // every hour
+        onTick: cloudron.systemChecks,
         start: true,
         timeZone: tz
     });
