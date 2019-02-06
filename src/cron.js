@@ -118,8 +118,9 @@ function recreateJobs(tz) {
     if (gJobs.systemChecks) gJobs.systemChecks.stop();
     gJobs.systemChecks = new CronJob({
         cronTime: '00 30 * * * *', // every hour
-        onTick: cloudron.systemChecks,
+        onTick: cloudron.runSystemChecks,
         start: true,
+        runOnInit: true, // run system check immediately
         timeZone: tz
     });
 

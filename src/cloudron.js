@@ -18,7 +18,7 @@ exports = module.exports = {
     setDashboardDomain: setDashboardDomain,
     renewCerts: renewCerts,
 
-    systemChecks: systemChecks,
+    runSystemChecks: runSystemChecks,
 
     // exposed for testing
     _checkDiskSpace: checkDiskSpace
@@ -188,12 +188,12 @@ function isRebootRequired(callback) {
 }
 
 // called from cron.js
-function systemChecks() {
+function runSystemChecks() {
     async.parallel([
         checkBackupConfiguration,
         checkDiskSpace
     ], function () {
-        debug('systemChecks: done');
+        debug('runSystemChecks: done');
     });
 }
 
