@@ -4,6 +4,7 @@ exports = module.exports = {
     NotificationsError: NotificationsError,
 
     add: add,
+    upsert: upsert,
     get: get,
     ack: ack,
     getAllPaged: getAllPaged,
@@ -15,7 +16,9 @@ exports = module.exports = {
     oomEvent: oomEvent,
     appDied: appDied,
     processCrash: processCrash,
-    apptaskCrash: apptaskCrash
+    apptaskCrash: apptaskCrash,
+    backupConfigWarning: backupConfigWarning,
+    diskSpaceWarning: diskSpaceWarning
 };
 
 var assert = require('assert'),
@@ -62,6 +65,30 @@ function add(userId, eventId, title, message, action, callback) {
     debug('add: ', userId, title, action);
 
     notificationdb.add({
+        userId: userId,
+        eventId: eventId,
+        title: title,
+        message: message,
+        action: action
+    }, function (error, result) {
+        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new NotificationsError(NotificationsError.NOT_FOUND, error.message));
+        if (error) return callback(new NotificationsError(NotificationsError.INTERNAL_ERROR, error));
+
+        callback(null, { id: result });
+    });
+}
+
+function upsert(userId, eventId, title, message, action, callback) {
+    assert.strictEqual(typeof userId, 'string');
+    assert.strictEqual(typeof eventId, 'string');
+    assert.strictEqual(typeof title, 'string');
+    assert.strictEqual(typeof message, 'string');
+    assert.strictEqual(typeof action, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    debug('upsert: ', userId, title, action);
+
+    notificationdb.upsert({
         userId: userId,
         eventId: eventId,
         title: title,
@@ -239,6 +266,27 @@ function apptaskCrash(eventId, appId, crashLogFile) {
     actionForAllAdmins([], function (admin, callback) {
         mailer.unexpectedExit(admin.email, subject, crashLogs);
         add(admin.id, eventId, subject, 'Detailed logs have been sent to your email address.', '/#/system', callback);
+    }, function (error) {
+        if (error) console.error(error);
+    });
+}
+
+function backupConfigWarning(message) {
+    assert.strictEqual(typeof message, 'string');
+
+    actionForAllAdmins([], function (admin, callback) {
+        upsert(admin.id, null, 'Backup Configuration', message, '/#/backups', callback);
+    }, function (error) {
+        if (error) console.error(error);
+    });
+}
+
+function diskSpaceWarning(message) {
+    assert.strictEqual(typeof message, 'string');
+
+    actionForAllAdmins([], function (admin, callback) {
+        mailer.outOfDiskSpace(admin.email, message);
+        upsert(admin.id, null, 'Out of Disk Space', message, '/#/graphs', callback);
     }, function (error) {
         if (error) console.error(error);
     });
