@@ -8,6 +8,7 @@ var assert = require('assert'),
     eventlog = require('./eventlog.js'),
     safe = require('safetydance'),
     path = require('path'),
+    paths = require('./paths.js'),
     util = require('util');
 
 var COLLECT_LOGS_CMD = path.join(__dirname, 'scripts/collectlogs.sh');
@@ -24,6 +25,11 @@ function collectLogs(unitName, callback) {
     if (!logs) return callback(safe.error);
 
     logs = logs + '\n\n=====================================\n\n';
+
+    // special case for box since the real logs are at path.join(paths.LOG_DIR, 'box.log')
+    if (unitName === 'box.service') {
+        logs += safe.child_process.execSync('tail --lines=500 ' + path.join(paths.LOG_DIR, 'box.log'), { encoding: 'utf8' });
+    }
 
     callback(null, logs);
 }
