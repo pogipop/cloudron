@@ -18,7 +18,8 @@ exports = module.exports = {
     processCrash: processCrash,
     apptaskCrash: apptaskCrash,
     backupConfigWarning: backupConfigWarning,
-    diskSpaceWarning: diskSpaceWarning
+    diskSpaceWarning: diskSpaceWarning,
+    mailStatusWarning: mailStatusWarning
 };
 
 var assert = require('assert'),
@@ -276,6 +277,16 @@ function backupConfigWarning(message) {
 
     actionForAllAdmins([], function (admin, callback) {
         upsert(admin.id, null, 'Backup Configuration', message, '/#/backups', callback);
+    }, function (error) {
+        if (error) console.error(error);
+    });
+}
+
+function mailStatusWarning(message) {
+    assert.strictEqual(typeof message, 'string');
+
+    actionForAllAdmins([], function (admin, callback) {
+        upsert(admin.id, null, 'Mail Status', message, '/#/mail', callback);
     }, function (error) {
         if (error) console.error(error);
     });

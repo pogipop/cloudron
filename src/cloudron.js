@@ -37,7 +37,6 @@ var assert = require('assert'),
     eventlog = require('./eventlog.js'),
     fs = require('fs'),
     mail = require('./mail.js'),
-    mailer = require('./mailer.js'),
     notifications = require('./notifications.js'),
     os = require('os'),
     path = require('path'),
@@ -191,7 +190,8 @@ function isRebootRequired(callback) {
 function runSystemChecks() {
     async.parallel([
         checkBackupConfiguration,
-        checkDiskSpace
+        checkDiskSpace,
+        checkMailStatus
     ], function () {
         debug('runSystemChecks: done');
     });
@@ -249,6 +249,35 @@ function checkDiskSpace(callback) {
             callback();
         }).catch(function (error) {
             if (error) console.error(error);
+            callback();
+        });
+    });
+}
+
+function checkMailStatus(callback) {
+    assert.strictEqual(typeof callback, 'function');
+
+    debug('checking mail status');
+
+    domains.getAll(function (error, allDomains) {
+        if (error) return callback(error);
+
+        async.filterSeries(allDomains, function (domainObject, iteratorCallback) {
+            mail.getStatus(config.adminDomain(), function (error, result) {
+                if (error) return iteratorCallback(null, true);
+
+                let mailError = Object.keys(result.dns).some((record) => !result.dns[record].status);
+                if (result.rbl && !result.rbl.status) mailError = true;
+                if (result.relay && !result.relay.status) mailError = true;
+
+                iteratorCallback(null, mailError);
+            });
+        }, function (error, erroredDomainObjects) {
+            if (error || erroredDomainObjects.length === 0) return callback(error);
+
+            const erroredDomains = erroredDomainObjects.map((d) => d.domain);
+            if (erroredDomains.length) notifications.mailStatusWarning(`Email status check of one or more domains failed - ${erroredDomains.join(',')}`);
+
             callback();
         });
     });
