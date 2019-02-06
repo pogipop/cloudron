@@ -256,10 +256,10 @@ describe('database', function () {
         });
 
         it('update succeeds', function (done) {
-            notificationdb.update(NOTIFICATION_1.id, { acknowledged: true }, function (error) {
+            notificationdb.update(NOTIFICATION_1.id, { acknowledged: true }, function (error, result) {
                 expect(error).to.equal(null);
 
-                notificationdb.get(NOTIFICATION_1.id, function (error, result) {
+                notificationdb.get(result, function (error, result) {
                     expect(error).to.equal(null);
                     expect(result.id).to.equal(NOTIFICATION_1.id);
                     expect(result.title).to.equal(NOTIFICATION_1.title);
@@ -296,10 +296,47 @@ describe('database', function () {
         });
 
         it('can add notification without eventId', function (done) {
-            notificationdb.add(NOTIFICATION_3, function (error) {
+            notificationdb.add(NOTIFICATION_3, function (error, result) {
                 expect(error).to.equal(null);
+                expect(result).to.be.a('string');
+
+                // stash for further use
+                NOTIFICATION_3.id = result;
 
                 done();
+            });
+        });
+
+        it('can upsert acked notification without eventId', function (done) {
+            notificationdb.update(NOTIFICATION_3.id, { acknowledged: true }, function (error, result) {
+                expect(error).to.equal(null);
+                expect(result).to.be.a('string');
+
+                // check message also gets updated
+                NOTIFICATION_3.message = 'new message';
+
+                notificationdb.get(NOTIFICATION_3.id, function (error, result) {
+                    expect(error).to.equal(null);
+
+                    var oldCreationTime = result.creationTime;
+
+                    // wait to verify the creationTime update
+                    setTimeout(function () {
+                        notificationdb.upsert(NOTIFICATION_3, function (error, result) {
+                            expect(error).to.equal(null);
+                            expect(result).to.equal(NOTIFICATION_3.id);
+
+                            notificationdb.get(NOTIFICATION_3.id, function (error, result) {
+                                expect(error).to.equal(null);
+                                expect(result.acknowledged).to.equal(false);
+                                expect(result.message).to.equal(NOTIFICATION_3.message);
+                                expect(result.creationTime).to.be.greaterThan(oldCreationTime);
+
+                                done();
+                            });
+                        });
+                    }, 1000);
+                });
             });
         });
     });

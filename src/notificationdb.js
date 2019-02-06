@@ -3,6 +3,7 @@
 exports = module.exports = {
     get: get,
     add: add,
+    upsert: upsert,
     update: update,
     del: del,
     listByUserIdPaged: listByUserIdPaged
@@ -37,6 +38,30 @@ function add(notification, callback) {
     });
 }
 
+// will clear the ack flag
+// matches by userId and title
+function upsert(notification, callback) {
+    assert.strictEqual(typeof notification, 'object');
+    assert.strictEqual(typeof callback, 'function');
+
+    database.query('SELECT * from notifications WHERE userId = ? AND title = ?', [ notification.userId, notification.title ], function (error, result) {
+        if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
+        if (result.length === 0) return add(notification, callback);
+
+        postProcess(result[0]);
+
+        var data = {
+            acknowledged: false,
+            eventId: notification.eventId,
+            message: notification.message,
+            action: notification.action,
+            creationTime: new Date()
+        };
+
+        update(result[0].id, data, callback);
+    });
+}
+
 function update(id, data, callback) {
     assert.strictEqual(typeof id, 'string');
     assert.strictEqual(typeof data, 'object');
@@ -54,7 +79,7 @@ function update(id, data, callback) {
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
         if (result.affectedRows !== 1) return callback(new DatabaseError(DatabaseError.NOT_FOUND));
 
-        return callback(null);
+        return callback(null, id);
     });
 }
 
