@@ -1526,4 +1526,6 @@
 * Add dashboard domain change event
 * Fix issue where notification email were sent from incorrect domain
 * Alert about configuration issues in the notification UI
+* Switching dashboard domain now updates MX, SPF records
+* Mailbox and lists UI is now always visible (but disabled) when incoming email is disabled
 
