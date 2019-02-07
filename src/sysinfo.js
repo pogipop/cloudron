@@ -40,9 +40,7 @@ function getApi(callback) {
     assert.strictEqual(typeof callback, 'function');
 
     switch (config.provider()) {
-    case '': return callback(null, caas);   // current fallback for caas
     case 'caas': return callback(null, caas);
-    case 'digitalocean': return callback(null, generic);
     case 'ec2': return callback(null, ec2);
     case 'lightsail': return callback(null, ec2);
     case 'ami': return callback(null, ec2);

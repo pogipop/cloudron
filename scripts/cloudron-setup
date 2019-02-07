@@ -103,6 +103,7 @@ elif [[  \
             "${provider}" != "cloudscale" && \
             "${provider}" != "contabo" && \
             "${provider}" != "digitalocean" && \
+            "${provider}" != "digitalocean-mp" && \
             "${provider}" != "ec2" && \
             "${provider}" != "exoscale" && \
             "${provider}" != "galaxygate" && \
