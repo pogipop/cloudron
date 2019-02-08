@@ -619,35 +619,35 @@ describe('dns provider', function () {
         it('upsert non-existing record succeeds', function (done) {
 
             let getHostsReturn = {
-                "Type": "namecheap.domains.dns.getHosts",
-                "DomainDNSGetHostsResult": {
-                    "Domain": "example-dns-test.com",
-                    "EmailType": "FWD",
-                    "IsUsingOurDNS": "true",
-                    "host": [
+                'Type': 'namecheap.domains.dns.getHosts',
+                'DomainDNSGetHostsResult': {
+                    'Domain': 'example-dns-test.com',
+                    'EmailType': 'FWD',
+                    'IsUsingOurDNS': 'true',
+                    'host': [
                         {
-                            "HostId": "614433",
-                            "Name": "www",
-                            "Type": "CNAME",
-                            "Address": "parkingpage.namecheap.com.",
-                            "MXPref": "10",
-                            "TTL": "1800",
-                            "AssociatedAppTitle": "",
-                            "FriendlyName": "CNAME Record",
-                            "IsActive": "true",
-                            "IsDDNSEnabled": "false"
+                            'HostId': '614433',
+                            'Name': 'www',
+                            'Type': 'CNAME',
+                            'Address': 'parkingpage.namecheap.com.',
+                            'MXPref': '10',
+                            'TTL': '1800',
+                            'AssociatedAppTitle': '',
+                            'FriendlyName': 'CNAME Record',
+                            'IsActive': 'true',
+                            'IsDDNSEnabled': 'false'
                         },
                         {
-                            "HostId": "614432",
-                            "Name": "@",
-                            "Type": "URL",
-                            "Address": "http://www.example-dns-test.com/",
-                            "MXPref": "10",
-                            "TTL": "1800",
-                            "AssociatedAppTitle": "URL Forwarding",
-                            "FriendlyName": "URL Record",
-                            "IsActive": "true",
-                            "IsDDNSEnabled": "false"
+                            'HostId': '614432',
+                            'Name': '@',
+                            'Type': 'URL',
+                            'Address': 'http://www.example-dns-test.com/',
+                            'MXPref': '10',
+                            'TTL': '1800',
+                            'AssociatedAppTitle': 'URL Forwarding',
+                            'FriendlyName': 'URL Record',
+                            'IsActive': 'true',
+                            'IsDDNSEnabled': 'false'
                         }
                     ]
                 }
@@ -655,28 +655,28 @@ describe('dns provider', function () {
 
             let setInternalExpect = [
                 {
-                    "HostId": "614433",
-                    "HostName": "www",
-                    "RecordType": "CNAME",
-                    "Address": "parkingpage.namecheap.com.",
-                    "MXPref": "10",
-                    "TTL": "1800",
-                    "AssociatedAppTitle": "",
-                    "FriendlyName": "CNAME Record",
-                    "IsActive": "true",
-                    "IsDDNSEnabled": "false"
+                    'HostId': '614433',
+                    'HostName': 'www',
+                    'RecordType': 'CNAME',
+                    'Address': 'parkingpage.namecheap.com.',
+                    'MXPref': '10',
+                    'TTL': '1800',
+                    'AssociatedAppTitle': '',
+                    'FriendlyName': 'CNAME Record',
+                    'IsActive': 'true',
+                    'IsDDNSEnabled': 'false'
                 },
                 {
-                    "HostId": "614432",
-                    "HostName": "@",
-                    "RecordType": "URL",
-                    "Address": "http://www.example-dns-test.com/",
-                    "MXPref": "10",
-                    "TTL": "1800",
-                    "AssociatedAppTitle": "URL Forwarding",
-                    "FriendlyName": "URL Record",
-                    "IsActive": "true",
-                    "IsDDNSEnabled": "false"
+                    'HostId': '614432',
+                    'HostName': '@',
+                    'RecordType': 'URL',
+                    'Address': 'http://www.example-dns-test.com/',
+                    'MXPref': '10',
+                    'TTL': '1800',
+                    'AssociatedAppTitle': 'URL Forwarding',
+                    'FriendlyName': 'URL Record',
+                    'IsActive': 'true',
+                    'IsDDNSEnabled': 'false'
                 },
                 {
                     RecordType: 'A',
@@ -688,20 +688,20 @@ describe('dns provider', function () {
             let getHostsFake = sinon.fake.yields(null, getHostsReturn);
             let setHostsFake = sinon.fake.yields(null, true);
             let mockObj = {
-                    dns: {
-                        getHosts: getHostsFake,
-                        setHosts: setHostsFake
-                    }
+                dns: {
+                    getHosts: getHostsFake,
+                    setHosts: setHostsFake
+                }
             };
 
-            sandbox.stub(namecheap.prototype, "domains").value(mockObj);
+            sandbox.stub(namecheap.prototype, 'domains').value(mockObj);
 
             domains.upsertDnsRecords('test', DOMAIN_0.domain, 'A', ['1.2.3.4'], function (error) {
                 expect(error).to.eql(null);
 
                 expect(setHostsFake.calledOnce).to.eql(true);
                 expect(setHostsFake.calledWith(DOMAIN_0.domain, setInternalExpect)).to.eql(true);
-                
+
                 done();
             });
         });
@@ -709,35 +709,35 @@ describe('dns provider', function () {
         it('upsert multiple non-existing records succeeds', function (done) {
 
             let getHostsReturn = {
-                "Type": "namecheap.domains.dns.getHosts",
-                "DomainDNSGetHostsResult": {
-                    "Domain": "example-dns-test.com",
-                    "EmailType": "FWD",
-                    "IsUsingOurDNS": "true",
-                    "host": [
+                'Type': 'namecheap.domains.dns.getHosts',
+                'DomainDNSGetHostsResult': {
+                    'Domain': 'example-dns-test.com',
+                    'EmailType': 'FWD',
+                    'IsUsingOurDNS': 'true',
+                    'host': [
                         {
-                            "HostId": "614433",
-                            "Name": "www",
-                            "Type": "CNAME",
-                            "Address": "parkingpage.namecheap.com.",
-                            "MXPref": "10",
-                            "TTL": "1800",
-                            "AssociatedAppTitle": "",
-                            "FriendlyName": "CNAME Record",
-                            "IsActive": "true",
-                            "IsDDNSEnabled": "false"
+                            'HostId': '614433',
+                            'Name': 'www',
+                            'Type': 'CNAME',
+                            'Address': 'parkingpage.namecheap.com.',
+                            'MXPref': '10',
+                            'TTL': '1800',
+                            'AssociatedAppTitle': '',
+                            'FriendlyName': 'CNAME Record',
+                            'IsActive': 'true',
+                            'IsDDNSEnabled': 'false'
                         },
                         {
-                            "HostId": "614432",
-                            "Name": "@",
-                            "Type": "URL",
-                            "Address": "http://www.example-dns-test.com/",
-                            "MXPref": "10",
-                            "TTL": "1800",
-                            "AssociatedAppTitle": "URL Forwarding",
-                            "FriendlyName": "URL Record",
-                            "IsActive": "true",
-                            "IsDDNSEnabled": "false"
+                            'HostId': '614432',
+                            'Name': '@',
+                            'Type': 'URL',
+                            'Address': 'http://www.example-dns-test.com/',
+                            'MXPref': '10',
+                            'TTL': '1800',
+                            'AssociatedAppTitle': 'URL Forwarding',
+                            'FriendlyName': 'URL Record',
+                            'IsActive': 'true',
+                            'IsDDNSEnabled': 'false'
                         }
                     ]
                 }
@@ -745,28 +745,28 @@ describe('dns provider', function () {
 
             let setInternalExpect = [
                 {
-                    "HostId": "614433",
-                    "HostName": "www",
-                    "RecordType": "CNAME",
-                    "Address": "parkingpage.namecheap.com.",
-                    "MXPref": "10",
-                    "TTL": "1800",
-                    "AssociatedAppTitle": "",
-                    "FriendlyName": "CNAME Record",
-                    "IsActive": "true",
-                    "IsDDNSEnabled": "false"
+                    'HostId': '614433',
+                    'HostName': 'www',
+                    'RecordType': 'CNAME',
+                    'Address': 'parkingpage.namecheap.com.',
+                    'MXPref': '10',
+                    'TTL': '1800',
+                    'AssociatedAppTitle': '',
+                    'FriendlyName': 'CNAME Record',
+                    'IsActive': 'true',
+                    'IsDDNSEnabled': 'false'
                 },
                 {
-                    "HostId": "614432",
-                    "HostName": "@",
-                    "RecordType": "URL",
-                    "Address": "http://www.example-dns-test.com/",
-                    "MXPref": "10",
-                    "TTL": "1800",
-                    "AssociatedAppTitle": "URL Forwarding",
-                    "FriendlyName": "URL Record",
-                    "IsActive": "true",
-                    "IsDDNSEnabled": "false"
+                    'HostId': '614432',
+                    'HostName': '@',
+                    'RecordType': 'URL',
+                    'Address': 'http://www.example-dns-test.com/',
+                    'MXPref': '10',
+                    'TTL': '1800',
+                    'AssociatedAppTitle': 'URL Forwarding',
+                    'FriendlyName': 'URL Record',
+                    'IsActive': 'true',
+                    'IsDDNSEnabled': 'false'
                 },
                 {
                     RecordType: 'TXT',
@@ -788,20 +788,20 @@ describe('dns provider', function () {
             let getHostsFake = sinon.fake.yields(null, getHostsReturn);
             let setHostsFake = sinon.fake.yields(null, true);
             let mockObj = {
-                    dns: {
-                        getHosts: getHostsFake,
-                        setHosts: setHostsFake
-                    }
+                dns: {
+                    getHosts: getHostsFake,
+                    setHosts: setHostsFake
+                }
             };
 
-            sandbox.stub(namecheap.prototype, "domains").value(mockObj);
+            sandbox.stub(namecheap.prototype, 'domains').value(mockObj);
 
             domains.upsertDnsRecords('test', DOMAIN_0.domain, 'TXT', ['1.2.3.4', '2.3.4.5', '3.4.5.6'], function (error) {
                 expect(error).to.eql(null);
 
                 expect(setHostsFake.calledOnce).to.eql(true);
                 expect(setHostsFake.calledWith(DOMAIN_0.domain, setInternalExpect)).to.eql(true);
-                
+
                 done();
             });
         });
@@ -809,35 +809,35 @@ describe('dns provider', function () {
         it('upsert multiple non-existing MX records succeeds', function (done) {
 
             let getHostsReturn = {
-                "Type": "namecheap.domains.dns.getHosts",
-                "DomainDNSGetHostsResult": {
-                    "Domain": "example-dns-test.com",
-                    "EmailType": "FWD",
-                    "IsUsingOurDNS": "true",
-                    "host": [
+                'Type': 'namecheap.domains.dns.getHosts',
+                'DomainDNSGetHostsResult': {
+                    'Domain': 'example-dns-test.com',
+                    'EmailType': 'FWD',
+                    'IsUsingOurDNS': 'true',
+                    'host': [
                         {
-                            "HostId": "614433",
-                            "Name": "www",
-                            "Type": "CNAME",
-                            "Address": "parkingpage.namecheap.com.",
-                            "MXPref": "10",
-                            "TTL": "1800",
-                            "AssociatedAppTitle": "",
-                            "FriendlyName": "CNAME Record",
-                            "IsActive": "true",
-                            "IsDDNSEnabled": "false"
+                            'HostId': '614433',
+                            'Name': 'www',
+                            'Type': 'CNAME',
+                            'Address': 'parkingpage.namecheap.com.',
+                            'MXPref': '10',
+                            'TTL': '1800',
+                            'AssociatedAppTitle': '',
+                            'FriendlyName': 'CNAME Record',
+                            'IsActive': 'true',
+                            'IsDDNSEnabled': 'false'
                         },
                         {
-                            "HostId": "614432",
-                            "Name": "@",
-                            "Type": "URL",
-                            "Address": "http://www.example-dns-test.com/",
-                            "MXPref": "10",
-                            "TTL": "1800",
-                            "AssociatedAppTitle": "URL Forwarding",
-                            "FriendlyName": "URL Record",
-                            "IsActive": "true",
-                            "IsDDNSEnabled": "false"
+                            'HostId': '614432',
+                            'Name': '@',
+                            'Type': 'URL',
+                            'Address': 'http://www.example-dns-test.com/',
+                            'MXPref': '10',
+                            'TTL': '1800',
+                            'AssociatedAppTitle': 'URL Forwarding',
+                            'FriendlyName': 'URL Record',
+                            'IsActive': 'true',
+                            'IsDDNSEnabled': 'false'
                         }
                     ]
                 }
@@ -845,28 +845,28 @@ describe('dns provider', function () {
 
             let setInternalExpect = [
                 {
-                    "HostId": "614433",
-                    "HostName": "www",
-                    "RecordType": "CNAME",
-                    "Address": "parkingpage.namecheap.com.",
-                    "MXPref": "10",
-                    "TTL": "1800",
-                    "AssociatedAppTitle": "",
-                    "FriendlyName": "CNAME Record",
-                    "IsActive": "true",
-                    "IsDDNSEnabled": "false"
+                    'HostId': '614433',
+                    'HostName': 'www',
+                    'RecordType': 'CNAME',
+                    'Address': 'parkingpage.namecheap.com.',
+                    'MXPref': '10',
+                    'TTL': '1800',
+                    'AssociatedAppTitle': '',
+                    'FriendlyName': 'CNAME Record',
+                    'IsActive': 'true',
+                    'IsDDNSEnabled': 'false'
                 },
                 {
-                    "HostId": "614432",
-                    "HostName": "@",
-                    "RecordType": "URL",
-                    "Address": "http://www.example-dns-test.com/",
-                    "MXPref": "10",
-                    "TTL": "1800",
-                    "AssociatedAppTitle": "URL Forwarding",
-                    "FriendlyName": "URL Record",
-                    "IsActive": "true",
-                    "IsDDNSEnabled": "false"
+                    'HostId': '614432',
+                    'HostName': '@',
+                    'RecordType': 'URL',
+                    'Address': 'http://www.example-dns-test.com/',
+                    'MXPref': '10',
+                    'TTL': '1800',
+                    'AssociatedAppTitle': 'URL Forwarding',
+                    'FriendlyName': 'URL Record',
+                    'IsActive': 'true',
+                    'IsDDNSEnabled': 'false'
                 },
                 {
                     RecordType: 'MX',
@@ -891,20 +891,20 @@ describe('dns provider', function () {
             let getHostsFake = sinon.fake.yields(null, getHostsReturn);
             let setHostsFake = sinon.fake.yields(null, true);
             let mockObj = {
-                    dns: {
-                        getHosts: getHostsFake,
-                        setHosts: setHostsFake
-                    }
+                dns: {
+                    getHosts: getHostsFake,
+                    setHosts: setHostsFake
+                }
             };
 
-            sandbox.stub(namecheap.prototype, "domains").value(mockObj);
+            sandbox.stub(namecheap.prototype, 'domains').value(mockObj);
 
             domains.upsertDnsRecords('test', DOMAIN_0.domain, 'MX', ['10 1.2.3.4', '20 2.3.4.5', '30 3.4.5.6'], function (error) {
                 expect(error).to.eql(null);
 
                 expect(setHostsFake.calledOnce).to.eql(true);
                 expect(setHostsFake.calledWith(DOMAIN_0.domain, setInternalExpect)).to.eql(true);
-                
+
                 done();
             });
         });
@@ -912,35 +912,35 @@ describe('dns provider', function () {
         it('upsert existing record succeeds', function (done) {
 
             let getHostsReturn = {
-                "Type": "namecheap.domains.dns.getHosts",
-                "DomainDNSGetHostsResult": {
-                    "Domain": "example-dns-test.com",
-                    "EmailType": "FWD",
-                    "IsUsingOurDNS": "true",
-                    "host": [
+                'Type': 'namecheap.domains.dns.getHosts',
+                'DomainDNSGetHostsResult': {
+                    'Domain': 'example-dns-test.com',
+                    'EmailType': 'FWD',
+                    'IsUsingOurDNS': 'true',
+                    'host': [
                         {
-                            "HostId": "614433",
-                            "Name": "www",
-                            "Type": "CNAME",
-                            "Address": DOMAIN_0.domain,
-                            "MXPref": "10",
-                            "TTL": "1800",
-                            "AssociatedAppTitle": "",
-                            "FriendlyName": "CNAME Record",
-                            "IsActive": "true",
-                            "IsDDNSEnabled": "false"
+                            'HostId': '614433',
+                            'Name': 'www',
+                            'Type': 'CNAME',
+                            'Address': DOMAIN_0.domain,
+                            'MXPref': '10',
+                            'TTL': '1800',
+                            'AssociatedAppTitle': '',
+                            'FriendlyName': 'CNAME Record',
+                            'IsActive': 'true',
+                            'IsDDNSEnabled': 'false'
                         },
                         {
-                            "HostId": "614432",
-                            "Name": "@",
-                            "Type": "URL",
-                            "Address": "http://www.example-dns-test.com/",
-                            "MXPref": "10",
-                            "TTL": "1800",
-                            "AssociatedAppTitle": "URL Forwarding",
-                            "FriendlyName": "URL Record",
-                            "IsActive": "true",
-                            "IsDDNSEnabled": "false"
+                            'HostId': '614432',
+                            'Name': '@',
+                            'Type': 'URL',
+                            'Address': 'http://www.example-dns-test.com/',
+                            'MXPref': '10',
+                            'TTL': '1800',
+                            'AssociatedAppTitle': 'URL Forwarding',
+                            'FriendlyName': 'URL Record',
+                            'IsActive': 'true',
+                            'IsDDNSEnabled': 'false'
                         }
                     ]
                 }
@@ -948,93 +948,93 @@ describe('dns provider', function () {
 
             let setInternalExpect = [
                 {
-                    "HostId": "614433",
-                    "HostName": "www",
-                    "RecordType": "CNAME",
-                    "Address": "1.2.3.4",
-                    "MXPref": "10",
-                    "TTL": "1800",
-                    "AssociatedAppTitle": "",
-                    "FriendlyName": "CNAME Record",
-                    "IsActive": "true",
-                    "IsDDNSEnabled": "false"
+                    'HostId': '614433',
+                    'HostName': 'www',
+                    'RecordType': 'CNAME',
+                    'Address': '1.2.3.4',
+                    'MXPref': '10',
+                    'TTL': '1800',
+                    'AssociatedAppTitle': '',
+                    'FriendlyName': 'CNAME Record',
+                    'IsActive': 'true',
+                    'IsDDNSEnabled': 'false'
                 },
                 {
-                    "HostId": "614432",
-                    "HostName": "@",
-                    "RecordType": "URL",
-                    "Address": "http://www.example-dns-test.com/",
-                    "MXPref": "10",
-                    "TTL": "1800",
-                    "AssociatedAppTitle": "URL Forwarding",
-                    "FriendlyName": "URL Record",
-                    "IsActive": "true",
-                    "IsDDNSEnabled": "false"
+                    'HostId': '614432',
+                    'HostName': '@',
+                    'RecordType': 'URL',
+                    'Address': 'http://www.example-dns-test.com/',
+                    'MXPref': '10',
+                    'TTL': '1800',
+                    'AssociatedAppTitle': 'URL Forwarding',
+                    'FriendlyName': 'URL Record',
+                    'IsActive': 'true',
+                    'IsDDNSEnabled': 'false'
                 }
             ];
 
             let getHostsFake = sinon.fake.yields(null, getHostsReturn);
             let setHostsFake = sinon.fake.yields(null, true);
             let mockObj = {
-                    dns: {
-                        getHosts: getHostsFake,
-                        setHosts: setHostsFake
-                    }
+                dns: {
+                    getHosts: getHostsFake,
+                    setHosts: setHostsFake
+                }
             };
 
-            sandbox.stub(namecheap.prototype, "domains").value(mockObj);
+            sandbox.stub(namecheap.prototype, 'domains').value(mockObj);
 
             domains.upsertDnsRecords('www', DOMAIN_0.domain, 'CNAME', ['1.2.3.4'], function (error) {
                 expect(error).to.eql(null);
 
                 expect(setHostsFake.calledOnce).to.eql(true);
                 expect(setHostsFake.calledWith(DOMAIN_0.domain, setInternalExpect)).to.eql(true);
-                
+
                 done();
             });
         });
 
         it('get succeeds', function(done) {
             let getHostsReturn = {
-                "Type": "namecheap.domains.dns.getHosts",
-                "DomainDNSGetHostsResult": {
-                    "Domain": "example-dns-test.com",
-                    "EmailType": "FWD",
-                    "IsUsingOurDNS": "true",
-                    "host": [
+                'Type': 'namecheap.domains.dns.getHosts',
+                'DomainDNSGetHostsResult': {
+                    'Domain': 'example-dns-test.com',
+                    'EmailType': 'FWD',
+                    'IsUsingOurDNS': 'true',
+                    'host': [
                         {
-                            "HostId": "614433",
-                            "Name": "www",
-                            "Type": "CNAME",
-                            "Address": "1.2.3.4",
-                            "MXPref": "10",
-                            "TTL": "1800",
-                            "AssociatedAppTitle": "",
-                            "FriendlyName": "CNAME Record",
-                            "IsActive": "true",
-                            "IsDDNSEnabled": "false"
+                            'HostId': '614433',
+                            'Name': 'www',
+                            'Type': 'CNAME',
+                            'Address': '1.2.3.4',
+                            'MXPref': '10',
+                            'TTL': '1800',
+                            'AssociatedAppTitle': '',
+                            'FriendlyName': 'CNAME Record',
+                            'IsActive': 'true',
+                            'IsDDNSEnabled': 'false'
                         },
                         {
-                            "HostId": "614432",
-                            "Name": "test",
-                            "Type": "A",
-                            "Address": "1.2.3.4",
-                            "MXPref": "10",
-                            "TTL": "1800",
-                            "FriendlyName": "A Record",
-                            "IsActive": "true",
-                            "IsDDNSEnabled": "false"
+                            'HostId': '614432',
+                            'Name': 'test',
+                            'Type': 'A',
+                            'Address': '1.2.3.4',
+                            'MXPref': '10',
+                            'TTL': '1800',
+                            'FriendlyName': 'A Record',
+                            'IsActive': 'true',
+                            'IsDDNSEnabled': 'false'
                         },
                         {
-                            "HostId": "614431",
-                            "Name": "test",
-                            "Type": "A",
-                            "Address": "2.3.4.5",
-                            "MXPref": "10",
-                            "TTL": "1800",
-                            "FriendlyName": "A Record",
-                            "IsActive": "true",
-                            "IsDDNSEnabled": "false"
+                            'HostId': '614431',
+                            'Name': 'test',
+                            'Type': 'A',
+                            'Address': '2.3.4.5',
+                            'MXPref': '10',
+                            'TTL': '1800',
+                            'FriendlyName': 'A Record',
+                            'IsActive': 'true',
+                            'IsDDNSEnabled': 'false'
                         }
                     ]
                 }
@@ -1042,12 +1042,12 @@ describe('dns provider', function () {
 
             let getHostsFake = sinon.fake.yields(null, getHostsReturn);
             let mockObj = {
-                    dns: {
-                        getHosts: getHostsFake
-                    }
+                dns: {
+                    getHosts: getHostsFake
+                }
             };
 
-            sandbox.stub(namecheap.prototype, "domains").value(mockObj);
+            sandbox.stub(namecheap.prototype, 'domains').value(mockObj);
 
             domains.getDnsRecords('test', DOMAIN_0.domain, 'A', function (error, result) {
                 expect(error).to.eql(null);
@@ -1056,7 +1056,7 @@ describe('dns provider', function () {
                 expect(result.length).to.eql(2);
                 expect(getHostsFake.calledOnce).to.eql(true);
                 expect(result).to.eql(['1.2.3.4', '2.3.4.5']);
-                
+
                 done();
             });
         });
@@ -1064,35 +1064,35 @@ describe('dns provider', function () {
         it('del succeeds', function (done) {
 
             let getHostsReturn = {
-                "Type": "namecheap.domains.dns.getHosts",
-                "DomainDNSGetHostsResult": {
-                    "Domain": "example-dns-test.com",
-                    "EmailType": "FWD",
-                    "IsUsingOurDNS": "true",
-                    "host": [
+                'Type': 'namecheap.domains.dns.getHosts',
+                'DomainDNSGetHostsResult': {
+                    'Domain': 'example-dns-test.com',
+                    'EmailType': 'FWD',
+                    'IsUsingOurDNS': 'true',
+                    'host': [
                         {
-                            "HostId": "614433",
-                            "Name": "www",
-                            "Type": "CNAME",
-                            "Address": "1.2.3.4",
-                            "MXPref": "10",
-                            "TTL": "1800",
-                            "AssociatedAppTitle": "",
-                            "FriendlyName": "CNAME Record",
-                            "IsActive": "true",
-                            "IsDDNSEnabled": "false"
+                            'HostId': '614433',
+                            'Name': 'www',
+                            'Type': 'CNAME',
+                            'Address': '1.2.3.4',
+                            'MXPref': '10',
+                            'TTL': '1800',
+                            'AssociatedAppTitle': '',
+                            'FriendlyName': 'CNAME Record',
+                            'IsActive': 'true',
+                            'IsDDNSEnabled': 'false'
                         },
                         {
-                            "HostId": "614432",
-                            "Name": "@",
-                            "Type": "URL",
-                            "Address": "http://www.example-dns-test.com/",
-                            "MXPref": "10",
-                            "TTL": "1800",
-                            "AssociatedAppTitle": "URL Forwarding",
-                            "FriendlyName": "URL Record",
-                            "IsActive": "true",
-                            "IsDDNSEnabled": "false"
+                            'HostId': '614432',
+                            'Name': '@',
+                            'Type': 'URL',
+                            'Address': 'http://www.example-dns-test.com/',
+                            'MXPref': '10',
+                            'TTL': '1800',
+                            'AssociatedAppTitle': 'URL Forwarding',
+                            'FriendlyName': 'URL Record',
+                            'IsActive': 'true',
+                            'IsDDNSEnabled': 'false'
                         }
                     ]
                 }
@@ -1100,36 +1100,36 @@ describe('dns provider', function () {
 
             let setInternalExpect = [
                 {
-                    "HostId": "614432",
-                    "HostName": "@",
-                    "RecordType": "URL",
-                    "Address": "http://www.example-dns-test.com/",
-                    "MXPref": "10",
-                    "TTL": "1800",
-                    "AssociatedAppTitle": "URL Forwarding",
-                    "FriendlyName": "URL Record",
-                    "IsActive": "true",
-                    "IsDDNSEnabled": "false"
+                    'HostId': '614432',
+                    'HostName': '@',
+                    'RecordType': 'URL',
+                    'Address': 'http://www.example-dns-test.com/',
+                    'MXPref': '10',
+                    'TTL': '1800',
+                    'AssociatedAppTitle': 'URL Forwarding',
+                    'FriendlyName': 'URL Record',
+                    'IsActive': 'true',
+                    'IsDDNSEnabled': 'false'
                 }
             ];
 
             let getHostsFake = sinon.fake.yields(null, getHostsReturn);
             let setHostsFake = sinon.fake.yields(null, true);
             let mockObj = {
-                    dns: {
-                        getHosts: getHostsFake,
-                        setHosts: setHostsFake
-                    }
+                dns: {
+                    getHosts: getHostsFake,
+                    setHosts: setHostsFake
+                }
             };
 
-            sandbox.stub(namecheap.prototype, "domains").value(mockObj);
+            sandbox.stub(namecheap.prototype, 'domains').value(mockObj);
 
             domains.removeDnsRecords('www', DOMAIN_0.domain, 'CNAME', ['1.2.3.4'], function (error) {
                 expect(error).to.eql(null);
 
                 expect(setHostsFake.calledOnce).to.eql(true);
                 expect(setHostsFake.calledWith(DOMAIN_0.domain, setInternalExpect)).to.eql(true);
-                
+
                 done();
             });
         });
@@ -1137,35 +1137,35 @@ describe('dns provider', function () {
         it('del succeeds w/ non-present host', function (done) {
 
             let getHostsReturn = {
-                "Type": "namecheap.domains.dns.getHosts",
-                "DomainDNSGetHostsResult": {
-                    "Domain": "example-dns-test.com",
-                    "EmailType": "FWD",
-                    "IsUsingOurDNS": "true",
-                    "host": [
+                'Type': 'namecheap.domains.dns.getHosts',
+                'DomainDNSGetHostsResult': {
+                    'Domain': 'example-dns-test.com',
+                    'EmailType': 'FWD',
+                    'IsUsingOurDNS': 'true',
+                    'host': [
                         {
-                            "HostId": "614433",
-                            "Name": "www",
-                            "Type": "CNAME",
-                            "Address": "parkingpage.namecheap.com.",
-                            "MXPref": "10",
-                            "TTL": "1800",
-                            "AssociatedAppTitle": "",
-                            "FriendlyName": "CNAME Record",
-                            "IsActive": "true",
-                            "IsDDNSEnabled": "false"
+                            'HostId': '614433',
+                            'Name': 'www',
+                            'Type': 'CNAME',
+                            'Address': 'parkingpage.namecheap.com.',
+                            'MXPref': '10',
+                            'TTL': '1800',
+                            'AssociatedAppTitle': '',
+                            'FriendlyName': 'CNAME Record',
+                            'IsActive': 'true',
+                            'IsDDNSEnabled': 'false'
                         },
                         {
-                            "HostId": "614432",
-                            "Name": "@",
-                            "Type": "URL",
-                            "Address": "http://www.example-dns-test.com/",
-                            "MXPref": "10",
-                            "TTL": "1800",
-                            "AssociatedAppTitle": "URL Forwarding",
-                            "FriendlyName": "URL Record",
-                            "IsActive": "true",
-                            "IsDDNSEnabled": "false"
+                            'HostId': '614432',
+                            'Name': '@',
+                            'Type': 'URL',
+                            'Address': 'http://www.example-dns-test.com/',
+                            'MXPref': '10',
+                            'TTL': '1800',
+                            'AssociatedAppTitle': 'URL Forwarding',
+                            'FriendlyName': 'URL Record',
+                            'IsActive': 'true',
+                            'IsDDNSEnabled': 'false'
                         }
                     ]
                 }
@@ -1174,19 +1174,19 @@ describe('dns provider', function () {
             let getHostsFake = sinon.fake.yields(null, getHostsReturn);
             let setHostsFake = sinon.fake.yields(null, true);
             let mockObj = {
-                    dns: {
-                        getHosts: getHostsFake,
-                        setHosts: setHostsFake
-                    }
+                dns: {
+                    getHosts: getHostsFake,
+                    setHosts: setHostsFake
+                }
             };
 
-            sandbox.stub(namecheap.prototype, "domains").value(mockObj);
+            sandbox.stub(namecheap.prototype, 'domains').value(mockObj);
 
             domains.removeDnsRecords('test', DOMAIN_0.domain, 'A', ['1.2.3.4'], function (error) {
                 expect(error).to.eql(null);
 
                 expect(setHostsFake.notCalled).to.eql(true);
-                
+
                 done();
             });
         });
