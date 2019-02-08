@@ -459,7 +459,6 @@ function waitForDnsRecord(location, domain, type, value, options, callback) {
 // removes all fields that are strictly private and should never be returned by API calls
 function removePrivateFields(domain) {
     var result = _.pick(domain, 'domain', 'zoneName', 'provider', 'config', 'tlsConfig', 'fallbackCertificate', 'locked');
-    if (result.fallbackCertificate) delete result.fallbackCertificate.key;  // do not return the 'key'. in caas, this is private
     return api(result.provider).removePrivateFields(result);
 }
 

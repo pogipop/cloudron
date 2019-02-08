@@ -27,6 +27,10 @@ function getFqdn(location, domain) {
 
 function removePrivateFields(domainObject) {
     domainObject.config.token = domains.SECRET_PLACEHOLDER;
+
+    // do not return the 'key'. in caas, this is private
+    delete domainObject.fallbackCertificate.key;
+
     return domainObject;
 }
 
