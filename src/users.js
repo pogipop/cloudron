@@ -130,6 +130,7 @@ function validatePassword(password) {
     assert.strictEqual(typeof password, 'string');
 
     if (password.length < 8) return new UsersError(UsersError.BAD_FIELD, 'Password must be atleast 8 characters');
+    if (password.length > 256) return new UsersError(UsersError.BAD_FIELD, 'Password cannot be more than 256 characters');
 
     return null;
 }
