@@ -1,6 +1,7 @@
 'use strict';
 
 exports = module.exports = {
+    removePrivateFields: removePrivateFields,
     upsert: upsert,
     get: get,
     del: del,
@@ -21,6 +22,11 @@ var assert = require('assert'),
 
 // we are using latest v4 stable API https://api.cloudflare.com/#getting-started-endpoints
 var CLOUDFLARE_ENDPOINT = 'https://api.cloudflare.com/client/v4';
+
+function removePrivateFields(domainObject) {
+    domainObject.config.token = domains.SECRET_PLACEHOLDER;
+    return domainObject;
+}
 
 function translateRequestError(result, callback) {
     assert.strictEqual(typeof result, 'object');

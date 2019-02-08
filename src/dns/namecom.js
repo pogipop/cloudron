@@ -1,6 +1,7 @@
 'use strict';
 
 exports = module.exports = {
+    removePrivateFields: removePrivateFields,
     upsert: upsert,
     get: get,
     del: del,
@@ -22,6 +23,11 @@ const NAMECOM_API = 'https://api.name.com/v4';
 
 function formatError(response) {
     return `Name.com DNS error [${response.statusCode}] ${response.text}`;
+}
+
+function removePrivateFields(domainObject) {
+    domainObject.config.token = domains.SECRET_PLACEHOLDER;
+    return domainObject;
 }
 
 function addRecord(dnsConfig, zoneName, name, type, values, callback) {

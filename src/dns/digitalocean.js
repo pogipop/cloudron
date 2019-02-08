@@ -1,6 +1,7 @@
 'use strict';
 
 exports = module.exports = {
+    removePrivateFields: removePrivateFields,
     upsert: upsert,
     get: get,
     del: del,
@@ -23,6 +24,11 @@ var DIGITALOCEAN_ENDPOINT = 'https://api.digitalocean.com';
 
 function formatError(response) {
     return util.format('DigitalOcean DNS error [%s] %j', response.statusCode, response.body);
+}
+
+function removePrivateFields(domainObject) {
+    domainObject.config.token = domains.SECRET_PLACEHOLDER;
+    return domainObject;
 }
 
 function getInternal(dnsConfig, zoneName, name, type, callback) {

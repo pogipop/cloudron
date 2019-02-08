@@ -1,6 +1,7 @@
 'use strict';
 
 exports = module.exports = {
+    removePrivateFields: removePrivateFields,
     upsert: upsert,
     get: get,
     del: del,
@@ -27,6 +28,11 @@ const GODADDY_INVALID_TXT = '""';
 
 function formatError(response) {
     return util.format(`GoDaddy DNS error [${response.statusCode}] ${response.body.message}`);
+}
+
+function removePrivateFields(domainObject) {
+    domainObject.config.apiSecret = domains.SECRET_PLACEHOLDER;
+    return domainObject;
 }
 
 function upsert(domainObject, location, type, values, callback) {

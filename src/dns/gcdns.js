@@ -1,6 +1,7 @@
 'use strict';
 
 exports = module.exports = {
+    removePrivateFields: removePrivateFields,
     upsert: upsert,
     get: get,
     del: del,
@@ -17,6 +18,11 @@ var assert = require('assert'),
     util = require('util'),
     waitForDns = require('./waitfordns.js'),
     _ = require('underscore');
+
+function removePrivateFields(domainObject) {
+    domainObject.config.credentials.private_key = domains.SECRET_PLACEHOLDER;
+    return domainObject;
+}
 
 function getDnsCredentials(dnsConfig) {
     assert.strictEqual(typeof dnsConfig, 'object');

@@ -1,6 +1,7 @@
 'use strict';
 
 exports = module.exports = {
+    removePrivateFields: removePrivateFields,
     upsert: upsert,
     get: get,
     del: del,
@@ -20,6 +21,11 @@ var assert = require('assert'),
 
 function formatError(response) {
     return util.format('NameCheap DNS error [%s] %j', response.code, response.message);
+}
+
+function removePrivateFields(domainObject) {
+    domainObject.config.apiKey = domains.SECRET_PLACEHOLDER;
+    return domainObject;
 }
 
 // Only send required fields - https://www.namecheap.com/support/api/methods/domains-dns/set-hosts.aspx

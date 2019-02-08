@@ -7,6 +7,7 @@
 // -------------------------------------------
 
 exports = module.exports = {
+    removePrivateFields: removePrivateFields,
     upsert: upsert,
     get: get,
     del: del,
@@ -16,6 +17,11 @@ exports = module.exports = {
 
 var assert = require('assert'),
     util = require('util');
+
+function removePrivateFields(domainObject) {
+    // in-place removal of tokens and api keys with domains.SECRET_PLACEHOLDER
+    return domainObject;
+}
 
 function upsert(domainObject, location, type, values, callback) {
     assert.strictEqual(typeof domainObject, 'object');

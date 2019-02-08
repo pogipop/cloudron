@@ -1,6 +1,7 @@
 'use strict';
 
 exports = module.exports = {
+    removePrivateFields: removePrivateFields,
     upsert: upsert,
     get: get,
     del: del,
@@ -22,6 +23,11 @@ function getFqdn(location, domain) {
     assert.strictEqual(typeof domain, 'string');
 
     return (location === '') ? domain : location + '-' + domain;
+}
+
+function removePrivateFields(domainObject) {
+    domainObject.config.token = domains.SECRET_PLACEHOLDER;
+    return domainObject;
 }
 
 function upsert(domainObject, location, type, values, callback) {

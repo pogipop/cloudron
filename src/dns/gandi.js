@@ -1,6 +1,7 @@
 'use strict';
 
 exports = module.exports = {
+    removePrivateFields: removePrivateFields,
     upsert: upsert,
     get: get,
     del: del,
@@ -21,6 +22,11 @@ var GANDI_API = 'https://dns.api.gandi.net/api/v5';
 
 function formatError(response) {
     return util.format(`Gandi DNS error [${response.statusCode}] ${response.body.message}`);
+}
+
+function removePrivateFields(domainObject) {
+    domainObject.config.token = domains.SECRET_PLACEHOLDER;
+    return domainObject;
 }
 
 function upsert(domainObject, location, type, values, callback) {

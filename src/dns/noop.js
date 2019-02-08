@@ -1,6 +1,7 @@
 'use strict';
 
 exports = module.exports = {
+    removePrivateFields: removePrivateFields,
     upsert: upsert,
     get: get,
     del: del,
@@ -11,6 +12,10 @@ exports = module.exports = {
 var assert = require('assert'),
     debug = require('debug')('box:dns/noop'),
     util = require('util');
+
+function removePrivateFields(domainObject) {
+    return domainObject;
+}
 
 function upsert(domainObject, location, type, values, callback) {
     assert.strictEqual(typeof domainObject, 'object');

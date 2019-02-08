@@ -28,7 +28,9 @@ module.exports = exports = {
 
     prepareDashboardDomain: prepareDashboardDomain,
 
-    DomainsError: DomainsError
+    DomainsError: DomainsError,
+
+    SECRET_PLACEHOLDER: 'hidden'
 };
 
 var assert = require('assert'),
@@ -458,11 +460,7 @@ function waitForDnsRecord(location, domain, type, value, options, callback) {
 function removePrivateFields(domain) {
     var result = _.pick(domain, 'domain', 'zoneName', 'provider', 'config', 'tlsConfig', 'fallbackCertificate', 'locked');
     if (result.fallbackCertificate) delete result.fallbackCertificate.key;  // do not return the 'key'. in caas, this is private
-
-    // remove 'apiSecret' and 'secretAccessKey'. not remove 'apiKey' and 'accessKeyId' as these are meant to be user visible
-    result.config = _.omit(result.config, (v, k) => k === 'token' || k === 'credentials' || k.toLowerCase().includes('secret'));
-
-    return result;
+    return api(result.provider).removePrivateFields(result);
 }
 
 // removes all fields that are not accessible by a normal user
