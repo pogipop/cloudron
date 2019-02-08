@@ -270,7 +270,15 @@ describe('Mail API', function () {
                 .send({ domain: DOMAIN_0.domain })
                 .end(function (err, res) {
                     expect(res.statusCode).to.equal(201);
-                    done();
+
+                    superagent.post(SERVER_URL + '/api/v1/mail/' + DOMAIN_0.domain + '/enable')
+                        .query({ access_token: token })
+                        .send({ enabled: true })
+                        .end(function (err, res) {
+                            expect(res.statusCode).to.equal(202);
+
+                            done();
+                        });
                 });
         });
 
