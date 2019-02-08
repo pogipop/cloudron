@@ -66,16 +66,6 @@ describe('Notifications', function () {
 
     var notificationId;
 
-    it('add fails with unknown event', function (done) {
-        notifications.add(USER_0.id, 'eventunknown', 'title', 'message text', '/actionurl', function (error, result) {
-            expect(error).to.be.an('object');
-            expect(error.reason).to.equal(NotificationsError.NOT_FOUND);
-            expect(result).not.to.be.ok();
-
-            done();
-        });
-    });
-
     it('add succeeds', function (done) {
         notifications.add(USER_0.id, EVENT_0.id, 'title', 'message text', '/actionurl', function (error, result) {
             expect(error).to.eql(null);
