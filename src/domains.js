@@ -33,6 +33,7 @@ module.exports = exports = {
 
 var assert = require('assert'),
     async = require('async'),
+    asyncIf = require('./asyncif.js'),
     config = require('./config.js'),
     constants = require('./constants.js'),
     DatabaseError = require('./databaseerror.js'),
@@ -307,10 +308,13 @@ function update(domain, data, auditSource, callback) {
         error = validateTlsConfig(tlsConfig, provider);
         if (error) return callback(error);
 
-        verifyDnsConfig(config, domain, zoneName, provider, function (error, sanitizedConfig) {
+        asyncIf(!!config, (done) => verifyDnsConfig(config, domain, zoneName, provider, done), function (error, sanitizedConfig) {
             if (error) return callback(error);
 
-            domaindb.update(domain, { zoneName: zoneName, provider: provider, config: sanitizedConfig, tlsConfig: tlsConfig }, function (error) {
+            let newData = { zoneName: zoneName, provider: provider, tlsConfig: tlsConfig };
+            if (config) newData.config = sanitizedConfig;
+
+            domaindb.update(domain, newData, function (error) {
                 if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new DomainsError(DomainsError.NOT_FOUND));
                 if (error) return callback(new DomainsError(DomainsError.INTERNAL_ERROR, error));
 
@@ -454,6 +458,10 @@ function waitForDnsRecord(location, domain, type, value, options, callback) {
 function removePrivateFields(domain) {
     var result = _.pick(domain, 'domain', 'zoneName', 'provider', 'config', 'tlsConfig', 'fallbackCertificate', 'locked');
     if (result.fallbackCertificate) delete result.fallbackCertificate.key;  // do not return the 'key'. in caas, this is private
+
+    // remove 'apiSecret' and 'secretAccessKey'. not remove 'apiKey' and 'accessKeyId' as these are meant to be user visible
+    result.config = _.omit(result.config, (v, k) => k === 'token' || k === 'credentials' || k.toLowerCase().includes('secret'));
+
     return result;
 }
 
