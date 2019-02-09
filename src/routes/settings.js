@@ -153,7 +153,7 @@ function getBackupConfig(req, res, next) {
     settings.getBackupConfig(function (error, config) {
         if (error) return next(new HttpError(500, error));
 
-        next(new HttpSuccess(200, config));
+        next(new HttpSuccess(200, settings.removeBackupConfigPrivateFields(config)));
     });
 }
 

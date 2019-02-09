@@ -23,6 +23,7 @@ exports = module.exports = {
 
     getBackupConfig: getBackupConfig,
     setBackupConfig: setBackupConfig,
+    removeBackupConfigPrivateFields: removeBackupConfigPrivateFields,
 
     getCaasConfig: getCaasConfig,
 
@@ -59,6 +60,7 @@ exports = module.exports = {
 
 var addons = require('./addons.js'),
     assert = require('assert'),
+    asyncIf = require('./asyncif.js'),
     backups = require('./backups.js'),
     BackupsError = backups.BackupsError,
     config = require('./config.js'),
@@ -292,6 +294,13 @@ function setDynamicDnsConfig(enabled, callback) {
     });
 }
 
+// removes fields that should not returned in API responses. keep in sync with setBackupConfig
+function removeBackupConfigPrivateFields(backupConfig) {
+    var result = _.omit(backupConfig, (v, k) => k === 'token' || k === 'key' || k.toLowerCase().includes('secret'));
+
+    return result;
+}
+
 function getBackupConfig(callback) {
     assert.strictEqual(typeof callback, 'function');
 
@@ -307,19 +316,28 @@ function setBackupConfig(backupConfig, callback) {
     assert.strictEqual(typeof backupConfig, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    backups.testConfig(backupConfig, function (error) {
-        if (error && error.reason === BackupsError.BAD_FIELD) return callback(new SettingsError(SettingsError.BAD_FIELD, error.message));
-        if (error && error.reason === BackupsError.EXTERNAL_ERROR) return callback(new SettingsError(SettingsError.EXTERNAL_ERROR, error.message));
-        if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
+    // keep in sync with removeBackupConfigPrivateFields
+    const verifyConfig = Object.keys(backupConfig).some((k) => k === 'token' || k === 'key' || k.toLowerCase().includes('secret'));
 
-        backups.cleanupCacheFilesSync();
+    getBackupConfig(function (error, curentConfig) {
+        if (error) return callback(error);
 
-        settingsdb.set(exports.BACKUP_CONFIG_KEY, JSON.stringify(backupConfig), function (error) {
+        asyncIf(verifyConfig, (done) => backups.testConfig(backupConfig, done), function (error) {
+            if (error && error.reason === BackupsError.BAD_FIELD) return callback(new SettingsError(SettingsError.BAD_FIELD, error.message));
+            if (error && error.reason === BackupsError.EXTERNAL_ERROR) return callback(new SettingsError(SettingsError.EXTERNAL_ERROR, error.message));
             if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
 
-            gEvents.emit(exports.BACKUP_CONFIG_KEY, backupConfig);
+            backups.cleanupCacheFilesSync();
 
-            callback(null);
+            backupConfig = _.extend({}, curentConfig, backupConfig); // merge token/key/secret
+
+            settingsdb.set(exports.BACKUP_CONFIG_KEY, JSON.stringify(backupConfig), function (error) {
+                if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
+
+                gEvents.emit(exports.BACKUP_CONFIG_KEY, backupConfig);
+
+                callback(null);
+            });
         });
     });
 }
