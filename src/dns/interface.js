@@ -8,6 +8,7 @@
 
 exports = module.exports = {
     removePrivateFields: removePrivateFields,
+    injectPrivateFields: injectPrivateFields,
     upsert: upsert,
     get: get,
     del: del,
@@ -21,6 +22,10 @@ var assert = require('assert'),
 function removePrivateFields(domainObject) {
     // in-place removal of tokens and api keys with domains.SECRET_PLACEHOLDER
     return domainObject;
+}
+
+function injectPrivateFields(newConfig, currentConfig) {
+    // in-place injection of tokens and api keys which came in with domains.SECRET_PLACEHOLDER
 }
 
 function upsert(domainObject, location, type, values, callback) {

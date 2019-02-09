@@ -2,6 +2,7 @@
 
 exports = module.exports = {
     removePrivateFields: removePrivateFields,
+    injectPrivateFields: injectPrivateFields,
     upsert: upsert,
     get: get,
     del: del,
@@ -28,6 +29,10 @@ function formatError(response) {
 function removePrivateFields(domainObject) {
     domainObject.config.token = domains.SECRET_PLACEHOLDER;
     return domainObject;
+}
+
+function injectPrivateFields(newConfig, currentConfig) {
+    if (newConfig.token === domains.SECRET_PLACEHOLDER) newConfig.token = currentConfig.token;
 }
 
 function addRecord(dnsConfig, zoneName, name, type, values, callback) {

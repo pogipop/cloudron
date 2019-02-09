@@ -2,6 +2,7 @@
 
 exports = module.exports = {
     removePrivateFields: removePrivateFields,
+    injectPrivateFields: injectPrivateFields,
     upsert: upsert,
     get: get,
     del: del,
@@ -32,6 +33,10 @@ function removePrivateFields(domainObject) {
     delete domainObject.fallbackCertificate.key;
 
     return domainObject;
+}
+
+function injectPrivateFields(newConfig, currentConfig) {
+    if (newConfig.token === domains.SECRET_PLACEHOLDER) newConfig.token = currentConfig.token;
 }
 
 function upsert(domainObject, location, type, values, callback) {

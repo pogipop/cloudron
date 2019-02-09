@@ -35,7 +35,6 @@ module.exports = exports = {
 
 var assert = require('assert'),
     async = require('async'),
-    asyncIf = require('./asyncif.js'),
     config = require('./config.js'),
     constants = require('./constants.js'),
     DatabaseError = require('./databaseerror.js'),
@@ -310,11 +309,17 @@ function update(domain, data, auditSource, callback) {
         error = validateTlsConfig(tlsConfig, provider);
         if (error) return callback(error);
 
-        asyncIf(!!config, (done) => verifyDnsConfig(config, domain, zoneName, provider, done), function (error, sanitizedConfig) {
+        api(provider).injectPrivateFields(config, domainObject.config);
+
+        verifyDnsConfig(config, domain, zoneName, provider, function (error, sanitizedConfig) {
             if (error) return callback(error);
 
-            let newData = { zoneName: zoneName, provider: provider, tlsConfig: tlsConfig };
-            if (config) newData.config = sanitizedConfig;
+            let newData = {
+                config: sanitizedConfig,
+                zoneName: zoneName,
+                provider: provider,
+                tlsConfig: tlsConfig
+            };
 
             domaindb.update(domain, newData, function (error) {
                 if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new DomainsError(DomainsError.NOT_FOUND));

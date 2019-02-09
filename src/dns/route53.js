@@ -2,6 +2,7 @@
 
 exports = module.exports = {
     removePrivateFields: removePrivateFields,
+    injectPrivateFields: injectPrivateFields,
     upsert: upsert,
     get: get,
     del: del,
@@ -22,6 +23,10 @@ var assert = require('assert'),
 function removePrivateFields(domainObject) {
     domainObject.config.secretAccessKey = domains.SECRET_PLACEHOLDER;
     return domainObject;
+}
+
+function injectPrivateFields(newConfig, currentConfig) {
+    if (newConfig.secretAccessKey === domains.SECRET_PLACEHOLDER) newConfig.secretAccessKey = currentConfig.secretAccessKey;
 }
 
 function getDnsCredentials(dnsConfig) {

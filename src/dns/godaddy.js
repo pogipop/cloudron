@@ -2,6 +2,7 @@
 
 exports = module.exports = {
     removePrivateFields: removePrivateFields,
+    injectPrivateFields: injectPrivateFields,
     upsert: upsert,
     get: get,
     del: del,
@@ -33,6 +34,10 @@ function formatError(response) {
 function removePrivateFields(domainObject) {
     domainObject.config.apiSecret = domains.SECRET_PLACEHOLDER;
     return domainObject;
+}
+
+function injectPrivateFields(newConfig, currentConfig) {
+    if (newConfig.apiSecret === domains.SECRET_PLACEHOLDER) newConfig.apiSecret = currentConfig.apiSecret;
 }
 
 function upsert(domainObject, location, type, values, callback) {

@@ -2,6 +2,7 @@
 
 exports = module.exports = {
     removePrivateFields: removePrivateFields,
+    injectPrivateFields: injectPrivateFields,
     upsert: upsert,
     get: get,
     del: del,
@@ -20,6 +21,9 @@ var assert = require('assert'),
 
 function removePrivateFields(domainObject) {
     return domainObject;
+}
+
+function injectPrivateFields(newConfig, currentConfig) {
 }
 
 function upsert(domainObject, location, type, values, callback) {
