@@ -49,7 +49,7 @@ function getApi(dnsConfig, callback) {
         if (error) return callback(new DomainsError(DomainsError.INTERNAL_ERROR, error));
 
         // Note that for all NameCheap calls to go through properly, the public IP returned by the getPublicIp method below must be whitelisted on NameCheap's API dashboard
-        let namecheap = new Namecheap(dnsConfig.username, dnsConfig.apiKey, ip);
+        let namecheap = new Namecheap(dnsConfig.username, dnsConfig.token, ip);
         namecheap.setUsername(dnsConfig.username);
 
         callback(null, namecheap);
@@ -236,11 +236,11 @@ function verifyDnsConfig(domainObject, callback) {
     const ip = '127.0.0.1';
 
     if (!dnsConfig.username || typeof dnsConfig.username !== 'string') return callback(new DomainsError(DomainsError.BAD_FIELD, 'username must be a non-empty string'));
-    if (!dnsConfig.apiKey || typeof dnsConfig.apiKey !== 'string') return callback(new DomainsError(DomainsError.BAD_FIELD, 'apiKey must be a non-empty string'));
+    if (!dnsConfig.token || typeof dnsConfig.token !== 'string') return callback(new DomainsError(DomainsError.BAD_FIELD, 'token must be a non-empty string'));
 
     let credentials = {
         username: dnsConfig.username,
-        apiKey: dnsConfig.apiKey
+        token: dnsConfig.token
     };
 
     if (process.env.BOX_ENV === 'test') return callback(null, credentials); // this shouldn't be here
