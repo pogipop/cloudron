@@ -24,7 +24,7 @@ function formatError(response) {
 }
 
 function removePrivateFields(domainObject) {
-    domainObject.config.apiKey = domains.SECRET_PLACEHOLDER;
+    domainObject.config.token = domains.SECRET_PLACEHOLDER;
     return domainObject;
 }
 
