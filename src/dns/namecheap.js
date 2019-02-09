@@ -232,9 +232,9 @@ function verifyDnsConfig(domainObject, callback) {
     if (!dnsConfig.username || typeof dnsConfig.username !== 'string') return callback(new DomainsError(DomainsError.BAD_FIELD, 'username must be a non-empty string'));
     if (!dnsConfig.apiKey || typeof dnsConfig.apiKey !== 'string') return callback(new DomainsError(DomainsError.BAD_FIELD, 'apiKey must be a non-empty string'));
 
-    var credentials = {
+    let credentials = {
         username: dnsConfig.username,
-        apKey: dnsConfig.apiKey
+        apiKey: dnsConfig.apiKey
     };
 
     if (process.env.BOX_ENV === 'test') return callback(null, credentials); // this shouldn't be here
@@ -260,7 +260,7 @@ function verifyDnsConfig(domainObject, callback) {
 
                 debug('verifyDnsConfig: Test A record removed again');
 
-                callback(null, dnsConfig);
+                callback(null, credentials);
             });
         });
     });
