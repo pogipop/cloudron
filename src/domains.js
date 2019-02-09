@@ -30,7 +30,7 @@ module.exports = exports = {
 
     DomainsError: DomainsError,
 
-    SECRET_PLACEHOLDER: 'hidden'
+    SECRET_PLACEHOLDER: '*****'
 };
 
 var assert = require('assert'),
