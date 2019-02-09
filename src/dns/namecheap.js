@@ -18,8 +18,6 @@ var assert = require('assert'),
     util = require('util'),
     waitForDns = require('./waitfordns.js');
 
-var namecheap;
-
 function formatError(response) {
     return util.format('NameCheap DNS error [%s] %j', response.code, response.message);
 }
@@ -43,20 +41,18 @@ function mapHosts(hosts) {
     });
 }
 
-function init(dnsConfig, callback) {
+function getApi(dnsConfig, callback) {
     assert.strictEqual(typeof dnsConfig, 'object');
     assert.strictEqual(typeof callback, 'function');
-
-    if (namecheap) return callback();
 
     sysinfo.getPublicIp(function (error, ip) {
         if (error) return callback(new DomainsError(DomainsError.INTERNAL_ERROR, error));
 
         // Note that for all NameCheap calls to go through properly, the public IP returned by the getPublicIp method below must be whitelisted on NameCheap's API dashboard
-        namecheap = new Namecheap(dnsConfig.username, dnsConfig.apiKey, ip);
+        let namecheap = new Namecheap(dnsConfig.username, dnsConfig.apiKey, ip);
         namecheap.setUsername(dnsConfig.username);
 
-        callback();
+        callback(null, namecheap);
     });
 }
 
@@ -67,7 +63,7 @@ function getInternal(dnsConfig, zoneName, subdomain, type, callback) {
     assert.strictEqual(typeof type, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    init(dnsConfig, function (error) {
+    getApi(dnsConfig, function (error, namecheap) {
         if (error) return callback(error);
 
         namecheap.domains.dns.getHosts(zoneName, function (error, result) {
@@ -80,12 +76,22 @@ function getInternal(dnsConfig, zoneName, subdomain, type, callback) {
     });
 }
 
-function setInternal(zoneName, hosts, callback) {
-    let mappedHosts = mapHosts(hosts);
-    namecheap.domains.dns.setHosts(zoneName, mappedHosts, function (error, result) {
-        if (error) return callback(new DomainsError(DomainsError.EXTERNAL_ERROR, formatError(error)));
+function setInternal(dnsConfig, zoneName, hosts, callback) {
+    assert.strictEqual(typeof dnsConfig, 'object');
+    assert.strictEqual(typeof zoneName, 'string');
+    assert(Array.isArray(hosts));
+    assert.strictEqual(typeof callback, 'function');
 
-        return callback(null, result);
+    let mappedHosts = mapHosts(hosts);
+
+    getApi(dnsConfig, function (error, namecheap) {
+        if (error) return callback(error);
+
+        namecheap.domains.dns.setHosts(zoneName, mappedHosts, function (error, result) {
+            if (error) return callback(new DomainsError(DomainsError.EXTERNAL_ERROR, formatError(error)));
+
+            return callback(null, result);
+        });
     });
 }
 
@@ -149,7 +155,7 @@ function upsert(domainObject, subdomain, type, values, callback) {
 
         let toUpsert = result.concat(toInsert);
 
-        setInternal(zoneName, toUpsert, callback);
+        setInternal(dnsConfig, zoneName, toUpsert, callback);
     });
 }
 
@@ -215,7 +221,7 @@ function del(domainObject, subdomain, type, values, callback) {
         }
 
         // Only set hosts if we actually removed a host
-        if (removed) return setInternal(zoneName, result, callback);
+        if (removed) return setInternal(dnsConfig, zoneName, result, callback);
 
         callback();
     });
