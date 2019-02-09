@@ -113,6 +113,7 @@ elif [[  \
             "${provider}" != "lightsail" && \
             "${provider}" != "linode" && \
             "${provider}" != "netcup" && \
+            "${provider}" != "netcup-image" && \
             "${provider}" != "ovh" && \
             "${provider}" != "rosehosting" && \
             "${provider}" != "scaleway" && \
