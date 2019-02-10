@@ -309,7 +309,7 @@ function update(domain, data, auditSource, callback) {
         error = validateTlsConfig(tlsConfig, provider);
         if (error) return callback(error);
 
-        api(provider).injectPrivateFields(config, domainObject.config);
+        if (provider === domainObject.provider) api(provider).injectPrivateFields(config, domainObject.config);
 
         verifyDnsConfig(config, domain, zoneName, provider, function (error, sanitizedConfig) {
             if (error) return callback(error);
