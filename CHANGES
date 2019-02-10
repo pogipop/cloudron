@@ -1529,4 +1529,5 @@
 * Switching dashboard domain now updates MX, SPF records
 * Mailbox and lists UI is now always visible (but disabled) when incoming email is disabled
 * Fix issue where long passwords were not accepted
+* DNS and backup credential secrets are not returned in API calls anymore
 
