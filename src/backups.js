@@ -26,6 +26,11 @@ exports = module.exports = {
     cleanup: cleanup,
     cleanupCacheFilesSync: cleanupCacheFilesSync,
 
+    injectPrivateFields: injectPrivateFields,
+    removePrivateFields: removePrivateFields,
+
+    SECRET_PLACEHOLDER: String.fromCharCode(0x25CF).repeat(8),
+
     // for testing
     _getBackupFilePath: getBackupFilePath,
     _restoreFsMetadata: restoreFsMetadata,
@@ -111,6 +116,17 @@ function api(provider) {
     case 'noop': return require('./storage/noop.js');
     default: return null;
     }
+}
+
+function injectPrivateFields(newConfig, currentConfig) {
+    if (newConfig.key === exports.SECRET_PLACEHOLDER) newConfig.key = currentConfig.key;
+    if (newConfig.provider === currentConfig.provider) api(newConfig.provider).injectPrivateFields(newConfig, currentConfig);
+}
+
+function removePrivateFields(backupConfig) {
+    assert.strictEqual(typeof backupConfig, 'object');
+    if (backupConfig.key) backupConfig.key = exports.SECRET_PLACEHOLDER;
+    return api(backupConfig.provider).removePrivateFields(backupConfig);
 }
 
 function testConfig(backupConfig, callback) {

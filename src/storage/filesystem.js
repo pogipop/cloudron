@@ -11,7 +11,9 @@ exports = module.exports = {
     remove: remove,
     removeDir: removeDir,
 
-    testConfig: testConfig
+    testConfig: testConfig,
+    removePrivateFields: removePrivateFields,
+    injectPrivateFields: injectPrivateFields
 };
 
 var assert = require('assert'),
@@ -189,3 +191,9 @@ function testConfig(apiConfig, callback) {
     });
 }
 
+function removePrivateFields(apiConfig) {
+    return apiConfig;
+}
+
+function injectPrivateFields(/* newConfig, currentConfig */) {
+}

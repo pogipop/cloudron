@@ -22,11 +22,22 @@ exports = module.exports = {
     remove: remove,
     removeDir: removeDir,
 
-    testConfig: testConfig
+    testConfig: testConfig,
+    removePrivateFields: removePrivateFields,
+    injectPrivateFields: injectPrivateFields
 };
 
 var assert = require('assert'),
     EventEmitter = require('events');
+
+function removePrivateFields(apiConfig) {
+    // in-place removal of tokens and api keys with domains.SECRET_PLACEHOLDER
+    return apiConfig;
+}
+
+function injectPrivateFields(newConfig, currentConfig) {
+    // in-place injection of tokens and api keys which came in with domains.SECRET_PLACEHOLDER
+}
 
 function upload(apiConfig, backupFilePath, sourceStream, callback) {
     assert.strictEqual(typeof apiConfig, 'object');

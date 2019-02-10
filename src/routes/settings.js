@@ -32,6 +32,7 @@ exports = module.exports = {
 };
 
 var assert = require('assert'),
+    backups = require('../backups.js'),
     docker = require('../docker.js'),
     DockerError = docker.DockerError,
     HttpError = require('connect-lastmile').HttpError,
@@ -153,7 +154,7 @@ function getBackupConfig(req, res, next) {
     settings.getBackupConfig(function (error, config) {
         if (error) return next(new HttpError(500, error));
 
-        next(new HttpSuccess(200, settings.removeBackupConfigPrivateFields(config)));
+        next(new HttpSuccess(200, backups.removePrivateFields(config)));
     });
 }
 

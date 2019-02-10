@@ -11,6 +11,8 @@ exports = module.exports = {
     removeDir: removeDir,
 
     testConfig: testConfig,
+    removePrivateFields: removePrivateFields,
+    injectPrivateFields: injectPrivateFields,
 
     // Used to mock AWS
     _mockInject: mockInject,
@@ -20,6 +22,7 @@ exports = module.exports = {
 var assert = require('assert'),
     async = require('async'),
     AWS = require('aws-sdk'),
+    backups = require('../backups.js'),
     BackupsError = require('../backups.js').BackupsError,
     chunk = require('lodash.chunk'),
     config = require('../config.js'),
@@ -46,10 +49,6 @@ var gCachedCaasCredentials = { issueDate: null, credentials: null };
 
 function S3_NOT_FOUND(error) {
     return error.code === 'NoSuchKey' || error.code === 'NotFound' || error.code === 'ENOENT';
-}
-
-function S3_ACCESS_DENIED(error) {
-    return error.code === 'AccessDenied' || error.statusCode === 403;
 }
 
 function getCaasConfig(apiConfig, callback) {
@@ -485,4 +484,13 @@ function testConfig(apiConfig, callback) {
             });
         });
     });
+}
+
+function removePrivateFields(apiConfig) {
+    apiConfig.secretAccessKey = backups.SECRET_PLACEHOLDER;
+    return apiConfig;
+}
+
+function injectPrivateFields(newConfig, currentConfig) {
+    if (newConfig.secretAccessKey === backups.SECRET_PLACEHOLDER) newConfig.secretAccessKey = currentConfig.secretAccessKey;
 }

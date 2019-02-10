@@ -11,6 +11,8 @@ exports = module.exports = {
     removeDir: removeDir,
 
     testConfig: testConfig,
+    removePrivateFields: removePrivateFields,
+    injectPrivateFields: injectPrivateFields,
 
     // Used to mock GCS
     _mockInject: mockInject,
@@ -19,6 +21,7 @@ exports = module.exports = {
 
 var assert = require('assert'),
     async = require('async'),
+    backups = require('../backups.js'),
     BackupsError = require('../backups.js').BackupsError,
     debug = require('debug')('box:storage/gcs'),
     EventEmitter = require('events'),
@@ -258,3 +261,11 @@ function testConfig(apiConfig, callback) {
     });
 }
 
+function removePrivateFields(apiConfig) {
+    apiConfig.credentials.private_key = backups.SECRET_PLACEHOLDER;
+    return apiConfig;
+}
+
+function injectPrivateFields(newConfig, currentConfig) {
+    if (newConfig.credentials.private_key === backups.SECRET_PLACEHOLDER && currentConfig.credentials) newConfig.credentials.private_key = currentConfig.credentials.private_key;
+}
