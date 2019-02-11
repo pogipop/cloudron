@@ -22,6 +22,8 @@ let gHealthInfo = { }; // { time, appDownEvent }
 const OOM_MAIL_LIMIT = 60 * 60 * 1000; // 60 minutes
 let gLastOomMailTime = Date.now() - (5 * 60 * 1000); // pretend we sent email 5 minutes ago
 
+const AUDIT_SOURCE = { userId: null, username: 'healthmonitor' };
+
 function debugApp(app) {
     assert(typeof app === 'object');
 
@@ -44,7 +46,7 @@ function setHealth(app, health, callback) {
         if (!gHealthInfo[app.id].appDownEvent) return callback(null);
 
         // do not send mails for dev apps
-        if (!app.debugMode) eventlog.add(eventlog.ACTION_APP_UP, { app: app }, {});
+        if (!app.debugMode) eventlog.add(eventlog.ACTION_APP_UP, AUDIT_SOURCE, { app: app });
 
         gHealthInfo[app.id].appDownEvent = false;
     } else if (Math.abs(now - gHealthInfo[app.id].time) > UNHEALTHY_THRESHOLD) {
@@ -53,7 +55,7 @@ function setHealth(app, health, callback) {
         debugApp(app, 'marking as unhealthy since not seen for more than %s minutes', UNHEALTHY_THRESHOLD/(60 * 1000));
 
         // do not send mails for dev apps
-        if (!app.debugMode) eventlog.add(eventlog.ACTION_APP_DOWN, { app: app }, {});
+        if (!app.debugMode) eventlog.add(eventlog.ACTION_APP_DOWN, AUDIT_SOURCE, { app: app });
 
         gHealthInfo[app.id].appDownEvent = true;
     } else {
@@ -152,12 +154,8 @@ function processDockerEvents(intervalSecs, callback) {
 
                 // do not send mails for dev apps
                 if (notifyUser) {
-                    var auditSource = {
-                        containerId: containerId,
-                        app: app || null  // app can be null if it's an addon crash
-                    };
-
-                    eventlog.add(eventlog.ACTION_APP_OOM, auditSource, ev);
+                    // app can be null for addon containers
+                    eventlog.add(eventlog.ACTION_APP_OOM, AUDIT_SOURCE, { ev: ev, containerId: containerId, app: app || null });
 
                     gLastOomMailTime = now;
                 }

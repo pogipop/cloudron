@@ -17,6 +17,8 @@ var CRASH_LOG_TIMESTAMP_OFFSET = 1000 * 60 * 60; // 60 min
 var CRASH_LOG_TIMESTAMP_FILE = '/tmp/crashlog.timestamp';
 var CRASH_LOG_STASH_FILE = '/tmp/crashlog';
 
+const AUDIT_SOURCE = { userId: null, username: 'healthmonitor' };
+
 function collectLogs(unitName, callback) {
     assert.strictEqual(typeof unitName, 'string');
     assert.strictEqual(typeof callback, 'function');
@@ -55,7 +57,7 @@ function sendFailureLogs(unitName) {
             return;
         }
 
-        eventlog.add(eventlog.ACTION_PROCESS_CRASH, { processName: unitName }, { crashLogFile: CRASH_LOG_STASH_FILE }, function (error) {
+        eventlog.add(eventlog.ACTION_PROCESS_CRASH, AUDIT_SOURCE, { processName: unitName, crashLogFile: CRASH_LOG_STASH_FILE }, function (error) {
             if (error) console.log(`Error sending crashlog. Logs stashed at ${CRASH_LOG_STASH_FILE}`);
 
             // write the new timestamp file and delete stash file

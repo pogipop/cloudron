@@ -380,6 +380,7 @@ function removeInternalFields(app) {
         'alternateDomains', 'ownerId', 'env', 'enableAutomaticUpdate', 'dataDir');
 }
 
+// non-admins can only see these
 function removeRestrictedFields(app) {
     return _.pick(app,
         'id', 'appStoreId', 'installationState', 'installationProgress', 'runState', 'health', 'ownerId',
