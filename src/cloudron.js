@@ -206,9 +206,9 @@ function checkBackupConfiguration(callback) {
         if (error) return console.error(error);
 
         if (backupConfig.provider === 'noop') {
-            notifications.backupConfigWarning('Cloudron backups are disabled. Please ensure this server is backed up using alternate means. See https://cloudron.io/documentation/backups/#storage-providers for more information');
+            notifications.backupConfigWarning('Cloudron backups are disabled. Please ensure this server is backed up using alternate means. See https://cloudron.io/documentation/backups/#storage-providers for more information.');
         } else if (backupConfig.provider === 'filesystem' && !backupConfig.externalDisk) {
-            notifications.backupConfigWarning('Cloudron backups are currently on the same disk as the Cloudron server instance. This is dangerous and can lead to complete data loss if the disk fails. See https://cloudron.io/documentation/backups/#storage-providers for setting up an external storage provider');
+            notifications.backupConfigWarning('Cloudron backups are currently on the same disk as the Cloudron server instance. This is dangerous and can lead to complete data loss if the disk fails. See https://cloudron.io/documentation/backups/#storage-providers for storing backups in an external location.');
         }
     });
 }
