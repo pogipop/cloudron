@@ -206,9 +206,9 @@ function checkBackupConfiguration(callback) {
         if (error) return console.error(error);
 
         if (backupConfig.provider === 'noop') {
-            notifications.backupConfigWarning('Cloudron backups are disabled. Please ensure this server is backed up using alternate means.');
+            notifications.backupConfigWarning('Cloudron backups are disabled. Please ensure this server is backed up using alternate means. See https://cloudron.io/documentation/backups/#storage-providers for more information');
         } else if (backupConfig.provider === 'filesystem' && !backupConfig.externalDisk) {
-            notifications.backupConfigWarning('Cloudron backups are currently on the same disk as the Cloudron server instance. This is dangerous and can lead to complete data loss if the disk fails.');
+            notifications.backupConfigWarning('Cloudron backups are currently on the same disk as the Cloudron server instance. This is dangerous and can lead to complete data loss if the disk fails. See https://cloudron.io/documentation/backups/#filesystem for more information');
         }
     });
 }
@@ -277,7 +277,7 @@ function checkMailStatus(callback) {
 
             const erroredDomains = erroredDomainObjects.map((d) => d.domain);
             debug(`checkMailStatus: ${erroredDomains.join(',')} failed status checks`);
-            if (erroredDomains.length) notifications.mailStatusWarning(`Email status check of one or more domains failed - ${erroredDomains.join(',')}`);
+            if (erroredDomains.length) notifications.mailStatusWarning(`Email status check of one or more domains failed - ${erroredDomains.join(',')}. See the Status tab in the Email view for more information.`);
 
             callback();
         });

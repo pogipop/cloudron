@@ -276,7 +276,7 @@ function backupConfigWarning(message) {
     assert.strictEqual(typeof message, 'string');
 
     actionForAllAdmins([], function (admin, callback) {
-        upsert(admin.id, null, 'Backup Configuration', message, '/#/backups', callback);
+        upsert(admin.id, null, 'Backup configuration is unsafe', message, '/#/backups', callback);
     }, function (error) {
         if (error) console.error(error);
     });
@@ -286,7 +286,7 @@ function mailStatusWarning(message) {
     assert.strictEqual(typeof message, 'string');
 
     actionForAllAdmins([], function (admin, callback) {
-        upsert(admin.id, null, 'Mail Status', message, '/#/email', callback);
+        upsert(admin.id, null, 'Email is not configured properly', message, '/#/email', callback);
     }, function (error) {
         if (error) console.error(error);
     });
