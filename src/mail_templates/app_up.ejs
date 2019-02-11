@@ -1,0 +1,14 @@
+<%if (format === 'text') { %>
+
+Dear Cloudron Admin,
+
+The application '<%= title %>' installed at <%= appFqdn %> is back online
+and responding to health checks.
+
+Powered by https://cloudron.io
+
+Sent at: <%= new Date().toUTCString() %>
+
+<% } else { %>
+
+<% } %>

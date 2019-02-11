@@ -17,7 +17,7 @@ exports = module.exports = {
 
 const HEALTHCHECK_INTERVAL = 10 * 1000; // every 10 seconds. this needs to be small since the UI makes only healthy apps clickable
 const UNHEALTHY_THRESHOLD = 10 * 60 * 1000; // 10 minutes
-let gHealthInfo = { }; // { time, emailSent }
+let gHealthInfo = { }; // { time, appDownEvent }
 
 const OOM_MAIL_LIMIT = 60 * 60 * 1000; // 60 minutes
 let gLastOomMailTime = Date.now() - (5 * 60 * 1000); // pretend we sent email 5 minutes ago
@@ -36,22 +36,28 @@ function setHealth(app, health, callback) {
     var now = new Date();
 
     if (!(app.id in gHealthInfo)) { // add new apps to list
-        gHealthInfo[app.id] = { time: now, emailSent: false };
+        gHealthInfo[app.id] = { time: now, appDownEvent: false };
     }
 
     if (health === appdb.HEALTH_HEALTHY) {
         gHealthInfo[app.id].time = now;
+        if (!gHealthInfo[app.id].appDownEvent) return callback(null);
+
+        // do not send mails for dev apps
+        if (!app.debugMode) eventlog.add(eventlog.ACTION_APP_UP, { app: app }, {});
+
+        gHealthInfo[app.id].appDownEvent = false;
     } else if (Math.abs(now - gHealthInfo[app.id].time) > UNHEALTHY_THRESHOLD) {
-        if (gHealthInfo[app.id].emailSent) return callback(null);
+        if (gHealthInfo[app.id].appDownEvent) return callback(null);
 
         debugApp(app, 'marking as unhealthy since not seen for more than %s minutes', UNHEALTHY_THRESHOLD/(60 * 1000));
 
         // do not send mails for dev apps
         if (!app.debugMode) eventlog.add(eventlog.ACTION_APP_DOWN, { app: app }, {});
 
-        gHealthInfo[app.id].emailSent = true;
+        gHealthInfo[app.id].appDownEvent = true;
     } else {
-        debugApp(app, 'waiting for sometime to update the app health');
+        debugApp(app, 'waiting for %s seconds to update the app health', (Math.abs(now - gHealthInfo[app.id].time) - UNHEALTHY_THRESHOLD)/1000);
         return callback(null);
     }
 

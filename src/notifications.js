@@ -14,6 +14,7 @@ exports = module.exports = {
     userRemoved: userRemoved,
     adminChanged: adminChanged,
     oomEvent: oomEvent,
+    appUp: appUp,
     appDied: appDied,
     processCrash: processCrash,
     apptaskCrash: apptaskCrash,
@@ -214,6 +215,21 @@ function oomEvent(eventId, program, context) {
         else message = `The container with id ${context.details.id} ran out of memory`;
 
         add(admin.id, eventId, 'Process died out-of-memory', message, context.app ? '/#/apps' : '', callback);
+    }, function (error) {
+        if (error) console.error(error);
+    });
+}
+
+function appUp(eventId, app) {
+    assert.strictEqual(typeof eventId, 'string');
+    assert.strictEqual(typeof app, 'object');
+
+    // also send us a notification mail
+    if (config.provider() === 'caas') mailer.appDied('support@cloudron.io', app);
+
+    actionForAllAdmins([], function (admin, callback) {
+        mailer.appUp(admin.email, app);
+        add(admin.id, eventId, `App ${app.fqdn} is back online`, `The application ${app.manifest.title} installed at ${app.fqdn} is back online.`, '/#/apps', callback);
     }, function (error) {
         if (error) console.error(error);
     });

@@ -19,6 +19,7 @@ exports = module.exports = {
     ACTION_APP_UPDATE: 'app.update',
     ACTION_APP_LOGIN: 'app.login',
     ACTION_APP_OOM: 'app.oom',
+    ACTION_APP_UP: 'app.up',
     ACTION_APP_DOWN: 'app.down',
     ACTION_APP_TASK_CRASH: 'app.task.crash',
 
@@ -115,6 +116,8 @@ function add(action, source, data, callback) {
             notifications.oomEvent(id, source.app ? source.app.id : source.containerId, { app: source.app, details: data });
         } else if (action === exports.ACTION_APP_DOWN) {
             notifications.appDied(id, source.app);
+        } else if (action === exports.ACTION_APP_UP) {
+            notifications.appUp(id, source.app);
         } else if (action === exports.ACTION_APP_TASK_CRASH) {
             notifications.apptaskCrash(id, source.appId, data.crashLogFile);
         } else if (action === exports.ACTION_PROCESS_CRASH) {
