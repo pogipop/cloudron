@@ -38,7 +38,7 @@ function setHealth(app, health, callback) {
 
     if (health === appdb.HEALTH_HEALTHY) {
         healthTime = now;
-        if (curHealth !== appdb.HEALTH_HEALTHY) {
+        if (curHealth && curHealth !== appdb.HEALTH_HEALTHY) { // app starts out with null health
             debugApp(app, 'app switched from %s to healthy', curHealth);
 
             // do not send mails for dev apps

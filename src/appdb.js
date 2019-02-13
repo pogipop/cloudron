@@ -43,7 +43,7 @@ exports = module.exports = {
     RSTATE_RUNNING: 'running',
     RSTATE_PENDING_START: 'pending_start',
     RSTATE_PENDING_STOP: 'pending_stop',
-    RSTATE_STOPPED: 'stopped', // app stopped by use
+    RSTATE_STOPPED: 'stopped', // app stopped by us
 
     // run codes (keep in sync in UI)
     HEALTH_HEALTHY: 'healthy',
