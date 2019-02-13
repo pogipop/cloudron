@@ -38,8 +38,8 @@ function setHealth(app, health, callback) {
 
     if (health === appdb.HEALTH_HEALTHY) {
         healthTime = now;
-        if (curHealth === appdb.HEALTH_UNHEALTHY) {
-            debugApp(app, 'app switched from unhealthy to healthy');
+        if (curHealth !== appdb.HEALTH_HEALTHY) {
+            debugApp(app, 'app switched from %s to healthy', curHealth);
 
             // do not send mails for dev apps
             if (!app.debugMode) eventlog.add(eventlog.ACTION_APP_UP, AUDIT_SOURCE, { app: app });
