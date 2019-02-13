@@ -113,15 +113,15 @@ function add(action, source, data, callback) {
         } else if (action === exports.ACTION_USER_UPDATE && data.adminStatusChanged) {
             notifications.adminChanged(source.userId, id, data.user);
         } else if (action === exports.ACTION_APP_OOM) {
-            notifications.oomEvent(id, source.app ? source.app.id : source.containerId, { app: source.app, details: data });
+            notifications.oomEvent(id, data.app ? data.app.id : data.containerId, { app: data.app, details: data });
         } else if (action === exports.ACTION_APP_DOWN) {
-            notifications.appDied(id, source.app);
+            notifications.appDied(id, data.app);
         } else if (action === exports.ACTION_APP_UP) {
-            notifications.appUp(id, source.app);
+            notifications.appUp(id, data.app);
         } else if (action === exports.ACTION_APP_TASK_CRASH) {
-            notifications.apptaskCrash(id, source.appId, data.crashLogFile);
+            notifications.apptaskCrash(id, data.appId, data.crashLogFile);
         } else if (action === exports.ACTION_PROCESS_CRASH) {
-            notifications.processCrash(id, source.processName, data.crashLogFile);
+            notifications.processCrash(id, data.processName, data.crashLogFile);
         } else {
             // no notification
         }
