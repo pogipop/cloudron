@@ -65,6 +65,7 @@ CREATE TABLE IF NOT EXISTS apps(
     installationProgress TEXT,
     runState VARCHAR(512),
     health VARCHAR(128),
+    healthTime TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, // when the app last responded
     containerId VARCHAR(128),
     manifestJson TEXT,
     httpPort INTEGER,                        // this is the nginx proxy port and not manifest.httpPort

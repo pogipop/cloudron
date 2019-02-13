@@ -70,7 +70,7 @@ var APPS_FIELDS_PREFIXED = [ 'apps.id', 'apps.appStoreId', 'apps.installationSta
     'apps.accessRestrictionJson', 'apps.restoreConfigJson', 'apps.oldConfigJson', 'apps.updateConfigJson', 'apps.memoryLimit',
     'apps.xFrameOptions', 'apps.sso', 'apps.debugModeJson', 'apps.robotsTxt', 'apps.enableBackup',
     'apps.creationTime', 'apps.updateTime', 'apps.ownerId', 'apps.mailboxName', 'apps.enableAutomaticUpdate',
-    'apps.dataDir', 'apps.ts' ].join(',');
+    'apps.dataDir', 'apps.ts', 'apps.healthTime' ].join(',');
 
 var PORT_BINDINGS_FIELDS = [ 'hostPort', 'type', 'environmentVariable', 'appId' ].join(',');
 
@@ -476,12 +476,13 @@ function updateWithConstraints(id, app, constraints, callback) {
 }
 
 // not sure if health should influence runState
-function setHealth(appId, health, callback) {
+function setHealth(appId, health, healthTime, callback) {
     assert.strictEqual(typeof appId, 'string');
     assert.strictEqual(typeof health, 'string');
+    assert(util.isDate(healthTime));
     assert.strictEqual(typeof callback, 'function');
 
-    var values = { health: health };
+    var values = { health, healthTime };
 
     var constraints = 'AND runState NOT LIKE "pending_%" AND installationState = "installed"';
 

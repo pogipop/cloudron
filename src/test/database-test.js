@@ -1124,7 +1124,7 @@ describe('database', function () {
             appdb.get(APP_0.id, function (error, result) {
                 expect(error).to.be(null);
                 expect(result).to.be.an('object');
-                expect(_.omit(result, ['creationTime', 'updateTime', 'ts'])).to.be.eql(APP_0);
+                expect(_.omit(result, ['creationTime', 'updateTime', 'ts', 'healthTime'])).to.be.eql(APP_0);
                 done();
             });
         });
@@ -1162,7 +1162,7 @@ describe('database', function () {
                 appdb.get(APP_0.id, function (error, result) {
                     expect(error).to.be(null);
                     expect(result).to.be.an('object');
-                    expect(_.omit(result, ['creationTime', 'updateTime', 'ts'])).to.be.eql(APP_0);
+                    expect(_.omit(result, ['creationTime', 'updateTime', 'ts', 'healthTime'])).to.be.eql(APP_0);
                     done();
                 });
             });
@@ -1172,7 +1172,7 @@ describe('database', function () {
             appdb.getByHttpPort(APP_0.httpPort, function (error, result) {
                 expect(error).to.be(null);
                 expect(result).to.be.an('object');
-                expect(_.omit(result, ['creationTime', 'updateTime', 'ts'])).to.be.eql(APP_0);
+                expect(_.omit(result, ['creationTime', 'updateTime', 'ts', 'healthTime'])).to.be.eql(APP_0);
                 done();
             });
         });
@@ -1197,8 +1197,8 @@ describe('database', function () {
                 expect(error).to.be(null);
                 expect(result).to.be.an(Array);
                 expect(result.length).to.be(2);
-                expect(_.omit(result[0], ['creationTime', 'updateTime','ts'])).to.be.eql(APP_0);
-                expect(_.omit(result[1], ['creationTime', 'updateTime','ts'])).to.be.eql(APP_1);
+                expect(_.omit(result[0], ['creationTime', 'updateTime','ts', 'healthTime'])).to.be.eql(APP_0);
+                expect(_.omit(result[1], ['creationTime', 'updateTime','ts', 'healthTime'])).to.be.eql(APP_1);
                 done();
             });
         });
@@ -1239,7 +1239,7 @@ describe('database', function () {
         });
 
         it('cannot set app as healthy because app is not installed', function (done) {
-            appdb.setHealth(APP_1.id, appdb.HEALTH_HEALTHY, function (error) {
+            appdb.setHealth(APP_1.id, appdb.HEALTH_HEALTHY, new Date(), function (error) {
                 expect(error).to.be.ok();
                 done();
             });
@@ -1249,7 +1249,7 @@ describe('database', function () {
             appdb.update(APP_1.id, { runState: appdb.RSTATE_PENDING_STOP, installationState: appdb.ISTATE_INSTALLED }, function (error) {
                 expect(error).to.be(null);
 
-                appdb.setHealth(APP_1.id, appdb.HEALTH_HEALTHY, function (error) {
+                appdb.setHealth(APP_1.id, appdb.HEALTH_HEALTHY, new Date(), function (error) {
                     expect(error).to.be.ok();
                     done();
                 });
@@ -1260,7 +1260,7 @@ describe('database', function () {
             appdb.update(APP_1.id, { runState: null, installationState: appdb.ISTATE_INSTALLED }, function (error) {
                 expect(error).to.be(null);
 
-                appdb.setHealth(APP_1.id, appdb.HEALTH_HEALTHY, function (error) {
+                appdb.setHealth(APP_1.id, appdb.HEALTH_HEALTHY, new Date(), function (error) {
                     expect(error).to.be.ok();
                     done();
                 });
@@ -1271,7 +1271,7 @@ describe('database', function () {
             appdb.update(APP_1.id, { runState: appdb.RSTATE_RUNNING, installationState: appdb.ISTATE_INSTALLED }, function (error) {
                 expect(error).to.be(null);
 
-                appdb.setHealth(APP_1.id, appdb.HEALTH_HEALTHY, function (error) {
+                appdb.setHealth(APP_1.id, appdb.HEALTH_HEALTHY, new Date(), function (error) {
                     expect(error).to.be(null);
                     appdb.get(APP_1.id, function (error, app) {
                         expect(error).to.be(null);
@@ -1283,7 +1283,7 @@ describe('database', function () {
         });
 
         it('cannot set health of unknown app', function (done) {
-            appdb.setHealth('randomId', appdb.HEALTH_HEALTHY, function (error) {
+            appdb.setHealth('randomId', appdb.HEALTH_HEALTHY, new Date(), function (error) {
                 expect(error).to.be.ok();
                 done();
             });
