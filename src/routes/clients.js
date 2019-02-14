@@ -96,6 +96,9 @@ function getTokens(req, res, next) {
     clients.getTokensByUserId(req.params.clientId, req.user.id, function (error, result) {
         if (error && error.reason === ClientsError.NOT_FOUND) return next(new HttpError(404, error.message));
         if (error) return next(new HttpError(500, error));
+
+        result = result.map(clients.removeTokenPrivateFields);
+
         next(new HttpSuccess(200, { tokens: result }));
     });
 }

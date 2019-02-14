@@ -18,6 +18,8 @@ exports = module.exports = {
 
     addDefaultClients: addDefaultClients,
 
+    removeTokenPrivateFields: removeTokenPrivateFields,
+
     // client type enums
     TYPE_EXTERNAL: 'external',
     TYPE_BUILT_IN: 'built-in',
@@ -39,7 +41,8 @@ var apps = require('./apps.js'),
     users = require('./users.js'),
     UsersError = users.UsersError,
     util = require('util'),
-    uuid = require('uuid');
+    uuid = require('uuid'),
+    _ = require('underscore');
 
 function ClientsError(reason, errorOrMessage) {
     assert.strictEqual(typeof reason, 'string');
@@ -341,4 +344,8 @@ function addDefaultClients(origin, callback) {
         clientdb.upsert.bind(null, 'cid-sdk', 'SDK', 'built-in', 'secret-sdk', origin, '*'),
         clientdb.upsert.bind(null, 'cid-cli', 'Cloudron Tool', 'built-in', 'secret-cli', origin, '*')
     ], callback);
+}
+
+function removeTokenPrivateFields(token) {
+    return _.pick(token, 'identifier', 'clientId', 'scope', 'expires', 'name');
 }

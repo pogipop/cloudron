@@ -1535,4 +1535,5 @@
 [3.5.2]
 * Fix encoding of links in plain text email
 * Hide mail relay password
+* Do not return API tokens in REST API
 
