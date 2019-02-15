@@ -5,10 +5,10 @@ Dear <%= user.displayName || user.username || user.email %>,
 Welcome to <%= cloudronName %>!
 
 Follow the link to get started.
-<%= setupLink %>
+<%- setupLink %>
 
 <% if (invitor && invitor.email) { %>
-You are receiving this email because you were invited by <%- invitor.email %>.
+You are receiving this email because you were invited by <%= invitor.email %>.
 <% } %>
 
 
