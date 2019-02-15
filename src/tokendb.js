@@ -3,8 +3,8 @@
 'use strict';
 
 exports = module.exports = {
-    generateToken: generateToken,
     get: get,
+    getByAccessToken: getByAccessToken,
     add: add,
     del: del,
     delByClientId: delByClientId,
@@ -19,16 +19,11 @@ exports = module.exports = {
 
 var assert = require('assert'),
     database = require('./database.js'),
-    DatabaseError = require('./databaseerror'),
-    hat = require('./hat.js');
+    DatabaseError = require('./databaseerror');
 
-var TOKENS_FIELDS = [ 'accessToken', 'identifier', 'clientId', 'scope', 'expires', 'name' ].join(',');
+var TOKENS_FIELDS = [ 'id', 'accessToken', 'identifier', 'clientId', 'scope', 'expires', 'name' ].join(',');
 
-function generateToken() {
-    return hat(8 * 32); // TODO: make this stronger
-}
-
-function get(accessToken, callback) {
+function getByAccessToken(accessToken, callback) {
     assert.strictEqual(typeof accessToken, 'string');
     assert.strictEqual(typeof callback, 'function');
 
@@ -40,7 +35,24 @@ function get(accessToken, callback) {
     });
 }
 
-function add(accessToken, identifier, clientId, expires, scope, name, callback) {
+function get(id, callback) {
+    assert.strictEqual(typeof id, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    database.query('SELECT ' + TOKENS_FIELDS + ' FROM tokens WHERE id = ?', [ id ], function (error, result) {
+        if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
+        if (result.length === 0) return callback(new DatabaseError(DatabaseError.NOT_FOUND));
+
+        callback(null, result[0]);
+    });
+}
+
+function add(token, callback) {
+    assert.strictEqual(typeof token, 'object');
+    assert.strictEqual(typeof callback, 'function');
+
+    let { id, accessToken, identifier, clientId, expires, scope, name } = token;
+
     assert.strictEqual(typeof accessToken, 'string');
     assert.strictEqual(typeof identifier, 'string');
     assert(typeof clientId === 'string' || clientId === null);
@@ -49,8 +61,8 @@ function add(accessToken, identifier, clientId, expires, scope, name, callback) 
     assert.strictEqual(typeof name, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    database.query('INSERT INTO tokens (accessToken, identifier, clientId, expires, scope, name) VALUES (?, ?, ?, ?, ?, ?)',
-        [ accessToken, identifier, clientId, expires, scope, name ], function (error, result) {
+    database.query('INSERT INTO tokens (id, accessToken, identifier, clientId, expires, scope, name) VALUES (?, ?, ?, ?, ?, ?, ?)',
+        [ id, accessToken, identifier, clientId, expires, scope, name ], function (error, result) {
             if (error && error.code === 'ER_DUP_ENTRY') return callback(new DatabaseError(DatabaseError.ALREADY_EXISTS));
             if (error || result.affectedRows !== 1) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
 
@@ -58,11 +70,11 @@ function add(accessToken, identifier, clientId, expires, scope, name, callback) 
         });
 }
 
-function del(accessToken, callback) {
-    assert.strictEqual(typeof accessToken, 'string');
+function del(id, callback) {
+    assert.strictEqual(typeof id, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    database.query('DELETE FROM tokens WHERE accessToken = ?', [ accessToken ], function (error, result) {
+    database.query('DELETE FROM tokens WHERE id = ?', [ id ], function (error, result) {
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
         if (result.affectedRows !== 1) return callback(new DatabaseError(DatabaseError.NOT_FOUND));
 

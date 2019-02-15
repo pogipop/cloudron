@@ -276,16 +276,24 @@ function addTokenByUserId(clientId, userId, expiresAt, options, callback) {
             accesscontrol.scopesForUser(user, function (error, userScopes) {
                 if (error) return callback(new ClientsError(ClientsError.INTERNAL_ERROR, error));
 
-                var scope = accesscontrol.canonicalScopeString(result.scope);
-                var authorizedScopes = accesscontrol.intersectScopes(userScopes, scope.split(','));
+                const scope = accesscontrol.canonicalScopeString(result.scope);
+                const authorizedScopes = accesscontrol.intersectScopes(userScopes, scope.split(','));
 
-                var token = tokendb.generateToken();
+                const token = {
+                    id: 'tid-' + uuid.v4(),
+                    accessToken: hat(8 * 32),
+                    identifier: userId,
+                    clientId: result.id,
+                    expires: expiresAt,
+                    scope: authorizedScopes.join(','),
+                    name: name
+                };
 
-                tokendb.add(token, userId, result.id, expiresAt, authorizedScopes.join(','), name, function (error) {
+                tokendb.add(token, function (error) {
                     if (error) return callback(new ClientsError(ClientsError.INTERNAL_ERROR, error));
 
                     callback(null, {
-                        accessToken: token,
+                        accessToken: token.accessToken,
                         tokenScopes: authorizedScopes,
                         identifier: userId,
                         clientId: result.id,
@@ -347,5 +355,5 @@ function addDefaultClients(origin, callback) {
 }
 
 function removeTokenPrivateFields(token) {
-    return _.pick(token, 'identifier', 'clientId', 'scope', 'expires', 'name');
+    return _.pick(token, 'id', 'identifier', 'clientId', 'scope', 'expires', 'name');
 }

@@ -85,7 +85,7 @@ describe('janitor', function () {
     });
 
     it('did not remove the non-expired token', function (done) {
-        tokendb.get(TOKEN_0.accessToken, function (error, result) {
+        tokendb.getByAccessToken(TOKEN_0.accessToken, function (error, result) {
             expect(error).to.be(null);
             expect(result).to.be.eql(TOKEN_0);
             done();
@@ -93,7 +93,7 @@ describe('janitor', function () {
     });
 
     it('did remove the non-expired token', function (done) {
-        tokendb.get(TOKEN_1.accessToken, function (error, result) {
+        tokendb.getByAccessToken(TOKEN_1.accessToken, function (error, result) {
             expect(error).to.be.a(DatabaseError);
             expect(error.reason).to.be(DatabaseError.NOT_FOUND);
             expect(result).to.not.be.ok();

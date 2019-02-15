@@ -121,7 +121,7 @@ function validateToken(accessToken, callback) {
     assert.strictEqual(typeof accessToken, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    tokendb.get(accessToken, function (error, token) {
+    tokendb.getByAccessToken(accessToken, function (error, token) {
         if (error && error.reason === DatabaseError.NOT_FOUND) return callback(null, null /* user */, 'Invalid Token'); // will end up as a 401
         if (error) return callback(error); // this triggers 'internal error' in passport
 

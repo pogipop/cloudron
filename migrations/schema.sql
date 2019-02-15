@@ -41,9 +41,10 @@ CREATE TABLE IF NOT EXISTS groupMembers(
     FOREIGN KEY(userId) REFERENCES users(id));
 
 CREATE TABLE IF NOT EXISTS tokens(
+    id VARCHAR(128) NOT NULL UNIQUE,
     name VARCHAR(64) DEFAULT "", // description
     accessToken VARCHAR(128) NOT NULL UNIQUE,
-    identifier VARCHAR(128) NOT NULL,
+    identifier VARCHAR(128) NOT NULL, // resourceId: app id or user id
     clientId VARCHAR(128),
     scope VARCHAR(512) NOT NULL,
     expires BIGINT NOT NULL, // FIXME: make this a timestamp
