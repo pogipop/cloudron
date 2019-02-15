@@ -56,7 +56,7 @@ function getDomain(req, res, next) {
         if (error && error.reason === MailError.NOT_FOUND) return next(new HttpError(404, error.message));
         if (error) return next(new HttpError(500, error));
 
-        next(new HttpSuccess(200, result));
+        next(new HttpSuccess(200, mail.removePrivateFields(result)));
     });
 }
 

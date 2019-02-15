@@ -1532,3 +1532,7 @@
 * DNS and backup credential secrets are not returned in API calls anymore
 * Send notification when an app that went down, came back up
 
+[3.5.2]
+* Fix encoding of links in plain text email
+* Hide mail relay password
+

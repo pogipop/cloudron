@@ -29,6 +29,8 @@ exports = module.exports = {
 
     DEMO_USERNAME: 'cloudron',
 
-    AUTOUPDATE_PATTERN_NEVER: 'never'
+    AUTOUPDATE_PATTERN_NEVER: 'never',
+
+    SECRET_PLACEHOLDER: String.fromCharCode(0x25CF).repeat(8)
 };
 

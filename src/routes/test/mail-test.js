@@ -13,7 +13,8 @@ var async = require('async'),
     maildb = require('../../maildb.js'),
     server = require('../../server.js'),
     superagent = require('superagent'),
-    userdb = require('../../userdb.js');
+    userdb = require('../../userdb.js'),
+    _ = require('underscore');
 
 var SERVER_URL = 'http://localhost:' + config.get('port');
 
@@ -719,7 +720,7 @@ describe('Mail API', function () {
                     .query({ access_token: token })
                     .end(function (err, res) {
                         expect(res.statusCode).to.equal(200);
-                        expect(res.body.relay).to.eql(relay);
+                        expect(_.omit(res.body.relay, 'password')).to.eql(_.omit(relay, 'password'));
                         done();
                     });
             });

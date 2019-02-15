@@ -10,6 +10,8 @@ exports = module.exports = {
     removeDomain: removeDomain,
     clearDomains: clearDomains,
 
+    removePrivateFields: removePrivateFields,
+
     setDnsRecords: setDnsRecords,
     setMailFqdn: setMailFqdn,
 
@@ -49,6 +51,7 @@ exports = module.exports = {
 var assert = require('assert'),
     async = require('async'),
     config = require('./config.js'),
+    constants = require('./constants.js'),
     DatabaseError = require('./databaseerror.js'),
     debug = require('debug')('box:mail'),
     dns = require('./native-dns.js'),
@@ -868,6 +871,13 @@ function clearDomains(callback) {
     });
 }
 
+// remove all fields that should never be sent out via REST API
+function removePrivateFields(domain) {
+    let result = _.pick(domain, 'domain', 'enabled', 'mailFromValidation', 'catchAll', 'relay');
+    if (result.relay && result.relay.password) result.relay.password = constants.SECRET_PLACEHOLDER;
+    return result;
+}
+
 function setMailFromValidation(domain, enabled, callback) {
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof enabled, 'boolean');
@@ -903,16 +913,23 @@ function setMailRelay(domain, relay, callback) {
     assert.strictEqual(typeof relay, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    verifyRelay(relay, function (error) {
+    getDomain(domain, function (error, result) {
         if (error) return callback(error);
 
-        maildb.update(domain, { relay: relay }, function (error) {
-            if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new MailError(MailError.NOT_FOUND));
-            if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
+        // inject current password
+        if (result.relay.provider === relay.provider && relay.password === constants.SECRET_PLACEHOLDER) relay.password = result.relay.password;
 
-            restartMail(NOOP_CALLBACK);
+        verifyRelay(relay, function (error) {
+            if (error) return callback(error);
 
-            callback(null);
+            maildb.update(domain, { relay: relay }, function (error) {
+                if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new MailError(MailError.NOT_FOUND));
+                if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
+
+                restartMail(NOOP_CALLBACK);
+
+                callback(null);
+            });
         });
     });
 }
