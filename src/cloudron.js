@@ -267,8 +267,8 @@ function checkMailStatus(callback) {
                 if (error) return iteratorCallback(null, true);
 
                 let mailError = Object.keys(result.dns).some((record) => !result.dns[record].status);
-                if (result.rbl && !result.rbl.status) mailError = true;
                 if (result.relay && !result.relay.status) mailError = true;
+                if (result.rbl && result.rbl.status === false) mailError = true; // rbl is an optional check
 
                 iteratorCallback(null, mailError);
             });
