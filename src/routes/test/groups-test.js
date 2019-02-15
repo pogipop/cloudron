@@ -11,9 +11,9 @@ var accesscontrol = require('../../accesscontrol.js'),
     config = require('../../config.js'),
     database = require('../../database.js'),
     expect = require('expect.js'),
-    groups = require('../../groups.js'),
-    superagent = require('superagent'),
+    hat = require('../../hat.js'),
     server = require('../../server.js'),
+    superagent = require('superagent'),
     tokendb = require('../../tokendb.js');
 
 var SERVER_URL = 'http://localhost:' + config.get('port');
@@ -66,11 +66,11 @@ function setup(done) {
                     expect(result).to.be.ok();
                     expect(result.statusCode).to.eql(201);
 
-                    token_1 = tokendb.generateToken();
+                    token_1 = hat(8 * 32);
                     userId_1 = result.body.id;
 
                     // HACK to get a token for second user (passwords are generated and the user should have gotten a password setup link...)
-                    tokendb.add(token_1, userId_1, 'test-client-id',  Date.now() + 100000, accesscontrol.SCOPE_PROFILE, '', callback);
+                    tokendb.add({ id: 'tid-1', accessToken: token_1, identifier: userId_1, clientId: 'test-client-id', expires: Date.now() + 100000, scope: accesscontrol.SCOPE_PROFILE, name: '' }, callback);
                 });
         }
     ], done);

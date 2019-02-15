@@ -11,6 +11,7 @@ var async = require('async'),
     database = require('../database'),
     DatabaseError = require('../databaseerror.js'),
     expect = require('expect.js'),
+    hat = require('../hat.js'),
     janitor = require('../janitor.js'),
     tokendb = require('../tokendb.js');
 
@@ -29,7 +30,8 @@ describe('janitor', function () {
     };
 
     var TOKEN_0 = {
-        accessToken: tokendb.generateToken(),
+        id: 'tid-0',
+        accessToken: hat(8 * 32),
         identifier: '0',
         clientId: 'clientid-0',
         expires: Date.now() + 60 * 60 * 1000,
@@ -37,7 +39,8 @@ describe('janitor', function () {
         name: 'clientid0'
     };
     var TOKEN_1 = {
-        accessToken: tokendb.generateToken(),
+        id: 'tid-1',
+        accessToken: hat(8 * 32),
         identifier: '1',
         clientId: 'clientid-1',
         expires: Date.now() - 1000,
@@ -51,8 +54,8 @@ describe('janitor', function () {
             database._clear,
             authcodedb.add.bind(null, AUTHCODE_0.authCode, AUTHCODE_0.clientId, AUTHCODE_0.userId, AUTHCODE_0.expiresAt),
             authcodedb.add.bind(null, AUTHCODE_1.authCode, AUTHCODE_1.clientId, AUTHCODE_1.userId, AUTHCODE_1.expiresAt),
-            tokendb.add.bind(null, TOKEN_0.accessToken, TOKEN_0.identifier, TOKEN_0.clientId, TOKEN_0.expires, TOKEN_0.scope, TOKEN_0.name),
-            tokendb.add.bind(null, TOKEN_1.accessToken, TOKEN_1.identifier, TOKEN_1.clientId, TOKEN_1.expires, TOKEN_1.scope, TOKEN_1.name)
+            tokendb.add.bind(null, TOKEN_0),
+            tokendb.add.bind(null, TOKEN_1)
         ], done);
     });
 

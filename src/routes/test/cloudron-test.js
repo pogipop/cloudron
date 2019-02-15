@@ -9,6 +9,7 @@ let async = require('async'),
     config = require('../../config.js'),
     database = require('../../database.js'),
     expect = require('expect.js'),
+    hat = require('../../hat.js'),
     http = require('http'),
     nock = require('nock'),
     os = require('os'),
@@ -162,11 +163,11 @@ describe('Cloudron', function () {
                             expect(result).to.be.ok();
                             expect(result.statusCode).to.eql(201);
 
-                            token_1 = tokendb.generateToken();
+                            token_1 = hat(8 * 32);
                             userId_1 = result.body.id;
 
                             // HACK to get a token for second user (passwords are generated and the user should have gotten a password setup link...)
-                            tokendb.add(token_1, userId_1, 'test-client-id',  Date.now() + 100000, 'cloudron', '', callback);
+                            tokendb.add({ id: 'tid-1', accessToken: token_1, identifier: userId_1, clientId: 'test-client-id', expires: Date.now() + 100000, scope: 'cloudron', name: '' }, callback);
                         });
                 }
             ], done);

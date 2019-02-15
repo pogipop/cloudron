@@ -6,9 +6,11 @@
 
 'use strict';
 
-var config = require('../../config.js'),
+var accesscontrol = require('../../accesscontrol.js'),
+    config = require('../../config.js'),
     database = require('../../database.js'),
     expect = require('expect.js'),
+    hat = require('../../hat.js'),
     mailer = require('../../mailer.js'),
     superagent = require('superagent'),
     server = require('../../server.js'),
@@ -110,10 +112,10 @@ describe('Profile API', function () {
         });
 
         it('fails with expired token', function (done) {
-            var token = tokendb.generateToken();
+            var token = hat(8 * 32);
             var expires = Date.now() - 2000; // 1 sec
 
-            tokendb.add(token, user_0.id, null, expires, 'profile', 'tokenname', function (error) {
+            tokendb.add({ id: 'tid-3', accessToken: token, identifier: user_0.id, clientId: null, expires: expires, scope: accesscontrol.SCOPE_PROFILE, name: 'fromtest' }, function (error) {
                 expect(error).to.not.be.ok();
 
                 superagent.get(SERVER_URL + '/api/v1/profile').query({ access_token: token }).end(function (error, result) {

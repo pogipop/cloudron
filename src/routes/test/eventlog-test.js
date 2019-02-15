@@ -12,6 +12,7 @@ var accesscontrol = require('../../accesscontrol.js'),
     database = require('../../database.js'),
     eventlogdb = require('../../eventlogdb.js'),
     expect = require('expect.js'),
+    hat = require('../../hat.js'),
     superagent = require('superagent'),
     server = require('../../server.js'),
     tokendb = require('../../tokendb.js');
@@ -72,10 +73,10 @@ function setup(done) {
         },
 
         function (callback) {
-            token_1 = tokendb.generateToken();
+            token_1 = hat(8 * 32);
 
             // HACK to get a token for second user (passwords are generated and the user should have gotten a password setup link...)
-            tokendb.add(token_1, USER_1_ID, 'test-client-id',  Date.now() + 100000, accesscontrol.SCOPE_PROFILE, '', callback);
+            tokendb.add({ id: 'tid-0', accessToken: token_1, identifier: USER_1_ID, clientId: 'test-client-id', expires: Date.now() + 100000, scope: accesscontrol.SCOPE_PROFILE, name: '' }, callback);
         },
 
         function (callback) {

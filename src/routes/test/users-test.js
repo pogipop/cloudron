@@ -12,6 +12,7 @@ var accesscontrol = require('../../accesscontrol.js'),
     domains = require('../../domains.js'),
     tokendb = require('../../tokendb.js'),
     expect = require('expect.js'),
+    hat = require('../../hat.js'),
     groups = require('../../groups.js'),
     mail = require('../../mail.js'),
     mailer = require('../../mailer.js'),
@@ -84,7 +85,7 @@ function checkMails(number, done) {
 describe('Users API', function () {
     var user_0, user_1, user_2, user_4;
     var token = null, userToken = null;
-    var token_1 = tokendb.generateToken();
+    var token_1 = hat(8 * 32);
 
     before(setup);
     after(cleanup);
@@ -173,15 +174,24 @@ describe('Users API', function () {
     });
 
     it('cannot get userInfo with expired token', function (done) {
-        var token = tokendb.generateToken();
         var expires = Date.now() + 2000; // 1 sec
 
-        tokendb.add(token, user_0.id, null, expires, accesscontrol.SCOPE_PROFILE, 'tokenname', function (error) {
+        let token = {
+            id: 'tid-0',
+            accessToken: hat(8 * 32),
+            identifier: user_0.id,
+            clientId: null,
+            expires: expires,
+            scope: accesscontrol.SCOPE_PROFILE,
+            name: 'tokenname'
+        };
+
+        tokendb.add(token, function (error) {
             expect(error).to.not.be.ok();
 
             setTimeout(function () {
                 superagent.get(SERVER_URL + '/api/v1/users/' + user_0.username)
-                    .query({ access_token: token })
+                    .query({ access_token: token.accessToken })
                     .end(function (error, result) {
                         expect(result.statusCode).to.equal(401);
                         done();
@@ -287,7 +297,7 @@ describe('Users API', function () {
                 user_1 = result.body;
 
                 // HACK to get a token for second user (passwords are generated and the user should have gotten a password setup link...)
-                tokendb.add(token_1, user_1.id, 'test-client-id',  Date.now() + 10000, accesscontrol.SCOPE_PROFILE, 'fromtest', done);
+                tokendb.add({ id: 'tid-3', accessToken: token_1, identifier: user_1.id, clientId: 'test-client-id', expires: Date.now() + 10000, scope: accesscontrol.SCOPE_PROFILE, name: 'fromtest' }, done);
             });
     });
 
@@ -697,10 +707,10 @@ describe('Users API', function () {
 
                 user_4 = result.body;
 
-                userToken = tokendb.generateToken();
+                userToken = hat(8 * 32);
                 var expires = Date.now() + 2000; // 1 sec
 
-                tokendb.add(userToken, user_4.id, null, expires, accesscontrol.SCOPE_PROFILE, '', done);
+                tokendb.add({ id: 'tid-2', accessToken: userToken, identifier: user_4.id, clientId: null, expires: expires, scope: accesscontrol.SCOPE_PROFILE, name: '' }, done);
             });
     });
 
