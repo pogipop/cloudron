@@ -874,7 +874,10 @@ function clearDomains(callback) {
 // remove all fields that should never be sent out via REST API
 function removePrivateFields(domain) {
     let result = _.pick(domain, 'domain', 'enabled', 'mailFromValidation', 'catchAll', 'relay');
-    if (result.relay && result.relay.password) result.relay.password = constants.SECRET_PLACEHOLDER;
+    if (result.relay.provider !== 'cloudron-smtp') {
+        if (result.relay.username === result.relay.password) result.relay.username = constants.SECRET_PLACEHOLDER;
+        result.relay.password = constants.SECRET_PLACEHOLDER;
+    }
     return result;
 }
 
@@ -916,8 +919,11 @@ function setMailRelay(domain, relay, callback) {
     getDomain(domain, function (error, result) {
         if (error) return callback(error);
 
-        // inject current password
-        if (result.relay.provider === relay.provider && relay.password === constants.SECRET_PLACEHOLDER) relay.password = result.relay.password;
+        // inject current username/password
+        if (result.relay.provider === relay.provider) {
+            if (relay.username === constants.SECRET_PLACEHOLDER) relay.username = result.relay.username;
+            if (relay.password === constants.SECRET_PLACEHOLDER) relay.password = result.relay.password;
+        }
 
         verifyRelay(relay, function (error) {
             if (error) return callback(error);
