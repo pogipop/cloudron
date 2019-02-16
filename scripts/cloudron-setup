@@ -112,6 +112,7 @@ elif [[  \
             "${provider}" != "hetzner" && \
             "${provider}" != "lightsail" && \
             "${provider}" != "linode" && \
+            "${provider}" != "linode-stackscript" && \
             "${provider}" != "netcup" && \
             "${provider}" != "netcup-image" && \
             "${provider}" != "ovh" && \
