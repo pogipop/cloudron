@@ -16,6 +16,10 @@ function getGraphs(req, res, next) {
     delete req.headers['cookies'];
     req.url = url.format({ pathname: 'render', query: parsedUrl.query });
 
+    // graphs may take very long to respond so we run into headers already sent issues quite often
+    // nginx still has a request timeout which can deal with this then.
+    req.clearTimeout();
+
     graphiteProxy(req, res, next);
 }
 
