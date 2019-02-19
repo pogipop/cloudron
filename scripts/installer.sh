@@ -56,12 +56,12 @@ if [[ $(docker version --format {{.Client.Version}}) != "18.03.1-ce" ]]; then
 fi
 
 echo "==> installer: updating node"
-if [[ "$(node --version)" != "v8.11.2" ]]; then
-    mkdir -p /usr/local/node-8.11.2
-    $curl -sL https://nodejs.org/dist/v8.11.2/node-v8.11.2-linux-x64.tar.gz | tar zxvf - --strip-components=1 -C /usr/local/node-8.11.2
-    ln -sf /usr/local/node-8.11.2/bin/node /usr/bin/node
-    ln -sf /usr/local/node-8.11.2/bin/npm /usr/bin/npm
-    rm -rf /usr/local/node-6.11.5
+if [[ "$(node --version)" != "v10.15.1" ]]; then
+    mkdir -p /usr/local/node-10.15.1
+    $curl -sL https://nodejs.org/dist/v10.15.1/node-v10.15.1-linux-x64.tar.gz | tar zxvf - --strip-components=1 -C /usr/local/node-10.15.1
+    ln -sf /usr/local/node-10.15.1/bin/node /usr/bin/node
+    ln -sf /usr/local/node-10.15.1/bin/npm /usr/bin/npm
+    rm -rf /usr/local/node-8.11.2 /usr/local/node-8.9.3
 fi
 
 # this is here (and not in updater.js) because rebuild requires the above node

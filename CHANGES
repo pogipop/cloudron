@@ -1539,4 +1539,5 @@
 
 [3.6.0]
 * Make reboot required check server side
+* Update node to 10.15.1
 
