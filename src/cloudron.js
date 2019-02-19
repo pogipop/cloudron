@@ -191,7 +191,8 @@ function runSystemChecks() {
     async.parallel([
         checkBackupConfiguration,
         checkDiskSpace,
-        checkMailStatus
+        checkMailStatus,
+        checkRebootRequired
     ], function () {
         debug('runSystemChecks: done');
     });
@@ -281,6 +282,20 @@ function checkMailStatus(callback) {
 
             callback();
         });
+    });
+}
+
+function checkRebootRequired(callback) {
+    assert.strictEqual(typeof callback, 'function');
+
+    debug('checking if reboot required');
+
+    isRebootRequired(function (error, rebootRequired) {
+        if (error) return callback(error);
+
+        if (rebootRequired) notifications.rebootRequired('To finish security updates, a [reboot](/#/system) is necessary.');
+
+        callback();
     });
 }
 

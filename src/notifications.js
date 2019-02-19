@@ -20,7 +20,8 @@ exports = module.exports = {
     apptaskCrash: apptaskCrash,
     backupConfigWarning: backupConfigWarning,
     diskSpaceWarning: diskSpaceWarning,
-    mailStatusWarning: mailStatusWarning
+    mailStatusWarning: mailStatusWarning,
+    rebootRequired: rebootRequired
 };
 
 var assert = require('assert'),
@@ -303,6 +304,16 @@ function mailStatusWarning(message) {
 
     actionForAllAdmins([], function (admin, callback) {
         upsert(admin.id, null, 'Email is not configured properly', message, '/#/email', callback);
+    }, function (error) {
+        if (error) console.error(error);
+    });
+}
+
+function rebootRequired(message) {
+    assert.strictEqual(typeof message, 'string');
+
+    actionForAllAdmins([], function (admin, callback) {
+        upsert(admin.id, null, 'Reboot Required', message, '/#/system', callback);
     }, function (error) {
         if (error) console.error(error);
     });

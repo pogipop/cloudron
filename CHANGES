@@ -1537,3 +1537,6 @@
 * Hide mail relay password
 * Do not return API tokens in REST API
 
+[3.6.0]
+* Make reboot required check server side
+
