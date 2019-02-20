@@ -9,10 +9,10 @@ var debug = require('debug')('box:digest'),
 var NOOP_CALLBACK = function (error) { if (error) debug(error); };
 
 exports = module.exports = {
-    maybeSend: maybeSend
+    send: send
 };
 
-function maybeSend(callback) {
+function send(callback) {
     callback = callback || NOOP_CALLBACK;
 
     settings.getEmailDigest(function (error, enabled) {
@@ -53,7 +53,7 @@ function maybeSend(callback) {
             };
 
             // always send digest for backup failure notification
-            debug('maybeSend: sending digest email', info);
+            debug('send: sending digest email', info);
             mailer.sendDigest(info);
 
             callback();
