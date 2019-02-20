@@ -90,6 +90,14 @@ server {
     add_header Referrer-Policy "no-referrer-when-downgrade";
     proxy_hide_header Referrer-Policy;
 
+    # gzip responses that are > 50k and not images
+    gzip on;
+    gzip_min_length 50k;
+    gzip_types text/css text/javascript text/xml text/plain application/javascript application/x-javascript application/json;
+
+    # enable for proxied requests as well
+    gzip_proxied any;
+
 <% if ( endpoint === 'admin' ) { -%>
     # CSP headers for the admin/dashboard resources
     add_header Content-Security-Policy "default-src 'none'; connect-src wss: https: 'self' *.cloudron.io; script-src https: 'self' 'unsafe-inline' 'unsafe-eval'; img-src * data:; style-src https: 'unsafe-inline'; object-src 'none'; font-src https: 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self';";
