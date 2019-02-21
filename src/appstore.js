@@ -251,7 +251,14 @@ function getBoxUpdate(callback) {
                 return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, util.format('Invalid update version: %s %s', result.statusCode, result.text)));
             }
 
-            // updateInfo: { version, changelog, upgrade, sourceTarballUrl, sourceTarballSigUrl, boxVersionsUrl, boxVersionsSigUrl }
+            // updateInfo: { version, changelog, sourceTarballUrl, sourceTarballSigUrl, boxVersionsUrl, boxVersionsSigUrl }
+            if (!updateInfo.version || typeof updateInfo.version !== 'string') return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, util.format('Bad response (bad version): %s %s', result.statusCode, result.text)));
+            if (!updateInfo.changelog || !Array.isArray(updateInfo.changelog)) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, util.format('Bad response (bad version): %s %s', result.statusCode, result.text)));
+            if (!updateInfo.sourceTarballUrl || typeof updateInfo.sourceTarballUrl !== 'string') return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, util.format('Bad response (bad sourceTarballUrl): %s %s', result.statusCode, result.text)));
+            if (!updateInfo.sourceTarballSigUrl || typeof updateInfo.sourceTarballSigUrl !== 'string') return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, util.format('Bad response (bad sourceTarballSigUrl): %s %s', result.statusCode, result.text)));
+            if (!updateInfo.boxVersionsUrl || typeof updateInfo.boxVersionsUrl !== 'string') return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, util.format('Bad response (bad boxVersionsUrl): %s %s', result.statusCode, result.text)));
+            if (!updateInfo.boxVersionsSigUrl || typeof updateInfo.boxVersionsSigUrl !== 'string') return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, util.format('Bad response (bad boxVersionsSigUrl): %s %s', result.statusCode, result.text)));
+
             callback(null, updateInfo);
         });
     });
