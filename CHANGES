@@ -1541,4 +1541,5 @@
 * Make reboot required check server side
 * Update node to 10.15.1
 * Enable gzip compression for large objects
+* Update docker to 18.09
 

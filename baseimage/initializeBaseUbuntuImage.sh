@@ -28,6 +28,7 @@ debconf-set-selections <<< 'mysql-server mysql-server/root_password_again passwo
 # this enables automatic security upgrades (https://help.ubuntu.com/community/AutomaticSecurityUpdates)
 # resolvconf is needed for unbound to work property after disabling systemd-resolved in 18.04
 ubuntu_version=$(lsb_release -rs)
+ubuntu_codename=$(lsb_release -cs)
 gpg_package=$([[ "${ubuntu_version}" == "16.04" ]] && echo "gnupg" || echo "gpg")
 apt-get -y install \
     acl \
@@ -69,10 +70,14 @@ echo "==> Installing Docker"
 mkdir -p /etc/systemd/system/docker.service.d
 echo -e "[Service]\nExecStart=\nExecStart=/usr/bin/dockerd -H fd:// --log-driver=journald --exec-opt native.cgroupdriver=cgroupfs --storage-driver=overlay2" > /etc/systemd/system/docker.service.d/cloudron.conf
 
-curl -sL https://download.docker.com/linux/ubuntu/dists/xenial/pool/stable/amd64/docker-ce_18.03.1~ce-0~ubuntu_amd64.deb -o /tmp/docker.deb
+# there are 3 packages for docker - containerd, CLI and the daemon
+curl -sL "https://download.docker.com/linux/ubuntu/dists/${ubuntu_codename}/pool/stable/amd64/containerd.io_1.2.2-3_amd64.deb" -o /tmp/
+containerd.deb
+curl -sL "https://download.docker.com/linux/ubuntu/dists/${ubuntu_codename}/pool/stable/amd64/docker-ce-cli_18.09.2~3-0~ubuntu-${ubuntu_codename}_amd64.deb" -o /tmp/docker-ce-cli.deb
+curl -sL "https://download.docker.com/linux/ubuntu/dists/${ubuntu_codename}/pool/stable/amd64/docker-ce_18.09.2~3-0~ubuntu-${ubuntu_codename}_amd64.deb" -o /tmp/docker.deb
 # apt install with install deps (as opposed to dpkg -i)
-apt install -y /tmp/docker.deb
-rm /tmp/docker.deb
+apt install -y /tmp/containerd.deb  /tmp/docker-ce-cli.deb /tmp/docker.deb
+rm /tmp/containerd.deb /tmp/docker-ce-cli.deb /tmp/docker.deb
 
 storage_driver=$(docker info | grep "Storage Driver" | sed 's/.*: //')
 if [[ "${storage_driver}" != "overlay2" ]]; then

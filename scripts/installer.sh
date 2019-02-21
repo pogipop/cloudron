@@ -19,17 +19,17 @@ readonly curl="curl --fail --connect-timeout 20 --retry 10 --retry-delay 2 --max
 readonly script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 readonly box_src_tmp_dir="$(realpath ${script_dir}/..)"
 
+readonly ubuntu_version=$(lsb_release -rs)
+readonly ubuntu_codename=$(lsb_release -cs)
+
 readonly is_update=$(systemctl is-active box && echo "yes" || echo "no")
 
 echo "==> installer: updating docker"
-if [[ $(docker version --format {{.Client.Version}}) != "18.03.1-ce" ]]; then
-    $curl -sL https://download.docker.com/linux/ubuntu/dists/xenial/pool/stable/amd64/docker-ce_18.03.1~ce-0~ubuntu_amd64.deb -o /tmp/docker.deb
-
-    # https://download.docker.com/linux/ubuntu/dists/xenial/stable/binary-amd64/Packages
-    if [[ $(sha256sum /tmp/docker.deb | cut -d' ' -f1) != "54f4c9268492a4fd2ec2e6bcc95553855b025f35dcc8b9f60ac34e0aa307279b" ]]; then
-        echo "==> installer: docker binary download is corrupt"
-        exit 5
-    fi
+if [[ $(docker version --format {{.Client.Version}}) != "18.09.2" ]]; then
+    # there are 3 packages for docker - containerd, CLI and the daemon
+    $curl -sL "https://download.docker.com/linux/ubuntu/dists/${ubuntu_codename}/pool/stable/amd64/containerd.io_1.2.2-3_amd64.deb" -o /tmp/containerd.deb
+    $curl -sL "https://download.docker.com/linux/ubuntu/dists/${ubuntu_codename}/pool/stable/amd64/docker-ce-cli_18.09.2~3-0~ubuntu-${ubuntu_codename}_amd64.deb" -o /tmp/docker-ce-cli.deb
+    $curl -sL "https://download.docker.com/linux/ubuntu/dists/${ubuntu_codename}/pool/stable/amd64/docker-ce_18.09.2~3-0~ubuntu-${ubuntu_codename}_amd64.deb" -o /tmp/docker.deb
 
     echo "==> installer: Waiting for all dpkg tasks to finish..."
     while fuser /var/lib/dpkg/lock; do
@@ -47,12 +47,12 @@ if [[ $(docker version --format {{.Client.Version}}) != "18.03.1-ce" ]]; then
         sleep 1
     done
 
-    while ! apt install -y /tmp/docker.deb; do
+    while ! apt install -y /tmp/containerd.deb  /tmp/docker-ce-cli.deb /tmp/docker.deb; do
         echo "==> installer: Failed to install docker. Retry"
         sleep 1
     done
 
-    rm /tmp/docker.deb
+    rm /tmp/containerd.deb /tmp/docker-ce-cli.deb /tmp/docker.deb
 fi
 
 echo "==> installer: updating node"
