@@ -195,7 +195,7 @@ function updateToLatest(auditSource, callback) {
     let task = tasks.startTask(tasks.TASK_UPDATE, [ boxUpdateInfo ]);
     task.on('error', (error) => callback(new UpdaterError(UpdaterError.INTERNAL_ERROR, error)));
     task.on('start', (taskId) => {
-        eventlog.add(eventlog.ACTION_UPDATE, auditSource, { taskId });
+        eventlog.add(eventlog.ACTION_UPDATE, auditSource, { taskId, boxUpdateInfo });
         callback(null, taskId);
     });
     task.on('finish', (error) => {
