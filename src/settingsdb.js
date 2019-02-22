@@ -13,11 +13,13 @@ var assert = require('assert'),
     database = require('./database.js'),
     DatabaseError = require('./databaseerror');
 
+const SETTINGS_FIELDS = [ 'name', 'value' ].join(',');
+
 function get(key, callback) {
     assert.strictEqual(typeof key, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    database.query('SELECT * FROM settings WHERE name = ?', [ key ], function (error, result) {
+    database.query(`SELECT ${SETTINGS_FIELDS} FROM settings WHERE name = ?`, [ key ], function (error, result) {
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
         if (result.length === 0) return callback(new DatabaseError(DatabaseError.NOT_FOUND));
 
@@ -26,7 +28,7 @@ function get(key, callback) {
 }
 
 function getAll(callback) {
-    database.query('SELECT * FROM settings ORDER BY name', function (error, results) {
+    database.query(`SELECT ${SETTINGS_FIELDS} FROM settings ORDER BY name`, function (error, results) {
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
 
         callback(null, results);
