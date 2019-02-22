@@ -269,6 +269,7 @@ function get(req, res, next) {
     case settings.DYNAMIC_DNS_KEY: return getDynamicDnsConfig(req, res, next);
     case settings.BACKUP_CONFIG_KEY: return getBackupConfig(req, res, next);
     case settings.PLATFORM_CONFIG_KEY: return getPlatformConfig(req, res, next);
+    case settings.APPSTORE_CONFIG_KEY: return getAppstoreConfig(req, res, next);
 
     case settings.APP_AUTOUPDATE_PATTERN_KEY: return getAppAutoupdatePattern(req, res, next);
     case settings.BOX_AUTOUPDATE_PATTERN_KEY: return getBoxAutoupdatePattern(req, res, next);
@@ -288,6 +289,7 @@ function set(req, res, next) {
     case settings.DYNAMIC_DNS_KEY: return setDynamicDnsConfig(req, res, next);
     case settings.BACKUP_CONFIG_KEY: return setBackupConfig(req, res, next);
     case settings.PLATFORM_CONFIG_KEY: return setPlatformConfig(req, res, next);
+    case settings.APPSTORE_CONFIG_KEY: return setAppstoreConfig(req, res, next);
 
     case settings.APP_AUTOUPDATE_PATTERN_KEY: return setAppAutoupdatePattern(req, res, next);
     case settings.BOX_AUTOUPDATE_PATTERN_KEY: return setBoxAutoupdatePattern(req, res, next);

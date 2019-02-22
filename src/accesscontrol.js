@@ -12,8 +12,7 @@ exports = module.exports = {
     SCOPE_SETTINGS: 'settings',
     SCOPE_USERS_READ: 'users:read',
     SCOPE_USERS_MANAGE: 'users:manage',
-    SCOPE_APPSTORE: 'appstore',
-    VALID_SCOPES: [ 'apps', 'appstore', 'clients', 'cloudron', 'domains', 'mail', 'profile', 'settings', 'users' ], // keep this sorted
+    VALID_SCOPES: [ 'apps', 'clients', 'cloudron', 'domains', 'mail', 'profile', 'settings', 'users' ], // keep this sorted
 
     SCOPE_ANY: '*',
 

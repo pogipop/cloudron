@@ -100,7 +100,6 @@ function initializeExpressSync() {
     var clientsScope = routes.accesscontrol.scope(accesscontrol.SCOPE_CLIENTS);
     var domainsReadScope = routes.accesscontrol.scope(accesscontrol.SCOPE_DOMAINS_READ);
     var domainsManageScope = routes.accesscontrol.scope(accesscontrol.SCOPE_DOMAINS_MANAGE);
-    var appstoreScope = routes.accesscontrol.scope(accesscontrol.SCOPE_APPSTORE);
 
     const isUnmanaged = routes.accesscontrol.isUnmanaged;
     const verifyDomainLock = routes.domains.verifyDomainLock;
@@ -237,8 +236,6 @@ function initializeExpressSync() {
     // settings routes (these are for the settings tab - avatar & name have public routes for normal users. see above)
     router.get('/api/v1/settings/cloudron_avatar', settingsScope, routes.settings.getCloudronAvatar);
     router.post('/api/v1/settings/cloudron_avatar', settingsScope, multipart, routes.settings.setCloudronAvatar);
-    router.get ('/api/v1/settings/appstore_config', appstoreScope, routes.settings.getAppstoreConfig);
-    router.post('/api/v1/settings/appstore_config', appstoreScope, routes.settings.setAppstoreConfig);
 
     router.get ('/api/v1/settings/:setting', settingsScope, routes.settings.get);
     router.post('/api/v1/settings/:setting', settingsScope, routes.settings.set);
