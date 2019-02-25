@@ -7,7 +7,8 @@ exports = module.exports = {
     UpdaterError: UpdaterError
 };
 
-var assert = require('assert'),
+var apps = require('./apps.js'),
+    assert = require('assert'),
     async = require('async'),
     child_process = require('child_process'),
     backups = require('./backups.js'),
@@ -21,6 +22,7 @@ var assert = require('assert'),
     path = require('path'),
     paths = require('./paths.js'),
     safe = require('safetydance'),
+    semver = require('semver'),
     shell = require('./shell.js'),
     tasks = require('./tasks.js'),
     updateChecker = require('./updatechecker.js'),
@@ -181,6 +183,24 @@ function update(boxUpdateInfo, progressCallback, callback) {
     });
 }
 
+function canUpdate(boxUpdateInfo, callback) {
+    assert.strictEqual(typeof boxUpdateInfo, 'object');
+    assert.strictEqual(typeof callback, 'function');
+
+    apps.getAll(function (error, result) {
+        if (error) return callback(new UpdaterError(UpdaterError.INTERNAL_ERROR, error));
+
+        for (let app of result) {
+            const maxBoxVersion = app.manifest.maxBoxVersion;
+            if (semver.valid(maxBoxVersion) && semver.gt(boxUpdateInfo.version, maxBoxVersion)) {
+                return callback(new UpdaterError(UpdaterError.BAD_STATE, `Cannot update to v${boxUpdateInfo.version} because ${app.fqdn} has a maxBoxVersion of ${maxBoxVersion}`));
+            }
+        }
+
+        callback();
+    });
+}
+
 function updateToLatest(auditSource, callback) {
     assert.strictEqual(typeof auditSource, 'object');
     assert.strictEqual(typeof callback, 'function');
@@ -189,18 +209,22 @@ function updateToLatest(auditSource, callback) {
     if (!boxUpdateInfo) return callback(new UpdaterError(UpdaterError.ALREADY_UPTODATE, 'No update available'));
     if (!boxUpdateInfo.sourceTarballUrl) return callback(new UpdaterError(UpdaterError.BAD_STATE, 'No automatic update available'));
 
-    let error = locker.lock(locker.OP_BOX_UPDATE);
-    if (error) return callback(new UpdaterError(UpdaterError.BAD_STATE, `Cannot update now: ${error.message}`));
+    canUpdate(boxUpdateInfo, function (error) {
+        if (error) return callback(error);
 
-    let task = tasks.startTask(tasks.TASK_UPDATE, [ boxUpdateInfo ]);
-    task.on('error', (error) => callback(new UpdaterError(UpdaterError.INTERNAL_ERROR, error)));
-    task.on('start', (taskId) => {
-        eventlog.add(eventlog.ACTION_UPDATE, auditSource, { taskId, boxUpdateInfo });
-        callback(null, taskId);
-    });
-    task.on('finish', (error) => {
-        locker.unlock(locker.OP_BOX_UPDATE);
+        error = locker.lock(locker.OP_BOX_UPDATE);
+        if (error) return callback(new UpdaterError(UpdaterError.BAD_STATE, `Cannot update now: ${error.message}`));
 
-        debug('Update failed with error', error);
+        let task = tasks.startTask(tasks.TASK_UPDATE, [ boxUpdateInfo ]);
+        task.on('error', (error) => callback(new UpdaterError(UpdaterError.INTERNAL_ERROR, error)));
+        task.on('start', (taskId) => {
+            eventlog.add(eventlog.ACTION_UPDATE, auditSource, { taskId, boxUpdateInfo });
+            callback(null, taskId);
+        });
+        task.on('finish', (error) => {
+            locker.unlock(locker.OP_BOX_UPDATE);
+
+            debug('Update failed with error', error);
+        });
     });
 }
