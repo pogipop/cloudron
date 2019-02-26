@@ -49,7 +49,6 @@ apiServerOrigin="https://api.cloudron.io"
 webServerOrigin="https://cloudron.io"
 sourceTarballUrl=""
 rebootServer="true"
-baseDataDir=""
 
 args=$(getopt -o "" -l "help,skip-baseimage-init,provider:,version:,env:,edition:,skip-reboot" -n "$0" -- "$@")
 eval set -- "${args}"
@@ -122,11 +121,6 @@ elif [[  \
             "${provider}" != "generic" \
         ]]; then
     echo "--provider must be one of: azure, cloudscale.ch, contabo, digitalocean, ec2, exoscale, galaxygate, gce, hetzner, lightsail, linode, netcup, ovh, rosehosting, scaleway, vultr or generic"
-    exit 1
-fi
-
-if [[ -n "${baseDataDir}" && ! -d "${baseDataDir}" ]]; then
-    echo "${baseDataDir} does not exist"
     exit 1
 fi
 
