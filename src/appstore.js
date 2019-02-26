@@ -316,17 +316,15 @@ function getAccount(callback) {
     });
 }
 
-function registerCloudron(userId, token, callback) {
+function registerCloudron(adminDomain, userId, token, callback) {
+    assert.strictEqual(typeof adminDomain, 'string');
     assert.strictEqual(typeof userId, 'string');
     assert.strictEqual(typeof token, 'string');
     assert.strictEqual(typeof callback, 'function');
 
     const url = `${config.apiServerOrigin()}/api/v1/users/${userId}/cloudrons`;
-    const data = {
-        domain: config.adminDomain()
-    };
 
-    superagent.post(url).send(data).query({ accessToken: token }).timeout(30 * 1000).end(function (error, result) {
+    superagent.post(url).send({ domain: adminDomain }).query({ accessToken: token }).timeout(30 * 1000).end(function (error, result) {
         if (error && !error.response) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, error.message));
         if (result.statusCode === 401) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, 'invalid appstore token'));
         if (result.statusCode !== 201) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, 'unable to register cloudron'));

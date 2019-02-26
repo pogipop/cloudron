@@ -67,6 +67,7 @@ var addons = require('./addons.js'),
     assert = require('assert'),
     backups = require('./backups.js'),
     BackupsError = backups.BackupsError,
+    config = require('./config.js'),
     constants = require('./constants.js'),
     CronJob = require('cron').CronJob,
     DatabaseError = require('./databaseerror.js'),
@@ -409,9 +410,13 @@ function setPlatformConfig(platformConfig, callback) {
 
 function setAppstoreConfig(appstoreConfig, callback) {
     assert.strictEqual(typeof appstoreConfig, 'object');
+    assert.strictEqual(typeof appstoreConfig.userId, 'string');
+    assert.strictEqual(typeof appstoreConfig.token, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    appstore.registerCloudron(appstoreConfig, function (error, cloudronId) {
+    const { userId, token } = appstoreConfig;
+
+    appstore.registerCloudron(config.adminDomain(), userId, token, function (error, cloudronId) {
         if (error && error.reason === AppstoreError.EXTERNAL_ERROR) return callback(new SettingsError(SettingsError.EXTERNAL_ERROR, error.message));
         if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
 

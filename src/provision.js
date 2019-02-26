@@ -9,7 +9,8 @@ exports = module.exports = {
     ProvisionError: ProvisionError
 };
 
-var assert = require('assert'),
+var appstore = require('./appstore.js'),
+    assert = require('assert'),
     async = require('async'),
     backups = require('./backups.js'),
     BackupsError = require('./backups.js').BackupsError,
@@ -22,6 +23,7 @@ var assert = require('assert'),
     DomainsError = domains.DomainsError,
     eventlog = require('./eventlog.js'),
     mail = require('./mail.js'),
+    paths = require('./paths.js'),
     safe = require('safetydance'),
     semver = require('semver'),
     settingsdb = require('./settingsdb.js'),
@@ -129,6 +131,34 @@ function unprovision(callback) {
     ], callback);
 }
 
+
+function autoRegisterCloudron(adminDomain, callback) {
+    assert.strictEqual(typeof adminDomain, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    if (!config.edition()) return callback();
+
+    const license = safe.JSON.parse(safe.fs.readFileSync(paths.LICENSE_FILE, 'utf8'));
+    if (!license) return callback(new ProvisionError(ProvisionError.EXTERNAL_ERROR, 'Cannot read license'));
+    if (typeof license.userId !== 'string' || typeof license.token !== 'string') return callback(new ProvisionError(ProvisionError.EXTERNAL_ERROR, 'Bad license'));
+
+    appstore.registerCloudron(adminDomain, license.userId, license.token, function (error, cloudronId) {
+        if (error) return callback(error);
+
+        const data = {
+            userId: license.userId,
+            token: license.token,
+            cloudronId: cloudronId
+        };
+
+        settingsdb.set(settings.APPSTORE_CONFIG_KEY, JSON.stringify(data), function (error) {
+            if (error) return callback(new ProvisionError(ProvisionError.INTERNAL_ERROR, error));
+
+            callback();
+        });
+    });
+}
+
 function setup(dnsConfig, autoconf, auditSource, callback) {
     assert.strictEqual(typeof dnsConfig, 'object');
     assert.strictEqual(typeof autoconf, 'object');
@@ -173,6 +203,8 @@ function setup(dnsConfig, autoconf, auditSource, callback) {
                 callback(); // now that args are validated run the task in the background
 
                 async.series([
+                    setProgress.bind(null, 'setup', 'Registering server'),
+                    autoRegisterCloudron.bind(null, domain),
                     domains.prepareDashboardDomain.bind(null, domain, auditSource, (progress) => setProgress('setup', progress.message, NOOP_CALLBACK)),
                     cloudron.setDashboardDomain.bind(null, domain, auditSource), // this sets up the config.fqdn()
                     mail.addDomain.bind(null, domain), // this relies on config.mailFqdn()

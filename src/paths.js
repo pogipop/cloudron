@@ -8,6 +8,8 @@ exports = module.exports = {
     CLOUDRON_DEFAULT_AVATAR_FILE: path.join(__dirname + '/../assets/avatar.png'),
     INFRA_VERSION_FILE: path.join(config.baseDir(), 'platformdata/INFRA_VERSION'),
 
+    LICENSE_FILE: '/etc/cloudron/LICENSE',
+
     PLATFORM_DATA_DIR: path.join(config.baseDir(), 'platformdata'),
     APPS_DATA_DIR: path.join(config.baseDir(), 'appsdata'),
     BOX_DATA_DIR: path.join(config.baseDir(), 'boxdata'),
