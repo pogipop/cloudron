@@ -14,6 +14,9 @@ exports = module.exports = {
 
     getAccount: getAccount,
 
+    registerCloudron: registerCloudron,
+    getCloudron: getCloudron,
+
     sendFeedback: sendFeedback,
 
     AppstoreError: AppstoreError
@@ -310,6 +313,49 @@ function getAccount(callback) {
             // { profile: { id, email, groupId, billing, firstName, lastName, company, street, city, zip, state, country } }
             callback(null, result.body.profile);
         });
+    });
+}
+
+function registerCloudron(userId, token, callback) {
+    assert.strictEqual(typeof userId, 'string');
+    assert.strictEqual(typeof token, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    const url = `${config.apiServerOrigin()}/api/v1/users/${userId}/cloudrons`;
+    const data = {
+        domain: config.adminDomain()
+    };
+
+    superagent.post(url).send(data).query({ accessToken: token }).timeout(30 * 1000).end(function (error, result) {
+        if (error && !error.response) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, error.message));
+        if (result.statusCode === 401) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, 'invalid appstore token'));
+        if (result.statusCode !== 201) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, 'unable to register cloudron'));
+
+        const cloudronId = safe.query(result.body, 'cloudron.id');
+        if (!cloudronId) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, 'Invalid response - no cloudron id'));
+
+        debug(`setAppstoreConfig: Cloudron registered with id ${cloudronId}`);
+
+        callback(null, cloudronId);
+    });
+}
+
+function getCloudron(appstoreConfig, callback) {
+    assert.strictEqual(typeof appstoreConfig, 'object');
+    assert.strictEqual(typeof callback, 'function');
+
+    const { userId, cloudronId, token } = appstoreConfig;
+
+    const url = config.apiServerOrigin() + '/api/v1/users/' + userId + '/cloudrons/' + cloudronId;
+
+    superagent.get(url).query({ accessToken: token }).timeout(30 * 1000).end(function (error, result) {
+        if (error && !error.response) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, error.message));
+        if (result.statusCode === 401) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, 'invalid appstore token'));
+        if (result.statusCode === 403) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, 'wrong user'));
+        if (result.statusCode === 404) return callback(new AppstoreError(AppstoreError.NOT_FOUND, error.message));
+        if (result.statusCode !== 200) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, 'unknown error'));
+
+        callback();
     });
 }
 
