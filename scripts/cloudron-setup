@@ -124,6 +124,11 @@ elif [[  \
     exit 1
 fi
 
+if [[ -n "${edition}" && ! -f "LICENSE" ]]; then
+    echo "A LICENSE is required to use this edition. Please contact support@cloudron.io"
+    exit 1
+fi
+
 echo ""
 echo "##############################################"
 echo "         Cloudron Setup (${requestedVersion:-latest})"
@@ -232,6 +237,8 @@ CONF_END
         exit 1
     fi
 fi
+
+[[ -f LICENSE ]] && cp LICENSE /etc/cloudron/LICENSE
 
 echo -n "=> Waiting for cloudron to be ready (this takes some time) ..."
 while true; do
