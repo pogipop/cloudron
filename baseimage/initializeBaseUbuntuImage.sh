@@ -71,8 +71,7 @@ mkdir -p /etc/systemd/system/docker.service.d
 echo -e "[Service]\nExecStart=\nExecStart=/usr/bin/dockerd -H fd:// --log-driver=journald --exec-opt native.cgroupdriver=cgroupfs --storage-driver=overlay2" > /etc/systemd/system/docker.service.d/cloudron.conf
 
 # there are 3 packages for docker - containerd, CLI and the daemon
-curl -sL "https://download.docker.com/linux/ubuntu/dists/${ubuntu_codename}/pool/stable/amd64/containerd.io_1.2.2-3_amd64.deb" -o /tmp/
-containerd.deb
+curl -sL "https://download.docker.com/linux/ubuntu/dists/${ubuntu_codename}/pool/stable/amd64/containerd.io_1.2.2-3_amd64.deb" -o /tmp/containerd.deb
 curl -sL "https://download.docker.com/linux/ubuntu/dists/${ubuntu_codename}/pool/stable/amd64/docker-ce-cli_18.09.2~3-0~ubuntu-${ubuntu_codename}_amd64.deb" -o /tmp/docker-ce-cli.deb
 curl -sL "https://download.docker.com/linux/ubuntu/dists/${ubuntu_codename}/pool/stable/amd64/docker-ce_18.09.2~3-0~ubuntu-${ubuntu_codename}_amd64.deb" -o /tmp/docker.deb
 # apt install with install deps (as opposed to dpkg -i)
