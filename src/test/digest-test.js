@@ -104,7 +104,7 @@ describe('digest', function () {
         });
 
         it('does not send mail with digest disabled', function (done) {
-            digest.maybeSend(function (error) {
+            digest.send(function (error) {
                 if (error) return done(error);
                 checkMails(0, null, done);
             });
@@ -118,7 +118,7 @@ describe('digest', function () {
         });
 
         it('sends mail for box update', function (done) {
-            digest.maybeSend(function (error) {
+            digest.send(function (error) {
                 if (error) return done(error);
 
                 checkMails(1, `${USER_0.email}`, done);
@@ -128,7 +128,7 @@ describe('digest', function () {
         it('sends mail for pending update', function (done) {
             updatechecker._setUpdateInfo({ box: null, apps: { 'appid': { manifest: { version: '1.2.5', changelog: 'noop\nreally' } } } });
 
-            digest.maybeSend(function (error) {
+            digest.send(function (error) {
                 if (error) return done(error);
 
                 checkMails(1, `${USER_0.email}`, done);
@@ -141,7 +141,7 @@ describe('digest', function () {
             maildb.update(DOMAIN_0.domain, { enabled: true }, function (error) {
                 if (error) return done(error);
 
-                digest.maybeSend(function (error) {
+                digest.send(function (error) {
                     if (error) return done(error);
 
                     checkMails(1, `${USER_0.email}`, done);
