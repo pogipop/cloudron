@@ -16,6 +16,7 @@ exports = module.exports = {
 
     prepareDashboardDomain: prepareDashboardDomain,
     setDashboardDomain: setDashboardDomain,
+    setDashboardAndMailDomain: setDashboardAndMailDomain,
     renewCerts: renewCerts,
 
     runSystemChecks: runSystemChecks,
@@ -356,6 +357,7 @@ function prepareDashboardDomain(domain, auditSource, callback) {
     task.on('start', (taskId) => callback(null, taskId));
 }
 
+// call this only pre activation since it won't start mail server
 function setDashboardDomain(domain, auditSource, callback) {
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof auditSource, 'object');
@@ -381,11 +383,26 @@ function setDashboardDomain(domain, auditSource, callback) {
 
                 eventlog.add(eventlog.ACTION_DASHBOARD_DOMAIN_UPDATE, auditSource, { domain: domain, fqdn: fqdn });
 
-                mail.setMailFqdn(fqdn, domain, NOOP_CALLBACK);
-
                 callback(null);
             });
         });
+    });
+}
+
+// call this only post activation because it will restart mail server
+function setDashboardAndMailDomain(domain, auditSource, callback) {
+    assert.strictEqual(typeof domain, 'string');
+    assert.strictEqual(typeof auditSource, 'object');
+    assert.strictEqual(typeof callback, 'function');
+
+    debug(`setDashboardAndMailDomain: ${domain}`);
+
+    setDashboardDomain(domain, auditSource, function (error) {
+        if (error) return callback(error);
+
+        mail.onMailFqdnChanged(NOOP_CALLBACK); // this will update dns and re-configure mail server
+
+        callback(null);
     });
 }
 

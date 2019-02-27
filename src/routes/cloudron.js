@@ -10,7 +10,7 @@ exports = module.exports = {
     checkForUpdates: checkForUpdates,
     getLogs: getLogs,
     getLogStream: getLogStream,
-    setDashboardDomain: setDashboardDomain,
+    setDashboardAndMailDomain: setDashboardAndMailDomain,
     prepareDashboardDomain: prepareDashboardDomain,
     renewCerts: renewCerts
 };
@@ -151,10 +151,10 @@ function getLogStream(req, res, next) {
     });
 }
 
-function setDashboardDomain(req, res, next) {
+function setDashboardAndMailDomain(req, res, next) {
     if (!req.body.domain || typeof req.body.domain !== 'string') return next(new HttpError(400, 'domain must be a string'));
 
-    cloudron.setDashboardDomain(req.body.domain, auditSource(req), function (error) {
+    cloudron.setDashboardAndMailDomain(req.body.domain, auditSource(req), function (error) {
         if (error && error.reason === CloudronError.BAD_FIELD) return next(new HttpError(404, error.message));
         if (error) return next(new HttpError(500, error));
 

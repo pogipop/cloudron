@@ -13,7 +13,7 @@ exports = module.exports = {
     removePrivateFields: removePrivateFields,
 
     setDnsRecords: setDnsRecords,
-    setMailFqdn: setMailFqdn,
+    onMailFqdnChanged: onMailFqdnChanged,
 
     validateName: validateName,
 
@@ -808,10 +808,11 @@ function setDnsRecords(domain, callback) {
     upsertDnsRecords(domain, config.mailFqdn(), callback);
 }
 
-function setMailFqdn(mailFqdn, mailDomain, callback) {
-    assert.strictEqual(typeof mailFqdn, 'string');
-    assert.strictEqual(typeof mailDomain, 'string');
+function onMailFqdnChanged(callback) {
     assert.strictEqual(typeof callback, 'function');
+
+    const mailFqdn = config.mailFqdn(),
+        mailDomain = config.adminDomain();
 
     domains.getAll(function (error, allDomains) {
         if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
