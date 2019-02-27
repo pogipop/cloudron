@@ -346,6 +346,9 @@ function initializeSysadminExpressSync() {
     router.post('/api/v1/retire', routes.sysadmin.retire);
     router.post('/api/v1/apps/:id/import', routes.sysadmin.importAppDatabase);
 
+    // routes to test features otherwise hard to test
+    router.post('/api/v1/test/digest', routes.sysadmin.testDigest);
+
     return httpServer;
 }
 
