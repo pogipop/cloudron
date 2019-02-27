@@ -51,6 +51,7 @@ Last successful backup: <%- info.finishedBackups[0].backupId || info.finishedBac
 <% } else { -%>
 
 This Cloudron did **not** backup successfully in the last week!
+<%= webadminUrl %>/#/backups
 <% } -%>
 
 Powered by https://cloudron.io
@@ -62,7 +63,7 @@ Sent at: <%= new Date().toUTCString() %>
 <center>
     <div style="max-width: 800px; text-align: left; border: 1px solid lightgray; padding: 20px;">
         <center>
-            <img src="<%= cloudronAvatarUrl %>" width="128px" height="128px"/>
+            <img src="<%= cloudronAvatarUrl %>" width="64px" height="64px"/>
         </center>
 
         <br/>
@@ -147,7 +148,14 @@ Sent at: <%= new Date().toUTCString() %>
     <% if (info.finishedBackups.length) { %>
         <p><b>Last successful backup : </b> <%= info.finishedBackups[0].backupId || info.finishedBackups[0].filename %> </p>
     <% } else { %>
-        <p><b>This Cloudron did not backup successfully in the last week!</b></p>
+        <p>
+            <b style="color: red;">The Cloudron did not backup successfully in the last week!</b>
+            <br/>
+            <br/>
+            <a href="<%= webadminUrl %>/#/backups">
+                <button style="color: #fff; background-color: #2196f3; border-color: #2196f3; border: 0; border-radius: 2px; padding: 6px 12px; cursor: pointer;">Create backup now</button>
+            </a>
+        </p>
     <% } %>
 
         <br/>

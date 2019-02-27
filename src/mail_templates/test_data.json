@@ -49,6 +49,10 @@
                 "changelog": "* This has changed\n * and that as well\n * some more"
             }
         }],
+        "certRenewals": [],
+        "finishedBackups": [],
+        "usersAdded": [],
+        "usersRemoved": [],
         "hasSubscription": false
     }
 }
