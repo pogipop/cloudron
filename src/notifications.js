@@ -3,7 +3,6 @@
 exports = module.exports = {
     NotificationsError: NotificationsError,
 
-    add: add,
     get: get,
     ack: ack,
     getAllPaged: getAllPaged,
@@ -61,22 +60,20 @@ util.inherits(NotificationsError, Error);
 NotificationsError.INTERNAL_ERROR = 'Internal Error';
 NotificationsError.NOT_FOUND = 'Not Found';
 
-function add(userId, eventId, title, message, action, callback) {
+function add(userId, eventId, title, message, callback) {
     assert.strictEqual(typeof userId, 'string');
     assert(typeof eventId === 'string' || eventId === null);
     assert.strictEqual(typeof title, 'string');
     assert.strictEqual(typeof message, 'string');
-    assert.strictEqual(typeof action, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    debug('add: ', userId, title, action);
+    debug('add: ', userId, title);
 
     notificationdb.add({
         userId: userId,
         eventId: eventId,
         title: title,
-        message: message,
-        action: action
+        message: message
     }, function (error, result) {
         if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new NotificationsError(NotificationsError.NOT_FOUND, error.message));
         if (error) return callback(new NotificationsError(NotificationsError.INTERNAL_ERROR, error));
@@ -149,7 +146,7 @@ function userAdded(performedBy, eventId, user) {
 
     actionForAllAdmins([ performedBy, user.id ], function (admin, callback) {
         mailer.userAdded(admin.email, user);
-        add(admin.id, eventId, 'User added', `User ${user.fallbackEmail} was added`, '/#/users', callback);
+        add(admin.id, eventId, 'User added', `User ${user.fallbackEmail} was added`, callback);
     }, function (error) {
         if (error) console.error(error);
     });
@@ -162,7 +159,7 @@ function userRemoved(performedBy, eventId, user) {
 
     actionForAllAdmins([ performedBy, user.id ], function (admin, callback) {
         mailer.userRemoved(admin.email, user);
-        add(admin.id, eventId, 'User removed', `User ${user.username || user.email || user.fallbackEmail} was removed`, '/#/users', callback);
+        add(admin.id, eventId, 'User removed', `User ${user.username || user.email || user.fallbackEmail} was removed`, callback);
     }, function (error) {
         if (error) console.error(error);
     });
@@ -174,7 +171,7 @@ function adminChanged(performedBy, eventId, user) {
 
     actionForAllAdmins([ performedBy, user.id ], function (admin, callback) {
         mailer.adminChanged(admin.email, user, user.admin);
-        add(admin.id, eventId, 'Admin status change', `User ${user.username || user.email || user.fallbackEmail} ${user.admin ? 'is now an admin' : 'is no more an admin'}`, '/#/users', callback);
+        add(admin.id, eventId, 'Admin status change', `User ${user.username || user.email || user.fallbackEmail} ${user.admin ? 'is now an admin' : 'is no more an admin'}`, callback);
     }, function (error) {
         if (error) console.error(error);
     });
@@ -195,7 +192,7 @@ function oomEvent(eventId, program, context) {
         if (context.app) message = `The application ${context.app.manifest.title} with id ${context.app.id} ran out of memory.`;
         else message = `The container with id ${context.details.id} ran out of memory`;
 
-        add(admin.id, eventId, 'Process died out-of-memory', message, context.app ? '/#/apps' : '', callback);
+        add(admin.id, eventId, 'Process died out-of-memory', message, callback);
     }, function (error) {
         if (error) console.error(error);
     });
@@ -210,7 +207,7 @@ function appUp(eventId, app) {
 
     actionForAllAdmins([], function (admin, callback) {
         mailer.appUp(admin.email, app);
-        add(admin.id, eventId, `App ${app.fqdn} is back online`, `The application ${app.manifest.title} installed at ${app.fqdn} is back online.`, '/#/apps', callback);
+        add(admin.id, eventId, `App ${app.fqdn} is back online`, `The application ${app.manifest.title} installed at ${app.fqdn} is back online.`, callback);
     }, function (error) {
         if (error) console.error(error);
     });
@@ -225,7 +222,7 @@ function appDied(eventId, app) {
 
     actionForAllAdmins([], function (admin, callback) {
         mailer.appDied(admin.email, app);
-        add(admin.id, eventId, `App ${app.fqdn} is down`, `The application ${app.manifest.title} installed at ${app.fqdn} is not responding.`, '/#/apps', callback);
+        add(admin.id, eventId, `App ${app.fqdn} is down`, `The application ${app.manifest.title} installed at ${app.fqdn} is not responding.`, callback);
     }, function (error) {
         if (error) console.error(error);
     });
@@ -244,7 +241,7 @@ function processCrash(eventId, processName, crashLogFile) {
 
     actionForAllAdmins([], function (admin, callback) {
         mailer.unexpectedExit(admin.email, subject, crashLogs);
-        add(admin.id, eventId, subject, 'Detailed logs have been sent to your email address.', '/#/system', callback);
+        add(admin.id, eventId, subject, 'Detailed logs have been sent to your email address.', callback);
     }, function (error) {
         if (error) console.error(error);
     });
@@ -263,7 +260,7 @@ function apptaskCrash(eventId, appId, crashLogFile) {
 
     actionForAllAdmins([], function (admin, callback) {
         mailer.unexpectedExit(admin.email, subject, crashLogs);
-        add(admin.id, eventId, subject, 'Detailed logs have been sent to your email address.', '/#/system', callback);
+        add(admin.id, eventId, subject, 'Detailed logs have been sent to your email address.', callback);
     }, function (error) {
         if (error) console.error(error);
     });

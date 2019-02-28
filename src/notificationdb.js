@@ -13,7 +13,7 @@ let assert = require('assert'),
     database = require('./database.js'),
     DatabaseError = require('./databaseerror');
 
-const NOTIFICATION_FIELDS = [ 'id', 'userId', 'eventId', 'title', 'message', 'action', 'creationTime', 'acknowledged' ];
+const NOTIFICATION_FIELDS = [ 'id', 'userId', 'eventId', 'title', 'message', 'creationTime', 'acknowledged' ];
 
 function postProcess(result) {
     assert.strictEqual(typeof result, 'object');
@@ -27,8 +27,8 @@ function add(notification, callback) {
     assert.strictEqual(typeof notification, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    const query = 'INSERT INTO notifications (userId, eventId, title, message, action) VALUES (?, ?, ?, ?, ?)';
-    const args = [ notification.userId, notification.eventId, notification.title, notification.message, notification.action ];
+    const query = 'INSERT INTO notifications (userId, eventId, title, message) VALUES (?, ?, ?, ?)';
+    const args = [ notification.userId, notification.eventId, notification.title, notification.message ];
 
     database.query(query, args, function (error, result) {
         if (error && error.code === 'ER_NO_REFERENCED_ROW_2') return callback(new DatabaseError(DatabaseError.NOT_FOUND, 'no such eventlog entry'));
@@ -52,7 +52,6 @@ function upsert(notification, callback) {
             acknowledged: notification.acknowledged,
             eventId: notification.eventId,
             message: notification.message,
-            action: notification.action,
             creationTime: new Date()
         };
 
