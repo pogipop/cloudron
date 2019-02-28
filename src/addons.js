@@ -184,7 +184,7 @@ var KNOWN_ADDONS = {
 const KNOWN_SERVICES = {
     mail: {
         status: containerStatus.bind(null, 'mail', 'CLOUDRON_MAIL_TOKEN'),
-        restart: restartContainer.bind(null, 'mail'),
+        restart: mail.restartMail,
         defaultMemoryLimit: Math.max((1 + Math.round(os.totalmem()/(1024*1024*1024)/4)) * 128, 256) * 1024 * 1024
     },
     mongodb: {

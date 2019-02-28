@@ -23,6 +23,7 @@ exports = module.exports = {
     setMailEnabled: setMailEnabled,
 
     startMail: restartMail,
+    restartMail: restartMail,
 
     sendTestMail: sendTestMail,
 
