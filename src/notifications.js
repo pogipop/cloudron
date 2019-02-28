@@ -9,15 +9,9 @@ exports = module.exports = {
     ack: ack,
     getAllPaged: getAllPaged,
 
+    onEvent: onEvent,
+
     // specialized notifications
-    userAdded: userAdded,
-    userRemoved: userRemoved,
-    adminChanged: adminChanged,
-    oomEvent: oomEvent,
-    appUp: appUp,
-    appDied: appDied,
-    processCrash: processCrash,
-    apptaskCrash: apptaskCrash,
     backupConfigWarning: backupConfigWarning,
     diskSpaceWarning: diskSpaceWarning,
     mailStatusWarning: mailStatusWarning,
@@ -29,6 +23,7 @@ var assert = require('assert'),
     config = require('./config.js'),
     DatabaseError = require('./databaseerror.js'),
     debug = require('debug')('box:notifications'),
+    eventlog = require('./eventlog.js'),
     mailer = require('./mailer.js'),
     notificationdb = require('./notificationdb.js'),
     safe = require('safetydance'),
@@ -328,3 +323,35 @@ function diskSpaceWarning(message) {
         if (error) console.error(error);
     });
 }
+
+function onEvent(id, action, source, data, callback) {
+    assert.strictEqual(typeof id, 'string');
+    assert.strictEqual(typeof action, 'string');
+    assert.strictEqual(typeof source, 'object');
+    assert.strictEqual(typeof data, 'object');
+    assert.strictEqual(typeof callback, 'function');
+
+    // decide if we want to add notifications as well
+    if (action === eventlog.ACTION_USER_ADD) {
+        userAdded(source.userId, id, data.user);
+    } else if (action === eventlog.ACTION_USER_REMOVE) {
+        userRemoved(source.userId, id, data.user);
+    } else if (action === eventlog.ACTION_USER_UPDATE && data.adminStatusChanged) {
+        adminChanged(source.userId, id, data.user);
+    } else if (action === eventlog.ACTION_APP_OOM) {
+        oomEvent(id, data.app ? data.app.id : data.containerId, { app: data.app, details: data });
+    } else if (action === eventlog.ACTION_APP_DOWN) {
+        appDied(id, data.app);
+    } else if (action === eventlog.ACTION_APP_UP) {
+        appUp(id, data.app);
+    } else if (action === eventlog.ACTION_APP_TASK_CRASH) {
+        apptaskCrash(id, data.appId, data.crashLogFile);
+    } else if (action === eventlog.ACTION_PROCESS_CRASH) {
+        processCrash(id, data.processName, data.crashLogFile);
+    } else {
+        // no notification
+    }
+
+    callback();
+}
+

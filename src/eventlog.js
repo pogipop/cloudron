@@ -105,28 +105,11 @@ function add(action, source, data, callback) {
     api(uuid.v4(), action, source, data, function (error, id) {
         if (error) return callback(new EventLogError(EventLogError.INTERNAL_ERROR, error));
 
-        // decide if we want to add notifications as well
-        if (action === exports.ACTION_USER_ADD) {
-            notifications.userAdded(source.userId, id, data.user);
-        } else if (action === exports.ACTION_USER_REMOVE) {
-            notifications.userRemoved(source.userId, id, data.user);
-        } else if (action === exports.ACTION_USER_UPDATE && data.adminStatusChanged) {
-            notifications.adminChanged(source.userId, id, data.user);
-        } else if (action === exports.ACTION_APP_OOM) {
-            notifications.oomEvent(id, data.app ? data.app.id : data.containerId, { app: data.app, details: data });
-        } else if (action === exports.ACTION_APP_DOWN) {
-            notifications.appDied(id, data.app);
-        } else if (action === exports.ACTION_APP_UP) {
-            notifications.appUp(id, data.app);
-        } else if (action === exports.ACTION_APP_TASK_CRASH) {
-            notifications.apptaskCrash(id, data.appId, data.crashLogFile);
-        } else if (action === exports.ACTION_PROCESS_CRASH) {
-            notifications.processCrash(id, data.processName, data.crashLogFile);
-        } else {
-            // no notification
-        }
+        notifications.onEvent(id, action, source, data, function (error) {
+            if (error) return callback(new EventLogError(EventLogError.INTERNAL_ERROR, error));
 
-        callback(null, { id: id });
+            callback(null, { id: id });
+        });
     });
 }
 
