@@ -4,21 +4,22 @@ exports = module.exports = {
     NotificationsError: NotificationsError,
 
     add: add,
-    upsert: upsert,
     get: get,
     ack: ack,
     getAllPaged: getAllPaged,
 
     onEvent: onEvent,
 
-    // specialized notifications
-    backupConfigWarning: backupConfigWarning,
-    diskSpaceWarning: diskSpaceWarning,
-    mailStatusWarning: mailStatusWarning,
-    rebootRequired: rebootRequired
+    // NOTE: if you add an alert, be sure to add title below
+    ALERT_BACKUP_CONFIG: 'backupConfig',
+    ALERT_DISK_SPACE: 'diskSpace',
+    ALERT_MAIL_STATUS: 'mailStatus',
+    ALERT_REBOOT: 'reboot',
+
+    alert: alert
 };
 
-var assert = require('assert'),
+let assert = require('assert'),
     async = require('async'),
     config = require('./config.js'),
     DatabaseError = require('./databaseerror.js'),
@@ -29,6 +30,14 @@ var assert = require('assert'),
     safe = require('safetydance'),
     users = require('./users.js'),
     util = require('util');
+
+// These titles are matched for upsert
+const ALERT_TITLES = {
+    backupConfig: 'Backup configuration is unsafe',
+    diskSpace: 'Out of Disk Space',
+    mailStatus: 'Email is not configured properly',
+    reboot: 'Reboot Required'
+};
 
 function NotificationsError(reason, errorOrMessage) {
     assert.strictEqual(typeof reason, 'string');
@@ -63,30 +72,6 @@ function add(userId, eventId, title, message, action, callback) {
     debug('add: ', userId, title, action);
 
     notificationdb.add({
-        userId: userId,
-        eventId: eventId,
-        title: title,
-        message: message,
-        action: action
-    }, function (error, result) {
-        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new NotificationsError(NotificationsError.NOT_FOUND, error.message));
-        if (error) return callback(new NotificationsError(NotificationsError.INTERNAL_ERROR, error));
-
-        callback(null, { id: result });
-    });
-}
-
-function upsert(userId, eventId, title, message, action, callback) {
-    assert.strictEqual(typeof userId, 'string');
-    assert(typeof eventId === 'string' || eventId === null);
-    assert.strictEqual(typeof title, 'string');
-    assert.strictEqual(typeof message, 'string');
-    assert.strictEqual(typeof action, 'string');
-    assert.strictEqual(typeof callback, 'function');
-
-    debug('upsert: ', userId, title, action);
-
-    notificationdb.upsert({
         userId: userId,
         eventId: eventId,
         title: title,
@@ -284,44 +269,44 @@ function apptaskCrash(eventId, appId, crashLogFile) {
     });
 }
 
-function backupConfigWarning(message) {
+function upsert(userId, eventId, title, message, callback) {
+    assert.strictEqual(typeof userId, 'string');
+    assert(typeof eventId === 'string' || eventId === null);
+    assert.strictEqual(typeof title, 'string');
     assert.strictEqual(typeof message, 'string');
+    assert.strictEqual(typeof callback, 'function');
 
-    actionForAllAdmins([], function (admin, callback) {
-        upsert(admin.id, null, 'Backup configuration is unsafe', message, '/#/backups', callback);
-    }, function (error) {
-        if (error) console.error(error);
+    debug('upsert: ', userId, title, message);
+
+    notificationdb.upsert({
+        userId: userId,
+        eventId: eventId,
+        title: title,
+        message: message,
+        acknowledged: !message
+    }, function (error, result) {
+        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new NotificationsError(NotificationsError.NOT_FOUND, error.message));
+        if (error) return callback(new NotificationsError(NotificationsError.INTERNAL_ERROR, error));
+
+        callback(null, { id: result });
     });
 }
 
-function mailStatusWarning(message) {
+function alert(id, message, callback) {
+    assert.strictEqual(typeof id, 'string');
     assert.strictEqual(typeof message, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    const title = ALERT_TITLES[id];
+    if (!title) return callback();
 
     actionForAllAdmins([], function (admin, callback) {
-        upsert(admin.id, null, 'Email is not configured properly', message, '/#/email', callback);
+        upsert(admin.id, null, title, message, callback);
     }, function (error) {
         if (error) console.error(error);
     });
-}
 
-function rebootRequired(message) {
-    assert.strictEqual(typeof message, 'string');
-
-    actionForAllAdmins([], function (admin, callback) {
-        upsert(admin.id, null, 'Reboot Required', message, '/#/system', callback);
-    }, function (error) {
-        if (error) console.error(error);
-    });
-}
-
-function diskSpaceWarning(message) {
-    assert.strictEqual(typeof message, 'string');
-
-    actionForAllAdmins([], function (admin, callback) {
-        upsert(admin.id, null, 'Out of Disk Space', message, '/#/graphs', callback);
-    }, function (error) {
-        if (error) console.error(error);
-    });
+    callback();
 }
 
 function onEvent(id, action, source, data, callback) {

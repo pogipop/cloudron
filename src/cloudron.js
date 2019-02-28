@@ -207,11 +207,14 @@ function checkBackupConfiguration(callback) {
     settings.getBackupConfig(function (error, backupConfig) {
         if (error) return console.error(error);
 
+        let message = '';
         if (backupConfig.provider === 'noop') {
-            notifications.backupConfigWarning('Cloudron backups are disabled. Please ensure this server is backed up using alternate means. See https://cloudron.io/documentation/backups/#storage-providers for more information.');
+            message = 'Cloudron backups are disabled. Please ensure this server is backed up using alternate means. See https://cloudron.io/documentation/backups/#storage-providers for more information.';
         } else if (backupConfig.provider === 'filesystem' && !backupConfig.externalDisk) {
-            notifications.backupConfigWarning('Cloudron backups are currently on the same disk as the Cloudron server instance. This is dangerous and can lead to complete data loss if the disk fails. See https://cloudron.io/documentation/backups/#storage-providers for storing backups in an external location.');
+            message = 'Cloudron backups are currently on the same disk as the Cloudron server instance. This is dangerous and can lead to complete data loss if the disk fails. See https://cloudron.io/documentation/backups/#storage-providers for storing backups in an external location.';
         }
+
+        notifications.alert(notifications.ALERT_BACKUP_CONFIG, message, callback);
     });
 }
 
@@ -246,9 +249,7 @@ function checkDiskSpace(callback) {
 
             debug('Disk space checked. ok: %s', !oos);
 
-            if (oos) notifications.diskSpaceWarning(JSON.stringify(entries, null, 4));
-
-            callback();
+            notifications.alert(notifications.ALERT_DISK_SPACE, oos ? JSON.stringify(entries, null, 4) : '', callback);
         }).catch(function (error) {
             if (error) console.error(error);
             callback();
@@ -279,9 +280,7 @@ function checkMailStatus(callback) {
 
             const erroredDomains = erroredDomainObjects.map((d) => d.domain);
             debug(`checkMailStatus: ${erroredDomains.join(',')} failed status checks`);
-            if (erroredDomains.length) notifications.mailStatusWarning(`Email status check of the following domain(s) failed - ${erroredDomains.join(',')}. See the Status tab in the [Email view](/#/email/) for more information.`);
-
-            callback();
+            notifications.alert(notifications.ALERT_MAIL_STATUS, erroredDomains.length ? `Email status check of the following domain(s) failed - ${erroredDomains.join(',')}. See the Status tab in the [Email view](/#/email/) for more information.` : '', callback);
         });
     });
 }
@@ -294,9 +293,7 @@ function checkRebootRequired(callback) {
     isRebootRequired(function (error, rebootRequired) {
         if (error) return callback(error);
 
-        if (rebootRequired) notifications.rebootRequired('To finish security updates, a [reboot](/#/system) is necessary.');
-
-        callback();
+        notifications.alert(notifications.ALERT_REBOOT, rebootRequired ? 'To finish security updates, a [reboot](/#/system) is necessary.' : '', callback);
     });
 }
 

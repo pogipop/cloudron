@@ -38,8 +38,6 @@ function add(notification, callback) {
     });
 }
 
-// will clear the ack flag
-// matches by userId and title
 function upsert(notification, callback) {
     assert.strictEqual(typeof notification, 'object');
     assert.strictEqual(typeof callback, 'function');
@@ -51,7 +49,7 @@ function upsert(notification, callback) {
         postProcess(result[0]);
 
         var data = {
-            acknowledged: false,
+            acknowledged: notification.acknowledged,
             eventId: notification.eventId,
             message: notification.message,
             action: notification.action,
