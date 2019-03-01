@@ -295,7 +295,8 @@ function getLogs(unit, options, callback) {
 
     // need to handle box.log without subdir
     if (unit === 'box') args.push(path.join(paths.LOG_DIR, 'box.log'));
-    else args.push(path.join(paths.LOG_DIR, unit, 'app.log'));
+    else if (unit.startsWith('crash-')) args.push(path.join(paths.CRASH_LOG_DIR, unit.slice(6) + '.log'));
+    else return callback(new CloudronError(CloudronError.BAD_FIELD, 'No such unit'));
 
     var cp = spawn('/usr/bin/tail', args);
 

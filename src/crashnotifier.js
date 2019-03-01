@@ -45,13 +45,13 @@ function sendFailureLogs(unitName, callback) {
             logs = util.format('Failed to collect logs.', error);
         }
 
-        const crashLogFile = `${new Date().toISOString()}.log`;
-        console.log(`Sending failure logs for ${unitName} at ${crashLogFile}`);
+        const crashId = `${new Date().toISOString()}`;
+        console.log(`Creating crash log for ${unitName} with id ${crashId}`);
 
-        if (!safe.fs.writeFileSync(path.join(paths.CRASH_LOG_DIR, crashLogFile), logs)) console.log(`Failed to stash logs to ${crashLogFile}:`, safe.error);
+        if (!safe.fs.writeFileSync(path.join(paths.CRASH_LOG_DIR, `${crashId}.log`), logs)) console.log(`Failed to stash logs to ${crashLogFile}:`, safe.error);
 
-        eventlog.add(eventlog.ACTION_PROCESS_CRASH, AUDIT_SOURCE, { processName: unitName, crashLogFile: crashLogFile }, function (error) {
-            if (error) console.log(`Error sending crashlog. Logs stashed at ${crashLogFile}`);
+        eventlog.add(eventlog.ACTION_PROCESS_CRASH, AUDIT_SOURCE, { processName: unitName, crashId: crashId }, function (error) {
+            if (error) console.log(`Error sending crashlog. Logs stashed at ${crashId}.log`);
 
             safe.fs.writeFileSync(CRASH_LOG_TIMESTAMP_FILE, String(Date.now()));
 

@@ -224,21 +224,21 @@ function appDied(eventId, app, callback) {
     }, callback);
 }
 
-function processCrash(eventId, processName, crashLogFile, callback) {
+function processCrash(eventId, processName, crashId, callback) {
     assert.strictEqual(typeof eventId, 'string');
     assert.strictEqual(typeof processName, 'string');
-    assert.strictEqual(typeof crashLogFile, 'string');
+    assert.strictEqual(typeof crashId, 'string');
     assert.strictEqual(typeof callback, 'function');
 
     var subject = `${processName} exited unexpectedly`;
-    var crashLogs = safe.fs.readFileSync(path.join(paths.CRASH_LOG_DIR, crashLogFile), 'utf8') || `No logs found at ${crashLogFile}`;
+    var crashLogs = safe.fs.readFileSync(path.join(paths.CRASH_LOG_DIR, crashId, '.log'), 'utf8') || `No logs found at ${crashId}.log`;
 
     // also send us a notification mail
     if (config.provider() === 'caas') mailer.unexpectedExit('support@cloudron.io', subject, crashLogs);
 
     actionForAllAdmins([], function (admin, callback) {
         mailer.unexpectedExit(admin.email, subject, crashLogs);
-        add(admin.id, eventId, subject, `The service has been restarted automatically. Crash logs are available [here](/logs.html?crash=${crashLogFile})`, callback);
+        add(admin.id, eventId, subject, `The service has been restarted automatically. Crash logs are available [here](/logs.html?crashId=${crashId}).`, callback);
     }, callback);
 }
 
@@ -315,7 +315,7 @@ function onEvent(id, action, source, data, callback) {
     case eventlog.ACTION_APP_DOWN: return appDied(id, data.app, callback);
     case eventlog.ACTION_APP_UP: return appUp(id, data.app, callback);
     case eventlog.ACTION_APP_TASK_CRASH: return apptaskCrash(id, data.appId, data.crashLogFile, callback);
-    case eventlog.ACTION_PROCESS_CRASH: return processCrash(id, data.processName, data.crashLogFile, callback);
+    case eventlog.ACTION_PROCESS_CRASH: return processCrash(id, data.processName, data.crashId, callback);
     default: return callback();
     }
 }
