@@ -41,3 +41,10 @@ docker ps
 echo
 echo
 docker network inspect cloudron
+echo
+echo
+echo "box"
+echo "---"
+tail --lines=500 /home/yellowtent/platformdata/logs/box.log
+
+

@@ -60,7 +60,10 @@ mkdir -p "${PLATFORM_DATA_DIR}/collectd/collectd.conf.d"
 mkdir -p "${PLATFORM_DATA_DIR}/logrotate.d"
 mkdir -p "${PLATFORM_DATA_DIR}/acme"
 mkdir -p "${PLATFORM_DATA_DIR}/backup"
-mkdir -p "${PLATFORM_DATA_DIR}/logs/backup" "${PLATFORM_DATA_DIR}/logs/updater" "${PLATFORM_DATA_DIR}/logs/tasks"
+mkdir -p "${PLATFORM_DATA_DIR}/logs/backup" \
+         "${PLATFORM_DATA_DIR}/logs/updater" \
+         "${PLATFORM_DATA_DIR}/logs/tasks" \
+         "${PLATFORM_DATA_DIR}/logs/crash"
 mkdir -p "${PLATFORM_DATA_DIR}/update"
 
 mkdir -p "${BOX_DATA_DIR}/appicons"
@@ -135,8 +138,9 @@ echo "==> Configuring logrotate"
 if ! grep -q "^include ${PLATFORM_DATA_DIR}/logrotate.d" /etc/logrotate.conf; then
     echo -e "\ninclude ${PLATFORM_DATA_DIR}/logrotate.d\n" >> /etc/logrotate.conf
 fi
-cp "${script_dir}/start/box-logrotate" "${script_dir}/start/app-logrotate" "${PLATFORM_DATA_DIR}/logrotate.d/"
-chown root:root "${PLATFORM_DATA_DIR}/logrotate.d/box-logrotate" "${PLATFORM_DATA_DIR}/logrotate.d/app-logrotate"
+cp "${script_dir}/start/logrotate/"* "${PLATFORM_DATA_DIR}/logrotate.d/"
+rm -f "${PLATFORM_DATA_DIR}/logrotate.d/box-logrotate" "${PLATFORM_DATA_DIR}/logrotate.d/app-logrotate" # remove pre 3.6 config files
+chown root:root "${PLATFORM_DATA_DIR}/logrotate.d/"
 
 echo "==> Adding motd message for admins"
 cp "${script_dir}/start/cloudron-motd" /etc/update-motd.d/92-cloudron

@@ -4,7 +4,7 @@
 
 var database = require('./src/database.js');
 
-var sendFailureLogs = require('./src/logcollector').sendFailureLogs;
+var crashNotifier = require('./src/crashnotifier.js');
 
 // This is triggered by systemd with the crashed unit name as argument
 function main() {
@@ -17,7 +17,11 @@ function main() {
     database.initialize(function (error) {
         if (error) return console.error('Cannot connect to database. Unable to send crash log.', error);
 
-        sendFailureLogs(unitName);
+        crashNotifier.sendFailureLogs(unitName, function (error) {
+            if (error) console.error(error);
+
+            process.exit();
+        });
     });
 }
 

@@ -26,6 +26,8 @@ let assert = require('assert'),
     eventlog = require('./eventlog.js'),
     mailer = require('./mailer.js'),
     notificationdb = require('./notificationdb.js'),
+    path = require('path'),
+    paths = require('./paths.js'),
     safe = require('safetydance'),
     users = require('./users.js'),
     util = require('util');
@@ -234,14 +236,14 @@ function processCrash(eventId, processName, crashLogFile) {
     assert.strictEqual(typeof crashLogFile, 'string');
 
     var subject = `${processName} exited unexpectedly`;
-    var crashLogs = safe.fs.readFileSync(crashLogFile, 'utf8') || `No logs found at ${crashLogFile}`;
+    var crashLogs = safe.fs.readFileSync(path.join(paths.CRASH_LOG_DIR, crashLogFile), 'utf8') || `No logs found at ${crashLogFile}`;
 
     // also send us a notification mail
     if (config.provider() === 'caas') mailer.unexpectedExit('support@cloudron.io', subject, crashLogs);
 
     actionForAllAdmins([], function (admin, callback) {
         mailer.unexpectedExit(admin.email, subject, crashLogs);
-        add(admin.id, eventId, subject, 'Detailed logs have been sent to your email address.', callback);
+        add(admin.id, eventId, subject, `The service has been restarted automatically. Crash logs are available [here](/logs.html?crash=${crashLogFile})`, callback);
     }, function (error) {
         if (error) console.error(error);
     });
