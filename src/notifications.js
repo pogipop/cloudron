@@ -141,83 +141,79 @@ function actionForAllAdmins(skippingUserIds, iterator, callback) {
     });
 }
 
-function userAdded(performedBy, eventId, user) {
+function userAdded(performedBy, eventId, user, callback) {
     assert.strictEqual(typeof performedBy, 'string');
     assert.strictEqual(typeof eventId, 'string');
     assert.strictEqual(typeof user, 'object');
+    assert.strictEqual(typeof callback, 'function');
 
-    actionForAllAdmins([ performedBy, user.id ], function (admin, callback) {
+    actionForAllAdmins([ performedBy, user.id ], function (admin, done) {
         mailer.userAdded(admin.email, user);
-        add(admin.id, eventId, 'User added', `User ${user.fallbackEmail} was added`, callback);
-    }, function (error) {
-        if (error) console.error(error);
-    });
+        add(admin.id, eventId, 'User added', `User ${user.fallbackEmail} was added`, done);
+    }, callback);
 }
 
-function userRemoved(performedBy, eventId, user) {
+function userRemoved(performedBy, eventId, user, callback) {
     assert.strictEqual(typeof performedBy, 'string');
     assert.strictEqual(typeof eventId, 'string');
     assert.strictEqual(typeof user, 'object');
+    assert.strictEqual(typeof callback, 'function');
 
-    actionForAllAdmins([ performedBy, user.id ], function (admin, callback) {
+    actionForAllAdmins([ performedBy, user.id ], function (admin, done) {
         mailer.userRemoved(admin.email, user);
-        add(admin.id, eventId, 'User removed', `User ${user.username || user.email || user.fallbackEmail} was removed`, callback);
-    }, function (error) {
-        if (error) console.error(error);
-    });
+        add(admin.id, eventId, 'User removed', `User ${user.username || user.email || user.fallbackEmail} was removed`, done);
+    }, callback);
 }
 
-function adminChanged(performedBy, eventId, user) {
+function adminChanged(performedBy, eventId, user, callback) {
     assert.strictEqual(typeof performedBy, 'string');
     assert.strictEqual(typeof user, 'object');
+    assert.strictEqual(typeof callback, 'function');
 
-    actionForAllAdmins([ performedBy, user.id ], function (admin, callback) {
+    actionForAllAdmins([ performedBy, user.id ], function (admin, done) {
         mailer.adminChanged(admin.email, user, user.admin);
-        add(admin.id, eventId, 'Admin status change', `User ${user.username || user.email || user.fallbackEmail} ${user.admin ? 'is now an admin' : 'is no more an admin'}`, callback);
-    }, function (error) {
-        if (error) console.error(error);
-    });
+        add(admin.id, eventId, 'Admin status change', `User ${user.username || user.email || user.fallbackEmail} ${user.admin ? 'is now an admin' : 'is no more an admin'}`, done);
+    }, callback);
 }
 
-function oomEvent(eventId, program, context) {
+function oomEvent(eventId, program, context, callback) {
     assert.strictEqual(typeof eventId, 'string');
     assert.strictEqual(typeof program, 'string');
     assert.strictEqual(typeof context, 'object');
+    assert.strictEqual(typeof callback, 'function');
 
     // also send us a notification mail
     if (config.provider() === 'caas') mailer.oomEvent('support@cloudron.io', program, JSON.stringify(context, null, 4));
 
-    actionForAllAdmins([], function (admin, callback) {
+    actionForAllAdmins([], function (admin, done) {
         mailer.oomEvent(admin.email, program, JSON.stringify(context, null, 4));
 
         var message;
         if (context.app) message = `The application ${context.app.manifest.title} with id ${context.app.id} ran out of memory.`;
         else message = `The container with id ${context.details.id} ran out of memory`;
 
-        add(admin.id, eventId, 'Process died out-of-memory', message, callback);
-    }, function (error) {
-        if (error) console.error(error);
-    });
+        add(admin.id, eventId, 'Process died out-of-memory', message, done);
+    }, callback);
 }
 
-function appUp(eventId, app) {
+function appUp(eventId, app, callback) {
     assert.strictEqual(typeof eventId, 'string');
     assert.strictEqual(typeof app, 'object');
+    assert.strictEqual(typeof callback, 'function');
 
     // also send us a notification mail
-    if (config.provider() === 'caas') mailer.appDied('support@cloudron.io', app);
+    if (config.provider() === 'caas') mailer.appUp('support@cloudron.io', app);
 
-    actionForAllAdmins([], function (admin, callback) {
+    actionForAllAdmins([], function (admin, done) {
         mailer.appUp(admin.email, app);
-        add(admin.id, eventId, `App ${app.fqdn} is back online`, `The application ${app.manifest.title} installed at ${app.fqdn} is back online.`, callback);
-    }, function (error) {
-        if (error) console.error(error);
-    });
+        add(admin.id, eventId, `App ${app.fqdn} is back online`, `The application ${app.manifest.title} installed at ${app.fqdn} is back online.`, done);
+    }, callback);
 }
 
-function appDied(eventId, app) {
+function appDied(eventId, app, callback) {
     assert.strictEqual(typeof eventId, 'string');
     assert.strictEqual(typeof app, 'object');
+    assert.strictEqual(typeof callback, 'function');
 
     // also send us a notification mail
     if (config.provider() === 'caas') mailer.appDied('support@cloudron.io', app);
@@ -225,15 +221,14 @@ function appDied(eventId, app) {
     actionForAllAdmins([], function (admin, callback) {
         mailer.appDied(admin.email, app);
         add(admin.id, eventId, `App ${app.fqdn} is down`, `The application ${app.manifest.title} installed at ${app.fqdn} is not responding.`, callback);
-    }, function (error) {
-        if (error) console.error(error);
-    });
+    }, callback);
 }
 
-function processCrash(eventId, processName, crashLogFile) {
+function processCrash(eventId, processName, crashLogFile, callback) {
     assert.strictEqual(typeof eventId, 'string');
     assert.strictEqual(typeof processName, 'string');
     assert.strictEqual(typeof crashLogFile, 'string');
+    assert.strictEqual(typeof callback, 'function');
 
     var subject = `${processName} exited unexpectedly`;
     var crashLogs = safe.fs.readFileSync(path.join(paths.CRASH_LOG_DIR, crashLogFile), 'utf8') || `No logs found at ${crashLogFile}`;
@@ -244,15 +239,14 @@ function processCrash(eventId, processName, crashLogFile) {
     actionForAllAdmins([], function (admin, callback) {
         mailer.unexpectedExit(admin.email, subject, crashLogs);
         add(admin.id, eventId, subject, `The service has been restarted automatically. Crash logs are available [here](/logs.html?crash=${crashLogFile})`, callback);
-    }, function (error) {
-        if (error) console.error(error);
-    });
+    }, callback);
 }
 
-function apptaskCrash(eventId, appId, crashLogFile) {
+function apptaskCrash(eventId, appId, crashLogFile, callback) {
     assert.strictEqual(typeof eventId, 'string');
     assert.strictEqual(typeof appId, 'string');
     assert.strictEqual(typeof crashLogFile, 'string');
+    assert.strictEqual(typeof callback, 'function');
 
     var subject = `Apptask for ${appId} crashed`;
     var crashLogs = safe.fs.readFileSync(crashLogFile, 'utf8') || `No logs found at ${crashLogFile}`;
@@ -260,12 +254,10 @@ function apptaskCrash(eventId, appId, crashLogFile) {
     // also send us a notification mail
     if (config.provider() === 'caas') mailer.unexpectedExit('support@cloudron.io', subject, crashLogs);
 
-    actionForAllAdmins([], function (admin, callback) {
+    actionForAllAdmins([], function (admin, done) {
         mailer.unexpectedExit(admin.email, subject, crashLogs);
-        add(admin.id, eventId, subject, 'Detailed logs have been sent to your email address.', callback);
-    }, function (error) {
-        if (error) console.error(error);
-    });
+        add(admin.id, eventId, subject, 'Detailed logs have been sent to your email address.', done);
+    }, callback);
 }
 
 function upsert(userId, eventId, title, message, callback) {
@@ -315,27 +307,15 @@ function onEvent(id, action, source, data, callback) {
     assert.strictEqual(typeof data, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    // decide if we want to add notifications as well
-    if (action === eventlog.ACTION_USER_ADD) {
-        userAdded(source.userId, id, data.user);
-    } else if (action === eventlog.ACTION_USER_REMOVE) {
-        userRemoved(source.userId, id, data.user);
-    } else if (action === eventlog.ACTION_USER_UPDATE && data.adminStatusChanged) {
-        adminChanged(source.userId, id, data.user);
-    } else if (action === eventlog.ACTION_APP_OOM) {
-        oomEvent(id, data.app ? data.app.id : data.containerId, { app: data.app, details: data });
-    } else if (action === eventlog.ACTION_APP_DOWN) {
-        appDied(id, data.app);
-    } else if (action === eventlog.ACTION_APP_UP) {
-        appUp(id, data.app);
-    } else if (action === eventlog.ACTION_APP_TASK_CRASH) {
-        apptaskCrash(id, data.appId, data.crashLogFile);
-    } else if (action === eventlog.ACTION_PROCESS_CRASH) {
-        processCrash(id, data.processName, data.crashLogFile);
-    } else {
-        // no notification
+    switch (action) {
+    case eventlog.ACTION_USER_ADD: return userAdded(source.userId, id, data.user, callback);
+    case eventlog.ACTION_USER_REMOVE: return userRemoved(source.userId, id, data.user, callback);
+    case eventlog.ACTION_USER_UPDATE: return data.adminStatusChanged ? adminChanged(source.userId, id, data.user, callback) : callback();
+    case eventlog.ACTION_APP_OOM: return oomEvent(id, data.app ? data.app.id : data.containerId, { app: data.app, details: data }, callback);
+    case eventlog.ACTION_APP_DOWN: return appDied(id, data.app, callback);
+    case eventlog.ACTION_APP_UP: return appUp(id, data.app, callback);
+    case eventlog.ACTION_APP_TASK_CRASH: return apptaskCrash(id, data.appId, data.crashLogFile, callback);
+    case eventlog.ACTION_PROCESS_CRASH: return processCrash(id, data.processName, data.crashLogFile, callback);
+    default: return callback();
     }
-
-    callback();
 }
-
