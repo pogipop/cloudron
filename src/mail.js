@@ -544,6 +544,8 @@ function checkConfiguration(callback) {
                 markdownMessage += '\n\n';
             });
 
+            markdownMessage += 'Email Status is checked every 30 minutes\n See the [troubleshooting docs](https://cloudron.io/documentation/troubleshooting/#mail-dns) for more information.\n';
+
             callback(null, markdownMessage);
         });
     });

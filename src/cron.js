@@ -117,7 +117,7 @@ function recreateJobs(tz) {
 
     if (gJobs.systemChecks) gJobs.systemChecks.stop();
     gJobs.systemChecks = new CronJob({
-        cronTime: '00 30 * * * *', // every 30 minutes
+        cronTime: '00 30 * * * *', // every 30 minutes. if you change this interval, change the notification messages with correct duration
         onTick: cloudron.runSystemChecks,
         start: true,
         runOnInit: true, // run system check immediately
