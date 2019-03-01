@@ -2,6 +2,7 @@
 
 exports = module.exports = {
     getStatus: getStatus,
+    checkConfiguration: checkConfiguration,
 
     getDomains: getDomains,
 
@@ -455,9 +456,9 @@ function getStatus(domain, callback) {
 
     // ensure we always have a valid toplevel properties for the api
     var results = {
-        dns: {},
-        rbl: {},
-        relay: {}
+        dns: {}, // { mx: { expected, value }, dmarc: { expected, value }, dkim: { expected, value }, spf: { expected, value }, ptr: { expected, value } }
+        rbl: {}, // { status, ip, servers: [{name,site,dns}]}
+        relay: {} // { status, value }
     };
 
     function recordResult(what, func) {
@@ -500,6 +501,50 @@ function getStatus(domain, callback) {
 
         async.parallel(checks, function () {
             callback(null, results);
+        });
+    });
+}
+
+function checkConfiguration(callback) {
+    assert.strictEqual(typeof callback, 'function');
+
+    let messages = {};
+
+    domains.getAll(function (error, allDomains) {
+        if (error) return callback(error);
+
+        async.eachSeries(allDomains, function (domainObject, iteratorCallback) {
+            getStatus(domainObject.domain, function (error, result) {
+                if (error) return iteratorCallback(error);
+
+                let message = [];
+
+                Object.keys(result.dns).forEach((type) => {
+                    const record = result.dns[type];
+                    if (!record.status) message.push(`${type.toUpperCase()} DNS record did not match. Expected: \`${record.expected}\`. Actual: \`${record.value}\``);
+                });
+                if (result.relay && !result.relay.status) message.push(`Relay error: ${result.relay.value}`);
+                if (result.rbl && result.rbl.status === false) { // rbl field contents is optional
+                    const servers = result.rbl.servers.map((bs) => `[${bs.name}](${bs.site})`); // in markdown
+                    message.push(`This server's IP \`${result.rbl.ip}\` is blacklisted in the following servers - ${servers.join(', ')}`);
+                }
+
+                if (message.length) messages[domainObject.domain] = message;
+
+                iteratorCallback(null);
+            });
+        }, function (error) {
+            if (error) return callback(error);
+
+            // create bulleted list for each domain
+            let markdownMessage = '';
+            Object.keys(messages).forEach((domain) => {
+                markdownMessage += `**${domain}**\n`;
+                markdownMessage += messages[domain].map((m) => `* ${m}\n`).join('');
+                markdownMessage += '\n\n';
+            });
+
+            callback(null, markdownMessage);
         });
     });
 }

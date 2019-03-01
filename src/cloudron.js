@@ -27,6 +27,7 @@ exports = module.exports = {
 
 var assert = require('assert'),
     async = require('async'),
+    backups = require('./backups.js'),
     clients = require('./clients.js'),
     config = require('./config.js'),
     constants = require('./constants.js'),
@@ -194,8 +195,8 @@ function runSystemChecks() {
         checkDiskSpace,
         checkMailStatus,
         checkRebootRequired
-    ], function () {
-        debug('runSystemChecks: done');
+    ], function (error) {
+        debug('runSystemChecks: done', error);
     });
 }
 
@@ -204,15 +205,8 @@ function checkBackupConfiguration(callback) {
 
     debug('Checking backup configuration');
 
-    settings.getBackupConfig(function (error, backupConfig) {
-        if (error) return console.error(error);
-
-        let message = '';
-        if (backupConfig.provider === 'noop') {
-            message = 'Cloudron backups are disabled. Please ensure this server is backed up using alternate means. See https://cloudron.io/documentation/backups/#storage-providers for more information.';
-        } else if (backupConfig.provider === 'filesystem' && !backupConfig.externalDisk) {
-            message = 'Cloudron backups are currently on the same disk as the Cloudron server instance. This is dangerous and can lead to complete data loss if the disk fails. See https://cloudron.io/documentation/backups/#storage-providers for storing backups in an external location.';
-        }
+    backups.checkConfiguration(function (error, message) {
+        if (error) return callback(error);
 
         notifications.alert(notifications.ALERT_BACKUP_CONFIG, message, callback);
     });
@@ -262,26 +256,10 @@ function checkMailStatus(callback) {
 
     debug('checking mail status');
 
-    domains.getAll(function (error, allDomains) {
+    mail.checkConfiguration(function (error, message) {
         if (error) return callback(error);
 
-        async.filterSeries(allDomains, function (domainObject, iteratorCallback) {
-            mail.getStatus(config.adminDomain(), function (error, result) {
-                if (error) return iteratorCallback(null, true);
-
-                let mailError = Object.keys(result.dns).some((record) => !result.dns[record].status);
-                if (result.relay && !result.relay.status) mailError = true;
-                if (result.rbl && result.rbl.status === false) mailError = true; // rbl is an optional check
-
-                iteratorCallback(null, mailError);
-            });
-        }, function (error, erroredDomainObjects) {
-            if (error || erroredDomainObjects.length === 0) return callback(error);
-
-            const erroredDomains = erroredDomainObjects.map((d) => d.domain);
-            debug(`checkMailStatus: ${erroredDomains.join(',')} failed status checks`);
-            notifications.alert(notifications.ALERT_MAIL_STATUS, erroredDomains.length ? `Email status check of the following domain(s) failed - ${erroredDomains.join(',')}. See the Status tab in the [Email view](/#/email/) for more information.` : '', callback);
-        });
+        notifications.alert(notifications.ALERT_MAIL_STATUS, message, callback);
     });
 }
 

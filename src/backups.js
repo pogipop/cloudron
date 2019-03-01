@@ -29,6 +29,8 @@ exports = module.exports = {
     injectPrivateFields: injectPrivateFields,
     removePrivateFields: removePrivateFields,
 
+    checkConfiguration: checkConfiguration,
+
     SECRET_PLACEHOLDER: String.fromCharCode(0x25CF).repeat(8),
 
     // for testing
@@ -1254,5 +1256,22 @@ function startCleanupTask(auditSource, callback) {
             removedBoxBackups: result ? result.removedBoxBackups : [],
             removedAppBackups: result ? result.removedAppBackups : []
         });
+    });
+}
+
+function checkConfiguration(callback) {
+    assert.strictEqual(typeof callback, 'function');
+
+    settings.getBackupConfig(function (error, backupConfig) {
+        if (error) return callback(error);
+
+        let message = '';
+        if (backupConfig.provider === 'noop') {
+            message = 'Cloudron backups are disabled. Please ensure this server is backed up using alternate means. See https://cloudron.io/documentation/backups/#storage-providers for more information.';
+        } else if (backupConfig.provider === 'filesystem' && !backupConfig.externalDisk) {
+            message = 'Cloudron backups are currently on the same disk as the Cloudron server instance. This is dangerous and can lead to complete data loss if the disk fails. See https://cloudron.io/documentation/backups/#storage-providers for storing backups in an external location.';
+        }
+
+        callback(null, message);
     });
 }
