@@ -1545,4 +1545,5 @@
 * Add a way to lock specific settings
 * Add UI to copy app's backup id
 * Block platform updates based on app manifest constraints
+* Make crash logs viewable via the dashboard
 

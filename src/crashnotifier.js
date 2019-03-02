@@ -48,7 +48,7 @@ function sendFailureLogs(unitName, callback) {
         const crashId = `${new Date().toISOString()}`;
         console.log(`Creating crash log for ${unitName} with id ${crashId}`);
 
-        if (!safe.fs.writeFileSync(path.join(paths.CRASH_LOG_DIR, `${crashId}.log`), logs)) console.log(`Failed to stash logs to ${crashLogFile}:`, safe.error);
+        if (!safe.fs.writeFileSync(path.join(paths.CRASH_LOG_DIR, `${crashId}.log`), logs)) console.log(`Failed to stash logs to ${crashId}.log:`, safe.error);
 
         eventlog.add(eventlog.ACTION_PROCESS_CRASH, AUDIT_SOURCE, { processName: unitName, crashId: crashId }, function (error) {
             if (error) console.log(`Error sending crashlog. Logs stashed at ${crashId}.log`);
