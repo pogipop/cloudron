@@ -265,6 +265,7 @@ function add(id, appStoreId, manifest, location, domain, ownerId, portBindings, 
     assert.strictEqual(typeof ownerId, 'string');
     assert.strictEqual(typeof portBindings, 'object');
     assert(data && typeof data === 'object');
+    assert(typeof data.mailboxName === 'string' && data.mailboxName); // non-empty string
     assert.strictEqual(typeof callback, 'function');
 
     portBindings = portBindings || { };
@@ -281,7 +282,7 @@ function add(id, appStoreId, manifest, location, domain, ownerId, portBindings, 
     var robotsTxt = 'robotsTxt' in data ? data.robotsTxt : null;
     var debugModeJson = data.debugMode ? JSON.stringify(data.debugMode) : null;
     var env = data.env || {};
-    const mailboxName = data.mailboxName || null;
+    const mailboxName = data.mailboxName;
 
     var queries = [];
 

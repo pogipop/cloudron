@@ -83,7 +83,7 @@ CREATE TABLE IF NOT EXISTS apps(
     robotsTxt TEXT,
     enableBackup BOOLEAN DEFAULT 1, // misnomer: controls automatic daily backups
     enableAutomaticUpdate BOOLEAN DEFAULT 1,
-    mailboxName VARCHAR(128), // mailbox of this app
+    mailboxName VARCHAR(128), // mailbox of this app. default allocated as '.app'
 
     // the following fields do not belong here, they can be removed when we use a queue for apptask
     restoreConfigJson VARCHAR(256), // used to pass backupId to restore from to apptask
