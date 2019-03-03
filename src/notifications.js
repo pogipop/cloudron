@@ -15,7 +15,10 @@ exports = module.exports = {
     ALERT_MAIL_STATUS: 'mailStatus',
     ALERT_REBOOT: 'reboot',
 
-    alert: alert
+    alert: alert,
+
+    // exported for testing
+    _add: add
 };
 
 let assert = require('assert'),

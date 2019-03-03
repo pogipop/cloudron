@@ -67,7 +67,7 @@ describe('Notifications', function () {
     var notificationId;
 
     it('add succeeds', function (done) {
-        notifications.add(USER_0.id, EVENT_0.id, 'title', 'message text', '/actionurl', function (error, result) {
+        notifications._add(USER_0.id, EVENT_0.id, 'title', 'message text', function (error, result) {
             expect(error).to.eql(null);
             expect(result.id).to.be.ok();
 
@@ -83,7 +83,6 @@ describe('Notifications', function () {
             expect(result.id).to.equal(notificationId);
             expect(result.title).to.equal('title');
             expect(result.message).to.equal('message text');
-            expect(result.action).to.equal('/actionurl');
             expect(result.acknowledged).to.equal(false);
             expect(result.creationTime).to.be.a(Date);
 
@@ -145,7 +144,6 @@ describe('Notifications', function () {
             expect(results[0].id).to.be(notificationId);
             expect(results[0].title).to.equal('title');
             expect(results[0].message).to.equal('message text');
-            expect(results[0].action).to.equal('/actionurl');
             expect(results[0].acknowledged).to.equal(true);
             expect(results[0].creationTime).to.be.a(Date);
 
@@ -155,7 +153,7 @@ describe('Notifications', function () {
 
     it('getAllPaged succeeds for second page', function (done) {
         async.timesSeries(20, function (n, callback) {
-            notifications.add(USER_0.id, EVENT_0.id, 'title' + n, 'some message', 'some action', callback);
+            notifications._add(USER_0.id, EVENT_0.id, 'title' + n, 'some message', callback);
         }, function (error) {
             expect(error).to.eql(null);
 

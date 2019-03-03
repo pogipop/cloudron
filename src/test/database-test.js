@@ -144,7 +144,6 @@ describe('database', function () {
             eventId: EVENT_0.id,
             title: 'first one',
             message: 'some message there',
-            action: 'usually a url'
         };
 
         var NOTIFICATION_1 = {
@@ -152,7 +151,6 @@ describe('database', function () {
             eventId: EVENT_1.id,
             title: 'second one',
             message: 'some message there',
-            action: 'usually a url'
         };
 
         var NOTIFICATION_2 = {
@@ -160,7 +158,6 @@ describe('database', function () {
             eventId: EVENT_2.id,
             title: 'third one',
             message: 'some message there',
-            action: 'usually a url'
         };
 
         var NOTIFICATION_3 = {
@@ -168,7 +165,6 @@ describe('database', function () {
             eventId: null,
             title: 'third one',
             message: 'some message there',
-            action: 'usually a url'
         };
 
         before(function (done) {
@@ -218,7 +214,6 @@ describe('database', function () {
                 expect(result.id).to.equal(NOTIFICATION_0.id);
                 expect(result.title).to.equal(NOTIFICATION_0.title);
                 expect(result.message).to.equal(NOTIFICATION_0.message);
-                expect(result.action).to.equal(NOTIFICATION_0.action);
                 expect(result.acknowledged).to.equal(false);
                 done();
             });
@@ -241,7 +236,6 @@ describe('database', function () {
                 expect(result[0].id).to.equal(NOTIFICATION_0.id);
                 expect(result[0].title).to.equal(NOTIFICATION_0.title);
                 expect(result[0].message).to.equal(NOTIFICATION_0.message);
-                expect(result[0].action).to.equal(NOTIFICATION_0.action);
                 expect(result[0].acknowledged).to.equal(false);
                 done();
             });
@@ -264,7 +258,6 @@ describe('database', function () {
                     expect(result.id).to.equal(NOTIFICATION_1.id);
                     expect(result.title).to.equal(NOTIFICATION_1.title);
                     expect(result.message).to.equal(NOTIFICATION_1.message);
-                    expect(result.action).to.equal(NOTIFICATION_1.action);
                     expect(result.acknowledged).to.equal(true);
 
                     done();
@@ -1896,7 +1889,6 @@ describe('database', function () {
                         eventId: eventId,
                         title: 'first one',
                         message: 'some message there',
-                        action: 'usually a url'
                     };
 
                     notificationdb.add(notification, callback);
