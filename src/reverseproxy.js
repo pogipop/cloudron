@@ -14,7 +14,6 @@ exports = module.exports = {
     getCertificate: getCertificate,
     ensureCertificate: ensureCertificate,
 
-    renewAll: renewAll,
     renewCerts: renewCerts,
 
     // the 'configure' functions always ensure a certificate
@@ -585,22 +584,13 @@ function renewCerts(options, auditSource, progressCallback, callback) {
                 else return iteratorCallback(new Error(`Unknown domain type for ${appDomain.fqdn}. This should never happen`));
 
                 configureFunc(function (ignoredError) {
-                    if (ignoredError) debug('renewAll: error reconfiguring app', ignoredError);
+                    if (ignoredError) debug('renewCerts: error reconfiguring app', ignoredError);
 
                     platform.handleCertChanged(appDomain.fqdn, iteratorCallback);
                 });
             });
         }, callback);
     });
-}
-
-function renewAll(auditSource, callback) {
-    assert.strictEqual(typeof auditSource, 'object');
-    assert.strictEqual(typeof callback, 'function');
-
-    debug('renewAll: Checking certificates for renewal');
-
-    renewCerts({}, auditSource, callback);
 }
 
 function removeAppConfigs() {
