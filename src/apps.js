@@ -74,6 +74,7 @@ var appdb = require('./appdb.js'),
     fs = require('fs'),
     mail = require('./mail.js'),
     manifestFormat = require('cloudron-manifestformat'),
+    once = require('once'),
     os = require('os'),
     path = require('path'),
     paths = require('./paths.js'),
@@ -1457,20 +1458,26 @@ function uploadFile(appId, sourceFilePath, destFilePath, callback) {
     assert.strictEqual(typeof destFilePath, 'string');
     assert.strictEqual(typeof callback, 'function');
 
+    const done = once(function (error) {
+        safe.fs.unlinkSync(sourceFilePath); // remove file in /tmp
+        callback(error);
+    });
+
     // the built-in bash printf understands "%q" but not /usr/bin/printf.
     // ' gets replaced with '\'' . the first closes the quote and last one starts a new one
     const escapedDestFilePath = safe.child_process.execSync(`printf %q '${destFilePath.replace(/'/g, '\'\\\'\'')}'`, { shell: '/bin/bash', encoding: 'utf8' });
     debug(`uploadFile: ${sourceFilePath} -> ${escapedDestFilePath}`);
 
     exec(appId, { cmd: [ 'bash', '-c', `cat - > ${escapedDestFilePath}` ], tty: false }, function (error, stream) {
-        if (error) return callback(error);
+        if (error) return done(error);
 
         var readFile = fs.createReadStream(sourceFilePath);
-        readFile.on('error', callback);
+        readFile.on('error', done);
+
+        stream.on('error', done);
+        stream.on('finish', done);
 
         readFile.pipe(stream);
-
-        callback(null);
     });
 }
 
