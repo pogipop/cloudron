@@ -1457,7 +1457,12 @@ function uploadFile(appId, sourceFilePath, destFilePath, callback) {
     assert.strictEqual(typeof destFilePath, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    exec(appId, { cmd: [ 'bash', '-c', 'cat - > ' + destFilePath ], tty: false }, function (error, stream) {
+    // the built-in bash printf understands "%q" but not /usr/bin/printf.
+    // ' gets replaced with '\'' . the first closes the quote and last one starts a new one
+    const escapedDestFilePath = safe.child_process.execSync(`printf %q '${destFilePath.replace(/'/g, '\'\\\'\'')}'`, { shell: '/bin/bash', encoding: 'utf8' });
+    debug(`uploadFile: ${sourceFilePath} -> ${escapedDestFilePath}`);
+
+    exec(appId, { cmd: [ 'bash', '-c', `cat - > ${escapedDestFilePath}` ], tty: false }, function (error, stream) {
         if (error) return callback(error);
 
         var readFile = fs.createReadStream(sourceFilePath);
