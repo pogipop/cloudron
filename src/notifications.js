@@ -263,6 +263,18 @@ function apptaskCrash(eventId, appId, crashLogFile, callback) {
     }, callback);
 }
 
+function certificateRenewalError(eventId, vhost, errorMessage, callback) {
+    assert.strictEqual(typeof eventId, 'string');
+    assert.strictEqual(typeof vhost, 'string');
+    assert.strictEqual(typeof errorMessage, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    actionForAllAdmins([], function (admin, callback) {
+        mailer.certificateRenewalError(vhost, errorMessage);
+        add(admin.id, eventId, `Certificate renewal of ${vhost} failed`, `Failed to new certs of ${vhost}: ${errorMessage}. Renewal will be retried in 12 hours`, callback);
+    }, callback);
+}
+
 function upsert(userId, eventId, title, message, callback) {
     assert.strictEqual(typeof userId, 'string');
     assert(typeof eventId === 'string' || eventId === null);
@@ -319,6 +331,10 @@ function onEvent(id, action, source, data, callback) {
     case eventlog.ACTION_APP_UP: return appUp(id, data.app, callback);
     case eventlog.ACTION_APP_TASK_CRASH: return apptaskCrash(id, data.appId, data.crashLogFile, callback);
     case eventlog.ACTION_PROCESS_CRASH: return processCrash(id, data.processName, data.crashId, callback);
+    case eventlog.ACTION_CERTIFICATE_RENEWAL:
+    case eventlog.ACTION_CERTIFICATE_NEW:
+        return data.errorMessage ? certificateRenewalError(id, data.domain, data.errorMessage, callback): callback();
+
     default: return callback();
     }
 }

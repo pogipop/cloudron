@@ -45,7 +45,6 @@ var acme2 = require('./cert/acme2.js'),
     eventlog = require('./eventlog.js'),
     fallback = require('./cert/fallback.js'),
     fs = require('fs'),
-    mailer = require('./mailer.js'),
     os = require('os'),
     path = require('path'),
     paths = require('./paths.js'),
@@ -357,14 +356,7 @@ function ensureCertificate(vhost, domain, auditSource, callback) {
                 debug('ensureCertificate: getting certificate for %s with options %j', vhost, apiOptions);
 
                 api.getCertificate(vhost, domain, apiOptions, function (error, certFilePath, keyFilePath) {
-                    var errorMessage = error ? error.message : '';
-
-                    if (error) {
-                        debug('ensureCertificate: could not get certificate. using fallback certs', error);
-                        mailer.certificateRenewalError(vhost, errorMessage);
-                    }
-
-                    eventlog.add(currentBundle ? eventlog.ACTION_CERTIFICATE_RENEWAL : eventlog.ACTION_CERTIFICATE_NEW, auditSource, { domain: vhost, errorMessage: errorMessage });
+                    eventlog.add(currentBundle ? eventlog.ACTION_CERTIFICATE_RENEWAL : eventlog.ACTION_CERTIFICATE_NEW, auditSource, { domain: vhost, errorMessage: error ? error.message : '' });
 
                     // if no cert was returned use fallback. the fallback/caas provider will not provide any for example
                     if (!certFilePath || !keyFilePath) return getFallbackCertificate(domain, callback);
