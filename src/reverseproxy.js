@@ -45,6 +45,7 @@ var acme2 = require('./cert/acme2.js'),
     eventlog = require('./eventlog.js'),
     fallback = require('./cert/fallback.js'),
     fs = require('fs'),
+    mail = require('./mail.js'),
     os = require('os'),
     path = require('path'),
     paths = require('./paths.js'),
@@ -330,6 +331,15 @@ function getCertificate(fqdn, domain, callback) {
     });
 }
 
+function notifyCertChanged(vhost, callback) {
+    assert.strictEqual(typeof vhost, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    if (vhost !== config.mailFqdn()) return callback();
+
+    mail.handleCertChanged(callback);
+}
+
 function ensureCertificate(vhost, domain, auditSource, callback) {
     assert.strictEqual(typeof vhost, 'string');
     assert.strictEqual(typeof domain, 'string');
@@ -358,10 +368,14 @@ function ensureCertificate(vhost, domain, auditSource, callback) {
                 api.getCertificate(vhost, domain, apiOptions, function (error, certFilePath, keyFilePath) {
                     eventlog.add(currentBundle ? eventlog.ACTION_CERTIFICATE_RENEWAL : eventlog.ACTION_CERTIFICATE_NEW, auditSource, { domain: vhost, errorMessage: error ? error.message : '' });
 
-                    // if no cert was returned use fallback. the fallback/caas provider will not provide any for example
-                    if (!certFilePath || !keyFilePath) return getFallbackCertificate(domain, callback);
+                    notifyCertChanged(vhost, function (error) {
+                        if (error) return callback(error);
 
-                    callback(null, { certFilePath, keyFilePath, type: 'new-le' });
+                        // if no cert was returned use fallback. the fallback/caas provider will not provide any for example
+                        if (!certFilePath || !keyFilePath) return getFallbackCertificate(domain, callback);
+
+                        callback(null, { certFilePath, keyFilePath });
+                    });
                 });
             });
         });
@@ -575,11 +589,7 @@ function renewCerts(options, auditSource, progressCallback, callback) {
                 else if (appDomain.type === 'alternate') configureFunc = writeAppRedirectNginxConfig.bind(null, appDomain.app, appDomain.fqdn, bundle);
                 else return iteratorCallback(new Error(`Unknown domain type for ${appDomain.fqdn}. This should never happen`));
 
-                configureFunc(function (ignoredError) {
-                    if (ignoredError) debug('renewCerts: error reconfiguring app', ignoredError);
-
-                    platform.handleCertChanged(appDomain.fqdn, iteratorCallback);
-                });
+                configureFunc(iteratorCallback);
             });
         }, callback);
     });

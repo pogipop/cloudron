@@ -25,6 +25,7 @@ exports = module.exports = {
 
     startMail: restartMail,
     restartMail: restartMail,
+    handleCertChanged: handleCertChanged,
 
     sendTestMail: sendTestMail,
 
@@ -688,6 +689,10 @@ function restartMailIfActivated(callback) {
 
         restartMail(callback);
     });
+}
+
+function handleCertChanged(callback) {
+    restartMailIfActivated(callback);
 }
 
 function getDomain(domain, callback) {

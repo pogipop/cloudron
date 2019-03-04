@@ -4,8 +4,6 @@ exports = module.exports = {
     start: start,
     stop: stop,
 
-    handleCertChanged: handleCertChanged,
-
     // exported for testing
     _isReady: false
 };
@@ -166,15 +164,4 @@ function startApps(existingInfra, callback) {
         debug('startApps: apps are already uptodate');
         callback();
     }
-}
-
-function handleCertChanged(cn, callback) {
-    assert.strictEqual(typeof cn, 'string');
-    assert.strictEqual(typeof callback, 'function');
-
-    debug('handleCertChanged', cn);
-
-    if (cn === '*.' + config.adminDomain() || cn === config.adminFqdn()) return mail.restartMail(callback);
-
-    callback();
 }

@@ -1548,4 +1548,5 @@
 * Make crash logs viewable via the dashboard
 * Fix issue where uploading of filenames with brackets and plus was not working
 * Add notification for cert renewal and backup failures
+* Fix issue where mail container was not updated with the latest certificate
 
