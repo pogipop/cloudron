@@ -125,6 +125,8 @@ SettingsError.BAD_FIELD = 'Bad Field';
 
 
 function notifyChange(key, value) {
+    assert.strictEqual(typeof key, 'string');
+    // value is a variant
     cron.handleSettingsChanged(key, value);
 }
 

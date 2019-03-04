@@ -101,8 +101,8 @@ function startPostActivationJobs(callback) {
 
 function handleSettingsChanged(key, value) {
     assert.strictEqual(typeof key, 'string');
-    assert.strictEqual(typeof value, 'string');
 
+    // value is a variant
     switch (key) {
     case settings.TIME_ZONE_KEY: recreateJobs(value); break;
     case settings.APP_AUTOUPDATE_PATTERN_KEY: appAutoupdatePatternChanged(value); break;
