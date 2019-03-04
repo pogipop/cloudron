@@ -174,7 +174,7 @@ function handleCertChanged(cn, callback) {
 
     debug('handleCertChanged', cn);
 
-    if (cn === '*.' + config.adminDomain() || cn === config.adminFqdn()) return mail.startMail(callback);
+    if (cn === '*.' + config.adminDomain() || cn === config.adminFqdn()) return mail.restartMail(callback);
 
     callback();
 }
