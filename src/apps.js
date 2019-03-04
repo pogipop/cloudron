@@ -1393,6 +1393,7 @@ function downloadFile(appId, filePath, callback) {
     assert.strictEqual(typeof filePath, 'string');
     assert.strictEqual(typeof callback, 'function');
 
+    debug(`downloadFile: ${filePath}`); // no need to escape filePath because we don't rely on bash
     exec(appId, { cmd: [ 'stat', '--printf=%F-%s', filePath ], tty: true }, function (error, stream) {
         if (error) return callback(error);
 

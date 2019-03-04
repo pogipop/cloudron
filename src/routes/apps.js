@@ -598,7 +598,7 @@ function downloadFile(req, res, next) {
 
         var headers = {
             'Content-Type': 'application/octet-stream',
-            'Content-Disposition': 'attachment; filename="' + info.filename + '"'
+            'Content-Disposition': `attachment; filename*=utf-8''${encodeURIComponent(info.filename)}` // RFC 2184 section 4
         };
         if (info.size) headers['Content-Length'] = info.size;
 
