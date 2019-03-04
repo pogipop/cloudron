@@ -55,7 +55,6 @@ var addons = require('./addons.js'),
     eventlog = require('./eventlog.js'),
     fs = require('fs'),
     locker = require('./locker.js'),
-    mailer = require('./mailer.js'),
     mkdirp = require('mkdirp'),
     once = require('once'),
     path = require('path'),
@@ -1018,9 +1017,9 @@ function startBackupTask(auditSource, callback) {
     task.on('finish', (error, result) => {
         locker.unlock(locker.OP_FULL_BACKUP);
 
-        if (error) mailer.backupFailed(error);
+        const errorMessage = error ? util.inspect(result, { depth: 10, showHidden: true }) : '';
 
-        eventlog.add(eventlog.ACTION_BACKUP_FINISH, auditSource, { errorMessage: error ? error.message : null, backupId: result });
+        eventlog.add(eventlog.ACTION_BACKUP_FINISH, auditSource, { errorMessage: errorMessage, backupId: result });
     });
 }
 

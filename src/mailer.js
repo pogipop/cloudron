@@ -47,17 +47,6 @@ var MAIL_TEMPLATES_DIR = path.join(__dirname, 'mail_templates');
 
 var gMailQueue = [ ];
 
-function splatchError(error) {
-    var result = { };
-    Object.getOwnPropertyNames(error).forEach(function (key) {
-        var value = this[key];
-        if (value instanceof Error) value = splatchError(value);
-        result[key] = value;
-    }, error /* thisArg */);
-
-    return util.inspect(result, { depth: null, showHidden: true });
-}
-
 function getAdminEmails(callback) {
     users.getAllAdmins(function (error, admins) {
         if (error) return callback(error);
@@ -459,9 +448,7 @@ function sendDigest(info) {
     });
 }
 
-function backupFailed(error) {
-    var message = splatchError(error);
-
+function backupFailed(errorMessage) {
     getMailConfig(function (error, mailConfig) {
         if (error) return debug('Error getting mail details:', error);
 
@@ -469,7 +456,7 @@ function backupFailed(error) {
             from: mailConfig.notificationFrom,
             to: config.provider() === 'caas' ? 'support@cloudron.io' : mailConfig.adminEmails.join(', '),
             subject: util.format('[%s] Failed to backup', mailConfig.cloudronName),
-            text: render('backup_failed.ejs', { cloudronName: mailConfig.cloudronName, message: message, format: 'text' })
+            text: render('backup_failed.ejs', { cloudronName: mailConfig.cloudronName, message: errorMessage, format: 'text' })
         };
 
         enqueue(mailOptions);

@@ -1547,4 +1547,5 @@
 * Block platform updates based on app manifest constraints
 * Make crash logs viewable via the dashboard
 * Fix issue where uploading of filenames with brackets and plus was not working
+* Add notification for cert renewal and backup failures
 
