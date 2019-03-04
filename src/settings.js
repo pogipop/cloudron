@@ -56,9 +56,6 @@ exports = module.exports = {
 
     // blobs
     CLOUDRON_AVATAR_KEY: 'cloudron_avatar', // not stored in db but can be used for locked flag
-
-    on: on,
-    removeListener: removeListener
 };
 
 var addons = require('./addons.js'),
@@ -69,6 +66,7 @@ var addons = require('./addons.js'),
     BackupsError = backups.BackupsError,
     config = require('./config.js'),
     constants = require('./constants.js'),
+    cron = require('./cron.js'),
     CronJob = require('cron').CronJob,
     DatabaseError = require('./databaseerror.js'),
     moment = require('moment-timezone'),
@@ -101,8 +99,6 @@ var gDefaults = (function () {
     return result;
 })();
 
-let gEvents = new (require('events').EventEmitter)();
-
 function SettingsError(reason, errorOrMessage) {
     assert.strictEqual(typeof reason, 'string');
     assert(errorOrMessage instanceof Error || typeof errorOrMessage === 'string' || typeof errorOrMessage === 'undefined');
@@ -127,12 +123,9 @@ SettingsError.EXTERNAL_ERROR = 'External Error';
 SettingsError.NOT_FOUND = 'Not Found';
 SettingsError.BAD_FIELD = 'Bad Field';
 
-function on(key, handler) {
-    gEvents.on(key, handler);
-}
 
-function removeListener(key, handler) {
-    gEvents.removeListener(key, handler);
+function notifyChange(key, value) {
+    cron.handleSettingsChanged(key, value);
 }
 
 function setAppAutoupdatePattern(pattern, callback) {
@@ -147,7 +140,7 @@ function setAppAutoupdatePattern(pattern, callback) {
     settingsdb.set(exports.APP_AUTOUPDATE_PATTERN_KEY, pattern, function (error) {
         if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
 
-        gEvents.emit(exports.APP_AUTOUPDATE_PATTERN_KEY, pattern);
+        notifyChange(exports.APP_AUTOUPDATE_PATTERN_KEY, pattern);
 
         return callback(null);
     });
@@ -176,7 +169,7 @@ function setBoxAutoupdatePattern(pattern, callback) {
     settingsdb.set(exports.BOX_AUTOUPDATE_PATTERN_KEY, pattern, function (error) {
         if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
 
-        gEvents.emit(exports.BOX_AUTOUPDATE_PATTERN_KEY, pattern);
+        notifyChange(exports.BOX_AUTOUPDATE_PATTERN_KEY, pattern);
 
         return callback(null);
     });
@@ -202,7 +195,7 @@ function setTimeZone(tz, callback) {
     settingsdb.set(exports.TIME_ZONE_KEY, tz, function (error) {
         if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
 
-        gEvents.emit(exports.TIME_ZONE_KEY, tz);
+        notifyChange(exports.TIME_ZONE_KEY, tz);
 
         return callback(null);
     });
@@ -241,7 +234,7 @@ function setCloudronName(name, callback) {
     settingsdb.set(exports.CLOUDRON_NAME_KEY, name, function (error) {
         if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
 
-        gEvents.emit(exports.CLOUDRON_NAME_KEY, name);
+        notifyChange(exports.CLOUDRON_NAME_KEY, name);
 
         return callback(null);
     });
@@ -290,7 +283,7 @@ function setDynamicDnsConfig(enabled, callback) {
     settingsdb.set(exports.DYNAMIC_DNS_KEY, enabled ? 'enabled' : '', function (error) {
         if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
 
-        gEvents.emit(exports.DYNAMIC_DNS_KEY, enabled);
+        notifyChange(exports.DYNAMIC_DNS_KEY, enabled);
 
         return callback(null);
     });
@@ -328,7 +321,7 @@ function setBackupConfig(backupConfig, callback) {
             settingsdb.set(exports.BACKUP_CONFIG_KEY, JSON.stringify(backupConfig), function (error) {
                 if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
 
-                gEvents.emit(exports.BACKUP_CONFIG_KEY, backupConfig);
+                notifyChange(exports.BACKUP_CONFIG_KEY, backupConfig);
 
                 callback(null);
             });
@@ -354,7 +347,7 @@ function setEmailDigest(enabled, callback) {
     settingsdb.set(exports.EMAIL_DIGEST, enabled ? 'enabled' : '', function (error) {
         if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
 
-        gEvents.emit(exports.EMAIL_DIGEST, enabled);
+        notifyChange(exports.EMAIL_DIGEST, enabled);
 
         callback(null);
     });
@@ -429,7 +422,7 @@ function setAppstoreConfig(appstoreConfig, callback) {
         settingsdb.set(exports.APPSTORE_CONFIG_KEY, JSON.stringify(data), function (error) {
             if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
 
-            gEvents.emit(exports.APPSTORE_CONFIG_KEY, appstoreConfig);
+            notifyChange(exports.APPSTORE_CONFIG_KEY, appstoreConfig);
 
             callback(null);
         });

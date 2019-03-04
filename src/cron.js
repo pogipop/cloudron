@@ -4,7 +4,9 @@ exports = module.exports = {
     startPostActivationJobs: startPostActivationJobs,
     startPreActivationJobs: startPreActivationJobs,
 
-    stopJobs: stopJobs
+    stopJobs: stopJobs,
+
+    handleSettingsChanged: handleSettingsChanged
 };
 
 var appHealthMonitor = require('./apphealthmonitor.js'),
@@ -85,11 +87,6 @@ function startPostActivationJobs(callback) {
         start: true
     });
 
-    settings.on(settings.TIME_ZONE_KEY, recreateJobs);
-    settings.on(settings.APP_AUTOUPDATE_PATTERN_KEY, appAutoupdatePatternChanged);
-    settings.on(settings.BOX_AUTOUPDATE_PATTERN_KEY, boxAutoupdatePatternChanged);
-    settings.on(settings.DYNAMIC_DNS_KEY, dynamicDnsChanged);
-
     settings.getAll(function (error, allSettings) {
         if (error) return callback(error);
 
@@ -100,6 +97,19 @@ function startPostActivationJobs(callback) {
 
         callback();
     });
+}
+
+function handleSettingsChanged(key, value) {
+    assert.strictEqual(typeof key, 'string');
+    assert.strictEqual(typeof value, 'string');
+
+    switch (key) {
+    case settings.TIME_ZONE_KEY: recreateJobs(value); break;
+    case settings.APP_AUTOUPDATE_PATTERN_KEY: appAutoupdatePatternChanged(value); break;
+    case settings.BOX_AUTOUPDATE_PATTERN_KEY: boxAutoupdatePatternChanged(value); break;
+    case settings.DYNAMIC_DNS_KEY: dynamicDnsChanged(value); break;
+    default: break;
+    }
 }
 
 function recreateJobs(tz) {
@@ -281,11 +291,6 @@ function dynamicDnsChanged(enabled) {
 
 function stopJobs(callback) {
     assert.strictEqual(typeof callback, 'function');
-
-    settings.removeListener(settings.TIME_ZONE_KEY, recreateJobs);
-    settings.removeListener(settings.APP_AUTOUPDATE_PATTERN_KEY, appAutoupdatePatternChanged);
-    settings.removeListener(settings.BOX_AUTOUPDATE_PATTERN_KEY, boxAutoupdatePatternChanged);
-    settings.removeListener(settings.DYNAMIC_DNS_KEY, dynamicDnsChanged);
 
     for (var job in gJobs) {
         if (!gJobs[job]) continue;
