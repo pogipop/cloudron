@@ -1017,9 +1017,9 @@ function startBackupTask(auditSource, callback) {
     task.on('finish', (error, result) => {
         locker.unlock(locker.OP_FULL_BACKUP);
 
-        const errorMessage = error ? util.inspect(result, { depth: 10, showHidden: true }) : '';
+        const errorMessage = error ? error.message : '';
 
-        eventlog.add(eventlog.ACTION_BACKUP_FINISH, auditSource, { errorMessage: errorMessage, backupId: result });
+        eventlog.add(eventlog.ACTION_BACKUP_FINISH, auditSource, { taskId: task.id, errorMessage: errorMessage, backupId: result });
     });
 }
 

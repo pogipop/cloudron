@@ -275,14 +275,15 @@ function certificateRenewalError(eventId, vhost, errorMessage, callback) {
     }, callback);
 }
 
-function backupFailed(eventId, errorMessage, callback) {
+function backupFailed(eventId, taskId, errorMessage, callback) {
     assert.strictEqual(typeof eventId, 'string');
+    assert.strictEqual(typeof taskId, 'string');
     assert.strictEqual(typeof errorMessage, 'string');
     assert.strictEqual(typeof callback, 'function');
 
     actionForAllAdmins([], function (admin, callback) {
         mailer.backupFailed(errorMessage);
-        add(admin.id, eventId, 'Failed to backup', `Backup failed: ${errorMessage}. Will be retried in 4 hours`, callback);
+        add(admin.id, eventId, 'Failed to backup', `Backup failed: ${errorMessage}. Logs are available [here](/logs.html?taskId=${taskId}). Will be retried in 4 hours`, callback);
     }, callback);
 }
 
@@ -346,7 +347,7 @@ function onEvent(id, action, source, data, callback) {
     case eventlog.ACTION_CERTIFICATE_NEW:
         return data.errorMessage ? certificateRenewalError(id, data.domain, data.errorMessage, callback): callback();
 
-    case eventlog.ACTION_BACKUP_FINISH: return data.errorMessage ? backupFailed(id, data.errorMessage, callback) : callback();
+    case eventlog.ACTION_BACKUP_FINISH: return data.errorMessage ? backupFailed(id, data.taskId, data.errorMessage, callback) : callback();
 
     default: return callback();
     }

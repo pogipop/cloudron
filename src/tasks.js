@@ -137,6 +137,7 @@ function startTask(type, args) {
             });
         });
 
+        events.id = taskId;
         events.emit('start', taskId);
     });
 
