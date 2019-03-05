@@ -2,8 +2,8 @@
 
 exports = module.exports = {
     get: get,
+    getByUserIdAndTitle: getByUserIdAndTitle,
     add: add,
-    upsert: upsert,
     update: update,
     del: del,
     listByUserIdPaged: listByUserIdPaged
@@ -38,24 +38,18 @@ function add(notification, callback) {
     });
 }
 
-function upsert(notification, callback) {
-    assert.strictEqual(typeof notification, 'object');
+function getByUserIdAndTitle(userId, title, callback) {
+    assert.strictEqual(typeof userId, 'string');
+    assert.strictEqual(typeof title, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    database.query('SELECT * from notifications WHERE userId = ? AND title = ?', [ notification.userId, notification.title ], function (error, result) {
+    database.query('SELECT ' + NOTIFICATION_FIELDS + ' from notifications WHERE userId = ? AND title = ? ORDER BY creationTime LIMIT 1', [ userId, title ], function (error, results) {
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
-        if (result.length === 0) return add(notification, callback);
+        if (results.length === 0) return callback(new DatabaseError(DatabaseError.NOT_FOUND));
 
-        postProcess(result[0]);
+        postProcess(results[0]);
 
-        var data = {
-            acknowledged: notification.acknowledged,
-            eventId: notification.eventId,
-            message: notification.message,
-            creationTime: new Date()
-        };
-
-        update(result[0].id, data, callback);
+        callback(null, results[0]);
     });
 }
 
@@ -76,7 +70,7 @@ function update(id, data, callback) {
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
         if (result.affectedRows !== 1) return callback(new DatabaseError(DatabaseError.NOT_FOUND));
 
-        return callback(null, id);
+        callback(null);
     });
 }
 

@@ -295,19 +295,29 @@ function upsert(userId, eventId, title, message, callback) {
     assert.strictEqual(typeof message, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    debug(`upsert: userId=${userId} title=${title} message=${message}`);
+    const acknowledged = !message;
 
-    notificationdb.upsert({
+    const data = {
         userId: userId,
         eventId: eventId,
         title: title,
         message: message,
-        acknowledged: !message
-    }, function (error, result) {
-        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new NotificationsError(NotificationsError.NOT_FOUND, error.message));
-        if (error) return callback(new NotificationsError(NotificationsError.INTERNAL_ERROR, error));
+        acknowledged: acknowledged
+    };
 
-        callback(null, { id: result });
+    notificationdb.getByUserIdAndTitle(userId, title, function (error, result) {
+        if (error && error.reason !== DatabaseError.NOT_FOUND) return callback(new NotificationsError(NotificationsError.INTERNAL_ERROR, error));
+
+        if (!result && acknowledged) return callback(); // do not add acked alerts
+
+        let updateFunc = !result ? notificationdb.add.bind(null, data) : notificationdb.update.bind(null, result.id, data);
+
+        updateFunc(function (error) {
+            if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new NotificationsError(NotificationsError.NOT_FOUND, error.message));
+            if (error) return callback(new NotificationsError(NotificationsError.INTERNAL_ERROR, error));
+
+            callback(null);
+        });
     });
 }
 
