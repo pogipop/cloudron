@@ -294,7 +294,7 @@ function upsert(userId, eventId, title, message, callback) {
     assert.strictEqual(typeof message, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    debug('upsert: ', userId, title, message);
+    debug(`upsert: userId=${userId} title=${title} message=${message}`);
 
     notificationdb.upsert({
         userId: userId,
@@ -318,13 +318,15 @@ function alert(id, message, callback) {
     const title = ALERT_TITLES[id];
     if (!title) return callback();
 
+    debug(`alert: id=${id} title=${title} message=${message}`);
+
     actionForAllAdmins([], function (admin, callback) {
         upsert(admin.id, null, title, message, callback);
     }, function (error) {
         if (error) console.error(error);
-    });
 
-    callback();
+        callback();
+    });
 }
 
 function onEvent(id, action, source, data, callback) {
