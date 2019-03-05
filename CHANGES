@@ -1537,7 +1537,7 @@
 * Hide mail relay password
 * Do not return API tokens in REST API
 
-[3.6.0]
+[3.5.3]
 * Make reboot required check server side
 * Update node to 10.15.1
 * Enable gzip compression for large objects
