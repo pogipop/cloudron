@@ -27,8 +27,8 @@ function add(notification, callback) {
     assert.strictEqual(typeof notification, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    const query = 'INSERT INTO notifications (userId, eventId, title, message) VALUES (?, ?, ?, ?)';
-    const args = [ notification.userId, notification.eventId, notification.title, notification.message ];
+    const query = 'INSERT INTO notifications (userId, eventId, title, message, acknowledged) VALUES (?, ?, ?, ?, ?)';
+    const args = [ notification.userId, notification.eventId, notification.title, notification.message, notification.acknowledged ];
 
     database.query(query, args, function (error, result) {
         if (error && error.code === 'ER_NO_REFERENCED_ROW_2') return callback(new DatabaseError(DatabaseError.NOT_FOUND, 'no such eventlog entry'));
