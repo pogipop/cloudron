@@ -674,6 +674,7 @@ function restartMail(callback) {
 
     if (process.env.BOX_ENV === 'test' && !process.env.TEST_CREATE_INFRA) return callback();
 
+    debug(`restartMail: restarting mail container with ${config.mailFqdn()} ${config.adminDomain()}`);
     configureMail(config.mailFqdn(), config.adminDomain(), callback);
 }
 
@@ -692,6 +693,9 @@ function restartMailIfActivated(callback) {
 }
 
 function handleCertChanged(callback) {
+    assert.strictEqual(typeof callback, 'function');
+
+    debug('handleCertChanged: will restart if activated');
     restartMailIfActivated(callback);
 }
 
