@@ -198,14 +198,6 @@ function translatePortBindings(portBindings, manifest) {
     return result;
 }
 
-function postProcess(app) {
-    let result = {};
-    for (let portName in app.portBindings) {
-        result[portName] = app.portBindings[portName].hostPort;
-    }
-    app.portBindings = result;
-}
-
 function addSpacesSuffix(location, user) {
     if (user.admin || !config.isSpacesEnabled()) return location;
 
@@ -393,6 +385,18 @@ function getIconUrlSync(app) {
     return fs.existsSync(iconPath) ? '/api/v1/apps/' + app.id + '/icon' : null;
 }
 
+function postProcess(app, domainObjectMap) {
+    let result = {};
+    for (let portName in app.portBindings) {
+        result[portName] = app.portBindings[portName].hostPort;
+    }
+    app.portBindings = result;
+
+    app.iconUrl = getIconUrlSync(app);
+    app.fqdn = domains.fqdn(app.location, domainObjectMap[app.domain]);
+    app.alternateDomains.forEach(function (ad) { ad.fqdn = domains.fqdn(ad.subdomain, domainObjectMap[ad.domain]); });
+}
+
 function hasAccessTo(app, user, callback) {
     assert.strictEqual(typeof app, 'object');
     assert.strictEqual(typeof user, 'object');
@@ -412,25 +416,31 @@ function hasAccessTo(app, user, callback) {
     callback(null, false);
 }
 
-function get(appId, callback) {
-    assert.strictEqual(typeof appId, 'string');
+function getDomainObjectMap(callback) {
     assert.strictEqual(typeof callback, 'function');
 
     domaindb.getAll(function (error, domainObjects) {
         if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
 
+        let domainObjectMap = {};
+        for (let d of domainObjects) { domainObjectMap[d.domain] = d; }
+
+        callback(null, domainObjectMap);
+    });
+}
+
+function get(appId, callback) {
+    assert.strictEqual(typeof appId, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    getDomainObjectMap(function (error, domainObjectMap) {
+        if (error) return callback(error);
+
         appdb.get(appId, function (error, app) {
             if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new AppsError(AppsError.NOT_FOUND, 'No such app'));
             if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
 
-            postProcess(app);
-
-            let domainObjectMap = {};
-            for (let d of domainObjects) { domainObjectMap[d.domain] = d; }
-
-            app.iconUrl = getIconUrlSync(app);
-            app.fqdn = domains.fqdn(app.location, domainObjectMap[app.domain]);
-            app.alternateDomains.forEach(function (ad) { ad.fqdn = domains.fqdn(ad.subdomain, domainObjectMap[ad.domain]); });
+            postProcess(app, domainObjectMap);
 
             callback(null, app);
         });
@@ -441,11 +451,8 @@ function getByIpAddress(ip, callback) {
     assert.strictEqual(typeof ip, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    domaindb.getAll(function (error, domainObjects) {
-        if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
-
-        let domainObjectMap = {};
-        for (let d of domainObjects) { domainObjectMap[d.domain] = d; }
+    getDomainObjectMap(function (error, domainObjectMap) {
+        if (error) return callback(error);
 
         docker.getContainerIdByIp(ip, function (error, containerId) {
             if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
@@ -454,11 +461,7 @@ function getByIpAddress(ip, callback) {
                 if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new AppsError(AppsError.NOT_FOUND, 'No such app'));
                 if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
 
-                postProcess(app);
-
-                app.iconUrl = getIconUrlSync(app);
-                app.fqdn = domains.fqdn(app.location, domainObjectMap[app.domain]);
-                app.alternateDomains.forEach(function (ad) { ad.fqdn = domains.fqdn(ad.subdomain, domainObjectMap[ad.domain]); });
+                postProcess(app, domainObjectMap);
 
                 callback(null, app);
             });
@@ -469,28 +472,15 @@ function getByIpAddress(ip, callback) {
 function getAll(callback) {
     assert.strictEqual(typeof callback, 'function');
 
-    domaindb.getAll(function (error, domainObjects) {
-        if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
-
-        let domainObjectMap = {};
-        for (let d of domainObjects) { domainObjectMap[d.domain] = d; }
+    getDomainObjectMap(function (error, domainObjectMap) {
+        if (error) return callback(error);
 
         appdb.getAll(function (error, apps) {
             if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
 
-            apps.forEach(postProcess);
+            apps.forEach((app) => postProcess(app, domainObjectMap));
 
-            async.eachSeries(apps, function (app, iteratorDone) {
-                app.iconUrl = getIconUrlSync(app);
-                app.fqdn = domains.fqdn(app.location, domainObjectMap[app.domain]);
-                app.alternateDomains.forEach(function (ad) { ad.fqdn = domains.fqdn(ad.subdomain, domainObjectMap[ad.domain]); });
-
-                iteratorDone(null, app);
-            }, function (error) {
-                if (error) return callback(error);
-
-                callback(null, apps);
-            });
+            callback(null, apps);
         });
     });
 }
