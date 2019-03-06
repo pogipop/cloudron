@@ -318,8 +318,6 @@ function setBackupConfig(backupConfig, callback) {
 
             backups.cleanupCacheFilesSync();
 
-            backupConfig = _.extend({}, curentConfig, backupConfig); // merge token/key/secret
-
             settingsdb.set(exports.BACKUP_CONFIG_KEY, JSON.stringify(backupConfig), function (error) {
                 if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
 
