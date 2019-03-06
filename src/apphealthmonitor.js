@@ -19,7 +19,7 @@ exports = module.exports = {
 const HEALTHCHECK_INTERVAL = 10 * 1000; // every 10 seconds. this needs to be small since the UI makes only healthy apps clickable
 const UNHEALTHY_THRESHOLD = 10 * 60 * 1000; // 10 minutes
 
-const OOM_MAIL_LIMIT = 60 * 60 * 1000; // 60 minutes
+const OOM_EVENT_LIMIT = 60 * 60 * 1000; // 60 minutes
 let gLastOomMailTime = Date.now() - (5 * 60 * 1000); // pretend we sent email 5 minutes ago
 
 const AUDIT_SOURCE = { userId: null, username: 'healthmonitor' };
@@ -152,7 +152,7 @@ function processDockerEvents(intervalSecs, callback) {
             getContainerInfo(containerId, function (error, app, addon) {
                 const program = error ? containerId : (app ? app.fqdn : addon.name);
                 const now = Date.now();
-                const notifyUser = (!app || !app.debugMode) && (now - gLastOomMailTime > OOM_MAIL_LIMIT);
+                const notifyUser = !(app && app.debugMode) && ((now - gLastOomMailTime) > OOM_EVENT_LIMIT);
 
                 debug('OOM %s notifyUser: %s. lastOomTime: %s (now: %s)', program, notifyUser, gLastOomMailTime, now);
 
