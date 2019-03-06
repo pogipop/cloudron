@@ -481,10 +481,10 @@ function certificateRenewalError(domain, message) {
     });
 }
 
-function oomEvent(mailTo, program, context) {
+function oomEvent(mailTo, program, event) {
     assert.strictEqual(typeof mailTo, 'string');
     assert.strictEqual(typeof program, 'string');
-    assert.strictEqual(typeof context, 'string');
+    assert.strictEqual(typeof event, 'object');
 
     getMailConfig(function (error, mailConfig) {
         if (error) return debug('Error getting mail details:', error);
@@ -492,8 +492,8 @@ function oomEvent(mailTo, program, context) {
         var mailOptions = {
             from: mailConfig.notificationFrom,
             to: mailTo,
-            subject: util.format('[%s] %s exited unexpectedly', mailConfig.cloudronName, program),
-            text: render('oom_event.ejs', { cloudronName: mailConfig.cloudronName, program: program, context: context, format: 'text' })
+            subject: util.format('[%s] %s was restarted (OOM)', mailConfig.cloudronName, program),
+            text: render('oom_event.ejs', { cloudronName: mailConfig.cloudronName, program: program, event: event, format: 'text' })
         };
 
         sendMails([ mailOptions ]);

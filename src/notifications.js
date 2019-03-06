@@ -180,23 +180,35 @@ function adminChanged(performedBy, eventId, user, callback) {
     }, callback);
 }
 
-function oomEvent(eventId, program, context, callback) {
+function oomEvent(eventId, app, addon, containerId, event, callback) {
     assert.strictEqual(typeof eventId, 'string');
-    assert.strictEqual(typeof program, 'string');
-    assert.strictEqual(typeof context, 'object');
+    assert.strictEqual(typeof app, 'object');
+    assert.strictEqual(typeof addon, 'object');
+    assert.strictEqual(typeof containerId, 'string');
     assert.strictEqual(typeof callback, 'function');
 
+    let title, message, program;
+    if (app) {
+        program = app.fqdn;
+        title = `The application ${app.fqdn} (${app.manifest.title}) ran out of memory.`;
+        message = 'The application has been restarted automatically. If you see this notification often, consider increasing the [memory limit](https://cloudron.io/documentation/apps/#increasing-the-memory-limit-of-an-app)';
+    } else if (addon) {
+        program = addon.name;
+        title = `The ${addon.name} service ran out of memory`;
+        message = 'The service has been restarted automatically. If you see this notification often, consider increasing the [memory limit](https://cloudron.io/documentation/troubleshooting/#services)';
+    } else {
+        program = containerId;
+        title = `The container ${containerId} ran out of memory`;
+        message = 'The container has been restarted automatically. Consider increasing the [memory limit](https://docs.docker.com/v17.09/edge/engine/reference/commandline/update/#update-a-containers-kernel-memory-constraints)';
+    }
+
     // also send us a notification mail
-    if (config.provider() === 'caas') mailer.oomEvent('support@cloudron.io', program, JSON.stringify(context, null, 4));
+    if (config.provider() === 'caas') mailer.oomEvent('support@cloudron.io', program, event);
 
     actionForAllAdmins([], function (admin, done) {
-        mailer.oomEvent(admin.email, program, JSON.stringify(context, null, 4));
+        mailer.oomEvent(admin.email, program, event);
 
-        var message;
-        if (context.app) message = `The application ${context.app.manifest.title} with id ${context.app.id} ran out of memory.`;
-        else message = `The container with id ${context.details.id} ran out of memory`;
-
-        add(admin.id, eventId, 'Process died out-of-memory', message, done);
+        add(admin.id, eventId, title, message, done);
     }, callback);
 }
 
@@ -351,7 +363,7 @@ function onEvent(id, action, source, data, callback) {
     case eventlog.ACTION_USER_ADD: return userAdded(source.userId, id, data.user, callback);
     case eventlog.ACTION_USER_REMOVE: return userRemoved(source.userId, id, data.user, callback);
     case eventlog.ACTION_USER_UPDATE: return data.adminStatusChanged ? adminChanged(source.userId, id, data.user, callback) : callback();
-    case eventlog.ACTION_APP_OOM: return oomEvent(id, data.app ? data.app.id : data.containerId, { app: data.app, details: data }, callback);
+    case eventlog.ACTION_APP_OOM: return oomEvent(id, data.app, data.addon, data.containerId, data.event, callback);
     case eventlog.ACTION_APP_DOWN: return appDied(id, data.app, callback);
     case eventlog.ACTION_APP_UP: return appUp(id, data.app, callback);
     case eventlog.ACTION_APP_TASK_CRASH: return apptaskCrash(id, data.appId, data.crashLogFile, callback);

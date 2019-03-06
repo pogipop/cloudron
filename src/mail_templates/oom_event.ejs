@@ -2,21 +2,20 @@
 
 Dear <%= cloudronName %> Admin,
 
-<%= program %>  exited unexpectedly using too much memory!
+<%= program %> has bee restarted now as it ran out of memory.
 
-The app has been restarted now. Should this message appear repeatedly or
-undefined behavior is observed, give the app more memory.
-This can be done in the advanced settings in the app configuration dialog
-in your Cloudron's web interface.
+Should this message appear repeatedly or undefined behavior is observed, give the app more memory.
 
-Please see some excerpt of the logs below.
+* To increase an app's memory limit - https://cloudron.io/documentation/apps/#increasing-the-memory-limit-of-an-app
+* To increase a service's memory limit - https://cloudron.io/documentation/troubleshooting/#services
 
--------------------------------------
-
-<%- context %>
+Out of memory event:
 
 -------------------------------------
 
+<%- event %>
+
+-------------------------------------
 
 Powered by https://cloudron.io
 

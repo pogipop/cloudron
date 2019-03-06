@@ -22,6 +22,7 @@ exports = module.exports = {
     getContainerIdByIp: getContainerIdByIp,
     inspect: inspect,
     inspectByName: inspect,
+    getEvents: getEvents,
     memoryUsage: memoryUsage,
     execContainer: execContainer,
     createVolume: createVolume,
@@ -471,6 +472,19 @@ function inspect(containerId, callback) {
         if (error) return callback(new DockerError(DockerError.INTERNAL_ERROR, error));
 
         callback(null, result);
+    });
+}
+
+function getEvents(options, callback) {
+    assert.strictEqual(typeof options, 'object');
+    assert.strictEqual(typeof callback, 'function');
+
+    let docker = exports.connection;
+
+    docker.getEvents(options, function (error, stream) {
+        if (error) return callback(new DockerError(DockerError.INTERNAL_ERROR, error));
+
+        callback(null, stream);
     });
 }
 

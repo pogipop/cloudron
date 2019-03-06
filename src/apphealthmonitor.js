@@ -6,8 +6,9 @@ var appdb = require('./appdb.js'),
     async = require('async'),
     DatabaseError = require('./databaseerror.js'),
     debug = require('debug')('box:apphealthmonitor'),
-    docker = require('./docker.js').connection,
+    docker = require('./docker.js'),
     eventlog = require('./eventlog.js'),
+    safe = require('safetydance'),
     superagent = require('superagent'),
     util = require('util');
 
@@ -77,11 +78,10 @@ function checkAppHealth(app, callback) {
         return callback(null);
     }
 
-    var container = docker.getContainer(app.containerId),
-        manifest = app.manifest;
+    const manifest = app.manifest;
 
-    container.inspect(function (err, data) {
-        if (err || !data || !data.State) {
+    docker.inspect(app.containerId, function (error, data) {
+        if (error || !data || !data.State) {
             debugApp(app, 'Error inspecting container');
             return setHealth(app, appdb.HEALTH_ERROR, callback);
         }
@@ -116,6 +116,18 @@ function checkAppHealth(app, callback) {
     });
 }
 
+function getContainerInfo(containerId, callback) {
+    docker.inspect(containerId, function (error, result) {
+        if (error) return callback(error);
+
+        const appId = safe.query(result, 'Config.Labels.appId', null);
+
+        if (!appId) return callback(null, null /* app */, { name: result.Name }); // addon
+
+        apps.get(appId, callback); // don't get by container id as this can be an exec container
+    });
+}
+
 /*
     OOM can be tested using stress tool like so:
         docker run -ti -m 100M cloudron/base:0.10.0 /bin/bash
@@ -134,21 +146,20 @@ function processDockerEvents(intervalSecs, callback) {
 
         stream.setEncoding('utf8');
         stream.on('data', function (data) {
-            var ev = JSON.parse(data);
-            var containerId = ev.id;
+            const event = JSON.parse(data);
+            const containerId = String(event.id);
 
-            appdb.getByContainerId(containerId, function (error, app) { // this can error for addons
-                var program = error || !app.id ? containerId : `app-${app.id}`;
-                var now = Date.now();
-
+            getContainerInfo(containerId, function (error, app, addon) {
+                const program = error ? containerId : (app ? app.fqdn : addon.name);
+                const now = Date.now();
                 const notifyUser = (!app || !app.debugMode) && (now - gLastOomMailTime > OOM_MAIL_LIMIT);
 
-                debug('OOM %s notifyUser: %s. lastOomTime: %s (now: %s)', program, notifyUser, gLastOomMailTime, now, ev);
+                debug('OOM %s notifyUser: %s. lastOomTime: %s (now: %s)', program, notifyUser, gLastOomMailTime, now);
 
                 // do not send mails for dev apps
                 if (notifyUser) {
                     // app can be null for addon containers
-                    eventlog.add(eventlog.ACTION_APP_OOM, AUDIT_SOURCE, { ev: ev, containerId: containerId, app: app || null });
+                    eventlog.add(eventlog.ACTION_APP_OOM, AUDIT_SOURCE, { event: event, containerId: containerId, addon: addon || null, app: app || null });
 
                     gLastOomMailTime = now;
                 }
