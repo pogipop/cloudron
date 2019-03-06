@@ -196,7 +196,7 @@ function oomEvent(eventId, app, addon, containerId, event, callback) {
         program = addon.name;
         title = `The ${addon.name} service ran out of memory`;
         message = 'The service has been restarted automatically. If you see this notification often, consider increasing the [memory limit](https://cloudron.io/documentation/troubleshooting/#services)';
-    } else {
+    } else { // this never happens currently
         program = containerId;
         title = `The container ${containerId} ran out of memory`;
         message = 'The container has been restarted automatically. Consider increasing the [memory limit](https://docs.docker.com/v17.09/edge/engine/reference/commandline/update/#update-a-containers-kernel-memory-constraints)';

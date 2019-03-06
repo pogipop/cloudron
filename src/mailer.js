@@ -493,7 +493,7 @@ function oomEvent(mailTo, program, event) {
             from: mailConfig.notificationFrom,
             to: mailTo,
             subject: util.format('[%s] %s was restarted (OOM)', mailConfig.cloudronName, program),
-            text: render('oom_event.ejs', { cloudronName: mailConfig.cloudronName, program: program, event: event, format: 'text' })
+            text: render('oom_event.ejs', { cloudronName: mailConfig.cloudronName, program: program, event: JSON.stringify(event), format: 'text' })
         };
 
         sendMails([ mailOptions ]);
