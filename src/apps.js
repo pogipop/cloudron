@@ -456,18 +456,11 @@ function getByIpAddress(ip, callback) {
 
                 postProcess(app);
 
-                domaindb.getAll(function (error, domainObjects) {
-                    if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
+                app.iconUrl = getIconUrlSync(app);
+                app.fqdn = domains.fqdn(app.location, domainObjectMap[app.domain]);
+                app.alternateDomains.forEach(function (ad) { ad.fqdn = domains.fqdn(ad.subdomain, domainObjectMap[ad.domain]); });
 
-                    let domainObjectMap = {};
-                    for (let d of domainObjects) { domainObjectMap[d.domain] = d; }
-
-                    app.iconUrl = getIconUrlSync(app);
-                    app.fqdn = domains.fqdn(app.location, domainObjectMap[app.domain]);
-                    app.alternateDomains.forEach(function (ad) { ad.fqdn = domains.fqdn(ad.subdomain, domainObjectMap[ad.domain]); });
-
-                    callback(null, app);
-                });
+                callback(null, app);
             });
         });
     });
