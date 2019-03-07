@@ -458,8 +458,8 @@ function getStatus(domain, callback) {
     // ensure we always have a valid toplevel properties for the api
     var results = {
         dns: {}, // { mx: { expected, value }, dmarc: { expected, value }, dkim: { expected, value }, spf: { expected, value }, ptr: { expected, value } }
-        rbl: {}, // { status, ip, servers: [{name,site,dns}]}
-        relay: {} // { status, value }
+        rbl: {}, // { status, ip, servers: [{name,site,dns}]} optional. only for cloudron-smtp
+        relay: {} // { status, value } always checked
     };
 
     function recordResult(what, func) {
@@ -524,7 +524,7 @@ function checkConfiguration(callback) {
                     const record = result.dns[type];
                     if (!record.status) message.push(`${type.toUpperCase()} DNS record did not match. Expected: \`${record.expected}\`. Actual: \`${record.value}\``);
                 });
-                if (result.relay && !result.relay.status) message.push(`Relay error: ${result.relay.value}`);
+                if (!result.relay.status) message.push(`Relay error: ${result.relay.value}`);
                 if (result.rbl && result.rbl.status === false) { // rbl field contents is optional
                     const servers = result.rbl.servers.map((bs) => `[${bs.name}](${bs.site})`); // in markdown
                     message.push(`This server's IP \`${result.rbl.ip}\` is blacklisted in the following servers - ${servers.join(', ')}`);
