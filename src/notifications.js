@@ -14,6 +14,7 @@ exports = module.exports = {
     ALERT_DISK_SPACE: 'diskSpace',
     ALERT_MAIL_STATUS: 'mailStatus',
     ALERT_REBOOT: 'reboot',
+    ALERT_BOX_UPDATE: 'boxUpdate',
 
     alert: alert,
 
@@ -40,7 +41,8 @@ const ALERT_TITLES = {
     backupConfig: 'Backup configuration is unsafe',
     diskSpace: 'Out of Disk Space',
     mailStatus: 'Email is not configured properly',
-    reboot: 'Reboot Required'
+    reboot: 'Reboot Required',
+    boxUpdate: 'New Cloudron Update Available'
 };
 
 function NotificationsError(reason, errorOrMessage) {

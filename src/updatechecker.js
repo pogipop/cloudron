@@ -18,6 +18,7 @@ var apps = require('./apps.js'),
     constants = require('./constants.js'),
     debug = require('debug')('box:updatechecker'),
     mailer = require('./mailer.js'),
+    notifications = require('./notifications.js'),
     paths = require('./paths.js'),
     safe = require('safetydance'),
     settings = require('./settings.js');
@@ -160,19 +161,9 @@ function checkBoxUpdates(callback) {
                 callback();
             }
 
-            // always send notifications if user is on the free plan
-            if (appstore.isFreePlan(result)) {
-                mailer.boxUpdateAvailable(false /* hasSubscription */, updateInfo.version, updateInfo.changelog);
-                return done();
-            }
+            const message = `Cloudron version ${updateInfo.version} is available. Click [here](/#/settings) to update.\n\nChangelog: ${updateInfo.changelog}`;
 
-            // only send notifications if update pattern is 'never'
-            settings.getBoxAutoupdatePattern(function (error, result) {
-                if (error) debug(error);
-                else if (result === constants.AUTOUPDATE_PATTERN_NEVER) mailer.boxUpdateAvailable(true /* hasSubscription */, updateInfo.version, updateInfo.changelog);
-
-                done();
-            });
+            notifications.alert(notifications.ALERT_BOX_UPDATE, message, done);
         });
     });
 }
