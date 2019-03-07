@@ -152,18 +152,17 @@ function checkBoxUpdates(callback) {
             return callback();
         }
 
-        appstore.getSubscription(function (error, result) {
+        const changelog = updateInfo.changelog.map((m) => `* ${m}\n`).join('');
+
+        const message = `Cloudron version ${updateInfo.version} is available. Click [here](/#/settings) to update.\n\nChangelog:\n${changelog}\n\n`;
+
+        notifications.alert(notifications.ALERT_BOX_UPDATE, message, function (error) {
             if (error) return callback(error);
 
-            function done() {
-                state.box = updateInfo.version;
-                saveState(state);
-                callback();
-            }
+            state.box = updateInfo.version;
+            saveState(state);
 
-            const message = `Cloudron version ${updateInfo.version} is available. Click [here](/#/settings) to update.\n\nChangelog: ${updateInfo.changelog}`;
-
-            notifications.alert(notifications.ALERT_BOX_UPDATE, message, done);
+            callback();
         });
     });
 }

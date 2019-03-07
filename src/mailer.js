@@ -5,7 +5,6 @@ exports = module.exports = {
     userRemoved: userRemoved,
     adminChanged: adminChanged,
     passwordReset: passwordReset,
-    boxUpdateAvailable: boxUpdateAvailable,
     appUpdateAvailable: appUpdateAvailable,
     sendDigest: sendDigest,
 
@@ -335,44 +334,6 @@ function appDied(mailTo, app) {
             to: mailTo,
             subject: util.format('[%s] App %s is down', mailConfig.cloudronName, app.fqdn),
             text: render('app_down.ejs', { title: app.manifest.title, appFqdn: app.fqdn, format: 'text' })
-        };
-
-        enqueue(mailOptions);
-    });
-}
-
-function boxUpdateAvailable(hasSubscription, newBoxVersion, changelog) {
-    assert.strictEqual(typeof hasSubscription, 'boolean');
-    assert.strictEqual(typeof newBoxVersion, 'string');
-    assert(util.isArray(changelog));
-
-    getMailConfig(function (error, mailConfig) {
-        if (error) return debug('Error getting mail details:', error);
-
-        var converter = new showdown.Converter();
-
-        var templateData = {
-            webadminUrl: config.adminOrigin(),
-            newBoxVersion: newBoxVersion,
-            hasSubscription: hasSubscription,
-            changelog: changelog,
-            changelogHTML: changelog.map(function (e) { return converter.makeHtml(e); }),
-            cloudronName: mailConfig.cloudronName,
-            cloudronAvatarUrl: config.adminOrigin() + '/api/v1/cloudron/avatar'
-        };
-
-        var templateDataText = JSON.parse(JSON.stringify(templateData));
-        templateDataText.format = 'text';
-
-        var templateDataHTML = JSON.parse(JSON.stringify(templateData));
-        templateDataHTML.format = 'html';
-
-        var mailOptions = {
-            from: mailConfig.notificationFrom,
-            to: mailConfig.adminEmails.join(', '),
-            subject: util.format('%s has a new update available', mailConfig.cloudronName),
-            text: render('box_update_available.ejs', templateDataText),
-            html: render('box_update_available.ejs', templateDataHTML)
         };
 
         enqueue(mailOptions);

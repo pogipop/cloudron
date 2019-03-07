@@ -42,7 +42,7 @@ const ALERT_TITLES = {
     diskSpace: 'Out of Disk Space',
     mailStatus: 'Email is not configured properly',
     reboot: 'Reboot Required',
-    boxUpdate: 'New Cloudron Update Available'
+    boxUpdate: 'New Cloudron Version Available'
 };
 
 function NotificationsError(reason, errorOrMessage) {
