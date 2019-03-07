@@ -448,7 +448,7 @@ function sendDigest(info) {
     });
 }
 
-function backupFailed(errorMessage) {
+function backupFailed(errorMessage, logUrl) {
     getMailConfig(function (error, mailConfig) {
         if (error) return debug('Error getting mail details:', error);
 
@@ -456,7 +456,7 @@ function backupFailed(errorMessage) {
             from: mailConfig.notificationFrom,
             to: config.provider() === 'caas' ? 'support@cloudron.io' : mailConfig.adminEmails.join(', '),
             subject: util.format('[%s] Failed to backup', mailConfig.cloudronName),
-            text: render('backup_failed.ejs', { cloudronName: mailConfig.cloudronName, message: errorMessage, format: 'text' })
+            text: render('backup_failed.ejs', { cloudronName: mailConfig.cloudronName, message: errorMessage, logUrl: logUrl, format: 'text' })
         };
 
         enqueue(mailOptions);

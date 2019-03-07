@@ -295,7 +295,7 @@ function backupFailed(eventId, taskId, errorMessage, callback) {
     assert.strictEqual(typeof callback, 'function');
 
     actionForAllAdmins([], function (admin, callback) {
-        mailer.backupFailed(errorMessage);
+        mailer.backupFailed(errorMessage, `${config.adminOrigin()}/logs.html?taskId=${taskId}`);
         add(admin.id, eventId, 'Failed to backup', `Backup failed: ${errorMessage}. Logs are available [here](/logs.html?taskId=${taskId}). Will be retried in 4 hours`, callback);
     }, callback);
 }
