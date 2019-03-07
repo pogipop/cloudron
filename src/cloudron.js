@@ -208,7 +208,7 @@ function checkBackupConfiguration(callback) {
     backups.checkConfiguration(function (error, message) {
         if (error) return callback(error);
 
-        notifications.alert(notifications.ALERT_BACKUP_CONFIG, message, callback);
+        notifications.alert(notifications.ALERT_BACKUP_CONFIG, 'Backup configuration is unsafe', message, callback);
     });
 }
 
@@ -243,7 +243,7 @@ function checkDiskSpace(callback) {
 
             debug('Disk space checked. ok: %s', !oos);
 
-            notifications.alert(notifications.ALERT_DISK_SPACE, oos ? JSON.stringify(entries, null, 4) : '', callback);
+            notifications.alert(notifications.ALERT_DISK_SPACE, 'Server is running out of disk space', oos ? JSON.stringify(entries, null, 4) : '', callback);
         }).catch(function (error) {
             if (error) console.error(error);
             callback();
@@ -259,7 +259,7 @@ function checkMailStatus(callback) {
     mail.checkConfiguration(function (error, message) {
         if (error) return callback(error);
 
-        notifications.alert(notifications.ALERT_MAIL_STATUS, message, callback);
+        notifications.alert(notifications.ALERT_MAIL_STATUS, 'Email is not configured properly', message, callback);
     });
 }
 
@@ -271,7 +271,7 @@ function checkRebootRequired(callback) {
     isRebootRequired(function (error, rebootRequired) {
         if (error) return callback(error);
 
-        notifications.alert(notifications.ALERT_REBOOT, rebootRequired ? 'To finish security updates, a [reboot](/#/system) is necessary.' : '', callback);
+        notifications.alert(notifications.ALERT_REBOOT, 'Reboot Required', rebootRequired ? 'To finish security updates, a [reboot](/#/system) is necessary.' : '', callback);
     });
 }
 

@@ -154,9 +154,9 @@ function checkBoxUpdates(callback) {
 
         const changelog = updateInfo.changelog.map((m) => `* ${m}\n`).join('');
 
-        const message = `Cloudron version ${updateInfo.version} is available. Click [here](/#/settings) to update.\n\nChangelog:\n${changelog}\n\n`;
+        const message = `Changelog:\n${changelog}\n\nClick [here](/#/settings) to update.\n\n`;
 
-        notifications.alert(notifications.ALERT_BOX_UPDATE, message, function (error) {
+        notifications.alert(notifications.ALERT_BOX_UPDATE, `Cloudron v${updateInfo.version} is available`, message, function (error) {
             if (error) return callback(error);
 
             state.box = updateInfo.version;

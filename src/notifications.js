@@ -36,15 +36,6 @@ let assert = require('assert'),
     users = require('./users.js'),
     util = require('util');
 
-// These titles are matched for upsert
-const ALERT_TITLES = {
-    backupConfig: 'Backup configuration is unsafe',
-    diskSpace: 'Out of Disk Space',
-    mailStatus: 'Email is not configured properly',
-    reboot: 'Reboot Required',
-    boxUpdate: 'New Cloudron Version Available'
-};
-
 function NotificationsError(reason, errorOrMessage) {
     assert.strictEqual(typeof reason, 'string');
     assert(errorOrMessage instanceof Error || typeof errorOrMessage === 'string' || typeof errorOrMessage === 'undefined');
@@ -335,13 +326,11 @@ function upsert(userId, eventId, title, message, callback) {
     });
 }
 
-function alert(id, message, callback) {
+function alert(id, title, message, callback) {
     assert.strictEqual(typeof id, 'string');
+    assert.strictEqual(typeof title, 'string');
     assert.strictEqual(typeof message, 'string');
     assert.strictEqual(typeof callback, 'function');
-
-    const title = ALERT_TITLES[id];
-    if (!title) return callback();
 
     debug(`alert: id=${id} title=${title} message=${message}`);
 
