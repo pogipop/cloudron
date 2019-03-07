@@ -140,7 +140,7 @@ function recreateJobs(tz) {
     if (gJobs.boxUpdateCheckerJob) gJobs.boxUpdateCheckerJob.stop();
     gJobs.boxUpdateCheckerJob = new CronJob({
         cronTime: '00 ' + randomMinute + ' * * * *', // once an hour
-        onTick: updateChecker.checkBoxUpdates,
+        onTick: () => updateChecker.checkBoxUpdates(NOOP_CALLBACK),
         start: true,
         timeZone: tz
     });
@@ -148,7 +148,7 @@ function recreateJobs(tz) {
     if (gJobs.appUpdateChecker) gJobs.appUpdateChecker.stop();
     gJobs.appUpdateChecker = new CronJob({
         cronTime: '00 ' + randomMinute + ' * * * *', // once an hour
-        onTick: updateChecker.checkAppUpdates,
+        onTick: () => updateChecker.checkAppUpdates(NOOP_CALLBACK),
         start: true,
         timeZone: tz
     });

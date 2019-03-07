@@ -13,6 +13,7 @@ exports = module.exports = {
 
 var apps = require('./apps.js'),
     appstore = require('./appstore.js'),
+    assert = require('assert'),
     async = require('async'),
     constants = require('./constants.js'),
     debug = require('debug')('box:updatechecker'),
@@ -23,8 +24,6 @@ var apps = require('./apps.js'),
 
 var gAppUpdateInfo = { }, // id -> update info { creationDate, manifest }
     gBoxUpdateInfo = null; // { version, changelog, upgrade, sourceTarballUrl }
-
-var NOOP_CALLBACK = function (error) { if (error) debug(error); };
 
 function loadState() {
     var state = safe.JSON.parse(safe.fs.readFileSync(paths.UPDATE_CHECKER_FILE, 'utf8'));
@@ -62,7 +61,7 @@ function resetAppUpdateInfo(appId) {
 }
 
 function checkAppUpdates(callback) {
-    callback = callback || NOOP_CALLBACK; // null when called from a timer task
+    assert.strictEqual(typeof callback, 'function');
 
     debug('Checking App Updates');
 
@@ -133,7 +132,7 @@ function checkAppUpdates(callback) {
 }
 
 function checkBoxUpdates(callback) {
-    callback = callback || NOOP_CALLBACK; // null when called from a timer task
+    assert.strictEqual(typeof callback, 'function');
 
     debug('Checking Box Updates');
 
