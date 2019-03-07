@@ -1550,3 +1550,16 @@
 * Add notification for cert renewal and backup failures
 * Fix issue where mail container was not updated with the latest certificate
 
+[3.5.4]
+* Make reboot required check server side
+* Update node to 10.15.1
+* Enable gzip compression for large objects
+* Update docker to 18.09
+* Add a way to lock specific settings
+* Add UI to copy app's backup id
+* Block platform updates based on app manifest constraints
+* Make crash logs viewable via the dashboard
+* Fix issue where uploading of filenames with brackets and plus was not working
+* Add notification for cert renewal and backup failures
+* Fix issue where mail container was not updated with the latest certificate
+
