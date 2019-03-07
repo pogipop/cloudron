@@ -154,7 +154,7 @@ function startAppTask(appId, callback) {
             debug('Apptask crashed with code %s and signal %s', code, signal);
             appdb.update(appId, { installationState: appdb.ISTATE_ERROR, installationProgress: 'Apptask crashed with code ' + code + ' and signal ' + signal }, NOOP_CALLBACK);
             eventlog.add(eventlog.ACTION_APP_TASK_CRASH, AUDIT_SOURCE, { appId: appId, crashLogFile: logFilePath }, NOOP_CALLBACK);
-        } else if (code === 50) {
+        } else if (code === 50) { // task exited cleanly but with an error
             eventlog.add(eventlog.ACTION_APP_TASK_CRASH, AUDIT_SOURCE, { appId: appId, crashLogFile: logFilePath }, NOOP_CALLBACK);
         }
         delete gActiveTasks[appId];
