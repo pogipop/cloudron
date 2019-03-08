@@ -26,22 +26,6 @@ systemctl enable apparmor
 systemctl restart apparmor
 
 usermod ${USER} -a -G docker
-# preserve the existing storage driver (user might be using overlay2)
-storage_driver=$(docker info | grep "Storage Driver" | sed 's/.*: //')
-[[ -n "${storage_driver}" ]] || storage_driver="overlay2" # if the above command fails
-
-temp_file=$(mktemp)
-# create systemd drop-in. some apps do not work with aufs
-echo -e "[Service]\nExecStart=\nExecStart=/usr/bin/dockerd -H fd:// --log-driver=journald --exec-opt native.cgroupdriver=cgroupfs --storage-driver=${storage_driver}" > "${temp_file}"
-
-systemctl enable docker
-# restart docker if options changed
-if [[ ! -f /etc/systemd/system/docker.service.d/cloudron.conf ]] || ! diff -q /etc/systemd/system/docker.service.d/cloudron.conf "${temp_file}" >/dev/null; then
-    mkdir -p /etc/systemd/system/docker.service.d
-    mv "${temp_file}" /etc/systemd/system/docker.service.d/cloudron.conf
-    systemctl daemon-reload
-    systemctl restart docker
-fi
 docker network create --subnet=172.18.0.0/16 cloudron || true
 
 mkdir -p "${BOX_DATA_DIR}"

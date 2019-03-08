@@ -66,7 +66,7 @@ apt-get install -y python   # Install python which is required for npm rebuild
 # https://docs.docker.com/engine/installation/linux/ubuntulinux/
 echo "==> Installing Docker"
 
-# create systemd drop-in file
+# create systemd drop-in file. if you channge options here, be sure to fixup installer.sh as well
 mkdir -p /etc/systemd/system/docker.service.d
 echo -e "[Service]\nExecStart=\nExecStart=/usr/bin/dockerd -H fd:// --log-driver=journald --exec-opt native.cgroupdriver=cgroupfs --storage-driver=overlay2" > /etc/systemd/system/docker.service.d/cloudron.conf
 
