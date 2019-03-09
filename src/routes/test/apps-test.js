@@ -254,8 +254,8 @@ function stopBox(done) {
 
     // db is not cleaned up here since it's too late to call it after server.stop. if called before server.stop taskmanager apptasks are unhappy :/
     async.series([
-        taskmanager.stopPendingTasks,
-        taskmanager.waitForPendingTasks,
+        taskmanager._stopPendingTasks,
+        taskmanager._waitForPendingTasks,
         appdb._clear,
         server.stop,
         ldap.stop,

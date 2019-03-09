@@ -8,8 +8,9 @@ exports = module.exports = {
     startAppTask: startAppTask,
     restartAppTask: restartAppTask,
 
-    stopPendingTasks: stopPendingTasks,
-    waitForPendingTasks: waitForPendingTasks
+    // exported for testing
+    _stopPendingTasks: stopPendingTasks,
+    _waitForPendingTasks: waitForPendingTasks
 };
 
 var appdb = require('./appdb.js'),
