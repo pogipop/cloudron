@@ -37,7 +37,6 @@ var assert = require('assert'),
     settings = require('./settings.js'),
     showdown = require('showdown'),
     smtpTransport = require('nodemailer-smtp-transport'),
-    users = require('./users.js'),
     util = require('util');
 
 var NOOP_CALLBACK = function (error) { if (error) debug(error); };
@@ -46,38 +45,20 @@ var MAIL_TEMPLATES_DIR = path.join(__dirname, 'mail_templates');
 
 var gMailQueue = [ ];
 
-function getAdminEmails(callback) {
-    users.getAllAdmins(function (error, admins) {
-        if (error) return callback(error);
-
-        if (admins.length === 0) return callback(new Error('No admins on this cloudron')); // box not activated yet
-
-        var adminEmails = [ ];
-        admins.forEach(function (admin) { adminEmails.push(admin.email); });
-
-        callback(null, adminEmails);
-    });
-}
-
 // This will collect the most common details required for notification emails
 function getMailConfig(callback) {
     assert.strictEqual(typeof callback, 'function');
 
-    getAdminEmails(function (error, adminEmails) {
-        if (error) return callback(error);
+    settings.getCloudronName(function (error, cloudronName) {
+        // this is not fatal
+        if (error) {
+            debug(error);
+            cloudronName = 'Cloudron';
+        }
 
-        settings.getCloudronName(function (error, cloudronName) {
-            // this is not fatal
-            if (error) {
-                debug(error);
-                cloudronName = 'Cloudron';
-            }
-
-            callback(null, {
-                adminEmails: adminEmails,
-                cloudronName: cloudronName,
-                notificationFrom: `"${cloudronName}" <no-reply@${config.adminDomain()}>`
-            });
+        callback(null, {
+            cloudronName: cloudronName,
+            notificationFrom: `"${cloudronName}" <no-reply@${config.adminDomain()}>`
         });
     });
 }
@@ -340,10 +321,12 @@ function appDied(mailTo, app) {
     });
 }
 
-function appUpdateAvailable(app, hasSubscription, info) {
+function appUpdateAvailable(mailTo, app, hasSubscription, info, callback) {
+    assert.strictEqual(typeof mailTo, 'string');
     assert.strictEqual(typeof app, 'object');
     assert.strictEqual(typeof hasSubscription, 'boolean');
     assert.strictEqual(typeof info, 'object');
+    assert.strictEqual(typeof callback, 'function');
 
     getMailConfig(function (error, mailConfig) {
         if (error) return debug('Error getting mail details:', error);
@@ -368,18 +351,22 @@ function appUpdateAvailable(app, hasSubscription, info) {
 
         var mailOptions = {
             from: mailConfig.notificationFrom,
-            to: mailConfig.adminEmails.join(', '),
+            to: mailTo,
             subject: util.format('App %s has a new update available', app.fqdn),
             text: render('app_update_available.ejs', templateDataText),
             html: render('app_update_available.ejs', templateDataHTML)
         };
 
         enqueue(mailOptions);
+
+        callback();
     });
 }
 
-function sendDigest(info) {
+function sendDigest(mailTo, info, callback) {
+    assert.strictEqual(typeof mailTo, 'string');
     assert.strictEqual(typeof info, 'object');
+    assert.strictEqual(typeof callback, 'function');
 
     getMailConfig(function (error, mailConfig) {
         if (error) return debug('Error getting mail details:', error);
@@ -399,13 +386,15 @@ function sendDigest(info) {
 
         var mailOptions = {
             from: mailConfig.notificationFrom,
-            to: mailConfig.adminEmails.join(', '),
+            to: mailTo,
             subject: util.format('[%s] Weekly activity digest', mailConfig.cloudronName),
             text: render('digest.ejs', templateDataText),
             html: render('digest.ejs', templateDataHTML)
         };
 
         enqueue(mailOptions);
+
+        callback();
     });
 }
 

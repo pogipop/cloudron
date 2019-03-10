@@ -1,25 +1,26 @@
 'use strict';
 
-var debug = require('debug')('box:digest'),
+var assert = require('assert'),
+    async = require('async'),
+    debug = require('debug')('box:digest'),
     eventlog = require('./eventlog.js'),
-    updatechecker = require('./updatechecker.js'),
     mailer = require('./mailer.js'),
-    settings = require('./settings.js');
-
-var NOOP_CALLBACK = function (error) { if (error) debug(error); };
+    settings = require('./settings.js'),
+    updatechecker = require('./updatechecker.js'),
+    users = require('./users.js');
 
 exports = module.exports = {
     send: send
 };
 
 function send(callback) {
-    callback = callback || NOOP_CALLBACK;
+    assert.strictEqual(typeof callback, 'function');
 
     settings.getEmailDigest(function (error, enabled) {
         if (error) return callback(error);
 
         if (!enabled) {
-            debug('Email digest is disabled');
+            debug('send: email digest is disabled');
             return callback();
         }
 
@@ -52,11 +53,13 @@ function send(callback) {
                 usersRemoved: usersRemoved // unused because we don't have username to work with
             };
 
-            // always send digest for backup failure notification
             debug('send: sending digest email', info);
-            mailer.sendDigest(info);
 
-            callback();
+            users.getAllAdmins(function (error, admins) {
+                if (error) return callback(error);
+
+                async.eachSeries(admins, (admin, done) => mailer.sendDigest(admin.email, info, done), callback);
+            });
         });
     });
 }
