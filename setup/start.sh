@@ -108,6 +108,8 @@ systemctl restart unbound
 # ensure cloudron-syslog runs
 systemctl restart cloudron-syslog
 
+json -f /etc/cloudron/cloudron.conf -I -e "delete this.adminLocation" # can be removed after 3.6
+
 echo "==> Configuring sudoers"
 rm -f /etc/sudoers.d/${USER}
 cp "${script_dir}/start/sudoers" /etc/sudoers.d/${USER}

@@ -8,6 +8,7 @@ var appdb = require('./appdb.js'),
     apps = require('./apps.js'),
     async = require('async'),
     config = require('./config.js'),
+    constants = require('./constants.js'),
     debug = require('debug')('box:dyndns'),
     domains = require('./domains.js'),
     eventlog = require('./eventlog.js'),
@@ -32,7 +33,7 @@ function sync(callback) {
 
         debug(`refreshDNS: updating ip from ${info.ip} to ${ip}`);
 
-        domains.upsertDnsRecords(config.adminLocation(), config.adminDomain(), 'A', [ ip ], function (error) {
+        domains.upsertDnsRecords(constants.ADMIN_LOCATION, config.adminDomain(), 'A', [ ip ], function (error) {
             if (error) return callback(error);
 
             debug('refreshDNS: updated admin location');

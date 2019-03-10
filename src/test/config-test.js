@@ -33,7 +33,6 @@ describe('config', function () {
     it('did set default values', function () {
         expect(config.adminDomain()).to.equal('');
         expect(config.adminFqdn()).to.equal('');
-        expect(config.adminLocation()).to.equal('my');
     });
 
     it('set does not save custom values in file', function (done) {
@@ -68,7 +67,6 @@ describe('config', function () {
         config.setAdminFqdn('my-test.example.com');
 
         expect(config.adminDomain()).to.equal('test.example.com');
-        expect(config.adminLocation()).to.equal('my');
         expect(config.adminOrigin()).to.equal('https://my-test.example.com');
     });
 

@@ -205,8 +205,8 @@ function verifyRelay(relay, callback) {
 
 function checkDkim(domain, callback) {
     var dkim = {
-        domain: config.dkimSelector() + '._domainkey.' + domain,
-        name: config.dkimSelector() + '._domainkey',
+        domain: `${constants.DKIM_SELECTOR}._domainkey.${domain}`,
+        name: `${constants.DKIM_SELECTOR}._domainkey`,
         type: 'TXT',
         expected: null,
         value: null,
@@ -782,7 +782,7 @@ function ensureDkimKeySync(domain) {
     if (!safe.child_process.execSync('openssl genrsa -out ' + dkimPrivateKeyFile + ' 1024')) return new MailError(MailError.INTERNAL_ERROR, safe.error);
     if (!safe.child_process.execSync('openssl rsa -in ' + dkimPrivateKeyFile + ' -out ' + dkimPublicKeyFile + ' -pubout -outform PEM')) return new MailError(MailError.INTERNAL_ERROR, safe.error);
 
-    if (!safe.fs.writeFileSync(dkimSelectorFile, config.dkimSelector(), 'utf8')) return new MailError(MailError.INTERNAL_ERROR, safe.error);
+    if (!safe.fs.writeFileSync(dkimSelectorFile, constants.DKIM_SELECTOR, 'utf8')) return new MailError(MailError.INTERNAL_ERROR, safe.error);
 
     return null;
 }
@@ -824,7 +824,7 @@ function upsertDnsRecords(domain, mailFqdn, callback) {
         if (!dkimKey) return callback(new MailError(MailError.INTERNAL_ERROR, new Error('Failed to read dkim public key')));
 
         // t=s limits the domainkey to this domain and not it's subdomains
-        var dkimRecord = { subdomain: config.dkimSelector() + '._domainkey', domain: domain, type: 'TXT', values: [ '"v=DKIM1; t=s; p=' + dkimKey + '"' ] };
+        var dkimRecord = { subdomain: `${constants.DKIM_SELECTOR}._domainkey`, domain: domain, type: 'TXT', values: [ '"v=DKIM1; t=s; p=' + dkimKey + '"' ] };
 
         var records = [ ];
         records.push(dkimRecord);

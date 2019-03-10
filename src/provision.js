@@ -122,7 +122,6 @@ function unprovision(callback) {
 
     config.setAdminDomain('');
     config.setAdminFqdn('');
-    config.setAdminLocation(constants.ADMIN_LOCATION);
 
     // TODO: also cancel any existing configureWebadmin task
     async.series([

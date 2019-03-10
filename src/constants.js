@@ -18,6 +18,7 @@ exports = module.exports = {
     ],
 
     ADMIN_LOCATION: 'my',
+    DKIM_SELECTOR: 'cloudron',
 
     NGINX_DEFAULT_CONFIG_FILE_NAME: 'default.conf',
 

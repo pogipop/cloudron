@@ -20,7 +20,6 @@ exports = module.exports = {
     setFqdn: setAdminDomain,
     setAdminDomain: setAdminDomain,
     setAdminFqdn: setAdminFqdn,
-    setAdminLocation: setAdminLocation,
     version: version,
     database: database,
     edition: edition,
@@ -29,12 +28,9 @@ exports = module.exports = {
     adminOrigin: adminOrigin,
     internalAdminOrigin: internalAdminOrigin,
     sysadminOrigin: sysadminOrigin, // caas routes
-    adminLocation: adminLocation,
     adminFqdn: adminFqdn,
-    mailLocation: mailLocation,
     mailFqdn: mailFqdn,
     hasIPv6: hasIPv6,
-    dkimSelector: dkimSelector,
 
     isManaged: isManaged,
     isDemo: isDemo,
@@ -74,7 +70,6 @@ function saveSync() {
         webServerOrigin: data.webServerOrigin,
         adminDomain: data.adminDomain,
         adminFqdn: data.adminFqdn,
-        adminLocation: data.adminLocation,
         provider: data.provider,
         isDemo: data.isDemo,
         edition: data.edition
@@ -95,7 +90,6 @@ function initConfig() {
     // setup defaults
     data.adminFqdn = '';
     data.adminDomain = '';
-    data.adminLocation = 'my';
     data.port = 3000;
     data.apiServerOrigin = null;
     data.webServerOrigin = null;
@@ -168,19 +162,6 @@ function adminDomain() {
     return get('adminDomain');
 }
 
-function mailLocation() {
-    return get('adminLocation'); // not a typo! should be same as admin location until we figure out certificates
-}
-
-function setAdminLocation(location) {
-    set('adminLocation', location);
-}
-
-
-function adminLocation() {
-    return get('adminLocation');
-}
-
 function setAdminFqdn(adminFqdn) {
     set('adminFqdn', adminFqdn);
 }
@@ -234,13 +215,6 @@ function hasIPv6() {
     const IPV6_PROC_FILE = '/proc/net/if_inet6';
     // on contabo, /proc/net/if_inet6 is an empty file. so just exists is not enough
     return fs.existsSync(IPV6_PROC_FILE) && fs.readFileSync(IPV6_PROC_FILE, 'utf8').trim().length !== 0;
-}
-
-// it has to change with the adminLocation so that multiple cloudrons
-// can send out emails at the same time.
-function dkimSelector() {
-    var loc = adminLocation();
-    return loc === 'my' ? 'cloudron' : `cloudron-${loc.replace(/\./g, '')}`;
 }
 
 function edition() {

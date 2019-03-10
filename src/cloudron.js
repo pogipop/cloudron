@@ -351,7 +351,6 @@ function setDashboardDomain(domain, auditSource, callback) {
             const fqdn = domains.fqdn(constants.ADMIN_LOCATION, domainObject);
 
             config.setAdminDomain(domain);
-            config.setAdminLocation(constants.ADMIN_LOCATION);
             config.setAdminFqdn(fqdn);
 
             clients.addDefaultClients(config.adminOrigin(), function (error) {
