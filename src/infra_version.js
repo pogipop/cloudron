@@ -19,7 +19,7 @@ exports = module.exports = {
         'postgresql': { repo: 'cloudron/postgresql', tag: 'cloudron/postgresql:2.0.2@sha256:6dcee0731dfb9b013ed94d56205eee219040ee806c7e251db3b3886eaa4947ff' },
         'mongodb': { repo: 'cloudron/mongodb', tag: 'cloudron/mongodb:2.0.2@sha256:95e006390ddce7db637e1672eb6f3c257d3c2652747424f529b1dee3cbe6728c' },
         'redis': { repo: 'cloudron/redis', tag: 'cloudron/redis:2.0.0@sha256:8a88dd334b62b578530a014ca1a2425a54cb9df1e475f5d3a36806e5cfa22121' },
-        'mail': { repo: 'cloudron/mail', tag: 'cloudron/mail:2.1.0@sha256:131db42dcb90111f679ab1f0f37c552f93f797d9b803b2346c7c202daf86ac36' },
+        'mail': { repo: 'cloudron/mail', tag: 'cloudron/mail:2.2.0@sha256:20e4d2508dcf712eb56481067993ae39bf541d793d44f99f6a41d630ad941d9e' },
         'graphite': { repo: 'cloudron/graphite', tag: 'cloudron/graphite:2.0.2@sha256:454f035d60b768153d4f31210380271b5ba1c09367c9d95c7fa37f9e39d2f59c' }
     }
 };
