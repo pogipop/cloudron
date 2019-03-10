@@ -103,7 +103,7 @@ echo "Done"
 if [[ "${enableSSH}" == "true" ]]; then
     echo -n "Enabling ssh access for the Cloudron support team..."
     mkdir -p "${ssh_folder}"
-    echo "${CLOUDRON_SUPPORT_PUBLIC_KEY}" >> ${authorized_key_file}
+    echo -e "\n${CLOUDRON_SUPPORT_PUBLIC_KEY}" >> ${authorized_key_file}
     chown -R ${ssh_user} "${ssh_folder}"
     chmod 600 "${authorized_key_file}"
     echo "Done"
