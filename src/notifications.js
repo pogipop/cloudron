@@ -275,8 +275,11 @@ function certificateRenewalError(eventId, vhost, errorMessage, callback) {
     assert.strictEqual(typeof errorMessage, 'string');
     assert.strictEqual(typeof callback, 'function');
 
+    // also send us a notification mail
+    if (config.provider() === 'caas') mailer.certificateRenewalError('support@cloudron.io', vhost, errorMessage);
+
     actionForAllAdmins([], function (admin, callback) {
-        mailer.certificateRenewalError(vhost, errorMessage);
+        mailer.certificateRenewalError(admin.email, vhost, errorMessage);
         add(admin.id, eventId, `Certificate renewal of ${vhost} failed`, `Failed to new certs of ${vhost}: ${errorMessage}. Renewal will be retried in 12 hours`, callback);
     }, callback);
 }
@@ -287,8 +290,11 @@ function backupFailed(eventId, taskId, errorMessage, callback) {
     assert.strictEqual(typeof errorMessage, 'string');
     assert.strictEqual(typeof callback, 'function');
 
+    // also send us a notification mail
+    if (config.provider() === 'caas') mailer.backupFailed('support@cloudron.io', errorMessage, `${config.adminOrigin()}/logs.html?taskId=${taskId}`);
+
     actionForAllAdmins([], function (admin, callback) {
-        mailer.backupFailed(errorMessage, `${config.adminOrigin()}/logs.html?taskId=${taskId}`);
+        mailer.backupFailed(admin.email, errorMessage, `${config.adminOrigin()}/logs.html?taskId=${taskId}`);
         add(admin.id, eventId, 'Failed to backup', `Backup failed: ${errorMessage}. Logs are available [here](/logs.html?taskId=${taskId}). Will be retried in 4 hours`, callback);
     }, callback);
 }

@@ -409,13 +409,15 @@ function sendDigest(info) {
     });
 }
 
-function backupFailed(errorMessage, logUrl) {
+function backupFailed(mailTo, errorMessage, logUrl) {
+    assert.strictEqual(typeof mailTo, 'string');
+
     getMailConfig(function (error, mailConfig) {
         if (error) return debug('Error getting mail details:', error);
 
         var mailOptions = {
             from: mailConfig.notificationFrom,
-            to: config.provider() === 'caas' ? 'support@cloudron.io' : mailConfig.adminEmails.join(', '),
+            to: mailTo,
             subject: util.format('[%s] Failed to backup', mailConfig.cloudronName),
             text: render('backup_failed.ejs', { cloudronName: mailConfig.cloudronName, message: errorMessage, logUrl: logUrl, format: 'text' })
         };
@@ -424,7 +426,8 @@ function backupFailed(errorMessage, logUrl) {
     });
 }
 
-function certificateRenewalError(domain, message) {
+function certificateRenewalError(mailTo, domain, message) {
+    assert.strictEqual(typeof mailTo, 'string');
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof message, 'string');
 
@@ -433,7 +436,7 @@ function certificateRenewalError(domain, message) {
 
         var mailOptions = {
             from: mailConfig.notificationFrom,
-            to: config.provider() === 'caas' ? 'support@cloudron.io' : mailConfig.adminEmails.join(', '),
+            to: mailTo,
             subject: util.format('[%s] Certificate renewal error', domain),
             text: render('certificate_renewal_error.ejs', { domain: domain, message: message, format: 'text' })
         };
