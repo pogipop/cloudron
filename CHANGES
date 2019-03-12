@@ -1565,4 +1565,5 @@
 
 [3.6.0]
 * (mail) Bump mail_max_userip_connections to 50
+* Fix issue where DKIM was not setup correctly during a restore
 
