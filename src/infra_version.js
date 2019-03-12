@@ -15,7 +15,7 @@ exports = module.exports = {
     // a major version bump in the db containers will trigger the restore logic that uses the db dumps
     // docker inspect --format='{{index .RepoDigests 0}}' $IMAGE to get the sha256
     'images': {
-        'mysql': { repo: 'cloudron/mysql', tag: 'cloudron/mysql:2.0.1@sha256:5a13360da4a2085c7d474bea6b1090c5eb24732d4f73459942af7612d4993d7f' },
+        'mysql': { repo: 'cloudron/mysql', tag: 'cloudron/mysql:2.0.2@sha256:a28320f313785816be60e3f865e09065504170a3d20ed37de675c719b32b01eb' },
         'postgresql': { repo: 'cloudron/postgresql', tag: 'cloudron/postgresql:2.0.2@sha256:6dcee0731dfb9b013ed94d56205eee219040ee806c7e251db3b3886eaa4947ff' },
         'mongodb': { repo: 'cloudron/mongodb', tag: 'cloudron/mongodb:2.0.2@sha256:95e006390ddce7db637e1672eb6f3c257d3c2652747424f529b1dee3cbe6728c' },
         'redis': { repo: 'cloudron/redis', tag: 'cloudron/redis:2.0.0@sha256:8a88dd334b62b578530a014ca1a2425a54cb9df1e475f5d3a36806e5cfa22121' },
