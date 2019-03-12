@@ -245,7 +245,7 @@ function verifyDnsConfig(domainObject, callback) {
 
         if (nameservers.map(function (n) { return n.toLowerCase(); }).indexOf('ns1.digitalocean.com') === -1) {
             debug('verifyDnsConfig: %j does not contains DO NS', nameservers);
-            return callback(new DomainsError(DomainsError.BAD_FIELD, 'Domain nameservers are not set to Digital Ocean'));
+            return callback(new DomainsError(DomainsError.BAD_FIELD, 'Domain nameservers are not set to DigitalOcean'));
         }
 
         const location = 'cloudrontestdns';
