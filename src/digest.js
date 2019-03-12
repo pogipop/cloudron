@@ -32,7 +32,7 @@ function send(callback) {
             if (error) return callback(error);
 
             var appUpdates = events.filter(function (e) { return e.action === eventlog.ACTION_APP_UPDATE; }).map(function (e) { return e.data; });
-            var boxUpdates = events.filter(function (e) { return e.action === eventlog.ACTION_UPDATE; }).map(function (e) { return e.data; });
+            var boxUpdates = events.filter(function (e) { return e.action === eventlog.ACTION_UPDATE && e.data.boxUpdateInfo; }).map(function (e) { return e.data.boxUpdateInfo; });
             var certRenewals = events.filter(function (e) { return e.action === eventlog.ACTION_CERTIFICATE_RENEWAL; }).map(function (e) { return e.data; });
             var usersAdded = events.filter(function (e) { return e.action === eventlog.ACTION_USER_ADD; }).map(function (e) { return e.data; });
             var usersRemoved = events.filter(function (e) { return e.action === eventlog.ACTION_USER_REMOVE; }).map(function (e) { return e.data; });

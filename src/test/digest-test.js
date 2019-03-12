@@ -82,7 +82,7 @@ describe('digest', function () {
                     users.update(USER_0.id, { fallbackEmail: USER_0.fallbackEmail }, AUDIT_SOURCE, callback);
                 });
             },
-            eventlog.add.bind(null, eventlog.ACTION_UPDATE, AUDIT_SOURCE, { boxUpdateInfo: { sourceTarballUrl: 'xx', version: '1.2.3', changelog: [ 'good stuff' ] } }),
+            eventlog.add.bind(null, eventlog.ACTION_UPDATE, AUDIT_SOURCE, { taskId: 12, boxUpdateInfo: { sourceTarballUrl: 'xx', version: '1.2.3', changelog: [ 'good stuff' ] } }),
             maildb.update.bind(null, DOMAIN_0.domain, { enabled: true }),
             mailer._clearMailQueue
         ], done);
