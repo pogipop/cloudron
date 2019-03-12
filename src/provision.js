@@ -202,7 +202,7 @@ function setup(dnsConfig, autoconf, auditSource, callback) {
                 callback(); // now that args are validated run the task in the background
 
                 async.series([
-                    setProgress.bind(null, 'setup', 'Registering server'),
+                    // setProgress.bind(null, 'setup', 'Registering server'),
                     autoRegisterCloudron.bind(null, domain),
                     domains.prepareDashboardDomain.bind(null, domain, auditSource, (progress) => setProgress('setup', progress.message, NOOP_CALLBACK)),
                     cloudron.setDashboardDomain.bind(null, domain, auditSource), // this sets up the config.fqdn()
