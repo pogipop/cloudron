@@ -1563,7 +1563,7 @@
 * Add notification for cert renewal and backup failures
 * Fix issue where mail container was not updated with the latest certificate
 
-[3.6.0]
+[3.5.5]
 * (mail) Bump mail_max_userip_connections to 50
 * Fix issue where DKIM was not setup correctly during a restore
 
