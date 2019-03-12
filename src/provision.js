@@ -321,7 +321,7 @@ function restore(backupConfig, backupId, version, autoconf, auditSource, callbac
                 // currently, our suggested restore flow is after a dnsSetup. The dnSetup creates DKIM keys and updates the DNS
                 // for this reason, we have to re-setup DNS after a restore so it has DKIm from the backup
                 // Once we have a 100% IP based restore, we can skip this
-                mail.setDnsRecords.bind(null, config.adminDomain(), config.mailFqdn()),
+                mail.setDnsRecords.bind(null, config.adminDomain()),
                 eventlog.add.bind(null, eventlog.ACTION_RESTORE, auditSource, { backupId }),
             ], function (error) {
                 gProvisionStatus.restore.active = false;
