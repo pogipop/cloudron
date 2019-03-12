@@ -26,18 +26,6 @@ readonly is_update=$(systemctl is-active box && echo "yes" || echo "no")
 
 echo "==> installer: updating docker"
 
-# verify that existing docker installation uses overlay2. devicemapper does not works with ubuntu 16/docker 18.09
-# if you change the drop-in file below be sure to change initializeUbuntuBaseImage script as well
-if ! grep -q "storage-driver=overlay2" /etc/systemd/system/docker.service.d/cloudron.conf; then
-    echo "==> installer: restarting docker with overlay2 backend"
-    echo -e "[Service]\nExecStart=\nExecStart=/usr/bin/dockerd -H fd:// --log-driver=journald --exec-opt native.cgroupdriver=cgroupfs --storage-driver=overlay2" > /etc/systemd/system/docker.service.d/cloudron.conf
-    systemctl daemon-reload
-    systemctl restart docker
-
-    # trigger a re-configure after the box starts up, so that all images are repulled with the new graphdriver
-    sed -e "s/48.12.1/48.12.0/" -i /home/yellowtent/platformdata/INFRA_VERSION
-fi
-
 if [[ $(docker version --format {{.Client.Version}}) != "18.09.2" ]]; then
     # there are 3 packages for docker - containerd, CLI and the daemon
     $curl -sL "https://download.docker.com/linux/ubuntu/dists/${ubuntu_codename}/pool/stable/amd64/containerd.io_1.2.2-3_amd64.deb" -o /tmp/containerd.deb
