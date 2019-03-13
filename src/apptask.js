@@ -295,7 +295,8 @@ function registerSubdomain(app, overwrite, callback) {
 
             // get the current record before updating it
             domains.getDnsRecords(app.location, app.domain, 'A', function (error, values) {
-                if (error) return retryCallback(error);
+                if (error && error.reason === DomainsError.EXTERNAL_ERROR) return retryCallback(error); // try again
+                if (error) return retryCallback(null, error); // give up for access and other errors
 
                 // refuse to update any existing DNS record for custom domains that we did not create
                 if (values.length !== 0 && !overwrite) return retryCallback(null, new Error('DNS Record already exists'));
