@@ -17,11 +17,6 @@ else
     printf "are automatically installed on this server every night.\n"
     printf "\n"
     printf "Read more at https://cloudron.io/documentation/security/#os-updates\n"
-
-    if grep -q "^PasswordAuthentication yes" /etc/ssh/sshd_config; then
-        printf "\nPlease disable password based SSH access to secure your server. Read more at\n"
-        printf "https://cloudron.io/documentation/security/#securing-ssh-access\n"
-    fi
 fi
 
 printf "\nFor help and more information, visit https://forum.cloudron.io\n\n"
