@@ -194,7 +194,7 @@ function verifyRelay(relay, callback) {
 
     // we used to verify cloudron-smtp with checkOutboundPort25 but that is unreliable given that we just
     // randomly select some smtp server
-    if (relay.provider === 'cloudron-smtp') return callback();
+    if (relay.provider === 'cloudron-smtp' || relay.provider === 'noop') return callback();
 
     checkSmtpRelay(relay, function (error) {
         if (error) return callback(new MailError(MailError.BAD_FIELD, error.message));
@@ -496,7 +496,7 @@ function getStatus(domain, callback) {
                 recordResult('relay', checkOutboundPort25),
                 recordResult('rbl', checkRblStatus.bind(null, domain))
             );
-        } else {
+        } else if (result.relay.provider !== 'no-op') {
             checks.push(recordResult('relay', checkSmtpRelay.bind(null, result.relay)));
         }
 
@@ -567,7 +567,7 @@ function createMailConfig(mailFqdn, callback) {
             const alertsTo = config.provider() === 'caas' ? [ 'support@cloudron.io' ] : [ ];
             alertsTo.concat(error ? [] : owner.email).join(','); // owner may not exist yet
 
-            const mailOutDomains = mailDomains.map(function (d) { return d.domain; }).join(',');
+            const mailOutDomains = mailDomains.filter(d => d.relay.provider !== 'noop').map(d => d.domain).join(',');
             const mailInDomains = mailDomains.filter(function (d) { return d.enabled; }).map(function (d) { return d.domain; }).join(',');
 
             if (!safe.fs.writeFileSync(path.join(paths.ADDON_CONFIG_DIR, 'mail/mail.ini'),
@@ -592,7 +592,7 @@ function createMailConfig(mailFqdn, callback) {
 
                 const relay = domain.relay;
 
-                const enableRelay = relay.provider !== 'cloudron-smtp',
+                const enableRelay = relay.provider !== 'cloudron-smtp' && relay.provider !== 'noop',
                     host = relay.host || '',
                     port = relay.port || 25,
                     username = relay.username || '',
