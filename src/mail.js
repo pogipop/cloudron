@@ -496,7 +496,7 @@ function getStatus(domain, callback) {
                 recordResult('relay', checkOutboundPort25),
                 recordResult('rbl', checkRblStatus.bind(null, domain))
             );
-        } else if (result.relay.provider !== 'no-op') {
+        } else if (result.relay.provider !== 'noop') {
             checks.push(recordResult('relay', checkSmtpRelay.bind(null, result.relay)));
         }
 
@@ -524,7 +524,7 @@ function checkConfiguration(callback) {
                     const record = result.dns[type];
                     if (!record.status) message.push(`${type.toUpperCase()} DNS record did not match. Expected: \`${record.expected}\`. Actual: \`${record.value}\``);
                 });
-                if (!result.relay.status) message.push(`Relay error: ${result.relay.value}`);
+                if (result.relay && result.relay.status === false) message.push(`Relay error: ${result.relay.value}`);
                 if (result.rbl && result.rbl.status === false) { // rbl field contents is optional
                     const servers = result.rbl.servers.map((bs) => `[${bs.name}](${bs.site})`); // in markdown
                     message.push(`This server's IP \`${result.rbl.ip}\` is blacklisted in the following servers - ${servers.join(', ')}`);
