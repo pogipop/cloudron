@@ -1,6 +1,7 @@
-# logrotate config for app and crash logs
+# logrotate config for app, crash, addon and task logs
 
-/home/yellowtent/platformdata/logs/*/*.log {
+# man 7 glob
+/home/yellowtent/platformdata/logs/[!t][!a][!s][!k][!s]/*.log {
     # only keep one rotated file, we currently do not send that over the api
     rotate 1
     size 10M
@@ -8,3 +9,10 @@
     nocompress
     copytruncate
 }
+
+/home/yellowtent/platformdata/logs/tasks/*.log {
+    monthly
+    rotate 0
+    missingok
+}
+

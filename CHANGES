@@ -1568,4 +1568,6 @@
 * Fix issue where DKIM was not setup correctly during a restore
 * (mysql) Remove any stale lock file on restart
 * Add a way to disable outbound mail for a domain
+* Cleanup task logs
+* Fix issue where dashboard location might conflict with existing app location
 

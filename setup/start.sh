@@ -126,6 +126,8 @@ if ! grep -q "^include ${PLATFORM_DATA_DIR}/logrotate.d" /etc/logrotate.conf; th
 fi
 cp "${script_dir}/start/logrotate/"* "${PLATFORM_DATA_DIR}/logrotate.d/"
 rm -f "${PLATFORM_DATA_DIR}/logrotate.d/box-logrotate" "${PLATFORM_DATA_DIR}/logrotate.d/app-logrotate" # remove pre 3.6 config files
+
+# logrotate files have to be owned by root, this is here to fixup existing installations where we were resetting the owner to yellowtent
 chown root:root "${PLATFORM_DATA_DIR}/logrotate.d/"
 
 echo "==> Adding motd message for admins"
@@ -186,9 +188,6 @@ chown "${USER}:${USER}" -R "${PLATFORM_DATA_DIR}/nginx" "${PLATFORM_DATA_DIR}/co
 chown "${USER}:${USER}" "${PLATFORM_DATA_DIR}/INFRA_VERSION" 2>/dev/null || true
 chown "${USER}:${USER}" "${PLATFORM_DATA_DIR}"
 chown "${USER}:${USER}" "${APPS_DATA_DIR}"
-
-# logrotate files have to be owned by root, this is here to fixup existing installations where we were resetting the owner to yellowtent
-chown root:root -R "${PLATFORM_DATA_DIR}/logrotate.d"
 
 # do not chown the boxdata/mail directory; dovecot gets upset
 chown "${USER}:${USER}" "${BOX_DATA_DIR}"
