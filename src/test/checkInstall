@@ -18,6 +18,7 @@ scripts=("${SOURCE_DIR}/src/scripts/clearvolume.sh" \
          "${SOURCE_DIR}/src/scripts/restart.sh" \
          "${SOURCE_DIR}/src/scripts/restartdocker.sh" \
          "${SOURCE_DIR}/src/scripts/restartunbound.sh" \
+         "${SOURCE_DIR}/src/scripts/restartproftpd.sh" \
          "${SOURCE_DIR}/src/scripts/update.sh" \
          "${SOURCE_DIR}/src/scripts/collectlogs.sh" \
          "${SOURCE_DIR}/src/scripts/configurecollectd.sh" \

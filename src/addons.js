@@ -211,6 +211,11 @@ const KNOWN_SERVICES = {
         status: statusUnbound,
         restart: restartUnbound,
         defaultMemoryLimit: 0
+    },
+    proftpd: {
+        status: statusProftpd,
+        restart: restartProftpd,
+        defaultMemoryLimit: 0
     }
 };
 
@@ -1712,6 +1717,22 @@ function restartUnbound(callback) {
     assert.strictEqual(typeof callback, 'function');
 
     shell.sudo('restartunbound', [ path.join(__dirname, 'scripts/restartunbound.sh') ], {}, NOOP_CALLBACK);
+
+    callback(null);
+}
+
+function statusProftpd(callback) {
+    assert.strictEqual(typeof callback, 'function');
+
+    shell.exec('statusProftpd', 'systemctl is-active proftpd', function (error) {
+        callback(null, { status: error ? exports.SERVICE_STATUS_STOPPED : exports.SERVICE_STATUS_ACTIVE });
+    });
+}
+
+function restartProftpd(callback) {
+    assert.strictEqual(typeof callback, 'function');
+
+    shell.sudo('restartProftpd', [ path.join(__dirname, 'scripts/restartproftpd.sh') ], {}, NOOP_CALLBACK);
 
     callback(null);
 }
