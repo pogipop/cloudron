@@ -19,6 +19,8 @@ var assert = require('assert'),
     mail = require('./mail.js'),
     MailError = mail.MailError,
     mailboxdb = require('./mailboxdb.js'),
+    path = require('path'),
+    paths = require('./paths.js'),
     safe = require('safetydance');
 
 var gServer = null;
@@ -481,6 +483,74 @@ function authenticateUserMailbox(req, res, next) {
     });
 }
 
+function authenticateProftpd(req, res, next) {
+    debug('proftpd addon auth: %s (from %s)', req.dn.toString(), req.connection.ldap.id);
+
+    if (!req.dn.rdns[0].attrs.cn) return next(new ldap.NoSuchObjectError(req.dn.toString()));
+
+    var email = req.dn.rdns[0].attrs.cn.value.toLowerCase();
+    var parts = email.split('@');
+    if (parts.length !== 2) return next(new ldap.NoSuchObjectError(req.dn.toString()));
+
+    var username = parts[0];
+    var appDomain = parts[1];
+
+    // TODO sync this with platform.js proftpd config generation
+    if (username === 'admin' && appDomain === 'cloudron') {
+        if (req.credentials !== 'password') return next(new ldap.InvalidCredentialsError(req.dn.toString()));
+        return res.end();
+    }
+
+    // actual user bind
+    users.verifyWithUsername(username, req.credentials, function (error) {
+        if (error) return next(new ldap.InvalidCredentialsError(req.dn.toString()));
+
+        debug('proftpd addon auth: success');
+
+        res.end();
+    });
+}
+
+function userSearchProftpd(req, res, next) {
+    debug('proftpd user search: dn %s, scope %s, filter %s (from %s)', req.dn.toString(), req.scope, req.filter.toString(), req.connection.ldap.id);
+
+    if (req.filter.attribute !== 'username' || !req.filter.value) return next(new ldap.NoSuchObjectError(req.dn.toString()));
+
+    var parts = req.filter.value.split('@');
+    if (parts.length !== 2) return next(new ldap.NoSuchObjectError(req.dn.toString()));
+
+    var username = parts[0];
+    var appDomain = parts[1];
+
+    apps.getAll(function (error, result) {
+        if (error) return next(new ldap.OperationsError(error.toString()));
+
+        var app = result.find(function (a) { return a.fqdn === appDomain; });
+        if (!app) return next(new ldap.NoSuchObjectError(req.dn.toString()));
+
+        users.getByUsername(username, function (error, result) {
+            if (error) return next(new ldap.OperationsError(error.toString()));
+
+            var dn = ldap.parseDN(`cn=${username}@${appDomain},ou=proftpd,dc=cloudron`);
+
+            var obj = {
+                dn: dn.toString(),
+                attributes: {
+                    homeDirectory: path.join(paths.APPS_DATA_DIR, app.id, 'data'),
+                    objectclass: ['user'],
+                    objectcategory: 'person',
+                    cn: result.id,
+                    uid: `${result.username}@${appDomain}`, // for bind after search
+                    uidNumber: 1000,    // unix uid for ftp access
+                    gidNumber: 1000     // unix gid for ftp access
+                }
+            };
+
+            finalSend([ obj ], req, res, next);
+        });
+    });
+}
+
 function authenticateMailAddon(req, res, next) {
     debug('mail addon auth: %s (from %s)', req.dn.toString(), req.connection.ldap.id);
 
@@ -554,6 +624,9 @@ function start(callback) {
 
     gServer.bind('ou=recvmail,dc=cloudron', authenticateMailAddon); // dovecot
     gServer.bind('ou=sendmail,dc=cloudron', authenticateMailAddon); // haraka
+
+    gServer.bind('ou=proftpd,dc=cloudron', authenticateProftpd);    // proftdp
+    gServer.search('ou=proftpd,dc=cloudron', userSearchProftpd);
 
     gServer.compare('cn=users,ou=groups,dc=cloudron', authenticateApp, groupUsersCompare);
     gServer.compare('cn=admins,ou=groups,dc=cloudron', authenticateApp, groupAdminsCompare);

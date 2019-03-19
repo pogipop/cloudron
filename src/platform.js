@@ -12,13 +12,12 @@ var addons = require('./addons.js'),
     apps = require('./apps.js'),
     assert = require('assert'),
     async = require('async'),
-    config = require('./config.js'),
     debug = require('debug')('box:platform'),
+    ejs = require('ejs'),
     fs = require('fs'),
     graphs = require('./graphs.js'),
     infra = require('./infra_version.js'),
     locker = require('./locker.js'),
-    mail = require('./mail.js'),
     paths = require('./paths.js'),
     reverseProxy = require('./reverseproxy.js'),
     safe = require('safetydance'),
@@ -28,6 +27,8 @@ var addons = require('./addons.js'),
     _ = require('underscore');
 
 var NOOP_CALLBACK = function (error) { if (error) debug(error); };
+
+var PROFTPD_CONFIG_EJS = fs.readFileSync(__dirname + '/proftpd.ejs', { encoding: 'utf8' });
 
 function start(callback) {
     assert.strictEqual(typeof callback, 'function');
@@ -62,6 +63,7 @@ function start(callback) {
         startApps.bind(null, existingInfra),
         graphs.startGraphite.bind(null, existingInfra),
         addons.startServices.bind(null, existingInfra),
+        configureProftpd.bind(null, existingInfra),
         fs.writeFile.bind(fs, paths.INFRA_VERSION_FILE, JSON.stringify(infra, null, 4))
     ], function (error) {
         if (error) return callback(error);
@@ -164,4 +166,20 @@ function startApps(existingInfra, callback) {
         debug('startApps: apps are already uptodate');
         callback();
     }
+}
+
+function configureProftpd(existingInfra, callback) {
+    var data = {
+        sftpPort: 222,
+        ldapUrl: 'ldap://172.18.0.1:3002',
+        ldapUsersBaseDn: 'ou=proftpd,dc=cloudron',
+        ldapBindUsername: 'cn=admin@cloudron,ou=proftpd,dc=cloudron',
+        ldapBindPassword: 'password'
+    };
+
+    console.log('------ configure proftpd', data, paths.PROFTPD_CONFIG_FILE);
+
+    if (!safe.fs.writeFileSync(paths.PROFTPD_CONFIG_FILE, ejs.render(PROFTPD_CONFIG_EJS, data))) return callback(safe.error);
+
+    callback(null);
 }

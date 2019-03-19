@@ -10,7 +10,7 @@ iptables -t filter -F CLOUDRON # empty any existing rules
 # allow ssh, http, https, ping, dns
 iptables -t filter -I CLOUDRON -m state --state RELATED,ESTABLISHED -j ACCEPT
 # caas has ssh on port 202
-iptables -A CLOUDRON -p tcp -m tcp -m multiport --dports 22,25,80,202,443,587,993,4190 -j ACCEPT
+iptables -A CLOUDRON -p tcp -m tcp -m multiport --dports 22,25,80,202,222,443,587,993,4190 -j ACCEPT
 
 iptables -t filter -A CLOUDRON -p icmp --icmp-type echo-request -j ACCEPT
 iptables -t filter -A CLOUDRON -p icmp --icmp-type echo-reply -j ACCEPT

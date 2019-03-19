@@ -16,6 +16,7 @@ exports = module.exports = {
     remove: removeUser,
     get: get,
     getByResetToken: getByResetToken,
+    getByUsername: getByUsername,
     getAllAdmins: getAllAdmins,
     resetPasswordByIdentifier: resetPasswordByIdentifier,
     setPassword: setPassword,
@@ -382,6 +383,18 @@ function getByResetToken(email, resetToken, callback) {
         if (error) return callback(new UsersError(UsersError.INTERNAL_ERROR, error));
 
         callback(null, result);
+    });
+}
+
+function getByUsername(username, callback) {
+    assert.strictEqual(typeof username, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    userdb.getByUsername(username.toLowerCase(), function (error, result) {
+        if (error && error.reason == DatabaseError.NOT_FOUND) return callback(new UsersError(UsersError.NOT_FOUND));
+        if (error) return callback(new UsersError(UsersError.INTERNAL_ERROR, error));
+
+        get(result.id, callback);
     });
 }
 

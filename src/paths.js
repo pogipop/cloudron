@@ -25,6 +25,7 @@ exports = module.exports = {
     UPDATE_DIR: path.join(config.baseDir(), 'platformdata/update'),
     SNAPSHOT_INFO_FILE: path.join(config.baseDir(), 'platformdata/backup/snapshot-info.json'),
     DYNDNS_INFO_FILE: path.join(config.baseDir(), 'platformdata/dyndns-info.json'),
+    PROFTPD_CONFIG_FILE: path.join(config.baseDir(), 'platformdata/proftpd.conf'),
 
     // this is not part of appdata because an icon may be set before install
     APP_ICONS_DIR: path.join(config.baseDir(), 'boxdata/appicons'),

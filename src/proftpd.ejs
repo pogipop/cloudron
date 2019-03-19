@@ -6,7 +6,7 @@ UseIPv6				off
 # If set on you can experience a longer connection delay in many cases.
 IdentLookups			off
 
-ServerName			"##SERVER_NAME"
+ServerName			Cloudron
 ServerType			standalone
 DeferWelcome			off
 
@@ -24,8 +24,8 @@ ListOptions                	"-l"
 
 DenyFilter			\*.*/
 
-# Use this to jail all users in their homes
-# DefaultRoot			~
+# Use this to jail all users in their homes, will be homeDirectory LDAP attribute
+DefaultRoot			~
 
 # Users require a valid shell listed in /etc/shells to login.
 # Use this directive to release that constrain.
@@ -59,26 +59,26 @@ SystemLog   /run/proftpd/proftpd.log
 WtmpLog off
 
 <IfModule mod_quotatab.c>
-QuotaEngine off
+    QuotaEngine off
 </IfModule>
 
 <IfModule mod_ratio.c>
-Ratios off
+    Ratios off
 </IfModule>
 
 # Delay engine reduces impact of the so-called Timing Attack described in
 # http://www.securityfocus.com/bid/11430/discuss
 # It is on by default.
 <IfModule mod_delay.c>
-DelayEngine on
+    DelayEngine on
 </IfModule>
 
 <IfModule mod_ctrls.c>
-ControlsEngine        off
-ControlsMaxClients    2
-ControlsLog           /var/log/proftpd/controls.log
-ControlsInterval      5
-ControlsSocket        /var/run/proftpd/proftpd.sock
+    ControlsEngine        off
+    ControlsMaxClients    2
+    ControlsLog           /var/log/proftpd/controls.log
+    ControlsInterval      5
+    ControlsSocket        /var/run/proftpd/proftpd.sock
 </IfModule>
 
 <IfModule mod_ctrls_admin.c>
@@ -87,43 +87,31 @@ ControlsSocket        /var/run/proftpd/proftpd.sock
 
 LoadModule mod_ldap.c
 <IfModule mod_ldap.c>
-# https://forums.proftpd.org/smf/index.php?topic=6368.0
-LDAPServer "##LDAP_URL/??sub"
-LDAPBindDN "##LDAP_BIND_DN" "##LDAP_BIND_PASSWORD"
-LDAPUsers "##LDAP_USERS_BASE_DN" (username=%u)
+    # https://forums.proftpd.org/smf/index.php?topic=6368.0
+    LDAPServer "<%= ldapUrl %>/??sub"
+    LDAPBindDN "<%= ldapBindUsername %>" "<%= ldapBindPassword %>"
+    LDAPUsers "<%= ldapUsersBaseDn %>" (username=%u)
 
-LDAPForceDefaultUID on
-LDAPDefaultUID ##LDAP_UID
-LDAPForceDefaultGID on
-LDAPDefaultGID ##LDAP_GID
-
-LDAPForceGeneratedHomedir on
-LDAPGenerateHomedir on
-LDAPGenerateHomedirPrefix /app/data
-LDAPGenerateHomedirPrefixNoUsername on
-
-#LDAPUseTLS off
-#LDAPLog /run/proftpd/ldap.log
+    LDAPLog /var/log/proftpd/ldap.log
 </IfModule>
 
 <IfModule mod_sftp.c>
-SFTPEngine on
-Port ##SFTP_PORT
-SFTPLog /run/proftpd/sftp.log
+    SFTPEngine on
+    Port <%= sftpPort %>
+    SFTPLog /var/log/proftpd/sftp.log
 
-# Configure both the RSA and DSA host keys, using the same host key
-# files that OpenSSH uses.
-SFTPHostKey /app/data/.sftpd/ssh_host_rsa_key
-SFTPHostKey /app/data/.sftpd/ssh_host_dsa_key
+    # Configure both the RSA and DSA host keys, using the same host key
+    # files that OpenSSH uses.
+    SFTPHostKey /etc/ssh/ssh_host_rsa_key
 
-SFTPAuthMethods password
+    SFTPAuthMethods password
 
-# Enable compression
-SFTPCompression delayed
+    # Enable compression
+    SFTPCompression delayed
 
-RequireValidShell off
+    RequireValidShell off
 </IfModule>
 
 <Directory />
-  HideNoAccess yes
+    HideNoAccess yes
 </Directory>

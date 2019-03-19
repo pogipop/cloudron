@@ -148,6 +148,11 @@ if ! grep -q "^Restart=" /etc/systemd/system/multi-user.target.wants/nginx.servi
 fi
 systemctl start nginx
 
+echo "==> Configuring proftpd"
+# link nginx config to system config
+unlink /etc/proftpd/proftpd.conf 2>/dev/null || rm -rf /etc/proftpd/proftpd.conf
+ln -s "${PLATFORM_DATA_DIR}/proftpd.conf" /etc/proftpd/proftpd.conf
+
 # restart mysql to make sure it has latest config
 if [[ ! -f /etc/mysql/mysql.cnf ]] || ! diff -q "${script_dir}/start/mysql.cnf" /etc/mysql/mysql.cnf >/dev/null; then
     # wait for all running mysql jobs
