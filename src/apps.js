@@ -10,6 +10,7 @@ exports = module.exports = {
     get: get,
     getByContainerId: getByContainerId,
     getByIpAddress: getByIpAddress,
+    getByFqdn: getByFqdn,
     getAll: getAll,
     getAllByUser: getAllByUser,
     install: install,
@@ -474,6 +475,20 @@ function getByIpAddress(ip, callback) {
         if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
 
         getByContainerId(containerId, callback);
+    });
+}
+
+function getByFqdn(fqdn, callback) {
+    assert.strictEqual(typeof fqdn, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    getAll(function (error, result) {
+        if (error) return callback(error);
+
+        var app = result.find(function (a) { return a.fqdn === fqdn; });
+        if (!app) return callback(new AppsError(AppsError.NOT_FOUND, 'No such app'));
+
+        callback(null, app);
     });
 }
 

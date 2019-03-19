@@ -519,33 +519,33 @@ function userSearchProftpd(req, res, next) {
     if (parts.length !== 2) return next(new ldap.NoSuchObjectError(req.dn.toString()));
 
     var username = parts[0];
-    var appDomain = parts[1];
+    var appFqdn = parts[1];
 
-    apps.getAll(function (error, result) {
+    apps.getByFqdn(appFqdn, function (error, app) {
         if (error) return next(new ldap.OperationsError(error.toString()));
 
-        var app = result.find(function (a) { return a.fqdn === appDomain; });
-        if (!app) return next(new ldap.NoSuchObjectError(req.dn.toString()));
-
-        users.getByUsername(username, function (error, result) {
+        users.getByUsername(username, function (error, user) {
             if (error) return next(new ldap.OperationsError(error.toString()));
 
-            var dn = ldap.parseDN(`cn=${username}@${appDomain},ou=proftpd,dc=cloudron`);
+            apps.hasAccessTo(app, user, function (error, hasAccess) {
+                if (error) return next(new ldap.OperationsError(error.toString()));
+                if (!hasAccess) return next(new ldap.InsufficientAccessRightsError('Not authorized'));
 
-            var obj = {
-                dn: dn.toString(),
-                attributes: {
-                    homeDirectory: path.join(paths.APPS_DATA_DIR, app.id, 'data'),
-                    objectclass: ['user'],
-                    objectcategory: 'person',
-                    cn: result.id,
-                    uid: `${result.username}@${appDomain}`, // for bind after search
-                    uidNumber: 1000,    // unix uid for ftp access
-                    gidNumber: 1000     // unix gid for ftp access
-                }
-            };
+                var obj = {
+                    dn: ldap.parseDN(`cn=${username}@${appFqdn},ou=proftpd,dc=cloudron`).toString(),
+                    attributes: {
+                        homeDirectory: path.join(paths.APPS_DATA_DIR, app.id, 'data'),
+                        objectclass: ['user'],
+                        objectcategory: 'person',
+                        cn: user.id,
+                        uid: `${username}@${appFqdn}`,  // for bind after search
+                        uidNumber: 1000,                // unix uid for ftp access
+                        gidNumber: 1000                 // unix gid for ftp access
+                    }
+                };
 
-            finalSend([ obj ], req, res, next);
+                finalSend([ obj ], req, res, next);
+            });
         });
     });
 }
