@@ -149,9 +149,8 @@ fi
 systemctl start nginx
 
 echo "==> Configuring proftpd"
-# link nginx config to system config
-unlink /etc/proftpd/proftpd.conf 2>/dev/null || rm -rf /etc/proftpd/proftpd.conf
-ln -s "${PLATFORM_DATA_DIR}/proftpd.conf" /etc/proftpd/proftpd.conf
+cp "${script_dir}/start/proftpd.conf" /etc/proftpd/proftpd.conf
+systemctl restart proftpd
 
 # restart mysql to make sure it has latest config
 if [[ ! -f /etc/mysql/mysql.cnf ]] || ! diff -q "${script_dir}/start/mysql.cnf" /etc/mysql/mysql.cnf >/dev/null; then
