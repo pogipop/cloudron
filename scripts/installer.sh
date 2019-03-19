@@ -56,6 +56,13 @@ if [[ $(docker version --format {{.Client.Version}}) != "18.09.2" ]]; then
     rm /tmp/containerd.deb /tmp/docker-ce-cli.deb /tmp/docker.deb
 fi
 
+echo "==> installer: updating proftpd"
+if [[ ! `proftpd --version | grep "1.3.5"` ]]; then
+    echo "Install proftpd"
+    apt install -y proftpd-basic=1.3.5e-1build1 proftpd-mod-ldap=1.3.5e-1build1
+    systemctl stop proftpd
+fi
+
 echo "==> installer: updating node"
 if [[ "$(node --version)" != "v10.15.1" ]]; then
     mkdir -p /usr/local/node-10.15.1
