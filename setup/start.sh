@@ -149,6 +149,7 @@ fi
 systemctl start nginx
 
 echo "==> Configuring proftpd"
+rm -f /etc/proftpd/proftpd.conf
 cp "${script_dir}/start/proftpd.conf" /etc/proftpd/proftpd.conf
 systemctl restart proftpd
 

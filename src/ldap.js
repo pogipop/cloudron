@@ -486,23 +486,18 @@ function authenticateUserMailbox(req, res, next) {
 function authenticateProftpd(req, res, next) {
     debug('proftpd addon auth: %s (from %s)', req.dn.toString(), req.connection.ldap.id);
 
+    var sourceIp = req.connection.ldap.id.split(':')[0];
+    if (sourceIp.split('.').length !== 4) return next(new ldap.InsufficientAccessRightsError('Missing source identifier'));
+    if (sourceIp !== '127.0.0.1') return next(new ldap.InsufficientAccessRightsError('Source not authorized'));
+
     if (!req.dn.rdns[0].attrs.cn) return next(new ldap.NoSuchObjectError(req.dn.toString()));
 
     var email = req.dn.rdns[0].attrs.cn.value.toLowerCase();
     var parts = email.split('@');
     if (parts.length !== 2) return next(new ldap.NoSuchObjectError(req.dn.toString()));
 
-    var username = parts[0];
-    var appDomain = parts[1];
-
-    // TODO sync this with platform.js proftpd config generation
-    if (username === 'admin' && appDomain === 'cloudron') {
-        if (req.credentials !== 'password') return next(new ldap.InvalidCredentialsError(req.dn.toString()));
-        return res.end();
-    }
-
     // actual user bind
-    users.verifyWithUsername(username, req.credentials, function (error) {
+    users.verifyWithUsername(parts[0], req.credentials, function (error) {
         if (error) return next(new ldap.InvalidCredentialsError(req.dn.toString()));
 
         debug('proftpd addon auth: success');
@@ -513,6 +508,10 @@ function authenticateProftpd(req, res, next) {
 
 function userSearchProftpd(req, res, next) {
     debug('proftpd user search: dn %s, scope %s, filter %s (from %s)', req.dn.toString(), req.scope, req.filter.toString(), req.connection.ldap.id);
+
+    var sourceIp = req.connection.ldap.id.split(':')[0];
+    if (sourceIp.split('.').length !== 4) return next(new ldap.InsufficientAccessRightsError('Missing source identifier'));
+    if (sourceIp !== '127.0.0.1') return next(new ldap.InsufficientAccessRightsError('Source not authorized'));
 
     if (req.filter.attribute !== 'username' || !req.filter.value) return next(new ldap.NoSuchObjectError(req.dn.toString()));
 
