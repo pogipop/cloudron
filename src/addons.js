@@ -216,10 +216,15 @@ const KNOWN_SERVICES = {
         status: statusProftpd,
         restart: restartProftpd,
         defaultMemoryLimit: 0
+    },
+    graphite: {
+        status: statusGraphite,
+        restart: restartContainer.bind(null, 'graphite'),
+        defaultMemoryLimit: 75 * 1024 * 1024
     }
 };
 
-function debugApp(app, args) {
+function debugApp(app /*, args */) {
     assert(typeof app === 'object');
 
     debug((app.fqdn || app.location) + ' ' + util.format.apply(util, Array.prototype.slice.call(arguments, 1)));
@@ -263,6 +268,30 @@ function restartContainer(serviceName, callback) {
 
             callback(null);
         });
+    });
+}
+
+function getServiceDetails(containerName, tokenEnvName, callback) {
+    assert.strictEqual(typeof containerName, 'string');
+    assert.strictEqual(typeof tokenEnvName, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    docker.inspect(containerName, function (error, result) {
+        if (error && error.reason === DockerError.NOT_FOUND) return callback(new AddonsError(AddonsError.NOT_ACTIVE, error));
+        if (error) return callback(new AddonsError(AddonsError.INTERNAL_ERROR, error));
+
+        const ip = safe.query(result, 'NetworkSettings.Networks.cloudron.IPAddress', null);
+        if (!ip) return callback(new AddonsError(AddonsError.NOT_ACTIVE, `Error getting ${containerName} container ip`));
+
+        // extract the cloudron token for auth
+        const env = safe.query(result, 'Config.Env', null);
+        if (!env) return callback(new AddonsError(AddonsError.INTERNAL_ERROR, `Error getting ${containerName} env`));
+        const tmp = env.find(function (e) { return e.indexOf(tokenEnvName) === 0; });
+        if (!tmp) return callback(new AddonsError(AddonsError.INTERNAL_ERROR, `Error getting ${containerName} cloudron token env var`));
+        const token = tmp.slice(tokenEnvName.length + 1); // +1 for the = sign
+        if (!token)  return callback(new AddonsError(AddonsError.INTERNAL_ERROR, `Error getting ${containerName} cloudron token`));
+
+        callback(null, { ip: ip, token: token, state: result.State });
     });
 }
 
@@ -443,30 +472,6 @@ function restartService(serviceName, callback) {
     KNOWN_SERVICES[serviceName].restart(callback);
 }
 
-function getServiceDetails(containerName, tokenEnvName, callback) {
-    assert.strictEqual(typeof containerName, 'string');
-    assert.strictEqual(typeof tokenEnvName, 'string');
-    assert.strictEqual(typeof callback, 'function');
-
-    docker.inspect(containerName, function (error, result) {
-        if (error && error.reason === DockerError.NOT_FOUND) return callback(new AddonsError(AddonsError.NOT_ACTIVE, error));
-        if (error) return callback(new AddonsError(AddonsError.INTERNAL_ERROR, error));
-
-        const ip = safe.query(result, 'NetworkSettings.Networks.cloudron.IPAddress', null);
-        if (!ip) return callback(new AddonsError(AddonsError.NOT_ACTIVE, `Error getting ${containerName} container ip`));
-
-        // extract the cloudron token for auth
-        const env = safe.query(result, 'Config.Env', null);
-        if (!env) return callback(new AddonsError(AddonsError.INTERNAL_ERROR, `Error getting ${containerName} env`));
-        const tmp = env.find(function (e) { return e.indexOf(tokenEnvName) === 0; });
-        if (!tmp) return callback(new AddonsError(AddonsError.INTERNAL_ERROR, `Error getting ${containerName} cloudron token env var`));
-        const token = tmp.slice(tokenEnvName.length + 1); // +1 for the = sign
-        if (!token)  return callback(new AddonsError(AddonsError.INTERNAL_ERROR, `Error getting ${containerName} cloudron token`));
-
-        callback(null, { ip: ip, token: token, state: result.State });
-    });
-}
-
 function waitForService(containerName, tokenEnvName, callback) {
     assert.strictEqual(typeof containerName, 'string');
     assert.strictEqual(typeof tokenEnvName, 'string');
@@ -622,7 +627,7 @@ function updateServiceConfig(platformConfig, callback) {
     debug('updateServiceConfig: %j', platformConfig);
 
     // TODO: this should possibly also rollback memory to default
-    async.eachSeries([ 'mysql', 'postgresql', 'mail', 'mongodb' ], function iterator(serviceName, iteratorCallback) {
+    async.eachSeries([ 'mysql', 'postgresql', 'mail', 'mongodb', 'graphite' ], function iterator(serviceName, iteratorCallback) {
         const containerConfig = platformConfig[serviceName];
         let memory, memorySwap;
         if (containerConfig && containerConfig.memory && containerConfig.memorySwap) {
@@ -1735,4 +1740,30 @@ function restartProftpd(callback) {
     shell.sudo('restartProftpd', [ path.join(__dirname, 'scripts/restartproftpd.sh') ], {}, NOOP_CALLBACK);
 
     callback(null);
+}
+
+function statusGraphite(callback) {
+    assert.strictEqual(typeof callback, 'function');
+
+    docker.inspect('graphite', function (error, container) {
+        if (error && error.reason === DockerError.NOT_FOUND) return callback(new AddonsError(AddonsError.NOT_ACTIVE, error));
+        if (error) return callback(new AddonsError(AddonsError.INTERNAL_ERROR, error));
+
+        request.get('http://127.0.0.1:8417', { timeout: 3000 }, function (error, response) {
+            if (error) return callback(null, { status: exports.SERVICE_STATUS_STARTING, error: `Error waiting for graphite: ${error.message}` });
+            if (response.statusCode !== 200) return callback(null, { status: exports.SERVICE_STATUS_STARTING, error: `Error waiting for graphite. Status code: ${response.statusCode} message: ${response.body.message}` });
+
+            docker.memoryUsage('graphite', function (error, result) {
+                if (error) return callback(new AddonsError(AddonsError.INTERNAL_ERROR, error));
+
+                var tmp = {
+                    status: container.State.Running ? exports.SERVICE_STATUS_ACTIVE : exports.SERVICE_STATUS_STOPPED,
+                    memoryUsed: result.memory_stats.usage,
+                    memoryPercent: parseInt(100 * result.memory_stats.usage / result.memory_stats.limit)
+                };
+
+                callback(null, tmp);
+            });
+        });
+    });
 }

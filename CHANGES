@@ -1570,4 +1570,5 @@
 * Add a way to disable outbound mail for a domain
 * Cleanup task logs
 * Fix issue where dashboard location might conflict with existing app location
+* Ad graphite to services
 
