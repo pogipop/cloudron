@@ -167,6 +167,7 @@ function prepareDashboardDomain(req, res, next) {
 
     cloudron.prepareDashboardDomain(req.body.domain, auditSource(req), function (error, taskId) {
         if (error && error.reason === CloudronError.BAD_FIELD) return next(new HttpError(404, error.message));
+        if (error && error.reason === CloudronError.BAD_STATE) return next(new HttpError(409, error.message));
         if (error) return next(new HttpError(500, error));
 
         next(new HttpSuccess(202, { taskId }));

@@ -25,7 +25,8 @@ exports = module.exports = {
     _checkDiskSpace: checkDiskSpace
 };
 
-var assert = require('assert'),
+var apps = require('./apps.js'),
+    assert = require('assert'),
     async = require('async'),
     backups = require('./backups.js'),
     clients = require('./clients.js'),
@@ -328,9 +329,23 @@ function prepareDashboardDomain(domain, auditSource, callback) {
 
     debug(`prepareDashboardDomain: ${domain}`);
 
-    let task = tasks.startTask(tasks.TASK_PREPARE_DASHBOARD_DOMAIN, [ domain, auditSource ]);
-    task.on('error', (error) => callback(new CloudronError(CloudronError.INTERNAL_ERROR, error)));
-    task.on('start', (taskId) => callback(null, taskId));
+    domains.get(domain, function (error, domainObject) {
+        if (error && error.reason === DomainsError.NOT_FOUND) return callback(new CloudronError(CloudronError.BAD_FIELD, 'No such domain'));
+        if (error) return callback(new CloudronError(CloudronError.INTERNAL_ERROR, error));
+
+        const fqdn = domains.fqdn(constants.ADMIN_LOCATION, domainObject);
+
+        apps.getAll(function (error, result) {
+            if (error) return callback(new CloudronError(CloudronError.INTERNAL_ERROR, error));
+
+            const conflict = result.filter(app => app.fqdn === fqdn);
+            if (conflict.length) return callback(new CloudronError(CloudronError.BAD_STATE, 'Dashboard location conflicts with an existing app'));
+
+            let task = tasks.startTask(tasks.TASK_PREPARE_DASHBOARD_DOMAIN, [ domain, auditSource ]);
+            task.on('error', (error) => callback(new CloudronError(CloudronError.INTERNAL_ERROR, error)));
+            task.on('start', (taskId) => callback(null, taskId));
+        });
+    });
 }
 
 // call this only pre activation since it won't start mail server
