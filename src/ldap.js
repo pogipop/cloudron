@@ -527,6 +527,12 @@ function userSearchProftpd(req, res, next) {
         // only allow apps which specify "ftp" support in the localstorage addon
         if (!app.manifest.addons.localstorage || !app.manifest.addons.localstorage.ftp) return next(new ldap.UnavailableError('Not supported'));
 
+        var uidNumber = app.manifest.addons.localstorage.ftp;
+        if (!Number.isInteger(uidNumber)) {
+            console.error('addon localstorage ftp uid must be an integer', app);
+            return next(new ldap.UnavailableError('Not supported'));
+        }
+
         users.getByUsername(username, function (error, user) {
             if (error) return next(new ldap.OperationsError(error.toString()));
 
@@ -542,8 +548,8 @@ function userSearchProftpd(req, res, next) {
                         objectcategory: 'person',
                         cn: user.id,
                         uid: `${username}@${appFqdn}`,  // for bind after search
-                        uidNumber: 1000,                // unix uid for ftp access
-                        gidNumber: 1000                 // unix gid for ftp access
+                        uidNumber: uidNumber,           // unix uid for ftp access
+                        gidNumber: uidNumber            // unix gid for ftp access
                     }
                 };
 
