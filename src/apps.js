@@ -321,10 +321,11 @@ function validateDataDir(dataDir) {
     return null;
 }
 
-function getDuplicateErrorDetails(location, portBindings, error) {
-    assert.strictEqual(typeof location, 'string');
-    assert.strictEqual(typeof portBindings, 'object');
+function getDuplicateErrorDetails(error, location, domainObject, portBindings) {
     assert.strictEqual(error.reason, DatabaseError.ALREADY_EXISTS);
+    assert.strictEqual(typeof location, 'string');
+    assert.strictEqual(typeof domainObject, 'object');
+    assert.strictEqual(typeof portBindings, 'object');
 
     var match = error.message.match(/ER_DUP_ENTRY: Duplicate entry '(.*)' for key '(.*)'/);
     if (!match) {
@@ -333,7 +334,10 @@ function getDuplicateErrorDetails(location, portBindings, error) {
     }
 
     // check if the location conflicts
-    if (match[1] === location) return new AppsError(AppsError.ALREADY_EXISTS, `${match[2]} '${match[1]}' is in use`);
+    if (match[2] === 'subdomain') {
+        const fqdn = domains.fqdn(location, domainObject);
+        return new AppsError(AppsError.ALREADY_EXISTS, `subdomain '${fqdn}' is in use`);
+    }
 
     // check if any of the port bindings conflict
     for (let portName in portBindings) {
@@ -661,7 +665,7 @@ function install(data, user, auditSource, callback) {
             };
 
             appdb.add(appId, appStoreId, manifest, location, domain, ownerId, translatePortBindings(portBindings, manifest), data, function (error) {
-                if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(getDuplicateErrorDetails(location, portBindings, error));
+                if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(getDuplicateErrorDetails(error, location, domainObject, portBindings));
                 if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new AppsError(AppsError.NOT_FOUND, error.message));
                 if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
 
@@ -819,7 +823,7 @@ function configure(appId, data, user, auditSource, callback) {
             debug('Will configure app with id:%s values:%j', appId, values);
 
             appdb.setInstallationCommand(appId, appdb.ISTATE_PENDING_CONFIGURE, values, function (error) {
-                if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(getDuplicateErrorDetails(location, portBindings, error));
+                if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(getDuplicateErrorDetails(error, location, domainObject, portBindings));
                 if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new AppsError(AppsError.BAD_STATE));
                 if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
 
@@ -1087,7 +1091,7 @@ function clone(appId, data, user, auditSource, callback) {
                 };
 
                 appdb.add(newAppId, app.appStoreId, manifest, location, domain, ownerId, translatePortBindings(portBindings, manifest), data, function (error) {
-                    if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(getDuplicateErrorDetails(location, portBindings, error));
+                    if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(getDuplicateErrorDetails(error, location, domainObject, portBindings));
                     if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
 
                     appstore.purchase(newAppId, { appstoreId: app.appStoreId, manifestId: manifest.id }, function (appstoreError) {
