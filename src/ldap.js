@@ -524,6 +524,9 @@ function userSearchProftpd(req, res, next) {
     apps.getByFqdn(appFqdn, function (error, app) {
         if (error) return next(new ldap.OperationsError(error.toString()));
 
+        // only allow apps which specify "ftp" support in the localstorage addon
+        if (!app.manifest.addons.localstorage || !app.manifest.addons.localstorage.ftp) return next(new ldap.UnavailableError('Not supported'));
+
         users.getByUsername(username, function (error, user) {
             if (error) return next(new ldap.OperationsError(error.toString()));
 
