@@ -143,6 +143,7 @@ function validatePortBindings(portBindings, manifest) {
         80, /* http */
         143, /* imap */
         202, /* caas ssh */
+        222, /* proftd */
         443, /* https */
         465, /* smtps */
         587, /* submission */
