@@ -1563,7 +1563,7 @@
 * Add notification for cert renewal and backup failures
 * Fix issue where mail container was not updated with the latest certificate
 
-[3.5.5]
+[4.0.0]
 * (mail) Bump mail_max_userip_connections to 50
 * Fix issue where DKIM was not setup correctly during a restore
 * (mysql) Remove any stale lock file on restart
@@ -1571,4 +1571,5 @@
 * Cleanup task logs
 * Fix issue where dashboard location might conflict with existing app location
 * Ad graphite to services
+* Add labels and tags to apps
 

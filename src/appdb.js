@@ -68,6 +68,7 @@ var assert = require('assert'),
 var APPS_FIELDS_PREFIXED = [ 'apps.id', 'apps.appStoreId', 'apps.installationState', 'apps.installationProgress', 'apps.runState',
     'apps.health', 'apps.containerId', 'apps.manifestJson', 'apps.httpPort', 'subdomains.subdomain AS location', 'subdomains.domain',
     'apps.accessRestrictionJson', 'apps.restoreConfigJson', 'apps.oldConfigJson', 'apps.updateConfigJson', 'apps.memoryLimit',
+    'apps.label', 'apps.tagsJson',
     'apps.xFrameOptions', 'apps.sso', 'apps.debugModeJson', 'apps.robotsTxt', 'apps.enableBackup',
     'apps.creationTime', 'apps.updateTime', 'apps.ownerId', 'apps.mailboxName', 'apps.enableAutomaticUpdate',
     'apps.dataDir', 'apps.ts', 'apps.healthTime' ].join(',');
@@ -94,6 +95,10 @@ function postProcess(result) {
     assert(result.restoreConfigJson === null || typeof result.restoreConfigJson === 'string');
     result.restoreConfig = safe.JSON.parse(result.restoreConfigJson);
     delete result.restoreConfigJson;
+
+    assert(result.tagsJson === null || typeof result.tagsJson === 'string');
+    result.tags = safe.JSON.parse(result.tagsJson) || [];
+    delete result.tagsJson;
 
     assert(result.hostPorts === null || typeof result.hostPorts === 'string');
     assert(result.environmentVariables === null || typeof result.environmentVariables === 'string');
@@ -272,24 +277,28 @@ function add(id, appStoreId, manifest, location, domain, ownerId, portBindings, 
 
     var manifestJson = JSON.stringify(manifest);
 
-    var accessRestriction = data.accessRestriction || null;
-    var accessRestrictionJson = JSON.stringify(accessRestriction);
-    var memoryLimit = data.memoryLimit || 0;
-    var xFrameOptions = data.xFrameOptions || '';
-    var installationState = data.installationState || exports.ISTATE_PENDING_INSTALL;
-    var restoreConfigJson = data.restoreConfig ? JSON.stringify(data.restoreConfig) : null; // used when cloning
-    var sso = 'sso' in data ? data.sso : null;
-    var robotsTxt = 'robotsTxt' in data ? data.robotsTxt : null;
-    var debugModeJson = data.debugMode ? JSON.stringify(data.debugMode) : null;
-    var env = data.env || {};
+    const accessRestriction = data.accessRestriction || null;
+    const accessRestrictionJson = JSON.stringify(accessRestriction);
+    const memoryLimit = data.memoryLimit || 0;
+    const xFrameOptions = data.xFrameOptions || '';
+    const installationState = data.installationState || exports.ISTATE_PENDING_INSTALL;
+    const restoreConfigJson = data.restoreConfig ? JSON.stringify(data.restoreConfig) : null; // used when cloning
+    const sso = 'sso' in data ? data.sso : null;
+    const robotsTxt = 'robotsTxt' in data ? data.robotsTxt : null;
+    const debugModeJson = data.debugMode ? JSON.stringify(data.debugMode) : null;
+    const env = data.env || {};
+    const label = data.label || null;
+    const tagsJson = data.tags ? JSON.stringify(data.tags) : null;
     const mailboxName = data.mailboxName;
 
     var queries = [];
 
     queries.push({
-        query: 'INSERT INTO apps (id, appStoreId, manifestJson, installationState, accessRestrictionJson, memoryLimit, xFrameOptions, restoreConfigJson, sso, debugModeJson, robotsTxt, ownerId, mailboxName) ' +
-            ' VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-        args: [ id, appStoreId, manifestJson, installationState, accessRestrictionJson, memoryLimit, xFrameOptions, restoreConfigJson, sso, debugModeJson, robotsTxt, ownerId, mailboxName ]
+        query: 'INSERT INTO apps (id, appStoreId, manifestJson, installationState, accessRestrictionJson, memoryLimit, xFrameOptions,'
+            + 'restoreConfigJson, sso, debugModeJson, robotsTxt, ownerId, mailboxName, label, tagsJson) ' +
+            + ' VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        args: [ id, appStoreId, manifestJson, installationState, accessRestrictionJson, memoryLimit, xFrameOptions, restoreConfigJson,
+            sso, debugModeJson, robotsTxt, ownerId, mailboxName, label, tagsJson ]
     });
 
     queries.push({

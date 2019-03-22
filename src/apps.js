@@ -283,9 +283,31 @@ function validateRobotsTxt(robotsTxt) {
 }
 
 function validateBackupFormat(format) {
+    assert.strictEqual(typeof format, 'string');
+
     if (format === 'tgz' || format == 'rsync') return null;
 
     return new AppsError(AppsError.BAD_FIELD, 'Invalid backup format');
+}
+
+function validateLabel(label) {
+    if (label === null) return null;
+
+    if (label.length > 128) return new AppsError(AppsError.BAD_FIELD, 'label must be less than 128');
+
+    return null;
+}
+
+function validateTags(tags) {
+    assert(Array.isArray(tags), 'tags must be an array');
+
+    if (tags.length > 64) return new AppsError(AppsError.BAD_FIELD, 'Can only set up to 64 tags');
+
+    for (const tag of tags) {
+        if (tag.length > 128) return new AppsError(AppsError.BAD_FIELD, 'tag must be less than 128');
+    }
+
+    return null;
 }
 
 function validateEnv(env) {
@@ -575,7 +597,9 @@ function install(data, user, auditSource, callback) {
         ownerId = data.ownerId,
         alternateDomains = data.alternateDomains || [],
         env = data.env || {},
-        mailboxName = data.mailboxName || '';
+        mailboxName = data.mailboxName || '',
+        label = data.label || null,
+        tags = data.tags || null;
 
     assert(data.appStoreId || data.manifest); // atleast one of them is required
 
@@ -607,6 +631,12 @@ function install(data, user, auditSource, callback) {
         if (error) return callback(error);
 
         error = validateBackupFormat(backupFormat);
+        if (error) return callback(error);
+
+        error = validateLabel(label);
+        if (error) return callback(error);
+
+        error = validateTags(tags);
         if (error) return callback(error);
 
         if ('sso' in data && !('optionalSso' in manifest)) return callback(new AppsError(AppsError.BAD_FIELD, 'sso can only be specified for apps with optionalSso'));
@@ -794,6 +824,18 @@ function configure(appId, data, user, auditSource, callback) {
             error = validateDataDir(data.dataDir);
             if (error) return callback(error);
             values.dataDir = data.dataDir;
+        }
+
+        if ('label' in data) {
+            error = validateLabel(data.label);
+            if (error) return callback(error);
+            values.label = data.label;
+        }
+
+        if ('tags' in data) {
+            error = validateTags(data.tags);
+            if (error) return callback(error);
+            values.tags = data.tags;
         }
 
         domains.get(domain, function (error, domainObject) {
