@@ -270,7 +270,6 @@ function add(id, appStoreId, manifest, location, domain, ownerId, portBindings, 
     assert.strictEqual(typeof ownerId, 'string');
     assert.strictEqual(typeof portBindings, 'object');
     assert(data && typeof data === 'object');
-    assert(typeof data.mailboxName === 'string' && data.mailboxName); // non-empty string
     assert.strictEqual(typeof callback, 'function');
 
     portBindings = portBindings || { };
@@ -289,13 +288,13 @@ function add(id, appStoreId, manifest, location, domain, ownerId, portBindings, 
     const env = data.env || {};
     const label = data.label || null;
     const tagsJson = data.tags ? JSON.stringify(data.tags) : null;
-    const mailboxName = data.mailboxName;
+    const mailboxName = data.mailboxName || null;
 
     var queries = [];
 
     queries.push({
         query: 'INSERT INTO apps (id, appStoreId, manifestJson, installationState, accessRestrictionJson, memoryLimit, xFrameOptions,'
-            + 'restoreConfigJson, sso, debugModeJson, robotsTxt, ownerId, mailboxName, label, tagsJson) ' +
+            + 'restoreConfigJson, sso, debugModeJson, robotsTxt, ownerId, mailboxName, label, tagsJson) '
             + ' VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
         args: [ id, appStoreId, manifestJson, installationState, accessRestrictionJson, memoryLimit, xFrameOptions, restoreConfigJson,
             sso, debugModeJson, robotsTxt, ownerId, mailboxName, label, tagsJson ]

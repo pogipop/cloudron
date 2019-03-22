@@ -145,7 +145,7 @@ function clear(callback) {
     database.query('DELETE FROM eventlog', function (error) {
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
 
-        callback(error);
+        callback(null);
     });
 }
 
@@ -153,19 +153,19 @@ function delByCreationTime(creationTime, callback) {
     assert(util.isDate(creationTime));
     assert.strictEqual(typeof callback, 'function');
 
-    // since notifications reference eventlog items, we have to clean them up as well
-    database.query('SELECT * FROM eventlog WHERE creationTime < ?', [ creationTime ], function (error, result) {
+    // remove notifications that reference the events as well
+    database.query('SELECT * FROM eventlog WHERE creationTime <= ?', [ creationTime ], function (error, result) {
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
 
-        async.eachSeries(result, function (item, callback) {
-            database.query('DELETE FROM notifications WHERE eventId=?', [ item.id ], function (error) {
-                if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
+        async.eachSeries(result, function (item, iteratorCallback) {
+            async.series([
+                database.query.bind(null, 'DELETE FROM notifications WHERE eventId=?', [ item.id ]),
+                database.query.bind(null, 'DELETE FROM eventlog WHERE id=?', [ item.id ])
+            ], iteratorCallback);
+        }, function (error) {
+            if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
 
-                database.query('DELETE FROM eventlog WHERE id=?', [ item.id ], function (error) {
-                    if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
-                    callback();
-                });
-            });
-        }, callback);
+            callback(null);
+        });
     });
 }
