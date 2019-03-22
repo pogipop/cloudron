@@ -13,15 +13,15 @@ var assert = require('assert'),
     DatabaseError = require('./databaseerror.js'),
     debug = require('debug')('box:ldap'),
     eventlog = require('./eventlog.js'),
-    users = require('./users.js'),
-    UsersError = users.UsersError,
     ldap = require('ldapjs'),
     mail = require('./mail.js'),
     MailError = mail.MailError,
     mailboxdb = require('./mailboxdb.js'),
     path = require('path'),
     paths = require('./paths.js'),
-    safe = require('safetydance');
+    safe = require('safetydance'),
+    users = require('./users.js'),
+    UsersError = users.UsersError;
 
 var gServer = null;
 
