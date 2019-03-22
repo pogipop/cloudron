@@ -97,9 +97,9 @@ function finalSend(results, req, res, next) {
 
         var resultCookie;
         if (last < max) {
-            resultCookie = new Buffer(last.toString());
+            resultCookie = Buffer.from(last.toString());
         } else {
-            resultCookie = new Buffer('');
+            resultCookie = Buffer.from('');
         }
 
         res.controls.push(new ldap.PagedResultsControl({

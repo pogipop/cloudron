@@ -628,7 +628,7 @@ function install(data, user, auditSource, callback) {
         if (icon) {
             if (!validator.isBase64(icon)) return callback(new AppsError(AppsError.BAD_FIELD, 'icon is not base64'));
 
-            if (!safe.fs.writeFileSync(path.join(paths.APP_ICONS_DIR, appId + '.png'), new Buffer(icon, 'base64'))) {
+            if (!safe.fs.writeFileSync(path.join(paths.APP_ICONS_DIR, appId + '.png'), Buffer.from(icon, 'base64'))) {
                 return callback(new AppsError(AppsError.INTERNAL_ERROR, 'Error saving icon:' + safe.error.message));
             }
         }
@@ -886,7 +886,7 @@ function update(appId, data, auditSource, callback) {
                 if (data.icon) {
                     if (!validator.isBase64(data.icon)) return callback(new AppsError(AppsError.BAD_FIELD, 'icon is not base64'));
 
-                    if (!safe.fs.writeFileSync(path.join(paths.APP_ICONS_DIR, appId + '.png'), new Buffer(data.icon, 'base64'))) {
+                    if (!safe.fs.writeFileSync(path.join(paths.APP_ICONS_DIR, appId + '.png'), Buffer.from(data.icon, 'base64'))) {
                         return callback(new AppsError(AppsError.INTERNAL_ERROR, 'Error saving icon:' + safe.error.message));
                     }
                 } else {

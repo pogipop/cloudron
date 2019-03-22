@@ -192,7 +192,7 @@ function create(username, password, email, displayName, options, auditSource, ca
                 username: username,
                 email: email,
                 fallbackEmail: email,   // for new users the fallbackEmail is also the default email
-                password: new Buffer(derivedKey, 'binary').toString('hex'),
+                password: Buffer.from(derivedKey, 'binary').toString('hex'),
                 salt: salt.toString('hex'),
                 createdAt: now,
                 modifiedAt: now,
@@ -249,11 +249,11 @@ function verify(userId, password, callback) {
             return callback(null, user);
         }
 
-        var saltBinary = new Buffer(user.salt, 'hex');
+        var saltBinary = Buffer.from(user.salt, 'hex');
         crypto.pbkdf2(password, saltBinary, CRYPTO_ITERATIONS, CRYPTO_KEY_LENGTH, CRYPTO_DIGEST, function (error, derivedKey) {
             if (error) return callback(new UsersError(UsersError.INTERNAL_ERROR, error));
 
-            var derivedKeyHex = new Buffer(derivedKey, 'binary').toString('hex');
+            var derivedKeyHex = Buffer.from(derivedKey, 'binary').toString('hex');
             if (derivedKeyHex !== user.password) return callback(new UsersError(UsersError.WRONG_PASSWORD));
 
             callback(null, user);
@@ -513,12 +513,12 @@ function setPassword(userId, newPassword, callback) {
 
         if (config.isDemo() && user.username === constants.DEMO_USERNAME) return callback(new UsersError(UsersError.BAD_FIELD, 'Not allowed in demo mode'));
 
-        var saltBuffer = new Buffer(user.salt, 'hex');
+        var saltBuffer = Buffer.from(user.salt, 'hex');
         crypto.pbkdf2(newPassword, saltBuffer, CRYPTO_ITERATIONS, CRYPTO_KEY_LENGTH, CRYPTO_DIGEST, function (error, derivedKey) {
             if (error) return callback(new UsersError(UsersError.INTERNAL_ERROR, error));
 
             user.modifiedAt = (new Date()).toISOString();
-            user.password = new Buffer(derivedKey, 'binary').toString('hex');
+            user.password = Buffer.from(derivedKey, 'binary').toString('hex');
             user.resetToken = '';
 
             userdb.update(userId, user, function (error) {

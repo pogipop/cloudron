@@ -80,7 +80,7 @@ function urlBase64Encode(string) {
 }
 
 function b64(str) {
-    var buf = util.isBuffer(str) ? str : new Buffer(str);
+    var buf = util.isBuffer(str) ? str : Buffer.from(str);
     return urlBase64Encode(buf.toString('base64'));
 }
 
