@@ -81,33 +81,41 @@ describe('Settings API', function () {
         });
 
         it('can set app_autoupdate_pattern', function (done) {
-            var eventPattern = null;
-            settings.on(settings.APP_AUTOUPDATE_PATTERN_KEY, function (pattern) {
-                eventPattern = pattern;
-            });
-
             superagent.post(SERVER_URL + '/api/v1/settings/app_autoupdate_pattern')
                 .query({ access_token: token })
                 .send({ pattern: '00 30 11 * * 1-5' })
                 .end(function (err, res) {
                     expect(res.statusCode).to.equal(200);
-                    expect(eventPattern === '00 30 11 * * 1-5').to.be.ok();
+                    done();
+                });
+        });
+
+        it('can get app auto update pattern', function (done) {
+            superagent.get(SERVER_URL + '/api/v1/settings/app_autoupdate_pattern')
+                .query({ access_token: token })
+                .end(function (err, res) {
+                    expect(res.statusCode).to.equal(200);
+                    expect(res.body.pattern).to.be('00 30 11 * * 1-5');
                     done();
                 });
         });
 
         it('can set app_autoupdate_pattern to never', function (done) {
-            var eventPattern = null;
-            settings.on(settings.APP_AUTOUPDATE_PATTERN_KEY, function (pattern) {
-                eventPattern = pattern;
-            });
-
             superagent.post(SERVER_URL + '/api/v1/settings/app_autoupdate_pattern')
                 .query({ access_token: token })
                 .send({ pattern: constants.AUTOUPDATE_PATTERN_NEVER })
                 .end(function (err, res) {
                     expect(res.statusCode).to.equal(200);
-                    expect(eventPattern).to.eql(constants.AUTOUPDATE_PATTERN_NEVER);
+                    done();
+                });
+        });
+
+        it('can get app auto update pattern', function (done) {
+            superagent.get(SERVER_URL + '/api/v1/settings/app_autoupdate_pattern')
+                .query({ access_token: token })
+                .end(function (err, res) {
+                    expect(res.statusCode).to.equal(200);
+                    expect(res.body.pattern).to.be(constants.AUTOUPDATE_PATTERN_NEVER);
                     done();
                 });
         });
@@ -144,33 +152,41 @@ describe('Settings API', function () {
         });
 
         it('can set box_autoupdate_pattern', function (done) {
-            var eventPattern = null;
-            settings.on(settings.BOX_AUTOUPDATE_PATTERN_KEY, function (pattern) {
-                eventPattern = pattern;
-            });
-
             superagent.post(SERVER_URL + '/api/v1/settings/box_autoupdate_pattern')
                 .query({ access_token: token })
                 .send({ pattern: '00 30 11 * * 1-5' })
                 .end(function (err, res) {
                     expect(res.statusCode).to.equal(200);
-                    expect(eventPattern === '00 30 11 * * 1-5').to.be.ok();
+                    done();
+                });
+        });
+
+        it('can get app auto update pattern', function (done) {
+            superagent.get(SERVER_URL + '/api/v1/settings/box_autoupdate_pattern')
+                .query({ access_token: token })
+                .end(function (err, res) {
+                    expect(res.statusCode).to.equal(200);
+                    expect(res.body.pattern).to.be('00 30 11 * * 1-5');
                     done();
                 });
         });
 
         it('can set box_autoupdate_pattern to never', function (done) {
-            var eventPattern = null;
-            settings.on(settings.BOX_AUTOUPDATE_PATTERN_KEY, function (pattern) {
-                eventPattern = pattern;
-            });
-
             superagent.post(SERVER_URL + '/api/v1/settings/box_autoupdate_pattern')
                 .query({ access_token: token })
                 .send({ pattern: constants.AUTOUPDATE_PATTERN_NEVER })
                 .end(function (err, res) {
                     expect(res.statusCode).to.equal(200);
-                    expect(eventPattern).to.eql(constants.AUTOUPDATE_PATTERN_NEVER);
+                    done();
+                });
+        });
+
+        it('can get app auto update pattern', function (done) {
+            superagent.get(SERVER_URL + '/api/v1/settings/box_autoupdate_pattern')
+                .query({ access_token: token })
+                .end(function (err, res) {
+                    expect(res.statusCode).to.equal(200);
+                    expect(res.body.pattern).to.be(constants.AUTOUPDATE_PATTERN_NEVER);
                     done();
                 });
         });
