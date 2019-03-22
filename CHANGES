@@ -1572,4 +1572,5 @@
 * Fix issue where dashboard location might conflict with existing app location
 * Ad graphite to services
 * Add labels and tags to apps
+* Ensure MySQL is storing data/time in UTC
 

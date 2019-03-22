@@ -114,6 +114,7 @@ fi
 echo "==> Configuring host"
 sed -e 's/^#NTP=/NTP=0.ubuntu.pool.ntp.org 1.ubuntu.pool.ntp.org 2.ubuntu.pool.ntp.org 3.ubuntu.pool.ntp.org/' -i /etc/systemd/timesyncd.conf
 timedatectl set-ntp 1
+# mysql follows the system timezone
 timedatectl set-timezone UTC
 
 # Disable bind for good measure (on online.net, kimsufi servers these are pre-installed and conflicts with unbound)

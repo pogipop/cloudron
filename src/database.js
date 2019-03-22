@@ -36,7 +36,8 @@ function initialize(callback) {
         port: config.database().port,
         database: config.database().name,
         multipleStatements: false,
-        ssl: false
+        ssl: false,
+        timezone: 'Z' // mysql follows the SYSTEM timezone. on Cloudron, this is UTC
     });
 
     gConnectionPool.on('connection', function (connection) {
