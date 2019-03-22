@@ -272,11 +272,7 @@ function mailboxSearch(req, res, next) {
                     objectcategory: 'mailbox',
                     cn: `${mailbox.name}@${mailbox.domain}`,
                     uid: `${mailbox.name}@${mailbox.domain}`,
-                    mail: `${mailbox.name}@${mailbox.domain}`,
-                    displayname: 'Max Mustermann',
-                    givenName: 'Max',
-                    username: 'mmustermann',
-                    samaccountname: 'mmustermann'
+                    mail: `${mailbox.name}@${mailbox.domain}`
                 }
             };
 
