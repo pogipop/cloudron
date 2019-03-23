@@ -1375,7 +1375,7 @@ describe('dns provider', function () {
         });
     });
 
-    describe('gcdns', function () {
+    xdescribe('gcdns', function () {
         var HOSTED_ZONES = [];
         var zoneQueue = [];
         var _OriginalGCDNS;
