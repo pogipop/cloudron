@@ -20,7 +20,7 @@ function verifyOwnership(req, res, next) {
         if (error && error.reason === NotificationsError.NOT_FOUND) return next(new HttpError(404, 'No such notification'));
         if (error) return next(new HttpError(500, error));
 
-        if (result.userId !== req.user.id) return next(new HttpError(401, 'Unauthorized'));
+        if (result.userId !== req.user.id) return next(new HttpError(403, 'User is not owner'));
 
         req.notification = result;
 

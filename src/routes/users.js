@@ -136,7 +136,7 @@ function verifyPassword(req, res, next) {
     if (typeof req.body.password !== 'string') return next(new HttpError(400, 'API call requires user password'));
 
     users.verifyWithUsername(req.user.username, req.body.password, function (error) {
-        if (error && error.reason === UsersError.WRONG_PASSWORD) return next(new HttpError(403, 'Password incorrect')); // not 401 intentionally
+        if (error && error.reason === UsersError.WRONG_PASSWORD) return next(new HttpError(403, 'Password incorrect')); // not 401 intentionally since the UI redirects for 401
         if (error && error.reason === UsersError.NOT_FOUND) return next(new HttpError(404, 'No such user'));
         if (error) return next(new HttpError(500, error));
 

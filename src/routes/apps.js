@@ -60,7 +60,7 @@ function verifyOwnership(req, res, next) {
         if (error && error.reason === AppsError.NOT_FOUND) return next(new HttpError(404, 'No such app'));
         if (error) return next(new HttpError(500, error));
 
-        if (app.ownerId !== req.user.id) return next(new HttpError(401, 'Unauthorized'));
+        if (app.ownerId !== req.user.id) return next(new HttpError(403, 'User is not owner'));
 
         next();
     });
