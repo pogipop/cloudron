@@ -56,10 +56,10 @@ apt-get -y install \
 cp /usr/share/unattended-upgrades/20auto-upgrades /etc/apt/apt.conf.d/20auto-upgrades
 
 echo "==> Installing node.js"
-mkdir -p /usr/local/node-8.15.1
-curl -sL https://nodejs.org/dist/v8.15.1/node-v8.15.1-linux-x64.tar.gz | tar zxvf - --strip-components=1 -C /usr/local/node-8.15.1
-ln -sf /usr/local/node-8.15.1/bin/node /usr/bin/node
-ln -sf /usr/local/node-8.15.1/bin/npm /usr/bin/npm
+mkdir -p /usr/local/node-10.15.1
+curl -sL https://nodejs.org/dist/v10.15.1/node-v10.15.1-linux-x64.tar.gz | tar zxvf - --strip-components=1 -C /usr/local/node-10.15.1
+ln -sf /usr/local/node-10.15.1/bin/node /usr/bin/node
+ln -sf /usr/local/node-10.15.1/bin/npm /usr/bin/npm
 apt-get install -y python   # Install python which is required for npm rebuild
 [[ "$(python --version 2>&1)" == "Python 2.7."* ]] || die "Expecting python version to be 2.7.x"
 

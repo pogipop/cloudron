@@ -205,7 +205,6 @@ function cleanup(done) {
 }
 
 describe('Ldap', function () {
-    this.timeout(10000);
     before(setup);
     after(cleanup);
 
@@ -215,7 +214,8 @@ describe('Ldap', function () {
 
             client.bind('cn=doesnotexist,ou=users,dc=cloudron', 'password', function (error) {
                 expect(error).to.be.a(ldap.NoSuchObjectError);
-                client.unbind(done);
+                client.unbind();
+                done();
             });
         });
 
@@ -224,7 +224,8 @@ describe('Ldap', function () {
 
             client.bind('cn=' + USER_0.id + ',ou=users,dc=cloudron', 'wrongpassword', function (error) {
                 expect(error).to.be.a(ldap.InvalidCredentialsError);
-                client.unbind(done);
+                client.unbind();
+                done();
             });
         });
 
@@ -233,7 +234,8 @@ describe('Ldap', function () {
 
             client.bind('cn=' + USER_0.id + ',ou=users,dc=cloudron', USER_0.password, function (error) {
                 expect(error).to.be(null);
-                client.unbind(done);
+                client.unbind();
+                done();
             });
         });
 
@@ -242,7 +244,8 @@ describe('Ldap', function () {
 
             client.bind('cn=' + USER_0.username + ',ou=users,dc=cloudron', USER_0.password, function (error) {
                 expect(error).to.be(null);
-                client.unbind(done);
+                client.unbind();
+                done();
             });
         });
 
@@ -251,7 +254,8 @@ describe('Ldap', function () {
 
             client.bind('cn=' + USER_0.email + ',ou=users,dc=cloudron', USER_0.password, function (error) {
                 expect(error).to.be(null);
-                client.unbind(done);
+                client.unbind();
+                done();
             });
         });
 
@@ -277,7 +281,8 @@ describe('Ldap', function () {
 
             client.bind('mail=' + USER_0.username + ',ou=users,dc=cloudron', USER_0.password, function (error) {
                 expect(error).to.be.a(ldap.NoSuchObjectError);
-                client.unbind(done);
+                client.unbind();
+                done();
             });
         });
 
@@ -289,7 +294,8 @@ describe('Ldap', function () {
 
                 client.bind('cn=' + USER_1.id + ',ou=users,dc=cloudron', USER_1.password, function (error) {
                     expect(error).to.be.a(ldap.NoSuchObjectError);
-                    client.unbind(done);
+                    client.unbind();
+                    done();
                 });
             });
         });
@@ -302,7 +308,8 @@ describe('Ldap', function () {
 
                 client.bind('cn=' + USER_0.id + ',ou=users,dc=cloudron', USER_0.password, function (error) {
                     expect(error).to.be(null);
-                    client.unbind(done);
+                    client.unbind();
+                    done();
                 });
             });
         });
@@ -322,7 +329,8 @@ describe('Ldap', function () {
 
                 result.on('error', function (error) {
                     expect(error).to.be.a(ldap.NoSuchObjectError);
-                    client.unbind(done);
+                    client.unbind();
+                    done();
                 });
                 result.on('end', function (result) {
                     done(new Error('Should not succeed. Status ' + result.status));
@@ -353,7 +361,8 @@ describe('Ldap', function () {
                     expect(entries[0].mail).to.equal(USER_0.email.toLowerCase());
                     expect(entries[1].username).to.equal(USER_1.username.toLowerCase());
                     expect(entries[1].mail).to.equal(USER_1.email.toLowerCase());
-                    client.unbind(done);
+                    client.unbind();
+                    done();
                 });
             });
         });
@@ -382,7 +391,8 @@ describe('Ldap', function () {
                     expect(entries[0].mail).to.equal(USER_0.email.toLowerCase());
                     expect(entries[1].username).to.equal(USER_1.username.toLowerCase());
                     expect(entries[1].mail).to.equal(USER_1.email.toLowerCase());
-                    client.unbind(done);
+                    client.unbind();
+                    done();
                 });
             });
         });
@@ -447,7 +457,8 @@ describe('Ldap', function () {
                     entries.sort(function (a, b) { return a.username > b.username; });
                     expect(entries[0].username).to.equal(USER_0.username.toLowerCase());
                     expect(entries[1].username).to.equal(USER_1.username.toLowerCase());
-                    client.unbind(done);
+                    client.unbind();
+                    done();
                 });
             });
         });
@@ -472,7 +483,8 @@ describe('Ldap', function () {
                     expect(entries.length).to.equal(1);
                     expect(entries[0].username).to.equal(USER_0.username.toLowerCase());
                     expect(entries[0].memberof.length).to.equal(2);
-                    client.unbind(done);
+                    client.unbind();
+                    done();
                 });
             });
         });
@@ -611,7 +623,8 @@ describe('Ldap', function () {
                     expect(entries[1].cn).to.equal('admins');
                     // if only one entry, the array becomes a string :-/
                     expect(entries[1].memberuid).to.equal(USER_0.id);
-                    client.unbind(done);
+                    client.unbind();
+                    done();
                 });
             });
         });
@@ -642,7 +655,8 @@ describe('Ldap', function () {
                     expect(entries[1].cn).to.equal('admins');
                     // if only one entry, the array becomes a string :-/
                     expect(entries[1].memberuid).to.equal(USER_0.id);
-                    client.unbind(done);
+                    client.unbind();
+                    done();
                 });
             });
         });
@@ -667,7 +681,8 @@ describe('Ldap', function () {
                     expect(entries.length).to.equal(1);
                     expect(entries[0].cn).to.equal('users');
                     expect(entries[0].memberuid.length).to.equal(3);
-                    client.unbind(done);
+                    client.unbind();
+                    done();
                 });
             });
         });
@@ -740,7 +755,8 @@ describe('Ldap', function () {
                     expect(entries[1].cn).to.equal('admins');
                     // if only one entry, the array becomes a string :-/
                     expect(entries[1].memberuid).to.equal(USER_0.id);
-                    client.unbind(done);
+                    client.unbind();
+                    done();
                 });
             });
         });
@@ -785,6 +801,7 @@ describe('Ldap', function () {
         });
     });
 
+    // ldapsearch -LLL -E pr=10/noprompt -x -h localhost -p 3002 -b cn=userName0@example.com,ou=mailboxes,dc=cloudron objectclass=mailbox
     function ldapSearch(dn, filter, callback) {
         var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + config.get('ldapPort') });
 
@@ -794,9 +811,8 @@ describe('Ldap', function () {
         };
 
         function done(error, entries) {
-            client.unbind(function () {
-                callback(error, entries);
-            });
+            client.unbind();
+            callback(error, entries);
         }
 
         client.search(dn, opts, function (error, result) {
@@ -920,7 +936,8 @@ describe('Ldap', function () {
 
             client.bind('cn=' + USER_0.username + '@example.com,domain=example.com,ou=mailboxes,dc=cloudron', USER_0.password + 'nope', function (error) {
                 expect(error).to.be.a(ldap.NoSuchObjectError);
-                client.unbind(done);
+                client.unbind();
+                done();
             });
         });
 
@@ -982,7 +999,8 @@ describe('Ldap', function () {
 
             client.bind('cn=' + USER_0.username + '@example.com,ou=sendmail,dc=cloudron', USER_0.password + 'nope', function (error) {
                 expect(error).to.be.a(ldap.InvalidCredentialsError);
-                client.unbind(done);
+                client.unbind();
+                done();
             });
         });
 
@@ -991,7 +1009,8 @@ describe('Ldap', function () {
 
             client.bind('cn=' + USER_0.email + ',ou=sendmail,dc=cloudron', USER_0.password + 'nope', function (error) {
                 expect(error).to.be.a(ldap.NoSuchObjectError);
-                client.unbind(done);
+                client.unbind();
+                done();
             });
         });
 
@@ -1041,7 +1060,8 @@ describe('Ldap', function () {
 
             client.bind('cn=hacker.app@example.com,ou=sendmail,dc=cloudron', 'nope', function (error) {
                 expect(error).to.be.a(ldap.NoSuchObjectError);
-                client.unbind(done);
+                client.unbind();
+                done();
             });
         });
 
@@ -1050,7 +1070,8 @@ describe('Ldap', function () {
 
             client.bind('cn=' + APP_0.location + '.app@example.com,ou=sendmail,dc=cloudron', 'nope', function (error) {
                 expect(error).to.be.a(ldap.NoSuchObjectError);
-                client.unbind(done);
+                client.unbind();
+                done();
             });
         });
 
@@ -1074,7 +1095,8 @@ describe('Ldap', function () {
 
             client.bind('cn=' + USER_0.username + '@example.com,ou=recvmail,dc=cloudron', USER_0.password + 'nope', function (error) {
                 expect(error).to.be.a(ldap.NoSuchObjectError);
-                client.unbind(done);
+                client.unbind();
+                done();
             });
         });
 
@@ -1083,7 +1105,8 @@ describe('Ldap', function () {
 
             client.bind('cn=' + USER_0.email + ',ou=recvmail,dc=cloudron', USER_0.password + 'nope', function (error) {
                 expect(error).to.be.a(ldap.NoSuchObjectError);
-                client.unbind(done);
+                client.unbind();
+                done();
             });
         });
 
@@ -1132,7 +1155,8 @@ describe('Ldap', function () {
 
             client.bind('cn=hacker.app@example.com,ou=recvmail,dc=cloudron', 'nope', function (error) {
                 expect(error).to.be.a(ldap.NoSuchObjectError);
-                client.unbind(done);
+                client.unbind();
+                done();
             });
         });
 
@@ -1141,7 +1165,8 @@ describe('Ldap', function () {
 
             client.bind('cn=' + APP_0.location + '.app@example.com,ou=recvmail,dc=cloudron', 'nope', function (error) {
                 expect(error).to.be.a(ldap.NoSuchObjectError);
-                client.unbind(done);
+                client.unbind();
+                done();
             });
         });
 

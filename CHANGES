@@ -1573,5 +1573,4 @@
 * Ad graphite to services
 * Add labels and tags to apps
 * Ensure MySQL is storing data/time in UTC
-* Set node to 8.15.1 (node 10.x broke ldap search)
 
