@@ -245,7 +245,7 @@ describe('Cloudron', function () {
             var options = {
                 host: 'localhost',
                 port: config.get('port'),
-                path: '/api/v1/cloudron/logstream/mail?units=all&lines=10&access_token=' + token,
+                path: '/api/v1/cloudron/logstream/box?lines=10&access_token=' + token,
                 headers: { 'Accept': 'text/event-stream', 'Connection': 'keep-alive' }
             };
 
