@@ -299,7 +299,7 @@ function validateLabel(label) {
 }
 
 function validateTags(tags) {
-    assert(Array.isArray(tags), 'tags must be an array');
+    if (tags === null) return null;
 
     if (tags.length > 64) return new AppsError(AppsError.BAD_FIELD, 'Can only set up to 64 tags');
 

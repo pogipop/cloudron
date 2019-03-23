@@ -97,7 +97,7 @@ function postProcess(result) {
     delete result.restoreConfigJson;
 
     assert(result.tagsJson === null || typeof result.tagsJson === 'string');
-    result.tags = safe.JSON.parse(result.tagsJson) || [];
+    result.tags = safe.JSON.parse(result.tagsJson) || null;
     delete result.tagsJson;
 
     assert(result.hostPorts === null || typeof result.hostPorts === 'string');
