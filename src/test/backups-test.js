@@ -70,6 +70,8 @@ function cleanupBackups(callback) {
 }
 
 describe('backups', function () {
+    this.timeout(10000);
+
     before(function (done) {
         const BACKUP_DIR = path.join(os.tmpdir(), 'cloudron-backup-test');
 

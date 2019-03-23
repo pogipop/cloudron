@@ -64,12 +64,12 @@ if [[ ! `proftpd --version | grep "1.3.5"` ]]; then
 fi
 
 echo "==> installer: updating node"
-if [[ "$(node --version)" != "v10.15.1" ]]; then
-    mkdir -p /usr/local/node-10.15.1
-    $curl -sL https://nodejs.org/dist/v10.15.1/node-v10.15.1-linux-x64.tar.gz | tar zxvf - --strip-components=1 -C /usr/local/node-10.15.1
-    ln -sf /usr/local/node-10.15.1/bin/node /usr/bin/node
-    ln -sf /usr/local/node-10.15.1/bin/npm /usr/bin/npm
-    rm -rf /usr/local/node-8.11.2 /usr/local/node-8.9.3
+if [[ "$(node --version)" != "v8.15.1" ]]; then
+    mkdir -p /usr/local/node-8.15.1
+    $curl -sL https://nodejs.org/dist/v8.15.1/node-v8.15.1-linux-x64.tar.gz | tar zxvf - --strip-components=1 -C /usr/local/node-8.15.1
+    ln -sf /usr/local/node-8.15.1/bin/node /usr/bin/node
+    ln -sf /usr/local/node-8.15.1/bin/npm /usr/bin/npm
+    rm -rf /usr/local/node-10.15.1
 fi
 
 # this is here (and not in updater.js) because rebuild requires the above node

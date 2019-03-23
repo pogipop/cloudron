@@ -28,6 +28,8 @@ function cleanup(done) {
 }
 
 describe('Eventlog', function () {
+    this.timeout(10000);
+
     before(setup);
     after(cleanup);
 
