@@ -596,7 +596,7 @@ describe('dns provider', function () {
         });
     });
 
-    describe('namecheap', function () {
+    xdescribe('namecheap', function () {
         let sandbox = require('sinon').createSandbox();
 
         let username = 'namecheapuser';

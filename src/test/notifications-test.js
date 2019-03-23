@@ -11,6 +11,7 @@ var async = require('async'),
     users = require('../users.js'),
     userdb = require('../userdb.js'),
     eventlogdb = require('../eventlogdb.js'),
+    notificationdb = require('../notificationdb.js'),
     notifications = require('../notifications.js'),
     NotificationsError = notifications.NotificationsError,
     expect = require('expect.js');
@@ -157,12 +158,14 @@ describe('Notifications', function () {
         }, function (error) {
             expect(error).to.eql(null);
 
-            notifications.getAllPaged(USER_0.id, null, 2, 10, function (error, results) {
+            notifications.getAllPaged(USER_0.id, null /* ack */, 2, 10, function (error, results) {
                 expect(error).to.eql(null);
                 expect(results).to.be.an(Array);
                 expect(results.length).to.be(10);
 
-                expect(results[0].title).to.equal('title9');
+                // we cannot compare the title because ordering is by time which is stored in mysql with seconds
+                // precision. making the ordering random...
+                // expect(results[0].title).to.equal('title9');
 
                 done();
             });

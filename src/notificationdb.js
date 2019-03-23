@@ -6,7 +6,10 @@ exports = module.exports = {
     add: add,
     update: update,
     del: del,
-    listByUserIdPaged: listByUserIdPaged
+    listByUserIdPaged: listByUserIdPaged,
+
+    // exported for testing
+    _clear: clear
 };
 
 let assert = require('assert'),
@@ -109,7 +112,7 @@ function listByUserIdPaged(userId, page, perPage, callback) {
     var data = [ userId ];
     var query = 'SELECT ' + NOTIFICATION_FIELDS + ' FROM notifications WHERE userId=?';
 
-    query += ' ORDER BY creationTime DESC LIMIT ?,?';
+    query += ' ORDER BY creationTime, title DESC LIMIT ?,?';
 
     data.push((page-1)*perPage);
     data.push(perPage);
@@ -122,3 +125,14 @@ function listByUserIdPaged(userId, page, perPage, callback) {
         callback(null, results);
     });
 }
+
+function clear(callback) {
+    assert.strictEqual(typeof callback, 'function');
+
+    database.query('DELETE FROM notifications', function (error) {
+        if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
+
+        callback(null);
+    });
+}
+

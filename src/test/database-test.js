@@ -142,28 +142,28 @@ describe('database', function () {
         var NOTIFICATION_0 = {
             userId: USER_0.id,
             eventId: EVENT_0.id,
-            title: 'first one',
+            title: 'title z', // titles are this way for ordering
             message: 'some message there',
         };
 
         var NOTIFICATION_1 = {
             userId: USER_0.id,
             eventId: EVENT_1.id,
-            title: 'second one',
+            title: 'title y',
             message: 'some message there',
         };
 
         var NOTIFICATION_2 = {
             userId: USER_1.id,
             eventId: EVENT_2.id,
-            title: 'third one',
+            title: 'title x',
             message: 'some message there',
         };
 
         var NOTIFICATION_3 = {
             userId: USER_0.id,
             eventId: null,
-            title: 'third one',
+            title: 'title w',
             message: 'some message there',
         };
 

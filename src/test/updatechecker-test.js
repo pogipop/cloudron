@@ -10,6 +10,7 @@ var appdb = require('../appdb.js'),
     async = require('async'),
     config = require('../config.js'),
     constants = require('../constants.js'),
+    cron = require('../cron.js'),
     database = require('../database.js'),
     domains = require('../domains.js'),
     expect = require('expect.js'),
@@ -61,6 +62,7 @@ function cleanup(done) {
     safe.fs.unlinkSync(paths.UPDATE_CHECKER_FILE);
 
     async.series([
+        cron.stopJobs,
         database._clear,
         database.uninitialize
     ], done);
@@ -77,6 +79,7 @@ describe('updatechecker - box - manual (email)', function () {
         async.series([
             database.initialize,
             database._clear,
+            cron.startPostActivationJobs,
             domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0, AUDIT_SOURCE),
             mail.addDomain.bind(null, DOMAIN_0.domain),
             users.createOwner.bind(null, USER_0.username, USER_0.password, USER_0.email, USER_0.displayName, AUDIT_SOURCE),
@@ -111,21 +114,15 @@ describe('updatechecker - box - manual (email)', function () {
         var scope = nock('http://localhost:4444')
             .get('/api/v1/users/uid/cloudrons/cid/boxupdate')
             .query({ boxVersion: config.version(), accessToken: 'token' })
-            .reply(200, { version: UPDATE_VERSION, changelog: [''], sourceTarballUrl: 'box.tar.gz' } );
-
-        var scope2 = nock('http://localhost:4444')
-            .get('/api/v1/users/uid/cloudrons/cid/subscription')
-            .query({ accessToken: 'token' })
-            .reply(200, { subscription: { plan: { id: 'pro' } } } );
+            .reply(200, { version: UPDATE_VERSION, changelog: [''], sourceTarballUrl: 'box.tar.gz', sourceTarballSigUrl: 'box.tar.gz.sig', boxVersionsUrl: 'box.versions', boxVersionsSigUrl: 'box.versions.sig' } );
 
         updatechecker.checkBoxUpdates(function (error) {
             expect(!error).to.be.ok();
             expect(updatechecker.getUpdateInfo().box.version).to.be(UPDATE_VERSION);
             expect(updatechecker.getUpdateInfo().box.sourceTarballUrl).to.be('box.tar.gz');
             expect(scope.isDone()).to.be.ok();
-            expect(scope2.isDone()).to.be.ok();
 
-            checkMails(1, done);
+            checkMails(0, done);
         });
     });
 
@@ -155,6 +152,7 @@ describe('updatechecker - box - automatic (no email)', function () {
 
         async.series([
             database.initialize,
+            cron.startPostActivationJobs,
             domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0, AUDIT_SOURCE),
             mail.addDomain.bind(null, DOMAIN_0.domain),
             mailer._clearMailQueue,
@@ -171,18 +169,12 @@ describe('updatechecker - box - automatic (no email)', function () {
         var scope = nock('http://localhost:4444')
             .get('/api/v1/users/uid/cloudrons/cid/boxupdate')
             .query({ boxVersion: config.version(), accessToken: 'token' })
-            .reply(200, { version: UPDATE_VERSION, sourceTarballUrl: 'box.tar.gz' } );
-
-        var scope2 = nock('http://localhost:4444')
-            .get('/api/v1/users/uid/cloudrons/cid/subscription')
-            .query({ accessToken: 'token' })
-            .reply(200, { subscription: { plan: { id: 'pro' } } } );
+            .reply(200, { version: UPDATE_VERSION, changelog: [''], sourceTarballUrl: 'box.tar.gz', sourceTarballSigUrl: 'box.tar.gz.sig', boxVersionsUrl: 'box.versions', boxVersionsSigUrl: 'box.versions.sig' } );
 
         updatechecker.checkBoxUpdates(function (error) {
             expect(!error).to.be.ok();
             expect(updatechecker.getUpdateInfo().box.version).to.be(UPDATE_VERSION);
             expect(scope.isDone()).to.be.ok();
-            expect(scope2.isDone()).to.be.ok();
 
             checkMails(0, done);
         });
@@ -198,6 +190,7 @@ describe('updatechecker - box - automatic free (email)', function () {
 
         async.series([
             database.initialize,
+            cron.startPostActivationJobs,
             domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0, AUDIT_SOURCE),
             mail.addDomain.bind(null, DOMAIN_0.domain),
             mailer._clearMailQueue,
@@ -214,20 +207,14 @@ describe('updatechecker - box - automatic free (email)', function () {
         var scope = nock('http://localhost:4444')
             .get('/api/v1/users/uid/cloudrons/cid/boxupdate')
             .query({ boxVersion: config.version(), accessToken: 'token' })
-            .reply(200, { version: UPDATE_VERSION, changelog: [''], sourceTarballUrl: 'box.tar.gz' } );
-
-        var scope2 = nock('http://localhost:4444')
-            .get('/api/v1/users/uid/cloudrons/cid/subscription')
-            .query({ accessToken: 'token' })
-            .reply(200, { subscription: { plan: { id: 'free' } } } );
+            .reply(200, { version: UPDATE_VERSION, changelog: [''], sourceTarballUrl: 'box.tar.gz', sourceTarballSigUrl: 'box.tar.gz.sig', boxVersionsUrl: 'box.versions', boxVersionsSigUrl: 'box.versions.sig' } );
 
         updatechecker.checkBoxUpdates(function (error) {
             expect(!error).to.be.ok();
             expect(updatechecker.getUpdateInfo().box.version).to.be(UPDATE_VERSION);
             expect(scope.isDone()).to.be.ok();
-            expect(scope2.isDone()).to.be.ok();
 
-            checkMails(1, done);
+            checkMails(0, done);
         });
     });
 });
@@ -268,6 +255,7 @@ describe('updatechecker - app - manual (email)', function () {
         async.series([
             database.initialize,
             database._clear,
+            cron.startPostActivationJobs,
             domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0, AUDIT_SOURCE),
             mail.addDomain.bind(null, DOMAIN_0.domain),
             mailer._clearMailQueue,
@@ -309,7 +297,7 @@ describe('updatechecker - app - manual (email)', function () {
         var scope = nock('http://localhost:4444')
             .get('/api/v1/users/uid/cloudrons/cid/appupdate')
             .query({ boxVersion: config.version(), accessToken: 'token', appId: APP_0.appStoreId, appVersion: APP_0.manifest.version })
-            .reply(500, { update: { manifest: { version: '1.0.0' } } } );
+            .reply(500, { update: { manifest: { version: '1.0.0', changelog: '* some changes' } } } );
 
         updatechecker.checkAppUpdates(function (error) {
             expect(!error).to.be.ok();
@@ -326,7 +314,7 @@ describe('updatechecker - app - manual (email)', function () {
         var scope = nock('http://localhost:4444')
             .get('/api/v1/users/uid/cloudrons/cid/appupdate')
             .query({ boxVersion: config.version(), accessToken: 'token', appId: APP_0.appStoreId, appVersion: APP_0.manifest.version })
-            .reply(200, { manifest: { version: '2.0.0' } } );
+            .reply(200, { manifest: { version: '2.0.0', changelog: '* some changes' } } );
 
         var scope2 = nock('http://localhost:4444')
             .get('/api/v1/users/uid/cloudrons/cid/subscription')
@@ -335,7 +323,7 @@ describe('updatechecker - app - manual (email)', function () {
 
         updatechecker.checkAppUpdates(function (error) {
             expect(!error).to.be.ok();
-            expect(updatechecker.getUpdateInfo().apps).to.eql({ 'appid-0': { manifest: { version: '2.0.0' } } });
+            expect(updatechecker.getUpdateInfo().apps).to.eql({ 'appid-0': { manifest: { version: '2.0.0', changelog: '* some changes' } } });
             expect(scope.isDone()).to.be.ok();
             expect(scope2.isDone()).to.be.ok();
 
@@ -390,6 +378,7 @@ describe('updatechecker - app - automatic (no email)', function () {
         async.series([
             database.initialize,
             database._clear,
+            cron.startPostActivationJobs,
             domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0, AUDIT_SOURCE),
             mail.addDomain.bind(null, DOMAIN_0.domain),
             mailer._clearMailQueue,
@@ -414,11 +403,11 @@ describe('updatechecker - app - automatic (no email)', function () {
         var scope = nock('http://localhost:4444')
             .get('/api/v1/users/uid/cloudrons/cid/appupdate')
             .query({ boxVersion: config.version(), accessToken: 'token', appId: APP_0.appStoreId, appVersion: APP_0.manifest.version })
-            .reply(200, { manifest: { version: '2.0.0' } } );
+            .reply(200, { manifest: { version: '2.0.0', changelog: 'c' } } );
 
         updatechecker.checkAppUpdates(function (error) {
             expect(!error).to.be.ok();
-            expect(updatechecker.getUpdateInfo().apps).to.eql({ 'appid-0': { manifest: { version: '2.0.0' } } });
+            expect(updatechecker.getUpdateInfo().apps).to.eql({ 'appid-0': { manifest: { version: '2.0.0', changelog: 'c' } } });
             expect(scope.isDone()).to.be.ok();
 
             checkMails(0, done);
@@ -462,6 +451,7 @@ describe('updatechecker - app - automatic free (email)', function () {
         async.series([
             database.initialize,
             database._clear,
+            cron.startPostActivationJobs,
             domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0, AUDIT_SOURCE),
             mail.addDomain.bind(null, DOMAIN_0.domain),
             mailer._clearMailQueue,
@@ -486,7 +476,7 @@ describe('updatechecker - app - automatic free (email)', function () {
         var scope = nock('http://localhost:4444')
             .get('/api/v1/users/uid/cloudrons/cid/appupdate')
             .query({ boxVersion: config.version(), accessToken: 'token', appId: APP_0.appStoreId, appVersion: APP_0.manifest.version })
-            .reply(200, { manifest: { version: '2.0.0' } } );
+            .reply(200, { manifest: { version: '2.0.0', changelog: 'c' } } );
 
         var scope2 = nock('http://localhost:4444')
             .get('/api/v1/users/uid/cloudrons/cid/subscription')
@@ -495,7 +485,7 @@ describe('updatechecker - app - automatic free (email)', function () {
 
         updatechecker.checkAppUpdates(function (error) {
             expect(!error).to.be.ok();
-            expect(updatechecker.getUpdateInfo().apps).to.eql({ 'appid-0': { manifest: { version: '2.0.0' } } });
+            expect(updatechecker.getUpdateInfo().apps).to.eql({ 'appid-0': { manifest: { version: '2.0.0', changelog: 'c' } } });
             expect(scope.isDone()).to.be.ok();
             expect(scope2.isDone()).to.be.ok();
 

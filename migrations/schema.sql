@@ -8,6 +8,7 @@
 #### TEXT - stored offline from table row (use for strings)
 #### BLOB - stored offline from table row (use for binary data)
 #### https://dev.mysql.com/doc/refman/5.0/en/storage-requirements.html
+#### Times are stored in the database in UTC. And precision is seconds
 
 # The code uses zero dates. Make sure sql_mode does NOT have NO_ZERO_DATE
 # http://johnemb.blogspot.com/2014/09/adding-or-removing-individual-sql-modes.html
