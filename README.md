@@ -64,6 +64,7 @@ the containers in the Cloudron.
 
 ## Community
 
+* [Chat](https://chat.cloudron.io)
 * [Forum](https://forum.cloudron.io/)
 * [Support](mailto:support@cloudron.io)
 
