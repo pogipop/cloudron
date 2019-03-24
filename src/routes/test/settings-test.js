@@ -359,7 +359,7 @@ describe('Settings API', function () {
         });
 
         it('set fails with wrong appstore user', function (done) {
-            var scope = nock(config.apiServerOrigin()).get('/api/v1/users/nebulon/cloudrons/cloudron0?accessToken=sometoken').reply(403);
+            var scope = nock(config.apiServerOrigin()).post('/api/v1/users/nebulon/cloudrons?accessToken=sometoken').reply(401, {});
 
             superagent.post(SERVER_URL + '/api/v1/settings/appstore_config')
                 .query({ access_token: token })
@@ -367,7 +367,7 @@ describe('Settings API', function () {
                 .end(function (err, res) {
                     expect(scope.isDone()).to.be.ok();
                     expect(res.statusCode).to.equal(424);
-                    expect(res.body.message).to.equal('wrong user');
+                    expect(res.body.message).to.equal('invalid appstore token');
 
                     done();
                 });
@@ -384,13 +384,13 @@ describe('Settings API', function () {
         });
 
         it('set succeeds with cloudronId', function (done) {
-            var scope = nock(config.apiServerOrigin()).get('/api/v1/users/nebulon/cloudrons/cloudron0?accessToken=someothertoken').reply(200, { cloudron: { id: 'cloudron0' }});
+            var scope1 = nock(config.apiServerOrigin()).post('/api/v1/users/nebulon/cloudrons?accessToken=someothertoken').reply(201, { cloudron: { id: 'cloudron0' }});
 
             superagent.post(SERVER_URL + '/api/v1/settings/appstore_config')
                 .query({ access_token: token })
                 .send({ userId: 'nebulon', token: 'someothertoken' })
                 .end(function (err, res) {
-                    expect(scope.isDone()).to.be.ok();
+                    expect(scope1.isDone()).to.be.ok();
                     expect(res.statusCode).to.equal(202);
                     expect(res.body).to.eql({ userId: 'nebulon', token: 'someothertoken', cloudronId: 'cloudron0' });
 
@@ -399,14 +399,12 @@ describe('Settings API', function () {
         });
 
         it('set succeeds with cloudronId but unkown one (reregister)', function (done) {
-            var scope0 = nock(config.apiServerOrigin()).get('/api/v1/users/nebulon/cloudrons/cloudron0?accessToken=someothertoken').reply(404);
             var scope1 = nock(config.apiServerOrigin()).post('/api/v1/users/nebulon/cloudrons?accessToken=someothertoken').reply(201, { cloudron: { id: 'cloudron1' }});
 
             superagent.post(SERVER_URL + '/api/v1/settings/appstore_config')
                 .query({ access_token: token })
                 .send({ userId: 'nebulon', token: 'someothertoken' })
                 .end(function (err, res) {
-                    expect(scope0.isDone()).to.be.ok();
                     expect(scope1.isDone()).to.be.ok();
                     expect(res.statusCode).to.equal(202);
                     expect(res.body).to.eql({ userId: 'nebulon', token: 'someothertoken', cloudronId: 'cloudron1' });
