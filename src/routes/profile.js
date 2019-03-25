@@ -10,16 +10,12 @@ exports = module.exports = {
 };
 
 var assert = require('assert'),
+    auditSource = require('../auditsource.js'),
     HttpError = require('connect-lastmile').HttpError,
     HttpSuccess = require('connect-lastmile').HttpSuccess,
     users = require('../users.js'),
     UsersError = users.UsersError,
     _ = require('underscore');
-
-function auditSource(req) {
-    var ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress || null;
-    return { ip: ip, username: req.user ? req.user.username : null, userId: req.user ? req.user.id : null };
-}
 
 function get(req, res, next) {
     assert.strictEqual(typeof req.user, 'object');
@@ -45,7 +41,7 @@ function update(req, res, next) {
 
     var data = _.pick(req.body, 'email', 'fallbackEmail', 'displayName');
 
-    users.update(req.user.id, data, auditSource(req), function (error) {
+    users.update(req.user.id, data, auditSource.fromRequest(req), function (error) {
         if (error && error.reason === UsersError.BAD_FIELD) return next(new HttpError(400, error.message));
         if (error && error.reason === UsersError.ALREADY_EXISTS) return next(new HttpError(409, error.message));
         if (error && error.reason === UsersError.NOT_FOUND) return next(new HttpError(404, 'User not found'));

@@ -13,6 +13,7 @@ exports = module.exports = {
 var apps = require('../apps.js'),
     AppsError = apps.AppsError,
     addons = require('../addons.js'),
+    auditSource = require('../auditsource.js'),
     backups = require('../backups.js'),
     BackupsError = require('../backups.js').BackupsError,
     cloudron = require('../cloudron.js'),
@@ -28,8 +29,7 @@ function backup(req, res, next) {
 
     // note that cloudron.backup only waits for backup initiation and not for backup to complete
     // backup progress can be checked up ny polling the progress api call
-    var auditSource = { userId: null, username: 'sysadmin' };
-    backups.startBackupTask(auditSource, function (error, taskId) {
+    backups.startBackupTask(auditSource.SYSADMIN, function (error, taskId) {
         if (error && error.reason === BackupsError.BAD_STATE) return next(new HttpError(409, error.message));
         if (error) return next(new HttpError(500, error));
 
@@ -41,8 +41,7 @@ function update(req, res, next) {
     debug('triggering update');
 
     // this only initiates the update, progress can be checked via the progress route
-    var auditSource = { userId: null, username: 'sysadmin' };
-    updater.updateToLatest(auditSource, function (error, taskId) {
+    updater.updateToLatest(auditSource.SYSADMIN, function (error, taskId) {
         if (error && error.reason === UpdaterError.ALREADY_UPTODATE) return next(new HttpError(422, error.message));
         if (error && error.reason === UpdaterError.BAD_STATE) return next(new HttpError(409, error.message));
         if (error) return next(new HttpError(500, error));

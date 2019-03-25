@@ -17,6 +17,7 @@ exports = module.exports = {
 
 let assert = require('assert'),
     async = require('async'),
+    auditSource = require('../auditsource.js'),
     cloudron = require('../cloudron.js'),
     CloudronError = cloudron.CloudronError,
     HttpError = require('connect-lastmile').HttpError,
@@ -24,11 +25,6 @@ let assert = require('assert'),
     updater = require('../updater.js'),
     updateChecker = require('../updatechecker.js'),
     UpdaterError = require('../updater.js').UpdaterError;
-
-function auditSource(req) {
-    var ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress || null;
-    return { ip: ip, username: req.user ? req.user.username : null, userId: req.user ? req.user.id : null };
-}
 
 function reboot(req, res, next) {
     // Finish the request, to let the appstore know we triggered the reboot
@@ -62,7 +58,7 @@ function getDisks(req, res, next) {
 
 function update(req, res, next) {
     // this only initiates the update, progress can be checked via the progress route
-    updater.updateToLatest(auditSource(req), function (error, taskId) {
+    updater.updateToLatest(auditSource.fromRequest(req), function (error, taskId) {
         if (error && error.reason === UpdaterError.ALREADY_UPTODATE) return next(new HttpError(422, error.message));
         if (error && error.reason === UpdaterError.BAD_STATE) return next(new HttpError(409, error.message));
         if (error) return next(new HttpError(500, error));
@@ -154,7 +150,7 @@ function getLogStream(req, res, next) {
 function setDashboardAndMailDomain(req, res, next) {
     if (!req.body.domain || typeof req.body.domain !== 'string') return next(new HttpError(400, 'domain must be a string'));
 
-    cloudron.setDashboardAndMailDomain(req.body.domain, auditSource(req), function (error) {
+    cloudron.setDashboardAndMailDomain(req.body.domain, auditSource.fromRequest(req), function (error) {
         if (error && error.reason === CloudronError.BAD_FIELD) return next(new HttpError(404, error.message));
         if (error) return next(new HttpError(500, error));
 
@@ -165,7 +161,7 @@ function setDashboardAndMailDomain(req, res, next) {
 function prepareDashboardDomain(req, res, next) {
     if (!req.body.domain || typeof req.body.domain !== 'string') return next(new HttpError(400, 'domain must be a string'));
 
-    cloudron.prepareDashboardDomain(req.body.domain, auditSource(req), function (error, taskId) {
+    cloudron.prepareDashboardDomain(req.body.domain, auditSource.fromRequest(req), function (error, taskId) {
         if (error && error.reason === CloudronError.BAD_FIELD) return next(new HttpError(404, error.message));
         if (error && error.reason === CloudronError.BAD_STATE) return next(new HttpError(409, error.message));
         if (error) return next(new HttpError(500, error));
@@ -175,7 +171,7 @@ function prepareDashboardDomain(req, res, next) {
 }
 
 function renewCerts(req, res, next) {
-    cloudron.renewCerts({ domain: req.body.domain || null }, auditSource(req), function (error, taskId) {
+    cloudron.renewCerts({ domain: req.body.domain || null }, auditSource.fromRequest(req), function (error, taskId) {
         if (error && error.reason === CloudronError.NOT_FOUND) return next(new HttpError(404, error.message));
         if (error) return next(new HttpError(500, error));
 

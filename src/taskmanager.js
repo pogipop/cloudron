@@ -17,6 +17,7 @@ var appdb = require('./appdb.js'),
     apps = require('./apps.js'),
     assert = require('assert'),
     async = require('async'),
+    auditSource = require('./auditsource.js'),
     child_process = require('child_process'),
     debug = require('debug')('box:taskmanager'),
     fs = require('fs'),
@@ -34,8 +35,6 @@ var gPendingTasks = [ ];
 var TASK_CONCURRENCY = 3;
 var NOOP_CALLBACK = function (error) { if (error) debug(error); };
 var gPaused = true;
-
-const AUDIT_SOURCE = { userId: null, username: 'taskmanager' };
 
 // resume app tasks when platform is ready or after a crash
 function resumeTasks(callback) {
@@ -154,9 +153,9 @@ function startAppTask(appId, callback) {
         if (code === null /* signal */ || (code !== 0 && code !== 50)) { // apptask crashed
             debug('Apptask crashed with code %s and signal %s', code, signal);
             appdb.update(appId, { installationState: appdb.ISTATE_ERROR, installationProgress: 'Apptask crashed with code ' + code + ' and signal ' + signal }, NOOP_CALLBACK);
-            eventlog.add(eventlog.ACTION_APP_TASK_CRASH, AUDIT_SOURCE, { appId: appId, crashLogFile: logFilePath }, NOOP_CALLBACK);
+            eventlog.add(eventlog.ACTION_APP_TASK_CRASH, auditSource.TASK_MANAGER, { appId: appId, crashLogFile: logFilePath }, NOOP_CALLBACK);
         } else if (code === 50) { // task exited cleanly but with an error
-            eventlog.add(eventlog.ACTION_APP_TASK_CRASH, AUDIT_SOURCE, { appId: appId, crashLogFile: logFilePath }, NOOP_CALLBACK);
+            eventlog.add(eventlog.ACTION_APP_TASK_CRASH, auditSource.TASK_MANAGER, { appId: appId, crashLogFile: logFilePath }, NOOP_CALLBACK);
         }
         delete gActiveTasks[appId];
         locker.unlock(locker.OP_APPTASK); // unlock event will trigger next task

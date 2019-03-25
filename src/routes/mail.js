@@ -35,6 +35,7 @@ exports = module.exports = {
 };
 
 var assert = require('assert'),
+    auditSource = require('../auditsource.js'),
     mail = require('../mail.js'),
     MailError = mail.MailError,
     HttpError = require('connect-lastmile').HttpError,
@@ -43,11 +44,6 @@ var assert = require('assert'),
     url = require('url');
 
 var mailProxy = middleware.proxy(url.parse('http://127.0.0.1:2020'));
-
-function auditSource(req) {
-    var ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress || null;
-    return { ip: ip, username: req.user ? req.user.username : null, userId: req.user ? req.user.id : null };
-}
 
 function getDomain(req, res, next) {
     assert.strictEqual(typeof req.params.domain, 'string');
@@ -190,7 +186,7 @@ function setMailEnabled(req, res, next) {
 
     if (typeof req.body.enabled !== 'boolean') return next(new HttpError(400, 'enabled is required'));
 
-    mail.setMailEnabled(req.params.domain, !!req.body.enabled, auditSource(req), function (error) {
+    mail.setMailEnabled(req.params.domain, !!req.body.enabled, auditSource.fromRequest(req), function (error) {
         if (error && error.reason === MailError.NOT_FOUND) return next(new HttpError(404, error.message));
         if (error && error.reason === MailError.BAD_FIELD) return next(new HttpError(400, error.message));
         if (error && error.reason === MailError.BILLING_REQUIRED) return next(new HttpError(402, error.message));
@@ -243,7 +239,7 @@ function addMailbox(req, res, next) {
     if (typeof req.body.name !== 'string') return next(new HttpError(400, 'name must be a string'));
     if (typeof req.body.userId !== 'string') return next(new HttpError(400, 'userId must be a string'));
 
-    mail.addMailbox(req.body.name, req.params.domain, req.body.userId, auditSource(req), function (error) {
+    mail.addMailbox(req.body.name, req.params.domain, req.body.userId, auditSource.fromRequest(req), function (error) {
         if (error && error.reason === MailError.NOT_FOUND) return next(new HttpError(404, error.message));
         if (error && error.reason === MailError.ALREADY_EXISTS) return next(new HttpError(409, error.message));
         if (error && error.reason === MailError.BAD_FIELD) return next(new HttpError(400, error.message));
@@ -272,7 +268,7 @@ function removeMailbox(req, res, next) {
     assert.strictEqual(typeof req.params.domain, 'string');
     assert.strictEqual(typeof req.params.name, 'string');
 
-    mail.removeMailbox(req.params.name, req.params.domain, auditSource(req), function (error) {
+    mail.removeMailbox(req.params.name, req.params.domain, auditSource.fromRequest(req), function (error) {
         if (error && error.reason === MailError.NOT_FOUND) return next(new HttpError(404, error.message));
         if (error) return next(new HttpError(500, error));
 
@@ -358,7 +354,7 @@ function addList(req, res, next) {
         if (typeof req.body.members[i] !== 'string') return next(new HttpError(400, 'member must be a string'));
     }
 
-    mail.addList(req.body.name, req.params.domain, req.body.members, auditSource(req), function (error) {
+    mail.addList(req.body.name, req.params.domain, req.body.members, auditSource.fromRequest(req), function (error) {
         if (error && error.reason === MailError.NOT_FOUND) return next(new HttpError(404, error.message));
         if (error && error.reason === MailError.ALREADY_EXISTS) return next(new HttpError(409, 'list already exists'));
         if (error && error.reason === MailError.BAD_FIELD) return next(new HttpError(400, error.message));
@@ -391,7 +387,7 @@ function removeList(req, res, next) {
     assert.strictEqual(typeof req.params.domain, 'string');
     assert.strictEqual(typeof req.params.name, 'string');
 
-    mail.removeList(req.params.name, req.params.domain, auditSource(req), function (error) {
+    mail.removeList(req.params.name, req.params.domain, auditSource.fromRequest(req), function (error) {
         if (error && error.reason === MailError.NOT_FOUND) return next(new HttpError(404, error.message));
         if (error) return next(new HttpError(500, error));
 

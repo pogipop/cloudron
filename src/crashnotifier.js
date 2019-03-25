@@ -5,6 +5,7 @@ exports = module.exports = {
 };
 
 var assert = require('assert'),
+    auditSource = require('./auditsource.js'),
     eventlog = require('./eventlog.js'),
     safe = require('safetydance'),
     path = require('path'),
@@ -15,8 +16,6 @@ const COLLECT_LOGS_CMD = path.join(__dirname, 'scripts/collectlogs.sh');
 
 const CRASH_LOG_TIMESTAMP_OFFSET = 1000 * 60 * 60; // 60 min
 const CRASH_LOG_TIMESTAMP_FILE = '/tmp/crashlog.timestamp';
-
-const AUDIT_SOURCE = { userId: null, username: 'healthmonitor' };
 
 function collectLogs(unitName, callback) {
     assert.strictEqual(typeof unitName, 'string');
@@ -50,7 +49,7 @@ function sendFailureLogs(unitName, callback) {
 
         if (!safe.fs.writeFileSync(path.join(paths.CRASH_LOG_DIR, `${crashId}.log`), logs)) console.log(`Failed to stash logs to ${crashId}.log:`, safe.error);
 
-        eventlog.add(eventlog.ACTION_PROCESS_CRASH, AUDIT_SOURCE, { processName: unitName, crashId: crashId }, function (error) {
+        eventlog.add(eventlog.ACTION_PROCESS_CRASH, auditSource.HEALTH_MONITOR, { processName: unitName, crashId: crashId }, function (error) {
             if (error) console.log(`Error sending crashlog. Logs stashed at ${crashId}.log`);
 
             safe.fs.writeFileSync(CRASH_LOG_TIMESTAMP_FILE, String(Date.now()));

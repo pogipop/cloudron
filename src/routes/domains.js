@@ -11,15 +11,11 @@ exports = module.exports = {
 };
 
 var assert = require('assert'),
+    auditSource = require('../auditsource.js'),
     domains = require('../domains.js'),
     DomainsError = domains.DomainsError,
     HttpError = require('connect-lastmile').HttpError,
     HttpSuccess = require('connect-lastmile').HttpSuccess;
-
-function auditSource(req) {
-    var ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress || null;
-    return { ip: ip, username: req.user ? req.user.username : null, userId: req.user ? req.user.id : null };
-}
 
 function verifyDomainLock(req, res, next) {
     assert.strictEqual(typeof req.params.domain, 'string');
@@ -69,7 +65,7 @@ function add(req, res, next) {
         tlsConfig: req.body.tlsConfig || { provider: 'letsencrypt-prod' }
     };
 
-    domains.add(req.body.domain, data, auditSource(req), function (error) {
+    domains.add(req.body.domain, data, auditSource.fromRequest(req), function (error) {
         if (error && error.reason === DomainsError.ALREADY_EXISTS) return next(new HttpError(409, error.message));
         if (error && error.reason === DomainsError.BAD_FIELD) return next(new HttpError(400, error.message));
         if (error && error.reason === DomainsError.INVALID_PROVIDER) return next(new HttpError(400, error.message));
@@ -135,7 +131,7 @@ function update(req, res, next) {
         tlsConfig: req.body.tlsConfig || { provider: 'letsencrypt-prod' }
     };
 
-    domains.update(req.params.domain, data, auditSource(req), function (error) {
+    domains.update(req.params.domain, data, auditSource.fromRequest(req), function (error) {
         if (error && error.reason === DomainsError.NOT_FOUND) return next(new HttpError(404, error.message));
         if (error && error.reason === DomainsError.BAD_FIELD) return next(new HttpError(400, error.message));
         if (error && error.reason === DomainsError.INVALID_PROVIDER) return next(new HttpError(400, error.message));
@@ -148,7 +144,7 @@ function update(req, res, next) {
 function del(req, res, next) {
     assert.strictEqual(typeof req.params.domain, 'string');
 
-    domains.del(req.params.domain, auditSource(req), function (error) {
+    domains.del(req.params.domain, auditSource.fromRequest(req), function (error) {
         if (error && error.reason === DomainsError.NOT_FOUND) return next(new HttpError(404, error.message));
         if (error && error.reason === DomainsError.IN_USE) return next(new HttpError(409, 'Domain is still in use. Remove all apps and mailboxes using this domain'));
         if (error) return next(new HttpError(500, error));

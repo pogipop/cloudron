@@ -4,6 +4,7 @@ var appdb = require('./appdb.js'),
     apps = require('./apps.js'),
     assert = require('assert'),
     async = require('async'),
+    auditSource = require('./auditsource.js'),
     DatabaseError = require('./databaseerror.js'),
     debug = require('debug')('box:apphealthmonitor'),
     docker = require('./docker.js'),
@@ -21,8 +22,6 @@ const UNHEALTHY_THRESHOLD = 10 * 60 * 1000; // 10 minutes
 
 const OOM_EVENT_LIMIT = 60 * 60 * 1000; // 60 minutes
 let gLastOomMailTime = Date.now() - (5 * 60 * 1000); // pretend we sent email 5 minutes ago
-
-const AUDIT_SOURCE = { userId: null, username: 'healthmonitor' };
 
 function debugApp(app) {
     assert(typeof app === 'object');
@@ -43,14 +42,14 @@ function setHealth(app, health, callback) {
             debugApp(app, 'app switched from %s to healthy', curHealth);
 
             // do not send mails for dev apps
-            if (!app.debugMode) eventlog.add(eventlog.ACTION_APP_UP, AUDIT_SOURCE, { app: app });
+            if (!app.debugMode) eventlog.add(eventlog.ACTION_APP_UP, auditSource.HEALTH_MONITOR, { app: app });
         }
     } else if (Math.abs(now - healthTime) > UNHEALTHY_THRESHOLD) {
         if (curHealth === appdb.HEALTH_HEALTHY) {
             debugApp(app, 'marking as unhealthy since not seen for more than %s minutes', UNHEALTHY_THRESHOLD/(60 * 1000));
 
             // do not send mails for dev apps
-            if (!app.debugMode) eventlog.add(eventlog.ACTION_APP_DOWN, AUDIT_SOURCE, { app: app });
+            if (!app.debugMode) eventlog.add(eventlog.ACTION_APP_DOWN, auditSource.HEALTH_MONITOR, { app: app });
         }
     } else {
         debugApp(app, 'waiting for %s seconds to update the app health', (UNHEALTHY_THRESHOLD - Math.abs(now - healthTime))/1000);
@@ -159,7 +158,7 @@ function processDockerEvents(intervalSecs, callback) {
                 // do not send mails for dev apps
                 if (notifyUser) {
                     // app can be null for addon containers
-                    eventlog.add(eventlog.ACTION_APP_OOM, AUDIT_SOURCE, { event: event, containerId: containerId, addon: addon || null, app: app || null });
+                    eventlog.add(eventlog.ACTION_APP_OOM, auditSource.HEALTH_MONITOR, { event: event, containerId: containerId, addon: addon || null, app: app || null });
 
                     gLastOomMailTime = now;
                 }

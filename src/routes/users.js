@@ -15,15 +15,11 @@ exports = module.exports = {
 };
 
 var assert = require('assert'),
+    auditSource = require('../auditsource.js'),
     HttpError = require('connect-lastmile').HttpError,
     HttpSuccess = require('connect-lastmile').HttpSuccess,
     users = require('../users.js'),
     UsersError = users.UsersError;
-
-function auditSource(req) {
-    var ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress || null;
-    return { ip: ip, username: req.user ? req.user.username : null, userId: req.user ? req.user.id : null };
-}
 
 function create(req, res, next) {
     assert.strictEqual(typeof req.body, 'object');
@@ -39,7 +35,7 @@ function create(req, res, next) {
     var username = 'username' in req.body ? req.body.username : null;
     var displayName = req.body.displayName || '';
 
-    users.create(username, password, email, displayName, { invitor: req.user, admin: req.body.admin }, auditSource(req), function (error, user) {
+    users.create(username, password, email, displayName, { invitor: req.user, admin: req.body.admin }, auditSource.fromRequest(req), function (error, user) {
         if (error && error.reason === UsersError.BAD_FIELD) return next(new HttpError(400, error.message));
         if (error && error.reason === UsersError.ALREADY_EXISTS) return next(new HttpError(409, error.message));
         if (error) return next(new HttpError(500, error));
@@ -74,7 +70,7 @@ function update(req, res, next) {
         if (req.user.id === req.params.userId && !req.body.admin) return next(new HttpError(409, 'Cannot remove admin flag on self'));
     }
 
-    users.update(req.params.userId, req.body, auditSource(req), function (error) {
+    users.update(req.params.userId, req.body, auditSource.fromRequest(req), function (error) {
         if (error && error.reason === UsersError.BAD_FIELD) return next(new HttpError(400, error.message));
         if (error && error.reason === UsersError.ALREADY_EXISTS) return next(new HttpError(409, error.message));
         if (error && error.reason === UsersError.NOT_FOUND) return next(new HttpError(404, 'User not found'));
@@ -119,7 +115,7 @@ function remove(req, res, next) {
 
     if (req.user.id === req.params.userId) return next(new HttpError(409, 'Not allowed to remove yourself.'));
 
-    users.remove(req.params.userId, auditSource(req), function (error) {
+    users.remove(req.params.userId, auditSource.fromRequest(req), function (error) {
         if (error && error.reason === UsersError.BAD_FIELD) return next(new HttpError(400, error.message));
         if (error && error.reason === UsersError.NOT_FOUND) return next(new HttpError(404, 'No such user'));
         if (error) return next(new HttpError(500, error));
@@ -189,7 +185,7 @@ function transferOwnership(req, res, next) {
 
     if (typeof req.body.ownerId !== 'string') return next(new HttpError(400, 'ownerId must be a string'));
 
-    users.transferOwnership(req.params.userId, req.body.ownerId, auditSource(req), function (error) {
+    users.transferOwnership(req.params.userId, req.body.ownerId, auditSource.fromRequest(req), function (error) {
         if (error && error.reason === UsersError.NOT_FOUND) return next(new HttpError(404, 'No such user'));
         if (error) return next(new HttpError(500, error));
 

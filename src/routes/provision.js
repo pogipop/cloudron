@@ -10,6 +10,7 @@ exports = module.exports = {
 };
 
 var assert = require('assert'),
+    auditSource = require('../auditsource'),
     caas = require('../caas.js'),
     CaasError = require('../caas.js').CaasError,
     config = require('../config.js'),
@@ -19,11 +20,6 @@ var assert = require('assert'),
     provision = require('../provision.js'),
     ProvisionError = require('../provision.js').ProvisionError,
     superagent = require('superagent');
-
-function auditSource(req) {
-    var ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress || null;
-    return { ip: ip, username: req.user ? req.user.username : null, userId: req.user ? req.user.id : null };
-}
 
 function providerTokenAuth(req, res, next) {
     assert.strictEqual(typeof req.body, 'object');
@@ -84,7 +80,7 @@ function setup(req, res, next) {
     // it can take sometime to setup DNS, register cloudron
     req.clearTimeout();
 
-    provision.setup(dnsConfig, req.body.autoconf || {}, auditSource(req), function (error) {
+    provision.setup(dnsConfig, req.body.autoconf || {}, auditSource.fromRequest(req), function (error) {
         if (error && error.reason === ProvisionError.ALREADY_SETUP) return next(new HttpError(409, error.message));
         if (error && error.reason === ProvisionError.BAD_FIELD) return next(new HttpError(400, error.message));
         if (error && error.reason === ProvisionError.BAD_STATE) return next(new HttpError(409, error.message));
@@ -110,7 +106,7 @@ function activate(req, res, next) {
     var ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
     debug('activate: username:%s ip:%s', username, ip);
 
-    provision.activate(username, password, email, displayName, ip, auditSource(req), function (error, info) {
+    provision.activate(username, password, email, displayName, ip, auditSource.fromRequest(req), function (error, info) {
         if (error && error.reason === ProvisionError.ALREADY_PROVISIONED) return next(new HttpError(409, 'Already setup'));
         if (error && error.reason === ProvisionError.BAD_FIELD) return next(new HttpError(400, error.message));
         if (error) return next(new HttpError(500, error));
@@ -147,7 +143,7 @@ function restore(req, res, next) {
     // TODO: validate subfields of these objects
     if (req.body.autoconf && typeof req.body.autoconf !== 'object') return next(new HttpError(400, 'autoconf must be an object'));
 
-    provision.restore(backupConfig, req.body.backupId, req.body.version, req.body.autoconf || {}, auditSource(req), function (error) {
+    provision.restore(backupConfig, req.body.backupId, req.body.version, req.body.autoconf || {}, auditSource.fromRequest(req), function (error) {
         if (error && error.reason === ProvisionError.ALREADY_SETUP) return next(new HttpError(409, error.message));
         if (error && error.reason === ProvisionError.BAD_FIELD) return next(new HttpError(400, error.message));
         if (error && error.reason === ProvisionError.BAD_STATE) return next(new HttpError(409, error.message));

@@ -32,6 +32,7 @@ exports = module.exports = {
 var apps = require('../apps.js'),
     AppsError = apps.AppsError,
     assert = require('assert'),
+    auditSource = require('../auditsource.js'),
     config = require('../config.js'),
     debug = require('debug')('box:routes/apps'),
     fs = require('fs'),
@@ -41,11 +42,6 @@ var apps = require('../apps.js'),
     safe = require('safetydance'),
     util = require('util'),
     WebSocket = require('ws');
-
-function auditSource(req) {
-    var ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress || null;
-    return { ip: ip, username: req.user ? req.user.username : null, userId: req.user ? req.user.id : null };
-}
 
 function verifyOwnership(req, res, next) {
     if (req.user.admin) return next();
@@ -158,7 +154,7 @@ function installApp(req, res, next) {
 
     debug('Installing app :%j', data);
 
-    apps.install(data, req.user, auditSource(req), function (error, app) {
+    apps.install(data, req.user, auditSource.fromRequest(req), function (error, app) {
         if (error && error.reason === AppsError.NOT_FOUND) return next(new HttpError(404, error.message));
         if (error && error.reason === AppsError.ALREADY_EXISTS) return next(new HttpError(409, error.message));
         if (error && error.reason === AppsError.PORT_RESERVED) return next(new HttpError(409, 'Port ' + error.message + ' is reserved.'));
@@ -226,7 +222,7 @@ function configureApp(req, res, next) {
 
     debug('Configuring app id:%s data:%j', req.params.id, data);
 
-    apps.configure(req.params.id, data, req.user, auditSource(req), function (error) {
+    apps.configure(req.params.id, data, req.user, auditSource.fromRequest(req), function (error) {
         if (error && error.reason === AppsError.ALREADY_EXISTS) return next(new HttpError(409, error.message));
         if (error && error.reason === AppsError.PORT_RESERVED) return next(new HttpError(409, 'Port ' + error.message + ' is reserved.'));
         if (error && error.reason === AppsError.PORT_CONFLICT) return next(new HttpError(409, 'Port ' + error.message + ' is already in use.'));
@@ -251,7 +247,7 @@ function restoreApp(req, res, next) {
     if (!('backupId' in req.body)) return next(new HttpError(400, 'backupId is required'));
     if (data.backupId !== null && typeof data.backupId !== 'string') return next(new HttpError(400, 'backupId must be string or null'));
 
-    apps.restore(req.params.id, data, auditSource(req), function (error) {
+    apps.restore(req.params.id, data, auditSource.fromRequest(req), function (error) {
         if (error && error.reason === AppsError.NOT_FOUND) return next(new HttpError(404, 'No such app'));
         if (error && error.reason === AppsError.BAD_FIELD) return next(new HttpError(400, error.message));
         if (error && error.reason === AppsError.BAD_STATE) return next(new HttpError(409, error.message));
@@ -276,7 +272,7 @@ function cloneApp(req, res, next) {
     if (typeof data.domain !== 'string') return next(new HttpError(400, 'domain is required'));
     if (('portBindings' in data) && typeof data.portBindings !== 'object') return next(new HttpError(400, 'portBindings must be an object'));
 
-    apps.clone(req.params.id, data, req.user, auditSource(req), function (error, result) {
+    apps.clone(req.params.id, data, req.user, auditSource.fromRequest(req), function (error, result) {
         if (error && error.reason === AppsError.NOT_FOUND) return next(new HttpError(404, 'No such app'));
         if (error && error.reason === AppsError.PORT_RESERVED) return next(new HttpError(409, 'Port ' + error.message + ' is reserved.'));
         if (error && error.reason === AppsError.PORT_CONFLICT) return next(new HttpError(409, 'Port ' + error.message + ' is already in use.'));
@@ -312,7 +308,7 @@ function uninstallApp(req, res, next) {
 
     debug('Uninstalling app id:%s', req.params.id);
 
-    apps.uninstall(req.params.id, auditSource(req), function (error) {
+    apps.uninstall(req.params.id, auditSource.fromRequest(req), function (error) {
         if (error && error.reason === AppsError.BILLING_REQUIRED) return next(new HttpError(402, 'Billing required'));
         if (error && error.reason === AppsError.NOT_FOUND) return next(new HttpError(404, 'No such app'));
         if (error) return next(new HttpError(500, error));
@@ -365,7 +361,7 @@ function updateApp(req, res, next) {
 
     debug('Update app id:%s to manifest:%j', req.params.id, data.manifest);
 
-    apps.update(req.params.id, req.body, auditSource(req), function (error) {
+    apps.update(req.params.id, req.body, auditSource.fromRequest(req), function (error) {
         if (error && error.reason === AppsError.NOT_FOUND) return next(new HttpError(404, 'No such app'));
         if (error && error.reason === AppsError.BAD_FIELD) return next(new HttpError(400, error.message));
         if (error && error.reason === AppsError.BAD_STATE) return next(new HttpError(409, error.message));

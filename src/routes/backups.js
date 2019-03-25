@@ -5,16 +5,12 @@ exports = module.exports = {
     startBackup: startBackup
 };
 
-var backupdb = require('../backupdb.js'),
+let auditSource = require('../auditsource.js'),
+    backupdb = require('../backupdb.js'),
     backups = require('../backups.js'),
     BackupsError = require('../backups.js').BackupsError,
     HttpError = require('connect-lastmile').HttpError,
     HttpSuccess = require('connect-lastmile').HttpSuccess;
-
-function auditSource(req) {
-    var ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress || null;
-    return { ip: ip, username: req.user ? req.user.username : null, userId: req.user ? req.user.id : null };
-}
 
 function list(req, res, next) {
     var page = typeof req.query.page !== 'undefined' ? parseInt(req.query.page) : 1;
@@ -32,7 +28,7 @@ function list(req, res, next) {
 }
 
 function startBackup(req, res, next) {
-    backups.startBackupTask(auditSource(req), function (error, taskId) {
+    backups.startBackupTask(auditSource.fromRequest(req), function (error, taskId) {
         if (error && error.reason === BackupsError.BAD_STATE) return next(new HttpError(409, error.message));
         if (error) return next(new HttpError(500, error));
 
