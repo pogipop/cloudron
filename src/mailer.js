@@ -9,7 +9,6 @@ exports = module.exports = {
     sendDigest: sendDigest,
 
     sendInvite: sendInvite,
-    unexpectedExit: unexpectedExit,
 
     appUp: appUp,
     appDied: appDied,
@@ -447,27 +446,6 @@ function oomEvent(mailTo, program, event) {
             to: mailTo,
             subject: util.format('[%s] %s was restarted (OOM)', mailConfig.cloudronName, program),
             text: render('oom_event.ejs', { cloudronName: mailConfig.cloudronName, program: program, event: JSON.stringify(event), format: 'text' })
-        };
-
-        sendMails([ mailOptions ]);
-    });
-}
-
-// this function bypasses the queue intentionally. it is also expected to work without the mailer module initialized
-// NOTE: crashnotifier should ideally be able to send mail when there is no db, however we need the 'from' address domain from the db
-function unexpectedExit(mailTo, subject, context) {
-    assert.strictEqual(typeof mailTo, 'string');
-    assert.strictEqual(typeof subject, 'string');
-    assert.strictEqual(typeof context, 'string');
-
-    getMailConfig(function (error, mailConfig) {
-        if (error) return debug('Error getting mail details:', error);
-
-        var mailOptions = {
-            from: mailConfig.notificationFrom,
-            to: mailTo,
-            subject: `[${mailConfig.cloudronName}] ${subject}`,
-            text: render('unexpected_exit.ejs', { cloudronName: mailConfig.cloudronName, subject: subject, context: context, format: 'text' })
         };
 
         sendMails([ mailOptions ]);

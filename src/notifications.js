@@ -30,9 +30,6 @@ let assert = require('assert'),
     eventlog = require('./eventlog.js'),
     mailer = require('./mailer.js'),
     notificationdb = require('./notificationdb.js'),
-    path = require('path'),
-    paths = require('./paths.js'),
-    safe = require('safetydance'),
     users = require('./users.js'),
     util = require('util');
 
@@ -233,42 +230,6 @@ function appDied(eventId, app, callback) {
     }, callback);
 }
 
-function processCrash(eventId, processName, crashId, callback) {
-    assert.strictEqual(typeof eventId, 'string');
-    assert.strictEqual(typeof processName, 'string');
-    assert.strictEqual(typeof crashId, 'string');
-    assert.strictEqual(typeof callback, 'function');
-
-    var subject = `${processName} exited unexpectedly`;
-    var crashLogs = safe.fs.readFileSync(path.join(paths.CRASH_LOG_DIR, crashId, '.log'), 'utf8') || `No logs found at ${crashId}.log`;
-
-    // also send us a notification mail
-    if (config.provider() === 'caas') mailer.unexpectedExit('support@cloudron.io', subject, crashLogs);
-
-    actionForAllAdmins([], function (admin, callback) {
-        mailer.unexpectedExit(admin.email, subject, crashLogs);
-        add(admin.id, eventId, subject, `The service has been restarted automatically. Crash logs are available [here](/logs.html?crashId=${crashId}).`, callback);
-    }, callback);
-}
-
-function apptaskCrash(eventId, appId, crashLogFile, callback) {
-    assert.strictEqual(typeof eventId, 'string');
-    assert.strictEqual(typeof appId, 'string');
-    assert.strictEqual(typeof crashLogFile, 'string');
-    assert.strictEqual(typeof callback, 'function');
-
-    var subject = `Apptask for ${appId} crashed`;
-    var crashLogs = safe.fs.readFileSync(crashLogFile, 'utf8') || `No logs found at ${crashLogFile}`;
-
-    // also send us a notification mail
-    if (config.provider() === 'caas') mailer.unexpectedExit('support@cloudron.io', subject, crashLogs);
-
-    actionForAllAdmins([], function (admin, done) {
-        mailer.unexpectedExit(admin.email, subject, crashLogs);
-        add(admin.id, eventId, subject, 'Detailed logs have been sent to your email address.', done);
-    }, callback);
-}
-
 function certificateRenewalError(eventId, vhost, errorMessage, callback) {
     assert.strictEqual(typeof eventId, 'string');
     assert.strictEqual(typeof vhost, 'string');
@@ -363,8 +324,6 @@ function onEvent(id, action, source, data, callback) {
     case eventlog.ACTION_APP_OOM: return oomEvent(id, data.app, data.addon, data.containerId, data.event, callback);
     case eventlog.ACTION_APP_DOWN: return appDied(id, data.app, callback);
     case eventlog.ACTION_APP_UP: return appUp(id, data.app, callback);
-    case eventlog.ACTION_APP_TASK_CRASH: return apptaskCrash(id, data.appId, data.crashLogFile, callback);
-    case eventlog.ACTION_PROCESS_CRASH: return processCrash(id, data.processName, data.crashId, callback);
     case eventlog.ACTION_CERTIFICATE_RENEWAL:
     case eventlog.ACTION_CERTIFICATE_NEW:
         return data.errorMessage ? certificateRenewalError(id, data.domain, data.errorMessage, callback): callback();
