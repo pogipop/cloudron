@@ -318,18 +318,35 @@ function onEvent(id, action, source, data, callback) {
     assert.strictEqual(typeof callback, 'function');
 
     switch (action) {
-    case eventlog.ACTION_USER_ADD: return userAdded(source.userId, id, data.user, callback);
-    case eventlog.ACTION_USER_REMOVE: return userRemoved(source.userId, id, data.user, callback);
-    case eventlog.ACTION_USER_UPDATE: return data.adminStatusChanged ? adminChanged(source.userId, id, data.user, callback) : callback();
-    case eventlog.ACTION_APP_OOM: return oomEvent(id, data.app, data.addon, data.containerId, data.event, callback);
-    case eventlog.ACTION_APP_DOWN: return appDied(id, data.app, callback);
-    case eventlog.ACTION_APP_UP: return appUp(id, data.app, callback);
+    case eventlog.ACTION_USER_ADD:
+        return userAdded(source.userId, id, data.user, callback);
+
+    case eventlog.ACTION_USER_REMOVE:
+        return userRemoved(source.userId, id, data.user, callback);
+
+    case eventlog.ACTION_USER_UPDATE:
+        if (!data.adminStatusChanged) return callback();
+        return adminChanged(source.userId, id, data.user, callback);
+
+    case eventlog.ACTION_APP_OOM:
+        return oomEvent(id, data.app, data.addon, data.containerId, data.event, callback);
+
+    case eventlog.ACTION_APP_DOWN:
+        return appDied(id, data.app, callback);
+
+    case eventlog.ACTION_APP_UP:
+        return appUp(id, data.app, callback);
+
     case eventlog.ACTION_CERTIFICATE_RENEWAL:
     case eventlog.ACTION_CERTIFICATE_NEW:
-        return data.errorMessage ? certificateRenewalError(id, data.domain, data.errorMessage, callback): callback();
+        if (!data.errorMessage) return callback();
+        return certificateRenewalError(id, data.domain, data.errorMessage, callback);
 
-    case eventlog.ACTION_BACKUP_FINISH: return data.errorMessage ? backupFailed(id, data.taskId, data.errorMessage, callback) : callback();
+    case eventlog.ACTION_BACKUP_FINISH:
+        if (!data.errorMessage) return callback();
+        return backupFailed(id, data.taskId, data.errorMessage, callback);
 
-    default: return callback();
+    default:
+        return callback();
     }
 }
