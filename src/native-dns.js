@@ -5,7 +5,10 @@ exports = module.exports = {
 };
 
 var assert = require('assert'),
-    dns = require('dns');
+    dns = require('dns'),
+    _ = require('underscore');
+
+const DEFAULT_OPTIONS = { server: '127.0.0.1', timeout: 5000 }; // unbound runs on 127.0.0.1
 
 // a note on TXT records. It doesn't have quotes ("") at the DNS level. Those quotes
 // are added for DNS server software to enclose spaces. Such quotes may also be returned
@@ -17,7 +20,8 @@ function resolve(hostname, rrtype, options, callback) {
     assert.strictEqual(typeof callback, 'function');
 
     const resolver = new dns.Resolver();
-    if (options.server) resolver.setServers([ options.server ]);
+    options = _.extend(DEFAULT_OPTIONS, options);
+    resolver.setServers([ options.server ]);
 
     // should callback with ECANCELLED but looks like we might hit https://github.com/nodejs/node/issues/14814
     const timerId = setTimeout(resolver.cancel.bind(resolver), options.timeout || 5000);

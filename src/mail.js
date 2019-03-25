@@ -78,7 +78,7 @@ var assert = require('assert'),
     util = require('util'),
     _ = require('underscore');
 
-const DNS_OPTIONS = { server: '127.0.0.1', timeout: 5000 }; // unbound runs on 127.0.0.1
+const DNS_OPTIONS = { timeout: 5000 };
 var NOOP_CALLBACK = function (error) { if (error) debug(error); };
 
 function MailError(reason, errorOrMessage) {
