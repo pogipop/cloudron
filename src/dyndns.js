@@ -6,6 +6,7 @@ exports = module.exports = {
 
 var appdb = require('./appdb.js'),
     apps = require('./apps.js'),
+    assert = require('assert'),
     async = require('async'),
     config = require('./config.js'),
     constants = require('./constants.js'),
@@ -16,11 +17,10 @@ var appdb = require('./appdb.js'),
     safe = require('safetydance'),
     sysinfo = require('./sysinfo.js');
 
-var NOOP_CALLBACK = function (error) { if (error) debug(error); };
-
 // called for dynamic dns setups where we have to update the IP
-function sync(callback) {
-    callback = callback || NOOP_CALLBACK;
+function sync(auditSource, callback) {
+    assert.strictEqual(typeof auditSource, 'object');
+    assert.strictEqual(typeof callback, 'function');
 
     sysinfo.getPublicIp(function (error, ip) {
         if (error) return callback(error);
@@ -51,7 +51,7 @@ function sync(callback) {
 
                     debug('refreshDNS: updated apps');
 
-                    eventlog.add(eventlog.ACTION_DYNDNS_UPDATE, { userId: null, username: 'cron' }, { fromIp: info.ip, toIp: ip });
+                    eventlog.add(eventlog.ACTION_DYNDNS_UPDATE, auditSource, { fromIp: info.ip, toIp: ip });
                     info.ip = ip;
                     safe.fs.writeFileSync(paths.DYNDNS_INFO_FILE, JSON.stringify(info), 'utf8');
 

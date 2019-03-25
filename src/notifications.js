@@ -343,8 +343,8 @@ function onEvent(id, action, source, data, callback) {
         return certificateRenewalError(id, data.domain, data.errorMessage, callback);
 
     case eventlog.ACTION_BACKUP_FINISH:
-        if (!data.errorMessage) return callback();
-        return backupFailed(id, data.taskId, data.errorMessage, callback);
+        if (!data.errorMessage || source.username !== 'cron') return callback();
+        return backupFailed(id, data.taskId, data.errorMessage, callback); // only notify for automated backups
 
     default:
         return callback();

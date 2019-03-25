@@ -13,6 +13,7 @@ var appHealthMonitor = require('./apphealthmonitor.js'),
     apps = require('./apps.js'),
     appstore = require('./appstore.js'),
     assert = require('assert'),
+    auditSource = require('./auditsource.js'),
     backups = require('./backups.js'),
     caas = require('./caas.js'),
     cloudron = require('./cloudron.js'),
@@ -50,7 +51,6 @@ var gJobs = {
 };
 
 var NOOP_CALLBACK = function (error) { if (error) debug(error); };
-var AUDIT_SOURCE = { userId: null, username: 'cron' };
 
 // cron format
 // Seconds: 0-59
@@ -120,7 +120,7 @@ function recreateJobs(tz) {
     if (gJobs.backup) gJobs.backup.stop();
     gJobs.backup = new CronJob({
         cronTime: '00 00 */6 * * *', // check every 6 hours
-        onTick: backups.ensureBackup.bind(null, AUDIT_SOURCE, NOOP_CALLBACK),
+        onTick: backups.ensureBackup.bind(null, auditSource.CRON, NOOP_CALLBACK),
         start: true,
         timeZone: tz
     });
@@ -164,7 +164,7 @@ function recreateJobs(tz) {
     if (gJobs.cleanupBackups) gJobs.cleanupBackups.stop();
     gJobs.cleanupBackups = new CronJob({
         cronTime: '00 45 */6 * * *', // every 6 hours. try not to overlap with ensureBackup job
-        onTick: backups.startCleanupTask.bind(null, AUDIT_SOURCE, NOOP_CALLBACK),
+        onTick: backups.startCleanupTask.bind(null, auditSource.CRON, NOOP_CALLBACK),
         start: true,
         timeZone: tz
     });
@@ -196,7 +196,7 @@ function recreateJobs(tz) {
     if (gJobs.certificateRenew) gJobs.certificateRenew.stop();
     gJobs.certificateRenew = new CronJob({
         cronTime: '00 00 */12 * * *', // every 12 hours
-        onTick: cloudron.renewCerts.bind(null, {}, AUDIT_SOURCE, NOOP_CALLBACK),
+        onTick: cloudron.renewCerts.bind(null, {}, auditSource.CRON, NOOP_CALLBACK),
         start: true,
         timeZone: tz
     });
@@ -234,7 +234,7 @@ function boxAutoupdatePatternChanged(pattern) {
             var updateInfo = updateChecker.getUpdateInfo();
             if (updateInfo.box) {
                 debug('Starting autoupdate to %j', updateInfo.box);
-                updater.updateToLatest(AUDIT_SOURCE, NOOP_CALLBACK);
+                updater.updateToLatest(auditSource.CRON, NOOP_CALLBACK);
             } else {
                 debug('No box auto updates available');
             }
@@ -260,7 +260,7 @@ function appAutoupdatePatternChanged(pattern) {
             var updateInfo = updateChecker.getUpdateInfo();
             if (updateInfo.apps) {
                 debug('Starting app update to %j', updateInfo.apps);
-                apps.autoupdateApps(updateInfo.apps, AUDIT_SOURCE, NOOP_CALLBACK);
+                apps.autoupdateApps(updateInfo.apps, auditSource.CRON, NOOP_CALLBACK);
             } else {
                 debug('No app auto updates available');
             }
@@ -279,7 +279,7 @@ function dynamicDnsChanged(enabled) {
     if (enabled) {
         gJobs.dynamicDns = new CronJob({
             cronTime: '00 */10 * * * *',
-            onTick: dyndns.sync,
+            onTick: dyndns.sync.bind(null, auditSource.CRON, NOOP_CALLBACK),
             start: true,
             timeZone: gJobs.boxUpdateCheckerJob.cronTime.zone // hack
         });

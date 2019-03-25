@@ -1575,4 +1575,5 @@
 * Ensure MySQL is storing data/time in UTC
 * Fix bug where the UI redirects to login screen when enabling 2FA with invalid token
 * Use unbound resolver when resolving NS record of a domain
+* Various fixes for notifications
 
