@@ -1577,4 +1577,5 @@
 * Use unbound resolver when resolving NS record of a domain
 * Various fixes for notifications
 * Add FTP support for apps
+* Add app version as part of info dialog
 
