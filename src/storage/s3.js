@@ -322,8 +322,12 @@ function copy(apiConfig, oldFilePath, newFilePath) {
                         UploadId: uploadId
                     };
 
+                    events.emit('progress', `Copying part ${params.PartNumber} - ${params.CopySource} ${params.CopySourceRange}`);
+
                     s3.uploadPartCopy(params, function (error, result) {
                         if (error) return done(error);
+
+                        events.emit('progress', `Uploaded part ${params.PartNumber} - Etag: ${result.CopyPartResult.ETag}`);
 
                         uploadedParts.push({ ETag: result.CopyPartResult.ETag, PartNumber: partNumber });
 
@@ -339,6 +343,8 @@ function copy(apiConfig, oldFilePath, newFilePath) {
                             MultipartUpload: { Parts: uploadedParts },
                             UploadId: uploadId
                         };
+
+                        events.emit('progress', `Finishing multipart copy - ${params.Key}`);
 
                         s3.completeMultipartUpload(params, done);
                     }).on('retry', function (response) {
