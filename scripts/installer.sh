@@ -57,9 +57,9 @@ if [[ $(docker version --format {{.Client.Version}}) != "18.09.2" ]]; then
 fi
 
 echo "==> installer: updating proftpd"
-if [[ "$(proftpd --version)" != *"1.3.5"* ]]; then
+if ! command -v proftpd; then
     echo "Install proftpd"
-    apt install -y proftpd-basic=1.3.5e-1build1 proftpd-mod-ldap=1.3.5e-1build1
+    apt install -y proftpd-basic proftpd-mod-ldap
     systemctl stop proftpd
 fi
 
