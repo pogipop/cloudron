@@ -35,6 +35,7 @@ apt-get -y install \
     build-essential \
     cron \
     curl \
+    debconf-utils \
     dmsetup \
     $gpg_package \
     iptables \
