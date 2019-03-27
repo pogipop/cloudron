@@ -186,6 +186,10 @@ else
     cp "${BOX_DATA_DIR}/dhparams.pem" "${PLATFORM_DATA_DIR}/addons/mail/dhparams.pem"
 fi
 
+# old installations used to create appdata/<app>/redis which is now part of old backups and prevents restore
+echo "==> Cleaning up stale redis directories"
+find "${APPS_DATA_DIR}" -maxdepth 2 -type d -name redis -exec rm -rf {} +
+
 echo "==> Changing ownership"
 # be careful of what is chown'ed here. subdirs like mysql,redis etc are owned by the containers and will stop working if perms change
 chown -R "${USER}" /etc/cloudron
