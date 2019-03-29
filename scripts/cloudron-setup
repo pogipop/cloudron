@@ -93,7 +93,7 @@ echo "Running cloudron-setup with args : $@" > "${LOG_FILE}"
 
 # validate arguments in the absence of data
 if [[ -z "${provider}" ]]; then
-    echo "--provider is required (azure, digitalocean, ec2, exoscale, gce, hetzner, lightsail, linode, netcup, ovh, rosehosting, scaleway, vultr or generic)"
+    echo "--provider is required (azure, contabo, digitalocean, ec2, exoscale, gce, hetzner, lightsail, linode, netcup, ovh, rosehosting, scaleway, vultr or generic)"
     exit 1
 elif [[  \
             "${provider}" != "ami" && \
