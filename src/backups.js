@@ -286,9 +286,9 @@ function tarPack(dataLayout, key, callback) {
     var pack = tar.pack('/', {
         dereference: false, // pack the symlink and not what it points to
         entries: dataLayout.localPaths(),
-        ignoreFileRemoved: (path, err) => {
-            debug(`tarPack: ${path} got removed (${err.code}). ignoring`);
-            return true;
+        ignoreStatError: (path, err) => {
+            debug(`tarPack: error stat'ing ${path} - ${err.code}`);
+            return err.code === 'ENOENT'; // ignore if file or dir got removed (probably some temporary file)
         },
         map: function(header) {
             header.name = dataLayout.toRemotePath(header.name);
