@@ -1,12 +1,12 @@
 'use strict';
 
 var assert = require('assert'),
-    async = require('async'),
     DataLayout = require('./datalayout.js'),
     debug = require('debug')('box:syncer'),
     fs = require('fs'),
     path = require('path'),
     paths = require('./paths.js'),
+    readline = require('readline'),
     safe = require('safetydance');
 
 exports = module.exports = {
@@ -62,16 +62,61 @@ function ISFILE(x) {
     return (x & fs.constants.S_IFREG) === fs.constants.S_IFREG;
 }
 
+// a queue backed by a file
+class Queue {
+    constructor(queueFile) {
+        assert.strictEqual(typeof queueFile, 'string');
+
+        this._queueFile = queueFile;
+        this._queueFd = fs.openSync(queueFile, 'w'); // truncates any existing file
+        this.length = 0;
+    }
+    push(task) {
+        fs.appendFileSync(this._queueFd, JSON.stringify(task) + '\n');
+        this.length++;
+    }
+    destroy() {
+        fs.unlinkSync(this._queueFile);
+    }
+    process(concurrency, taskProcessor, callback) {
+        fs.closeSync(this._queueFd);
+        this._queueFd = -1;
+        let inflight = 0;
+
+        let lineReader = readline.createInterface({
+            input: fs.createReadStream(this._queueFile),
+            crlfDelay: Infinity,
+            terminal: false
+        });
+
+        lineReader.on('line', (line) => {
+            ++inflight;
+            taskProcessor(JSON.parse(line), (error) => {
+                if (error) return callback(error);
+                --inflight;
+                if (lineReader.closed && !inflight) return callback();
+                if (inflight < concurrency) return lineReader.resume();
+            });
+
+            if (inflight >= concurrency) lineReader.pause(); // this doesn't pause 'line' events. it's OK to go a bit over concurrency
+        });
+        lineReader.on('close', () => { if (!inflight) return callback(); });
+    }
+}
+
 function sync(dataLayout, taskProcessor, concurrency, callback) {
     assert(dataLayout instanceof DataLayout, 'Expecting dataLayout to be a DataLayout');
     assert.strictEqual(typeof taskProcessor, 'function');
     assert.strictEqual(typeof concurrency, 'number');
     assert.strictEqual(typeof callback, 'function');
 
-    var curCacheIndex = 0, addQueue = [ ], delQueue = [ ];
+    var curCacheIndex = 0;
 
     var cacheFile = path.join(paths.BACKUP_INFO_DIR, dataLayout.getBasename() + '.sync.cache'),
         newCacheFile = path.join(paths.BACKUP_INFO_DIR, dataLayout.getBasename() + '.sync.cache.new');
+
+    let addQueue = new Queue(path.join(paths.BACKUP_INFO_DIR, dataLayout.getBasename() + '.add.queue')),
+        delQueue = new Queue(path.join(paths.BACKUP_INFO_DIR, dataLayout.getBasename() + '.del.queue'));
 
     var cache = [ ];
 
@@ -157,11 +202,13 @@ function sync(dataLayout, taskProcessor, concurrency, callback) {
 
     debug('Processing %s deletes and %s additions', delQueue.length, addQueue.length);
 
-    async.eachLimit(delQueue, concurrency, taskProcessor, function (error) {
+    delQueue.process(concurrency, taskProcessor, function (error) {
         debug('Done processing deletes', error);
+        delQueue.destroy();
 
-        async.eachLimit(addQueue, concurrency, taskProcessor, function (error) {
+        addQueue.process(concurrency, taskProcessor, function (error) {
             debug('Done processing adds', error);
+            addQueue.destroy();
 
             if (error) return callback(error);
 
