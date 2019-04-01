@@ -286,6 +286,10 @@ function tarPack(dataLayout, key, callback) {
     var pack = tar.pack('/', {
         dereference: false, // pack the symlink and not what it points to
         entries: dataLayout.localPaths(),
+        ignoreFileRemoved: (path, err) => {
+            debug(`tarPack: ${path} got removed (${err.code}). ignoring`);
+            return true;
+        },
         map: function(header) {
             header.name = dataLayout.toRemotePath(header.name);
             return header;

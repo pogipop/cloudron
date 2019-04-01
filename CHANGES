@@ -1578,4 +1578,5 @@
 * Various fixes for notifications
 * Add FTP support for apps
 * Add app version as part of info dialog
+* (backup) Do not abort archive if file(s) disappear
 

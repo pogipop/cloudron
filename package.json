@@ -70,7 +70,7 @@
     "split": "^1.0.1",
     "superagent": "^4.1.0",
     "supererror": "^0.7.2",
-    "tar-fs": "^2.0.0",
+    "tar-fs": "github:cloudron-io/tar-fs#ignore_file_removed",
     "tar-stream": "^2.0.1",
     "tldjs": "^2.3.1",
     "underscore": "^1.9.1",
