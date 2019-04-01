@@ -150,6 +150,7 @@ function sync(dataLayout, taskProcessor, concurrency, callback) {
 
     traverse(readDataLayoutTree(dataLayout), '');
     advanceCache(''); // remove rest of the cache entries
+    cache = []; // clear cache to clear up some memory
 
     safe.fs.closeSync(newCacheFd);
 
