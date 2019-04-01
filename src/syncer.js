@@ -130,8 +130,6 @@ function sync(dataLayout, taskProcessor, concurrency, callback) {
                 }
             } else if (ISDIR(cacheStat.mode) && entryStat.isDirectory()) { // dir names match
                 ++curCacheIndex;
-                // if we just pass path, have to keep looking into data layout!!! so pass an object
-                // the object needs to have the path where we are traversing...
                 traverse(readTree(entry.absolutePath), entryPath);
             } else if (ISFILE(cacheStat.mode) && entryStat.isFile()) { // file names match
                 if (entryStat.mtime.getTime() !== cacheStat.mtime || entryStat.size != cacheStat.size || entryStat.inode !== cacheStat.inode) { // file changed
