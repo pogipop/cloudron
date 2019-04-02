@@ -1,5 +1,5 @@
 #!/bin/bash
-':' //# comment; exec /usr/bin/env node --max_old_space_size=300 "$0" "$@"
+':' //# comment; exec /usr/bin/env node --expose-gc "$0" "$@"
 
 // to understand the above hack read http://sambal.org/2014/02/passing-options-node-shebang-line/
 
