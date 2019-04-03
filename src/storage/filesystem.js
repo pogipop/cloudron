@@ -113,12 +113,12 @@ function copy(apiConfig, oldFilePath, newFilePath) {
     assert.strictEqual(typeof oldFilePath, 'string');
     assert.strictEqual(typeof newFilePath, 'string');
 
-    debug('copy: %s -> %s', oldFilePath, newFilePath);
-
     var events = new EventEmitter();
 
     mkdirp(path.dirname(newFilePath), function (error) {
         if (error) return events.emit('done', new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
+
+        events.emit('progress', `Copying ${oldFilePath} to ${newFilePath}`);
 
         // this will hardlink backups saving space
         var cpOptions = apiConfig.noHardlinks ? '-a' : '-al';
@@ -155,7 +155,7 @@ function removeDir(apiConfig, pathPrefix) {
 
     var events = new EventEmitter();
 
-    events.emit('progress', `removeDir: ${pathPrefix}`);
+    process.nextTick(() => events.emit('progress', `Removing directory ${pathPrefix}`));
 
     shell.spawn('removeDir', '/bin/rm', [ '-rf', pathPrefix ], { }, function (error) {
         if (error) return events.emit('done', new BackupsError(BackupsError.EXTERNAL_ERROR, error.message));
