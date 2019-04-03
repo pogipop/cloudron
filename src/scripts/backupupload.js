@@ -37,10 +37,22 @@ process.on('disconnect', function () {
     process.exit(0);
 });
 
+// send progress every n seconds
+function throttledProgressCallback(msecs) {
+    let lastProgress = null;
+
+    return function (progress) {
+        let now = Date.now();
+        if (lastProgress && ((now - lastProgress) < msecs)) return;
+        process.send(progress);
+        lastProgress = now;
+    };
+}
+
 initialize(function (error) {
     if (error) throw error;
 
-    backups.upload(backupId, format, dataLayoutString, (progress) => process.send(progress), function resultHandler(error) {
+    backups.upload(backupId, format, dataLayoutString, throttledProgressCallback(5000), function resultHandler(error) {
         if (error) debug('upload completed with error', error);
 
         debug('upload completed');
