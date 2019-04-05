@@ -513,13 +513,9 @@ function userSearchSftp(req, res, next) {
 
         // only allow apps which specify "ftp" support in the localstorage addon
         if (!safe.query(app.manifest.addons, 'localstorage.ftp.uid')) return next(new ldap.UnavailableError('Not supported'));
-        if (typeof app.manifest.addons.localstorage.ftp.uid !== 'string') return next(new ldap.UnavailableError('Bad uid'));
+        if (typeof app.manifest.addons.localstorage.ftp.uid !== 'number') return next(new ldap.UnavailableError('Bad uid, must be a number'));
 
-        const uidNumber = parseInt(app.manifest.addons.localstorage.ftp.uid.split('/')[0], 10);
-        if (!Number.isInteger(uidNumber)) {
-            console.error('addon localstorage ftp uid must be an integer', app);
-            return next(new ldap.UnavailableError('Not supported'));
-        }
+        const uidNumber = app.manifest.addons.localstorage.ftp.uid;
 
         users.getByUsername(username, function (error, user) {
             if (error) return next(new ldap.OperationsError(error.toString()));
