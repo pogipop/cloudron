@@ -21,6 +21,6 @@ exports = module.exports = {
         'redis': { repo: 'cloudron/redis', tag: 'cloudron/redis:2.0.0@sha256:8a88dd334b62b578530a014ca1a2425a54cb9df1e475f5d3a36806e5cfa22121' },
         'mail': { repo: 'cloudron/mail', tag: 'cloudron/mail:2.2.0@sha256:20e4d2508dcf712eb56481067993ae39bf541d793d44f99f6a41d630ad941d9e' },
         'graphite': { repo: 'cloudron/graphite', tag: 'cloudron/graphite:2.0.2@sha256:454f035d60b768153d4f31210380271b5ba1c09367c9d95c7fa37f9e39d2f59c' },
-        'sftp': { repo: 'cloudron/sftp', tag: 'cloudron/sftp:0.0.1@sha256:2e620f62cf2868ee29eafdc574eca012990a21898f77ab47f2f86e5788134f20' }
+        'sftp': { repo: 'cloudron/sftp', tag: 'cloudron/sftp:0.1.0@sha256:e177c5bf5f38c84ce1dea35649c22a1b05f96eec67a54a812c5a35e585670f0f' }
     }
 };
