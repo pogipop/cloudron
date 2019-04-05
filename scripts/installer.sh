@@ -56,23 +56,6 @@ if [[ $(docker version --format {{.Client.Version}}) != "18.09.2" ]]; then
     rm /tmp/containerd.deb /tmp/docker-ce-cli.deb /tmp/docker.deb
 fi
 
-echo "==> installer: updating proftpd"
-while ! command -v proftpd; do
-    echo "Install proftpd"
-    if ! apt install -y debconf-utils; then
-        echo "==> installer: Failed to install debconf-utils. Retry"
-        sleep 1
-        continue
-    fi
-    echo "proftpd-basic shared/proftpd/inetd_or_standalone select standalone" | debconf-set-selections
-    if ! apt install -y proftpd-basic proftpd-mod-ldap; then
-        echo "==> installer: Failed to install proftpd. Retry"
-        sleep 1
-        continue
-    fi
-    systemctl stop proftpd
-done
-
 echo "==> installer: updating node"
 if [[ "$(node --version)" != "v10.15.1" ]]; then
     mkdir -p /usr/local/node-10.15.1

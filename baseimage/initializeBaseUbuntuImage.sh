@@ -44,8 +44,6 @@ apt-get -y install \
     mysql-server-5.7 \
     nginx-full \
     openssh-server \
-    proftpd-basic \
-    proftpd-mod-ldap \
     pwgen \
     resolvconf \
     sudo \

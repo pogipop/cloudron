@@ -18,7 +18,6 @@ var assert = require('assert'),
     MailError = mail.MailError,
     mailboxdb = require('./mailboxdb.js'),
     path = require('path'),
-    paths = require('./paths.js'),
     safe = require('safetydance'),
     users = require('./users.js'),
     UsersError = users.UsersError;
@@ -479,12 +478,8 @@ function authenticateUserMailbox(req, res, next) {
     });
 }
 
-function authenticateProftpd(req, res, next) {
-    debug('proftpd addon auth: %s (from %s)', req.dn.toString(), req.connection.ldap.id);
-
-    var sourceIp = req.connection.ldap.id.split(':')[0];
-    if (sourceIp.split('.').length !== 4) return next(new ldap.InsufficientAccessRightsError('Missing source identifier'));
-    if (sourceIp !== '127.0.0.1') return next(new ldap.InsufficientAccessRightsError('Source not authorized'));
+function authenticateSftp(req, res, next) {
+    debug('sftp auth: %s (from %s)', req.dn.toString(), req.connection.ldap.id);
 
     if (!req.dn.rdns[0].attrs.cn) return next(new ldap.NoSuchObjectError(req.dn.toString()));
 
@@ -496,18 +491,14 @@ function authenticateProftpd(req, res, next) {
     users.verifyWithUsername(parts[0], req.credentials, function (error) {
         if (error) return next(new ldap.InvalidCredentialsError(req.dn.toString()));
 
-        debug('proftpd addon auth: success');
+        debug('sftp auth: success');
 
         res.end();
     });
 }
 
-function userSearchProftpd(req, res, next) {
-    debug('proftpd user search: dn %s, scope %s, filter %s (from %s)', req.dn.toString(), req.scope, req.filter.toString(), req.connection.ldap.id);
-
-    var sourceIp = req.connection.ldap.id.split(':')[0];
-    if (sourceIp.split('.').length !== 4) return next(new ldap.InsufficientAccessRightsError('Missing source identifier'));
-    if (sourceIp !== '127.0.0.1') return next(new ldap.InsufficientAccessRightsError('Source not authorized'));
+function userSearchSftp(req, res, next) {
+    debug('sftp user search: dn %s, scope %s, filter %s (from %s)', req.dn.toString(), req.scope, req.filter.toString(), req.connection.ldap.id);
 
     if (req.filter.attribute !== 'username' || !req.filter.value) return next(new ldap.NoSuchObjectError(req.dn.toString()));
 
@@ -525,7 +516,6 @@ function userSearchProftpd(req, res, next) {
         if (typeof app.manifest.addons.localstorage.ftp.uid !== 'string') return next(new ldap.UnavailableError('Bad uid'));
 
         const uidNumber = parseInt(app.manifest.addons.localstorage.ftp.uid.split('/')[0], 10);
-
         if (!Number.isInteger(uidNumber)) {
             console.error('addon localstorage ftp uid must be an integer', app);
             return next(new ldap.UnavailableError('Not supported'));
@@ -539,9 +529,9 @@ function userSearchProftpd(req, res, next) {
                 if (!hasAccess) return next(new ldap.InsufficientAccessRightsError('Not authorized'));
 
                 var obj = {
-                    dn: ldap.parseDN(`cn=${username}@${appFqdn},ou=proftpd,dc=cloudron`).toString(),
+                    dn: ldap.parseDN(`cn=${username}@${appFqdn},ou=sftp,dc=cloudron`).toString(),
                     attributes: {
-                        homeDirectory: path.join(paths.APPS_DATA_DIR, app.id, 'data'),
+                        homeDirectory: path.join('/app/data', app.id, 'data'),
                         objectclass: ['user'],
                         objectcategory: 'person',
                         cn: user.id,
@@ -631,8 +621,8 @@ function start(callback) {
     gServer.bind('ou=recvmail,dc=cloudron', authenticateMailAddon); // dovecot
     gServer.bind('ou=sendmail,dc=cloudron', authenticateMailAddon); // haraka
 
-    gServer.bind('ou=proftpd,dc=cloudron', authenticateProftpd);    // proftdp
-    gServer.search('ou=proftpd,dc=cloudron', userSearchProftpd);
+    gServer.bind('ou=sftp,dc=cloudron', authenticateSftp);    // sftp
+    gServer.search('ou=sftp,dc=cloudron', userSearchSftp);
 
     gServer.compare('cn=users,ou=groups,dc=cloudron', authenticateApp, groupUsersCompare);
     gServer.compare('cn=admins,ou=groups,dc=cloudron', authenticateApp, groupAdminsCompare);

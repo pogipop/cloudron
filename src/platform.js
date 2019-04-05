@@ -21,6 +21,7 @@ var addons = require('./addons.js'),
     reverseProxy = require('./reverseproxy.js'),
     safe = require('safetydance'),
     settings = require('./settings.js'),
+    sftp = require('./sftp.js'),
     shell = require('./shell.js'),
     taskmanager = require('./taskmanager.js'),
     _ = require('underscore');
@@ -59,6 +60,7 @@ function start(callback) {
         // mark app state before we start addons. this gives the db import logic a chance to mark an app as errored
         startApps.bind(null, existingInfra),
         graphs.startGraphite.bind(null, existingInfra),
+        sftp.startSftp.bind(null, existingInfra),
         addons.startServices.bind(null, existingInfra),
         fs.writeFile.bind(fs, paths.INFRA_VERSION_FILE, JSON.stringify(infra, null, 4))
     ], function (error) {
@@ -136,7 +138,7 @@ function stopContainers(existingInfra, callback) {
     } else {
         assert(typeof infra.images, 'object');
         var changedAddons = [ ];
-        for (var imageName in infra.images) {
+        for (var imageName in existingInfra.images) { // do not use infra.images because we can only stop things which are existing
             if (infra.images[imageName].tag !== existingInfra.images[imageName].tag) changedAddons.push(imageName);
         }
 

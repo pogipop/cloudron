@@ -212,9 +212,9 @@ const KNOWN_SERVICES = {
         restart: restartUnbound,
         defaultMemoryLimit: 0
     },
-    proftpd: {
-        status: statusProftpd,
-        restart: restartProftpd,
+    sftp: {
+        status: statusSftp,
+        restart: restartContainer.bind(null, 'sftp'),
         defaultMemoryLimit: 0
     },
     graphite: {
@@ -1726,20 +1726,25 @@ function restartUnbound(callback) {
     callback(null);
 }
 
-function statusProftpd(callback) {
+function statusSftp(callback) {
     assert.strictEqual(typeof callback, 'function');
 
-    shell.exec('statusProftpd', 'systemctl is-active proftpd', function (error) {
-        callback(null, { status: error ? exports.SERVICE_STATUS_STOPPED : exports.SERVICE_STATUS_ACTIVE });
+    docker.inspect('sftp', function (error, container) {
+        if (error && error.reason === DockerError.NOT_FOUND) return callback(new AddonsError(AddonsError.NOT_ACTIVE, error));
+        if (error) return callback(new AddonsError(AddonsError.INTERNAL_ERROR, error));
+
+        docker.memoryUsage('sftp', function (error, result) {
+            if (error) return callback(new AddonsError(AddonsError.INTERNAL_ERROR, error));
+
+            var tmp = {
+                status: container.State.Running ? exports.SERVICE_STATUS_ACTIVE : exports.SERVICE_STATUS_STOPPED,
+                memoryUsed: result.memory_stats.usage,
+                memoryPercent: parseInt(100 * result.memory_stats.usage / result.memory_stats.limit)
+            };
+
+            callback(null, tmp);
+        });
     });
-}
-
-function restartProftpd(callback) {
-    assert.strictEqual(typeof callback, 'function');
-
-    shell.sudo('restartProftpd', [ path.join(__dirname, 'scripts/restartproftpd.sh') ], {}, NOOP_CALLBACK);
-
-    callback(null);
 }
 
 function statusGraphite(callback) {
