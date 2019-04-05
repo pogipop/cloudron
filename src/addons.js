@@ -215,7 +215,7 @@ const KNOWN_SERVICES = {
     sftp: {
         status: statusSftp,
         restart: restartContainer.bind(null, 'sftp'),
-        defaultMemoryLimit: 0
+        defaultMemoryLimit: 256 * 1024 * 1024
     },
     graphite: {
         status: statusGraphite,
