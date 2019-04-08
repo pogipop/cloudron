@@ -20,7 +20,7 @@ function resolve(hostname, rrtype, options, callback) {
     assert.strictEqual(typeof callback, 'function');
 
     const resolver = new dns.Resolver();
-    options = _.extend(DEFAULT_OPTIONS, options);
+    options = _.extend({ }, DEFAULT_OPTIONS, options);
     resolver.setServers([ options.server ]);
 
     // should callback with ECANCELLED but looks like we might hit https://github.com/nodejs/node/issues/14814
