@@ -45,6 +45,8 @@ function getInternal(dnsConfig, zoneName, name, type, callback) {
 
     var nextPage = null, matchingRecords = [];
 
+    debug(`getInternal: getting dns records of ${zoneName} with ${name} and type ${type}`);
+
     async.doWhilst(function (iteratorDone) {
         var url = nextPage ? nextPage : DIGITALOCEAN_ENDPOINT + '/v2/domains/' + zoneName + '/records';
 
@@ -63,12 +65,14 @@ function getInternal(dnsConfig, zoneName, name, type, callback) {
 
                 nextPage = (result.body.links && result.body.links.pages) ? result.body.links.pages.next : null;
 
+                debug(`getInternal: next page - ${nextPage}`);
+
                 iteratorDone();
             });
     }, function () { return !!nextPage; }, function (error) {
-        if (error) return callback(error);
+        debug('getInternal:', error, matchingRecords);
 
-        debug('getInternal: %j', matchingRecords);
+        if (error) return callback(error);
 
         return callback(null, matchingRecords);
     });
