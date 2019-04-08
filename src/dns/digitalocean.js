@@ -143,7 +143,13 @@ function upsert(domainObject, location, type, values, callback) {
                         return iteratorCallback(null);
                     });
             }
-        }, callback);
+        }, function (error) {
+            if (error) return callback(error);
+
+            debug('upsert: completed with recordIds:%j', recordIds);
+
+            callback();
+        });
     });
 }
 

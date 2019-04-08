@@ -811,6 +811,8 @@ function upsertDnsRecords(domain, mailFqdn, callback) {
     assert.strictEqual(typeof mailFqdn, 'string');
     assert.strictEqual(typeof callback, 'function');
 
+    debug(`upsertDnsRecords: updating mail dns records of domain ${domain} and mail fqdn ${mailFqdn}`);
+
     maildb.get(domain, function (error, result) {
         if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new MailError(MailError.NOT_FOUND));
         if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
@@ -832,8 +834,6 @@ function upsertDnsRecords(domain, mailFqdn, callback) {
             records.push({ subdomain: '_dmarc', domain: domain, type: 'TXT', values: [ '"v=DMARC1; p=reject; pct=100"' ] });
             records.push({ subdomain: '', domain: domain, type: 'MX', values: [ '10 ' + mailFqdn + '.' ] });
         }
-
-        debug('upsertDnsRecords: %j', records);
 
         txtRecordsWithSpf(domain, mailFqdn, function (error, txtRecords) {
             if (error) return callback(error);
