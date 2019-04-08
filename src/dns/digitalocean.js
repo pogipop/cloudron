@@ -53,6 +53,7 @@ function getInternal(dnsConfig, zoneName, name, type, callback) {
         superagent.get(url)
             .set('Authorization', 'Bearer ' + dnsConfig.token)
             .timeout(30 * 1000)
+            .retry(5)
             .end(function (error, result) {
                 if (error && !error.response) return iteratorDone(new DomainsError(DomainsError.EXTERNAL_ERROR, util.format('Network error %s', error.message)));
                 if (result.statusCode === 404) return iteratorDone(new DomainsError(DomainsError.NOT_FOUND, formatError(result)));
@@ -118,6 +119,7 @@ function upsert(domainObject, location, type, values, callback) {
                     .set('Authorization', 'Bearer ' + dnsConfig.token)
                     .send(data)
                     .timeout(30 * 1000)
+                    .retry(5)
                     .end(function (error, result) {
                         if (error && !error.response) return iteratorCallback(new DomainsError(DomainsError.EXTERNAL_ERROR, util.format('Network error %s', error.message)));
                         if (result.statusCode === 403 || result.statusCode === 401) return iteratorCallback(new DomainsError(DomainsError.ACCESS_DENIED, formatError(result)));
@@ -133,6 +135,7 @@ function upsert(domainObject, location, type, values, callback) {
                     .set('Authorization', 'Bearer ' + dnsConfig.token)
                     .send(data)
                     .timeout(30 * 1000)
+                    .retry(5)
                     .end(function (error, result) {
                     // increment, as we have consumed the record
                         ++i;
@@ -206,6 +209,7 @@ function del(domainObject, location, type, values, callback) {
         superagent.del(DIGITALOCEAN_ENDPOINT + '/v2/domains/' + zoneName + '/records/' + tmp[0].id)
             .set('Authorization', 'Bearer ' + dnsConfig.token)
             .timeout(30 * 1000)
+            .retry(5)
             .end(function (error, result) {
                 if (error && !error.response) return callback(new DomainsError(DomainsError.EXTERNAL_ERROR, util.format('Network error %s', error.message)));
                 if (result.statusCode === 404) return callback(null);
