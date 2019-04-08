@@ -52,10 +52,10 @@ function getInternal(dnsConfig, zoneName, name, type, callback) {
             .set('Authorization', 'Bearer ' + dnsConfig.token)
             .timeout(30 * 1000)
             .end(function (error, result) {
-                if (error && !error.response) return callback(new DomainsError(DomainsError.EXTERNAL_ERROR, util.format('Network error %s', error.message)));
-                if (result.statusCode === 404) return callback(new DomainsError(DomainsError.NOT_FOUND, formatError(result)));
-                if (result.statusCode === 403 || result.statusCode === 401) return callback(new DomainsError(DomainsError.ACCESS_DENIED, formatError(result)));
-                if (result.statusCode !== 200) return callback(new DomainsError(DomainsError.EXTERNAL_ERROR, formatError(result)));
+                if (error && !error.response) return iteratorDone(new DomainsError(DomainsError.EXTERNAL_ERROR, util.format('Network error %s', error.message)));
+                if (result.statusCode === 404) return iteratorDone(new DomainsError(DomainsError.NOT_FOUND, formatError(result)));
+                if (result.statusCode === 403 || result.statusCode === 401) return iteratorDone(new DomainsError(DomainsError.ACCESS_DENIED, formatError(result)));
+                if (result.statusCode !== 200) return iteratorDone(new DomainsError(DomainsError.EXTERNAL_ERROR, formatError(result)));
 
                 matchingRecords = matchingRecords.concat(result.body.domain_records.filter(function (record) {
                     return (record.type === type && record.name === name);
