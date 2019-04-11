@@ -214,8 +214,8 @@ function configureApp(req, res, next) {
 
     if (data.label && typeof data.label !== 'string') return next(new HttpError(400, 'label must be a non-empty string'));
     if (data.tags) {
-        if (!Array.isArray(data.tags)) return next(new HttpError(400, 'tags must be a string array'));
-        if (data.tags.some(d => typeof d !== 'string')) return next(new HttpError(400, 'tags must be in array of strings'));
+        if (!Array.isArray(data.tags)) return next(new HttpError(400, 'tags must be an array of strings'));
+        if (data.tags.some(d => typeof d !== 'string')) return next(new HttpError(400, 'tags must be an array of strings'));
     }
 
     if ('dataDir' in data && typeof data.dataDir !== 'string') return next(new HttpError(400, 'dataDir must be a string'));
