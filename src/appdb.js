@@ -423,6 +423,7 @@ function updateWithConstraints(id, app, constraints, callback) {
     assert(!('portBindings' in app) || typeof app.portBindings === 'object');
     assert(!('accessRestriction' in app) || typeof app.accessRestriction === 'object' || app.accessRestriction === '');
     assert(!('alternateDomains' in app) || Array.isArray(app.alternateDomains));
+    assert(!('tags' in app) || Array.isArray(app.tags));
     assert(!('env' in app) || typeof app.env === 'object');
 
     var queries = [ ];
@@ -461,7 +462,7 @@ function updateWithConstraints(id, app, constraints, callback) {
 
     var fields = [ ], values = [ ];
     for (var p in app) {
-        if (p === 'manifest' || p === 'oldConfig' || p === 'updateConfig' || p === 'restoreConfig' || p === 'accessRestriction' || p === 'debugMode') {
+        if (p === 'manifest' || p === 'oldConfig' || p === 'updateConfig' || p === 'restoreConfig' || p === 'tags' || p === 'accessRestriction' || p === 'debugMode') {
             fields.push(`${p}Json = ?`);
             values.push(JSON.stringify(app[p]));
         } else if (p !== 'portBindings' && p !== 'location' && p !== 'domain' && p !== 'alternateDomains' && p !== 'env') {
