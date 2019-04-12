@@ -221,6 +221,11 @@ const KNOWN_SERVICES = {
         status: statusGraphite,
         restart: restartContainer.bind(null, 'graphite'),
         defaultMemoryLimit: 75 * 1024 * 1024
+    },
+    nginx: {
+        status: statusNginx,
+        restart: restartNginx,
+        defaultMemoryLimit: 0
     }
 };
 
@@ -1722,6 +1727,22 @@ function restartUnbound(callback) {
     assert.strictEqual(typeof callback, 'function');
 
     shell.sudo('restartunbound', [ path.join(__dirname, 'scripts/restartunbound.sh') ], {}, NOOP_CALLBACK);
+
+    callback(null);
+}
+
+function statusNginx(callback) {
+    assert.strictEqual(typeof callback, 'function');
+
+    shell.exec('statusNginx', 'systemctl is-active nginx', function (error) {
+        callback(null, { status: error ? exports.SERVICE_STATUS_STOPPED : exports.SERVICE_STATUS_ACTIVE });
+    });
+}
+
+function restartNginx(callback) {
+    assert.strictEqual(typeof callback, 'function');
+
+    shell.sudo('reloadnginx', [ path.join(__dirname, 'scripts/reloadnginx.sh') ], {}, NOOP_CALLBACK);
 
     callback(null);
 }
