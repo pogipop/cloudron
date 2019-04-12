@@ -114,6 +114,7 @@ function api(provider) {
     case 's3-v4-compat': return require('./storage/s3.js');
     case 'digitalocean-spaces': return require('./storage/s3.js');
     case 'exoscale-sos': return require('./storage/s3.js');
+    case 'scaleway-objectstorage': return require('./storage/s3.js');
     case 'noop': return require('./storage/noop.js');
     default: return null;
     }
