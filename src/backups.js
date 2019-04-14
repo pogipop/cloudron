@@ -867,9 +867,10 @@ function snapshotApp(app, progressCallback, callback) {
     });
 }
 
-function rotateAppBackup(backupConfig, app, timestamp, progressCallback, callback) {
+function rotateAppBackup(backupConfig, app, options, timestamp, progressCallback, callback) {
     assert.strictEqual(typeof backupConfig, 'object');
     assert.strictEqual(typeof app, 'object');
+    assert.strictEqual(typeof options, 'object');
     assert.strictEqual(typeof timestamp, 'string');
     assert.strictEqual(typeof progressCallback, 'function');
     assert.strictEqual(typeof callback, 'function');
@@ -892,7 +893,7 @@ function rotateAppBackup(backupConfig, app, timestamp, progressCallback, callbac
         copy.on('done', function (copyBackupError) {
             const state = copyBackupError ? backupdb.BACKUP_STATE_ERROR : backupdb.BACKUP_STATE_NORMAL;
 
-            backupdb.update(backupId, { state: state }, function (error) {
+            backupdb.update(backupId, { preserveSecs: options.preserveSecs || 0, state: state }, function (error) {
                 if (copyBackupError) return callback(copyBackupError);
                 if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
 
@@ -933,8 +934,9 @@ function uploadAppSnapshot(backupConfig, app, progressCallback, callback) {
     });
 }
 
-function backupAppWithTimestamp(app, timestamp, progressCallback, callback) {
+function backupAppWithTimestamp(app, options, timestamp, progressCallback, callback) {
     assert.strictEqual(typeof app, 'object');
+    assert.strictEqual(typeof options, 'object');
     assert.strictEqual(typeof timestamp, 'string');
     assert.strictEqual(typeof progressCallback, 'function');
     assert.strictEqual(typeof callback, 'function');
@@ -947,13 +949,14 @@ function backupAppWithTimestamp(app, timestamp, progressCallback, callback) {
         uploadAppSnapshot(backupConfig, app, progressCallback, function (error) {
             if (error) return callback(error);
 
-            rotateAppBackup(backupConfig, app, timestamp, progressCallback, callback);
+            rotateAppBackup(backupConfig, app, options, timestamp, progressCallback, callback);
         });
     });
 }
 
-function backupApp(app, progressCallback, callback) {
+function backupApp(app, options, progressCallback, callback) {
     assert.strictEqual(typeof app, 'object');
+    assert.strictEqual(typeof options, 'object');
     assert.strictEqual(typeof progressCallback, 'function');
     assert.strictEqual(typeof callback, 'function');
 
@@ -961,7 +964,7 @@ function backupApp(app, progressCallback, callback) {
 
     debug(`backupApp - Backing up ${app.fqdn} with timestamp ${timestamp}`);
 
-    backupAppWithTimestamp(app, timestamp, progressCallback, callback);
+    backupAppWithTimestamp(app, options, timestamp, progressCallback, callback);
 }
 
 // this function expects you to have a lock. Unlike other progressCallback this also has a progress field
@@ -986,7 +989,7 @@ function backupBoxAndApps(progressCallback, callback) {
                 return iteratorCallback(null, null); // nothing to backup
             }
 
-            backupAppWithTimestamp(app, timestamp, (progress) => progressCallback({ percent: percent, message: progress.message }), function (error, backupId) {
+            backupAppWithTimestamp(app, { /* options */ }, timestamp, (progress) => progressCallback({ percent: percent, message: progress.message }), function (error, backupId) {
                 if (error && error.reason !== BackupsError.BAD_STATE) {
                     debugApp(app, 'Unable to backup', error);
                     return iteratorCallback(error);
@@ -1101,6 +1104,7 @@ function cleanupAppBackups(backupConfig, referencedAppBackups, callback) {
 
         async.eachSeries(appBackups, function iterator(appBackup, iteratorDone) {
             if (referencedAppBackups.indexOf(appBackup.id) !== -1) return iteratorDone();
+            if ((now - appBackup.creationTime) < (appBackup.preserveSecs * 1000)) return iteratorDone();
             if ((now - appBackup.creationTime) < (backupConfig.retentionSecs * 1000)) return iteratorDone();
 
             debug('cleanupAppBackups: removing %s', appBackup.id);

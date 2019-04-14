@@ -6,7 +6,7 @@ var assert = require('assert'),
     safe = require('safetydance'),
     util = require('util');
 
-var BACKUPS_FIELDS = [ 'id', 'creationTime', 'version', 'type', 'dependsOn', 'state', 'manifestJson', 'format' ];
+var BACKUPS_FIELDS = [ 'id', 'creationTime', 'version', 'type', 'dependsOn', 'state', 'manifestJson', 'format', 'preserveSecs' ];
 
 exports = module.exports = {
     add: add,

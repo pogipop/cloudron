@@ -586,7 +586,7 @@ function backup(app, callback) {
 
     async.series([
         updateApp.bind(null, app, { installationProgress: '10, Backing up' }),
-        backups.backupApp.bind(null, app, (progress) => updateApp(app, { installationProgress: `30, ${progress.message}` }, NOOP_CALLBACK)),
+        backups.backupApp.bind(null, app, { /* options */ }, (progress) => updateApp(app, { installationProgress: `30, ${progress.message}` }, NOOP_CALLBACK)),
 
         // done!
         function (callback) {
@@ -706,7 +706,8 @@ function update(app, callback) {
 
             async.series([
                 updateApp.bind(null, app, { installationProgress: '15, Backing up app' }),
-                backups.backupApp.bind(null, app, (progress) => updateApp(app, { installationProgress: `15, Backup - ${progress.message}` }, NOOP_CALLBACK))
+                // preserve update backups for 3 weeks
+                backups.backupApp.bind(null, app, { preserveSecs: 3*7*24*60*60 }, (progress) => updateApp(app, { installationProgress: `15, Backup - ${progress.message}` }, NOOP_CALLBACK))
             ], function (error) {
                 if (error) error.backupError = true;
                 next(error);

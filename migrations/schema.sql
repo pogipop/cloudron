@@ -141,6 +141,7 @@ CREATE TABLE IF NOT EXISTS backups(
     state VARCHAR(16) NOT NULL,
     manifestJson TEXT, /* to validate if the app can be installed in this version of box */
     format VARCHAR(16) DEFAULT "tgz",
+    preserveSecs INTEGER DEFAULT 0,
 
     PRIMARY KEY (id));
 
