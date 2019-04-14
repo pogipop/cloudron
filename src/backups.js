@@ -783,9 +783,9 @@ function backupDone(apiConfig, backupId, appBackupIds, callback) {
     });
 }
 
-function rotateBoxBackup(backupConfig, timestamp, appBackupIds, progressCallback, callback) {
+function rotateBoxBackup(backupConfig, tag, appBackupIds, progressCallback, callback) {
     assert.strictEqual(typeof backupConfig, 'object');
-    assert.strictEqual(typeof timestamp, 'string');
+    assert.strictEqual(typeof tag, 'string');
     assert(Array.isArray(appBackupIds));
     assert.strictEqual(typeof progressCallback, 'function');
     assert.strictEqual(typeof callback, 'function');
@@ -793,8 +793,8 @@ function rotateBoxBackup(backupConfig, timestamp, appBackupIds, progressCallback
     var snapshotInfo = getSnapshotInfo('box');
     if (!snapshotInfo) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, 'Snapshot info missing or corrupt'));
 
-    var snapshotTime = snapshotInfo.timestamp.replace(/[T.]/g, '-').replace(/[:Z]/g,'');
-    var backupId = util.format('%s/box_%s_v%s', timestamp, snapshotTime, config.version());
+    const snapshotTime = snapshotInfo.timestamp.replace(/[T.]/g, '-').replace(/[:Z]/g,''); // add this to filename to make it unique, so it's easy to download them
+    const backupId = util.format('%s/box_%s_v%s', tag, snapshotTime, config.version());
     const format = backupConfig.format;
 
     debug(`Rotating box backup to id ${backupId}`);
@@ -823,9 +823,9 @@ function rotateBoxBackup(backupConfig, timestamp, appBackupIds, progressCallback
     });
 }
 
-function backupBoxWithAppBackupIds(appBackupIds, timestamp, progressCallback, callback) {
+function backupBoxWithAppBackupIds(appBackupIds, tag, progressCallback, callback) {
     assert(Array.isArray(appBackupIds));
-    assert.strictEqual(typeof timestamp, 'string');
+    assert.strictEqual(typeof tag, 'string');
     assert.strictEqual(typeof progressCallback, 'function');
     assert.strictEqual(typeof callback, 'function');
 
@@ -835,7 +835,7 @@ function backupBoxWithAppBackupIds(appBackupIds, timestamp, progressCallback, ca
         uploadBoxSnapshot(backupConfig, progressCallback, function (error) {
             if (error) return callback(error);
 
-            rotateBoxBackup(backupConfig, timestamp, appBackupIds, progressCallback, callback);
+            rotateBoxBackup(backupConfig, tag, appBackupIds, progressCallback, callback);
         });
     });
 }
@@ -867,20 +867,20 @@ function snapshotApp(app, progressCallback, callback) {
     });
 }
 
-function rotateAppBackup(backupConfig, app, options, timestamp, progressCallback, callback) {
+function rotateAppBackup(backupConfig, app, tag, options, progressCallback, callback) {
     assert.strictEqual(typeof backupConfig, 'object');
     assert.strictEqual(typeof app, 'object');
+    assert.strictEqual(typeof tag, 'string');
     assert.strictEqual(typeof options, 'object');
-    assert.strictEqual(typeof timestamp, 'string');
     assert.strictEqual(typeof progressCallback, 'function');
     assert.strictEqual(typeof callback, 'function');
 
     var snapshotInfo = getSnapshotInfo(app.id);
     if (!snapshotInfo) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, 'Snapshot info missing or corrupt'));
 
-    var snapshotTime = snapshotInfo.timestamp.replace(/[T.]/g, '-').replace(/[:Z]/g,'');
     var manifest = snapshotInfo.restoreConfig ? snapshotInfo.restoreConfig.manifest : snapshotInfo.manifest; // compat
-    var backupId = util.format('%s/app_%s_%s_v%s', timestamp, app.id, snapshotTime, manifest.version);
+    const snapshotTime = snapshotInfo.timestamp.replace(/[T.]/g, '-').replace(/[:Z]/g,''); // add this for unique filename which helps when downloading them
+    const backupId = util.format('%s/app_%s_%s_v%s', tag, app.id, snapshotTime, manifest.version);
     const format = backupConfig.format;
 
     debug(`Rotating app backup of ${app.id} to id ${backupId}`);
@@ -934,10 +934,10 @@ function uploadAppSnapshot(backupConfig, app, progressCallback, callback) {
     });
 }
 
-function backupAppWithTimestamp(app, options, timestamp, progressCallback, callback) {
+function backupAppWithTag(app, tag, options, progressCallback, callback) {
     assert.strictEqual(typeof app, 'object');
+    assert.strictEqual(typeof tag, 'string');
     assert.strictEqual(typeof options, 'object');
-    assert.strictEqual(typeof timestamp, 'string');
     assert.strictEqual(typeof progressCallback, 'function');
     assert.strictEqual(typeof callback, 'function');
 
@@ -949,7 +949,7 @@ function backupAppWithTimestamp(app, options, timestamp, progressCallback, callb
         uploadAppSnapshot(backupConfig, app, progressCallback, function (error) {
             if (error) return callback(error);
 
-            rotateAppBackup(backupConfig, app, options, timestamp, progressCallback, callback);
+            rotateAppBackup(backupConfig, app, tag, options, progressCallback, callback);
         });
     });
 }
@@ -960,11 +960,11 @@ function backupApp(app, options, progressCallback, callback) {
     assert.strictEqual(typeof progressCallback, 'function');
     assert.strictEqual(typeof callback, 'function');
 
-    const timestamp = (new Date()).toISOString().replace(/[T.]/g, '-').replace(/[:Z]/g,'');
+    const tag = (new Date()).toISOString().replace(/[T.]/g, '-').replace(/[:Z]/g,'');
 
-    debug(`backupApp - Backing up ${app.fqdn} with timestamp ${timestamp}`);
+    debug(`backupApp - Backing up ${app.fqdn} with tag ${tag}`);
 
-    backupAppWithTimestamp(app, options, timestamp, progressCallback, callback);
+    backupAppWithTag(app, tag, options, progressCallback, callback);
 }
 
 // this function expects you to have a lock. Unlike other progressCallback this also has a progress field
@@ -972,7 +972,7 @@ function backupBoxAndApps(progressCallback, callback) {
     assert.strictEqual(typeof progressCallback, 'function');
     assert.strictEqual(typeof callback, 'function');
 
-    var timestamp = (new Date()).toISOString().replace(/[T.]/g, '-').replace(/[:Z]/g,'');
+    const tag = (new Date()).toISOString().replace(/[T.]/g, '-').replace(/[:Z]/g,'');
 
     apps.getAll(function (error, allApps) {
         if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
@@ -989,7 +989,7 @@ function backupBoxAndApps(progressCallback, callback) {
                 return iteratorCallback(null, null); // nothing to backup
             }
 
-            backupAppWithTimestamp(app, { /* options */ }, timestamp, (progress) => progressCallback({ percent: percent, message: progress.message }), function (error, backupId) {
+            backupAppWithTag(app, tag, { /* options */ }, (progress) => progressCallback({ percent: percent, message: progress.message }), function (error, backupId) {
                 if (error && error.reason !== BackupsError.BAD_STATE) {
                     debugApp(app, 'Unable to backup', error);
                     return iteratorCallback(error);
@@ -1007,7 +1007,7 @@ function backupBoxAndApps(progressCallback, callback) {
             progressCallback({ percent: percent, message: 'Backing up system data' });
             percent += step;
 
-            backupBoxWithAppBackupIds(backupIds, timestamp, (progress) => progressCallback({ percent: percent, message: progress.message }), callback);
+            backupBoxWithAppBackupIds(backupIds, tag, (progress) => progressCallback({ percent: percent, message: progress.message }), callback);
         });
     });
 }
