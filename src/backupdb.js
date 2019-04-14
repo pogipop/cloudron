@@ -103,21 +103,21 @@ function get(id, callback) {
         });
 }
 
-function add(backup, callback) {
-    assert(backup && typeof backup === 'object');
-    assert.strictEqual(typeof backup.id, 'string');
-    assert.strictEqual(typeof backup.version, 'string');
-    assert(backup.type === exports.BACKUP_TYPE_APP || backup.type === exports.BACKUP_TYPE_BOX);
-    assert(util.isArray(backup.dependsOn));
-    assert.strictEqual(typeof backup.manifest, 'object');
-    assert.strictEqual(typeof backup.format, 'string');
+function add(id, data, callback) {
+    assert(data && typeof data === 'object');
+    assert.strictEqual(typeof id, 'string');
+    assert.strictEqual(typeof data.version, 'string');
+    assert(data.type === exports.BACKUP_TYPE_APP || data.type === exports.BACKUP_TYPE_BOX);
+    assert(util.isArray(data.dependsOn));
+    assert.strictEqual(typeof data.manifest, 'object');
+    assert.strictEqual(typeof data.format, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    var creationTime = backup.creationTime || new Date(); // allow tests to set the time
-    var manifestJson = JSON.stringify(backup.manifest);
+    var creationTime = data.creationTime || new Date(); // allow tests to set the time
+    var manifestJson = JSON.stringify(data.manifest);
 
     database.query('INSERT INTO backups (id, version, type, creationTime, state, dependsOn, manifestJson, format) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-        [ backup.id, backup.version, backup.type, creationTime, exports.BACKUP_STATE_NORMAL, backup.dependsOn.join(','), manifestJson, backup.format ],
+        [ id, data.version, data.type, creationTime, exports.BACKUP_STATE_NORMAL, data.dependsOn.join(','), manifestJson, data.format ],
         function (error) {
             if (error && error.code === 'ER_DUP_ENTRY') return callback(new DatabaseError(DatabaseError.ALREADY_EXISTS));
             if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));

@@ -156,7 +156,7 @@ describe('backups', function () {
             async.eachSeries([[ BACKUP_0, BACKUP_0_APP_0, BACKUP_0_APP_1 ], [ BACKUP_1, BACKUP_1_APP_0, BACKUP_1_APP_1 ]], function (backup, callback) {
                 // space out backups
                 setTimeout(function () {
-                    async.each(backup, backupdb.add, callback);
+                    async.each(backup, (b, done) => backupdb.add(b.id, b, done), callback);
                 }, 2000);
             }, function (error) {
                 expect(error).to.not.be.ok();
@@ -202,7 +202,7 @@ describe('backups', function () {
         });
 
         it('succeeds for app backups not referenced by a box backup', function (done) {
-            async.eachSeries([BACKUP_0_APP_0, BACKUP_0_APP_1], backupdb.add, function (error) {
+            async.eachSeries([BACKUP_0_APP_0, BACKUP_0_APP_1], (b, done) => backupdb.add(b.id, b, done), function (error) {
                 expect(error).to.not.be.ok();
 
                 // wait for expiration

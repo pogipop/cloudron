@@ -1589,7 +1589,7 @@ describe('database', function () {
                 format: 'tgz'
             };
 
-            backupdb.add(backup, function (error) {
+            backupdb.add(backup.id, backup, function (error) {
                 expect(error).to.be(null);
                 done();
             });
@@ -1655,7 +1655,7 @@ describe('database', function () {
                 format: 'tgz'
             };
 
-            backupdb.add(backup, function (error) {
+            backupdb.add(backup.id, backup, function (error) {
                 expect(error).to.be(null);
                 done();
             });
