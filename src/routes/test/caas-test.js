@@ -153,7 +153,7 @@ describe('Caas', function () {
         after(cleanup);
 
         it('calls the appstore after backup is done', function (done) {
-            superagent.post(SERVER_URL + '/api/v1/backups')
+            superagent.post(SERVER_URL + '/api/v1/backups/create')
                 .query({ access_token: token })
                 .end(function (error, result) {
                     expect(result.statusCode).to.equal(202);

@@ -149,7 +149,8 @@ function initializeExpressSync() {
 
     // backups
     router.get ('/api/v1/backups', settingsScope, routes.backups.list);
-    router.post('/api/v1/backups', settingsScope, routes.backups.startBackup);
+    router.post('/api/v1/backups/create', settingsScope, routes.backups.startBackup);
+    router.post('/api/v1/backups/cleanup', settingsScope, routes.backups.cleanup);
 
     // config route (for dashboard)
     router.get ('/api/v1/config', profileScope, routes.cloudron.getConfig);

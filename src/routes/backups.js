@@ -2,7 +2,8 @@
 
 exports = module.exports = {
     list: list,
-    startBackup: startBackup
+    startBackup: startBackup,
+    cleanup: cleanup
 };
 
 let auditSource = require('../auditsource.js'),
@@ -30,6 +31,14 @@ function list(req, res, next) {
 function startBackup(req, res, next) {
     backups.startBackupTask(auditSource.fromRequest(req), function (error, taskId) {
         if (error && error.reason === BackupsError.BAD_STATE) return next(new HttpError(409, error.message));
+        if (error) return next(new HttpError(500, error));
+
+        next(new HttpSuccess(202, { taskId }));
+    });
+}
+
+function cleanup(req, res, next) {
+    backups.startCleanupTask(auditSource.fromRequest(req), function (error, taskId) {
         if (error) return next(new HttpError(500, error));
 
         next(new HttpSuccess(202, { taskId }));

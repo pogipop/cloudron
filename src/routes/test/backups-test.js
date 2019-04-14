@@ -84,7 +84,7 @@ describe('Backups API', function () {
 
     describe('create', function () {
         it('fails due to mising token', function (done) {
-            superagent.post(SERVER_URL + '/api/v1/backups')
+            superagent.post(SERVER_URL + '/api/v1/backups/create')
                 .end(function (error, result) {
                     expect(result.statusCode).to.equal(401);
                     done();
@@ -92,7 +92,7 @@ describe('Backups API', function () {
         });
 
         it('fails due to wrong token', function (done) {
-            superagent.post(SERVER_URL + '/api/v1/backups')
+            superagent.post(SERVER_URL + '/api/v1/backups/create')
                 .query({ access_token: token.toUpperCase() })
                 .end(function (error, result) {
                     expect(result.statusCode).to.equal(401);
@@ -101,7 +101,7 @@ describe('Backups API', function () {
         });
 
         it('succeeds', function (done) {
-            superagent.post(SERVER_URL + '/api/v1/backups')
+            superagent.post(SERVER_URL + '/api/v1/backups/create')
                 .query({ access_token: token })
                 .end(function (error, result) {
                     expect(result.statusCode).to.equal(202);
