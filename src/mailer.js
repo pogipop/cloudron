@@ -20,12 +20,10 @@ exports = module.exports = {
 
     sendTestMail: sendTestMail,
 
-    _getMailQueue: _getMailQueue,
-    _clearMailQueue: _clearMailQueue
+    _mailQueue: [] // accumulate mails in test mode
 };
 
 var assert = require('assert'),
-    async = require('async'),
     config = require('./config.js'),
     debug = require('debug')('box:mailer'),
     docker = require('./docker.js').connection,
@@ -41,8 +39,6 @@ var assert = require('assert'),
 var NOOP_CALLBACK = function (error) { if (error) debug(error); };
 
 var MAIL_TEMPLATES_DIR = path.join(__dirname, 'mail_templates');
-
-var gMailQueue = [ ];
 
 // This will collect the most common details required for notification emails
 function getMailConfig(callback) {
@@ -62,17 +58,14 @@ function getMailConfig(callback) {
     });
 }
 
-
-function processQueue() {
-    sendMails(gMailQueue);
-    gMailQueue = [ ];
-}
-
-// note : this function should NOT access the database. it is called by the crashnotifier
-// which does not initialize mailer or the databse
-function sendMails(queue, callback) {
-    assert(util.isArray(queue));
+function sendMail(mailOptions, callback) {
+    assert.strictEqual(typeof mailOptions, 'object');
     callback = callback || NOOP_CALLBACK;
+
+    if (process.env.BOX_ENV === 'test') {
+        exports._mailQueue.push(mailOptions);
+        return callback();
+    }
 
     docker.getContainer('mail').inspect(function (error, data) {
         if (error) return callback(error);
@@ -97,32 +90,14 @@ function sendMails(queue, callback) {
             }
         }));
 
-        debug('Processing mail queue of size %d (through %s:2525)', queue.length, mailServerIp);
+        transport.sendMail(mailOptions, function (error) {
+            if (error) return callback(error);
 
-        async.mapSeries(queue, function iterator(mailOptions, callback) {
-            transport.sendMail(mailOptions, function (error) {
-                if (error) return debug(error); // TODO: requeue?
-                debug('Email sent to ' + mailOptions.to);
-            });
-            callback(null);
-        }, function done() {
-            debug('Done processing mail queue');
+            debug(`Email "${mailOptions.subject}" sent to ${mailOptions.to}`);
 
             callback(null);
         });
     });
-}
-
-function enqueue(mailOptions) {
-    assert.strictEqual(typeof mailOptions, 'object');
-
-    if (!mailOptions.from) debug('sender address is missing');
-    if (!mailOptions.to) debug('recipient address is missing');
-
-    debug('Queued mail for ' + mailOptions.from + ' to ' + mailOptions.to);
-    gMailQueue.push(mailOptions);
-
-    if (process.env.BOX_ENV !== 'test') processQueue();
 }
 
 function render(templateFile, params) {
@@ -155,7 +130,7 @@ function mailUserEvent(mailTo, user, event) {
             text: render('user_event.ejs', { user: user, event: event, format: 'text' }),
         };
 
-        enqueue(mailOptions);
+        sendMail(mailOptions);
     });
 }
 
@@ -191,7 +166,7 @@ function sendInvite(user, invitor) {
             html: render('welcome_user.ejs', templateDataHTML)
         };
 
-        enqueue(mailOptions);
+        sendMail(mailOptions);
     });
 }
 
@@ -224,7 +199,7 @@ function userAdded(mailTo, user) {
             html: render('user_added.ejs', templateDataHTML)
         };
 
-        enqueue(mailOptions);
+        sendMail(mailOptions);
     });
 }
 
@@ -276,7 +251,7 @@ function passwordReset(user) {
             html: render('password_reset.ejs', templateDataHTML)
         };
 
-        enqueue(mailOptions);
+        sendMail(mailOptions);
     });
 }
 
@@ -296,7 +271,7 @@ function appUp(mailTo, app) {
             text: render('app_up.ejs', { title: app.manifest.title, appFqdn: app.fqdn, format: 'text' })
         };
 
-        enqueue(mailOptions);
+        sendMail(mailOptions);
     });
 }
 
@@ -316,7 +291,7 @@ function appDied(mailTo, app) {
             text: render('app_down.ejs', { title: app.manifest.title, appFqdn: app.fqdn, format: 'text' })
         };
 
-        enqueue(mailOptions);
+        sendMail(mailOptions);
     });
 }
 
@@ -356,9 +331,7 @@ function appUpdateAvailable(mailTo, app, hasSubscription, info, callback) {
             html: render('app_update_available.ejs', templateDataHTML)
         };
 
-        enqueue(mailOptions);
-
-        callback();
+        sendMail(mailOptions, callback);
     });
 }
 
@@ -391,9 +364,7 @@ function sendDigest(mailTo, info, callback) {
             html: render('digest.ejs', templateDataHTML)
         };
 
-        enqueue(mailOptions);
-
-        callback();
+        sendMail(mailOptions, callback);
     });
 }
 
@@ -410,7 +381,7 @@ function backupFailed(mailTo, errorMessage, logUrl) {
             text: render('backup_failed.ejs', { cloudronName: mailConfig.cloudronName, message: errorMessage, logUrl: logUrl, format: 'text' })
         };
 
-        enqueue(mailOptions);
+        sendMail(mailOptions);
     });
 }
 
@@ -429,7 +400,7 @@ function certificateRenewalError(mailTo, domain, message) {
             text: render('certificate_renewal_error.ejs', { domain: domain, message: message, format: 'text' })
         };
 
-        sendMails([ mailOptions ]);
+        sendMail(mailOptions);
     });
 }
 
@@ -448,7 +419,7 @@ function oomEvent(mailTo, program, event) {
             text: render('oom_event.ejs', { cloudronName: mailConfig.cloudronName, program: program, event: JSON.stringify(event), format: 'text' })
         };
 
-        sendMails([ mailOptions ]);
+        sendMail(mailOptions);
     });
 }
 
@@ -466,16 +437,6 @@ function sendTestMail(domain, email) {
             text: render('test.ejs', { cloudronName: mailConfig.cloudronName, format: 'text'})
         };
 
-        enqueue(mailOptions);
+        sendMail(mailOptions);
     });
-}
-
-function _getMailQueue() {
-    return gMailQueue;
-}
-
-function _clearMailQueue(callback) {
-    gMailQueue = [];
-
-    if (callback) callback();
 }

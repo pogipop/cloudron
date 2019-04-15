@@ -49,11 +49,12 @@ const DOMAIN_0 = {
 };
 
 function cleanupUsers(done) {
+    mailer._mailQueue = [];
+
     async.series([
         groupdb._clear,
         userdb._clear,
         mailboxdb._clear,
-        mailer._clearMailQueue
     ], done);
 }
 
@@ -72,17 +73,18 @@ function setup(done) {
     config._reset();
     config.setFqdn(DOMAIN_0.domain);
 
+    mailer._mailQueue = [];
+
     async.series([
         database.initialize,
         database._clear,
         domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0, AUDIT_SOURCE),
         mail.addDomain.bind(null, DOMAIN_0.domain),
-        mailer._clearMailQueue
     ], done);
 }
 
 function cleanup(done) {
-    mailer._clearMailQueue();
+    mailer._mailQueue = [];
 
     async.series([
         database._clear,
@@ -98,11 +100,11 @@ function checkMails(number, options, callback) {
 
     // mails are enqueued async
     setTimeout(function () {
-        expect(mailer._getMailQueue().length).to.equal(number);
+        expect(mailer._mailQueue.length).to.equal(number);
 
-        if (options && options.sentTo) expect(mailer._getMailQueue().some(function (mail) { return mail.to === options.sentTo; }));
+        if (options && options.sentTo) expect(mailer._mailQueue.some(function (mail) { return mail.to === options.sentTo; }));
 
-        mailer._clearMailQueue();
+        mailer._mailQueue = [];
 
         callback();
     }, 500);

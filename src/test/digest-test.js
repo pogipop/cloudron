@@ -47,13 +47,13 @@ var AUDIT_SOURCE = {
 function checkMails(number, email, done) {
     // mails are enqueued async
     setTimeout(function () {
-        expect(mailer._getMailQueue().length).to.equal(number);
+        expect(mailer._mailQueue.length).to.equal(number);
 
         if (number) {
-            expect(mailer._getMailQueue()[0].to).to.equal(email);
+            expect(mailer._mailQueue[0].to).to.equal(email);
         }
 
-        mailer._clearMailQueue();
+        mailer._mailQueue = [];
         done();
     }, 500);
 }
@@ -66,6 +66,8 @@ describe('digest', function () {
         config.set('provider', 'notcaas');
         config.setFqdn(DOMAIN_0.domain);
         safe.fs.unlinkSync(paths.UPDATE_CHECKER_FILE);
+
+        mailer._mailQueue = [];
 
         async.series([
             database.initialize,
@@ -84,12 +86,11 @@ describe('digest', function () {
             },
             eventlog.add.bind(null, eventlog.ACTION_UPDATE, AUDIT_SOURCE, { taskId: 12, boxUpdateInfo: { sourceTarballUrl: 'xx', version: '1.2.3', changelog: [ 'good stuff' ] } }),
             maildb.update.bind(null, DOMAIN_0.domain, { enabled: true }),
-            mailer._clearMailQueue
         ], done);
     });
 
     after(function (done) {
-        mailer._clearMailQueue();
+        mailer._mailQueue = [];
         safe.fs.unlinkSync(paths.UPDATE_CHECKER_FILE);
 
         async.series([

@@ -44,10 +44,11 @@ var groupObject;
 function setup(done) {
     config._reset();
 
+    mailer._mailQueue = [];
+
     async.series([
         server.start,
         database._clear,
-        mailer._clearMailQueue,
         domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0, AUDIT_SOURCE),
         mail.addDomain.bind(null, DOMAIN_0.domain)
     ], function (error) {
@@ -67,7 +68,7 @@ function cleanup(done) {
     database._clear(function (error) {
         expect(!error).to.be.ok();
 
-        mailer._clearMailQueue();
+        mailer._mailQueue = [];
 
         server.stop(done);
     });
@@ -76,8 +77,8 @@ function cleanup(done) {
 function checkMails(number, done) {
     // mails are enqueued async
     setTimeout(function () {
-        expect(mailer._getMailQueue().length).to.equal(number);
-        mailer._clearMailQueue();
+        expect(mailer._mailQueue.length).to.equal(number);
+        mailer._mailQueue = [];
         done();
     }, 500);
 }
@@ -336,7 +337,7 @@ describe('Users API', function () {
     });
 
     it('can send invite', function (done) {
-        mailer._clearMailQueue();
+        mailer._mailQueue = [];
 
         superagent.post(SERVER_URL + '/api/v1/users/' + user_1.id + '/send_invite')
             .query({ access_token: token })
@@ -450,7 +451,7 @@ describe('Users API', function () {
     });
 
     it('create second and third user', function (done) {
-        mailer._clearMailQueue();
+        mailer._mailQueue = [];
         superagent.post(SERVER_URL + '/api/v1/users')
             .query({ access_token: token })
             .send({ username: USERNAME_2, email: EMAIL_2 })
@@ -685,7 +686,7 @@ describe('Users API', function () {
     });
 
     it('cannot create user with bad password', function (done) {
-        mailer._clearMailQueue();
+        mailer._mailQueue = [];
 
         superagent.post(SERVER_URL + '/api/v1/users')
             .query({ access_token: token })

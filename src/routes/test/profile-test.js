@@ -36,8 +36,6 @@ describe('Profile API', function () {
         server.start(function (error) {
             expect(!error).to.be.ok();
 
-            mailer._clearMailQueue();
-
             database._clear(function (error) {
                 expect(error).to.eql(null);
 
@@ -61,7 +59,7 @@ describe('Profile API', function () {
         database._clear(function (error) {
             expect(!error).to.be.ok();
 
-            mailer._clearMailQueue();
+            mailer._mailQueue = [];
 
             server.stop(done);
         });

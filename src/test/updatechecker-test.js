@@ -51,14 +51,14 @@ const UPDATE_VERSION = semver.inc(config.version(), 'major');
 function checkMails(number, done) {
     // mails are enqueued async
     setTimeout(function () {
-        expect(mailer._getMailQueue().length).to.equal(number);
-        mailer._clearMailQueue();
+        expect(mailer._mailQueue.length).to.equal(number);
+        mailer._mailQueue = [];
         done();
     }, 500);
 }
 
 function cleanup(done) {
-    mailer._clearMailQueue();
+    mailer._mailQueue = [];
     safe.fs.unlinkSync(paths.UPDATE_CHECKER_FILE);
 
     async.series([
@@ -76,6 +76,8 @@ describe('updatechecker - box - manual (email)', function () {
         config.set('provider', 'notcaas');
         safe.fs.unlinkSync(paths.UPDATE_CHECKER_FILE);
 
+        mailer._mailQueue = [];
+
         async.series([
             database.initialize,
             database._clear,
@@ -85,7 +87,6 @@ describe('updatechecker - box - manual (email)', function () {
             users.createOwner.bind(null, USER_0.username, USER_0.password, USER_0.email, USER_0.displayName, AUDIT_SOURCE),
             settings.setBoxAutoupdatePattern.bind(null, constants.AUTOUPDATE_PATTERN_NEVER),
             settingsdb.set.bind(null, settings.APPSTORE_CONFIG_KEY, JSON.stringify({ userId: 'uid', cloudronId: 'cid', token: 'token' })),
-            mailer._clearMailQueue
         ], done);
     });
 
@@ -150,12 +151,13 @@ describe('updatechecker - box - automatic (no email)', function () {
         config.set('apiServerOrigin', 'http://localhost:4444');
         config.set('provider', 'notcaas');
 
+        mailer._mailQueue = [];
+
         async.series([
             database.initialize,
             cron.startPostActivationJobs,
             domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0, AUDIT_SOURCE),
             mail.addDomain.bind(null, DOMAIN_0.domain),
-            mailer._clearMailQueue,
             users.createOwner.bind(null, USER_0.username, USER_0.password, USER_0.email, USER_0.displayName, AUDIT_SOURCE),
             settingsdb.set.bind(null, settings.APPSTORE_CONFIG_KEY, JSON.stringify({ userId: 'uid', cloudronId: 'cid', token: 'token' }))
         ], done);
@@ -188,12 +190,13 @@ describe('updatechecker - box - automatic free (email)', function () {
         config.set('apiServerOrigin', 'http://localhost:4444');
         config.set('provider', 'notcaas');
 
+        mailer._mailQueue = [];
+
         async.series([
             database.initialize,
             cron.startPostActivationJobs,
             domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0, AUDIT_SOURCE),
             mail.addDomain.bind(null, DOMAIN_0.domain),
-            mailer._clearMailQueue,
             users.createOwner.bind(null, USER_0.username, USER_0.password, USER_0.email, USER_0.displayName, AUDIT_SOURCE),
             settingsdb.set.bind(null, settings.APPSTORE_CONFIG_KEY, JSON.stringify({ userId: 'uid', cloudronId: 'cid', token: 'token' }))
         ], done);
@@ -252,13 +255,14 @@ describe('updatechecker - app - manual (email)', function () {
         config.set('apiServerOrigin', 'http://localhost:4444');
         config.set('provider', 'notcaas');
 
+        mailer._mailQueue = [];
+
         async.series([
             database.initialize,
             database._clear,
             cron.startPostActivationJobs,
             domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0, AUDIT_SOURCE),
             mail.addDomain.bind(null, DOMAIN_0.domain),
-            mailer._clearMailQueue,
             function (next) {
                 users.createOwner(USER_0.username, USER_0.password, USER_0.email, USER_0.displayName, AUDIT_SOURCE, function (error, userObject) {
                     if (error) return next(error);
@@ -375,13 +379,14 @@ describe('updatechecker - app - automatic (no email)', function () {
         config.set('apiServerOrigin', 'http://localhost:4444');
         config.set('provider', 'notcaas');
 
+        mailer._mailQueue = [];
+
         async.series([
             database.initialize,
             database._clear,
             cron.startPostActivationJobs,
             domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0, AUDIT_SOURCE),
             mail.addDomain.bind(null, DOMAIN_0.domain),
-            mailer._clearMailQueue,
             function (next) {
                 users.createOwner(USER_0.username, USER_0.password, USER_0.email, USER_0.displayName, AUDIT_SOURCE, function (error, userObject) {
                     if (error) return next(error);
@@ -448,13 +453,14 @@ describe('updatechecker - app - automatic free (email)', function () {
         config.set('apiServerOrigin', 'http://localhost:4444');
         config.set('provider', 'notcaas');
 
+        mailer._mailQueue = [];
+
         async.series([
             database.initialize,
             database._clear,
             cron.startPostActivationJobs,
             domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0, AUDIT_SOURCE),
             mail.addDomain.bind(null, DOMAIN_0.domain),
-            mailer._clearMailQueue,
             function (next) {
                 users.createOwner(USER_0.username, USER_0.password, USER_0.email, USER_0.displayName, AUDIT_SOURCE, function (error, userObject) {
                     if (error) return next(error);
