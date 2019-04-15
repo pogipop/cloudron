@@ -1024,9 +1024,11 @@ function sendTestMail(domain, to, callback) {
     getDomain(domain, function (error, result) {
         if (error) return callback(error);
 
-        mailer.sendTestMail(result.domain, to);
+        mailer.sendTestMail(result.domain, to, function (error) {
+            if (error) return callback(new MailError(MailError.EXTERNAL_ERROR, error.message));
 
-        callback();
+            callback();
+        });
     });
 }
 

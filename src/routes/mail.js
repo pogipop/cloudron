@@ -204,6 +204,7 @@ function sendTestMail(req, res, next) {
 
     mail.sendTestMail(req.params.domain, req.body.to, function (error) {
         if (error && error.reason === MailError.NOT_FOUND) return next(new HttpError(404, error.message));
+        if (error && error.reason === MailError.EXTERNAL_ERROR) return next(new HttpError(424, error.message));
         if (error) return next(new HttpError(500, error));
 
         next(new HttpSuccess(202));

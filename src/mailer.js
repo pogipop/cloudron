@@ -423,9 +423,10 @@ function oomEvent(mailTo, program, event) {
     });
 }
 
-function sendTestMail(domain, email) {
+function sendTestMail(domain, email, callback) {
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof email, 'string');
+    assert.strictEqual(typeof callback, 'function');
 
     getMailConfig(function (error, mailConfig) {
         if (error) return debug('Error getting mail details:', error);
@@ -437,6 +438,6 @@ function sendTestMail(domain, email) {
             text: render('test.ejs', { cloudronName: mailConfig.cloudronName, format: 'text'})
         };
 
-        sendMail(mailOptions);
+        sendMail(mailOptions, callback);
     });
 }
