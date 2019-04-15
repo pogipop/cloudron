@@ -106,7 +106,6 @@ MailError.BAD_FIELD = 'Bad Field';
 MailError.ALREADY_EXISTS = 'Already Exists';
 MailError.NOT_FOUND = 'Not Found';
 MailError.IN_USE = 'In Use';
-MailError.BILLING_REQUIRED = 'Billing Required';
 
 function validateName(name) {
     assert.strictEqual(typeof name, 'string');
