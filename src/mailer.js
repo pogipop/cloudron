@@ -85,7 +85,7 @@ function sendMail(mailOptions, callback) {
             host: mailServerIp,
             port: config.get('smtpPort'),
             auth: {
-                user: `no-reply@${config.adminDomain()}`,
+                user: mailOptions.authUser || `no-reply@${config.adminDomain()}`,
                 pass: relayToken
             }
         }));
@@ -432,6 +432,7 @@ function sendTestMail(domain, email, callback) {
         if (error) return debug('Error getting mail details:', error);
 
         var mailOptions = {
+            authUser: `no-reply@${domain}`,
             from: `"${mailConfig.cloudronName}" <no-reply@${domain}>`,
             to: email,
             subject: util.format('Test Email from %s', mailConfig.cloudronName),

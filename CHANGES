@@ -1582,4 +1582,5 @@
 * Show app upstream version in the info dialog
 * Add Scaleway ObjectStorage backup backend
 * Preserve update backups for 3 weeks
+* Make send test mail functionality work with secondary domain
 
