@@ -1021,6 +1021,30 @@ describe('App installation', function () {
             });
     });
 
+    it('cannot reconfigure app with invalid tags', function (done) {
+        superagent.post(SERVER_URL + '/api/v1/apps/' + APP_ID + '/configure')
+            .query({ access_token: token })
+            .send({ location: APP_LOCATION_NEW, portBindings: { ECHO_SERVER_PORT: 7172 }, tags: 'foobar' })
+            .end(function (err, res) {
+                expect(res.statusCode).to.equal(400);
+
+                superagent.post(SERVER_URL + '/api/v1/apps/' + APP_ID + '/configure')
+                    .query({ access_token: token })
+                    .send({ location: APP_LOCATION_NEW, portBindings: { ECHO_SERVER_PORT: 7172 }, tags: ['hello', '', 'there' ] })
+                    .end(function (err, res) {
+                        expect(res.statusCode).to.equal(400);
+
+                        superagent.post(SERVER_URL + '/api/v1/apps/' + APP_ID + '/configure')
+                            .query({ access_token: token })
+                            .send({ location: APP_LOCATION_NEW, portBindings: { ECHO_SERVER_PORT: 7172 }, tags: ['hello', 1234, 'there' ] })
+                            .end(function (err, res) {
+                                expect(res.statusCode).to.equal(400);
+                                done();
+                            });
+                    });
+            });
+    });
+
     it('non admin cannot reconfigure app', function (done) {
         superagent.post(SERVER_URL + '/api/v1/apps/' + APP_ID + '/configure')
             .query({ access_token: token_1 })

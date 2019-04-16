@@ -119,10 +119,6 @@ function installApp(req, res, next) {
     if (data.backupFormat && typeof data.backupFormat !== 'string') return next(new HttpError(400, 'backupFormat must be string or null'));
 
     if ('label' in data && typeof data.label !== 'string') return next(new HttpError(400, 'label must be a string'));
-    if ('tags' in data) {
-        if (!Array.isArray(data.tags)) return next(new HttpError(400, 'tags must be a string array'));
-        if (data.tags.some(d => typeof d !== 'string')) return next(new HttpError(400, 'tags must be in array of strings'));
-    }
 
     // falsy values in cert and key unset the cert
     if (data.key && typeof data.cert !== 'string') return next(new HttpError(400, 'cert must be a string'));
@@ -213,11 +209,6 @@ function configureApp(req, res, next) {
     }
 
     if ('label' in data && typeof data.label !== 'string') return next(new HttpError(400, 'label must be a string'));
-    if ('tags' in data) {
-        if (!Array.isArray(data.tags)) return next(new HttpError(400, 'tags must be an array of strings'));
-        if (data.tags.some(d => typeof d !== 'string')) return next(new HttpError(400, 'tags must be an array of strings'));
-    }
-
     if ('dataDir' in data && typeof data.dataDir !== 'string') return next(new HttpError(400, 'dataDir must be a string'));
 
     debug('Configuring app id:%s data:%j', req.params.id, data);

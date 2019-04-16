@@ -299,13 +299,11 @@ function validateLabel(label) {
 }
 
 function validateTags(tags) {
-    if (tags === null) return null;
-
+    if (!Array.isArray(tags)) return new AppsError(AppsError.BAD_FIELD, 'tags must be an array of strings');
     if (tags.length > 64) return new AppsError(AppsError.BAD_FIELD, 'Can only set up to 64 tags');
 
-    for (const tag of tags) {
-        if (tag.length > 128) return new AppsError(AppsError.BAD_FIELD, 'tag must be less than 128');
-    }
+    if (tags.some(tag => (!tag || typeof tag !== 'string'))) return new AppsError(AppsError.BAD_FIELD, 'tags must be an array of non-empty strings');
+    if (tags.some(tag => tag.length > 128)) return new AppsError(AppsError.BAD_FIELD, 'tag must be less than 128');
 
     return null;
 }
