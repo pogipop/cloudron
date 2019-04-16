@@ -165,7 +165,6 @@ function startBox(done) {
     process.env.TEST_CREATE_INFRA = 1;
 
     safe.fs.unlinkSync(paths.INFRA_VERSION_FILE);
-    child_process.execSync('docker ps -qa | xargs --no-run-if-empty docker rm -f');
 
     async.series([
         // first clear, then start server. otherwise, taskmanager spins up tasks for obsolete appIds
