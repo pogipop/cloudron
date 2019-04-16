@@ -212,8 +212,8 @@ function configureApp(req, res, next) {
         if (Object.keys(data.env).some(function (key) { return typeof data.env[key] !== 'string'; })) return next(new HttpError(400, 'env must contain values as strings'));
     }
 
-    if (data.label && typeof data.label !== 'string') return next(new HttpError(400, 'label must be a non-empty string'));
-    if (data.tags) {
+    if ('label' in data && typeof data.label !== 'string') return next(new HttpError(400, 'label must be a string'));
+    if ('tags' in data) {
         if (!Array.isArray(data.tags)) return next(new HttpError(400, 'tags must be an array of strings'));
         if (data.tags.some(d => typeof d !== 'string')) return next(new HttpError(400, 'tags must be an array of strings'));
     }
