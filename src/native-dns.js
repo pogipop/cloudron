@@ -5,6 +5,7 @@ exports = module.exports = {
 };
 
 var assert = require('assert'),
+    config = require('./config.js'),
     dns = require('dns'),
     _ = require('underscore');
 
@@ -21,7 +22,9 @@ function resolve(hostname, rrtype, options, callback) {
 
     const resolver = new dns.Resolver();
     options = _.extend({ }, DEFAULT_OPTIONS, options);
-    resolver.setServers([ options.server ]);
+
+    // Only use unbound on a Cloudron
+    if (config.CLOUDRON) resolver.setServers([ options.server ]);
 
     // should callback with ECANCELLED but looks like we might hit https://github.com/nodejs/node/issues/14814
     const timerId = setTimeout(resolver.cancel.bind(resolver), options.timeout || 5000);
