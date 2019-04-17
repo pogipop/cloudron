@@ -132,8 +132,8 @@ function stopContainers(existingInfra, callback) {
         // TODO: only nuke containers with isCloudronManaged=true
         debug('stopping all containers for infra upgrade');
         async.series([
-            shell.exec.bind(null, 'stopContainers', 'docker ps -qa | xargs --no-run-if-empty docker stop'),
-            shell.exec.bind(null, 'stopContainers', 'docker ps -qa | xargs --no-run-if-empty docker rm -f')
+            shell.exec.bind(null, 'stopContainers', 'docker ps -qa --filter \'network=cloudron\' | xargs --no-run-if-empty docker stop'),
+            shell.exec.bind(null, 'stopContainers', 'docker ps -qa --filter \'network=cloudron\' | xargs --no-run-if-empty docker rm -f')
         ], callback);
     } else {
         assert(typeof infra.images, 'object');
@@ -146,8 +146,8 @@ function stopContainers(existingInfra, callback) {
         let filterArg = changedAddons.map(function (c) { return `--filter 'name=${c}'`; }).join(' '); // name=c matches *c*. required for redis-{appid}
         // ignore error if container not found (and fail later) so that this code works across restarts
         async.series([
-            shell.exec.bind(null, 'stopContainers', `docker ps -qa ${filterArg} | xargs --no-run-if-empty docker stop || true`),
-            shell.exec.bind(null, 'stopContainers', `docker ps -qa ${filterArg} | xargs --no-run-if-empty docker rm -f || true`)
+            shell.exec.bind(null, 'stopContainers', `docker ps -qa ${filterArg} --filter 'network=cloudron' | xargs --no-run-if-empty docker stop || true`),
+            shell.exec.bind(null, 'stopContainers', `docker ps -qa ${filterArg} --filter 'network=cloudron' | xargs --no-run-if-empty docker rm -f || true`)
         ], callback);
     }
 }
