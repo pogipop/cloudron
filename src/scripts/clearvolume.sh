@@ -22,7 +22,7 @@ volume_dir="$2"
 
 if [[ "${BOX_ENV}" == "test" ]]; then
     # be careful not to nuke some random directory when testing
-    [[ "${volume_dir}" != *"./cloudron_test/"* ]] && exit 1
+    [[ "${volume_dir}" != *"/.cloudron_test/"* ]] && exit 1
 fi
 
 if [[ -d "${volume_dir}" ]]; then
