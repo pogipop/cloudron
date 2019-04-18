@@ -91,7 +91,7 @@
     "sinon": "^7.3.1"
   },
   "scripts": {
-    "test": "runTests",
+    "test": "./runTests",
     "postmerge": "/bin/true",
     "precommit": "/bin/true",
     "prepush": "npm test",
