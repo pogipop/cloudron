@@ -597,7 +597,7 @@ function install(data, user, auditSource, callback) {
         env = data.env || {},
         mailboxName = data.mailboxName || '',
         label = data.label || null,
-        tags = data.tags || null;
+        tags = data.tags || [];
 
     assert(data.appStoreId || data.manifest); // atleast one of them is required
 
