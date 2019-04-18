@@ -2,13 +2,14 @@
 
 set -eu
 
-readonly SOURCE_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")"/../.. && pwd)"
+readonly SOURCE_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 readonly DATA_DIR="${HOME}/.cloudron_test"
+readonly DEFAULT_TESTS="./src/test/*-test.js ./src/routes/test/*-test.js"
 
 ! "${SOURCE_dir}/src/test/checkInstall" && exit 1
 
 # cleanup old data dirs some of those docker container data requires sudo to be removed
-echo "=> Provide root password to purge any leftover data dirs (${DATA_DIR}):"
+echo "=> Provide root password to purge any leftover data in ${DATA_DIR}:"
 sudo rm -rf ${DATA_DIR}
 
 # create dir structure
@@ -19,9 +20,11 @@ mkdir -p boxdata/appicons boxdata/mail boxdata/certs boxdata/mail/dkim/localhost
 mkdir -p platformdata/addons/mail platformdata/nginx/cert platformdata/nginx/applications platformdata/collectd/collectd.conf.d platformdata/addons platformdata/logrotate.d platformdata/backup platformdata/logs/tasks
 
 # put cert
+echo "=> Generating a localhost selfsigned cert"
 openssl req -x509 -newkey rsa:2048 -keyout platformdata/nginx/cert/host.key -out platformdata/nginx/cert/host.cert -days 3650 -subj '/CN=localhost' -nodes -config <(cat /etc/ssl/openssl.cnf <(printf "\n[SAN]\nsubjectAltName=DNS:*.localhost"))
 
 # clear out any containers
+echo "=> Delete all docker containers first"
 docker ps -qa | xargs --no-run-if-empty docker rm -f
 
 # create docker network (while the infra code does this, most tests skip infra setup)
@@ -30,25 +33,33 @@ docker network create --subnet=172.18.0.0/16 cloudron || true
 # create the same mysql server version to test with
 OUT=`docker inspect mysql-server` || true
 if [[ "${OUT}" = "[]" ]]; then
-    echo "Starting mysql-server..."
+    echo "=> Starting mysql-server..."
     docker run --name mysql-server -e MYSQL_ROOT_PASSWORD=password -d mysql:5.7
 else
-    echo "mysql-server already running. If you want to start fresh, run 'docker rm --force mysql-server'"
+    echo "=> mysql-server already running. If you want to start fresh, run 'docker rm --force mysql-server'"
 fi
 
 export MYSQL_IP=`docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' mysql-server`
 
-echo "Waiting for mysql server to be ready..."
+echo "=> Waiting for mysql server to be ready..."
 while ! mysqladmin ping -h"${MYSQL_IP}" --silent; do
     sleep 1
 done
 
-echo "Starting cloudron-syslog"
+echo "=> Starting cloudron-syslog"
 cloudron-syslog --logdir "${DATA_DIR}/platformdata/logs/" &
 
-echo "Ensure database"
+echo "=> Ensure database"
 mysql -h"${MYSQL_IP}" -uroot -ppassword -e 'CREATE DATABASE IF NOT EXISTS box'
 
-echo "Run database migrations"
+echo "=> Run database migrations"
 cd "${SOURCE_dir}"
 BOX_ENV=test DATABASE_URL=mysql://root:password@${MYSQL_IP}/box node_modules/.bin/db-migrate up
+
+echo "=> Run tests with mocha"
+TESTS=${DEFAULT_TESTS}
+if [[ $# -gt 0 ]]; then
+    TESTS="$*"
+fi
+
+BOX_ENV=test ./node_modules/mocha/bin/_mocha -- --no-timeouts --exit -R spec ${TESTS}
