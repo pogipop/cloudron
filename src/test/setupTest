@@ -2,14 +2,18 @@
 
 set -eu
 
-readonly source_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")"/../.. && pwd)"
+readonly SOURCE_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")"/../.. && pwd)"
+readonly DATA_DIR="${HOME}/.cloudron_test"
 
-! "${source_dir}/src/test/checkInstall" && exit 1
+! "${SOURCE_dir}/src/test/checkInstall" && exit 1
+
+# cleanup old data dirs some of those docker container data requires sudo to be removed
+echo "=> Provide root password to purge any leftover data dirs (${DATA_DIR}):"
+sudo rm -rf ${DATA_DIR}
 
 # create dir structure
-rm -rf $HOME/.cloudron_test 2>/dev/null || true # some of those docker container data requires sudo to be removed
-mkdir -p $HOME/.cloudron_test
-cd $HOME/.cloudron_test
+mkdir -p ${DATA_DIR}
+cd ${DATA_DIR}
 mkdir -p appsdata
 mkdir -p boxdata/appicons boxdata/mail boxdata/certs boxdata/mail/dkim/localhost boxdata/mail/dkim/foobar.com
 mkdir -p platformdata/addons/mail platformdata/nginx/cert platformdata/nginx/applications platformdata/collectd/collectd.conf.d platformdata/addons platformdata/logrotate.d platformdata/backup platformdata/logs/tasks
@@ -39,9 +43,12 @@ while ! mysqladmin ping -h"${MYSQL_IP}" --silent; do
     sleep 1
 done
 
+echo "Starting cloudron-syslog"
+cloudron-syslog --logdir "${DATA_DIR}/platformdata/logs/" &
+
 echo "Ensure database"
 mysql -h"${MYSQL_IP}" -uroot -ppassword -e 'CREATE DATABASE IF NOT EXISTS box'
 
 echo "Run database migrations"
-cd "${source_dir}"
+cd "${SOURCE_dir}"
 BOX_ENV=test DATABASE_URL=mysql://root:password@${MYSQL_IP}/box node_modules/.bin/db-migrate up
