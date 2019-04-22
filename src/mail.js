@@ -165,16 +165,22 @@ function checkSmtpRelay(relay, callback) {
         status: false
     };
 
-    var transporter = nodemailer.createTransport(smtpTransport({
+    var options = {
         connectionTimeout: 5000,
         greetingTimeout: 5000,
         host: relay.host,
-        port: relay.port,
-        auth: {
+        port: relay.port
+    };
+
+    // only set auth if either username or password is provided, some relays auth based on IP (range)
+    if (relay.username || relay.password) {
+        options.auth = {
             user: relay.username,
             pass: relay.password
-        }
-    }));
+        };
+    }
+
+    var transporter = nodemailer.createTransport(smtpTransport(options));
 
     transporter.verify(function(error) {
         result.status = !error;
