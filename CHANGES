@@ -1583,4 +1583,5 @@
 * Add Scaleway ObjectStorage backup backend
 * Preserve update backups for 3 weeks
 * Make send test mail functionality work with secondary domain
+* Add support for an external email relay that does not require authentication
 
