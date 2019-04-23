@@ -170,6 +170,7 @@ function setMailRelay(req, res, next) {
     if ('port' in req.body && typeof req.body.port !== 'number') return next(new HttpError(400, 'port must be a string'));
     if ('username' in req.body && typeof req.body.username !== 'string') return next(new HttpError(400, 'username must be a string'));
     if ('password' in req.body && typeof req.body.password !== 'string') return next(new HttpError(400, 'password must be a string'));
+    if ('acceptSelfSignedCerts' in req.body && typeof req.body.acceptSelfSignedCerts !== 'boolean') return next(new HttpError(400, 'acceptSelfSignedCerts must be a boolean'));
 
     mail.setMailRelay(req.params.domain, req.body, function (error) {
         if (error && error.reason === MailError.NOT_FOUND) return next(new HttpError(404, error.message));

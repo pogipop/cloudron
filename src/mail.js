@@ -180,6 +180,8 @@ function checkSmtpRelay(relay, callback) {
         };
     }
 
+    if (relay.acceptSelfSignedCerts) options.tls = { rejectUnauthorized: false };
+
     var transporter = nodemailer.createTransport(smtpTransport(options));
 
     transporter.verify(function(error) {

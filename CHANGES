@@ -1584,4 +1584,5 @@
 * Preserve update backups for 3 weeks
 * Make send test mail functionality work with secondary domain
 * Add support for an external email relay that does not require authentication
+* Add option to accept self-signed certs when using external mail relay
 
