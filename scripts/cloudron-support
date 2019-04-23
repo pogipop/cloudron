@@ -84,6 +84,15 @@ fi
 echo -e $LINE"Filesystem stats"$LINE >> $OUT
 df -h &>> $OUT
 
+echo -e $LINE"Appsdata stats"$LINE >> $OUT
+du -hcsL /home/yellowtent/appsdata/* &>> $OUT
+
+echo -e $LINE"Boxdata stats"$LINE >> $OUT
+du -hcsL /home/yellowtent/boxdata/* &>> $OUT
+
+echo -e $LINE"Backup stats (possibly misleading)"$LINE >> $OUT
+du -hcsL /var/backups/* &>> $OUT
+
 echo -e $LINE"System daemon status"$LINE >> $OUT
 systemctl status --lines=100 cloudron.target box mysql unbound cloudron-syslog nginx collectd docker &>> $OUT
 
