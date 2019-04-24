@@ -225,7 +225,7 @@ function startBox(done) {
                     token_1 = hat(8 * 32);
 
                     // HACK to get a token for second user (passwords are generated and the user should have gotten a password setup link...)
-                    tokendb.add({ id: 'tid-1', accessToken: token_1, identifier: user_1_id, clientId: 'test-client-id', expires: Date.now() + 100000, scope: 'apps', name: '' }, callback);
+                    tokendb.add({ id: 'tid-1', accessToken: token_1, identifier: user_1_id, clientId: 'cid-sdk', expires: Date.now() + 1000000, scope: 'apps', name: '' }, callback); // cid-sdk means we don't need to send password
                 });
         },
 
@@ -1081,7 +1081,7 @@ describe('App installation', function () {
             .query({ access_token: token_1 })
             .send({ location: APP_LOCATION_NEW, domain: DOMAIN_0.domain, portBindings: { ECHO_SERVER_PORT: 7172 }, accessRestriction: null })
             .end(function (err, res) {
-                expect(res.statusCode).to.equal(401);
+                expect(res.statusCode).to.equal(403);
                 done();
             });
     });
