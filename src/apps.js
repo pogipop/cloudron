@@ -397,14 +397,14 @@ function removeInternalFields(app) {
         'location', 'domain', 'fqdn', 'mailboxName',
         'accessRestriction', 'manifest', 'portBindings', 'iconUrl', 'memoryLimit', 'xFrameOptions',
         'sso', 'debugMode', 'robotsTxt', 'enableBackup', 'creationTime', 'updateTime', 'ts', 'tags',
-        'alternateDomains', 'ownerId', 'env', 'enableAutomaticUpdate', 'dataDir');
+        'label', 'alternateDomains', 'ownerId', 'env', 'enableAutomaticUpdate', 'dataDir');
 }
 
 // non-admins can only see these
 function removeRestrictedFields(app) {
     return _.pick(app,
         'id', 'appStoreId', 'installationState', 'installationProgress', 'runState', 'health', 'ownerId',
-        'location', 'domain', 'fqdn', 'manifest', 'portBindings', 'iconUrl', 'creationTime', 'ts', 'tags');
+        'location', 'domain', 'fqdn', 'manifest', 'portBindings', 'iconUrl', 'creationTime', 'ts', 'tags', 'label');
 }
 
 function getIconUrlSync(app) {
