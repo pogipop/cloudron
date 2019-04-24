@@ -9,8 +9,11 @@ readonly DEFAULT_TESTS="./src/test/*-test.js ./src/routes/test/*-test.js"
 ! "${SOURCE_dir}/src/test/checkInstall" && exit 1
 
 # cleanup old data dirs some of those docker container data requires sudo to be removed
-echo "=> Provide root password to purge any leftover data in ${DATA_DIR}:"
+echo "=> Provide root password to purge any leftover data in ${DATA_DIR} and load apparmor profile:"
 sudo rm -rf ${DATA_DIR}
+
+echo "=> Loading app armor profile"
+sudo apparmor_parser --replace --write-cache ./setup/start/docker-cloudron-app.apparmor
 
 # create dir structure
 mkdir -p ${DATA_DIR}
