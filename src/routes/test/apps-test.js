@@ -122,7 +122,10 @@ function checkAddons(appEntry, done) {
                 delete body.docker; // TODO fix this for some reason we cannot connect to the docker proxy on port 3003
 
                 for (var key in body) {
-                    if (body[key] !== 'OK') return callback('Not done yet: ' + JSON.stringify(body));
+                    if (body[key] !== 'OK') {
+                        console.log('Not done yet: ' + JSON.stringify(body));
+                        return callback('Not done yet: ' + JSON.stringify(body));
+                    }
                 }
 
                 callback();
@@ -843,6 +846,7 @@ describe('App installation', function () {
     it('logs - stdout and stderr', function (done) {
         superagent.get(SERVER_URL + '/api/v1/apps/' + APP_ID + '/logs')
             .query({ access_token: token })
+            .buffer(false)
             .end(function (err, res) {
                 var data = '';
                 res.on('data', function (d) { data += d.toString('utf8'); });
@@ -862,7 +866,6 @@ describe('App installation', function () {
                 done();
             });
     });
-
 
     xit('logStream - stream logs', function (done) {
         var options = {
