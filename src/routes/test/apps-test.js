@@ -867,7 +867,7 @@ describe('App installation', function () {
             });
     });
 
-    xit('logStream - stream logs', function (done) {
+    it('logStream - stream logs', function (done) {
         var options = {
             port: config.get('port'), host: 'localhost', path: '/api/v1/apps/' + APP_ID + '/logstream?access_token=' + token,
             headers: { 'Accept': 'text/event-stream', 'Connection': 'keep-alive' }
@@ -876,18 +876,15 @@ describe('App installation', function () {
         // superagent doesn't work. maybe https://github.com/visionmedia/superagent/issues/420
         var req = http.get(options, function (res) {
             var data = '';
-            res.on('data', function (d) { data += d.toString('utf8'); console.log('=== logstream data', d.toString('utf8')); });
+            res.on('data', function (d) { data += d.toString('utf8'); });
             setTimeout(function checkData() {
                 expect(data.length).to.not.be(0);
-                var lineNumber = 1;
                 data.split('\n').forEach(function (line) {
                     if (line.indexOf('id: ') !== 0) return;
-                    expect(parseInt(line.substr(4), 10)).to.be(lineNumber); // line number
-                    ++lineNumber;
+                    expect(parseInt(line.substr(4), 10)).to.be.a('number'); // timestamp
                 });
 
                 req.abort();
-                expect(lineNumber).to.be.above(1);
                 done();
             }, 1000);
             res.on('error', done);

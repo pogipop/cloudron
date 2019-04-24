@@ -142,8 +142,11 @@ function startAppTask(appId, callback) {
         return callback();
     }
 
+    // when running tests, we have to inject the DEBUG env. in cloudron, the value is inherited
+    const env = process.env.BOX_ENV === 'test' ? _.extend({}, process.env, { DEBUG: 'box*,connect-lastmile' }) : process.env;
+
     // when parent process dies, apptask processes are killed because KillMode=control-group in systemd unit file
-    gActiveTasks[appId] = child_process.fork(__dirname + '/apptask.js', [ appId ], { stdio: [ 'pipe', fd, fd, 'ipc' ]});
+    gActiveTasks[appId] = child_process.fork(__dirname + '/apptask.js', [ appId ], { stdio: [ 'pipe', fd, fd, 'ipc' ], env: env });
 
     var pid = gActiveTasks[appId].pid;
     debug('Started task of %s pid: %s. See logs at %s', appId, pid, logFilePath);
