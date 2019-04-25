@@ -12,8 +12,11 @@ readonly DEFAULT_TESTS="./src/test/*-test.js ./src/routes/test/*-test.js"
 echo "=> Provide root password to purge any leftover data in ${DATA_DIR} and load apparmor profile:"
 sudo rm -rf ${DATA_DIR}
 
-echo "=> Loading app armor profile"
-sudo apparmor_parser --replace --write-cache ./setup/start/docker-cloudron-app.apparmor
+# archlinux does not have apparmor
+if hash apparmor_parser 2>/dev/null; then
+    echo "=> Loading app armor profile"
+    sudo apparmor_parser --replace --write-cache ./setup/start/docker-cloudron-app.apparmor
+fi
 
 # create dir structure
 mkdir -p ${DATA_DIR}
