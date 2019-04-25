@@ -604,6 +604,10 @@ function start(callback) {
 
     gServer = ldap.createServer({ log: logger });
 
+    gServer.on('error', function (error) {
+        console.error('LDAP:', error);
+    });
+
     gServer.search('ou=users,dc=cloudron', authenticateApp, userSearch);
     gServer.search('ou=groups,dc=cloudron', authenticateApp, groupSearch);
     gServer.bind('ou=users,dc=cloudron', authenticateApp, authenticateUser, authorizeUserForApp);
