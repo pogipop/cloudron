@@ -61,7 +61,7 @@ function verifySetupToken(setupToken, callback) {
     settings.getCaasConfig(function (error, caasConfig) {
         if (error) return callback(new CaasError(CaasError.INTERNAL_ERROR, error));
 
-        superagent.get(config.apiServerOrigin() + '/api/v1/boxes/' + caasConfig.boxId + '/setup/verify').query({ setupToken: setupToken })
+        superagent.get(config.apiServerOrigin() + '/api/v1/caas/boxes/' + caasConfig.boxId + '/setup/verify').query({ setupToken: setupToken })
             .timeout(30 * 1000)
             .end(function (error, result) {
                 if (error && !error.response) return callback(new CaasError(CaasError.EXTERNAL_ERROR, error));
@@ -82,7 +82,7 @@ function setupDone(setupToken, callback) {
         if (error) return callback(new CaasError(CaasError.INTERNAL_ERROR, error));
 
         // Now let the api server know we got activated
-        superagent.post(config.apiServerOrigin() + '/api/v1/boxes/' + caasConfig.boxId + '/setup/done').query({ setupToken: setupToken })
+        superagent.post(config.apiServerOrigin() + '/api/v1/caas/boxes/' + caasConfig.boxId + '/setup/done').query({ setupToken: setupToken })
             .timeout(30 * 1000)
             .end(function (error, result) {
                 if (error && !error.response) return callback(new CaasError(CaasError.EXTERNAL_ERROR, error));
@@ -105,7 +105,7 @@ function backupDone(apiConfig, backupId, appBackupIds, callback) {
 
     debug('[%s] backupDone: %s apps %j', backupId, backupId, appBackupIds);
 
-    var url = config.apiServerOrigin() + '/api/v1/boxes/' + apiConfig.fqdn + '/backupDone';
+    var url = config.apiServerOrigin() + '/api/v1/caas/boxes/' + apiConfig.fqdn + '/backupDone';
     var data = {
         boxVersion: config.version(),
         backupId: backupId,
@@ -128,7 +128,7 @@ function sendHeartbeat() {
     getCaasConfig(function (error, result) {
         if (error) return debug('Caas config missing', error);
 
-        var url = config.apiServerOrigin() + '/api/v1/boxes/' + result.boxId + '/heartbeat';
+        var url = config.apiServerOrigin() + '/api/v1/caas/boxes/' + result.boxId + '/heartbeat';
         superagent.post(url).query({ token: result.token, version: config.version() }).timeout(30 * 1000).end(function (error, result) {
             if (error && !error.response) debug('Network error sending heartbeat.', error);
             else if (result.statusCode !== 200) debug('Server responded to heartbeat with %s %s', result.statusCode, result.text);
@@ -145,7 +145,7 @@ function setPtrRecord(domain, callback) {
         if (error) return callback(error);
 
         superagent
-            .post(config.apiServerOrigin() + '/api/v1/boxes/' + result.boxId + '/ptr')
+            .post(config.apiServerOrigin() + '/api/v1/caas/boxes/' + result.boxId + '/ptr')
             .query({ token: result.token })
             .send({ domain: domain })
             .timeout(5 * 1000)

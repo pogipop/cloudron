@@ -61,8 +61,8 @@ function setup(done) {
         domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0, AUDIT_SOURCE),
 
         function createAdmin(callback) {
-            var scope1 = nock(config.apiServerOrigin()).get('/api/v1/boxes/BOX_ID/setup/verify?setupToken=somesetuptoken').reply(200, {});
-            var scope2 = nock(config.apiServerOrigin()).post('/api/v1/boxes/BOX_ID/setup/done?setupToken=somesetuptoken').reply(201, {});
+            var scope1 = nock(config.apiServerOrigin()).get('/api/v1/caas/boxes/BOX_ID/setup/verify?setupToken=somesetuptoken').reply(200, {});
+            var scope2 = nock(config.apiServerOrigin()).post('/api/v1/caas/boxes/BOX_ID/setup/done?setupToken=somesetuptoken').reply(201, {});
 
             superagent.post(SERVER_URL + '/api/v1/cloudron/activate')
                 .query({ setupToken: 'somesetuptoken' })
@@ -116,7 +116,7 @@ describe('Caas', function () {
 
         // note that while the server itself returns 503, the cloudron gets activated. this is just the way it is
         it('fails due to internal server error on appstore side', function (done) {
-            var scope = nock(config.apiServerOrigin()).get('/api/v1/boxes/BOX_ID/setup/verify?setupToken=somesetuptoken').reply(500, { message: 'this is wrong' });
+            var scope = nock(config.apiServerOrigin()).get('/api/v1/caas/boxes/BOX_ID/setup/verify?setupToken=somesetuptoken').reply(500, { message: 'this is wrong' });
 
             superagent.post(SERVER_URL + '/api/v1/cloudron/activate')
                 .query({ setupToken: 'somesetuptoken' })
@@ -129,8 +129,8 @@ describe('Caas', function () {
         });
 
         xit('succeeds', function (done) {
-            var scope1 = nock(config.apiServerOrigin()).get('/api/v1/boxes/BOX_ID/setup/verify?setupToken=somesetuptoken').reply(200, {});
-            var scope2 = nock(config.apiServerOrigin()).post('/api/v1/boxes/BOX_ID/setup/done?setupToken=somesetuptoken').reply(201, {});
+            var scope1 = nock(config.apiServerOrigin()).get('/api/v1/caas/boxes/BOX_ID/setup/verify?setupToken=somesetuptoken').reply(200, {});
+            var scope2 = nock(config.apiServerOrigin()).post('/api/v1/caas/boxes/BOX_ID/setup/done?setupToken=somesetuptoken').reply(201, {});
 
             superagent.post(SERVER_URL + '/api/v1/cloudron/activate')
                 .query({ setupToken: 'somesetuptoken' })
@@ -146,7 +146,7 @@ describe('Caas', function () {
     });
 
     describe('Backups API', function () {
-        var scope1 = nock(config.apiServerOrigin()).post('/api/v1/boxes/BOX_ID/awscredentials?token=BACKUP_TOKEN')
+        var scope1 = nock(config.apiServerOrigin()).post('/api/v1/caas/boxes/BOX_ID/awscredentials?token=BACKUP_TOKEN')
             .reply(201, { credentials: { AccessKeyId: 'accessKeyId', SecretAccessKey: 'secretAccessKey' } }, { 'Content-Type': 'application/json' });
 
         before(setup);
