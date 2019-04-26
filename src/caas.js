@@ -4,6 +4,8 @@ exports = module.exports = {
     verifySetupToken: verifySetupToken,
     setupDone: setupDone,
 
+    backupDone: backupDone,
+
     sendHeartbeat: sendHeartbeat,
     setPtrRecord: setPtrRecord,
 
@@ -90,6 +92,33 @@ function setupDone(setupToken, callback) {
 
                 callback(null);
             });
+    });
+}
+
+function backupDone(apiConfig, backupId, appBackupIds, callback) {
+    assert.strictEqual(typeof apiConfig, 'object');
+    assert.strictEqual(typeof backupId, 'string');
+    assert(Array.isArray(appBackupIds));
+    assert.strictEqual(typeof callback, 'function');
+
+    if (apiConfig.provider !== 'caas') return callback();
+
+    debug('[%s] backupDone: %s apps %j', backupId, backupId, appBackupIds);
+
+    var url = config.apiServerOrigin() + '/api/v1/boxes/' + apiConfig.fqdn + '/backupDone';
+    var data = {
+        boxVersion: config.version(),
+        backupId: backupId,
+        appId: null,        // now unused
+        appVersion: null,   // now unused
+        appBackupIds: appBackupIds
+    };
+
+    superagent.post(url).send(data).query({ token: apiConfig.token }).timeout(30 * 1000).end(function (error, result) {
+        if (error && !error.response) return callback(new CaasError(CaasError.EXTERNAL_ERROR, error));
+        if (result.statusCode !== 200) return callback(new CaasError(CaasError.EXTERNAL_ERROR, result.text));
+
+        return callback(null);
     });
 }
 
