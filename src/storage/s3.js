@@ -62,7 +62,7 @@ function getCaasConfig(apiConfig, callback) {
 
     debug('getCaasCredentials: getting new credentials');
 
-    var url = config.apiServerOrigin() + '/api/v1/caas/boxes/' + apiConfig.fqdn + '/awscredentials';
+    var url = config.apiServerOrigin() + '/api/v1/caas/boxes/' + apiConfig.boxId + '/awscredentials';
     superagent.post(url).query({ token: apiConfig.token }).timeout(30 * 1000).end(function (error, result) {
         if (error && !error.response) return callback(error);
         if (result.statusCode !== 201) return callback(new Error(result.text));

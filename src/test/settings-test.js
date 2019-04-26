@@ -100,10 +100,10 @@ describe('Settings', function () {
 
         it('can set backup config', function (done) {
             nock(config.apiServerOrigin())
-                .post(`/api/v1/caas/boxes/${DOMAIN_0}/awscredentials?token=TOKEN`)
+                .post(`/api/v1/caas/boxes/boxid/awscredentials?token=TOKEN`)
                 .reply(201, { credentials: { AccessKeyId: 'accessKeyId', SecretAccessKey: 'secretAccessKey', SessionToken: 'sessionToken' } });
 
-            settings.setBackupConfig({ provider: 'caas', fqdn: DOMAIN_0, token: 'TOKEN', format: 'tgz', prefix: 'boxid', bucket: 'bucket' }, function (error) {
+            settings.setBackupConfig({ provider: 'caas', boxId: 'boxid', token: 'TOKEN', format: 'tgz', prefix: 'boxid', bucket: 'bucket' }, function (error) {
                 expect(error).to.be(null);
                 done();
             });

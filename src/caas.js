@@ -105,7 +105,7 @@ function backupDone(apiConfig, backupId, appBackupIds, callback) {
 
     debug('[%s] backupDone: %s apps %j', backupId, backupId, appBackupIds);
 
-    var url = config.apiServerOrigin() + '/api/v1/caas/boxes/' + apiConfig.fqdn + '/backupDone';
+    var url = config.apiServerOrigin() + '/api/v1/caas/boxes/' + apiConfig.boxId + '/backupDone';
     var data = {
         boxVersion: config.version(),
         backupId: backupId,
