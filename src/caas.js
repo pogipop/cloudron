@@ -44,16 +44,6 @@ CaasError.INVALID_TOKEN = 'Invalid Token';
 CaasError.INTERNAL_ERROR = 'Internal Error';
 CaasError.EXTERNAL_ERROR = 'External Error';
 
-function getCaasConfig(callback) {
-    assert.strictEqual(typeof callback, 'function');
-
-    settings.getCaasConfig(function (error, result) {
-        if (error) return callback(new CaasError(CaasError.INTERNAL_ERROR, error));
-
-        callback(null, result);
-    });
-}
-
 function verifySetupToken(setupToken, callback) {
     assert.strictEqual(typeof setupToken, 'string');
     assert.strictEqual(typeof callback, 'function');
@@ -64,10 +54,10 @@ function verifySetupToken(setupToken, callback) {
         superagent.get(config.apiServerOrigin() + '/api/v1/caas/boxes/' + caasConfig.boxId + '/setup/verify').query({ setupToken: setupToken })
             .timeout(30 * 1000)
             .end(function (error, result) {
-                if (error && !error.response) return callback(new CaasError(CaasError.EXTERNAL_ERROR, error));
+                if (error && !error.response) return callback(new CaasError(CaasError.EXTERNAL_ERROR, error.message));
                 if (result.statusCode === 403) return callback(new CaasError(CaasError.INVALID_TOKEN));
                 if (result.statusCode === 409) return callback(new CaasError(CaasError.BAD_STATE, 'Already setup'));
-                if (result.statusCode !== 200) return callback(new CaasError(CaasError.EXTERNAL_ERROR, error));
+                if (result.statusCode !== 200) return callback(new CaasError(CaasError.EXTERNAL_ERROR, error.message));
 
                 callback(null);
             });
@@ -85,10 +75,10 @@ function setupDone(setupToken, callback) {
         superagent.post(config.apiServerOrigin() + '/api/v1/caas/boxes/' + caasConfig.boxId + '/setup/done').query({ setupToken: setupToken })
             .timeout(30 * 1000)
             .end(function (error, result) {
-                if (error && !error.response) return callback(new CaasError(CaasError.EXTERNAL_ERROR, error));
+                if (error && !error.response) return callback(new CaasError(CaasError.EXTERNAL_ERROR, error.message));
                 if (result.statusCode === 403) return callback(new CaasError(CaasError.INVALID_TOKEN));
                 if (result.statusCode === 409) return callback(new CaasError(CaasError.BAD_STATE, 'Already setup'));
-                if (result.statusCode !== 201) return callback(new CaasError(CaasError.EXTERNAL_ERROR, error));
+                if (result.statusCode !== 201) return callback(new CaasError(CaasError.EXTERNAL_ERROR, error.message));
 
                 callback(null);
             });
@@ -115,24 +105,30 @@ function backupDone(apiConfig, backupId, appBackupIds, callback) {
     };
 
     superagent.post(url).send(data).query({ token: apiConfig.token }).timeout(30 * 1000).end(function (error, result) {
-        if (error && !error.response) return callback(new CaasError(CaasError.EXTERNAL_ERROR, error));
+        if (error && !error.response) return callback(new CaasError(CaasError.EXTERNAL_ERROR, error.message));
         if (result.statusCode !== 200) return callback(new CaasError(CaasError.EXTERNAL_ERROR, result.text));
 
         return callback(null);
     });
 }
 
-function sendHeartbeat() {
-    assert(config.provider() === 'caas', 'Heartbeat is only sent for managed cloudrons');
+function sendHeartbeat(callback) {
+    assert.strictEqual(typeof callback, 'function');
 
-    getCaasConfig(function (error, result) {
-        if (error) return debug('Caas config missing', error);
+    if (config.provider() !== 'caas') return callback(new CaasError.INTERNAL_ERROR, new Error('Heartbeat is only sent for managed cloudrons'));
 
-        var url = config.apiServerOrigin() + '/api/v1/caas/boxes/' + result.boxId + '/heartbeat';
-        superagent.post(url).query({ token: result.token, version: config.version() }).timeout(30 * 1000).end(function (error, result) {
-            if (error && !error.response) debug('Network error sending heartbeat.', error);
-            else if (result.statusCode !== 200) debug('Server responded to heartbeat with %s %s', result.statusCode, result.text);
-            else debug('Heartbeat sent to %s', url);
+    settings.getCaasConfig(function (error, caasConfig) {
+        if (error) return callback(new CaasError(CaasError.INTERNAL_ERROR, error));
+        if (!caasConfig.token) return callback(); // not configured yet
+
+        var url = config.apiServerOrigin() + '/api/v1/caas/boxes/' + caasConfig.boxId + '/heartbeat';
+        superagent.post(url).query({ token: caasConfig.token, version: config.version() }).timeout(30 * 1000).end(function (error, result) {
+            if (error && !error.response) return callback(new CaasError(CaasError.EXTERNAL_ERROR, `Network error sending heartbeat: ${error.message}`));
+            if (result.statusCode !== 200) return callback(new CaasError(CaasError.EXTERNAL_ERROR, `Server responded to heartbeat with ${result.statusCode}: ${result.text}`));
+
+            debug('Heartbeat sent to %s', url);
+
+            callback();
         });
     });
 }
@@ -141,12 +137,12 @@ function setPtrRecord(domain, callback) {
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    getCaasConfig(function (error, result) {
-        if (error) return callback(error);
+    settings.getCaasConfig(function (error, caasConfig) {
+        if (error) return callback(new CaasError(CaasError.INTERNAL_ERROR, error));
 
         superagent
-            .post(config.apiServerOrigin() + '/api/v1/caas/boxes/' + result.boxId + '/ptr')
-            .query({ token: result.token })
+            .post(config.apiServerOrigin() + '/api/v1/caas/boxes/' + caasConfig.boxId + '/ptr')
+            .query({ token: caasConfig.token })
             .send({ domain: domain })
             .timeout(5 * 1000)
             .end(function (error, result) {
