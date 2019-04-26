@@ -203,29 +203,8 @@ fi
 
 # NOTE: this install script only supports 3.x and above
 echo "=> Installing version ${version} (this takes some time) ..."
-if [[ "${version}" =~ 3\.[0-2]+\.[0-9]+ ]]; then
-    readonly DATA_FILE="/root/cloudron-install-data.json"
-    data=$(cat <<EOF
-{
-    "provider": "${provider}",
-    "edition": "${edition}",
-    "apiServerOrigin": "${apiServerOrigin}",
-    "webServerOrigin": "${webServerOrigin}",
-    "version": "${version}"
-}
-EOF
-)
-    echo "${data}" > "${DATA_FILE}"
-
-    if ! /bin/bash "${box_src_tmp_dir}/scripts/installer.sh" --data-file "${DATA_FILE}" &>> "${LOG_FILE}"; then
-        echo "Failed to install cloudron. See ${LOG_FILE} for details"
-        exit 1
-    fi
-
-    rm "${DATA_FILE}"
-else
-    mkdir -p /etc/cloudron
-    cat > "/etc/cloudron/cloudron.conf" <<CONF_END
+mkdir -p /etc/cloudron
+cat > "/etc/cloudron/cloudron.conf" <<CONF_END
 {
     "apiServerOrigin": "${apiServerOrigin}",
     "webServerOrigin": "${webServerOrigin}",
@@ -234,10 +213,9 @@ else
 }
 CONF_END
 
-    if ! /bin/bash "${box_src_tmp_dir}/scripts/installer.sh" &>> "${LOG_FILE}"; then
-        echo "Failed to install cloudron. See ${LOG_FILE} for details"
-        exit 1
-    fi
+if ! /bin/bash "${box_src_tmp_dir}/scripts/installer.sh" &>> "${LOG_FILE}"; then
+    echo "Failed to install cloudron. See ${LOG_FILE} for details"
+    exit 1
 fi
 
 [[ -f LICENSE ]] && cp LICENSE /etc/cloudron/LICENSE
