@@ -132,6 +132,26 @@ describe('Settings', function () {
             });
         });
 
+        it('can get default unstable apps setting', function (done) {
+            settings.getUnstableAppsConfig(function (error, enabled) {
+                expect(error).to.be(null);
+                expect(enabled).to.be(false);
+                done();
+            });
+        });
+
+        it('can set unstable apps setting', function (done) {
+            settings.setUnstableAppsConfig(true, function (error) {
+                expect(error).to.be(null);
+
+                settings.getUnstableAppsConfig(function (error, enabled) {
+                    expect(error).to.be(null);
+                    expect(enabled).to.be(true);
+                    done();
+                });
+            });
+        });
+
         it('can get all values', function (done) {
             settings.getAll(function (error, allSettings) {
                 expect(error).to.be(null);
@@ -139,6 +159,7 @@ describe('Settings', function () {
                 expect(allSettings[settings.APP_AUTOUPDATE_PATTERN_KEY]).to.be.a('string');
                 expect(allSettings[settings.BOX_AUTOUPDATE_PATTERN_KEY]).to.be.a('string');
                 expect(allSettings[settings.CLOUDRON_NAME_KEY]).to.be.a('string');
+                expect(allSettings[settings.UNSTABLE_APPS_KEY]).to.be.a('boolean');
                 done();
             });
         });

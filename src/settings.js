@@ -87,6 +87,7 @@ var gDefaults = (function () {
     result[exports.TIME_ZONE_KEY] = 'America/Los_Angeles';
     result[exports.CLOUDRON_NAME_KEY] = 'Cloudron';
     result[exports.DYNAMIC_DNS_KEY] = false;
+    result[exports.UNSTABLE_APPS_KEY] = false;
     result[exports.BACKUP_CONFIG_KEY] = {
         provider: 'filesystem',
         key: '',
