@@ -225,6 +225,26 @@ function setDynamicDnsConfig(req, res, next) {
     });
 }
 
+function getUnstableAppsConfig(req, res, next) {
+    settings.getUnstableAppsConfig(function (error, enabled) {
+        if (error) return next(new HttpError(500, error));
+
+        next(new HttpSuccess(200, { enabled: enabled }));
+    });
+}
+
+function setUnstableAppsConfig(req, res, next) {
+    assert.strictEqual(typeof req.body, 'object');
+
+    if (typeof req.body.enabled !== 'boolean') return next(new HttpError(400, 'enabled boolean is required'));
+
+    settings.setUnstableAppsConfig(req.body.enabled, function (error) {
+        if (error && error.reason === SettingsError.BAD_FIELD) return next(new HttpError(400, error.message));
+        if (error) return next(new HttpError(500, error));
+
+        next(new HttpSuccess(200, {}));
+    });
+}
 
 function getAppstoreConfig(req, res, next) {
     settings.getAppstoreConfig(function (error, result) {
@@ -281,6 +301,7 @@ function get(req, res, next) {
     case settings.BACKUP_CONFIG_KEY: return getBackupConfig(req, res, next);
     case settings.PLATFORM_CONFIG_KEY: return getPlatformConfig(req, res, next);
     case settings.APPSTORE_CONFIG_KEY: return getAppstoreConfig(req, res, next);
+    case settings.UNSTABLE_APPS_KEY: return getUnstableAppsConfig(req, res, next);
 
     case settings.APP_AUTOUPDATE_PATTERN_KEY: return getAppAutoupdatePattern(req, res, next);
     case settings.BOX_AUTOUPDATE_PATTERN_KEY: return getBoxAutoupdatePattern(req, res, next);
@@ -301,6 +322,7 @@ function set(req, res, next) {
     case settings.BACKUP_CONFIG_KEY: return setBackupConfig(req, res, next);
     case settings.PLATFORM_CONFIG_KEY: return setPlatformConfig(req, res, next);
     case settings.APPSTORE_CONFIG_KEY: return setAppstoreConfig(req, res, next);
+    case settings.UNSTABLE_APPS_KEY: return setUnstableAppsConfig(req, res, next);
 
     case settings.APP_AUTOUPDATE_PATTERN_KEY: return setAppAutoupdatePattern(req, res, next);
     case settings.BOX_AUTOUPDATE_PATTERN_KEY: return setBoxAutoupdatePattern(req, res, next);

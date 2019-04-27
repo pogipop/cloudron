@@ -21,6 +21,9 @@ exports = module.exports = {
     getDynamicDnsConfig: getDynamicDnsConfig,
     setDynamicDnsConfig: setDynamicDnsConfig,
 
+    getUnstableAppsConfig: getUnstableAppsConfig,
+    setUnstableAppsConfig: setUnstableAppsConfig,
+
     getBackupConfig: getBackupConfig,
     setBackupConfig: setBackupConfig,
 
@@ -41,6 +44,7 @@ exports = module.exports = {
     // booleans. if you add an entry here, be sure to fix getAll
     DYNAMIC_DNS_KEY: 'dynamic_dns',
     EMAIL_DIGEST: 'email_digest',
+    UNSTABLE_APPS_KEY: 'unstable_apps',
 
     // json. if you add an entry here, be sure to fix getAll
     BACKUP_CONFIG_KEY: 'backup_config',
@@ -291,6 +295,31 @@ function setDynamicDnsConfig(enabled, callback) {
     });
 }
 
+function getUnstableAppsConfig(callback) {
+    assert.strictEqual(typeof callback, 'function');
+
+    settingsdb.get(exports.UNSTABLE_APPS_KEY, function (error, enabled) {
+        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(null, gDefaults[exports.UNSTABLE_APPS_KEY]);
+        if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
+
+        callback(null, !!enabled); // settingsdb holds string values only
+    });
+}
+
+function setUnstableAppsConfig(enabled, callback) {
+    assert.strictEqual(typeof enabled, 'boolean');
+    assert.strictEqual(typeof callback, 'function');
+
+    // settingsdb takes string values only
+    settingsdb.set(exports.UNSTABLE_APPS_KEY, enabled ? 'enabled' : '', function (error) {
+        if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
+
+        notifyChange(exports.UNSTABLE_APPS_KEY, enabled);
+
+        return callback(null);
+    });
+}
+
 function getBackupConfig(callback) {
     assert.strictEqual(typeof callback, 'function');
 
@@ -440,6 +469,7 @@ function getAll(callback) {
 
         // convert booleans
         result[exports.DYNAMIC_DNS_KEY] = !!result[exports.DYNAMIC_DNS_KEY];
+        result[exports.UNSTABLE_APPS_KEY] = !!result[exports.UNSTABLE_APPS_KEY];
 
         // convert JSON objects
         [exports.BACKUP_CONFIG_KEY, exports.APPSTORE_CONFIG_KEY, exports.PLATFORM_CONFIG_KEY ].forEach(function (key) {
