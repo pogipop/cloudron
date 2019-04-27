@@ -7,7 +7,6 @@
 
 var async = require('async'),
     config = require('../config.js'),
-    constants = require('../constants.js'),
     database = require('../database.js'),
     expect = require('expect.js'),
     MockS3 = require('mock-aws-s3'),
