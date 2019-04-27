@@ -69,7 +69,7 @@ function startPreActivationJobs(callback) {
 
         gJobs.caasHeartbeat = new CronJob({
             cronTime: `${seconds} */1 * * * *`, // every minute
-            onTick: caas.sendHeartbeat(NOOP_CALLBACK),
+            onTick: () => caas.sendHeartbeat(NOOP_CALLBACK),
             start: true
         });
     }
