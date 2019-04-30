@@ -260,39 +260,6 @@ function backupFailed(eventId, taskId, errorMessage, callback) {
     }, callback);
 }
 
-function upsert(userId, eventId, title, message, callback) {
-    assert.strictEqual(typeof userId, 'string');
-    assert(typeof eventId === 'string' || eventId === null);
-    assert.strictEqual(typeof title, 'string');
-    assert.strictEqual(typeof message, 'string');
-    assert.strictEqual(typeof callback, 'function');
-
-    const acknowledged = !message;
-
-    const data = {
-        userId: userId,
-        eventId: eventId,
-        title: title,
-        message: message,
-        acknowledged: acknowledged
-    };
-
-    notificationdb.getByUserIdAndTitle(userId, title, function (error, result) {
-        if (error && error.reason !== DatabaseError.NOT_FOUND) return callback(new NotificationsError(NotificationsError.INTERNAL_ERROR, error));
-
-        if (!result && acknowledged) return callback(); // do not add acked alerts
-
-        let updateFunc = !result ? notificationdb.add.bind(null, data) : notificationdb.update.bind(null, result.id, data);
-
-        updateFunc(function (error) {
-            if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new NotificationsError(NotificationsError.NOT_FOUND, error.message));
-            if (error) return callback(new NotificationsError(NotificationsError.INTERNAL_ERROR, error));
-
-            callback(null);
-        });
-    });
-}
-
 function alert(id, title, message, callback) {
     assert.strictEqual(typeof id, 'string');
     assert.strictEqual(typeof title, 'string');
@@ -301,8 +268,32 @@ function alert(id, title, message, callback) {
 
     debug(`alert: id=${id} title=${title} message=${message}`);
 
+    const acknowledged = !message;
+
     actionForAllAdmins([], function (admin, callback) {
-        upsert(admin.id, null, title, message, callback);
+        const data = {
+            userId: admin.id,
+            eventId: null,
+            title: title,
+            message: message,
+            acknowledged: acknowledged,
+            creationTime: new Date()
+        };
+
+        notificationdb.getByUserIdAndTitle(admin.id, title, function (error, result) {
+            if (error && error.reason !== DatabaseError.NOT_FOUND) return callback(new NotificationsError(NotificationsError.INTERNAL_ERROR, error));
+
+            if (!result && acknowledged) return callback(); // do not add acked alerts
+
+            let updateFunc = !result ? notificationdb.add.bind(null, data) : notificationdb.update.bind(null, result.id, data);
+
+            updateFunc(function (error) {
+                if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new NotificationsError(NotificationsError.NOT_FOUND, error.message));
+                if (error) return callback(new NotificationsError(NotificationsError.INTERNAL_ERROR, error));
+
+                callback(null);
+            });
+        });
     }, function (error) {
         if (error) console.error(error);
 
