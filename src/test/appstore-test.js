@@ -14,7 +14,8 @@ var async = require('async'),
     database = require('../database.js'),
     expect = require('expect.js'),
     nock = require('nock'),
-    settings = require('../settings.js');
+    settings = require('../settings.js'),
+    settingsdb = require('../settingsdb.js');
 
 const DOMAIN = 'example-appstore-test.com';
 const APPSTORE_USER_ID = 'appstoreuserid';
@@ -66,13 +67,13 @@ describe('Appstore', function () {
             expect(error).to.not.be.ok();
             expect(scope.isDone()).to.be.ok();
 
-            done();
+            settingsdb.set(settings.APPSTORE_TOKEN_KEY, APPSTORE_TOKEN, done);
         });
     });
 
     it('can send alive status', function (done) {
         var scope = nock('http://localhost:6060')
-            .post(`/api/v1/users/${APPSTORE_USER_ID}/cloudrons/${CLOUDRON_ID}/alive?accessToken=${APPSTORE_TOKEN}`, function (body) {
+            .post(`/api/v1/alive?accessToken=${APPSTORE_TOKEN}`, function (body) {
                 expect(body.version).to.be.a('string');
                 expect(body.adminFqdn).to.be.a('string');
                 expect(body.provider).to.be.a('string');

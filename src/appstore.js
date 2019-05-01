@@ -71,6 +71,17 @@ function getAppstoreConfig(callback) {
     });
 }
 
+function getAppstoreToken(callback) {
+    assert.strictEqual(typeof callback, 'function');
+
+    settings.getAppstoreToken(function (error, token) {
+        if (error) return callback(new AppstoreError(AppstoreError.INTERNAL_ERROR, error));
+        if (!token) return callback(new AppstoreError(AppstoreError.BILLING_REQUIRED));
+
+        callback(null, token);
+    });
+}
+
 function getSubscription(callback) {
     assert.strictEqual(typeof callback, 'function');
 
@@ -97,7 +108,7 @@ function isFreePlan(subscription) {
 // See app.js install it will create a db record first but remove it again if appstore purchase fails
 function purchase(appId, data, callback) {
     assert.strictEqual(typeof appId, 'string');
-    assert.strictEqual(typeof data, 'object');
+    assert.strictEqual(typeof data, 'object'); // { appstoreId, manifestId }
     assert(data.appstoreId || data.manifestId);
     assert.strictEqual(typeof callback, 'function');
 
@@ -120,7 +131,7 @@ function purchase(appId, data, callback) {
 
 function unpurchase(appId, data, callback) {
     assert.strictEqual(typeof appId, 'string');
-    assert.strictEqual(typeof data, 'object');
+    assert.strictEqual(typeof data, 'object'); // { appstoreId, manifestId }
     assert(data.appstoreId || data.manifestId);
     assert.strictEqual(typeof callback, 'function');
 
@@ -217,11 +228,11 @@ function sendAliveStatus(callback) {
             }
         };
 
-        getAppstoreConfig(function (error, appstoreConfig) {
+        getAppstoreToken(function (error, token) {
             if (error) return callback(error);
 
-            var url = config.apiServerOrigin() + '/api/v1/users/' + appstoreConfig.userId + '/cloudrons/' + appstoreConfig.cloudronId + '/alive';
-            superagent.post(url).send(data).query({ accessToken: appstoreConfig.token }).timeout(30 * 1000).end(function (error, result) {
+            const url = `${config.apiServerOrigin()}/api/v1/alive`;
+            superagent.post(url).send(data).query({ accessToken: token }).timeout(30 * 1000).end(function (error, result) {
                 if (error && !error.response) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, error));
                 if (result.statusCode === 404) return callback(new AppstoreError(AppstoreError.NOT_FOUND));
                 if (result.statusCode !== 201) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, util.format('Sending alive status failed. %s %j', result.status, result.body)));
@@ -331,8 +342,8 @@ function sendFeedback(info, callback) {
         apps.get(info.appId, callback);
     }
 
-    settings.getAppstoreToken(function (error, token) {
-        if (error) return callback(new AppstoreError(AppstoreError.INTERNAL_ERROR, error));
+    getAppstoreToken(function (error, token) {
+        if (error) return callback(error);
 
         collectAppInfoIfNeeded(function (error, result) {
             if (error) console.error('Unable to get app info', error);
