@@ -87,6 +87,7 @@ describe('updatechecker - box - manual (email)', function () {
             users.createOwner.bind(null, USER_0.username, USER_0.password, USER_0.email, USER_0.displayName, AUDIT_SOURCE),
             settings.setBoxAutoupdatePattern.bind(null, constants.AUTOUPDATE_PATTERN_NEVER),
             settingsdb.set.bind(null, settings.APPSTORE_CONFIG_KEY, JSON.stringify({ userId: 'uid', cloudronId: 'cid', token: 'token' })),
+            settingsdb.set.bind(null, settings.APPSTORE_TOKEN_KEY, 'atoken'),
         ], done);
     });
 
@@ -96,8 +97,8 @@ describe('updatechecker - box - manual (email)', function () {
         nock.cleanAll();
 
         var scope = nock('http://localhost:4444')
-            .get('/api/v1/users/uid/cloudrons/cid/boxupdate')
-            .query({ boxVersion: config.version(), accessToken: 'token' })
+            .get('/api/v1/boxupdate')
+            .query({ boxVersion: config.version(), accessToken: 'atoken' })
             .reply(204, { } );
 
         updatechecker.checkBoxUpdates(function (error) {
@@ -113,8 +114,8 @@ describe('updatechecker - box - manual (email)', function () {
         nock.cleanAll();
 
         var scope = nock('http://localhost:4444')
-            .get('/api/v1/users/uid/cloudrons/cid/boxupdate')
-            .query({ boxVersion: config.version(), accessToken: 'token' })
+            .get('/api/v1/boxupdate')
+            .query({ boxVersion: config.version(), accessToken: 'atoken' })
             .reply(200, { version: UPDATE_VERSION, changelog: [''], sourceTarballUrl: 'box.tar.gz', sourceTarballSigUrl: 'box.tar.gz.sig', boxVersionsUrl: 'box.versions', boxVersionsSigUrl: 'box.versions.sig' } );
 
         updatechecker.checkBoxUpdates(function (error) {
@@ -131,8 +132,8 @@ describe('updatechecker - box - manual (email)', function () {
         nock.cleanAll();
 
         var scope = nock('http://localhost:4444')
-            .get('/api/v1/users/uid/cloudrons/cid/boxupdate')
-            .query({ boxVersion: config.version(), accessToken: 'token' })
+            .get('/api/v1/boxupdate')
+            .query({ boxVersion: config.version(), accessToken: 'atoken' })
             .reply(404, { version: '2.0.0-pre.0', changelog: [''], sourceTarballUrl: 'box-pre.tar.gz' } );
 
         updatechecker.checkBoxUpdates(function (error) {
@@ -159,7 +160,8 @@ describe('updatechecker - box - automatic (no email)', function () {
             domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0, AUDIT_SOURCE),
             mail.addDomain.bind(null, DOMAIN_0.domain),
             users.createOwner.bind(null, USER_0.username, USER_0.password, USER_0.email, USER_0.displayName, AUDIT_SOURCE),
-            settingsdb.set.bind(null, settings.APPSTORE_CONFIG_KEY, JSON.stringify({ userId: 'uid', cloudronId: 'cid', token: 'token' }))
+            settingsdb.set.bind(null, settings.APPSTORE_CONFIG_KEY, JSON.stringify({ userId: 'uid', cloudronId: 'cid', token: 'token' })),
+            settingsdb.set.bind(null, settings.APPSTORE_TOKEN_KEY, 'atoken'),
         ], done);
     });
 
@@ -169,8 +171,8 @@ describe('updatechecker - box - automatic (no email)', function () {
         nock.cleanAll();
 
         var scope = nock('http://localhost:4444')
-            .get('/api/v1/users/uid/cloudrons/cid/boxupdate')
-            .query({ boxVersion: config.version(), accessToken: 'token' })
+            .get('/api/v1/boxupdate')
+            .query({ boxVersion: config.version(), accessToken: 'atoken' })
             .reply(200, { version: UPDATE_VERSION, changelog: [''], sourceTarballUrl: 'box.tar.gz', sourceTarballSigUrl: 'box.tar.gz.sig', boxVersionsUrl: 'box.versions', boxVersionsSigUrl: 'box.versions.sig' } );
 
         updatechecker.checkBoxUpdates(function (error) {
@@ -198,7 +200,8 @@ describe('updatechecker - box - automatic free (email)', function () {
             domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0, AUDIT_SOURCE),
             mail.addDomain.bind(null, DOMAIN_0.domain),
             users.createOwner.bind(null, USER_0.username, USER_0.password, USER_0.email, USER_0.displayName, AUDIT_SOURCE),
-            settingsdb.set.bind(null, settings.APPSTORE_CONFIG_KEY, JSON.stringify({ userId: 'uid', cloudronId: 'cid', token: 'token' }))
+            settingsdb.set.bind(null, settings.APPSTORE_CONFIG_KEY, JSON.stringify({ userId: 'uid', cloudronId: 'cid', token: 'token' })),
+            settingsdb.set.bind(null, settings.APPSTORE_TOKEN_KEY, 'atoken'),
         ], done);
     });
 
@@ -208,8 +211,8 @@ describe('updatechecker - box - automatic free (email)', function () {
         nock.cleanAll();
 
         var scope = nock('http://localhost:4444')
-            .get('/api/v1/users/uid/cloudrons/cid/boxupdate')
-            .query({ boxVersion: config.version(), accessToken: 'token' })
+            .get('/api/v1/boxupdate')
+            .query({ boxVersion: config.version(), accessToken: 'atoken' })
             .reply(200, { version: UPDATE_VERSION, changelog: [''], sourceTarballUrl: 'box.tar.gz', sourceTarballSigUrl: 'box.tar.gz.sig', boxVersionsUrl: 'box.versions', boxVersionsSigUrl: 'box.versions.sig' } );
 
         updatechecker.checkBoxUpdates(function (error) {
@@ -272,7 +275,8 @@ describe('updatechecker - app - manual (email)', function () {
                 });
             },
             settings.setAppAutoupdatePattern.bind(null, constants.AUTOUPDATE_PATTERN_NEVER),
-            settingsdb.set.bind(null, settings.APPSTORE_CONFIG_KEY, JSON.stringify({ userId: 'uid', cloudronId: 'cid', token: 'token' }))
+            settingsdb.set.bind(null, settings.APPSTORE_CONFIG_KEY, JSON.stringify({ userId: 'uid', cloudronId: 'cid', token: 'token' })),
+            settingsdb.set.bind(null, settings.APPSTORE_TOKEN_KEY, 'atoken'),
         ], done);
     });
 
@@ -282,8 +286,8 @@ describe('updatechecker - app - manual (email)', function () {
         nock.cleanAll();
 
         var scope = nock('http://localhost:4444')
-            .get('/api/v1/users/uid/cloudrons/cid/appupdate')
-            .query({ boxVersion: config.version(), accessToken: 'token', appId: APP_0.appStoreId, appVersion: APP_0.manifest.version })
+            .get('/api/v1/appupdate')
+            .query({ boxVersion: config.version(), accessToken: 'atoken', appId: APP_0.appStoreId, appVersion: APP_0.manifest.version })
             .reply(204, { } );
 
         updatechecker.checkAppUpdates(function (error) {
@@ -299,8 +303,8 @@ describe('updatechecker - app - manual (email)', function () {
         nock.cleanAll();
 
         var scope = nock('http://localhost:4444')
-            .get('/api/v1/users/uid/cloudrons/cid/appupdate')
-            .query({ boxVersion: config.version(), accessToken: 'token', appId: APP_0.appStoreId, appVersion: APP_0.manifest.version })
+            .get('/api/v1/appupdate')
+            .query({ boxVersion: config.version(), accessToken: 'atoken', appId: APP_0.appStoreId, appVersion: APP_0.manifest.version })
             .reply(500, { update: { manifest: { version: '1.0.0', changelog: '* some changes' } } } );
 
         updatechecker.checkAppUpdates(function (error) {
@@ -316,8 +320,8 @@ describe('updatechecker - app - manual (email)', function () {
         nock.cleanAll();
 
         var scope = nock('http://localhost:4444')
-            .get('/api/v1/users/uid/cloudrons/cid/appupdate')
-            .query({ boxVersion: config.version(), accessToken: 'token', appId: APP_0.appStoreId, appVersion: APP_0.manifest.version })
+            .get('/api/v1/appupdate')
+            .query({ boxVersion: config.version(), accessToken: 'atoken', appId: APP_0.appStoreId, appVersion: APP_0.manifest.version })
             .reply(200, { manifest: { version: '2.0.0', changelog: '* some changes' } } );
 
         var scope2 = nock('http://localhost:4444')
@@ -396,7 +400,8 @@ describe('updatechecker - app - automatic (no email)', function () {
                 });
             },
             settings.setAppAutoupdatePattern.bind(null, '00 00 1,3,5,23 * * *'),
-            settingsdb.set.bind(null, settings.APPSTORE_CONFIG_KEY, JSON.stringify({ userId: 'uid', cloudronId: 'cid', token: 'token' }))
+            settingsdb.set.bind(null, settings.APPSTORE_CONFIG_KEY, JSON.stringify({ userId: 'uid', cloudronId: 'cid', token: 'token' })),
+            settingsdb.set.bind(null, settings.APPSTORE_TOKEN_KEY, 'atoken'),
         ], done);
     });
 
@@ -406,8 +411,8 @@ describe('updatechecker - app - automatic (no email)', function () {
         nock.cleanAll();
 
         var scope = nock('http://localhost:4444')
-            .get('/api/v1/users/uid/cloudrons/cid/appupdate')
-            .query({ boxVersion: config.version(), accessToken: 'token', appId: APP_0.appStoreId, appVersion: APP_0.manifest.version })
+            .get('/api/v1/appupdate')
+            .query({ boxVersion: config.version(), accessToken: 'atoken', appId: APP_0.appStoreId, appVersion: APP_0.manifest.version })
             .reply(200, { manifest: { version: '2.0.0', changelog: 'c' } } );
 
         updatechecker.checkAppUpdates(function (error) {
@@ -470,7 +475,8 @@ describe('updatechecker - app - automatic free (email)', function () {
                 });
             },
             settings.setAppAutoupdatePattern.bind(null, '00 00 1,3,5,23 * * *'),
-            settingsdb.set.bind(null, settings.APPSTORE_CONFIG_KEY, JSON.stringify({ userId: 'uid', cloudronId: 'cid', token: 'token' }))
+            settingsdb.set.bind(null, settings.APPSTORE_CONFIG_KEY, JSON.stringify({ userId: 'uid', cloudronId: 'cid', token: 'token' })),
+            settingsdb.set.bind(null, settings.APPSTORE_TOKEN_KEY, 'atoken'),
         ], done);
     });
 
@@ -480,8 +486,8 @@ describe('updatechecker - app - automatic free (email)', function () {
         nock.cleanAll();
 
         var scope = nock('http://localhost:4444')
-            .get('/api/v1/users/uid/cloudrons/cid/appupdate')
-            .query({ boxVersion: config.version(), accessToken: 'token', appId: APP_0.appStoreId, appVersion: APP_0.manifest.version })
+            .get('/api/v1/appupdate')
+            .query({ boxVersion: config.version(), accessToken: 'atoken', appId: APP_0.appStoreId, appVersion: APP_0.manifest.version })
             .reply(200, { manifest: { version: '2.0.0', changelog: 'c' } } );
 
         var scope2 = nock('http://localhost:4444')

@@ -246,12 +246,12 @@ function sendAliveStatus(callback) {
 function getBoxUpdate(callback) {
     assert.strictEqual(typeof callback, 'function');
 
-    getAppstoreConfig(function (error, appstoreConfig) {
+    getAppstoreToken(function (error, token) {
         if (error) return callback(error);
 
-        var url = config.apiServerOrigin() + '/api/v1/users/' + appstoreConfig.userId + '/cloudrons/' + appstoreConfig.cloudronId + '/boxupdate';
+        const url = `${config.apiServerOrigin()}/api/v1/boxupdate`;
 
-        superagent.get(url).query({ accessToken: appstoreConfig.token, boxVersion: config.version() }).timeout(10 * 1000).end(function (error, result) {
+        superagent.get(url).query({ accessToken: token, boxVersion: config.version() }).timeout(10 * 1000).end(function (error, result) {
             if (error && !error.response) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, error.message));
             if (result.statusCode === 204) return callback(null); // no update
             if (result.statusCode !== 200 || !result.body) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, util.format('Bad response: %s %s', result.statusCode, result.text)));
@@ -279,12 +279,12 @@ function getAppUpdate(app, callback) {
     assert.strictEqual(typeof app, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    getAppstoreConfig(function (error, appstoreConfig) {
+    getAppstoreToken(function (error, token) {
         if (error) return callback(error);
 
-        var url = config.apiServerOrigin() + '/api/v1/users/' + appstoreConfig.userId + '/cloudrons/' + appstoreConfig.cloudronId + '/appupdate';
+        const url = `${config.apiServerOrigin()}/api/v1/appupdate`;
 
-        superagent.get(url).query({ accessToken: appstoreConfig.token, boxVersion: config.version(), appId: app.appStoreId, appVersion: app.manifest.version }).timeout(10 * 1000).end(function (error, result) {
+        superagent.get(url).query({ accessToken: token, boxVersion: config.version(), appId: app.appStoreId, appVersion: app.manifest.version }).timeout(10 * 1000).end(function (error, result) {
             if (error && !error.response) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, error));
             if (result.statusCode === 204) return callback(null); // no update
             if (result.statusCode !== 200 || !result.body) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, util.format('Bad response: %s %s', result.statusCode, result.text)));
