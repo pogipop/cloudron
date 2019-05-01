@@ -109,19 +109,6 @@ describe('Appstore', function () {
         });
     });
 
-    it('can get account', function (done) {
-        var scope = nock('http://localhost:6060')
-            .get(`/api/v1/users/${APPSTORE_USER_ID}?accessToken=${APPSTORE_TOKEN}`)
-            .reply(200, { profile: { id: APPSTORE_USER_ID }});
-
-        appstore.getAccount(function (error, result) {
-            expect(error).to.not.be.ok();
-            expect(scope.isDone()).to.be.ok();
-            expect(result.id).to.equal(APPSTORE_USER_ID);
-            done();
-        });
-    });
-
     it('can purchase an app', function (done) {
         var scope1 = nock('http://localhost:6060')
             .post(`/api/v1/users/${APPSTORE_USER_ID}/cloudrons/${CLOUDRON_ID}/apps/${APP_ID}?accessToken=${APPSTORE_TOKEN}`, function () { return true; })
