@@ -38,6 +38,10 @@ exports = module.exports = {
     getPlatformConfig: getPlatformConfig,
     setPlatformConfig: setPlatformConfig,
 
+    getLicenseKey: getLicenseKey,
+    getCloudronId: getCloudronId,
+    getAppstoreToken: getAppstoreToken,
+
     get: get,
     getAll: getAll,
 
@@ -57,6 +61,9 @@ exports = module.exports = {
     BOX_AUTOUPDATE_PATTERN_KEY: 'box_autoupdate_pattern',
     TIME_ZONE_KEY: 'time_zone',
     CLOUDRON_NAME_KEY: 'cloudron_name',
+    LICENSE_KEY: 'license_key',
+    CLOUDRON_ID_KEY: 'cloudron_id',
+    APPSTORE_TOKEN_KEY: 'appstore_token',
 
     // blobs
     CLOUDRON_AVATAR_KEY: 'cloudron_avatar', // not stored in db but can be used for locked flag
@@ -88,6 +95,9 @@ var gDefaults = (function () {
     result[exports.CLOUDRON_NAME_KEY] = 'Cloudron';
     result[exports.DYNAMIC_DNS_KEY] = false;
     result[exports.UNSTABLE_APPS_KEY] = false;
+    result[exports.LICENSE_KEY] = '';
+    result[exports.CLOUDRON_ID_KEY] = '';
+    result[exports.APPSTORE_TOKEN_KEY] = '';
     result[exports.BACKUP_CONFIG_KEY] = {
         provider: 'filesystem',
         key: '',
@@ -428,6 +438,39 @@ function setPlatformConfig(platformConfig, callback) {
         if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
 
         addons.updateServiceConfig(platformConfig, callback);
+    });
+}
+
+function getLicenseKey(callback) {
+    assert.strictEqual(typeof callback, 'function');
+
+    settingsdb.get(exports.LICENSE_KEY, function (error, value) {
+        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(null, gDefaults[exports.LICENSE_KEY]);
+        if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
+
+        callback(null, value);
+    });
+}
+
+function getCloudronId(callback) {
+    assert.strictEqual(typeof callback, 'function');
+
+    settingsdb.get(exports.CLOUDRON_ID_KEY, function (error, value) {
+        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(null, gDefaults[exports.CLOUDRON_ID_KEY]);
+        if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
+
+        callback(null, value);
+    });
+}
+
+function getAppstoreToken(callback) {
+    assert.strictEqual(typeof callback, 'function');
+
+    settingsdb.get(exports.APPSTORE_TOKEN_KEY, function (error, value) {
+        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(null, gDefaults[exports.APPSTORE_TOKEN_KEY]);
+        if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
+
+        callback(null, value);
     });
 }
 

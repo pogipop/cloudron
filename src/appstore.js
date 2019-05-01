@@ -331,16 +331,16 @@ function sendFeedback(info, callback) {
         apps.get(info.appId, callback);
     }
 
-    getAppstoreConfig(function (error, appstoreConfig) {
-        if (error) return callback(error);
+    settings.getAppstoreToken(function (error, token) {
+        if (error) return callback(new AppstoreError(AppstoreError.INTERNAL_ERROR, error));
 
         collectAppInfoIfNeeded(function (error, result) {
             if (error) console.error('Unable to get app info', error);
             if (result) info.app = result;
 
-            var url = config.apiServerOrigin() + '/api/v1/users/' + appstoreConfig.userId + '/cloudrons/' + appstoreConfig.cloudronId + '/feedback';
+            let url = config.apiServerOrigin() + '/api/v1/feedback';
 
-            superagent.post(url).query({ accessToken: appstoreConfig.token }).send(info).timeout(10 * 1000).end(function (error, result) {
+            superagent.post(url).query({ accessToken: token }).send(info).timeout(10 * 1000).end(function (error, result) {
                 if (error && !error.response) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, error));
                 if (result.statusCode !== 201) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, util.format('Bad response: %s %s', result.statusCode, result.text)));
 

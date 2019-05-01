@@ -49,7 +49,8 @@ function setup(done) {
                 });
         },
 
-        settingsdb.set.bind(null, settings.APPSTORE_CONFIG_KEY, JSON.stringify({ userId: 'USER_ID', cloudronId: 'CLOUDRON_ID', token: 'ACCESS_TOKEN' }))
+        settingsdb.set.bind(null, settings.APPSTORE_CONFIG_KEY, JSON.stringify({ userId: 'USER_ID', cloudronId: 'CLOUDRON_ID', token: 'ACCESS_TOKEN' })),
+        settingsdb.set.bind(null, settings.APPSTORE_TOKEN_KEY, 'CLOUDRON_TOKEN')
     ], done);
 }
 
@@ -231,7 +232,7 @@ describe('Support API', function () {
         it('succeeds with ticket type', function (done) {
             var scope2 = nock(config.apiServerOrigin())
                 .filteringRequestBody(function (/* unusedBody */) { return ''; }) // strip out body
-                .post('/api/v1/users/USER_ID/cloudrons/CLOUDRON_ID/feedback?accessToken=ACCESS_TOKEN')
+                .post('/api/v1/feedback?accessToken=CLOUDRON_TOKEN')
                 .reply(201, { });
 
             superagent.post(SERVER_URL + '/api/v1/support/feedback')
@@ -247,7 +248,7 @@ describe('Support API', function () {
         it('succeeds with app type', function (done) {
             var scope2 = nock(config.apiServerOrigin())
                 .filteringRequestBody(function (/* unusedBody */) { return ''; }) // strip out body
-                .post('/api/v1/users/USER_ID/cloudrons/CLOUDRON_ID/feedback?accessToken=ACCESS_TOKEN')
+                .post('/api/v1/feedback?accessToken=CLOUDRON_TOKEN')
                 .reply(201, { });
 
             superagent.post(SERVER_URL + '/api/v1/support/feedback')
