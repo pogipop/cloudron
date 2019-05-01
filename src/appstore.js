@@ -15,7 +15,6 @@ exports = module.exports = {
     getAccount: getAccount,
 
     registerCloudron: registerCloudron,
-    getCloudron: getCloudron,
 
     sendFeedback: sendFeedback,
 
@@ -335,25 +334,6 @@ function registerCloudron(adminDomain, userId, token, callback) {
         debug(`setAppstoreConfig: Cloudron registered with id ${cloudronId}`);
 
         callback(null, cloudronId);
-    });
-}
-
-function getCloudron(appstoreConfig, callback) {
-    assert.strictEqual(typeof appstoreConfig, 'object');
-    assert.strictEqual(typeof callback, 'function');
-
-    const { userId, cloudronId, token } = appstoreConfig;
-
-    const url = config.apiServerOrigin() + '/api/v1/users/' + userId + '/cloudrons/' + cloudronId;
-
-    superagent.get(url).query({ accessToken: token }).timeout(30 * 1000).end(function (error, result) {
-        if (error && !error.response) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, error.message));
-        if (result.statusCode === 401) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, 'invalid appstore token'));
-        if (result.statusCode === 403) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, 'wrong user'));
-        if (result.statusCode === 404) return callback(new AppstoreError(AppstoreError.NOT_FOUND, error.message));
-        if (result.statusCode !== 200) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, 'unknown error'));
-
-        callback();
     });
 }
 
