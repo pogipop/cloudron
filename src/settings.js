@@ -40,7 +40,7 @@ exports = module.exports = {
 
     getLicenseKey: getLicenseKey,
     getCloudronId: getCloudronId,
-    getAppstoreToken: getAppstoreToken,
+    getCloudronToken: getCloudronToken,
 
     get: get,
     getAll: getAll,
@@ -63,7 +63,7 @@ exports = module.exports = {
     CLOUDRON_NAME_KEY: 'cloudron_name',
     LICENSE_KEY: 'license_key',
     CLOUDRON_ID_KEY: 'cloudron_id',
-    APPSTORE_TOKEN_KEY: 'appstore_token',
+    CLOUDRON_TOKEN_KEY: 'cloudron_token',
 
     // blobs
     CLOUDRON_AVATAR_KEY: 'cloudron_avatar', // not stored in db but can be used for locked flag
@@ -97,7 +97,7 @@ var gDefaults = (function () {
     result[exports.UNSTABLE_APPS_KEY] = false;
     result[exports.LICENSE_KEY] = '';
     result[exports.CLOUDRON_ID_KEY] = '';
-    result[exports.APPSTORE_TOKEN_KEY] = '';
+    result[exports.CLOUDRON_TOKEN_KEY] = '';
     result[exports.BACKUP_CONFIG_KEY] = {
         provider: 'filesystem',
         key: '',
@@ -463,11 +463,11 @@ function getCloudronId(callback) {
     });
 }
 
-function getAppstoreToken(callback) {
+function getCloudronToken(callback) {
     assert.strictEqual(typeof callback, 'function');
 
-    settingsdb.get(exports.APPSTORE_TOKEN_KEY, function (error, value) {
-        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(null, gDefaults[exports.APPSTORE_TOKEN_KEY]);
+    settingsdb.get(exports.CLOUDRON_TOKEN_KEY, function (error, value) {
+        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(null, gDefaults[exports.CLOUDRON_TOKEN_KEY]);
         if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
 
         callback(null, value);

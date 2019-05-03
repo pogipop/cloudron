@@ -471,7 +471,7 @@ describe('App API', function () {
         settings.setAppstoreConfig({ userId: user_1_id, token: USER_1_APPSTORE_TOKEN }, function (error) {
             if (error) return done(error);
 
-            settingsdb.set(settings.APPSTORE_TOKEN_KEY, USER_1_APPSTORE_TOKEN, function (error) {
+            settingsdb.set(settings.CLOUDRON_TOKEN_KEY, USER_1_APPSTORE_TOKEN, function (error) {
                 if (error) return done(error);
 
                 expect(fake1.isDone()).to.be.ok();
@@ -666,7 +666,7 @@ describe('App installation', function () {
                 settings.setAppstoreConfig({ userId: user_1_id, token: USER_1_APPSTORE_TOKEN }, function (error) {
                     if (error) return callback(error);
 
-                    settingsdb.set(settings.APPSTORE_TOKEN_KEY, USER_1_APPSTORE_TOKEN, function (error) {
+                    settingsdb.set(settings.CLOUDRON_TOKEN_KEY, USER_1_APPSTORE_TOKEN, function (error) {
                         if (error) return callback(error);
 
                         expect(fake1.isDone()).to.be.ok();

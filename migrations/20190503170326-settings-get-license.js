@@ -23,12 +23,12 @@ exports.up = function(db, callback) {
         console.log('Downloading license');
 
         superagent.get(`${config.apiServerOrigin}/api/v1/cloudron_license`)
-            .query({ token: config.token })
+            .query({ accessToken: config.token })
             .timeout(30 * 1000).end(function (error, result) {
                 if (error && !error.response) return callback(new Error('Network error getting license:' + error.message));
                 if (result.statusCode !== 200) return callback(new Error(`Bad status getting license: ${result.status} ${result.text}`));
 
-                if (!result.body.cloudronId || !result.body.licenseKey || !result.body.token) return callback(new Error(`Bad response getting license:  ${result.text}`));
+                if (!result.body.cloudronId || !result.body.licenseKey || !result.body.cloudronToken) return callback(new Error(`Bad response getting license:  ${result.text}`));
 
                 console.log('Adding license', result.body);
 
@@ -36,7 +36,7 @@ exports.up = function(db, callback) {
                     db.runSql.bind(db, 'START TRANSACTION;'),
                     db.runSql.bind(db, 'INSERT settings (name, value) VALUES(?, ?)', [ 'cloudron_id', JSON.stringify(result.body.cloudronId) ]),
                     db.runSql.bind(db, 'INSERT settings (name, value) VALUES(?, ?)', [ 'license_key', JSON.stringify(result.body.licenseKey) ]),
-                    db.runSql.bind(db, 'INSERT settings (name, value) VALUES(?, ?)', [ 'appstore_token', JSON.stringify(result.body.token) ]),
+                    db.runSql.bind(db, 'INSERT settings (name, value) VALUES(?, ?)', [ 'cloudron_token', JSON.stringify(result.body.cloudronToken) ]),
                     // db.runSql.bind(db, 'DELETE FROM settings WHERE name=?', [ 'appstore_config' ]),
                     db.runSql.bind(db, 'COMMIT')
                 ], callback);

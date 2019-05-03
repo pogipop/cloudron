@@ -67,7 +67,7 @@ describe('Appstore', function () {
             expect(error).to.not.be.ok();
             expect(scope.isDone()).to.be.ok();
 
-            settingsdb.set(settings.APPSTORE_TOKEN_KEY, APPSTORE_TOKEN, done);
+            settingsdb.set(settings.CLOUDRON_TOKEN_KEY, APPSTORE_TOKEN, done);
         });
     });
 

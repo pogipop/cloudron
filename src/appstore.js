@@ -71,10 +71,10 @@ function getAppstoreConfig(callback) {
     });
 }
 
-function getAppstoreToken(callback) {
+function getCloudronToken(callback) {
     assert.strictEqual(typeof callback, 'function');
 
-    settings.getAppstoreToken(function (error, token) {
+    settings.getCloudronToken(function (error, token) {
         if (error) return callback(new AppstoreError(AppstoreError.INTERNAL_ERROR, error));
         if (!token) return callback(new AppstoreError(AppstoreError.BILLING_REQUIRED));
 
@@ -112,7 +112,7 @@ function purchase(data, callback) {
     assert.strictEqual(typeof data.appId, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    getAppstoreToken(function (error, token) {
+    getCloudronToken(function (error, token) {
         if (error) return callback(error);
 
         const url = `${config.apiServerOrigin()}/api/v1/cloudronapps`;
@@ -135,7 +135,7 @@ function unpurchase(appId, data, callback) {
     assert(data.appstoreId || data.manifestId);
     assert.strictEqual(typeof callback, 'function');
 
-    getAppstoreToken(function (error, token) {
+    getCloudronToken(function (error, token) {
         if (error) return callback(error);
 
         const url = `${config.apiServerOrigin()}/api/v1/cloudronapps/${appId}`;
@@ -228,7 +228,7 @@ function sendAliveStatus(callback) {
             }
         };
 
-        getAppstoreToken(function (error, token) {
+        getCloudronToken(function (error, token) {
             if (error) return callback(error);
 
             const url = `${config.apiServerOrigin()}/api/v1/alive`;
@@ -246,7 +246,7 @@ function sendAliveStatus(callback) {
 function getBoxUpdate(callback) {
     assert.strictEqual(typeof callback, 'function');
 
-    getAppstoreToken(function (error, token) {
+    getCloudronToken(function (error, token) {
         if (error) return callback(error);
 
         const url = `${config.apiServerOrigin()}/api/v1/boxupdate`;
@@ -279,7 +279,7 @@ function getAppUpdate(app, callback) {
     assert.strictEqual(typeof app, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    getAppstoreToken(function (error, token) {
+    getCloudronToken(function (error, token) {
         if (error) return callback(error);
 
         const url = `${config.apiServerOrigin()}/api/v1/appupdate`;
@@ -342,7 +342,7 @@ function sendFeedback(info, callback) {
         apps.get(info.appId, callback);
     }
 
-    getAppstoreToken(function (error, token) {
+    getCloudronToken(function (error, token) {
         if (error) return callback(error);
 
         collectAppInfoIfNeeded(function (error, result) {
