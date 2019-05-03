@@ -10,9 +10,10 @@ exports = module.exports = {
     SCOPE_MAIL: 'mail',
     SCOPE_PROFILE: 'profile',
     SCOPE_SETTINGS: 'settings',
+    SCOPE_SUBSCRIPTION: 'subscription',
     SCOPE_USERS_READ: 'users:read',
     SCOPE_USERS_MANAGE: 'users:manage',
-    VALID_SCOPES: [ 'apps', 'clients', 'cloudron', 'domains', 'mail', 'profile', 'settings', 'users' ], // keep this sorted
+    VALID_SCOPES: [ 'apps', 'clients', 'cloudron', 'domains', 'mail', 'profile', 'settings', 'subscription', 'users' ], // keep this sorted
 
     SCOPE_ANY: '*',
 

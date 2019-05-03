@@ -29,9 +29,6 @@ exports = module.exports = {
 
     getCaasConfig: getCaasConfig,
 
-    getAppstoreConfig: getAppstoreConfig,
-    setAppstoreConfig: setAppstoreConfig,
-
     getEmailDigest: getEmailDigest,
     setEmailDigest: setEmailDigest,
 
@@ -39,8 +36,13 @@ exports = module.exports = {
     setPlatformConfig: setPlatformConfig,
 
     getLicenseKey: getLicenseKey,
+    setLicenseKey: setLicenseKey,
+
     getCloudronId: getCloudronId,
+    setCloudronId: setCloudronId,
+
     getCloudronToken: getCloudronToken,
+    setCloudronToken: setCloudronToken,
 
     get: get,
     getAll: getAll,
@@ -52,7 +54,6 @@ exports = module.exports = {
 
     // json. if you add an entry here, be sure to fix getAll
     BACKUP_CONFIG_KEY: 'backup_config',
-    APPSTORE_CONFIG_KEY: 'appstore_config',
     CAAS_CONFIG_KEY: 'caas_config',
     PLATFORM_CONFIG_KEY: 'platform_config',
 
@@ -70,12 +71,9 @@ exports = module.exports = {
 };
 
 var addons = require('./addons.js'),
-    appstore = require('./appstore.js'),
-    AppstoreError = require('./appstore.js').AppstoreError,
     assert = require('assert'),
     backups = require('./backups.js'),
     BackupsError = backups.BackupsError,
-    config = require('./config.js'),
     constants = require('./constants.js'),
     cron = require('./cron.js'),
     CronJob = require('cron').CronJob,
@@ -106,7 +104,6 @@ var gDefaults = (function () {
         retentionSecs: 2 * 24 * 60 * 60, // 2 days
         intervalSecs: 24 * 60 * 60 // ~1 day
     };
-    result[exports.APPSTORE_CONFIG_KEY] = {};
     result[exports.CAAS_CONFIG_KEY] = {};
     result[exports.EMAIL_DIGEST] = true;
     result[exports.PLATFORM_CONFIG_KEY] = {};
@@ -404,17 +401,6 @@ function getCaasConfig(callback) {
     });
 }
 
-function getAppstoreConfig(callback) {
-    assert.strictEqual(typeof callback, 'function');
-
-    settingsdb.get(exports.APPSTORE_CONFIG_KEY, function (error, value) {
-        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(null, gDefaults[exports.APPSTORE_CONFIG_KEY]);
-        if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
-
-        callback(null, JSON.parse(value));
-    });
-}
-
 function getPlatformConfig(callback) {
     assert.strictEqual(typeof callback, 'function');
 
@@ -452,6 +438,19 @@ function getLicenseKey(callback) {
     });
 }
 
+function setLicenseKey(licenseKey, callback) {
+    assert.strictEqual(typeof licenseKey, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    settingsdb.set(exports.LICENSE_KEY, licenseKey, function (error) {
+        if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
+
+        notifyChange(exports.LICENSE_KEY, licenseKey);
+
+        callback(null);
+    });
+}
+
 function getCloudronId(callback) {
     assert.strictEqual(typeof callback, 'function');
 
@@ -460,6 +459,19 @@ function getCloudronId(callback) {
         if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
 
         callback(null, value);
+    });
+}
+
+function setCloudronId(cid, callback) {
+    assert.strictEqual(typeof cid, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    settingsdb.set(exports.CLOUDRON_ID_KEY, cid, function (error) {
+        if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
+
+        notifyChange(exports.CLOUDRON_ID_KEY, cid);
+
+        callback(null);
     });
 }
 
@@ -474,31 +486,16 @@ function getCloudronToken(callback) {
     });
 }
 
-function setAppstoreConfig(appstoreConfig, callback) {
-    assert.strictEqual(typeof appstoreConfig, 'object');
-    assert.strictEqual(typeof appstoreConfig.userId, 'string');
-    assert.strictEqual(typeof appstoreConfig.token, 'string');
+function setCloudronToken(token, callback) {
+    assert.strictEqual(typeof token, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    const { userId, token } = appstoreConfig;
-
-    appstore.registerCloudron(config.adminDomain(), userId, token, function (error, cloudronId) {
-        if (error && error.reason === AppstoreError.EXTERNAL_ERROR) return callback(new SettingsError(SettingsError.EXTERNAL_ERROR, error.message));
+    settingsdb.set(exports.CLOUDRON_TOKEN_KEY, token, function (error) {
         if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
 
-        let data = {
-            userId: appstoreConfig.userId,
-            token: appstoreConfig.token,
-            cloudronId: cloudronId
-        };
+        notifyChange(exports.CLOUDRON_TOKEN_KEY, token);
 
-        settingsdb.set(exports.APPSTORE_CONFIG_KEY, JSON.stringify(data), function (error) {
-            if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
-
-            notifyChange(exports.APPSTORE_CONFIG_KEY, appstoreConfig);
-
-            callback(null);
-        });
+        callback(null);
     });
 }
 
@@ -516,7 +513,7 @@ function getAll(callback) {
         result[exports.UNSTABLE_APPS_KEY] = !!result[exports.UNSTABLE_APPS_KEY];
 
         // convert JSON objects
-        [exports.BACKUP_CONFIG_KEY, exports.APPSTORE_CONFIG_KEY, exports.PLATFORM_CONFIG_KEY ].forEach(function (key) {
+        [exports.BACKUP_CONFIG_KEY, exports.PLATFORM_CONFIG_KEY ].forEach(function (key) {
             result[key] = typeof result[key] === 'object' ? result[key] : safe.JSON.parse(result[key]);
         });
 

@@ -18,7 +18,6 @@ var async = require('async'),
     settingsdb = require('../settingsdb.js');
 
 const DOMAIN = 'example-appstore-test.com';
-const APPSTORE_USER_ID = 'appstoreuserid';
 const APPSTORE_TOKEN = 'appstoretoken';
 const CLOUDRON_ID = 'cloudronid';
 const APP_ID = 'appid';
@@ -50,7 +49,7 @@ describe('Appstore', function () {
 
     beforeEach(nock.cleanAll);
 
-    it('cannot send alive status without appstore config', function (done) {
+    it('cannot send alive status without cloudron token', function (done) {
         appstore.sendAliveStatus(function (error) {
             expect(error).to.be.ok();
             expect(error.reason).to.equal(AppstoreError.BILLING_REQUIRED);
@@ -58,17 +57,8 @@ describe('Appstore', function () {
         });
     });
 
-    it('can set appstore config', function (done) {
-        var scope = nock('http://localhost:6060')
-            .post(`/api/v1/users/${APPSTORE_USER_ID}/cloudrons?accessToken=${APPSTORE_TOKEN}`, function () { return true; })
-            .reply(201, { cloudron: { id: CLOUDRON_ID }});
-
-        settings.setAppstoreConfig({ userId: APPSTORE_USER_ID, token: APPSTORE_TOKEN }, function (error) {
-            expect(error).to.not.be.ok();
-            expect(scope.isDone()).to.be.ok();
-
-            settingsdb.set(settings.CLOUDRON_TOKEN_KEY, APPSTORE_TOKEN, done);
-        });
+    it('can set cloudron token', function (done) {
+        settingsdb.set(settings.CLOUDRON_TOKEN_KEY, APPSTORE_TOKEN, done);
     });
 
     it('can send alive status', function (done) {
@@ -159,4 +149,3 @@ describe('Appstore', function () {
         });
     });
 });
-

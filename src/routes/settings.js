@@ -246,38 +246,6 @@ function setUnstableAppsConfig(req, res, next) {
     });
 }
 
-function getAppstoreConfig(req, res, next) {
-    settings.getAppstoreConfig(function (error, result) {
-        if (error) return next(new HttpError(500, error));
-
-        next(new HttpSuccess(200, result));
-    });
-}
-
-function setAppstoreConfig(req, res, next) {
-    assert.strictEqual(typeof req.body, 'object');
-
-    if (typeof req.body.userId !== 'string') return next(new HttpError(400, 'userId is required'));
-    if (typeof req.body.token !== 'string') return next(new HttpError(400, 'token is required'));
-
-    var options = {
-        userId: req.body.userId,
-        token: req.body.token
-    };
-
-    settings.setAppstoreConfig(options, function (error) {
-        if (error && error.reason === SettingsError.BAD_FIELD) return next(new HttpError(400, error.message));
-        if (error && error.reason === SettingsError.EXTERNAL_ERROR) return next(new HttpError(424, error.message));
-        if (error) return next(new HttpError(500, error));
-
-        settings.getAppstoreConfig(function (error, result) {
-            if (error) return next(new HttpError(500, error));
-
-            next(new HttpSuccess(202, result));
-        });
-    });
-}
-
 function setRegistryConfig(req, res, next) {
     assert.strictEqual(typeof req.body, 'object');
 
@@ -300,7 +268,6 @@ function get(req, res, next) {
     case settings.DYNAMIC_DNS_KEY: return getDynamicDnsConfig(req, res, next);
     case settings.BACKUP_CONFIG_KEY: return getBackupConfig(req, res, next);
     case settings.PLATFORM_CONFIG_KEY: return getPlatformConfig(req, res, next);
-    case settings.APPSTORE_CONFIG_KEY: return getAppstoreConfig(req, res, next);
     case settings.UNSTABLE_APPS_KEY: return getUnstableAppsConfig(req, res, next);
 
     case settings.APP_AUTOUPDATE_PATTERN_KEY: return getAppAutoupdatePattern(req, res, next);
@@ -321,7 +288,6 @@ function set(req, res, next) {
     case settings.DYNAMIC_DNS_KEY: return setDynamicDnsConfig(req, res, next);
     case settings.BACKUP_CONFIG_KEY: return setBackupConfig(req, res, next);
     case settings.PLATFORM_CONFIG_KEY: return setPlatformConfig(req, res, next);
-    case settings.APPSTORE_CONFIG_KEY: return setAppstoreConfig(req, res, next);
     case settings.UNSTABLE_APPS_KEY: return setUnstableAppsConfig(req, res, next);
 
     case settings.APP_AUTOUPDATE_PATTERN_KEY: return setAppAutoupdatePattern(req, res, next);

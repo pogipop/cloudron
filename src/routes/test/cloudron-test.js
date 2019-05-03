@@ -16,7 +16,6 @@ let async = require('async'),
     superagent = require('superagent'),
     server = require('../../server.js'),
     settings = require('../../settings.js'),
-    settingsdb = require('../../settingsdb.js'),
     tokendb = require('../../tokendb.js');
 
 var SERVER_URL = 'http://localhost:' + config.get('port');
@@ -34,8 +33,7 @@ function setup(done) {
     async.series([
         server.start.bind(server),
         database._clear,
-        settings.setBackupConfig.bind(null, { provider: 'filesystem', backupFolder: '/tmp', format: 'tgz' }),
-        settingsdb.set.bind(null, settings.APPSTORE_CONFIG_KEY, JSON.stringify({ userId: 'USER_ID', cloudronId: 'CLOUDRON_ID', token: 'ACCESS_TOKEN' }))
+        settings.setBackupConfig.bind(null, { provider: 'filesystem', backupFolder: '/tmp', format: 'tgz' })
     ], done);
 }
 

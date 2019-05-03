@@ -464,30 +464,23 @@ describe('App API', function () {
     });
 
     it('app install succeeds with purchase', function (done) {
-        var fake1 = nock(config.apiServerOrigin()).post(function (uri) { return uri.indexOf('/api/v1/users/' + user_1_id + '/cloudrons') >= 0; }, { 'domain': DOMAIN_0.domain }).reply(201, { cloudron: { id: CLOUDRON_ID } });
         var fake2 = nock(config.apiServerOrigin()).get('/api/v1/apps/' + APP_STORE_ID).reply(200, { manifest: APP_MANIFEST });
         var fake3 = nock(config.apiServerOrigin()).post(function (uri) { return uri.indexOf('/api/v1/cloudronapps') >= 0; }, (body) => body.appstoreId === APP_STORE_ID && body.manifestId === APP_MANIFEST.id && body.appId).reply(201, { });
 
-        settings.setAppstoreConfig({ userId: user_1_id, token: USER_1_APPSTORE_TOKEN }, function (error) {
+        settingsdb.set(settings.CLOUDRON_TOKEN_KEY, USER_1_APPSTORE_TOKEN, function (error) {
             if (error) return done(error);
 
-            settingsdb.set(settings.CLOUDRON_TOKEN_KEY, USER_1_APPSTORE_TOKEN, function (error) {
-                if (error) return done(error);
-
-                expect(fake1.isDone()).to.be.ok();
-
-                superagent.post(SERVER_URL + '/api/v1/apps/install')
-                    .query({ access_token: token })
-                    .send({ appStoreId: APP_STORE_ID, location: APP_LOCATION, domain: DOMAIN_0.domain, portBindings: null, accessRestriction: { users: [ 'someuser' ], groups: [] } })
-                    .end(function (err, res) {
-                        expect(res.statusCode).to.equal(202);
-                        expect(res.body.id).to.be.a('string');
-                        APP_ID = res.body.id;
-                        expect(fake2.isDone()).to.be.ok();
-                        expect(fake3.isDone()).to.be.ok();
-                        done();
-                    });
-            });
+            superagent.post(SERVER_URL + '/api/v1/apps/install')
+                .query({ access_token: token })
+                .send({ appStoreId: APP_STORE_ID, location: APP_LOCATION, domain: DOMAIN_0.domain, portBindings: null, accessRestriction: { users: [ 'someuser' ], groups: [] } })
+                .end(function (err, res) {
+                    expect(res.statusCode).to.equal(202);
+                    expect(res.body.id).to.be.a('string');
+                    APP_ID = res.body.id;
+                    expect(fake2.isDone()).to.be.ok();
+                    expect(fake3.isDone()).to.be.ok();
+                    done();
+                });
         });
     });
 
@@ -662,17 +655,10 @@ describe('App installation', function () {
             },
 
             function (callback) {
-                var fake1 = nock(config.apiServerOrigin()).post(function (uri) { return uri.indexOf('/api/v1/users/' + user_1_id + '/cloudrons') >= 0; }, { 'domain': DOMAIN_0.domain }).reply(201, { cloudron: { id: CLOUDRON_ID } });
-                settings.setAppstoreConfig({ userId: user_1_id, token: USER_1_APPSTORE_TOKEN }, function (error) {
+                settingsdb.set(settings.CLOUDRON_TOKEN_KEY, USER_1_APPSTORE_TOKEN, function (error) {
                     if (error) return callback(error);
 
-                    settingsdb.set(settings.CLOUDRON_TOKEN_KEY, USER_1_APPSTORE_TOKEN, function (error) {
-                        if (error) return callback(error);
-
-                        expect(fake1.isDone()).to.be.ok();
-
-                        callback();
-                    });
+                    callback();
                 });
             }
         ], done);

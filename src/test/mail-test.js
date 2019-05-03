@@ -13,8 +13,7 @@ var async = require('async'),
     expect = require('expect.js'),
     mail = require('../mail.js'),
     maildb = require('../maildb.js'),
-    nock = require('nock'),
-    settings = require('../settings.js');
+    nock = require('nock');
 
 const DOMAIN_0 = {
     domain: 'example.com',
@@ -29,10 +28,6 @@ const AUDIT_SOURCE = {
     ip: '1.2.3.4'
 };
 
-const APPSTORE_USER_ID = 'appstoreuserid';
-const APPSTORE_TOKEN = 'appstoretoken';
-const CLOUDRON_ID = 'cloudronid';
-
 function setup(done) {
     config._reset();
     config.set('fqdn', 'example.com');
@@ -42,19 +37,7 @@ function setup(done) {
         database.initialize,
         database._clear,
         domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0, AUDIT_SOURCE),
-        mail.addDomain.bind(null, DOMAIN_0.domain),
-        function (callback) {
-            var scope = nock('http://localhost:6060')
-                .post(`/api/v1/users/${APPSTORE_USER_ID}/cloudrons?accessToken=${APPSTORE_TOKEN}`, function () { return true; })
-                .reply(201, { cloudron: { id: CLOUDRON_ID }});
-
-            settings.setAppstoreConfig({ userId: APPSTORE_USER_ID, token: APPSTORE_TOKEN }, function (error) {
-                expect(error).to.not.be.ok();
-                expect(scope.isDone()).to.be.ok();
-
-                callback();
-            });
-        }
+        mail.addDomain.bind(null, DOMAIN_0.domain)
     ], done);
 }
 

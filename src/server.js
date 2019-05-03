@@ -89,6 +89,7 @@ function initializeExpressSync() {
 
     // scope middleware implicitly also adds bearer token verification
     var cloudronScope = routes.accesscontrol.scope(accesscontrol.SCOPE_CLOUDRON);
+    var subscriptionScope = routes.accesscontrol.scope(accesscontrol.SCOPE_SUBSCRIPTION);
     var profileScope = routes.accesscontrol.scope(accesscontrol.SCOPE_PROFILE);
     var usersReadScope = routes.accesscontrol.scope(accesscontrol.SCOPE_USERS_READ);
     var usersManageScope = routes.accesscontrol.scope(accesscontrol.SCOPE_USERS_MANAGE);
@@ -134,6 +135,9 @@ function initializeExpressSync() {
     router.get ('/api/v1/cloudron/logstream/:unit', cloudronScope, routes.cloudron.getLogStream);
     router.get ('/api/v1/cloudron/eventlog', cloudronScope, routes.eventlog.list);
     router.get ('/api/v1/cloudron/eventlog/:eventId', cloudronScope, routes.eventlog.get);
+
+    // subscription routes
+    router.post('/api/v1/subscription', subscriptionScope, routes.subscription.subscribeCloudron);
 
     // tasks
     router.get ('/api/v1/tasks', settingsScope, routes.tasks.list);

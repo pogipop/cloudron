@@ -6,13 +6,12 @@ exports = module.exports = {
 
     getSubscription: getSubscription,
     isFreePlan: isFreePlan,
+    subscribeCloudron: subscribeCloudron,
 
     sendAliveStatus: sendAliveStatus,
 
     getAppUpdate: getAppUpdate,
     getBoxUpdate: getBoxUpdate,
-
-    registerCloudron: registerCloudron,
 
     sendFeedback: sendFeedback,
 
@@ -55,6 +54,8 @@ function AppstoreError(reason, errorOrMessage) {
 util.inherits(AppstoreError, Error);
 AppstoreError.INTERNAL_ERROR = 'Internal Error';
 AppstoreError.EXTERNAL_ERROR = 'External Error';
+AppstoreError.ALREADY_EXISTS = 'Already Exists';
+AppstoreError.ACCESS_DENIED = 'Access Denied';
 AppstoreError.NOT_FOUND = 'Internal Error';
 AppstoreError.BILLING_REQUIRED = 'Billing Required';
 
@@ -79,6 +80,48 @@ function getCloudronToken(callback) {
         if (!token) return callback(new AppstoreError(AppstoreError.BILLING_REQUIRED));
 
         callback(null, token);
+    });
+}
+
+function login(email, password, totpToken, callback) {
+    assert.strictEqual(typeof email, 'string');
+    assert.strictEqual(typeof password, 'string');
+    assert.strictEqual(typeof totpToken, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    var data = {
+        email: email,
+        password: password,
+        totpToken: totpToken
+    };
+
+    const url = config.apiServerOrigin() + '/api/v1/login';
+    superagent.post(url).send(data).timeout(30 * 1000).end(function (error, result) {
+        if (error && !error.response) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, error.message));
+        if (result.statusCode === 401) return callback(new AppstoreError(AppstoreError.ACCESS_DENIED));
+        if (result.statusCode !== 200) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, `login status code: ${result.statusCode}`));
+
+        callback(null, result.body); // { userId, accessToken }
+    });
+}
+
+function registerUser(email, password, callback) {
+    assert.strictEqual(typeof email, 'string');
+    assert.strictEqual(typeof password, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    var data = {
+        email: email,
+        password: password,
+    };
+
+    const url = config.apiServerOrigin() + '/api/v1/register_user';
+    superagent.post(url).send(data).timeout(30 * 1000).end(function (error, result) {
+        if (error && !error.response) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, error.message));
+        if (result.statusCode === 409) return callback(new AppstoreError(AppstoreError.ALREADY_EXISTS, error.message));
+        if (result.statusCode !== 201) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, error.message));
+
+        callback(null);
     });
 }
 
@@ -306,25 +349,54 @@ function getAppUpdate(app, callback) {
     });
 }
 
-function registerCloudron(adminDomain, userId, token, callback) {
-    assert.strictEqual(typeof adminDomain, 'string');
-    assert.strictEqual(typeof userId, 'string');
+function registerCloudron(token, callback) {
     assert.strictEqual(typeof token, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    const url = `${config.apiServerOrigin()}/api/v1/users/${userId}/cloudrons`;
+    const url = `${config.apiServerOrigin()}/api/v1/register_cloudron`;
 
-    superagent.post(url).send({ domain: adminDomain }).query({ accessToken: token }).timeout(30 * 1000).end(function (error, result) {
+    superagent.post(url).send({ domain: config.adminDomain() }).query({ accessToken: token }).timeout(30 * 1000).end(function (error, result) {
         if (error && !error.response) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, error.message));
         if (result.statusCode === 401) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, 'invalid appstore token'));
         if (result.statusCode !== 201) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, 'unable to register cloudron'));
 
-        const cloudronId = safe.query(result.body, 'cloudron.id');
-        if (!cloudronId) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, 'Invalid response - no cloudron id'));
+        // cloudronId, token, licenseKey
+        if (!result.body.cloudronId) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, 'Invalid response - no cloudron id'));
+        if (!result.body.cloudronToken) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, 'Invalid response - no token'));
+        if (!result.body.licenseKey) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, 'Invalid response - no license'));
 
-        debug(`setAppstoreConfig: Cloudron registered with id ${cloudronId}`);
+        async.series([
+            settings.setCloudronId.bind(null, result.body.cloudronId),
+            settings.setCloudronToken.bind(null, result.body.cloudronToken),
+            settings.setLicenseKey.bind(null, result.body.licenseKey),
+        ], function (error) {
+            if (error) return callback(new AppstoreError(AppstoreError.INTERNAL_ERROR, error));
 
-        callback(null, cloudronId);
+            debug(`registerCloudron: Cloudron registered with id ${result.body.cloudronId}`);
+
+            callback();
+        });
+    });
+}
+
+function subscribeCloudron(options, callback) {
+    assert.strictEqual(typeof options, 'object');
+    assert.strictEqual(typeof callback, 'function');
+
+    function maybeSignup(done) {
+        if (!options.signup) return done();
+
+        registerUser(options.email, options.password, done);
+    }
+
+    maybeSignup(function (error) {
+        if (error) return callback(error);
+
+        login(options.email, options.password, options.totpToken || '', function (error, result) {
+            if (error) return callback(error);
+
+            registerCloudron(result.accessToken, callback);
+        });
     });
 }
 

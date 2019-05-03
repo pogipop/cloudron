@@ -49,7 +49,6 @@ function setup(done) {
                 });
         },
 
-        settingsdb.set.bind(null, settings.APPSTORE_CONFIG_KEY, JSON.stringify({ userId: 'USER_ID', cloudronId: 'CLOUDRON_ID', token: 'ACCESS_TOKEN' })),
         settingsdb.set.bind(null, settings.CLOUDRON_TOKEN_KEY, 'CLOUDRON_TOKEN')
     ], done);
 }
