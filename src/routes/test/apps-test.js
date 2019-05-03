@@ -4,6 +4,7 @@
 /* global describe:false */
 /* global before:false */
 /* global after:false */
+/* global xit:false */
 
 var appdb = require('../../appdb.js'),
     apps = require('../../apps.js'),
@@ -30,6 +31,7 @@ var appdb = require('../../appdb.js'),
     safe = require('safetydance'),
     server = require('../../server.js'),
     settings = require('../../settings.js'),
+    settingsdb = require('../../settingsdb.js'),
     superagent = require('superagent'),
     taskmanager = require('../../taskmanager.js'),
     tokendb = require('../../tokendb.js'),
@@ -464,24 +466,28 @@ describe('App API', function () {
     it('app install succeeds with purchase', function (done) {
         var fake1 = nock(config.apiServerOrigin()).post(function (uri) { return uri.indexOf('/api/v1/users/' + user_1_id + '/cloudrons') >= 0; }, { 'domain': DOMAIN_0.domain }).reply(201, { cloudron: { id: CLOUDRON_ID } });
         var fake2 = nock(config.apiServerOrigin()).get('/api/v1/apps/' + APP_STORE_ID).reply(200, { manifest: APP_MANIFEST });
-        var fake3 = nock(config.apiServerOrigin()).post(function (uri) { return uri.indexOf('/api/v1/users/' + user_1_id + '/cloudrons/' + CLOUDRON_ID + '/apps/') >= 0; }, { 'appstoreId': APP_STORE_ID, 'manifestId': APP_MANIFEST.id }).reply(201, { });
+        var fake3 = nock(config.apiServerOrigin()).post(function (uri) { return uri.indexOf('/api/v1/cloudronapps') >= 0; }, (body) => body.appstoreId === APP_STORE_ID && body.manifestId === APP_MANIFEST.id && body.appId).reply(201, { });
 
         settings.setAppstoreConfig({ userId: user_1_id, token: USER_1_APPSTORE_TOKEN }, function (error) {
             if (error) return done(error);
 
-            expect(fake1.isDone()).to.be.ok();
+            settingsdb.set(settings.APPSTORE_TOKEN_KEY, USER_1_APPSTORE_TOKEN, function (error) {
+                if (error) return done(error);
 
-            superagent.post(SERVER_URL + '/api/v1/apps/install')
-                .query({ access_token: token })
-                .send({ appStoreId: APP_STORE_ID, location: APP_LOCATION, domain: DOMAIN_0.domain, portBindings: null, accessRestriction: { users: [ 'someuser' ], groups: [] } })
-                .end(function (err, res) {
-                    expect(res.statusCode).to.equal(202);
-                    expect(res.body.id).to.be.a('string');
-                    APP_ID = res.body.id;
-                    expect(fake2.isDone()).to.be.ok();
-                    expect(fake3.isDone()).to.be.ok();
-                    done();
-                });
+                expect(fake1.isDone()).to.be.ok();
+
+                superagent.post(SERVER_URL + '/api/v1/apps/install')
+                    .query({ access_token: token })
+                    .send({ appStoreId: APP_STORE_ID, location: APP_LOCATION, domain: DOMAIN_0.domain, portBindings: null, accessRestriction: { users: [ 'someuser' ], groups: [] } })
+                    .end(function (err, res) {
+                        expect(res.statusCode).to.equal(202);
+                        expect(res.body.id).to.be.a('string');
+                        APP_ID = res.body.id;
+                        expect(fake2.isDone()).to.be.ok();
+                        expect(fake3.isDone()).to.be.ok();
+                        done();
+                    });
+            });
         });
     });
 
@@ -578,8 +584,8 @@ describe('App API', function () {
     });
 
     it('can uninstall app', function (done) {
-        var fake1 = nock(config.apiServerOrigin()).get(function (uri) { return uri.indexOf('/api/v1/users/' + user_1_id + '/cloudrons/' + CLOUDRON_ID + '/apps/') >= 0; }).reply(200, { });
-        var fake2 = nock(config.apiServerOrigin()).delete(function (uri) { return uri.indexOf('/api/v1/users/' + user_1_id + '/cloudrons/' + CLOUDRON_ID + '/apps/') >= 0; }).reply(204, { });
+        var fake1 = nock(config.apiServerOrigin()).get(function (uri) { return uri.indexOf('/api/v1/cloudronapps/') >= 0; }).reply(200, { });
+        var fake2 = nock(config.apiServerOrigin()).delete(function (uri) { return uri.indexOf('/api/v1/cloudronapps/') >= 0; }).reply(204, { });
 
         superagent.post(SERVER_URL + '/api/v1/apps/' + APP_ID + '/uninstall')
             .send({ password: PASSWORD })
@@ -594,7 +600,7 @@ describe('App API', function () {
 
     it('app install succeeds again', function (done) {
         var fake1 = nock(config.apiServerOrigin()).get('/api/v1/apps/' + APP_STORE_ID).reply(200, { manifest: APP_MANIFEST });
-        var fake2 = nock(config.apiServerOrigin()).post(function (uri) { return uri.indexOf('/api/v1/users/' + user_1_id + '/cloudrons/' + CLOUDRON_ID + '/apps/') >= 0; }, { 'appstoreId': APP_STORE_ID, 'manifestId': APP_MANIFEST.id }).reply(201, { });
+        var fake2 = nock(config.apiServerOrigin()).post(function (uri) { return uri.indexOf('/api/v1/cloudronapps') >= 0; }, (body) => body.appstoreId === APP_STORE_ID && body.manifestId === APP_MANIFEST.id && body.appId).reply(201, { });
 
         superagent.post(SERVER_URL + '/api/v1/apps/install')
             .query({ access_token: token })
@@ -660,9 +666,13 @@ describe('App installation', function () {
                 settings.setAppstoreConfig({ userId: user_1_id, token: USER_1_APPSTORE_TOKEN }, function (error) {
                     if (error) return callback(error);
 
-                    expect(fake1.isDone()).to.be.ok();
+                    settingsdb.set(settings.APPSTORE_TOKEN_KEY, USER_1_APPSTORE_TOKEN, function (error) {
+                        if (error) return callback(error);
 
-                    callback();
+                        expect(fake1.isDone()).to.be.ok();
+
+                        callback();
+                    });
                 });
             }
         ], done);
@@ -674,7 +684,7 @@ describe('App installation', function () {
 
     it('can install test app', function (done) {
         var fake1 = nock(config.apiServerOrigin()).get('/api/v1/apps/' + APP_STORE_ID).reply(200, { manifest: APP_MANIFEST });
-        var fake2 = nock(config.apiServerOrigin()).post(function (uri) { return uri.indexOf('/api/v1/users/' + user_1_id + '/cloudrons/' + CLOUDRON_ID + '/apps/') >= 0; }, { 'appstoreId': APP_STORE_ID, 'manifestId': APP_MANIFEST.id }).reply(201, { });
+        var fake2 = nock(config.apiServerOrigin()).post(function (uri) { return uri.indexOf('/api/v1/cloudronapps') >= 0; }, (body) => body.appstoreId === APP_STORE_ID && body.manifestId === APP_MANIFEST.id && body.appId).reply(201, { });
 
         var count = 0;
         function checkInstallStatus() {
@@ -913,7 +923,7 @@ describe('App installation', function () {
 
     it('did stop the app', function (done) {
         function waitForAppToDie() {
-            superagent.get('http://localhost:' + appEntry.httpPort + appResult.manifest.healthCheckPath).end(function (err, res) {
+            superagent.get('http://localhost:' + appEntry.httpPort + appResult.manifest.healthCheckPath).end(function (err) {
                 if (!err || err.code !== 'ECONNREFUSED') return setTimeout(waitForAppToDie, 500);
 
                 // wait for app status to be updated
@@ -1135,8 +1145,8 @@ describe('App installation', function () {
     });
 
     it('can uninstall app', function (done) {
-        var fake1 = nock(config.apiServerOrigin()).get(function (uri) { return uri.indexOf('/api/v1/users/' + user_1_id + '/cloudrons/' + CLOUDRON_ID + '/apps/') >= 0; }).reply(200, { });
-        var fake2 = nock(config.apiServerOrigin()).delete(function (uri) { return uri.indexOf('/api/v1/users/' + user_1_id + '/cloudrons/' + CLOUDRON_ID + '/apps/') >= 0; }).reply(204, { });
+        var fake1 = nock(config.apiServerOrigin()).get(function (uri) { return uri.indexOf('/api/v1/cloudronapps/') >= 0; }).reply(200, { });
+        var fake2 = nock(config.apiServerOrigin()).delete(function (uri) { return uri.indexOf('/api/v1/cloudronapps/') >= 0; }).reply(204, { });
 
         var count = 0;
         function checkUninstallStatus() {
@@ -1195,7 +1205,7 @@ describe('App installation', function () {
     });
 
     it('uninstalled - removed redis addon', function (done) {
-        docker.getContainer('redis-' + APP_ID).inspect(function (error, data) {
+        docker.getContainer('redis-' + APP_ID).inspect(function (error) {
             expect(error).to.be.ok();
             done();
         });

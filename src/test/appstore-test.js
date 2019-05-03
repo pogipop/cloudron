@@ -112,10 +112,10 @@ describe('Appstore', function () {
 
     it('can purchase an app', function (done) {
         var scope1 = nock('http://localhost:6060')
-            .post(`/api/v1/users/${APPSTORE_USER_ID}/cloudrons/${CLOUDRON_ID}/apps/${APP_ID}?accessToken=${APPSTORE_TOKEN}`, function () { return true; })
+            .post(`/api/v1/cloudronapps?accessToken=${APPSTORE_TOKEN}`, function () { return true; })
             .reply(201, {});
 
-        appstore.purchase(APP_ID, { appstoreId: APPSTORE_APP_ID, manifestId: APPSTORE_APP_ID }, function (error) {
+        appstore.purchase({ appId: APP_ID, appstoreId: APPSTORE_APP_ID, manifestId: APPSTORE_APP_ID }, function (error) {
             expect(error).to.not.be.ok();
             expect(scope1.isDone()).to.be.ok();
 
@@ -125,11 +125,11 @@ describe('Appstore', function () {
 
     it('unpurchase succeeds if app was never purchased', function (done) {
         var scope1 = nock('http://localhost:6060')
-            .get(`/api/v1/users/${APPSTORE_USER_ID}/cloudrons/${CLOUDRON_ID}/apps/${APP_ID}?accessToken=${APPSTORE_TOKEN}`)
+            .get(`/api/v1/cloudronapps/${APP_ID}?accessToken=${APPSTORE_TOKEN}`)
             .reply(404, {});
 
         var scope2 = nock('http://localhost:6060')
-            .delete(`/api/v1/users/${APPSTORE_USER_ID}/cloudrons/${CLOUDRON_ID}/apps/${APP_ID}?accessToken=${APPSTORE_TOKEN}`, function () { return true; })
+            .delete(`/api/v1/cloudronapps/${APP_ID}?accessToken=${APPSTORE_TOKEN}`, function () { return true; })
             .reply(204, {});
 
         appstore.unpurchase(APP_ID, { appstoreId: APPSTORE_APP_ID, manifestId: APPSTORE_APP_ID }, function (error) {
@@ -143,11 +143,11 @@ describe('Appstore', function () {
 
     it('can unpurchase an app', function (done) {
         var scope1 = nock('http://localhost:6060')
-            .get(`/api/v1/users/${APPSTORE_USER_ID}/cloudrons/${CLOUDRON_ID}/apps/${APP_ID}?accessToken=${APPSTORE_TOKEN}`)
+            .get(`/api/v1/cloudronapps/${APP_ID}?accessToken=${APPSTORE_TOKEN}`)
             .reply(200, {});
 
         var scope2 = nock('http://localhost:6060')
-            .delete(`/api/v1/users/${APPSTORE_USER_ID}/cloudrons/${CLOUDRON_ID}/apps/${APP_ID}?accessToken=${APPSTORE_TOKEN}`, function () { return true; })
+            .delete(`/api/v1/cloudronapps/${APP_ID}?accessToken=${APPSTORE_TOKEN}`, function () { return true; })
             .reply(204, {});
 
         appstore.unpurchase(APP_ID, { appstoreId: APPSTORE_APP_ID, manifestId: APPSTORE_APP_ID }, function (error) {

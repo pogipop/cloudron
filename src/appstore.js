@@ -106,18 +106,18 @@ function isFreePlan(subscription) {
 }
 
 // See app.js install it will create a db record first but remove it again if appstore purchase fails
-function purchase(appId, data, callback) {
-    assert.strictEqual(typeof appId, 'string');
-    assert.strictEqual(typeof data, 'object'); // { appstoreId, manifestId }
+function purchase(data, callback) {
+    assert.strictEqual(typeof data, 'object'); // { appstoreId, manifestId, appId }
     assert(data.appstoreId || data.manifestId);
+    assert.strictEqual(typeof data.appId, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    getAppstoreConfig(function (error, appstoreConfig) {
+    getAppstoreToken(function (error, token) {
         if (error) return callback(error);
 
-        var url = config.apiServerOrigin() + '/api/v1/users/' + appstoreConfig.userId + '/cloudrons/' + appstoreConfig.cloudronId + '/apps/' + appId;
+        const url = `${config.apiServerOrigin()}/api/v1/cloudronapps`;
 
-        superagent.post(url).send(data).query({ accessToken: appstoreConfig.token }).timeout(30 * 1000).end(function (error, result) {
+        superagent.post(url).send(data).query({ accessToken: token }).timeout(30 * 1000).end(function (error, result) {
             if (error && !error.response) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, error.message));
             if (result.statusCode === 404) return callback(new AppstoreError(AppstoreError.NOT_FOUND));
             if (result.statusCode === 403 || result.statusCode === 401) return callback(new AppstoreError(AppstoreError.BILLING_REQUIRED));
@@ -135,18 +135,18 @@ function unpurchase(appId, data, callback) {
     assert(data.appstoreId || data.manifestId);
     assert.strictEqual(typeof callback, 'function');
 
-    getAppstoreConfig(function (error, appstoreConfig) {
+    getAppstoreToken(function (error, token) {
         if (error) return callback(error);
 
-        var url = config.apiServerOrigin() + '/api/v1/users/' + appstoreConfig.userId + '/cloudrons/' + appstoreConfig.cloudronId + '/apps/' + appId;
+        const url = `${config.apiServerOrigin()}/api/v1/cloudronapps/${appId}`;
 
-        superagent.get(url).query({ accessToken: appstoreConfig.token }).timeout(30 * 1000).end(function (error, result) {
-            if (error && !error.response) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, error));
+        superagent.get(url).query({ accessToken: token }).timeout(30 * 1000).end(function (error, result) {
+            if (error && !error.response) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, error.message));
             if (result.statusCode === 403 || result.statusCode === 401) return callback(new AppstoreError(AppstoreError.BILLING_REQUIRED));
             if (result.statusCode === 404) return callback(null);   // was never purchased
             if (result.statusCode !== 201 && result.statusCode !== 200) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, util.format('App unpurchase failed. %s %j', result.status, result.body)));
 
-            superagent.del(url).send(data).query({ accessToken: appstoreConfig.token }).timeout(30 * 1000).end(function (error, result) {
+            superagent.del(url).send(data).query({ accessToken: token }).timeout(30 * 1000).end(function (error, result) {
                 if (error && !error.response) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, error));
                 if (result.statusCode === 403 || result.statusCode === 401) return callback(new AppstoreError(AppstoreError.BILLING_REQUIRED));
                 if (result.statusCode !== 204) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, util.format('App unpurchase failed. %s %j', result.status, result.body)));

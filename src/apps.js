@@ -698,7 +698,7 @@ function install(data, user, auditSource, callback) {
                 if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new AppsError(AppsError.NOT_FOUND, error.message));
                 if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
 
-                appstore.purchase(appId, { appstoreId: appStoreId, manifestId: manifest.id }, function (appstoreError) {
+                appstore.purchase({ appId: appId, appstoreId: appStoreId, manifestId: manifest.id }, function (appstoreError) {
                     // if purchase failed, rollback the appdb record
                     if (appstoreError) {
                         appdb.del(appId, function (error) {
@@ -1135,7 +1135,7 @@ function clone(appId, data, user, auditSource, callback) {
                     if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(getDuplicateErrorDetails(error, location, domainObject, portBindings));
                     if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
 
-                    appstore.purchase(newAppId, { appstoreId: app.appStoreId, manifestId: manifest.id }, function (appstoreError) {
+                    appstore.purchase({ appId: newAppId, appstoreId: app.appStoreId, manifestId: manifest.id }, function (appstoreError) {
                         // if purchase failed, rollback the appdb record
                         if (appstoreError) {
                             appdb.del(newAppId, function (error) {
