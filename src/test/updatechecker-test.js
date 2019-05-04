@@ -320,18 +320,12 @@ describe('updatechecker - app - manual (email)', function () {
             .query({ boxVersion: config.version(), accessToken: 'atoken', appId: APP_0.appStoreId, appVersion: APP_0.manifest.version })
             .reply(200, { manifest: { version: '2.0.0', changelog: '* some changes' } } );
 
-        var scope2 = nock('http://localhost:4444')
-            .get('/api/v1/users/uid/cloudrons/cid/subscription')
-            .query({ accessToken: 'token' })
-            .reply(200, { subscription: { plan: { id: 'pro' } } } );
-
         updatechecker.checkAppUpdates(function (error) {
             expect(!error).to.be.ok();
             expect(updatechecker.getUpdateInfo().apps).to.eql({ 'appid-0': { manifest: { version: '2.0.0', changelog: '* some changes' } } });
             expect(scope.isDone()).to.be.ok();
-            expect(scope2.isDone()).to.be.ok();
 
-            checkMails(1, done);
+            checkMails(0, done);
         });
     });
 
@@ -484,18 +478,12 @@ describe('updatechecker - app - automatic free (email)', function () {
             .query({ boxVersion: config.version(), accessToken: 'atoken', appId: APP_0.appStoreId, appVersion: APP_0.manifest.version })
             .reply(200, { manifest: { version: '2.0.0', changelog: 'c' } } );
 
-        var scope2 = nock('http://localhost:4444')
-            .get('/api/v1/users/uid/cloudrons/cid/subscription')
-            .query({ accessToken: 'token' })
-            .reply(200, { subscription: { plan: { id: 'free' } } } );
-
         updatechecker.checkAppUpdates(function (error) {
             expect(!error).to.be.ok();
             expect(updatechecker.getUpdateInfo().apps).to.eql({ 'appid-0': { manifest: { version: '2.0.0', changelog: 'c' } } });
             expect(scope.isDone()).to.be.ok();
-            expect(scope2.isDone()).to.be.ok();
 
-            checkMails(1, done);
+            checkMails(0, done);
         });
     });
 });
