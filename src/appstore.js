@@ -107,8 +107,8 @@ function registerUser(email, password, callback) {
     const url = config.apiServerOrigin() + '/api/v1/register_user';
     superagent.post(url).send(data).timeout(30 * 1000).end(function (error, result) {
         if (error && !error.response) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, error.message));
-        if (result.statusCode === 409) return callback(new AppstoreError(AppstoreError.ALREADY_EXISTS, error.message));
-        if (result.statusCode !== 201) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, error.message));
+        if (result.statusCode === 409) return callback(new AppstoreError(AppstoreError.ALREADY_EXISTS));
+        if (result.statusCode !== 201) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, `register status code: ${result.statusCode}`));
 
         callback(null);
     });

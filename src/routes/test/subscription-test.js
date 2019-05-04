@@ -83,6 +83,31 @@ describe('Subscription API', function () {
             });
     });
 
+    it('can setup subscription - signup', function (done) {
+        var scope1 = nock(config.apiServerOrigin())
+            .post('/api/v1/register_user', (body) => body.email && body.password)
+            .reply(201, { });
+
+        var scope2 = nock(config.apiServerOrigin())
+            .post('/api/v1/login', (body) => body.email && body.password)
+            .reply(200, { userId: 'userId', accessToken: 'SECRET_TOKEN' });
+
+        var scope3 = nock(config.apiServerOrigin())
+            .post('/api/v1/register_cloudron?accessToken=SECRET_TOKEN', (body) => !!body.domain)
+            .reply(201, { cloudronId: 'cid', cloudronToken: 'CLOUDRON_TOKEN', licenseKey: 'lkey' });
+
+        superagent.post(SERVER_URL + '/api/v1/subscription')
+            .send({ email: 'test@cloudron.io', password: 'secret', signup: true })
+            .query({ access_token: token })
+            .end(function (error, result) {
+                expect(result.statusCode).to.equal(200);
+                expect(scope1.isDone()).to.be.ok();
+                expect(scope2.isDone()).to.be.ok();
+                expect(scope3.isDone()).to.be.ok();
+                done();
+            });
+    });
+
     it('can get subscription', function (done) {
         var scope1 = nock(config.apiServerOrigin())
             .get('/api/v1/subscription?accessToken=CLOUDRON_TOKEN', () => true)
