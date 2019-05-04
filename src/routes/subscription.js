@@ -31,6 +31,7 @@ function getSubscription(req, res, next) {
     assert.strictEqual(typeof req.body, 'object');
 
     appstore.getSubscription(function (error, result) {
+        if (error && error.reason === AppstoreError.ALREADY_EXISTS) return next(new HttpError(409, error.message));
         if (error && error.reason === AppstoreError.EXTERNAL_ERROR) return next(new HttpError(424, error.message));
         if (error) return next(new HttpError(500, error));
 
