@@ -1,7 +1,8 @@
 'use strict';
 
 exports = module.exports = {
-    subscribeCloudron: subscribeCloudron
+    subscribeCloudron: subscribeCloudron,
+    getSubscription: getSubscription
 };
 
 var appstore = require('../appstore.js'),
@@ -23,5 +24,16 @@ function subscribeCloudron(req, res, next) {
         if (error) return next(new HttpError(500, error));
 
         next(new HttpSuccess(200, {}));
+    });
+}
+
+function getSubscription(req, res, next) {
+    assert.strictEqual(typeof req.body, 'object');
+
+    appstore.getSubscription(function (error, result) {
+        if (error && error.reason === AppstoreError.EXTERNAL_ERROR) return next(new HttpError(424, error.message));
+        if (error) return next(new HttpError(500, error));
+
+        next(new HttpSuccess(200, result)); // { email, subscription }
     });
 }

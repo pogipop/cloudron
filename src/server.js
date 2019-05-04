@@ -138,6 +138,7 @@ function initializeExpressSync() {
 
     // subscription routes
     router.post('/api/v1/subscription', subscriptionScope, routes.subscription.subscribeCloudron);
+    router.get ('/api/v1/subscription', subscriptionScope, routes.subscription.getSubscription);
 
     // tasks
     router.get ('/api/v1/tasks', settingsScope, routes.tasks.list);

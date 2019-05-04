@@ -70,7 +70,7 @@ describe('Subscription API', function () {
 
         var scope2 = nock(config.apiServerOrigin())
             .post('/api/v1/register_cloudron?accessToken=SECRET_TOKEN', (body) => !!body.domain)
-            .reply(201, { cloudronId: 'cid', cloudronToken: 'token', licenseKey: 'lkey' });
+            .reply(201, { cloudronId: 'cid', cloudronToken: 'CLOUDRON_TOKEN', licenseKey: 'lkey' });
 
         superagent.post(SERVER_URL + '/api/v1/subscription')
             .send({ email: 'test@cloudron.io', password: 'secret', signup: false })
@@ -79,6 +79,22 @@ describe('Subscription API', function () {
                 expect(result.statusCode).to.equal(200);
                 expect(scope1.isDone()).to.be.ok();
                 expect(scope2.isDone()).to.be.ok();
+                done();
+            });
+    });
+
+    it('can get subscription', function (done) {
+        var scope1 = nock(config.apiServerOrigin())
+            .get('/api/v1/subscription?accessToken=CLOUDRON_TOKEN', () => true)
+            .reply(200, { subscription: { plan: { id: 'free' } }, email: 'test@cloudron.io' });
+
+        superagent.get(SERVER_URL + '/api/v1/subscription')
+            .query({ access_token: token })
+            .end(function (error, result) {
+                expect(result.statusCode).to.equal(200);
+                expect(result.body.email).to.be('test@cloudron.io');
+                expect(result.body.subscription).to.be.an('object');
+                expect(scope1.isDone()).to.be.ok();
                 done();
             });
     });

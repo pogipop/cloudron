@@ -61,17 +61,6 @@ AppstoreError.BILLING_REQUIRED = 'Billing Required';
 
 var NOOP_CALLBACK = function (error) { if (error) debug(error); };
 
-function getAppstoreConfig(callback) {
-    assert.strictEqual(typeof callback, 'function');
-
-    settings.getAppstoreConfig(function (error, result) {
-        if (error) return callback(new AppstoreError(AppstoreError.INTERNAL_ERROR, error));
-        if (!result.token) return callback(new AppstoreError(AppstoreError.BILLING_REQUIRED));
-
-        callback(null, result);
-    });
-}
-
 function getCloudronToken(callback) {
     assert.strictEqual(typeof callback, 'function');
 
@@ -128,18 +117,18 @@ function registerUser(email, password, callback) {
 function getSubscription(callback) {
     assert.strictEqual(typeof callback, 'function');
 
-    getAppstoreConfig(function (error, appstoreConfig) {
+    getCloudronToken(function (error, token) {
         if (error) return callback(error);
 
-        const url = config.apiServerOrigin() + '/api/v1/users/' + appstoreConfig.userId + '/cloudrons/' + appstoreConfig.cloudronId + '/subscription';
-        superagent.get(url).query({ accessToken: appstoreConfig.token }).timeout(30 * 1000).end(function (error, result) {
+        const url = config.apiServerOrigin() + '/api/v1/subscription';
+        superagent.get(url).query({ accessToken: token }).timeout(30 * 1000).end(function (error, result) {
             if (error && !error.response) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, error.message));
             if (result.statusCode === 401) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, 'invalid appstore token'));
             if (result.statusCode === 403) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, 'wrong user'));
             if (result.statusCode === 502) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, 'stripe error'));
             if (result.statusCode !== 200) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, 'unknown error'));
 
-            callback(null, result.body.subscription);
+            callback(null, result.body); // { email, subscription}
         });
     });
 }
