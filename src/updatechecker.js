@@ -99,34 +99,16 @@ function checkAppUpdates(callback) {
                     return iteratorDone();
                 }
 
-                appstore.getSubscription(function (error, result) {
-                    if (error) {
-                        debug('Error getting subscription for %s', app.id, error);
-                        return iteratorDone();
-                    }
+                // only send notifications if update pattern is 'never'
+                settings.getAppAutoupdatePattern(function (error, result) {
+                    if (error) return iteratorDone(error);
+                    if (result !== constants.AUTOUPDATE_PATTERN_NEVER) return iteratorDone();
 
-                    // always send notifications if user is on the free plan
-                    if (appstore.isFreePlan(result)) {
-                        debug('Notifying user of app update for %s from %s to %s', app.id, app.manifest.version, updateInfo.manifest.version);
-                        users.getAllAdmins(function (error, admins) {
-                            if (error) return callback(error);
+                    debug('Notifying user of app update for %s from %s to %s', app.id, app.manifest.version, updateInfo.manifest.version);
+                    users.getAllAdmins(function (error, admins) {
+                        if (error) return callback(error);
 
-                            async.eachSeries(admins, (admin, done) => mailer.appUpdateAvailable(admin.email, app, false /* subscription */, updateInfo, done), iteratorDone);
-                        });
-                        return;
-                    }
-
-                    // only send notifications if update pattern is 'never'
-                    settings.getAppAutoupdatePattern(function (error, result) {
-                        if (error) return iteratorDone(error);
-                        if (result !== constants.AUTOUPDATE_PATTERN_NEVER) return iteratorDone();
-
-                        debug('Notifying user of app update for %s from %s to %s', app.id, app.manifest.version, updateInfo.manifest.version);
-                        users.getAllAdmins(function (error, admins) {
-                            if (error) return callback(error);
-
-                            async.eachSeries(admins, (admin, done) => mailer.appUpdateAvailable(admin.email, app, true /* subscription */, updateInfo, done), iteratorDone);
-                        });
+                        async.eachSeries(admins, (admin, done) => mailer.appUpdateAvailable(admin.email, app, true /* subscription */, updateInfo, done), iteratorDone);
                     });
                 });
             });
