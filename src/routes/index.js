@@ -3,6 +3,7 @@
 exports = module.exports = {
     accesscontrol: require('./accesscontrol.js'),
     apps: require('./apps.js'),
+    appstore: require('./appstore.js'),
     backups: require('./backups.js'),
     clients: require('./clients.js'),
     cloudron: require('./cloudron.js'),

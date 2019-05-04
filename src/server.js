@@ -90,6 +90,7 @@ function initializeExpressSync() {
     // scope middleware implicitly also adds bearer token verification
     var cloudronScope = routes.accesscontrol.scope(accesscontrol.SCOPE_CLOUDRON);
     var subscriptionScope = routes.accesscontrol.scope(accesscontrol.SCOPE_SUBSCRIPTION);
+    var appstoreScope = routes.accesscontrol.scope(accesscontrol.SCOPE_APPSTORE);
     var profileScope = routes.accesscontrol.scope(accesscontrol.SCOPE_PROFILE);
     var usersReadScope = routes.accesscontrol.scope(accesscontrol.SCOPE_USERS_READ);
     var usersManageScope = routes.accesscontrol.scope(accesscontrol.SCOPE_USERS_MANAGE);
@@ -215,6 +216,11 @@ function initializeExpressSync() {
     router.post('/api/v1/clients/:clientId/tokens', clientsScope, routes.clients.addToken);
     router.del ('/api/v1/clients/:clientId/tokens', clientsScope, routes.clients.delTokens);
     router.del ('/api/v1/clients/:clientId/tokens/:tokenId', clientsScope, routes.clients.delToken);
+
+    // appstore routes
+    router.get ('/api/v1/appstore/apps', appstoreScope, routes.appstore.getApps);
+    router.get ('/api/v1/appstore/apps/:appstoreId', appstoreScope, routes.appstore.getApp);
+    router.get ('/api/v1/appstore/apps/:appstoreId/versions/:versionId', appstoreScope, routes.appstore.getAppVersion);
 
     // app routes
     router.get ('/api/v1/apps',          appsReadScope, routes.apps.getApps);

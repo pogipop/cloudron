@@ -3,6 +3,7 @@
 exports = module.exports = {
     SCOPE_APPS_READ: 'apps:read',
     SCOPE_APPS_MANAGE: 'apps:manage',
+    SCOPE_APPSTORE: 'appstore',
     SCOPE_CLIENTS: 'clients',
     SCOPE_CLOUDRON: 'cloudron',
     SCOPE_DOMAINS_READ: 'domains:read',
@@ -13,7 +14,7 @@ exports = module.exports = {
     SCOPE_SUBSCRIPTION: 'subscription',
     SCOPE_USERS_READ: 'users:read',
     SCOPE_USERS_MANAGE: 'users:manage',
-    VALID_SCOPES: [ 'apps', 'clients', 'cloudron', 'domains', 'mail', 'profile', 'settings', 'subscription', 'users' ], // keep this sorted
+    VALID_SCOPES: [ 'apps', 'appstore', 'clients', 'cloudron', 'domains', 'mail', 'profile', 'settings', 'subscription', 'users' ], // keep this sorted
 
     SCOPE_ANY: '*',
 

@@ -1,6 +1,10 @@
 'use strict';
 
 exports = module.exports = {
+    getApps: getApps,
+    getApp: getApp,
+    getAppVersion: getAppVersion,
+
     purchase: purchase,
     unpurchase: unpurchase,
 
@@ -413,11 +417,62 @@ function sendFeedback(info, callback) {
             let url = config.apiServerOrigin() + '/api/v1/feedback';
 
             superagent.post(url).query({ accessToken: token }).send(info).timeout(10 * 1000).end(function (error, result) {
-                if (error && !error.response) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, error));
+                if (error && !error.response) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, error.message));
                 if (result.statusCode !== 201) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, util.format('Bad response: %s %s', result.statusCode, result.text)));
 
                 callback(null);
             });
         });
     });
+}
+
+function getApps(callback) {
+    assert.strictEqual(typeof callback, 'function');
+
+    getCloudronToken(function (error, token) {
+        if (error) return callback(error);
+
+        settings.getUnstableAppsConfig(function (error, unstable) {
+            if (error) return callback(new AppstoreError(AppstoreError.INTERNAL_ERROR, error));
+            const url = `${config.apiServerOrigin()}/api/v1/apps`;
+            superagent.get(url).query({ accessToken: token, boxVersion: config.version(), unstable: unstable }).timeout(10 * 1000).end(function (error, result) {
+                if (error && !error.response) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, error.message));
+                if (result.statusCode === 403 || result.statusCode === 401) return callback(new AppstoreError(AppstoreError.BILLING_REQUIRED));
+                if (result.statusCode === 402) return callback(new AppstoreError(AppstoreError.BILLING_REQUIRED, result.body.message));
+                if (result.statusCode !== 200) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, util.format('App listing failed. %s %j', result.status, result.body)));
+                if (!result.body.apps) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, util.format('Bad response: %s %s', result.statusCode, result.text)));
+
+                callback(null, result.body.apps);
+            });
+        });
+    });
+}
+
+function getAppVersion(appId, version, callback) {
+    assert.strictEqual(typeof appId, 'string');
+    assert.strictEqual(typeof version, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    getCloudronToken(function (error, token) {
+        if (error) return callback(error);
+
+        let url = `${config.apiServerOrigin()}/api/v1/apps/${appId}`;
+        if (version !== 'latest') url += `/versions/${version}`;
+
+        superagent.get(url).query({ accessToken: token }).timeout(10 * 1000).end(function (error, result) {
+            if (error && !error.response) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, error.message));
+            if (result.statusCode === 403 || result.statusCode === 401) return callback(new AppstoreError(AppstoreError.BILLING_REQUIRED));
+            if (result.statusCode === 402) return callback(new AppstoreError(AppstoreError.BILLING_REQUIRED, result.body.message));
+            if (result.statusCode !== 200) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, util.format('App fetch failed. %s %j', result.status, result.body)));
+
+            callback(null, result.body);
+        });
+    });
+}
+
+function getApp(appId, callback) {
+    assert.strictEqual(typeof appId, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    getAppVersion(appId, 'latest', callback);
 }
