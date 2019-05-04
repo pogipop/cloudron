@@ -325,7 +325,7 @@ describe('updatechecker - app - manual (email)', function () {
             expect(updatechecker.getUpdateInfo().apps).to.eql({ 'appid-0': { manifest: { version: '2.0.0', changelog: '* some changes' } } });
             expect(scope.isDone()).to.be.ok();
 
-            checkMails(0, done);
+            checkMails(1, done);
         });
     });
 
