@@ -12,10 +12,10 @@ exports.up = function(db, callback) {
 
     const config = JSON.parse(fs.readFileSync('/etc/cloudron/cloudron.conf', 'utf8'));
 
-    db.runSql('SELECT appstore_config FROM settings', function (error, result) {
+    db.all('SELECT * FROM settings WHERE name="appstore_config"', function (error, results) {
         if (error) return callback(error);
 
-        if (result[0].total === 0) {
+        if (results.length === 0) {
             console.log('No appstore config, skipping license migration');
             return callback();
         }
