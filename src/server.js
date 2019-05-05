@@ -137,10 +137,6 @@ function initializeExpressSync() {
     router.get ('/api/v1/cloudron/eventlog', cloudronScope, routes.eventlog.list);
     router.get ('/api/v1/cloudron/eventlog/:eventId', cloudronScope, routes.eventlog.get);
 
-    // subscription routes
-    router.post('/api/v1/subscription', subscriptionScope, routes.subscription.subscribeCloudron);
-    router.get ('/api/v1/subscription', subscriptionScope, routes.subscription.getSubscription);
-
     // tasks
     router.get ('/api/v1/tasks', settingsScope, routes.tasks.list);
     router.get ('/api/v1/tasks/:taskId', settingsScope, routes.tasks.get);
@@ -217,7 +213,9 @@ function initializeExpressSync() {
     router.del ('/api/v1/clients/:clientId/tokens', clientsScope, routes.clients.delTokens);
     router.del ('/api/v1/clients/:clientId/tokens/:tokenId', clientsScope, routes.clients.delToken);
 
-    // appstore routes
+    // appstore and subscription routes
+    router.post('/api/v1/appstore/register_cloudron', subscriptionScope, routes.appstore.registerCloudron);
+    router.get ('/api/v1/appstore/subscription', subscriptionScope, routes.appstore.getSubscription);
     router.get ('/api/v1/appstore/apps', appstoreScope, routes.appstore.getApps);
     router.get ('/api/v1/appstore/apps/:appstoreId', appstoreScope, routes.appstore.getApp);
     router.get ('/api/v1/appstore/apps/:appstoreId/versions/:versionId', appstoreScope, routes.appstore.getAppVersion);

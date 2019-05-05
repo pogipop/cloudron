@@ -59,7 +59,7 @@ function cleanup(done) {
     });
 }
 
-describe('Appstore API', function () {
+describe('Appstore Apps API', function () {
     before(setup);
     after(cleanup);
 
@@ -81,7 +81,7 @@ describe('Appstore API', function () {
             });
     });
 
-    it('setup subscription', function (done) {
+    it('register cloudron', function (done) {
         var scope1 = nock(config.apiServerOrigin())
             .post('/api/v1/login', (body) => body.email && body.password)
             .reply(200, { userId: 'userId', accessToken: 'SECRET_TOKEN' });
@@ -90,7 +90,7 @@ describe('Appstore API', function () {
             .post('/api/v1/register_cloudron?accessToken=SECRET_TOKEN', (body) => !!body.domain)
             .reply(201, { cloudronId: 'cid', cloudronToken: 'CLOUDRON_TOKEN', licenseKey: 'lkey' });
 
-        superagent.post(SERVER_URL + '/api/v1/subscription')
+        superagent.post(SERVER_URL + '/api/v1/appstore/register_cloudron')
             .send({ email: 'test@cloudron.io', password: 'secret', signup: false })
             .query({ access_token: token })
             .end(function (error, result) {
@@ -143,4 +143,70 @@ describe('Appstore API', function () {
             });
     });
 
+});
+
+describe('Subscription API', function () {
+    before(setup);
+    after(cleanup);
+
+    it('can setup subscription - no signup', function (done) {
+        var scope1 = nock(config.apiServerOrigin())
+            .post('/api/v1/login', (body) => body.email && body.password)
+            .reply(200, { userId: 'userId', accessToken: 'SECRET_TOKEN' });
+
+        var scope2 = nock(config.apiServerOrigin())
+            .post('/api/v1/register_cloudron?accessToken=SECRET_TOKEN', (body) => !!body.domain)
+            .reply(201, { cloudronId: 'cid', cloudronToken: 'CLOUDRON_TOKEN', licenseKey: 'lkey' });
+
+        superagent.post(SERVER_URL + '/api/v1/appstore/register_cloudron')
+            .send({ email: 'test@cloudron.io', password: 'secret', signup: false })
+            .query({ access_token: token })
+            .end(function (error, result) {
+                expect(result.statusCode).to.equal(201);
+                expect(scope1.isDone()).to.be.ok();
+                expect(scope2.isDone()).to.be.ok();
+                done();
+            });
+    });
+
+    it('can setup subscription - signup', function (done) {
+        var scope1 = nock(config.apiServerOrigin())
+            .post('/api/v1/register_user', (body) => body.email && body.password)
+            .reply(201, { });
+
+        var scope2 = nock(config.apiServerOrigin())
+            .post('/api/v1/login', (body) => body.email && body.password)
+            .reply(200, { userId: 'userId', accessToken: 'SECRET_TOKEN' });
+
+        var scope3 = nock(config.apiServerOrigin())
+            .post('/api/v1/register_cloudron?accessToken=SECRET_TOKEN', (body) => !!body.domain)
+            .reply(201, { cloudronId: 'cid', cloudronToken: 'CLOUDRON_TOKEN', licenseKey: 'lkey' });
+
+        superagent.post(SERVER_URL + '/api/v1/appstore/register_cloudron')
+            .send({ email: 'test@cloudron.io', password: 'secret', signup: true })
+            .query({ access_token: token })
+            .end(function (error, result) {
+                expect(result.statusCode).to.equal(201);
+                expect(scope1.isDone()).to.be.ok();
+                expect(scope2.isDone()).to.be.ok();
+                expect(scope3.isDone()).to.be.ok();
+                done();
+            });
+    });
+
+    it('can get subscription', function (done) {
+        var scope1 = nock(config.apiServerOrigin())
+            .get('/api/v1/subscription?accessToken=CLOUDRON_TOKEN', () => true)
+            .reply(200, { subscription: { plan: { id: 'free' } }, email: 'test@cloudron.io' });
+
+        superagent.get(SERVER_URL + '/api/v1/appstore/subscription')
+            .query({ access_token: token })
+            .end(function (error, result) {
+                expect(result.statusCode).to.equal(200);
+                expect(result.body.email).to.be('test@cloudron.io');
+                expect(result.body.subscription).to.be.an('object');
+                expect(scope1.isDone()).to.be.ok();
+                done();
+            });
+    });
 });

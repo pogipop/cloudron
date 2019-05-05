@@ -19,7 +19,6 @@ exports = module.exports = {
     provision: require('./provision.js'),
     services: require('./services.js'),
     settings: require('./settings.js'),
-    subscription: require('./subscription.js'),
     support: require('./support.js'),
     sysadmin: require('./sysadmin.js'),
     tasks: require('./tasks.js'),

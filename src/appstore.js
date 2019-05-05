@@ -5,12 +5,13 @@ exports = module.exports = {
     getApp: getApp,
     getAppVersion: getAppVersion,
 
+    registerCloudron: registerCloudron,
+
     purchase: purchase,
     unpurchase: unpurchase,
 
     getSubscription: getSubscription,
     isFreePlan: isFreePlan,
-    subscribeCloudron: subscribeCloudron,
 
     sendAliveStatus: sendAliveStatus,
 
@@ -352,7 +353,7 @@ function getAppUpdate(app, callback) {
     });
 }
 
-function registerCloudron(token, callback) {
+function subscribeCloudron(token, callback) {
     assert.strictEqual(typeof token, 'string');
     assert.strictEqual(typeof callback, 'function');
 
@@ -381,7 +382,7 @@ function registerCloudron(token, callback) {
     });
 }
 
-function subscribeCloudron(options, callback) {
+function registerCloudron(options, callback) {
     assert.strictEqual(typeof options, 'object');
     assert.strictEqual(typeof callback, 'function');
 
@@ -397,7 +398,7 @@ function subscribeCloudron(options, callback) {
         login(options.email, options.password, options.totpToken || '', function (error, result) {
             if (error) return callback(error);
 
-            registerCloudron(result.accessToken, callback);
+            subscribeCloudron(result.accessToken, callback);
         });
     });
 }
