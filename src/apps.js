@@ -1042,8 +1042,8 @@ function purchaseApp(data, callback) {
         if (!error) return callback();
 
         // if purchase failed, rollback the appdb record
-        appdb.del(data.appId, function (error) {
-            if (error) debug('install: Failed to rollback app installation.', error);
+        appdb.del(data.appId, function (delError) {
+            if (delError) debug('install: Failed to rollback app installation.', delError);
 
             if (error.reason === AppstoreError.NOT_FOUND) return callback(new AppsError(AppsError.NOT_FOUND, error.message));
             if (error && error.reason === AppstoreError.BILLING_REQUIRED) return callback(new AppsError(AppsError.BILLING_REQUIRED, error.message));
