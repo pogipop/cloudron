@@ -37,7 +37,7 @@ exports.up = function(db, callback) {
                     db.runSql.bind(db, 'INSERT settings (name, value) VALUES(?, ?)', [ 'cloudron_id', JSON.stringify(result.body.cloudronId) ]),
                     db.runSql.bind(db, 'INSERT settings (name, value) VALUES(?, ?)', [ 'license_key', JSON.stringify(result.body.licenseKey) ]),
                     db.runSql.bind(db, 'INSERT settings (name, value) VALUES(?, ?)', [ 'cloudron_token', JSON.stringify(result.body.cloudronToken) ]),
-                    // db.runSql.bind(db, 'DELETE FROM settings WHERE name=?', [ 'appstore_config' ]),
+                    db.runSql.bind(db, 'DELETE FROM settings WHERE name=?', [ 'appstore_config' ]),
                     db.runSql.bind(db, 'COMMIT')
                 ], callback);
             });
