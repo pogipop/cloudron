@@ -52,7 +52,7 @@ describe('Appstore', function () {
     it('cannot send alive status without cloudron token', function (done) {
         appstore.sendAliveStatus(function (error) {
             expect(error).to.be.ok();
-            expect(error.reason).to.equal(AppstoreError.BILLING_REQUIRED);
+            expect(error.reason).to.equal(AppstoreError.INVALID_TOKEN);
             done();
         });
     });
