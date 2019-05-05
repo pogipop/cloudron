@@ -25,7 +25,7 @@ function subscribeCloudron(req, res, next) {
         if (error && error.reason === AppstoreError.EXTERNAL_ERROR) return next(new HttpError(424, error.message));
         if (error) return next(new HttpError(500, error));
 
-        next(new HttpSuccess(200, {}));
+        next(new HttpSuccess(201, {}));
     });
 }
 

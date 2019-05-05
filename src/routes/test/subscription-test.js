@@ -76,7 +76,7 @@ describe('Subscription API', function () {
             .send({ email: 'test@cloudron.io', password: 'secret', signup: false })
             .query({ access_token: token })
             .end(function (error, result) {
-                expect(result.statusCode).to.equal(200);
+                expect(result.statusCode).to.equal(201);
                 expect(scope1.isDone()).to.be.ok();
                 expect(scope2.isDone()).to.be.ok();
                 done();
@@ -100,7 +100,7 @@ describe('Subscription API', function () {
             .send({ email: 'test@cloudron.io', password: 'secret', signup: true })
             .query({ access_token: token })
             .end(function (error, result) {
-                expect(result.statusCode).to.equal(200);
+                expect(result.statusCode).to.equal(201);
                 expect(scope1.isDone()).to.be.ok();
                 expect(scope2.isDone()).to.be.ok();
                 expect(scope3.isDone()).to.be.ok();
