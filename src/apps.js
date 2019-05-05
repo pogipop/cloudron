@@ -688,21 +688,8 @@ function install(data, user, auditSource, callback) {
                 if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new AppsError(AppsError.NOT_FOUND, error.message));
                 if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
 
-                appstore.purchase({ appId: appId, appstoreId: appStoreId, manifestId: manifest.id }, function (appstoreError) {
-                    // if purchase failed, rollback the appdb record
-                    if (appstoreError) {
-                        appdb.del(appId, function (error) {
-                            if (error) debug('install: Failed to rollback app installation.', error);
-
-                            if (appstoreError.reason === AppstoreError.NOT_FOUND) return callback(new AppsError(AppsError.NOT_FOUND, appstoreError.message));
-                            if (appstoreError && appstoreError.reason === AppstoreError.BILLING_REQUIRED) return callback(new AppsError(AppsError.BILLING_REQUIRED, appstoreError.message));
-                            if (appstoreError && appstoreError.reason === AppstoreError.EXTERNAL_ERROR) return callback(new AppsError(AppsError.EXTERNAL_ERROR, appstoreError.message));
-
-                            callback(new AppsError(AppsError.INTERNAL_ERROR, appstoreError));
-                        });
-
-                        return;
-                    }
+                purchaseApp({ appId: appId, appstoreId: appStoreId, manifestId: manifest.id }, function (error) {
+                    if (error) return callback(error);
 
                     // save cert to boxdata/certs
                     if (cert && key) {
@@ -1047,6 +1034,28 @@ function restore(appId, data, auditSource, callback) {
     });
 }
 
+function purchaseApp(data, callback) {
+    assert.strictEqual(typeof data, 'object');
+    assert.strictEqual(typeof callback, 'function');
+
+    appstore.purchase(data, function (error) {
+        if (!error) return callback();
+
+        // if purchase failed, rollback the appdb record
+        appdb.del(data.appId, function (error) {
+            if (error) debug('install: Failed to rollback app installation.', error);
+
+            if (error.reason === AppstoreError.NOT_FOUND) return callback(new AppsError(AppsError.NOT_FOUND, error.message));
+            if (error && error.reason === AppstoreError.BILLING_REQUIRED) return callback(new AppsError(AppsError.BILLING_REQUIRED, error.message));
+            if (error && error.reason === AppstoreError.INVALID_TOKEN) return callback(new AppsError(AppsError.BILLING_REQUIRED, error.message));
+            if (error && error.reason === AppstoreError.LICENSE_ERROR) return callback(new AppsError(AppsError.BILLING_REQUIRED, error.message));
+            if (error && error.reason === AppstoreError.EXTERNAL_ERROR) return callback(new AppsError(AppsError.EXTERNAL_ERROR, error.message));
+
+            callback(new AppsError(AppsError.INTERNAL_ERROR, error));
+        });
+    });
+}
+
 function clone(appId, data, user, auditSource, callback) {
     assert.strictEqual(typeof appId, 'string');
     assert.strictEqual(typeof data, 'object');
@@ -1121,21 +1130,8 @@ function clone(appId, data, user, auditSource, callback) {
                     if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(getDuplicateErrorDetails(error, location, domainObject, portBindings));
                     if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
 
-                    appstore.purchase({ appId: newAppId, appstoreId: app.appStoreId, manifestId: manifest.id }, function (appstoreError) {
-                        // if purchase failed, rollback the appdb record
-                        if (appstoreError) {
-                            appdb.del(newAppId, function (error) {
-                                if (error) debug('install: Failed to rollback app installation.', error);
-
-                                if (appstoreError.reason === AppstoreError.NOT_FOUND) return callback(new AppsError(AppsError.NOT_FOUND, appstoreError.message));
-                                if (appstoreError && appstoreError.reason === AppstoreError.BILLING_REQUIRED) return callback(new AppsError(AppsError.BILLING_REQUIRED, appstoreError.message));
-                                if (appstoreError && appstoreError.reason === AppstoreError.EXTERNAL_ERROR) return callback(new AppsError(AppsError.EXTERNAL_ERROR, appstoreError.message));
-
-                                callback(new AppsError(AppsError.INTERNAL_ERROR, appstoreError));
-                            });
-
-                            return;
-                        }
+                    purchaseApp({ appId: newAppId, appstoreId: app.appStoreId, manifestId: manifest.id }, function (error) {
+                        if (error) return callback(error);
 
                         taskmanager.restartAppTask(newAppId);
 
@@ -1167,6 +1163,8 @@ function uninstall(appId, auditSource, callback) {
         appstore.unpurchase(appId, { appstoreId: app.appStoreId, manifestId: app.manifest.id }, function (error) {
             if (error && error.reason === AppstoreError.NOT_FOUND) return callback(new AppsError(AppsError.NOT_FOUND));
             if (error && error.reason === AppstoreError.BILLING_REQUIRED) return callback(new AppsError(AppsError.BILLING_REQUIRED, error.message));
+            if (error && error.reason === AppstoreError.INVALID_TOKEN) return callback(new AppsError(AppsError.BILLING_REQUIRED, error.message));
+            if (error && error.reason === AppstoreError.LICENSE_ERROR) return callback(new AppsError(AppsError.BILLING_REQUIRED, error.message));
             if (error && error.reason === AppstoreError.EXTERNAL_ERROR) return callback(new AppsError(AppsError.EXTERNAL_ERROR, error.message));
             if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
 
