@@ -115,7 +115,7 @@ function scopesForUser(user, callback) {
 
     if (user.admin) return callback(null, exports.VALID_SCOPES);
 
-    callback(null, config.isSpacesEnabled() ? [ 'profile', 'apps', 'domains:read', 'users:read' ] : [ 'profile', 'apps:read' ]);
+    callback(null, [ 'profile', 'apps:read' ]);
 }
 
 function validateToken(accessToken, callback) {

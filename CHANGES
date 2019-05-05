@@ -1586,4 +1586,5 @@
 * Add support for an external email relay that does not require authentication
 * Add option to accept self-signed certs when using external mail relay
 * Allow publishing and listing community supported apps
+* Remove spaces support
 

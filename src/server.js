@@ -95,7 +95,7 @@ function initializeExpressSync() {
     var usersReadScope = routes.accesscontrol.scope(accesscontrol.SCOPE_USERS_READ);
     var usersManageScope = routes.accesscontrol.scope(accesscontrol.SCOPE_USERS_MANAGE);
     var appsReadScope = routes.accesscontrol.scope(accesscontrol.SCOPE_APPS_READ);
-    var appsManageScope = [ routes.accesscontrol.scope(accesscontrol.SCOPE_APPS_MANAGE), routes.apps.verifyOwnership ];
+    var appsManageScope = [ routes.accesscontrol.scope(accesscontrol.SCOPE_APPS_MANAGE) ];
     var settingsScope = routes.accesscontrol.scope(accesscontrol.SCOPE_SETTINGS);
     var mailScope = routes.accesscontrol.scope(accesscontrol.SCOPE_MAIL);
     var notificationsScope = [ routes.accesscontrol.scope(accesscontrol.SCOPE_PROFILE), routes.notifications.verifyOwnership ];
@@ -240,7 +240,7 @@ function initializeExpressSync() {
     router.get ('/api/v1/apps/:id/logs',      appsManageScope, routes.apps.getLogs);
     router.get ('/api/v1/apps/:id/exec',      appsManageScope, routes.apps.exec);
     // websocket cannot do bearer authentication
-    router.get ('/api/v1/apps/:id/execws',    routes.accesscontrol.websocketAuth.bind(null, [ accesscontrol.SCOPE_APPS_MANAGE ]), routes.apps.verifyOwnership, routes.apps.execWebSocket);
+    router.get ('/api/v1/apps/:id/execws',    routes.accesscontrol.websocketAuth.bind(null, [ accesscontrol.SCOPE_APPS_MANAGE ]), routes.apps.execWebSocket);
     router.post('/api/v1/apps/:id/clone',     appsManageScope, routes.apps.cloneApp);
     router.get ('/api/v1/apps/:id/download',  appsManageScope, routes.apps.downloadFile);
     router.post('/api/v1/apps/:id/upload',    appsManageScope, multipart, routes.apps.uploadFile);

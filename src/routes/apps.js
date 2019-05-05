@@ -1,8 +1,6 @@
 'use strict';
 
 exports = module.exports = {
-    verifyOwnership: verifyOwnership,
-
     getApp: getApp,
     getApps: getApps,
     getAppIcon: getAppIcon,
@@ -42,25 +40,6 @@ var apps = require('../apps.js'),
     safe = require('safetydance'),
     util = require('util'),
     WebSocket = require('ws');
-
-function verifyOwnership(req, res, next) {
-    if (req.user.admin) return next();
-
-    if (!config.isSpacesEnabled()) return next();
-
-    const appCreate = !('id' in req.params);
-
-    if (appCreate) return next(); // ok to install app
-
-    apps.get(req.params.id, function (error, app) {
-        if (error && error.reason === AppsError.NOT_FOUND) return next(new HttpError(404, 'No such app'));
-        if (error) return next(new HttpError(500, error));
-
-        if (app.ownerId !== req.user.id) return next(new HttpError(403, 'User is not owner'));
-
-        next();
-    });
-}
 
 function getApp(req, res, next) {
     assert.strictEqual(typeof req.params.id, 'string');

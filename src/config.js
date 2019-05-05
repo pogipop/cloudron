@@ -35,9 +35,6 @@ exports = module.exports = {
     isManaged: isManaged,
     isDemo: isDemo,
 
-    // feature flags based on editions (these have a separate license from standard edition)
-    isSpacesEnabled: isSpacesEnabled,
-
     // for testing resets to defaults
     _reset: _reset
 };
@@ -197,10 +194,6 @@ function database() {
 
 function isDemo() {
     return get('isDemo') === true;
-}
-
-function isSpacesEnabled() {
-    return get('edition') === 'education';
 }
 
 function provider() {

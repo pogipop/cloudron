@@ -201,13 +201,6 @@ function translatePortBindings(portBindings, manifest) {
     return result;
 }
 
-function addSpacesSuffix(location, user) {
-    if (user.admin || !config.isSpacesEnabled()) return location;
-
-    const spacesSuffix = user.username.replace(/\./g, '-');
-    return location === '' ? spacesSuffix : `${location}-${spacesSuffix}`;
-}
-
 function validateAccessRestriction(accessRestriction) {
     assert.strictEqual(typeof accessRestriction, 'object');
 
@@ -665,9 +658,6 @@ function install(data, user, auditSource, callback) {
             if (error && error.reason === DomainsError.NOT_FOUND) return callback(new AppsError(AppsError.NOT_FOUND, 'No such domain'));
             if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, 'Could not get domain info:' + error.message));
 
-            location = addSpacesSuffix(location, user);
-            alternateDomains.forEach(function (ad) { ad.subdomain = addSpacesSuffix(ad.subdomain, user); }); // TODO: validate these
-
             error = domains.validateHostname(location, domainObject);
             if (error) return callback(new AppsError(AppsError.BAD_FIELD, 'Bad location: ' + error.message));
 
@@ -809,7 +799,6 @@ function configure(appId, data, user, auditSource, callback) {
         if ('alternateDomains' in data) {
             // TODO validate all subdomains [{ domain: '', subdomain: ''}]
             values.alternateDomains = data.alternateDomains;
-            values.alternateDomains.forEach(function (ad) { ad.subdomain = addSpacesSuffix(ad.subdomain, user); }); // TODO: validate these
         }
 
         if ('env' in data) {
@@ -839,8 +828,6 @@ function configure(appId, data, user, auditSource, callback) {
         domains.get(domain, function (error, domainObject) {
             if (error && error.reason === DomainsError.NOT_FOUND) return callback(new AppsError(AppsError.NOT_FOUND, 'No such domain'));
             if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, 'Could not get domain info:' + error.message));
-
-            location = addSpacesSuffix(location, user);
 
             error = domains.validateHostname(location, domainObject);
             if (error) return callback(new AppsError(AppsError.BAD_FIELD, 'Bad location: ' + error.message));
@@ -1112,7 +1099,6 @@ function clone(appId, data, user, auditSource, callback) {
                 if (error && error.reason === DomainsError.NOT_FOUND) return callback(new AppsError(AppsError.EXTERNAL_ERROR, 'No such domain'));
                 if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, 'Could not get domain info:' + error.message));
 
-                location = addSpacesSuffix(location, user);
                 error = domains.validateHostname(location, domainObject);
                 if (error) return callback(new AppsError(AppsError.BAD_FIELD, 'Bad location: ' + error.message));
 
