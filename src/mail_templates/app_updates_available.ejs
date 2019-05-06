@@ -8,10 +8,12 @@ A new version <%= apps[i].updateInfo.manifest.version %> of the app '<%= apps[i]
 Changes:
 <%= apps[i].updateInfo.manifest.changelog %>
 
-<% }} -%>
+<% } -%>
 
 <% if (!hasSubscription) { -%>
 *Keep your Cloudron automatically up-to-date and secure by upgrading to a paid plan at* <%= webadminUrl %>/#/settings
+<% } else { -%>
+Update now at <%= webadminUrl %>
 <% } -%>
 
 Powered by https://cloudron.io
@@ -40,7 +42,13 @@ Sent at: <%= new Date().toUTCString() %>
 
         <% if (!hasSubscription) { %>
         <p>Keep your Cloudron automatically up-to-date and secure by upgrading to a <a href="<%= webadminUrl %>/#/settings">paid plan</a>.</p>
-        <% } %>
+        <% } else { -%>
+        <p>
+            <br/>
+            <center><a href="<%= webadminUrl %>">Update now</a></center>
+            <br/>
+        </p>
+        <% } -%>
 
         <br/>
     </div>
