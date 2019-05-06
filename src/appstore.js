@@ -61,7 +61,7 @@ AppstoreError.INTERNAL_ERROR = 'Internal Error';
 AppstoreError.EXTERNAL_ERROR = 'External Error';
 AppstoreError.ALREADY_EXISTS = 'Already Exists';
 AppstoreError.ACCESS_DENIED = 'Access Denied';
-AppstoreError.NOT_FOUND = 'Internal Error';
+AppstoreError.NOT_FOUND = 'Not Found';
 AppstoreError.BILLING_REQUIRED = 'Billing Required'; // upstream 402 (subsciption_expired and subscription_required)
 AppstoreError.LICENSE_ERROR = 'License Error'; // upstream 422 (no license, invalid license)
 AppstoreError.INVALID_TOKEN = 'Invalid token'; // upstream 401 (invalid token)
@@ -475,8 +475,8 @@ function getAppVersion(appId, version, callback) {
         superagent.get(url).query({ accessToken: token }).timeout(10 * 1000).end(function (error, result) {
             if (error && !error.response) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, error.message));
             if (result.statusCode === 403 || result.statusCode === 401) return callback(new AppstoreError(AppstoreError.INVALID_TOKEN));
+            if (result.statusCode === 404) return callback(new AppstoreError(AppstoreError.NOT_FOUND));
             if (result.statusCode === 422) return callback(new AppstoreError(AppstoreError.LICENSE_ERROR, result.body.message));
-            if (result.statusCode === 402) return callback(new AppstoreError(AppstoreError.BILLING_REQUIRED, result.body.message));
             if (result.statusCode !== 200) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, util.format('App fetch failed. %s %j', result.status, result.body)));
 
             callback(null, result.body);
