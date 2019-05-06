@@ -103,7 +103,7 @@ function checkAppUpdates(callback) {
                         return iteratorDone();
                     }
 
-                    const updateIsBlocked = apps.canAutoupdateApp(app, updateInfo);
+                    const updateIsBlocked = apps.canAutoupdateApp(app, updateInfo.manifest);
                     if (autoupdatesEnabled && !updateIsBlocked) return iteratorDone();
 
                     debug('Notifying of app update for %s from %s to %s', app.id, app.manifest.version, updateInfo.manifest.version);
