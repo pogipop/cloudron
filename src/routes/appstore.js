@@ -78,6 +78,6 @@ function getSubscription(req, res, next) {
         if (error && error.reason === AppstoreError.EXTERNAL_ERROR) return next(new HttpError(424, error.message));
         if (error) return next(new HttpError(500, error));
 
-        next(new HttpSuccess(200, result)); // { email, subscription }
+        next(new HttpSuccess(200, result)); // { email, cloudronId, plan, cancel_at, status }
     });
 }
