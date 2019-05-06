@@ -36,6 +36,7 @@ var addons = require('./addons.js'),
     ejs = require('ejs'),
     fs = require('fs'),
     manifestFormat = require('cloudron-manifestformat'),
+    mailer = require('./mailer.js'),
     mkdirp = require('mkdirp'),
     net = require('net'),
     os = require('os'),
@@ -47,6 +48,7 @@ var addons = require('./addons.js'),
     shell = require('./shell.js'),
     superagent = require('superagent'),
     sysinfo = require('./sysinfo.js'),
+    users = require('./users.js'),
     util = require('util'),
     _ = require('underscore');
 
@@ -780,6 +782,22 @@ function update(app, callback) {
         function (callback) {
             debugApp(app, 'updated');
             updateApp(app, { installationState: appdb.ISTATE_INSTALLED, installationProgress: '', health: null, updateConfig: null, updateTime: new Date() }, callback);
+        },
+
+        function notifyAdminsAboutUpdate(callback) {
+            if (app.installationState === appdb.ISTATE_PENDING_FORCE_UPDATE) return callback(null);
+
+            users.getAllAdmins(function (error, admins) {
+                if (error) {
+                    console.error('Failed to get admins to send update done notification:', error);
+                    return callback(); // this is not fatal
+                }
+
+                async.eachSeries(admins, (admin, done) => mailer.appUpdateDone(admin.email, app, done), function (error) {
+                    if (error) console.error('Failed to send update done notification:', error);
+                    callback();
+                });
+            });
         }
     ], function seriesDone(error) {
         if (error && error.backupError) {
