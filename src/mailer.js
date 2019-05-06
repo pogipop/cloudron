@@ -6,7 +6,6 @@ exports = module.exports = {
     adminChanged: adminChanged,
     passwordReset: passwordReset,
     appUpdateAvailable: appUpdateAvailable,
-    appUpdateDone: appUpdateDone,
     sendDigest: sendDigest,
 
     sendInvite: sendInvite,
@@ -330,35 +329,6 @@ function appUpdateAvailable(mailTo, app, hasSubscription, info, callback) {
             subject: util.format('App %s has a new update available', app.fqdn),
             text: render('app_update_available.ejs', templateDataText),
             html: render('app_update_available.ejs', templateDataHTML)
-        };
-
-        sendMail(mailOptions, callback);
-    });
-}
-
-function appUpdateDone(mailTo, app, callback) {
-    assert.strictEqual(typeof mailTo, 'string');
-    assert.strictEqual(typeof app, 'object');
-    assert.strictEqual(typeof callback, 'function');
-
-    getMailConfig(function (error, mailConfig) {
-        if (error) return debug('Error getting mail details:', error);
-
-        var templateData = {
-            webadminUrl: config.adminOrigin(),
-            app: app,
-            cloudronName: mailConfig.cloudronName,
-            cloudronAvatarUrl: config.adminOrigin() + '/api/v1/cloudron/avatar'
-        };
-
-        var templateDataText = JSON.parse(JSON.stringify(templateData));
-        templateDataText.format = 'text';
-
-        var mailOptions = {
-            from: mailConfig.notificationFrom,
-            to: mailTo,
-            subject: util.format('App %s was updated', app.fqdn),
-            text: render('app_update_done.ejs', templateDataText)
         };
 
         sendMail(mailOptions, callback);
