@@ -116,20 +116,20 @@ function checkAppUpdates(callback) {
 
                     iteratorDone();
                 });
-            });
-        }, function () {
-            newState.box = loadState().box; // preserve the latest box state information
-            saveState(newState);
+            }, function () {
+                newState.box = loadState().box; // preserve the latest box state information
+                saveState(newState);
 
-            if (notificationPending.length === 0) return callback();
+                if (notificationPending.length === 0) return callback();
 
-            users.getAllAdmins(function (error, admins) {
-                if (error) {
-                    console.error(error);
-                    return callback();
-                }
+                users.getAllAdmins(function (error, admins) {
+                    if (error) {
+                        console.error(error);
+                        return callback();
+                    }
 
-                async.eachSeries(admins, (admin, done) => mailer.appUpdatesAvailable(admin.email, notificationPending, true /* subscription */, done), callback);
+                    async.eachSeries(admins, (admin, done) => mailer.appUpdatesAvailable(admin.email, notificationPending, true /* subscription */, done), callback);
+                });
             });
         });
     });
