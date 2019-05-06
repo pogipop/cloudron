@@ -2,10 +2,13 @@
 
 Dear Cloudron Admin,
 
-A new version <%= updateInfo.manifest.version %> of the app '<%= app.manifest.title %>' installed at <%= app.fqdn %> is available!
+<% for (var i = 0; i < apps.length; i++) { -%>
+A new version <%= apps[i].updateInfo.manifest.version %> of the app '<%= apps[i].app.manifest.title %>' installed at <%= apps[i].app.fqdn %> is available!
 
 Changes:
-<%= updateInfo.manifest.changelog %>
+<%= apps[i].updateInfo.manifest.changelog %>
+
+<% }} -%>
 
 <% if (!hasSubscription) { -%>
 *Keep your Cloudron automatically up-to-date and secure by upgrading to a paid plan at* <%= webadminUrl %>/#/settings
@@ -24,14 +27,16 @@ Sent at: <%= new Date().toUTCString() %>
     <h3>Dear <%= cloudronName %> Admin,</h3>
 
     <div style="width: 650px; text-align: left;">
+<% for (var i = 0; i < apps.length; i++) { -%>
         <p>
-            A new version <%= updateInfo.manifest.version %> of the app '<%= app.manifest.title %>' installed at <a href="https://<%= app.fqdn %>"><%= app.fqdn %></a> is available!
+            A new version <%= apps[i].updateInfo.manifest.version %> of the app '<%= apps[i].app.manifest.title %>' installed at <a href="https://<%= apps[i].app.fqdn %>"><%= apps[i].app.fqdn %></a> is available!
         </p>
 
         <h5>Changelog:</h5>
-        <%- changelogHTML %>
+        <%- apps[i].changelogHTML %>
 
         <br/>
+<% } -%>
 
         <% if (!hasSubscription) { %>
         <p>Keep your Cloudron automatically up-to-date and secure by upgrading to a <a href="<%= webadminUrl %>/#/settings">paid plan</a>.</p>

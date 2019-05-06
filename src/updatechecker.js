@@ -75,6 +75,8 @@ function checkAppUpdates(callback) {
         if (error) return callback(error);
         const autoupdatesEnabled = (result !== constants.AUTOUPDATE_PATTERN_NEVER);
 
+        var notificationPending = [];
+
         apps.getAll(function (error, result) {
             if (error) return callback(error);
 
@@ -107,17 +109,28 @@ function checkAppUpdates(callback) {
                     if (autoupdatesEnabled && !updateIsBlocked) return iteratorDone();
 
                     debug('Notifying of app update for %s from %s to %s', app.id, app.manifest.version, updateInfo.manifest.version);
-                    users.getAllAdmins(function (error, admins) {
-                        if (error) return iteratorDone(error);
-
-                        async.eachSeries(admins, (admin, done) => mailer.appUpdateAvailable(admin.email, app, true /* subscription */, updateInfo, done), iteratorDone);
+                    notificationPending.push({
+                        app: app,
+                        updateInfo: updateInfo
                     });
+
+                    iteratorDone();
                 });
             });
         }, function () {
             newState.box = loadState().box; // preserve the latest box state information
             saveState(newState);
-            callback();
+
+            if (notificationPending.length === 0) return callback();
+
+            users.getAllAdmins(function (error, admins) {
+                if (error) {
+                    console.error(error);
+                    return callback();
+                }
+
+                async.eachSeries(admins, (admin, done) => mailer.appUpdatesAvailable(admin.email, notificationPending, true /* subscription */, done), callback);
+            });
         });
     });
 }

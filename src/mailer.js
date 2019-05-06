@@ -5,7 +5,7 @@ exports = module.exports = {
     userRemoved: userRemoved,
     adminChanged: adminChanged,
     passwordReset: passwordReset,
-    appUpdateAvailable: appUpdateAvailable,
+    appUpdatesAvailable: appUpdatesAvailable,
     sendDigest: sendDigest,
 
     sendInvite: sendInvite,
@@ -295,24 +295,24 @@ function appDied(mailTo, app) {
     });
 }
 
-function appUpdateAvailable(mailTo, app, hasSubscription, info, callback) {
+function appUpdatesAvailable(mailTo, apps, hasSubscription, callback) {
     assert.strictEqual(typeof mailTo, 'string');
-    assert.strictEqual(typeof app, 'object');
+    assert.strictEqual(typeof apps, 'object');
     assert.strictEqual(typeof hasSubscription, 'boolean');
-    assert.strictEqual(typeof info, 'object');
     assert.strictEqual(typeof callback, 'function');
 
     getMailConfig(function (error, mailConfig) {
         if (error) return debug('Error getting mail details:', error);
 
         var converter = new showdown.Converter();
+        apps.forEach(function (app) {
+            app.changelogHTML = converter.makeHtml(app.updateInfo.manifest.changelog);
+        });
 
         var templateData = {
             webadminUrl: config.adminOrigin(),
             hasSubscription: hasSubscription,
-            app: app,
-            updateInfo: info,
-            changelogHTML: converter.makeHtml(info.manifest.changelog),
+            apps: apps,
             cloudronName: mailConfig.cloudronName,
             cloudronAvatarUrl: config.adminOrigin() + '/api/v1/cloudron/avatar'
         };
@@ -326,9 +326,9 @@ function appUpdateAvailable(mailTo, app, hasSubscription, info, callback) {
         var mailOptions = {
             from: mailConfig.notificationFrom,
             to: mailTo,
-            subject: util.format('App %s has a new update available', app.fqdn),
-            text: render('app_update_available.ejs', templateDataText),
-            html: render('app_update_available.ejs', templateDataHTML)
+            subject: `New app updates available for ${mailConfig.cloudronName}`,
+            text: render('app_updates_available.ejs', templateDataText),
+            html: render('app_updates_available.ejs', templateDataHTML)
         };
 
         sendMail(mailOptions, callback);
