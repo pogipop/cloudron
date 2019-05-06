@@ -1039,7 +1039,7 @@ function purchaseApp(data, callback) {
     assert.strictEqual(typeof data, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    appstore.purchase(data, function (error) {
+    appstore.purchaseApp(data, function (error) {
         if (!error) return callback();
 
         // if purchase failed, rollback the appdb record
@@ -1161,7 +1161,7 @@ function uninstall(appId, auditSource, callback) {
     get(appId, function (error, app) {
         if (error) return callback(error);
 
-        appstore.unpurchase(appId, { appstoreId: app.appStoreId, manifestId: app.manifest.id }, function (error) {
+        appstore.unpurchaseApp(appId, { appstoreId: app.appStoreId, manifestId: app.manifest.id }, function (error) {
             if (error && error.reason === AppstoreError.NOT_FOUND) return callback(new AppsError(AppsError.NOT_FOUND));
             if (error && error.reason === AppstoreError.BILLING_REQUIRED) return callback(new AppsError(AppsError.BILLING_REQUIRED, error.message));
             if (error && error.reason === AppstoreError.INVALID_TOKEN) return callback(new AppsError(AppsError.BILLING_REQUIRED, error.message));

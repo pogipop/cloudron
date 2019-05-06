@@ -7,8 +7,8 @@ exports = module.exports = {
 
     registerCloudron: registerCloudron,
 
-    purchase: purchase,
-    unpurchase: unpurchase,
+    purchaseApp: purchaseApp,
+    unpurchaseApp: unpurchaseApp,
 
     getSubscription: getSubscription,
     isFreePlan: isFreePlan,
@@ -146,7 +146,7 @@ function isFreePlan(subscription) {
 }
 
 // See app.js install it will create a db record first but remove it again if appstore purchase fails
-function purchase(data, callback) {
+function purchaseApp(data, callback) {
     assert.strictEqual(typeof data, 'object'); // { appstoreId, manifestId, appId }
     assert(data.appstoreId || data.manifestId);
     assert.strictEqual(typeof data.appId, 'string');
@@ -170,7 +170,7 @@ function purchase(data, callback) {
     });
 }
 
-function unpurchase(appId, data, callback) {
+function unpurchaseApp(appId, data, callback) {
     assert.strictEqual(typeof appId, 'string');
     assert.strictEqual(typeof data, 'object'); // { appstoreId, manifestId }
     assert(data.appstoreId || data.manifestId);
