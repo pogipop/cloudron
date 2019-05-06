@@ -19,6 +19,7 @@ function getApps(req, res, next) {
     appstore.getApps(function (error, apps) {
         if (error && error.reason === AppstoreError.INVALID_TOKEN) return next(new HttpError(402, error.message));
         if (error && error.reason === AppstoreError.LICENSE_ERROR) return next(new HttpError(402, error.message));
+        if (error && error.reason === AppstoreError.NOT_REGISTERED) return next(new HttpError(412, error.message));
         if (error) return next(new HttpError(500, error));
 
         next(new HttpSuccess(200, { apps: apps }));
@@ -32,6 +33,7 @@ function getApp(req, res, next) {
         if (error && error.reason === AppstoreError.NOT_FOUND) return next(new HttpError(404, 'No such app'));
         if (error && error.reason === AppstoreError.INVALID_TOKEN) return next(new HttpError(402, error.message));
         if (error && error.reason === AppstoreError.LICENSE_ERROR) return next(new HttpError(402, error.message));
+        if (error && error.reason === AppstoreError.NOT_REGISTERED) return next(new HttpError(412, error.message));
         if (error) return next(new HttpError(500, error));
 
         next(new HttpSuccess(200, app));
@@ -46,6 +48,7 @@ function getAppVersion(req, res, next) {
         if (error && error.reason === AppstoreError.NOT_FOUND) return next(new HttpError(404, 'No such app or version'));
         if (error && error.reason === AppstoreError.INVALID_TOKEN) return next(new HttpError(402, error.message));
         if (error && error.reason === AppstoreError.LICENSE_ERROR) return next(new HttpError(402, error.message));
+        if (error && error.reason === AppstoreError.NOT_REGISTERED) return next(new HttpError(412, error.message));
         if (error) return next(new HttpError(500, error));
 
         next(new HttpSuccess(200, manifest));
@@ -75,6 +78,7 @@ function getSubscription(req, res, next) {
 
     appstore.getSubscription(function (error, result) {
         if (error && error.reason === AppstoreError.INVALID_TOKEN) return next(new HttpError(402, error.message));
+        if (error && error.reason === AppstoreError.NOT_REGISTERED) return next(new HttpError(412, error.message));
         if (error && error.reason === AppstoreError.EXTERNAL_ERROR) return next(new HttpError(424, error.message));
         if (error) return next(new HttpError(500, error));
 

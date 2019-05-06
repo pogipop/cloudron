@@ -64,7 +64,8 @@ AppstoreError.ACCESS_DENIED = 'Access Denied';
 AppstoreError.NOT_FOUND = 'Internal Error';
 AppstoreError.BILLING_REQUIRED = 'Billing Required'; // upstream 402 (subsciption_expired and subscription_required)
 AppstoreError.LICENSE_ERROR = 'License Error'; // upstream 422 (no license, invalid license)
-AppstoreError.INVALID_TOKEN = 'Invalid token'; // upstream 401 (no token)
+AppstoreError.INVALID_TOKEN = 'Invalid token'; // upstream 401 (invalid token)
+AppstoreError.NOT_REGISTERED = 'Not registered'; // upstream 412 (no token, not set yet)
 
 var NOOP_CALLBACK = function (error) { if (error) debug(error); };
 
@@ -73,7 +74,7 @@ function getCloudronToken(callback) {
 
     settings.getCloudronToken(function (error, token) {
         if (error) return callback(new AppstoreError(AppstoreError.INTERNAL_ERROR, error));
-        if (!token) return callback(new AppstoreError(AppstoreError.INVALID_TOKEN));
+        if (!token) return callback(new AppstoreError(AppstoreError.NOT_REGISTERED));
 
         callback(null, token);
     });
