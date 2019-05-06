@@ -67,7 +67,7 @@ describe('Appstore Apps API', function () {
         superagent.get(SERVER_URL + '/api/v1/appstore/apps')
             .query({ access_token: token })
             .end(function (error, result) {
-                expect(result.statusCode).to.equal(402); // billing required
+                expect(result.statusCode).to.equal(412); // not registered yet
                 done();
             });
     });
@@ -76,7 +76,7 @@ describe('Appstore Apps API', function () {
         superagent.get(SERVER_URL + '/api/v1/appstore/apps/org.wordpress.cloudronapp')
             .query({ access_token: token })
             .end(function (error, result) {
-                expect(result.statusCode).to.equal(402); // billing required
+                expect(result.statusCode).to.equal(412); // not registered yet
                 done();
             });
     });

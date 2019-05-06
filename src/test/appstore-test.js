@@ -49,10 +49,10 @@ describe('Appstore', function () {
 
     beforeEach(nock.cleanAll);
 
-    it('cannot send alive status without cloudron token', function (done) {
+    it('cannot send alive status without registering', function (done) {
         appstore.sendAliveStatus(function (error) {
             expect(error).to.be.ok();
-            expect(error.reason).to.equal(AppstoreError.INVALID_TOKEN);
+            expect(error.reason).to.equal(AppstoreError.NOT_REGISTERED);
             done();
         });
     });

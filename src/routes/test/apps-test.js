@@ -457,7 +457,7 @@ describe('App API', function () {
             .query({ access_token: token })
             .send({ appStoreId: APP_STORE_ID, location: APP_LOCATION, domain: DOMAIN_0.domain, portBindings: null, accessRestriction: null })
             .end(function (err, res) {
-                expect(res.statusCode).to.equal(402);
+                expect(res.statusCode).to.equal(424);
                 expect(fake1.isDone()).to.be.ok();
                 done();
             });

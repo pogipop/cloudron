@@ -135,7 +135,7 @@ function installApp(req, res, next) {
         if (error && error.reason === AppsError.PORT_RESERVED) return next(new HttpError(409, 'Port ' + error.message + ' is reserved.'));
         if (error && error.reason === AppsError.PORT_CONFLICT) return next(new HttpError(409, 'Port ' + error.message + ' is already in use.'));
         if (error && error.reason === AppsError.BAD_FIELD) return next(new HttpError(400, error.message));
-        if (error && error.reason === AppsError.BILLING_REQUIRED) return next(new HttpError(402, error.message));
+        if (error && error.reason === AppsError.PLAN_LIMIT) return next(new HttpError(402, error.message));
         if (error && error.reason === AppsError.BAD_CERTIFICATE) return next(new HttpError(400, error.message));
         if (error && error.reason === AppsError.EXTERNAL_ERROR) return next(new HttpError(424, error.message));
         if (error) return next(new HttpError(500, error));
@@ -249,7 +249,7 @@ function cloneApp(req, res, next) {
         if (error && error.reason === AppsError.ALREADY_EXISTS) return next(new HttpError(409, error.message));
         if (error && error.reason === AppsError.BAD_FIELD) return next(new HttpError(400, error.message));
         if (error && error.reason === AppsError.BAD_STATE) return next(new HttpError(409, error.message));
-        if (error && error.reason === AppsError.BILLING_REQUIRED) return next(new HttpError(402, 'Billing required'));
+        if (error && error.reason === AppsError.PLAN_LIMIT) return next(new HttpError(402, error.message));
         if (error && error.reason === AppsError.BAD_CERTIFICATE) return next(new HttpError(400, error.message));
         if (error && error.reason === AppsError.EXTERNAL_ERROR) return next(new HttpError(424, error.message));
         if (error) return next(new HttpError(500, error));
@@ -279,7 +279,7 @@ function uninstallApp(req, res, next) {
     debug('Uninstalling app id:%s', req.params.id);
 
     apps.uninstall(req.params.id, auditSource.fromRequest(req), function (error) {
-        if (error && error.reason === AppsError.BILLING_REQUIRED) return next(new HttpError(402, 'Billing required'));
+        if (error && error.reason === AppsError.EXTERNAL_ERROR) return next(new HttpError(424, error));
         if (error && error.reason === AppsError.NOT_FOUND) return next(new HttpError(404, 'No such app'));
         if (error) return next(new HttpError(500, error));
 

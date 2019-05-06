@@ -125,7 +125,7 @@ AppsError.BAD_FIELD = 'Bad Field';
 AppsError.BAD_STATE = 'Bad State';
 AppsError.PORT_RESERVED = 'Port Reserved';
 AppsError.PORT_CONFLICT = 'Port Conflict';
-AppsError.BILLING_REQUIRED = 'Billing Required';
+AppsError.PLAN_LIMIT = 'Plan Limit';
 AppsError.ACCESS_DENIED = 'Access denied';
 AppsError.BAD_CERTIFICATE = 'Invalid certificate';
 
@@ -1047,9 +1047,10 @@ function purchaseApp(data, callback) {
             if (delError) debug('install: Failed to rollback app installation.', delError);
 
             if (error.reason === AppstoreError.NOT_FOUND) return callback(new AppsError(AppsError.NOT_FOUND, error.message));
-            if (error && error.reason === AppstoreError.BILLING_REQUIRED) return callback(new AppsError(AppsError.BILLING_REQUIRED, error.message));
-            if (error && error.reason === AppstoreError.INVALID_TOKEN) return callback(new AppsError(AppsError.BILLING_REQUIRED, error.message));
-            if (error && error.reason === AppstoreError.LICENSE_ERROR) return callback(new AppsError(AppsError.BILLING_REQUIRED, error.message));
+            if (error && error.reason === AppstoreError.PLAN_LIMIT) return callback(new AppsError(AppsError.PLAN_LIMIT, error.message));
+            if (error && error.reason === AppstoreError.INVALID_TOKEN) return callback(new AppsError(AppsError.EXTERNAL_ERROR, error.message));
+            if (error && error.reason === AppstoreError.LICENSE_ERROR) return callback(new AppsError(AppsError.EXTERNAL_ERROR, error.message));
+            if (error && error.reason === AppstoreError.NOT_REGISTERED) return callback(new AppsError(AppsError.EXTERNAL_ERROR, error.message));
             if (error && error.reason === AppstoreError.EXTERNAL_ERROR) return callback(new AppsError(AppsError.EXTERNAL_ERROR, error.message));
 
             callback(new AppsError(AppsError.INTERNAL_ERROR, error));
@@ -1163,9 +1164,8 @@ function uninstall(appId, auditSource, callback) {
 
         appstore.unpurchaseApp(appId, { appstoreId: app.appStoreId, manifestId: app.manifest.id }, function (error) {
             if (error && error.reason === AppstoreError.NOT_FOUND) return callback(new AppsError(AppsError.NOT_FOUND));
-            if (error && error.reason === AppstoreError.BILLING_REQUIRED) return callback(new AppsError(AppsError.BILLING_REQUIRED, error.message));
-            if (error && error.reason === AppstoreError.INVALID_TOKEN) return callback(new AppsError(AppsError.BILLING_REQUIRED, error.message));
-            if (error && error.reason === AppstoreError.LICENSE_ERROR) return callback(new AppsError(AppsError.BILLING_REQUIRED, error.message));
+            if (error && error.reason === AppstoreError.INVALID_TOKEN) return callback(new AppsError(AppsError.EXTERNAL_ERROR, error.message));
+            if (error && error.reason === AppstoreError.LICENSE_ERROR) return callback(new AppsError(AppsError.EXTERNAL_ERROR, error.message));
             if (error && error.reason === AppstoreError.EXTERNAL_ERROR) return callback(new AppsError(AppsError.EXTERNAL_ERROR, error.message));
             if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
 

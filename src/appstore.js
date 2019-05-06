@@ -62,7 +62,7 @@ AppstoreError.EXTERNAL_ERROR = 'External Error';
 AppstoreError.ALREADY_EXISTS = 'Already Exists';
 AppstoreError.ACCESS_DENIED = 'Access Denied';
 AppstoreError.NOT_FOUND = 'Not Found';
-AppstoreError.BILLING_REQUIRED = 'Billing Required'; // upstream 402 (subsciption_expired and subscription_required)
+AppstoreError.PLAN_LIMIT = 'Plan limit reached'; // upstream 402 (subsciption_expired and subscription_required)
 AppstoreError.LICENSE_ERROR = 'License Error'; // upstream 422 (no license, invalid license)
 AppstoreError.INVALID_TOKEN = 'Invalid token'; // upstream 401 (invalid token)
 AppstoreError.NOT_REGISTERED = 'Not registered'; // upstream 412 (no token, not set yet)
@@ -131,10 +131,10 @@ function getSubscription(callback) {
         const url = config.apiServerOrigin() + '/api/v1/subscription';
         superagent.get(url).query({ accessToken: token }).timeout(30 * 1000).end(function (error, result) {
             if (error && !error.response) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, error.message));
-            if (result.statusCode === 401) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, 'invalid appstore token'));
-            if (result.statusCode === 403) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, 'wrong user'));
-            if (result.statusCode === 502) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, 'stripe error'));
-            if (result.statusCode !== 200) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, 'unknown error'));
+            if (result.statusCode === 401) return callback(new AppstoreError(AppstoreError.INVALID_TOKEN));
+            if (result.statusCode === 422) return callback(new AppstoreError(AppstoreError.LICENSE_ERROR));
+            if (result.statusCode === 502) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, `Stripe error: ${error.message}`));
+            if (result.statusCode !== 200) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, `Unknown error: ${error.message}`));
 
             callback(null, result.body); // { email, subscription }
         });
@@ -159,10 +159,11 @@ function purchaseApp(data, callback) {
 
         superagent.post(url).send(data).query({ accessToken: token }).timeout(30 * 1000).end(function (error, result) {
             if (error && !error.response) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, error.message));
-            if (result.statusCode === 404) return callback(new AppstoreError(AppstoreError.NOT_FOUND));
-            if (result.statusCode === 403 || result.statusCode === 401) return callback(new AppstoreError(AppstoreError.INVALID_TOKEN));
-            if (result.statusCode === 402) return callback(new AppstoreError(AppstoreError.BILLING_REQUIRED, result.body.message));
+            if (result.statusCode === 404) return callback(new AppstoreError(AppstoreError.NOT_FOUND)); // appstoreId does not exist
+            if (result.statusCode === 401) return callback(new AppstoreError(AppstoreError.INVALID_TOKEN));
+            if (result.statusCode === 402) return callback(new AppstoreError(AppstoreError.PLAN_LIMIT, result.body.message));
             if (result.statusCode === 422) return callback(new AppstoreError(AppstoreError.LICENSE_ERROR, result.body.message));
+            // 200 if already purchased, 201 is newly purchased
             if (result.statusCode !== 201 && result.statusCode !== 200) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, util.format('App purchase failed. %s %j', result.status, result.body)));
 
             callback(null);
@@ -183,14 +184,14 @@ function unpurchaseApp(appId, data, callback) {
 
         superagent.get(url).query({ accessToken: token }).timeout(30 * 1000).end(function (error, result) {
             if (error && !error.response) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, error.message));
-            if (result.statusCode === 403 || result.statusCode === 401) return callback(new AppstoreError(AppstoreError.INVALID_TOKEN));
             if (result.statusCode === 404) return callback(null);   // was never purchased
+            if (result.statusCode === 401) return callback(new AppstoreError(AppstoreError.INVALID_TOKEN));
             if (result.statusCode === 422) return callback(new AppstoreError(AppstoreError.LICENSE_ERROR, result.body.message));
             if (result.statusCode !== 201 && result.statusCode !== 200) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, util.format('App unpurchase failed. %s %j', result.status, result.body)));
 
             superagent.del(url).send(data).query({ accessToken: token }).timeout(30 * 1000).end(function (error, result) {
                 if (error && !error.response) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, error));
-                if (result.statusCode === 403 || result.statusCode === 401) return callback(new AppstoreError(AppstoreError.BILLING_REQUIRED));
+                if (result.statusCode === 401) return callback(new AppstoreError(AppstoreError.INVALID_TOKEN));
                 if (result.statusCode !== 204) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, util.format('App unpurchase failed. %s %j', result.status, result.body)));
 
                 callback(null);
@@ -277,7 +278,7 @@ function sendAliveStatus(callback) {
             superagent.post(url).send(data).query({ accessToken: token }).timeout(30 * 1000).end(function (error, result) {
                 if (error && !error.response) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, error));
                 if (result.statusCode === 404) return callback(new AppstoreError(AppstoreError.NOT_FOUND));
-                if (result.statusCode === 403 || result.statusCode === 401) return callback(new AppstoreError(AppstoreError.INVALID_TOKEN));
+                if (result.statusCode === 401) return callback(new AppstoreError(AppstoreError.INVALID_TOKEN));
                 if (result.statusCode === 422) return callback(new AppstoreError(AppstoreError.LICENSE_ERROR, result.body.message));
                 if (result.statusCode !== 201) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, util.format('Sending alive status failed. %s %j', result.status, result.body)));
 
@@ -297,7 +298,7 @@ function getBoxUpdate(callback) {
 
         superagent.get(url).query({ accessToken: token, boxVersion: config.version() }).timeout(10 * 1000).end(function (error, result) {
             if (error && !error.response) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, error.message));
-            if (result.statusCode === 403 || result.statusCode === 401) return callback(new AppstoreError(AppstoreError.INVALID_TOKEN));
+            if (result.statusCode === 401) return callback(new AppstoreError(AppstoreError.INVALID_TOKEN));
             if (result.statusCode === 422) return callback(new AppstoreError(AppstoreError.LICENSE_ERROR, result.body.message));
             if (result.statusCode === 204) return callback(null); // no update
             if (result.statusCode !== 200 || !result.body) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, util.format('Bad response: %s %s', result.statusCode, result.text)));
@@ -332,7 +333,7 @@ function getAppUpdate(app, callback) {
 
         superagent.get(url).query({ accessToken: token, boxVersion: config.version(), appId: app.appStoreId, appVersion: app.manifest.version }).timeout(10 * 1000).end(function (error, result) {
             if (error && !error.response) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, error));
-            if (result.statusCode === 403 || result.statusCode === 401) return callback(new AppstoreError(AppstoreError.INVALID_TOKEN));
+            if (result.statusCode === 401) return callback(new AppstoreError(AppstoreError.INVALID_TOKEN));
             if (result.statusCode === 422) return callback(new AppstoreError(AppstoreError.LICENSE_ERROR, result.body.message));
             if (result.statusCode === 204) return callback(null); // no update
             if (result.statusCode !== 200 || !result.body) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, util.format('Bad response: %s %s', result.statusCode, result.text)));
@@ -362,7 +363,7 @@ function subscribeCloudron(token, callback) {
 
     superagent.post(url).send({ domain: config.adminDomain() }).query({ accessToken: token }).timeout(30 * 1000).end(function (error, result) {
         if (error && !error.response) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, error.message));
-        if (result.statusCode !== 201) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, 'unable to register cloudron'));
+        if (result.statusCode !== 201) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, `Unable to register cloudron: ${error.message}`));
 
         // cloudronId, token, licenseKey
         if (!result.body.cloudronId) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, 'Invalid response - no cloudron id'));
@@ -429,7 +430,7 @@ function sendFeedback(info, callback) {
 
             superagent.post(url).query({ accessToken: token }).send(info).timeout(10 * 1000).end(function (error, result) {
                 if (error && !error.response) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, error.message));
-                if (result.statusCode === 403 || result.statusCode === 401) return callback(new AppstoreError(AppstoreError.INVALID_TOKEN));
+                if (result.statusCode === 401) return callback(new AppstoreError(AppstoreError.INVALID_TOKEN));
                 if (result.statusCode === 422) return callback(new AppstoreError(AppstoreError.LICENSE_ERROR, result.body.message));
                 if (result.statusCode !== 201) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, util.format('Bad response: %s %s', result.statusCode, result.text)));
 
