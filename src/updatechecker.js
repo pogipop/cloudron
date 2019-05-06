@@ -75,10 +75,10 @@ function checkAppUpdates(callback) {
         if (error) return callback(error);
         const autoupdatesEnabled = (result !== constants.AUTOUPDATE_PATTERN_NEVER);
 
-        apps.getAll(function (error, apps) {
+        apps.getAll(function (error, result) {
             if (error) return callback(error);
 
-            async.eachSeries(apps, function (app, iteratorDone) {
+            async.eachSeries(result, function (app, iteratorDone) {
                 if (app.appStoreId === '') return iteratorDone(); // appStoreId can be '' for dev apps
 
                 appstore.getAppUpdate(app, function (error, updateInfo) {
