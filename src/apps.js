@@ -34,6 +34,7 @@ exports = module.exports = {
 
     checkManifestConstraints: checkManifestConstraints,
 
+    canAutoupdateApp: canAutoupdateApp,
     autoupdateApps: autoupdateApps,
 
     restoreInstalledApps: restoreInstalledApps,
@@ -1294,26 +1295,26 @@ function exec(appId, options, callback) {
     });
 }
 
+function canAutoupdateApp(app, newManifest) {
+    if (!app.enableAutomaticUpdate) return new Error('Automatic update disabled');
+    if ((semver.major(app.manifest.version) !== 0) && (semver.major(app.manifest.version) !== semver.major(newManifest.version))) return new Error('Major version change'); // major changes are blocking
+
+    const newTcpPorts = newManifest.tcpPorts || { };
+    const newUdpPorts = newManifest.udpPorts || { };
+    const portBindings = app.portBindings; // this is never null
+
+    for (let portName in portBindings) {
+        if (!(portName in newTcpPorts) && !(portName in newUdpPorts)) return new Error(`${portName} was in use but new update removes it`);
+    }
+
+    // it's fine if one or more (unused) keys got removed
+    return null;
+}
+
 function autoupdateApps(updateInfo, auditSource, callback) { // updateInfo is { appId -> { manifest } }
     assert.strictEqual(typeof updateInfo, 'object');
     assert.strictEqual(typeof auditSource, 'object');
     assert.strictEqual(typeof callback, 'function');
-
-    function canAutoupdateApp(app, newManifest) {
-        if (!app.enableAutomaticUpdate) return new Error('Automatic update disabled');
-        if ((semver.major(app.manifest.version) !== 0) && (semver.major(app.manifest.version) !== semver.major(newManifest.version))) return new Error('Major version change'); // major changes are blocking
-
-        const newTcpPorts = newManifest.tcpPorts || { };
-        const newUdpPorts = newManifest.udpPorts || { };
-        const portBindings = app.portBindings; // this is never null
-
-        for (let portName in portBindings) {
-            if (!(portName in newTcpPorts) && !(portName in newUdpPorts)) return new Error(`${portName} was in use but new update removes it`);
-        }
-
-        // it's fine if one or more (unused) keys got removed
-        return null;
-    }
 
     if (!updateInfo) return callback(null);
 

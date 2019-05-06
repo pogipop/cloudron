@@ -71,42 +71,44 @@ function checkAppUpdates(callback) {
     var oldState = loadState();
     var newState = { };  // create new state so that old app ids are removed
 
-    apps.getAll(function (error, apps) {
+    settings.getAppAutoupdatePattern(function (error, result) {
         if (error) return callback(error);
+        const autoupdatesEnabled = (result !== constants.AUTOUPDATE_PATTERN_NEVER);
 
-        async.eachSeries(apps, function (app, iteratorDone) {
-            if (app.appStoreId === '') return iteratorDone(); // appStoreId can be '' for dev apps
+        apps.getAll(function (error, apps) {
+            if (error) return callback(error);
 
-            appstore.getAppUpdate(app, function (error, updateInfo) {
-                if (error) {
-                    debug('Error getting app update info for %s', app.id, error);
-                    return iteratorDone();  // continue to next
-                }
+            async.eachSeries(apps, function (app, iteratorDone) {
+                if (app.appStoreId === '') return iteratorDone(); // appStoreId can be '' for dev apps
 
-                // skip if no next version is found
-                if (!updateInfo) {
-                    delete gAppUpdateInfo[app.id];
-                    return iteratorDone();
-                }
+                appstore.getAppUpdate(app, function (error, updateInfo) {
+                    if (error) {
+                        debug('Error getting app update info for %s', app.id, error);
+                        return iteratorDone();  // continue to next
+                    }
 
-                gAppUpdateInfo[app.id] = updateInfo;
+                    // skip if no next version is found
+                    if (!updateInfo) {
+                        delete gAppUpdateInfo[app.id];
+                        return iteratorDone();
+                    }
 
-                // decide whether to send email
-                newState[app.id] = updateInfo.manifest.version;
+                    gAppUpdateInfo[app.id] = updateInfo;
 
-                if (oldState[app.id] === newState[app.id]) {
-                    debug('Skipping notification of app update %s since user was already notified', app.id);
-                    return iteratorDone();
-                }
+                    // decide whether to send email
+                    newState[app.id] = updateInfo.manifest.version;
 
-                // only send notifications if update pattern is 'never'
-                settings.getAppAutoupdatePattern(function (error, result) {
-                    if (error) return iteratorDone(error);
-                    if (result !== constants.AUTOUPDATE_PATTERN_NEVER) return iteratorDone();
+                    if (oldState[app.id] === newState[app.id]) {
+                        debug('Skipping notification of app update %s since user was already notified', app.id);
+                        return iteratorDone();
+                    }
 
-                    debug('Notifying user of app update for %s from %s to %s', app.id, app.manifest.version, updateInfo.manifest.version);
+                    const updateIsBlocked = apps.canAutoupdateApp(app, updateInfo);
+                    if (autoupdatesEnabled && !updateIsBlocked) return iteratorDone();
+
+                    debug('Notifying of app update for %s from %s to %s', app.id, app.manifest.version, updateInfo.manifest.version);
                     users.getAllAdmins(function (error, admins) {
-                        if (error) return callback(error);
+                        if (error) return iteratorDone(error);
 
                         async.eachSeries(admins, (admin, done) => mailer.appUpdateAvailable(admin.email, app, true /* subscription */, updateInfo, done), iteratorDone);
                     });
