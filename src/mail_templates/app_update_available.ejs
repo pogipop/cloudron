@@ -25,7 +25,7 @@ Sent at: <%= new Date().toUTCString() %>
 
     <div style="width: 650px; text-align: left;">
         <p>
-            A new version <%= updateInfo.manifest.version %> of the app '<%= app.manifest.title %>' installed at <%= app.fqdn %> is available!
+            A new version <%= updateInfo.manifest.version %> of the app '<%= app.manifest.title %>' installed at <a href="https://<%= app.fqdn %>"><%= app.fqdn %></a> is available!
         </p>
 
         <h5>Changelog:</h5>
