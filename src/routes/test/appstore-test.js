@@ -145,11 +145,11 @@ describe('Appstore Apps API', function () {
 
 });
 
-describe('Subscription API', function () {
+describe('Subscription API - no signup', function () {
     before(setup);
     after(cleanup);
 
-    it('can setup subscription - no signup', function (done) {
+    it('can setup subscription', function (done) {
         var scope1 = nock(config.apiServerOrigin())
             .post('/api/v1/login', (body) => body.email && body.password)
             .reply(200, { userId: 'userId', accessToken: 'SECRET_TOKEN' });
@@ -169,7 +169,22 @@ describe('Subscription API', function () {
             });
     });
 
-    it('can setup subscription - signup', function (done) {
+    it('cannot re-setup subscription - already registered', function (done) {
+        superagent.post(SERVER_URL + '/api/v1/appstore/register_cloudron')
+            .send({ email: 'test@cloudron.io', password: 'secret', signup: false })
+            .query({ access_token: token })
+            .end(function (error, result) {
+                expect(result.statusCode).to.equal(422);
+                done();
+            });
+    });
+});
+
+describe('Subscription API - signup', function () {
+    before(setup);
+    after(cleanup);
+
+    it('can setup subscription', function (done) {
         var scope1 = nock(config.apiServerOrigin())
             .post('/api/v1/register_user', (body) => body.email && body.password)
             .reply(201, { });
