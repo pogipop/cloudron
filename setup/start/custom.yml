@@ -5,5 +5,11 @@ features:
   configureBackup: true
   dynamicDns: true
   subscription: true
-  support:
-    remote: true
+  remoteSupport: true
+
+support:
+  email: support@cloudron.io
+
+alerts:
+  email: support@cloudron.io
+  notifyCloudronAdmins: false

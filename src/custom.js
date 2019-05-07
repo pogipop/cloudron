@@ -7,6 +7,9 @@ let debug = require('debug')('box:features'),
 
 exports = module.exports = {
     features: features,
+    supportEmail: supportEmail,
+    alertsEmail: alertsEmail,
+    sendAlertsToCloudronAdmins: sendAlertsToCloudronAdmins
 };
 
 const gCustom = (function () {
@@ -22,8 +25,20 @@ const gCustom = (function () {
 function features() {
     return {
         dynamicDns: safe.query(gCustom, 'features.dynamicDns', true),
-        remoteSupport: safe.query(gCustom, 'features.support.remote', true),
+        remoteSupport: safe.query(gCustom, 'features.remoteSupport', true),
         subscription: safe.query(gCustom, 'features.subscription', true),
         configureBackup: safe.query(gCustom, 'features.configureBackup', true)
     };
+}
+
+function supportEmail() {
+    return safe.query(gCustom, 'support.email', 'support@cloudron.io');
+}
+
+function alertsEmail() {
+    return safe.query(gCustom, 'alerts.email', 'support@cloudron.io');
+}
+
+function sendAlertsToCloudronAdmins() {
+    return safe.query(gCustom, 'alerts.notifyCloudronAdmins', true);
 }

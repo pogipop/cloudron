@@ -25,6 +25,7 @@ exports = module.exports = {
 let assert = require('assert'),
     async = require('async'),
     config = require('./config.js'),
+    custom = require('./custom.js'),
     DatabaseError = require('./databaseerror.js'),
     debug = require('debug')('box:notifications'),
     eventlog = require('./eventlog.js'),
@@ -192,8 +193,8 @@ function oomEvent(eventId, app, addon, containerId, event, callback) {
         message = 'The container has been restarted automatically. Consider increasing the [memory limit](https://docs.docker.com/v17.09/edge/engine/reference/commandline/update/#update-a-containers-kernel-memory-constraints)';
     }
 
-    // also send us a notification mail
-    if (config.provider() === 'caas') mailer.oomEvent('support@cloudron.io', program, event);
+    if (custom.alertsEmail()) mailer.oomEvent(custom.alertsEmail(), program, event);
+    if (!custom.sendAlertsToCloudronAdmins()) return callback();
 
     actionForAllAdmins([], function (admin, done) {
         mailer.oomEvent(admin.email, program, event);
@@ -207,8 +208,8 @@ function appUp(eventId, app, callback) {
     assert.strictEqual(typeof app, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    // also send us a notification mail
-    if (config.provider() === 'caas') mailer.appUp('support@cloudron.io', app);
+    if (custom.alertsEmail()) mailer.appUp(custom.alertsEmail(), app);
+    if (!custom.sendAlertsToCloudronAdmins()) return callback();
 
     actionForAllAdmins([], function (admin, done) {
         mailer.appUp(admin.email, app);
@@ -221,8 +222,8 @@ function appDied(eventId, app, callback) {
     assert.strictEqual(typeof app, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    // also send us a notification mail
-    if (config.provider() === 'caas') mailer.appDied('support@cloudron.io', app);
+    if (custom.alertsEmail()) mailer.appDied(custom.alertsEmail(), app);
+    if (!custom.sendAlertsToCloudronAdmins()) return callback();
 
     actionForAllAdmins([], function (admin, callback) {
         mailer.appDied(admin.email, app);
@@ -253,8 +254,8 @@ function certificateRenewalError(eventId, vhost, errorMessage, callback) {
     assert.strictEqual(typeof errorMessage, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    // also send us a notification mail
-    if (config.provider() === 'caas') mailer.certificateRenewalError('support@cloudron.io', vhost, errorMessage);
+    if (custom.alertsEmail()) mailer.certificateRenewalError(custom.alertsEmail(), vhost, errorMessage);
+    if (!custom.sendAlertsToCloudronAdmins()) return callback();
 
     actionForAllAdmins([], function (admin, callback) {
         mailer.certificateRenewalError(admin.email, vhost, errorMessage);
@@ -268,8 +269,8 @@ function backupFailed(eventId, taskId, errorMessage, callback) {
     assert.strictEqual(typeof errorMessage, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    // also send us a notification mail
-    if (config.provider() === 'caas') mailer.backupFailed('support@cloudron.io', errorMessage, `${config.adminOrigin()}/logs.html?taskId=${taskId}`);
+    if (custom.alertsEmail()) mailer.backupFailed(custom.alertsEmail(), errorMessage, `${config.adminOrigin()}/logs.html?taskId=${taskId}`);
+    if (!custom.sendAlertsToCloudronAdmins()) return callback();
 
     actionForAllAdmins([], function (admin, callback) {
         mailer.backupFailed(admin.email, errorMessage, `${config.adminOrigin()}/logs.html?taskId=${taskId}`);

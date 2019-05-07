@@ -28,7 +28,7 @@ var MANIFEST = {
     'description': 'test description',
     'tagline': 'test rocks',
     'website': 'http://test.cloudron.io',
-    'contactEmail': 'support@cloudron.io',
+    'contactEmail': 'test@cloudron.io',
     'version': '0.1.0',
     'manifestVersion': 1,
     'dockerImage': 'cloudron/test:25.2.0',

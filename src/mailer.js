@@ -26,6 +26,7 @@ exports = module.exports = {
 
 var assert = require('assert'),
     config = require('./config.js'),
+    custom = require('./custom.js'),
     debug = require('debug')('box:mailer'),
     docker = require('./docker.js').connection,
     ejs = require('ejs'),
@@ -289,7 +290,7 @@ function appDied(mailTo, app) {
             from: mailConfig.notificationFrom,
             to: mailTo,
             subject: util.format('[%s] App %s is down', mailConfig.cloudronName, app.fqdn),
-            text: render('app_down.ejs', { title: app.manifest.title, appFqdn: app.fqdn, format: 'text' })
+            text: render('app_down.ejs', { title: app.manifest.title, appFqdn: app.fqdn, supportEmail: custom.supportEmail(), format: 'text' })
         };
 
         sendMail(mailOptions);

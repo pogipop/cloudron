@@ -27,7 +27,7 @@ function feedback(req, res, next) {
     if (req.body.appId && typeof req.body.appId !== 'string') return next(new HttpError(400, 'appId must be string'));
 
     appstore.sendFeedback(_.extend({ }, req.body, { email: req.user.email, displayName: req.user.displayName }), function (error) {
-        if (error) return next(new HttpError(503, `Error contacting cloudron.io: ${error.message}. Please email support@cloudron.io`));
+        if (error) return next(new HttpError(503, `Error contacting cloudron.io: ${error.message}. Please email ${custom.supportEmail()}`));
 
         next(new HttpSuccess(201, {}));
     });
