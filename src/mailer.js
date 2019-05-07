@@ -296,9 +296,10 @@ function appDied(mailTo, app) {
     });
 }
 
-function appUpdated(mailTo, app) {
+function appUpdated(mailTo, app, callback) {
     assert.strictEqual(typeof mailTo, 'string');
     assert.strictEqual(typeof app, 'object');
+    callback = callback || NOOP_CALLBACK;
 
     debug('Sending mail for app %s @ %s updated', app.id, app.fqdn);
 
@@ -312,7 +313,7 @@ function appUpdated(mailTo, app) {
             text: render('app_updated.ejs', { title: app.manifest.title, appFqdn: app.fqdn, version: app.manifest.version, format: 'text' })
         };
 
-        sendMail(mailOptions);
+        sendMail(mailOptions, callback);
     });
 }
 

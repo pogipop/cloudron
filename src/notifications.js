@@ -236,8 +236,14 @@ function appUpdated(eventId, app, callback) {
     assert.strictEqual(typeof callback, 'function');
 
     actionForAllAdmins([], function (admin, done) {
-        mailer.appUpdated(admin.email, app);
-        add(admin.id, eventId, `App ${app.fqdn} updated`, `The application ${app.manifest.title} installed at https://${app.fqdn} was updated to package version ${app.manifest.version}.`, done);
+        add(admin.id, eventId, `App ${app.fqdn} updated`, `The application ${app.manifest.title} installed at https://${app.fqdn} was updated to package version ${app.manifest.version}.`, function (error) {
+            if (error) return callback(error);
+
+            mailer.appUpdated(admin.email, app, function (error) {
+                if (error) console.error('Failed to send app updated email', error); // non fatal
+                done();
+            });
+        });
     }, callback);
 }
 
