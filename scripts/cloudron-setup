@@ -207,7 +207,7 @@ cat > "/etc/cloudron/cloudron.conf" <<CONF_END
 }
 CONF_END
 
-[[ -n "${license}" ]] && echo "$license" > /etc/cloudron/LICENSE
+[[ -n "${license}" ]] && echo -n "$license" > /etc/cloudron/LICENSE
 
 if ! /bin/bash "${box_src_tmp_dir}/scripts/installer.sh" &>> "${LOG_FILE}"; then
     echo "Failed to install cloudron. See ${LOG_FILE} for details"
