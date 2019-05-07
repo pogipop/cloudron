@@ -237,7 +237,7 @@ function appUpdated(eventId, app, callback) {
 
     actionForAllAdmins([], function (admin, done) {
         mailer.appUpdated(admin.email, app);
-        add(admin.id, eventId, `App ${app.fqdn} updated`, `The application ${app.manifest.title} installed at ${app.fqdn} was updated to version ${app.manifest.version}.`, done);
+        add(admin.id, eventId, `App ${app.fqdn} updated`, `The application ${app.manifest.title} installed at https://${app.fqdn} was updated to package version ${app.manifest.version}.`, done);
     }, callback);
 }
 
