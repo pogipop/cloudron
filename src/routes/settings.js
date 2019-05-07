@@ -4,9 +4,7 @@ exports = module.exports = {
     set: set,
     get: get,
 
-    getCloudronAvatar: getCloudronAvatar,
-
-    verifySettingsLock: verifySettingsLock
+    getCloudronAvatar: getCloudronAvatar
 };
 
 var assert = require('assert'),
@@ -18,20 +16,6 @@ var assert = require('assert'),
     safe = require('safetydance'),
     settings = require('../settings.js'),
     SettingsError = settings.SettingsError;
-
-function verifySettingsLock(req, res, next) {
-    assert.strictEqual(typeof req.params.setting, 'string');
-
-    settings.get(req.params.setting, function (error, result) {
-        // not locked. let actual route return not found. this is useful for entries stored outside the database like cloudron_avatar
-        if (error && error.reason === SettingsError.NOT_FOUND) return next();
-        if (error) return next(new HttpError(500, error));
-
-        if (result.locked) return next(new HttpError(423, 'This setting is locked'));
-
-        next();
-    });
-}
 
 function getAppAutoupdatePattern(req, res, next) {
     settings.getAppAutoupdatePattern(function (error, pattern) {

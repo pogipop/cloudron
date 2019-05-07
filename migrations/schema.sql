@@ -116,7 +116,6 @@ CREATE TABLE IF NOT EXISTS authcodes(
 CREATE TABLE IF NOT EXISTS settings(
     name VARCHAR(128) NOT NULL UNIQUE,
     value TEXT,
-    locked BOOLEAN,
     PRIMARY KEY(name));
 
 CREATE TABLE IF NOT EXISTS appAddonConfigs(
