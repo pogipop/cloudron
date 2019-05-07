@@ -5,7 +5,7 @@ exports = module.exports = {
     getApp: getApp,
     getAppVersion: getAppVersion,
 
-    registerCloudron: registerCloudron,
+    registerWithLoginCredentials: registerWithLoginCredentials,
 
     purchaseApp: purchaseApp,
     unpurchaseApp: unpurchaseApp,
@@ -386,7 +386,7 @@ function subscribeCloudron(token, callback) {
     });
 }
 
-function registerCloudron(options, callback) {
+function registerWithLoginCredentials(options, callback) {
     assert.strictEqual(typeof options, 'object');
     assert.strictEqual(typeof callback, 'function');
 
