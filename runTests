@@ -68,4 +68,4 @@ if [[ $# -gt 0 ]]; then
     TESTS="$*"
 fi
 
-BOX_ENV=test ./node_modules/mocha/bin/_mocha -- --no-timeouts --exit -R spec ${TESTS}
+BOX_ENV=test ./node_modules/mocha/bin/_mocha --bail -- --no-timeouts --exit -R spec ${TESTS}
