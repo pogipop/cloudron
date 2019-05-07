@@ -414,7 +414,7 @@ describe('Storage', function () {
             });
         });
 
-        it('can copy', function (done) {
+        xit('can copy', function (done) {
             fs.writeFileSync(path.join(GCSMockBasePath, 'uploadtest/C++.gitignore'), 'special', 'utf8');
 
             var sourceKey = 'uploadtest';

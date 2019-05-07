@@ -38,6 +38,7 @@ var apps = require('./apps.js'),
     DomainsError = require('./domains.js').DomainsError,
     df = require('@sindresorhus/df'),
     eventlog = require('./eventlog.js'),
+    custom = require('./custom.js'),
     fs = require('fs'),
     mail = require('./mail.js'),
     notifications = require('./notifications.js'),
@@ -172,7 +173,8 @@ function getConfig(callback) {
             isDemo: config.isDemo(),
             memory: os.totalmem(),
             provider: config.provider(),
-            cloudronName: allSettings[settings.CLOUDRON_NAME_KEY]
+            cloudronName: allSettings[settings.CLOUDRON_NAME_KEY],
+            features: custom.features(),
         });
     });
 }

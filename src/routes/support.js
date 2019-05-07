@@ -8,8 +8,8 @@ exports = module.exports = {
 };
 
 var appstore = require('../appstore.js'),
-    AppstoreError = require('../appstore.js').AppstoreError,
     assert = require('assert'),
+    custom = require('../custom.js'),
     HttpError = require('connect-lastmile').HttpError,
     HttpSuccess = require('connect-lastmile').HttpSuccess,
     support = require('../support.js'),
@@ -35,6 +35,8 @@ function feedback(req, res, next) {
 
 function enableRemoteSupport(req, res, next) {
     assert.strictEqual(typeof req.body, 'object');
+
+    if (!custom.features().remoteSupport) return next(new HttpError(403, 'feature disabled by admin'));
 
     if (typeof req.body.enable !== 'boolean') return next(new HttpError(400, 'enabled is required'));
 

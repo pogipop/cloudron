@@ -1,0 +1,9 @@
+# add customizations here
+# after making changes run "sudo systemctl restart box"
+
+features:
+  configureBackup: true
+  dynamicDns: true
+  subscription: true
+  support:
+    remote: true
