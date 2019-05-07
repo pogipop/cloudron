@@ -18,7 +18,7 @@ exports = module.exports = {
     getAppUpdate: getAppUpdate,
     getBoxUpdate: getBoxUpdate,
 
-    sendFeedback: sendFeedback,
+    createTicket: createTicket,
 
     AppstoreError: AppstoreError
 };
@@ -27,6 +27,7 @@ var apps = require('./apps.js'),
     assert = require('assert'),
     async = require('async'),
     config = require('./config.js'),
+    custom = require('./custom.js'),
     debug = require('debug')('box:appstore'),
     domains = require('./domains.js'),
     eventlog = require('./eventlog.js'),
@@ -410,7 +411,7 @@ function registerCloudron(options, callback) {
     });
 }
 
-function sendFeedback(info, callback) {
+function createTicket(info, callback) {
     assert.strictEqual(typeof info, 'object');
     assert.strictEqual(typeof info.email, 'string');
     assert.strictEqual(typeof info.displayName, 'string');
@@ -431,7 +432,9 @@ function sendFeedback(info, callback) {
             if (error) console.error('Unable to get app info', error);
             if (result) info.app = result;
 
-            let url = config.apiServerOrigin() + '/api/v1/feedback';
+            let url = config.apiServerOrigin() + '/api/v1/ticket';
+
+            info.supportEmail = custom.supportEmail(); // destination address for tickets
 
             superagent.post(url).query({ accessToken: token }).send(info).timeout(10 * 1000).end(function (error, result) {
                 if (error && !error.response) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, error.message));

@@ -145,12 +145,12 @@ describe('Support API', function () {
         });
     });
 
-    describe('feedback', function () {
+    describe('ticket', function () {
         before(setup);
         after(cleanup);
 
         it('fails without token', function (done) {
-            superagent.post(SERVER_URL + '/api/v1/support/feedback')
+            superagent.post(SERVER_URL + '/api/v1/support/ticket')
                 .send({ type: 'ticket', subject: 'some subject', description: 'some description' })
                 .end(function (error, result) {
                     expect(result.statusCode).to.equal(401);
@@ -159,7 +159,7 @@ describe('Support API', function () {
         });
 
         it('fails without type', function (done) {
-            superagent.post(SERVER_URL + '/api/v1/support/feedback')
+            superagent.post(SERVER_URL + '/api/v1/support/ticket')
                 .send({ subject: 'some subject', description: 'some description' })
                 .query({ access_token: token })
                 .end(function (error, result) {
@@ -169,7 +169,7 @@ describe('Support API', function () {
         });
 
         it('fails with empty type', function (done) {
-            superagent.post(SERVER_URL + '/api/v1/support/feedback')
+            superagent.post(SERVER_URL + '/api/v1/support/ticket')
                 .send({ type: '', subject: 'some subject', description: 'some description' })
                 .query({ access_token: token })
                 .end(function (error, result) {
@@ -179,7 +179,7 @@ describe('Support API', function () {
         });
 
         it('fails with unknown type', function (done) {
-            superagent.post(SERVER_URL + '/api/v1/support/feedback')
+            superagent.post(SERVER_URL + '/api/v1/support/ticket')
                 .send({ type: 'foobar', subject: 'some subject', description: 'some description' })
                 .query({ access_token: token })
                 .end(function (error, result) {
@@ -189,7 +189,7 @@ describe('Support API', function () {
         });
 
         it('fails without description', function (done) {
-            superagent.post(SERVER_URL + '/api/v1/support/feedback')
+            superagent.post(SERVER_URL + '/api/v1/support/ticket')
                 .send({ type: 'ticket', subject: 'some subject' })
                 .query({ access_token: token })
                 .end(function (error, result) {
@@ -199,7 +199,7 @@ describe('Support API', function () {
         });
 
         it('fails with empty subject', function (done) {
-            superagent.post(SERVER_URL + '/api/v1/support/feedback')
+            superagent.post(SERVER_URL + '/api/v1/support/ticket')
                 .send({ type: 'ticket', subject: '', description: 'some description' })
                 .query({ access_token: token })
                 .end(function (error, result) {
@@ -209,7 +209,7 @@ describe('Support API', function () {
         });
 
         it('fails with empty description', function (done) {
-            superagent.post(SERVER_URL + '/api/v1/support/feedback')
+            superagent.post(SERVER_URL + '/api/v1/support/ticket')
                 .send({ type: 'ticket', subject: 'some subject', description: '' })
                 .query({ access_token: token })
                 .end(function (error, result) {
@@ -219,7 +219,7 @@ describe('Support API', function () {
         });
 
         it('fails without subject', function (done) {
-            superagent.post(SERVER_URL + '/api/v1/support/feedback')
+            superagent.post(SERVER_URL + '/api/v1/support/ticket')
                 .send({ type: 'ticket', description: 'some description' })
                 .query({ access_token: token })
                 .end(function (error, result) {
@@ -231,10 +231,10 @@ describe('Support API', function () {
         it('succeeds with ticket type', function (done) {
             var scope2 = nock(config.apiServerOrigin())
                 .filteringRequestBody(function (/* unusedBody */) { return ''; }) // strip out body
-                .post('/api/v1/feedback?accessToken=CLOUDRON_TOKEN')
+                .post('/api/v1/ticket?accessToken=CLOUDRON_TOKEN')
                 .reply(201, { });
 
-            superagent.post(SERVER_URL + '/api/v1/support/feedback')
+            superagent.post(SERVER_URL + '/api/v1/support/ticket')
                 .send({ type: 'ticket', subject: 'some subject', description: 'some description' })
                 .query({ access_token: token })
                 .end(function (error, result) {
@@ -247,10 +247,10 @@ describe('Support API', function () {
         it('succeeds with app type', function (done) {
             var scope2 = nock(config.apiServerOrigin())
                 .filteringRequestBody(function (/* unusedBody */) { return ''; }) // strip out body
-                .post('/api/v1/feedback?accessToken=CLOUDRON_TOKEN')
+                .post('/api/v1/ticket?accessToken=CLOUDRON_TOKEN')
                 .reply(201, { });
 
-            superagent.post(SERVER_URL + '/api/v1/support/feedback')
+            superagent.post(SERVER_URL + '/api/v1/support/ticket')
                 .send({ type: 'app_missing', subject: 'some subject', description: 'some description' })
                 .query({ access_token: token })
                 .end(function (error, result) {

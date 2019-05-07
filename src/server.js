@@ -274,8 +274,8 @@ function initializeExpressSync() {
     router.post('/api/v1/mail/:domain/lists/:name', mailScope, routes.mail.updateList);
     router.del ('/api/v1/mail/:domain/lists/:name', mailScope, routes.mail.removeList);
 
-    // feedback
-    router.post('/api/v1/support/feedback', cloudronScope, routes.support.feedback);
+    // support
+    router.post('/api/v1/support/ticket', cloudronScope, routes.support.createTicket);
     router.get ('/api/v1/support/remote_support', cloudronScope, routes.support.getRemoteSupport);
     router.post('/api/v1/support/remote_support', cloudronScope, routes.support.enableRemoteSupport);
 

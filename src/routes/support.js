@@ -1,7 +1,7 @@
 'use strict';
 
 exports = module.exports = {
-    feedback: feedback,
+    createTicket: createTicket,
 
     getRemoteSupport: getRemoteSupport,
     enableRemoteSupport: enableRemoteSupport
@@ -15,7 +15,7 @@ var appstore = require('../appstore.js'),
     support = require('../support.js'),
     _ = require('underscore');
 
-function feedback(req, res, next) {
+function createTicket(req, res, next) {
     assert.strictEqual(typeof req.user, 'object');
 
     const VALID_TYPES = [ 'feedback', 'ticket', 'app_missing', 'app_error', 'upgrade_request' ];
@@ -26,7 +26,7 @@ function feedback(req, res, next) {
     if (typeof req.body.description !== 'string' || !req.body.description) return next(new HttpError(400, 'description must be string'));
     if (req.body.appId && typeof req.body.appId !== 'string') return next(new HttpError(400, 'appId must be string'));
 
-    appstore.sendFeedback(_.extend({ }, req.body, { email: req.user.email, displayName: req.user.displayName }), function (error) {
+    appstore.createTicket(_.extend({ }, req.body, { email: req.user.email, displayName: req.user.displayName }), function (error) {
         if (error) return next(new HttpError(503, `Error contacting cloudron.io: ${error.message}. Please email ${custom.supportEmail()}`));
 
         next(new HttpSuccess(201, {}));
