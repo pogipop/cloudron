@@ -357,13 +357,13 @@ function getAppUpdate(app, callback) {
     });
 }
 
-function subscribeCloudron(token, callback) {
-    assert.strictEqual(typeof token, 'string');
+function registerCloudron(data, callback) {
+    assert.strictEqual(typeof data, 'object');
     assert.strictEqual(typeof callback, 'function');
 
     const url = `${config.apiServerOrigin()}/api/v1/register_cloudron`;
 
-    superagent.post(url).send({ domain: config.adminDomain() }).query({ accessToken: token }).timeout(30 * 1000).end(function (error, result) {
+    superagent.post(url).send(data).timeout(30 * 1000).end(function (error, result) {
         if (error && !error.response) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, error.message));
         if (result.statusCode !== 201) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, `Unable to register cloudron: ${error.message}`));
 
@@ -405,7 +405,7 @@ function registerWithLoginCredentials(options, callback) {
             login(options.email, options.password, options.totpToken || '', function (error, result) {
                 if (error) return callback(error);
 
-                subscribeCloudron(result.accessToken, callback);
+                registerCloudron({ domain: config.adminDomain(), accessToken: result.accessToken }, callback);
             });
         });
     });
