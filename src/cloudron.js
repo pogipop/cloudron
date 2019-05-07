@@ -175,6 +175,7 @@ function getConfig(callback) {
             provider: config.provider(),
             cloudronName: allSettings[settings.CLOUDRON_NAME_KEY],
             features: custom.features(),
+            supportEmail: custom.supportEmail()
         });
     });
 }
