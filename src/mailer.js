@@ -12,6 +12,7 @@ exports = module.exports = {
 
     appUp: appUp,
     appDied: appDied,
+    appUpdated: appUpdated,
     oomEvent: oomEvent,
 
     backupFailed: backupFailed,
@@ -289,6 +290,26 @@ function appDied(mailTo, app) {
             to: mailTo,
             subject: util.format('[%s] App %s is down', mailConfig.cloudronName, app.fqdn),
             text: render('app_down.ejs', { title: app.manifest.title, appFqdn: app.fqdn, format: 'text' })
+        };
+
+        sendMail(mailOptions);
+    });
+}
+
+function appUpdated(mailTo, app) {
+    assert.strictEqual(typeof mailTo, 'string');
+    assert.strictEqual(typeof app, 'object');
+
+    debug('Sending mail for app %s @ %s updated', app.id, app.fqdn);
+
+    getMailConfig(function (error, mailConfig) {
+        if (error) return debug('Error getting mail details:', error);
+
+        var mailOptions = {
+            from: mailConfig.notificationFrom,
+            to: mailTo,
+            subject: util.format('[%s] App %s was updated', mailConfig.cloudronName, app.fqdn),
+            text: render('app_updated.ejs', { title: app.manifest.title, appFqdn: app.fqdn, version: app.manifest.version, format: 'text' })
         };
 
         sendMail(mailOptions);
