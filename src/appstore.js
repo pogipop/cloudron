@@ -6,6 +6,7 @@ exports = module.exports = {
     getAppVersion: getAppVersion,
 
     registerWithLoginCredentials: registerWithLoginCredentials,
+    registerWithLicense: registerWithLicense,
 
     purchaseApp: purchaseApp,
     unpurchaseApp: unpurchaseApp,
@@ -386,6 +387,17 @@ function registerCloudron(data, callback) {
     });
 }
 
+function registerWithLicense(license, callback) {
+    assert.strictEqual(typeof license, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    getCloudronToken(function (error, token) {
+        if (token) return callback(new AppstoreError(AppstoreError.ALREADY_REGISTERED));
+
+        registerCloudron({ license }, callback);
+    });
+}
+
 function registerWithLoginCredentials(options, callback) {
     assert.strictEqual(typeof options, 'object');
     assert.strictEqual(typeof callback, 'function');
@@ -396,8 +408,8 @@ function registerWithLoginCredentials(options, callback) {
         registerUser(options.email, options.password, done);
     }
 
-    getCloudronToken(function (error) {
-        if (!error || error.reason !== AppstoreError.NOT_REGISTERED) return callback(new AppstoreError(AppstoreError.ALREADY_REGISTERED));
+    getCloudronToken(function (error, token) {
+        if (token) return callback(new AppstoreError(AppstoreError.ALREADY_REGISTERED));
 
         maybeSignup(function (error) {
             if (error) return callback(error);

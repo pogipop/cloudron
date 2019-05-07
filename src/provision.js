@@ -6,10 +6,14 @@ exports = module.exports = {
     activate: activate,
     getStatus: getStatus,
 
+    autoRegister: autoRegister,
+
     ProvisionError: ProvisionError
 };
 
-var assert = require('assert'),
+var appstore = require('./appstore.js'),
+    AppstoreError = require('./appstore.js').AppstoreError,
+    assert = require('assert'),
     async = require('async'),
     backups = require('./backups.js'),
     BackupsError = require('./backups.js').BackupsError,
@@ -21,7 +25,9 @@ var assert = require('assert'),
     domains = require('./domains.js'),
     DomainsError = domains.DomainsError,
     eventlog = require('./eventlog.js'),
+    fs = require('fs'),
     mail = require('./mail.js'),
+    paths = require('./paths.js'),
     safe = require('safetydance'),
     semver = require('semver'),
     settingsdb = require('./settingsdb.js'),
@@ -321,5 +327,24 @@ function getStatus(callback) {
                 activated: activated,
             }, gProvisionStatus));
         });
+    });
+}
+
+function autoRegister(callback) {
+    assert.strictEqual(typeof callback, 'function');
+
+    if (!fs.existsSync(paths.LICENSE_FILE)) return callback();
+
+    const license = safe.fs.readFileSync(paths.LICENSE_FILE, 'utf8');
+    if (!license) return callback(new ProvisionError(ProvisionError.EXTERNAL_ERROR, 'Cannot read license'));
+
+    appstore.registerWithLicense(license, function (error) {
+        if (error && error.reason !== AppstoreError.ALREADY_REGISTERED) {
+            debug(error);
+            debug('Failed to auto-register Cloudron with license. Please contact support@cloudron.io');
+            return; // does not call callback on purpose. the server just 'hangs' with the above error
+        }
+
+        callback();
     });
 }

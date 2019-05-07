@@ -87,7 +87,7 @@ describe('Appstore Apps API', function () {
             .reply(200, { userId: 'userId', accessToken: 'SECRET_TOKEN' });
 
         var scope2 = nock(config.apiServerOrigin())
-            .post('/api/v1/register_cloudron?accessToken=SECRET_TOKEN', (body) => !!body.domain)
+            .post('/api/v1/register_cloudron', (body) => !!body.domain && body.accessToken === 'SECRET_TOKEN')
             .reply(201, { cloudronId: 'cid', cloudronToken: 'CLOUDRON_TOKEN', licenseKey: 'lkey' });
 
         superagent.post(SERVER_URL + '/api/v1/appstore/register_cloudron')
@@ -155,7 +155,7 @@ describe('Subscription API - no signup', function () {
             .reply(200, { userId: 'userId', accessToken: 'SECRET_TOKEN' });
 
         var scope2 = nock(config.apiServerOrigin())
-            .post('/api/v1/register_cloudron?accessToken=SECRET_TOKEN', (body) => !!body.domain)
+            .post('/api/v1/register_cloudron', (body) => !!body.domain && body.accessToken === 'SECRET_TOKEN')
             .reply(201, { cloudronId: 'cid', cloudronToken: 'CLOUDRON_TOKEN', licenseKey: 'lkey' });
 
         superagent.post(SERVER_URL + '/api/v1/appstore/register_cloudron')
@@ -194,7 +194,7 @@ describe('Subscription API - signup', function () {
             .reply(200, { userId: 'userId', accessToken: 'SECRET_TOKEN' });
 
         var scope3 = nock(config.apiServerOrigin())
-            .post('/api/v1/register_cloudron?accessToken=SECRET_TOKEN', (body) => !!body.domain)
+            .post('/api/v1/register_cloudron', (body) => !!body.domain && body.accessToken === 'SECRET_TOKEN')
             .reply(201, { cloudronId: 'cid', cloudronToken: 'CLOUDRON_TOKEN', licenseKey: 'lkey' });
 
         superagent.post(SERVER_URL + '/api/v1/appstore/register_cloudron')
