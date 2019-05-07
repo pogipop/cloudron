@@ -12,6 +12,11 @@ exports.up = function(db, callback) {
 
     const config = JSON.parse(fs.readFileSync('/etc/cloudron/cloudron.conf', 'utf8'));
 
+    if (config.provider === 'caas') {
+        debug('license migration skipped for caas');
+        return callback(); // caas will be migrated with auto-register logic
+    }
+
     db.all('SELECT * FROM settings WHERE name="appstore_config"', function (error, results) {
         if (error) return callback(error);
 
