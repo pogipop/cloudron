@@ -48,6 +48,7 @@ apiServerOrigin="https://api.cloudron.io"
 webServerOrigin="https://cloudron.io"
 sourceTarballUrl=""
 rebootServer="true"
+license=""
 
 args=$(getopt -o "" -l "help,skip-baseimage-init,provider:,version:,env:,skip-reboot,license:" -n "$0" -- "$@")
 eval set -- "${args}"
