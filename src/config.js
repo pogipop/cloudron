@@ -22,7 +22,6 @@ exports = module.exports = {
     setAdminFqdn: setAdminFqdn,
     version: version,
     database: database,
-    edition: edition,
 
     // these values are derived
     adminOrigin: adminOrigin,
@@ -32,7 +31,6 @@ exports = module.exports = {
     mailFqdn: mailFqdn,
     hasIPv6: hasIPv6,
 
-    isManaged: isManaged,
     isDemo: isDemo,
 
     // for testing resets to defaults
@@ -68,8 +66,7 @@ function saveSync() {
         adminDomain: data.adminDomain,
         adminFqdn: data.adminFqdn,
         provider: data.provider,
-        isDemo: data.isDemo,
-        edition: data.edition
+        isDemo: data.isDemo
     };
 
     fs.writeFileSync(cloudronConfigFileName, JSON.stringify(conf, null, 4)); // functions are ignored by JSON.stringify
@@ -95,7 +92,6 @@ function initConfig() {
     data.sysadminPort = 3001;
     data.ldapPort = 3002;
     data.dockerProxyPort = 3003;
-    data.edition = '';
 
     // keep in sync with start.sh
     data.database = {
@@ -200,16 +196,8 @@ function provider() {
     return get('provider');
 }
 
-function isManaged() {
-    return edition() === 'hostingprovider';
-}
-
 function hasIPv6() {
     const IPV6_PROC_FILE = '/proc/net/if_inet6';
     // on contabo, /proc/net/if_inet6 is an empty file. so just exists is not enough
     return fs.existsSync(IPV6_PROC_FILE) && fs.readFileSync(IPV6_PROC_FILE, 'utf8').trim().length !== 0;
-}
-
-function edition() {
-    return get('edition');
 }

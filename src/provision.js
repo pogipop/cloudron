@@ -135,8 +135,6 @@ function autoRegisterCloudron(adminDomain, callback) {
     assert.strictEqual(typeof adminDomain, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    if (!config.edition()) return callback();
-
     const license = safe.JSON.parse(safe.fs.readFileSync(paths.LICENSE_FILE, 'utf8'));
     if (!license) return callback(new ProvisionError(ProvisionError.EXTERNAL_ERROR, 'Cannot read license'));
     if (typeof license.userId !== 'string' || typeof license.token !== 'string') return callback(new ProvisionError(ProvisionError.EXTERNAL_ERROR, 'Bad license'));
@@ -349,7 +347,6 @@ function getStatus(callback) {
                 cloudronName: cloudronName,
                 adminFqdn: config.adminDomain() ? config.adminFqdn() : null,
                 activated: activated,
-                edition: config.edition()
             }, gProvisionStatus));
         });
     });

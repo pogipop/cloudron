@@ -103,7 +103,6 @@ function initializeExpressSync() {
     var domainsReadScope = routes.accesscontrol.scope(accesscontrol.SCOPE_DOMAINS_READ);
     var domainsManageScope = routes.accesscontrol.scope(accesscontrol.SCOPE_DOMAINS_MANAGE);
 
-    const isUnmanaged = routes.accesscontrol.isUnmanaged;
     const verifyDomainLock = routes.domains.verifyDomainLock;
     const verifySettingsLock = routes.settings.verifySettingsLock;
 
@@ -277,9 +276,9 @@ function initializeExpressSync() {
     router.del ('/api/v1/mail/:domain/lists/:name', mailScope, routes.mail.removeList);
 
     // feedback
-    router.post('/api/v1/support/feedback', cloudronScope, isUnmanaged, routes.support.feedback);
-    router.get ('/api/v1/support/remote_support', cloudronScope, isUnmanaged, routes.support.getRemoteSupport);
-    router.post('/api/v1/support/remote_support', cloudronScope, isUnmanaged, routes.support.enableRemoteSupport);
+    router.post('/api/v1/support/feedback', cloudronScope, routes.support.feedback);
+    router.get ('/api/v1/support/remote_support', cloudronScope, routes.support.getRemoteSupport);
+    router.post('/api/v1/support/remote_support', cloudronScope, routes.support.enableRemoteSupport);
 
     // domain routes
     router.post('/api/v1/domains', domainsManageScope, routes.domains.add);

@@ -170,7 +170,6 @@ function getConfig(callback) {
             mailFqdn: config.mailFqdn(),
             version: config.version(),
             isDemo: config.isDemo(),
-            edition: config.edition(),
             memory: os.totalmem(),
             provider: config.provider(),
             cloudronName: allSettings[settings.CLOUDRON_NAME_KEY]

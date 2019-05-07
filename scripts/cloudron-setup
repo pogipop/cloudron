@@ -43,21 +43,19 @@ fi
 initBaseImage="true"
 # provisioning data
 provider=""
-edition=""
 requestedVersion=""
 apiServerOrigin="https://api.cloudron.io"
 webServerOrigin="https://cloudron.io"
 sourceTarballUrl=""
 rebootServer="true"
 
-args=$(getopt -o "" -l "help,skip-baseimage-init,provider:,version:,env:,edition:,skip-reboot" -n "$0" -- "$@")
+args=$(getopt -o "" -l "help,skip-baseimage-init,provider:,version:,env:,skip-reboot" -n "$0" -- "$@")
 eval set -- "${args}"
 
 while true; do
     case "$1" in
     --help) echo "See https://cloudron.io/documentation/installation/ on how to install Cloudron"; exit 0;;
     --provider) provider="$2"; shift 2;;
-    --edition) edition="$2"; shift 2;;
     --version) requestedVersion="$2"; shift 2;;
     --env)
         if [[ "$2" == "dev" ]]; then
@@ -123,11 +121,6 @@ elif [[  \
             "${provider}" != "generic" \
         ]]; then
     echo "--provider must be one of: azure, cloudscale.ch, contabo, digitalocean, ec2, exoscale, galaxygate, gce, hetzner, lightsail, linode, netcup, ovh, rosehosting, scaleway, upcloud, vultr or generic"
-    exit 1
-fi
-
-if [[ -n "${edition}" && ! -f "LICENSE" ]]; then
-    echo "A LICENSE is required to use this edition. Please contact support@cloudron.io"
     exit 1
 fi
 
@@ -208,8 +201,7 @@ cat > "/etc/cloudron/cloudron.conf" <<CONF_END
 {
     "apiServerOrigin": "${apiServerOrigin}",
     "webServerOrigin": "${webServerOrigin}",
-    "provider": "${provider}",
-    "edition": "${edition}"
+    "provider": "${provider}"
 }
 CONF_END
 
@@ -217,8 +209,6 @@ if ! /bin/bash "${box_src_tmp_dir}/scripts/installer.sh" &>> "${LOG_FILE}"; then
     echo "Failed to install cloudron. See ${LOG_FILE} for details"
     exit 1
 fi
-
-[[ -f LICENSE ]] && cp LICENSE /etc/cloudron/LICENSE
 
 echo -n "=> Waiting for cloudron to be ready (this takes some time) ..."
 while true; do
