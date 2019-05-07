@@ -310,7 +310,7 @@ describe('backups', function () {
 
         it('can backup', function (done) {
             // arch only has maria db which lacks some mysqldump options we need, this is only here to allow running the tests :-/
-            if (require('child_process').execSync('/usr/bin/mysqldump --version').toString().indexOf('MariaDB') !== -1) done();
+            if (require('child_process').execSync('/usr/bin/mysqldump --version').toString().indexOf('MariaDB') !== -1) return done();
 
             createBackup(function (error, result) {
                 expect(error).to.be(null);
@@ -325,7 +325,7 @@ describe('backups', function () {
 
         it('can take another backup', function (done) {
             // arch only has maria db which lacks some mysqldump options we need, this is only here to allow running the tests :-/
-            if (require('child_process').execSync('/usr/bin/mysqldump --version').toString().indexOf('MariaDB') !== -1) done();
+            if (require('child_process').execSync('/usr/bin/mysqldump --version').toString().indexOf('MariaDB') !== -1) return done();
 
             createBackup(function (error, result) {
                 expect(error).to.be(null);
