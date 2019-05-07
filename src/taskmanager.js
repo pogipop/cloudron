@@ -151,6 +151,8 @@ function startAppTask(appId, callback) {
     var pid = gActiveTasks[appId].pid;
     debug('Started task of %s pid: %s. See logs at %s', appId, pid, logFilePath);
 
+    eventlog.add(eventlog.ACTION_APP_TASK_START, auditSource.TASK_MANAGER, { appId: appId, logFile: logFilePath }, NOOP_CALLBACK);
+
     gActiveTasks[appId].once('exit', function (code, signal) {
         debug('Task for %s pid %s completed with status %s', appId, pid, code);
         if (code === null /* signal */ || (code !== 0 && code !== 50)) { // apptask crashed
@@ -159,6 +161,8 @@ function startAppTask(appId, callback) {
             eventlog.add(eventlog.ACTION_APP_TASK_CRASH, auditSource.TASK_MANAGER, { appId: appId, crashLogFile: logFilePath }, NOOP_CALLBACK);
         } else if (code === 50) { // task exited cleanly but with an error
             eventlog.add(eventlog.ACTION_APP_TASK_CRASH, auditSource.TASK_MANAGER, { appId: appId, crashLogFile: logFilePath }, NOOP_CALLBACK);
+        } else {
+            eventlog.add(eventlog.ACTION_APP_TASK_SUCCESS, auditSource.TASK_MANAGER, { appId: appId, logFile: logFilePath }, NOOP_CALLBACK);
         }
         delete gActiveTasks[appId];
         locker.unlock(locker.OP_APPTASK); // unlock event will trigger next task

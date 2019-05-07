@@ -21,7 +21,9 @@ exports = module.exports = {
     ACTION_APP_OOM: 'app.oom',
     ACTION_APP_UP: 'app.up',
     ACTION_APP_DOWN: 'app.down',
+    ACTION_APP_TASK_START: 'app.task.start',
     ACTION_APP_TASK_CRASH: 'app.task.crash',
+    ACTION_APP_TASK_SUCCESS: 'app.task.success',
 
     ACTION_BACKUP_FINISH: 'backup.finish',
     ACTION_BACKUP_START: 'backup.start',
