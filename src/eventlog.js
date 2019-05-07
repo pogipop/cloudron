@@ -17,6 +17,7 @@ exports = module.exports = {
     ACTION_APP_RESTORE: 'app.restore',
     ACTION_APP_UNINSTALL: 'app.uninstall',
     ACTION_APP_UPDATE: 'app.update',
+    ACTION_APP_UPDATE_FINISH: 'app.update.finish',
     ACTION_APP_LOGIN: 'app.login',
     ACTION_APP_OOM: 'app.oom',
     ACTION_APP_UP: 'app.up',

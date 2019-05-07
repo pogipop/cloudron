@@ -5,6 +5,7 @@ exports = module.exports = {
     HEALTH_MONITOR: { userId: null, username: 'healthmonitor' },
     SYSADMIN: { userId: null, username: 'sysadmin' },
     TASK_MANAGER: { userId: null, username: 'taskmanager' },
+    APP_TASK: { userId: null, username: 'apptask' },
 
     fromRequest: fromRequest
 };

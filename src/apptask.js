@@ -25,6 +25,7 @@ var addons = require('./addons.js'),
     apps = require('./apps.js'),
     assert = require('assert'),
     async = require('async'),
+    auditsource = require('./auditsource.js'),
     backups = require('./backups.js'),
     config = require('./config.js'),
     database = require('./database.js'),
@@ -34,6 +35,7 @@ var addons = require('./addons.js'),
     domains = require('./domains.js'),
     DomainsError = domains.DomainsError,
     ejs = require('ejs'),
+    eventlog = require('./eventlog.js'),
     fs = require('fs'),
     manifestFormat = require('cloudron-manifestformat'),
     mkdirp = require('mkdirp'),
@@ -789,7 +791,7 @@ function update(app, callback) {
             debugApp(app, 'Error updating app: %s', error);
             updateApp(app, { installationState: appdb.ISTATE_ERROR, installationProgress: error.message, updateTime: new Date() }, callback.bind(null, error));
         } else {
-            callback(null);
+            eventlog.add(eventlog.ACTION_APP_UPDATE_FINISH, auditsource.APP_TASK, { app: app, success: true }, callback);
         }
     });
 }

@@ -230,6 +230,17 @@ function appDied(eventId, app, callback) {
     }, callback);
 }
 
+function appUpdated(eventId, app, callback) {
+    assert.strictEqual(typeof eventId, 'string');
+    assert.strictEqual(typeof app, 'object');
+    assert.strictEqual(typeof callback, 'function');
+
+    actionForAllAdmins([], function (admin, done) {
+        mailer.appUpdated(admin.email, app);
+        add(admin.id, eventId, `App ${app.fqdn} updated`, `The application ${app.manifest.title} installed at ${app.fqdn} was updated to version ${app.manifest.version}.`, done);
+    }, callback);
+}
+
 function certificateRenewalError(eventId, vhost, errorMessage, callback) {
     assert.strictEqual(typeof eventId, 'string');
     assert.strictEqual(typeof vhost, 'string');
@@ -327,6 +338,9 @@ function onEvent(id, action, source, data, callback) {
 
     case eventlog.ACTION_APP_UP:
         return appUp(id, data.app, callback);
+
+    case eventlog.ACTION_APP_UPDATE_FINISH:
+        return appUpdated(id, data.app, callback);
 
     case eventlog.ACTION_CERTIFICATE_RENEWAL:
     case eventlog.ACTION_CERTIFICATE_NEW:

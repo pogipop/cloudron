@@ -1,0 +1,13 @@
+<%if (format === 'text') { %>
+
+Dear Cloudron Admin,
+
+The application '<%= title %>' installed at <%= appFqdn %> was updated to app package version <%= version %>.
+
+Powered by https://cloudron.io
+
+Sent at: <%= new Date().toUTCString() %>
+
+<% } else { %>
+
+<% } %>
