@@ -66,6 +66,7 @@ function registerCloudron(req, res, next) {
     appstore.registerCloudron(req.body, function (error) {
         if (error && error.reason === AppstoreError.ALREADY_EXISTS) return next(new HttpError(409, error.message));
         if (error && error.reason === AppstoreError.ACCESS_DENIED) return next(new HttpError(412, error.message));
+        if (error && error.reason === AppstoreError.ALREADY_REGISTERED) return next(new HttpError(422, error.message));
         if (error && error.reason === AppstoreError.EXTERNAL_ERROR) return next(new HttpError(424, error.message));
         if (error) return next(new HttpError(500, error));
 

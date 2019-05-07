@@ -66,6 +66,7 @@ AppstoreError.PLAN_LIMIT = 'Plan limit reached'; // upstream 402 (subsciption_ex
 AppstoreError.LICENSE_ERROR = 'License Error'; // upstream 422 (no license, invalid license)
 AppstoreError.INVALID_TOKEN = 'Invalid token'; // upstream 401 (invalid token)
 AppstoreError.NOT_REGISTERED = 'Not registered'; // upstream 412 (no token, not set yet)
+AppstoreError.ALREADY_REGISTERED = 'Already registered';
 
 var NOOP_CALLBACK = function (error) { if (error) debug(error); };
 
@@ -394,13 +395,17 @@ function registerCloudron(options, callback) {
         registerUser(options.email, options.password, done);
     }
 
-    maybeSignup(function (error) {
-        if (error) return callback(error);
+    getCloudronToken(function (error) {
+        if (!error || error.reason !== AppstoreError.NOT_REGISTERED) return callback(new AppstoreError(AppstoreError.ALREADY_REGISTERED));
 
-        login(options.email, options.password, options.totpToken || '', function (error, result) {
+        maybeSignup(function (error) {
             if (error) return callback(error);
 
-            subscribeCloudron(result.accessToken, callback);
+            login(options.email, options.password, options.totpToken || '', function (error, result) {
+                if (error) return callback(error);
+
+                subscribeCloudron(result.accessToken, callback);
+            });
         });
     });
 }
