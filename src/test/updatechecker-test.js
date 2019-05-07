@@ -409,7 +409,7 @@ describe('updatechecker - app - automatic (no email)', function () {
             expect(updatechecker.getUpdateInfo().apps).to.eql({ 'appid-0': { manifest: { version: '2.0.0', changelog: 'c' } } });
             expect(scope.isDone()).to.be.ok();
 
-            checkMails(0, done);
+            checkMails(1, done);
         });
     });
 });
@@ -483,7 +483,7 @@ describe('updatechecker - app - automatic free (email)', function () {
             expect(updatechecker.getUpdateInfo().apps).to.eql({ 'appid-0': { manifest: { version: '2.0.0', changelog: 'c' } } });
             expect(scope.isDone()).to.be.ok();
 
-            checkMails(0, done);
+            checkMails(1, done);
         });
     });
 });
