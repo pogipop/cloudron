@@ -568,53 +568,46 @@ function createMailConfig(mailFqdn, callback) {
     getDomains(function (error, mailDomains) {
         if (error) return callback(error);
 
-        users.getOwner(function (error, owner) {
-            const alertsFrom = `no-reply@${config.adminDomain()}`;
+        const mailOutDomains = mailDomains.filter(d => d.relay.provider !== 'noop').map(d => d.domain).join(',');
+        const mailInDomains = mailDomains.filter(function (d) { return d.enabled; }).map(function (d) { return d.domain; }).join(',');
 
-            const alertsTo = config.provider() === 'caas' ? [ 'support@cloudron.io' ] : [ ];
-            alertsTo.concat(error ? [] : owner.email).join(','); // owner may not exist yet
+        if (!safe.fs.writeFileSync(path.join(paths.ADDON_CONFIG_DIR, 'mail/mail.ini'),
+            `mail_in_domains=${mailInDomains}\nmail_out_domains=${mailOutDomains}\nmail_server_name=${mailFqdn}\n\n`, 'utf8')) {
+            return callback(new Error('Could not create mail var file:' + safe.error.message));
+        }
 
-            const mailOutDomains = mailDomains.filter(d => d.relay.provider !== 'noop').map(d => d.domain).join(',');
-            const mailInDomains = mailDomains.filter(function (d) { return d.enabled; }).map(function (d) { return d.domain; }).join(',');
+        // enable_outbound makes plugin forward email for relayed mail. non-relayed mail always hits LMTP plugin first
+        if (!safe.fs.writeFileSync(path.join(paths.ADDON_CONFIG_DIR, 'mail/smtp_forward.ini'), 'enable_outbound=false\ndomain_selector=mail_from\n', 'utf8')) {
+            return callback(new Error('Could not create smtp forward file:' + safe.error.message));
+        }
 
-            if (!safe.fs.writeFileSync(path.join(paths.ADDON_CONFIG_DIR, 'mail/mail.ini'),
-                `mail_in_domains=${mailInDomains}\nmail_out_domains=${mailOutDomains}\nmail_server_name=${mailFqdn}\nalerts_from=${alertsFrom}\nalerts_to=${alertsTo}\n\n`, 'utf8')) {
+        // create sections for per-domain configuration
+        mailDomains.forEach(function (domain) {
+            const catchAll = domain.catchAll.map(function (c) { return `${c}@${domain.domain}`; }).join(',');
+            const mailFromValidation = domain.mailFromValidation;
+
+            if (!safe.fs.appendFileSync(path.join(paths.ADDON_CONFIG_DIR, 'mail/mail.ini'),
+                `[${domain.domain}]\ncatch_all=${catchAll}\nmail_from_validation=${mailFromValidation}\n\n`, 'utf8')) {
                 return callback(new Error('Could not create mail var file:' + safe.error.message));
             }
 
-            // enable_outbound makes plugin forward email for relayed mail. non-relayed mail always hits LMTP plugin first
-            if (!safe.fs.writeFileSync(path.join(paths.ADDON_CONFIG_DIR, 'mail/smtp_forward.ini'), 'enable_outbound=false\ndomain_selector=mail_from\n', 'utf8')) {
-                return callback(new Error('Could not create smtp forward file:' + safe.error.message));
+            const relay = domain.relay;
+
+            const enableRelay = relay.provider !== 'cloudron-smtp' && relay.provider !== 'noop',
+                host = relay.host || '',
+                port = relay.port || 25,
+                username = relay.username || '',
+                password = relay.password || '';
+
+            if (!enableRelay) return;
+
+            if (!safe.fs.appendFileSync(paths.ADDON_CONFIG_DIR + '/mail/smtp_forward.ini',
+                `[${domain.domain}]\nenable_outbound=true\nhost=${host}\nport=${port}\nenable_tls=true\nauth_type=plain\nauth_user=${username}\nauth_pass=${password}\n\n`, 'utf8')) {
+                return callback(new Error('Could not create mail var file:' + safe.error.message));
             }
-
-            // create sections for per-domain configuration
-            mailDomains.forEach(function (domain) {
-                const catchAll = domain.catchAll.map(function (c) { return `${c}@${domain.domain}`; }).join(',');
-                const mailFromValidation = domain.mailFromValidation;
-
-                if (!safe.fs.appendFileSync(path.join(paths.ADDON_CONFIG_DIR, 'mail/mail.ini'),
-                    `[${domain.domain}]\ncatch_all=${catchAll}\nmail_from_validation=${mailFromValidation}\n\n`, 'utf8')) {
-                    return callback(new Error('Could not create mail var file:' + safe.error.message));
-                }
-
-                const relay = domain.relay;
-
-                const enableRelay = relay.provider !== 'cloudron-smtp' && relay.provider !== 'noop',
-                    host = relay.host || '',
-                    port = relay.port || 25,
-                    username = relay.username || '',
-                    password = relay.password || '';
-
-                if (!enableRelay) return;
-
-                if (!safe.fs.appendFileSync(paths.ADDON_CONFIG_DIR + '/mail/smtp_forward.ini',
-                    `[${domain.domain}]\nenable_outbound=true\nhost=${host}\nport=${port}\nenable_tls=true\nauth_type=plain\nauth_user=${username}\nauth_pass=${password}\n\n`, 'utf8')) {
-                    return callback(new Error('Could not create mail var file:' + safe.error.message));
-                }
-            });
-
-            callback(null, mailInDomains.length !== 0 /* allowInbound */);
         });
+
+        callback(null, mailInDomains.length !== 0 /* allowInbound */);
     });
 }
 
