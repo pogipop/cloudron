@@ -30,7 +30,6 @@ var appstore = require('./appstore.js'),
     paths = require('./paths.js'),
     safe = require('safetydance'),
     semver = require('semver'),
-    settingsdb = require('./settingsdb.js'),
     settings = require('./settings.js'),
     superagent = require('superagent'),
     users = require('./users.js'),
@@ -95,9 +94,6 @@ function autoprovision(autoconf, callback) {
         debug(`autoprovision: ${key}`);
 
         switch (key) {
-        case 'caasConfig':
-            settingsdb.set(settings.CAAS_CONFIG_KEY, JSON.stringify(autoconf[key]), iteratorDone);
-            break;
         case 'backupConfig':
             settings.setBackupConfig(autoconf[key], iteratorDone);
             break;

@@ -27,8 +27,6 @@ exports = module.exports = {
     getBackupConfig: getBackupConfig,
     setBackupConfig: setBackupConfig,
 
-    getCaasConfig: getCaasConfig,
-
     getPlatformConfig: getPlatformConfig,
     setPlatformConfig: setPlatformConfig,
 
@@ -50,7 +48,6 @@ exports = module.exports = {
 
     // json. if you add an entry here, be sure to fix getAll
     BACKUP_CONFIG_KEY: 'backup_config',
-    CAAS_CONFIG_KEY: 'caas_config',
     PLATFORM_CONFIG_KEY: 'platform_config',
 
     // strings
@@ -100,7 +97,6 @@ var gDefaults = (function () {
         retentionSecs: 2 * 24 * 60 * 60, // 2 days
         intervalSecs: 24 * 60 * 60 // ~1 day
     };
-    result[exports.CAAS_CONFIG_KEY] = {};
     result[exports.PLATFORM_CONFIG_KEY] = {};
 
     return result;
@@ -358,17 +354,6 @@ function setBackupConfig(backupConfig, callback) {
                 callback(null);
             });
         });
-    });
-}
-
-function getCaasConfig(callback) {
-    assert.strictEqual(typeof callback, 'function');
-
-    settingsdb.get(exports.CAAS_CONFIG_KEY, function (error, value) {
-        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(null, gDefaults[exports.CAAS_CONFIG_KEY]);
-        if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
-
-        callback(null, JSON.parse(value));
     });
 }
 
