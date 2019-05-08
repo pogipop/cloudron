@@ -25,14 +25,12 @@ var assert = require('assert'),
     backups = require('../backups.js'),
     BackupsError = require('../backups.js').BackupsError,
     chunk = require('lodash.chunk'),
-    config = require('../config.js'),
     debug = require('debug')('box:storage/s3'),
     EventEmitter = require('events'),
     https = require('https'),
     PassThrough = require('stream').PassThrough,
     path = require('path'),
-    S3BlockReadStream = require('s3-block-read-stream'),
-    superagent = require('superagent');
+    S3BlockReadStream = require('s3-block-read-stream');
 
 // test only
 var originalAWS;
@@ -45,61 +43,13 @@ function mockRestore() {
     AWS = originalAWS;
 }
 
-var gCachedCaasCredentials = { issueDate: null, credentials: null };
-
 function S3_NOT_FOUND(error) {
     return error.code === 'NoSuchKey' || error.code === 'NotFound' || error.code === 'ENOENT';
-}
-
-function getCaasConfig(apiConfig, callback) {
-    assert.strictEqual(typeof apiConfig, 'object');
-    assert.strictEqual(typeof callback, 'function');
-    assert(apiConfig.token);
-
-    if ((new Date() - gCachedCaasCredentials.issueDate) <= (1.75 * 60 * 60 * 1000)) { // caas gives tokens with 2 hour limit
-        return callback(null, gCachedCaasCredentials.credentials);
-    }
-
-    debug('getCaasCredentials: getting new credentials');
-
-    var url = config.apiServerOrigin() + '/api/v1/caas/boxes/' + apiConfig.boxId + '/awscredentials';
-    superagent.post(url).query({ token: apiConfig.token }).timeout(30 * 1000).end(function (error, result) {
-        if (error && !error.response) return callback(error);
-        if (result.statusCode !== 201) return callback(new Error(result.text));
-        if (!result.body || !result.body.credentials) return callback(new Error('Unexpected response: ' + JSON.stringify(result.headers)));
-
-        var credentials = {
-            signatureVersion: 'v4',
-            accessKeyId: result.body.credentials.AccessKeyId,
-            secretAccessKey: result.body.credentials.SecretAccessKey,
-            sessionToken: result.body.credentials.SessionToken,
-            region: apiConfig.region || 'us-east-1',
-            maxRetries: 5,
-            retryDelayOptions: {
-                customBackoff: () => 20000 // constant backoff - https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/Config.html#retryDelayOptions-property
-            },
-            httpOptions: {
-                connectTimeout: 10000, // https://github.com/aws/aws-sdk-js/pull/1446
-                timeout: 300 * 1000 // https://github.com/aws/aws-sdk-js/issues/1704 (allow 5MB chunk upload to take upto 5 minutes)
-            }
-        };
-
-        if (apiConfig.endpoint) credentials.endpoint = new AWS.Endpoint(apiConfig.endpoint);
-
-        gCachedCaasCredentials = {
-            issueDate: new Date(),
-            credentials: credentials
-        };
-
-        callback(null, credentials);
-    });
 }
 
 function getS3Config(apiConfig, callback) {
     assert.strictEqual(typeof apiConfig, 'object');
     assert.strictEqual(typeof callback, 'function');
-
-    if (apiConfig.provider === 'caas') return getCaasConfig(apiConfig, callback);
 
     var credentials = {
         signatureVersion: apiConfig.signatureVersion || 'v4',
@@ -452,12 +402,8 @@ function testConfig(apiConfig, callback) {
     assert.strictEqual(typeof apiConfig, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    if (apiConfig.provider === 'caas') {
-        if (typeof apiConfig.token !== 'string') return callback(new BackupsError(BackupsError.BAD_FIELD, 'token must be a string'));
-    } else {
-        if (typeof apiConfig.accessKeyId !== 'string') return callback(new BackupsError(BackupsError.BAD_FIELD, 'accessKeyId must be a string'));
-        if (typeof apiConfig.secretAccessKey !== 'string') return callback(new BackupsError(BackupsError.BAD_FIELD, 'secretAccessKey must be a string'));
-    }
+    if (typeof apiConfig.accessKeyId !== 'string') return callback(new BackupsError(BackupsError.BAD_FIELD, 'accessKeyId must be a string'));
+    if (typeof apiConfig.secretAccessKey !== 'string') return callback(new BackupsError(BackupsError.BAD_FIELD, 'secretAccessKey must be a string'));
 
     if (typeof apiConfig.bucket !== 'string') return callback(new BackupsError(BackupsError.BAD_FIELD, 'bucket must be a string'));
     if (typeof apiConfig.prefix !== 'string') return callback(new BackupsError(BackupsError.BAD_FIELD, 'prefix must be a string'));
