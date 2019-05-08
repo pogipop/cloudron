@@ -21,7 +21,6 @@ var appHealthMonitor = require('./apphealthmonitor.js'),
     constants = require('./constants.js'),
     CronJob = require('cron').CronJob,
     debug = require('debug')('box:cron'),
-    digest = require('./digest.js'),
     dyndns = require('./dyndns.js'),
     eventlog = require('./eventlog.js'),
     janitor = require('./janitor.js'),
@@ -43,7 +42,6 @@ var gJobs = {
     cleanupBackups: null,
     cleanupEventlog: null,
     cleanupTokens: null,
-    digestEmail: null,
     dockerVolumeCleaner: null,
     dynamicDns: null,
     schedulerSync: null,
@@ -197,14 +195,6 @@ function recreateJobs(tz) {
     gJobs.certificateRenew = new CronJob({
         cronTime: '00 00 */12 * * *', // every 12 hours
         onTick: cloudron.renewCerts.bind(null, {}, auditSource.CRON, NOOP_CALLBACK),
-        start: true,
-        timeZone: tz
-    });
-
-    if (gJobs.digestEmail) gJobs.digestEmail.stop();
-    gJobs.digestEmail = new CronJob({
-        cronTime: '00 00 00 * * 3', // every wednesday
-        onTick: digest.send.bind(null, NOOP_CALLBACK),
         start: true,
         timeZone: tz
     });
