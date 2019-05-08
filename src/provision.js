@@ -95,13 +95,6 @@ function autoprovision(autoconf, callback) {
         debug(`autoprovision: ${key}`);
 
         switch (key) {
-        case 'appstoreConfig':
-            if (config.provider() === 'caas') { // skip registration
-                settingsdb.set(settings.APPSTORE_CONFIG_KEY, JSON.stringify(autoconf[key]), iteratorDone);
-            } else { // register cloudron
-                settings.setAppstoreConfig(autoconf[key], iteratorDone);
-            }
-            break;
         case 'caasConfig':
             settingsdb.set(settings.CAAS_CONFIG_KEY, JSON.stringify(autoconf[key]), iteratorDone);
             break;
