@@ -46,7 +46,6 @@ var addons = require('./addons.js'),
     async = require('async'),
     assert = require('assert'),
     backupdb = require('./backupdb.js'),
-    caas = require('./caas.js'),
     config = require('./config.js'),
     crypto = require('crypto'),
     database = require('./database.js'),
@@ -785,11 +784,7 @@ function rotateBoxBackup(backupConfig, tag, appBackupIds, progressCallback, call
 
                 debug(`Rotated box backup successfully as id ${backupId}`);
 
-                caas.backupDone(backupConfig, backupId, appBackupIds, function (error) {
-                    if (error) return callback(error);
-
-                    callback(null, backupId);
-                });
+                callback(null, backupId);
             });
         });
     });
