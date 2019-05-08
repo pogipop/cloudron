@@ -112,6 +112,24 @@ function autoprovision(autoconf, callback) {
     });
 }
 
+function autoRegister(callback) {
+    assert.strictEqual(typeof callback, 'function');
+
+    if (!fs.existsSync(paths.LICENSE_FILE)) return callback();
+
+    const license = safe.fs.readFileSync(paths.LICENSE_FILE, 'utf8');
+    if (!license) return callback(new ProvisionError(ProvisionError.EXTERNAL_ERROR, 'Cannot read license'));
+
+    appstore.registerWithLicense(license.trim(), function (error) {
+        if (error && error.reason !== AppstoreError.ALREADY_REGISTERED) {
+            debug('Failed to auto-register cloudron', error);
+            return callback(new ProvisionError(ProvisionError.LICENSE_ERROR, 'Failed to auto-register Cloudron with license. Please contact support@cloudron.io'));
+        }
+
+        callback();
+    });
+}
+
 function unprovision(callback) {
     assert.strictEqual(typeof callback, 'function');
 
@@ -172,7 +190,7 @@ function setup(dnsConfig, autoconf, auditSource, callback) {
                 callback(); // now that args are validated run the task in the background
 
                 async.series([
-                    // setProgress.bind(null, 'setup', 'Registering server'),
+                    autoRegister,
                     domains.prepareDashboardDomain.bind(null, domain, auditSource, (progress) => setProgress('setup', progress.message, NOOP_CALLBACK)),
                     cloudron.setDashboardDomain.bind(null, domain, auditSource), // this sets up the config.fqdn()
                     mail.addDomain.bind(null, domain), // this relies on config.mailFqdn()
@@ -320,24 +338,5 @@ function getStatus(callback) {
                 activated: activated,
             }, gProvisionStatus));
         });
-    });
-}
-
-function autoRegister(callback) {
-    assert.strictEqual(typeof callback, 'function');
-
-    if (!fs.existsSync(paths.LICENSE_FILE)) return callback();
-
-    const license = safe.fs.readFileSync(paths.LICENSE_FILE, 'utf8');
-    if (!license) return callback(new ProvisionError(ProvisionError.EXTERNAL_ERROR, 'Cannot read license'));
-
-    appstore.registerWithLicense(license.trim(), function (error) {
-        if (error && error.reason !== AppstoreError.ALREADY_REGISTERED) {
-            debug(error);
-            debug('Failed to auto-register Cloudron with license. Please contact support@cloudron.io');
-            return; // does not call callback on purpose. the server just 'hangs' with the above error
-        }
-
-        callback();
     });
 }
