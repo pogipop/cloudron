@@ -37,7 +37,7 @@ anyone to effortlessly host web applications on their server on their own terms.
 
 ## Demo
 
-Try our demo at https://my-demo.cloudron.me (username: cloudron password: cloudron).
+Try our demo at https://my.demo.cloudron.io (username: cloudron password: cloudron).
 
 ## Installing
 
