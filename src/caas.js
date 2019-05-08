@@ -2,7 +2,6 @@
 
 exports = module.exports = {
     verifySetupToken: verifySetupToken,
-    setupDone: setupDone,
 
     backupDone: backupDone,
 
@@ -55,27 +54,6 @@ function verifySetupToken(setupToken, callback) {
                 if (result.statusCode === 403) return callback(new CaasError(CaasError.INVALID_TOKEN));
                 if (result.statusCode === 409) return callback(new CaasError(CaasError.BAD_STATE, 'Already setup'));
                 if (result.statusCode !== 200) return callback(new CaasError(CaasError.EXTERNAL_ERROR, error.message));
-
-                callback(null);
-            });
-    });
-}
-
-function setupDone(setupToken, callback) {
-    assert.strictEqual(typeof setupToken, 'string');
-    assert.strictEqual(typeof callback, 'function');
-
-    settings.getCaasConfig(function (error, caasConfig) {
-        if (error) return callback(new CaasError(CaasError.INTERNAL_ERROR, error));
-
-        // Now let the api server know we got activated
-        superagent.post(config.apiServerOrigin() + '/api/v1/caas/boxes/' + caasConfig.boxId + '/setup/done').query({ setupToken: setupToken })
-            .timeout(30 * 1000)
-            .end(function (error, result) {
-                if (error && !error.response) return callback(new CaasError(CaasError.EXTERNAL_ERROR, error.message));
-                if (result.statusCode === 403) return callback(new CaasError(CaasError.INVALID_TOKEN));
-                if (result.statusCode === 409) return callback(new CaasError(CaasError.BAD_STATE, 'Already setup'));
-                if (result.statusCode !== 201) return callback(new CaasError(CaasError.EXTERNAL_ERROR, error.message));
 
                 callback(null);
             });
