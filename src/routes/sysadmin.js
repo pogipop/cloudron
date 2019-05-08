@@ -5,8 +5,6 @@ exports = module.exports = {
     update: update,
     retire: retire,
 
-    testDigest: testDigest,
-
     importAppDatabase: importAppDatabase
 };
 
@@ -17,7 +15,6 @@ var apps = require('../apps.js'),
     backups = require('../backups.js'),
     BackupsError = require('../backups.js').BackupsError,
     cloudron = require('../cloudron.js'),
-    digest = require('../digest.js'),
     debug = require('debug')('box:routes/sysadmin'),
     HttpError = require('connect-lastmile').HttpError,
     HttpSuccess = require('connect-lastmile').HttpSuccess,
@@ -70,15 +67,5 @@ function importAppDatabase(req, res, next) {
 
             next(new HttpSuccess(202, {}));
         });
-    });
-}
-
-function testDigest(req, res, next) {
-    debug('test digest');
-
-    digest.send(function (error) {
-        if (error) return next(new HttpError(500, error));
-
-        next(new HttpSuccess(202, {}));
     });
 }

@@ -6,7 +6,6 @@ exports = module.exports = {
     adminChanged: adminChanged,
     passwordReset: passwordReset,
     appUpdatesAvailable: appUpdatesAvailable,
-    sendDigest: sendDigest,
 
     sendInvite: sendInvite,
 
@@ -352,39 +351,6 @@ function appUpdatesAvailable(mailTo, apps, hasSubscription, callback) {
             subject: `New app updates available for ${mailConfig.cloudronName}`,
             text: render('app_updates_available.ejs', templateDataText),
             html: render('app_updates_available.ejs', templateDataHTML)
-        };
-
-        sendMail(mailOptions, callback);
-    });
-}
-
-function sendDigest(mailTo, info, callback) {
-    assert.strictEqual(typeof mailTo, 'string');
-    assert.strictEqual(typeof info, 'object');
-    assert.strictEqual(typeof callback, 'function');
-
-    getMailConfig(function (error, mailConfig) {
-        if (error) return debug('Error getting mail details:', error);
-
-        var templateData = {
-            webadminUrl: config.adminOrigin(),
-            cloudronName: mailConfig.cloudronName,
-            cloudronAvatarUrl: config.adminOrigin() + '/api/v1/cloudron/avatar',
-            info: info
-        };
-
-        var templateDataText = JSON.parse(JSON.stringify(templateData));
-        templateDataText.format = 'text';
-
-        var templateDataHTML = JSON.parse(JSON.stringify(templateData));
-        templateDataHTML.format = 'html';
-
-        var mailOptions = {
-            from: mailConfig.notificationFrom,
-            to: mailTo,
-            subject: util.format('[%s] Weekly activity digest', mailConfig.cloudronName),
-            text: render('digest.ejs', templateDataText),
-            html: render('digest.ejs', templateDataHTML)
         };
 
         sendMail(mailOptions, callback);

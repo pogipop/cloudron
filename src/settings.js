@@ -29,9 +29,6 @@ exports = module.exports = {
 
     getCaasConfig: getCaasConfig,
 
-    getEmailDigest: getEmailDigest,
-    setEmailDigest: setEmailDigest,
-
     getPlatformConfig: getPlatformConfig,
     setPlatformConfig: setPlatformConfig,
 
@@ -49,7 +46,6 @@ exports = module.exports = {
 
     // booleans. if you add an entry here, be sure to fix getAll
     DYNAMIC_DNS_KEY: 'dynamic_dns',
-    EMAIL_DIGEST: 'email_digest',
     UNSTABLE_APPS_KEY: 'unstable_apps',
 
     // json. if you add an entry here, be sure to fix getAll
@@ -105,7 +101,6 @@ var gDefaults = (function () {
         intervalSecs: 24 * 60 * 60 // ~1 day
     };
     result[exports.CAAS_CONFIG_KEY] = {};
-    result[exports.EMAIL_DIGEST] = true;
     result[exports.PLATFORM_CONFIG_KEY] = {};
 
     return result;
@@ -363,30 +358,6 @@ function setBackupConfig(backupConfig, callback) {
                 callback(null);
             });
         });
-    });
-}
-
-function getEmailDigest(callback) {
-    assert.strictEqual(typeof callback, 'function');
-
-    settingsdb.get(exports.EMAIL_DIGEST, function (error, enabled) {
-        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(null, gDefaults[exports.EMAIL_DIGEST]);
-        if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
-
-        callback(null, !!enabled); // settingsdb holds string values only
-    });
-}
-
-function setEmailDigest(enabled, callback) {
-    assert.strictEqual(typeof enabled, 'boolean');
-    assert.strictEqual(typeof callback, 'function');
-
-    settingsdb.set(exports.EMAIL_DIGEST, enabled ? 'enabled' : '', function (error) {
-        if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
-
-        notifyChange(exports.EMAIL_DIGEST, enabled);
-
-        callback(null);
     });
 }
 

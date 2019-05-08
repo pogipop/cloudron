@@ -117,21 +117,6 @@ describe('Settings', function () {
             });
         });
 
-        it('can enable mail digest', function (done) {
-            settings.setEmailDigest(true, function (error) {
-                expect(error).to.be(null);
-                done();
-            });
-        });
-
-        it('can get mail digest', function (done) {
-            settings.getEmailDigest(function (error, enabled) {
-                expect(error).to.be(null);
-                expect(enabled).to.be(true);
-                done();
-            });
-        });
-
         it('can get default unstable apps setting', function (done) {
             settings.getUnstableAppsConfig(function (error, enabled) {
                 expect(error).to.be(null);
