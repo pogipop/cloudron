@@ -120,6 +120,8 @@ function autoRegister(callback) {
     const license = safe.fs.readFileSync(paths.LICENSE_FILE, 'utf8');
     if (!license) return callback(new ProvisionError(ProvisionError.EXTERNAL_ERROR, 'Cannot read license'));
 
+    debug('Auto-registering cloudron');
+
     appstore.registerWithLicense(license.trim(), function (error) {
         if (error && error.reason !== AppstoreError.ALREADY_REGISTERED) {
             debug('Failed to auto-register cloudron', error);
