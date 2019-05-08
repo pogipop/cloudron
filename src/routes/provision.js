@@ -2,7 +2,6 @@
 
 exports = module.exports = {
     providerTokenAuth: providerTokenAuth,
-    setupTokenAuth: setupTokenAuth,
     setup: setup,
     activate: activate,
     restore: restore,
@@ -11,8 +10,6 @@ exports = module.exports = {
 
 var assert = require('assert'),
     auditSource = require('../auditsource'),
-    caas = require('../caas.js'),
-    CaasError = require('../caas.js').CaasError,
     config = require('../config.js'),
     debug = require('debug')('box:routes/setup'),
     HttpError = require('connect-lastmile').HttpError,
@@ -38,24 +35,6 @@ function providerTokenAuth(req, res, next) {
     } else {
         next();
     }
-}
-
-function setupTokenAuth(req, res, next) {
-    assert.strictEqual(typeof req.query, 'object');
-
-    if (config.provider() !== 'caas') return next();
-
-    if (typeof req.query.setupToken !== 'string' || !req.query.setupToken) return next(new HttpError(400, 'setupToken must be a non empty string'));
-
-    caas.verifySetupToken(req.query.setupToken, function (error) {
-        if (error && error.reason === CaasError.BAD_STATE) return next(new HttpError(409, 'Already setup'));
-        if (error && error.reason === CaasError.INVALID_TOKEN) return next(new HttpError(401, 'Invalid token'));
-        if (error && error.reason === CaasError.EXTERNAL_ERROR) return next(new HttpError(424, error.message));
-
-        if (error) return next(new HttpError(500, error));
-
-        next();
-    });
 }
 
 function setup(req, res, next) {
