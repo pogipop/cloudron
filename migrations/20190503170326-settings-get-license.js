@@ -25,7 +25,7 @@ exports.up = function(db, callback) {
         const appstoreConfig = JSON.parse(results[0].value);
 
         superagent.get(`${config.apiServerOrigin}/api/v1/cloudron_license`)
-            .query({ accessToken: appstoreConfig.token, cloudronId: appstoreConfig.cloudronId })
+            .query({ accessToken: appstoreConfig.token, cloudronId: appstoreConfig.cloudronId, provider: config.provider })
             .timeout(30 * 1000).end(function (error, result) {
                 if (error && !error.response) return callback(new Error('Network error getting license:' + error.message));
                 if (result.statusCode !== 200) return callback(new Error(`Bad status getting license: ${result.status} ${result.text}`));
