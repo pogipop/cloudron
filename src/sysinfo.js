@@ -7,7 +7,6 @@ exports = module.exports = {
 };
 
 var assert = require('assert'),
-    caas = require('./sysinfo/caas.js'),
     config = require('./config.js'),
     ec2 = require('./sysinfo/ec2.js'),
     generic = require('./sysinfo/generic.js'),
@@ -40,7 +39,6 @@ function getApi(callback) {
     assert.strictEqual(typeof callback, 'function');
 
     switch (config.provider()) {
-    case 'caas': return callback(null, caas);
     case 'ec2': return callback(null, ec2);
     case 'lightsail': return callback(null, ec2);
     case 'ami': return callback(null, ec2);
