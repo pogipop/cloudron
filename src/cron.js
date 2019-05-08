@@ -1,8 +1,7 @@
 'use strict';
 
 exports = module.exports = {
-    startPostActivationJobs: startPostActivationJobs,
-    startPreActivationJobs: startPreActivationJobs,
+    startJobs: startJobs,
 
     stopJobs: stopJobs,
 
@@ -15,7 +14,6 @@ var appHealthMonitor = require('./apphealthmonitor.js'),
     assert = require('assert'),
     auditSource = require('./auditsource.js'),
     backups = require('./backups.js'),
-    caas = require('./caas.js'),
     cloudron = require('./cloudron.js'),
     config = require('./config.js'),
     constants = require('./constants.js'),
@@ -36,7 +34,6 @@ var gJobs = {
     appUpdateChecker: null,
     backup: null,
     boxUpdateChecker: null,
-    caasHeartbeat: null,
     systemChecks: null,
     certificateRenew: null,
     cleanupBackups: null,
@@ -58,24 +55,7 @@ var NOOP_CALLBACK = function (error) { if (error) debug(error); };
 // Months: 0-11
 // Day of Week: 0-6
 
-function startPreActivationJobs(callback) {
-    if (config.provider() === 'caas') {
-        // hack: send the first heartbeat only after we are running for 60 seconds
-        // required as we end up sending a heartbeat and then cloudron-setup reboots the server
-        var seconds = (new Date()).getSeconds() - 1;
-        if (seconds === -1) seconds = 59;
-
-        gJobs.caasHeartbeat = new CronJob({
-            cronTime: `${seconds} */1 * * * *`, // every minute
-            onTick: () => caas.sendHeartbeat(NOOP_CALLBACK),
-            start: true
-        });
-    }
-
-    callback();
-}
-
-function startPostActivationJobs(callback) {
+function startJobs(callback) {
     assert.strictEqual(typeof callback, 'function');
 
     var randomHourMinute = Math.floor(60*Math.random());

@@ -6,9 +6,6 @@ exports = module.exports = {
 
     backupDone: backupDone,
 
-    sendHeartbeat: sendHeartbeat,
-    setPtrRecord: setPtrRecord,
-
     CaasError: CaasError
 };
 
@@ -109,47 +106,5 @@ function backupDone(apiConfig, backupId, appBackupIds, callback) {
         if (result.statusCode !== 200) return callback(new CaasError(CaasError.EXTERNAL_ERROR, result.text));
 
         return callback(null);
-    });
-}
-
-function sendHeartbeat(callback) {
-    assert.strictEqual(typeof callback, 'function');
-
-    if (config.provider() !== 'caas') return callback(new CaasError.INTERNAL_ERROR, new Error('Heartbeat is only sent for managed cloudrons'));
-
-    settings.getCaasConfig(function (error, caasConfig) {
-        if (error) return callback(new CaasError(CaasError.INTERNAL_ERROR, error));
-        if (!caasConfig.token) return callback(); // not configured yet
-
-        var url = config.apiServerOrigin() + '/api/v1/caas/boxes/' + caasConfig.boxId + '/heartbeat';
-        superagent.post(url).query({ token: caasConfig.token, version: config.version() }).timeout(30 * 1000).end(function (error, result) {
-            if (error && !error.response) return callback(new CaasError(CaasError.EXTERNAL_ERROR, `Network error sending heartbeat: ${error.message}`));
-            if (result.statusCode !== 200) return callback(new CaasError(CaasError.EXTERNAL_ERROR, `Server responded to heartbeat with ${result.statusCode}: ${result.text}`));
-
-            debug('Heartbeat sent to %s', url);
-
-            callback();
-        });
-    });
-}
-
-function setPtrRecord(domain, callback) {
-    assert.strictEqual(typeof domain, 'string');
-    assert.strictEqual(typeof callback, 'function');
-
-    settings.getCaasConfig(function (error, caasConfig) {
-        if (error) return callback(new CaasError(CaasError.INTERNAL_ERROR, error));
-
-        superagent
-            .post(config.apiServerOrigin() + '/api/v1/caas/boxes/' + caasConfig.boxId + '/ptr')
-            .query({ token: caasConfig.token })
-            .send({ domain: domain })
-            .timeout(5 * 1000)
-            .end(function (error, result) {
-                if (error && !error.response) return callback(new CaasError(CaasError.EXTERNAL_ERROR, 'Cannot reach appstore'));
-                if (result.statusCode !== 202) return callback(new CaasError(CaasError.EXTERNAL_ERROR, util.format('%s %j', result.statusCode, result.body)));
-
-                return callback(null);
-            });
     });
 }

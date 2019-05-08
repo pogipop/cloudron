@@ -87,9 +87,9 @@ CloudronError.ALREADY_UPTODATE = 'No Update Available';
 function initialize(callback) {
     assert.strictEqual(typeof callback, 'function');
 
-    cron.startPreActivationJobs(callback);
-
     runStartupTasks();
+
+    callback();
 }
 
 function uninitialize(callback) {
@@ -109,7 +109,7 @@ function onActivated(callback) {
     // 2. the restore code path can run without sudo (since mail/ is non-root)
     async.series([
         platform.start,
-        cron.startPostActivationJobs
+        cron.startJobs
     ], callback);
 }
 
