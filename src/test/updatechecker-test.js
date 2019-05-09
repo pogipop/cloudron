@@ -81,7 +81,7 @@ describe('updatechecker - box - manual (email)', function () {
         async.series([
             database.initialize,
             database._clear,
-            cron.startPostActivationJobs,
+            cron.startJobs,
             domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0, AUDIT_SOURCE),
             mail.addDomain.bind(null, DOMAIN_0.domain),
             users.createOwner.bind(null, USER_0.username, USER_0.password, USER_0.email, USER_0.displayName, AUDIT_SOURCE),
@@ -155,7 +155,7 @@ describe('updatechecker - box - automatic (no email)', function () {
 
         async.series([
             database.initialize,
-            cron.startPostActivationJobs,
+            cron.startJobs,
             domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0, AUDIT_SOURCE),
             mail.addDomain.bind(null, DOMAIN_0.domain),
             users.createOwner.bind(null, USER_0.username, USER_0.password, USER_0.email, USER_0.displayName, AUDIT_SOURCE),
@@ -194,7 +194,7 @@ describe('updatechecker - box - automatic free (email)', function () {
 
         async.series([
             database.initialize,
-            cron.startPostActivationJobs,
+            cron.startJobs,
             domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0, AUDIT_SOURCE),
             mail.addDomain.bind(null, DOMAIN_0.domain),
             users.createOwner.bind(null, USER_0.username, USER_0.password, USER_0.email, USER_0.displayName, AUDIT_SOURCE),
@@ -260,7 +260,7 @@ describe('updatechecker - app - manual (email)', function () {
         async.series([
             database.initialize,
             database._clear,
-            cron.startPostActivationJobs,
+            cron.startJobs,
             domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0, AUDIT_SOURCE),
             mail.addDomain.bind(null, DOMAIN_0.domain),
             function (next) {
@@ -378,7 +378,7 @@ describe('updatechecker - app - automatic (no email)', function () {
         async.series([
             database.initialize,
             database._clear,
-            cron.startPostActivationJobs,
+            cron.startJobs,
             domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0, AUDIT_SOURCE),
             mail.addDomain.bind(null, DOMAIN_0.domain),
             function (next) {
@@ -452,7 +452,7 @@ describe('updatechecker - app - automatic free (email)', function () {
         async.series([
             database.initialize,
             database._clear,
-            cron.startPostActivationJobs,
+            cron.startJobs,
             domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0, AUDIT_SOURCE),
             mail.addDomain.bind(null, DOMAIN_0.domain),
             function (next) {
