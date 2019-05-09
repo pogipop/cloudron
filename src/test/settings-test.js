@@ -23,7 +23,7 @@ var DOMAIN_0 = 'example.com';
 function setup(done) {
     config._reset();
     config.set('fqdn', DOMAIN_0);
-    config.set('provider', 'caas');
+    config.set('provider', 'digitalocean');
     nock.cleanAll();
 
     async.series([
@@ -33,11 +33,7 @@ function setup(done) {
 
             s3._mockInject(MockS3);
 
-            // a cloudron must have a backup config to startup
-            settingsdb.set(settings.BACKUP_CONFIG_KEY, JSON.stringify({ provider: 'caas', token: 'foo', key: 'key', format: 'tgz'}), function (error) {
-                expect(error).to.be(null);
-                callback();
-            });
+            callback();
         }
     ], done);
 }
@@ -97,22 +93,11 @@ describe('Settings', function () {
             });
         });
 
-        it('can set backup config', function (done) {
-            nock(config.apiServerOrigin())
-                .post(`/api/v1/caas/boxes/boxid/awscredentials?token=TOKEN`)
-                .reply(201, { credentials: { AccessKeyId: 'accessKeyId', SecretAccessKey: 'secretAccessKey', SessionToken: 'sessionToken' } });
-
-            settings.setBackupConfig({ provider: 'caas', boxId: 'boxid', token: 'TOKEN', format: 'tgz', prefix: 'boxid', bucket: 'bucket' }, function (error) {
-                expect(error).to.be(null);
-                done();
-            });
-        });
-
         it('can get backup config', function (done) {
             settings.getBackupConfig(function (error, backupConfig) {
                 expect(error).to.be(null);
-                expect(backupConfig.provider).to.be('caas');
-                expect(backupConfig.token).to.be('TOKEN');
+                expect(backupConfig.provider).to.be('filesystem');
+                expect(backupConfig.backupFolder).to.be('/var/backups');
                 done();
             });
         });

@@ -23,7 +23,7 @@ describe('Server', function () {
     before(function () {
         config._reset();
         config.setFqdn(DOMAIN);
-        config.set('provider', 'notcaas'); // otherwise, cron sets a caas timer for heartbeat causing the test to not quit
+        config.set('provider', 'digitalocean');
     });
 
     after(cleanup);

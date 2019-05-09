@@ -105,7 +105,6 @@ BackupsError.NOT_FOUND = 'not found';
 // choose which storage backend we use for test purpose we use s3
 function api(provider) {
     switch (provider) {
-    case 'caas': return require('./storage/s3.js');
     case 's3': return require('./storage/s3.js');
     case 'gcs': return require('./storage/gcs.js');
     case 'filesystem': return require('./storage/filesystem.js');

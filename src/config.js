@@ -26,7 +26,7 @@ exports = module.exports = {
     // these values are derived
     adminOrigin: adminOrigin,
     internalAdminOrigin: internalAdminOrigin,
-    sysadminOrigin: sysadminOrigin, // caas routes
+    sysadminOrigin: sysadminOrigin, // localhost routes
     adminFqdn: adminFqdn,
     mailFqdn: mailFqdn,
     hasIPv6: hasIPv6,

@@ -101,7 +101,7 @@ describe('apptask', function () {
     before(function (done) {
         config._reset();
         config.setFqdn(DOMAIN_0.domain);
-        config.set('provider', 'caas');
+        config.set('provider', 'digitalocean');
 
         awsHostedZones = {
             HostedZones: [{

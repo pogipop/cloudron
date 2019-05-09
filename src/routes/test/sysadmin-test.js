@@ -52,7 +52,7 @@ function setup(done) {
         },
 
         function createSettings(callback) {
-            settingsdb.set(settings.BACKUP_CONFIG_KEY, JSON.stringify({ provider: 'caas', token: 'BACKUP_TOKEN', boxId: 'boxid', key: 'key', prefix: 'boxid', format: 'tgz'}), callback);
+            settingsdb.set(settings.BACKUP_CONFIG_KEY, JSON.stringify({ provider: 'filesystem', backupFolder: '/tmp/backups', prefix: 'boxid', format: 'tgz'}), callback);
         }
     ], done);
 }

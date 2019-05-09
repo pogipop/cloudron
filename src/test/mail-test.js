@@ -31,7 +31,7 @@ const AUDIT_SOURCE = {
 function setup(done) {
     config._reset();
     config.set('fqdn', 'example.com');
-    config.set('provider', 'caas');
+    config.set('provider', 'digitalocean');
 
     async.series([
         database.initialize,

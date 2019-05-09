@@ -73,7 +73,7 @@ describe('updatechecker - box - manual (email)', function () {
         config._reset();
         config.setFqdn(DOMAIN_0.domain);
         config.set('apiServerOrigin', 'http://localhost:4444');
-        config.set('provider', 'notcaas');
+        config.set('provider', 'digitalocean');
         safe.fs.unlinkSync(paths.UPDATE_CHECKER_FILE);
 
         mailer._mailQueue = [];
@@ -149,7 +149,7 @@ describe('updatechecker - box - automatic (no email)', function () {
     before(function (done) {
         config.setFqdn(DOMAIN_0.domain);
         config.set('apiServerOrigin', 'http://localhost:4444');
-        config.set('provider', 'notcaas');
+        config.set('provider', 'digitalocean');
 
         mailer._mailQueue = [];
 
@@ -188,7 +188,7 @@ describe('updatechecker - box - automatic free (email)', function () {
         config.setFqdn(DOMAIN_0.domain);
         config.set('version', '1.0.0');
         config.set('apiServerOrigin', 'http://localhost:4444');
-        config.set('provider', 'notcaas');
+        config.set('provider', 'digitalocean');
 
         mailer._mailQueue = [];
 
@@ -253,7 +253,7 @@ describe('updatechecker - app - manual (email)', function () {
         config.setFqdn(DOMAIN_0.domain);
         config.set('version', '1.0.0');
         config.set('apiServerOrigin', 'http://localhost:4444');
-        config.set('provider', 'notcaas');
+        config.set('provider', 'digitalocean');
 
         mailer._mailQueue = [];
 
@@ -371,7 +371,7 @@ describe('updatechecker - app - automatic (no email)', function () {
         config.setFqdn(DOMAIN_0.domain);
         config.set('version', '1.0.0');
         config.set('apiServerOrigin', 'http://localhost:4444');
-        config.set('provider', 'notcaas');
+        config.set('provider', 'digitalocean');
 
         mailer._mailQueue = [];
 
@@ -445,7 +445,7 @@ describe('updatechecker - app - automatic free (email)', function () {
         config.setFqdn(DOMAIN_0.domain);
         config.set('version', '1.0.0');
         config.set('apiServerOrigin', 'http://localhost:4444');
-        config.set('provider', 'notcaas');
+        config.set('provider', 'digitalocean');
 
         mailer._mailQueue = [];
 
