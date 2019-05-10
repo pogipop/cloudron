@@ -174,7 +174,7 @@ function getConfig(callback) {
             memory: os.totalmem(),
             provider: config.provider(),
             cloudronName: allSettings[settings.CLOUDRON_NAME_KEY],
-            features: custom.features(),
+            uiSpec: custom.uiSpec(),
             supportEmail: custom.supportEmail()
         });
     });

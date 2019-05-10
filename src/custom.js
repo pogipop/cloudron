@@ -1,44 +1,62 @@
 'use strict';
 
 let debug = require('debug')('box:features'),
+    lodash = require('lodash'),
     paths = require('./paths.js'),
     safe = require('safetydance'),
     yaml = require('js-yaml');
 
 exports = module.exports = {
-    features: features,
+    uiSpec: uiSpec,
     supportEmail: supportEmail,
     alertsEmail: alertsEmail,
     sendAlertsToCloudronAdmins: sendAlertsToCloudronAdmins
 };
 
+const DEFAULT = {
+    features: {
+        configureBackup: true,
+        dynamicDns: true,
+        subscription: true,
+        remoteSupport: true
+    },
+    support: {
+        email: 'support@cloudron.io'
+    },
+    alerts: {
+        email: '',
+        notifyCloudronAdmins: false
+    }
+};
+
 const gCustom = (function () {
     try {
-        if (!safe.fs.existsSync(paths.CUSTOM_FILE)) return {};
-        return yaml.safeLoad(safe.fs.readFileSync(paths.CUSTOM_FILE, 'utf8'));
+        if (!safe.fs.existsSync(paths.CUSTOM_FILE)) return DEFAULT;
+        const c = yaml.safeLoad(safe.fs.readFileSync(paths.CUSTOM_FILE, 'utf8'));
+        return lodash.merge({}, DEFAULT, c);
     } catch (e) {
         debug(`Error loading features file from ${paths.CUSTOM_FILE} : ${e.message}`);
-        return {};
+        return DEFAULT;
     }
 })();
 
-function features() {
+function uiSpec() {
     return {
-        dynamicDns: safe.query(gCustom, 'features.dynamicDns', true),
-        remoteSupport: safe.query(gCustom, 'features.remoteSupport', true),
-        subscription: safe.query(gCustom, 'features.subscription', true),
-        configureBackup: safe.query(gCustom, 'features.configureBackup', true)
+        dynamicDns: gCustom.features.dynamicDns,
+        remoteSupport: gCustom.features.remoteSupport,
+        subscription: gCustom.features.subscription,
+        configureBackup: gCustom.features.configureBackup
     };
 }
 
 function supportEmail() {
-    return safe.query(gCustom, 'support.email', 'support@cloudron.io');
+    return gCustom.support.email;
 }
 
 function alertsEmail() {
-    return safe.query(gCustom, 'alerts.email', '');
+    return gCustom.alerts.email;
 }
 
 function sendAlertsToCloudronAdmins() {
-    return safe.query(gCustom, 'alerts.notifyCloudronAdmins', true);
+    return gCustom.alerts.notifyCloudronAdmins;
 }
