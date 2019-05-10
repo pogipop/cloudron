@@ -27,7 +27,7 @@ function createTicket(req, res, next) {
     if (req.body.appId && typeof req.body.appId !== 'string') return next(new HttpError(400, 'appId must be string'));
 
     appstore.createTicket(_.extend({ }, req.body, { email: req.user.email, displayName: req.user.displayName }), function (error) {
-        if (error) return next(new HttpError(503, `Error contacting cloudron.io: ${error.message}. Please email ${custom.supportEmail()}`));
+        if (error) return next(new HttpError(503, `Error contacting cloudron.io: ${error.message}. Please email ${custom.spec().support.email}`));
 
         next(new HttpSuccess(201, {}));
     });
@@ -36,7 +36,7 @@ function createTicket(req, res, next) {
 function enableRemoteSupport(req, res, next) {
     assert.strictEqual(typeof req.body, 'object');
 
-    if (!custom.features().remoteSupport) return next(new HttpError(405, 'feature disabled by admin'));
+    if (!custom.spec().support.remoteSupport) return next(new HttpError(405, 'feature disabled by admin'));
 
     if (typeof req.body.enable !== 'boolean') return next(new HttpError(400, 'enabled is required'));
 

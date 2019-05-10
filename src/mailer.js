@@ -289,7 +289,7 @@ function appDied(mailTo, app) {
             from: mailConfig.notificationFrom,
             to: mailTo,
             subject: util.format('[%s] App %s is down', mailConfig.cloudronName, app.fqdn),
-            text: render('app_down.ejs', { title: app.manifest.title, appFqdn: app.fqdn, supportEmail: custom.supportEmail(), format: 'text' })
+            text: render('app_down.ejs', { title: app.manifest.title, appFqdn: app.fqdn, supportEmail: custom.spec().support.email, format: 'text' })
         };
 
         sendMail(mailOptions);

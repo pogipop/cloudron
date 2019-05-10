@@ -446,7 +446,7 @@ function createTicket(info, callback) {
 
             let url = config.apiServerOrigin() + '/api/v1/ticket';
 
-            info.supportEmail = custom.supportEmail(); // destination address for tickets
+            info.supportEmail = custom.spec().support.email; // destination address for tickets
 
             superagent.post(url).query({ accessToken: token }).send(info).timeout(10 * 1000).end(function (error, result) {
                 if (error && !error.response) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, error.message));

@@ -131,8 +131,8 @@ function getBackupConfig(req, res, next) {
     settings.getBackupConfig(function (error, config) {
         if (error) return next(new HttpError(500, error));
 
-        // used by the UI to figure if backups are disabled
-        if (!custom.features().configureBackup) {
+        // always send provider as it is used by the UI to figure if backups are disabled ('noop' backend)
+        if (!custom.spec().backups.configurable) {
             return next(new HttpSuccess(200, { provider: config.provider }));
         }
 
@@ -143,7 +143,7 @@ function getBackupConfig(req, res, next) {
 function setBackupConfig(req, res, next) {
     assert.strictEqual(typeof req.body, 'object');
 
-    if (!custom.features().configureBackup) return next(new HttpError(405, 'feature disabled by admin'));
+    if (!custom.spec().backups.configurable) return next(new HttpError(405, 'feature disabled by admin'));
 
     if (typeof req.body.provider !== 'string') return next(new HttpError(400, 'provider is required'));
     if (typeof req.body.retentionSecs !== 'number') return next(new HttpError(400, 'retentionSecs is required'));
@@ -207,7 +207,7 @@ function getDynamicDnsConfig(req, res, next) {
 function setDynamicDnsConfig(req, res, next) {
     assert.strictEqual(typeof req.body, 'object');
 
-    if (!custom.features().dynamicDns) return next(new HttpError(405, 'feature disabled by admin'));
+    if (!custom.spec().domains.dynamicDns) return next(new HttpError(405, 'feature disabled by admin'));
 
     if (typeof req.body.enabled !== 'boolean') return next(new HttpError(400, 'enabled boolean is required'));
 

@@ -8,20 +8,22 @@ let debug = require('debug')('box:features'),
 
 exports = module.exports = {
     uiSpec: uiSpec,
-    supportEmail: supportEmail,
-    alertsEmail: alertsEmail,
-    sendAlertsToCloudronAdmins: sendAlertsToCloudronAdmins
+    spec: spec
 };
 
-const DEFAULT = {
-    features: {
-        configureBackup: true,
-        dynamicDns: true,
-        subscription: true,
-        remoteSupport: true
+const DEFAULT_SPEC = {
+    backups: {
+        configurable: true
+    },
+    domains: {
+        dynamicDns: true
+    },
+    subscription: {
+        configurable: true
     },
     support: {
-        email: 'support@cloudron.io'
+        email: 'support@cloudron.io',
+        remoteSupport: true
     },
     alerts: {
         email: '',
@@ -29,34 +31,22 @@ const DEFAULT = {
     }
 };
 
-const gCustom = (function () {
+const gSpec = (function () {
     try {
-        if (!safe.fs.existsSync(paths.CUSTOM_FILE)) return DEFAULT;
+        if (!safe.fs.existsSync(paths.CUSTOM_FILE)) return DEFAULT_SPEC;
         const c = yaml.safeLoad(safe.fs.readFileSync(paths.CUSTOM_FILE, 'utf8'));
-        return lodash.merge({}, DEFAULT, c);
+        return lodash.merge({}, DEFAULT_SPEC, c);
     } catch (e) {
         debug(`Error loading features file from ${paths.CUSTOM_FILE} : ${e.message}`);
-        return DEFAULT;
+        return DEFAULT_SPEC;
     }
 })();
 
+// flags sent to the UI. this is separate because we have values that are secret to the backend
 function uiSpec() {
-    return {
-        dynamicDns: gCustom.features.dynamicDns,
-        remoteSupport: gCustom.features.remoteSupport,
-        subscription: gCustom.features.subscription,
-        configureBackup: gCustom.features.configureBackup
-    };
+    return gSpec;
 }
 
-function supportEmail() {
-    return gCustom.support.email;
-}
-
-function alertsEmail() {
-    return gCustom.alerts.email;
-}
-
-function sendAlertsToCloudronAdmins() {
-    return gCustom.alerts.notifyCloudronAdmins;
+function spec() {
+    return gSpec;
 }
