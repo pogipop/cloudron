@@ -110,8 +110,8 @@ systemctl restart cloudron-syslog
 
 $json -f /etc/cloudron/cloudron.conf -I -e "delete this.edition" # can be removed after 4.0
 
-echo "==> Ensuring custom.yml"
-[[ ! -f /etc/cloudron/custom.yml ]] && cp "${script_dir}/start/custom.yml" /etc/cloudron/custom.yml
+echo "==> Clearing custom.yml"
+rm -f /etc/cloudron/custom.yml
 
 echo "==> Configuring sudoers"
 rm -f /etc/sudoers.d/${USER}

@@ -36,7 +36,7 @@ function supportEmail() {
 }
 
 function alertsEmail() {
-    return safe.query(gCustom, 'alerts.email', 'support@cloudron.io');
+    return safe.query(gCustom, 'alerts.email', '');
 }
 
 function sendAlertsToCloudronAdmins() {

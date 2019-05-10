@@ -1,15 +1,16 @@
 # add customizations here
 # after making changes run "sudo systemctl restart box"
 
-features:
-  configureBackup: true
-  dynamicDns: true
-  subscription: true
-  remoteSupport: true
+# features:
+#   configureBackup: true
+#   dynamicDns: true
+#   subscription: true
+#   remoteSupport: true
+# 
+# support:
+#   email: support@cloudron.io
+# 
+# alerts:
+#   email: support@cloudron.io
+#   notifyCloudronAdmins: false
 
-support:
-  email: support@cloudron.io
-
-alerts:
-  email: support@cloudron.io
-  notifyCloudronAdmins: false
