@@ -263,7 +263,7 @@ function copy(apiConfig, oldFilePath, newFilePath) {
                     endBytes = startBytes + chunkSize;
                     if (endBytes > size) endBytes = size;
 
-                    var params = {
+                    var partCopyParams = {
                         Bucket: apiConfig.bucket,
                         Key: path.join(newFilePath, relativePath),
                         CopySource: encodeCopySource(apiConfig.bucket, entry.fullPath), // See aws-sdk-js/issues/1302
@@ -272,12 +272,12 @@ function copy(apiConfig, oldFilePath, newFilePath) {
                         UploadId: uploadId
                     };
 
-                    events.emit('progress', `Copying part ${params.PartNumber} - ${params.CopySource} ${params.CopySourceRange}`);
+                    events.emit('progress', `Copying part ${partCopyParams.PartNumber} - ${partCopyParams.CopySource} ${partCopyParams.CopySourceRange}`);
 
-                    s3.uploadPartCopy(params, function (error, result) {
+                    s3.uploadPartCopy(partCopyParams, function (error, result) {
                         if (error) return done(error);
 
-                        events.emit('progress', `Uploaded part ${params.PartNumber} - Etag: ${result.CopyPartResult.ETag}`);
+                        events.emit('progress', `Uploaded part ${partCopyParams.PartNumber} - Etag: ${result.CopyPartResult.ETag}`);
 
                         uploadedParts.push({ ETag: result.CopyPartResult.ETag, PartNumber: partNumber });
 
@@ -287,16 +287,16 @@ function copy(apiConfig, oldFilePath, newFilePath) {
                             return copyNextChunk();
                         }
 
-                        var params = {
+                        var completeMultipartParams = {
                             Bucket: apiConfig.bucket,
                             Key: path.join(newFilePath, relativePath),
                             MultipartUpload: { Parts: uploadedParts },
                             UploadId: uploadId
                         };
 
-                        events.emit('progress', `Finishing multipart copy - ${params.Key}`);
+                        events.emit('progress', `Finishing multipart copy - ${completeMultipartParams.Key}`);
 
-                        s3.completeMultipartUpload(params, done);
+                        s3.completeMultipartUpload(completeMultipartParams, done);
                     }).on('retry', function (response) {
                         ++retryCount;
                         events.emit('progress', `Retrying (${response.retryCount+1}) multipart copy of ${relativePath || oldFilePath}. Error: ${response.error} ${response.httpResponse.statusCode}`);
