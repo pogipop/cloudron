@@ -36,7 +36,7 @@ function createTicket(req, res, next) {
 function enableRemoteSupport(req, res, next) {
     assert.strictEqual(typeof req.body, 'object');
 
-    if (!custom.features().remoteSupport) return next(new HttpError(403, 'feature disabled by admin'));
+    if (!custom.features().remoteSupport) return next(new HttpError(405, 'feature disabled by admin'));
 
     if (typeof req.body.enable !== 'boolean') return next(new HttpError(400, 'enabled is required'));
 
