@@ -1589,3 +1589,6 @@
 * Remove spaces support
 * Features implementation for customization
 
+[4.0.1]
+* Make it easier to import email
+
