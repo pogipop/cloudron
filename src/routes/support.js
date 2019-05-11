@@ -18,6 +18,8 @@ var appstore = require('../appstore.js'),
 function createTicket(req, res, next) {
     assert.strictEqual(typeof req.user, 'object');
 
+    if (!custom.spec().support.submitTickets) return next(new HttpError(405, 'feature disabled by admin'));
+
     const VALID_TYPES = [ 'feedback', 'ticket', 'app_missing', 'app_error', 'upgrade_request' ];
 
     if (typeof req.body.type !== 'string' || !req.body.type) return next(new HttpError(400, 'type must be string'));
