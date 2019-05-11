@@ -35,6 +35,9 @@ const DEFAULT_SPEC = {
     alerts: {
         email: '',
         notifyCloudronAdmins: false
+    },
+    footer: {
+        body: '&copy; 2019 [Cloudron](https://cloudron.io) [Forum <i class="fa fa-comments"></i>](https://forum.cloudron.io)'
     }
 };
 
