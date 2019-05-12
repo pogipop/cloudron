@@ -1593,3 +1593,7 @@
 * Make it easier to import email
 * Give SFTP access only to admins
 
+[4.0.2]
+* Fix GCDNS crash
+* Add option to update without backing up
+
