@@ -15,7 +15,7 @@ var assert = require('assert'),
     dns = require('../native-dns.js'),
     domains = require('../domains.js'),
     DomainsError = require('../domains.js').DomainsError,
-    GCDNS = require('@google-cloud/dns'),
+    GCDNS = require('@google-cloud/dns').DNS,
     util = require('util'),
     waitForDns = require('./waitfordns.js'),
     _ = require('underscore');
@@ -46,7 +46,7 @@ function getZoneByName(dnsConfig, zoneName, callback) {
     assert.strictEqual(typeof zoneName, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    var gcdns = GCDNS(getDnsCredentials(dnsConfig));
+    var gcdns = new GCDNS(getDnsCredentials(dnsConfig));
 
     gcdns.getZones(function (error, zones) {
         if (error && error.message === 'invalid_grant') return callback(new DomainsError(DomainsError.ACCESS_DENIED, 'The key was probably revoked'));
