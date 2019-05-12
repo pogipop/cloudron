@@ -204,7 +204,7 @@ function boxAutoupdatePatternChanged(pattern) {
             var updateInfo = updateChecker.getUpdateInfo();
             if (updateInfo.box) {
                 debug('Starting autoupdate to %j', updateInfo.box);
-                updater.updateToLatest(auditSource.CRON, NOOP_CALLBACK);
+                updater.updateToLatest({ skipBackup: false }, auditSource.CRON, NOOP_CALLBACK);
             } else {
                 debug('No box auto updates available');
             }
