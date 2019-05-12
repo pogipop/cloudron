@@ -154,8 +154,9 @@ function downloadAndVerifyRelease(updateInfo, callback) {
     });
 }
 
-function update(boxUpdateInfo, progressCallback, callback) {
+function update(boxUpdateInfo, options, progressCallback, callback) {
     assert(boxUpdateInfo && typeof boxUpdateInfo === 'object');
+    assert(options && typeof options === 'object');
     assert.strictEqual(typeof progressCallback, 'function');
     assert.strictEqual(typeof callback, 'function');
 
@@ -164,9 +165,15 @@ function update(boxUpdateInfo, progressCallback, callback) {
     downloadAndVerifyRelease(boxUpdateInfo, function (error, packageInfo) {
         if (error) return callback(error);
 
-        progressCallback({ percent: 10, message: 'Backing up' });
+        function maybeBackup(next) {
+            if (options.skipBackup) return next();
 
-        backups.backupBoxAndApps((progress) => progressCallback({ percent: 10+progress.percent*70/100, message: progress.message }), function (error) {
+            progressCallback({ percent: 10, message: 'Backing up' });
+
+            backups.backupBoxAndApps((progress) => progressCallback({ percent: 10+progress.percent*70/100, message: progress.message }), next);
+        }
+
+        maybeBackup(function (error) {
             if (error) return callback(error);
 
             debug('updating box %s', boxUpdateInfo.sourceTarballUrl);
@@ -201,7 +208,8 @@ function canUpdate(boxUpdateInfo, callback) {
     });
 }
 
-function updateToLatest(auditSource, callback) {
+function updateToLatest(options, auditSource, callback) {
+    assert.strictEqual(typeof options, 'object');
     assert.strictEqual(typeof auditSource, 'object');
     assert.strictEqual(typeof callback, 'function');
 
@@ -215,7 +223,7 @@ function updateToLatest(auditSource, callback) {
         error = locker.lock(locker.OP_BOX_UPDATE);
         if (error) return callback(new UpdaterError(UpdaterError.BAD_STATE, `Cannot update now: ${error.message}`));
 
-        let task = tasks.startTask(tasks.TASK_UPDATE, [ boxUpdateInfo ]);
+        let task = tasks.startTask(tasks.TASK_UPDATE, [ boxUpdateInfo, options ]);
         task.on('error', (error) => callback(new UpdaterError(UpdaterError.INTERNAL_ERROR, error)));
         task.on('start', (taskId) => {
             eventlog.add(eventlog.ACTION_UPDATE, auditSource, { taskId, boxUpdateInfo });

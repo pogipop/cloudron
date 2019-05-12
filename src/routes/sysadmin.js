@@ -38,7 +38,7 @@ function update(req, res, next) {
     debug('triggering update');
 
     // this only initiates the update, progress can be checked via the progress route
-    updater.updateToLatest(auditSource.SYSADMIN, function (error, taskId) {
+    updater.updateToLatest({ skipBackup: false }, auditSource.SYSADMIN, function (error, taskId) {
         if (error && error.reason === UpdaterError.ALREADY_UPTODATE) return next(new HttpError(422, error.message));
         if (error && error.reason === UpdaterError.BAD_STATE) return next(new HttpError(409, error.message));
         if (error) return next(new HttpError(500, error));

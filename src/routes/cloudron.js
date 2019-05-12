@@ -57,8 +57,10 @@ function getDisks(req, res, next) {
 }
 
 function update(req, res, next) {
+    if ('skipBackup' in req.body && typeof req.body.skipBackup !== 'boolean') return next(new HttpError(400, 'skipBackup must be a boolean'));
+
     // this only initiates the update, progress can be checked via the progress route
-    updater.updateToLatest(auditSource.fromRequest(req), function (error, taskId) {
+    updater.updateToLatest(req.body, auditSource.fromRequest(req), function (error, taskId) {
         if (error && error.reason === UpdaterError.ALREADY_UPTODATE) return next(new HttpError(422, error.message));
         if (error && error.reason === UpdaterError.BAD_STATE) return next(new HttpError(409, error.message));
         if (error) return next(new HttpError(500, error));
