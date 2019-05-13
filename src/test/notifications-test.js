@@ -11,7 +11,6 @@ var async = require('async'),
     users = require('../users.js'),
     userdb = require('../userdb.js'),
     eventlogdb = require('../eventlogdb.js'),
-    notificationdb = require('../notificationdb.js'),
     notifications = require('../notifications.js'),
     NotificationsError = notifications.NotificationsError,
     expect = require('expect.js');
@@ -152,20 +151,24 @@ describe('Notifications', function () {
         });
     });
 
-    it('getAllPaged succeeds for second page', function (done) {
-        async.timesSeries(20, function (n, callback) {
-            notifications._add(USER_0.id, EVENT_0.id, 'title' + n, 'some message', callback);
+    it('getAllPaged succeeds for second page (takes 5 seconds to add)', function (done) {
+        async.timesSeries(5, function (n, callback) {
+            // timeout is for database TIMESTAMP resolution
+            setTimeout(function () {
+                notifications._add(USER_0.id, EVENT_0.id, 'title' + n, 'some message', callback);
+            }, 1000);
         }, function (error) {
             expect(error).to.eql(null);
 
-            notifications.getAllPaged(USER_0.id, null /* ack */, 2, 10, function (error, results) {
+            notifications.getAllPaged(USER_0.id, null /* ack */, 2, 3, function (error, results) {
                 expect(error).to.eql(null);
                 expect(results).to.be.an(Array);
-                expect(results.length).to.be(10);
+                expect(results.length).to.be(3);
 
-                // we cannot compare the title because ordering is by time which is stored in mysql with seconds
-                // precision. making the ordering random...
-                // expect(results[0].title).to.equal('title9');
+                expect(results[0].title).to.equal('title1');
+                expect(results[1].title).to.equal('title0');
+                // the previous tests already add one notification with 'title'
+                expect(results[2].title).to.equal('title');
 
                 done();
             });
