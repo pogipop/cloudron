@@ -248,7 +248,7 @@ describe('Profile API', function () {
                 .query({ access_token: token_0 })
                 .send({ password: 'some wrong password', newPassword: 'MOre#$%34' })
                 .end(function (err, res) {
-                    expect(res.statusCode).to.equal(403);
+                    expect(res.statusCode).to.equal(400);
                     done();
                 });
         });
