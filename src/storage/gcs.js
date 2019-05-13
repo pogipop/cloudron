@@ -25,7 +25,7 @@ var assert = require('assert'),
     BackupsError = require('../backups.js').BackupsError,
     debug = require('debug')('box:storage/gcs'),
     EventEmitter = require('events'),
-    GCS = require('@google-cloud/storage'),
+    GCS = require('@google-cloud/storage').Storage,
     PassThrough = require('stream').PassThrough,
     path = require('path');
 
@@ -53,7 +53,7 @@ function getBucket(apiConfig) {
         }
     };
 
-    return GCS(gcsConfig).bucket(apiConfig.bucket);
+    return new GCS(gcsConfig).bucket(apiConfig.bucket);
 }
 
 // storage api
