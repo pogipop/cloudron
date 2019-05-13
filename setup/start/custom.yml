@@ -25,3 +25,6 @@
 # alerts:
 #   email: support@cloudron.io
 #   notifyCloudronAdmins: false
+#
+# footer:
+#   body: '&copy; 2019 [Cloudron](https://cloudron.io) [Forum <i class="fa fa-comments"></i>](https://forum.cloudron.io)'
