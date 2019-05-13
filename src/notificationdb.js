@@ -112,7 +112,7 @@ function listByUserIdPaged(userId, page, perPage, callback) {
     var data = [ userId ];
     var query = 'SELECT ' + NOTIFICATION_FIELDS + ' FROM notifications WHERE userId=?';
 
-    query += ' ORDER BY creationTime, title DESC LIMIT ?,?';
+    query += ' ORDER BY creationTime DESC LIMIT ?,?';
 
     data.push((page-1)*perPage);
     data.push(perPage);
