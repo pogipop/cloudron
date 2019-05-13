@@ -190,29 +190,9 @@ describe('Mail API', function () {
                 });
         });
 
-        it('cannot delete domain without password', function (done) {
-            superagent.del(SERVER_URL + '/api/v1/mail/doesnotexist.com')
-                .query({ access_token: token })
-                .end(function (err, res) {
-                    expect(res.statusCode).to.equal(400);
-                    done();
-                });
-        });
-
-        it('cannot delete domain with wrong password', function (done) {
-            superagent.del(SERVER_URL + '/api/v1/mail/doesnotexist.com')
-                .send({ password: PASSWORD+PASSWORD })
-                .query({ access_token: token })
-                .end(function (err, res) {
-                    expect(res.statusCode).to.equal(403);
-                    done();
-                });
-        });
-
         it('cannot delete non-existing domain', function (done) {
             superagent.del(SERVER_URL + '/api/v1/mail/doesnotexist.com')
                 .query({ access_token: token })
-                .send({ password: PASSWORD })
                 .end(function (err, res) {
                     expect(res.statusCode).to.equal(404);
                     done();
@@ -221,7 +201,6 @@ describe('Mail API', function () {
 
         it('cannot delete admin mail domain', function (done) {
             superagent.del(SERVER_URL + '/api/v1/mail/' + ADMIN_DOMAIN.domain)
-                .send({ password: PASSWORD })
                 .query({ access_token: token })
                 .end(function (err, res) {
                     expect(res.statusCode).to.equal(409);
@@ -231,7 +210,6 @@ describe('Mail API', function () {
 
         it('can delete admin mail domain', function (done) {
             superagent.del(SERVER_URL + '/api/v1/mail/' + DOMAIN_0.domain)
-                .send({ password: PASSWORD })
                 .query({ access_token: token })
                 .end(function (err, res) {
                     expect(res.statusCode).to.equal(204);
@@ -289,7 +267,6 @@ describe('Mail API', function () {
             dns.resolve = resolve;
 
             superagent.del(SERVER_URL + '/api/v1/mail/' + DOMAIN_0.domain)
-                .send({ password: PASSWORD })
                 .query({ access_token: token })
                 .end(function (err, res) {
                     expect(res.statusCode).to.equal(204);
@@ -539,7 +516,6 @@ describe('Mail API', function () {
 
         after(function (done) {
             superagent.del(SERVER_URL + '/api/v1/mail/' + DOMAIN_0.domain)
-                .send({ password: PASSWORD })
                 .query({ access_token: token })
                 .end(function (err, res) {
                     expect(res.statusCode).to.equal(204);
@@ -591,7 +567,6 @@ describe('Mail API', function () {
 
         after(function (done) {
             superagent.del(SERVER_URL + '/api/v1/mail/' + DOMAIN_0.domain)
-                .send({ password: PASSWORD })
                 .query({ access_token: token })
                 .end(function (err, res) {
                     expect(res.statusCode).to.equal(204);
@@ -662,7 +637,6 @@ describe('Mail API', function () {
 
         after(function (done) {
             superagent.del(SERVER_URL + '/api/v1/mail/' + DOMAIN_0.domain)
-                .send({ password: PASSWORD })
                 .query({ access_token: token })
                 .end(function (err, res) {
                     expect(res.statusCode).to.equal(204);
@@ -740,7 +714,6 @@ describe('Mail API', function () {
 
         after(function (done) {
             superagent.del(SERVER_URL + '/api/v1/mail/' + DOMAIN_0.domain)
-                .send({ password: PASSWORD })
                 .query({ access_token: token })
                 .end(function (err, res) {
                     expect(res.statusCode).to.equal(204);
@@ -846,7 +819,6 @@ describe('Mail API', function () {
                 if (error) return done(error);
 
                 superagent.del(SERVER_URL + '/api/v1/mail/' + DOMAIN_0.domain)
-                    .send({ password: PASSWORD })
                     .query({ access_token: token })
                     .end(function (err, res) {
                         expect(res.statusCode).to.equal(204);
@@ -972,7 +944,6 @@ describe('Mail API', function () {
                 if (error) return done(error);
 
                 superagent.del(SERVER_URL + '/api/v1/mail/' + DOMAIN_0.domain)
-                    .send({ password: PASSWORD })
                     .query({ access_token: token })
                     .end(function (err, res) {
                         expect(res.statusCode).to.equal(204);

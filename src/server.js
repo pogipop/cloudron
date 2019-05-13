@@ -168,7 +168,7 @@ function initializeExpressSync() {
     router.get ('/api/v1/users', usersReadScope, routes.users.list);
     router.post('/api/v1/users', usersManageScope, routes.users.create);
     router.get ('/api/v1/users/:userId', usersManageScope, routes.users.get); // this is manage scope because it returns non-restricted fields
-    router.del ('/api/v1/users/:userId', usersManageScope, routes.users.verifyPassword, routes.users.remove);
+    router.del ('/api/v1/users/:userId', usersManageScope, routes.users.remove);
     router.post('/api/v1/users/:userId', usersManageScope, routes.users.update);
     router.post('/api/v1/users/:userId/password', usersManageScope, routes.users.changePassword);
     router.put ('/api/v1/users/:userId/groups', usersManageScope, routes.users.setGroups);
@@ -182,7 +182,7 @@ function initializeExpressSync() {
     router.get ('/api/v1/groups/:groupId', usersManageScope, routes.groups.get);
     router.put ('/api/v1/groups/:groupId/members', usersManageScope, routes.groups.updateMembers);
     router.post('/api/v1/groups/:groupId', usersManageScope, routes.groups.update);
-    router.del ('/api/v1/groups/:groupId', usersManageScope, routes.users.verifyPassword, routes.groups.remove);
+    router.del ('/api/v1/groups/:groupId', usersManageScope, routes.groups.remove);
 
     // form based login routes used by oauth2 frame
     router.get ('/api/v1/session/login', csrf, routes.oauth2.loginForm);
@@ -225,10 +225,10 @@ function initializeExpressSync() {
     router.get ('/api/v1/apps/:id/icon', routes.apps.getAppIcon);
 
     router.post('/api/v1/apps/install',       appsManageScope, routes.apps.installApp);
-    router.post('/api/v1/apps/:id/uninstall', appsManageScope, routes.users.verifyPassword, routes.apps.uninstallApp);
+    router.post('/api/v1/apps/:id/uninstall', appsManageScope, routes.apps.uninstallApp);
     router.post('/api/v1/apps/:id/configure', appsManageScope, routes.apps.configureApp);
     router.post('/api/v1/apps/:id/update',    appsManageScope, routes.apps.updateApp);
-    router.post('/api/v1/apps/:id/restore',   appsManageScope, routes.users.verifyPassword, routes.apps.restoreApp);
+    router.post('/api/v1/apps/:id/restore',   appsManageScope, routes.apps.restoreApp);
     router.post('/api/v1/apps/:id/backup',    appsManageScope, routes.apps.backupApp);
     router.get ('/api/v1/apps/:id/backups',   appsManageScope, routes.apps.listBackups);
     router.post('/api/v1/apps/:id/stop',      appsManageScope, routes.apps.stopApp);
@@ -252,8 +252,8 @@ function initializeExpressSync() {
     // email routes
     router.get ('/api/v1/mail/:domain',       mailScope, routes.mail.getDomain);
     router.post('/api/v1/mail',               mailScope, routes.mail.addDomain);
-    router.get ('/api/v1/mail/:domain/stats', mailScope, routes.users.verifyPassword, routes.mail.getDomainStats);
-    router.del ('/api/v1/mail/:domain',       mailScope, routes.users.verifyPassword, routes.mail.removeDomain);
+    router.get ('/api/v1/mail/:domain/stats', mailScope, routes.mail.getDomainStats);
+    router.del ('/api/v1/mail/:domain',       mailScope, routes.mail.removeDomain);
     router.get ('/api/v1/mail/:domain/status',       mailScope, routes.mail.getStatus);
     router.post('/api/v1/mail/:domain/mail_from_validation', mailScope, routes.mail.setMailFromValidation);
     router.post('/api/v1/mail/:domain/catch_all',  mailScope, routes.mail.setCatchAllAddress);
@@ -285,7 +285,7 @@ function initializeExpressSync() {
     router.get ('/api/v1/domains', domainsReadScope, routes.domains.getAll);
     router.get ('/api/v1/domains/:domain', domainsManageScope, verifyDomainLock, routes.domains.get);  // this is manage scope because it returns non-restricted fields
     router.put ('/api/v1/domains/:domain', domainsManageScope, verifyDomainLock, routes.domains.update);
-    router.del ('/api/v1/domains/:domain', domainsManageScope, verifyDomainLock, routes.users.verifyPassword, routes.domains.del);
+    router.del ('/api/v1/domains/:domain', domainsManageScope, verifyDomainLock, routes.domains.del);
 
     // addon routes
     router.get ('/api/v1/services', cloudronScope, routes.services.getAll);

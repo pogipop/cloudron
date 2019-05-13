@@ -537,7 +537,6 @@ describe('App API', function () {
 
     it('cannot uninstall invalid app', function (done) {
         superagent.post(SERVER_URL + '/api/v1/apps/whatever/uninstall')
-            .send({ password: PASSWORD })
             .query({ access_token: token })
             .end(function (err, res) {
                 expect(res.statusCode).to.equal(404);
@@ -545,28 +544,8 @@ describe('App API', function () {
             });
     });
 
-    it('cannot uninstall app without password', function (done) {
-        superagent.post(SERVER_URL + '/api/v1/apps/' + APP_ID + '/uninstall')
-            .query({ access_token: token })
-            .end(function (err, res) {
-                expect(res.statusCode).to.equal(400);
-                done();
-            });
-    });
-
-    it('cannot uninstall app with wrong password', function (done) {
-        superagent.post(SERVER_URL + '/api/v1/apps/' + APP_ID + '/uninstall')
-            .send({ password: PASSWORD+PASSWORD })
-            .query({ access_token: token })
-            .end(function (err, res) {
-                expect(res.statusCode).to.equal(403);
-                done();
-            });
-    });
-
     it('non admin cannot uninstall app', function (done) {
         superagent.post(SERVER_URL + '/api/v1/apps/' + APP_ID + '/uninstall')
-            .send({ password: PASSWORD })
             .query({ access_token: token_1 })
             .end(function (err, res) {
                 expect(res.statusCode).to.equal(403);
@@ -579,7 +558,6 @@ describe('App API', function () {
         var fake2 = nock(config.apiServerOrigin()).delete(function (uri) { return uri.indexOf('/api/v1/cloudronapps/') >= 0; }).reply(204, { });
 
         superagent.post(SERVER_URL + '/api/v1/apps/' + APP_ID + '/uninstall')
-            .send({ password: PASSWORD })
             .query({ access_token: token })
             .end(function (err, res) {
                 expect(res.statusCode).to.equal(202);
@@ -1146,7 +1124,6 @@ describe('App installation', function () {
         }
 
         superagent.post(SERVER_URL + '/api/v1/apps/' + APP_ID + '/uninstall')
-            .send({ password: PASSWORD })
             .query({ access_token: token })
             .end(function (err, res) {
                 expect(res.statusCode).to.equal(202);

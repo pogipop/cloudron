@@ -250,7 +250,6 @@ describe('Groups API', function () {
 
     it('can remove empty group', function (done) {
         superagent.del(SERVER_URL + '/api/v1/groups/' + group1Object.id)
-            .send({ password: PASSWORD })
             .query({ access_token: token })
             .end(function (error, result) {
                 expect(result.statusCode).to.equal(204);
@@ -260,7 +259,6 @@ describe('Groups API', function () {
 
     it('can remove non-empty group', function (done) {
         superagent.del(SERVER_URL + '/api/v1/groups/' + groupObject.id)
-            .send({ password: PASSWORD })
             .query({ access_token: token })
             .end(function (error, result) {
                 expect(result.statusCode).to.equal(204);

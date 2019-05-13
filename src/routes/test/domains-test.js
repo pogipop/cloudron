@@ -253,7 +253,6 @@ describe('Domains API', function () {
         it('cannot delete locked domain', function (done) {
             superagent.delete(SERVER_URL + '/api/v1/domains/' + DOMAIN_0.domain)
                 .query({ access_token: token })
-                .send({ password: PASSWORD })
                 .end(function (error, result) {
                     expect(result.statusCode).to.equal(423);
                     done();
@@ -262,31 +261,9 @@ describe('Domains API', function () {
     });
 
     describe('delete', function () {
-        it('fails without password', function (done) {
-            superagent.delete(SERVER_URL + '/api/v1/domains/' + DOMAIN_0.domain)
-                .query({ access_token: token })
-                .end(function (error, result) {
-                    expect(result.statusCode).to.equal(400);
-
-                    done();
-                });
-        });
-
-        it('fails with wrong password', function (done) {
-            superagent.delete(SERVER_URL + '/api/v1/domains/' + DOMAIN_0.domain)
-                .query({ access_token: token })
-                .send({ password: PASSWORD + PASSWORD })
-                .end(function (error, result) {
-                    expect(result.statusCode).to.equal(403);
-
-                    done();
-                });
-        });
-
         it('fails for non-existing domain', function (done) {
             superagent.delete(SERVER_URL + '/api/v1/domains/' + DOMAIN_0.domain + DOMAIN_0.domain)
                 .query({ access_token: token })
-                .send({ password: PASSWORD })
                 .end(function (error, result) {
                     expect(result.statusCode).to.equal(404);
 
@@ -297,7 +274,6 @@ describe('Domains API', function () {
         it('succeeds', function (done) {
             superagent.delete(SERVER_URL + '/api/v1/domains/' + DOMAIN_0.domain)
                 .query({ access_token: token })
-                .send({ password: PASSWORD })
                 .end(function (error, result) {
                     expect(result.statusCode).to.equal(204);
 

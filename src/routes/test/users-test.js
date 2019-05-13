@@ -529,7 +529,6 @@ describe('Users API', function () {
     it('remove random user fails', function (done) {
         superagent.del(SERVER_URL + '/api/v1/users/randomid')
             .query({ access_token: token })
-            .send({ password: PASSWORD })
             .end(function (err, res) {
                 expect(res.statusCode).to.equal(404);
                 done();
@@ -539,38 +538,8 @@ describe('Users API', function () {
     it('user removes himself is not allowed', function (done) {
         superagent.del(SERVER_URL + '/api/v1/users/' + user_0.id)
             .query({ access_token: token })
-            .send({ password: PASSWORD })
             .end(function (err, res) {
                 expect(res.statusCode).to.equal(409);
-                done();
-            });
-    });
-
-    it('admin cannot remove normal user without giving a password', function (done) {
-        superagent.del(SERVER_URL + '/api/v1/users/' + user_1.id)
-            .query({ access_token: token })
-            .end(function (err, res) {
-                expect(res.statusCode).to.equal(400);
-                done();
-            });
-    });
-
-    it('admin cannot remove normal user with empty password', function (done) {
-        superagent.del(SERVER_URL + '/api/v1/users/' + user_1.id)
-            .query({ access_token: token })
-            .send({ password: '' })
-            .end(function (err, res) {
-                expect(res.statusCode).to.equal(403);
-                done();
-            });
-    });
-
-    it('admin cannot remove normal user with giving wrong password', function (done) {
-        superagent.del(SERVER_URL + '/api/v1/users/' + user_1.id)
-            .query({ access_token: token })
-            .send({ password: PASSWORD + PASSWORD })
-            .end(function (err, res) {
-                expect(res.statusCode).to.equal(403);
                 done();
             });
     });
@@ -578,7 +547,6 @@ describe('Users API', function () {
     it('admin removes normal user', function (done) {
         superagent.del(SERVER_URL + '/api/v1/users/' + user_1.id)
             .query({ access_token: token })
-            .send({ password: PASSWORD })
             .end(function (err, res) {
                 expect(res.statusCode).to.equal(204);
                 done();
@@ -588,7 +556,6 @@ describe('Users API', function () {
     it('admin removes himself should not be allowed', function (done) {
         superagent.del(SERVER_URL + '/api/v1/users/' + user_0.id)
             .query({ access_token: token })
-            .send({ password: PASSWORD })
             .end(function (err, res) {
                 expect(res.statusCode).to.equal(409);
                 done();
