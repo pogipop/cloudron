@@ -56,8 +56,6 @@ const DOMAIN_0 = {
     tlsConfig: { provider: 'fallback' }
 };
 
-const CLOUDRON_ID = 'somecloudronid';
-
 var APP_STORE_ID = 'test', APP_ID;
 var APP_LOCATION = 'appslocation';
 var APP_LOCATION_2 = 'appslocationtwo';
