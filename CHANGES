@@ -1597,3 +1597,6 @@
 * Fix GCDNS crash
 * Add option to update without backing up
 
+[4.0.3]
+* Fix dashboard issue for non-admins
+
