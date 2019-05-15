@@ -20,6 +20,7 @@ let assert = require('assert'),
     auditSource = require('../auditsource.js'),
     cloudron = require('../cloudron.js'),
     CloudronError = cloudron.CloudronError,
+    custom = require('../custom.js'),
     HttpError = require('connect-lastmile').HttpError,
     HttpSuccess = require('connect-lastmile').HttpSuccess,
     updater = require('../updater.js'),
@@ -152,6 +153,8 @@ function getLogStream(req, res, next) {
 function setDashboardAndMailDomain(req, res, next) {
     if (!req.body.domain || typeof req.body.domain !== 'string') return next(new HttpError(400, 'domain must be a string'));
 
+    if (!custom.spec().domains.changeDashboardDomain) return next(new HttpError(405, 'feature disabled by admin'));
+
     cloudron.setDashboardAndMailDomain(req.body.domain, auditSource.fromRequest(req), function (error) {
         if (error && error.reason === CloudronError.BAD_FIELD) return next(new HttpError(404, error.message));
         if (error) return next(new HttpError(500, error));
@@ -162,6 +165,8 @@ function setDashboardAndMailDomain(req, res, next) {
 
 function prepareDashboardDomain(req, res, next) {
     if (!req.body.domain || typeof req.body.domain !== 'string') return next(new HttpError(400, 'domain must be a string'));
+
+    if (!custom.spec().domains.changeDashboardDomain) return next(new HttpError(405, 'feature disabled by admin'));
 
     cloudron.prepareDashboardDomain(req.body.domain, auditSource.fromRequest(req), function (error, taskId) {
         if (error && error.reason === CloudronError.BAD_FIELD) return next(new HttpError(404, error.message));

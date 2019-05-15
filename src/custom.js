@@ -17,7 +17,8 @@ const DEFAULT_SPEC = {
         configurable: true
     },
     domains: {
-        dynamicDns: true
+        dynamicDns: true,
+        changeDashboardDomain: true
     },
     subscription: {
         configurable: true

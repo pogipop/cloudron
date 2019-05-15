@@ -6,6 +6,7 @@
 #
 # domains:
 #   dynamicDns: true
+#   changeDashboardDomain: true
 #
 # subscription:
 #   configurable: true
