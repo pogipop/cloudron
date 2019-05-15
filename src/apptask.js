@@ -697,6 +697,8 @@ function update(app, callback) {
     // FIXME: this does not handle option changes (like multipleDatabases)
     var unusedAddons = _.omit(app.manifest.addons, Object.keys(app.updateConfig.manifest.addons));
 
+    const FORCED_UPDATE = (app.installationState === appdb.ISTATE_PENDING_FORCE_UPDATE);
+
     async.series([
         // this protects against the theoretical possibility of an app being marked for update from
         // a previous version of box code
@@ -704,7 +706,7 @@ function update(app, callback) {
         verifyManifest.bind(null, app.updateConfig.manifest),
 
         function (next) {
-            if (app.installationState === appdb.ISTATE_PENDING_FORCE_UPDATE) return next(null);
+            if (FORCED_UPDATE) return next(null);
 
             async.series([
                 updateApp.bind(null, app, { installationProgress: '15, Backing up app' }),
@@ -791,6 +793,9 @@ function update(app, callback) {
             debugApp(app, 'Error updating app: %s', error);
             updateApp(app, { installationState: appdb.ISTATE_ERROR, installationProgress: error.message, updateTime: new Date() }, callback.bind(null, error));
         } else {
+            // do not spam the notifcation view
+            if (FORCED_UPDATE) return callback();
+
             eventlog.add(eventlog.ACTION_APP_UPDATE_FINISH, auditsource.APP_TASK, { app: app, success: true }, callback);
         }
     });
