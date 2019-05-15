@@ -108,7 +108,8 @@ function autoprovision(autoconf, callback) {
     });
 }
 
-function autoRegister(callback) {
+function autoRegister(domain, callback) {
+    assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof callback, 'function');
 
     if (!fs.existsSync(paths.LICENSE_FILE)) return callback();
@@ -118,7 +119,7 @@ function autoRegister(callback) {
 
     debug('Auto-registering cloudron');
 
-    appstore.registerWithLicense(license.trim(), function (error) {
+    appstore.registerWithLicense(license.trim(), domain, function (error) {
         if (error && error.reason !== AppstoreError.ALREADY_REGISTERED) {
             debug('Failed to auto-register cloudron', error);
             return callback(new ProvisionError(ProvisionError.LICENSE_ERROR, 'Failed to auto-register Cloudron with license. Please contact support@cloudron.io'));
@@ -188,7 +189,7 @@ function setup(dnsConfig, autoconf, auditSource, callback) {
                 callback(); // now that args are validated run the task in the background
 
                 async.series([
-                    autoRegister,
+                    autoRegister.bind(null, domain),
                     domains.prepareDashboardDomain.bind(null, domain, auditSource, (progress) => setProgress('setup', progress.message, NOOP_CALLBACK)),
                     cloudron.setDashboardDomain.bind(null, domain, auditSource), // this sets up the config.fqdn()
                     mail.addDomain.bind(null, domain), // this relies on config.mailFqdn()

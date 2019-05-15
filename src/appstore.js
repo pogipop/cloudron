@@ -387,14 +387,15 @@ function registerCloudron(data, callback) {
     });
 }
 
-function registerWithLicense(license, callback) {
+function registerWithLicense(license, domain, callback) {
     assert.strictEqual(typeof license, 'string');
+    assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof callback, 'function');
 
     getCloudronToken(function (error, token) {
         if (token) return callback(new AppstoreError(AppstoreError.ALREADY_REGISTERED));
 
-        registerCloudron({ license }, callback);
+        registerCloudron({ license, domain }, callback);
     });
 }
 
