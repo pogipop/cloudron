@@ -1600,3 +1600,7 @@
 [4.0.3]
 * Fix dashboard issue for non-admins
 
+[4.1.0]
+* Remove password requirement for uninstalling apps and users
+* Hosting provider edition
+
