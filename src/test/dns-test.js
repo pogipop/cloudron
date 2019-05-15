@@ -8,7 +8,7 @@
 
 var async = require('async'),
     AWS = require('aws-sdk'),
-    GCDNS = require('@google-cloud/dns'),
+    GCDNS = require('@google-cloud/dns').DNS,
     config = require('../config.js'),
     database = require('../database.js'),
     domains = require('../domains.js'),
@@ -1375,7 +1375,7 @@ describe('dns provider', function () {
         });
     });
 
-    xdescribe('gcdns', function () {
+    describe('gcdns', function () {
         var HOSTED_ZONES = [];
         var zoneQueue = [];
         var _OriginalGCDNS;
@@ -1413,7 +1413,7 @@ describe('dns provider', function () {
             }
 
             function fakeZone(name, ns, recordQueue) {
-                var zone = GCDNS().zone(name.replace('.', '-'));
+                var zone = new GCDNS().zone(name.replace('.', '-'));
                 zone.metadata.dnsName = name + '.';
                 zone.metadata.nameServers = ns || ['8.8.8.8', '8.8.4.4'];
                 zone.getRecords = mockery(recordQueue || zoneQueue);
@@ -1450,7 +1450,7 @@ describe('dns provider', function () {
 
         it('upsert existing record succeeds', function (done) {
             zoneQueue.push([null, HOSTED_ZONES]);
-            zoneQueue.push([null, [GCDNS().zone('test').record('A', { 'name': 'test', data: ['5.6.7.8'], ttl: 1 })]]);
+            zoneQueue.push([null, [new GCDNS().zone('test').record('A', { 'name': 'test', data: ['5.6.7.8'], ttl: 1 })]]);
             zoneQueue.push([null, { id: '2' }]);
 
             domains.upsertDnsRecords('test', DOMAIN_0.domain, 'A', ['1.2.3.4'], function (error) {
@@ -1476,7 +1476,7 @@ describe('dns provider', function () {
 
         it('get succeeds', function (done) {
             zoneQueue.push([null, HOSTED_ZONES]);
-            zoneQueue.push([null, [GCDNS().zone('test').record('A', { 'name': 'test', data: ['1.2.3.4', '5.6.7.8'], ttl: 1 })]]);
+            zoneQueue.push([null, [new GCDNS().zone('test').record('A', { 'name': 'test', data: ['1.2.3.4', '5.6.7.8'], ttl: 1 })]]);
 
             domains.getDnsRecords('test', DOMAIN_0.domain, 'A', function (error, result) {
                 expect(error).to.eql(null);
@@ -1491,7 +1491,7 @@ describe('dns provider', function () {
 
         it('del succeeds', function (done) {
             zoneQueue.push([null, HOSTED_ZONES]);
-            zoneQueue.push([null, [GCDNS().zone('test').record('A', { 'name': 'test', data: ['5.6.7.8'], ttl: 1 })]]);
+            zoneQueue.push([null, [new GCDNS().zone('test').record('A', { 'name': 'test', data: ['5.6.7.8'], ttl: 1 })]]);
             zoneQueue.push([null, { id: '5' }]);
 
             domains.removeDnsRecords('test', DOMAIN_0.domain, 'A', ['1.2.3.4'], function (error) {
