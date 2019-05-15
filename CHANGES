@@ -1604,4 +1604,5 @@
 * Remove password requirement for uninstalling apps and users
 * Hosting provider edition
 * Enforce limits in mail container
+* Fix crash when using unauthenticated relay
 
