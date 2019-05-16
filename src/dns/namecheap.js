@@ -102,8 +102,8 @@ function setInternal(dnsConfig, zoneName, hosts, callback) {
         hosts.forEach(function (host, i) {
             var n = i+1; // api starts with 1 not 0
             query['TTL' + n] = '300'; // keep it low
-            query['HostName' + n] = host.Name;
-            query['RecordType' + n] = host.Type;
+            query['HostName' + n] = host.HostName || host.Name;
+            query['RecordType' + n] = host.RecordType || host.Type;
             query['Address' + n] = host.Address;
 
             if (host.Type === 'MX') {
