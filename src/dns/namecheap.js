@@ -15,14 +15,13 @@ var assert = require('assert'),
     dns = require('../native-dns.js'),
     domains = require('../domains.js'),
     DomainsError = require('../domains.js').DomainsError,
-    Namecheap = require('namecheap'),
     sysinfo = require('../sysinfo.js'),
+    superagent = require('superagent'),
     util = require('util'),
-    waitForDns = require('./waitfordns.js');
+    waitForDns = require('./waitfordns.js'),
+    xml2js = require('xml2js');
 
-function formatError(response) {
-    return util.format('NameCheap DNS error [%s] %j', response.code, response.message);
-}
+const ENDPOINT = 'https://api.namecheap.com/xml.response';
 
 function removePrivateFields(domainObject) {
     domainObject.config.token = domains.SECRET_PLACEHOLDER;
@@ -33,37 +32,19 @@ function injectPrivateFields(newConfig, currentConfig) {
     if (newConfig.token === domains.SECRET_PLACEHOLDER) newConfig.token = currentConfig.token;
 }
 
-// Only send required fields - https://www.namecheap.com/support/api/methods/domains-dns/set-hosts.aspx
-function mapHosts(hosts) {
-    return hosts.map(function (host) {
-        let tmp = {};
-
-        tmp.TTL = '300';
-        tmp.RecordType = host.RecordType || host.Type;
-        tmp.HostName = host.HostName || host.Name;
-        tmp.Address = host.Address;
-
-        if (tmp.RecordType === 'MX') {
-            tmp.EmailType = 'MX';
-            if (host.MXPref) tmp.MXPref = host.MXPref;
-        }
-
-        return tmp;
-    });
-}
-
-function getApi(dnsConfig, callback) {
+function getQuery(dnsConfig, callback) {
     assert.strictEqual(typeof dnsConfig, 'object');
     assert.strictEqual(typeof callback, 'function');
 
     sysinfo.getPublicIp(function (error, ip) {
         if (error) return callback(new DomainsError(DomainsError.INTERNAL_ERROR, error));
 
-        // Note that for all NameCheap calls to go through properly, the public IP returned by the getPublicIp method below must be whitelisted on NameCheap's API dashboard
-        let namecheap = new Namecheap(dnsConfig.username, dnsConfig.token, ip);
-        namecheap.setUsername(dnsConfig.username);
-
-        callback(null, namecheap);
+        callback(null, {
+            ApiUser: dnsConfig.username,
+            ApiKey: dnsConfig.token,
+            UserName: dnsConfig.username,
+            ClientIp: ip
+        });
     });
 }
 
@@ -74,15 +55,30 @@ function getInternal(dnsConfig, zoneName, subdomain, type, callback) {
     assert.strictEqual(typeof type, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    getApi(dnsConfig, function (error, namecheap) {
+    getQuery(dnsConfig, function (error, query) {
         if (error) return callback(error);
 
-        namecheap.domains.dns.getHosts(zoneName, function (error, result) {
-            if (error) return callback(new DomainsError(DomainsError.EXTERNAL_ERROR, formatError(error)));
+        query.Command = 'namecheap.domains.dns.getHosts';
+        query.SLD = zoneName.split('.')[0];
+        query.TLD = zoneName.split('.')[1];
 
-            debug('entire getInternal response: %j', result);
+        superagent.get(ENDPOINT).query(query).end(function (error, result) {
+            if (error) return callback(new DomainsError(DomainsError.EXTERNAL_ERROR, error));
 
-            return callback(null, result['DomainDNSGetHostsResult']['host']);
+            var parser = new xml2js.Parser();
+            parser.parseString(result.text, function (error, result) {
+                if (error) return callback(new DomainsError(DomainsError.EXTERNAL_ERROR, error));
+
+                var tmp = result.ApiResponse;
+                if (!tmp.CommandResponse[0]) return callback(new DomainsError(DomainsError.EXTERNAL_ERROR, 'Invalid response'));
+                if (!tmp.CommandResponse[0].DomainDNSGetHostsResult[0]) return callback(new DomainsError(DomainsError.EXTERNAL_ERROR, 'Invalid response'));
+
+                var hosts = result.ApiResponse.CommandResponse[0].DomainDNSGetHostsResult[0].host.map(function (h) {
+                    return h['$'];
+                });
+
+                callback(null, hosts);
+            });
         });
     });
 }
@@ -93,15 +89,41 @@ function setInternal(dnsConfig, zoneName, hosts, callback) {
     assert(Array.isArray(hosts));
     assert.strictEqual(typeof callback, 'function');
 
-    let mappedHosts = mapHosts(hosts);
-
-    getApi(dnsConfig, function (error, namecheap) {
+    getQuery(dnsConfig, function (error, query) {
         if (error) return callback(error);
 
-        namecheap.domains.dns.setHosts(zoneName, mappedHosts, function (error, result) {
-            if (error) return callback(new DomainsError(DomainsError.EXTERNAL_ERROR, formatError(error)));
+        query.Command = 'namecheap.domains.dns.setHosts';
+        query.SLD = zoneName.split('.')[0];
+        query.TLD = zoneName.split('.')[1];
 
-            return callback(null, result);
+        // Map to query params https://www.namecheap.com/support/api/methods/domains-dns/set-hosts.aspx
+        hosts.forEach(function (host, i) {
+            var n = i+1; // api starts with 1 not 0
+            query['TTL' + n] = '300'; // keep it low
+            query['HostName' + n] = host.Name;
+            query['RecordType' + n] = host.Type;
+            query['Address' + n] = host.Address;
+
+            if (host.Type === 'MX') {
+                query['EmailType' + n] = 'MX';
+                if (host.MXPref) query['MXPref' + n] = host.MXPref;
+            }
+        });
+
+        superagent.post(ENDPOINT).query(query).end(function (error, result) {
+            if (error) return callback(new DomainsError(DomainsError.EXTERNAL_ERROR, error));
+
+            var parser = new xml2js.Parser();
+            parser.parseString(result.text, function (error, result) {
+                if (error) return callback(new DomainsError(DomainsError.EXTERNAL_ERROR, error));
+
+                var tmp = result.ApiResponse;
+                if (!tmp.CommandResponse[0]) return callback(new DomainsError(DomainsError.EXTERNAL_ERROR, 'Invalid response'));
+                if (!tmp.CommandResponse[0].DomainDNSSetHostsResult[0]) return callback(new DomainsError(DomainsError.EXTERNAL_ERROR, 'Invalid response'));
+                if (tmp.CommandResponse[0].DomainDNSSetHostsResult[0]['$'].IsSuccess !== 'true') return callback(new DomainsError(DomainsError.EXTERNAL_ERROR, 'Invalid response'));
+
+                callback(null);
+            });
         });
     });
 }
@@ -253,8 +275,6 @@ function verifyDnsConfig(domainObject, callback) {
         username: dnsConfig.username,
         token: dnsConfig.token
     };
-
-    if (process.env.BOX_ENV === 'test') return callback(null, credentials); // this shouldn't be here
 
     dns.resolve(zoneName, 'NS', { timeout: 5000 }, function (error, nameservers) {
         if (error && error.code === 'ENOTFOUND') return callback(new DomainsError(DomainsError.BAD_FIELD, 'Unable to resolve nameservers for this domain'));

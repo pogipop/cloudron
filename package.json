@@ -47,7 +47,6 @@
     "morgan": "^1.9.1",
     "multiparty": "^4.2.1",
     "mysql": "^2.17.1",
-    "namecheap": "github:joshuakarjala/node-namecheap#464a952",
     "nodemailer": "^6.1.1",
     "nodemailer-smtp-transport": "^2.7.4",
     "oauth2orize": "^1.11.0",
@@ -79,7 +78,8 @@
     "uuid": "^3.3.2",
     "valid-url": "^1.0.9",
     "validator": "^10.11.0",
-    "ws": "^6.2.1"
+    "ws": "^6.2.1",
+    "xml2js": "^0.4.19"
   },
   "devDependencies": {
     "expect.js": "*",
