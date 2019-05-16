@@ -15,8 +15,9 @@ var assert = require('assert'),
     dns = require('../native-dns.js'),
     domains = require('../domains.js'),
     DomainsError = require('../domains.js').DomainsError,
-    sysinfo = require('../sysinfo.js'),
+    safe = require('safetydance'),
     superagent = require('superagent'),
+    sysinfo = require('../sysinfo.js'),
     util = require('util'),
     waitForDns = require('./waitfordns.js'),
     xml2js = require('xml2js');
@@ -70,6 +71,7 @@ function getInternal(dnsConfig, zoneName, subdomain, type, callback) {
                 if (error) return callback(new DomainsError(DomainsError.EXTERNAL_ERROR, error));
 
                 var tmp = result.ApiResponse;
+                if (tmp['$'].Status !== 'OK') return callback(new DomainsError(DomainsError.EXTERNAL_ERROR, safe.query(tmp, 'Errors[0].Error[0]._', 'Invalid response')));
                 if (!tmp.CommandResponse[0]) return callback(new DomainsError(DomainsError.EXTERNAL_ERROR, 'Invalid response'));
                 if (!tmp.CommandResponse[0].DomainDNSGetHostsResult[0]) return callback(new DomainsError(DomainsError.EXTERNAL_ERROR, 'Invalid response'));
 
@@ -118,6 +120,7 @@ function setInternal(dnsConfig, zoneName, hosts, callback) {
                 if (error) return callback(new DomainsError(DomainsError.EXTERNAL_ERROR, error));
 
                 var tmp = result.ApiResponse;
+                if (tmp['$'].Status !== 'OK') return callback(new DomainsError(DomainsError.EXTERNAL_ERROR, safe.query(tmp, 'Errors[0].Error[0]._', 'Invalid response')));
                 if (!tmp.CommandResponse[0]) return callback(new DomainsError(DomainsError.EXTERNAL_ERROR, 'Invalid response'));
                 if (!tmp.CommandResponse[0].DomainDNSSetHostsResult[0]) return callback(new DomainsError(DomainsError.EXTERNAL_ERROR, 'Invalid response'));
                 if (tmp.CommandResponse[0].DomainDNSSetHostsResult[0]['$'].IsSuccess !== 'true') return callback(new DomainsError(DomainsError.EXTERNAL_ERROR, 'Invalid response'));
