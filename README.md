@@ -41,12 +41,7 @@ Try our demo at https://my.demo.cloudron.io (username: cloudron password: cloudr
 
 ## Installing
 
-You can install the Cloudron platform on your own server or get a managed server
-from cloudron.io. In either case, the Cloudron platform will keep your server and
-apps up-to-date and secure.
-
-* [Selfhosting](https://cloudron.io/documentation/installation/) - [Pricing](https://cloudron.io/pricing.html)
-* [Managed Hosting](https://cloudron.io/managed.html)
+[Install script](https://cloudron.io/documentation/installation/) - [Pricing](https://cloudron.io/pricing.html)
 
 **Note:** This repo is a small part of what gets installed on your server - there is
 the dashboard, database addons, graph container, base image etc. Cloudron also relies
