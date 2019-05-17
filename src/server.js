@@ -18,7 +18,6 @@ var accesscontrol = require('./accesscontrol.js'),
     middleware = require('./middleware'),
     passport = require('passport'),
     path = require('path'),
-    provision = require('./provision.js'),
     routes = require('./routes/index.js'),
     ws = require('ws');
 

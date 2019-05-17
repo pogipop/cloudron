@@ -420,10 +420,15 @@ function removeIcon(app, callback) {
     assert.strictEqual(typeof app, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    fs.unlink(path.join(paths.APP_ICONS_DIR, app.id + '.png'), function (error) {
-        if (error && error.code !== 'ENOENT') debugApp(app, 'cannot remove icon : %s', error);
-        callback(null);
-    });
+    if (!safe.fs.unlinkSync(path.join(paths.APP_ICONS_DIR, app.id + '.png'))) {
+        if (safe.error.code !== 'ENOENT') debugApp(app, 'cannot remove icon : %s', safe.error);
+    }
+
+    if (!safe.fs.unlinkSync(path.join(paths.APP_ICONS_DIR, app.id + '.user.png'))) {
+        if (safe.error.code !== 'ENOENT') debugApp(app, 'cannot remove user icon : %s', safe.error);
+    }
+
+    callback(null);
 }
 
 function cleanupLogs(app, callback) {

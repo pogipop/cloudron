@@ -402,8 +402,15 @@ function removeRestrictedFields(app) {
 }
 
 function getIconUrlSync(app) {
-    var iconPath = paths.APP_ICONS_DIR + '/' + app.id + '.png';
-    return fs.existsSync(iconPath) ? '/api/v1/apps/' + app.id + '/icon' : null;
+    const iconUrl = '/api/v1/apps/' + app.id + '/icon';
+
+    const userIconPath = `${paths.APP_ICONS_DIR}/${app.id}.user.png`;
+    if (safe.fs.existsSync(userIconPath)) return iconUrl;
+
+    const appstoreIconPath = `${paths.APP_ICONS_DIR}/${app.id}.png`;
+    if (safe.fs.existsSync(appstoreIconPath)) return iconUrl;
+
+    return null;
 }
 
 function postProcess(app, domainObjectMap) {

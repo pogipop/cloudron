@@ -31,9 +31,7 @@ var apps = require('../apps.js'),
     AppsError = apps.AppsError,
     assert = require('assert'),
     auditSource = require('../auditsource.js'),
-    config = require('../config.js'),
     debug = require('debug')('box:routes/apps'),
-    fs = require('fs'),
     HttpError = require('connect-lastmile').HttpError,
     HttpSuccess = require('connect-lastmile').HttpSuccess,
     paths = require('../paths.js'),
@@ -67,11 +65,13 @@ function getApps(req, res, next) {
 function getAppIcon(req, res, next) {
     assert.strictEqual(typeof req.params.id, 'string');
 
-    var iconPath = paths.APP_ICONS_DIR + '/' + req.params.id + '.png';
-    fs.exists(iconPath, function (exists) {
-        if (!exists) return next(new HttpError(404, 'No such icon'));
-        res.sendFile(iconPath);
-    });
+    const userIconPath = `${paths.APP_ICONS_DIR}/${req.params.id}.user.png`;
+    if (safe.fs.existsSync(userIconPath)) return res.sendFile(userIconPath);
+
+    const appstoreIconPath = `${paths.APP_ICONS_DIR}/${req.params.id}.png`;
+    if (safe.fs.existsSync(appstoreIconPath)) return res.sendFile(appstoreIconPath);
+
+    return next(new HttpError(404, 'No such icon'));
 }
 
 function installApp(req, res, next) {
