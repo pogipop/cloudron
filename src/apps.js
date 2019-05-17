@@ -820,6 +820,18 @@ function configure(appId, data, user, auditSource, callback) {
             values.tags = data.tags;
         }
 
+        if ('icon' in data) {
+            if (data.icon) {
+                if (!validator.isBase64(data.icon)) return callback(new AppsError(AppsError.BAD_FIELD, 'icon is not base64'));
+
+                if (!safe.fs.writeFileSync(path.join(paths.APP_ICONS_DIR, appId + '.user.png'), Buffer.from(data.icon, 'base64'))) {
+                    return callback(new AppsError(AppsError.INTERNAL_ERROR, 'Error saving icon:' + safe.error.message));
+                }
+            } else {
+                safe.fs.unlinkSync(path.join(paths.APP_ICONS_DIR, appId + '.user.png'));
+            }
+        }
+
         domains.get(domain, function (error, domainObject) {
             if (error && error.reason === DomainsError.NOT_FOUND) return callback(new AppsError(AppsError.NOT_FOUND, 'No such domain'));
             if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, 'Could not get domain info:' + error.message));
@@ -908,11 +920,11 @@ function update(appId, data, auditSource, callback) {
                 if (data.icon) {
                     if (!validator.isBase64(data.icon)) return callback(new AppsError(AppsError.BAD_FIELD, 'icon is not base64'));
 
-                    if (!safe.fs.writeFileSync(path.join(paths.APP_ICONS_DIR, appId + '.png'), Buffer.from(data.icon, 'base64'))) {
+                    if (!safe.fs.writeFileSync(path.join(paths.APP_ICONS_DIR, appId + '.user.png'), Buffer.from(data.icon, 'base64'))) {
                         return callback(new AppsError(AppsError.INTERNAL_ERROR, 'Error saving icon:' + safe.error.message));
                     }
                 } else {
-                    safe.fs.unlinkSync(path.join(paths.APP_ICONS_DIR, appId + '.png'));
+                    safe.fs.unlinkSync(path.join(paths.APP_ICONS_DIR, appId + '.user.png'));
                 }
             }
 

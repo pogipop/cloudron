@@ -189,6 +189,7 @@ function configureApp(req, res, next) {
 
     if ('label' in data && typeof data.label !== 'string') return next(new HttpError(400, 'label must be a string'));
     if ('dataDir' in data && typeof data.dataDir !== 'string') return next(new HttpError(400, 'dataDir must be a string'));
+    if ('icon' in data && typeof data.icon !== 'string') return next(new HttpError(400, 'icon is not a string'));
 
     debug('Configuring app id:%s data:%j', req.params.id, data);
 
@@ -326,7 +327,6 @@ function updateApp(req, res, next) {
     if ('appStoreId' in data && typeof data.appStoreId !== 'string') return next(new HttpError(400, 'appStoreId must be a string'));
     if (!data.manifest && !data.appStoreId) return next(new HttpError(400, 'appStoreId or manifest is required'));
 
-    if ('icon' in data && typeof data.icon !== 'string') return next(new HttpError(400, 'icon is not a string'));
     if ('force' in data && typeof data.force !== 'boolean') return next(new HttpError(400, 'force must be a boolean'));
 
     debug('Update app id:%s to manifest:%j', req.params.id, data.manifest);
