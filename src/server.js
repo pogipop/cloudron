@@ -222,7 +222,7 @@ function initializeExpressSync() {
     // app routes
     router.get ('/api/v1/apps',          appsReadScope, routes.apps.getApps);
     router.get ('/api/v1/apps/:id',      appsManageScope, routes.apps.getApp);
-    router.get ('/api/v1/apps/:id/icon', routes.apps.getAppIcon);
+    router.get ('/api/v1/apps/:id/icon', appsReadScope, routes.apps.getAppIcon);
 
     router.post('/api/v1/apps/install',       appsManageScope, routes.apps.installApp);
     router.post('/api/v1/apps/:id/uninstall', appsManageScope, routes.apps.uninstallApp);
