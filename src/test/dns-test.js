@@ -13,7 +13,6 @@ var async = require('async'),
     database = require('../database.js'),
     domains = require('../domains.js'),
     expect = require('expect.js'),
-    namecheap = require('namecheap'),
     nock = require('nock'),
     sinon = require('sinon'),
     util = require('util');
