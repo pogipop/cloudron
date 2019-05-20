@@ -89,8 +89,7 @@
     "mock-aws-s3": "git+https://github.com/cloudron-io/mock-aws-s3.git",
     "nock": "^10.0.6",
     "node-sass": "^4.11.0",
-    "recursive-readdir": "^2.2.2",
-    "sinon": "^7.3.2"
+    "recursive-readdir": "^2.2.2"
   },
   "scripts": {
     "test": "./runTests",

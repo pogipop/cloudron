@@ -14,7 +14,6 @@ var async = require('async'),
     domains = require('../domains.js'),
     expect = require('expect.js'),
     nock = require('nock'),
-    sinon = require('sinon'),
     util = require('util');
 
 var DOMAIN_0 = {
@@ -596,8 +595,6 @@ describe('dns provider', function () {
     });
 
     xdescribe('namecheap', function () {
-        let sandbox = require('sinon').createSandbox();
-
         let username = 'namecheapuser';
         let apiKey = 'API_KEY';
 
@@ -611,11 +608,17 @@ describe('dns provider', function () {
             domains.update(DOMAIN_0.domain, DOMAIN_0, AUDIT_SOURCE, done);
         });
 
-        after(function() {
-            sandbox.restore();
+        beforeEach(function () {
+            nock.cleanAll();
         });
 
         it('upsert non-existing record succeeds', function (done) {
+            var req1 = nock(DIGITALOCEAN_ENDPOINT).filteringRequestBody(function () { return false; })
+                .get('/v2/domains/' + DOMAIN_0.zoneName + '/records')
+                .reply(200, { domain_records: [] });
+            var req2 = nock(DIGITALOCEAN_ENDPOINT).filteringRequestBody(function () { return false; })
+                .post('/v2/domains/' + DOMAIN_0.zoneName + '/records')
+                .reply(201, { domain_record: DOMAIN_RECORD_0 });
 
             let getHostsReturn = {
                 'Type': 'namecheap.domains.dns.getHosts',
@@ -683,17 +686,6 @@ describe('dns provider', function () {
                     Address: '1.2.3.4'
                 }
             ];
-
-            let getHostsFake = sinon.fake.yields(null, getHostsReturn);
-            let setHostsFake = sinon.fake.yields(null, true);
-            let mockObj = {
-                dns: {
-                    getHosts: getHostsFake,
-                    setHosts: setHostsFake
-                }
-            };
-
-            sandbox.stub(namecheap.prototype, 'domains').value(mockObj);
 
             domains.upsertDnsRecords('test', DOMAIN_0.domain, 'A', ['1.2.3.4'], function (error) {
                 expect(error).to.eql(null);
@@ -783,17 +775,6 @@ describe('dns provider', function () {
                     Address: '3.4.5.6'
                 }
             ];
-
-            let getHostsFake = sinon.fake.yields(null, getHostsReturn);
-            let setHostsFake = sinon.fake.yields(null, true);
-            let mockObj = {
-                dns: {
-                    getHosts: getHostsFake,
-                    setHosts: setHostsFake
-                }
-            };
-
-            sandbox.stub(namecheap.prototype, 'domains').value(mockObj);
 
             domains.upsertDnsRecords('test', DOMAIN_0.domain, 'TXT', ['1.2.3.4', '2.3.4.5', '3.4.5.6'], function (error) {
                 expect(error).to.eql(null);
@@ -887,17 +868,6 @@ describe('dns provider', function () {
                 }
             ];
 
-            let getHostsFake = sinon.fake.yields(null, getHostsReturn);
-            let setHostsFake = sinon.fake.yields(null, true);
-            let mockObj = {
-                dns: {
-                    getHosts: getHostsFake,
-                    setHosts: setHostsFake
-                }
-            };
-
-            sandbox.stub(namecheap.prototype, 'domains').value(mockObj);
-
             domains.upsertDnsRecords('test', DOMAIN_0.domain, 'MX', ['10 1.2.3.4', '20 2.3.4.5', '30 3.4.5.6'], function (error) {
                 expect(error).to.eql(null);
 
@@ -972,17 +942,6 @@ describe('dns provider', function () {
                 }
             ];
 
-            let getHostsFake = sinon.fake.yields(null, getHostsReturn);
-            let setHostsFake = sinon.fake.yields(null, true);
-            let mockObj = {
-                dns: {
-                    getHosts: getHostsFake,
-                    setHosts: setHostsFake
-                }
-            };
-
-            sandbox.stub(namecheap.prototype, 'domains').value(mockObj);
-
             domains.upsertDnsRecords('www', DOMAIN_0.domain, 'CNAME', ['1.2.3.4'], function (error) {
                 expect(error).to.eql(null);
 
@@ -1038,15 +997,6 @@ describe('dns provider', function () {
                     ]
                 }
             };
-
-            let getHostsFake = sinon.fake.yields(null, getHostsReturn);
-            let mockObj = {
-                dns: {
-                    getHosts: getHostsFake
-                }
-            };
-
-            sandbox.stub(namecheap.prototype, 'domains').value(mockObj);
 
             domains.getDnsRecords('test', DOMAIN_0.domain, 'A', function (error, result) {
                 expect(error).to.eql(null);
@@ -1112,17 +1062,6 @@ describe('dns provider', function () {
                 }
             ];
 
-            let getHostsFake = sinon.fake.yields(null, getHostsReturn);
-            let setHostsFake = sinon.fake.yields(null, true);
-            let mockObj = {
-                dns: {
-                    getHosts: getHostsFake,
-                    setHosts: setHostsFake
-                }
-            };
-
-            sandbox.stub(namecheap.prototype, 'domains').value(mockObj);
-
             domains.removeDnsRecords('www', DOMAIN_0.domain, 'CNAME', ['1.2.3.4'], function (error) {
                 expect(error).to.eql(null);
 
@@ -1169,17 +1108,6 @@ describe('dns provider', function () {
                     ]
                 }
             };
-
-            let getHostsFake = sinon.fake.yields(null, getHostsReturn);
-            let setHostsFake = sinon.fake.yields(null, true);
-            let mockObj = {
-                dns: {
-                    getHosts: getHostsFake,
-                    setHosts: setHostsFake
-                }
-            };
-
-            sandbox.stub(namecheap.prototype, 'domains').value(mockObj);
 
             domains.removeDnsRecords('test', DOMAIN_0.domain, 'A', ['1.2.3.4'], function (error) {
                 expect(error).to.eql(null);
